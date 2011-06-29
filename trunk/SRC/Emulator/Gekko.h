@@ -122,13 +122,26 @@ typedef union TBREG
     };
 } TBREG;
 
-// machine state register bits
-#define MSR_EE      0x8000          // external interrupt enable
-#define MSR_ME      0x1000          // machine check enable
-#define MSR_FP      0x2000          // floating point available
-#define MSR_IR      0x0020          // instruction address translation
-#define MSR_DR      0x0010          // data address translation
-#define MSR_RI      0x0002          // recoverable exception
+#define BIT(n)              (1 << (31-n))
+
+// Machine State Flags
+#define MSR_RESERVED        0xFFFA0088
+#define MSR_POW             (BIT(13))               // Power management enable
+#define MSR_ILE             (BIT(15))               // Exception little-endian mode
+#define MSR_EE              (BIT(16))               // External interrupt enable
+#define MSR_PR              (BIT(17))               // User privilege level
+#define MSR_FP              (BIT(18))               // Floating-point available
+#define MSR_ME              (BIT(19))               // Machine check enable
+#define MSR_FE0             (BIT(20))               // Floating-point exception mode 0
+#define MSR_SE              (BIT(21))               // Single-step trace enable
+#define MSR_BE              (BIT(22))               // Branch trace enable
+#define MSR_FE1             (BIT(23))               // Floating-point exception mode 1
+#define MSR_IP              (BIT(25))               // Exception prefix
+#define MSR_IR              (BIT(26))               // Instruction address translation
+#define MSR_DR              (BIT(27))               // Data address translation
+#define MSR_PM              (BIT(29))               // Performance monitor mode
+#define MSR_RI              (BIT(30))               // Recoverable exception
+#define MSR_LE              (BIT(31))               // Little-endian mode enable
 
 // ** Gekko specific **
 
