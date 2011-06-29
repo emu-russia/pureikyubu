@@ -53,6 +53,14 @@ static void con_print_other_regs()
     con_printf_at(58,11, CYAN "sprg3 " NORM "%08X", SPRG3);
     con_printf_at(58,13, CYAN "ear   " NORM "%08X", EAR);
     con_printf_at(58,14, CYAN "pvr   " NORM "%08X", PVR);
+
+    // Some cpu flags.
+    con_printf_at(74, 1, CYAN "%s", (MSR & MSR_PR) ? "UISA" : "OEA");       // Supervisor?
+    con_printf_at(74, 2, CYAN "%s", (MSR & MSR_EE) ? "EE" : "NE");          // Interrupts enabled?
+    con_printf_at(74, 4, CYAN "PSE " NORM "%i", (HID2 & HID2_PSE) ? 1 : 0); // Paired Single mode?
+    con_printf_at(74, 5, CYAN "LSQ " NORM "%i", (HID2 & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
+    con_printf_at(74, 6, CYAN "WPE " NORM "%i", (HID2 & HID2_WPE) ? 1 : 0); // Gather buffer?
+    con_printf_at(74, 7, CYAN "LC  " NORM "%i", (HID2 & HID2_LCE) ? 1 : 0); // Cache locked?
 }
 
 static void con_print_gprreg(int x, int y, int num)
@@ -159,27 +167,91 @@ static void con_print_psrs()
     {
         con_printf_at(64, y, CYAN "gqr%i " NORM "%08X", y - 1, GQR[y - 1]);
     }
+
+    con_printf_at (64, 10, CYAN "PSE   " NORM "%i", (HID2 & HID2_PSE) ? 1 : 0); // Paired Single mode?
+    con_printf_at (64, 11, CYAN "LSQ   " NORM "%i", (HID2 & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
+}
+
+// -----------------------------------------------------------------------------------------
+// MMU
+
+static int cntlzw(u32 val)
+{
+    int i;
+    for(i=0; i<32; i++)
+    {
+        if(val & (1 << (31-i))) break;
+    }
+    return ((i == 32) ? 31 : i);
+}
+
+static void describe_bat_reg (int x, int y, u32 up, u32 lo, int instr)
+{
+    // Use plain numbers, no definitions (for best compatibility).
+    u32 bepi = (up >> 17) & 0x7fff;
+    u32 bl = (up >> 2) & 0x7ff;
+    u32 vs = (up >> 1) & 1;
+    u32 vp = up & 1;
+    u32 brpn = (lo >> 17) & 0x7fff;
+    u32 w = (lo >> 5) & 1;
+    u32 i = (lo >> 4) & 1;
+    u32 m = (lo >> 3) & 1;
+    u32 g = (lo >> 2) & 1;
+    u32 pp = lo & 3;
+
+    u32 EStart = bepi << 17, PStart = brpn << 17;
+    u32 blkSize = 1 << (17 + 11 - cntlzw((bl << (32-11)) | 0x00100000));
+
+    char *ppstr = BRED "NA";
+    if(pp)
+    {
+        if(instr) { ppstr = ((pp & 1) ? (char *)(NORM "X") : (char *)(NORM "XW")); }
+        else      { ppstr = ((pp & 1) ? (char *)(NORM "R") : (char *)(NORM "RW")); }
+    }
+
+    con_printf_at (x, y, NORM "%08X->%08X" " %-6s" " %c%c%c%c" " %s %s" " %s" ,
+        EStart, PStart, FileSmartSize(blkSize), 
+        w ? 'W' : '-',
+        i ? 'I' : '-',
+        m ? 'M' : '-',
+        g ? 'G' : '-',
+        vs ? NORM "Vs" : BRED "Ns",
+        vp ? NORM "Vp" : BRED "Np",
+        ppstr
+    );
 }
 
 static void con_print_mmu()
 {
-    con_printf_at(0, 11,CYAN "sdr1  " NORM "%08X", SDR1);
-    con_printf_at(0, 12,CYAN "IR    " NORM "%i", (MSR & MSR_IR) ? 1 : 0);
-    con_printf_at(0, 13,CYAN "DR    " NORM "%i", (MSR & MSR_DR) ? 1 : 0);
-    
-    con_printf_at(0, 1, CYAN "DBATs " NORM "%08X:%08X", DBAT0U, DBAT0L);
-    con_printf_at(0, 2, CYAN "      " NORM "%08X:%08X", DBAT1U, DBAT1L);
-    con_printf_at(0, 3, CYAN "      " NORM "%08X:%08X", DBAT2U, DBAT2L);
-    con_printf_at(0, 4, CYAN "      " NORM "%08X:%08X", DBAT3U, DBAT3L);        
+    con_printf_at (0, 11,CYAN "sdr1  " NORM "%08X", SDR1);
 
-    con_printf_at(0, 6, CYAN "IBATs " NORM "%08X:%08X", IBAT0U, IBAT0L);
-    con_printf_at(0, 7, CYAN "      " NORM "%08X:%08X", IBAT1U, IBAT1L);
-    con_printf_at(0, 8, CYAN "      " NORM "%08X:%08X", IBAT2U, IBAT2L);
-    con_printf_at(0, 9, CYAN "      " NORM "%08X:%08X", IBAT3U, IBAT3L);
+    con_printf_at (0, 13,CYAN "IR    " NORM "%i", (MSR & MSR_IR) ? 1 : 0);
+    con_printf_at (0, 14,CYAN "DR    " NORM "%i", (MSR & MSR_DR) ? 1 : 0);
+    
+    con_printf_at (0, 1, CYAN "dbat0 " NORM "%08X:%08X", DBAT0U, DBAT0L);
+    con_printf_at (0, 2, CYAN "dbat1 " NORM "%08X:%08X", DBAT1U, DBAT1L);
+    con_printf_at (0, 3, CYAN "dbat2 " NORM "%08X:%08X", DBAT2U, DBAT2L);
+    con_printf_at (0, 4, CYAN "dbat3 " NORM "%08X:%08X", DBAT3U, DBAT3L);        
+
+    con_printf_at (0, 6, CYAN "ibat0 " NORM "%08X:%08X", IBAT0U, IBAT0L);
+    con_printf_at (0, 7, CYAN "ibat1 " NORM "%08X:%08X", IBAT1U, IBAT1L);
+    con_printf_at (0, 8, CYAN "ibat2 " NORM "%08X:%08X", IBAT2U, IBAT2L);
+    con_printf_at (0, 9, CYAN "ibat3 " NORM "%08X:%08X", IBAT3U, IBAT3L);
+
+    describe_bat_reg(24, 1, DBAT0U, DBAT0L, 0);
+    describe_bat_reg(24, 2, DBAT1U, DBAT1L, 0);
+    describe_bat_reg(24, 3, DBAT2U, DBAT2L, 0);
+    describe_bat_reg(24, 4, DBAT3U, DBAT3L, 0);
+
+    describe_bat_reg(24, 6, IBAT0U, IBAT0L, 1);
+    describe_bat_reg(24, 7, IBAT1U, IBAT1L, 1);
+    describe_bat_reg(24, 8, IBAT2U, IBAT2L, 1);
+    describe_bat_reg(24, 9, IBAT3U, IBAT3L, 1);
 
     for(int n=0, y=1; n<16; n++, y++)
     {
-        con_printf_at(25, y, CYAN "sr%-2i  " NORM "%08X", y-1, SR[y-1]);
+        char * prefix = SR[y-1] & 0x80000000 ? BRED : NORM;
+        con_printf_at (64, y, CYAN "sr%-2i  " "%s" "%08X", y-1, prefix, SR[y-1]);
     }
 }
 

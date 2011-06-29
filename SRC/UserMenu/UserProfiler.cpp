@@ -122,7 +122,7 @@ void UpdateProfiler()
         s64 total = stopTime - startTime;
 
         cpuTime = total - gfxTime - sfxTime - padTime - dvdTime;
-        s64 cur; ReadTimeStampCounter(&cur);
+        s64 cur; MyReadTimeStampCounter(&cur);
         s64 diff = cur - startTime;
 
         // calculate how long we can be in idle state (VSYNC, as in real)
@@ -148,7 +148,7 @@ void UpdateProfiler()
         }
 
         // calculate MIPS
-        ReadTimeStampCounter(&cur);
+        MyReadTimeStampCounter(&cur);
         diff = cur - mipsTime;
         if(cur >= ONE_SECOND)
         {
