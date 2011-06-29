@@ -1,0 +1,229 @@
+// dsp.c
+
+//
+// low-level DSP mail delivery
+//
+
+u32 DSPCheckMailToDSP(void)
+{
+    return ( *(u16 *)0xCC005000 & 0x8000 );
+}
+
+u32 DSPCheckMailFromDSP(void)
+{
+    return ( *(u16 *)0xCC005004 & 0x8000 );
+}
+
+u32 DSPReadCPUToDSPMbox(void)
+{
+    return ( (*(u16 *)0xCC005000 << 16) | *(u16 *)0xCC005002 );
+}
+
+u32 DSPReadMailFromDSP(void)
+{
+    return ( (*(u16 *)0xCC005004 << 16) | *(u16 *)0xCC005006 );
+}
+
+void DSPSendMailToDSP(u32 mail)
+{
+    *(u16 *)0xCC005000 = mail >> 16;
+    *(u16 *)0xCC005002 = (u16)mail;
+}
+
+//
+// assert DSP interrupt
+//
+
+void DSPAssertInt(void)
+{
+    u16 old, tmp;
+    BOOL lvl = OSDisableInterrupts();
+
+    old = *(u16 *)0xCC00500A;
+    tmp = old & ~0x00A8;
+    tmp |= 0x0002;
+    *(u16 *)0xCC00500A = tmp;
+
+    OSRestoreInterrupts(lvl);
+}
+
+//
+// DSP management
+//
+
+BOOL __DSP_init_flag;
+
+void DSPInit(void)
+{
+    __DSP_debug_printf("DSPInit(): Build Date: %s %s\n", __DATE__, __TIME__);
+
+    if(__DSP_init_flag == FALSE)
+    {
+        u16 old, tmp;
+        BOOL lvl = OSDisableInterrupts();
+
+        __OSSetInterruptHandler(__OS_INTERRUPT_DSP_DSP, __DSPHandler);
+        __OSUnmaskInterrupts(OS_INTERRUPTMASK_DSP_DSP);
+
+        old = *(u16 *)0xCC00500A;
+        tmp = old & ~0x00A8;
+        tmp |= 0x0800;
+        *(u16 *)0xCC00500A = tmp;
+
+        old = *(u16 *)0xCC00500A;
+        tmp = old & ~0x00AC;
+        *(u16 *)0xCC00500A = tmp;
+
+        __DSP_tmp_task   = 
+        __DSP_curr_task  =
+        __DSP_last_task  =
+        __DSP_first_task = NULL;
+
+        __DSP_init_flag = TRUE;
+
+        OSRestoreInterrupts(lvl);
+    }
+}
+
+BOOL DSPCheckInit(void)
+{
+    return __DSP_init_flag;
+}
+
+void DSPReset(void)
+{
+    u16 old, tmp;
+    BOOL lvl = OSDisableInterrupts();
+
+    old = *(u16 *)0xCC00500A;
+    tmp = old & ~0x00A8;
+    tmp |= 0x0800;
+    tmp |= 0x0001;
+    *(u16 *)0xCC00500A = tmp;
+
+    __DSP_init_flag = FALSE;
+
+    OSRestoreInterrupts(lvl);
+}
+
+void DSPHalt(void)
+{
+    u16 old, tmp;
+    BOOL lvl = OSDisableInterrupts();
+
+    old = *(u16 *)0xCC00500A;
+    tmp = old & ~0x00A8;
+    tmp |= 0x0004;
+    *(u16 *)0xCC00500A = tmp;
+
+    OSRestoreInterrupts(lvl);
+}
+
+void DSPUnhalt(void)
+{
+    u16 old, tmp;
+    BOOL lvl = OSDisableInterrupts();
+
+    old = *(u16 *)0xCC00500A;
+    tmp = old & ~0x00AC;
+    *(u16 *)0xCC00500A = tmp;
+
+    OSRestoreInterrupts(lvl);
+}
+
+u32 DSPGetDMAStatus(void)
+{
+    return ( *(u16 *)0xCC00500A & 0x0200 );
+}
+
+//
+// DSP task control
+//
+
+DSPTaskInfo *DSPAddTask(DSPTaskInfo *task)
+{
+    BOOL lvl;
+
+    if(__DSP_init_flag == FALSE)
+    {
+        OSHalt("DSPAddTask(): DSP driver not initialized!\n");
+    }
+
+    lvl = OSDisableInterrupts();
+
+    __DSP_insert_task(task);
+
+    state->state = DSP_TASK_STATE_INIT;
+    state->flags = DSP_TASK_FLAG_ATTACHED;
+
+    OSRestoreInterrupts(lvl);
+
+    if(task == __DSP_first_task)
+    {
+        __DSP_boot_task(task);
+    }
+
+    return task;
+}
+
+DSPTaskInfo *DSPCancelTask(DSPTaskInfo *task)
+{
+    BOOL lvl;
+
+    if(__DSP_init_flag == FALSE)
+    {
+        OSHalt("DSPCancelTask(): DSP driver not initialized!\n");
+    }
+
+    lvl = OSDisableInterrupts();
+
+    task->flags |= DSP_TASK_FLAG_CANCEL;
+
+    OSRestoreInterrupts(lvl);
+    return task;
+}
+
+DSPTaskInfo *DSPAssertTask(DSPTaskInfo *task)
+{
+    BOOL lvl;
+
+    if(__DSP_init_flag == FALSE)
+    {
+        OSHalt("DSPAssertTask(): DSP driver not initialized!\n");
+    }
+
+    if((task->flags & DSP_TASK_FLAG_ATTACHED) == 0)
+    {
+        OSHalt("DSPAssertTask(): Specified task not in active task list!\n");
+    }
+
+    lvl = OSDisableInterrupts();
+
+    if(task == __DSP_curr_task)
+    {
+        __DSP_rude_task = task;
+        __DSP_rude_task_pending = TRUE;
+
+        OSRestoreInterrupts(lvl);
+        return task;
+    }
+    else
+    {
+        if(DSPGetTaskPriority(task) < DSPGetTaskPriority(__DSP_curr_task))
+        {
+            __DSP_rude_task = task;
+            __DSP_rude_task_pending = TRUE;
+
+            if(DSPGetTaskState(__DSP_curr_task) == DSP_TASK_STATE_RUN)
+            {
+                DSPAssertInt();
+            }
+
+            OSRestoreInterrupts(lvl);
+            return task
+        }
+    }
+
+    OSRestoreInterrupts(lvl);
+    return NULL;
+}

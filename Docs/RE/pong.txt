@@ -1,0 +1,50 @@
+    
+    PONG Hacking
+    ---------------------------------------------------------------------------
+
+    PONG is GAMECUBE demo, written by DesktopMan. It is perfect choice to
+    start GC emulation from. If you're writing interpreter, it can be used to
+    test some integer opcodes and get visual results on screen, by VI buffer
+    output. In recompiler, it can be used to test branch compilation. PONG can
+    be used for testing of HLE calls (like VI wait retrace, as example). You
+    can imagine many other applications for this useful demo :)
+
+    ---------------------------------------------------------------------------
+
+    List of opcodes, used in PONG (unsorted, by first occurrence) :
+
+        addis   (integer)
+        lwz     (integer load)
+        mfspr   (system)
+        oris    (logical)
+        mtspr   (system)
+        sync    (system)
+        b*      (branch)
+        stwu    (integer store)
+        addi    (integer)
+        stw     (integer store)
+        ori     (logical)
+        bc*     (branch)
+        cmpli   (integer compare)
+        cmpi    (integer compare)
+        rlwinm  (integer rotate)
+        lwzx    (integer load)
+        stwx    (integer store)
+        bclr*   (branch)
+        lhz     (integer load)
+        mulli   (integer)
+        lbz     (integer load)
+        or      (logical)
+        srawi   (integer shift)
+        subfic  (integer)
+        stb     (integer store)
+        add     (integer)
+        sub     (integer)
+        cmp     (integer compare)
+        crxor   (condition register logical)
+        extsb   (integer)
+
+    List of "hardware" calls :
+
+        
+    Video Mode settings : PAL 60Hz (interlaced)

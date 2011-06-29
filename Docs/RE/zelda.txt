@@ -1,0 +1,300 @@
+// some reversing of Legend of Zelda: The Wind Waker
+// made by org <kvzorganic@mail.ru>
+// many thanks to Nintendo for Zelda MAP file !!
+
+void main()
+{
+    u32*        stackBase = ??;     // some weird stack manipulations on ASM
+                                    // complicated and dont care
+    OSThread*   curThread = OSGetCurrentThread();
+
+    mDoMain.sPowerOnTime = OSGetTime();
+
+    // not interesting stuff
+    OSReportInit();                 // set flag
+    version_check();                // halt if not good (never happen)
+
+    // allocate reset data buffer
+    if( (mDoRst.mResetData == (u32 *)OSAllocFromArenaLo(16, 4))
+        == NULL) while(1);          // halt, if failed
+
+    // clear some reset data
+    if(OSGetResetCode() == 0)
+    {
+        mDoRst.mResetData[0] = 0;
+        mDoRst.mResetData[1] = 0;
+        mDoRst.mResetData[1] = 0;   // why twice ? maybe typo..
+        mDoRst.mResetData[2] = 0;
+        mDoRst.mResetData[3] =-1;
+    }
+
+    // g_dComIfG_gameInfo is huge buffer, based on #define access
+    // each entry meaning some item, or stuff, not really sure
+    ct__13dComIfG_inf(g_dComIfG_gameInfo);
+
+    // switch between development modes
+    if(mDoMain.developmentMode < 0)         // currently its 0
+    {
+        DVDDiskID *id = DVDGetCurrentDiskID();
+
+        if(id->gameVersion > 0x90)          // always enabled
+        {
+            mDoMain.developmentMode = 1;
+        }
+        else if(id->gameVersion > 0x80)     // depends on console type
+        {
+            mDoMain.developmentMode = (OSGetConsoleType() >> 28) & 1;
+        }
+        else mDoMain.developmentMode = 0;   // always disabled
+    }
+
+    // startup main thread
+    OSCreateThread(
+        &mainThread,
+        main01,
+        NULL,
+        stackBase,
+        0x1f000,
+        OSGetThreadPriority(curThread),
+        0           // stay in thread's list (rejoinable)
+    );
+    OSResumeThread(&mainThread);
+    
+    // deactivate current thread
+    OSSetThreadPriority(curThread, 31); // lowest
+    OSSuspendThread(curThread);
+
+    // main thread starts to execute after next retrace
+}
+
+// Zelda has its own report routines
+// and seems its not using usual OSReport
+void OSReportInit()
+{
+    if(print_initialized) return;
+    else print_initialized = 1;
+}
+
+void version_check()
+{
+    if(
+        strcmp("05Sep2002", "05Sep2002") ||
+        strcmp(NULL, NULL)               )
+    {
+        // actually this will never happen
+        OSReport_Error("SDK" "and Something on Japaneese ?");
+        while(1);   // halt
+    }
+}
+
+// crazy constructors things, and not interesting 
+// whats "ComIfG" ? Common Info Game ?
+ct__13dComIfG_inf(r3)
+{
+    *r3+?? = 255;
+    ct_14dComIfG_play_cFv(r3+4768);
+}
+
+// ---------------------------------------------------------------------------
+
+void main01(void)
+{
+    mDoMch_Create();        // memory, heaps, tables etc
+    mDoGph_Create();        // graphics
+    mDoCPd_Create();        // controllers
+
+    RootHeapCheck[1]   = JKRHeap.sRootHeap;
+    SystemHeapCheck[1] = JKRHeap.sSystemHeap;
+    ZeldaHeapCheck[1]  = mDoExt_getZeldaHeap();
+    GameHeapCheck[1]   = mDoExt_getGameHeap();
+    ArchiveHeapCheck[1]= mDoExt_getArchiveHeap();
+    CommandHeapCheck[1]= mDoExt_getCommandHeap();
+
+    JFWSystem.systemConsole[22] = (mDoMain.developmentMode == 0) ? 0 : 3;
+    JFWSystem.systemConsole[16] = 32;
+    JFWSystem.systemConsole[17] = 42;
+
+    mDoDvdThd.create(LOAD_COPYDATE, NULL);
+
+    fapGm_Create();
+
+    mDisplayHeapSize = 0;
+
+    cDyl_InitAsync();
+
+    g_mDoAud_audioHeap = JKRSolidHeap.create( 0x166800, 
+                                              JKRHeap.sCurrentHeap, 
+                                              0);
+    
+    // game loop
+    while(1)
+    {
+        // increase frame counter
+        frame++;
+
+        if(fillcheck_check_frame)
+        {
+            if(frame % fillcheck_check_frame)
+            {
+                mDoMch_HeapCheckAll();
+            }
+        }
+
+        if(mDoDvdThd.SyncWidthSound)
+        {
+            mDoMemCd_Ctrl.update(g_mDoMemCd_control);
+        }
+
+        mDoCPd_Read();
+        mDoAud_Execute();
+        fapGm_Execute();
+        debug();
+    }
+}
+
+BOOL mDoMch_Create(void)
+{
+    if((OSGetConsoleType() & OS_CONSOLE_RETAIL3) || (mDoMain.developmentMode == 0))
+    {
+        OSReportDisable();
+    }
+
+    JKRHeap.sDefaultFillFlag = mDoMch.mDebugFill - 1;
+
+    if(JFWSystem.sInitCalled)
+    {
+        // guess it same as :
+        // JUTASSERTMSG("sInitCalled == 0");
+
+        JUTAssertion.showAssert(
+            JUTAssertion.getSDevice(),
+            "JFWSystem.h", 47,
+            "sInitCalled == 0"
+        );
+        OSPanic(
+            "JFWSystem.h", 47,
+            "sInitCalled == 0"
+        );
+    }
+
+    JFWSystem.CSetUpParam.maxStdHeaps = 1;
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    u32 arenaHi = OSGetArenaHi();
+    u32 arenaLo = OSGetArenaLo();
+
+    if(arenaHi > 0x81800000)
+    {
+        u32 upperArenaHi = arenaHi - 0x81800000;
+        if(upperArenaHi > arenaLo)
+        {
+            OSSetArenaHi(upperArenaHi);
+        }
+    }
+
+    u32 heapSize = OSGetArenaHi() - OSGetArenaLo() - 240;
+    if(OSGetConsoleSimulatedMemSize() > 48 MB)
+    {
+        heapSize -= 16 MB;
+    }
+
+    // mDoMain.memMargin = -1 on startup
+    if((mDoMain.memMargin + 65536) == 65535)
+    {
+        heapSize += mDoMain.memMargin;
+    }
+
+    if(JFWSystem.sInitCalled) JUTASSERTMSG("sInitCalled == 0");
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+    JFWSystem.CSetUpParam.sysHeapSize = heapSize - 12 MB - 3072;
+    if(JFWSystem.sInitCalled) JUTASSERTMSG("sInitCalled == 0");
+
+    JFWSystem.CSetUpParam.fifoBufSize = 640*1024;           // 640 kb
+    if(JFWSystem.sInitCalled) JUTASSERTMSG("sInitCalled == 0");
+
+    JFWSystem.CSetUpParam.aramAudioBufSize = 10*1024*1024;  // 10 mb
+    if(JFWSystem.sInitCalled) JUTASSERTMSG("sInitCalled == 0");
+
+    JFWSystem.CSetUpParam.aramGraphBufSize = 5944*1024      // 5.8 mb
+    GXRenderModeObj *rm = mDoMch.mRenderModeObj;
+    if(JFWSystem.sInitCalled) JUTASSERTMSG("sInitCalled == 0");
+
+    JFWSystem.CSetUpParam.renderMode = rm;
+    JFWSystem.init();
+
+    if(mDoMain.developmentMode == 0)
+    {
+        JUTAssertion.setVisible(FALSE);
+    }
+
+    JUTDbPrint.sDebugPrint[12] = 0;
+
+    JKRHeap.setErrorHandler(myMemoryErrorRoutine);
+    JKRHeap.setErrorFlag(JKRHeap.sRootHeap, TRUE);
+    JKRHeap.setErrorFlag(JFWSystem.systemHeap, TRUE);
+
+    mDoExt_createCommandHeap(4096, JKRHeap.sRootHeap);
+    mDoExt_createArchiveHeap(10565*1024, JKRHeap.sRootHeap);
+    mDoExt_createGameHeap(2938*1024, JKRHeap.sRootHeap);
+
+    u32 freeSize = JKRHeap.getFreeSize(JKRHeap.sSystemHeap) - 65536;
+    if(freeSize <= 0) JUTASSERTMSG("Halt");
+
+    JKRHeap.becomeCurrentHeap(
+        mDoExt_createZeldaHeap(freeSize, JKRHeap.sSystemHeap);
+    );
+
+    JKRAramStream.setTransBuffer(0, 8*1024, JKRHeap.sSystemHeap);
+    JKRAram.sSzpBufferSize          = 
+    JKRDvdAramRipper.sSzpBufferSize = 
+    JKRDvdRipper.sSzpBufferSize     = 8*1024;
+
+    JKRThreadSwitch.createManager(0);
+
+    void *ptr = __nw(104);      // probably "new" operator
+    if(ptr)
+    {
+        __ct__9JKRThreadFP(
+            ptr, 
+            OSGetCurrentThread(),
+            0
+        );
+    }
+
+    JFWSystem.systemConsole[22] = 3;
+    JFWSystem.systemConsole[16] = 16;
+    JFWSystem.systemConsole[17] = 42;
+
+    JUTException.appendMapFile("/maps/framework.map");
+    JUTException.setPreUserCallback(myExceptionCallback);
+    JUTException.setPostUserCallback(fault_callback_scroll);
+
+    // C math init
+    JMANewSinTable(12);
+    cM.init(mDoExt_getZeldaHeap());
+    cM_initRnd(100, 100, 100);
+
+    mDoDvdThd.create(OSGetThreadPriority(OSGetCurrentThread()) - 2);
+    mDoDvdErr_ThdInit();
+
+    mDoMemCd_Ctrl.ThdInit(g_mDoMemCd_control);
+
+    return TRUE;
+}
+
+BOOL mDoGph_Create(void)
+{
+    JKRSolidHeap *heap = mDoExt_createSolidHeapToCurrent(0, 0, 0);
+
+    mDoGph_gInf.create();
+    dDlist_list.init(&g_dComIfG_gameInfo[23836]);
+
+    mDoExt_restoreCurrentHeap(mDoExt_adjustSolidHeap(heap));
+
+    JFWAutoAbortGfx = mDoMain.developmentMode - 1 + 1; // ?
+
+    return TRUE;
+}

@@ -1,0 +1,83 @@
+// internal GX library data
+struct __GXData
+{
+    vNumNot             +0
+    bpSentNot           +2
+    vNum                +4
+    vLim                +6
+    cpEnable            +8
+    cpStatus            +12
+    cpClr               +16
+    vcdLo               +20
+    vcdHi               +24
+    vatA                +28
+    vatB                +60
+    vatC                +92
+    lpSize              +126
+    matIdxA             +128
+    matIdxB             +132
+    indexBase           +136
+    indexStride         +152
+    ambColor            +168
+    matColor            +176
+    suTs0               +184
+    suTs1               +216
+    suScis0             +248
+    suScis1             +252
+    tref                +256
+    iref                +288
+    bpMask              +292
+    IndTexScale0
+    IndTexScale1
+    tevc
+    teva
+    tevKsel
+    cmode0
+    cmode1
+    zmode
+    peCtrl
+    cpDispSrc
+    cpDispSize
+    cpDispStride
+    cpDisp
+    cpTexSrc
+    cpTexSize
+    cpTexStride
+    cpTex
+    cpTexZ
+    genMode
+    TexRegions
+    TexRegionsCI
+    nextTexRgn
+    nextTexRgnCI
+    TlutRegions
+    texRegionCallback
+    tlutRegionCallback
+    nrmType
+    hasNrms
+    hasBiNrms
+    projType
+    projMtx
+    vpLeft
+    vpTop
+    vpWd
+    vpHt
+    vpNearz
+    vpFarz
+    fgRange
+    fgSideX
+    tImage0
+    tMode0
+    texmapId
+    tcsManEnab
+    tevTcEnab
+    perf0
+    perf1
+    perfSel
+    inDispList
+    dlSaveContext
+    dirtyVAT
+    dirtyState
+} gxData;
+
+static __GXData gx;

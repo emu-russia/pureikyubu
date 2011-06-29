@@ -1,0 +1,495 @@
+    Dolwin CHANGE Log.
+
+    ---------------------------------------------------------------------------
+
+    [27 Dec 2004 org]
+
+    Fixed bug in EXI interrupt update. Memcards are working in Busta!!
+    (You need __CARDUnlock and __CARDMountCallback presense in MAP).
+
+    Implemented 'path' configuration dialog (to add/delete selector paths).
+
+    More STD math : sin, cos, modf, frexp, ldexp, floor, ceil. Untested!
+
+    File loading is a bit more informative in debugger.
+
+    THP Hack removed completely.
+
+    Linux bugs :
+        Bug in SRAM read. EXI_CR_TLEN(exi.regs[0].cr) was EXI_CR_TLEN(exi.regs[0].len)
+        SRAM reads need to be swapped. In function : "gcn_time_init".
+        To boot kernel (start_kernel -> time_init) RTC should be enabled.
+    Thanks to Masken for working Linux binary with MAP!
+
+    Statusbar fixed. Now its updated every second, instead every VIINT.
+
+    "press" command removed, since its reported as not workable.
+
+    Beta team reported that THP hack does nothing. Removed from settings, but
+    can be changed by regedit.
+
+    Highlevel PAD driver (PADRead call). Not perfect.
+
+    SaveMAP finished. I changed some Symbols.cpp API to support multiple sets
+    of symbols. This allow me to load MAP as new set of symbols and compare it
+    with current set, to check for new symbols. New "savemap" command.
+
+    HLE hit rate APIs, to watch for most recently called HLE routines.
+    New "top10" debug command :)
+
+    Vector/matrix library workaround (not finished). Current performance increase
+    ~0.3 MIPS.
+
+    Stdc.cpp added, including memcpy/memset ATM. memcpy optionally powered by MMX.
+
+    OS Context API finished. Tested on osdemos, BAM and Luigi. Working well.
+    Performance increase ~0.1 MIPS. Note! FP Unavail. exception is unhandled in
+    HLE OSContext driver! (All FPU state is saved all the time).
+
+    OSLoadContext return is patched as RFI (not usual BLR). See Symbols.cpp,
+    SYMSetHighlevel, line 97.
+
+    Added predefined HLE calls : HLE_IGNORE, HLE_RETURN0, HLE_RETURN1, HLE_TRAP.
+    HLE_IGNORE  - return immediately from call
+    HLE_RETURN0 - return 0 (NULL)
+    HLE_RETURN1 - return 1
+    HLE_TRAP    - trap call (break execution)
+
+    CPU timing settings now can be modified during run-time. Reacting of game
+    on such "operation" is unknown (not tested).
+
+    Games.ini API modified to support game-specific settings. CPU timing can
+    be specified by unique value for every game.
+
+    Added some patch commands, and Patch menu controls are finished.
+
+    Added support for debugger scripts (new "script" command). Scripts are
+    working like patch files (executed after every game frame).
+
+    debugger's BLR command improved (now you can type BLR with value, to
+    simulate "return VALUE;". single BLR was reacted like usual "return" in C).
+
+    NOP command improved. Now if you mistyped NOP somewhere, you can De-NOP it,
+    by "denop" command.
+
+    Fixed debug console "fullscreen" mode ("full" command). Garbage removed.
+
+    "press" command added to simulate controller's button pressing. Not sure,
+    but this may can help to restore "lost input" :/
+
+    Few changes and additions to MAP system, by request from beta-testers :)
+    New "name"-command. Added "emu" flag to recognize emulator symbols, which
+    are used in compiler dumps (like reg names). Such symbols are invisible for
+    "syms"-command output and map saves.
+
+    Some hacks on real-time clock (RTC). TBR->Realtime convertion still sux.
+
+    Quick locked cache implementation. Star Soldier work. OS lockedcache demos
+    doesnt.
+
+    MSR_FP was 0x4000, should be 0x2000. Dolphin OS 'FP Unavailable' handler
+    now implemented (FP regs are saved after thread switch). Dont see any 
+    compatibility issues :(
+
+    Known bugs : input lost when using RTC emulation :( Game's GX is continue
+    to draw, but PAD became unaccessible. Reason unknown (probably wrong OSTime
+    is checked somewhere).
+
+    Summary: Massive debug improvements. Total performance increase ~0.5 MIPS.
+    Real Gekko performance is about 1000 MIPS :) Current is 5-6 MIPS in emu :)
+
+    Linux hung on start_kernel -> calibrate_delay.
+
+    Memory cards are working. Great christmas gift!
+
+    ---------------------------------------------------------------------------
+
+    [21 Nov 2004 org]
+
+    Memcards from last 0.09 update. Not tested.
+
+    Paired-single scaled load/store are implemented. Not tested yet.
+
+    Found bug in decrementer assertion (example code) :
+        lwz     r0, 12 (sp)
+        addi    sp, sp, 8       <- when DECREMENTER_EXCEPTION is here,
+        mtlr    r0              <- r0 fucked
+        blr
+    Decrementer exception check now only after branch instructions.
+
+    Dolphin Video plugin is ported as Dolwin GX plugin. Zelda intro running..
+    And I havent did anything else, just ported plugin o_O
+
+    CPU Compare implemented. This allowing to compare CPU registers on two
+    running emulator instancies. From source code :
+        // Processing :
+        //      Step 1: Run 1st Dolwin.
+        //      Step 2: Load file in debugger, and start compare as server
+        //      Step 3: Run 2nd Dolwin.
+        //      Step 4: Switch core to recompiler, close debugger,
+        //              and boot same file as 1st. Start compare as client.
+        //      Step 5: After 2nd file boot, CPU compare will start to sync both Dolwins
+        //      Step 6: Press F11 in 1st Dolwin debugger to execute opcode
+        //      Step 7: 2nd Dolwin will execute too
+        //      Step 8: Goto step 6.
+    (Run Once must be enabled, to allow multiple Dolwin instancies).
+
+    Fixed bug in DOL loader. BSS shouldnt be cleared !
+
+    Fixed bug in AI registers, when writing something, like 0xFFFF80nn in 
+    16-bit register. Sometimes I think Costis is specially doing such bugs,
+    to crash Dolwin >:[ Also cubedemo is crashing after first run, because of
+    small TBR value and unexpected VI interrupt. You need to wait RSOD and
+    reset emulator again.
+
+    HW update is disabled, when apploader is booting.
+
+    'HLE Only' mode is added. This will be used, when we'll make *full* HLE
+    of Dolphin OS library calls. HWUpdate is always disabled, when HLE only.
+
+    Your MAP Maker added again. Works great.
+
+    OSTimeFormat() fixed. Now I let Win32 work for me :) I made GC Time
+    conversion as : GC Time -> FILETIME -> Real time. Not work with Dolphin
+    Video :(
+
+    WIP on profiler.
+
+    Null AX Plugin. Simple DirectSound AX Plugin. I dont like my sound.
+
+    Fixed bug in GCMCMPR tool for long file names with spaces (quotes).
+
+    VI frame buffer update is disabled with first GX access.
+
+    Small fix for GAMES.ini. comments was ended by '\n' (Unix style), and now
+    it is ended by '\0xd\n' (DOS).
+
+    Tested DVDOpenFile(). I found small bug: root was not identified, when
+    root dir is "\". Added debugger's 'dvdopen' command, to quickly get
+    DVD file position.
+
+    Hardware Bailout default value ("CPU_TIME" uvar) was changed from 1000,
+    to 0 (check hardware after every instruction). Too big value is crashing
+    emulation. TODO : Find optimal value! Dolphin guys are using 30, btw.
+    
+    Here I write all timing-related variables :
+        · CPU Delay. How often TBR and DEC are updated. Number of opcodes.
+        · Hardware Update Bailout. Hardware is updated, when this counter
+          become zero (HWUpdate will be called). Then set counter to initial
+          value.
+        · Counter Factor. The value to change TBR and DEC: TBR += CF, DEC -= CF.
+        · Read-Clear Interrupts. Clear INTSR register, after reading. (Obsolete?)
+        · Real-Time Clock. DEC and TBR are updated by real-life time counter.
+          Note, that all hardware update will be real-time also.
+        · Branch Checking Only. DEC/TBR and Hardware Bailout are updated only
+          after branch instructions (or at the beginning of the group in 
+          recompiler).
+    This will be implemented as user-accessible vars. After all, Dolwin can
+    work in three modes : Low-Level Precede, Low-Level Real-Time and High-Level.
+    Whole hardware stuff will be obsolete in High-Level mode.
+
+    BUST-A-MOVE is running slow and badly. Many GX applications are crashing on
+    strange Fifo errors :(
+
+    Dolphin Video plugin allowing to boot many games. See beta-testers reports.
+
+    ---------------------------------------------------------------------------
+
+    [28 Oct 2004 org]
+
+    Final plugins specifications 1.0, for GX, AX, PAD and DVD. BBA plugin is 
+    removed, NET wanted :)
+
+    Changes on font system :
+        · fonts are repositioned to Data directory
+        · they have .SZP extension (as Nintendo)
+        · ANSI font can be detected by file size (its ANSI if <= than 0x3000)
+        · no custom Dolwin font format. both ANSI and SJIS fonts are present
+          together in any console (no matter PAL or NTSC).
+        · SZP (formerly Yay0) encoder/decoder removed.
+        · UserFonts module is used only to set paths for ANSI and SJIS fonts.
+        · fonts are loading during EIOpen() into exi.ansiFont and exi.sjisFont.
+        · Japan translation table for selector is placed into UserSelector.
+
+    ZLIB is distributed with Dolwin source code. Now GCMCMPR and DVD can be
+    compiled even with missing library paths. If you want to use other ZLIB
+    directory, change :
+        #include "../zlib/zlib.h"
+        #pragma comment(lib, "../zlib/zlibstat.lib")
+    to :
+        #include <zlib.h>
+    (and add new "Include" and "Library" paths in VisualC options).
+
+    Typo in VI : VI_INT_ENB (VI interrupt enable) mask was 0x20000000, must be
+    0x10000000.
+
+    Another bug in VI : "The interrupt is cleared by writing a *zero* to the
+    status flag". (typically HW is writing "1" to clear interrupt, so I missed
+    that VI specific).
+
+    Ultimate PI (processor interface) API :
+        PICheckInterrupts();
+        PIAssertInt(u32 mask);
+        PIClearInt(u32 mask);
+    INTSR &= ~mask, on write.
+    F|RES: i think the hw devices reset the interrupt in the PI to 0 
+    if the interrupt cause is eliminated. that isnt done by software (afaik)
+
+    AIS and AID are integrated in AI.cpp. DSP is moved to HighLevel section.
+
+    Fixed bug on DVD stop motor command. I forgot to clear TSTART bit and
+    assert DIINT. 16-bit regs added. Streaming commands are added. DVD is
+    fully implemented (no visible bugs).
+
+    DVD is using instant reads now. I have doubts about read delay.. We'll see.
+
+    Interrupts are fixed (MSR_EE clear was before CPUException call).
+
+    SI register unions removed. Bad idea.
+
+    Apploader simulation implemented (tested in Zelda and AC). ReadFST is fixed.
+    Zelda boot time is changed from 0.65 to 0.45 seconds, 30% faster, huhu :)
+
+    RAM allocation through VirtualAlloc is changed to usual malloc. VirtualAlloc
+    is buggy ! Dont know why, but it is, after many emu resets :(
+
+    In some OS demos, I found better way to show "branch history" aka "callstack".
+    This method is called "LR Back Chain". Compilator is using some space in
+    stack, to save caller LR value, which we can obtain and get caller branch.
+    See debugger's "lr" command.
+
+    More icons added to user.
+
+    Running back again (and new) : FreeLoader, ActionReplay, Balls (now3d), CZN,
+    browseDVD (Sappharad), Galaxy Assaliant, my GameBoy emu, GChip8, maze (dovoto),
+    PAD test (DesktopMan), Particles (DesktopMan), PONG :), ShipWithFont, 
+    Snowlords, Terra, xRick, Yeti.
+
+    Not well : ctr-snd (no sound), demoone / fontdemo (flickering), FreeBird
+    (tearing, look at wings), Sprite by DesktopMan ("sprite" not visible),
+    Tetris (no sound). Flickering mostly caused by wrong CPU timer, when 
+    TBR is increased without some delay (I use 12). With "exact" CPU timers,
+    all flickering is gone.
+
+    Fireee and Pong! are not working, because they are badly compiled.
+
+    Newest homedev: Dotrikun, CUBEDOOM and GC-Linux are still not working nice.
+    Costis cubedemo is working, but crashes are often.
+
+    This update is not 100% rewritten. But anyway, you probably need it, to
+    see how work is going on.
+
+    ---------------------------------------------------------------------------
+
+    [16 Oct 2004 org]
+
+    After some doubts, I made decision to change GCMCMPR compression method
+    from Huffman+RLE to ZLIB. And now compression ratio is even better =)
+    GCMCMPR and DVD Plugin are revised. Universe mind (god) bless ZLIB ! 
+
+    Free Loader / Action Replay are working again (although emulation is hacky
+    - mean no SYSCALL and BLR patch on __OSInitAudioSystem function).
+
+    Improved Debugger. Added issues :
+        · possiblity to run in fast mode (with recompiler)
+        · show compiled X86 code (F3->Ctrl+Enter)
+        · support memory symbolic information (also see *-command)
+        · more commands
+        · memory breakpoints
+        · fixed Win98 console input lag (problem was in UpdateMainWindow)
+        · can be opened/closed any time (see below about DOLDEBUG)
+
+    New patch files format (already tested). Can be used to skip HW read/writes
+    or to NOP infinite loop branch opcodes. Cheat application is possible, but
+    not allowed >:)
+
+    MAP loader. Supported MAP formats : RAW, GCC, CodeWarrior.
+
+    "DOLDEBUG" now controlled from GUI. It is replaced by "emu.doldebug"
+    variable. This allow to open/close debugger any time.
+
+    New "Debug" sub-menu.
+
+    Fixed bug in VI registers (unswapped data, damn Intel with their little-
+    endian format).
+
+    File entry number (#) is shown, when user selecting it. Can be used as
+    parameter for debugger's 'boot {#}' command.
+
+    Wrote some documents, regarding emulator. Made some .bat files for project.
+    Dolwin.dsm removed from project (who need build number?).
+
+    Good old PAD plugin integrated with Dolwin project. Plugin dialogs are
+    moved from 0.09 with few changes.
+
+    PAD Plugin : F1-F24 keys are invalid (cannot be used, reserved by GUI).
+    Same as CTRL, ALT and SHIFT keys.
+
+    New symbolic information module (infinite number of symbols, fast searching).
+
+    mojo added.
+
+    ---------------------------------------------------------------------------
+
+    [30 Sep 2004 org]
+
+    Completely restructured Debugger, Memory, Interpreter and Recompiler! 
+    All changes are nicely transparent from User/Hardware side :)
+
+    I removed branch callbacks and R_IC (instruction counter). Now CPU is
+    checking execptions/interrupts after every opcode. And hardware is using
+    TBU/TBL registers, instead of R_IC, for timer checking. I added nice "union"
+    for TBU and TBL, now compiler may use x86 flags when increasing TBL :)
+
+    Hardware update is placed in Hardware.cpp - HWUpdate(), since BCBs
+    are gone. Its called after every opcode, but theoretically can be called 
+    in branch opcodes (to save some time on timers checking). HWUpdate is in
+    charge of hardware mutual tasks (transfers, counters, streaming etc etc).
+
+    I removed your toolbar and EMUBreak/EMUContinue. Its lame stuff :)
+    User can pause game, by hitting "START" button, and Play/Pause/Stop
+    controls are stupid. Looks like we also forgot to add "Volume" track :)
+
+    Hardware register mappings are changed from 0xCCnnnnnn to 0x0Cnnnnnn,
+    as in real (physical addressing).
+
+    DOLWIN_VER extended to APPNAME, APPDESC, APPVER and APPBUILD. Last one
+    is under control of build macro (see Dolwin.dsm).
+
+    Disk swap-wizard simplified to DVD->Open/Close Cover & Insert Disk menus.
+
+    Fail-safe emu output stuff (DolwinReport, DolwinError, DolwinQuestion and
+    ASSERT macro) are moved from UserWindow to UserMain.
+
+    Current working directory is restored every time, after file closed.
+
+    Fixed minor bugs in selector (transparency bug, wrong menu controls).
+
+    Loader cleaned-up. *.bin files now can be loaded from File->Open menu. 
+    Loading offset is getting from BINORG user variable. New patch file format.
+
+    X86 disassembler added (without MMX/SSE*/3DNow! extensions).
+
+    Fixed major bug in branches : PC is saved in LR, even if (ctr_ok & cond_ok)
+    condition was false!
+
+    VI rewritten. Now it has precede frame timing, and homedev demos will not
+    flicker, or hung in "wait retrace" anymore.
+
+    Only PONG is running well in this update :) But without joypads though :)
+
+    ---------------------------------------------------------------------------
+
+    [24 Sep 2004 org]
+
+    ATTENTION : This is *NOT* 0.09 update! Its already 0.10.
+
+    Whole Emulator, Hardware and HighLevel is removed temporary (There are
+    still few code there, but dont look at it, it is not important, and 
+    used just to support user stuff).
+
+    Finally, all user variables are placed in list. See UserConfig.h
+
+    New UserWindow. Now all important main window handlers are shared in "wnd".
+
+    New user selector : I rewrote whole UserSelector code, fixed some old bugs,
+    completed "Sort By" feature, added file filter dialog and item popup menu.
+    GCM compression feature is integrated with emulator (by DolwinExecute()),
+    and selector is able to add GMP files into list. Also I _removed_ whole 
+    "Browser" code. Please, dont kick me for that, sorry but I never like it :)
+    Now selector is almost looking good.
+
+    New file utilities module : UserFile (handy).
+
+    UserDatabase has gone. Now we have nice looking code, which is using
+    GAMES.ini information, for known games/execs. See UserConfig for details.
+    (Emu is still able to use "Defaults" from DVD banner).
+
+    This is just point update, to keep source alive (I'm still having some
+    problems with PC and HDDs). So in general, you may just peek in it, and
+    look how is work going on :)
+
+    ---------------------------------------------------------------------------
+
+    [19 Aug 2004 org]
+
+    Savestates are temporary disabled (they are dummy), since Im planning to
+    rewrite some hardware, it will be too compilicated to rewrite savestates
+    also in future - I'll better redo them completely.
+
+    PI intsr bug is fixed. I modified all hardware modules, and removed your
+    hack on EXI.
+
+    Internal plugins are removed (it wasnt good idea).
+
+    DVD data reading now is not instantly. I added hardware delay, when reading
+    more than 100 kb (will be optionally), since real DVD speed is 2-3 MB/sec.
+
+    New plugin specifications, including DVD.
+
+    DVD plugin with compression support added. Also I wrote GCMCMPR tool, and
+    now its a part of Dolwin source code. Thus I finally cleaned or GCM 
+    handling code (no more GCM.cpp, GCMFileSystem.cpp - all is gone and fit 
+    nicely in DVD plugin). See details of plugin in plugspecs (PlugSpec.h)
+    * untested * (tested only on BAM).
+
+    EMUBreak and EMUContinue added, for toolbar pause control. "running" is
+    changed to "emu_running" and "emu_paused" added.
+
+    I changed some files, to add GMP support (UserLoader and UserSelector).
+    See UserSelector's FillGCMInfo().
+
+    Some changes in high-level section (Bootrom.cpp and Banner.cpp).
+
+    Ok, so what I havent included from your last update :
+
+        - I dont touched MC and EXI, since you probably can now use it without 
+          hacks, after fixing PI bug. If not, tell me - I'll include it.
+        - Thread priority controls are dummy. Please, dont use Windows GUI
+          code in Emulator section, in future. Try to find better way.
+        - User mapper code (and GCC MAP loader). Sure it will be integrated 
+          later with new HLE core (note : Apploader is not good place to call 
+          map-maker. Better initiate it in UserLoader/AutoloadMap).
+
+    ---------------------------------------------------------------------------
+
+    [5 Jul 2004 org]
+
+    Window now has sizing border. OGL resizing is not implemented yet.
+
+    Status bar now showing "OS time", instead CLK (instruction) counter.
+    OS time is just formatted TBU/TBL date and time string. This thing
+    can be used to detect timing bugs.
+
+    Added some MMU working code in memory engine. Now only BAT logic is 
+    supported. MMU can be enabled/disabled by "MMU" user variable (it is
+    enabled by default!). GC-Linux is still not working :(
+
+    Internal GX is slighty improved (its grown up). Still not useful for
+    gfx output.
+
+    Added support for PAD RDST interrupt, by request from beta-testing team
+    (some games are using it). SI hardware seems to be fully completed now,
+    but Im not sure about PAD poll timing..
+
+    Dolwin now can load files from command line - you may associate it with
+    DOL, ELF and GCMs. This was added by request from author of EmuLoader :)
+
+    Added small fix for userselector. See ResizeFileBrowserControl().
+
+    Some small additions related to MMU and resizing feature.
+
+    Fixed bug in Zelda MAP loading. It was stupid string overflow in
+    HLERegisterProc(). Now its okay (MAP must be fixed though. I used
+    GZLE.\maps\framework.map. I removed all stuff below ".data" and added
+    "Link map of Zelda" string at the beginning of the file. Then rename it 
+    to GZLEC8.map and place in $Dolwin$\Data dir). After I skipped 
+    "DsetupTable__FUlUlUlUlUl" and "DsetDolbyDelay__FUlUs" in debugger, 
+    I got Nintendo logo :)
+
+    Fixed naming of R2 and R13 registers. They was SDA1 and SDA2 respectively,
+    but must be vise versa. Take care about your previous reversing listings!
+
+    Fucking buggy callstack was removed.
+
+    ---------------------------------------------------------------------------

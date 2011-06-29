@@ -1,0 +1,230 @@
+// Dolphin OS context RE by org
+// OSContext.c
+
+// OSLoMem.h
+OSContext *__OSPhysicalContext AT_ADDRESS(OS_BASE_CACHED | 0x00C0);
+OSContext *__OSCurrentContext  AT_ADDRESS(OS_BASE_CACHED | 0x00D4);
+
+[800000D8] - default thread (OSThread *)
+
+void __OSLoadFPUContext(???, OSContext *context)
+{
+    if(context->state & OS_CONTEXT_STATE_FPSAVED)
+    {
+        FPSCR = context.fpscr;
+
+        if(HID2[PSE])
+        {
+            PS[0] = context->psf[0];
+            .
+            .
+            .
+            PS[31] = context->psf[31];
+        }
+        else
+        {
+            FPR[0] = context->fpr[0];
+            .
+            .
+            .
+            FPR[31] = context->fpr[31];
+        }
+    }
+}
+
+void __OSSaveFPUContext(???, ???, OSContext *context)
+{
+    context->state |= OS_CONTEXT_STATE_FPSAVED;
+
+    // save FPRs
+    context->fpr[0] = FPR[0];
+    .
+    .
+    .
+    context->fpr[31] = FPR[31];
+
+    // save FP state/control
+    context.fpscr = FPSCR;
+
+    // save paireds
+    if(HID2[PSE])
+    {
+        context->fpr[0] = FPR[0];
+        .
+        .
+        .
+        context->fpr[31] = FPR[31];
+    }
+}
+
+void OSLoadFPUContext(OSContext *context)
+{
+    __OSLoadFPUContext(???, context);
+}
+
+void OSSaveFPUContext(OSContext *context)
+{
+    __OSSaveFPUContext(???, ???, context);
+}
+
+void OSSetCurrentContext(OSContext *context)
+{
+    __OSCurrentContext = context;
+    __OSPhysicalContext= OSCachedToPhysical(context);
+
+    if(context == __OSDefaultThread->context)
+    {
+        context.srr1 |= MSR_FP;     // floating-point available
+        MSR[RI] = 1;                // recoverable interrupt
+    }
+    else
+    {   
+        context.srr1 &= ~MSR_FP;
+        MSR[FP] = 0;
+        MSR[RI] = 1;
+        __asm   isync
+    }
+}
+
+OSContext *OSGetCurrentContext()
+{
+    return __OSCurrentContext;
+}
+
+u32 OSSaveContext(OSContext *context)
+{
+    // save GPRs
+    context.gpr[13...31] = GPR[13...31];
+
+    // save quantization regs (GQR0 is always zero)
+    context.gqr[1...7] = GQR[1...7];
+
+    // others
+    context.cr   = CR;
+    context.srr0 = context.lr = LR;
+    context.srr1 = MSR;
+    context.ctr  = CTR;
+    context.xer  = XER;
+
+    // compiler pointers
+    context.gpr[1]  = SP;
+    context.gpr[2]  = SDA1;
+
+    context.gpr[12] = 1;
+    return 0;
+}
+
+void OSLoadContext(OSContext *context)
+{
+    if(
+        context.srr0 >= __RAS_OSDisableInterrupts_begin &&
+        context.srr0 <= __RAS_OSDisableInterrupts_end      )
+    {
+        context.srr0 = __RAS_OSDisableInterrupts_begin;
+    }
+
+    // restore GPRs
+    GPR[0...2] = context.gpr[0...2];
+
+    if(context.state & OS_CONTEXT_STATE_EXC)
+    {
+        context.state &= ~OS_CONTEXT_STATE_EXC;
+        GPR[5...31] = context.gpr[5...31];
+    }
+    else GPR[13...31] = context.gpr[13...31];
+
+    // restore GQRs (GQR0 is always 0)
+    GQR[1...7] = context.gqr[1...7];
+
+    // others
+    CR  = context.cr;
+    LR  = context.lr;
+    CTR = context.ctr;
+    XER = context.xer;
+
+    MSR[IE] = MSR[RI] = 0;
+    SRR0 = context.srr0;
+    SRR1 = context.srr1;
+
+    GPR[4] = context.gpr[4];
+    GPR[3] = context.gpr[3];
+
+    // return from interrupt (update PC and MSR)
+    __asm   rfi
+}
+
+u32 OSGetStackPointer()
+{
+    return GPR[1];  // SP
+}
+
+u32 OSSwitchStack(u32 newsp)
+{
+    u32 oldsp = GPR[1];
+    GPR[1] = newsp;
+    return oldsp;
+}
+
+int OSSwitchFiber(u32 pc, u32 newsp)
+{
+    u32 oldsp = GPR[1];
+    int rval;
+    GPR[1] = newsp;
+    rval = (void *)pc();
+    GPR[1] = oldsp;
+    return rval;
+}
+
+void OSClearContext(OSContext *context)
+{
+    context.mode  =
+    context.state = 0;
+
+    if(context == __OSDefaultThread->context)
+    {
+        __OSDefaultThread = NULL;
+    }
+}
+
+void OSInitContext(OSContext *context, u32 pc, u32 sp)
+{
+    context.srr0 = pc;
+    context.gpr[1] = sp;
+    context.srr1 = 0x9032;
+
+    context.cr  =
+    context.xer = 0;
+
+    context.gpr[2] = GPR[2];
+    context.gpr[3...31] = 0;
+    context.gpr[13] = GPR[13];
+
+    context.gqr[0...7] = 0;
+
+    OSClearContext(context);
+}
+
+void OSDumpContext(OSContext *context)
+{
+    ...
+}
+
+void OSSwitchFPUContext(__OSException exception, OSContext *context)
+{
+    ...
+}
+
+void __OSContextInit()
+{
+    __OSSetExceptionHandler(
+        __OS_EXCEPTION_FLOATING_POINT,
+        OSSwitchFPUContext
+    );
+
+    DBPrintf("FPU-unavailable handler installed\n");
+}
+
+void OSFillFPUContext(OSContext *context)
+{
+    ...
+}

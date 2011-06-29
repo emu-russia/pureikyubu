@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+	<META NAME="description" CONTENT="Since its appearance on the 3d gaming scene.  S3TC (S3 Texture Compression)  has created quite a stir.  Click here to find out the truth about S3's amazing new technology.">
+	<META NAME="keywords" CONTENT="truth,s3tc,savage,3d,texture,compression,agp,quake,arena,microsoft,directx,screen,shots,flaws,nvidia,comdex,compress,algorithm,color,table,memory,frame,buffer,local,system,voodoo,2,performance,bandwidth,unreal,quality,encoding,decoding,s3,implementation,a">
+	<META NAME="author" CONTENT="Jeffrey Tseng">
+	<META NAME="site" CONTENT="HardwareCentral">
+	<META NAME="date" CONTENT="1999-05-29">
+	<META NAME="section" CONTENT="reports">
+	<META NAME="channel" CONTENT="Internet Technology">
+	<TITLE>HardwareCentral - Reports - The Truth About S3TC - Implementation, Support, and The Future of S3TC</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#009900" VLINK="#009900" ALINK="#006600">
+
+<font size=2 face=Verdana>
+ 
+
+			<FONT COLOR="#666666" SIZE=5><B>The Truth About S3TC</B></FONT><BR>
+			<FONT COLOR="#000000" SIZE=3><B>Implementation, Support, and The Future of S3TC</B></FONT><BR><IMG HEIGHT=7 WIDTH="324" SRC="/graphics/fill/clear.gif"><BR>
+			<FONT SIZE=1 FACE="Verdana, Arial, Helvetica"><a href="mailto:jtseng@hardwarecentral.com">Jeffrey Tseng</a></FONT><BR>
+			<P>
+			<!--**** begin content ****-->
+				<B>Implementation</B><br> There are two possible implementations of S3TC.  Textures can either be compressed using S3TC at author-time or at run-time.  Generally speaking, 3d applications will ship with the textures already compressed using S3TC.  This way the game developer has control over the quality vs. size of the graphics.  However, the developers must create 2 sets of textures, one using S3TC and one without in order to maintain compatibility with 3d accelerators utilizing S3TC and not utilizing S3TC.  Having to do sets of graphics poses the problem of additional work for the game developer.  The other method of implementation is compression during run-time.  Using the DirectX 6.0 API, textures can be compressed while they are being loaded either into the frame buffer or system memory.<br> <br><B>S3TC Support</B><br> At the current time, there is limited support for S3TC in games.  However, this is going to change.  With the incorporation of S3TC into Microsoft DirectX 6.0, it is almost inevitable that many 3d game developers will be using it in their upcoming titles.  As well S3TC is suppose to be very simple to implement in both DirectX and OpenGL.  Epic has already written a patch that allows for the use of S3TC in Unreal  (as seen in the Unreal demo levels that S3 has been showing off).  However, the biggest impact on gaining industry support will probably be Quake Arena's support for S3TC.  Id has always been a key player in 3d gaming and their support is certain to pave to way for many other game developers.<br> <br><B>The Future of S3TC</B><br> Overall, S3TC is a great technology that will most likely change the 3d gaming industry.  Are other 3d chip developers going to be support S3TC in hardware?  From what has been announced, it doesn’t look like it.  3DFX just recently announced Voodoo 3 and it doesn’t seem to be supporting any type of texture compression.  However, there is a slight possibility that the NV10 may suport S3TC or another form of texture compression as NVidia is usually ahead of the competition.  However, the future of S3TC is contingent on the support which is receives from game developers.  No matter how good a technology is, it's as good as dead if people don't use it.								<P><FONT FACE="Tahoma, Arial, Helvetica" SIZE=2 COLOR="#666666"><B>&#171;</B></FONT>&nbsp;<FONT FACE="Verdana, Arial, Helvetica" SIZE=1><B>Back: </B><A HREF="index.html" CLASS="nav">Introduction</A></FONT>
+            <P>
+
+            <!--**** begin skip ahead ****-->
+            <table border=0 cellspacing=0 cellpadding=0><tr><td align="left" nowrap><FONT FACE="Verdana, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>Skip Ahead</B></FONT><BR><IMG HEIGHT=5 WIDTH=1 SRC="/graphics/fill/clear.gif"><BR>1 <A HREF="index.html">Introduction</A><BR>2 <A HREF="2.html">Higher Resolution Textures</A><BR>3 <A HREF="3.html">More Benefits</A><BR>4 <A HREF="4.html">S3 Texture Compression Algorithm</A><BR>5 <A HREF="5.html">Image Quality</A><BR>6 Implementation, Support, and The Future of S3TC<BR></font></td></tr></table>
+
+
+</FONT>
+</BODY>
+</HTML>

@@ -1,0 +1,139 @@
+
+Dolphin OS timing initialization
+--------------------------------
+
+
+BOOTROM:
+=-=-=-=-
+
+Bootrom will call __SyncTime() in its main() before gfx menu.
+
+
+typedef s64     OSTime;
+typedef s32     OSTick;
+
+OS timer clock period is 1/12 of Gekko CPU core clock :
+486 mhz / 12 = 40.5 mhz
+
+
+// update time-base registers by RTC (real-time clock) value
+// RTC is number of seconds, since 01 January 00:00:00 2000 (current epoch)
+void __SyncTime()
+{
+    OSTick  rtcValue;
+    OSSram* sram = __OSLockSram();
+
+    if( __OSGetRTC(&rtcValue) == TRUE )
+    {
+        // counterBias can be negative value
+        rtcValue += (OSTick)sram->counterBias;
+        __OSSetTime( (OSTime)rtcValue * OS_TIMER_CLOCK );
+    }
+
+    __OSUnlockSram(0);
+}
+
+// here is SRAM structure
+typedef struct
+{
+    u16     checkSum;           // SRAM byte checksum (discovered by Costis)
+    u16     checkSumInv;        // inverted checksum (see YAGCD)
+    u32     ead0;
+    u32     ead1;
+    s32     counterBias;        // now we already know meaning of this one too :)
+    s8      displayOffsetH;     // used by VI library
+    u8      ntd;
+    u8      language;
+    u8      flags;
+    u8      dummy[44];
+} SRAM;
+
+
+OS:
+=-=
+
+__OSSetTime is used only in bootrom, to set time-base registers according
+to battery-backed RTC value.
+
+
+// OS low-memory variable
+OSTime __OSSystemTime AT_ADDRESS(OS_BASE_CACHED | 0x30D8);
+
+void __OSSetTime(OSTime newValue)
+{
+    BOOL enabled = OSDisableInterrupts();
+
+    // system time keep its value during soft resets (?)
+    __OSSystemTime += newValue - OSGetTime();   // I'm unsure of that
+                                                // 64 bit math is hard to disasm
+
+    __SetTime(newValue);
+
+    EXIProbeReset();
+    OSRestoreInterrupts(enabled);
+}
+
+// use undocumented SPR registers, to set time-base
+// SPR[284] = TBL, to write
+// SPR[285] = TBU, to write
+void __fastcall __SetTime(OSTime time)
+{
+    __asm   li      r5, 0
+    __asm   mtspr   284, r5     // clear TBL value (to avoid TBU++)
+    __asm   mtspr   285, r3     // set TBU
+    __asm   mtspr   284, r4     // set TBL
+    __asm   blr
+}
+
+
+Emulation issues : Games dont like real TBR value. At least they work better,
+when TBR is set to 0 before game start. Unemulated TBR is only affect on memcard
+save date, AFAIK.
+
+To convert TBR value to real-time I use Windows file time utility :
+
+// covert GC time to human-usable time string;
+// example output : "30 Jun 2004 3:06:14:127"
+char * OSTimeFormat(u64 tbr)
+{
+    // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
+    // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
+    // To convert GCTIME -> FILETIME :
+    //      1: adjust GCTIME by number of 1/10000000 intervals
+    //         between Jan 1 1601 and Jan 1 2000.
+    //      2: assume X - 1/10000000 sec, Y - 1/40500000 sec,
+    //         FILETIME = (GCTIME * Y) / X
+
+    // coversion GCTIME -> FILETIME
+    #define MAGIK 0x0713AD7857941000
+    f64 x = 1.0 / 10000000.0, y = 1.0 / 40500000.0;
+    tbr += MAGIK;
+    u64 ft = (u64)( ((f64)(s64)tbr * y) / x );
+    FILETIME fileTime; SYSTEMTIME sysTime;
+    fileTime.dwHighDateTime = (u32)(ft >> 32);
+    fileTime.dwLowDateTime  = (u32)(ft & 0x00000000ffffffff);
+    FileTimeToSystemTime(&fileTime, &sysTime);
+
+    // format string
+    static char *mnstr[12] =
+        { "Jan", "Feb", "Mar", "Apr",
+          "May", "Jun", "Jul", "Aug",
+          "Sep", "Oct", "Nov", "Dec"
+        };
+    static char gcTime[256];
+    sprintf( gcTime, "%i %s %i %02i:%02i:%02i:%03i",
+             sysTime.wDay, mnstr[sysTime.wMonth - 1], sysTime.wYear,
+             sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds );
+    return gcTime;
+}
+
+Although this conversion is not perfect :O) Play with MAGIK value to find
+suitable bias adjustment.
+
+Tell me please, if you find better way to format GC time.
+
+
+
+
+Document by org <kvzorganic@mail.ru>
+RTC: 11 Dec 2004 :)

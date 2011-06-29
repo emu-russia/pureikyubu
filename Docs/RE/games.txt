@@ -1,0 +1,27 @@
+
+    Games, which are supporting hardware (DVD) streaming :
+    --------------------------------------------------------------------------
+
+    Games on multiple DVDs (DI COVER interrupt required) :
+    --------------------------------------------------------------------------
+
+        Resident Evil 0
+        Resident Evil 1
+        Tales Of Symphonia
+        Baten Kaitos
+        Metal Gear Solid: Twin Snakes
+
+    GX Usage :
+    --------------------------------------------------------------------------
+
+    GX Fifo Usage :
+    --------------------------------------------------------------------------
+
+    Audio Library and DSP :
+    --------------------------------------------------------------------------
+
+    CPU Usage :
+    --------------------------------------------------------------------------
+
+        Star Soldier :
+            locked cache

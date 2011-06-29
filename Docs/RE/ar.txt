@@ -1,0 +1,479 @@
+// ARAM library reversing by org <kvzorganic@mail.ru>
+
+// ----------------------------------------------------------------------------
+
+//
+// internal variables
+//
+
+static  ARCallback  __AR_Callback;              // interrupt handler callback
+static  u32         __AR_Size;
+static  u32         __AR_InternalSize;          // standard ARAM size in bytes
+static  u32         __AR_ExpansionSize;         // expansion ARAM size in bytes
+
+static  BOOL        __AR_init_flag;             // are we initialized ?
+
+// some variables for ARAlloc / ARFree
+static  u32         __AR_StackPointer;
+static  u32         __AR_FreeBlocks;
+static  u32 *       __AR_BlockLength;
+
+//
+// known ARAM controller registers
+//
+
+#define AR_SIZE             (*(volatile u16 *)(0xCC005012))
+#define AR_MODE             (*(volatile u16 *)(0xCC005016))
+#define AR_REFRESH          (*(volatile u16 *)(0xCC00501A))
+#define AR_DMA_MMADDR_H     (*(volatile u16 *)(0xCC005020))
+#define AR_DMA_MMADDR_L     (*(volatile u16 *)(0xCC005022))
+#define AR_DMA_ARADDR_H     (*(volatile u16 *)(0xCC005024))
+#define AR_DMA_ARADDR_L     (*(volatile u16 *)(0xCC005026))
+#define AR_DMA_CNT_H        (*(volatile u16 *)(0xCC005028))
+#define AR_DMA_CNT_L        (*(volatile u16 *)(0xCC00502A))
+
+//
+// DSP interface main control register
+//
+
+// AIDCR bits
+#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress, if set
+#define AIDCR_DSPINTMSK     (1 << 8)        // * interrupt mask   (RW)
+#define AIDCR_DSPINT        (1 << 7)        // * interrupt active (RWC)
+#define AIDCR_ARINTMSK      (1 << 6)
+#define AIDCR_ARINT         (1 << 5)
+#define AIDCR_AIINTMSK      (1 << 4)
+#define AIDCR_AIINT         (1 << 3)
+#define AIDCR_HALT          (1 << 2)        // halt DSP
+#define AIDCR_PIINT         (1 << 1)        // assert DSP PI interrupt
+#define AIDCR_RES           (1 << 0)        // reset DSP
+
+#define AIDCR               (*(volatile u16 *)(0xCC00500A))
+
+// ----------------------------------------------------------------------------
+
+ARCallback ARRegisterDMACallback(ARCallback callback)
+{
+    BOOL old = OSDisableInterrupts();
+    ARCallback old_callback = __AR_Callback;
+
+    __AR_Callback = callback;
+
+    OSRestoreInterrupts(old);
+    return old_callback;
+}
+
+u32 ARGetDMAStatus(void)
+{
+    BOOL old = OSDisableInterrupts;
+    u32 val = *(u16 *)(0xCC00500A) & 0x0200;
+    OSRestoreInterrupts(old);
+    return val;
+}
+
+#define ARAM_DIR_MRAM_TO_ARAM   0
+#define ARAM_DIR_ARAM_TO_MRAM   1
+
+void ARStartDMA(u32 type, u32 mainmem_addr, u32 aram_addr, u32 length)
+{
+    BOOL old = OSDisableInterrupts();
+
+    //
+    // do some checks
+    // not important for emulator
+    // 
+
+    if(*(u16 *)(0xCC00500A) & 0x0200)
+    {
+        OSHalt("ARAM DMA already in progress\n");
+    }
+
+    if(mainmem_addr & 0x1f)
+    {
+        OSHalt("AR: Main memory address is not a multiple of 32 bytes!\n");
+    }
+
+    if(length & 0x1f)
+    {
+        OSHalt("AR: DMA transfer length is not a multiple of 32 bytes!\n");
+    }
+
+    //
+    // do transfer
+    //
+
+    AR_DMA_MMADDR_H = (AR_DMA_MMADDR_H & 0x03FF) | (mainmem_addr >> 16);
+    AR_DMA_MMADDR_L = (AR_DMA_MMADDR_L & 0x001F) | (mainmem_addr & 0xFFFF);
+
+    AR_DMA_ARADDR_H = (AR_DMA_ARADDR_H & 0x03FF) | (aram_addr >> 16);
+    AR_DMA_ARADDR_L = (AR_DMA_ARADDR_L & 0x001F) | (aram_addr & 0xFFFF);
+
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x7FFF) | (type << 15);
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x03FF) | (length >> 16);
+    AR_DMA_CNT_L = (AR_DMA_CNT_L & 0x001F) | (length & 0xFFFF);
+
+    OSRestoreInterrupts(old);
+}
+
+//
+// allocation wrappers
+//
+
+u32 ARAlloc(u32 length)
+{
+    u32  tmp;
+    BOOL old = OSDisableInterrupts();
+
+    if(length & 0x1f)
+    {
+        OSHalt("ARAlloc(): length is not multiple of 32bytes!\n");
+    }
+
+    if(__AR_StackPointer > __AR_Size)
+    {
+        OSHalt("ARAlloc(): Out of ARAM!\n");
+    }
+
+    if(__AR_FreeBlocks == 0)
+    {
+        OSHalt("ARAlloc(): No more free blocks!\n");
+    }
+
+    tmp = __AR_StackPointer;
+    __AR_StackPointer += length;
+    *__AR_BlockLength++ = length;
+    __AR_FreeBlocks--;
+
+    OSRestoreInterrupts(old);
+    return tmp;
+}
+
+u32 ARFree(u32 *length)
+{
+    BOOL old = OSDisableInterrupts();
+
+    __AR_BlockLength--;
+    if(__AR_BlockLength)
+    {
+        *length = *__AR_BlockLength;
+    }
+
+    __AR_StackPointer -= *__AR_BlockLength;
+    __AR_FreeBlocks++;
+
+    OSRestoreInterrupts(old);
+    return __AR_StackPointer;
+}
+
+BOOL ARCheckInit(void)
+{
+    return __AR_init_flag;
+}
+
+u32 ARInit(u32 *stack_index_addr, u32 num_entries)
+{
+    BOOL old;
+
+    // return default aram base, if already inited
+    if(__AR_init_flag) return 0x4000;   
+
+    // disable all interrupts
+    old = OSDisableInterrupts();
+
+    // clear DMA callback
+    __AR_Callback = NULL;
+
+    // set ARAM interrupt handler
+    __OSSetInterruptHandler(
+        __OS_INTERRUPT_DSP_ARAM,
+        __ARHandler
+    );
+
+    // enable ARAM interrupt
+    __OSUnmaskInterrupts(OS_INTERRUPTMASK_DSP_ARAM);
+
+    // setup ARAM stack environment
+    __AR_StackPointer = 0x4000;
+    __AR_FreeBlocks   = num_entries;
+    __AR_BlockLength  = stack_index_addr;
+
+    // initialize ARAM aggregate refresh frequency
+#ifndef NDEBUG
+    if((float)(AR_REFRESH & 0xFF) != 176.0)
+    {
+        OSHalt("ARInit(): ILLEGAL SDRAM REFRESH VALUE\n");
+    }
+#endif
+    AR_REFRESH |= (AR_REFRESH << 8);
+
+    // check size of ARAM (look for expansion)
+    // DONT USE EMPTY HLE !
+    __ARChecksize();
+
+    // all is ok and ARAM is ready
+    __AR_init_flag = TRUE;
+    OSRestoreInterrupts(old);
+    return __AR_StackPointer;
+}
+
+void ARReset(void)
+{
+    __AR_init_flag = FALSE;
+}
+
+void ARSetSize(void)
+{
+    OSReport("ARSetSize(): I don't do anything anymore!\n");
+}
+
+u32 ARGetBaseAddress(void)
+{
+    return 0x4000;
+}
+
+u32 ARGetSize(void)
+{
+    return __AR_Size;
+}
+
+u32 ARGetInternalSize(void)
+{
+    return __AR_InternalSize;
+}
+
+// possible flag values
+#define AR_CLEAR_INTERNAL_ALL   0x0     // whole 16 mb of aram, starting from 0
+#define AR_CLEAR_INTERNAL_USER  0x1     // only starting from 0x4000
+#define AR_CLEAR_EXPANSION_ALL  0x2     // clear expansion aram
+
+void ARClear(u32 flag)
+{
+    switch(flag)
+    {
+        case AR_CLEAR_INTERNAL_ALL:
+            if(__AR_InternalSize)
+            {
+                __ARClearArea(0, __AR_InternalSize);
+            }
+            break;
+
+        case AR_CLEAR_INTERNAL_USER:
+            if(__AR_InternalSize)
+            {
+                __ARClearArea(0x4000, __AR_InternalSize - 0x4000);
+            }
+            break;
+
+        case AR_CLEAR_EXPANSION_ALL:
+            if(__AR_InternalSize && __AR_ExpansionSize)
+            {
+                __ARClearArea(__AR_InternalSize, __AR_ExpansionSize);
+            }
+            break;
+
+        default:
+            OSHalt("ARClear(): Unknown flag.\n");
+    }
+}
+
+static void __ARHandler(__OSInterrupt interrupt, OSContext *context)
+{
+    OSContext   exceptionContext;
+
+    // clear ARINT
+    u16 tmp = AIDCR & ~(AIDCR_AIINT | AIDCR_DSPINT);
+    tmp |= AIDCR_ARINT;
+    AIDCR = tmp;
+
+    OSClearContext(&exceptionContext);
+    OSSetCurrentContext(&exceptionContext);
+
+    // user callback
+    if(__AR_Callback) __AR_Callback();
+
+    OSClearContext(&exceptionContext);
+    OSSetCurrentContext(context);
+}
+
+// clear AR trransfer complete interrupt bit
+void __ARClearInterrupt(void)
+{
+    // dont touch other interrupt bits
+    u16 tmp = AIDCR & ~(AIDCR_AIINT | AIDCR_DSPINT);
+
+    // clear ARINT
+    tmp |= AIDCR_ARINT;
+
+    // update register
+    AIDCR = tmp;
+}
+
+// zero, if no AR interrupt
+// non-zero, otherwise
+u32 __ARGetInterruptStatus(void)
+{
+    return (AIDCR & AIDCR_ARINT);
+}
+
+void __ARWaitForDMA(void)
+{
+    while(AIDCR & AIDCR_ARDMA) ;
+}
+
+void inline __ARWriteDMA(u32 mmem_addr, u32 aram_addr, u32 length)
+{
+    AR_DMA_MMADDR_H = (AR_DMA_MMADDR_H & 0x03FF) | (mainmem_addr >> 16);
+    AR_DMA_MMADDR_L = (AR_DMA_MMADDR_L & 0x001F) | (mainmem_addr & 0xFFFF);
+
+    AR_DMA_ARADDR_H = (AR_DMA_ARADDR_H & 0x03FF) | (aram_addr >> 16);
+    AR_DMA_ARADDR_L = (AR_DMA_ARADDR_L & 0x001F) | (aram_addr & 0xFFFF);
+
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x7FFF) | (ARAM_DIR_MRAM_TO_ARAM << 15);
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x03FF) | (length >> 16);
+    AR_DMA_CNT_L = (AR_DMA_CNT_L & 0x001F) | (length & 0xFFFF);
+
+    __ARWaitForDMA();
+    __ARClearInterrupt();
+}
+
+void inline __ARReadDMA(u32 mmem_addr, u32 aram_addr, u32 length)
+{
+    AR_DMA_MMADDR_H = (AR_DMA_MMADDR_H & 0x03FF) | (mainmem_addr >> 16);
+    AR_DMA_MMADDR_L = (AR_DMA_MMADDR_L & 0x001F) | (mainmem_addr & 0xFFFF);
+
+    AR_DMA_ARADDR_H = (AR_DMA_ARADDR_H & 0x03FF) | (aram_addr >> 16);
+    AR_DMA_ARADDR_L = (AR_DMA_ARADDR_L & 0x001F) | (aram_addr & 0xFFFF);
+
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x7FFF) | (ARAM_DIR_ARAM_TO_MRAM << 15);
+    AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x03FF) | (length >> 16);
+    AR_DMA_CNT_L = (AR_DMA_CNT_L & 0x001F) | (length & 0xFFFF);
+
+    __ARWaitForDMA();
+    __ARClearInterrupt();
+}
+
+#define ARAM_2MB    2 * 1024 * 1024
+#define ARAM_16MB   16 * 1024 * 1024
+#define ARAM_20MB   16 * 1024 * 1024
+#define ARAM_32MB   16 * 1024 * 1024
+#define ARAM_48MB   16 * 1024 * 1024
+
+void __ARChecksize(void)
+{
+    u32 test_data_pad[8];
+    u32 dummy_data_pad[8];
+    u32 buffer_pad[8];
+    u32 *test_data, *dummy_data, *buffer;
+    u16 ARAM_mode, ARAM_size;
+
+    // wait until ARAM is "ready"
+    // this loop is locking emulator, if no ARAM_MODE hack
+    while( ( (r0 = ARAM_MODE) & 0x0001 ) == 0) ;
+
+    __AR_InternalSize = ARAM_size = ARAM_16MB;
+
+    r0 = ARAM_SIZE & 0xFFC0;     // clear last 6 bits
+    r0 |= 0x0003;
+    r0 |= 0x0020;
+    ARAM_SIZE = r0;
+
+    // make sure test buffers are 32-byte aligned
+    test_data  = OSRoundDown32B(test_data_pad);
+    dummy_data = OSRoundDown32B(dummy_data_pad);
+    buffer     = OSRoundDown32B(buffer_pad);
+
+    // fill buffers by test data (leet N language again ?)
+    for(n=0; n<8; n++)
+    {
+        test_data[n] = 0xDEADBEEF;
+        dummy_data[n] = 0xBAD0BAD0;
+    }
+
+    // make sure our test data is in RAM
+    DCFlushRange(test_data, 32);
+    DCFlushRange(dummy_data, 32);
+
+    // no expansion by default
+    __AR_ExpansionSize = 0;
+
+    // write test data in various ARAM regions
+    __ARWriteDMA(test_data, ARAM_16MB, 32);
+    __ARWriteDMA(test_data, ARAM_16MB + ARAM_2MB, 32);
+    __ARWriteDMA(test_data, ARAM_32MB, 32);
+    __ARWriteDMA(test_data, ARAM_48MB, 32);
+    __ARWriteDMA(test_data, ARAM_20MB, 32);
+
+    // now read and check with test data
+    memset(buffer, 0, 32);
+    DCFlushRange(buffer, 32);
+
+    __ARWriteDMA(dummy_data, ARAM_16MB, 32);
+
+    DCInvalidateRange(buffer, 32);
+    __ARReadDMA(buffer, ARAM_16MB, 32);
+    PPCSync();
+
+    if(buffer[0] == dummy_data[0])
+    {
+        // * ARAM EXPANSION DETECTED *
+        // now check expansion amount, by reading test data
+
+        // expansion checking is buggy..
+        // production boards has 16 MB of ARAM, so dont care
+
+        OSReport("__ARChecksize(): ARAM Expansion present.\n");
+
+        r0 = AR_SIZE & 0xFFC0;
+        r0 |= 0x0003;
+        AR_SIZE = r0;
+    }
+
+    // save ARAM configuration
+    OSPhysicalToUncached(0x000000D0) = ARAM_size;   // in OS global
+    __AR_Size = ARAM_size;                          // for ARAM driver
+}
+
+// clear specified region of ARAM
+void __ARClearArea(u32 start_addr, u32 length)
+{
+    u8 zero_buffer[2100], *ptr;
+    u32 remainder;
+    u32 curr_addr, curr_len, end_addr;
+
+    //
+    // some checks
+    //
+
+    if(start_addr & 0x1f)
+    {
+        OSHalt("__ARClearArea(): Destination address not 32-byte aligned.\n");
+    }
+
+    if(length & 0x1f)
+    {
+        OSHalt("__ARClearArea(): Length not multiple of 32 bytes.\n");
+    }
+
+    ptr = OSRoundDown32B(zero_buffer);
+
+    // wait, until ARAM is "ready"
+    while((AR_MODE & 1) == 0) ;
+
+    memset(ptr, 0, 2048);
+    DCFlushRange(ptr, 2048);
+
+    curr_addr = start_addr;
+    end_addr  = start_addr + length;
+
+    while(curr_addr < end_addr)
+    {
+        // buggy ?
+        remainder = end_addr - curr_addr;
+        if(remainder >= 2048) remainder = 2048;
+        curr_len = (remainder + 31) & 0x3f; <-- maybe & 0x1f ?
+
+        __ARWriteDMA(ptr, curr_addr, curr_len);
+
+        curr_addr += curr_len;
+    }
+}

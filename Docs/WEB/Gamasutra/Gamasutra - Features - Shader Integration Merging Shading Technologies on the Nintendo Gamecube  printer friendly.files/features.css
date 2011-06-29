@@ -1,0 +1,24 @@
+P {
+	FONT-WEIGHT: normal; FONT-SIZE: x-small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+H1 {
+	FONT-WEIGHT: bold; FONT-SIZE: large; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif; TEXT-ALIGN: center
+}
+H2 {
+	FONT-WEIGHT: bold; FONT-SIZE: small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+H3 {
+	FONT-WEIGHT: bold; FONT-SIZE: x-small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+.subhead {
+	FONT-WEIGHT: bold; FONT-SIZE: x-small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+LI {
+	FONT-SIZE: x-small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+BLOCKQUOTE {
+	FONT-SIZE: x-small; FONT-FAMILY: Verdana, Arial, Helvetica, sans-serif
+}
+CODE {
+	FONT-SIZE: x-small; FONT-FAMILY: "Courier New", Courier, mono
+}

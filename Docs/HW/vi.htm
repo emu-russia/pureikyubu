@@ -1,0 +1,195 @@
+<html>
+<head>
+<style>pre { font-family: Courier; font-size: 8pt;}</style>
+</head>
+
+<body>
+<center><u><h2>GAMECUBE Video Interface</h2></u></center>
+
+<BR><b>Vertical Timing Register</b> (R/W) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002000</font></b><BR><BR>This register setups the 
+vertical timing. The value ACV is double buffered <PRE>     EQU      3:0     Equalization pulse in half lines.                  -
+     ACV     13:4     Active video in full lines.                        -
+</PRE><BR><b>Display Configuration Register</b> (R/W) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002002</font></b><BR><BR>This register set ups and enables VI. Generally, VI 
+should be reset before enabling it. This resets the states into some known 
+values. <PRE>    ENB   0     This bit enables the video timing generation and data request.      0
+    RST   1     This bit clears all data request and puts VI into its idle state.   0
+    NIN   2     To select interlace or non-interlace mode. NIN = 0: interlace,      0
+                NIN = 1: non-interlace. In non-interlace mode, the top field is
+                drawn at field rate while the bottom field is not displayed.
+    DLR   3     This bit selects the 3D display mode.
+    LE0   5:4   Gun trigger mode. It enables the Display Latch Register 0. When     0
+                the mode is 1 or 2, it will clear itself(off) automatically when a
+                gun trigger is detected or at time out. This field is double buffered.
+                0 off
+                1 on for 1 field
+                2 on for 2 fields
+                3 always on
+    LE1   7:6   To enable Display Latch Register 1. See the description of LE0.     0
+    FMT   9:8   Indicates current video format:                                     0
+                0 NTSC
+                1 PAL
+                2 MPAL
+                3 Debug (CCIR656)
+</PRE><BR><b>Horizontal Timing 0 Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002004</font></b><BR><BR>This register setups 
+the horizontal timing. <PRE>     HLW     9:0    Half line width.                                     -
+     HCE    22:16   Horizontal sync start to color burst end.            -
+     HCS    30:24   Horizontal sync start to color burst start.          -
+</PRE><BR><b>Horizontal Timing 1 Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002008</font></b><BR><BR>This register setups 
+the horizontal timing. <PRE>     HSY    6:0   Horizontal sync width.                                 -
+     HBE   16:7   Horizontal sync start to horizontal blanking end.      -
+     HBS   26:17  Half line to horizontal blanking start.                -
+</PRE><BR><b>Odd Field Vertical Timing Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00200C</font></b><BR><BR>This register 
+sets up the pre-blanking and post-blanking intervals of odd fields. The values 
+PRB and PSB are double buffered. <PRE>     PRB        9:0       Pre-blanking in half lines.                    -
+     PSB       25:16      Post-blanking in half lines.                   -
+</PRE><BR><b>Even Field Vertical Timing Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002010</font></b><BR><BR>This register 
+sets up the pre-blanking and post-blanking intervals of even fields. The values 
+PRB and PSB are double buffered. <PRE>     PRB        9:0       Pre-blanking in half lines.                    -
+     PSB       25:16      Post-blanking in half lines.                   -
+</PRE><BR><b>Odd Field Burst Blanking Interval Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002014</font></b><BR><BR>This 
+register sets up the burst blanking interval of odd fields. <PRE>     BS1     4:0    Field 1 start to burst blanking start in half lines. -
+     BE1    15:5    Field 1 start to burst blanking end in half lines.   -
+     BS3    20:16   Field 3 start to burst blanking start in half lines. -
+     BE3    31:21   Field 3 start to burst blanking end in half lines.   -
+</PRE><BR><b>Even Field Burst Blanking Interval Register</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002018</font></b><BR><BR>This 
+register sets up the burst-blanking interval of even fields. <PRE>     BS2     4:0    Field 2 start to burst blanking start in half lines. -
+     BE2    15:5    Field 2 start to burst blanking end in half lines.   -
+     BS4    20:16   Field 4 start to burst blanking start in half lines. -
+     BE4    31:21   Field 4 start to burst blanking end in half lines.   -
+</PRE><BR><b>Top Field Base Register L</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00201C</font></b><BR><BR>This register specifies 
+the display origin of the top field of a picture in 2D display mode or for the 
+left picture in 3D display mode. <PRE>     FBB   23:0   External memory address of the frame buffer image.     -
+     XOF   27:24  Horizontal offset, in pixels, of the left-most pixel   -
+                  within the first word of the fetched picture.          -
+</PRE><BR><b>Top Field Base Register R</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002020</font></b><BR><BR>This register specifies 
+the base address of the top field for the right picture in the 3D display mode. 
+It is not used in 2D display mode. <PRE>     FBB   23:0   External memory address of the frame buffer image.     -
+</PRE><BR><b>Bottom Field Base Register L</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002024</font></b><BR><BR>This register specifies 
+the display origin of the bottom field of a picture in 2D display mode or for 
+the left picture in 3D display mode. <PRE>     FBB   23:0   External memory address of the frame buffer image.     -
+</PRE><BR><b>Bottom Field Base Register R</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002028</font></b><BR><BR>This register specifies 
+the base address of the bottom field for the right picture in the 3D display 
+mode. It is not used in 2D display mode. <PRE>     FBB   23:0   External memory address of the frame buffer image.     -
+</PRE><BR><b>Picture Configuration Register</b> (R/W) <BR><BR>This register 
+specifies the picture configuration. <PRE>     STD      7:0     Stride per line in words.                          -
+     WPL     14:8     Number of reads per line in words.                 -
+</PRE><BR><b>Display Position Register</b> (R) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00202C</font></b><BR><BR>This register contains the 
+current raster position. <BR><BR>The Horizontal Count is in pixels and runs from 
+1 to # pixels per line. It is reset to 1 at the beginning of every line. 
+<BR><BR>The Vertical Count is in lines (on a frame basis) and runs from 1 to # 
+lines per frame. It is 1 at the beginning of pre-equalization. This is a frame 
+line count. So for example: for NTSC vcount=264 is the first (full) line in the 
+second field and vcount=525 is the last line in the frame (fields being numbered 
+1-4). For non-interlaced modes vcount is on a field-by-field basis (for NTSC 
+vcount ranges from 1-263). <BR><BR>This counting scheme applies the Display 
+Position, Display Interrupt, and Display Latch registers. <PRE>     HCT         10:0        Horizontal count.                           -
+     VCT         26:16       Vertical count.                             -
+</PRE><BR><b>Display Interrupt Register 0</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002030</font></b><BR><BR>There are a total of 
+four display interrupt registers (0-3). They are used to generate interrupts to 
+the main processor at different positions within a field. Each register has a 
+separate enable bit. The interrupt is cleared by writing a zero to the status 
+flag (INT). <PRE>     HCT     10:0  Horizontal count to generate interrupt.               -
+     VCT     26:16 Vertical count to generate interrupt.                 -
+     ENB      28   Interrupt is enabled if this bit is set.              0
+     INT      31   Interrupt status. A "1" indicates that an interrupt   0 
+                  is active.
+</PRE><BR><b>Display Interrupt Register 1</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002034</font></b><BR><BR>See the description of 
+Display Interrupt Register 0. <BR><BR><BR><b>Display Interrupt Register 2</b> (R/W) 
+ [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002038</font></b><BR><BR>See the description of Display Interrupt Register 0. <BR><BR><BR><b>Display 
+Interrupt Register 3</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00203C</font></b><BR><BR>See the description of Display Interrupt 
+Register 0. <BR><BR><BR><b>Display Latch Register 0</b> (R/W) <BR><BR>The Display Latch 
+Register 0 latches the value of the Display Position Register at the rising edge 
+of the gt0 signal. The trigger flag is set if a gun trigger is detected. Writing 
+a zero to the register clear the trigger flag. <PRE>     HCT         10:0        Horizontal count.                           0
+     VCT         26:16       Vertical count.                             0  
+     TRG          31         Trigger flag.                               0
+</PRE><BR><b>Display Latch Register 1</b> (R/W) <BR><BR>See the description of 
+Display Latch Register 0. This register is latched on the rising edge of the gt1 
+signal. <BR><BR><BR><b>Output Polarity Register</b> (R/W) <BR><BR>This register sets up the 
+polarity of the out going control signals <PRE>      I_POL         0       Inverts Interlace Flag                       0
+      N_POL         1       Inverts NTSC Flag                            0
+      K_POL         2       Inverts Burst Blank Flag                     0
+      B_POL         3       Inverts Burst Flag                           0
+      H_POL         4       Inverts HSyncb Flag                          0
+      V_POL         5       Inverts VSyncb Flag                          0
+      F_POL         6       Inverts Field Flag                           0
+      C_POL         7       Inverts CSyncb Flag                          0
+</PRE><BR><b>Horizontal Scale Register</b> (R/W) <BR><BR>This register sets up the 
+step size of the horizontal stepper. <PRE>      STP        8:0    Horizontal stepping size (U1.8).                 256
+      HS_EN      12     Horizontal Scaler Enable                         0
+</PRE><BR><b>Scaling Width Register</b> (R/W) <BR><BR>This register is the number 
+of source pixels to be scaled. This is only used when the Horizontal Scaler is 
+enabled. For example, if the image is to be scaled from 320x240 to 640x240, 320 
+would be written into this register. <PRE>      SRCWIDTH        9:0     Horizontal stepping size                   0
+</PRE><BR><b>Filter Coefficient Table 0</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00204C</font></b><BR><BR>This register sets up 
+part of the low pass filter. Taps 0 to 9 are in the range [0.0, 2.0). <PRE>          T0         9:0           Tap 0 (U1.9).                         -
+          T1        19:10          Tap 1.                                -
+          T2        29:20          Tap 2.                                -
+                </pre><b>Filter Coefficient Table 1</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002050</font></b><br><br>
+        This register sets up part of the low pass filter.<pre>
+          T3          9:0          Tap 3.                                -
+          T4         19:10         Tap 4.                                -
+          T5         29:20         Tap 5.                                - 
+                </pre><b>Filter Coefficient Table 2</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002054</font></b><br><br>
+        This register sets up part of the low pass filter.<pre>
+          T6          9:0          Tap 6.                                -
+          T7         19:10         Tap 7.                                -
+          T8         29:20         Tap 8.                                -
+                </pre><b>Filter Coefficient Table 3</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002058</font></b><br><br>
+    This register sets up part of the low pass filter. Taps 9 to tap 24
+                are in the range [-0.125, 0.125).<pre>
+          T9           7:0         Tap 9 (S-2.9).                        -
+          T10         15:8         Tap 10.                               -
+          T11         23:16        Tap 11.                               -
+          T12         31:24        Tap 12.                               -
+                </pre><b>Filter Coefficient Table 4</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00205C</font></b><br><br>
+        This register sets up part of the low pass filter.<pre>
+          T13          7:0         Tap 13.                               -
+          T14         15:8         Tap 14.                               -
+          T15         23:16        Tap 15.                               -
+          T16         31:24        Tap 16.                               -
+                </pre><b>Filter Coefficient Table 5</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002060</font></b><br><br>
+        This register sets up part of the low pass filter.<pre>
+          T17          7:0         Tap 17.                               -
+          T18         15:8         Tap 18.                               -
+          T19         23:16        Tap 19.                               -
+          T20         31:24        Tap 20.                               -
+                </pre><b>Filter Coefficient Table 6</b> (R/W) [32] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002064</font></b><br><br>
+        This register sets up part of the low pass filter.<pre>
+          T21         7:0          Tap 21.                               -
+          T22        15:8          Tap 22.                               -
+          T23        23:16         Tap 23.                               -
+          T24        31:24         Hardwired to zero.                    -            
+</PRE>
+
+                  <br><b><B>VI Clock Select Register</b></B> (R/W) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00206C</font></b><br><br>
+    This register selects whether the VI will receive a 27 Mhz or a 54 Mhz
+    clock. The 54 Mhz clock is used only with the progressive
+                          display modes.<PRE>
+     VICLKSEL          1       0 for 27 Mhz video clk                    0
+                               1 for 54 Mhz video clk                      
+</PRE>
+                    <br><b>VI DTV Status Register</b> (R) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC00206E</font></b><br><br>
+    This register allows software to read the status of two I/O pins.<PRE>
+     VISEL             2       Don't care                                -
+</PRE><BR><b>Border HBE</b> (R/W) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002072</font></b><BR><BR>This register (in conjunction with the 
+border HBS) sets up a black border around the actual active pixels in debug 
+mode. This was done in order to accommodate certain encoders that only support 
+720 active pixels. The border HBE and HBS can be programmed for 720 active 
+pixels while the regular HBE and HBS can be programmed to the actual active 
+width. This allows the frame buffer to be of any width without having to 
+manually set up a border in memory. These registers will only take effect if 
+enabled and in debug mode. <PRE>      HBE656         9:0    Border Horizontal Blank End                  0
+      BRDR_EN        15     Border Enable                                0
+</PRE><BR><b>Border HBS</b> (R/W) [16] &nbsp;&nbsp;&nbsp;<b><font face=Verdana color=PURPLE size=2pt>CC002074</font></b> <PRE>      HBS656       9:0    Border Horizontal Blank Start                  0
+</PRE>
+
+<br><i> * &nbsp; The fourth column in each table shows the power-up reset values.</i><br>
+<i> ** All numbers are little-endian (PPC using big-endian!) .</i><br><br>
+
+<hr>
+<br><i>
+Ripped from USPTO #6609977<br>
+<a href="mailto:kvzorganic@mail.ru">org - kvzorganic@mail.ru</a></i>
+</body>
+</html>

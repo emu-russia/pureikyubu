@@ -1,0 +1,30 @@
+<HTML>
+<HEAD>
+	<META NAME="description" CONTENT="Since its appearance on the 3d gaming scene.  S3TC (S3 Texture Compression)  has created quite a stir.  Click here to find out the truth about S3's amazing new technology.">
+	<META NAME="keywords" CONTENT="truth,s3tc,savage,3d,texture,compression,agp,quake,arena,microsoft,directx,screen,shots,flaws,nvidia,comdex,compress,algorithm,color,table,memory,frame,buffer,local,system,voodoo,2,performance,bandwidth,unreal,quality,encoding,decoding,s3,implementation,a">
+	<META NAME="author" CONTENT="Jeffrey Tseng">
+	<META NAME="site" CONTENT="HardwareCentral">
+	<META NAME="date" CONTENT="1999-05-29">
+	<META NAME="section" CONTENT="reports">
+	<META NAME="channel" CONTENT="Internet Technology">
+	<TITLE>HardwareCentral - Reports - The Truth About S3TC - Higher Resolution Textures</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#009900" VLINK="#009900" ALINK="#006600">
+
+<font size=2 face=Verdana> 
+
+			<FONT COLOR="#666666" SIZE=5><B>The Truth About S3TC</B></FONT><BR>
+			<FONT COLOR="#000000" SIZE=3><B>Higher Resolution Textures</B></FONT><BR><IMG HEIGHT=7 WIDTH="324" SRC="/graphics/fill/clear.gif"><BR>
+			<FONT SIZE=1 FACE="Verdana, Arial, Helvetica"><a href="mailto:jtseng@hardwarecentral.com">Jeffrey Tseng</a></FONT><BR>
+			<P>
+			<!--**** begin content ****-->
+				Increased texture resolution is probably “the” most important benefit of the S3TC technology.  Here are some file sizes of BMPs before and after S3TC compression:</P> <B>Compressed and Uncompressed File Sizes</B> <div align="CENTER">   <table border=1 cellpadding=5 cellspacing=0 hspace=0 vspace=0 align="CENTER">     <tr>        <th bgcolor="#FFFFCC"><FONT SIZE=2><b>BMP File Size (bytes)</FONT></b></th>       <th><FONT SIZE=2><b>S3TC File Size (bytes)</FONT></b></th>       <th bgcolor="#FFCC00"><FONT SIZE=2>Compression ratio</FONT></th>     </tr>     <tr>        <td bgcolor="#FFFFCC" align="CENTER"><FONT SIZE=2>2,359,350</FONT></td>       <td align="CENTER"><FONT SIZE=2>393,344 bytes</FONT></td>       <td bgcolor="#FFCC00" align="CENTER"><FONT SIZE=2>6.0 : 1</FONT></td>     </tr>     <tr align="CENTER">        <td bgcolor="#FFFFCC" align="CENTER"><FONT SIZE=2>921,656</FONT></td>       <td align="CENTER"><FONT SIZE=2>153,728</FONT></td>       <td bgcolor="#FFCC00"><FONT SIZE=2>6.0 : 1</FONT></td>     </tr>     <tr align="CENTER">        <td bgcolor="#FFFFCC"><FONT SIZE=2>40,025</FONT></td>       <td align="CENTER"><FONT SIZE=2>6743</FONT></td>       <td bgcolor="#FFCC00"><FONT SIZE=2>5.9 : 1</FONT></td>     </tr>   </table> </div><br><B>Note:</B> This table is for 24-bit color.  16-bit color gives a 4 : 1 compression ratio while 8-bit only gives a 2 : 1 ratio. <P>These results give approximately a 6:1 compression ratio.  Because there is a 6:1 compression ratio with S3TC, the resolution of the textures can be much higher than without using S3TC.  Essentially, you can fit 6 times as much data in the same memory space as without using compression.  6 times as much data means that each dimension of the 2D graphic can be 2.44 times higher in resolution.  In other words, a 624 x 624 compressed texture would take up the same memory footprint as a 256 x 256 uncompressed texture.  But how does this actually affect the way textures look?  Here are a few sample screen shots from S3:</P> <div align="CENTER"><img src="rescompare.jpg" width="400" height="150"></div><table width="400" align=center>     <tr align=center>       <td><FONT SIZE=2><center><b> 2048x2048x24-bit with S3TC on Savage3D</FONT></b> </td><td><FONT SIZE=2><b>256x256x8-bit on 3Dfx Voodoo 2 SLI</b></center>        </td> </tr>   </table>    <br><B>A note about the comparison</B><br> Before jumping to the conclusion that S3TC makes the textures look “far” better, you must understand the nature of these graphics.  The comparison here is not exactly as equal as it looks.  Part of the comparison here is actually of S3TC to no S3TC, but the other half of the comparison is not of the S3TC technology but of the texture size handling capabilities of the Voodoo 2 vs. the Savage 3D.  Even if we neglect the number of bits used to color data (which gives S3TC the advantage anyway, because S3TC compresses much more at a 24-bit color depth), the 2024x2024 S3TC image still contains much more data than the 256x256 Voodoo 2 image.  In actuality, if the textures were to take up the same amount of memory (comparing just the texture compression), the S3TC image should only be about 624x624 in size as we calculated before.  What this comparison does fairly show is that the Savage 3D with S3TC and its ability to handle larger textures, is capable of displaying much higher resolution graphics than the Voodoo 2.  But the color depth cannot be neglected either, the 24-bit color of the Savage3D with S3TC is much nicer than the Voodoo II with only 8-bit color.  Overall S3TC yields much nicer, higher resolution textures than without using S3TC. <P><B>What about other benefits?  Read on...</B></P>								<P ALIGN="RIGHT"><FONT FACE="Verdana, Arial, Helvetica" SIZE=1><B>Next: </B><A HREF="3.html" CLASS="nav">More Benefits</A></FONT>&nbsp;<FONT FACE="Tahoma, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>&#187;</B></FONT></FONT>
+            <P>
+
+
+            <table border=0 cellspacing=0 cellpadding=0><tr><td align="left" nowrap><FONT FACE="Verdana, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>Skip Ahead</B></FONT><BR><IMG HEIGHT=5 WIDTH=1 SRC="/graphics/fill/clear.gif"><BR>1 <A HREF="index.html">Introduction</A><BR>2 Higher Resolution Textures<BR>3 <A HREF="3.html">More Benefits</A><BR>4 <A HREF="4.html">S3 Texture Compression Algorithm</A><BR>5 <A HREF="5.html">Image Quality</A><BR>6 <A HREF="6.html">Implementation, Support, and The Future of S3TC</A><BR></font></td></tr></table>            
+            </FONT>
+
+</BODY>
+</HTML>

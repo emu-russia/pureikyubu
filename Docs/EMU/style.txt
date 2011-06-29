@@ -1,0 +1,130 @@
+
+    Dolwin source code style, by org.
+
+    Rules
+    --------------------------------------------------------------------------
+
+    Try to make nice looking and accurate code. Do not mess code, like some
+    GPL programs, use Nintendo style.
+
+    Tab size = 4. Tab inserts spaces. Do not use '\t'. Line size = about 80.
+
+    Use this :
+
+// ---------------------------------------------------------------------------
+
+    to separate sections of your module.
+
+    Comments
+    --------------------------------------------------------------------------
+
+    // single comment (lowercase letters). punctuation signs,;. smiles :)
+    // and try to adjust comment lines, if there are many of them (like now)
+
+    /*/
+        multi-line comment. use same rules as for single line.
+    /*/
+
+    Single C Operations
+    --------------------------------------------------------------------------
+
+    i = a + b;
+    i++;
+    i += 10;
+    i <<= 5;
+    i = (i + 5) / (a & b);
+
+    Function Calls
+    --------------------------------------------------------------------------
+
+    No spaces between call and first '('.
+
+    small_call(1);      // which can fit in single line
+
+    medium_call( 1 != 1, "We got dilemma %s = %i",
+                 "1 != 1", 1 != 1 );
+
+    large_call(
+        param1, 
+        param2, 
+        param3, 
+        param4, 
+        paramInfinite
+    );
+
+    If
+    --------------------------------------------------------------------------
+
+    if(something)               // no space between 'if' and '('
+    {
+    }
+
+    if((a == b) && (b == a))    // spaces between expressions
+    {
+    }
+
+    For
+    --------------------------------------------------------------------------
+
+    for(int i=0; i<100; i++)    for(int i=0, j=2; i<100; i+=2, j+=5)
+    {                           {
+    }                           }
+
+    for(;;)
+    {
+        // infinite loop
+    }
+
+    Do, While
+    --------------------------------------------------------------------------
+
+    do                          while(someting)
+    {                           {
+                                    
+    } while(something);         }
+
+    while(1)
+    {
+        // infinite loop
+    }
+
+    Structures
+    --------------------------------------------------------------------------
+
+    Do not use classes.
+
+    typedef struct
+    {
+        u32     member1;        // comments 1
+        u8      member2;        // comments 2 (same level)
+        void*   member3;        // comments 3 (same level)
+    } MyStructure;
+
+    Preprocessor
+    --------------------------------------------------------------------------
+
+    #include "dolphin.h"    // common Dolwin include file
+
+    #include <header.h>     // compiler and SDK include files
+
+    #define SOMETHING       // big letters
+
+    // single-line macro
+    #define MACRO(n)    ((n) = 5)
+
+    // use '\' on same level and big enough distance
+    #define MACRO(n)            \
+    {                           \
+        i = a + b;              \
+        i++;                    \
+        i += 10;                \    
+    }
+
+    // conditional code compilation
+    #ifdef  SOMETHING
+        // code is here
+    #endif  // SOMETHING
+
+    --------------------------------------------------------------------------
+
+    See Dolwin source code for more detailed examples :)

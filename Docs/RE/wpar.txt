@@ -1,0 +1,22 @@
+// from GXInit
+
+BOOL IsWriteGatherBufferEmpty(void)
+{
+    return WPAR[BNE];
+}
+
+void EnableWriteGatherPipe(void)
+{
+    u32 hid2 = PPCMfhid2();
+    PPCMtwpar(0x0C080000);
+    PPCMthid2(hid2 | HID2_WPE);
+}
+
+void DisableWriteGatherPipe(void)
+{
+    u32 hid2 = PPCMfhid2();
+    PPCMthid2(hid2 & ~HID2_WPE);
+}
+
+
+

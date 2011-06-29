@@ -1,0 +1,292 @@
+
+                                GAMECUBE DSP
+
+    --------------------------------------------------------------------------
+
+    Preface.
+    --------
+
+    This is collection of knowledge about working of GAMECUBE DSP. As you can
+    see later, DSP is another small computer, inside cube. This text is not
+    pretending on full DSP description, I just gathered all my software reverse
+    engineering of DSP library and some info from patents.
+    
+    Corrections and additions are welcome.
+
+    DSP is integrated with Flipper ASIC. It was developed by Macronix and
+    licensed by Nintendo. It is using to produce advanced sound effects, like
+    surround multi-channel sound, reverb and chorus, and else.
+
+    Official GC SDK dont have any valuable information regardless DSP inner
+    working. It is all proprietary.
+
+    DSP Architecture.
+    -----------------
+
+      81 mhz instruction clock (1/6 of main CPU clock)
+      40-bit add-and-multiply-result registers for calculations
+      16-bit data addressing
+      16-bit address space, including :
+        · 8 KB Data RAM (DRAM)
+        · 4 KB Data ROM (DROM)
+        · 8 KB Instruction RAM (IRAM)
+        · 8 KB Instruction ROM (IROM)
+        · and some hardware registers, to control internal hardware (see below)
+      additional DSP internal hardware :
+        · custom ADPCM decoder
+        · cached memory interface to ARAM (also referred as "accelerator")
+        · DMA interface to main memory (to boot microcode)
+        · "mailbox" registers for communication with the CPU
+
+    Details of memory mapping are unknown. It can be statically mapped areas,
+    like on GameBoy, or DSP may have simple translation logic. I have a feeling
+    that they are statically mapped.
+
+    Now word to United States Patent 6,643,744 "Method and apparatus for
+    pre-fetching audio data" :
+
+    "DSP core has a 100 MHz (* 81 Mhz on production GC) instruction clock and
+    uses 16-bit data words and addressing. DSP core uses a word (16-bit)
+    addressable instruction memory that includes a RAM area (8 kbyte) and a ROM
+    area (8 kbyte) and a word addressable data memory that includes a RAM area
+    (8 kbyte) and a ROM area (4 kbyte). A DSP DMA is provided to transfer data
+    from/to main memory, to/from the DSP data/instruction RAM areas or from the
+    DSP data/instruction ROM areas to main memory. There are two requestors of
+    access to instruction memory: DSP DMA and DSP. The instruction RAM area can
+    be read/write by DSP DMA and can only be read by DSP. The instruction ROM
+    area can only be read by DSP. There are three requestors of access to data
+    memory: DSP DMA, data bus 1 and data bus 2. Mail box registers are provided
+    for communication with the main processor. Mail box registers may include a
+    first mail box register for communications from main processor to DSP core
+    and a second mail box register for communications from DSP core to main
+    processor. Each register is, for example, 32-bits wide. An accelerator is
+    usable instead of DSP core to read from and write to audio memory. A memory
+    controller is provided for audio memory and is operative, among other things,
+    to arbitrate requests for audio memory access between DSP core and a
+    dedicated DMA channel controlled by main processor, for data transactions
+    between audio memory and main memory. Generally, data transactions between
+    audio memory and DSP data memory have priority over DMA channel. A decoder
+    decodes audio samples supplied thereto. Audio memory is intended primarily
+    for the storage of audio-related data and may comprise 16 MB of RAM,
+    expandable up to a total of 128 MB (* for developer boards)."
+
+    I know, patents are hard to read :)
+
+    Interrupts.
+    -----------
+
+    There are some *DSP* interrupts (not GC), which I guessed :
+
+        Reset interrupt   - RES bit is set in DSPCR
+        Halt interrupt    - HALT bit is set in DSPCR
+        DSP interrupt     - INT bit is set in DSPCR
+        Mailbox interrupt - generated when CPU is writing into output mailbox
+                            register (to signal DSP about new mail).
+
+    Mailbox Registers.
+    ------------------
+
+    0x0C005000      DSP Output Mailbox Register High Part (CPU->DSP)
+    0x0C005002      DSP Output Mailbox Register Low Part (CPU->DSP)
+    0x0C005004      DSP Input Mailbox Register High Part (DSP->CPU)
+    0x0C005006      DSP Input Mailbox Register Low Part (DSP->CPU)
+
+    Although patent is said they are 32-bit wide, Nintendo DSP library accessing
+    them by 16-bit halfs. I dont know reason of that.
+
+    Writing in mailbox register (from any side) will assert interrupt :
+
+        If CPU->DSP mailbox, generate DSP mailbox interrupt;
+        If DSP->CPU mailbox, generate PI DSP interrupt (see DSP Control Reg).
+
+    Thats how CPU and DSP are "talking". Typically, some informative number
+    is placed in mailbox register. It can be interpreted as command, or some
+    DSP task status. It is fully depended on DSP microcode.
+
+    If mailbox regs are accessing by half parts, there are probably some "shadow"
+    registers, which are used to copy in real registers, when both halfs are
+    written. As example :
+
+        CPU writing some message to DSP : 0xBADADD1E (some number).
+        Thats how DSP library will write it in DSP out mailbox :
+
+        *(u16 *)0xCC005000 = 0xBADA;
+        *(u16 *)0xCC005002 = 0xDD1E;
+
+        As you see, DSP mailbox interrupt will be generated, after we write
+        0xBADA, and DSP mailbox handler will get only 0xBADA???? message.
+
+        With shadow registers, it will looks like this :
+
+        *(u16 *)0xCC005000 = 0xBADA;  // shadow hi part = 0xBADA
+        *(u16 *)0xCC005002 = 0xDD1E;  // shadow lo part = 0xDD1E
+        // copy 0xBADADD1E into real mailbox, when both shadows are filled.
+        // and "invalidate" shadow registers for new mail message.
+
+    Mailbox reading is also performed under shadow registers.
+
+    I dont have other explanation, why Nintendo accessing mailboxes by 16-bit
+    halfs, except maybe if hardware designed to wait writes first into hi part
+    and then to low part.
+
+    Another questionable thing is high-order bit of mailbox registers. DSP
+    library is checking this bit all the time, after writing/reading mailboxes :
+
+        // mail delivered to DSP ?
+        u32 DSPCheckMailToDSP(void)
+        {
+            return ( *(u16 *)0xCC005000 & 0x8000 );
+        }
+
+        // new mail from DSP ?
+        u32 DSPCheckMailFromDSP(void)
+        {
+            return ( *(u16 *)0xCC005004 & 0x8000 );
+        }
+
+    It may be hardware-implemented read-only bit, but it may be set by loaded
+    microcode/DSP mailbox interrupt handler (I mean microcode specific).
+        
+    DSP Control Register.
+    ---------------------
+
+    0x0C00500A      DSP Control Register (DSPCR)
+
+    This register is messy, because it has not only DSP state, but also some
+    bits for ARAM and audio DMA..
+
+        0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0 
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦  ¦ ¦ ¦  -- 0: RES
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦  ¦ ¦  ---- 1: INT
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦  ¦  ------ 2: HALT
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦ ¦   -------- 3: AI_INT
+                 ¦ ¦ ¦ ¦  ¦ ¦ ¦  ----------- 4: AI_INT_MSK
+                 ¦ ¦ ¦ ¦  ¦ ¦  ------------- 5: AR_INT
+                 ¦ ¦ ¦ ¦  ¦  --------------- 6: AR_INT_MSK
+                 ¦ ¦ ¦ ¦   ----------------- 7: DSP_INT
+                 ¦ ¦ ¦  -------------------- 8: DSP_INT_MSK
+                 ¦ ¦  ---------------------- 9: AR_DMA
+                 ¦  ------------------------ 10: ?
+                  -------------------------- 11: ?
+
+        RES - DSP reset interrupt status
+             write 1: to reset DSP
+                   0: no meaning?
+             read  1: DSP still resetting
+                   0: DSP reseted
+
+        INT - DSP interrupt status
+             write 1: to generate DSP interrupt
+                   0: no meaning?
+             read  no meaning?
+
+        HALT - DSP halt interrupt status
+             write 1: to halt DSP
+                   0: to unhalt DSP
+             read  1: DSP halted
+                   0: DSP not halted
+
+        AI_INT - audio DMA interrupt status
+             write 1: clear AI interrupt pending
+                   0: no meaning
+             read  1: AI interrupt pending
+                   0: no AI interrupt pending
+
+        AI_INT_MSK - audio DMA interrupt mask
+                   1: AI interrupt assertion for CPU allowed
+                   0: AI interrupt assertion for CPU not allowed
+
+        AR_INT - ARAM DMA interrupt status
+        AR_INT_MSK - ARAM DMA interrupt mask
+                   see AI_INT and AI_INT_MSK
+
+        DSP_INT - DSP interrupt status
+        DSP_INT_MSK - DSP interrupt mask
+                   see AI_INT and AI_INT_MSK
+
+        AR_DMA - ARAM DMA state
+             read  1: ARAM DMA in progress
+                   0: ARAM DMA completed
+
+    Bits 10 and 11 are used during DSP initialization, in DSPInit and 
+    __OSInitAudioSystem SDK functions. Meaning is unknown, but such code may
+    be important :
+
+        DSPCR &= ~0x0800            // clear bit11
+        while(DSPCR & 0x0400);      // wait bit10 clear
+
+    Internal Hardware.                
+    ------------------
+
+    See some description of DSP accelerator in US Patent 6,643,744.
+
+    ACSAH: Accelerator ARAM Starting Address High: 0xFFD4
+    Bits    Type    Reset   Description
+    15..11  R       0x0     Reserved
+    10..0   R/W     0x0     Starting address bits 26-16 of ARAM high-word
+                            starting address
+                  
+    ACSAL: Accelerator ARAM Starting Address Low: 0xFFD5
+    Bits    Type    Reset   Description
+    15..0   R/W     0x0     Starting address bits 15-0 of ARAM low-word
+                            starting address
+
+    ACEAH: Accelerator ARAM Ending Address High: 0xFFD6
+    Bits    Type    Reset   Description
+    15..11  R       0x0     Reserved
+    10..0   R/W     0x0     Ending address bits 26-16 of ARAM high-word
+                            ending address
+
+    ACEAL: Accelerator ARAM Ending Address Low: 0xFFD7
+    Bits    Type    Reset   Description
+    15..0   R/W     0x0     Ending address bits 15-0 of ARAM low-word
+                            ending address
+
+    ACCAH: Accelerator ARAM Current Address High: 0xFFD8 (DSP Address)
+    Bits    Type    Reset   Description
+    15      R/W     0x0     Direction, 0: accelerator read ARAM
+                                       1: accelerator write ARAM
+    14..11  R       0x0     Reserved
+    10..0   R/W     0x0     Current address bits 26-16 of ARAM high-word
+                            current address
+
+    ACCAL: Accelerator ARAM Current Address Low: 0xFFD9
+    Bits    Type    Reset   Description
+    15..0   R/W     0x0     Current address bits 15-0 of ARAM low-word
+                            current address
+
+    AMDM: ARAM DMA request Mask: 0xFFEF
+    Bits    Type    Reset   Description
+    15..1   R       0x0     Reserved
+    0       R/W     0x0     DMA request mask,
+                                0: DMA request ARAM is unmasked
+                                1: DMA request ARAM is masked
+
+    (This info is not much valuable, until instruction set is unknown).
+
+    Known DSP Microcodes.
+    ---------------------
+
+    "During system initialization, a runtime audio library is downloaded to
+    audio DSP. This audio library is used by audio DSP to process and mix voices
+    in accordance with commands in a command list generated by main processor.
+    The command list is stored in main memory. Audio DSP retrieves the commands
+    from main memory and executes them in accordance with the runtime audio
+    library downloaded thereto."
+
+    I have seen following audio DSP libs :
+
+        · AX library. Shipped with official SDK from Nintendo.
+        · JAudio library. This library is used in Zelda and some other games
+          from Nintendo. It is not using the same DSP library, as AX.
+
+    I dont know details, but general difference between libraries is in mailbox
+    messages format, and microcode program.
+
+    SDK CARD library also has microcode, to "unlock" memory card.
+
+    --------------------------------------------------------------------------
+
+    Last edited 11 Dec 2004
+    org <kvzorganic@mail.ru>

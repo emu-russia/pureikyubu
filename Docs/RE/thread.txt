@@ -1,0 +1,243 @@
+
+    Some interesting facts :
+    -------------------------
+
+    - threads are rescheduled after every interrupt, in dispatch handler
+    - same priorities are controlled by "round robin"
+
+// ----------------------------------------------------------------------------
+
+struct OSThread
+{
+    // theese offsets are correct (see os/OSContext.h)
+    OSContext       context;    +0
+        {
+            u32 gpr[32];        +0
+            u32 cr;             +128
+            u32 lr;             +132
+            u32 ctr;            +136
+            u32 xer;            +140
+            f64 fpr[32];        +144
+            u32 fpscr_pad;      +400
+            u32 fpscr;          +404
+            u32 srr0;           +408
+            u32 srr1;           +412
+            u16 mode;           +416
+            u16 state;          +418
+            u32 gqr[8];         +420
+            f64 psf[32];        +456
+        } OSContext;
+
+    // all offsets are correct
+    u16             state;      +712
+    u16             attr;       +714
+    s32             suspend;    +716
+    OSPriority      priority;   +720
+    OSPriority      base;       +724
+    void*           val;        +728
+
+    OSThreadQueue*  queue;      +732
+    OSThreadLink    link;   
+        OSThread*  next;        +736
+        OSThread*  prev;        +740
+    OSThreadQueue   queueJoin;
+        OSThread*  head;        +744
+        OSThread*  tail;        +748
+    OSMutex*        mutex;      +752
+    OSMutexQueue    queueMutex;
+        OSMutex*   head;        +756
+        OSMutex*   tail;        +760
+    OSThreadLink    linkActive;
+        OSThread*  next;        +764
+        OSThread*  prev;        +768
+
+    u8*             stackBase;  +772
+    u32*            stackEnd;   +776
+};
+
+// definitions, locals etc
+
+static u32      RunQueueBits;
+static BOOL     RunQueueHint;
+static s32      Reschedule;
+
+OSThreadQueue   RunQueue[32];
+OSThread        IdleThread;             // +256
+OSThread        DefaultThread;          // +1040
+OSContext       IdleContext;            // +1824
+
+// from os/OSLoMem.h
+OSThread *__OSDefaultThread AT_ADDRESS(OS_BASE_CACHED | 0x00D8);
+OSThreadLink __OSLinkActive AT_ADDRESS(OS_BASE_CACHED | 0x00DC);
+OSThread *__OSCurrentThread AT_ADDRESS(OS_BASE_CACHED | 0x00E4);
+
+// ----------------------------------------------------------------------------
+
+// OSThread.c
+
+// TODO : check teh damn offsets
+void __OSThreadInit(void)
+{
+    OSThread    *thread;
+    OSPriority  prio;
+
+    DefaultThread.state     = OS_THREAD_STATE_RUNNING;
+    DefaultThread.attr      = OS_THREAD_ATTR_DETACH;
+    DefaultThread.priority  =
+    DefaultThread.base      = 16;
+    DefaultThread.suspend   = 0;
+    DefaultThread.val       = (void *)0xffffffff;
+    DefaultThread.mutex     = NULL;
+
+    OSInitThreadQueue(&DefaultThread.queueJoin);
+
+    DefaultThread.queueMutex.head = DefaultThread.queueMutex.tail = NULL;
+
+    __OSDefaultThread = &DefaultThread;
+
+    OSClearContext(&DefaultThread.context);
+    OSSetCurrentContext(&DefaultThread.context);
+
+    DefaultThread.stackBase = _stack_addr;
+    DefaultThread.stackEnd  = _stack_end;
+
+    *DefaultThread.stackEnd = OS_THREAD_STACK_MAGIC;
+
+    RunQueueHint = FALSE;
+    RunQueueBits = 0;
+    __OSCurrentThread = &DefaultThread;
+
+    for(prio=OS_PRIORITY_MIN; prio<=OS_PRIORITY_MAX; prio++)
+    {
+        OSInitThreadQueue(&RunQueue[prio]);
+    }
+
+    //
+    // start active threads queue
+    //
+
+    OSInitThreadQueue(&__OSLinkActive);
+
+    if((thread = __OSLinkActive.tail) == NULL)
+    {
+        __OSLinkActive.head = &DefaultThread;
+    }
+    else
+    {
+        thread.next = &DefaultThread;
+    }
+
+    DefaultThread.prev = thread;
+    DefaultThread.next = NULL;
+
+    __OSLinkActive.tail = &DefaultThread;
+
+    OSClearContext(&IdleContext.context);
+
+    Reschedule = 0;
+} 
+
+void OSInitThreadQueue(OSThreadQueue *queue)
+{
+    queue->head = queue->tail = NULL;
+}
+
+OSThread *OSGetCurrentThread(void)
+{
+    return __OSCurrentThread;
+}
+
+void __OSSwitchThread(OSThread *nextThread)
+{
+    __OSCurrentThread = nextThread;
+
+    OSSetCurrentContext(nextThread->context);
+    OSLoadContext(nextThread->context);
+}
+
+BOOL OSIsThreadSuspended(OSThread *thread)
+{
+    return (thread->suspend > 0) ? (TRUE) : (FALSE);
+}
+
+BOOL OSIsThreadTerminated(OSThread *thread)
+{
+    return (thread->state == OS_THREAD_STATE_MORIBUND) ?
+        (
+            TRUE           
+        ) :
+        (
+            (thread->state == 0) ? ( TRUE ) : ( FALSE );
+        ) ;
+}
+
+BOOL __OSIsThreadActive(OSThread *thread)
+{
+    OSThread *active;
+
+    if(thread->state != 0)
+    {
+        return FALSE;
+    }
+
+    //
+    // try to find thread in active threads
+    //
+
+    active = __OSLinkActive.head
+
+    while(active)
+    {
+        // our thread is in active threads queue
+        if(active == thread)
+        {
+            return TRUE;
+        }
+
+        // get next thread from list
+        active = active->linkActive.next;
+    }
+
+    // this thread isn't active
+    return FALSE;
+}
+
+s32 OSDisableScheduler()
+{
+    BOOL enabled = OSDisableInterrupts();
+    s32  count   = Reschedule++;
+    OSRestoreInterrupts(enabled);
+    return count;
+}
+
+s32 OSEnableScheduler()
+{
+    BOOL enabled = OSDisableInterrupts();
+    s32  count   = Reschedule--;
+    OSRestoreInterrupts(enabled);
+    return count;
+}
+
+void SetRun(OSThread *thread)
+{
+    OSThread *__prev;
+
+    thread->queue = &RunQueue[thread->priority];
+
+    if((__prev = thread->queue.tail) == NULL)
+    {
+        thread->queue.head = thread;
+    }
+    else
+    {
+        __prev->link.next = thread;
+    }
+
+    thread->link.prev = __prev;
+
+    thread->link.next = NULL;
+    thread->queue->prev = thread;
+
+    RunQueueBits |= 1 << (31 - thread->priotity);
+    RunQueueHint = TRUE;
+}
