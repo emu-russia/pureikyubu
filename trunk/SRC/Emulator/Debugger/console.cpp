@@ -28,7 +28,7 @@ static BOOL CALLBACK WndEnumProc(HWND hWnd, LPARAM lpParam)
     return TRUE;
 }
 
-static HWND GetConsoleWindow(void)
+static HWND MyGetConsoleWindow(void)
 {
     HWND hwnd = NULL;
     EnumWindows((WNDENUMPROC)WndEnumProc, (LPARAM)&hwnd);
@@ -82,7 +82,7 @@ void con_open()
 
     // create console 
     AllocConsole();
-    con.hwnd = GetConsoleWindow();
+    con.hwnd = MyGetConsoleWindow();
 
     // get input/ouput handles
     con.input = GetStdHandle(STD_INPUT_HANDLE);

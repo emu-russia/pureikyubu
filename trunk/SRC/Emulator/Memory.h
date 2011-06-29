@@ -71,7 +71,7 @@ extern void (__fastcall *MEMWriteDouble)(u32 addr, u64 *data);  // store doublew
 extern u32  (__fastcall *MEMFetch)(u32 addr);
 
 // memory mapper API
-extern u32  (__fastcall *MEMEffectiveToPhysical)(u32 ea, BOOL IR=0); // translate
+extern u32  (__fastcall *MEMEffectiveToPhysical)(u32 ea, BOOL IR); // translate
 void    MEMMap(BOOL IR, BOOL DR, u32 startEA, u32 startPA, u32 length);
 void    MEMDoRemap(BOOL IR, BOOL DR);
 void    MEMRemapMemory(BOOL IR, BOOL DR);

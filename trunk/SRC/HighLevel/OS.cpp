@@ -70,6 +70,7 @@ void OSGetCurrentContext(void)
 
 void OSSaveContext(void)
 {
+    int i;
     HLEHit(HLE_OS_SAVE_CONTEXT);
 
     OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
@@ -78,7 +79,7 @@ void OSSaveContext(void)
     OSSaveFPUContext();
 
     // save gprs
-    for(int i=13; i<32; i++)
+    for(i=13; i<32; i++)
         c->gpr[i] = SWAP(GPR[i]);
 
     // save gqrs 1..7 (GRQ0 is always 0)
@@ -173,6 +174,7 @@ void OSClearContext(void)
 
 void OSInitContext(void)
 {
+    int i;
     HLEHit(HLE_OS_INIT_CONTEXT);
 
     OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
@@ -184,7 +186,7 @@ void OSInitContext(void)
     c->cr = 0;
     c->xer = 0;
 
-    for(int i=0; i<8; i++)
+    for(i=0; i<8; i++)
         c->gqr[i] = 0;
 
     OSClearContext();
@@ -309,9 +311,10 @@ void OSRestoreInterrupts(void)
 // show OSContext data align offsets
 void OSCheckContextStruct()
 {
+    int i;
     OSContext context;
 
-    for(int i=0; i<32; i++)
+    for(i=0; i<32; i++)
         DBReport("GPR[%i] = %i\n", i, (u32)&context.gpr[i] - (u32)&context.gpr[0]);
 
     DBReport("CR = %i\n", (u32)&context.cr - (u32)&context.gpr[0]);

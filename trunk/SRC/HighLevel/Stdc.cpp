@@ -75,8 +75,8 @@ void HLE_memcpy()
     HLEHit(HLE_MEMCPY);
 
     u32 eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
-    u32 paDest = MEMEffectiveToPhysical(eaDest);
-    u32 paSrc = MEMEffectiveToPhysical(eaSrc);
+    u32 paDest = MEMEffectiveToPhysical(eaDest, 0);
+    u32 paSrc = MEMEffectiveToPhysical(eaSrc, 0);
 
 #ifdef  _DEBUG
     ASSERT(paDest == -1, "memcpy dest unmapped");
@@ -103,7 +103,7 @@ void HLE_memset()
     HLEHit(HLE_MEMSET);
 
     u32 eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
-    u32 paDest = MEMEffectiveToPhysical(eaDest);
+    u32 paDest = MEMEffectiveToPhysical(eaDest, 0);
 
 #ifdef  _DEBUG
     ASSERT(paDest == -1, "memcpy dest unmapped");
@@ -145,7 +145,7 @@ void HLE_modf()
 {
     HLEHit(HLE_MODF);
 
-    double * intptr = (double *)(&RAM[MEMEffectiveToPhysical(PARAM(0))]);
+    double * intptr = (double *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
     
     FPRD(1) = modf(FPRD(1), intptr);
     swap_double(intptr);
@@ -156,7 +156,7 @@ void HLE_frexp()
 {
     HLEHit(HLE_FREXP);
 
-    u32 * expptr = (u32 *)(&RAM[MEMEffectiveToPhysical(PARAM(0))]);
+    u32 * expptr = (u32 *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
     *expptr = SWAP(*expptr);

@@ -6,7 +6,7 @@ static char *hexbyte(u32 addr)
     static char buf[4];
 
     // check address
-    u32 pa = MEMEffectiveToPhysical(addr);
+    u32 pa = MEMEffectiveToPhysical(addr, 0);
 
     if(pa != -1)
     {
@@ -25,7 +25,7 @@ static char *charbyte(u32 addr)
     buf[0] = '.'; buf[1] = 0;
 
     // check address
-    u32 pa = MEMEffectiveToPhysical(addr);
+    u32 pa = MEMEffectiveToPhysical(addr, 0);
 
     if(pa != -1)
     {
@@ -48,7 +48,7 @@ void con_update_dump_window()
     con_print_at(2, wind.data_y, "F2");
     con_printf_at(6, wind.data_y, 
         " phys:%08X stack:%08X sda1:%08X sda2:%08X", 
-        MEMEffectiveToPhysical(con.data), SP, SDA1, SDA2
+        MEMEffectiveToPhysical(con.data, 0), SP, SDA1, SDA2
     );
     con_attr(7, 0);
 
@@ -154,7 +154,7 @@ static void con_memedit_reload()
         u32 ea = con.data;
         for(int i=0; i<16 * (wind.data_h-1); i++, ea++)
         {
-            u32 pa = MEMEffectiveToPhysical(ea), val;
+            u32 pa = MEMEffectiveToPhysical(ea, 0), val;
             if(pa != 0xffffffff) MEMReadByte(ea, &val);
             else val = 0;
             medbuf[i] = (u8)val;
@@ -201,7 +201,7 @@ static void con_memedit_apply()
     {
         for(int col=0; col<16; col++, ea++)
         {
-            u32 pa = MEMEffectiveToPhysical(ea);
+            u32 pa = MEMEffectiveToPhysical(ea, 0);
             if(pa != 0xffffffff)
             {
                 u32 val = (medbuf[16*row+col] & medmask[16*row+col]) | 

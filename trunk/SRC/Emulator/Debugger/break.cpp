@@ -28,11 +28,12 @@ DBPoint * con_allocate_bp()
 
 void con_rem_bp(s32 num)
 {
+    int i;
     if(num >= con.brknum) return;
 
     DBPoint * ptr = (DBPoint *)malloc((con.brknum - 1) * sizeof(DBPoint));
     ASSERT(ptr == NULL, "Cannot kill breakpoint.");
-    for(s32 i=0; i<num; i++)
+    for(i=0; i<num; i++)
     {
         ptr[i] = con.brks[i];
     }

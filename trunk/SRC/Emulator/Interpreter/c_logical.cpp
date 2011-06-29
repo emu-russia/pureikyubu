@@ -207,8 +207,8 @@ OP(EXTSHD)
 // ra = n
 OP(CNTLZW)
 {
-    u32 rs = RRS;
-    for(u32 n=0, m=1<<31; n<32; n++, m>>=1)
+    u32 n, m, rs = RRS;
+    for(n=0, m=1<<31; n<32; n++, m>>=1)
     {
         if(rs & m) break;
     }
@@ -224,8 +224,8 @@ OP(CNTLZW)
 // CR0
 OP(CNTLZWD)
 {
-    u32 rs = RRS;
-    for(u32 n=0, m=1<<31; n<32; n++, m>>=1)
+    u32 n, m, rs = RRS;
+    for(n=0, m=1<<31; n<32; n++, m>>=1)
     {
         if(rs & m) break;
     }

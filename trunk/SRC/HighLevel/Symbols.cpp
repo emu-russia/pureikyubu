@@ -172,6 +172,7 @@ static char * strsave(char *str)
 // add new symbol
 void SYMAddNew(u32 addr, char *name, BOOL emuSymbol /* FALSE */)
 {
+    int i;
     // calculate tag
     int tag = gettag(addr);
 
@@ -179,7 +180,7 @@ void SYMAddNew(u32 addr, char *name, BOOL emuSymbol /* FALSE */)
     if(addr == 0) return;
 
     // check if already present
-    for(int i=0; i<work->symcount[tag]; i++)
+    for(i=0; i<work->symcount[tag]; i++)
     {
         // if yes, then replace
         if(work->symhash[tag][i].eaddr == addr)

@@ -116,13 +116,14 @@ static void load_path()
 // called after loading of new file (see Emulator\Loader.cpp)
 BOOL AddSelectorPath(char *fullPath)
 {
+    int i;
     // spell will be checked RTL, so fullPath[0] doesnt crash when fullPath = NULL
     if( (fullPath[0] == 0) || (fullPath == NULL) )
         return FALSE;
 
     fix_path(fullPath);
 
-    for(int i=0; i<usel.pathnum; i++)
+    for(i=0; i<usel.pathnum; i++)
     {
         if(!stricmp(fullPath, usel.paths[i])) break;
     }

@@ -47,6 +47,7 @@ u32 DOLSize(DolHeader *dol)
 // under control of DolphinOS, so just use simple translation mask.
 u32 LoadDOL(char *dolname)
 {
+    int i;
     FILE        *dol;
     DolHeader   dh;
 
@@ -62,7 +63,7 @@ u32 LoadDOL(char *dolname)
               DOLSize(&dh) );
 
     // load all text (code) sections
-    for(s32 i=0; i<DOL_NUM_TEXT; i++)
+    for(i=0; i<DOL_NUM_TEXT; i++)
     {
         if(dh.textOffset[i])    // if offset is 0, then section is empty
         {
@@ -107,6 +108,7 @@ u32 LoadDOL(char *dolname)
 // same as LoadDOL, but DOL is mapped in memory
 u32 LoadDOLFromMemory(DolHeader *dol, u32 ofs)
 {
+    int i;
     #define ADDPTR(p1, p2) (u8 *)((u32)(p1)+(u32)(p2))
 
     // swap DOL header
@@ -116,7 +118,7 @@ u32 LoadDOLFromMemory(DolHeader *dol, u32 ofs)
               ofs, DOLSize(dol) );
 
     // load all text (code) sections
-    for(s32 i=0; i<DOL_NUM_TEXT; i++)
+    for(i=0; i<DOL_NUM_TEXT; i++)
     {
         if(dol->textOffset[i])  // if offset is 0, then section is empty
         {
@@ -434,7 +436,7 @@ void ApplyPatches(BOOL load, s32 a, s32 b)
         if(p->freeze || load)
         {
             u32 ea = MEMSwap(p->effectiveAddress);
-            u32 pa = MEMEffectiveToPhysical(ea);
+            u32 pa = MEMEffectiveToPhysical(ea, 0);
             if(pa == -1) continue;
 
             u8 * ptr = (u8 *)&RAM[pa], * data = (u8 *)(&(p->data));

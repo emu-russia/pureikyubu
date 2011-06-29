@@ -107,6 +107,9 @@ void (__fastcall *c_1[64])(u32 op) = {
 // setup extension tables
 void IPTInitTables()
 {
+    int i;
+    u8 scale;
+
     // build rotate mask table
     for(int mb=0; mb<32; mb++)
     {
@@ -118,7 +121,7 @@ void IPTInitTables()
     }
 
     // build paired-single load scale
-    for(u8 scale=0; scale<64; scale++)
+    for(scale=0; scale<64; scale++)
     {
         int factor;
         if(scale & 0x20)    // -32 ... -1
@@ -148,7 +151,7 @@ void IPTInitTables()
     }
 
     // set all tables to default "not implemented" opcode
-    for(s32 i=0; i<2048; i++)
+    for(i=0; i<2048; i++)
     {
         if(i < 64) c_59[i] = c_NI;
         c_19[i] = c_31[i] = c_63[i] = c_NI;
