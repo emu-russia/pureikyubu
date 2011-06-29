@@ -1,0 +1,1 @@
+void    FontConfigure(HWND hParent);

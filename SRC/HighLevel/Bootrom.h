@@ -1,0 +1,1 @@
+void    BootROM(BOOL dvd);
