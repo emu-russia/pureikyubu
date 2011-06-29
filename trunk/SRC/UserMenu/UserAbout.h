@@ -1,0 +1,1 @@
+void    AboutDialog(HWND hwndParent);

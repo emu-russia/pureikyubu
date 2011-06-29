@@ -1,0 +1,17 @@
+void __fastcall a_LFS(u32 op, u32 pc);
+void __fastcall a_LFSX(u32 op, u32 pc);
+void __fastcall a_LFSU(u32 op, u32 pc);
+void __fastcall a_LFSUX(u32 op, u32 pc);
+void __fastcall a_LFD(u32 op, u32 pc);
+void __fastcall a_LFDX(u32 op, u32 pc);
+void __fastcall a_LFDU(u32 op, u32 pc);
+void __fastcall a_LFDUX(u32 op, u32 pc);
+void __fastcall a_STFS(u32 op, u32 pc);
+void __fastcall a_STFSX(u32 op, u32 pc);
+void __fastcall a_STFSU(u32 op, u32 pc);
+void __fastcall a_STFSUX(u32 op, u32 pc);
+void __fastcall a_STFD(u32 op, u32 pc);
+void __fastcall a_STFDX(u32 op, u32 pc);
+void __fastcall a_STFDU(u32 op, u32 pc);
+void __fastcall a_STFDUX(u32 op, u32 pc);
+void __fastcall a_STFIWX(u32 op, u32 pc);
