@@ -1,0 +1,17 @@
+EXPORTS
+    RegisterPlugin                  @1
+
+    DVDOpen                         @2
+    DVDClose                        @3
+
+    DVDSetCurrent                   @4
+    DVDIsCompressed                 @5
+
+    DVDSeek                         @6
+    DVDRead                         @7
+    DVDOpenFile                     @8
+
+    DVDConfigure                    @9
+    DVDAbout                        @10
+
+    DVDSaveLoad                     @11
