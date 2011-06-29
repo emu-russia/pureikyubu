@@ -320,7 +320,7 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                 *ptrA16 = p;
                 *ptrB16 = ph;
             }
-            else
+            else if(bitdepth == 24)
             {
                 *ptrA++ = (u8)b;
                 *ptrA++ = (u8)g;
@@ -329,6 +329,18 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                 *ptrB++ = (u8)bh;
                 *ptrB++ = (u8)gh;
                 *ptrB++ = (u8)rh;
+            }
+            else    // 32 bpp ARGB format.
+            {
+                *ptrA++ = (u8)b;
+                *ptrA++ = (u8)g;
+                *ptrA++ = (u8)r;
+                *ptrA++ = (u8)255;
+
+                *ptrB++ = (u8)bh;
+                *ptrB++ = (u8)gh;
+                *ptrB++ = (u8)rh;
+                *ptrB++ = (u8)255;
             }
         }
 
