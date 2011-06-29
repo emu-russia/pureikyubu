@@ -1,0 +1,38 @@
+// 0x20
+typedef union
+{
+    struct
+    {
+        unsigned    rid : 8;
+        unsigned    sux : 12;
+        unsigned    suy : 12;
+    };
+    u32     scis0;
+} SU_SCIS0;
+
+// 0x21
+typedef union
+{
+    struct
+    {
+        unsigned    rid : 8;
+        unsigned    suw : 12;
+        unsigned    suh : 12;
+    };
+    u32     scis1;
+} SU_SCIS1;
+
+void GXGetScissor(
+    u32* xOrig, 
+    u32* yOrig, 
+    u32* wd, 
+    u32* ht )
+{
+    SU_SCIS0 s0 = gx.suScis0;
+    SU_SCIS1 s1 = gx.suScis1;
+    
+    *xOrig = s0.sux - 342;
+    *yOrig = s0.suy - 342;
+    *wd = s1.suw - s0.sux + 1;
+    *ht = s1.suh - s0.suy + 1;
+}

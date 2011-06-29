@@ -1,0 +1,1009 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!-- saved from url=(0056)http://www.gamasutra.com/features/20021002/sauer_pfv.htm -->
+<HTML><HEAD><TITLE>Gamasutra - Features - "Shader Integration: Merging Shading Technologies on the Nintendo Gamecube " printer friendly</TITLE><!-- #BeginTemplate "/Templates/printer friendly.dwt" --><!-- #BeginEditable "doctitle" --><LINK 
+href="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/features.css" 
+type=text/css rel=stylesheet><!-- #EndEditable -->
+<META http-equiv=Content-Type content="text/html; charset=iso-8859-1"><LINK 
+href="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/features.css" 
+type=text/css rel=stylesheet>
+<META content="MSHTML 6.00.2600.0" name=GENERATOR></HEAD>
+<BODY vLink=#000000 link=#880000 bgColor=#ffffff><!-- top ad call for 468x60 and 120x60 -->
+<SCRIPT 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/focused_ads.js">
+  
+</SCRIPT>
+<BR><!-- begin main ad tag --><FONT face="Verdana, Arial, Helvetica, sans-serif" 
+size=-2><I><B>Gama Network Presents:</B></I></FONT> 
+<P align=left><IMG height=60 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/gama2001logo2.gif" 
+width=552><BR></P>
+<P align=left><IMG height=5 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/99_body_divider.gif" 
+width=445> </P>
+<P><FONT face="Verdana, Arial, Helvetica, sans-serif" size=+2><!-- #BeginEditable "title" -->
+<P align=center>
+<H1 align=center>Shader Integration: Merging Shading Technologies on the 
+Nintendo Gamecube </H1><!-- #EndEditable --></FONT><BR><FONT 
+face="Arial, Helvetica, sans-serif" size=-1><B><I><FONT 
+face="Verdana, Arial, Helvetica, sans-serif">By</FONT> </I></B></FONT><FONT 
+face="Verdana, Arial, Helvetica, sans-serif" size=-1 font="undefined"><!-- #BeginEditable "by%20line" --><B><I>Florian Sauer and 
+Sigmund Vik</I></B><!-- #EndEditable --></FONT><BR><FONT 
+face="Arial, Helvetica, sans-serif" size=-1><B><FONT 
+face="Verdana, Arial, Helvetica, sans-serif">Gamasutra</FONT></B></FONT><BR><FONT 
+face="Verdana, Arial, Helvetica, sans-serif"><!-- #BeginEditable "issue" --><FONT 
+size=-1><I>October 2, 2002<BR></I></FONT><!-- #EndEditable --><FONT 
+size=-1><BR><B>URL:</B></FONT><B> </B><!-- #BeginEditable "url" --><FONT 
+size=-1><B>http://www.gamasutra.com/features/20021002/sauer_01.htm</B></FONT><!-- #EndEditable --></FONT>
+<P></P><!-- #BeginEditable "main%20content" -->
+<P>Rendering polygons is not as easy as it used to be, the reason being the vast 
+amount of different rendering techniques, methods and algorithms available. Not 
+only is choosing the right ones a problem, even worse, all that are selected 
+need to work together. This means, one cannot select algorithms just based on 
+their visible results on screen, but one must also have a look at the resources 
+needed. Input and output format and values need to match when one rendering 
+method provides the input for another. Therefore, different techniques need to 
+be integrated, i.e. they must be made compatible. Not only by means of 
+input/output values, but also by means of their resource usage and their general 
+environment. All must be considered and matched. Sometimes however, the 
+selection of one particular rendering method comes with such a heavy resource 
+penalty (i.e. fill rate, transform rate, storage space, cpu-time, etc.) that 
+some other, already selected and implemented methods, need to be simplified 
+and/or revised so that the added method integrates well into the general 
+framework. At some point, one figures, that there are some algorithms, which 
+simply do not work together. In that case, only one may be used, the other one 
+needs to be replaced by a more compatible method.</P>
+<P>All those problems hint that a general approach to shading is quite valuable 
+and helps in making the right decisions. The general approach of Star Wars: 
+Rogue Leader on the Nintendo Gamecube is described and the decisions made based 
+on it, are outlined. This includes sketching down most of the shading 
+algorithms, their specific implementations, and noting some technical details; 
+as well as various clever bits and pieces.</P>
+<P>The second part of this features introduces the application of the principles 
+introduced to the area of landscape shading/texturing.<B> </B></P><B>
+<H2>Potential Algorithms</H2></B>
+<P>Technically many shading methods work on current generation hardware as on 
+the Nintendo<BR>Gamecube. These methods include (but are not limited to):</P>
+<UL>
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>dynamically lit 
+  polygons with global and local lights specular highlights</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>illumination 
+  maps</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflection 
+  mapping</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>emboss mapping 
+  (shift and subtract of a height field)</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump mapping 
+  (per pixel calculations for diffuse, specular and reflective 
+  components)</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>projected 
+  shadows</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" 
+  size=-1>self-shadowing</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>shadow 
+  volumes</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>projected 
+  reflections</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>layered 
+  fog</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>polynomial 
+  texture mapping</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>displacement 
+  maps</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>multiple 
+  texture mapping</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>custom 
+  dithering</FONT> </LI></UL>
+<P>For each of those methods, one is guaranteed to find a couple of 
+implementations on various platforms and many references in books and scientific 
+papers. The problem is however, that all those methods are looked at on their 
+own. One has to find a common environment to integrate them. This process is 
+(naturally) not hassle free and leads to certain limitations.</P>
+<H2>Limitations</H2>
+<P>The problems that can arise during integrating (or just using/implementing) 
+different shading methods fall into four different classes: algorithm 
+compatibility, hardware limitations, performance metrics, and memory 
+limitations.</P>
+<P>Some shading methods are not compatible. It can be as simple as a 
+self-shadowing pre-render pass producing eight bit z-depth values and a shadow 
+projection method requiring eight bit alpha values. In addition, sometimes one 
+algorithm needs geometry data being preprocessed in a very specific way to be 
+feasible on the target, while another needs a completely different 
+representation of the same data. Worst case here would be allocating twice the 
+storage amount, which is not the best solution at all.</P>
+<P>All hardware has its limits. They can be as minor as the maximum number of 
+constant color registers in the texture environment (TEV) and as major as the 
+fact that there is just one destination-alpha (stencil) buffer. However, if one 
+has five shading methods, which all are using one constant color register to 
+combine colors and the hardware supports just four, one has a problem. This can 
+only be resolved in cutting a feature or in clever reuse of the color registers 
+(i.e. making some colors just intensities and therefore end up with three color 
+registers plus four intensity registers (rgba := four intensity values)). The 
+flexible design of the Nintendo Gamecube hardware allows for many tricks like 
+that, where one limited resource is substituted by another one with almost no 
+additional cost. However, if you want to use two shading methods which both are 
+based on a stencil buffer approach, you can’t introduce any tradeoff, since 
+there is just one of it. The rendering need to be done in two passes or some 
+alternative method needs to be used.</P>
+<P>Each system has a specific performance metric (and it will never change). 
+Determining which operations are relatively cheap and which are slightly 
+expensive is a basic requirement to figure out what can be done and what will 
+hurt in the large-scale application of a specific method. Luckily, the Nintendo 
+Gamecube is powerful and by being so, allows for many state of the art 
+techniques. Fill rate is not a problem and due to the eight textures that can be 
+applied in one go (i.e. in one render pass), the requirements to the transform 
+unit are not as elaborate as on other architectures. As another advantage, the 
+PowerPC CPU performs well and memory access is very fast. Moreover, when it 
+really should come down to hands-on assembly, one can find a lot of literature 
+and examples due to the wide application of the CPU family in other areas. 
+However, even the tightest assembly loop can’t process infinite amounts of data. 
+If a shading method requires elaborate pre-render passes and pre-computing per 
+frame on the CPU, the amounts of polygons is limited. Also, should complicated 
+shading make it a requirement that there is more than one pre-render pass per 
+object, things can quickly get slow. In that case, it can be beneficial to merge 
+two of those passes into one, if the selected algorithms allow that (and that’s 
+indeed possible when pre-rendering for self-shadowing and projected 
+shadows).</P>
+<P>Almost the same goes without much further discussion for memory storage. It 
+is another inherently limited resource. Shading methods that require many 
+additional texture channels and/or pre-render buffers lose against methods that 
+don’t have such requirements.</P>
+<H2>General approach</H2>
+<P>As outlined before, a common environment can give the required structure to 
+host the different shading methods that are about to be used at once. Of course, 
+it’s quite difficult to plot such an environment beforehand without knowing 
+exactly where the problems are. Therefore, this is an iterative process for the 
+novice. The two major points, which guided Rogue Leader’s shading subsystem are 
+consistent lighting for all geometry and a consistent illumination model.</P>
+<P>The fact, that all geometry was lit the same in a consistent way helped 
+tremendously to achieve the required look. By doing so, there was no room for 
+lighting error, which may have been introduced if things where partly pre-lit 
+and party dynamically lit. It’s always very hard to keep things, once they go 
+different ways, consistent. In addition, one directional and one ambient light 
+on the Nintendo Gamecube are guaranteed to be computationally for free. 
+Therefore, that decision does not impose a performance penalty (strictly 
+speaking, as soon as one starts to use more complex shader setups, even more 
+hardware lights come at no performance penalty, because the graphics processor 
+computes light values in parallel to other things).</P>
+<P>Because of that approach, color per vertex is only used as pure paint. This 
+means that a model may be textured completely just using intensity textures 
+(grayscale) and color will be applied by painting vertex colors. To compute the 
+material color, both values are multiplied together. The result is then exposed 
+to the lighting calculations.</P>
+<P>Local lights are all computed per vertex and are added ‘on-demand’, i.e. if 
+an object intersects with a local light’s bounding sphere, the appropriate 
+lights are fetched and the lighting calculations are enabled.</P>
+<P>Equally important to the consistent lighting of all geometry is the usage of 
+a consistent illumination model. Computations for different shaders need to be 
+done in the same consistent manner so the results are comparable and do not 
+depend on specific features (e.g. bump mapping, illumination maps, specularity, 
+etc.) being enabled or not. </P>
+<P>Specifically, the classification of lights into global (directional and 
+ambient) and local (point and spot) lights helps with specific shadowing 
+problems. The hardware supports this quite nicely by having two color channels 
+(GX_COLOR0 and GX_COLOR1) that can be routed around independently in the texture 
+environment. </P>
+<P>Another strict distinction is helpful. Color computations are separated in 
+material color and light color computations. The first takes place in the models 
+own domain whereas the second one relies on the game’s light database and the 
+shadowing techniques used. In fact, the shading subsystem uses many different 
+methods to compute light values (c.f. Lighting Pipeline). </P>
+<P align=center><IMG height=137 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_01.gif" 
+width=550><BR><B>Figure 1: Basic illumination model. </B></P>
+<P>Figure1 illustrates the basic flow of color values through the texture 
+environment. This flow is the same for all different shaders used (i.e. diffuse 
+shader, phong shader, lambert shader, reflective shader, etc.). Shading is a 
+two-fold problem Technically speaking, shading polygons has to deal with two 
+different problem domains, which are solved at different times during runtime. 
+Those are configuration of the texture environment (shading subsystem) and light 
+collection and selection (lighting pipeline).</P>
+<P align=center><IMG height=171 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_02.gif" 
+width=550><BR><B>Figure 2: Control flow during rendering. </B></P>
+<P>
+<H2>Shading is a Two-Fold Problem</H2>
+<P>Technically speaking, shading polygons has to deal with two different problem 
+domains, which are solved at different times during runtime: configuration of 
+the texture environment (shading subsystem) and light collection and selection 
+(lighting pipeline) The reason for that distinction and the problem that comes 
+with it are illustrated in Figure 2. It’s quite possible that a specific shader 
+is used for a couple of objects that are rendered sequentially (i.e. a large 
+number of objects of the same kind). This results in the shader only once being 
+translated into a sequence of GX commands, Nintendo’s graphics API, but the 
+local lights for each object of course can be different. All of the objects will 
+very likely be at different world positions and therefore be exposed to 
+different local lights or even no local lights at all. During rendering, the 
+lighting pipeline now has to take care that GX knows about the correct lights 
+and needs to issue the required sequence of commands.</P>
+<P>The reason for that distinction and the problem that comes with it are 
+illustrated in figure 2. It’s quite possible that a specific shader is used for 
+a couple of objects that are rendered sequentially (i.e. a large number of 
+objects of the same kind). This results in the shader only once being translated 
+into a sequence of GX commands, Nintendo’s graphics API, but the local lights 
+for each object of course can be different. All of the objects will very likely 
+be at different world positions and therefore be exposed to different local 
+lights or even no local lights at all. During rendering, the lighting pipeline 
+now has to take care that GX knows about the correct lights and needs to issue 
+the required sequence of commands.</P>
+<H2>Shading subsystem</H2>
+<P>To clarify the term shader, Figure 3 shows the data structure that defines 
+one. A shader is a data structure that describes “how to compute colors” for 
+rendering polygons. The term building a shader refers to the process of 
+transforming such a data structure into a stream of GX commands, which configure 
+the hardware to produce the desired output. One should note that during the 
+shader build many features are activated dynamically. For instance, if an object 
+should get tinted a color multiplication is added to the final output color 
+whatever shader was setup before. In addition, layered fog adds another stage at 
+the end of the color computation that blends depending on the pixel’s height in 
+world space and distance from the camera in eye space between a fog color and 
+the original pixel color. Of course, it would be nice, if the complete shader 
+subsystem would be dynamic like that. However, experience shows that many 
+shaders can only be built by hand into an optimal (i.e. least cycle usage) 
+setup.</P>
+<P><FONT face="Courier New, Courier, mono">typedef struct tShader 
+{<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;char 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mName[16]; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// shader name, as in 
+Maya...<BR><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tShaderLimit 
+&nbsp;&nbsp;&nbsp;&nbsp;mShaderLimit; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// shading limit, i.e. 
+type...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tShaderFlags 
+&nbsp;&nbsp;&nbsp;&nbsp;mShaderFlags; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// additional 
+flags...<BR><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tShaderColor 
+&nbsp;&nbsp;&nbsp;&nbsp;mColor; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 
+material color, if used...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tShaderColor 
+&nbsp;&nbsp;&nbsp;&nbsp;mSpecularColor; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 
+specular color, if used...<BR><BR><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f32 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mReflectivity; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// reflectivity 
+strength...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f32 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mEmbossScale; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// emboss 
+depth...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f32 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mMovieFade; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// movie shader 
+weight...<BR><BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tShaderDataDescriptor 
+&nbsp;&nbsp;mDataInfo; &nbsp;&nbsp;&nbsp;// texture info...<BR>} 
+tShader;</FONT></P>
+<P align=center><B>Figure 3: A ‘tShader’ data structure describing how to render 
+polygons.</B></P>
+<P>Mostly the structure’s members describe various properties of a shader (like 
+the material color, the specular color and cosine power for phong shaders, the 
+reflectivity for reflective phong shaders, etc.). The most important member is 
+the mShaderLimit , which describes what kind of shading is actually performed. 
+The term limit illustrates at what point the color computation actually should 
+stop. Roughly, the following shading limits were implemented:</P>
+<UL>
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>diffuse</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>illuminated 
+  mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>phong</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>phong 
+  mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>phong mapped 
+  gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>phong 
+  illuminated mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>phong 
+  illuminated mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflective 
+  phong</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflective 
+  phong mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflective 
+  phong mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflective 
+  phong illuminated mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>reflective 
+  phong illuminated mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump 
+  mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump 
+  illuminated mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump phong 
+  mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump phong 
+  mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump phong 
+  illuminated mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump phong 
+  illuminated mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump reflective 
+  phong mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump reflective 
+  phong mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump reflective 
+  phong illuminated mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>bump reflective 
+  phong illuminated mapped gloss</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>emboss 
+  mapped</FONT> 
+  <LI><FONT face="Verdana, Arial, Helvetica, sans-serif" size=-1>emboss 
+  illuminated mapped</FONT> </LI></UL>
+<P>This clearly shows, that an automatic way of generating code to generate 
+shader setups would be very nice, since all the shaders listed above need to be 
+maintained. However, as mentioned above, a couple of features where added in 
+automagically already, like self-shadowing and tinting for example.</P>
+<P><FONT face="Courier New, Courier, mono">typedef struct tConfig 
+{<BR>&nbsp;&nbsp;&nbsp;&nbsp;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &nbsp;// 
+resources currently allocated...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GXTevStageID 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stage; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 
+current tevstage...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GXTexCoordID 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coord; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 
+current texture coordinate...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GXTexMapID 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;map; 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// current texture 
+map...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+// ...<BR><BR>} tConfig;<BR><BR>void shadingConfig_ResetAllocation(tConfig 
+*pConfig);<BR>void shadingConfig_Allocate(tConfig *pConfig, s32 stages, s32 
+coords, s32 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;maps);<BR>void 
+shadingConfig_Flush(tConfig *pConfig);</FONT></P>
+<P align=center><B>Figure 4: Data structure ‘tConfig’ describing resource 
+allocation.</B></P>
+<P>Since a shader setup is built by various functions, one needs to keep track 
+of various hardware resources. For example, texture environment stages, texture 
+matrices, texture coordinates, texture maps and such need to be allocated in a 
+sequential manner. Some resources require special order requirements; texture 
+coordinates for emboss mapping always need to be generated last. Therefore, 
+infrastructure is needed to deal with the allocation problems. The solution here 
+is another tiny data structure <FONT 
+face="Courier New, Courier, mono">tConfig</FONT> (c.f. figure 4).</P>
+<P>This structure holds information about the resources used during setup. 
+Before any resources are used, the allocation information is reset using the 
+<FONT face="Courier New, Courier, mono">shadingConfig_ResetAllocation();</FONT> 
+call. For each tevstage, texture coordinate and etcetera used, a call to <FONT 
+face="Courier New, Courier, mono">shadingConfig_Allocate();</FONT> is made, 
+which marks the corresponding resources as being allocated. When one now calls a 
+subroutine that inserts additional GX commands, the tConfig structure is passed 
+along as a parameter. The called function can now have a look at the structure’s 
+members and knows what tevstage, texture coordinate and etcetera to use next. 
+When the shader construction is done, the function <FONT 
+face="Courier New, Courier, mono">shadingConfig_Flush();</FONT> is called, which 
+actually passes the number ofresources used to the hardware. Error checking can 
+be preformed here as well.</P>
+<P align=center><IMG height=367 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_05.gif" 
+width=550><BR><B>Figure 5: Shading subsystem client control flow. </B></P>
+<P>The shading subsystem needs to maintain a global GX state as well. This is 
+because the shading subsystem is not the only client to GX. Other parts of the 
+game program will issue GX commands and setup their own rendering methods in 
+specific ways. However, since the shading subsystem has to initialize quite a 
+bit of GX state to work properly, a protocol needs to be introduced to reduce 
+the amount of redundant state changes (c.f. figure 5). The straightforward 
+solution of initializing the complete GX state as needed by the shading 
+subsystem is of course way to slow. A boolean variable keeps track if the 
+shading subsystem has initialized GX for its usage. Every time it is about to be 
+used, a function <FONT 
+face="Courier New, Courier, mono">shading_PreRenderInit();</FONT> is called. 
+This function checks the flag. If it’s false GX is initialized and the flag is 
+set to true. The next time some shading needs to be done, the boolean is already 
+true and the setup can be skipped. On the other hand, when other parts of the 
+game program do some ‘hard coded’ GX usage, they need to reset that boolean by 
+calling <FONT face="Courier New, Courier, mono">shading_GxDirty();</FONT>.</P>
+<P>Finally, the shading subsystem keeps books about various default settings for 
+the texture environment. If subsequent shader setups share some settings that 
+are the same, a couple of GX commands can be skipped, since it is in an already 
+known state. If another shader is setup, the function 
+shading_CleanupDirtyState(); cleans the marked dirty state and leaves GX in the 
+expected way behind. Those optimizations helped quite a bit in the end to 
+maintain a reasonable frame rate.</P>
+<H2>Lighting Pipeline</H2>
+<P>The actual purpose of the so-called lighting pipeline is to deliver light 
+color values per shaded pixel. As mentioned before, all lights are classified 
+into either global or local lights and the methods of computing light color 
+values vary. The results of global lighting can be computed in three different 
+ways: per vertex, per pixel using emboss mapping, and per pixel using bump 
+mapping.</P>
+<P>All three of these methods come in two variants one with self-shadowing and 
+one without. When self-shadowing is enabled, the directional component of the 
+global light is not added to the output color value if the pixel to be shaded 
+falls in shadow. The ambient color is the only term that then contributes to the 
+global lighting. The conditional add is facilitated using the two different 
+color channels <FONT face="Courier New, Courier, mono">GX_COLOR0</FONT> and 
+<FONT face="Courier New, Courier, mono">GX_COLOR1</FONT>. The first one carries 
+the directional component of the global light whereas the second one is assigned 
+to all local lights and the ambient term.</P>
+<P>Local lights are always computed per vertex using the lighting hardware and 
+are fed into <FONT face="Courier New, Courier, mono">GX_COLOR1</FONT>. Note that 
+both channels are combined when self-shadowing is not enabled. There is a tiny 
+problem when color per vertex is used for painting and two channels are used. 
+The hardware is not able to feed one set of color per vertex data without 
+sending the same data twice into the graphics processor. Therefore, one needs to 
+decide if the local lights are computed unpainted (which only leads to visible 
+artifacts, if local lights are contributing) or if color per vertex data is sent 
+twice into both color channels, eating up vertex performance. Experience showed 
+that not painting the local lights was quite ok, and nobody really noticed.</P>
+<P>The control flow of the lighting pipeline is a bit tricky. The problem here 
+is that at an object’s rendering time all local lights possibly intersecting the 
+object’s bounding sphere, need to be known (c.f. figure 6).</P>
+<P align=center><IMG height=304 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_06.gif" 
+width=550><BR><B>Figure 6: Lighting pipeline, control flow. </B></P>
+<P>This requires the creation of a local light database that holds information 
+about all local lights influencing the visible geometry. The game program needs 
+to add all local lights to the database before any rendering takes place. Care 
+needs to be taken when it comes down to culling lights for visibility against 
+the view frustum. The reason is that the distance attenuation function as used 
+per default by GX has no precise cutoff point and therefore setting up a point 
+light with a 50m radius does not mean that no light will contribute to any 
+polygons starting at any distance &gt; 50m. Light will pop on and off if the 
+lights are collected by software culling assuming a 50m radius. A fludge factor 
+of 2.0f proved to be quite successful here.</P>
+<P>Once all visible lights are added, rendering can begin. First, all logical 
+lights are transformed into an array of <FONT 
+face="Courier New, Courier, mono">GXLightObj</FONT> objects. This array is 
+double (or triple) buffered to let the graphics processor always have a private 
+copy to read from while the CPU is generating the array for the next frame. An 
+array is constructed since each object is likely to receive it’s own set of 
+local lights. Instead of storing many copies of <FONT 
+face="Courier New, Courier, mono">GXLightObj</FONT> objects in the FIFO using 
+<FONT face="Courier New, Courier, mono">GXLoadLightObjImm();</FONT> we instruct 
+the graphics processor to fetch lights indirectly from the constructed array 
+using the faster <FONT 
+face="Courier New, Courier, mono">GXLoadLightObjIdx();</FONT> function.</P>
+<P>As rendering of an object starts, all intersecting lights are collected (up 
+to a maximum number of eight lights) and loaded from the array. Note that one 
+should remember which lights are loaded to avoid unnecessary loads. The light 
+mask is computed (an eight bit value as sent to <FONT 
+face="Courier New, Courier, mono">GXSetChanCtrl();</FONT> ) that describes what 
+lights actually contribute to the lighting calculation in hardware. This mask 
+value is the interface between the shading subsystem and the lighting pipeline. 
+This is because <FONT face="Courier New, Courier, mono">GXSetChanCtrl();</FONT> 
+not only specifies what lights are enabled but also how color per vertex is used 
+and what kind of light calculation is performed. Therefore, parameters to this 
+GX call are coming in from the two different subsystems at different times. By 
+storing the light mask value as an easy accessible variable and making sure, 
+that no bogus values are loaded in case of the first shader setup (i.e. when no 
+lights have been collected yet), this problem can be solved.</P>
+<H2>Description of Shading Methods</H2>
+<P>In the next couple of sections, many of the shading methods used in Star 
+Wars: Rogue Leader are briefly described. Specific aspects on how they integrate 
+in the shading environment are discussed in detail. Additional information can 
+be found in the Nintendo Gamecube SDK.</P>
+<P align=center><IMG height=108 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_07.gif" 
+width=550><BR><B>Figure 7: Illumination mapping. </B></P>
+<H2>Method 1: Illumination Maps</H2>
+<P>Illumination maps are used by the artists when they want specific areas to be 
+self-illuminated. Good examples are lights of small windows. Illumination 
+mapping requires an additional texture, which typically is just an intensity 
+texture (one for four bits). Note that strictly speaking, an illumination map 
+could be colored, however, since the white of the illumination map will be 
+multiplied by the texture color of the color map anyways, colored illumination 
+maps can be circumvented. After the light calculation is done, the 
+self-illuminating term is fetched from a texture and simply added to the light 
+color (c.f. figure 7).</P>
+<P align=center><IMG height=284 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_08.gif" 
+width=312><BR><B>Figure 8: Texture used for specular highlights.</B> </P>
+<H2>Method 2: Specular Highlights</H2>
+<P>Specular highlights are a very important feature visually. The shiny 
+reflection of light on surfaces gives the eye another hint about where in the 
+scene light sources are located and adds to the overall realism. Technically 
+speaking, specular highlights are relatively simple to implement. The light 
+database needs to be able to determine the dominant light direction, which is, 
+in most cases, derived from one of the directional lights (i.e. from the 
+brightest one).</P>
+<P>There are two different methods available to implement specular highlights. 
+The lighting hardware can compute a specular term per vertex. This is quick to 
+setup and the results are quite reasonable with highly tessellated geometry, but 
+as always, computing something per pixel always gives results that are more 
+pleasant. Therefore generating texture coordinates per vertex and looking up a 
+specular highlight texture (c.f. figure 8) looks better.</P>
+<P align=center><IMG height=166 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_09.gif" 
+width=550><BR><B>Figure 9: Specular highlights.</B> </P>
+<P>The generation of texture coordinates is done in two steps (c.f. section 
+“Texture Coordinate Generation”). First, the normal data is transformed from 
+model into eye space using a texture matrix. Note that this step is common for 
+all geometry and provides the basis for all other shading methods as well. This 
+has the benefit that the interface to the geometry engine (computing skinned 
+meshes, etc.) can be kept fairly simple and interdependencies between both 
+subsystems are reduced. The transformed normals are now transformed again into 
+using the “eye_normal to specular_coords” matrix using the dual transform 
+feature of the hardware. This matrix depends on the cosine power (i.e. size) of 
+the material being rendered and the direction of the light (also in eye space), 
+c.f. code fraction 1 for more details. Since the specular texture is so 
+frequently used, one should consider preloading them into the hardware texture 
+cache permanently.</P>
+<H2>Method 3: Reflection/Environment Mapping</H2>
+<P>A mapping method that is quite similar to specular mapping is environment 
+mapping. The surroundings of an object are reflecting from its surface. It’s not 
+feasible with current generation hardware to implement this correctly. This is 
+because a ray tracing approach would be required; which can’t be done in 
+consumer hardware. Instead, a generic view of the scene is used that is rendered 
+by an artist or generated during startup just once. However, this view 
+(consisting of six texture maps, one in each direction) needs to be converted 
+into a spherical environment map. This generated map is used to lookup pixels 
+during runtime. This map needs to be regenerated as soon as the camera 
+orientation is changing. The Nintendo Gamecube SDK contains examples on how to 
+do so.</P>
+<P align=center><IMG height=171 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_10.gif" 
+width=550><BR><B>Figure 10: Environment mapping.</B> </P>
+<P>Code fraction 2 shows how to setup the second pass matrix in this case. In 
+addition, some care needs to be taken on how the computed environment color is 
+used and how it interacts with the computed light color for the same pixel (i.e. 
+fragment). A linear interpolation between those two values solves the problem 
+and gives control over how reflective a material is. Note that highly reflective 
+surfaces will get almost no contribution from the computed light color (which is 
+correct, since the surface reflects the incoming light), but since color per 
+vertex painting is done via multiplication in the lighting hardware, the painted 
+colors will be removed. This is an example of bad shader integration, but since 
+the solution to the problem (passing color per vertex values unmodified and 
+multiplying in the texture environment) is a significant performance hit it also 
+introduces other problems. The trade off seems quite reasonable.</P>
+<H2>Method 4: Emboss mapping</H2>
+<P>Are more subtle but nevertheless important method is bump mapping where a 
+height field mapped onto a surface describes its elevation per pixel without 
+adding geometric data. On the Nintendo Gamecube two different methods are 
+straightforward to implement. Emboss mapping computes light values per pixel. It 
+is not possible to compute “bumped” specular highlights and reflection with this 
+method. “Real” per pixel bump mapping using the indirect texture unit is capable 
+of doing so (c.f. method 5). </P>
+<P>The hardware has direct support for emboss mapping. The height field is 
+looked up twice, first with the original set of texture coordinates as generated 
+by the texturing artist. Afterwards with a slightly different set of texture 
+coordinates as generated by the lighting hardware, which shifts the original 
+texture coordinates depending of the direction of the light. Note that the 
+amount of shifting (and therefore the resulting depth impression) comes from the 
+scale of the normal matrix as loaded with GXLoadNrmMtxImm(); . This means that 
+the matrices need to be scaled to the desired values. This does not affect 
+lighting calculation since the normals are renormalized for light computations 
+anyways, but it does mean that one mesh (i.e. set of polygons rendered with one 
+set of matrices) can have only one depth value for emboss mapping and imposes a 
+interdependency between the shading and geometry subsystems. The resulting 
+height values are subtracted and multiplied by the computed light color (c.f. 
+figure 11).</P>
+<P align=center><IMG height=154 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_11.gif" 
+width=550><BR><B>Figure 11: Emboss mapping.</B> </P>
+<P>Emboss mapping does not support the computation of specular highlights. 
+However, one can just ignore the emboss map and add non-bumpy specular 
+highlights. Nevertheless, by doing so, the dark edges of the bumpy surface will 
+be removed (due to the adding) and the effect falls apart to some extent (not to 
+mention that the specular highlights by itself ignore the height field 
+completely).</P>
+<P>Finally, emboss mapping (as bump mapping) needs binormals to describe the 
+orientation of<BR>the height field on the surface. Since they need to be 
+transformed the same way the normals<BR>are transformed this can add a bit 
+overhead.</P>
+<H2>Method 5: Bump Mapping</H2>
+<P>Visually better results can be achieved using “real” bump mapping as 
+supported with the indirect texture unit. Using this method the hardware 
+computes a normal per pixel and uses that to lookup different textures including 
+a diffuse light map (containing all directional and ambient lights), an 
+environment map (as described in method 3) and even a specular map. Thereby all 
+those shading effects are computed correctly in a bumped way. However, since the 
+global lights are now fetched from a texture instead of being computed by the 
+lighting hardware, the texture needs to be generated dynamically as soon as the 
+camera orientation and/or the lights change (again, one can find an example on 
+how this is done in the demo section of the Nintendo Gamecube SDK).</P>
+<P>In addition, the height field needs to be pre-processed into a “delta U/delta 
+V texture” (which is an intensity/alpha texture with four bit per component) and 
+therefore needs (without further measures) twice as much memory for texture 
+storage than the emboss mapping method described in method 4.</P>
+<P align=center><IMG height=167 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_12.gif" 
+width=550><BR><B>Figure 12: Bump mapping.</B> </P>
+<P>The delta-texture is fed into the indirect unit where it is combined with the 
+surface normals, describing the orientation of the bump map. In the last stage 
+of this three-cycle setup, the diffuse light map is looked up and the result is 
+the bumped light color for the global lights. Note that the local lights are 
+still computed per vertex (because they have a location and the normal used as 
+input data does not give this information) and are added later in the texture 
+environment.</P>
+<P align=center><IMG height=256 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_13.gif" 
+width=550><BR><B>Figure 13: Actions in the texture environment and <BR>the 
+indirect texturing unit during bump mapping.</B> </P>
+<P>Since the computation of the perturbed normal is so elaborate, doing more 
+than one lookup with the computation result amortizes the effort slightly. 
+Specular highlights and environment reflections can be looked up in subsequent 
+stages. The lookup of the bumped specularity is a bit tricky, since the 
+coordinates are kept in the indirect unit and passed from stage to stage. 
+However, they are already denormalized and this is what makes it tricky (c.f. 
+code fraction 3). The processes in the texture environment and the indirect 
+texture unit are described in figure 13.</P>
+<H2>Method 7: Self Shadowing</H2>
+<P>Per-object self-shadowing can be realized quite nicely on the Nintendo 
+Gamecube. The benefit of doing self-shadowing on a per object basis is that one 
+does not need to be concerned so much with precision. Almost all reasonably 
+sized (e.g. in diameter) objects can be represented nicely in an eight-bit Z 
+texture as needed by the algorithm. To figure out if a pixel falls within shadow 
+or not the object is pre-rendered from the viewpoint of the main directional 
+light. “Viewpoint” means, the point that is reached when going backwards in the 
+light direction from the center point of the model in question (note that a 
+directional light by itself does not have a point of origin). This pre-render 
+step is done using an orthogonal projection and the top/down, left/right and 
+near/far planes have to be set in a way that the texture area used for 
+pre-rendering is used to its maximum extend (i.e. deriving this planes from the 
+bounding sphere). After the pre-rendering is complete, the Z buffer is 
+grabbed.</P>
+<P>Later, when the object is rendered into the view, each rendered pixels 
+coordinates are projected into texture coordinates of the grabbed Z texture. 
+Using a ramp texture, the distance of each pixel to the imaginary light point is 
+measured and the resulting two values are compared. Depending on the outcome of 
+this test, the rendered fragment either falls into shadow or not. Local lights 
+are passed through a second color channel and added conditionally to the global 
+colors (c.f. figure 14). Yet again, the Nintendo Gamecube SDK contains examples 
+that describe the technical details.</P>
+<P align=center><IMG height=184 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_14.gif" 
+width=550><BR><B>Figure 14: Self shadowing.</B> </P>
+<H2>Method 8: Projected Shadows</H2>
+<P>A similar technique is projecting shadows. In this case, the shadow is not 
+cast on the object in question itself but onto receiver geometry. Once again, 
+the object is pre-rendered from the imaginary point of light using an orthogonal 
+projection (same as in method 7). However, now one does not grab Z values but 
+the outline of the object in the color buffer. This outline is rendered in a 
+second pass on the receiver geometry (using the receiver geometry itself and 
+compute texture coordinates from its vertices). Strictly speaking, with the 
+texturing capabilities there is no need to render the receiver geometry in a 
+second pass, however, allowing multiple shadows to be cast on one piece of 
+receiving geometry would add much to the complexity of the algorithm. 
+Nevertheless, if the number of shadows is fixed, one should render them in a 
+single go to save on transform time (c.f. figure 15 for more details).</P>
+<P>This approach results in a big requirement for the geometry subsystem. It 
+needs to be able to return chunks of geometry. Of course, one just needs to 
+re-render those polygons that are affected by the shadow outline. Fast methods 
+of constructing these chunks are an important requirement.</P>
+<P align=center><IMG height=142 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_15.gif" 
+width=550><BR><B>Figure 15: Projected shadows.</B> </P>
+<P>During the second render pass, one has two options to shade the fragments: 
+darkening the pixels that fall in shadow, or re-rendering the pixels as 
+described by the receivers material properties omitting global directional 
+light.<BR><BR>It is worth noting that the pre-render passes for the projected 
+shadows can be easily combined with the pre-rendering passes required for 
+self-shadowing. This is because both render the object from the same virtual 
+point of light. Instead of rendering one depth map and another outline just the 
+depth map is rendered and grabbed. Nothing changes for the self-shadowing 
+technique. However, the during rendering the projected shadows onto the receiver 
+geometry the actual Z values are fetched and compared against 0xff, which 
+represents the far clipping plane during the pre-render pass for self-shadowing. 
+If the fetched depth is &lt; 0xff the receiver geometry falls into shadow 
+otherwise it is exposed to light.</P>
+<H2>Method 9: Projected Reflections</H2>
+<P>Projected Reflections are very similar to projected shadows (c.f. figure 16). 
+A receiving piece of geometry is re-rendered here as well. In this case, the 
+object is pre-rendered from an imaginary viewpoint, which the object would be 
+looked at if the camera would be mirrored at the reflective plane. In this case, 
+however, it is important that a perspective projection is used to project the 
+geometry onto the receiving geometry.</P>
+<P>If the reflective geometry is intersecting the mirroring plane (as it could 
+be the case with water being the reflective element in a scene), pixels falling 
+underneath that plane must be carefully cut-off. Outputting an alpha of zero for 
+those pixels (using the same techniques as described in method 10, layered fog) 
+and configuring GX to skip alpha = 0 pixels does the job.</P>
+<P align=center><IMG height=145 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_16.gif" 
+width=550><BR><B>Figure 16: Projected reflections.</B> </P>
+<H2>Method 10: Layered Fog</H2>
+<P>To compute layered fog (e.g. fog, which changes its intensity not only based 
+on the distance to the camera but also on the height in world space) one needs 
+to compute/lookup an intensity value, which describes how much a pixel is 
+fogged. To do so, a texture coordinate generation is setup that transforms 
+vertices back from eye into world space using the dual transform feature. It’s 
+nice that one can actually use exactly the same matrix (e.g. GX_PNMTX0) to do 
+the first part of the texture coordinate transformation. The second matrix 
+multiply maps the Y component onto a ramp texture. Scaling and transformation 
+have to be carefully adjusted to map the wanted gradient of world Y coordinates 
+onto the U [0, …, 1] range. In the same manner eye Z is mapped into V [0, …, 1], 
+c.f. figure 17 and code fraction 4 for more details.</P>
+<P align=center><IMG height=121 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_17.gif" 
+width=550><BR><B>Figure 17: Layered Fog.</B> </P>
+<P>Note that one could use a color texture instead of an intensity texture to 
+get results that are even more advanced.</P>
+<P>There is a drawback generating layered fog like this. It only works right as 
+long as the camera is reasonably outside the fog volume. As soon as it dives 
+deeply into it and looks up, the un-fogged polygons higher up are still visible. 
+However, that can be compensated with figuring out how much the camera is in fog 
+(height wise) and then fog everything, i.e. dynamically adjusting the fog 
+ceiling.</P>
+<H2>Method 11: Custom Dithering</H2>
+<P>For some surfaces banding is a problem. Especially sky textures with their 
+subtle color gradients suffer when the frame buffer is configured using a 
+destination alpha buffer that is required by so many rendering methods (only six 
+bits are stored per component to allow for an additional six bit alpha channel). 
+The built in hardware dither helps already, however, the results could be 
+better. Adding a repetitive pattern to the outputted pixels fools the human eye 
+into not recognizing the banding as much as before. The pattern just needs to be 
+a “four x four” pixel texture that contains biased positive and negative offsets 
+that are added to the outputted pixels. Additional control can be given, when 
+the dither pattern is multiplied by a factor before adding and therefore 
+adjustment of the dither strength is possible. The only problem here is that the 
+dither pattern must be screen-space aligned. Each vertex must be transformed 
+into screen space aligned texture coordinates. A trick similar to the one used 
+in method 10 (layered fog) helps here (c.f. figure 18). The incoming vertices 
+are transformed into eye space using the regular model to eye matrix and using 
+the dual transform feature the dither pattern is aligned onto the screen.</P>
+<P align=center><IMG height=113 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_18.gif" 
+width=550><BR><B>Figure 18: Custom dithering. </B></P>
+<H2>Pre-Rendering</H2>
+<P>Many of the sketched shading methods require pre-rendering objects. This 
+suggests that pre-rendering has to become an integral component of the game 
+program and measures need to be taken to ensure proper resource usage for both 
+processing time and texture storage. The first thing is that pre-render passes 
+should be combined when possible (c.f. method 7 and method 8). This is quite an 
+obvious gain both in time and in storage.</P>
+<P>In addition, storage should be organized in pools that provide a fixed number 
+of slots to be rendered into. Before pre-rendering starts, all objects that 
+require it have to be gathered, sorted by distance from the camera and then get 
+slots assigned (the first couple of slots can even have a slightly bigger 
+texture size). If the pool runs out of slots, pre-rendering stops and some 
+object will loose their respective properties (like self shadowing).</P>
+<P>The last and most important thing is that shading and geometric information 
+have to be strictly separated. It must be possible to render an object fully 
+lit, with all texturing features, etc. and to the same extent it must be easy to 
+render just raw, fully lit polygons of the same geometry. This is because many 
+pre-render passes just need the outline or depth values. Sending more data into 
+the graphics processor, like texture coordinates or colors will just slow the 
+process down. It also must be possible to render objects from different 
+viewpoints. Unfortunately, this is only possible with the construction of 
+different sets of matrices that all need to be computed by the CPU. Storage 
+organization of these matrices is important. In addition, one does not need to 
+forget that rendering the same geometry with the same set of matrices does not 
+mean that those matrices need to be recomputed.</P>
+<P align=center><IMG height=254 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_19.gif" 
+width=550><BR><B>Figure 19: Texture coordinate generation</B>. </P>
+<H2>Texture Coordinate Generation</H2>
+<P>A couple of shading methods are using the fragments orientation (i.e. normal 
+data) as a basis and it is a common step to transform the model space normals 
+into eye space first. Therefore, it is a good idea to split all texture 
+coordinate generations into two passes. The first pass is shared between all 
+methods and the math needs to be revised to operate on the proper eye space 
+normals (c.f. figure 19).</P>
+<H2>Indirect texturing</H2>
+<P>A unique and very interesting feature of the Nintendo Gamecube is the 
+indirect texture unit. It is capable of modifying/generating texture coordinates 
+per pixel and therefore allows for a wide variation of effects. Rippled decals, 
+heat effects and shockwaves are common uses. When it is used together with 
+grabbing the frame buffer, the results are impressive. Figure 20 illustrates the 
+control flow when rendering shockwaves. The problem here is that texture 
+coordinates for the shockwave geometry needs to be computed. One more time, the 
+dual transform feature of the texturing hardware helps. The model coordinates 
+are transformed into eye space and then projected onto the screen using the same 
+matrix as loaded with GXSetProjection(); . The output is rendered back into the 
+frame buffer. The point of grabbing the frame buffer must be determined 
+carefully since it can not be truly the very last thing since this would affect 
+all overlays and score displays as well.</P>
+<P align=center><IMG height=170 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_20.gif" 
+width=550><BR><B>Figure 20: Indirect texturing example.</B></P>
+<H2>
+<P>Merging different shading algorithms does not come without any effort, 
+however, the balanced architecture of the Nintendo Gamecube supports a wide 
+variety of methods that combined together make the visual difference.</P></H2>
+<P>To summarize: Care must be taken while combining algorithms, shader should be 
+constructed out of components or parts, and separation of global and local 
+lights helps a great deal. Consistent lighting during runtime is a big step 
+forward. Make all geometry lit dynamically during runtime and use color per 
+vertex just for painting, not pre-lighting. Per pixel methods usually give 
+better results, however, they are more expensive. Geometry and shading should be 
+strictly separated.</P>
+<H2>Part Two: Landscape Shading</H2>
+<P>The landscape in Rogue Leader™ is height-map based, and uniformly divided 
+into smaller render-units called meta-tiles (c.f. figure 21). One meta-tile 
+covers 128x128 meters, and all triangles belonging to a meta-tile must use the 
+same shader. This restriction is enforced to simplify and improve the triangle 
+stripping of the landscape (on the Nintendo GameCube™, as most other modern 
+graphics pipelines, efficient triangle stripping is important to obtain high 
+performance). When deciding the size of the meta-tiles, local lighting also has 
+to be considered. Since the Nintendo GameCube™ has a limited number of hardware 
+lights (eight), large meta-tiles imply “fewer lights per area”. In addition, the 
+larger the meta-tiles, the greater the chance to draw too much geometry with 
+lighting enabled when it’s not necessary (which is not good – enabling hardware 
+lights certainly do not come for free).</P>
+<P align=center><IMG height=222 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_21.gif" 
+width=400><BR><B>Figure 21: Landscape split up in metatiles and their LOD 
+values.</B> </P>
+<P>When the landscape engine was programmed, the geometry part was implemented 
+before the landscape shaders (c.f. figure 22). This meant that during the 
+working phase for the landscape geometry, it was hard to see how high 
+polygon-count was needed to make the results look sufficiently detailed and 
+complex. As the shaders started to get in place, it became clear that the 
+complexity of the geometry could be reduced without sacrificing the complexity 
+in visual appearance (in the final game, a typical landscape view uses about 14k 
+triangles). This experience shows the importance of a balance between the 
+complexity in geometry, and the shaders applied to that geometry.</P>
+<P align=center><IMG height=161 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_22.gif" 
+width=550><BR><B>Figure 22: Geometry vs. shading. </B></P>
+<H2>Landscape Texturing</H2>
+<P>A texture layer is defined to be an affinely transformed repeated texture 
+image. This implies that one texture image can give rise to several texture 
+layers. Texture layers are applied to the landscape by vertically projecting 
+them onto the surface; which is ok since the surface is a height-map, so any 
+vertical line only intersects the surface once. Besides being easy to implement 
+on both the tools and engine side, this approach is also memory efficient, since 
+the texture coordinates do not need to be stored/loaded, but are derived 
+directly from the position of the vertices (c.f. figure 23).</P>
+<P align=center><IMG height=75 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_23.gif" 
+width=550><BR><B>Figure 23: Texture coordinate generation. </B></P>
+<P>The actual texturing of the landscape is done by blending/mixing several 
+texture layers together across the surface. This multi-texturing approach 
+eliminates the need for transition textures, and gives a varied look from a 
+relatively few high-detail texture images. Since the scaling of a texture layer 
+can be non-uniform, this approach can also help to combat the texture stretching 
+which is common in height-map based landscapes in areas with steep slopes. 
+According to the gradient of the height-map surface, one can apply texture 
+layers that are scaled down in roughly that direction.</P>
+<P>The work of specifying how the texture layers should be blended together was 
+done in the in-house level design program called L3DEdit. This tool has features 
+for managing texture layers, as well as blending them together. More 
+technically, for each texture layer, L3DEdit maintains a corresponding 
+gray-scale image which says how much of that texture layer should be present. 
+These gray-scale images are called mix-maps, and the sum of all corresponding 
+pixels from all mix-maps should always be one (or 255, if you like). L3DEdit can 
+preview the blended landscape on the texture artist’s workstation, and allows 
+for interactive changes to the mix-maps.</P>
+<P align=center><IMG height=275 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_24.gif" 
+width=550><BR><B>Figure 24: Mixing three texture layers. </B></P>
+<P>For performance and memory reasons, on the Nintendo GameCube™ a meta-tile is 
+not allowed to use more than three different texture layers blended together. In 
+the data conversion each meta-tile that has non-trivial blending, is assigned a 
+32x32 pixels texture image that contains the mix-map information for that 
+meta-tile. For meta-tiles that blend two or three texture layers, we store this 
+information in four bits (I4) and eight bits (IA4) mix-map textures, 
+accordingly. Duplicate mix-map texture tiles are ignored to preserve memory. To 
+avoid seams between adjacent meta-tiles due to bi-linear texture filtering, only 
+31x31 unique pixels are used for each meta-tile – the last pixel rows are copied 
+from the next, adjacent meta-tiles. To implement the texture layer blending on 
+the Nintendo GameCube™, the texture environment is then set up to compute</P>
+<P align=center><FONT face="Courier New, Courier, mono" size=-1>mIT0 + 
+(1-mI)T1</FONT></P>
+<P align=left>for blending two texture layers, and</P>
+<P align=center><FONT face="Courier New, Courier, mono" size=-1>mIT0 + mAT1 + 
+(1-mI-mA)T2</FONT></P>
+<P align=left>for blending three texture layers (c.f. figure 24 for the most 
+complicated case).</P>
+<H2>Landscape Self-Shadowing</H2>
+<P align=left>The self-shadowing of the height-map surface is pre-computed as a 
+shadow table in the data conversion. It turned out that doing ground-sun line 
+segment intersections with the landscape in real-time was too expensive; even 
+when the results were sparsely updated and cached. The shadow table stores the 
+ground-sun intersection result for 256 different sun positions for each 
+height-map vertex (in the game in-between values are interpolated). On a 
+meta-tile basis, series of 256 intersection results is efficiently encoded for 
+in a state-change array, and the number of state-changes is stored using a 
+simple form of static Huffman encoding. The size of the shadow table is of 
+course very dependent on how the sun is moving. In most levels, the shadow table 
+is small (150-300k), but in some level where the sun is raising the table is 
+&gt;800k. In the game engine, meta-tile shadow information is decoded when it’s 
+needed, and cached together with other vertex data. To get softer shadows a nine 
+point/tap filter is applied to the shadow values (c.f. figure 25).</P>
+<P align=center><IMG height=159 
+src="Gamasutra - Features - Shader Integration Merging Shading Technologies on the Nintendo Gamecube  printer friendly.files/fig_25.gif" 
+width=550><BR><B>Figure 25: Landscape self shadowing. </B></P>
+<P align=left>This filter smoothes the shadow values, and can be efficiently 
+implemented using only four additions and two shifts (by reusing previously 
+computed columns for adjacent vertices). These shadow values are then sent to 
+the texture environment as a color per vertex. The polygon interpolated shadow 
+value is then multiplied with the global light color.</P>
+<P align=left>Together with the texture layers, additional effect maps are used 
+to further enhance the detail/depth impression: emboss style bump-mapping, 
+far-distance detail map, and a cloud map. The emboss style bump mapping is only 
+used for up-close meta-tiles. A color per vertex value describes how to fade the 
+map in/out over distance (these values are the level of detail morphing values 
+from the height-map geometry computation). The far-distance detail map is used 
+to break up repeated texturing far away, and it’s faded out close to the camera. 
+This fade is done similar to how the emboss map is fading. The cloud map is used 
+to give the impression of clouds casting moving shadows on the ground. It’s also 
+just a vertically projected map, but this time with an animated translation.</P>
+<P align=left>
+<H2>Landscape Shader Optimizations </H2>
+<P></P>
+<P align=left>At first the height-map tiles were drawn in front to back order, 
+but since this resulted in a lot of shader changes, it turned out that it was 
+far more efficient to first sort the meta-tiles in shader order (and within one 
+set of meta-tiles using the same shader, sort front to back).</P>
+<P align=left>A trick that is worth mentioning is how to avoid sending the same 
+bi-normals and tangents for emboss mapping repeatedly to the transform unit (XF) 
+of the graphics processor. It turns out that if these vectors are not present in 
+the vertex format, XF will provide the previously transformed bi-normal and 
+tangent, which reside in internal registers. Thus, if a dummy triangle is drawn 
+with the bi-normal and tangent immediately before the landscape is drawn, then 
+there is no need to send the same vectors over again for the rest of the 
+height-map triangles. This means that only one vertex format is needed for the 
+entire landscape, and it saves memory, transfer bandwidth and most importantly 
+transform performance.</P>
+<P align=left>The landscape in Rogue Leader uses a multi-texturing approach that 
+is implemented with a specialized set of shaders for blending/mixing texture 
+layers. For efficient processing, the landscape if divided into manageable 
+render-units. This is also important for utilizing the local lighting hardware 
+support. To obtain high performance, it’s important to achieve efficient 
+triangle stripping, and minimize the number of shader changes.</P>
+<P align=left>
+<H2>Code Listings<BR><BR>Code Listing 1: Generating texture coordinates for 
+specular highlights.</H2>
+<P align=left><FONT face="Courier New, Courier, mono" size=-1>void 
+shadingMath_ComputeSpecularPostMtx(mt32 *pOut, v32 *ldir_viewspace, f32 
+size)</FONT></P>
+<BLOCKQUOTE>
+  <P align=left><FONT face="Courier New, Courier, mono" size=-1>{<BR>f32 
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;scale, 
+  &nbsp;&nbsp;dotp, r, tweak;<BR>v32 
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vaxis, 
+  &nbsp;&nbsp;vhalf;<BR>q32 
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;q;<BR><BR>// 
+  convert input...<BR>assert(size &gt;= 0.0f &amp;&amp; size &lt;= 
+  1.0f);<BR><BR>size = mathClampMinMax(size, 0.0f, 1.0f);<BR>tweak = (PHONG_MAX 
+  - PHONG_MIN)*size + PHONG_MIN;<BR><BR>// check for singular point...<BR>dotp = 
+  -ldir_viewspace-&gt;z;<BR><BR>if (dotp &lt;= 
+  -1.0f)<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathMatSetScale(pOut, 
+  0.0f);<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return;<BR>}<BR><BR>// The obtained 
+  half-angle vector directs an opposite side...<BR>if (dotp &gt;= 
+  1.0f)<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;// 
+  Looking exactly with the 
+  light...<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathMatInit(pOut);<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<BR>else<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vhalf.x 
+  = -ldir_viewspace-&gt;x;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vhalf.y = 
+  -ldir_viewspace-&gt;y;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vhalf.z = 
+  -ldir_viewspace-&gt;z + 1.0f;<BR>&nbsp;<BR>&nbsp;&nbsp;&nbsp;&nbsp; 
+  mathVecNormalize(&amp;vhalf);<BR><BR>&nbsp;&nbsp;&nbsp;&nbsp; r = 
+  facos(-vhalf.z);<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vaxis.x = 
+  -vhalf.y;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vaxis.y = 
+  vhalf.x;<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vaxis.z = 
+  0.0f;<BR><BR>&nbsp;&nbsp;&nbsp;&nbsp; mathQuatMakeRad(&amp;q, &amp;vaxis, 
+  r);<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathQuatToMatrix(pOut, 
+  &amp;q);<BR>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;};<BR><BR>scale = 2.0f * tweak + 
+  1.5f;<BR>mathMatAddScale(pOut, scale);<BR><BR>pOut-&gt;m[RD_U][RD_T] 
+  =<BR>pOut-&gt;m[RD_V][RD_T] = 0.5f;<BR><BR>// setup w to be always 
+  one...<BR>pOut-&gt;m[RD_W][RD_X] =<BR>pOut-&gt;m[RD_W][RD_Y] 
+  =<BR>pOut-&gt;m[RD_W][RD_Z] = 0.0f;<BR>pOut-&gt;m[RD_W][RD_T] = 
+  1.0f;<BR>}</FONT><BR></P></BLOCKQUOTE>
+<P>
+<H2>Code Listing 2: Generating texture coordinates for environment lookups.</H2>
+<P></P>
+<P><FONT face="Courier New, Courier, mono" size=-1>void 
+shadingMath_ComputeSphereLookupPostMtx(mt32 *pOut, f32 nrm_scale, bool 
+bBinormal)</FONT></P>
+<BLOCKQUOTE>
+  <P><FONT face="Courier New, Courier, mono" size=-1>{<BR>mathMatSetScale(pOut, 
+  nrm_scale * 0.5f);<BR>pOut-&gt;m[RD_V][RD_Y] *= 
+  -1.0f;<BR>pOut-&gt;m[RD_U][RD_T] =<BR>pOut-&gt;m[RD_V][RD_T] = bBinormal ? 
+  0.0f : 0.5f;<BR>// setup w to be always 1.0f -&gt; i.e. 'disable' w 
+  divide...<BR>pOut-&gt;m[RD_W][RD_Z] = 0.0f;<BR>pOut-&gt;m[RD_W][RD_T] = 
+  1.0f;<BR>}</FONT></P></BLOCKQUOTE>
+<P><B>
+<H2>Code Listing 3: Correcting texture coordinates for bumped specular 
+lookups.</H2></B>
+<P></P>
+<BLOCKQUOTE>
+  <P><FONT face="Courier New, Courier, mono" size=-1>// compute fancy 
+  mtx...<BR>shadingMath_ComputeSpecularPostMtx(&amp;m, 
+  shadingLightGroup_GetPhongDirEye(), cosinePower);<BR>// get correction 
+  factor...<BR>f = (f32)gpSG-&gt;GetEnvMapSize() / 
+  (f32)GXGetTexObjWidth(pSpecMap);<BR>// need to 'undo' lightmap 
+  lookup...<BR>m.m[RD_X][RD_RIGHT] += -0.5f * f;<BR>m.m[RD_Y][RD_UP] += 0.5f * 
+  f;<BR>m.m[RD_X][RD_T] += -0.5f * f;<BR>m.m[RD_Y][RD_T] += -0.5f * 
+  f;<BR>GXLoadTexMtxImm(m.m, GX_PT_SPECULAR_FROM_NORM, 
+GX_MTX3x4);</FONT></P></BLOCKQUOTE>
+<P>
+<H2>Code Listing 4: Computing intensity values for layered fog lookup 
+textures.</H2>
+<P></P>
+<P><FONT face="Courier New, Courier, mono" size=-1>static u8 
+_fogFunction(tLayeredFog *pFog, f32 x, f32 y)</FONT></P>
+<BLOCKQUOTE>
+  <P><FONT face="Courier New, Courier, mono" size=-1>{<BR>f32 
+  v;<BR>assert(pFog);<BR>assert(x &gt;= 0.0f &amp;&amp; x &lt; 
+  pFog-&gt;rampWidth);<BR>assert(y &gt;= 0.0f &amp;&amp; y &lt; 
+  pFog-&gt;rampHeight);<BR>assert(pFog-&gt;inFogFactor &gt;= 0.0f &amp;&amp; 
+  pFog-&gt;inFogFactor &lt;= 1.0f);<BR>x /= pFog-&gt;rampWidth - 1.0f;<BR>y /= 
+  pFog-&gt;rampHeight - 1.0f;<BR>// height...<BR>v = x * x;<BR>v = v * (1.0f - 
+  pFog-&gt;inFogFactor) + pFog-&gt;inFogFactor;<BR>// distance...<BR>v *= y * 
+  y;<BR>v *= 255.0f;<BR>return ((u8)mathClampMax(v, 
+  pFog-&gt;currentSettings.maxIntensity));<BR>}</FONT><BR></P></BLOCKQUOTE><!-- #EndEditable -->
+<P><FONT face="Arial, Helvetica, sans-serif" size=-1><I><FONT 
+face="Verdana, Arial, Helvetica, sans-serif">Copyright © 2003 CMP Media Inc. All 
+rights reserved.</FONT></I></FONT></P><!-- #EndTemplate --></BODY></HTML>

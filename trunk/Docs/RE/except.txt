@@ -1,0 +1,24 @@
+    
+    common exception vector:
+    -------------------------
+
+    SPRG0 = R4
+    OSContext *context = __OSPhysicalContext;
+    context->gpr[3] = R3;
+    context->gpr[4] = SPRG0;
+    context->gpr[5] = R5;
+    context->state |= OS_CONTEXT_STATE_EXC;
+
+    context->cr  = CR;
+    context->lr  = LR;
+    context->ctr = CTR;
+    context->xer = XER;
+
+    context->srr0 = SRR0;
+    context->srr1 = SRR1;
+
+    SRR1 = MSR | (IR + DR);
+
+    r3 = exception number
+    r4 = [800000D4]
+

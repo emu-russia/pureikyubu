@@ -1,0 +1,16 @@
+
+    GAMECUBE DOOM Bugs :
+    --------------------------------------------------------------------------
+
+    unhandled HW access : R32 0xCC006844 (pc:0x80078BE8)
+    unhandled HW access : R32 0xCC006858 (pc:0x80078BFC)
+    Probably source code typo.
+
+    on 0x80096080 (clear buffer?) with parameters :
+        r3 = 0x8071A2E0
+        r4 = 0
+        r5 = 0x900040 (9*1024*1024 + 64)
+    Unexpected DEC exception can be generated, when CPU decrementing DEC 
+    register every opcode. Can be fixed, by decrementing DEC, e.g. every 12
+    opcodes.
+

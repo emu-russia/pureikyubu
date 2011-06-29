@@ -1,0 +1,131 @@
+   ---------------------------------------------------------------------------
+                             GC Emulation Tips.
+   ---------------------------------------------------------------------------
+
+    General Emu Development
+    -----------------------
+
+    Any emulator development includes several stages :
+
+                                                    Interpreter
+    Disassembler -> Memory Emulation -> Debugger ->   and/or    -> Hardware
+                                                    Recompiler
+
+    Optional feature is HLE. NextGen consoles hardware emulation is often 
+    realized, using plugin technology. There are some nice GAMECUBE plugins
+    with Dolwin 0.10 ;)
+
+    VI emulation tips
+    -----------------
+
+    VI have A LOT of different registers. You dont need to emulate them all.
+    Here is the list of most important :
+
+    CC002002 - for video mode (determining maximum hline value)
+    CC00201C - for XFB address (if homebrewn VI XFB blitting is enabled)
+    CC00202C - hline count
+    CC002030 - To handle VI retrace interrupt.
+
+    hline counter can be emulated in two ways :
+
+    1. Constantly increase it after some interval, and clear when it reach
+    its maximum value (depends on video mode).
+
+    2. Switch it between some fixed values to cheat game libraries wait vsync
+    routine. It will be faster, than previous method, but less compatible.
+    (You dont need counter, but games can use different hline check values).
+
+    Practically, VI is not much important to emulate. In Dolphin OS its used
+    mainly to reschedule active threads and to control PAD sampling rate, and
+    homebrewn are using it for output and for wait retrace routines. GAMECUBE
+    GX can be emulated without EFB->XFB copying.
+
+    Be careful : VI interrupt is cleared, when INT bit is cleared. Usually
+    other hardware is clearing interrupt, by setting INT bit. But not VI!
+
+    Summary : Your task in VI emulation is to make VIINT generated every
+    fixed GC time intervals. Approximately 30 ms of GC time. (I use GC time
+    term for TBR register, which count every 1/12 CPU clocks). Use your 
+    debugger and make sure, that VIINT is generated at constantly rate.
+
+    Here is small note for VI frame timing, which may help you :
+
+     ---------------------------------------------------
+    |       |         PAL         | NTSC, MPAL, EURGB60 |
+    | value +---------------------|---------------------|
+    |       |   NIN    |   INT    |   NIN    |   INT    |
+    |=======+==========+==========+==========+==========|
+    |  hz   |   50     |    25    |    60    |    30    |
+    |-------+----------+----------+----------+----------|
+    | lines |  312.5   |   625    |  262.5   |   525    |
+    |-------+----------+----------+----------+----------|
+    | active|   262    |   574    |   218    |   480    |
+     -------+----------+----------+----------+----------
+
+    NIN - non-intelaced (double-strike) mode (both odd and even lines in one frame)
+    INT - interlaced mode (odd and even lines in alternating frames)
+
+    I call all NTSC, MPAL and EURGB60 modes, as "NTSC-Like" in emu.
+
+    FP FPSCR
+    --------
+
+    Emulating of FPSCR-register is unecessary. The only one interesting field
+    is RN (rounding control). Affecting of rounding control on emulation
+    run-flow is unknown.
+
+    Note : At least zelda works fine without it.
+
+    Fast FP context switching
+    -------------------------
+
+    GCN OS have optimized FP context switching. It doesnt saves FPU context
+    each time, after exception or interrupt occurs. It switches FP context
+    only when it was changed. This is possible with using of floating point
+    exception (vector is 0x800).
+
+    So, to avoid context bugs, when using multi-threaded applications, you
+    should raise floating point exception, every time, after changing of FPR
+    or PS registers (simply after every floating-point instruction).
+
+    MSR bits
+    --------
+
+    Here is the list of important MSR bits :
+
+    MSR[EE] - This one is used to mask external interrupts and decrementer
+    exception. Emulator must check this bit, before rasing interrupt, or 
+    when decrementer reaching zero value, as example :
+
+        if(--DEC == 0)
+        {
+            if(MSR & 0x8000)    // EE bit mask
+            {
+                CPUException(DECREMENTER_INTERRUPT);
+            }
+        }
+
+    MSR[RI] - Always set this bit after any exception! If this bit will be 
+    cleared, OS halts as unexpected exception.
+
+    MSR[FP] - See in previous tip.
+
+    MSR[DR] and MSR[IR] can be optionally used for MMU emulation.
+
+    Other bits shouldn't be used :)
+
+    Exceptions
+    ----------
+
+    List of most important exceptions for correct emulation :
+
+    0x500   External Interrupt. Very important :)
+    0x800   Floating-point unavailable. For correct OS context switching.
+    0x900   Decrementer. Used by OS alarm objects.
+    0xC00   Optionally. You can fake system call opcode, and dont use it.
+            But GC-Linux is using it, so you cant ignore it for homebrewn.
+
+    ---------------------------------------------------------------------------
+    
+    This document is maintaining by Dolwin team.
+    Last edited by org, 5 Nov 2004

@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+	<META NAME="description" CONTENT="Since its appearance on the 3d gaming scene.  S3TC (S3 Texture Compression)  has created quite a stir.  Click here to find out the truth about S3's amazing new technology.">
+	<META NAME="keywords" CONTENT="truth,s3tc,savage,3d,texture,compression,agp,quake,arena,microsoft,directx,screen,shots,flaws,nvidia,comdex,compress,algorithm,color,table,memory,frame,buffer,local,system,voodoo,2,performance,bandwidth,unreal,quality,encoding,decoding,s3,implementation,a">
+	<META NAME="author" CONTENT="Jeffrey Tseng">
+	<META NAME="site" CONTENT="HardwareCentral">
+	<META NAME="date" CONTENT="1999-05-29">
+	<META NAME="section" CONTENT="reports">
+	<META NAME="channel" CONTENT="Internet Technology">
+	<TITLE>HardwareCentral - Reports - The Truth About S3TC - Image Quality</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#009900" VLINK="#009900" ALINK="#006600">
+<font size=2 face=Verdana>
+ 
+
+			<FONT COLOR="#666666" SIZE=5><B>The Truth About S3TC</B></FONT><BR>
+			<FONT COLOR="#000000" SIZE=3><B>Image Quality</B></FONT><BR><IMG HEIGHT=7 WIDTH="324" SRC="/graphics/fill/clear.gif"><BR>
+			<FONT SIZE=1 FACE="Verdana, Arial, Helvetica"><a href="mailto:jtseng@hardwarecentral.com">Jeffrey Tseng</a></FONT><BR>
+			<P>
+			<!--**** begin content ****-->
+				<B>Gradients and Abrupt Color Changes</B></P> <table border="0" width="325" align="CENTER">     <tr>        <td>         <div align="CENTER">           <img src="gnos3tc.gif" width="131" height="132"></a>          </div>       </td>       <td>         <div align="CENTER">           <img src="gs3tc.gif" width="131" height="132" align="MIDDLE"></a>          </div>       </td>     </tr>     <tr>        <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with no S3TC(200% zoom)</FONT></b>         </div>       </td>       <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with S3TC(200% zoom)</FONT></b>         </div>       </td>     </tr>   </table>  <P><table border="0" width="200" align="CENTER">     <tr>       <td>         <div align="CENTER">           <img src="badcompresszoom.gif" width="131" height="131">         </div>       </td>     </tr>     <tr>       <td>         <div align="CENTER">           <FONT SIZE=2><b>Flawed S3TC compression</FONT></b>         </div>       </td>     </tr>   </table></P> From the first set of pictures above, you can see that the S3TC image compression quality is fairly poor.  Instead of having smooth gradient transitions between colors, there is blockiness and abrupt color changes.  Why is this?  The reason is because the algorithm used for the compression does not work well when there are gradients as well as large changes in color.  During S3TC encoding, the bitmap is divided into 4x4 texels.  The 2 most extreme colors are chosen as the representative colors and the other 2 colors of the 4 color look-up table are derived from the 2 representative colors.  Now, if the 2 representative colors are too distinct, then each of the 4 colors of the look-up table will also turn out to be quite distinct.  If there are any gradients in the 4x4 texel, they will not be well represented because the transition between the colors of the look-table are not very smooth.  This is why the compression did not work well on the first set of graphics. <P><B>Subtler Color Changes</B></P> <P><table border="0" width="325" align="CENTER">     <tr>        <td>         <div align="CENTER">           <img src="firenos3tc.jpg" width="150" height="150"></a>          </div>       </td>       <td>         <div align="CENTER">           <img src="fires3tc.jpg" width="150" height="150" align="MIDDLE"></a>          </div>       </td>     </tr>     <tr>        <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with no S3TC(200% zoom)</FONT></b>         </div>       </td>       <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with S3TC(200% zoom)</FONT></b>         </div>       </td>     </tr>   </table></P>  However, when the color changes are not as abrupt and common (as seen in the second set of pictures), the compression algorithm seems to work fine. The difference between the original and the compressed in the second set is hardly discernable. <P><B>S3TC Image Quality Conclusion</B></P> <P><table border="0" width="325" align="CENTER">     <tr>        <td>         <div align="CENTER">           <img src="nos3tcthumb.jpg" width="162" height="122">          </div>       </td>       <td>         <div align="CENTER">           <img src="s3tcthumb.jpg" width="163" height="122" align="MIDDLE">          </div>       </td>     </tr>     <tr>        <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with no S3TC</FONT></b>         </div>       </td>       <td>         <div align="CENTER">           <FONT SIZE=2><b>Graphic with S3TC</FONT></b>         </div>       </td>     </tr>   </table></P> Overall, the image quality of the S3TC is adequate.  In some instances, there are apparent lapses in quality, but these lapses are only really noticeable when the graphic is enlarged.  In addition, these flaws only really occur in the instances where there are gradients and abrupt color changes.  For the use of compressing textures, the difference between compressed and non-compressed is virtually negligible.								<P ALIGN="RIGHT"><FONT FACE="Verdana, Arial, Helvetica" SIZE=1><B>Next: </B><A HREF="6.html" CLASS="nav">Implementation, Support, and The Future of S3TC</A></FONT>&nbsp;<FONT FACE="Tahoma, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>&#187;</B></FONT></FONT>
+            <P>
+
+            <!--**** begin skip ahead ****-->
+            <table border=0 cellspacing=0 cellpadding=0><tr><td align="left" nowrap><FONT FACE="Verdana, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>Skip Ahead</B></FONT><BR><IMG HEIGHT=5 WIDTH=1 SRC="/graphics/fill/clear.gif"><BR>1 <A HREF="index.html">Introduction</A><BR>2 <A HREF="2.html">Higher Resolution Textures</A><BR>3 <A HREF="3.html">More Benefits</A><BR>4 <A HREF="4.html">S3 Texture Compression Algorithm</A><BR>5 Image Quality<BR>6 <A HREF="6.html">Implementation, Support, and The Future of S3TC</A><BR></font></td></tr></table>            <!--**** end skip ahead ****-->
+            </FONT>
+
+</font>
+
+</BODY>
+</HTML>

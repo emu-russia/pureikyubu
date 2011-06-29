@@ -1,0 +1,33 @@
+<HTML>
+<HEAD>
+	<META NAME="description" CONTENT="Since its appearance on the 3d gaming scene.  S3TC (S3 Texture Compression)  has created quite a stir.  Click here to find out the truth about S3's amazing new technology.">
+	<META NAME="keywords" CONTENT="truth,s3tc,savage,3d,texture,compression,agp,quake,arena,microsoft,directx,screen,shots,flaws,nvidia,comdex,compress,algorithm,color,table,memory,frame,buffer,local,system,voodoo,2,performance,bandwidth,unreal,quality,encoding,decoding,s3,implementation,a">
+	<META NAME="author" CONTENT="Jeffrey Tseng">
+	<META NAME="site" CONTENT="HardwareCentral">
+	<META NAME="date" CONTENT="1999-05-29">
+	<META NAME="section" CONTENT="reports">
+	<META NAME="channel" CONTENT="Internet Technology">
+	<TITLE>HardwareCentral - Reports - The Truth About S3TC - S3 Texture Compression Algorithm</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#009900" VLINK="#009900" ALINK="#006600">
+
+<font size=2 face=Verdana>
+ 
+
+			<FONT COLOR="#666666" SIZE=5><B>The Truth About S3TC</B></FONT><BR>
+			<FONT COLOR="#000000" SIZE=3><B>S3 Texture Compression Algorithm</B></FONT><BR><IMG HEIGHT=7 WIDTH="324" SRC="/graphics/fill/clear.gif"><BR>
+			<FONT SIZE=1 FACE="Verdana, Arial, Helvetica"><a href="mailto:jtseng@hardwarecentral.com">Jeffrey Tseng</a></FONT><BR>
+			<P>
+			<!--**** begin content ****-->
+				<B>Encoding</B><br> The algorithm that is used for S3TC is actually a very simple one.  S3TC breaks a texture map into 4x4 texels.  For opaque textures, each texel is represented by a 2 bit code.  Accompanying each 4x4 texel block are two representative 16 bit colors in RGB565 format.  With these two representative color, two more colors are derived by interpolating the two repsentative colors uniformaly, forming a 4 color look-up table.  Each bit of the 4x4 texel block is then encoded using the 4 bit color look-up table.  In total 64 bits are used for the 16 texels, yielding and average of 4 bits per texel.  If the texture has transparencies, one of the 4 colors of the lookup table is used to indicate transparency and the derived color then just becomes the average of the 2 representative colors. <P>Below is a figure showing the original block, the color look-up table and the compressed block.</P> <div align="CENTER"><img src="colourtable.gif" width="350" height="115"></div> <div align="CENTER"><img src="colortablelabel.gif" width="350" height="25"></div> <br><B>Decoding</B><br>Decoding is even simpler than encoding.  It just involves assigning each 2 bit texel color index to the corresponding RGB color in the lookup table.  Because it is so simple, decoding can be done at very high speeds.  <P><B>But does image quality suffer with S3TC?</B></P>								<P ALIGN="RIGHT"><FONT FACE="Verdana, Arial, Helvetica" SIZE=1><B>Next: </B><A HREF="5.html" CLASS="nav">Image Quality</A></FONT>&nbsp;<FONT FACE="Tahoma, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>&#187;</B></FONT></FONT>
+            <P>
+
+            <!--**** begin skip ahead ****-->
+            <table border=0 cellspacing=0 cellpadding=0><tr><td align="left" nowrap><FONT FACE="Verdana, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>Skip Ahead</B></FONT><BR><IMG HEIGHT=5 WIDTH=1 SRC="clear.gif"><BR>1 <A HREF="index.html">Introduction</A><BR>2 <A HREF="2.html">Higher Resolution Textures</A><BR>3 <A HREF="3.html">More Benefits</A><BR>4 S3 Texture Compression Algorithm<BR>5 <A HREF="5.html">Image Quality</A><BR>6 <A HREF="6.html">Implementation, Support, and The Future of S3TC</A><BR></font></td></tr></table> 
+            </FONT>
+
+</font>
+
+</BODY>
+</HTML>

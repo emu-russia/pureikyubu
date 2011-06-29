@@ -1,0 +1,118 @@
+
+    Preface
+    --------------------------------------------------------------------------
+
+    OK, you got Dolwin source code. Now I tell you how to compile it.
+    This document looks like it was mixed from different pieces. Thats
+    true, because I simply collected my random ideas and put 'em here :)
+
+    Source code can be compiled in following environments : 
+        - Microsoft Visual Studio C/C++ 6.0 (default)
+        - Microsoft Visual Studio C/C++ 7.0+ (.NET)
+        - Metrowerks CodeWarrior for PC, Version 8.0
+    I prefer CodeWarrior, because its fast and stable, although it doesnt
+    have resource editor. I would like to support other compilers (MinGW, 
+    Cygwin, GCC, DJGPP, else).
+
+    You can check current IDE/compiler by pre-defined macros :
+        '__MSVC__' for Visual C++ 6.0
+        '__VCNET__' for Visual C++ 7.0+
+        '__MWERKS__' for CodeWarrior
+
+    Also : it is highly recommended to install SP5 for Visual C 6.0, or you may
+    get some weird compilation errors !!
+
+    It is good idea, to migrate from default VC6 workspace (.DSW) to other
+    compilers. Run VCNET_Remove_All.bat to delete all VC 7.0+ project data
+    files, and convert .DSW again. CodeWarrior dont need to be managed, because
+    it is smart enough - just add new files/projects into new IDE folders.
+
+    In order to compile Dolwin.exe under CodeWarrior, you need to delete all
+    side project, like DVD, PAD and GCMCMPR tool from folder, where source
+    code is placed. Otherwise CodeWarrior will have some problems with 
+    compilation of resource data.
+
+    Tip : If you want to use F7 as Build button in VCNET IDE, follow this:
+    Tools->Customize->Commands->Keyboard..->Mapping scheme->Visual C++ 6.
+
+    Run Dolwin_Cleanup.bat to remove any IDE/compiler 'garbage'.
+    (Some future compiler may not have "Cleanup" feature in IDE).
+
+    Sometimes Dolwin.exe is compiled without XP manifest resource.
+    That happens because of MSVC NET is replacing definition of manifest,
+    in RES\Dolwin.rc. Make sure, that manifest is defined as :
+
+    IDR_MANIFEST            24      DISCARDABLE     "Dolwin.manifest"
+
+    Source Code Layout
+    --------------------------------------------------------------------------
+
+    There are totally 4 sub-systems : Emulator, UserMenu, GCN Hardware and
+    GCN High Level. 
+
+    Emulator : this is home for Gekko CPU emulation; Interpreter, Recompiler 
+    Debugger and Memory engine. It also contain general emu controls (GO, STOP)
+    and GC file loader, to load DVD images or GC executable files.
+
+    UserMenu : this is Windows platform-related stuff. Mainly used to change
+    Dolwin configuration ("user variables") and for user-friendly GUI, to
+    load and run GC files. Nothing special there, just plain Win32 code.
+
+    GCN Hardware : this is low-level emulation of all GC hardware systems.
+    Currently Dolwin can nicely emulate almost all hardware, except "MI".
+    Hardware is abstracted from Emulator/CPU by *Open/*Close calls and
+    hardware traps, so theoretically Dolwin can emulate any possible
+    hardware.
+
+    GCN High Level : this is High Level Emulation (HLE) corner. At this 
+    moment, only official Nintendo DEVKIT calls are supported. Also there
+    you can find loader/maker for MAP files, GC "BIOS" HLE and symbolic 
+    information support for Debugger.
+
+    You need ZLIB library to compile DVD Plugin and GCMCMPR Tool. ZLIB is
+    included. You need Microsoft HTML Help API to compile Dolwin.exe (its
+    also included, I just got it from Visual Studio NET).
+
+    Dolwin Project Properties
+    --------------------------------------------------------------------------
+
+    Make sure, that you have pre-defined some compiler macros, if you're using
+    Microsoft compilers :
+
+        '__MSVC__' for Visual C++ 6.0
+        '__VCNET__' for Visual C++ 7.0+
+
+    __MWERKS__ is always defined by CodeWarrior itself.
+
+    EXE loading base must be 0x00400000, for correct high level emulation :
+    MSVC : Project->Settings->Link->Output->Base Address
+    CW : Edit->** Win32 x86 Settings->Linker->x86 COFF->Base address
+    VCNET : Right mouse button on 'Dolwin' project in Solution Explorer, then
+    Properties->Linker->Advanced->Base Address
+
+    Note: some EXE compressors dont work properly with Dolwin executable,
+    I just informed you.
+
+    Also Dolwin workspace contain some plugins and GCMCMPR tool. You must be
+    sure, that Dolwin has set dependencies to any plugin in workspace, for 
+    correct compilation. If you dont understand about "dependencies", dont 
+    touch them. You may need to change them, only in case you want to add new 
+    plugins/tools in Dolwin workspace.
+
+    Documentation Layout
+    --------------------------------------------------------------------------
+
+    TODO
+
+    Summary
+    --------------------------------------------------------------------------
+
+    If you're bored by reading this writings, just press 'F7' in any IDE,
+    and forget it =)
+
+    Target on UserMenu\UserMain.cpp to start your hacking.
+
+    --------------------------------------------------------------------------
+
+    This document is maintaining by Dolwin team.
+    Last edited by org, 10 Jan 2005

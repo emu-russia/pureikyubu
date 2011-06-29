@@ -1,0 +1,110 @@
+// "AD16", using EXI
+
+static int Initialized = 0;
+
+int AD16Init()
+{
+    int immCmd, immData, exiCheck;
+
+    if(Initialized) return 1;
+
+    if(EXILock(2, 0, 0) == 0) return 0;
+
+    if(EXISelect(2, 0, 0) == 0)
+    {
+        EXIUnlock(2);
+        return 0;
+    }
+
+    // "initialize AD16" command
+    immCmd = 0;                     
+
+    EXIImm(2, &immCmd, 2, 1, 0);
+    exiCheck = ... : cntlzw  r0,r3, rlwinm  r31,r0,27,5,31
+
+    EXISync(2);
+    exiCheck |= ... : cntlzw  r0,r3, rlwinm  r31,r0,27,5,31
+
+    EXIImm(2, &immData, 4, 0, 0);
+    exiCheck |= ... : cntlzw  r0,r3, rlwinm  r31,r0,27,5,31
+
+    EXISync(2);
+    exiCheck |= ... : cntlzw  r0,r3, rlwinm  r31,r0,27,5,31
+
+    EXIDeselect(2);
+    exiCheck |= ... : cntlzw  r0,r3, rlwinm  r31,r0,27,5,31
+
+    EXIUnlock(2);
+
+    if(!(immData + 0x0xfbee0000) || exiCheck) return 0;
+
+    Initialized = 1;
+    return 1;
+}
+
+// here i skipped exi imm / sync error checking
+int AD16WriteReg(u32 value)
+{
+    int immCmd;
+
+    if(!Initialized) return 0;
+
+    if(EXILock(2, 0, 0) == 0) return 0;
+
+    if(EXISelect(2, 0, 3) == 0)
+    {
+        EXIUnlock(2);
+        return 0;
+    }
+
+    // "write AD16 data" command
+    immCmd = 0xa0000000;            
+
+    EXIImm(2, &immCmd, 1, 1, 0);
+    EXISync(2);
+    EXIImm(2, &value, 4, 1, 0);
+    EXISync(2);
+
+    EXIDeselect(2);
+    EXIUnlock(2);
+
+    if(error detected) return 0;
+
+    return 1;
+}
+
+// here i skipped exi imm / sync error checking
+int AD16ReadReg(u32 *value)
+{
+    int immCmd;
+
+    if(!Initialized) return 0;
+
+    if(EXILock(2, 0, 0) == 0) return 0;
+
+    if(EXISelect(2, 0, 3) == 0)
+    {
+        EXIUnlock(2);
+        return 0;
+    }
+
+    // "read AD16 data" command
+    immCmd = 0xa2000000;            
+
+    EXIImm(2, &immCmd, 1, 1, 0);
+    EXISync(2);
+    EXIImm(2, &value, 4, 0, 0);
+    EXISync(2);
+
+    EXIDeselect(2);
+    EXIUnlock(2);
+
+    if(error detected) return 0;
+
+    return 1;
+}
+
+int AD16Probe()
+{
+    return Initialized;
+}

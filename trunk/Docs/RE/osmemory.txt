@@ -1,0 +1,185 @@
+//
+// OS memory protection.
+//
+
+// Memory size APIs:
+u32 OSGetPhysicalMemSize() { return (u32)[0x80000028]; }
+u32 OSGetConsoleSimulatedMemSize() { return (u32)[0x800000f0]; }
+
+// this will be executed after each OS "reset"
+void OnReset()
+{
+    // no protection
+    (u16)[0xcc004010] = 0xff;
+
+    // mask all (MEM_0 | MEM_1 | MEM_2 | MEM_3)
+    __OSMaskInterrupts(0xf0000000);
+}
+
+// this handler invoked on protection fault.
+void MEMIntrruptHandler()
+{
+    r7 = (u16)[0xcc004024]
+    r6 = (u16)[0xcc004022]
+    r5 = (u16)[0xcc00401e]
+    (u16)[0xcc004020] = 0
+    rlwimi  r6,r7,16,6,15
+
+    // OS_ERROR_PROTECTION = 15
+    if(__OSErrorTable[15])
+    {
+        __OSErrorTable[15]();
+    }
+    else
+    {
+        __OSUnhandledException(15);
+    }
+}
+
+void OSProtectRange(u32 chan, void *addr, u32 nBytes, u32 control)
+{
+    if(chan <= 3)
+    {
+        void *endAddr;
+        BOOL level;
+
+        // align range to 1024 byte page boundary
+        endAddr = addr + nBytes + 1023;
+        addr &= ~0x3ff;
+        endAddr &= ~0x3ff;
+
+        DCFlushRange(addr, endAddr - addr);
+
+        level = OSDisableInterrupts();
+
+        // mask MEM_X (by default)
+        __OSMaskInterrupts(0x80000000 >> chan);
+
+        // save protected range (in pages)
+        (u16)[0xcc004000][chan] = (addr >> 10);
+        (u16)[0xcc004002][chan] = (endAddr >> 10);
+
+        // set protection mask (2 bit for every chan)
+        (u16)[0xcc004010] |= ((u16)[0xcc004010] & (3 << (chan * 2))) |
+                             ((control & 3) << (chan * 2));
+
+        // unmask MEM_X, if protection enabled (NONE, RDONLY or WRONLY)
+        if(control != RDWR)
+        {
+            __OSUnmaskInterrupts(0x80000000 >> chan);
+        }
+
+        OSRestoreInterrupts(level);
+    }
+}
+
+void Config24MB()
+{
+    isync
+    DBATU[0] = 0
+    DBATL[0] = 2
+    DBATU[0] = 0x800001ff
+    isync
+    IBATU[0] = 0
+    IBATL[0] = 2
+    IBATU[0] = 0x800001ff
+    isync
+    DBATU[2] = 0
+    DBATL[2] = 0x01000002
+    DBATU[2] = 0x810000ff
+    isync
+    IBATU[2] = 0
+    IBATL[2] = 0x01000002
+    IBATU[2] = 0x810000ff
+    isync
+
+    // enable instruction and data address translation
+    SRR1 = MSR | 0x30
+    SRR0 = LR
+    RFI
+}
+
+void Config48MB()
+{
+    isync
+    DBATU[0] = 0
+    DBATL[0] = 2
+    DBATU[0] = 0x800003ff
+    isync
+    IBATU[0] = 0
+    IBATL[0] = 2
+    IBATU[0] = 0x800003ff
+    isync
+    DBATU[2] = 0
+    DBATL[2] = 0x02000002
+    DBATU[2] = 0x820001ff
+    isync
+    IBATU[2] = 0
+    IBATL[2] = 0x02000002
+    IBATU[2] = 0x820001ff
+    isync
+
+    // enable instruction and data address translation
+    SRR1 = MSR | 0x30
+    SRR0 = LR
+    RFI
+}
+
+void RealMode(void (*Config)())
+{
+    clrlwi  r3,r3,2
+    mtsrr0  r3
+    mfmsr   r3
+    rlwinm  r3,r3,0,28,25
+    mtsrr1  r3
+    rfi
+}
+
+struct OSResetFunctionInfo ResetFunctionInfo = {
+    OnReset,        // see above
+    127             // maximum priority
+};
+
+// OSInit() sub-call
+void __OSInitMemoryProtection()
+{
+    BOOL level = OSDisableInterrupts();
+    u32 PhysicalMemSize, ConsoleSimulatedMemSize;
+
+    if((u32)[0x800000f0] <= 24 MB)
+    {
+        RealMode(Config24MB);
+    }
+    else if((u32)[0x800000f0] <= 48 MB)
+    {
+        RealMode(Config48MB);
+    }
+
+    (u16)[0xcc004020] = 0;
+    (u16)[0xcc004010] = 0xff;
+
+    // mask all (MEM_0 | MEM_1 | MEM_2 | MEM_3)
+    __OSMaskInterrupts(0xf0000000);
+
+    __OSSetInterruptHandler(MEM_0, MEMIntrruptHandler);
+    __OSSetInterruptHandler(MEM_1, MEMIntrruptHandler);
+    __OSSetInterruptHandler(MEM_2, MEMIntrruptHandler);
+    __OSSetInterruptHandler(MEM_3, MEMIntrruptHandler);
+
+    OSRegisterResetFunction(&ResetFunctionInfo);
+
+    __OSUnmaskInterrupts(MEM_ADDRESS);
+
+    ConsoleSimulatedMemSize = (u32)[0x800000f0];
+    PhysicalMemSize = (u32)[0x80000028];
+
+    if(ConsoleSimulatedMemSize < PhysicalMemSize)
+    {
+        if((PhysicalMemSize - 24MB) == 0)
+        {
+            (u16)[0xcc004028] = 2;
+        }
+    }
+
+    OSRestoreInterrupts(level);
+}

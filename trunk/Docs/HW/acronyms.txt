@@ -1,0 +1,42 @@
+
+               -= Nintendo GAMECUBE hardware abbreviations =-
+
+    ARAM
+        Auxiliary (Audio) Memory. 16 MB of slow (comapred to RAM) DRAM.
+        Used for raw DSP sound data and for textures sometimes.
+        ARAM has DMA communication channel with main memory (RAM).
+
+    DOL, Dolphin
+        Work name of GAMECUBE. Nintendo has custom executable file format with
+        .DOL extension.
+
+    DSP
+        Digital Signal Processor. Used to produce advanced sound in GC.
+        DSP is integrated with GP in Flipper chip.
+
+    EXI
+        Expansion Interface. MX serial devices protocol. Sort of USB
+        architecture.
+
+    Flipper
+        Largest chip on GC board. Contains audio and graphics processors.
+
+    GC, GCN, NGC
+        Nintendo GAMECUBE
+
+    GCM
+        GAMECUBE Master Data.
+
+    Gekko
+        GAMECUBE CPU, custom PowerPC 750 with 40 new SIMD-like instructions.
+
+    GP
+        Graphics Processor, the main part of Flipper chip. Developed by ArtX.
+
+    MX
+        Macronix Ltd. chips index. GC has many hardware parts, developed
+        by Macronix, like DSP, EXI and bootrom chip.
+
+    RAM
+        Main memory. GC has 24 MB of fast 1T-SRAM. Development boards has RAM
+        extended up to 48 MB.

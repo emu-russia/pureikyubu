@@ -1,0 +1,54 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+
+	<META NAME="AUTHOR" CONTENT="Anand Lal Shimpi">
+	<META NAME="KEYWORDS" CONTENT="motherboards; intel; amd; pentium; nvidia; 3dfx; matrox; athlon; pentium 3; RAM; RAMBUS; SDRAM; video cards; hardware; processors; news">
+	<META NAME="DESCRIPTION" CONTENT="The entry page to AnandTech, find reviews on computer hardware. Also find news on the computer industry.">
+
+	<title>AnandTech - Hardware Behind the Consoles - Part II: Nintendo's GameCube</title>
+	
+	<link rel="stylesheet" type="text/css" href="/css/anand.css">
+	<link rel="SHORTCUT ICON" href="/favicon.ico">
+	<script src="/js/addon.js"></script>
+
+</head>
+
+
+
+<body onload="" bgcolor="#ffffff" link="#000000" alink="#000000" vlink="#000000" marginwidth="4" marginheight="18" topmargin="18" leftmargin="4">
+
+<font size="2" face="Verdana">
+
+<center><h3>1T-SRAM outside of Flipper</h3></center>
+
+<p>The GameCube features another 24MB of 1T-SRAM that is located outside of the 
+  Flipper chip which is used as its main memory. This 64-bit memory bus runs at 
+  2x the operating clock of Flipper, or 324MHz resulting in 2.6GB/s of bandwidth 
+  between Flipper and the Cube's main memory. While this is only as much memory 
+  bandwidth as an original GeForce 256, remember that all of the Z-buffer accesses 
+  are done on the embedded 1T-SRAM and the frame being drawn is done initially 
+  to the on-die 2MB buffer. This reduces the need for as much main memory bandwidth 
+  as we're used to seeing. </p>
+<p align="center"><img src="mosys.jpg" width="400" height="278"><br>
+  There are two 12MB 1T-SRAM chips located on the GameCube motherboard</p>
+<p>But we're not too sure about Nintendo's decision to continue to use 1T-SRAM 
+  even for the main memory. There are significantly faster <b><a class=highlight  title="Double Data Rate transfers allows for data to be fetched on both the rising and falling edges of the clock thus doubling the effective transfer rate of the clock.  For example a 100MHz DDR clock would achieve a peak transfer rate equal to that of a 200MHz clock.  The effective transfer rate is equal to the clock frequency multiplied by the bus width, doubled."><font color=navy>DDR</font></a></b> SDRAM devices out 
+  there, not even as fast as the 200MHz DDR featured in the Xbox that would provide 
+  much more memory bandwidth than the 1T-SRAM of the GameCube. This is one of 
+  the points that it was unfortunately that the design was completed prior to 
+  the ATI acquisition of ArtX since we may have seen a Radeon-like 128-bit DDR 
+  memory bus used for the main memory in the Cube. The only benefit the Cube gains 
+  from using 1T-SRAM as its main memory is low latency access and thus better 
+  bus utilization; coupled with the fact that the memory bus is synchronized to 
+  the Gekko's FSB and Flipper's operating frequency (162MHz x 2) we can assume 
+  that latency is reduced as much as possible with this design. Again, we see 
+  elements of the efficiency of GameCube rather than a focus on raw power.</p>
+
+</font>
+
+</body>
+</html>
+
+

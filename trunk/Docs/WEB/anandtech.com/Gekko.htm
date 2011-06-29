@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+
+<html>
+<head>
+
+	<META NAME="AUTHOR" CONTENT="Anand Lal Shimpi">
+	<META NAME="KEYWORDS" CONTENT="motherboards; intel; amd; pentium; nvidia; 3dfx; matrox; athlon; pentium 3; RAM; RAMBUS; SDRAM; video cards; hardware; processors; news">
+	<META NAME="DESCRIPTION" CONTENT="The entry page to AnandTech, find reviews on computer hardware. Also find news on the computer industry.">
+
+	<title>AnandTech - Hardware Behind the Consoles - Part II: Nintendo's GameCube</title>
+	
+	<link rel="stylesheet" type="text/css" href="/css/anand.css">
+	<link rel="SHORTCUT ICON" href="/favicon.ico">
+	<script src="/js/addon.js"></script>
+
+</head>
+
+
+
+<body onload="" bgcolor="#ffffff" link="#000000" alink="#000000" vlink="#000000" marginwidth="4" marginheight="18" topmargin="18" leftmargin="4">
+
+<font size=2 face="Verdana">
+
+<center><h3>The GameCube CPU </h3></center>
+<p>While the Xbox was a PC turned game-console, Nintendo's GameCube was designed 
+  as a game console from the ground up. Nintendo's needs for this next-generation 
+  console were very clear: the chip would have to be powerful, cheap to manufacture, 
+  and run cool enough that it could fit in a very small enclosure. Nintendo ended 
+  up contracting IBM to handle the production of the CPUs for the GameCube based 
+  on their well-known PowerPC 750CXe processor.</p>
+<p>However details on this processor are sketchy at best but the information we've 
+  been able to gather points at a relatively unmodified PowerPC 750CXe microprocessor 
+  with the addition of close to 40 new instructions (potentially SIMD FP) designed 
+  to specifically aid in game performance. Followers of the PowerPC architecture 
+  will quickly realize that these additional instructions do not comprise all 
+  of the instructions provided by Motorola's AltiVec SIMD instruction set. It 
+  is possible that only a subset of AltiVec was implemented into this processor, 
+  using instructions heavily geared towards the tasks that it would be handling.</p>
+<p align="center"><img src="gekko.jpg" width="400" height="328"></p>
+<p>The basics of this PPC 750CXe derivative (codenamed Gekko) are fairly simple; 
+  the PowerPC core features a 4-stage basic integer pipeline which is mostly responsible 
+  for the very low clock speeds the core is able to achieve. Most important for 
+  gaming performance however are more precise floating point calculations and 
+  the Gekko's floating point pipeline is 7 stages long. Since the Gekko is a native 
+  RISC processor it does not suffer the same fate as its Xbox counterpart in that 
+  it doesn't have to spend much time in the fetch/decoding stages of the pipeline. 
+  Immediately upon fetching the RISC instructions to be executed, they are dispatched 
+  and one clock cycle later, they are ready to be sent to the execution units.</p>
+<p>The PowerPC architecture is a 64-bit architecture with a 32-bit subset which 
+  in the case of the Gekko processor, is what is used. The CPU supports 32-bit 
+  addresses and features two 32-bit Integer ALUs; separate to that is a 64-bit 
+  FPU that is capable of working on either 64-bit floats or two 32-bit floats 
+  using its thirty two 64-bit FP registers. This abundance of operating registers 
+  is mirrored in the 32 General Purpose Registers (GPRs) that the processor has, 
+  dwarfing the Xbox's x86-limited offering (8 GPRs).</p>
+<p>Although both the Gekko and the Intel CPU used in the Xbox are built upon advanced 
+  0.18-micron processes, the Gekko is held back by its relatively short pipeline 
+  limiting it to generally no higher than 500MHz. The Gekko does use Copper interconnects 
+  which are superior to their Aluminum counterparts (used in the Xbox CPU for 
+  example) in that they more efficiently conduct electricity, but this advantage 
+  is still not able to result in a higher clock speed for the CPU. In the case 
+  of the GameCube, the CPU is clocked at 485MHz, or 3 times its 162MHz FSB frequency. 
+  The benefit of a shorter pipeline is of course, an increased number of instructions 
+  that can be processed in those limited number of clocks. However from all of 
+  that data that we have seen comparing the PowerPC 750 to even the desktop Intel 
+  Celeron processor, it does not seem that the Gekko can compete, performance-wise. 
+</p>
+<p>Your experience in the PC hardware world however should have taught you that 
+  CPU performance does not matter when it comes to games as long as you are bottlenecked 
+  elsewhere in the system, so theoretically Gekko could be more than enough for 
+  the GameCube but we have a feeling it's not. </p>
+<p>Instead of being a processing powerhouse, Gekko was actually chosen for its 
+  physical characteristics. Although it does have a larger on-die L1 &amp; L2 
+  cache than the Xbox CPU (64KB/256KB vs. 32KB/128KB) and is composed of more 
+  transistors (over 21 million vs. approximately 9 million for the Xbox CPU), 
+  Gekko's die is under 45 mm^2. For comparison, the processor used in the Xbox 
+  has a die measuring approximately 100 mm^2. </p>
+<p>The Gekko is actually a very cool running CPU, dissipating around 5W at its 
+  485MHz operating frequency. Again, when compared to the Intel CPU used in the 
+  Xbox, you're looking at roughly three times more being produced by the X-CPU 
+  than by the GameCube's Gekko. </p>
+<p>So while isn't as powerful at the Xbox CPU, Gekko's smaller die and cooler 
+  operation provide for lower manufacturing costs and a smaller sized console 
+  which fit Nintendo's goals perfectly.</p>
+<p>Gekko does have more FSB bandwidth at its disposal than the X-CPU, simply because 
+  its FSB is running at 162MHz vs. the 133MHz FSB frequency that is within the 
+  limits of Intel's AGTL+ spec. This results in a 1.3GB/s connection between Gekko 
+  and the North Bridge, which like in the case of the Xbox's nForce-based platform, 
+  is integrated into a single chip along with the graphics core.</p>
+<p>It's time to meet a close friend of Gekko; we call him Flipper.</p>
+
+</font>
+
+</body>
+</html>
+
+

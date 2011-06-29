@@ -1,0 +1,29 @@
+<HTML>
+<HEAD>
+	<META NAME="description" CONTENT="Since its appearance on the 3d gaming scene.  S3TC (S3 Texture Compression)  has created quite a stir.  Click here to find out the truth about S3's amazing new technology.">
+	<META NAME="keywords" CONTENT="truth,s3tc,savage,3d,texture,compression,agp,quake,arena,microsoft,directx,screen,shots,flaws,nvidia,comdex,compress,algorithm,color,table,memory,frame,buffer,local,system,voodoo,2,performance,bandwidth,unreal,quality,encoding,decoding,s3,implementation,a">
+	<META NAME="author" CONTENT="Jeffrey Tseng">
+	<META NAME="site" CONTENT="HardwareCentral">
+	<META NAME="date" CONTENT="1999-05-29">
+	<META NAME="section" CONTENT="reports">
+	<META NAME="channel" CONTENT="Internet Technology">
+	<TITLE>HardwareCentral - Reports - The Truth About S3TC - More Benefits</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF" LINK="#009900" VLINK="#009900" ALINK="#006600">
+
+<font size=2 face=Verdana>
+ 
+
+			<FONT COLOR="#666666" SIZE=5><B>The Truth About S3TC</B></FONT><BR>
+			<FONT COLOR="#000000" SIZE=3><B>More Benefits</B></FONT><BR><IMG HEIGHT=7 WIDTH="324" SRC="/graphics/fill/clear.gif"><BR>
+			<FONT SIZE=1 FACE="Verdana, Arial, Helvetica"><a href="mailto:jtseng@hardwarecentral.com">Jeffrey Tseng</a></FONT><BR>
+			<P>
+				<B>Increased Performance/Decreased Bandwidth Requirements</B><br> In terms of performance, the obvious benefit is that a given texture requires significantly less memory when compressed.  Effectively, using S3TC, it should be possible to hold as much as 6 times more texture in texture memory than when S3TC is not used.  If the textures used in the 3d application cannot fit into the local frame buffer, then AGP is used to store and retrieve data from system memory, which is much slower than when using local memory.  However, if S3TC is used, the amount of data that needs to be transferred through the AGP bus is much less, making texture swapping from system memory much faster.  But how much of a need is there for S3TC to alleviate AGP bus traffic when the next generation 3d accelerators are coming out with 32MB or more of memory?  None of the games currently out right now use HUGE amounts of memory like those found in the S3 Unreal demo levels.  So, S3TC is currently not that important to alleviate AGP traffic since most of the textures can fit into local memory.  However, future games like Quake Arena will be using a lot larger and more numerous textures, which will probably make texture compression much more practical, even when using a 32MB frame buffer.<br><br> <B>Larger and More Numerous Textures</B><br> Generalizing more on the advantages above, texture compression allows 3d games to use much larger and more numerous textures resulting in much more detailed surfaces.  Having more space for textures also means that a greater variety of textures can be used to give more varied scenes.  In addition, if texturing out of local memory, the additional memory that is freed by using texture compression can be put towards increasing display resolution and triple buffering which can typically increase performance by about 30%.  However, conserving memory to increase screen resolution and to enable triple buffering is much less significant with 16MB or 32MB of local video memory because it then constitutes a much smaller fraction of total memory.<br><br> <B>Quality/Performance Tradeoffs</B><br> One thing to note is that the performance gains and quality benefits of S3TC cannot both coexist to their fullest extents.  If a game were to use S3TC to make textures that are 6 times as large as without S3TC, then the performance gains from S3TC over the AGP bus is effectively nullified.  Though the textures would be 6 times higher in resolution, they would still take up the same amount of memory as the normal textures.  So the amount of data being transferred through the AGP bus remains the same.  Conversely, if a game were to use S3TC to compress textures so they are 1/6 the size of the original textures, there would be a performance increase, but the image resolution/quality would not benefit.								<P ALIGN="RIGHT"><FONT FACE="Verdana, Arial, Helvetica" SIZE=1><B>Next: </B><A HREF="4.html" CLASS="nav">S3 Texture Compression Algorithm</A></FONT>&nbsp;<FONT FACE="Tahoma, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>&#187;</B></FONT></FONT>
+            <P>
+
+            <table border=0 cellspacing=0 cellpadding=0><tr><td align="left" nowrap><FONT FACE="Verdana, Arial, Helvetica" SIZE=2><FONT COLOR="#666666"><B>Skip Ahead</B></FONT><BR><IMG HEIGHT=5 WIDTH=1 SRC="/graphics/fill/clear.gif"><BR>1 <A HREF="index.html">Introduction</A><BR>2 <A HREF="2.html">Higher Resolution Textures</A><BR>3 More Benefits<BR>4 <A HREF="4.html">S3 Texture Compression Algorithm</A><BR>5 <A HREF="5.html">Image Quality</A><BR>6 <A HREF="6.html">Implementation, Support, and The Future of S3TC</A><BR></font></td></tr></table> 
+            </FONT>
+
+</BODY>
+</HTML>

@@ -1,0 +1,56 @@
+    All registers are 16-bit only. All bits are in little-endian format 
+    (mask for bit 0 is 0x0001).
+
+CP_SR - Command Processor Status Register [CC000000] R
+    bit 0 : fifo overflow (wrptr > hiWatermark)
+    bit 1 : fifo underlow (rdptr > loWatermark)
+    bit 2 : GP is idle for reading (1 : idle)
+    bit 3 : GP is idle for commands (1 : idle)
+    bit 4 : breakpoint interrupt
+    (other bits are reserved)
+
+CP_CR - Command Processor Control Register [CC000002] R/W
+    bit 0 : enable reading of fifo by GP
+    bit 1 : write 1, to clear breakpoint interrupt ?
+    bit 2 : enable overflow checks (high watermark)
+    bit 3 : enable underlow checks (low watermark)
+    bit 4 : link GP and CPU fifos
+    bit 5 : enable breakpoint checks ?
+    (other bits are reserved)
+
+CP_CLR - Command Processor Clear Register [CC000004] W
+    bit 0 : write 1, to clear fifo overflow
+    bit 1 : write 1, to clear fifo underlow
+    (other bits are reserved)
+
+CP_BASEL [CC000020] R/W
+CP_BASEH [CC000022] R/W
+    fifo base physical address
+
+CP_TOPL [CC000024] R/W
+CP_TOPH [CC000026] R/W
+    fifo top physical address
+
+CP_HIWMARKL [CC000028] R/W
+CP_HIWMARKH [CC00002A] R/W
+    high watermark physical address
+
+CP_LOWMARKL [CC00002C] R/W
+CP_LOWMARKH [CC00002E] R/W
+    low watermark physical address
+
+CP_CNTL [CC000030] R/W
+CP_CNTH [CC000032] R/W
+    distance between read and write pointers (count)
+
+CP_WRPTRL [CC000034] R/W
+CP_WRPTRH [CC000036] R/W
+    GP fifo write pointer (physical address)
+
+CP_RDPTRL [CC000038] R/W
+CP_RDPTRH [CC00003A] R/W
+    GP fifo read pointer (physical address)
+
+CP_BPPTRL [CC00003C] R/W
+CP_BPPTRH [CC00003E] R/W
+    GP fifo breakpoint (physical address)

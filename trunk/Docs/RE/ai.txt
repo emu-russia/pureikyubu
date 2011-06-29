@@ -1,0 +1,191 @@
+#include <ai.h>
+
+//
+// local data
+//
+
+static BOOL __AI_init_flag;
+
+static AIDCallback __AID_Callback;
+static AISCallback __AIS_Callback;
+
+// ----------------------------------------------------------------------------
+
+// AUDIO FIFO-DMA
+
+AIDCallback AIRegisterDMACallback(AIDCallback callback)
+{
+    BOOL old = OSDisableInterrupts();
+    AIDCallback old_callback = __AID_Callback;
+    __AID_Callback = callback;
+    OSRestoreInterrupts(old);
+    return old_callback;
+}
+
+void AIInitDMA(u32 start_addr, u32 length)
+{
+    BOOL old = OSDisableInterrupts();
+
+    //
+    // set dma address
+    //
+
+    *(u16 *)(0xCC005030) =
+        (*(u16 *)(0xCC005030) & 0xFC00) |       // keep 6 bits unchaged
+        (start_addr >> 16);                     // upper part
+
+    *(u16 *)(0xCC005032) =
+        (*(u16 *)(0xCC005032) & 0xFFE0) |       // 32-byte aligned
+        (start_addr & 0xFFFF);                  // lower part
+
+    // check alignment
+    if(length & 0x1F)
+    {
+        OSHalt("AIStartDMA: length must be multiple of 32 bytes");
+    }
+
+    // TODO : Nintendo missed checking for maximum length
+
+    //
+    // set length counter
+    //
+
+    // somewhat like this :
+    *(u16 *)(0xCC005036) = length / 32;
+
+    OSRestoreInterrupts(old);
+}
+
+BOOL AIGetDMAEnableFlag(void)
+{
+    return *(u16 *)(0xCC005036) >> 15;
+}
+
+void AIStartDMA(void)
+{
+    *(u16 *)(0xCC005036) |= 0x8000;
+}
+
+void AIStopDMA(void)
+{
+    *(u16 *)(0xCC005036) &= ~0x8000;
+}
+
+u32 AIGetDMABytesLeft(void)
+{
+    return *(u16 *)(0xCC00503A) * 32;
+}
+
+u32 AIGetDMAStartAddr(void)
+{
+    return  ((*(u16 *)(0xCC005030) << 16) |     // upper part
+             (*(u16 *)(0xCC005032)      ) )     // lower part
+             & 0x03FFFFE0;                      // apply address mask
+}
+
+u32 AIGetDMALength(void)
+{
+    return (*(u16 *)(0xCC005036) & ~0x8000) * 32;
+}
+
+BOOL AICheckInit(void)
+{
+    return __AI_init_flag;
+}                                              
+
+// ----------------------------------------------------------------------------
+
+// AUDIO STREAMING 
+
+// hardware registers
+#define AICR    ( *(volatile u32 *)(0xCC006C00 + 0x00) )
+#define AIVR    ( *(volatile u32 *)(0xCC006C00 + 0x04) )
+#define AISCNT  ( *(volatile u32 *)(0xCC006C00 + 0x08) )
+#define AIIT    ( *(volatile u32 *)(0xCC006C00 + 0x0C) )
+
+// AICR bit shifts
+#define AICR_DFR_SHFT       6                   // HW2 only !!
+#define AICR_SCRESET_SHFT   5
+#define AICR_AIINTVLD_SHFT  4
+#define AICR_AIINT_SHFT     3
+#define AICR_AIINTMSK_SHFT  2
+#define AICR_AFR_SHFT       1
+#define AICR_PSTAT_SHFT     0
+
+// AICR mask layout
+#define AICR_DFR        (1 << AICR_DFR_SHFT)    // HW2 only !!
+#define AICR_SCRESET    (1 << AICR_SCRESET_SHFT)
+#define AICR_AIINTVLD   (1 << AICR_AIINTVLD_SHFT)
+#define AICR_AIINT      (1 << AICR_AIINT_SHFT)
+#define AICR_AIINTMSK   (1 << AICR_AIINTMSK_SHFT)
+#define AICR_AFR        (1 << AICR_AFR_SHFT)
+#define AICR_PSTAT      (1 << AICR_PSTAT_SHFT)
+
+// volume register macros
+#define AIVR_SETR(val)  (AIVR = (AIVR & 0x00FF) | (val << 8))
+#define AIVR_SETL(val)  (AIVR = (AIVR & 0xFF00) | (val))
+#define AIVR_GETR       (AIVR >> 8)
+#define AIVR_GETL       (AIVR & 0xFF)
+
+AISCallback AIRegisterStreamCallback(AISCallback callback)
+{
+    BOOL old = OSDisableInterrupts();
+    AISCallback old_callback = __AIS_Callback;
+    __AIS_Callback = callback;
+    OSRestoreInterrupts(old);
+    return old_callback;
+}
+
+u32 AIGetStreamSampleCount(void)
+{
+    return AISCNT;
+}
+
+void AIResetStreamSampleCount(void)
+{
+    AICR = (AICR & ~AICR_SCRESET) | AICR_SCRESET;
+}
+
+void AISetStreamTrigger(u32 trigger)
+{
+    AIIT = trigger;
+}
+
+u32 AIGetStreamTrigger(void)
+{
+    return AIIT;
+}
+
+void AISetStreamPlayState(u32 state)
+{
+}
+
+u32 AIGetStreamPlayState(void)
+{
+    return (AICR & AICR_PSTAT);
+}
+
+void AISetDSPSampleRate(u32 rate)
+{
+}
+
+u32 AIGetDSPSampleRate(void)
+{
+    return (AICR >> AICR_DFR_SHFT) & 1;
+}
+
+void AISetStreamSampleRate(u32 rate)
+{
+}
+
+u32 AIGetStreamSampleRate(void)
+{
+    return (AICR >> AICR_AFR_SHFT) & 1;
+}
+
+void        AISetStreamVolLeft          (u8 vol);
+void        AISetStreamVolRight         (u8 vol);
+
+u8          AIGetStreamVolLeft          (void);
+u8          AIGetStreamVolRight         (void);
+

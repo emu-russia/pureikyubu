@@ -1,0 +1,152 @@
+    Description of 'Yay0', by org <kvzorganic@mail.ru>
+    Last updated 5 Mar 2004
+
+    All terms are mine, so dont kick me, if something is wrong..
+
+    ---------------------------------------------------------------------------
+
+    First 16 bytes are 'Yay0' header :
+
+    offset size     description
+      +0    4       'Yay0' signature
+      +4    4       size of decoded data, in bytes
+      +8    4       link table offset
+      +12   4       non-linked chunks and count modifiers table offset
+
+      +16           chunk description mask (words).
+                    each word describes incoming 32 chunks.
+                    if bit is set, then next chunk
+                    is non-linked (1 byte), otherwise
+                    next chunk is copied from previous data
+
+    Example mask : 0b 1101 0010 0000 0010 0000 0000 1101 1001,
+        bit 0 = 1, chunk 0 is non-linked, grab next byte from [+12] buffer
+        bit 1 = 1, chunk 1 is non-linked, grab next byte from [+12] buffer
+        bit 2 = 0, chunk 2 is linked, do block copy, using [+8] table
+        and so on...
+
+     [+8]           chunks link table (offsets)
+
+    [+12]           non-linked chunks and count modifiers buffer
+
+    Total size of decoded data buffer calculated as header size (16 bytes)
+    and size of decoded data ([+4] in header). Typical values are :
+
+        ANSI font = 65824 bytes
+        SJIS font = 593636 bytes
+
+    Average packing ratio is 20-50% (depends on data size)
+
+    Description of 'decoding' :
+
+    I dont know much about other data compression algorithms, so I will not
+    be surprised, if Yay0 is just LZ modification :)
+
+    Recipe : the main idea is repeat previously unpacked block of data.
+
+    1. if next bit in mask is '1', copy one byte to destination buffer
+       from [+12] table, otherwise do following steps.
+
+    2. read 16-bit halfword from 'chunks link table' area :
+
+        [cccc] [oooo oooo oooo]
+
+       first 4-bits are 'count' modifier. it counts bytes to copy.
+       next 12-bits are 'offset' modifier.
+
+    3. adjust modifiers : 
+
+        id('count' == 0)
+        {
+            'cmod' = grab next byte from 'count modifiers buffer'
+            'count' = 'cmod' + 18;
+        }
+        else 'count' = 'count' + 2;
+
+        'offset' = 'offset' - 1;
+
+        (I assume, that current offset is in destination buffer)
+
+    4. copy 'count' bytes from 'current offset' - 'offset'.
+
+        See also <yay0.png>
+
+    ---------------------------------------------------------------------------
+
+    Reversing of decoding routine :
+
+    void Decode(void *s, void *d)
+    {
+        i, j, k
+        p, q
+        cnt
+
+        i = r21 = *(u32 *)(s + 4);      // size of decoded data
+        j = r29 = *(u32 *)(s + 8);      // link table
+        k = r23 = *(u32 *)(s + 12);     // byte chunks and count modifiers
+
+        q = r31 = 0                     // current offset in dest buffer
+        cnt = r28 = 0                   // mask bit counter
+        p = r24 = 16                    // current offset in mask table
+
+        do
+        {
+            // if all bits are done, get next mask
+            if(cnt == 0)
+            {
+                // read word from mask data block
+                r22 = *(u32 *)(s + p);
+                p += 4;
+                cnt = 32;   // bit counter
+            }
+
+            // if next bit is set, chunk is non-linked
+            if(r22 & 0x80000000)
+            {
+                // get next byte
+                *(u8 *)(d + q) = *(u8 *)(s + k);
+                k++, q++;
+            }
+            // do copy, otherwise
+            else
+            {
+                // read 16-bit from link table
+                r26 = *(u16 *)(s + j);
+                j += 2;
+
+                // 'offset'
+                r25 = q - (r26 & 0xfff);
+
+                // 'count'
+                r30 = r26 >> 12;
+
+                if(r30 == 0)
+                {
+                    // get 'count' modifier
+                    r5 = *(u8 *)(s + k);
+                    k++;
+                    r30 = r5 + 18
+                }
+                else r30 += 2;
+
+                // do block copy
+                r5 = d + r25
+                for(i=0; i<r30; i++)
+                {
+                    *(u8 *)(d + q) = *(u8 *)(r5 - 1);
+                    q++, r5++;
+                }
+            }
+
+            // next bit in mask
+            r22 <<= 1;
+            cnt--;
+        } while(q < i);
+    }
+
+
+    Notes : I found that some files on games DVDs which have "SZP" extension
+    are also compressed as "Yay0", so probably Nintendo's term for this
+    compression alg. is 'SZP'-compression.
+
+

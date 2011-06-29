@@ -1,0 +1,15 @@
+// BB2 (Boot Block 2) structure
+
+#define OS_BB2_OFFSET   0x400       // disk offset
+
+typedef struct
+{
+    u32     bootFilePosition;       // main DOL executable
+    u32     FSTPosition;            // default FST
+    u32     FSTLength;              // default FST size (in bytes)
+    u32     FSTMaxLength;           // size of biggest additional FST
+    u32     userPosition;
+    u32     userLength;
+    u8      padding0[40];           // reserved, should be 0
+} DVDBB2;
+

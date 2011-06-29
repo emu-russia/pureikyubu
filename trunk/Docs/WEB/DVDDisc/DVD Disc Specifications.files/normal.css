@@ -1,0 +1,144 @@
+BODY {
+	FONT-SIZE: x-small; COLOR: #202020; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+P {
+	FONT-SIZE: x-small; COLOR: #202020; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+TD {
+	FONT-SIZE: x-small; COLOR: #202020; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+TH {
+	FONT-SIZE: x-small; COLOR: #202020; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+H2 {
+	FONT-SIZE: 16pt; COLOR: #000080; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+H3 {
+	FONT-SIZE: 130%; COLOR: rgb(100,100,100); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+A:visited {
+	FONT-WEIGHT: bold; COLOR: #496c91; TEXT-DECORATION: none
+}
+A:hover {
+	TEXT-DECORATION: underline
+}
+A:active {
+	COLOR: #e56757
+}
+A:link {
+	FONT-WEIGHT: bold; COLOR: #245480; TEXT-DECORATION: none
+}
+.bodyback {
+	BACKGROUND-COLOR: rgb(220,220,220)
+}
+DIV {
+	
+}
+DIV.left {
+	FONT-WEIGHT: bold; FONT-SIZE: 10pt; COLOR: #ffffff; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+LI {
+	MARGIN-TOP: 5px; MARGIN-LEFT: -15px
+}
+A.left:link {
+	FONT-WEIGHT: bold; COLOR: #ffffff; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+A.left:hover {
+	TEXT-DECORATION: underline
+}
+A.left:visited {
+	FONT-WEIGHT: bold; COLOR: #ffffff; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+A.left:active {
+	FONT-WEIGHT: bold; COLOR: #c0c0c0
+}
+.sectiontitle {
+	FONT-WEIGHT: bold; FONT-SIZE: 180%; COLOR: rgb(48,83,116); LINE-HEIGHT: 110%; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.paratitle {
+	PADDING-LEFT: 3px; FONT-WEIGHT: bold; FONT-SIZE: 125%; PADDING-BOTTOM: 1px; MARGIN: -3px 0px -12px; BORDER-LEFT: 1px solid; WIDTH: 96%; COLOR: rgb(80,80,80); BORDER-BOTTOM: 1px solid; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.heading3 {
+	FONT-WEIGHT: bold; FONT-SIZE: 115%; MARGIN: -3px 0px -15px; COLOR: #640000; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.topic {
+	FONT-WEIGHT: bold; FONT-SIZE: 130%; MARGIN: 0px; WIDTH: 92%; COLOR: rgb(255,255,255); BACKGROUND-COLOR: rgb(73,108,145)
+}
+.months {
+	FONT-WEIGHT: bold; FONT-SIZE: 100%; MARGIN: 10px 0px 0px; WIDTH: 70%; COLOR: #601010; BORDER-BOTTOM: gray thin dotted; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.lineheading {
+	BORDER-TOP: gray 2px solid; FONT-WEIGHT: bold; FONT-SIZE: 130%; MARGIN: 10px 0px 5px; WIDTH: 92%; COLOR: #404040; BORDER-BOTTOM: gray 2px solid; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.question {
+	FONT-WEIGHT: bold; FONT-SIZE: 110%; MARGIN-BOTTOM: -12px; COLOR: rgb(50,50,50); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.contentstitle {
+	FONT-WEIGHT: bold; FONT-SIZE: 130%; COLOR: rgb(80,80,80); FONT-FAMILY: Arial, Helvetica, sans-serif; font-width: 80%
+}
+.contentsright {
+	FONT-WEIGHT: bold; MARGIN: 0px 0px 5px; FONT-FAMILY: Arial, sans-serif
+}
+.quote {
+	FONT-WEIGHT: bold; FONT-SIZE: 110%; MARGIN: 15px 15px 5px 0px; COLOR: rgb(180,40,40); LINE-HEIGHT: 100%; FONT-STYLE: italic; FONT-FAMILY: "Comic Sans MS", Arial, Helvetica, sans-serif; TEXT-ALIGN: center; font-width: 80%
+}
+.newstitle {
+	FONT-WEIGHT: bold; FONT-SIZE: 120%; MARGIN: 5px 0px 0px; COLOR: #404040; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.summary {
+	FONT-WEIGHT: bold; FONT-SIZE: 105%; MARGIN: -10px 0px 0px; COLOR: rgb(100,100,100); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.lefttitle {
+	FONT-WEIGHT: bold; FONT-SIZE: 130%; COLOR: rgb(224,224,224); FONT-FAMILY: Arial, Helvetica, sans-serif; TEXT-DECORATION: none
+}
+.tableheading {
+	FONT-WEIGHT: bold; FONT-SIZE: 110%; COLOR: rgb(224,224,224); FONT-FAMILY: Arial, Helvetica, sans-serif; TEXT-DECORATION: none
+}
+.navbar {
+	FONT-WEIGHT: bold; FONT-SIZE: 90%; MARGIN: 15px 0px; COLOR: rgb(100,100,100); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.search {
+	FONT-WEIGHT: bold; FONT-SIZE: 80%; COLOR: rgb(255,255,255); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.date {
+	FONT-WEIGHT: bold; FONT-SIZE: 90%; COLOR: rgb(255,255,255); FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+.year {
+	FONT-WEIGHT: bold; FONT-SIZE: 140%; COLOR: rgb(80,80,80)
+}
+.tabletext {
+	MARGIN: 0px 0px 10px
+}
+.menubartable {
+	BORDER-TOP: black 2px solid; WIDTH: 750px; BORDER-BOTTOM: black 2px solid; BACKGROUND-COLOR: rgb(71,108,145)
+}
+.lefttable {
+	BORDER-RIGHT: 0px; BORDER-TOP: 0px; MARGIN: 0px; BORDER-LEFT: 0px; WIDTH: 160px; BORDER-BOTTOM: 0px; BACKGROUND-COLOR: rgb(71,108,145)
+}
+.whitetable {
+	BORDER-RIGHT: 0px; BORDER-TOP: 0px; BORDER-LEFT: 0px; WIDTH: 750px; BORDER-BOTTOM: 0px; BACKGROUND-COLOR: rgb(255,255,255)
+}
+.maincell {
+	MARGIN: 0px 25px
+}
+.rightcell {
+	WIDTH: 130px
+}
+.contentcell {
+	WIDTH: 130px
+}
+.titletable {
+	BORDER-RIGHT: 0px; PADDING-RIGHT: 0px; BORDER-TOP: 0px; PADDING-LEFT: 0px; PADDING-BOTTOM: 0px; MARGIN: 0px 0px 15px; BORDER-LEFT: 0px; WIDTH: 410px; PADDING-TOP: 0px; BORDER-BOTTOM: 0px
+}
+.blue {
+	FONT-WEIGHT: bold; FONT-SIZE: 90%; COLOR: rgb(255,255,255); FONT-FAMILY: Arial, Helvetica, sans-serif; BACKGROUND-COLOR: rgb(71,108,145)
+}
+.normalcellbg {
+	FONT-SIZE: 75%; COLOR: rgb(32,32,32); FONT-FAMILY: Arial, Helvetica, sans-serif; BACKGROUND-COLOR: rgb(230,230,235)
+}
+.tables {
+	BORDER-RIGHT: rgb(255,255,255) 2px; PADDING-RIGHT: 2px; BORDER-TOP: rgb(255,255,255) 2px; PADDING-LEFT: 2px; PADDING-BOTTOM: 2px; MARGIN: 10px 0px; BORDER-LEFT: rgb(255,255,255) 2px; WIDTH: 405px; PADDING-TOP: 2px; BORDER-BOTTOM: rgb(255,255,255) 2px; BACKGROUND-COLOR: rgb(255,255,255)
+}
+.headercells {
+	FONT-WEIGHT: bold; COLOR: rgb(255,255,255); BACKGROUND-COLOR: rgb(73,108,145)
+}

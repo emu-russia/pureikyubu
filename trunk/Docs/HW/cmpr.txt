@@ -1,0 +1,44 @@
+
+                    GAMECUBE Compressed Texture Format
+
+    --------------------------------------------------------------------------
+
+    As usual texture, CMPR-texture is divided on tiles, each per 32-bytes,
+    to fit texture cache line. Every tile is sub-tiled on four parts, in
+    zigzag order :
+
+        0-1
+         /
+        2-3
+
+    Format of sub-tile is pretty simple, and looks like DXT1. First goes two
+    base colors in RGB565, followed by 16 sub-tile texels. Every texel is
+    2-bit wide, to lookup from four colors : 00, 01, 10 and 11. First two
+    are given already, and last two are interpolated from first ones, by 
+    following rule :
+
+        COLOR0 and COLOR1 are base colors.
+
+        RGB0 <- unpack RGB565 COLOR0
+        A0 = 255
+
+        RGB1 <- unpack RGB565 COLOR1
+        A1 = 255
+
+        if COLOR0 > COLOR1
+            RGB2 = (2 * RGB0 + RGB1) / 3
+            A2 = 255
+
+            RGB3 = (2 * RGB1 + RGB0) / 3
+            A3 = 255
+        else
+            RGB2 = (RGB0 + RGB1) / 2
+            A2 = 255
+
+            RGB3 = (2 * RGB1 + RGB0) / 3
+            A3 = 0
+
+    --------------------------------------------------------------------------
+
+    This document is maintaining by Dolwin team.
+    Last edited by org, 21 Sep 2004    
