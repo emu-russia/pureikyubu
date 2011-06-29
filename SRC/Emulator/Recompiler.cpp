@@ -10,7 +10,7 @@
 u32 RECGroupSize(u32 start)
 {
     // align for 4 bytes and translate
-    u32 pa = MEMEffectiveToPhysical(start & ~3);
+    u32 pa = MEMEffectiveToPhysical(start & ~3, 0);
     u32 cnt = 1;
 
     while(cnt < CPU_MAX_GROUP)
@@ -65,7 +65,7 @@ static void dump_group(char *fname, u32 ea)
     if(!f) return;
 
     fprintf(f, "compiler group at %08X\n\n", ea);
-    ea = MEMEffectiveToPhysical(ea);
+    ea = MEMEffectiveToPhysical(ea, 0);
     if(ea == 0xffffffff)
     {
         fprintf(f, "no memory there.\n");
@@ -122,7 +122,7 @@ void * __fastcall RECCompileGroup(u32 start)
     cpu.recptr = 0;             // reset recbuf position
 
     u32 groupSize = RECGroupSize(start);
-    u32 pc = start, pa = MEMEffectiveToPhysical(start);
+    u32 pc = start, pa = MEMEffectiveToPhysical(start, 0);
     u32 spa = pa;               // save start address
 
     // call CPU update
@@ -226,7 +226,7 @@ __declspec(naked) void __fastcall RECDefaultGroup(u32 addr)
 void RECFlushRange(u32 addr, u32 size)
 {
     // align and translate
-    addr = MEMEffectiveToPhysical(addr & ~3);
+    addr = MEMEffectiveToPhysical(addr & ~3, 0);
     if(size & 3) size = (size & ~3) + 4;
     register u32 cur = addr, end = addr + size;
     cur >>= 2, end >>= 2;
@@ -245,7 +245,7 @@ void RECFlushRange(u32 addr, u32 size)
 // GO!
 void RECStart()
 {
-    u32 pa = MEMEffectiveToPhysical(PC & ~3);
+    u32 pa = MEMEffectiveToPhysical(PC & ~3, 0);
     void (__fastcall *group)(u32) = (void (__fastcall *)(u32))cpu.groups[pa >> 2];
     group(PC);
 }

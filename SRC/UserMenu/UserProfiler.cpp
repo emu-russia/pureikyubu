@@ -26,7 +26,7 @@ static  DWORD   checkTime;
 // stupid msdev hungs on asm { ... } blocks
 // so use single-line __asm expressions
 
-static __declspec(naked) void __fastcall ReadTimeStampCounter(s64 *ptr)
+static __declspec(naked) void __fastcall MyReadTimeStampCounter(s64 *ptr)
 {
     // rdtsc
     __asm  _emit    0x0f
@@ -57,7 +57,7 @@ static float GetClockSpeed()
             while((t1.LowPart - t0.LowPart) < 50)
             {
                 QueryPerformanceCounter(&t1);
-                ReadTimeStampCounter(&stamp0);
+                MyReadTimeStampCounter(&stamp0);
             }
 
             t0.LowPart = t1.LowPart;
@@ -66,7 +66,7 @@ static float GetClockSpeed()
             while((t1.LowPart - t0.LowPart) < 1000)
             {
                 QueryPerformanceCounter(&t1);
-                ReadTimeStampCounter(&stamp1);
+                MyReadTimeStampCounter(&stamp1);
             }
         }
 
@@ -99,9 +99,9 @@ void OpenProfiler()
     {
         cpuTime = gfxTime = sfxTime = padTime = dvdTime = idleTime = 0;
         ONE_SECOND = (s64)((f64)GetClockSpeed() * (f64)1000000.0);
-        ReadTimeStampCounter(&startTime);
-        ReadTimeStampCounter(&fpsTime);
-        ReadTimeStampCounter(&mipsTime);
+        MyReadTimeStampCounter(&startTime);
+        MyReadTimeStampCounter(&fpsTime);
+        MyReadTimeStampCounter(&mipsTime);
     }
 
     checkTime = GetTickCount();
@@ -118,7 +118,7 @@ void UpdateProfiler()
         checkTime = GetTickCount();
     
         // measure time
-        ReadTimeStampCounter(&stopTime);
+        MyReadTimeStampCounter(&stopTime);
         s64 total = stopTime - startTime;
 
         cpuTime = total - gfxTime - sfxTime - padTime - dvdTime;
@@ -137,14 +137,14 @@ void UpdateProfiler()
 /*/
 
         // frames per second
-        ReadTimeStampCounter(&cur);
+        MyReadTimeStampCounter(&cur);
         diff = cur - fpsTime;
         if(diff >= ONE_SECOND)
         {
             sprintf(buf, "FPS:%u", vi.frames);
             vi.frames = 0;
             SetStatusText(STATUS_FPS, buf);
-            ReadTimeStampCounter(&fpsTime);
+            MyReadTimeStampCounter(&fpsTime);
         }
 
         // calculate MIPS
@@ -154,7 +154,7 @@ void UpdateProfiler()
         {
             sprintf(mips, "%.1f", (f32)cpu.ops / 1000000.0f);
             cpu.ops = 0;
-            ReadTimeStampCounter(&mipsTime);
+            MyReadTimeStampCounter(&mipsTime);
         }
         else
         {
@@ -180,7 +180,7 @@ void UpdateProfiler()
 
         // reset counters
         cpuTime = gfxTime = sfxTime = padTime = dvdTime = idleTime = 0;
-        ReadTimeStampCounter(&startTime);
+        MyReadTimeStampCounter(&startTime);
     }
 }
 
@@ -188,18 +188,18 @@ void UpdateProfiler()
 
 // profilers set
 
-void BeginProfileGfx() { if(Profiler) ReadTimeStampCounter(&gfxStartTime); }
-void EndProfileGfx()   { if(Profiler) { ReadTimeStampCounter(&gfxStopTime);
+void BeginProfileGfx() { if(Profiler) MyReadTimeStampCounter(&gfxStartTime); }
+void EndProfileGfx()   { if(Profiler) { MyReadTimeStampCounter(&gfxStopTime);
                          gfxTime += gfxStopTime - gfxStartTime; } }
 
-void BeginProfileSfx() { if(Profiler) ReadTimeStampCounter(&sfxStartTime); }
-void EndProfileSfx()   { if(Profiler) { ReadTimeStampCounter(&sfxStopTime);
+void BeginProfileSfx() { if(Profiler) MyReadTimeStampCounter(&sfxStartTime); }
+void EndProfileSfx()   { if(Profiler) { MyReadTimeStampCounter(&sfxStopTime);
                          sfxTime += sfxStopTime - sfxStartTime; } }
 
-void BeginProfilePAD() { if(Profiler) ReadTimeStampCounter(&padStartTime); }
-void EndProfilePAD()   { if(Profiler) { ReadTimeStampCounter(&padStopTime);
+void BeginProfilePAD() { if(Profiler) MyReadTimeStampCounter(&padStartTime); }
+void EndProfilePAD()   { if(Profiler) { MyReadTimeStampCounter(&padStopTime);
                          padTime += padStopTime - padStartTime; } }
 
-void BeginProfileDVD() { if(Profiler) ReadTimeStampCounter(&dvdStartTime); }
-void EndProfileDVD()   { if(Profiler) { ReadTimeStampCounter(&dvdStopTime);
+void BeginProfileDVD() { if(Profiler) MyReadTimeStampCounter(&dvdStartTime); }
+void EndProfileDVD()   { if(Profiler) { MyReadTimeStampCounter(&dvdStopTime);
                          dvdTime += dvdStopTime - dvdStartTime; } }

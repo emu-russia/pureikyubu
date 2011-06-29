@@ -19,7 +19,7 @@ OP(BX)
         case 0:                 // b
         {
             npc = pc += target;
-            pc = MEMEffectiveToPhysical(pc);
+            pc = MEMEffectiveToPhysical(pc, 0);
 
             MOV_ECX_IMM(npc);
             JMP_DD(&cpu.groups[pc >> 2]);
@@ -29,7 +29,7 @@ OP(BX)
         {
             u32 lr = pc + 4;
             npc = pc += target;
-            pc = MEMEffectiveToPhysical(pc);
+            pc = MEMEffectiveToPhysical(pc, 0);
 
             MOV_DD_IMM(&LR, lr & ~3);
             MOV_ECX_IMM(npc);
@@ -38,7 +38,7 @@ OP(BX)
         }
         case 2:                 // ba
         {
-            pc = MEMEffectiveToPhysical(npc = target);
+            pc = MEMEffectiveToPhysical(npc = target, 0);
 
             MOV_ECX_IMM(npc);
             JMP_DD(&cpu.groups[pc >> 2]);
@@ -47,7 +47,7 @@ OP(BX)
         case 3:                 // bla
         {
             u32 lr = pc + 4;
-            pc = MEMEffectiveToPhysical(npc = target);
+            pc = MEMEffectiveToPhysical(npc = target, 0);
 
             MOV_DD_IMM(&LR, lr & ~3);
             MOV_ECX_IMM(npc);
@@ -62,7 +62,7 @@ OP(BX)
 // continue execution
 static void no_branch(u32 pc)
 {
-    u32 phys = MEMEffectiveToPhysical(pc+4);
+    u32 phys = MEMEffectiveToPhysical(pc+4, 0);
     MOV_ECX_IMM(pc+4);
     JMP_DD(&cpu.groups[phys >> 2]);
 }
@@ -136,7 +136,7 @@ OP(BCX)
         if(target & 0x8000) target |= 0xffff0000;
         if(op & 2) npc = target;
         else npc = pc + target;
-        u32 phys = MEMEffectiveToPhysical(npc);
+        u32 phys = MEMEffectiveToPhysical(npc, 0);
         MOV_ECX_IMM(npc);
         JMP_DD(&cpu.groups[phys >> 2]);
     JUMP_END(0);

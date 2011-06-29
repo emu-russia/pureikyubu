@@ -100,6 +100,7 @@ static int LoadMapGCC(char *mapname)
 // load Dolwin format map-file
 static int LoadMapRAW(char *mapname)
 {
+    int i;
     s32 size = FileSize(mapname);
     FILE *f = fopen(mapname, "rt");
 
@@ -122,7 +123,7 @@ static int LoadMapRAW(char *mapname)
     mapbuf[size] = 0;
 
     // remove all garbage, like tabs
-    for(int i=0; i<size; i++)
+    for(i=0; i<size; i++)
     {
         if(mapbuf[i] < ' ') mapbuf[i] = '\n';
     }

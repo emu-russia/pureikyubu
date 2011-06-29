@@ -247,6 +247,8 @@ static void LoadSettings(int n)         // dialogs created
 
 static void SaveSettings()              // OK pressed
 {
+    int i;
+
     // Emulator
     if(settingsLoaded[0])
     {
@@ -288,7 +290,7 @@ static void SaveSettings()              // OK pressed
         int max = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
 
         // delete all dirs
-        for(int i=0; i<usel.pathnum; i++)
+        for(i=0; i<usel.pathnum; i++)
         {
             if(usel.paths[i])
             {
@@ -462,6 +464,7 @@ static BOOL CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wParam
 
 static BOOL CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    int i;
     int curSel, max;
     char * path, text[1024];
 
@@ -485,7 +488,7 @@ static BOOL CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wParam
 
                         // check if already present
                         max = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
-                        for(int i=0; i<max; i++)
+                        for(i=0; i<max; i++)
                         {
                             SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
                             if(!stricmp(path, text)) break;

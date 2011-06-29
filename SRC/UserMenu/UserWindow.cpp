@@ -203,10 +203,11 @@ void UpdateRecentMenu(HWND hwnd)
 
 void AddRecentFile(char *path)
 {
+    int n;
     int RecentNum = GetConfigInt(USER_RECENT_NUM, USER_RECENT_NUM_DEFAULT);
 
     // check if item already present in list
-    for(int n=1; n<=RecentNum; n++)
+    for(n=1; n<=RecentNum; n++)
     {
         if(!stricmp(path, GetRecentEntry(n)))
         {

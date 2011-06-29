@@ -98,6 +98,7 @@ void con_ldst_info()
 
 void con_update_disa_window()
 {
+    int line;
     con_attr(0, 3);
     con_fill_line(wind.disa_y);
     if(wind.focus == WDISA) con_print_at(0, wind.disa_y, WHITE "\x1f");
@@ -108,7 +109,7 @@ void con_update_disa_window()
         con_printf_at(
             6, wind.disa_y, 
             " cursor:%08X phys:%08X pc:%08X", 
-            con.disa_cursor, MEMEffectiveToPhysical(con.disa_cursor), PC);
+            con.disa_cursor, MEMEffectiveToPhysical(con.disa_cursor, 0), PC);
     }
     else if(wind.disamode == DISAMOD_X86)
     {
@@ -148,7 +149,7 @@ void con_update_disa_window()
                 if(*ptr++ == '\n') crcnt++;
             }
 
-            for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++)
+            for(line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++)
             {
                 lp = linebuf;
                 while(*ptr && *ptr != '\n') *lp++ = *ptr++;
@@ -171,7 +172,7 @@ void con_disa_show_compile()
 {
     wind.x86addr = con.disa_cursor;
     wind.x86line = wind.x86lines = 0;
-    u32 ea = wind.x86addr, pa = MEMEffectiveToPhysical(wind.x86addr);
+    u32 ea = wind.x86addr, pa = MEMEffectiveToPhysical(wind.x86addr, 0);
 
     // check if group is present
     u8 *code = cpu.groups[pa >> 2];

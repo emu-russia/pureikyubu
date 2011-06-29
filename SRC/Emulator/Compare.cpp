@@ -87,12 +87,13 @@ void COMPDisconnect()               // close connection
 
 static void fill_ppc_context(CompareData * data)
 {
+    int i;
     data->pc    = PC;
     data->cr    = CR;
     data->tbr   = UTBR;
     data->msr   = MSR;
     data->fpscr = FPSCR;
-    for(int i=0; i<32; i++) data->gpr[i]    = GPR[i];
+    for(i=0; i<32; i++) data->gpr[i]    = GPR[i];
     for(i=0; i<32; i++)     data->fp_ps0[i] = cpu.fpr[i].uval;
     for(i=0; i<32; i++)     data->ps1[i]    = cpu.ps1[i].uval;
     for(i=0; i<1024; i++)   data->spr[i]    = SPR[i];

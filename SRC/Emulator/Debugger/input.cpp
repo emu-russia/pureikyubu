@@ -479,7 +479,7 @@ static void disa_navigate()
     DISA    disa;
     u32 op = 0, addr = con.disa_cursor;
 
-    u32 pa = MEMEffectiveToPhysical(addr);
+    u32 pa = MEMEffectiveToPhysical(addr, 0);
     if(pa != -1) op = MEMFetch(pa);
     if(op == 0) return;
 

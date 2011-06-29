@@ -271,7 +271,7 @@ static u8 buf[20];
 static u32 vaddr;
 static int bufp, bufe;
 static char ubuf[100], *ubufp, *ubufp2, *ubufp2end;
-static col;
+static int col;
 
 static char *hex1=""; // ="0x";
 static char *hex2=""; // ="h";
@@ -326,20 +326,20 @@ static u8 getbyte()
   return *(codepnt++);
 }
 
-static prefix;
-static modrmv;
-static sibv;
-static opsize;
-static addrsize;
+static int prefix;
+static int modrmv;
+static int sibv;
+static int opsize;
+static int addrsize;
 
-static modrm()
+static int modrm()
 {
   if (modrmv == -1)
     modrmv = getbyte();
   return modrmv;
 }
 
-static sib()
+static int sib()
 {
   if (sibv == -1)
     sibv = getbyte();

@@ -215,7 +215,7 @@ void cmd_blr_old()
     if(con.running) return;
 
     u32 ea = con.disa_cursor;
-    u32 pa = MEMEffectiveToPhysical(ea);
+    u32 pa = MEMEffectiveToPhysical(ea, 0);
     if(pa == -1) return;
     RAM[pa+0] = 0x4e;   // BLR
     RAM[pa+1] = 0x80;
@@ -246,7 +246,7 @@ void cmd_blr(int argc, char argv[][CON_LINELEN])
         if(con.running) return;
 
         u32 ea = con.disa_cursor;
-        u32 pa = MEMEffectiveToPhysical(ea);
+        u32 pa = MEMEffectiveToPhysical(ea, 0);
         if(pa == -1) return;
 
         u32 op = MEMSwap(*(u32 *)(&RAM[pa]));
@@ -543,7 +543,7 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
                                       i+1, disa.opcode, disa.operands );
             }
             MEMReadWord(sp, &sp);           // walk stack
-            if(!sp || MEMEffectiveToPhysical(sp) == -1) break;
+            if(!sp || MEMEffectiveToPhysical(sp, 0) == -1) break;
         }
         #undef MAX_LEVEL
     }
@@ -571,7 +571,7 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
         if(argv[1][0] == '*')
         {
             u32 branchAddr = con.disa_cursor, op;
-            u32 pa = MEMEffectiveToPhysical(branchAddr);
+            u32 pa = MEMEffectiveToPhysical(branchAddr, 0);
             if(pa != -1)
             {
                 DISA disa;
@@ -624,7 +624,7 @@ void cmd_nop()
     if(con.running) return;
 
     u32 ea = con.disa_cursor;
-    u32 pa = MEMEffectiveToPhysical(ea);
+    u32 pa = MEMEffectiveToPhysical(ea, 0);
     if(pa == -1) return;
     
     u32 old = MEMSwap(*(u32 *)(&RAM[pa]));
@@ -641,7 +641,7 @@ void cmd_denop()
     if(con.running) return;
 
     u32 ea = con.disa_cursor;
-    u32 pa = MEMEffectiveToPhysical(ea);
+    u32 pa = MEMEffectiveToPhysical(ea, 0);
     if(pa == -1) return;
 
     u32 old = get_nop(ea);
@@ -777,6 +777,7 @@ void cmd_r(int argc, char argv[][CON_LINELEN])
 
 void cmd_sop(int argc, char argv[][CON_LINELEN])
 {
+    u32 saddr;
     if(argc < 2)
     {
         con_print("syntax : sop <opcode>\n");
@@ -788,11 +789,11 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
     {
         // search opcode
         u32 eaddr = con.disa_cursor + 16384;
-        for(u32 saddr=con.disa_cursor+4; saddr<eaddr; saddr+=4)
+        for(saddr=con.disa_cursor+4; saddr<eaddr; saddr+=4)
         {
             DISA disa;
             u32 op = 0;
-            u32 pa = MEMEffectiveToPhysical(saddr);
+            u32 pa = MEMEffectiveToPhysical(saddr, 0);
             if(pa != -1) op = MEMFetch(pa);
             disa.op = op;
             disa.pc = saddr;
@@ -901,6 +902,7 @@ static int testempty(char *str)
 
 void cmd_script(char *file)
 {
+    int i;
     con_print(YEL "loading script: %s\n", file);
 
     // following code is copied from MAPLoad :)
@@ -932,7 +934,7 @@ void cmd_script(char *file)
     sbuf[size] = 0;
 
     // remove all garbage, like tabs
-    for(int i=0; i<size; i++)
+    for(i=0; i<size; i++)
     {
         if(sbuf[i] < ' ') sbuf[i] = '\n';
     }

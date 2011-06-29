@@ -435,7 +435,7 @@ OP(LWARX)
     u32 ea = RRB;
     if(RA) ea += RRA;
     cpu.RESERVE = TRUE;
-    cpu.RESERVE_ADDR = MEMEffectiveToPhysical(ea);
+    cpu.RESERVE_ADDR = MEMEffectiveToPhysical(ea, 0);
     CPUReadWord(ea, &RRD);
 }
 
