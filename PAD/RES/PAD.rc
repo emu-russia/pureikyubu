@@ -1,0 +1,216 @@
+//Microsoft Developer Studio generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+#ifdef _WIN32
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE MOVEABLE PURE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_ICON1               ICON    DISCARDABLE     "PAD.ico"
+#endif    // Russian resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (U.S.) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+#ifdef _WIN32
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG1 DIALOGEX 0, 0, 360, 255
+STYLE DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Controller"
+FONT 7, "Small Fonts", 0, 0, 0x1
+BEGIN
+    CONTROL         104,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,187,
+                    110,42,31
+    CONTROL         103,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,215,
+                    45,80,62,WS_EX_TRANSPARENT
+    CONTROL         102,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,130,
+                    153,39,36
+    PUSHBUTTON      "...",IDC_BUTTON_X,311,46,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_START,191,142,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_Y,311,61,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_A,311,76,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_B,311,91,35,15,NOT WS_TABSTOP
+    CTEXT           "X",IDC_STATIC,298,51,10,8
+    CTEXT           "Y",IDC_STATIC,298,65,10,8
+    CTEXT           "A",IDC_STATIC,298,80,10,8
+    CTEXT           "B",IDC_STATIC,298,95,10,8
+    CONTROL         107,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,15,
+                    106,49,31
+    CONTROL         108,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,15,
+                    158,49,31
+    PUSHBUTTON      "...",IDC_BUTTON_RIGHT,172,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_DOWN,133,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_LEFT,94,163,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_UP,133,137,35,15,NOT WS_TABSTOP
+    CONTROL         105,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,70,
+                    49,61,54
+    CONTROL         106,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | 
+                    SS_REALSIZEIMAGE,248,151,44,38
+    PUSHBUTTON      "...",IDC_BUTTON_XDOWN50,94,106,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XDOWN100,94,121,35,15,NOT WS_TABSTOP
+    CTEXT           "50%",IDC_STATIC,74,110,15,8
+    CTEXT           "100%",IDC_STATIC,74,122,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_XRIGHT50,134,62,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XRIGHT100,134,76,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XUP100,94,15,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XUP50,94,31,35,15,NOT WS_TABSTOP
+    CTEXT           "100%",IDC_STATIC,74,20,15,8
+    CTEXT           "50%",IDC_STATIC,74,33,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_XLEFT50,30,62,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XLEFT100,30,76,35,15,NOT WS_TABSTOP
+    CTEXT           "50%",IDC_STATIC,10,65,15,8
+    CTEXT           "100%",IDC_STATIC,12,79,15,8
+    CTEXT           "50%",IDC_STATIC,172,65,15,8
+    CTEXT           "100%",IDC_STATIC,172,78,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_CXUP,253,135,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXLEFT,210,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXDOWN,253,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXRIGHT,294,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERR,22,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERL,22,138,35,15,NOT WS_TABSTOP
+    GROUPBOX        "Define buttons",IDC_STATIC,5,5,350,223
+    CONTROL         "Plugged in",IDC_CHECK_PLUG,"Button",BS_AUTOCHECKBOX,15,
+                    20,50,10
+    CTEXT           "Basic PAD-plugin (v. 0.07)",IDC_STATIC,215,20,130,10,0,
+                    WS_EX_STATICEDGE
+    PUSHBUTTON      "Cancel",IDC_PAD_CONFIG_CANCEL,318,234,36,17
+    PUSHBUTTON      "Clear",IDC_PAD_CONFIG_CLEAR,6,234,36,17
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERZ,22,206,35,15,NOT WS_TABSTOP
+    CTEXT           "R",IDC_STATIC,61,196,10,8
+    CTEXT           "Z",IDC_STATIC,61,210,10,8
+    PUSHBUTTON      "OK",IDC_PAD_CONFIG_OK,276,234,36,17
+    PUSHBUTTON      "Default",IDC_PAD_CONFIG_DEFAULT,48,234,36,17
+END
+
+IDD_DIALOG2 DIALOG DISCARDABLE  0, 0, 160, 150
+STYLE DS_MODALFRAME | DS_SETFOREGROUND | DS_FIXEDSYS | DS_CENTER | WS_POPUP | 
+    WS_CAPTION | WS_SYSMENU
+CAPTION "About Input Plugin"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    DEFPUSHBUTTON   "Close",IDC_PAD_ABOUT_OK,59,131,42,14
+    GROUPBOX        "Version Info",IDC_STATIC,5,4,150,122
+    LTEXT           "Thanks to Adrian Oboroc for provided PAD documentation.",
+                    IDC_STATIC,18,72,111,18
+    LTEXT           "Basic PAD Plugin, using Win32 API.\n(C) 2003-2004 Dolwin team.",
+                    IDC_STATIC,18,48,114,18
+    LTEXT           "Static",IDC_ABOUT_STAMP,54,18,93,25
+    LTEXT           "Thanks to DesktopMan for PAD testing demos.",IDC_STATIC,
+                    18,90,111,21
+    ICON            IDI_ICON1,IDC_STATIC,19,19,20,20
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO MOVEABLE PURE 
+BEGIN
+    IDD_DIALOG1, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 101
+    END
+
+    IDD_DIALOG2, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 153
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 143
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP  MOVEABLE PURE   "padArrows.bmp"
+IDB_BITMAP2             BITMAP  MOVEABLE PURE   "padButtons.bmp"
+IDB_BITMAP3             BITMAP  MOVEABLE PURE   "padStart.bmp"
+IDB_BITMAP4             BITMAP  MOVEABLE PURE   "padStick.bmp"
+IDB_BITMAP5             BITMAP  MOVEABLE PURE   "padSubStick.bmp"
+IDB_BITMAP6             BITMAP  MOVEABLE PURE   "padTriggerL.bmp"
+IDB_BITMAP7             BITMAP  MOVEABLE PURE   "padTriggerR.bmp"
+#endif    // English (U.S.) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+
