@@ -13,23 +13,23 @@ void (__fastcall *c_4 [2048])(u32 op);      // 4
 // not implemented opcode
 OP(NI)
 {
-    char instr[256];
-    DISA d;
+    char text[256];
+    PPCD_CB d;
     
     // disassemble
-    d.op = op;
+    d.instr = op;
     d.pc = PC;
-    dasm(&d);
+    PPCDisasm (&d);
     sprintf(
-        instr, "%08X  <%08X>  (%i, %i)  %-10s %s",
-        PC, op, op >> 26, op & 0x7ff, d.opcode, d.operands
+        text, "%08X  <%08X>  (%i, %i)  %-10s %s",
+        PC, op, op >> 26, op & 0x7ff, d.mnemonic, d.operands
     );
 
     if(emu.doldebug)
     {
         DBHalt( "** CPU ERROR **\n"
                 "unimplemented opcode : %s\n\n",
-                instr );
+                text );
     }
 
     char dump[1024];
@@ -63,7 +63,7 @@ OP(NI)
     DolwinError( "** CPU ERROR **",
             "unimplemented opcode : %s\n\n"
             "%s\n",
-            instr, dump );
+            text, dump );
 }
 
 // switch to extension opcode table

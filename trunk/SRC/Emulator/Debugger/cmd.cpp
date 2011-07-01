@@ -513,7 +513,7 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
     else
     {
         #define MAX_LEVEL 0xfff     // back chain limit
-        DISA disa;
+        PPCD_CB disa;
         u32 sp;
 
         if(!emu.running || !SP)
@@ -530,17 +530,19 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
 
         for(int i=0; i<level; i++)
         {
-            MEMReadWord(sp+4, &disa.pc);    // read LR value from stack
+            u32 read_pc;
+            MEMReadWord(sp+4, &read_pc);    // read LR value from stack
+            disa.pc = read_pc;
             disa.pc -= 4;                   // set to branch opcode
-            MEMReadWord(disa.pc, &disa.op); // read branch
-            dasm(&disa);                    // disasm
-            if(disa.type == DISA_BRANCH)
+            MEMReadWord(disa.pc, &disa.instr); // read branch
+            PPCDisasm (&disa);                    // disasm
+            if(disa.iclass & PPC_DISA_BRANCH)
             {
-                char * symbol = SYMName(disa.disp);
+                char * symbol = SYMName(disa.target);
                 if(symbol) con_print( NORM "%-3i: " GREEN "%-12s%-12s " BROWN "(%s)\n", 
-                                      i+1, disa.opcode, disa.operands, symbol );
+                                      i+1, disa.mnemonic, disa.operands, symbol );
                 else       con_print( NORM "%-3i: " GREEN "%-12s%-12s " "\n", 
-                                      i+1, disa.opcode, disa.operands );
+                                      i+1, disa.mnemonic, disa.operands );
             }
             MEMReadWord(sp, &sp);           // walk stack
             if(!sp || MEMEffectiveToPhysical(sp, 0) == -1) break;
@@ -574,13 +576,13 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
             u32 pa = MEMEffectiveToPhysical(branchAddr, 0);
             if(pa != -1)
             {
-                DISA disa;
+                PPCD_CB disa;
                 MEMReadWord(branchAddr, &op);
                 disa.pc = branchAddr;
-                disa.op = op;
-                dasm(&disa);
-                if(disa.type == DISA_BRANCH)
-                    address = disa.disp;
+                disa.instr = op;
+                PPCDisasm (&disa);
+                if(disa.iclass & PPC_DISA_BRANCH)
+                    address = disa.target;
             }
             else address = 0;
         }
@@ -791,14 +793,14 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
         u32 eaddr = con.disa_cursor + 16384;
         for(saddr=con.disa_cursor+4; saddr<eaddr; saddr+=4)
         {
-            DISA disa;
+            PPCD_CB disa;
             u32 op = 0;
             u32 pa = MEMEffectiveToPhysical(saddr, 0);
             if(pa != -1) op = MEMFetch(pa);
-            disa.op = op;
+            disa.instr = op;
             disa.pc = saddr;
-            dasm(&disa);
-            if(!stricmp(disa.opcode, argv[1])) break;
+            PPCDisasm (&disa);
+            if(!stricmp(disa.mnemonic, argv[1])) break;
         }
         if(saddr == eaddr) con_print(GREEN "%s " NORM "not found. last address : %08X\n", argv[1], saddr);
         else
