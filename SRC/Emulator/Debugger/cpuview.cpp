@@ -5,7 +5,7 @@
 
 static int con_disa_line(int line, u32 opcode, u32 addr)
 {
-    DISA    disa;
+    PPCD_CB    disa;
     int bg, fg, bgcur, bgbp;
     char *symbol;
     int addend = 1;
@@ -39,10 +39,10 @@ static int con_disa_line(int line, u32 opcode, u32 addr)
     con_printf_at( 0, line, NORM "%08X  ", addr);
     con_printf_at(10, line, CYAN "%08X  ", opcode);
 
-    disa.op = opcode;
+    disa.instr = opcode;
     disa.pc = addr;
 
-    dasm(&disa);
+    PPCDisasm (&disa);
 
     if(opcode == 0x4e800020 /* blr */)
     {
@@ -50,19 +50,19 @@ static int con_disa_line(int line, u32 opcode, u32 addr)
         // to easily locate end of function
         con_printf_at(20, line, GREEN "blr");
     }
-    else if(disa.type == DISA_BRANCH)
+    else if(disa.iclass & PPC_DISA_BRANCH)
     {
-        con_printf_at(20, line, GREEN "%-12s%s", disa.opcode, disa.operands);
-        if(disa.disp > addr) con_printline(CYAN " \x19");
-        else if (disa.disp < addr) con_printline(CYAN " \x18");
+        con_printf_at(20, line, GREEN "%-12s%s", disa.mnemonic, disa.operands);
+        if(disa.target > addr) con_printline(CYAN " \x19");
+        else if (disa.target < addr) con_printline(CYAN " \x18");
         else con_printline(CYAN " \x1b");
 
-        if(symbol = SYMName(disa.disp))
+        if(symbol = SYMName(disa.target))
         {
             con_printf_at(47, line, BROWN " ; %s", symbol);
         }
     }
-    else con_printf_at(20, line, NORM "%-12s%s", disa.opcode, disa.operands);
+    else con_printf_at(20, line, NORM "%-12s%s", disa.mnemonic, disa.operands);
 
     return addend;
 }
@@ -70,17 +70,17 @@ static int con_disa_line(int line, u32 opcode, u32 addr)
 // show pointer to data
 void con_ldst_info()
 {
-    DISA    disa;
+    PPCD_CB    disa;
     wind.ldst = FALSE;
 
     {
         u32 op = MEMFetch(con.disa_cursor & ~3);
 
         disa.pc = con.disa_cursor;
-        disa.op = op;
-        dasm(&disa);
+        disa.instr = op;
+        PPCDisasm (&disa);
 
-        if(disa.type == DISA_LDST)
+        if(disa.iclass & PPC_DISA_LDST)
         {
             wind.ldst_disp = RRA + SIMM;
             con_attr(0, 3);
@@ -200,30 +200,30 @@ void con_disa_show_compile()
         if(*code == 0xcc) break;    // int3
         if(*code == 0x90)           // nop - show PPC opcode
         {
-            DISA disa;
+            PPCD_CB disa;
             u32 op = MEMFetch(pa);
 
             ptr += sprintf(ptr, GREEN "%08X  ", ea);
             ptr += sprintf(ptr, "%08X  ", op);
 
-            disa.op = op;
+            disa.instr = op;
             disa.pc = ea;
 
-            dasm(&disa);
+            PPCDisasm (&disa);
 
-            if(disa.type == DISA_BRANCH)
+            if(disa.iclass & PPC_DISA_BRANCH)
             {
                 char * symbol;
 
-                ptr += sprintf(ptr, "%-12s%s", disa.opcode, disa.operands);
+                ptr += sprintf(ptr, "%-12s%s", disa.mnemonic, disa.operands);
 
-                if(symbol = SYMName(disa.disp))
+                if(symbol = SYMName(disa.target))
                 {
                     ptr += sprintf(ptr, BROWN " ; %s", symbol);
                 }
                 ptr += sprintf(ptr, "\n");
             }
-            else ptr += sprintf(ptr, "%-12s%s\n", disa.opcode, disa.operands);
+            else ptr += sprintf(ptr, "%-12s%s\n", disa.mnemonic, disa.operands);
 
             i--;
             code++;

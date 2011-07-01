@@ -6,7 +6,7 @@
 // emulator sub-systems
 #include "Memory.h"         // memory engine for CPU
 #include "Gekko.h"          // CPU controls
-#include "DisasmPPC.h"      // PowerPC disassembler
+#include "GekkoDisasm.h"    // Gekko disassembler
 #include "DisasmX86.h"      // x86-series disassembler
 #include "Debugger.h"       // debugger interface
 #include "Interpreter.h"    // Gekko interpreter

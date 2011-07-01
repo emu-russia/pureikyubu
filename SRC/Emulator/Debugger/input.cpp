@@ -476,19 +476,19 @@ static void disa_return()
 
 static void disa_navigate()
 {
-    DISA    disa;
+    PPCD_CB    disa;
     u32 op = 0, addr = con.disa_cursor;
 
     u32 pa = MEMEffectiveToPhysical(addr, 0);
     if(pa != -1) op = MEMFetch(pa);
     if(op == 0) return;
 
-    memset(&disa, 0, sizeof(DISA));
-    disa.op = op;
+    memset(&disa, 0, sizeof(PPCD_CB));
+    disa.instr = op;
     disa.pc = addr;
-    dasm(&disa);
+    PPCDisasm (&disa);
 
-    if(disa.type == DISA_BRANCH) disa_goto(disa.disp);
+    if(disa.iclass & PPC_DISA_BRANCH) disa_goto(disa.target);
 }
 
 static void con_disa_key(char ascii, int vkey, int ctrl)

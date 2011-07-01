@@ -14,22 +14,22 @@ void (__fastcall *a_4 [2048])(u32 op, u32 pc); // 4
 
 static void __fastcall cpu_not_implemented(u32 op, u32 pc)
 {
-    char instr[256];
-    DISA d;
+    char text[256];
+    PPCD_CB d;
 
     // disassemble
-    d.op = op;
+    d.instr = op;
     d.pc = pc;
-    dasm(&d);
+    PPCDisasm(&d);
     sprintf(
-        instr, "%08X  <%08X>  (%i, %i)  %-10s %s",
-        pc, op, op >> 26, op & 0x7ff, d.opcode, d.operands
+        text, "%08X  <%08X>  (%i, %i)  %-10s %s",
+        pc, op, op >> 26, op & 0x7ff, d.mnemonic, d.operands
     );
 
 /*/
     DolwinError( "** CPU COMPILER ERROR **",
                  "unimplemented opcode : %s\n\n",
-                 instr );
+                 text );
 /*/
 
     // fallback interpreter

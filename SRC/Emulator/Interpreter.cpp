@@ -39,12 +39,12 @@ static void log_opcode(u32 op)
         PC, XER, CTR
     );
 
-    DISA d;
-    d.op = op;
+    PPCD_CB d;
+    d.instr = op;
     d.pc = PC;
-    dasm(&d);
+    PPCDisasm (&d);
     DBReport( CPU "%08X: %08X %-10s %s\n%s\n",
-             PC, op, d.opcode, d.operands, dump );
+              PC, op, d.mnemonic, d.operands, dump );
 }
 
 // parse and execute single opcode

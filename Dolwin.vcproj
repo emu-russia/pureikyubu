@@ -225,14 +225,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\SRC\Emulator\DisasmPPC.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SRC\Emulator\DisasmPPC.h"
-				>
-			</File>
-			<File
 				RelativePath=".\SRC\Emulator\DisasmX86.cpp"
 				>
 			</File>
@@ -254,6 +246,14 @@
 			</File>
 			<File
 				RelativePath=".\SRC\Emulator\Gekko.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SRC\Emulator\GekkoDisasm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SRC\Emulator\GekkoDisasm.h"
 				>
 			</File>
 			<File
