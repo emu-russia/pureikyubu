@@ -1,0 +1,358 @@
+
+Exploring of Gekko Special Purpose Registers for CubeDocumented project.
+
+Documented by Andrei Chestakov (org). Version 1.0. (22 Sep 2006)
+
+------------------------------------------------------------------------------
+
+SPR 0
+-----
+
+"mtspr/mfspr is supervisor-only if SPR[0] = 1" as written in PPC manual.
+Set program exception handler.
+In supervisor mode:
+Read SPR[0]: Program Exception (Illegal)
+Write SPR[0] 0x00000001: Program Exception (Illegal)
+Write SPR[0] 0x00000000: Program Exception (Illegal)
+Set MSR[PR] to 1 (user mode)
+Read SPR[0]: Program Exception (Illegal)
+Write SPR[0]: Program Exception (Illegal)
+
+XER (1)
+-------
+
+Write 0xFFFFFFFF to XER.
+Result: 0xE000FF7F.
+Second write 0x00000000.
+Result: 0x00000000.
+Bits 16-23 are R/W and probably have some meaning on other PPC models.
+Bits 3-15, 24 are Read 0 only.
+Same for OEA.
+
+SPR 2, 3, 4, 5, 6, 7
+--------------------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+LR (8)
+------
+
+All bits are valid R/W without any doubts. :)
+Prove:
+        mfspr   r31, LR
+        li      r30, 0xFFFF     # LR = 0xFFFFFFFF
+        mtspr   LR, r30
+        mfspr   r30, LR
+        mtspr   LR, r31
+        mr      r3, r30
+        bl      PrintValue
+Output: 0xFFFFFFFF
+Same for OEA.
+
+CTR (9)
+-------
+
+Write: 0xDEADBEEF
+Readed: 0xDEADBEEF
+All bits are R/W.
+Same for OEA.
+
+SPR 10, 11, 12, 13, 14, 15, 16, 17
+----------------------------------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+DSISR (18)
+----------
+
+OEA: All bits are valid for R/W.
+UISA Read or Write: Program Exception (Privileged).
+
+DAR (19)
+--------
+
+OEA: All bits are valid for R/W.
+UISA Read or Write: Program Exception (Privileged).
+
+SPR 20, 21
+----------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+DEC (22)
+--------
+
+OEA: All bits are valid for R/W.
+UISA Read or Write: Program Exception (Privileged).
+Countering down :)
+
+SPR 23, 24
+----------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+SDR1 (25)
+---------
+
+OEA:
+Write 0xFFFFFFFF. Read result: 0xFFFF01FF. Bits 16-22 are read-only zero.
+UISA: Read or Write: Program Exception (Privileged).
+
+SRR0 (26)
+---------
+
+OEA:
+Write 0xFFFFFFFF. Read result: 0xFFFFFFFF. All bits are valid for R/W, but
+official manual says bits 30-31 are reserved.
+UISA: Read or Write: Program Exception (Privileged).
+
+SRR1 (27)
+---------
+
+OEA:
+Write 0xFFFFFFFF. Read result: 0xFFFFFFFF. All bits are valid for R/W.
+UISA: Read or Write: Program Exception (Privileged).
+
+SPRG0-SPRG3 (272-275)
+---------------------
+
+OEA:
+Write value 0xFFFFFFFF to any registers.
+Readed: 0xFFFFFFFF.
+Write SPRG0 0xAAAAAAAA;
+Write SPRG1 0xBBBBBBBB;
+Write SPRG2 0xCCCCCCCC;
+Write SPRG3 0xDDDDDDDD;
+Results are:
+SPRG0 0xAAAAAAAA;
+SPRG1 0xBBBBBBBB;
+SPRG2 0xCCCCCCCC;
+SPRG3 0xDDDDDDDD;
+All bits are valid for R/W.
+UISA: Read or Write: Program Exception (Privileged).
+
+SPR 276-281
+-----------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+EAR (282)
+---------
+
+OEA:
+Write 0xFFFFFFFF.
+Readed: 0x8000000F. Bits 1-25 are read 0 only.
+UISA Read and Write: Program Exception (Privileged).
+
+SPR 283
+-------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+TBL and TBU (284 and 285)
+-------------------------
+
+OEA:
+Read TBL and TBU via mfspr, and read TBL and TBU via mftb:
+SPR 285: 0x00000000     TBU: 0x00000000
+SPR 284: 0x48F4202F     TBL: 0x48F429DD   (small time need for read)
+Write 0xAABBCCDD to SPR 285, and 0x88888888 to SPR 284, results are:
+SPR 285: 0xAABBCCDD     TBU: 0xAABBCCDD
+SPR 284: 0x888894E9     TBL: 0x88889ECD   (small time need for read)
+All bits are valid for R/W.
+UISA any Read or Write: Program Exception (Privileged).
+
+SPR 286
+-------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+PVR (287)
+---------
+
+OEA:
+Write 0xFFFFFFFF;
+Readed: 0x00083214. Register is read-only.
+UISA Read and Write: Program Exception (Privileged).
+
+IBAT0-IBAT3, DBAT0-DBAT3 (528-543)
+----------------------------------
+
+For IBAT testing I used IBAT3, for DBAT testing I used DBAT3. I'm pretty sure
+other registers work the same, because otherwise PPC UNIX-based software
+never existed :)
+Setting mode OEA:
+Write 0xFFFFFFFF to IBAT3U and IBAT3L. Readed:
+IBAT3U: 0xFFFE1FFF. Bits 15-18 are read 0 only.
+IBAT3L: 0xFFFE007B. Bits 15-24 and 29 are read only. Setting W and G bits
+in WIMG bit-field is allowed (but speciefed by architecture as boundedly-undefined).
+Write 0xFFFFFFFF to DBAT3U and DBAT3L. Readed:
+DBAT3U: 0xFFFE1FFF. Bits 15-18 are read 0 only.
+DBAT3L: 0xFFFE007B. Bits 15-24 and 29 are read only. Setting W and G bits allowed.
+UISA: Attempt to Read or Write cause Program Exception (Privileged).
+
+GQR0-GQR7 (912-919)
+-------------------
+
+Write value 0xFFFFFFFF to any registers.
+Readed: 0xFFFFFFFF. All bits are valid R/W.
+Write GQR0 0x11111111;
+Write GQR1 0x22222222;
+Write GQR2 0x33333333;
+Write GQR3 0x44444444;
+Write GQR4 0x55555555;
+Write GQR5 0x66666666;
+Write GQR6 0x77777777;
+Write GQR7 0x88888888;
+Results are:
+GQR0 0x11111111;
+GQR1 0x22222222;
+GQR2 0x33333333;
+GQR3 0x44444444;
+GQR4 0x55555555;
+GQR5 0x66666666;
+GQR6 0x77777777;
+GQR7 0x88888888;
+UISA Read or Write: Program Exception (Privileged).
+
+HID2 (920)
+----------
+
+OEA:
+Write 0xFFFFFFFF to HID2.
+Result: 0xF00FFFFF. Sticky bits 8-11 are cannot be written as '1'. You can
+only clear them, when they set by hardware. Bits 4-7 are read only.
+UISA: Set MSR[PR] to 1 (user mode), set program exception handler,
+Read HID2: Program Exception (Privileged)
+Write HID2: Program Exception (Privileged)
+
+WPAR (921)
+----------
+
+OEA: Write 0xFFFFFFFF, readed: 0xFFFFFFE0, bits 27-30 are read 0 only. Bit 31
+is read only (set when WGPipe is not empty).
+When running in UISA: Read or Write attempt Program Exception (Privileged).
+
+DMA_U (922)
+-----------
+
+OEA: Write 0xFFFFFFFF, readed 0xFFFFFFFF. All bits valid for R/W.
+UISA: Program Exception (Privileged).
+
+DMA_L (923)
+-----------
+
+OEA: Write 0xFFFFFFFF, readed 0xFFFFFFFC. Bit 30 is sticky (can write only 1,
+but not 0), when read it shows DMA command status. Bit 31 is sticky (can write
+only 1, but not 0), when read it shows DMA operation. Other bits are R/W.
+UISA: Program Exception (Privileged).
+
+UMMCR0, UPMC1, UPMC2, USIA, UMMCR1, UPMC3, UPMC4, USDA (936-943)
+----------------------------------------------------------------
+
+OEA: Attempt to Write cause to Program Exception (Illegal).
+Read is work.
+UISA: Attempt to Write cause to Program Exception (Illegal).
+Read is work.
+
+SPR 944-951
+-----------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+MMCR0, PMC1, PMC2, SIA, MMCR1, PMC3, PMC4, SDA (952-959 respectively)
+---------------------------------------------------------------------
+
+OEA: Writing 0xFFFFFFFF to any PMC registers, returns 0xFFFFFFFF (all
+bits are valid for R/W) for all registers, except:
+MMCR1: readed value is 0xFFC00000 (bits 10-31 are read 0 only).
+SDA: readed value is 0x00000000 (register is read only).
+UISA: Attempt to Read or Write cause to Program Exception (Privileged).
+
+HID0 (1008)
+-----------
+
+OEA: 
+Setting some bits may be dangerous, but... :)
+Write: 0xFFFFC3FF (I do not set DCFI, ICFI, DLOCK and ILOCK), Readed: 
+same value 0xFFFFC3FF, so all bits are valid R/W. No read only bits.
+UISA: Attempt to Read or Write cause to Program Exception (Privileged).
+
+HID1 (1009)
+-----------
+
+OEA:
+Write value 0xFFFFFFFF, readed: 0x80000000 (all bits are read-only), Gekko
+PLL_CFG = 0b1000.
+UISA: Attempt to Read or Write cause to Program Exception (Privileged).
+
+IABR (1010)
+-----------
+
+OEA:
+Write 0xFFFFFFFF to IABR, readed value: 0xFFFFFFFE. You cannot set bit 31 !
+Its always 0.
+UISA Read or Write: Program Exception (Privileged).
+
+SPR 1011, 1012
+--------------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+DABR (1013)
+-----------
+
+OEA:
+Write 0xFFFFFFFF to DABR, readed value: 0xFFFFFFFF.
+UISA Read or Write: Program Exception (Privileged).
+
+SPR 1014, 1015, 1016
+--------------------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+L2CR (1017)
+-----------
+
+OEA: Write value 0xFFFFFFFF, readed: 0xFFFFFF00. Bits 24-30 are read-only 0.
+Bit 31 is 1 only when global invalidation in progress.
+UISA Read or Write: Program Exception (Privileged).
+
+SPR 1018
+--------
+
+OEA and UISA Read or Write: Program Exception (Illegal).
+
+ICTC (1019)
+-----------
+
+OEA: Write 0xFFFFFFFF, readed: 0x000001FF. Bits 0-22 are read 0 always.
+UISA: Program Exception (Privileged).
+
+THRM1 (1020)
+------------
+
+OEA Write 0xFFFFFFFF.
+Read result is: 0x3F800007. Bits 0-1 are read-only. Bits 9-28 are readed as 0.
+UISA Read or Write: Program Exception (Privileged)
+
+THRM2 (1021)
+------------
+
+OEA Write 0xFFFFFFFF.
+Read result is: 0x3F800007. Bits 0-1 are read-only. Bits 9-28 are readed as 0.
+UISA Read or Write: Program Exception (Privileged)
+
+THRM3 (1022)
+------------
+
+OEA Write 0xFFFFFFFF.
+Now read, result is: 0xFE003FFF. Bits 7-17 are readed as zero.
+UISA Read or Write: Program Exception (Privileged)
+
+PIR (1023)
+----------
+
+This register is defined by PPC architecutre, but should not present in Gekko.
+Lets check:
+OEA and UISA Read or Write: Program Exception (Illegal)
