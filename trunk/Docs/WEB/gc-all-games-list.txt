@@ -1,5 +1,161 @@
+                           GameCube Game List.
 
+    ----------------------------------------------------------------------------
+    N    Game Title                                         Release Date  GameID
+    ----------------------------------------------------------------------------
 
-001 
+    Year 2001 (20 games).
 
-Last updated 2 Nov 2004
+    0001 Disney's Tarzan: Untamed                           Nov 10, 2001   XXXX
+    0002 Madden NFL 2002                                    Nov 18, 2001
+    0003 SSX Tricky                                         Nov 18, 2001
+    0004 NHL Hitz 20-02                                     Nov 18, 2001
+    0005 All-Star Baseball 2002                             Nov 18, 2001
+    0006 Tony Hawk's Pro Skater 3                           Nov 18, 2001
+    0007 Super Monkey Ball                                  Nov 18, 2001
+    0008 Luigi's Mansion                                    Nov 18, 2001
+    0009 Wave Race: Blue Storm                              Nov 18, 2001
+    0010 Star Wars: Rogue Squadron II: Rogue Leader         Nov 18, 2001
+    0011 Batman: Vengeance                                  Nov 18, 2001
+    0012 FIFA Soccer 2002                                   Nov 24, 2001
+    0013 Dave Mirra Freestyle BMX 2                         Nov 27, 2001
+    0014 Crazy Taxi                                         Nov 30, 2001
+    0015 XG3 Extreme G Racing                               Dec 01, 2001
+    0016 Super Smash Bros. Melee                            Dec 03, 2001
+    0017 Pikmin                                             Dec 03, 2001
+    0018 Simpsons Road Rage, The                            Dec 07, 2001
+    0019 NFL Quarterback Club 2002                          Dec 10, 2001
+    0020 Universal Studios Theme Parks Adventure            Dec 17, 2001
+
+    Year 2002.
+
+    0021 Cel Damage                                         Jan 08, 2002
+    0022 NBA Courtside 2002                                 Jan 14, 2002
+    0023 ESPN International Winter Sports 2002              Jan 31, 2002
+    0024 Smashing Drive                                     Feb 01, 2002
+    0025 Dark Summit                                        Feb 06, 2002
+    0026 Sonic Adventure 2 Battle                           Feb 12, 2002
+    0027 18 Wheeler American Pro Trucker                    Feb 19, 2002
+    0028 NBA Street                                         Feb 23, 2002
+    0029 Jeremy McGrath Supercross World                    Feb 27, 2002
+    0030 All-Star Baseball 2003                             Feb 28, 2002
+    0031 Bloody Roar: Primal Fury                           Mar 01, 2002
+    0032 Pac-Man World 2                                    Mar 01, 2002
+    0033 Gauntlet: Dark Legacy                              Mar 05, 2002
+    0034 SpyHunter                                          Mar 11, 2002
+    0035 NFL Blitz 20-02 (GCN)                              Mar 18, 2002 
+    0036 Home Run KING                                      Mar 19, 2002
+    0037 James Bond 007: Agent under Fire                   Mar 19, 2002
+    0038 Driven                                             Mar 26, 2002
+    0039 Disney's Donald Duck: Goin' "Quackers" (GCN)       Mar 26, 2002
+    0040 Sega Sports: NBA 2K2                               Mar 26, 2002
+    0041 Sega Soccer Slam                                   Mar 26, 2002
+    0042 Burnout                                            Apr 01, 2002
+    0043 Resident Evil                                      Apr 01, 2002  
+    0044 Spider-Man (GCN)                                   Apr 17, 2002 
+    0045 FIFA World Cup 2002                                Apr 25, 2002
+    0046 ESPN MLS Extra Time 2002                           Apr 30, 2002 
+    0047 Lost Kingdoms                                      May 01, 2002
+    0048 ZooCube                                            May   , 2002
+    0049 Legends of Wrestling                               May 10, 2002
+    0050 Virtua Striker 2002                                May 20, 2002
+    0051 Bomberman Generation                               Jun 06, 2002 
+    0052 WWE WrestleMania X8                                Jun 12, 2002
+    0053 F1 2002                                            Jun 24, 2002
+    0054 Eternal Darkness: Sanity's Requiem                 Jun 24, 2002
+    0055 MX Superfly                                        Jun 25, 2002 
+    0056 RedCard 20-03                                      Jun 27, 2002
+    0057 Tetris Worlds (GCN)                                Jun 30, 2002
+    0058 UFC: Throwdown                                     Jul   , 2002 
+    0059 NCAA Football 2003                                 Jul 24, 2002
+    0060 Turok Evolution                                    Aug   , 2002 
+    0061 Aggressive Inline                                  Aug 05, 2002
+    0062 Madden NFL 2003                                    Aug 10, 2002 
+    0063 Smuggler's Run: Warzones                           Aug 12, 2002  
+    0064 Disney's Magical Mirror Starring Mickey Mouse      Aug 12, 2002  
+    0065 NFL Blitz 20-03 (GCN)                              Aug 14, 2002  
+    0066 Beach Spikers                                      Aug 14, 2002  
+    0067 SEGA Sports NFL 2K3                                Aug 20, 2002   
+    0068 Super Monkey Ball 2                                Aug 24, 2002 
+    0069 Super Mario Sunshine                               Aug 26, 2002 
+    0070 SEGA Sports NCAA College Football 2K3              Sep 03, 2002  
+    0071 Pac-Man Fever                                      Sep 04, 2002  
+    0072 MLB Slugfest 20-03                                 Sep 05, 2002 
+    0073 Scooby Doo!: Night of 100 Frights                  Sep 12, 2002 
+    0074 Rayman Arena                                       Sep 15, 2002  
+    0075 Rocket Power: Beach Bandits (GCN)                  Sep 15, 2002 
+    0076 Animal Crossing                                    Sep 16, 2002  
+    0077 Egg Mania: Eggstreme Madness                       Sep 18, 2002  
+    0078 Kelly Slater's Pro Surfer                          Sep 18, 2002 
+    0079 Crash Bandicoot: The Wrath of Cortex               Sep 18, 2002 
+    0080 Disney/Pixar's Monsters, Inc.: Scream Arena        Sep 19, 2002  
+    0081 Freekstyle                                         Sep 23, 2002 
+    0082 Star Fox Adventures                                Sep 23, 2002  
+    0083 4 x 4 EVO 2                                        Sep 24, 2002   
+    0084 Capcom vs. SNK 2 EO                                Sep 24, 2002 
+    0085 NHL Hitz 20-03                                     Sep 24, 2002 
+    0086 Scorpion King, The: Rise of an Akkadian            Sep 24, 2002 
+    0087 Big Air Freestyle                                  Sep 24, 2002 
+    0088 Mystic Heroes                                      Sep 28, 2002 
+    0089 WTA Tour Tennis (GCN)                              Sep 30, 2002 
+    0090 Mat Hoffman's Pro BMX 2 (GCN)                      Oct 01, 2002 
+    0091 NHL 2003                                           Oct 01, 2002  
+    0092 Top Gun: Combat Zones                              Oct   , 2002 
+    0093 Need For Speed: Hot Pursuit 2                      Oct 01, 2002 
+    0094 Star Wars: The Clone Wars                          Oct 01, 2002  
+    0095 Sega Sports NBA 2K3                                Oct 07, 2002 
+    0096 Pro Rally 2002                                     Oct 09, 2002 
+    0097 Ty the Tasmanian Tiger                             Oct 09, 2002 
+    0098 Outlaw Golf                                        Oct 09, 2002 
+    0099 Godzilla: Destroy All Monsters Melee               Oct 09, 2002 
+    0100 Knockout Kings 2003                                Oct 10, 2002 
+    0101 NBA Live 2003                                      Oct 11, 2002  
+    0102 Namco Museum (GCN)                                 Oct 12, 2002 
+    0103 Casper: Spirit Dimensions                          Oct 14, 2002 
+    0104 Backyard Football                                  Oct 15, 2002  
+    0105 Taz: Wanted                                        Oct 15, 2002 
+    0106 BloodRayne                                         Oct 15, 2002 
+    0107 Robotech: BattleCry                                Oct 15, 2002 
+    0108 TimeSplitters 2                                    Oct 15, 2002  
+    0109 Mario Party 4                                      Oct 21, 2002 
+    0110 X-Men: Next Dimension                              Oct 23, 2002  
+    0111 Worms Blast (GCN)                                  Oct 23, 2002  
+    0112 Swingerz Golf                                      Oct 23, 2002  
+    0113 Tony Hawk's Pro Skater 4                           Oct 23, 2002 
+    0114 Phantasy Star Online: Episode I & II               Oct 29, 2002 
+    0115 Street Hoops                                       Nov   , 2002   
+    0116 Tiger Woods PGA Tour 2003                          Nov   , 2002 
+    0117 Shrek: Extra Large                                 Nov 01, 2002 
+    0118 FIFA Soccer 2003 (GCN)                             Nov 06, 2002  
+    0119 Cubivore                                           Nov 08, 2002 
+    0120 Spyro: Enter the Dragonfly                         Nov 08, 2002  
+    0121 Zapper (GCN)                                       Nov 09, 2002 
+    0122 Fire Blade                                         Nov 09, 2002 
+    0123 Medal of Honor: Frontline                          Nov 09, 2002 
+    0124 Defender                                           Nov 10, 2002 
+    0125 Whirl Tour                                         Nov 11, 2002 
+    0126 NASCAR: Dirt To Daytona                            Nov 11, 2002 
+    0127 Resident Evil Zero                                 Nov 11, 2002  
+    0128 Sonic Mega Collection                              Nov 11, 2002  
+    0129 Evolution Skateboarding                            Nov 12, 2002 
+    0130 Wreckless: The Yakuza Missions                     Nov 12, 2002 
+    0131 Hot Wheels Velocity X                              Nov 12, 2002 
+    0132 Disney Sports Skateboarding                        Nov 13, 2002  
+    0133 Disney Sports Soccer                               Nov 13, 2002  
+    0134 Darkened Skye                                      Nov 13, 2002 
+    0135 Harry Potter and the Chamber of Secrets (GCN)      Nov 15, 2002  
+    0136 James Bond 007: NightFire                          Nov 15, 2002  
+    0137 Rocky (GCN)                                        Nov 16, 2002  
+    0138 Die Hard: Vendetta                                 Nov 18, 2002 
+    0139 Metroid Prime                                      Nov 18, 2002 
+    0140 Minority Report (GCN)                              Nov 20, 2002 
+
+    Year 2003.
+
+    Year 2004.
+
+    Year 2005.
+
+    ---------------------------------------------------------------------------
+
+    Last updated 30 May 2005

@@ -1,42 +1,226 @@
 
-               -= Nintendo GAMECUBE hardware abbreviations =-
+Gamecube hardware acronyms for CubeDocumented project.
 
-    ARAM
-        Auxiliary (Audio) Memory. 16 MB of slow (comapred to RAM) DRAM.
-        Used for raw DSP sound data and for textures sometimes.
-        ARAM has DMA communication channel with main memory (RAM).
+Documented by Andrei Shestakov (org). Version 1.3. (2 Feb 2007)
 
-    DOL, Dolphin
-        Work name of GAMECUBE. Nintendo has custom executable file format with
-        .DOL extension.
+------------------------------------------------------------------------------
 
-    DSP
-        Digital Signal Processor. Used to produce advanced sound in GC.
-        DSP is integrated with GP in Flipper chip.
+AA
+    Antialiasing. Rendering method, that makes polygon edges seem less sharpen,
+    by combining colors of nearby pixels.
 
-    EXI
-        Expansion Interface. MX serial devices protocol. Sort of USB
-        architecture.
+AD16
+    Mysterious EXI device.
 
-    Flipper
-        Largest chip on GC board. Contains audio and graphics processors.
+AI
+    Audio Interface. Hardware responsible for DMA playback of PCM buffer and
+    DVD ADPCM streaming sound. AI hardware cannot mix sound channels or set
+    channel volume for PCM DMA playback. These operations and more advanced
+    sound effects are produced by DSP.
 
-    GC, GCN, NGC
-        Nintendo GAMECUBE
+Apploader
+    Small program on DVD to load main DOL executable.
 
-    GCM
-        GAMECUBE Master Data.
+AR, ARAM
+    Auxiliary (Audio) Memory. 16 MB of slow (comapred to RAM) DRAM.
+    Used for raw DSP sound data and as temporary space for textures.
+    ARAM has DMA communication channel with main memory (RAM). Development
+    boards has "ARAM Expansion" (additional 4, 16 or 32 MBs).
 
-    Gekko
-        GAMECUBE CPU, custom PowerPC 750 with 40 new SIMD-like instructions.
+BAT
+    Block Address Translation, PPC MMU translation mechanism. There are DBAT
+    and IBAT special-purpose registers for data and instruction address 
+    translation respectively.
 
-    GP
-        Graphics Processor, the main part of Flipper chip. Developed by ArtX.
+BBA
+    Broad-Band Adapter, GC's 10BaseT Ethernet Adapter.
 
-    MX
-        Macronix Ltd. chips index. GC has many hardware parts, developed
-        by Macronix, like DSP, EXI and bootrom chip.
+BS
+    Bootstrap Stage (from analogy with UNIX). Very first code, executed after
+    GC hard reset.
 
-    RAM
-        Main memory. GC has 24 MB of fast 1T-SRAM. Development boards has RAM
-        extended up to 48 MB.
+BS2
+    Bootstrap Stage 2. Same as IPL.
+
+CR
+    PPC Condition Register, stores result of integer comare operation, for
+    conditional branch decision.
+
+CRT
+    C Run Time. C/C++ program environment (libraries and startup calls).
+
+DOL
+    Gamecube application (custom executable file format).
+
+Dolphin
+    Early development work name of Gamecube.
+
+Dolphin OS
+    Gamecube OS. Single user, single process, multithreaded. Linked together
+    with any GC application ("hard-linked"), as library.
+
+DSP
+    Digital Signal Processor. Used to produce advanced sound on GC.
+    DSP is integrated with GP in Flipper chip and has its own ROM.
+    Developed by Macronix.
+
+DI, DVD
+    DVD hardware interface. GC DVD is actually microcontroller, based on MN-10200
+    CPU with proprietary firmware ROM. DVD is protected by non-standard barcodes
+    and data encryption, which is decrypted on-the-fly by DVD controller. GC DVD
+    cannot be read on usual PC hardware. Whole GC DVD stuff is developed by
+    Matsushita.
+
+EFB
+    Embedded Framebuffer. 2MB of fast 1T-SRAM memory located inside Flipper.
+    Used by GP's pixel engine to draw pixels. Later copied into XFB, for final
+    TV-output.
+
+EXI
+    Expansion Interface. Gamecube peripherial devices bus, sort of USB
+    architecture. Developed by Macronix. Devices drived by EXI: memory cards,
+    broad-band adapter, real-time clock, bootrom, SRAM.
+
+FIFO
+    First-In-First-Out buffer to send GP commands and create GP command lists.
+
+Flipper
+    Gamecube Northbridge+Peripheral Hardware+Graphics Processor+Audio DSP.
+
+FPR
+    Floating Point Register. Gekko has 32 64-bit FPRs, named f0-f31.
+
+FPSCR
+    Floating Point Status and Control Register.
+
+JTAG
+    Hardware debug interface to CPU. You can connect some wires to CPU pins,
+    to overwhelm it. Gekko has full support of IEEE 1149-1a-1993 JTAG standard
+    (discussed).
+
+GC, GCN, NGC
+    Nintendo Gamecube.
+
+GCM
+    Gamecube Master Data (official term). GC DVD Image files.
+
+Gekko
+    Gamecube CPU, PowerPC 750-derivative processor with FPU extensions, called
+    "Paired Single".
+
+GP, GX
+    Graphics Processor, the major part of Flipper chip. GP is fixed point
+    state-machine. Developed by ArtX team.
+
+GPR
+    General Purpose Register. Gekko has 32 32-bit GPRs, named r0-r31. r1 often
+    used as stack pointer (sp).
+
+GX
+    Software library, developed by Nintendo and ArtX, to drive GP hardware.
+    Has many crossways with OpenGL (but more advanced).
+
+HW2
+    Common name of GC hardware. Number states for revision ("2" for production
+    boards, "1" for first development hardware).
+
+IPL
+    Initial Program Loader. Graphics shell, used to load game from DVD.
+
+MC
+    Memory Card, EXI device.
+
+MI
+    Flipper memory interface, plays role of "Nothbridge".
+
+MMU
+    PPC Memory Management Unit. Translates virtual address to physical.
+    MMU has two translation mechanisms: block address translation and page table
+    translation. Address translation for data access and instruction fetch is
+    processed separately in DMMU and IMMU.
+
+MSR
+    Machine State Register. CPU status and control register.
+
+MX
+    Macronix Ltd. chips index. GC has many hardware parts, developed
+    by Macronix, like DSP, EXI and bootrom chip.
+
+PC
+    Program Counter. PowerPC architecture does not define such term, but
+    everyone is using it anyway, instead "CIA" (Current Instruction Address).
+
+PCM
+    Pulse Code Modulation, method commonly used in digital sound hardware.
+    PCM sound parameters are: playback rate, bits per sample, sample format.
+    GC AI can playback 32000/48000 Hz, 16-bit big-endian stereo samples via
+    DMA.
+
+PI
+    Peripheral Interface. Set of hardware registers to control interrupts and
+    hardware reset. There also "PI FIFO": hardware-driven FIFO buffer in RAM.
+
+PM
+    PowerPC Performance Monitor. Set of PPC special purpose registers used for
+    speed profiling of applications.
+
+PPC
+    IBM PowerPC Architecture.
+
+PTE
+    Page Table Entry. Page table record, used to translate virtual address to
+    physical.
+
+RAM
+    Main memory. GC has 24 MB of fast 1T-SRAM. Development boards has RAM
+    extended up to 48 MB. Developed by MoSys.
+
+ROM
+    Read-only memory. GC has following ROMs: 2 MB encrypted bootrom, 128 KB
+    DVD firmware, 4 KB DSP DROM, 8 KB DSP IROM.
+
+RSW
+    "Reset Switch", same as reset button. Seems early development GC models
+    were equipped by switch, insted programmable reset button.
+
+RTC
+    Real-time clock. EXI device, counting seconds.
+
+SDK
+    Software Development Kit. Full set of compilers, libraries and documentation
+    for development on specified platform. Gamecube SDK contain development tools,
+    like sound and texture convertors, and set of libraries for OS and hardware.
+    Compiler is provided by Metrowerk's CodeWarrior. There also huge development
+    board and paper documentation.
+
+SI
+    Serial Interface. Hardware responsible for communication with serial devices,
+    such as GC controller and keyboard via serial I/O buffer.
+
+SPR
+    Special-purpose register. Set of registers, dedicated to operating system.
+    Gekko has about 60 SPRs.
+
+SR
+    Segment Registers, used by MMU for virtual address translation.
+
+SRAM
+    Small amount of battery backuped memory for OS misc settings.
+
+TLB
+    PPC MMU Translation Lookaside Buffer, used to keep recently used page
+    address translations. Gekko has 128 two-way set associative TLB for each
+    MMU (DMMU and IMMU).
+
+VI
+    Video Interface. Hardware responsible for TV-out of framebuffer (XFB),
+    and generating VBlank interrupt (actually can be configured to interrupt
+    CPU at any beam location). Has support for light-gun, antialiasing of XFB
+    by tap-filters and progressive video mode (480p).
+
+WBUF
+    Gekko Write Gather Buffer. Small cache for burst memory transactions.
+    Used together with graphics FIFO to send GP commands.
+
+XFB
+    External Framebuffer, located in main memory. Used for final TV-out by VI.

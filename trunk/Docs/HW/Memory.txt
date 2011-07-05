@@ -1,0 +1,272 @@
+
+Gamecube memory model for CubeDocumented project.
+
+This document is under construction.
+Documented by Andrei Chestakov (org). Version 0.01. (21 Sep 2006)
+Additions and corrections by tmbinc.
+
+--------------------------------------------------------------------------
+
+1. Effective Address Memory Map (Dolphin OS):
+
+80000000  24MB  Main Memory (RAM), write-back cached
+C0000000  24MB  Main Memory (RAM), write-through cached
+C8000000   2MB  Embedded Framebuffer (EFB)
+CC000000        Command Processor (CP)
+CC001000        Pixel Engine (PE)
+CC002000        Video Interface (VI)
+CC003000        Peripheral Interface (PI)
+CC004000        Memory Interface (MI)
+CC005000        DSP and DMA Audio Interface (AID)
+CC006000        DVD Interface (DI)
+CC006400        Serial Interface (SI)
+CC006800        External Interface (EXI)
+CC006C00        Audio Streaming Interface (AIS)
+CC008000        FIFO
+E0000000  16KB  L1 Locked Cache scratchpad buffer
+
+Other memory access will ISI/DSI at first (if not mapped by MMU) and then 
+Flipper memory interface interrupt (if its not mapped or protected).
+
+Effective address map in other OSes (such as GC-Linux) maybe different.
+
+Dolphin OS by default is not using page-table translation and segment registers.
+Only block translation is used. Configuration of DBAT and IBAT registers in
+Dolphin OS is as follow :
+
+DBAT0: 80001FFF 00000002    Write-back cached main memory, 256MB block.
+DBAT1: C0001FFF 0000002A    Write-through cached main memory, 256MB block.
+DBAT2: 00000000 00000000    Reserved for user.
+DBAT3: 00000000 00000000    Reserved for user.
+
+IBAT0: 80001FFF 00000002    Write-back cached main memory, 256MB block.
+IBAT1: 00000000 00000000    Reserved for user.
+IBAT2: 00000000 00000000    Reserved for user.
+IBAT3: 00000000 00000000    Reserved for user.
+
+Additionaly OS set DBAT3, when locked cache is used:
+DBAT3: E00001FE E0000002    Locked cache, 16MB block (only first 16KB is valid)
+
+Although some applications use segment registers to simulate direct ARAM access.
+GC-Linux also use segment registers and page tables for VM.
+
+Do not use effective address map in your emulators. You must first translate effective
+address by your MMU emu, and then emulate access to physical memory (see below).
+
+2. Physical Address Memory Map (Flipper memory interface):
+
+00000000  24MB  Main Memory (RAM)
+08000000   2MB  Embedded Framebuffer (EFB)
+0C000000        Command Processor (CP)
+0C001000        Pixel Engine (PE)
+0C002000        Video Interface (VI)
+0C003000        Peripheral Interface (PI)
+0C004000        Memory Interface (MI)
+0C005000        DSP and DMA Audio Interface (AID)
+0C006000        DVD Interface (DI)
+0C006400        Serial Interface (SI)
+0C006800        External Interface (EXI)
+0C006C00        Audio Streaming Interface (AIS)
+0C008000        FIFO
+FFF00000   1MB  Boot ROM (first megabyte)
+
+Unmapped memory access will generate Flipper memory interface (MI) interrupt.
+See more details of Memory Interface in MI.txt.
+
+3. Memory access details.
+
+Effective address is translated by Gekko Memory Management Unit (MMU) to
+Physical Address. Flipper hosts all memory operations by Memory Interface (MI).
+
+ ----------         ----------         -------------
+|          |  PA   |          |  PA   |             |
+|  Gekko   |------>| Flipper  |------>| Main Memory |
+|          |       |   MI     |       |             |
+ ----------         ----------         -------------
+     EA                 |
+                        | PA
+                        V
+                 ----------------         EA - Effective Address
+                |                |        PA - Physical Address
+                | Other Hardware |
+                |                |
+                 ----------------
+
+Access can be byte, halfword, word (32 bits), double-word and burst (32 bytes).
+Burst transfer is used by cache-line store/fetch and gather-buffer store operation.
+
+4. Undocumented memory feature.
+
+First time when I saw it, I thought it was bug:
+
+Uncached store byte to main memory:
+
+Example address 0xC0000A00 (unused by any software).
+
+Store byte 0xAA to 0xC00000A00:
+C00000A00: AA 00 00 00 AA 00 00 00        (Flipper store 8 bytes)
+
+Store byte 0xAA to 0xC00000A01:
+C00000A00: 00 AA 00 00 00 AA 00 00        (Flipper store 8 bytes)
+
+Store byte 0xAA to 0xC00000A02:
+C00000A00: 00 00 AA 00 00 00 AA 00        (Flipper store 8 bytes)
+
+Store byte 0xAA to 0xC00000A03:
+C00000A00: 00 00 00 AA 00 00 00 AA        (Flipper store 8 bytes)
+
+Uncached store halfword to main memory:
+
+Example address 0xC0000A00 (unused by any software).
+
+Store halfword 0xAABB to 0xC00000A00:
+C00000A00: AA BB 00 00 AA BB 00 00        (Flipper store 8 bytes)
+
+Store halfword 0xAABB to 0xC00000A01:
+C00000A00: 00 AA BB 00 00 AA BB 00        (Flipper store 8 bytes)
+
+Store halfword 0xAABB to 0xC00000A02:
+C00000A00: 00 00 AA BB 00 00 AA BB        (Flipper store 8 bytes)
+
+Store halfword 0xAABB to 0xC00000A03:
+C00000A00: BB 00 00 AA BB 00 00 AA        (Flipper store 8 bytes, halfword wrapped)
+
+Thing is, the bus allows only 64bit accesses. In cached regions, it will write
+cachelines, so it will never hit the problem. It's not that uncommon, to not
+connect the "byte store" lines.
+
+Issue:
+You cannot use memset() at uncached memory areas, because it will fill memory by
+incorrect values. Cached byte and halfword access is NOT "buggy". Uncached word
+and double-word access is NOT "buggy". Uncached read is NOT "buggy" also.
+
+Application:
+I measured CPU time (by Performance Monitor) which need to store byte by cached and
+uncached address. Its the same! So you can clear 8 bytes of main memory by single
+byte write much faster:
+
+/* Fast clear routine, exploiting Flipper store byte "bug". */
+void __fastclear(void *addr, int length)
+{
+    int i, tail;
+    u8 *ptr;
+
+    if(length < 8)
+    {
+        memset(addr, 0, length);
+        DCBlockStore(addr);
+        return;
+    }
+
+    tail = length % 8;
+    length /= 8;
+ 
+    for(i=0, ptr=OSCachedToUncached(addr); i<length; i++, ptr+=8)
+    {
+        *ptr = 0;
+    }
+
+    if(tail)
+    {
+        ptr = OSUncachedToCached(ptr);
+        memset(ptr, 0, tail);
+        DCBlockStore(ptr);
+    }
+}
+
+This is 30% or more faster than usual memset.
+
+5. Write Gather Pipe (or Gather-buffer).
+
+Gather-buffer is circular 128 byte FIFO which collect stores to fixed physical
+address and after amount of data reach 32 bytes, it blast block of data equals
+to cache-line size (32-bytes, called "burst transfer") to external memory.
+
+Gather-buf is enabled only when HID2[WPE] bit is set. You can set store physical
+address by WPAR register (WPAR[GB_ADDR] field). WPAR[BNE] field shows you
+whenever GB is empty or not.
+
+To discard all current storing data just overwrite WPAR[GB_ADDR].
+To flush gather-buf you must fill it by some dummy data, until it blast 32 bytes.
+
+Do not store data by address with bits 0-26 equals to WPAR[GB_ADDR], but other bits
+27-31 are not zero. Gather-buffer compare only bits 0-26 of physical address, otherwise
+your store goes directly to main memory, bypassing gather-buffer.
+Reading from WPAR[GB_ADDR] is not affected to gather-buffer. You will get value which
+is stored in external memory at this moment.
+
+Example Code:
+
+void *gatherbuf;
+
+static void EnableGatherBuffer(void)
+{
+    PPCMthid2(PPCMfhid2() | HID2_WPE);
+}
+
+static void DisableGatherBuffer(void)
+{
+    PPCMthid2(PPCMfhid2() & ~HID2_WPE);
+}
+
+static void FlushGatherBuffer(void)
+{
+    int i;
+    for(i=0; i<31; i++) *(u8 *)gatherbuf = 0x00;
+}
+
+static void TestGatherBuffer(void)
+{
+    //
+    // When directed to FIFO.
+    //
+    gatherbuf = 0xCC008000;
+
+    PPCMtwpar(gatherbuf & 0x0FFFFFFF);
+    PPCSync();
+    EnableGatherBuffer();
+    PPCSync();
+    
+    *(u8 *)gatherbuf = 0xAA;
+    *(u16 *)gatherbuf = 0xAABB;
+    *(u32 *)gatherbuf = 0x11223344;
+    *(f32 *)gatherbuf = 1.0f;
+    *(f64 *)gatherbuf = 1.0;                
+    
+    FlushGatherBuffer();
+    DisableGatherBuffer();
+
+    //
+    // Redirected to main memory.
+    //
+    gatherbuf = 0xC0000A00;
+
+    PPCMtwpar(gatherbuf & 0x0FFFFFFF);
+    PPCSync();
+    EnableGatherBuffer();
+    PPCSync();
+    
+    *(u8 *)gatherbuf = 0xAA;
+    *(u16 *)gatherbuf = 0xAABB;
+    *(u32 *)gatherbuf = 0x11223344;
+    *(f32 *)gatherbuf = 1.0f;
+    *(f64 *)gatherbuf = 1.0;                
+    
+    FlushGatherBuffer();
+    DisableGatherBuffer();
+}
+
+Result in both cases is following gather-buffer data:
+
+0000: AA AA BB 11 22 33 44 3F
+0008: 80 00 00 3F F0 00 00 00
+0010: 00 00 00 00 00 00 00 00
+0018: 00 00 00 00 00 00 00 00
+
+which is transferred to external memory via burst transfer.
+
+--------------------------------------------------------------------------
+
+ToDo.
+
+Check unmapped physical memory space and hardware registers access modes.

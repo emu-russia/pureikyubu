@@ -1,0 +1,396 @@
+Complete Gekko instruction list.
+
+-------------------------------------------------------------------------------
+
+Integer Instructions (112) :
+----------------------------
+
+addi
+addis
+add
+add.
+addo            (*)
+addo.           (*)
+subf
+subf.
+subfo           (*)
+subfo.          (*)
+addic
+addic.
+subfic
+addc
+addc.
+addco           (*)
+addco.          (*)
+subfc
+subfc.
+subfco          (*)
+subfco.         (*)
+adde
+adde.
+addeo           (*)
+addeo.          (*)
+subfe
+subfe.
+subfeo          (*)
+subfeo.         (*)
+addme
+addme.
+addmeo          (*)
+addmeo.         (*)
+subfme
+subfme.
+subfmeo         (*)
+subfmeo.        (*)
+addze
+addze.
+addzeo          (*)
+addzeo.         (*)
+subfze
+subfze.
+subfzeo         (*)
+subfzeo.        (*)
+neg
+neg.
+nego            (*)
+nego.           (*)
+mulli
+mullw
+mullw.
+mullwo          (*)
+mullwo.         (*)
+mulhw
+mulhw.
+mulhwu
+mulhwu.
+divw
+divw.
+divwo           (*)
+divwo.          (*)
+divwu
+divwu.
+divwuo          (*)
+divwuo.         (*)
+cmpi
+cmp
+cmpli
+cmpl
+andi.
+andis.
+ori
+oris
+xori
+xoris
+and
+and.
+or
+or.
+xor
+xor.
+nand
+nand.
+nor
+nor.
+eqv
+eqv.
+andc
+andc.
+orc
+orc.
+extsb
+extsb.
+extsh
+extsh.
+cntlzw
+cntlzw.
+rlwinm
+rlwinm.
+rlwnm
+rlwnm.
+rlwimi
+rlwimi.
+slw
+slw.
+srw
+srw.
+srawi
+srawi.
+sraw
+sraw.
+
+(*) - instructions with "overflow option" are not used by C compiler.
+
+Floating-Point Instructions (65) :
+----------------------------------
+
+fadd
+fadd.
+fadds           (*)
+fadds.          (*)
+fsub
+fsub.
+fsubs           (*)
+fsubs.          (*)
+fmul
+fmul.
+fmuls           (*)
+fmuls.          (*)
+fdiv
+fdiv.
+fdivs
+fdivs.
+fres            (*)
+fres.           (*)
+frsqrte
+frsqrte.
+fsel            (*)
+fsel.           (*)
+fmadd
+fmadd.
+fmadds          (*)
+fmadds.         (*)
+fmsub
+fmsub.
+fmsubs          (*)
+fmsubs.         (*)
+fnmadd
+fnmadd.
+fnmadds         (*)
+fnmadds.        (*)
+fnmsub
+fnmsub.
+fnmsubs         (*)
+fnmsubs.        (*)
+frsp            (*)
+frsp.           (*)
+fctiw
+fctiw.
+fctiwz
+fctiwz.
+fneg
+fneg.
+fabs
+fabs.
+fnabs
+fnabs.
+fcmpu
+fcmpo
+mffs
+mffs.
+mcrfs       
+mtfsfi
+mtfsfi.
+mtfsf
+mtfsf.
+mtfsb0
+mtfsb0.
+mtfsb1
+mtfsb1.
+fmr             (*)
+fmr.            (*)
+
+(*) - slighty modified for paired singles
+
+Paired Single Instructions (54) :
+---------------------------------
+
+ps_add
+ps_add.
+ps_sub
+ps_sub.
+ps_mul
+ps_mul.
+ps_div
+ps_div.
+ps_res
+ps_res.
+ps_rsqrte
+ps_rsqrte.
+ps_sel
+ps_sel.
+ps_muls0
+ps_muls0.
+ps_muls1
+ps_muls1.
+ps_sum0
+ps_sum0.
+ps_sum1
+ps_sum1.
+ps_madd
+ps_madd.
+ps_msub
+ps_msub.
+ps_nmadd
+ps_nmadd.
+ps_nmsub
+ps_nmsub.
+ps_madds0
+ps_madds0.
+ps_madds1
+ps_madds1.
+ps_cmpu0
+ps_cmpu1
+ps_cmpo0
+ps_cmpo1
+ps_mr
+ps_mr.
+ps_neg
+ps_neg.
+ps_abs
+ps_abs.
+ps_nabs
+ps_nabs.
+ps_merge00
+ps_merge00.
+ps_merge01
+ps_merge01.
+ps_merge10
+ps_merge10.
+ps_merge11
+ps_merge11.
+
+Integer Load and Store Instructions (38) :
+------------------------------------------
+
+lbz
+lbzx
+lbzu
+lbzux
+lhz
+lhzx
+lhzu
+lhzux
+lha
+lhax
+lhau
+lhaux
+lwz
+lwzx
+lwzu
+lwzux
+stb
+stbx
+stbu
+stbux
+sth
+sthx
+sthu
+sthux
+stw
+stwx
+stwu
+stwux
+lhbrx
+lwbrx
+sthbrx
+stwbrx
+lmw
+stmw
+lswi
+lswx
+stswi
+stswx
+lwarx
+stwcx.
+
+Floating-Point Load and Store Instructions (17) :
+-------------------------------------------------
+
+lfs
+lfsx
+lfsu
+lfsux
+lfd
+lfdx
+lfdu
+lfdux
+stfs
+stfsx
+stfsu
+stfsux
+stfd
+stfdx
+stfdu
+stfdux
+stfiwx
+
+Paired Single Load and Store Instructions (8) :
+-----------------------------------------------
+
+psq_l
+psq_lx
+psq_lu
+psq_lux
+psq_st
+psq_stx
+psq_stu
+psq_stux
+
+Branch Instructions (12) :
+--------------------------
+
+b
+ba
+bl
+bla
+bc
+bca
+bcl
+bcla
+bclr
+bclrl
+bcctr
+bcctrl
+
+Condition Register Logical Instructions (9) :
+---------------------------------------------
+
+crand
+cror
+crxor
+crnand
+crnor
+creqv
+crandc
+crorc
+mcrf
+
+Misc Instructions (33) :
+------------------------
+
+twi
+tw
+sc
+rfi
+mtcrf
+mcrxr
+mfcr
+mtmsr
+mfmsr
+mtspr
+mfspr
+mftb
+mtsr
+mtsrin
+mfsr
+mfsrin
+eieio
+sync
+isync
+eciwx
+ecowx
+tlbie
+tlbsync
+dcbt
+dcbtst
+dcbz
+dcbz_l
+dcbst
+dcbf
+dcbi
+icbi
+
+-------------------------------------------------------------------------------
+
+348+1 total
+(+0x00000000 "empty instruction", which is treated by everyone as forced Illegal Instruction).
