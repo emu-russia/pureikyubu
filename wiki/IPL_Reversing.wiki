@@ -97,6 +97,38 @@ main
 81300594  4E800020  blr
 }}}
 
+{{{
+void main ()
+{
+    BS2Init ();
+    OSInit ();
+    AD16Init ();
+    AD16WriteReg (0x08000000);
+
+    DVDInit ();
+    AD16WriteReg (0x09000000);
+
+    CARDInit ();
+    AD16WriteReg (0x0A000000);
+
+    sub_81301F0C ();
+    __VIInit (4);
+    VIInit ();
+    AD16WriteReg (0x0B000000);
+
+    __OSBusClock = 162000000;
+    __OSCoreClock = 486000000;
+    sub_81302034 ();
+    sub_813020C8 ();
+    PADSetSpec (5);
+    PADInit ();
+    AD16WriteReg (0x0C000000);
+
+    BS2Main ();
+    OSHalt ("BS2 ERROR >>> SHOULD NEVER REACH HERE");
+}
+}}}
+
 == BS2Init ==
 
 {{{
