@@ -138,7 +138,7 @@ void con_open()
         ", CW"
 #endif        
         "\n"
-        WHITE "Copyright 2002-2004, " APPNAME " Team\n\n"
+        WHITE "Copyright 2002-2011, " APPNAME " Team\n\n"
     );
 }
 

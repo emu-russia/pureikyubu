@@ -4,6 +4,7 @@ void    cmd_blr(int argc, char argv[][CON_LINELEN]);
 void    cmd_boot(int argc, char argv[][CON_LINELEN]);
 void    cmd_d(int argc, char argv[][CON_LINELEN]);
 void    cmd_denop();
+void    cmd_disa(int argc, char argv[][CON_LINELEN]);
 void    cmd_dop();
 void    cmd_dvdopen(int argc, char argv[][CON_LINELEN]);
 void    cmd_full(int argc, char argv[][CON_LINELEN]);

@@ -46,6 +46,11 @@ void con_command(int argc, char argv[][CON_LINELEN], int lnum)
         cmd_denop();
         return;
     }
+    else if(ifname("disa"))                 // dump disassembly to text file
+    {
+        cmd_disa(argc, argv);
+        return;
+    }
     else if(ifname("dop"))                  // apply patches
     {
         cmd_dop();
@@ -110,7 +115,7 @@ void con_command(int argc, char argv[][CON_LINELEN], int lnum)
         cmd_plist();
         return;
     }
-    else if(ifname("r"))                    // register operations (GPR)
+    else if(ifname("r"))                    // register operations
     {
         cmd_r(argc, argv);
         con.update |= CON_UPDATE_REGS;
@@ -370,6 +375,94 @@ void cmd_d(int argc, char argv[][CON_LINELEN])
 
         // simply address
         con.data = strtoul(argv[1], NULL, 0);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// disa
+
+static void disa_line (FILE *f, u32 opcode, u32 addr)
+{
+    PPCD_CB    disa;
+    char *symbol;
+
+    if(symbol = SYMName(addr))
+    {
+        fprintf (f, "\n%s\n", symbol);
+    }
+
+    fprintf ( f, "%08X  %08X  ", addr, opcode);
+
+    disa.instr = opcode;
+    disa.pc = addr;
+
+    PPCDisasm (&disa);
+
+    if(opcode == 0x4e800020  )  /// blr
+    {
+        // ignore other bclr/bcctr opcodes,
+        // to easily locate end of function
+        fprintf (f, "blr");
+    }
+    
+    else if(disa.iclass & PPC_DISA_BRANCH)
+    {
+        fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
+        if(disa.target > addr) fprintf (f, " \x19");
+        else if (disa.target < addr) fprintf (f, " \x18");
+        else fprintf (f, " \x1b");
+
+        if(symbol = SYMName(disa.target))
+        {
+            fprintf (f, "\t\t\t ; %s", symbol);
+        }
+    }
+    
+    else fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
+
+    if ((disa.iclass & PPC_DISA_INTEGER) && disa.mnemonic[0] == 'r' && disa.mnemonic[1] == 'l')
+    {
+        fprintf (f, "\t\t\tmask:0x%08X", (u32)disa.target);
+    }
+    fprintf (f, "\n");
+}
+
+void cmd_disa(int argc, char argv[][CON_LINELEN])
+{
+    u32 start_addr, end_addr;
+    FILE *f;
+
+    if (argc < 3)
+    {
+        con_print ("syntax : disa <start_addr> <end_addr>\n");
+        con_print ("disassemble code between `start_addr` and `end_addr` and dump it into disa.txt\n");
+        con_print ("example of use : " GREEN "disa 0x81300000 0x81350000\n");
+    }
+    else
+    {
+        if(!emu.running)
+        {
+            con_print ("not loaded\n");
+        }
+
+        start_addr = strtoul ( argv[1], NULL, 0 );
+        end_addr = strtoul ( argv[2], NULL, 0 );
+
+        f = fopen ( "Data\\disa.txt", "wt" );
+        if (!f)
+        {
+            con_print ( "Cannot open output file!\n");
+            return;
+        }
+
+        for (start_addr; start_addr<end_addr; start_addr+=4)
+        {
+            u32 opcode = MEMFetch(start_addr);
+            disa_line ( f, opcode, start_addr );
+        }
+
+        con_print ( "Disassembling from 0x%08X to 0x%08X... done\n", start_addr, end_addr );
+        fclose (f);
     }
 }
 
@@ -715,6 +808,267 @@ void cmd_plist()
 // ---------------------------------------------------------------------------
 // r
 
+// Get pointer to Gekko register.
+static u32 *getreg (char *name)
+{
+    if (!stricmp(name, "r0")) return &GPR[0];
+    else if (!stricmp(name, "r1")) return &GPR[1];
+    else if (!stricmp(name, "r2")) return &GPR[2];
+    else if (!stricmp(name, "r3")) return &GPR[3];
+    else if (!stricmp(name, "r4")) return &GPR[4];
+    else if (!stricmp(name, "r5")) return &GPR[5];
+    else if (!stricmp(name, "r6")) return &GPR[6];
+    else if (!stricmp(name, "r7")) return &GPR[7];
+    else if (!stricmp(name, "r8")) return &GPR[8];
+    else if (!stricmp(name, "r9")) return &GPR[9];
+    else if (!stricmp(name, "r10")) return &GPR[10];
+    else if (!stricmp(name, "r11")) return &GPR[11];
+    else if (!stricmp(name, "r12")) return &GPR[12];
+    else if (!stricmp(name, "r13")) return &GPR[13];
+    else if (!stricmp(name, "r14")) return &GPR[14];
+    else if (!stricmp(name, "r15")) return &GPR[15];
+    else if (!stricmp(name, "r16")) return &GPR[16];
+    else if (!stricmp(name, "r17")) return &GPR[17];
+    else if (!stricmp(name, "r18")) return &GPR[18];
+    else if (!stricmp(name, "r19")) return &GPR[19];
+    else if (!stricmp(name, "r20")) return &GPR[20];
+    else if (!stricmp(name, "r21")) return &GPR[21];
+    else if (!stricmp(name, "r22")) return &GPR[22];
+    else if (!stricmp(name, "r23")) return &GPR[23];
+    else if (!stricmp(name, "r24")) return &GPR[24];
+    else if (!stricmp(name, "r25")) return &GPR[25];
+    else if (!stricmp(name, "r26")) return &GPR[26];
+    else if (!stricmp(name, "r27")) return &GPR[27];
+    else if (!stricmp(name, "r28")) return &GPR[28];
+    else if (!stricmp(name, "r29")) return &GPR[29];
+    else if (!stricmp(name, "r30")) return &GPR[30];
+    else if (!stricmp(name, "r31")) return &GPR[31];
+
+    else if (!stricmp(name, "sp")) return &GPR[1];
+    else if (!stricmp(name, "sd1")) return &GPR[13];
+    else if (!stricmp(name, "sd2")) return &GPR[2];
+
+    else if (!stricmp(name, "cr")) return &CR;
+    else if (!stricmp(name, "fpscr")) return &FPSCR;
+    else if (!stricmp(name, "xer")) return &XER;
+    else if (!stricmp(name, "lr")) return &LR;
+    else if (!stricmp(name, "ctr")) return &CTR;
+    else if (!stricmp(name, "msr")) return &MSR;
+
+    else if (!stricmp(name, "sr0")) return &SR[0];
+    else if (!stricmp(name, "sr1")) return &SR[1];
+    else if (!stricmp(name, "sr2")) return &SR[2];
+    else if (!stricmp(name, "sr3")) return &SR[3];
+    else if (!stricmp(name, "sr4")) return &SR[4];
+    else if (!stricmp(name, "sr5")) return &SR[5];
+    else if (!stricmp(name, "sr6")) return &SR[6];
+    else if (!stricmp(name, "sr7")) return &SR[7];
+    else if (!stricmp(name, "sr8")) return &SR[8];
+    else if (!stricmp(name, "sr9")) return &SR[9];
+    else if (!stricmp(name, "sr10")) return &SR[10];
+    else if (!stricmp(name, "sr11")) return &SR[11];
+    else if (!stricmp(name, "sr12")) return &SR[12];
+    else if (!stricmp(name, "sr13")) return &SR[13];
+    else if (!stricmp(name, "sr14")) return &SR[14];
+    else if (!stricmp(name, "sr15")) return &SR[15];
+
+    else if (!stricmp(name, "ibat0u")) return &IBAT0U;
+    else if (!stricmp(name, "ibat1u")) return &IBAT1U;
+    else if (!stricmp(name, "ibat2u")) return &IBAT2U;
+    else if (!stricmp(name, "ibat3u")) return &IBAT3U;
+    else if (!stricmp(name, "ibat0l")) return &IBAT0L;
+    else if (!stricmp(name, "ibat1l")) return &IBAT1L;
+    else if (!stricmp(name, "ibat2l")) return &IBAT2L;
+    else if (!stricmp(name, "ibat3l")) return &IBAT3L;
+    else if (!stricmp(name, "dbat0u")) return &DBAT0U;
+    else if (!stricmp(name, "dbat1u")) return &DBAT1U;
+    else if (!stricmp(name, "dbat2u")) return &DBAT2U;
+    else if (!stricmp(name, "dbat3u")) return &DBAT3U;
+    else if (!stricmp(name, "dbat0l")) return &DBAT0L;
+    else if (!stricmp(name, "dbat1l")) return &DBAT1L;
+    else if (!stricmp(name, "dbat2l")) return &DBAT2L;
+    else if (!stricmp(name, "dbat3l")) return &DBAT3L;
+
+    else if (!stricmp(name, "sdr1")) return &SDR1;
+    else if (!stricmp(name, "sprg0")) return &SPRG0;
+    else if (!stricmp(name, "sprg1")) return &SPRG1;
+    else if (!stricmp(name, "sprg2")) return &SPRG2;
+    else if (!stricmp(name, "sprg3")) return &SPRG3;
+    else if (!stricmp(name, "dar")) return &DAR;
+    else if (!stricmp(name, "dsisr")) return &DSISR;
+    else if (!stricmp(name, "srr0")) return &SRR0;
+    else if (!stricmp(name, "srr1")) return &SRR1;
+    else if (!stricmp(name, "pmc1")) return &SPR[953];
+    else if (!stricmp(name, "pmc2")) return &SPR[954];
+    else if (!stricmp(name, "pmc3")) return &SPR[957];
+    else if (!stricmp(name, "pmc4")) return &SPR[958];
+    else if (!stricmp(name, "mmcr0")) return &SPR[952];
+    else if (!stricmp(name, "mmcr1")) return &SPR[956];
+    else if (!stricmp(name, "sia")) return &SPR[955];
+    else if (!stricmp(name, "sda")) return &SPR[959];
+
+    else if (!stricmp(name, "gqr0")) return &GQR[0];
+    else if (!stricmp(name, "gqr1")) return &GQR[1];
+    else if (!stricmp(name, "gqr2")) return &GQR[2];
+    else if (!stricmp(name, "gqr3")) return &GQR[3];
+    else if (!stricmp(name, "gqr4")) return &GQR[4];
+    else if (!stricmp(name, "gqr5")) return &GQR[5];
+    else if (!stricmp(name, "gqr6")) return &GQR[6];
+    else if (!stricmp(name, "gqr7")) return &GQR[7];
+
+    else if (!stricmp(name, "hid0")) return &HID0;
+    else if (!stricmp(name, "hid1")) return &HID1;
+    else if (!stricmp(name, "hid2")) return &HID2;
+
+    else if (!stricmp(name, "dabr")) return &DABR;
+    else if (!stricmp(name, "iabr")) return &IABR;
+    else if (!stricmp(name, "wpar")) return &WPAR;
+    else if (!stricmp(name, "l2cr")) return &SPR[1017];
+    else if (!stricmp(name, "dmau")) return &DMAU;
+    else if (!stricmp(name, "dmal")) return &DMAL;
+    else if (!stricmp(name, "thrm1")) return &SPR[1020];
+    else if (!stricmp(name, "thrm2")) return &SPR[1021];
+    else if (!stricmp(name, "thrm2")) return &SPR[1022];
+    else if (!stricmp(name, "ictc")) return &SPR[1019];
+
+    else if (!stricmp(name, "pc")) return &PC;   // Wow !
+
+    return NULL;
+}
+
+// Operations.
+static u32 op_replace (u32 a, u32 b) { return b; }
+static u32 op_add (u32 a, u32 b) { return a+b; }
+static u32 op_sub (u32 a, u32 b) { return a-b; }
+static u32 op_mul (u32 a, u32 b) { return a*b; }
+static u32 op_div (u32 a, u32 b) { return b?(a/b):0; }
+static u32 op_or (u32 a, u32 b) { return a|b; }
+static u32 op_and (u32 a, u32 b) { return a&b; }
+static u32 op_xor (u32 a, u32 b) { return a^b; }
+static u32 op_shl (u32 a, u32 b) { return a<<b; }
+static u32 op_shr (u32 a, u32 b) { return a>>b; }
+
+// Special handling for MSR register.
+static void describe_msr (u32 msr_val)
+{
+    static char *fpmod[4] = 
+    {
+        "exceptions disabled",
+        "imprecise nonrecoverable",
+        "imprecise recoverable",
+        "precise mode",                        
+    };
+    int f, fe[2];
+
+    con_print ("MSR: 0x%08X\n", msr_val);
+    
+    if(msr_val & MSR_POW) con_print("MSR[POW]: 1, power management enabled\n");
+    else con_print("MSR[POW]: 0, power management disabled\n");
+    if(msr_val & MSR_ILE) con_print("MSR[ILE]: 1\n");
+    else con_print("MSR[ILE]: 0\n");
+    if(msr_val & MSR_EE) con_print("MSR[EE] : 1, external interrupts and decrementer exception are enabled\n");
+    else con_print("MSR[EE] : 0, external interrupts and decrementer exception are disabled\n");
+    if(msr_val & MSR_PR) con_print("MSR[PR] : 1, processor execute in user mode (UISA)\n");
+    else con_print("MSR[PR] : 0, processor execute in supervisor mode (OEA)\n");
+    if(msr_val & MSR_FP) con_print("MSR[FP] : 1, floating-point is available\n");
+    else con_print("MSR[FP] : 0, floating-point unavailable\n");
+    if(msr_val & MSR_ME) con_print("MSR[ME] : 1, machine check exceptions are enabled\n");
+    else con_print("MSR[ME] : 0, machine check exceptions are disabled\n");
+    
+    fe[0] = msr_val & MSR_FE0 ? 1 : 0;
+    fe[1] = msr_val & MSR_FE1 ? 1 : 0;
+    f = (fe[0] << 1) | (fe[1]);
+    con_print("MSR[FE] : %i, floating-point %s\n", f, fpmod[f]);
+    
+    if(msr_val & MSR_SE) con_print("MSR[SE] : 1, single-step tracing is enabled\n");
+    else con_print("MSR[SE] : 0, single-step tracing is disabled\n");
+    if(msr_val & MSR_BE) con_print("MSR[BE] : 1, branch tracing is enabled\n");
+    else con_print("MSR[BE] : 0, branch tracing is disabled\n");
+    if(msr_val & MSR_IP) con_print("MSR[IP] : 1, exception prefix to physical address is 0xFFFn_nnnn\n");
+    else con_print("MSR[IP] : 0, exception prefix to physical address is 0x000n_nnnn\n");
+    if(msr_val & MSR_IR) con_print("MSR[IR] : 1, instruction address translation is enabled\n");
+    else con_print("MSR[IR] : 0, instruction address translation is disabled\n");
+    if(msr_val & MSR_DR) con_print("MSR[DR] : 1, data address translation is enabled\n");
+    else con_print("MSR[DR] : 0, data address translation is disabled\n");
+    if(msr_val & MSR_PM) con_print("MSR[PM] : 1, performance monitoring is enabled for this thread\n");
+    else con_print("MSR[PM] : 0, performance monitoring is disabled for this thread\n");
+    if(msr_val & MSR_RI) con_print("MSR[RI] : 1\n");
+    else con_print("MSR[RI] : 0\n");
+    if(msr_val & MSR_LE) con_print("MSR[LE] : 1, processor runs in little-endian mode\n");
+    else con_print("MSR[LE] : 0, processor runs in big-endian mode\n");
+}
+
+void cmd_r (int argc, char argv[][CON_LINELEN])
+{
+    if(argc < 2)
+    {
+        con_print ("Syntax : r <reg> OR r <reg> <op> <val> OR r <reg> <op> <reg>\n");
+        con_print ("sp, sd1, sd2 semantics are supported for reg name.\n");
+        con_print ("Value can be decimal, or hex with \'0x\' prefix.\n");
+        con_print ("Possible operations are: = + - * / | & ^ << >>\n");
+        con_print ("Examples of use : " GREEN "r sp\n");
+        con_print ("                  " GREEN "r r3 = 12\n");
+        con_print ("                  " GREEN "r r7 | 0x8020\n");
+        con_print ("                  " GREEN "r msr\n");
+        con_print ("                  " GREEN "r hid2 | 2\n");
+        con_print ("                  " GREEN "r r7 = sd1\n");
+        con_print ("See also        : " GREEN "fr\n");
+    }
+    else
+    {
+        u32 (*op)(u32 a, u32 b) = NULL;
+
+        u32 *n = getreg (argv[1]);
+        if(n == NULL)
+        {
+            con_print ("unknown register : %s\n", argv[1]);
+            return;
+        }
+
+        // show register
+        if(argc <= 3)
+        {
+            if (!stricmp (argv[1], "msr")) describe_msr (*n);
+            else con_print ("%s = %i (0x%X)\n", argv[1], *n, *n);
+            return;
+        }
+
+        // Get operation.
+        if (!strcmp (argv[2], "=")) op = op_replace;
+        else if (!strcmp (argv[2], "+")) op = op_add;
+        else if (!strcmp (argv[2], "-")) op = op_sub;
+        else if (!strcmp (argv[2], "*")) op = op_mul;
+        else if (!strcmp (argv[2], "/")) op = op_div;
+        else if (!strcmp (argv[2], "|")) op = op_or;
+        else if (!strcmp (argv[2], "&")) op = op_and;
+        else if (!strcmp (argv[2], "^")) op = op_xor;
+        else if (!strcmp (argv[2], "<<")) op = op_shl;
+        else if (!strcmp (argv[2], ">>")) op = op_shr;
+        if (op == NULL)
+        {
+            con_print ("Unknown operation: %s\n", argv[2]);
+            return;
+        }
+
+        // New value
+        u32 *m = getreg (argv[3]);
+        if (m == NULL)
+        {
+            u32 i = strtoul (argv[3], NULL, 0);
+            con_print ("%s %s %i (0x%X)\n", argv[1], argv[2], i, i);
+            *n = op(*n, i);
+        }
+        else
+        {
+            con_print ("%s %s %s\n", argv[1], argv[2], argv[3]);
+            *n = op(*n, *m);
+        }
+        con_update(CON_UPDATE_REGS | CON_UPDATE_DISA);
+    }
+}
+
+/*
+
 // -1, if unknown register
 static int getreg(char *str)
 {
@@ -773,6 +1127,8 @@ void cmd_r(int argc, char argv[][CON_LINELEN])
         }
     }
 }
+
+*/
 
 // ---------------------------------------------------------------------------
 // sop
@@ -1097,7 +1453,7 @@ void cmd_help()
         ", CW"
 #endif        
         "\n"
-        WHITE "Copyright 2002-2004, " APPNAME " Team\n\n"
+        WHITE "Copyright 2002-2011, " APPNAME " Team\n\n"
     );
 
     con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
@@ -1160,6 +1516,7 @@ void cmd_help()
     con_print(WHITE "    memtst               " NORM "- memory test (" YEL "WARNING" NORM ")");
     con_print(WHITE "    cls                  " NORM "- clear message buffer");
     con_print(WHITE "    colors               " NORM "- colored output test");
+    con_print(WHITE "    disa                 " NORM "- disassemble code into text file");
     con_print(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS");
     con_print("\n");
 
