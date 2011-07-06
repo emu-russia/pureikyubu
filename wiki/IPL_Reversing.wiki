@@ -120,7 +120,7 @@ void main ()
     __OSCoreClock = 486000000;
     sub_81302034 ();
     sub_813020C8 ();
-    PADSetSpec (5);
+    PADSetSpec (PAD_SPEC_5);
     PADInit ();
     AD16WriteReg (0x0C000000);
 
