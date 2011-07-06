@@ -10,8 +10,9 @@
 
 static int mapFormat;
 static char *mapName;
-static FILE* mapFile;
+static FILE* mapFile = NULL;
 static BOOL appendStarted;
+static int itemsUpdated;
 
 static void AppendMAPBySymbol(u32 address, char *symbol)
 {
@@ -46,6 +47,8 @@ static void AppendMAPBySymbol(u32 address, char *symbol)
     }
 
     DBReport(YEL "New map entry: %08X %s\n", address, symbol);
+    itemsUpdated ++;
+    fclose (mapFile);
 }
 
 // save whole symbolic information in map.
@@ -76,9 +79,9 @@ void SaveMAP(char *mapname /*="this"*/)
 
     // find new map entries to append file
     mapName = mapname;
-    appendStarted = 0;
+    appendStarted = itemsUpdated = 0;
     SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
-    fflush(mapFile);
+    if ( itemsUpdated == 0 ) DBReport (YEL "nothing to update\n");
 
     // restore old workspace
     SYMKill();
