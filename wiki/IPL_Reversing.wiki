@@ -112,7 +112,7 @@ void main ()
     AD16WriteReg (0x0A000000);
 
     sub_81301F0C ();
-    __VIInit (4);
+    __VIInit (VI_DEBUG_PAL);
     VIInit ();
     AD16WriteReg (0x0B000000);
 
