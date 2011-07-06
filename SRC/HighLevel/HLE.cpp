@@ -59,6 +59,9 @@ static struct OSCalls
     char    *name;
     void    (*call)();
 } oscalls[] = {
+
+/*/
+
     // Interrupt handling
     { "OSDisableInterrupts"     , OSDisableInterrupts       },
     { "OSEnableInterrupts"      , OSEnableInterrupts        },
@@ -81,7 +84,7 @@ static struct OSCalls
     // Std C
     { "memset"                  , HLE_memset                },
     { "memcpy"                  , HLE_memcpy                },
-/*/
+
     { "cos"                     , HLE_cos                   },
     { "sin"                     , HLE_sin                   },
     { "modf"                    , HLE_modf                  },

@@ -50,6 +50,7 @@ static int con_disa_line(int line, u32 opcode, u32 addr)
         // to easily locate end of function
         con_printf_at(20, line, GREEN "blr");
     }
+    
     else if(disa.iclass & PPC_DISA_BRANCH)
     {
         con_printf_at(20, line, GREEN "%-12s%s", disa.mnemonic, disa.operands);
@@ -62,7 +63,13 @@ static int con_disa_line(int line, u32 opcode, u32 addr)
             con_printf_at(47, line, BROWN " ; %s", symbol);
         }
     }
+    
     else con_printf_at(20, line, NORM "%-12s%s", disa.mnemonic, disa.operands);
+
+    if ((disa.iclass & PPC_DISA_INTEGER) && disa.mnemonic[0] == 'r' && disa.mnemonic[1] == 'l')
+    {
+        con_printf_at (60, line, NORM "mask:0x%08X", (u32)disa.target);
+    }
 
     return addend;
 }
