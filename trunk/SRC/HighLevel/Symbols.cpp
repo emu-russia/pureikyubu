@@ -57,14 +57,14 @@ void SYMCompareWorkspaces (
     {
         BOOL found = FALSE;
         SYM *symbol = &source->symhash[tag][i];
-        if( !symbol->emuSymbol )
+        if( !symbol->emuSymbol && symbol )
         {
             for(int tag2=0; tag2<61; tag2++)
             {
                 for(int i2=0; i2<dest->symcount[tag2]; i2++)
                 {
                     SYM *symbol2 = &dest->symhash[tag][i];
-                    if(symbol2->emuSymbol) continue;
+                    if(symbol2->emuSymbol || symbol2 == NULL) continue;
                     if(!strcmp(symbol->savedName, symbol2->savedName))
                     {
                         found = TRUE;
