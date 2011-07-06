@@ -46,6 +46,8 @@ __start
 81300094  4807B300  b           0x8137B394 
 }}}
 
+* No OSInit since memory is garbaged by first bootstrap stage *
+
 == main ==
 
 {{{
