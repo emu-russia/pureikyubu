@@ -112,7 +112,7 @@ void main ()
     AD16WriteReg (0x0A000000);
 
     sub_81301F0C ();
-    __VIInit (VI_DEBUG_PAL);
+    __VIInit (VI_TVMODE_PAL_INT);
     VIInit ();
     AD16WriteReg (0x0B000000);
 
