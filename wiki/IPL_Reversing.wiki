@@ -170,6 +170,23 @@ void main ()
 813004E0  4E800020  blr
 }}}
 
+{{{
+void BS2Init (void)
+{
+    // Clear OS low memory.
+    memset ( 0x80000000, 0, 256 );
+    memset ( 0x80003000, 0, 256 );
+
+    ClearUnusedBatRegisters ();
+    __OSPhysMemSize = 24*1024*1024;
+    __OSConsoleType = OS_CONSOLE_RETAIL1;
+    __OSConsoleType += ([0xCC00302C] >> 28) & 0xF;
+    var_814AD8C8 = 0xFFFFFFFF;
+
+    ClearFPURegisters ();
+}
+}}}
+
 == ClearUnusedBatRegisters ==
 
 {{{
