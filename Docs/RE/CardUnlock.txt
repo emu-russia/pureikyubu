@@ -1,0 +1,359 @@
+
+Gamecube memory card unlock reverse engineering for CubeDocumented project.
+
+This reversing is not pretending to be compilable, and can be used for
+education purposes only. I dont hold any responsibility for damage of your
+Gamecube clock settings or memory card saves or else, produced from using
+code/information represented in this document.
+
+Documented by Andrei Chestakov (org). Version 0.1. (12 May 2005)
+
+--------------------------------------------------------------------------
+
+Overview.
+
+Memory card unlock is really weirdo operation, because its using GC DSP.
+It proves, that N still have crazy developers and its good.
+
+This reversing representing card unlock operation from both CPU and DSP sides.
+
+--------------------------------------------------------------------------
+
+PART I: CPU Side. Unlock call.
+
+s32 __CARDUnlock  <-- CARD_RESULT
+
+
+
+--------------------------------------------------------------------------
+
+PART II: CPU Side. Helper calls.
+
+These routines are replacement for stdc's srand and rand.
+
+static  u32 next = 1;   // rand seed
+
+u32 CARDRand(void)
+{
+    next = next * 0x41C64E6D + 12345;
+
+    return (next >> 16) & 0x7fff;   // RAND_MAX = 0x7fff
+}
+
+void CARDSrand(u32 seed)
+{
+    next = seed;
+}
+
+---
+
+u32 exnor_1st(u32 data, int rshift)
+{
+    u32 work = data;
+
+    for(int i=0; i<rshift; i++)
+    {
+        u32 wk = ~((work >> 23) ^ (work >> 15) ^ (work >> 7) ^ work);
+        work = (work >> 1) | ((wk & 2) << 30);
+    }
+
+    return work;
+}
+
+
+u32 exnor(u32 data, int lshift)
+{
+    u32 work = data;
+
+    for(int i=0; i<lshift; i++)
+    {
+        u32 wk = ~((work << 23) ^ (work << 15) ^ (work << 7) ^ work);
+        work = (work << 1) | ((work >> 30) & 2)
+    }
+
+    return work;
+}
+
+---
+
+Reverse bit order, for example 0xBC2F1895 will be 0xA918F43D :
+
+10111100001011110001100010010101 -> 10101001000110001111010000111101.
+
+u32 bitrev(u32 data)
+{
+    u32 wk = 0;
+    int j = 0, k = 1;
+
+    for(int i=0; i<32; i++)
+    {
+        if(i > 15)
+        {
+            if(i == 31)
+            {
+                wk |= (data >> 31);
+            }
+            else
+            {
+                wk |= (data & (1 << i)) >> k;
+                k += 2;
+            } 
+        }
+        else
+        {
+            wk |= (data & (1 << i)) << (31 - i - j);
+            j++;
+        }
+    }
+
+    return wk;
+}
+
+---
+
+s32 ReadArrayUnlock(s32 chan, u32 data, void *rbuf, s32 rlen, s32 mode)
+{
+    CARDControl *card;
+    s32 err;
+    u8 cmd[5];
+
+
+    ASSERT(0 <= chan && chan < 2);
+
+    card = &__CARDBlock[chan];
+
+    if( EXISelect(chan, 0, __CARDFreq) == 0 ) return CARD_RESULT_NOCARD;
+
+    // Round down data to 4096 bytes (sector number)
+    data &= ~(4096 - 1);
+
+    // Commands for MX25L4004
+    // ReadArray           0x52 SA2 SA1 PN BA 0x00 0x00 0x00 0x00
+
+    memset(&cmd, 0, sizeof(cmd));
+
+    cmd[0] = 0x52;
+
+    if(mode == 0)
+    {
+        cmd[1] = (data >> 29) & 3;
+        cmd[2] = (data >> 21) & 0xff;
+        cmd[3] = (data >> 19) & 1;
+        cmd[4] = (data >> 12) & 0x7f;
+    }
+    else
+    {
+        cmd[1] = (u8)(data >> 24);
+        cmd[2] = (u8)(data >> 16);
+    }
+
+
+    // EXI error accumulate macro is used widely in libraries, but I think
+    // it doesnt have appropriate C-version (since cntlzw) and implemented as
+    // macro in SDK private exi.h header.
+    // First parameter is error flag and second is returned value of EXI call.
+    // In case you interested how its accumulating, here is asm version:
+    //      cntlzw  r0, result
+    //      rlwinm  r0,r0,27,5,31
+    //      or      error,error,r0
+
+    err = 0;
+
+    EXIAccumError(err, EXIImmEx(chan, cmd, sizeof(cmd), EXI_WRITE));
+    EXIAccumError(err, EXIImmEx(chan, card->workArea, rlen, EXI_WRITE));
+    EXIAccumError(err, EXIImmEx(chan, rbuf, rlen, EXI_READ));
+    EXIAccumError(err, EXIDeselect(chan));
+
+    return (err) ? CARD_RESULT_NOCARD : CARD_RESULT_READY;
+}
+
+--- 
+
+u32 GetInitVal(void)
+{
+    OSTick tick = OSGetTick();
+    CARDSrand(tick);
+    return (CARDRand() | 0x7FEC0000) & ~(4096 - 1);
+}
+
+---
+
+00000330 <DummyLen>:
+ 330:   7c 08 02 a6     mflr    r0
+ 334:   90 01 00 04     stw r0,4(r1)
+ 338:   94 21 ff e8     stwu    r1,-24(r1)
+ 33c:   bf 81 00 08     stmw    r28,8(r1)
+ 340:   3b c0 00 01     li  r30,1
+ 344:   3b 80 00 00     li  r28,0
+ 348:   48 00 00 01     bl  348 <DummyLen+0x18>
+            348: R_PPC_REL24    OSGetTick
+ 34c:   7c 7d 1b 78     mr  r29,r3
+ 350:   7f a3 eb 78     mr  r3,r29
+ 354:   48 00 00 01     bl  354 <DummyLen+0x24>
+            354: R_PPC_REL24    CARDSrand
+ 358:   48 00 00 01     bl  358 <DummyLen+0x28>
+            358: R_PPC_REL24    CARDRand
+ 35c:   7c 7f 1b 78     mr  r31,r3
+ 360:   57 ff 06 fe     clrlwi  r31,r31,27
+ 364:   3b ff 00 01     addi    r31,r31,1
+ 368:   48 00 00 3c     b   3a4 <DummyLen+0x74>
+ 36c:   48 00 00 01     bl  36c <DummyLen+0x3c>
+            36c: R_PPC_REL24    OSGetTick
+ 370:   7c 7d 1b 78     mr  r29,r3
+ 374:   7f bf f0 30     slw r31,r29,r30
+ 378:   3b de 00 01     addi    r30,r30,1
+ 37c:   28 1e 00 10     cmplwi  r30,16
+ 380:   40 81 00 08     ble 388 <DummyLen+0x58>
+ 384:   3b c0 00 01     li  r30,1
+ 388:   7f e3 fb 78     mr  r3,r31
+ 38c:   48 00 00 01     bl  38c <DummyLen+0x5c>
+            38c: R_PPC_REL24    CARDSrand
+ 390:   48 00 00 01     bl  390 <DummyLen+0x60>
+            390: R_PPC_REL24    CARDRand
+ 394:   7c 7f 1b 78     mr  r31,r3
+ 398:   57 ff 06 fe     clrlwi  r31,r31,27
+ 39c:   3b ff 00 01     addi    r31,r31,1
+ 3a0:   3b 9c 00 01     addi    r28,r28,1
+ 3a4:   2c 1f 00 04     cmpwi   r31,4
+ 3a8:   40 80 00 0c     bge 3b4 <DummyLen+0x84>
+ 3ac:   28 1c 00 0a     cmplwi  r28,10
+ 3b0:   41 80 ff bc     blt 36c <DummyLen+0x3c>
+ 3b4:   2c 1f 00 04     cmpwi   r31,4
+ 3b8:   40 80 00 08     bge 3c0 <DummyLen+0x90>
+ 3bc:   3b e0 00 04     li  r31,4
+ 3c0:   7f e3 fb 78     mr  r3,r31
+ 3c4:   80 01 00 1c     lwz r0,28(r1)
+ 3c8:   bb 81 00 08     lmw r28,8(r1)
+ 3cc:   38 21 00 18     addi    r1,r1,24
+ 3d0:   7c 08 03 a6     mtlr    r0
+ 3d4:   4e 80 00 20     blr
+
+
+--------------------------------------------------------------------------
+
+PART III: DSP Side.
+
+Disassembly obtained from duddie's GDTOOL.
+
+0000 0000      NOP         
+0001 0000      NOP         
+0002 0000      NOP         
+0003 0000      NOP         
+0004 0000      NOP         
+0005 0000      NOP         
+0006 0000      NOP         
+0007 0000      NOP         
+0008 0000      NOP         
+0009 0000      NOP         
+000a 0000      NOP         
+000b 0000      NOP         
+000c 0000      NOP         
+000d 0021      HALT        
+000e 02ff      RTI         
+000f 0021      HALT        
+0010 1306      SBSET       #0x06
+0011 1203      SBCLR       #0x03
+0012 1204      SBCLR       #0x04
+0013 1305      SBSET       #0x05
+0014 0092 00ff LRI         $18, #0x00ff
+0016 0088 ffff LRI         $8, #0xffff
+0018 0089 ffff LRI         $9, #0xffff
+001a 008a ffff LRI         $10, #0xffff
+001c 008b ffff LRI         $11, #0xffff
+001e 8f00      S16         
+001f 02bf 0088 CALL        0x0088
+0021 16fc dcd1 SI          @0xfffc, #0xdcd1
+0023 16fd 0000 SI          @0xfffd, #0x0000
+0025 16fb 0001 SI          @0xfffb, #0x0001
+0027 02bf 008e CALL        0x008e
+0029 25ff      LRS         $29, @0xffff
+002a 0380 ff00 CMPI        $31, #0xff00
+002c 0294 0027 JNE         0x0027
+002e 02bf 008e CALL        0x008e
+0030 1fdf      MRR         $30, $31
+0031 24ff      LRS         $28, @0xffff
+0032 0240 0fff ANDI        $30, #0x0fff
+0034 0098 0400 LRI         $24, #0x0400
+0036 009a 0010 LRI         $26, #0x0010
+0038 0099 0000 LRI         $25, #0x0000
+003a 8e00      S40         
+003b 02bf 0094 CALL        0x0094
+003d 02bf 8644 CALL        0x8644
+003f 02bf 0088 CALL        0x0088
+0041 16fc dcd1 SI          @0xfffc, #0xdcd1
+0043 16fd 0003 SI          @0xfffd, #0x0003
+0045 16fb 0001 SI          @0xfffb, #0x0001
+0047 8f00      S16         
+0048 02bf 008e CALL        0x008e
+004a 0380 cdd1 CMPI        $31, #0xcdd1
+004c 0294 0048 JNE         0x0048
+004e 27ff      LRS         $31, @0xffff
+004f 0380 0001 CMPI        $31, #0x0001
+0051 0295 005a JEQ         0x005a
+0053 0380 0002 CMPI        $31, #0x0002
+0055 0295 8000 JEQ         0x8000
+0057 029f 0048 JMP         0x0048
+0059 0021      HALT        
+005a 8e00      S40         
+005b 02bf 008e CALL        0x008e
+005d 25ff      LRS         $29, @0xffff
+005e 02bf 008e CALL        0x008e
+0060 25ff      LRS         $29, @0xffff
+0061 02bf 008e CALL        0x008e
+0063 25ff      LRS         $29, @0xffff
+0064 02bf 008e CALL        0x008e
+0066 00c5 ffff LR          $5, @0xffff
+0068 0340 0fff ANDI        $31, #0x0fff
+006a 1c9f      MRR         $4, $31
+006b 02bf 008e CALL        0x008e
+006d 00c7 ffff LR          $7, @0xffff
+006f 02bf 008e CALL        0x008e
+0071 00c6 ffff LR          $6, @0xffff
+0073 02bf 008e CALL        0x008e
+0075 00c0 ffff LR          $0, @0xffff
+0077 02bf 008e CALL        0x008e
+0079 20ff      LRS         $24, @0xffff
+007a 0340 0fff ANDI        $31, #0x0fff
+007c 1f5f      MRR         $26, $31
+007d 02bf 008e CALL        0x008e
+007f 21ff      LRS         $25, @0xffff
+0080 02bf 008e CALL        0x008e
+0082 23ff      LRS         $27, @0xffff
+0083 1205      SBCLR       #0x05
+0084 1206      SBCLR       #0x06
+0085 029f 80b5 JMP         0x80b5
+0087 0021      HALT        
+
+0088 27fc      LRS         $31, @0xfffc
+0089 03c0 8000 ANDF        $31, #0x8000
+008b 029d 0088 JNZ         0x0088
+008d 02df      RET         
+
+008e 27fe      LRS         $31, @0xfffe
+008f 03c0 8000 ANDF        $31, #0x8000
+0091 029c 008e JZR         0x008e
+0093 02df      RET         
+
+0094 2ece      SRS         @0xffce, $30
+0095 2ccf      SRS         @0xffcf, $28
+0096 00f8 ffcd SR          @0xffcd, $24
+0098 00f9 ffc9 SR          @0xffc9, $25
+009a 00fa ffcb SR          @0xffcb, $26
+009c 26c9      LRS         $30, @0xffc9
+009d 02c0 0004 ANDF        $30, #0x0004
+009f 029d 009c JNZ         0x009c
+00a1 02df      RET         
+00a2 0000      NOP         
+00a3 0000      NOP         
+00a4 0000      NOP         
+00a5 0000      NOP         
+00a6 0000      NOP         
+00a7 0000      NOP         
+00a8 0000      NOP         
+00a9 0000      NOP         
+00aa 0000      NOP         
+00ab 0000      NOP         
+00ac 0000      NOP         
+00ad 0000      NOP         
+00ae 0000      NOP         
+00af 0000      NOP         
