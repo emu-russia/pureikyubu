@@ -6,156 +6,571 @@
 
     Year 2001 (20 games).
 
-    0001 Disney's Tarzan: Untamed                           Nov 10, 2001   XXXX
-    0002 Madden NFL 2002                                    Nov 18, 2001
-    0003 SSX Tricky                                         Nov 18, 2001
-    0004 NHL Hitz 20-02                                     Nov 18, 2001
-    0005 All-Star Baseball 2002                             Nov 18, 2001
-    0006 Tony Hawk's Pro Skater 3                           Nov 18, 2001
-    0007 Super Monkey Ball                                  Nov 18, 2001
-    0008 Luigi's Mansion                                    Nov 18, 2001
-    0009 Wave Race: Blue Storm                              Nov 18, 2001
-    0010 Star Wars: Rogue Squadron II: Rogue Leader         Nov 18, 2001
-    0011 Batman: Vengeance                                  Nov 18, 2001
-    0012 FIFA Soccer 2002                                   Nov 24, 2001
-    0013 Dave Mirra Freestyle BMX 2                         Nov 27, 2001
-    0014 Crazy Taxi                                         Nov 30, 2001
-    0015 XG3 Extreme G Racing                               Dec 01, 2001
-    0016 Super Smash Bros. Melee                            Dec 03, 2001
-    0017 Pikmin                                             Dec 03, 2001
-    0018 Simpsons Road Rage, The                            Dec 07, 2001
-    0019 NFL Quarterback Club 2002                          Dec 10, 2001
-    0020 Universal Studios Theme Parks Adventure            Dec 17, 2001
+    0001 Disney's Tarzan: Untamed                           Nov 10, 2001   GTZE
+    0002 Madden NFL 2002                                    Nov 18, 2001   GMDE
+    0003 SSX Tricky                                         Nov 18, 2001   GSTE
+    0004 NHL Hitz 2002                                      Nov 18, 2001   GNHE
+    0005 All-Star Baseball 2002                             Nov 18, 2001   GA2E
+    0006 Tony Hawk's Pro Skater 3                           Nov 18, 2001   GT3E
+    0007 Super Monkey Ball                                  Nov 18, 2001   GMBE
+    0008 Luigi's Mansion                                    Nov 18, 2001   GLME
+    0009 Wave Race: Blue Storm                              Nov 18, 2001   GWRE
+    0010 Star Wars: Rogue Squadron II: Rogue Leader         Nov 18, 2001   GSWE
+    0011 Batman: Vengeance                                  Nov 18, 2001   GBVE
+    0012 FIFA Soccer 2002                                   Nov 24, 2001   GFSE
+    0013 Dave Mirra Freestyle BMX 2                         Nov 27, 2001   GBXE
+    0014 Crazy Taxi                                         Nov 30, 2001   GCTE
+    0015 XG3 Extreme G Racing                               Dec 01, 2001   G3EE
+    0016 Super Smash Bros. Melee                            Dec 03, 2001   GALE
+    0017 Pikmin                                             Dec 03, 2001   GPIE
+    0018 Simpsons Road Rage, The                            Dec 07, 2001   GSPE
+    0019 NFL Quarterback Club 2002                          Dec 10, 2001   GQBE
+    0020 Universal Studios Theme Parks Adventure            Dec 17, 2001   GUSE
 
-    Year 2002.
+    Year 2002 (146 games).
 
-    0021 Cel Damage                                         Jan 08, 2002
-    0022 NBA Courtside 2002                                 Jan 14, 2002
-    0023 ESPN International Winter Sports 2002              Jan 31, 2002
-    0024 Smashing Drive                                     Feb 01, 2002
-    0025 Dark Summit                                        Feb 06, 2002
-    0026 Sonic Adventure 2 Battle                           Feb 12, 2002
-    0027 18 Wheeler American Pro Trucker                    Feb 19, 2002
-    0028 NBA Street                                         Feb 23, 2002
-    0029 Jeremy McGrath Supercross World                    Feb 27, 2002
-    0030 All-Star Baseball 2003                             Feb 28, 2002
-    0031 Bloody Roar: Primal Fury                           Mar 01, 2002
-    0032 Pac-Man World 2                                    Mar 01, 2002
-    0033 Gauntlet: Dark Legacy                              Mar 05, 2002
-    0034 SpyHunter                                          Mar 11, 2002
-    0035 NFL Blitz 20-02 (GCN)                              Mar 18, 2002 
-    0036 Home Run KING                                      Mar 19, 2002
-    0037 James Bond 007: Agent under Fire                   Mar 19, 2002
-    0038 Driven                                             Mar 26, 2002
-    0039 Disney's Donald Duck: Goin' "Quackers" (GCN)       Mar 26, 2002
-    0040 Sega Sports: NBA 2K2                               Mar 26, 2002
-    0041 Sega Soccer Slam                                   Mar 26, 2002
-    0042 Burnout                                            Apr 01, 2002
-    0043 Resident Evil                                      Apr 01, 2002  
-    0044 Spider-Man (GCN)                                   Apr 17, 2002 
-    0045 FIFA World Cup 2002                                Apr 25, 2002
-    0046 ESPN MLS Extra Time 2002                           Apr 30, 2002 
-    0047 Lost Kingdoms                                      May 01, 2002
-    0048 ZooCube                                            May   , 2002
-    0049 Legends of Wrestling                               May 10, 2002
-    0050 Virtua Striker 2002                                May 20, 2002
-    0051 Bomberman Generation                               Jun 06, 2002 
-    0052 WWE WrestleMania X8                                Jun 12, 2002
-    0053 F1 2002                                            Jun 24, 2002
-    0054 Eternal Darkness: Sanity's Requiem                 Jun 24, 2002
-    0055 MX Superfly                                        Jun 25, 2002 
-    0056 RedCard 20-03                                      Jun 27, 2002
-    0057 Tetris Worlds (GCN)                                Jun 30, 2002
-    0058 UFC: Throwdown                                     Jul   , 2002 
-    0059 NCAA Football 2003                                 Jul 24, 2002
-    0060 Turok Evolution                                    Aug   , 2002 
-    0061 Aggressive Inline                                  Aug 05, 2002
-    0062 Madden NFL 2003                                    Aug 10, 2002 
-    0063 Smuggler's Run: Warzones                           Aug 12, 2002  
-    0064 Disney's Magical Mirror Starring Mickey Mouse      Aug 12, 2002  
-    0065 NFL Blitz 20-03 (GCN)                              Aug 14, 2002  
-    0066 Beach Spikers                                      Aug 14, 2002  
-    0067 SEGA Sports NFL 2K3                                Aug 20, 2002   
-    0068 Super Monkey Ball 2                                Aug 24, 2002 
-    0069 Super Mario Sunshine                               Aug 26, 2002 
-    0070 SEGA Sports NCAA College Football 2K3              Sep 03, 2002  
-    0071 Pac-Man Fever                                      Sep 04, 2002  
-    0072 MLB Slugfest 20-03                                 Sep 05, 2002 
-    0073 Scooby Doo!: Night of 100 Frights                  Sep 12, 2002 
-    0074 Rayman Arena                                       Sep 15, 2002  
-    0075 Rocket Power: Beach Bandits (GCN)                  Sep 15, 2002 
-    0076 Animal Crossing                                    Sep 16, 2002  
-    0077 Egg Mania: Eggstreme Madness                       Sep 18, 2002  
-    0078 Kelly Slater's Pro Surfer                          Sep 18, 2002 
-    0079 Crash Bandicoot: The Wrath of Cortex               Sep 18, 2002 
-    0080 Disney/Pixar's Monsters, Inc.: Scream Arena        Sep 19, 2002  
-    0081 Freekstyle                                         Sep 23, 2002 
-    0082 Star Fox Adventures                                Sep 23, 2002  
-    0083 4 x 4 EVO 2                                        Sep 24, 2002   
-    0084 Capcom vs. SNK 2 EO                                Sep 24, 2002 
-    0085 NHL Hitz 20-03                                     Sep 24, 2002 
-    0086 Scorpion King, The: Rise of an Akkadian            Sep 24, 2002 
-    0087 Big Air Freestyle                                  Sep 24, 2002 
-    0088 Mystic Heroes                                      Sep 28, 2002 
-    0089 WTA Tour Tennis (GCN)                              Sep 30, 2002 
-    0090 Mat Hoffman's Pro BMX 2 (GCN)                      Oct 01, 2002 
-    0091 NHL 2003                                           Oct 01, 2002  
-    0092 Top Gun: Combat Zones                              Oct   , 2002 
-    0093 Need For Speed: Hot Pursuit 2                      Oct 01, 2002 
-    0094 Star Wars: The Clone Wars                          Oct 01, 2002  
-    0095 Sega Sports NBA 2K3                                Oct 07, 2002 
-    0096 Pro Rally 2002                                     Oct 09, 2002 
-    0097 Ty the Tasmanian Tiger                             Oct 09, 2002 
-    0098 Outlaw Golf                                        Oct 09, 2002 
-    0099 Godzilla: Destroy All Monsters Melee               Oct 09, 2002 
-    0100 Knockout Kings 2003                                Oct 10, 2002 
-    0101 NBA Live 2003                                      Oct 11, 2002  
-    0102 Namco Museum (GCN)                                 Oct 12, 2002 
-    0103 Casper: Spirit Dimensions                          Oct 14, 2002 
-    0104 Backyard Football                                  Oct 15, 2002  
-    0105 Taz: Wanted                                        Oct 15, 2002 
-    0106 BloodRayne                                         Oct 15, 2002 
-    0107 Robotech: BattleCry                                Oct 15, 2002 
-    0108 TimeSplitters 2                                    Oct 15, 2002  
-    0109 Mario Party 4                                      Oct 21, 2002 
-    0110 X-Men: Next Dimension                              Oct 23, 2002  
-    0111 Worms Blast (GCN)                                  Oct 23, 2002  
-    0112 Swingerz Golf                                      Oct 23, 2002  
-    0113 Tony Hawk's Pro Skater 4                           Oct 23, 2002 
-    0114 Phantasy Star Online: Episode I & II               Oct 29, 2002 
-    0115 Street Hoops                                       Nov   , 2002   
-    0116 Tiger Woods PGA Tour 2003                          Nov   , 2002 
-    0117 Shrek: Extra Large                                 Nov 01, 2002 
-    0118 FIFA Soccer 2003 (GCN)                             Nov 06, 2002  
-    0119 Cubivore                                           Nov 08, 2002 
-    0120 Spyro: Enter the Dragonfly                         Nov 08, 2002  
-    0121 Zapper (GCN)                                       Nov 09, 2002 
-    0122 Fire Blade                                         Nov 09, 2002 
-    0123 Medal of Honor: Frontline                          Nov 09, 2002 
-    0124 Defender                                           Nov 10, 2002 
-    0125 Whirl Tour                                         Nov 11, 2002 
-    0126 NASCAR: Dirt To Daytona                            Nov 11, 2002 
-    0127 Resident Evil Zero                                 Nov 11, 2002  
-    0128 Sonic Mega Collection                              Nov 11, 2002  
-    0129 Evolution Skateboarding                            Nov 12, 2002 
-    0130 Wreckless: The Yakuza Missions                     Nov 12, 2002 
-    0131 Hot Wheels Velocity X                              Nov 12, 2002 
-    0132 Disney Sports Skateboarding                        Nov 13, 2002  
-    0133 Disney Sports Soccer                               Nov 13, 2002  
-    0134 Darkened Skye                                      Nov 13, 2002 
-    0135 Harry Potter and the Chamber of Secrets (GCN)      Nov 15, 2002  
-    0136 James Bond 007: NightFire                          Nov 15, 2002  
-    0137 Rocky (GCN)                                        Nov 16, 2002  
-    0138 Die Hard: Vendetta                                 Nov 18, 2002 
-    0139 Metroid Prime                                      Nov 18, 2002 
-    0140 Minority Report (GCN)                              Nov 20, 2002 
+    0021 Cel Damage                                         01/08/2002 
+    0022 NBA Courtside 2002                                 01/14/2002 
+    0023 ESPN International Winter Sports 2002              01/31/2002 
+    0024 Smashing Drive                                     02/01/2002   
+    0025 Dark Summit                                        02/06/2002   
+    0026 Sonic Adventure 2 Battle                           02/12/2002  
+    0027 18 Wheeler American Pro Trucker                    02/19/2002 
+    0028 NBA Street                                         02/23/2002  
+    0029 Jeremy McGrath Supercross World                    02/27/2002   
+    0030 All-Star Baseball 2003                             02/28/2002  
+    0031 Bloody Roar: Primal Fury                           03/01/2002 
+    0032 Pac-Man World 2                                    03/01/2002
+    0033 Gauntlet: Dark Legacy                              03/05/2002    
+    0034 SpyHunter                                          03/11/2002 
+    0035 NFL Blitz 20-02 (GCN)                              03/18/2002   
+    0036 Home Run KING                                      03/19/2002  
+    0037 James Bond 007: Agent under Fire                   03/19/2002 
+    0038 Disney's Donald Duck: Goin' "Quackers" (GCN)       03/26/2002 
+    0039 Sega Soccer Slam                                   03/26/2002  
+    0040 Sega Sports: NBA 2K2                               03/26/2002 
+    0041 Driven                                             03/26/2002 
+    0042 Resident Evil                                      04/01/2002
+    0043 Burnout                                            04/01/2002 
+    0044 ESPN MLS Extra Time 2002                           04/09/2002 
+    0045 Spider-Man (GCN)                                   04/17/2002  
+    0046 FIFA World Cup 2002                                04/25/2002 
+    0047 Lost Kingdoms                                      05/01/2002 
+    0048 ZooCube                                            05/05/2002  
+    0049 Legends of Wrestling                               05/10/2002 
+    0050 Virtua Striker 2002                                05/20/2002    
+    0051 Bomberman Generation                               06/06/2002 
+    0052 WWE WrestleMania X8                                06/12/2002   
+    0053 Eternal Darkness: Sanity's Requiem                 06/24/2002   
+    0054 F1 2002                                            06/24/2002  
+    0055 MX Superfly                                        06/25/2002  
+    0056 RedCard 20-03                                      06/27/2002  
+    0057 Tetris Worlds (GCN)                                06/30/2002 
+    0058 UFC: Throwdown                                     07/23/2002 
+    0059 NCAA Football 2003                                 07/24/2002  
+    0060 Turok Evolution                                    08/01/2002 
+    0061 Aggressive Inline                                  08/05/2002  
+    0062 Madden NFL 2003                                    08/10/2002   
+    0063 Disney's Magical Mirror Starring Mickey Mouse      08/12/2002      
+    0064 Smuggler's Run: Warzones                           08/12/2002  
+    0065 NFL Blitz 20-03 (GCN)                              08/14/2002     
+    0066 Beach Spikers                                      08/14/2002    
+    0067 SEGA Sports NFL 2K3                                08/20/2002       
+    0068 Super Monkey Ball 2                                08/24/2002     
+    0069 Super Mario Sunshine                               08/26/2002     
+    0070 SEGA Sports NCAA College Football 2K3              09/03/2002      
+    0071 Pac-Man Fever   Board Games,                       09/04/2002   
+    0072 MLB Slugfest 20-03                                 09/05/2002   
+    0073 Scooby Doo!: Night of 100 Frights                  09/12/2002 
+    0074 Rayman Arena                                       09/15/2002 
+    0075 Rocket Power: Beach Bandits (GCN)                  09/15/2002  
+    0076 Animal Crossing                                    09/16/2002     
+    0077 Egg Mania: Eggstreme Madness                       09/18/2002  
+    0078 NASCAR Thunder 2003                                09/18/2002  
+    0079 Crash Bandicoot: The Wrath of Cortex               09/18/2002     
+    0080 Kelly Slater's Pro Surfer                          09/18/2002  
+    0081 Disney/Pixar's Monsters, Inc.: Scream Arena        09/19/2002  
+    0082 Star Fox Adventures                                09/23/2002       
+    0083 Freekstyle                                         09/23/2002   
+    0084 4 x 4 EVO 2                                        09/24/2002     
+    0085 Capcom vs. SNK 2 EO                                09/24/2002    
+    0086 Scorpion King, The: Rise of an Akkadian            09/24/2002     
+    0087 NHL Hitz 20-03                                     09/24/2002     
+    0088 Big Air Freestyle                                  09/24/2002    
+    0089 WTA Tour Tennis (GCN)                              09/24/2002   
+    0090 Mystic Heroes                                      09/28/2002   
+    0091 Star Wars: The Clone Wars                          10/01/2002    
+    0092 NHL 2003                                           10/01/2002  
+    0093 Need For Speed: Hot Pursuit 2                      10/01/2002  
+    0094 Mat Hoffman's Pro BMX 2 (GCN)                      10/01/2002    
+    0095 Top Gun: Combat Zones                              10/02/2002    
+    0096 Sega Sports NBA 2K3                                10/07/2002   
+    0097 Outlaw Golf                                        10/09/2002       
+    0098 Ty the Tasmanian Tiger                             10/09/2002    
+    0099 Knockout Kings 2003                                10/10/2002 
+    0100 NBA Live 2003                                      10/11/2002  
+    0101 Namco Museum (GCN)                                 10/12/2002     
+    0102 Casper: Spirit Dimensions                          10/14/2002      
+    0103 BloodRayne                                         10/15/2002     
+    0104 TimeSplitters 2                                    10/15/2002    
+    0105 Robotech: BattleCry                                10/15/2002      
+    0106 Backyard Football                                  10/15/2002   
+    0107 Taz: Wanted                                        10/15/2002  
+    0108 Mario Party 4                                      10/21/2002     
+    0109 Worms Blast (GCN)                                  10/23/2002 
+    0110 X-Men: Next Dimension                              10/23/2002 
+    0111 Tony Hawk's Pro Skater 4                           10/23/2002     
+    0112 Swingerz Golf                                      10/23/2002      
+    0113 Phantasy Star Online: Episode I & II               10/29/2002   
+    0114 Pro Rally 2002                                     10/29/2002 
+    0115 Shrek: Extra Large                                 11/01/2002       
+    0116 FIFA Soccer 2003 (GCN)                             11/06/2002  
+    0117 Spyro: Enter the Dragonfly                         11/08/2002     
+    0118 Cubivore                                           11/08/2002    
+    0119 Zapper (GCN)                                       11/09/2002  
+    0120 Fire Blade                                         11/09/2002  
+    0121 Medal of Honor: Frontline                          11/09/2002    
+    0122 Defender                                           11/10/2002    
+    0123 Sonic Mega Collection                              11/11/2002     
+    0124 Whirl Tour                                         11/11/2002     
+    0125 Resident Evil Zero                                 11/11/2002  
+    0126 NASCAR: Dirt To Daytona                            11/11/2002    
+    0127 Wreckless: The Yakuza Missions                     11/12/2002     
+    0128 Evolution Skateboarding                            11/12/2002   
+    0129 Hot Wheels Velocity X                              11/12/2002 
+    0130 Disney Sports Skateboarding                        11/13/2002  
+    0131 Disney Sports Soccer                               11/13/2002 
+    0132 Darkened Skye                                      11/13/2002      
+    0133 Harry Potter and the Chamber of Secrets (GCN)      11/15/2002 
+    0134 James Bond 007: NightFire                          11/15/2002  
+    0135 Rocky (GCN)                                        11/16/2002 
+    0136 Die Hard: Vendetta                                 11/18/2002  
+    0137 Metroid Prime                                      11/18/2002      
+    0138 Nickelodeon Party Blast (GCN)                      11/20/2002   
+    0139 Minority Report (GCN)                              11/20/2002 
+    0140 Monopoly Party                                     11/20/2002  
+    0141 Star Wars Jedi Knight II: Jedi Outcast             11/20/2002   
+    0142 Mortal Kombat: Deadly Alliance                     11/20/2002     
+    0143 Hunter: The Reckoning                              11/20/2002 
+    0144 Baldur's Gate: Dark Alliance                       11/20/2002  
+    0145 Dead to Rights                                     11/25/2002 
+    0146 Rugrats: Royal Ransom                              11/26/2002 
+    0147 Street Hoops                                       11/26/2002  
+    0148 Mary-Kate and Ashley Sweet 16: Licensed to Drive (GCN)  11/26/2002 
+    0149 Tiger Woods PGA Tour 2003                          11/29/2002  
+    0150 BMX XXX                                            11/29/2002  
+    0151 Reign of Fire (GCN)                                11/30/2002  
+    0152 Legends of Wrestling II                            11/30/2002  
+    0153 Monster Jam: Maximum Destruction                   12/01/2002  
+    0154 Disney's PK: Out of the Shadows                    12/01/2002 
+    0155 Dr. Muto                                           12/01/2002    
+    0156 Evolution Worlds                                   12/02/2002 
+    0157 Frogger Beyond                                     12/02/2002 
+    0158 Disney Sports Football                             12/10/2002  
+    0159 SEGA Sports NHL 2K3                                12/10/2002  
+    0160 Sega Sports NCAA College Basketball 2K3            12/10/2002
+    0161 Blood Omen 2                                       12/11/2002  
+    0162 SpongeBob SquarePants: Revenge of the Flying Dutchman(GCN)  12/16/2002  
+    0163 Adventures of Jimmy Neutron Boy Genius, The        12/17/2002 
+    0164 Super Bubble Pop                                   12/20/2002 
+    0165 Lord of the Rings: The Two Towers                  12/30/2002 
+    0166 Dragon's Lair 3D                                   12/30/2002 
 
-    Year 2003.
+    Year 2003 (135 games).
 
-    Year 2004.
+    0167 Resident Evil 2 (GCN)                              01/14/2003  
+    Resident Evil 3: Nemesis                                01/14/2003     
+    Tom Clancy's The Sum Of All Fears (GCN)                 01/14/2003  
+    ATV: Quad Power Racing 2                                01/25/2003  
+    Skies of Arcadia Legends                                01/28/2003    
+    Summoner: A Goddess Reborn                              02/04/2003  
+    Tom Clancy's Ghost Recon                                02/12/2003  
+    Bust-a-Move 3000                                        02/12/2003  
+    Vexx                                                    02/12/2003 
+    Cubix Robots for Everyone: Showdown                     02/15/2003   
+    Legend of Zelda, The: Ocarina of Time Master Quest      02/16/2003   
+    Evolution Snowboarding                                  02/26/2003 
+    All-Star Baseball 2004 (GCN)                            02/27/2003  
+    Rayman 3: Hoodlum Havoc                                 03/05/2003   
+    Disney Sports Basketball                                03/14/2003    
+    Transworld Surf: Next Wave                              03/14/2003    
+    WWE Crush Hour                                          03/18/2003  
+    Piglet's BIG Game (GCN)                                 03/19/2003    
+    MLB Slugfest 20-04                                      03/19/2003    
+    Batman: Dark Tomorrow                                   03/19/2003  
+    Legend of Zelda, The: The Wind Waker                    03/24/2003    
+    Sims, The                                               03/24/2003 
+    Army Men Air Combat: The Elite Missions                 03/26/2003 
+    Superman: Shadow of the Apokolips (GCN)                 03/28/2003   
+    Dakar 2: The World's Ultimate Rally                     03/31/2003  
+    Def Jam Vendetta                                        04/01/2003 
+    Red Faction II                                          04/03/2003 
+    Men In Black II: Alien Escape                           04/08/2003  
+    Tom Clancy's Splinter Cell                              04/08/2003  
+    Burnout 2: Point of Impact                              04/09/2003 
+    Backyard Baseball (GCN)                                 04/12/2003 
+    Tube Slider                                             04/15/2003   
+    X2 Wolverine's Revenge (GCN)                            04/16/2003  
+    Ikaruga                                                 04/16/2003  
+    Conflict: Desert Storm                                  04/23/2003    
+    NBA Street Vol. 2                                       04/26/2003 
+    City Racer                                              05/07/2003    
+    Disney/Pixar's Finding Nemo                             05/13/2003 
+    Speed Kings                                             05/15/2003  
+    Enter the Matrix                                        05/15/2003  
+    Lost Kingdoms II                                        05/22/2003  
+    Hulk, The                                               05/27/2003   
+    Shrek: Super Party                                      05/27/2003    
+    Ultimate Muscle: Legends vs. New Generation (GCN)       06/07/2003  
+    Mega Man Network Transmission                           06/17/2003   
+    Hitman 2: Silent Assassin                               06/17/2003  
+    Sonic Adventure DX: Director's Cut                      06/17/2003     
+    Wario World                                             06/23/2003 
+    SX Superstar                                            06/30/2003  
+    Charlie's Angels                                        07/09/2003   
+    Italian Job, The                                        07/15/2003  
+    Dinotopia: The Sunstone Odyssey                         07/23/2003    
+    Aquaman: Battle for Atlantis                            07/28/2003      
+    Mario Golf: Toadstool Tour                              07/28/2003  
+    Rally Championship                                      07/28/2003  
+    Freaky Flyers                                           08/05/2003  
+    Madden NFL 2004                                         08/12/2003  
+    F-Zero GX                                               08/25/2003  
+    Soul Calibur II                                         08/26/2003   
+    Buffy the Vampire Slayer: Chaos Bleeds                  08/26/2003  
+    Disney's Extreme Skate Adventure (GCN)                  09/08/2003  
+    Product Number 03 (P.N. 03)                             09/10/2003 
+    Adventures of Jimmy Neutron Boy Genius, The: Jet Fusion 09/15/2003 
+    Disney's Party                                          09/15/2003 
+    Simpsons Hit & Run, The                                 09/15/2003   
+    Drome Racers                                            09/15/2003  
+    Spirits & Spells                                        09/22/2003   
+    Tiger Woods PGA Tour 2004                               09/23/2003   
+    Beyblade Super Tournament Battle                        09/23/2003    
+    Billy Hatcher and The Giant Egg                         09/23/2003   
+    Wallace & Gromit in Project Zoo                         09/23/2003  
+    NHL Hitz: Pro                                           09/25/2003     
+    Grooverider: Slot Car Thunder                           09/30/2003 
+    Auto Modellista                                         09/30/2003  
+    Freedom Fighters                                        10/01/2003  
+    NHL 2004                                                10/03/2003  
+    Freestyle MetalX                                        10/06/2003  
+    Viewtiful Joe                                           10/07/2003  
+    Kirby Air Ride                                          10/13/2003  
+    NBA Live 2004                                           10/15/2003  
+    Tak and the Power of Juju                               10/15/2003  
+    Haunted Mansion, The                                    10/17/2003      
+    SSX 3                                                   10/20/2003  
+    Bionicle                                                10/20/2003  
+    Star Wars: Rogue Squadron III: Rebel Strike             10/21/2003   
+    Teenage Mutant Ninja Turtles                            10/21/2003  
+    SpongeBob SquarePants: Battle for Bikini Bottom         10/28/2003  
+    Rogue Ops                                               10/28/2003 
+    Harry Potter: Quidditch World Cup (GCN)                 10/28/2003  
+    Tony Hawk's Underground (GCN)                           10/28/2003 
+    Dragon Ball Z: Budokai                                  10/28/2003 
+    Yu-Gi-Oh!: Falsebound Kingdom                           11/02/2003 
+    Gladius                                                 11/04/2003   
+    RoadKill                                                11/04/2003     
+    FIFA Soccer 2004                                        11/04/2003 
+    Fairly OddParents, The: Breakin' Da Rules               11/04/2003   
+    True Crime: Streets of L.A.                             11/04/2003 
+    Frogger's Adventures: The Rescue                        11/04/2003   
+    Lord of the Rings, The: The Return of the King          11/05/2003  
+    Sphinx and the Cursed Mummy                             11/11/2003  
+    Hobbit, The                                             11/11/2003   
+    Batman: Rise of Sin Tzu                                 11/11/2003 
+    Crash Nitro Kart                                        11/11/2003   
+    Mario Party 5                                           11/11/2003    
+    Medal of Honor: Rising Sun                              11/11/2003   
+    Legend of Zelda, The: Collector's Edition               11/17/2003    
+    Mario Kart: Double Dash!!                               11/17/2003       
+    Need for Speed Underground                              11/17/2003  
+    Go! Go! Hypergrind                                      11/18/2003     
+    Metal Arms: Glitch In the System                        11/18/2003   
+    Muppet Party Cruise, The                                11/18/2003      
+    Prince of Persia: The Sands of Time                     11/18/2003 
+    Disney's Hide & Sneak                                   11/20/2003 
+    Tonka Rescue Patrol                                     11/21/2003   
+    Looney Tunes: Back In Action (GCN)                      11/24/2003 
+    Tom and Jerry in War of the Whiskers                    11/25/2003  
+    XGRA: Extreme-G Racing Association                      11/25/2003  
+    XIII                                                    11/25/2003   
+    Powerpuff Girls: Relish Rampage Pickled Edition         11/26/2003  
+    Spawn: Armageddon                                       11/30/2003  
+    1080° Avalanche                                         12/01/2003     
+    Pokemon Channel                                         12/01/2003 
+    Gotcha Force                                            12/02/2003 
+    Resident Evil: Code Veronica X                          12/02/2003
+    Beyond Good & Evil                                      12/03/2003 
+    I-Ninja                                                 12/04/2003 
+    NFL Blitz: Pro                                          12/04/2003    
+    Harry Potter and the Sorcerer's Stone (GCN)             12/09/2003  
+    R: Racing Evolution                                     12/09/2003 
+    Medabots Infinity                                       12/11/2003 
+    Monster 4x4: Masters of Metal                           12/12/2003 
+    Goblin Commander: Unleash the Horde                     12/16/2003 
+    Pac-Man Vs.                                             12/16/2003 
+    Sims, The: Bustin' Out                                  12/16/2003  
+    Midway Arcade Treasures                                 12/17/2003 
 
-    Year 2005.
+    Year 2004 (98 games).
+
+    Sonic Heroes    Action     E   01/06/2004  
+    NFL Street  Football       E   01/13/2004  
+    Conflict Desert Storm II: Back to Baghdad   Action     T   01/20/2004    
+    Freestyle Street Soccer     Soccer, Sports     T   01/27/2004 
+    Final Fantasy: Crystal Chronicles   Adventure, RPG     T   02/09/2004     
+    James Bond 007: Everything or Nothing   Action     T   02/17/2004   
+    Pitfall: The Lost Expedition    Action     E   02/20/2004 
+    BlowOut     Action     T   02/27/2004   
+    Phantasy Star Online Episode III: C.A.R.D. Revolution   RPG        T   03/02/2004   
+    Scooby Doo! Mystery Mayhem  Adventure      E   03/03/2004    
+    Bomberman Jetters   Action     E   03/09/2004  
+    Metal Gear Solid: The Twin Snakes   Action     M   03/09/2004   
+    MVP Baseball 2004   Baseball       E   03/09/2004 
+    Worms 3D    Strategy       T   03/11/2004  
+    Mission: Impossible -- Operation Surma  Action     T   03/16/2004     
+    Harvest Moon: A Wonderful Life  RPG        E   03/16/2004   
+    Samurai Jack: The Shadow of Aku     Action     T   03/23/2004     
+    Pokemon Colosseum   RPG        E   03/24/2004      
+    WarioWare, Inc.: Mega Party Game$   Action     E   04/05/2004     
+    Serious Sam: Next Encounter     First Person       M   04/12/2004  
+    Space Raiders   Action     T   04/21/2004 
+    Road Trip: The Arcade Edition   Racing     E   04/21/2004 
+    Top Angler: Real Bass Fishing   Fishing        E   04/28/2004  
+    Shrek 2     Action     E   05/04/2004 
+    Future Tactics: The Uprising    RPG        T   05/10/2004  
+    Custom Robo     Action     T   05/10/2004     
+    Harry Potter and the Prisoner of Azkaban    Adventure      E   06/02/2004  
+    Legend of Zelda, The: Four Swords Adventures    Adventure      E   06/07/2004      
+    Ribbit King     Golf, Sports       E   06/08/2004    
+    Tom Clancy's Rainbow Six 3  Action     M   06/16/2004  
+    Mega Man Anniversary Collection     Action     E   06/22/2004   
+    Spider-Man 2    Action, Adventure      T   06/28/2004 
+    Pool Paradise   Sports, Classic Games      E   07/05/2004     
+    Tom Clancy's Splinter Cell: Pandora Tomorrow    Action     T   07/06/2004  
+    Pokemon Box Ruby and Sapphire   Productivity       E   07/12/2004     
+    Tales of Symphonia  RPG        T   07/13/2004 
+    NCAA Football 2005  Football, Sports       E   07/14/2004  
+    Puyo Pop Fever  Puzzles        E   07/20/2004      
+    Catwoman    Action     T   07/23/2004  
+    Madden NFL 2005     Football, Sports       E   08/09/2004 
+    Army Men: Sarge's War   Action     T   08/10/2004      
+    Lotus Challenge     Racing     E   08/10/2004      
+    Amazing Island  Simulation     E   08/24/2004     
+    Starsky & Hutch     Action     T   08/24/2004    
+    Pikmin 2    Strategy       E   08/30/2004    
+    Carmen Sandiego: The Secret of the Stolen Drums     Action     E   08/31/2004   
+    SRS: Street Racing Syndicate    Racing     T   08/31/2004    
+    NASCAR 2005: Chase for the Cup  Racing     E   08/31/2004   
+    Digimon Rumble Arena 2  Action     T   09/02/2004  
+    Terminator 3: The Redemption    Action     T   09/07/2004    
+    Fairly OddParents, The: Shadow Showdown     Action     E   09/07/2004  
+    Zoids: Battle Legends   Action     T   09/07/2004  
+    Adventures of Jimmy Neutron Boy Genius, The: Attack of the Twonkies     Action     E   09/13/2004   
+    Phantasy Star Online: Episode I & II Plus   RPG        T   09/14/2004       
+    WWE Day of Reckoning    Sports, Wrestling      T   09/17/2004 
+    Def Jam Fight for NY    Fighting       M   09/20/2004 
+    Tiger Woods PGA Tour 2005   Golf, Sports       E   09/21/2004  
+    X-Men Legends   RPG        T   09/21/2004    
+    Bad Boys: Miami Takedown    Action     M   09/21/2004  Crave Entertainment  
+    Second Sight    Action     T   09/21/2004
+    NHL 2005    Sports, Hockey     E   09/22/2004 
+    Power Rangers: Dino Thunder     Action     E   09/22/2004  
+    Donkey Konga    Action, Rhythm     E   09/27/2004   
+    Mega Man X: Command Mission     RPG        E   09/28/2004   
+    NBA Live 2005   Basketball, Sports     E   09/28/2004  
+    Dreamworks Shark Tale   Action     E   09/29/2004 
+    Tony Hawk's Underground 2: World Destruction Tour   Sports, Extreme        T   10/04/2004   
+    Trigger Man     Action, Adventure      T   10/04/2004   
+    Disney/Pixar's The Incredibles  Action     T   10/04/2004 
+    Paper Mario: The Thousand-Year Door     Action, RPG        E   10/11/2004      
+    FIFA Soccer 2005    Soccer, Sports     E   10/12/2004  
+    TY the Tasmanian Tiger 2: Bush Rescue   Action     E   10/12/2004  
+    Midway Arcade Treasures II  Arcade     M   10/14/2004   
+    Teenage Mutant Ninja Turtles 2: Battle Nexus    Action     T   10/20/2004 
+    Scaler  Action     T   10/26/2004    
+    Intellivision Lives! Arcade Classics    Arcade     E   10/26/2004   
+    SpongeBob SquarePants Movie, The    Action     E   10/27/2004    
+    Spyro: A Hero's Tail    Action     E   11/02/2004    
+    Lord of the Rings, The: The Third Age   RPG        T   11/02/2004  
+    Polar Express, The  Adventure      E   11/02/2004 
+    Army Men: RTS   Strategy       T   11/03/2004      
+    Mario Power Tennis  Sports, Tennis     E   11/08/2004    
+    Lemony Snicket's A Series of Unfortunate Events     Action, Adventure      E   11/09/2004  
+    URBZ, The: Sims in the City     Simulation     T   11/09/2004 
+    Metroid Prime 2 Echoes  Adventure, First Person        T   11/15/2004     
+    Need for Speed Underground 2    Racing     E   11/15/2004   
+    Baten Kaitos: Eternal Wings and the Lost Ocean  RPG        T   11/16/2004    
+    Call of Duty: Finest Hour   First Person       T   11/17/2004 
+    MC Groovz Dance Craze   Action     E   11/17/2004     
+    Viewtiful Joe 2     Action     T   11/18/2004 
+    GoldenEye: Rogue Agent  Action     T   11/22/2004   
+    King Arthur     Action, Adventure      T   11/22/2004   
+    Alien Hominid   Action     T   11/23/2004      
+    Prince of Persia: Warrior Within    Action     M   11/30/2004  
+    Mario Party 6   Action, Board Games        E   12/06/2004     
+    Cabela's Big Game Hunters 2005 Adventures   Budget Price, First Person, Sports     T   12/07/2004 
+    Dragon Ball Z: Budokai 2    Fighting       T   12/12/2004     
+    NFL Street 2    Sports, Football       E   12/26/2004 
+
+    Year 2005 (92 games).
+
+    Resident Evil 4     Action, Adventure      M   01/11/2005 
+    NBA Street Vol. 3   Sports, Basketball     E   02/08/2005 
+    Disney's Winnie the Pooh: Rumbly Tumbly Adventure   Adventure, Action      E   02/10/2005  
+    Star Fox: Assault   Arcade, Shooter        T   02/14/2005  
+    FIFA Street     Soccer, Sports     E   02/22/2005 
+    Judge Dredd: Dredd vs. Death    First Person       M   02/22/2005    
+    Robots  Action     E   02/23/2005    
+    Mortal Kombat: Deception    Fighting       M   02/28/2005    
+    Fight Night Round 2     Boxing, Sports     T   03/01/2005 
+    MVP Baseball 2005   Baseball       E   03/01/2005  
+    Rave Master     Fighting       T   03/08/2005 
+    Donkey Kong Jungle Beat     Action     E 10+   03/14/2005    
+    Teenage Mutant Ninja Turtles: Mutant Melee  Action     T   03/15/2005    
+    Tom Clancy's Ghost Recon 2  First Person       T   03/15/2005  
+    TimeSplitters: Future Perfect   First Person       M   03/21/2005    
+    Pinball Hall of Fame    Pinball        E   03/22/2005   
+    Strike Force Bowling    Sports, Miscellaneous      E   03/22/2005 
+    Dragon Ball Z: Sagas    Action     T   03/22/2005
+    Tom Clancy's Splinter Cell: Chaos Theory    Adventure      M   03/31/2005 
+    Donkey Konga 2  Action, Rhythm     T   05/09/2005
+    Madagascar  Action     E 10+   05/24/2005    
+    Digimon World 4     Action     E   06/03/2005  
+    Medal of Honor: European Assault    First Person       T   06/06/2005  
+    Batman Begins   Action     T   06/15/2005 
+    Fantastic 4     Action     T   06/28/2005  
+    Killer 7    Action     M   07/07/2005 
+    Charlie & the Chocolate Factory     Action, Adventure      E   07/22/2005 
+    Harvest Moon: Another Wonderful Life    RPG        E   07/26/2005
+    Madden NFL 06   Football, Sports       E   08/09/2005   
+    Geist   Adventure, First Person        M   08/15/2005   
+    Hello Kitty: Roller Rescue  Adventure      E   08/16/2005   
+    Sonic Gems Collection   Action     E   08/16/2005    
+    Incredible Hulk, The: Ultimate Destruction  Action     T   08/23/2005    
+    Mario Superstar Baseball    Baseball, Sports       E   08/29/2005      
+    WWE Day of Reckoning 2  Sports, Wrestling      T   08/29/2005    
+    Namco Museum 50th Anniversary   Arcade     E 10+   08/30/2005   
+    One Piece: Grand Battle     Fighting       T   09/13/2005 
+    Animaniacs: The Great Edgar Hunt    Action, Adventure      E   09/13/2005      
+    Scooby-Doo! Unmasked    Action, Adventure      E   09/13/2005  
+    Cabela's Outdoor Adventures '06     Action, Fishing        T   09/14/2005  
+    Battalion Wars  Action, Strategy       T   09/19/2005     
+    Marvel Nemesis: Rise of the Imperfects  Action     T   09/20/2005  
+    X-Men Legends II: Rise of Apocalypse    Action, RPG        T   09/21/2005   
+    Tiger Woods PGA TOUR 06     Golf       E   09/22/2005  
+    Tak: The Great Juju Challenge   Adventure      E   09/22/2005   
+    World Series of Poker   Card Games     E 10+   09/27/2005 
+    Tom Clancy's Rainbow Six: Lockdown  Action     M   09/27/2005  
+    Ultimate Spider-Man     Action     T   09/27/2005 
+    Frogger: Ancient Shadow     Action     E   09/27/2005    
+    NBA Live 06     Basketball     E   09/28/2005 
+    Pokemon XD: Gale of Darkness    RPG        E   10/03/2005    
+    Bratz: Rock Angelz  Adventure      E   10/04/2005  
+    FIFA Soccer 06  Sports, Soccer     E   10/04/2005 
+    SSX on Tour     Extreme, Sports        E 10+   10/11/2005  
+    Zatch Bell! Mamodo Battles  Fighting       T   10/11/2005   
+    Tasmanian Tiger 3: Night of the Quinkan     Action     E 10+   10/11/2005 
+    Fire Emblem: Path of Radiance   RPG, Strategy      T   10/17/2005     
+    SpongeBob Squarepants: Lights, Camera, PANTS!   Action     E   10/18/2005   
+    Disney's Chicken Little     Action     E 10+   10/18/2005      
+    Tony Hawk's American Wasteland  Extreme        T   10/18/2005 
+    Dora the Explorer: Journey to the Purple Planet     Adventure      EC  10/18/2005     
+    Crash Tag Team Racing   Racing     E 10+   10/18/2005 
+    Codename Kids Next Door: Operation V.I.D.E.O.G.A.M.E.   Action     E 10+   10/19/2005     
+    Dance Dance Revolution: Mario Mix   Action, Rhythm     E   10/24/2005      
+    Nicktoons Unite!    Action, Adventure      E   10/25/2005 
+    Spartan: Total Warrior  Action     M   10/25/2005 
+    LEGO Star Wars: The Video Game  Action     E   10/25/2005  
+    Ed, Edd n Eddy: The Mis-Edventures  Adventure      E   10/25/2005  
+    Midway Arcade Treasures 3   Arcade     E   10/25/2005    
+    Sims 2, The     Simulation     T   10/25/2005  
+    Mark Davis Pro Bass Challenge   Fishing, Sports        E   10/25/2005  
+    Teenage Mutant Ninja Turtles 3: Mutant Nightmare    Action     E 10+   11/01/2005  
+    Call of Duty 2: Big Red One     First Person       T   11/01/2005   
+    Disney/Pixar's The Incredibles: Rise of the Underminer  Action     E 10+   11/01/2005  
+    SeaWorld Adventure Parks: Shamu's Deep Sea Adventure    Action     E   11/01/2005 
+    Mario Party 7   Action     E   11/07/2005  
+    Gun     Action     M   11/08/2005 
+    Viewtiful Joe Red Hot Rumble    Action     T   11/08/2005    
+    Karaoke Revolution Party    Action, Rhythm     E 10+   11/08/2005     
+    Harry Potter and the Goblet of Fire     Adventure      E 10+   11/15/2005 
+    True Crime: New York City   Action     M   11/15/2005 
+    Shadow the Hedgehog     Action     E 10+   11/15/2005    
+    From Russia with Love   Action     T   11/15/2005  
+    Need For Speed: Most Wanted     Racing     T   11/15/2005    
+    Cabela's Dangerous Hunts 2  Hunting, Sports        T   11/16/2005  
+    Pac-Man World 3     Action     E   11/22/2005 
+    Peter Jackson's King Kong: The Official Game of the Movie   Action     T   11/22/2005  
+    Chronicles of Narnia, The: The Lion, the Witch and the Wardrobe     Action, Adventure      T   11/22/2005
+    American Chopper 2: Full Throttle   Racing, Motorcycle     T   11/28/2005  
+    Super Mario Strikers    Soccer     E   12/05/2005    
+    Prince of Persia: The Two Thrones   Action     M   12/06/2005  
+    Chaos Field     Action     E   12/13/2005  
+
+
+    Year 2006 (46 games).
+
+    Mega Man X Collection   Action     E   01/10/2006  
+    Curious George  Action     E   02/01/2006  
+    Chibi-Robo  Action     E 10+   02/06/2006       
+    Sonic Riders    Racing     E   02/21/2006   
+    FIFA Street 2   Soccer     E   02/28/2006  
+    Naruto: Clash of Ninja  Fighting       T   03/07/2006    
+    Ice Age 2: The Meltdown     Action     E 10+   03/14/2006      
+    Kao the Kangaroo Round 2    Action     E   03/21/2006   
+    Harvest Moon: Magical Melody    RPG        E   03/28/2006  
+    2006 FIFA World Cup     Soccer, Sports     E   04/06/2006 
+    Odama   Pinball, Strategy      E 10+   04/10/2006  
+    Rampage: Total Destruction  Action     E 10+   04/25/2006     
+    Over the Hedge  Action     E 10+   05/09/2006 
+    X-Men: The Official Game    Action     T   05/16/2006 
+    Teen Titans     Action     E 10+   05/24/2006    
+    Disney/Pixar Cars   Racing     E   06/06/2006  
+    Major League Baseball 2K6   Baseball, Sports       E   06/12/2006    
+    Monster House   Action     E 10+   07/18/2006 
+    Ant Bully, The  Adventure      E 10+   07/24/2006   
+    Barnyard    Action     E 10+   08/01/2006 
+    Super Monkey Ball Adventure     Action, Adventure, Puzzles     E   08/01/2006     
+    Pac-Man World Rally     Racing     E   08/22/2006  
+    Madden NFL 07   Football       E   08/22/2006  
+    One Piece: Grand Adventure  Action, Fighting       T   08/29/2006   
+    Baten Kaitos Origins    RPG        T   09/06/2006    
+    One Piece: Pirates Carnival     Action     E   09/12/2006  
+    Lego Star Wars II: The Original Trilogy     Action     E 10+   09/12/2006    
+    Open Season     Action, Adventure      E 10+   09/19/2006 
+    Baten Kaitos Origins    RPG        T   09/25/2006    
+    Grim Adventures of Billy and Mandy  Action     E 10+   09/26/2006    
+    Naruto: Clash of Ninja 2    Fighting       T   09/26/2006     
+    FIFA Soccer 07  Soccer     E   10/03/2006 
+    Legend of Spyro, The: A New Beginning   Action     E 10+   10/10/2006 
+    Avatar: The Last Airbender  Action     E 10+   10/10/2006
+    SpongeBob SquarePants: Creature from the Krusty Krab    Action     E   10/17/2006 
+    Sims 2, The: Pets   Simulation     T   10/17/2006 
+    Dreamworks' Flushed Away    Action     E   10/17/2006 
+    Nicktoons: Battle for Volcano Island    Action     E   10/24/2006 
+    Bratz: Forever Diamondz     Simulation     E   10/24/2006 
+    Tom Clancy's Splinter Cell: Double Agent    Action     M   10/24/2006 
+    Need for Speed: Carbon  Racing     E 10+   10/31/2006 
+    Lara Croft Tomb Raider: Legend  Action     T   11/14/2006  
+    Happy Feet  Adventure      E   11/14/2006 
+    Bionicle Heroes     Action     E 10+   11/14/2006  
+    Zatch Bell!: Mamodo Fury    Fighting       T   12/05/2006   
+    Legend of Zelda, The: Twilight Princess     Adventure      T   12/11/2006 
+
+    Year 2007 (5 games).
+
+    TMNT    Action     E 10+   03/20/2007  Ubisoft  
+    Backyard Baseball 2007  Baseball, Sports       E   03/23/2007
+    Disney's Meet the Robinsons     Action     E 10+   03/27/2007 
+    Surf's Up   Sports, Surfing        E 10+   05/07/2007 
+    Ratatouille (GCN)   Action     E   06/26/2007 
 
     ---------------------------------------------------------------------------
 
-    Last updated 30 May 2005
+    542 games total.
+    Based on http://www.nintendo.com/consumer/gameslist/gamelist.jsp
+
+    Last updated 2 Dec 2010
