@@ -1,0 +1,12 @@
+EXPORTS
+    RegisterPlugin                      @1
+
+    GXOpen                              @2
+    GXClose                             @3
+    
+    GXWriteFifo                         @4
+    GXSetTokens                         @5
+
+    GXConfigure                         @6
+    GXAbout                             @7
+	GXSaveLoad							@8
