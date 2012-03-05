@@ -1353,8 +1353,18 @@ void PPCDisasm(PPCD_CB *discb)
         case 01471: integer("orc.", 'Z', ASB_A|ASB_S|ASB_B); break;
         case 01554: integer("ecowx", 'X', DAB_D|DAB_A|DAB_B); o->iclass = PPC_DISA_OPTIONAL; break; // ecowx
         case 01556: ldst("sthux", 1, 0); break;                             // sthux
-        case 01570: integer("or", 'Z', ASB_A|ASB_S|ASB_B); break;           // orx
-        case 01571: integer("or.", 'Z', ASB_A|ASB_S|ASB_B); break;
+        case 01570:                                                         // orx
+#ifdef SIMPLIFIED
+                    if(DIS_RS == DIS_RB) { integer("mr", 'Z', ASB_A|ASB_S); o->iclass |= PPC_DISA_SIMPLIFIED; }
+                    else
+#endif
+                    integer("or", 'Z', ASB_A|ASB_S|ASB_B); break;
+        case 01571: 
+#ifdef SIMPLIFIED
+                    if(DIS_RS == DIS_RB) { integer("mr.", 'Z', ASB_A|ASB_S); o->iclass |= PPC_DISA_SIMPLIFIED; }
+                    else
+#endif
+                    integer("or.", 'Z', ASB_A|ASB_S|ASB_B); break;
         case 01626: integer("divwu", 'X', DAB_D|DAB_A|DAB_B); break;        // divwux
         case 01626|OE: integer("divwuo", 'X', DAB_D|DAB_A|DAB_B); break;
         case 01627: integer("divwu.", 'X', DAB_D|DAB_A|DAB_B); break;

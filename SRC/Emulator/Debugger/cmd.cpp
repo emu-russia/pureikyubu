@@ -171,6 +171,11 @@ void con_command(int argc, char argv[][CON_LINELEN], int lnum)
         cmd_top10();
         return;
     }
+    else if(ifname("tree"))                 // show call tree
+    {
+        cmd_tree(argc, argv);
+        return;
+    }
     else if(ifname("u"))                    // set disassembly address
     {
         cmd_u(argc, argv);
@@ -404,18 +409,15 @@ static void disa_line (FILE *f, u32 opcode, u32 addr)
         // to easily locate end of function
         fprintf (f, "blr");
     }
-    
+
     else if(disa.iclass & PPC_DISA_BRANCH)
     {
-        fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
+        if(symbol = SYMName(disa.target)) fprintf (f, "%-12s%s", disa.mnemonic, symbol);
+        else fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
+
         if(disa.target > addr) fprintf (f, " \x19");
         else if (disa.target < addr) fprintf (f, " \x18");
         else fprintf (f, " \x1b");
-
-        if(symbol = SYMName(disa.target))
-        {
-            fprintf (f, "\t\t\t ; %s", symbol);
-        }
     }
     
     else fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
@@ -429,7 +431,7 @@ static void disa_line (FILE *f, u32 opcode, u32 addr)
 
 void cmd_disa(int argc, char argv[][CON_LINELEN])
 {
-    u32 start_addr, end_addr;
+    u32 start_addr, sa, end_addr;
     FILE *f;
 
     if (argc < 3)
@@ -446,6 +448,7 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
         }
 
         start_addr = strtoul ( argv[1], NULL, 0 );
+        sa = start_addr;
         end_addr = strtoul ( argv[2], NULL, 0 );
 
         f = fopen ( "Data\\disa.txt", "wt" );
@@ -461,7 +464,7 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
             disa_line ( f, opcode, start_addr );
         }
 
-        con_print ( "Disassembling from 0x%08X to 0x%08X... done\n", start_addr, end_addr );
+        con_print ( "Disassembling from 0x%08X to 0x%08X... done\n", sa, end_addr );
         fclose (f);
     }
 }
@@ -1393,6 +1396,119 @@ void cmd_top10()
 }
 
 // ---------------------------------------------------------------------------
+// tree
+
+typedef struct call_history {
+    u32 address;
+    int hits;
+} call_history;
+
+static call_history * callhist;
+static int callhist_count;
+
+static int get_call_history ( u32 address )
+{
+    for (int i=0; i<callhist_count; i++) {
+        if ( callhist[i].address == address ) {
+            return ++callhist[i].hits;
+        }
+    }
+
+    callhist = (call_history *)realloc ( callhist, sizeof(call_history) * (callhist_count + 1) );
+    callhist[callhist_count].address = address;
+    callhist[callhist_count].hits = 1;
+    callhist_count ++;
+
+    return 1;
+}
+
+static void dump_subcalls ( u32 address, FILE * f, int level )
+{
+    u32 prev_address = address;
+    PPCD_CB    disa;
+    int bailout = 10000;
+
+    int times = get_call_history (address);
+
+    int cnt = level;
+    while ( cnt--) fprintf ( f, "\t" );
+    
+    char * name = SYMName (address);
+    if (name) fprintf ( f, "%s (%i)", name, times );
+    else fprintf ( f, "0x%08X (%i)", address, times );
+
+    if ( address > 0x8135b260 ) {
+        fprintf ( f, "\n" );
+        return;
+    }
+
+    if ( times > 1 ) {      // Eliminate repetitive walktrhough
+        fprintf ( f, " ...\n");
+        return;
+    }
+    else fprintf ( f, "\n");
+
+    while ( bailout-- )
+    {
+        u32 opcode = MEMFetch ( address );
+        if ( opcode == 0x4e800020 || opcode == 0 ) break;
+
+        disa.instr = opcode;
+        disa.pc = address;
+
+        PPCDisasm (&disa);
+
+        if(disa.iclass & PPC_DISA_BRANCH) {
+            if ( !stricmp ( disa.mnemonic, "bl" ) )
+            {
+                u32 start_address = (u32)disa.target;
+                if ( prev_address != start_address ) dump_subcalls ( start_address, f, level+1 );
+            }
+        }
+
+        if ( disa.iclass & PPC_DISA_ILLEGAL ) break;
+
+        address += 4;
+    }
+}
+
+void cmd_tree (int argc, char argv[][CON_LINELEN])
+{
+    u32 start_addr;
+    FILE * f;
+
+    if (argc < 2)
+    {
+        con_print ("syntax : tree <start_addr> \n");
+        con_print ("create call tree of function at `start_addr`, including subcalls and dump it into calltree.txt\n");
+        con_print ("`start_addr` can be symbolic or direct address.\n");
+        con_print ("example of use : " GREEN "tree main\n");
+    }
+    else
+    {
+        if(!emu.running)
+        {
+            con_print ("not loaded\n");
+            return;
+        }
+
+        start_addr = SYMAddress(argv[1]);
+        if ( start_addr == 0 ) start_addr = strtoul ( argv[1], NULL, 0 );
+
+        con_print ( "Creating call tree from 0x%08X\n", start_addr );
+
+        if ( callhist ) {
+            free (callhist);
+            callhist_count = 0;
+        }
+
+        f = fopen ( "Data\\calltree.txt", "wt" );
+        dump_subcalls ( start_addr, f, 0 );
+        fclose ( f );
+    }
+}
+
+// ---------------------------------------------------------------------------
 // u
 
 void cmd_u(int argc, char argv[][CON_LINELEN])
@@ -1517,6 +1633,7 @@ void cmd_help()
     con_print(WHITE "    cls                  " NORM "- clear message buffer");
     con_print(WHITE "    colors               " NORM "- colored output test");
     con_print(WHITE "    disa                 " NORM "- disassemble code into text file");
+    con_print(WHITE "    tree                 " NORM "- show call tree");
     con_print(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS");
     con_print("\n");
 
