@@ -120,7 +120,7 @@ void main ()
 
     __OSBusClock = 162000000;
     __OSCoreClock = 486000000;
-    sub_81302034 ();
+    sub_81302034 ();        // BS2SetTime
     sub_813020C8 ();
     PADSetSpec (PAD_SPEC_5);
     PADInit ();
@@ -242,4 +242,134 @@ void BS2Init (void)
 81300450  FFC00090  fmr         fr30, fr0
 81300454  FFE00090  fmr         fr31, fr0
 81300458  4E800020  blr
+}}}
+
+typedef struct
+{
+    u16     checkSum;           // SRAM byte checksum (discovered by Costis)
+    u16     checkSumInv;        // inverted checksum (see YAGCD)
+    u32     ead0;
+    u32     ead1;
+    s32     counterBias;        // now we already know meaning of this one too :)
+    s8      displayOffsetH;     // used by VI library
+    u8      ntd;
+    u8      language;
+    u8      flags;
+    u8      dummy[44];
+} SRAM;
+
+OSSram* sram
+
+r31 = 0
+r30 = 0
+
+OSTick  rtcValue;
+[0x814AD2DC] = [0x814AD2E0] = 0
+
+r29 = __OSLockSram ()
+
+if ( __OSCheckSram () == FALSE )
+{
+    r30 = sram->counterBias
+    if ( __OSGetRTC (&rtcValue) )
+    {
+
+
+
+    }
+    else r30 = 0;
+}
+
+if (sram->flags & 8)
+{
+    [0x814AD2E0] = 1
+    __OSUnlockSram ( r30 );
+    if ( r30 )
+    {
+        while ( __OSSyncSram () == 0 ) {}
+    }
+}
+
+
+
+
+{{{
+81301F0C  7C0802A6  mflr        r0
+81301F10  90010004  stw         r0, 4 (r1)
+81301F14  9421FFB8  stwu        r1, -72 (r1)
+81301F18  93E10044  stw         r31, 68 (r1)
+81301F1C  3BE00000  li          r31, 0
+81301F20  93C10040  stw         r30, 64 (r1)
+81301F24  3BC00000  li          r30, 0
+81301F28  93A1003C  stw         r29, 60 (r1)
+81301F2C  93ED831C  stw         r31, -0x7CE4 (r13)
+81301F30  93ED8320  stw         r31, -0x7CE0 (r13)
+81301F34  4805E809  bl          0x8136073C              ; __OSLockSram
+81301F38  7C7D1B78  or          r29, r3, r3
+81301F3C  4805EC19  bl          0x81360B54              ; __OSCheckSram
+81301F40  2C030000  cmpwi       r3, 0
+81301F44  408200A4  bne-        0x81301FE8 
+
+81301F48  83DD000C  lwz         r30, 12 (r29)
+81301F4C  38610008  addi        r3, r1, 8
+81301F50  4805E315  bl          0x81360264              ; __OSGetRTC
+81301F54  2C030000  cmpwi       r3, 0
+81301F58  41820054  beq-        0x81301FAC 
+
+81301F5C  3C608000  lis         r3, 0x8000
+81301F60  80010008  lwz         r0, 8 (r1)
+81301F64  806300F8  lwz         r3, 248 (r3)
+81301F68  38A1000C  addi        r5, r1, 12
+81301F6C  7C80F214  add         r4, r0, r30
+81301F70  5466F0BE  rlwinm      r6, r3, 30, 2, 31           mask:0x3FFFFFFF
+81301F74  7C7F21D6  mullw       r3, r31, r4
+81301F78  7C062016  mulhwu      r0, r6, r4
+81301F7C  7C630214  add         r3, r3, r0
+81301F80  7C06F9D6  mullw       r0, r6, r31
+81301F84  7C8621D6  mullw       r4, r6, r4
+81301F88  7C630214  add         r3, r3, r0
+81301F8C  48061A91  bl          0x81363A1C              ; OSTicksToCalendarTime
+81301F90  80010020  lwz         r0, 32 (r1)
+81301F94  2C0007D0  cmpwi       r0, 0x07D0
+81301F98  4180000C  blt-        0x81301FA4 
+81301F9C  2C0007D7  cmpwi       r0, 0x07D7
+81301FA0  40810010  ble-        0x81301FB0 
+81301FA4  3BC00000  li          r30, 0
+81301FA8  48000008  b           0x81301FB0 
+81301FAC  7FFEFB78  or          r30, r31, r31
+
+81301FB0  387D0000  addi        r3, r29, 0
+81301FB4  38800000  li          r4, 0
+81301FB8  38A00014  li          r5, 20
+81301FBC  4BFFE20D  bl          0x813001C8              ; memset
+81301FC0  93DD000C  stw         r30, 12 (r29)
+81301FC4  38000001  li          r0, 1
+81301FC8  3BC00001  li          r30, 1
+81301FCC  887D0013  lbz         r3, 19 (r29)
+81301FD0  60630010  ori         r3, r3, 0x0010
+81301FD4  987D0013  stb         r3, 19 (r29)
+81301FD8  887D0013  lbz         r3, 19 (r29)
+81301FDC  60630004  ori         r3, r3, 0x0004
+81301FE0  987D0013  stb         r3, 19 (r29)
+81301FE4  900D831C  stw         r0, -0x7CE4 (r13)
+
+81301FE8  881D0013  lbz         r0, 19 (r29)
+81301FEC  54000739  rlwinm.     r0, r0, 0, 28, 28           mask:0x00000008
+81301FF0  4082000C  bne-        0x81301FFC 
+81301FF4  38000001  li          r0, 1
+81301FF8  900D8320  stw         r0, -0x7CE0 (r13)
+81301FFC  7FC3F378  or          r3, r30, r30
+81302000  4805EAFD  bl          0x81360AFC              ; __OSUnlockSram
+81302004  2C1E0000  cmpwi       r30, 0
+81302008  41820010  beq-        0x81302018 
+8130200C  4805EB39  bl          0x81360B44              ; __OSSyncSram
+81302010  2C030000  cmpwi       r3, 0
+81302014  4182FFF8  beq+        0x8130200C 
+81302018  8001004C  lwz         r0, 76 (r1)
+8130201C  83E10044  lwz         r31, 68 (r1)
+81302020  83C10040  lwz         r30, 64 (r1)
+81302024  83A1003C  lwz         r29, 60 (r1)
+81302028  38210048  addi        r1, r1, 72
+8130202C  7C0803A6  mtlr        r0
+81302030  4E800020  blr
 }}}

@@ -23,6 +23,7 @@ void    cmd_sd(int sd, int argc, char argv[][CON_LINELEN]);
 void    cmd_sop(int argc, char argv[][CON_LINELEN]);
 void    cmd_stat(int argc, char argv[][CON_LINELEN]);
 void    cmd_syms(int argc, char argv[][CON_LINELEN]);
+void    cmd_tree(int argc, char argv[][CON_LINELEN]);
 void    cmd_top10();
 void    cmd_u(int argc, char argv[][CON_LINELEN]);
 
