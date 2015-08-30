@@ -1,5 +1,8 @@
 // Microsoft Visual C++ generated resource script.
 //
+
+#include <windows.h>
+
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -7,7 +10,6 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
-#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
@@ -439,13 +441,6 @@ IDI_MOREICON3           ICON                    "moreicon3.ico"
 IDI_MOREICON4           ICON                    "moreicon4.ico"
 IDI_MOREICON5           ICON                    "moreicon5.ico"
 IDI_MOREICON6           ICON                    "moreicon6.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// RT_MANIFEST
-//
-
-IDR_MANIFEST            24      DISCARDABLE     "Dolwin.manifest"
 
 /////////////////////////////////////////////////////////////////////////////
 //

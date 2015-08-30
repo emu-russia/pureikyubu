@@ -2,6 +2,9 @@
 // Microsoft Visual C++ generated include file.
 // Used by pad.rc
 //
+
+#define IDC_STATIC                      -1
+
 #define IDD_DIALOG1                     101
 #define IDB_BITMAP1                     102
 #define IDB_BITMAP2                     103

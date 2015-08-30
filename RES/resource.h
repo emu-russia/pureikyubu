@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by Dolwin.rc
 //
+#define IDC_STATIC                      -1
 #define ID_POPUP_FILE                   0
 #define IDR_MANIFEST                    1
 #define IDI_DOLWIN_ICON                 101

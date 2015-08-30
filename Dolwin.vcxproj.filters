@@ -1,0 +1,616 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Emulator">
+      <UniqueIdentifier>{67614323-2dfe-4cd4-b975-74c835f61214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Debugger">
+      <UniqueIdentifier>{de75d09b-3e15-4f0f-9214-42ddb39314c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Interpreter">
+      <UniqueIdentifier>{3426ce88-9ffe-46eb-a753-1b8d9431b56c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Emulator\Recompiler">
+      <UniqueIdentifier>{9a560f41-bff0-41ec-9f64-6e3143b1afed}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="User Menu">
+      <UniqueIdentifier>{9ac656bd-c11c-4483-8b88-d88d8e6c617b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="User Menu\Resource Files">
+      <UniqueIdentifier>{8b89c15e-a9b8-492f-9de2-300059b1a186}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GCN Hardware">
+      <UniqueIdentifier>{3935fe48-4a8d-4a9a-9e92-cf1279717bf6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GCN High Level">
+      <UniqueIdentifier>{89f79858-7882-4cc0-a254-6726ae01445e}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SRC\Emulator\Compare.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\DisasmX86.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Emulator.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Gekko.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\GekkoDisasm.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Loader.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Memory.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\SaveLoad.cpp">
+      <Filter>Emulator</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\break.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\cmd.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\console.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\cpuview.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\input.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\memview.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\output.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\regs.cpp">
+      <Filter>Emulator\Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_branch.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_compare.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_condition.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_floatingpoint.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_fploadstore.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_integer.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_loadstore.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_logical.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_pairedsingle.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_psloadstore.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_rotate.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_shift.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_system.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Interpreter\c_tables.cpp">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_branch.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_compare.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_condition.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_floatingpoint.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_fploadstore.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_integer.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_loadstore.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_logical.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_pairedsingle.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_psloadstore.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_rotate.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_shift.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_system.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Recompiler\a_tables.cpp">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserAbout.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserConfig.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserFile.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserFonts.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserMain.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserMemcards.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserPlugins.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserProfiler.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserSelector.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserSettings.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserWindow.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\AI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\AR.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\CP.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\DI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\EFB.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\EI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\GDI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\HW.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\MC.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\MI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\PI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\Plugins.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\SI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Hardware\VI.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\AX.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\Bootrom.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\DSP.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\DVDBanner.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\HLE.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\JAudio.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\MapLoader.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\MapMaker.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\MapSaver.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\Mtx.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\OS.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\PAD.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\Stdc.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\HighLevel\Symbols.cpp">
+      <Filter>GCN High Level</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SRC\Emulator\Compare.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\DisasmX86.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Emulator.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Gekko.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\GekkoDisasm.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Loader.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Memory.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\SaveLoad.h">
+      <Filter>Emulator</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\break.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\cmd.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\console.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\cpuview.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\input.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\memview.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\output.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Debugger\regs.h">
+      <Filter>Emulator\Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_branch.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_compare.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_condition.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_floatingpoint.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_fploadstore.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_integer.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_loadstore.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_logical.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_pairedsingle.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_psloadstore.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_rotate.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_shift.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_system.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Interpreter\c_tables.h">
+      <Filter>Emulator\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_branch.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_compare.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_condition.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_floatingpoint.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_fploadstore.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_integer.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_loadstore.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_logical.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_pairedsingle.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_psloadstore.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_rotate.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_shift.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_system.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\a_tables.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Emulator\Recompiler\X86.h">
+      <Filter>Emulator\Recompiler</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\User.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserAbout.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserConfig.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserFile.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserFonts.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserMain.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserMemcards.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserPlugins.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserProfiler.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserSelector.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserSettings.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserWindow.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="RES\nobanner.h">
+      <Filter>User Menu\Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RES\resource.h">
+      <Filter>User Menu\Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RES\SjisTable.h">
+      <Filter>User Menu\Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\AI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\AR.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\CP.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\DI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs2.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\EFB.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\EI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\GDI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\Hardware.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\HW.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\MC.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\MI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\PI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\Plugins.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\SI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\VI.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\AX.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\Bootrom.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\DSP.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\DVDBanner.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\HighLevel.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\HLE.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\JAudio.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\MapLoader.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\MapMaker.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\MapSaver.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\Mtx.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\OS.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\PAD.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\Stdc.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\HighLevel\Symbols.h">
+      <Filter>GCN High Level</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\dolphin.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="RES\Dolwin.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\GCN.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\GCN_sm.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon1.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon2.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon3.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon4.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon5.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\moreicon6.ico">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="RES\Dolwin.manifest">
+      <Filter>User Menu\Resource Files</Filter>
+    </Manifest>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RES\Dolwin.rc">
+      <Filter>User Menu\Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

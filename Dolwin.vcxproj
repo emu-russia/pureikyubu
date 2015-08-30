@@ -1,0 +1,384 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{890F0F44-0A41-45FD-B630-32363F058052}</ProjectGuid>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v120</PlatformToolset>
+    <UseOfMfc>false</UseOfMfc>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(VCTargetsPath)Microsoft.CPP.UpgradeFromVC70.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>.\Debug\</OutDir>
+    <IntDir>.\Debug\</IntDir>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>.\Release\</OutDir>
+    <IntDir>.\Release\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Debug/Dolwin.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.\SRC;.\SRC\Emulator;.\SRC\UserMenu;.\SRC\Hardware;.\SRC\HighLevel;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;__VCNET__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader />
+      <PrecompiledHeaderOutputFile>.\Debug/Dolwin.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Dolwin.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ProgramDatabaseFile>.\Debug/Dolwin.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <BaseAddress>0x400000</BaseAddress>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/Dolwin.tlb</TypeLibraryName>
+    </Midl>
+    <ClCompile>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <AdditionalIncludeDirectories>.\SRC;.\SRC\Emulator;.\SRC\UserMenu;.\SRC\Hardware;.\SRC\HighLevel;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;__VCNET__;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader />
+      <PrecompiledHeaderOutputFile>.\Release/Dolwin.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Release/</AssemblerListingLocation>
+      <ObjectFileName>.\Release/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Release/</ProgramDataBaseFileName>
+      <WarningLevel>Level3</WarningLevel>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <CompileAs>Default</CompileAs>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0409</Culture>
+    </ResourceCompile>
+    <Link>
+      <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalDependencies>comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <OutputFile>Dolwin.exe</OutputFile>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <ProgramDatabaseFile>.\Release/Dolwin.pdb</ProgramDatabaseFile>
+      <SubSystem>Windows</SubSystem>
+      <BaseAddress>0x400000</BaseAddress>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <DataExecutionPrevention />
+      <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="SRC\Emulator\Compare.cpp" />
+    <ClCompile Include="SRC\Emulator\Debugger.cpp" />
+    <ClCompile Include="SRC\Emulator\Debugger\break.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\cmd.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\console.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\cpuview.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\input.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\memview.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\output.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\Debugger\regs.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="SRC\Emulator\DisasmX86.cpp" />
+    <ClCompile Include="SRC\Emulator\Emulator.cpp" />
+    <ClCompile Include="SRC\Emulator\Gekko.cpp" />
+    <ClCompile Include="SRC\Emulator\GekkoDisasm.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_branch.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_compare.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_condition.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_floatingpoint.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_fploadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_integer.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_loadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_logical.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_pairedsingle.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_psloadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_rotate.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_shift.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_system.cpp" />
+    <ClCompile Include="SRC\Emulator\Interpreter\c_tables.cpp" />
+    <ClCompile Include="SRC\Emulator\Loader.cpp" />
+    <ClCompile Include="SRC\Emulator\Memory.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_branch.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_compare.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_condition.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_floatingpoint.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_fploadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_integer.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_loadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_logical.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_pairedsingle.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_psloadstore.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_rotate.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_shift.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_system.cpp" />
+    <ClCompile Include="SRC\Emulator\Recompiler\a_tables.cpp" />
+    <ClCompile Include="SRC\Emulator\SaveLoad.cpp" />
+    <ClCompile Include="SRC\Hardware\AI.cpp" />
+    <ClCompile Include="SRC\Hardware\AR.cpp" />
+    <ClCompile Include="SRC\Hardware\CP.cpp" />
+    <ClCompile Include="SRC\Hardware\DI.cpp" />
+    <ClCompile Include="SRC\Hardware\EFB.cpp" />
+    <ClCompile Include="SRC\Hardware\EI.cpp" />
+    <ClCompile Include="SRC\Hardware\GDI.cpp" />
+    <ClCompile Include="SRC\Hardware\HW.cpp" />
+    <ClCompile Include="SRC\Hardware\MC.cpp" />
+    <ClCompile Include="SRC\Hardware\MI.cpp" />
+    <ClCompile Include="SRC\Hardware\PI.cpp" />
+    <ClCompile Include="SRC\Hardware\Plugins.cpp" />
+    <ClCompile Include="SRC\Hardware\SI.cpp" />
+    <ClCompile Include="SRC\Hardware\VI.cpp" />
+    <ClCompile Include="SRC\HighLevel\AX.cpp" />
+    <ClCompile Include="SRC\HighLevel\Bootrom.cpp" />
+    <ClCompile Include="SRC\HighLevel\DSP.cpp" />
+    <ClCompile Include="SRC\HighLevel\DVDBanner.cpp" />
+    <ClCompile Include="SRC\HighLevel\HLE.cpp" />
+    <ClCompile Include="SRC\HighLevel\JAudio.cpp" />
+    <ClCompile Include="SRC\HighLevel\MapLoader.cpp" />
+    <ClCompile Include="SRC\HighLevel\MapMaker.cpp" />
+    <ClCompile Include="SRC\HighLevel\MapSaver.cpp" />
+    <ClCompile Include="SRC\HighLevel\Mtx.cpp" />
+    <ClCompile Include="SRC\HighLevel\OS.cpp" />
+    <ClCompile Include="SRC\HighLevel\PAD.cpp" />
+    <ClCompile Include="SRC\HighLevel\Stdc.cpp" />
+    <ClCompile Include="SRC\HighLevel\Symbols.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserAbout.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserConfig.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserFile.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserFonts.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserMain.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserMemcards.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserPlugins.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserProfiler.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserSelector.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserSettings.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserWindow.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="RES\nobanner.h" />
+    <ClInclude Include="RES\resource.h" />
+    <ClInclude Include="RES\SjisTable.h" />
+    <ClInclude Include="SRC\dolphin.h" />
+    <ClInclude Include="SRC\Emulator\Compare.h" />
+    <ClInclude Include="SRC\Emulator\Debugger.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\break.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\cmd.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\console.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\cpuview.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\input.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\memview.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\output.h" />
+    <ClInclude Include="SRC\Emulator\Debugger\regs.h" />
+    <ClInclude Include="SRC\Emulator\DisasmX86.h" />
+    <ClInclude Include="SRC\Emulator\Emulator.h" />
+    <ClInclude Include="SRC\Emulator\Gekko.h" />
+    <ClInclude Include="SRC\Emulator\GekkoDisasm.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_branch.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_compare.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_condition.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_floatingpoint.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_fploadstore.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_integer.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_loadstore.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_logical.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_pairedsingle.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_psloadstore.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_rotate.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_shift.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_system.h" />
+    <ClInclude Include="SRC\Emulator\Interpreter\c_tables.h" />
+    <ClInclude Include="SRC\Emulator\Loader.h" />
+    <ClInclude Include="SRC\Emulator\Memory.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_branch.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_compare.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_condition.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_floatingpoint.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_fploadstore.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_integer.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_loadstore.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_logical.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_pairedsingle.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_psloadstore.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_rotate.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_shift.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_system.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\a_tables.h" />
+    <ClInclude Include="SRC\Emulator\Recompiler\X86.h" />
+    <ClInclude Include="SRC\Emulator\SaveLoad.h" />
+    <ClInclude Include="SRC\Hardware\AI.h" />
+    <ClInclude Include="SRC\Hardware\AR.h" />
+    <ClInclude Include="SRC\Hardware\CP.h" />
+    <ClInclude Include="SRC\Hardware\DI.h" />
+    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h" />
+    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs2.h" />
+    <ClInclude Include="SRC\Hardware\EFB.h" />
+    <ClInclude Include="SRC\Hardware\EI.h" />
+    <ClInclude Include="SRC\Hardware\GDI.h" />
+    <ClInclude Include="SRC\Hardware\Hardware.h" />
+    <ClInclude Include="SRC\Hardware\HW.h" />
+    <ClInclude Include="SRC\Hardware\MC.h" />
+    <ClInclude Include="SRC\Hardware\MI.h" />
+    <ClInclude Include="SRC\Hardware\PI.h" />
+    <ClInclude Include="SRC\Hardware\Plugins.h" />
+    <ClInclude Include="SRC\Hardware\SI.h" />
+    <ClInclude Include="SRC\Hardware\VI.h" />
+    <ClInclude Include="SRC\HighLevel\AX.h" />
+    <ClInclude Include="SRC\HighLevel\Bootrom.h" />
+    <ClInclude Include="SRC\HighLevel\DSP.h" />
+    <ClInclude Include="SRC\HighLevel\DVDBanner.h" />
+    <ClInclude Include="SRC\HighLevel\HighLevel.h" />
+    <ClInclude Include="SRC\HighLevel\HLE.h" />
+    <ClInclude Include="SRC\HighLevel\JAudio.h" />
+    <ClInclude Include="SRC\HighLevel\MapLoader.h" />
+    <ClInclude Include="SRC\HighLevel\MapMaker.h" />
+    <ClInclude Include="SRC\HighLevel\MapSaver.h" />
+    <ClInclude Include="SRC\HighLevel\Mtx.h" />
+    <ClInclude Include="SRC\HighLevel\OS.h" />
+    <ClInclude Include="SRC\HighLevel\PAD.h" />
+    <ClInclude Include="SRC\HighLevel\Stdc.h" />
+    <ClInclude Include="SRC\HighLevel\Symbols.h" />
+    <ClInclude Include="SRC\UserMenu\User.h" />
+    <ClInclude Include="SRC\UserMenu\UserAbout.h" />
+    <ClInclude Include="SRC\UserMenu\UserConfig.h" />
+    <ClInclude Include="SRC\UserMenu\UserFile.h" />
+    <ClInclude Include="SRC\UserMenu\UserFonts.h" />
+    <ClInclude Include="SRC\UserMenu\UserMain.h" />
+    <ClInclude Include="SRC\UserMenu\UserMemcards.h" />
+    <ClInclude Include="SRC\UserMenu\UserPlugins.h" />
+    <ClInclude Include="SRC\UserMenu\UserProfiler.h" />
+    <ClInclude Include="SRC\UserMenu\UserSelector.h" />
+    <ClInclude Include="SRC\UserMenu\UserSettings.h" />
+    <ClInclude Include="SRC\UserMenu\UserWindow.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="RES\Dolwin.ico" />
+    <Image Include="RES\GCN.ico" />
+    <Image Include="RES\GCN_sm.ico" />
+    <Image Include="RES\moreicon1.ico" />
+    <Image Include="RES\moreicon2.ico" />
+    <Image Include="RES\moreicon3.ico" />
+    <Image Include="RES\moreicon4.ico" />
+    <Image Include="RES\moreicon5.ico" />
+    <Image Include="RES\moreicon6.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="RES\Dolwin.manifest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RES\Dolwin.rc">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RES</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">RES</AdditionalIncludeDirectories>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="DVD\DVD.vcxproj">
+      <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="GCMCMPR\GCMCMPR.vcxproj">
+      <Project>{bdde7aaa-bc75-4846-abc0-e8da96e23897}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+    <ProjectReference Include="PAD\PAD.vcxproj">
+      <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
