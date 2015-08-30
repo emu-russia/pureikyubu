@@ -161,10 +161,42 @@
   <ItemGroup>
     <ClInclude Include="..\Source\dolphin.h" />
     <ClInclude Include="..\Source\Gui\Gui.h" />
+    <ClInclude Include="..\Source\Gui\GuiAbout.h" />
+    <ClInclude Include="..\Source\Gui\GuiGamelist.h" />
     <ClInclude Include="..\Source\Gui\GuiMain.h" />
+    <ClInclude Include="..\Source\Gui\GuiMemcards.h" />
+    <ClInclude Include="..\Source\Gui\GuiSettings.h" />
+    <ClInclude Include="..\Source\Gui\GuiStatus.h" />
+    <ClInclude Include="..\Source\Utils\Cmd.h" />
+    <ClInclude Include="..\Source\Utils\Config.h" />
+    <ClInclude Include="..\Source\Utils\CoreDisasm.h" />
+    <ClInclude Include="..\Source\Utils\FileWrap.h" />
+    <ClInclude Include="..\Source\Utils\GekkoDisasm.h" />
+    <ClInclude Include="..\Source\Utils\Listutils.h" />
+    <ClInclude Include="..\Source\Utils\Machine.h" />
+    <ClInclude Include="..\Source\Utils\Profiler.h" />
+    <ClInclude Include="..\Source\Utils\SaveState.h" />
+    <ClInclude Include="..\Source\Utils\Spinlock.h" />
+    <ClInclude Include="..\Source\Utils\Threads.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source\Gui\GuiAbout.c" />
+    <ClCompile Include="..\Source\Gui\GuiGamelist.c" />
     <ClCompile Include="..\Source\Gui\GuiMain.c" />
+    <ClCompile Include="..\Source\Gui\GuiMemcards.c" />
+    <ClCompile Include="..\Source\Gui\GuiSettings.c" />
+    <ClCompile Include="..\Source\Gui\GuiStatus.c" />
+    <ClCompile Include="..\Source\Utils\Cmd.c" />
+    <ClCompile Include="..\Source\Utils\Config.c" />
+    <ClCompile Include="..\Source\Utils\CoreDisasm.c" />
+    <ClCompile Include="..\Source\Utils\FileWrap.c" />
+    <ClCompile Include="..\Source\Utils\GekkoDisasm.c" />
+    <ClCompile Include="..\Source\Utils\Listutils.c" />
+    <ClCompile Include="..\Source\Utils\Machine.c" />
+    <ClCompile Include="..\Source\Utils\Profiler.c" />
+    <ClCompile Include="..\Source\Utils\SaveState.c" />
+    <ClCompile Include="..\Source\Utils\Spinlock.c" />
+    <ClCompile Include="..\Source\Utils\Threads.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

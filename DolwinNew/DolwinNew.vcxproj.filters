@@ -43,10 +43,106 @@
     <ClInclude Include="..\Source\Gui\GuiMain.h">
       <Filter>Gui</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiAbout.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiGamelist.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiMemcards.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiSettings.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiStatus.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Config.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\FileWrap.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Listutils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Profiler.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Spinlock.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Threads.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Cmd.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\CoreDisasm.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\GekkoDisasm.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\SaveState.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Machine.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Gui\GuiMain.c">
       <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Gui\GuiAbout.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Gui\GuiGamelist.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Gui\GuiMemcards.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Gui\GuiSettings.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Gui\GuiStatus.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Config.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\FileWrap.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Listutils.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Profiler.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Spinlock.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Threads.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Cmd.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\CoreDisasm.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\GekkoDisasm.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\SaveState.c">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Machine.c">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
