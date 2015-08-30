@@ -26,3 +26,6 @@ DolwinRelease_x64.pdb
 DolwinNew/DolwinNew.opensdf
 DolwinNew/DolwinNew.sdf
 DolwinNew/DolwinNew.v12.suo
+DolwinNew/Debug
+DolwinNew/Release
+DolwinNew/x64
