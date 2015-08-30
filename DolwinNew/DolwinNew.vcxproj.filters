@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Debugger">
+      <UniqueIdentifier>{e9844833-b753-4c82-911e-eec1ae943beb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DSPInterpreter">
+      <UniqueIdentifier>{606b1289-0d81-475f-b4c8-c1ed018ad321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="DSPJitc">
+      <UniqueIdentifier>{7f090f3b-5143-4966-ac9a-7341301f5416}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FlipperGX">
+      <UniqueIdentifier>{b60faf82-f58a-4d32-b637-cbb739f163a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GekkoCommon">
+      <UniqueIdentifier>{c93fde1e-243d-48af-958d-a989826b4416}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GekkoInterpreter">
+      <UniqueIdentifier>{169a2131-ef8d-4151-95ac-e394881ff335}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GekkoJitc">
+      <UniqueIdentifier>{9d15e578-c30c-4392-9d9a-b4d918dacf36}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Gui">
+      <UniqueIdentifier>{a611e3e6-8dff-4f15-9174-c88242e861f9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HLE">
+      <UniqueIdentifier>{81b63314-9750-461e-afac-79aa555ec0a1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="HW">
+      <UniqueIdentifier>{ca6ac939-0dae-4c4b-8982-0e855d4355db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{4290f6ea-dabe-447c-a9fd-c4fe0a042f5a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Source\dolphin.h" />
+    <ClInclude Include="..\Source\Gui\Gui.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Gui\GuiMain.h">
+      <Filter>Gui</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Source\Gui\GuiMain.c">
+      <Filter>Gui</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
