@@ -94,7 +94,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils;../Source/Debugger</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -110,7 +110,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils;../Source/Debugger</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -128,7 +128,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils;../Source/Debugger</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,7 +148,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../Source;../Source/Gui;../Source/Utils;../Source/Debugger</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,6 +159,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Source\Debugger\Break.h" />
+    <ClInclude Include="..\Source\Debugger\Console.h" />
+    <ClInclude Include="..\Source\Debugger\Debugger.h" />
+    <ClInclude Include="..\Source\Debugger\DSPView.h" />
+    <ClInclude Include="..\Source\Debugger\GekkoView.h" />
+    <ClInclude Include="..\Source\Debugger\Input.h" />
+    <ClInclude Include="..\Source\Debugger\MemView.h" />
+    <ClInclude Include="..\Source\Debugger\Regs.h" />
+    <ClInclude Include="..\Source\Debugger\Report.h" />
     <ClInclude Include="..\Source\dolphin.h" />
     <ClInclude Include="..\Source\Gui\Gui.h" />
     <ClInclude Include="..\Source\Gui\GuiAbout.h" />
@@ -178,8 +187,18 @@
     <ClInclude Include="..\Source\Utils\SaveState.h" />
     <ClInclude Include="..\Source\Utils\Spinlock.h" />
     <ClInclude Include="..\Source\Utils\Threads.h" />
+    <ClInclude Include="..\Source\Utils\Utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Source\Debugger\Break.c" />
+    <ClCompile Include="..\Source\Debugger\Console.c" />
+    <ClCompile Include="..\Source\Debugger\Debugger.c" />
+    <ClCompile Include="..\Source\Debugger\DSPView.c" />
+    <ClCompile Include="..\Source\Debugger\GekkoView.c" />
+    <ClCompile Include="..\Source\Debugger\Input.c" />
+    <ClCompile Include="..\Source\Debugger\MemView.c" />
+    <ClCompile Include="..\Source\Debugger\Regs.c" />
+    <ClCompile Include="..\Source\Debugger\Report.c" />
     <ClCompile Include="..\Source\Gui\GuiAbout.c" />
     <ClCompile Include="..\Source\Gui\GuiGamelist.c" />
     <ClCompile Include="..\Source\Gui\GuiMain.c" />

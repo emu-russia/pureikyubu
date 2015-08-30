@@ -34,6 +34,9 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{4290f6ea-dabe-447c-a9fd-c4fe0a042f5a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{8a9b2f8e-3466-4641-b06a-bfb396dbafbd}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Source\dolphin.h" />
@@ -91,6 +94,36 @@
     <ClInclude Include="..\Source\Utils\Machine.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Break.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Console.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Debugger.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\DSPView.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\GekkoView.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Input.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\MemView.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Regs.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Utils\Utils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Source\Debugger\Report.h">
+      <Filter>Debugger</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Gui\GuiMain.c">
@@ -143,6 +176,33 @@
     </ClCompile>
     <ClCompile Include="..\Source\Utils\Machine.c">
       <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Break.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Console.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\DSPView.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\GekkoView.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Input.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\MemView.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Regs.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Debugger.c">
+      <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Debugger\Report.c">
+      <Filter>Debugger</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
