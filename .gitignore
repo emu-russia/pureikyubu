@@ -17,3 +17,5 @@ Plugins/*.dll
 Plugins/*.ilk
 Data/*.mci
 Data/*.mci
+Dolwin.sdf
+Dolwin.v12.suo
