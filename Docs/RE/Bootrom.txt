@@ -1,12 +1,12 @@
 
-Gamecube bootrom reverse engineering for CubeDocumented project.
+Gamecube bootrom reverse engineering.
 
 This reversing is not pretending to be compilable, and can be used for
 education purposes only. I dont hold any responsibility for damage of your
 Gamecube clock settings or memory card saves or else, produced from using
 code/information represented in this document.
 
-Documented by Andrei Chestakov (org). Version 1.1. (12 Sep 2006)
+Version 1.1. (12 Sep 2006)
 Additions and corrections by tmbinc.
 
 19 Jul 2005: Small corrections regardling "BS" acronym (see Appendix).

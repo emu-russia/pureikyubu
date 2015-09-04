@@ -3,7 +3,7 @@
 
     This document can help you to create your own GAMECUBE interrupt handling
     code (even in your own OS?). I hope it will be also useful for authors of
-    GC emulators. Send your comments or questions to kvzorganic@mail.ru.
+    GC emulators. Send your comments or questions to ogamespec@gmail.com
 
 1. Overview.
 

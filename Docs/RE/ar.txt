@@ -1,4 +1,4 @@
-// ARAM library reversing by org <kvzorganic@mail.ru>
+// ARAM library reversing by org <ogamespec@gmail.com>
 
 // ----------------------------------------------------------------------------
 

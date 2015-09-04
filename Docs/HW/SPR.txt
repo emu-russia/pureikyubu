@@ -1,7 +1,7 @@
 
-Exploring of Gekko Special Purpose Registers for CubeDocumented project.
+Exploring of Gekko Special Purpose Registers.
 
-Documented by Andrei Chestakov (org). Version 1.0. (22 Sep 2006)
+Version 1.0. (22 Sep 2006)
 
 ------------------------------------------------------------------------------
 

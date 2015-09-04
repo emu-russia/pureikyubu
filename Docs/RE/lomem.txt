@@ -5,7 +5,7 @@
 
   based on Titanik's gcinfos1.txt
 
-  80000000 + 256 bytes - OS low memory area (lomem)
+  0x80000000 + 256 bytes - OS low memory area (lomem)
 
      80000000  4         DiskID : GameName
      80000004  2         DiskID : Company
@@ -16,21 +16,22 @@
      8000000a  20        padding(0)
      80000020  4         Magic word (boot method : bootrom/JTAG) 'DISEASE' hehe
      80000024  4         Version
-     80000028  4         Physical Memory Size (in bytes, 0x1800000 usual)
+     80000028  4         Physical Memory Size (in bytes, usually 0x1800000)
      8000002C  4         Console type
-                             00000001 = Retail1
-                             00000002 = Retail2
-                             00000003 = Retail3
-                             00000004 = Retail4
-                             1XXXXXXX = Devkits and emulators
-                             10000000 = emulator
-                             10000001 = PC emulator
-                             10000002 = "Arthur"
-                             10000003 = "Minnow"
-                             10000004 = Devkit1
-                             10000005 = Devkit2
-                             10000006 = Devkit3
-                             10000007 = Devkit4
+                             00000001 = Retail1 (OS_CONSOLE_RETAIL1)
+                             00000002 = Retail2 (OS_CONSOLE_RETAIL2)
+                             00000003 = Retail3 (OS_CONSOLE_RETAIL3)
+                             00000004 = Retail4 (OS_CONSOLE_RETAIL4)
+                             1XXXXXXX = Devkits and emulators (OS_CONSOLE_DEVELOPMENT)
+                             10000000 = Mac emulator (OS_CONSOLE_EMULATOR)
+                             10000001 = PC emulator (OS_CONSOLE_PC_EMULATOR)
+                             10000002 = "Arthur" (OS_CONSOLE_ARTHUR), test board
+                             10000003 = "Minnow" (OS_CONSOLE_MINNOW), test board
+                             10000004 = Devkit1 (OS_CONSOLE_DEVHW1)
+                             10000005 = Devkit2 (OS_CONSOLE_DEVHW2)
+                             10000006 = Devkit3 (OS_CONSOLE_DEVHW3)
+                             10000007 = Devkit4 (OS_CONSOLE_DEVHW4)
+
      80000030  4         ArenaLo
      80000034  4         ArenaHi
      80000038  4         FST Location in ram
@@ -44,7 +45,7 @@
                              1 = PAL
                              2 = DEBUG
                              3 = DEBUG PAL
-                             4 = MPAL
+                             4 = MPAL (Brasil)
                              5 = PAL60
 
      800000D0  4         ARAM size (internal + expansion) in bytes
@@ -59,9 +60,16 @@
      800000F0  4         Simulated Memory Size (in bytes)
      800000F4  4         Pad Spec (?)
      800000F8  4         Bus clock fixed value (162000000 Hz)
+                         u32 __OSBusClock    AT_ADDRESS(OS_BASE_CACHED | 0x00F8);
      800000FC  4         Core clock fixed value (486000000 Hz)
+                         u32 __OSCoreClock   AT_ADDRESS(OS_BASE_CACHED | 0x00FC);
+
+
+  0x80003000 - Secondary OS low memory area
+   
+
 
 -------------------------------------------------------------------------------
 
-org -- kvzorganic@mail.ru
-24 Dec 2003
+org -- ogamespec@gmail.com
+3 Sep 2015

@@ -135,5 +135,5 @@ Tell me please, if you find better way to format GC time.
 
 
 
-Document by org <kvzorganic@mail.ru>
+Document by org <ogamespec@gmail.com>
 RTC: 11 Dec 2004 :)

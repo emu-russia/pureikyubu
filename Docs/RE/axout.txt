@@ -1,5 +1,5 @@
 // AX library sound output (playback) module
-// rev. by org <kvzorganic@mail.ru>
+// rev. by org <ogamespec@gmail.com>
 
 // AX playback init :
 // 1. DSPInit - reset DSP, install DSP interrupt handler (see my dsp.txt)

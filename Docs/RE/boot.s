@@ -15,7 +15,7 @@
 boot:
 
 # This will initialize Gekko implementation specifics.
-        lis         r4, 0x0011          # XXX: This must be proved somehow..
+        lis         r4, 0x0011
         addi        r4, r4, 0x0C64
         mtspr       HID0, r4
 

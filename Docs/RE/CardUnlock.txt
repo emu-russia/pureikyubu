@@ -1,12 +1,12 @@
 
-Gamecube memory card unlock reverse engineering for CubeDocumented project.
+Gamecube memory card unlock reverse engineering.
 
 This reversing is not pretending to be compilable, and can be used for
 education purposes only. I dont hold any responsibility for damage of your
 Gamecube clock settings or memory card saves or else, produced from using
 code/information represented in this document.
 
-Documented by Andrei Chestakov (org). Version 0.1. (12 May 2005)
+Version 0.1. (12 May 2005)
 
 --------------------------------------------------------------------------
 

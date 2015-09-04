@@ -6,7 +6,7 @@
     not easy to handle whole thing, but I made it :) Hope it will be useful
     for all, who was stuck on GX fifo.
 
-    Send your comments or questions to kvzorganic@mail.ru.
+    Send your comments or questions to ogamespec@gmail.com
 
     --------------------------------------------------------------------------
 

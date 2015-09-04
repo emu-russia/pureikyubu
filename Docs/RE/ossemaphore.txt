@@ -1,5 +1,5 @@
 // Dolphin OS - OSSemaphore.c
-// RE by org - kvzorganic@mail.ru
+// RE by org - ogamespec@gmail.com
 
 typedef struct OSSemaphore
 {

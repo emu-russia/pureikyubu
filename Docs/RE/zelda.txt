@@ -1,5 +1,5 @@
 // some reversing of Legend of Zelda: The Wind Waker
-// made by org <kvzorganic@mail.ru>
+// made by org <ogamespec@gmail.com>
 // many thanks to Nintendo for Zelda MAP file !!
 
 void main()

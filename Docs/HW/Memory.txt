@@ -1,8 +1,8 @@
 
-Gamecube memory model for CubeDocumented project.
+Gamecube memory model.
 
 This document is under construction.
-Documented by Andrei Chestakov (org). Version 0.01. (21 Sep 2006)
+Version 0.01. (21 Sep 2006)
 Additions and corrections by tmbinc.
 
 --------------------------------------------------------------------------

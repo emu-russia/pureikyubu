@@ -1,19 +1,19 @@
 
-Gamecube apploader reverse engineering for CubeDocumented project.
+Gamecube apploader reverse engineering.
 
 This reversing is not pretending to be compilable, and can be used for
 education purposes only. I dont hold any responsibility for damage of your
 Gamecube clock settings or memory card saves or else, produced from using
 code/information represented in this document.
 
-Documented by Andrei Chestakov (org). Version 1.1. (26 Apr 2005)
+Version 1.1. (26 Apr 2005)
 Additions and corrections by tmbinc.
 
 ------------------------------------------------------------------------------
 
 Overview.
 
-Complete Luigi's Apploader. Reverse work by org <kvzorganic@mail.ru>
+Complete Luigi's Apploader. Reverse work by org <ogamespec@gmail.com>
 Other games seems to contain the same code with minor changes due to
 revision, so you may think, that apploader is the same for all games.
 Except Datel's FreeLoader and ActionReplay DVDs, which are using custom

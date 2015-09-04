@@ -1,3 +1,16 @@
+/*++
+
+Copyright (c)
+
+Module Name:
+
+    Gui.h
+
+Abstract:
+
+    Common Gui header.
+
+--*/
 
 #pragma once
 

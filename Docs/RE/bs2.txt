@@ -398,7 +398,7 @@ note : European PAL IPL v. 1.0 was used.
 
 -------------------------------------------------------------------------------
 
-org -- kvzorganic@mail.ru
+org -- ogamespec@gmail.com
 
 Thanks to tmbinc and titanik for their great work!
 

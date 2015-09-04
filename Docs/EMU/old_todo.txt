@@ -1,0 +1,96 @@
+
+    Dolwin TODO (in no particular order) !
+    10 Jan 2005
+
+
+    Emulator:
+    ---------
+
+    [1] Memory Engine issues. Finish MMU emulation, add memory exceptions handling.
+    Add data cache hack. Cleanup code.
+
+    [2] CPU Core - more work on recompiler needed. Check timing again, get rid
+    of exceptions in recompiler mode. Fix debug console core change.
+
+    [3] Debugger - more commands
+
+    [4] Load scripts from Games.ini
+
+    [5] Patch tool.
+
+
+    Hardware:
+    ---------
+
+    [1] Fifo - get rid of draw token problem
+
+    [2] Fix RTC to show correct GC time.
+
+    [+] Make memcards work in games, by fixing DSP.
+
+    [4] Solve 'PAD lost' problem
+
+
+    UserMenu:
+    ---------
+
+    [1] Add user settings dialog.
+
+    [+] Implement 'path' configuration dialog (to add/delete selector paths)
+
+    [3] Debug console manual. MAP files manual. Patch manual.
+    [4] Debug replacement manual.
+    [5] User variables and Dolwin configuration manual.
+    [6] Join and cleanup all my GC hardware docs and rev. materials.
+
+    [7] User FAQ and help manual.
+
+
+    HighLevel:
+    ---------
+
+    [1] Finish matrix library HLE. Add more stdc calls. Cleanup.
+
+    [2] OS Threads ? Should gain more speedup by eliminating VI wait retrace
+    idle loop.
+
+    [3] VI library ?
+
+    [4] Finish DSP microcode emulation.
+
+    Plugins:
+    --------
+
+    [1] AX - fix DVD audio, finish DSP/DMA sound.
+
+    [2] PAD - work on configure dialogs (use teh property sheet), cleanup
+
+    [3] DVD - fix DVDOpenFile path->DVD offset conversion.
+
+    GX - see Dolwin Video
+
+    Dolwin Video:
+    -------------
+
+    [1] Mode selection (640x480 etc), fullscreen.
+
+    [2] Cleanup/speedup fifo command processor
+
+    [3] Lighting, advanced lighting (C, vertex shaders)
+
+    [4] Texgen (C, vertex shaders)
+
+    [5] Texture cache, fast texture decoding
+
+    [6] TEV approximation 'AI' :)
+
+    [7] TEV shaders emulation
+
+    [8] Debug: informative on-screen display, png texture dump, cam rotation,
+    texture lookup, fifo commands dump, fifo dump...
+
+
+    ------------------
+
+    Add more MAPs and patch files with description on them.
+
