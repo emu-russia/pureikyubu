@@ -124,6 +124,9 @@
     <ClInclude Include="..\Source\Debugger\Report.h">
       <Filter>Debugger</Filter>
     </ClInclude>
+    <ClInclude Include="..\Source\Utils\Strutils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Source\Gui\GuiMain.c">
@@ -203,6 +206,9 @@
     </ClCompile>
     <ClCompile Include="..\Source\Debugger\Report.c">
       <Filter>Debugger</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Source\Utils\Strutils.c">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

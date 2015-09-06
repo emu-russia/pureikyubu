@@ -186,6 +186,7 @@
     <ClInclude Include="..\Source\Utils\Profiler.h" />
     <ClInclude Include="..\Source\Utils\SaveState.h" />
     <ClInclude Include="..\Source\Utils\Spinlock.h" />
+    <ClInclude Include="..\Source\Utils\Strutils.h" />
     <ClInclude Include="..\Source\Utils\Threads.h" />
     <ClInclude Include="..\Source\Utils\Utils.h" />
   </ItemGroup>
@@ -215,6 +216,7 @@
     <ClCompile Include="..\Source\Utils\Profiler.c" />
     <ClCompile Include="..\Source\Utils\SaveState.c" />
     <ClCompile Include="..\Source\Utils\Spinlock.c" />
+    <ClCompile Include="..\Source\Utils\Strutils.c" />
     <ClCompile Include="..\Source\Utils\Threads.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

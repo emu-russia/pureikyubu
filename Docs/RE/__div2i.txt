@@ -1,0 +1,3 @@
+s64     __div2i(s64 a, s64 b);
+
+This is inline CodeWarrior intrinisc: (s64)result = (s64)a / (s64)b.

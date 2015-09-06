@@ -1,0 +1,165 @@
+typedef struct ETHStat
+{
+    u32     rcvcount;
+    u32     sendcount;
+    u32     cntof;
+    
+    u16     re;
+    u16     te;
+    u16     fifoe;
+    u16     rbf;
+    u16     rx_bf;
+    u16     rx_crc;
+    u16     rx_fae;
+    u16     rx_fo;
+    u16     rx_rw;
+    u16     rx_rf;
+    u16     tx_crs;
+    u16     tx_uf;
+    u16     tx_owc;
+} ETHStat;
+
+static int __ETHVersion = 0;
+static ETHStat ethstat;
+static OSThreadQueue threadQ;
+static OSAlarm rcvchk_alarm;
+static OSResetFunctionInfo ResetFunctionInfo = { OnReset, 127 };
+
+static u8 private_macaddr[6];
+static u8 broadcastheader[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+static u8 __revid;
+static u16 __devid = 0xd107;
+static u8 __acstart = 0x4e;
+
+// SI EXI Clock Lock register.
+#define SIEXILK         ( *(volatile u32 *)(0xCC00643C))
+#define SIEXILK_LOCK    0x80000000
+
+// ---------------------------------------------------------------------------
+
+int ETHInit(void)
+{
+    static BOOL firsttime = TRUE;
+    u32 cid, fcsr, phy0r;
+
+    if(firsttime)
+        OSRegisterVersion(__ETHVersion);
+
+    OSInitThreadQueue(&threadQ);
+
+    // Unlock 32 MHz EXI clock.
+    SIEXILK &= ~SIEXILK_LOCK;
+
+    waitexilock();
+    __sendbusy = 0;
+
+    memset(&ethstat, 0, sizeof(ETHStat));
+
+    protoarray = 0;
+    protonum = 0;
+    recvcallback0 = 0;
+    recvcallback1 = 0;
+
+    // Retrieve and check the ID of an ethernet adapter.
+    cid = readCID();
+    if(cid != 0x04020200)
+    {
+        EXIUnlock(0);
+        OSReport("cid = %08x\n", cid);
+        return -1;
+    }
+
+    reset();
+    readcmdLong(0x20, private_macaddr, 6);
+    __revid = readEXIcmd(1);
+    writeEXIcmdLong(4, &__devid, 2);
+    writeEXIcmd(5, __acstart);
+    fcsr = readcmd(0x5b) & ~0x80;
+    writecmd(0x5b, fcsr);
+    writecmd(0x5e, 1);
+    phy0r = readcmd(0x5c) | 0x04;
+    writecmd(0x5c, phy0r);
+    writecmd(1, 0);
+    writecmd(0x50, 0x80);
+    writecmd(8, 0);
+    writeEXIcmd(2, 0xF8);
+
+    EXISetExiCallback(2, exiinthandler);
+
+    if(firsttime)
+    {
+        OSCreateAlarm(&rcvchk_alarm);
+        OSSetPeriodicAlarm(&rcvchk_alarm, 
+
+        firsttime = FALSE;
+    }
+
+    OSRegisterResetFunction(&ResetFunctionInfo);
+
+    EXIUnlock(0);
+    return 1;
+}
+
+// ---------------------------------------------------------------------------
+
+void exiinthandler(void)
+{
+    u32 ret, ir, exiisr;
+
+    if( EXILock(0, 2, exiinthandler) == 0) return;
+
+    ir = readEXIcmd(3);
+    writeEXIcmd(2, 0);
+
+
+
+
+}
+
+// ---------------------------------------------------------------------------
+
+void unlockcallback(void)
+{
+    OSWakeupThread(&threadQ);
+}
+
+void waitexilock(void)
+{
+    BOOL enabled = OSDisableInterrupts();
+
+    if( EXILock(0, 2, 0, unlockcallback) != 1 )
+    {
+        OSRestoreInterrupts(enabled);
+        return;
+    }
+
+    OSSleepThread(&threadQ);
+    OSRestoreInterrupts(enabled);
+}
+
+u32 readCID(void)
+{
+    u32 cid;
+    u16 ethcmd = 0;
+
+    EXISelect(0, 2, 0);
+    EXIImm(0, &ethcmd, 2, 1, 0);
+    EXISync(0);
+    EXIImm(0, &cid, 4, 0, 0);
+    EXISync(0);
+    EXIDeselect(0);
+
+    return cid;
+}
+
+void reset(void)
+{
+    writecmd(0x60, 0);
+    waitmicro(10000);
+
+    readEXIcmdWait200Micro(15);
+    waitmicro(10000);
+
+    writecmd(0, 1);
+    writecmd(0, 0);
+}

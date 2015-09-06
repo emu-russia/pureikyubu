@@ -1,0 +1,76 @@
+// FST Entry
+typedef struct
+{
+    u8      isDir;                  // 1, if directory
+    u8      nameOffsetHi;
+    u16     nameOffsetLo;
+    union
+    {
+        struct                      // root entry
+        {
+            u32     reservedZero;
+            s32     entryNum;
+        };
+        struct                      // file
+        {
+            u32     fileOffset;
+            u32     fileLength;
+        };
+        struct                      // directory
+        {
+            u32     parentOffset;   // previous
+            u32     nextOffset;     // next
+        };
+    };
+} DVDEntry;
+
+DVDEntry * FstStart;            // set after dvd fs init
+
+
+BOOL DVDOpen(char* fileName, DVDFileInfo* fileInfo)
+{
+    if(fileName == NULL)
+        OSHalt("DVDOpen(): null pointer is specified to file name\n");
+    if(fileInfo == NULL)
+        OSHalt("DVDOpen(): null pointer is specified to file info address\n");
+
+    s32 entrynum = DVDConvertPathToEntrynum(fileName);
+
+    if(entrynum < 0)
+    {
+        char currentDir[128];
+        DVDGetCurrentDir(currentDir, sizeof(currentDir));
+
+        OSReport( "Warning: DVDOpen(): file '%s' was not found under %s.\n",
+                   fileName,
+                   currentDir );
+
+        return FALSE;
+    }
+
+    DVDEntry * entry = &FstStart[entrynum];
+
+    if( entry->isDir )
+    {
+        OSReport( "DVDOpen(): directory '%s' is specified as a filename\n",
+                  fileName );
+        return FALSE;
+    }
+
+    // save file information
+    fileInfo->startAddr = entry->fileOffset;
+    fileInfo->length = entry->fileLength;
+
+    // reset callback
+    fileInfo->callback = NULL;
+
+    fileInfo->cb.state = DVD_STATE_END;
+
+    return TRUE;
+}
+
+
+
+
+Reversed by org <ogamespec@gmail.com>
+Last updated 11 Dec 2004
