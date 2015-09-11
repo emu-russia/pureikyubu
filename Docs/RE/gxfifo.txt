@@ -726,5 +726,3 @@ void GXRestoreWriteGatherPipe(void)
     PPC_SYNC();
     OSRestoreInterrupts(enabled);
 }
-
-// SUMMARY : GC fifo is most complex hardware, I've seen..
