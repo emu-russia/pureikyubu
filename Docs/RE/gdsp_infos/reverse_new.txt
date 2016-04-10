@@ -1,0 +1,398 @@
+TODO:
+-----
+
+- reverse lirr correctly
+
+
+PROGRESS LOG:
+----------
+
+20050318 - unknown opcodes 482
+20050316 - unknown opcodes 537
+20050314 - unknown opcodes 623
+
+INTERESTING ROUTINES OF THE DAY:
+--------------------------------
+
+use of 0x0058
+07bb b100      TSTA	$ACL0
+07bc 02d5      CW	0x02d5		; *** UNKNOWN OPCODE ***
+07bd 04fe      ADDIS	$ACL0, #0x00fe
+07be 1f1e      MRR	$R18, $ACL0
+07bf 191e      LRRI	$ACL0, @$R00
+07c0 0291 07c6 JX1	0x07c6
+07c2 191a      LRRI	$R1a, @$R00
+07c3 0058      CW	0x0058		; *** UNKNOWN OPCODE ***
+07c4 64a0      CW	0x64a0		; *** UNKNOWN OPCODE ***
+07c5 6433      CW	0x6433		; *** UNKNOWN OPCODE ***
+07c6 1b7e      SRRI	@$R03, $ACL0
+07c7 02df      RET	
+
+use of 0x005e
+034b 0080 0477 LRI	$R00, #0x0477
+034d 0084 ffff LRI	$R04, #0xffff
+034f 0087 ffff LRI	$R07, #0xffff
+0351 199a      LRRX	$R1a, @$R00
+0352 6554      CW	0x6554		; *** UNKNOWN OPCODE ***
+0353 005e      CW	0x005e		; *** UNKNOWN OPCODE ***
+0354 65ad      CW	0x65ad		; *** UNKNOWN OPCODE ***
+
+
+
+0b2e 8a00      CW	0x8a00		; *** UNKNOWN OPCODE
+0b2f 0083 03e8 LRI	$R03, #0x03e8
+0b31 191e      LRRI	$ACL0, @$R00
+0b32 191a      LRRI	$R1a, @$R00
+0b33 1006      CW	0x1006		; *** UNKNOWN OPCODE
+0b34 64a0      CW	0x64a0		; *** UNKNOWN OPCODE
+0b35 1b7e      SRRI	@$R03, $ACL0
+0b36 1b7a      SRRI	@$R03, $R1a
+0b37 0080 03e8 LRI	$R00, #0x03e8
+0b39 0088 0007 LRI	$R08, #0x0007
+0b3b 1150      CW	0x1150		; *** UNKNOWN OPCODE
+0b3c 0b48      LRIS	$R1b, #0x0048
+0b3d 1c61      MRR	$R03, $R01
+0b3e 84c3      CW	0x84c3		; *** UNKNOWN OPCODE
+0b3f f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b40 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b41 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b42 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b43 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b44 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b45 f2c3      CW	0xf2c3		; *** UNKNOWN OPCODE
+0b46 f200      CW	0xf200		; *** UNKNOWN OPCODE
+0b47 fe00      CW	0xfe00		; *** UNKNOWN OPCODE
+0b48 1b3e      SRRI	@$R01, $ACL0
+0b49 0088 ffff LRI	$R08, #0xffff
+0b4b 8b00      CW	0x8b00		; *** UNKNOWN OPCODE
+0b4c 02df      RET
+
+
+0066 0080 0c00 LRI	$R00, #0x0c00
+0068 8e00      SET40
+0069 8100      CLRA	$ACL0
+006a 8970      CW	0x8970		; *** UNKNOWN OPCODE
+006b b100      CW	0xb100		; *** UNKNOWN OPCODE
+006c 0291 007e Jx1	0x007e
+006e 0a13      LRIS	$R1a, #0x0013
+006f c100      CW	0xc100		; *** UNKNOWN OPCODE
+0070 0292 007e Jx2	0x007e
+
+
+
+Check pair:
+
+0x000c - does not exist in current sources but does belong to group deca/inca
+
+0x0058 - 0x005f
+
+0x005e
+|0000 0000 010r rrrr|
+if the next opcode is LRRI/SRRI then increment will be done by value of $Rr
+Although for $Rr r=0-7 result is totally broken.
+Increment is done prior to loading tho.
+
+0x0060 - 0x007f
+|0000 0000 011r rrrr| |aaaa aaaa aaaa aaaa|
+loop block of opcodes decrementing register till > 0
+loop starting from following opcode till opcode pointed by address aaaa (including opcode at aaaa).
+
+0x11xx - ??? possibly followed by second value
+
+0x0272
+0x0271 - conditional instructions (probably following instruction gets executed/ignored
+
+0x3000 - 0x3100
+|0011 00sr ---- ----|
+$(1e+r) ^= $(1a+s)
+
+0x3800 - 0x3900
+|0011 10sr ---- ----|
+$(1e+r) |= $(1a+s)
+
+0x3400 - 0x3500
+|0011 01sr ---- ----|
+$(1e+r) &= $(1a+s)
+
+0x4000 - 0x4700
+|0100 0ssd 0000 0000|
+$accd.hm += $(18+s);
+FLAGS!
+
+0x4800 - 0x4b00
+|0100 10sd 0000 0000|
+$accd += $acx.hl
+$(1c+d) += $(18+s) ; $R(1e+d) += R(1a+s) ;
+FLAGS!
+
+0x4c00 - 0x4d00
+|0100 110r 0000 0000|
+$accd += $(1-d)
+FLAGS!
+
+0x5c00 - 0x5d00
+|0101 110d 0000 0000|
+ACCd -= ACC(1-d);
+
+0x6000 - 
+$R1e = $r18; $r10 = $R1c = 0;
+Modifies flags
+
+0x604x
+|0110 0ssd 01rr rxaa|
+$R(d+0x1e) = $R(s+0x18);
+@$Ra = $R(r+0x18); if (x == 0) $Ra++ else $Ra += $R(a+4);
+
+
+0x64a0 - ????? increment A03
+
+0x6c00
+$acc0 = $acc1
+FLAGS!
+
+0x6d00
+$acc1 = $acc0
+FLAGS!
+
+0x6e00 - move MAC to ACC0; $R10 = $R16 ; $R1c = $R14 ; $R1e = $R15 + $R17
+0x6f00 - move MAC to ACC1; $R11 = $R16 ; $R1d = $R14 ; $R1f = $R15 + $R17
+
+0x7000 - 7300
+|0111 00sd ---- ----|
+$accd.hml += $acxs.l
+FLAGS!
+
+
+
+
+0x8000 - XXX
+
+0x8000 - 0x8900
+|1000 z00c 0rrr rxaa|
+if (c == 1) $R(z+0x1c) = $R(z+0x10) = $R(z+0x1e) = 0; set flags to 0x24
+$R(r+0x18) = @$Ra ; if (x == 0) $Ra++ else $Ra += $R(a+4);
+
+1000 xxxx 1xxx xxxx load to two registers
+8084 - add r4 to r0
+8088 - arr r7 to r3
+
+0x8200 - XXX might be compare acc0 with acc1
+0x8271 - @$r1+ -> $acc0, then compare
+
+|1000 0010 01rr r0aa|
+FLAGS = ACC0 - ACC1 ; $R(r+0x18) = $Aa ; $Ra++ ;
+
+0x8400
+|1000 0100 0000 0000|
+Clear $prod
+$14 = 0; $15 = 0xfff0 ; $16 = 0x00ff ; $17 = 0x0010
+
+0x8600 0x8700
+|1000 011r ---- ----|
+Test $acxr.h
+
+0x8c00 - clr bit 15 of $SR
+0x8d00 - set bit 15 of $SR
+
+0x8a00 - clr bit 13 of $SR		// multiply result will be * 2
+0x8b00 - set bit 13 of $SR		// multiply result OK
+
+0x8e00 - clr bit 14 of $r13		// 40 bit mode
+0x8f00 - set bit 14 of $r13		// 32 bit mode
+
+// *** 9xxx START
+
+|1001 r001 0000 0000|
+ASR acca, 16
+calculate flags
+
+|1001 a000 0000 0000|
+$prod = $(18+a) * $(1a+a)
+
+|1001 a01r 0000 0000|
+$aclr.hm = $prod.hm
+$aclr.l = 0
+$prod = $(18+a) * $(1a+a)
+
+|1001 a10r 0000 0000|
+$aclr += $prod
+$prod = $(18+a) * $(1a+a)
+
+|1001 a11r 0000 0000|
+$aclr = $prod
+$prod = $(18+a) * $(1a+a)
+
+// *** 9xxx END 
+
+// *** Axxx START
+|1010 r000 ---- ----|
+looks like test $acr   ??????????????????
+
+|1010 a000 0000 0000|
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a01r 0000 0000|
+$acr.hm = $prod.hm
+$acr.l = 0
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a10r 0000 0000|
+$acr = $prod
+$prod = $(18+a) * (a==0)?$19:$1b
+
+|1010 a11r 0000 0000|
+$acr = $prod
+$prod = $(18+a) * (a==0)?$19:$1b
+
+// *** Axxx END
+
+0xb100 - test $ACL0 | $ACH0 | $r1c
+		 sets 24 if all of those above == 0
+0xb900 - test $ACL1 | $ACH1 | $r1d
+		 sets 24 if all of those above == 0
+
+b0
+$prod = $19 * $1a
+b8
+$prod = $1b * $1a
+
+
+c800
+$prod = $1b * $1e
+d800
+$prod = $1b * $1f
+d000
+$prod = $1a * 1f
+c000
+$prod = $1a * 1e
+
+c500/c400
+|110s a10r ---- ----|
+$acr += $prod ; $prod = $(1a+a) * $(1e+s)
+|110s a11r ---- ----|
+$acr = $prod ; $prod = $(1a+a) * $(1e+s)
+
+0xc100 - 0xd100
+|110r a001 ---- ----|
+compare $acca with $(1a+r)
+$acca < $(r1a)	28
+$acca > $(r1a)	21
+$acca = $(r1a)	25	// equal only if acc.1c == 0
+
+
+
+
+0xa000 - 0xb800
+|101m n000 0000 0000|
+m = 1 -> s = 1a ; m = 0 -> s = 18
+n = 1 -> d = 1b ; n = 0 -> d = 19
+$prod = $Rs * $Rd
+
+0xc000 - looks like r14 = $1a * $1e * 2;
+|1100
+0xd000 - looks like $1a * $1f * 2;
+|1101
+
+0xe000 - $prod = $18 * $19
+|1110 00ab ---- ----|
+$prod += (a==0)?$18:$1a * (b==0)?$19:$1b
+|1110 01ab ---- ----|
+$prod -= (a==0)?$18:$1a * (b==0)?$19:$1b
+|1110 10ab ---- ----|
+$prod += (a==0)?$1e:$1f * (b==0)?$19:$1b
+|1110 11ab ---- ----|
+$prod -= (a==0)?$1e:$1f * (b==0)?$19:$1b
+
+0xf000 - 0xf100
+LSL16
+|1111 000r ---- ----| 
+$r(10+r) = $r(1e+r); $r(1e+r) = $r(1c+r); $r(1c+r) = 0; simply... shift acc(r) by 16 left
+
+0xf400 - 0xf500
+LSR16
+|1111 010r ---- ----| 
+$r(1c+r) = $r(1e+r) ; $r(1e+r) = $r(10+r); $r(10+r) = 0; simply... shift acc(r) by 16 right
+
+0xf800
+|1111 10ra ---- ----|
+$accr.hm = $prod_x + $(1a+r) ; $accr.l = 0
+REMARK: $prod_x = $16 (sign extended) << 16 + U$15 + U$17
+REMARK!!! If has following load to the register, then acc is first cleared, then loaded
+with new value and then MAC is performed.
+FLAGS!
+
+0xfc00-0xfd00
+|1111 110r ---- ----|
+$accr.l = 0
+
+0xfe00-0xff00
+|1111 111r ---- ----|
+$acr.hm = $prod.hm
+$acr.l = 0
+
+0x--XX
+if preceding opcode is:
+CLEAR ACC			- accumulator value used for current opcode, accumulator cleaned, opcode executed
+MULTIPLY			- value of acc used, multiply performed, opcode executed
+MULTIPLY AND ACC:	- value of acc used, multiply performed, opcode executed, accumulate
+COMAPRE				- value loaded prior to compare (think so)
+TST					- value loaded prior to compare (think so)
+
+
+|xxxx xxxx ooxx xxxx|
+
+'L[N]
+|xxxx xxxx 01dd diss|
+$(d+0x18) = @$s
+i = 0 -> $Rs++
+i = 1 -> $Rs += $R(s+4)
+
+'LS[NM|M|N]
+|xxxx xxxx 10dd ba0r|
+$(18+d) = @$00 ; @$03 = $(1e+r)
+
+'SL[NM|M|N]
+|xxxx xxxx 10dd ba1r|
+@$00 = $(1e+r) ; $(18+d) = @$03
+a = 0 -> $R00++
+b = 0 -> $R03++
+a = 1 -> $R00 += $R04	[N]
+b = 1 -> $R03 += $R07	[M] // something fucked with adding here, always happen for $R03
+
+'LD[NM|M|N]
+|xxxx xxxx 11mn barr| !!! if rr == 11 then there is special version look below
+m = 1 -> s = 1a ; m = 0 -> s = 18
+n = 1 -> d = 1b ; n = 0 -> d = 19
+$s = $d = @$r
+a = 0 -> $r++
+b = 0 -> $03++
+a = 1 -> $r += $R(r+4)
+b = 1 -> $03 += $R07 // something fucked with adding here, always happen for $R03
+
+'LD2[NM|M|N]
+special version for rr = 11 (0x3)
+|xxxx xxxx 11rm ba11|
+m = 0 -> s = 18, d = 1a ; m = 1 -> s = 19, d = 1b
+$s = $d = @$r
+a = 0 -> $r++
+b = 0 -> $03++
+a = 1 -> $r += $(r+4)
+b = 1 -> $03 += $07 // something fucked with adding here, always happen for $R03
+
+'S[N]
+|xxxx xxxx 001r rnaa|
+@$a = $(r+1c)
+n = 0 $a++
+n = 1 $a += $(a+4)
+
+'M
+|xxxx xxxx 0001 ddss|
+$(d+18) = $(s+1c)
+
+'[DAR][IAR][NAR]
+|xxxx xxxx 0000 nnaa|
+n = 00 no-op
+n = 01 [DAR] $a--
+n = 10 [IAR] $a++
+n = 11 [NAR] $a + $(a+4)
+

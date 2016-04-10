@@ -1,0 +1,75 @@
+yagcd changelog. latest changes are on top of the list
+
+- updated 19.0 (reference section)
+- added 5.7.3.11 (write mem debug command), provided by isobel
+
+2005/05/30
+
+- updated 14.9 (vgc file descryption)
+- updated 5.7.3.5.1 (dvd error codes, thanks to destop and tmbinc)
+- updated 5.7.2 (dvd debug commands, thanks to cheqmate)
+- fixed BP reg 0x4a (thanks to masken)
+
+2005/04/17
+
+- splitted "file formats" section into "general" and "game", added "compression
+  formats" section, sorted all those sections alphabetically
+- added long list of game fileformats, thanks to thakis for providing info
+- added 15.34 (THP format), thanks to thakis for providing info
+- added 15.20 (.bti files), thanks to thakis for providing info
+- added 14.4 and 14.9 (info on viper- and qoob flash files)
+- updated GX regs, BP 0xf5 (checked against libogc)
+- corrected 10.5.3 (sram checksum), thanks to shagkur for pointing this one out
+- added extended sram info, thanks to shagkur for pointing this one out
+
+2005/03/13
+
+- added 15.11.2 (Yay0 decompression Code), info taken from OR9's docs
+- added 15.12 (Yaz0), info provided by thakis
+- added a bit of info to 10.10 (SD Cards)
+- added actual useful info to 15.10.1 (CMPR texture format), 
+  taken from OR9's docs (from dolwin)
+- added 14.10 (RARC/SZS) (info provided by thakis)
+- update references (17; 17.1)
+- thakis sent corrections/pointed out a bunch of spelling errors, and reworded
+  some fux0red english (many thanks!)
+- 5.7 (DI stuff) reworked (much more to come...)
+- added some actual info to 9.7 (DKongas)
+- added info to 14.9 (TGC format) (info taken from tgvtogcm.c by Plootid)
+
+2004/12/31
+
+- fixed scripts to generate proper xml for gc-linux.org
+- some cosmetic tweaks
+- added 9.7 (DKongas), 9.8 (Chainsaw Controller)
+- updated 10.5.1 (sram memory map)
+- corrected 10.7 (memory cards) (reported by DesktopMan)
+- added 14.9 (tgc fileformat) (requested by jsr, more info coming later...)
+- some corrections on bba interrupts
+- updated 2.2 (consumer units)
+- updated 15.11 (yay0 format)
+
+2004/09/13
+
+- corrected addresses in 5.6.2.4 (reported by shagkur)
+- fixed a table in 5.4 (crosschecked against document by org)
+- added note about MSR bit in 6.1
+- added vague note about H4M format
+- small update on dvd protection
+- fixed some structural errors in ipl/bios protection
+- small update to 13.1 (DVD layout) (found by Josiah "afnom" Burroughs in Dolwin source)
+- small update to 9.1 (joybus ids) (reported by Scream|CT)
+
+2004/08/23
+
+- added a note on notation of logical/arithmetic symbols in 1.3
+- added some info on the eth chip 
+- added some info on TPL fileformat (provided by Monk)
+
+2004/08/22
+
+- added changelog and list of missing stuff
+- few cosmetical changes to the webpages
+- changed all PAL60 resolutions in table 5.3.1 to 640x480 (reported by d|x)
+- added some info on the eth chip 
+

@@ -1,0 +1,372 @@
+Yet Another Gamecube Documentation - missing stuff/todo list
+------------------------------------------------------------------------------
+
+just incase you feel like you could provide any additional
+information, have a look at this list for what is still
+missing. (and ofcourse, its by itself incomplete aswell, so
+its still a good idea to check the documentation :))
+
+groepaz@gmx.net
+
+------------------------------------------------------------------------------
+2 Gamecube_Hardware_Introduction
+2.4_Hardware_Parts_List
+2.4.2_Semi-Conductors
+2.4.2.1 IPL
+- incomplete
+
+------------------------------------------------------------------------------
+3.  Gekko_CPU_Overview
+3.1_Registers
+- incomplete (-> ppc manual, dolwin source)
+3.3_PPC_Instructions
+- incomplete (-> ppc manual)
+3.4_additional_Gekko_Instructions
+- incomplete (-> dolwin source)
+3.5 Programming_Tips_and_additional_information
+- incomplete (-> ppc manual)
+3.5.1  Machine State Register
+- description missing (-> ppc manual)
+3.5.2  Caches
+- description missing (-> ppc manual)
+
+------------------------------------------------------------------------------
+4. Memory Map
+4.2_RAM_usage
+4.2.1_Dolphin-OS_globals
+4.2.1.2 Debugger Info
+- info incomplete
+4.2.1.3 Debugger Hook
+- info incomplete
+4.2.1.4 Dolphin OS globals
+- incomplete description for 0x800000e4-0x800000f7
+4.2.3 Dolphin-OS_globals
+- incomplete description for 0x800030e0-0x800030ff
+
+------------------------------------------------------------------------------
+5.    Hardware_Registers
+5.1   CP_-_Command_Processor
+
+*** register unknown ***
+    0xcc000006
+    0xcc000008
+    0xcc00000a
+    0xcc00000c
+    0xcc000018
+    0xcc00001a
+    0xcc00001c
+
+5.1.1 Token Register
+- inaccurate description, maybe also move this to GX ?
+5.2_PE_-_Pixel_Engine
+
+-any info about regs > 0x10 missing
+
+*** bit details incomplete ***
+    0xcc001000 Z-Configuration
+    0xcc001002 Alpha-Configuration
+    0xcc001004 Destination ALpha
+    0xcc001006 ALpha mode
+
+*** bit names incomplete ***
+    0xcc001008 ALpha Read
+    0xcc00100a Interrupt Status register
+
+5.3_VI_-_Video_Interface
+
+*** bit names missing ***
+    0xcc002068 (4) (AA stuff)
+
+*** register unknown ***
+    0xcc002076 (2) (unused?)
+    0xcc002078 (4) (unused?)
+    0xcc00207c (4) (unused?)
+    - everything > 0x76 unused ?
+
+these two are mentioned in the patents:
+
+Picture Configuration Register (R/W)
+This register specifies the picture configuration.
+STD 7:0 Stride per line in words. -
+WPL 14:8 Number of reads per line in words. -
+
+Output Polarity Register (R/W)
+This register sets up the polarity of the out going control signals
+I_POL 0 Inverts Interlace Flag 0
+N_POL 1 Inverts NTSC Flag 0
+K_POL 2 Inverts Burst Blank Flag 0
+B_POL 3 Inverts Burst Flag 0
+H_POL 4 Inverts HSyncb Flag 0
+V_POL 5 Inverts VSyncb Flag 0
+F_POL 6 Inverts Field Flag 0
+C_POL 7 Inverts CSyncb Flag 0
+
+5.4 PI_-_Processor_Interface
+
+*** bit names incomplete ***
+    0xCC003000 (4) INTSR - interrupt cause
+    0xCC003004 (4) INTMR - interrupt mask
+*** bit names missing ***
+    0xCC00300c (4) FIFO Base Start
+    0xCC003010 (4) FIFO Base End?
+    0xCC003014 (4) PI (cpu) FIFO current Write Pointer?
+    0xCC003024 (4) Reset?
+    0xCC00302c (4) console type?
+*** register unknown ***
+    0xCC003018 (4)
+    0xCC00301c (4)
+    0xCC003020 (4)
+    0xCC003028 (4) (unused?)
+    0xCC00302c (4)
+    0xCC003030 (4)
+
+- everything > 0x30 unused ?
+
+5.5 MI_-_Memory_Interface
+
+-more info on the timers needed
+
+*** bit names incomplete ***
+    0xCC004020 (2) ?
+    0xCC00405a     ?
+
+*** register unknown ***
+    0xCC004012 (2)
+    0xCC004014 (2)
+    0xCC004016 (2)
+    0xCC004018 (2)
+    0xCC00401a (2)
+    0xCC004026 (2)
+    0xCC004028 (2)
+    0xCC00402a (2)
+    0xCC00402c (2)
+    0xCC00402e (2)
+    0xCC004030 (2)
+    0xCC00405c-0xCC00407c unused?
+
+5.6 DSP_-_Digital_Signal_Processor_Interface
+
+*** bit details incomplete ***
+    0xCC00500a (2) AI DSP CSR - Control Status Register (DSP Status)
+    0xCC005012 (2) AR_SIZE
+    0xCC005016 (2) AR_MODE
+    0xCC00501a (2) AR_REFRESH
+
+*** register unknown ***
+    0xCC005008 (2)
+    0xCC00500c (4)
+    0xCC005010 (2)
+    0xCC005014 (2)
+    0xCC005018 (2)
+    0xCC00501c (4)
+    0xCC00502c (4)
+    0xCC005034 (2)
+    0xCC005038 (2)
+    0xCC00503c (4)
+
+- everything > 0x3c unused ?
+
+5.7 DI_-_DVD_Interface
+
+*** bit names missing ***
+    0xCC00600c (4) DICMDBUF1 - DI Command Buffer 1 (offset in 32 bit words)
+    0xCC006010 (4) DICMDBUF2 - DI Command Buffer 2 (source length)
+
+5.8 SI_-_Serial_Interface
+
+*** bit details incomplete ***
+    0xCC006434 (4) SICOMCSR - SI Communication Control Status Register (command)
+    0xCC006438 (4) SISR - SI Status Register (channel select & status2)
+
+5.9 EXI_-_External_Interface
+
+5.10 AI_-_Audio_Streaming_Interface
+
+5.11  GX FIFO (Graphic display lists)
+5.11.1  internal BP registers
+
+*** bit details incomplete ***
+
+    0x00 GEN MODE
+    0x06 IND MTXA0
+    0x07 IND MTXB0
+    0x08 IND MTXC0
+    0x09 IND MTXA1
+    0x0a IND MTXB1
+    0x0b IND MTXC1
+    0x0c IND MTXA2
+    0x0d IND MTXB2
+    0x0e IND MTXC2
+    0x0f IND IMASK
+    0x10-0x1f IND CMD0 - tev indirect 0-15
+    0x25 RAS1 SS0 - ind tex coord scale 0
+    0x26 RAS1 SS1 - ind tex coord scale 1
+    0x27 RAS1 IREF
+    0x28-0x2f RAS1 TREF0 - tev order 0-7
+    0x40 PE ZMODE set z mode
+    0x41 PE CMODE0
+    0x42 PE CMODE1
+    0x43 PE CONTROL
+    0x64 TX LOADTLUT0
+    0x65 TX LOADTLUT1
+    0xc0-0xde TEV COLOR ENV 0 - F
+    0xc1-0xdf TEV ALPHA ENV 0 - F
+    0xf3 TEV ALPHAFUNC - alpha compare
+    0xf4 TEV Z ENV 0 - z texture 0
+    0xf5 TEV Z ENV 1 - z texture 1
+    0xf6-0xfd TEV KSEL 0 - Tev Swap Mode Table 0-7
+
+*** bit names incomplete ***
+
+    0x45 PE DONE - draw done
+    0xe0 TEV REGISTERL 0
+    0xe1 TEV REGISTERH 0
+    0xe2 TEV REGISTERL 1
+    0xe3 TEV REGISTERH 1
+    0xe4 TEV REGISTERL 2
+    0xe5 TEV REGISTERH 2
+    0xe6 TEV REGISTERL 3
+    0xe7 TEV REGISTERH 3
+
+*** bit names missing ***
+
+    0x01 display copy filter
+    0x02 display copy filter
+    0x03 display copy filter
+    0x04 display copy filter
+    0x23 SU Counter (?)
+    0x24 RAS Counter (?)
+    0x44 field mask
+    0x46 some clock ?
+    0x4d stride ?
+    0x52 pe copy execute?
+    0x53 copy filter
+    0x54 copy filter
+    0x55 bounding box
+    0x56 bounding box
+    0x67 metric ?
+    0x68 field mode
+    0x69 some clock ?
+    0xe8 Fog Range
+
+*** register unknown ***
+
+    0x05 ?
+    0x4c ?
+    0x57-0x58 ?
+    0x5a-0x63 ?
+    0x66 ?
+    0x6a-0x7f ?
+    0x9c-0x9f ?
+    0xbc-0xbf ?
+    0xe9 ?
+    0xea-0xeb ?
+    0xff ?
+
+5.11.2  internal CP Registers
+
+*** register unknown ***
+
+    0x20    ?
+
+5.11.3  internal XF Registers
+
+*** bit details incomplete ***
+
+        0x1007 Perf1-Xform target performance register
+
+*** bit names missing ***
+
+        0x1000 Error
+        0x1001 Diagnostics
+        0x1002 State0-Internal State Register 0
+        0x1003 State1-Internal State Register 1
+        0x1006 Perf0-Performance monitor selects
+
+*** register unknown ***
+
+        0x1013-0x1017 ?
+        0x1027-0x103e ?
+        0x1048-0x104f ?
+
+------------------------------------------------------------------------------
+6 Exception_and_Interrupt_Processing
+- somewhat incomplete
+
+------------------------------------------------------------------------------
+7 Video_Processing
+- very incomplete
+
+------------------------------------------------------------------------------
+8 3d Graphics_Processing
+- very incomplete
+
+------------------------------------------------------------------------------
+9    Joy-Bus_Devices
+- may be inaccurate, needs more testing
+9.1 ID and device list
+- bits are wrong, needs more testing
+9.4  GBA
+- description missing
+9.5  Wavebird
+- description missing
+9.6  steering wheel
+- description missing
+
+------------------------------------------------------------------------------
+10    EXI_Devices
+10.6 AD16
+- more info needed
+10.7  Memory Cards
+10.7.2  Operation
+10.7.2.1  unlocking
+- description of dsp program missing
+10.8 Ethernet adapter
+- very incomplete (-> datasheet)
+10.9  UART
+- description missing
+- wtf is it with "uart" at all?! do we really have this?! who came up with it? :)
+10.10 SD Cards
+- description missing
+
+------------------------------------------------------------------------------
+11  HSP Devices
+- general description missing
+11.1  GB Player
+- description missing
+
+------------------------------------------------------------------------------
+12_Memory_Card_Structure
+- info on formatting a card and/or generating the unique id needed
+
+------------------------------------------------------------------------------
+13_DVD_Structure
+13.1  Disk header
+- incomplete
+13.2  Disk header Information
+- incomplete
+
+------------------------------------------------------------------------------
+14_File_Formats
+14.1  BNR (Banner file format)
+- description of texture data format missing
+14.8 H4M
+- details missing
+
+------------------------------------------------------------------------------
+15  Graphic Formats
+- lots of trivial info missing (-> common knowledge :))
+15.10 S3TC
+- very inaccurate (-> docs from s3)
+15.11  Yay0
+- description of packing algo incomplete (-> org has documented it)
+
+------------------------------------------------------------------------------
+16  Appendix
+16.1  GCC Quick How To
+16.1.9  Linker Script
+- missing
+16.1.10  Startup Code
+- missing
+16.4 Maxcronix Chip IDs
+- table is incomplete
