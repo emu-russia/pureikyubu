@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using ManagedConsole;
+
 namespace ManagedConsoleDemo
 {
     public partial class Form1 : Form
@@ -26,12 +28,24 @@ namespace ManagedConsoleDemo
 
         private void openConsoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            con.Allocate("Demo", new Size(80, 60));
+            con.Allocate("Demo", new Size(80, 25));
         }
 
         private void closeCosoleToolStripMenuItem_Click(object sender, EventArgs e)
         {
             con.Free();
+        }
+
+        private void fillTestToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            con.Fill(new Rectangle(1, 1, 10, 10), ColorCode.DBLUE);
+            con.Invalidate();
+        }
+
+        private void printTestToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            con.PrintAt(ColorCode.RED, 5, 5, "Hello, world!\nNew\ttabbed\tline.");
+            con.Invalidate();
         }
     }
 }

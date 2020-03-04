@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedConsoleDemo", "ManagedConsoleDemo.csproj", "{4AA3DD4C-B323-4805-8A39-0ACB1106D97F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManagedConsole", "..\ManagedConsole\ManagedConsole.csproj", "{9A26120D-3056-48A5-A4CE-831C17F64131}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ManagedConsole", "..\ManagedConsole\ManagedConsole.csproj", "{9A26120D-3056-48A5-A4CE-831C17F64131}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

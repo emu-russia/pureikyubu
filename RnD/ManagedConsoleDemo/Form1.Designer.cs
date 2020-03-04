@@ -34,6 +34,8 @@
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openConsoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeCosoleToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.fillTestToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.printTestToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -59,7 +61,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(93, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -67,7 +69,9 @@
             // 
             this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openConsoleToolStripMenuItem,
-            this.closeCosoleToolStripMenuItem});
+            this.closeCosoleToolStripMenuItem,
+            this.fillTestToolStripMenuItem,
+            this.printTestToolStripMenuItem});
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.debugToolStripMenuItem.Text = "Debug";
@@ -85,6 +89,20 @@
             this.closeCosoleToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.closeCosoleToolStripMenuItem.Text = "Close Cosole";
             this.closeCosoleToolStripMenuItem.Click += new System.EventHandler(this.closeCosoleToolStripMenuItem_Click);
+            // 
+            // fillTestToolStripMenuItem
+            // 
+            this.fillTestToolStripMenuItem.Name = "fillTestToolStripMenuItem";
+            this.fillTestToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.fillTestToolStripMenuItem.Text = "FillTest";
+            this.fillTestToolStripMenuItem.Click += new System.EventHandler(this.fillTestToolStripMenuItem_Click);
+            // 
+            // printTestToolStripMenuItem
+            // 
+            this.printTestToolStripMenuItem.Name = "printTestToolStripMenuItem";
+            this.printTestToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.printTestToolStripMenuItem.Text = "PrintTest";
+            this.printTestToolStripMenuItem.Click += new System.EventHandler(this.printTestToolStripMenuItem_Click);
             // 
             // Form1
             // 
@@ -110,6 +128,8 @@
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openConsoleToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem closeCosoleToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem fillTestToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem printTestToolStripMenuItem;
     }
 }
 

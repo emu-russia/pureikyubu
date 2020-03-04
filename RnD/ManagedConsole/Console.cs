@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Runtime.InteropServices;
+using System.Collections.Generic;
 using System.Drawing;
+
+using System.Runtime.InteropServices;
 
 namespace ManagedConsole
 {
@@ -9,7 +11,8 @@ namespace ManagedConsole
     /// </summary>
     public enum ColorCode
     {
-        DBLUE = 1,
+        BLACK = 0,
+        DBLUE,
         GREEN,
         CYAN,
         RED,
@@ -27,7 +30,7 @@ namespace ManagedConsole
         WHITE,
     }
 
-    public class Console
+    public partial class Console
     {
         bool allocated = false;
         IntPtr input;
@@ -36,7 +39,7 @@ namespace ManagedConsole
         CHAR_INFO [] buf;
         Size consize;
         Point pos;
-        UInt16 attr;
+        List<Window> windows = new List<Window>();
 
         public void Allocate(string title, Size size)
         {
@@ -46,9 +49,23 @@ namespace ManagedConsole
             buf = new CHAR_INFO[size.Width * size.Height];
             consize = new Size(size.Width, size.Height);
             pos = new Point(0, 0);
-            attr = 0;
 
-            AllocConsole();
+            for (int i=0; i<buf.Length; i++)
+            {
+                buf[i].Attributes = 0;
+                buf[i].UnicodeChar = ' ';
+            }
+
+            bool res = AllocConsole();
+            if (!res && Marshal.GetLastWin32Error() == 5)
+            {
+                // Close if already opened by some instance
+                FreeConsole();
+
+                res = AllocConsole();
+                if (!res)
+                    throw new Exception("AllocConsole failed! LastError: " + Marshal.GetLastWin32Error().ToString());
+            }
 
             input = GetStdHandle(STD_INPUT_HANDLE);
             if (input == (IntPtr)INVALID_HANDLE_VALUE)
@@ -88,6 +105,8 @@ namespace ManagedConsole
             if (!allocated)
                 return;
 
+            windows.Clear();
+
             CloseHandle(input);
             CloseHandle(output);
 
@@ -100,17 +119,50 @@ namespace ManagedConsole
             return allocated;
         }
 
+        #region "Console Output"
+
         public void PrintAt(ColorCode color, int x, int y, string text)
         {
             if (!allocated)
                 throw new Exception("Allocate console first!");
 
+            pos.X = x;
+            pos.Y = y;
 
+            for (int i=0; i<text.Length; i++)
+            {
+                if (pos.Y >= consize.Height)
+                    break;
+
+                if (text[i] == '\n')
+                {
+                    pos.X = x;
+                    pos.Y++;
+                }
+                else if (text[i] == '\t')
+                {
+                    int numToRound = pos.X + 1;
+                    int multiple = 4;
+                    int untilX = ((((numToRound) + (multiple) - 1) / (multiple)) * (multiple));
+
+                    int numspaces = untilX - pos.X;
+                    while (numspaces-- != 0)
+                    {
+                        PrintChar(' ', color);
+                    }
+                }
+                else
+                {
+                    PrintChar(text[i], color);
+                }
+            }
         }
 
-        private void PrintChar(char ch)
+        private void PrintChar(char ch, ColorCode color)
         {
-            buf[pos.Y * consize.Width + pos.X].Attributes = attr;
+            ushort oldAttr = buf[pos.Y * consize.Width + pos.X].Attributes;
+            oldAttr = (ushort)((oldAttr & 0xf0) | ((int)color));
+            buf[pos.Y * consize.Width + pos.X].Attributes = oldAttr;
             buf[pos.Y * consize.Width + pos.X].AsciiChar = ch;
             pos.X++;
             if (pos.X >= consize.Width)
@@ -124,223 +176,58 @@ namespace ManagedConsole
             }
         }
 
-        public void SetAttr(int fg, int bg)
+        // Fill the console region with the specified color
+        public void Fill(Rectangle rect, ColorCode backColor)
         {
-            attr = (ushort)((bg << 4) | fg);
-        }
-
-        public void SetAttrFg(int fg, int bg)
-        {
-            attr = (ushort)((attr & ~0xf) | fg);
-        }
-
-        public void SetAttrBg(int bg)
-        {
-            attr = (ushort)((attr & ~(0xf << 4)) | (bg << 4));
-        }
-
-        // Console API: https://www.pinvoke.net/default.aspx/kernel32/ConsoleFunctions.html
-
-        #region "Interop Area"
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool AllocConsole();
-
-        [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern bool FreeConsole();
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleTitle(string lpConsoleTitle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern IntPtr GetStdHandle(
-                int nStdHandle);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleWindowInfo(
-                IntPtr hConsoleOutput,
-                bool bAbsolute,
-                [In] ref SMALL_RECT lpConsoleWindow);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleScreenBufferSize(
-            IntPtr hConsoleOutput,
-            COORD dwSize);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleCursorInfo(
-                IntPtr hConsoleOutput,
-                out CONSOLE_CURSOR_INFO lpConsoleCursorInfo);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool GetConsoleMode(
-                IntPtr hConsoleHandle,
-                out uint lpMode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleMode(
-                IntPtr hConsoleHandle,
-                uint dwMode);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool WriteConsoleOutput(
-                IntPtr hConsoleOutput,
-                CHAR_INFO[] lpBuffer,
-                COORD dwBufferSize,
-                COORD dwBufferCoord,
-                ref SMALL_RECT lpWriteRegion);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool SetConsoleCursorPosition(
-                IntPtr hConsoleOutput,
-                COORD dwCursorPosition);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool PeekConsoleInput(
-                IntPtr hConsoleInput,
-                [Out] INPUT_RECORD[] lpBuffer,
-                uint nLength,
-                out uint lpNumberOfEventsRead);
-
-        [DllImport("kernel32.dll", EntryPoint = "ReadConsoleInputW", CharSet = CharSet.Unicode)]
-        static extern bool ReadConsoleInput(
-                IntPtr hConsoleInput,
-                [Out] INPUT_RECORD[] lpBuffer,
-                uint nLength,
-                out uint lpNumberOfEventsRead);
-
-        [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool CloseHandle(IntPtr hObject);
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct COORD
-        {
-
-            public short X;
-            public short Y;
-
-        }
-
-        struct SMALL_RECT
-        {
-
-            public short Left;
-            public short Top;
-            public short Right;
-            public short Bottom;
-
-        }
-
-        struct CONSOLE_SCREEN_BUFFER_INFO
-        {
-
-            public COORD dwSize;
-            public COORD dwCursorPosition;
-            public short wAttributes;
-            public SMALL_RECT srWindow;
-            public COORD dwMaximumWindowSize;
-
-        }
-
-        [StructLayout(LayoutKind.Explicit)]
-        struct INPUT_RECORD
-        {
-            [FieldOffset(0)]
-            public ushort EventType;
-            [FieldOffset(4)]
-            public KEY_EVENT_RECORD KeyEvent;
-            [FieldOffset(4)]
-            public MOUSE_EVENT_RECORD MouseEvent;
-            [FieldOffset(4)]
-            public WINDOW_BUFFER_SIZE_RECORD WindowBufferSizeEvent;
-            [FieldOffset(4)]
-            public MENU_EVENT_RECORD MenuEvent;
-            [FieldOffset(4)]
-            public FOCUS_EVENT_RECORD FocusEvent;
-        };
-
-        [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode)]
-        struct KEY_EVENT_RECORD
-        {
-            [FieldOffset(0), MarshalAs(UnmanagedType.Bool)]
-            public bool bKeyDown;
-            [FieldOffset(4), MarshalAs(UnmanagedType.U2)]
-            public ushort wRepeatCount;
-            [FieldOffset(6), MarshalAs(UnmanagedType.U2)]
-            //public VirtualKeys wVirtualKeyCode;
-            public ushort wVirtualKeyCode;
-            [FieldOffset(8), MarshalAs(UnmanagedType.U2)]
-            public ushort wVirtualScanCode;
-            [FieldOffset(10)]
-            public char UnicodeChar;
-            [FieldOffset(12), MarshalAs(UnmanagedType.U4)]
-            //public ControlKeyState dwControlKeyState;
-            public uint dwControlKeyState;
-        }
-
-        [StructLayout(LayoutKind.Sequential)]
-        struct MOUSE_EVENT_RECORD
-        {
-            public COORD dwMousePosition;
-            public uint dwButtonState;
-            public uint dwControlKeyState;
-            public uint dwEventFlags;
-        }
-
-        struct WINDOW_BUFFER_SIZE_RECORD
-        {
-            public COORD dwSize;
-
-            public WINDOW_BUFFER_SIZE_RECORD(short x, short y)
+            for (int y=rect.Y; y<rect.Height; y++)
             {
-                dwSize = new COORD();
-                dwSize.X = x;
-                dwSize.Y = y;
+                if (y >= consize.Height)
+                    break;
+
+                for (int x =rect.X; x<rect.Width; x++)
+                {
+                    if (x >= consize.Width)
+                        break;
+
+                    ushort oldAttr = buf[y * consize.Width + x].Attributes;
+                    oldAttr = (ushort)((oldAttr & 0xf) | ((int)backColor << 4));
+                    buf[y * consize.Width + x].Attributes = oldAttr;
+                }
             }
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        struct MENU_EVENT_RECORD
+        public void Invalidate()
         {
-            public uint dwCommandId;
+            Blit(new Rectangle(0, 0, consize.Width, consize.Height));
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        struct FOCUS_EVENT_RECORD
+        public void Blit (Rectangle rect)
         {
-            public uint bSetFocus;
+            COORD sz = new COORD();
+            sz.X = (short)consize.Width;
+            sz.Y = (short)consize.Height;
+
+            COORD pos = new COORD();
+            pos.X = (short)rect.X;
+            pos.Y = (short)rect.Y;
+
+            SMALL_RECT rgn = new SMALL_RECT();
+
+            rgn.Left = (short)rect.X;
+            rgn.Top = (short)rect.Y;
+            rgn.Right = (short)(rect.X + rect.Width - 1);
+            rgn.Bottom = (short)(rect.Y + rect.Height - 1);
+
+            bool success = WriteConsoleOutput(output, buf, sz, pos, ref rgn);
         }
 
-        //CHAR_INFO struct, which was a union in the old days
-        // so we want to use LayoutKind.Explicit to mimic it as closely
-        // as we can
-        [StructLayout(LayoutKind.Explicit)]
-        struct CHAR_INFO
-        {
-            [FieldOffset(0)]
-            public char UnicodeChar;
-            [FieldOffset(0)]
-            public char AsciiChar;
-            [FieldOffset(2)] //2 bytes seems to work properly
-            public UInt16 Attributes;
-        }
+        #endregion "Console Output"
 
-        [StructLayout(LayoutKind.Sequential)]
-        struct CONSOLE_CURSOR_INFO
-        {
-            uint Size;
-            bool Visible;
-        }
 
-        const int STD_INPUT_HANDLE = -10;
-        const int STD_OUTPUT_HANDLE = -11;
-        const int STD_ERROR_HANDLE = -12;
 
-        const int INVALID_HANDLE_VALUE = -1;
+        #region "Console Input"
 
-        const uint ENABLE_MOUSE_INPUT = 0x0010;
-
-        #endregion "Interop Area"
+        #endregion "Console Input"
 
 
     }
