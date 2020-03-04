@@ -199,6 +199,18 @@ namespace ManagedConsole
             bool Visible;
         }
 
+        const int FOCUS_EVENT = 0x0010;
+        const int KEY_EVENT = 0x0001;
+        const int MENU_EVENT = 0x0008;
+        const int MOUSE_EVENT = 0x0002;
+        const int WINDOW_BUFFER_SIZE_EVENT = 0x0004;
+
+        const int LEFT_ALT_PRESSED = 0x0002;
+        const int LEFT_CTRL_PRESSED = 0x0008;
+        const int RIGHT_ALT_PRESSED = 0x0001;
+        const int RIGHT_CTRL_PRESSED = 0x0004;
+        const int SHIFT_PRESSED = 0x0010;
+
         const int STD_INPUT_HANDLE = -10;
         const int STD_OUTPUT_HANDLE = -11;
         const int STD_ERROR_HANDLE = -12;

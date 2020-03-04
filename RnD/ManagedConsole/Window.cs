@@ -48,7 +48,7 @@ namespace ManagedConsole
             }
 
             // Key Press Event
-            public void OnKeyInput()
+            public virtual void OnKeyInput(KeyInfo key)
             { }
 
             // Display a string of the specified color at the specified coordinates of the window.

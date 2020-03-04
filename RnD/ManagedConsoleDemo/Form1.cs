@@ -14,7 +14,7 @@ namespace ManagedConsoleDemo
 {
     public partial class Form1 : Form
     {
-        ManagedConsole.Console con = new ManagedConsole.Console();
+        TestConsole con = new TestConsole();
 
         public Form1()
         {
@@ -47,5 +47,11 @@ namespace ManagedConsoleDemo
             con.PrintAt(ColorCode.RED, 5, 5, "Hello, world!\nNew\ttabbed\tline.");
             con.Invalidate();
         }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            con.Free();
+        }
+
     }
 }
