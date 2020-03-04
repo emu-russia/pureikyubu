@@ -9,9 +9,9 @@ enum FILE_TYPE
     FILE_TYPE_DIR,
 };
                                                             // dont forget to :
-s32     FileSize(char *filename);
-void*   FileLoad(char *filename, u32 *size=NULL);           // free!
-BOOL    FileSave(char *filename, void *data, u32 size);
+int     FileSize(char *filename);
+void*   FileLoad(char *filename, uint32_t *size=NULL);           // free!
+BOOL    FileSave(char *filename, void *data, uint32_t size);
 char*   FileOpen(HWND hwnd, int type=FILE_TYPE_ALL);        // copy away!
 char*   FileShortName(char *filename, int lvl=3);           // copy away!
-char*   FileSmartSize(u32 size);                            // copy away!
+char*   FileSmartSize(uint32_t size);                            // copy away!

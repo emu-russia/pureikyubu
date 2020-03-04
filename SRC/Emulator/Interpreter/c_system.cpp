@@ -1,21 +1,21 @@
 // System Instructions
 #include "dolphin.h"
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 // ---------------------------------------------------------------------------
 // os
 
 OP(TWI)
 {
-    s32 a = RRA, b = SIMM;
-    s32 to = RS;
+    int32_t a = RRA, b = SIMM;
+    int32_t to = RS;
     
     if( ((a < b) && (to & 0x10)) ||
         ((a > b) && (to & 0x08)) ||
         ((a ==b) && (to & 0x04)) ||
-        (((u32)a <(u32)b) && (to & 0x02)) ||
-        (((u32)a >(u32)b) && (to & 0x01)))
+        (((uint32_t)a < (uint32_t)b) && (to & 0x02)) ||
+        (((uint32_t)a > (uint32_t)b) && (to & 0x01)))
     {
         // pseudo-branch (to resume from next instruction after 'rfi')
         PC += 4;
@@ -25,15 +25,15 @@ OP(TWI)
 
 OP(TW)
 {
-    s32 a = RRA, b = RRB;
-    s32 to = RS;
+    int32_t a = RRA, b = RRB;
+    int32_t to = RS;
     BOOL trap = FALSE;
     
     if( ((a < b) && (to & 0x10)) ||
         ((a > b) && (to & 0x08)) ||
         ((a ==b) && (to & 0x04)) ||
-        (((u32)a <(u32)b) && (to & 0x02)) ||
-        (((u32)a >(u32)b) && (to & 0x01)))
+        (((uint32_t)a < (uint32_t)b) && (to & 0x02)) ||
+        (((uint32_t)a > (uint32_t)b) && (to & 0x01)))
     {
         // pseudo-branch (to resume from next instruction after 'rfi')
         PC += 4;
@@ -71,9 +71,9 @@ static inline BOOL msr_dr() { return (MSR & MSR_DR) ? 1 : 0; }
 // CR = (rs & mask) | (CR & ~mask)
 OP(MTCRF)
 {
-    u32 m, crm = CRM, a, d = RRS;
+    uint32_t m, crm = CRM, a, d = RRS;
 
-    for(s32 i=0; i<8; i++)
+    for(int i=0; i<8; i++)
     {
         if((crm >> i) & 1)
         {
@@ -88,7 +88,7 @@ OP(MTCRF)
 // XER[0..3] = 0b0000
 OP(MCRXR)
 {
-    u32 mask = 0xf0000000 >> (4 * CRFD);
+    uint32_t mask = 0xf0000000 >> (4 * CRFD);
     CR &= ~mask;
     CR |= (XER & 0xf0000000) >> (4 * CRFD);
     XER &= ~0xf0000000;
@@ -115,7 +115,7 @@ OP(MFMSR)
 // spr = rs
 OP(MTSPR)
 {
-    s32 spr = (RB << 5) | RA;
+    int spr = (RB << 5) | RA;
 
     if(spr >= 528 && spr <= 543)
     {
@@ -171,9 +171,9 @@ OP(MTSPR)
             SPR[spr] = RRS;
             if(SPR[923] & 2)
             {
-                u32 maddr = SPR[922] & ~0x1f;
-                u32 lcaddr = SPR[923] & ~0x1f;
-                u32 length = ((SPR[922] & 0x1f) << 2) | ((SPR[923] >> 2) & 3);
+                uint32_t maddr = SPR[922] & ~0x1f;
+                uint32_t lcaddr = SPR[923] & ~0x1f;
+                uint32_t length = ((SPR[922] & 0x1f) << 2) | ((SPR[923] >> 2) & 3);
                 if(length == 0) length = 128;
                 if(SPR[923] & 0x10)
                 {   // load
@@ -217,7 +217,7 @@ OP(MFSPR)
 // rd = tbr
 OP(MFTB)
 {
-    s32 tbr = (RB << 5) | RA;
+    int tbr = (RB << 5) | RA;
 
     if(tbr == 268)
     {

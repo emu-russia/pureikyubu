@@ -28,7 +28,7 @@ void    LoadRecentFile(int index);
 void    OnMainWindowOpened();
 void    OnMainWindowClosed();
 HWND    CreateMainWindow();
-void    ResizeMainWindow(s32 width, s32 height);
+void    ResizeMainWindow(int width, int height);
 void    UpdateMainWindow(BOOL peek=TRUE);
 
 // utilities

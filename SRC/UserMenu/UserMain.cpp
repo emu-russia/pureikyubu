@@ -151,7 +151,7 @@ char * FixCommandLine(char *lpCmdLine)
     {
         lpCmdLine++;
     }
-    s32 len = strlen(lpCmdLine);
+    int len = strlen(lpCmdLine);
     if(lpCmdLine[len-1] == '\"' || lpCmdLine[len-1] == '\'')
     {
         lpCmdLine[len-1] = 0;

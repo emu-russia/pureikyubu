@@ -92,7 +92,7 @@ static char * simm(int val, int hex, int s)
     if( ((val >= -256) && (val <= 256)) && !hex) sprintf(out, "%i", val);
     else
     {
-        u16 hexval = (u16)val;
+        uint16_t hexval = (uint16_t)val;
         if((hexval & 0x8000) && s) sprintf(out, "-" HEX1 "%04X" HEX2, ((~hexval) & 0xffff) + 1);
         else sprintf(out, HEX1 "%04X" HEX2, hexval);
     }
@@ -1763,7 +1763,7 @@ void PPCDisasm(PPCD_CB *discb)
 #endif
 }
 
-char *PPCDisasmSimple(u64 pc, u32 instr)
+char *PPCDisasmSimple(uint64_t pc, uint32_t instr)
 {
     PPCD_CB dis_out;
     static char output[256];

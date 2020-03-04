@@ -30,7 +30,7 @@ static void AddFont(HWND hwndDlg, char *file)
     _splitpath(file, drive, dir, name, ext);
 
     // check font type
-    u32 size = FileSize(file);
+    int size = FileSize(file);
     BOOL is_ansi = (size <= ANSI_SIZE);
 
     if(is_ansi)

@@ -19,15 +19,15 @@
 
 typedef struct PPCD_CB
 {
-    u64     pc;                     // Program counter (input)
-    u32     instr;                  // Instruction (input)
+    uint64_t   pc;                  // Program counter (input)
+    uint32_t   instr;               // Instruction (input)
     char    mnemonic[16];           // Instruction mnemonic.
     char    operands[64];           // Instruction operands.
-    u32     immed;                  // Immediate value (displacement for load/store, immediate operand for arithm./logic).
+    uint32_t   immed;               // Immediate value (displacement for load/store, immediate operand for arithm./logic).
     int     r[4];                   // Index value for operand registers and immediates.
-    u64     target;                 // Target address for branch instructions / Mask for RLWINM-like instructions
+    uint64_t   target;              // Target address for branch instructions / Mask for RLWINM-like instructions
     int     iclass;                 // One or combination of PPC_DISA_* flags.
 } PPCD_CB;
 
 void    PPCDisasm(PPCD_CB *disa);
-char*   PPCDisasmSimple(u64 pc, u32 instr);
+char*   PPCDisasmSimple(uint64_t pc, uint32_t instr);

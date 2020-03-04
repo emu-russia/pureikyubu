@@ -6,7 +6,7 @@
 
 void con_bp_list()
 {
-    for(s32 i=0; i<con.brknum; i++)
+    for(int i=0; i<con.brknum; i++)
     {
         con_print("\t%i: %c %08X %i\n",
             i,
@@ -26,7 +26,7 @@ DBPoint * con_allocate_bp()
     return &con.brks[con.brknum];
 }
 
-void con_rem_bp(s32 num)
+void con_rem_bp(int num)
 {
     int i;
     if(num >= con.brknum) return;
@@ -47,9 +47,9 @@ void con_rem_bp(s32 num)
     con.brknum--;
 }
 
-DBPoint * con_is_code_bp(u32 addr)
+DBPoint * con_is_code_bp(uint32_t addr)
 {
-    for(s32 i=0; i<con.brknum; i++)
+    for(int i=0; i<con.brknum; i++)
     {
         if((con.brks[i].ea == addr) && !con.brks[i].mem)
         {
@@ -59,7 +59,7 @@ DBPoint * con_is_code_bp(u32 addr)
     return NULL;
 }
 
-void con_add_code_bp(u32 addr)
+void con_add_code_bp(uint32_t addr)
 {
     DBPoint * brk = con_is_code_bp(addr);
     if(brk) return;
@@ -71,9 +71,9 @@ void con_add_code_bp(u32 addr)
     con.brknum++;
 }
 
-void con_rem_code_bp(u32 addr)
+void con_rem_code_bp(uint32_t addr)
 {
-    for(s32 i=0; i<con.brknum; i++)
+    for(int i=0; i<con.brknum; i++)
     {
         if((con.brks[i].ea == addr) && !con.brks[i].mem)
         {
@@ -82,9 +82,9 @@ void con_rem_code_bp(u32 addr)
     }
 }
 
-DBPoint * con_is_data_bp(u32 addr, s32 dlen)
+DBPoint * con_is_data_bp(uint32_t addr, int dlen)
 {
-    for(s32 i=0; i<con.brknum; i++)
+    for(int i=0; i<con.brknum; i++)
     {
         if((con.brks[i].dlen == dlen) && (con.brks[i].ea == addr) && con.brks[i].mem)
         {
@@ -94,7 +94,7 @@ DBPoint * con_is_data_bp(u32 addr, s32 dlen)
     return NULL;
 }
 
-void con_add_data_bp(u32 addr, s32 dlen)
+void con_add_data_bp(uint32_t addr, int dlen)
 {
     DBPoint * brk = con_is_data_bp(addr, dlen);
     if(brk) return;
@@ -107,9 +107,9 @@ void con_add_data_bp(u32 addr, s32 dlen)
     con.brknum++;
 }
 
-void con_rem_data_bp(u32 addr, s32 dlen)
+void con_rem_data_bp(uint32_t addr, int dlen)
 {
-    for(s32 i=0; i<con.brknum; i++)
+    for(int i=0; i<con.brknum; i++)
     {
         if((con.brks[i].dlen == dlen) && (con.brks[i].ea == addr) && con.brks[i].mem)
         {
@@ -134,7 +134,7 @@ void con_rem_all_bp()
 // start execute (F5)
 void con_run_execute()
 {
-    s64 old = TBR;
+    int64_t old = TBR;
     con.running = TRUE;
 
     while(1)
@@ -158,8 +158,8 @@ void con_run_execute()
 // step over function
 void con_step_over()
 {
-    s64 old = TBR;
-    u32 stop_addr = PC + 4;
+    int64_t old = TBR;
+    uint32_t stop_addr = PC + 4;
 
     while(1)
     {
@@ -190,7 +190,7 @@ void con_step_over()
 // ---------------------------------------------------------------------------
 // exception trap
 
-void DBException(u32 code)
+void DBException(uint32_t code)
 {
     IPTException(code);
 }
@@ -198,7 +198,7 @@ void DBException(u32 code)
 // ---------------------------------------------------------------------------
 // memory traps
 
-void __fastcall DBReadByte(u32 addr, u32 *reg)
+void __fastcall DBReadByte(uint32_t addr, uint32_t*reg)
 {
     if(con.running)
     {
@@ -206,7 +206,7 @@ void __fastcall DBReadByte(u32 addr, u32 *reg)
     MEMReadByte(addr, reg);
 }
 
-void __fastcall DBWriteByte(u32 addr, u32 data)
+void __fastcall DBWriteByte(uint32_t addr, uint32_t data)
 {
     if(con.running)
     {
@@ -214,7 +214,7 @@ void __fastcall DBWriteByte(u32 addr, u32 data)
     MEMWriteByte(addr, data);
 }
 
-void __fastcall DBReadHalf(u32 addr, u32 *reg)
+void __fastcall DBReadHalf(uint32_t addr, uint32_t*reg)
 {
     if(con.running)
     {
@@ -222,7 +222,7 @@ void __fastcall DBReadHalf(u32 addr, u32 *reg)
     MEMReadHalf(addr, reg);
 }
 
-void __fastcall DBReadHalfS(u32 addr, u32 *reg)
+void __fastcall DBReadHalfS(uint32_t addr, uint32_t*reg)
 {
     if(con.running)
     {
@@ -230,7 +230,7 @@ void __fastcall DBReadHalfS(u32 addr, u32 *reg)
     MEMReadHalfS(addr, reg);
 }
 
-void __fastcall DBWriteHalf(u32 addr, u32 data)
+void __fastcall DBWriteHalf(uint32_t addr, uint32_t data)
 {
     if(con.running)
     {
@@ -238,7 +238,7 @@ void __fastcall DBWriteHalf(u32 addr, u32 data)
     MEMWriteHalf(addr, data);
 }
 
-void __fastcall DBReadWord(u32 addr, u32 *reg)
+void __fastcall DBReadWord(uint32_t addr, uint32_t*reg)
 {
     if(con.running)
     {
@@ -246,7 +246,7 @@ void __fastcall DBReadWord(u32 addr, u32 *reg)
     MEMReadWord(addr, reg);
 }
 
-void __fastcall DBWriteWord(u32 addr, u32 data)
+void __fastcall DBWriteWord(uint32_t addr, uint32_t data)
 {
     if(con.running)
     {
@@ -254,7 +254,7 @@ void __fastcall DBWriteWord(u32 addr, u32 data)
     MEMWriteWord(addr, data);
 }
 
-void __fastcall DBReadDouble(u32 addr, u64 *reg)
+void __fastcall DBReadDouble(uint32_t addr, uint64_t*reg)
 {
     if(con.running)
     {
@@ -262,7 +262,7 @@ void __fastcall DBReadDouble(u32 addr, u64 *reg)
     MEMReadDouble(addr, reg);
 }
 
-void __fastcall DBWriteDouble(u32 addr, u64 *data)
+void __fastcall DBWriteDouble(uint32_t addr, uint64_t*data)
 {
     if(con.running)
     {

@@ -59,20 +59,20 @@
 
 // memory read/write routines (thats all you need for CPU).
 // Gekko has 64-bit data bus, so MEM*Double are necessary.
-extern void (__fastcall *MEMReadByte)(u32 addr, u32 *reg);      // load byte
-extern void (__fastcall *MEMWriteByte)(u32 addr, u32 data);     // store byte
-extern void (__fastcall *MEMReadHalf)(u32 addr, u32 *reg);      // load halfword
-extern void (__fastcall *MEMReadHalfS)(u32 addr, u32 *reg);     // load signed halfword
-extern void (__fastcall *MEMWriteHalf)(u32 addr, u32 data);     // store halfword
-extern void (__fastcall *MEMReadWord)(u32 addr, u32 *reg);      // load word
-extern void (__fastcall *MEMWriteWord)(u32 addr, u32 data);     // store word
-extern void (__fastcall *MEMReadDouble)(u32 addr, u64 *reg);    // load doubleword
-extern void (__fastcall *MEMWriteDouble)(u32 addr, u64 *data);  // store doubleword
-extern u32  (__fastcall *MEMFetch)(u32 addr);
+extern void (__fastcall *MEMReadByte)(uint32_t addr, uint32_t *reg);      // load byte
+extern void (__fastcall *MEMWriteByte)(uint32_t addr, uint32_t data);     // store byte
+extern void (__fastcall *MEMReadHalf)(uint32_t addr, uint32_t *reg);      // load halfword
+extern void (__fastcall *MEMReadHalfS)(uint32_t addr, uint32_t *reg);     // load signed halfword
+extern void (__fastcall *MEMWriteHalf)(uint32_t addr, uint32_t data);     // store halfword
+extern void (__fastcall *MEMReadWord)(uint32_t addr, uint32_t *reg);      // load word
+extern void (__fastcall *MEMWriteWord)(uint32_t addr, uint32_t data);     // store word
+extern void (__fastcall *MEMReadDouble)(uint32_t addr, uint64_t *reg);    // load doubleword
+extern void (__fastcall *MEMWriteDouble)(uint32_t addr, uint64_t *data);  // store doubleword
+extern uint32_t(__fastcall *MEMFetch)(uint32_t addr);
 
 // memory mapper API
-extern u32  (__fastcall *MEMEffectiveToPhysical)(u32 ea, BOOL IR); // translate
-void    MEMMap(BOOL IR, BOOL DR, u32 startEA, u32 startPA, u32 length);
+extern uint32_t(__fastcall *MEMEffectiveToPhysical)(uint32_t ea, BOOL IR); // translate
+void    MEMMap(BOOL IR, BOOL DR, uint32_t startEA, uint32_t startPA, uint32_t length);
 void    MEMDoRemap(BOOL IR, BOOL DR);
 void    MEMRemapMemory(BOOL IR, BOOL DR);
 
@@ -81,11 +81,11 @@ void    MEMInit();                                              // init
 void    MEMFini();                                              // deinit
 void    MEMOpen();                                              // open
 void    MEMClose();                                             // close
-void    MEMSelect(u8 mode, BOOL save=1);                        // select translation mode
-extern  u32 __fastcall MEMSwap(u32 data);                       // swap long
-extern  u16 __fastcall MEMSwapHalf(u16 data);                   // swap short
-void    __fastcall MEMSwapArea(u32 *addr, s32 count);           // swap longs
-void    __fastcall MEMSwapAreaHalf(u16 *addr, s32 count);       // swap shorts
+void    MEMSelect(int mode, BOOL save=1);                       // select translation mode
+extern  uint32_t __fastcall MEMSwap(uint32_t data);                       // swap long
+extern  uint16_t __fastcall MEMSwapHalf(uint16_t data);                   // swap short
+void    __fastcall MEMSwapArea(uint32_t *addr, int count);           // swap longs
+void    __fastcall MEMSwapAreaHalf(uint16_t *addr, int count);       // swap shorts
 
 // ---------------------------------------------------------------------------
 
@@ -97,14 +97,14 @@ typedef struct MEMControl
     BOOL        opened;             // opened ?
 
     // memory state
-    u8          mmu;                // translation mode (0: simple, 1: mmu)
+    int         mmu;                // translation mode (0: simple, 1: mmu)
     BOOL        mmudirect;          // direct mmu translation (mean no lookup tables)
-    u8*         ram;                // main memory (RAMSIZE)
-    u8**        imap;               // instruction translation lookup table (alive only when mmu)
-    u8**        dmap;               // data translation lookup table (alive only when mmu)
+    uint8_t*    ram;                // main memory (RAMSIZE)
+    uint8_t**   imap;               // instruction translation lookup table (alive only when mmu)
+    uint8_t**   dmap;               // data translation lookup table (alive only when mmu)
     BOOL        ir, dr;             // remap request
 
-    u8          lc[0x40000+4096];   // L2 locked cache
+    uint8_t     lc[0x40000+4096];   // L2 locked cache
 } MEMControl;
 
 extern  MEMControl mem;

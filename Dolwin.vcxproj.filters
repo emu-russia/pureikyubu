@@ -10,9 +10,6 @@
     <Filter Include="Emulator\Interpreter">
       <UniqueIdentifier>{3426ce88-9ffe-46eb-a753-1b8d9431b56c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Emulator\Recompiler">
-      <UniqueIdentifier>{9a560f41-bff0-41ec-9f64-6e3143b1afed}</UniqueIdentifier>
-    </Filter>
     <Filter Include="User Menu">
       <UniqueIdentifier>{9ac656bd-c11c-4483-8b88-d88d8e6c617b}</UniqueIdentifier>
     </Filter>
@@ -27,13 +24,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Emulator\Compare.cpp">
-      <Filter>Emulator</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\Emulator\Debugger.cpp">
-      <Filter>Emulator</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\DisasmX86.cpp">
       <Filter>Emulator</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Emulator\Emulator.cpp">
@@ -52,12 +43,6 @@
       <Filter>Emulator</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Emulator\Memory.cpp">
-      <Filter>Emulator</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler.cpp">
-      <Filter>Emulator</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\SaveLoad.cpp">
       <Filter>Emulator</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Emulator\Debugger\break.cpp">
@@ -125,48 +110,6 @@
     </ClCompile>
     <ClCompile Include="SRC\Emulator\Interpreter\c_tables.cpp">
       <Filter>Emulator\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_branch.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_compare.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_condition.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_floatingpoint.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_fploadstore.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_integer.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_loadstore.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_logical.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_pairedsingle.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_psloadstore.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_rotate.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_shift.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_system.cpp">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Recompiler\a_tables.cpp">
-      <Filter>Emulator\Recompiler</Filter>
     </ClCompile>
     <ClCompile Include="SRC\UserMenu\UserAbout.cpp">
       <Filter>User Menu</Filter>
@@ -287,13 +230,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SRC\Emulator\Compare.h">
-      <Filter>Emulator</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\Emulator\Debugger.h">
-      <Filter>Emulator</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\DisasmX86.h">
       <Filter>Emulator</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Emulator\Emulator.h">
@@ -312,12 +249,6 @@
       <Filter>Emulator</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Emulator\Memory.h">
-      <Filter>Emulator</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler.h">
-      <Filter>Emulator</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\SaveLoad.h">
       <Filter>Emulator</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Emulator\Debugger\break.h">
@@ -385,51 +316,6 @@
     </ClInclude>
     <ClInclude Include="SRC\Emulator\Interpreter\c_tables.h">
       <Filter>Emulator\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_branch.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_compare.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_condition.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_floatingpoint.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_fploadstore.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_integer.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_loadstore.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_logical.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_pairedsingle.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_psloadstore.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_rotate.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_shift.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_system.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\a_tables.h">
-      <Filter>Emulator\Recompiler</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Emulator\Recompiler\X86.h">
-      <Filter>Emulator\Recompiler</Filter>
     </ClInclude>
     <ClInclude Include="SRC\UserMenu\User.h">
       <Filter>User Menu</Filter>

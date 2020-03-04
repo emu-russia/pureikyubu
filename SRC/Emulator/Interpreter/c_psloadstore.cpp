@@ -2,7 +2,7 @@
 // used for fast type casting and matrix transfers.
 #include "dolphin.h"
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 /*/ ---------------------------------------------------------------------------
 
@@ -19,9 +19,9 @@
 --------------------------------------------------------------------------- /*/
 
 // INT -> F32 (F = I * 2 ** -S)
-static f32 dequantize(u32 data, s32 type, u8 scale)
+static float dequantize(uint32_t data, int type, uint8_t scale)
 {
-    f32 flt;
+    float flt;
 
     switch(type)
     {
@@ -37,9 +37,9 @@ static f32 dequantize(u32 data, s32 type, u8 scale)
 }
 
 // F32 -> INT (I = ROUND(F * 2 ** S))
-static u32 quantize(f32 data, s32 type, u8 scale)
+static uint32_t quantize(float data, int type, uint8_t scale)
 {
-    u32 uval;
+    uint32_t uval;
 
     data *= cpu.stScale[scale];
 

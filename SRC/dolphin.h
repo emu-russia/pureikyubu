@@ -6,6 +6,7 @@
 // ---------------------------------------------------------------------------
 // compiler and SDK include files.
 
+#include <stdint.h>
 #include <direct.h>
 #include <setjmp.h>
 #include <float.h>
@@ -25,32 +26,7 @@
 // version info, used everywhere in emu.
 #define APPNAME     "Dolwin"
 #define APPDESC     "Nintendo Gamecube Emulator for Windows"
-#define APPVER      "0.10"
-
-// ---------------------------------------------------------------------------
-// Dolwin data types. please, try not to use various DWORDs, ulongs etc.,
-// except Windows defined BOOL. let the source to be compatible with Nintendo's ;)
-
-typedef signed   char       s8;
-typedef signed   short      s16;
-typedef signed   long       s32;
-typedef signed   __int64    s64;
-typedef unsigned char       u8;
-typedef unsigned short      u16;
-typedef unsigned long       u32;
-typedef unsigned __int64    u64;
-typedef float               f32;
-typedef double              f64;
-
-// just to show, that BOOL is common for use
-#ifndef WIN32
-typedef enum BOOL { FALSE, TRUE = !FALSE } BOOL;
-#endif
-
-// note : do not use C++ classes in Dolwin, because "this" pointer is
-// making some pressure on x86 registers.
-
-// do not use "inline" calls, they may be buggy in __fastcall functions.
+#define APPVER      "0.11"
 
 // ---------------------------------------------------------------------------
 // Dolwin includes, from higher to lower levels.

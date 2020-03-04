@@ -1,12 +1,12 @@
 // Branch Instructions
 #include "dolphin.h"
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 // PC = PC + EXTS(LI || 0b00)
 OP(B)
 {
-    u32 target = op & 0x03fffffc;
+    uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
     PC = PC + target;
 }
@@ -14,7 +14,7 @@ OP(B)
 // PC = EXTS(LI || 0b00)
 OP(BA)
 {
-    u32 target = op & 0x03fffffc;
+    uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
     PC = target;
 }
@@ -22,7 +22,7 @@ OP(BA)
 // LR = PC + 4, PC = PC + EXTS(LI || 0b00)
 OP(BL)
 {
-    u32 target = op & 0x03fffffc;
+    uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
     LR = PC + 4;
     PC = PC + target;
@@ -31,13 +31,13 @@ OP(BL)
 // LR = PC + 4, PC = EXTS(LI || 0b00)
 OP(BLA)
 {
-    u32 target = op & 0x03fffffc;
+    uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
     LR = PC + 4;
     PC = target;
 }
 
-static void (__fastcall *bx[4])(u32 op) = { c_B, c_BL, c_BA, c_BLA };
+static void (__fastcall *bx[4])(uint32_t op) = { c_B, c_BL, c_BA, c_BLA };
 
 OP(BX)
 {
@@ -48,10 +48,10 @@ OP(BX)
 // ---------------------------------------------------------------------------
 
 // calculation of conditional branch
-static BOOL bc(u32 op)
+static BOOL bc(uint32_t op)
 {
     BOOL ctr_ok, cond_ok;
-    s32 bo = RD, bi = BI;
+    int bo = RD, bi = BI;
 
     if(BO(2) == 0)
     {
@@ -87,7 +87,7 @@ OP(BCX)
     {
         if(op & 1) LR = PC + 4; // LK
 
-        u32 target = op & 0xfffc;
+        uint32_t target = op & 0xfffc;
         if(target & 0x8000) target |= 0xffff0000;
         if(op & 2) PC = target; // AA
         else PC += target;
@@ -120,7 +120,7 @@ OP(BCLRL)
 {
     if(bc(op))
     {
-        u32 lr = PC + 4;
+        uint32_t lr = PC + 4;
         PC = LR & ~3;
         LR = lr;
         cpu.branch = TRUE;
@@ -130,10 +130,10 @@ OP(BCLRL)
 // ---------------------------------------------------------------------------
 
 // calculation of conditional to count register branch
-static BOOL bctr(u32 op)
+static BOOL bctr(uint32_t op)
 {
     BOOL cond_ok;
-    s32 bo = RD, bi = BI;
+    int bo = RD, bi = BI;
 
     if(BO(0) == 0)
     {

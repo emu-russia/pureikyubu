@@ -2,13 +2,13 @@
 #include "dolphin.h"
 
 // opcode tables
-void (__fastcall *c_19[2048])(u32 op);      // 19
-void (__fastcall *c_31[2048])(u32 op);      // 31
-void (__fastcall *c_59[64])(u32 op);        // 59
-void (__fastcall *c_63[2048])(u32 op);      // 63
-void (__fastcall *c_4 [2048])(u32 op);      // 4
+void (__fastcall *c_19[2048])(uint32_t op);      // 19
+void (__fastcall *c_31[2048])(uint32_t op);      // 31
+void (__fastcall *c_59[64])(uint32_t op);        // 59
+void (__fastcall *c_63[2048])(uint32_t op);      // 63
+void (__fastcall *c_4 [2048])(uint32_t op);      // 4
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 // not implemented opcode
 OP(NI)
@@ -93,7 +93,7 @@ OP(HL)
 }
 
 // setup main opcode table
-void (__fastcall *c_1[64])(u32 op) = {
+void (__fastcall *c_1[64])(uint32_t op) = {
  c_HL    , c_NI    , c_NI    , c_TWI   , c_OP4   , c_NI    , c_NI    , c_MULLI,
  c_SUBFIC, c_NI    , c_CMPLI , c_CMPI  , c_ADDIC , c_ADDICD, c_ADDI  , c_ADDIS,
  c_BCX   , c_SC    , c_BX    , c_OP19  , c_RLWIMI, c_RLWINM, c_NI    , c_RLWNM,
@@ -108,14 +108,14 @@ void (__fastcall *c_1[64])(u32 op) = {
 void IPTInitTables()
 {
     int i;
-    u8 scale;
+    uint8_t scale;
 
     // build rotate mask table
     for(int mb=0; mb<32; mb++)
     {
         for(int me=0; me<32; me++)
         {
-            u32 mask = ((u32)-1 >> mb) ^ ((me >= 31) ? 0 : ((u32)-1) >> (me + 1));
+            uint32_t mask = ((u32)-1 >> mb) ^ ((me >= 31) ? 0 : ((u32)-1) >> (me + 1));
             cpu.rotmask[mb][me] = (mb > me) ? (~mask) : (mask);
         }
     }
@@ -132,7 +132,7 @@ void IPTInitTables()
         {
             factor = 0 + (scale & 0x1f);
         }
-        cpu.ldScale[scale] = powf(2, -1.0f * (f32)factor);
+        cpu.ldScale[scale] = powf(2, -1.0f * (float)factor);
     }
 
     // build paired-single store scale
@@ -147,7 +147,7 @@ void IPTInitTables()
         {
             factor = 0 + (scale & 0x1f);
         }
-        cpu.stScale[scale] = powf(2, +1.0f * (f32)factor);
+        cpu.stScale[scale] = powf(2, +1.0f * (float)factor);
     }
 
     // set all tables to default "not implemented" opcode

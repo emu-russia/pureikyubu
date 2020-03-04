@@ -1,7 +1,7 @@
 // Integer Compare Instructions
 #include "dolphin.h"
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 #define SET_CR_LT(n)    (CR |=  (1 << (3 + 4 * (7 - n))))
 #define SET_CR_GT(n)    (CR |=  (1 << (2 + 4 * (7 - n))))
@@ -26,7 +26,7 @@
 // CR[4*crf..4*crf+3] = c || XER[SO]
 OP(CMPI)
 {
-    s32 a = RRA, b = SIMM;
+    int32_t a = RRA, b = SIMM;
     int crfd = CRFD;
     if(a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
     if(a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
@@ -44,7 +44,7 @@ OP(CMPI)
 // CR[4*crf..4*crf+3] = c || XER[SO]
 OP(CMP)
 {
-    s32 a = RRA, b = RRB;
+    int32_t a = RRA, b = RRB;
     int crfd = CRFD;
     if(a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
     if(a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
@@ -62,7 +62,7 @@ OP(CMP)
 // CR[4*crf..4*crf+3] = c || XER[SO]
 OP(CMPLI)
 {
-    u32 a = RRA, b = UIMM;
+    uint32_t a = RRA, b = UIMM;
     int crfd = CRFD;
     if(a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
     if(a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
@@ -80,8 +80,8 @@ OP(CMPLI)
 // CR[4*crf..4*crf+3] = c || XER[SO]
 OP(CMPL)
 {
-    u32 a = RRA;
-    u32 b = RRB;
+    uint32_t a = RRA;
+    uint32_t b = RRB;
     int crfd = CRFD;
     if(a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
     if(a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);

@@ -5,22 +5,22 @@
 static char tempBuf[1024];      // temporary buffer for file operations
 
 // get file size
-s32 FileSize(char *filename)
+int FileSize(char *filename)
 {
     FILE *f = fopen(filename, "rb");
     if(f == NULL) return 0;
     fseek(f, 0, SEEK_END);
-    s32 size = ftell(f);
+    int size = ftell(f);
     fclose(f);
     return size;
 }
 
 // load data from file
-void * FileLoad(char *filename, u32 *size)
+void * FileLoad(char *filename, uint32_t *size)
 {
     FILE*   f;
     void*   buffer;
-    u32     filesize;
+    uint32_t  filesize;
 
     if(size) *size = 0;
 
@@ -45,7 +45,7 @@ void * FileLoad(char *filename, u32 *size)
 }
 
 // save data in file
-BOOL FileSave(char *filename, void *data, u32 size)
+BOOL FileSave(char *filename, void *data, uint32_t size)
 {
     FILE *f = fopen(filename, "wb");
     if(f == NULL) return FALSE;
@@ -246,7 +246,7 @@ char * FileShortName(char *filename, int lvl)
 }
 
 // nice value of KB, MB or GB, for output
-char * FileSmartSize(u32 size)
+char * FileSmartSize(uint32_t size)
 {
     if(size < 1024)
     {
@@ -260,6 +260,6 @@ char * FileSmartSize(u32 size)
     {
         sprintf(tempBuf, "%i MB", size/1024/1024);
     }
-    else sprintf(tempBuf, "%1.1f GB", (f32)size/1024/1024/1024);
+    else sprintf(tempBuf, "%1.1f GB", (float)size/1024/1024/1024);
     return tempBuf;
 }

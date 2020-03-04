@@ -5,18 +5,18 @@
 CPUControl cpu;
 
 // generate (look, not assert!) exception
-void (*CPUException)(u32 vector);
+void (*CPUException)(uint32_t vector);
 
 // memory operations (using MEM* or DB* read/write operations)
-void (__fastcall *CPUReadByte)(u32 addr, u32 *reg);
-void (__fastcall *CPUWriteByte)(u32 addr, u32 data);
-void (__fastcall *CPUReadHalf)(u32 addr, u32 *reg);
-void (__fastcall *CPUReadHalfS)(u32 addr, u32 *reg);
-void (__fastcall *CPUWriteHalf)(u32 addr, u32 data);
-void (__fastcall *CPUReadWord)(u32 addr, u32 *reg);
-void (__fastcall *CPUWriteWord)(u32 addr, u32 data);
-void (__fastcall *CPUReadDouble)(u32 addr, u64 *reg);
-void (__fastcall *CPUWriteDouble)(u32 addr, u64 *data);
+void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t *reg);
+void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
+void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t *reg);
+void (__fastcall *CPUReadHalfS)(uint32_t addr, uint32_t *reg);
+void (__fastcall *CPUWriteHalf)(uint32_t addr, uint32_t data);
+void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t *reg);
+void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
+void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t *reg);
+void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t *data);
 
 // run from PC (using interpreter/debugger/recompiler)
 void (*CPUStart)();
@@ -55,9 +55,6 @@ void CPUInit()
 
     // setup interpreter tables
     IPTInitTables();
-
-    // setup recompiler
-    RECInitTables();
 }
 
 // free CPU resources
@@ -93,11 +90,6 @@ void CPUOpen()
         case CPU_INTERPRETER:
             CPUStart = IPTStart;
             CPUException = IPTException;
-            break;
-
-        case CPU_RECOMPILER:
-            CPUStart = RECStart;
-            CPUException = RECException;
             break;
 
         default:
@@ -143,7 +135,7 @@ void CPUTick()
 
     UTBR += cpu.cf;         // timer
 
-    u32 old = DEC;
+    uint32_t old = DEC;
     DEC -= cpu.cf;          // decrementer
     if((old ^ DEC) & 0x80000000)
     {

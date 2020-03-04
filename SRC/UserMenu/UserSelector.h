@@ -15,13 +15,13 @@ enum SELECTOR_FILE
 // file entry
 typedef struct UserFile
 {
-    s32     type;                   // see above (one of SELECTOR_FILE_*)
-    s32     size;                   // file size
+    int     type;                   // see above (one of SELECTOR_FILE_*)
+    int     size;                   // file size
     char    id[8];                  // GameID = DiskID + banner checksum
     char    name[2*MAX_PATH+2];     // file path and name
     char    title[MAX_TITLE];       // alternate file name
     char    comment[MAX_COMMENT];   // some notes
-    s32     icon[2];                // banner/icon + same but highlighted
+    int     icon[2];                // banner/icon + same but highlighted
 } UserFile;
 
 // selector columns
@@ -49,10 +49,10 @@ void    SetSelectorIconSize(BOOL smallIcon);        // <-- funny "BOOL small" co
 BOOL    AddSelectorPath(char *fullPath);            // FALSE, if path duplicated
 void    ResizeSelector(s32 width, s32 height);
 void    UpdateSelector();
-s32     SelectorGetSelected();
+int     SelectorGetSelected();
 void    SelectorSetSelected(s32 item);
 void    SelectorSetSelected(char *filename);
-void    SortSelector(s32 sortBy);
+void    SortSelector(int sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void    NotifySelector(LPNMHDR pnmh);
 void    ScrollSelector(char letter);

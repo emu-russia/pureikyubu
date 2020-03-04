@@ -27,7 +27,7 @@ static void fix_path(char *path)
 // remove all control symbols (below space)
 static void fix_string(char *str)
 {
-    for(u32 i=0; i<strlen(str); i++)
+    for(int i=0; i<strlen(str); i++)
     {
         if(str[i] < ' ') str[i] = ' ';
     }

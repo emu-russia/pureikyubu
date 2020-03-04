@@ -33,7 +33,7 @@ static char * tabs[] =
 
 static struct ConsoleVersion
 {
-    u32     ver;
+    uint32_t ver;
     char*   info;
 } consoleVersion[] = {
     { 0x00000001, "0x00000001: Retail 1" },
@@ -177,7 +177,7 @@ static void LoadSettings(int n)         // dialogs created
     // GCN Hardware
     if(n == 2)
     {
-        u32 ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
+        uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
         int i=0, selected;
         while(consoleVersion[i].ver != 0xffffffff)
         {
@@ -330,7 +330,7 @@ static void SaveSettings()              // OK pressed
         {
             char buf[100];
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf);
-            u32 ver = strtoul(buf, NULL, 0);
+            uint32_t ver = strtoul(buf, NULL, 0);
             SetConfigInt(USER_CONSOLE, ver);
         }
         else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver);
@@ -398,7 +398,7 @@ static void fix_path(char *path)
 // remove all control symbols (below space)
 static void fix_string(char *str)
 {
-    for(u32 i=0; i<strlen(str); i++)
+    for(int i=0; i<strlen(str); i++)
     {
         if(str[i] < ' ') str[i] = ' ';
     }
@@ -747,7 +747,7 @@ static BOOL CALLBACK EditFileProc(
                     );
                 }
                 EndDialog(hwndDlg, 0);
-                s32 sel = SelectorGetSelected();
+                int sel = SelectorGetSelected();
                 UpdateSelector();
                 SelectorSetSelected(sel);
                 return TRUE;
@@ -802,7 +802,7 @@ void EditFileInformation(HWND hwnd)
 // ---------------------------------------------------------------------------
 // file filter dialog
 
-static void filter_string(HWND hDlg, u32 filter)
+static void filter_string(HWND hDlg, uint32_t filter)
 {
     char buf[64], *ptr = buf;
     char * mask[] = { "*.dol", "*.elf", "*.gcm", "*.gmp" };
@@ -819,7 +819,7 @@ static void filter_string(HWND hDlg, u32 filter)
     SetDlgItemText(hDlg, IDC_FILE_FILTER, buf);
 }
 
-static void check_filter(HWND hDlg, u32 filter)
+static void check_filter(HWND hDlg, uint32_t filter)
 {
     // DOL
     if(filter & 0xff000000) CheckDlgButton(hDlg, IDC_DOL_FILTER, BST_CHECKED);
@@ -881,7 +881,7 @@ static BOOL CALLBACK FileFilterProc(
                 EndDialog(hwndDlg, 0);
 
                 // save information and update selector (if filter was changed)
-                if((u32)GetConfigInt(USER_FILTER, USER_FILTER_DEFAULT) != usel.filter)
+                if((uint32_t)GetConfigInt(USER_FILTER, USER_FILTER_DEFAULT) != usel.filter)
                 {
                     SetConfigInt(USER_FILTER, usel.filter);
                     UpdateSelector();

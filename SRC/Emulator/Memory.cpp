@@ -4,17 +4,17 @@
 MEMControl mem;
 
 // memory read/write routines (thats all you need for CPU)
-void (__fastcall *MEMReadByte)(u32 addr, u32 *reg);     // load byte
-void (__fastcall *MEMWriteByte)(u32 addr, u32 data);    // store byte
-void (__fastcall *MEMReadHalf)(u32 addr, u32 *reg);     // load halfword
-void (__fastcall *MEMReadHalfS)(u32 addr, u32 *reg);    // load signed halfword
-void (__fastcall *MEMWriteHalf)(u32 addr, u32 data);    // store halfword
-void (__fastcall *MEMReadWord)(u32 addr, u32 *reg);     // load word
-void (__fastcall *MEMWriteWord)(u32 addr, u32 data);    // store word
-void (__fastcall *MEMReadDouble)(u32 addr, u64 *reg);   // load doubleword
-void (__fastcall *MEMWriteDouble)(u32 addr, u64 *data); // store doubleword
-u32  (__fastcall *MEMFetch)(u32 addr);
-u32  (__fastcall *MEMEffectiveToPhysical)(u32 ea, BOOL IR); // translate
+void (__fastcall *MEMReadByte)(uint32_t addr, uint32_t *reg);     // load byte
+void (__fastcall *MEMWriteByte)(uint32_t addr, uint32_t data);    // store byte
+void (__fastcall *MEMReadHalf)(uint32_t addr, uint32_t *reg);     // load halfword
+void (__fastcall *MEMReadHalfS)(uint32_t addr, uint32_t *reg);    // load signed halfword
+void (__fastcall *MEMWriteHalf)(uint32_t addr, uint32_t data);    // store halfword
+void (__fastcall *MEMReadWord)(uint32_t addr, uint32_t *reg);     // load word
+void (__fastcall *MEMWriteWord)(uint32_t addr, uint32_t data);    // store word
+void (__fastcall *MEMReadDouble)(uint32_t addr, uint64_t *reg);   // load doubleword
+void (__fastcall *MEMWriteDouble)(uint32_t addr, uint64_t *data); // store doubleword
+uint32_t (__fastcall *MEMFetch)(uint32_t addr);
+uint32_t (__fastcall *MEMEffectiveToPhysical)(uint32_t ea, BOOL IR); // translate
 
 // ---------------------------------------------------------------------------
 // memory sub-system management (init stuff)
@@ -24,7 +24,7 @@ void MEMInit()
     if(mem.inited) return;
 
     // allocate main memory buffer
-    RAM = (u8 *)malloc(RAMSIZE);
+    RAM = (uint8_t *)malloc(RAMSIZE);
     ASSERT(RAM == NULL, "No space for main memory buffer.");
 
     #pragma message ("Hack : remove, when finish MMU tables")
@@ -90,33 +90,33 @@ void MEMClose()
 // forward referencies to memory operations :
 
 // simple translation only for GC DolphinOS (good enough mostly)
-void __fastcall GCReadByte(u32 addr, u32 *reg);
-void __fastcall GCWriteByte(u32 addr, u32 data);
-void __fastcall GCReadHalf(u32 addr, u32 *reg);
-void __fastcall GCReadHalfS(u32 addr, u32 *reg);
-void __fastcall GCWriteHalf(u32 addr, u32 data);
-void __fastcall GCReadWord(u32 addr, u32 *reg);
-void __fastcall GCWriteWord(u32 addr, u32 data);
-void __fastcall GCReadDouble(u32 addr, u64 *reg);
-void __fastcall GCWriteDouble(u32 addr, u64 *data);
-u32  __fastcall GCFetch(u32 addr);
-u32  __fastcall GCEffectiveToPhysical(u32 ea, BOOL IR=0);
+void __fastcall GCReadByte(uint32_t addr, uint32_t *reg);
+void __fastcall GCWriteByte(uint32_t addr, uint32_t data);
+void __fastcall GCReadHalf(uint32_t addr, uint32_t *reg);
+void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg);
+void __fastcall GCWriteHalf(uint32_t addr, uint32_t data);
+void __fastcall GCReadWord(uint32_t addr, uint32_t *reg);
+void __fastcall GCWriteWord(uint32_t addr, uint32_t data);
+void __fastcall GCReadDouble(uint32_t addr, uint64_t *reg);
+void __fastcall GCWriteDouble(uint32_t addr, uint64_t *data);
+uint32_t  __fastcall GCFetch(uint32_t addr);
+uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, BOOL IR=0);
 
 // for PowerPC memory mapping (as on real, slow, very compatible)
-void __fastcall MMUReadByte(u32 addr, u32 *reg);
-void __fastcall MMUWriteByte(u32 addr, u32 data);
-void __fastcall MMUReadHalf(u32 addr, u32 *reg);
-void __fastcall MMUReadHalfS(u32 addr, u32 *reg);
-void __fastcall MMUWriteHalf(u32 addr, u32 data);
-void __fastcall MMUReadWord(u32 addr, u32 *reg);
-void __fastcall MMUWriteWord(u32 addr, u32 data);
-void __fastcall MMUReadDouble(u32 addr, u64 *reg);
-void __fastcall MMUWriteDouble(u32 addr, u64 *data);
-u32  __fastcall MMUFetch(u32 addr);
-u32  __fastcall MMUEffectiveToPhysical(u32 ea, BOOL IR=0);
+void __fastcall MMUReadByte(uint32_t addr, uint32_t *reg);
+void __fastcall MMUWriteByte(uint32_t addr, uint32_t data);
+void __fastcall MMUReadHalf(uint32_t addr, uint32_t *reg);
+void __fastcall MMUReadHalfS(uint32_t addr, uint32_t *reg);
+void __fastcall MMUWriteHalf(uint32_t addr, uint32_t data);
+void __fastcall MMUReadWord(uint32_t addr, uint32_t *reg);
+void __fastcall MMUWriteWord(uint32_t addr, uint32_t data);
+void __fastcall MMUReadDouble(uint32_t addr, uint64_t *reg);
+void __fastcall MMUWriteDouble(uint32_t addr, uint64_t *data);
+uint32_t  __fastcall MMUFetch(uint32_t addr);
+uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, BOOL IR=0);
 
 // select memory mode
-void MEMSelect(u8 mode, BOOL save)
+void MEMSelect(int mode, BOOL save)
 {
     // select translation mode
     if(mode)    // MMU
@@ -124,9 +124,9 @@ void MEMSelect(u8 mode, BOOL save)
         if(!mem.mmudirect)
         {
             // take care about memory map, if mode is MMU
-            mem.imap = (u8 **)malloc(4*1024*1024);
+            mem.imap = (uint8_t **)malloc(4*1024*1024);
             ASSERT(mem.imap, "Not enough memory for MMU instruction translation buffer.");
-            mem.dmap = (u8 **)malloc(4*1024*1024);
+            mem.dmap = (uint8_t **)malloc(4*1024*1024);
             ASSERT(mem.dmap, "Not enough memory for MMU data translation buffer.");
 
             // clear lookups
@@ -188,7 +188,7 @@ void MEMSelect(u8 mode, BOOL save)
 // ---------------------------------------------------------------------------
 // simple translation (only for Dolphin OS). unlike 0.09, we are using C here.
 
-u32 __fastcall GCEffectiveToPhysical(u32 ea, BOOL IR)
+uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, BOOL IR)
 {
     if(!mem.opened) return -1;
     // ignore no memory, page faults, alignment, etc errors

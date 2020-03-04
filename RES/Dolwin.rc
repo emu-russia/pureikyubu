@@ -1,8 +1,5 @@
 // Microsoft Visual C++ generated resource script.
 //
-
-#include <windows.h>
-
 #include "resource.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
@@ -10,18 +7,17 @@
 //
 // Generated from the TEXTINCLUDE 2 resource.
 //
+#include "afxres.h"
 
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Russian resources
+// Russian (Russia) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-#ifdef _WIN32
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 #pragma code_page(1251)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -48,25 +44,23 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
-#endif    // Russian resources
+#endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Dialog
 //
 
-IDD_FILE_FILTER DIALOG  20, 30, 255, 126
+IDD_FILE_FILTER DIALOG 20, 30, 255, 126
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dolwin File Filter"
 FONT 8, "MS Sans Serif"
@@ -75,20 +69,15 @@ BEGIN
     GROUPBOX        "Executables",IDC_STATIC,5,5,245,45
     GROUPBOX        "DVD Images",IDC_STATIC,5,54,245,45
     LTEXT           "String :",IDC_STATIC,10,104,25,15,SS_CENTERIMAGE
-    EDITTEXT        IDC_FILE_FILTER,36,106,155,12,ES_AUTOHSCROLL | 
-                    ES_READONLY
-    CONTROL         "Dolphin/GAMECUBE executable file, custom Nintendo format",
-                    IDC_DOL_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
-                    15,225,15
-    CONTROL         "Embedded Link File, standard executable files",
-                    IDC_ELF_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
-                    30,225,15
-    CONTROL         "GAMECUBE Master Data, default GC DVD images",
-                    IDC_GCM_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
-                    64,225,15
-    CONTROL         "GAMECUBE Master Packed Data, custom Dolwin format",
-                    IDC_GMP_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,
-                    80,225,15
+    EDITTEXT        IDC_FILE_FILTER,36,106,155,12,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "Dolphin/GAMECUBE executable file, custom Nintendo format",IDC_DOL_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,225,15
+    CONTROL         "Embedded Link File, standard executable files",IDC_ELF_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,225,15
+    CONTROL         "GAMECUBE Master Data, default GC DVD images",IDC_GCM_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
+    CONTROL         "GAMECUBE Master Packed Data, custom Dolwin format",IDC_GMP_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
 END
 
 IDD_EDIT_FILE_INFO DIALOGEX 20, 30, 240, 177
@@ -101,52 +90,41 @@ BEGIN
     LTEXT           "Filename:",IDC_STATIC,4,7,35,10
     LTEXT           "Location:",IDC_STATIC,4,27,35,10
     LTEXT           "Title:",IDC_STATIC,3,47,35,20
-    EDITTEXT        IDC_FILE_INFO_TITLE,45,45,190,35,ES_MULTILINE | 
-                    ES_WANTRETURN | WS_VSCROLL
+    EDITTEXT        IDC_FILE_INFO_TITLE,45,45,190,35,ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL
     LTEXT           "Comment:",IDC_STATIC,3,86,35,40
-    EDITTEXT        IDC_FILE_INFO_COMMENT,45,85,190,65,ES_MULTILINE | 
-                    ES_WANTRETURN | WS_VSCROLL
+    EDITTEXT        IDC_FILE_INFO_COMMENT,45,85,190,65,ES_MULTILINE | ES_WANTRETURN | WS_VSCROLL
     PUSHBUTTON      "Defaults",IDC_FILE_INFO_DEFAULT,45,156,62,14
-    EDITTEXT        IDC_FILE_INFO_FILENAME,45,5,190,14,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT 
-                    WS_BORDER,WS_EX_CLIENTEDGE
-    EDITTEXT        IDC_FILE_INFO_PATH,45,25,190,14,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT 
-                    WS_BORDER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_FILE_INFO_FILENAME,45,5,190,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_FILE_INFO_PATH,45,25,190,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
 END
 
-IDD_SELECT_PLUGIN DIALOG  20, 30, 222, 110
+IDD_SELECT_PLUGIN DIALOG 20, 30, 222, 110
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configure *"
 FONT 9, "MS Sans Serif"
 BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,175,90,40,15
     GROUPBOX        "Select Plugin",IDC_STATIC,6,5,210,80
-    COMBOBOX        IDC_PLUGIN_LIST,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_PLUGIN_LIST,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "About...",IDC_PLUGIN_ABOUT,16,60,35,14
     PUSHBUTTON      "Config...",IDC_PLUGIN_CONFIG,171,60,35,14
     PUSHBUTTON      "OK",IDOK,135,90,35,15
-    COMBOBOX        IDC_PLUGIN_PADNUM,125,61,43,30,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_PLUGIN_PATH,16,40,175,12,ES_AUTOHSCROLL | 
-                    ES_READONLY | NOT WS_VISIBLE
+    COMBOBOX        IDC_PLUGIN_PADNUM,125,61,43,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    EDITTEXT        IDC_PLUGIN_PATH,16,40,175,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_VISIBLE
     PUSHBUTTON      "...",IDC_PLUGIN_BROWSE,194,40,13,13,NOT WS_VISIBLE
 END
 
-IDD_FONT_SETTINGS DIALOG  0, 0, 224, 130
+IDD_FONT_SETTINGS DIALOG 0, 0, 224, 130
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configure Bootrom Font"
 FONT 8, "MS Sans Serif"
 BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,177,108,40,15
     GROUPBOX        "Select Bootrom Ansi Font",IDC_STATIC,7,5,210,41
-    COMBOBOX        IDC_FONT_ANSICOMBO,16,20,190,40,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_FONT_ANSICOMBO,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "OK",IDOK,134,108,35,15
     GROUPBOX        "Select Bootrom Sjis Font",IDC_STATIC,7,57,210,41
-    COMBOBOX        IDC_FONT_SJISCOMBO,17,73,190,40,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_FONT_SJISCOMBO,17,73,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_MEMCARD_SETTINGS DIALOGEX 0, 0, 250, 182
@@ -156,37 +134,29 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,139,161,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,193,161,50,14
-    CONTROL         "Save to disk when disconnecting the memcard",
-                    IDC_MEMCARD_SYNCSAVE_FALSE,"Button",BS_AUTORADIOBUTTON,7,
-                    7,236,14
-    CONTROL         "Save to disk when writting to the memcard",
-                    IDC_MEMCARD_SYNCSAVE_TRUE,"Button",BS_AUTORADIOBUTTON,7,
-                    23,236,16
-    CONTROL         "Memcard is connected",IDC_MEMCARD_CONNECTED,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,14,58,220,11
+    CONTROL         "Save to disk when disconnecting the memcard",IDC_MEMCARD_SYNCSAVE_FALSE,
+                    "Button",BS_AUTORADIOBUTTON,7,7,236,14
+    CONTROL         "Save to disk when writting to the memcard",IDC_MEMCARD_SYNCSAVE_TRUE,
+                    "Button",BS_AUTORADIOBUTTON,7,23,236,16
+    CONTROL         "Memcard is connected",IDC_MEMCARD_CONNECTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,58,220,11
     LTEXT           "Filename:",IDC_STATIC,13,78,35,10
     LTEXT           "Location:",IDC_STATIC,13,99,35,10
     GROUPBOX        "Settings",IDC_STATIC,7,43,236,113
     PUSHBUTTON      "Choose file...",IDC_MEMCARD_CHOOSEFILE,175,132,59,16
     PUSHBUTTON      "Create New...",IDC_MEMCARD_NEW,112,133,59,16
     LTEXT           "",IDC_MEMCARD_SIZEDESC,57,114,178,12
-    EDITTEXT        IDC_MEMCARD_PATH,55,95,180,14,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT 
-                    WS_BORDER,WS_EX_CLIENTEDGE
-    EDITTEXT        IDC_MEMCARD_FILE,55,75,180,14,ES_MULTILINE | 
-                    ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT 
-                    WS_BORDER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_MEMCARD_PATH,55,95,180,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_MEMCARD_FILE,55,75,180,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
 END
 
-IDD_MEMCARD_CHOOSESIZE DIALOG  0, 0, 141, 46
+IDD_MEMCARD_CHOOSESIZE DIALOG 0, 0, 141, 46
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Choose Memcard Size"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,28,25,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,84,25,50,14
-    COMBOBOX        IDC_MEMCARD_SIZES,7,7,127,16,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_MEMCARD_SIZES,7,7,127,16,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
 END
 
 IDD_SETTINGS_EMU DIALOGEX 0, 0, 230, 256
@@ -197,43 +167,28 @@ BEGIN
     LTEXT           "Memory &Mode:",IDC_STATIC,12,30,78,12,SS_CENTERIMAGE
     GROUPBOX        "CPU Timing",IDC_STATIC,12,66,204,67
     GROUPBOX        "CPU Features",IDC_STATIC,12,139,204,72
-    CONTROL         "Use MM&X/SSE, when possible",IDC_USEMMX,"Button",
-                    BS_AUTOCHECKBOX,24,217,114,12
-    COMBOBOX        IDC_CPU_CORE,96,12,120,12,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL
-    COMBOBOX        IDC_MEMORY_MODE,96,30,120,12,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL
+    CONTROL         "Use MM&X/SSE, when possible",IDC_USEMMX,"Button",BS_AUTOCHECKBOX,24,217,114,12
+    COMBOBOX        IDC_CPU_CORE,96,12,120,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
+    COMBOBOX        IDC_MEMORY_MODE,96,30,120,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
     LTEXT           "Counter &Factor:",IDC_STATIC,24,78,66,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_COUNTER_FACTOR,96,78,24,12,ES_AUTOHSCROLL | NOT 
-                    WS_TABSTOP
+    EDITTEXT        IDC_COUNTER_FACTOR,96,78,24,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
     LTEXT           "Counter &Delay:",IDC_STATIC,24,95,66,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_COUNTER_DELAY,96,95,24,12,ES_AUTOHSCROLL | NOT 
-                    WS_TABSTOP
-    LTEXT           "Hardware &Bailout:",IDC_STATIC,24,112,66,12,
-                    SS_CENTERIMAGE
+    EDITTEXT        IDC_COUNTER_DELAY,96,95,24,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
+    LTEXT           "Hardware &Bailout:",IDC_STATIC,24,112,66,12,SS_CENTERIMAGE
     EDITTEXT        IDC_BAILOUT,96,112,24,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
     CONTROL         "Write-back data cache (Default: disabled)",IDC_CHECK3,
                     "Button",BS_AUTOCHECKBOX,24,155,150,12
-    CONTROL         "&Locked L1 cache (Default: disabled)",IDC_CHECK4,"Button",
-                    BS_AUTOCHECKBOX,24,173,132,12
+    CONTROL         "&Locked L1 cache (Default: disabled)",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,24,173,132,12
     CONTROL         "&Write gathering buffer (Default: disabled)",IDC_CHECK5,
                     "Button",BS_AUTOCHECKBOX,24,191,150,12
-    LTEXT           "(Default: %i)",IDC_CF_DEFAULT,126,78,78,12,
-                    SS_CENTERIMAGE
-    LTEXT           "(Default: %i)",IDC_DELAY_DEFAULT,126,95,78,12,
-                    SS_CENTERIMAGE
-    LTEXT           "(Default: %i)",IDC_BAILOUT_DEFAULT,126,112,78,12,
-                    SS_CENTERIMAGE
-    CONTROL         "Lookup &tables",IDC_CHECK6,"Button",BS_AUTOCHECKBOX,96,
-                    48,90,12
-    CONTROL         "MMX",IDC_MMXFLAG,"Button",BS_AUTOCHECKBOX | WS_DISABLED,
-                    24,234,30,12
-    CONTROL         "SSE",IDC_SSEFLAG,"Button",BS_AUTOCHECKBOX | WS_DISABLED,
-                    66,234,30,12
-    PUSHBUTTON      "Reset ALL\nsettings",IDC_WINDALL,150,216,48,24,
-                    BS_MULTILINE | NOT WS_TABSTOP
-    CONTROL         "",IDC_ENSURE_WINDALL,"Button",BS_AUTOCHECKBOX | 
-                    WS_TABSTOP,204,216,12,10
+    LTEXT           "(Default: %i)",IDC_CF_DEFAULT,126,78,78,12,SS_CENTERIMAGE
+    LTEXT           "(Default: %i)",IDC_DELAY_DEFAULT,126,95,78,12,SS_CENTERIMAGE
+    LTEXT           "(Default: %i)",IDC_BAILOUT_DEFAULT,126,112,78,12,SS_CENTERIMAGE
+    CONTROL         "Lookup &tables",IDC_CHECK6,"Button",BS_AUTOCHECKBOX,96,48,90,12
+    CONTROL         "MMX",IDC_MMXFLAG,"Button",BS_AUTOCHECKBOX | WS_DISABLED,24,234,30,12
+    CONTROL         "SSE",IDC_SSEFLAG,"Button",BS_AUTOCHECKBOX | WS_DISABLED,66,234,30,12
+    PUSHBUTTON      "Reset ALL\nsettings",IDC_WINDALL,150,216,48,24,BS_MULTILINE | NOT WS_TABSTOP
+    CONTROL         "",IDC_ENSURE_WINDALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,204,216,12,10
 END
 
 IDD_SETTINGS_GUI DIALOGEX 0, 0, 230, 254
@@ -243,8 +198,7 @@ BEGIN
     PUSHBUTTON      "Remove",IDC_KILLPATH,155,126,50,14,NOT WS_TABSTOP
     PUSHBUTTON      "Add...",IDC_ADDPATH,102,126,50,14
     GROUPBOX        "Directories",IDC_STATIC,12,12,204,138
-    LISTBOX         IDC_PATHLIST,18,24,192,96,LBS_NOINTEGRALHEIGHT | 
-                    WS_VSCROLL
+    LISTBOX         IDC_PATHLIST,18,24,192,96,LBS_NOINTEGRALHEIGHT | WS_VSCROLL
     PUSHBUTTON      "Filter...",IDC_FILEFILTER,24,126,50,14,NOT WS_TABSTOP
 END
 
@@ -253,48 +207,37 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Console Version:",IDC_STATIC,12,12,60,12,SS_CENTERIMAGE
-    COMBOBOX        IDC_CONSOLE_VER,72,12,144,12,CBS_DROPDOWNLIST | CBS_SORT | 
-                    WS_VSCROLL
-    CONTROL         "Real-Time Clock (Default: disabled)",IDC_RTC,"Button",
-                    BS_AUTOCHECKBOX,12,228,138,12
-    LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",
-                    IDC_STATIC,12,36,204,30
-    CONTROL         "Poll controllers after GX draw done (Default: disabled)",
-                    IDC_GX_POLL,"Button",BS_AUTOCHECKBOX,12,210,192,12
-    CONTROL         "Stretch video framebuffer to fit whole window (buggy)",
-                    IDC_VI_STRETCH,"Button",BS_AUTOCHECKBOX,12,192,192,12
+    COMBOBOX        IDC_CONSOLE_VER,72,12,144,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
+    CONTROL         "Real-Time Clock (Default: disabled)",IDC_RTC,"Button",BS_AUTOCHECKBOX,12,228,138,12
+    LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,36,204,30
+    CONTROL         "Poll controllers after GX draw done (Default: disabled)",IDC_GX_POLL,
+                    "Button",BS_AUTOCHECKBOX,12,210,192,12
+    CONTROL         "Stretch video framebuffer to fit whole window (buggy)",IDC_VI_STRETCH,
+                    "Button",BS_AUTOCHECKBOX,12,192,192,12
 END
 
 IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Simulate &apploader (Default: disabled)",
-                    IDC_SIMULATE_APPLDR,"Button",BS_AUTOCHECKBOX,12,66,146,
-                    10
+    CONTROL         "Simulate &apploader (Default: disabled)",IDC_SIMULATE_APPLDR,
+                    "Button",BS_AUTOCHECKBOX,12,66,146,10
     CONTROL         "&DSP in fake mode (Default: enabled)",IDC_DSP_FAKE,
                     "Button",BS_AUTOCHECKBOX,12,120,132,10
-    LTEXT           "Note : When using DSP fake, all advanced sound and memcards are not emulated. DSP is working like quick and dirty hack.",
-                    IDC_STATIC,12,138,210,24
+    LTEXT           "Note : When using DSP fake, all advanced sound and memcards are not emulated. DSP is working like quick and dirty hack.",IDC_STATIC,12,138,210,24
     GROUPBOX        "Initial OS Arena settings",IDC_STATIC,12,168,204,72
-    CONTROL         "Override arena settings after apploader (DVD only)",
-                    IDC_KEEP_ARENA,"Button",BS_AUTOCHECKBOX,18,222,180,10
-    EDITTEXT        IDC_ARENA_LO,72,180,84,12,ES_AUTOHSCROLL | NOT 
-                    WS_TABSTOP
+    CONTROL         "Override arena settings after apploader (DVD only)",IDC_KEEP_ARENA,
+                    "Button",BS_AUTOCHECKBOX,18,222,180,10
+    EDITTEXT        IDC_ARENA_LO,72,180,84,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
     LTEXT           "Arena Lo:",IDC_STATIC,30,180,36,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_ARENA_HI,72,199,84,12,ES_AUTOHSCROLL | NOT 
-                    WS_TABSTOP
+    EDITTEXT        IDC_ARENA_HI,72,199,84,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
     LTEXT           "Arena Hi:",IDC_STATIC,30,199,36,12,SS_CENTERIMAGE
-    PUSHBUTTON      "Default",IDC_ARENA_LO_DEFAULT,162,180,36,12,NOT 
-                    WS_TABSTOP
-    PUSHBUTTON      "Default",IDC_ARENA_HI_DEFAULT,162,198,36,12,NOT 
-                    WS_TABSTOP
-    LTEXT           "Note : Turn this option on, to boot game a bit faster. Also simulation can help to boot games with damaged apploaders\n(is there are any?).",
-                    IDC_STATIC,12,84,210,30
-    CONTROL         "Highlevel geometry library (MTX) (Default: enabled)",
-                    IDC_MTXHLE,"Button",BS_AUTOCHECKBOX,12,12,186,10
-    LTEXT           "Note : MTX is responsible for vector and matrix calculations. If MMX/SSE is enabled, MTX will use them instead usual C. SSE present only on Pentium III and above CPUs.",
-                    IDC_STATIC,12,30,204,30
+    PUSHBUTTON      "Default",IDC_ARENA_LO_DEFAULT,162,180,36,12,NOT WS_TABSTOP
+    PUSHBUTTON      "Default",IDC_ARENA_HI_DEFAULT,162,198,36,12,NOT WS_TABSTOP
+    LTEXT           "Note : Turn this option on, to boot game a bit faster. Also simulation can help to boot games with damaged apploaders\n(is there are any?).",IDC_STATIC,12,84,210,30
+    CONTROL         "Highlevel geometry library (MTX) (Default: enabled)",IDC_MTXHLE,
+                    "Button",BS_AUTOCHECKBOX,12,12,186,10
+    LTEXT           "Note : MTX is responsible for vector and matrix calculations. If MMX/SSE is enabled, MTX will use them instead usual C. SSE present only on Pentium III and above CPUs.",IDC_STATIC,12,30,204,30
 END
 
 IDD_PATCH_EDITOR DIALOGEX 0, 0, 214, 138
@@ -308,10 +251,8 @@ BEGIN
     PUSHBUTTON      "Add/Save...",IDC_BUTTON1,106,119,50,14,NOT WS_TABSTOP
     LTEXT           "Memory address :",IDC_STATIC,12,18,60,12,SS_CENTERIMAGE
     EDITTEXT        IDC_EDIT1,78,18,78,12,ES_AUTOHSCROLL
-    COMBOBOX        IDC_COMBO1,162,18,42,30,CBS_DROPDOWN | CBS_SORT | 
-                    WS_VSCROLL
-    CONTROL         "Update patch every frame",IDC_CHECK1,"Button",
-                    BS_AUTOCHECKBOX,12,54,98,10
+    COMBOBOX        IDC_COMBO1,162,18,42,30,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL
+    CONTROL         "Update patch every frame",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,12,54,98,10
     LTEXT           "Patch data :",IDC_STATIC,12,36,60,12,SS_CENTERIMAGE
     EDITTEXT        IDC_EDIT2,78,36,16,12,ES_CENTER | ES_AUTOHSCROLL
     EDITTEXT        IDC_EDIT3,12,90,192,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
@@ -331,32 +272,19 @@ FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,200,287,50,15
     ICON            IDI_DOLWIN_ICON,IDC_STATIC,11,8,20,20
-    LTEXT           "Dolwin - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2004, Dolwin team\nBuild version 0.09 (21:23:32 30 Mar 2004)",
-                    IDC_ABOUT_RELEASE,48,5,186,25
-    CONTROL         "",IDC_STATIC,"Static",SS_GRAYFRAME,0,282,255,1,
-                    WS_EX_STATICEDGE
-    LTEXT           "Dolwin 0.10 development team :\n   org        \t: coding, project designer\n   hotquik \t: coding, web page maintainer",
-                    IDC_STATIC,48,34,192,25
-    LTEXT           "Many thanks to Dolphin-emu development team:\nF|RES and ector, for great emu, help and info.",
-                    IDC_STATIC,48,120,186,18
-    LTEXT           "Greets: Alex Raider, Chrono, Costis, CrowTRobo, darkreign, DesktopMan, ector, emu_kidid, F|RES, Jeil, groepaz, Knuckles, Masken, MasterPhW, Martin64, monk, Posty, Titanik, tmbinc..",
-                    IDC_STATIC,48,85,195,36
-    LTEXT           "Important persons : Frank Wille (PPC disassembler) and Gilles Mouchard (ppcemul). Thank you guys.",
-                    IDC_STATIC,48,144,180,20
-    LTEXT           "Special thanks to hysteria for ""testing materials"".",
-                    IDC_STATIC,48,192,174,8
-    LTEXT           "Respect to Nintendo and Dr. Wei Yen!",IDC_STATIC,48,231,
-                    200,8
-    LTEXT           "Dolwin is not sponsored or licensed by Nintendo. It is not affiliated with Nintendo by any way. All logos and/or trademarks are property of their respective owners. Dolwin may not sold commercially, without permission of its authors.",
-                    IDC_STATIC,48,243,200,35,SS_SUNKEN
-    LTEXT           "Dolwin 0.10 beta testing team :\n   Chrono, darkreign, Jeil, Knuckles, MasterPhW, Posty",
-                    IDC_STATIC,48,63,192,18
-    LTEXT           "Thanks to Martin64, for web hosting.",IDC_STATIC,48,180,
-                    126,8
-    LTEXT           "Thanks to our beta-testing team, for bug reports.",
-                    IDC_STATIC,48,168,162,8
-    LTEXT           "Big Kickass to some GC game developers for doing silly games on such nice system!",
-                    IDC_STATIC,48,210,186,18
+    LTEXT           "Dolwin - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2004, Dolwin team\nBuild version 0.09 (21:23:32 30 Mar 2004)",IDC_ABOUT_RELEASE,48,5,186,25
+    CONTROL         "",IDC_STATIC,"Static",SS_GRAYFRAME,0,282,255,1,WS_EX_STATICEDGE
+    LTEXT           "Dolwin 0.10 development team :\n   org        \t: coding, project designer\n   hotquik \t: coding, web page maintainer",IDC_STATIC,48,34,192,25
+    LTEXT           "Many thanks to Dolphin-emu development team:\nF|RES and ector, for great emu, help and info.",IDC_STATIC,48,120,186,18
+    LTEXT           "Greets: Alex Raider, Chrono, Costis, CrowTRobo, darkreign, DesktopMan, ector, emu_kidid, F|RES, Jeil, groepaz, Knuckles, Masken, MasterPhW, Martin64, monk, Posty, Titanik, tmbinc..",IDC_STATIC,48,85,195,36
+    LTEXT           "Important persons : Frank Wille (PPC disassembler) and Gilles Mouchard (ppcemul). Thank you guys.",IDC_STATIC,48,144,180,20
+    LTEXT           "Special thanks to hysteria for ""testing materials"".",IDC_STATIC,48,192,174,8
+    LTEXT           "Respect to Nintendo and Dr. Wei Yen!",IDC_STATIC,48,231,200,8
+    LTEXT           "Dolwin is not sponsored or licensed by Nintendo. It is not affiliated with Nintendo by any way. All logos and/or trademarks are property of their respective owners. Dolwin may not sold commercially, without permission of its authors.",IDC_STATIC,48,243,200,35,SS_SUNKEN
+    LTEXT           "Dolwin 0.10 beta testing team :\n   Chrono, darkreign, Jeil, Knuckles, MasterPhW, Posty",IDC_STATIC,48,63,192,18
+    LTEXT           "Thanks to Martin64, for web hosting.",IDC_STATIC,48,180,126,8
+    LTEXT           "Thanks to our beta-testing team, for bug reports.",IDC_STATIC,48,168,162,8
+    LTEXT           "Big Kickass to some GC game developers for doing silly games on such nice system!",IDC_STATIC,48,210,186,18
 END
 
 
@@ -366,7 +294,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_FILE_FILTER, DIALOG
     BEGIN
@@ -374,6 +302,26 @@ BEGIN
         RIGHTMARGIN, 248
         TOPMARGIN, 7
         BOTTOMMARGIN, 119
+    END
+
+    IDD_EDIT_FILE_INFO, DIALOG
+    BEGIN
+    END
+
+    IDD_SELECT_PLUGIN, DIALOG
+    BEGIN
+    END
+
+    IDD_FONT_SETTINGS, DIALOG
+    BEGIN
+    END
+
+    IDD_MEMCARD_SETTINGS, DIALOG
+    BEGIN
+    END
+
+    IDD_MEMCARD_CHOOSESIZE, DIALOG
+    BEGIN
     END
 
     IDD_SETTINGS_EMU, DIALOG
@@ -433,14 +381,23 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_DOLWIN_ICON         ICON                    "Dolwin.ico"
+
 IDI_GCN_ICON            ICON                    "GCN.ico"
+
 IDI_GCN_SMALL_ICON      ICON                    "GCN_sm.ico"
+
 IDI_MOREICON1           ICON                    "moreicon1.ico"
+
 IDI_MOREICON2           ICON                    "moreicon2.ico"
+
 IDI_MOREICON3           ICON                    "moreicon3.ico"
+
 IDI_MOREICON4           ICON                    "moreicon4.ico"
+
 IDI_MOREICON5           ICON                    "moreicon5.ico"
+
 IDI_MOREICON6           ICON                    "moreicon6.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -465,11 +422,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "There is no knowledge, that is not power."
-            VALUE "CompanyName", "© 2003-2005 Dolwin Team."
+            VALUE "CompanyName", "© 2003-2020 Dolwin Team."
             VALUE "FileDescription", "Dolwin - Nintendo GameCube Emulator"
             VALUE "FileVersion", "0, 1, 0, 0"
             VALUE "InternalName", "Dolwin"
-            VALUE "LegalCopyright", "© 2003-2005 Dolwin Team."
+            VALUE "LegalCopyright", "© 2003-2020 Dolwin Team."
             VALUE "OriginalFilename", "Dolwin.exe"
             VALUE "ProductName", "Dolwin"
             VALUE "ProductVersion", "0, 1, 0, 0"
@@ -487,7 +444,7 @@ END
 // Accelerator
 //
 
-IDR_ACCELERATOR ACCELERATORS 
+IDR_ACCELERATOR ACCELERATORS
 BEGIN
     "D",            ID_DEBUG_CONSOLE,       VIRTKEY, CONTROL, NOINVERT
     "O",            ID_FILE_LOAD,           VIRTKEY, CONTROL, NOINVERT
@@ -505,7 +462,7 @@ END
 // Menu
 //
 
-IDR_MAIN_MENU MENU 
+IDR_MAIN_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -537,37 +494,21 @@ BEGIN
     END
     POPUP "&Development"
     BEGIN
-        POPUP "Start CPU Compare"
-        BEGIN
-            MENUITEM "Start as &Server",            ID_CPUCOMPARE_SERVER
-            MENUITEM "Connect as &Client",          ID_CPUCOMPARE_CLIENT
-        END
-        MENUITEM "Stop CPU Compare",            ID_CPUCOMPARE_DISCONNECT
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
         MENUITEM SEPARATOR
         POPUP "Log Output", GRAYED
         BEGIN
             MENUITEM "CPU Gekko (Full)",            ID_DEVELOPMENT_LOGOUTPUT_CPUGEKKO
-
             MENUITEM "Devkit HW (OSReport)",        ID_DEVELOPMENT_LOGOUTPUT_DEBUGGERHWOSREPORT
-
             MENUITEM SEPARATOR
             MENUITEM "GX - Fifo Writes",            ID_DEVELOPMENT_LOGOUTPUT_GXFIFO
-
             MENUITEM "VI - Video Interface",        ID_DEVELOPMENT_LOGOUTPUT_VIDEOVI
-
             MENUITEM "PI - Processor Interface",    ID_DEVELOPMENT_LOGOUTPUT_PIPROCESSORINTERFACE
-
             MENUITEM "MI - Memory Interface",       ID_DEVELOPMENT_LOGOUTPUT_MIMEMORYINTERFACE
-
             MENUITEM "AX - Audio (DMA/Stream)",     ID_DEVELOPMENT_LOGOUTPUT_AXDMAANDSTREAMING
-
             MENUITEM "DI - DVD Interface",          ID_DEVELOPMENT_LOGOUTPUT_DIDVDINTERFACE
-
             MENUITEM "SI - Serial Interface",       ID_DEVELOPMENT_LOGOUTPUT_SISERIALINTERFACE
-
             MENUITEM "EXI - Expansion Interface",   ID_DEVELOPMENT_LOGOUTPUT_EXIEXPANSIONINTERFACE
-
         END
         POPUP "Dump"
         BEGIN
@@ -580,17 +521,13 @@ BEGIN
             MENUITEM "VI Sync",                     ID_ASSERTINTERRUPT_VIINT
             MENUITEM "AI DMA",                      ID_ASSERTINTERRUPT_AIDMA
             MENUITEM "AI Stream",                   ID_ASSERTINTERRUPT_AISTREAM
-
             MENUITEM "CP Draw Done",                ID_ASSERTINTERRUPT_CPDRAWDONE
-
             MENUITEM "CP Draw Token",               ID_ASSERTINTERRUPT_CPDRAWTOKEN
-
             MENUITEM "SI Controller Poll",          ID_ASSERTINTERRUPT_SI
             MENUITEM "DVD Transfer End",            ID_ASSERTINTERRUPT_DVD
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Find Symbols",               ID_CREATE_MAP
-        , CHECKED, GRAYED
+        MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
         MENUITEM "&Load Symbols...",            ID_LOAD_MAP, GRAYED
         MENUITEM "&Add Symbols...",             ID_ADD_MAP, GRAYED
         MENUITEM "&Save Symbols...",            ID_SAVE_MAP, GRAYED
@@ -610,32 +547,21 @@ BEGIN
             MENUITEM "&Disable Selector",           ID_OPTIONS_VIEW_DISABLE
             MENUITEM SEPARATOR
             MENUITEM "&Small Icons",                ID_OPTIONS_VIEW_SMALLICONS
-
-            MENUITEM "&Large Icons",                ID_OPTIONS_VIEW_LARGEICONS
-            , CHECKED
+            MENUITEM "&Large Icons",                ID_OPTIONS_VIEW_LARGEICONS, CHECKED
             MENUITEM SEPARATOR
             POPUP "Sort by..."
             BEGIN
-                MENUITEM "&1  Default",                 ID_OPTIONS_VIEW_SORTBY_1
-                , CHECKED
+                MENUITEM "&1  Default",                 ID_OPTIONS_VIEW_SORTBY_1, CHECKED
                 MENUITEM "&2  File Name",               ID_OPTIONS_VIEW_SORTBY_2
-
                 MENUITEM "&3  Title",                   ID_OPTIONS_VIEW_SORTBY_3
-
                 MENUITEM "&4  Size",                    ID_OPTIONS_VIEW_SORTBY_4
-
                 MENUITEM "&5  Game ID",                 ID_OPTIONS_VIEW_SORTBY_5
-
                 MENUITEM "&6  Comment",                 ID_OPTIONS_VIEW_SORTBY_6
-
                 MENUITEM "&7  Keep Unsorted",           ID_OPTIONS_VIEW_SORTBY_7
-
             END
             MENUITEM "File &Filter...",             ID_OPTIONS_VIEW_FILEFILTER
-
         END
-        MENUITEM "Always On &Top",              ID_OPTIONS_ALWAYSONTOP
-        , CHECKED
+        MENUITEM "Always On &Top",              ID_OPTIONS_ALWAYSONTOP, CHECKED
         MENUITEM SEPARATOR
         MENUITEM "&Graphics...\tCtrl+G",        ID_OPTIONS_GRAPHICS
         MENUITEM "&Sound...\tCtrl+S",           ID_OPTIONS_SOUND
@@ -646,20 +572,14 @@ BEGIN
         POPUP "&Controllers"
         BEGIN
             MENUITEM "Port &1",                     ID_OPTIONS_CONTROLLERS_PORT1
-
             MENUITEM "Port &2",                     ID_OPTIONS_CONTROLLERS_PORT2
-
             MENUITEM "Port &3",                     ID_OPTIONS_CONTROLLERS_PORT3
-
             MENUITEM "Port &4",                     ID_OPTIONS_CONTROLLERS_PORT4
-
         END
         POPUP "&Memcards"
         BEGIN
             MENUITEM "Slot &A",                     ID_OPTIONS_MEMCARDS_SLOTA
-
             MENUITEM "Slot &B",                     ID_OPTIONS_MEMCARDS_SLOTB
-
         END
         MENUITEM "Bootrom &Font...",            ID_OPTIONS_BOOTROMFONT
     END
@@ -681,7 +601,7 @@ BEGIN
     END
 END
 
-IDR_POPUP_MENU MENU 
+IDR_POPUP_MENU MENU
 BEGIN
     POPUP "File"
     BEGIN
@@ -698,12 +618,12 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     ID_DEVELOPMENT_LOGOUTPUT_GXFIFO "435345"
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

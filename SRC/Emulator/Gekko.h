@@ -10,8 +10,7 @@
 // CPU core enumeration
 enum CPU_CORE
 {
-    CPU_INTERPRETER = 1,
-    CPU_RECOMPILER,
+    CPU_INTERPRETER = 1
 };
 
 // ---------------------------------------------------------------------------
@@ -22,7 +21,7 @@ enum CPU_CORE
 #define RA          ((op >> 16) & 0x1f)
 #define RB          ((op >> 11) & 0x1f)
 #define RC          ((op >>  6) & 0x1f)
-#define SIMM        ((s32)(s16)(u16)op)
+#define SIMM        ((int32_t)(int16_t)(uint16_t)op)
 #define UIMM        (op & 0xffff)
 #define CRFD        ((op >> 23) & 7)
 #define CRFS        ((op >> 18) & 7)
@@ -106,19 +105,19 @@ enum CPU_CORE
 // floating point register
 typedef union FPREG
 {
-    f64         dbl;
-    u64         uval;
+    double         dbl;
+    uint64_t       uval;
 } FPREG;
 
 // time-base
 typedef union TBREG
 {
-    s64         sval;               // for comparsion
-    u64         uval;               // for incrementing
+    int16_t         sval;               // for comparsion
+    uint64_t        uval;               // for incrementing
     struct
     {
-        u32     l;                  // for output
-        u32     u;
+        uint32_t     l;                  // for output
+        uint32_t     u;
     };
 } TBREG;
 
@@ -201,7 +200,7 @@ typedef union TBREG
 #define CPU_EXCEPTION_IABR          0x1300
 #define CPU_EXCEPTION_THERMAL       0x1700
 
-extern  void (*CPUException)(u32 vector);
+extern  void (*CPUException)(uint32_t vector);
 
 /*/ ---------------------------------------------------------------------------
 
@@ -234,15 +233,15 @@ extern  void (*CPUException)(u32 vector);
 
 // CPU memory operations. using MEM* or DB* read/write operations,
 // (depending on DOLDEBUG definition in dolphin.h)
-extern void (__fastcall *CPUReadByte)(u32 addr, u32 *reg);
-extern void (__fastcall *CPUWriteByte)(u32 addr, u32 data);
-extern void (__fastcall *CPUReadHalf)(u32 addr, u32 *reg);
-extern void (__fastcall *CPUReadHalfS)(u32 addr, u32 *reg);
-extern void (__fastcall *CPUWriteHalf)(u32 addr, u32 data);
-extern void (__fastcall *CPUReadWord)(u32 addr, u32 *reg);
-extern void (__fastcall *CPUWriteWord)(u32 addr, u32 data);
-extern void (__fastcall *CPUReadDouble)(u32 addr, u64 *reg);
-extern void (__fastcall *CPUWriteDouble)(u32 addr, u64 *data);
+extern void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t*reg);
+extern void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
+extern void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t*reg);
+extern void (__fastcall *CPUReadHalfS)(uint32_t addr, uint32_t*reg);
+extern void (__fastcall *CPUWriteHalf)(uint32_t addr, uint32_t data);
+extern void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t*reg);
+extern void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
+extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
+extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 
 // controls
 void    CPUInit();
@@ -257,44 +256,37 @@ void    CPUTick();                  // modify counters
 typedef struct CPUControl
 {
     // CPU state (all registers)
-    u32         gpr[32];            // general purpose regs
+    uint32_t    gpr[32];            // general purpose regs
     FPREG       fpr[32], ps1[32];   // floating point regs (fpr=ps0 for paired singles)
-    u32         spr[1024];          // special purpose regs
-    u32         sr[16];             // segment regs
-    u32         cr;                 // condition reg
-    u32         msr;                // machine state reg
-    u32         fpscr;              // FP status/control reg (rounding only for now)
-    u32         pc;                 // program counter
+    uint32_t    spr[1024];          // special purpose regs
+    uint32_t    sr[16];             // segment regs
+    uint32_t    cr;                 // condition reg
+    uint32_t    msr;                // machine state reg
+    uint32_t    fpscr;              // FP status/control reg (rounding only for now)
+    uint32_t    pc;                 // program counter
     TBREG       tb;                 // time-base counter (timer)
 
-    s32         bailout;            // update HW, if < 0
-    s32         bailtime;           // initial "bailout" value
-    s64         one_second;         // one second in timer ticks
-    u32         cf;                 // counter factor
-    u32         delay, delayVal;    // TBR/DEC update delay (number of instructions)
+    int32_t     bailout;            // update HW, if < 0
+    int32_t     bailtime;           // initial "bailout" value
+    int64_t     one_second;         // one second in timer ticks
+    uint32_t    cf;                 // counter factor
+    uint32_t    delay, delayVal;    // TBR/DEC update delay (number of instructions)
     BOOL        decreq;             // decrementer exception request
 
-    u32         core;               // see CPU core enumeration
+    uint32_t    core;               // see CPU core enumeration
     BOOL        mmx;                // 1: mmx supported and enabled
     BOOL        sse;                // 1: sse supported and enabled
     BOOL        log;                // log EVERY executed opcode
-    u32         ops;                // instruction counter (only for debug!)
+    uint32_t    ops;                // instruction counter (only for debug!)
 
     // for default interpreter
     BOOL        exception;          // exception pending
     BOOL        branch;             // non-linear PC change
-    u32         rotmask[32][32];    // mask for integer rotate opcodes 
+    uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
     BOOL        RESERVE;            // for lwarx/stwcx.
-    u32         RESERVE_ADDR;       // for lwarx/stwcx.
-    f32         ldScale[64];        // for paired-single loads
-    f32         stScale[64];        // for paired-single stores
-
-    // for default recompiler
-    s32         oplvl;              // optimization level
-    u8**        groups;             // group allocation table (24 mb)
-    u8*         recbuf;             // temporary buffer
-    u32         recptr;             // temporary buffer position
-    u32         jumprel[4];         // for relative jumps patching
+    uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
+    float       ldScale[64];        // for paired-single loads
+    float       stScale[64];        // for paired-single stores
 } CPUControl;
 
 extern  CPUControl cpu;

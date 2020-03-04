@@ -16,4 +16,4 @@
 // interpreter core API
 void    IPTStart();
 void    IPTExecuteOpcode();
-void    IPTException(u32 code);
+void    IPTException(uint32_t code);

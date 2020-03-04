@@ -1,9 +1,0 @@
-void __fastcall a_CRAND(u32 op, u32 pc);
-void __fastcall a_CROR(u32 op, u32 pc);
-void __fastcall a_CRXOR(u32 op, u32 pc);
-void __fastcall a_CRNAND(u32 op, u32 pc);
-void __fastcall a_CRNOR(u32 op, u32 pc);
-void __fastcall a_CREQV(u32 op, u32 pc);
-void __fastcall a_CRANDC(u32 op, u32 pc);
-void __fastcall a_CRORC(u32 op, u32 pc);
-void __fastcall a_MCRF(u32 op, u32 pc);

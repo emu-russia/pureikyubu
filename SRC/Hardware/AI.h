@@ -50,7 +50,7 @@
 typedef struct AIREG
 {
     BOOL    valid[2];               // shadow valid state
-    struct  { u16 hi, lo; } shadow; // register data
+    struct  { uint16_t hi, lo; } shadow; // register data
 } AIREG;
 
 // ---------------------------------------------------------------------------

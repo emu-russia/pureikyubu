@@ -490,10 +490,10 @@ void OnMainWindowClosed()
 // window controls
 
 // resize client area to fit in given width and height
-void ResizeMainWindow(s32 width, s32 height)
+void ResizeMainWindow(int width, int height)
 {
     RECT rc;
-    s32 x, y, w, h;
+    int x, y, w, h;
 
     GetWindowRect(wnd.hMainWindow, &rc);
 
@@ -810,21 +810,6 @@ loadFile:
                     }
                     return 0;
 
-                // start cpucompare (server)
-                case ID_CPUCOMPARE_SERVER:
-                    COMPCreateServer();
-                    return 0;
-
-                // start cpucompare (client)
-                case ID_CPUCOMPARE_CLIENT:
-                    COMPConnectClient();
-                    return 0;
-
-                // stop cpucompare
-                case ID_CPUCOMPARE_DISCONNECT:
-                    COMPDisconnect();
-                    return 0;
-
                 // dump main memory
                 case ID_DUMP_RAM:
                     SetStatusText(STATUS_PROGRESS, "Dumping main memory...");
@@ -1039,8 +1024,8 @@ loadFile:
                 RECT rc;
                 GetClientRect(hwnd, &rc);
                 GDIResize(
-                    (s32)(rc.right - rc.left),
-                    (s32)(rc.bottom - rc.top)
+                    (int)(rc.right - rc.left),
+                    (int)(rc.bottom - rc.top)
                 );
             }
 

@@ -10,7 +10,7 @@ void IPTStart()
     }
 }
 
-static void log_opcode(u32 op)
+static void log_opcode(uint32_t op)
 {
     char dump[1024];
 
@@ -52,8 +52,7 @@ void IPTExecuteOpcode()
 {
     // execute one instruction
     // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-    COMPDoCompare();
-    u32 op = MEMFetch(PC);
+    uint32_t op = MEMFetch(PC);
     if(cpu.log) log_opcode(op);
     if(cpu.exception) goto JumpPC;  // ISI
     c_1[op >> 26](op); cpu.ops++;
@@ -103,7 +102,7 @@ JumpPC:
 }
 
 // interpreter exception
-void IPTException(u32 code)
+void IPTException(uint32_t code)
 {
     // save regs
     SRR0 = PC;

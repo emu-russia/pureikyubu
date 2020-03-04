@@ -225,7 +225,7 @@ static BOOL CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                 strcpy(buf, filename );
 
                 /* create the file */
-                if (MCCreateMemcardFile(filename, (u16)(newsize >> 17)) == FALSE) return TRUE ;
+                if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE ;
 
                 filename = strrchr(buf, '\\');
                 if (filename == NULL) {

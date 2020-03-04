@@ -1,13 +1,13 @@
 // Integer Shift Instructions
 #include "dolphin.h"
 
-#define OP(name) void __fastcall c_##name##(u32 op)
+#define OP(name) void __fastcall c_##name##(uint32_t op)
 
 #define COMPUTE_CR0(r)                                                                \
 {                                                                                     \
     (CR = (CR & 0xfffffff)                   |                                        \
     ((XER & (1 << 31)) ? (0x10000000) : (0)) |                                        \
-    (((s32)(r) < 0) ? (0x80000000) : (((s32)(r) > 0) ? (0x40000000) : (0x20000000))));\
+    (((int32_t)(r) < 0) ? (0x80000000) : (((int32_t)(r) > 0) ? (0x40000000) : (0x20000000))));\
 }
 
 #define SET_XER_CA      (XER |=  (1 << 29))
@@ -22,7 +22,7 @@
 // (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
 OP(SLW)
 {
-    u32 n = RRB;
+    uint32_t n = RRB;
     
     if(n & 0x20) RRA = 0;
     else RRA = RRS << (n & 0x1f);
@@ -38,8 +38,8 @@ OP(SLW)
 // CR0
 OP(SLWD)
 {
-    u32 n = RRB;
-    u32 res;
+    uint32_t n = RRB;
+    uint32_t res;
     
     if(n & 0x20) res = 0;
     else res = RRS << (n & 0x1f);
@@ -57,7 +57,7 @@ OP(SLWD)
 // (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
 OP(SRW)
 {
-    u32 n = RRB;
+    uint32_t n = RRB;
 
     if(n & 0x20) RRA = 0;
     else RRA = RRS >> (n & 0x1f);
@@ -73,8 +73,8 @@ OP(SRW)
 // CR0
 OP(SRWD)
 {
-    u32 n = RRB;
-    u32 res;
+    uint32_t n = RRB;
+    uint32_t res;
 
     if(n & 0x20) res = 0;
     else res = RRS >> (n & 0x1f);
@@ -91,9 +91,9 @@ OP(SRWD)
 // XER[CA] = sign(0) & ((r & ~m) != 0)
 OP(SRAWI)
 {
-    u32 n = SH;
-    s32 res;
-    s32 src = RRS;
+    uint32_t n = SH;
+    int32_t res;
+    int32_t src = RRS;
 
     if(n == 0)
     {
@@ -118,9 +118,9 @@ OP(SRAWI)
 // CR0
 OP(SRAWID)
 {
-    u32 n = SH;
-    s32 res;
-    s32 src = RRS;
+    uint32_t n = SH;
+    int32_t res;
+    int32_t src = RRS;
 
     if(n == 0)
     {
@@ -147,9 +147,9 @@ OP(SRAWID)
 // XER[CA] = S & (r & ~m[0-31] != 0)
 OP(SRAW)
 {
-    u32 n = RRB;
-    s32 res;
-    s32 src = RRS;
+    uint32_t n = RRB;
+    int32_t res;
+    int32_t src = RRS;
 
     if(n == 0)
     {
@@ -172,7 +172,7 @@ OP(SRAW)
     else
     {
         n = n & 0x1f;
-        res = (s32)src >> n;
+        res = (int32_t)src >> n;
         if(src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
     }
 
@@ -190,9 +190,9 @@ OP(SRAW)
 // CR0
 OP(SRAWD)
 {
-    u32 n = RRB;
-    s32 res;
-    s32 src = RRS;
+    uint32_t n = RRB;
+    int32_t res;
+    int32_t src = RRS;
 
     if(n == 0)
     {
@@ -215,7 +215,7 @@ OP(SRAWD)
     else
     {
         n = n & 0x1f;
-        res = (s32)src >> n;
+        res = (int32_t)src >> n;
         if(src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
     }
 
