@@ -506,12 +506,15 @@ namespace ManagedConsole
 
                 if (key != null)
                 {
-                    OnKeyInput(key);
-
-                    foreach (var w in windows)
+                    if (key.KeyCode != Key.None)
                     {
-                        if (w.IsActive())
-                            w.OnKeyInput(key);
+                        OnKeyInput(key);
+
+                        foreach (var w in windows)
+                        {
+                            if (w.IsActive())
+                                w.OnKeyInput(key);
+                        }
                     }
                 }
 
