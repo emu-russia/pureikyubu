@@ -712,7 +712,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", "*.gmp", NULL };
+    char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", NULL };
     char found[2 * MAX_PATH];
     int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
     WIN32_FIND_DATA fd;
@@ -878,30 +878,6 @@ static void mouseclick(int rmb)
         else
         {
             EnableMenuItem(usel.hFileMenu, ID_FILE_COMPRESS, MF_ENABLED);
-        }
-
-        // change "Compress.." -> "Decompress..", if file is compressed
-        if(file->type == SELECTOR_FILE_DVD)
-        {
-            bool compressed = DVDIsCompressed(file->name);
-
-            char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-            _splitpath(file->name, drive, dir, name, ext);
-
-            if(compressed)  // ID of Dolwin compressed GCM file
-            {
-                SetMenuItemText(usel.hFileMenu, ID_FILE_COMPRESS, "&Decompress...");
-                sprintf(usel.file1, "\"%s%s%s.gmp\"", drive, dir, name);
-                sprintf(usel.file2, "\"%s%s%s.gcm\"", drive, dir, name);
-                usel.compress = 0;
-            }
-            else
-            {
-                SetMenuItemText(usel.hFileMenu, ID_FILE_COMPRESS, "&Compress...");
-                sprintf(usel.file1, "\"%s%s%s.gcm\"", drive, dir, name);
-                sprintf(usel.file2, "\"%s%s%s.gmp\"", drive, dir, name);
-                usel.compress = 1;
-            }
         }
 
         POINT p;

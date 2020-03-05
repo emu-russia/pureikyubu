@@ -8,8 +8,6 @@
 // HTML Help
 #include "../HtmlHelp/HtmlHelp.h"
 #pragma comment(lib, "HtmlHelp/HtmlHelp.lib")
-#define USER_MANUAL ".\\Data\\DolwinUserManual.chm"
-#define DEV_MANUAL  ".\\Data\\Wiki.chm"
 
 
 // all important data is placed here
@@ -769,30 +767,6 @@ loadFile:
                     return 0;
                 }
 
-                // popup file menu
-                case ID_FILE_COMPRESS:
-                {
-                    char cmdLine[1024];
-                    sprintf(cmdLine, " %s %s", usel.file1, usel.file2);
-
-                    // check GCMCMPR tool presence
-                    FILE *f = fopen("GCMCMPR.exe", "rb");
-                    if(f == NULL)
-                    {
-                        DolwinReport("GCMCMPR Tool wasnt found under Dolwin root.");
-                        return 0;
-                    }
-                    else fclose(f);
-                    
-                    // execute GCMCMPR tool
-                    if(emu.doldebug) DBClose();
-                    DolwinExecute("GCMCMPR.exe", cmdLine);
-                    SetStatusText(STATUS_PROGRESS, "Press F5 to update file list after GCM (de)compression..");
-                    Sleep(3000);    // suspend, while tool is working
-                    if(emu.doldebug) DBOpen();
-                    return 0;
-                }
-
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // debug controls
 
@@ -941,16 +915,6 @@ loadFile:
                 case ID_OPTIONS_BOOTROMFONT:
                     FontConfigure(hwnd);
                     break;
-
-                // help manuals
-                case ID_HELP_DEVMANUAL:
-                    f = fopen(DEV_MANUAL, "rb");
-                    if(f)
-                    {
-                        fclose(f);
-                        HtmlHelp(hwnd, DEV_MANUAL, HH_DISPLAY_TOPIC, 0);
-                    }
-                    return 0;
 
                 // about...
                 case ID_ABOUT_GFX:

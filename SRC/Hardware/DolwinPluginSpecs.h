@@ -157,9 +157,6 @@ void DVDClose();
 // return 1 if no errors, and 0 if cannot use file
 long DVDSetCurrent(char *file);
 
-// return 1, if DVD image is compressed
-long DVDIsCompressed(char *file);
-
 // seek and read operations on current DVD
 void DVDSeek(long position);
 void DVDRead(void *buffer, long length);

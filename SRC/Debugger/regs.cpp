@@ -32,7 +32,7 @@ static void con_print_other_regs()
     con_printf_at(28, 5, CYAN "dec " NORM "%08X", DEC);
     con_printf_at(28, 8, CYAN "pc  " NORM "%08X", PC);
     con_printf_at(28, 9, CYAN "lr  " NORM "%08X", LR);
-    con_printf_at(28,14, CYAN "tbr " NORM "%08X:%08X", cpu.tb.u, cpu.tb.l);
+    con_printf_at(28,14, CYAN "tbr " NORM "%08X:%08X", cpu.tb.Part.u, cpu.tb.Part.l);
 
     con_printf_at(42, 1, CYAN "msr   " NORM "%08X", MSR);
     con_printf_at(42, 2, CYAN "fpscr " NORM "%08X", FPSCR);

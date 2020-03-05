@@ -164,9 +164,6 @@ typedef void (*DVDCLOSE)();
 // return 1 if no errors, and 0 if cannot use file
 typedef long (*DVDSETCURRENT)(char *file);
 
-// return 1, if DVD image is compressed
-typedef long (*DVDISCOMPRESSED)(char *file);
-
 // seek and read operations on current DVD
 typedef void (*DVDSEEK)(long position);
 typedef void (*DVDREAD)(void *buffer, long length);

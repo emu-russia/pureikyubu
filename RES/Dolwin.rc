@@ -585,8 +585,6 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "User Manual",                 ID_HELP_HELPMANUAL, GRAYED
-        MENUITEM "Developer Manual",            ID_HELP_DEVMANUAL, GRAYED
         MENUITEM "Web Site",                    ID_HELP_WEBSITE, GRAYED
         MENUITEM SEPARATOR
         POPUP "About &Plugins"

@@ -34,7 +34,6 @@ extern PADABOUT             PADAbout;
 extern DVDOPEN              DVDOpen;
 extern DVDCLOSE             DVDClose;
 extern DVDSETCURRENT        DVDSetCurrent;
-extern DVDISCOMPRESSED      DVDIsCompressed;
 extern DVDSEEK              DVDSeek;
 extern DVDREAD              DVDRead;
 extern DVDOPENFILE          DVDOpenFile;

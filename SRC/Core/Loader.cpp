@@ -6,7 +6,6 @@
 //      .elf        - standard executable
 //      .bin        - binary file (loaded at BINORG offset)
 //      .gcm        - game master data (GC DVD images)
-//      .gmp        - Dolwin compressed GCMs
 #include "dolphin.h"
 
 // all loader variables are placed here
@@ -629,11 +628,6 @@ static void DoLoadFile(char *filename)
         ldat.dvd = FALSE;
     }
     else IFEXT(".gcm")
-    {
-        DVDSetCurrent(filename);
-        ldat.dvd = SetGameID(filename);
-    }
-    else IFEXT(".gmp")
     {
         DVDSetCurrent(filename);
         ldat.dvd = SetGameID(filename);

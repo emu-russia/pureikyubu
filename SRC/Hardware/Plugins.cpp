@@ -45,7 +45,6 @@ PADABOUT            PADAbout           = NULL;
 DVDOPEN             DVDOpen            = NULL;
 DVDCLOSE            DVDClose           = NULL;
 DVDSETCURRENT       DVDSetCurrent      = NULL;
-DVDISCOMPRESSED     DVDIsCompressed    = NULL;
 DVDSEEK             DVDSeek            = NULL;
 DVDREAD             DVDRead            = NULL;
 DVDOPENFILE         DVDOpenFile        = NULL;
@@ -212,7 +211,6 @@ static void DVDPluginInit(char *name, int warn)
     LoadAPI(DVD, DVDOPEN, DVDOpen);
     LoadAPI(DVD, DVDCLOSE, DVDClose);
     LoadAPI(DVD, DVDSETCURRENT, DVDSetCurrent);
-    LoadAPI(DVD, DVDISCOMPRESSED, DVDIsCompressed);
     LoadAPI(DVD, DVDSEEK, DVDSeek);
     LoadAPI(DVD, DVDREAD, DVDRead);
     LoadAPI(DVD, DVDOPENFILE, DVDOpenFile);
