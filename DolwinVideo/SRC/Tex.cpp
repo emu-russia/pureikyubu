@@ -203,7 +203,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
     BOOL doDump = FALSE;
     Color *texbuf;
     int oldw, oldh;
-    int w, h;
+    DWORD w, h;
     unsigned n;
 
     // check cache entries for coincidence
@@ -241,15 +241,11 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
 
     // aspect
     tcache[n].ds = tcache[n].dt = 1.0f;
-    __asm       mov     eax, width
-    __asm       bsr     eax, eax
-    __asm       mov     w, eax
+    _BitScanReverse(&w, width);
     if(width & ((1 << w) - 1)) w = 1 << (w+1);
     else w = width;
     tcache[n].ds = (float)width / (float)w;
-    __asm       mov     eax, height
-    __asm       bsr     eax, eax
-    __asm       mov     h, eax
+    _BitScanReverse(&h, height);
     if(height & ((1 << h) - 1)) h = 1 << (h+1);
     else h = height;
     tcache[n].dt = (float)height / (float)h;

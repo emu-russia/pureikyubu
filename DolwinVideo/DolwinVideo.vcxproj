@@ -163,6 +163,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="SRC\Config.h" />
     <ClInclude Include="SRC\Fifo.h" />
     <ClInclude Include="SRC\GL.H" />
     <ClInclude Include="SRC\Gpl.h" />

@@ -28,7 +28,6 @@ long DVDSetCurrent(char *file)
     if (!res)
         return res;
 
-    dvd.selected = true;
     return res;
 }
 

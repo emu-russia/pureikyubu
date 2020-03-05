@@ -1,8 +1,4 @@
 
-#ifdef  _DEBUG
-#define FIFOLOG
-#endif
-
 // vertex attributes
 typedef enum
 {

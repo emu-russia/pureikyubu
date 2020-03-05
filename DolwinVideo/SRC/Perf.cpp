@@ -40,7 +40,7 @@ void PerfClose()
     }
 }
 
-void PerfPrintf(int x, int y, char *fmt, ...)
+void PerfPrintf(int x, int y, const char *fmt, ...)
 {
     va_list arg;
     int len, x0 = x;

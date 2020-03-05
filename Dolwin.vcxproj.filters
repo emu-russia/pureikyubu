@@ -475,11 +475,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="RES\Dolwin.manifest">
-      <Filter>User Menu\Resource Files</Filter>
-    </Manifest>
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="RES\Dolwin.rc">
       <Filter>User Menu\Resource Files</Filter>
     </ResourceCompile>

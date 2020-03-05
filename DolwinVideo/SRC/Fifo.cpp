@@ -140,7 +140,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_POS] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "pos, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -157,7 +157,7 @@ void FifoReconfigure(
             pipeline[VTX_NRM][vat] = nrmattr[vcd][cnt][fmt];
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "nrm, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
@@ -174,7 +174,7 @@ void FifoReconfigure(
             pipeline[VTX_COLOR0][vat] = col0attr[vcd][cnt][fmt];
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "col0, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
@@ -191,7 +191,7 @@ void FifoReconfigure(
             pipeline[VTX_COLOR1][vat] = col1attr[vcd][cnt][fmt];
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "col1, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
@@ -212,7 +212,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD0] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex0, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -233,7 +233,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD1] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex1, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -254,7 +254,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD2] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex2, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -275,7 +275,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD3] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex3, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -296,7 +296,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD4] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex4, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -317,7 +317,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD5] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex5, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -338,7 +338,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD6] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex6, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -359,7 +359,7 @@ void FifoReconfigure(
             fracDenom[vat][VTX_TEXCOORD7] = denom;
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "tex7, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
@@ -385,7 +385,7 @@ void FifoReconfigure(
             }
 
             // create fifo log file
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(filog)
             {
                 fclose(filog);
@@ -405,7 +405,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set posidx\n");
@@ -424,7 +424,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -443,7 +443,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -462,7 +462,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -481,7 +481,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -500,7 +500,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -519,7 +519,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -538,7 +538,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");
@@ -557,7 +557,7 @@ void FifoReconfigure(
             }
 
             // log output
-#ifdef  FIFOLOG
+#if  FIFOLOG
             if(vcd > 0)
             {
                 fprintf(filog, "set tx0idx\n");

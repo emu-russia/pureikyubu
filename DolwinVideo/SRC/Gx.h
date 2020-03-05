@@ -16,6 +16,7 @@
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
+#include <intrin.h>
 
 // color type
 typedef union
@@ -25,6 +26,7 @@ typedef union
 } Color;
 
 // other project includes
+#include "Config.h"
 #include "Plug.h"
 #include "Perf.h"
 #include "GPL.h"

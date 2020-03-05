@@ -54,6 +54,9 @@
     <ClInclude Include="SRC\XF.H">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SRC\Config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SRC\Fifo.cpp">

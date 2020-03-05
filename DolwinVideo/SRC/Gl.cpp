@@ -163,7 +163,7 @@ void GL_EndFrame()
     }
 /*/
 
-/*/
+#if SHOWPERF
     if(GetAsyncKeyState(VK_TAB) & 0x80000000) showPerf = TRUE;
 
     if(showPerf)
@@ -185,7 +185,7 @@ void GL_EndFrame()
             xfRegs.numcol, xfRegs.numtex, bpRegs.genmode.ntev + 1
         );
     }
-/*/
+#endif
 
     // do snapshot
     if(make_shot)

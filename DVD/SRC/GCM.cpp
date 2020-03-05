@@ -11,6 +11,8 @@ static int      seekval;        // current DVD position
 
 BOOL GCMSelectFile(char *file)
 {
+    dvd.selected = false;
+
     // open GCM file
     gcm_file = fopen(file, "rb");
     if(!gcm_file) return FALSE;
@@ -29,6 +31,8 @@ BOOL GCMSelectFile(char *file)
 
     // reset position
     seekval = 0;
+
+    dvd.selected = true;
 
     return TRUE;
 }

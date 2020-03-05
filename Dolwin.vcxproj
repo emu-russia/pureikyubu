@@ -149,7 +149,7 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <BaseAddress>0x100000000</BaseAddress>
+      <BaseAddress>0x400000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -213,7 +213,7 @@
       <AdditionalDependencies>opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
-      <BaseAddress>0x100000000</BaseAddress>
+      <BaseAddress>0x400000</BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
       <DataExecutionPrevention>
       </DataExecutionPrevention>
@@ -385,9 +385,6 @@
     <Image Include="RES\moreicon4.ico" />
     <Image Include="RES\moreicon5.ico" />
     <Image Include="RES\moreicon6.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <Manifest Include="RES\Dolwin.manifest" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RES\Dolwin.rc">

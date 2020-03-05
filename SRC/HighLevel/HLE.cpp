@@ -124,7 +124,7 @@ void HLEOpen()
         HWEnableUpdate(0);
     }
 
-    SYMAddEmulatorSymbols();
+    //SYMAddEmulatorSymbols();
 
     // set high level calls
     int32_t n = 0;
