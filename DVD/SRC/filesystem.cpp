@@ -2,37 +2,18 @@
 // I just cleaned hotquik's code a bit.
 #include "DVD.h"
 
+#include "../SRC/Core/Memory.h"
+
 // local data
 static DVDBB2           bb2;
 static DVDFileEntry*    fst;            // not above DVD_FST_MAX_SIZE!
-static u32              fstSize;        // size of loaded FST
+static uint32_t         fstSize;        // size of loaded FST
 static char*            files;          // string table
-
-// ---------------------------------------------------------------------------
-// swap endianess
-
-static __declspec(naked) inline u32 __fastcall MEMSwap(u32 data)
-{
-    __asm   bswap   ecx
-    __asm   mov     eax, ecx
-    __asm   ret
-}
-
-static void __fastcall MEMSwapArea(u32 *addr, long count)
-{
-    u32 *until = addr + count / 4;
-
-    while(addr != until)
-    {
-        *addr = MEMSwap(*addr);
-        addr++;
-    }
-}
 
 // ---------------------------------------------------------------------------
 // file system
 
-#define FSTOFS(lo, hi) (((u32)hi << 16) | lo)
+#define FSTOFS(lo, hi) (((uint32_t)hi << 16) | lo)
 
 // swap bytes in FST (for x86)
 // return beginning of strings table (or NULL, if bad FST)
@@ -68,7 +49,7 @@ BOOL dvd_fs_init()
     // load tables
     DVDSeek(DVD_BB2_OFFSET);
     DVDRead(&bb2, sizeof(DVDBB2));
-    MEMSwapArea((u32 *)&bb2, sizeof(DVDBB2));
+    MEMSwapArea((uint32_t *)&bb2, sizeof(DVDBB2));
 
     // delete previous FST
     if(fst)
@@ -107,7 +88,7 @@ BOOL dvd_fs_init()
 
 // convert DVD file name into file position on the disk
 // 0, if file not found
-s32 dvd_open(char *path, DVDFileEntry *root)
+int dvd_open(char *path, DVDFileEntry *root)
 {
     int  slashPos;
     char search[DVD_MAXPATH], *slash, *p;

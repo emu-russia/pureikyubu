@@ -42,9 +42,6 @@
     <ClCompile Include="SRC\UserMenu\UserMemcards.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserPlugins.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\UserMenu\UserProfiler.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
@@ -88,9 +85,6 @@
       <Filter>GCN Hardware</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Hardware\PI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\Plugins.cpp">
       <Filter>GCN Hardware</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Hardware\SI.cpp">
@@ -248,9 +242,6 @@
     <ClInclude Include="SRC\UserMenu\UserMemcards.h">
       <Filter>User Menu</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserPlugins.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\UserMenu\UserProfiler.h">
       <Filter>User Menu</Filter>
     </ClInclude>
@@ -287,9 +278,6 @@
     <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs2.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\Hardware\EFB.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
@@ -312,9 +300,6 @@
       <Filter>GCN Hardware</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Hardware\PI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\Plugins.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Hardware\SI.h">

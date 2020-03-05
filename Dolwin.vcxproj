@@ -257,7 +257,6 @@
     <ClCompile Include="SRC\Hardware\MC.cpp" />
     <ClCompile Include="SRC\Hardware\MI.cpp" />
     <ClCompile Include="SRC\Hardware\PI.cpp" />
-    <ClCompile Include="SRC\Hardware\Plugins.cpp" />
     <ClCompile Include="SRC\Hardware\SI.cpp" />
     <ClCompile Include="SRC\Hardware\VI.cpp" />
     <ClCompile Include="SRC\HighLevel\AX.cpp" />
@@ -290,7 +289,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SRC\UserMenu\UserMemcards.cpp" />
-    <ClCompile Include="SRC\UserMenu\UserPlugins.cpp" />
     <ClCompile Include="SRC\UserMenu\UserProfiler.cpp" />
     <ClCompile Include="SRC\UserMenu\UserSelector.cpp" />
     <ClCompile Include="SRC\UserMenu\UserSettings.cpp" />
@@ -336,7 +334,6 @@
     <ClInclude Include="SRC\Hardware\CP.h" />
     <ClInclude Include="SRC\Hardware\DI.h" />
     <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h" />
-    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs2.h" />
     <ClInclude Include="SRC\Hardware\EFB.h" />
     <ClInclude Include="SRC\Hardware\EI.h" />
     <ClInclude Include="SRC\Hardware\GDI.h" />
@@ -345,7 +342,6 @@
     <ClInclude Include="SRC\Hardware\MC.h" />
     <ClInclude Include="SRC\Hardware\MI.h" />
     <ClInclude Include="SRC\Hardware\PI.h" />
-    <ClInclude Include="SRC\Hardware\Plugins.h" />
     <ClInclude Include="SRC\Hardware\SI.h" />
     <ClInclude Include="SRC\Hardware\VI.h" />
     <ClInclude Include="SRC\HighLevel\AX.h" />
@@ -369,7 +365,6 @@
     <ClInclude Include="SRC\UserMenu\UserFonts.h" />
     <ClInclude Include="SRC\UserMenu\UserMain.h" />
     <ClInclude Include="SRC\UserMenu\UserMemcards.h" />
-    <ClInclude Include="SRC\UserMenu\UserPlugins.h" />
     <ClInclude Include="SRC\UserMenu\UserProfiler.h" />
     <ClInclude Include="SRC\UserMenu\UserSelector.h" />
     <ClInclude Include="SRC\UserMenu\UserSettings.h" />
@@ -406,6 +401,14 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </MASM>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="DVD\DVD.vcxproj">
+      <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
+    </ProjectReference>
+    <ProjectReference Include="PAD\PAD.vcxproj">
+      <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

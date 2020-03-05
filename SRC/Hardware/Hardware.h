@@ -2,8 +2,7 @@
 
 #pragma once
 
-// Dolwin plugins
-#include "Plugins.h"
+#include "DolwinPluginSpecs.h"
 
 // hardware controls and register traps
 #include "HW.h"

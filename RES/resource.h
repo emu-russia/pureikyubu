@@ -2,7 +2,6 @@
 // Microsoft Visual C++ generated include file.
 // Used by Dolwin.rc
 //
-#define IDC_STATIC                      -1
 #define ID_POPUP_FILE                   0
 #define IDR_MANIFEST                    1
 #define IDI_DOLWIN_ICON                 101
@@ -15,7 +14,6 @@
 #define IDR_POPUP_MENU                  109
 #define IDD_FILE_FILTER                 111
 #define IDD_EDIT_FILE_INFO              113
-#define IDD_SELECT_PLUGIN               114
 #define IDD_MEMCARD_SETTINGS            115
 #define IDD_MEMCARD_CHOOSESIZE          116
 #define IDD_FONT_SETTINGS               117
@@ -52,10 +50,6 @@
 #define IDC_FILE_INFO_FILENAME          1005
 #define IDC_FILE_INFO_PATH              1006
 #define IDC_FILE_INFO_TITLE             1007
-#define IDC_PLUGIN_ABOUT                1008
-#define IDC_PLUGIN_CONFIG               1009
-#define IDC_PLUGIN_LIST                 1010
-#define IDC_PLUGIN_PADNUM               1011
 #define IDC_FONT_ANSICOMBO              1012
 #define IDC_FONT_SJISCOMBO              1013
 #define IDC_MEMCARD_CONNECTED           1014
@@ -67,8 +61,6 @@
 #define IDC_MEMCARD_NEW                 1020
 #define IDC_MEMCARD_SIZES               1021
 #define IDC_MEMCARD_SIZEDESC            1022
-#define IDC_PLUGIN_PATH                 1023
-#define IDC_PLUGIN_BROWSE               1024
 #define IDC_CHECK1                      1025
 #define IDC_USEMMX                      1025
 #define IDC_CPU_CORE                    1026
@@ -210,13 +202,15 @@
 #define ID_DEVELOPMENT_LOGOUTPUT_DIDVDINTERFACE 40096
 #define ID_DEVELOPMENT_LOGOUTPUT_SISERIALINTERFACE 40097
 #define ID_DEVELOPMENT_LOGOUTPUT_EXIEXPANSIONINTERFACE 40098
+#define ID_HELP_ABOUTPLUGINS            40099
+#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        144
-#define _APS_NEXT_COMMAND_VALUE         40099
+#define _APS_NEXT_COMMAND_VALUE         40100
 #define _APS_NEXT_CONTROL_VALUE         1072
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

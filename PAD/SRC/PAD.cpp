@@ -4,29 +4,6 @@
 PAD pad;
 
 // ---------------------------------------------------------------------------
-// run-time initializations
-
-// dll entrypoint
-BOOL APIENTRY DllMain(HANDLE hModule, DWORD dwReasonForCall, LPVOID lpUnknown)
-{
-    if(dwReasonForCall == DLL_PROCESS_ATTACH)
-    {
-        pad.inst = (HINSTANCE)hModule;
-    }
-    return TRUE;
-}
-
-// make sure, that emulator is using correct PAD plugin
-void RegisterPlugin(PluginData * plugData)
-{
-    // save main window handler
-    pad.hwndParent = (HWND *)plugData->display;
-
-    plugData->type = DOL_PLUG_PAD;
-    plugData->version = "GC Controller Plugin (Windows Keyboard)" " (" PAD_VER ")";
-}
-
-// ---------------------------------------------------------------------------
 // called when emulation started/stopped (pad controls)
 
 long PADOpen()
@@ -73,7 +50,7 @@ static void pad_reset_chan(PADState *state)
 // collect keyboard buttons in PADState
 long PADReadButtons(long padnum, PADState *state)
 {
-    u16 button = 0;
+    uint16_t button = 0;
 
     pad_reset_chan(state);
 
@@ -165,42 +142,9 @@ long PADReadButtons(long padnum, PADState *state)
     return 1;
 }
 
-static VOID CALLBACK TimerProc(
-    HWND hwnd,
-    UINT uMsg,
-    UINT idEvent,
-    DWORD dwTime)
-{
-    FlashWindow(*pad.hwndParent, TRUE);
-}
-
 // controller motor. 0 returned, if rumble is not supported by PAD.
 // see one of PAD_MOTOR* for allowed commands.
 long PADSetRumble(long padnum, long cmd)
 {
-    if(pad.config[padnum].plugged)
-    {
-        pad.rumbleFlag[padnum] = cmd;
-
-        if(cmd == PAD_MOTOR_RUMBLE)
-        {
-            SetTimer(*pad.hwndParent, 1, 50, TimerProc);
-        }
-        else
-        {
-            KillTimer(*pad.hwndParent, 1);
-            FlashWindow(*pad.hwndParent, FALSE);
-        }
-        return TRUE;
-    }
-    else return FALSE;
-}
-
-// ---------------------------------------------------------------------------
-// save/load (currently there is nothing to save)
-
-// savestate (flag:0 to load, flag:1 to save)
-void PADSaveLoad(long flag, char *filename)
-{
-    // empty
+    return FALSE;
 }

@@ -12,13 +12,13 @@
 
 typedef struct
 {
-    u32     bootFilePosition;
-    u32     FSTPosition;
-    u32     FSTLength;
-    u32     FSTMaxLength;
-    u32     userPosition;
-    u32     userLength;
-    u8      padding[8];
+    uint32_t     bootFilePosition;
+    uint32_t     FSTPosition;
+    uint32_t     FSTLength;
+    uint32_t     FSTMaxLength;
+    uint32_t     userPosition;
+    uint32_t     userLength;
+    uint8_t      padding[8];
 } DVDBB2;
 
 // BI2 is omitted here..
@@ -32,24 +32,24 @@ typedef struct
 
 typedef struct
 {
-    u8      isDir;                  // 1, if directory
-    u8      nameOffsetHi;
-    u16     nameOffsetLo;
+    uint8_t      isDir;                  // 1, if directory
+    uint8_t      nameOffsetHi;
+    uint16_t     nameOffsetLo;
     union
     {
         struct                      // file
         {
-            u32     fileOffset;
-            u32     fileLength;
+            uint32_t     fileOffset;
+            uint32_t     fileLength;
         };
         struct                      // directory
         {
-            u32     parentOffset;   // previous
-            u32     nextOffset;     // next
+            uint32_t     parentOffset;   // previous
+            uint32_t     nextOffset;     // next
         };
     };
 } DVDFileEntry;
 
 // externals
 BOOL    dvd_fs_init();
-s32     dvd_open(char *path, DVDFileEntry *root=NULL);
+int     dvd_open(char *path, DVDFileEntry *root=NULL);

@@ -98,22 +98,6 @@ BEGIN
     EDITTEXT        IDC_FILE_INFO_PATH,45,25,190,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
 END
 
-IDD_SELECT_PLUGIN DIALOG 20, 30, 222, 110
-STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
-CAPTION "Configure *"
-FONT 9, "MS Sans Serif"
-BEGIN
-    PUSHBUTTON      "Cancel",IDCANCEL,175,90,40,15
-    GROUPBOX        "Select Plugin",IDC_STATIC,6,5,210,80
-    COMBOBOX        IDC_PLUGIN_LIST,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    PUSHBUTTON      "About...",IDC_PLUGIN_ABOUT,16,60,35,14
-    PUSHBUTTON      "Config...",IDC_PLUGIN_CONFIG,171,60,35,14
-    PUSHBUTTON      "OK",IDOK,135,90,35,15
-    COMBOBOX        IDC_PLUGIN_PADNUM,125,61,43,30,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
-    EDITTEXT        IDC_PLUGIN_PATH,16,40,175,12,ES_AUTOHSCROLL | ES_READONLY | NOT WS_VISIBLE
-    PUSHBUTTON      "...",IDC_PLUGIN_BROWSE,194,40,13,13,NOT WS_VISIBLE
-END
-
 IDD_FONT_SETTINGS DIALOG 0, 0, 224, 130
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Configure Bootrom Font"
@@ -305,10 +289,6 @@ BEGIN
     END
 
     IDD_EDIT_FILE_INFO, DIALOG
-    BEGIN
-    END
-
-    IDD_SELECT_PLUGIN, DIALOG
     BEGIN
     END
 
@@ -563,12 +543,6 @@ BEGIN
         END
         MENUITEM "Always On &Top",              ID_OPTIONS_ALWAYSONTOP, CHECKED
         MENUITEM SEPARATOR
-        MENUITEM "&Graphics...\tCtrl+G",        ID_OPTIONS_GRAPHICS
-        MENUITEM "&Sound...\tCtrl+S",           ID_OPTIONS_SOUND
-        MENUITEM "&Input...\tCtrl+I",           ID_OPTIONS_INPUT
-        MENUITEM "&DVD...",                     ID_OPTIONS_DVD
-        MENUITEM "&Net...",                     ID_OPTIONS_NET, GRAYED
-        MENUITEM SEPARATOR
         POPUP "&Controllers"
         BEGIN
             MENUITEM "Port &1",                     ID_OPTIONS_CONTROLLERS_PORT1
@@ -587,14 +561,6 @@ BEGIN
     BEGIN
         MENUITEM "Web Site",                    ID_HELP_WEBSITE, GRAYED
         MENUITEM SEPARATOR
-        POPUP "About &Plugins"
-        BEGIN
-            MENUITEM "&Graphics...",                ID_ABOUT_GFX
-            MENUITEM "&Sound...",                   ID_ABOUT_AUD
-            MENUITEM "&Input...",                   ID_ABOUT_PAD
-            MENUITEM "&DVD...",                     ID_ABOUT_DVD
-            MENUITEM "&Net...",                     ID_ABOUT_NET, GRAYED
-        END
         MENUITEM "A&bout Dolwin...",            ID_HELP_ABOUT
     END
 END

@@ -412,7 +412,7 @@ int GetVKey()
     }
 }
 
-BOOL CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     char buf[256];
     int vkey;
@@ -731,48 +731,4 @@ void PADConfigure(long padnum)
         MAKEINTRESOURCE(IDD_DIALOG1),
         *pad.hwndParent,
         PADConfigDialogProc);
-}
-
-BOOL CALLBACK PADAboutDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    char buf[256], *ptr;
-
-    switch(uMsg)
-    {
-        case WM_INITDIALOG:
-            ptr = buf;
-            ptr += sprintf(ptr, "DATE\t: %s\n", __DATE__);
-            ptr += sprintf(ptr, "TIME\t: %s\n", __TIME__);
-            ptr += sprintf(ptr, "SPEC\t: %s  ", DOL_PLUG_VER);
-            SetDlgItemText(hwndDlg, IDC_ABOUT_STAMP, buf);
-            return TRUE;
-
-        case WM_CLOSE:
-            EndDialog(hwndDlg, 0);
-            return TRUE;
-
-        case WM_COMMAND:
-            switch(LOWORD(wParam))
-            {
-                case IDC_PAD_ABOUT_OK:
-                    PADSaveConfig(hwndDlg);
-                    EndDialog(hwndDlg, 0);
-                    return TRUE;
-            }
-            break;
-
-        default:
-            return FALSE;
-    }
-    return FALSE;
-}
-
-
-void PADAbout()
-{
-    DialogBox(
-        pad.inst,
-        MAKEINTRESOURCE(IDD_DIALOG2),
-        *pad.hwndParent,
-        PADAboutDialogProc);
 }

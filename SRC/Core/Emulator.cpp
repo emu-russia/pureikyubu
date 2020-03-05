@@ -14,7 +14,6 @@ void EMUInit()
 
     MEMInit();
     CPUInit();
-    PSInit();
     MEMOpen();
     MEMSelect(0, 0);
 
@@ -27,7 +26,6 @@ void EMUDie()
     ASSERT(emu.running == TRUE, "You should stop emulation, before exit!");
     if(emu.initok == FALSE) return;
 
-    PSShutdown();
     CPUFini();
     MEMFini();
 
@@ -47,7 +45,9 @@ void EMUOpen()
     MEMOpen();
     MEMSelect(mem.mmu, 0);
     CPUOpen();
-    PSOpen();
+    ASSERT(GXOpen() == 0, "Cannot start graphics!");
+    ASSERT(AXOpen() == 0, "Cannot start audio!");
+    ASSERT(PADOpen() == 0, "Cannot start joypad!");
     HWOpen();
     ReloadFile();   // PC will be set here
     HLEOpen();
@@ -75,7 +75,9 @@ void EMUClose()
     OnMainWindowClosed();
 
     // close other sub-systems
-    PSClose();
+    PADClose();
+    AXClose();
+    GXClose();
     HLEClose();
     HWClose();
     MEMClose();

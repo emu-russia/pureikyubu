@@ -860,29 +860,6 @@ loadFile:
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // options dialogs
 
-                // configure graphics
-                case ID_OPTIONS_GRAPHICS:
-                    if(emu.running) { if(GXConfigure) GXConfigure(); }
-                    else ConfigureGraphicsDialog();
-                    return 0;
-
-                // configure audio
-                case ID_OPTIONS_SOUND:
-                    if(emu.running) { if(AXConfigure) AXConfigure(); }
-                    else ConfigureAudioDialog();
-                    return 0;
-
-                // configure dvd
-                case ID_OPTIONS_DVD:
-                    if(emu.running) { if(DVDConfigure) DVDConfigure(); }
-                    else ConfigureDVDDialog();
-                    return 0;
-
-                // configure input
-                case ID_OPTIONS_INPUT:
-                    if(!emu.running) ConfigureInputDialog();
-                    return 0;
-
                 case ID_OPTIONS_CONTROLLERS_PORT1:
                     PADConfigure(0);
                     return 0;
@@ -911,19 +888,6 @@ loadFile:
                     FontConfigure(hwnd);
                     break;
 
-                // about...
-                case ID_ABOUT_GFX:
-                    if(GXAbout) GXAbout();
-                    return 0;
-                case ID_ABOUT_AUD:
-                    if(AXAbout) AXAbout();
-                    return 0;
-                case ID_ABOUT_PAD:
-                    if(PADAbout) PADAbout();
-                    return 0;
-                case ID_ABOUT_DVD:
-                    if(DVDAbout) DVDAbout();
-                    return 0;
                 case ID_HELP_ABOUT:
                     AboutDialog(hwnd);
                     return 0;

@@ -12,39 +12,13 @@
 // you should report Dolwin team, about all changes :
 // org <kvzorganic@mail.ru>, hotquik <hotquik@hotmail.com>
 
-#ifndef __PLUGIN_SPECS_H__
-#define __PLUGIN_SPECS_H__
+#pragma once
 
 // return values are always 1 for good, and 0 for bad.
 
-// plugin specification version
-#define DOL_PLUG_VER            "1.0"
-
-// plugin types (can be multi-purposed, types may be ORed)
-#define DOL_PLUG_GX             (0x01)      // 3D Graphics
-#define DOL_PLUG_AX             (0x02)      // Audio
-#define DOL_PLUG_PAD            (0x04)      // Controller
-#define DOL_PLUG_DVD            (0x08)      // DVD Image
-#define DOL_PLUG_NET            (0x10)      // NET Interface
-
-// plugin data. should be passed to RegisterPlugin as parameter.
-typedef struct PluginData
-{
-    // these values are passed as parameters during plugin init
-    void*           display;    // handler of drawing device (HWND* in Windows, for example)
-    unsigned char*  ram;        // your 24 MB memory buffer
-
-    // these values are returned by plugin
-    unsigned long   type;       // see DOL_PLUG_* types
-    char*           version;    // plugin description and version string
-} PluginData;
-
-// used to verify plugin
-void RegisterPlugin(PluginData * plugData);
-
 // ---------------------------------------------------------------------------
 
-// GX plugin (3D graphics)
+// GX (3D graphics)
 
 // GXOpen() should be called before emulation started, to initialize
 // plugin. GXClose() is called, when emulation is stopped, to shutdown plugin.
@@ -64,13 +38,9 @@ void GXWriteFifo(unsigned char *dataPtr, unsigned long length);
 // GX doesnt responsible for clearing token values (should be performed by emu).
 void GXSetTokens(long *peDrawDone, long *peToken, unsigned short *tokenVal);
 
-// config / about
-void GXConfigure();
-void GXAbout();
-
 // ---------------------------------------------------------------------------
 
-// AX plugin (audio)
+// AX (audio)
 
 // AXOpen() should be called before emulation started, to initialize
 // plugin. AXClose() is called, when emulation is stopped, to shutdown plugin.
@@ -89,13 +59,9 @@ void AXPlayStream(void * buffer, long length);
 // set stream volume (0..255), you cant set DMA volume in hardware.
 void AXSetVolume(unsigned char left, unsigned char right);
 
-// user stuff
-void AXConfigure();
-void AXAbout();
-
 // ---------------------------------------------------------------------------
 
-// PAD plugin (input)
+// PAD (input)
 // (padnum = 0...3)
 
 typedef struct PADState
@@ -142,34 +108,20 @@ long PADSetRumble(long padnum, long cmd);
 
 // config / about
 void PADConfigure(long padnum);
-void PADAbout();
 
 // ---------------------------------------------------------------------------
 
-// DVD plugin
-
-// DVDOpen() should be called before emulation started, to initialize
-// plugin. DVDClose() is called, when emulation is stopped, to shutdown plugin.
-long DVDOpen();
-void DVDClose();
+// DVD
 
 // set current DVD image for read/seek/open file operations
 // return 1 if no errors, and 0 if cannot use file
 long DVDSetCurrent(char *file);
 
 // seek and read operations on current DVD
-void DVDSeek(long position);
-void DVDRead(void *buffer, long length);
+void DVDSeek(int position);
+void DVDRead(void *buffer, int length);
 
 // open file in DVD root. return file position, or 0 if no such file.
 // note : current DVD must be selected first!
 // example use : s32 banner = DVDOpenFile("/opening.bnr");
 long DVDOpenFile(char *dvdfile);
-
-// config / about
-void DVDConfigure();
-void DVDAbout();
-
-#endif  // __PLUGIN_SPECS_H__
-
-// EOF

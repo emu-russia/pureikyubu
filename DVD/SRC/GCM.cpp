@@ -4,8 +4,8 @@
 
 // local data
 static FILE*    gcm_file;       // selected GCM file
-static s32      gcm_size;       // size of opened file
-static s32      seekval;        // current DVD position
+static int      gcm_size;       // size of opened file
+static int      seekval;        // current DVD position
 
 // ---------------------------------------------------------------------------
 
@@ -33,12 +33,12 @@ BOOL GCMSelectFile(char *file)
     return TRUE;
 }
 
-void GCMSeek(s32 position)
+void GCMSeek(int position)
 {
     seekval = position;
 }
 
-void GCMRead(u8 *buf, s32 length)
+void GCMRead(uint8_t*buf, int length)
 {
     if(gcm_file)
     {

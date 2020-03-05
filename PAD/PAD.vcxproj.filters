@@ -21,15 +21,9 @@
     <ClCompile Include="SRC\PAD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\SRC\UserMenu\UserConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRC\Configure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\SRC\Hardware\DolwinPluginSpecs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SRC\PAD.h">
@@ -38,11 +32,6 @@
     <ClInclude Include="RES\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="RES\PAD.def">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="RES\PAD.ico">
