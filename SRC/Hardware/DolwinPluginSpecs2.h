@@ -75,10 +75,6 @@ typedef void (*GXSETTOKENS)(long *peDrawDone, long *peToken, unsigned short *tok
 typedef void (*GXCONFIGURE)();
 typedef void (*GXABOUT)();
 
-// savestate (flag:0 to load, flag:1 to save);
-// "filename" is currently running DVD/executable file name.
-typedef void (*GXSAVELOAD)(long flag, char *filename);
-
 // ---------------------------------------------------------------------------
 
 // AX plugin (audio)
@@ -103,10 +99,6 @@ typedef void (*AXSETVOLUME)(unsigned char left, unsigned char right);
 // user stuff
 typedef void (*AXCONFIGURE)();
 typedef void (*AXABOUT)();
-
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-typedef void (*AXSAVELOAD)(long flag, char *filename);
 
 // ---------------------------------------------------------------------------
 
@@ -159,10 +151,6 @@ typedef long (*PADSETRUMBLE)(long padnum, long cmd);
 typedef void (*PADCONFIGURE)(long padnum);
 typedef void (*PADABOUT)();
 
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-typedef void (*PADSAVELOAD)(long flag, char *filename);
-
 // ---------------------------------------------------------------------------
 
 // DVD plugin
@@ -191,10 +179,6 @@ typedef long (*DVDOPENFILE)(char *dvdfile);
 // config / about
 typedef void (*DVDCONFIGURE)();
 typedef void (*DVDABOUT)();
-
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-typedef void (*DVDSAVELOAD)(long flag, char *filename);
 
 #endif  // __PLUGIN_SPECS2_H__
 

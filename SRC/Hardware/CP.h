@@ -62,27 +62,27 @@
 // CP registers
 typedef struct CPRegs
 {
-    u16     sr;         // status
-    u16     cr;         // control
-    u32     base, top;
-    u32     lomark, himark;
-    u32     cnt;
-    u32     wrptr, rdptr, bpptr;
+    uint16_t     sr;         // status
+    uint16_t     cr;         // control
+    uint32_t     base, top;
+    uint32_t     lomark, himark;
+    uint32_t     cnt;
+    uint32_t     wrptr, rdptr, bpptr;
 } CPRegs;
 
 // PE registers
 typedef struct PERegs
 {
-    u16     sr;         // status register
-    u16     token;      // last token
+    uint16_t     sr;         // status register
+    uint16_t     token;      // last token
 } PERegs;
 
 // PI registers
 typedef struct PIRegs
 {
-    u32     base;
-    u32     top;
-    u32     wrptr;      // also WRAP bit
+    uint32_t     base;
+    uint32_t     top;
+    uint32_t     wrptr;      // also WRAP bit
 } PIRegs;
 
 // ---------------------------------------------------------------------------
@@ -95,12 +95,12 @@ typedef struct FifoControl
     PERegs      pe;     // pixel engine registers
     PIRegs      pi;     // processor (CPU) fifo regs
     
-    long    drawdone;   // events
-    long    token;
-    u32     done_num;   // number of drawdone (PE_FINISH) events
-    s64     time;       // fifo update time
+    long        drawdone;   // events
+    long        token;
+    uint32_t    done_num;   // number of drawdone (PE_FINISH) events
+    int64_t     time;       // fifo update time
 
-    BOOL    gxpoll;     // 1: poll controllers after GX draw done
+    BOOL        gxpoll;     // 1: poll controllers after GX draw done
 } FifoControl;
 
 extern  FifoControl fifo;

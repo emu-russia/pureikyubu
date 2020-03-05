@@ -7,9 +7,9 @@
 
 void * DVDLoadBanner(char *dvdFile)
 {
-    s32 fsize = FileSize(dvdFile);
+    int fsize = FileSize(dvdFile);
     DVDBanner2 * banner;
-    u32 bnrofs;
+    uint32_t bnrofs;
 
     banner = (DVDBanner2 *)malloc(sizeof(DVDBanner2));
     ASSERT(banner == NULL, "Not enough memory for DVD banner data.");
@@ -23,24 +23,24 @@ void * DVDLoadBanner(char *dvdFile)
     if(bnrofs)
     {
         DVDSeek(bnrofs);
-        DVDRead((u8 *)banner, sizeof(DVDBanner2));
+        DVDRead((uint8_t *)banner, sizeof(DVDBanner2));
     }
     else memcpy(banner, nobanner, sizeof(DVDBanner));
 
     return banner;
 }
 
-u8 DVDBannerChecksum(void *banner)
+uint8_t DVDBannerChecksum(void *banner)
 {
     DVDBanner*  bnr  = (DVDBanner *)banner;
     DVDBanner2* bnr2 = (DVDBanner2*)banner;
-    u8*         buf;
-    u32         sum  = 0;
+    uint8_t*         buf;
+    uint32_t         sum  = 0;
 
     // select banner type
     if(MEMSwap(bnr->id) == DVD_BANNER_ID)   // US/JAP
     {
-        buf = (u8 *)bnr;
+        buf = (uint8_t *)bnr;
         for(int i=0; i<sizeof(DVDBanner); i++)
         {
             sum += buf[i];
@@ -48,12 +48,12 @@ u8 DVDBannerChecksum(void *banner)
     }
     else                                    // EUR
     {
-        buf = (u8 *)bnr2;
+        buf = (uint8_t *)bnr2;
         for(int i=0; i<sizeof(DVDBanner2); i++)
         {
             sum += buf[i];
         }
     }
 
-    return (u8)sum;
+    return (uint8_t)sum;
 }

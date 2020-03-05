@@ -14,7 +14,7 @@ static FILE* mapFile = NULL;
 static BOOL appendStarted;
 static int itemsUpdated;
 
-static void AppendMAPBySymbol(u32 address, char *symbol)
+static void AppendMAPBySymbol(uint32_t address, char *symbol)
 {
     mapFile = fopen(mapName, "a");
     if(!mapFile) return;

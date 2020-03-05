@@ -151,7 +151,7 @@ static void CP_BREAK()
 }
 
 // count PI write pointer, CP pointer, check for breakpoint
-static void fifo_flow(u32 nbytes)
+static void fifo_flow(uint32_t nbytes)
 {
     // PI fifo flow
     fifo.pi.wrptr &= ~PI_WRPTR_WRAP;
@@ -199,7 +199,7 @@ static void fifo_flow(u32 nbytes)
 // pixel engine status register (0x100a)
 //
 
-static void __fastcall write_pe_sr(u32 addr, u32 data)
+static void __fastcall write_pe_sr(uint32_t addr, uint32_t data)
 {
     // clear interrupts
     if(fifo.pe.sr & PE_SR_DONE)
@@ -219,9 +219,9 @@ static void __fastcall write_pe_sr(u32 addr, u32 data)
     if(data & PE_SR_TOKENMSK) fifo.pe.sr |= PE_SR_TOKENMSK;
     else fifo.pe.sr &= ~PE_SR_TOKENMSK;
 }
-static void __fastcall read_pe_sr(u32 addr, u32 *reg)  { *reg = fifo.pe.sr; }
+static void __fastcall read_pe_sr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pe.sr; }
 
-static void __fastcall read_pe_token(u32 addr, u32 *reg) { *reg = fifo.pe.token; }
+static void __fastcall read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo.pe.token; }
 
 //
 // command processor
@@ -229,7 +229,7 @@ static void __fastcall read_pe_token(u32 addr, u32 *reg) { *reg = fifo.pe.token;
 
 // control and status registers
 
-static void __fastcall read_cp_sr(u32 addr, u32 *reg)
+static void __fastcall read_cp_sr(uint32_t addr, uint32_t *reg)
 {
     // GP is always ready for action
     fifo.cp.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
@@ -237,9 +237,9 @@ static void __fastcall read_cp_sr(u32 addr, u32 *reg)
     *reg = fifo.cp.sr;
 }
 
-static void __fastcall write_cp_cr(u32 addr, u32 data)
+static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
 {
-    fifo.cp.cr = (u16)data;
+    fifo.cp.cr = (uint16_t)data;
 
     // clear breakpoint
     if(data & CP_CR_BPCLR)
@@ -248,9 +248,9 @@ static void __fastcall write_cp_cr(u32 addr, u32 data)
         PIClearInt(PI_INTERRUPT_CP);
     }
 }
-static void __fastcall read_cp_cr(u32 addr, u32 *reg) { *reg = fifo.cp.cr; }
+static void __fastcall read_cp_cr(uint32_t addr, uint32_t *reg) { *reg = fifo.cp.cr; }
 
-static void __fastcall write_cp_clr(u32 addr, u32 data)
+static void __fastcall write_cp_clr(uint32_t addr, uint32_t data)
 {
     // clear watermark conditions
     if(data & CP_CLR_OVFCLR)
@@ -286,53 +286,53 @@ static void printCP()
     DBReport(YEL"   rdptr:%08X", 0x80000000 | fifo.cp.rdptr);
 }
 
-static void __fastcall read_cp_baseh(u32 addr, u32 *reg)    { *reg = fifo.cp.base >> 16; }
-static void __fastcall write_cp_baseh(u32 addr, u32 data)   { fifo.cp.base = data << 16; }
-static void __fastcall read_cp_basel(u32 addr, u32 *reg)    { *reg = fifo.cp.base & 0xffff; }
-static void __fastcall write_cp_basel(u32 addr, u32 data)   { fifo.cp.base = data & 0xffff; }
-static void __fastcall read_cp_toph(u32 addr, u32 *reg)     { *reg = fifo.cp.top >> 16; }
-static void __fastcall write_cp_toph(u32 addr, u32 data)    { fifo.cp.top = data << 16; }
-static void __fastcall read_cp_topl(u32 addr, u32 *reg)     { *reg = fifo.cp.top & 0xffff; }
-static void __fastcall write_cp_topl(u32 addr, u32 data)    { fifo.cp.top = data & 0xffff; }
+static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base >> 16; }
+static void __fastcall write_cp_baseh(uint32_t addr, uint32_t data)   { fifo.cp.base = data << 16; }
+static void __fastcall read_cp_basel(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base & 0xffff; }
+static void __fastcall write_cp_basel(uint32_t addr, uint32_t data)   { fifo.cp.base = data & 0xffff; }
+static void __fastcall read_cp_toph(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.top >> 16; }
+static void __fastcall write_cp_toph(uint32_t addr, uint32_t data)    { fifo.cp.top = data << 16; }
+static void __fastcall read_cp_topl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.top & 0xffff; }
+static void __fastcall write_cp_topl(uint32_t addr, uint32_t data)    { fifo.cp.top = data & 0xffff; }
 
-static void __fastcall read_cp_hmarkh(u32 addr, u32 *reg)   { *reg = fifo.cp.himark >> 16; }
-static void __fastcall write_cp_hmarkh(u32 addr, u32 data)  { fifo.cp.himark = data << 16; }
-static void __fastcall read_cp_hmarkl(u32 addr, u32 *reg)   { *reg = fifo.cp.himark & 0xffff; }
-static void __fastcall write_cp_hmarkl(u32 addr, u32 data)  { fifo.cp.himark = data & 0xffff; }
-static void __fastcall read_cp_lmarkh(u32 addr, u32 *reg)   { *reg = fifo.cp.lomark >> 16; }
-static void __fastcall write_cp_lmarkh(u32 addr, u32 data)  { fifo.cp.lomark = data << 16; }
-static void __fastcall read_cp_lmarkl(u32 addr, u32 *reg)   { *reg = fifo.cp.lomark & 0xffff; }
-static void __fastcall write_cp_lmarkl(u32 addr, u32 data)  { fifo.cp.lomark = data & 0xffff; }
+static void __fastcall read_cp_hmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himark >> 16; }
+static void __fastcall write_cp_hmarkh(uint32_t addr, uint32_t data)  { fifo.cp.himark = data << 16; }
+static void __fastcall read_cp_hmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himark & 0xffff; }
+static void __fastcall write_cp_hmarkl(uint32_t addr, uint32_t data)  { fifo.cp.himark = data & 0xffff; }
+static void __fastcall read_cp_lmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomark >> 16; }
+static void __fastcall write_cp_lmarkh(uint32_t addr, uint32_t data)  { fifo.cp.lomark = data << 16; }
+static void __fastcall read_cp_lmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomark & 0xffff; }
+static void __fastcall write_cp_lmarkl(uint32_t addr, uint32_t data)  { fifo.cp.lomark = data & 0xffff; }
 
-static void __fastcall read_cp_cnth(u32 addr, u32 *reg)     { *reg = fifo.cp.cnt >> 16 ; }
-static void __fastcall write_cp_cnth(u32 addr, u32 data)    { fifo.cp.cnt = data << 16; }
-static void __fastcall read_cp_cntl(u32 addr, u32 *reg)     { *reg = fifo.cp.cnt & 0xffff; }
-static void __fastcall write_cp_cntl(u32 addr, u32 data)    { fifo.cp.cnt = data & 0xffff; }
+static void __fastcall read_cp_cnth(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnt >> 16 ; }
+static void __fastcall write_cp_cnth(uint32_t addr, uint32_t data)    { fifo.cp.cnt = data << 16; }
+static void __fastcall read_cp_cntl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnt & 0xffff; }
+static void __fastcall write_cp_cntl(uint32_t addr, uint32_t data)    { fifo.cp.cnt = data & 0xffff; }
 
-static void __fastcall read_cp_wrptrh(u32 addr, u32 *reg)   { *reg = fifo.cp.wrptr >> 16; }
-static void __fastcall write_cp_wrptrh(u32 addr, u32 data)  { fifo.cp.wrptr = data << 16; }
-static void __fastcall read_cp_wrptrl(u32 addr, u32 *reg)   { *reg = fifo.cp.wrptr & 0xffff; }
-static void __fastcall write_cp_wrptrl(u32 addr, u32 data)  { fifo.cp.wrptr = data & 0xffff; }
-static void __fastcall read_cp_rdptrh(u32 addr, u32 *reg)   { *reg = fifo.cp.rdptr >> 16; }
-static void __fastcall write_cp_rdptrh(u32 addr, u32 data)  { fifo.cp.rdptr = data << 16; }
-static void __fastcall read_cp_rdptrl(u32 addr, u32 *reg)   { *reg = fifo.cp.rdptr & 0xffff; }
-static void __fastcall write_cp_rdptrl(u32 addr, u32 data)  { fifo.cp.rdptr = data & 0xffff; }
+static void __fastcall read_cp_wrptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptr >> 16; }
+static void __fastcall write_cp_wrptrh(uint32_t addr, uint32_t data)  { fifo.cp.wrptr = data << 16; }
+static void __fastcall read_cp_wrptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptr & 0xffff; }
+static void __fastcall write_cp_wrptrl(uint32_t addr, uint32_t data)  { fifo.cp.wrptr = data & 0xffff; }
+static void __fastcall read_cp_rdptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptr >> 16; }
+static void __fastcall write_cp_rdptrh(uint32_t addr, uint32_t data)  { fifo.cp.rdptr = data << 16; }
+static void __fastcall read_cp_rdptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptr & 0xffff; }
+static void __fastcall write_cp_rdptrl(uint32_t addr, uint32_t data)  { fifo.cp.rdptr = data & 0xffff; }
 
-static void __fastcall read_cp_bpptrh(u32 addr, u32 *reg)   { *reg = fifo.cp.bpptr >> 16; }
-static void __fastcall write_cp_bpptrh(u32 addr, u32 data)  { fifo.cp.bpptr = data << 16; }
-static void __fastcall read_cp_bpptrl(u32 addr, u32 *reg)   { *reg = fifo.cp.bpptr & 0xffff; }
-static void __fastcall write_cp_bpptrl(u32 addr, u32 data)  { fifo.cp.bpptr = data & 0xffff; }
+static void __fastcall read_cp_bpptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptr >> 16; }
+static void __fastcall write_cp_bpptrh(uint32_t addr, uint32_t data)  { fifo.cp.bpptr = data << 16; }
+static void __fastcall read_cp_bpptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptr & 0xffff; }
+static void __fastcall write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptr = data & 0xffff; }
 
 //
 // PI fifo (CPU)
 //
 
-static void __fastcall read_pi_base(u32 addr, u32 *reg)   { *reg = fifo.pi.base; }
-static void __fastcall write_pi_base(u32 addr, u32 data)  { fifo.pi.base = data; }
-static void __fastcall read_pi_top(u32 addr, u32 *reg)    { *reg = fifo.pi.top; }
-static void __fastcall write_pi_top(u32 addr, u32 data)   { fifo.pi.top = data; }
-static void __fastcall read_pi_wrptr(u32 addr, u32 *reg)  { *reg = fifo.pi.wrptr; }
-static void __fastcall write_pi_wrptr(u32 addr, u32 data) { fifo.pi.wrptr = data; }
+static void __fastcall read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = fifo.pi.base; }
+static void __fastcall write_pi_base(uint32_t addr, uint32_t data)  { fifo.pi.base = data; }
+static void __fastcall read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = fifo.pi.top; }
+static void __fastcall write_pi_top(uint32_t addr, uint32_t data)   { fifo.pi.top = data; }
+static void __fastcall read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pi.wrptr; }
+static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { fifo.pi.wrptr = data; }
 
 // show PI fifo configuration
 static void printPI()
@@ -348,9 +348,9 @@ static void printPI()
 // PI fifo buffer (scratch space, for non-redirected fifo)
 //
 
-void __fastcall write_fifo8(u32 addr, u32 data)
+void __fastcall write_fifo8(uint32_t addr, uint32_t data)
 {
-    u8 b = (u8)data;
+    uint8_t b = (uint8_t)data;
 
     BeginProfileGfx();
     GXWriteFifo(&b, 1);
@@ -358,22 +358,22 @@ void __fastcall write_fifo8(u32 addr, u32 data)
     EndProfileGfx();
 }
 
-void __fastcall write_fifo16(u32 addr, u32 data)
+void __fastcall write_fifo16(uint32_t addr, uint32_t data)
 {
-    u16 h = MEMSwapHalf((u16)data);
+    uint16_t h = MEMSwapHalf((uint16_t)data);
 
     BeginProfileGfx();
-    GXWriteFifo((u8 *)&h, 2);
+    GXWriteFifo((uint8_t *)&h, 2);
     fifo_flow(2);
     EndProfileGfx();
 }
 
-void __fastcall write_fifo32(u32 addr, u32 data)
+void __fastcall write_fifo32(uint32_t addr, uint32_t data)
 {
-    u32 w = MEMSwap(data);
+    uint32_t w = MEMSwap(data);
 
     BeginProfileGfx();
-    GXWriteFifo((u8 *)&w, 4);
+    GXWriteFifo((uint8_t *)&w, 4);
     fifo_flow(4);
     EndProfileGfx();
 }
@@ -382,8 +382,8 @@ void __fastcall write_fifo32(u32 addr, u32 data)
 // stubs
 //
 
-static void __fastcall no_write(u32 addr, u32 data) {}
-static void __fastcall no_read(u32 addr, u32 *reg)  { *reg = 0; }
+static void __fastcall no_write(uint32_t addr, uint32_t data) {}
+static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 // ---------------------------------------------------------------------------
 // init

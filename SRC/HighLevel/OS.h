@@ -26,26 +26,26 @@
 typedef struct OSContext
 {
     // GPRs
-    u32     gpr[32];
+    uint32_t     gpr[32];
 
-    u32     cr, lr, ctr, xer;
+    uint32_t     cr, lr, ctr, xer;
 
     // FPRs (or paired-single 0-part)
-    f64     fpr[32];
+    double     fpr[32];
 
-    u32     fpscr_pad;
-    u32     fpscr;          // dummy in emulator
+    uint32_t     fpscr_pad;
+    uint32_t     fpscr;          // dummy in emulator
 
     // exception handling regs
-    u32     srr[2];
+    uint32_t     srr[2];
 
     // context flags
-    u16     mode;           // one of OS_CONTEXT_MODE*
-    u16     state;          // or'ed OS_CONTEXT_STATE*
+    uint16_t     mode;           // one of OS_CONTEXT_MODE*
+    uint16_t     state;          // or'ed OS_CONTEXT_STATE*
 
     // gekko-specific regs
-    u32     gqr[8];         // quantization mode regs
-    f64     psr[32];        // paired-single 1-part
+    uint32_t     gqr[8];         // quantization mode regs
+    double       psr[32];        // paired-single 1-part
 
 } OSContext;
 
@@ -77,4 +77,4 @@ void    OSRestoreInterrupts ( void );
 --------------------------------------------------------------------------- */
 
 void    OSCheckContextStruct();
-char*   OSTimeFormat(u64 tbr, BOOL noDate=FALSE);
+char*   OSTimeFormat(uint64_t tbr, BOOL noDate=FALSE);

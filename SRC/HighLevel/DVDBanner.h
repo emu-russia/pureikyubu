@@ -14,34 +14,34 @@
 // JP/US version
 typedef struct DVDBanner
 {
-    u32     id;                         // 'BNR1'
-    u32     padding[7];
-    u8      image[2 * DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT]; // RGB5A3 texture
-    u8      shortTitle[32];             // game name (short, for IPL menu)
-    u8      shortMaker[32];             // developer
-    u8      longTitle[64];              // game name (long, for Dolwin =:))
-    u8      longMaker[64];              // developer (long description)
-    u8      comment[128];               // comments. may include '\n'
+    uint32_t     id;                         // 'BNR1'
+    uint32_t     padding[7];
+    uint8_t      image[2 * DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT]; // RGB5A3 texture
+    uint8_t      shortTitle[32];             // game name (short, for IPL menu)
+    uint8_t      shortMaker[32];             // developer
+    uint8_t      longTitle[64];              // game name (long, for Dolwin =:))
+    uint8_t      longMaker[64];              // developer (long description)
+    uint8_t      comment[128];               // comments. may include '\n'
 } DVDBanner;
 
 // EUR version
 typedef struct DVDBanner2
 {
-    u32     id;                         // 'BNR2'
-    u32     padding[7];
-    u8      image[2 * DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT]; // RGB5A3 texture
+    uint32_t     id;                         // 'BNR2'
+    uint32_t     padding[7];
+    uint8_t      image[2 * DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT]; // RGB5A3 texture
 
     // comments on six european languages
     struct
     {
-        u8  shortTitle[32];
-        u8  shortMaker[32];
-        u8  longTitle[64];
-        u8  longMaker[64];
-        u8  comment[128];
+        uint8_t  shortTitle[32];
+        uint8_t  shortMaker[32];
+        uint8_t  longTitle[64];
+        uint8_t  longMaker[64];
+        uint8_t  comment[128];
     } comments[6];
 } DVDBanner2;
 
 // banner API
 void*   DVDLoadBanner(char *dvdFile);           // free() required!
-u8      DVDBannerChecksum(void *banner);
+uint8_t DVDBannerChecksum(void *banner);

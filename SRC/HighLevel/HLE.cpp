@@ -127,7 +127,7 @@ void HLEOpen()
     SYMAddEmulatorSymbols();
 
     // set high level calls
-    s32 n = 0;
+    int32_t n = 0;
     while(osignore[n])
     {
         HLESetCall(osignore[n++], os_ignore);
@@ -176,9 +176,9 @@ void HLEClose()
     DSPClose();
 }
 
-void HLEExecuteCallback(u32 entryPoint)
+void HLEExecuteCallback(uint32_t entryPoint)
 {
-    u32 old = LR;
+    uint32_t old = LR;
     PC = entryPoint;
     LR = 0;
     while(PC) IPTExecuteOpcode();

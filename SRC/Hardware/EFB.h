@@ -3,9 +3,9 @@
 #define EFB_MASK    0x1fffff
 
 // peeks and pokes
-void    EFBPeek8(u32 ofs, u32 *reg);
-void    EFBPeek16(u32 ofs, u32 *reg);
-void    EFBPeek32(u32 ofs, u32 *reg);
-void    EFBPoke8(u32 ofs, u32 data);
-void    EFBPoke16(u32 ofs, u32 data);
-void    EFBPoke32(u32 ofs, u32 data);
+void    EFBPeek8(uint32_t ofs, uint32_t *reg);
+void    EFBPeek16(uint32_t ofs, uint32_t *reg);
+void    EFBPeek32(uint32_t ofs, uint32_t *reg);
+void    EFBPoke8(uint32_t ofs, uint32_t data);
+void    EFBPoke16(uint32_t ofs, uint32_t data);
+void    EFBPoke32(uint32_t ofs, uint32_t data);

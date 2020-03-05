@@ -10,14 +10,14 @@
 
 static  BOOL    Profiler;   // uservar
 
-static  s64     startTime, stopTime;
-static  s64     gfxStartTime, gfxStopTime;
-static  s64     sfxStartTime, sfxStopTime;
-static  s64     padStartTime, padStopTime;
-static  s64     dvdStartTime, dvdStopTime;
-static  s64     cpuTime, gfxTime, sfxTime, padTime, dvdTime, idleTime;
-static  s64     ONE_SECOND;
-static  s64     fpsTime, mipsTime;
+static  int64_t     startTime, stopTime;
+static  int64_t     gfxStartTime, gfxStopTime;
+static  int64_t     sfxStartTime, sfxStopTime;
+static  int64_t     padStartTime, padStopTime;
+static  int64_t     dvdStartTime, dvdStopTime;
+static  int64_t     cpuTime, gfxTime, sfxTime, padTime, dvdTime, idleTime;
+static  int64_t     ONE_SECOND;
+static  int64_t     fpsTime, mipsTime;
 static  DWORD   checkTime;
 
 // ---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ static  DWORD   checkTime;
 // stupid msdev hungs on asm { ... } blocks
 // so use single-line __asm expressions
 
-static __declspec(naked) void __fastcall MyReadTimeStampCounter(s64 *ptr)
+static __declspec(naked) void __fastcall MyReadTimeStampCounter(int64_t *ptr)
 {
     // rdtsc
     __asm  _emit    0x0f
@@ -41,8 +41,8 @@ static float GetClockSpeed()
 {
     int i = 0;
     LARGE_INTEGER   t0, t1, perfFreq;
-    s64 stamp0 = 0, stamp1 = 0;
-    s64 diffStamp, diffTicks;
+    int64_t stamp0 = 0, stamp1 = 0;
+    int64_t diffStamp, diffTicks;
 
     if(QueryPerformanceFrequency(&perfFreq))
     {
@@ -98,7 +98,7 @@ void OpenProfiler()
     if(Profiler)
     {
         cpuTime = gfxTime = sfxTime = padTime = dvdTime = idleTime = 0;
-        ONE_SECOND = (s64)((f64)GetClockSpeed() * (f64)1000000.0);
+        ONE_SECOND = (int64_t)((double)GetClockSpeed() * (double)1000000.0);
         MyReadTimeStampCounter(&startTime);
         MyReadTimeStampCounter(&fpsTime);
         MyReadTimeStampCounter(&mipsTime);
@@ -119,11 +119,11 @@ void UpdateProfiler()
     
         // measure time
         MyReadTimeStampCounter(&stopTime);
-        s64 total = stopTime - startTime;
+        int64_t total = stopTime - startTime;
 
         cpuTime = total - gfxTime - sfxTime - padTime - dvdTime;
-        s64 cur; MyReadTimeStampCounter(&cur);
-        s64 diff = cur - startTime;
+        int64_t cur; MyReadTimeStampCounter(&cur);
+        int64_t diff = cur - startTime;
 
         // calculate how long we can be in idle state (VSYNC, as in real)
         // current emulation speed is not allowing to waste any time
@@ -152,7 +152,7 @@ void UpdateProfiler()
         diff = cur - mipsTime;
         if(cur >= ONE_SECOND)
         {
-            sprintf(mips, "%.1f", (f32)cpu.ops / 1000000.0f);
+            sprintf(mips, "%.1f", (float)cpu.ops / 1000000.0f);
             cpu.ops = 0;
             MyReadTimeStampCounter(&mipsTime);
         }
@@ -168,12 +168,12 @@ void UpdateProfiler()
             //sprintf(buf, "mips:%s  core:%-2.1f  gfx:%-2.1f  snd:%-2.1f  pad:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
             sprintf(buf, "mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f", 
                 mips,
-                (f64)cpuTime * 100 / (f64)total,
-                (f64)gfxTime * 100 / (f64)total,
-                (f64)sfxTime * 100 / (f64)total,
-                (f64)padTime * 100 / (f64)total,
-                (f64)dvdTime * 100 / (f64)total,
-                (f64)idleTime* 100 / (f64)total
+                (double)cpuTime * 100 / (double)total,
+                (double)gfxTime * 100 / (double)total,
+                (double)sfxTime * 100 / (double)total,
+                (double)padTime * 100 / (double)total,
+                (double)dvdTime * 100 / (double)total,
+                (double)idleTime* 100 / (double)total
             );
             SetStatusText(STATUS_PROGRESS, buf);
         }

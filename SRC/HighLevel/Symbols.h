@@ -5,7 +5,7 @@
 // symbolic entry
 typedef struct SYM
 {
-    u32     eaddr;              // effective address
+    uint32_t eaddr;             // effective address
     char*   savedName;          // symbolic description
     void    (*routine)();       // associated high-level call
     BOOL    emuSymbol;          // 1, when symbol from Dolwin.exe
@@ -21,10 +21,10 @@ typedef struct SYMControl
 extern  SYMControl sym;
 
 // API for emulator
-void    SYMAddNew(u32 addr, char *name, BOOL emuSymbol=FALSE);
+void    SYMAddNew(uint32_t addr, char *name, BOOL emuSymbol=FALSE);
 void    SYMSetHighlevel(char *symName, void (*routine)());
-u32     SYMAddress(char *symName);
-char*   SYMName(u32 symAddr);
+uint32_t SYMAddress(char *symName);
+char*   SYMName(uint32_t symAddr);
 void    SYMKill();
 void    SYMList(char *str="*");
 void    SYMAddEmulatorSymbols();
@@ -35,5 +35,5 @@ void    SYMCompareWorkspaces (
     SYMControl      *source,
     SYMControl      *dest,
     // callback is called when symbol in source wasnt found in dest
-    void (*DiffCallback)(u32 ea, char * name)
+    void (*DiffCallback)(uint32_t ea, char * name)
 );

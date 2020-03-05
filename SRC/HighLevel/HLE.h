@@ -66,4 +66,4 @@ extern  HLEControl hle;
 void    HLESetCall(char *name, void (*call)());
 void    HLEOpen();
 void    HLEClose();
-void    HLEExecuteCallback(u32 entryPoint);
+void    HLEExecuteCallback(uint32_t entryPoint);

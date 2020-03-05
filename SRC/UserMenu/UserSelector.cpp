@@ -114,7 +114,7 @@ static void load_path()
 }
 
 // called after loading of new file (see Emulator\Loader.cpp)
-BOOL AddSelectorPath(char *fullPath)
+bool AddSelectorPath(char *fullPath)
 {
     int i;
     // spell will be checked RTL, so fullPath[0] doesnt crash when fullPath = NULL
@@ -154,13 +154,13 @@ static int is565()
     return 1;   // HACK, until I know how
 }
 
-#define PACKRGB555(r, g, b) (u16)((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
-#define PACKRGB565(r, g, b) (u16)((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
+#define PACKRGB555(r, g, b) (uint16_t)((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
+#define PACKRGB565(r, g, b) (uint16_t)((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
 
 // convert banner. return indexes of new banner icon.
 // we are using two icons for single banner, to highlight.
 // return FALSE, if we cant convert banner (or something bad)
-static BOOL add_banner(u8 *banner, int *bA, int *bB)
+static bool add_banner(uint8_t *banner, int *bA, int *bB)
 {
     int pack = is565();
     int width = (usel.smallIcons) ? (DVD_BANNER_WIDTH >> 1) : (DVD_BANNER_WIDTH);
@@ -170,21 +170,21 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
     int bpp = bitdepth / 8;
     int bcount = width * height * bpp;
     int tiles  = (DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT) / 16;    
-    u8 *imageA, *imageB, *ptrA, *ptrB;
-    f64 rgb[3], rgbh[3];
-    f64 alpha, alphaC;
-    u16 *tile  = (u16 *)banner, *ptrA16, *ptrB16;
-    u32 ri[4], gi[4], bi[4], ai[4], rhi[4], ghi[4], bhi[4];     // for interpolation
-    u32 r, g, b, a, rh, gh, bh;                                 // final values
+    uint8_t *imageA, *imageB, *ptrA, *ptrB;
+    double rgb[3], rgbh[3];
+    double alpha, alphaC;
+    uint16_t *tile  = (uint16_t *)banner, *ptrA16, *ptrB16;
+    uint32_t ri[4], gi[4], bi[4], ai[4], rhi[4], ghi[4], bhi[4];     // for interpolation
+    uint32_t r, g, b, a, rh, gh, bh;                                 // final values
     int row = 0, col = 0, pos;
 
-    imageA = (u8 *)malloc(bcount);
+    imageA = (uint8_t *)malloc(bcount);
     if(imageA == NULL)
     {
         DeleteDC(hdc);
         return FALSE;
     }
-    imageB = (u8 *)malloc(bcount);
+    imageB = (uint8_t *)malloc(bcount);
     if(imageB == NULL)
     {
         free(imageA);
@@ -193,14 +193,14 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
     }
 
     DWORD backcol = GetSysColor(COLOR_WINDOW);
-    rgb[0] = (f64)GetRValue(backcol);
-    rgb[1] = (f64)GetGValue(backcol);
-    rgb[2] = (f64)GetBValue(backcol);
+    rgb[0] = (double)GetRValue(backcol);
+    rgb[1] = (double)GetGValue(backcol);
+    rgb[2] = (double)GetBValue(backcol);
 
     backcol = GetSysColor(COLOR_HIGHLIGHT);
-    rgbh[0] = (f64)GetRValue(backcol);
-    rgbh[1] = (f64)GetGValue(backcol);
-    rgbh[2] = (f64)GetBValue(backcol);
+    rgbh[0] = (double)GetRValue(backcol);
+    rgbh[1] = (double)GetGValue(backcol);
+    rgbh[2] = (double)GetBValue(backcol);
 
     // convert RGB5A3 -> RGBA
     for(int i=0; i<tiles; i++, tile+=16)
@@ -208,7 +208,7 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
         for(int j=0; j<4; j+=usel.smallIcons+1)
         for(int k=0; k<4; k+=usel.smallIcons+1)
         {
-            u16 p, ph;
+            uint16_t p, ph;
 
             if(usel.smallIcons)     // small banner (interpolate)
             {
@@ -222,9 +222,9 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                         ri[n] = (p & 0x7c00) >> 10;
                         gi[n] = (p & 0x03e0) >> 5;
                         bi[n] = (p & 0x001f);
-                        ri[n] = (u8)((ri[n] << 3) | (ri[n] >> 2));
-                        gi[n] = (u8)((gi[n] << 3) | (gi[n] >> 2));
-                        bi[n] = (u8)((bi[n] << 3) | (bi[n] >> 2));
+                        ri[n] = (uint8_t)((ri[n] << 3) | (ri[n] >> 2));
+                        gi[n] = (uint8_t)((gi[n] << 3) | (gi[n] >> 2));
+                        bi[n] = (uint8_t)((bi[n] << 3) | (bi[n] >> 2));
                         rhi[n] = ri[n], ghi[n] = gi[n], bhi[n] = bi[n];
                     }
                     else
@@ -234,16 +234,16 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                         bi[n] = (p & 0x000f);
                         ai[n] = (p & 0x7000) >> 12;
 
-                        alpha = (f64)ai[n] / 7.0;
+                        alpha = (double)ai[n] / 7.0;
                         alphaC = 1.0 - alpha;
 
-                        rhi[n] = (u8)((f64)(16*ri[n]) * alpha + rgbh[0] * alphaC);
-                        ghi[n] = (u8)((f64)(16*gi[n]) * alpha + rgbh[1] * alphaC);
-                        bhi[n] = (u8)((f64)(16*bi[n]) * alpha + rgbh[2] * alphaC);
+                        rhi[n] = (uint8_t)((double)(16*ri[n]) * alpha + rgbh[0] * alphaC);
+                        ghi[n] = (uint8_t)((double)(16*gi[n]) * alpha + rgbh[1] * alphaC);
+                        bhi[n] = (uint8_t)((double)(16*bi[n]) * alpha + rgbh[2] * alphaC);
 
-                        ri[n] = (u8)((f64)(16*ri[n]) * alpha + rgb[0] * alphaC);
-                        gi[n] = (u8)((f64)(16*gi[n]) * alpha + rgb[1] * alphaC);
-                        bi[n] = (u8)((f64)(16*bi[n]) * alpha + rgb[2] * alphaC);
+                        ri[n] = (uint8_t)((double)(16*ri[n]) * alpha + rgb[0] * alphaC);
+                        gi[n] = (uint8_t)((double)(16*gi[n]) * alpha + rgb[1] * alphaC);
+                        bi[n] = (uint8_t)((double)(16*bi[n]) * alpha + rgb[2] * alphaC);
                     }
                 }
 
@@ -266,9 +266,9 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                     r = (p & 0x7c00) >> 10;
                     g = (p & 0x03e0) >> 5;
                     b = (p & 0x001f);
-                    r = (u8)((r << 3) | (r >> 2));
-                    g = (u8)((g << 3) | (g >> 2));
-                    b = (u8)((b << 3) | (b >> 2));
+                    r = (uint8_t)((r << 3) | (r >> 2));
+                    g = (uint8_t)((g << 3) | (g >> 2));
+                    b = (uint8_t)((b << 3) | (b >> 2));
                     rh = r, gh = g, bh = b;
                 }
                 else
@@ -278,23 +278,23 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
                     b = (p & 0x000f);
                     a = (p & 0x7000) >> 12;
 
-                    alpha = (f64)a / 7.0;
+                    alpha = (double)a / 7.0;
                     alphaC = 1.0 - alpha;
 
-                    rh = (u8)((f64)(16*r) * alpha + rgbh[0] * alphaC);
-                    gh = (u8)((f64)(16*g) * alpha + rgbh[1] * alphaC);
-                    bh = (u8)((f64)(16*b) * alpha + rgbh[2] * alphaC);
+                    rh = (uint8_t)((double)(16*r) * alpha + rgbh[0] * alphaC);
+                    gh = (uint8_t)((double)(16*g) * alpha + rgbh[1] * alphaC);
+                    bh = (uint8_t)((double)(16*b) * alpha + rgbh[2] * alphaC);
 
-                    r = (u8)((f64)(16*r) * alpha + rgb[0] * alphaC);
-                    g = (u8)((f64)(16*g) * alpha + rgb[1] * alphaC);
-                    b = (u8)((f64)(16*b) * alpha + rgb[2] * alphaC);
+                    r = (uint8_t)((double)(16*r) * alpha + rgb[0] * alphaC);
+                    g = (uint8_t)((double)(16*g) * alpha + rgb[1] * alphaC);
+                    b = (uint8_t)((double)(16*b) * alpha + rgb[2] * alphaC);
                 }
 
                 pos = bpp * ((row + j) * width + (col + k));
             }
 
-            ptrA16 = (u16 *)&imageA[pos];
-            ptrB16 = (u16 *)&imageB[pos];
+            ptrA16 = (uint16_t *)&imageA[pos];
+            ptrB16 = (uint16_t *)&imageB[pos];
             ptrA   = &imageA[pos];
             ptrB   = &imageB[pos];
 
@@ -302,7 +302,7 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
             {
                 // you can test 8-bit in XP, running Dolwin in 256 colors
                 *ptrA++ =
-                *ptrB++ = (u8)(r | g ^ b);
+                *ptrB++ = (uint8_t)(r | g ^ b);
             }
             else if(bitdepth == 16)
             {
@@ -322,25 +322,25 @@ static BOOL add_banner(u8 *banner, int *bA, int *bB)
             }
             else if(bitdepth == 24)
             {
-                *ptrA++ = (u8)b;
-                *ptrA++ = (u8)g;
-                *ptrA++ = (u8)r;
+                *ptrA++ = (uint8_t)b;
+                *ptrA++ = (uint8_t)g;
+                *ptrA++ = (uint8_t)r;
 
-                *ptrB++ = (u8)bh;
-                *ptrB++ = (u8)gh;
-                *ptrB++ = (u8)rh;
+                *ptrB++ = (uint8_t)bh;
+                *ptrB++ = (uint8_t)gh;
+                *ptrB++ = (uint8_t)rh;
             }
             else    // 32 bpp ARGB format.
             {
-                *ptrA++ = (u8)b;
-                *ptrA++ = (u8)g;
-                *ptrA++ = (u8)r;
-                *ptrA++ = (u8)255;
+                *ptrA++ = (uint8_t)b;
+                *ptrA++ = (uint8_t)g;
+                *ptrA++ = (uint8_t)r;
+                *ptrA++ = (uint8_t)255;
 
-                *ptrB++ = (u8)bh;
-                *ptrB++ = (u8)gh;
-                *ptrB++ = (u8)rh;
-                *ptrB++ = (u8)255;
+                *ptrB++ = (uint8_t)bh;
+                *ptrB++ = (uint8_t)gh;
+                *ptrB++ = (uint8_t)rh;
+                *ptrB++ = (uint8_t)255;
             }
         }
 
@@ -387,7 +387,7 @@ static void add_item(int index)
 }
 
 // insert new file into filelist
-static void add_file(char *file, s32 fsize, s32 type)
+static void add_file(char *file, int fsize, int type)
 {
     UserFile    item;
     DVDBanner2  *bnr;
@@ -441,7 +441,7 @@ static void add_file(char *file, s32 fsize, s32 type)
 
         // convert banner to RGB and add into bannerlist
         int a, b;
-        BOOL res = add_banner(bnr->image, &a, &b);
+        bool res = add_banner(bnr->image, &a, &b);
         if(res == FALSE) return;    // we cant :(
         item.icon[0] = a;
         item.icon[1] = b;
@@ -456,11 +456,11 @@ static void add_file(char *file, s32 fsize, s32 type)
 
         // set ID
 /*/
-        u32 size, checksum = -1;
-        u8 *buf = (u8 *)FileLoad(file, &size);
+        uint32_t size, checksum = -1;
+        uint8_t *buf = (uint8_t *)FileLoad(file, &size);
         if(buf)
         {
-            for(u32 i=0; i<size; i++)
+            for(uint32_t i=0; i<size; i++)
                 checksum += buf[i];
             free(buf);
         }
@@ -531,14 +531,14 @@ static void reset_columns()
     ADDCOL(CENTER, 60 , GAMEID , 3);
 
     // last one is tricky
-    s32 commentWidth = usel.width - 
+    int commentWidth = usel.width - 
                        (((usel.smallIcons) ? (57) : (105))+200+60+60) - 
                        GetSystemMetrics(SM_CXVSCROLL) - 4;
     if(commentWidth < 190) commentWidth = 190;
     ADDCOL(LEFT  , commentWidth, COMMENT, 4);
 }
 
-void ResizeSelector(s32 width, s32 height)
+void ResizeSelector(int width, int height)
 {
     // opened ?
     if(!usel.opened) return;
@@ -562,13 +562,13 @@ void ResizeSelector(s32 width, s32 height)
     }
 }
 
-static u16 * SjisToUnicode(u8 * sjisText, u32 * size, u32 * chars)
+static uint16_t * SjisToUnicode(uint8_t * sjisText, uint32_t * size, uint32_t * chars)
 {
-    u16 * unicodeText , *ptrU , uchar, schar;
-    u8 *ptrS;
+    uint16_t * unicodeText , *ptrU , uchar, schar;
+    uint8_t *ptrS;
 
     *size = strlen((char *)sjisText) * 2;
-    unicodeText = (u16 *)malloc(*size);
+    unicodeText = (uint16_t *)malloc(*size);
     memset(unicodeText, 0, *size);
 
     ptrU = unicodeText;
@@ -604,7 +604,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     #define     ID item->itemID
     #define     DC item->hDC
     UserFile*   file;       // item to draw
-    BOOL        selected;   // 1, if item is selected
+    bool        selected;   // 1, if item is selected
     HBRUSH      hb;         // background brush
     LV_ITEM     lvi;
     LV_COLUMN   lvc;
@@ -636,7 +636,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     if(selected)
     {
         char progress[1024];
-        sprintf(progress, "#%i: %s", (s32)lvi.lParam + 1, file->name);
+        sprintf(progress, "#%i: %s", (int)lvi.lParam + 1, file->name);
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -701,8 +701,8 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         if( (file->id[3] == 'J') &&     // sick check (but no alternative)
             (col == 1 || col == 4))     // title or comment only
         {
-            u16 *buf; u32 size, chars;
-            buf = SjisToUnicode((u8 *)text, &size, &chars);
+            uint16_t *buf; uint32_t size, chars;
+            buf = SjisToUnicode((uint8_t *)text, &size, &chars);
             DrawTextW(DC, (wchar_t *)buf, chars, &rc2, fmt);
             free(buf);
         } else DrawText(DC, text, len, &rc2, fmt);
@@ -743,11 +743,11 @@ void UpdateSelector()
     while(dir < usel.pathnum)
     {
         int m = 0;
-        u32 filter = MEMSwap(usel.filter);
+        uint32_t filter = MEMSwap(usel.filter);
 
         while(mask[m])
         {
-            u8 allow = (u8)filter;
+            uint8_t allow = (uint8_t)filter;
             filter >>= 8;
             if(!allow) { m++; continue; }
 
@@ -780,20 +780,20 @@ void UpdateSelector()
     UpdateWindow(usel.hSelectorWindow);
 
     // re-sort (we need to save old value, to avoid swap of filelist)
-    s32 oldSort = usel.sortBy;
+    int oldSort = usel.sortBy;
     usel.sortBy = 0;
     SortSelector(oldSort);
 }
 
-s32 SelectorGetSelected()
+int SelectorGetSelected()
 {
-    s32 item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
+    int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
     if(item == -1) return -1;
     usel.selected = &usel.files[item];
     return item;
 }
 
-void SelectorSetSelected(s32 item)
+void SelectorSetSelected(int item)
 {
     if(item >= usel.filenum) return;
     ListView_SetItemState(usel.hSelectorWindow, item, LVNI_SELECTED, LVNI_SELECTED);
@@ -804,7 +804,7 @@ void SelectorSetSelected(s32 item)
 // if file not present, keep selection unchanged
 void SelectorSetSelected(char *filename)
 {
-    for(s32 i=0; i<usel.filenum; i++)
+    for(int i=0; i<usel.filenum; i++)
     {
         if(!stricmp(filename, usel.files[i].name))
         {
@@ -883,7 +883,7 @@ static void mouseclick(int rmb)
         // change "Compress.." -> "Decompress..", if file is compressed
         if(file->type == SELECTOR_FILE_DVD)
         {
-            BOOL compressed = DVDIsCompressed(file->name);
+            bool compressed = DVDIsCompressed(file->name);
 
             char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
             _splitpath(file->name, drive, dir, name, ext);
@@ -951,7 +951,7 @@ void NotifySelector(LPNMHDR pnmh)
 void ScrollSelector(char letter)
 {
     letter = tolower(letter);
-    for(s32 n=0; n<usel.filenum; n++)
+    for(int n=0; n<usel.filenum; n++)
     {
         UserFile *file = &usel.files[n];
         char c = tolower(file->title[0]);
@@ -1014,7 +1014,7 @@ static int get_dvd_files()
     return sum;
 }
 
-void SortSelector(s32 sortBy)
+void SortSelector(int sortBy)
 {
     // opened ?
     if(!usel.opened) return;
@@ -1114,7 +1114,7 @@ void CreateSelector()
     SetFocus(usel.hSelectorWindow);
 
     // retrieve icon size
-    BOOL iconSize = GetConfigInt(USER_SMALLICONS, USER_SMALLICONS_DEFAULT);
+    bool iconSize = GetConfigInt(USER_SMALLICONS, USER_SMALLICONS_DEFAULT);
 
     // set "opened" flag (for following calls)
     usel.opened = TRUE;
@@ -1162,7 +1162,7 @@ void CloseSelector()
 }
 
 // 0: large, 1:small
-void SetSelectorIconSize(BOOL smallIcon)
+void SetSelectorIconSize(bool smallIcon)
 {
     // opened ?
     if(!usel.opened) return;

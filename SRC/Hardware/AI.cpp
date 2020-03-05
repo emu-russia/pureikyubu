@@ -37,9 +37,9 @@ AIControl ai;
 // ---------------------------------------------------------------------------
 // AIDCR
 
-static void __fastcall write_aidcr(u32 addr, u32 data)
+static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
 {
-    AIDCR = (u16)data;
+    AIDCR = (uint16_t)data;
 
     // clear pending interrupts
     if(AIDCR & AIDCR_DSPINT)
@@ -67,7 +67,7 @@ static void __fastcall write_aidcr(u32 addr, u32 data)
     DSPSetHaltBit ((AIDCR >> 2) & 1);
 }
 
-static void __fastcall read_aidcr(u32 addr, u32 *reg)
+static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
@@ -93,13 +93,13 @@ void AIDINT()
 }
 
 // how much time AI DMA need to playback "n" bytes.
-static s64 AIGetTime(long dmaBytes, long rate)
+static int64_t AIGetTime(long dmaBytes, long rate)
 {
     long samples = dmaBytes / 4;    // left+right, 16-bit
     return samples * (cpu.one_second / rate);
 }
 
-static void AIStartDMA(u32 addr, long bytes)
+static void AIStartDMA(uint32_t addr, long bytes)
 {
     AXPlayAudio(&RAM[addr & RAMMASK], bytes);
     DBReport(AI "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
@@ -123,10 +123,10 @@ static void AISetDMASampleRate(long rate)
 // transfer starts only, if shadows are valid
 // 
 
-static void __fastcall write_dmah(u32 addr, u32 data)
+static void __fastcall write_dmah(uint32_t addr, uint32_t data)
 {
     ai.madr.valid[0] = TRUE;
-    ai.madr.shadow.hi = (u16)data;
+    ai.madr.shadow.hi = (uint16_t)data;
 
     // setup buffer
     if(ai.madr.valid[0] && ai.madr.valid[1])
@@ -136,10 +136,10 @@ static void __fastcall write_dmah(u32 addr, u32 data)
     }
 }
 
-static void __fastcall write_dmal(u32 addr, u32 data)
+static void __fastcall write_dmal(uint32_t addr, uint32_t data)
 {
     ai.madr.valid[1] = TRUE;
-    ai.madr.shadow.lo = (u16)data;
+    ai.madr.shadow.lo = (uint16_t)data;
 
     // setup buffer
     if(ai.madr.valid[0] && ai.madr.valid[1])
@@ -149,16 +149,16 @@ static void __fastcall write_dmal(u32 addr, u32 data)
     }
 }
 
-static void __fastcall read_dmah(u32 addr, u32 *reg) { *reg = ai.madr.shadow.hi; }
-static void __fastcall read_dmal(u32 addr, u32 *reg) { *reg = ai.madr.shadow.lo; }
+static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.hi; }
+static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.lo; }
 
 //
 // dma length / control
 //
 
-static void __fastcall write_len(u32 addr, u32 data)
+static void __fastcall write_len(uint32_t addr, uint32_t data)
 {
-    ai.len = (u16)data;
+    ai.len = (uint16_t)data;
 
     // begin audio dma transfer
     if(ai.len & AID_EN)
@@ -168,13 +168,13 @@ static void __fastcall write_len(u32 addr, u32 data)
     }
     else AIStopDMA();
 }
-static void __fastcall read_len(u32 addr, u32 *reg) { *reg = ai.len; }
+static void __fastcall read_len(uint32_t addr, uint32_t *reg) { *reg = ai.len; }
 
 //
 // read sample block (32b) counter
 //
 
-static void __fastcall read_dcnt(u32 addr, u32 *reg)
+static void __fastcall read_dcnt(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.dcnt--;
     if(ai.dcnt & 0x8000) ai.dcnt = 0;
@@ -199,7 +199,7 @@ void AISINT()
 }
 
 // AI control register
-static void __fastcall write_cr(u32 addr, u32 data)
+static void __fastcall write_cr(uint32_t addr, uint32_t data)
 {
     ai.cr = data;
 
@@ -229,43 +229,43 @@ static void __fastcall write_cr(u32 addr, u32 data)
     if(ai.cr & AICR_DFR) AISetDMASampleRate(48000);
     else AISetDMASampleRate(32000);
 }
-static void __fastcall read_cr(u32 addr, u32 *reg)     { *reg = ai.cr; }
+static void __fastcall read_cr(uint32_t addr, uint32_t *reg)     { *reg = ai.cr; }
 
 // stream samples counter
-static void __fastcall read_scnt(u32 addr, u32 *reg)
+static void __fastcall read_scnt(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.scnt;
 }
-static void __fastcall write_dummy(u32 addr, u32 data) {}
+static void __fastcall write_dummy(uint32_t addr, uint32_t data) {}
 
 // interrupt trigger
-static void __fastcall write_it(u32 addr, u32 data)
+static void __fastcall write_it(uint32_t addr, uint32_t data)
 {
     DBReport(AIS "set trigger to : 0x%08X\n", data);
     ai.it = data;
 }
-static void __fastcall read_it(u32 addr, u32 *reg)     { *reg = ai.it; }
+static void __fastcall read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it; }
 
 // stream volume register
-static void __fastcall write_vr(u32 addr, u32 data)
+static void __fastcall write_vr(uint32_t addr, uint32_t data)
 {
-    ai.vr = (u16)data;
-    AXSetVolume((u8)ai.vr, (u8)(ai.vr >> 8));
+    ai.vr = (uint16_t)data;
+    AXSetVolume((uint8_t)ai.vr, (uint8_t)(ai.vr >> 8));
 }
-static void __fastcall read_vr(u32 addr, u32 *reg)     { *reg = ai.vr; }
+static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr; }
 
 // ---------------------------------------------------------------------------
 // DSP mailbox controls (refer to HLE)
 
-static void __fastcall write_out_mbox_h(u32 addr, u32 data) { DSPWriteOutMailboxHi((u16)data); }
-static void __fastcall write_out_mbox_l(u32 addr, u32 data) { DSPWriteOutMailboxLo((u16)data); }
-static void __fastcall read_out_mbox_h(u32 addr, u32 *reg)  { *reg = DSPReadOutMailboxHi(); }
-static void __fastcall read_out_mbox_l(u32 addr, u32 *reg)  { *reg = DSPReadOutMailboxLo(); }
+static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { DSPWriteOutMailboxHi((uint16_t)data); }
+static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { DSPWriteOutMailboxLo((uint16_t)data); }
+static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t *reg)  { *reg = DSPReadOutMailboxHi(); }
+static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t *reg)  { *reg = DSPReadOutMailboxLo(); }
 
-static void __fastcall write_in_mbox_h(u32 addr, u32 data)  { DolwinReport("Wha?"); }
-static void __fastcall write_in_mbox_l(u32 addr, u32 data)  { DolwinReport("Wha?"); }
-static void __fastcall read_in_mbox_h(u32 addr, u32 *reg)   { *reg = DSPReadInMailboxHi(); }
-static void __fastcall read_in_mbox_l(u32 addr, u32 *reg)   { *reg = DSPReadInMailboxLo(); }
+static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data)  { DolwinReport("Wha?"); }
+static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data)  { DolwinReport("Wha?"); }
+static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t *reg)   { *reg = DSPReadInMailboxHi(); }
+static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t *reg)   { *reg = DSPReadInMailboxLo(); }
 
 // ---------------------------------------------------------------------------
 

@@ -5,8 +5,8 @@
 DSPControl dsp;
 
 static  DSPMicrocode temp;
-static  u16 tempOut[2], tempIn[2];
-static  u32 cardWorkarea;
+static  uint16_t tempOut[2], tempIn[2];
+static  uint32_t cardWorkarea;
 
 #define HI 0
 #define LO 1
@@ -40,14 +40,14 @@ BOOL DSPGetHaltBit() { return dsp.task->GetHaltBit(); }
     0x0C005006      DSP Input Mailbox Register Low Part (DSP->CPU)
 /*/
 
-void DSPWriteOutMailboxHi(u16 value) { dsp.task->WriteOutMailboxHi(value); }
-void DSPWriteOutMailboxLo(u16 value) { dsp.task->WriteOutMailboxLo(value); }
+void DSPWriteOutMailboxHi(uint16_t value) { dsp.task->WriteOutMailboxHi(value); }
+void DSPWriteOutMailboxLo(uint16_t value) { dsp.task->WriteOutMailboxLo(value); }
 
-u16 DSPReadOutMailboxHi() { return dsp.task->ReadOutMailboxHi(); }
-u16 DSPReadOutMailboxLo() { return dsp.task->ReadOutMailboxLo(); }
+uint16_t DSPReadOutMailboxHi() { return dsp.task->ReadOutMailboxHi(); }
+uint16_t DSPReadOutMailboxLo() { return dsp.task->ReadOutMailboxLo(); }
 
-u16 DSPReadInMailboxHi()  { return dsp.task->ReadInMailboxHi(); }
-u16 DSPReadInMailboxLo()  { return dsp.task->ReadInMailboxLo(); }
+uint16_t DSPReadInMailboxHi()  { return dsp.task->ReadInMailboxHi(); }
+uint16_t DSPReadInMailboxLo()  { return dsp.task->ReadInMailboxLo(); }
 
 // ---------------------------------------------------------------------------
 // simple fake microcode
@@ -61,17 +61,17 @@ static BOOL Fake_GetIntBit() { return 0; }
 static void Fake_SetHaltBit(BOOL val) {}
 static BOOL Fake_GetHaltBit() { return 0; }
 
-static void NoWriteMailbox(u16 value) {}
-static u16 NoReadMailbox() { return 0; }
-static u16 FakeOutMailboxHi()
+static void NoWriteMailbox(uint16_t value) {}
+static uint16_t NoReadMailbox() { return 0; }
+static uint16_t FakeOutMailboxHi()
 {
-    static u16 mbox = 0;
+    static uint16_t mbox = 0;
     if(mbox == 0) mbox = 0x8000;
     else mbox = 0;
     return mbox;
 }
-static u16 FakeInMailboxHi() { return 0x8071; }
-static u16 FakeInMailboxLo() { return 0xfeed; }
+static uint16_t FakeInMailboxHi() { return 0x8071; }
+static uint16_t FakeInMailboxLo() { return 0xfeed; }
 
 static DSPMicrocode fakeUcode = {
     0, 0, 0, 0, DSP_FAKE_UCODE,
@@ -105,7 +105,7 @@ static void IROM_SetHaltBit(BOOL val)
     DBReport(DSP RED "set HALT bit: %i\n", val);
 }
 
-void IROMWriteOutMailboxHi(u16 value)
+void IROMWriteOutMailboxHi(uint16_t value)
 {
     dsp.out[HI] = value | 0x8000;
     if(dsp.time != DSP_INFINITE) return;
@@ -124,7 +124,7 @@ void IROMWriteOutMailboxHi(u16 value)
     }
     DolwinReport(DSP RED "write OUT_HI %04X\n", value);
 }
-void IROMWriteOutMailboxLo(u16 value)
+void IROMWriteOutMailboxLo(uint16_t value)
 {
     dsp.out[LO] = value;
     if(dsp.time != DSP_INFINITE)
@@ -195,11 +195,11 @@ void IROMWriteOutMailboxLo(u16 value)
     DolwinReport(DSP RED "write OUT_LO %04X\n", value);
 }
 
-u16 IROMReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
-u16 IROMReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
+uint16_t IROMReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
+uint16_t IROMReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
 
-u16 IROMReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
-u16 IROMReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
+uint16_t IROMReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
+uint16_t IROMReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
 
 static DSPMicrocode bootUcode = {
     0, 0, 0, 0, DSP_BOOT_UCODE,
@@ -218,7 +218,7 @@ static DSPMicrocode bootUcode = {
 // ---------------------------------------------------------------------------
 // card unlock microcode
 
-static void CARDWriteOutMailboxHi(u16 value)
+static void CARDWriteOutMailboxHi(uint16_t value)
 {
     dsp.out[HI] = value | 0x8000;
     if(dsp.time != DSP_INFINITE) return;
@@ -230,7 +230,7 @@ static void CARDWriteOutMailboxHi(u16 value)
     }
     DBReport(DSP RED "write OUT_HI %04X\n", value);
 }
-static void CARDWriteOutMailboxLo(u16 value)
+static void CARDWriteOutMailboxLo(uint16_t value)
 {
     dsp.out[LO] = value;
     if(dsp.time != DSP_INFINITE)
@@ -293,9 +293,9 @@ static DSPMicrocode cardUnlock = {
 };
 
 static void  __CARDUnlock () { 
-//s32 __CARDUnlock ( s32 chan, u8 * unlockKey ) 
+//int32_t __CARDUnlock ( int32_t chan, u8 * unlockKey ) 
 
-    u32 address = SYMAddress("__CARDMountCallback"); 
+    uint32_t address = SYMAddress("__CARDMountCallback");
 
     //void __CARDMountCallback (s32 chan, s32 status ); 
     GPR[4] = 0; 
@@ -307,9 +307,9 @@ static void  __CARDUnlock () {
 // init and update
 
 // calculate ucode byte checksum
-static u32 DSP_ucode_checksum(u8 *ptr, int len)
+static uint32_t DSP_ucode_checksum(uint8_t *ptr, int len)
 {
-    u32 sum = 0;
+    uint32_t sum = 0;
     for(int n=0; n<len; n++)
     {
         sum += ptr[n];
@@ -325,7 +325,7 @@ static u32 DSP_ucode_checksum(u8 *ptr, int len)
     return sum;
 }
 
-static DSPMicrocode * DSP_find_ucode(u16 iram_addr, u16 iram_len, u32 sum)
+static DSPMicrocode * DSP_find_ucode(uint16_t iram_addr, uint16_t iram_len, uint32_t sum)
 {
     switch(sum)
     {
@@ -450,7 +450,7 @@ void DSPUpdate()
                 return;
             case 0x0abc:        // do actual task boot
             {
-                u32 sum  = DSP_ucode_checksum(&RAM[temp.ram_addr], temp.iram_len);
+                uint32_t sum  = DSP_ucode_checksum(&RAM[temp.ram_addr], temp.iram_len);
                 dsp.task = DSP_find_ucode(temp.iram_addr, temp.iram_len, sum);
                 if(dsp.task->init) dsp.task->init();
                 return;

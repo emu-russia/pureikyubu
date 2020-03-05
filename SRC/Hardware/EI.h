@@ -45,26 +45,26 @@
 // EXI registers block
 typedef struct EXIRegs
 {
-    u32         csr;            // communication register 
-    u32         madr;           // memory address (32 byte aligned)
-    u32         len;            // size (32 bytes aligned)
-    u32         cr;             // control register
-    u32         data;           // immediate data register
+    uint32_t         csr;            // communication register 
+    uint32_t         madr;           // memory address (32 byte aligned)
+    uint32_t         len;            // size (32 bytes aligned)
+    uint32_t         cr;             // control register
+    uint32_t         data;           // immediate data register
 } EXIRegs;
 
 // SRAM structure layout. see YAGCD for details.
 typedef struct SRAM
 {
-    u16     checkSum;
-    u16     checkSumInv;
-    u32     ead0;
-    u32     ead1;
-    u32     counterBias;
-    s8      displayOffsetH;
-    u8      ntd;
-    u8      language;
-    u8      flags;
-    u8      dummy[44];          // reserved for future        
+    uint16_t     checkSum;
+    uint16_t     checkSumInv;
+    uint32_t     ead0;
+    uint32_t     ead1;
+    uint32_t     counterBias;
+    int8_t       displayOffsetH;
+    uint8_t      ntd;
+    uint8_t      language;
+    uint8_t      flags;
+    uint8_t      dummy[44];          // reserved for future        
 } SRAM;
 
 // bootrom encoded font sizes
@@ -83,19 +83,19 @@ typedef struct EIControl
     // hardware state
     EXIRegs     regs[3];        // exi registers
     SRAM        sram;           // battery-backed memory (misc console settings)
-    u8*         ansiFont;       // bootrom font (loaded from file)
-    u8*         sjisFont;
+    uint8_t*    ansiFont;       // bootrom font (loaded from file)
+    uint8_t*    sjisFont;
     BOOL        rtc;            // 1: RTC enabled
-    u32         rtcVal;         // last updated RTC value
-    u32         ad16;           // trace step
+    uint32_t    rtcVal;         // last updated RTC value
+    uint32_t    ad16;           // trace step
     char        uart[256];      // UART I/O buffer
-    u32         upos;           // UART buffer position (if > 0, UART buffer not empty)
+    uint32_t    upos;           // UART buffer position (if > 0, UART buffer not empty)
 
     // helper variables used for EXI transfers
-    s32         chan, sel;      // curent selected chan:device (sel=-1 no device)
-    u32         ad16_cmd;       // command for AD16
+    int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
+    uint32_t    ad16_cmd;       // command for AD16
     BOOL        firstImm;       // first imm write is always command
-    u32         mxaddr;         // "address" inside MX chip for transfers
+    uint32_t    mxaddr;         // "address" inside MX chip for transfers
     BOOL        uartNE;         
 
     BOOL        log;            // allow log EXI activities
@@ -108,8 +108,8 @@ void    RTCUpdate();
 
 // for memcards and other external devices
 void    EXIUpdateInterrupts();
-void    EXIAttach(s32 chan);    // connect device
-void    EXIDetach(s32 chan);    // disconnect device
+void    EXIAttach(int chan);    // connect device
+void    EXIDetach(int chan);    // disconnect device
 
 void    EIOpen();
 void    EIClose();

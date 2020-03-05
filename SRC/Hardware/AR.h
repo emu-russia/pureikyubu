@@ -29,11 +29,11 @@
 // ARAM state (registers and other data)
 typedef struct ARControl
 {
-    u8*         mem;                // aux. memory buffer (size is ARAMSIZE)
-    u32         mmaddr, araddr;     // DMA address
-    u32         cnt;                // count
+    uint8_t     *mem;                // aux. memory buffer (size is ARAMSIZE)
+    uint32_t    mmaddr, araddr;     // DMA address
+    uint32_t    cnt;                // count
     BOOL        cntv[2];            // count register validate state
-    u16         size;               // "AR_SIZE" (0x5012) register
+    uint16_t    size;               // "AR_SIZE" (0x5012) register
 } ARControl;
 
 void    AROpen();

@@ -48,21 +48,21 @@
 typedef struct Memcard {
     char filename[256]; // filename where the memcard data is stores 
     FILE * file;        // pointer to that file
-    u32 size;           // size of the memcard in bytes
-    u8 * data;          // pointer to the memcard raw data (stored in little endian order)
+    uint32_t size;           // size of the memcard in bytes
+    uint8_t * data;          // pointer to the memcard raw data (stored in little endian order)
     BOOL connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
-    u16 ID;             // manufacturer and device code
-    u8 status;          // current status
+    uint16_t ID;             // manufacturer and device code
+    uint8_t status;          // current status
 
 //  Command Reader
-    u8 Command;
+    uint8_t Command;
     int databytes;
     int dummybytes;
-    u32 executionFlags;
+    uint32_t executionFlags;
     void (__fastcall *procedure)(Memcard *);
     int databytesread;
     int dummybytesread;
-    u32 commandData;
+    uint32_t commandData;
     BOOL ready;
     EXIRegs * exi;
 } Memcard;
@@ -70,9 +70,9 @@ typedef struct Memcard {
 typedef struct MCCommand {
     int databytes;
     int dummybytes;
-    u32 executionFlags;
+    uint32_t executionFlags;
     void (__fastcall *procedure)(Memcard *);
-    u8 Command;
+    uint8_t Command;
 } MCCommand ;
 
 #define Memcard_BlockSize       8192
@@ -85,7 +85,7 @@ typedef struct MCCommand {
 
 /* definition of valid sizes for a memcard in bytes */
 #define Num_Memcard_ValidSizes 6
-extern const u32 Memcard_ValidSizes[Num_Memcard_ValidSizes];
+extern const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes];
 
 /* defines if the memcard should be tried to connect, (not if the memcard is actually connected!!) */
 extern BOOL Memcard_Connected[2];
@@ -121,7 +121,7 @@ BOOL    MCIsConnected(int cardnum);
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-BOOL    MCCreateMemcardFile(char *path, u16 memcard_id);
+BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id);
 
 /*
  * Sets the memcard to use the specified file. If the memcard is connected, 

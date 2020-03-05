@@ -8,8 +8,8 @@
 // fast longlong swap, invented by org
 static void swap_double(void *srcPtr)
 {
-    u8 *src = (u8 *)srcPtr;
-    register u8 t;
+    uint8_t *src = (uint8_t *)srcPtr;
+    register uint8_t t;
 
     for(int i=0; i<4; i++)
     {
@@ -24,7 +24,7 @@ static void swap_double(void *srcPtr)
 --------------------------------------------------------------------------- */
 
 // fast mmx version
-static void mmx_memcpy(u8 *dest, u8 *src, u32 cnt)
+static void mmx_memcpy(uint8_t *dest, uint8_t *src, uint32_t cnt)
 {
     int tail = cnt % 8, qwords = cnt >> 3;
 
@@ -47,7 +47,7 @@ static void mmx_memcpy(u8 *dest, u8 *src, u32 cnt)
 
 // fast sse version (well, not as fast, as I've seen in some asm sources, but enough)
 #ifdef  __VCNET__
-static void sse_memcpy_u(u8 *dest, u8 *src, u32 cnt)
+static void sse_memcpy_u(uint8_t *dest, uint8_t *src, uint32_t cnt)
 {
     int tail = cnt % 16, dqwords = cnt >> 4;
 
@@ -74,9 +74,9 @@ void HLE_memcpy()
 {
     HLEHit(HLE_MEMCPY);
 
-    u32 eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
-    u32 paDest = MEMEffectiveToPhysical(eaDest, 0);
-    u32 paSrc = MEMEffectiveToPhysical(eaSrc, 0);
+    uint32_t eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
+    uint32_t paDest = MEMEffectiveToPhysical(eaDest, 0);
+    uint32_t paSrc = MEMEffectiveToPhysical(eaSrc, 0);
 
 #ifdef  _DEBUG
     ASSERT(paDest == -1, "memcpy dest unmapped");
@@ -102,8 +102,8 @@ void HLE_memset()
 {
     HLEHit(HLE_MEMSET);
 
-    u32 eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
-    u32 paDest = MEMEffectiveToPhysical(eaDest, 0);
+    uint32_t eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
+    uint32_t paDest = MEMEffectiveToPhysical(eaDest, 0);
 
 #ifdef  _DEBUG
     ASSERT(paDest == -1, "memcpy dest unmapped");
@@ -156,7 +156,7 @@ void HLE_frexp()
 {
     HLEHit(HLE_FREXP);
 
-    u32 * expptr = (u32 *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
+    uint32_t * expptr = (uint32_t *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
     *expptr = SWAP(*expptr);

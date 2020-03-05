@@ -12,11 +12,11 @@
 
 typedef struct Matrix
 {
-    u32     data[3][4];
+    uint32_t     data[3][4];
 } Matrix, *MatrixPtr;
 typedef struct MatrixF
 {
-    f32     data[3][4];
+    float     data[3][4];
 } MatrixF, *MatrixFPtr;
 
 #define MTX(mx)  mx->data
@@ -25,7 +25,7 @@ static void print_mtx(MatrixPtr ptr, char *name="")
 {
     MatrixFPtr m = (MatrixFPtr)ptr;
 
-    MEMSwapArea((u32 *)ptr, 3*4*4);
+    MEMSwapArea((uint32_t *)ptr, 3*4*4);
     DolwinReport( "%s\n"
                   "%f %f %f %f\n"
                   "%f %f %f %f\n"
@@ -35,7 +35,7 @@ static void print_mtx(MatrixPtr ptr, char *name="")
                   MTX(m)[0][0], MTX(m)[0][1], MTX(m)[0][2], MTX(m)[0][3],
                   MTX(m)[1][0], MTX(m)[1][1], MTX(m)[1][2], MTX(m)[1][3],
                   MTX(m)[2][0], MTX(m)[2][1], MTX(m)[2][2], MTX(m)[2][3] );
-    MEMSwapArea((u32 *)ptr, 3*4*4);
+    MEMSwapArea((uint32_t *)ptr, 3*4*4);
 }
 
 /* ---------------------------------------------------------------------------
@@ -136,8 +136,8 @@ void C_MTXConcat(void)
     //print_mtx((MatrixPtr)a, "a C");
     //print_mtx((MatrixPtr)b, "b C");
 
-    MEMSwapArea((u32 *)a, 3*4*4);
-    MEMSwapArea((u32 *)b, 3*4*4);
+    MEMSwapArea((uint32_t *)a, 3*4*4);
+    MEMSwapArea((uint32_t *)b, 3*4*4);
 
     // m = a x b
     MTX(m)[0][0] = MTX(a)[0][0]*MTX(b)[0][0] + MTX(a)[0][1]*MTX(b)[1][0] + MTX(a)[0][2]*MTX(b)[2][0];
@@ -156,9 +156,9 @@ void C_MTXConcat(void)
     MTX(m)[2][3] = MTX(a)[2][0]*MTX(b)[0][3] + MTX(a)[2][1]*MTX(b)[1][3] + MTX(a)[2][2]*MTX(b)[2][3] + MTX(a)[2][3];
 
     // restore A and B
-    MEMSwapArea((u32 *)a, 3*4*4);
-    MEMSwapArea((u32 *)b, 3*4*4);
-    MEMSwapArea((u32 *)m, 3*4*4);
+    MEMSwapArea((uint32_t *)a, 3*4*4);
+    MEMSwapArea((uint32_t *)b, 3*4*4);
+    MEMSwapArea((uint32_t *)m, 3*4*4);
 
     //print_mtx((MatrixPtr)m, "m C");
 
@@ -223,8 +223,8 @@ void SIMD_MTXIdentity(void)
 {
     HLEHit(HLE_MTX_IDENTITY);
 
-    static u64 konst10 = 0x803f;
-    static u64 konst01 = 0x803f00000000;
+    static uint64_t konst10 = 0x803f;
+    static uint64_t konst01 = 0x803f00000000;
     MatrixPtr m = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
 
     __asm   mov     eax, dword ptr m
@@ -314,8 +314,8 @@ void SIMD_MTXConcat(void)
     //print_mtx((MatrixPtr)a, "a");
     //print_mtx((MatrixPtr)b, "b");
 
-    MEMSwapArea((u32 *)a, 3*4*4);
-    MEMSwapArea((u32 *)b, 3*4*4);
+    MEMSwapArea((uint32_t *)a, 3*4*4);
+    MEMSwapArea((uint32_t *)b, 3*4*4);
 
     // m = a x b. SSE gives 7 movs, 3 adds, 3 muls (shufps swaps are neglegible)
     __asm   mov     eax, dword ptr a
@@ -332,9 +332,9 @@ void SIMD_MTXConcat(void)
     MTX(m)[2][3] += MTX(a)[2][3];
 
     // restore A and B
-    MEMSwapArea((u32 *)a, 3*4*4);
-    MEMSwapArea((u32 *)b, 3*4*4);
-    MEMSwapArea((u32 *)m, 3*4*4);
+    MEMSwapArea((uint32_t *)a, 3*4*4);
+    MEMSwapArea((uint32_t *)b, 3*4*4);
+    MEMSwapArea((uint32_t *)m, 3*4*4);
 
     //print_mtx((MatrixPtr)m, "m");
 

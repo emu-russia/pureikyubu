@@ -9,12 +9,12 @@ void MAPInit(char * mapname);
  * if blr is not FALSE, the mark is considerated an exitpoint from the function
  * Use carefully!!!
  */
-void MAPAddMark (u32 offset, BOOL blr) ;
+void MAPAddMark (uint32_t offset, BOOL blr) ;
 
 /*
  * Checks the specified range, and automatically adds marks to entry and exit points to functions.
  */
-void MAPAddRange (u32 offsetStart, u32 offsetEnd) ;
+void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd) ;
 
 /*
  * Finishes the creation of the current map

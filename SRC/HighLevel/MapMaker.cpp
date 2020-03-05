@@ -2,13 +2,13 @@
 #include "dolphin.h"
 
 typedef struct opMarker {
-    u32 offset;
+    uint32_t offset;
     BOOL blr;
 } opMarker;
 
 typedef struct funcDesc {
-    u32 checksum;
-    u32 nameoffset;
+    uint32_t checksum;
+    uint32_t nameoffset;
 } funcDesc;
 
 FILE *Map;
@@ -16,7 +16,7 @@ FILE *Map;
 opMarker * Map_marks;
 int Map_marksSize, Map_marksMaxSize;
 
-u8 * Map_buffer;
+uint8_t * Map_buffer;
 int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
@@ -36,13 +36,13 @@ static void MAPGrow (int num)
 /*
  * Calculates a custom Checksum for a range of opcodes
  */
-static u32 MAPFuncChecksum (u32 offsetStart, u32 offsetEnd)
+static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
 {
-    u32 sum = 0, offset;
-    u32 opcode, auxop, op, op2, op3;
+    uint32_t sum = 0, offset;
+    uint32_t opcode, auxop, op, op2, op3;
 
     for (offset = offsetStart; offset <= offsetEnd; offset+=4) {
-        opcode = MEMSwap(*((u32 *)&RAM[offset & RAMMASK]));
+        opcode = MEMSwap(*((uint32_t *)&RAM[offset & RAMMASK]));
         op = opcode & 0xFC000000; 
         op2 = 0;
         op3 = 0;
@@ -83,11 +83,11 @@ static u32 MAPFuncChecksum (u32 offsetStart, u32 offsetEnd)
  */
 static void MAPOpen ()
 {
-    u32 size = 0;
-    Map_buffer = (u8 *)FileLoad(MAPDAT_FILE, &size);
+    uint32_t size = 0;
+    Map_buffer = (uint8_t *)FileLoad(MAPDAT_FILE, &size);
     if (Map_buffer == NULL) return;
-    Map_functionsSize = *(u32 *)(Map_buffer);
-    Map_functions = (funcDesc *)(Map_buffer + sizeof(u32));
+    Map_functionsSize = *(uint32_t *)(Map_buffer);
+    Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));
     Map_functionsNamesTable = (char *)((char *)Map_functions 
                                         + Map_functionsSize * sizeof(funcDesc));
 
@@ -113,7 +113,7 @@ static void MAPClose ()
     Map_functionsNamesTable = NULL;
 }
 
-static char * MAPFind (u32 checksum)
+static char * MAPFind (uint32_t checksum)
 {
     int inf, med, sup;
     if (Map_buffer == NULL) return NULL;
@@ -153,7 +153,7 @@ void MAPInit(char * mapname)
  * if blr is not FALSE, the mark is considerated an exitpoint from the function
  * Use carefully!!!
  */
-void MAPAddMark (u32 offset, BOOL blr)
+void MAPAddMark (uint32_t offset, BOOL blr)
 {
     int inf, med, sup;
 
@@ -182,11 +182,11 @@ void MAPAddMark (u32 offset, BOOL blr)
 /*
  * Checks the specified range, and automatically adds marks to entry and exit points to functions.
  */
-void MAPAddRange (u32 offsetStart, u32 offsetEnd)
+void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
 {
-    u32 opcode;
-    u32 target;
-    u32 op, op2;
+    uint32_t opcode;
+    uint32_t target;
+    uint32_t op, op2;
 
     if (!Map) return ;
     if (!Map_marks) return ;
@@ -194,7 +194,7 @@ void MAPAddRange (u32 offsetStart, u32 offsetEnd)
     MAPAddMark (offsetStart, FALSE);
     while(offsetStart < offsetEnd) {
 
-        opcode = MEMSwap(*((u32 *)&RAM[offsetStart & RAMMASK]));
+        opcode = MEMSwap(*((uint32_t *)&RAM[offsetStart & RAMMASK]));
         op = opcode >> 26, op2 = 0;
 
         switch (op) {
@@ -229,7 +229,7 @@ void MAPAddRange (u32 offsetStart, u32 offsetEnd)
 void MAPFinish()
 {
     int i, k;
-    u32 Checksum;
+    uint32_t Checksum;
     char * name, namebuf[MAP_MAXFUNCNAME];
     int namelen;
 

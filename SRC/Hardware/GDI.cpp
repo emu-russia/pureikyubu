@@ -6,14 +6,14 @@ static HBITMAP  hbmDIBSection;
 static HGDIOBJ  oldSelected;
 
 static BOOL     gdi_init;
-static s32      gdi_width, gdi_height;
-static s32      bm_width, bm_height;
+static int      gdi_width, gdi_height;
+static int      bm_width, bm_height;
 
-BOOL GDIOpen(HWND hwnd, s32 width, s32 height, RGBQUAD **gfxbuf)
+BOOL GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 {
     HDC         hdc;
     BITMAPINFO* bmi;
-    u8*         DIBase;
+    uint8_t     *DIBase;
 
     DBReport(CYAN "GDI: Windows DIB for video interface\n");
 
@@ -101,7 +101,7 @@ void GDIRefresh()
     }
 }
 
-void GDIResize(s32 width, s32 height)
+void GDIResize(int width, int height)
 {
     gdi_width  = width;
     gdi_height = height;

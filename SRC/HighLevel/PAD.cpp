@@ -12,7 +12,7 @@ void _PADRead()
 
     PADStatus * status = (PADStatus *)(&RAM[PARAM(0) & RAMMASK]);
     BOOL present;
-    u32 retVal = 0, rumbleFlags[] = { 1<<31, 1<<30, 1<<29, 1<<28 };
+    uint32_t retVal = 0, rumbleFlags[] = { 1<<31, 1<<30, 1<<29, 1<<28 };
 
     // read PAD state
     for(int i=0; i<4; i++)

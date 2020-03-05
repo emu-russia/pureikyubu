@@ -53,20 +53,20 @@ static BOOL AXGetHaltBit() { return halt; }
     0x0C005006      DSP Input Mailbox Register Low Part (DSP->CPU)
 /*/
 
-static void AXWriteOutMailboxHi(u16 value)
+static void AXWriteOutMailboxHi(uint16_t value)
 {
     DBReport(DSP RED "write OUT_HI %04X\n", value);
 }
-static void AXWriteOutMailboxLo(u16 value)
+static void AXWriteOutMailboxLo(uint16_t value)
 {
     DBReport(DSP RED "write OUT_LO %04X\n", value);
 }
 
-static u16 AXReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
-static u16 AXReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
+static uint16_t AXReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
+static uint16_t AXReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
 
-static u16 AXReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
-static u16 AXReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
+static uint16_t AXReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
+static uint16_t AXReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
 
 // DSP callbacks
 

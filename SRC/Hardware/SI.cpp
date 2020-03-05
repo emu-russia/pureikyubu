@@ -35,9 +35,9 @@ SIControl si;
 // data packet, written back to the communication buffer
 //
 
-static void SICommand(s32 chan, u8 *ptr)
+static void SICommand(int chan, uint8_t *ptr)
 {
-    u8  cmd = ptr[0];
+    uint8_t  cmd = ptr[0];
 
     switch(cmd)
     {
@@ -92,7 +92,7 @@ static void SICommand(s32 chan, u8 *ptr)
 
 /* ******* CHAN 0 ******* */
 
-static void __fastcall si_wr_out0(u32 addr, u32 data)       // write
+static void __fastcall si_wr_out0(uint32_t addr, uint32_t data)       // write
 {
     si.shdw[0] = data;
     SI_SR_REG |= SI_SR_WRST0;
@@ -106,14 +106,14 @@ static void __fastcall si_wr_out0(u32 addr, u32 data)       // write
     }
 }
 
-static void __fastcall si_rd_out0(u32 addr, u32 *reg)       // read
+static void __fastcall si_rd_out0(uint32_t addr, uint32_t *reg)       // read
 {
     *reg = si.out[0];
 }
 
 /* ******* CHAN 1 ******* */
 
-static void __fastcall si_wr_out1(u32 addr, u32 data)       // write
+static void __fastcall si_wr_out1(uint32_t addr, uint32_t data)       // write
 {
     si.shdw[1] = data;
     SI_SR_REG |= SI_SR_WRST1;
@@ -127,14 +127,14 @@ static void __fastcall si_wr_out1(u32 addr, u32 data)       // write
     }
 }
 
-static void __fastcall si_rd_out1(u32 addr, u32 *reg)       // read
+static void __fastcall si_rd_out1(uint32_t addr, uint32_t *reg)       // read
 {
     *reg = si.out[1];
 }
 
 /* ******* CHAN 2 ******* */
 
-static void __fastcall si_wr_out2(u32 addr, u32 data)       // write
+static void __fastcall si_wr_out2(uint32_t addr, uint32_t data)       // write
 {
     si.shdw[2] = data;
     SI_SR_REG |= SI_SR_WRST2;
@@ -148,14 +148,14 @@ static void __fastcall si_wr_out2(u32 addr, u32 data)       // write
     }
 }
 
-static void __fastcall si_rd_out2(u32 addr, u32 *reg)       // read
+static void __fastcall si_rd_out2(uint32_t addr, uint32_t *reg)       // read
 {
     *reg = si.out[2];
 }
 
 /* ******* CHAN 3 ******* */
 
-static void __fastcall si_wr_out3(u32 addr, u32 data)       // write
+static void __fastcall si_wr_out3(uint32_t addr, uint32_t data)       // write
 {
     si.shdw[3] = data;
     SI_SR_REG |= SI_SR_WRST3;
@@ -169,7 +169,7 @@ static void __fastcall si_wr_out3(u32 addr, u32 data)       // write
     }
 }
 
-static void __fastcall si_rd_out3(u32 addr, u32 *reg)       // read
+static void __fastcall si_rd_out3(uint32_t addr, uint32_t *reg)       // read
 {
     *reg = si.out[3];
 }
@@ -181,13 +181,13 @@ static void __fastcall si_rd_out3(u32 addr, u32 *reg)       // read
 
 /* ******* CHAN 0 ******* */
 
-static void __fastcall si_inh0(u32 addr, u32 *reg)          // high
+static void __fastcall si_inh0(uint32_t addr, uint32_t *reg)          // high
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[0].stickY;
-    res |= (u8)si.pad[0].stickX << 8;
+    res  = (uint8_t)si.pad[0].stickY;
+    res |= (uint8_t)si.pad[0].stickX << 8;
     res |= si.pad[0].button << 16;
 
     // clear RDST mask and interrupt
@@ -205,28 +205,28 @@ static void __fastcall si_inh0(u32 addr, u32 *reg)          // high
     *reg = res;
 }
 
-static void __fastcall si_inl0(u32 addr, u32 *reg)          // low
+static void __fastcall si_inl0(uint32_t addr, uint32_t *reg)          // low
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[0].triggerRight;
-    res |= (u8)si.pad[0].triggerLeft << 8;
-    res |= (u8)si.pad[0].substickY << 16;
-    res |= (u8)si.pad[0].substickX << 24;
+    res  = (uint8_t)si.pad[0].triggerRight;
+    res |= (uint8_t)si.pad[0].triggerLeft << 8;
+    res |= (uint8_t)si.pad[0].substickY << 16;
+    res |= (uint8_t)si.pad[0].substickX << 24;
 
     *reg = res;
 }
 
 /* ******* CHAN 1 ******* */
 
-static void __fastcall si_inh1(u32 addr, u32 *reg)          // high
+static void __fastcall si_inh1(uint32_t addr, uint32_t *reg)          // high
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[1].stickY;
-    res |= (u8)si.pad[1].stickX << 8;
+    res  = (uint8_t)si.pad[1].stickY;
+    res |= (uint8_t)si.pad[1].stickX << 8;
     res |= si.pad[1].button << 16;
 
     // clear RDST mask and interrupt
@@ -244,28 +244,28 @@ static void __fastcall si_inh1(u32 addr, u32 *reg)          // high
     *reg = res;
 }
 
-static void __fastcall si_inl1(u32 addr, u32 *reg)          // low
+static void __fastcall si_inl1(uint32_t addr, uint32_t *reg)          // low
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[1].triggerRight;
-    res |= (u8)si.pad[1].triggerLeft << 8;
-    res |= (u8)si.pad[1].substickY << 16;
-    res |= (u8)si.pad[1].substickX << 24;
+    res  = (uint8_t)si.pad[1].triggerRight;
+    res |= (uint8_t)si.pad[1].triggerLeft << 8;
+    res |= (uint8_t)si.pad[1].substickY << 16;
+    res |= (uint8_t)si.pad[1].substickX << 24;
 
     *reg = res;
 }
 
 /* ******* CHAN 2 ******* */
 
-static void __fastcall si_inh2(u32 addr, u32 *reg)          // high
+static void __fastcall si_inh2(uint32_t addr, uint32_t *reg)          // high
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[2].stickY;
-    res |= (u8)si.pad[2].stickX << 8;
+    res  = (uint8_t)si.pad[2].stickY;
+    res |= (uint8_t)si.pad[2].stickX << 8;
     res |= si.pad[2].button << 16;
 
     // clear RDST mask and interrupt
@@ -283,28 +283,28 @@ static void __fastcall si_inh2(u32 addr, u32 *reg)          // high
     *reg = res;
 }
 
-static void __fastcall si_inl2(u32 addr, u32 *reg)          // low
+static void __fastcall si_inl2(uint32_t addr, uint32_t *reg)          // low
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[2].triggerRight;
-    res |= (u8)si.pad[2].triggerLeft << 8;
-    res |= (u8)si.pad[2].substickY << 16;
-    res |= (u8)si.pad[2].substickX << 24;
+    res  = (uint8_t)si.pad[2].triggerRight;
+    res |= (uint8_t)si.pad[2].triggerLeft << 8;
+    res |= (uint8_t)si.pad[2].substickY << 16;
+    res |= (uint8_t)si.pad[2].substickX << 24;
 
     *reg = res;
 }
 
 /* ******* CHAN 3 ******* */
 
-static void __fastcall si_inh3(u32 addr, u32 *reg)          // high
+static void __fastcall si_inh3(uint32_t addr, uint32_t *reg)          // high
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[3].stickY;
-    res |= (u8)si.pad[3].stickX << 8;
+    res  = (uint8_t)si.pad[3].stickY;
+    res |= (uint8_t)si.pad[3].stickX << 8;
     res |= si.pad[3].button << 16;
 
     // clear RDST mask and interrupt
@@ -322,15 +322,15 @@ static void __fastcall si_inh3(u32 addr, u32 *reg)          // high
     *reg = res;
 }
 
-static void __fastcall si_inl3(u32 addr, u32 *reg)          // low
+static void __fastcall si_inl3(uint32_t addr, uint32_t *reg)          // low
 {
-    u32 res;
+    uint32_t res;
 
     // return swapped joypad values
-    res  = (u8)si.pad[3].triggerRight;
-    res |= (u8)si.pad[3].triggerLeft << 8;
-    res |= (u8)si.pad[3].substickY << 16;
-    res |= (u8)si.pad[3].substickX << 24;
+    res  = (uint8_t)si.pad[3].triggerRight;
+    res |= (uint8_t)si.pad[3].triggerLeft << 8;
+    res |= (uint8_t)si.pad[3].substickY << 16;
+    res |= (uint8_t)si.pad[3].substickX << 24;
 
     *reg = res;
 }
@@ -339,10 +339,10 @@ static void __fastcall si_inl3(u32 addr, u32 *reg)          // low
 // communication buffer access
 //
 
-static void __fastcall write_sicom(u32 addr, u32 data)
+static void __fastcall write_sicom(uint32_t addr, uint32_t data)
 {
     unsigned ofs = addr & 0x7f;
-    u8      *out = (u8 *)&data;
+    uint8_t      *out = (uint8_t *)&data;
 
     si.combuf[ofs+0] = out[3];
     si.combuf[ofs+1] = out[2];
@@ -350,10 +350,10 @@ static void __fastcall write_sicom(u32 addr, u32 data)
     si.combuf[ofs+3] = out[0];
 }
 
-static void __fastcall read_sicom(u32 addr, u32 *reg)
+static void __fastcall read_sicom(uint32_t addr, uint32_t *reg)
 {
     unsigned ofs = addr & 0x7f;
-    u8      *in  = (u8 *)reg;
+    uint8_t      *in  = (uint8_t *)reg;
 
     in[0] = si.combuf[ofs+3];
     in[1] = si.combuf[ofs+2];
@@ -368,14 +368,14 @@ static void __fastcall read_sicom(u32 addr, u32 *reg)
 // polling register
 //
 
-static void __fastcall write_poll(u32 addr, u32 data) { SI_POLL_REG = data; }
-static void __fastcall read_poll(u32 addr, u32 *reg)  { *reg = SI_POLL_REG; }
+static void __fastcall write_poll(uint32_t addr, uint32_t data) { SI_POLL_REG = data; }
+static void __fastcall read_poll(uint32_t addr, uint32_t *reg)  { *reg = SI_POLL_REG; }
 
 //
 // communication control/status 
 //
 
-static void __fastcall write_commcsr(u32 addr, u32 data)
+static void __fastcall write_commcsr(uint32_t addr, uint32_t data)
 {
     // clear incoming interrupt
     if(data & SI_COMCSR_TCINT)
@@ -392,14 +392,14 @@ static void __fastcall write_commcsr(u32 addr, u32 data)
     if(data & SI_COMCSR_TSTART)
     {
         // select channel
-        s32 chan = SI_COMCSR_CHAN(data);
+        int chan = SI_COMCSR_CHAN(data);
         SI_COMCSR_REG |= (chan << 1);
 
         // setup in/out length
-        s32 inlen = SI_COMCSR_INLEN(data);
+        int inlen = SI_COMCSR_INLEN(data);
         SI_COMCSR_REG |= (inlen << 8);
         if(inlen == 0) inlen = 128;
-        s32 outlen = SI_COMCSR_OUTLEN(data);
+        int outlen = SI_COMCSR_OUTLEN(data);
         SI_COMCSR_REG |= (outlen << 16);
         if(outlen == 0) outlen = 128;
 
@@ -422,7 +422,7 @@ static void __fastcall write_commcsr(u32 addr, u32 data)
     }
 }
 
-static void __fastcall read_commcsr(u32 addr, u32 *reg)
+static void __fastcall read_commcsr(uint32_t addr, uint32_t *reg)
 {
     *reg = SI_COMCSR_REG;
 }
@@ -431,7 +431,7 @@ static void __fastcall read_commcsr(u32 addr, u32 *reg)
 // status register
 //
 
-static void __fastcall write_sisr(u32 addr, u32 data)
+static void __fastcall write_sisr(uint32_t addr, uint32_t data)
 {
     // copy shadow command registers
     if(data & SI_SR_WR)
@@ -447,7 +447,7 @@ static void __fastcall write_sisr(u32 addr, u32 data)
     }
 }
 
-static void __fastcall read_sisr(u32 addr, u32 *reg)
+static void __fastcall read_sisr(uint32_t addr, uint32_t *reg)
 {
     *reg = SI_SR_REG;
 }
@@ -456,15 +456,15 @@ static void __fastcall read_sisr(u32 addr, u32 *reg)
 // EXI clock lock reg (dummy)
 //
 
-static void __fastcall write_exilk(u32 addr, u32 data) { si.exilk = data; }
-static void __fastcall read_exilk(u32 addr, u32 *reg)  { *reg = si.exilk; }
+static void __fastcall write_exilk(uint32_t addr, uint32_t data) { si.exilk = data; }
+static void __fastcall read_exilk(uint32_t addr, uint32_t *reg)  { *reg = si.exilk; }
 
 //
 // stubs for fake mode
 //
 
-static void __fastcall no_write(u32 addr, u32 data) {}
-static void __fastcall no_read(u32 addr, u32 *reg)
+static void __fastcall no_write(uint32_t addr, uint32_t data) {}
+static void __fastcall no_read(uint32_t addr, uint32_t *reg)
 {
     if(addr == SI_POLL) *reg = 0xffffffff;
     else *reg = 0;

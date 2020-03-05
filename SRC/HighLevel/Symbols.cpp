@@ -31,9 +31,9 @@ static SYM * symfind(char *symName)
 }
 
 // calculate tag - sum of all ciphers in lower word of address
-static int gettag(u32 addr)
+static int gettag(uint32_t addr)
 {
-    u32 lo = (u16)addr;
+    uint32_t lo = (uint16_t)addr;
     return ((lo >>  0) & 0xf) +         // value = 0...60
            ((lo >>  4) & 0xf) +
            ((lo >>  8) & 0xf) +
@@ -48,7 +48,7 @@ void SYMSetWorkspace(SYMControl *useIt)
 void SYMCompareWorkspaces (
     SYMControl      *source,
     SYMControl      *dest,
-    void (*DiffCallback)(u32 ea, char * name)
+    void (*DiffCallback)(uint32_t ea, char * name)
 )
 {
     // walk all
@@ -81,7 +81,7 @@ void SYMCompareWorkspaces (
 
 // get address of symbolic label
 // if label is not specified, return 0
-u32 SYMAddress(char *symName)
+uint32_t SYMAddress(char *symName)
 {
     // try to find specified symbol
     SYM *symbol = symfind(symName);
@@ -92,7 +92,7 @@ u32 SYMAddress(char *symName)
 
 // get symbolic label by given address
 // if label is not specified, return NULL
-char * SYMName(u32 symAddr)
+char * SYMName(uint32_t symAddr)
 {
     // calculate tag
     int tag = gettag(symAddr);
@@ -118,7 +118,7 @@ void SYMSetHighlevel(char *symName, void (*routine)())
     SYM *symbol = symfind(symName);
 
     // check address
-    ASSERT((u32)routine & ~0x03ffffff, "High-level call is too high in memory.");
+    ASSERT((uint32_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)
@@ -126,13 +126,13 @@ void SYMSetHighlevel(char *symName, void (*routine)())
         symbol->routine = routine;      // overwrite
 
         // if first opcode is 'BLR', then just leave it
-        u32 op;
+        uint32_t op;
         MEMReadWord(symbol->eaddr, &op);
         if(op != 0x4e800020)
         {
             MEMWriteWord(
                 symbol->eaddr,          // add patch
-                (u32)routine            // 000: high-level opcode
+                (uint32_t)routine            // 000: high-level opcode
             );
             if(!stricmp(symName, "OSLoadContext"))
             {
@@ -170,7 +170,7 @@ static char * strsave(char *str)
 }
 
 // add new symbol
-void SYMAddNew(u32 addr, char *name, BOOL emuSymbol /* FALSE */)
+void SYMAddNew(uint32_t addr, char *name, BOOL emuSymbol /* FALSE */)
 {
     int i;
     // calculate tag
@@ -264,97 +264,6 @@ void SYMList(char *str)
 // add Dolwin symbolic information (for x86 disassembly)
 void SYMAddEmulatorSymbols()
 {
-    SYMAddNew((u32)WinMain, "WinMain", 1);
-
-    // CPU registers
-    // ---------------------------------------------------------------------------
-    for(int n=0; n<32; n++)
-    {
-        char rname[16];
-        if(n == 1) sprintf(rname, "SP");
-        else if(n == 13) sprintf(rname, "SDA1");
-        else if(n == 2) sprintf(rname, "SDA2");
-        else sprintf(rname, "GPR%i", n);
-        SYMAddNew((u32)&GPR[n], rname, 1);
-        sprintf(rname, "PS0.%i", n);
-        SYMAddNew((u32)&PS0(n), rname, 1);
-        sprintf(rname, "PS1.%i", n);
-        SYMAddNew((u32)&PS1(n), rname, 1);
-        if(n < 8)
-        {
-            sprintf(rname, "GQR%i", n);
-            SYMAddNew((u32)&GQR[n], rname, 1);
-        }
-        if(n < 16)
-        {
-            sprintf(rname, "SR%i", n);
-            SYMAddNew((u32)&SR[n], rname, 1);
-        }
-    }
-    SYMAddNew((u32)&CR, "CR", 1);
-    SYMAddNew((u32)&MSR, "MSR", 1);
-    SYMAddNew((u32)&FPSCR, "FPSCR", 1);
-    SYMAddNew((u32)&PC, "PC", 1);
-    SYMAddNew((u32)&SPR[1], "XER", 1);
-    SYMAddNew((u32)&SPR[8], "LR", 1);
-    SYMAddNew((u32)&SPR[9], "CTR", 1);
-    SYMAddNew((u32)&SPR[18], "DSISR", 1);
-    SYMAddNew((u32)&SPR[19], "DAR", 1);
-    SYMAddNew((u32)&SPR[22], "DEC", 1);
-    SYMAddNew((u32)&SPR[25], "SDR1", 1);
-    SYMAddNew((u32)&SPR[26], "SRR0", 1);
-    SYMAddNew((u32)&SPR[27], "SRR1", 1);
-    SYMAddNew((u32)&SPR[272], "SPRG0", 1);
-    SYMAddNew((u32)&SPR[273], "SPRG1", 1);
-    SYMAddNew((u32)&SPR[274], "SPRG2", 1);
-    SYMAddNew((u32)&SPR[275], "SPRG3", 1);
-    SYMAddNew((u32)&SPR[282], "EAR", 1);
-    SYMAddNew((u32)&SPR[287], "PVR", 1);
-    SYMAddNew((u32)&SPR[528], "IBAT0U", 1);
-    SYMAddNew((u32)&SPR[529], "IBAT0L", 1);
-    SYMAddNew((u32)&SPR[530], "IBAT1U", 1);
-    SYMAddNew((u32)&SPR[531], "IBAT1L", 1);
-    SYMAddNew((u32)&SPR[532], "IBAT2U", 1);
-    SYMAddNew((u32)&SPR[533], "IBAT2L", 1);
-    SYMAddNew((u32)&SPR[534], "IBAT3U", 1);
-    SYMAddNew((u32)&SPR[535], "IBAT3L", 1);
-    SYMAddNew((u32)&SPR[536], "DBAT0U", 1);
-    SYMAddNew((u32)&SPR[537], "DBAT0L", 1);
-    SYMAddNew((u32)&SPR[538], "DBAT1U", 1);
-    SYMAddNew((u32)&SPR[539], "DBAT1L", 1);
-    SYMAddNew((u32)&SPR[540], "DBAT2U", 1);
-    SYMAddNew((u32)&SPR[541], "DBAT2L", 1);
-    SYMAddNew((u32)&SPR[542], "DBAT3U", 1);
-    SYMAddNew((u32)&SPR[543], "DBAT3L", 1);
-    SYMAddNew((u32)&SPR[936], "UMMCR0", 1);
-    SYMAddNew((u32)&SPR[937], "UPMC1", 1);
-    SYMAddNew((u32)&SPR[938], "UPMC2", 1);
-    SYMAddNew((u32)&SPR[939], "USIA", 1);
-    SYMAddNew((u32)&SPR[941], "UPMC3", 1);
-    SYMAddNew((u32)&SPR[942], "UPMC4", 1);
-    SYMAddNew((u32)&SPR[943], "USDA", 1);
-    SYMAddNew((u32)&SPR[952], "MMCR0", 1);
-    SYMAddNew((u32)&SPR[953], "PMC1", 1);
-    SYMAddNew((u32)&SPR[954], "PMC2", 1);
-    SYMAddNew((u32)&SPR[955], "SIA", 1);
-    SYMAddNew((u32)&SPR[956], "MMCR1", 1);
-    SYMAddNew((u32)&SPR[957], "PMC3", 1);
-    SYMAddNew((u32)&SPR[958], "PMC4", 1);
-    SYMAddNew((u32)&SPR[959], "SDA", 1);
-    SYMAddNew((u32)&SPR[1008], "HID0", 1);
-    SYMAddNew((u32)&SPR[1009], "HID1", 1);
-    SYMAddNew((u32)&SPR[1010], "IABR", 1);
-    SYMAddNew((u32)&SPR[1013], "DABR", 1);
-    SYMAddNew((u32)&SPR[1017], "L2CR", 1);
-    SYMAddNew((u32)&SPR[1019], "ICTC", 1);
-    SYMAddNew((u32)&SPR[1020], "THRM1", 1);
-    SYMAddNew((u32)&SPR[1021], "THRM2", 1);
-    SYMAddNew((u32)&SPR[1022], "THRM3", 1);
-    SYMAddNew((u32)&SPR[920], "HID2", 1);
-    SYMAddNew((u32)&SPR[922], "DMAU", 1);
-    SYMAddNew((u32)&SPR[923], "DMAL", 1);
-    SYMAddNew((u32)&SPR[940], "UMMCR1", 1);
-
     // hardware registers (Dolphin OS mapping!)
     // ---------------------------------------------------------------------------    
 
@@ -504,19 +413,4 @@ void SYMAddEmulatorSymbols()
     // 0C008000        PI FIFO (GX)
     SYMAddNew(GX_FIFO | PREFIX, "GX_FIFO", 1);
     SYMAddNew((GX_FIFO + 4) | PREFIX, "GX_FIFO", 1);
-
-    // other variables
-    // ---------------------------------------------------------------------------
-    SYMAddNew((u32)&CPUReadByte, "CPUReadByte", 1);
-    SYMAddNew((u32)&CPUWriteByte, "CPUWriteByte", 1);
-    SYMAddNew((u32)&CPUReadHalf, "CPUReadHalf", 1);
-    SYMAddNew((u32)&CPUReadHalfS, "CPUReadHalfS", 1);
-    SYMAddNew((u32)&CPUWriteHalf, "CPUWriteHalf", 1);
-    SYMAddNew((u32)&CPUReadWord, "CPUReadWord", 1);
-    SYMAddNew((u32)&CPUWriteWord, "CPUWriteWord", 1);
-    SYMAddNew((u32)&CPUReadDouble, "CPUReadDouble", 1);
-    SYMAddNew((u32)&CPUWriteDouble, "CPUWriteDouble", 1);
-    SYMAddNew((u32)&cpu.ops, "OPS", 1);
-    SYMAddNew((u32)HWUpdate, "HWUpdate", 1);
-    SYMAddNew((u32)COMPDoCompare, "COMPDoCompare", 1);
 }

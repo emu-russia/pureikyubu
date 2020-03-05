@@ -60,21 +60,21 @@ typedef struct AIREG
 typedef struct AIControl
 {
     // AID
-    u16         dcr;            // AI/DSP control register
+    uint16_t    dcr;            // AI/DSP control register
     AIREG       madr;           // DMA address
-    u16         len;            // DMA control/DMA length (length of audio data)
-    u16         dcnt;           // DMA count-down
+    uint16_t    len;            // DMA control/DMA length (length of audio data)
+    uint16_t    dcnt;           // DMA count-down
 
     // AIS
-    u32         cr;             // AIS control reg
-    u32         vr;             // AIS volume
-    u32         scnt;           // sample counter
-    u32         it;             // sample counter trigger
+    uint32_t    cr;             // AIS control reg
+    uint32_t    vr;             // AIS volume
+    uint32_t    scnt;           // sample counter
+    uint32_t    it;             // sample counter trigger
 
     // helpers
-    u32         lastDma;        // last valid DMA address
-    s32         dmaRate;        // copy of DFR value (32000/48000)
-    s64         dmaTime;        // audio DMA update time 
+    uint32_t    lastDma;        // last valid DMA address
+    int32_t     dmaRate;        // copy of DFR value (32000/48000)
+    int64_t     dmaTime;        // audio DMA update time 
 } AIControl;
 
 extern  AIControl ai;

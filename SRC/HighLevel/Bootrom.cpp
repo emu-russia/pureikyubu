@@ -1,7 +1,7 @@
 // BS and BS2 (IPL) simulation.
 #include "dolphin.h"
 
-static u32 default_syscall[] = {    // default exception handler
+static uint32_t default_syscall[] = {    // default exception handler
     0x2c01004c,     // isync
     0xac04007c,     // sync
     0x6400004c,     // rfi
@@ -11,17 +11,17 @@ static u32 default_syscall[] = {    // default exception handler
 static void ReadFST()
 {
     #define DOL_LIMIT   (4*1024*1024)
-    #define ROUND32(x)  (((u32)(x)+32-1)&~(32-1))
+    #define ROUND32(x)  (((uint32_t)(x)+32-1)&~(32-1))
 
-    u32     bb2[8];         // space for BB2
-    u32     fstAddr, fstOffs, fstSize, fstMaxSize;
+    uint32_t     bb2[8];         // space for BB2
+    uint32_t     fstAddr, fstOffs, fstSize, fstMaxSize;
 
     // plugin safe test (to run something without plugins at all)
     if(DVDSetCurrent == NULL) return;
 
     // read BB2
     DVDSeek(0x420);
-    DVDRead((u8 *)bb2, 32);
+    DVDRead((uint8_t *)bb2, 32);
 
     // rounding is not important, but present in new apploaders.
     // FST memory address is calculated, by adjusting bb[4] with "DOL LIMIT";
@@ -50,11 +50,11 @@ static void ReadFST()
 // this is exact apploader emulation. it is safe and checked.
 static void BootApploader()
 {
-    u32     appHeader[8];           // apploader header information
-    u32     appSize;                // size of apploader image
-    u32     appEntryPoint;
-    u32     _prolog, _main, _epilog;
-    u32     offs, size, addr;       // return of apploader main
+    uint32_t     appHeader[8];           // apploader header information
+    uint32_t     appSize;                // size of apploader image
+    uint32_t     appEntryPoint;
+    uint32_t     _prolog, _main, _epilog;
+    uint32_t     offs, size, addr;       // return of apploader main
 
     // disable hardware update
     HWEnableUpdate(0);
@@ -69,7 +69,7 @@ static void BootApploader()
     MEMWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
 
     DVDSeek(0x2440);                // apploader offset
-    DVDRead((u8 *)appHeader, 32);   // read apploader header
+    DVDRead((uint8_t *)appHeader, 32);   // read apploader header
     MEMSwapArea(appHeader, 32);     // and swap it
 
     // save apploader info
@@ -153,21 +153,21 @@ static void SimulateApploader()
     DBReport( "\n" YEL "simulating apploader..\n");
 
     // BB2 structure is private, so keep it secret for public, hehe :)
-    u32     bb2[8];         // space for BB2
+    uint32_t     bb2[8];         // space for BB2
     DVDSeek(0x420);
-    DVDRead((u8 *)bb2, 32);
-    u32 bootFilePosition = MEMSwap(bb2[0]);
+    DVDRead((uint8_t*)bb2, 32);
+    uint32_t bootFilePosition = MEMSwap(bb2[0]);
 
     // load DOL header
     DolHeader dol, dolS;    // + swapped
     DVDSeek(bootFilePosition);
     DVDRead(&dol, sizeof(DolHeader));
     memcpy(&dolS, &dol, sizeof(DolHeader));
-    MEMSwapArea((u32 *)&dolS, sizeof(DolHeader));
+    MEMSwapArea((uint32_t*)&dolS, sizeof(DolHeader));
 
     // load DOL
-    u32 dolSize = DOLSize(&dolS);
-    u8 *dolbuf = (u8 *)malloc(dolSize + sizeof(DolHeader));
+    uint32_t dolSize = DOLSize(&dolS);
+    uint8_t *dolbuf = (uint8_t *)malloc(dolSize + sizeof(DolHeader));
     if(dolbuf == NULL)
     {
         DBReport(YEL "error loading DOL!\n");
@@ -196,15 +196,15 @@ static void __SyncTime()
 
     DBReport(GREEN "updating timer value..\n");
 
-    s32 counterBias = (s32)MEMSwap(exi.sram.counterBias);
-    s32 rtcValue = exi.rtcVal + counterBias;
+    int32_t counterBias = (int32_t)MEMSwap(exi.sram.counterBias);
+    int32_t rtcValue = exi.rtcVal + counterBias;
     DBReport(GREEN "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
 
-    s64 newTime = (s64)rtcValue * CPU_TIMER_CLOCK;
-    s64 systemTime;
-    MEMReadDouble(0x800030d8, (u64 *)&systemTime);
+    int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
+    int64_t systemTime;
+    MEMReadDouble(0x800030d8, (uint64_t *)&systemTime);
     systemTime += newTime - TBR;
-    MEMWriteDouble(0x800030d8, (u64 *)&systemTime);
+    MEMWriteDouble(0x800030d8, (uint64_t *)&systemTime);
     TBR = newTime;
     DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.u, cpu.tb.l);
 }
@@ -212,7 +212,7 @@ static void __SyncTime()
 void BootROM(BOOL dvd)
 {
     // set initial MMU state, according with BS2/Dolphin OS
-    for(s32 sr=0; sr<16; sr++)              // unmounted
+    for(int sr=0; sr<16; sr++)              // unmounted
     {
         SR[sr] = 0x80000000;
     }
@@ -244,7 +244,7 @@ void BootROM(BOOL dvd)
     __SyncTime();
 
     // modify important OS low memory variables (lomem) (BS)
-    u32 ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
+    uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
     MEMWriteWord(0x8000002c, ver);          // console type
     MEMWriteWord(0x80000028, RAMSIZE);      // memsize
     MEMWriteWord(0x800000f0, RAMSIZE);      // simmemsize

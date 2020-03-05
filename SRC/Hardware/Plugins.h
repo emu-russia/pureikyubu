@@ -11,7 +11,6 @@ extern GXWRITEFIFO          GXWriteFifo;
 extern GXSETTOKENS          GXSetTokens;
 extern GXCONFIGURE          GXConfigure;
 extern GXABOUT              GXAbout;
-extern GXSAVELOAD           GXSaveLoad;
 
 // AX plugin
 extern AXOPEN               AXOpen;
@@ -22,7 +21,6 @@ extern AXPLAYSTREAM         AXPlayStream;
 extern AXSETVOLUME          AXSetVolume;
 extern AXCONFIGURE          AXConfigure;
 extern AXABOUT              AXAbout;
-extern AXSAVELOAD           AXSaveLoad;
 
 // PAD plugin
 extern PADOPEN              PADOpen;
@@ -31,7 +29,6 @@ extern PADREADBUTTONS       PADReadButtons;
 extern PADSETRUMBLE         PADSetRumble;
 extern PADCONFIGURE         PADConfigure;
 extern PADABOUT             PADAbout;
-extern PADSAVELOAD          PADSaveLoad;
 
 // DVD plugin
 extern DVDOPEN              DVDOpen;
@@ -43,10 +40,6 @@ extern DVDREAD              DVDRead;
 extern DVDOPENFILE          DVDOpenFile;
 extern DVDCONFIGURE         DVDConfigure;
 extern DVDABOUT             DVDAbout;
-extern DVDSAVELOAD          DVDSaveLoad;
-
-// NET plugin
-// ...
 
 void   PSInit();
 void   PSShutdown();

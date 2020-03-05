@@ -11,7 +11,7 @@ static int LoadMapCW(char *mapname)
     FILE    *map;
     
     // symbol information
-    u32     moduleOffset, procSize, procAddr;
+    uint32_t  moduleOffset, procSize, procAddr;
     int     flags;
     char    procName[512];
 
@@ -64,7 +64,7 @@ static int LoadMapGCC(char *mapname)
     FILE    *map;
     
     // symbol information
-    u32     procAddr;
+    uint32_t     procAddr;
     char    par1[512];
     char    par2[512];
 
@@ -101,7 +101,7 @@ static int LoadMapGCC(char *mapname)
 static int LoadMapRAW(char *mapname)
 {
     int i;
-    s32 size = FileSize(mapname);
+    int size = FileSize(mapname);
     FILE *f = fopen(mapname, "rt");
 
     // allocate memory
@@ -167,7 +167,7 @@ static int LoadMapRAW(char *mapname)
 
         // add symbol
         char *name;
-        u32 addr = strtoul(p, &name, 16);
+        uint32_t addr = strtoul(p, &name, 16);
         while(*name <= ' ') name++;
         SYMAddNew(addr, name);
     }

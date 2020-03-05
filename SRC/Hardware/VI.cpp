@@ -35,8 +35,8 @@
 
     static struct
     {
-        u16         regs[59];       // regs are copied to shdwRegs
-        u16         shdwRegs[59];   // shdwRegs are copied to hardware registers
+        uint16_t         regs[59];       // regs are copied to shdwRegs
+        uint16_t         shdwRegs[59];   // shdwRegs are copied to hardware registers
         VIHorVer    HorVer;         // used for temporary calculations
     } vi;
 
@@ -55,12 +55,12 @@ VIControl vi;
 // drawing of XFB
 
 // YUV to RGB conversion
-#define yuv2rs(y, u, v) ( (u32)bound((76283*(y - 16) + 104595*(v - 128))>>16) )
-#define yuv2gs(y, u, v) ( (u32)bound((76283*(y - 16) - 53281 *(v - 128) - 25624*(u - 128))>>16) << 8 )
-#define yuv2bs(y, u, v) ( (u32)bound((76283*(y - 16) + 132252*(u - 128))>>16) << 16 )
+#define yuv2rs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 104595*(v - 128))>>16) )
+#define yuv2gs(y, u, v) ( (uint32_t)bound((76283*(y - 16) - 53281 *(v - 128) - 25624*(u - 128))>>16) << 8 )
+#define yuv2bs(y, u, v) ( (uint32_t)bound((76283*(y - 16) + 132252*(u - 128))>>16) << 16 )
 
 // clamping routine
-static inline s32 bound(s32 x)
+static inline int bound(int x)
 {
     if(x < 0) x = 0;
     if(x > 255) x = 255;
@@ -68,10 +68,10 @@ static inline s32 bound(s32 x)
 }
 
 // copy XFB to screen
-void YUVBlit(u8 *yuvbuf, RGBQUAD *dib)
+void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
 {
-    u32 *rgbbuf = (u32 *)dib;
-    s32 count = 320 * 480;
+    uint32_t *rgbbuf = (uint32_t *)dib;
+    int count = 320 * 480;
     
     if(yuvbuf == NULL) return;
 
@@ -79,7 +79,7 @@ void YUVBlit(u8 *yuvbuf, RGBQUAD *dib)
     BeginProfileGfx();
     while(count--)
     {
-        s32 y1 = *yuvbuf++,
+        int y1 = *yuvbuf++,
             v  = *yuvbuf++,
             y2 = *yuvbuf++,
             u  = *yuvbuf++;
@@ -98,7 +98,7 @@ void YUVBlit(u8 *yuvbuf, RGBQUAD *dib)
 // reset VI timing
 static void vi_set_timing()
 {
-    u16 reg  = vi.disp_cr;
+    uint16_t reg  = vi.disp_cr;
     vi.inter = (reg & VI_CR_NIN) ? 0 : 1;
     vi.mode  = VI_CR_FMT(reg);
     if(vi.mode == 2) vi.mode = VI_NTSC_LIKE; // MPAL same as NTSC
@@ -124,8 +124,8 @@ void VIUpdate()
     {
         vi.vtime = TBR;
 
-        u32 currentBeamPos = VI_POS_VCT(vi.pos);
-        u32 triggerBeamPos = VI_INT_VCT(vi.int0);
+        uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
+        uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
 
         // generate VIINT ?
         currentBeamPos++;
@@ -171,19 +171,19 @@ void VIUpdate()
 // ---------------------------------------------------------------------------
 // accessing VI registers.
 
-static void __fastcall vi_read8(u32 addr, u32 *reg)
+static void __fastcall vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
     DolwinReport("VI READ8");
     *reg = 0;
 }
 
-static void __fastcall vi_write8(u32 addr, u32 data)
+static void __fastcall vi_write8(uint32_t addr, uint32_t data)
 {
     DolwinReport("VI WRITE8");
 }
 
-static void __fastcall vi_read16(u32 addr, u32 *reg)
+static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
 {
     switch(addr & 0x7f)
     {
@@ -194,36 +194,36 @@ static void __fastcall vi_read16(u32 addr, u32 *reg)
             *reg = vi.tfbl >> 16;
             return;
         case 0x1E:      // video buffer low (TOP)
-            *reg = (u16)vi.tfbl;
+            *reg = (uint16_t)vi.tfbl;
             return;
         case 0x24:      // video buffer hi (BOTTOM)
             *reg = vi.bfbl >> 16;
             return;
         case 0x26:      // video buffer low (BOTTOM)
-            *reg = (u16)vi.bfbl;
+            *reg = (uint16_t)vi.bfbl;
             return;
         case 0x2C:      // beam position hi
             *reg = vi.pos >> 16;
             return;
         case 0x2E:      // beam position low
-            *reg = (u16)vi.pos;
+            *reg = (uint16_t)vi.pos;
             return;
         case 0x30:      // int0 control hi
             *reg = vi.int0 >> 16;
             return;
         case 0x32:      // int0 control low
-            *reg = (u16)vi.int0;
+            *reg = (uint16_t)vi.int0;
             return;
     }
     *reg = 0;
 }
 
-static void __fastcall vi_write16(u32 addr, u32 data)
+static void __fastcall vi_write16(uint32_t addr, uint32_t data)
 {
     switch(addr & 0x7f)
     {
         case 0x02:      // display control
-            vi.disp_cr = (u16)data;
+            vi.disp_cr = (uint16_t)data;
             vi_set_timing();
             return;
         case 0x1C:      // video buffer hi (TOP)
@@ -236,7 +236,7 @@ static void __fastcall vi_write16(u32 addr, u32 data)
             return;
         case 0x1E:      // video buffer low (TOP)
             vi.tfbl &= 0xffff0000;
-            vi.tfbl |= (u16)data;
+            vi.tfbl |= (uint16_t)data;
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= RAMSIZE) vi.xfbbuf = NULL;
@@ -252,7 +252,7 @@ static void __fastcall vi_write16(u32 addr, u32 data)
             return;
         case 0x26:      // video buffer low (BOTTOM)
             vi.bfbl &= 0xffff0000;
-            vi.bfbl |= (u16)data;
+            vi.bfbl |= (uint16_t)data;
             vi.bfbl &= 0xffffff;
             DBReport(VI "BFBL set to %08X\n", vi.bfbl);
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
@@ -264,7 +264,7 @@ static void __fastcall vi_write16(u32 addr, u32 data)
             return;
         case 0x2E:      // beam position low
             vi.pos &= 0xffff0000;
-            vi.pos |= (u16)data;
+            vi.pos |= (uint16_t)data;
             return;
         case 0x30:      // int0 control hi
             vi.int0 &= 0x0000ffff;
@@ -276,17 +276,17 @@ static void __fastcall vi_write16(u32 addr, u32 data)
             return;
         case 0x32:      // int0 control low
             vi.int0 &= 0xffff0000;
-            vi.int0 |= (u16)data;
+            vi.int0 |= (uint16_t)data;
             return;
     }
 }
 
-static void __fastcall vi_read32(u32 addr, u32 *reg)
+static void __fastcall vi_read32(uint32_t addr, uint32_t *reg)
 {
     switch(addr & 0x7f)
     {
         case 0x00:      // display control
-            *reg = (u32)vi.disp_cr;
+            *reg = (uint32_t)vi.disp_cr;
             return;
         case 0x1C:      // video buffer (TOP)
             *reg = vi.tfbl;
@@ -304,12 +304,12 @@ static void __fastcall vi_read32(u32 addr, u32 *reg)
     *reg = 0;
 }
 
-static void __fastcall vi_write32(u32 addr, u32 data)
+static void __fastcall vi_write32(uint32_t addr, uint32_t data)
 {
     switch(addr & 0x7f)
     {
         case 0x00:      // display control
-            vi.disp_cr = (u16)data;
+            vi.disp_cr = (uint16_t)data;
             vi_set_timing();
             return;
         case 0x1C:      // video buffer (TOP)
@@ -340,8 +340,8 @@ static void __fastcall vi_write32(u32 addr, u32 data)
 // show VI info
 void VIStats()
 {
-    u32 currentBeamPos = VI_POS_VCT(vi.pos);
-    u32 triggerBeamPos = VI_INT_VCT(vi.int0);
+    uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
+    uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
 
     DBReport(GREEN "    VI interrupt : [%i x x x]\n", vi.int0 >> 31);
     DBReport(GREEN "    VI int mask  : [%i x x x]\n", (vi.int0 >> 28) & 1);
@@ -391,7 +391,7 @@ void VIOpen()
     }
 
     // set traps to VI registers
-    for(u32 ofs=0; ofs<0x80; ofs++)
+    for(uint32_t ofs=0; ofs<0x80; ofs++)
     {
         HWSetTrap(8, 0x0C002000 + ofs, vi_read8, vi_write8);
         if((ofs % 2) == 0) HWSetTrap(16, 0x0C002000 + ofs, vi_read16, vi_write16);

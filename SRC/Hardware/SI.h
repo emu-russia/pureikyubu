@@ -80,12 +80,12 @@
 // SI state (registers and other data)
 typedef struct SIControl
 {
-    u32                 out[4], shdw[4];// out + shadows
-    u32                 poll;           // poll control
-    u32                 comcsr;         // CSR
-    u32                 sr;             // status
-    u32                 exilk;          // EXILK dummy
-    u8                  combuf[128+32]; // communication buffer (+ overrun protection)
+    uint32_t            out[4], shdw[4];// out + shadows
+    uint32_t            poll;           // poll control
+    uint32_t            comcsr;         // CSR
+    uint32_t            sr;             // status
+    uint32_t            exilk;          // EXILK dummy
+    uint8_t             combuf[128+32]; // communication buffer (+ overrun protection)
     
     PADState            pad[4];         // PAD state (inbuf replacement)
     BOOL                rumble[4];      // rumble support flags for every controller

@@ -4,12 +4,12 @@
 
 // hardware traps tables, shared to memory engine.
 // there is no need in 64-bit traps, phew =:)
-void (__fastcall *hw_read8  [HW_MAX_KNOWN])(u32, u32 *);
-void (__fastcall *hw_write8 [HW_MAX_KNOWN])(u32, u32);
-void (__fastcall *hw_read16 [HW_MAX_KNOWN])(u32, u32 *);
-void (__fastcall *hw_write16[HW_MAX_KNOWN])(u32, u32);
-void (__fastcall *hw_read32 [HW_MAX_KNOWN])(u32, u32 *);
-void (__fastcall *hw_write32[HW_MAX_KNOWN])(u32, u32);
+void (__fastcall *hw_read8  [HW_MAX_KNOWN])(uint32_t, uint32_t *);
+void (__fastcall *hw_write8 [HW_MAX_KNOWN])(uint32_t, uint32_t);
+void (__fastcall *hw_read16 [HW_MAX_KNOWN])(uint32_t, uint32_t *);
+void (__fastcall *hw_write16[HW_MAX_KNOWN])(uint32_t, uint32_t);
+void (__fastcall *hw_read32 [HW_MAX_KNOWN])(uint32_t, uint32_t *);
+void (__fastcall *hw_write32[HW_MAX_KNOWN])(uint32_t, uint32_t);
 
 static BOOL hw_assert;      // assert on not implemented HW in non DEBUG
 static BOOL update;         // 1: HW update enabled
@@ -18,7 +18,7 @@ static BOOL update;         // 1: HW update enabled
 // default hardware R/W operations.
 // emulation is halted on unknown register access, if hw_assert = 1
 
-static void __fastcall def_hw_read8(u32 addr, u32 *reg)
+static void __fastcall def_hw_read8(uint32_t addr, uint32_t *reg)
 {
     if(emu.doldebug)
     {
@@ -34,22 +34,22 @@ static void __fastcall def_hw_read8(u32 addr, u32 *reg)
     }
 }
 
-static void __fastcall def_hw_write8(u32 addr, u32 data)
+static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
 {
     if(emu.doldebug)
     {
-        DBHalt("unhandled HW access :  W8 %08X = %02X, (pc:%08X)\n", addr, (u8)data, PC);
+        DBHalt("unhandled HW access :  W8 %08X = %02X, (pc:%08X)\n", addr, (uint8_t)data, PC);
     }
     else
     {
         hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
 
         if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access :  W8 %08X = %02X (pc:%08X)", addr, (u8)data, PC );
+                                   "unhandled HW access :  W8 %08X = %02X (pc:%08X)", addr, (uint8_t)data, PC );
     }
 }
 
-static void __fastcall def_hw_read16(u32 addr, u32 *reg)
+static void __fastcall def_hw_read16(uint32_t addr, uint32_t *reg)
 {
     if(emu.doldebug)
     {
@@ -65,22 +65,22 @@ static void __fastcall def_hw_read16(u32 addr, u32 *reg)
     }
 }
 
-static void __fastcall def_hw_write16(u32 addr, u32 data)
+static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
 {
     if(emu.doldebug)
     {
-        DBHalt("unhandled HW access : W16 %08X = %04X, (pc:%08X)\n", addr, (u16)data, PC);
+        DBHalt("unhandled HW access : W16 %08X = %04X, (pc:%08X)\n", addr, (uint16_t)data, PC);
     }
     else
     {
         hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
 
         if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access : W16 %08X = %04X (pc:%08X)", addr, (u16)data, PC );
+                                   "unhandled HW access : W16 %08X = %04X (pc:%08X)", addr, (uint16_t)data, PC );
     }
 }
 
-static void __fastcall def_hw_read32(u32 addr, u32 *reg)
+static void __fastcall def_hw_read32(uint32_t addr, uint32_t *reg)
 {
     if(emu.doldebug)
     {
@@ -96,7 +96,7 @@ static void __fastcall def_hw_read32(u32 addr, u32 *reg)
     }
 }
 
-static void __fastcall def_hw_write32(u32 addr, u32 data)
+static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
 {
     if(emu.doldebug)
     {
@@ -115,9 +115,9 @@ static void __fastcall def_hw_write32(u32 addr, u32 data)
 // traps API
 
 static void HWSetTrap8(
-    u32 addr, 
-    void (__fastcall *rdTrap)(u32, u32 *),
-    void (__fastcall *wrTrap)(u32, u32))
+    uint32_t addr,
+    void (__fastcall *rdTrap)(uint32_t, uint32_t *),
+    void (__fastcall *wrTrap)(uint32_t, uint32_t))
 {
     if(rdTrap == NULL) rdTrap = def_hw_read8;
     if(wrTrap == NULL) wrTrap = def_hw_write8;
@@ -127,9 +127,9 @@ static void HWSetTrap8(
 }
 
 static void HWSetTrap16(
-    u32 addr, 
-    void (__fastcall *rdTrap)(u32, u32 *),
-    void (__fastcall *wrTrap)(u32, u32))
+    uint32_t addr,
+    void (__fastcall *rdTrap)(uint32_t, uint32_t *),
+    void (__fastcall *wrTrap)(uint32_t, uint32_t))
 {
     if(rdTrap == NULL) rdTrap = def_hw_read16;
     if(wrTrap == NULL) wrTrap = def_hw_write16;
@@ -139,9 +139,9 @@ static void HWSetTrap16(
 }
 
 static void HWSetTrap32(
-    u32 addr, 
-    void (__fastcall *rdTrap)(u32, u32 *),
-    void (__fastcall *wrTrap)(u32, u32))
+    uint32_t addr,
+    void (__fastcall *rdTrap)(uint32_t, uint32_t *),
+    void (__fastcall *wrTrap)(uint32_t, uint32_t))
 {
     if(rdTrap == NULL) rdTrap = def_hw_read32;
     if(wrTrap == NULL) wrTrap = def_hw_write32;
@@ -152,10 +152,10 @@ static void HWSetTrap32(
 
 // wrapper
 void HWSetTrap(
-    u32 type,                               // 8, 16 or 32
-    u32 addr,                               // physical trap address
-    void (__fastcall *rdTrap)(u32, u32 *),  // register read trap
-    void (__fastcall *wrTrap)(u32, u32))    // register write trap
+    uint32_t type,                               // 8, 16 or 32
+    uint32_t addr,                               // physical trap address
+    void (__fastcall *rdTrap)(uint32_t, uint32_t *),  // register read trap
+    void (__fastcall *wrTrap)(uint32_t, uint32_t))    // register write trap
 {
     // address must be in correct range
     if(!( (addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN)) ))
@@ -194,7 +194,7 @@ void HWSetTrap(
 // called every time when emu restarted
 static void HWClearTraps()
 {
-    register u32 addr;
+    register uint32_t addr;
 
     // possible errors, if greater 0xffff
     ASSERT( HW_MAX_KNOWN > 0xffff, 

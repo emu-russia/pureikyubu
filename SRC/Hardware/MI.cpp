@@ -5,14 +5,14 @@
 #include "dolphin.h"
 
 // stubs for MI registers
-static void __fastcall no_write(u32 addr, u32 data) {}
-static void __fastcall no_read(u32 addr, u32 *reg)  { *reg = 0; }
+static void __fastcall no_write(uint32_t addr, uint32_t data) {}
+static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 void MIOpen()
 {
     DBReport(CYAN "MI: Flipper memory interface\n");
 
-    for(u32 ofs=0; ofs<=0x28; ofs+=2)
+    for(uint32_t ofs=0; ofs<=0x28; ofs+=2)
     {
         HWSetTrap(16, 0x0C004000 | ofs, no_read, no_write);
     }

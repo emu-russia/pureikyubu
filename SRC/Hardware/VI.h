@@ -77,25 +77,25 @@
 // VI state (registers and other data)
 typedef struct VIControl
 {
-    u16         disp_cr;    // display configuration register
-    u32         tfbl;       // video buffer (top field)
-    u32         bfbl;       // video buffer (bottom field)
-    u32         pos;        // beam position
-    u32         int0;       // INT0 status
+    uint16_t    disp_cr;    // display configuration register
+    uint32_t    tfbl;       // video buffer (top field)
+    uint32_t    bfbl;       // video buffer (bottom field)
+    uint32_t    pos;        // beam position
+    uint32_t    int0;       // INT0 status
 
-    u32         mode;       // see VI modes
+    uint32_t    mode;       // see VI modes
     BOOL        inter;      // 1, if interlace
-    u32         vcount;     // number of lines for single frame
+    uint32_t    vcount;     // number of lines for single frame
     BOOL        auto_vcnt;
-    s64         vtime;      // frame timer
-    s64         one_frame;  // frame length in CPU timer ticks
+    int64_t     vtime;      // frame timer
+    int64_t     one_frame;  // frame length in CPU timer ticks
 
     BOOL        xfb;        // enable video frame buffer (GDI)
-    u8*         xfbbuf;     // translated TFBL pointer
+    uint8_t*    xfbbuf;     // translated TFBL pointer
     RGBQUAD*    gfxbuf;     // DIB
 
     BOOL        log;        // do debugger log output
-    u32         frames;     // frames rendered (can be used by both VI and GX)
+    uint32_t    frames;     // frames rendered (can be used by both VI and GX)
     BOOL        stretch;    // 1: stretch VI framebuffer to fit whole window
 } VIControl;
 

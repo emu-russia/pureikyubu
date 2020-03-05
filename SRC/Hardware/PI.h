@@ -27,8 +27,8 @@
 // PI state (registers and other data)
 typedef struct PIControl
 {
-    u32         intsr;          // interrupt cause
-    u32         intmr;          // interrupt mask
+    uint32_t    intsr;          // interrupt cause
+    uint32_t    intmr;          // interrupt mask
     BOOL        rswhack;        // reset "switch" hack
 } PIControl;
 
@@ -38,6 +38,6 @@ extern  PIControl pi;
 #define INTMR   pi.intmr
 
 void    PICheckInterrupts();    // call to check for pending interrupt(s)
-void    PIAssertInt(u32 mask);  // set interrupt(s)
-void    PIClearInt(u32 mask);   // clear interrupt(s)
+void    PIAssertInt(uint32_t mask);  // set interrupt(s)
+void    PIClearInt(uint32_t mask);   // clear interrupt(s)
 void    PIOpen();

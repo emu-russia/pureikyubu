@@ -1,7 +1,6 @@
 // GC hardware includes
 
-#ifndef __HARDWARE_H__
-#define __HARDWARE_H__
+#pragma once
 
 // Dolwin plugins
 #include "Plugins.h"
@@ -25,5 +24,3 @@
 #include "SI.h"
 #include "EI.h"
 #include "MC.h"
-
-#endif  // __HARDWARE_H__

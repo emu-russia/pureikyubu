@@ -6,10 +6,10 @@
 #define SWAP        MEMSwap
 
 // internal OS vars
-static  u32     __OSPhysicalContext;    // OS_PHYSICAL_CONTEXT
-static  u32     __OSCurrentContext;     // OS_CURRENT_CONTEXT
+static  uint32_t     __OSPhysicalContext;    // OS_PHYSICAL_CONTEXT
+static  uint32_t     __OSCurrentContext;     // OS_CURRENT_CONTEXT
 
-static  u32     __OSDefaultThread;      // OS_DEFAULT_THREAD
+static  uint32_t     __OSDefaultThread;      // OS_DEFAULT_THREAD
 
 /* ---------------------------------------------------------------------------
     Context API, based on Dolphin OS reversing of OSContext module
@@ -22,8 +22,8 @@ static  u32     __OSDefaultThread;      // OS_DEFAULT_THREAD
 // fast longlong swap, invented by org
 static void swap_double(void *srcPtr)
 {
-    u8 *src = (u8 *)srcPtr;
-    register u8 t;
+    uint8_t *src = (uint8_t*)srcPtr;
+    register uint8_t t;
 
     for(int i=0; i<4; i++)
     {
@@ -127,7 +127,7 @@ void OSLoadContext(void)
         GQR[i] = SWAP(c->gqr[i]);
 
     // load other gprs
-    u16 state = (c->state >> 8) | (c->state << 8);
+    uint16_t state = (c->state >> 8) | (c->state << 8);
     if(state & OS_CONTEXT_STATE_EXC)
     {
         state &= ~OS_CONTEXT_STATE_EXC;
@@ -211,10 +211,10 @@ void OSLoadFPUContext(void)
         {
             if(PSE)
             {
-                cpu.ps1[i].uval = *(u64 *)(&c->psr[i]);
+                cpu.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
                 swap_double(&cpu.ps1[i].uval);
             }
-            cpu.fpr[i].uval = *(u64 *)(&c->fpr[i]);
+            cpu.fpr[i].uval = *(uint64_t *)(&c->fpr[i]);
             swap_double(&cpu.fpr[i].uval);
         }
     }
@@ -230,11 +230,11 @@ void OSSaveFPUContext(void)
 
     for(int i=0; i<32; i++)
     {
-        *(u64 *)(&c->fpr[i]) = cpu.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
         swap_double(&c->fpr[i]);
         if(PSE)
         {
-            *(u64 *)(&c->psr[i]) = cpu.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }
@@ -249,11 +249,11 @@ void OSFillFPUContext(void)
 
     for(int i=0; i<32; i++)
     {
-        *(u64 *)(&c->fpr[i]) = cpu.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
         swap_double(&c->fpr[i]);
         if(PSE)
         {
-            *(u64 *)(&c->psr[i]) = cpu.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }
@@ -278,7 +278,7 @@ void OSDisableInterrupts(void)
 {
     HLEHit(HLE_OS_DISABLE_INTERRUPTS);
 
-    u32 prev = MSR;
+    uint32_t prev = MSR;
     MSR &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
 }
@@ -288,7 +288,7 @@ void OSEnableInterrupts(void)
 {
     HLEHit(HLE_OS_ENABLE_INTERRUPTS);
 
-    u32 prev = MSR;
+    uint32_t prev = MSR;
     MSR |= MSR_EE;
     RET_VAL = (prev >> 15) & 1;
 }
@@ -298,7 +298,7 @@ void OSRestoreInterrupts(void)
 {
     HLEHit(HLE_OS_RESTORE_INTERRUPTS);
 
-    u32 prev = MSR;
+    uint32_t prev = MSR;
     if(PARAM(0)) MSR |= MSR_EE;
     else MSR &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
@@ -315,35 +315,35 @@ void OSCheckContextStruct()
     OSContext context;
 
     for(i=0; i<32; i++)
-        DBReport("GPR[%i] = %i\n", i, (u32)&context.gpr[i] - (u32)&context.gpr[0]);
+        DBReport("GPR[%i] = %i\n", i, (uint32_t)&context.gpr[i] - (uint32_t)&context.gpr[0]);
 
-    DBReport("CR = %i\n", (u32)&context.cr - (u32)&context.gpr[0]);
-    DBReport("LR = %i\n", (u32)&context.lr - (u32)&context.gpr[0]);
-    DBReport("CTR = %i\n", (u32)&context.ctr - (u32)&context.gpr[0]);
-    DBReport("XER = %i\n", (u32)&context.xer - (u32)&context.gpr[0]);
+    DBReport("CR = %i\n", (uint32_t)&context.cr - (uint32_t)&context.gpr[0]);
+    DBReport("LR = %i\n", (uint32_t)&context.lr - (uint32_t)&context.gpr[0]);
+    DBReport("CTR = %i\n", (uint32_t)&context.ctr - (uint32_t)&context.gpr[0]);
+    DBReport("XER = %i\n", (uint32_t)&context.xer - (uint32_t)&context.gpr[0]);
 
     for(i=0; i<32; i++)
-        DBReport("FPR[%i] = %i\n", i, (u32)&context.fpr[i] - (u32)&context.gpr[0]);
+        DBReport("FPR[%i] = %i\n", i, (uint32_t)&context.fpr[i] - (uint32_t)&context.gpr[0]);
 
-    DBReport("FPSCR = %i\n", (u32)&context.fpscr_pad - (u32)&context.gpr[0]);
+    DBReport("FPSCR = %i\n", (uint32_t)&context.fpscr_pad - (uint32_t)&context.gpr[0]);
 
-    DBReport("SRR0 = %i\n", (u32)&context.srr[0] - (u32)&context.gpr[0]);
-    DBReport("SRR1 = %i\n", (u32)&context.srr[1] - (u32)&context.gpr[0]);
+    DBReport("SRR0 = %i\n", (uint32_t)&context.srr[0] - (uint32_t)&context.gpr[0]);
+    DBReport("SRR1 = %i\n", (uint32_t)&context.srr[1] - (uint32_t)&context.gpr[0]);
 
-    DBReport("mode = %i\n", (u32)&context.mode - (u32)&context.gpr[0]);
-    DBReport("state = %i\n", (u32)&context.state - (u32)&context.gpr[0]);
+    DBReport("mode = %i\n", (uint32_t)&context.mode - (uint32_t)&context.gpr[0]);
+    DBReport("state = %i\n", (uint32_t)&context.state - (uint32_t)&context.gpr[0]);
 
     for(i=0; i<8; i++)
-        DBReport("GQR[%i] = %i\n", i, (u32)&context.gqr[i] - (u32)&context.gpr[0]);
+        DBReport("GQR[%i] = %i\n", i, (uint32_t)&context.gqr[i] - (uint32_t)&context.gpr[0]);
     for(i=0; i<32; i++)
-        DBReport("PSR[%i] = %i\n", i, (u32)&context.psr[i] - (u32)&context.gpr[0]);
+        DBReport("PSR[%i] = %i\n", i, (uint32_t)&context.psr[i] - (uint32_t)&context.gpr[0]);
 
     DBReport("OSContext size: %i(%i)/%i\n", sizeof(OSContext), 712, OS_CONTEXT_SIZE);
 }
 
 // covert GC time to human-usable time string;
 // example output : "30 Jun 2004 3:06:14:127"
-char * OSTimeFormat(u64 tbr, BOOL noDate /* FALSE */)
+char * OSTimeFormat(uint64_t tbr, BOOL noDate /* FALSE */)
 {
     // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
     // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
@@ -355,12 +355,12 @@ char * OSTimeFormat(u64 tbr, BOOL noDate /* FALSE */)
 
     // coversion GCTIME -> FILETIME
     #define MAGIK 0x0713AD7857941000
-    f64 x = 1.0 / 10000000.0, y = 1.0 / 40500000.0;
+    double x = 1.0 / 10000000.0, y = 1.0 / 40500000.0;
     tbr += MAGIK;
-    u64 ft = (u64)( ((f64)(s64)tbr * y) / x );
+    uint64_t ft = (uint64_t)( ((double)(int64_t)tbr * y) / x );
     FILETIME fileTime; SYSTEMTIME sysTime;
-    fileTime.dwHighDateTime = (u32)(ft >> 32);
-    fileTime.dwLowDateTime  = (u32)(ft & 0x00000000ffffffff);
+    fileTime.dwHighDateTime = (uint32_t)(ft >> 32);
+    fileTime.dwLowDateTime  = (uint32_t)(ft & 0x00000000ffffffff);
     FileTimeToSystemTime(&fileTime, &sysTime);
 
     // format string

@@ -69,19 +69,19 @@
 // DI state (registers and other data)
 typedef struct DIControl
 {
-    u32         sr, cvr, cr;    // DI registers
-    u32         mar, len;
-    u32         cmdbuf[3];
-    u32         immbuf;
-    u32         cfg;
+    uint32_t        sr, cvr, cr;    // DI registers
+    uint32_t        mar, len;
+    uint32_t        cmdbuf[3];
+    uint32_t        immbuf;
+    uint32_t        cfg;
 
-    BOOL        coverst;        // 1: cover open, 0: closed
-    BOOL        streaming;      // 1: streaming audio enabled
-    u32         strseek;        // streaming position on disk
-    u32         strseekOld;     // initial streaming position on disk
-    s32         strcount;       // streaming counter (streaming will stop, when reach zero)
-    s32         strcountOld;    // initial streaming counter
-    u8          *workArea;      // streaming work area
+    BOOL            coverst;        // 1: cover open, 0: closed
+    BOOL            streaming;      // 1: streaming audio enabled
+    uint32_t        strseek;        // streaming position on disk
+    uint32_t        strseekOld;     // initial streaming position on disk
+    int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
+    int32_t         strcountOld;    // initial streaming counter
+    uint8_t         *workArea;      // streaming work area
 } DIControl;
 
 extern  DIControl di;

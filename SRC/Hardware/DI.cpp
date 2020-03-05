@@ -68,7 +68,7 @@ static void DIINT()
 // execute DVD command
 static void DICommand()
 {
-    u32 seek = di.cmdbuf[1] << 2;
+    uint32_t seek = di.cmdbuf[1] << 2;
 
     switch(di.cmdbuf[0] >> 24)
     {
@@ -168,7 +168,7 @@ static void DICommand()
 // 32-bit register traps
 
 // status register
-static void __fastcall write_sr(u32 addr, u32 data)
+static void __fastcall write_sr(uint32_t addr, uint32_t data)
 {
     // set masks
     if(data & DI_SR_BRKINTMSK) DISR |= DI_SR_BRKINTMSK;
@@ -199,12 +199,12 @@ static void __fastcall write_sr(u32 addr, u32 data)
         }
     }
 }
-static void __fastcall read_sr(u32 addr, u32 *reg) { *reg = (u16)DISR; }
+static void __fastcall read_sr(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)DISR; }
 
 // control register
-static void __fastcall write_cr(u32 addr, u32 data)
+static void __fastcall write_cr(uint32_t addr, uint32_t data)
 {
-    DICR = (u16)data;
+    DICR = (uint16_t)data;
 
     // start command
     if(DICR & DI_CR_TSTART)
@@ -213,10 +213,10 @@ static void __fastcall write_cr(u32 addr, u32 data)
         DICommand();
     }
 }
-static void __fastcall read_cr(u32 addr, u32 *reg) { *reg = (u16)DICR; }
+static void __fastcall read_cr(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)DICR; }
 
 // cover register
-static void __fastcall write_cvr(u32 addr, u32 data)
+static void __fastcall write_cvr(uint32_t addr, uint32_t data)
 {
     // clear cover interrupt
     if(data & DI_CVR_CVRINT)
@@ -229,63 +229,63 @@ static void __fastcall write_cvr(u32 addr, u32 data)
     if(data & DI_CVR_CVRINTMSK) DICVR |= DI_CVR_CVRINTMSK;
     else DICVR &= ~DI_CVR_CVRINTMSK;
 }
-static void __fastcall read_cvr(u32 addr, u32 *reg) { *reg = (u16)DICVR; }
+static void __fastcall read_cvr(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)DICVR; }
 
 // dma registers
-static void __fastcall read_mar(u32 addr, u32 *reg)  { *reg = DIMAR; }
-static void __fastcall write_mar(u32 addr, u32 data) { DIMAR = data; }
-static void __fastcall read_len(u32 addr, u32 *reg)  { *reg = DILEN; }
-static void __fastcall write_len(u32 addr, u32 data) { DILEN = data; }
+static void __fastcall read_mar(uint32_t addr, uint32_t *reg)  { *reg = DIMAR; }
+static void __fastcall write_mar(uint32_t addr, uint32_t data) { DIMAR = data; }
+static void __fastcall read_len(uint32_t addr, uint32_t *reg)  { *reg = DILEN; }
+static void __fastcall write_len(uint32_t addr, uint32_t data) { DILEN = data; }
 
 // di buffers
-static void __fastcall read_cmdbuf0(u32 addr, u32 *reg)  { *reg = di.cmdbuf[0]; }
-static void __fastcall write_cmdbuf0(u32 addr, u32 data) { di.cmdbuf[0] = data; }
-static void __fastcall read_cmdbuf1(u32 addr, u32 *reg)  { *reg = di.cmdbuf[1]; }
-static void __fastcall write_cmdbuf1(u32 addr, u32 data) { di.cmdbuf[1] = data; }
-static void __fastcall read_cmdbuf2(u32 addr, u32 *reg)  { *reg = di.cmdbuf[2]; }
-static void __fastcall write_cmdbuf2(u32 addr, u32 data) { di.cmdbuf[2] = data; }
-static void __fastcall read_immbuf(u32 addr, u32 *reg)   { *reg = di.immbuf; }
-static void __fastcall write_immbuf(u32 addr, u32 data)  { di.immbuf = data; }
+static void __fastcall read_cmdbuf0(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[0]; }
+static void __fastcall write_cmdbuf0(uint32_t addr, uint32_t data) { di.cmdbuf[0] = data; }
+static void __fastcall read_cmdbuf1(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[1]; }
+static void __fastcall write_cmdbuf1(uint32_t addr, uint32_t data) { di.cmdbuf[1] = data; }
+static void __fastcall read_cmdbuf2(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[2]; }
+static void __fastcall write_cmdbuf2(uint32_t addr, uint32_t data) { di.cmdbuf[2] = data; }
+static void __fastcall read_immbuf(uint32_t addr, uint32_t *reg)   { *reg = di.immbuf; }
+static void __fastcall write_immbuf(uint32_t addr, uint32_t data)  { di.immbuf = data; }
 
 // register is read only.
 // currently, bit 0 is used for ROM scramble disable, bits 1-7 are reserved
 // used in EXISync->__OSGetDIConfig call, return 0 and forget.
-static void __fastcall read_cfg(u32 addr, u32 *reg) { *reg = 0; }
+static void __fastcall read_cfg(uint32_t addr, uint32_t *reg) { *reg = 0; }
 
 // ---------------------------------------------------------------------------
 // 16-bit register traps (simply wraps to 32-bit regs)
 
 // stubs for high parts of SR, CR and CVR regs
-static void __fastcall no_write(u32 addr, u32 data) {}
-static void __fastcall no_read(u32 addr, u32 *reg)  { *reg = 0; }
+static void __fastcall no_write(uint32_t addr, uint32_t data) {}
+static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 // access by high or low part
-static void __fastcall read_mar_h(u32 addr, u32 *reg)  { *reg = DIMAR >> 16; }
-static void __fastcall read_mar_l(u32 addr, u32 *reg)  { *reg = (u16)DIMAR; }
-static void __fastcall write_mar_h(u32 addr, u32 data) { DIMAR = (DIMAR & 0x0000ffff) | (data << 16); }
-static void __fastcall write_mar_l(u32 addr, u32 data) { DIMAR = (DIMAR & 0xffff0000) | ((u16)data); }
-static void __fastcall read_len_h(u32 addr, u32 *reg)  { *reg = DILEN >> 16; }
-static void __fastcall read_len_l(u32 addr, u32 *reg)  { *reg = (u16)DILEN; }
-static void __fastcall write_len_h(u32 addr, u32 data) { DILEN = (DILEN & 0x0000ffff) | (data << 16); }
-static void __fastcall write_len_l(u32 addr, u32 data) { DILEN = (DILEN & 0xffff0000) | ((u16)data); }
+static void __fastcall read_mar_h(uint32_t addr, uint32_t *reg)  { *reg = DIMAR >> 16; }
+static void __fastcall read_mar_l(uint32_t addr, uint32_t *reg)  { *reg = (uint16_t)DIMAR; }
+static void __fastcall write_mar_h(uint32_t addr, uint32_t data) { DIMAR = (DIMAR & 0x0000ffff) | (data << 16); }
+static void __fastcall write_mar_l(uint32_t addr, uint32_t data) { DIMAR = (DIMAR & 0xffff0000) | ((uint16_t)data); }
+static void __fastcall read_len_h(uint32_t addr, uint32_t *reg)  { *reg = DILEN >> 16; }
+static void __fastcall read_len_l(uint32_t addr, uint32_t *reg)  { *reg = (uint16_t)DILEN; }
+static void __fastcall write_len_h(uint32_t addr, uint32_t data) { DILEN = (DILEN & 0x0000ffff) | (data << 16); }
+static void __fastcall write_len_l(uint32_t addr, uint32_t data) { DILEN = (DILEN & 0xffff0000) | ((uint16_t)data); }
 
 // access by high or low part
-static void __fastcall read_cmdbuf0_h(u32 addr, u32 *reg)  { *reg = di.cmdbuf[0] >> 16; }
-static void __fastcall read_cmdbuf0_l(u32 addr, u32 *reg)  { *reg = (u16)di.cmdbuf[0]; }
-static void __fastcall write_cmdbuf0_h(u32 addr, u32 data) { di.cmdbuf[0] = (di.cmdbuf[0] & 0x0000ffff) | (data << 16); }
-static void __fastcall write_cmdbuf0_l(u32 addr, u32 data) { di.cmdbuf[0] = (di.cmdbuf[0] & 0xffff0000) | ((u16)data); }
-static void __fastcall read_cmdbuf1_h(u32 addr, u32 *reg)  { *reg = di.cmdbuf[1] >> 16; }
-static void __fastcall read_cmdbuf1_l(u32 addr, u32 *reg)  { *reg = (u16)di.cmdbuf[1]; }
-static void __fastcall write_cmdbuf1_h(u32 addr, u32 data) { di.cmdbuf[1] = (di.cmdbuf[1] & 0x0000ffff) | (data << 16); }
-static void __fastcall write_cmdbuf1_l(u32 addr, u32 data) { di.cmdbuf[1] = (di.cmdbuf[1] & 0xffff0000) | ((u16)data); }
-static void __fastcall read_cmdbuf2_h(u32 addr, u32 *reg)  { *reg = di.cmdbuf[2] >> 16; }
-static void __fastcall read_cmdbuf2_l(u32 addr, u32 *reg)  { *reg = (u16)di.cmdbuf[2]; }
-static void __fastcall write_cmdbuf2_h(u32 addr, u32 data) { di.cmdbuf[2] = (di.cmdbuf[2] & 0x0000ffff) | (data << 16); }
-static void __fastcall write_cmdbuf2_l(u32 addr, u32 data) { di.cmdbuf[2] = (di.cmdbuf[2] & 0xffff0000) | ((u16)data); }
-static void __fastcall read_immbuf_h(u32 addr, u32 *reg)   { *reg = di.immbuf >> 16; }
-static void __fastcall read_immbuf_l(u32 addr, u32 *reg)   { *reg = (u16)di.immbuf; }
-static void __fastcall write_immbuf_h(u32 addr, u32 data)  { di.immbuf = (di.immbuf & 0x0000ffff) | (data << 16); }
-static void __fastcall write_immbuf_l(u32 addr, u32 data)  { di.immbuf = (di.immbuf & 0xffff0000) | ((u16)data); }
+static void __fastcall read_cmdbuf0_h(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[0] >> 16; }
+static void __fastcall read_cmdbuf0_l(uint32_t addr, uint32_t *reg)  { *reg = (uint16_t)di.cmdbuf[0]; }
+static void __fastcall write_cmdbuf0_h(uint32_t addr, uint32_t data) { di.cmdbuf[0] = (di.cmdbuf[0] & 0x0000ffff) | (data << 16); }
+static void __fastcall write_cmdbuf0_l(uint32_t addr, uint32_t data) { di.cmdbuf[0] = (di.cmdbuf[0] & 0xffff0000) | ((uint16_t)data); }
+static void __fastcall read_cmdbuf1_h(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[1] >> 16; }
+static void __fastcall read_cmdbuf1_l(uint32_t addr, uint32_t *reg)  { *reg = (uint16_t)di.cmdbuf[1]; }
+static void __fastcall write_cmdbuf1_h(uint32_t addr, uint32_t data) { di.cmdbuf[1] = (di.cmdbuf[1] & 0x0000ffff) | (data << 16); }
+static void __fastcall write_cmdbuf1_l(uint32_t addr, uint32_t data) { di.cmdbuf[1] = (di.cmdbuf[1] & 0xffff0000) | ((uint16_t)data); }
+static void __fastcall read_cmdbuf2_h(uint32_t addr, uint32_t *reg)  { *reg = di.cmdbuf[2] >> 16; }
+static void __fastcall read_cmdbuf2_l(uint32_t addr, uint32_t *reg)  { *reg = (uint16_t)di.cmdbuf[2]; }
+static void __fastcall write_cmdbuf2_h(uint32_t addr, uint32_t data) { di.cmdbuf[2] = (di.cmdbuf[2] & 0x0000ffff) | (data << 16); }
+static void __fastcall write_cmdbuf2_l(uint32_t addr, uint32_t data) { di.cmdbuf[2] = (di.cmdbuf[2] & 0xffff0000) | ((uint16_t)data); }
+static void __fastcall read_immbuf_h(uint32_t addr, uint32_t *reg)   { *reg = di.immbuf >> 16; }
+static void __fastcall read_immbuf_l(uint32_t addr, uint32_t *reg)   { *reg = (uint16_t)di.immbuf; }
+static void __fastcall write_immbuf_h(uint32_t addr, uint32_t data)  { di.immbuf = (di.immbuf & 0x0000ffff) | (data << 16); }
+static void __fastcall write_immbuf_l(uint32_t addr, uint32_t data)  { di.immbuf = (di.immbuf & 0xffff0000) | ((uint16_t)data); }
 
 // ---------------------------------------------------------------------------
 // step DVD stream buffer
@@ -295,7 +295,7 @@ void DIStreamUpdate()
     if(di.streaming)
     {
         // load new data
-        s32 count = (di.strcount < DVD_STREAM_BLK) ?
+        int32_t count = (di.strcount < DVD_STREAM_BLK) ?
                     di.strcount : 
                     DVD_STREAM_BLK ;
         BeginProfileDVD();
@@ -345,7 +345,7 @@ void DIOpen()
     AXPlayStream(0, 0);
 
     ASSERT(di.workArea, "Dirty DVD streaming workarea");
-    di.workArea = (u8 *)malloc(DVD_STREAM_BLK + 1024);
+    di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
     ASSERT(di.workArea == NULL, "No space for DVD streaming workarea");
     memset(di.workArea, 0, DVD_STREAM_BLK);
 

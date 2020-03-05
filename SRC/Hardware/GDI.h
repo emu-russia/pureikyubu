@@ -1,4 +1,4 @@
-BOOL    GDIOpen(HWND hwnd, s32 width, s32 height, RGBQUAD **gfxbuf);
+BOOL    GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf);
 void    GDIClose(HWND hwnd);
 void    GDIRefresh();
-void    GDIResize(s32 width, s32 height);
+void    GDIResize(int width, int height);

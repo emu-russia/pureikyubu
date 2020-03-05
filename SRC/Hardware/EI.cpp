@@ -115,7 +115,7 @@ void EXIUpdateInterrupts()
 // attach / detach device on EXI channel
 //
 
-void EXIAttach(s32 chan)
+void EXIAttach(int chan)
 {
     if(exi.log) DBReport(EXI "attaching device at channel %i\n", chan);
 
@@ -127,7 +127,7 @@ void EXIAttach(s32 chan)
     EXIUpdateInterrupts();
 }
 
-void EXIDetach(s32 chan)
+void EXIDetach(int chan)
 {
     if(exi.log) DBReport(EXI "detaching device at channel %i\n", chan);
 
@@ -145,11 +145,11 @@ void EXIDetach(s32 chan)
 
 static void SRAMLoad(SRAM *s)
 {
-    u8 * buf;
-    u32 size;
+    uint8_t * buf;
+    uint32_t size;
 
     // load data from file in temporary buffer
-    buf = (u8 *)FileLoad(SRAM_FILE, &size);
+    buf = (uint8_t *)FileLoad(SRAM_FILE, &size);
     memset(s, 0, sizeof(SRAM));
 
     // copy less or equal bytes from buffer to SRAM
@@ -192,13 +192,13 @@ void RTCUpdate()
 // load ANSI and SJIS fonts
 //
 
-static void FontLoad(u8 **font, u32 fontsize, char *filename)
+static void FontLoad(uint8_t **font, uint32_t fontsize, char *filename)
 {
-    u8 * buf;
-    u32 size;
+    uint8_t * buf;
+    uint32_t size;
 
     // allocate memory for font data
-    *font = (u8 *)malloc(fontsize);
+    *font = (uint8_t *)malloc(fontsize);
     if(*font == NULL)
     {
 failed: DolwinError(
@@ -210,7 +210,7 @@ failed: DolwinError(
     memset(*font, 0, fontsize); // clear
 
     // load data from file in temporary buffer
-    buf = (u8 *)FileLoad(filename, &size);
+    buf = (uint8_t *)FileLoad(filename, &size);
     if(buf != NULL)
     {
         if(size > fontsize) memcpy(*font, buf, fontsize);
@@ -220,7 +220,7 @@ failed: DolwinError(
     else goto failed;
 }
 
-static void FontUnload(u8 **font)
+static void FontUnload(uint8_t **font)
 {
     if(*font)
     {
@@ -234,8 +234,8 @@ static char * uartf(char *buf)
 {
     static char str[300];
     char *ptr = str;
-    s32 len = strlen(buf);
-    for(s32 n=0; n<len; n++)
+    int len = strlen(buf);
+    for(int n=0; n<len; n++)
     {
         if(buf[n] == 13) buf[n] = '\n';
         *ptr++ = buf[n];
@@ -259,7 +259,7 @@ void UnknownTransfer()
 // MX chip transfers (EXI device 0:1)
 void MXTransfer()
 {
-    u32 ofs;
+    uint32_t ofs;
     BOOL dma = (exi.regs[0].cr & EXI_CR_DMA) ? (1) : (0);
 
     // read or write ?
@@ -320,9 +320,9 @@ void MXTransfer()
                 }
                 else if((ofs >= 0x20000100) && (ofs < (0x20000100 + (sizeof(SRAM) << 6))))
                 {
-                    s32 len = EXI_CR_TLEN(exi.regs[0].cr);
-                    u8 * sofs = (u8 *)&exi.sram + ((ofs >> 6) & 0xff) - 4;
-                    u8 * rofs = (u8 *)&exi.regs[0].data;
+                    int len = EXI_CR_TLEN(exi.regs[0].cr);
+                    uint8_t * sofs = (uint8_t *)&exi.sram + ((ofs >> 6) & 0xff) - 4;
+                    uint8_t * rofs = (uint8_t *)&exi.regs[0].data;
                     switch(len)
                     {
                         case 0:         // byte
@@ -384,26 +384,26 @@ void MXTransfer()
                 }
                 else
                 {
-                    u32 bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
-                    u32 data = MEMSwap(exi.regs[0].data);
+                    uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
+                    uint32_t data = MEMSwap(exi.regs[0].data);
 
                     ofs = exi.mxaddr & 0x7fffffff;
                     if((ofs >= 0x20000100) && (ofs <= 0x20001000))
                     {
                         // SRAM immediate writes
-                        u32 pos = (((ofs - 256) >> 6) & 0x3F);
+                        uint32_t pos = (((ofs - 256) >> 6) & 0x3F);
 
                         if(exi.log) DBReport( EXI "SRAM write immediate pos %d data %08x bytes %08x\n",
                                               pos, exi.regs[0].data, bytes );
 
-                        memcpy(((u8 *)&exi.sram) + pos, &data, bytes);
+                        memcpy(((uint8_t *)&exi.sram) + pos, &data, bytes);
                         exi.mxaddr += (bytes << 6);
                     }
                     else if((ofs >= 0x20010000) && (ofs < 0x20010100))
                     {
                         // UART I/O
-                        u8 *buf = (u8 *)&data;
-                        for(u32 n=0; n<bytes; n++)
+                        uint8_t *buf = (uint8_t *)&data;
+                        for(uint32_t n=0; n<bytes; n++)
                         {
                             exi.uart[exi.upos++] = buf[n];
 
@@ -508,7 +508,7 @@ static void exi_select(int chan)
     exi.sel = -1;
 }
 
-static void write_csr(s32 chan, u32 data)
+static void write_csr(int chan, uint32_t data)
 {
     // clear interrupts 
     exi.regs[chan].csr &= ~(data & EXI_CSR_INTERRUPTS); 
@@ -519,40 +519,40 @@ static void write_csr(s32 chan, u32 data)
     EXIUpdateInterrupts();
 }
 
-static void __fastcall exi0_read_csr(u32 addr, u32 *reg)  { *reg = exi.regs[0].csr; }
-static void __fastcall exi1_read_csr(u32 addr, u32 *reg)  { *reg = exi.regs[1].csr; }
-static void __fastcall exi2_read_csr(u32 addr, u32 *reg)  { *reg = exi.regs[2].csr; }
-static void __fastcall exi0_write_csr(u32 addr, u32 data) { write_csr(0, data); }
-static void __fastcall exi1_write_csr(u32 addr, u32 data) { write_csr(1, data); }
-static void __fastcall exi2_write_csr(u32 addr, u32 data) { write_csr(2, data); }
+static void __fastcall exi0_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].csr; }
+static void __fastcall exi1_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].csr; }
+static void __fastcall exi2_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].csr; }
+static void __fastcall exi0_write_csr(uint32_t addr, uint32_t data) { write_csr(0, data); }
+static void __fastcall exi1_write_csr(uint32_t addr, uint32_t data) { write_csr(1, data); }
+static void __fastcall exi2_write_csr(uint32_t addr, uint32_t data) { write_csr(2, data); }
 
 //
 // memory address for EXI DMA
 //
 
-static void __fastcall exi0_read_madr(u32 addr, u32 *reg)  { *reg = exi.regs[0].madr; }
-static void __fastcall exi1_read_madr(u32 addr, u32 *reg)  { *reg = exi.regs[1].madr; }
-static void __fastcall exi2_read_madr(u32 addr, u32 *reg)  { *reg = exi.regs[2].madr; }
-static void __fastcall exi0_write_madr(u32 addr, u32 data) { exi.regs[0].madr = data; }
-static void __fastcall exi1_write_madr(u32 addr, u32 data) { exi.regs[1].madr = data; }
-static void __fastcall exi2_write_madr(u32 addr, u32 data) { exi.regs[2].madr = data; }
+static void __fastcall exi0_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].madr; }
+static void __fastcall exi1_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].madr; }
+static void __fastcall exi2_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].madr; }
+static void __fastcall exi0_write_madr(uint32_t addr, uint32_t data) { exi.regs[0].madr = data; }
+static void __fastcall exi1_write_madr(uint32_t addr, uint32_t data) { exi.regs[1].madr = data; }
+static void __fastcall exi2_write_madr(uint32_t addr, uint32_t data) { exi.regs[2].madr = data; }
 
 //
 // data length for DMA
 //
 
-static void __fastcall exi0_read_len(u32 addr, u32 *reg)  { *reg = exi.regs[0].len; }
-static void __fastcall exi1_read_len(u32 addr, u32 *reg)  { *reg = exi.regs[1].len; }
-static void __fastcall exi2_read_len(u32 addr, u32 *reg)  { *reg = exi.regs[2].len; }
-static void __fastcall exi0_write_len(u32 addr, u32 data) { exi.regs[0].len = data; }
-static void __fastcall exi1_write_len(u32 addr, u32 data) { exi.regs[1].len = data; }
-static void __fastcall exi2_write_len(u32 addr, u32 data) { exi.regs[2].len = data; }
+static void __fastcall exi0_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].len; }
+static void __fastcall exi1_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].len; }
+static void __fastcall exi2_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].len; }
+static void __fastcall exi0_write_len(uint32_t addr, uint32_t data) { exi.regs[0].len = data; }
+static void __fastcall exi1_write_len(uint32_t addr, uint32_t data) { exi.regs[1].len = data; }
+static void __fastcall exi2_write_len(uint32_t addr, uint32_t data) { exi.regs[2].len = data; }
 
 //
 // EXI control 
 //
 
-static void exi_write_cr(s32 chan, u32 data)
+static void exi_write_cr(int chan, uint32_t data)
 {
     EXIRegs *regs = &exi.regs[chan];
     regs->cr = data;
@@ -577,23 +577,23 @@ static void exi_write_cr(s32 chan, u32 data)
     }
 }
 
-static void __fastcall exi0_read_cr(u32 addr, u32 *reg)  { *reg = exi.regs[0].cr; }
-static void __fastcall exi1_read_cr(u32 addr, u32 *reg)  { *reg = exi.regs[1].cr; }
-static void __fastcall exi2_read_cr(u32 addr, u32 *reg)  { *reg = exi.regs[2].cr; }
-static void __fastcall exi0_write_cr(u32 addr, u32 data) { exi_write_cr(0, data); }
-static void __fastcall exi1_write_cr(u32 addr, u32 data) { exi_write_cr(1, data); }
-static void __fastcall exi2_write_cr(u32 addr, u32 data) { exi_write_cr(2, data); }
+static void __fastcall exi0_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].cr; }
+static void __fastcall exi1_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].cr; }
+static void __fastcall exi2_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].cr; }
+static void __fastcall exi0_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(0, data); }
+static void __fastcall exi1_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(1, data); }
+static void __fastcall exi2_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(2, data); }
 
 //
 // EXI immediate data
 //
 
-static void __fastcall exi0_read_data(u32 addr, u32 *reg)  { *reg = exi.regs[0].data; }
-static void __fastcall exi1_read_data(u32 addr, u32 *reg)  { *reg = exi.regs[1].data; }
-static void __fastcall exi2_read_data(u32 addr, u32 *reg)  { *reg = exi.regs[2].data; }
-static void __fastcall exi0_write_data(u32 addr, u32 data) { exi.regs[0].data = data; }
-static void __fastcall exi1_write_data(u32 addr, u32 data) { exi.regs[1].data = data; }
-static void __fastcall exi2_write_data(u32 addr, u32 data) { exi.regs[2].data = data; }
+static void __fastcall exi0_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].data; }
+static void __fastcall exi1_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].data; }
+static void __fastcall exi2_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].data; }
+static void __fastcall exi0_write_data(uint32_t addr, uint32_t data) { exi.regs[0].data = data; }
+static void __fastcall exi1_write_data(uint32_t addr, uint32_t data) { exi.regs[1].data = data; }
+static void __fastcall exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[2].data = data; }
 
 // ---------------------------------------------------------------------------
 // init

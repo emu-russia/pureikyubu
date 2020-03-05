@@ -68,10 +68,6 @@ void GXSetTokens(long *peDrawDone, long *peToken, unsigned short *tokenVal);
 void GXConfigure();
 void GXAbout();
 
-// savestate (flag:0 to load, flag:1 to save);
-// "filename" is currently running DVD/executable file name.
-void GXSaveLoad(long flag, char *filename);
-
 // ---------------------------------------------------------------------------
 
 // AX plugin (audio)
@@ -96,10 +92,6 @@ void AXSetVolume(unsigned char left, unsigned char right);
 // user stuff
 void AXConfigure();
 void AXAbout();
-
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-void AXSaveLoad(long flag, char *filename);
 
 // ---------------------------------------------------------------------------
 
@@ -152,10 +144,6 @@ long PADSetRumble(long padnum, long cmd);
 void PADConfigure(long padnum);
 void PADAbout();
 
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-void PADSaveLoad(long flag, char *filename);
-
 // ---------------------------------------------------------------------------
 
 // DVD plugin
@@ -184,10 +172,6 @@ long DVDOpenFile(char *dvdfile);
 // config / about
 void DVDConfigure();
 void DVDAbout();
-
-// savestate (flag:0 to load, flag:1 to save)
-// "filename" is currently running DVD/executable file name.
-void DVDSaveLoad(long flag, char *filename);
 
 #endif  // __PLUGIN_SPECS_H__
 

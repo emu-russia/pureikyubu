@@ -46,7 +46,7 @@ Parameters:
 #define MEMCARD_BA_EXTRABYTES   0x80 // when a BA is passed as arg, MEMCARD_BA_EXTRABYTES defines wheter the arg are regular bytes or extra bytes
 /******************************************************************************************************/
 
-const u32 Memcard_BytesMask [5] = { 0x00000000, 0xFF000000, 0xFFFF0000, 0xFFFFFF00, 0xFFFFFFFF };
+const uint32_t Memcard_BytesMask [5] = { 0x00000000, 0xFF000000, 0xFFFF0000, 0xFFFFFF00, 0xFFFFFFFF };
 
 /*
  * These functions just execute the readed command.
@@ -137,7 +137,7 @@ const MCCommand Memcard_ValidCommands[Num_Memcard_ValidCommands] = {
         MEMCARD_COMMAND_WAKEUP }  //#define MEMCARD_COMMAND_WAKEUP        0x87
 };
 
-const u32 Memcard_ValidSizes[Num_Memcard_ValidSizes] = { 
+const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = { 
     0x00080000, //524288 bytes , // Memory Card 59
     0x00100000, //1048576 bytes , // Memory Card 123
     0x00200000, //2097152 bytes , // Memory Card 251
@@ -152,7 +152,7 @@ BOOL MCOpened = FALSE;
 
 Memcard memcard[2];
 
-static u32 __fastcall MCCalculateOffset (u32 mc_address) {
+static uint32_t __fastcall MCCalculateOffset (uint32_t mc_address) {
 	if (mc_address & MEMCARD_BA_EXTRABYTES)
 		DBReport (RED "MC :: Extra bytes are not supported");
     return        (mc_address & 0x0000007F) |
@@ -160,7 +160,7 @@ static u32 __fastcall MCCalculateOffset (u32 mc_address) {
                  ((mc_address & 0x7FFF0000) >> 7);
 }
 
-static void __fastcall MCSyncSave (Memcard * memcard, u32 offset , u32 size) {
+static void __fastcall MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t size) {
     if (SyncSave == TRUE) // Bad idea!!
     {
         if (fseek(memcard->file, offset, SEEK_SET) != 0) {
@@ -181,7 +181,7 @@ static void __fastcall MCGetStatusProc (Memcard * memcard){
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
     exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
-        (((u32)memcard->status << 24) & Memcard_BytesMask[auxbytes]);
+        (((uint32_t)memcard->status << 24) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCClearStatusProc*********************************************/
 static void __fastcall MCClearStatusProc (Memcard * memcard) {
@@ -195,11 +195,11 @@ static void __fastcall MCClearStatusProc (Memcard * memcard) {
 static void __fastcall MCPageProgramProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
-    u32 offset;
-    u8 auxbyte = (u8)(memcard->commandData & 0x000000FF);
-    u32 auxdata = memcard->commandData;
-    u8 *abuf;
-    u32 size;
+    uint32_t offset;
+    uint8_t auxbyte = (uint8_t)(memcard->commandData & 0x000000FF);
+    uint32_t auxdata = memcard->commandData;
+    uint8_t *abuf;
+    uint32_t size;
     if (exi->cr & EXI_CR_DMA) {
         abuf = &RAM[exi->madr & RAMMASK];
         size = exi->len;
@@ -231,19 +231,19 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
 static void __fastcall MCReadArrayProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
-    u32 offset;
-    u8 auxbyte = (u8)(memcard->commandData & 0x000000FF);
+    uint32_t offset;
+    uint8_t auxbyte = (uint8_t)(memcard->commandData & 0x000000FF);
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
-    u32 auxdata = memcard->commandData;
-    u8 *abuf;
-    u32 size;
+    uint32_t auxdata = memcard->commandData;
+    uint8_t *abuf;
+    uint32_t size;
 
     if (exi->cr & EXI_CR_DMA) {
         abuf = &RAM[exi->madr & RAMMASK];
         size = exi->len;
     }
     else {
-        abuf = (u8 *)&exi->data;
+        abuf = (uint8_t *)&exi->data;
         size = auxbytes;
     }
 
@@ -272,7 +272,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
 /**********************************MCSectorEraseProc*********************************************/
 static void __fastcall MCSectorEraseProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
-    u32 offset;
+    uint32_t offset;
 
 
     offset = MCCalculateOffset(memcard->commandData);
@@ -298,11 +298,11 @@ static void __fastcall MCGetEXIDeviceIdProc (Memcard * memcard) {
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
     exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
-        ((u32)(memcard->size >> 17) & Memcard_BytesMask[auxbytes]);
+        ((uint32_t)(memcard->size >> 17) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCCardEraseProc*********************************************/
 static void __fastcall MCCardEraseProc (Memcard * memcard) {
-    u32 offset = 0;
+    uint32_t offset = 0;
 
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
 
@@ -327,7 +327,7 @@ static void __fastcall MCReadIdProc (Memcard * memcard){
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
     exi->data = (exi->data & ~Memcard_BytesMask[auxbytes]) |
-        (((u32)memcard->ID << 16) & Memcard_BytesMask[auxbytes]);
+        (((uint32_t)memcard->ID << 16) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCSleepProc*********************************************/
 static void __fastcall MCSleepProc (Memcard * memcard) {
@@ -340,7 +340,7 @@ static void __fastcall MCWakeUpProc (Memcard * memcard) {
 
 /********************************************************************************************/
 void MCTransfer () {
-    u32 auxdata, auxdma;
+    uint32_t auxdata, auxdma;
     int auxbytes, i;
     Memcard *auxmc;
     EXIRegs *auxexi;
@@ -373,7 +373,7 @@ void MCTransfer () {
         if (!auxdma) {
             while (auxbytes > 0) {
                 if (auxmc->Command == MEMCARD_COMMAND_UNDEFINED || auxmc->ready ) {
-                    auxmc->Command = (u8)(auxdata >> 24);
+                    auxmc->Command = (uint8_t)(auxdata >> 24);
                     for (i = 0; i < Num_Memcard_ValidCommands; i++)
                         if (auxmc->Command == Memcard_ValidCommands[i].Command) {
                             auxmc->databytes = Memcard_ValidCommands[i].databytes;
@@ -403,7 +403,7 @@ void MCTransfer () {
                     auxmc->dummybytesread++;
                 }
                 else 
-                    DBReport (RED "MC :: Extra bytes at transfer , data : %02x", (u8)(auxdata >> 24));
+                    DBReport (RED "MC :: Extra bytes at transfer , data : %02x", (uint8_t)(auxdata >> 24));
                 auxdata = auxdata << 8;
                 auxbytes--;
             }
@@ -445,10 +445,10 @@ BOOL    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-BOOL    MCCreateMemcardFile(char *path, u16 memcard_id) {
+BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
     FILE * newfile;
-    u32 b, blocks;
-    u8 newfile_buffer[Memcard_BlockSize];
+    uint32_t b, blocks;
+    uint8_t newfile_buffer[Memcard_BlockSize];
 
     switch (memcard_id) {
     case MEMCARD_ID_64:
@@ -458,7 +458,7 @@ BOOL    MCCreateMemcardFile(char *path, u16 memcard_id) {
     case MEMCARD_ID_1024:
     case MEMCARD_ID_2048:
         /* 17 = Mbits to byte conversion */
-        blocks = ((u32)memcard_id) << (17 - Memcard_BlockSize_log2); 
+        blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
 		ASSERT ( TRUE , "Wrong card id for creating file.");
@@ -626,7 +626,7 @@ BOOL MCConnect (int cardnum) {
             return FALSE;
         }
 
-        for (i = 0 ; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (u32)buf.st_size; i++);
+        for (i = 0 ; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)buf.st_size; i++);
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
@@ -637,7 +637,7 @@ BOOL MCConnect (int cardnum) {
         }
 
         memcard[cardnum].size = buf.st_size;
-        memcard[cardnum].data = (u8 *)malloc(memcard[cardnum].size);
+        memcard[cardnum].data = (uint8_t *)malloc(memcard[cardnum].size);
 
         if (memcard[cardnum].data == NULL) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
@@ -668,7 +668,7 @@ BOOL MCConnect (int cardnum) {
         }
 
         /* if nothing fails... */
-        memcard[cardnum].ID = ((u16)0xC2) << 8 | (u16)0x42; // Datel's code just for now
+        memcard[cardnum].ID = ((uint16_t)0xC2) << 8 | (uint16_t)0x42; // Datel's code just for now
         memcard[cardnum].status = MEMCARD_STATUS_READY;
         memcard[cardnum].connected = TRUE;
         EXIAttach(cardnum);        // connect device

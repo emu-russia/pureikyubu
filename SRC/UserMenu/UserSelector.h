@@ -45,12 +45,12 @@ enum SELECTOR_SORT
 // selector API
 void    CreateSelector();
 void    CloseSelector();
-void    SetSelectorIconSize(BOOL smallIcon);        // <-- funny "BOOL small" compiler bug is here
-BOOL    AddSelectorPath(char *fullPath);            // FALSE, if path duplicated
-void    ResizeSelector(s32 width, s32 height);
+void    SetSelectorIconSize(bool smallIcon);
+bool    AddSelectorPath(char *fullPath);            // FALSE, if path duplicated
+void    ResizeSelector(int width, int height);
 void    UpdateSelector();
 int     SelectorGetSelected();
-void    SelectorSetSelected(s32 item);
+void    SelectorSetSelected(int item);
 void    SelectorSetSelected(char *filename);
 void    SortSelector(int sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
@@ -60,31 +60,31 @@ void    ScrollSelector(char letter);
 // all important data is placed here
 typedef struct UserSelector
 {
-    BOOL        active;             // 1, if enabled (under control of UserWindow)
-    BOOL        opened;             // 1, if visible
-    BOOL        smallIcons;         // show small icons
-    s32         sortBy;             // sort rule (one of SELECTOR_SORT_*)
-    s32         width;              // selector width
-    s32         height;             // selector height
+    bool        active;             // 1, if enabled (under control of UserWindow)
+    bool        opened;             // 1, if visible
+    bool        smallIcons;         // show small icons
+    int         sortBy;             // sort rule (one of SELECTOR_SORT_*)
+    int         width;              // selector width
+    int         height;             // selector height
 
     HWND        hSelectorWindow;    // selector window handler
     HMENU       hFileMenu;          // popup file menu
-    BOOL        compress;           // current file action (1:compress, 0:decompress)
+    bool        compress;           // current file action (1:compress, 0:decompress)
     char        file1[256];         // first file for GCMCMPR
     char        file2[256];         // second file for GCMCMPR
     UserFile*   selected;           // first selected item (temporary for edit file dialog)
 
     // path list, where to search files.
     char**      paths;
-    s32         pathnum;
+    int         pathnum;
 
     // file filter
-    u32         filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
+    uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
 
     // we are using self-extended file list, so file count is
     // unlimited in theory (limited only by system resources).
     UserFile*   files;              // file list
-    s32         filenum;            // file count
+    int         filenum;            // file count
 } UserSelector;
 
 extern  UserSelector usel;

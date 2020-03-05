@@ -43,14 +43,12 @@
     <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <OutDir>.\Debug\</OutDir>
-    <IntDir>.\Debug\</IntDir>
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <OutDir>.\Release\</OutDir>
-    <IntDir>.\Release\</IntDir>
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Midl>
@@ -62,7 +60,7 @@
     </Midl>
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\SRC;.\SRC\Emulator;.\SRC\UserMenu;.\SRC\Hardware;.\SRC\HighLevel;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\SRC;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;__VCNET__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -71,7 +69,7 @@
       <AssemblerListingLocation>.\Debug/</AssemblerListingLocation>
       <ObjectFileName>.\Debug/</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug/</ProgramDataBaseFileName>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level4</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
@@ -83,7 +81,6 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>Dolwin.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>.\Debug/Dolwin.pdb</ProgramDatabaseFile>
@@ -104,7 +101,7 @@
     </Midl>
     <ClCompile>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
-      <AdditionalIncludeDirectories>.\SRC;.\SRC\Emulator;.\SRC\UserMenu;.\SRC\Hardware;.\SRC\HighLevel;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\SRC;.\RES;.\DVD\SRC;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;__VCNET__;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -125,7 +122,6 @@
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalDependencies>comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>Dolwin.exe</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ProgramDatabaseFile>.\Release/Dolwin.pdb</ProgramDatabaseFile>
       <SubSystem>Windows</SubSystem>
@@ -136,59 +132,35 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Emulator\Debugger.cpp" />
-    <ClCompile Include="SRC\Emulator\Debugger\break.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\cmd.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\console.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\cpuview.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\input.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\memview.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\output.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Debugger\regs.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">.\Debug\Debugger/</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\Debugger/</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="SRC\Emulator\Emulator.cpp" />
-    <ClCompile Include="SRC\Emulator\Gekko.cpp" />
-    <ClCompile Include="SRC\Emulator\GekkoDisasm.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_branch.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_compare.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_condition.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_floatingpoint.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_fploadstore.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_integer.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_loadstore.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_logical.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_pairedsingle.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_psloadstore.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_rotate.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_shift.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_system.cpp" />
-    <ClCompile Include="SRC\Emulator\Interpreter\c_tables.cpp" />
-    <ClCompile Include="SRC\Emulator\Loader.cpp" />
-    <ClCompile Include="SRC\Emulator\Memory.cpp" />
+    <ClCompile Include="SRC\Core\Emulator.cpp" />
+    <ClCompile Include="SRC\Core\Gekko.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_branch.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_compare.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_condition.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_floatingpoint.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_fploadstore.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_integer.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_loadstore.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_logical.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_pairedsingle.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_psloadstore.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_rotate.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_shift.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_system.cpp" />
+    <ClCompile Include="SRC\Core\Interpreter\c_tables.cpp" />
+    <ClCompile Include="SRC\Core\Loader.cpp" />
+    <ClCompile Include="SRC\Core\Memory.cpp" />
+    <ClCompile Include="SRC\Debugger\break.cpp" />
+    <ClCompile Include="SRC\Debugger\cmd.cpp" />
+    <ClCompile Include="SRC\Debugger\console.cpp" />
+    <ClCompile Include="SRC\Debugger\cpuview.cpp" />
+    <ClCompile Include="SRC\Debugger\Debugger.cpp" />
+    <ClCompile Include="SRC\Debugger\GekkoDisasm.cpp" />
+    <ClCompile Include="SRC\Debugger\input.cpp" />
+    <ClCompile Include="SRC\Debugger\memview.cpp" />
+    <ClCompile Include="SRC\Debugger\output.cpp" />
+    <ClCompile Include="SRC\Debugger\regs.cpp" />
     <ClCompile Include="SRC\Hardware\AI.cpp" />
     <ClCompile Include="SRC\Hardware\AR.cpp" />
     <ClCompile Include="SRC\Hardware\CP.cpp" />
@@ -208,7 +180,6 @@
     <ClCompile Include="SRC\HighLevel\DSP.cpp" />
     <ClCompile Include="SRC\HighLevel\DVDBanner.cpp" />
     <ClCompile Include="SRC\HighLevel\HLE.cpp" />
-    <ClCompile Include="SRC\HighLevel\JAudio.cpp" />
     <ClCompile Include="SRC\HighLevel\MapLoader.cpp" />
     <ClCompile Include="SRC\HighLevel\MapMaker.cpp" />
     <ClCompile Include="SRC\HighLevel\MapSaver.cpp" />
@@ -233,36 +204,36 @@
     <ClInclude Include="RES\nobanner.h" />
     <ClInclude Include="RES\resource.h" />
     <ClInclude Include="RES\SjisTable.h" />
+    <ClInclude Include="SRC\Core\Emulator.h" />
+    <ClInclude Include="SRC\Core\Gekko.h" />
+    <ClInclude Include="SRC\Core\Interpreter.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_branch.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_compare.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_condition.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_floatingpoint.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_fploadstore.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_integer.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_loadstore.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_logical.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_pairedsingle.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_psloadstore.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_rotate.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_shift.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_system.h" />
+    <ClInclude Include="SRC\Core\Interpreter\c_tables.h" />
+    <ClInclude Include="SRC\Core\Loader.h" />
+    <ClInclude Include="SRC\Core\Memory.h" />
+    <ClInclude Include="SRC\Debugger\break.h" />
+    <ClInclude Include="SRC\Debugger\cmd.h" />
+    <ClInclude Include="SRC\Debugger\console.h" />
+    <ClInclude Include="SRC\Debugger\cpuview.h" />
+    <ClInclude Include="SRC\Debugger\Debugger.h" />
+    <ClInclude Include="SRC\Debugger\GekkoDisasm.h" />
+    <ClInclude Include="SRC\Debugger\input.h" />
+    <ClInclude Include="SRC\Debugger\memview.h" />
+    <ClInclude Include="SRC\Debugger\output.h" />
+    <ClInclude Include="SRC\Debugger\regs.h" />
     <ClInclude Include="SRC\dolphin.h" />
-    <ClInclude Include="SRC\Emulator\Debugger.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\break.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\cmd.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\console.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\cpuview.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\input.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\memview.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\output.h" />
-    <ClInclude Include="SRC\Emulator\Debugger\regs.h" />
-    <ClInclude Include="SRC\Emulator\Emulator.h" />
-    <ClInclude Include="SRC\Emulator\Gekko.h" />
-    <ClInclude Include="SRC\Emulator\GekkoDisasm.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_branch.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_compare.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_condition.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_floatingpoint.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_fploadstore.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_integer.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_loadstore.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_logical.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_pairedsingle.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_psloadstore.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_rotate.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_shift.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_system.h" />
-    <ClInclude Include="SRC\Emulator\Interpreter\c_tables.h" />
-    <ClInclude Include="SRC\Emulator\Loader.h" />
-    <ClInclude Include="SRC\Emulator\Memory.h" />
     <ClInclude Include="SRC\Hardware\AI.h" />
     <ClInclude Include="SRC\Hardware\AR.h" />
     <ClInclude Include="SRC\Hardware\CP.h" />
@@ -286,7 +257,6 @@
     <ClInclude Include="SRC\HighLevel\DVDBanner.h" />
     <ClInclude Include="SRC\HighLevel\HighLevel.h" />
     <ClInclude Include="SRC\HighLevel\HLE.h" />
-    <ClInclude Include="SRC\HighLevel\JAudio.h" />
     <ClInclude Include="SRC\HighLevel\MapLoader.h" />
     <ClInclude Include="SRC\HighLevel\MapMaker.h" />
     <ClInclude Include="SRC\HighLevel\MapSaver.h" />

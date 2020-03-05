@@ -22,7 +22,6 @@ GXWRITEFIFO         GXWriteFifo        = NULL;
 GXSETTOKENS         GXSetTokens        = NULL;
 GXCONFIGURE         GXConfigure        = NULL;
 GXABOUT             GXAbout            = NULL;
-GXSAVELOAD          GXSaveLoad         = NULL;
 
 // audio externals
 AXOPEN              AXOpen             = NULL;
@@ -33,7 +32,6 @@ AXPLAYSTREAM        AXPlayStream       = NULL;
 AXSETVOLUME         AXSetVolume        = NULL;
 AXCONFIGURE         AXConfigure        = NULL;
 AXABOUT             AXAbout            = NULL;
-AXSAVELOAD          AXSaveLoad         = NULL;
 
 // pad externals
 PADOPEN             PADOpen            = NULL;
@@ -42,7 +40,6 @@ PADREADBUTTONS      PADReadButtons     = NULL;
 PADSETRUMBLE        PADSetRumble       = NULL;
 PADCONFIGURE        PADConfigure       = NULL;
 PADABOUT            PADAbout           = NULL;
-PADSAVELOAD         PADSaveLoad        = NULL;
 
 // dvd externals
 DVDOPEN             DVDOpen            = NULL;
@@ -54,10 +51,6 @@ DVDREAD             DVDRead            = NULL;
 DVDOPENFILE         DVDOpenFile        = NULL;
 DVDCONFIGURE        DVDConfigure       = NULL;
 DVDABOUT            DVDAbout           = NULL;
-DVDSAVELOAD         DVDSaveLoad        = NULL;
-
-// net externals
-// ...
 
 REGISTERPLUGIN      RegisterPlugin     = NULL;
 
@@ -112,7 +105,6 @@ static void GXPluginInit(char *name, int warn)
     LoadAPI(GX, GXSETTOKENS, GXSetTokens);
     LoadAPI(GX, GXCONFIGURE, GXConfigure);
     LoadAPI(GX, GXABOUT, GXAbout);
-    LoadAPI(GX, GXSAVELOAD, GXSaveLoad);
 
     // set GX tokens
     GXSetTokens(&fifo.drawdone, &fifo.token, &fifo.pe.token);
@@ -153,7 +145,6 @@ static void AXPluginInit(char *name, int warn)
     LoadAPI(AX, AXSETVOLUME, AXSetVolume);
     LoadAPI(AX, AXCONFIGURE, AXConfigure);
     LoadAPI(AX, AXABOUT, AXAbout);
-    LoadAPI(AX, AXSAVELOAD, AXSaveLoad);
 }
 
 static void PADPluginInit(char *name, int warn)
@@ -189,7 +180,6 @@ static void PADPluginInit(char *name, int warn)
     LoadAPI(PAD, PADSETRUMBLE, PADSetRumble);
     LoadAPI(PAD, PADCONFIGURE, PADConfigure);
     LoadAPI(PAD, PADABOUT, PADAbout);
-    LoadAPI(PAD, PADSAVELOAD, PADSaveLoad);
 }
 
 static void DVDPluginInit(char *name, int warn)
@@ -228,7 +218,6 @@ static void DVDPluginInit(char *name, int warn)
     LoadAPI(DVD, DVDOPENFILE, DVDOpenFile);
     LoadAPI(DVD, DVDCONFIGURE, DVDConfigure);
     LoadAPI(DVD, DVDABOUT, DVDAbout);
-    LoadAPI(DVD, DVDSAVELOAD, DVDSaveLoad);
 }
 
 // ---------------------------------------------------------------------------

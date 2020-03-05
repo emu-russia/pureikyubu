@@ -9,7 +9,7 @@ PIControl pi;
 // interrupts
 
 // return short interrupt description
-static char *intdesc(u32 mask)
+static char *intdesc(uint32_t mask)
 {
     switch(mask & 0xffff)
     {
@@ -33,12 +33,12 @@ static char *intdesc(u32 mask)
     return "UNKNOWN";
 }
 
-static void printOut(u32 mask, char *fix)
+static void printOut(uint32_t mask, char *fix)
 {
     if(emu.doldebug)
     {
         char buf[256], *p = buf;
-        for(u32 m=1; m<=PI_INTERRUPT_HSP; m<<=1)
+        for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
         {
             if(mask & m) p += sprintf(p, "%sINT ", intdesc(m));
         }
@@ -61,7 +61,7 @@ void PICheckInterrupts()
 }
 
 // assert (look, not generate!) interrupt
-void PIAssertInt(u32 mask)
+void PIAssertInt(uint32_t mask)
 {
     INTSR |= mask;
     if((INTMR & mask) && emu.doldebug)
@@ -72,7 +72,7 @@ void PIAssertInt(u32 mask)
 }
 
 // clear interrupt
-void PIClearInt(u32 mask)
+void PIClearInt(uint32_t mask)
 { 
     if((INTSR & mask) && emu.doldebug)
     {
@@ -84,24 +84,24 @@ void PIClearInt(u32 mask)
 // ---------------------------------------------------------------------------
 // traps for interrupt regs
 
-static void __fastcall read_intsr(u32 addr, u32 *reg)
+static void __fastcall read_intsr(uint32_t addr, uint32_t *reg)
 {
     *reg = INTSR | (pi.rswhack << 16);
 }
 
 // writes turns them off ?
-static void __fastcall write_intsr(u32 addr, u32 data)
+static void __fastcall write_intsr(uint32_t addr, uint32_t data)
 {
     INTSR &= ~data;
     PICheckInterrupts();
 }
 
-static void __fastcall read_intmr(u32 addr, u32 *reg)
+static void __fastcall read_intmr(uint32_t addr, uint32_t *reg)
 {
     *reg = INTMR;
 }
 
-static void __fastcall write_intmr(u32 addr, u32 data)
+static void __fastcall write_intmr(uint32_t addr, uint32_t data)
 {
     INTMR = data;
 
@@ -109,7 +109,7 @@ static void __fastcall write_intmr(u32 addr, u32 data)
     if(INTMR && emu.doldebug)
     {
         char buf[256], *p = buf;
-        for(u32 m=1; m<=PI_INTERRUPT_HSP; m<<=1)
+        for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
         {
             if(INTMR & m) p += sprintf(p, "%s ", intdesc(m));
         }
@@ -125,9 +125,9 @@ static void __fastcall write_intmr(u32 addr, u32 data)
 // GC revision
 //
 
-static void __fastcall read_mbrev(u32 addr, u32 *reg)
+static void __fastcall read_mbrev(uint32_t addr, uint32_t *reg)
 {
-    u32 ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
+    uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
 
     // bootrom using this register in following way :
     //
@@ -144,7 +144,7 @@ static void __fastcall read_mbrev(u32 addr, u32 *reg)
 // reset register
 //
 
-static void __fastcall write_reset(u32 addr, u32 data)
+static void __fastcall write_reset(uint32_t addr, uint32_t data)
 {
     // reset emulator
     if(data)
@@ -154,7 +154,7 @@ static void __fastcall write_reset(u32 addr, u32 data)
     }
 }
 
-static void __fastcall read_reset(u32 addr, u32 *reg)
+static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
 {
     // on system power-on, the code is zero
     *reg = 0;

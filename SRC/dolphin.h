@@ -1,7 +1,6 @@
 // general include file for whole project. must be included first.
 
-#ifndef __DOLPHIN_H__
-#define __DOLPHIN_H__
+#pragma once
 
 // ---------------------------------------------------------------------------
 // compiler and SDK include files.
@@ -31,9 +30,8 @@
 // ---------------------------------------------------------------------------
 // Dolwin includes, from higher to lower levels.
 
-#include "User.h"
-#include "HighLevel.h"
-#include "Hardware.h"
-#include "Emulator.h"
-
-#endif  // __DOLPHIN_H__
+#include "UserMenu/User.h"
+#include "HighLevel/HighLevel.h"
+#include "Hardware/Hardware.h"
+#include "Core/Emulator.h"
+#include "Debugger/Debugger.h"
