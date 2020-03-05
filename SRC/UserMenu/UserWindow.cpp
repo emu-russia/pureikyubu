@@ -175,6 +175,7 @@ void UpdateRecentMenu(HWND hwnd)
     }
 
     // if no recent, add empty
+#if 0
     if(GetConfigInt(USER_RECENT_NUM, USER_RECENT_NUM_DEFAULT) == 0)
     {
         AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, "None");
@@ -190,6 +191,7 @@ void UpdateRecentMenu(HWND hwnd)
             AppendMenu(hReloadMenu, MF_STRING, ID_FILE_RECENT_1+i, buf);
         }
     }
+#endif
 
     DrawMenuBar(hwnd);
 }

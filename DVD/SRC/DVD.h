@@ -27,12 +27,6 @@ typedef struct
     HINSTANCE   inst;       // plugin dll handler
     HWND*       hwndMain;   // emulator's main window
 
-    // callbacks for selected format
-    BOOL        (*select)(char *);
-    void        (*seek)(int);
-    void        (*read)(uint8_t *, int);
-    void        (*close)();
-
     // DVD plugin settings
     int         frdm;       // file read mode,
                             // 0 : fread(1, size)

@@ -442,6 +442,8 @@ void CPOpen()
     HWSetTrap(8 , GX_FIFO+4, NULL, write_fifo8);
     HWSetTrap(16, GX_FIFO+4, NULL, write_fifo16);
     HWSetTrap(32, GX_FIFO+4, NULL, write_fifo32);
+
+    GXSetTokens(&fifo.drawdone, &fifo.token, &fifo.pe.token);
 }
 
 void CPUpdate()

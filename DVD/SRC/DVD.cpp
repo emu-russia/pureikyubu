@@ -9,20 +9,15 @@ DVD dvd;
 long DVDSetCurrent(char *file)
 {
     // close previously selected file
-    if(dvd.close) dvd.close();
+    GCMClose();
 
     // try to open file
     FILE *f = fopen(file, "rb");
     if(!f) return FALSE;
     fclose(f);
 
-    dvd.select = GCMSelectFile;
-    dvd.seek   = GCMSeek;
-    dvd.read   = GCMRead;
-    dvd.close  = GCMClose;
-
     // select current DVD
-    BOOL res = dvd.select(file);
+    BOOL res = GCMSelectFile(file);
 
     // init filesystem
     if(res)
@@ -45,7 +40,7 @@ void DVDSeek(int position)
     // DVD is not selected
     if (!dvd.selected) return;
 
-    dvd.seek(position);
+    GCMSeek(position);
 }
 
 void DVDRead(void *buffer, int length)
@@ -53,7 +48,7 @@ void DVDRead(void *buffer, int length)
     // DVD is not selected
     if(!dvd.selected) return;
 
-    dvd.read((uint8_t *)buffer, length);
+    GCMRead((uint8_t *)buffer, length);
 }
 
 long DVDOpenFile(char *dvdfile)
