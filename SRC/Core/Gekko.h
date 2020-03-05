@@ -112,7 +112,7 @@ typedef union FPREG
 // time-base
 typedef union TBREG
 {
-    int16_t         sval;               // for comparsion
+    int64_t         sval;               // for comparsion
     uint64_t        uval;               // for incrementing
     struct
     {

@@ -26,7 +26,6 @@ static void con_function_key(int vkey, int ctrl)
             else con_change_focus(WCONSOLE); // Console (roll)
             break;
         case VK_F5:
-            if(wind.disamode != DISAMOD_PPC) break;
             if(con.running) con_break();
             else con_run_execute();
             break;
