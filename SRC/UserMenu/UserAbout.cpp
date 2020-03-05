@@ -27,22 +27,20 @@ static INT_PTR CALLBACK AboutProc(
             sprintf(
                 tmpbuf,
                 APPNAME " - " APPDESC "\n"
-                "Copyright 2003-2005, Dolwin team\n"
+                "Copyright 2003-2020, Dolwin team\n"
                 "Build version %s (%s, %s) "
 #ifdef      _DEBUG
                 "debug "
 #else
                 "release "
 #endif
-#ifdef      __MSVC__
-                "msvc6"
+
+#if         _M_X64
+                "X64"
+#else
+                "X86"
 #endif
-#ifdef      __VCNET__
-                "msvc7"
-#endif
-#ifdef      __MWERKS__
-                "warrior"
-#endif
+
                 ,
                 APPVER,
                 __DATE__,
