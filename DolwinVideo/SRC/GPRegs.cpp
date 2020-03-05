@@ -888,7 +888,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
     if((startIdx >= 0x0000) && (startIdx < 0x0400))
     {
         memcpy(
-            (void *)((uint32_t)xfRegs.posmtx + (uint32_t)4 * startIdx), 
+            (void *)((uint8_t *)xfRegs.posmtx + (uint32_t)4 * startIdx), 
             regData, 
             amount * sizeof(float)
         );
@@ -908,7 +908,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
     else if((startIdx >= 0x0400) && (startIdx < 0x0500))
     {
         memcpy(
-            (void *)((uint32_t)xfRegs.nrmmtx + (uint32_t)4 * startIdx), 
+            (void *)((uint8_t *)xfRegs.nrmmtx + (uint32_t)4 * startIdx), 
             regData, 
             amount * sizeof(float)
         );
@@ -917,7 +917,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
     else if((startIdx >= 0x0500) && (startIdx < 0x0600))
     {
         memcpy(
-            (void *)((uint32_t)xfRegs.postmtx + (uint32_t)4 * startIdx), 
+            (void *)((uint8_t *)xfRegs.postmtx + 4 * startIdx), 
             regData, 
             amount * sizeof(float)
         );
