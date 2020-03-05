@@ -22,14 +22,14 @@
 
 // GXOpen() should be called before emulation started, to initialize
 // plugin. GXClose() is called, when emulation is stopped, to shutdown plugin.
-long GXOpen();
+long GXOpen(uint8_t* ramPtr, HWND hwndMain);
 void GXClose();
 
 // add new data to graphics fifo. draw next primitive, if there are enough data.
 // should be called, when CPU is writing any data into 0x0C008000, when CP is
 // working in "linked" mode ("single-buffer" fifo). emulator should take care
 // about "multi-buffer" fifo mode itself.
-void GXWriteFifo(unsigned char *dataPtr, unsigned long length);
+void GXWriteFifo(uint8_t *dataPtr, uint32_t length);
 
 // set pointers to GX tokens.
 // when fifo reaches "draw done", it will set peDrawDone to 1.

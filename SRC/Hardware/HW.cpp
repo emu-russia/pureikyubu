@@ -197,7 +197,7 @@ static void HWClearTraps()
     register uint32_t addr;
 
     // possible errors, if greater 0xffff
-    ASSERT( HW_MAX_KNOWN > 0xffff, 
+    VERIFY( HW_MAX_KNOWN > 0xffff,
             "HW_MAX_KNOWN must be below or equal to 0xffff." );
 
     // for 8-bit registers

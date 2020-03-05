@@ -118,7 +118,7 @@ void SYMSetHighlevel(char *symName, void (*routine)())
     SYM *symbol = symfind(symName);
 
     // check address
-    ASSERT((uint32_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
+    VERIFY((uint32_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)

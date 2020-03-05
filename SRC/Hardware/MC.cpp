@@ -422,7 +422,7 @@ void MCTransfer () {
         }
         break;
     default:
-        ASSERT(TRUE, "Unknown memcard transfer type");
+        VERIFY(TRUE, "Unknown memcard transfer type");
     }
 }
 
@@ -431,7 +431,7 @@ void MCTransfer () {
  */
 BOOL    MCIsConnected(int cardnum) {
     if(emu.doldebug)
-        ASSERT ((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
+        VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
     return memcard[cardnum].connected;
 }
 
@@ -461,21 +461,21 @@ BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-		ASSERT ( TRUE , "Wrong card id for creating file.");
+        VERIFY( TRUE , "Wrong card id for creating file.");
         return FALSE;
     }
 
     newfile = fopen(path, "wb") ;
 
 	if (newfile == NULL) {
-		ASSERT ((newfile == NULL), "Error while trying to create memcard file.");
+        VERIFY((newfile == NULL), "Error while trying to create memcard file.");
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-			ASSERT (TRUE, "Error while trying to write memcard file.");
+            VERIFY(TRUE, "Error while trying to write memcard file.");
 
 			fclose (newfile);
             return FALSE;
@@ -493,7 +493,7 @@ BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
  */ 
 void    MCUseFile(int cardnum, char *path, BOOL connect) {
     if(emu.doldebug)
-        ASSERT ((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
+        VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));

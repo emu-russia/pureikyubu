@@ -85,9 +85,9 @@ void con_open()
 
     // get input/ouput handles
     con.input = GetStdHandle(STD_INPUT_HANDLE);
-    ASSERT(con.input == INVALID_HANDLE_VALUE, "Cannot obtain input handler");
+    VERIFY(con.input == INVALID_HANDLE_VALUE, "Cannot obtain input handler");
     con.output = GetStdHandle(STD_OUTPUT_HANDLE);
-    ASSERT(con.output == INVALID_HANDLE_VALUE, "Cannot obtain output handler");
+    VERIFY(con.output == INVALID_HANDLE_VALUE, "Cannot obtain output handler");
 
     // setup console window
     GetConsoleCursorInfo(con.output, &con.curinfo);

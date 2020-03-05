@@ -689,7 +689,7 @@ static void add_nop(uint32_t ea, uint32_t oldVal)
 {
     int n = con.nopNum ++;
     con.nopHist = (NOPHistory *)realloc(con.nopHist, sizeof(NOPHistory) * con.nopNum);
-    ASSERT(con.nopHist == NULL, "NOP history is full");
+    VERIFY(con.nopHist == NULL, "NOP history is full");
     con.nopHist[n].ea = ea;
     con.nopHist[n].oldValue = oldVal;
 }

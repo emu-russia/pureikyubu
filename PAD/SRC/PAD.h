@@ -24,7 +24,6 @@ typedef struct
     HINSTANCE   inst;       // plugin dll handler
     HWND*       hwndParent; // main window
 
-    uint32_t    rumbleFlag[4];
     int         padToConfigure;
     PADCONF     config[4];
 } PAD;

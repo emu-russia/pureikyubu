@@ -197,7 +197,7 @@ static void DolwinExceptionHandler(LPEXCEPTION_POINTERS exp)
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     // check previous instance, maybe we are running on 3.11 =:)
-    ASSERT( hPrevInstance != NULL,
+    VERIFY( hPrevInstance != NULL,
             "Sorry, " APPNAME " doesnt support OS'es below Windows95.");
 
     // prepare file system
@@ -214,9 +214,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         ldat.cmdline = TRUE;
 
-        // disable plugin warning
-        SetConfigInt(USER_PLUG_WARN, FALSE);
-
         CreateMainWindow();
 
         LoadFile(FixCommandLine(lpCmdLine));
@@ -225,7 +222,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // will exits after closing emulation
         // returning control back to frontend
     }
-    else SetConfigInt(USER_PLUG_WARN, TRUE);
 
     // init emu and user interface (emulator will be initialized
     // during main window creation).

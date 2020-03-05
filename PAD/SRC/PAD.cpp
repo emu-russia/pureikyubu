@@ -29,9 +29,6 @@ void PADClose()
     pad.config[1].plugged = 
     pad.config[2].plugged = 
     pad.config[3].plugged = 0;
-
-    KillTimer(*pad.hwndParent, 1);
-    FlashWindow(*pad.hwndParent, FALSE);
 }
 
 // ---------------------------------------------------------------------------

@@ -9,9 +9,7 @@ void    DolwinError(char *title, char *fmt, ...);
 BOOL    DolwinQuestion(char *title, char *fmt, ...);
 void    DolwinReport(char *fmt, ...);
 
-// Dolwin assertion macro. note : assertion is fired, when condition is TRUE
-// I dont know how it works : (void) ((expr) && (error, 0)), but it does =:)
-#define ASSERT(expr, msg)                                                   \
+#define VERIFY(expr, msg)                                                   \
     (void) ((expr) &&                                                       \
     (                                                                       \
        DolwinError(                                                         \

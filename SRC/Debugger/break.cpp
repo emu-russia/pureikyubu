@@ -21,7 +21,7 @@ DBPoint * con_allocate_bp()
 {
     if(con.brknum) con.brks = (DBPoint *)realloc(con.brks, (con.brknum + 1) * sizeof(DBPoint));
     else con.brks = (DBPoint *)malloc(sizeof(DBPoint));
-    ASSERT(con.brks == NULL, "No space for new breakpoint!");
+    VERIFY(con.brks == NULL, "No space for new breakpoint!");
 
     return &con.brks[con.brknum];
 }
@@ -32,7 +32,7 @@ void con_rem_bp(int num)
     if(num >= con.brknum) return;
 
     DBPoint * ptr = (DBPoint *)malloc((con.brknum - 1) * sizeof(DBPoint));
-    ASSERT(ptr == NULL, "Cannot kill breakpoint.");
+    VERIFY(ptr == NULL, "Cannot kill breakpoint.");
     for(i=0; i<num; i++)
     {
         ptr[i] = con.brks[i];

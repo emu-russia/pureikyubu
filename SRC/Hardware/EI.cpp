@@ -282,7 +282,7 @@ void MXTransfer()
                 }
                 if((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
                 {
-                    ASSERT(exi.ansiFont == NULL, "ANSI bootrom font not loaded!");
+                    VERIFY(exi.ansiFont == NULL, "ANSI bootrom font not loaded!");
                     memcpy(
                         &RAM[exi.regs[0].madr & RAMMASK], 
                         &exi.ansiFont[ofs - 0x001fcf00],
@@ -294,7 +294,7 @@ void MXTransfer()
                 }
                 if((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
                 {
-                    ASSERT(exi.sjisFont == NULL, "SJIS bootrom font not loaded!");
+                    VERIFY(exi.sjisFont == NULL, "SJIS bootrom font not loaded!");
                     memcpy(
                         &RAM[exi.regs[0].madr & RAMMASK], 
                         &exi.sjisFont[ofs - 0x001aff00],

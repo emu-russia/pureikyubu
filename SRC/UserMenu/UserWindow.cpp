@@ -38,7 +38,7 @@ static void CreateStatusBar()
         ID_STATUS_BAR
     );
 
-    ASSERT(wnd.hStatusWindow == NULL, "Couldnt create " APPNAME " status bar window!");
+    VERIFY(wnd.hStatusWindow == NULL, "Couldnt create " APPNAME " status bar window!");
 
     // depart statusbar
     SendMessage( wnd.hStatusWindow, 
@@ -990,7 +990,7 @@ HWND CreateMainWindow()
     HINSTANCE hInstance = GetModuleHandle(NULL);
     WNDCLASS wc;
 
-    ASSERT(wnd.hMainWindow != NULL, "Main window is already created!");
+    VERIFY(wnd.hMainWindow != NULL, "Main window is already created!");
 
     wc.cbClsExtra    = wc.cbWndExtra = 0;
     wc.hbrBackground = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
@@ -1002,7 +1002,7 @@ HWND CreateMainWindow()
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MAIN_MENU);
     wc.style         = 0;
 
-    ASSERT(
+    VERIFY(
         RegisterClass(&wc) == 0, 
         "Couldn't register " "GAMECUBE" " window class!"
     );
@@ -1016,7 +1016,7 @@ HWND CreateMainWindow()
         NULL, NULL,
         hInstance, NULL);
 
-    ASSERT(
+    VERIFY(
         wnd.hMainWindow == NULL,
         "Couldn't create " APPNAME " main window!"
     );

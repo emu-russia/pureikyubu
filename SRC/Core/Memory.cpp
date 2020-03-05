@@ -25,7 +25,7 @@ void MEMInit()
 
     // allocate main memory buffer
     RAM = (uint8_t *)malloc(RAMSIZE);
-    ASSERT(RAM == NULL, "No space for main memory buffer.");
+    VERIFY(RAM == NULL, "No space for main memory buffer.");
 
     #pragma message ("Hack : remove, when finish MMU tables")
     mem.mmudirect = 1;
@@ -49,7 +49,7 @@ void MEMFini()
 
 void MEMOpen()
 {
-    ASSERT(!mem.inited, "Initialize memory first!");
+    VERIFY(!mem.inited, "Initialize memory first!");
     if(mem.opened) return;
 
     // get memory mode (simple by default)
@@ -66,7 +66,7 @@ void MEMOpen()
 
 void MEMClose()
 {
-    ASSERT(!mem.inited, "Initialize memory first!");
+    VERIFY(!mem.inited, "Initialize memory first!");
     if(!mem.opened) return;
 
     // release memory maps (if present)
@@ -125,9 +125,9 @@ void MEMSelect(int mode, BOOL save)
         {
             // take care about memory map, if mode is MMU
             mem.imap = (uint8_t **)malloc(4*1024*1024);
-            ASSERT(mem.imap, "Not enough memory for MMU instruction translation buffer.");
+            VERIFY(mem.imap, "Not enough memory for MMU instruction translation buffer.");
             mem.dmap = (uint8_t **)malloc(4*1024*1024);
-            ASSERT(mem.dmap, "Not enough memory for MMU data translation buffer.");
+            VERIFY(mem.dmap, "Not enough memory for MMU data translation buffer.");
 
             // clear lookups
             memset(mem.imap, 0, 4*1024*1024);

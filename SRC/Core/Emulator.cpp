@@ -9,7 +9,7 @@ Emulator emu;
 // this function is called once, during Dolwin life-time
 void EMUInit()
 {
-    ASSERT(emu.running == TRUE, "Emulator not initialized!");
+    VERIFY(emu.running == TRUE, "Emulator not initialized!");
     if(emu.initok == TRUE) return;
 
     MEMInit();
@@ -23,7 +23,7 @@ void EMUInit()
 // this function is called last, during Dolwin life-time
 void EMUDie()
 {
-    ASSERT(emu.running == TRUE, "You should stop emulation, before exit!");
+    VERIFY(emu.running == TRUE, "You should stop emulation, before exit!");
     if(emu.initok == FALSE) return;
 
     CPUFini();
@@ -45,9 +45,9 @@ void EMUOpen()
     MEMOpen();
     MEMSelect(mem.mmu, 0);
     CPUOpen();
-    ASSERT(GXOpen() == 0, "Cannot start graphics!");
-    ASSERT(AXOpen() == 0, "Cannot start audio!");
-    ASSERT(PADOpen() == 0, "Cannot start joypad!");
+    VERIFY(GXOpen(mem.ram, wnd.hMainWindow) == 0, "Cannot start graphics!");
+    VERIFY(AXOpen() == 0, "Cannot start audio!");
+    VERIFY(PADOpen() == 0, "Cannot start joypad!");
     HWOpen();
     ReloadFile();   // PC will be set here
     HLEOpen();

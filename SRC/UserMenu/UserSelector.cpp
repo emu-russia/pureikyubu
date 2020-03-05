@@ -56,11 +56,11 @@ static void add_path(char *path)
     // extend list
     if(usel.paths) usel.paths = (char **)realloc(usel.paths, sizeof(char **) * (usel.pathnum + 1));
     else usel.paths = (char **)malloc(sizeof(char **));
-    ASSERT(usel.paths == NULL, "Not enough memory to extend PATH list.");
+    VERIFY(usel.paths == NULL, "Not enough memory to extend PATH list.");
 
     // save new path, and increase "pathnum"
     usel.paths[usel.pathnum] = (char *)malloc(len);
-    ASSERT(usel.paths[usel.pathnum] == NULL, "Not enough memory for new PATH.");
+    VERIFY(usel.paths[usel.pathnum] == NULL, "Not enough memory for new PATH.");
     strcpy(usel.paths[usel.pathnum++], path);
 }
 
@@ -132,7 +132,7 @@ bool AddSelectorPath(char *fullPath)
     {
         char temp[100000];
         char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
-        ASSERT(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
+        VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
         if(!stricmp(old, "<EMPTY>"))
             sprintf(temp, "%s", fullPath);
         else
@@ -478,7 +478,7 @@ static void add_file(char *file, int fsize, int type)
             item.comment[0] = 0;
         }
     }
-    else ASSERT(type, "Unknown selector file type.");
+    else VERIFY(type, "Unknown selector file type.");
 
     // extend filelist
     if(usel.files)
@@ -490,7 +490,7 @@ static void add_file(char *file, int fsize, int type)
     {
         usel.files = (UserFile *)malloc(sizeof(UserFile));
     }
-    ASSERT(usel.files == NULL, "Not enough memory for new selector item.");
+    VERIFY(usel.files == NULL, "Not enough memory for new selector item.");
 
     // add new item
     memcpy(&usel.files[usel.filenum], &item, sizeof(UserFile));

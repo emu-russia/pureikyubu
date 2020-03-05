@@ -219,6 +219,9 @@
     <ClCompile Include="SRC\Debugger\regs.cpp">
       <Filter>Debugger</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\Hardware\AudioNull.cpp">
+      <Filter>GCN Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRC\UserMenu\User.h">

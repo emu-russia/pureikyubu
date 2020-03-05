@@ -8,6 +8,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DVD", "DVD\DVD.vcxproj", "{
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PAD", "PAD\PAD.vcxproj", "{5EE55A55-7211-48AC-AC5F-C36FB97C85A2}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DolwinVideo", "DolwinVideo\DolwinVideo.vcxproj", "{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -40,6 +42,14 @@ Global
 		{5EE55A55-7211-48AC-AC5F-C36FB97C85A2}.Release|Win32.Build.0 = Release|Win32
 		{5EE55A55-7211-48AC-AC5F-C36FB97C85A2}.Release|x64.ActiveCfg = Release|x64
 		{5EE55A55-7211-48AC-AC5F-C36FB97C85A2}.Release|x64.Build.0 = Release|x64
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|Win32.ActiveCfg = Debug|Win32
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|Win32.Build.0 = Debug|Win32
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x64.ActiveCfg = Debug|x64
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x64.Build.0 = Debug|x64
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|Win32.ActiveCfg = Release|Win32
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|Win32.Build.0 = Release|Win32
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x64.ActiveCfg = Release|x64
+		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

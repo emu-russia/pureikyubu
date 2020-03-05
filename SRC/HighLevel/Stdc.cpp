@@ -79,10 +79,10 @@ void HLE_memcpy()
     uint32_t paSrc = MEMEffectiveToPhysical(eaSrc, 0);
 
 #ifdef  _DEBUG
-    ASSERT(paDest == -1, "memcpy dest unmapped");
-    ASSERT(paSrc == -1, "memcpy src unmapped");
-    ASSERT( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
-    ASSERT( (paSrc + cnt) > RAMSIZE, "memcpy src. Out of bounds");
+    VERIFY(paDest == -1, "memcpy dest unmapped");
+    VERIFY(paSrc == -1, "memcpy src unmapped");
+    VERIFY( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
+    VERIFY( (paSrc + cnt) > RAMSIZE, "memcpy src. Out of bounds");
 #endif
 
 //  DBReport( GREEN "memcpy(0x%08X, 0x%08X, %i(%s))\n", 
@@ -106,8 +106,8 @@ void HLE_memset()
     uint32_t paDest = MEMEffectiveToPhysical(eaDest, 0);
 
 #ifdef  _DEBUG
-    ASSERT(paDest == -1, "memcpy dest unmapped");
-    ASSERT( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
+    VERIFY(paDest == -1, "memcpy dest unmapped");
+    VERIFY( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
 #endif
 
 //  DBReport( GREEN "memcpy(0x%08X, %i(%c), %i(%s))\n", 

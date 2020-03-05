@@ -58,17 +58,8 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_ANSI       "ANSI"              // bootrom ANSI font
 #define USER_ANSI_DEFAULT       "Data\\Arial 16.szp"
 
-#define USER_AX         "AX"                // current AX plugin
-#define USER_AX_DEFAULT         "Plugins\\AXDefault.dll"
-
-#define USER_DVD        "DVD"               // current DVD plugin
-#define USER_DVD_DEFAULT        "Plugins\\DVDDefault.dll"
-
 #define USER_FILTER     "FILTER"            // file filter
 #define USER_FILTER_DEFAULT     0xffffffff
-
-#define USER_GX         "GX"                // current GX plugin
-#define USER_GX_DEFAULT         "Plugins\\GXDefault.dll"
 
 #define USER_LASTDIR_ALL "LASTDIR_ALL"      // last used directory (all files)
 #define USER_LASTDIR_ALL_DEFAULT ".\\"
@@ -87,9 +78,6 @@ char *  GetIniVar(char *gameId, char *var);
 
 #define USER_ONTOP      "ONTOP"             // window is always on top, if 1
 #define USER_ONTOP_DEFAULT      FALSE
-
-#define USER_PAD        "PAD"               // current PAD plugin
-#define USER_PAD_DEFAULT        "Plugins\\PADDefault.dll"
 
 #define USER_PATH       "PATH"              // path string for selector
 #define USER_PATH_DEFAULT       ".\\;c:\\"
@@ -140,9 +128,6 @@ char *  GetIniVar(char *gameId, char *var);
 
 #define USER_PI_RSWHACK "RSWHACK"           // reset button hack
 #define USER_PI_RSWHACK_DEFAULT 1
-
-#define USER_PLUG_WARN  "PLUG_WARN"         // show plugin warning ('no xxx plugin')
-#define USER_PLUG_WARN_DEFAULT  1
 
 #define USER_RTC        "RTC"               // 1: real-time clock enabled
 #define USER_RTC_DEFAULT        0

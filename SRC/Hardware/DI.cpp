@@ -78,8 +78,8 @@ static void DICommand()
             break;
 
         case 0xA8:          // read sector (disk id) (DMA)
-            ASSERT(!(DICR & DI_CR_DMA), "Non-DMA disk transfer");
-            ASSERT(DILEN & 0x1f, "Not aligned disk DMA transfer. Should be on 32-byte boundary!");
+            VERIFY(!(DICR & DI_CR_DMA), "Non-DMA disk transfer");
+            VERIFY(DILEN & 0x1f, "Not aligned disk DMA transfer. Should be on 32-byte boundary!");
 
             BeginProfileDVD();
             DVDSeek(seek);
@@ -344,9 +344,9 @@ void DIOpen()
 
     AXPlayStream(0, 0);
 
-    ASSERT(di.workArea, "Dirty DVD streaming workarea");
+    VERIFY(di.workArea, "Dirty DVD streaming workarea");
     di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
-    ASSERT(di.workArea == NULL, "No space for DVD streaming workarea");
+    VERIFY(di.workArea == NULL, "No space for DVD streaming workarea");
     memset(di.workArea, 0, DVD_STREAM_BLK);
 
     // set 32-bit register traps
