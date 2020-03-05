@@ -1,11 +1,6 @@
 // Paired Single Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define IS_NAN(n)       (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0)
-#define IS_SNAN(n)      (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0 && ((n) & 0x0008000000000000) == 0)
-#define SET_CRF(n, c)   (CR = (CR & (~(0xf0000000 >> (4 * n)))) | (c << (4 * (7 - n))))
+#include "interpreter.h"
 
 OP(PS_ADD)
 {

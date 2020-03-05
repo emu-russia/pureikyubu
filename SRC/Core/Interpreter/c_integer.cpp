@@ -1,22 +1,6 @@
 // Integer Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define COMPUTE_CR0(r)                                                                \
-{                                                                                     \
-    (CR = (CR & 0xfffffff)                   |                                        \
-    ((XER & (1 << 31)) ? (0x10000000) : (0)) |                                        \
-    (((int32_t)(r) < 0) ? (0x80000000) : (((int32_t)(r) > 0) ? (0x40000000) : (0x20000000))));\
-}
-
-#define SET_XER_SO      (XER |=  (1 << 31))
-#define SET_XER_OV      (XER |=  (1 << 30))
-#define SET_XER_CA      (XER |=  (1 << 29))
-#define RESET_XER_SO    (XER &= ~(1 << 31))
-#define RESET_XER_OV    (XER &= ~(1 << 30))
-#define RESET_XER_CA    (XER &= ~(1 << 29))
-#define IS_XER_CA       (XER & (1 << 29))
+#include "interpreter.h"
 
 // rd = (ra | 0) + SIMM
 OP(ADDI)
@@ -52,13 +36,8 @@ OP(ADDO)
     uint32_t a = RRA, b = RRB, res;
     BOOL ovf = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jno     no_ovf
-    __asm   mov     ovf, 1
-no_ovf:
-    __asm   mov     res, eax
+    res = AddOverflow(a, b);
+    ovf = OverflowBit != 0;
 
     RRD = res;
     if(ovf)
@@ -75,13 +54,8 @@ OP(ADDOD)
     uint32_t a = RRA, b = RRB, res;
     BOOL ovf = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jno     no_ovf
-    __asm   mov     ovf, 1
-no_ovf:
-    __asm   mov     res, eax
+    res = AddOverflow(a, b);
+    ovf = OverflowBit != 0;
 
     RRD = res;
     if(ovf)
@@ -123,13 +97,8 @@ OP(ADDIC)
     uint32_t a = RRA, b = SIMM, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -141,13 +110,8 @@ OP(ADDICD)
     uint32_t a = RRA, b = SIMM, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -160,13 +124,8 @@ OP(SUBFIC)
     uint32_t a = ~RRA, b = SIMM + 1, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -178,13 +137,8 @@ OP(ADDC)
     uint32_t a = RRA, b = RRB, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -196,13 +150,8 @@ OP(ADDCD)
     uint32_t a = RRA, b = RRB, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -215,16 +164,9 @@ OP(ADDCO)
     uint32_t a = RRA, b = RRB, res;
     BOOL carry = FALSE, ovf = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   jno     no_ovf
-    __asm   mov     ovf, 1
-no_ovf:
-    __asm   mov     res, eax
+    res = AddCarryOverflow(a, b);
+    carry = CarryBit != 0;
+    ovf = OverflowBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -242,16 +184,9 @@ OP(ADDCOD)
     uint32_t a = RRA, b = RRB, res;
     BOOL carry = FALSE, ovf = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   jno     no_ovf
-    __asm   mov     ovf, 1
-no_ovf:
-    __asm   mov     res, eax
+    res = AddCarryOverflow(a, b);
+    carry = CarryBit != 0;
+    ovf = OverflowBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -270,13 +205,8 @@ OP(SUBFC)
     uint32_t a = ~RRA, b = RRB + 1, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     if(carry) SET_XER_CA; else RESET_XER_CA;
     RRD = res;
@@ -288,13 +218,8 @@ OP(SUBFCD)
     uint32_t a = ~RRA, b = RRB + 1, res;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, b);
+    carry = CarryBit != 0;
 
     if(carry) SET_XER_CA; else RESET_XER_CA;
     RRD = res;
@@ -309,13 +234,8 @@ static void ADDXER(uint32_t a, uint32_t op)
     uint32_t c = (IS_XER_CA) ? 1 : 0;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, c
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, c);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -327,13 +247,8 @@ static void ADDXERD(uint32_t a, uint32_t op)
     uint32_t c = (IS_XER_CA) ? 1 : 0;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, c
-    __asm   add     eax, ecx
-    __asm   jnc     no_carry
-    __asm   mov     carry, 1
-no_carry:
-    __asm   mov     res, eax
+    res = AddCarry(a, c);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -489,7 +404,7 @@ OP(MULLI)
 OP(MULLW)
 {
     int32_t a = RRA, b = RRB;
-    int64_t res = a * b;
+    int64_t res = (int64_t)a * (int64_t)b;
     RRD = (int32_t)(res & 0x00000000ffffffff);
 }
 
@@ -499,7 +414,7 @@ OP(MULLW)
 OP(MULLWD)
 {
     int32_t a = RRA, b = RRB;
-    int64_t res = a * b;
+    int64_t res = (int64_t)a * (int64_t)b;
     RRD = (int32_t)(res & 0x00000000ffffffff);
     COMPUTE_CR0(res);
 }

@@ -1,7 +1,6 @@
 // Floating-Point Load and Store Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
+#include "interpreter.h"
 
 // ---------------------------------------------------------------------------
 // loads

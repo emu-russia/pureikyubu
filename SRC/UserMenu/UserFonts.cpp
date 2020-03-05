@@ -123,7 +123,7 @@ static void EnumFonts(HWND hwndDlg)
     }
 }
 
-static BOOL CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     int i;
     switch(uMsg)

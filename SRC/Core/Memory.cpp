@@ -885,7 +885,7 @@ __declspec(naked) uint16_t __fastcall MEMSwapHalf(uint16_t data)
 }
 
 // swap longs (no need in assembly, used by tools)
-void __fastcall MEMSwapArea(uint32_t *addr, int count)
+void MEMSwapArea(uint32_t *addr, int count)
 {
     uint32_t *until = addr + count / sizeof(uint32_t);
 
@@ -897,7 +897,7 @@ void __fastcall MEMSwapArea(uint32_t *addr, int count)
 }
 
 // swap shorts (no need in assembly, used by tools)
-void __fastcall MEMSwapAreaHalf(uint16_t *addr, int count)
+void MEMSwapAreaHalf(uint16_t *addr, int count)
 {
     uint16_t *until = addr + count / sizeof(uint16_t);
 

@@ -288,7 +288,6 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(PE_TOKEN | PREFIX, "PE_TOKEN", 1);
 
     // 0C002000        Video Interface (VI) (*moan* >_<)
-#ifndef VI_OLD
     SYMAddNew(VI_VERT_TIMING | PREFIX, "VI_VERT_TIMING", 1);
     SYMAddNew(VI_DISP_CR | PREFIX, "VI_DISP_CR", 1);
     SYMAddNew(VI_HORZ_TIMING0 | PREFIX, "VI_HORZ_TIMING0", 1);
@@ -317,7 +316,6 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(VI_DTV | PREFIX, "VI_DTV", 1);
     SYMAddNew(VI_BRDR_HBE | PREFIX, "VI_BRDR_HBE", 1);
     SYMAddNew(VI_BRDR_HBS | PREFIX, "VI_BRDR_HBS", 1);
-#endif  // VI_OLD
 
     // 0C003000        Processor Interface (PI)
     SYMAddNew(PI_INTSR | PREFIX, "PI_INTSR", 1);
@@ -331,7 +329,6 @@ void SYMAddEmulatorSymbols()
     // 0C004000        Memory Interface (MI) (fuck it)
 
     // 0C005000        DSP and DMA Audio Interface (AID), ARAM
-#ifndef AI_OLD
     SYMAddNew(DSP_OUTMBOXH | PREFIX, "DSP_OUTMBOXH", 1);
     SYMAddNew(DSP_OUTMBOXL | PREFIX, "DSP_OUTMBOXL", 1);
     SYMAddNew(DSP_INMBOXH | PREFIX, "DSP_INMBOXH", 1);
@@ -350,7 +347,6 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(AR_DMA_ARADDR_L | PREFIX, "AR_DMA_ARADDR_L", 1);
     SYMAddNew(AR_DMA_CNT_H | PREFIX, "AR_DMA_CNT_H", 1);
     SYMAddNew(AR_DMA_CNT_L | PREFIX, "AR_DMA_CNT_L", 1);
-#endif  // AI_OLD
 
     // 0C006000        DVD Interface (DI) (no 16-bit regs)
     SYMAddNew(DI_SR | PREFIX, "DI_SR", 1);
@@ -365,7 +361,6 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(DI_CFG | PREFIX, "DI_CFG", 1);
 
     // 0C006400        Serial Interface (SI)
-#ifndef SI_OLD
     SYMAddNew(SI_CHAN0_OUTBUF | PREFIX, "SI_CHAN0_OUTBUF", 1);
     SYMAddNew(SI_CHAN0_INBUFH | PREFIX, "SI_CHAN0_INBUFH", 1);
     SYMAddNew(SI_CHAN0_INBUFL | PREFIX, "SI_CHAN0_INBUFL", 1);
@@ -383,7 +378,6 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(SI_SR | PREFIX, "SI_SR", 1);
     SYMAddNew(SI_EXILK | PREFIX, "SI_EXILK", 1);
     SYMAddNew(SI_COMBUF | PREFIX, "SI_COMBUF", 1);
-#endif  // SI_OLD
 
     // 0C006800        External Interface (EXI)
     SYMAddNew(EXI0_CSR | PREFIX, "EXI0_CSR", 1);
@@ -403,12 +397,10 @@ void SYMAddEmulatorSymbols()
     SYMAddNew(EXI2_DATA | PREFIX, "EXI2_DATA", 1);
 
     // 0C006C00        Audio Streaming Interface (AIS)
-#ifndef AI_OLD
     SYMAddNew(AIS_CR | PREFIX, "AIS_CR", 1);
     SYMAddNew(AIS_VR | PREFIX, "AIS_VR", 1);
     SYMAddNew(AIS_SCNT | PREFIX, "AIS_SCNT", 1);
     SYMAddNew(AIS_IT | PREFIX, "AIS_IT", 1);
-#endif  // AI_OLD
 
     // 0C008000        PI FIFO (GX)
     SYMAddNew(GX_FIFO | PREFIX, "GX_FIFO", 1);

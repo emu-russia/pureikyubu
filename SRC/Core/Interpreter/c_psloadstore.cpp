@@ -1,8 +1,7 @@
 // Paired Single Load and Store Instructions
 // used for fast type casting and matrix transfers.
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
+#include "interpreter.h"
 
 /*/ ---------------------------------------------------------------------------
 

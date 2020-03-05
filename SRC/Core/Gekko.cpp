@@ -25,26 +25,16 @@ void (*CPUStart)();
 
 static BOOL IsMMXPresent()
 {
-    DWORD flag;
-
-    __asm   mov     eax, 1
-    __asm   cpuid
-    __asm   and     edx, 0x800000
-    __asm   mov     flag, edx
-
-    return (flag != 0);
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x800000) != 0;
 }
 
 static BOOL IsSSEPresent()
 {
-    DWORD flag;
-
-    __asm   mov     eax, 1
-    __asm   cpuid
-    __asm   and     edx, 0x2000000
-    __asm   mov     flag, edx
-
-    return (flag != 0);
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x2000000) != 0;
 }
 
 // init tables, allocate memory

@@ -26,14 +26,9 @@ static  DWORD   checkTime;
 // stupid msdev hungs on asm { ... } blocks
 // so use single-line __asm expressions
 
-static __declspec(naked) void __fastcall MyReadTimeStampCounter(int64_t *ptr)
+static void __fastcall MyReadTimeStampCounter(int64_t *ptr)
 {
-    // rdtsc
-    __asm  _emit    0x0f
-    __asm  _emit    0x31
-    __asm   mov     [ecx], eax
-    __asm   mov     [ecx + 4], edx
-    __asm   ret
+    *ptr = __rdtsc();
 }
 
 // get average CPU speed (in MHz)

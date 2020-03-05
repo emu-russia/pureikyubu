@@ -121,7 +121,7 @@ static void EnumGXPlugins(HWND hwndDlg)
     }
 }
 
-static BOOL CALLBACK ConfigureGraphicsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK ConfigureGraphicsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     RECT rc;
     int i, selected;
@@ -355,7 +355,7 @@ static void EnumAXPlugins(HWND hwndDlg)
     }
 }
 
-static BOOL CALLBACK ConfigureAudioProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK ConfigureAudioProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     RECT rc;
     int i, selected;
@@ -599,7 +599,7 @@ static void FillPADSelectionCombo(HWND hwndDlg)
     SendMessage(GetDlgItem(hwndDlg, IDC_PLUGIN_PADNUM), CB_SETCURSEL, 0, 0);
 }
 
-static BOOL CALLBACK ConfigureInputProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK ConfigureInputProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     RECT rc;
     int i, selected;
@@ -848,7 +848,7 @@ static void EnumDVDPlugins(HWND hwndDlg)
     }
 }
 
-static BOOL CALLBACK ConfigureDVDProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK ConfigureDVDProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     RECT rc;
     int i, selected;

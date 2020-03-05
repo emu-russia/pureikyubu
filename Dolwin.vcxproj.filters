@@ -453,6 +453,9 @@
     <ClInclude Include="SRC\Debugger\regs.h">
       <Filter>Debugger</Filter>
     </ClInclude>
+    <ClInclude Include="SRC\Core\Interpreter\interpreter.h">
+      <Filter>Core\Interpreter</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="RES\Dolwin.ico">
@@ -492,5 +495,13 @@
     <ResourceCompile Include="RES\Dolwin.rc">
       <Filter>User Menu\Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="SRC\Core\AsmX64.asm">
+      <Filter>Core</Filter>
+    </MASM>
+    <MASM Include="SRC\Core\AsmX86.asm">
+      <Filter>Core</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

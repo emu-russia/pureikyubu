@@ -1,20 +1,6 @@
 // Integer Compare Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define SET_CR_LT(n)    (CR |=  (1 << (3 + 4 * (7 - n))))
-#define SET_CR_GT(n)    (CR |=  (1 << (2 + 4 * (7 - n))))
-#define SET_CR_EQ(n)    (CR |=  (1 << (1 + 4 * (7 - n))))
-#define SET_CR_SO(n)    (CR |=  (1 << (    4 * (7 - n))))
-#define RESET_CR_LT(n)  (CR &= ~(1 << (3 + 4 * (7 - n))))
-#define RESET_CR_GT(n)  (CR &= ~(1 << (2 + 4 * (7 - n))))
-#define RESET_CR_EQ(n)  (CR &= ~(1 << (1 + 4 * (7 - n))))
-#define RESET_CR_SO(n)  (CR &= ~(1 << (    4 * (7 - n))))
-
-#define IS_XER_SO       (XER & (1 << 31))
-#define IS_XER_OV       (XER & (1 << 30))
-#define IS_XER_CA       (XER & (1 << 29))
+#include "interpreter.h"
 
 // a = ra (signed)
 // b = SIMM

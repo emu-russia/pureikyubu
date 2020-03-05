@@ -1,15 +1,6 @@
 // Floating-Point Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define COMPUTE_CR1()                                                                 \
-{                                                                                     \
-    CR = (CR & 0xf0ffffff) | ((FPSCR & 0xf0000000) >> 4);                             \
-}
-
-#define IS_NAN(n)       (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0)
-#define IS_SNAN(n)      (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0 && ((n) & 0x0008000000000000) == 0)
+#include "interpreter.h"
 
 // ---------------------------------------------------------------------------
 // arithmetic

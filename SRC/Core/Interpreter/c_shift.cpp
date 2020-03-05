@@ -1,17 +1,6 @@
 // Integer Shift Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define COMPUTE_CR0(r)                                                                \
-{                                                                                     \
-    (CR = (CR & 0xfffffff)                   |                                        \
-    ((XER & (1 << 31)) ? (0x10000000) : (0)) |                                        \
-    (((int32_t)(r) < 0) ? (0x80000000) : (((int32_t)(r) > 0) ? (0x40000000) : (0x20000000))));\
-}
-
-#define SET_XER_CA      (XER |=  (1 << 29))
-#define RESET_XER_CA    (XER &= ~(1 << 29))
+#include "interpreter.h"
 
 // n = rb[27-31]
 // r = ROTL(rs, n)

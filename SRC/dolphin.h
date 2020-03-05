@@ -17,6 +17,7 @@
 #include <time.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <intrin.h>
 #include "resource.h"
 
 // ---------------------------------------------------------------------------

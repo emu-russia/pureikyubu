@@ -1,18 +1,6 @@
 // Integer Load and Store Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
-
-#define SET_CR0_LT      (CR |=  (1 << 31))
-#define SET_CR0_GT      (CR |=  (1 << 30))
-#define SET_CR0_EQ      (CR |=  (1 << 29))
-#define SET_CR0_SO      (CR |=  (1 << 28))
-#define RESET_CR0_LT    (CR &= ~(1 << 31))
-#define RESET_CR0_GT    (CR &= ~(1 << 30))
-#define RESET_CR0_EQ    (CR &= ~(1 << 29))
-#define RESET_CR0_SO    (CR &= ~(1 << 28))
-
-#define IS_XER_SO       (XER & (1 << 31))
+#include "interpreter.h"
 
 // ---------------------------------------------------------------------------
 // loads

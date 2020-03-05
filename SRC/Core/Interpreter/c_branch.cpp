@@ -1,7 +1,6 @@
 // Branch Instructions
 #include "dolphin.h"
-
-#define OP(name) void __fastcall c_##name##(uint32_t op)
+#include "interpreter.h"
 
 // PC = PC + EXTS(LI || 0b00)
 OP(B)

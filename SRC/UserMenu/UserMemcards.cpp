@@ -108,7 +108,7 @@ static char *ChooseMemcardFileProc(HWND hwnd, char * lastDir)
 /*
  * Callback procedure for the choose size (of a new memcard) dialog
  */
-static BOOL CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     int index;
     char buf[256];
@@ -153,7 +153,7 @@ static BOOL CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wPara
 /*
  * Callback procedure for the memcard settings dialog
  */
-static BOOL CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     char buf[256], buf2[256], *filename;
     long newsize;

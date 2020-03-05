@@ -5,7 +5,7 @@ static BOOL opened = FALSE;
 static HWND dlgAbout;
 
 // dialog procedure
-static BOOL CALLBACK AboutProc(
+static INT_PTR CALLBACK AboutProc(
     HWND    hwndDlg,    // handle to dialog box
     UINT    uMsg,       // message
     WPARAM  wParam,     // first message parameter
