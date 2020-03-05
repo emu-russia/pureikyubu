@@ -56,3 +56,5 @@ extern "C" uint32_t OverflowBit;
 extern "C" uint32_t __fastcall AddCarry(uint32_t a, uint32_t b);
 extern "C" uint32_t __fastcall AddOverflow(uint32_t a, uint32_t b);
 extern "C" uint32_t __fastcall AddCarryOverflow(uint32_t a, uint32_t b);
+extern "C" uint32_t __fastcall AddXer2(uint32_t a, uint32_t b);
+extern "C" uint32_t __fastcall Rotl32(int sa, uint32_t data);

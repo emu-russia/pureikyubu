@@ -10,17 +10,12 @@
     Locked: Cannot be changed while emu running. 
 /*/
 
-// HTML Help API
-#include "../HtmlHelp/HtmlHelp.h"
-#pragma comment(lib, "HtmlHelp/HtmlHelp.lib")
-
 // all user variables (except memory cards vars) are placed in UserConfig.h
 
 // parent window and instance
 static HWND         hParentWnd, hChildDlg[4];
 static HINSTANCE    hParentInst;
 static BOOL         settingsLoaded[4];
-static HH_POPUP     hp;
 static BOOL         needSelUpdate;
 
 static char * tabs[] = 
@@ -365,9 +360,6 @@ static void TextPopup(int page, int id)
     {
         if(tooltip[n].id == id && tooltip[n].page == page)
         {
-            hp.pszText = tooltip[n].text;
-            GetCursorPos(&hp.pt);
-            HtmlHelp(hChildDlg[page], NULL, HH_DISPLAY_TEXT_POPUP, (DWORD)&hp);
             return;
         }
         n++;
@@ -583,17 +575,6 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 
     PROPSHEETPAGE psp[4];
     PROPSHEETHEADER psh;
-
-    // HTML Help popup
-    hp.cbStruct = sizeof(HH_POPUP);
-    hp.hinst = hParentInst;
-    hp.idString = 0;
-    hp.clrBackground = hp.clrForeground = -1;
-    hp.rcMargins.bottom = 
-    hp.rcMargins.left   = 
-    hp.rcMargins.right  = 
-    hp.rcMargins.top    = -1;
-    hp.pszFont = NULL;
 
     // Emulator page
     psp[0].dwSize = sizeof(PROPSHEETPAGE);

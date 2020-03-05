@@ -261,18 +261,9 @@ static void ADDXER2(uint32_t a, uint32_t b, uint32_t op)
     uint32_t c = (IS_XER_CA) ? 1 : 0;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   xor     edx, edx    // upper 32 bits of 64-bit operand
-
-    __asm   add     eax, ecx
-    __asm   adc     edx, edx
-
-    __asm   add     eax, c
-    __asm   adc     edx, 0
-
-    __asm   mov     res, eax
-    __asm   mov     carry, edx  // now save carry
+    CarryBit = c;
+    res = AddXer2(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;
@@ -284,18 +275,9 @@ static void ADDXER2D(uint32_t a, uint32_t b, uint32_t op)
     uint32_t c = (IS_XER_CA) ? 1 : 0;
     BOOL carry = FALSE;
 
-    __asm   mov     eax, a
-    __asm   mov     ecx, b
-    __asm   xor     edx, edx    // upper 32 bits of 64-bit operand
-
-    __asm   add     eax, ecx
-    __asm   adc     edx, edx
-
-    __asm   add     eax, c
-    __asm   adc     edx, 0
-
-    __asm   mov     res, eax
-    __asm   mov     carry, edx  // now save carry
+    CarryBit = c;
+    res = AddXer2(a, b);
+    carry = CarryBit != 0;
 
     RRD = res;
     if(carry) SET_XER_CA; else RESET_XER_CA;

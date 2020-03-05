@@ -867,23 +867,6 @@ void MEMRemapMemory(BOOL IR, BOOL DR)
 // ---------------------------------------------------------------------------
 // swap endianness
 
-// assembly, because this functions is used in speed applications
-__declspec(naked) uint32_t __fastcall MEMSwap(uint32_t data)
-{
-    __asm   bswap   ecx
-    __asm   mov     eax, ecx
-    __asm   ret
-}
-
-// assembly, because this functions is used in speed applications
-__declspec(naked) uint16_t __fastcall MEMSwapHalf(uint16_t data)
-{ 
-    __asm   xchg    ch, cl
-    __asm   mov     eax, ecx
-    __asm   and     eax, 0xffff
-    __asm   ret
-}
-
 // swap longs (no need in assembly, used by tools)
 void MEMSwapArea(uint32_t *addr, int count)
 {

@@ -159,7 +159,9 @@ void HLEOpen()
     PADOpenHLE();
 
     // Geometry library
+#if !_M_X64
     MTXOpen();
+#endif
 }
 
 void HLEClose()

@@ -285,10 +285,8 @@ OP(PS_CMPU0)
         uint64_t da, db;
         uint32_t c;
 
-        __asm   fld     qword ptr a
-        __asm   fstp    qword ptr da
-        __asm   fld     qword ptr b
-        __asm   fstp    qword ptr db
+        da = *(uint64_t*)&a;
+        db = *(uint64_t*)&b;
 
         if(IS_NAN(da) || IS_NAN(db)) c = 1;
         else if(a < b) c = 8;
@@ -309,10 +307,8 @@ OP(PS_CMPU1)
         uint64_t da, db;
         uint32_t c;
 
-        __asm   fld     qword ptr a
-        __asm   fstp    qword ptr da
-        __asm   fld     qword ptr b
-        __asm   fstp    qword ptr db
+        da = *(uint64_t*)&a;
+        db = *(uint64_t*)&b;
 
         if(IS_NAN(da) || IS_NAN(db)) c = 1;
         else if(a < b) c = 8;
@@ -333,10 +329,8 @@ OP(PS_CMPO0)
         uint64_t da, db;
         uint32_t c;
 
-        __asm   fld     qword ptr a
-        __asm   fstp    qword ptr da
-        __asm   fld     qword ptr b
-        __asm   fstp    qword ptr db
+        da = *(uint64_t*)&a;
+        db = *(uint64_t*)&b;
 
         if(IS_NAN(da) || IS_NAN(db)) c = 1;
         else if(a < b) c = 8;
@@ -357,10 +351,8 @@ OP(PS_CMPO1)
         uint64_t da, db;
         uint32_t c;
 
-        __asm   fld     qword ptr a
-        __asm   fstp    qword ptr da
-        __asm   fld     qword ptr b
-        __asm   fstp    qword ptr db
+        da = *(uint64_t*)&a;
+        db = *(uint64_t*)&b;
 
         if(IS_NAN(da) || IS_NAN(db)) c = 1;
         else if(a < b) c = 8;

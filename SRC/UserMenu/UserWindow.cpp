@@ -5,11 +5,6 @@
 // last note : DO NOT USE WINDOWS API CODE IN OTHER SUB-SYSTEMS!!
 #include "dolphin.h"
 
-// HTML Help
-#include "../HtmlHelp/HtmlHelp.h"
-#pragma comment(lib, "HtmlHelp/HtmlHelp.lib")
-
-
 // all important data is placed here
 UserWindow wnd;
 

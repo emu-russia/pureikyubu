@@ -82,8 +82,8 @@ void    MEMFini();                                              // deinit
 void    MEMOpen();                                              // open
 void    MEMClose();                                             // close
 void    MEMSelect(int mode, BOOL save=1);                       // select translation mode
-extern  uint32_t __fastcall MEMSwap(uint32_t data);                       // swap long
-extern  uint16_t __fastcall MEMSwapHalf(uint16_t data);                   // swap short
+extern "C" uint32_t __fastcall MEMSwap(uint32_t data);          // swap long
+extern "C" uint16_t __fastcall MEMSwapHalf(uint16_t data);      // swap short
 void    MEMSwapArea(uint32_t *addr, int count);           // swap longs
 void    MEMSwapAreaHalf(uint16_t *addr, int count);       // swap shorts
 
