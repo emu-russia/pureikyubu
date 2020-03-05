@@ -67,7 +67,6 @@ static void con_function_key(int vkey, int ctrl)
             }
             break;
         case VK_F9:     // Toggle Breakpoint
-            if(wind.disamode != DISAMOD_PPC) break;
             if(con_is_code_bp(con.disa_cursor))
             {
                 con_rem_code_bp(con.disa_cursor);
@@ -495,78 +494,55 @@ static void con_disa_key(char ascii, int vkey, int ctrl)
     switch(vkey)
     {
         case VK_HOME:
-            if(wind.disamode == DISAMOD_PPC)
-            {
-                con_set_disa_cur(con.disa_cursor);
-            }
+            con_set_disa_cur(con.disa_cursor);
             break;
         case VK_END:
             break;
         case VK_UP:
-            if(wind.disamode == DISAMOD_PPC)
+            if(con.disa_cursor < con.text)
             {
-                if(con.disa_cursor < con.text)
-                {
-                    con.disa_cursor = con.text;
-                    break;
-                }
-                if(con.disa_cursor >= (con.text + 4 * wind.disa_h - 4))
-                {
-                    con.disa_cursor = con.text + 4 * wind.disa_h - 8;
-                    break;
-                }
-                con.disa_cursor -= 4;
-                if(con.disa_cursor < con.text) con.text -= 4;
+                con.disa_cursor = con.text;
+                break;
             }
+            if(con.disa_cursor >= (con.text + 4 * wind.disa_h - 4))
+            {
+                con.disa_cursor = con.text + 4 * wind.disa_h - 8;
+                break;
+            }
+            con.disa_cursor -= 4;
+            if(con.disa_cursor < con.text) con.text -= 4;
             break;
         case VK_DOWN:
-            if(wind.disamode == DISAMOD_PPC)
+            if(con.disa_cursor < con.text)
             {
-                if(con.disa_cursor < con.text)
-                {
-                    con.disa_cursor = con.text;
-                    break;
-                }
-                if(con.disa_cursor >= (con.text + 4 * (wind.disa_h - wind.disa_sub_h) - 4))
-                {
-                    con.disa_cursor = con.text + 4 * (wind.disa_h - wind.disa_sub_h) - 8;
-                    break;
-                }
-                con.disa_cursor += 4;
-                if(con.disa_cursor >= (con.text + ((wind.disa_h - wind.disa_sub_h) - 1) * 4)) con.text += 4;
+                con.disa_cursor = con.text;
+                break;
             }
+            if(con.disa_cursor >= (con.text + 4 * (wind.disa_h - wind.disa_sub_h) - 4))
+            {
+                con.disa_cursor = con.text + 4 * (wind.disa_h - wind.disa_sub_h) - 8;
+                break;
+            }
+            con.disa_cursor += 4;
+            if(con.disa_cursor >= (con.text + ((wind.disa_h - wind.disa_sub_h) - 1) * 4)) con.text += 4;
             break;
         case VK_PRIOR:
-            if(wind.disamode == DISAMOD_PPC)
-            {
-                con.text -= 4 * wind.disa_h - 4;
-                if(!disa_cur_visible()) con.disa_cursor = con.text;
-            }
+            con.text -= 4 * wind.disa_h - 4;
+            if(!disa_cur_visible()) con.disa_cursor = con.text;
             break;
         case VK_NEXT:
-            if(wind.disamode == DISAMOD_PPC)
-            {
-                con.text += 4 * (wind.disa_h - wind.disa_sub_h) - 4;
-                if(!disa_cur_visible()) con.disa_cursor = con.text + ((wind.disa_h - wind.disa_sub_h) - 2) * 4;
-            }
+            con.text += 4 * (wind.disa_h - wind.disa_sub_h) - 4;
+            if(!disa_cur_visible()) con.disa_cursor = con.text + ((wind.disa_h - wind.disa_sub_h) - 2) * 4;
             break;
         case VK_RETURN:
-            if(wind.disamode == DISAMOD_PPC)
-            {
-                disa_navigate();    // browse functions
-            }
+            disa_navigate();    // browse functions
             break;
         case VK_ESCAPE:
-            switch(wind.disamode)
-            {
-                case DISAMOD_PPC:       // browse back
-                    disa_return();
-                    break;
-            }
+            disa_return();
             break;
     }
 
-    if(wind.disamode == DISAMOD_PPC) con_ldst_info();
+    con_ldst_info();
     con.update |= CON_UPDATE_DISA;
 }
 

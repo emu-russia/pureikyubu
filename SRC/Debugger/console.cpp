@@ -74,7 +74,6 @@ void con_open()
     wind.disa_sub_h = 0;
     con_recalc_wnds();
 
-    wind.disamode = DISAMOD_PPC;
     con.data = 0x80000000;
     con.text = PC;
     con_set_disa_cur(con.text);
@@ -138,7 +137,7 @@ void con_open()
         ", CW"
 #endif        
         "\n"
-        WHITE "Copyright 2002-2011, " APPNAME " Team\n\n"
+        WHITE "Copyright 2002-2020, " APPNAME " Team\n\n"
     );
 }
 

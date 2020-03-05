@@ -206,7 +206,7 @@ static void __SyncTime()
     systemTime += newTime - TBR;
     MEMWriteDouble(0x800030d8, (uint64_t *)&systemTime);
     TBR = newTime;
-    DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.u, cpu.tb.l);
+    DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
 
 void BootROM(BOOL dvd)

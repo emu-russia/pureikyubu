@@ -46,16 +46,12 @@ typedef enum FOCUSWND { WREGS = 0, WDATA, WDISA, WCONSOLE } FOCUSWND;
 // current registers window mode
 typedef enum REGWNDMODE { REGMOD_GPR = 0, REGMOD_FPR, REGMOD_PSR, REGMOD_MMU, REGMOD_MAX } REGWNDMODE;
 
-// current disassembly window mode
-typedef enum DISAWNDMODE { DISAMOD_PPC = 0, DISAMOD_MAX } DISAWNDMODE;
-
 // console windows
 typedef struct WINDControl
 {
     BOOL                full;                   // "fullscreen" mode
     FOCUSWND            focus;                  // wregs, wdata, wdisa, wconsole
     REGWNDMODE          regmode;                // register window mode
-    DISAWNDMODE         disamode;               // disassembly window mode
     int                 regs_y;                 // Y registers window
     int                 regs_h;                 // Height registsrs window
     int                 data_y;                 // Y Data window

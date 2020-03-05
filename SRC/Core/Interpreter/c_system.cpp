@@ -142,12 +142,12 @@ OP(MTSPR)
             break;
 
         case    284:
-            cpu.tb.l = RRS;
-            DBReport(CPU "set TBL : %08X\n", cpu.tb.l);
+            cpu.tb.Part.l = RRS;
+            DBReport(CPU "set TBL : %08X\n", cpu.tb.Part.l);
             break;
         case    285:
-            cpu.tb.u = RRS;
-            DBReport(CPU "set TBH : %08X\n", cpu.tb.u);
+            cpu.tb.Part.u = RRS;
+            DBReport(CPU "set TBH : %08X\n", cpu.tb.Part.u);
             break;
 
         // write gathering buffer
@@ -221,12 +221,12 @@ OP(MFTB)
 
     if(tbr == 268)
     {
-        RRD = cpu.tb.l;
+        RRD = cpu.tb.Part.l;
         return;
     }
     else if(tbr == 269)
     {
-        RRD = cpu.tb.u;
+        RRD = cpu.tb.Part.u;
         return;
     }
 }

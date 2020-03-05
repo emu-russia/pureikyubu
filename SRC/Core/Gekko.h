@@ -118,7 +118,7 @@ typedef union TBREG
     {
         uint32_t     l;                  // for output
         uint32_t     u;
-    };
+    } Part;
 } TBREG;
 
 #define BIT(n)              (1 << (31-n))

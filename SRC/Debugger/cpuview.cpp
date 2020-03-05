@@ -111,33 +111,23 @@ void con_update_disa_window()
     if(wind.focus == WDISA) con_print_at(0, wind.disa_y, WHITE "\x1f");
     con_attr(0, 3);
     con_print_at(2, wind.disa_y, "F3");
-    if(wind.disamode == DISAMOD_PPC)
-    {
-        con_printf_at(
-            6, wind.disa_y, 
-            " cursor:%08X phys:%08X pc:%08X", 
-            con.disa_cursor, MEMEffectiveToPhysical(con.disa_cursor, 0), PC);
-    }
+    con_printf_at(
+        6, wind.disa_y, 
+        " cursor:%08X phys:%08X pc:%08X", 
+        con.disa_cursor, MEMEffectiveToPhysical(con.disa_cursor, 0), PC);
     con_attr(7, 0);
 
-    if(wind.disamode == DISAMOD_PPC) con_ldst_info();
+    con_ldst_info();
 
     uint32_t op, addr = con.text & ~3;
     wind.disa_sub_h = 0;
 
-    switch(wind.disamode)
+    for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
     {
-        case DISAMOD_PPC:           // PowerPC
-        {
-            for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
-            {
-                op = MEMFetch(addr);
+        op = MEMFetch(addr);
 
-                int n = con_disa_line(line, op, addr);
-                if(n > 1) wind.disa_sub_h += n - 1;
-                line += n - 1;
-            }
-            break;
-        }
+        int n = con_disa_line(line, op, addr);
+        if(n > 1) wind.disa_sub_h += n - 1;
+        line += n - 1;
     }
 }
