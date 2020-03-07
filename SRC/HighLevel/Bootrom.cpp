@@ -16,9 +16,6 @@ static void ReadFST()
     uint32_t     bb2[8];         // space for BB2
     uint32_t     fstAddr, fstOffs, fstSize, fstMaxSize;
 
-    // plugin safe test (to run something without plugins at all)
-    if(DVDSetCurrent == NULL) return;
-
     // read BB2
     DVDSeek(0x420);
     DVDRead((uint8_t *)bb2, 32);

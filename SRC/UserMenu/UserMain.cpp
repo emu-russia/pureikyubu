@@ -136,9 +136,6 @@ static void InitFileSystem(HINSTANCE hInst)
     // make sure, that Dolwin has data directory.
     CreateDirectory(".\\Data", NULL);
 
-    // make sure, that Dolwin has plugins directory.
-    CreateDirectory(".\\Plugins", NULL);
-
     // today is a good day
     PlaySound( "monkeyisland.wav", NULL,
                 SND_FILENAME | SND_LOOP | SND_ASYNC | SND_NOWAIT | SND_NODEFAULT);
