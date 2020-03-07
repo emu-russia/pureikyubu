@@ -2,15 +2,16 @@
 
 #pragma once
 
-#include "DolwinPluginSpecs.h"
+// external interfaces (previously plugins)
+#include "AX.h"
+#include "GX.h"
+#include "PAD.h"
+#include "DVD.h"
 
 // hardware controls and register traps
 #include "HW.h"
 
 // GC hardware set (in register addressing order, see Memory.h)
-// *_OLD hardware modules also should work (not recommended) :
-// replace ANY.cpp by ANY_OLD.cpp to use instead, and change
-// from #include "ANY.h" to #include "ANY_OLD.h" below.
 #include "EFB.h"
 #include "AI.h"
 #include "GDI.h"
