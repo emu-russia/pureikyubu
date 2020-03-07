@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
-#include "resource.h"
+#include "../RES/resource.h"
 
 #include "Hardware/PAD.h"
 
@@ -17,9 +17,6 @@
 // all important data is placed here
 typedef struct
 {
-    HINSTANCE   inst;       // plugin dll handler
-    HWND*       hwndParent; // main window
-
     int         padToConfigure;
     PADCONF     config[4];
 } PAD;

@@ -863,16 +863,16 @@ loadFile:
         // options dialogs
 
                 case ID_OPTIONS_CONTROLLERS_PORT1:
-                    PADConfigure(0);
+                    PADConfigure(0, wnd.hMainWindow);
                     return 0;
                 case ID_OPTIONS_CONTROLLERS_PORT2:
-                    PADConfigure(1);
+                    PADConfigure(1, wnd.hMainWindow);
                     return 0;
                 case ID_OPTIONS_CONTROLLERS_PORT3:
-                    PADConfigure(2);
+                    PADConfigure(2, wnd.hMainWindow);
                     return 0;
                 case ID_OPTIONS_CONTROLLERS_PORT4:
-                    PADConfigure(3);
+                    PADConfigure(3, wnd.hMainWindow);
                     return 0;
 
                 // configure memcard in slot A

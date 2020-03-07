@@ -40,6 +40,15 @@
 #define ID_ASSERTINTERRUPT_SI           141
 #define IDD_PATCH_EDITOR                142
 #define IDD_ABOUT                       143
+#define IDB_BITMAP1                     144
+#define IDB_BITMAP2                     145
+#define IDB_BITMAP3                     146
+#define IDB_BITMAP4                     147
+#define IDB_BITMAP5                     148
+#define IDB_BITMAP6                     149
+#define IDB_BITMAP7                     150
+#define IDB_BITMAP8                     151
+#define IDD_DIALOG_PAD			152
 #define IDC_FILE_FILTER                 1001
 #define IDC_DOL_FILTER                  1002
 #define IDC_ELF_FILTER                  1003
@@ -111,6 +120,39 @@
 #define IDC_EDIT9                       1069
 #define IDC_EDIT10                      1070
 #define IDC_ABOUT_RELEASE               1071
+#define IDC_BUTTON_X                    1072
+#define IDC_BUTTON_START                1073
+#define IDC_BUTTON_Y                    1074
+#define IDC_BUTTON_A                    1075
+#define IDC_BUTTON_B                    1076
+#define IDC_BUTTON_RIGHT                1077
+#define IDC_BUTTON_DOWN                 1078
+#define IDC_BUTTON_LEFT                 1079
+#define IDC_BUTTON_UP                   1080
+#define IDC_BUTTON_XDOWN50              1081
+#define IDC_BUTTON_XDOWN100             1082
+#define IDC_BUTTON_XRIGHT50             1083
+#define IDC_BUTTON_XRIGHT100            1084
+#define IDC_BUTTON_XUP100               1085
+#define IDC_BUTTON_XUP50                1086
+#define IDC_BUTTON_XLEFT50              1087
+#define IDC_BUTTON_XLEFT100             1088
+#define IDC_CHECK_PLUG                  1089
+#define IDC_BUTTON_CXUP                 1090
+#define IDC_BUTTON_CXLEFT               1091
+#define IDC_BUTTON_CXDOWN               1092
+#define IDC_BUTTON_CXRIGHT              1093
+#define IDC_BUTTON_TRIGGERR             1094
+#define IDC_BUTTON_TRIGGERL             1095
+#define IDC_PAD_CONFIG_OK               1096
+#define IDC_PAD_CONFIG_CANCEL           1097
+#define IDC_PAD_CONFIG_CLEAR            1098
+#define IDC_PAD_ABOUT_OK                1099
+#define IDC_BUTTON_TRIGGERZ             1100
+#define IDC_ABOUT_STAMP                 1101
+#define IDC_PAD_CONFIG_OK2              1102
+#define IDC_PAD_CONFIG_CLEAR2           1103
+#define IDC_PAD_CONFIG_DEFAULT          1104
 #define ID_FILE_RECENT_1                40003
 #define ID_FILE_RECENT_2                40004
 #define ID_FILE_RECENT_3                40005
@@ -209,9 +251,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        144
+#define _APS_NEXT_RESOURCE_VALUE        153
 #define _APS_NEXT_COMMAND_VALUE         40100
-#define _APS_NEXT_CONTROL_VALUE         1072
+#define _APS_NEXT_CONTROL_VALUE         1105
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

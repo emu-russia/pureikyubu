@@ -1,5 +1,5 @@
 // Dolwin debugger interface.
-// Note : every debugger call must include if(emu.doldebug) check!
+// Note: every debugger call must include if(emu.doldebug) check!
 
 #pragma once
 

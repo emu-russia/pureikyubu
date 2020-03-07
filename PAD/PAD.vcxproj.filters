@@ -9,59 +9,21 @@
       <UniqueIdentifier>{7e65415e-5be4-4306-918e-aa0efede25ce}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{88bf4260-7c1c-4fcc-88e0-306871c24932}</UniqueIdentifier>
-      <Extensions>ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;rc;def;</Extensions>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Configure.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\PAD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\Configure.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SRC\Configure.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\PAD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RES\resource.h">
-      <Filter>Resource Files</Filter>
+    <ClInclude Include="SRC\Configure.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="RES\PAD.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padArrows.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padButtons.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padStart.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padStick.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padSubStick.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padTriggerL.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="RES\padTriggerR.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="RES\PAD.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
   </ItemGroup>
 </Project>

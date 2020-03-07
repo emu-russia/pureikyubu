@@ -476,6 +476,27 @@
     <Image Include="RES\moreicon6.ico">
       <Filter>User Menu\Resource Files</Filter>
     </Image>
+    <Image Include="RES\padArrows.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padButtons.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padStart.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padStick.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padSubStick.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padTriggerL.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
+    <Image Include="RES\padTriggerR.bmp">
+      <Filter>User Menu\Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RES\Dolwin.rc">

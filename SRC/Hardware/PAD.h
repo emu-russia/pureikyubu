@@ -48,4 +48,4 @@ long PADReadButtons(long padnum, PADState *state);
 long PADSetRumble(long padnum, long cmd);
 
 // config / about
-void PADConfigure(long padnum);
+void PADConfigure(long padnum, HWND hwndParent);

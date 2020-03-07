@@ -722,13 +722,13 @@ INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
     return FALSE;
 }
 
-void PADConfigure(long padnum)
+void PADConfigure(long padnum, HWND hwndParent)
 {
     pad.padToConfigure = padnum;
 
     DialogBox(
-        pad.inst,
-        MAKEINTRESOURCE(IDD_DIALOG1),
-        *pad.hwndParent,
+        GetModuleHandle(NULL),
+        MAKEINTRESOURCE(IDD_DIALOG_PAD),
+        hwndParent,
         PADConfigDialogProc);
 }

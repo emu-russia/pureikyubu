@@ -228,10 +228,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     setjmp(mainloop);
 
     // roll main loop
-    static LPEXCEPTION_POINTERS exp;
-#ifndef  _DEBUG
-    __try {
-#endif
     for(;;)
     {
         // Idle loop
@@ -248,13 +244,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
     }
-#ifndef  _DEBUG
-    }
-    __except(exp = GetExceptionInformation(), EXCEPTION_EXECUTE_HANDLER)
-    {
-        DolwinExceptionHandler(exp);
-    }
-#endif
 
     // should never reach this point. Dolwin always exit()'s.
     DolwinError("ERROR", APPNAME " ERROR >>> SHOULD NEVER REACH HERE :)");
