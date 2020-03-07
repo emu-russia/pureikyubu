@@ -87,6 +87,7 @@ static void BootApploader()
 
     // set stack
     SP = 0x816ffffc;
+    SDA1 = 0x81100000;      // Fake sda1
 
     // execute entrypoint
     PC = appEntryPoint;

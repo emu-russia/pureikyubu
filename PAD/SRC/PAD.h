@@ -1,8 +1,5 @@
 // common include project header
 
-// plugin version
-#define PAD_VER         "0.7"
-
 // compiler and Windows API includes
 #include <stdint.h>
 #include <stdarg.h>
@@ -12,8 +9,7 @@
 #include <windows.h>
 #include "resource.h"
 
-// Dolwin plugin specifications. we need only PAD.
-#include "DolwinPluginSpecs.h"
+#include "Hardware/PAD.h"
 
 // other include files
 #include "Configure.h"      // PAD configure dialog

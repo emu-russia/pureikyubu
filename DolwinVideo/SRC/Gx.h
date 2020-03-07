@@ -1,7 +1,5 @@
 // common include file
 
-#define GX_VER "0.7"
-
 //#define WIREFRAME
 #define NO_VIEWPORT
 #define TEXMODE     GL_MODULATE

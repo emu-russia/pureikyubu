@@ -34,11 +34,11 @@ void TexFree()
 {
     for(unsigned n=0; n<MAX; n++)
     {
-        if(tcache[n].rgbaData)
-        {
-            free(tcache[n].rgbaData);
-            tcache[n].rgbaData = NULL;
-        }
+        //if(tcache[n].rgbaData)
+        //{
+        //    free(tcache[n].rgbaData);
+        //    tcache[n].rgbaData = NULL;
+        //}
     }
 }
 

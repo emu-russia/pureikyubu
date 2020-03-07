@@ -1,8 +1,5 @@
 // common include project header
 
-// plugin version
-#define DVD_VER         "0.1"
-
 // compiler and Windows API includes
 #include <stdint.h>
 #include <stdarg.h>
@@ -11,11 +8,10 @@
 #include <string.h>
 #include <windows.h>
 
-// length of DVD image
+// size of DVD image
 #define DVD_SIZE            0x57058000  // 1.4 GB
 
-// Dolwin plugin specifications. we need only DVD.
-#include "DolwinPluginSpecs.h"
+#include "Hardware/DVD.h"
 
 // other include files
 #include "filesystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
