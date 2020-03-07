@@ -34,8 +34,6 @@ enum HLEHitrate
     HLE_MTX_INVERSE,
     HLE_MTX_INVXPOSE,
 
-    HLE_PAD_READ,
-
     HLE_HITRATE_MAX
 };
 

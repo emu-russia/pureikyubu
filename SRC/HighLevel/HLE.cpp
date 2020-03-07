@@ -231,8 +231,6 @@ char * HLEGetHitNameByIndex(int idx)
         case HLE_MTX_TRANSPOSE: return "MTXTranspose";
         case HLE_MTX_INVERSE: return "MTXInverse";
         case HLE_MTX_INVXPOSE: return "MTXInvXpose";
-
-        case HLE_PAD_READ: return "PADRead";
     }
     return "Unknown call";
 }
