@@ -114,8 +114,7 @@ void HLEOpen()
         GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
-    // DEBUG: Bug here
-    //SYMAddEmulatorSymbols();
+    SYMAddEmulatorSymbols();
 
     // set high level calls
     int32_t n = 0;

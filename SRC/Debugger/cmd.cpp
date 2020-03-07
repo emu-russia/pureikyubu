@@ -1544,22 +1544,6 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
 
 void cmd_help()
 {
-    con_print(
-        WHITE APPNAME " - " APPDESC "\n"
-        WHITE "Build ver. " APPVER ", " __DATE__ ", " __TIME__ 
-#ifdef  __MSVC__
-        ", MSVC"
-#endif
-#ifdef  __VCNET__
-        ", VCNET"
-#endif
-#ifdef  __MWERKS__
-        ", CW"
-#endif        
-        "\n"
-        WHITE "Copyright 2002-2011, " APPNAME " Team\n\n"
-    );
-
     con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
     con_print(WHITE "    .                    " NORM "- view code at pc");
     con_print(WHITE "    *                    " NORM "- view data, pointed by load/store opcode");
@@ -1632,9 +1616,11 @@ void cmd_help()
     con_print(WHITE "    F4                   " NORM "- command string");
     con_print(WHITE "    F5                   " NORM "- run, stop");
     con_print(WHITE "    F6, ^F6              " NORM "- switch registers");
-    con_print(WHITE "    F7                   " NORM "- step in");
     con_print(WHITE "    F9                   " NORM "- toggle autokill breakpoint");
     con_print(WHITE "    ^F9                  " NORM "- toggle breakpoint");
+    con_print(WHITE "    F10                  " NORM "- step over");
+    con_print(WHITE "    F11                  " NORM "- single step (Google: disable f11 windows 10 console");
+    con_print(WHITE "    F12                  " NORM "- skip instruction");
     con_print("\n");
 
     con_print(CYAN  "--- misc keys -----------------------------------------------------------------");

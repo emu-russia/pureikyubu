@@ -155,6 +155,14 @@ void con_run_execute()
     }
 }
 
+// step into instruction
+void con_step_into()
+{
+    IPTExecuteOpcode();
+    con.text = PC - 4 * wind.disa_h / 2 + 4;
+    con.update |= CON_UPDATE_ALL;
+}
+
 // step over function
 void con_step_over()
 {

@@ -18,6 +18,7 @@ void    con_rem_data_bp(uint32_t addr, int dlen);
 void    con_rem_all_bp();
 
 void    con_run_execute();
+void    con_step_into();
 void    con_step_over();
 
 // exception trap

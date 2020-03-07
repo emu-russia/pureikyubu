@@ -30,7 +30,7 @@ static void con_function_key(int vkey, int ctrl)
             else con_run_execute();
             break;
         case VK_F6:
-            // Switch Registers VIew
+            // Switch Registers View
             if(ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED))
             {
                 if(wind.regmode == REGMOD_GPR)
@@ -77,13 +77,8 @@ static void con_function_key(int vkey, int ctrl)
         case VK_F10:    // Step Over
             if(!con.running) con_step_over();
             break;
-        case VK_F11:    // Step In
-            if(!con.running)
-            {
-                IPTExecuteOpcode();
-                con.text = PC - 4 * wind.disa_h / 2 + 4;
-                con.update |= CON_UPDATE_ALL;
-            }
+        case VK_F11:    // Step Into
+            if (!con.running) con_step_into();
             break;
         case VK_F12:    // Skip
             if(!con.running)

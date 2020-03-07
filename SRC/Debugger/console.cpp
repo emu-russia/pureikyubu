@@ -126,17 +126,7 @@ void con_open()
     // show emulator version and copyright
     con_print(
         WHITE APPNAME " - " APPDESC "\n"
-        WHITE "Build ver. " APPVER ", " __DATE__ ", " __TIME__ 
-#ifdef  __MSVC__
-        ", MSVC"
-#endif
-#ifdef  __VCNET__
-        ", VCNET"
-#endif
-#ifdef  __MWERKS__
-        ", CW"
-#endif        
-        "\n"
+        WHITE "Build ver. " APPVER ", " __DATE__ ", " __TIME__ "\n"
         WHITE "Copyright 2002-2020, " APPNAME " Team\n\n"
     );
 }
