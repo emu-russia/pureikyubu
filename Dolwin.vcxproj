@@ -277,7 +277,6 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="SRC\HighLevel\OS.cpp" />
-    <ClCompile Include="SRC\HighLevel\PAD.cpp" />
     <ClCompile Include="SRC\HighLevel\Stdc.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
@@ -336,16 +335,19 @@
     <ClInclude Include="SRC\dolphin.h" />
     <ClInclude Include="SRC\Hardware\AI.h" />
     <ClInclude Include="SRC\Hardware\AR.h" />
+    <ClInclude Include="SRC\Hardware\AX.h" />
     <ClInclude Include="SRC\Hardware\CP.h" />
     <ClInclude Include="SRC\Hardware\DI.h" />
-    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h" />
+    <ClInclude Include="SRC\Hardware\DVD.h" />
     <ClInclude Include="SRC\Hardware\EFB.h" />
     <ClInclude Include="SRC\Hardware\EI.h" />
     <ClInclude Include="SRC\Hardware\GDI.h" />
+    <ClInclude Include="SRC\Hardware\GX.h" />
     <ClInclude Include="SRC\Hardware\Hardware.h" />
     <ClInclude Include="SRC\Hardware\HW.h" />
     <ClInclude Include="SRC\Hardware\MC.h" />
     <ClInclude Include="SRC\Hardware\MI.h" />
+    <ClInclude Include="SRC\Hardware\PAD.h" />
     <ClInclude Include="SRC\Hardware\PI.h" />
     <ClInclude Include="SRC\Hardware\SI.h" />
     <ClInclude Include="SRC\Hardware\VI.h" />
@@ -360,7 +362,6 @@
     <ClInclude Include="SRC\HighLevel\MapSaver.h" />
     <ClInclude Include="SRC\HighLevel\Mtx.h" />
     <ClInclude Include="SRC\HighLevel\OS.h" />
-    <ClInclude Include="SRC\HighLevel\PAD.h" />
     <ClInclude Include="SRC\HighLevel\Stdc.h" />
     <ClInclude Include="SRC\HighLevel\Symbols.h" />
     <ClInclude Include="SRC\UserMenu\User.h" />

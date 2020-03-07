@@ -146,23 +146,5 @@ char *  GetIniVar(char *gameId, char *var);
 
 // High Level
 
-#define USER_APPLDR     "APPLDR"            // 0:simulate, 1:boot apploader
-#define USER_APPLDR_DEFAULT     1
-
 #define USER_HLE_MTX    "HLEMTX"            // 1: use matrix library HLE
 #define USER_HLE_MTX_DEFAULT    1
-
-#define USER_HLE_ONLY   "HLEONLY"           // 1: do not use GCN hardware at all
-#define USER_HLE_ONLY_DEFAULT   0
-
-#define USER_HLE_PAD    "HLEPAD"            // 1: use HLE pad driver
-#define USER_HLE_PAD_DEFAULT    0
-
-#define USER_ARENA_LO   "ARENALO"           // arenaLo value
-#define USER_ARENA_LO_DEFAULT   0x80403100
-
-#define USER_ARENA_HI   "ARENAHI"           // arenaHi value
-#define USER_ARENA_HI_DEFAULT   0x81600000
-
-#define USER_KEEP_ARENA "ARENAKEEP"         // 1: override arena settings after apploader (DVD only)
-#define USER_KEEP_ARENA_DEFAULT 0

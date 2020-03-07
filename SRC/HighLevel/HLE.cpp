@@ -114,16 +114,7 @@ void HLEOpen()
         GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
-    hle.only = GetConfigInt(USER_HLE_ONLY, USER_HLE_ONLY_DEFAULT);
-    if(hle.only)
-    {
-        DBReport(GREEN "emulator is working in HLE mode.\n\n");
-        hle.lastHwAssert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-        SetConfigInt(USER_HW_ASSERT, 0);
-        HWClose();  // cruel
-        HWEnableUpdate(0);
-    }
-
+    // DEBUG: Bug here
     //SYMAddEmulatorSymbols();
 
     // set high level calls
@@ -154,9 +145,6 @@ void HLEOpen()
 
     // init dsp
     DSPOpen();
-
-    // controllers
-    PADOpenHLE();
 
     // Geometry library
 #if !_M_X64

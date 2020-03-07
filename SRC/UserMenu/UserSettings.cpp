@@ -204,27 +204,12 @@ static void LoadSettings(int n)         // dialogs created
     // GCN High Level
     if(n == 3)
     {
-        char buf[256];
-        sprintf(buf, "Simulate &apploader (Default: %s)", USER_APPLDR_DEFAULT ? "disabled" : "enabled");
-        SetDlgItemText(hDlg, IDC_SIMULATE_APPLDR, buf);
-
-        sprintf(buf, "0x%08X", GetConfigInt(USER_ARENA_LO, USER_ARENA_LO_DEFAULT));
-        SetDlgItemText(hDlg, IDC_ARENA_LO, buf);
-        sprintf(buf, "0x%08X", GetConfigInt(USER_ARENA_HI, USER_ARENA_HI_DEFAULT));
-        SetDlgItemText(hDlg, IDC_ARENA_HI, buf);
-
         CheckDlgButton(hDlg, IDC_MTXHLE, BST_UNCHECKED);
-        CheckDlgButton(hDlg, IDC_SIMULATE_APPLDR, BST_UNCHECKED);
         CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_UNCHECKED);
-        CheckDlgButton(hDlg, IDC_KEEP_ARENA, BST_UNCHECKED);
         BOOL flag = GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
         if(flag) CheckDlgButton(hDlg, IDC_MTXHLE, BST_CHECKED);
-        flag = GetConfigInt(USER_APPLDR, USER_APPLDR_DEFAULT);
-        if(!flag) CheckDlgButton(hDlg, IDC_SIMULATE_APPLDR, BST_CHECKED);
         flag = GetConfigInt(USER_DSP_FAKE, USER_DSP_FAKE_DEFAULT);
         if(flag) CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_CHECKED);
-        flag = GetConfigInt(USER_KEEP_ARENA, USER_KEEP_ARENA_DEFAULT);
-        if(flag) CheckDlgButton(hDlg, IDC_KEEP_ARENA, BST_CHECKED);
 
         settingsLoaded[3] = TRUE;
     }
@@ -334,18 +319,8 @@ static void SaveSettings()              // OK pressed
         HWND hDlg = hChildDlg[3];
         BOOL flag = IsDlgButtonChecked(hDlg, IDC_MTXHLE);
         SetConfigInt(USER_HLE_MTX, flag);
-        flag = IsDlgButtonChecked(hDlg, IDC_SIMULATE_APPLDR);
-        SetConfigInt(USER_APPLDR, !flag);
         flag = IsDlgButtonChecked(hDlg, IDC_DSP_FAKE);
         SetConfigInt(USER_DSP_FAKE, flag);
-        flag = IsDlgButtonChecked(hDlg, IDC_KEEP_ARENA);
-        SetConfigInt(USER_KEEP_ARENA, flag);
-
-        char buf[256];
-        GetDlgItemText(hDlg, IDC_ARENA_LO, buf, sizeof(buf));
-        SetConfigInt(USER_ARENA_LO, strtoul(buf, NULL, 16));
-        GetDlgItemText(hDlg, IDC_ARENA_HI, buf, sizeof(buf));
-        SetConfigInt(USER_ARENA_HI, strtoul(buf, NULL, 16));
     }
 }
 
@@ -548,14 +523,6 @@ static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wP
         case WM_COMMAND:
             switch(wParam)
             {
-                case IDC_ARENA_LO_DEFAULT:
-                    sprintf(buf, "0x%08X", USER_ARENA_LO_DEFAULT);
-                    SetDlgItemText(hDlg, IDC_ARENA_LO, buf);
-                    break;
-                case IDC_ARENA_HI_DEFAULT:
-                    sprintf(buf, "0x%08X", USER_ARENA_HI_DEFAULT);
-                    SetDlgItemText(hDlg, IDC_ARENA_HI, buf);
-                    break;
             }
             break;
 

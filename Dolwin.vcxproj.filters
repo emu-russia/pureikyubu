@@ -123,9 +123,6 @@
     <ClCompile Include="SRC\HighLevel\OS.cpp">
       <Filter>GCN High Level</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\HighLevel\PAD.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\HighLevel\Stdc.cpp">
       <Filter>GCN High Level</Filter>
     </ClCompile>
@@ -278,9 +275,6 @@
     <ClInclude Include="SRC\Hardware\DI.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Hardware\DolwinPluginSpecs.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\Hardware\EFB.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
@@ -342,9 +336,6 @@
       <Filter>GCN High Level</Filter>
     </ClInclude>
     <ClInclude Include="SRC\HighLevel\OS.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\PAD.h">
       <Filter>GCN High Level</Filter>
     </ClInclude>
     <ClInclude Include="SRC\HighLevel\Stdc.h">
@@ -443,6 +434,18 @@
     </ClInclude>
     <ClInclude Include="SRC\Core\Interpreter\interpreter.h">
       <Filter>Core\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\AX.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\DVD.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\GX.h">
+      <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Hardware\PAD.h">
+      <Filter>GCN Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

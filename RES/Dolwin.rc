@@ -204,21 +204,9 @@ IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Simulate &apploader (Default: disabled)",IDC_SIMULATE_APPLDR,
-                    "Button",BS_AUTOCHECKBOX,12,66,146,10
     CONTROL         "&DSP in fake mode (Default: enabled)",IDC_DSP_FAKE,
-                    "Button",BS_AUTOCHECKBOX,12,120,132,10
-    LTEXT           "Note : When using DSP fake, all advanced sound and memcards are not emulated. DSP is working like quick and dirty hack.",IDC_STATIC,12,138,210,24
-    GROUPBOX        "Initial OS Arena settings",IDC_STATIC,12,168,204,72
-    CONTROL         "Override arena settings after apploader (DVD only)",IDC_KEEP_ARENA,
-                    "Button",BS_AUTOCHECKBOX,18,222,180,10
-    EDITTEXT        IDC_ARENA_LO,72,180,84,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
-    LTEXT           "Arena Lo:",IDC_STATIC,30,180,36,12,SS_CENTERIMAGE
-    EDITTEXT        IDC_ARENA_HI,72,199,84,12,ES_AUTOHSCROLL | NOT WS_TABSTOP
-    LTEXT           "Arena Hi:",IDC_STATIC,30,199,36,12,SS_CENTERIMAGE
-    PUSHBUTTON      "Default",IDC_ARENA_LO_DEFAULT,162,180,36,12,NOT WS_TABSTOP
-    PUSHBUTTON      "Default",IDC_ARENA_HI_DEFAULT,162,198,36,12,NOT WS_TABSTOP
-    LTEXT           "Note : Turn this option on, to boot game a bit faster. Also simulation can help to boot games with damaged apploaders\n(is there are any?).",IDC_STATIC,12,84,210,30
+                    "Button",BS_AUTOCHECKBOX,12,63,132,10
+    LTEXT           "Note : When using DSP fake, all advanced sound and memcards are not emulated. DSP is working like quick and dirty hack.",IDC_STATIC,12,81,210,24
     CONTROL         "Highlevel geometry library (MTX) (Default: enabled)",IDC_MTXHLE,
                     "Button",BS_AUTOCHECKBOX,12,12,186,10
     LTEXT           "Note : MTX is responsible for vector and matrix calculations. If MMX/SSE is enabled, MTX will use them instead usual C. SSE present only on Pentium III and above CPUs.",IDC_STATIC,12,30,204,30
@@ -574,6 +562,17 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Game &INI Settings...",       ID_FILE_EDITINFO
     END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SETTINGS_HLE AFX_DIALOG_LAYOUT
+BEGIN
+    0
 END
 
 

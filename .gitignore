@@ -5,8 +5,6 @@ Dolwin.ilk
 Dolwin.opensdf
 GCMCMPR.exe
 GCMCMPR.ilk
-Plugins/*.dll
-Plugins/*.ilk
 Data/*.mci
 Data/*.mci
 Dolwin.sdf

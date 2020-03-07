@@ -147,43 +147,6 @@ static void BootApploader()
     DBReport( NORM "\n");
 }
 
-// simulate apploader (faster loading).
-// NOT WORKING WITH CUSTOM APPLOADERS !! USE AT YOUR OWN RISK!
-static void SimulateApploader()
-{
-    DBReport( "\n" YEL "simulating apploader..\n");
-
-    // BB2 structure is private, so keep it secret for public, hehe :)
-    uint32_t     bb2[8];         // space for BB2
-    DVDSeek(0x420);
-    DVDRead((uint8_t*)bb2, 32);
-    uint32_t bootFilePosition = MEMSwap(bb2[0]);
-
-    // load DOL header
-    DolHeader dol, dolS;    // + swapped
-    DVDSeek(bootFilePosition);
-    DVDRead(&dol, sizeof(DolHeader));
-    memcpy(&dolS, &dol, sizeof(DolHeader));
-    MEMSwapArea((uint32_t*)&dolS, sizeof(DolHeader));
-
-    // load DOL
-    uint32_t dolSize = DOLSize(&dolS);
-    uint8_t *dolbuf = (uint8_t *)malloc(dolSize + sizeof(DolHeader));
-    if(dolbuf == NULL)
-    {
-        DBReport(YEL "error loading DOL!\n");
-        PC = 0;
-        return;
-    }
-    memcpy(dolbuf, &dol, sizeof(DolHeader));
-    DVDRead(&dolbuf[sizeof(DolHeader)], dolSize);
-    PC = LoadDOLFromMemory((DolHeader *)dolbuf, bootFilePosition);
-    free(dolbuf);
-
-    // need also
-    ReadFST();
-}
-
 // RTC -> TBR
 static void __SyncTime()
 {
@@ -252,15 +215,6 @@ void BootROM(BOOL dvd)
     MEMWriteWord(0x800000f8, CPU_BUS_CLOCK);
     MEMWriteWord(0x800000fc, CPU_CORE_CLOCK);
 
-    // note, that arenaLo and arenaHi are always overrided in OSInit(),
-    // by compiler predefined vars : __ArenaLo and __ArenaHi.
-    // home demos are using arena, to set initial stack value (which is
-    // incorrect - use teh arena, if you're using OS lomem!). so, basically
-    // any _safe_ values can be written in arena pointers.
-
-    MEMWriteWord(0x80000030, GetConfigInt(USER_ARENA_LO, USER_ARENA_LO_DEFAULT));
-    MEMWriteWord(0x80000034, GetConfigInt(USER_ARENA_HI, USER_ARENA_HI_DEFAULT));
-
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
     memcpy( &RAM[CPU_EXCEPTION_SYSCALL], 
@@ -279,15 +233,7 @@ void BootROM(BOOL dvd)
         if(id[3] == 'P') MEMWriteWord(0x800000CC, 1);   // set to PAL
         else MEMWriteWord(0x800000CC, 0);
 
-        BOOL boot = GetConfigInt(USER_APPLDR, USER_APPLDR_DEFAULT);
-        if(boot) BootApploader();
-        else SimulateApploader();
-
-        if(GetConfigInt(USER_KEEP_ARENA, USER_KEEP_ARENA_DEFAULT))
-        {
-            MEMWriteWord(0x80000030, GetConfigInt(USER_ARENA_LO, USER_ARENA_LO_DEFAULT));
-            MEMWriteWord(0x80000034, GetConfigInt(USER_ARENA_HI, USER_ARENA_HI_DEFAULT));
-        }
+        BootApploader();
     }
     else ReadFST(); // load FST, for demos
 }
