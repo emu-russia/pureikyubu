@@ -97,6 +97,12 @@ uint32_t LoadDOL(char *dolname)
         }
     }
 
+    BootROM(false);
+
+    // Setup registers
+    SP = 0x816ffffc;
+    SDA1 = 0x81100000;      // Fake sda1
+
     // DO NOT CLEAR BSS !
 
     DBReport(YEL "   DOL entrypoint %08X\n\n", dh.entryPoint);

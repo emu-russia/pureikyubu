@@ -82,10 +82,6 @@ static void BootApploader()
     GPR[4] = 0x81300008;            // main
     GPR[5] = 0x8130000c;            // _epilog
 
-    // set stack
-    SP = 0x816ffffc;
-    SDA1 = 0x81100000;      // Fake sda1
-
     // execute entrypoint
     PC = appEntryPoint;
     LR = 0;
@@ -218,6 +214,10 @@ void BootROM(BOOL dvd)
             default_syscall, 
             sizeof(default_syscall) );
 
+    // set stack
+    SP = 0x816ffffc;
+    SDA1 = 0x81100000;      // Fake sda1
+
     // simulate or boot apploader, if dvd
     if(dvd)
     {
@@ -232,5 +232,10 @@ void BootROM(BOOL dvd)
 
         BootApploader();
     }
-    else ReadFST(); // load FST, for demos
+    else
+    {
+        MEMWriteWord(0x80000034, SP);
+
+        ReadFST(); // load FST, for demos
+    }
 }
