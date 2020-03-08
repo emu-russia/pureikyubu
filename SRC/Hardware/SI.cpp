@@ -76,9 +76,8 @@ static void SICommand(int chan, uint8_t *ptr)
         default:
         {
             DolwinReport(
-                "unknown SI command\n" "chan:%i\n" "cmd:%02X\n" "out:%i in:%i\n" "pc:%08X",
-                chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG), PC
-            );
+                "unknown SI command\n" "chan:%i\n" "cmd:%02X\n" "out:%i in:%i\n",
+                chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG) );
         }
     }
 }

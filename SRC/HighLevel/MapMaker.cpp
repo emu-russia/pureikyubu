@@ -231,7 +231,7 @@ void MAPFinish()
     int i, k;
     uint32_t Checksum;
     char * name, namebuf[MAP_MAXFUNCNAME];
-    int namelen;
+    size_t namelen;
 
     if (!Map) return ;
 

@@ -14,6 +14,10 @@
 
 #include "../Debugger/Debugger.h"
 
+#include "../Core/Memory.h"
+#include "../Core/Gekko.h"
+
 #include "../UserMenu/UserMain.h"
 #include "../UserMenu/UserFile.h"
 #include "../UserMenu/UserProfiler.h"
+#include "../UserMenu/UserWindow.h"

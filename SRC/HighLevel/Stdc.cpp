@@ -5,6 +5,20 @@
 #define RET_VAL     GPR[3]
 #define SWAP        MEMSwap
 
+static bool IsMMXPresent()
+{
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x800000) != 0;
+}
+
+static bool IsSSEPresent()
+{
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x2000000) != 0;
+}
+
 // fast longlong swap, invented by org
 static void swap_double(void *srcPtr)
 {
@@ -46,7 +60,6 @@ static void mmx_memcpy(uint8_t *dest, uint8_t *src, uint32_t cnt)
 }
 
 // fast sse version (well, not as fast, as I've seen in some asm sources, but enough)
-#ifdef  __VCNET__
 static void sse_memcpy_u(uint8_t *dest, uint8_t *src, uint32_t cnt)
 {
     int tail = cnt % 16, dqwords = cnt >> 4;
@@ -67,7 +80,6 @@ static void sse_memcpy_u(uint8_t *dest, uint8_t *src, uint32_t cnt)
 
     if(tail) memcpy(dest, src, tail);
 }
-#endif  // __VCNET__
 
 // void *memcpy( void *dest, const void *src, size_t count );
 void HLE_memcpy()
@@ -88,11 +100,9 @@ void HLE_memcpy()
 //  DBReport( GREEN "memcpy(0x%08X, 0x%08X, %i(%s))\n", 
 //            eaDest, eaSrc, cnt, FileSmartSize(cnt) );
 
-#ifdef  __VCNET__
-    if(cpu.sse) sse_memcpy_u(&RAM[paDest], &RAM[paSrc], cnt);
+    if(IsSSEPresent()) sse_memcpy_u(&RAM[paDest], &RAM[paSrc], cnt);
     else
-#endif
-    if(cpu.mmx) mmx_memcpy(&RAM[paDest], &RAM[paSrc], cnt);
+    if(IsMMXPresent()) mmx_memcpy(&RAM[paDest], &RAM[paSrc], cnt);
     else
     memcpy(&RAM[paDest], &RAM[paSrc], cnt);
 }

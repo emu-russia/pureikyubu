@@ -274,6 +274,9 @@
     <ClInclude Include="Src\filesystem.h" />
     <ClInclude Include="Src\GCM.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Readme.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,1 +1,1 @@
-void    BootROM(BOOL dvd);
+void    BootROM(bool dvd, bool rtc, uint32_t consoleVer);

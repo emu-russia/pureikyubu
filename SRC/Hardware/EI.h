@@ -111,7 +111,7 @@ void    EXIUpdateInterrupts();
 void    EXIAttach(int chan);    // connect device
 void    EXIDetach(int chan);    // disconnect device
 
-void    EIOpen();
+void    EIOpen(HWConfig* config);
 void    EIClose();
 
 #pragma pack()

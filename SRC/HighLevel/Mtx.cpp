@@ -42,16 +42,30 @@ static void print_mtx(MatrixPtr ptr, const char *name="")
     Init layer
 --------------------------------------------------------------------------- */
 
+static bool IsMMXPresent()
+{
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x800000) != 0;
+}
+
+static bool IsSSEPresent()
+{
+    int cpuInfo[4];
+    __cpuid(cpuInfo, 1);
+    return (cpuInfo[3] & 0x2000000) != 0;
+}
+
 void MTXOpen()
 {
     BOOL flag = GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
     if(flag == FALSE) return;
 
     DBReport( GREEN "Geometry library install (extensions MMX:%i, SSE:%i).\n",
-              cpu.mmx, cpu.sse );
+              IsMMXPresent(), IsSSEPresent() );
 
     // select between multimedia extension and C
-    if(cpu.mmx)
+    if(IsMMXPresent())
     {
         HLESetCall("C_MTXIdentity",             SIMD_MTXIdentity);
         HLESetCall("PSMTXIdentity",             SIMD_MTXIdentity);

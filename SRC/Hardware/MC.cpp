@@ -201,7 +201,7 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
     uint8_t *abuf;
     uint32_t size;
     if (exi->cr & EXI_CR_DMA) {
-        abuf = &RAM[exi->madr & RAMMASK];
+        abuf = &mi.ram[exi->madr];
         size = exi->len;
     }
     else {
@@ -239,7 +239,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
     uint32_t size;
 
     if (exi->cr & EXI_CR_DMA) {
-        abuf = &RAM[exi->madr & RAMMASK];
+        abuf = &mi.ram[exi->madr];
         size = exi->len;
     }
     else {
@@ -508,7 +508,8 @@ void    MCUseFile(int cardnum, const char *path, bool connect) {
  * If no settings are found, default memcards are created.
  * Then both memcards are connected (based on settings)
  */ 
-void MCOpen () {
+void MCOpen (HWConfig * config)
+{
     DBReport(CYAN "MC: Memory cards");
 
     MCOpened = TRUE;
@@ -521,11 +522,11 @@ void MCOpen () {
     memcard[MEMCARD_SLOTB].exi = &exi.regs[MEMCARD_SLOTB];
 
     /* load settings */
-    Memcard_Connected[MEMCARD_SLOTA] = GetConfigInt(MemcardA_Connected_Key, FALSE, HKEY_MEMCARD);
-    Memcard_Connected[MEMCARD_SLOTB] = GetConfigInt(MemcardB_Connected_Key, FALSE, HKEY_MEMCARD);
-    strcpy(memcard[MEMCARD_SLOTA].filename, GetConfigString(MemcardA_Filename_Key, "*", HKEY_MEMCARD));
-    strcpy(memcard[MEMCARD_SLOTB].filename, GetConfigString(MemcardB_Filename_Key, "*", HKEY_MEMCARD));
-    SyncSave = GetConfigInt(Memcard_SyncSave_Key, FALSE, HKEY_MEMCARD);
+    Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
+    Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
+    strcpy(memcard[MEMCARD_SLOTA].filename, config->MemcardA_Filename);
+    strcpy(memcard[MEMCARD_SLOTB].filename, config->MemcardB_Filename);
+    SyncSave = config->Memcard_SyncSave;
 
     if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
         /* there is no info in the registry. use a default memcard */
@@ -587,7 +588,6 @@ void MCClose () {
 bool MCConnect (int cardnum) {
     bool ret = true;
     int i;
-    struct stat buf ;
     switch (cardnum) {
     case -1:
         if (Memcard_Connected[MEMCARD_SLOTA] /*== TRUE*/)   ret = MCConnect(MEMCARD_SLOTA);
@@ -597,6 +597,8 @@ bool MCConnect (int cardnum) {
     case MEMCARD_SLOTA:
     case MEMCARD_SLOTB:
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
+
+        int memcardSize = FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = fopen(memcard[cardnum].filename, "r+b");
         if (memcard[cardnum].file == NULL) {
@@ -613,15 +615,7 @@ bool MCConnect (int cardnum) {
             return FALSE;
         }
 
-        if (fstat(fileno(memcard[cardnum].file), &buf) != 0) {
-//          DBReport(YEL "couldnt retreive file info\n");
-            MessageBoxA (NULL,"couldnt retreive file info", "Memcard Error", 0);
-            fclose(memcard[cardnum].file);
-            memcard[cardnum].file = NULL;
-            return FALSE;
-        }
-
-        for (i = 0 ; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)buf.st_size; i++);
+        for (i = 0 ; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)memcardSize; i++);
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
@@ -631,7 +625,7 @@ bool MCConnect (int cardnum) {
             return FALSE;
         }
 
-        memcard[cardnum].size = buf.st_size;
+        memcard[cardnum].size = memcardSize;
         memcard[cardnum].data = (uint8_t *)malloc(memcard[cardnum].size);
 
         if (memcard[cardnum].data == NULL) {

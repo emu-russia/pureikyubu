@@ -15,4 +15,4 @@
 #include "UserAbout.h"          // about dialog
 #include "DVDBanner.h"			// banner utilities for selector
 #include "Loader.h"				// GC file loader
-#include "Emulator.h"			// 
+#include "Emulator.h"			// emu control

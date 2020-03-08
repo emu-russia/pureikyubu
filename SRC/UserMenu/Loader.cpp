@@ -97,7 +97,9 @@ uint32_t LoadDOL(char *dolname)
         }
     }
 
-    BootROM(false);
+    HWConfig config = { 0 };
+    EMUGetHwConfig(&config);
+    BootROM(false, config.exi_rtc, config.consoleVer);
 
     // Setup registers
     SP = 0x816ffffc;
@@ -661,7 +663,9 @@ static void DoLoadFile(char *filename)
     }
 
     // simulate bootrom
-    BootROM(ldat.dvd);
+    HWConfig config = { 0 };
+    EMUGetHwConfig(&config);
+    BootROM(ldat.dvd, config.exi_rtc, config.consoleVer);
     Sleep(10);
 
     // autoload map file

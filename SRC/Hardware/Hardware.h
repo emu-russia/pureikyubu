@@ -2,6 +2,47 @@
 
 #pragma once
 
+// Config from Ui
+
+#include <Windows.h>
+
+typedef struct _HWConfig
+{
+    // MI
+    size_t      ramsize;
+
+    // VI
+	HWND	    hwndMain;
+    bool        vi_log;
+    bool        vi_xfb;
+    bool        vi_stretch;
+    uint32_t    vcount;
+
+    // PI
+    uint32_t    consoleVer;
+    bool        rswhack;
+
+    // EI
+    bool        exi_log;
+    bool        exi_osReport;
+    bool        exi_rtc;
+    char        ansiFilename[0x100];
+    char        sjisFilename[0x100];
+
+    // MC
+    bool        MemcardA_Connected;
+    bool        MemcardB_Connected;
+    char        MemcardA_Filename[0x100];
+    char        MemcardB_Filename[0x100];
+    bool        Memcard_SyncSave;
+
+    // CP
+    bool        gxpoll;         // 1: poll controllers after GX draw done
+
+    int64_t     one_second;         // one CPU second in timer ticks
+
+} HWConfig;
+
 // external interfaces (previously plugins)
 #include "AX.h"
 #include "GX.h"

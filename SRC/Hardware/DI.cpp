@@ -73,7 +73,7 @@ static void DICommand()
     switch(di.cmdbuf[0] >> 24)
     {
         case 0x12:          // read manufacture info (DMA)
-            memset(&RAM[DIMAR & RAMMASK], 0, 0x20);
+            memset(&mi.ram[DIMAR], 0, 0x20);
             DILEN = 0;
             break;
 
@@ -83,7 +83,7 @@ static void DICommand()
 
             BeginProfileDVD();
             DVDSeek(seek);
-            DVDRead(&RAM[DIMAR & RAMMASK], DILEN);
+            DVDRead(&mi.ram[DIMAR], DILEN);
             EndProfileDVD();
 
             DBReport( DI "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n", 

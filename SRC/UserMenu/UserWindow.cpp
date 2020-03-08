@@ -51,7 +51,7 @@ static void CreateStatusBar()
 }
 
 // change text in specified statusbar part
-void SetStatusText(int sbPart, char *text, bool post)
+void SetStatusText(int sbPart, const char *text, bool post)
 {
     if(wnd.hStatusWindow == NULL) return;
     if(post)

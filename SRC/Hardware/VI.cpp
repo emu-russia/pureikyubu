@@ -107,11 +107,11 @@ static void vi_set_timing()
     switch(vi.mode)
     {
         case VI_NTSC_LIKE:
-            vi.one_frame = cpu.one_second / 30;
+            vi.one_frame = vi.one_second / 30;
             if(vi.auto_vcnt) vi.vcount = (vi.inter) ? VI_NTSC_INTER : VI_NTSC_NON_INTER;
             break;
         case VI_PAL_LIKE:
-            vi.one_frame = cpu.one_second / 25;
+            vi.one_frame = vi.one_second / 25;
             if(vi.auto_vcnt) vi.vcount = (vi.inter) ? VI_PAL_INTER : VI_PAL_NON_INTER;
             break;
     }
@@ -231,16 +231,16 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
             vi.tfbl |= data << 16;
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             vi.tfbl &= 0xffffff;
-            if(vi.tfbl >= RAMSIZE) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &RAM[vi.tfbl];
+            if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl];
             return;
         case 0x1E:      // video buffer low (TOP)
             vi.tfbl &= 0xffff0000;
             vi.tfbl |= (uint16_t)data;
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             vi.tfbl &= 0xffffff;
-            if(vi.tfbl >= RAMSIZE) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &RAM[vi.tfbl];
+            if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl];
             return;
         case 0x24:      // video buffer hi (BOTTOM)
             vi.bfbl &= 0x0000ffff;
@@ -315,8 +315,8 @@ static void __fastcall vi_write32(uint32_t addr, uint32_t data)
         case 0x1C:      // video buffer (TOP)
             vi.tfbl = data & 0xffffff;
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
-            if(vi.tfbl >= RAMSIZE) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &RAM[vi.tfbl];
+            if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl];
             return;
         case 0x24:      // video buffer (BOTTOM)
             vi.bfbl = data & 0xffffff;
@@ -352,22 +352,23 @@ void VIStats()
 // ---------------------------------------------------------------------------
 // init
 
-void VIOpen(HWND hwndMain)
+void VIOpen(HWConfig * config)
 {
     DBReport(CYAN "VI: Video-out hardware interface\n");
 
     // clear VI regs
     memset(&vi, 0, sizeof(VIControl));
 
-    vi.hwndMain = hwndMain;
+    vi.hwndMain = config->hwndMain;
+    vi.one_second = config->one_second;
 
     // read VI settings
-    vi.log = GetConfigInt(USER_VI_LOG, USER_VI_LOG_DEFAULT) & 1;
-    vi.xfb = GetConfigInt(USER_VI_XFB, USER_VI_XFB_DEFAULT) & 1;
-    vi.stretch = GetConfigInt(USER_VI_STRETCH, USER_VI_STRETCH_DEFAULT) & 1;
+    vi.log = config->vi_log;
+    vi.xfb = config->vi_xfb;
+    vi.stretch = config->vi_stretch;
 
     // vertical count value
-    vi.vcount = GetConfigInt(USER_VI_COUNT, USER_VI_COUNT_DEFAULT);
+    vi.vcount = config->vcount;
     vi.auto_vcnt = (vi.vcount == 0);
     if(!vi.auto_vcnt)
     {

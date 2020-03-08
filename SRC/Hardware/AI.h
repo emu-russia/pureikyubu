@@ -75,6 +75,8 @@ typedef struct AIControl
     uint32_t    lastDma;        // last valid DMA address
     int32_t     dmaRate;        // copy of DFR value (32000/48000)
     int64_t     dmaTime;        // audio DMA update time 
+
+    int64_t     one_second;     // one CPU second in timer ticks
 } AIControl;
 
 extern  AIControl ai;
@@ -83,6 +85,6 @@ void    AIDINT();
 void    AISINT();
 
 void    AIUpdate();
-void    AIOpen();
+void    AIOpen(HWConfig * config);
 
 #pragma pack()

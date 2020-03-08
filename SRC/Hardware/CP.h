@@ -105,7 +105,7 @@ typedef struct FifoControl
 
 extern  FifoControl fifo;
 
-void    CPOpen();
+void    CPOpen(HWConfig* config);
 void    CPUpdate();
 
 #pragma pack()

@@ -8,36 +8,6 @@
 #define CPU_MAX_DELAY   12
 
 // ---------------------------------------------------------------------------
-// opcode decoding ("op" representing current opcode, to simplify macros)
-
-#define RD          ((op >> 21) & 0x1f)
-#define RS          RD
-#define RA          ((op >> 16) & 0x1f)
-#define RB          ((op >> 11) & 0x1f)
-#define RC          ((op >>  6) & 0x1f)
-#define SIMM        ((int32_t)(int16_t)(uint16_t)op)
-#define UIMM        (op & 0xffff)
-#define CRFD        ((op >> 23) & 7)
-#define CRFS        ((op >> 18) & 7)
-#define CRBD        ((op >> 21) & 0x1f)
-#define CRBA        ((op >> 16) & 0x1f)
-#define CRBB        ((op >> 11) & 0x1f)
-#define BO(n)       ((bo >> (4-n)) & 1)
-#define BI          RA
-#define SH          RB
-#define MB          ((op >> 6) & 0x1f)
-#define ME          ((op >> 1) & 0x1f)
-#define CRM         ((op >> 12) & 0xff)
-#define FM          ((op >> 17) & 0xff)
-
-// fast R*-field register addressing
-#define RRD         GPR[RD]
-#define RRS         GPR[RS]
-#define RRA         GPR[RA]
-#define RRB         GPR[RB]
-#define RRC         GPR[RC]
-
-// ---------------------------------------------------------------------------
 // registers and their bitfields
 
 // name registers
@@ -226,7 +196,7 @@ extern  void (*CPUException)(uint32_t vector);
 // CPU externals
 
 // CPU memory operations. using MEM* or DB* read/write operations,
-// (depending on DOLDEBUG definition in dolphin.h)
+// (depending on whenever Debugger is running or not)
 extern void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t*reg);
 extern void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
 extern void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t*reg);
@@ -268,8 +238,8 @@ typedef struct CPUControl
     bool        decreq;             // decrementer exception request
 
     uint32_t    core;               // see CPU core enumeration
-    bool        mmx;                // 1: mmx supported and enabled
-    bool        sse;                // 1: sse supported and enabled
+    bool        mmx;                // 1: mmx supported
+    bool        sse;                // 1: sse supported
     uint32_t    ops;                // instruction counter (only for debug!)
 
     // for default interpreter

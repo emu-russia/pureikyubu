@@ -82,20 +82,6 @@ static char * int2str(int i)
     return str;
 }
 
-static BOOL IsMMXPresent()
-{
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x800000) != 0;
-}
-
-static BOOL IsSSEPresent()
-{
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x2000000) != 0;
-}
-
 // ---------------------------------------------------------------------------
 
 static void LoadSettings(int n)         // dialogs created
@@ -132,14 +118,6 @@ static void LoadSettings(int n)         // dialogs created
         SetDlgItemText(hDlg, IDC_DELAY_DEFAULT, buf);
         sprintf(buf, "(Default: %i)", USER_CPU_TIME_DEFAULT);
         SetDlgItemText(hDlg, IDC_BAILOUT_DEFAULT, buf);
-
-        CheckDlgButton(hDlg, IDC_USEMMX, BST_UNCHECKED);
-        CheckDlgButton(hDlg, IDC_MMXFLAG, BST_UNCHECKED);
-        CheckDlgButton(hDlg, IDC_SSEFLAG, BST_UNCHECKED);
-        BOOL flag = IsMMXPresent() && GetConfigInt(USER_MMX, USER_MMX_DEFAULT);
-        if(flag) CheckDlgButton(hDlg, IDC_USEMMX, BST_CHECKED);
-        if(IsMMXPresent()) CheckDlgButton(hDlg, IDC_MMXFLAG, BST_CHECKED);
-        if(IsSSEPresent()) CheckDlgButton(hDlg, IDC_SSEFLAG, BST_CHECKED);
 
         settingsLoaded[0] = TRUE;
     }
@@ -244,9 +222,6 @@ static void SaveSettings()              // OK pressed
             sprintf(buf, "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
             SetStatusText(STATUS_TIMING, buf);
         }
-
-        cpu.mmx = IsMMXPresent() && IsDlgButtonChecked(hDlg, IDC_USEMMX);
-        SetConfigInt(USER_MMX, cpu.mmx);
     }
 
     // GUI/Selector

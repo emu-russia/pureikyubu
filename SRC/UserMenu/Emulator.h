@@ -2,6 +2,8 @@
 
 #pragma once
 
+void    EMUGetHwConfig(HWConfig* config);
+
 // emulator controls API
 void    EMUInit();          // called once
 void    EMUDie();           // called once

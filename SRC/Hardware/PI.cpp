@@ -124,7 +124,7 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
 
 static void __fastcall read_mbrev(uint32_t addr, uint32_t *reg)
 {
-    uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
+    uint32_t ver = pi.consoleVer;
 
     // bootrom using this register in following way :
     //
@@ -160,11 +160,12 @@ static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
 // ---------------------------------------------------------------------------
 // init
 
-void PIOpen()
+void PIOpen(HWConfig* config)
 {
     DBReport(CYAN "PI: Processor interface (interrupts)\n");
 
-    pi.rswhack = GetConfigInt(USER_PI_RSWHACK, USER_PI_RSWHACK_DEFAULT) & 1;
+    pi.rswhack = config->rswhack;
+    pi.consoleVer = config->consoleVer;
     pi.log = true;
 
     // clear interrupt registers

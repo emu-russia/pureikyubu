@@ -41,7 +41,7 @@ static bool IsSSEPresent()
 void CPUInit()
 {
     cpu.mmx = IsMMXPresent();
-    cpu.sse = IsSSEPresent() && cpu.mmx;
+    cpu.sse = IsSSEPresent();
 
     // setup interpreter tables
     IPTInitTables();
@@ -56,7 +56,7 @@ void CPUFini()
 void CPUOpen(int bailout, int delay, int counterFactor)
 {
     cpu.mmx = IsMMXPresent();
-    cpu.sse = IsSSEPresent() && cpu.mmx;
+    cpu.sse = IsSSEPresent();
 
     // CPU bailout - number of CPU instructions to update hardware
     cpu.bailout = bailout;

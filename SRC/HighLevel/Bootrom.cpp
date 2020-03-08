@@ -54,7 +54,7 @@ static void BootApploader()
     uint32_t     offs, size, addr;       // return of apploader main
 
     // disable hardware update
-    HWEnableUpdate(0);
+    HWEnableUpdate(false);
 
     // I use prolog/epilog terms here, but Nintendo is using 
     // something weird, like : appLoaderFunc1 (see Zelda dump - it 
@@ -134,16 +134,16 @@ static void BootApploader()
     while(PC) IPTExecuteOpcode();
 
     // enable hardware update
-    HWEnableUpdate(1);
+    HWEnableUpdate(true);
 
     PC = GPR[3];
     DBReport( NORM "\n");
 }
 
 // RTC -> TBR
-static void __SyncTime()
+static void __SyncTime(bool rtc)
 {
-    if(GetConfigInt(USER_RTC, USER_RTC_DEFAULT) == FALSE)
+    if(!rtc)
     {
         TBR = 0;
         return;
@@ -166,7 +166,7 @@ static void __SyncTime()
     DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
 
-void BootROM(BOOL dvd)
+void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 {
     // set initial MMU state, according with BS2/Dolphin OS
     for(int sr=0; sr<16; sr++)              // unmounted
@@ -198,11 +198,10 @@ void BootROM(BOOL dvd)
     PVR = 0x00083214;
 
     // RTC -> TBR
-    __SyncTime();
+    __SyncTime(rtc);
 
     // modify important OS low memory variables (lomem) (BS)
-    uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
-    MEMWriteWord(0x8000002c, ver);          // console type
+    MEMWriteWord(0x8000002c, consoleVer);   // console type
     MEMWriteWord(0x80000028, RAMSIZE);      // memsize
     MEMWriteWord(0x800000f0, RAMSIZE);      // simmemsize
     MEMWriteWord(0x800000f8, CPU_BUS_CLOCK);

@@ -164,7 +164,7 @@ static void HWClearTraps()
 // ---------------------------------------------------------------------------
 // init and update
 
-void HWOpen(HWND hwndMain)
+void HWOpen(HWConfig* config)
 {
     DBReport(
         GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
@@ -179,16 +179,16 @@ void HWOpen(HWND hwndMain)
     // if emulator try to read or write register,
     // so we need to set traps for missing regs :
 
-    VIOpen(hwndMain);   // video (TV)
-    CPOpen();       // fifo
-    MIOpen();       // memory protection
-    AIOpen();       // audio (AID and AIS)
+    MIOpen(config); // memory protection and 1T-SRAM interface
+    VIOpen(config); // video (TV)
+    CPOpen(config); // fifo
+    AIOpen(config); // audio (AID and AIS)
     DSPOpen();      // DSP
     AROpen();       // aux. memory (ARAM)
-    EIOpen();       // expansion interface (EXI)
+    EIOpen(config); // expansion interface (EXI)
     DIOpen();       // disk
     SIOpen();       // GC controllers
-    PIOpen();       // interrupts, console regs
+    PIOpen(config); // interrupts, console regs
 
     HWEnableUpdate(1);
 
@@ -202,6 +202,7 @@ void HWClose()
     VIClose();      // close GDI (if opened)
     DIClose();      // release streaming buffer
     DSPClose();
+    MIClose();
 
     HWClearTraps();
 }

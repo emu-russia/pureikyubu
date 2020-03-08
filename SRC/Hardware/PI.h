@@ -31,6 +31,7 @@ typedef struct PIControl
     uint32_t    intmr;          // interrupt mask
     bool        rswhack;        // reset "switch" hack
     bool        log;            // log interrupts
+    uint32_t    consoleVer;     // console version
 } PIControl;
 
 extern  PIControl pi;
@@ -41,4 +42,4 @@ extern  PIControl pi;
 void    PICheckInterrupts();    // call to check for pending interrupt(s)
 void    PIAssertInt(uint32_t mask);  // set interrupt(s)
 void    PIClearInt(uint32_t mask);   // clear interrupt(s)
-void    PIOpen();
+void    PIOpen(HWConfig * config);

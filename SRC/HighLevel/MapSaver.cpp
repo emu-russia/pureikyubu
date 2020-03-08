@@ -60,7 +60,7 @@ void SaveMAP(const char *mapname /*="this"*/)
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
 
-    if(!stricmp(mapname, "this"))
+    if(!_stricmp(mapname, "this"))
     {
         if(hle.mapfile[0] == 0)
         {

@@ -134,7 +134,7 @@ void    MCUseFile(int cardnum, const char *path, bool connect);
  * If no settings are found, default memcards are created.
  * Then both memcards are connected (based on settings)
  */ 
-void    MCOpen ();
+void    MCOpen (HWConfig* config);
 
 /* 
  * Disconnects both Memcard. Closes the memcard system and saves the current settings

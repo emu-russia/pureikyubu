@@ -96,12 +96,12 @@ void AIDINT()
 static int64_t AIGetTime(long dmaBytes, long rate)
 {
     long samples = dmaBytes / 4;    // left+right, 16-bit
-    return samples * (cpu.one_second / rate);
+    return samples * (ai.one_second / rate);
 }
 
 static void AIStartDMA(uint32_t addr, long bytes)
 {
-    AXPlayAudio(&RAM[addr & RAMMASK], bytes);
+    AXPlayAudio(&mi.ram[addr], bytes);
     DBReport(AI "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
 }
 
@@ -291,13 +291,15 @@ void AIUpdate()
     }
 }
 
-void AIOpen()
+void AIOpen(HWConfig* config)
 {
     DBReport(CYAN "AI: Audio interface (DMA and DSP)\n");
 
     // clear regs
     memset(&ai, 0, sizeof(AIControl));
     ai.dmaRate = 32000;     // was division by 0 in AIGetTime
+    
+    ai.one_second = config->one_second;
 
     // set register traps
     HWSetTrap(16, AI_DCR, read_aidcr, write_aidcr);

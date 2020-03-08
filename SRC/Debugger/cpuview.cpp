@@ -89,7 +89,9 @@ void con_ldst_info()
 
         if(disa.iclass & PPC_DISA_LDST)
         {
-            wind.ldst_disp = RRA + SIMM;
+            int ra = ((op >> 16) & 0x1f);
+            int32_t simm = ((int32_t)(int16_t)(uint16_t)op);
+            wind.ldst_disp = GPR[ra] + simm;
             con_attr(0, 3);
             con_fill_line(wind.disa_y);
             if(wind.focus == WDISA) con_print_at(0, wind.disa_y, WHITE "\x1f");

@@ -48,7 +48,7 @@ typedef struct HLEControl
     bool        lastHwAssert;   // saved HW_ASSERT uvar flag
 
     // current loaded map file
-    char        mapfile[MAX_PATH];
+    char        mapfile[0x1000];
     
     // number of HLE hits in last frame
     int         hitrate[HLE_HITRATE_MAX];

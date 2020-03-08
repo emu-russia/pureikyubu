@@ -388,7 +388,7 @@ static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 // ---------------------------------------------------------------------------
 // init
 
-void CPOpen()
+void CPOpen(HWConfig * config)
 {
     DBReport(CYAN "FIFO: Command processor (for GX)\n");
 
@@ -397,7 +397,7 @@ void CPOpen()
 
     fifo.time = TBR + 100;
 
-    fifo.gxpoll = GetConfigInt(USER_GX_POLL, USER_GX_POLL_DEFAULT);
+    fifo.gxpoll = config->gxpoll;
 
     // command processor
     HWSetTrap(16, CP_SR         , read_cp_sr, NULL);

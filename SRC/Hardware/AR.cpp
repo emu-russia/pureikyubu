@@ -57,7 +57,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         {
             if(type == ARAM_TO_RAM)
             {
-                memset(&RAM[maddr & RAMMASK], 0, size);
+                memset(&mi.ram[maddr], 0, size);
 
                 aram.cnt &= 0x80000000;     // clear dma counter
                 ARINT();                    // invoke aram TC interrupt
@@ -66,8 +66,8 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         }
 
         // blast data
-        if(type == RAM_TO_ARAM) memcpy(&ARAM[aaddr], &RAM[maddr & RAMMASK], size);
-        else memcpy(&RAM[maddr & RAMMASK], &ARAM[aaddr], size);
+        if(type == RAM_TO_ARAM) memcpy(&ARAM[aaddr], &mi.ram[maddr], size);
+        else memcpy(&mi.ram[maddr], &ARAM[aaddr], size);
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt

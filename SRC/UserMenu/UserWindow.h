@@ -12,7 +12,7 @@ enum STATUS_ENUM
     STATUS_TIME,                // time counter
 };
 
-void    SetStatusText(int sbPart, char *text, bool post=false);
+void    SetStatusText(int sbPart, const char *text, bool post=false);
 char*   GetStatusText(int sbPart);
 
 void    StartProgress(int range, int delta);

@@ -118,7 +118,7 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
     SYM *symbol = symfind(symName);
 
     // check address
-    VERIFY((uint32_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
+    VERIFY((uint64_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)
@@ -132,9 +132,9 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
         {
             MEMWriteWord(
                 symbol->eaddr,          // add patch
-                (uint32_t)routine            // 000: high-level opcode
+                (uint32_t)routine       // 000: high-level opcode
             );
-            if(!stricmp(symName, "OSLoadContext"))
+            if(!_stricmp(symName, "OSLoadContext"))
             {
                 MEMWriteWord(
                     symbol->eaddr + 4,  // return to caller
@@ -157,7 +157,7 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
 // save string in memory
 static char * strsave(const char *str)
 {
-    int len = strlen(str) + 1;
+    size_t len = strlen(str) + 1;
     char *saved = (char *)malloc(len);
     if(saved == NULL)
     {
@@ -239,7 +239,7 @@ void SYMKill()
 // * - all symbols (warning! Zelda has about 20000 symbols).
 void SYMList(const char *str)
 {
-    int len = strlen(str), cnt = 0;
+    size_t len = strlen(str), cnt = 0;
     DBReport("tag:id <address> symbol\n\n");
 
     // walk all
@@ -247,7 +247,7 @@ void SYMList(const char *str)
     for(int i=0; i<work->symcount[tag]; i++)
     {
         SYM *symbol = &work->symhash[tag][i];
-        if( ((*str == '*') || !strnicmp(str, symbol->savedName, len)) && !symbol->emuSymbol )
+        if( ((*str == '*') || !_strnicmp(str, symbol->savedName, len)) && !symbol->emuSymbol )
         {
             DBReport(
                 "%02i:%03i " CYAN "<%08X> " GREEN "%s\n", 

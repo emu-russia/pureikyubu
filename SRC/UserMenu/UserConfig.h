@@ -47,9 +47,6 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_MMU        "MMU"               // memory translation mode (0: simple, 1: mmu)
 #define USER_MMU_DEFAULT        0
 
-#define USER_MMX        "MMX"               // 1: use MMX/SSE when possible
-#define USER_MMX_DEFAULT        1
-
 #define USER_PATCH      "PATCH"             // patches allowed, if 1
 #define USER_PATCH_DEFAULT      1
 

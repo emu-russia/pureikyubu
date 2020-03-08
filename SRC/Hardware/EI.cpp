@@ -277,14 +277,14 @@ void MXTransfer()
                         DBReport(EXI "wrong input buffer size for SRAM read dma\n");
                         return;
                     }
-                    memcpy(&RAM[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
+                    memcpy(&mi.ram[exi.regs[0].madr], &exi.sram, sizeof(SRAM));
                     return;
                 }
                 if((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
                 {
                     assert(exi.ansiFont);
                     memcpy(
-                        &RAM[exi.regs[0].madr & RAMMASK], 
+                        &mi.ram[exi.regs[0].madr],
                         &exi.ansiFont[ofs - 0x001fcf00],
                         exi.regs[0].len
                     );
@@ -296,7 +296,7 @@ void MXTransfer()
                 {
                     assert(exi.sjisFont);
                     memcpy(
-                        &RAM[exi.regs[0].madr & RAMMASK], 
+                        &mi.ram[exi.regs[0].madr],
                         &exi.sjisFont[ofs - 0x001aff00],
                         exi.regs[0].len
                     );
@@ -416,7 +416,7 @@ void MXTransfer()
                             }
                         }
                     }
-                    else DBReport(BRED "EXI : Unknown MX chip write immediate to %08X  (pc:%08X)", ofs, PC);
+                    else DBReport(BRED "EXI : Unknown MX chip write immediate to %08X", ofs);
                 }
             }
             return;
@@ -461,7 +461,7 @@ void ADTransfer()
                     return;
                 }
                 exi.ad16 = exi.regs[2].data >> 16;
-                if(exi.log) DBReport(EXI "AD16 set to %04X (pc:%08X)\n", exi.ad16, PC);
+                if(exi.log) DBReport(EXI "AD16 set to %04X\n", exi.ad16);
             }
             return;
         }
@@ -598,7 +598,7 @@ static void __fastcall exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[
 // ---------------------------------------------------------------------------
 // init
 
-void EIOpen()
+void EIOpen(HWConfig * config)
 {
     DBReport(CYAN "EXI: External devices interface bus\n");
 
@@ -606,18 +606,16 @@ void EIOpen()
     memset(&exi, 0, sizeof(EIControl));
 
     // load user variables
-    exi.log = GetConfigInt(USER_EXI_LOG, USER_EXI_LOG_DEFAULT);
-    exi.osReport = GetConfigInt(USER_OS_REPORT, USER_OS_REPORT_DEFAULT);
-    exi.rtc = GetConfigInt(USER_RTC, USER_RTC_DEFAULT);
+    exi.log = config->exi_log;
+    exi.osReport = config->exi_osReport;
+    exi.rtc = config->exi_rtc;
     
     // reset devices
     exi.sel = -1;           // deselect MX device
     SRAMLoad(&exi.sram);    // load sram
     RTCUpdate();
-    FontLoad( &exi.ansiFont, ANSI_SIZE, 
-              GetConfigString(USER_ANSI, USER_ANSI_DEFAULT) );
-    FontLoad( &exi.sjisFont, SJIS_SIZE, 
-              GetConfigString(USER_SJIS, USER_SJIS_DEFAULT) );
+    FontLoad( &exi.ansiFont, ANSI_SIZE, config->ansiFilename );
+    FontLoad( &exi.sjisFont, SJIS_SIZE, config->sjisFilename );
 
     // set traps for EXI channel 0 registers
     HWSetTrap(32, EXI0_CSR , exi0_read_csr , exi0_write_csr) ;
@@ -641,7 +639,7 @@ void EIOpen()
     HWSetTrap(32, EXI2_DATA, exi2_read_data, exi2_write_data);
 
     // open memory cards
-    MCOpen();
+    MCOpen(config);
 
     // open broad band adapter
 }

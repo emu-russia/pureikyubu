@@ -99,13 +99,14 @@ typedef struct VIControl
     bool        stretch;    // 1: stretch VI framebuffer to fit whole window
 
     HWND        hwndMain;
+    int64_t     one_second;     // one CPU second in timer ticks
 } VIControl;
 
 extern  VIControl vi;
 
 void    VIUpdate();
 void    VIStats();
-void    VIOpen(HWND hwndMain);
+void    VIOpen(HWConfig* config);
 void    VIClose();
 
 #pragma pack()

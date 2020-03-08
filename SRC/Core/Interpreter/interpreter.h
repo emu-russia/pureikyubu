@@ -58,3 +58,33 @@ extern "C" uint32_t __fastcall AddOverflow(uint32_t a, uint32_t b);
 extern "C" uint32_t __fastcall AddCarryOverflow(uint32_t a, uint32_t b);
 extern "C" uint32_t __fastcall AddXer2(uint32_t a, uint32_t b);
 extern "C" uint32_t __fastcall Rotl32(int sa, uint32_t data);
+
+// ---------------------------------------------------------------------------
+// opcode decoding ("op" representing current opcode, to simplify macros)
+
+#define RD          ((op >> 21) & 0x1f)
+#define RS          RD
+#define RA          ((op >> 16) & 0x1f)
+#define RB          ((op >> 11) & 0x1f)
+#define RC          ((op >>  6) & 0x1f)
+#define SIMM        ((int32_t)(int16_t)(uint16_t)op)
+#define UIMM        (op & 0xffff)
+#define CRFD        ((op >> 23) & 7)
+#define CRFS        ((op >> 18) & 7)
+#define CRBD        ((op >> 21) & 0x1f)
+#define CRBA        ((op >> 16) & 0x1f)
+#define CRBB        ((op >> 11) & 0x1f)
+#define BO(n)       ((bo >> (4-n)) & 1)
+#define BI          RA
+#define SH          RB
+#define MB          ((op >> 6) & 0x1f)
+#define ME          ((op >> 1) & 0x1f)
+#define CRM         ((op >> 12) & 0xff)
+#define FM          ((op >> 17) & 0xff)
+
+// fast R*-field register addressing
+#define RRD         GPR[RD]
+#define RRS         GPR[RS]
+#define RRA         GPR[RA]
+#define RRB         GPR[RB]
+#define RRC         GPR[RC]
