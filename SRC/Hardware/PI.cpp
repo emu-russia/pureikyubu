@@ -166,7 +166,7 @@ void PIOpen(HWConfig* config)
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
-    pi.log = true;
+    pi.log = false;// true;
 
     // clear interrupt registers
     INTSR = INTMR = 0;
