@@ -12,4 +12,5 @@ User interface rewritten in c#
 - MemcardConfigure
 - ResetAllSettings, OpenSettingsDialog, EditFileFilter
 - Get/SetStatusText
-- Native Dll
+- Loader
+- Emulator

@@ -175,6 +175,11 @@
     </ClCompile>
     <ClCompile Include="UserStubs.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SRC\Core\GekkoCore\GekkoCore.vcxproj">
+      <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

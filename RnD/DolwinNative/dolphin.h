@@ -17,6 +17,9 @@
 
 #include "HighLevel/HighLevel.h"
 #include "Hardware/Hardware.h"
-#include "Core/Emulator.h"
+#include "Core/Memory.h"
+#include "Core/Gekko.h"
+#include "Core/Interpreter.h"
+
 #include "DebuggerStubs.h"
 #include "UserStubs.h"

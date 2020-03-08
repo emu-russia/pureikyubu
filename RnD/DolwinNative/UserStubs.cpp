@@ -1,15 +1,5 @@
 #include "dolphin.h"
 
-void OnMainWindowOpened()
-{
-
-}
-
-void OnMainWindowClosed()
-{
-
-}
-
 // fatal error
 void DolwinError(const char* title, const char* fmt, ...)
 {
@@ -22,11 +12,6 @@ void DolwinError(const char* title, const char* fmt, ...)
 
     MessageBoxA(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
 
-    // send message, to stop emulation,
-    // let the user decide - to close emu or not
-    if (emu.running)
-    {
-    }
     exit(0);    // return bad
 }
 
