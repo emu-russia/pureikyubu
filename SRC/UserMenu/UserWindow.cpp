@@ -175,7 +175,6 @@ void UpdateRecentMenu(HWND hwnd)
     }
 
     // if no recent, add empty
-#if 0
     if(GetConfigInt(USER_RECENT_NUM, USER_RECENT_NUM_DEFAULT) == 0)
     {
         AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, "None");
@@ -191,7 +190,6 @@ void UpdateRecentMenu(HWND hwnd)
             AppendMenu(hReloadMenu, MF_STRING, ID_FILE_RECENT_1+i, buf);
         }
     }
-#endif
 
     DrawMenuBar(hwnd);
 }
@@ -546,9 +544,8 @@ void UpdateMainWindow(bool peek)
 
     if(peek)
     {
-        while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            //if(msg.message != 0x0118)
             if(!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
             {
                 TranslateMessage(&msg);

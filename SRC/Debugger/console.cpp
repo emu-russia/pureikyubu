@@ -184,7 +184,7 @@ void con_start()
 
     for(;;)
     {
-        UpdateMainWindow(1);
+        UpdateMainWindow(true);
         con_read_input(1);
         con_refresh();
     }
