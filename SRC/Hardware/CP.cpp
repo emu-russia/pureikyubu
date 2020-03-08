@@ -1,7 +1,7 @@
 // all fifo-related stuff here :
 // CP - command processor, PE - pixel engine,
 // PI fifo - processor interface fifo.
-#include "dolphin.h"
+#include "pch.h"
 
 /*/
     Thats how I understand GC graphics fifo logic.

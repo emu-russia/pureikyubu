@@ -2,7 +2,7 @@
 // is not easy, like you may think. We should watch for MAP file formats
 // and try to append symbols into alredy present MAP.
 // Simple MAP overwrite is stupid.
-#include "dolphin.h"
+#include "pch.h"
 
 #define DEFAULT_MAP "Data\\default.map"
 //#define HEX "0x"

@@ -14,6 +14,8 @@
 // GC hardware set (in register addressing order, see Memory.h)
 #include "EFB.h"
 #include "AI.h"
+#include "DSP.h"
+#include "AXUCode.h"
 #include "GDI.h"
 #include "CP.h"
 #include "VI.h"

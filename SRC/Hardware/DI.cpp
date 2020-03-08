@@ -1,6 +1,6 @@
 // DI - disk interface. both 16/32-registers are implemeted.
 // fixed 0.09 stop motor command (TSTART wasnt cleared and no DIINT)
-#include "dolphin.h"
+#include "pch.h"
 
 // DI state (registers and other data)
 DIControl di;
@@ -14,7 +14,7 @@ void DIOpenCover()
     di.coverst = TRUE;
     DBReport(DI "cover opened\n");
 
-    if(emu.running)
+    if(di.running)
     {
         DICVR |= DI_CVR_CVR;    // set cover flag
         
@@ -33,7 +33,7 @@ void DICloseCover()
     di.coverst = FALSE;
     DBReport(DI "cover closed\n");
 
-    if(emu.running)
+    if(di.running)
     {
         DICVR &= ~DI_CVR_CVR;   // clear cover flag
 
@@ -143,14 +143,15 @@ static void DICommand()
 
         // unknown command
         default:
-            DolwinReport(
-                "Unknown DVD command : %08X (pc:%08X)\n\n"
+            DolwinError(
+                "DVD Subsystem Failure",
+                "Unknown DVD command : %08X\n\n"
                 "type:%s\n"
                 "dma:%s\n"
                 "madr:%08X\n"
                 "dlen:%08X\n"
                 "imm:%08X\n",
-                di.cmdbuf[0], PC,
+                di.cmdbuf[0],
                 (DICR & DI_CR_RW) ? ("write") : ("read"),
                 (DICR & DI_CR_DMA) ? ("yes") : ("no"),
                 DIMAR,
@@ -344,9 +345,8 @@ void DIOpen()
 
     AXPlayStream(0, 0);
 
-    VERIFY(di.workArea, "Dirty DVD streaming workarea");
     di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
-    VERIFY(di.workArea == NULL, "No space for DVD streaming workarea");
+    assert(di.workArea);
     memset(di.workArea, 0, DVD_STREAM_BLK);
 
     // set 32-bit register traps
@@ -382,6 +382,8 @@ void DIOpen()
     HWSetTrap(16, DI_IMMBUF_L , read_immbuf_l  , write_immbuf_l);
     HWSetTrap(16, DI_CFG_H    , read_cfg       , NULL);
     HWSetTrap(16, DI_CFG_L    , read_cfg       , NULL);
+
+    di.running = true;
 }
 
 void DIClose()
@@ -391,4 +393,6 @@ void DIClose()
         free(di.workArea);
         di.workArea = NULL;
     }
+
+    di.running = false;
 }

@@ -97,13 +97,15 @@ typedef struct VIControl
     bool        log;        // do debugger log output
     uint32_t    frames;     // frames rendered (can be used by both VI and GX)
     bool        stretch;    // 1: stretch VI framebuffer to fit whole window
+
+    HWND        hwndMain;
 } VIControl;
 
 extern  VIControl vi;
 
 void    VIUpdate();
 void    VIStats();
-void    VIOpen();
+void    VIOpen(HWND hwndMain);
 void    VIClose();
 
 #pragma pack()

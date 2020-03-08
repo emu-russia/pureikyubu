@@ -30,6 +30,7 @@ typedef struct PIControl
     uint32_t    intsr;          // interrupt cause
     uint32_t    intmr;          // interrupt mask
     bool        rswhack;        // reset "switch" hack
+    bool        log;            // log interrupts
 } PIControl;
 
 extern  PIControl pi;

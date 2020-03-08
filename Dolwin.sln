@@ -12,6 +12,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DolwinVideo", "DolwinVideo\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GekkoCore", "SRC\Core\GekkoCore\GekkoCore.vcxproj", "{289C41EF-117B-478C-A3F6-84906E88209E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GCNHardware", "SRC\Hardware\GCNHardware\GCNHardware.vcxproj", "{C43F1C9F-177B-46A8-BE31-08189D25AD43}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GCNHighLevel", "SRC\HighLevel\GCNHighLevel\GCNHighLevel.vcxproj", "{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -60,6 +64,22 @@ Global
 		{289C41EF-117B-478C-A3F6-84906E88209E}.Release|Win32.Build.0 = Release|Win32
 		{289C41EF-117B-478C-A3F6-84906E88209E}.Release|x64.ActiveCfg = Release|x64
 		{289C41EF-117B-478C-A3F6-84906E88209E}.Release|x64.Build.0 = Release|x64
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Debug|Win32.ActiveCfg = Debug|Win32
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Debug|Win32.Build.0 = Debug|Win32
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Debug|x64.ActiveCfg = Debug|x64
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Debug|x64.Build.0 = Debug|x64
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Release|Win32.ActiveCfg = Release|Win32
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Release|Win32.Build.0 = Release|Win32
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Release|x64.ActiveCfg = Release|x64
+		{C43F1C9F-177B-46A8-BE31-08189D25AD43}.Release|x64.Build.0 = Release|x64
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Debug|Win32.Build.0 = Debug|Win32
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Debug|x64.ActiveCfg = Debug|x64
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Debug|x64.Build.0 = Debug|x64
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Release|Win32.ActiveCfg = Release|Win32
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Release|Win32.Build.0 = Release|Win32
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Release|x64.ActiveCfg = Release|x64
+		{8B3F4ADC-DC10-442C-BBBA-8C5BA201FDBC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

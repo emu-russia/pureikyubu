@@ -7,7 +7,7 @@
 // basic application output
 
 // fatal error
-void DolwinError(char *title, char *fmt, ...)
+void DolwinError(const char *title, const char *fmt, ...)
 {
     va_list arg;
     char buf[0x1000];
@@ -16,7 +16,14 @@ void DolwinError(char *title, char *fmt, ...)
     vsprintf(buf, fmt, arg);
     va_end(arg);
 
-    MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+    if (emu.doldebug)
+    {
+        DBHalt(buf);
+    }
+    else
+    {
+        MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+    }
 
     // send message, to stop emulation,
     // let the user decide - to close emu or not
@@ -29,7 +36,7 @@ void DolwinError(char *title, char *fmt, ...)
 
 // fatal error, if user answers no
 // return TRUE if "yes", and FALSE if "no"
-BOOL DolwinQuestion(char *title, char *fmt, ...)
+BOOL DolwinQuestion(const char *title, const char *fmt, ...)
 {
     va_list arg;
     char buf[0x1000];
@@ -53,7 +60,7 @@ BOOL DolwinQuestion(char *title, char *fmt, ...)
 }
 
 // application message
-void DolwinReport(char *fmt, ...)
+void DolwinReport(const char *fmt, ...)
 {
     va_list arg;
     char buf[0x1000];

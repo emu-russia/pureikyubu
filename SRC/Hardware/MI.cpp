@@ -1,8 +1,8 @@
-// MI - memory interface stubs.
+// MI - memory interface.
 //
 // MI is used in __OSInitMemoryProtection and by few games for debug.
 // MI is implemented only for HW2 consoles! it is not back-compatible.
-#include "dolphin.h"
+#include "pch.h"
 
 // stubs for MI registers
 static void __fastcall no_write(uint32_t addr, uint32_t data) {}

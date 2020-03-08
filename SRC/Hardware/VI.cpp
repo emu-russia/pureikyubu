@@ -1,7 +1,7 @@
 // VI - video interface (TV stuff).
 // 0.09 was very stupid, so I completely rewrote whole module;
 // now "wait retrace" will never hung in homedev demos.
-#include "dolphin.h"
+#include "pch.h"
 
 /* ---------------------------------------------------------------------------
 
@@ -352,12 +352,14 @@ void VIStats()
 // ---------------------------------------------------------------------------
 // init
 
-void VIOpen()
+void VIOpen(HWND hwndMain)
 {
     DBReport(CYAN "VI: Video-out hardware interface\n");
 
     // clear VI regs
     memset(&vi, 0, sizeof(VIControl));
+
+    vi.hwndMain = hwndMain;
 
     // read VI settings
     vi.log = GetConfigInt(USER_VI_LOG, USER_VI_LOG_DEFAULT) & 1;
@@ -382,7 +384,7 @@ void VIOpen()
     // open GDI (if need)
     if(vi.xfb)
     {
-        bool res = GDIOpen(wnd.hMainWindow, 640, 480, &vi.gfxbuf);
+        bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
         if(!res)
         {
             DolwinReport("VI cant startup GDI");
@@ -404,5 +406,5 @@ void VIClose()
     // XFB can be enabled during emulation,
     // so we must be sure, that GDI is closed
     // even if XFB wasn't enabled, before start
-    GDIClose(wnd.hMainWindow);
+    GDIClose(vi.hwndMain);
 }

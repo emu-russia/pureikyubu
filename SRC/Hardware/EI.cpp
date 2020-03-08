@@ -1,6 +1,6 @@
 // EI - expansion (or extension) interface. also referred as EXI.
 // (EXI term is reserved for Dolwin HLE of EI).
-#include "dolphin.h"
+#include "pch.h"
 
 // IMPORTANT : all EXI transfers are completed instantly in emu (mean no DMA chain).
 
@@ -282,7 +282,7 @@ void MXTransfer()
                 }
                 if((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
                 {
-                    VERIFY(exi.ansiFont == NULL, "ANSI bootrom font not loaded!");
+                    assert(exi.ansiFont);
                     memcpy(
                         &RAM[exi.regs[0].madr & RAMMASK], 
                         &exi.ansiFont[ofs - 0x001fcf00],
@@ -294,7 +294,7 @@ void MXTransfer()
                 }
                 if((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
                 {
-                    VERIFY(exi.sjisFont == NULL, "SJIS bootrom font not loaded!");
+                    assert(exi.sjisFont);
                     memcpy(
                         &RAM[exi.regs[0].madr & RAMMASK], 
                         &exi.sjisFont[ofs - 0x001aff00],

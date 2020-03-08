@@ -1,5 +1,5 @@
 // EFB - embedded framebuffer reads (peeks) and writes (pokes)
-#include "dolphin.h"
+#include "pch.h"
 
 void EFBPeek8(uint32_t ofs, uint32_t *reg)
 {

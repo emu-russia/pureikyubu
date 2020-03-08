@@ -82,6 +82,8 @@ typedef struct DIControl
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
     int32_t         strcountOld;    // initial streaming counter
     uint8_t         *workArea;      // streaming work area
+
+    bool            running;        // DI subsystem is online
 } DIControl;
 
 extern  DIControl di;

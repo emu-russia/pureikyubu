@@ -1,6 +1,6 @@
 // PI - processor interface (interrupts and console control regs)
 // PI fifo located in CP.cpp module
-#include "dolphin.h"
+#include "pch.h"
 
 // PI state (registers and other data)
 PIControl pi;
@@ -9,7 +9,7 @@ PIControl pi;
 // interrupts
 
 // return short interrupt description
-static char *intdesc(uint32_t mask)
+static const char *intdesc(uint32_t mask)
 {
     switch(mask & 0xffff)
     {
@@ -33,18 +33,15 @@ static char *intdesc(uint32_t mask)
     return "UNKNOWN";
 }
 
-static void printOut(uint32_t mask, char *fix)
+static void printOut(uint32_t mask, const char *fix)
 {
-    if(emu.doldebug)
+    char buf[256], *p = buf;
+    for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
     {
-        char buf[256], *p = buf;
-        for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
-        {
-            if(mask & m) p += sprintf(p, "%sINT ", intdesc(m));
-        }
-        *p = 0;
-        DBReport(PI "%s%s (pc: %08X, time: %s)", buf, fix, PC, OSTimeFormat(UTBR, 1));
+        if(mask & m) p += sprintf(p, "%sINT ", intdesc(m));
     }
+    *p = 0;
+    DBReport(PI "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
 }
 
 // generate interrupt (if pending)
@@ -52,7 +49,7 @@ void PICheckInterrupts()
 {
     if((INTSR & INTMR) && (MSR & MSR_EE))
     {
-        if(emu.doldebug)
+        if (pi.log)
         {
             printOut(INTSR, "signaled");
         }
@@ -64,7 +61,7 @@ void PICheckInterrupts()
 void PIAssertInt(uint32_t mask)
 {
     INTSR |= mask;
-    if((INTMR & mask) && emu.doldebug)
+    if((INTMR & mask) && pi.log)
     {
         printOut(mask, "asserted");
     }
@@ -74,7 +71,7 @@ void PIAssertInt(uint32_t mask)
 // clear interrupt
 void PIClearInt(uint32_t mask)
 { 
-    if((INTSR & mask) && emu.doldebug)
+    if((INTSR & mask) && pi.log)
     {
         printOut(mask, "cleared");
     }
@@ -106,7 +103,7 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
     INTMR = data;
 
     // print out list of masked interrupts
-    if(INTMR && emu.doldebug)
+    if(INTMR && pi.log)
     {
         char buf[256], *p = buf;
         for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
@@ -168,6 +165,7 @@ void PIOpen()
     DBReport(CYAN "PI: Processor interface (interrupts)\n");
 
     pi.rswhack = GetConfigInt(USER_PI_RSWHACK, USER_PI_RSWHACK_DEFAULT) & 1;
+    pi.log = true;
 
     // clear interrupt registers
     INTSR = INTMR = 0;

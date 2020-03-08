@@ -231,37 +231,6 @@
     <ClCompile Include="SRC\Debugger\memview.cpp" />
     <ClCompile Include="SRC\Debugger\output.cpp" />
     <ClCompile Include="SRC\Debugger\regs.cpp" />
-    <ClCompile Include="SRC\Hardware\AI.cpp" />
-    <ClCompile Include="SRC\Hardware\AR.cpp" />
-    <ClCompile Include="SRC\Hardware\AudioNull.cpp" />
-    <ClCompile Include="SRC\Hardware\CP.cpp" />
-    <ClCompile Include="SRC\Hardware\DI.cpp" />
-    <ClCompile Include="SRC\Hardware\EFB.cpp" />
-    <ClCompile Include="SRC\Hardware\EI.cpp" />
-    <ClCompile Include="SRC\Hardware\GDI.cpp" />
-    <ClCompile Include="SRC\Hardware\HW.cpp" />
-    <ClCompile Include="SRC\Hardware\MC.cpp" />
-    <ClCompile Include="SRC\Hardware\MI.cpp" />
-    <ClCompile Include="SRC\Hardware\PI.cpp" />
-    <ClCompile Include="SRC\Hardware\SI.cpp" />
-    <ClCompile Include="SRC\Hardware\VI.cpp" />
-    <ClCompile Include="SRC\HighLevel\AX.cpp" />
-    <ClCompile Include="SRC\HighLevel\Bootrom.cpp" />
-    <ClCompile Include="SRC\HighLevel\DSP.cpp" />
-    <ClCompile Include="SRC\HighLevel\HLE.cpp" />
-    <ClCompile Include="SRC\HighLevel\MapLoader.cpp" />
-    <ClCompile Include="SRC\HighLevel\MapMaker.cpp" />
-    <ClCompile Include="SRC\HighLevel\MapSaver.cpp" />
-    <ClCompile Include="SRC\HighLevel\Mtx.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\OS.cpp" />
-    <ClCompile Include="SRC\HighLevel\Stdc.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\Symbols.cpp" />
     <ClCompile Include="SRC\UserMenu\DVDBanner.cpp" />
     <ClCompile Include="SRC\UserMenu\Emulator.cpp" />
     <ClCompile Include="SRC\UserMenu\Loader.cpp" />
@@ -294,36 +263,6 @@
     <ClInclude Include="SRC\Debugger\output.h" />
     <ClInclude Include="SRC\Debugger\regs.h" />
     <ClInclude Include="SRC\dolphin.h" />
-    <ClInclude Include="SRC\Hardware\AI.h" />
-    <ClInclude Include="SRC\Hardware\AR.h" />
-    <ClInclude Include="SRC\Hardware\AX.h" />
-    <ClInclude Include="SRC\Hardware\CP.h" />
-    <ClInclude Include="SRC\Hardware\DI.h" />
-    <ClInclude Include="SRC\Hardware\DVD.h" />
-    <ClInclude Include="SRC\Hardware\EFB.h" />
-    <ClInclude Include="SRC\Hardware\EI.h" />
-    <ClInclude Include="SRC\Hardware\GDI.h" />
-    <ClInclude Include="SRC\Hardware\GX.h" />
-    <ClInclude Include="SRC\Hardware\Hardware.h" />
-    <ClInclude Include="SRC\Hardware\HW.h" />
-    <ClInclude Include="SRC\Hardware\MC.h" />
-    <ClInclude Include="SRC\Hardware\MI.h" />
-    <ClInclude Include="SRC\Hardware\PAD.h" />
-    <ClInclude Include="SRC\Hardware\PI.h" />
-    <ClInclude Include="SRC\Hardware\SI.h" />
-    <ClInclude Include="SRC\Hardware\VI.h" />
-    <ClInclude Include="SRC\HighLevel\AX.h" />
-    <ClInclude Include="SRC\HighLevel\Bootrom.h" />
-    <ClInclude Include="SRC\HighLevel\DSP.h" />
-    <ClInclude Include="SRC\HighLevel\HighLevel.h" />
-    <ClInclude Include="SRC\HighLevel\HLE.h" />
-    <ClInclude Include="SRC\HighLevel\MapLoader.h" />
-    <ClInclude Include="SRC\HighLevel\MapMaker.h" />
-    <ClInclude Include="SRC\HighLevel\MapSaver.h" />
-    <ClInclude Include="SRC\HighLevel\Mtx.h" />
-    <ClInclude Include="SRC\HighLevel\OS.h" />
-    <ClInclude Include="SRC\HighLevel\Stdc.h" />
-    <ClInclude Include="SRC\HighLevel\Symbols.h" />
     <ClInclude Include="SRC\UserMenu\DVDBanner.h" />
     <ClInclude Include="SRC\UserMenu\Emulator.h" />
     <ClInclude Include="SRC\UserMenu\Loader.h" />
@@ -379,6 +318,12 @@
     </ProjectReference>
     <ProjectReference Include="SRC\Core\GekkoCore\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="SRC\Hardware\GCNHardware\GCNHardware.vcxproj">
+      <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
+    </ProjectReference>
+    <ProjectReference Include="SRC\HighLevel\GCNHighLevel\GCNHighLevel.vcxproj">
+      <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

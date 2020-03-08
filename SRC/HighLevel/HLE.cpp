@@ -1,5 +1,5 @@
 // high level initialization code
-#include "dolphin.h"
+#include "pch.h"
 
 HLEControl hle;
 
@@ -11,7 +11,7 @@ void os_ret1()   { GPR[3] = 1; }
 void os_trap()   { PC = LR - 4; DBHalt("High level trap (pc: %08X)!\n", PC); }
 
 // HLE Ignore (you know what are you doing!)
-static char *osignore[] = {
+static const char *osignore[] = {
     // stubs for audio/DSP
     //"__OSInitAudioSystem"       ,
     //"__AI_SRC_INIT"             ,
@@ -29,7 +29,7 @@ static char *osignore[] = {
 };
 
 // HLE which return 0 as result
-static char *osret0[] = {
+static const char *osret0[] = {
     "VerifyID"                  ,
 
     // Terminator
@@ -38,7 +38,7 @@ static char *osret0[] = {
 };
 
 // HLE which return 1 as result
-static char *osret1[] = {
+static const char *osret1[] = {
 
     // Terminator
     "HLE_RETURN1",
@@ -46,7 +46,7 @@ static char *osret1[] = {
 };
 
 // HLE Traps (calls, which can cause unpredictable situation)
-static char *ostraps[] = {
+static const char *ostraps[] = {
 
     // Terminator
     "HLE_TRAP",
@@ -101,7 +101,7 @@ static struct OSCalls
 // ---------------------------------------------------------------------------
 
 // wrapper
-void HLESetCall(char * name, void (*call)())
+void HLESetCall(const char * name, void (*call)())
 {
     SYMSetHighlevel(name, call);
 }
@@ -113,8 +113,6 @@ void HLEOpen()
         GREEN "Highlevel Initialization.\n"
         GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
-
-    SYMAddEmulatorSymbols();
 
     // set high level calls
     int32_t n = 0;
@@ -142,9 +140,6 @@ void HLEOpen()
   
     HLEResetHitrate();
 
-    // init dsp
-    DSPOpen();
-
     // Geometry library
 #if !_M_X64
     MTXOpen();
@@ -154,9 +149,6 @@ void HLEOpen()
 void HLEClose()
 {
     SYMKill();
-
-    // shutdown dsp
-    DSPClose();
 }
 
 void HLEExecuteCallback(uint32_t entryPoint)
@@ -197,7 +189,7 @@ void HLEGetTop10(int toplist[10])
     }
 }
 
-char * HLEGetHitNameByIndex(int idx)
+const char * HLEGetHitNameByIndex(int idx)
 {
     // compiler should build nice jump table for us
     switch(idx)

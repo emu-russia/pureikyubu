@@ -1,6 +1,6 @@
 // hardware init/update code; register traps (for memory engine).
 // IMPORTANT : whole HW should use physical CPU addressing, not effective!
-#include "dolphin.h"
+#include "pch.h"
 
 // hardware traps tables, shared to memory engine.
 // there is no need in 64-bit traps, phew =:)
@@ -20,80 +20,38 @@ static bool update;         // 1: HW update enabled
 
 static void __fastcall def_hw_read8(uint32_t addr, uint32_t *reg)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access :  R8 %08X, (pc:%08X)\n", addr, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access :  R8 %08X (pc:%08X)", addr, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access :  R8 %08X", addr );
 }
 
 static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access :  W8 %08X = %02X, (pc:%08X)\n", addr, (uint8_t)data, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access :  W8 %08X = %02X (pc:%08X)", addr, (uint8_t)data, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access :  W8 %08X = %02X", addr, (uint8_t)data );
 }
 
 static void __fastcall def_hw_read16(uint32_t addr, uint32_t *reg)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access : R16 %08X, (pc:%08X)\n", addr, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access : R16 %08X (pc:%08X)", addr, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access : R16 %08X", addr );
 }
 
 static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access : W16 %08X = %04X, (pc:%08X)\n", addr, (uint16_t)data, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access : W16 %08X = %04X (pc:%08X)", addr, (uint16_t)data, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access : W16 %08X = %04X", addr, (uint16_t)data );
 }
 
 static void __fastcall def_hw_read32(uint32_t addr, uint32_t *reg)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access : R32 %08X, (pc:%08X)\n", addr, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access : R32 %08X (pc:%08X)", addr, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access : R32 %08X", addr );
 }
 
 static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
 {
-    if(emu.doldebug)
-    {
-        DBHalt("unhandled HW access : W32 %08X = %08X, (pc:%08X)\n", addr, data, PC);
-    }
-    else
-    {
-        DolwinError( "Hardware Not Implemented",
-                     "unhandled HW access : W32 %08X = %08X (pc:%08X)", addr, data, PC );
-    }
+    DolwinError( "Hardware Not Implemented",
+                 "unhandled HW access : W32 %08X = %08X", addr, data );
 }
 
 // ---------------------------------------------------------------------------
@@ -182,8 +140,7 @@ static void HWClearTraps()
     register uint32_t addr;
 
     // possible errors, if greater 0xffff
-    VERIFY( HW_MAX_KNOWN > 0xffff,
-            "HW_MAX_KNOWN must be below or equal to 0xffff." );
+    assert(HW_MAX_KNOWN < 0x10000);
 
     // for 8-bit registers
     for(addr=HW_BASE; addr<(HW_BASE + HW_MAX_KNOWN); addr++)
@@ -207,7 +164,7 @@ static void HWClearTraps()
 // ---------------------------------------------------------------------------
 // init and update
 
-void HWOpen()
+void HWOpen(HWND hwndMain)
 {
     DBReport(
         GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
@@ -222,10 +179,11 @@ void HWOpen()
     // if emulator try to read or write register,
     // so we need to set traps for missing regs :
 
-    VIOpen();       // video (TV)
+    VIOpen(hwndMain);   // video (TV)
     CPOpen();       // fifo
     MIOpen();       // memory protection
     AIOpen();       // audio (AID and AIS)
+    DSPOpen();      // DSP
     AROpen();       // aux. memory (ARAM)
     EIOpen();       // expansion interface (EXI)
     DIOpen();       // disk
@@ -243,6 +201,7 @@ void HWClose()
     EIClose();      // take care about closing of memcards and BBA
     VIClose();      // close GDI (if opened)
     DIClose();      // release streaming buffer
+    DSPClose();
 
     HWClearTraps();
 }

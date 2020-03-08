@@ -40,7 +40,7 @@ enum HLEHitrate
 #define HLEHit(index)   hle.hitrate[index]++
 void    HLEResetHitrate();
 void    HLEGetTop10(int toplist[10]);
-char*   HLEGetHitNameByIndex(int idx);
+const char* HLEGetHitNameByIndex(int idx);
 
 // HLE state variables
 typedef struct HLEControl
@@ -57,7 +57,7 @@ typedef struct HLEControl
 
 extern  HLEControl hle;
 
-void    HLESetCall(char *name, void (*call)());
+void    HLESetCall(const char *name, void (*call)());
 void    HLEOpen();
 void    HLEClose();
 void    HLEExecuteCallback(uint32_t entryPoint);

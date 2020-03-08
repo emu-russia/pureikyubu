@@ -1,5 +1,5 @@
 // AR - auxiliary RAM (audio RAM) interface
-#include "dolphin.h"
+#include "pch.h"
 
 /* ---------------------------------------------------------------------------
    useful bits from AIDCR : 
@@ -47,7 +47,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         if(type == RAM_TO_ARAM) DBReport(AR "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
         else DBReport(AR "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
 
-        VERIFY(maddr& 0x1f, "main memory address is not a multiple of 32 bytes!");
+        VERIFY(maddr & 0x1f, "main memory address is not a multiple of 32 bytes!");
         VERIFY(size & 0x1f, "DMA transfer length is not a multiple of 32 bytes!");
 
         // ARAM driver is trying to check for expansion
@@ -169,9 +169,8 @@ void AROpen()
     DBReport(CYAN "AR: Aux. memory (ARAM) driver\n");
 
     // reallocate ARAM
-    VERIFY(ARAM, "ARAM is not released after emu close");
     ARAM = (uint8_t *)malloc(ARAMSIZE);
-    VERIFY(ARAM == NULL, "Couldnt reallocate ARAM buffer");
+    assert(ARAM);
 
     // clear ARAM data
     memset(ARAM, 0, ARAMSIZE);

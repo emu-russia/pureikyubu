@@ -120,14 +120,14 @@ bool    MCIsConnected(int cardnum);
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(char *path, uint16_t memcard_id);
+bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id);
 
 /*
  * Sets the memcard to use the specified file. If the memcard is connected, 
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, char *path, bool connect);
+void    MCUseFile(int cardnum, const char *path, bool connect);
 
 /* 
  * Starts the memcard system and loads the saved settings.

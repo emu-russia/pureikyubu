@@ -19,7 +19,7 @@ void    HWSetTrap(
             uint32_t addr,                                       // physical address of trap
             void (__fastcall *rdTrap)(uint32_t, uint32_t *) = NULL,   // register read trap
             void (__fastcall *wrTrap)(uint32_t, uint32_t)   = NULL);  // register write trap
-void    HWOpen();
+void    HWOpen(HWND hwndMain);
 void    HWClose();
 void    HWUpdate();
 void    HWEnableUpdate(bool en);

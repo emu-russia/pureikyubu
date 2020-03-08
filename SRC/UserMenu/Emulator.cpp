@@ -47,7 +47,7 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     assert(GXOpen(mem.ram, wnd.hMainWindow));
     assert(AXOpen());
     assert(PADOpen());
-    HWOpen();
+    HWOpen(wnd.hMainWindow);
     ReloadFile();   // PC will be set here
     HLEOpen();
 

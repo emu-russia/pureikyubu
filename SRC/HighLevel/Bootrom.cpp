@@ -1,5 +1,5 @@
 // BS and BS2 (IPL) simulation.
-#include "dolphin.h"
+#include "pch.h"
 
 static uint32_t default_syscall[] = {    // default exception handler
     0x2c01004c,     // isync

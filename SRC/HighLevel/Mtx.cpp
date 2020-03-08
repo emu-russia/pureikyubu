@@ -1,6 +1,6 @@
 // GC Vector/Matrix math library emulation, powered by MMX/SSE
 // MMX is used for fast copy, SSE for paired-single math
-#include "dolphin.h"
+#include "pch.h"
 
 #define PARAM(n)    GPR[3+n]
 #define RET_VAL     GPR[3]
@@ -21,7 +21,7 @@ typedef struct MatrixF
 
 #define MTX(mx)  mx->data
 
-static void print_mtx(MatrixPtr ptr, char *name="")
+static void print_mtx(MatrixPtr ptr, const char *name="")
 {
     MatrixFPtr m = (MatrixFPtr)ptr;
 

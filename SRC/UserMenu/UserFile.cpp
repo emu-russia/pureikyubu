@@ -5,7 +5,7 @@
 static char tempBuf[1024];      // temporary buffer for file operations
 
 // get file size
-int FileSize(char *filename)
+int FileSize(const char *filename)
 {
     FILE *f = fopen(filename, "rb");
     if(f == NULL) return 0;
@@ -16,7 +16,7 @@ int FileSize(char *filename)
 }
 
 // load data from file
-void * FileLoad(char *filename, uint32_t *size)
+void * FileLoad(const char *filename, uint32_t *size)
 {
     FILE*   f;
     void*   buffer;
@@ -45,7 +45,7 @@ void * FileLoad(char *filename, uint32_t *size)
 }
 
 // save data in file
-BOOL FileSave(char *filename, void *data, uint32_t size)
+BOOL FileSave(const char *filename, void *data, uint32_t size)
 {
     FILE *f = fopen(filename, "wb");
     if(f == NULL) return FALSE;
@@ -217,27 +217,29 @@ char * FileOpen(HWND hwnd, int type)
 }
 
 // make path to file shorter for "lvl" levels.
-char * FileShortName(char *filename, int lvl)
+char * FileShortName(const char *filename, int lvl)
 {
     int c = 0, i;
 
-    tempBuf[0] = filename[0];
-    tempBuf[1] = filename[1];
-    tempBuf[2] = filename[2];
+    char* ptr = (char *)filename;
 
-    filename += 3;
+    tempBuf[0] = ptr[0];
+    tempBuf[1] = ptr[1];
+    tempBuf[2] = ptr[2];
 
-    for(i=strlen(filename)-1; i; i--)
+    ptr += 3;
+
+    for(i=strlen(ptr)-1; i; i--)
     {
-        if(filename[i] == '\\') c++;
+        if(ptr[i] == '\\') c++;
         if(c == lvl) break;
     }
 
     if(c == lvl)
     {
-        sprintf(&tempBuf[3], "...%s", &filename[i]);
+        sprintf(&tempBuf[3], "...%s", &ptr[i]);
     }
-    else return filename - 3;
+    else return ptr - 3;
 
     return tempBuf;
 }

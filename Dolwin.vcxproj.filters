@@ -7,12 +7,6 @@
     <Filter Include="User Menu\Resource Files">
       <UniqueIdentifier>{8b89c15e-a9b8-492f-9de2-300059b1a186}</UniqueIdentifier>
     </Filter>
-    <Filter Include="GCN Hardware">
-      <UniqueIdentifier>{3935fe48-4a8d-4a9a-9e92-cf1279717bf6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GCN High Level">
-      <UniqueIdentifier>{89f79858-7882-4cc0-a254-6726ae01445e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Debugger">
       <UniqueIdentifier>{c95b6c67-8f65-4d78-8bdb-57536346d5ec}</UniqueIdentifier>
     </Filter>
@@ -48,78 +42,6 @@
     <ClCompile Include="SRC\UserMenu\UserWindow.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\Hardware\AI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\AR.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\CP.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\DI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\EFB.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\EI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\GDI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\HW.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\MC.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\MI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\PI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\SI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\VI.cpp">
-      <Filter>GCN Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\AX.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\Bootrom.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\DSP.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\HLE.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\MapLoader.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\MapMaker.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\MapSaver.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\Mtx.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\OS.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\Stdc.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\HighLevel\Symbols.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\Debugger\break.cpp">
       <Filter>Debugger</Filter>
     </ClCompile>
@@ -149,9 +71,6 @@
     </ClCompile>
     <ClCompile Include="SRC\Debugger\regs.cpp">
       <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Hardware\AudioNull.cpp">
-      <Filter>GCN Hardware</Filter>
     </ClCompile>
     <ClCompile Include="SRC\UserMenu\DVDBanner.cpp">
       <Filter>User Menu</Filter>
@@ -200,84 +119,6 @@
     <ClInclude Include="RES\resource.h">
       <Filter>User Menu\Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Hardware\AI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\AR.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\CP.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\DI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\EFB.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\EI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\GDI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\Hardware.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\HW.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\MC.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\MI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\PI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\SI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\VI.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\AX.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\Bootrom.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\DSP.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\HighLevel.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\HLE.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\MapLoader.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\MapMaker.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\MapSaver.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\Mtx.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\OS.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\Stdc.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\HighLevel\Symbols.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\dolphin.h" />
     <ClInclude Include="SRC\Debugger\break.h">
       <Filter>Debugger</Filter>
@@ -308,18 +149,6 @@
     </ClInclude>
     <ClInclude Include="SRC\Debugger\regs.h">
       <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\AX.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\DVD.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\GX.h">
-      <Filter>GCN Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Hardware\PAD.h">
-      <Filter>GCN Hardware</Filter>
     </ClInclude>
     <ClInclude Include="SRC\UserMenu\SjisTable.h">
       <Filter>User Menu</Filter>

@@ -1,6 +1,6 @@
 // MAP files loader. currently there are support for three MAP file formats : 
 // Dolwin custom ("RAW"), CodeWarrior and GCC-like.
-#include "dolphin.h"
+#include "pch.h"
 
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
@@ -187,7 +187,6 @@ int LoadMAP(char *mapname, bool add)
     if(!add)
     {
         SYMKill();
-        SYMAddEmulatorSymbols();
     }
 
     // copy name for MAP saver (with SaveMAP "this" parameter)

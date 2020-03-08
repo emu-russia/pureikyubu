@@ -1,5 +1,5 @@
 // SI - serial interface (only GC "Spec5" controllers atm, by PAD plugin calls).
-#include "dolphin.h"
+#include "pch.h"
 
 // SI state (registers and other data)
 SIControl si;

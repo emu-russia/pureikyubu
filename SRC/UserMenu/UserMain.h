@@ -2,15 +2,15 @@
 void    DolwinMainLoop();
 
 // basic message output
-void    DolwinError(char *title, char *fmt, ...);
-BOOL    DolwinQuestion(char *title, char *fmt, ...);
-void    DolwinReport(char *fmt, ...);
+void    DolwinError(const char *title, const char *fmt, ...);
+BOOL    DolwinQuestion(const char *title, const char *fmt, ...);
+void    DolwinReport(const char *fmt, ...);
 
 #define VERIFY(expr, msg)                                                   \
     (void) ((expr) &&                                                       \
     (                                                                       \
        DolwinError(                                                         \
-            APPNAME " Assertion Failed!",                                   \
+            "Assertion Failed!",                                            \
             "expr\t: %s\n"                                                  \
             "file\t: %s\n"                                                  \
             "line\t: %i\n"                                                  \

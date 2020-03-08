@@ -22,12 +22,11 @@ extern  SYMControl sym;
 
 // API for emulator
 void    SYMAddNew(uint32_t addr, const char *name, bool emuSymbol=false);
-void    SYMSetHighlevel(char *symName, void (*routine)());
-uint32_t SYMAddress(char *symName);
+void    SYMSetHighlevel(const char *symName, void (*routine)());
+uint32_t SYMAddress(const char *symName);
 char*   SYMName(uint32_t symAddr);
 void    SYMKill();
 void    SYMList(const char *str="*");
-void    SYMAddEmulatorSymbols();
 
 // advanced stuff (dont use it, if you dont know how)
 void    SYMSetWorkspace(SYMControl *useIt);

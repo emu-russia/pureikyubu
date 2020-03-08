@@ -2,7 +2,7 @@
 // TODO : EXIINT and 0x8101 !!!!    
 // TODO : figure out what 0x81 code is supposed to do on a real memcard
 
-#include "dolphin.h"
+#include "pch.h"
 #include <sys/stat.h>
 
 /************************** Commands ***************************************/ 
@@ -422,7 +422,7 @@ void MCTransfer () {
         }
         break;
     default:
-        VERIFY(TRUE, "Unknown memcard transfer type");
+        DolwinError("Memcard Error", "Unknown memcard transfer type");
     }
 }
 
@@ -430,8 +430,8 @@ void MCTransfer () {
  * Checks if the memcard is connected.
  */
 bool    MCIsConnected(int cardnum) {
-    if(emu.doldebug)
-        VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
+    // Invalid memcard number
+    assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
     return memcard[cardnum].connected;
 }
 
@@ -445,7 +445,7 @@ bool    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -461,21 +461,21 @@ bool    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        VERIFY( TRUE , "Wrong card id for creating file.");
+        DolwinError ( "Memcard Error", "Wrong card id for creating file.");
         return FALSE;
     }
 
     newfile = fopen(path, "wb") ;
 
 	if (newfile == NULL) {
-        VERIFY((newfile == NULL), "Error while trying to create memcard file.");
+        DolwinReport("Error while trying to create memcard file.");
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            VERIFY(TRUE, "Error while trying to write memcard file.");
+            DolwinReport("Error while trying to write memcard file.");
 
 			fclose (newfile);
             return FALSE;
@@ -491,9 +491,10 @@ bool    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, char *path, bool connect) {
-    if(emu.doldebug)
-        VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
+void    MCUseFile(int cardnum, const char *path, bool connect) {
+
+    // Invalid memcard number
+    assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
@@ -529,7 +530,7 @@ void MCOpen () {
     if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        char * filename = ".\\Data\\MemCardA.mci";
+        const char * filename = ".\\Data\\MemCardA.mci";
         FILE * fileptr;
 
         fileptr = fopen(filename, "rb");
@@ -549,7 +550,7 @@ void MCOpen () {
     if (strcmp(memcard[MEMCARD_SLOTB].filename, "*") == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        char * filename = ".\\Data\\MemCardB.mci";
+        const char * filename = ".\\Data\\MemCardB.mci";
         FILE * fileptr;
 
         fileptr = fopen(filename, "rb");
@@ -576,12 +577,6 @@ void MCOpen () {
 void MCClose () {
     MCOpened = FALSE;
     MCDisconnect();
-    /* save settings */
-    SetConfigInt(MemcardA_Connected_Key, Memcard_Connected[MEMCARD_SLOTA], HKEY_MEMCARD);
-    SetConfigInt(MemcardB_Connected_Key, Memcard_Connected[MEMCARD_SLOTB], HKEY_MEMCARD);
-    SetConfigString(MemcardA_Filename_Key, memcard[MEMCARD_SLOTA].filename, HKEY_MEMCARD);
-    SetConfigString(MemcardB_Filename_Key, memcard[MEMCARD_SLOTB].filename, HKEY_MEMCARD);
-    SetConfigInt(Memcard_SyncSave_Key, SyncSave, HKEY_MEMCARD);
 }
 
 /* 
@@ -604,7 +599,7 @@ bool MCConnect (int cardnum) {
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
 
         memcard[cardnum].file = fopen(memcard[cardnum].filename, "r+b");
-        if (memcard[cardnum].file == NULL && emu.doldebug) {
+        if (memcard[cardnum].file == NULL) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
@@ -620,7 +615,7 @@ bool MCConnect (int cardnum) {
 
         if (fstat(fileno(memcard[cardnum].file), &buf) != 0) {
 //          DBReport(YEL "couldnt retreive file info\n");
-            MessageBox (wnd.hMainWindow ,"couldnt retreive file info", "Memcard Error", 0);
+            MessageBoxA (NULL,"couldnt retreive file info", "Memcard Error", 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -630,7 +625,7 @@ bool MCConnect (int cardnum) {
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
-            MessageBox (wnd.hMainWindow ,"memcard file doesnt have a valid size", "Memcard Error", 0);
+            MessageBoxA (NULL,"memcard file doesnt have a valid size", "Memcard Error", 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -641,7 +636,7 @@ bool MCConnect (int cardnum) {
 
         if (memcard[cardnum].data == NULL) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-            MessageBox (wnd.hMainWindow ,"couldnt allocate enough memory for memcard", "Memcard Error", 0);
+            MessageBoxA (NULL,"couldnt allocate enough memory for memcard", "Memcard Error", 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -649,7 +644,7 @@ bool MCConnect (int cardnum) {
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
 //          DBReport(YEL "error at locating file cursor\n");
-            MessageBox (wnd.hMainWindow ,"error at locating file cursor", "Memcard Error", 0);
+            MessageBoxA (NULL ,"error at locating file cursor", "Memcard Error", 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);
@@ -659,7 +654,7 @@ bool MCConnect (int cardnum) {
 
         if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
 //          DBReport(YEL "error at reading the memcard file\n");
-            MessageBox (wnd.hMainWindow ,"error at reading the memcard file", "Memcard Error", 0);
+            MessageBoxA (NULL,"error at reading the memcard file", "Memcard Error", 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);

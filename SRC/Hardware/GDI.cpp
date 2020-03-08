@@ -1,5 +1,5 @@
 // Windows GDI for VI module, to support homedev.
-#include "dolphin.h"
+#include "pch.h"
 
 static HDC      hdcMainWnd, hdcWndComp;
 static HBITMAP  hbmDIBSection;
