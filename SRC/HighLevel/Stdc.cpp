@@ -100,11 +100,11 @@ void HLE_memcpy()
 //  DBReport( GREEN "memcpy(0x%08X, 0x%08X, %i(%s))\n", 
 //            eaDest, eaSrc, cnt, FileSmartSize(cnt) );
 
-    if(IsSSEPresent()) sse_memcpy_u(&RAM[paDest], &RAM[paSrc], cnt);
+    if(IsSSEPresent()) sse_memcpy_u(&mi.ram[paDest], &mi.ram[paSrc], cnt);
     else
-    if(IsMMXPresent()) mmx_memcpy(&RAM[paDest], &RAM[paSrc], cnt);
+    if(IsMMXPresent()) mmx_memcpy(&mi.ram[paDest], &mi.ram[paSrc], cnt);
     else
-    memcpy(&RAM[paDest], &RAM[paSrc], cnt);
+    memcpy(&mi.ram[paDest], &mi.ram[paSrc], cnt);
 }
 
 // void *memset( void *dest, int c, size_t count );
@@ -122,7 +122,7 @@ void HLE_memset()
 
 //  DBReport( GREEN "memcpy(0x%08X, %i(%c), %i(%s))\n", 
 //            eaDest, c, cnt, FileSmartSize(cnt) );
-    memset(&RAM[paDest], c, cnt);
+    memset(&mi.ram[paDest], c, cnt);
 }
 
 /* ---------------------------------------------------------------------------
@@ -155,7 +155,7 @@ void HLE_modf()
 {
     HLEHit(HLE_MODF);
 
-    double * intptr = (double *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
+    double * intptr = (double *)(&mi.ram[MEMEffectiveToPhysical(PARAM(0), 0)]);
     
     FPRD(1) = modf(FPRD(1), intptr);
     swap_double(intptr);
@@ -166,7 +166,7 @@ void HLE_frexp()
 {
     HLEHit(HLE_FREXP);
 
-    uint32_t * expptr = (uint32_t *)(&RAM[MEMEffectiveToPhysical(PARAM(0), 0)]);
+    uint32_t * expptr = (uint32_t *)(&mi.ram[MEMEffectiveToPhysical(PARAM(0), 0)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
     *expptr = SWAP(*expptr);

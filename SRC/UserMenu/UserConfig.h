@@ -26,9 +26,6 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_BINORG     "BINORG"            // binary file loading offset (physical address)
 #define USER_BINORG_DEFAULT     0x3100
 
-#define USER_CPU        "CPU"               // CPU core (see Gekko.h)
-#define USER_CPU_DEFAULT        CPU_INTERPRETER
-
 #define USER_CPU_CF     "CPU_CF"            // CPU counter factor
 #define USER_CPU_CF_DEFAULT     1
 

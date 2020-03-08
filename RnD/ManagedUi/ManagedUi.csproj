@@ -93,6 +93,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="DolwinNativeDll.cs" />
     <Compile Include="FileUtils.cs" />
     <Compile Include="FormAbout.cs">

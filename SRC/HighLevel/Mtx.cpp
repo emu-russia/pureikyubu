@@ -58,7 +58,7 @@ static bool IsSSEPresent()
 
 void MTXOpen()
 {
-    BOOL flag = GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
+    BOOL flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
     if(flag == FALSE) return;
 
     DBReport( GREEN "Geometry library install (extensions MMX:%i, SSE:%i).\n",
@@ -111,7 +111,7 @@ void C_MTXIdentity(void)
 {
     HLEHit(HLE_MTX_IDENTITY);
 
-    MatrixPtr m = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
+    MatrixPtr m = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
 
     MTX(m)[0][0] = ONE;  MTX(m)[0][1] = ZERO; MTX(m)[0][2] = ZERO; MTX(m)[0][3] = ZERO;
     MTX(m)[1][0] = ZERO; MTX(m)[1][1] = ONE;  MTX(m)[1][2] = ZERO; MTX(m)[1][3] = ZERO;
@@ -122,8 +122,8 @@ void C_MTXCopy(void)
 {
     HLEHit(HLE_MTX_COPY);
 
-    MatrixPtr src = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixPtr dst = (MatrixPtr)(&RAM[PARAM(1) & RAMMASK]);
+    MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixPtr dst = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
 
     if(src == dst) return;
 
@@ -139,9 +139,9 @@ void C_MTXConcat(void)
 {
     HLEHit(HLE_MTX_CONCAT);
 
-    MatrixFPtr a = (MatrixFPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixFPtr b = (MatrixFPtr)(&RAM[PARAM(1) & RAMMASK]);
-    MatrixFPtr axb = (MatrixFPtr)(&RAM[PARAM(2) & RAMMASK]);
+    MatrixFPtr a = (MatrixFPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixFPtr b = (MatrixFPtr)(&mi.ram[PARAM(1) & RAMMASK]);
+    MatrixFPtr axb = (MatrixFPtr)(&mi.ram[PARAM(2) & RAMMASK]);
     MatrixFPtr t = (MatrixFPtr)(&tmpMatrix[0]), m;
 
     if( (axb == a) || (axb == b) ) m = t;
@@ -193,8 +193,8 @@ void C_MTXTranspose(void)
 {
     HLEHit(HLE_MTX_TRANSPOSE);
 
-    MatrixPtr src = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixPtr xPose = (MatrixPtr)(&RAM[PARAM(1) & RAMMASK]);
+    MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixPtr xPose = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
     MatrixPtr t = (&tmpMatrix[0]), m;
 
     if(src == xPose) m = t;
@@ -239,7 +239,7 @@ void SIMD_MTXIdentity(void)
 
     static uint64_t konst10 = 0x803f;
     static uint64_t konst01 = 0x803f00000000;
-    MatrixPtr m = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
+    MatrixPtr m = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
 
     __asm   mov     eax, dword ptr m
     __asm   pxor    mm0, mm0        // 0.0f  0.0f
@@ -278,8 +278,8 @@ void SIMD_MTXCopy(void)
 {
     HLEHit(HLE_MTX_COPY);
 
-    MatrixPtr src = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixPtr dst = (MatrixPtr)(&RAM[PARAM(1) & RAMMASK]);
+    MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixPtr dst = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
 
     if(src == dst) return;
 
@@ -288,8 +288,6 @@ void SIMD_MTXCopy(void)
     //print_mtx((MatrixPtr)src, "src");
     //print_mtx((MatrixPtr)dst, "dst");
 }
-
-#ifdef  __VCNET__
 
 #define CONCAT_ROW(ofs)                         \
 {                                               \
@@ -317,9 +315,9 @@ void SIMD_MTXConcat(void)
 {
     HLEHit(HLE_MTX_CONCAT);
 
-    MatrixFPtr a = (MatrixFPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixFPtr b = (MatrixFPtr)(&RAM[PARAM(1) & RAMMASK]);
-    MatrixFPtr axb = (MatrixFPtr)(&RAM[PARAM(2) & RAMMASK]);
+    MatrixFPtr a = (MatrixFPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixFPtr b = (MatrixFPtr)(&mi.ram[PARAM(1) & RAMMASK]);
+    MatrixFPtr axb = (MatrixFPtr)(&mi.ram[PARAM(2) & RAMMASK]);
     MatrixFPtr t = (MatrixFPtr)(&tmpMatrix[0]), m;
 
     if( (axb == a) || (axb == b) ) m = t;
@@ -367,8 +365,8 @@ void SIMD_MTXTranspose(void)
 {
     HLEHit(HLE_MTX_TRANSPOSE);
 
-    MatrixPtr src = (MatrixPtr)(&RAM[PARAM(0) & RAMMASK]);
-    MatrixPtr xPose = (MatrixPtr)(&RAM[PARAM(1) & RAMMASK]);
+    MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
+    MatrixPtr xPose = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
     MatrixPtr t = (&tmpMatrix[0]), m;
 
     if(src == xPose) m = t;
@@ -432,5 +430,3 @@ void SIMD_MTXInverse(void)
 void SIMD_MTXInvXpose(void)
 {
 }
-
-#endif  // __VCNET__

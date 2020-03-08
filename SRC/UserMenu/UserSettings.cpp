@@ -200,9 +200,7 @@ static void SaveSettings()              // OK pressed
     if(settingsLoaded[0])
     {
         HWND hDlg = hChildDlg[0];
-        int selected = (int)SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_GETCURSEL, 0, 0);
-        SetConfigInt(USER_CPU, selected + 1);
-        selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
+        int selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
         SetConfigInt(USER_MMU, selected);
 
         GetDlgItemText(hDlg, IDC_COUNTER_FACTOR, buf, sizeof(buf));

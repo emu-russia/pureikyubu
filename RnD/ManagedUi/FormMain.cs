@@ -8,21 +8,44 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using System.IO;
+
 namespace ManagedUi
 {
     public partial class FormMain : Form
     {
         bool aboutShown = false;
+        Config config = new Config();
 
         public FormMain()
         {
             InitializeComponent();
         }
 
+        /// <summary>
+        /// set proper current working directory, create missing directories
+        /// </summary>
+        private void InitFileSystem ()
+        {
+            // set current working directory relative to Dolwin executable
+
+            // make sure, that Dolwin has data directory
+            if (!Directory.Exists(".\\Data"))
+            {
+                Directory.CreateDirectory(".\\Data");
+            }
+        }
+
         private void FormMain_Load(object sender, EventArgs e)
         {
+            InitFileSystem();
+
+            config.Load();
+
             Text = Properties.Resources.APPNAME + " - " + Properties.Resources.APPDESC + " (" + Properties.Resources.APPVER + ")";
 
+            // DEBUG
+            GameListDemo();
         }
 
         void GameListDemo()
@@ -69,5 +92,11 @@ namespace ManagedUi
         {
             DolwinNativeDll.Test();
         }
+
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            config.Save();
+        }
+
     }
 }

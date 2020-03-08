@@ -41,6 +41,7 @@
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.testNativeDllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutDolwinToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -53,7 +54,6 @@
             this.columnSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnGameId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnComment = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.testNativeDllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripMain.SuspendLayout();
             this.statusStripMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -153,6 +153,13 @@
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.debugToolStripMenuItem.Text = "Debug";
             // 
+            // testNativeDllToolStripMenuItem
+            // 
+            this.testNativeDllToolStripMenuItem.Name = "testNativeDllToolStripMenuItem";
+            this.testNativeDllToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.testNativeDllToolStripMenuItem.Text = "Test Native Dll";
+            this.testNativeDllToolStripMenuItem.Click += new System.EventHandler(this.testNativeDllToolStripMenuItem_Click);
+            // 
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
@@ -170,7 +177,7 @@
             // aboutDolwinToolStripMenuItem
             // 
             this.aboutDolwinToolStripMenuItem.Name = "aboutDolwinToolStripMenuItem";
-            this.aboutDolwinToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.aboutDolwinToolStripMenuItem.Size = new System.Drawing.Size(156, 22);
             this.aboutDolwinToolStripMenuItem.Text = "About Dolwin...";
             this.aboutDolwinToolStripMenuItem.Click += new System.EventHandler(this.aboutDolwinToolStripMenuItem_Click);
             // 
@@ -241,13 +248,6 @@
             this.columnComment.Text = "Comment";
             this.columnComment.Width = 190;
             // 
-            // testNativeDllToolStripMenuItem
-            // 
-            this.testNativeDllToolStripMenuItem.Name = "testNativeDllToolStripMenuItem";
-            this.testNativeDllToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.testNativeDllToolStripMenuItem.Text = "Test Native Dll";
-            this.testNativeDllToolStripMenuItem.Click += new System.EventHandler(this.testNativeDllToolStripMenuItem_Click);
-            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -260,6 +260,7 @@
             this.MainMenuStrip = this.menuStripMain;
             this.Name = "FormMain";
             this.Text = "Dolwin";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FormMain_FormClosing);
             this.Load += new System.EventHandler(this.FormMain_Load);
             this.menuStripMain.ResumeLayout(false);
             this.menuStripMain.PerformLayout();

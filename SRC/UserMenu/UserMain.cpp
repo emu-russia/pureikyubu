@@ -95,7 +95,7 @@ static void LockMultipleCalls()
 // set proper current working directory, create missing directories
 static void InitFileSystem(HINSTANCE hInst)
 {
-    // set current working directory relative to Dolwin binary
+    // set current working directory relative to Dolwin executable
     GetModuleFileName(hInst, ldat.cwd, 1024);
     *(strrchr(ldat.cwd, '\\') + 1) = 0;
     SetCurrentDirectory(ldat.cwd);
