@@ -232,7 +232,7 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &mi.ram[vi.tfbl];
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
             return;
         case 0x1E:      // video buffer low (TOP)
             vi.tfbl &= 0xffff0000;
@@ -240,7 +240,7 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &mi.ram[vi.tfbl];
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
             return;
         case 0x24:      // video buffer hi (BOTTOM)
             vi.bfbl &= 0x0000ffff;
@@ -316,7 +316,7 @@ static void __fastcall vi_write32(uint32_t addr, uint32_t data)
             vi.tfbl = data & 0xffffff;
             DBReport(VI "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-            else vi.xfbbuf = &mi.ram[vi.tfbl];
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
             return;
         case 0x24:      // video buffer (BOTTOM)
             vi.bfbl = data & 0xffffff;

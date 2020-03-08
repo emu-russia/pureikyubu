@@ -101,6 +101,7 @@ static int64_t AIGetTime(long dmaBytes, long rate)
 
 static void AIStartDMA(uint32_t addr, long bytes)
 {
+    addr &= RAMMASK;
     AXPlayAudio(&mi.ram[addr], bytes);
     DBReport(AI "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
 }

@@ -14,7 +14,8 @@ BOOL GCMSelectFile(char *file)
     dvd.selected = false;
 
     // open GCM file
-    gcm_file = fopen(file, "rb");
+    gcm_file = nullptr;
+    fopen_s(&gcm_file, file, "rb");
     if(!gcm_file) return FALSE;
 
     // get file size

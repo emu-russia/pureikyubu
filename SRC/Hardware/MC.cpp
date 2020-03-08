@@ -201,7 +201,7 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
     uint8_t *abuf;
     uint32_t size;
     if (exi->cr & EXI_CR_DMA) {
-        abuf = &mi.ram[exi->madr];
+        abuf = &mi.ram[exi->madr & RAMMASK];
         size = exi->len;
     }
     else {
@@ -239,7 +239,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
     uint32_t size;
 
     if (exi->cr & EXI_CR_DMA) {
-        abuf = &mi.ram[exi->madr];
+        abuf = &mi.ram[exi->madr & RAMMASK];
         size = exi->len;
     }
     else {
@@ -465,7 +465,8 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
         return FALSE;
     }
 
-    newfile = fopen(path, "wb") ;
+    newfile = nullptr;
+    fopen_s(&newfile, path, "wb") ;
 
 	if (newfile == NULL) {
         DolwinReport("Error while trying to create memcard file.");
@@ -498,7 +499,7 @@ void    MCUseFile(int cardnum, const char *path, bool connect) {
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
-    strcpy(memcard[cardnum].filename, path);
+    strcpy_s(memcard[cardnum].filename, sizeof(memcard[cardnum].filename), path);
 
     if (connect == TRUE) MCConnect(cardnum);
 }
@@ -524,8 +525,8 @@ void MCOpen (HWConfig * config)
     /* load settings */
     Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
     Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
-    strcpy(memcard[MEMCARD_SLOTA].filename, config->MemcardA_Filename);
-    strcpy(memcard[MEMCARD_SLOTB].filename, config->MemcardB_Filename);
+    strcpy_s(memcard[MEMCARD_SLOTA].filename, sizeof(memcard[MEMCARD_SLOTA].filename), config->MemcardA_Filename);
+    strcpy_s(memcard[MEMCARD_SLOTB].filename, sizeof(memcard[MEMCARD_SLOTB].filename), config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
     if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
@@ -534,7 +535,8 @@ void MCOpen (HWConfig * config)
         const char * filename = ".\\Data\\MemCardA.mci";
         FILE * fileptr;
 
-        fileptr = fopen(filename, "rb");
+        fileptr = nullptr;
+        fopen_s(&fileptr, filename, "rb");
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -554,7 +556,8 @@ void MCOpen (HWConfig * config)
         const char * filename = ".\\Data\\MemCardB.mci";
         FILE * fileptr;
 
-        fileptr = fopen(filename, "rb");
+        fileptr = nullptr;
+        fopen_s(&fileptr, filename, "rb");
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -600,7 +603,8 @@ bool MCConnect (int cardnum) {
 
         int memcardSize = FileSize(memcard[cardnum].filename);
 
-        memcard[cardnum].file = fopen(memcard[cardnum].filename, "r+b");
+        memcard[cardnum].file = nullptr;
+        fopen_s(&memcard[cardnum].file, memcard[cardnum].filename, "r+b");
         if (memcard[cardnum].file == NULL) {
             static char slt[2] = { 'A', 'B' };
 

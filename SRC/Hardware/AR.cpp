@@ -38,6 +38,8 @@ static void ARINT()
 
 static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
 {
+    maddr &= RAMMASK;
+
     if(aram.cntv[0] && aram.cntv[1])
     {
         aram.cntv[0] = aram.cntv[1] = FALSE;    // invalidate

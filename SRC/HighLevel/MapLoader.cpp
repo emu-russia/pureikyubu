@@ -132,7 +132,7 @@ static int LoadMapRAW(char *mapname)
     while(*ptr)
     {
         // some maps has really *huge* symbols
-        char line[1000];
+        char line[0x1000];
         line[i = 0] = 0;
 
         // cut string

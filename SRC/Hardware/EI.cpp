@@ -183,7 +183,7 @@ void RTCUpdate()
 {
     if(exi.rtc)
     {
-        exi.rtcVal = MAGIC_VALUE + time(NULL);
+        exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
     }
     else exi.rtcVal = 0;
 }
@@ -234,7 +234,7 @@ static char * uartf(char *buf)
 {
     static char str[300];
     char *ptr = str;
-    int len = strlen(buf);
+    size_t len = strlen(buf);
     for(int n=0; n<len; n++)
     {
         if(buf[n] == 13) buf[n] = '\n';
@@ -277,14 +277,14 @@ void MXTransfer()
                         DBReport(EXI "wrong input buffer size for SRAM read dma\n");
                         return;
                     }
-                    memcpy(&mi.ram[exi.regs[0].madr], &exi.sram, sizeof(SRAM));
+                    memcpy(&mi.ram[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
                     return;
                 }
                 if((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
                 {
                     assert(exi.ansiFont);
                     memcpy(
-                        &mi.ram[exi.regs[0].madr],
+                        &mi.ram[exi.regs[0].madr & RAMMASK],
                         &exi.ansiFont[ofs - 0x001fcf00],
                         exi.regs[0].len
                     );
@@ -296,7 +296,7 @@ void MXTransfer()
                 {
                     assert(exi.sjisFont);
                     memcpy(
-                        &mi.ram[exi.regs[0].madr],
+                        &mi.ram[exi.regs[0].madr & RAMMASK],
                         &exi.sjisFont[ofs - 0x001aff00],
                         exi.regs[0].len
                     );

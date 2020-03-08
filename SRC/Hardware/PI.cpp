@@ -38,7 +38,7 @@ static void printOut(uint32_t mask, const char *fix)
     char buf[256], *p = buf;
     for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
     {
-        if(mask & m) p += sprintf(p, "%sINT ", intdesc(m));
+        if(mask & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%sINT ", intdesc(m));
     }
     *p = 0;
     DBReport(PI "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
@@ -108,7 +108,7 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
         char buf[256], *p = buf;
         for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
         {
-            if(INTMR & m) p += sprintf(p, "%s ", intdesc(m));
+            if(INTMR & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%s ", intdesc(m));
         }
         *p = 0;
 

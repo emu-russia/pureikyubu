@@ -12,7 +12,8 @@ bool DVDSetCurrent(char *file)
     GCMClose();
 
     // try to open file
-    FILE *f = fopen(file, "rb");
+    FILE* f = nullptr;
+    fopen_s(&f, file, "rb");
     if(!f) return FALSE;
     fclose(f);
 

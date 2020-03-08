@@ -21,7 +21,7 @@ uint32_t     lastFifoSize;
 
 uint8_t  accum[1024*1024+32];// primitive accumulation buffer
 uint8_t *accptr;             // current offset in accum
-uint32_t acclen;             // length of accumulated data
+size_t   acclen;             // length of accumulated data
 uint8_t  gxcmd;              // next fifo command to execute
 uint32_t need;               // need bytes for command
 uint8_t  cmdidle=1;
@@ -739,7 +739,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
     uint8_t  *readptr = fifoPtr;
     uint8_t  cmd;
 
-    while((uint32_t)readptr < (uint32_t)endptr)
+    while((uint8_t*)readptr < (uint8_t*)endptr)
     {
         switch(cmd = *readptr++)
         {
@@ -1826,7 +1826,7 @@ void GXWriteFifo(uint8_t *dataPtr, uint32_t length)
     {
         uint8_t *was = accptr;
         gx_command(gxcmd);
-        acclen -= (uint32_t)accptr - (uint32_t)was;
+        acclen -= (uint8_t*)accptr - (uint8_t*)was;
         memcpy(accum, accptr, acclen);
         accptr = accum;
         cmdidle = 1;

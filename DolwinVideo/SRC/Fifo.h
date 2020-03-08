@@ -67,5 +67,5 @@ void FifoReconfigure(
 
 extern uint8_t  accum[1024*1024+32];// primitive accumulation buffer
 extern uint8_t  *accptr;             // current offset in accum
-extern uint32_t acclen;             // length of accumulated data
+extern size_t   acclen;             // length of accumulated data
 extern uint8_t  cmdidle;

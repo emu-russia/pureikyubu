@@ -121,11 +121,11 @@ int dvd_open(char *path, DVDFileEntry *root)
 
     if(slashPos == -1)  // search in current dir
     {
-        strcpy(search, path);
+        strcpy_s(search, sizeof(search), path);
     }
     else                // search in another dir
     {
-        strncpy(search, path, slashPos);
+        strncpy_s(search, sizeof(search), path, slashPos);
     }
 
     // search file
@@ -133,7 +133,7 @@ int dvd_open(char *path, DVDFileEntry *root)
     curr = root + 1;
     while(curr < next)
     {
-        if(!stricmp(search, &files[FSTOFS(curr->nameOffsetLo, curr->nameOffsetHi)]))
+        if(!_stricmp(search, &files[FSTOFS(curr->nameOffsetLo, curr->nameOffsetHi)]))
             break;
         if(curr->isDir) curr = &fst[curr->nextOffset];
         else            curr = curr + 1;

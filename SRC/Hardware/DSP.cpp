@@ -450,7 +450,7 @@ void DSPUpdate()
                 return;
             case 0x0abc:        // do actual task boot
             {
-                uint32_t sum  = DSP_ucode_checksum(&mi.ram[temp.ram_addr], temp.iram_len);
+                uint32_t sum  = DSP_ucode_checksum(&mi.ram[temp.ram_addr & RAMMASK], temp.iram_len);
                 dsp.task = DSP_find_ucode(temp.iram_addr, temp.iram_len, sum);
                 if(dsp.task->init) dsp.task->init();
                 return;

@@ -97,12 +97,9 @@ static void __fastcall si_wr_out0(uint32_t addr, uint32_t data)       // write
     SI_SR_REG |= SI_SR_WRST0;
 
     // control motor
-    if(PADSetRumble)
-    {
-        if(data == 0x00400000) PADSetRumble(0, PAD_MOTOR_STOP);
-        else if(data == 0x00400001) PADSetRumble(0, PAD_MOTOR_RUMBLE);
-        else if(data == 0x00400002) PADSetRumble(0, PAD_MOTOR_STOP_HARD);
-    }
+    if(data == 0x00400000) PADSetRumble(0, PAD_MOTOR_STOP);
+    else if(data == 0x00400001) PADSetRumble(0, PAD_MOTOR_RUMBLE);
+    else if(data == 0x00400002) PADSetRumble(0, PAD_MOTOR_STOP_HARD);
 }
 
 static void __fastcall si_rd_out0(uint32_t addr, uint32_t *reg)       // read
@@ -118,12 +115,9 @@ static void __fastcall si_wr_out1(uint32_t addr, uint32_t data)       // write
     SI_SR_REG |= SI_SR_WRST1;
 
     // control motor
-    if(PADSetRumble)
-    {
-        if(data == 0x00400000) PADSetRumble(1, PAD_MOTOR_STOP);
-        else if(data == 0x00400001) PADSetRumble(1, PAD_MOTOR_RUMBLE);
-        else if(data == 0x00400002) PADSetRumble(1, PAD_MOTOR_STOP_HARD);
-    }
+    if(data == 0x00400000) PADSetRumble(1, PAD_MOTOR_STOP);
+    else if(data == 0x00400001) PADSetRumble(1, PAD_MOTOR_RUMBLE);
+    else if(data == 0x00400002) PADSetRumble(1, PAD_MOTOR_STOP_HARD);
 }
 
 static void __fastcall si_rd_out1(uint32_t addr, uint32_t *reg)       // read
@@ -139,12 +133,9 @@ static void __fastcall si_wr_out2(uint32_t addr, uint32_t data)       // write
     SI_SR_REG |= SI_SR_WRST2;
 
     // control motor
-    if(PADSetRumble)
-    {
-        if(data == 0x00400000) PADSetRumble(2, PAD_MOTOR_STOP);
-        else if(data == 0x00400001) PADSetRumble(2, PAD_MOTOR_RUMBLE);
-        else if(data == 0x00400002) PADSetRumble(2, PAD_MOTOR_STOP_HARD);
-    }
+    if(data == 0x00400000) PADSetRumble(2, PAD_MOTOR_STOP);
+    else if(data == 0x00400001) PADSetRumble(2, PAD_MOTOR_RUMBLE);
+    else if(data == 0x00400002) PADSetRumble(2, PAD_MOTOR_STOP_HARD);
 }
 
 static void __fastcall si_rd_out2(uint32_t addr, uint32_t *reg)       // read
@@ -160,12 +151,9 @@ static void __fastcall si_wr_out3(uint32_t addr, uint32_t data)       // write
     SI_SR_REG |= SI_SR_WRST3;
 
     // control motor
-    if(PADSetRumble)
-    {
-        if(data == 0x00400000) PADSetRumble(3, PAD_MOTOR_STOP);
-        else if(data == 0x00400001) PADSetRumble(3, PAD_MOTOR_RUMBLE);
-        else if(data == 0x00400002) PADSetRumble(3, PAD_MOTOR_STOP_HARD);
-    }
+    if(data == 0x00400000) PADSetRumble(3, PAD_MOTOR_STOP);
+    else if(data == 0x00400001) PADSetRumble(3, PAD_MOTOR_RUMBLE);
+    else if(data == 0x00400002) PADSetRumble(3, PAD_MOTOR_STOP_HARD);
 }
 
 static void __fastcall si_rd_out3(uint32_t addr, uint32_t *reg)       // read
@@ -481,7 +469,7 @@ void SIPoll()
     {
         // update pad input buffer
         bool connected = false;
-        if(PADReadButtons) connected = PADReadButtons(0, &si.pad[0]);
+        connected = PADReadButtons(0, &si.pad[0]);
 
         // set RDST flag
         if(connected)
@@ -495,7 +483,7 @@ void SIPoll()
     {
         // update pad input buffer
         bool connected = false;
-        if(PADReadButtons) connected = PADReadButtons(1, &si.pad[1]);
+        connected = PADReadButtons(1, &si.pad[1]);
 
         // set RDST flag
         if(connected)
@@ -509,7 +497,7 @@ void SIPoll()
     {
         // update pad input buffer
         bool connected = false;
-        if(PADReadButtons) connected = PADReadButtons(2, &si.pad[2]);
+        connected = PADReadButtons(2, &si.pad[2]);
 
         // set RDST flag
         if(connected)
@@ -523,7 +511,7 @@ void SIPoll()
     {
         // update pad input buffer
         bool connected = false;
-        if(PADReadButtons) connected = PADReadButtons(3, &si.pad[3]);
+        connected = PADReadButtons(3, &si.pad[3]);
 
         // set RDST flag
         if(connected)
