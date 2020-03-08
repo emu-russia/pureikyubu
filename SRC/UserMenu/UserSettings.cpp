@@ -78,7 +78,7 @@ static struct Tooltip
 static char * int2str(int i)
 {
     static char str[16];
-    sprintf(str, "%i", i);
+    sprintf_s (str, sizeof(str), "%i", i);
     return str;
 }
 
@@ -112,11 +112,11 @@ static void LoadSettings(int n)         // dialogs created
         SetDlgItemText(hDlg, IDC_BAILOUT, int2str(bail));
 
         char buf[256];
-        sprintf(buf, "(Default: %i)", USER_CPU_CF_DEFAULT);
+        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_CF_DEFAULT);
         SetDlgItemText(hDlg, IDC_CF_DEFAULT, buf);
-        sprintf(buf, "(Default: %i)", USER_CPU_DELAY_DEFAULT);
+        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_DELAY_DEFAULT);
         SetDlgItemText(hDlg, IDC_DELAY_DEFAULT, buf);
-        sprintf(buf, "(Default: %i)", USER_CPU_TIME_DEFAULT);
+        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_TIME_DEFAULT);
         SetDlgItemText(hDlg, IDC_BAILOUT_DEFAULT, buf);
 
         settingsLoaded[0] = TRUE;
@@ -159,7 +159,7 @@ static void LoadSettings(int n)         // dialogs created
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
             char buf[100];
-            sprintf(buf, consoleVersion[selected].info, ver);
+            sprintf_s(buf, sizeof(buf), consoleVersion[selected].info, ver);
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)buf);
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
@@ -216,7 +216,7 @@ static void SaveSettings()              // OK pressed
         if(emu.running)
         {
             // update view of CPU timing setup
-            sprintf(buf, "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
+            sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
             SetStatusText(STATUS_TIMING, buf);
         }
     }
@@ -598,8 +598,8 @@ static INT_PTR CALLBACK EditFileProc(
             char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
             char path[MAX_PATH], fullname[MAX_PATH];
             _splitpath(usel.selected->name, drive, dir, name, ext);
-            sprintf(path, "%s%s", drive, dir);
-            sprintf(fullname, "%s%s", name, ext);
+            sprintf_s(path, sizeof(path), "%s%s", drive, dir);
+            sprintf_s(fullname, sizeof(fullname), "%s%s", name, ext);
             SetDlgItemText(hwndDlg, IDC_FILE_INFO_TITLE, usel.selected->title);
             SetDlgItemText(hwndDlg, IDC_FILE_INFO_COMMENT, usel.selected->comment);
             SetDlgItemText(hwndDlg, IDC_FILE_INFO_FILENAME, fullname);

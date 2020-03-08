@@ -125,7 +125,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
                 int blocks, kb;
                 blocks = Memcard_ValidSizes[index] / Memcard_BlockSize;
                 kb = Memcard_ValidSizes[index] / 1024;
-                sprintf (buf, "%d blocks  (%d Kb)", blocks, kb); 
+                sprintf_s (buf, sizeof(buf), "%d blocks  (%d Kb)", blocks, kb);
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_INSERTSTRING, (WPARAM)index, (LPARAM)(LPSTR)buf);
             }
             SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_SETCURSEL, (WPARAM)0,  (LPARAM)0);
@@ -199,7 +199,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             }
 
             if (memcard[um_num].connected == TRUE) {
-                sprintf (buf, "Size: %d usable blocks (%d Kb)", (int)(memcard[um_num].size / Memcard_BlockSize - 5), (int)(memcard[um_num].size / 1024)); 
+                sprintf_s (buf, sizeof(buf), "Size: %d usable blocks (%d Kb)", (int)(memcard[um_num].size / Memcard_BlockSize - 5), (int)(memcard[um_num].size / 1024));
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
@@ -224,7 +224,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = NewMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
-                strcpy(buf, filename );
+                strcpy_s(buf, sizeof(buf), filename );
 
                 /* create the file */
                 if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE ;
@@ -249,7 +249,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = ChooseMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
-                strcpy(buf, filename );
+                strcpy_s (buf, sizeof(buf), filename );
 
                 filename = strrchr(buf, '\\');
                 if (filename == NULL) {
@@ -276,7 +276,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
                     if (Fnsize+1 + Pathsize+1 >= sizeof (memcard[um_num].filename)) {
-                        sprintf(buf, "File full path must be less than %i characters.", sizeof (memcard[um_num].filename) );
+                        sprintf_s (buf, sizeof(buf), "File full path must be less than %i characters.", sizeof (memcard[um_num].filename) );
                         MessageBox(hwndDlg, buf, "Invalid filename", 0);
                         return TRUE;
                     }
@@ -284,8 +284,8 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)(Pathsize+1), (LPARAM)(LPCTSTR)buf);
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT,  (WPARAM)(Fnsize+1), (LPARAM)(LPCTSTR)buf2);
 
-                    strcat(buf, "\\");
-                    strcat(buf, buf2);
+                    strcat_s(buf, sizeof(buf), "\\");
+                    strcat_s(buf, sizeof(buf), buf2);
                 }
 
                 if (emu.running == FALSE) {

@@ -13,13 +13,13 @@ static char     FontSjisFile[MAX_PATH];         // copy of USER_SJIS variable
 
 static void FontSetAnsiFile(char *filename)
 {
-    strcpy(FontAnsiFile, filename);
+    strcpy_s(FontAnsiFile, sizeof(FontAnsiFile), filename);
     SetConfigString(USER_ANSI, FontAnsiFile);
 }
 
 static void FontSetSjisFile(char *filename)
 {
-    strcpy(FontSjisFile, filename);
+    strcpy_s(FontSjisFile, sizeof(FontSjisFile), filename);
     SetConfigString(USER_SJIS, FontSjisFile);
 }
 
@@ -76,13 +76,13 @@ static void EnumFonts(HWND hwndDlg)
     SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_RESETCONTENT, 0, 0);
     SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_RESETCONTENT, 0, 0);
 
-    sprintf(FontPath, "%s\\*.szp", FontsDir);
+    sprintf_s(FontPath, sizeof(FontPath), "%s\\*.szp", FontsDir);
     hfff = FindFirstFile(FontPath, &fd);
 
     if(hfff == INVALID_HANDLE_VALUE) return;
     else
     {
-        sprintf(FontPath, "%s\\%s", FontsDir, fd.cFileName);
+        sprintf_s(FontPath, sizeof(FontPath), "%s\\%s", FontsDir, fd.cFileName);
         AddFont(hwndDlg, FontPath);
 
         if(!strcmp(FontAnsiFile, FontPath))
@@ -93,7 +93,7 @@ static void EnumFonts(HWND hwndDlg)
 
     while(FindNextFile(hfff, &fd))
     {
-        sprintf(FontPath, "%s\\%s", FontsDir, fd.cFileName);
+        sprintf_s(FontPath, sizeof(FontPath), "%s\\%s", FontsDir, fd.cFileName);
         AddFont(hwndDlg, FontPath);
 
         if(!strcmp(FontAnsiFile, FontPath))

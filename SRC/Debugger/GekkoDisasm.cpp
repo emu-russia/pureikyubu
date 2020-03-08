@@ -89,12 +89,12 @@ static void ill(void)
 static char * simm(int val, int hex, int s)
 {
     static char out[16];
-    if( ((val >= -256) && (val <= 256)) && !hex) sprintf(out, "%i", val);
+    if( ((val >= -256) && (val <= 256)) && !hex) sprintf_s (out, sizeof(out), "%i", val);
     else
     {
         uint16_t hexval = (uint16_t)val;
-        if((hexval & 0x8000) && s) sprintf(out, "-" HEX1 "%04X" HEX2, ((~hexval) & 0xffff) + 1);
-        else sprintf(out, HEX1 "%04X" HEX2, hexval);
+        if((hexval & 0x8000) && s) sprintf_s (out, sizeof(out), "-" HEX1 "%04X" HEX2, ((~hexval) & 0xffff) + 1);
+        else sprintf_s (out, sizeof(out), HEX1 "%04X" HEX2, hexval);
     }
     return out;
 }
@@ -104,7 +104,7 @@ static void put(char * mnem, uint32_t mask, uint32_t chkval=0, int iclass=PPC_DI
 {
     if( (Instr & mask) != chkval ) { ill(); return; }
     o->iclass |= iclass;
-    strncpy(o->mnemonic, mnem, sizeof(o->mnemonic));
+    strncpy_s (o->mnemonic, sizeof(o->mnemonic), mnem, sizeof(o->mnemonic));
 }
 
 // Simplified mnemonic trap conditions
@@ -124,17 +124,17 @@ static void trap(int L, int imm)
 #ifdef  SIMPLIFIED
     if(t_cond[rd] != NULL)
     {
-        sprintf(o->mnemonic, "t%c%s%c", t_mode[L & 1], t_cond[rd], imm ? 'i' : 0);
-        if(imm) sprintf(o->operands, "%s" COMMA "%s", REGA, simm(DIS_SIMM, 0, s));
-        else sprintf(o->operands, "%s" COMMA "%s", REGA, REGB);
+        sprintf_s (o->mnemonic, sizeof(o->mnemonic), "t%c%s%c", t_mode[L & 1], t_cond[rd], imm ? 'i' : 0);
+        if(imm) sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", REGA, simm(DIS_SIMM, 0, s));
+        else sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", REGA, REGB);
         o->iclass |= PPC_DISA_SIMPLIFIED;
     }
     else
 #endif
     {
-        sprintf(o->mnemonic, "t%c%c", t_mode[L & 1], imm ? 'i' : 0);
-        if(imm) sprintf(o->operands, "%i" COMMA "%s" COMMA "%s", rd, REGA, simm(DIS_SIMM, 0, s));
-        else sprintf(o->operands, "%i" COMMA "%s" COMMA "%s", rd, REGA, REGB);
+        sprintf_s (o->mnemonic, sizeof(o->mnemonic), "t%c%c", t_mode[L & 1], imm ? 'i' : 0);
+        if(imm) sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%s" COMMA "%s", rd, REGA, simm(DIS_SIMM, 0, s));
+        else sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%s" COMMA "%s", rd, REGA, REGB);
     }
     if(L) o->iclass |= PPC_DISA_64;
     o->r[1] = DIS_RA; if(!imm) o->r[2] = DIS_RB;
@@ -182,69 +182,69 @@ static void integer(char *mnem, char form, int dab, int hex=0, int s=1, int crfD
 {
     char * ptr = o->operands;
     int rd = DIS_RD, ra = DIS_RA, rb = DIS_RB;
-    strncpy(o->mnemonic, mnem, sizeof(o->mnemonic));
-    if(crfD) ptr += sprintf(ptr, "%s%i" COMMA, crname, rd >> 2); // CMP only
-    if(L) ptr += sprintf(ptr, "%i" COMMA, rd & 1);           // CMP only
+    strncpy_s (o->mnemonic, sizeof(o->mnemonic), mnem, sizeof(o->mnemonic));
+    if(crfD) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s%i" COMMA, crname, rd >> 2); // CMP only
+    if(L) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%i" COMMA, rd & 1);           // CMP only
     if(form == 'D')
     {
-        if(dab & DAB_D) ptr += sprintf(ptr, "%s", REGD);
+        if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGD);
         if(dab & DAB_A)
         {
-            if(dab & DAB_D) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGA);
+            if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGA);
         }
-        if(imm) ptr += sprintf(ptr, COMMA "%s", simm(s ? DIS_SIMM : DIS_UIMM, hex, s));
+        if(imm) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), COMMA "%s", simm(s ? DIS_SIMM : DIS_UIMM, hex, s));
     }
     else if(form == 'S')
     {
-        if(dab & ASB_A) ptr += sprintf(ptr, "%s", REGA);
+        if(dab & ASB_A) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGA);
         if(dab & ASB_S)
         {
-            if(dab & ASB_A) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGS);
+            if(dab & ASB_A) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGS);
         }
-        if(imm) ptr += sprintf(ptr, COMMA "%s", simm(s ? DIS_SIMM : DIS_UIMM, hex, s));
+        if(imm) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), COMMA "%s", simm(s ? DIS_SIMM : DIS_UIMM, hex, s));
     }
     else if(form == 'X')    // DAB
     {
-        if(dab & DAB_D) ptr += sprintf(ptr, "%s", REGD);
+        if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGD);
         if(dab & DAB_A)
         {
-            if(dab & DAB_D) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGA);
+            if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGA);
         }
         if(dab & DAB_B)
         {
-            if(dab & (DAB_D|DAB_A)) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGB);
+            if(dab & (DAB_D|DAB_A)) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGB);
         }
     }
     else if(form == 'F')    // FPU DAB
     {
-        if(dab & DAB_D) ptr += sprintf(ptr, "%s%i", fregname, rd);
+        if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s%i", fregname, rd);
         if(dab & DAB_A)
         {
-            if(dab & DAB_D) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGA);
+            if(dab & DAB_D) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGA);
         }
         if(dab & DAB_B)
         {
-            if(dab & (DAB_D|DAB_A)) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGB);
+            if(dab & (DAB_D|DAB_A)) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGB);
         }
     }
     else if(form == 'Z')    // ASB
     {
-        if(dab & ASB_A) ptr += sprintf(ptr, "%s", REGA);
+        if(dab & ASB_A) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGA);
         if(dab & ASB_S)
         {
-            if(dab & ASB_A) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGS);
+            if(dab & ASB_A) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGS);
         }
         if(dab & ASB_B)
         {
-            if(dab & (ASB_A|ASB_S)) ptr += sprintf(ptr, "%s", COMMA);
-            ptr += sprintf(ptr, "%s", REGB);
+            if(dab & (ASB_A|ASB_S)) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", COMMA);
+            ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s", REGB);
         }
     }
     else { ill(); return; }
@@ -275,11 +275,11 @@ static void cmp(char *l, char *i)
     }
 
 #ifdef  SIMPLIFIED
-    sprintf(mnem, "cmp%s%c%s", l, (rd & 1) ? 'd' : 'w', i);
+    sprintf_s (mnem, sizeof(mnem), "cmp%s%c%s", l, (rd & 1) ? 'd' : 'w', i);
     integer(mnem, (*i == 'i') ? 'D' : 'X', DAB_A|DAB_B, 0, 1, (rd >> 2) ? 1 : 0, 0);
     o->iclass |= PPC_DISA_SIMPLIFIED;
 #else
-    sprintf(mnem, "cmp%s%s", l, i);
+    sprintf_s (mnem, sizeof(mnem), "cmp%s%s", l, i);
     integer(mnem, (*i == 'i') ? 'D' : 'X', DAB_A|DAB_B, 0, 1, 1, 1);
 #endif
 }
@@ -304,7 +304,7 @@ static void addi(char *suffix)
     }
     if(DIS_UIMM & 0x8000)
     {
-        sprintf(mnem, "subi%s", suffix);
+        sprintf_s (mnem, sizeof(mnem), "subi%s", suffix);
 
         // Fix immediate field.
         uint16_t value = (uint16_t)(~(DIS_UIMM) + 1);
@@ -315,11 +315,11 @@ static void addi(char *suffix)
     }
     else
     {
-        sprintf(mnem, "addi%s", suffix);
+        sprintf_s (mnem, sizeof(mnem), "addi%s", suffix);
         integer(mnem, 'D', DAB_D|DAB_A, 0, 0);
     }
 #else
-    sprintf(mnem, "addi%s", suffix);
+    sprintf_s (mnem, sizeof(mnem), "addi%s", suffix);
     integer(mnem, 'D', DAB_D|DAB_A);
 #endif
 }
@@ -391,7 +391,7 @@ static void bcx(int Disp, int L)
         if(bo & 16)         // Branch always                            // BO[0]
         {
 #ifdef  SIMPLIFIED
-            sprintf(o->mnemonic, "b%s%s", r, b_opt[Disp ? AALK : LK]);
+            sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s", r, b_opt[Disp ? AALK : LK]);
             if(Disp) ptr = place_target(ptr, 0);
             o->iclass |= PPC_DISA_SIMPLIFIED;
             return;
@@ -404,7 +404,7 @@ static void bcx(int Disp, int L)
             char *cond = b_cond[((bo & 8) >> 1) | (bi & 3)];
             if(cond != NULL)                                            // BO[1]
             {
-                sprintf(o->mnemonic, "b%s%s%s%c", cond, r, b_opt[Disp ? AALK : LK], y);
+                sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s%s%c", cond, r, b_opt[Disp ? AALK : LK], y);
                 if(bi >= 4) ptr += sprintf(ptr, "%s%i", crname, bi >> 2);
                 if(Disp) ptr = place_target(ptr, bi >= 4);
                 o->iclass |= PPC_DISA_SIMPLIFIED;
@@ -420,7 +420,7 @@ static void bcx(int Disp, int L)
 #ifdef  SIMPLIFIED
         if(b_ctr[bo >> 1])
         {
-            sprintf(o->mnemonic, "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? AALK : LK], y);
+            sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? AALK : LK], y);
             if(!(bo & 16)) ptr += sprintf(ptr, "%i", bi);
             if(Disp) ptr = place_target(ptr, !(bo & 16));
             o->iclass |= PPC_DISA_SIMPLIFIED;
@@ -430,7 +430,7 @@ static void bcx(int Disp, int L)
     }
 
     // Not simplified standard form
-    sprintf(o->mnemonic, "bc%s%s", r, b_opt[Disp ? AALK : LK]);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "bc%s%s", r, b_opt[Disp ? AALK : LK]);
     ptr += sprintf(ptr, "%i" COMMA "%i", bo, bi);
     if(Disp) ptr = place_target(ptr, 1);
 }
@@ -444,7 +444,7 @@ static void bx(void)
     o->target = (AA ? 0 : DIS_PC) + bd;
  
     o->iclass |= PPC_DISA_BRANCH;
-    sprintf(o->mnemonic, "b%s", b_opt[AALK]);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s", b_opt[AALK]);
     place_target(o->operands, 0);
 }
 
@@ -452,8 +452,8 @@ static void bx(void)
 static void mcrf(void)
 {
     if(Instr & 0x63f801) { ill(); return; }
-    strncpy(o->mnemonic, "mcrf", sizeof(o->mnemonic));
-    sprintf(o->operands, "%s%i" COMMA "%s%i", crname, DIS_RD >> 2, crname, DIS_RA >> 2);
+    strncpy_s (o->mnemonic, sizeof(o->mnemonic), "mcrf", sizeof(o->mnemonic));
+    sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i", crname, DIS_RD >> 2, crname, DIS_RA >> 2);
 }
 
 // CR logic operations
@@ -468,24 +468,24 @@ static void crop(char *name, char *simp="", int ddd=0, int daa=0)
     {
         if( (crfD == crfA) && ddd )
         {
-            sprintf(o->mnemonic, "cr%s", simp);
-            sprintf(o->operands, "%i", crfD);
+            sprintf_s (o->mnemonic, sizeof(o->mnemonic), "cr%s", simp);
+            sprintf_s (o->operands, sizeof(o->operands), "%i", crfD);
             o->r[0] = crfD;
             o->iclass |= PPC_DISA_SIMPLIFIED;
             return;
         }
         if( daa )
         {
-            sprintf(o->mnemonic, "cr%s", simp);
-            sprintf(o->operands, "%i" COMMA "%i", crfD, crfA);
+            sprintf_s (o->mnemonic, sizeof(o->mnemonic), "cr%s", simp);
+            sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%i", crfD, crfA);
             o->r[0] = crfD; o->r[1] = crfA;
             o->iclass |= PPC_DISA_SIMPLIFIED;
             return;
         }
     }
 #endif
-    sprintf(o->mnemonic, "cr%s", name);
-    sprintf(o->operands, "%i" COMMA "%i" COMMA "%i", crfD, crfA, crfB);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "cr%s", name);
+    sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%i" COMMA "%i", crfD, crfA, crfB);
     o->r[0] = crfD; o->r[1] = crfA; o->r[2] = crfB;
 }
 
@@ -506,11 +506,11 @@ static void rlw(char *name, int rb, int ins=0)
 {
     int mb = DIS_MB, me = DIS_ME;
     char * ptr = o->operands;
-    sprintf(o->mnemonic, "rlw%s%c", name, Rc ? '.' : '\0');
-    ptr += sprintf(ptr, "%s" COMMA "%s" COMMA, REGA, REGS);
-    if(rb) ptr += sprintf(ptr, "%s" COMMA, REGB);
-    else   ptr += sprintf(ptr, "%i" COMMA, DIS_RB);     // sh
-    ptr += sprintf(ptr, "%i" COMMA "%i", mb, me);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "rlw%s%c", name, Rc ? '.' : '\0');
+    ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s" COMMA "%s" COMMA, REGA, REGS);
+    if(rb) ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%s" COMMA, REGB);
+    else   ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%i" COMMA, DIS_RB);     // sh
+    ptr += sprintf_s (ptr, sizeof(o->operands) - (ptr - o->operands), "%i" COMMA "%i", mb, me);
 
     // Put mask in target.
     MASK32(mb, me);
@@ -567,9 +567,9 @@ static void ldst(char *name, int x/*indexed*/, int load=1, int L=0, int string=0
     {
         int rd = DIS_RD, ra = DIS_RA;
         int16_t imm = DIS_SIMM;
-        strcpy (o->mnemonic, name);
-        if(fload) sprintf (o->operands, "%s%i" COMMA "%s" LPAREN "%s" RPAREN, fregname, rd, simm(imm, 0, 1), regname[ra]);
-        else sprintf (o->operands, "%s" COMMA "%s" LPAREN "%s" RPAREN, regname[rd], simm(imm, 0, 1), regname[ra]);
+        strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
+        if(fload) sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s" LPAREN "%s" RPAREN, fregname, rd, simm(imm, 0, 1), regname[ra]);
+        else sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s" LPAREN "%s" RPAREN, regname[rd], simm(imm, 0, 1), regname[ra]);
         o->r[0] = rd;
         o->r[1] = ra;
         o->immed = DIS_UIMM & 0x8000 ? DIS_UIMM | 0xFFFF0000 : DIS_UIMM;
@@ -600,11 +600,11 @@ static void movesr(char *name, int from, int L, int xform)
 {
     int reg = DIS_RD, sreg = DIS_RA & 0xF, regb = DIS_RB;
 
-    strncpy(o->mnemonic, name, sizeof(o->mnemonic));
+    strncpy_s (o->mnemonic, sizeof(o->mnemonic), name, sizeof(o->mnemonic));
     if(xform)
     {
         if(Instr & 0x001F0001) { ill(); return; }
-        sprintf(o->operands, "%s" COMMA "%s", regname[reg], regname[regb]);
+        sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", regname[reg], regname[regb]);
         o->r[0] = reg;
         o->r[1] = regb;
     }
@@ -613,13 +613,13 @@ static void movesr(char *name, int from, int L, int xform)
         if(Instr & 0x0010F801) { ill(); return; }
         if(from)
         {
-            sprintf(o->operands, "%s" COMMA "%i", regname[reg], sreg);
+            sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%i", regname[reg], sreg);
             o->r[0] = reg;
             o->r[1] = sreg;
         }
         else
         {
-            sprintf(o->operands, "%i" COMMA "%s", sreg, regname[reg]);
+            sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%s", sreg, regname[reg]);
             o->r[0] = sreg;
             o->r[1] = reg;
         }
@@ -636,14 +636,14 @@ static void mtcrf(void)
 #ifdef SIMPLIFIED
     if(crm == 0xFF)
     {
-        strncpy(o->mnemonic, "mtcr", sizeof(o->mnemonic));
-        sprintf(o->operands, "%s", regname[rs]);
+        strncpy_s (o->mnemonic, sizeof(o->mnemonic), "mtcr", sizeof(o->mnemonic));
+        sprintf_s (o->operands, sizeof(o->operands), "%s", regname[rs]);
     }
     else
 #endif
     {
-        strncpy(o->mnemonic, "mtcrf", sizeof(o->mnemonic));
-        sprintf(o->operands, HEX1 "%02X" HEX2 COMMA "%s", crm, regname[rs]);
+        strncpy_s (o->mnemonic, sizeof(o->mnemonic), "mtcrf", sizeof(o->mnemonic));
+        sprintf_s (o->operands, sizeof(o->operands), HEX1 "%02X" HEX2 COMMA "%s", crm, regname[rs]);
     }
     o->r[0] = rs;
 }
@@ -651,8 +651,8 @@ static void mtcrf(void)
 static void mcrxr(void)
 {
     if (Instr & 0x007FF800) { ill(); return; }
-    strcpy (o->mnemonic, "mcrxr");
-    sprintf (o->operands, "%s%i", crname, DIS_RD >> 2);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), "mcrxr");
+    sprintf_s (o->operands, sizeof(o->operands), "%s%i", crname, DIS_RD >> 2);
     o->r[0] = DIS_RD >> 2;
 }
 
@@ -750,7 +750,7 @@ static char *spr_name(int n)
 #endif
     }
 
-    sprintf(def, "%u", n);
+    sprintf_s(def, sizeof(def), "%u", n);
     return def;
 }
 
@@ -765,7 +765,7 @@ static char *tbr_name(int n)
         case 269: return "TBU";
     }
 
-    sprintf(def, "%u", n);
+    sprintf_s(def, sizeof(def), "%u", n);
     return def;
 }
 
@@ -783,23 +783,23 @@ static void movespr(int from)
     else { fix = "spr"; f = 0; }
 
     // Mnemonics and operands.
-    sprintf (o->mnemonic, "m%c%s", from ? 'f' : 't', fix);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "m%c%s", from ? 'f' : 't', fix);
     if (f)
     {
-        sprintf (o->operands, "%s", regname[DIS_RD]);
+        sprintf_s (o->operands, sizeof(o->operands), "%s", regname[DIS_RD]);
         o->r[0] = DIS_RD;
     }
     else
     {
         if (from)
         {
-            sprintf (o->operands, "%s" COMMA "%s", regname[DIS_RD], spr_name(spr));
+            sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", regname[DIS_RD], spr_name(spr));
             o->r[0] = DIS_RD;
             o->r[1] = spr;
         }
         else
         {
-            sprintf (o->operands, "%s" COMMA "%s", spr_name(spr), regname[DIS_RD]);
+            sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", spr_name(spr), regname[DIS_RD]);
             o->r[0] = spr;
             o->r[1] = DIS_RD;
         }
@@ -817,15 +817,15 @@ static void movetbr(void)
     else { fix = "tb"; f = 0; }
 
     // Mnemonics and operands.
-    sprintf (o->mnemonic, "mf%s", fix);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "mf%s", fix);
     if (f)
     {
-        sprintf (o->operands, "%s", regname[DIS_RD]);
+        sprintf_s (o->operands, sizeof(o->operands), "%s", regname[DIS_RD]);
         o->r[0] = DIS_RD;
     }
     else
     {
-        sprintf (o->operands, "%s" COMMA "%s", regname[DIS_RD], tbr_name(tbr));
+        sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s", regname[DIS_RD], tbr_name(tbr));
         o->r[0] = DIS_RD;
         o->r[1] = tbr;
     }
@@ -834,8 +834,8 @@ static void movetbr(void)
 static void srawi(void)
 {
     int rs = DIS_RS, ra = DIS_RA, sh = DIS_RB;
-    sprintf (o->mnemonic, "srawi%c", Rc ? '.' : 0);
-    sprintf (o->operands, "%s" COMMA "%s" COMMA "%i", regname[ra], regname[rs], sh);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "srawi%c", Rc ? '.' : 0);
+    sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s" COMMA "%i", regname[ra], regname[rs], sh);
     o->r[0] = ra;
     o->r[1] = rs;
     o->r[2] = sh;
@@ -845,8 +845,8 @@ static void srawi(void)
 static void sradi(void)
 {
     int rs = DIS_RS, ra = DIS_RA, sh = (((Instr >> 1) & 1) << 5) | DIS_RB;
-    sprintf (o->mnemonic, "sradi%c", Rc ? '.' : 0);
-    sprintf (o->operands, "%s" COMMA "%s" COMMA "%i", regname[ra], regname[rs], sh);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "sradi%c", Rc ? '.' : 0);
+    sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s" COMMA "%i", regname[ra], regname[rs], sh);
     o->r[0] = ra;
     o->r[1] = rs;
     o->r[2] = sh;
@@ -856,8 +856,8 @@ static void sradi(void)
 static void lsswi(char *name)
 {
     int rd = DIS_RD, ra = DIS_RA, nb = DIS_RB;
-    strcpy (o->mnemonic, name);
-    sprintf (o->operands, "%s" COMMA "%s" COMMA "%i", regname[rd], regname[ra], nb);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
+    sprintf_s (o->operands, sizeof(o->operands), "%s" COMMA "%s" COMMA "%i", regname[rd], regname[ra], nb);
     o->r[0] = rd;
     o->r[1] = ra;
     o->r[2] = nb;
@@ -876,28 +876,28 @@ static void fpu(char *name, uint32_t mask, int type, int flag=PPC_DISA_OTHER)
 
     if(Instr & mask) { ill(); return; }
 
-    strcpy (o->mnemonic, name);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
 
     switch (type)
     {
         case FPU_DAB:
-            sprintf (o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, b);
+            sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, b);
             o->r[0] = d; o->r[1] = a; o->r[2] = b;
             break;
         case FPU_DB:
-            sprintf (o->operands, "%s%i" COMMA "%s%i", fregname, d, fregname, b);
+            sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i", fregname, d, fregname, b);
             o->r[0] = d; o->r[1] = b;
             break;
         case FPU_DAC:
-            sprintf (o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c);
+            sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c);
             o->r[0] = d; o->r[1] = a; o->r[2] = c;
             break;
         case FPU_DACB:
-            sprintf (o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c, fregname, b);
+            sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c, fregname, b);
             o->r[0] = d; o->r[1] = a; o->r[2] = c; o->r[3] = b;
             break;
         case FPU_D:
-            sprintf (o->operands, "%s%i", fregname, d);
+            sprintf_s (o->operands, sizeof(o->operands), "%s%i", fregname, d);
             o->r[0] = d;
             break;
     }
@@ -911,8 +911,8 @@ static void fcmp(char *name)
 
     if (Instr & 0x00600001) { ill(); return; }
 
-    strcpy (o->mnemonic, name);
-    sprintf (o->operands, "%i" COMMA "%s%i" COMMA "%s%i", crfd, fregname, ra, fregname, rb);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
+    sprintf_s (o->operands, sizeof(o->operands), "%i" COMMA "%s%i" COMMA "%s%i", crfd, fregname, ra, fregname, rb);
     o->r[0] = crfd; o->r[1] = ra; o->r[2] = rb;
     o->iclass = PPC_DISA_FPU;
 }
@@ -923,8 +923,8 @@ static void mtfsf(void)
 
     if(Instr & 0x02010000) { ill(); return; }
 
-    sprintf (o->mnemonic, "mtfsf%c", Rc ? '.' : 0);
-    sprintf (o->operands, HEX1 "%02X" HEX2 COMMA "%s%i", fm, fregname, rb);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "mtfsf%c", Rc ? '.' : 0);
+    sprintf_s (o->operands, sizeof(o->operands), HEX1 "%02X" HEX2 COMMA "%s%i", fm, fregname, rb);
     o->r[0] = fm; o->r[1] = rb;
     o->iclass = PPC_DISA_FPU;
 }
@@ -935,8 +935,8 @@ static void mtfsb(char *name)
 
     if (Instr & 0x001FF800) { ill(); return; }
 
-    strcpy (o->mnemonic, name);
-    sprintf (o->operands, "%i", crbd);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
+    sprintf_s (o->operands, sizeof(o->operands), "%i", crbd);
     o->r[0] = crbd;
     o->iclass = PPC_DISA_FPU;
 }
@@ -947,8 +947,8 @@ static void mcrfs(void)
 
     if (Instr & 0x0063F801) { ill(); return; }
 
-    strcpy (o->mnemonic, "mcrfs");
-    sprintf (o->operands, "%s%i" COMMA "%s%i", crname, crfD, crname, crfS);
+    strcpy_s (o->mnemonic, sizeof(o->mnemonic), "mcrfs");
+    sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i", crname, crfD, crname, crfS);
     o->r[0] = crfD; o->r[1] = crfS;
     o->iclass = PPC_DISA_FPU;
 }
@@ -959,8 +959,8 @@ static void mtfsfi(void)
 
     if (Instr & 0x007F0800) { ill(); return; }
 
-    sprintf (o->mnemonic, "mtfsfi%c", Rc ? '.' : 0);
-    sprintf (o->operands, "%s%i" COMMA "%i", crname, crfD, imm);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "mtfsfi%c", Rc ? '.' : 0);
+    sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%i", crname, crfD, imm);
     o->r[0] = crfD; o->r[1] = imm;
     o->iclass = PPC_DISA_FPU;
 }
@@ -978,9 +978,9 @@ static void ps_cmpx(int n)
 {
     static char *fix[] = { "u0", "o0", "u1", "o1" };
     if(Instr & 0x00600001) { ill(); return; }
-    sprintf(o->mnemonic, "ps_cmp%s", fix[n]);
+    sprintf_s (o->mnemonic, sizeof(o->mnemonic), "ps_cmp%s", fix[n]);
     o->r[0] = DIS_RD>>2; o->r[1] = DIS_RA; o->r[2] = DIS_RB;
-    sprintf(o->operands, "%s%d" COMMA "%s%d" COMMA "%s%d", crname, o->r[0], fregname, o->r[1], fregname, o->r[2]);
+    sprintf_s (o->operands, sizeof(o->operands), "%s%d" COMMA "%s%d" COMMA "%s%d", crname, o->r[0], fregname, o->r[1], fregname, o->r[2]);
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC; 
 }
 
@@ -996,12 +996,12 @@ static char *ps_ldst_offs(unsigned long val)
     {
         if(val <= 128)
         {
-            sprintf(buf, "%i", val);
+            sprintf_s (buf, sizeof(buf), "%i", val);
             return buf;
         }
 
-        if(val & 0x800) sprintf(buf, "-" HEX1 "%03X" HEX2, ((~val) & 0xfff) + 1);
-        else sprintf(buf, HEX1 "%03X" HEX2, val);
+        if(val & 0x800) sprintf_s (buf, sizeof(buf), "-" HEX1 "%03X" HEX2, ((~val) & 0xfff) + 1);
+        else sprintf_s (buf, sizeof(buf), HEX1 "%03X" HEX2, val);
 
         return buf;
     }
@@ -1010,8 +1010,8 @@ static char *ps_ldst_offs(unsigned long val)
 static void ps_ldst(char *fix)
 {
   int s = DIS_RS, a = DIS_RA, d = (Instr & 0xfff);
-  sprintf(o->mnemonic, "psq_%s", fix);  
-  sprintf( o->operands, "%s%i" COMMA "%s" LPAREN "%s" RPAREN COMMA "%i" COMMA "%i",
+  sprintf_s (o->mnemonic, sizeof(o->mnemonic), "psq_%s", fix);
+  sprintf_s (o->operands, sizeof(o->operands), "%s%i" COMMA "%s" LPAREN "%s" RPAREN COMMA "%i" COMMA "%i",
            fregname, s, ps_ldst_offs(d), regname[a], (Instr >> 15) & 1, (Instr >> 12) & 7 );
   o->r[0] = s; o->r[1] = a; o->r[2] = DIS_RB >> 1;
   o->immed = d & 0x800 ? d | 0xFFFFF000 : d;
@@ -1022,8 +1022,8 @@ static void ps_ldstx(char *fix)
 {
     int d = DIS_RD, a = DIS_RA, b = DIS_RB;
     if(Instr & 1) { ill(); return; }
-    sprintf(o->mnemonic, "psq_%s", fix);
-    sprintf(o->operands, "%s%i" COMMA "%s" COMMA "%s" COMMA "%i" COMMA "%i", fregname, d, regname[a], regname[b], (Instr >> 10) & 1, (Instr >> 7) & 7);
+    sprintf_s(o->mnemonic, sizeof(o->mnemonic), "psq_%s", fix);
+    sprintf_s(o->operands, sizeof(o->operands), "%s%i" COMMA "%s" COMMA "%s" COMMA "%i" COMMA "%i", fregname, d, regname[a], regname[b], (Instr >> 10) & 1, (Instr >> 7) & 7);
     o->r[0] = d; o->r[1] = a; o->r[2] = b; o->r[3] = DIS_RC >> 1;
     o->iclass = PPC_DISA_FPU | PPC_DISA_LDST | PPC_DISA_SPECIFIC; 
 }
@@ -1031,8 +1031,8 @@ static void ps_ldstx(char *fix)
 static void ps_dacb(char *fix)
 {
     int a = DIS_RA, b = DIS_RB, c = DIS_RC, d = DIS_RD;
-    sprintf(o->mnemonic, "ps_%s%c", fix, Rc ? '.' : 0);
-    sprintf(o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c, fregname, b);
+    sprintf_s(o->mnemonic, sizeof(o->mnemonic), "ps_%s%c", fix, Rc ? '.' : 0);
+    sprintf_s(o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c, fregname, b);
     o->r[0] = d; o->r[1] = a; o->r[2] = c; o->r[3] = b; 
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
@@ -1041,8 +1041,8 @@ static void ps_dac(char *fix)
 {
     int a = DIS_RA, c = DIS_RC, d = DIS_RD;
     if(Instr & 0x0000F800) { ill(); return; }
-    sprintf(o->mnemonic, "ps_%s%c", fix, Rc ? '.' : 0);
-    sprintf(o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c);
+    sprintf_s(o->mnemonic, sizeof(o->mnemonic), "ps_%s%c", fix, Rc ? '.' : 0);
+    sprintf_s(o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, c);
     o->r[0] = d; o->r[1] = a; o->r[2] = c;
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
@@ -1051,8 +1051,8 @@ static void ps_dab(char *fix, int unmask=0)
 {
     int d = DIS_RD, a = DIS_RA, b = DIS_RB;
     if(Instr & 0x000007C0 && !unmask) { ill(); return; }
-    sprintf(o->mnemonic, "ps_%s%c", fix, Rc ? '.' : 0);
-    sprintf(o->operands, "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, b);
+    sprintf_s(o->mnemonic, sizeof(o->mnemonic), "ps_%s%c", fix, Rc ? '.' : 0);
+    sprintf_s(o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i" COMMA "%s%i", fregname, d, fregname, a, fregname, b);
     o->r[0] = d; o->r[1] = a; o->r[2] = b;
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
@@ -1062,8 +1062,8 @@ static void ps_db(char *fix, int aonly=0)
     int d = DIS_RD, b = DIS_RB;
     if(aonly) { if(Instr & 0x001F0000) { ill(); return; } }
     else  { if(Instr & 0x001F07C0) { ill(); return; } }
-    sprintf(o->mnemonic, "ps_%s%c", fix, Rc ? '.' : 0);
-    sprintf(o->operands, "%s%i" COMMA "%s%i", fregname, d, fregname, b);
+    sprintf_s(o->mnemonic, sizeof(o->mnemonic), "ps_%s%c", fix, Rc ? '.' : 0);
+    sprintf_s(o->operands, sizeof(o->operands), "%s%i" COMMA "%s%i", fregname, d, fregname, b);
     o->r[0] = d; o->r[1] = b;
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
@@ -1772,6 +1772,6 @@ char *PPCDisasmSimple(uint64_t pc, uint32_t instr)
     dis_out.instr = instr;
 
     PPCDisasm(&dis_out);
-    sprintf(output, "%08X  %08X  %-10s %s", (uint32_t)pc, instr, dis_out.mnemonic, dis_out.operands);
+    sprintf_s(output, sizeof(output), "%08X  %08X  %-10s %s", (uint32_t)pc, instr, dis_out.mnemonic, dis_out.operands);
     return output;
 }

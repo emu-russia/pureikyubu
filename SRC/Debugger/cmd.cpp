@@ -305,11 +305,12 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
                 con_print("out of file list. n must be 1..%i\n", usel.filenum);
                 return;
             }
-            strncpy(filepath, usel.files[n-1].name, 255);
+            strncpy_s(filepath, sizeof(filepath), usel.files[n-1].name, 255);
         }
-        else strncpy(filepath, argv[1], 255);
+        else strncpy_s(filepath, sizeof(filepath), argv[1], 255);
 
-        FILE *f = fopen(filepath, "rb");
+        FILE* f = nullptr;
+        fopen_s(&f, filepath, "rb");
         if(!f)
         {
             con_print("file not exist! filepath=%s\n", filepath);
@@ -442,7 +443,8 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
         sa = start_addr;
         end_addr = strtoul ( argv[2], NULL, 0 );
 
-        f = fopen ( "Data\\disa.txt", "wt" );
+        f = nullptr;
+        fopen_s ( &f, "Data\\disa.txt", "wt" );
         if (!f)
         {
             con_print ( "Cannot open output file!\n");
@@ -573,7 +575,7 @@ void cmd_logfile(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        strncpy(con.logfile, argv[1], sizeof(con.logfile));
+        strncpy_s (con.logfile, sizeof(con.logfile), argv[1], sizeof(con.logfile));
         con_print("logging into " GREEN "%s\n", con.logfile);
     }
 }
@@ -1253,7 +1255,8 @@ void cmd_script(char *file)
     // following code is copied from MAPLoad :)
 
     int size = FileSize(file);
-    FILE *f = fopen(file, "rt");
+    FILE* f = nullptr;
+    fopen_s (&f, file, "rt");
     if(!f)
     {
         con_print(RED "cannot open script file!\n");
@@ -1487,7 +1490,8 @@ void cmd_tree (int argc, char argv[][CON_LINELEN])
             callhist_count = 0;
         }
 
-        f = fopen ( "Data\\calltree.txt", "wt" );
+        f = nullptr;
+        fopen_s ( &f, "Data\\calltree.txt", "wt" );
         dump_subcalls ( start_addr, f, 0 );
         fclose ( f );
     }

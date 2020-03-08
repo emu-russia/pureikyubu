@@ -1,6 +1,5 @@
 // Dolwin file utilities
 #include "pch.h"
-#include <shlobj.h>
 
 static char tempBuf[1024];      // temporary buffer for file operations
 

@@ -7,7 +7,8 @@ static char tempBuf[1024];      // temporary buffer for file operations
 // get file size
 int FileSize(const char *filename)
 {
-    FILE *f = fopen(filename, "rb");
+    FILE* f = nullptr;
+    fopen_s(&f, filename, "rb");
     if(f == NULL) return 0;
     fseek(f, 0, SEEK_END);
     int size = ftell(f);
@@ -24,7 +25,8 @@ void * FileLoad(const char *filename, uint32_t *size)
 
     if(size) *size = 0;
 
-    f = fopen(filename, "rb");
+    f = nullptr;
+    fopen_s(&f, filename, "rb");
     if(f == NULL) return NULL;
 
     fseek(f, 0, SEEK_END);
@@ -47,7 +49,8 @@ void * FileLoad(const char *filename, uint32_t *size)
 // save data in file
 BOOL FileSave(const char *filename, void *data, uint32_t size)
 {
-    FILE *f = fopen(filename, "wb");
+    FILE* f = nullptr;
+    fopen_s(&f, filename, "wb");
     if(f == NULL) return FALSE;
 
     fwrite(data, size, 1, f);
@@ -68,16 +71,16 @@ char * FileOpen(HWND hwnd, int type)
     switch(type)
     {
         case FILE_TYPE_ALL:
-            strcpy(lastDir, GetConfigString(USER_LASTDIR_ALL, USER_LASTDIR_ALL_DEFAULT));
+            strcpy_s(lastDir, sizeof(lastDir), GetConfigString(USER_LASTDIR_ALL, USER_LASTDIR_ALL_DEFAULT));
             break;
         case FILE_TYPE_DVD:
-            strcpy(lastDir, GetConfigString(USER_LASTDIR_DVD, USER_LASTDIR_DVD_DEFAULT));
+            strcpy_s(lastDir, sizeof(lastDir), GetConfigString(USER_LASTDIR_DVD, USER_LASTDIR_DVD_DEFAULT));
             break;
         case FILE_TYPE_MAP:
-            strcpy(lastDir, GetConfigString(USER_LASTDIR_MAP, USER_LASTDIR_MAP_DEFAULT));
+            strcpy_s(lastDir, sizeof(lastDir), GetConfigString(USER_LASTDIR_MAP, USER_LASTDIR_MAP_DEFAULT));
             break;
         case FILE_TYPE_PATCH:
-            strcpy(lastDir, GetConfigString(USER_LASTDIR_PATCH, USER_LASTDIR_PATCH_DEFAULT));
+            strcpy_s(lastDir, sizeof(lastDir), GetConfigString(USER_LASTDIR_PATCH, USER_LASTDIR_PATCH_DEFAULT));
             break;
     }
 
@@ -183,10 +186,10 @@ char * FileOpen(HWND hwnd, int type)
 
     if(result)
     {
-        strcpy(tempBuf, szFileName);
+        strcpy_s(tempBuf, sizeof(tempBuf), szFileName);
 
         // save last directory
-        strcpy(lastDir, tempBuf);
+        strcpy_s(lastDir, sizeof(lastDir), tempBuf);
         int i = (int)strlen(lastDir) - 1;
         while(lastDir[i] != '\\') i--;
         lastDir[i+1] = '\0';
@@ -250,16 +253,16 @@ char * FileSmartSize(uint32_t size)
 {
     if(size < 1024)
     {
-        sprintf(tempBuf, "%i byte", size);
+        sprintf_s(tempBuf, sizeof(tempBuf), "%i byte", size);
     }
     else if(size < 1024*1024)
     {
-        sprintf(tempBuf, "%i KB", size/1024);
+        sprintf_s(tempBuf, sizeof(tempBuf), "%i KB", size/1024);
     }
     else if(size < 1024*1024*1024)
     {
-        sprintf(tempBuf, "%i MB", size/1024/1024);
+        sprintf_s(tempBuf, sizeof(tempBuf), "%i MB", size/1024/1024);
     }
-    else sprintf(tempBuf, "%1.1f GB", (float)size/1024/1024/1024);
+    else sprintf_s(tempBuf, sizeof(tempBuf), "%1.1f GB", (float)size/1024/1024/1024);
     return tempBuf;
 }

@@ -23,8 +23,6 @@ static  DWORD   checkTime;
 // ---------------------------------------------------------------------------
 
 // precede timer utility
-// stupid msdev hungs on asm { ... } blocks
-// so use single-line __asm expressions
 
 static void __fastcall MyReadTimeStampCounter(int64_t *ptr)
 {

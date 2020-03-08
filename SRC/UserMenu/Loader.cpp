@@ -51,7 +51,8 @@ uint32_t LoadDOL(char *dolname)
     DolHeader   dh;
 
     // try to open file
-    dol = fopen(dolname, "rb");
+    dol = nullptr;
+    fopen_s(&dol, dolname, "rb");
     if(!dol) return 0;
 
     // load DOL header and swap it for loader
@@ -261,7 +262,8 @@ uint32_t LoadELF(char *elfname)
     ElfPhdr     phdr;
     int         i;
 
-    f = fopen(elfname, "rb");
+    f = nullptr;
+    fopen_s(&f, elfname, "rb");
     if(!f) return 0;
 
     // check header
@@ -338,7 +340,8 @@ uint32_t LoadBIN(char *binname)
     int fsize = FileSize(binname);
 
     // try to load file
-    FILE * bin = fopen(binname, "rb");
+    FILE* bin = nullptr;
+    fopen_s(&bin, binname, "rb");
     if(bin == NULL) return 0;
 
     // nothing to load ?
@@ -385,7 +388,8 @@ bool LoadPatch(char * patchname, bool add)
     int patchNum = FileSize(patchname) / sizeof(Patch);
 
     // try to open file
-    FILE *f = fopen(patchname, "rb");
+    FILE* f = nullptr;
+    fopen_s(&f, patchname, "rb");
     if(f == NULL) return false;
 
     // print notification in debugger
@@ -522,7 +526,7 @@ static void LoadIniSettings()
 
     // show CPU timing setup
     char buf[64];
-    sprintf(buf, "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
+    sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
     SetStatusText(STATUS_TIMING, buf);
 }
 
@@ -534,14 +538,14 @@ static void AutoloadMap()
     _splitpath(ldat.currentFile, drive, dir, name, ext);
 
     // Step 1: try to load map from Data directory
-    if(ldat.dvd) sprintf(mapname, ".\\Data\\%s.map", ldat.gameID);
-    else sprintf(mapname, ".\\Data\\%s.map", name);
+    if(ldat.dvd) sprintf_s(mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
+    else sprintf_s(mapname, sizeof(mapname), ".\\Data\\%s.map", name);
     int ok = LoadMAP(mapname);
     if(ok) return;
  
     // Step 2: try to load map from file directory
-    if(ldat.dvd) sprintf(mapname, "%s%s%s.map", drive, dir, ldat.gameID);
-    else sprintf(mapname, "%s%s%s.map", drive, dir, name);
+    if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), "%s%s%s.map", drive, dir, ldat.gameID);
+    else sprintf_s (mapname, sizeof(mapname), "%s%s%s.map", drive, dir, name);
     ok = LoadMAP(mapname);
     if(ok) return;
 
@@ -551,8 +555,8 @@ static void AutoloadMap()
     // Step 3: make new map (find symbols)
     if(GetConfigInt(USER_MAKEMAP, USER_MAKEMAP_DEFAULT))
     {
-        if(ldat.dvd) sprintf(mapname, ".\\Data\\%s.map", ldat.gameID);
-        else sprintf(mapname, ".\\Data\\%s.map", name);
+        if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
+        else sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", name);
         DBReport( YEL "Making new MAP file : %s\n\n", mapname);
         MAPInit(mapname);
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
@@ -569,14 +573,14 @@ static void AutoloadPatch()
     _splitpath(ldat.currentFile, drive, dir, name, ext);
 
     // Step 1: try to load patch from Data directory
-    if(ldat.dvd) sprintf(patch, ".\\Data\\%s.patch", ldat.gameID);
-    else sprintf(patch, ".\\Data\\%s.patch", name);
+    if(ldat.dvd) sprintf_s (patch, sizeof(patch), ".\\Data\\%s.patch", ldat.gameID);
+    else sprintf_s (patch, sizeof(patch), ".\\Data\\%s.patch", name);
     BOOL ok = LoadPatch(patch);
     if(ok) return;
 
     // Step 2: try to load patch from file directory
-    if(ldat.dvd) sprintf(patch, "%s%s%s.patch", drive, dir, ldat.gameID);
-    else sprintf(patch, "%s%s%s.patch", drive, dir, name);
+    if(ldat.dvd) sprintf_s (patch, sizeof(patch), "%s%s%s.patch", drive, dir, ldat.gameID);
+    else sprintf_s (patch, sizeof(patch), "%s%s%s.patch", drive, dir, name);
     LoadPatch(patch);
 
     // sorry, no patches for this DVD/executable
@@ -597,7 +601,7 @@ static BOOL SetGameID(char *filename)
     diskID[4] = 0;
 
     // set GameID
-    sprintf( ldat.gameID, "%.4s%02X",
+    sprintf_s ( ldat.gameID, sizeof(ldat.gameID), "%.4s%02X",
              diskID, DVDBannerChecksum((void *)bnr) );
     free(bnr);
     return TRUE;
@@ -609,11 +613,11 @@ static BOOL SetGameID(char *filename)
 static void DoLoadFile(char *filename)
 {
     uint32_t entryPoint = 0;
-    char statusText[256];
+    char statusText[0x1000];
     uint32_t s_time = GetTickCount();
 
     // loading progress
-    sprintf(statusText, "Loading %s", filename);
+    sprintf_s(statusText, sizeof(statusText), "Loading %s", filename);
     SetStatusText(STATUS_PROGRESS, statusText);
 
     // load file
@@ -657,8 +661,8 @@ static void DoLoadFile(char *filename)
     {
         char fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
         _splitpath(filename, drive, dir, name, ext);
-        sprintf(fullPath, "%s%s", drive, dir);
-        strcpy(ldat.currentFileName, name);
+        sprintf_s(fullPath, sizeof(fullPath), "%s%s", drive, dir);
+        strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), name);
 
         // add new recent entry
         AddRecentFile(filename);
@@ -683,7 +687,7 @@ static void DoLoadFile(char *filename)
     // show boot time
     uint32_t e_time = GetTickCount();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
-    sprintf(statusText, "Boot time %1.2f sec", ldat.boottime);
+    sprintf_s (statusText, sizeof(statusText), "Boot time %1.2f sec", ldat.boottime);
     SetStatusText(STATUS_PROGRESS, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
@@ -696,7 +700,7 @@ static void DoLoadFile(char *filename)
 // set next file to load
 void LoadFile(char *filename)
 {
-    strcpy(ldat.currentFile, filename);
+    strcpy_s(ldat.currentFile, sizeof(ldat.currentFile), filename);
     SetConfigString(USER_LASTFILE, ldat.currentFile);
 }
 

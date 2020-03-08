@@ -59,7 +59,7 @@ namespace ManagedUi
                     Directory.SetCurrentDirectory(config.Settings.LastDirMap);
                     break;
                 case FileType.Patch:
-                    openFileDialog.Filter = "Patch files|*.patch|All Files|*.*";
+                    openFileDialog.Filter = "Patch files|*.xmlpatch|All Files|*.*";
                     Directory.SetCurrentDirectory(config.Settings.LastDirPatch);
                     break;
             }

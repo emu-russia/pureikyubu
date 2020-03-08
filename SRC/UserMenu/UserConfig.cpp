@@ -141,7 +141,7 @@ void SetConfigInt(char *var, int newVal, char *path)
         RegCreate(path);
     }
 
-    sprintf(buf, "0x%.8X", newVal);
+    sprintf_s(buf, sizeof(buf), "0x%.8X", newVal);
 
     RegSet(var, (LPBYTE)buf, (int)strlen(buf), REG_SZ);
     RegClose();
@@ -150,7 +150,7 @@ void SetConfigInt(char *var, int newVal, char *path)
 void KillConfigInt(char *var, char *path)
 {
     char key[256];
-    sprintf(key, "%s\\%s", path, var);
+    sprintf_s(key, sizeof(key), "%s\\%s", path, var);
     RegDelete(key);
 }
 
@@ -211,7 +211,7 @@ void SetGameInfo(char *gameId, char title[64], char comment[128])
     // to interleave INI sections for best view.
     if(!present)
     {
-        sprintf(newComment, "%s\0xd\n", comment);
+        sprintf_s(newComment, sizeof(newComment), "%s\0xd\n", comment);
     }
 
     // write alternate game title

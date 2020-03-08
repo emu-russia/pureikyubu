@@ -13,7 +13,7 @@ void DolwinError(const char *title, const char *fmt, ...)
     char buf[0x1000];
 
     va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
+    vsprintf_s(buf, sizeof(buf), fmt, arg);
     va_end(arg);
 
     if (emu.doldebug)
@@ -42,7 +42,7 @@ BOOL DolwinQuestion(const char *title, const char *fmt, ...)
     char buf[0x1000];
 
     va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
+    vsprintf_s(buf, sizeof(buf), fmt, arg);
     va_end(arg);
 
     int btn = MessageBox(
@@ -66,7 +66,7 @@ void DolwinReport(const char *fmt, ...)
     char buf[0x1000];
 
     va_start(arg, fmt);
-    vsprintf(buf, fmt, arg);
+    vsprintf_s(buf, sizeof(buf), fmt, arg);
     va_end(arg);
 
     MessageBox(NULL, buf, APPNAME " Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);

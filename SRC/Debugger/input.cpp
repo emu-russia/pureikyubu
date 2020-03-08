@@ -178,10 +178,10 @@ void con_tokenizing(char *line)
                 return;
             }
 
-            strncpy(roll.tokens[roll.tokencount], line + start, end - start);
+            strncpy_s (roll.tokens[roll.tokencount], sizeof(roll.tokens[roll.tokencount]), line + start, end - start);
 
             // make lower only first token
-            if(roll.tokencount == 0) _strlwr(roll.tokens[roll.tokencount]);
+            if(roll.tokencount == 0) _strlwr_s(roll.tokens[roll.tokencount], sizeof(roll.tokens[roll.tokencount]));
             roll.tokencount++;
         }
         else if(!endl)
@@ -204,7 +204,8 @@ void con_tokenizing(char *line)
                 return;
             }
 
-            strncpy(roll.tokens[roll.tokencount++], line + start, end - start);
+            strncpy_s (roll.tokens[roll.tokencount], sizeof(roll.tokens[roll.tokencount]), line + start, end - start);
+            roll.tokencount++;
         }
     }
 }
@@ -260,7 +261,7 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
                 roll.editlen = (int)strlen(roll.editline);
                 if(!roll.editlen) return;
                 if(testempty(roll.editline)) return;
-                strcpy(roll.history[roll.historypos], roll.editline);
+                strcpy_s (roll.history[roll.historypos], sizeof(roll.history[roll.historypos]), roll.editline);
                 roll.historypos++;
                 if(roll.historypos > 255) roll.historypos = 0;
                 roll.historycur = roll.historypos;
@@ -282,7 +283,7 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
                     if(--roll.historycur < 0) roll.historycur = 0;
                     else
                     {
-                        strcpy(roll.editline, roll.history[roll.historycur]);
+                        strcpy_s (roll.editline, sizeof(roll.editline), roll.history[roll.historycur]);
                         roll.editpos = roll.editlen = (int)strlen(roll.editline);
                         con_update(CON_UPDATE_EDIT);
                     }
@@ -309,7 +310,7 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
                     }
                     else
                     {
-                        strcpy(roll.editline, roll.history[roll.historycur]);
+                        strcpy_s (roll.editline, sizeof(roll.editline), roll.history[roll.historycur]);
                         roll.editpos = roll.editlen = (int)strlen(roll.editline);
                         con_update(CON_UPDATE_EDIT);
                     }

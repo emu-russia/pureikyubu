@@ -68,9 +68,9 @@ void con_recalc_wnds()
 
 void con_blt_region(int regY, int regH)
 {
-    COORD       pos = { 0, regY };
+    COORD       pos = { 0, (SHORT)regY };
     COORD       sz = { CON_WIDTH, CON_HEIGHT };
-    SMALL_RECT  rgn = { 0, regY, 79, (regY + regH - 1) };
+    SMALL_RECT  rgn = { 0, (SHORT)regY, 79, (SHORT)(regY + regH - 1) };
     BOOL        success = WriteConsoleOutput(con.output, *con.buf, sz, pos, &rgn);
 }
 
@@ -135,13 +135,13 @@ void con_print_at(int X, int Y, char *text)
 
 void con_status(char *txt)
 {
-    sprintf(roll.statusline, " %s\n", txt);
+    sprintf_s (roll.statusline, sizeof(roll.statusline), " %s\n", txt);
     con_update(CON_UPDATE_STAT);
 }
 
 void con_cursorxy(int x, int y)
 {
-    COORD   cr = { x, y };
+    COORD   cr = { (SHORT)x, (SHORT)y };
     SetConsoleCursorPosition(con.output, cr);
 }
 
@@ -169,7 +169,7 @@ void con_printf_at(int x, int y, char *txt, ...)
     static char buf[256];
 
     va_start(varg, txt);
-    vsprintf(buf, txt, varg);
+    vsprintf_s (buf, sizeof(buf), txt, varg);
     con_print_at(x, y, buf);
     va_end(varg);
 }
@@ -189,16 +189,16 @@ static char * string_to_HTML_string(char *txt)
     size_t len = strlen(txt);
 
     logcurcol = NULL;
-    ptr += sprintf(ptr, "%s", logcol[7]);
+    ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "%s", logcol[7]);
 
     for(int n=0; n<len;)
     {
         char c = txt[n];
         if(c == 1)
         {
-            if(logcurcol) ptr += sprintf(ptr, "</font>");
+            if(logcurcol) ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "</font>");
             logcurcol = logcol[txt[n+1]];
-            ptr += sprintf(ptr, "%s", logcurcol);
+            ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "%s", logcurcol);
             n+=2;
         }
         else if(c == 2)
@@ -207,12 +207,12 @@ static char * string_to_HTML_string(char *txt)
         }
         else if(c == '<')
         {
-            ptr += sprintf(ptr, "&lt;");
+            ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "&lt;");
             n++;
         }
         else if(c == '>')
         {
-            ptr += sprintf(ptr, "&gt;");
+            ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "&gt;");
             n++;
         }
         else
@@ -222,8 +222,8 @@ static char * string_to_HTML_string(char *txt)
         }
     }
 
-    if(logcurcol) ptr += sprintf(ptr, "</font>");
-    ptr += sprintf(ptr, "\n");
+    if(logcurcol) ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "</font>");
+    ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "\n");
     *ptr++ = 0;
     return html;
 }
@@ -236,11 +236,15 @@ static void log_console_output(char *txt)
     {
         if(!con.logf)
         {
-            con.logf = fopen(con.logfile, "w");
-            fprintf(con.logf, "<html>\n");
-            fprintf(con.logf, "<style>pre { font-family: Small; font-size: 8pt; }</style>\n");
-            fprintf(con.logf, "<body bgcolor=#000000>\n");
-            fprintf(con.logf, "<pre>\n");
+            con.logf = nullptr;
+            fopen_s (&con.logf, con.logfile, "w");
+            if (con.logf)
+            {
+                fprintf(con.logf, "<html>\n");
+                fprintf(con.logf, "<style>pre { font-family: Small; font-size: 8pt; }</style>\n");
+                fprintf(con.logf, "<body bgcolor=#000000>\n");
+                fprintf(con.logf, "<pre>\n");
+            }
         }
 
         if(con.logf)
@@ -263,13 +267,13 @@ void con_add_roller_line(char *txt, int err)
     // insert error color
     if(err)
     {
-        sprintf(line, BRED "%s", txt);
+        sprintf_s(line, sizeof(line), BRED "%s", txt);
         ptr = line;
     }
 
     // roll console "roller" 1 line up
     roll.rollpos = con_wraproll(roll.rollpos, 1);
-    strncpy(roll.data[roll.rollpos], ptr, CON_LINELEN-1);
+    strncpy_s(roll.data[roll.rollpos], sizeof(roll.data[roll.rollpos]), ptr, CON_LINELEN-1);
     log_console_output(string_to_HTML_string(ptr));
     con_update(CON_UPDATE_MSGS);
 }
@@ -457,7 +461,7 @@ void con_error(const char *txt, ...)
     // emulator can do output, even if console closed
     if(!con.active) return;
 
-    sprintf(buf, BRED);
+    sprintf_s(buf, sizeof(buf), BRED);
     va_start(arg, txt);
     vsprintf(buf+strlen(BRED), txt, arg);
     va_end(arg);
@@ -495,7 +499,7 @@ void con_print(const char *txt, ...)
     // emulator can do output, even if console closed
     if(!con.active) return;
 
-    sprintf(buf, NORM);
+    sprintf_s(buf, sizeof(buf), NORM);
     va_start(arg, txt);
     vsprintf(buf+strlen(NORM), txt, arg);
     va_end(arg);

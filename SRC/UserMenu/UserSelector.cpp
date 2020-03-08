@@ -61,7 +61,8 @@ static void add_path(char *path)
     // save new path, and increase "pathnum"
     usel.paths[usel.pathnum] = (char *)malloc(len);
     VERIFY(usel.paths[usel.pathnum] == NULL, "Not enough memory for new PATH.");
-    strcpy(usel.paths[usel.pathnum++], path);
+    strcpy_s(usel.paths[usel.pathnum], len, path);
+    usel.pathnum++;
 }
 
 // load PATH user variable and cut it on pieces into "paths" list
@@ -134,9 +135,9 @@ bool AddSelectorPath(char *fullPath)
         char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
         VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
         if(!_stricmp(old, "<EMPTY>"))
-            sprintf(temp, "%s", fullPath);
+            sprintf_s(temp, sizeof(temp), "%s", fullPath);
         else
-            sprintf(temp, "%s;%s", old, fullPath);
+            sprintf_s(temp, sizeof(temp), "%s;%s", old, fullPath);
         SetConfigString(USER_PATH, temp);
         add_path(fullPath);
         return true;
@@ -401,14 +402,15 @@ static void add_file(char *file, int fsize, int type)
     }
 
     // try to open file
-    FILE *f = fopen(file, "rb");
+    FILE* f = nullptr;
+    fopen_s(&f, file, "rb");
     if(f == NULL) return;
     fclose(f);
 
     // save file info
     item.type = type;
     item.size = fsize;
-    strcpy(item.name, file);
+    strcpy_s(item.name, sizeof(item.name), file);
 
     if(type == SELECTOR_FILE_DVD)
     {
@@ -426,15 +428,15 @@ static void add_file(char *file, int fsize, int type)
         diskID[4] = 0;
 
         // set GameID
-        sprintf( item.id, "%.4s%02X",
+        sprintf_s ( item.id, sizeof(item.id), "%.4s%02X",
                  diskID, DVDBannerChecksum((void *)bnr) );
 
         // set game name and comment
         if(GetGameInfo(item.id, item.title, item.comment) == FALSE)
         {
             // use banner info instead (and remove line-feeds)
-            strncpy(item.title, (char *)bnr->comments[0].longTitle, MAX_TITLE);
-            strncpy(item.comment, (char *)bnr->comments[0].comment, MAX_COMMENT);
+            strncpy_s(item.title, sizeof(item.title), (char *)bnr->comments[0].longTitle, MAX_TITLE);
+            strncpy_s(item.comment, sizeof(item.comment), (char *)bnr->comments[0].comment, MAX_COMMENT);
             fix_string(item.title);
             fix_string(item.comment);
         }
@@ -470,11 +472,11 @@ static void add_file(char *file, int fsize, int type)
         else if(!stricmp(ext, ".dol")) sprintf(item.id, "D%02X%03X", size, checksum);
         else
 /*/
-        strcpy(item.id, "-");
+        strcpy_s (item.id, sizeof(item.id), "-");
 
         if(GetGameInfo(name, item.title, item.comment) == FALSE)
         {
-            strcpy(item.title, name);
+            strcpy_s (item.title, sizeof(item.title), name);
             item.comment[0] = 0;
         }
     }
@@ -636,7 +638,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     if(selected)
     {
         char progress[1024];
-        sprintf(progress, "#%i: %s", (int)lvi.lParam + 1, file->name);
+        sprintf_s(progress, sizeof(progress), "#%i: %s", (int)lvi.lParam + 1, file->name);
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -751,7 +753,7 @@ void UpdateSelector()
             filter >>= 8;
             if(!allow) { m++; continue; }
 
-            sprintf(search, "%s%s", usel.paths[dir], mask[m]);
+            sprintf_s(search, sizeof(search), "%s%s", usel.paths[dir], mask[m]);
 
             hfff = FindFirstFile(search, &fd);
             if(hfff != INVALID_HANDLE_VALUE)
@@ -760,7 +762,7 @@ void UpdateSelector()
                 {
                     if(~fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                     {
-                        sprintf(found, "%s%s", usel.paths[dir], fd.cFileName);
+                        sprintf_s(found, sizeof(found), "%s%s", usel.paths[dir], fd.cFileName);
                         add_file(found, fd.nFileSizeLow, type[m]);
                     }
                 }
@@ -860,7 +862,7 @@ static void mouseclick(int rmb)
     {
         // show item number for debugger's 'boot {n}' command
         char progress[1024];
-        sprintf(progress, "#%i: %s", item + 1, file->name);
+        sprintf_s(progress, sizeof(progress), "#%i: %s", item + 1, file->name);
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -899,7 +901,7 @@ static void doubleclick()
 
     UserFile *file = &usel.files[item];
     char filename[256];
-    strcpy(filename, file->name);
+    strcpy_s(filename, sizeof(filename), file->name);
 
     // load file
     LoadFile(filename);
@@ -930,7 +932,7 @@ void ScrollSelector(int letter)
     for(int n=0; n<usel.filenum; n++)
     {
         UserFile *file = &usel.files[n];
-        char c = tolower(file->title[0]);
+        int c = tolower(file->title[0]);
         if(c == letter)
         {
             SelectorSetSelected(n);

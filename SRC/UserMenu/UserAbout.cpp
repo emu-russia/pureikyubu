@@ -26,8 +26,9 @@ static INT_PTR CALLBACK AboutProc(
             SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
             CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-            sprintf(
+            sprintf_s(
                 tmpbuf,
+                sizeof(tmpbuf),
                 APPNAME " - " APPDESC "\n"
                 "Copyright 2003-2020, Dolwin team\n"
                 "Build version %s (%s, %s) "

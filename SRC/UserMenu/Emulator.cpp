@@ -23,13 +23,13 @@ void EMUGetHwConfig(HWConfig * config)
     config->exi_osReport = GetConfigInt(USER_OS_REPORT, USER_OS_REPORT_DEFAULT) & 1;
     config->exi_rtc = GetConfigInt(USER_RTC, USER_RTC_DEFAULT) & 1;
 
-    strcpy(config->ansiFilename, GetConfigString(USER_ANSI, USER_ANSI_DEFAULT));
-    strcpy(config->sjisFilename, GetConfigString(USER_SJIS, USER_SJIS_DEFAULT));
+    strcpy_s (config->ansiFilename, sizeof(config->ansiFilename), GetConfigString(USER_ANSI, USER_ANSI_DEFAULT));
+    strcpy_s (config->sjisFilename, sizeof(config->sjisFilename), GetConfigString(USER_SJIS, USER_SJIS_DEFAULT));
 
     config->MemcardA_Connected = GetConfigInt(MemcardA_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
     config->MemcardB_Connected = GetConfigInt(MemcardB_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
-    strcpy(config->MemcardA_Filename, GetConfigString(MemcardA_Filename_Key, "*", HKEY_MEMCARD));
-    strcpy(config->MemcardB_Filename, GetConfigString(MemcardB_Filename_Key, "*", HKEY_MEMCARD));
+    strcpy_s (config->MemcardA_Filename, sizeof(config->MemcardA_Filename), GetConfigString(MemcardA_Filename_Key, "*", HKEY_MEMCARD));
+    strcpy_s (config->MemcardB_Filename, sizeof(config->MemcardB_Filename), GetConfigString(MemcardB_Filename_Key, "*", HKEY_MEMCARD));
     config->Memcard_SyncSave = GetConfigInt(Memcard_SyncSave_Key, FALSE, HKEY_MEMCARD) & 1;
 
     config->gxpoll = GetConfigInt(USER_GX_POLL, USER_GX_POLL_DEFAULT) & 1;

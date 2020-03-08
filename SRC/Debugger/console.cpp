@@ -77,7 +77,7 @@ void con_open()
     con.data = 0x80000000;
     con.text = PC;
     con_set_disa_cur(con.text);
-    strcpy(con.logfile, CON_LOG_FILE);
+    strcpy_s (con.logfile, sizeof(con.logfile), CON_LOG_FILE);
 
     // create console 
     AllocConsole();

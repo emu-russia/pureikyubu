@@ -136,14 +136,14 @@ static int GetMenuItemIndex(HMENU hMenu, char *item)
 static void SetRecentEntry(int index, char *str)
 {
     char var[256];
-    sprintf(var, USER_RECENT, index);
+    sprintf_s (var, sizeof(var), USER_RECENT, index);
     SetConfigString(var, str);
 }
 
 static char *GetRecentEntry(int index)
 {
     char var[256];
-    sprintf(var, USER_RECENT, index);
+    sprintf_s (var, sizeof(var), USER_RECENT, index);
     return GetConfigString(var, "");
 }
 
@@ -186,7 +186,7 @@ void UpdateRecentMenu(HWND hwnd)
 
         for(int i=0, n = RecentNum; i<RecentNum; i++, n--)
         {
-            sprintf(buf, "%s", FileShortName(GetRecentEntry(n), 3));
+            sprintf_s(buf, sizeof(buf), "%s", FileShortName(GetRecentEntry(n), 3));
             AppendMenu(hReloadMenu, MF_STRING, ID_FILE_RECENT_1+i, buf);
         }
     }
@@ -207,7 +207,7 @@ void AddRecentFile(char *path)
             // place old recent to the top
             // and move upper recents down
             char old[256];
-            sprintf(old, "%s", GetRecentEntry(n));
+            sprintf_s (old, sizeof(old), "%s", GetRecentEntry(n));
             for(n=n+1; n<=RecentNum; n++)
             {
                 SetRecentEntry(n-1, GetRecentEntry(n));
@@ -446,22 +446,22 @@ void OnMainWindowOpened()
     {
         if(GetGameInfo(ldat.gameID, gameTitle, comment) == 0)
         {
-            sprintf(gameTitle, "%s", ldat.currentFileName);
+            sprintf_s (gameTitle, sizeof(gameTitle), "%s", ldat.currentFileName);
         }
-        sprintf(newTitle, prefix, gameTitle);
+        sprintf_s (newTitle, sizeof(newTitle), prefix, gameTitle);
     }
     else
     {
         if(GetGameInfo(ldat.currentFileName, gameTitle, comment) == 0)
         {
-            sprintf(gameTitle, "%s demo", ldat.currentFileName);
+            sprintf_s (gameTitle, sizeof(gameTitle), "%s demo", ldat.currentFileName);
         }
-        sprintf(newTitle, prefix, gameTitle);
+        sprintf_s (newTitle, sizeof(newTitle), prefix, gameTitle);
     }
     SetWindowText(wnd.hMainWindow, newTitle);
 
     // user profiler
-    OpenProfiler();
+    OpenProfiler(GetConfigInt(USER_PROFILE, USER_PROFILE_DEFAULT));
 
     // set cursor back to normal
     SetCursor(LoadCursor(NULL, IDC_ARROW));
@@ -642,7 +642,8 @@ loadFile:
 
                 // load bootrom
                 case ID_FILE_IPLMENU:
-                    f = fopen("bootrom.dol", "r");
+                    f = nullptr;
+                    fopen_s(&f, "bootrom.dol", "r");
                     if(f == NULL)
                     {
                         DolwinReport(
@@ -930,7 +931,7 @@ loadFile:
         {
             char fileName[256];
 
-            strcpy(fileName, "");
+            strcpy_s(fileName, sizeof(fileName), "");
             DragQueryFile((HDROP)wParam, 0, fileName, sizeof(fileName));
             DragFinish((HDROP)wParam);
 

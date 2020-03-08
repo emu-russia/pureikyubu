@@ -1,5 +1,5 @@
 // controls
-void    OpenProfiler();
+void    OpenProfiler(bool enable);
 void    UpdateProfiler();
 
 // additive profiler calls

@@ -137,7 +137,7 @@ void con_run_execute()
     int64_t old = TBR;
     con.running = TRUE;
 
-    while(1)
+    while(emu.running)
     {
         IPTExecuteOpcode();
 

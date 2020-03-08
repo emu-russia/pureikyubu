@@ -18,13 +18,11 @@ static  int64_t     dvdStartTime, dvdStopTime;
 static  int64_t     cpuTime, gfxTime, sfxTime, padTime, dvdTime, idleTime;
 static  int64_t     ONE_SECOND;
 static  int64_t     fpsTime, mipsTime;
-static  DWORD   checkTime;
+static  DWORD       checkTime;
 
 // ---------------------------------------------------------------------------
 
 // precede timer utility
-// stupid msdev hungs on asm { ... } blocks
-// so use single-line __asm expressions
 
 static void __fastcall MyReadTimeStampCounter(int64_t *ptr)
 {
@@ -77,10 +75,10 @@ static float GetClockSpeed()
 
 // ---------------------------------------------------------------------------
 
-void OpenProfiler()
+void OpenProfiler(bool enable)
 {
     // load user variable
-    Profiler = GetConfigInt(USER_PROFILE, USER_PROFILE_DEFAULT);
+    Profiler = enable;
 
     // status window should be valid
     if(!IsWindow(wnd.hStatusWindow)) Profiler = FALSE;
@@ -136,7 +134,7 @@ void UpdateProfiler()
         diff = cur - fpsTime;
         if(diff >= ONE_SECOND)
         {
-            sprintf(buf, "FPS:%u", vi.frames);
+            sprintf_s(buf, sizeof(buf), "FPS:%u", vi.frames);
             vi.frames = 0;
             SetStatusText(STATUS_FPS, buf);
             MyReadTimeStampCounter(&fpsTime);
@@ -147,7 +145,7 @@ void UpdateProfiler()
         diff = cur - mipsTime;
         if(cur >= ONE_SECOND)
         {
-            sprintf(mips, "%.1f", (float)cpu.ops / 1000000.0f);
+            sprintf_s(mips, sizeof(mips), "%.1f", (float)cpu.ops / 1000000.0f);
             cpu.ops = 0;
             MyReadTimeStampCounter(&mipsTime);
         }
@@ -161,7 +159,7 @@ void UpdateProfiler()
         {
             //sprintf(buf, "mips:%s  core:%-2.1f  fifo:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f", 
             //sprintf(buf, "mips:%s  core:%-2.1f  gfx:%-2.1f  snd:%-2.1f  pad:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
-            sprintf(buf, "mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f", 
+            sprintf_s (buf, sizeof(buf), "mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
                 mips,
                 (double)cpuTime * 100 / (double)total,
                 (double)gfxTime * 100 / (double)total,
