@@ -15,11 +15,14 @@
 #include <intrin.h>
 #include <tchar.h>
 
-#include "HighLevel/HighLevel.h"
-#include "Hardware/Hardware.h"
-#include "Core/Memory.h"
-#include "Core/Gekko.h"
-#include "Core/Interpreter.h"
+#include "../../SRC/HighLevel/HighLevel.h"
+#include "../../SRC/Hardware/Hardware.h"
+#include "../../SRC/Core/Memory.h"
+#include "../../SRC/Core/Gekko.h"
+#include "../../SRC/Core/Interpreter.h"
 
 #include "DebuggerStubs.h"
 #include "UserStubs.h"
+#include "StatusLine.h"
+#include "File.h"
+#include "Profiler.h"

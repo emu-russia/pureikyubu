@@ -51,3 +51,23 @@ void DolwinReport(const char* fmt, ...)
 
     MessageBoxA(NULL, buf, "Dolwin Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
 }
+
+void UpdateMainWindow(bool peek)
+{
+
+}
+
+void ApplyPatches(bool load, int32_t a, int32_t b)
+{
+
+}
+
+long PADReadButtons(long padnum, PADState* state)
+{
+    return 1;
+}
+
+long PADSetRumble(long padnum, long cmd)
+{
+    return 1;
+}

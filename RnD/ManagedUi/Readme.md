@@ -13,3 +13,5 @@ User interface rewritten in c#
 - Get/SetStatusText
 - Loader
 - Emulator
+- Selector
+- DVDBanner

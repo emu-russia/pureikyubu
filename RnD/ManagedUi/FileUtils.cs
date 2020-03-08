@@ -38,31 +38,39 @@ namespace ManagedUi
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static string FileOpen (FileType type)
+        public static string FileOpen (FileType type, Config config)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
+
+            string prevDir = Directory.GetCurrentDirectory();
 
             switch (type)
             {
                 case FileType.All:
                     openFileDialog.Filter = "All Supported Files|*.dol;*.elf;*.bin;*.gcm;*.iso|GameCube Executable Files|*.dol;*.elf|Binary Files|*.bin|GameCube DVD Images|*.gcm;*.iso|All Files|*.*";
+                    Directory.SetCurrentDirectory(config.Settings.LastDirAll);
                     break;
                 case FileType.Dvd:
                     openFileDialog.Filter = "GameCube DVD Images|*.gcm;*.iso|All Files|*.*";
+                    Directory.SetCurrentDirectory(config.Settings.LastDirDvd);
                     break;
                 case FileType.Map:
                     openFileDialog.Filter = "Symbolic information files|*.map|All Files|*.*";
+                    Directory.SetCurrentDirectory(config.Settings.LastDirMap);
                     break;
                 case FileType.Patch:
                     openFileDialog.Filter = "Patch files|*.patch|All Files|*.*";
+                    Directory.SetCurrentDirectory(config.Settings.LastDirPatch);
                     break;
             }
 
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                Directory.SetCurrentDirectory(prevDir);
                 return openFileDialog.FileName;
             }
 
+            Directory.SetCurrentDirectory(prevDir);
             return null;
         }
 
