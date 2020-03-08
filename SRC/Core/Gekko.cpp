@@ -74,7 +74,6 @@ void CPUOpen(int bailout, int delay, int counterFactor)
     cpu.decreq = 0;
 
     // select core
-    CPUStart = IPTStart;
     CPUException = IPTException;
 
     // set CPU memory operations to default (using MEM*);

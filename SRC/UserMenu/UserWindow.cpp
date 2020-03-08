@@ -408,7 +408,7 @@ static void OnMainWindowCreate(HWND hwnd)
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
     // simulate close operation, like we just stopped emu
-    OnMainWindowClosed();
+    OnMainWindowClosing();
 
     // set cursor back to normal
     SetCursor(LoadCursor(NULL, IDC_ARROW));
@@ -641,7 +641,6 @@ loadFile:
                 // unload file (STOP)
                 case ID_FILE_UNLOAD:
                     EMUClose();
-                    DolwinMainLoop();
                     return 0;
 
                 // load bootrom
@@ -879,7 +878,6 @@ loadFile:
                         emu.doldebug = TRUE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
                         SetStatusText(STATUS_PROGRESS, "Debugger opened");
-                        if(emu.running) DBStart();
                     }
                     else
                     {   // close
@@ -888,7 +886,6 @@ loadFile:
                         emu.doldebug = FALSE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
                         SetStatusText(STATUS_PROGRESS, "Debugger closed");
-                        if(emu.running) CPUStart();
                     }
                     return 0;
 

@@ -91,7 +91,6 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     // debugger has its own core, to control CPU execution
     if (emu.doldebug)
     {
-        CPUStart = DBStart;
         CPUException = DBException;
     }
 
@@ -99,7 +98,17 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     OnMainWindowOpened();
 
     // start emulation!
-    CPUStart();
+    if (emu.doldebug)
+    {
+        DBStart();
+    }
+    else
+    {
+        while (emu.running)
+        {
+            IPTExecuteOpcode();
+        }
+    }
 }
 
 // this function calls every time, after user stops emulation

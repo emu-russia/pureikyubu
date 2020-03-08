@@ -75,19 +75,6 @@ void DolwinReport(const char *fmt, ...)
 // ---------------------------------------------------------------------------
 // WinMain (very first run-time initialization and main loop)
 
-// long jump buffer is used, because we cant be sure, that UpdateMainWindow
-// is returned normally. example situation : emulation was already stopped by
-// EMUClose, but UpdateMainWindow is already called by some hardware to update
-// Dolwin main window; as result, UpdateMainWindow will return to nowhere, because
-// emulation is stopped already (and hardware is closed).
-static jmp_buf mainloop;
-
-// jump to emulator's main loop
-void DolwinMainLoop()
-{
-    longjmp(mainloop, 0);
-}
-
 // check for multiple instancies
 static void LockMultipleCalls()
 {
@@ -167,9 +154,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // init emu and user interface (emulator will be initialized
     // during main window creation).
     CreateMainWindow();
-
-    // set long jump buffer to main loop
-    setjmp(mainloop);
 
     // roll main loop
     for(;;)

@@ -211,7 +211,6 @@ extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 void    CPUInit();
 void    CPUFini();
 void    CPUOpen(int bailout, int delay, int counterFactor);
-extern  void (*CPUStart)();         // start from PC
 void    CPUTick();                  // modify counters
 
 // there is no need in CPUStop

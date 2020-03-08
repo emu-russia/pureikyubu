@@ -624,8 +624,6 @@ BEGIN
     END
     POPUP "&Help"
     BEGIN
-        MENUITEM "Web Site",                    ID_HELP_WEBSITE, GRAYED
-        MENUITEM SEPARATOR
         MENUITEM "A&bout Dolwin...",            ID_HELP_ABOUT
     END
 END

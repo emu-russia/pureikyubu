@@ -1,15 +1,6 @@
 // default C interpreter (opcode parser).
 #include "pch.h"
 
-// start to execute from PC
-void IPTStart()
-{
-    for(;;)
-    {
-        IPTExecuteOpcode();
-    }
-}
-
 // parse and execute single opcode
 void IPTExecuteOpcode()
 {

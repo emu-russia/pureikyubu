@@ -14,6 +14,5 @@
 #include "Interpreter/c_system.h"
 
 // interpreter core API
-void    IPTStart();
 void    IPTExecuteOpcode();
 void    IPTException(uint32_t code);

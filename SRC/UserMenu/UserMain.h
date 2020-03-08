@@ -1,6 +1,3 @@
-// fall-back into main loop
-void    DolwinMainLoop();
-
 // basic message output
 void    DolwinError(const char *title, const char *fmt, ...);
 BOOL    DolwinQuestion(const char *title, const char *fmt, ...);
