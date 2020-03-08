@@ -11,8 +11,8 @@ void (__fastcall *hw_write16[HW_MAX_KNOWN])(uint32_t, uint32_t);
 void (__fastcall *hw_read32 [HW_MAX_KNOWN])(uint32_t, uint32_t *);
 void (__fastcall *hw_write32[HW_MAX_KNOWN])(uint32_t, uint32_t);
 
-static BOOL hw_assert;      // assert on not implemented HW in non DEBUG
-static BOOL update;         // 1: HW update enabled
+static bool hw_assert;      // assert on not implemented HW in non DEBUG
+static bool update;         // 1: HW update enabled
 
 // ---------------------------------------------------------------------------
 // default hardware R/W operations.
@@ -26,11 +26,8 @@ static void __fastcall def_hw_read8(uint32_t addr, uint32_t *reg)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access :  R8 %08X (pc:%08X)", addr, PC );
-        else *reg = 0;
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access :  R8 %08X (pc:%08X)", addr, PC );
     }
 }
 
@@ -42,10 +39,8 @@ static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access :  W8 %08X = %02X (pc:%08X)", addr, (uint8_t)data, PC );
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access :  W8 %08X = %02X (pc:%08X)", addr, (uint8_t)data, PC );
     }
 }
 
@@ -57,11 +52,8 @@ static void __fastcall def_hw_read16(uint32_t addr, uint32_t *reg)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access : R16 %08X (pc:%08X)", addr, PC );
-        else *reg = 0;
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access : R16 %08X (pc:%08X)", addr, PC );
     }
 }
 
@@ -73,10 +65,8 @@ static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access : W16 %08X = %04X (pc:%08X)", addr, (uint16_t)data, PC );
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access : W16 %08X = %04X (pc:%08X)", addr, (uint16_t)data, PC );
     }
 }
 
@@ -88,11 +78,8 @@ static void __fastcall def_hw_read32(uint32_t addr, uint32_t *reg)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access : R32 %08X (pc:%08X)", addr, PC );
-        else *reg = 0;
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access : R32 %08X (pc:%08X)", addr, PC );
     }
 }
 
@@ -104,10 +91,8 @@ static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
     }
     else
     {
-        hw_assert = GetConfigInt(USER_HW_ASSERT, USER_HW_ASSERT_DEFAULT);
-
-        if(hw_assert) DolwinError( APPNAME " Hardware Not Implemented",
-                                   "unhandled HW access : W32 %08X = %08X (pc:%08X)", addr, data, PC );
+        DolwinError( "Hardware Not Implemented",
+                     "unhandled HW access : W32 %08X = %08X (pc:%08X)", addr, data, PC );
     }
 }
 
@@ -161,7 +146,7 @@ void HWSetTrap(
     if(!( (addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN)) ))
     {
         DolwinError(
-            APPNAME " Hardware sub-system error",
+            "Hardware sub-system error",
             "Trap address is out of GAMECUBE registers range.\n"
             "address : %08X\n", addr
         );
@@ -183,7 +168,7 @@ void HWSetTrap(
         // should never happen
         default:
             DolwinError(
-                APPNAME " Hardware sub-system error",
+                "Hardware sub-system error",
                 "Unknown trap type : %u (%08X)",
                 type, addr
             );
@@ -286,8 +271,7 @@ void HWUpdate()
 }
 
 // allow/disallow HW update
-void HWEnableUpdate(BOOL en)
+void HWEnableUpdate(bool en)
 {
     update = en;
-    if(MEGA_HLE_MODE) update = 0;
 }

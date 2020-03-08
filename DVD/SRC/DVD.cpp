@@ -6,7 +6,7 @@ DVD dvd;
 // ---------------------------------------------------------------------------
 // select current dvd 
 
-long DVDSetCurrent(char *file)
+bool DVDSetCurrent(char *file)
 {
     // close previously selected file
     GCMClose();

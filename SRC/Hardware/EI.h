@@ -85,7 +85,7 @@ typedef struct EIControl
     SRAM        sram;           // battery-backed memory (misc console settings)
     uint8_t*    ansiFont;       // bootrom font (loaded from file)
     uint8_t*    sjisFont;
-    BOOL        rtc;            // 1: RTC enabled
+    bool        rtc;            // 1: RTC enabled
     uint32_t    rtcVal;         // last updated RTC value
     uint32_t    ad16;           // trace step
     char        uart[256];      // UART I/O buffer
@@ -94,12 +94,12 @@ typedef struct EIControl
     // helper variables used for EXI transfers
     int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
     uint32_t    ad16_cmd;       // command for AD16
-    BOOL        firstImm;       // first imm write is always command
+    bool        firstImm;       // first imm write is always command
     uint32_t    mxaddr;         // "address" inside MX chip for transfers
-    BOOL        uartNE;         
+    bool        uartNE;
 
-    BOOL        log;            // allow log EXI activities
-    BOOL        osReport;       // allow UART debugger output (log not affecting this)
+    bool        log;            // allow log EXI activities
+    bool        osReport;       // allow UART debugger output (log not affecting this)
 } EIControl;
 
 extern  EIControl exi;

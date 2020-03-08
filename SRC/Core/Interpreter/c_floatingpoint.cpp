@@ -1,5 +1,5 @@
 // Floating-Point Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // ---------------------------------------------------------------------------
@@ -526,7 +526,7 @@ OP(FCMPU)
         else c = 2;
         
         FPSCR = (FPSCR & 0xffff0fff) | (c << 12);
-        CR = (CR & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
+        PPC_CR = (PPC_CR & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
         if(IS_SNAN(da) || IS_SNAN(db))
         {
             FPSCR = FPSCR | 0x01000000;
@@ -550,7 +550,7 @@ OP(FCMPO)
         else c = 2;
         
         FPSCR = (FPSCR & 0xffff0fff) | (c << 12);
-        CR = (CR & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
+        PPC_CR = (PPC_CR & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
         if(IS_SNAN(da) || IS_SNAN(db))
         {
             FPSCR = FPSCR | 0x01000000;
@@ -587,8 +587,8 @@ OP(MFFSD)
 OP(MCRFS)
 {
     uint32_t fp = (FPSCR >> (28 - RA)) & 0xf;
-    CR &= ~(0xf0000000 >> RD);
-    CR |= fp << (28 - RD);
+    PPC_CR &= ~(0xf0000000 >> RD);
+    PPC_CR |= fp << (28 - RD);
 }
 
 // mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]

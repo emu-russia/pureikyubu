@@ -108,13 +108,11 @@ static void LoadSettings(int n)         // dialogs created
         CheckDlgButton(hDlg, IDC_ENSURE_WINDALL, BST_UNCHECKED);
         EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
 
-        int selected = GetConfigInt(USER_CPU, USER_CPU_DEFAULT);
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_RESETCONTENT, 0, 0);
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Interpreter");
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"JIT Compiler");
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_SETCURSEL, selected - 1, 0);
+        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_SETCURSEL, 0, 0);
 
-        selected = GetConfigInt(USER_MMU, USER_MMU_DEFAULT);
+        bool selected = GetConfigInt(USER_MMU, USER_MMU_DEFAULT);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_RESETCONTENT, 0, 0);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Simple translation");
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Advanced (Linux)");

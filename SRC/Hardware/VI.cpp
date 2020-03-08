@@ -382,11 +382,11 @@ void VIOpen()
     // open GDI (if need)
     if(vi.xfb)
     {
-        BOOL res = GDIOpen(wnd.hMainWindow, 640, 480, &vi.gfxbuf);
-        if(res == FALSE)
+        bool res = GDIOpen(wnd.hMainWindow, 640, 480, &vi.gfxbuf);
+        if(!res)
         {
             DolwinReport("VI cant startup GDI");
-            vi.xfb = FALSE;
+            vi.xfb = false;
         }
     }
 

@@ -1,5 +1,5 @@
 // Integer Compare Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // a = ra (signed)

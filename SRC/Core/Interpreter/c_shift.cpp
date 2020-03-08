@@ -1,5 +1,5 @@
 // Integer Shift Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // n = rb[27-31]

@@ -51,7 +51,7 @@ static void CreateStatusBar()
 }
 
 // change text in specified statusbar part
-void SetStatusText(int sbPart, char *text, BOOL post)
+void SetStatusText(int sbPart, char *text, bool post)
 {
     if(wnd.hStatusWindow == NULL) return;
     if(post)
@@ -425,6 +425,13 @@ static void OnMainWindowDestroy()
     exit(1);        // return good
 }
 
+// emulation start in progress
+void OnMainWindowOpening()
+{
+    // set loading cursor
+    SetCursor(LoadCursor(NULL, IDC_WAIT));
+}
+
 // emulation has started - do proper actions
 void OnMainWindowOpened()
 {
@@ -457,10 +464,13 @@ void OnMainWindowOpened()
 
     // user profiler
     OpenProfiler();
+
+    // set cursor back to normal
+    SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
-// emulation is stopped - do proper actions
-void OnMainWindowClosed()
+// emulation stop in progress
+void OnMainWindowClosing()
 {
     // restore current working directory
     SetCurrentDirectory(ldat.cwd);
@@ -468,8 +478,8 @@ void OnMainWindowClosed()
     // enable selector
     CreateSelector();
     ModifySelectorControls(usel.active);
-    EnableMenuItem( GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
-                    wnd.hMainMenu, "&Options") ), 1, MF_BYPOSITION | MF_ENABLED );
+    EnableMenuItem(GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
+        wnd.hMainMenu, "&Options")), 1, MF_BYPOSITION | MF_ENABLED);
 
     // redraw window
     ShowWindow(wnd.hMainWindow, SW_HIDE);
@@ -479,6 +489,16 @@ void OnMainWindowClosed()
     // set to Idle
     SetWindowText(wnd.hMainWindow, WIN_NAME);
     ResetStatusBar();
+
+    // set loading cursor
+    SetCursor(LoadCursor(NULL, IDC_WAIT));
+}
+
+// emulation is stopped - do proper actions
+void OnMainWindowClosed()
+{
+    // set cursor back to normal
+    SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 // ---------------------------------------------------------------------------
@@ -520,7 +540,7 @@ void ResizeMainWindow(int width, int height)
 }
 
 // update message queue
-void UpdateMainWindow(BOOL peek)
+void UpdateMainWindow(bool peek)
 {
     static MSG msg;
 
@@ -583,7 +603,10 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             {
                 LoadRecentFile(LOWORD(wParam) - ID_FILE_RECENT_1 + 1);
                 EMUClose();
-                EMUOpen();
+                EMUOpen(
+                    GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+                    GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+                    GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
             }
             else switch(LOWORD(wParam))
             {
@@ -594,7 +617,10 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 loadFile:
                         LoadFile(name);
                         EMUClose();
-                        EMUOpen();
+                        EMUOpen(
+                            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+                            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+                            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
                     }
                     return 0;
 
@@ -605,7 +631,10 @@ loadFile:
                     {
                         LoadRecentFile(1);
                         EMUClose();
-                        EMUOpen();
+                        EMUOpen(
+                            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+                            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+                            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
                     }
                     return 0;
 

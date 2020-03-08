@@ -481,7 +481,7 @@ void SIPoll()
     if(SI_POLL_REG & SI_POLL_EN0)
     {
         // update pad input buffer
-        BOOL connected = FALSE;
+        bool connected = false;
         if(PADReadButtons) connected = PADReadButtons(0, &si.pad[0]);
 
         // set RDST flag
@@ -495,7 +495,7 @@ void SIPoll()
     if(SI_POLL_REG & SI_POLL_EN1)
     {
         // update pad input buffer
-        BOOL connected = FALSE;
+        bool connected = false;
         if(PADReadButtons) connected = PADReadButtons(1, &si.pad[1]);
 
         // set RDST flag
@@ -509,7 +509,7 @@ void SIPoll()
     if(SI_POLL_REG & SI_POLL_EN2)
     {
         // update pad input buffer
-        BOOL connected = FALSE;
+        bool connected = false;
         if(PADReadButtons) connected = PADReadButtons(2, &si.pad[2]);
 
         // set RDST flag
@@ -523,7 +523,7 @@ void SIPoll()
     if(SI_POLL_REG & SI_POLL_EN3)
     {
         // update pad input buffer
-        BOOL connected = FALSE;
+        bool connected = false;
         if(PADReadButtons) connected = PADReadButtons(3, &si.pad[3]);
 
         // set RDST flag
@@ -547,7 +547,7 @@ void SIPoll()
 // ---------------------------------------------------------------------------
 // init
 
-void SIOpen(BOOL fake)
+void SIOpen(bool fake)
 {
     DBReport(CYAN "SI: Serial interface driver\n");
 

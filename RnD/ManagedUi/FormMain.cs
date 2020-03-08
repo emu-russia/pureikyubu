@@ -64,5 +64,10 @@ namespace ManagedUi
         {
             aboutShown = false;
         }
+
+        private void testNativeDllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DolwinNativeDll.Test();
+        }
     }
 }

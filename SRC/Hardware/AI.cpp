@@ -125,26 +125,26 @@ static void AISetDMASampleRate(long rate)
 
 static void __fastcall write_dmah(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[0] = TRUE;
+    ai.madr.valid[0] = true;
     ai.madr.shadow.hi = (uint16_t)data;
 
     // setup buffer
     if(ai.madr.valid[0] && ai.madr.valid[1])
     {
-        ai.madr.valid[0] = ai.madr.valid[1] = FALSE;
+        ai.madr.valid[0] = ai.madr.valid[1] = false;
         ai.lastDma = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
     }
 }
 
 static void __fastcall write_dmal(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[1] = TRUE;
+    ai.madr.valid[1] = true;
     ai.madr.shadow.lo = (uint16_t)data;
 
     // setup buffer
     if(ai.madr.valid[0] && ai.madr.valid[1])
     {
-        ai.madr.valid[0] = ai.madr.valid[1] = FALSE;
+        ai.madr.valid[0] = ai.madr.valid[1] = false;
         ai.lastDma = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
     }
 }

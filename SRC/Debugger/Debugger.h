@@ -24,8 +24,8 @@
 #define MC      CYAN "MC : "
 
 // '\n' is supported (no auto-linefeed!)
-extern  void (*DBHalt)(char *text, ...);    // always breaks emulation
-extern  void (*DBReport)(char *text, ...);  // do debugger output
+extern  void (*DBHalt)(const char *text, ...);    // always breaks emulation
+extern  void (*DBReport)(const char *text, ...);  // do debugger output
 
 void    DBOpen();                           // open debugger window ("integrate")
 void    DBClose();                          // close debugger completely

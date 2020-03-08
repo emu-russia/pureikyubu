@@ -154,8 +154,8 @@ typedef struct Patch
 } Patch;
 #pragma pack()
 
-BOOL    LoadPatch(char * patchname, BOOL add=FALSE);
-void    ApplyPatches(BOOL load=0, int32_t a=0, int32_t b=-1);
+bool    LoadPatch(char * patchname, bool add=false);
+void    ApplyPatches(bool load=0, int32_t a=0, int32_t b=-1);
 void    UnloadPatch();
 
 // ---------------------------------------------------------------------------
@@ -168,22 +168,18 @@ void    ReloadFile();
 // all loader variables are placed here
 typedef struct LoaderData
 {
-    BOOL    cmdline;                // loaded from command line ?
+    bool    cmdline;                // loaded from command line ?
     char    cwd[1024];              // current working directory
     uint32_t     binOffset;              // binary file loading offset
-    BOOL    dvd;                    // 1, if loaded file is DVD image
+    bool    dvd;                    // 1, if loaded file is DVD image
     char    gameID[16];             // GameID, for dvd
-    char    currentFile[MAX_PATH];  // next file to be loaded or re-loaded
+    char    currentFile[0x1000];    // next file to be loaded or re-loaded
     char    currentFileName[256];   // name of loaded file (without extension)
-    float     boottime;               // in seconds
+    float   boottime;               // in seconds
 
-    BOOL    enablePatch;            // allow patches, if 1
+    bool    enablePatch;            // allow patches, if 1
     uint32_t     patchNum;               // number of patches in table
     Patch*  patches;                // patch table
-
-    // identify game for hacks
-    BOOL    freeLoader;
-    BOOL    actionReplay;
 } LoaderData;
 
 extern  LoaderData ldat;

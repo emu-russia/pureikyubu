@@ -71,17 +71,17 @@ extern void (__fastcall *MEMWriteDouble)(uint32_t addr, uint64_t *data);  // sto
 extern uint32_t(__fastcall *MEMFetch)(uint32_t addr);
 
 // memory mapper API
-extern uint32_t(__fastcall *MEMEffectiveToPhysical)(uint32_t ea, BOOL IR); // translate
-void    MEMMap(BOOL IR, BOOL DR, uint32_t startEA, uint32_t startPA, uint32_t length);
-void    MEMDoRemap(BOOL IR, BOOL DR);
-void    MEMRemapMemory(BOOL IR, BOOL DR);
+extern uint32_t(__fastcall *MEMEffectiveToPhysical)(uint32_t ea, bool IR); // translate
+void    MEMMap(bool IR, bool DR, uint32_t startEA, uint32_t startPA, uint32_t length);
+void    MEMDoRemap(bool IR, bool DR);
+void    MEMRemapMemory(bool IR, bool DR);
 
 // other memory APIs
 void    MEMInit();                                              // init
 void    MEMFini();                                              // deinit
-void    MEMOpen();                                              // open
+void    MEMOpen(int mode);                                      // open
 void    MEMClose();                                             // close
-void    MEMSelect(int mode, BOOL save=1);                       // select translation mode
+void    MEMSelect(int mode, bool save=true);                    // select translation mode
 extern "C" uint32_t __fastcall MEMSwap(uint32_t data);          // swap long
 extern "C" uint16_t __fastcall MEMSwapHalf(uint16_t data);      // swap short
 void    MEMSwapArea(uint32_t *addr, int count);           // swap longs
@@ -93,16 +93,16 @@ void    MEMSwapAreaHalf(uint16_t *addr, int count);       // swap shorts
 typedef struct MEMControl
 {
     // latch variables
-    BOOL        inited;             // inited ?
-    BOOL        opened;             // opened ?
+    bool        inited;             // inited ?
+    bool        opened;             // opened ?
 
     // memory state
     int         mmu;                // translation mode (0: simple, 1: mmu)
-    BOOL        mmudirect;          // direct mmu translation (mean no lookup tables)
+    bool        mmudirect;          // direct mmu translation (mean no lookup tables)
     uint8_t*    ram;                // main memory (RAMSIZE)
     uint8_t**   imap;               // instruction translation lookup table (alive only when mmu)
     uint8_t**   dmap;               // data translation lookup table (alive only when mmu)
-    BOOL        ir, dr;             // remap request
+    bool        ir, dr;             // remap request
 
     uint8_t     lc[0x40000+4096];   // L2 locked cache
 } MEMControl;

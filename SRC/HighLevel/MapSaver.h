@@ -1,1 +1,1 @@
-void    SaveMAP(char *mapname="this");
+void    SaveMAP(const char *mapname="this");

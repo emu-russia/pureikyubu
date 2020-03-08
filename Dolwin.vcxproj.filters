@@ -13,12 +13,6 @@
     <Filter Include="GCN High Level">
       <UniqueIdentifier>{89f79858-7882-4cc0-a254-6726ae01445e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{167fa71e-5d66-4e52-8836-de7511b66968}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core\Interpreter">
-      <UniqueIdentifier>{5c49dcb6-30df-4b77-ada7-391bdb862659}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Debugger">
       <UniqueIdentifier>{c95b6c67-8f65-4d78-8bdb-57536346d5ec}</UniqueIdentifier>
     </Filter>
@@ -102,9 +96,6 @@
     <ClCompile Include="SRC\HighLevel\DSP.cpp">
       <Filter>GCN High Level</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\HighLevel\DVDBanner.cpp">
-      <Filter>GCN High Level</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\HighLevel\HLE.cpp">
       <Filter>GCN High Level</Filter>
     </ClCompile>
@@ -128,63 +119,6 @@
     </ClCompile>
     <ClCompile Include="SRC\HighLevel\Symbols.cpp">
       <Filter>GCN High Level</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_branch.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_compare.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_condition.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_floatingpoint.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_fploadstore.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_integer.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_loadstore.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_logical.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_pairedsingle.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_psloadstore.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_rotate.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_shift.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_system.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter\c_tables.cpp">
-      <Filter>Core\Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Emulator.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Gekko.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Interpreter.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Loader.cpp">
-      <Filter>Core</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Core\Memory.cpp">
-      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Debugger\break.cpp">
       <Filter>Debugger</Filter>
@@ -218,6 +152,15 @@
     </ClCompile>
     <ClCompile Include="SRC\Hardware\AudioNull.cpp">
       <Filter>GCN Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\DVDBanner.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\Loader.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\UserMenu\Emulator.cpp">
+      <Filter>User Menu</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -254,13 +197,7 @@
     <ClInclude Include="SRC\UserMenu\UserWindow.h">
       <Filter>User Menu</Filter>
     </ClInclude>
-    <ClInclude Include="RES\nobanner.h">
-      <Filter>User Menu\Resource Files</Filter>
-    </ClInclude>
     <ClInclude Include="RES\resource.h">
-      <Filter>User Menu\Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RES\SjisTable.h">
       <Filter>User Menu\Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Hardware\AI.h">
@@ -314,9 +251,6 @@
     <ClInclude Include="SRC\HighLevel\DSP.h">
       <Filter>GCN High Level</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\HighLevel\DVDBanner.h">
-      <Filter>GCN High Level</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\HighLevel\HighLevel.h">
       <Filter>GCN High Level</Filter>
     </ClInclude>
@@ -345,63 +279,6 @@
       <Filter>GCN High Level</Filter>
     </ClInclude>
     <ClInclude Include="SRC\dolphin.h" />
-    <ClInclude Include="SRC\Core\Interpreter\c_branch.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_compare.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_condition.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_floatingpoint.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_fploadstore.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_integer.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_loadstore.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_logical.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_pairedsingle.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_psloadstore.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_rotate.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_shift.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_system.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\c_tables.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Emulator.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Gekko.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Loader.h">
-      <Filter>Core</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Core\Memory.h">
-      <Filter>Core</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\Debugger\break.h">
       <Filter>Debugger</Filter>
     </ClInclude>
@@ -432,9 +309,6 @@
     <ClInclude Include="SRC\Debugger\regs.h">
       <Filter>Debugger</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Core\Interpreter\interpreter.h">
-      <Filter>Core\Interpreter</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\Hardware\AX.h">
       <Filter>GCN Hardware</Filter>
     </ClInclude>
@@ -446,6 +320,21 @@
     </ClInclude>
     <ClInclude Include="SRC\Hardware\PAD.h">
       <Filter>GCN Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\SjisTable.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\DVDBanner.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\nobanner.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\Loader.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\Emulator.h">
+      <Filter>User Menu</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -502,13 +391,5 @@
     <ResourceCompile Include="RES\Dolwin.rc">
       <Filter>User Menu\Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="SRC\Core\AsmX64.asm">
-      <Filter>Core</Filter>
-    </MASM>
-    <MASM Include="SRC\Core\AsmX86.asm">
-      <Filter>Core</Filter>
-    </MASM>
   </ItemGroup>
 </Project>

@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <Windows.h>
+
 // return values are always 1 for good, and 0 for bad.
 
 // GXOpen() should be called before emulation started, to initialize

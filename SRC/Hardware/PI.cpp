@@ -86,7 +86,7 @@ void PIClearInt(uint32_t mask)
 
 static void __fastcall read_intsr(uint32_t addr, uint32_t *reg)
 {
-    *reg = INTSR | (pi.rswhack << 16);
+    *reg = INTSR | ((pi.rswhack & 1) << 16);
 }
 
 // writes turns them off ?
@@ -167,7 +167,7 @@ void PIOpen()
 {
     DBReport(CYAN "PI: Processor interface (interrupts)\n");
 
-    pi.rswhack = GetConfigInt(USER_PI_RSWHACK, USER_PI_RSWHACK_DEFAULT);
+    pi.rswhack = GetConfigInt(USER_PI_RSWHACK, USER_PI_RSWHACK_DEFAULT) & 1;
 
     // clear interrupt registers
     INTSR = INTMR = 0;

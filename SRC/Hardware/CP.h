@@ -100,7 +100,7 @@ typedef struct FifoControl
     uint32_t    done_num;   // number of drawdone (PE_FINISH) events
     int64_t     time;       // fifo update time
 
-    BOOL        gxpoll;     // 1: poll controllers after GX draw done
+    bool        gxpoll;     // 1: poll controllers after GX draw done
 } FifoControl;
 
 extern  FifoControl fifo;

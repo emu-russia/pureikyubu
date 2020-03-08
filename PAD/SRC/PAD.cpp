@@ -6,7 +6,7 @@ PAD pad;
 // ---------------------------------------------------------------------------
 // called when emulation started/stopped (pad controls)
 
-long PADOpen()
+bool PADOpen()
 {
     pad.padToConfigure = 0;
     PADLoadConfig(NULL);

@@ -1,5 +1,5 @@
 // Logical Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // ra = rs & UIMM, CR0

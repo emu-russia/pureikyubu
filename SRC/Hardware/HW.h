@@ -22,4 +22,4 @@ void    HWSetTrap(
 void    HWOpen();
 void    HWClose();
 void    HWUpdate();
-void    HWEnableUpdate(BOOL en);
+void    HWEnableUpdate(bool en);

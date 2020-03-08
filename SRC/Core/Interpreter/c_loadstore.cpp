@@ -1,5 +1,5 @@
 // Integer Load and Store Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // ---------------------------------------------------------------------------
@@ -422,7 +422,7 @@ OP(LWARX)
 {
     uint32_t ea = RRB;
     if(RA) ea += RRA;
-    cpu.RESERVE = TRUE;
+    cpu.RESERVE = true;
     cpu.RESERVE_ADDR = MEMEffectiveToPhysical(ea, 0);
     CPUReadWord(ea, &RRD);
 }
@@ -440,13 +440,13 @@ OP(STWCXD)
     uint32_t ea = RRB;
     if(RA) ea += RRA;
 
-    CR &= 0x0fffffff;
+    PPC_CR &= 0x0fffffff;
    
     if(cpu.RESERVE)
     {
         CPUWriteWord(ea, RRS);
         SET_CR0_EQ;    
-        cpu.RESERVE = FALSE;
+        cpu.RESERVE = false;
     }
 
     if(IS_XER_SO) SET_CR0_SO;

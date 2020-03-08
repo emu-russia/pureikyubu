@@ -1,5 +1,5 @@
 // Integer Rotate Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // n = SH

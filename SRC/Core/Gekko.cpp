@@ -1,5 +1,5 @@
 // CPU controls 
-#include "dolphin.h"
+#include "pch.h"
 
 // CPU control/state block (all important data is here)
 CPUControl cpu;
@@ -23,14 +23,14 @@ void (*CPUStart)();
 
 // ---------------------------------------------------------------------------
 
-static BOOL IsMMXPresent()
+static bool IsMMXPresent()
 {
     int cpuInfo[4];
     __cpuid(cpuInfo, 1);
     return (cpuInfo[3] & 0x800000) != 0;
 }
 
-static BOOL IsSSEPresent()
+static bool IsSSEPresent()
 {
     int cpuInfo[4];
     __cpuid(cpuInfo, 1);
@@ -40,7 +40,7 @@ static BOOL IsSSEPresent()
 // init tables, allocate memory
 void CPUInit()
 {
-    cpu.mmx = IsMMXPresent() && GetConfigInt(USER_MMX, USER_MMX_DEFAULT);
+    cpu.mmx = IsMMXPresent();
     cpu.sse = IsSSEPresent() && cpu.mmx;
 
     // setup interpreter tables
@@ -53,47 +53,29 @@ void CPUFini()
 }
 
 // select the core, before run
-void CPUOpen()
+void CPUOpen(int bailout, int delay, int counterFactor)
 {
-    cpu.mmx = IsMMXPresent() && GetConfigInt(USER_MMX, USER_MMX_DEFAULT);
+    cpu.mmx = IsMMXPresent();
     cpu.sse = IsSSEPresent() && cpu.mmx;
 
     // CPU bailout - number of CPU instructions to update hardware
-    cpu.bailout = GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT);
+    cpu.bailout = bailout;
     if(cpu.bailout <= 0) cpu.bailout = 1;
     cpu.bailtime = cpu.bailout;
 
     // CPU delay - number of CPU instructions to update TBR/DEC
-    cpu.delay = GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT);
+    cpu.delay = delay;
     //if(cpu.delay > CPU_MAX_DELAY) cpu.delay = CPU_MAX_DELAY;
     if(cpu.delay <= 0) cpu.delay = 1;
     cpu.delayVal = cpu.delay;
 
-    cpu.cf = GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT);
+    cpu.cf = counterFactor;
     cpu.one_second = CPU_TIMER_CLOCK;
     cpu.decreq = 0;
 
     // select core
-    cpu.core = GetConfigInt(USER_CPU, USER_CPU_DEFAULT);
-    switch(cpu.core)
-    {
-        case CPU_INTERPRETER:
-            CPUStart = IPTStart;
-            CPUException = IPTException;
-            break;
-
-        default:
-            DolwinError( "Gekko core select", 
-                         "Unknown core number : %i",
-                         cpu.core );
-    }
-
-    // debugger has its own core, to control CPU execution
-    if(emu.doldebug)
-    {
-        CPUStart = DBStart;
-        CPUException = DBException;
-    }
+    CPUStart = IPTStart;
+    CPUException = IPTException;
 
     // set CPU memory operations to default (using MEM*);
     // debugger will override them by DB* calls after start, if need.

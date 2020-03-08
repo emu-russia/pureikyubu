@@ -5,6 +5,7 @@
 // ---------------------------------------------------------------------------
 // compiler and SDK include files.
 
+#include <assert.h>
 #include <stdint.h>
 #include <direct.h>
 #include <setjmp.h>
@@ -34,5 +35,7 @@
 #include "UserMenu/User.h"
 #include "HighLevel/HighLevel.h"
 #include "Hardware/Hardware.h"
-#include "Core/Emulator.h"
+#include "Core/Memory.h"
+#include "Core/Gekko.h"
+#include "Core/Interpreter.h"
 #include "Debugger/Debugger.h"

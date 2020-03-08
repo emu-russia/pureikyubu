@@ -75,8 +75,8 @@ typedef struct DIControl
     uint32_t        immbuf;
     uint32_t        cfg;
 
-    BOOL            coverst;        // 1: cover open, 0: closed
-    BOOL            streaming;      // 1: streaming audio enabled
+    bool            coverst;        // 1: cover open, 0: closed
+    bool            streaming;      // 1: streaming audio enabled
     uint32_t        strseek;        // streaming position on disk
     uint32_t        strseekOld;     // initial streaming position on disk
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
@@ -88,7 +88,7 @@ extern  DIControl di;
 
 void    DIOpenCover();          // open
 void    DICloseCover();         // close
-BOOL    DIGetCoverState();      // 1: cover open, 0: closed
+bool    DIGetCoverState();      // 1: cover open, 0: closed
 void    DIStreamUpdate();       // update DVD streaming playback, called every VIINT
 void    DIOpen();
 void    DIClose();

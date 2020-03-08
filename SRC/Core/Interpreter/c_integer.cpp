@@ -1,5 +1,5 @@
 // Integer Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // rd = (ra | 0) + SIMM
@@ -34,7 +34,7 @@ OP(ADDD)
 OP(ADDO)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL ovf = FALSE;
+    bool ovf = false;
 
     res = AddOverflow(a, b);
     ovf = OverflowBit != 0;
@@ -52,7 +52,7 @@ OP(ADDO)
 OP(ADDOD)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL ovf = FALSE;
+    bool ovf = false;
 
     res = AddOverflow(a, b);
     ovf = OverflowBit != 0;
@@ -95,7 +95,7 @@ OP(SUBFOD)
 OP(ADDIC)
 {
     uint32_t a = RRA, b = SIMM, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -108,7 +108,7 @@ OP(ADDIC)
 OP(ADDICD)
 {
     uint32_t a = RRA, b = SIMM, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -122,7 +122,7 @@ OP(ADDICD)
 OP(SUBFIC)
 {
     uint32_t a = ~RRA, b = SIMM + 1, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -135,7 +135,7 @@ OP(SUBFIC)
 OP(ADDC)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -148,7 +148,7 @@ OP(ADDC)
 OP(ADDCD)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -162,7 +162,7 @@ OP(ADDCD)
 OP(ADDCO)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL carry = FALSE, ovf = FALSE;
+    bool carry = false, ovf = false;
 
     res = AddCarryOverflow(a, b);
     carry = CarryBit != 0;
@@ -182,7 +182,7 @@ OP(ADDCO)
 OP(ADDCOD)
 {
     uint32_t a = RRA, b = RRB, res;
-    BOOL carry = FALSE, ovf = FALSE;
+    bool carry = false, ovf = false;
 
     res = AddCarryOverflow(a, b);
     carry = CarryBit != 0;
@@ -203,7 +203,7 @@ OP(ADDCOD)
 OP(SUBFC)
 {
     uint32_t a = ~RRA, b = RRB + 1, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -216,7 +216,7 @@ OP(SUBFC)
 OP(SUBFCD)
 {
     uint32_t a = ~RRA, b = RRB + 1, res;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, b);
     carry = CarryBit != 0;
@@ -232,7 +232,7 @@ static void ADDXER(uint32_t a, uint32_t op)
 {
     uint32_t res;
     uint32_t c = (IS_XER_CA) ? 1 : 0;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, c);
     carry = CarryBit != 0;
@@ -245,7 +245,7 @@ static void ADDXERD(uint32_t a, uint32_t op)
 {
     uint32_t res;
     uint32_t c = (IS_XER_CA) ? 1 : 0;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     res = AddCarry(a, c);
     carry = CarryBit != 0;
@@ -259,7 +259,7 @@ static void ADDXER2(uint32_t a, uint32_t b, uint32_t op)
 {
     uint32_t res;
     uint32_t c = (IS_XER_CA) ? 1 : 0;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     CarryBit = c;
     res = AddXer2(a, b);
@@ -273,7 +273,7 @@ static void ADDXER2D(uint32_t a, uint32_t b, uint32_t op)
 {
     uint32_t res;
     uint32_t c = (IS_XER_CA) ? 1 : 0;
-    BOOL carry = FALSE;
+    bool carry = false;
 
     CarryBit = c;
     res = AddXer2(a, b);

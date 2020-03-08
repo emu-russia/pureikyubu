@@ -9,7 +9,7 @@ void MAPInit(char * mapname);
  * if blr is not FALSE, the mark is considerated an exitpoint from the function
  * Use carefully!!!
  */
-void MAPAddMark (uint32_t offset, BOOL blr) ;
+void MAPAddMark (uint32_t offset, bool blr) ;
 
 /*
  * Checks the specified range, and automatically adds marks to entry and exit points to functions.

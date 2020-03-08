@@ -146,7 +146,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         LoadFile(FixCommandLine(lpCmdLine));
         EMUClose();
-        EMUOpen();
+        EMUOpen(
+            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
         // will exits after closing emulation
         // returning control back to frontend
     }

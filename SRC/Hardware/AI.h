@@ -49,7 +49,7 @@
 // register assumed to be correct, only when both shadows are valid
 typedef struct AIREG
 {
-    BOOL    valid[2];               // shadow valid state
+    bool    valid[2];               // shadow valid state
     struct  { uint16_t hi, lo; } shadow; // register data
 } AIREG;
 

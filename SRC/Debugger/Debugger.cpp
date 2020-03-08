@@ -5,9 +5,9 @@
 #include "dolphin.h"
 
 // message output
-static void dummy(char *text, ...) {}
-void (*DBHalt)(char *text, ...)   = dummy;
-void (*DBReport)(char *text, ...) = dummy;
+static void dummy(const char *text, ...) {}
+void (*DBHalt)(const char *text, ...)   = dummy;
+void (*DBReport)(const char *text, ...) = dummy;
 
 void DBOpen()           // open debugger window
 {

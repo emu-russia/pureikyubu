@@ -1,7 +1,7 @@
 // breakpoint
 typedef struct DBPoint
 {
-    BOOL        mem;        // breakpoint type. 1:memory, 0:pc
+    bool        mem;        // breakpoint type. 1:memory, 0:pc
     uint32_t    ea;         // effective address of breakpoint
     int         dlen;       // data length to break : 8, 16, 32 or 64
 } DBPoint;

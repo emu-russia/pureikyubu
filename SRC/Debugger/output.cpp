@@ -174,7 +174,7 @@ void con_printf_at(int x, int y, char *txt, ...)
     va_end(varg);
 }
 
-void con_set_autoscroll(BOOL value)
+void con_set_autoscroll(bool value)
 {
     roll.autoscroll = value;
     if(value) con_status("Ready. Press PgUp to look behind.");
@@ -331,7 +331,7 @@ static void con_update_scroll_window()
     }
 }
 
-void con_fullscreen(BOOL full)
+void con_fullscreen(bool full)
 {
     for(int i=0; i<CON_HEIGHT; i++)
         con_clear_line(i, 7);
@@ -380,7 +380,7 @@ void con_update(uint32_t mask)
     else con.update |= mask;
 }
 
-void con_refresh(BOOL showpc)
+void con_refresh(bool showpc)
 {
     if(con.active == FALSE) return;
     if(showpc)
@@ -447,7 +447,7 @@ void con_refresh(BOOL showpc)
     con.update = 0;
 }
 
-void con_error(char *txt, ...)
+void con_error(const char *txt, ...)
 {
     char    buf[0x1000];
     va_list arg;
@@ -485,7 +485,7 @@ void con_error(char *txt, ...)
     con_break();
 }
 
-void con_print(char *txt, ...)
+void con_print(const char *txt, ...)
 {
     char    buf[0x1000];
     va_list arg;

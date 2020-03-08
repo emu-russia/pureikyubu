@@ -3,8 +3,6 @@
 
 #pragma once
 
-// return values are always 1 for good, and 0 for bad.
-
 typedef struct PADState
 {
     unsigned short  button;         // combination of PAD_BUTTON*
@@ -37,7 +35,7 @@ typedef struct PADState
 
 // PADOpen() should be called before emulation started, to initialize
 // plugin. PADClose() is called, when emulation is stopped, to shutdown plugin.
-long PADOpen();
+bool PADOpen();
 void PADClose();
 
 // read controller buttons state. returns 1, if ok, and 0, if PAD not connected

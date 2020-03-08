@@ -1,9 +1,9 @@
 // Null audio
 #include "dolphin.h"
 
-long AXOpen()
+bool AXOpen()
 {
-	return 1;
+	return true;
 }
 
 void AXClose()

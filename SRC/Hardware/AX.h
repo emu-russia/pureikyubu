@@ -2,11 +2,9 @@
 
 #pragma once
 
-// return values are always 1 for good, and 0 for bad.
-
 // AXOpen() should be called before emulation started, to initialize
 // plugin. AXClose() is called, when emulation is stopped, to shutdown plugin.
-long AXOpen();
+bool AXOpen();
 void AXClose();
 
 // play DMA audio buffer (big-endian, 16-bit), AXPlayAudio(0, 0) - to stop.

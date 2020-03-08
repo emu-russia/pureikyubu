@@ -1,5 +1,4 @@
-#ifndef __MC_H__
-#define __MC_H__
+#pragma once
 
 /* Memcard ids by number of blocks */
 #define MEMCARD_ID_64       (0x0004)
@@ -50,7 +49,7 @@ typedef struct Memcard {
     FILE * file;        // pointer to that file
     uint32_t size;           // size of the memcard in bytes
     uint8_t * data;          // pointer to the memcard raw data (stored in little endian order)
-    BOOL connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
+    bool connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
     uint16_t ID;             // manufacturer and device code
     uint8_t status;          // current status
 
@@ -63,7 +62,7 @@ typedef struct Memcard {
     int databytesread;
     int dummybytesread;
     uint32_t commandData;
-    BOOL ready;
+    bool ready;
     EXIRegs * exi;
 } Memcard;
 
@@ -88,19 +87,19 @@ typedef struct MCCommand {
 extern const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes];
 
 /* defines if the memcard should be tried to connect, (not if the memcard is actually connected!!) */
-extern BOOL Memcard_Connected[2];
+extern bool Memcard_Connected[2];
 
 /*
  * if SyncSave is TRUE, all write operations on the memcard will be instantaneusly saved to disk
  * if not, the memcard will only be saved to disk when it is disconnected
  */
-extern BOOL SyncSave;
+extern bool SyncSave;
 
 /* Memcards vars */
 extern Memcard memcard[2];
 
 /* defines if the Memcard system has been opened */
-extern BOOL MCOpened;
+extern bool MCOpened;
 
 /***************************************************************/
 
@@ -109,7 +108,7 @@ void MCTransfer () ;
 /*
  * Checks if the memcard is connected.
  */
-BOOL    MCIsConnected(int cardnum);
+bool    MCIsConnected(int cardnum);
 
 /*
  * Creates a new memcard file
@@ -121,14 +120,14 @@ BOOL    MCIsConnected(int cardnum);
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id);
+bool    MCCreateMemcardFile(char *path, uint16_t memcard_id);
 
 /*
  * Sets the memcard to use the specified file. If the memcard is connected, 
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, char *path, BOOL connect);
+void    MCUseFile(int cardnum, char *path, bool connect);
 
 /* 
  * Starts the memcard system and loads the saved settings.
@@ -147,13 +146,11 @@ void    MCClose ();
  * 
  * cardnum = -1 for both (based on the Memcard_Connected setting)
  */
-BOOL    MCConnect (int cardnum = -1);
+bool    MCConnect (int cardnum = -1);
 
 /* 
  * Saves the data from the memcard to disk and disconnects the choosen memcard
  * 
  * cardnum = -1 for both
  */
-BOOL    MCDisconnect (int cardnum = -1);
-
-#endif //__MC_H__
+bool    MCDisconnect (int cardnum = -1);

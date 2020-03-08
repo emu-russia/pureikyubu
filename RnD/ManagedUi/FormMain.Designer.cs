@@ -53,6 +53,7 @@
             this.columnSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnGameId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnComment = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.testNativeDllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripMain.SuspendLayout();
             this.statusStripMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -146,6 +147,8 @@
             // 
             // debugToolStripMenuItem
             // 
+            this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.testNativeDllToolStripMenuItem});
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.debugToolStripMenuItem.Text = "Debug";
@@ -238,6 +241,13 @@
             this.columnComment.Text = "Comment";
             this.columnComment.Width = 190;
             // 
+            // testNativeDllToolStripMenuItem
+            // 
+            this.testNativeDllToolStripMenuItem.Name = "testNativeDllToolStripMenuItem";
+            this.testNativeDllToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.testNativeDllToolStripMenuItem.Text = "Test Native Dll";
+            this.testNativeDllToolStripMenuItem.Click += new System.EventHandler(this.testNativeDllToolStripMenuItem_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -287,6 +297,7 @@
         private System.Windows.Forms.ColumnHeader columnSize;
         private System.Windows.Forms.ColumnHeader columnGameId;
         private System.Windows.Forms.ColumnHeader columnComment;
+        private System.Windows.Forms.ToolStripMenuItem testNativeDllToolStripMenuItem;
     }
 }
 

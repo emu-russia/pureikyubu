@@ -1,11 +1,16 @@
+
+#pragma once
+
+#include <Windows.h>
+
 // other console includes
-#include "Debugger/output.h"    // text output and refresh
-#include "Debugger/input.h"     // keyboard input
-#include "Debugger/cmd.h"       // command processor
-#include "Debugger/break.h"     // breakpoints control
-#include "Debugger/regs.h"      // registers view
-#include "Debugger/cpuview.h"   // cpu view (disassembly)
-#include "Debugger/memview.h"   // memory (data) view
+#include "output.h"    // text output and refresh
+#include "input.h"     // keyboard input
+#include "cmd.h"       // command processor
+#include "break.h"     // breakpoints control
+#include "regs.h"      // registers view
+#include "cpuview.h"   // cpu view (disassembly)
+#include "memview.h"   // memory (data) view
 
 // console controls
 void    con_open();
@@ -26,9 +31,9 @@ typedef struct CONControl
     CHAR_INFO           buf[CON_HEIGHT][CON_WIDTH];
     uint32_t            text, data;     // effective address for cpu/mem view
     uint32_t            disa_cursor;    // cpuview cursor
-    BOOL                active;         // TRUE, whenever console is active
-    BOOL                running;        // TRUE, if running
-    BOOL                log;            // flush messages into log-file
+    bool                active;         // TRUE, whenever console is active
+    bool                running;        // TRUE, if running
+    bool                log;            // flush messages into log-file
     char                logfile[256];   // HTML file for log output
     FILE*               logf;           // file descriptor
     DBPoint*            brks;           // breakpoint list

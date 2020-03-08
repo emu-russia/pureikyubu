@@ -1,4 +1,4 @@
-#include "dolphin.h"
+#include "pch.h"
 
 // shared data
 MEMControl mem;
@@ -14,7 +14,7 @@ void (__fastcall *MEMWriteWord)(uint32_t addr, uint32_t data);    // store word
 void (__fastcall *MEMReadDouble)(uint32_t addr, uint64_t *reg);   // load doubleword
 void (__fastcall *MEMWriteDouble)(uint32_t addr, uint64_t *data); // store doubleword
 uint32_t (__fastcall *MEMFetch)(uint32_t addr);
-uint32_t (__fastcall *MEMEffectiveToPhysical)(uint32_t ea, BOOL IR); // translate
+uint32_t (__fastcall *MEMEffectiveToPhysical)(uint32_t ea, bool IR); // translate
 
 // ---------------------------------------------------------------------------
 // memory sub-system management (init stuff)
@@ -25,12 +25,12 @@ void MEMInit()
 
     // allocate main memory buffer
     RAM = (uint8_t *)malloc(RAMSIZE);
-    VERIFY(RAM == NULL, "No space for main memory buffer.");
+    assert(RAM);
 
     #pragma message ("Hack : remove, when finish MMU tables")
     mem.mmudirect = 1;
 
-    mem.inited = TRUE;
+    mem.inited = true;
 }
 
 void MEMFini()
@@ -44,16 +44,15 @@ void MEMFini()
         RAM = NULL;
     }
 
-    mem.inited = FALSE;
+    mem.inited = false;
 }
 
-void MEMOpen()
+void MEMOpen(int mode)
 {
-    VERIFY(!mem.inited, "Initialize memory first!");
-    if(mem.opened) return;
-
-    // get memory mode (simple by default)
-    int mode = GetConfigInt(USER_MMU, USER_MMU_DEFAULT);
+    if (!mem.inited)
+        return;
+    if(mem.opened)
+        return;
 
     // select memory mode
     MEMSelect(mode);
@@ -61,13 +60,15 @@ void MEMOpen()
     // clear RAM
     memset(RAM, 0, RAMSIZE);
 
-    mem.opened = TRUE;
+    mem.opened = true;
 }
 
 void MEMClose()
 {
-    VERIFY(!mem.inited, "Initialize memory first!");
-    if(!mem.opened) return;
+    if (!mem.inited)
+        return;
+    if(!mem.opened)
+        return;
 
     // release memory maps (if present)
     if(mem.imap)
@@ -81,7 +82,7 @@ void MEMClose()
         mem.dmap = NULL;
     }
 
-    mem.opened = FALSE;
+    mem.opened = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -100,7 +101,7 @@ void __fastcall GCWriteWord(uint32_t addr, uint32_t data);
 void __fastcall GCReadDouble(uint32_t addr, uint64_t *reg);
 void __fastcall GCWriteDouble(uint32_t addr, uint64_t *data);
 uint32_t  __fastcall GCFetch(uint32_t addr);
-uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, BOOL IR=0);
+uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR=0);
 
 // for PowerPC memory mapping (as on real, slow, very compatible)
 void __fastcall MMUReadByte(uint32_t addr, uint32_t *reg);
@@ -113,10 +114,10 @@ void __fastcall MMUWriteWord(uint32_t addr, uint32_t data);
 void __fastcall MMUReadDouble(uint32_t addr, uint64_t *reg);
 void __fastcall MMUWriteDouble(uint32_t addr, uint64_t *data);
 uint32_t  __fastcall MMUFetch(uint32_t addr);
-uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, BOOL IR=0);
+uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR=0);
 
 // select memory mode
-void MEMSelect(int mode, BOOL save)
+void MEMSelect(int mode, bool save)
 {
     // select translation mode
     if(mode)    // MMU
@@ -125,9 +126,9 @@ void MEMSelect(int mode, BOOL save)
         {
             // take care about memory map, if mode is MMU
             mem.imap = (uint8_t **)malloc(4*1024*1024);
-            VERIFY(mem.imap, "Not enough memory for MMU instruction translation buffer.");
+            assert(mem.imap);
             mem.dmap = (uint8_t **)malloc(4*1024*1024);
-            VERIFY(mem.dmap, "Not enough memory for MMU data translation buffer.");
+            assert(mem.dmap);
 
             // clear lookups
             memset(mem.imap, 0, 4*1024*1024);
@@ -181,14 +182,13 @@ void MEMSelect(int mode, BOOL save)
     if(save)
     {
         mem.mmu = mode;
-        SetConfigInt(USER_MMU, mem.mmu);
     }
 }
 
 // ---------------------------------------------------------------------------
 // simple translation (only for Dolphin OS). unlike 0.09, we are using C here.
 
-uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, BOOL IR)
+uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
 {
     if(!mem.opened) return -1;
     // ignore no memory, page faults, alignment, etc errors
@@ -445,7 +445,7 @@ static uint32_t *dbatl[4] = { &DBAT0L, &DBAT1L, &DBAT2L, &DBAT3L };
 static uint32_t *ibatu[4] = { &IBAT0U, &IBAT1U, &IBAT2U, &IBAT3U };
 static uint32_t *ibatl[4] = { &IBAT0L, &IBAT1L, &IBAT2L, &IBAT3L };
 
-uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, BOOL IR)
+uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
 {
     uint32_t pa;
     if(!mem.opened) return -1;
@@ -825,17 +825,14 @@ uint32_t __fastcall MMUFetch(uint32_t addr)
 }
 
 // map specified region of memory
-void MEMMap(BOOL IR, BOOL DR, uint32_t startEA, uint32_t startPA, uint32_t length)
+void MEMMap(bool IR, bool DR, uint32_t startEA, uint32_t startPA, uint32_t length)
 {
     uint32_t ea = startEA;
     uint32_t pa = startPA;
     uint32_t sz = ((length + 4095) & ~4095); // page round up
 
-    if(emu.doldebug)
-    {
-        DBReport( YEL "mapping [I%i][D%i] %08X->%08X, %s\n",
-                  IR, DR, ea, pa, FileSmartSize(sz) );
-    }
+    DBReport( YEL "mapping [I%i][D%i] %08X->%08X, %08X\n",
+              IR, DR, ea, pa, sz );
 
     while(sz)
     {
@@ -849,19 +846,19 @@ void MEMMap(BOOL IR, BOOL DR, uint32_t startEA, uint32_t startPA, uint32_t lengt
 }
 
 // do actual remapping
-void MEMDoRemap(BOOL IR, BOOL DR)
+void MEMDoRemap(bool IR, bool DR)
 {
     // IMPLEMENT !!
 }
 
 // set to remap imap/dmap before next opcode/ldst operation
-void MEMRemapMemory(BOOL IR, BOOL DR)
+void MEMRemapMemory(bool IR, bool DR)
 {
     if(mem.mmudirect) return;
     mem.ir = IR;
-    if(emu.doldebug && IR) DBReport( YEL "remapping instruction MMU logic..\n");
+    if(IR) DBReport( YEL "remapping instruction MMU logic..\n");
     mem.dr = DR;
-    if(emu.doldebug && DR) DBReport( YEL "remapping data MMU logic..\n");
+    if(DR) DBReport( YEL "remapping data MMU logic..\n");
 }
 
 // ---------------------------------------------------------------------------

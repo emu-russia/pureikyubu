@@ -7,12 +7,6 @@
 #define CPU_TIMER_CLOCK (CPU_BUS_CLOCK / 4)
 #define CPU_MAX_DELAY   12
 
-// CPU core enumeration
-enum CPU_CORE
-{
-    CPU_INTERPRETER = 1
-};
-
 // ---------------------------------------------------------------------------
 // opcode decoding ("op" representing current opcode, to simplify macros)
 
@@ -90,7 +84,7 @@ enum CPU_CORE
 #define HID1    (SPR[1009])
 #define IABR    (SPR[1010])
 #define DABR    (SPR[1013])
-#define CR      cpu.cr
+#define PPC_CR  cpu.cr
 #define MSR     cpu.msr
 #define FPSCR   cpu.fpscr
 #define TBR     cpu.tb.sval
@@ -246,7 +240,7 @@ extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 // controls
 void    CPUInit();
 void    CPUFini();
-void    CPUOpen();                  // select core, before start
+void    CPUOpen(int bailout, int delay, int counterFactor);
 extern  void (*CPUStart)();         // start from PC
 void    CPUTick();                  // modify counters
 
@@ -271,19 +265,18 @@ typedef struct CPUControl
     int64_t     one_second;         // one second in timer ticks
     uint32_t    cf;                 // counter factor
     uint32_t    delay, delayVal;    // TBR/DEC update delay (number of instructions)
-    BOOL        decreq;             // decrementer exception request
+    bool        decreq;             // decrementer exception request
 
     uint32_t    core;               // see CPU core enumeration
-    BOOL        mmx;                // 1: mmx supported and enabled
-    BOOL        sse;                // 1: sse supported and enabled
-    BOOL        log;                // log EVERY executed opcode
+    bool        mmx;                // 1: mmx supported and enabled
+    bool        sse;                // 1: sse supported and enabled
     uint32_t    ops;                // instruction counter (only for debug!)
 
     // for default interpreter
-    BOOL        exception;          // exception pending
-    BOOL        branch;             // non-linear PC change
+    bool        exception;          // exception pending
+    bool        branch;             // non-linear PC change
     uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-    BOOL        RESERVE;            // for lwarx/stwcx.
+    bool        RESERVE;            // for lwarx/stwcx.
     uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
     float       ldScale[64];        // for paired-single loads
     float       stScale[64];        // for paired-single stores

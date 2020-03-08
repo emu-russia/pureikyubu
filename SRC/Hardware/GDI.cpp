@@ -9,7 +9,7 @@ static BOOL     gdi_init;
 static int      gdi_width, gdi_height;
 static int      bm_width, bm_height;
 
-BOOL GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
+bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 {
     HDC         hdc;
     BITMAPINFO* bmi;

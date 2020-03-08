@@ -178,7 +178,7 @@ static int LoadMapRAW(char *mapname)
 }
 
 // wrapper for all map formats. FALSE is returned, if cannot load map file.
-int LoadMAP(char *mapname, BOOL add)
+int LoadMAP(char *mapname, bool add)
 {
     FILE *f;
     char sign[256];

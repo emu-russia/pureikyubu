@@ -87,7 +87,7 @@ void OSSaveContext(void)
         c->gqr[i] = SWAP(GQR[i]);
 
     // misc regs
-    c->cr = SWAP(CR);
+    c->cr = SWAP(PPC_CR);
     c->lr = SWAP(LR);
     c->ctr = SWAP(CTR);
     c->xer = SWAP(XER);
@@ -142,7 +142,7 @@ void OSLoadContext(void)
     }
 
     // misc regs
-    CR  = SWAP(c->cr);
+    PPC_CR  = SWAP(c->cr);
     LR  = SWAP(c->lr);
     CTR = SWAP(c->ctr);
     XER = SWAP(c->xer);
@@ -315,35 +315,35 @@ void OSCheckContextStruct()
     OSContext context;
 
     for(i=0; i<32; i++)
-        DBReport("GPR[%i] = %i\n", i, (uint32_t)&context.gpr[i] - (uint32_t)&context.gpr[0]);
+        DBReport("GPR[%i] = %i\n", i, (uint8_t*)&context.gpr[i] - (uint8_t*)&context.gpr[0]);
 
-    DBReport("CR = %i\n", (uint32_t)&context.cr - (uint32_t)&context.gpr[0]);
-    DBReport("LR = %i\n", (uint32_t)&context.lr - (uint32_t)&context.gpr[0]);
-    DBReport("CTR = %i\n", (uint32_t)&context.ctr - (uint32_t)&context.gpr[0]);
-    DBReport("XER = %i\n", (uint32_t)&context.xer - (uint32_t)&context.gpr[0]);
+    DBReport("CR = %i\n", (uint8_t*)&context.cr - (uint8_t*)&context.gpr[0]);
+    DBReport("LR = %i\n", (uint8_t*)&context.lr - (uint8_t*)&context.gpr[0]);
+    DBReport("CTR = %i\n", (uint8_t*)&context.ctr - (uint8_t*)&context.gpr[0]);
+    DBReport("XER = %i\n", (uint8_t*)&context.xer - (uint8_t*)&context.gpr[0]);
 
     for(i=0; i<32; i++)
-        DBReport("FPR[%i] = %i\n", i, (uint32_t)&context.fpr[i] - (uint32_t)&context.gpr[0]);
+        DBReport("FPR[%i] = %i\n", i, (uint8_t*)&context.fpr[i] - (uint8_t*)&context.gpr[0]);
 
-    DBReport("FPSCR = %i\n", (uint32_t)&context.fpscr_pad - (uint32_t)&context.gpr[0]);
+    DBReport("FPSCR = %i\n", (uint8_t*)&context.fpscr_pad - (uint8_t*)&context.gpr[0]);
 
-    DBReport("SRR0 = %i\n", (uint32_t)&context.srr[0] - (uint32_t)&context.gpr[0]);
-    DBReport("SRR1 = %i\n", (uint32_t)&context.srr[1] - (uint32_t)&context.gpr[0]);
+    DBReport("SRR0 = %i\n", (uint8_t*)&context.srr[0] - (uint8_t*)&context.gpr[0]);
+    DBReport("SRR1 = %i\n", (uint8_t*)&context.srr[1] - (uint8_t*)&context.gpr[0]);
 
-    DBReport("mode = %i\n", (uint32_t)&context.mode - (uint32_t)&context.gpr[0]);
-    DBReport("state = %i\n", (uint32_t)&context.state - (uint32_t)&context.gpr[0]);
+    DBReport("mode = %i\n", (uint8_t*)&context.mode - (uint8_t*)&context.gpr[0]);
+    DBReport("state = %i\n", (uint8_t*)&context.state - (uint8_t*)&context.gpr[0]);
 
     for(i=0; i<8; i++)
-        DBReport("GQR[%i] = %i\n", i, (uint32_t)&context.gqr[i] - (uint32_t)&context.gpr[0]);
+        DBReport("GQR[%i] = %i\n", i, (uint8_t*)&context.gqr[i] - (uint8_t*)&context.gpr[0]);
     for(i=0; i<32; i++)
-        DBReport("PSR[%i] = %i\n", i, (uint32_t)&context.psr[i] - (uint32_t)&context.gpr[0]);
+        DBReport("PSR[%i] = %i\n", i, (uint8_t*)&context.psr[i] - (uint8_t*)&context.gpr[0]);
 
     DBReport("OSContext size: %i(%i)/%i\n", sizeof(OSContext), 712, OS_CONTEXT_SIZE);
 }
 
 // covert GC time to human-usable time string;
 // example output : "30 Jun 2004 3:06:14:127"
-char * OSTimeFormat(uint64_t tbr, BOOL noDate /* FALSE */)
+char * OSTimeFormat(uint64_t tbr, bool noDate /* false */)
 {
     // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
     // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
@@ -364,7 +364,7 @@ char * OSTimeFormat(uint64_t tbr, BOOL noDate /* FALSE */)
     FileTimeToSystemTime(&fileTime, &sysTime);
 
     // format string
-    static char *mnstr[12] =
+    static const char *mnstr[12] =
         { "Jan", "Feb", "Mar", "Apr",
           "May", "Jun", "Jul", "Aug",
           "Sep", "Oct", "Nov", "Dec"

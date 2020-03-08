@@ -29,7 +29,7 @@ typedef struct PIControl
 {
     uint32_t    intsr;          // interrupt cause
     uint32_t    intmr;          // interrupt mask
-    BOOL        rswhack;        // reset "switch" hack
+    bool        rswhack;        // reset "switch" hack
 } PIControl;
 
 extern  PIControl pi;

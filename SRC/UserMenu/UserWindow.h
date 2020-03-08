@@ -12,7 +12,7 @@ enum STATUS_ENUM
     STATUS_TIME,                // time counter
 };
 
-void    SetStatusText(int sbPart, char *text, BOOL post=FALSE);
+void    SetStatusText(int sbPart, char *text, bool post=false);
 char*   GetStatusText(int sbPart);
 
 void    StartProgress(int range, int delta);
@@ -25,11 +25,13 @@ void    AddRecentFile(char *path);
 void    LoadRecentFile(int index);
 
 // window controls API
+void    OnMainWindowOpening();
 void    OnMainWindowOpened();
+void    OnMainWindowClosing();
 void    OnMainWindowClosed();
 HWND    CreateMainWindow();
 void    ResizeMainWindow(int width, int height);
-void    UpdateMainWindow(BOOL peek=TRUE);
+void    UpdateMainWindow(bool peek=true);
 
 // utilities
 void    SetAlwaysOnTop(HWND hwnd, BOOL state);

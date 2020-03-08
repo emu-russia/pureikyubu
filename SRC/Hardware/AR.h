@@ -32,7 +32,7 @@ typedef struct ARControl
     uint8_t     *mem;                // aux. memory buffer (size is ARAMSIZE)
     uint32_t    mmaddr, araddr;     // DMA address
     uint32_t    cnt;                // count
-    BOOL        cntv[2];            // count register validate state
+    bool        cntv[2];            // count register validate state
     uint16_t    size;               // "AR_SIZE" (0x5012) register
 } ARControl;
 

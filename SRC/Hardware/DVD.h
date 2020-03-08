@@ -2,11 +2,9 @@
 
 #pragma once
 
-// return values are always 1 for good, and 0 for bad.
-
 // set current DVD image for read/seek/open file operations
 // return 1 if no errors, and 0 if cannot use file
-long DVDSetCurrent(char *file);
+bool DVDSetCurrent(char *file);
 
 // seek and read operations on current DVD
 void DVDSeek(int position);

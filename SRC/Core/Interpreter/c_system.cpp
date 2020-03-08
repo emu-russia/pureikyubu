@@ -1,5 +1,5 @@
 // System Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // ---------------------------------------------------------------------------
@@ -26,7 +26,7 @@ OP(TW)
 {
     int32_t a = RRA, b = RRB;
     int32_t to = RS;
-    BOOL trap = FALSE;
+    bool trap = false;
     
     if( ((a < b) && (to & 0x10)) ||
         ((a > b) && (to & 0x08)) ||
@@ -43,12 +43,9 @@ OP(TW)
 // syscall
 OP(SC)
 {
-    if(!ldat.freeLoader && !ldat.actionReplay)
-    {
-        // pseudo-branch (to resume from next instruction after 'rfi')
-        PC += 4;
-        CPUException(CPU_EXCEPTION_SYSCALL);
-    }
+    // pseudo-branch (to resume from next instruction after 'rfi')
+    PC += 4;
+    CPUException(CPU_EXCEPTION_SYSCALL);
 }
 
 // return from exception
@@ -57,14 +54,14 @@ OP(RFI)
     MSR &= ~(0x87C0FF73 | 0x00040000);
     MSR |= SRR1 & 0x87C0FF73;
     PC = SRR0 & ~3;
-    cpu.branch = TRUE;
+    cpu.branch = true;
 }
 
 // ---------------------------------------------------------------------------
 // system registers
 
-static inline BOOL msr_ir() { return (MSR & MSR_IR) ? 1 : 0; }
-static inline BOOL msr_dr() { return (MSR & MSR_DR) ? 1 : 0; }
+static inline bool msr_ir() { return (MSR & MSR_IR) ? true : false; }
+static inline bool msr_dr() { return (MSR & MSR_DR) ? true : false; }
 
 // mask = (4)CRM[0] || (4)CRM[1] || ... || (4)CRM[7]
 // CR = (rs & mask) | (CR & ~mask)
@@ -78,7 +75,7 @@ OP(MTCRF)
         {
             a = (d >> (i << 2)) & 0xf;
             m = (0xf << (i << 2));
-            CR = (CR & ~m) | (a << (i << 2));
+            PPC_CR = (PPC_CR & ~m) | (a << (i << 2));
         }
     }
 }
@@ -88,15 +85,15 @@ OP(MTCRF)
 OP(MCRXR)
 {
     uint32_t mask = 0xf0000000 >> (4 * CRFD);
-    CR &= ~mask;
-    CR |= (XER & 0xf0000000) >> (4 * CRFD);
+    PPC_CR &= ~mask;
+    PPC_CR |= (XER & 0xf0000000) >> (4 * CRFD);
     XER &= ~0xf0000000;
 }
 
 // rd = cr
 OP(MFCR)
 {
-    RRD = CR;
+    RRD = PPC_CR;
 }
 
 // msr = rs
@@ -118,20 +115,20 @@ OP(MTSPR)
 
     if(spr >= 528 && spr <= 543)
     {
-        static char * bat[] = {
+        static const char * bat[] = {
             "IBAT0U", "IBAT0L", "IBAT1U", "IBAT1L",
             "IBAT2U", "IBAT2L", "IBAT3U", "IBAT3L",
             "DBAT0U", "DBAT0L", "DBAT1U", "DBAT1L",
             "DBAT2U", "DBAT2L", "DBAT3U", "DBAT3L"
         };
-        if(emu.doldebug) DBReport( CPU "%s <- %08X (IR:%i DR:%i pc:%08X)\n", 
-                                   bat[spr-528], RRS, msr_ir(), msr_dr(), PC );
+        DBReport( CPU "%s <- %08X (IR:%i DR:%i pc:%08X)\n", 
+                  bat[spr-528], RRS, msr_ir(), msr_dr(), PC );
     }
     else switch(spr)
     {
         // decrementer
         case    22:
-            DBReport(CPU "set decrementer (OS alarm) to %s\n", OSTimeFormat(RRS, 1));
+            DBReport(CPU "set decrementer (OS alarm) to %08X\n", RRS);
             break;
 
         // page table base
@@ -151,14 +148,7 @@ OP(MTSPR)
 
         // write gathering buffer
         case    921:
-            if(RRS != 0x0C008000)
-            {
-                DolwinQuestion(
-                    "Non-predictable situation!", 
-                    "Redirecting write gather buffer!\n"
-                    "Are you sure, you want to continue?"
-                );
-            }
+            assert(RRS == 0x0C008000);
             break;
 
         // locked cache dma (dirty hack)

@@ -1,5 +1,5 @@
 // Paired Single Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 OP(PS_ADD)

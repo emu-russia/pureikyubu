@@ -8,7 +8,7 @@ typedef struct SYM
     uint32_t eaddr;             // effective address
     char*   savedName;          // symbolic description
     void    (*routine)();       // associated high-level call
-    BOOL    emuSymbol;          // 1, when symbol from Dolwin.exe
+    bool    emuSymbol;          // 1, when symbol from Dolwin.exe
 } SYM;
 
 // all important variables are here
@@ -21,12 +21,12 @@ typedef struct SYMControl
 extern  SYMControl sym;
 
 // API for emulator
-void    SYMAddNew(uint32_t addr, char *name, BOOL emuSymbol=FALSE);
+void    SYMAddNew(uint32_t addr, const char *name, bool emuSymbol=false);
 void    SYMSetHighlevel(char *symName, void (*routine)());
 uint32_t SYMAddress(char *symName);
 char*   SYMName(uint32_t symAddr);
 void    SYMKill();
-void    SYMList(char *str="*");
+void    SYMList(const char *str="*");
 void    SYMAddEmulatorSymbols();
 
 // advanced stuff (dont use it, if you dont know how)

@@ -26,7 +26,7 @@ void con_memorize_cpu_regs()
 
 static void con_print_other_regs()
 {
-    con_printf_at(28, 1, CYAN "cr  " NORM "%08X", CR);
+    con_printf_at(28, 1, CYAN "cr  " NORM "%08X", PPC_CR);
     con_printf_at(28, 2, CYAN "xer " NORM "%08X", XER);
     con_printf_at(28, 4, CYAN "ctr " NORM "%08X", CTR);
     con_printf_at(28, 5, CYAN "dec " NORM "%08X", DEC);

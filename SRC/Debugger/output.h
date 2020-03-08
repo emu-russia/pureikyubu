@@ -49,7 +49,7 @@ typedef enum REGWNDMODE { REGMOD_GPR = 0, REGMOD_FPR, REGMOD_PSR, REGMOD_MMU, RE
 // console windows
 typedef struct WINDControl
 {
-    BOOL                full;                   // "fullscreen" mode
+    bool                full;                   // "fullscreen" mode
     FOCUSWND            focus;                  // wregs, wdata, wdisa, wconsole
     REGWNDMODE          regmode;                // register window mode
     int                 regs_y;                 // Y registers window
@@ -68,7 +68,7 @@ typedef struct WINDControl
     uint32_t            visible;                // see CON_UPDATE_*
     uint32_t            disa_nav_hist[256];     // disassembler window navigation history
     int                 disa_nav_last;          // last address
-    BOOL                ldst;                   // used for load/store helper
+    bool                ldst;                   // used for load/store helper
     uint32_t            ldst_disp;
 } WINDControl;
 
@@ -86,7 +86,7 @@ typedef struct ROLLControl
     int     historycur;                         // current command history position
     char    tokens[CON_TOKENCNT][CON_LINELEN];  // tokens parsed from editline[]
     int     tokencount;                         // parsed tokens count
-    BOOL    autoscroll;                         // if TRUE, then viewpos = rollpos-1
+    bool    autoscroll;                         // if TRUE, then viewpos = rollpos-1
 } ROLLControl;
 
 extern  WINDControl wind;
@@ -113,11 +113,11 @@ void    con_cursorxy(int x, int y);
 void    con_fill_line(int y);
 void    con_clear_line(int y, uint16_t attr=7);
 void    con_printf_at(int x, int y, char *txt, ...);
-void    con_set_autoscroll(BOOL value);
+void    con_set_autoscroll(bool value);
 void    con_add_roller_line(char *txt, int err);
 void    con_change_focus(FOCUSWND newfocus);
-void    con_fullscreen(BOOL full);
+void    con_fullscreen(bool full);
 void    con_update(uint32_t mask);
-void    con_refresh(BOOL showpc=FALSE);
-void    con_error(char *txt, ...);
-void    con_print(char *txt, ...);
+void    con_refresh(bool showpc=false);
+void    con_error(const char *txt, ...);
+void    con_print(const char *txt, ...);

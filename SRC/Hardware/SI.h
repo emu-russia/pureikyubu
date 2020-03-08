@@ -88,16 +88,16 @@ typedef struct SIControl
     uint8_t             combuf[128+32]; // communication buffer (+ overrun protection)
     
     PADState            pad[4];         // PAD state (inbuf replacement)
-    BOOL                rumble[4];      // rumble support flags for every controller
+    bool                rumble[4];      // rumble support flags for every controller
                                         // filled when SI is inited, by checking PADSetRumble
 
-    BOOL                fake;           // SI is in fake mode
-    BOOL                log;            // do debugger log output
+    bool                fake;           // SI is in fake mode
+    bool                log;            // do debugger log output
 } SIControl;
 
 extern  SIControl si;
 
 void    SIPoll();
-void    SIOpen(BOOL fake=FALSE);
+void    SIOpen(bool fake=false);
 
 #pragma pack()

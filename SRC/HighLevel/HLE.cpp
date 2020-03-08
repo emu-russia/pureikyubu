@@ -153,12 +153,6 @@ void HLEOpen()
 
 void HLEClose()
 {
-    if(hle.only)
-    {
-        // restore HW_ASSERT value
-        SetConfigInt(USER_HW_ASSERT, hle.lastHwAssert);
-    }
-
     SYMKill();
 
     // shutdown dsp

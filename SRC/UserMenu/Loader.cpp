@@ -114,7 +114,7 @@ uint32_t LoadDOL(char *dolname)
 uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 {
     int i;
-    #define ADDPTR(p1, p2) (uint8_t *)((uint32_t)(p1)+(uint32_t)(p2))
+    #define ADDPTR(p1, p2) (uint8_t *)((uint8_t*)(p1)+(uint32_t)(p2))
 
     // swap DOL header
     MEMSwapArea((uint32_t *)dol, sizeof(DolHeader));
@@ -370,21 +370,21 @@ uint32_t LoadBIN(char *binname)
 
 // return 1, if patch loaded OK.
 // "add" can be used to extend current patch table.
-BOOL LoadPatch(char * patchname, BOOL add)
+bool LoadPatch(char * patchname, bool add)
 {
     // allowed ?
     // since "enable" flag is loaded only here, it is not important
     // to load it in standalone patch Init routine. simply if there are
     // no patch files loaded, there is nothing to apply.
     ldat.enablePatch = GetConfigInt(USER_PATCH, USER_PATCH_DEFAULT);
-    if(!ldat.enablePatch) return TRUE;
+    if(!ldat.enablePatch) return true;
 
     // count patchnum
     int patchNum = FileSize(patchname) / sizeof(Patch);
 
     // try to open file
     FILE *f = fopen(patchname, "rb");
-    if(f == NULL) return FALSE;
+    if(f == NULL) return false;
 
     // print notification in debugger
     if(add) DBReport(YEL "added patch : %s\n", patchname);
@@ -399,35 +399,35 @@ BOOL LoadPatch(char * patchname, BOOL add)
     // extend (or allocate new) patch table, and copy data
     if(add)
     {
-        if(patchNum == 0) return TRUE;  // nothing to add
+        if(patchNum == 0) return true;  // nothing to add
 
         ldat.patches = (Patch *)realloc(
             ldat.patches, 
             (patchNum + ldat.patchNum) * sizeof(Patch)
         );
-        if(ldat.patches == NULL) return FALSE;
+        if(ldat.patches == NULL) return false;
 
         fread(&ldat.patches[ldat.patchNum], sizeof(Patch), patchNum, f);
         ldat.patchNum += patchNum;
-        ApplyPatches(1, ldat.patchNum - patchNum);
+        ApplyPatches(true, ldat.patchNum - patchNum);
     }
     else
     {
         ldat.patches = (Patch *)malloc(patchNum * sizeof(Patch));
-        if(ldat.patches == NULL) return FALSE;
+        if(ldat.patches == NULL) return false;
 
         fread(ldat.patches, sizeof(Patch), patchNum, f);
         ldat.patchNum = patchNum;
-        ApplyPatches(1);
+        ApplyPatches(true);
     }
 
     fclose(f);
-    return TRUE;
+    return true;
 }
 
 // called after patch loading and/or every VI frame
 // [a...b] - range of patches in table to apply in (including a and b)
-void ApplyPatches(BOOL load, int32_t a, int32_t b)
+void ApplyPatches(bool load, int32_t a, int32_t b)
 {
     // allowed ?
     if(!ldat.enablePatch) return;
@@ -658,19 +658,6 @@ static void DoLoadFile(char *filename)
 
         // add new path to selector
         AddSelectorPath(fullPath);      // all checks are there
-    }
-
-    // set hack identifiers
-    {
-        ldat.freeLoader   =             // clear all
-        ldat.actionReplay = FALSE;
-        if(!stricmp(ldat.gameID, "GNHEE9")) ldat.freeLoader = TRUE;
-        if(!stricmp(ldat.gameID, "GNHE8C")) ldat.actionReplay = TRUE;
-        if(!stricmp(ldat.currentFileName, "ar")) ldat.actionReplay = TRUE;
-
-        // show all
-        if(ldat.freeLoader) DBReport(GREEN "Freeloader" YEL " hacks are enabled\n");
-        if(ldat.actionReplay) DBReport(GREEN "Action Replay" YEL " hacks are enabled\n");
     }
 
     // simulate bootrom

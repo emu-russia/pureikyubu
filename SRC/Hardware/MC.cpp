@@ -146,9 +146,9 @@ const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
     0x01000000  //16777216 bytes , // Memory Card 2043
 };
 
-BOOL Memcard_Connected[2] = { FALSE, FALSE };
-BOOL SyncSave = FALSE;
-BOOL MCOpened = FALSE;
+bool Memcard_Connected[2] = { false, false };
+bool SyncSave = false;
+bool MCOpened = false;
 
 Memcard memcard[2];
 
@@ -429,7 +429,7 @@ void MCTransfer () {
 /*
  * Checks if the memcard is connected.
  */
-BOOL    MCIsConnected(int cardnum) {
+bool    MCIsConnected(int cardnum) {
     if(emu.doldebug)
         VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
     return memcard[cardnum].connected;
@@ -445,7 +445,7 @@ BOOL    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -491,7 +491,7 @@ BOOL    MCCreateMemcardFile(char *path, uint16_t memcard_id) {
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, char *path, BOOL connect) {
+void    MCUseFile(int cardnum, char *path, bool connect) {
     if(emu.doldebug)
         VERIFY((cardnum != MEMCARD_SLOTA) && (cardnum != MEMCARD_SLOTB), "Invalid memcard number");
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
@@ -589,8 +589,8 @@ void MCClose () {
  * 
  * cardnum = -1 for both (based on the Memcard_Connected setting)
  */
-BOOL MCConnect (int cardnum) {
-    BOOL ret = TRUE;
+bool MCConnect (int cardnum) {
+    bool ret = true;
     int i;
     struct stat buf ;
     switch (cardnum) {
@@ -683,8 +683,8 @@ BOOL MCConnect (int cardnum) {
  * 
  * cardnum = -1 for both
  */
-BOOL MCDisconnect (int cardnum) {
-    BOOL ret = TRUE;
+bool MCDisconnect (int cardnum) {
+    bool ret = true;
     switch (cardnum) {
     case -1:
         ret = MCDisconnect(MEMCARD_SLOTA) && MCDisconnect(MEMCARD_SLOTB);

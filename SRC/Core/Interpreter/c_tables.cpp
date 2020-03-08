@@ -1,5 +1,5 @@
 // interpreter tables setup
-#include "dolphin.h"
+#include "../pch.h"
 
 // opcode tables
 void (__fastcall *c_19[2048])(uint32_t op);      // 19
@@ -14,56 +14,15 @@ void (__fastcall *c_4 [2048])(uint32_t op);      // 4
 OP(NI)
 {
     char text[256];
-    PPCD_CB d;
-    
+   
     // disassemble
-    d.instr = op;
-    d.pc = PC;
-    PPCDisasm (&d);
     sprintf(
-        text, "%08X  <%08X>  (%i, %i)  %-10s %s",
-        PC, op, op >> 26, op & 0x7ff, d.mnemonic, d.operands
-    );
+        text, "%08X  <%08X>  (%i, %i)",
+        PC, op, op >> 26, op & 0x7ff );
 
-    if(emu.doldebug)
-    {
-        DBHalt( "** CPU ERROR **\n"
-                "unimplemented opcode : %s\n\n",
-                text );
-    }
-
-    char dump[1024];
-
-    sprintf(dump,
-        "CPU STATE : \n"
-        "\n"
-        "r0 :%08X\tr8 :%08X\tr16:%08X\tr24:%08X\n"
-        "sp :%08X\tr9 :%08X\tr17:%08X\tr25:%08X\n"
-        "sd2:%08X\tr10:%08X\tr18:%08X\tr26:%08X\n"
-        "r3 :%08X\tr11:%08X\tr19:%08X\tr27:%08X\n"
-        "r4 :%08X\tr12:%08X\tr20:%08X\tr28:%08X\n"
-        "r5 :%08X\tsd1:%08X\tr21:%08X\tr29:%08X\n"
-        "r6 :%08X\tr14:%08X\tr22:%08X\tr30:%08X\n"
-        "r7 :%08X\tr15:%08X\tr23:%08X\tr31:%08X\n"
-        "\n"
-        "lr :%08X\tcr :%08X\tdec:%08X\n"
-        "pc :%08X\txer:%08X\tctr:%08X\n",
-        GPR[ 0], GPR[ 8], GPR[16], GPR[24],
-        GPR[ 1], GPR[ 9], GPR[17], GPR[25],
-        GPR[ 2], GPR[10], GPR[18], GPR[26],
-        GPR[ 3], GPR[11], GPR[19], GPR[27],
-        GPR[ 4], GPR[12], GPR[20], GPR[28],
-        GPR[ 5], GPR[13], GPR[21], GPR[29],
-        GPR[ 6], GPR[14], GPR[22], GPR[30],
-        GPR[ 7], GPR[15], GPR[23], GPR[31],
-        LR, CR, DEC,
-        PC, XER, CTR
-    );
-
-    DolwinError( "** CPU ERROR **",
-            "unimplemented opcode : %s\n\n"
-            "%s\n",
-            text, dump );
+    DBHalt( "** CPU ERROR **\n"
+            "unimplemented opcode : %s\n\n",
+            text );
 }
 
 // switch to extension opcode table
@@ -77,15 +36,14 @@ static OP(OP4)  { c_4 [op & 0x7ff](op); }
 OP(HL)
 {
     // Dolwin module base should be specified in project properties
-    void (*pcall)() = (void (*)())(op);
+    void (*pcall)() = (void (*)())((void *)op);
 
     if(op == 0)
     {
         DBHalt(
             "Something goes wrong in interpreter, \n"
             "program is trying to execute NULL opcode.\n\n"
-            "pc:%08X, time:%s", PC, OSTimeFormat(UTBR)
-        );
+            "pc:%08X", PC );
         return;
     }
 

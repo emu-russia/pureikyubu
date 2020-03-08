@@ -84,19 +84,19 @@ typedef struct VIControl
     uint32_t    int0;       // INT0 status
 
     uint32_t    mode;       // see VI modes
-    BOOL        inter;      // 1, if interlace
+    bool        inter;      // 1, if interlace
     uint32_t    vcount;     // number of lines for single frame
-    BOOL        auto_vcnt;
+    bool        auto_vcnt;
     int64_t     vtime;      // frame timer
     int64_t     one_frame;  // frame length in CPU timer ticks
 
-    BOOL        xfb;        // enable video frame buffer (GDI)
+    bool        xfb;        // enable video frame buffer (GDI)
     uint8_t*    xfbbuf;     // translated TFBL pointer
     RGBQUAD*    gfxbuf;     // DIB
 
-    BOOL        log;        // do debugger log output
+    bool        log;        // do debugger log output
     uint32_t    frames;     // frames rendered (can be used by both VI and GX)
-    BOOL        stretch;    // 1: stretch VI framebuffer to fit whole window
+    bool        stretch;    // 1: stretch VI framebuffer to fit whole window
 } VIControl;
 
 extern  VIControl vi;

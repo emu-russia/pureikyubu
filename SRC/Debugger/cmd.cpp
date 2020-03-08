@@ -319,7 +319,10 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
 
         LoadFile(filepath);
         EMUClose();
-        EMUOpen();
+        EMUOpen(
+            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
     }
 }
 
@@ -517,7 +520,6 @@ void cmd_log(int argc, char argv[][CON_LINELEN])
     {
         con_print("syntax : log [dev] <0/1>\n");
         con_print(GREEN "dev" NORM " is specified device :\n");
-        con_print("    cpu  : Gekko processor\n");
         con_print("    fifo : GX command processor\n");
         con_print("    vi   : video interface\n");
         con_print("    pi   : interrupts\n");
@@ -552,13 +554,7 @@ void cmd_log(int argc, char argv[][CON_LINELEN])
     else
     {
         #define IFDEV(n) if(!strncmp(argv[1], n, strlen(n)))
-        IFDEV("cpu")
-        {
-            cpu.log = atoi(argv[2]);
-            if(cpu.log) con_print(CPU "Gekko processor log enabled");
-            else con_print(CPU "Gekko processor log disabled");
-        }
-        else con_print("unknown device!\n");
+        con_print("unknown device!\n");
         #undef IFDEV
     }
 }
@@ -839,7 +835,7 @@ static uint32_t *getreg (char *name)
     else if (!stricmp(name, "sd1")) return &GPR[13];
     else if (!stricmp(name, "sd2")) return &GPR[2];
 
-    else if (!stricmp(name, "cr")) return &CR;
+    else if (!stricmp(name, "cr")) return &PPC_CR;
     else if (!stricmp(name, "fpscr")) return &FPSCR;
     else if (!stricmp(name, "xer")) return &XER;
     else if (!stricmp(name, "lr")) return &LR;

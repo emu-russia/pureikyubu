@@ -45,8 +45,7 @@ char*   HLEGetHitNameByIndex(int idx);
 // HLE state variables
 typedef struct HLEControl
 {
-    BOOL        only;           // use HLE only (GC hardware is not allowed)
-    BOOL        lastHwAssert;   // saved HW_ASSERT uvar flag
+    bool        lastHwAssert;   // saved HW_ASSERT uvar flag
 
     // current loaded map file
     char        mapfile[MAX_PATH];
@@ -57,9 +56,6 @@ typedef struct HLEControl
 } HLEControl;
 
 extern  HLEControl hle;
-
-// =:)
-#define MEGA_HLE_MODE   hle.only
 
 void    HLESetCall(char *name, void (*call)());
 void    HLEOpen();

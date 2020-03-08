@@ -1,5 +1,5 @@
 // Branch Instructions
-#include "dolphin.h"
+#include "../pch.h"
 #include "interpreter.h"
 
 // PC = PC + EXTS(LI || 0b00)
@@ -41,15 +41,15 @@ static void (__fastcall *bx[4])(uint32_t op) = { c_B, c_BL, c_BA, c_BLA };
 OP(BX)
 {
     bx[op & 3](op);
-    cpu.branch = TRUE;
+    cpu.branch = true;
 }
 
 // ---------------------------------------------------------------------------
 
 // calculation of conditional branch
-static BOOL bc(uint32_t op)
+static bool bc(uint32_t op)
 {
-    BOOL ctr_ok, cond_ok;
+    bool ctr_ok, cond_ok;
     int bo = RD, bi = BI;
 
     if(BO(2) == 0)
@@ -59,14 +59,14 @@ static BOOL bc(uint32_t op)
         if(BO(3)) ctr_ok = (CTR == 0);
         else ctr_ok = (CTR != 0);
     }
-    else ctr_ok = TRUE;
+    else ctr_ok = true;
 
     if(BO(0) == 0)
     {
-        if(BO(1)) cond_ok = ((CR << bi) & 0x80000000) != 0;
-        else cond_ok = ((CR << bi) & 0x80000000) == 0;
+        if(BO(1)) cond_ok = ((PPC_CR << bi) & 0x80000000) != 0;
+        else cond_ok = ((PPC_CR << bi) & 0x80000000) == 0;
     }
-    else cond_ok = TRUE;
+    else cond_ok = true;
 
     return (ctr_ok & cond_ok);
 }
@@ -90,7 +90,7 @@ OP(BCX)
         if(target & 0x8000) target |= 0xffff0000;
         if(op & 2) PC = target; // AA
         else PC += target;
-        cpu.branch = TRUE;
+        cpu.branch = true;
     }
 }
 
@@ -104,7 +104,7 @@ OP(BCLR)
     if(bc(op))
     {
         PC = LR & ~3;
-        cpu.branch = TRUE;
+        cpu.branch = true;
     }
 }
 
@@ -122,24 +122,24 @@ OP(BCLRL)
         uint32_t lr = PC + 4;
         PC = LR & ~3;
         LR = lr;
-        cpu.branch = TRUE;
+        cpu.branch = true;
     }
 }
 
 // ---------------------------------------------------------------------------
 
 // calculation of conditional to count register branch
-static BOOL bctr(uint32_t op)
+static bool bctr(uint32_t op)
 {
-    BOOL cond_ok;
+    bool cond_ok;
     int bo = RD, bi = BI;
 
     if(BO(0) == 0)
     {
-        if(BO(1)) cond_ok = ((CR << bi) & 0x80000000) != 0;
-        else cond_ok = ((CR << bi) & 0x80000000) == 0;
+        if(BO(1)) cond_ok = ((PPC_CR << bi) & 0x80000000) != 0;
+        else cond_ok = ((PPC_CR << bi) & 0x80000000) == 0;
     }
-    else cond_ok = TRUE;
+    else cond_ok = true;
 
     return cond_ok;
 }
@@ -153,7 +153,7 @@ OP(BCCTR)
     if(bctr(op))
     {
         PC = CTR & ~3;
-        cpu.branch = TRUE;
+        cpu.branch = true;
     }
 }
 
@@ -168,6 +168,6 @@ OP(BCCTRL)
     {
         LR = PC + 4;
         PC = CTR & ~3;
-        cpu.branch = TRUE;
+        cpu.branch = true;
     }
 }

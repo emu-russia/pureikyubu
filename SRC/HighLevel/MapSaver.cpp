@@ -55,7 +55,7 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
 // there can be two cases of this call : save map into specified file and update current map
 // if there is not map loaded, all new symbols will go in default.map
 // saved map is appended (mean no file overwrite, and add new symbols to the end)
-void SaveMAP(char *mapname /*="this"*/)
+void SaveMAP(const char *mapname /*="this"*/)
 {
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
@@ -74,11 +74,11 @@ void SaveMAP(char *mapname /*="this"*/)
 
     // load MAP symbols
     SYMSetWorkspace(mapSet);
-    mapFormat = LoadMAP(mapname);
+    mapFormat = LoadMAP((char *)mapname);
     if(mapFormat == 0) return;  // :(
 
     // find new map entries to append file
-    mapName = mapname;
+    mapName = (char *)mapname;
     appendStarted = itemsUpdated = 0;
     SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
     if ( itemsUpdated == 0 ) DBReport (YEL "nothing to update\n");
