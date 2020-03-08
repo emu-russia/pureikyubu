@@ -66,7 +66,7 @@ uint32_t LoadDOL(char *dolname)
     {
         if(dh.textOffset[i])    // if offset is 0, then section is empty
         {
-            void *addr = &RAM[dh.textAddress[i] & RAMMASK];
+            void *addr = &mi.ram[dh.textAddress[i] & RAMMASK];
 
             fseek(dol, dh.textOffset[i], SEEK_SET);
             fread(addr, 1, dh.textSize[i], dol);
@@ -84,7 +84,7 @@ uint32_t LoadDOL(char *dolname)
     {
         if(dh.dataOffset[i])    // if offset is 0, then section is empty
         {
-            void *addr = &RAM[dh.dataAddress[i] & RAMMASK];
+            void *addr = &mi.ram[dh.dataAddress[i] & RAMMASK];
 
             fseek(dol, dh.dataOffset[i], SEEK_SET);
             fread(addr, 1, dh.dataSize[i], dol);
@@ -129,7 +129,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     {
         if(dol->textOffset[i])  // if offset is 0, then section is empty
         {
-            uint8_t*addr = &RAM[dol->textAddress[i] & RAMMASK];
+            uint8_t*addr = &mi.ram[dol->textAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
             DBReport(
@@ -145,7 +145,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     {
         if(dol->dataOffset[i])  // if offset is 0, then section is empty
         {
-            uint8_t *addr = &RAM[dol->dataAddress[i] & RAMMASK];
+            uint8_t *addr = &mi.ram[dol->dataAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
             DBReport(
@@ -311,7 +311,7 @@ uint32_t LoadELF(char *elfname)
                 vend = vaddr + size;
 
                 fseek(f, Elf_SwapOff(phdr.p_offset), SEEK_SET);
-                fread(&RAM[vaddr & RAMMASK], vend - vaddr, 1, f);
+                fread(&mi.ram[vaddr & RAMMASK], vend - vaddr, 1, f);
             }
         }
 
@@ -355,7 +355,7 @@ uint32_t LoadBIN(char *binname)
     }
 
     // load
-    fread(&RAM[org], 1, fsize, bin);
+    fread(&mi.ram[org], 1, fsize, bin);
     fclose(bin);
 
     DBReport(YEL "loaded binary file at %08X (%s)\n\n", org, FileSmartSize(fsize));
@@ -446,7 +446,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
             uint32_t pa = MEMEffectiveToPhysical(ea, 0);
             if(pa == -1) continue;
 
-            uint8_t * ptr = (uint8_t *)&RAM[pa], * data = (uint8_t *)(&(p->data));
+            uint8_t * ptr = (uint8_t *)&mi.ram[pa], * data = (uint8_t *)(&(p->data));
             switch(p->dataSize)
             {
                 case PATCH_SIZE_8:

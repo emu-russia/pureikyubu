@@ -8,9 +8,6 @@
     translation       : effective -> physical
 /*/
 
-// main memory buffer
-#define RAM         mem.ram
-
 // amount of main memory (in bytes)
 #define RAMSIZE     0x01800000      // 24 mb
 
@@ -99,7 +96,6 @@ typedef struct MEMControl
     // memory state
     int         mmu;                // translation mode (0: simple, 1: mmu)
     bool        mmudirect;          // direct mmu translation (mean no lookup tables)
-    uint8_t*    ram;                // main memory (RAMSIZE)
     uint8_t**   imap;               // instruction translation lookup table (alive only when mmu)
     uint8_t**   dmap;               // data translation lookup table (alive only when mmu)
     bool        ir, dr;             // remap request

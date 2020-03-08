@@ -215,10 +215,10 @@ void cmd_blr_old()
     uint32_t ea = con.disa_cursor;
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
     if(pa == -1) return;
-    RAM[pa+0] = 0x4e;   // BLR
-    RAM[pa+1] = 0x80;
-    RAM[pa+2] = 0;
-    RAM[pa+3] = 0x20;
+    mi.ram[pa+0] = 0x4e;   // BLR
+    mi.ram[pa+1] = 0x80;
+    mi.ram[pa+2] = 0;
+    mi.ram[pa+3] = 0x20;
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
 }
@@ -247,24 +247,24 @@ void cmd_blr(int argc, char argv[][CON_LINELEN])
         uint32_t pa = MEMEffectiveToPhysical(ea, 0);
         if(pa == -1) return;
 
-        uint32_t op = MEMSwap(*(uint32_t*)(&RAM[pa]));
+        uint32_t op = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
         if(op == 0x4e800020) return;
 
         int ofs = 0;
         if(argc >= 2)           // value, to simulate "return X"
         {
             uint32_t iVal = strtoul(argv[1], NULL, 0) & 0xffff;
-            RAM[pa+0] = 0x38;
-            RAM[pa+1] = 0;
-            RAM[pa+2] = (uint8_t)(iVal >> 8);
-            RAM[pa+3] = (uint8_t)iVal;
+            mi.ram[pa+0] = 0x38;
+            mi.ram[pa+1] = 0;
+            mi.ram[pa+2] = (uint8_t)(iVal >> 8);
+            mi.ram[pa+3] = (uint8_t)iVal;
             ofs = 4;
         }
         
-        RAM[pa+ofs+0] = 0x4e;   // BLR
-        RAM[pa+ofs+1] = 0x80;
-        RAM[pa+ofs+2] = 0;
-        RAM[pa+ofs+3] = 0x20;
+        mi.ram[pa+ofs+0] = 0x4e;   // BLR
+        mi.ram[pa+ofs+1] = 0x80;
+        mi.ram[pa+ofs+2] = 0;
+        mi.ram[pa+ofs+3] = 0x20;
 
         con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
     }
@@ -709,9 +709,9 @@ void cmd_nop()
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
     if(pa == -1) return;
     
-    uint32_t old = MEMSwap(*(uint32_t*)(&RAM[pa]));
-    RAM[pa] = 0x60;
-    RAM[pa+1] = RAM[pa+2] = RAM[pa+3] = 0;
+    uint32_t old = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
+    mi.ram[pa] = 0x60;
+    mi.ram[pa+1] = mi.ram[pa+2] = mi.ram[pa+3] = 0;
     add_nop(ea, old);
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
@@ -728,10 +728,10 @@ void cmd_denop()
 
     uint32_t old = get_nop(ea);
     if(old == 0) return;
-    RAM[pa+0] = (uint8_t)(old >> 24);
-    RAM[pa+1] = (uint8_t)(old >> 16);
-    RAM[pa+2] = (uint8_t)(old >>  8);
-    RAM[pa+3] = (uint8_t)(old >>  0);
+    mi.ram[pa+0] = (uint8_t)(old >> 24);
+    mi.ram[pa+1] = (uint8_t)(old >> 16);
+    mi.ram[pa+2] = (uint8_t)(old >>  8);
+    mi.ram[pa+3] = (uint8_t)(old >>  0);
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
 }

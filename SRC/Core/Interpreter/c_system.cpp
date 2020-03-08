@@ -167,7 +167,7 @@ OP(MTSPR)
                 if(SPR[923] & 0x10)
                 {   // load
                     memcpy(
-                        &RAM[maddr & RAMMASK],
+                        &mi.ram[maddr & RAMMASK],
                         &mem.lc[lcaddr & 0x3ffff],
                         length * 32
                     );
@@ -176,7 +176,7 @@ OP(MTSPR)
                 {   // store
                     memcpy(
                         &mem.lc[lcaddr & 0x3ffff],
-                        &RAM[maddr & RAMMASK],
+                        &mi.ram[maddr & RAMMASK],
                         length * 32
                     );
                 }

@@ -8,12 +8,15 @@ static char *hexbyte(uint32_t addr)
     // check address
     uint32_t pa = MEMEffectiveToPhysical(addr, 0);
 
-    if(pa != -1)
+    if (mi.ram)
     {
-        if(pa < RAMSIZE)
+        if (pa != -1)
         {
-            sprintf(buf, "%02X", RAM[pa]);
-            return buf;
+            if (pa < RAMSIZE)
+            {
+                sprintf(buf, "%02X", mi.ram[pa]);
+                return buf;
+            }
         }
     }
     return "??";
@@ -27,12 +30,12 @@ static char *charbyte(uint32_t addr)
     // check address
     uint32_t pa = MEMEffectiveToPhysical(addr, 0);
 
-    if(pa != -1)
+    if (mi.ram && pa != -1)
     {
-        if(pa < RAMSIZE)
+        if (pa < RAMSIZE)
         {
-            uint8_t data = RAM[pa];
-            if((data >= 32) && (data <= 255)) sprintf(buf, "%c\0", data);
+            uint8_t data = mi.ram[pa];
+            if ((data >= 32) && (data <= 255)) sprintf(buf, "%c\0", data);
             return buf;
         }
     }

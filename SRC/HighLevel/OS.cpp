@@ -42,7 +42,7 @@ void OSSetCurrentContext(void)
     CPUWriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
     CPUWriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
 
-    OSContext *c = (OSContext *)(&RAM[__OSPhysicalContext]);
+    OSContext *c = (OSContext *)(&mi.ram[__OSPhysicalContext]);
 
     if(__OSCurrentContext == __OSDefaultThread/*context*/)
     {
@@ -73,7 +73,7 @@ void OSSaveContext(void)
     int i;
     HLEHit(HLE_OS_SAVE_CONTEXT);
 
-    OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     // always save FP/PS context
     OSSaveFPUContext();
@@ -108,7 +108,7 @@ void OSLoadContext(void)
 {
     HLEHit(HLE_OS_LOAD_CONTEXT);
 
-    OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     // thread switch on OSDisableInterrupts is omitted, because
     // interrupts are generated only at branch opcodes;
@@ -160,7 +160,7 @@ void OSClearContext(void)
 {
     HLEHit(HLE_OS_CLEAR_CONTEXT);
 
-    OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     c->mode = 0;
     c->state = 0;
@@ -177,7 +177,7 @@ void OSInitContext(void)
     int i;
     HLEHit(HLE_OS_INIT_CONTEXT);
 
-    OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     c->srr[0] = SWAP(PARAM(1));
     c->gpr[1] = SWAP(PARAM(2));
@@ -200,7 +200,7 @@ void OSInitContext(void)
 void OSLoadFPUContext(void)
 {
     PARAM(1) = PARAM(0);
-    OSContext * c = (OSContext *)(&RAM[PARAM(1) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(1) & RAMMASK]);
 
     //u16 state = (c->state >> 8) | (c->state << 8);
     //if(! (state & OS_CONTEXT_STATE_FPSAVED) )
@@ -223,7 +223,7 @@ void OSLoadFPUContext(void)
 void OSSaveFPUContext(void)
 {
     PARAM(2) = PARAM(0);
-    OSContext * c = (OSContext *)(&RAM[PARAM(2) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(2) & RAMMASK]);
 
     //c->state |= (OS_CONTEXT_STATE_FPSAVED >> 8) | (OS_CONTEXT_STATE_FPSAVED << 8);
     c->fpscr = SWAP(FPSCR);
@@ -242,7 +242,7 @@ void OSSaveFPUContext(void)
 
 void OSFillFPUContext(void)
 {
-    OSContext * c = (OSContext *)(&RAM[PARAM(0) & RAMMASK]);
+    OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
     
     MSR |= MSR_FP;
     c->fpscr = SWAP(FPSCR);

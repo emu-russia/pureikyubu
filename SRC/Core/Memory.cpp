@@ -23,10 +23,6 @@ void MEMInit()
 {
     if(mem.inited) return;
 
-    // allocate main memory buffer
-    RAM = (uint8_t *)malloc(RAMSIZE);
-    assert(RAM);
-
     #pragma message ("Hack : remove, when finish MMU tables")
     mem.mmudirect = 1;
 
@@ -36,13 +32,6 @@ void MEMInit()
 void MEMFini()
 {
     if(!mem.inited) return;
-
-    // destroy main memory
-    if(RAM)
-    {
-        free(RAM);
-        RAM = NULL;
-    }
 
     mem.inited = false;
 }
@@ -56,9 +45,6 @@ void MEMOpen(int mode)
 
     // select memory mode
     MEMSelect(mode);
-
-    // clear RAM
-    memset(RAM, 0, RAMSIZE);
 
     mem.opened = true;
 }
@@ -198,6 +184,7 @@ uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
 void __fastcall GCReadByte(uint32_t addr, uint32_t*reg)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint8_t bogus = 0;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -216,13 +203,20 @@ void __fastcall GCReadByte(uint32_t addr, uint32_t*reg)
     // bus load byte
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = &bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *reg = (uint32_t)*ptr;
 }
 
 void __fastcall GCWriteByte(uint32_t addr, uint32_t data)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint8_t bogus;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -241,13 +235,20 @@ void __fastcall GCWriteByte(uint32_t addr, uint32_t data)
     // bus store byte
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = &bogus;
+        else
+            ptr = &mi.ram[pa];
+}
     *ptr = (uint8_t)data;
 }
 
 void __fastcall GCReadHalf(uint32_t addr, uint32_t *reg)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint16_t bogus = 0;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -266,13 +267,20 @@ void __fastcall GCReadHalf(uint32_t addr, uint32_t *reg)
     // bus load halfword
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = (uint8_t *)&bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *reg = (uint32_t)MEMSwapHalf(*(uint16_t *)ptr);
 }
 
 void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint16_t bogus = 0;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -293,7 +301,13 @@ void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg)
     // bus load halfword signed
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = (uint8_t *)&bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *reg = MEMSwapHalf(*(uint16_t *)ptr);
     if(*reg & 0x8000) *reg |= 0xffff0000;
 }
@@ -301,6 +315,7 @@ void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg)
 void __fastcall GCWriteHalf(uint32_t addr, uint32_t data)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint16_t bogus;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -319,13 +334,20 @@ void __fastcall GCWriteHalf(uint32_t addr, uint32_t data)
     // bus store halfword
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = (uint8_t*)&bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *(uint16_t *)ptr = MEMSwapHalf((uint16_t)data);
 }
 
 void __fastcall GCReadWord(uint32_t addr, uint32_t *reg)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint32_t bogus = 0;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -344,13 +366,20 @@ void __fastcall GCReadWord(uint32_t addr, uint32_t *reg)
     // bus load word
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = (uint8_t *)&bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *reg = MEMSwap(*(uint32_t *)ptr);
 }
 
 void __fastcall GCWriteWord(uint32_t addr, uint32_t data)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
+    uint32_t bogus;
 
     // hardware trap
     if(pa >= HW_BASE)
@@ -369,7 +398,13 @@ void __fastcall GCWriteWord(uint32_t addr, uint32_t data)
     // bus store word
     uint8_t *ptr;
     if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else ptr = &RAM[pa];
+    else
+    {
+        if (mi.ram == nullptr)
+            ptr = (uint8_t*)&bogus;
+        else
+            ptr = &mi.ram[pa];
+    }
     *(uint32_t *)ptr = MEMSwap(data);
 }
 
@@ -381,7 +416,7 @@ void __fastcall GCWriteWord(uint32_t addr, uint32_t data)
 void __fastcall GCReadDouble(uint32_t addr, uint64_t *_reg)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t *buf = &RAM[pa], *reg = (uint8_t *)_reg;
+    uint8_t *buf = &mi.ram[pa], *reg = (uint8_t *)_reg;
 
     if(addr >= 0xe0000000) buf = &mem.lc[addr & 0x3ffff];
 
@@ -399,7 +434,7 @@ void __fastcall GCReadDouble(uint32_t addr, uint64_t *_reg)
 void __fastcall GCWriteDouble(uint32_t addr, uint64_t *_data)
 {
     uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t *buf = &RAM[pa], *data = (uint8_t *)_data;
+    uint8_t *buf = &mi.ram[pa], *data = (uint8_t *)_data;
 
     if(addr >= 0xe0000000) buf = &mem.lc[addr & 0x3ffff];
 
@@ -421,8 +456,15 @@ uint32_t __fastcall GCFetch(uint32_t addr)
     uint32_t pa = GCEffectiveToPhysical(addr);
     if(pa >= RAMSIZE) return 1;
 
+    uint32_t bogus = 0;
+
     // bus fetch instruction
-    uint8_t *ptr = &RAM[pa];
+
+    uint8_t* ptr;
+    if (mi.ram == nullptr)
+        ptr = (uint8_t*)&bogus;
+    else
+        ptr = &mi.ram[pa];
     return MEMSwap(*(uint32_t *)ptr);
 }
 
@@ -463,7 +505,7 @@ uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
         if(pn)
         {
             uint8_t *ptr = &pn[ea & 4095];
-            return (uint32_t)(ptr - RAM);
+            return (uint32_t)(ptr - mi.ram);
         }
         else return -1;
     }
@@ -544,7 +586,7 @@ void __fastcall MMUReadByte(uint32_t addr, uint32_t *reg)
         }
 
         // bus load byte
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *reg = (uint32_t)*ptr;
     }
     else GCReadByte(addr, reg);
@@ -577,7 +619,7 @@ void __fastcall MMUWriteByte(uint32_t addr, uint32_t data)
         }
 
         // bus store byte
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *ptr = (uint8_t)data;
     }
     else GCWriteByte(addr, data);
@@ -610,7 +652,7 @@ void __fastcall MMUReadHalf(uint32_t addr, uint32_t *reg)
         }
 
         // bus load halfword
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *reg = (uint32_t)MEMSwapHalf(*(uint16_t *)ptr);
     }
     else GCReadHalf(addr, reg);
@@ -645,7 +687,7 @@ void __fastcall MMUReadHalfS(uint32_t addr, uint32_t *reg)
         }
         
         // bus load halfword signed
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *reg = MEMSwapHalf(*(uint16_t *)ptr);
         if(*reg & 0x8000) *reg |= 0xffff0000;
     }
@@ -679,7 +721,7 @@ void __fastcall MMUWriteHalf(uint32_t addr, uint32_t data)
         }
 
         // bus store halfword
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *(uint16_t *)ptr = MEMSwapHalf((uint16_t)data);
     }
     else GCWriteHalf(addr, data);
@@ -712,7 +754,7 @@ void __fastcall MMUReadWord(uint32_t addr, uint32_t *reg)
         }
 
         // bus load word
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *reg = MEMSwap(*(uint32_t *)ptr);
     }
     else GCReadWord(addr, reg);
@@ -745,7 +787,7 @@ void __fastcall MMUWriteWord(uint32_t addr, uint32_t data)
         }
 
         // bus store word
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         *(uint32_t *)ptr = MEMSwap(data);
     }
     else GCWriteWord(addr, data);
@@ -767,7 +809,7 @@ void __fastcall MMUReadDouble(uint32_t addr, uint64_t *_reg)
     {
         uint32_t pa = MMUEffectiveToPhysical(addr);
         if(pa == -1) return;
-        uint8_t *buf = &RAM[pa], *reg = (uint8_t *)_reg;
+        uint8_t *buf = &mi.ram[pa], *reg = (uint8_t *)_reg;
 
         // bus load doubleword
         reg[0] = buf[7];
@@ -793,7 +835,7 @@ void __fastcall MMUWriteDouble(uint32_t addr, uint64_t *_data)
     {
         uint32_t pa = MMUEffectiveToPhysical(addr);
         if(pa == -1) return;
-        uint8_t *buf = &RAM[pa], *data = (uint8_t *)_data;
+        uint8_t *buf = &mi.ram[pa], *data = (uint8_t *)_data;
 
         // bus store doubleword
         buf[0] = data[7];
@@ -818,7 +860,7 @@ uint32_t __fastcall MMUFetch(uint32_t addr)
         if(pa >= RAMSIZE) return 1;
 
         // bus fetch instruction
-        uint8_t *ptr = &RAM[pa];
+        uint8_t *ptr = &mi.ram[pa];
         return MEMSwap(*(uint32_t *)ptr);
     }
     else return GCFetch(addr);
@@ -837,8 +879,8 @@ void MEMMap(bool IR, bool DR, uint32_t startEA, uint32_t startPA, uint32_t lengt
     while(sz)
     {
         if(pa >= RAMSIZE) break;
-        if(IR) mem.imap[ea >> 12] = &RAM[pa & ~4095];
-        if(DR) mem.dmap[ea >> 12] = &RAM[pa & ~4095];
+        if(IR) mem.imap[ea >> 12] = &mi.ram[pa & ~4095];
+        if(DR) mem.dmap[ea >> 12] = &mi.ram[pa & ~4095];
         ea += 4096;
         pa += 4096;
         sz -= 4096;

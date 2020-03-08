@@ -31,7 +31,7 @@ static void ReadFST()
 
     // load FST into memory
     DVDSeek(fstOffs);
-    DVDRead(&RAM[fstAddr & RAMMASK], fstSize);
+    DVDRead(&mi.ram[fstAddr & RAMMASK], fstSize);
 
     // save fst configuration in lomem
     MEMWriteWord(0x80000038, fstAddr);
@@ -75,7 +75,7 @@ static void BootApploader()
 
     // load apploader image
     DVDSeek(0x2460);
-    DVDRead(&RAM[0x81200000 & RAMMASK], appSize);
+    DVDRead(&mi.ram[0x81200000 & RAMMASK], appSize);
 
     // set parameters for apploader entrypoint
     GPR[3] = 0x81300004;            // save apploader _prolog offset
@@ -120,7 +120,7 @@ static void BootApploader()
         if(size)
         {
             DVDSeek(offs);
-            DVDRead(&RAM[addr & RAMMASK], size);
+            DVDRead(&mi.ram[addr & RAMMASK], size);
 
             DBReport( YEL "apploader read : offs : %08X size : %08X addr : %08X\n",
                       offs, size, addr );
@@ -209,7 +209,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
-    memcpy( &RAM[CPU_EXCEPTION_SYSCALL], 
+    memcpy( &mi.ram[CPU_EXCEPTION_SYSCALL],
             default_syscall, 
             sizeof(default_syscall) );
 
@@ -222,10 +222,10 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     {
         // read disk ID information to 0x80000000
         DVDSeek(0);
-        DVDRead(RAM, 32);
+        DVDRead(mi.ram, 32);
 
         // additional PAL/NTSC selection hack for old VIConfigure()
-        char *id = (char *)RAM;
+        char *id = (char *)mi.ram;
         if(id[3] == 'P') MEMWriteWord(0x800000CC, 1);   // set to PAL
         else MEMWriteWord(0x800000CC, 0);
 

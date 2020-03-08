@@ -77,15 +77,16 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
     MEMSelect(mem.mmu, 0);
     CPUOpen(bailout, delay, counterFactor);
-    assert(GXOpen(mem.ram, wnd.hMainWindow));
-    assert(AXOpen());
-    assert(PADOpen());
 
     HWConfig hwconfig = { 0 };
     EMUGetHwConfig(&hwconfig);
     HWOpen(&hwconfig);
     ReloadFile();   // PC will be set here
     HLEOpen();
+
+    assert(GXOpen(mi.ram, wnd.hMainWindow));
+    assert(AXOpen());
+    assert(PADOpen());
 
     // debugger has its own core, to control CPU execution
     if (emu.doldebug)

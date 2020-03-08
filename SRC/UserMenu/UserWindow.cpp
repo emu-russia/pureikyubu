@@ -812,22 +812,31 @@ loadFile:
 
                 // dump main memory
                 case ID_DUMP_RAM:
-                    SetStatusText(STATUS_PROGRESS, "Dumping main memory...");
-                    FileSave("RAM.bin", RAM, RAMSIZE);
-                    SetStatusText(STATUS_PROGRESS, "Main memory dumped in RAM.bin");
+                    if (mi.ram)
+                    {
+                        SetStatusText(STATUS_PROGRESS, "Dumping main memory...");
+                        FileSave("RAM.bin", mi.ram, RAMSIZE);
+                        SetStatusText(STATUS_PROGRESS, "Main memory dumped in RAM.bin");
+                    }
                     return 0;
 
                 // dump aux. memory
                 case ID_DUMP_ARAM:
-                    SetStatusText(STATUS_PROGRESS, "Dumping aux. memory...");
-                    FileSave("ARAM.bin", ARAM, ARAMSIZE);
-                    SetStatusText(STATUS_PROGRESS, "Aux. memory dumped in ARAM.bin");
+                    if (ARAM)
+                    {
+                        SetStatusText(STATUS_PROGRESS, "Dumping aux. memory...");
+                        FileSave("ARAM.bin", ARAM, ARAMSIZE);
+                        SetStatusText(STATUS_PROGRESS, "Aux. memory dumped in ARAM.bin");
+                    }
                     return 0;
 
                 // dump OS low memory
                 case ID_DUMP_LOMEM:
-                    FileSave("lomem.bin", RAM, 0x3100);
-                    SetStatusText(STATUS_PROGRESS, "OS low memory dumped in lomem.bin");
+                    if (mi.ram)
+                    {
+                        FileSave("lomem.bin", mi.ram, 0x3100);
+                        SetStatusText(STATUS_PROGRESS, "OS low memory dumped in lomem.bin");
+                    }
                     return 0;
 
                 // enable patches
