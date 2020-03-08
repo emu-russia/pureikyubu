@@ -6,11 +6,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("ManagedUi")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyDescription("Dolwin - Nintendo GameCube Emulator")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("Dolwin Team")]
 [assembly: AssemblyProduct("ManagedUi")]
-[assembly: AssemblyCopyright("Copyright ©  2020")]
+[assembly: AssemblyCopyright("© 2003-2020 Dolwin Team.")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

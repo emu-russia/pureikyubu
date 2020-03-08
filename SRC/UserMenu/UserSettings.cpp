@@ -743,7 +743,7 @@ void EditFileInformation(HWND hwnd)
 static void filter_string(HWND hDlg, uint32_t filter)
 {
     char buf[64], *ptr = buf;
-    char * mask[] = { "*.dol", "*.elf", "*.gcm", "*.gmp" };
+    char * mask[] = { "*.dol", "*.elf", "*.gcm", "*.iso" };
 
     filter = MEMSwap(filter);
 
@@ -768,7 +768,7 @@ static void check_filter(HWND hDlg, uint32_t filter)
     // GCM
     if(filter & 0x0000ff00) CheckDlgButton(hDlg, IDC_GCM_FILTER, BST_CHECKED);
     else CheckDlgButton(hDlg, IDC_GCM_FILTER, BST_UNCHECKED);
-    // GMP
+    // ISO
     if(filter & 0x000000ff) CheckDlgButton(hDlg, IDC_GMP_FILTER, BST_CHECKED);
     else CheckDlgButton(hDlg, IDC_GMP_FILTER, BST_UNCHECKED);
 }
@@ -843,7 +843,7 @@ static INT_PTR CALLBACK FileFilterProc(
                     filter_string(hwndDlg, usel.filter);
                     check_filter(hwndDlg, usel.filter);
                     return TRUE;
-                case IDC_GMP_FILTER:                    // GMP
+                case IDC_GMP_FILTER:                    // ISO
                     usel.filter ^= 0x000000ff;
                     filter_string(hwndDlg, usel.filter);
                     check_filter(hwndDlg, usel.filter);

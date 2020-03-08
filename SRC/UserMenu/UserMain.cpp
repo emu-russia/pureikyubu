@@ -68,33 +68,6 @@ void DolwinReport(char *fmt, ...)
 // ---------------------------------------------------------------------------
 // WinMain (very first run-time initialization and main loop)
 
-// execute another app
-BOOL DolwinExecute(char *appName, char *cmdLine)
-{
-#ifndef LOADPARMS32
-    typedef struct tagLOADPARMS32
-    {  
-        LPSTR lpEnvAddress;     // address of environment strings 
-        LPSTR lpCmdLine;        // address of command line 
-        LPSTR lpCmdShow;        // how to show new program 
-        DWORD dwReserved;       // must be zero 
-    } LOADPARMS32; 
-#endif  // LOADPARMS32
-
-    LOADPARMS32 params;
-    WORD cmdShow[] = { 2, SW_NORMAL };
-
-    memset(&params, 0, sizeof(LOADPARMS32));
-
-    char arg[1024];
-    sprintf(arg, "%c%s", strlen(cmdLine), cmdLine);
-    params.lpCmdLine = arg;
-    params.lpCmdShow = (LPSTR)cmdShow;
-
-    if(LoadModule(appName, &params) > 31) return TRUE;
-    else return FALSE;
-}
-
 // long jump buffer is used, because we cant be sure, that UpdateMainWindow
 // is returned normally. example situation : emulation was already stopped by
 // EMUClose, but UpdateMainWindow is already called by some hardware to update
@@ -135,10 +108,6 @@ static void InitFileSystem(HINSTANCE hInst)
 
     // make sure, that Dolwin has data directory.
     CreateDirectory(".\\Data", NULL);
-
-    // today is a good day
-    PlaySound( "monkeyisland.wav", NULL,
-                SND_FILENAME | SND_LOOP | SND_ASYNC | SND_NOWAIT | SND_NODEFAULT);
 }
 
 // return file name without quotes
@@ -156,47 +125,9 @@ char * FixCommandLine(char *lpCmdLine)
     return lpCmdLine;
 }
 
-static void DolwinExceptionHandler(LPEXCEPTION_POINTERS exp)
-{
-    char dump[1024];
-
-    sprintf(dump,
-        "Gekko CPU Registers:\n"
-        "\n"
-        "r0 :%08X\tr8 :%08X\tr16:%08X\tr24:%08X\n"
-        "sp :%08X\tr9 :%08X\tr17:%08X\tr25:%08X\n"
-        "sd2:%08X\tr10:%08X\tr18:%08X\tr26:%08X\n"
-        "r3 :%08X\tr11:%08X\tr19:%08X\tr27:%08X\n"
-        "r4 :%08X\tr12:%08X\tr20:%08X\tr28:%08X\n"
-        "r5 :%08X\tsd1:%08X\tr21:%08X\tr29:%08X\n"
-        "r6 :%08X\tr14:%08X\tr22:%08X\tr30:%08X\n"
-        "r7 :%08X\tr15:%08X\tr23:%08X\tr31:%08X\n"
-        "\n"
-        "lr :%08X\tcr :%08X\tdec:%08X\n"
-        "pc :%08X\txer:%08X\tctr:%08X\n",
-        GPR[ 0], GPR[ 8], GPR[16], GPR[24],
-        GPR[ 1], GPR[ 9], GPR[17], GPR[25],
-        GPR[ 2], GPR[10], GPR[18], GPR[26],
-        GPR[ 3], GPR[11], GPR[19], GPR[27],
-        GPR[ 4], GPR[12], GPR[20], GPR[28],
-        GPR[ 5], GPR[13], GPR[21], GPR[29],
-        GPR[ 6], GPR[14], GPR[22], GPR[30],
-        GPR[ 7], GPR[15], GPR[23], GPR[31],
-        LR, CR, DEC,
-        PC, XER, CTR
-    );
-
-    DolwinError( "Exception during emulation run-flow!",
-                 "%s", dump );
-}
-
 // entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-    // check previous instance, maybe we are running on 3.11 =:)
-    VERIFY( hPrevInstance != NULL,
-            "Sorry, " APPNAME " doesnt support OS'es below Windows95.");
-
     // prepare file system
     InitFileSystem(hInstance);
 
@@ -249,5 +180,3 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     DolwinError("ERROR", APPNAME " ERROR >>> SHOULD NEVER REACH HERE :)");
     return 0;   // return bad
 }
-
-const char *verId = "$Id: Dolwin 0.10 (30.11.2004)$\r\n";

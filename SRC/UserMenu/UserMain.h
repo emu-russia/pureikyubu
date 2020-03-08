@@ -1,6 +1,3 @@
-// execute another application
-BOOL    DolwinExecute(char *appName, char *cmdLine="");
-
 // fall-back into main loop
 void    DolwinMainLoop();
 

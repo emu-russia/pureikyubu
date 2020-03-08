@@ -60,10 +60,10 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Dialog
 //
 
-IDD_FILE_FILTER DIALOG 20, 30, 255, 126
+IDD_FILE_FILTER DIALOGEX 20, 30, 255, 126
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Dolwin File Filter"
-FONT 8, "MS Sans Serif"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,196,104,50,16
     GROUPBOX        "Executables",IDC_STATIC,5,5,245,45
@@ -74,10 +74,8 @@ BEGIN
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,225,15
     CONTROL         "Embedded Link File, standard executable files",IDC_ELF_FILTER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,225,15
-    CONTROL         "GAMECUBE Master Data, default GC DVD images",IDC_GCM_FILTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
-    CONTROL         "GAMECUBE Master Packed Data, custom Dolwin format",IDC_GMP_FILTER,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
+    CONTROL         "GameCube DVD Images (GCM)",IDC_GCM_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
+    CONTROL         "GameCube DVD Images (ISO)",IDC_GMP_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
 END
 
 IDD_EDIT_FILE_INFO DIALOGEX 20, 30, 240, 177
@@ -588,7 +586,6 @@ BEGIN
         MENUITEM "Add Patch...",                ID_ADD_PATCH
         MENUITEM SEPARATOR
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
-        MENUITEM "System Info...",              ID_DEVELOPMENT_SYSINFO
     END
     POPUP "&Options"
     BEGIN
@@ -659,6 +656,11 @@ BEGIN
 END
 
 IDD_DIALOG_PAD AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FILE_FILTER AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

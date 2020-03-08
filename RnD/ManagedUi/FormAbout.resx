@@ -117,17 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="APPDESC" xml:space="preserve">
-    <value>Nintendo Gamecube Emulator for Windows</value>
-  </data>
-  <data name="APPNAME" xml:space="preserve">
-    <value>Dolwin</value>
-  </data>
-  <data name="APPVER" xml:space="preserve">
-    <value>0.11</value>
-  </data>
-  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="padStart" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\padStart.bmp;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
 </root>

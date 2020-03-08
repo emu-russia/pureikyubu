@@ -61,6 +61,33 @@ namespace ManagedUi.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Nintendo Gamecube Emulator for Windows.
+        /// </summary>
+        internal static string APPDESC {
+            get {
+                return ResourceManager.GetString("APPDESC", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Dolwin.
+        /// </summary>
+        internal static string APPNAME {
+            get {
+                return ResourceManager.GetString("APPNAME", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 0.11.
+        /// </summary>
+        internal static string APPVER {
+            get {
+                return ResourceManager.GetString("APPVER", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap padStart {

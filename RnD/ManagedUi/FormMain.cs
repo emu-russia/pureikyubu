@@ -12,12 +12,20 @@ namespace ManagedUi
 {
     public partial class FormMain : Form
     {
+        bool aboutShown = false;
+
         public FormMain()
         {
             InitializeComponent();
         }
 
         private void FormMain_Load(object sender, EventArgs e)
+        {
+            Text = Properties.Resources.APPNAME + " - " + Properties.Resources.APPDESC + " (" + Properties.Resources.APPVER + ")";
+
+        }
+
+        void GameListDemo()
         {
             var imageList = new ImageList();
             imageList.ImageSize = new Size(96, 32);
@@ -39,6 +47,22 @@ namespace ManagedUi
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private void aboutDolwinToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!aboutShown)
+            {
+                FormAbout about = new FormAbout();
+                about.FormClosed += About_FormClosed;
+                about.Show();
+                aboutShown = true;
+            }
+        }
+
+        private void About_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            aboutShown = false;
         }
     }
 }

@@ -144,18 +144,15 @@ char * FileOpen(HWND hwnd, int type)
         {
             case FILE_TYPE_ALL:
                 ofn.lpstrFilter = 
-                    "All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.gmp)\0*.dol;*.elf;*.bin;*.gcm;*.gmp\0"
+                    "All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
                     "GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
                     "Binary Files (*.bin)\0*.bin\0"
-                    "GameCube DVD Images (*.gcm)\0*.gcm\0"
-                    "Compressed DVD Images (*.gmp)\0*.gmp\0"
+                    "GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
                     "All Files (*.*)\0*.*\0";
                 break;
             case FILE_TYPE_DVD:
                 ofn.lpstrFilter = 
-                    "All Disk Image Files (*.gcm, *.gmp)\0*.gcm;*.gmp\0"
-                    "GameCube DVD Images (*.gcm)\0*.gcm\0"
-                    "Compressed DVD Images (*.gmp)\0*.gmp\0"
+                    "GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
                     "All Files (*.*)\0*.*\0";
                 break;
             case FILE_TYPE_MAP:

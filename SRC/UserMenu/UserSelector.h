@@ -1,5 +1,4 @@
-#ifndef __USER_SELECTOR_H__
-#define __USER_SELECTOR_H__
+#pragma once
 
 // file type (*.bin is not supported, and can be opened only by File->Open)
 enum SELECTOR_FILE
@@ -88,5 +87,3 @@ typedef struct UserSelector
 } UserSelector;
 
 extern  UserSelector usel;
-
-#endif  // __USER_SELECTOR_H__

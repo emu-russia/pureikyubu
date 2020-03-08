@@ -854,11 +854,6 @@ loadFile:
                     }
                     return 0;
 
-                // msinfo32
-                case ID_DEVELOPMENT_SYSINFO:
-                    DolwinExecute("C:\\Program Files\\Common Files\\Microsoft Shared\\MSINFO\\msinfo32.exe");
-                    return 0;
-
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // options dialogs
 
@@ -911,7 +906,6 @@ loadFile:
             if(stricmp(".dol", strrchr(fileName, '.')) &&
                stricmp(".elf", strrchr(fileName, '.')) && 
                stricmp(".bin", strrchr(fileName, '.')) && 
-               stricmp(".gmp", strrchr(fileName, '.')) && 
                stricmp(".gcm", strrchr(fileName, '.')) ) break;
 
             name = fileName;
