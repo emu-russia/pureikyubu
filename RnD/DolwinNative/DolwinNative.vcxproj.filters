@@ -15,13 +15,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="dolphin.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DebuggerStubs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="UserStubs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

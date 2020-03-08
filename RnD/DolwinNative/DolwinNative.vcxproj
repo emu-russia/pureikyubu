@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;DOLWINNATIVE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>dolphin.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\..\SRC</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -110,7 +110,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;DOLWINNATIVE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>dolphin.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\..\SRC</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -128,7 +128,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;DOLWINNATIVE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>dolphin.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\..\SRC</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -148,7 +148,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;DOLWINNATIVE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>dolphin.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>..\..\SRC</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -161,7 +161,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="DebuggerStubs.h" />
-    <ClInclude Include="dolphin.h" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="UserStubs.h" />
   </ItemGroup>
   <ItemGroup>
@@ -176,8 +176,20 @@
     <ClCompile Include="UserStubs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\DolwinVideo\DolwinVideo.vcxproj">
+      <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\DVD\DVD.vcxproj">
+      <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\SRC\Core\GekkoCore\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SRC\Hardware\GCNHardware\GCNHardware.vcxproj">
+      <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\SRC\HighLevel\GCNHighLevel\GCNHighLevel.vcxproj">
+      <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

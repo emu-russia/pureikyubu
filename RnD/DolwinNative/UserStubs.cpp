@@ -1,4 +1,4 @@
-#include "dolphin.h"
+#include "pch.h"
 
 // fatal error
 void DolwinError(const char* title, const char* fmt, ...)
