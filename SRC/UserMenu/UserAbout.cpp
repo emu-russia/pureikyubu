@@ -12,6 +12,8 @@ static INT_PTR CALLBACK AboutProc(
     LPARAM  lParam      // second message parameter
 )
 {
+    UNREFERENCED_PARAMETER(lParam);
+
     char tmpbuf[256];    
 
     switch(uMsg)

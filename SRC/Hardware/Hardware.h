@@ -39,6 +39,9 @@ typedef struct _HWConfig
     // CP
     bool        gxpoll;         // 1: poll controllers after GX draw done
 
+    // DSP
+    bool        dspFakeMode;
+
     int64_t     one_second;         // one CPU second in timer ticks
 
 } HWConfig;

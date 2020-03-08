@@ -3,8 +3,8 @@
 
 // ---------------------------------------------------------------------------
 
-#define ifname(name)        (stricmp(name, argv[0]) == 0)
-#define iftoken(name, n)    (stricmp(name, argv[n]) == 0)
+#define ifname(name)        (_stricmp(name, argv[0]) == 0)
+#define iftoken(name, n)    (_stricmp(name, argv[n]) == 0)
 #define required(req)       if(req != (argc - 1)) { print("%u parameter(s) required\n", req); return; }
 #define minrequired(req)    if(req > (argc - 1)) { print("at least %u parameter(s) required\n", req); return; }
 
@@ -382,7 +382,7 @@ static void disa_line (FILE *f, uint32_t opcode, uint32_t addr)
     PPCD_CB    disa;
     char *symbol;
 
-    if(symbol = SYMName(addr))
+    if((symbol = SYMName(addr)) != nullptr)
     {
         fprintf (f, "\n%s\n", symbol);
     }
@@ -403,7 +403,7 @@ static void disa_line (FILE *f, uint32_t opcode, uint32_t addr)
 
     else if(disa.iclass & PPC_DISA_BRANCH)
     {
-        if(symbol = SYMName(disa.target)) fprintf (f, "%-12s%s", disa.mnemonic, symbol);
+        if((symbol = SYMName(disa.target)) != nullptr) fprintf (f, "%-12s%s", disa.mnemonic, symbol);
         else fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
 
         if(disa.target > addr) fprintf (f, " \x19");
@@ -649,7 +649,7 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        uint32_t address;
+        uint32_t address = 0;
         if(argv[1][0] == '*')
         {
             uint32_t branchAddr = con.disa_cursor, op;
@@ -798,127 +798,127 @@ void cmd_plist()
 // Get pointer to Gekko register.
 static uint32_t *getreg (char *name)
 {
-    if (!stricmp(name, "r0")) return &GPR[0];
-    else if (!stricmp(name, "r1")) return &GPR[1];
-    else if (!stricmp(name, "r2")) return &GPR[2];
-    else if (!stricmp(name, "r3")) return &GPR[3];
-    else if (!stricmp(name, "r4")) return &GPR[4];
-    else if (!stricmp(name, "r5")) return &GPR[5];
-    else if (!stricmp(name, "r6")) return &GPR[6];
-    else if (!stricmp(name, "r7")) return &GPR[7];
-    else if (!stricmp(name, "r8")) return &GPR[8];
-    else if (!stricmp(name, "r9")) return &GPR[9];
-    else if (!stricmp(name, "r10")) return &GPR[10];
-    else if (!stricmp(name, "r11")) return &GPR[11];
-    else if (!stricmp(name, "r12")) return &GPR[12];
-    else if (!stricmp(name, "r13")) return &GPR[13];
-    else if (!stricmp(name, "r14")) return &GPR[14];
-    else if (!stricmp(name, "r15")) return &GPR[15];
-    else if (!stricmp(name, "r16")) return &GPR[16];
-    else if (!stricmp(name, "r17")) return &GPR[17];
-    else if (!stricmp(name, "r18")) return &GPR[18];
-    else if (!stricmp(name, "r19")) return &GPR[19];
-    else if (!stricmp(name, "r20")) return &GPR[20];
-    else if (!stricmp(name, "r21")) return &GPR[21];
-    else if (!stricmp(name, "r22")) return &GPR[22];
-    else if (!stricmp(name, "r23")) return &GPR[23];
-    else if (!stricmp(name, "r24")) return &GPR[24];
-    else if (!stricmp(name, "r25")) return &GPR[25];
-    else if (!stricmp(name, "r26")) return &GPR[26];
-    else if (!stricmp(name, "r27")) return &GPR[27];
-    else if (!stricmp(name, "r28")) return &GPR[28];
-    else if (!stricmp(name, "r29")) return &GPR[29];
-    else if (!stricmp(name, "r30")) return &GPR[30];
-    else if (!stricmp(name, "r31")) return &GPR[31];
+    if (!_stricmp(name, "r0")) return &GPR[0];
+    else if (!_stricmp(name, "r1")) return &GPR[1];
+    else if (!_stricmp(name, "r2")) return &GPR[2];
+    else if (!_stricmp(name, "r3")) return &GPR[3];
+    else if (!_stricmp(name, "r4")) return &GPR[4];
+    else if (!_stricmp(name, "r5")) return &GPR[5];
+    else if (!_stricmp(name, "r6")) return &GPR[6];
+    else if (!_stricmp(name, "r7")) return &GPR[7];
+    else if (!_stricmp(name, "r8")) return &GPR[8];
+    else if (!_stricmp(name, "r9")) return &GPR[9];
+    else if (!_stricmp(name, "r10")) return &GPR[10];
+    else if (!_stricmp(name, "r11")) return &GPR[11];
+    else if (!_stricmp(name, "r12")) return &GPR[12];
+    else if (!_stricmp(name, "r13")) return &GPR[13];
+    else if (!_stricmp(name, "r14")) return &GPR[14];
+    else if (!_stricmp(name, "r15")) return &GPR[15];
+    else if (!_stricmp(name, "r16")) return &GPR[16];
+    else if (!_stricmp(name, "r17")) return &GPR[17];
+    else if (!_stricmp(name, "r18")) return &GPR[18];
+    else if (!_stricmp(name, "r19")) return &GPR[19];
+    else if (!_stricmp(name, "r20")) return &GPR[20];
+    else if (!_stricmp(name, "r21")) return &GPR[21];
+    else if (!_stricmp(name, "r22")) return &GPR[22];
+    else if (!_stricmp(name, "r23")) return &GPR[23];
+    else if (!_stricmp(name, "r24")) return &GPR[24];
+    else if (!_stricmp(name, "r25")) return &GPR[25];
+    else if (!_stricmp(name, "r26")) return &GPR[26];
+    else if (!_stricmp(name, "r27")) return &GPR[27];
+    else if (!_stricmp(name, "r28")) return &GPR[28];
+    else if (!_stricmp(name, "r29")) return &GPR[29];
+    else if (!_stricmp(name, "r30")) return &GPR[30];
+    else if (!_stricmp(name, "r31")) return &GPR[31];
 
-    else if (!stricmp(name, "sp")) return &GPR[1];
-    else if (!stricmp(name, "sd1")) return &GPR[13];
-    else if (!stricmp(name, "sd2")) return &GPR[2];
+    else if (!_stricmp(name, "sp")) return &GPR[1];
+    else if (!_stricmp(name, "sd1")) return &GPR[13];
+    else if (!_stricmp(name, "sd2")) return &GPR[2];
 
-    else if (!stricmp(name, "cr")) return &PPC_CR;
-    else if (!stricmp(name, "fpscr")) return &FPSCR;
-    else if (!stricmp(name, "xer")) return &XER;
-    else if (!stricmp(name, "lr")) return &LR;
-    else if (!stricmp(name, "ctr")) return &CTR;
-    else if (!stricmp(name, "msr")) return &MSR;
+    else if (!_stricmp(name, "cr")) return &PPC_CR;
+    else if (!_stricmp(name, "fpscr")) return &FPSCR;
+    else if (!_stricmp(name, "xer")) return &XER;
+    else if (!_stricmp(name, "lr")) return &LR;
+    else if (!_stricmp(name, "ctr")) return &CTR;
+    else if (!_stricmp(name, "msr")) return &MSR;
 
-    else if (!stricmp(name, "sr0")) return &SR[0];
-    else if (!stricmp(name, "sr1")) return &SR[1];
-    else if (!stricmp(name, "sr2")) return &SR[2];
-    else if (!stricmp(name, "sr3")) return &SR[3];
-    else if (!stricmp(name, "sr4")) return &SR[4];
-    else if (!stricmp(name, "sr5")) return &SR[5];
-    else if (!stricmp(name, "sr6")) return &SR[6];
-    else if (!stricmp(name, "sr7")) return &SR[7];
-    else if (!stricmp(name, "sr8")) return &SR[8];
-    else if (!stricmp(name, "sr9")) return &SR[9];
-    else if (!stricmp(name, "sr10")) return &SR[10];
-    else if (!stricmp(name, "sr11")) return &SR[11];
-    else if (!stricmp(name, "sr12")) return &SR[12];
-    else if (!stricmp(name, "sr13")) return &SR[13];
-    else if (!stricmp(name, "sr14")) return &SR[14];
-    else if (!stricmp(name, "sr15")) return &SR[15];
+    else if (!_stricmp(name, "sr0")) return &SR[0];
+    else if (!_stricmp(name, "sr1")) return &SR[1];
+    else if (!_stricmp(name, "sr2")) return &SR[2];
+    else if (!_stricmp(name, "sr3")) return &SR[3];
+    else if (!_stricmp(name, "sr4")) return &SR[4];
+    else if (!_stricmp(name, "sr5")) return &SR[5];
+    else if (!_stricmp(name, "sr6")) return &SR[6];
+    else if (!_stricmp(name, "sr7")) return &SR[7];
+    else if (!_stricmp(name, "sr8")) return &SR[8];
+    else if (!_stricmp(name, "sr9")) return &SR[9];
+    else if (!_stricmp(name, "sr10")) return &SR[10];
+    else if (!_stricmp(name, "sr11")) return &SR[11];
+    else if (!_stricmp(name, "sr12")) return &SR[12];
+    else if (!_stricmp(name, "sr13")) return &SR[13];
+    else if (!_stricmp(name, "sr14")) return &SR[14];
+    else if (!_stricmp(name, "sr15")) return &SR[15];
 
-    else if (!stricmp(name, "ibat0u")) return &IBAT0U;
-    else if (!stricmp(name, "ibat1u")) return &IBAT1U;
-    else if (!stricmp(name, "ibat2u")) return &IBAT2U;
-    else if (!stricmp(name, "ibat3u")) return &IBAT3U;
-    else if (!stricmp(name, "ibat0l")) return &IBAT0L;
-    else if (!stricmp(name, "ibat1l")) return &IBAT1L;
-    else if (!stricmp(name, "ibat2l")) return &IBAT2L;
-    else if (!stricmp(name, "ibat3l")) return &IBAT3L;
-    else if (!stricmp(name, "dbat0u")) return &DBAT0U;
-    else if (!stricmp(name, "dbat1u")) return &DBAT1U;
-    else if (!stricmp(name, "dbat2u")) return &DBAT2U;
-    else if (!stricmp(name, "dbat3u")) return &DBAT3U;
-    else if (!stricmp(name, "dbat0l")) return &DBAT0L;
-    else if (!stricmp(name, "dbat1l")) return &DBAT1L;
-    else if (!stricmp(name, "dbat2l")) return &DBAT2L;
-    else if (!stricmp(name, "dbat3l")) return &DBAT3L;
+    else if (!_stricmp(name, "ibat0u")) return &IBAT0U;
+    else if (!_stricmp(name, "ibat1u")) return &IBAT1U;
+    else if (!_stricmp(name, "ibat2u")) return &IBAT2U;
+    else if (!_stricmp(name, "ibat3u")) return &IBAT3U;
+    else if (!_stricmp(name, "ibat0l")) return &IBAT0L;
+    else if (!_stricmp(name, "ibat1l")) return &IBAT1L;
+    else if (!_stricmp(name, "ibat2l")) return &IBAT2L;
+    else if (!_stricmp(name, "ibat3l")) return &IBAT3L;
+    else if (!_stricmp(name, "dbat0u")) return &DBAT0U;
+    else if (!_stricmp(name, "dbat1u")) return &DBAT1U;
+    else if (!_stricmp(name, "dbat2u")) return &DBAT2U;
+    else if (!_stricmp(name, "dbat3u")) return &DBAT3U;
+    else if (!_stricmp(name, "dbat0l")) return &DBAT0L;
+    else if (!_stricmp(name, "dbat1l")) return &DBAT1L;
+    else if (!_stricmp(name, "dbat2l")) return &DBAT2L;
+    else if (!_stricmp(name, "dbat3l")) return &DBAT3L;
 
-    else if (!stricmp(name, "sdr1")) return &SDR1;
-    else if (!stricmp(name, "sprg0")) return &SPRG0;
-    else if (!stricmp(name, "sprg1")) return &SPRG1;
-    else if (!stricmp(name, "sprg2")) return &SPRG2;
-    else if (!stricmp(name, "sprg3")) return &SPRG3;
-    else if (!stricmp(name, "dar")) return &DAR;
-    else if (!stricmp(name, "dsisr")) return &DSISR;
-    else if (!stricmp(name, "srr0")) return &SRR0;
-    else if (!stricmp(name, "srr1")) return &SRR1;
-    else if (!stricmp(name, "pmc1")) return &SPR[953];
-    else if (!stricmp(name, "pmc2")) return &SPR[954];
-    else if (!stricmp(name, "pmc3")) return &SPR[957];
-    else if (!stricmp(name, "pmc4")) return &SPR[958];
-    else if (!stricmp(name, "mmcr0")) return &SPR[952];
-    else if (!stricmp(name, "mmcr1")) return &SPR[956];
-    else if (!stricmp(name, "sia")) return &SPR[955];
-    else if (!stricmp(name, "sda")) return &SPR[959];
+    else if (!_stricmp(name, "sdr1")) return &SDR1;
+    else if (!_stricmp(name, "sprg0")) return &SPRG0;
+    else if (!_stricmp(name, "sprg1")) return &SPRG1;
+    else if (!_stricmp(name, "sprg2")) return &SPRG2;
+    else if (!_stricmp(name, "sprg3")) return &SPRG3;
+    else if (!_stricmp(name, "dar")) return &DAR;
+    else if (!_stricmp(name, "dsisr")) return &DSISR;
+    else if (!_stricmp(name, "srr0")) return &SRR0;
+    else if (!_stricmp(name, "srr1")) return &SRR1;
+    else if (!_stricmp(name, "pmc1")) return &SPR[953];
+    else if (!_stricmp(name, "pmc2")) return &SPR[954];
+    else if (!_stricmp(name, "pmc3")) return &SPR[957];
+    else if (!_stricmp(name, "pmc4")) return &SPR[958];
+    else if (!_stricmp(name, "mmcr0")) return &SPR[952];
+    else if (!_stricmp(name, "mmcr1")) return &SPR[956];
+    else if (!_stricmp(name, "sia")) return &SPR[955];
+    else if (!_stricmp(name, "sda")) return &SPR[959];
 
-    else if (!stricmp(name, "gqr0")) return &GQR[0];
-    else if (!stricmp(name, "gqr1")) return &GQR[1];
-    else if (!stricmp(name, "gqr2")) return &GQR[2];
-    else if (!stricmp(name, "gqr3")) return &GQR[3];
-    else if (!stricmp(name, "gqr4")) return &GQR[4];
-    else if (!stricmp(name, "gqr5")) return &GQR[5];
-    else if (!stricmp(name, "gqr6")) return &GQR[6];
-    else if (!stricmp(name, "gqr7")) return &GQR[7];
+    else if (!_stricmp(name, "gqr0")) return &GQR[0];
+    else if (!_stricmp(name, "gqr1")) return &GQR[1];
+    else if (!_stricmp(name, "gqr2")) return &GQR[2];
+    else if (!_stricmp(name, "gqr3")) return &GQR[3];
+    else if (!_stricmp(name, "gqr4")) return &GQR[4];
+    else if (!_stricmp(name, "gqr5")) return &GQR[5];
+    else if (!_stricmp(name, "gqr6")) return &GQR[6];
+    else if (!_stricmp(name, "gqr7")) return &GQR[7];
 
-    else if (!stricmp(name, "hid0")) return &HID0;
-    else if (!stricmp(name, "hid1")) return &HID1;
-    else if (!stricmp(name, "hid2")) return &HID2;
+    else if (!_stricmp(name, "hid0")) return &HID0;
+    else if (!_stricmp(name, "hid1")) return &HID1;
+    else if (!_stricmp(name, "hid2")) return &HID2;
 
-    else if (!stricmp(name, "dabr")) return &DABR;
-    else if (!stricmp(name, "iabr")) return &IABR;
-    else if (!stricmp(name, "wpar")) return &WPAR;
-    else if (!stricmp(name, "l2cr")) return &SPR[1017];
-    else if (!stricmp(name, "dmau")) return &DMAU;
-    else if (!stricmp(name, "dmal")) return &DMAL;
-    else if (!stricmp(name, "thrm1")) return &SPR[1020];
-    else if (!stricmp(name, "thrm2")) return &SPR[1021];
-    else if (!stricmp(name, "thrm2")) return &SPR[1022];
-    else if (!stricmp(name, "ictc")) return &SPR[1019];
+    else if (!_stricmp(name, "dabr")) return &DABR;
+    else if (!_stricmp(name, "iabr")) return &IABR;
+    else if (!_stricmp(name, "wpar")) return &WPAR;
+    else if (!_stricmp(name, "l2cr")) return &SPR[1017];
+    else if (!_stricmp(name, "dmau")) return &DMAU;
+    else if (!_stricmp(name, "dmal")) return &DMAL;
+    else if (!_stricmp(name, "thrm1")) return &SPR[1020];
+    else if (!_stricmp(name, "thrm2")) return &SPR[1021];
+    else if (!_stricmp(name, "thrm2")) return &SPR[1022];
+    else if (!_stricmp(name, "ictc")) return &SPR[1019];
 
-    else if (!stricmp(name, "pc")) return &PC;   // Wow !
+    else if (!_stricmp(name, "pc")) return &PC;   // Wow !
 
     return NULL;
 }
@@ -1015,7 +1015,7 @@ void cmd_r (int argc, char argv[][CON_LINELEN])
         // show register
         if(argc <= 3)
         {
-            if (!stricmp (argv[1], "msr")) describe_msr (*n);
+            if (!_stricmp (argv[1], "msr")) describe_msr (*n);
             else con_print ("%s = %i (0x%X)\n", argv[1], *n, *n);
             return;
         }
@@ -1143,7 +1143,7 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);
-            if(!stricmp(disa.mnemonic, argv[1])) break;
+            if(!_stricmp(disa.mnemonic, argv[1])) break;
         }
         if(saddr == eaddr) con_print(GREEN "%s " NORM "not found. last address : %08X\n", argv[1], saddr);
         else
@@ -1442,8 +1442,9 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
 
         PPCDisasm (&disa);
 
-        if(disa.iclass & PPC_DISA_BRANCH) {
-            if ( !stricmp ( disa.mnemonic, "bl" ) )
+        if(disa.iclass & PPC_DISA_BRANCH)
+        {
+            if ( !_stricmp ( disa.mnemonic, "bl" ) )
             {
                 uint32_t start_address = (uint32_t)disa.target;
                 if ( prev_address != start_address ) dump_subcalls ( start_address, f, level+1 );
@@ -1511,12 +1512,12 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
         uint32_t addr = 0;
 
         // first check for link/counter registers
-        if(!stricmp(argv[1], "lr"))
+        if(!_stricmp(argv[1], "lr"))
         {
             con_set_disa_cur(LR);
             return;
         }
-        if(!stricmp(argv[1], "ctr"))
+        if(!_stricmp(argv[1], "ctr"))
         {
             con_set_disa_cur(CTR);
             return;

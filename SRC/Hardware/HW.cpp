@@ -183,7 +183,7 @@ void HWOpen(HWConfig* config)
     VIOpen(config); // video (TV)
     CPOpen(config); // fifo
     AIOpen(config); // audio (AID and AIS)
-    DSPOpen();      // DSP
+    DSPOpen(config);    // DSP
     AROpen();       // aux. memory (ARAM)
     EIOpen(config); // expansion interface (EXI)
     DIOpen();       // disk

@@ -139,7 +139,7 @@ static void LoadSettings(int n)         // dialogs created
     if(n == 2)
     {
         uint32_t ver = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
-        int i=0, selected;
+        int i=0, selected = sizeof(consoleVersion) / 8 - 1;
         while(consoleVersion[i].ver != 0xffffffff)
         {
             if(consoleVersion[i].ver == ver)
@@ -194,6 +194,7 @@ static void LoadSettings(int n)         // dialogs created
 static void SaveSettings()              // OK pressed
 {
     int i;
+    char buf[256] = { 0, };
 
     // Emulator
     if(settingsLoaded[0])
@@ -204,7 +205,6 @@ static void SaveSettings()              // OK pressed
         selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
         SetConfigInt(USER_MMU, selected);
 
-        char buf[256];
         GetDlgItemText(hDlg, IDC_COUNTER_FACTOR, buf, sizeof(buf));
         cpu.cf = atoi(buf); if(cpu.cf <= 0) cpu.cf = 1;
         SetConfigInt(USER_CPU_CF, cpu.cf);
@@ -218,7 +218,6 @@ static void SaveSettings()              // OK pressed
         if(emu.running)
         {
             // update view of CPU timing setup
-            char buf[64];
             sprintf(buf, "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
             SetStatusText(STATUS_TIMING, buf);
         }
@@ -271,7 +270,6 @@ static void SaveSettings()              // OK pressed
         int selected = (int)SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETCURSEL, 0, 0);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            char buf[100];
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf);
             uint32_t ver = strtoul(buf, NULL, 0);
             SetConfigInt(USER_CONSOLE, ver);
@@ -317,7 +315,7 @@ static void TextPopup(int page, int id)
 // make sure path have ending '\\'
 static void fix_path(char *path)
 {
-    int n = strlen(path);
+    size_t n = strlen(path);
     if(path[n-1] != '\\')
     {
         path[n]   = '\\';
@@ -328,7 +326,7 @@ static void fix_path(char *path)
 // remove all control symbols (below space)
 static void fix_string(char *str)
 {
-    for(int i=0; i<strlen(str); i++)
+    for(size_t i=0; i<strlen(str); i++)
     {
         if(str[i] < ' ') str[i] = ' ';
     }
@@ -412,7 +410,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                     EditFileFilter(hDlg);
                     break;
                 case IDC_ADDPATH:
-                    if(path = FileOpen(hDlg, FILE_TYPE_DIR))
+                    if((path = FileOpen(hDlg, FILE_TYPE_DIR)) != nullptr)
                     {
                         fix_path(path);
 
@@ -421,7 +419,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                         for(i=0; i<max; i++)
                         {
                             SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
-                            if(!stricmp(path, text)) break;
+                            if(!_stricmp(path, text)) break;
                         }
 
                         // add new path
@@ -491,12 +489,6 @@ static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wP
 
         case WM_NOTIFY:
             if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
-            break;
-
-        case WM_COMMAND:
-            switch(wParam)
-            {
-            }
             break;
 
         case WM_HELP:

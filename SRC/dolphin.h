@@ -30,12 +30,12 @@
 #define APPVER      "0.11"
 
 // ---------------------------------------------------------------------------
-// Dolwin includes, from higher to lower levels.
+// Dolwin includes
 
-#include "UserMenu/User.h"
-#include "HighLevel/HighLevel.h"
-#include "Hardware/Hardware.h"
 #include "Core/Memory.h"
 #include "Core/Gekko.h"
 #include "Core/Interpreter.h"
+#include "Hardware/Hardware.h"
+#include "HighLevel/HighLevel.h"
 #include "Debugger/Debugger.h"
+#include "UserMenu/User.h"

@@ -244,6 +244,6 @@ char *GetIniVar(char *gameId, char *var)
         USER_INI_FILE
     );
 
-    if(!stricmp(buf, "ERROR")) return NULL;
+    if(!_stricmp(buf, "ERROR")) return NULL;
     else return buf;
 }

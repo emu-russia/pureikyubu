@@ -1772,6 +1772,6 @@ char *PPCDisasmSimple(uint64_t pc, uint32_t instr)
     dis_out.instr = instr;
 
     PPCDisasm(&dis_out);
-    sprintf(output, "%08X  %08X  %-10s %s", pc, instr, dis_out.mnemonic, dis_out.operands);
+    sprintf(output, "%08X  %08X  %-10s %s", (uint32_t)pc, instr, dis_out.mnemonic, dis_out.operands);
     return output;
 }

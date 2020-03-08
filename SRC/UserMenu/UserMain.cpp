@@ -124,7 +124,7 @@ char * FixCommandLine(char *lpCmdLine)
     {
         lpCmdLine++;
     }
-    int len = strlen(lpCmdLine);
+    size_t len = strlen(lpCmdLine);
     if(lpCmdLine[len-1] == '\"' || lpCmdLine[len-1] == '\'')
     {
         lpCmdLine[len-1] = 0;
@@ -135,6 +135,9 @@ char * FixCommandLine(char *lpCmdLine)
 // entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+    UNREFERENCED_PARAMETER(hPrevInstance);
+    UNREFERENCED_PARAMETER(nShowCmd);
+
     // prepare file system
     InitFileSystem(hInstance);
 

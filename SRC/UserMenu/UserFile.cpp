@@ -206,12 +206,12 @@ char * FileOpen(HWND hwnd, int type)
                 break;
         }
 
-        chdir(prevDir);
+        _chdir(prevDir);
         return tempBuf;
     }
     else
     {
-        chdir(prevDir);
+        _chdir(prevDir);
         return NULL;
     }
 }
@@ -219,7 +219,8 @@ char * FileOpen(HWND hwnd, int type)
 // make path to file shorter for "lvl" levels.
 char * FileShortName(const char *filename, int lvl)
 {
-    int c = 0, i;
+    int c = 0;
+    size_t i = 0;
 
     char* ptr = (char *)filename;
 

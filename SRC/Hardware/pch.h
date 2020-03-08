@@ -21,3 +21,6 @@
 #include "../UserMenu/UserFile.h"
 #include "../UserMenu/UserProfiler.h"
 #include "../UserMenu/UserWindow.h"
+#include "../UserMenu/Loader.h"
+
+#include "../HighLevel/HighLevel.h"

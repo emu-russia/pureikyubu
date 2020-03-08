@@ -44,12 +44,12 @@ static char *NewMemcardFileProc(HWND hwnd, char * lastDir)
             
         LoadedFile[i] = '\0';       // terminate
         
-        chdir(prevc);
+        _chdir(prevc);
         return LoadedFile;
     }
     else
     {
-        chdir(prevc);
+        _chdir(prevc);
         return NULL;
     }
 }
@@ -95,12 +95,12 @@ static char *ChooseMemcardFileProc(HWND hwnd, char * lastDir)
             
         LoadedFile[i] = '\0';       // terminate
           
-        chdir(prevc);
+        _chdir(prevc);
         return LoadedFile;
     }
     else
     {
-        chdir(prevc);
+        _chdir(prevc);
         return NULL;
     }
 }
@@ -110,6 +110,8 @@ static char *ChooseMemcardFileProc(HWND hwnd, char * lastDir)
  */
 static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    UNREFERENCED_PARAMETER(lParam);
+
     int index;
     char buf[256];
 
@@ -274,7 +276,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
                     if (Fnsize+1 + Pathsize+1 >= sizeof (memcard[um_num].filename)) {
-                        sprintf(buf, "File full path must be less than %d characters.", sizeof (memcard[um_num].filename) );
+                        sprintf(buf, "File full path must be less than %i characters.", sizeof (memcard[um_num].filename) );
                         MessageBox(hwndDlg, buf, "Invalid filename", 0);
                         return TRUE;
                     }
@@ -334,7 +336,11 @@ void MemcardConfigure(int num, HWND hParent) {
 
     opened = MCOpened;
     if (opened == FALSE)
-        MCOpen (); // This Dialog needs that the memcard are connected if they are supposed to be
+    {
+        HWConfig confg = { 0 };
+        EMUGetHwConfig(&confg);
+        MCOpen(&confg); // This Dialog needs that the memcard are connected if they are supposed to be
+    }
     DialogBox(
         GetModuleHandle(NULL),
         MAKEINTRESOURCE(IDD_MEMCARD_SETTINGS),

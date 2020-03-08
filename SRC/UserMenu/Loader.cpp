@@ -603,7 +603,7 @@ static BOOL SetGameID(char *filename)
     return TRUE;
 }
 
-#define IFEXT(ext) if(!stricmp(ext, strrchr(filename, '.')))
+#define IFEXT(ext) if(!_stricmp(ext, strrchr(filename, '.')))
 
 // load any Dolwin-supported file
 static void DoLoadFile(char *filename)
@@ -634,6 +634,11 @@ static void DoLoadFile(char *filename)
         entryPoint = LoadBIN(filename);
         ldat.gameID[0] = 0;
         ldat.dvd = FALSE;
+    }
+    else IFEXT(".iso")
+    {
+        DVDSetCurrent(filename);
+        ldat.dvd = SetGameID(filename);
     }
     else IFEXT(".gcm")
     {

@@ -19,7 +19,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
     con_clear_line(line, con.attr);
 
-    if(symbol = SYMName(addr))
+    if((symbol = SYMName(addr)) != nullptr)
     {
         con_printf_at(0, line, GREEN "%s\n", symbol);
         line++;
@@ -58,7 +58,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
         else if (disa.target < addr) con_printline(CYAN " \x18");
         else con_printline(CYAN " \x1b");
 
-        if(symbol = SYMName(disa.target))
+        if((symbol = SYMName(disa.target)) != nullptr)
         {
             con_printf_at(47, line, BROWN " ; %s", symbol);
         }

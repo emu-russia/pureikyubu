@@ -14,9 +14,9 @@
                                       ------ 2: HALT
 /*/
 
-static BOOL reset, dspint, halt;
+static bool reset, dspint, halt;
 
-static void AXSetResetBit(BOOL val)
+static void AXSetResetBit(bool val)
 {
     reset = val;
     if(reset)
@@ -24,9 +24,9 @@ static void AXSetResetBit(BOOL val)
         DBReport(DSP GREEN "AX reset\n");
     }
 }
-static BOOL AXGetResetBit() { return 0; }
+static bool AXGetResetBit() { return 0; }
 
-static void AXSetIntBit(BOOL val)
+static void AXSetIntBit(bool val)
 {
     dspint = val;
     if(dspint)
@@ -34,9 +34,9 @@ static void AXSetIntBit(BOOL val)
         DBReport(DSP GREEN "AX assert int\n");
     }
 }
-static BOOL AXGetIntBit() { return 0; }
+static bool AXGetIntBit() { return 0; }
 
-static void AXSetHaltBit(BOOL val)
+static void AXSetHaltBit(bool val)
 {
     if(halt != val)
     {
@@ -44,7 +44,7 @@ static void AXSetHaltBit(BOOL val)
     }
     halt = val;
 }
-static BOOL AXGetHaltBit() { return halt; }
+static bool AXGetHaltBit() { return halt; }
 
 /*/
     0x0C005000      DSP Output Mailbox Register High Part (CPU->DSP)

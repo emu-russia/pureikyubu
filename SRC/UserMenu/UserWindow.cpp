@@ -204,7 +204,7 @@ void AddRecentFile(char *path)
     // check if item already present in list
     for(n=1; n<=RecentNum; n++)
     {
-        if(!stricmp(path, GetRecentEntry(n)))
+        if(!_stricmp(path, GetRecentEntry(n)))
         {
             // place old recent to the top
             // and move upper recents down
@@ -612,7 +612,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             {
                 // load DVD/executable (START)
                 case ID_FILE_LOAD:
-                    if(name = FileOpen(hwnd))
+                    if((name = FileOpen(hwnd)) != nullptr)
                     {
 loadFile:
                         LoadFile(name);
@@ -678,9 +678,9 @@ loadFile:
 
                 // set new current DVD image
                 case ID_FILE_CHANGEDVD:
-                    if((name = FileOpen(hwnd, FILE_TYPE_DVD)) && DIGetCoverState())
+                    if((name = FileOpen(hwnd, FILE_TYPE_DVD)) != nullptr && DIGetCoverState())
                     {
-                        if(!stricmp(name, ldat.currentFile)) return 0;  // same
+                        if(!_stricmp(name, ldat.currentFile)) return 0;  // same
                         if(DVDSetCurrent(name) == FALSE) return 0;      // bad
 
                         // close lid
@@ -846,7 +846,7 @@ loadFile:
 
                 // load patch data
                 case ID_LOAD_PATCH:
-                    if(name = FileOpen(hwnd, FILE_TYPE_PATCH))
+                    if((name = FileOpen(hwnd, FILE_TYPE_PATCH)) != nullptr)
                     {
                         UnloadPatch();
                         LoadPatch(name, 0);
@@ -855,7 +855,7 @@ loadFile:
 
                 // add new patch data
                 case ID_ADD_PATCH:
-                    if(name = FileOpen(hwnd, FILE_TYPE_PATCH))
+                    if((name = FileOpen(hwnd, FILE_TYPE_PATCH)) != nullptr)
                     {
                         LoadPatch(name, 1);
                     }
@@ -932,10 +932,11 @@ loadFile:
             DragFinish((HDROP)wParam);
 
             // extension filter
-            if(stricmp(".dol", strrchr(fileName, '.')) &&
-               stricmp(".elf", strrchr(fileName, '.')) && 
-               stricmp(".bin", strrchr(fileName, '.')) && 
-               stricmp(".gcm", strrchr(fileName, '.')) ) break;
+            if(_stricmp(".dol", strrchr(fileName, '.')) &&
+               _stricmp(".elf", strrchr(fileName, '.')) &&
+               _stricmp(".bin", strrchr(fileName, '.')) &&
+               _stricmp(".iso", strrchr(fileName, '.')) &&
+               _stricmp(".gcm", strrchr(fileName, '.')) ) break;
 
             name = fileName;
             goto loadFile;

@@ -54,7 +54,7 @@ void    SelectorSetSelected(char *filename);
 void    SortSelector(int sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void    NotifySelector(LPNMHDR pnmh);
-void    ScrollSelector(char letter);
+void    ScrollSelector(int letter);
 
 // all important data is placed here
 typedef struct UserSelector

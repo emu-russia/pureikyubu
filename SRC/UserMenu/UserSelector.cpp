@@ -16,7 +16,7 @@ static HIMAGELIST bannerList;
 // make sure path have ending '\\'
 static void fix_path(char *path)
 {
-    int n = strlen(path);
+    size_t n = strlen(path);
     if(path[n-1] != '\\')
     {
         path[n]   = '\\';
@@ -46,7 +46,7 @@ static void list_path()
 static void add_path(char *path)
 {
     // check path size
-    int len = strlen(path) + 1;
+    size_t len = strlen(path) + 1;
     if(len >= MAX_PATH)
     {
         DolwinReport("Too long path string : %s", path);
@@ -119,13 +119,13 @@ bool AddSelectorPath(char *fullPath)
     int i;
     // spell will be checked RTL, so fullPath[0] doesnt crash when fullPath = NULL
     if( (fullPath[0] == 0) || (fullPath == NULL) )
-        return FALSE;
+        return false;
 
     fix_path(fullPath);
 
     for(i=0; i<usel.pathnum; i++)
     {
-        if(!stricmp(fullPath, usel.paths[i])) break;
+        if(!_stricmp(fullPath, usel.paths[i])) break;
     }
 
     if(i == usel.pathnum)
@@ -133,15 +133,15 @@ bool AddSelectorPath(char *fullPath)
         char temp[100000];
         char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
         VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
-        if(!stricmp(old, "<EMPTY>"))
+        if(!_stricmp(old, "<EMPTY>"))
             sprintf(temp, "%s", fullPath);
         else
             sprintf(temp, "%s;%s", old, fullPath);
         SetConfigString(USER_PATH, temp);
         add_path(fullPath);
-        return TRUE;
+        return true;
     }
-    else return FALSE;
+    else return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
     double rgb[3], rgbh[3];
     double alpha, alphaC;
     uint16_t *tile  = (uint16_t *)banner, *ptrA16, *ptrB16;
-    uint32_t ri[4], gi[4], bi[4], ai[4], rhi[4], ghi[4], bhi[4];     // for interpolation
+    uint32_t ri[4], gi[4], bi[4], ai2[4], rhi[4], ghi[4], bhi[4];     // for interpolation
     uint32_t r, g, b, a, rh, gh, bh;                                 // final values
     int row = 0, col = 0, pos;
 
@@ -232,9 +232,9 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
                         ri[n] = (p & 0x0f00) >> 8;
                         gi[n] = (p & 0x00f0) >> 4;
                         bi[n] = (p & 0x000f);
-                        ai[n] = (p & 0x7000) >> 12;
+                        ai2[n] = (p & 0x7000) >> 12;
 
-                        alpha = (double)ai[n] / 7.0;
+                        alpha = (double)ai2[n] / 7.0;
                         alphaC = 1.0 - alpha;
 
                         rhi[n] = (uint8_t)((double)(16*ri[n]) * alpha + rgbh[0] * alphaC);
@@ -806,7 +806,7 @@ void SelectorSetSelected(char *filename)
 {
     for(int i=0; i<usel.filenum; i++)
     {
-        if(!stricmp(filename, usel.files[i].name))
+        if(!_stricmp(filename, usel.files[i].name))
         {
             SelectorSetSelected(i);
             break;
@@ -924,7 +924,7 @@ void NotifySelector(LPNMHDR pnmh)
 }
 
 // set selected item, by first letter key pressed
-void ScrollSelector(char letter)
+void ScrollSelector(int letter)
 {
     letter = tolower(letter);
     for(int n=0; n<usel.filenum; n++)
@@ -951,13 +951,13 @@ static int sort_by_type(const void *cmp1, const void *cmp2)
 static int sort_by_filename(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return stricmp(f1->name, f2->name);
+    return _stricmp(f1->name, f2->name);
 }
 
 static int sort_by_title(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return stricmp(f1->title, f2->title);
+    return _stricmp(f1->title, f2->title);
 }
 
 static int sort_by_size(const void *cmp1, const void *cmp2)
@@ -975,7 +975,7 @@ static int sort_by_gameid(const void *cmp1, const void *cmp2)
 static int sort_by_comment(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return stricmp(f1->comment, f2->comment);
+    return _stricmp(f1->comment, f2->comment);
 }
 
 // count DVD files in list

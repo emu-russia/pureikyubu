@@ -125,6 +125,8 @@ static void EnumFonts(HWND hwndDlg)
 
 static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    UNREFERENCED_PARAMETER(lParam);
+
     int i;
     switch(uMsg)
     {

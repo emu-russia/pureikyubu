@@ -21,12 +21,12 @@ typedef struct DSPMicrocode
     DSPUID      uid;            // unique microcode ID (see above)
 
     // DSPCR callbacks
-    void        (*SetResetBit)(BOOL val);
-    BOOL        (*GetResetBit)();
-    void        (*SetIntBit)(BOOL val);
-    BOOL        (*GetIntBit)();
-    void        (*SetHaltBit)(BOOL val);
-    BOOL        (*GetHaltBit)();
+    void        (*SetResetBit)(bool val);
+    bool        (*GetResetBit)();
+    void        (*SetIntBit)(bool val);
+    bool        (*GetIntBit)();
+    void        (*SetHaltBit)(bool val);
+    bool        (*GetHaltBit)();
 
     // mailbox callbacks
     void        (*WriteOutMailboxHi)(uint16_t value);
@@ -44,7 +44,7 @@ typedef struct DSPMicrocode
 // DSP state
 typedef struct DSPControl
 {
-    BOOL            fakeMode;   // 1: task is always DSP_FAKE_UCODE
+    bool            fakeMode;   // 1: task is always DSP_FAKE_UCODE
     DSPMicrocode    *task;      // current microcode
     uint16_t        out[2];     // CPU->DSP mailbox
     uint16_t        in[2];      // DSP->CPU mailbox
@@ -64,12 +64,12 @@ extern  DSPControl dsp;
                                      ¦  ---- 1: INT
                                       ------ 2: HALT
 /*/
-void    DSPSetResetBit(BOOL val);
-BOOL    DSPGetResetBit();
-void    DSPSetIntBit(BOOL val);
-BOOL    DSPGetIntBit();
-void    DSPSetHaltBit(BOOL val);
-BOOL    DSPGetHaltBit();
+void    DSPSetResetBit(bool val);
+bool    DSPGetResetBit();
+void    DSPSetIntBit(bool val);
+bool    DSPGetIntBit();
+void    DSPSetHaltBit(bool val);
+bool    DSPGetHaltBit();
 
 /*/
     0x0C005000      DSP Output Mailbox Register High Part (CPU->DSP)
@@ -84,7 +84,7 @@ uint16_t     DSPReadOutMailboxLo();
 uint16_t     DSPReadInMailboxHi();
 uint16_t     DSPReadInMailboxLo();
 
-void    DSPOpen();
+void    DSPOpen(HWConfig * config);
 void    DSPClose();
 void    DSPUpdate();
 void    DSPAssertInt();

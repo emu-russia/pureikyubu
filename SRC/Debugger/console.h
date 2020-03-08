@@ -18,6 +18,8 @@ void    con_close();
 void    con_start();
 void    con_break(char *reason=NULL);
 
+#pragma pack(push, 8)
+
 // all console important variables are here
 typedef struct CONControl
 {
@@ -41,5 +43,7 @@ typedef struct CONControl
     NOPHistory*         nopHist;
     int                 nopNum;
 } CONControl;
+
+#pragma pack(pop)
 
 extern  CONControl con;

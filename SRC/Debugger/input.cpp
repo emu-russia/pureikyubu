@@ -181,7 +181,7 @@ void con_tokenizing(char *line)
             strncpy(roll.tokens[roll.tokencount], line + start, end - start);
 
             // make lower only first token
-            if(roll.tokencount == 0) strlwr(roll.tokens[roll.tokencount]);
+            if(roll.tokencount == 0) _strlwr(roll.tokens[roll.tokencount]);
             roll.tokencount++;
         }
         else if(!endl)
@@ -411,10 +411,13 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
 
 static void con_data_key(char ascii, int vkey, int ctrl)
 {
+    UNREFERENCED_PARAMETER(ascii);
+    UNREFERENCED_PARAMETER(ctrl);
+
     switch(vkey)
     {
         case VK_HOME:
-            con.data = 1<<31;
+            con.data = (uint32_t)(1<<31);
             break;
         case VK_END:
             con.data = (RAMSIZE | (1<<31)) - ((wind.data_h - 1) * 16);
@@ -486,6 +489,9 @@ static void disa_navigate()
 
 static void con_disa_key(char ascii, int vkey, int ctrl)
 {
+    UNREFERENCED_PARAMETER(ascii);
+    UNREFERENCED_PARAMETER(ctrl);
+
     switch(vkey)
     {
         case VK_HOME:

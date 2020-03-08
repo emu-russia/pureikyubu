@@ -186,7 +186,7 @@ static char * string_to_HTML_string(char *txt)
 {
     static char html[0x1000];
     char *ptr = html;
-    int len = strlen(txt);
+    size_t len = strlen(txt);
 
     logcurcol = NULL;
     ptr += sprintf(ptr, "%s", logcol[7]);
@@ -336,7 +336,9 @@ void con_fullscreen(bool full)
     for(int i=0; i<CON_HEIGHT; i++)
         con_clear_line(i, 7);
 
-    if(wind.full = full)
+    wind.full = full;
+
+    if(wind.full)
     {
         wind.regs_h = 0;
         wind.data_h = 0;

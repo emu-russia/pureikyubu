@@ -24,14 +24,14 @@ static  uint32_t cardWorkarea;
                                       ------ 2: HALT
 /*/
 
-void DSPSetResetBit(BOOL val) { dsp.task->SetResetBit(val); }
-BOOL DSPGetResetBit() { return dsp.task->GetResetBit(); }
+void DSPSetResetBit(bool val) { dsp.task->SetResetBit(val); }
+bool DSPGetResetBit() { return dsp.task->GetResetBit(); }
 
-void DSPSetIntBit(BOOL val) { dsp.task->SetIntBit(val); }
-BOOL DSPGetIntBit() { return dsp.task->GetIntBit(); }
+void DSPSetIntBit(bool val) { dsp.task->SetIntBit(val); }
+bool DSPGetIntBit() { return dsp.task->GetIntBit(); }
 
-void DSPSetHaltBit(BOOL val) { dsp.task->SetHaltBit(val); }
-BOOL DSPGetHaltBit() { return dsp.task->GetHaltBit(); }
+void DSPSetHaltBit(bool val) { dsp.task->SetHaltBit(val); }
+bool DSPGetHaltBit() { return dsp.task->GetHaltBit(); }
 
 /*/
     0x0C005000      DSP Output Mailbox Register High Part (CPU->DSP)
@@ -52,14 +52,14 @@ uint16_t DSPReadInMailboxLo()  { return dsp.task->ReadInMailboxLo(); }
 // ---------------------------------------------------------------------------
 // simple fake microcode
 
-static void Fake_SetResetBit(BOOL val) {}
-static BOOL Fake_GetResetBit() { return 0; }
+static void Fake_SetResetBit(bool val) {}
+static bool Fake_GetResetBit() { return 0; }
 
-static void Fake_SetIntBit(BOOL val) {}
-static BOOL Fake_GetIntBit() { return 0; }
+static void Fake_SetIntBit(bool val) {}
+static bool Fake_GetIntBit() { return 0; }
 
-static void Fake_SetHaltBit(BOOL val) {}
-static BOOL Fake_GetHaltBit() { return 0; }
+static void Fake_SetHaltBit(bool val) {}
+static bool Fake_GetHaltBit() { return 0; }
 
 static void NoWriteMailbox(uint16_t value) {}
 static uint16_t NoReadMailbox() { return 0; }
@@ -90,17 +90,17 @@ static DSPMicrocode fakeUcode = {
 // ---------------------------------------------------------------------------
 // DSP boot microcode
 
-static void IROM_SetResetBit(BOOL val)
+static void IROM_SetResetBit(bool val)
 {
     DBReport(DSP RED "set RESET bit: %i\n", val);
 }
 
-static void IROM_SetIntBit(BOOL val)
+static void IROM_SetIntBit(bool val)
 {
     DBReport(DSP RED "set INT bit: %i\n", val);
 }
 
-static void IROM_SetHaltBit(BOOL val)
+static void IROM_SetHaltBit(bool val)
 {
     DBReport(DSP RED "set HALT bit: %i\n", val);
 }
@@ -378,9 +378,9 @@ void DSPAssertInt()
     }
 }
 
-void DSPOpen()
+void DSPOpen(HWConfig* config)
 {
-    dsp.fakeMode = GetConfigInt(USER_DSP_FAKE, USER_DSP_FAKE_DEFAULT);
+    dsp.fakeMode = config->dspFakeMode;
     if(dsp.fakeMode)
     {
         DBReport(DSP "working in fake mode\n");
