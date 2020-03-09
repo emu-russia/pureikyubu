@@ -12,7 +12,7 @@ void DolwinError(const char* title, const char* fmt, ...)
 
     MessageBoxA(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
 
-    exit(0);    // return bad
+    exit(1);    // return bad
 }
 
 // fatal error, if user answers no

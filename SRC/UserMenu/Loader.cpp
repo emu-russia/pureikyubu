@@ -168,7 +168,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 // ELF loader
 
 // swapping endiannes. dont use Dolwin memory swap, and keep whole
-// code to be portable for other applications. and dont use Dolwin types.
+// code to be portable for other applications.
 
 static int CheckELFHeader(ElfEhdr *hdr)
 {
@@ -367,11 +367,9 @@ uint32_t LoadBIN(char *binname)
 }
 
 // ---------------------------------------------------------------------------
-// patch loader. may be used for game cheating, but I dont like cheaters.
-// so there is no cheat support in Dolwin. instead of that, patches are 
-// using to erase some unimplemented hardware code.
+// patch loader.
 
-// you may ignore whole patch code, since it's definitely only for org :)
+// you may ignore whole patch code, since it's definitely only for me :)
 
 // return 1, if patch loaded OK.
 // "add" can be used to extend current patch table.

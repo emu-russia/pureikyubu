@@ -54,6 +54,8 @@
             this.columnSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnGameId = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnComment = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.closeSelectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openSelectorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStripMain.SuspendLayout();
             this.statusStripMain.SuspendLayout();
             this.panel1.SuspendLayout();
@@ -148,7 +150,9 @@
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.testNativeDllToolStripMenuItem});
+            this.testNativeDllToolStripMenuItem,
+            this.closeSelectorToolStripMenuItem,
+            this.openSelectorToolStripMenuItem});
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.debugToolStripMenuItem.Text = "Debug";
@@ -156,7 +160,7 @@
             // testNativeDllToolStripMenuItem
             // 
             this.testNativeDllToolStripMenuItem.Name = "testNativeDllToolStripMenuItem";
-            this.testNativeDllToolStripMenuItem.Size = new System.Drawing.Size(148, 22);
+            this.testNativeDllToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.testNativeDllToolStripMenuItem.Text = "Test Native Dll";
             this.testNativeDllToolStripMenuItem.Click += new System.EventHandler(this.testNativeDllToolStripMenuItem_Click);
             // 
@@ -248,6 +252,20 @@
             this.columnComment.Text = "Comment";
             this.columnComment.Width = 190;
             // 
+            // closeSelectorToolStripMenuItem
+            // 
+            this.closeSelectorToolStripMenuItem.Name = "closeSelectorToolStripMenuItem";
+            this.closeSelectorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.closeSelectorToolStripMenuItem.Text = "Close Selector";
+            this.closeSelectorToolStripMenuItem.Click += new System.EventHandler(this.closeSelectorToolStripMenuItem_Click);
+            // 
+            // openSelectorToolStripMenuItem
+            // 
+            this.openSelectorToolStripMenuItem.Name = "openSelectorToolStripMenuItem";
+            this.openSelectorToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.openSelectorToolStripMenuItem.Text = "Open Selector";
+            this.openSelectorToolStripMenuItem.Click += new System.EventHandler(this.openSelectorToolStripMenuItem_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -299,6 +317,8 @@
         private System.Windows.Forms.ColumnHeader columnGameId;
         private System.Windows.Forms.ColumnHeader columnComment;
         private System.Windows.Forms.ToolStripMenuItem testNativeDllToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem closeSelectorToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openSelectorToolStripMenuItem;
     }
 }
 

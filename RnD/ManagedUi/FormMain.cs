@@ -27,8 +27,6 @@ namespace ManagedUi
         /// </summary>
         private void InitFileSystem ()
         {
-            // set current working directory relative to Dolwin executable
-
             // make sure, that Dolwin has data directory
             if (!Directory.Exists(".\\Data"))
             {
@@ -98,5 +96,14 @@ namespace ManagedUi
             config.Save();
         }
 
+        private void closeSelectorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            listView1.Hide();
+        }
+
+        private void openSelectorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            listView1.Show();
+        }
     }
 }

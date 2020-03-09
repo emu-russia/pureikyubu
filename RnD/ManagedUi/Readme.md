@@ -7,7 +7,7 @@ User interface rewritten in c#
 - About
 - FontConfigure
 - PAD Config
-- Main: LockMultipleCalls, DolwinError, DolwinReport
+- Main: DolwinError, DolwinReport
 - MemcardConfigure
 - OpenSettingsDialog
 - Get/SetStatusText
