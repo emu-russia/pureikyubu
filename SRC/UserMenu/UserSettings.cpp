@@ -188,8 +188,6 @@ static void LoadSettings(int n)         // dialogs created
         CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_UNCHECKED);
         BOOL flag = GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
         if(flag) CheckDlgButton(hDlg, IDC_MTXHLE, BST_CHECKED);
-        flag = GetConfigInt(USER_DSP_FAKE, USER_DSP_FAKE_DEFAULT);
-        if(flag) CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_CHECKED);
 
         settingsLoaded[3] = TRUE;
     }
@@ -299,8 +297,6 @@ static void SaveSettings()              // OK pressed
         HWND hDlg = hChildDlg[3];
         BOOL flag = IsDlgButtonChecked(hDlg, IDC_MTXHLE);
         SetConfigInt(USER_HLE_MTX, flag);
-        flag = IsDlgButtonChecked(hDlg, IDC_DSP_FAKE);
-        SetConfigInt(USER_DSP_FAKE, flag);
     }
 }
 

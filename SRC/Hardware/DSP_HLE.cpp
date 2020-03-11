@@ -73,20 +73,6 @@ static uint16_t FakeOutMailboxHi()
 static uint16_t FakeInMailboxHi() { return 0x8071; }
 static uint16_t FakeInMailboxLo() { return 0xfeed; }
 
-static DSPMicrocode fakeUcode = {
-    0, 0, 0, 0, DSP_FAKE_UCODE,
-
-    // DSPCR callbacks
-    Fake_SetResetBit, Fake_GetResetBit,     // RESET
-    Fake_SetIntBit,   Fake_GetIntBit,       // INT
-    Fake_SetHaltBit,  Fake_GetHaltBit,      // HALT
-
-    // mailbox callbacks
-    NoWriteMailbox,   NoWriteMailbox,       // write CPU->DSP
-    FakeOutMailboxHi, NoReadMailbox,        // read CPU->DSP
-    FakeInMailboxHi,  FakeInMailboxLo       // read DSP->CPU
-};
-
 // ---------------------------------------------------------------------------
 // DSP boot microcode
 
@@ -129,7 +115,7 @@ void IROMWriteOutMailboxLo(uint16_t value)
     dsp.out[LO] = value;
     if(dsp.time != DSP_INFINITE)
     {
-        DSPUpdate();
+        DSPHLEUpdate();
         return;
     }
     switch(dsp.out[LO])
@@ -235,7 +221,7 @@ static void CARDWriteOutMailboxLo(uint16_t value)
     dsp.out[LO] = value;
     if(dsp.time != DSP_INFINITE)
     {
-        DSPUpdate();
+        DSPHLEUpdate();
         return;
     }
     switch(dsp.out[LO])
@@ -351,9 +337,6 @@ static void DSPSwitchTask(DSPUID uid)
 {
     switch(uid)
     {
-        case DSP_FAKE_UCODE:
-            dsp.task = &fakeUcode;
-            break;
         case DSP_BOOT_UCODE:
             dsp.task = &bootUcode;
             break;
@@ -378,39 +361,19 @@ void DSPAssertInt()
     }
 }
 
-void DSPOpen(HWConfig* config)
+void DSPHLEOpen(HWConfig* config)
 {
-    dsp.fakeMode = config->dspFakeMode;
-    if(dsp.fakeMode)
-    {
-        DBReport(_DSP "working in fake mode\n");
-        DSPSwitchTask(DSP_FAKE_UCODE);
-    }
-    else
-    {
-        DBReport(_DSP "working in simulate mode\n");
-        DSPSwitchTask(DSP_BOOT_UCODE);
-    }
-
-    if(dsp.fakeMode)
-    {
-        HLESetCall("__OSInitAudioSystem", os_ignore);
-        HLESetCall("DSPSendCommands2__FPUlUlPFUs_v", os_ignore);
-        HLESetCall("DsetupTable__FUlUlUlUlUl", os_ignore);
-        HLESetCall("DsetDolbyDelay__FUlUs", os_ignore);
-        HLESetCall("__AXOutInitDSP", os_ignore);
-
-        HLESetCall("__CARDUnlock", __CARDUnlock);
-    }
+    DBReport(_DSP "working in simulate mode\n");
+    DSPSwitchTask(DSP_BOOT_UCODE);
 
     dsp.time = DSP_INFINITE;
 }
 
-void DSPClose()
+void DSPHLEClose()
 {
 }
 
-void DSPUpdate()
+void DSPHLEUpdate()
 {
     if(TBR >= dsp.time)
     {

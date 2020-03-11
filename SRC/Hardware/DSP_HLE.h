@@ -1,10 +1,9 @@
 // infinite timeout interval
-#define DSP_INFINITE    (0x7fffffffffffffff)
+#define DSP_INFINITE    (0x7fffffffffffffffLL)
 
 // known microcodes
 enum DSPUID
 {
-    DSP_FAKE_UCODE   = 'KAKA',  // fake
     DSP_BOOT_UCODE   = 'BOOT',  // boot microcode
     DSP_CARD_UCODE   = 'CARD',  // card unlock
     DSP_AX_UCODE     = 'AXAX',  // AX slave
@@ -44,7 +43,6 @@ typedef struct DSPMicrocode
 // DSP state
 typedef struct DSPControl
 {
-    bool            fakeMode;   // 1: task is always DSP_FAKE_UCODE
     DSPMicrocode    *task;      // current microcode
     uint16_t        out[2];     // CPU->DSP mailbox
     uint16_t        in[2];      // DSP->CPU mailbox
@@ -84,7 +82,7 @@ uint16_t     DSPReadOutMailboxLo();
 uint16_t     DSPReadInMailboxHi();
 uint16_t     DSPReadInMailboxLo();
 
-void    DSPOpen(HWConfig * config);
-void    DSPClose();
-void    DSPUpdate();
+void    DSPHLEOpen(HWConfig * config);
+void    DSPHLEClose();
+void    DSPHLEUpdate();
 void    DSPAssertInt();

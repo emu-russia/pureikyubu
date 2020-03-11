@@ -105,9 +105,6 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_CONSOLE    "CONSOLE"           // console version (see YAGCD)
 #define USER_CONSOLE_DEFAULT    3           // 0x00000003: latest production board
 
-#define USER_DSP_FAKE   "DSP_FAKE"          // 1: use fake DSP mode (very dirty hack)
-#define USER_DSP_FAKE_DEFAULT   1
-
 #define USER_EXI_LOG    "EXI_LOG"           // 1: log EXI activities
 #define USER_EXI_LOG_DEFAULT    1
 

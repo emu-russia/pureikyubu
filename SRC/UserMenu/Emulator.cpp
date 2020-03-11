@@ -34,8 +34,6 @@ void EMUGetHwConfig(HWConfig * config)
 
     config->gxpoll = GetConfigInt(USER_GX_POLL, USER_GX_POLL_DEFAULT) & 1;
 
-    config->dspFakeMode = GetConfigInt(USER_DSP_FAKE, USER_DSP_FAKE_DEFAULT) & 1;
-
     config->one_second = cpu.one_second;
 
     strcpy_s(config->BootromFilename, sizeof(config->BootromFilename), GetConfigString(USER_BOOTROM, USER_BOOTROM_DEFAULT));

@@ -3,7 +3,6 @@
 #pragma once
 
 #include <string>
-#include "Hardware/DspAnalyzer.h"
 
 namespace DSP
 {

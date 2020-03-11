@@ -207,9 +207,6 @@ IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "&DSP in fake mode (Default: enabled)",IDC_DSP_FAKE,
-                    "Button",BS_AUTOCHECKBOX,12,63,132,10
-    LTEXT           "Note : When using DSP fake, all advanced sound and memcards are not emulated. DSP is working like quick and dirty hack.",IDC_STATIC,12,81,210,24
     CONTROL         "Highlevel geometry library (MTX) (Default: enabled)",IDC_MTXHLE,
                     "Button",BS_AUTOCHECKBOX,12,12,186,10
     LTEXT           "Note : MTX is responsible for vector and matrix calculations. If MMX/SSE is enabled, MTX will use them instead usual C. SSE present only on Pentium III and above CPUs.",IDC_STATIC,12,30,204,30

@@ -20,7 +20,7 @@ void HWOpen(HWConfig* config)
     VIOpen(config); // video (TV)
     CPOpen(config); // fifo
     AIOpen(config); // audio (AID and AIS)
-    DSPOpen(config);    // DSP
+    DSPHLEOpen(config);    // DSP (HLE)
     AROpen();       // aux. memory (ARAM)
     EIOpen(config); // expansion interface (EXI)
     DIOpen();       // disk
@@ -38,7 +38,7 @@ void HWClose()
     EIClose();      // take care about closing of memcards and BBA
     VIClose();      // close GDI (if opened)
     DIClose();      // release streaming buffer
-    DSPClose();
+    DSPHLEClose();
     MIClose();
 }
 
@@ -58,7 +58,7 @@ void HWUpdate()
         // update audio and DSP
         BeginProfileSfx();
         AIUpdate();
-        DSPUpdate();
+        DSPHLEUpdate();
         EndProfileSfx();
 
         //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));
