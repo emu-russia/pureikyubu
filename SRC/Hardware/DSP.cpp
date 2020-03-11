@@ -92,17 +92,17 @@ static DSPMicrocode fakeUcode = {
 
 static void IROM_SetResetBit(bool val)
 {
-    DBReport(DSP RED "set RESET bit: %i\n", val);
+    DBReport(_DSP RED "set RESET bit: %i\n", val);
 }
 
 static void IROM_SetIntBit(bool val)
 {
-    DBReport(DSP RED "set INT bit: %i\n", val);
+    DBReport(_DSP RED "set INT bit: %i\n", val);
 }
 
 static void IROM_SetHaltBit(bool val)
 {
-    DBReport(DSP RED "set HALT bit: %i\n", val);
+    DBReport(_DSP RED "set HALT bit: %i\n", val);
 }
 
 void IROMWriteOutMailboxHi(uint16_t value)
@@ -122,7 +122,7 @@ void IROMWriteOutMailboxHi(uint16_t value)
         case 0xcdd1:    // sync
             return;
     }
-    DolwinReport(DSP RED "write OUT_HI %04X\n", value);
+    DolwinReport(_DSP RED "write OUT_HI %04X\n", value);
 }
 void IROMWriteOutMailboxLo(uint16_t value)
 {
@@ -192,14 +192,14 @@ void IROMWriteOutMailboxLo(uint16_t value)
             }
             break;
     }
-    DolwinReport(DSP RED "write OUT_LO %04X\n", value);
+    DolwinReport(_DSP RED "write OUT_LO %04X\n", value);
 }
 
-uint16_t IROMReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
-uint16_t IROMReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
+uint16_t IROMReadOutMailboxHi() { DBReport(_DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
+uint16_t IROMReadOutMailboxLo() { DBReport(_DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
 
-uint16_t IROMReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
-uint16_t IROMReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
+uint16_t IROMReadInMailboxHi()  { DBReport(_DSP RED "read IN_HI\n"); return dsp.in[HI]; }
+uint16_t IROMReadInMailboxLo()  { DBReport(_DSP RED "read IN_LO\n"); return dsp.in[LO]; }
 
 static DSPMicrocode bootUcode = {
     0, 0, 0, 0, DSP_BOOT_UCODE,
@@ -228,7 +228,7 @@ static void CARDWriteOutMailboxHi(uint16_t value)
             tempOut[HI] = 0xff00;
             return;
     }
-    DBReport(DSP RED "write OUT_HI %04X\n", value);
+    DBReport(_DSP RED "write OUT_HI %04X\n", value);
 }
 static void CARDWriteOutMailboxLo(uint16_t value)
 {
@@ -250,7 +250,7 @@ static void CARDWriteOutMailboxLo(uint16_t value)
             }
             break;
     }
-    DBReport(DSP RED "write OUT_LO %04X\n", value);
+    DBReport(_DSP RED "write OUT_LO %04X\n", value);
 }
 
 static void CARDInit()
@@ -258,7 +258,7 @@ static void CARDInit()
     // send init confirmation mail to CPU and signal DSP interrupt handler
     dsp.in[HI] = 0xdcd1; dsp.in[LO] = 0;
     DSPAssertInt();
-    DBReport(DSP GREEN "DSP Interrupt (card init)\n");
+    DBReport(_DSP GREEN "DSP Interrupt (card init)\n");
 }
 
 static void CARDResume()
@@ -269,7 +269,7 @@ static void CARDResume()
     // send donw confirmation mail to CPU and signal DSP interrupt handler
     dsp.in[HI] = 0xdcd1; dsp.in[LO] = 3;
     DSPAssertInt();
-    DBReport(DSP GREEN "DSP Interrupt (card done)\n");
+    DBReport(_DSP GREEN "DSP Interrupt (card done)\n");
 
     // fallback to boot microcode
     dsp.task = &bootUcode;
@@ -331,7 +331,7 @@ static DSPMicrocode * DSP_find_ucode(uint16_t iram_addr, uint16_t iram_len, uint
     {
         // card unlock microcode (small one, 300 bytes only)
         case 0x00006F87:
-            DBReport(DSP GREEN "card unlock microcode booted!\n");
+            DBReport(_DSP GREEN "card unlock microcode booted!\n");
             return &cardUnlock;
 
         // AX slave microcode
@@ -339,7 +339,7 @@ static DSPMicrocode * DSP_find_ucode(uint16_t iram_addr, uint16_t iram_len, uint
         case 0x0008134F:        // dec 2001
         case 0x00073930:        // apr 2002
         case 0x0009D716:        // jun 2002
-            DBReport(DSP GREEN "AX slave microcode booted!\n");
+            DBReport(_DSP GREEN "AX slave microcode booted!\n");
             return &AXSlave;
     }
 
@@ -383,12 +383,12 @@ void DSPOpen(HWConfig* config)
     dsp.fakeMode = config->dspFakeMode;
     if(dsp.fakeMode)
     {
-        DBReport(DSP "working in fake mode\n");
+        DBReport(_DSP "working in fake mode\n");
         DSPSwitchTask(DSP_FAKE_UCODE);
     }
     else
     {
-        DBReport(DSP "working in simulate mode\n");
+        DBReport(_DSP "working in simulate mode\n");
         DSPSwitchTask(DSP_BOOT_UCODE);
     }
 
@@ -415,12 +415,12 @@ void DSPUpdate()
     if(TBR >= dsp.time)
     {
         dsp.time = DSP_INFINITE;
-        DBReport(DSP GREEN "UPDATE!!\n");
+        DBReport(_DSP GREEN "UPDATE!!\n");
         switch(tempOut[HI] & ~0x8000)
         {
             case 0x0000:        // reset acknowledge
                 dsp.in[HI] = 0x8071; dsp.in[LO] = 0xfeed;   // ready to boot
-                DBReport(DSP GREEN "__OSInitAudioSystem DSP reset\n");
+                DBReport(_DSP GREEN "__OSInitAudioSystem DSP reset\n");
                 return;
             case 0x00f3:        // send task parameters
                 dsp.out[HI] &= ~0x8000;
@@ -428,21 +428,21 @@ void DSPUpdate()
                 {
                     case 0xa001:
                         temp.ram_addr = (dsp.out[HI] << 16) | dsp.out[LO];
-                        DBReport(DSP GREEN "boot task : IRAM MMEM ADDR: 0x%08X\n", temp.ram_addr);
+                        DBReport(_DSP GREEN "boot task : IRAM MMEM ADDR: 0x%08X\n", temp.ram_addr);
                         break;
                     case 0xc002:
                         temp.iram_addr = (dsp.out[HI] << 16) | dsp.out[LO];
-                        DBReport(DSP GREEN "boot task : IRAM DSP ADDR : 0x%08X\n", temp.iram_addr);
+                        DBReport(_DSP GREEN "boot task : IRAM DSP ADDR : 0x%08X\n", temp.iram_addr);
                         break;
                     case 0xa002:
                         temp.iram_len = (dsp.out[HI] << 16) | dsp.out[LO];
-                        DBReport(DSP GREEN "boot task : IRAM LENGTH   : 0x%08X\n", temp.iram_len);
+                        DBReport(_DSP GREEN "boot task : IRAM LENGTH   : 0x%08X\n", temp.iram_len);
                         break;
                     case 0xb002:
-                        DBReport(DSP GREEN "boot task : DRAM MMEM ADDR: 0x%08X\n", (dsp.out[HI] << 16) | dsp.out[LO]);
+                        DBReport(_DSP GREEN "boot task : DRAM MMEM ADDR: 0x%08X\n", (dsp.out[HI] << 16) | dsp.out[LO]);
                         break;
                     case 0xd001:
-                        DBReport(DSP GREEN "boot task : Start Vector  : 0x%08X\n", (dsp.out[HI] << 16) | dsp.out[LO]);
+                        DBReport(_DSP GREEN "boot task : Start Vector  : 0x%08X\n", (dsp.out[HI] << 16) | dsp.out[LO]);
                         dsp.time = TBR + temp.iram_len / 4;
                         tempOut[HI] = 0x0abc;
                         break;
@@ -460,7 +460,7 @@ void DSPUpdate()
                 {
                     dsp.out[HI] &= ~0x8000;
                     cardWorkarea = (dsp.out[HI] << 16) | dsp.out[LO];
-                    DBReport(DSP GREEN "unlocking card, block from 0x%08X\n", cardWorkarea);
+                    DBReport(_DSP GREEN "unlocking card, block from 0x%08X\n", cardWorkarea);
                     if(dsp.task->resume) dsp.task->resume();
                 }
                 return;

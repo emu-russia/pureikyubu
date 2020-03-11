@@ -88,7 +88,7 @@ void OSSaveContext(void)
 
     // misc regs
     c->cr = SWAP(PPC_CR);
-    c->lr = SWAP(LR);
+    c->lr = SWAP(PPC_LR);
     c->ctr = SWAP(CTR);
     c->xer = SWAP(XER);
     c->srr[0] = c->lr;
@@ -143,7 +143,7 @@ void OSLoadContext(void)
 
     // misc regs
     PPC_CR  = SWAP(c->cr);
-    LR  = SWAP(c->lr);
+    PPC_LR = SWAP(c->lr);
     CTR = SWAP(c->ctr);
     XER = SWAP(c->xer);
 

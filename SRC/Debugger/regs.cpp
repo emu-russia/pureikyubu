@@ -29,9 +29,9 @@ static void con_print_other_regs()
     con_printf_at(28, 1, CYAN "cr  " NORM "%08X", PPC_CR);
     con_printf_at(28, 2, CYAN "xer " NORM "%08X", XER);
     con_printf_at(28, 4, CYAN "ctr " NORM "%08X", CTR);
-    con_printf_at(28, 5, CYAN "dec " NORM "%08X", DEC);
+    con_printf_at(28, 5, CYAN "dec " NORM "%08X", PPC_DEC);
     con_printf_at(28, 8, CYAN "pc  " NORM "%08X", PC);
-    con_printf_at(28, 9, CYAN "lr  " NORM "%08X", LR);
+    con_printf_at(28, 9, CYAN "lr  " NORM "%08X", PPC_LR);
     con_printf_at(28,14, CYAN "tbr " NORM "%08X:%08X", cpu.tb.Part.u, cpu.tb.Part.l);
 
     con_printf_at(42, 1, CYAN "msr   " NORM "%08X", MSR);
@@ -44,7 +44,7 @@ static void con_print_other_regs()
     con_printf_at(42,10, CYAN "dmal  " NORM "%08X", DMAL);
 
     con_printf_at(58, 1, CYAN "dsisr " NORM "%08X", DSISR);
-    con_printf_at(58, 2, CYAN "dar   " NORM "%08X", DAR);
+    con_printf_at(58, 2, CYAN "dar   " NORM "%08X", PPC_DAR);
     con_printf_at(58, 4, CYAN "srr0  " NORM "%08X", SRR0);
     con_printf_at(58, 5, CYAN "srr1  " NORM "%08X", SRR1);
     con_printf_at(58, 8, CYAN "sprg0 " NORM "%08X", SPRG0);
@@ -250,8 +250,8 @@ static void con_print_mmu()
 
     for(int n=0, y=1; n<16; n++, y++)
     {
-        char * prefix = SR[y-1] & 0x80000000 ? BRED : NORM;
-        con_printf_at (64, y, CYAN "sr%-2i  " "%s" "%08X", y-1, prefix, SR[y-1]);
+        char * prefix = PPC_SR[y-1] & 0x80000000 ? BRED : NORM;
+        con_printf_at (64, y, CYAN "sr%-2i  " "%s" "%08X", y-1, prefix, PPC_SR[y-1]);
     }
 }
 

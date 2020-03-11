@@ -712,26 +712,26 @@ static uint32_t *getreg (char *name)
     else if (!_stricmp(name, "cr")) return &PPC_CR;
     else if (!_stricmp(name, "fpscr")) return &FPSCR;
     else if (!_stricmp(name, "xer")) return &XER;
-    else if (!_stricmp(name, "lr")) return &LR;
+    else if (!_stricmp(name, "lr")) return &PPC_LR;
     else if (!_stricmp(name, "ctr")) return &CTR;
     else if (!_stricmp(name, "msr")) return &MSR;
 
-    else if (!_stricmp(name, "sr0")) return &SR[0];
-    else if (!_stricmp(name, "sr1")) return &SR[1];
-    else if (!_stricmp(name, "sr2")) return &SR[2];
-    else if (!_stricmp(name, "sr3")) return &SR[3];
-    else if (!_stricmp(name, "sr4")) return &SR[4];
-    else if (!_stricmp(name, "sr5")) return &SR[5];
-    else if (!_stricmp(name, "sr6")) return &SR[6];
-    else if (!_stricmp(name, "sr7")) return &SR[7];
-    else if (!_stricmp(name, "sr8")) return &SR[8];
-    else if (!_stricmp(name, "sr9")) return &SR[9];
-    else if (!_stricmp(name, "sr10")) return &SR[10];
-    else if (!_stricmp(name, "sr11")) return &SR[11];
-    else if (!_stricmp(name, "sr12")) return &SR[12];
-    else if (!_stricmp(name, "sr13")) return &SR[13];
-    else if (!_stricmp(name, "sr14")) return &SR[14];
-    else if (!_stricmp(name, "sr15")) return &SR[15];
+    else if (!_stricmp(name, "sr0")) return &PPC_SR[0];
+    else if (!_stricmp(name, "sr1")) return &PPC_SR[1];
+    else if (!_stricmp(name, "sr2")) return &PPC_SR[2];
+    else if (!_stricmp(name, "sr3")) return &PPC_SR[3];
+    else if (!_stricmp(name, "sr4")) return &PPC_SR[4];
+    else if (!_stricmp(name, "sr5")) return &PPC_SR[5];
+    else if (!_stricmp(name, "sr6")) return &PPC_SR[6];
+    else if (!_stricmp(name, "sr7")) return &PPC_SR[7];
+    else if (!_stricmp(name, "sr8")) return &PPC_SR[8];
+    else if (!_stricmp(name, "sr9")) return &PPC_SR[9];
+    else if (!_stricmp(name, "sr10")) return &PPC_SR[10];
+    else if (!_stricmp(name, "sr11")) return &PPC_SR[11];
+    else if (!_stricmp(name, "sr12")) return &PPC_SR[12];
+    else if (!_stricmp(name, "sr13")) return &PPC_SR[13];
+    else if (!_stricmp(name, "sr14")) return &PPC_SR[14];
+    else if (!_stricmp(name, "sr15")) return &PPC_SR[15];
 
     else if (!_stricmp(name, "ibat0u")) return &IBAT0U;
     else if (!_stricmp(name, "ibat1u")) return &IBAT1U;
@@ -755,7 +755,7 @@ static uint32_t *getreg (char *name)
     else if (!_stricmp(name, "sprg1")) return &SPRG1;
     else if (!_stricmp(name, "sprg2")) return &SPRG2;
     else if (!_stricmp(name, "sprg3")) return &SPRG3;
-    else if (!_stricmp(name, "dar")) return &DAR;
+    else if (!_stricmp(name, "dar")) return &PPC_DAR;
     else if (!_stricmp(name, "dsisr")) return &DSISR;
     else if (!_stricmp(name, "srr0")) return &SRR0;
     else if (!_stricmp(name, "srr1")) return &SRR1;
@@ -1416,7 +1416,7 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
         // first check for link/counter registers
         if(!_stricmp(argv[1], "lr"))
         {
-            con_set_disa_cur(LR);
+            con_set_disa_cur(PPC_LR);
             return;
         }
         if(!_stricmp(argv[1], "ctr"))

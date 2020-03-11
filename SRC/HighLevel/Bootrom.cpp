@@ -84,7 +84,7 @@ static void BootApploader()
 
     // execute entrypoint
     PC = appEntryPoint;
-    LR = 0;
+    PPC_LR = 0;
     while(PC) IPTExecuteOpcode();
 
     // get apploader interface offsets
@@ -98,7 +98,7 @@ static void BootApploader()
     // execute apploader prolog
     GPR[3] = 0x81300000;            // OSReport callback as parameter
     PC = _prolog;
-    LR = 0;
+    PPC_LR = 0;
     while(PC) IPTExecuteOpcode();
 
     // execute apploader main
@@ -110,7 +110,7 @@ static void BootApploader()
         GPR[5] = 0x8130000c;        // disk offset
 
         PC = _main;
-        LR = 0;
+        PPC_LR = 0;
         while(PC) IPTExecuteOpcode();
 
         CPUReadWord(0x81300004, &addr);
@@ -130,7 +130,7 @@ static void BootApploader()
 
     // execute apploader epilog
     PC = _epilog;
-    LR = 0;
+    PPC_LR = 0;
     while(PC) IPTExecuteOpcode();
 
     // enable hardware update
@@ -171,7 +171,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     // set initial MMU state, according with BS2/Dolphin OS
     for(int sr=0; sr<16; sr++)              // unmounted
     {
-        SR[sr] = 0x80000000;
+        PPC_SR[sr] = 0x80000000;
     }
     // DBATs
     DBAT0U = 0x80001fff; DBAT0L = 0x00000002;   // 0x80000000, 256mb, cached

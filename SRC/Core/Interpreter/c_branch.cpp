@@ -23,7 +23,7 @@ OP(BL)
 {
     uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
-    LR = PC + 4;
+    PPC_LR = PC + 4;
     PC = PC + target;
 }
 
@@ -32,7 +32,7 @@ OP(BLA)
 {
     uint32_t target = op & 0x03fffffc;
     if(target & 0x02000000) target |= 0xfc000000;
-    LR = PC + 4;
+    PPC_LR = PC + 4;
     PC = target;
 }
 
@@ -84,7 +84,7 @@ OP(BCX)
 {
     if(bc(op))
     {
-        if(op & 1) LR = PC + 4; // LK
+        if(op & 1) PPC_LR = PC + 4; // LK
 
         uint32_t target = op & 0xfffc;
         if(target & 0x8000) target |= 0xffff0000;
@@ -103,7 +103,7 @@ OP(BCLR)
 {
     if(bc(op))
     {
-        PC = LR & ~3;
+        PC = PPC_LR & ~3;
         cpu.branch = true;
     }
 }
@@ -120,8 +120,8 @@ OP(BCLRL)
     if(bc(op))
     {
         uint32_t lr = PC + 4;
-        PC = LR & ~3;
-        LR = lr;
+        PC = PPC_LR & ~3;
+        PPC_LR = lr;
         cpu.branch = true;
     }
 }
@@ -166,7 +166,7 @@ OP(BCCTRL)
 {
     if(bctr(op))
     {
-        LR = PC + 4;
+        PPC_LR = PC + 4;
         PC = CTR & ~3;
         cpu.branch = true;
     }

@@ -5,6 +5,7 @@
 
 #include "console.h"
 #include "GekkoDisasm.h"    // Gekko disassembler
+#include "DspDisasm.h"		// DSP disassembler
 
 // hardware messages output prefix (GC hardware)
 #define CP      CYAN "CP : "
@@ -14,12 +15,12 @@
 #define PI      CYAN "PI : "
 #define CPU     CYAN "CPU: "
 #define MI      CYAN "MI : "
-#define DSP     CYAN "DSP: "
+#define _DSP    CYAN "DSP: "
 #define DI      CYAN "DI : "
 #define AR      CYAN "AR : "
 #define AI      CYAN "AI : "
 #define AIS     CYAN "AIS: "
-#define SI      CYAN "SI : "
+#define _SI     CYAN "SI : "
 #define EXI     CYAN "EXI: "
 #define MC      CYAN "MC : "
 

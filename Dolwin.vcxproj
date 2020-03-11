@@ -224,6 +224,7 @@
     <ClCompile Include="SRC\Debugger\console.cpp" />
     <ClCompile Include="SRC\Debugger\cpuview.cpp" />
     <ClCompile Include="SRC\Debugger\Debugger.cpp" />
+    <ClCompile Include="SRC\Debugger\DspDisasm.cpp" />
     <ClCompile Include="SRC\Debugger\GekkoDisasm.cpp" />
     <ClCompile Include="SRC\Debugger\input.cpp" />
     <ClCompile Include="SRC\Debugger\memview.cpp" />
@@ -255,6 +256,7 @@
     <ClInclude Include="SRC\Debugger\console.h" />
     <ClInclude Include="SRC\Debugger\cpuview.h" />
     <ClInclude Include="SRC\Debugger\Debugger.h" />
+    <ClInclude Include="SRC\Debugger\DspDisasm.h" />
     <ClInclude Include="SRC\Debugger\GekkoDisasm.h" />
     <ClInclude Include="SRC\Debugger\input.h" />
     <ClInclude Include="SRC\Debugger\memview.h" />

@@ -21,7 +21,7 @@ static void AXSetResetBit(bool val)
     reset = val;
     if(reset)
     {
-        DBReport(DSP GREEN "AX reset\n");
+        DBReport(_DSP GREEN "AX reset\n");
     }
 }
 static bool AXGetResetBit() { return 0; }
@@ -31,7 +31,7 @@ static void AXSetIntBit(bool val)
     dspint = val;
     if(dspint)
     {
-        DBReport(DSP GREEN "AX assert int\n");
+        DBReport(_DSP GREEN "AX assert int\n");
     }
 }
 static bool AXGetIntBit() { return 0; }
@@ -40,7 +40,7 @@ static void AXSetHaltBit(bool val)
 {
     if(halt != val)
     {
-        DBReport(DSP GREEN "AX halt=%i\n", val);
+        DBReport(_DSP GREEN "AX halt=%i\n", val);
     }
     halt = val;
 }
@@ -55,18 +55,18 @@ static bool AXGetHaltBit() { return halt; }
 
 static void AXWriteOutMailboxHi(uint16_t value)
 {
-    DBReport(DSP RED "write OUT_HI %04X\n", value);
+    DBReport(_DSP RED "write OUT_HI %04X\n", value);
 }
 static void AXWriteOutMailboxLo(uint16_t value)
 {
-    DBReport(DSP RED "write OUT_LO %04X\n", value);
+    DBReport(_DSP RED "write OUT_LO %04X\n", value);
 }
 
-static uint16_t AXReadOutMailboxHi() { DBReport(DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
-static uint16_t AXReadOutMailboxLo() { DBReport(DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
+static uint16_t AXReadOutMailboxHi() { DBReport(_DSP RED "read OUT_HI\n"); return dsp.out[HI]; }
+static uint16_t AXReadOutMailboxLo() { DBReport(_DSP RED "read OUT_LO\n"); return dsp.out[LO]; }
 
-static uint16_t AXReadInMailboxHi()  { DBReport(DSP RED "read IN_HI\n"); return dsp.in[HI]; }
-static uint16_t AXReadInMailboxLo()  { DBReport(DSP RED "read IN_LO\n"); return dsp.in[LO]; }
+static uint16_t AXReadInMailboxHi()  { DBReport(_DSP RED "read IN_HI\n"); return dsp.in[HI]; }
+static uint16_t AXReadInMailboxLo()  { DBReport(_DSP RED "read IN_LO\n"); return dsp.in[LO]; }
 
 // DSP callbacks
 
@@ -75,7 +75,7 @@ static void AXInit()
     // send init confirmation mail to CPU and signal DSP interrupt handler
     dsp.in[HI] = 0xdcd1; dsp.in[LO] = 0;
     DSPAssertInt();
-    DBReport(DSP GREEN "DSP Interrupt (AX init mail arrived)\n");
+    DBReport(_DSP GREEN "DSP Interrupt (AX init mail arrived)\n");
 }
 
 static void AXResume()

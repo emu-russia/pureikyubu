@@ -223,25 +223,25 @@ OP(MFTB)
 // sr[a] = rs
 OP(MTSR)
 {
-    SR[RA] = RRS;
+    PPC_SR[RA] = RRS;
 }
 
 // sr[rb] = rs
 OP(MTSRIN)
 {
-    SR[RRB & 0xf] = RRS;
+    PPC_SR[RRB & 0xf] = RRS;
 }
 
 // rd = sr[a]
 OP(MFSR)
 {
-    RRD = SR[RA];
+    RRD = PPC_SR[RA];
 }
 
 // rd = sr[rb]
 OP(MFSRIN)
 {
-    RRD = SR[RRB & 0xf];
+    RRD = PPC_SR[RRB & 0xf];
 }
 
 // ---------------------------------------------------------------------------

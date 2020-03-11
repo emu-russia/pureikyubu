@@ -81,6 +81,9 @@
     <ClCompile Include="SRC\UserMenu\Emulator.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\Debugger\DspDisasm.cpp">
+      <Filter>Debugger</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRC\UserMenu\User.h">
@@ -164,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="SRC\UserMenu\Emulator.h">
       <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\Debugger\DspDisasm.h">
+      <Filter>Debugger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

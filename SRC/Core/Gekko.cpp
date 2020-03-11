@@ -109,9 +109,9 @@ void CPUTick()
 
     UTBR += cpu.cf;         // timer
 
-    uint32_t old = DEC;
-    DEC -= cpu.cf;          // decrementer
-    if((old ^ DEC) & 0x80000000)
+    uint32_t old = PPC_DEC;
+    PPC_DEC -= cpu.cf;          // decrementer
+    if((old ^ PPC_DEC) & 0x80000000)
     {
         if(MSR & MSR_EE)
         {

@@ -8,7 +8,7 @@ HLEControl hle;
 void os_ignore() { DBReport(GREEN "High level ignore (pc: %08X, %s)\n", PC, SYMName(PC)); }
 void os_ret0()   { GPR[3] = NULL; }
 void os_ret1()   { GPR[3] = 1; }
-void os_trap()   { PC = LR - 4; DBHalt("High level trap (pc: %08X)!\n", PC); }
+void os_trap()   { PC = PPC_LR - 4; DBHalt("High level trap (pc: %08X)!\n", PC); }
 
 // HLE Ignore (you know what are you doing!)
 static const char *osignore[] = {
@@ -153,11 +153,11 @@ void HLEClose()
 
 void HLEExecuteCallback(uint32_t entryPoint)
 {
-    uint32_t old = LR;
+    uint32_t old = PPC_LR;
     PC = entryPoint;
-    LR = 0;
+    PPC_LR = 0;
     while(PC) IPTExecuteOpcode();
-    PC = LR = old;
+    PC = PPC_LR = old;
 }
 
 void HLEResetHitrate()
