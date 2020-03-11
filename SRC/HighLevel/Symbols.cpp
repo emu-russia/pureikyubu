@@ -132,7 +132,7 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
         {
             CPUWriteWord(
                 symbol->eaddr,          // add patch
-                (uint32_t)routine       // 000: high-level opcode
+                (uint32_t)((uint64_t)routine & 0x03ffffff)  // 000: high-level opcode
             );
             if(!_stricmp(symName, "OSLoadContext"))
             {

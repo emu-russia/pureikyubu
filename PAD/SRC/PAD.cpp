@@ -1,5 +1,5 @@
-// Plugin API for emulator
-#include "PAD.h"
+// PAD API for emulator
+#include "pch.h"
 
 PAD pad;
 

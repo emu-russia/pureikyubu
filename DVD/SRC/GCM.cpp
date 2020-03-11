@@ -1,6 +1,6 @@
 // simple GCM reading.
 // format can be detected only by file extension.
-#include "DVD.h"
+#include "pch.h"
 
 // local data
 static FILE*    gcm_file;       // selected GCM file

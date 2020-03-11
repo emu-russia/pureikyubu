@@ -1,5 +1,5 @@
 // PAD plugin configure and about dialogs
-#include "PAD.h"
+#include "pch.h"
 
 static char *vkeys[256] = { // default keyboard virtual codes description (? - not used)
  "?", "?", "?", "?", "?", "?", "?", "?",  "Bkspace", "Tab", "?", "?", "?", "Enter", "?", "?", // 00-0F

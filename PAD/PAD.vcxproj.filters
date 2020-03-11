@@ -17,12 +17,18 @@
     <ClCompile Include="SRC\Configure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRC\PAD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SRC\Configure.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
