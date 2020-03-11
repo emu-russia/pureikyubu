@@ -82,12 +82,13 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     HWConfig hwconfig = { 0 };
     EMUGetHwConfig(&hwconfig);
     HWOpen(&hwconfig);
-    ReloadFile();   // PC will be set here
-    HLEOpen();
 
     assert(GXOpen(mi.ram, wnd.hMainWindow));
     assert(AXOpen());
     assert(PADOpen());
+
+    ReloadFile();   // PC will be set here
+    HLEOpen();
 
     // debugger has its own core, to control CPU execution
     if (emu.doldebug)

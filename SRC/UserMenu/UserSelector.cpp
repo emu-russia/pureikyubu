@@ -714,7 +714,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", NULL };
+    char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", "*.iso", NULL };
     char found[2 * MAX_PATH];
     int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
     WIN32_FIND_DATA fd;
