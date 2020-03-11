@@ -3,43 +3,13 @@
 // shared data
 MEMControl mem;
 
-// memory read/write routines (thats all you need for CPU)
-void (__fastcall *MEMReadByte)(uint32_t addr, uint32_t *reg);     // load byte
-void (__fastcall *MEMWriteByte)(uint32_t addr, uint32_t data);    // store byte
-void (__fastcall *MEMReadHalf)(uint32_t addr, uint32_t *reg);     // load halfword
-void (__fastcall *MEMReadHalfS)(uint32_t addr, uint32_t *reg);    // load signed halfword
-void (__fastcall *MEMWriteHalf)(uint32_t addr, uint32_t data);    // store halfword
-void (__fastcall *MEMReadWord)(uint32_t addr, uint32_t *reg);     // load word
-void (__fastcall *MEMWriteWord)(uint32_t addr, uint32_t data);    // store word
-void (__fastcall *MEMReadDouble)(uint32_t addr, uint64_t *reg);   // load doubleword
-void (__fastcall *MEMWriteDouble)(uint32_t addr, uint64_t *data); // store doubleword
-uint32_t (__fastcall *MEMFetch)(uint32_t addr);
 uint32_t (__fastcall *MEMEffectiveToPhysical)(uint32_t ea, bool IR); // translate
 
 // ---------------------------------------------------------------------------
 // memory sub-system management (init stuff)
 
-void MEMInit()
-{
-    if(mem.inited) return;
-
-    #pragma message ("Hack : remove, when finish MMU tables")
-    mem.mmudirect = 1;
-
-    mem.inited = true;
-}
-
-void MEMFini()
-{
-    if(!mem.inited) return;
-
-    mem.inited = false;
-}
-
 void MEMOpen(int mode)
 {
-    if (!mem.inited)
-        return;
     if(mem.opened)
         return;
 
@@ -51,55 +21,17 @@ void MEMOpen(int mode)
 
 void MEMClose()
 {
-    if (!mem.inited)
-        return;
     if(!mem.opened)
         return;
-
-    // release memory maps (if present)
-    if(mem.imap)
-    {
-        free(mem.imap);
-        mem.imap = NULL;
-    }
-    if(mem.dmap)
-    {
-        free(mem.dmap);
-        mem.dmap = NULL;
-    }
 
     mem.opened = false;
 }
 
 // ---------------------------------------------------------------------------
-// memory mapper engine
+// memory engine
 
-// forward referencies to memory operations :
-
-// simple translation only for GC DolphinOS (good enough mostly)
-void __fastcall GCReadByte(uint32_t addr, uint32_t *reg);
-void __fastcall GCWriteByte(uint32_t addr, uint32_t data);
-void __fastcall GCReadHalf(uint32_t addr, uint32_t *reg);
-void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg);
-void __fastcall GCWriteHalf(uint32_t addr, uint32_t data);
-void __fastcall GCReadWord(uint32_t addr, uint32_t *reg);
-void __fastcall GCWriteWord(uint32_t addr, uint32_t data);
-void __fastcall GCReadDouble(uint32_t addr, uint64_t *reg);
-void __fastcall GCWriteDouble(uint32_t addr, uint64_t *data);
-uint32_t  __fastcall GCFetch(uint32_t addr);
+// forward referencies
 uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR=0);
-
-// for PowerPC memory mapping (as on real, slow, very compatible)
-void __fastcall MMUReadByte(uint32_t addr, uint32_t *reg);
-void __fastcall MMUWriteByte(uint32_t addr, uint32_t data);
-void __fastcall MMUReadHalf(uint32_t addr, uint32_t *reg);
-void __fastcall MMUReadHalfS(uint32_t addr, uint32_t *reg);
-void __fastcall MMUWriteHalf(uint32_t addr, uint32_t data);
-void __fastcall MMUReadWord(uint32_t addr, uint32_t *reg);
-void __fastcall MMUWriteWord(uint32_t addr, uint32_t data);
-void __fastcall MMUReadDouble(uint32_t addr, uint64_t *reg);
-void __fastcall MMUWriteDouble(uint32_t addr, uint64_t *data);
-uint32_t  __fastcall MMUFetch(uint32_t addr);
 uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR=0);
 
 // select memory mode
@@ -108,59 +40,12 @@ void MEMSelect(int mode, bool save)
     // select translation mode
     if(mode)    // MMU
     {
-        if(!mem.mmudirect)
-        {
-            // take care about memory map, if mode is MMU
-            mem.imap = (uint8_t **)malloc(4*1024*1024);
-            assert(mem.imap);
-            mem.dmap = (uint8_t **)malloc(4*1024*1024);
-            assert(mem.dmap);
-
-            // clear lookups
-            memset(mem.imap, 0, 4*1024*1024);
-            memset(mem.dmap, 0, 4*1024*1024);
-        }
-
-        MEMRemapMemory(1, 1);
-
         // set advanced translation
-        MEMReadByte            = MMUReadByte;
-        MEMWriteByte           = MMUWriteByte;
-        MEMReadHalf            = MMUReadHalf;
-        MEMReadHalfS           = MMUReadHalfS;
-        MEMWriteHalf           = MMUWriteHalf;
-        MEMReadWord            = MMUReadWord;
-        MEMWriteWord           = MMUWriteWord;
-        MEMReadDouble          = MMUReadDouble;
-        MEMWriteDouble         = MMUWriteDouble;
-        MEMFetch               = MMUFetch;
         MEMEffectiveToPhysical = MMUEffectiveToPhysical;
     }
     else        // simple
     {
-        // release memory maps (if present)
-        if(mem.imap)
-        {
-            free(mem.imap);
-            mem.imap = NULL;
-        }
-        if(mem.dmap)
-        {
-            free(mem.dmap);
-            mem.dmap = NULL;
-        }
-
-        // set simple translation
-        MEMReadByte            = GCReadByte;
-        MEMWriteByte           = GCWriteByte;
-        MEMReadHalf            = GCReadHalf;
-        MEMReadHalfS           = GCReadHalfS;
-        MEMWriteHalf           = GCWriteHalf;
-        MEMReadWord            = GCReadWord;
-        MEMWriteWord           = GCWriteWord;
-        MEMReadDouble          = GCReadDouble;
-        MEMWriteDouble         = GCWriteDouble;
-        MEMFetch               = GCFetch;
+        // no mmu
         MEMEffectiveToPhysical = GCEffectiveToPhysical;
     }
 
@@ -172,7 +57,7 @@ void MEMSelect(int mode, bool save)
 }
 
 // ---------------------------------------------------------------------------
-// simple translation (only for Dolphin OS). unlike 0.09, we are using C here.
+// simple translation (only for Dolphin OS)
 
 uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
 {
@@ -181,231 +66,104 @@ uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
     return ea & RAMMASK;        // thats all =:)
 }
 
-void __fastcall GCReadByte(uint32_t addr, uint32_t*reg)
+void __fastcall MEMReadByte(uint32_t addr, uint32_t *reg)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t bogus = 0;
-
-    // hardware trap
-    if(pa >= HW_BASE)
+    // Locked cache
+    if (addr >= 0xe0000000)
     {
-        hw_read8[addr & 0xffff](addr, reg);
+        uint8_t * ptr = &mem.lc[addr & 0x3ffff];
+        *reg = (uint32_t)*ptr;
         return;
     }
 
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPeek8(addr & EFB_MASK, reg);
-        return;
-    }
-
-    // bus load byte
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = &bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *reg = (uint32_t)*ptr;
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIReadByte(pa, reg);
 }
 
-void __fastcall GCWriteByte(uint32_t addr, uint32_t data)
+void __fastcall MEMWriteByte(uint32_t addr, uint32_t data)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t bogus;
-
-    // hardware trap
-    if(pa >= HW_BASE)
+    // Locked cache
+    if (addr >= 0xe0000000)
     {
-        hw_write8[addr & 0xffff](addr, (uint8_t)data);
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *ptr = (uint8_t)data;
         return;
     }
 
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPoke16(addr & EFB_MASK, data);
-        return;
-    }
-
-    // bus store byte
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = &bogus;
-        else
-            ptr = &mi.ram[pa];
-}
-    *ptr = (uint8_t)data;
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIWriteByte(pa, data);
 }
 
-void __fastcall GCReadHalf(uint32_t addr, uint32_t *reg)
+void __fastcall MEMReadHalf(uint32_t addr, uint32_t *reg)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint16_t bogus = 0;
-
-    // hardware trap
-    if(pa >= HW_BASE)
+    // Locked cache
+    if (addr >= 0xe0000000)
     {
-        hw_read16[addr & 0xfffe](addr, reg);
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
         return;
     }
 
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPeek16(addr & EFB_MASK, reg);
-        return;
-    }
-
-    // bus load halfword
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = (uint8_t *)&bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *reg = (uint32_t)MEMSwapHalf(*(uint16_t *)ptr);
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIReadHalf(pa, reg);
 }
 
-void __fastcall GCReadHalfS(uint32_t addr, uint32_t *reg)
+void __fastcall MEMReadHalfS(uint32_t addr, uint32_t *reg)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint16_t bogus = 0;
-
-    // hardware trap
-    if(pa >= HW_BASE)
+    // Locked cache
+    if (addr >= 0xe0000000)
     {
-        hw_read16[addr & 0xfffe](addr, reg);
-        if(*reg & 0x8000) *reg |= 0xffff0000;
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *reg = MEMSwapHalf(*(uint16_t*)ptr);
+        if (*reg & 0x8000) *reg |= 0xffff0000;
         return;
     }
 
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIReadHalf(pa, reg);
+    if (*reg & 0x8000) *reg |= 0xffff0000;
+}
+
+void __fastcall MEMWriteHalf(uint32_t addr, uint32_t data)
+{
+    // Locked cache
+    if (addr >= 0xe0000000)
     {
-        EFBPeek16(addr & EFB_MASK, reg);
-        if(*reg & 0x8000) *reg |= 0xffff0000;
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *(uint16_t*)ptr = MEMSwapHalf((uint16_t)data);
+        return;
+    }
+
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIWriteHalf(pa, data);
+}
+
+void __fastcall MEMReadWord(uint32_t addr, uint32_t *reg)
+{
+    // Locked cache
+    if (addr >= 0xe0000000)
+    {
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *reg = MEMSwap(*(uint32_t*)ptr);
+        return;
+    }
+
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIReadWord(pa, reg);
+}
+
+void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
+{
+    // Locked cache
+    if (addr >= 0xe0000000)
+    {
+        uint8_t* ptr = &mem.lc[addr & 0x3ffff];
+        *(uint32_t*)ptr = MEMSwap(data);
         return;
     }
     
-    // bus load halfword signed
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = (uint8_t *)&bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *reg = MEMSwapHalf(*(uint16_t *)ptr);
-    if(*reg & 0x8000) *reg |= 0xffff0000;
-}
-
-void __fastcall GCWriteHalf(uint32_t addr, uint32_t data)
-{
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint16_t bogus;
-
-    // hardware trap
-    if(pa >= HW_BASE)
-    {
-        hw_write16[addr & 0xfffe](addr, data);
-        return;
-    }
-
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPoke16(addr & EFB_MASK, data);
-        return;
-    }
-
-    // bus store halfword
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = (uint8_t*)&bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *(uint16_t *)ptr = MEMSwapHalf((uint16_t)data);
-}
-
-void __fastcall GCReadWord(uint32_t addr, uint32_t *reg)
-{
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint32_t bogus = 0;
-
-    // hardware trap
-    if(pa >= HW_BASE)
-    {
-        hw_read32[addr & 0xfffc](addr, reg);
-        return;
-    }
-
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPeek32(addr & EFB_MASK, reg);
-        return;
-    }
-
-    // bus load word
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = (uint8_t *)&bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *reg = MEMSwap(*(uint32_t *)ptr);
-}
-
-void __fastcall GCWriteWord(uint32_t addr, uint32_t data)
-{
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint32_t bogus;
-
-    // hardware trap
-    if(pa >= HW_BASE)
-    {
-        hw_write32[addr & 0xfffc](addr, data);
-        return;
-    }
-
-    // embedded frame buffer
-    if(pa >= EFB_BASE)
-    {
-        EFBPoke32(addr & EFB_MASK, data);
-        return;
-    }
-
-    // bus store word
-    uint8_t *ptr;
-    if(addr >= 0xe0000000) ptr = &mem.lc[addr & 0x3ffff];
-    else
-    {
-        if (mi.ram == nullptr)
-            ptr = (uint8_t*)&bogus;
-        else
-            ptr = &mi.ram[pa];
-    }
-    *(uint32_t *)ptr = MEMSwap(data);
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIWriteWord(pa, data);
 }
 
 //
@@ -413,59 +171,58 @@ void __fastcall GCWriteWord(uint32_t addr, uint32_t data)
 // (because all regs are generally integers)
 //
 
-void __fastcall GCReadDouble(uint32_t addr, uint64_t *_reg)
+void __fastcall MEMReadDouble(uint32_t addr, uint64_t *_reg)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t *buf = &mi.ram[pa], *reg = (uint8_t *)_reg;
+    // Locked cache
+    if (addr >= 0xe0000000)
+    {
+        uint8_t* buf = &mem.lc[addr & 0x3ffff], *reg = (uint8_t*)_reg;
 
-    if(addr >= 0xe0000000) buf = &mem.lc[addr & 0x3ffff];
+        reg[0] = buf[7];
+        reg[1] = buf[6];
+        reg[2] = buf[5];
+        reg[3] = buf[4];
+        reg[4] = buf[3];
+        reg[5] = buf[2];
+        reg[6] = buf[1];
+        reg[7] = buf[0];
 
-    // bus load doubleword
-    reg[0] = buf[7];
-    reg[1] = buf[6];
-    reg[2] = buf[5];
-    reg[3] = buf[4];
-    reg[4] = buf[3];
-    reg[5] = buf[2];
-    reg[6] = buf[1];
-    reg[7] = buf[0];
+        return;
+    }
+
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIReadDouble(pa, _reg);
 }
 
-void __fastcall GCWriteDouble(uint32_t addr, uint64_t *_data)
+void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *_data)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    uint8_t *buf = &mi.ram[pa], *data = (uint8_t *)_data;
+    // Locked cache
+    if (addr >= 0xe0000000)
+    {
+        uint8_t* buf = &mem.lc[addr & 0x3ffff], * data = (uint8_t*)_data;
 
-    if(addr >= 0xe0000000) buf = &mem.lc[addr & 0x3ffff];
+        buf[0] = data[7];
+        buf[1] = data[6];
+        buf[2] = data[5];
+        buf[3] = data[4];
+        buf[4] = data[3];
+        buf[5] = data[2];
+        buf[6] = data[1];
+        buf[7] = data[0];
 
-    // bus store doubleword
-    buf[0] = data[7];
-    buf[1] = data[6];
-    buf[2] = data[5];
-    buf[3] = data[4];
-    buf[4] = data[3];
-    buf[5] = data[2];
-    buf[6] = data[1];
-    buf[7] = data[0];
+        return;
+    }
+
+    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    MIWriteDouble(pa, _data);
 }
 
-// fetch opcode (0.09 fetch accelerator is gone, hence we are using MMU)
+// fetch opcode
 // return 1, if cannot fetch (no memory)
-uint32_t __fastcall GCFetch(uint32_t addr)
+void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode)
 {
-    uint32_t pa = GCEffectiveToPhysical(addr);
-    if(pa >= RAMSIZE) return 1;
-
-    uint32_t bogus = 0;
-
-    // bus fetch instruction
-
-    uint8_t* ptr;
-    if (mi.ram == nullptr)
-        ptr = (uint8_t*)&bogus;
-    else
-        ptr = &mi.ram[pa];
-    return MEMSwap(*(uint32_t *)ptr);
+    uint32_t pa = MEMEffectiveToPhysical(addr, true);
+    MIReadWord(pa, opcode);
 }
 
 // ---------------------------------------------------------------------------
@@ -475,9 +232,6 @@ uint32_t __fastcall GCFetch(uint32_t addr)
 // page translation table. it is good place to remap "data" before load/store
 // operation, and "instruction" before any "non-linear" PC change (i.e. branch,
 // exception or like).
-
-// direct-store facility (T=1) is in history now, so Dolwin doesnt support it, 
-// like new software ;)
 
 // we do not support access rights for BAT logic (in that case we must have two
 // standalone lookup talbes for Load and Store operations).
@@ -495,20 +249,6 @@ uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
     // ea = effective address
     // pa = physical address
     // pn = page number
-
-    // use translation lookup table
-    if(!mem.mmudirect)
-    {
-        uint8_t *pn;
-        if(IR) pn = mem.imap[ea >> 12];
-        else pn = mem.dmap[ea >> 12];
-        if(pn)
-        {
-            uint8_t *ptr = &pn[ea & 4095];
-            return (uint32_t)(ptr - mi.ram);
-        }
-        else return -1;
-    }
 
     // perform direct translation
     if(IR)
@@ -546,361 +286,7 @@ uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
         }
     }
 
-/*/
-    DolwinError( 
-        "Memory Mapping Unit",
-        "Cannot translate effective address : %08X\n"
-        "IR:%i DR:%i pc:%08X\n"
-        "Implement segment page translation logic!", 
-        ea, (MSR & MSR_IR) ? 1 : 0, (MSR & MSR_DR) ? 1 : 0, PC
-    );
-/*/
-
     return -1;
-}
-
-void __fastcall MMUReadByte(uint32_t addr, uint32_t *reg)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_read8[addr & 0xffff](addr, reg);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPeek8(addr & EFB_MASK, reg);
-            return;
-        }
-
-        // bus load byte
-        uint8_t *ptr = &mi.ram[pa];
-        *reg = (uint32_t)*ptr;
-    }
-    else GCReadByte(addr, reg);
-}
-
-void __fastcall MMUWriteByte(uint32_t addr, uint32_t data)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_write8[addr & 0xffff](addr, (uint8_t)data);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPoke8(addr & EFB_MASK, data);
-            return;
-        }
-
-        // bus store byte
-        uint8_t *ptr = &mi.ram[pa];
-        *ptr = (uint8_t)data;
-    }
-    else GCWriteByte(addr, data);
-}
-
-void __fastcall MMUReadHalf(uint32_t addr, uint32_t *reg)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_read16[addr & 0xfffe](addr, reg);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPeek16(addr & EFB_MASK, reg);
-            return;
-        }
-
-        // bus load halfword
-        uint8_t *ptr = &mi.ram[pa];
-        *reg = (uint32_t)MEMSwapHalf(*(uint16_t *)ptr);
-    }
-    else GCReadHalf(addr, reg);
-}
-
-void __fastcall MMUReadHalfS(uint32_t addr, uint32_t *reg)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_read16[addr & 0xfffe](addr, reg);
-            if(*reg & 0x8000) *reg |= 0xffff0000;
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPeek16(addr & EFB_MASK, reg);
-            if(*reg & 0x8000) *reg |= 0xffff0000;
-            return;
-        }
-        
-        // bus load halfword signed
-        uint8_t *ptr = &mi.ram[pa];
-        *reg = MEMSwapHalf(*(uint16_t *)ptr);
-        if(*reg & 0x8000) *reg |= 0xffff0000;
-    }
-    else GCReadHalfS(addr, reg);
-}
-
-void __fastcall MMUWriteHalf(uint32_t addr, uint32_t data)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_write16[addr & 0xfffe](addr, data);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPoke16(addr & EFB_MASK, data);
-            return;
-        }
-
-        // bus store halfword
-        uint8_t *ptr = &mi.ram[pa];
-        *(uint16_t *)ptr = MEMSwapHalf((uint16_t)data);
-    }
-    else GCWriteHalf(addr, data);
-}
-
-void __fastcall MMUReadWord(uint32_t addr, uint32_t *reg)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_read32[addr & 0xfffc](addr, reg);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPeek32(addr & EFB_MASK, reg);
-            return;
-        }
-
-        // bus load word
-        uint8_t *ptr = &mi.ram[pa];
-        *reg = MEMSwap(*(uint32_t *)ptr);
-    }
-    else GCReadWord(addr, reg);
-}
-
-void __fastcall MMUWriteWord(uint32_t addr, uint32_t data)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-
-        // hardware trap
-        if(pa >= HW_BASE)
-        {
-            hw_write32[addr & 0xfffc](addr, data);
-            return;
-        }
-
-        // embedded frame buffer
-        if(pa >= EFB_BASE)
-        {
-            EFBPoke32(addr & EFB_MASK, data);
-            return;
-        }
-
-        // bus store word
-        uint8_t *ptr = &mi.ram[pa];
-        *(uint32_t *)ptr = MEMSwap(data);
-    }
-    else GCWriteWord(addr, data);
-}
-
-//
-// fortunately longlongs are never used in GC hardware access
-// (because all regs are generally integers)
-//
-
-void __fastcall MMUReadDouble(uint32_t addr, uint64_t *_reg)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-        uint8_t *buf = &mi.ram[pa], *reg = (uint8_t *)_reg;
-
-        // bus load doubleword
-        reg[0] = buf[7];
-        reg[1] = buf[6];
-        reg[2] = buf[5];
-        reg[3] = buf[4];
-        reg[4] = buf[3];
-        reg[5] = buf[2];
-        reg[6] = buf[1];
-        reg[7] = buf[0];
-    }
-    else GCReadDouble(addr, _reg);
-}
-
-void __fastcall MMUWriteDouble(uint32_t addr, uint64_t *_data)
-{
-    if(mem.dr)
-    {
-        MEMDoRemap(0, 1);
-        mem.dr = 0;
-    }
-    if(MSR & MSR_DR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr);
-        if(pa == -1) return;
-        uint8_t *buf = &mi.ram[pa], *data = (uint8_t *)_data;
-
-        // bus store doubleword
-        buf[0] = data[7];
-        buf[1] = data[6];
-        buf[2] = data[5];
-        buf[3] = data[4];
-        buf[4] = data[3];
-        buf[5] = data[2];
-        buf[6] = data[1];
-        buf[7] = data[0];
-    }
-    else GCWriteDouble(addr, _data);
-}
-
-// fetch opcode (0.09 fetch accelerator is gone, hence we are using MMU)
-// return 1, if cannot fetch (no memory)
-uint32_t __fastcall MMUFetch(uint32_t addr)
-{
-    if(MSR & MSR_IR)
-    {
-        uint32_t pa = MMUEffectiveToPhysical(addr, 1);
-        if(pa >= RAMSIZE) return 1;
-
-        // bus fetch instruction
-        uint8_t *ptr = &mi.ram[pa];
-        return MEMSwap(*(uint32_t *)ptr);
-    }
-    else return GCFetch(addr);
-}
-
-// map specified region of memory
-void MEMMap(bool IR, bool DR, uint32_t startEA, uint32_t startPA, uint32_t length)
-{
-    uint32_t ea = startEA;
-    uint32_t pa = startPA;
-    uint32_t sz = ((length + 4095) & ~4095); // page round up
-
-    DBReport( YEL "mapping [I%i][D%i] %08X->%08X, %08X\n",
-              IR, DR, ea, pa, sz );
-
-    while(sz)
-    {
-        if(pa >= RAMSIZE) break;
-        if(IR) mem.imap[ea >> 12] = &mi.ram[pa & ~4095];
-        if(DR) mem.dmap[ea >> 12] = &mi.ram[pa & ~4095];
-        ea += 4096;
-        pa += 4096;
-        sz -= 4096;
-    }
-}
-
-// do actual remapping
-void MEMDoRemap(bool IR, bool DR)
-{
-    // IMPLEMENT !!
-}
-
-// set to remap imap/dmap before next opcode/ldst operation
-void MEMRemapMemory(bool IR, bool DR)
-{
-    if(mem.mmudirect) return;
-    mem.ir = IR;
-    if(IR) DBReport( YEL "remapping instruction MMU logic..\n");
-    mem.dr = DR;
-    if(DR) DBReport( YEL "remapping data MMU logic..\n");
 }
 
 // ---------------------------------------------------------------------------

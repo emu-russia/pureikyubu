@@ -400,48 +400,48 @@ void CPOpen(HWConfig * config)
     fifo.gxpoll = config->gxpoll;
 
     // command processor
-    HWSetTrap(16, CP_SR         , read_cp_sr, NULL);
-    HWSetTrap(16, CP_CR         , read_cp_cr, write_cp_cr);
-    HWSetTrap(16, CP_CLR        , NULL, write_cp_clr);
-    HWSetTrap(16, CP_TEX        , no_read, no_write);
-    HWSetTrap(16, CP_BASE       , read_cp_baseh, write_cp_baseh);
-    HWSetTrap(16, CP_BASE + 2   , read_cp_basel, write_cp_basel);
-    HWSetTrap(16, CP_TOP        , read_cp_toph, write_cp_toph);
-    HWSetTrap(16, CP_TOP + 2    , read_cp_topl, write_cp_topl);
-    HWSetTrap(16, CP_HIWMARK    , read_cp_hmarkh, write_cp_hmarkh);
-    HWSetTrap(16, CP_HIWMARK + 2, read_cp_hmarkl, write_cp_hmarkl);
-    HWSetTrap(16, CP_LOWMARK    , read_cp_lmarkh, write_cp_lmarkh);
-    HWSetTrap(16, CP_LOWMARK + 2, read_cp_lmarkl, write_cp_lmarkl);
-    HWSetTrap(16, CP_CNT        , read_cp_cnth, write_cp_cnth);
-    HWSetTrap(16, CP_CNT + 2    , read_cp_cntl, write_cp_cntl);
-    HWSetTrap(16, CP_WRPTR      , read_cp_wrptrh, write_cp_wrptrh);
-    HWSetTrap(16, CP_WRPTR + 2  , read_cp_wrptrl, write_cp_wrptrl);
-    HWSetTrap(16, CP_RDPTR      , read_cp_rdptrh, write_cp_rdptrh);
-    HWSetTrap(16, CP_RDPTR + 2  , read_cp_rdptrl, write_cp_rdptrl);
-    HWSetTrap(16, CP_BPPTR      , read_cp_bpptrh, write_cp_bpptrh);
-    HWSetTrap(16, CP_BPPTR + 2  , read_cp_bpptrl, write_cp_bpptrl);
+    MISetTrap(16, CP_SR         , read_cp_sr, NULL);
+    MISetTrap(16, CP_CR         , read_cp_cr, write_cp_cr);
+    MISetTrap(16, CP_CLR        , NULL, write_cp_clr);
+    MISetTrap(16, CP_TEX        , no_read, no_write);
+    MISetTrap(16, CP_BASE       , read_cp_baseh, write_cp_baseh);
+    MISetTrap(16, CP_BASE + 2   , read_cp_basel, write_cp_basel);
+    MISetTrap(16, CP_TOP        , read_cp_toph, write_cp_toph);
+    MISetTrap(16, CP_TOP + 2    , read_cp_topl, write_cp_topl);
+    MISetTrap(16, CP_HIWMARK    , read_cp_hmarkh, write_cp_hmarkh);
+    MISetTrap(16, CP_HIWMARK + 2, read_cp_hmarkl, write_cp_hmarkl);
+    MISetTrap(16, CP_LOWMARK    , read_cp_lmarkh, write_cp_lmarkh);
+    MISetTrap(16, CP_LOWMARK + 2, read_cp_lmarkl, write_cp_lmarkl);
+    MISetTrap(16, CP_CNT        , read_cp_cnth, write_cp_cnth);
+    MISetTrap(16, CP_CNT + 2    , read_cp_cntl, write_cp_cntl);
+    MISetTrap(16, CP_WRPTR      , read_cp_wrptrh, write_cp_wrptrh);
+    MISetTrap(16, CP_WRPTR + 2  , read_cp_wrptrl, write_cp_wrptrl);
+    MISetTrap(16, CP_RDPTR      , read_cp_rdptrh, write_cp_rdptrh);
+    MISetTrap(16, CP_RDPTR + 2  , read_cp_rdptrl, write_cp_rdptrl);
+    MISetTrap(16, CP_BPPTR      , read_cp_bpptrh, write_cp_bpptrh);
+    MISetTrap(16, CP_BPPTR + 2  , read_cp_bpptrl, write_cp_bpptrl);
 
     // pixel engine
-    HWSetTrap(16, PE_ZCR       , no_read, no_write);
-    HWSetTrap(16, PE_ACR       , no_read, no_write);
-    HWSetTrap(16, PE_ALPHA_DST , no_read, no_write);
-    HWSetTrap(16, PE_ALPHA_MODE, no_read, no_write);
-    HWSetTrap(16, PE_ALPHA_READ, no_read, no_write);
-    HWSetTrap(16, PE_SR        , read_pe_sr, write_pe_sr);
-    HWSetTrap(16, PE_TOKEN     , read_pe_token, NULL);
+    MISetTrap(16, PE_ZCR       , no_read, no_write);
+    MISetTrap(16, PE_ACR       , no_read, no_write);
+    MISetTrap(16, PE_ALPHA_DST , no_read, no_write);
+    MISetTrap(16, PE_ALPHA_MODE, no_read, no_write);
+    MISetTrap(16, PE_ALPHA_READ, no_read, no_write);
+    MISetTrap(16, PE_SR        , read_pe_sr, write_pe_sr);
+    MISetTrap(16, PE_TOKEN     , read_pe_token, NULL);
 
     // processor interface (CPU fifo)
-    HWSetTrap(32, PI_BASE , read_pi_base , write_pi_base);
-    HWSetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
-    HWSetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
+    MISetTrap(32, PI_BASE , read_pi_base , write_pi_base);
+    MISetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
+    MISetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
 
     // scratch PI fifo buffer
-    HWSetTrap(8 , GX_FIFO  , NULL, write_fifo8);
-    HWSetTrap(16, GX_FIFO  , NULL, write_fifo16);
-    HWSetTrap(32, GX_FIFO  , NULL, write_fifo32);
-    HWSetTrap(8 , GX_FIFO+4, NULL, write_fifo8);
-    HWSetTrap(16, GX_FIFO+4, NULL, write_fifo16);
-    HWSetTrap(32, GX_FIFO+4, NULL, write_fifo32);
+    MISetTrap(8 , GX_FIFO  , NULL, write_fifo8);
+    MISetTrap(16, GX_FIFO  , NULL, write_fifo16);
+    MISetTrap(32, GX_FIFO  , NULL, write_fifo32);
+    MISetTrap(8 , GX_FIFO+4, NULL, write_fifo8);
+    MISetTrap(16, GX_FIFO+4, NULL, write_fifo16);
+    MISetTrap(32, GX_FIFO+4, NULL, write_fifo32);
 
     GXSetTokens(&fifo.drawdone, &fifo.token, &fifo.pe.token);
 }

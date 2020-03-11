@@ -127,23 +127,23 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
 
         // if first opcode is 'BLR', then just leave it
         uint32_t op;
-        MEMReadWord(symbol->eaddr, &op);
+        CPUReadWord(symbol->eaddr, &op);
         if(op != 0x4e800020)
         {
-            MEMWriteWord(
+            CPUWriteWord(
                 symbol->eaddr,          // add patch
                 (uint32_t)routine       // 000: high-level opcode
             );
             if(!_stricmp(symName, "OSLoadContext"))
             {
-                MEMWriteWord(
+                CPUWriteWord(
                     symbol->eaddr + 4,  // return to caller
                     0x4c000064          // rfi
                 );
             }
             else
             {
-                MEMWriteWord(
+                CPUWriteWord(
                     symbol->eaddr + 4,  // return to caller
                     0x4e800020          // blr
                 );

@@ -34,13 +34,13 @@ static void ReadFST()
     DVDRead(&mi.ram[fstAddr & RAMMASK], fstSize);
 
     // save fst configuration in lomem
-    MEMWriteWord(0x80000038, fstAddr);
-    MEMWriteWord(0x8000003c, fstMaxSize);
+    CPUWriteWord(0x80000038, fstAddr);
+    CPUWriteWord(0x8000003c, fstMaxSize);
 
     // adjust arenaHi (OSInit will override it anyway, but not home demos)
     // arenaLo set to 0
-    //MEMWriteWord(0x80000030, 0);
-    //MEMWriteWord(0x80000034, fstAddr);
+    //CPUWriteWord(0x80000030, 0);
+    //CPUWriteWord(0x80000034, fstAddr);
 }
 
 // execute apploader (apploader base is 0x81200000)
@@ -63,7 +63,7 @@ static void BootApploader()
     DBReport( YEL "booting apploader..\n");
 
     // set OSReport dummy
-    MEMWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
+    CPUWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
 
     DVDSeek(0x2440);                // apploader offset
     DVDRead((uint8_t *)appHeader, 32);   // read apploader header
@@ -88,9 +88,9 @@ static void BootApploader()
     while(PC) IPTExecuteOpcode();
 
     // get apploader interface offsets
-    MEMReadWord(0x81300004, &_prolog);
-    MEMReadWord(0x81300008, &_main);
-    MEMReadWord(0x8130000c, &_epilog);
+    CPUReadWord(0x81300004, &_prolog);
+    CPUReadWord(0x81300008, &_main);
+    CPUReadWord(0x8130000c, &_epilog);
 
     DBReport( YEL "apploader interface : init : %08X main : %08X close : %08X\n", 
               _prolog, _main, _epilog );
@@ -113,9 +113,9 @@ static void BootApploader()
         LR = 0;
         while(PC) IPTExecuteOpcode();
 
-        MEMReadWord(0x81300004, &addr);
-        MEMReadWord(0x81300008, &size);
-        MEMReadWord(0x8130000c, &offs);
+        CPUReadWord(0x81300004, &addr);
+        CPUReadWord(0x81300008, &size);
+        CPUReadWord(0x8130000c, &offs);
 
         if(size)
         {
@@ -159,9 +159,9 @@ static void __SyncTime(bool rtc)
 
     int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
     int64_t systemTime;
-    MEMReadDouble(0x800030d8, (uint64_t *)&systemTime);
+    CPUReadDouble(0x800030d8, (uint64_t *)&systemTime);
     systemTime += newTime - TBR;
-    MEMWriteDouble(0x800030d8, (uint64_t *)&systemTime);
+    CPUWriteDouble(0x800030d8, (uint64_t *)&systemTime);
     TBR = newTime;
     DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
@@ -188,9 +188,6 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     // page table
     SDR1 = 0;
 
-    // reset MMU
-    if(mem.mmu) MEMRemapMemory(1, 1);
-
     MSR &= ~MSR_EE;                         // disable interrupts/DEC
     MSR |= MSR_FP;                          // enable FP
 
@@ -201,11 +198,11 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     __SyncTime(rtc);
 
     // modify important OS low memory variables (lomem) (BS)
-    MEMWriteWord(0x8000002c, consoleVer);   // console type
-    MEMWriteWord(0x80000028, RAMSIZE);      // memsize
-    MEMWriteWord(0x800000f0, RAMSIZE);      // simmemsize
-    MEMWriteWord(0x800000f8, CPU_BUS_CLOCK);
-    MEMWriteWord(0x800000fc, CPU_CORE_CLOCK);
+    CPUWriteWord(0x8000002c, consoleVer);   // console type
+    CPUWriteWord(0x80000028, RAMSIZE);      // memsize
+    CPUWriteWord(0x800000f0, RAMSIZE);      // simmemsize
+    CPUWriteWord(0x800000f8, CPU_BUS_CLOCK);
+    CPUWriteWord(0x800000fc, CPU_CORE_CLOCK);
 
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
@@ -226,14 +223,14 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
         // additional PAL/NTSC selection hack for old VIConfigure()
         char *id = (char *)mi.ram;
-        if(id[3] == 'P') MEMWriteWord(0x800000CC, 1);   // set to PAL
-        else MEMWriteWord(0x800000CC, 0);
+        if(id[3] == 'P') CPUWriteWord(0x800000CC, 1);   // set to PAL
+        else CPUWriteWord(0x800000CC, 0);
 
         BootApploader();
     }
     else
     {
-        MEMWriteWord(0x80000034, SP);
+        CPUWriteWord(0x80000034, SP);
 
         ReadFST(); // load FST, for demos
     }

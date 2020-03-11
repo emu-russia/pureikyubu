@@ -303,20 +303,20 @@ void AIOpen(HWConfig* config)
     ai.one_second = config->one_second;
 
     // set register traps
-    HWSetTrap(16, AI_DCR, read_aidcr, write_aidcr);
+    MISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
 
-    HWSetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-    HWSetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-    HWSetTrap(16, DSP_INMBOXH , read_in_mbox_h , write_in_mbox_h);
-    HWSetTrap(16, DSP_INMBOXL , read_in_mbox_l , write_in_mbox_l);
+    MISetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
+    MISetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
+    MISetTrap(16, DSP_INMBOXH , read_in_mbox_h , write_in_mbox_h);
+    MISetTrap(16, DSP_INMBOXL , read_in_mbox_l , write_in_mbox_l);
 
-    HWSetTrap(16, AID_MADRH , read_dmah, write_dmah);
-    HWSetTrap(16, AID_MADRL , read_dmal, write_dmal);
-    HWSetTrap(16, AID_LEN   , read_len , write_len);
-    HWSetTrap(16, AID_CNT   , read_dcnt, NULL);
+    MISetTrap(16, AID_MADRH , read_dmah, write_dmah);
+    MISetTrap(16, AID_MADRL , read_dmal, write_dmal);
+    MISetTrap(16, AID_LEN   , read_len , write_len);
+    MISetTrap(16, AID_CNT   , read_dcnt, NULL);
 
-    HWSetTrap(32, AIS_CR  , read_cr  , write_cr);
-    HWSetTrap(32, AIS_VR  , read_vr  , write_vr);
-    HWSetTrap(32, AIS_SCNT, read_scnt, NULL);
-    HWSetTrap(32, AIS_IT  , read_it  , write_it);
+    MISetTrap(32, AIS_CR  , read_cr  , write_cr);
+    MISetTrap(32, AIS_VR  , read_vr  , write_vr);
+    MISetTrap(32, AIS_SCNT, read_scnt, NULL);
+    MISetTrap(32, AIS_IT  , read_it  , write_it);
 }

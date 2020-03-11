@@ -184,21 +184,21 @@ void AROpen()
     aram.mmaddr = aram.araddr = aram.cnt = 0;
 
     // set traps to aram registers
-    HWSetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
-    HWSetTrap(16, AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
-    HWSetTrap(16, AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
-    HWSetTrap(16, AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
-    HWSetTrap(16, AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
-    HWSetTrap(16, AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
+    MISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
+    MISetTrap(16, AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
+    MISetTrap(16, AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
+    MISetTrap(16, AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
+    MISetTrap(16, AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
+    MISetTrap(16, AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
 
-    HWSetTrap(32, AR_DMA_MMADDR, ar_read_maddr, ar_write_maddr);
-    HWSetTrap(32, AR_DMA_ARADDR, ar_read_araddr, ar_write_araddr);
-    HWSetTrap(32, AR_DMA_CNT, ar_read_cnt, ar_write_cnt);
+    MISetTrap(32, AR_DMA_MMADDR, ar_read_maddr, ar_write_maddr);
+    MISetTrap(32, AR_DMA_ARADDR, ar_read_araddr, ar_write_araddr);
+    MISetTrap(32, AR_DMA_CNT, ar_read_cnt, ar_write_cnt);
 
     // hacks
-    HWSetTrap(16, AR_SIZE   , ar_hack_size_r, ar_hack_size_w);
-    HWSetTrap(16, AR_MODE   , ar_hack_mode  , no_write);
-    HWSetTrap(16, AR_REFRESH, no_read       , no_write);
+    MISetTrap(16, AR_SIZE   , ar_hack_size_r, ar_hack_size_w);
+    MISetTrap(16, AR_MODE   , ar_hack_mode  , no_write);
+    MISetTrap(16, AR_REFRESH, no_read       , no_write);
 }
 
 void ARClose()

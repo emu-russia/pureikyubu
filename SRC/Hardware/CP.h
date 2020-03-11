@@ -1,4 +1,4 @@
-#pragma pack(1)
+#pragma pack(push, 1)
 
 // GX fifo scratch buffer (attached to PI fifo, when 0x0C008000)
 #define GX_FIFO         0x0C008000
@@ -108,4 +108,4 @@ extern  FifoControl fifo;
 void    CPOpen(HWConfig* config);
 void    CPUpdate();
 
-#pragma pack()
+#pragma pack(pop)

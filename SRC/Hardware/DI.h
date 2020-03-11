@@ -1,4 +1,4 @@
-#pragma pack(1)
+#pragma pack(push, 1)
 
 // size of DVD data
 #define DVD_SIZE         0x57058000     // approx. 1.4 GB
@@ -95,4 +95,4 @@ void    DIStreamUpdate();       // update DVD streaming playback, called every V
 void    DIOpen();
 void    DIClose();
 
-#pragma pack()
+#pragma pack(pop)

@@ -477,7 +477,7 @@ static void disa_navigate()
     uint32_t op = 0, addr = con.disa_cursor;
 
     uint32_t pa = MEMEffectiveToPhysical(addr, 0);
-    if(pa != -1) op = MEMFetch(pa);
+    if(pa != -1) MEMFetch(pa, &op);
     if(op == 0) return;
 
     memset(&disa, 0, sizeof(PPCD_CB));

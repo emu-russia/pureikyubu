@@ -172,9 +172,9 @@ void PIOpen(HWConfig* config)
     INTSR = INTMR = 0;
 
     // set interrupt registers hooks
-    HWSetTrap(32, PI_INTSR   , read_intsr, write_intsr);
-    HWSetTrap(32, PI_INTMR   , read_intmr, write_intmr);
-    HWSetTrap(32, PI_MB_REV  , read_mbrev, NULL);
-    HWSetTrap( 8, PI_RST_CODE, read_reset, write_reset);
-    HWSetTrap(32, PI_RST_CODE, read_reset, write_reset);
+    MISetTrap(32, PI_INTSR   , read_intsr, write_intsr);
+    MISetTrap(32, PI_INTMR   , read_intmr, write_intmr);
+    MISetTrap(32, PI_MB_REV  , read_mbrev, NULL);
+    MISetTrap( 8, PI_RST_CODE, read_reset, write_reset);
+    MISetTrap(32, PI_RST_CODE, read_reset, write_reset);
 }

@@ -81,7 +81,8 @@ void con_ldst_info()
     wind.ldst = FALSE;
 
     {
-        uint32_t op = MEMFetch(con.disa_cursor & ~3);
+        uint32_t op;
+        MEMFetch(con.disa_cursor & ~3, &op);
 
         disa.pc = con.disa_cursor;
         disa.instr = op;
@@ -126,7 +127,7 @@ void con_update_disa_window()
 
     for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
     {
-        op = MEMFetch(addr);
+        MEMFetch(addr, &op);
 
         int n = con_disa_line(line, op, addr);
         if(n > 1) wind.disa_sub_h += n - 1;

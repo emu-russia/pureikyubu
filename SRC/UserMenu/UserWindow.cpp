@@ -300,7 +300,7 @@ void ModifySwapControls(BOOL state)
 }
 
 // set menu selector-related controls state
-void ModifySelectorControls(BOOL active)
+void ModifySelectorControls(bool active)
 {
     if(active)
     {
@@ -383,7 +383,7 @@ static void OnMainWindowCreate(HWND hwnd)
 
     // selector disabled ?
     usel.active = GetConfigInt(USER_SELECTOR, USER_SELECTOR_DEFAULT);
-    if(ldat.cmdline) usel.active = FALSE;
+    if(ldat.cmdline) usel.active = false;
     ModifySelectorControls(usel.active);
 
     // icon size
@@ -435,7 +435,7 @@ void OnMainWindowOpened()
 {
     // disable selector
     CloseSelector();
-    ModifySelectorControls(0);
+    ModifySelectorControls(false);
     EnableMenuItem( GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
                     wnd.hMainMenu, "&Options") ), 1, MF_BYPOSITION | MF_GRAYED );
 
@@ -716,12 +716,12 @@ loadFile:
                     {
                         CloseSelector();
                         ResetStatusBar();
-                        ModifySelectorControls(0);
+                        ModifySelectorControls(false);
                         SetConfigInt(USER_SELECTOR, usel.active = FALSE);
                     }
                     else
                     {
-                        ModifySelectorControls(1);
+                        ModifySelectorControls(true);
                         SetConfigInt(USER_SELECTOR, usel.active = TRUE);
                         CreateSelector();
                     }

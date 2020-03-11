@@ -351,38 +351,38 @@ void DIOpen()
     memset(di.workArea, 0, DVD_STREAM_BLK);
 
     // set 32-bit register traps
-    HWSetTrap(32, DI_SR     , read_sr      , write_sr);
-    HWSetTrap(32, DI_CVR    , read_cvr     , write_cvr);
-    HWSetTrap(32, DI_CMDBUF0, read_cmdbuf0 , write_cmdbuf0);
-    HWSetTrap(32, DI_CMDBUF1, read_cmdbuf1 , write_cmdbuf1);
-    HWSetTrap(32, DI_CMDBUF2, read_cmdbuf2 , write_cmdbuf2);
-    HWSetTrap(32, DI_MAR    , read_mar     , write_mar);
-    HWSetTrap(32, DI_LEN    , read_len     , write_len);
-    HWSetTrap(32, DI_CR     , read_cr      , write_cr);
-    HWSetTrap(32, DI_IMMBUF , read_immbuf  , write_immbuf);
-    HWSetTrap(32, DI_CFG    , read_cfg     , NULL);
+    MISetTrap(32, DI_SR     , read_sr      , write_sr);
+    MISetTrap(32, DI_CVR    , read_cvr     , write_cvr);
+    MISetTrap(32, DI_CMDBUF0, read_cmdbuf0 , write_cmdbuf0);
+    MISetTrap(32, DI_CMDBUF1, read_cmdbuf1 , write_cmdbuf1);
+    MISetTrap(32, DI_CMDBUF2, read_cmdbuf2 , write_cmdbuf2);
+    MISetTrap(32, DI_MAR    , read_mar     , write_mar);
+    MISetTrap(32, DI_LEN    , read_len     , write_len);
+    MISetTrap(32, DI_CR     , read_cr      , write_cr);
+    MISetTrap(32, DI_IMMBUF , read_immbuf  , write_immbuf);
+    MISetTrap(32, DI_CFG    , read_cfg     , NULL);
 
     // set 16-bit register traps (unused in SDK, but may be used in other apps)
-    HWSetTrap(16, DI_SR_H     , no_read        , no_write);
-    HWSetTrap(16, DI_SR_L     , read_sr        , write_sr);
-    HWSetTrap(16, DI_CVR_H    , no_read        , no_write);
-    HWSetTrap(16, DI_CVR_L    , read_cvr       , write_cvr);
-    HWSetTrap(16, DI_CMDBUF0_H, read_cmdbuf0_h , write_cmdbuf0_h);
-    HWSetTrap(16, DI_CMDBUF0_L, read_cmdbuf0_l , write_cmdbuf0_l);
-    HWSetTrap(16, DI_CMDBUF1_H, read_cmdbuf1_h , write_cmdbuf1_h);
-    HWSetTrap(16, DI_CMDBUF1_L, read_cmdbuf1_l , write_cmdbuf1_l);
-    HWSetTrap(16, DI_CMDBUF2_H, read_cmdbuf2_h , write_cmdbuf2_h);
-    HWSetTrap(16, DI_CMDBUF2_L, read_cmdbuf2_l , write_cmdbuf2_l);
-    HWSetTrap(16, DI_MAR_H    , read_mar_h     , write_mar_h);
-    HWSetTrap(16, DI_MAR_L    , read_mar_l     , write_mar_l);
-    HWSetTrap(16, DI_LEN_H    , read_len_h     , write_len_h);
-    HWSetTrap(16, DI_LEN_L    , read_len_l     , write_len_l);
-    HWSetTrap(16, DI_CR_H     , no_read        , no_write);
-    HWSetTrap(16, DI_CR_L     , read_cr        , write_cr);
-    HWSetTrap(16, DI_IMMBUF_H , read_immbuf_h  , write_immbuf_h);
-    HWSetTrap(16, DI_IMMBUF_L , read_immbuf_l  , write_immbuf_l);
-    HWSetTrap(16, DI_CFG_H    , read_cfg       , NULL);
-    HWSetTrap(16, DI_CFG_L    , read_cfg       , NULL);
+    MISetTrap(16, DI_SR_H     , no_read        , no_write);
+    MISetTrap(16, DI_SR_L     , read_sr        , write_sr);
+    MISetTrap(16, DI_CVR_H    , no_read        , no_write);
+    MISetTrap(16, DI_CVR_L    , read_cvr       , write_cvr);
+    MISetTrap(16, DI_CMDBUF0_H, read_cmdbuf0_h , write_cmdbuf0_h);
+    MISetTrap(16, DI_CMDBUF0_L, read_cmdbuf0_l , write_cmdbuf0_l);
+    MISetTrap(16, DI_CMDBUF1_H, read_cmdbuf1_h , write_cmdbuf1_h);
+    MISetTrap(16, DI_CMDBUF1_L, read_cmdbuf1_l , write_cmdbuf1_l);
+    MISetTrap(16, DI_CMDBUF2_H, read_cmdbuf2_h , write_cmdbuf2_h);
+    MISetTrap(16, DI_CMDBUF2_L, read_cmdbuf2_l , write_cmdbuf2_l);
+    MISetTrap(16, DI_MAR_H    , read_mar_h     , write_mar_h);
+    MISetTrap(16, DI_MAR_L    , read_mar_l     , write_mar_l);
+    MISetTrap(16, DI_LEN_H    , read_len_h     , write_len_h);
+    MISetTrap(16, DI_LEN_L    , read_len_l     , write_len_l);
+    MISetTrap(16, DI_CR_H     , no_read        , no_write);
+    MISetTrap(16, DI_CR_L     , read_cr        , write_cr);
+    MISetTrap(16, DI_IMMBUF_H , read_immbuf_h  , write_immbuf_h);
+    MISetTrap(16, DI_IMMBUF_L , read_immbuf_l  , write_immbuf_l);
+    MISetTrap(16, DI_CFG_H    , read_cfg       , NULL);
+    MISetTrap(16, DI_CFG_L    , read_cfg       , NULL);
 
     di.running = true;
 }

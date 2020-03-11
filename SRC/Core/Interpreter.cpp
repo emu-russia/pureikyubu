@@ -1,4 +1,4 @@
-// default C interpreter (opcode parser).
+// default C interpreter (opcode parser)
 #include "pch.h"
 
 // parse and execute single opcode
@@ -6,7 +6,8 @@ void IPTExecuteOpcode()
 {
     // execute one instruction
     // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-    uint32_t op = MEMFetch(PC);
+    uint32_t op;
+    MEMFetch(PC, &op);
     if(cpu.exception) goto JumpPC;  // ISI
     c_1[op >> 26](op); cpu.ops++;
     if(cpu.exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
@@ -44,13 +45,6 @@ JumpPC:
         cpu.exception = false;
         cpu.branch = false;
 
-        // remap instructions
-        if(mem.ir)
-        {
-            MEMDoRemap(1, 0);
-            mem.ir = 0;
-        }
-
     } else PC += 4;
 }
 
@@ -75,24 +69,3 @@ void IPTException(uint32_t code)
     PC = code;
     cpu.exception = true;
 }
-
-/*/ ---------------------------------------------------------------------------
-
-    Compatibility Notes :
-    ---------------------
-
-    branch          - seems ok (full)
-    compare         - seems ok (full)
-    condition       - seems ok (full)
-    floatingpoint   - CR1? FPSCR correct bit controls? frsp? fp unavail? comments?
-    fploadstore     - seems ok (full)
-    integer         - overflow opcodes? missing?
-    loadstore       - lswx? stswx?
-    logical         - seems ok (full)
-    pairedsingle    - CR1? FPSCR correct bit controls? fp unavail? comments?
-    psloadstore     - check scaling?
-    rotate          - seems ok (full)
-    shift           - seems ok (full)
-    system          - cache?, MMU?, Gekko specific (DMA, WPAR, PMC)?
-
---------------------------------------------------------------------------- /*/

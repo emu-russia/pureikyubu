@@ -1,4 +1,4 @@
-#pragma pack(1)
+#pragma pack(push, 1)
 
 // SI registers (all registers are 32-bit)
 
@@ -100,4 +100,4 @@ extern  SIControl si;
 void    SIPoll();
 void    SIOpen(bool fake=false);
 
-#pragma pack()
+#pragma pack(pop)

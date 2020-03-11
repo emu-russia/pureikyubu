@@ -618,25 +618,25 @@ void EIOpen(HWConfig * config)
     FontLoad( &exi.sjisFont, SJIS_SIZE, config->sjisFilename );
 
     // set traps for EXI channel 0 registers
-    HWSetTrap(32, EXI0_CSR , exi0_read_csr , exi0_write_csr) ;
-    HWSetTrap(32, EXI0_MADR, exi0_read_madr, exi0_write_madr);
-    HWSetTrap(32, EXI0_LEN , exi0_read_len , exi0_write_len) ;
-    HWSetTrap(32, EXI0_CR  , exi0_read_cr  , exi0_write_cr)  ;
-    HWSetTrap(32, EXI0_DATA, exi0_read_data, exi0_write_data);
+    MISetTrap(32, EXI0_CSR , exi0_read_csr , exi0_write_csr) ;
+    MISetTrap(32, EXI0_MADR, exi0_read_madr, exi0_write_madr);
+    MISetTrap(32, EXI0_LEN , exi0_read_len , exi0_write_len) ;
+    MISetTrap(32, EXI0_CR  , exi0_read_cr  , exi0_write_cr)  ;
+    MISetTrap(32, EXI0_DATA, exi0_read_data, exi0_write_data);
 
     // set traps for EXI channel 1 registers
-    HWSetTrap(32, EXI1_CSR , exi1_read_csr , exi1_write_csr) ;
-    HWSetTrap(32, EXI1_MADR, exi1_read_madr, exi1_write_madr);
-    HWSetTrap(32, EXI1_LEN , exi1_read_len , exi1_write_len) ;
-    HWSetTrap(32, EXI1_CR  , exi1_read_cr  , exi1_write_cr)  ;
-    HWSetTrap(32, EXI1_DATA, exi1_read_data, exi1_write_data);
+    MISetTrap(32, EXI1_CSR , exi1_read_csr , exi1_write_csr) ;
+    MISetTrap(32, EXI1_MADR, exi1_read_madr, exi1_write_madr);
+    MISetTrap(32, EXI1_LEN , exi1_read_len , exi1_write_len) ;
+    MISetTrap(32, EXI1_CR  , exi1_read_cr  , exi1_write_cr)  ;
+    MISetTrap(32, EXI1_DATA, exi1_read_data, exi1_write_data);
 
     // set traps for EXI channel 2 registers
-    HWSetTrap(32, EXI2_CSR , exi2_read_csr , exi2_write_csr) ;
-    HWSetTrap(32, EXI2_MADR, exi2_read_madr, exi2_write_madr);
-    HWSetTrap(32, EXI2_LEN , exi2_read_len , exi2_write_len) ;
-    HWSetTrap(32, EXI2_CR  , exi2_read_cr  , exi2_write_cr)  ;
-    HWSetTrap(32, EXI2_DATA, exi2_read_data, exi2_write_data);
+    MISetTrap(32, EXI2_CSR , exi2_read_csr , exi2_write_csr) ;
+    MISetTrap(32, EXI2_MADR, exi2_read_madr, exi2_write_madr);
+    MISetTrap(32, EXI2_LEN , exi2_read_len , exi2_write_len) ;
+    MISetTrap(32, EXI2_CR  , exi2_read_cr  , exi2_write_cr)  ;
+    MISetTrap(32, EXI2_DATA, exi2_read_data, exi2_write_data);
 
     // open memory cards
     MCOpen(config);

@@ -45,7 +45,6 @@ void EMUInit()
     assert(!emu.running);
     if(emu.initok == true) return;
 
-    MEMInit();
     CPUInit();
     MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
     MEMSelect(0, 0);
@@ -60,7 +59,6 @@ void EMUDie()
     if(emu.initok == false) return;
 
     CPUFini();
-    MEMFini();
 
     emu.initok = false;
 }

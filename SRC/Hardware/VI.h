@@ -1,4 +1,4 @@
-#pragma pack(1)
+#pragma pack(push, 1)
 
 // VI registers (can be accessed from any offset and by any size, 1, 2 or 4 bytes)
 
@@ -109,4 +109,4 @@ void    VIStats();
 void    VIOpen(HWConfig* config);
 void    VIClose();
 
-#pragma pack()
+#pragma pack(pop)

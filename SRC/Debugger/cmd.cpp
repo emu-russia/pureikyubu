@@ -326,7 +326,8 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
 
         for (start_addr; start_addr<end_addr; start_addr+=4)
         {
-            uint32_t opcode = MEMFetch(start_addr);
+            uint32_t opcode;
+            MEMFetch(start_addr, &opcode);
             disa_line ( f, opcode, start_addr );
         }
 
@@ -1012,7 +1013,7 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
             PPCD_CB disa;
             uint32_t op = 0;
             uint32_t pa = MEMEffectiveToPhysical(saddr, 0);
-            if(pa != -1) op = MEMFetch(pa);
+            if(pa != -1) MEMFetch(pa, &op);
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);
@@ -1333,7 +1334,8 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
 
     while ( bailout-- )
     {
-        uint32_t opcode = MEMFetch ( address );
+        uint32_t opcode;
+        MEMFetch(address, &opcode);
         if ( opcode == 0x4e800020 || opcode == 0 ) break;
 
         disa.instr = opcode;

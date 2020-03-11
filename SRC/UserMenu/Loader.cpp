@@ -445,7 +445,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
         if(p->freeze || load)
         {
             uint32_t ea = MEMSwap(p->effectiveAddress);
-            uint32_t pa = MEMEffectiveToPhysical(ea, 0);
+            uint32_t pa = MEMEffectiveToPhysical(ea, false);
             if(pa == -1) continue;
 
             uint8_t * ptr = (uint8_t *)&mi.ram[pa], * data = (uint8_t *)(&(p->data));
@@ -584,7 +584,7 @@ static void AutoloadPatch()
     // sorry, no patches for this DVD/executable
 }
 
-static BOOL SetGameID(char *filename)
+static BOOL SetGameIDAndTitle(char *filename)
 {
     // try to set current DVD
     if(DVDSetCurrent(filename) == FALSE) return FALSE;
@@ -597,6 +597,8 @@ static BOOL SetGameID(char *filename)
     DVDSeek(0);
     DVDRead(diskID, 4);
     diskID[4] = 0;
+
+    strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), (char *)bnr->comments[0].longTitle);
 
     // set GameID
     sprintf_s ( ldat.gameID, sizeof(ldat.gameID), "%.4s%02X",
@@ -612,7 +614,7 @@ static void DoLoadFile(char *filename)
 {
     uint32_t entryPoint = 0;
     char statusText[0x1000];
-    uint32_t s_time = GetTickCount();
+    ULONGLONG s_time = GetTickCount64();
 
     // loading progress
     sprintf_s(statusText, sizeof(statusText), "Loading %s", filename);
@@ -640,12 +642,12 @@ static void DoLoadFile(char *filename)
     else IFEXT(".iso")
     {
         DVDSetCurrent(filename);
-        ldat.dvd = SetGameID(filename);
+        ldat.dvd = SetGameIDAndTitle(filename);
     }
     else IFEXT(".gcm")
     {
         DVDSetCurrent(filename);
-        ldat.dvd = SetGameID(filename);
+        ldat.dvd = SetGameIDAndTitle(filename);
     }
 
     // file load success ?
@@ -660,7 +662,16 @@ static void DoLoadFile(char *filename)
         char fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
         _splitpath(filename, drive, dir, name, ext);
         sprintf_s(fullPath, sizeof(fullPath), "%s%s", drive, dir);
-        strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), name);
+        
+        // Set title to loaded executables
+        if (!ldat.dvd)
+        {
+            strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), name);
+        }
+        else
+        {
+            // Title set before (SetGameIDAndTitle)
+        }
 
         // add new recent entry
         AddRecentFile(filename);
@@ -683,7 +694,7 @@ static void DoLoadFile(char *filename)
     AutoloadPatch();
 
     // show boot time
-    uint32_t e_time = GetTickCount();
+    ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
     sprintf_s (statusText, sizeof(statusText), "Boot time %1.2f sec", ldat.boottime);
     SetStatusText(STATUS_PROGRESS, statusText);
@@ -691,7 +702,7 @@ static void DoLoadFile(char *filename)
     // set entrypoint (for DVD, PC will set in apploader)
     if(!ldat.dvd) PC = entryPoint;
 
-    // now onverwrite by INI settings
+    // now onverwrite config by INI settings
     LoadIniSettings();
 }
 
