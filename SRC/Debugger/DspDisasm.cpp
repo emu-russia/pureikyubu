@@ -1,23 +1,10 @@
-// DSP analyzer & disassembler
+// DSP disassembler
 
 #include "dolphin.h"
 
 namespace DSP
 {
-
-#pragma region "Analyzer part"
-
-	bool Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info)
-	{
-		return false;
-	}
-
-#pragma endregion "Analyzer part"
-
-
-#pragma region "Disassembler Part"
-
-	std::string AnalyzeInfo::ParameterToString(DspParameter index)
+	std::string DspDisasm::ParameterToString(DspParameter index)
 	{
 		switch (index)
 		{
@@ -64,50 +51,50 @@ namespace DSP
 	}
 
 	template<>
-	static std::string AnalyzeInfo::ToHexString(uint16_t address)
+	static std::string DspDisasm::ToHexString(uint16_t address)
 	{
 		return std::to_string(address);
 	}
 
 	template<>
-	static std::string AnalyzeInfo::ToHexString(uint8_t Byte)
+	static std::string DspDisasm::ToHexString(uint8_t Byte)
 	{
 		return std::to_string(Byte);
 	}
 
-	std::string AnalyzeInfo::InstrToString(DspInstruction instr, ConditionCode cc)
+	std::string DspDisasm::InstrToString(DspInstruction instr, ConditionCode cc)
 	{
 		return "";
 	}
 
-	std::string AnalyzeInfo::InstrExToString(DspInstructionEx instrEx)
+	std::string DspDisasm::InstrExToString(DspInstructionEx instrEx)
 	{
 		return "";
 	}
 
-	std::string Disasm(uint16_t startAddr, AnalyzeInfo& info)
+	std::string DspDisasm::Disasm(uint16_t startAddr, AnalyzeInfo& info)
 	{
 		std::string text = "";
 
 		// Address and code bytes
 
-		text += AnalyzeInfo::ToHexString(startAddr);
+		text += ToHexString(startAddr);
 		text += " ";
 
 		for (int i = 0; i < info.sizeInBytes; i++)
 		{
-			text += AnalyzeInfo::ToHexString(info.bytes[i]) + " ";
+			text += ToHexString(info.bytes[i]) + " ";
 		}
 
 		// Regular instruction
 
 		if (info.instr != DspInstruction::Unknown)
 		{
-			text += AnalyzeInfo::InstrToString(info.instr, info.cc);
+			text += DspDisasm::InstrToString(info.instr, info.cc);
 		}
 		else
 		{
-			text += "Unknonwn " + AnalyzeInfo::ToHexString(info.instrBits);
+			text += "Unknonwn " + ToHexString(info.instrBits);
 		}
 
 		bool firstParam = true;
@@ -117,7 +104,7 @@ namespace DSP
 			{
 				text += ", ";
 			}
-			text += AnalyzeInfo::ParameterToString(info.params[i]);
+			text += ParameterToString(info.params[i]);
 			firstParam = false;
 		}
 
@@ -129,11 +116,11 @@ namespace DSP
 
 			if (info.instrEx != DspInstructionEx::Unknown)
 			{
-				text += AnalyzeInfo::InstrExToString(info.instrEx);
+				text += InstrExToString(info.instrEx);
 			}
 			else
 			{
-				text += "Unknonwn ext " + AnalyzeInfo::ToHexString(info.instrExBits);
+				text += "Unknonwn ext " + ToHexString(info.instrExBits);
 			}
 
 			bool firstExtendedParam = true;
@@ -143,14 +130,12 @@ namespace DSP
 				{
 					text += ", ";
 				}
-				text += AnalyzeInfo::ParameterToString(info.paramsEx[i]);
+				text += ParameterToString(info.paramsEx[i]);
 				firstExtendedParam = false;
 			}
 		}
 
 		return text;
 	}
-
-#pragma endregion "Disassembler Part"
 
 }
