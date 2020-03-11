@@ -50,7 +50,7 @@ char *  GetIniVar(char *gameId, char *var);
 // UserMenu
 
 #define USER_ANSI       "ANSI"              // bootrom ANSI font
-#define USER_ANSI_DEFAULT       "Data\\Arial 16.szp"
+#define USER_ANSI_DEFAULT       "Data\\AnsiFont.szp"
 
 #define USER_FILTER     "FILTER"            // file filter
 #define USER_FILTER_DEFAULT     0xffffffff
@@ -92,7 +92,7 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_SELECTOR_DEFAULT   TRUE
 
 #define USER_SJIS       "SJIS"              // bootrom SJIS font
-#define USER_SJIS_DEFAULT       "Data\\Lucida 16.szp"
+#define USER_SJIS_DEFAULT       "Data\\SjisFont.szp"
 
 #define USER_SMALLICONS "SMALLICONS"        // show small icons, if 1
 #define USER_SMALLICONS_DEFAULT FALSE
