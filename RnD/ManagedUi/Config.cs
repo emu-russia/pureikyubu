@@ -26,7 +26,7 @@ namespace ManagedUi
             public bool Mmu = false;            // memory translation mode (false: simple, true: mmu)
             public bool Patches = true;         // patches allowed, if true
 
-            public string AnsiFont = "Data\\Arial 16.szp";  // bootrom ANSI font
+            public string AnsiFont = "Data\\AnsiFont.szp";  // bootrom ANSI font
             public string LastDirAll = ".\\";   // last used directory (all files)
             public string LastDirDvd = ".\\";   // last used directory (dvd)
             public string LastDirMap = ".\\Data";   // last used directory (map)
@@ -36,7 +36,7 @@ namespace ManagedUi
             public bool Profiler = true;        // true: enable emu profiler
             public List<string> RecentFiles = new List<string>();   // recent files
             public bool Selector = true;        // selector disabled, if false
-            public string SjisFont = "Data\\Lucida 16.szp";     // bootrom SJIS font
+            public string SjisFont = "Data\\SjisFont.szp";     // bootrom SJIS font
             public bool SmallIcons = false;     // show small icons, if true
 
             public UInt32 ConsoleVersion = 3;   // console version (see YAGCD), 0x00000003: latest production board
@@ -50,6 +50,9 @@ namespace ManagedUi
             public bool ViLog = true;           // do debugger log output
             public bool ViStretch = false;      // true: stretch VI framebuffer to fit whole window
             public bool ViXfb = true;           // enable video frame buffer (GDI)
+            public string Bootrom = null;       // Bootrom
+            public string DspDrom = null;       // DSP DROM
+            public string DspIrom = null;       // DSP IROM
 
             public bool HleMtx = false;         // true: use matrix library HLE
         }

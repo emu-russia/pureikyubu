@@ -138,6 +138,15 @@ char *  GetIniVar(char *gameId, char *var);
 #define USER_VI_XFB     "VI_XFB"            // enable video frame buffer (GDI)
 #define USER_VI_XFB_DEFAULT     1
 
+#define USER_BOOTROM	"BOOTROM"           // Bootrom
+#define USER_BOOTROM_DEFAULT       ""
+
+#define USER_DSP_DROM	"DSP_DROM"          // DSP DROM
+#define USER_DSP_DROM_DEFAULT       ""
+
+#define USER_DSP_IROM	"DSP_IROM"          // DSP IROM
+#define USER_DSP_IROM_DEFAULT       ""
+
 // High Level
 
 #define USER_HLE_MTX    "HLEMTX"            // 1: use matrix library HLE

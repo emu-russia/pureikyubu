@@ -48,7 +48,7 @@
 #define IDB_BITMAP6                     149
 #define IDB_BITMAP7                     150
 #define IDB_BITMAP8                     151
-#define IDD_DIALOG_PAD			152
+#define IDD_DIALOG_PAD                  152
 #define IDC_FILE_FILTER                 1001
 #define IDC_DOL_FILTER                  1002
 #define IDC_ELF_FILTER                  1003
@@ -102,8 +102,9 @@
 #define IDC_GX_POLL                     1043
 #define IDC_ARENA_HI                    1044
 #define IDC_VI_STRETCH                  1044
-#define IDC_ARENA_LO_DEFAULT            1045
-#define IDC_ARENA_HI_DEFAULT            1046
+#define IDC_CHOOSE_BOOTROM              1045
+#define IDC_CHOOSE_DSPDROM              1046
+#define IDC_CHOOSE_DSPIROM              1047
 #define IDC_WINDALL                     1048
 #define IDC_CHECK2                      1049
 #define IDC_ENSURE_WINDALL              1049
@@ -153,6 +154,9 @@
 #define IDC_PAD_CONFIG_OK2              1102
 #define IDC_PAD_CONFIG_CLEAR2           1103
 #define IDC_PAD_CONFIG_DEFAULT          1104
+#define IDC_BOOTROM_FILE                1105
+#define IDC_DSPDROM_FILE                1106
+#define IDC_DSPIROM_FILE                1107
 #define ID_FILE_RECENT_1                40003
 #define ID_FILE_RECENT_2                40004
 #define ID_FILE_RECENT_3                40005
@@ -251,9 +255,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        153
+#define _APS_NEXT_RESOURCE_VALUE        154
 #define _APS_NEXT_COMMAND_VALUE         40100
-#define _APS_NEXT_CONTROL_VALUE         1105
+#define _APS_NEXT_CONTROL_VALUE         1106
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

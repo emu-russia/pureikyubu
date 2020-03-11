@@ -164,6 +164,10 @@ static void LoadSettings(int n)         // dialogs created
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
+        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_BOOTROM_DEFAULT));
+        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_DSP_DROM_DEFAULT));
+        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_DSP_IROM_DEFAULT));
+
         CheckDlgButton(hDlg, IDC_RTC, BST_UNCHECKED);
         BOOL flag = GetConfigInt(USER_RTC, USER_RTC_DEFAULT);
         if(flag) CheckDlgButton(hDlg, IDC_RTC, BST_CHECKED);
@@ -274,6 +278,13 @@ static void SaveSettings()              // OK pressed
         }
         else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver);
 
+        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf, sizeof(buf));
+        SetConfigString(USER_BOOTROM, buf);
+        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf, sizeof(buf));
+        SetConfigString(USER_DSP_DROM, buf);
+        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf, sizeof(buf));
+        SetConfigString(USER_DSP_IROM, buf);
+
         BOOL flag = IsDlgButtonChecked(hDlg, IDC_RTC);
         SetConfigInt(USER_RTC, flag);
         fifo.gxpoll = IsDlgButtonChecked(hDlg, IDC_GX_POLL) & 1;
@@ -295,19 +306,6 @@ static void SaveSettings()              // OK pressed
 
 void ResetAllSettings()
 {
-}
-
-static void TextPopup(int page, int id)
-{
-    int n = 0;
-    while(tooltip[n].id)
-    {
-        if(tooltip[n].id == id && tooltip[n].page == page)
-        {
-            return;
-        }
-        n++;
-    }
 }
 
 // make sure path have ending '\\'
@@ -377,10 +375,6 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
         case WM_NOTIFY:
             if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
             break;
-
-        case WM_HELP:
-            TextPopup(0, ((HELPINFO FAR *)lParam)->iCtrlId);
-            break;
     }
     return FALSE;
 }
@@ -440,10 +434,6 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
         case WM_NOTIFY:
             if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
             break;
-
-        case WM_HELP:
-            TextPopup(1, ((HELPINFO FAR *)lParam)->iCtrlId);
-            break;
     }
     return FALSE;
 }
@@ -453,6 +443,8 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 
 static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    char* file = nullptr;
+
     switch(message)
     {
         case WM_INITDIALOG:
@@ -464,8 +456,43 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
             if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
             break;
 
-        case WM_HELP:
-            TextPopup(2, ((HELPINFO FAR *)lParam)->iCtrlId);
+        case WM_COMMAND:
+            switch (wParam)
+            {
+                case IDC_CHOOSE_BOOTROM:
+                    file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
+                    if (file != nullptr)
+                    {
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file);
+                    }
+                    else
+                    {
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, "");
+                    }
+                    break;
+                case IDC_CHOOSE_DSPDROM:
+                    file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
+                    if (file != nullptr)
+                    {
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file);
+                    }
+                    else
+                    {
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, "");
+                    }
+                    break;
+                case IDC_CHOOSE_DSPIROM:
+                    file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
+                    if (file != nullptr)
+                    {
+                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file);
+                    }
+                    else
+                    {
+                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, "");
+                    }
+                    break;
+            }
             break;
     }
     return FALSE;
@@ -487,10 +514,6 @@ static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wP
 
         case WM_NOTIFY:
             if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
-            break;
-
-        case WM_HELP:
-            TextPopup(3, ((HELPINFO FAR *)lParam)->iCtrlId);
             break;
     }
     return FALSE;

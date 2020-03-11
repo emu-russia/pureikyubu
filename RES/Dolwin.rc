@@ -165,7 +165,6 @@ BEGIN
     LTEXT           "(Default: %i)",IDC_CF_DEFAULT,126,78,78,12,SS_CENTERIMAGE
     LTEXT           "(Default: %i)",IDC_DELAY_DEFAULT,126,95,78,12,SS_CENTERIMAGE
     LTEXT           "(Default: %i)",IDC_BAILOUT_DEFAULT,126,112,78,12,SS_CENTERIMAGE
-    CONTROL         "Lookup &tables",IDC_CHECK6,"Button",BS_AUTOCHECKBOX,96,48,90,12
     PUSHBUTTON      "Reset ALL\nsettings",IDC_WINDALL,150,216,48,24,BS_MULTILINE | NOT WS_TABSTOP
     CONTROL         "",IDC_ENSURE_WINDALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,204,216,12,10
 END
@@ -188,11 +187,20 @@ BEGIN
     LTEXT           "Console Version:",IDC_STATIC,12,12,60,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CONSOLE_VER,72,12,144,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
     CONTROL         "Real-Time Clock (Default: disabled)",IDC_RTC,"Button",BS_AUTOCHECKBOX,12,228,138,12
-    LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,36,204,30
+    LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,30,204,30
     CONTROL         "Poll controllers after GX draw done (Default: disabled)",IDC_GX_POLL,
                     "Button",BS_AUTOCHECKBOX,12,210,192,12
     CONTROL         "Stretch video framebuffer to fit whole window (buggy)",IDC_VI_STRETCH,
                     "Button",BS_AUTOCHECKBOX,12,192,192,12
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_BOOTROM,168,78,48,14
+    EDITTEXT        IDC_BOOTROM_FILE,12,78,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "Bootrom file:",IDC_STATIC,12,66,96,10
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_DSPDROM,168,114,48,14
+    EDITTEXT        IDC_DSPDROM_FILE,12,114,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "DSP DROM file:",IDC_STATIC,12,102,96,10
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_DSPIROM,168,150,48,14
+    EDITTEXT        IDC_DSPIROM_FILE,12,150,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "DSP IROM file:",IDC_STATIC,12,138,96,10
 END
 
 IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
@@ -661,6 +669,11 @@ BEGIN
 END
 
 IDD_SETTINGS_EMU AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_HW AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

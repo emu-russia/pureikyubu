@@ -59,7 +59,7 @@ BOOL FileSave(const char *filename, void *data, uint32_t size)
 }
 
 // open file dialog
-char * FileOpen(HWND hwnd, int type)
+char * FileOpen(HWND hwnd, FILE_TYPE type)
 {
     OPENFILENAME ofn;
     char szFileName[1024];
