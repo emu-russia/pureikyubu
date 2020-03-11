@@ -78,7 +78,7 @@ static void LockMultipleCalls()
     if(dolwinsem == NULL)
     {
         DolwinReport("We are already running " APPNAME "!!");
-        exit(1);    // return good
+        exit(0);    // return good
     }
     CloseHandle(dolwinsem);
 
@@ -168,5 +168,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // should never reach this point. Dolwin always exit()'s.
     DolwinError("ERROR", APPNAME " ERROR >>> SHOULD NEVER REACH HERE :)");
-    return 0;   // return bad
+    return 1;   // return bad
 }

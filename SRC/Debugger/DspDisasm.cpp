@@ -95,7 +95,7 @@ namespace DSP
 		}
 		else
 		{
-			text += "Unknonwn " + ToHexString(info.instrBits);
+			text += "Unknown " + ToHexString(info.instrBits);
 		}
 
 		bool firstParam = true;
@@ -121,7 +121,7 @@ namespace DSP
 			}
 			else
 			{
-				text += "Unknonwn ext " + ToHexString(info.instrExBits);
+				text += "Unknown ext " + ToHexString(info.instrExBits);
 			}
 
 			bool firstExtendedParam = true;
