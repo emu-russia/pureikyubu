@@ -326,6 +326,9 @@
       <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />

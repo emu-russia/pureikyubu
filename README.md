@@ -1,6 +1,6 @@
 # Nintendo GameCube Emulator for Windows
 
-![PNG](/whc4e0b53d99e258.png)
+![PNG](/Docs/ScreenShots/Bootrom_NTSC_Dolwin.png)
 
 Dolwin is an emulator of Nintendo GameCube console.
 This platform is based on PowerPC-derivative processor, produced by IBM Corp. and codenamed Gekko.
