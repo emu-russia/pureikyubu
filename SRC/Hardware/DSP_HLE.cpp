@@ -302,11 +302,11 @@ static uint32_t DSP_ucode_checksum(uint8_t *ptr, int len)
     }
 
     // dump ucode
-/*/
+#if 1
     char ucname[256];
-    sprintf(ucname, "uc%08X.bin", sum);
+    sprintf_s(ucname, sizeof(ucname), "Data\\dsp_Ucode_%08X.bin", sum);
     FileSave(ucname, ptr, len);
-/*/
+#endif
 
     return sum;
 }
@@ -329,7 +329,7 @@ static DSPMicrocode * DSP_find_ucode(uint16_t iram_addr, uint16_t iram_len, uint
             return &AXSlave;
     }
 
-    DolwinError("DSP", "Unknown UCode : %08X", sum);
+    DBHalt(BRED "DSP: Unknown UCode (%08X)", sum);
     return NULL;    // not found
 }
 
@@ -414,8 +414,16 @@ void DSPHLEUpdate()
             case 0x0abc:        // do actual task boot
             {
                 uint32_t sum  = DSP_ucode_checksum(&mi.ram[temp.ram_addr & RAMMASK], temp.iram_len);
-                dsp.task = DSP_find_ucode(temp.iram_addr, temp.iram_len, sum);
-                if(dsp.task->init) dsp.task->init();
+
+                DSPMicrocode * newTask = DSP_find_ucode(temp.iram_addr, temp.iram_len, sum);
+                if (newTask)
+                {
+                    dsp.task = newTask;
+                    if (dsp.task->init)
+                    {
+                        dsp.task->init();
+                    }
+                }
                 return;
             }
             case 0x7f00:        // unlock memcard

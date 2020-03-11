@@ -678,7 +678,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        char text[256];
+        char text[0x1000];
         UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);

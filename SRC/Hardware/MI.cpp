@@ -317,38 +317,32 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
 
 static void __fastcall def_hw_read8(uint32_t addr, uint32_t* reg)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access :  R8 %08X", addr);
+    DBHalt(BRED "Unhandled HW access:  R8 %08X", addr);
 }
 
 static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access :  W8 %08X = %02X", addr, (uint8_t)data);
+    DBHalt(BRED "Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
 }
 
 static void __fastcall def_hw_read16(uint32_t addr, uint32_t* reg)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access : R16 %08X", addr);
+    DBHalt(BRED "Unhandled HW access: R16 %08X", addr);
 }
 
 static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access : W16 %08X = %04X", addr, (uint16_t)data);
+    DBHalt(BRED "Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
 }
 
 static void __fastcall def_hw_read32(uint32_t addr, uint32_t* reg)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access : R32 %08X", addr);
+    DBHalt(BRED "Unhandled HW access: R32 %08X", addr);
 }
 
 static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
 {
-    DolwinError("Hardware Not Implemented",
-        "unhandled HW access : W32 %08X = %08X", addr, data);
+    DBHalt(BRED "Unhandled HW access: W32 %08X = %08X", addr, data);
 }
 
 // ---------------------------------------------------------------------------
