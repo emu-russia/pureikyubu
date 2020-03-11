@@ -8,7 +8,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <direct.h>
-#include <setjmp.h>
 #include <float.h>
 #include <math.h>
 #include <stdarg.h>

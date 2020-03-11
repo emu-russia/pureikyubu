@@ -126,7 +126,7 @@ char * FileOpen(HWND hwnd, int type)
         if(result = (pidlBrowse != NULL))
         {
             SHGetPathFromIDList(pidlBrowse, lpBuffer); 
-            strcpy(szFileName, lpBuffer);
+            strcpy_s(szFileName, sizeof(szFileName), lpBuffer);
      
             // Free the PIDL returned by SHBrowseForFolder.
             g_pMalloc->Free(pidlBrowse);

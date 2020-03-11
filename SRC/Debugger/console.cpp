@@ -56,9 +56,10 @@ void con_open()
     CPUWriteDouble = DBWriteDouble;
 
     // clear internal structures
-    memset(&con, 0, sizeof(CONControl));
     memset(&roll, 0, sizeof(ROLLControl));
     memset(&wind, 0, sizeof(WINDControl));
+
+    cmd_init_handlers();
 
     // prepare console structures
     con_set_autoscroll(TRUE);
@@ -135,6 +136,8 @@ void con_close()
 {
     if(!con.active) return;
 
+    con.cmds.clear();
+
     // clear NOP history
     if(con.nopHist)
     {
@@ -178,7 +181,6 @@ void con_start()
     if(main) con_set_disa_cur(main);
     else con_set_disa_cur(PC);
 
-    setjmp(con.loop);
     con.update = CON_UPDATE_ALL;
     con_refresh();
 
@@ -193,7 +195,6 @@ void con_start()
 void con_break(char *reason)
 {
     if(reason) con_print("\n" GREEN "debugger breaks%s. press F5 to continue.\n", reason);
-    if(con.running) con.running = FALSE;
+    if(emu.running) emu.running = false;
     con_set_disa_cur(PC);
-    longjmp(con.loop, 0);
 }

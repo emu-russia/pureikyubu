@@ -26,7 +26,7 @@ static void con_function_key(int vkey, int ctrl)
             else con_change_focus(WCONSOLE); // Console (roll)
             break;
         case VK_F5:
-            if(con.running) con_break();
+            if(emu.running) con_break();
             else con_run_execute();
             break;
         case VK_F6:
@@ -75,13 +75,13 @@ static void con_function_key(int vkey, int ctrl)
             con.update |= CON_UPDATE_DISA;
             break;
         case VK_F10:    // Step Over
-            if(!con.running) con_step_over();
+            if(!emu.running) con_step_over();
             break;
         case VK_F11:    // Step Into
-            if (!con.running) con_step_into();
+            if (!emu.running) con_step_into();
             break;
         case VK_F12:    // Skip
-            if(!con.running)
+            if(!emu.running)
             {
                 PC += 4;
                 con.update |= CON_UPDATE_DISA;

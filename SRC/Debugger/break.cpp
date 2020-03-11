@@ -135,7 +135,8 @@ void con_rem_all_bp()
 void con_run_execute()
 {
     int64_t old = TBR;
-    con.running = TRUE;
+
+    emu.running = true;
 
     while(emu.running)
     {
@@ -208,7 +209,7 @@ void DBException(uint32_t code)
 
 void __fastcall DBReadByte(uint32_t addr, uint32_t*reg)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMReadByte(addr, reg);
@@ -216,7 +217,7 @@ void __fastcall DBReadByte(uint32_t addr, uint32_t*reg)
 
 void __fastcall DBWriteByte(uint32_t addr, uint32_t data)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMWriteByte(addr, data);
@@ -224,7 +225,7 @@ void __fastcall DBWriteByte(uint32_t addr, uint32_t data)
 
 void __fastcall DBReadHalf(uint32_t addr, uint32_t*reg)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMReadHalf(addr, reg);
@@ -232,7 +233,7 @@ void __fastcall DBReadHalf(uint32_t addr, uint32_t*reg)
 
 void __fastcall DBReadHalfS(uint32_t addr, uint32_t*reg)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMReadHalfS(addr, reg);
@@ -240,7 +241,7 @@ void __fastcall DBReadHalfS(uint32_t addr, uint32_t*reg)
 
 void __fastcall DBWriteHalf(uint32_t addr, uint32_t data)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMWriteHalf(addr, data);
@@ -248,7 +249,7 @@ void __fastcall DBWriteHalf(uint32_t addr, uint32_t data)
 
 void __fastcall DBReadWord(uint32_t addr, uint32_t*reg)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMReadWord(addr, reg);
@@ -256,7 +257,7 @@ void __fastcall DBReadWord(uint32_t addr, uint32_t*reg)
 
 void __fastcall DBWriteWord(uint32_t addr, uint32_t data)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMWriteWord(addr, data);
@@ -264,7 +265,7 @@ void __fastcall DBWriteWord(uint32_t addr, uint32_t data)
 
 void __fastcall DBReadDouble(uint32_t addr, uint64_t*reg)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMReadDouble(addr, reg);
@@ -272,7 +273,7 @@ void __fastcall DBReadDouble(uint32_t addr, uint64_t*reg)
 
 void __fastcall DBWriteDouble(uint32_t addr, uint64_t*data)
 {
-    if(con.running)
+    if(emu.running)
     {
     }
     MEMWriteDouble(addr, data);

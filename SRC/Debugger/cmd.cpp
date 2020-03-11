@@ -3,225 +3,97 @@
 
 // ---------------------------------------------------------------------------
 
-#define ifname(name)        (_stricmp(name, argv[0]) == 0)
-#define iftoken(name, n)    (_stricmp(name, argv[n]) == 0)
-#define required(req)       if(req != (argc - 1)) { print("%u parameter(s) required\n", req); return; }
-#define minrequired(req)    if(req > (argc - 1)) { print("at least %u parameter(s) required\n", req); return; }
+void cmd_init_handlers()
+{
+    con.cmds["."] = cmd_showpc;
+    con.cmds["*"] = cmd_showldst;
+    con.cmds["blr"] = cmd_blr;
+    con.cmds["boot"] = cmd_boot;
+    con.cmds["d"] = cmd_d;
+    con.cmds["denop"] = cmd_denop;
+    con.cmds["disa"] = cmd_disa;
+    con.cmds["dop"] = cmd_dop;
+    con.cmds["dvdopen"] = cmd_dvdopen;
+    con.cmds["full"] = cmd_full;
+    con.cmds["help"] = cmd_help;
+    con.cmds["log"] = cmd_log;
+    con.cmds["logfile"] = cmd_logfile;
+    con.cmds["lr"] = cmd_lr;
+    con.cmds["name"] = cmd_name;
+    con.cmds["nop"] = cmd_nop;
+    con.cmds["ostest"] = cmd_ostest;
+    con.cmds["plist"] = cmd_plist;
+    con.cmds["r"] = cmd_r;
+    con.cmds["savemap"] = cmd_savemap;
+    con.cmds["script"] = cmd_script;
+    con.cmds["sd1"] = cmd_sd1;
+    con.cmds["sd2"] = cmd_sd2;
+    con.cmds["sop"] = cmd_sop;
+    con.cmds["stat"] = cmd_stat;
+    con.cmds["syms"] = cmd_syms;
+    con.cmds["top10"] = cmd_top10;
+    con.cmds["tree"] = cmd_tree;
+    con.cmds["u"] = cmd_u;
+    con.cmds["unload"] = cmd_unload;
+    con.cmds["exit"] = cmd_exit;
+    con.cmds["quit"] = cmd_exit;
+    con.cmds["q"] = cmd_exit;
+    con.cmds["x"] = cmd_exit;
+}
 
 void con_command(int argc, char argv[][CON_LINELEN], int lnum)
 {
-    // a-z order
-    if(ifname("."))                         // set disassembly cursor to PC
+    auto it = con.cmds.find(argv[0]);
+
+    if ( it != con.cmds.end())
     {
-        con_set_disa_cur(PC);
-        return;
-    }
-    else if(ifname("*"))                    // show data pointed by LD/ST-opcode
-    {
-        if(wind.ldst)
-        {
-            con.data = wind.ldst_disp;
-            con.update |= CON_UPDATE_DATA;
-        }
-        return;
-    }
-    else if(ifname("blr"))                  // insert BLR instruction at cursor (with value)
-    {
-        cmd_blr(argc, argv);
-        return;
-    }
-    else if(ifname("boot"))                 // load file
-    {
-        cmd_boot(argc, argv);
-        return;
-    }
-    else if(ifname("d"))                    // show data at address
-    {
-        cmd_d(argc, argv);
-        con.update |= CON_UPDATE_DATA;
-        return;
-    }
-    else if(ifname("denop"))                // show data at address
-    {
-        cmd_denop();
-        return;
-    }
-    else if(ifname("disa"))                 // dump disassembly to text file
-    {
-        cmd_disa(argc, argv);
-        return;
-    }
-    else if(ifname("dop"))                  // apply patches
-    {
-        cmd_dop();
-        return;
-    }
-    else if(ifname("dvdopen"))              // get file position (use DVD plugin)
-    {
-        cmd_dvdopen(argc, argv);
-        return;
-    }
-    else if(ifname("foo"))                  // http://www.adom.de
-    {
-        switch(GetTickCount() & 1)
-        {
-            case 0: con_print("What do you wish for? phase daggers? potions of quickling blood?\n"); break;
-            case 1: con_print("I punish you, weaker! Mwahaha-hhha-haaa!!!\n"); break;
-        }
-        return;
-    }
-    else if(ifname("full"))                 // full screen mode
-    {
-        cmd_full(argc, argv);
-        return;
-    }
-    else if(ifname("help"))                 // help
-    {
-        cmd_help();
-        return;
-    }
-    else if(ifname("log"))                  // log control
-    {
-        cmd_log(argc, argv);
-        return;
-    }
-    else if(ifname("logfile"))              // set log file
-    {
-        cmd_logfile(argc, argv);
-        return;
-    }
-    else if(ifname("lr"))                   // show LR back chain
-    {
-        cmd_lr(argc, argv);
-        return;
-    }
-    else if(ifname("name"))                 // add symbol
-    {
-        cmd_name(argc, argv);
-        return;
-    }
-    else if(ifname("nop"))                  // insert NOP instruction at cursor
-    {
-        cmd_nop();
-        return;
-    }
-    else if(ifname("ostest"))               // test OS internals
-    {
-        cmd_ostest();
-        return;
-    }
-    else if(ifname("plist"))                // list all patch data
-    {
-        cmd_plist();
-        return;
-    }
-    else if(ifname("r"))                    // register operations
-    {
-        cmd_r(argc, argv);
-        con.update |= CON_UPDATE_REGS;
-        return;
-    }
-    else if(ifname("savemap"))              // save symbolic map into file
-    {
-        cmd_savemap(argc, argv);
-        return;
-    }
-    else if(ifname("script"))               // execute batch script
-    {
-        if(argc < 2)
-        {
-            con_print("syntax : script <file>\n");
-            con_print("path can be relative\n");
-            con_print("examples of use : " GREEN "script data\\zelda.s\n");
-            con_print("                  " GREEN "script c:\\luigi.s\n");
-        }
-        else cmd_script(argv[1]);
-        return;
-    }
-    else if(ifname("sd1"))                  // show data at "small data #1" register
-    {
-        cmd_sd(1, argc, argv);
-        con.update |= CON_UPDATE_DATA;
-        return;
-    }
-    else if(ifname("sd2"))                  // show data at "small data #2" register
-    {
-        cmd_sd(2, argc, argv);
-        con.update |= CON_UPDATE_DATA;
-        return;
-    }
-    else if(ifname("sop"))                  // search opcodes (down)
-    {
-        cmd_sop(argc, argv);
-        con.update |= CON_UPDATE_DISA;
-        return;
-    }
-    else if(ifname("stat"))                 // show hardware state/stats
-    {
-        cmd_stat(argc, argv);
-        return;
-    }
-    else if(ifname("syms"))                 // show symbolic info
-    {
-        cmd_syms(argc, argv);
-        return;
-    }
-    else if(ifname("top10"))                // show HLE calls toplist
-    {
-        cmd_top10();
-        return;
-    }
-    else if(ifname("tree"))                 // show call tree
-    {
-        cmd_tree(argc, argv);
-        return;
-    }
-    else if(ifname("u"))                    // set disassembly address
-    {
-        cmd_u(argc, argv);
-        return;
-    }
-    else if(ifname("unload"))               // unload file
-    {
-        if(emu.running)
-        {
-            SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
-        }
-        else con_print("not loaded.\n");
-        return;
-    }
-    else if(ifname("exit") || ifname("quit") || ifname("q") || ifname("x"))
-    {
-        con_print(GREEN ": exiting...\n"), con_refresh(), Sleep(10);
-        EMUClose();
-        EMUDie();
-        exit(1);
+        it->second(argc, argv);
     }
     else
     {
-        if(lnum) con_print("unknown script command in line %i, see \'" GREEN "help" NORM "\'", lnum);
+        if (lnum) con_print("unknown script command in line %i, see \'" GREEN "help" NORM "\'", lnum);
         else con_print("unknown command, try \'" GREEN "help" NORM "\'");
     }
 }
 
 // ---------------------------------------------------------------------------
-// blr
+// special
 
-void cmd_blr_old()
+void cmd_showpc(int argc, char argv[][CON_LINELEN])
 {
-    if(!emu.running) return;
-    if(con.running) return;
-
-    uint32_t ea = con.disa_cursor;
-    uint32_t pa = MEMEffectiveToPhysical(ea, 0);
-    if(pa == -1) return;
-    mi.ram[pa+0] = 0x4e;   // BLR
-    mi.ram[pa+1] = 0x80;
-    mi.ram[pa+2] = 0;
-    mi.ram[pa+3] = 0x20;
-
-    con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
+    con_set_disa_cur(PC);
 }
+
+void cmd_showldst(int argc, char argv[][CON_LINELEN])
+{
+    if (wind.ldst)
+    {
+        con.data = wind.ldst_disp;
+        con.update |= CON_UPDATE_DATA;
+    }
+}
+
+void cmd_unload(int argc, char argv[][CON_LINELEN])
+{
+    if (emu.running)
+    {
+        SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
+    }
+    else con_print("not loaded.\n");
+}
+
+void cmd_exit(int argc, char argv[][CON_LINELEN])
+{
+    con_print(GREEN ": exiting...\n");
+    con_refresh();
+    Sleep(10);
+    EMUClose();
+    EMUDie();
+    exit(0);
+}
+
+// ---------------------------------------------------------------------------
+// blr
 
 void cmd_blr(int argc, char argv[][CON_LINELEN])
 {
@@ -240,8 +112,7 @@ void cmd_blr(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        if(!emu.running) return;
-        if(con.running) return;
+        if(emu.running) return;
 
         uint32_t ea = con.disa_cursor;
         uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -347,6 +218,8 @@ void cmd_d(int argc, char argv[][CON_LINELEN])
     else
     {
         uint32_t addr = 0;
+
+        con.update |= CON_UPDATE_DATA;
 
         // first check for register form
         if(argv[1][0] == 'r' && isdigit(argv[1][1]))
@@ -465,7 +338,7 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // dop
 
-void cmd_dop()
+void cmd_dop(int argc, char argv[][CON_LINELEN])
 {
     if(ldat.patchNum == 0)
     {
@@ -687,7 +560,7 @@ static void add_nop(uint32_t ea, uint32_t oldVal)
 {
     int n = con.nopNum ++;
     con.nopHist = (NOPHistory *)realloc(con.nopHist, sizeof(NOPHistory) * con.nopNum);
-    VERIFY(con.nopHist == NULL, "NOP history is full");
+    assert(con.nopHist);
     con.nopHist[n].ea = ea;
     con.nopHist[n].oldValue = oldVal;
 }
@@ -702,10 +575,9 @@ static uint32_t get_nop(uint32_t ea)
     return 0;   // not present
 }
 
-void cmd_nop()
+void cmd_nop(int argc, char argv[][CON_LINELEN])
 {
-    if(!emu.running) return;
-    if(con.running) return;
+    if(emu.running) return;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -719,10 +591,9 @@ void cmd_nop()
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
 }
 
-void cmd_denop()
+void cmd_denop(int argc, char argv[][CON_LINELEN])
 {
-    if(!emu.running) return;
-    if(con.running) return;
+    if(emu.running) return;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -741,7 +612,7 @@ void cmd_denop()
 // ---------------------------------------------------------------------------
 // ostest
 
-void cmd_ostest()
+void cmd_ostest(int argc, char argv[][CON_LINELEN])
 {
     OSCheckContextStruct();
 }
@@ -749,7 +620,7 @@ void cmd_ostest()
 // ---------------------------------------------------------------------------
 // plist
 
-void cmd_plist()
+void cmd_plist(int argc, char argv[][CON_LINELEN])
 {
     if(ldat.patchNum == 0)
     {
@@ -1153,6 +1024,7 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
             con_print(GREEN "%s " NORM "found at address : %08X\n", argv[1], saddr);
             con_set_disa_cur(saddr);
         }
+        con.update |= CON_UPDATE_DISA;
     }
 }
 
@@ -1247,9 +1119,22 @@ static int testempty(char *str)
     return 1;
 }
 
-void cmd_script(char *file)
+void cmd_script(int argc, char argv[][CON_LINELEN])
 {
     int i;
+    char* file;
+
+    if (argc < 2)
+    {
+        con_print("syntax : script <file>\n");
+        con_print("path can be relative\n");
+        con_print("examples of use : " GREEN "script data\\zelda.cmd\n");
+        con_print("                  " GREEN "script c:\\luigi.cmd\n");
+        return;
+    }
+
+    file = argv[1];
+
     con_print(YEL "loading script: %s\n", file);
 
     // following code is copied from MAPLoad :)
@@ -1343,7 +1228,7 @@ void cmd_script(char *file)
 // ---------------------------------------------------------------------------
 // sd1, sd2
 
-void cmd_sd(int sd, int argc, char argv[][CON_LINELEN])
+void cmd_sdCommon(int sd, int argc, char argv[][CON_LINELEN])
 {
     if(argc < 2)
     {
@@ -1362,13 +1247,24 @@ void cmd_sd(int sd, int argc, char argv[][CON_LINELEN])
         ofs &= 0xffff;
         if(ofs & 0x8000) ofs |= 0xffff0000;
         con.data = sda + (int32_t)ofs;
+        con.update |= CON_UPDATE_DATA;
     }
+}
+
+void cmd_sd1(int argc, char argv[][CON_LINELEN])
+{
+    return cmd_sdCommon(1, argc, argv);
+}
+
+void cmd_sd2(int argc, char argv[][CON_LINELEN])
+{
+    return cmd_sdCommon(2, argc, argv);
 }
 
 // ---------------------------------------------------------------------------
 // top10
 
-void cmd_top10()
+void cmd_top10(int argc, char argv[][CON_LINELEN])
 {
     HLEGetTop10(hle.top10);
     con_print("HLE Greatest Hits!!\n");
@@ -1543,7 +1439,7 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // help
 
-void cmd_help()
+void cmd_help(int argc, char argv[][CON_LINELEN])
 {
     con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
     con_print(WHITE "    .                    " NORM "- view code at pc");

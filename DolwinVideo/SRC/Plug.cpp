@@ -5,6 +5,8 @@ uint8_t* RAM;
 HINSTANCE   hPlugin;
 HWND hwndMain;
 
+static bool gxOpened = false;
+
 // critical error
 void GFXError(const char *fmt, ...)
 {
@@ -27,6 +29,9 @@ void GFXError(const char *fmt, ...)
 
 long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
 {
+    if (gxOpened)
+        return 1;
+
     BOOL res;
 
     hPlugin = GetModuleHandle(NULL);
@@ -53,14 +58,21 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
     // prepare on-screen font texture
     PerfInit();
 
+    gxOpened = true;
+
     return res;
 }
 
 void GXClose()
 {
+    if (!gxOpened)
+        return;
+
     gfx->CloseSubsystem();
 
     TexFree();
 
     PerfClose();
+
+    gxOpened = false;
 }

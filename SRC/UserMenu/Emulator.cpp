@@ -68,7 +68,6 @@ void EMUDie()
 // this function calls every time, after user loading new file
 void EMUOpen(int bailout, int delay, int counterFactor)
 {
-    if(emu.running == true) return;
     emu.running = true;
 
     OnMainWindowOpening();
@@ -114,7 +113,6 @@ void EMUOpen(int bailout, int delay, int counterFactor)
 // this function calls every time, after user stops emulation
 void EMUClose()
 {
-    if(emu.running == false) return;
     emu.running = false;
 
     // take care about user interface
