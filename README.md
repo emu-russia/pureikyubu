@@ -20,4 +20,4 @@ Dolwin is composed as project for Microsoft Visual Studio. Main language is plai
 Dolwin originally stands for "Nintendo <code>*Dol*</code>phin Emulator for <code>*Win*</code>dows" (Dolphin is Gamecube codename).
 Later "Dolphin" was changed to "Gamecube", чтобы не было путаницы с другим эмулятором - Dolphin-emu.
 
-This project is a bit outdated, but it can be revived in near future.
+This project is revived from 2004 in 2020.
