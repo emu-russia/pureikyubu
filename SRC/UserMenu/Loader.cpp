@@ -607,13 +607,12 @@ static BOOL SetGameIDAndTitle(char *filename)
     return TRUE;
 }
 
-#define IFEXT(ext) if(!_stricmp(ext, strrchr(filename, '.')))
-
 // load any Dolwin-supported file
 static void DoLoadFile(char *filename)
 {
     uint32_t entryPoint = 0;
     char statusText[0x1000];
+    bool bootrom = false;
     ULONGLONG s_time = GetTickCount64();
 
     // loading progress
@@ -621,36 +620,48 @@ static void DoLoadFile(char *filename)
     SetStatusText(STATUS_PROGRESS, statusText);
 
     // load file
-    IFEXT(".dol")
+    if (!_stricmp(filename, "Bootrom"))
     {
-        entryPoint = LoadDOL(filename);
+        entryPoint = BOOTROM_START_ADDRESS + 0x100;
         ldat.gameID[0] = 0;
-        ldat.dvd = FALSE;
+        ldat.dvd = false;
+        bootrom = true;
     }
-    else IFEXT(".elf")
+    else
     {
-        entryPoint = LoadELF(filename);
-        ldat.gameID[0] = 0;
-        ldat.dvd = FALSE;
-    }
-    else IFEXT(".bin")
-    {
-        entryPoint = LoadBIN(filename);
-        ldat.gameID[0] = 0;
-        ldat.dvd = FALSE;
-    }
-    else IFEXT(".iso")
-    {
-        DVDSetCurrent(filename);
-        ldat.dvd = SetGameIDAndTitle(filename);
-    }
-    else IFEXT(".gcm")
-    {
-        DVDSetCurrent(filename);
-        ldat.dvd = SetGameIDAndTitle(filename);
+        char* extension = strrchr(filename, '.');
+        
+        if (!_stricmp(extension, ".dol"))
+        {
+            entryPoint = LoadDOL(filename);
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
+        }
+        else if (!_stricmp(extension, ".elf"))
+        {
+            entryPoint = LoadELF(filename);
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
+        }
+        else if (!_stricmp(extension, ".bin"))
+        {
+            entryPoint = LoadBIN(filename);
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
+        }
+        else if (!_stricmp(extension, ".iso"))
+        {
+            DVDSetCurrent(filename);
+            ldat.dvd = SetGameIDAndTitle(filename);
+        }
+        else if (!_stricmp(extension, ".gcm"))
+        {
+            DVDSetCurrent(filename);
+            ldat.dvd = SetGameIDAndTitle(filename);
+        }
     }
 
-    // file load success ?
+    // file load success?
     if(entryPoint == 0 && !ldat.dvd)
     {
         DolwinError( "Cannot load file!",
@@ -673,21 +684,30 @@ static void DoLoadFile(char *filename)
             // Title set before (SetGameIDAndTitle)
         }
 
-        // add new recent entry
-        AddRecentFile(filename);
+        if (!bootrom)
+        {
+            // add new recent entry
+            AddRecentFile(filename);
 
-        // add new path to selector
-        AddSelectorPath(fullPath);      // all checks are there
+            // add new path to selector
+            AddSelectorPath(fullPath);      // all checks are there
+        }
     }
 
     // simulate bootrom
-    HWConfig config = { 0 };
-    EMUGetHwConfig(&config);
-    BootROM(ldat.dvd, config.exi_rtc, config.consoleVer);
-    Sleep(10);
+    if (!bootrom)
+    {
+        HWConfig config = { 0 };
+        EMUGetHwConfig(&config);
+        BootROM(ldat.dvd, config.exi_rtc, config.consoleVer);
+        Sleep(10);
+    }
 
     // autoload map file
-    AutoloadMap();
+    if (!bootrom)
+    {
+        AutoloadMap();
+    }
 
     // autoload patch file. called after BootROM, to allow patch of OS lomem.
     UnloadPatch();
@@ -702,8 +722,11 @@ static void DoLoadFile(char *filename)
     // set entrypoint (for DVD, PC will set in apploader)
     if(!ldat.dvd) PC = entryPoint;
 
-    // now onverwrite config by INI settings
-    LoadIniSettings();
+    // now onverride config by INI settings
+    if (!bootrom)
+    {
+        LoadIniSettings();
+    }
 }
 
 // set next file to load

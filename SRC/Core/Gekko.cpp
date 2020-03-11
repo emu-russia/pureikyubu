@@ -95,6 +95,9 @@ void CPUOpen(int bailout, int delay, int counterFactor)
     // undefined, since any GC program is virtually loaded
     // after BOOTROM. although, we should set some system
     // registers for correct MMU emulation (see Bootrom.cpp).
+
+    // Disable translation for now
+    MSR &= ~(MSR_DR | MSR_IR);
 }
 
 // modify CPU counters

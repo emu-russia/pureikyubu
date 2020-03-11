@@ -5,12 +5,12 @@
 #include "pch.h"
 
 // hardware traps tables.
-void(__fastcall* hw_read8[HW_MAX_KNOWN])(uint32_t, uint32_t*);
-void(__fastcall* hw_write8[HW_MAX_KNOWN])(uint32_t, uint32_t);
-void(__fastcall* hw_read16[HW_MAX_KNOWN])(uint32_t, uint32_t*);
-void(__fastcall* hw_write16[HW_MAX_KNOWN])(uint32_t, uint32_t);
-void(__fastcall* hw_read32[HW_MAX_KNOWN])(uint32_t, uint32_t*);
-void(__fastcall* hw_write32[HW_MAX_KNOWN])(uint32_t, uint32_t);
+void(__fastcall* hw_read8[0x10000])(uint32_t, uint32_t*);
+void(__fastcall* hw_write8[0x10000])(uint32_t, uint32_t);
+void(__fastcall* hw_read16[0x10000])(uint32_t, uint32_t*);
+void(__fastcall* hw_write16[0x10000])(uint32_t, uint32_t);
+void(__fastcall* hw_read32[0x10000])(uint32_t, uint32_t*);
+void(__fastcall* hw_write32[0x10000])(uint32_t, uint32_t);
 
 // stubs for MI registers
 static void __fastcall no_write(uint32_t addr, uint32_t data) {}
@@ -20,9 +20,18 @@ MIControl mi;
 
 void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
     {
         *reg = 0;
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+        *reg = (uint32_t)*ptr;
         return;
     }
 
@@ -41,13 +50,27 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
     }
 
     // bus load byte
-    uint8_t* ptr = &mi.ram[pa];
-    *reg = (uint32_t)*ptr;
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *reg = (uint32_t)*ptr;
+    }
+    else
+    {
+        *reg = 0;
+    }
 }
 
 void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
+    {
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
     {
         return;
     }
@@ -67,15 +90,27 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
     }
 
     // bus store byte
-    uint8_t* ptr = &mi.ram[pa];
-    *ptr = (uint8_t)data;
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *ptr = (uint8_t)data;
+    }
 }
 
 void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
     {
         *reg = 0;
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
         return;
     }
 
@@ -94,13 +129,27 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
     }
 
     // bus load halfword
-    uint8_t* ptr = &mi.ram[pa];
-    *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+    }
+    else
+    {
+        *reg = 0;
+    }
 }
 
 void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
+    {
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
     {
         return;
     }
@@ -120,15 +169,27 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
     }
 
     // bus store halfword
-    uint8_t* ptr = &mi.ram[pa];
-    *(uint16_t*)ptr = MEMSwapHalf((uint16_t)data);
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *(uint16_t*)ptr = MEMSwapHalf((uint16_t)data);
+    }
 }
 
 void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
     {
         *reg = 0;
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+        *reg = MEMSwap(*(uint32_t*)ptr);
         return;
     }
 
@@ -147,13 +208,27 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
     }
 
     // bus load word
-    uint8_t* ptr = &mi.ram[pa];
-    *reg = MEMSwap(*(uint32_t*)ptr);
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *reg = MEMSwap(*(uint32_t*)ptr);
+    }
+    else
+    {
+        *reg = 0;
+    }
 }
 
 void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 {
+    uint8_t* ptr;
+
     if (mi.ram == nullptr)
+    {
+        return;
+    }
+
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
     {
         return;
     }
@@ -173,8 +248,11 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
     }
 
     // bus store word
-    uint8_t* ptr = &mi.ram[pa];
-    *(uint32_t*)ptr = MEMSwap(data);
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *(uint32_t*)ptr = MEMSwap(data);
+    }
 }
 
 //
@@ -184,6 +262,11 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 
 void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
 {
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        assert(true);
+    }
+
     if (pa >= RAMSIZE || mi.ram == nullptr)
     {
         *_reg = 0;
@@ -205,6 +288,11 @@ void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
 
 void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
 {
+    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        return;
+    }
+
     if (pa >= RAMSIZE || mi.ram == nullptr)
     {
         return;
@@ -370,6 +458,71 @@ static void MIClearTraps()
     }
 }
 
+// Load and descramble bootrom.
+// This implementation makes working with Bootrom easier, since we do not need to monitor cache transactions ("bursts") from the processor.
+
+void LoadBootrom(HWConfig* config)
+{
+    mi.BootromPresent = false;
+    mi.bootromSize = BOOTROM_SIZE;
+
+    // Load bootrom image
+
+    if (strlen(config->BootromFilename) == 0)
+    {
+        return;
+    }
+
+    uint32_t bootromImageSize = 0;
+
+    mi.bootrom = (uint8_t *)FileLoad(config->BootromFilename, &bootromImageSize);
+
+    if (bootromImageSize != mi.bootromSize)
+    {
+        free(mi.bootrom);
+        mi.bootrom = nullptr;
+        return;
+    }
+
+    // Determine size of encrypted data (find first empty cache burst line)
+
+    const size_t strideSize = 0x20;
+    uint8_t zeroStride[strideSize] = { 0 };
+
+    size_t beginOffset = 0x100;
+    size_t endOffset = mi.bootromSize - strideSize;
+    size_t offset = beginOffset;
+
+    while (offset < endOffset)
+    {
+        if (!memcmp(&mi.bootrom[offset], zeroStride, sizeof(zeroStride)))
+        {
+            break;
+        }
+
+        offset += strideSize;
+    }
+
+    if (offset == endOffset)
+    {
+        // Empty cacheline not found, something wrong with the image
+
+        free(mi.bootrom);
+        mi.bootrom = nullptr;
+        return;
+    }
+
+    // Descramble
+
+    IPLDescrambler(&mi.bootrom[beginOffset], (offset - beginOffset));
+    mi.BootromPresent = true;
+
+    // Show version
+
+    DBReport("Loaded and descrambled valid Bootrom\n");
+    DBReport(NORM "%s", (char*)mi.bootrom);
+}
+
 void MIOpen(HWConfig * config)
 {
     DBReport(CYAN "MI: Flipper memory interface\n");
@@ -391,6 +544,8 @@ void MIOpen(HWConfig * config)
     {
         MISetTrap(16, 0x0C004000 | ofs, no_read, no_write);
     }
+
+    LoadBootrom(config);
 }
 
 void MIClose()
@@ -399,6 +554,12 @@ void MIClose()
     {
         free(mi.ram);
         mi.ram = nullptr;
+    }
+
+    if (mi.bootrom)
+    {
+        free(mi.bootrom);
+        mi.bootrom = nullptr;
     }
 
     MIClearTraps();

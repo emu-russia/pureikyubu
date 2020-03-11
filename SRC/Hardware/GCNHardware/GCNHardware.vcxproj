@@ -30,6 +30,7 @@
     <ClCompile Include="..\EI.cpp" />
     <ClCompile Include="..\GDI.cpp" />
     <ClCompile Include="..\HW.cpp" />
+    <ClCompile Include="..\IPLDescrambler.cpp" />
     <ClCompile Include="..\MC.cpp" />
     <ClCompile Include="..\MI.cpp" />
     <ClCompile Include="..\pch.cpp">
@@ -57,6 +58,7 @@
     <ClInclude Include="..\GX.h" />
     <ClInclude Include="..\Hardware.h" />
     <ClInclude Include="..\HW.h" />
+    <ClInclude Include="..\IPLDescrambler.h" />
     <ClInclude Include="..\MC.h" />
     <ClInclude Include="..\MI.h" />
     <ClInclude Include="..\PAD.h" />

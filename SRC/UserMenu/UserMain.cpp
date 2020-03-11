@@ -1,6 +1,6 @@
 // Dolwin entrypoint (WinMain) and fail-safe application messages.
 // WinMain() should never return. 
-// exit() should return 1, for good reason. 0, for bad.
+// exit() should return 0, for good reason. 1, for bad.
 #include "dolphin.h"
 
 // ---------------------------------------------------------------------------
@@ -23,15 +23,8 @@ void DolwinError(const char *title, const char *fmt, ...)
     else
     {
         MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+        exit(1);    // return bad
     }
-
-    // send message, to stop emulation,
-    // let the user decide - to close emu or not
-    if(emu.running)
-    {
-        SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
-    }
-    exit(0);    // return bad
 }
 
 // fatal error, if user answers no

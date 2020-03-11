@@ -282,28 +282,65 @@ void MXTransfer()
                 }
                 if((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
                 {
-                    assert(exi.ansiFont);
-                    memcpy(
-                        &mi.ram[exi.regs[0].madr & RAMMASK],
-                        &exi.ansiFont[ofs - 0x001fcf00],
-                        exi.regs[0].len
-                    );
+                    if (mi.BootromPresent)
+                    {
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &mi.bootrom[ofs],
+                            exi.regs[0].len
+                        );
+                    }
+                    else
+                    {
+                        assert(exi.ansiFont);
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &exi.ansiFont[ofs - 0x001fcf00],
+                            exi.regs[0].len
+                        );
+                    }
                     if(exi.log) DBReport( EXI "ansi font copy to %08X (%i)\n", 
                                           exi.regs[0].madr | 0x80000000, exi.regs[0].len );
                     return;
                 }
                 if((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
                 {
-                    assert(exi.sjisFont);
-                    memcpy(
-                        &mi.ram[exi.regs[0].madr & RAMMASK],
-                        &exi.sjisFont[ofs - 0x001aff00],
-                        exi.regs[0].len
-                    );
+                    if (mi.BootromPresent)
+                    {
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &mi.bootrom[ofs],
+                            exi.regs[0].len
+                        );
+                    }
+                    else
+                    {
+                        assert(exi.sjisFont);
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &exi.sjisFont[ofs - 0x001aff00],
+                            exi.regs[0].len
+                        );
+                    }
                     if(exi.log) DBReport( EXI "sjis font copy to %08X (%i)\n",
                                           exi.regs[0].madr | 0x80000000, exi.regs[0].len );
                     return;
                 }
+
+                // Bootrom reads
+
+                if (ofs < mi.bootromSize && mi.BootromPresent)
+                {
+                    memcpy(
+                        &mi.ram[exi.regs[0].madr & RAMMASK],
+                        &mi.bootrom[ofs],
+                        exi.regs[0].len
+                    );
+                    if(exi.log) DBReport( EXI "bootrom copy to %08X (%i)\n",
+                                          exi.regs[0].madr | 0x80000000, exi.regs[0].len );
+                    return;
+                }
+
                 if(ofs)
                 {
                     if(exi.log) DBReport(EXI "unknown MX chip dma read\n");

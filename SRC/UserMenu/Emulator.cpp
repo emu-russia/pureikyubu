@@ -37,6 +37,10 @@ void EMUGetHwConfig(HWConfig * config)
     config->dspFakeMode = GetConfigInt(USER_DSP_FAKE, USER_DSP_FAKE_DEFAULT) & 1;
 
     config->one_second = cpu.one_second;
+
+    strcpy_s(config->BootromFilename, sizeof(config->BootromFilename), GetConfigString(USER_BOOTROM, USER_BOOTROM_DEFAULT));
+    strcpy_s(config->DspDromFilename, sizeof(config->DspDromFilename), GetConfigString(USER_DSP_DROM, USER_DSP_DROM_DEFAULT));
+    strcpy_s(config->DspIromFilename, sizeof(config->DspIromFilename), GetConfigString(USER_DSP_IROM, USER_DSP_IROM_DEFAULT));
 }
 
 // this function is called once, during Dolwin life-time

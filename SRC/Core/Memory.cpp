@@ -62,6 +62,13 @@ void MEMSelect(int mode, bool save)
 uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
 {
     if(!mem.opened) return -1;
+
+    // Required to run bootrom
+    if (ea >= BOOTROM_START_ADDRESS)
+    {
+        return ea;
+    }
+
     // ignore no memory, page faults, alignment, etc errors
     return ea & RAMMASK;        // thats all =:)
 }

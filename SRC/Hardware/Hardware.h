@@ -26,14 +26,14 @@ typedef struct _HWConfig
     bool        exi_log;
     bool        exi_osReport;
     bool        exi_rtc;
-    char        ansiFilename[0x100];
-    char        sjisFilename[0x100];
+    char        ansiFilename[0x1000];
+    char        sjisFilename[0x1000];
 
     // MC
     bool        MemcardA_Connected;
     bool        MemcardB_Connected;
-    char        MemcardA_Filename[0x100];
-    char        MemcardB_Filename[0x100];
+    char        MemcardA_Filename[0x1000];
+    char        MemcardB_Filename[0x1000];
     bool        Memcard_SyncSave;
 
     // CP
@@ -44,6 +44,10 @@ typedef struct _HWConfig
 
     int64_t     one_second;         // one CPU second in timer ticks
 
+    char        BootromFilename[0x1000];
+    char        DspDromFilename[0x1000];
+    char        DspIromFilename[0x1000];
+
 } HWConfig;
 
 // external interfaces (previously plugins)
@@ -52,10 +56,10 @@ typedef struct _HWConfig
 #include "PAD.h"
 #include "DVD.h"
 
-// hardware controls and register traps
+// hardware controls
 #include "HW.h"
 
-// GC hardware set (in register addressing order, see Memory.h)
+// GC hardware set (in register addressing order, see MI.h)
 #include "EFB.h"
 #include "AI.h"
 #include "DSP.h"
@@ -70,3 +74,4 @@ typedef struct _HWConfig
 #include "SI.h"
 #include "EI.h"
 #include "MC.h"
+#include "IPLDescrambler.h"

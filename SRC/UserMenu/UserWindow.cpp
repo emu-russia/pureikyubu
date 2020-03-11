@@ -642,21 +642,12 @@ loadFile:
 
                 // load bootrom
                 case ID_FILE_IPLMENU:
-                    f = nullptr;
-                    fopen_s(&f, "bootrom.dol", "r");
-                    if(f == NULL)
-                    {
-                        DolwinReport(
-                            "Dolwin is unable to start IPL menu.\n"
-                            "Cannot find \"bootrom.dol\" in Dolwin directory."
-                        );
-                    }
-                    else
-                    {
-                        fclose(f);
-                        name = "bootrom.dol";
-                        goto loadFile;
-                    }
+                    LoadFile("Bootrom");
+                    EMUClose();
+                    EMUOpen(
+                        GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+                        GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+                        GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT));
                     return 0;
 
                 // open/close DVD lid

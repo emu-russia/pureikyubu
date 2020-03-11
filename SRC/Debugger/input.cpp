@@ -75,18 +75,15 @@ static void con_function_key(int vkey, int ctrl)
             con.update |= CON_UPDATE_DISA;
             break;
         case VK_F10:    // Step Over
-            if(!emu.running) con_step_over();
+            con_step_over();
             break;
         case VK_F11:    // Step Into
-            if (!emu.running) con_step_into();
+            con_step_into();
             break;
         case VK_F12:    // Skip
-            if(!emu.running)
-            {
-                PC += 4;
-                con.update |= CON_UPDATE_DISA;
-                DBReport(YEL "skipped!\n");
-            }
+            PC += 4;
+            con.update |= CON_UPDATE_DISA;
+            DBReport(YEL "skipped!\n");
             break;
     }
 }
