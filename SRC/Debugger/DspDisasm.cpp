@@ -45,19 +45,34 @@ namespace DSP
 			case DspParameter::ac0m: text = "ac0.m"; break;
 			case DspParameter::ac1m: text = "ac1.m"; break;
 
+			case DspParameter::ac0: text = "ac0"; break;
+			case DspParameter::ac1: text = "ac1"; break;
+
 			// Immediates
 
 			case DspParameter::Byte:
 				text = "#0x" + ToHexString(info.ImmOperand.Byte);
 				break;
+			case DspParameter::Byte2:
+				text = "#0x" + ToHexString(info.ImmOperand2.Byte);
+				break;
 			case DspParameter::SignedByte:
 				text = "S8 #0x" + ToHexString((uint8_t)info.ImmOperand.SignedByte);	// TODO: For now
+				break;
+			case DspParameter::SignedByte2:
+				text = "S8 #0x" + ToHexString((uint8_t)info.ImmOperand2.SignedByte);	// TODO: For now
 				break;
 			case DspParameter::UnsignedShort:
 				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
 				break;
+			case DspParameter::UnsignedShort2:
+				text = "#0x" + ToHexString((uint16_t)info.ImmOperand2.UnsignedShort);
+				break;
 			case DspParameter::SignedShort:
 				text = "S16 #0x" + ToHexString((uint16_t)info.ImmOperand.SignedShort);	// TODO: For now
+				break;
+			case DspParameter::SignedShort2:
+				text = "S16 #0x" + ToHexString((uint16_t)info.ImmOperand2.SignedShort);	// TODO: For now
 				break;
 			case DspParameter::Address:
 				if (IsHardwareReg(info.ImmOperand.Address))
@@ -68,6 +83,9 @@ namespace DSP
 				{
 					text = "$0x" + ToHexString((uint16_t)info.ImmOperand.Address);
 				}
+				break;
+			case DspParameter::Address2:
+				text = "$0x" + ToHexString((uint16_t)info.ImmOperand2.Address);
 				break;
 		}
 

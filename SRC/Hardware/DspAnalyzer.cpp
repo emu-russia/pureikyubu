@@ -375,6 +375,209 @@ namespace DSP
 
 	bool Analyzer::Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info)
 	{
+		//LOOPI *	0001 [00]00 iiii iiii
+		//BLOOPI	0001 [00]01 iiii iiii aaaa aaaa aaaa aaaa 
+		//SBSET *	0001 [00]10 0000 0iii 
+		//SBCLR *	0001 [00]11 0000 0iii 
+
+		//LSL 		0001 [01]0r 00ii iiii
+		//LSR 		0001 [01]0r 01ii iiii
+		//ASL 		0001 [01]0r 10ii iiii
+		//ASR 		0001 [01]0r 11ii iiii
+		//SI * 		0001 [01]10 mmmm mmmm iiii iiii iiii iiii
+		//CALLR *	0001 [01]11 rrr1 1111 
+		//JMPR * 	0001 [01]11 rrr0 1111 
+
+		//LRR * 	0001 [10]00 0ssd dddd 
+		//LRRD * 	0001 [10]00 1ssd dddd 
+		//LRRI * 	0001 [10]01 0ssd dddd 
+		//LRRN * 	0001 [10]01 1ssd dddd 
+		//SRR * 	0001 [10]10 0ssd dddd 
+		//SRRD * 	0001 [10]10 1ssd dddd 
+		//SRRI * 	0001 [10]11 0ssd dddd 
+		//SRRN * 	0001 [10]11 1ssd dddd 
+
+		//MRR * 	0001 [11]dd ddds ssss 
+
+		switch ((info.instrBits >> 10) & 3)
+		{
+			case 0:
+				switch ((info.instrBits >> 8) & 3)
+				{
+					case 0:		// LOOPI
+					{
+						info.instr = DspInstruction::LOOPI;
+						info.flowControl = true;
+
+						if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)(info.instrBits & 0xff)))
+							return false;
+
+						break;
+					}
+					case 1:		// BLOOPI
+					{
+						if (instrMaxSize < sizeof(uint16_t))
+							return false;
+
+						info.instr = DspInstruction::BLOOPI;
+						info.flowControl = true;
+
+						uint16_t addr = MEMSwapHalf(*(uint16_t*)instrPtr);
+						if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+							return false;
+						if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)(info.instrBits & 0xff)))
+							return false;
+						if (!AddImmOperand(info, DspParameter::Address2, (DspAddress)addr))
+							return false;
+						break;
+					}
+					case 2:		// SBSET
+						if ((info.instrBits & 0b11111000) == 0)
+						{
+							info.instr = DspInstruction::SBSET;
+
+							int ii = 6 + (info.instrBits & 7);
+							if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)ii))
+								return false;
+						}
+						break;
+					case 3:		// SBCLR
+						if ((info.instrBits & 0b11111000) == 0)
+						{
+							info.instr = DspInstruction::SBCLR;
+
+							int ii = 6 + (info.instrBits & 7);
+							if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)ii))
+								return false;
+						}
+						break;
+				}
+				break;
+			case 1:
+				if ((info.instrBits & 0b1000000000) != 0)
+				{
+					if ((info.instrBits & 0b100000000) != 0)
+					{
+						if ((info.instrBits & 0xf) == 0xf)
+						{
+							// CALLR, JMPR
+							if ((info.instrBits & 0b10000) != 0)
+							{
+								info.instr = DspInstruction::CALLR;
+							}
+							else
+							{
+								info.instr = DspInstruction::JMPR;
+							}
+							info.flowControl = true;
+
+							int rr = (info.instrBits >> 5) & 7;
+							if (!AddParam(info, (DspParameter)rr, rr))
+								return false;
+						}
+					}
+					else
+					{
+						// SI
+						if (instrMaxSize < sizeof(uint16_t))
+							return false;
+
+						info.instr = DspInstruction::SI;
+
+						DspAddress mm = (DspAddress)(uint16_t)(int16_t)(int8_t)(uint8_t)(info.instrBits & 0xff);
+						uint16_t imm = MEMSwapHalf(*(uint16_t*)instrPtr);
+						if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+							return false;
+						if (!AddImmOperand(info, DspParameter::Address, mm))
+							return false;
+						if (!AddImmOperand(info, DspParameter::UnsignedShort2, imm))
+							return false;
+					}
+				}
+				else
+				{
+					// LSL, LSR, ASL, ASR
+
+					switch ((info.instrBits >> 6) & 3)
+					{
+						case 0:
+							info.instr = DspInstruction::LSL;
+							break;
+						case 1:
+							info.instr = DspInstruction::LSR;
+							break;
+						case 2:
+							info.instr = DspInstruction::ASL;
+							break;
+						case 3:
+							info.instr = DspInstruction::ASR;
+							break;
+					}
+					info.logic = true;
+
+					uint16_t rr = ((info.instrBits & 0b100000000) != 0) ? 1 : 0;
+					uint8_t ii = info.instrBits & 0x3f;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + rr), rr))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Byte, ii))
+						return false;
+				}
+				break;
+			case 2:			// LRR / SRR
+			{
+				switch ((info.instrBits >> 7) & 7)
+				{
+					case 0b000:
+						info.instr = DspInstruction::LRR;
+						break;
+					case 0b001:
+						info.instr = DspInstruction::LRRD;
+						break;
+					case 0b010:
+						info.instr = DspInstruction::LRRI;
+						break;
+					case 0b011:
+						info.instr = DspInstruction::LRRN;
+						break;
+					case 0b100:
+						info.instr = DspInstruction::SRR;
+						break;
+					case 0b101:
+						info.instr = DspInstruction::SRRD;
+						break;
+					case 0b110:
+						info.instr = DspInstruction::SRRI;
+						break;
+					case 0b111:
+						info.instr = DspInstruction::SRRN;
+						break;
+				}
+
+				int dd = (info.instrBits & 0x1f);
+				int ss = (info.instrBits >> 5) & 3;
+
+				if (!AddParam(info, (DspParameter)dd, dd))
+					return false;
+				if (!AddParam(info, (DspParameter)ss, ss))
+					return false;
+				break;
+			}
+			case 3:		// MRR
+			{
+				int dd = (info.instrBits >> 5) & 0x1f;
+				int ss = (info.instrBits & 0x1f);
+
+				info.instr = DspInstruction::MRR;
+
+				if (!AddParam(info, (DspParameter)dd, dd))
+					return false;
+				if (!AddParam(info, (DspParameter)ss, ss))
+					return false;
+				break;
+			}
+		}
+
 		return true;
 	}
 

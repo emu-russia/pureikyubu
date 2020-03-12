@@ -222,6 +222,11 @@ namespace DSP
 		ac0m,			///< 40-bit Accumulator 0 (mid)
 		ac1m,			///< 40-bit Accumulator 1 (mid)
 
+		// Accumulator (40-bit)
+
+		ac0,
+		ac1,
+
 		// Immediates
 
 		Byte,
@@ -229,6 +234,12 @@ namespace DSP
 		UnsignedShort,
 		SignedShort,
 		Address,
+
+		Byte2,
+		SignedByte2,
+		UnsignedShort2,
+		SignedShort2,
+		Address2,
 
 		Max,
 	};
@@ -293,6 +304,15 @@ namespace DSP
 			DspAddress	Address;		///< For bloop, call etc.
 		} ImmOperand;
 
+		union
+		{
+			uint8_t		Byte;
+			int8_t		SignedByte;		///< For SI
+			uint16_t	UnsignedShort;
+			int16_t		SignedShort;
+			DspAddress	Address;		///< For BLOOPI
+		} ImmOperand2;
+
 		ConditionCode cc;		///< Some instructions has condition code
 
 	} AnalyzeInfo;
@@ -332,7 +352,10 @@ namespace DSP
 		{
 			if (!AddParam(info, param, imm))
 				return false;
-			info.ImmOperand.Byte = imm;
+			if (param == DspParameter::Byte)
+				info.ImmOperand.Byte = imm;
+			else if (param == DspParameter::Byte2)
+				info.ImmOperand2.Byte = imm;
 			return true;
 		}
 
@@ -340,7 +363,10 @@ namespace DSP
 		{
 			if (!AddParam(info, param, imm))
 				return false;
-			info.ImmOperand.SignedByte = imm;
+			if (param == DspParameter::SignedByte)
+				info.ImmOperand.SignedByte = imm;
+			else if (param == DspParameter::SignedByte2)
+				info.ImmOperand2.SignedByte = imm;
 			return true;
 		}
 
@@ -348,7 +374,10 @@ namespace DSP
 		{
 			if (!AddParam(info, param, imm))
 				return false;
-			info.ImmOperand.UnsignedShort = imm;
+			if (param == DspParameter::UnsignedShort)
+				info.ImmOperand.UnsignedShort = imm;
+			else if (param == DspParameter::UnsignedShort2)
+				info.ImmOperand2.UnsignedShort = imm;
 			return true;
 		}
 
@@ -356,7 +385,10 @@ namespace DSP
 		{
 			if (!AddParam(info, param, imm))
 				return false;
-			info.ImmOperand.SignedShort = imm;
+			if (param == DspParameter::SignedShort)
+				info.ImmOperand.SignedShort = imm;
+			else if (param == DspParameter::SignedShort2)
+				info.ImmOperand2.SignedShort = imm;
 			return true;
 		}
 
@@ -364,7 +396,10 @@ namespace DSP
 		{
 			if (!AddParam(info, param, (uint16_t)imm))
 				return false;
-			info.ImmOperand.Address = imm;
+			if (param == DspParameter::Address)
+				info.ImmOperand.Address = imm;
+			else if (param == DspParameter::Address2)
+				info.ImmOperand2.Address = imm;
 			return true;
 		}
 
