@@ -321,6 +321,8 @@ namespace DSP
 			DspAddress	Address;		///< For bloop, call etc.
 		} ImmOperand;
 
+		///< Second immediate/address operand (required by small amount of instructions)
+
 		union
 		{
 			uint8_t		Byte;
