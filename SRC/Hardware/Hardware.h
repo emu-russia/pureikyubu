@@ -73,3 +73,4 @@ typedef struct _HWConfig
 #include "MC.h"
 #include "IPLDescrambler.h"
 #include "DspAnalyzer.h"
+#include "DspCore.h"

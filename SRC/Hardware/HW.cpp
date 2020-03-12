@@ -4,6 +4,7 @@
 
 static bool hw_assert;      // assert on not implemented HW in non DEBUG
 static bool update;         // 1: HW update enabled
+static DSP::DspCore* dspCore;   // instance of dsp core
 
 // ---------------------------------------------------------------------------
 // init and update
@@ -27,6 +28,8 @@ void HWOpen(HWConfig* config)
     SIOpen();       // GC controllers
     PIOpen(config); // interrupts, console regs
 
+    dspCore = new DSP::DspCore(config);
+
     HWEnableUpdate(1);
 
     DBReport("\n");
@@ -34,6 +37,12 @@ void HWOpen(HWConfig* config)
 
 void HWClose()
 {
+    if (dspCore)
+    {
+        delete dspCore;
+        dspCore = nullptr;
+    }
+
     ARClose();      // release ARAM
     EIClose();      // take care about closing of memcards and BBA
     VIClose();      // close GDI (if opened)
@@ -59,6 +68,7 @@ void HWUpdate()
         BeginProfileSfx();
         AIUpdate();
         DSPHLEUpdate();
+        dspCore->Update();
         EndProfileSfx();
 
         //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));

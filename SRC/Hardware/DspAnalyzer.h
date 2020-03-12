@@ -26,8 +26,8 @@ namespace DSP
 		ANDI,		///< Logical AND with the mid part of accumulator $acD.m and the immediate value I
 		ANDR,		///< Logical AND with the middle part of accumulator $acD.m and the high part of secondary accumulator, $axS.h
 
-		ASL,		///< Arithmetically left shifts the accumulator $acR by the amount speciﬁed by immediate I
-		ASR,		///< Arithmetically right shifts accumulator $acR speciﬁed by the value calculated by negating sign-extended bits 0-6
+		ASL,		///< Arithmetically left shifts the accumulator $acR by the amount specified by immediate I
+		ASR,		///< Arithmetically right shifts accumulator $acR specified by the value calculated by negating sign-extended bits 0-6
 		ASR16,		///< Arithmetically right shifts accumulator $acR by 16
 
 		BLOOP,		///< Block loop (Counter in register)
@@ -77,7 +77,7 @@ namespace DSP
 		LRRN,		///< Move value from data memory pointed by addressing register $S to register $D. Add indexing register $(0x4+S) to register $S
 		LRS,		///< Move value from data memory pointed by address M (8-bitsign-extended) to register $(0x18+D)
 
-		LSL,		///< Logically left shifts accumulator $acR by the amount speciﬁed by value I. 
+		LSL,		///< Logically left shifts accumulator $acR by the amount specified by value I. 
 		LSL16,		///< Logically left shifts accumulator $acR by 16
 		LSR,		///< Logically right shifts accumulator $acR by the amount calculated by negating sign-extended bits 0–6
 		LSR16,		///< Logically right shifts accumulator $acR by 16
@@ -250,6 +250,12 @@ namespace DSP
 
 		// Immediates
 
+		Byte,
+		SignedByte,
+		UnsignedShort,
+		SignedShort,
+		Address,
+
 		Max,
 	};
 
@@ -272,6 +278,8 @@ namespace DSP
 		O = 0b1110,			///< Overﬂow
 		Always = 0b1111,	///< Always
 	};
+
+	typedef uint32_t DspAddress;
 
 	typedef struct _AnalyzeInfo
 	{
@@ -300,18 +308,35 @@ namespace DSP
 
 		///< Immediate/address operand, followed by instruction Word (or contained inside instruction)
 
-		union ImmOperand
+		union
 		{
 			uint8_t		Byte;
 			int8_t		SignedByte;
 			uint16_t	UnsignedShort;
 			int16_t		SignedShort;
-			uint16_t	Address;		///< For bloop, call etc.
-		};
+			DspAddress	Address;		///< For bloop, call etc.
+		} ImmOperand;
 
 		ConditionCode cc;		///< Some instructions has condition code
 
 	} AnalyzeInfo;
 
-	bool Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+	class Analyzer
+	{
+		// Internal helpers
+
+		static void ResetInfo(AnalyzeInfo& info);
+
+		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+
+		static bool AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits);
+		template<typename T>
+		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);
+		static bool AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);
+
+	public:
+
+		static bool Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+	};
+
 }

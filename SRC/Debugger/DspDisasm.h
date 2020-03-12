@@ -17,6 +17,9 @@ namespace DSP
 		static std::string InstrExToString(DspInstructionEx);
 
 	public:
+
+		// startAddr in DSP "slots"
+
 		static std::string Disasm(uint16_t startAddr, AnalyzeInfo& info);
 	};
 }

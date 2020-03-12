@@ -25,6 +25,7 @@
     <ClCompile Include="..\AXUCode.cpp" />
     <ClCompile Include="..\CP.cpp" />
     <ClCompile Include="..\DI.cpp" />
+    <ClCompile Include="..\DspCore.cpp" />
     <ClCompile Include="..\DSP_HLE.cpp" />
     <ClCompile Include="..\DspAnalyzer.cpp" />
     <ClCompile Include="..\EFB.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="..\AXUCode.h" />
     <ClInclude Include="..\CP.h" />
     <ClInclude Include="..\DI.h" />
+    <ClInclude Include="..\DspCore.h" />
     <ClInclude Include="..\DSP_HLE.h" />
     <ClInclude Include="..\DspAnalyzer.h" />
     <ClInclude Include="..\DVD.h" />

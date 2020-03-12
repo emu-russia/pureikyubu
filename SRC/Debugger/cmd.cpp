@@ -1515,9 +1515,17 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 {
     if (argc < 2)
     {
-        con_print("syntax: dspdisa <dsp_ucode.bin>\n");
+        con_print("syntax: dspdisa <dsp_ucode.bin> [start_addr]\n");
         con_print("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
-        con_print("example of use: dspdisa Data\\dsp_irom.bin\n");
+        con_print("start_addr in DSP slots;\n");
+        con_print("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
+    }
+
+    size_t start_addr = 0;      // in DSP slots (halfwords)
+
+    if (argc >= 3)
+    {
+        start_addr = strtoul(argv[2], nullptr, 0);
     }
 
     uint32_t ucodeSize = 0;
@@ -1539,7 +1547,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 
     uint8_t* ucodePtr = ucode;
     size_t bytesLeft = ucodeSize;
-    size_t offset = 0;
+    size_t offset = 0;      // in DSP slots (halfwords)
 
     while (bytesLeft != 0)
     {
@@ -1547,7 +1555,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 
         // Analyze
 
-        bool result = DSP::Analyze(ucodePtr, ucodeSize - bytesLeft, info);
+        bool result = DSP::Analyzer::Analyze(ucodePtr, ucodeSize - 2 * offset, info);
         if (!result)
         {
             con_print("DSP::Analyze failed at offset: 0x%08X\n", offset);
@@ -1556,15 +1564,16 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 
         // Disassemble
 
-        std::string text = DSP::DspDisasm::Disasm(offset, info);
+        std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
 
         if (f)
         {
             fprintf(f, "%s\n", text.c_str());
         }
 
-        offset += info.sizeInBytes;
+        offset += (info.sizeInBytes / sizeof(uint16_t));
         bytesLeft -= info.sizeInBytes;
+        ucodePtr += info.sizeInBytes;
     }
 
     free(ucode);
