@@ -170,6 +170,13 @@ namespace DSP
 			case DspInstruction::LSR: text = "lsr"; break;
 			case DspInstruction::LSR16: text = "lsr16"; break;
 
+			case DspInstruction::M2: text = "m2"; break;
+			case DspInstruction::M0: text = "m0"; break;
+			case DspInstruction::CLR15: text = "clr15"; break;
+			case DspInstruction::SET15: text = "set15"; break;
+			case DspInstruction::CLR40: text = "clr40"; break;
+			case DspInstruction::SET40: text = "set40"; break;
+
 			case DspInstruction::MADD: text = "madd"; break;
 			case DspInstruction::MADDC: text = "maddc"; break;
 			case DspInstruction::MADDX: text = "maddx"; break;
@@ -247,22 +254,34 @@ namespace DSP
 
 		switch (instrEx)
 		{
-			case DspInstructionEx::_DR: text = "dr"; break;
-			case DspInstructionEx::_IR: text = "ir"; break;
-			case DspInstructionEx::_L: text = "l"; break;
-			case DspInstructionEx::_LN: text = "ln"; break;
-			case DspInstructionEx::_LS: text = "ls"; break;
-			case DspInstructionEx::_LSM: text = "lsm"; break;
-			case DspInstructionEx::_LSNM: text = "lsnm"; break;
-			case DspInstructionEx::_LSN: text = "lsn"; break;
-			case DspInstructionEx::_MV: text = "mv"; break;
-			case DspInstructionEx::_NR: text = "nr"; break;
-			case DspInstructionEx::_S: text = "s"; break;
-			case DspInstructionEx::_SL: text = "sl"; break;
-			case DspInstructionEx::_SLM: text = "slm"; break;
-			case DspInstructionEx::_SLMN: text = "slmn"; break;
-			case DspInstructionEx::_SLN: text = "sln"; break;
-			case DspInstructionEx::_SN: text = "sn"; break;
+			case DspInstructionEx::NOP2: text = "nop2"; break;
+			case DspInstructionEx::DR: text = "dr"; break;
+			case DspInstructionEx::IR: text = "ir"; break;
+			case DspInstructionEx::NR: text = "nr"; break;
+			case DspInstructionEx::MV: text = "mv"; break;
+			case DspInstructionEx::S: text = "s"; break;
+			case DspInstructionEx::SN: text = "sn"; break;
+			case DspInstructionEx::L: text = "l"; break;
+			case DspInstructionEx::LN: text = "ln"; break;
+
+			case DspInstructionEx::LS: text = "ls"; break;
+			case DspInstructionEx::SL: text = "sl"; break;
+			case DspInstructionEx::LSN: text = "lsn"; break;
+			case DspInstructionEx::SLN: text = "sln"; break;
+			case DspInstructionEx::LSM: text = "lsm"; break;
+			case DspInstructionEx::SLM: text = "slm"; break;
+			case DspInstructionEx::LSNM: text = "lsnm"; break;
+			case DspInstructionEx::SLNM: text = "slnm"; break;
+
+			case DspInstructionEx::LD: text = "ld"; break;
+			case DspInstructionEx::LDN: text = "ldn"; break;
+			case DspInstructionEx::LDM: text = "ldm"; break;
+			case DspInstructionEx::LDNM: text = "ldnm"; break;
+
+			case DspInstructionEx::LDAX: text = "ldax"; break;
+			case DspInstructionEx::LDAXN: text = "ldaxn"; break;
+			case DspInstructionEx::LDAXM: text = "ldaxm"; break;
+			case DspInstructionEx::LDAXNM: text = "ldaxnm"; break;
 		}
 
 		return text;

@@ -1551,6 +1551,11 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
     size_t bytesLeft = ucodeSize;
     size_t offset = 0;      // in DSP slots (halfwords)
 
+    if (f)
+    {
+        fprintf(f, "// Disassembled %s\n\n", argv[1]);
+    }
+
     while (bytesLeft != 0)
     {
         DSP::AnalyzeInfo info = { 0 };

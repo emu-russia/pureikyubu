@@ -639,6 +639,73 @@ namespace DSP
 
 	bool Analyzer::Group8(AnalyzeInfo& info)
 	{
+		//NX * 			1000 r000 xxxx xxxx			(possibly mov r, r)
+		//CLR * 		1000 r001 xxxx xxxx 
+		//CMP * 		1000 0010 xxxx xxxx 
+		//UNUSED*		1000 0011 xxxx xxxx 
+		//CLRP * 		1000 0100 xxxx xxxx 
+		//TSTAXH 		1000 011r xxxx xxxx 
+		//M2/M0 		1000 101x xxxx xxxx 
+		//CLR15/SET15	1000 110x xxxx xxxx 
+		//CLR40/SET40	1000 111x xxxx xxxx 
+
+		switch ((info.instrBits >> 8) & 0xf)
+		{
+			case 0b0000:		// NX
+			case 0b1000:
+				info.instr = DspInstruction::NX;
+				break;
+
+			case 0b0001:		// CLR acR
+			case 0b1001:
+			{
+				int r = (info.instrBits >> 11) & 1;
+				info.instr = DspInstruction::CLR;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + r), r))
+					return false;
+				break;
+			}
+
+			case 0b0010:		// CMP
+				info.instr = DspInstruction::CMP;
+				break;
+
+			case 0b0100:		// CLRP
+				info.instr = DspInstruction::CLRP;
+				break;
+
+			case 0b0110:		// TSTAXH axR.h 
+			case 0b0111:
+			{
+				int r = (info.instrBits >> 8) & 1;
+				info.instr = DspInstruction::TSTAXH;
+				if (!AddParam(info, r ? DspParameter::ax1h : DspParameter::ax0h, r))
+					return false;
+				break;
+			}
+
+			case 0b1010:		// M2
+				info.instr = DspInstruction::M2;
+				break;
+			case 0b1011:		// M0
+				info.instr = DspInstruction::M0;
+				break;
+
+			case 0b1100:		// CLR15
+				info.instr = DspInstruction::CLR15;
+				break;
+			case 0b1101:		// SET15
+				info.instr = DspInstruction::SET15;
+				break;
+
+			case 0b1110:		// CLR40
+				info.instr = DspInstruction::CLR40;
+				break;
+			case 0b1111:		// SET40
+				info.instr = DspInstruction::SET40;
+				break;
+		}
+
 		return true;
 	}
 
@@ -667,8 +734,40 @@ namespace DSP
 		return true;
 	}
 
+	// DSP instructions are in a hybrid format: some instructions occupy a full 16-bit word, and some can be packed as two 8-bit instructions per word.
+	// Extended opcodes represents lower-part of instruction pair.
+
 	bool Analyzer::GroupPacked(AnalyzeInfo& info)
 	{
+		//?? * 		xxxx xxxx 0000 00rr		// NOP2
+		//DR * 		xxxx xxxx 0000 01rr		// DR $arR 
+		//IR * 		xxxx xxxx 0000 10rr		// IR $arR 
+		//NR * 		xxxx xxxx 0000 11rr		// NR $arR, ixR
+		//MV * 		xxxx xxxx 0001 ddss 	// MV $(0x18+D), $(0x1c+S) 
+		//S * 		xxxx xxxx 001s s0dd		// S @$D, $(0x1c+D)  
+		//SN * 		xxxx xxxx 001s s1dd		// SN @$D, $(0x1c+D)  
+		//L * 		xxxx xxxx 01dd d0ss 	// L $(0x18+D), @$S 
+		//LN * 		xxxx xxxx 01dd d1ss 	// LN $(0x18+D), @$S 
+
+		//LS * 		xxxx xxxx 10dd 000s 	// LS $(0x18+D), $acS.m 
+		//SL * 		xxxx xxxx 10dd 001s		// SL $acS.m, $(0x18+D)  
+		//LSN * 	xxxx xxxx 10dd 010s		// LSN $(0x18+D), $acS.m 
+		//SLN * 	xxxx xxxx 10dd 011s		// SLN $acS.m, $(0x18+D)
+		//LSM * 	xxxx xxxx 10dd 100s		// LSM $(0x18+D), $acS.m 
+		//SLM * 	xxxx xxxx 10dd 101s		// SLM $acS.m, $(0x18+D)
+		//LSNM * 	xxxx xxxx 10dd 110s		// LSNM $(0x18+D), $acS.m 
+		//SLNM * 	xxxx xxxx 10dd 111s		// SLNM $acS.m, $(0x18+D)
+
+		//LD 		xxxx xxxx 11dr 00ss		// LD $ax0.d, $ax1.r, @$arS 
+		//LDN 		xxxx xxxx 11dr 01ss		// LDN $ax0.d, $ax1.r, @$arS
+		//LDM 		xxxx xxxx 11dr 10ss		// LDM $ax0.d, $ax1.r, @$arS
+		//LDNM 		xxxx xxxx 11dr 11ss		// LDNM $ax0.d, $ax1.r, @$arS
+
+		//LDAX 		xxxx xxxx 11sr 0011		// LDAX $axR, @$arS
+		//LDAXN 	xxxx xxxx 11sr 0111		// LDAXN $axR, @$arS
+		//LDAXM 	xxxx xxxx 11sr 1011		// LDAXM $axR, @$arS
+		//LDAXNM 	xxxx xxxx 11sr 1111		// LDAXNM $axR, @$arS
+
 		return true;
 	}
 

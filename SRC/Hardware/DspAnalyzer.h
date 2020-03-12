@@ -82,6 +82,13 @@ namespace DSP
 		LSR,		///< Logically right shifts accumulator $acR by the amount calculated by negating sign-extended bits 0–6
 		LSR16,		///< Logically right shifts accumulator $acR by 16
 
+		M2,			///< Clear SR_MUL_MODIFY
+		M0,			///< Set SR_MUL_MODIFY
+		CLR15,		///< Clear SR_MUL_UNSIGNED
+		SET15,		///< Set SR_MUL_UNSIGNED
+		CLR40,		///< Clear SR_40_MODE_BIT
+		SET40,		///< Set SR_40_MODE_BIT
+
 		MADD,		///< Multiply-add
 		MADDC,
 		MADDX,
@@ -163,24 +170,34 @@ namespace DSP
 	{
 		Unknown = -1,
 
-		_DR,		///< Decrement addressing register $arR
-		_IR,		///< Increment addressing register $arR. 
-		_L,			///< Load register $(0x18+D) with value from memory pointed by register $S. Post increment register $S
-		_LN,		///< Load register $(0x18+D) with value from memory pointed by register $S. Add indexing register register $(0x04+S) to register $S. 
-		_LS,		///< Load register $(0x18+D) with value from memory pointed by register $ar0. Store value from register $acS.m to memory location pointed by register $ar3. Increment both $ar0 and $ar3
-		_LSM,		///< Too long
-		_LSNM,		///< Too long
-		_LSN,		///< Too long
-		_MV,		///< Move value of register $(0x1c+S) to the register $(0x18+D). 
-		_NR,		///< Add corresponding indexing register $ixR to addressing register $arR. 
-		_S,			///< Store value of register $(0x1c+S) in the memory pointed by register $D. Post increment register $D. 
-		_SL,		///< Store value from register $acS.m to memory location pointed by register $ar0. Load register $(0x18+D) with value from memory pointed by register $ar3. Increment both $ar0 and $ar3. 
-		_SLM,		///< Too long
-		_SLMN,		///< Too long
-		_SLN,		///< Too long
-		_SN,		///< Store value of register $(0x1c+S) in the memory pointed by register $D. Add indexing register register $(0x04+D) to register $D. 
+		NOP2,	// 0x00
+		DR,		// DR $arR 
+		IR,		// IR $arR 
+		NR,		// NR $arR, ixR
+		MV,		// MV $(0x18+D), $(0x1c+S) 
+		S,		// S @$D, $(0x1c+D)  
+		SN,		// SN @$D, $(0x1c+D)  
+		L,		// L $(0x18+D), @$S 
+		LN,		// LN $(0x18+D), @$S 
 
-		// TODO: What about mentioned LD(?), LD2(?)
+		LS,		// LS $(0x18+D), $acS.m 
+		SL,		// SL $acS.m, $(0x18+D)  
+		LSN,	// LSN $(0x18+D), $acS.m 
+		SLN,	// SLN $acS.m, $(0x18+D)
+		LSM,	// LSM $(0x18+D), $acS.m 
+		SLM,	// SLM $acS.m, $(0x18+D)
+		LSNM,	// LSNM $(0x18+D), $acS.m 
+		SLNM,	// SLNM $acS.m, $(0x18+D)
+
+		LD,		// LD $ax0.d, $ax1.r, @$arS 
+		LDN,	// LDN $ax0.d, $ax1.r, @$arS
+		LDM,	// LDM $ax0.d, $ax1.r, @$arS
+		LDNM,	// LDNM $ax0.d, $ax1.r, @$arS
+
+		LDAX,	// LDAX $axR, @$arS
+		LDAXN,	// LDAXN $axR, @$arS
+		LDAXM,	// LDAXM $axR, @$arS
+		LDAXNM,	// LDAXNM $axR, @$arS
 	};
 
 	enum class DspParameter
