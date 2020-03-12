@@ -39,6 +39,8 @@ namespace DSP
 		static bool IsHardwareReg(DspAddress address);
 		static std::string HardwareRegName(DspAddress address);
 
+		static std::string CondCodeToString(ConditionCode cc);
+
 	public:
 
 		// startAddr in DSP "slots"

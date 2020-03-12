@@ -304,6 +304,7 @@ namespace DSP
 		static void ResetInfo(AnalyzeInfo& info);
 
 		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static bool Group0_Logic(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, DspInstruction instr, bool logic);
 
 		template<typename T>
 		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);

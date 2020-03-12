@@ -35,6 +35,7 @@ We would like to say Thanks to people, who helped us to make Dolwin:
 - monk: some ideas from gcube
 - Alex Raider: basic Windows Console code
 - segher: Bootrom descrambler
+- Duddie: For DSP reversing and docs
 
 And also to people, we have forgot or who wanted to stay anonymous :)
 

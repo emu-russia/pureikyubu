@@ -8,6 +8,8 @@ namespace DSP
 	{
 		info.sizeInBytes = 0;
 
+		info.instr = DspInstruction::Unknown;
+
 		info.extendedOpcodePresent = false;
 		info.numParameters = 0;
 		info.numParametersEx = 0;
@@ -15,6 +17,31 @@ namespace DSP
 		info.flowControl = false;
 		info.logic = false;
 		info.madd = false;
+	}
+
+	bool Analyzer::Group0_Logic(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, DspInstruction instr, bool logic)
+	{
+		if ((info.instrBits & 0xf) == 0)
+		{
+			if (instrMaxSize < sizeof(uint16_t))
+				return false;
+
+			int dd = ((info.instrBits & 0b100000000) != 0) ? 1 : 0;
+
+			info.instr = instr;
+			info.logic = logic;
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
+				return false;
+
+			uint16_t imm = MEMSwapHalf(*(uint16_t*)instrPtr);
+			if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+				return false;
+			if (!AddImmOperand(info, DspParameter::UnsignedShort, imm))
+				return false;
+		}
+
+		return true;
 	}
 
 	bool Analyzer::Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info)
@@ -181,35 +208,164 @@ namespace DSP
 			return true;
 		}
 
-		if ((info.instrBits & 0b0000111000000000) == 0b0000001000000000)
+		else if ((info.instrBits & 0b0000111000000000) == 0b0000001000000000)
 		{
-			//IF cc * 	0000 00[1]0 0111 cccc 
-			//JMP cc * 	0000 00[1]0 1001 cccc 
-			//CALL cc * 0000 00[1]0 1011 cccc 
-			//RET cc * 	0000 00[1]0 1101 cccc 
-			//ADDI * 	0000 00[1]r 0000 0000 iiii iiii iiii iiii 
-			//XORI * 	0000 00[1]r 0010 0000 iiii iiii iiii iiii 
-			//ANDI * 	0000 00[1]r 0100 0000 iiii iiii iiii iiii 
-			//ORI * 	0000 00[1]r 0110 0000 iiii iiii iiii iiii 
-			//CMPI * 	0000 00[1]r 1000 0000 iiii iiii iiii iiii 
-			//ANDCF * 	0000 00[1]r 1010 0000 iiii iiii iiii iiii 
-			//ANDF * 	0000 00[1]r 1100 0000 iiii iiii iiii iiii 
-			//ILRR * 	0000 00[1]r 0001 mmaa 
+			//IF cc * 	0000 00[1]0 [0111] cccc 
+			//JMP cc * 	0000 00[1]0 [1001] cccc aaaa aaaa aaaa aaaa
+			//CALL cc * 0000 00[1]0 [1011] cccc aaaa aaaa aaaa aaaa
+			//RET cc * 	0000 00[1]0 [1101] cccc 
+			//ADDI * 	0000 00[1]d [0000] 0000 iiii iiii iiii iiii 
+			//XORI * 	0000 00[1]d [0010] 0000 iiii iiii iiii iiii 
+			//ANDI * 	0000 00[1]d [0100] 0000 iiii iiii iiii iiii 
+			//ORI * 	0000 00[1]d [0110] 0000 iiii iiii iiii iiii 
+			//CMPI * 	0000 00[1]d [1000] 0000 iiii iiii iiii iiii 
+			//ANDCF * 	0000 00[1]d [1010] 0000 iiii iiii iiii iiii 
+			//ANDF * 	0000 00[1]d [1100] 0000 iiii iiii iiii iiii 
+			//ILRR * 	0000 00[1]d [0001] 00ss
+			//ILRRD * 	0000 00[1]d [0001] 01ss
+			//ILRRI * 	0000 00[1]d [0001] 10ss
+			//ILRRN * 	0000 00[1]d [0001] 11ss
+
+			switch ((info.instrBits >> 4) & 0xf)
+			{
+				case 0b0111:		// IF cc
+				{
+					info.instr = DspInstruction::IFcc;
+					info.cc = (ConditionCode)(info.instrBits & 0xf);
+					info.flowControl = true;
+					break;
+				}
+				case 0b1001:		// JMP cc
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					info.instr = DspInstruction::Jcc;
+					info.cc = (ConditionCode)(info.instrBits & 0xf);
+					info.flowControl = true;
+
+					uint16_t addr = MEMSwapHalf(*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
+						return false;
+
+					break;
+				}
+				case 0b1011:		// CALL cc
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					info.instr = DspInstruction::CALLcc;
+					info.cc = (ConditionCode)(info.instrBits & 0xf);
+					info.flowControl = true;
+
+					uint16_t addr = MEMSwapHalf(*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
+						return false;
+
+					break;
+				}
+				case 0b1101:		// RET cc
+				{
+					info.instr = DspInstruction::RETcc;
+					info.cc = (ConditionCode)(info.instrBits & 0xf);
+					info.flowControl = true;
+					break;
+				}
+				case 0b0000:		// ADDI
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ADDI, true);
+					break;
+				case 0b0010:		// XORI
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::XORI, true);
+					break;
+				case 0b0100:		// ANDI
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ANDI, true);
+					break;
+				case 0b0110:		// ORI
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ORI, true);
+					break;
+				case 0b1000:		// CMPI
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::CMPI, false);
+					break;
+				case 0b1010:		// ANDCF
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ANDCF, true);
+					break;
+				case 0b1100:		// ANDF
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ANDF, true);
+					break;
+				case 0b0001:		// ILRR's
+				{
+					switch ((info.instrBits >> 2) & 3)
+					{
+						case 0:
+							info.instr = DspInstruction::ILRR;
+							break;
+						case 1:
+							info.instr = DspInstruction::ILRRD;
+							break;
+						case 2:
+							info.instr = DspInstruction::ILRRI;
+							break;
+						case 3:
+							info.instr = DspInstruction::ILRRN;
+							break;
+					}
+
+					int dd = ((info.instrBits & 0b100000000) != 0) ? 1 : 0;
+					int ss = info.instrBits & 3;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
+						return false;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ar0 + ss), ss))
+						return false;
+
+					break;
+				}
+			}
 
 			return true;
 		}
 
-		if (info.instrBits & 0b0000100000000000)
+		else if (info.instrBits & 0b0000100000000000)
 		{
-			//LRIS * 	0000 1rrr iiii iiii 
+			//LRIS * 	0000 1ddd iiii iiii 
+
+			info.instr = DspInstruction::LRIS;
+
+			int dd = (info.instrBits >> 8) & 7;
+			int8_t ii = info.instrBits & 0xff;
+			if (!AddParam(info, (DspParameter)(0x18 + dd), dd))
+				return false;
+			if (!AddImmOperand(info, DspParameter::SignedByte, ii))
+				return false;
 
 			return true;
 		}
 
-		if (info.instrBits & 0b0000010000000000)
+		else if (info.instrBits & 0b0000010000000000)
 		{
-			//ADDIS *	0000 010d iiii iiii
-			//CMPIS *	0000 011d iiii iiii
+			//ADDIS *	0000 01[0]d iiii iiii
+			//CMPIS *	0000 01[1]d iiii iiii
+
+			if (info.instrBits & 0b1000000000)
+			{
+				info.instr = DspInstruction::CMPIS;
+			}
+			else
+			{
+				info.instr = DspInstruction::ADDIS;
+			}
+
+			int dd = (info.instrBits >> 8) & 1;
+			int8_t ii = info.instrBits & 0xff;
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
+				return false;
+			if (!AddImmOperand(info, DspParameter::SignedByte, ii))
+				return false;
 
 			return true;
 		}
@@ -268,10 +424,6 @@ namespace DSP
 		{
 			case 0:
 				return Group0(instrPtr, instrMaxSize, info);
-				break;
-
-			default:
-				info.instr = DspInstruction::Unknown;
 				break;
 		}
 

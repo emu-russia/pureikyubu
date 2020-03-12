@@ -48,16 +48,16 @@ namespace DSP
 			// Immediates
 
 			case DspParameter::Byte:
-				text = "0x" + ToHexString(info.ImmOperand.Byte);
+				text = "#0x" + ToHexString(info.ImmOperand.Byte);
 				break;
 			case DspParameter::SignedByte:
-				text = "S8 0x" + ToHexString((uint8_t)info.ImmOperand.SignedByte);	// TODO: For now
+				text = "S8 #0x" + ToHexString((uint8_t)info.ImmOperand.SignedByte);	// TODO: For now
 				break;
 			case DspParameter::UnsignedShort:
-				text = "0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
+				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
 				break;
 			case DspParameter::SignedShort:
-				text = "S16 0x" + ToHexString((uint16_t)info.ImmOperand.SignedShort);	// TODO: For now
+				text = "S16 #0x" + ToHexString((uint16_t)info.ImmOperand.SignedShort);	// TODO: For now
 				break;
 			case DspParameter::Address:
 				if (IsHardwareReg(info.ImmOperand.Address))
@@ -66,7 +66,7 @@ namespace DSP
 				}
 				else
 				{
-					text = "$" + ToHexString((uint16_t)info.ImmOperand.Address);
+					text = "$0x" + ToHexString((uint16_t)info.ImmOperand.Address);
 				}
 				break;
 		}
@@ -103,7 +103,7 @@ namespace DSP
 			case DspInstruction::BLOOP: text = "bloop"; break;
 			case DspInstruction::BLOOPI: text = "bloopi"; break;
 			case DspInstruction::CALL: text = "call"; break;
-			case DspInstruction::CALLcc: text = "callcc"; break;
+			case DspInstruction::CALLcc: text = "call" + CondCodeToString(cc); break;
 			case DspInstruction::CALLR: text = "callr"; break;
 
 			case DspInstruction::CLR: text = "clr"; break;
@@ -122,7 +122,7 @@ namespace DSP
 
 			case DspInstruction::IAR: text = "iar"; break;
 
-			case DspInstruction::IFcc: text = "ifcc"; break;
+			case DspInstruction::IFcc: text = "if" + CondCodeToString(cc); break;
 
 			case DspInstruction::ILRR: text = "ilrr"; break;
 			case DspInstruction::ILRRD: text = "ilrrd"; break;
@@ -133,7 +133,7 @@ namespace DSP
 			case DspInstruction::INCM: text = "incm"; break;
 
 			case DspInstruction::JMP: text = "jmp"; break;
-			case DspInstruction::Jcc: text = "jcc"; break;
+			case DspInstruction::Jcc: text = "j" + CondCodeToString(cc); break;
 			case DspInstruction::JMPR: text = "jmpr"; break;
 			case DspInstruction::LOOP: text = "loop"; break;
 			case DspInstruction::LOOPI: text = "loopi"; break;
@@ -194,7 +194,7 @@ namespace DSP
 			case DspInstruction::ORR: text = "orr"; break;
 
 			case DspInstruction::RET: text = "ret"; break;
-			case DspInstruction::RETcc: text = "retcc"; break;
+			case DspInstruction::RETcc: text = "ret" + CondCodeToString(cc); break;
 			case DspInstruction::RTI: text = "rti"; break;
 
 			case DspInstruction::SBSET: text = "sbset"; break;
@@ -284,6 +284,33 @@ namespace DSP
 
 			default:
 				text = "UnkHW_" + ToHexString((uint16_t)address);
+		}
+
+		return "$(" + text + ")";
+	}
+
+	std::string DspDisasm::CondCodeToString(ConditionCode cc)
+	{
+		std::string text = "";
+
+		switch (cc)
+		{
+			case ConditionCode::GE: text = "ge"; break;
+			case ConditionCode::L: text = "l"; break;
+			case ConditionCode::G: text = "g"; break;
+			case ConditionCode::LE: text = "le"; break;
+			case ConditionCode::NE: text = "ne"; break;
+			case ConditionCode::EQ: text = "eq"; break;
+			case ConditionCode::NC: text = "nc"; break;
+			case ConditionCode::C: text = "c"; break;
+			case ConditionCode::BelowS32: text = "bs32"; break;
+			case ConditionCode::AboveS32: text = "as32"; break;
+			case ConditionCode::UnknownA: text = "unkA"; break;
+			case ConditionCode::UnknownB: text = "unkB"; break;
+			case ConditionCode::NZ: text = "nz"; break;
+			case ConditionCode::ZR: text = "zr"; break;
+			case ConditionCode::O: text = "o"; break;
+			case ConditionCode::Always: text = ""; break;
 		}
 
 		return text;
