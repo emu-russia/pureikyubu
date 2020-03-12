@@ -57,9 +57,9 @@ extern  DSPControl dsp;
     0x0C00500A      DSP Control Register (DSPCR)
 
         0 0 0 0  0 0 0 0  0 0 0 0  0 0 0 0 
-                                     ¦ ¦ ¦
-                                     ¦ ¦  -- 0: RES
-                                     ¦  ---- 1: INT
+                                     Â¦ Â¦ Â¦
+                                     Â¦ Â¦  -- 0: RES
+                                     Â¦  ---- 1: INT
                                       ------ 2: HALT
 /*/
 void    DSPSetResetBit(bool val);

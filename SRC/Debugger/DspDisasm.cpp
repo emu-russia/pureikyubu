@@ -4,7 +4,7 @@
 
 namespace DSP
 {
-	std::string DspDisasm::ParameterToString(DspParameter index)
+	std::string DspDisasm::ParameterToString(DspParameter index, AnalyzeInfo & info)
 	{
 		std::string text;
 
@@ -47,25 +47,31 @@ namespace DSP
 
 			// Immediates
 
+			case DspParameter::Byte:
+				text = "0x" + ToHexString(info.ImmOperand.Byte);
+				break;
+			case DspParameter::SignedByte:
+				text = "S8 0x" + ToHexString((uint8_t)info.ImmOperand.SignedByte);	// TODO: For now
+				break;
+			case DspParameter::UnsignedShort:
+				text = "0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
+				break;
+			case DspParameter::SignedShort:
+				text = "S16 0x" + ToHexString((uint16_t)info.ImmOperand.SignedShort);	// TODO: For now
+				break;
+			case DspParameter::Address:
+				if (IsHardwareReg(info.ImmOperand.Address))
+				{
+					text = HardwareRegName(info.ImmOperand.Address);
+				}
+				else
+				{
+					text = "$" + ToHexString((uint16_t)info.ImmOperand.Address);
+				}
+				break;
 		}
 
 		return text;
-	}
-
-	template<>
-	static std::string DspDisasm::ToHexString(uint16_t address)
-	{
-		char buf[0x100] = { 0, };
-		sprintf_s(buf, sizeof(buf), "%04X", address);
-		return std::string(buf);
-	}
-
-	template<>
-	static std::string DspDisasm::ToHexString(uint8_t Byte)
-	{
-		char buf[0x100] = { 0, };
-		sprintf_s(buf, sizeof(buf), "%02X", Byte);
-		return std::string(buf);
 	}
 
 	std::string DspDisasm::InstrToString(DspInstruction instr, ConditionCode cc)
@@ -244,6 +250,45 @@ namespace DSP
 		return text;
 	}
 
+	bool DspDisasm::IsHardwareReg(DspAddress address)
+	{
+		return address >= 0xFF00;
+	}
+
+	std::string DspDisasm::HardwareRegName(DspAddress address)
+	{
+		std::string text;
+
+		switch ((DspHardwareRegs)address)
+		{
+			case DspHardwareRegs::CMBH: text = "CMBH"; break;
+			case DspHardwareRegs::CMBL: text = "CMBL"; break;
+			case DspHardwareRegs::DMBH: text = "DMBH"; break;
+			case DspHardwareRegs::DMBL: text = "DMBL"; break;
+
+			case DspHardwareRegs::DSMAH: text = "DSMAH"; break;
+			case DspHardwareRegs::DSMAL: text = "DSMAL"; break;
+			case DspHardwareRegs::DSPA: text = "DSPA"; break;
+			case DspHardwareRegs::DSCR: text = "DSCR"; break;
+			case DspHardwareRegs::DSBL: text = "DSBL"; break;
+
+			case DspHardwareRegs::ACSAH: text = "ACSAH"; break;
+			case DspHardwareRegs::ACSAL: text = "ACSAL"; break;
+			case DspHardwareRegs::ACEAH: text = "ACEAH"; break;
+			case DspHardwareRegs::ACEAL: text = "ACEAL"; break;
+			case DspHardwareRegs::ACCAH: text = "ACCAH"; break;
+			case DspHardwareRegs::ACCAL: text = "ACCAL"; break;
+			case DspHardwareRegs::ACDAT: text = "ACDAT"; break;
+
+			case DspHardwareRegs::DIRQ: text = "DIRQ"; break;
+
+			default:
+				text = "UnkHW_" + ToHexString((uint16_t)address);
+		}
+
+		return text;
+	}
+
 	std::string DspDisasm::Disasm(uint16_t startAddr, AnalyzeInfo& info)
 	{
 		std::string text = "";
@@ -253,7 +298,7 @@ namespace DSP
 		text += ToHexString((uint16_t)startAddr);
 		text += " ";
 
-		for (int i = 0; i < 4 /* max instruction size */; i++)
+		for (int i = 0; i < MaxInstructionSizeInBytes; i++)
 		{
 			if (i < info.sizeInBytes)
 			{
@@ -269,7 +314,7 @@ namespace DSP
 
 		if (info.instr != DspInstruction::Unknown)
 		{
-			text += DspDisasm::InstrToString(info.instr, info.cc) + "\t";
+			text += "\t" + DspDisasm::InstrToString(info.instr, info.cc) + "\t";
 		}
 		else
 		{
@@ -283,7 +328,7 @@ namespace DSP
 			{
 				text += ", ";
 			}
-			text += ParameterToString(info.params[i]);
+			text += ParameterToString(info.params[i], info);
 			firstParam = false;
 		}
 
@@ -293,9 +338,17 @@ namespace DSP
 		{
 			text += "\n";
 
+			text += "    ";		// Empty space for address
+			text += " ";
+
+			for (int i = 0; i < MaxInstructionSizeInBytes; i++)
+			{
+				text += "   ";		// Padding for code bytes
+			}
+
 			if (info.instrEx != DspInstructionEx::Unknown)
 			{
-				text += InstrExToString(info.instrEx) + "\t";
+				text += "\t" + InstrExToString(info.instrEx) + "\t";
 			}
 			else
 			{
@@ -309,7 +362,7 @@ namespace DSP
 				{
 					text += ", ";
 				}
-				text += ParameterToString(info.paramsEx[i]);
+				text += ParameterToString(info.paramsEx[i], info);
 				firstExtendedParam = false;
 			}
 		}

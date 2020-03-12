@@ -26,7 +26,7 @@
     <ClCompile Include="..\CP.cpp" />
     <ClCompile Include="..\DI.cpp" />
     <ClCompile Include="..\DspCore.cpp" />
-    <ClCompile Include="..\DSP_HLE.cpp" />
+    <ClCompile Include="..\DspHle.cpp" />
     <ClCompile Include="..\DspAnalyzer.cpp" />
     <ClCompile Include="..\EFB.cpp" />
     <ClCompile Include="..\EI.cpp" />
@@ -53,7 +53,7 @@
     <ClInclude Include="..\CP.h" />
     <ClInclude Include="..\DI.h" />
     <ClInclude Include="..\DspCore.h" />
-    <ClInclude Include="..\DSP_HLE.h" />
+    <ClInclude Include="..\DspHle.h" />
     <ClInclude Include="..\DspAnalyzer.h" />
     <ClInclude Include="..\DVD.h" />
     <ClInclude Include="..\EFB.h" />

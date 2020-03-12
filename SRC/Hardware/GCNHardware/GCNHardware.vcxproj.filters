@@ -69,10 +69,10 @@
     <ClCompile Include="..\DspAnalyzer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\DSP_HLE.cpp">
+    <ClCompile Include="..\DspCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\DspCore.cpp">
+    <ClCompile Include="..\DspHle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -143,10 +143,10 @@
     <ClInclude Include="..\DspAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DSP_HLE.h">
+    <ClInclude Include="..\DspCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DspCore.h">
+    <ClInclude Include="..\DspHle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

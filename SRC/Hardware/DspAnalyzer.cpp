@@ -84,14 +84,14 @@ namespace DSP
 						}
 					}
 					break;
-				case 0b001:
+				case 0b001:		// HALT
 					if ((info.instrBits & 0b11111) == 0b00001)
 					{
 						info.instr = DspInstruction::HALT;
 						info.flowControl = true;
 					}
 					break;
-				case 0b010:
+				case 0b010:		// LOOP
 				{
 					uint16_t r = info.instrBits & 0b11111;
 					info.instr = DspInstruction::LOOP;
@@ -100,14 +100,79 @@ namespace DSP
 						return false;
 					break;
 				}
-				case 0b011:
+				case 0b011:		// BLOOP
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					uint16_t r = info.instrBits & 0b11111;
+					info.instr = DspInstruction::BLOOP;
+					info.flowControl = true;
+					if (!AddParam(info, (DspParameter)r, r))
+						return false;
+
+					uint16_t addr = MEMSwapHalf (*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
+						return false;
+
 					break;
-				case 0b100:
+				}
+				case 0b100:		// LRI
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					uint16_t r = info.instrBits & 0b11111;
+					info.instr = DspInstruction::LRI;
+					if (!AddParam(info, (DspParameter)r, r))
+						return false;
+
+					uint16_t imm = MEMSwapHalf(*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::UnsignedShort, imm))
+						return false;
+
 					break;
-				case 0b110:
+				}
+				case 0b110:		// LR
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					uint16_t r = info.instrBits & 0b11111;
+					info.instr = DspInstruction::LR;
+					if (!AddParam(info, (DspParameter)r, r))
+						return false;
+
+					uint16_t addr = MEMSwapHalf(*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
+						return false;
+
 					break;
-				case 0b111:
+				}
+				case 0b111:		// SR
+				{
+					if (instrMaxSize < sizeof(uint16_t))
+						return false;
+
+					uint16_t addr = MEMSwapHalf(*(uint16_t*)instrPtr);
+					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+						return false;
+					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
+						return false;
+
+					uint16_t r = info.instrBits & 0b11111;
+					info.instr = DspInstruction::SR;
+					if (!AddParam(info, (DspParameter)r, r))
+						return false;
+
 					break;
+				}
 
 				default:
 					break;
@@ -162,51 +227,6 @@ namespace DSP
 
 		info.numParameters++;
 
-		return true;
-	}
-
-	template<>
-	bool Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm)
-	{
-		if (!AddParam(info, param, imm))
-			return false;
-		info.ImmOperand.Byte = imm;
-		return true;
-	}
-
-	template<>
-	bool Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm)
-	{
-		if (!AddParam(info, param, imm))
-			return false;
-		info.ImmOperand.SignedByte = imm;
-		return true;
-	}
-
-	template<>
-	bool Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm)
-	{
-		if (!AddParam(info, param, imm))
-			return false;
-		info.ImmOperand.UnsignedShort = imm;
-		return true;
-	}
-
-	template<>
-	bool Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm)
-	{
-		if (!AddParam(info, param, imm))
-			return false;
-		info.ImmOperand.SignedShort = imm;
-		return true;
-	}
-
-	template<>
-	bool Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm)
-	{
-		if (!AddParam(info, param, (uint16_t)imm))
-			return false;
-		info.ImmOperand.Address = imm;
 		return true;
 	}
 

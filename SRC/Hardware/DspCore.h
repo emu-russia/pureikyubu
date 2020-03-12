@@ -34,6 +34,32 @@ namespace DSP
 		uint16_t pc;		///< Program counter
 	} DspRegs;
 
+	enum class DspHardwareRegs
+	{
+		CMBH = 0xFFFE,		///< CPU Mailbox H 
+		CMBL = 0xFFFF,		///< CPU Mailbox L 
+		DMBH = 0xFFFC,		///< DSP Mailbox H 
+		DMBL = 0xFFFD,		///< DSP Mailbox L 
+
+		DSMAH = 0xFFCE,		///< Memory address H 
+		DSMAL = 0xFFCF,		///< Memory address L 
+		DSPA = 0xFFCD,		///< DSP memory address 
+		DSCR = 0xFFC9,		///< DMA control 
+		DSBL = 0xFFCB,		///< Block size 
+
+		ACSAH = 0xFFD4,		///< Accelerator start address H 
+		ACSAL = 0xFFD5,		///< Accelerator start address L 
+		ACEAH = 0xFFD6,		///< Accelerator end address H 
+		ACEAL = 0xFFD7,		///< Accelerator end address L 
+		ACCAH = 0xFFD8,		///< Accelerator current address H 
+		ACCAL = 0xFFD9,		///< Accelerator current address L 
+		ACDAT = 0xFFDD,		///< Accelerator data
+
+		DIRQ = 0xFFFB,		///< IRQ request
+
+		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
+	};
+
 	class DspCore
 	{
 		std::vector<uint16_t> breakpoints;		///< IMEM breakpoints

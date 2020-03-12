@@ -183,32 +183,6 @@ namespace DSP
 		// TODO: What about mentioned LD(?), LD2(?)
 	};
 
-	enum class DspHardwareRegs
-	{
-		CMBH = 0xFFFE,		///< CPU Mailbox H 
-		CMBL = 0xFFFF,		///< CPU Mailbox L 
-		DMBH = 0xFFFC,		///< DSP Mailbox H 
-		DMBL = 0xFFFD,		///< DSP Mailbox L 
-
-		DSMAH = 0xFFCE,		///< Memory address H 
-		DSMAL = 0xFFCF,		///< Memory address L 
-		DSPA = 0xFFCD,		///< DSP memory address 
-		DSCR = 0xFFC9,		///< DMA control 
-		DSBL = 0xFFCB,		///< Block size 
-
-		ACSAH = 0xFFD4,		///< Accelerator start address H 
-		ACSAL = 0xFFD5,		///< Accelerator start address L 
-		ACEAH = 0xFFD6,		///< Accelerator end address H 
-		ACEAL = 0xFFD7,		///< Accelerator end address L 
-		ACCAH = 0xFFD8,		///< Accelerator current address H 
-		ACCAL = 0xFFD9,		///< Accelerator current address L 
-		ACDAT = 0xFFDD,		///< Accelerator data
-
-		DIRQ = 0xFFFB,		///< IRQ request
-
-		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
-	};
-
 	enum class DspParameter
 	{
 		Unknown = -1,
@@ -331,14 +305,56 @@ namespace DSP
 
 		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
 
-		static bool AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits);
 		template<typename T>
 		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);
+		static bool AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits);
+
+		// c++ commitete should try harder. Allowed only in headers..
+
+		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm)
+		{
+			if (!AddParam(info, param, imm))
+				return false;
+			info.ImmOperand.Byte = imm;
+			return true;
+		}
+
+		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm)
+		{
+			if (!AddParam(info, param, imm))
+				return false;
+			info.ImmOperand.SignedByte = imm;
+			return true;
+		}
+
+		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm)
+		{
+			if (!AddParam(info, param, imm))
+				return false;
+			info.ImmOperand.UnsignedShort = imm;
+			return true;
+		}
+
+		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm)
+		{
+			if (!AddParam(info, param, imm))
+				return false;
+			info.ImmOperand.SignedShort = imm;
+			return true;
+		}
+
+		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm)
+		{
+			if (!AddParam(info, param, (uint16_t)imm))
+				return false;
+			info.ImmOperand.Address = imm;
+			return true;
+		}
+
 		static bool AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);
 
 	public:
 
 		static bool Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
 	};
-
 }
