@@ -1585,4 +1585,6 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
         fflush(f);
         fclose(f);
     }
+
+    DBReport("Done.\n");
 }

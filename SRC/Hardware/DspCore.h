@@ -70,6 +70,14 @@ namespace DSP
 
 		uint64_t savedGekkoTicks = 0;
 
+		bool running = false;
+
+		HANDLE threadHandle;
+		DWORD threadId;
+		volatile bool pendingThreadTerminate;
+
+		static DWORD WINAPI DspThreadProc(LPVOID lpParameter);
+
 	public:
 
 		static const size_t IRAM_SIZE = (8 * 1024);
@@ -95,6 +103,7 @@ namespace DSP
 		void ClearBreakpoints();
 
 		void Run();
+		bool IsRunning() { return running; }
 		void Suspend();
 
 		///< Execute single instruction (by interpreter)  (DEBUG)

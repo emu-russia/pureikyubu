@@ -68,7 +68,7 @@ void HWUpdate()
         BeginProfileSfx();
         AIUpdate();
         DSPHLEUpdate();
-        dspCore->Update();
+        //dspCore->Update();        // Updated by own thread
         EndProfileSfx();
 
         //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));
