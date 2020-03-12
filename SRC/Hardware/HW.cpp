@@ -4,7 +4,7 @@
 
 static bool hw_assert;      // assert on not implemented HW in non DEBUG
 static bool update;         // 1: HW update enabled
-static DSP::DspCore* dspCore;   // instance of dsp core
+DSP::DspCore* dspCore;      // instance of dsp core
 
 // ---------------------------------------------------------------------------
 // init and update

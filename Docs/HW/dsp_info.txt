@@ -15,49 +15,61 @@ Official GC SDK dont have any valuable information regardless DSP inner working.
 - 81 mhz instruction clock (1/6 of main CPU clock)
 - 40-bit add-and-multiply-result registers for calculations
 - 16-bit data addressing
-- 16-bit address space, including :
-	· 8 KB Data RAM (DRAM)
-	· 4 KB Data ROM (DROM)
-	· 8 KB Instruction RAM (IRAM)
-	· 8 KB Instruction ROM (IROM)
-	· and some hardware registers, to control internal hardware (see below)
+- 16-bit address space, including:
+	- 8 KBytes Data RAM (DRAM)     (8192 bytes)
+	- 4 KBytes Data ROM (DROM)     (4096 bytes)
+	- 8 KBytes Instruction RAM (IRAM)      (8192 bytes)
+	- 8 KBytes Instruction ROM (IROM)      (8192 bytes)
+	- and some hardware registers, to control internal hardware (see below)
 - additional DSP internal hardware:
-	· custom ADPCM decoder
-	· cached memory interface to ARAM (also referred as "accelerator")
-	· DMA interface to main memory (to boot microcode)
-	· "mailbox" registers for communication with the CPU
+	- custom ADPCM decoder
+	- cached memory interface to ARAM (also referred as "accelerator")
+	- DMA interface to main memory (to boot microcode)
+	- "mailbox" registers for communication with the CPU
 
-Details of memory mapping are unknown. It can be statically mapped areas, like on GameBoy, or DSP may have simple translation logic. I have a feeling that they are statically mapped.
+DSP instruction memory is only available by Fetch operations (by program counter). IRAM is mapped as the first 8 Kbytes of ARAM. That's why OSInitAudioSystem sends something there (this is actually a stub with exception vectors).
 
-Now word to United States Patent 6,643,744 "Method and apparatus for
-pre-fetching audio data":
+DRAM/DROM is accessible from the DSP by instructions such as Load/Store.
+
+DSP also uses half-word indexing, instead addressing. That is, for example, an address offset of 0x10 bytes is actually addressed as an halfword index (0x10/2) = 0x8.
+
+Well, that's not all Alien features...
+
+## Memory mapping
+
+IMEM (addressed by halfword indexing):
 
 ```
-DSP core has a 100 MHz (* 81 Mhz on production GC) instruction clock and
-uses 16-bit data words and addressing. DSP core uses a word (16-bit)
-addressable instruction memory that includes a RAM area (8 kbyte) and a ROM
-area (8 kbyte) and a word addressable data memory that includes a RAM area
-(8 kbyte) and a ROM area (4 kbyte). A DSP DMA is provided to transfer data
-from/to main memory, to/from the DSP data/instruction RAM areas or from the
-DSP data/instruction ROM areas to main memory. There are two requestors of
-access to instruction memory: DSP DMA and DSP. The instruction RAM area can
-be read/write by DSP DMA and can only be read by DSP. The instruction ROM
-area can only be read by DSP. There are three requestors of access to data
-memory: DSP DMA, data bus 1 and data bus 2. Mail box registers are provided
-for communication with the main processor. Mail box registers may include a
-first mail box register for communications from main processor to DSP core
-and a second mail box register for communications from DSP core to main
-processor. Each register is, for example, 32-bits wide. An accelerator is
-usable instead of DSP core to read from and write to audio memory. A memory
-controller is provided for audio memory and is operative, among other things,
-to arbitrate requests for audio memory access between DSP core and a
-dedicated DMA channel controlled by main processor, for data transactions
-between audio memory and main memory. Generally, data transactions between
-audio memory and DSP data memory have priority over DMA channel. A decoder
-decodes audio samples supplied thereto. Audio memory is intended primarily
-for the storage of audio-related data and may comprise 16 MB of RAM,
-expandable up to a total of 128 MB (* for developer boards).
+0x0000      IRAM (8 Kbytes)
+...
+0x8000      IROM (8 Kbytes)
+...
 ```
+
+DMEM (addressed by halfword indexing):
+
+```
+0x0000      DRAM (8 Kbytes)
+...
+0x8000      DROM (4 Kbytes)    (Coefficient tables)
+...
+0xFF00      Mapped hardware IO
+```
+
+Now word to United States Patent 6,643,744 "Method and apparatus for pre-fetching audio data":
+
+DSP core has a 100 MHz (* 81 Mhz on production GC) instruction clock and uses 16-bit data words and addressing. DSP core uses a word (16-bit)
+addressable instruction memory that includes a RAM area (8 kbyte) and a ROM area (8 kbyte) and a word addressable data memory that includes a RAM area
+(8 kbyte) and a ROM area (4 kbyte). A DSP DMA is provided to transfer data from/to main memory, to/from the DSP data/instruction RAM areas or from the
+DSP data/instruction ROM areas to main memory. There are two requestors of access to instruction memory: DSP DMA and DSP. The instruction RAM area can
+be read/write by DSP DMA and can only be read by DSP. The instruction ROM area can only be read by DSP. There are three requestors of access to data
+memory: DSP DMA, data bus 1 and data bus 2. Mail box registers are provided for communication with the main processor. Mail box registers may include a
+first mail box register for communications from main processor to DSP core and a second mail box register for communications from DSP core to main
+processor. Each register is, for example, 32-bits wide. An accelerator is usable instead of DSP core to read from and write to audio memory. A memory
+controller is provided for audio memory and is operative, among other things, to arbitrate requests for audio memory access between DSP core and a
+dedicated DMA channel controlled by main processor, for data transactions between audio memory and main memory. Generally, data transactions between
+audio memory and DSP data memory have priority over DMA channel. A decoder decodes audio samples supplied thereto. Audio memory is intended primarily
+for the storage of audio-related data and may comprise 16 MB of RAM, expandable up to a total of 128 MB (* for developer boards).
 
 ## Interrupts
 
@@ -245,18 +257,19 @@ Some description of DSP accelerator in US Patent 6,643,744:
 
 ## Known DSP Microcodes
 
+Patent mentions microcode:
+
 ```
-During system initialization, a runtime audio library is downloaded to
-audio DSP. This audio library is used by audio DSP to process and mix voices
-in accordance with commands in a command list generated by main processor.
-The command list is stored in main memory. Audio DSP retrieves the commands
-from main memory and executes them in accordance with the runtime audio
-library downloaded thereto.
+During system initialization, a runtime audio library is downloaded to audio DSP. This audio library is used by audio DSP to process and mix voices
+in accordance with commands in a command list generated by main processor. The command list is stored in main memory. Audio DSP retrieves the commands
+from main memory and executes them in accordance with the runtime audio library downloaded thereto.
 ```    
+
+OSInitAudioSystem loads small stub (32 bytes) through ARAM DMA, which contains exception vectors.
 
 I have seen following audio DSP libs:
 - AX library. Shipped with official SDK from Nintendo.
-- JAudio library. This library is used in Zelda and some other games from Nintendo. It is not using the same DSP library, as AX.
+- JAudio library. This library is used in Bootrom IPL, Zelda and some other games from Nintendo. It is not using the same DSP library, as AX.
 
 I dont know details, but general difference between libraries is in mailbox messages format, and microcode program.
 

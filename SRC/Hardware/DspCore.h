@@ -72,12 +72,19 @@ namespace DSP
 
 	public:
 
+		static const size_t IRAM_SIZE = (8 * 1024);
+		static const size_t IROM_SIZE = (8 * 1024);
+		static const size_t DRAM_SIZE = (8 * 1024);
+		static const size_t DROM_SIZE = (4 * 1024);
+
 		DspCoreType coreType = DspCoreType::Interpreter;
 
 		DspRegs regs = { 0 };
 
-		uint8_t dmem[0x10000 * 2] = { 0 };		///< DSP DRAM+DROM
-		uint8_t imem[0x10000 * 2] = { 0 };		///< DSP IRAM+IROM
+		uint8_t iram[IRAM_SIZE] = { 0 };
+		uint8_t irom[IROM_SIZE] = { 0 };
+		uint8_t dram[DRAM_SIZE] = { 0 };
+		uint8_t drom[DROM_SIZE] = { 0 };
 
 		DspCore(HWConfig* config);
 		~DspCore();

@@ -68,8 +68,29 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         }
 
         // blast data
-        if(type == RAM_TO_ARAM) memcpy(&ARAM[aaddr], &mi.ram[maddr], size);
-        else memcpy(&mi.ram[maddr], &ARAM[aaddr], size);
+        if (type == RAM_TO_ARAM)
+        {
+            if (aaddr < DSP::DspCore::IRAM_SIZE)
+            {
+                // IRAM is mapped as the first 8 Kbytes of ARAM
+                memcpy(&dspCore->iram[aaddr], &mi.ram[maddr], size);
+
+                // Dump it
+#if 1
+                FileSave("Data\\dsp_stub.bin", dspCore->iram, size);
+#endif
+            }
+            else
+            {
+                memcpy(&ARAM[aaddr], &mi.ram[maddr], size);
+            }
+        }
+        else
+        {
+            // Not sure if DSP IRAM is mapped this way also.. Leave it now
+
+            memcpy(&mi.ram[maddr], &ARAM[aaddr], size);
+        }
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt

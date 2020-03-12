@@ -583,6 +583,32 @@ namespace DSP
 
 	bool Analyzer::Group2(AnalyzeInfo& info)
 	{
+		//LRS * 	0010 0ddd mmmm mmmm 
+		//SRS * 	0010 1sss mmmm mmmm 
+
+		if ((info.instrBits & 0b100000000000) != 0)
+		{
+			info.instr = DspInstruction::SRS;
+			int ss = (info.instrBits >> 8) & 7;
+			DspAddress addr = (DspAddress)(uint16_t)(int16_t)(int8_t)(uint8_t)(info.instrBits & 0xff);
+
+			if (!AddImmOperand(info, DspParameter::Address, addr))
+				return false;
+			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+				return false;
+		}
+		else
+		{
+			info.instr = DspInstruction::LRS;
+			int dd = (info.instrBits >> 8) & 7;
+			DspAddress addr = (DspAddress)(uint16_t)(int16_t)(int8_t)(uint8_t)(info.instrBits & 0xff);
+
+			if (!AddParam(info, (DspParameter)(0x18 + dd), dd))
+				return false;
+			if (!AddImmOperand(info, DspParameter::Address, addr))
+				return false;
+		}
+
 		return true;
 	}
 
