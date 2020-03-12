@@ -11,7 +11,7 @@
 
 // RLWINM-like instructions mask is placed in output "target" parameter.
 
-#include "dolphin.h"
+#include "pch.h"
 
 #define POWERPC_32      // Use generic 32-bit model
 //efine POWERPC_64      // Use generic 64-bit model
@@ -55,7 +55,7 @@ static PPCD_CB *o;
 #define Rc          LK
 
 // GPRs. sp, sd1 and sd2 are named corresponding to PPC EABI.
-static char *regname[] = {
+static const char *regname[] = {
 #ifdef UPPERCASE
  "R0" , "R1" , "R2", "R3" , "R4" , "R5" , "R6" , "R7" , 
  "R8" , "R9" , "R10", "R11", "R12", "R13", "R14", "R15", 
@@ -100,7 +100,7 @@ static char * simm(int val, int hex, int s)
 }
 
 // Simple instruction form + reserved bitmask.
-static void put(char * mnem, uint32_t mask, uint32_t chkval=0, int iclass=PPC_DISA_OTHER)
+static void put(const char * mnem, uint32_t mask, uint32_t chkval=0, int iclass=PPC_DISA_OTHER)
 {
     if( (Instr & mask) != chkval ) { ill(); return; }
     o->iclass |= iclass;
@@ -108,7 +108,7 @@ static void put(char * mnem, uint32_t mask, uint32_t chkval=0, int iclass=PPC_DI
 }
 
 // Simplified mnemonic trap conditions
-static char * t_cond[32] = {
+static const char * t_cond[32] = {
  NULL, "lgt", "llt", NULL, "eq", "lge", "lle", NULL,
  "gt", NULL, NULL, NULL, "ge", NULL, NULL, NULL,
  "lt", NULL, NULL, NULL, "le", NULL, NULL, NULL,
@@ -178,7 +178,7 @@ static void trap(int L, int imm)
 // dab LSB bits : [D][A][B] (D should always present)
 // 'hex' for logic opcodes, 's' for alu opcodes, 'crfD' and 'L' for cmp opcodes
 // 'imm': 1 to show immediate operand
-static void integer(char *mnem, char form, int dab, int hex=0, int s=1, int crfD=0, int L=0, int imm=1)
+static void integer(const char *mnem, char form, int dab, int hex=0, int s=1, int crfD=0, int L=0, int imm=1)
 {
     char * ptr = o->operands;
     int rd = DIS_RD, ra = DIS_RA, rb = DIS_RB;
@@ -260,7 +260,7 @@ static void integer(char *mnem, char form, int dab, int hex=0, int s=1, int crfD
 }
 
 // Compare instructions (wraps to integer call)
-static void cmp(char *l, char *i)
+static void cmp(const char *l, const char *i)
 {
     char mnem[sizeof(o->mnemonic)];
     int rd = DIS_RD;
@@ -285,7 +285,7 @@ static void cmp(char *l, char *i)
 }
 
 // Add immediate (wraps to integer call)
-static void addi(char *suffix)
+static void addi(const char *suffix)
 {
     char mnem[sizeof(o->mnemonic)];
 
@@ -325,34 +325,34 @@ static void addi(char *suffix)
 }
 
 // Branch suffix: AA || LK.
-static char *b_opt[4] = { "", "l", "a", "la" };
+static const char *b_opt[4] = { "", "l", "a", "la" };
 
 // Branch condition code: 4 * BO[1] + (BI & 3)
-static char * b_cond[8] = {
+static const char * b_cond[8] = {
  "ge", "le", "ne", "ns", "lt", "gt", "eq", "so"
 };
 
 // Branch on CTR code: BO[0..3]
-static char * b_ctr[16] = {
+static const char * b_ctr[16] = {
  "dnzf", "dzf", NULL, NULL, "dnzt", "dzt", NULL, NULL,
  "dnz", "dz", NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 // Place target address in operands. Helper for bcx/bx calls.
-static char *place_target(char *ptr, int comma)
+static char *place_target(char *ptr, int comma, size_t ptrMaxSize)
 {
     char *old;
     uint32_t*t = (uint32_t*)&o->target;
 
-    if(comma) ptr += sprintf(ptr, "%s", COMMA);
+    if(comma) ptr += sprintf_s(ptr, ptrMaxSize, "%s", COMMA);
     old = ptr;
 #ifdef  POWERPC_32
-    ptr += sprintf(ptr, HEX1 "%08X" HEX2, (uint32_t)o->target);
+    ptr += sprintf_s(ptr, ptrMaxSize, HEX1 "%08X" HEX2, (uint32_t)o->target);
 #endif
 #ifdef  POWERPC_64
     ptr = old;
-    if(bigendian) ptr += sprintf(ptr, HEX1 "%08X_%08X" HEX2, t[0], t[1]);
-    else ptr += sprintf(ptr, HEX1 "%08X_%08X" HEX2, t[1], t[0]);
+    if(bigendian) ptr += sprintf_s(ptr, ptrMaxSize, HEX1 "%08X_%08X" HEX2, t[0], t[1]);
+    else ptr += sprintf_s(ptr, ptrMaxSize, HEX1 "%08X_%08X" HEX2, t[1], t[0]);
 #endif
     return ptr;
 }
@@ -364,7 +364,7 @@ static void bcx(int Disp, int L)
 {
     uint64_t bd = 0;
     int bo = DIS_RD, bi = DIS_RA;
-    char *r = Disp ? "" : (L ? "lr" : "ctr");
+    const char *r = Disp ? "" : (L ? "lr" : "ctr");
     char *ptr = o->operands;
 
     if( DIS_RB && !Disp ) { ill(); return; }
@@ -392,7 +392,7 @@ static void bcx(int Disp, int L)
         {
 #ifdef  SIMPLIFIED
             sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s", r, b_opt[Disp ? AALK : LK]);
-            if(Disp) ptr = place_target(ptr, 0);
+            if(Disp) ptr = place_target(ptr, 0, sizeof(o->operands) - (ptr - o->operands));
             o->iclass |= PPC_DISA_SIMPLIFIED;
             return;
 #endif  // SIMPLIFIED
@@ -401,12 +401,12 @@ static void bcx(int Disp, int L)
         {
             if(bo & 2) { ill(); return; }                               // BO[3]
 #ifdef  SIMPLIFIED
-            char *cond = b_cond[((bo & 8) >> 1) | (bi & 3)];
+            const char *cond = b_cond[((bo & 8) >> 1) | (bi & 3)];
             if(cond != NULL)                                            // BO[1]
             {
                 sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s%s%c", cond, r, b_opt[Disp ? AALK : LK], y);
-                if(bi >= 4) ptr += sprintf(ptr, "%s%i", crname, bi >> 2);
-                if(Disp) ptr = place_target(ptr, bi >= 4);
+                if(bi >= 4) ptr += sprintf_s(ptr, sizeof(o->operands) - (ptr - o->operands), "%s%i", crname, bi >> 2);
+                if(Disp) ptr = place_target(ptr, bi >= 4, sizeof(o->operands) - (ptr - o->operands));
                 o->iclass |= PPC_DISA_SIMPLIFIED;
                 return;
             }
@@ -421,8 +421,8 @@ static void bcx(int Disp, int L)
         if(b_ctr[bo >> 1])
         {
             sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? AALK : LK], y);
-            if(!(bo & 16)) ptr += sprintf(ptr, "%i", bi);
-            if(Disp) ptr = place_target(ptr, !(bo & 16));
+            if(!(bo & 16)) ptr += sprintf_s(ptr, sizeof(o->operands) - (ptr - o->operands), "%i", bi);
+            if(Disp) ptr = place_target(ptr, !(bo & 16), sizeof(o->operands) - (ptr - o->operands));
             o->iclass |= PPC_DISA_SIMPLIFIED;
             return;
         }
@@ -431,8 +431,8 @@ static void bcx(int Disp, int L)
 
     // Not simplified standard form
     sprintf_s (o->mnemonic, sizeof(o->mnemonic), "bc%s%s", r, b_opt[Disp ? AALK : LK]);
-    ptr += sprintf(ptr, "%i" COMMA "%i", bo, bi);
-    if(Disp) ptr = place_target(ptr, 1);
+    ptr += sprintf_s(ptr, sizeof(o->operands) - (ptr - o->operands), "%i" COMMA "%i", bo, bi);
+    if(Disp) ptr = place_target(ptr, 1, sizeof(o->operands) - (ptr - o->operands));
 }
 
 // Branch unconditional
@@ -445,7 +445,7 @@ static void bx(void)
  
     o->iclass |= PPC_DISA_BRANCH;
     sprintf_s (o->mnemonic, sizeof(o->mnemonic), "b%s", b_opt[AALK]);
-    place_target(o->operands, 0);
+    place_target(o->operands, 0, sizeof(o->operands));
 }
 
 // Move CR field
@@ -457,7 +457,7 @@ static void mcrf(void)
 }
 
 // CR logic operations
-static void crop(char *name, char *simp="", int ddd=0, int daa=0)
+static void crop(const char *name, const char *simp="", int ddd=0, int daa=0)
 {
     if(Instr & 1) { ill(); return; }
 
@@ -502,7 +502,7 @@ static void crop(char *name, char *simp="", int ddd=0, int daa=0)
 }
 
 // Rotate left word.
-static void rlw(char *name, int rb, int ins=0)
+static void rlw(const char *name, int rb, int ins=0)
 {
     int mb = DIS_MB, me = DIS_ME;
     char * ptr = o->operands;
@@ -560,7 +560,7 @@ static void rld(char *name, int rb, int mtype)
 }
 
 // Load/Store.
-static void ldst(char *name, int x/*indexed*/, int load=1, int L=0, int string=0, int fload=0)
+static void ldst(const char *name, int x/*indexed*/, int load=1, int L=0, int string=0, int fload=0)
 {
     if(x) integer(name, fload ? 'F' : 'X', DAB_D|DAB_A|DAB_B);
     else
@@ -582,7 +582,7 @@ static void ldst(char *name, int x/*indexed*/, int load=1, int L=0, int string=0
 }
 
 // Cache.
-static void cache(char *name, int flag=PPC_DISA_OTHER)
+static void cache(const char *name, int flag=PPC_DISA_OTHER)
 {
     if (DIS_RD) { ill(); return; }
     else
@@ -596,7 +596,7 @@ static void cache(char *name, int flag=PPC_DISA_OTHER)
     }
 }
 
-static void movesr(char *name, int from, int L, int xform)
+static void movesr(const char *name, int from, int L, int xform)
 {
     int reg = DIS_RD, sreg = DIS_RA & 0xF, regb = DIS_RB;
 
@@ -656,7 +656,7 @@ static void mcrxr(void)
     o->r[0] = DIS_RD >> 2;
 }
 
-static char *spr_name(int n)
+static const char *spr_name(int n)
 {
     static char def[8];
 
@@ -754,7 +754,7 @@ static char *spr_name(int n)
     return def;
 }
 
-static char *tbr_name(int n)
+static const char *tbr_name(int n)
 {
     static char def[8];
 
@@ -772,7 +772,7 @@ static char *tbr_name(int n)
 static void movespr(int from)
 {
     int spr = (DIS_RB << 5) | DIS_RA, f = 1;
-    char *fix;
+    const char *fix;
 
     if( !((spr == 1) || (spr == 8) || (spr == 9)) ) o->iclass |= PPC_DISA_OEA;
 
@@ -809,7 +809,7 @@ static void movespr(int from)
 static void movetbr(void)
 {
     int tbr = (DIS_RB << 5) | DIS_RA, f = 1;
-    char *fix;
+    const char *fix;
 
     // Handle simplified mnemonic
     if (tbr == 268) { fix = "tbl"; o->iclass |= PPC_DISA_SIMPLIFIED; }
@@ -853,7 +853,7 @@ static void sradi(void)
     o->iclass = PPC_DISA_INTEGER | PPC_DISA_64;
 }
 
-static void lsswi(char *name)
+static void lsswi(const char *name)
 {
     int rd = DIS_RD, ra = DIS_RA, nb = DIS_RB;
     strcpy_s (o->mnemonic, sizeof(o->mnemonic), name);
@@ -870,7 +870,7 @@ static void lsswi(char *name)
 #define FPU_DACB    4
 #define FPU_D       5
 
-static void fpu(char *name, uint32_t mask, int type, int flag=PPC_DISA_OTHER)
+static void fpu(const char *name, uint32_t mask, int type, int flag=PPC_DISA_OTHER)
 {
     int d = DIS_RD, a = DIS_RA, c = DIS_RC, b = DIS_RB;
 
@@ -905,7 +905,7 @@ static void fpu(char *name, uint32_t mask, int type, int flag=PPC_DISA_OTHER)
     o->iclass = PPC_DISA_FPU | flag;
 }
 
-static void fcmp(char *name)
+static void fcmp(const char *name)
 {
     int crfd = DIS_RD >> 2, ra = DIS_RA, rb = DIS_RB;
 
@@ -929,7 +929,7 @@ static void mtfsf(void)
     o->iclass = PPC_DISA_FPU;
 }
 
-static void mtfsb(char *name)
+static void mtfsb(const char *name)
 {
     int crbd = DIS_RD;
 
@@ -976,7 +976,7 @@ static void mtfsfi(void)
 
 static void ps_cmpx(int n)
 {
-    static char *fix[] = { "u0", "o0", "u1", "o1" };
+    static const char *fix[] = { "u0", "o0", "u1", "o1" };
     if(Instr & 0x00600001) { ill(); return; }
     sprintf_s (o->mnemonic, sizeof(o->mnemonic), "ps_cmp%s", fix[n]);
     o->r[0] = DIS_RD>>2; o->r[1] = DIS_RA; o->r[2] = DIS_RB;
@@ -984,7 +984,7 @@ static void ps_cmpx(int n)
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC; 
 }
 
-static char *ps_ldst_offs(unsigned long val)
+static const char *ps_ldst_offs(unsigned long val)
 {
     static char buf[8];
 
@@ -1007,7 +1007,7 @@ static char *ps_ldst_offs(unsigned long val)
     }
 }
 
-static void ps_ldst(char *fix)
+static void ps_ldst(const char *fix)
 {
   int s = DIS_RS, a = DIS_RA, d = (Instr & 0xfff);
   sprintf_s (o->mnemonic, sizeof(o->mnemonic), "psq_%s", fix);
@@ -1018,7 +1018,7 @@ static void ps_ldst(char *fix)
   o->iclass = PPC_DISA_FPU | PPC_DISA_LDST | PPC_DISA_SPECIFIC;
 }
 
-static void ps_ldstx(char *fix)
+static void ps_ldstx(const char *fix)
 {
     int d = DIS_RD, a = DIS_RA, b = DIS_RB;
     if(Instr & 1) { ill(); return; }
@@ -1028,7 +1028,7 @@ static void ps_ldstx(char *fix)
     o->iclass = PPC_DISA_FPU | PPC_DISA_LDST | PPC_DISA_SPECIFIC; 
 }
 
-static void ps_dacb(char *fix)
+static void ps_dacb(const char *fix)
 {
     int a = DIS_RA, b = DIS_RB, c = DIS_RC, d = DIS_RD;
     sprintf_s(o->mnemonic, sizeof(o->mnemonic), "ps_%s%c", fix, Rc ? '.' : 0);
@@ -1037,7 +1037,7 @@ static void ps_dacb(char *fix)
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
 
-static void ps_dac(char *fix)
+static void ps_dac(const char *fix)
 {
     int a = DIS_RA, c = DIS_RC, d = DIS_RD;
     if(Instr & 0x0000F800) { ill(); return; }
@@ -1047,7 +1047,7 @@ static void ps_dac(char *fix)
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
 
-static void ps_dab(char *fix, int unmask=0)
+static void ps_dab(const char *fix, int unmask=0)
 {
     int d = DIS_RD, a = DIS_RA, b = DIS_RB;
     if(Instr & 0x000007C0 && !unmask) { ill(); return; }
@@ -1057,7 +1057,7 @@ static void ps_dab(char *fix, int unmask=0)
     o->iclass = PPC_DISA_FPU | PPC_DISA_SPECIFIC;
 }
 
-static void ps_db(char *fix, int aonly=0)
+static void ps_db(const char *fix, int aonly=0)
 {
     int d = DIS_RD, b = DIS_RB;
     if(aonly) { if(Instr & 0x001F0000) { ill(); return; } }

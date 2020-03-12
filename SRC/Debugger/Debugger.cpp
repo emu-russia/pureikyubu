@@ -2,7 +2,7 @@
 // currently console debugger, migrated from 0.08+ is in use, 
 // but you may add GUI aswell. see "DOCS\EMU\debug.txt" for details of 
 // debugger replacement.
-#include "dolphin.h"
+#include "pch.h"
 
 // message output
 static void dummy(const char *text, ...) {}

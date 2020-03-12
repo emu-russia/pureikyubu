@@ -600,10 +600,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             {
                 LoadRecentFile(LOWORD(wParam) - ID_FILE_RECENT_1 + 1);
                 EMUClose();
-                EMUOpen(
-                    GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-                    GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-                    GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
+                EMUOpen();
             }
             else switch(LOWORD(wParam))
             {
@@ -614,10 +611,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 loadFile:
                         LoadFile(name);
                         EMUClose();
-                        EMUOpen(
-                            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-                            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-                            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
+                        EMUOpen();
                     }
                     return 0;
 
@@ -628,10 +622,7 @@ loadFile:
                     {
                         LoadRecentFile(1);
                         EMUClose();
-                        EMUOpen(
-                            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-                            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-                            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
+                        EMUOpen();
                     }
                     return 0;
 
@@ -644,10 +635,7 @@ loadFile:
                 case ID_FILE_IPLMENU:
                     LoadFile("Bootrom");
                     EMUClose();
-                    EMUOpen(
-                        GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-                        GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-                        GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT));
+                    EMUOpen();
                     return 0;
 
                 // open/close DVD lid

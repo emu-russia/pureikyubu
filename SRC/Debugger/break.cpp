@@ -1,5 +1,5 @@
 // breakpoints
-#include "dolphin.h"
+#include "pch.h"
 
 // ---------------------------------------------------------------------------
 // breakpoints controls
@@ -21,7 +21,7 @@ DBPoint * con_allocate_bp()
 {
     if(con.brknum) con.brks = (DBPoint *)realloc(con.brks, (con.brknum + 1) * sizeof(DBPoint));
     else con.brks = (DBPoint *)malloc(sizeof(DBPoint));
-    VERIFY(con.brks == NULL, "No space for new breakpoint!");
+    assert(con.brks);
 
     return &con.brks[con.brknum];
 }
@@ -32,7 +32,7 @@ void con_rem_bp(int num)
     if(num >= con.brknum) return;
 
     DBPoint * ptr = (DBPoint *)malloc((con.brknum - 1) * sizeof(DBPoint));
-    VERIFY(ptr == NULL, "Cannot kill breakpoint.");
+    assert(ptr);
     for(i=0; i<num; i++)
     {
         ptr[i] = con.brks[i];

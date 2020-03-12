@@ -19,7 +19,7 @@
 void    con_open();
 void    con_close();
 void    con_start();
-void    con_break(char *reason=NULL);
+void    con_break(const char *reason=NULL);
 
 #pragma pack(push, 8)
 

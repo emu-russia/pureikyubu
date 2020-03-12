@@ -1,11 +1,11 @@
 // registers view
-#include "dolphin.h"
+#include "pch.h"
 
 // register memory
 static uint32_t gpr_old[32];
 static FPREG ps0_old[32], ps1_old[32];
 
-static char *gprnames[] = {
+static const char *gprnames[] = {
  "r0" , "sp" , "sd2", "r3" , "r4" , "r5" , "r6" , "r7" , 
  "r8" , "r9" , "r10", "r11", "r12", "sd1", "r14", "r15", 
  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23", 
@@ -202,7 +202,7 @@ static void describe_bat_reg (int x, int y, uint32_t up, uint32_t lo, int instr)
     uint32_t EStart = bepi << 17, PStart = brpn << 17;
     uint32_t blkSize = 1 << (17 + 11 - cntlzw((bl << (32-11)) | 0x00100000));
 
-    char *ppstr = BRED "NA";
+    const char *ppstr = BRED "NA";
     if(pp)
     {
         if(instr) { ppstr = ((pp & 1) ? (char *)(NORM "X") : (char *)(NORM "XW")); }
@@ -250,7 +250,7 @@ static void con_print_mmu()
 
     for(int n=0, y=1; n<16; n++, y++)
     {
-        char * prefix = PPC_SR[y-1] & 0x80000000 ? BRED : NORM;
+        const char * prefix = PPC_SR[y-1] & 0x80000000 ? BRED : NORM;
         con_printf_at (64, y, CYAN "sr%-2i  " "%s" "%08X", y-1, prefix, PPC_SR[y-1]);
     }
 }

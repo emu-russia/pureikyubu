@@ -66,7 +66,7 @@ void EMUDie()
 }
 
 // this function calls every time, after user loading new file
-void EMUOpen(int bailout, int delay, int counterFactor)
+void EMUOpen()
 {
     emu.running = true;
 
@@ -75,7 +75,10 @@ void EMUOpen(int bailout, int delay, int counterFactor)
     // open other sub-systems
     MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
     MEMSelect(mem.mmu, 0);
-    CPUOpen(bailout, delay, counterFactor);
+    CPUOpen(
+        GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
+        GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
+        GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
 
     HWConfig hwconfig = { 0 };
     EMUGetHwConfig(&hwconfig);

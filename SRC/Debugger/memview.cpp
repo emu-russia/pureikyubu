@@ -1,7 +1,7 @@
 // memory (data) view
-#include "dolphin.h"
+#include "pch.h"
 
-static char *hexbyte(uint32_t addr)
+static const char *hexbyte(uint32_t addr)
 {
     static char buf[0x10];
 
@@ -22,7 +22,7 @@ static char *hexbyte(uint32_t addr)
     return "??";
 }
 
-static char *charbyte(uint32_t addr)
+static const char *charbyte(uint32_t addr)
 {
     static char buf[0x10];
     buf[0] = '.'; buf[1] = 0;

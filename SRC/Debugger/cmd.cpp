@@ -1,5 +1,5 @@
 // command processor
-#include "dolphin.h"
+#include "pch.h"
 
 // ---------------------------------------------------------------------------
 
@@ -12,6 +12,7 @@ void cmd_init_handlers()
     con.cmds["d"] = cmd_d;
     con.cmds["denop"] = cmd_denop;
     con.cmds["disa"] = cmd_disa;
+    con.cmds["dspdisa"] = cmd_dspdisa;
     con.cmds["dop"] = cmd_dop;
     con.cmds["dvdopen"] = cmd_dvdopen;
     con.cmds["full"] = cmd_full;
@@ -57,6 +58,99 @@ void con_command(int argc, char argv[][CON_LINELEN], int lnum)
 }
 
 // ---------------------------------------------------------------------------
+// help
+
+void cmd_help(int argc, char argv[][CON_LINELEN])
+{
+    con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
+    con_print(WHITE "    .                    " NORM "- view code at pc");
+    con_print(WHITE "    *                    " NORM "- view data, pointed by load/store opcode");
+    con_print(WHITE "    u                    " NORM "- view code at specified address");
+    con_print(WHITE "    d                    " NORM "- view data at specified address");
+    con_print(WHITE "    sd1                  " NORM "- quick form of d-command, using SDA1");
+    con_print(WHITE "    sd2                  " NORM "- quick form of d-command, using SDA2");
+    con_print(WHITE "    r                    " NORM "- show / change CPU register");
+    con_print(WHITE "    ps                   " NORM "- show / change paired-single register");
+    con_print(WHITE "    pc                   " NORM "- set program counter");
+
+    con_print(WHITE "    nop                  " NORM "- insert NOP opcode at cursor");
+    con_print(WHITE "    denop                " NORM "- restore old NOP'ed value");
+    con_print(WHITE "    blr [value]          " NORM "- insert BLR opcode at cursor (with value)");
+    //  con_print(WHITE "    b <addr>             " NORM "- toggle code breakpoint at <addr> (max=%i)", MAX_BPNUM);
+    //  con_print(WHITE "    bm [8|16|32] <addr>  " NORM "- toggle data breakpoint at <addr> (max=%i)", MAX_BPNUM);
+    con_print(WHITE "    bc                   " NORM "- clear all code breakpoints");
+    //  con_print(WHITE "    bmc                  " NORM "- clear all data breakpoints");
+    con_print(WHITE "    run                  " NORM "- execute until next breakpoint");
+    con_print(WHITE "    stop                 " NORM "- stop debugging");
+    con_print(WHITE "    reset                " NORM "- reset emulator");
+    con_print("\n");
+
+    con_print(CYAN  "--- high-level commands -------------------------------------------------------");
+    con_print(WHITE "    stat                 " NORM "- show hardware state/statistics");
+    con_print(WHITE "    syms                 " NORM "- list symbolic information");
+    con_print(WHITE "    name                 " NORM "- name function (add symbol)");
+    con_print(WHITE "    dvdopen              " NORM "- get file position (use DVD plugin)");
+    con_print(WHITE "    ostest               " NORM "- test OS internals");
+    con_print(WHITE "    top10                " NORM "- show HLE calls toplist");
+    //  con_print(WHITE "    alarm                " NORM "- generate decrementer exception");
+    //  con_print(WHITE "    bcb                  " NORM "- list all registered branch callbacks");    
+    //  con_print(WHITE "    hlestats             " NORM "- show HLE-subsystem state");
+    con_print(WHITE "    savemap              " NORM "- save symbolic map into file");
+    con_print("\n");
+
+    con_print(CYAN  "--- patch controls ------------------------------------------------------------");
+    con_print(WHITE "    dop                  " NORM "- apply patches immediately (only with freeze=1)");
+    con_print(WHITE "    plist                " NORM "- list all patch data");
+    con_print(WHITE "    pload                " NORM "- load patch file (unload previous)");
+    con_print(WHITE "    padd                 " NORM "- add patch file (do not unload previous)");
+    con_print(WHITE "    patch                " NORM "- insert memory patch");
+    con_print("\n");
+
+    con_print(CYAN  "--- misc commands -------------------------------------------------------------");
+    con_print(WHITE "    boot                 " NORM "- boot DVD/executable (from file or list)");
+    con_print(WHITE "    reboot               " NORM "- reload last file");
+    con_print(WHITE "    unload               " NORM "- unload current file");
+    con_print(WHITE "    sop                  " NORM "- search opcode (forward) from cursor address");
+    con_print(WHITE "    lr                   " NORM "- show LR back chain (\"branch history\"");
+    con_print(WHITE "    script               " NORM "- execute batch script");
+    //  con_print(WHITE "    mapmem               " NORM "- add memory mapper");
+    con_print(WHITE "    log                  " NORM "- enable/disable log output)");
+    con_print(WHITE "    logfile              " NORM "- choose HTML log-file for ouput");
+    con_print(WHITE "    full                 " NORM "- set full screen console mode");
+    con_print(WHITE "    shot                 " NORM "- take screenshot in ????.tga");
+    con_print(WHITE "    memst                " NORM "- memory allocation stats");
+    con_print(WHITE "    memtst               " NORM "- memory test (" YEL "WARNING" NORM ")");
+    con_print(WHITE "    cls                  " NORM "- clear message buffer");
+    con_print(WHITE "    colors               " NORM "- colored output test");
+    con_print(WHITE "    disa                 " NORM "- disassemble code into text file");
+    con_print(WHITE "    dspdisa              " NORM "- disassemble DSP code into text file");
+    con_print(WHITE "    tree                 " NORM "- show call tree");
+    con_print(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS");
+    con_print("\n");
+
+    con_print(CYAN  "--- functional keys -----------------------------------------------------------");
+    con_print(WHITE "    F1                   " NORM "- update registers");
+    con_print(WHITE "    F2                   " NORM "- memory view");
+    con_print(WHITE "    F3                   " NORM "- disassembly");
+    con_print(WHITE "    F4                   " NORM "- command string");
+    con_print(WHITE "    F5                   " NORM "- run, stop");
+    con_print(WHITE "    F6, ^F6              " NORM "- switch registers");
+    con_print(WHITE "    F9                   " NORM "- toggle autokill breakpoint");
+    con_print(WHITE "    ^F9                  " NORM "- toggle breakpoint");
+    con_print(WHITE "    F10                  " NORM "- step over");
+    con_print(WHITE "    F11                  " NORM "- single step (Google: disable f11 windows 10 console");
+    con_print(WHITE "    F12                  " NORM "- skip instruction");
+    con_print("\n");
+
+    con_print(CYAN  "--- misc keys -----------------------------------------------------------------");
+    con_print(WHITE "    PGUP, PGDN           " NORM "- scroll windows");
+    con_print(WHITE "    ENTER, ESC           " NORM "- follow/return branch (in disasm window)");
+    con_print(WHITE "    ENTER                " NORM "- memory edit (in memview window)");
+    con_print(WHITE "    ^ENTER               " NORM "- show X86 code, compile if need (disasm window)");
+    con_print("\n");
+}
+
+// ---------------------------------------------------------------------------
 // special
 
 void cmd_showpc(int argc, char argv[][CON_LINELEN])
@@ -77,7 +171,7 @@ void cmd_unload(int argc, char argv[][CON_LINELEN])
 {
     if (emu.running)
     {
-        SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
+        EMUClose();
     }
     else con_print("not loaded.\n");
 }
@@ -148,37 +242,16 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
 {
     if(argc < 2)
     {
-        con_print("syntax : boot <file> OR boot {n}\n");
-        con_print("path can be relative, n = 1..MAX\n");
+        con_print("syntax : boot <file>\n");
+        con_print("path can be relative\n");
         con_print("examples of use : " GREEN "boot c:\\luigimansion.gcm\n");
         con_print("                  " GREEN "boot PONG.dol\n");
-        con_print("                  " GREEN "boot {1}\n");
     }
     else
     {
-        char filepath[256];
+        char filepath[0x1000];
         
-        if(argv[1][0] == '{' && !emu.running)
-        {
-            int n = strtoul(&argv[1][1], NULL, 0);
-            if(usel.filenum <= 0)
-            {
-                con_print("selector is empty (no files).\n");
-                return;
-            }
-            if(n <= 0)
-            {
-                con_print("n must be 1..%i\n", usel.filenum);
-                return;
-            }
-            if(n >= (usel.filenum + 1))
-            {
-                con_print("out of file list. n must be 1..%i\n", usel.filenum);
-                return;
-            }
-            strncpy_s(filepath, sizeof(filepath), usel.files[n-1].name, 255);
-        }
-        else strncpy_s(filepath, sizeof(filepath), argv[1], 255);
+        strncpy_s(filepath, sizeof(filepath), argv[1], 255);
 
         FILE* f = nullptr;
         fopen_s(&f, filepath, "rb");
@@ -191,10 +264,7 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
 
         LoadFile(filepath);
         EMUClose();
-        EMUOpen(
-            GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-            GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-            GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
+        EMUOpen();
     }
 }
 
@@ -634,7 +704,7 @@ void cmd_plist(int argc, char argv[][CON_LINELEN])
     {
         Patch * p = &ldat.patches[i];
         uint8_t * data = (uint8_t *)&p->data;
-        char * fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
+        const char * fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
 
         switch(p->dataSize)
         {
@@ -812,7 +882,7 @@ static uint32_t op_shr (uint32_t a, uint32_t b) { return a>>b; }
 // Special handling for MSR register.
 static void describe_msr (uint32_t msr_val)
 {
-    static char *fpmod[4] = 
+    static const char *fpmod[4] = 
     {
         "exceptions disabled",
         "imprecise nonrecoverable",
@@ -1439,93 +1509,69 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
 }
 
 // ---------------------------------------------------------------------------
-// help
+// disasm dsp ucode
 
-void cmd_help(int argc, char argv[][CON_LINELEN])
+void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 {
-    con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
-    con_print(WHITE "    .                    " NORM "- view code at pc");
-    con_print(WHITE "    *                    " NORM "- view data, pointed by load/store opcode");
-    con_print(WHITE "    u                    " NORM "- view code at specified address");
-    con_print(WHITE "    d                    " NORM "- view data at specified address");
-    con_print(WHITE "    sd1                  " NORM "- quick form of d-command, using SDA1");
-    con_print(WHITE "    sd2                  " NORM "- quick form of d-command, using SDA2");
-    con_print(WHITE "    r                    " NORM "- show / change CPU register");
-    con_print(WHITE "    ps                   " NORM "- show / change paired-single register");
-    con_print(WHITE "    pc                   " NORM "- set program counter");
+    if (argc < 2)
+    {
+        con_print("syntax: dspdisa <dsp_ucode.bin>\n");
+        con_print("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
+        con_print("example of use: dspdisa Data\\dsp_irom.bin\n");
+    }
 
-    con_print(WHITE "    nop                  " NORM "- insert NOP opcode at cursor");
-    con_print(WHITE "    denop                " NORM "- restore old NOP'ed value");
-    con_print(WHITE "    blr [value]          " NORM "- insert BLR opcode at cursor (with value)");
-//  con_print(WHITE "    b <addr>             " NORM "- toggle code breakpoint at <addr> (max=%i)", MAX_BPNUM);
-//  con_print(WHITE "    bm [8|16|32] <addr>  " NORM "- toggle data breakpoint at <addr> (max=%i)", MAX_BPNUM);
-    con_print(WHITE "    bc                   " NORM "- clear all code breakpoints");
-//  con_print(WHITE "    bmc                  " NORM "- clear all data breakpoints");
-    con_print(WHITE "    run                  " NORM "- execute until next breakpoint");
-    con_print(WHITE "    stop                 " NORM "- stop debugging");
-    con_print(WHITE "    reset                " NORM "- reset emulator");
-    con_print("\n");
-    
-    con_print(CYAN  "--- high-level commands -------------------------------------------------------");
-    con_print(WHITE "    stat                 " NORM "- show hardware state/statistics");
-    con_print(WHITE "    syms                 " NORM "- list symbolic information");
-    con_print(WHITE "    name                 " NORM "- name function (add symbol)");
-    con_print(WHITE "    dvdopen              " NORM "- get file position (use DVD plugin)");
-    con_print(WHITE "    ostest               " NORM "- test OS internals");
-    con_print(WHITE "    top10                " NORM "- show HLE calls toplist");
-//  con_print(WHITE "    alarm                " NORM "- generate decrementer exception");
-//  con_print(WHITE "    bcb                  " NORM "- list all registered branch callbacks");    
-//  con_print(WHITE "    hlestats             " NORM "- show HLE-subsystem state");
-    con_print(WHITE "    savemap              " NORM "- save symbolic map into file");
-    con_print("\n");
+    uint32_t ucodeSize = 0;
+    uint8_t* ucode = (uint8_t *)FileLoad(argv[1], &ucodeSize);
+    if (!ucode)
+    {
+        con_print("Failed to load %s\n", argv[1]);
+        return;
+    }
 
-    con_print(CYAN  "--- patch controls ------------------------------------------------------------");
-    con_print(WHITE "    dop                  " NORM "- apply patches immediately (only with freeze=1)");
-    con_print(WHITE "    plist                " NORM "- list all patch data");
-    con_print(WHITE "    pload                " NORM "- load patch file (unload previous)");
-    con_print(WHITE "    padd                 " NORM "- add patch file (do not unload previous)");
-    con_print(WHITE "    patch                " NORM "- insert memory patch");
-    con_print("\n");
+    FILE* f = nullptr;
+    fopen_s(&f, "Data\\dspdisa.txt", "wt");
+    if (!f)
+    {
+        free(ucode);
+        con_print("Failed to create dsp_disa.txt\n");
+        return;
+    }
 
-    con_print(CYAN  "--- misc commands -------------------------------------------------------------");
-    con_print(WHITE "    boot                 " NORM "- boot DVD/executable (from file or list)");
-    con_print(WHITE "    reboot               " NORM "- reload last file");
-    con_print(WHITE "    unload               " NORM "- unload current file");
-    con_print(WHITE "    sop                  " NORM "- search opcode (forward) from cursor address");
-    con_print(WHITE "    lr                   " NORM "- show LR back chain (\"branch history\"");
-    con_print(WHITE "    script               " NORM "- execute batch script");
-//  con_print(WHITE "    mapmem               " NORM "- add memory mapper");
-    con_print(WHITE "    log                  " NORM "- enable/disable log output)");
-    con_print(WHITE "    logfile              " NORM "- choose HTML log-file for ouput");
-    con_print(WHITE "    full                 " NORM "- set full screen console mode");
-    con_print(WHITE "    shot                 " NORM "- take screenshot in ????.tga");
-    con_print(WHITE "    memst                " NORM "- memory allocation stats");
-    con_print(WHITE "    memtst               " NORM "- memory test (" YEL "WARNING" NORM ")");
-    con_print(WHITE "    cls                  " NORM "- clear message buffer");
-    con_print(WHITE "    colors               " NORM "- colored output test");
-    con_print(WHITE "    disa                 " NORM "- disassemble code into text file");
-    con_print(WHITE "    tree                 " NORM "- show call tree");
-    con_print(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS");
-    con_print("\n");
+    uint8_t* ucodePtr = ucode;
+    size_t bytesLeft = ucodeSize;
+    size_t offset = 0;
 
-    con_print(CYAN  "--- functional keys -----------------------------------------------------------");
-    con_print(WHITE "    F1                   " NORM "- update registers");
-    con_print(WHITE "    F2                   " NORM "- memory view");
-    con_print(WHITE "    F3                   " NORM "- disassembly");
-    con_print(WHITE "    F4                   " NORM "- command string");
-    con_print(WHITE "    F5                   " NORM "- run, stop");
-    con_print(WHITE "    F6, ^F6              " NORM "- switch registers");
-    con_print(WHITE "    F9                   " NORM "- toggle autokill breakpoint");
-    con_print(WHITE "    ^F9                  " NORM "- toggle breakpoint");
-    con_print(WHITE "    F10                  " NORM "- step over");
-    con_print(WHITE "    F11                  " NORM "- single step (Google: disable f11 windows 10 console");
-    con_print(WHITE "    F12                  " NORM "- skip instruction");
-    con_print("\n");
+    while (bytesLeft != 0)
+    {
+        DSP::AnalyzeInfo info;
 
-    con_print(CYAN  "--- misc keys -----------------------------------------------------------------");
-    con_print(WHITE "    PGUP, PGDN           " NORM "- scroll windows");
-    con_print(WHITE "    ENTER, ESC           " NORM "- follow/return branch (in disasm window)");
-    con_print(WHITE "    ENTER                " NORM "- memory edit (in memview window)");
-    con_print(WHITE "    ^ENTER               " NORM "- show X86 code, compile if need (disasm window)");
-    con_print("\n");
+        // Analyze
+
+        bool result = DSP::Analyze(ucodePtr, ucodeSize - bytesLeft, info);
+        if (!result)
+        {
+            con_print("DSP::Analyze failed at offset: 0x%08X\n", offset);
+            break;
+        }
+
+        // Disassemble
+
+        std::string text = DSP::DspDisasm::Disasm(offset, info);
+
+        if (f)
+        {
+            fprintf(f, "%s\n", text.c_str());
+        }
+
+        offset += info.sizeInBytes;
+        bytesLeft -= info.sizeInBytes;
+    }
+
+    free(ucode);
+
+    if (f)
+    {
+        fflush(f);
+        fclose(f);
+    }
 }

@@ -7,9 +7,6 @@
     <Filter Include="User Menu\Resource Files">
       <UniqueIdentifier>{8b89c15e-a9b8-492f-9de2-300059b1a186}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Debugger">
-      <UniqueIdentifier>{c95b6c67-8f65-4d78-8bdb-57536346d5ec}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SRC\UserMenu\UserAbout.cpp">
@@ -42,36 +39,6 @@
     <ClCompile Include="SRC\UserMenu\UserWindow.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\Debugger\break.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\cmd.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\console.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\cpuview.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\Debugger.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\GekkoDisasm.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\input.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\memview.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\output.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\regs.cpp">
-      <Filter>Debugger</Filter>
-    </ClCompile>
     <ClCompile Include="SRC\UserMenu\DVDBanner.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
@@ -80,9 +47,6 @@
     </ClCompile>
     <ClCompile Include="SRC\UserMenu\Emulator.cpp">
       <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Debugger\DspDisasm.cpp">
-      <Filter>Debugger</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -123,36 +87,6 @@
       <Filter>User Menu\Resource Files</Filter>
     </ClInclude>
     <ClInclude Include="SRC\dolphin.h" />
-    <ClInclude Include="SRC\Debugger\break.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\cmd.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\console.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\cpuview.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\Debugger.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\GekkoDisasm.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\input.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\memview.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\output.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\regs.h">
-      <Filter>Debugger</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\UserMenu\SjisTable.h">
       <Filter>User Menu</Filter>
     </ClInclude>
@@ -167,9 +101,6 @@
     </ClInclude>
     <ClInclude Include="SRC\UserMenu\Emulator.h">
       <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\Debugger\DspDisasm.h">
-      <Filter>Debugger</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

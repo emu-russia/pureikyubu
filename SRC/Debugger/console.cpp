@@ -1,7 +1,7 @@
 // console init code.
 //
 // recommended console font size is 6x9.
-#include "dolphin.h"
+#include "pch.h"
 
 // all console important variables are here
 CONControl con;
@@ -86,9 +86,9 @@ void con_open()
 
     // get input/ouput handles
     con.input = GetStdHandle(STD_INPUT_HANDLE);
-    VERIFY(con.input == INVALID_HANDLE_VALUE, "Cannot obtain input handler");
+    assert(con.input != INVALID_HANDLE_VALUE);
     con.output = GetStdHandle(STD_OUTPUT_HANDLE);
-    VERIFY(con.output == INVALID_HANDLE_VALUE, "Cannot obtain output handler");
+    assert(con.output != INVALID_HANDLE_VALUE);
 
     // setup console window
     GetConsoleCursorInfo(con.output, &con.curinfo);
@@ -118,18 +118,10 @@ void con_open()
             GetSystemMetrics(SM_CXSCREEN) - (wndrect.right - wndrect.left), 
             0, 0, 0, SWP_NOSIZE);
     }
-    SetConsoleTitle(APPNAME " Debug Console");
-    SetAlwaysOnTop(con.hwnd, TRUE);
+    SetConsoleTitleA("Dolwin Debug Console");
 
     con.active = TRUE;
     con.update |= CON_UPDATE_ALL;
-
-    // show emulator version and copyright
-    con_print(
-        WHITE APPNAME " - " APPDESC "\n"
-        WHITE "Build ver. " APPVER ", " __DATE__ ", " __TIME__ "\n"
-        WHITE "Copyright 2002-2020, " APPNAME " Team\n\n"
-    );
 }
 
 void con_close()
@@ -192,7 +184,7 @@ void con_start()
     }
 }
 
-void con_break(char *reason)
+void con_break(const char *reason)
 {
     if(reason) con_print("\n" GREEN "debugger breaks%s. press F5 to continue.\n", reason);
     if(emu.running) emu.running = false;

@@ -1,10 +1,10 @@
 // text output and refresh
-#include "dolphin.h"
+#include "pch.h"
 
 WINDControl wind;
 ROLLControl roll;
 
-static char *logcol[] = { 
+static const char *logcol[] = { 
     "<font color=#000000>", 
     "<font color=#000080>", 
     "<font color=#008000>", 
@@ -22,7 +22,7 @@ static char *logcol[] = {
     "<font color=#FFFF00>",
     "<font color=#FFFFFF>"
 };
-static char *logcurcol;
+static const char *logcurcol;
 
 // ---------------------------------------------------------------------------
 
@@ -89,7 +89,7 @@ void con_printchar(char ch)
     if(con.X >= CON_WIDTH) con_nextline();
 }
 
-void con_printline(char *text)
+void con_printline(const char *text)
 {
     if(!text) return;
 
@@ -127,13 +127,13 @@ void con_gotoxy(int X, int Y)
     con.Y = Y;
 }
 
-void con_print_at(int X, int Y, char *text)
+void con_print_at(int X, int Y, const char *text)
 {
     con_gotoxy(X, Y);
     con_printline(text);
 }
 
-void con_status(char *txt)
+void con_status(const char *txt)
 {
     sprintf_s (roll.statusline, sizeof(roll.statusline), " %s\n", txt);
     con_update(CON_UPDATE_STAT);
@@ -163,7 +163,7 @@ void con_clear_line(int y, uint16_t attr)
     }
 }
 
-void con_printf_at(int x, int y, char *txt, ...)
+void con_printf_at(int x, int y, const char *txt, ...)
 {
     va_list     varg;
     static char buf[256];
@@ -260,9 +260,9 @@ static void log_console_output(char *txt)
     }
 }
 
-void con_add_roller_line(char *txt, int err)
+void con_add_roller_line(const char *txt, int err)
 {
-    char line[0x1000], *ptr = txt;
+    char line[0x1000], *ptr = (char *)txt;
 
     // insert error color
     if(err)
@@ -463,7 +463,8 @@ void con_error(const char *txt, ...)
 
     sprintf_s(buf, sizeof(buf), BRED);
     va_start(arg, txt);
-    vsprintf(buf+strlen(BRED), txt, arg);
+    size_t bredlen = strlen(BRED);
+    vsprintf_s(buf + bredlen, sizeof(buf) - bredlen, txt, arg);
     va_end(arg);
     buf[strlen(buf) + 1] = 0;
 
@@ -501,7 +502,8 @@ void con_print(const char *txt, ...)
 
     sprintf_s(buf, sizeof(buf), NORM);
     va_start(arg, txt);
-    vsprintf(buf+strlen(NORM), txt, arg);
+    size_t normlen = strlen(NORM);
+    vsprintf_s (buf + normlen, sizeof(buf) - normlen, txt, arg);
     va_end(arg);
     buf[strlen(buf) + 1] = 0;
 

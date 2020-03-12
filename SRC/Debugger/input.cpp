@@ -1,5 +1,5 @@
 // keyboard input
-#include "dolphin.h"
+#include "pch.h"
 
 // ---------------------------------------------------------------------------
 
@@ -19,11 +19,7 @@ static void con_function_key(int vkey, int ctrl)
             con_change_focus(WDISA);    // Disa
             break;
         case VK_F4:
-            if(ctrl & (LEFT_ALT_PRESSED | RIGHT_ALT_PRESSED))
-            {
-                PostMessage(wnd.hMainWindow, WM_CLOSE, NULL, NULL);
-            }
-            else con_change_focus(WCONSOLE); // Console (roll)
+            con_change_focus(WCONSOLE); // Console (roll)
             break;
         case VK_F5:
             if(emu.running) con_break();

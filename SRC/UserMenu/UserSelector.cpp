@@ -33,15 +33,6 @@ static void fix_string(char *str)
     }
 }
 
-// print all paths (DEBUG)
-static void list_path()
-{
-    for(int i=0; i<usel.pathnum; i++)
-    {
-        DolwinReport("path %i : \'%s\'", i, usel.paths[i]);
-    }
-}
-
 // add new path into "paths" list
 static void add_path(char *path)
 {
@@ -601,7 +592,7 @@ static uint16_t * SjisToUnicode(uint8_t * sjisText, uint32_t * size, uint32_t * 
 void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 {
     // opened ?
-    if(!usel.opened) return;
+    if(!usel.opened || usel.updateInProgress) return;
 
     #define     ID item->itemID
     #define     DC item->hDC
@@ -678,7 +669,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        char text[0x1000];
+        char text[0x1000] = { 0, };
         UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
@@ -690,10 +681,8 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc.left  = rc.right;
         rc.right+= lvc.cx;
 
-        lvi.iSubItem   = col;
-        lvi.pszText    = text;
-        lvi.cchTextMax = sizeof(text);
-        int len = SendMessage(usel.hSelectorWindow, LVM_GETITEMTEXT, (WPARAM)ID, (LPARAM)&lvi);
+        ListView_GetItemText(usel.hSelectorWindow, ID, col, text, sizeof(text));
+        size_t len = strlen(text);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
@@ -717,12 +706,14 @@ void UpdateSelector()
     char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", "*.iso", NULL };
     char found[2 * MAX_PATH];
     int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
-    WIN32_FIND_DATA fd;
+    WIN32_FIND_DATA fd = { 0 };
     HANDLE hfff;
     int dir = 0;
 
     // opened ?
-    if(!usel.opened) return;
+    if(!usel.opened || usel.updateInProgress) return;
+
+    usel.updateInProgress = true;
 
     // destroy old filelist and path data
     ListView_DeleteAllItems(usel.hSelectorWindow);
@@ -778,6 +769,8 @@ void UpdateSelector()
         dir++;
     }
 
+    usel.updateInProgress = false;
+
     // update selector window
     UpdateWindow(usel.hSelectorWindow);
 
@@ -826,7 +819,7 @@ static void getdispinfo(LPNMHDR pnmh)
     UserFile    *file = &usel.files[lpdi->item.lParam];
     char        *len  = FileSmartSize(file->size);
 
-    #define DISP(n, text) case n: strcpy(lpdi->item.pszText, text); break
+    #define DISP(n, text) case n: strcpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, text); break
     switch(lpdi->item.iSubItem)
     {
         DISP(0, " ");
@@ -860,9 +853,9 @@ static void mouseclick(int rmb)
     }
     else                    // file selected
     {
-        // show item number for debugger's 'boot {n}' command
+        // show item
         char progress[1024];
-        sprintf_s(progress, sizeof(progress), "#%i: %s", item + 1, file->name);
+        sprintf_s(progress, sizeof(progress), "%s", file->name);
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -900,7 +893,7 @@ static void doubleclick()
     if(item == -1) return;
 
     UserFile *file = &usel.files[item];
-    char filename[256];
+    char filename[0x1000];
     strcpy_s(filename, sizeof(filename), file->name);
 
     // load file

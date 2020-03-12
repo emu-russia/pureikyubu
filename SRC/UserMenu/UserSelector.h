@@ -68,9 +68,6 @@ typedef struct UserSelector
 
     HWND        hSelectorWindow;    // selector window handler
     HMENU       hFileMenu;          // popup file menu
-    bool        compress;           // current file action (1:compress, 0:decompress)
-    char        file1[256];         // first file for GCMCMPR
-    char        file2[256];         // second file for GCMCMPR
     UserFile*   selected;           // first selected item (temporary for edit file dialog)
 
     // path list, where to search files.
@@ -84,6 +81,8 @@ typedef struct UserSelector
     // unlimited in theory (limited only by system resources).
     UserFile*   files;              // file list
     int         filenum;            // file count
+
+    bool        updateInProgress;   // UpdateSelector called, stop all drawing until it complete
 } UserSelector;
 
 extern  UserSelector usel;

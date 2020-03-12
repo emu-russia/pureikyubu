@@ -1,7 +1,6 @@
 // DSP disassembler
 
-#include "dolphin.h"
-#include "Hardware/DspAnalyzer.h"
+#include "pch.h"
 
 namespace DSP
 {
