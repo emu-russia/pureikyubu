@@ -303,8 +303,24 @@ namespace DSP
 
 		static void ResetInfo(AnalyzeInfo& info);
 
-		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
 		static bool Group0_Logic(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, DspInstruction instr, bool logic);
+
+		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static bool Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static bool Group2(AnalyzeInfo& info);
+		static bool Group3(AnalyzeInfo& info);
+		static bool Group4(AnalyzeInfo& info);
+		static bool Group5(AnalyzeInfo& info);
+		static bool Group6(AnalyzeInfo& info);
+		static bool Group7(AnalyzeInfo& info);
+		static bool Group8(AnalyzeInfo& info);
+		static bool Group9(AnalyzeInfo& info);
+		static bool GroupAB(AnalyzeInfo& info);
+		static bool GroupCD(AnalyzeInfo& info);
+		static bool GroupE(AnalyzeInfo& info);
+		static bool GroupF(AnalyzeInfo& info);
+
+		static bool GroupPacked(AnalyzeInfo& info);
 
 		template<typename T>
 		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);

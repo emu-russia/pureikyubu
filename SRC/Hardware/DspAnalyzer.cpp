@@ -373,6 +373,76 @@ namespace DSP
 		return true;
 	}
 
+	bool Analyzer::Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group2(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group3(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group4(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group5(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group6(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group7(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group8(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::Group9(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::GroupAB(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::GroupCD(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::GroupE(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::GroupF(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
+	bool Analyzer::GroupPacked(AnalyzeInfo& info)
+	{
+		return true;
+	}
+
 	bool Analyzer::AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits)
 	{
 		if (info.numParameters >= _countof(info.params))
@@ -418,13 +488,62 @@ namespace DSP
 
 		int group = (info.instrBits >> 12);
 
-		// Select by group
+		// Select by group. Groups 3-F in packed format.
 
 		switch (group)
 		{
 			case 0:
 				return Group0(instrPtr, instrMaxSize, info);
-				break;
+			case 1:
+				return Group1(instrPtr, instrMaxSize, info);
+			case 2:
+				return Group2(info);
+			case 3:
+				if (!Group3(info))
+					return false;
+				return GroupPacked(info);
+			case 4:
+				if (!Group4(info))
+					return false;
+				return GroupPacked(info);
+			case 5:
+				if (!Group5(info))
+					return false;
+				return GroupPacked(info);
+			case 6:
+				if (!Group6(info))
+					return false;
+				return GroupPacked(info);
+			case 7:
+				if (!Group7(info))
+					return false;
+				return GroupPacked(info);
+			case 8:
+				if (!Group8(info))
+					return false;
+				return GroupPacked(info);
+			case 9:
+				if (!Group9(info))
+					return false;
+				return GroupPacked(info);
+			case 0xa:
+			case 0xb:
+				if (!GroupAB(info))
+					return false;
+				return GroupPacked(info);
+			case 0xc:
+			case 0xd:
+				if (!GroupCD(info))
+					return false;
+				return GroupPacked(info);
+			case 0xe:
+				if (!GroupE(info))
+					return false;
+				return GroupPacked(info);
+			case 0xf:
+				if (!GroupF(info))
+					return false;
+				return GroupPacked(info);
 		}
 
 		return true;
