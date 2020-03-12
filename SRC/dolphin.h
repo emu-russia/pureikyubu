@@ -31,10 +31,11 @@
 // ---------------------------------------------------------------------------
 // Dolwin includes
 
+#include "UserMenu/UserSpinLock.h"
 #include "Core/Memory.h"
 #include "Core/Gekko.h"
 #include "Core/Interpreter.h"
-#include "Hardware/Hardware.h"
 #include "HighLevel/HighLevel.h"
+#include "Hardware/Hardware.h"
 #include "Debugger/Debugger.h"
 #include "UserMenu/User.h"

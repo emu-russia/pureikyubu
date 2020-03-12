@@ -10,6 +10,8 @@
 #include <time.h>
 #include <Windows.h>
 
+#include "../UserMenu/UserSpinLock.h"
+
 #include "../Core/Memory.h"
 #include "../Core/Gekko.h"
 #include "../Core/Interpreter.h"

@@ -283,6 +283,8 @@ namespace DSP
 
 	typedef struct _AnalyzeInfo
 	{
+		uint32_t clearingPaddy;		///< To use {0} on structure
+
 		DspInstruction instr;		///< Processed instruction (ready to output)
 		uint16_t instrBits;			///< Raw unprocessed opcode bits
 

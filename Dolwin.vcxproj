@@ -236,6 +236,7 @@
     <ClCompile Include="SRC\UserMenu\UserProfiler.cpp" />
     <ClCompile Include="SRC\UserMenu\UserSelector.cpp" />
     <ClCompile Include="SRC\UserMenu\UserSettings.cpp" />
+    <ClCompile Include="SRC\UserMenu\UserSpinLock.cpp" />
     <ClCompile Include="SRC\UserMenu\UserWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -256,6 +257,7 @@
     <ClInclude Include="SRC\UserMenu\UserProfiler.h" />
     <ClInclude Include="SRC\UserMenu\UserSelector.h" />
     <ClInclude Include="SRC\UserMenu\UserSettings.h" />
+    <ClInclude Include="SRC\UserMenu\UserSpinLock.h" />
     <ClInclude Include="SRC\UserMenu\UserWindow.h" />
   </ItemGroup>
   <ItemGroup>

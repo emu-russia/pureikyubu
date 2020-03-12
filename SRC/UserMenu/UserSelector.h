@@ -81,8 +81,7 @@ typedef struct UserSelector
     // unlimited in theory (limited only by system resources).
     UserFile*   files;              // file list
     int         filenum;            // file count
-
-    bool        updateInProgress;   // UpdateSelector called, stop all drawing until it complete
+    MySpinLock::LOCK filesLock;
 } UserSelector;
 
 extern  UserSelector usel;

@@ -10,6 +10,8 @@
 #include <intrin.h>
 #include <time.h>
 
+#include "../UserMenu/UserSpinLock.h"
+
 #include "HighLevel.h"
 
 #include "../Hardware/Hardware.h"

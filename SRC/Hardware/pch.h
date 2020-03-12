@@ -10,6 +10,8 @@
 #include <time.h>
 #include <Windows.h>
 
+#include "../UserMenu/UserSpinLock.h"
+
 #include "Hardware.h"
 
 #include "../Debugger/Debugger.h"

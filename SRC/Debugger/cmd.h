@@ -38,3 +38,13 @@ void    cmd_tree(int argc, char argv[][CON_LINELEN]);		// show call tree
 void    cmd_top10(int argc, char argv[][CON_LINELEN]);		// show HLE calls toplist
 void    cmd_u(int argc, char argv[][CON_LINELEN]);			// set disassembly address
 void    cmd_dspdisa(int argc, char argv[][CON_LINELEN]);	// disasm dsp ucode
+
+
+//dregs: Show dsp registers
+//dmem : Dump DSP DMEM
+//imem : Dump DSP IMEM
+//drun : Run DSP thread until break, halt or dstop
+//dstop : Stop DSP thread
+//dstep : Step DSP instruction
+//dbrk : Add IMEM breakpoint
+//dunbrk : Clear all IMEM breakpoints

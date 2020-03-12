@@ -85,6 +85,10 @@ void cmd_help(int argc, char argv[][CON_LINELEN])
     con_print(WHITE "    reset                " NORM "- reset emulator");
     con_print("\n");
 
+    con_print(CYAN  "--- dsp debug commands --------------------------------------------------------");
+    con_print(WHITE "    dspdisa              " NORM "- disassemble DSP code into text file");
+    con_print("\n");
+
     con_print(CYAN  "--- high-level commands -------------------------------------------------------");
     con_print(WHITE "    stat                 " NORM "- show hardware state/statistics");
     con_print(WHITE "    syms                 " NORM "- list symbolic information");
@@ -123,7 +127,6 @@ void cmd_help(int argc, char argv[][CON_LINELEN])
     con_print(WHITE "    cls                  " NORM "- clear message buffer");
     con_print(WHITE "    colors               " NORM "- colored output test");
     con_print(WHITE "    disa                 " NORM "- disassemble code into text file");
-    con_print(WHITE "    dspdisa              " NORM "- disassemble DSP code into text file");
     con_print(WHITE "    tree                 " NORM "- show call tree");
     con_print(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS");
     con_print("\n");
@@ -146,7 +149,6 @@ void cmd_help(int argc, char argv[][CON_LINELEN])
     con_print(WHITE "    PGUP, PGDN           " NORM "- scroll windows");
     con_print(WHITE "    ENTER, ESC           " NORM "- follow/return branch (in disasm window)");
     con_print(WHITE "    ENTER                " NORM "- memory edit (in memview window)");
-    con_print(WHITE "    ^ENTER               " NORM "- show X86 code, compile if need (disasm window)");
     con_print("\n");
 }
 
@@ -1551,7 +1553,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 
     while (bytesLeft != 0)
     {
-        DSP::AnalyzeInfo info;
+        DSP::AnalyzeInfo info = { 0 };
 
         // Analyze
 

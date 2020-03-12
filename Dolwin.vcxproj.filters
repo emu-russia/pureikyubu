@@ -48,6 +48,9 @@
     <ClCompile Include="SRC\UserMenu\Emulator.cpp">
       <Filter>User Menu</Filter>
     </ClCompile>
+    <ClCompile Include="SRC\UserMenu\UserSpinLock.cpp">
+      <Filter>User Menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRC\UserMenu\User.h">
@@ -100,6 +103,9 @@
       <Filter>User Menu</Filter>
     </ClInclude>
     <ClInclude Include="SRC\UserMenu\Emulator.h">
+      <Filter>User Menu</Filter>
+    </ClInclude>
+    <ClInclude Include="SRC\UserMenu\UserSpinLock.h">
       <Filter>User Menu</Filter>
     </ClInclude>
   </ItemGroup>

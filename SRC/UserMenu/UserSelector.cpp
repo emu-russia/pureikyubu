@@ -362,7 +362,8 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
     // clean up
     DeleteObject(hbm);
     DeleteDC(hdc);
-    free(imageA), free(imageB);
+    free(imageA);
+    free(imageB);
     return TRUE;
 }
 
@@ -474,6 +475,7 @@ static void add_file(char *file, int fsize, int type)
     else VERIFY(type, "Unknown selector file type.");
 
     // extend filelist
+    MySpinLock::Lock(&usel.filesLock);
     if(usel.files)
     {
         usel.files = (UserFile *)realloc(usel.files, 
@@ -483,10 +485,11 @@ static void add_file(char *file, int fsize, int type)
     {
         usel.files = (UserFile *)malloc(sizeof(UserFile));
     }
-    VERIFY(usel.files == NULL, "Not enough memory for new selector item.");
+    assert(usel.files);
+    memcpy(&usel.files[usel.filenum], &item, sizeof(UserFile));
+    MySpinLock::Unlock(&usel.filesLock);
 
     // add new item
-    memcpy(&usel.files[usel.filenum], &item, sizeof(UserFile));
     add_item(usel.filenum++);
 }
 
@@ -592,7 +595,7 @@ static uint16_t * SjisToUnicode(uint8_t * sjisText, uint32_t * size, uint32_t * 
 void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 {
     // opened ?
-    if(!usel.opened || usel.updateInProgress) return;
+    if(!usel.opened) return;
 
     #define     ID item->itemID
     #define     DC item->hDC
@@ -711,18 +714,18 @@ void UpdateSelector()
     int dir = 0;
 
     // opened ?
-    if(!usel.opened || usel.updateInProgress) return;
-
-    usel.updateInProgress = true;
+    if(!usel.opened) return;
 
     // destroy old filelist and path data
     ListView_DeleteAllItems(usel.hSelectorWindow);
+    MySpinLock::Lock(&usel.filesLock);
     if(usel.files)
     {
         free(usel.files);
         usel.files = NULL;
         usel.filenum = 0;
     }
+    MySpinLock::Unlock(&usel.filesLock);
     ImageList_Remove(bannerList, -1);
 
     // build search path list (even if selector closed)
@@ -768,8 +771,6 @@ void UpdateSelector()
         // next directory
         dir++;
     }
-
-    usel.updateInProgress = false;
 
     // update selector window
     UpdateWindow(usel.hSelectorWindow);
