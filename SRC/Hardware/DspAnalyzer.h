@@ -156,8 +156,8 @@ namespace DSP
 
 	///< Extended opcodes
 
-	/// Extended opcodes do not exist on their own. These opcodes can only be attached to opcodes that allow 
-	/// extending (8 lower bits of opcode not used by opcode). Extended opcodes do not modify the program counter ($pc register.
+	// DSP instructions are in a hybrid format: some instructions occupy a full 16-bit word, and some can be packed as two 8-bit instructions per word.
+	// Extended opcodes represents lower-part of instruction pair.
 
 	enum class DspInstructionEx
 	{
