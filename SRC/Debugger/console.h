@@ -47,8 +47,6 @@ public:
     bool                log = false;            // flush messages into log-file
     char                logfile[256] = { 0 };   // HTML file for log output
     FILE*               logf = nullptr;         // file descriptor
-    DBPoint*            brks = nullptr;         // breakpoint list
-    int                 brknum = 0;             // number of breakpoints
     NOPHistory*         nopHist = nullptr;
     int                 nopNum = 0;
     std::map<std::string, cmd_handler> cmds;

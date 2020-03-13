@@ -389,6 +389,12 @@ void cmd_dpc(int argc, char argv[][CON_LINELEN])
         return;
     }
 
+    if (dspCore->IsRunning())
+    {
+        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        return;
+    }
+
     if (argc < 2)
     {
         con_print("syntax: dpc <dsp_addr>\n");
@@ -417,6 +423,12 @@ void cmd_du(int argc, char argv[][CON_LINELEN])
     if (!dspCore)
     {
         DBReport("DspCore not ready\n");
+        return;
+    }
+
+    if (dspCore->IsRunning())
+    {
+        DBReport(_DSP "It is impossible while running DSP thread.\n");
         return;
     }
 

@@ -128,8 +128,14 @@ namespace DSP
 		void AddBreakpoint(DspAddress imemAddress);
 		void ListBreakpoints();
 		void ClearBreakpoints();
+		bool TestBreakpoint(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
+
+		// Register access
+
+		void MoveToReg(int reg, uint16_t val);
+		uint16_t MoveFromReg(int reg);
 
 		// Memory engine
 

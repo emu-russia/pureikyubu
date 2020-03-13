@@ -88,6 +88,7 @@ namespace DSP
 		{
 			ResumeThread(threadHandle);
 			DBReport(_DSP "DspCore::Run");
+			savedGekkoTicks = cpu.tb.uval;
 			running = true;
 		}
 	}
@@ -104,9 +105,14 @@ namespace DSP
 
 	void DspCore::Update()
 	{
+		uint64_t ticks = cpu.tb.uval;
 
+		if (ticks >= (savedGekkoTicks + GekkoTicksPerDspInstruction))
+		{
+			interp->ExecuteInstr();
+			savedGekkoTicks = ticks;
+		}
 	}
-
 
 	#pragma region "Debug"
 
@@ -132,6 +138,24 @@ namespace DSP
 		MySpinLock::Lock(&breakPointsSpinLock);
 		breakpoints.clear();
 		MySpinLock::Unlock(&breakPointsSpinLock);
+	}
+
+	bool DspCore::TestBreakpoint(DspAddress imemAddress)
+	{
+		bool found = false;
+
+		MySpinLock::Lock(&breakPointsSpinLock);
+		for (auto it = breakpoints.begin(); it != breakpoints.end(); ++it)
+		{
+			if (*it == imemAddress)
+			{
+				found = true;
+				break;
+			}
+		}
+		MySpinLock::Unlock(&breakPointsSpinLock);
+
+		return found;
 	}
 
 	/// Execute single instruction (by interpreter)
@@ -220,6 +244,81 @@ namespace DSP
 	}
 
 	#pragma endregion "Debug"
+
+
+	#pragma region "Register access"
+
+	void DspCore::MoveToReg(int reg, uint16_t val)
+	{
+		switch (reg)
+		{
+			case 0:
+			case 1:
+			case 2:
+			case 3:
+				regs.ar[reg] = val;
+				break;
+			case 4:
+			case 5:
+			case 6:
+			case 7:
+				regs.ix[reg - 4] = val;
+				break;
+			case 8:
+			case 9:
+			case 10:
+			case 11:
+				regs.gpr[reg - 8] = val;
+				break;
+			case 12:
+			case 13:
+			case 14:
+			case 15:
+				regs.st[reg - 12] = val;
+				break;
+			case 16:
+				break;
+			case 17:
+				break;
+			case 18:
+				regs.cr = val;
+				break;
+			case 19:
+				regs.sr = val;
+				break;
+			case 20:
+				break;
+			case 21:
+				break;
+			case 22:
+				break;
+			case 23:
+				break;
+			case 24:
+				break;
+			case 25:
+				break;
+			case 26:
+				break;
+			case 27:
+				break;
+			case 28:
+				break;
+			case 29:
+				break;
+			case 30:
+				break;
+			case 31:
+				break;
+		}
+	}
+
+	uint16_t DspCore::MoveFromReg(int reg)
+	{
+		return 0;
+	}
+
+	#pragma endregion "Register access"
 
 
 	#pragma region "Memory Engine"

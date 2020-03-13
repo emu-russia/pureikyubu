@@ -22,9 +22,6 @@ void DBClose()          // close debugger window
     con_close();
     DBHalt = dummy;
     DBReport = dummy;
-
-    // suspend, until OS is freeing resources
-    Sleep(100);
 }
 
 void DBRedraw()         // redraw whole debug UI (may be slow)

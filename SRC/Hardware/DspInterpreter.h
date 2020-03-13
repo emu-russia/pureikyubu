@@ -8,6 +8,10 @@ namespace DSP
 	{
 		DspCore* core;
 
+		// Instructions
+
+		void LRI(AnalyzeInfo& info);
+
 		void Dispatch(AnalyzeInfo& info);
 
 	public:

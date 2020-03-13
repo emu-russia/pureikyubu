@@ -44,17 +44,6 @@ void con_open()
 
     if(con.active) return;
 
-    // set traps to CPU memory operations
-    CPUReadByte    = DBReadByte;
-    CPUWriteByte   = DBWriteByte;
-    CPUReadHalf    = DBReadHalf;
-    CPUReadHalfS   = DBReadHalfS;
-    CPUWriteHalf   = DBWriteHalf;
-    CPUReadWord    = DBReadWord;
-    CPUWriteWord   = DBWriteWord;
-    CPUReadDouble  = DBReadDouble;
-    CPUWriteDouble = DBWriteDouble;
-
     // clear internal structures
     memset(&roll, 0, sizeof(ROLLControl));
     memset(&wind, 0, sizeof(WINDControl));
@@ -149,20 +138,6 @@ void con_close()
         fclose(con.logf);
         con.logf = NULL;
     }
-
-    // remove all breakpoints
-    con_rem_all_bp();
-
-    // restore CPU memory operations
-    CPUReadByte    = MEMReadByte;
-    CPUWriteByte   = MEMWriteByte;
-    CPUReadHalf    = MEMReadHalf;
-    CPUReadHalfS   = MEMReadHalfS;
-    CPUWriteHalf   = MEMWriteHalf;
-    CPUReadWord    = MEMReadWord;
-    CPUWriteWord   = MEMWriteWord;
-    CPUReadDouble  = MEMReadDouble;
-    CPUWriteDouble = MEMWriteDouble;
 
     con.active = FALSE;
 }

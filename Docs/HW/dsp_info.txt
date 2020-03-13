@@ -281,6 +281,43 @@ Games interacting with GameBoy via Link Cable also contain some microcode (need 
 
 Cleaned version from Duddie's document. Packed Group LDAX opcodes found in Dolphin-emu source code.
 
+### Group 0
+
+```
+NOP *       0000 0000 0000 0000 
+DAR *       0000 0000 0000 01dd         // DAR $arD 
+IAR *       0000 0000 0000 10dd         // IAR $arD  
+???         0000 0000 0000 11xx 
+ADDARN *    0000 0000 0001 ssdd         // ADDARN $arD, $ixS  
+HALT *      0000 0000 0010 0001 
+LOOP *      0000 0000 010r rrrr 
+BLOOP *     0000 0000 011r rrrr 
+LRI *       0000 0000 100r rrrr iiii iiii iiii iiii 
+??? *       0000 0000 101x xxxx 
+LR *        0000 0000 110r rrrr mmmm mmmm mmmm mmmm 
+SR *        0000 0000 111r rrrr mmmm mmmm mmmm mmmm 
+IF cc *     0000 0010 0111 cccc 
+JMP cc *    0000 0010 1001 cccc 
+CALL cc *   0000 0010 1011 cccc 
+RET cc *    0000 0010 1101 cccc 
+ADDI *      0000 001r 0000 0000 iiii iiii iiii iiii 
+XORI *      0000 001r 0010 0000 iiii iiii iiii iiii 
+ANDI *      0000 001r 0100 0000 iiii iiii iiii iiii 
+ORI *       0000 001r 0110 0000 iiii iiii iiii iiii 
+CMPI *      0000 001r 1000 0000 iiii iiii iiii iiii 
+ANDCF *     0000 001r 1010 0000 iiii iiii iiii iiii 
+ANDF *      0000 001r 1100 0000 iiii iiii iiii iiii 
+
+ILRR *      0000 00[1]d [0001] 00ss
+ILRRD *     0000 00[1]d [0001] 01ss
+ILRRI *     0000 00[1]d [0001] 10ss
+ILRRN *     0000 00[1]d [0001] 11ss
+
+ADDIS *     0000 010d iiii iiii 
+CMPIS *     0000 011d iiii iiii 
+LRIS *      0000 1rrr iiii iiii 
+```
+
 ### Group 1
 
 ```

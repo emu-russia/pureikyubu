@@ -11,7 +11,8 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
     int addend = 1;
 
     bgcur = (addr == con.disa_cursor) ? (8) : (0);
-    bgbp = (con_is_code_bp(addr)) ? (4) : (0);
+    //bgbp = (con_is_code_bp(addr)) ? (4) : (0);
+    bgbp = 0;
     bg = (addr == PC) ? (1) : (0);
     bg = bg ^ bgcur ^ bgbp;
     fg = 7;

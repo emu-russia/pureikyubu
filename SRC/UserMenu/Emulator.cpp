@@ -91,12 +91,6 @@ void EMUOpen()
     ReloadFile();   // PC will be set here
     HLEOpen();
 
-    // debugger has its own core, to control CPU execution
-    if (emu.doldebug)
-    {
-        CPUException = DBException;
-    }
-
     // take care about user interface
     OnMainWindowOpened();
 
