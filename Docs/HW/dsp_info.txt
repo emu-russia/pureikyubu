@@ -312,8 +312,8 @@ MRR *       0001 [11]dd ddds ssss       // MRR $D, $S
 ### Group 2
 
 ```
-LRS *       0010 0ddd mmmm mmmm 
-SRS *       0010 1sss mmmm mmmm 
+LRS *       0010 0ddd mmmm mmmm         // LRS $(0x18+D), @M 
+SRS *       0010 1sss mmmm mmmm         // SRS @M, $(0x18+S)
 ```
 
 ### Group 3
@@ -377,6 +377,57 @@ TSTAXH      1000 011r xxxx xxxx
 M2/M0       1000 101x xxxx xxxx 
 CLR15/SET15 1000 110x xxxx xxxx 
 CLR40/SET40 1000 111x xxxx xxxx 
+```
+
+### Group 9
+
+```
+MUL *       1001 s000 xxxx xxxx         // MUL $axS.l, $axS.h 
+ASR16 *     1001 s001 xxxx xxxx         // ASR16 $acS 
+MULMVZ *    1001 s01r xxxx xxxx         // MULMVZ $axS.l, $axS.h, $acR 
+MULAC *     1001 s10r xxxx xxxx         // MULAC $axS.l, $axS.h, $acR 
+MULMV *     1001 s11r xxxx xxxx         // MULMV $axS.l, $axS.h, $acR 
+```
+
+### Group AB
+
+```
+MULX *      101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
+???         1010 t001 xxxx xxxx         // ASL16 (?)
+MULXMVZ *   101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
+MULXAC *    101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
+MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR    
+```
+
+### Group CD
+
+```
+MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
+CMP16 *     110x t001 xxxx xxxx         // CMP16 $acT  (?)
+MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
+MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
+MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
+```
+
+### Group E
+
+```
+MADDX **    1110 00st xxxx xxxx         // MADDX $(0x18+S*2), $(0x19+T*2) 
+MSUBX **    1110 01st xxxx xxxx         // MSUBX $(0x18+S*2), $(0x19+T*2) 
+MADDC **    1110 10st xxxx xxxx         // MADDC $acS.l, $axT.h 
+MSUBC **    1110 11st xxxx xxxx         // MSUBC $acS.m, $axT.h 
+```
+
+### Group F
+
+```
+LSL16 *     1111 000d xxxx xxxx         // LSL16 $acD
+MADD *      1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
+LSR16 *     1111 010d xxxx xxxx         // LSR16 $acD
+MSUB *      1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
+ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $axS 
+CLRL *      1111 110d xxxx xxxx         // CLRL $acD.l 
+MOVPZ *     1111 111d xxxx xxxx         // MOVPZ $acD 
 ```
 
 ### Packed Group

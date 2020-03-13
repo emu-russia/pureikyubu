@@ -143,6 +143,7 @@ namespace DSP
 			case DspInstruction::CMP: text = "cmp"; break;
 			case DspInstruction::CMPI: text = "cmpi"; break;
 			case DspInstruction::CMPIS: text = "cmpis"; break;
+			case DspInstruction::CMP16: text = "cmp16"; break;
 
 			case DspInstruction::DAR: text = "dar"; break;
 			case DspInstruction::DEC: text = "dec"; break;

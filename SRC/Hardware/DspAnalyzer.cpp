@@ -870,6 +870,58 @@ namespace DSP
 
 	bool Analyzer::Group7(AnalyzeInfo& info)
 	{
+		//ADDAXL *    0111 00sd xxxx xxxx         // ADDAXL $acD, $axS.l 
+		//INCM *      0111 010d xxxx xxxx         // INCM $acsD  (mid accum)
+		//INC *       0111 011d xxxx xxxx         // INC $acD 
+		//DECM *      0111 100d xxxx xxxx         // DECM $acsD  (mid)
+		//DEC *       0111 101d xxxx xxxx         // DEC $acD 
+		//NEG *       0111 110d xxxx xxxx         // NEG $acD 
+		//MOVNP *     0111 111d xxxx xxxx         // MOVNP $acD 
+
+		int dd = (info.instrBits >> 8) & 1;
+
+		if ((info.instrBits & 0b110000000000) != 0)
+		{
+			// Others
+
+			switch ((info.instrBits >> 9) & 7)
+			{
+				case 0b010:
+					info.instr = DspInstruction::INCM;
+					break;
+				case 0b011:
+					info.instr = DspInstruction::INC;
+					break;
+				case 0b100:
+					info.instr = DspInstruction::DECM;
+					break;
+				case 0b101:
+					info.instr = DspInstruction::DEC;
+					break;
+				case 0b110:
+					info.instr = DspInstruction::NEG;
+					break;
+				case 0b111:
+					info.instr = DspInstruction::MOVNP;
+					break;
+			}
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+				return false;
+		}
+		else
+		{
+			// ADDAXL
+			int ss = (info.instrBits >> 9) & 1;
+
+			info.instr = DspInstruction::ADDAXL;
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+				return false;
+			if (!AddParam(info, ss ? DspParameter::ax1l : DspParameter::ax0l, ss))
+				return false;
+		}
+
 		return true;
 	}
 
@@ -947,16 +999,183 @@ namespace DSP
 
 	bool Analyzer::Group9(AnalyzeInfo& info)
 	{
+		//MUL *       1001 s000 xxxx xxxx         // MUL $axS.l, $axS.h 
+		//ASR16 *     1001 s001 xxxx xxxx         // ASR16 $acS 
+		//MULMVZ *    1001 s01r xxxx xxxx         // MULMVZ $axS.l, $axS.h, $acR 
+		//MULAC *     1001 s10r xxxx xxxx         // MULAC $axS.l, $axS.h, $acR 
+		//MULMV *     1001 s11r xxxx xxxx         // MULMV $axS.l, $axS.h, $acR 
+
+		int ss = (info.instrBits >> 11) & 1;
+		int rr = (info.instrBits >> 8) & 1;
+		info.madd = true;
+		bool hasR = false;
+
+		switch ((info.instrBits >> 9) & 3)
+		{
+			case 0:
+				if ((info.instrBits & 0b100000000) != 0)
+				{
+					// ASR16
+					info.madd = false;
+					info.instr = DspInstruction::ASR16;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + ss), ss))
+						return false;
+				}
+				else
+				{
+					// MUL
+					info.instr = DspInstruction::MUL;
+					hasR = false;
+				}
+				break;
+			case 1:		// MULMVZ
+				info.instr = DspInstruction::MULMVZ;
+				hasR = true;
+				break;
+			case 2:		// MULAC
+				info.instr = DspInstruction::MULAC;
+				hasR = true;
+				break;
+			case 3:		// MULMV
+				info.instr = DspInstruction::MULMV;
+				hasR = true;
+				break;
+		}
+
+		if (info.madd)
+		{
+			if (!AddParam(info, ss ? DspParameter::ax1l : DspParameter::ax0l, ss))
+				return false;
+			if (!AddParam(info, ss ? DspParameter::ax1h : DspParameter::ax0h, ss))
+				return false;
+
+			if (hasR)
+			{
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + rr), rr))
+					return false;
+			}
+		}
+
 		return true;
 	}
 
 	bool Analyzer::GroupAB(AnalyzeInfo& info)
 	{
+		//MULX *      101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
+		//???         1010 t001 xxxx xxxx         // ASL16 (?)
+		//MULXMVZ *   101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
+		//MULXAC *    101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
+		//MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR
+
+		info.madd = true;
+		int ss = (info.instrBits >> 12) & 1;
+		int tt = (info.instrBits >> 11) & 1;
+		int rr = (info.instrBits >> 8) & 1;
+		bool hasR = false;
+
+		switch ((info.instrBits >> 9) & 3)
+		{
+			case 0:
+				if ((info.instrBits & 0b100000000) != 0)
+				{
+					// ???
+					info.madd = false;
+				}
+				else
+				{
+					// MULX
+					info.instr = DspInstruction::MULX;
+					hasR = false;
+				}
+				break;
+			case 1:		// MULXMVZ
+				info.instr = DspInstruction::MULXMVZ;
+				hasR = true;
+				break;
+			case 2:		// MULXAC
+				info.instr = DspInstruction::MULXAC;
+				hasR = true;
+				break;
+			case 3:		// MULXMV
+				info.instr = DspInstruction::MULXMV;
+				hasR = true;
+				break;
+		}
+
+		if (info.madd)
+		{
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ax0l + ss), ss))
+				return false;
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ax1l + tt), tt))
+				return false;
+
+			if (hasR)
+			{
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + rr), rr))
+					return false;
+			}
+		}
+
 		return true;
 	}
 
 	bool Analyzer::GroupCD(AnalyzeInfo& info)
 	{
+		//MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
+		//CMP16 *     110x t001 xxxx xxxx         // CMP16 $acT  (?)
+		//MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
+		//MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
+		//MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
+
+		info.madd = true;
+		int ss = (info.instrBits >> 12) & 1;
+		int tt = (info.instrBits >> 11) & 1;
+		int rr = (info.instrBits >> 8) & 1;
+		bool hasR = false;
+
+		switch ((info.instrBits >> 9) & 3)
+		{
+			case 0:
+				if ((info.instrBits & 0b100000000) != 0)
+				{
+					// ???
+					info.madd = false;
+				}
+				else
+				{
+					// MULC
+					info.instr = DspInstruction::MULC;
+					hasR = false;
+				}
+				break;
+			case 1:		// MULCMVZ
+				info.instr = DspInstruction::MULCMVZ;
+				hasR = true;
+				break;
+			case 2:		// MULCAC
+				info.instr = DspInstruction::MULCAC;
+				hasR = true;
+				break;
+			case 3:		// MULCMV
+				info.instr = DspInstruction::MULCMV;
+				hasR = true;
+				break;
+		}
+
+		if (info.madd)
+		{
+			if (!AddParam(info, ss ? DspParameter::ac1m : DspParameter::ac0m, ss))
+				return false;
+			if (!AddParam(info, tt ? DspParameter::ax1h : DspParameter::ax0h, tt))
+				return false;
+
+			if (hasR)
+			{
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + rr), rr))
+					return false;
+			}
+		}
+
 		return true;
 	}
 

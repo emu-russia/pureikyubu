@@ -43,6 +43,7 @@ namespace DSP
 		CMP,		///< Compares accumulator $ac0 with accumulator $ac1
 		CMPI,		///< Compares mid accumulator $acD.hm ($amD) with sign-extended immediate value I
 		CMPIS,		///< Compares accumulator with short immediate
+		CMP16,		///< Group CD
 
 		DAR,		///< Decrement address register $arD. 
 		DEC,		///< Decrements accumulator $acD. 
