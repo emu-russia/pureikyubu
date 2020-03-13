@@ -67,7 +67,7 @@ void HWUpdate()
         // update audio and DSP
         BeginProfileSfx();
         AIUpdate();
-        DSPHLEUpdate();
+        //DSPHLEUpdate();       // Phasing out
         //dspCore->Update();        // Updated by own thread
         EndProfileSfx();
 

@@ -78,7 +78,7 @@ namespace DSP
 		LRRD,		///< Move value from data memory pointed by addressing register $S to register $D. Decrements register $S
 		LRRI,		///< Move value from data memory pointed by addressing register $S to register $D. Increments register $S
 		LRRN,		///< Move value from data memory pointed by addressing register $S to register $D. Add indexing register $(0x4+S) to register $S
-		LRS,		///< Move value from data memory pointed by address M (8-bitsign-extended) to register $(0x18+D)
+		LRS,		///< Move value from data memory pointed by address M (8-bit sign-extended) to register $(0x18+D)
 
 		LSL,		///< Logically left shifts accumulator $acR by the amount specified by value I. 
 		LSL16,		///< Logically left shifts accumulator $acR by 16

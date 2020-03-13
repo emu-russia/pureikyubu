@@ -80,6 +80,9 @@ namespace DSP
 		memset(&regs, 0, sizeof(regs));
 
 		regs.pc = 0x8000;			// IROM start
+
+		DspToCpuMailbox[0] = DspToCpuMailbox[1] = 0;
+		CpuToDspMailbox[0] = CpuToDspMailbox[1] = 0;
 	}
 
 	void DspCore::Run()
@@ -369,6 +372,25 @@ namespace DSP
 
 	uint16_t DspCore::ReadDMem(DspAddress addr)
 	{
+		if (addr >= 0xff00)
+		{
+			switch (addr)
+			{
+				case (DspAddress)DspHardwareRegs::CMBH:
+					return CpuToDspMailbox[0];
+				case (DspAddress)DspHardwareRegs::CMBL:
+					return CpuToDspMailbox[1];
+				case (DspAddress)DspHardwareRegs::DMBH:
+					return DspToCpuMailbox[0];
+				case (DspAddress)DspHardwareRegs::DMBL:
+					return DspToCpuMailbox[1];
+				default:
+					DBHalt(_DSP "Unknown HW read 0x%04X\n", addr);
+					break;
+			}
+			return 0;
+		}
+
 		uint8_t* ptr = TranslateDMem(addr);
 
 		if (ptr)
@@ -381,6 +403,23 @@ namespace DSP
 
 	void DspCore::WriteDMem(DspAddress addr, uint16_t value)
 	{
+		if (addr >= 0xff00)
+		{
+			switch (addr)
+			{
+				case (DspAddress)DspHardwareRegs::DMBH:
+					DspToCpuMailbox[0] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::DMBL:
+					DspToCpuMailbox[1] = value;
+					break;
+				default:
+					DBHalt(_DSP "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					break;
+			}
+			return;
+		}
+
 		if (addr < DRAM_SIZE)
 		{
 			uint8_t* ptr = TranslateDMem(addr);
@@ -399,7 +438,7 @@ namespace DSP
 
 	void DspCore::DSPSetResetBit(bool val)
 	{
-
+		Reset();
 	}
 
 	bool DspCore::DSPGetResetBit()
@@ -409,52 +448,64 @@ namespace DSP
 
 	void DspCore::DSPSetIntBit(bool val)
 	{
-
+		if (val)
+		{
+			DBReport(_DSP "DspCore::DSPSetIntBit\n");
+		}
 	}
 
 	bool DspCore::DSPGetIntBit()
 	{
+		// No meaning
 		return false;
 	}
 
 	void DspCore::DSPSetHaltBit(bool val)
 	{
-
+		val ? Suspend() : Run();
 	}
 
 	bool DspCore::DSPGetHaltBit()
 	{
-		return false;
+		return !running;
 	}
+
+	// CPU->DSP Mailbox
 
 	void DspCore::DSPWriteOutMailboxHi(uint16_t value)
 	{
+		DBReport("DspCore::DSPWriteOutMailboxHi: 0x%04X\n", value);
 
+		CpuToDspMailbox[0] = value;
 	}
 
 	void DspCore::DSPWriteOutMailboxLo(uint16_t value)
 	{
+		DBReport("DspCore::DSPWriteOutMailboxLo: 0x%04X\n", value);
 
+		CpuToDspMailbox[1] = value;
 	}
 
 	uint16_t DspCore::DSPReadOutMailboxHi()
 	{
-		return 0;
+		return CpuToDspMailbox[0];
 	}
 
 	uint16_t DspCore::DSPReadOutMailboxLo()
 	{
-		return 0;
+		return CpuToDspMailbox[1];
 	}
+
+	// DSP->CPU Mailbox
 
 	uint16_t DspCore::DSPReadInMailboxHi()
 	{
-		return 0;
+		return DspToCpuMailbox[0];
 	}
 
 	uint16_t DspCore::DSPReadInMailboxLo()
 	{
-		return 0;
+		return DspToCpuMailbox[1];
 	}
 
 	#pragma endregion "Flipper interface"

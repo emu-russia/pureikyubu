@@ -42,10 +42,10 @@ namespace DSP
 
 	enum class DspHardwareRegs
 	{
-		CMBH = 0xFFFE,		///< CPU Mailbox H 
-		CMBL = 0xFFFF,		///< CPU Mailbox L 
-		DMBH = 0xFFFC,		///< DSP Mailbox H 
-		DMBL = 0xFFFD,		///< DSP Mailbox L 
+		CMBH = 0xFFFE,		///< CPU->DSP Mailbox H 
+		CMBL = 0xFFFF,		///< CPU->DSP Mailbox L 
+		DMBH = 0xFFFC,		///< DSP->CPU Mailbox H 
+		DMBL = 0xFFFD,		///< DSP->CPU Mailbox L 
 
 		DSMAH = 0xFFCE,		///< Memory address H 
 		DSMAL = 0xFFCF,		///< Memory address L 
@@ -60,6 +60,7 @@ namespace DSP
 		ACCAH = 0xFFD8,		///< Accelerator current address H 
 		ACCAL = 0xFFD9,		///< Accelerator current address L 
 		ACDAT = 0xFFDD,		///< Accelerator data
+		AMDM = 0xFFEF,		///< ARAM DMA Request Mask
 
 		DIRQ = 0xFFFB,		///< IRQ request
 
@@ -70,7 +71,6 @@ namespace DSP
 		ACYN1 = 0xFFDB,
 		ACYN2 = 0xFFDC,
 		ACGAN = 0xFFDE,
-		AMDM = 0xFFEF,		///< ARAM DMA Request Mask
 
 		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
 	};
@@ -95,6 +95,9 @@ namespace DSP
 		static DWORD WINAPI DspThreadProc(LPVOID lpParameter);
 
 		DspInterpreter* interp;
+
+		uint16_t DspToCpuMailbox[2];		///< DMBH, DMBL
+		uint16_t CpuToDspMailbox[2];		///< CMBH, CMBL
 
 	public:
 
@@ -154,10 +157,12 @@ namespace DSP
 		void DSPSetHaltBit(bool val);
 		bool DSPGetHaltBit();
 
+		// CPU->DSP Mailbox
 		void DSPWriteOutMailboxHi(uint16_t value);
 		void DSPWriteOutMailboxLo(uint16_t value);
 		uint16_t DSPReadOutMailboxHi();
 		uint16_t DSPReadOutMailboxLo();
+		// DSP->CPU Mailbox
 		uint16_t DSPReadInMailboxHi();
 		uint16_t DSPReadInMailboxLo();
 

@@ -18,6 +18,41 @@ namespace DSP
 		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
 	}
 
+	void DspInterpreter::M2(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::M0(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::CLR15(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::SET15(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::CLR40(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::SET40(AnalyzeInfo& info)
+	{
+		// Ignore for now
+	}
+
+	void DspInterpreter::SBSET(AnalyzeInfo& info)
+	{
+		core->regs.sr |= (1 << info.ImmOperand.Byte);
+	}
+
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
 		// Test breakpoints
@@ -35,6 +70,15 @@ namespace DSP
 		{
 			case DspInstruction::LRI: LRI(info); break;
 
+			case DspInstruction::M2: M2(info); break;
+			case DspInstruction::M0: M0(info); break;
+			case DspInstruction::CLR15: CLR15(info); break;
+			case DspInstruction::SET15: SET15(info); break;
+			case DspInstruction::CLR40: CLR40(info); break;
+			case DspInstruction::SET40: SET40(info); break;
+
+			case DspInstruction::SBSET: SBSET(info); break;
+
 			default:
 				DBHalt(_DSP "Unknown instruction at 0x%04X\n", core->regs.pc);
 				core->Suspend();
@@ -46,6 +90,8 @@ namespace DSP
 		{
 			switch (info.instrEx)
 			{
+				case DspInstructionEx::NOP2: break;
+
 				default:
 					DBHalt(_DSP "Unknown packed instruction at 0x%04X\n", core->regs.pc);
 					core->Suspend();
