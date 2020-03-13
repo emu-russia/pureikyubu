@@ -9,6 +9,7 @@ namespace DSP
 		info.sizeInBytes = 0;
 
 		info.instr = DspInstruction::Unknown;
+		info.instrEx = DspInstructionEx::Unknown;
 
 		info.extendedOpcodePresent = false;
 		info.numParameters = 0;
@@ -320,7 +321,7 @@ namespace DSP
 
 					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
 						return false;
-					if (!AddParam(info, (DspParameter)((int)DspParameter::ar0 + ss), ss))
+					if (!AddParam(info, (DspParameter)((int)DspParameter::Indexed_ar0 + ss), ss))
 						return false;
 
 					break;
@@ -526,41 +527,64 @@ namespace DSP
 				break;
 			case 2:			// LRR / SRR
 			{
+				bool load = false;
+
 				switch ((info.instrBits >> 7) & 7)
 				{
 					case 0b000:
 						info.instr = DspInstruction::LRR;
+						load = true;
 						break;
 					case 0b001:
 						info.instr = DspInstruction::LRRD;
+						load = true;
 						break;
 					case 0b010:
 						info.instr = DspInstruction::LRRI;
+						load = true;
 						break;
 					case 0b011:
 						info.instr = DspInstruction::LRRN;
+						load = true;
 						break;
 					case 0b100:
 						info.instr = DspInstruction::SRR;
+						load = false;
 						break;
 					case 0b101:
 						info.instr = DspInstruction::SRRD;
+						load = false;
 						break;
 					case 0b110:
 						info.instr = DspInstruction::SRRI;
+						load = false;
 						break;
 					case 0b111:
 						info.instr = DspInstruction::SRRN;
+						load = false;
 						break;
 				}
 
-				int dd = (info.instrBits & 0x1f);
-				int ss = (info.instrBits >> 5) & 3;
+				if (load)
+				{
+					int dd = (info.instrBits & 0x1f);
+					int ss = (info.instrBits >> 5) & 3;
 
-				if (!AddParam(info, (DspParameter)dd, dd))
-					return false;
-				if (!AddParam(info, (DspParameter)ss, ss))
-					return false;
+					if (!AddParam(info, (DspParameter)dd, dd))
+						return false;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::Indexed_regs + ss), ss))
+						return false;
+				}
+				else
+				{
+					int ss = (info.instrBits & 0x1f);
+					int dd = (info.instrBits >> 5) & 3;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::Indexed_regs + dd), dd))
+						return false;
+					if (!AddParam(info, (DspParameter)ss, ss))
+						return false;
+				}
 				break;
 			}
 			case 3:		// MRR
@@ -744,10 +768,10 @@ namespace DSP
 		//IR * 		xxxx xxxx 0000 10rr		// IR $arR 
 		//NR * 		xxxx xxxx 0000 11rr		// NR $arR, ixR
 		//MV * 		xxxx xxxx 0001 ddss 	// MV $(0x18+D), $(0x1c+S) 
-		//S * 		xxxx xxxx 001s s0dd		// S @$D, $(0x1c+D)  
-		//SN * 		xxxx xxxx 001s s1dd		// SN @$D, $(0x1c+D)  
-		//L * 		xxxx xxxx 01dd d0ss 	// L $(0x18+D), @$S 
-		//LN * 		xxxx xxxx 01dd d1ss 	// LN $(0x18+D), @$S 
+		//S * 		xxxx xxxx 001s s0dd		// S @$rD, $(0x1c+s)  
+		//SN * 		xxxx xxxx 001s s1dd		// SN @$rD, $(0x1c+s)
+		//L * 		xxxx xxxx 01dd d0ss 	// L $(0x18+D), @$rS 
+		//LN * 		xxxx xxxx 01dd d1ss 	// LN $(0x18+D), @$rS 
 
 		//LS * 		xxxx xxxx 10dd 000s 	// LS $(0x18+D), $acS.m 
 		//SL * 		xxxx xxxx 10dd 001s		// SL $acS.m, $(0x18+D)  
@@ -768,6 +792,217 @@ namespace DSP
 		//LDAXM 	xxxx xxxx 11sr 1011		// LDAXM $axR, @$arS
 		//LDAXNM 	xxxx xxxx 11sr 1111		// LDAXNM $axR, @$arS
 
+		info.extendedOpcodePresent = true;
+
+		info.instrExBits = info.instrBits & 0xff;
+
+		switch (info.instrExBits >> 6)
+		{
+			case 0:
+			{
+				if ((info.instrExBits & 0b100000) != 0)		// S, SN
+				{
+					int ss = (info.instrExBits >> 3) & 3;
+					int dd = info.instrExBits & 3;
+
+					if ((info.instrExBits & 0b100) != 0)
+					{
+						info.instrEx = DspInstructionEx::SN;
+					}
+					else
+					{
+						info.instrEx = DspInstructionEx::S;
+					}
+
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_regs + dd), dd))
+						return false;
+					if (!AddParamEx(info, (DspParameter)(0x1c + ss), ss))
+						return false;
+				}
+				else if ((info.instrExBits & 0b10000) != 0)		// MV
+				{
+					int dd = (info.instrExBits >> 2) & 3;
+					int ss = info.instrExBits & 3;
+
+					info.instrEx = DspInstructionEx::MV;
+
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+						return false;
+					if (!AddParamEx(info, (DspParameter)(0x1c + ss), ss))
+						return false;
+				}
+				else	// NOP2, DR, IR, NR
+				{
+					int rr = info.instrExBits & 3;
+
+					switch ((info.instrExBits >> 2) & 3)
+					{
+						case 0:
+							info.instrEx = DspInstructionEx::NOP2;
+							break;
+						case 1:
+							info.instrEx = DspInstructionEx::DR;
+							if (!AddParamEx(info, (DspParameter)((int)DspParameter::ar0 + rr), rr))
+								return false;
+							break;
+						case 2:
+							info.instrEx = DspInstructionEx::IR;
+							if (!AddParamEx(info, (DspParameter)((int)DspParameter::ar0 + rr), rr))
+								return false;
+							break;
+						case 3:
+							info.instrEx = DspInstructionEx::NR;
+							if (!AddParamEx(info, (DspParameter)((int)DspParameter::ar0 + rr), rr))
+								return false;
+							if (!AddParamEx(info, (DspParameter)((int)DspParameter::ix0 + rr), rr))
+								return false;
+							break;
+					}
+				}
+
+				break;
+			}
+			case 1:		// L, LN
+			{
+				int dd = (info.instrExBits >> 3) & 7;
+				int ss = info.instrExBits & 3;
+
+				if (info.instrExBits & 0b100)
+				{
+					info.instrEx = DspInstructionEx::LN;
+				}
+				else
+				{
+					info.instrEx = DspInstructionEx::L;
+				}
+
+				if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+					return false;
+				if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_regs + ss), ss))
+					return false;
+
+				break;
+			}
+			case 2:		// LSx, SLx
+			{
+				int dd = (info.instrExBits >> 4) & 3;
+				int ss = info.instrExBits & 1;
+				bool load = false;
+
+				switch ((info.instrExBits >> 1) & 7)
+				{
+					case 0b000:
+						info.instrEx = DspInstructionEx::LS;
+						load = true;
+						break;
+					case 0b001:
+						info.instrEx = DspInstructionEx::SL;
+						load = false;
+						break;
+					case 0b010:
+						info.instrEx = DspInstructionEx::LSN;
+						load = true;
+						break;
+					case 0b011:
+						info.instrEx = DspInstructionEx::SLN;
+						load = false;
+						break;
+					case 0b100:
+						info.instrEx = DspInstructionEx::LSM;
+						load = true;
+						break;
+					case 0b101:
+						info.instrEx = DspInstructionEx::SLM;
+						load = false;
+						break;
+					case 0b110:
+						info.instrEx = DspInstructionEx::LSNM;
+						load = true;
+						break;
+					case 0b111:
+						info.instrEx = DspInstructionEx::SLNM;
+						load = false;
+						break;
+				}
+
+				if (load)
+				{
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+						return false;
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ac0m + ss), ss))
+						return false;
+				}
+				else
+				{
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ac0m + ss), ss))
+						return false;
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+						return false;
+				}
+
+				break;
+			}
+			case 3:		// LDx
+			{
+				if ((info.instrExBits & 3) == 0b11)
+				{
+					int ss = (info.instrExBits >> 5) & 1;
+					int rr = (info.instrExBits >> 4) & 1;
+
+					switch ((info.instrExBits >> 2) & 3)
+					{
+						case 0:
+							info.instrEx = DspInstructionEx::LDAX;
+							break;
+						case 1:
+							info.instrEx = DspInstructionEx::LDAXN;
+							break;
+						case 2:
+							info.instrEx = DspInstructionEx::LDAXM;
+							break;
+						case 3:
+							info.instrEx = DspInstructionEx::LDAXNM;
+							break;
+					}
+
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ax0 + rr), rr))
+						return false;
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_ar0 + ss), ss))
+						return false;
+				}
+				else
+				{
+					int dd = (info.instrExBits >> 5) & 1;
+					int rr = (info.instrExBits >> 4) & 1;
+					int ss = info.instrExBits & 3;
+
+					switch ((info.instrExBits >> 2) & 3)
+					{
+						case 0:
+							info.instrEx = DspInstructionEx::LD;
+							break;
+						case 1:
+							info.instrEx = DspInstructionEx::LDN;
+							break;
+						case 2:
+							info.instrEx = DspInstructionEx::LDM;
+							break;
+						case 3:
+							info.instrEx = DspInstructionEx::LDNM;
+							break;
+					}
+
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ax0l + dd), dd))
+						return false;
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ax1l + rr), rr))
+						return false;
+					if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_ar0 + ss), ss))
+						return false;
+				}
+				break;
+			}
+		}
+
 		return true;
 	}
 
@@ -780,6 +1015,19 @@ namespace DSP
 		info.paramBits[info.numParameters] = paramBits;
 
 		info.numParameters++;
+
+		return true;
+	}
+
+	bool Analyzer::AddParamEx(AnalyzeInfo& info, DspParameter param, uint16_t paramBits)
+	{
+		if (info.numParametersEx >= _countof(info.paramsEx))
+			return false;
+
+		info.paramsEx[info.numParametersEx] = param;
+		info.paramExBits[info.numParametersEx] = paramBits;
+
+		info.numParametersEx++;
 
 		return true;
 	}

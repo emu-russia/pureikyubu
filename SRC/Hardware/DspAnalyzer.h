@@ -244,6 +244,23 @@ namespace DSP
 		ac0,
 		ac1,
 
+		// Small accumulator (32-bit)
+
+		ax0,
+		ax1,
+
+		// Indexed by register
+
+		Indexed_regs,
+		Indexed_ar0 = Indexed_regs,	///< @ Addressing register 0 
+		Indexed_ar1,			///< @ Addressing register 1 
+		Indexed_ar2,			///< @ Addressing register 2 
+		Indexed_ar3,			///< @ Addressing register 3 
+		Indexed_ix0,			///< @ Indexing register 0 
+		Indexed_ix1,			///< @ Indexing register 1
+		Indexed_ix2,			///< @ Indexing register 2
+		Indexed_ix3,			///< @ Indexing register 3
+
 		// Immediates
 
 		Byte,
@@ -303,7 +320,7 @@ namespace DSP
 		DspParameter params[3];		///< Processed parameters (ready to output)
 		uint16_t paramBits[3];		///< Raw unprocessed parameter bits (order MSB->LSB)
 
-		DspParameter paramsEx[2];		///< Processed extended opcode parameters (ready to output)
+		DspParameter paramsEx[3];		///< Processed extended opcode parameters (ready to output)
 		uint16_t paramExBits[3];		///< Raw unprocessed extended opcode parameter bits (order MSB->LSB)
 
 		bool flowControl;		///< Branch, jump or another flow control instruction
@@ -364,6 +381,7 @@ namespace DSP
 		template<typename T>
 		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);
 		static bool AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits);
+		static bool AddParamEx(AnalyzeInfo& info, DspParameter param, uint16_t paramBits);
 
 		// c++ commitete should try harder. Allowed only in headers..
 

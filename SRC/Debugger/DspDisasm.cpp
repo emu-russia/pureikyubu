@@ -48,6 +48,18 @@ namespace DSP
 			case DspParameter::ac0: text = "ac0"; break;
 			case DspParameter::ac1: text = "ac1"; break;
 
+			case DspParameter::ax0: text = "ax0"; break;
+			case DspParameter::ax1: text = "ax1"; break;
+
+			case DspParameter::Indexed_ar0: text = "@ar0"; break;
+			case DspParameter::Indexed_ar1: text = "@ar1"; break;
+			case DspParameter::Indexed_ar2: text = "@ar2"; break;
+			case DspParameter::Indexed_ar3: text = "@ar3"; break;
+			case DspParameter::Indexed_ix0: text = "@ix0"; break;
+			case DspParameter::Indexed_ix1: text = "@ix1"; break;
+			case DspParameter::Indexed_ix2: text = "@ix2"; break;
+			case DspParameter::Indexed_ix3: text = "@ix3"; break;
+
 			// Immediates
 
 			case DspParameter::Byte:
@@ -245,6 +257,11 @@ namespace DSP
 			case DspInstruction::XORR: text = "xorr"; break;
 		}
 
+		while (text.size() < 5)
+		{
+			text += " ";
+		}
+
 		return text;
 	}
 
@@ -282,6 +299,11 @@ namespace DSP
 			case DspInstructionEx::LDAXN: text = "ldaxn"; break;
 			case DspInstructionEx::LDAXM: text = "ldaxm"; break;
 			case DspInstructionEx::LDAXNM: text = "ldaxnm"; break;
+		}
+
+		while (text.size() < 5)
+		{
+			text += " ";
 		}
 
 		return text;
@@ -382,7 +404,7 @@ namespace DSP
 		}
 		else
 		{
-			text += "Unknown " + ToHexString(info.instrBits);
+			text += "\t??? " + ToHexString(info.instrBits);
 		}
 
 		bool firstParam = true;
@@ -396,18 +418,13 @@ namespace DSP
 			firstParam = false;
 		}
 
-		// Extended instruction (next line)
+		// Packed instruction pair (same line)
 
 		if (info.extendedOpcodePresent)
 		{
-			text += "\n";
-
-			text += "    ";		// Empty space for address
-			text += " ";
-
-			for (int i = 0; i < MaxInstructionSizeInBytes; i++)
+			while (text.size() < 40)
 			{
-				text += "   ";		// Padding for code bytes
+				text += " ";
 			}
 
 			if (info.instrEx != DspInstructionEx::Unknown)
@@ -416,7 +433,7 @@ namespace DSP
 			}
 			else
 			{
-				text += "Unknown ext " + ToHexString(info.instrExBits);
+				text += "??? ext " + ToHexString(info.instrExBits);
 			}
 
 			bool firstExtendedParam = true;
