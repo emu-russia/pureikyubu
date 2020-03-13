@@ -17,3 +17,4 @@ void    cmd_dunbrk(int argc, char argv[][CON_LINELEN]);	// Clear all IMEM breakp
 void    cmd_dlist(int argc, char argv[][CON_LINELEN]);	// List IMEM breakpoints
 void    cmd_dpc(int argc, char argv[][CON_LINELEN]);	// Set DSP pc
 void    cmd_dreset(int argc, char argv[][CON_LINELEN]);	// Issue DSP reset
+void    cmd_du(int argc, char argv[][CON_LINELEN]);		// Disassemble some DSP instructions at program counter

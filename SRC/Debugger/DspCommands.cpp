@@ -16,6 +16,7 @@ void dsp_init_handlers()
     con.cmds["dunbrk"] = cmd_dunbrk;
     con.cmds["dpc"] = cmd_dpc;
     con.cmds["dreset"] = cmd_dreset;
+    con.cmds["du"] = cmd_du;
 }
 
 void dsp_help()
@@ -33,6 +34,7 @@ void dsp_help()
     con_print(WHITE "    dunbrk               " NORM "- Clear all IMEM breakpoints");
     con_print(WHITE "    dpc                  " NORM "- Set DSP program counter");
     con_print(WHITE "    dreset               " NORM "- Issue DSP reset");
+    con_print(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter");
     con_print("\n");
 }
 
@@ -163,13 +165,46 @@ void cmd_dmem(int argc, char argv[][CON_LINELEN])
 
     if (argc < 2)
     {
-        con_print("syntax: dmem <dsp_addr>\n");
+        con_print("syntax: dmem <dsp_addr>, dmem .\n");
         con_print("Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
+        con_print("dmem . will dump 0x800 bytes at dmem address 0\n");
         con_print("example of use: dmem 0x8000\n");
     }
 
-    DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    DSP::DspAddress dsp_addr = 0;
+    size_t bytes = 32;
 
+    if (argv[1][0] == '.')
+    {
+        dsp_addr = 0;
+        bytes = 0x800;
+    }
+    else
+    {
+        dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    }
+
+    DBReport("DMEM Dump %i bytes\n", bytes);
+
+    while (bytes != 0)
+    {
+        uint8_t* ptr = dspCore->TranslateDMem(dsp_addr);
+        if (ptr == nullptr)
+        {
+            DBReport(_DSP "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
+            break;
+        }
+
+        DBReport("%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            dsp_addr,
+            ptr[0], ptr[1], ptr[2], ptr[3],
+            ptr[4], ptr[5], ptr[6], ptr[7], 
+            ptr[8], ptr[9], ptr[0xa], ptr[0xb], 
+            ptr[0xc], ptr[0xd], ptr[0xe], ptr[0xf] );
+
+        bytes -= 0x10;
+        dsp_addr += 0x10;
+    }
 }
 
 // Dump DSP IMEM
@@ -183,13 +218,45 @@ void cmd_imem(int argc, char argv[][CON_LINELEN])
 
     if (argc < 2)
     {
-        con_print("syntax: imem <dsp_addr>\n");
+        con_print("syntax: imem <dsp_addr>, imem .\n");
         con_print("Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
+        con_print("imem . will dump 32 bytes of imem at program counter address.\n");
         con_print("example of use: imem 0\n");
     }
 
-    DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    DSP::DspAddress dsp_addr = 0;
+    size_t bytes = 32;
 
+    if (argv[1][0] == '.')
+    {
+        dsp_addr = dspCore->regs.pc;
+    }
+    else
+    {
+        dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    }
+    
+    DBReport("IMEM Dump %i bytes\n", bytes);
+
+    while (bytes != 0)
+    {
+        uint8_t* ptr = dspCore->TranslateIMem(dsp_addr);
+        if (ptr == nullptr)
+        {
+            DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
+            break;
+        }
+
+        DBReport("%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            dsp_addr,
+            ptr[0], ptr[1], ptr[2], ptr[3],
+            ptr[4], ptr[5], ptr[6], ptr[7],
+            ptr[8], ptr[9], ptr[0xa], ptr[0xb],
+            ptr[0xc], ptr[0xd], ptr[0xe], ptr[0xf]);
+
+        bytes -= 0x10;
+        dsp_addr += 0x10;
+    }
 }
 
 // Run DSP thread until break, halt or dstop
@@ -342,4 +409,41 @@ void cmd_dreset(int argc, char argv[][CON_LINELEN])
     }
 
     dspCore->Reset();
+}
+
+// Disassemble some DSP instructions at program counter
+void cmd_du(int argc, char argv[][CON_LINELEN])
+{
+    if (!dspCore)
+    {
+        DBReport("DspCore not ready\n");
+        return;
+    }
+
+    size_t instrCount = 8;
+    DSP::DspAddress addr = dspCore->regs.pc;
+
+    while (instrCount--)
+    {
+        uint8_t* imemPtr = dspCore->TranslateIMem(addr);
+        if (imemPtr == nullptr)
+        {
+            DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
+            break;
+        }
+
+        DSP::AnalyzeInfo info = { 0 };
+
+        if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+        {
+            DBReport(_DSP "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
+            return;
+        }
+
+        std::string code = DSP::DspDisasm::Disasm(addr, info);
+
+        DBReport("%s\n", code.c_str());
+
+        addr += (DSP::DspAddress)(info.sizeInBytes >> 1);
+    }
 }
