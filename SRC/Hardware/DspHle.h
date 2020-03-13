@@ -85,4 +85,3 @@ uint16_t     DSPReadInMailboxLo();
 void    DSPHLEOpen(HWConfig * config);
 void    DSPHLEClose();
 void    DSPHLEUpdate();
-void    DSPAssertInt();

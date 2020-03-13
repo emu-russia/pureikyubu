@@ -139,5 +139,21 @@ namespace DSP
 		uint16_t ReadDMem(DspAddress addr);
 		void WriteDMem(DspAddress addr, uint16_t value);
 
+		// Flipper interface
+
+		void DSPSetResetBit(bool val);
+		bool DSPGetResetBit();
+		void DSPSetIntBit(bool val);
+		bool DSPGetIntBit();
+		void DSPSetHaltBit(bool val);
+		bool DSPGetHaltBit();
+
+		void DSPWriteOutMailboxHi(uint16_t value);
+		void DSPWriteOutMailboxLo(uint16_t value);
+		uint16_t DSPReadOutMailboxHi();
+		uint16_t DSPReadOutMailboxLo();
+		uint16_t DSPReadInMailboxHi();
+		uint16_t DSPReadInMailboxLo();
+
 	};
 }

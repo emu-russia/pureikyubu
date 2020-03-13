@@ -87,4 +87,6 @@ void    AISINT();
 void    AIUpdate();
 void    AIOpen(HWConfig * config);
 
+void    DSPAssertInt();
+
 #pragma pack(pop)

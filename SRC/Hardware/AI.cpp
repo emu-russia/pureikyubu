@@ -320,3 +320,12 @@ void AIOpen(HWConfig* config)
     MISetTrap(32, AIS_SCNT, read_scnt, NULL);
     MISetTrap(32, AIS_IT  , read_it  , write_it);
 }
+
+void DSPAssertInt()
+{
+    AIDCR |= AIDCR_DSPINT;
+    if (AIDCR & AIDCR_DSPINTMSK)
+    {
+        PIAssertInt(PI_INTERRUPT_DSP);
+    }
+}

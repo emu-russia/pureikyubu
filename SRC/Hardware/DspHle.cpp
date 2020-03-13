@@ -352,15 +352,6 @@ static void DSPSwitchTask(DSPUID uid)
     }
 }
 
-void DSPAssertInt()
-{
-    AIDCR |= AIDCR_DSPINT;
-    if(AIDCR & AIDCR_DSPINTMSK)
-    {
-        PIAssertInt(PI_INTERRUPT_DSP);
-    }
-}
-
 void DSPHLEOpen(HWConfig* config)
 {
     DBReport(_DSP "working in simulate mode\n");

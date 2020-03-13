@@ -134,7 +134,7 @@ namespace DSP
 		MySpinLock::Unlock(&breakPointsSpinLock);
 	}
 
-	/// Execute single instruction (by interpreter)  (DEBUG)
+	/// Execute single instruction (by interpreter)
 	void DspCore::Step()
 	{
 		if (IsRunning())
@@ -153,9 +153,73 @@ namespace DSP
 		{
 			DBReport("pc: 0x%04X\n", regs.pc);
 		}
+
+		if (regs.prod != prevState->prod)
+		{
+			DBReport("prod: 0x%llX\n", regs.prod);
+		}
+
+		if (regs.cr != prevState->cr)
+		{
+			DBReport("cr: 0x%04X\n", regs.cr);
+		}
+
+		if (regs.sr != prevState->sr)
+		{
+			// TODO: Add bit description
+			DBReport("sr: 0x%04X\n", regs.sr);
+		}
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (regs.ac[i] != prevState->ac[i])
+			{
+				DBReport("ac%i: 0x%llX\n", i, regs.ac[i]);
+			}
+		}
+
+		for (int i = 0; i < 2; i++)
+		{
+			if (regs.ax[i] != prevState->ax[i])
+			{
+				DBReport("ax%i: 0x%llX\n", i, regs.ax[i]);
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (regs.ar[i] != prevState->ar[i])
+			{
+				DBReport("ar%i: 0x%04X\n", i, regs.ar[i]);
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (regs.ix[i] != prevState->ix[i])
+			{
+				DBReport("ix%i: 0x%04X\n", i, regs.ix[i]);
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (regs.gpr[i] != prevState->gpr[i])
+			{
+				DBReport("r%i: 0x%04X\n", 8+i, regs.gpr[i]);
+			}
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (regs.st[i] != prevState->st[i])
+			{
+				DBReport("st%i: 0x%04X\n", i, regs.st[i]);
+			}
+		}
 	}
 
-	#pragma endregion
+	#pragma endregion "Debug"
 
 
 	#pragma region "Memory Engine"
@@ -229,6 +293,71 @@ namespace DSP
 		}
 	}
 
-	#pragma endregion
+	#pragma endregion "Memory Engine"
+
+
+	#pragma region "Flipper interface"
+
+	void DspCore::DSPSetResetBit(bool val)
+	{
+
+	}
+
+	bool DspCore::DSPGetResetBit()
+	{
+		return false;
+	}
+
+	void DspCore::DSPSetIntBit(bool val)
+	{
+
+	}
+
+	bool DspCore::DSPGetIntBit()
+	{
+		return false;
+	}
+
+	void DspCore::DSPSetHaltBit(bool val)
+	{
+
+	}
+
+	bool DspCore::DSPGetHaltBit()
+	{
+		return false;
+	}
+
+	void DspCore::DSPWriteOutMailboxHi(uint16_t value)
+	{
+
+	}
+
+	void DspCore::DSPWriteOutMailboxLo(uint16_t value)
+	{
+
+	}
+
+	uint16_t DspCore::DSPReadOutMailboxHi()
+	{
+		return 0;
+	}
+
+	uint16_t DspCore::DSPReadOutMailboxLo()
+	{
+		return 0;
+	}
+
+	uint16_t DspCore::DSPReadInMailboxHi()
+	{
+		return 0;
+	}
+
+	uint16_t DspCore::DSPReadInMailboxLo()
+	{
+		return 0;
+	}
+
+	#pragma endregion "Flipper interface"
 
 }
