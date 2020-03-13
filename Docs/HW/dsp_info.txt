@@ -393,7 +393,8 @@ MULMV *     1001 s11r xxxx xxxx         // MULMV $axS.l, $axS.h, $acR
 
 ```
 MULX *      101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
-???         1010 t001 xxxx xxxx         // ASL16 (?)
+ABS         1010 t001 xxxx xxxx         // ABS $acT
+TST         1011 t001 xxxx xxxx         // TST $acT
 MULXMVZ *   101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
 MULXAC *    101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
 MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR    
@@ -403,7 +404,8 @@ MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR
 
 ```
 MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-CMP16 *     110x t001 xxxx xxxx         // CMP16 $acT  (?)
+CMPAXH *    1100 t001 xxxx xxxx         // CMPAXH $acT  (?)
+???         1101 t001 xxxx xxxx         // ???
 MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
@@ -414,7 +416,7 @@ MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR
 ```
 MADDX **    1110 00st xxxx xxxx         // MADDX $(0x18+S*2), $(0x19+T*2) 
 MSUBX **    1110 01st xxxx xxxx         // MSUBX $(0x18+S*2), $(0x19+T*2) 
-MADDC **    1110 10st xxxx xxxx         // MADDC $acS.l, $axT.h 
+MADDC **    1110 10st xxxx xxxx         // MADDC $acS.m, $axT.h 
 MSUBC **    1110 11st xxxx xxxx         // MSUBC $acS.m, $axT.h 
 ```
 

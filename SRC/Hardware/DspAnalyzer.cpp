@@ -1,4 +1,20 @@
-// DSP analyzer
+/*
+# DSP analyzer
+
+## What's going on here?
+
+This component analyzes the DSP instructions and is used by all interested systems (disassembler, interpreter and recompiler). 
+That is, in fact, this is a universal decoder.
+
+I decided to divide all the DSP instructions into groups (by higher 4 bits). Decoder implemented as simple if-else.
+
+Hybrid (packaged) instructions are stored into two different groups in AnalyseInfo struct.
+
+The simplest example of AnalyzeInfo consumption can be found in the disassembler.
+
+The DSP instruction format is so tightly packed and has a lot of entropy, so I could make a mistake in decoding somewhere. All this then has to appear.
+
+*/
 
 #include "pch.h"
 
@@ -1062,7 +1078,8 @@ namespace DSP
 	bool Analyzer::GroupAB(AnalyzeInfo& info)
 	{
 		//MULX *      101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
-		//???         1010 t001 xxxx xxxx         // ASL16 (?)
+		//ABS		  1010 t001 xxxx xxxx         // ABS $acT 
+		//TST		  1011 t001 xxxx xxxx		  // TST $acT
 		//MULXMVZ *   101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
 		//MULXAC *    101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
 		//MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR
@@ -1078,8 +1095,20 @@ namespace DSP
 			case 0:
 				if ((info.instrBits & 0b100000000) != 0)
 				{
-					// ???
 					info.madd = false;
+
+					if ((info.instrBits & 0b1000000000000) != 0)
+					{
+						// TST16
+						info.instr = DspInstruction::TST;
+					}
+					else
+					{
+						// ABS
+						info.instr = DspInstruction::ABS;
+					}
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + tt), tt))
+						return false;
 				}
 				else
 				{
@@ -1122,7 +1151,8 @@ namespace DSP
 	bool Analyzer::GroupCD(AnalyzeInfo& info)
 	{
 		//MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-		//CMP16 *     110x t001 xxxx xxxx         // CMP16 $acT  (?)
+		//CMPAXH *    1100 t001 xxxx xxxx         // CMPAXH $acT  (?)
+		//???		  1101 t001 xxxx xxxx         // ???
 		//MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 		//MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 		//MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
@@ -1138,8 +1168,19 @@ namespace DSP
 			case 0:
 				if ((info.instrBits & 0b100000000) != 0)
 				{
-					// ???
 					info.madd = false;
+
+					if ((info.instrBits & 0b1000000000000) != 0)
+					{
+						// ???
+					}
+					else
+					{
+						// CMPAXH
+						info.instr = DspInstruction::CMPAXH;
+					}
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + tt), tt))
+						return false;
 				}
 				else
 				{
@@ -1181,11 +1222,104 @@ namespace DSP
 
 	bool Analyzer::GroupE(AnalyzeInfo& info)
 	{
+		//MADDX **    1110 00st xxxx xxxx         // MADDX $(0x18+S*2), $(0x19+T*2) 
+		//MSUBX **    1110 01st xxxx xxxx         // MSUBX $(0x18+S*2), $(0x19+T*2) 
+		//MADDC **    1110 10st xxxx xxxx         // MADDC $acS.m, $axT.h 
+		//MSUBC **    1110 11st xxxx xxxx         // MSUBC $acS.m, $axT.h 
+
+		info.madd = true;
+		int ss = (info.instrBits >> 9) & 1;
+		int tt = (info.instrBits >> 8) & 1;
+
+		if ((info.instrBits & 0b100000000000) != 0)
+		{
+			// MADDC, MSUBC
+			info.instr = (info.instrBits & 0b010000000000) ?
+				DspInstruction::MSUBC : DspInstruction::MADDC;
+
+			if (!AddParam(info, ss ? DspParameter::ac1m : DspParameter::ac0m, ss))
+				return false;
+			if (!AddParam(info, tt ? DspParameter::ax1h : DspParameter::ax0h, tt))
+				return false;
+		}
+		else
+		{
+			// MADDX, MSUBX
+			info.instr = (info.instrBits & 0b010000000000) ?
+				DspInstruction::MSUBX : DspInstruction::MADDX;
+
+			if (!AddParam(info, (DspParameter)(0x18 + ss * 2), ss))
+				return false;
+			if (!AddParam(info, (DspParameter)(0x19 + tt * 2), tt))
+				return false;
+		}
+
 		return true;
 	}
 
 	bool Analyzer::GroupF(AnalyzeInfo& info)
 	{
+		//LSL16 *     1111 000d xxxx xxxx         // LSL16 $acD
+		//MADD *      1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
+		//LSR16 *     1111 010d xxxx xxxx         // LSR16 $acD
+		//MSUB *      1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
+		//ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $axS 
+		//CLRL *      1111 110d xxxx xxxx         // CLRL $acD.l 
+		//MOVPZ *     1111 111d xxxx xxxx         // MOVPZ $acD 
+
+		int dd = (info.instrBits >> 8) & 1;
+		int ss = (info.instrBits >> 9) & 1;
+
+		switch ((info.instrBits >> 9) & 7)
+		{
+			case 0b000:		// LSL16
+				info.logic = true;
+				info.instr = DspInstruction::LSL16;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				break;
+			case 0b001:		// MADD
+				info.madd = true;
+				info.instr = DspInstruction::MADD;
+				if (!AddParam(info, dd ? DspParameter::ax1l : DspParameter::ax0l, dd))
+					return false;
+				if (!AddParam(info, dd ? DspParameter::ax1h : DspParameter::ax0h, dd))
+					return false;
+				break;
+			case 0b010:		// LSR16
+				info.logic = true;
+				info.instr = DspInstruction::LSR16;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				break;
+			case 0b011:		// MSUB
+				info.madd = true;
+				info.instr = DspInstruction::MSUB;
+				if (!AddParam(info, dd ? DspParameter::ax1l : DspParameter::ax0l, dd))
+					return false;
+				if (!AddParam(info, dd ? DspParameter::ax1h : DspParameter::ax0h, dd))
+					return false;
+				break;
+			case 0b100:		// ADDPAXZ
+			case 0b101:
+				info.instr = DspInstruction::ADDPAXZ;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ax0 + ss), ss))
+					return false;
+				break;
+			case 0b110:		// CLRL
+				info.instr = DspInstruction::CLRL;
+				if (!AddParam(info, dd ? DspParameter::ac1l : DspParameter::ac0l, dd))
+					return false;
+				break;
+			case 0b111:		// MOVPZ
+				info.instr = DspInstruction::MOVPZ;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				break;
+		}
+
 		return true;
 	}
 

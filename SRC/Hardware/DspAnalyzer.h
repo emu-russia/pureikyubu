@@ -10,6 +10,8 @@ namespace DSP
 	{
 		Unknown = -1,
 
+		ABS,		///< 0xA100
+
 		ADD,		///< Adds accumulator $ac(1-D) to accumulator register $acD
 		ADDARN,		///< Adds indexing register $ixS to an addressing register $arD
 		ADDAX,		///< Adds secondary accumulator $axS to accumulator register $acD
@@ -43,7 +45,7 @@ namespace DSP
 		CMP,		///< Compares accumulator $ac0 with accumulator $ac1
 		CMPI,		///< Compares mid accumulator $acD.hm ($amD) with sign-extended immediate value I
 		CMPIS,		///< Compares accumulator with short immediate
-		CMP16,		///< Group CD
+		CMPAXH,		///< Group CD
 
 		DAR,		///< Decrement address register $arD. 
 		DEC,		///< Decrements accumulator $acD. 
