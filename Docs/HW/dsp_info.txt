@@ -275,6 +275,143 @@ I dont know details, but general difference between libraries is in mailbox mess
 
 SDK CARD library also has microcode, to "unlock" memory card.
 
+Games interacting with GameBoy via Link Cable also contain some microcode (need research).
+
+## DSP Instructions
+
+Cleaned version from Duddie's document. Packed Group LDAX opcodes found in Dolphin-emu source code.
+
+### Group 1
+
+```
+LOOPI *     0001 [00]00 iiii iiii
+BLOOPI      0001 [00]01 iiii iiii aaaa aaaa aaaa aaaa 
+SBSET *     0001 [00]10 0000 0iii 
+SBCLR *     0001 [00]11 0000 0iii 
+
+LSL         0001 [01]0r 00ii iiii
+LSR         0001 [01]0r 01ii iiii
+ASL         0001 [01]0r 10ii iiii
+ASR         0001 [01]0r 11ii iiii
+SI *        0001 [01]10 mmmm mmmm iiii iiii iiii iiii
+CALLR *     0001 [01]11 rrr1 1111 
+JMPR *      0001 [01]11 rrr0 1111 
+
+LRR *       0001 [10]00 0ssd dddd 
+LRRD *      0001 [10]00 1ssd dddd 
+LRRI *      0001 [10]01 0ssd dddd 
+LRRN *      0001 [10]01 1ssd dddd 
+SRR *       0001 [10]10 0ssd dddd 
+SRRD *      0001 [10]10 1ssd dddd 
+SRRI *      0001 [10]11 0ssd dddd 
+SRRN *      0001 [10]11 1ssd dddd 
+
+MRR *       0001 [11]dd ddds ssss       // MRR $D, $S 
+```
+
+### Group 2
+
+```
+LRS *       0010 0ddd mmmm mmmm 
+SRS *       0010 1sss mmmm mmmm 
+```
+
+### Group 3
+
+```
+XORR *      0011 00sd xxxx xxxx         // XORR $acD.m, $axS.h 
+ANDR *      0011 01sd xxxx xxxx         // ANDR $acD.m, $axS.h 
+ORR *       0011 10sd xxxx xxxx         // ORR $acD.m, $axS.h 
+ANDC *      0011 110d xxxx xxxx         // ANDC $acD.m, $ac(1-D).m 
+ORC *       0011 111d xxxx xxxx         // ORC $acD.m, $ac(1-D).m 
+```
+
+### Group 4
+
+```
+ADDR *      0100 0ssd xxxx xxxx         // ADDR $acD, $(0x18+S) 
+ADDAX *     0100 10sd xxxx xxxx         // ADDAX $acD, $axS 
+ADD *       0100 110d xxxx xxxx         // ADD $acD, $ac(1-D) 
+ADDP *      0100 111d xxxx xxxx         // ADDP $acD 
+```
+
+### Group 5
+
+```
+SUBR *      0101 0ssd xxxx xxxx         // SUBR $acD, $(0x18+S) 
+SUBAX *     0101 10sd xxxx xxxx         // SUBAX $acD, $axS 
+SUB *       0101 110d xxxx xxxx         // SUB $acD, $ac(1-D) 
+SUBP *      0101 111d xxxx xxxx         // SUBP $acD 
+```
+
+### Group 6
+
+```
+MOVR *      0110 0ssd xxxx xxxx         // MOVR $acD, $(0x18+S) 
+MOVAX *     0110 10sd xxxx xxxx         // MOVAX $acD, $axS 
+MOV *       0110 110d xxxx xxxx         // MOV $acD, $ac(1-D) 
+MOVP *      0110 111d xxxx xxxx         // MOVP $acD 
+```
+
+### Group 7
+
+```
+ADDAXL *    0111 00sd xxxx xxxx         // ADDAXL $acD, $axS.l 
+INCM *      0111 010d xxxx xxxx         // INCM $acsD  (mid accum)
+INC *       0111 011d xxxx xxxx         // INC $acD 
+DECM *      0111 100d xxxx xxxx         // DECM $acsD  (mid)
+DEC *       0111 101d xxxx xxxx         // DEC $acD 
+NEG *       0111 110d xxxx xxxx         // NEG $acD 
+MOVNP *     0111 111d xxxx xxxx         // MOVNP $acD 
+```
+
+### Group 8
+
+```
+NX *        1000 r000 xxxx xxxx         (possibly mov r, r)
+CLR *       1000 r001 xxxx xxxx 
+CMP *       1000 0010 xxxx xxxx 
+UNUSED*     1000 0011 xxxx xxxx 
+CLRP *      1000 0100 xxxx xxxx 
+TSTAXH      1000 011r xxxx xxxx 
+M2/M0       1000 101x xxxx xxxx 
+CLR15/SET15 1000 110x xxxx xxxx 
+CLR40/SET40 1000 111x xxxx xxxx 
+```
+
+### Packed Group
+
+```
+?? *        xxxx xxxx 0000 00rr     // NOP2
+DR *        xxxx xxxx 0000 01rr     // DR $arR 
+IR *        xxxx xxxx 0000 10rr     // IR $arR 
+NR *        xxxx xxxx 0000 11rr     // NR $arR, ixR
+MV *        xxxx xxxx 0001 ddss     // MV $(0x18+D), $(0x1c+S) 
+S *         xxxx xxxx 001s s0dd     // S @$D, $(0x1c+D)  
+SN *        xxxx xxxx 001s s1dd     // SN @$D, $(0x1c+D)  
+L *         xxxx xxxx 01dd d0ss     // L $(0x18+D), @$S 
+LN *        xxxx xxxx 01dd d1ss     // LN $(0x18+D), @$S 
+
+LS *        xxxx xxxx 10dd 000s     // LS $(0x18+D), $acS.m 
+SL *        xxxx xxxx 10dd 001s     // SL $acS.m, $(0x18+D)  
+LSN *       xxxx xxxx 10dd 010s     // LSN $(0x18+D), $acS.m 
+SLN *       xxxx xxxx 10dd 011s     // SLN $acS.m, $(0x18+D)
+LSM *       xxxx xxxx 10dd 100s     // LSM $(0x18+D), $acS.m 
+SLM *       xxxx xxxx 10dd 101s     // SLM $acS.m, $(0x18+D)
+LSNM *      xxxx xxxx 10dd 110s     // LSNM $(0x18+D), $acS.m 
+SLNM *      xxxx xxxx 10dd 111s     // SLNM $acS.m, $(0x18+D)
+
+LD          xxxx xxxx 11dr 00ss     // LD $ax0.d, $ax1.r, @$arS 
+LDN         xxxx xxxx 11dr 01ss     // LDN $ax0.d, $ax1.r, @$arS
+LDM         xxxx xxxx 11dr 10ss     // LDM $ax0.d, $ax1.r, @$arS
+LDNM        xxxx xxxx 11dr 11ss     // LDNM $ax0.d, $ax1.r, @$arS
+
+LDAX        xxxx xxxx 11sr 0011     // LDAX $axR, @$arS
+LDAXN       xxxx xxxx 11sr 0111     // LDAXN $axR, @$arS
+LDAXM       xxxx xxxx 11sr 1011     // LDAXM $axR, @$arS
+LDAXNM      xxxx xxxx 11sr 1111     // LDAXNM $axR, @$arS
+```
+
 ## Further reading
 
 Thanks to Duddie, more information about DSP is now known. Check gdsp_infos, GameCube_DSP_Users_Manual.pdf compiled by Dolphin-emu guys and GC IDA plugin by Pierre Bourdon.

@@ -638,6 +638,56 @@ namespace DSP
 
 	bool Analyzer::Group3(AnalyzeInfo& info)
 	{
+		//XORR *      0011 00sd xxxx xxxx         // XORR $acD.m, $axS.h 
+		//ANDR *      0011 01sd xxxx xxxx         // ANDR $acD.m, $axS.h 
+		//ORR *       0011 10sd xxxx xxxx         // ORR $acD.m, $axS.h 
+		//ANDC *      0011 110d xxxx xxxx         // ANDC $acD.m, $ac(1-D).m 
+		//ORC *       0011 111d xxxx xxxx         // ORC $acD.m, $ac(1-D).m 
+
+		info.logic = true;
+
+		if (((info.instrBits >> 10) & 3) == 0b11)		// ANDC, ORC
+		{
+			int dd = (info.instrBits >> 8) & 1;
+
+			if (info.instrBits & 0b1000000000)
+			{
+				info.instr = DspInstruction::ORC;
+			}
+			else
+			{
+				info.instr = DspInstruction::ANDC;
+			}
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
+				return false;
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + (1 - dd)), (1 - dd)))
+				return false;
+		}
+		else	// XORR, ANDR, ORR
+		{
+			int ss = (info.instrBits >> 9) & 1;
+			int dd = (info.instrBits >> 8) & 1;
+
+			switch ((info.instrBits >> 10) & 3)
+			{
+				case 0:
+					info.instr = DspInstruction::XORR;
+					break;
+				case 1:
+					info.instr = DspInstruction::ANDR;
+					break;
+				case 2:
+					info.instr = DspInstruction::ORR;
+					break;
+			}
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
+				return false;
+			if (!AddParam(info, ss ? DspParameter::ax1h : DspParameter::ax0h, ss))
+				return false;
+		}
+
 		return true;
 	}
 
