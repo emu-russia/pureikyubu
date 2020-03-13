@@ -13,6 +13,8 @@ The Step debugging method is used to unconditionally execute next DSP instructio
 The Update method checks the value of Gekko TBR. If its value has exceeded the limit for the execution of one DSP instruction (or segment in case of Jitc),
 interpreter/Jitc Execute method is called.
 
+DspCore uses the interpreter and recompiler at the same time, of their own free will, depending on the situation.
+
 */
 
 #pragma once
@@ -21,17 +23,21 @@ interpreter/Jitc Execute method is called.
 
 namespace DSP
 {
-	enum DspCoreType
-	{
-		Interpreter = 0,
-		Jitc,
-	};
+	typedef uint32_t DspAddress;		///< in halfwords slots 
 
 	typedef struct _DspRegs
 	{
 		uint32_t clearingPaddy;		///< To use {0} on structure
-
-		uint16_t pc;		///< Program counter
+		uint16_t ar[4];		///< Addressing registers
+		uint16_t ix[4];		///< Indexing registers
+		uint16_t gpr[4];	///< General purpose (r8-r11)
+		DspAddress st[4];	///< Stack registers
+		uint64_t ac[2];		///< 40-bit Accumulators
+		uint64_t ax[2];		///< 32-bit Accumulators
+		uint64_t prod;		///< Product register
+		uint16_t cr;		///< config
+		uint16_t sr;		///< status
+		DspAddress pc;		///< Program counter
 	} DspRegs;
 
 	enum class DspHardwareRegs
@@ -69,9 +75,11 @@ namespace DSP
 		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
 	};
 
+	class DspInterpreter;
+
 	class DspCore
 	{
-		std::vector<uint16_t> breakpoints;		///< IMEM breakpoints
+		std::vector<DspAddress> breakpoints;		///< IMEM breakpoints
 		MySpinLock::LOCK breakPointsSpinLock;
 
 		const uint32_t GekkoTicksPerDspInstruction = 10;		///< How many Gekko ticks should pass so that we can execute one DSP instruction
@@ -83,18 +91,19 @@ namespace DSP
 
 		HANDLE threadHandle;
 		DWORD threadId;
-		volatile bool pendingThreadTerminate;
 
 		static DWORD WINAPI DspThreadProc(LPVOID lpParameter);
 
+		DspInterpreter* interp;
+
 	public:
+
+		static const size_t MaxInstructionSizeInBytes = 4;		///< max instruction size
 
 		static const size_t IRAM_SIZE = (8 * 1024);
 		static const size_t IROM_SIZE = (8 * 1024);
 		static const size_t DRAM_SIZE = (8 * 1024);
 		static const size_t DROM_SIZE = (4 * 1024);
-
-		DspCoreType coreType = DspCoreType::Interpreter;
 
 		DspRegs regs = { 0 };
 
@@ -108,16 +117,27 @@ namespace DSP
 
 		void Reset();
 
-		void AddBreakpoint(uint16_t imemAddress /* in halfwords slots */);
-		void ClearBreakpoints();
-
 		void Run();
 		bool IsRunning() { return running; }
 		void Suspend();
 
-		///< Execute single instruction (by interpreter)  (DEBUG)
-		void Step();
-
 		void Update();
+
+		// Debug methods
+
+		void AddBreakpoint(DspAddress imemAddress);
+		void ListBreakpoints();
+		void ClearBreakpoints();
+		void Step();
+		void DumpRegs(DspRegs *prevState);
+
+		// Memory engine
+
+		uint8_t* TranslateIMem(DspAddress addr);
+		uint8_t* TranslateDMem(DspAddress addr);
+		uint16_t ReadIMem(DspAddress addr);
+		uint16_t ReadDMem(DspAddress addr);
+		void WriteDMem(DspAddress addr, uint16_t value);
+
 	};
 }

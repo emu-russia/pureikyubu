@@ -8,8 +8,6 @@ namespace DSP
 {
 	class DspDisasm
 	{
-		static const size_t MaxInstructionSizeInBytes = 4;		///< max instruction size (for padding)
-
 		// Utilities used by disasm
 
 		template<typename T>
@@ -43,8 +41,6 @@ namespace DSP
 
 	public:
 
-		// startAddr in DSP "slots"
-
-		static std::string Disasm(uint16_t startAddr, AnalyzeInfo& info);
+		static std::string Disasm(DspAddress startAddr, AnalyzeInfo& info);
 	};
 }

@@ -299,8 +299,6 @@ namespace DSP
 		Always = 0b1111,	///< Always
 	};
 
-	typedef uint32_t DspAddress;
-
 	typedef struct _AnalyzeInfo
 	{
 		uint32_t clearingPaddy;		///< To use {0} on structure

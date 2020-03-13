@@ -12,7 +12,6 @@ void cmd_init_handlers()
     con.cmds["d"] = cmd_d;
     con.cmds["denop"] = cmd_denop;
     con.cmds["disa"] = cmd_disa;
-    con.cmds["dspdisa"] = cmd_dspdisa;
     con.cmds["dop"] = cmd_dop;
     con.cmds["dvdopen"] = cmd_dvdopen;
     con.cmds["full"] = cmd_full;
@@ -40,6 +39,8 @@ void cmd_init_handlers()
     con.cmds["quit"] = cmd_exit;
     con.cmds["q"] = cmd_exit;
     con.cmds["x"] = cmd_exit;
+
+    dsp_init_handlers();
 }
 
 void con_command(int argc, char argv[][CON_LINELEN], int lnum)
@@ -85,9 +86,7 @@ void cmd_help(int argc, char argv[][CON_LINELEN])
     con_print(WHITE "    reset                " NORM "- reset emulator");
     con_print("\n");
 
-    con_print(CYAN  "--- dsp debug commands --------------------------------------------------------");
-    con_print(WHITE "    dspdisa              " NORM "- disassemble DSP code into text file");
-    con_print("\n");
+    dsp_help();
 
     con_print(CYAN  "--- high-level commands -------------------------------------------------------");
     con_print(WHITE "    stat                 " NORM "- show hardware state/statistics");
@@ -349,7 +348,7 @@ static void disa_line (FILE *f, uint32_t opcode, uint32_t addr)
 
     else if(disa.iclass & PPC_DISA_BRANCH)
     {
-        if((symbol = SYMName(disa.target)) != nullptr) fprintf (f, "%-12s%s", disa.mnemonic, symbol);
+        if((symbol = SYMName((uint32_t)disa.target)) != nullptr) fprintf (f, "%-12s%s", disa.mnemonic, symbol);
         else fprintf (f, "%-12s%s", disa.mnemonic, disa.operands);
 
         if(disa.target > addr) fprintf (f, " \x19");
@@ -562,11 +561,11 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
             MEMReadWord(sp+4, &read_pc);    // read LR value from stack
             disa.pc = read_pc;
             disa.pc -= 4;                   // set to branch opcode
-            MEMReadWord(disa.pc, &disa.instr); // read branch
+            MEMReadWord((uint32_t)disa.pc, &disa.instr); // read branch
             PPCDisasm (&disa);                    // disasm
             if(disa.iclass & PPC_DISA_BRANCH)
             {
-                char * symbol = SYMName(disa.target);
+                char * symbol = SYMName((uint32_t)disa.target);
                 if(symbol) con_print( NORM "%-3i: " GREEN "%-12s%-12s " BROWN "(%s)\n", 
                                       i+1, disa.mnemonic, disa.operands, symbol );
                 else       con_print( NORM "%-3i: " GREEN "%-12s%-12s " "\n", 
@@ -610,7 +609,7 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
                 disa.instr = op;
                 PPCDisasm (&disa);
                 if(disa.iclass & PPC_DISA_BRANCH)
-                    address = disa.target;
+                    address = (uint32_t)disa.target;
             }
             else address = 0;
         }
@@ -1508,88 +1507,4 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
         // simply address
         con_set_disa_cur(strtoul(argv[1], NULL, 0));
     }
-}
-
-// ---------------------------------------------------------------------------
-// disasm dsp ucode
-
-void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
-{
-    if (argc < 2)
-    {
-        con_print("syntax: dspdisa <dsp_ucode.bin> [start_addr]\n");
-        con_print("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
-        con_print("start_addr in DSP slots;\n");
-        con_print("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
-    }
-
-    size_t start_addr = 0;      // in DSP slots (halfwords)
-
-    if (argc >= 3)
-    {
-        start_addr = strtoul(argv[2], nullptr, 0);
-    }
-
-    uint32_t ucodeSize = 0;
-    uint8_t* ucode = (uint8_t *)FileLoad(argv[1], &ucodeSize);
-    if (!ucode)
-    {
-        con_print("Failed to load %s\n", argv[1]);
-        return;
-    }
-
-    FILE* f = nullptr;
-    fopen_s(&f, "Data\\dspdisa.txt", "wt");
-    if (!f)
-    {
-        free(ucode);
-        con_print("Failed to create dsp_disa.txt\n");
-        return;
-    }
-
-    uint8_t* ucodePtr = ucode;
-    size_t bytesLeft = ucodeSize;
-    size_t offset = 0;      // in DSP slots (halfwords)
-
-    if (f)
-    {
-        fprintf(f, "// Disassembled %s\n\n", argv[1]);
-    }
-
-    while (bytesLeft != 0)
-    {
-        DSP::AnalyzeInfo info = { 0 };
-
-        // Analyze
-
-        bool result = DSP::Analyzer::Analyze(ucodePtr, ucodeSize - 2 * offset, info);
-        if (!result)
-        {
-            con_print("DSP::Analyze failed at offset: 0x%08X\n", offset);
-            break;
-        }
-
-        // Disassemble
-
-        std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
-
-        if (f)
-        {
-            fprintf(f, "%s\n", text.c_str());
-        }
-
-        offset += (info.sizeInBytes / sizeof(uint16_t));
-        bytesLeft -= info.sizeInBytes;
-        ucodePtr += info.sizeInBytes;
-    }
-
-    free(ucode);
-
-    if (f)
-    {
-        fflush(f);
-        fclose(f);
-    }
-
-    DBReport("Done.\n");
 }

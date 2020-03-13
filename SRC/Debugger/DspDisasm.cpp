@@ -373,7 +373,7 @@ namespace DSP
 		return text;
 	}
 
-	std::string DspDisasm::Disasm(uint16_t startAddr, AnalyzeInfo& info)
+	std::string DspDisasm::Disasm(DspAddress startAddr, AnalyzeInfo& info)
 	{
 		std::string text = "";
 
@@ -382,7 +382,7 @@ namespace DSP
 		text += ToHexString((uint16_t)startAddr);
 		text += " ";
 
-		for (int i = 0; i < MaxInstructionSizeInBytes; i++)
+		for (int i = 0; i < DspCore::MaxInstructionSizeInBytes; i++)
 		{
 			if (i < info.sizeInBytes)
 			{

@@ -28,6 +28,7 @@
     <ClCompile Include="..\DspCore.cpp" />
     <ClCompile Include="..\DspHle.cpp" />
     <ClCompile Include="..\DspAnalyzer.cpp" />
+    <ClCompile Include="..\DspInterpreter.cpp" />
     <ClCompile Include="..\EFB.cpp" />
     <ClCompile Include="..\EI.cpp" />
     <ClCompile Include="..\GDI.cpp" />
@@ -55,6 +56,7 @@
     <ClInclude Include="..\DspCore.h" />
     <ClInclude Include="..\DspHle.h" />
     <ClInclude Include="..\DspAnalyzer.h" />
+    <ClInclude Include="..\DspInterpreter.h" />
     <ClInclude Include="..\DVD.h" />
     <ClInclude Include="..\EFB.h" />
     <ClInclude Include="..\EI.h" />
