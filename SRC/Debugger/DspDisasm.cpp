@@ -80,12 +80,6 @@ namespace DSP
 			case DspParameter::UnsignedShort2:
 				text = "#0x" + ToHexString((uint16_t)info.ImmOperand2.UnsignedShort);
 				break;
-			case DspParameter::SignedShort:
-				text = "S16 #0x" + ToHexString((uint16_t)info.ImmOperand.SignedShort);	// TODO: For now
-				break;
-			case DspParameter::SignedShort2:
-				text = "S16 #0x" + ToHexString((uint16_t)info.ImmOperand2.SignedShort);	// TODO: For now
-				break;
 			case DspParameter::Address:
 				if (IsHardwareReg(info.ImmOperand.Address))
 				{

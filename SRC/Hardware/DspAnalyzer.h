@@ -269,13 +269,11 @@ namespace DSP
 		Byte,
 		SignedByte,
 		UnsignedShort,
-		SignedShort,
 		Address,
 
 		Byte2,
 		SignedByte2,
 		UnsignedShort2,
-		SignedShort2,
 		Address2,
 
 		Max,
@@ -337,7 +335,6 @@ namespace DSP
 			uint8_t		Byte;
 			int8_t		SignedByte;
 			uint16_t	UnsignedShort;
-			int16_t		SignedShort;
 			DspAddress	Address;		///< For bloop, call etc.
 		} ImmOperand;
 
@@ -348,7 +345,6 @@ namespace DSP
 			uint8_t		Byte;
 			int8_t		SignedByte;		///< For SI
 			uint16_t	UnsignedShort;
-			int16_t		SignedShort;
 			DspAddress	Address;		///< For BLOOPI
 		} ImmOperand2;
 
@@ -418,17 +414,6 @@ namespace DSP
 				info.ImmOperand.UnsignedShort = imm;
 			else if (param == DspParameter::UnsignedShort2)
 				info.ImmOperand2.UnsignedShort = imm;
-			return true;
-		}
-
-		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm)
-		{
-			if (!AddParam(info, param, imm))
-				return false;
-			if (param == DspParameter::SignedShort)
-				info.ImmOperand.SignedShort = imm;
-			else if (param == DspParameter::SignedShort2)
-				info.ImmOperand2.SignedShort = imm;
 			return true;
 		}
 
