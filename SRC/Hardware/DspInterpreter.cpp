@@ -37,7 +37,7 @@ namespace DSP
 
 			default:
 				DBHalt(_DSP "Unknown instruction at 0x%04X\n", core->regs.pc);
-				//core->Suspend();
+				core->Suspend();
 				return;
 		}
 
@@ -48,7 +48,7 @@ namespace DSP
 			{
 				default:
 					DBHalt(_DSP "Unknown packed instruction at 0x%04X\n", core->regs.pc);
-					//core->Suspend();
+					core->Suspend();
 					return;
 			}
 		}

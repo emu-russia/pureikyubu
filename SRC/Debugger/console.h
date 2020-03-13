@@ -50,6 +50,7 @@ public:
     NOPHistory*         nopHist = nullptr;
     int                 nopNum = 0;
     std::map<std::string, cmd_handler> cmds;
+    MySpinLock::LOCK    reportLock;
 };
 
 #pragma pack(pop)

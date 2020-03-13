@@ -97,9 +97,9 @@ namespace DSP
 	{
 		if (running)
 		{
-			SuspendThread(threadHandle);
-			DBReport(_DSP "DspCore::Suspend");
 			running = false;
+			DBReport(_DSP "DspCore::Suspend");
+			SuspendThread(threadHandle);
 		}
 	}
 

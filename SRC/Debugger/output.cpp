@@ -232,7 +232,7 @@ static void log_console_output(char *txt)
 {
     static int nwrites = 10;
 
-    if(con.log == TRUE)
+    if(con.log)
     {
         if(!con.logf)
         {
@@ -272,9 +272,11 @@ void con_add_roller_line(const char *txt, int err)
     }
 
     // roll console "roller" 1 line up
+    MySpinLock::Lock(&con.reportLock);
     roll.rollpos = con_wraproll(roll.rollpos, 1);
     strncpy_s(roll.data[roll.rollpos], sizeof(roll.data[roll.rollpos]), ptr, CON_LINELEN-1);
     log_console_output(string_to_HTML_string(ptr));
+    MySpinLock::Unlock(&con.reportLock);
     con_update(CON_UPDATE_MSGS);
 }
 

@@ -4,7 +4,7 @@
 // CPU control/state block (all important data is here)
 CPUControl cpu;
 
-// generate (not assert!) exception
+// generate exception
 void (*CPUException)(uint32_t vector);
 
 // memory operations (using MEM* or DB* read/write operations)
