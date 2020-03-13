@@ -12,14 +12,14 @@ namespace DSP
 		{
 			// Registers
 
-			case DspParameter::ar0: text = "ar.0"; break;
-			case DspParameter::ar1: text = "ar.1"; break;
-			case DspParameter::ar2: text = "ar.2"; break;
-			case DspParameter::ar3: text = "ar.3"; break;
-			case DspParameter::ix0: text = "ix.0"; break;
-			case DspParameter::ix1: text = "ix.1"; break;
-			case DspParameter::ix2: text = "ix.2"; break;
-			case DspParameter::ix3: text = "ix.3"; break;
+			case DspParameter::ar0: text = "ar0"; break;
+			case DspParameter::ar1: text = "ar1"; break;
+			case DspParameter::ar2: text = "ar2"; break;
+			case DspParameter::ar3: text = "ar3"; break;
+			case DspParameter::ix0: text = "ix0"; break;
+			case DspParameter::ix1: text = "ix1"; break;
+			case DspParameter::ix2: text = "ix2"; break;
+			case DspParameter::ix3: text = "ix3"; break;
 			case DspParameter::r08: text = "r08"; break;
 			case DspParameter::r09: text = "r09"; break;
 			case DspParameter::r0a: text = "r0a"; break;
@@ -69,10 +69,10 @@ namespace DSP
 				text = "#0x" + ToHexString(info.ImmOperand2.Byte);
 				break;
 			case DspParameter::SignedByte:
-				text = "S8 #0x" + ToHexString((uint8_t)info.ImmOperand.SignedByte);	// TODO: For now
+				text = std::to_string((int)(int16_t)info.ImmOperand.SignedByte);
 				break;
 			case DspParameter::SignedByte2:
-				text = "S8 #0x" + ToHexString((uint8_t)info.ImmOperand2.SignedByte);	// TODO: For now
+				text = std::to_string((int)(int16_t)info.ImmOperand2.SignedByte);
 				break;
 			case DspParameter::UnsignedShort:
 				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
@@ -271,7 +271,8 @@ namespace DSP
 
 		switch (instrEx)
 		{
-			case DspInstructionEx::NOP2: text = "nop2"; break;
+			// Dont show nop2's
+			//case DspInstructionEx::NOP2: text = "nop2"; break;
 			case DspInstructionEx::DR: text = "dr"; break;
 			case DspInstructionEx::IR: text = "ir"; break;
 			case DspInstructionEx::NR: text = "nr"; break;

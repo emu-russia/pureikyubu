@@ -57,6 +57,15 @@ namespace DSP
 
 		DIRQ = 0xFFFB,		///< IRQ request
 
+		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
+
+		ACFMT = 0xFFD1,
+		ACPDS = 0xFFDA,
+		ACYN1 = 0xFFDB,
+		ACYN2 = 0xFFDC,
+		ACGAN = 0xFFDE,
+		AMDM = 0xFFEF,		///< ARAM DMA Request Mask
+
 		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
 	};
 

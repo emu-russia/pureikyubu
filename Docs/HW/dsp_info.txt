@@ -412,6 +412,38 @@ LDAXM       xxxx xxxx 11sr 1011     // LDAXM $axR, @$arS
 LDAXNM      xxxx xxxx 11sr 1111     // LDAXNM $axR, @$arS
 ```
 
+## Dispatching packed instructions
+
+Example (from some ucode):
+
+```
+02DA 10 50          loopi   #0x50
+02DB 4C 20          add     ac0, ac1            s       @ar0, ac0.l
+02DC 02 DF          ret     
+```
+
+It may be treated as following code:
+
+```c++
+int i = 0x50;
+while (i--)
+{
+    ac0 += ac1;             // Left executed first
+    *ar0++ = ac0.l;           // Right second
+}
+```
+
+Or like this:
+
+```c++
+int i = 0x50;
+while (i--)
+{
+    *ar0++ = ac0.l;           // Right executed first
+    ac0 += ac1;             // Left second
+}
+```
+
 ## Further reading
 
 Thanks to Duddie, more information about DSP is now known. Check gdsp_infos, GameCube_DSP_Users_Manual.pdf compiled by Dolphin-emu guys and GC IDA plugin by Pierre Bourdon.

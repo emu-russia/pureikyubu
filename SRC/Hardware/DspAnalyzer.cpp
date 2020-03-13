@@ -693,16 +693,178 @@ namespace DSP
 
 	bool Analyzer::Group4(AnalyzeInfo& info)
 	{
+		//ADDR *      0100 0ssd xxxx xxxx         // ADDR $acD, $(0x18+S) 
+		//ADDAX *     0100 10sd xxxx xxxx         // ADDAX $acD, $axS 
+		//ADD *       0100 110d xxxx xxxx         // ADD $acD, $ac(1-D) 
+		//ADDP *      0100 111d xxxx xxxx         // ADDP $acD 
+
+		int dd = (info.instrBits >> 8) & 1;
+
+		if ((info.instrBits & 0b100000000000) != 0)
+		{
+			if ((info.instrBits & 0b010000000000) != 0)
+			{
+				if ((info.instrBits & 0b001000000000) != 0)
+				{
+					// ADDP
+					info.instr = DspInstruction::ADDP;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+				}
+				else
+				{
+					// ADD
+					info.instr = DspInstruction::ADD;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + (1-dd)), (1-dd)))
+						return false;
+				}
+			}
+			else
+			{
+				// ADDAX
+				int ss = (info.instrBits >> 9) & 1;
+				info.instr = DspInstruction::ADDAX;
+
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ax0 + ss), ss))
+					return false;
+			}
+		}
+		else
+		{
+			// ADDR
+			int ss = (info.instrBits >> 9) & 3;
+			info.instr = DspInstruction::ADDR;
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+				return false;
+			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+				return false;
+		}
+
 		return true;
 	}
 
 	bool Analyzer::Group5(AnalyzeInfo& info)
 	{
+		//SUBR *      0101 0ssd xxxx xxxx         // SUBR $acD, $(0x18+S) 
+		//SUBAX *     0101 10sd xxxx xxxx         // SUBAX $acD, $axS 
+		//SUB *       0101 110d xxxx xxxx         // SUB $acD, $ac(1-D) 
+		//SUBP *      0101 111d xxxx xxxx         // SUBP $acD 
+
+		int dd = (info.instrBits >> 8) & 1;
+
+		if ((info.instrBits & 0b100000000000) != 0)
+		{
+			if ((info.instrBits & 0b010000000000) != 0)
+			{
+				if ((info.instrBits & 0b001000000000) != 0)
+				{
+					// SUBP
+					info.instr = DspInstruction::SUBP;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+				}
+				else
+				{
+					// SUB
+					info.instr = DspInstruction::SUB;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + (1 - dd)), (1 - dd)))
+						return false;
+				}
+			}
+			else
+			{
+				// SUBAX
+				int ss = (info.instrBits >> 9) & 1;
+				info.instr = DspInstruction::SUBAX;
+
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ax0 + ss), ss))
+					return false;
+			}
+		}
+		else
+		{
+			// SUBR
+			int ss = (info.instrBits >> 9) & 3;
+			info.instr = DspInstruction::SUBR;
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+				return false;
+			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+				return false;
+		}
+
 		return true;
 	}
 
 	bool Analyzer::Group6(AnalyzeInfo& info)
 	{
+		//MOVR *      0110 0ssd xxxx xxxx         // MOVR $acD, $(0x18+S) 
+		//MOVAX *     0110 10sd xxxx xxxx         // MOVAX $acD, $axS 
+		//MOV *       0110 110d xxxx xxxx         // MOV $acD, $ac(1-D) 
+		//MOVP *      0110 111d xxxx xxxx         // MOVP $acD 
+
+		int dd = (info.instrBits >> 8) & 1;
+
+		if ((info.instrBits & 0b100000000000) != 0)
+		{
+			if ((info.instrBits & 0b010000000000) != 0)
+			{
+				if ((info.instrBits & 0b001000000000) != 0)
+				{
+					// MOVP
+					info.instr = DspInstruction::MOVP;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+				}
+				else
+				{
+					// MOV
+					info.instr = DspInstruction::MOV;
+
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+						return false;
+					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + (1 - dd)), (1 - dd)))
+						return false;
+				}
+			}
+			else
+			{
+				// MOVAX
+				int ss = (info.instrBits >> 9) & 1;
+				info.instr = DspInstruction::MOVAX;
+
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+					return false;
+				if (!AddParam(info, (DspParameter)((int)DspParameter::ax0 + ss), ss))
+					return false;
+			}
+		}
+		else
+		{
+			// MOVR
+			int ss = (info.instrBits >> 9) & 3;
+			info.instr = DspInstruction::MOVR;
+
+			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
+				return false;
+			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+				return false;
+		}
+
 		return true;
 	}
 
