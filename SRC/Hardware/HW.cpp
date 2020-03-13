@@ -21,7 +21,6 @@ void HWOpen(HWConfig* config)
     VIOpen(config); // video (TV)
     CPOpen(config); // fifo
     AIOpen(config); // audio (AID and AIS)
-    DSPHLEOpen(config);    // DSP (HLE)
     AROpen();       // aux. memory (ARAM)
     EIOpen(config); // expansion interface (EXI)
     DIOpen();       // disk
@@ -29,6 +28,7 @@ void HWOpen(HWConfig* config)
     PIOpen(config); // interrupts, console regs
 
     dspCore = new DSP::DspCore(config);
+    assert(dspCore);
 
     HWEnableUpdate(1);
 
@@ -47,7 +47,6 @@ void HWClose()
     EIClose();      // take care about closing of memcards and BBA
     VIClose();      // close GDI (if opened)
     DIClose();      // release streaming buffer
-    DSPHLEClose();
     MIClose();
 }
 
@@ -67,7 +66,6 @@ void HWUpdate()
         // update audio and DSP
         BeginProfileSfx();
         AIUpdate();
-        //DSPHLEUpdate();       // Phasing out
         //dspCore->Update();        // Updated by own thread
         EndProfileSfx();
 

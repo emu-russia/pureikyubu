@@ -60,9 +60,6 @@
     <ClCompile Include="..\VI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\AXUCode.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\IPLDescrambler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -70,9 +67,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\DspCore.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DspHle.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\DspInterpreter.cpp">
@@ -137,9 +131,6 @@
     <ClInclude Include="..\VI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\AXUCode.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\IPLDescrambler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -147,9 +138,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\DspCore.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DspHle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\DspInterpreter.h">

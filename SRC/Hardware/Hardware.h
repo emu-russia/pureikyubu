@@ -61,8 +61,6 @@ typedef struct _HWConfig
 // GC hardware set (in register addressing order, see MI.h)
 #include "EFB.h"
 #include "AI.h"
-#include "DspHle.h"         ///< Phasing out
-#include "AXUCode.h"        ///< Phasing out
 #include "GDI.h"
 #include "CP.h"
 #include "VI.h"

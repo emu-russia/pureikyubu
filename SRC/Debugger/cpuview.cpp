@@ -59,7 +59,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
         else if (disa.target < addr) con_printline(CYAN " \x18");
         else con_printline(CYAN " \x1b");
 
-        if((symbol = SYMName(disa.target)) != nullptr)
+        if((symbol = SYMName((uint32_t)disa.target)) != nullptr)
         {
             con_printf_at(47, line, BROWN " ; %s", symbol);
         }

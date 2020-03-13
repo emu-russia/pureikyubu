@@ -22,11 +22,9 @@
     <ClCompile Include="..\AI.cpp" />
     <ClCompile Include="..\AR.cpp" />
     <ClCompile Include="..\AudioNull.cpp" />
-    <ClCompile Include="..\AXUCode.cpp" />
     <ClCompile Include="..\CP.cpp" />
     <ClCompile Include="..\DI.cpp" />
     <ClCompile Include="..\DspCore.cpp" />
-    <ClCompile Include="..\DspHle.cpp" />
     <ClCompile Include="..\DspAnalyzer.cpp" />
     <ClCompile Include="..\DspInterpreter.cpp" />
     <ClCompile Include="..\EFB.cpp" />
@@ -50,11 +48,9 @@
     <ClInclude Include="..\AI.h" />
     <ClInclude Include="..\AR.h" />
     <ClInclude Include="..\AX.h" />
-    <ClInclude Include="..\AXUCode.h" />
     <ClInclude Include="..\CP.h" />
     <ClInclude Include="..\DI.h" />
     <ClInclude Include="..\DspCore.h" />
-    <ClInclude Include="..\DspHle.h" />
     <ClInclude Include="..\DspAnalyzer.h" />
     <ClInclude Include="..\DspInterpreter.h" />
     <ClInclude Include="..\DVD.h" />

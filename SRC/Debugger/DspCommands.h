@@ -5,7 +5,7 @@
 void	dsp_init_handlers();
 void    dsp_help();
 
-void    cmd_dspdisa(int argc, char argv[][CON_LINELEN]);	// disasm dsp ucode
+void    cmd_dspdisa(int argc, char argv[][CON_LINELEN]);	// disasm dsp ucode to file
 void    cmd_dregs(int argc, char argv[][CON_LINELEN]);	// Show dsp registers
 void    cmd_dmem(int argc, char argv[][CON_LINELEN]);	// Dump DSP DMEM
 void    cmd_imem(int argc, char argv[][CON_LINELEN]);	// Dump DSP IMEM

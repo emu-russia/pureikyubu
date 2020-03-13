@@ -38,7 +38,7 @@ void dsp_help()
     con_print("\n");
 }
 
-// disasm dsp ucode
+// disasm dsp ucode to file
 void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 {
     if (argc < 2)
@@ -47,6 +47,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
         con_print("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
         con_print("start_addr in DSP slots;\n");
         con_print("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
+        return;
     }
 
     size_t start_addr = 0;      // in DSP slots (halfwords)
@@ -169,6 +170,7 @@ void cmd_dmem(int argc, char argv[][CON_LINELEN])
         con_print("Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
         con_print("dmem . will dump 0x800 bytes at dmem address 0\n");
         con_print("example of use: dmem 0x8000\n");
+        return;
     }
 
     DSP::DspAddress dsp_addr = 0;
@@ -222,6 +224,7 @@ void cmd_imem(int argc, char argv[][CON_LINELEN])
         con_print("Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
         con_print("imem . will dump 32 bytes of imem at program counter address.\n");
         con_print("example of use: imem 0\n");
+        return;
     }
 
     DSP::DspAddress dsp_addr = 0;
@@ -343,6 +346,7 @@ void cmd_dbrk(int argc, char argv[][CON_LINELEN])
         con_print("syntax: dbrk <dsp_addr>\n");
         con_print("Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n");
         con_print("example of use: dbrk 0x8020\n");
+        return;
     }
 
     DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
@@ -400,6 +404,7 @@ void cmd_dpc(int argc, char argv[][CON_LINELEN])
         con_print("syntax: dpc <dsp_addr>\n");
         con_print("Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n");
         con_print("example of use: dpc 0x8000\n");
+        return;
     }
 
     dspCore->regs.pc = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);

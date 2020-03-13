@@ -111,6 +111,8 @@ void con_open()
 
     con.active = TRUE;
     con.update |= CON_UPDATE_ALL;
+
+    DBReport("Debugger is running. Type help for quick reference.\n");
 }
 
 void con_close()
