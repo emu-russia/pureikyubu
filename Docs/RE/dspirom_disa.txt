@@ -19,20 +19,20 @@
 ```
 800E 81 00       	clr  	ac0             	     	
 800F 89 00       	clr  	ac1             	     	
-8010 02 BF 80 78 	call 	$0x8078
+8010 02 BF 80 78 	call 	WaitCpuMailbox
 8012 00 9F 80 F3 	lri  	ac1.m, #0x80F3
 8014 82 00       	cmp  	                	     	
 8015 02 95 80 1F 	jeq  	$0x801F
 8017 27 FF       	lrs  	ac1.m, $(CMBL)
 8018 16 FC FE EE 	si   	$(DMBH), #0xFEEE
 801A 2E FD       	srs  	$(DMBL), ac0.m
-801B 02 BF 80 7E 	call 	$0x807E
+801B 02 BF 80 7E 	call 	WaitDspMailbox
 801D 02 9F 80 0E 	j    	$0x800E
 801F 26 FF       	lrs  	ac0.m, $(CMBL)
 8020 00 9F A0 01 	lri  	ac1.m, #0xA001
 8022 82 00       	cmp  	                	     	
 8023 02 94 80 2C 	jne  	$0x802C
-8025 02 BF 80 78 	call 	$0x8078
+8025 02 BF 80 78 	call 	WaitCpuMailbox
 8027 27 FF       	lrs  	ac1.m, $(CMBL)
 8028 1C 9E       	mrr  	ix0, ac0.m
 8029 1C BF       	mrr  	ix1, ac1.m
@@ -40,21 +40,21 @@
 802C 00 9F A0 02 	lri  	ac1.m, #0xA002
 802E 82 00       	cmp  	                	     	
 802F 02 94 80 37 	jne  	$0x8037
-8031 02 BF 80 78 	call 	$0x8078
+8031 02 BF 80 78 	call 	WaitCpuMailbox
 8033 27 FF       	lrs  	ac1.m, $(CMBL)
 8034 1C FF       	mrr  	ix3, ac1.m
 8035 02 9F 80 0E 	j    	$0x800E
 8037 00 9F C0 02 	lri  	ac1.m, #0xC002
 8039 82 00       	cmp  	                	     	
 803A 02 94 80 42 	jne  	$0x8042
-803C 02 BF 80 78 	call 	$0x8078
+803C 02 BF 80 78 	call 	WaitCpuMailbox
 803E 27 FF       	lrs  	ac1.m, $(CMBL)
 803F 1C DF       	mrr  	ix2, ac1.m
 8040 02 9F 80 0E 	j    	$0x800E
 8042 00 9F B0 01 	lri  	ac1.m, #0xB001
 8044 82 00       	cmp  	                	     	
 8045 02 94 80 4E 	jne  	$0x804E
-8047 02 BF 80 78 	call 	$0x8078
+8047 02 BF 80 78 	call 	WaitCpuMailbox
 8049 27 FF       	lrs  	ac1.m, $(CMBL)
 804A 1F 5E       	mrr  	ax1.l, ac0.m
 804B 1F 1F       	mrr  	ax0.l, ac1.m
@@ -62,30 +62,39 @@
 804E 00 9F B0 02 	lri  	ac1.m, #0xB002
 8050 82 00       	cmp  	                	     	
 8051 02 94 80 59 	jne  	$0x8059
-8053 02 BF 80 78 	call 	$0x8078
+8053 02 BF 80 78 	call 	WaitCpuMailbox
 8055 27 FF       	lrs  	ac1.m, $(CMBL)
 8056 1F 3F       	mrr  	ax0.h, ac1.m
 8057 02 9F 80 0E 	j    	$0x800E
 8059 00 9F C0 01 	lri  	ac1.m, #0xC001
 805B 82 00       	cmp  	                	     	
 805C 02 94 80 64 	jne  	$0x8064
-805E 02 BF 80 78 	call 	$0x8078
+805E 02 BF 80 78 	call 	WaitCpuMailbox
 8060 27 FF       	lrs  	ac1.m, $(CMBL)
 8061 1F 7F       	mrr  	ax1.h, ac1.m
 8062 02 9F 80 0E 	j    	$0x800E
 8064 00 9F D0 01 	lri  	ac1.m, #0xD001
 8066 82 00       	cmp  	                	     	
 8067 02 94 80 71 	jne  	$0x8071
-8069 02 BF 80 78 	call 	$0x8078
+8069 02 BF 80 78 	call 	WaitCpuMailbox
 806B 81 00       	clr  	ac0             	     	
 806C 26 FF       	lrs  	ac0.m, $(CMBL)
 806D 1C 1E       	mrr  	ar0, ac0.m
-806E 02 9F 80 B5 	j    	$0x80B5
+806E 02 9F 80 B5 	j    	$0x80B5					// Run microcode
 8070 00 21       	halt 	
 8071 16 FC FA AA 	si   	$(DMBH), #0xFAAA
 8073 2E FD       	srs  	$(DMBL), ac0.m
-8074 02 BF 80 7E 	call 	$0x807E
+8074 02 BF 80 7E 	call 	WaitDspMailbox
 8076 02 9F 80 0E 	j    	$0x800E
+```
+
+```c++
+
+void DspMain ()			// 800E
+{
+	
+}
+
 ```
 
 ## Mailbox polling
@@ -100,15 +109,20 @@
 Wait for message from the processor.
 
 ```c++
-void WaitCpuMailbox()
+// Wait for message from the processor
+uint16_t WaitCpuMailbox()		// 8078
 {
-	while ( (*(uint16_t *)(CMBH) & 0x8000) == 0 )
+	uint16_t ac0m;
+	while ( ((ac0m = *(uint16_t *)(CMBH)) & 0x8000) == 0 )
 	{
 	}
+	return ac0m;
 }
 ```
 
 Wait until processor read both the upper and lower parts of DSP Mailbox.
+
+According to the logic of work, when the processor reads both mailbox halves, the msb will be cleared and the poll will stop.
 
 ```
 807E 26 FC       	lrs  	ac0.m, $(DMBH)
@@ -118,11 +132,14 @@ Wait until processor read both the upper and lower parts of DSP Mailbox.
 ```
 
 ```c++
-void WaitDspMailbox()
+// Wait until processor read mailbox
+uint16_t WaitDspMailbox()			// 807E
 {
-	while ( (*(uint16_t *)(DMBH) & 0x8000) == 0 )
+	uint16_t ac0m;
+	while ( ((ac0m = *(uint16_t *)(DMBH)) & 0x8000) == 0x8000 )
 	{
 	}
+	return ac0m;
 }
 ```
 
@@ -191,14 +208,12 @@ void WaitDspMailbox()
 80DF 00 DE FF C9 	lr   	ac0.m, $(DSCR)
 80E1 02 A0 00 04 	andcf	ac0.m, #0x0004
 80E3 02 9C 80 DF 	jnz  	$0x80DF
-```
-
-
-// -----------------------------------------------------------------------------------------------------
-
 80E5 17 0F       	jmpr 	ar0
 80E6 00 21       	halt 	
 
+// -----------------------------------------------------------------------------------------------------
+
+## Mixing Routines
 
 80E7 81 50       	clr  	ac0             	l    	ax1.l, @ar0
 80E8 89 49       	clr  	ac1             	l    	ax0.h, @ar1
@@ -1335,6 +1350,10 @@ void WaitDspMailbox()
 854A 02 DF       	ret  	
 
 
+
+// -----------------------------------------------------------------------------------------------------
+
+## Accelerator and DMA (?)
 
 
 854B 8E 00       	clr40	                	     	

@@ -258,13 +258,17 @@ static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr;
 // ---------------------------------------------------------------------------
 // DSP mailbox controls
 
-static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->DSPWriteOutMailboxHi((uint16_t)data); }
-static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->DSPWriteOutMailboxLo((uint16_t)data); }
-static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadOutMailboxHi(); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadOutMailboxLo(); }
+static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteHi((uint16_t)data); }
+static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteLo((uint16_t)data); }
+static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadHi(); }
+static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg)
+{
+    DolwinError(__FILE__, "Processor is not allowed to read own Lower Mailbox!");
+    *reg = 0;
+}
 
-static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadInMailboxHi(); }
-static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadInMailboxLo(); }
+static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadHi(); }
+static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(); }
 
 static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }
 static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }

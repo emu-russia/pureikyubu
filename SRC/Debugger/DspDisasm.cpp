@@ -336,6 +336,12 @@ namespace DSP
 
 			case DspHardwareRegs::DIRQ: text = "DIRQ"; break;
 
+			case DspHardwareRegs::ACFMT: text = "ACFMT"; break;
+			case DspHardwareRegs::ACPDS: text = "ACPDS"; break;
+			case DspHardwareRegs::ACYN1: text = "ACYN1"; break;
+			case DspHardwareRegs::ACYN2: text = "ACYN2"; break;
+			case DspHardwareRegs::ACGAN: text = "ACGAN"; break;
+
 			default:
 				text = "UnkHW_" + ToHexString((uint16_t)address);
 		}

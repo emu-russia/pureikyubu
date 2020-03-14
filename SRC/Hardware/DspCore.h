@@ -256,15 +256,15 @@ namespace DSP
 		bool DSPGetHaltBit();
 
 		// CPU->DSP Mailbox
-		void DSPWriteOutMailboxHi(uint16_t value);
-		void DSPWriteOutMailboxLo(uint16_t value);
-		uint16_t DSPReadOutMailboxHi();
-		uint16_t DSPReadOutMailboxLo();
+		void CpuToDspWriteHi(uint16_t value);
+		void CpuToDspWriteLo(uint16_t value);
+		uint16_t CpuToDspReadHi();
+		uint16_t CpuToDspReadLo();
 		// DSP->CPU Mailbox
-		void DSPWriteInMailboxHi(uint16_t value);
-		void DSPWriteInMailboxLo(uint16_t value);
-		uint16_t DSPReadInMailboxHi();
-		uint16_t DSPReadInMailboxLo();
+		void DspToCpuWriteHi(uint16_t value);
+		void DspToCpuWriteLo(uint16_t value);
+		uint16_t DspToCpuReadHi();
+		uint16_t DspToCpuReadLo();
 
 	};
 }

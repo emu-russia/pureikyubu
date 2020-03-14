@@ -446,13 +446,14 @@ namespace DSP
 			switch (addr)
 			{
 				case (DspAddress)DspHardwareRegs::CMBH:
-					return DSPReadOutMailboxHi();
+					return CpuToDspReadHi();
 				case (DspAddress)DspHardwareRegs::CMBL:
-					return DSPReadOutMailboxLo();
+					return CpuToDspReadLo();
 				case (DspAddress)DspHardwareRegs::DMBH:
-					return DSPReadInMailboxHi();
+					return DspToCpuReadHi();
 				case (DspAddress)DspHardwareRegs::DMBL:
-					return DSPReadInMailboxLo();
+					DolwinError(__FILE__, "DSP is not allowed to read own Lower Mailbox!");
+					break;
 				default:
 					DBHalt(_DSP "Unknown HW read 0x%04X\n", addr);
 					break;
@@ -476,11 +477,17 @@ namespace DSP
 		{
 			switch (addr)
 			{
+				case (DspAddress)DspHardwareRegs::CMBH:
+					DolwinError(__FILE__, "DSP is not allowed to write processor Mailbox!");
+					break;
+				case (DspAddress)DspHardwareRegs::CMBL:
+					DolwinError(__FILE__, "DSP is not allowed to write processor Mailbox!");
+					break;
 				case (DspAddress)DspHardwareRegs::DMBH:
-					DSPWriteInMailboxHi(value);
+					DspToCpuWriteHi(value);
 					break;
 				case (DspAddress)DspHardwareRegs::DMBL:
-					DSPWriteInMailboxLo(value);
+					DspToCpuWriteLo(value);
 					break;
 				default:
 					DBHalt(_DSP "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
@@ -546,7 +553,7 @@ namespace DSP
 
 	// Write by processor only.
 
-	void DspCore::DSPWriteOutMailboxHi(uint16_t value)
+	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
 		DBReport("DspCore::DSPWriteOutMailboxHi: 0x%04X\n", value);
 
@@ -558,7 +565,7 @@ namespace DSP
 		}
 	}
 
-	void DspCore::DSPWriteOutMailboxLo(uint16_t value)
+	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
 		DBReport("DspCore::DSPWriteOutMailboxLo: 0x%04X\n", value);
 
@@ -567,13 +574,14 @@ namespace DSP
 		CpuToDspMailbox[0] |= 0x8000;
 	}
 
-	uint16_t DspCore::DSPReadOutMailboxHi()
+	uint16_t DspCore::CpuToDspReadHi()
 	{
 		return CpuToDspMailbox[0];
 	}
 
-	uint16_t DspCore::DSPReadOutMailboxLo()
+	uint16_t DspCore::CpuToDspReadLo()
 	{
+		CpuToDspMailbox[0] &= ~0x8000;
 		return CpuToDspMailbox[1];
 	}
 
@@ -581,7 +589,7 @@ namespace DSP
 
 	// Write by DSP only.
 
-	void DspCore::DSPWriteInMailboxHi(uint16_t value)
+	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
 		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X\n", value);
 		DspToCpuMailbox[0] = value;
@@ -592,7 +600,7 @@ namespace DSP
 		}
 	}
 
-	void DspCore::DSPWriteInMailboxLo(uint16_t value)
+	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
 		DBReport(_DSP "DspHardwareRegs::DMBL = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
@@ -600,13 +608,14 @@ namespace DSP
 		DspToCpuMailbox[0] |= 0x8000;
 	}
 
-	uint16_t DspCore::DSPReadInMailboxHi()
+	uint16_t DspCore::DspToCpuReadHi()
 	{
 		return DspToCpuMailbox[0];
 	}
 
-	uint16_t DspCore::DSPReadInMailboxLo()
+	uint16_t DspCore::DspToCpuReadLo()
 	{
+		DspToCpuMailbox[0] &= ~0x8000;
 		return DspToCpuMailbox[1];
 	}
 

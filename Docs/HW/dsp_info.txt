@@ -88,9 +88,9 @@ There are some *DSP* interrupts (not Flipper), which I guessed:
 0x0C005006      DSP Input Mailbox Register Low Part (DSP->CPU)
 ```
 
-Although patent is said mailbox are 32-bit wide, Nintendo DSP library accessing them by 16-bit halfs. I dont know reason of that.
+Although patent is said mailbox are 32-bit wide, Nintendo DSP library accessing them by 16-bit halfs. Most likely because the DSP can only access memory in 16-bit words.
 
-Writing in mailbox register (from any side) will assert interrupt:
+Writing in mailbox register (from any side) will assert interrupt (Check ?):
 - If CPU->DSP mailbox, generate DSP mailbox interrupt;
 - If DSP->CPU mailbox, generate PI DSP interrupt (see DSP Control Reg).
 
