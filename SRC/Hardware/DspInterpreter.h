@@ -34,7 +34,6 @@ namespace DSP
 
 		void BLOOP(AnalyzeInfo& info);
 		void BLOOPI(AnalyzeInfo& info);
-		void CALL(AnalyzeInfo& info);
 		void CALLcc(AnalyzeInfo& info);
 		void CALLR(AnalyzeInfo& info);
 
@@ -65,7 +64,6 @@ namespace DSP
 		void INC(AnalyzeInfo& info);
 		void INCM(AnalyzeInfo& info);
 
-		void JMP(AnalyzeInfo& info);
 		void Jcc(AnalyzeInfo& info);
 		void JMPR(AnalyzeInfo& info);
 		void LOOP(AnalyzeInfo& info);
@@ -125,7 +123,6 @@ namespace DSP
 		void ORI(AnalyzeInfo& info);
 		void ORR(AnalyzeInfo& info);
 
-		void RET(AnalyzeInfo& info);
 		void RETcc(AnalyzeInfo& info);
 		void RTI(AnalyzeInfo& info);
 
@@ -181,6 +178,10 @@ namespace DSP
 		void LDAXM(AnalyzeInfo& info);
 		void LDAXNM(AnalyzeInfo& info);
 
+		static int64_t SignExtend40(int64_t);
+		bool Condition(ConditionCode cc);
+		void Flags40(int64_t ac);
+		void Flags(DspLongAccumulator ac);
 		void Dispatch(AnalyzeInfo& info);
 
 		// TODO: Cache analyzeinfo for IROM addresses

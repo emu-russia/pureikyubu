@@ -128,7 +128,6 @@ namespace DSP
 
 			case DspInstruction::BLOOP: text = "bloop"; break;
 			case DspInstruction::BLOOPI: text = "bloopi"; break;
-			case DspInstruction::CALL: text = "call"; break;
 			case DspInstruction::CALLcc: text = "call" + CondCodeToString(cc); break;
 			case DspInstruction::CALLR: text = "callr"; break;
 
@@ -159,7 +158,6 @@ namespace DSP
 			case DspInstruction::INC: text = "inc"; break;
 			case DspInstruction::INCM: text = "incm"; break;
 
-			case DspInstruction::JMP: text = "jmp"; break;
 			case DspInstruction::Jcc: text = "j" + CondCodeToString(cc); break;
 			case DspInstruction::JMPR: text = "jmpr"; break;
 			case DspInstruction::LOOP: text = "loop"; break;
@@ -227,7 +225,6 @@ namespace DSP
 			case DspInstruction::ORI: text = "ori"; break;
 			case DspInstruction::ORR: text = "orr"; break;
 
-			case DspInstruction::RET: text = "ret"; break;
 			case DspInstruction::RETcc: text = "ret" + CondCodeToString(cc); break;
 			case DspInstruction::RTI: text = "rti"; break;
 

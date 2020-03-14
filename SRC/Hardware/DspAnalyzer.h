@@ -34,7 +34,6 @@ namespace DSP
 
 		BLOOP,		///< Block loop (Counter in register)
 		BLOOPI,		///< Block loop (Counter in immediate operand)
-		CALL,		///< Call function
 		CALLcc,		///< Call function if condition cc has been met
 		CALLR,		///< Call function (register)
 
@@ -65,7 +64,6 @@ namespace DSP
 		INC,		///< Increments accumulator $acD
 		INCM,		///< Increments 24-bit mid-accumulator $acsD
 
-		JMP,		///< Jumps to addressA
 		Jcc,		///< Jumps to addressA if condition cc has been met
 		JMPR,		///< Jump to address (by register)
 		LOOP,		///< Loop (by register)
@@ -133,7 +131,6 @@ namespace DSP
 		ORI,		///< Logical OR of accumulator mid part $acD.m with immediate value I. 
 		ORR,		///< Logical OR middle part of accumulator $acD.m with high part of secondary accumulator $axS.h
 
-		RET,		///< Return from subroutine
 		RETcc,		///< Return from subroutine if condition cc has been met
 		RTI,		///< Return from exception
 

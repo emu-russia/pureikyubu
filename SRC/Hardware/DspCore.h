@@ -37,6 +37,7 @@ namespace DSP
 			uint16_t	h;
 		};
 		uint64_t	bits;
+		int64_t		sbits;
 	} DspLongAccumulator;
 
 	typedef union _DspShortAccumulator
@@ -44,9 +45,10 @@ namespace DSP
 		struct
 		{
 			uint16_t	l;
-			uint16_t	m;
+			uint16_t	h;
 		};
-		uint64_t	bits;
+		uint32_t	bits;
+		int32_t		sbits;
 	} DspShortAccumulator;
 
 	typedef union _DspStatus
@@ -66,6 +68,7 @@ namespace DSP
 			unsigned unk10 : 1;
 			unsigned eie : 1;		///< External interrupt enable 
 			unsigned unk12 : 1;
+			// Not actually status, but ALU control
 			unsigned am : 1;		///< Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
 			unsigned sxm : 1;	///< Sign extension mode (0 = clr40, 1 = set40)
 			unsigned su : 1;	///< Operands are signed (1 = unsigned) 
@@ -75,6 +78,45 @@ namespace DSP
 
 	} DspStatus;
 
+	enum class DspRegister
+	{
+		ar0 = 0,		///< Addressing register 0 
+		ar1,			///< Addressing register 1 
+		ar2,			///< Addressing register 2 
+		ar3,			///< Addressing register 3 
+		indexRegs,
+		ix0 = indexRegs,	///< Indexing register 0 
+		ix1,			///< Indexing register 1
+		ix2,			///< Indexing register 2
+		ix3,			///< Indexing register 3
+		gprs,
+		r8 = gprs,
+		r9,
+		r10,
+		r11,
+		stackRegs,
+		st0 = stackRegs,	///< Call stack register 
+		st1,			///< Data stack register 
+		st2,			///< Loop address stack register 
+		st3,			///< Loop counter register 
+		ac0h,			///< 40-bit Accumulator 0 (high) 
+		ac1h,			///< 40-bit Accumulator 1 (high) 
+		config,			///< Config register 
+		sr,				///< Status register 
+		prodl,			///< Product register (low) 
+		prodm1,			///< Product register (mid 1) 
+		prodh,			///< Product register (high) 
+		prodm2,			///< Product register (mid 2) 
+		ax0l,			///< 32-bit Accumulator 0 (low) 
+		ax0h,			///< 32-bit Accumulator 0 (high) 
+		ax1l,			///< 32-bit Accumulator 1 (low) 
+		ax1h,			///< 32-bit Accumulator 1 (high
+		ac0l,			///< 40-bit Accumulator 0 (low) 
+		ac1l,			///< 40-bit Accumulator 1 (low) 
+		ac0m,			///< 40-bit Accumulator 0 (mid)
+		ac1m,			///< 40-bit Accumulator 1 (mid)
+	};
+
 	#pragma pack (pop)
 
 	typedef struct _DspRegs
@@ -83,7 +125,7 @@ namespace DSP
 		uint16_t ar[4];		///< Addressing registers
 		uint16_t ix[4];		///< Indexing registers
 		uint16_t gpr[4];	///< General purpose (r8-r11)
-		DspAddress st[4];	///< Stack registers
+		std::vector<DspAddress> st[4];	///< Stack registers
 		DspLongAccumulator ac[2];		///< 40-bit Accumulators
 		DspShortAccumulator ax[2];		///< 32-bit Accumulators
 		uint64_t prod;		///< Product register

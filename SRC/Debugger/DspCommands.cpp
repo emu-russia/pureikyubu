@@ -17,6 +17,7 @@ void dsp_init_handlers()
     con.cmds["dpc"] = cmd_dpc;
     con.cmds["dreset"] = cmd_dreset;
     con.cmds["du"] = cmd_du;
+    con.cmds["dst"] = cmd_dst;
 }
 
 void dsp_help()
@@ -35,6 +36,7 @@ void dsp_help()
     con_print(WHITE "    dpc                  " NORM "- Set DSP program counter");
     con_print(WHITE "    dreset               " NORM "- Issue DSP reset");
     con_print(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter");
+    con_print(WHITE "    dst                  " NORM "- Dump DSP call stack");
     con_print("\n");
 }
 
@@ -143,7 +145,6 @@ void cmd_dregs(int argc, char argv[][CON_LINELEN])
         regsChanged.ar[i] = ~regsChanged.ar[i];
         regsChanged.ix[i] = ~regsChanged.ix[i];
         regsChanged.gpr[i] = ~regsChanged.gpr[i];
-        regsChanged.st[i] = ~regsChanged.st[i];
     }
 
     for (int i = 0; i < 2; i++)
@@ -462,5 +463,28 @@ void cmd_du(int argc, char argv[][CON_LINELEN])
         DBReport("%s\n", code.c_str());
 
         addr += (DSP::DspAddress)(info.sizeInBytes >> 1);
+    }
+}
+
+// Dump DSP call stack
+void cmd_dst(int argc, char argv[][CON_LINELEN])
+{
+    if (!dspCore)
+    {
+        DBReport("DspCore not ready\n");
+        return;
+    }
+
+    if (dspCore->IsRunning())
+    {
+        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        return;
+    }
+
+    DBReport("DSP Call Stack:\n");
+
+    for (auto it = dspCore->regs.st[0].begin(); it != dspCore->regs.st[0].end(); ++it)
+    {
+        DBReport("0x%04X\n", *it);
     }
 }

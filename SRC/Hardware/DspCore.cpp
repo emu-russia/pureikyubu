@@ -77,7 +77,11 @@ namespace DSP
 
 		savedGekkoTicks = cpu.tb.uval;
 
-		memset(&regs, 0, sizeof(regs));
+		for (int i = 0; i < _countof(regs.st); i++)
+		{
+			regs.st[i].clear();
+			regs.st[i].reserve(32);		// Should be enough
+		}
 
 		regs.pc = IROM_START_ADDRESS;			// IROM start
 
@@ -236,14 +240,6 @@ namespace DSP
 				DBReport("r%i: 0x%04X\n", 8+i, regs.gpr[i]);
 			}
 		}
-
-		for (int i = 0; i < 4; i++)
-		{
-			if (regs.st[i] != prevState->st[i])
-			{
-				DBReport("st%i: 0x%04X\n", i, regs.st[i]);
-			}
-		}
 	}
 
 	#pragma endregion "Debug"
@@ -255,69 +251,142 @@ namespace DSP
 	{
 		switch (reg)
 		{
-			case 0:
-			case 1:
-			case 2:
-			case 3:
+			case (int)DspRegister::ar0:
+			case (int)DspRegister::ar1:
+			case (int)DspRegister::ar2:
+			case (int)DspRegister::ar3:
 				regs.ar[reg] = val;
 				break;
-			case 4:
-			case 5:
-			case 6:
-			case 7:
-				regs.ix[reg - 4] = val;
+			case (int)DspRegister::ix0:
+			case (int)DspRegister::ix1:
+			case (int)DspRegister::ix2:
+			case (int)DspRegister::ix3:
+				regs.ix[reg - (int)DspRegister::indexRegs] = val;
 				break;
-			case 8:
-			case 9:
-			case 10:
-			case 11:
-				regs.gpr[reg - 8] = val;
+			case (int)DspRegister::r8:
+			case (int)DspRegister::r9:
+			case (int)DspRegister::r10:
+			case (int)DspRegister::r11:
+				regs.gpr[reg - (int)DspRegister::gprs] = val;
 				break;
-			case 12:
-			case 13:
-			case 14:
-			case 15:
-				regs.st[reg - 12] = val;
+			case (int)DspRegister::st0:
+			case (int)DspRegister::st1:
+			case (int)DspRegister::st2:
+			case (int)DspRegister::st3:
+				regs.st[reg - (int)DspRegister::stackRegs].push_back((DspAddress)val);
 				break;
-			case 16:
+			case (int)DspRegister::ac0h:
+				regs.ac[0].h = val;
 				break;
-			case 17:
+			case (int)DspRegister::ac1h:
+				regs.ac[1].h = val;
 				break;
-			case 18:
+			case (int)DspRegister::config:
 				regs.cr = val;
 				break;
-			case 19:
+			case (int)DspRegister::sr:
 				regs.sr.bits = val;
 				break;
-			case 20:
+			case (int)DspRegister::prodl:
+				// Read only
 				break;
-			case 21:
+			case (int)DspRegister::prodm1:
+				// Read only
 				break;
-			case 22:
+			case (int)DspRegister::prodh:
+				// Read only
 				break;
-			case 23:
+			case (int)DspRegister::prodm2:
+				// Read only
 				break;
-			case 24:
+			case (int)DspRegister::ax0l:
+				regs.ax[0].l = val;
 				break;
-			case 25:
+			case (int)DspRegister::ax0h:
+				regs.ax[0].h = val;
 				break;
-			case 26:
+			case (int)DspRegister::ax1l:
+				regs.ax[1].l = val;
 				break;
-			case 27:
+			case (int)DspRegister::ax1h:
+				regs.ax[1].h = val;
 				break;
-			case 28:
+			case (int)DspRegister::ac0l:
+				regs.ac[0].l = val;
 				break;
-			case 29:
+			case (int)DspRegister::ac1l:
+				regs.ac[1].l = val;
 				break;
-			case 30:
+			case (int)DspRegister::ac0m:
+				regs.ac[0].m = val;
 				break;
-			case 31:
+			case (int)DspRegister::ac1m:
+				regs.ac[1].m = val;
 				break;
 		}
 	}
 
 	uint16_t DspCore::MoveFromReg(int reg)
 	{
+		switch (reg)
+		{
+			case (int)DspRegister::ar0:
+			case (int)DspRegister::ar1:
+			case (int)DspRegister::ar2:
+			case (int)DspRegister::ar3:
+				return regs.ar[reg];
+			case (int)DspRegister::ix0:
+			case (int)DspRegister::ix1:
+			case (int)DspRegister::ix2:
+			case (int)DspRegister::ix3:
+				return regs.ix[reg - (int)DspRegister::indexRegs];
+			case (int)DspRegister::r8:
+			case (int)DspRegister::r9:
+			case (int)DspRegister::r10:
+			case (int)DspRegister::r11:
+				return regs.gpr[reg - (int)DspRegister::gprs];
+			case (int)DspRegister::st0:
+			case (int)DspRegister::st1:
+			case (int)DspRegister::st2:
+			case (int)DspRegister::st3:
+				return (uint16_t)regs.st[reg - (int)DspRegister::stackRegs].back();
+			case (int)DspRegister::ac0h:
+				return regs.ac[0].h;
+			case (int)DspRegister::ac1h:
+				return regs.ac[1].h;
+			case (int)DspRegister::config:
+				return regs.cr;
+			case (int)DspRegister::sr:
+				return regs.sr.bits;
+			case (int)DspRegister::prodl:
+				// TODO: Prod
+				return 0;
+			case (int)DspRegister::prodm1:
+				// TODO: Prod
+				return 0;
+			case (int)DspRegister::prodh:
+				// TODO: Prod
+				return 0;
+			case (int)DspRegister::prodm2:
+				// TODO: Prod
+				return 0;
+			case (int)DspRegister::ax0l:
+				return regs.ax[0].l;
+			case (int)DspRegister::ax0h:
+				return regs.ax[0].h;
+			case (int)DspRegister::ax1l:
+				return regs.ax[1].l;
+			case (int)DspRegister::ax1h:
+				return regs.ax[1].h;
+			case (int)DspRegister::ac0l:
+				return regs.ac[0].l;
+			case (int)DspRegister::ac1l:
+				return regs.ac[1].l;
+			case (int)DspRegister::ac0m:
+				return regs.ac[0].m;
+			case (int)DspRegister::ac1m:
+				return regs.ac[1].m;
+		}
 		return 0;
 	}
 
@@ -459,7 +528,7 @@ namespace DSP
 
 	bool DspCore::DSPGetIntBit()
 	{
-		// No meaning
+		// No meaning?
 		return false;
 	}
 

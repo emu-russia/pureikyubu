@@ -355,7 +355,7 @@ namespace DSP
 
 			int dd = (info.instrBits >> 8) & 7;
 			int8_t ii = info.instrBits & 0xff;
-			if (!AddParam(info, (DspParameter)(0x18 + dd), dd))
+			if (!AddParam(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 				return false;
 			if (!AddImmOperand(info, DspParameter::SignedByte, ii))
 				return false;
@@ -634,7 +634,7 @@ namespace DSP
 
 			if (!AddImmOperand(info, DspParameter::Address, addr))
 				return false;
-			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+			if (!AddParam(info, (DspParameter)(0x18 + ss), 0x18 + ss))
 				return false;
 		}
 		else
@@ -643,7 +643,7 @@ namespace DSP
 			int dd = (info.instrBits >> 8) & 7;
 			DspAddress addr = (DspAddress)(uint16_t)(int16_t)(int8_t)(uint8_t)(info.instrBits & 0xff);
 
-			if (!AddParam(info, (DspParameter)(0x18 + dd), dd))
+			if (!AddParam(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 				return false;
 			if (!AddImmOperand(info, DspParameter::Address, addr))
 				return false;
@@ -759,7 +759,7 @@ namespace DSP
 
 			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
 				return false;
-			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+			if (!AddParam(info, (DspParameter)(0x18 + ss), 0x18 + ss))
 				return false;
 		}
 
@@ -818,7 +818,7 @@ namespace DSP
 
 			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
 				return false;
-			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+			if (!AddParam(info, (DspParameter)(0x18 + ss), 0x18 + ss))
 				return false;
 		}
 
@@ -877,7 +877,7 @@ namespace DSP
 
 			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
 				return false;
-			if (!AddParam(info, (DspParameter)(0x18 + ss), ss))
+			if (!AddParam(info, (DspParameter)(0x18 + ss), 0x18 + ss))
 				return false;
 		}
 
@@ -1248,9 +1248,9 @@ namespace DSP
 			info.instr = (info.instrBits & 0b010000000000) ?
 				DspInstruction::MSUBX : DspInstruction::MADDX;
 
-			if (!AddParam(info, (DspParameter)(0x18 + ss * 2), ss))
+			if (!AddParam(info, (DspParameter)(0x18 + ss * 2), 0x18 + ss * 2))
 				return false;
-			if (!AddParam(info, (DspParameter)(0x19 + tt * 2), tt))
+			if (!AddParam(info, (DspParameter)(0x19 + tt * 2), 0x19 + tt * 2))
 				return false;
 		}
 
@@ -1381,7 +1381,7 @@ namespace DSP
 
 					if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_regs + dd), dd))
 						return false;
-					if (!AddParamEx(info, (DspParameter)(0x1c + ss), ss))
+					if (!AddParamEx(info, (DspParameter)(0x1c + ss), 0x1c + ss))
 						return false;
 				}
 				else if ((info.instrExBits & 0b10000) != 0)		// MV
@@ -1391,9 +1391,9 @@ namespace DSP
 
 					info.instrEx = DspInstructionEx::MV;
 
-					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 						return false;
-					if (!AddParamEx(info, (DspParameter)(0x1c + ss), ss))
+					if (!AddParamEx(info, (DspParameter)(0x1c + ss), 0x1c + ss))
 						return false;
 				}
 				else	// NOP2, DR, IR, NR
@@ -1501,7 +1501,7 @@ namespace DSP
 				{
 					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ac0m + ss), ss))
 						return false;
-					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 						return false;
 				}
 

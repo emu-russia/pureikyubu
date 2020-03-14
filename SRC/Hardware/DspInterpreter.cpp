@@ -28,14 +28,80 @@ namespace DSP
 
 	#pragma region "Top Instructions"
 
+	void DspInterpreter::ANDC(AnalyzeInfo& info)
+	{
+		int n = info.paramBits[0];
+		core->regs.ac[n].m &= core->regs.ac[1 - n].m;
+		Flags(core->regs.ac[n]);
+	}
+
+	void DspInterpreter::ANDCF(AnalyzeInfo& info)
+	{
+		core->regs.sr.lz = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
+	}
+
+	void DspInterpreter::ANDF(AnalyzeInfo& info)
+	{
+		core->regs.sr.lz = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == 0;
+	}
+
+	void DspInterpreter::CALLcc(AnalyzeInfo& info)
+	{
+		if (Condition(info.cc))
+		{
+			core->regs.st[0].push_back(core->regs.pc + 2);
+			core->regs.pc = info.ImmOperand.Address;
+		}
+		else
+		{
+			core->regs.pc += 2;
+		}
+	}
+
 	void DspInterpreter::CLR(AnalyzeInfo& info)
 	{
-		core->regs.ac[info.paramBits[0]].bits = 0;
+		int n = info.paramBits[0];
+		core->regs.ac[n].bits = 0;
+		Flags(core->regs.ac[n]);
+	}
+
+	void DspInterpreter::CMP(AnalyzeInfo& info)
+	{
+		int64_t a = SignExtend40(core->regs.ac[0].sbits);
+		int64_t b = SignExtend40(core->regs.ac[1].sbits);
+		Flags40(a - b);
+	}
+
+	void DspInterpreter::HALT(AnalyzeInfo& info)
+	{
+		core->Suspend();
+	}
+
+	void DspInterpreter::Jcc(AnalyzeInfo& info)
+	{
+		if (Condition(info.cc))
+		{
+			core->regs.pc = info.ImmOperand.Address;
+		}
+		else
+		{
+			core->regs.pc += 2;
+		}
 	}
 
 	void DspInterpreter::LRI(AnalyzeInfo& info)
 	{
 		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
+	}
+
+	void DspInterpreter::LRIS(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], (uint16_t)(int16_t)info.ImmOperand.SignedByte);
+	}
+
+	void DspInterpreter::LRS(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(info.ImmOperand.Address));
 	}
 
 	void DspInterpreter::M2(AnalyzeInfo& info)
@@ -68,6 +134,24 @@ namespace DSP
 		core->regs.sr.sxm = 1;
 	}
 
+	void DspInterpreter::MRR(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->MoveFromReg(info.paramBits[1]));
+	}
+
+	void DspInterpreter::RETcc(AnalyzeInfo& info)
+	{
+		if (Condition(info.cc))
+		{
+			core->regs.pc = core->regs.st[0].back();
+			core->regs.st[0].pop_back();
+		}
+		else
+		{
+			core->regs.pc++;
+		}
+	}
+
 	void DspInterpreter::SBSET(AnalyzeInfo& info)
 	{
 		core->regs.sr.bits |= (1 << info.ImmOperand.Byte);
@@ -83,6 +167,11 @@ namespace DSP
 		core->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
 	}
 
+	void DspInterpreter::SRS(AnalyzeInfo& info)
+	{
+		core->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
+	}
+
 	#pragma endregion "Top Instructions"
 
 
@@ -90,6 +179,61 @@ namespace DSP
 
 	#pragma endregion "Bottom Instructions"
 
+	int64_t DspInterpreter::SignExtend40(int64_t a)
+	{
+		if (a & 0x8000000000)
+		{
+			a |= 0xffffff0000000000;
+		}
+		return a;
+	}
+
+	bool DspInterpreter::Condition(ConditionCode cc)
+	{
+		switch (cc)
+		{
+			case ConditionCode::GE: return core->regs.sr.s == core->regs.sr.o;
+			case ConditionCode::L: return core->regs.sr.s != core->regs.sr.o;
+			case ConditionCode::G: return (core->regs.sr.s == core->regs.sr.o) && (core->regs.sr.z == 0);
+			case ConditionCode::LE: return (core->regs.sr.s != core->regs.sr.o) && (core->regs.sr.z != 0);
+			case ConditionCode::NE: return core->regs.sr.z == 0;
+			case ConditionCode::EQ: return core->regs.sr.z != 0;
+			case ConditionCode::NC: return core->regs.sr.o == 0;
+			case ConditionCode::C: return core->regs.sr.c != 0;
+			case ConditionCode::BelowS32: return core->regs.sr.as == 0;
+			case ConditionCode::AboveS32: return core->regs.sr.as != 0;
+			case ConditionCode::NZ: return core->regs.sr.lz == 0;
+			case ConditionCode::ZR: return core->regs.sr.lz != 0;
+			case ConditionCode::O: return core->regs.sr.o != 0;
+			case ConditionCode::Always: return true;
+		}
+
+		return false;
+	}
+
+	// 32-bit accumulator does not involved in flags calculations
+
+	void DspInterpreter::Flags40(int64_t ac)
+	{
+		bool carry = (ac & 0x10000000000) != 0;
+		bool zero = (ac & 0xffffffffff) == 0;
+		bool aboveS32 = (ac & 0xff00000000) == 0;		// Correct?
+		bool msb = (ac & 0x8000000000) != 0 ? true : false;
+		bool afterMsb = (ac & 0x4000000000) != 0 ? true : false;
+		bool ovf = msb ^ afterMsb ^ carry;		// Afair
+
+		core->regs.sr.c = carry;
+		core->regs.sr.o = ovf;
+		core->regs.sr.z = zero;
+		core->regs.sr.s = msb;
+		core->regs.sr.tt = msb == afterMsb;
+		core->regs.sr.as = aboveS32;
+	}
+
+	void DspInterpreter::Flags(DspLongAccumulator ac)
+	{
+		Flags40(SignExtend40(ac.bits));
+	}
 
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
@@ -107,9 +251,23 @@ namespace DSP
 		// Regular instructions ("top")
 		switch (info.instr)
 		{
+			case DspInstruction::ANDC: ANDC(info); break;
+			case DspInstruction::ANDCF: ANDCF(info); break;
+			case DspInstruction::ANDF: ANDF(info); break;
+
+			case DspInstruction::CALLcc: CALLcc(info); break;
+
 			case DspInstruction::CLR: CLR(info); break;
 
+			case DspInstruction::CMP: CMP(info); break;
+
+			case DspInstruction::HALT: HALT(info); break;
+
+			case DspInstruction::Jcc: Jcc(info); break;
+
 			case DspInstruction::LRI: LRI(info); break;
+			case DspInstruction::LRIS: LRIS(info); break;
+			case DspInstruction::LRS: LRS(info); break;
 
 			case DspInstruction::M2: M2(info); break;
 			case DspInstruction::M0: M0(info); break;
@@ -118,10 +276,15 @@ namespace DSP
 			case DspInstruction::CLR40: CLR40(info); break;
 			case DspInstruction::SET40: SET40(info); break;
 
+			case DspInstruction::MRR: MRR(info); break;
+
+			case DspInstruction::RETcc: RETcc(info); break;
+
 			case DspInstruction::SBSET: SBSET(info); break;
 			case DspInstruction::SBCLR: SBCLR(info); break;
 
 			case DspInstruction::SI: SI(info); break;
+			case DspInstruction::SRS: SRS(info); break;
 
 			case DspInstruction::NOP:
 			case DspInstruction::NX:
