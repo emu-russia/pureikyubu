@@ -79,7 +79,7 @@ namespace DSP
 
 		memset(&regs, 0, sizeof(regs));
 
-		regs.pc = 0x8000;			// IROM start
+		regs.pc = IROM_START_ADDRESS;			// IROM start
 
 		DspToCpuMailbox[0] = DspToCpuMailbox[1] = 0;
 		CpuToDspMailbox[0] = CpuToDspMailbox[1] = 0;
@@ -191,7 +191,7 @@ namespace DSP
 			DBReport("cr: 0x%04X\n", regs.cr);
 		}
 
-		if (regs.sr != prevState->sr)
+		if (regs.sr.bits != prevState->sr.bits)
 		{
 			// TODO: Add bit description
 			DBReport("sr: 0x%04X\n", regs.sr);
@@ -199,7 +199,7 @@ namespace DSP
 
 		for (int i = 0; i < 2; i++)
 		{
-			if (regs.ac[i] != prevState->ac[i])
+			if (regs.ac[i].bits != prevState->ac[i].bits)
 			{
 				DBReport("ac%i: 0x%llX\n", i, regs.ac[i]);
 			}
@@ -207,7 +207,7 @@ namespace DSP
 
 		for (int i = 0; i < 2; i++)
 		{
-			if (regs.ax[i] != prevState->ax[i])
+			if (regs.ax[i].bits != prevState->ax[i].bits)
 			{
 				DBReport("ax%i: 0x%llX\n", i, regs.ax[i]);
 			}
@@ -287,7 +287,7 @@ namespace DSP
 				regs.cr = val;
 				break;
 			case 19:
-				regs.sr = val;
+				regs.sr.bits = val;
 				break;
 			case 20:
 				break;
@@ -332,9 +332,9 @@ namespace DSP
 		{
 			return &iram[addr << 1];
 		}
-		else if (addr >= 0x8000 && addr < (0x8000 + IROM_SIZE))
+		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + IROM_SIZE))
 		{
-			return &irom[(addr - 0x8000) << 1];
+			return &irom[(addr - IROM_START_ADDRESS) << 1];
 		}
 		else
 		{
@@ -348,9 +348,9 @@ namespace DSP
 		{
 			return &dram[addr << 1];
 		}
-		else if (addr >= 0x8000 && addr < (0x8000 + DROM_SIZE))
+		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + DROM_SIZE))
 		{
-			return &drom[(addr - 0x8000) << 1];
+			return &drom[(addr - DROM_START_ADDRESS) << 1];
 		}
 		else
 		{
@@ -372,18 +372,18 @@ namespace DSP
 
 	uint16_t DspCore::ReadDMem(DspAddress addr)
 	{
-		if (addr >= 0xff00)
+		if (addr >= IFX_START_ADDRESS)
 		{
 			switch (addr)
 			{
 				case (DspAddress)DspHardwareRegs::CMBH:
-					return CpuToDspMailbox[0];
+					return DSPReadOutMailboxHi();
 				case (DspAddress)DspHardwareRegs::CMBL:
-					return CpuToDspMailbox[1];
+					return DSPReadOutMailboxLo();
 				case (DspAddress)DspHardwareRegs::DMBH:
-					return DspToCpuMailbox[0];
+					return DSPReadInMailboxHi();
 				case (DspAddress)DspHardwareRegs::DMBL:
-					return DspToCpuMailbox[1];
+					return DSPReadInMailboxLo();
 				default:
 					DBHalt(_DSP "Unknown HW read 0x%04X\n", addr);
 					break;
@@ -403,15 +403,15 @@ namespace DSP
 
 	void DspCore::WriteDMem(DspAddress addr, uint16_t value)
 	{
-		if (addr >= 0xff00)
+		if (addr >= IFX_START_ADDRESS)
 		{
 			switch (addr)
 			{
 				case (DspAddress)DspHardwareRegs::DMBH:
-					DspToCpuMailbox[0] = value;
+					DSPWriteInMailboxHi(value);
 					break;
 				case (DspAddress)DspHardwareRegs::DMBL:
-					DspToCpuMailbox[1] = value;
+					DSPWriteInMailboxLo(value);
 					break;
 				default:
 					DBHalt(_DSP "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
@@ -438,7 +438,10 @@ namespace DSP
 
 	void DspCore::DSPSetResetBit(bool val)
 	{
-		Reset();
+		if (val)
+		{
+			Reset();
+		}
 	}
 
 	bool DspCore::DSPGetResetBit()
@@ -471,6 +474,9 @@ namespace DSP
 	}
 
 	// CPU->DSP Mailbox
+	// TODO: Latch logic
+
+	// Write by processor only.
 
 	void DspCore::DSPWriteOutMailboxHi(uint16_t value)
 	{
@@ -497,6 +503,21 @@ namespace DSP
 	}
 
 	// DSP->CPU Mailbox
+	// TODO: Latch logic
+
+	// Write by DSP only.
+
+	void DspCore::DSPWriteInMailboxHi(uint16_t value)
+	{
+		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X\n", value);
+		DspToCpuMailbox[0] = value;
+	}
+
+	void DspCore::DSPWriteInMailboxLo(uint16_t value)
+	{
+		DBReport(_DSP "DspHardwareRegs::DMBL = 0x%04X\n", value);
+		DspToCpuMailbox[1] = value;
+	}
 
 	uint16_t DspCore::DSPReadInMailboxHi()
 	{

@@ -1,8 +1,6 @@
 // AI - audio interface
 #include "pch.h"
 
-#define USE_DSP_CORE 1
-
 // all AI timers update is based on TBR.
 
 /*/
@@ -64,30 +62,18 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
     AIDCR &= ~AIDCR_ARDMA;
 
     // DSP controls
-#if USE_DSP_CORE
     dspCore->DSPSetResetBit((AIDCR >> 0) & 1);
     dspCore->DSPSetIntBit  ((AIDCR >> 1) & 1);
     dspCore->DSPSetHaltBit ((AIDCR >> 2) & 1);
-#else
-    DSPSetResetBit((AIDCR >> 0) & 1);
-    DSPSetIntBit((AIDCR >> 1) & 1);
-    DSPSetHaltBit((AIDCR >> 2) & 1);
-#endif
 }
 
 static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
-#if USE_DSP_CORE
     AIDCR |= dspCore->DSPGetResetBit() << 0;
     AIDCR |= dspCore->DSPGetIntBit()   << 1;
     AIDCR |= dspCore->DSPGetHaltBit()  << 2;
-#else
-    AIDCR |= DSPGetResetBit() << 0;
-    AIDCR |= DSPGetIntBit() << 1;
-    AIDCR |= DSPGetHaltBit() << 2;
-#endif
 
     *reg = AIDCR;
 }
@@ -270,9 +256,7 @@ static void __fastcall write_vr(uint32_t addr, uint32_t data)
 static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr; }
 
 // ---------------------------------------------------------------------------
-// DSP mailbox controls (refer to HLE)
-
-#if USE_DSP_CORE
+// DSP mailbox controls
 
 static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->DSPWriteOutMailboxHi((uint16_t)data); }
 static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->DSPWriteOutMailboxLo((uint16_t)data); }
@@ -282,20 +266,8 @@ static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = ds
 static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadInMailboxHi(); }
 static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DSPReadInMailboxLo(); }
 
-#else
-
-static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { DSPWriteOutMailboxHi((uint16_t)data); }
-static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { DSPWriteOutMailboxLo((uint16_t)data); }
-static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DSPReadOutMailboxHi(); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DSPReadOutMailboxLo(); }
-
-static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DSPReadInMailboxHi(); }
-static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DSPReadInMailboxLo(); }
-
-#endif
-
-static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DolwinReport("Wha?"); }
-static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DolwinReport("Wha?"); }
+static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }
+static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }
 
 // ---------------------------------------------------------------------------
 

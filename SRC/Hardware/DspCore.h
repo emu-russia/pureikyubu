@@ -1,4 +1,4 @@
-// Low-level DSP core
+﻿// Low-level DSP core
 
 /*
 
@@ -20,10 +20,62 @@ DspCore uses the interpreter and recompiler at the same time, of their own free 
 #pragma once
 
 #include <vector>
+#include <atomic>
 
 namespace DSP
 {
 	typedef uint32_t DspAddress;		///< in halfwords slots 
+
+	#pragma pack (push, 1)
+
+	typedef union _DspLongAccumulator
+	{
+		struct
+		{
+			uint16_t	l;
+			uint16_t	m;
+			uint16_t	h;
+		};
+		uint64_t	bits;
+	} DspLongAccumulator;
+
+	typedef union _DspShortAccumulator
+	{
+		struct
+		{
+			uint16_t	l;
+			uint16_t	m;
+		};
+		uint64_t	bits;
+	} DspShortAccumulator;
+
+	typedef union _DspStatus
+	{
+		struct
+		{
+			unsigned c : 1;			///< Carry
+			unsigned o : 1;			///< Overﬂow 
+			unsigned z : 1;			///< Arithmetic zero 
+			unsigned s : 1;		///< Sign
+			unsigned as : 1;	///< Above s32 
+			unsigned tt : 1;	///< Top two bits are equal 
+			unsigned lz : 1;	///< Logic zero 
+			unsigned os : 1;	///< Overflow (sticky)
+			unsigned hwz : 1;	///< Hardwired to 0? 
+			unsigned ie : 1;	///< Interrupt enable 
+			unsigned unk10 : 1;
+			unsigned eie : 1;		///< External interrupt enable 
+			unsigned unk12 : 1;
+			unsigned am : 1;		///< Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
+			unsigned sxm : 1;	///< Sign extension mode (0 = clr40, 1 = set40)
+			unsigned su : 1;	///< Operands are signed (1 = unsigned) 
+		};
+
+		uint16_t bits;
+
+	} DspStatus;
+
+	#pragma pack (pop)
 
 	typedef struct _DspRegs
 	{
@@ -32,11 +84,11 @@ namespace DSP
 		uint16_t ix[4];		///< Indexing registers
 		uint16_t gpr[4];	///< General purpose (r8-r11)
 		DspAddress st[4];	///< Stack registers
-		uint64_t ac[2];		///< 40-bit Accumulators
-		uint64_t ax[2];		///< 32-bit Accumulators
+		DspLongAccumulator ac[2];		///< 40-bit Accumulators
+		DspShortAccumulator ax[2];		///< 32-bit Accumulators
 		uint64_t prod;		///< Product register
 		uint16_t cr;		///< config
-		uint16_t sr;		///< status
+		DspStatus sr;		///< status
 		DspAddress pc;		///< Program counter
 	} DspRegs;
 
@@ -96,8 +148,8 @@ namespace DSP
 
 		DspInterpreter* interp;
 
-		uint16_t DspToCpuMailbox[2];		///< DMBH, DMBL
-		uint16_t CpuToDspMailbox[2];		///< CMBH, CMBL
+		std::atomic<uint16_t> DspToCpuMailbox[2];		///< DMBH, DMBL
+		std::atomic<uint16_t> CpuToDspMailbox[2];		///< CMBH, CMBL
 
 	public:
 
@@ -107,6 +159,10 @@ namespace DSP
 		static const size_t IROM_SIZE = (8 * 1024);
 		static const size_t DRAM_SIZE = (8 * 1024);
 		static const size_t DROM_SIZE = (4 * 1024);
+
+		static const size_t IROM_START_ADDRESS = 0x8000;
+		static const size_t DROM_START_ADDRESS = 0x1000;
+		static const size_t IFX_START_ADDRESS = 0xFF00;		///< Internal dsp "hardware"
 
 		DspRegs regs = { 0 };
 
@@ -163,6 +219,8 @@ namespace DSP
 		uint16_t DSPReadOutMailboxHi();
 		uint16_t DSPReadOutMailboxLo();
 		// DSP->CPU Mailbox
+		void DSPWriteInMailboxHi(uint16_t value);
+		void DSPWriteInMailboxLo(uint16_t value);
 		uint16_t DSPReadInMailboxHi();
 		uint16_t DSPReadInMailboxLo();
 

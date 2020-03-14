@@ -1,4 +1,17 @@
-// GameCube DSP interpreter
+/*
+
+# GameCube DSP interpreter
+
+The development idea is as follows - to do at least something (critical mass of code), then do some reverse engineering
+of the microcodes and IROM and bring the emulation to an adequate state.
+
+## Interpreter architecture
+
+The interpreter is not involved in instruction decoding. It receives ready-made information from the analyzer (AnalyzeInfo struct).
+
+This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
+
+*/
 
 #include "pch.h"
 
@@ -13,6 +26,8 @@ namespace DSP
 	{
 	}
 
+	#pragma region "Top Instructions"
+
 	void DspInterpreter::LRI(AnalyzeInfo& info)
 	{
 		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
@@ -20,38 +35,56 @@ namespace DSP
 
 	void DspInterpreter::M2(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.am = 0;
 	}
 
 	void DspInterpreter::M0(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.am = 1;
 	}
 
 	void DspInterpreter::CLR15(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.su = 0;
 	}
 
 	void DspInterpreter::SET15(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.su = 1;
 	}
 
 	void DspInterpreter::CLR40(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.sxm = 0;
 	}
 
 	void DspInterpreter::SET40(AnalyzeInfo& info)
 	{
-		// Ignore for now
+		core->regs.sr.sxm = 1;
 	}
 
 	void DspInterpreter::SBSET(AnalyzeInfo& info)
 	{
-		core->regs.sr |= (1 << info.ImmOperand.Byte);
+		core->regs.sr.bits |= (1 << info.ImmOperand.Byte);
 	}
+
+	void DspInterpreter::SBCLR(AnalyzeInfo& info)
+	{
+		core->regs.sr.bits &= ~(1 << info.ImmOperand.Byte);
+	}
+
+	void DspInterpreter::SI(AnalyzeInfo& info)
+	{
+		core->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
+	}
+
+	#pragma endregion "Top Instructions"
+
+
+	#pragma region "Bottom Instructions"
+
+	#pragma endregion "Bottom Instructions"
+
 
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
@@ -66,6 +99,7 @@ namespace DSP
 			}
 		}
 
+		// Regular instructions ("top")
 		switch (info.instr)
 		{
 			case DspInstruction::LRI: LRI(info); break;
@@ -78,6 +112,13 @@ namespace DSP
 			case DspInstruction::SET40: SET40(info); break;
 
 			case DspInstruction::SBSET: SBSET(info); break;
+			case DspInstruction::SBCLR: SBCLR(info); break;
+
+			case DspInstruction::SI: SI(info); break;
+
+			case DspInstruction::NOP:
+			case DspInstruction::NX:
+				break;
 
 			default:
 				DBHalt(_DSP "Unknown instruction at 0x%04X\n", core->regs.pc);
@@ -85,7 +126,7 @@ namespace DSP
 				return;
 		}
 
-		// Packed tuple
+		// Packed tuple ("bottom")
 		if (info.extendedOpcodePresent)
 		{
 			switch (info.instrEx)

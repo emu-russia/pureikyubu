@@ -227,7 +227,7 @@ namespace DSP
 		st3,			///< Loop counter register 
 		ac0h,			///< 40-bit Accumulator 0 (high) 
 		ac1h,			///< 40-bit Accumulator 1 (high) 
-		config,			///< Conﬁg register 
+		config,			///< Config register 
 		sr,				///< Status register 
 		prodl,			///< Product register (low) 
 		prodm1,			///< Product register (mid 1) 

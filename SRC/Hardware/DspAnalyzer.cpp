@@ -454,7 +454,7 @@ namespace DSP
 							info.instr = DspInstruction::SBSET;
 
 							int ii = 6 + (info.instrBits & 7);
-							if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)ii))
+							if (!AddImmOperand(info, DspParameter::SignedByte, (int8_t)ii))
 								return false;
 						}
 						break;
@@ -464,7 +464,7 @@ namespace DSP
 							info.instr = DspInstruction::SBCLR;
 
 							int ii = 6 + (info.instrBits & 7);
-							if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)ii))
+							if (!AddImmOperand(info, DspParameter::SignedByte, (int8_t)ii))
 								return false;
 						}
 						break;

@@ -136,7 +136,7 @@ void cmd_dregs(int argc, char argv[][CON_LINELEN])
     regsChanged.pc = ~regsChanged.pc;
     regsChanged.prod = ~regsChanged.prod;
     regsChanged.cr = ~regsChanged.cr;
-    regsChanged.sr = ~regsChanged.sr;
+    regsChanged.sr.bits = ~regsChanged.sr.bits;
 
     for (int i = 0; i < 4; i++)
     {
@@ -148,8 +148,8 @@ void cmd_dregs(int argc, char argv[][CON_LINELEN])
 
     for (int i = 0; i < 2; i++)
     {
-        regsChanged.ac[i] = ~regsChanged.ac[i];
-        regsChanged.ax[i] = ~regsChanged.ax[i];
+        regsChanged.ac[i].bits = ~regsChanged.ac[i].bits;
+        regsChanged.ax[i].bits = ~regsChanged.ax[i].bits;
     }
 
     dspCore->DumpRegs(&regsChanged);
