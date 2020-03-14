@@ -474,7 +474,6 @@ namespace DSP
 	}
 
 	// CPU->DSP Mailbox
-	// TODO: Latch logic
 
 	// Write by processor only.
 
@@ -483,6 +482,11 @@ namespace DSP
 		DBReport("DspCore::DSPWriteOutMailboxHi: 0x%04X\n", value);
 
 		CpuToDspMailbox[0] = value;
+
+		if (value & 0x8000)
+		{
+			CpuToDspMailbox[0] &= ~0x8000;
+		}
 	}
 
 	void DspCore::DSPWriteOutMailboxLo(uint16_t value)
@@ -490,6 +494,8 @@ namespace DSP
 		DBReport("DspCore::DSPWriteOutMailboxLo: 0x%04X\n", value);
 
 		CpuToDspMailbox[1] = value;
+
+		CpuToDspMailbox[0] |= 0x8000;
 	}
 
 	uint16_t DspCore::DSPReadOutMailboxHi()
@@ -503,7 +509,6 @@ namespace DSP
 	}
 
 	// DSP->CPU Mailbox
-	// TODO: Latch logic
 
 	// Write by DSP only.
 
@@ -511,12 +516,19 @@ namespace DSP
 	{
 		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X\n", value);
 		DspToCpuMailbox[0] = value;
+
+		if (value & 0x8000)
+		{
+			DspToCpuMailbox[0] &= ~0x8000;
+		}
 	}
 
 	void DspCore::DSPWriteInMailboxLo(uint16_t value)
 	{
 		DBReport(_DSP "DspHardwareRegs::DMBL = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
+
+		DspToCpuMailbox[0] |= 0x8000;
 	}
 
 	uint16_t DspCore::DSPReadInMailboxHi()

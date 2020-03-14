@@ -28,6 +28,11 @@ namespace DSP
 
 	#pragma region "Top Instructions"
 
+	void DspInterpreter::CLR(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].bits = 0;
+	}
+
 	void DspInterpreter::LRI(AnalyzeInfo& info)
 	{
 		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
@@ -102,6 +107,8 @@ namespace DSP
 		// Regular instructions ("top")
 		switch (info.instr)
 		{
+			case DspInstruction::CLR: CLR(info); break;
+
 			case DspInstruction::LRI: LRI(info); break;
 
 			case DspInstruction::M2: M2(info); break;
