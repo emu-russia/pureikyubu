@@ -506,7 +506,7 @@ void cmd_difx(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    DBReport("DSP IDX Dump:\n");
+    DBReport("DSP IFX Dump:\n");
 
     dspCore->DumpIfx();
 }
