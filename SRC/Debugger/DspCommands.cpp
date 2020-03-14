@@ -18,6 +18,7 @@ void dsp_init_handlers()
     con.cmds["dreset"] = cmd_dreset;
     con.cmds["du"] = cmd_du;
     con.cmds["dst"] = cmd_dst;
+    con.cmds["difx"] = cmd_difx;
 }
 
 void dsp_help()
@@ -37,6 +38,7 @@ void dsp_help()
     con_print(WHITE "    dreset               " NORM "- Issue DSP reset");
     con_print(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter");
     con_print(WHITE "    dst                  " NORM "- Dump DSP call stack");
+    con_print(WHITE "    difx                 " NORM "- Dump DSP IFX (internal hardware)");
     con_print("\n");
 }
 
@@ -487,4 +489,24 @@ void cmd_dst(int argc, char argv[][CON_LINELEN])
     {
         DBReport("0x%04X\n", *it);
     }
+}
+
+// Dump DSP IFX
+void cmd_difx(int argc, char argv[][CON_LINELEN])
+{
+    if (!dspCore)
+    {
+        DBReport("DspCore not ready\n");
+        return;
+    }
+
+    if (dspCore->IsRunning())
+    {
+        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        return;
+    }
+
+    DBReport("DSP IDX Dump:\n");
+
+    dspCore->DumpIfx();
 }

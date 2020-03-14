@@ -19,3 +19,4 @@ void    cmd_dpc(int argc, char argv[][CON_LINELEN]);	// Set DSP pc
 void    cmd_dreset(int argc, char argv[][CON_LINELEN]);	// Issue DSP reset
 void    cmd_du(int argc, char argv[][CON_LINELEN]);		// Disassemble some DSP instructions at program counter
 void    cmd_dst(int argc, char argv[][CON_LINELEN]);	// Dump DSP call stack
+void    cmd_difx(int argc, char argv[][CON_LINELEN]);	// Dump DSP IFX

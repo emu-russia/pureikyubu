@@ -83,6 +83,23 @@ namespace DSP
 			regs.st[i].reserve(32);		// Should be enough
 		}
 
+		for (int i = 0; i < 4; i++)
+		{
+			regs.ar[i] = 0;
+			regs.ix[i] = 0;
+			regs.gpr[i] = 0;
+		}
+
+		for (int i = 0; i < 2; i++)
+		{ 
+			regs.ac[i].bits = 0;
+			regs.ax[i].bits = 0;
+		}
+
+		regs.prod = 0;
+		regs.cr = 0;
+		regs.sr.bits = 0;
+
 		regs.pc = IROM_START_ADDRESS;			// IROM start
 
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
@@ -242,6 +259,15 @@ namespace DSP
 				DBReport("r%i: 0x%04X\n", 8+i, regs.gpr[i]);
 			}
 		}
+	}
+
+	/// Dump IFX State
+	void DspCore::DumpIfx()
+	{
+		DBReport("Cpu2Dsp Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
+			CpuToDspMailboxShadow[0], (uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
+		DBReport("Dsp2CPu Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
+			DspToCpuMailboxShadow[0], (uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
 	}
 
 	#pragma endregion "Debug"
@@ -557,13 +583,13 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		DBHalt ("DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+		DBReport("DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
 		CpuToDspMailboxShadow[0] = value;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		DBHalt ("DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+		DBReport("DspCore::CpuToDspWriteLo: 0x%04X\n", value);
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
@@ -586,13 +612,13 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
+		DBReport("DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
 		DspToCpuMailboxShadow[0] = value;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		DBReport(_DSP "DspHardwareRegs::DMBL = 0x%04X\n", value);
+		DBReport("DspHardwareRegs::DMBL = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}

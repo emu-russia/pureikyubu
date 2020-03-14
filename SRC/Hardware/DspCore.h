@@ -209,7 +209,7 @@ namespace DSP
 		static const size_t DROM_START_ADDRESS = 0x1000;
 		static const size_t IFX_START_ADDRESS = 0xFF00;		///< Internal dsp "hardware"
 
-		DspRegs regs = { 0 };
+		DspRegs regs;
 
 		uint8_t iram[IRAM_SIZE] = { 0 };
 		uint8_t irom[IROM_SIZE] = { 0 };
@@ -235,6 +235,7 @@ namespace DSP
 		bool TestBreakpoint(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
+		void DumpIfx();
 
 		// Register access
 
