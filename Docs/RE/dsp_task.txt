@@ -70,7 +70,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 if(__DSP_curr_task == __DSP_rude_task)
                 {
                     DSPSendMailToDSP(0xCDD10003);
-                    while(DSPCheckMailToDSP() == 0) ;
+                    while(DSPCheckMailToDSP()) ;
 
                     __DSP_rude_task = NULL;
                     __DSP_rude_task_pending = FALSE;
@@ -83,7 +83,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 else
                 {
                     DSPSendMailToDSP(0xCDD10001);
-                    while(DSPCheckMailToDSP() == 0) ;                    
+                    while(DSPCheckMailToDSP()) ;                    
 
                     __DSP_exec_task(__DSP_curr_task, __DSP_rude_task);
                     __DSP_curr_task->state = DSP_TASK_STATE_YIELD;
@@ -101,7 +101,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 if(__DSP_curr_task == __DSP_first_task)
                 {
                     DSPSendMailToDSP(0xCDD10003);
-                    while(DSPCheckMailToDSP() == 0) ;
+                    while(DSPCheckMailToDSP()) ;
 
                     if(__DSP_curr_task->res_cb)
                     {
@@ -111,7 +111,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 else
                 {
                     DSPSendMailToDSP(0xCDD10001);
-                    while(DSPCheckMailToDSP() == 0) ;
+                    while(DSPCheckMailToDSP()) ;
 
                     __DSP_exec_task(__DSP_curr_task, __DSP_first_task);
                     __DSP_curr_task->state = DSP_TASK_STATE_YIELD;
@@ -121,7 +121,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
             else
             {
                 DSPSendMailToDSP(0xCDD10001);
-                while(DSPCheckMailToDSP() == 0) ;
+                while(DSPCheckMailToDSP()) ;
 
                 __DSP_exec_task(__DSP_curr_task, __DSP_curr_task->next);
                 __DSP_curr_task->state = DSP_TASK_STATE_YIELD;
@@ -138,7 +138,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 }
 
                 DSPSendMailToDSP(0xCDD10001);
-                while(DSPCheckMailToDSP() == 0) ;
+                while(DSPCheckMailToDSP()) ;
 
                 __DSP_exec_task(NULL, __DSP_rude_task);
                 __DSP_remove_task(__DSP_curr_task);
@@ -160,7 +160,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                     }
 
                     DSPSendMailToDSP(0xCDD10002);
-                    while(DSPCheckMailToDSP() == 0) ;
+                    while(DSPCheckMailToDSP()) ;
 
                     __DSP_curr_task->state = DSP_TASK_STATE_DONE;
                     __DSP_remove_task(__DSP_curr_task);
@@ -173,7 +173,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                     }
 
                     DSPSendMailToDSP(0xCDD10001);
-                    while(DSPCheckMailToDSP() == 0) ;
+                    while(DSPCheckMailToDSP()) ;
 
                     __DSP_curr_task->state = DSP_TASK_STATE_DONE;
 
@@ -190,7 +190,7 @@ void __DSPHandler(__OSInterrupt interrupt, OSContext *context)
                 }
 
                 DSPSendMailToDSP(0xCDD10001);
-                while(DSPCheckMailToDSP() == 0) ;
+                while(DSPCheckMailToDSP()) ;
 
                 __DSP_curr_task->state = DSP_TASK_STATE_DONE;
 
@@ -225,62 +225,62 @@ void __DSP_exec_task(DSPTaskInfo *curr, DSPTaskInfo *next)
     if(curr)
     {
         DSPSendMailToDSP(curr->dram_mmem_addr);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(curr->dram_length);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(curr->dram_addr);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
     }
     else
     {
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
     }
 
     DSPSendMailToDSP(next->iram_mmem_addr);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(next->iram_length);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(next->iram_addr);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     if(next->state == DSP_TASK_STATE_INIT)
     {
         DSPSendMailToDSP(next->dsp_init_vector);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(0);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
     }
     else
     {
         DSPSendMailToDSP(next->dsp_resume_vector);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(next->dram_mmem_addr);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(next->dram_length);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
 
         DSPSendMailToDSP(next->dram_addr);
-        while(DSPCheckMailToDSP() == 0) ;
+        while(DSPCheckMailToDSP()) ;
     }
 }
 
@@ -303,29 +303,29 @@ void __DSP_boot_task(DSPTaskInfo *task)
     }
 
     DSPSendMailToDSP(0x80F4A001);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
     DSPSendMailToDSP(task->iram_mmem_addr);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(0x80F4C002);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
     DSPSendMailToDSP(task->iram_addr);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(0x80F4A002);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
     DSPSendMailToDSP(task->iram_length);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(0x80F4B002);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
     DSPSendMailToDSP(0);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
     DSPSendMailToDSP(0x80F4D001);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
     DSPSendMailToDSP(task->dsp_init_vector);
-    while(DSPCheckMailToDSP() == 0) ;
+    while(DSPCheckMailToDSP()) ;
 
 #ifdef DEBUG
     __DSP_debug_printf("DSP is booting task: 0x%08X\n", task);

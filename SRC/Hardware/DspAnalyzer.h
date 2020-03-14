@@ -23,8 +23,8 @@ namespace DSP
 		ADDR,		///< Adds register $(0x18+S) to the accumulator $acD register
 
 		ANDC,		///< Logic AND middle part of accumulator $acD.m with middle part of accumulator $ax(1-D).m. 
-		ANDCF,		///< Logical AND operation involving the mid part of accumulator $acD.m and the immediate value I is equal to I
-		ANDF,		///< Logic AND operation involving the mid part of accumulator $acD.m and the immediate value I is equal to zero
+		TCLR,		///< Test bit clear
+		TSET,		///< Test bit set
 		ANDI,		///< Logical AND with the mid part of accumulator $acD.m and the immediate value I
 		ANDR,		///< Logical AND with the middle part of accumulator $acD.m and the high part of secondary accumulator, $axS.h
 
@@ -290,8 +290,8 @@ namespace DSP
 		AboveS32 = 0b1001,	///< Above s32 
 		UnknownA = 0b1010,	///< TODO (?)
 		UnknownB = 0b1011,	///< TODO (?)
-		NZ = 0b1100,		///< Not zero 
-		ZR = 0b1101,		///< Zero
+		NOK = 0b1100,		///< Bit Test Not OK
+		OK = 0b1101,		///< Bit Test OK
 		O = 0b1110,			///< Overﬂow
 		Always = 0b1111,	///< Always
 	};

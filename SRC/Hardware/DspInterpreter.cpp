@@ -35,14 +35,14 @@ namespace DSP
 		Flags(core->regs.ac[n]);
 	}
 
-	void DspInterpreter::ANDCF(AnalyzeInfo& info)
+	void DspInterpreter::TCLR(AnalyzeInfo& info)
 	{
-		core->regs.sr.lz = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
+		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == 0;
 	}
 
-	void DspInterpreter::ANDF(AnalyzeInfo& info)
+	void DspInterpreter::TSET(AnalyzeInfo& info)
 	{
-		core->regs.sr.lz = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == 0;
+		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) != 0;
 	}
 
 	void DspInterpreter::CALLcc(AnalyzeInfo& info)
@@ -202,8 +202,8 @@ namespace DSP
 			case ConditionCode::C: return core->regs.sr.c != 0;
 			case ConditionCode::BelowS32: return core->regs.sr.as == 0;
 			case ConditionCode::AboveS32: return core->regs.sr.as != 0;
-			case ConditionCode::NZ: return core->regs.sr.lz == 0;
-			case ConditionCode::ZR: return core->regs.sr.lz != 0;
+			case ConditionCode::NOK: return core->regs.sr.ok == 0;
+			case ConditionCode::OK: return core->regs.sr.ok != 0;
 			case ConditionCode::O: return core->regs.sr.o != 0;
 			case ConditionCode::Always: return true;
 		}
@@ -252,8 +252,8 @@ namespace DSP
 		switch (info.instr)
 		{
 			case DspInstruction::ANDC: ANDC(info); break;
-			case DspInstruction::ANDCF: ANDCF(info); break;
-			case DspInstruction::ANDF: ANDF(info); break;
+			case DspInstruction::TCLR: TCLR(info); break;
+			case DspInstruction::TSET: TSET(info); break;
 
 			case DspInstruction::CALLcc: CALLcc(info); break;
 

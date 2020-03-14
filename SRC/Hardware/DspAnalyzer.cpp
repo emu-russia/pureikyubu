@@ -236,8 +236,8 @@ namespace DSP
 			//ANDI * 	0000 00[1]d [0100] 0000 iiii iiii iiii iiii 
 			//ORI * 	0000 00[1]d [0110] 0000 iiii iiii iiii iiii 
 			//CMPI * 	0000 00[1]d [1000] 0000 iiii iiii iiii iiii 
-			//ANDCF * 	0000 00[1]d [1010] 0000 iiii iiii iiii iiii 
-			//ANDF * 	0000 00[1]d [1100] 0000 iiii iiii iiii iiii 
+			//TCLR * 	0000 00[1]d [1010] 0000 iiii iiii iiii iiii 
+			//TSET * 	0000 00[1]d [1100] 0000 iiii iiii iiii iiii 
 			//ILRR * 	0000 00[1]d [0001] 00ss
 			//ILRRD * 	0000 00[1]d [0001] 01ss
 			//ILRRI * 	0000 00[1]d [0001] 10ss
@@ -308,11 +308,11 @@ namespace DSP
 				case 0b1000:		// CMPI
 					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::CMPI, false);
 					break;
-				case 0b1010:		// ANDCF
-					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ANDCF, true);
+				case 0b1010:		// TCLR
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::TCLR, true);
 					break;
-				case 0b1100:		// ANDF
-					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::ANDF, true);
+				case 0b1100:		// TSET
+					return Group0_Logic(instrPtr, instrMaxSize, info, DspInstruction::TSET, true);
 					break;
 				case 0b0001:		// ILRR's
 				{

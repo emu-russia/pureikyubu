@@ -23,8 +23,8 @@ namespace DSP
 		void ADDR(AnalyzeInfo& info);
 
 		void ANDC(AnalyzeInfo& info);
-		void ANDCF(AnalyzeInfo& info);
-		void ANDF(AnalyzeInfo& info);
+		void TCLR(AnalyzeInfo& info);
+		void TSET(AnalyzeInfo& info);
 		void ANDI(AnalyzeInfo& info);
 		void ANDR(AnalyzeInfo& info);
 

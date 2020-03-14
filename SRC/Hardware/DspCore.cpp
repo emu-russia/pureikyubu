@@ -85,8 +85,10 @@ namespace DSP
 
 		regs.pc = IROM_START_ADDRESS;			// IROM start
 
-		DspToCpuMailbox[0] = DspToCpuMailbox[1] = 0;
-		CpuToDspMailbox[0] = CpuToDspMailbox[1] = 0;
+		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
+		DspToCpuMailbox[1] = DspToCpuMailboxShadow[1] = 0;
+		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] = 0;
+		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
 	}
 
 	void DspCore::Run()
@@ -452,8 +454,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DMBH:
 					return DspToCpuReadHi();
 				case (DspAddress)DspHardwareRegs::DMBL:
-					DolwinError(__FILE__, "DSP is not allowed to read own Lower Mailbox!");
-					break;
+					return DspToCpuReadLo();
 				default:
 					DBHalt(_DSP "Unknown HW read 0x%04X\n", addr);
 					break;
@@ -529,7 +530,8 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport(_DSP "DspCore::DSPSetIntBit\n");
+			DBHalt (_DSP BRED "DspCore::DSPSetIntBit (not implemented!)\n");
+			Suspend();
 		}
 	}
 
@@ -555,23 +557,15 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		DBReport("DspCore::DSPWriteOutMailboxHi: 0x%04X\n", value);
-
-		CpuToDspMailbox[0] = value;
-
-		if (value & 0x8000)
-		{
-			CpuToDspMailbox[0] &= ~0x8000;
-		}
+		DBHalt ("DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+		CpuToDspMailboxShadow[0] = value;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		DBReport("DspCore::DSPWriteOutMailboxLo: 0x%04X\n", value);
-
+		DBHalt ("DspCore::CpuToDspWriteLo: 0x%04X\n", value);
 		CpuToDspMailbox[1] = value;
-
-		CpuToDspMailbox[0] |= 0x8000;
+		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
 
 	uint16_t DspCore::CpuToDspReadHi()
@@ -581,8 +575,9 @@ namespace DSP
 
 	uint16_t DspCore::CpuToDspReadLo()
 	{
-		CpuToDspMailbox[0] &= ~0x8000;
-		return CpuToDspMailbox[1];
+		uint16_t value = CpuToDspMailbox[1];
+		CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
+		return value;
 	}
 
 	// DSP->CPU Mailbox
@@ -591,21 +586,15 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X\n", value);
-		DspToCpuMailbox[0] = value;
-
-		if (value & 0x8000)
-		{
-			DspToCpuMailbox[0] &= ~0x8000;
-		}
+		DBReport(_DSP "DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
+		DspToCpuMailboxShadow[0] = value;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
 		DBReport(_DSP "DspHardwareRegs::DMBL = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
-
-		DspToCpuMailbox[0] |= 0x8000;
+		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}
 
 	uint16_t DspCore::DspToCpuReadHi()
@@ -615,8 +604,9 @@ namespace DSP
 
 	uint16_t DspCore::DspToCpuReadLo()
 	{
-		DspToCpuMailbox[0] &= ~0x8000;
-		return DspToCpuMailbox[1];
+		uint16_t value = DspToCpuMailbox[1];
+		DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
+		return value;
 	}
 
 	#pragma endregion "Flipper interface"

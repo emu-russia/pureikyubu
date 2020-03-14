@@ -1,5 +1,7 @@
 # Disassembled dsp_irom.bin
 
+Send sync mail (0x8071FEED).
+
 ```
 8000 00 92 00 FF 	lri  	config, #0x00FF
 8002 12 06       	sbset	#0x0C
@@ -92,42 +94,117 @@
 
 void DspMain ()			// 800E
 {
-	
+	while (true)
+	{
+		ac0 = ac1 = 0;
+		ac0m = WaitCpuMailbox (); 		// High part here
+
+		// First Mail should be always 0x80F3xxxx, following by command sequence mail
+
+		if (ac0m != 0x80F3)
+		{
+			DMBH = 0xFEEE; 			// Invalid 1st message (FEEE)
+			DMBL = ac0m;
+			WaitDspMailbox ();
+			continue;
+		}
+
+		// Try command sequence mail
+
+		ac0m = CMBL;
+		switch (ac0m)
+		{
+			// Set ix0,1 registers  	(iram_mmem_addr)
+			case 0xA001:
+				ac0m = WaitCpuMailbox ();
+				ix0 = ac0m;
+				ix1 = CMBL;
+				break;
+
+			// Set ix3  		(iram_addr)
+			case 0xA002:
+				ac0m = WaitCpuMailbox();
+				ix3 = CMBL;
+				break;
+
+			// Set ix2 			(iram_length)
+			case 0xc002:
+				ac0m = WaitCpuMailbox();
+				ix2 = CMBL;			
+				break;
+
+			// Set ax1,0 Low 			(not used by __DSP_boot_task)
+			case 0xB001:
+				ac0m = WaitCpuMailbox();
+				ax1.l = ac0m;
+				ax0.l = CMBL;
+				break;
+
+			// Set ax0 High 			(always 0 in __DSP_boot_task)
+			case 0xB002:
+				ac0m = WaitCpuMailbox();
+				ax0.h = CMBL;
+				break;
+
+			// Set ax1 High 			(not used by __DSP_boot_task)
+			case 0xC001:
+				ac0m = WaitCpuMailbox();
+				ax1.h = CMBL;
+				break;
+
+			// Execute microcode    	(dsp_init_vector)
+			case 0xD001:
+				WaitCpuMailbox ();
+				ar0 = CMBL;
+				sub_80B5 ();
+
+				halt; 					// Never reach here
+
+				break;
+
+			// Unknown command sequence
+			default:
+				DMBH = 0xFAAA; 			// Invalid 2nd message (FAAA)
+				DMBL = ac0m;		// Return command to caller
+
+				WaitDspMailbox ();
+				break;
+
+		}
+	}
 }
 
 ```
 
 ## Mailbox polling
 
+Wait for message from the processor.
+
 ```
-8078 26 FE       	lrs  	ac0.m, $(CMBH)
-8079 02 C0 80 00 	andf 	ac0.m, #0x8000
-807B 02 9C 80 78 	jnz  	$0x8078
+8078 26 FE       	lrs  	ac0.m, $(CMBH)					; ac0m = CMBH
+8079 02 C0 80 00 	tset 	ac0.m, #0x8000 					; ok = (ac0m & 0x8000) != 0
+807B 02 9C 80 78 	jnok  	$0x8078 						; if (!ok) goto 0x8078;
 807D 02 DF       	ret  	
 ```
-
-Wait for message from the processor.
 
 ```c++
 // Wait for message from the processor
 uint16_t WaitCpuMailbox()		// 8078
 {
-	uint16_t ac0m;
-	while ( ((ac0m = *(uint16_t *)(CMBH)) & 0x8000) == 0 )
-	{
-	}
+	uint16_t acm0;
+	while ( ((acm0 = *(uint16_t *)(CMBH)) & 0x8000) == 0 )
+	{ }
 	return ac0m;
 }
+
 ```
 
 Wait until processor read both the upper and lower parts of DSP Mailbox.
 
-According to the logic of work, when the processor reads both mailbox halves, the msb will be cleared and the poll will stop.
-
 ```
-807E 26 FC       	lrs  	ac0.m, $(DMBH)
-807F 02 A0 80 00 	andcf	ac0.m, #0x8000
-8081 02 9C 80 7E 	jnz  	$0x807E
+807E 26 FC       	lrs  	ac0.m, $(DMBH) 					; ac0m = DMBH
+807F 02 A0 80 00 	tclr	ac0.m, #0x8000 					; ok = (ac0m & 0x8000) == 0
+8081 02 9C 80 7E 	jnok  	$0x807E							; 
 8083 02 DF       	ret  	
 ```
 
@@ -136,15 +213,33 @@ According to the logic of work, when the processor reads both mailbox halves, th
 uint16_t WaitDspMailbox()			// 807E
 {
 	uint16_t ac0m;
-	while ( ((ac0m = *(uint16_t *)(DMBH)) & 0x8000) == 0x8000 )
-	{
-	}
+	while ( ((ac0m = *(uint16_t *)(DMBH)) & 0x8000) != 0 )
+	{ }
 	return ac0m;
 }
 ```
 
+## Mailbox DSP -> CPU execution chart
 
-##
+```
+| Processor side (AX.lib) 					| DSP Side (IROM)							 				|
+|-------------------------------------------|-----------------------------------------------------------|
+| while(DSPCheckMailFromDSP() == 0) ;  	 	| 											 				|		CPU Waits DPS message  (DSP_INMBOXH.M)
+| 											|															|
+| 							 				| 800A 16 FC 80 71 	si   	$(DMBH), #0x8071 				| 		DSP sends message  (Welcome SYNC)   --> Go to Shadow HI
+|  											|															|
+|  											| 800C 16 FD FE ED 	si   	$(DMBL), #0xFEED 				| 		Nom-nom.   Shadow HI -> go to real HI
+| 										 	| 															|
+| 											| while ( ((ac0m = *(uint16_t *)(DMBH)) & 0x8000) != 0 ) 	|		DSP waits CPU read message
+|											|															|
+| mail = DSPReadMailFromDSP(); 				| 															| 		CPU read message
+| ASSERT ((uint16_t)mail == 0xFEED); 		| 															|
+
+
+
+```
+
+## Unused (?)
 
 
 ```
@@ -161,8 +256,8 @@ uint16_t WaitDspMailbox()			// 807E
 8093 00 FB FF CD 	sr   	$(DSPA), ax1.h
 8095 00 F9 FF CB 	sr   	$(DSBL), ax0.h
 8097 00 DE FF C9 	lr   	ac0.m, $(DSCR)
-8099 02 A0 00 04 	andcf	ac0.m, #0x0004
-809B 02 9C 80 97 	jnz  	$0x8097
+8099 02 A0 00 04 	tclr	ac0.m, #0x0004
+809B 02 9C 80 97 	jnok  	$0x8097
 809D 81 00       	clr  	ac0             	     	
 809E 1F C7       	mrr  	ac0.m, ix3
 809F B1 00       	tst  	ac0             	     	
@@ -174,10 +269,12 @@ uint16_t WaitDspMailbox()			// 807E
 80AA 00 E6 FF CD 	sr   	$(DSPA), ix2
 80AC 00 E7 FF CB 	sr   	$(DSBL), ix3
 80AE 00 DE FF C9 	lr   	ac0.m, $(DSCR)
-80B0 02 A0 00 04 	andcf	ac0.m, #0x0004
-80B2 02 9C 80 AE 	jnz  	$0x80AE
+80B0 02 A0 00 04 	tclr	ac0.m, #0x0004
+80B2 02 9C 80 AE 	jnok  	$0x80AE
 80B4 02 DF       	ret  	
 ```
+
+## Run microcode
 
 ```
 80B5 8E 00       	clr40	                	     	
@@ -193,8 +290,8 @@ uint16_t WaitDspMailbox()			// 807E
 80C4 00 FB FF CD 	sr   	$(DSPA), ax1.h
 80C6 00 F9 FF CB 	sr   	$(DSBL), ax0.h
 80C8 00 DE FF C9 	lr   	ac0.m, $(DSCR)
-80CA 02 A0 00 04 	andcf	ac0.m, #0x0004
-80CC 02 9C 80 C8 	jnz  	$0x80C8
+80CA 02 A0 00 04 	tclr	ac0.m, #0x0004
+80CC 02 9C 80 C8 	jnok  	$0x80C8
 80CE 89 00       	clr  	ac1             	     	
 80CF 1F E7       	mrr  	ac1.m, ix3
 80D0 B9 00       	tst  	ac1             	     	
@@ -206,8 +303,8 @@ uint16_t WaitDspMailbox()			// 807E
 80DB 00 E6 FF CD 	sr   	$(DSPA), ix2
 80DD 00 E7 FF CB 	sr   	$(DSBL), ix3
 80DF 00 DE FF C9 	lr   	ac0.m, $(DSCR)
-80E1 02 A0 00 04 	andcf	ac0.m, #0x0004
-80E3 02 9C 80 DF 	jnz  	$0x80DF
+80E1 02 A0 00 04 	tclr	ac0.m, #0x0004
+80E3 02 9C 80 DF 	jnok  	$0x80DF
 80E5 17 0F       	jmpr 	ar0
 80E6 00 21       	halt 	
 
@@ -1386,7 +1483,7 @@ uint16_t WaitDspMailbox()			// 807E
 8572 00 82 FF D3 	lri  	ar2, #0xFFD3
 8574 00 86 00 00 	lri  	ix2, #0x0000
 8576 1F E4       	mrr  	ac1.m, ix0
-8577 03 C0 00 01 	andf 	ac1.m, #0x0001
+8577 03 C0 00 01 	tset 	ac1.m, #0x0001
 8579 15 7F       	lsr  	ac1, #0x3F
 857A 1C BF       	mrr  	ix1, ac1.m
 857B 00 9A FF F8 	lri  	ax1.l, #0xFFF8
@@ -1398,7 +1495,7 @@ uint16_t WaitDspMailbox()			// 807E
 8584 F5 00       	lsr16	ac1             	     	
 8585 70 17       	addaxl	ac0, ax0.l     	mv   	ax0.h, ac1.m
 8586 72 78       	addaxl	ac0, ax1.l     	l    	ac1.m, @ar0
-8587 02 9C 85 8C 	jnz  	$0x858C
+8587 02 9C 85 8C 	jnok  	$0x858C
 8589 35 BE       	andr 	ac1.m, ax0.h    	slnm 	ac0.m, ax1.h
 858A 1F 1F       	mrr  	ax0.l, ac1.m
 858B 70 00       	addaxl	ac0, ax0.l     	     	
@@ -1479,7 +1576,7 @@ uint16_t WaitDspMailbox()			// 807E
 85FB 1A 5F       	srr  	@ar2, ac1.m
 85FC 1A BC       	srrd 	@ar1, ac0.l
 85FD 1B 3E       	srri 	@ar1, ac0.m
-85FE 02 9D 86 02 	jzr  	$0x8602
+85FE 02 9D 86 02 	jok  	$0x8602
 8600 02 BF 86 11 	call 	$0x8611
 8602 16 C9 00 01 	si   	$(DSCR), #0x0001
 8604 00 DE 04 06 	lr   	ac0.m, $0x0406
@@ -1541,8 +1638,8 @@ uint16_t WaitDspMailbox()			// 807E
 
 
 863D 00 DF FF C9 	lr   	ac1.m, $(DSCR)
-863F 03 C0 00 04 	andf 	ac1.m, #0x0004
-8641 02 9D 86 3D 	jzr  	$0x863D
+863F 03 C0 00 04 	tset 	ac1.m, #0x0004
+8641 02 9D 86 3D 	jok  	$0x863D
 8643 02 DF       	ret  	
 
 
@@ -1575,7 +1672,7 @@ uint16_t WaitDspMailbox()			// 807E
 866A 00 80 FF D3 	lri  	ar0, #0xFFD3
 866C 00 84 00 00 	lri  	ix0, #0x0000
 866E 00 DF 04 03 	lr   	ac1.m, $0x0403
-8670 03 C0 00 01 	andf 	ac1.m, #0x0001
+8670 03 C0 00 01 	tset 	ac1.m, #0x0001
 8672 15 7F       	lsr  	ac1, #0x3F
 8673 1C DF       	mrr  	ix2, ac1.m
 8674 00 9A FF F8 	lri  	ax1.l, #0xFFF8
@@ -1587,7 +1684,7 @@ uint16_t WaitDspMailbox()			// 807E
 867D F5 00       	lsr16	ac1             	     	
 867E 70 17       	addaxl	ac0, ax0.l     	mv   	ax0.h, ac1.m
 867F 72 79       	addaxl	ac0, ax1.l     	l    	ac1.m, @ar1
-8680 02 9C 86 85 	jnz  	$0x8685
+8680 02 9C 86 85 	jnok  	$0x8685
 8682 35 BC       	andr 	ac1.m, ax0.h    	lsnm 	ax1.h, ac0.m
 8683 1F 1F       	mrr  	ax0.l, ac1.m
 8684 70 00       	addaxl	ac0, ax0.l     	     	
@@ -1644,7 +1741,7 @@ uint16_t WaitDspMailbox()			// 807E
 86CD 1F B9       	mrr  	ac1.l, ax0.h
 86CE 1F 46       	mrr  	ax1.l, ix2
 86CF 1C 65       	mrr  	ar3, ix1
-86D0 02 9D 86 D4 	jzr  	$0x86D4
+86D0 02 9D 86 D4 	jok  	$0x86D4
 86D2 02 BF 86 E5 	call 	$0x86E5
 86D4 00 88 FF FF 	lri  	r08, #0xFFFF
 86D6 16 C9 00 01 	si   	$(DSCR), #0x0001
@@ -1935,7 +2032,7 @@ uint16_t WaitDspMailbox()			// 807E
 8832 00 80 FF D3 	lri  	ar0, #0xFFD3
 8834 00 84 00 00 	lri  	ix0, #0x0000
 8836 00 DF 04 03 	lr   	ac1.m, $0x0403
-8838 03 C0 00 01 	andf 	ac1.m, #0x0001
+8838 03 C0 00 01 	tset 	ac1.m, #0x0001
 883A 15 7F       	lsr  	ac1, #0x3F
 883B 1C DF       	mrr  	ix2, ac1.m
 883C 00 9A FF F8 	lri  	ax1.l, #0xFFF8
@@ -1947,7 +2044,7 @@ uint16_t WaitDspMailbox()			// 807E
 8845 F5 00       	lsr16	ac1             	     	
 8846 70 17       	addaxl	ac0, ax0.l     	mv   	ax0.h, ac1.m
 8847 72 79       	addaxl	ac0, ax1.l     	l    	ac1.m, @ar1
-8848 02 9C 88 4D 	jnz  	$0x884D
+8848 02 9C 88 4D 	jnok  	$0x884D
 884A 35 BC       	andr 	ac1.m, ax0.h    	lsnm 	ax1.h, ac0.m
 884B 1F 1F       	mrr  	ax0.l, ac1.m
 884C 70 00       	addaxl	ac0, ax0.l     	     	

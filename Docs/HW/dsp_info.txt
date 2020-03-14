@@ -90,10 +90,6 @@ There are some *DSP* interrupts (not Flipper), which I guessed:
 
 Although patent is said mailbox are 32-bit wide, Nintendo DSP library accessing them by 16-bit halfs. Most likely because the DSP can only access memory in 16-bit words.
 
-Writing in mailbox register (from any side) will assert interrupt (Check ?):
-- If CPU->DSP mailbox, generate DSP mailbox interrupt;
-- If DSP->CPU mailbox, generate PI DSP interrupt (see DSP Control Reg).
-
 Thats how CPU and DSP are "talking". Typically, some informative number is placed in mailbox register. It can be interpreted as command, or some DSP task status. It is fully depended on DSP microcode.
 
 If mailbox regs are accessing by half parts, there are probably some "shadow" registers, which are used to copy in real registers, when both halfs are written. As example:
@@ -105,7 +101,7 @@ Thats how DSP library will write it in DSP out mailbox:
 *(u16 *)0xCC005000 = 0xBADA;
 *(u16 *)0xCC005002 = 0xDD1E;
 
-As you can see, DSP mailbox interrupt will be generated, after we write 0xBADA, and DSP mailbox handler will get only partial 0xBADA???? message.
+When CPU write the upper part of the message, DSP can already read the upper half of the message, although the lower half is not yet filled (will get only partial 0xBADA???? message).
 
 With shadow registers, it will looks like this:
 
@@ -305,8 +301,8 @@ XORI *      0000 001r 0010 0000 iiii iiii iiii iiii
 ANDI *      0000 001r 0100 0000 iiii iiii iiii iiii 
 ORI *       0000 001r 0110 0000 iiii iiii iiii iiii 
 CMPI *      0000 001r 1000 0000 iiii iiii iiii iiii 
-ANDCF *     0000 001r 1010 0000 iiii iiii iiii iiii 
-ANDF *      0000 001r 1100 0000 iiii iiii iiii iiii 
+TCLR *      0000 001r 1010 0000 iiii iiii iiii iiii 
+TSET *      0000 001r 1100 0000 iiii iiii iiii iiii 
 
 ILRR *      0000 00[1]d [0001] 00ss
 ILRRD *     0000 00[1]d [0001] 01ss

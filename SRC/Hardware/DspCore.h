@@ -61,7 +61,7 @@ namespace DSP
 			unsigned s : 1;		///< Sign
 			unsigned as : 1;	///< Above s32 
 			unsigned tt : 1;	///< Top two bits are equal 
-			unsigned lz : 1;	///< Logic zero 
+			unsigned ok : 1;	///< 1: Bit test OK, 0: Bit test not OK
 			unsigned os : 1;	///< Overflow (sticky)
 			unsigned hwz : 1;	///< Hardwired to 0? 
 			unsigned ie : 1;	///< Interrupt enable 
@@ -191,7 +191,10 @@ namespace DSP
 		DspInterpreter* interp;
 
 		std::atomic<uint16_t> DspToCpuMailbox[2];		///< DMBH, DMBL
+		uint16_t DspToCpuMailboxShadow[2];
+
 		std::atomic<uint16_t> CpuToDspMailbox[2];		///< CMBH, CMBL
+		uint16_t CpuToDspMailboxShadow[2];
 
 	public:
 

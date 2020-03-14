@@ -261,11 +261,7 @@ static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr;
 static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteHi((uint16_t)data); }
 static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteLo((uint16_t)data); }
 static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadHi(); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg)
-{
-    DolwinError(__FILE__, "Processor is not allowed to read own Lower Mailbox!");
-    *reg = 0;
-}
+static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadLo(); }
 
 static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadHi(); }
 static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(); }

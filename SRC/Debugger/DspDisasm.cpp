@@ -117,8 +117,8 @@ namespace DSP
 			case DspInstruction::ADDR: text = "addr"; break;
 
 			case DspInstruction::ANDC: text = "andc"; break;
-			case DspInstruction::ANDCF: text = "andcf"; break;
-			case DspInstruction::ANDF: text = "andf"; break;
+			case DspInstruction::TCLR: text = "tclr"; break;
+			case DspInstruction::TSET: text = "tset"; break;
 			case DspInstruction::ANDI: text = "andi"; break;
 			case DspInstruction::ANDR: text = "andr"; break;
 
@@ -367,8 +367,8 @@ namespace DSP
 			case ConditionCode::AboveS32: text = "as32"; break;
 			case ConditionCode::UnknownA: text = "unkA"; break;
 			case ConditionCode::UnknownB: text = "unkB"; break;
-			case ConditionCode::NZ: text = "nz"; break;
-			case ConditionCode::ZR: text = "zr"; break;
+			case ConditionCode::NOK: text = "nok"; break;
+			case ConditionCode::OK: text = "ok"; break;
 			case ConditionCode::O: text = "o"; break;
 			case ConditionCode::Always: text = ""; break;
 		}
