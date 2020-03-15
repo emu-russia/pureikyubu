@@ -304,6 +304,9 @@ CMPI *      0000 001r 1000 0000 iiii iiii iiii iiii
 TCLR *      0000 001r 1010 0000 iiii iiii iiii iiii 
 TSET *      0000 001r 1100 0000 iiii iiii iiii iiii 
 
+LSN         0000 0010 1100 1010         // LSN     ac0, ac1.m
+ASN         0000 0010 1100 1011         // ASN     ac0, ac1.m
+
 ILRR *      0000 00[1]d [0001] 00ss
 ILRRD *     0000 00[1]d [0001] 01ss
 ILRRI *     0000 00[1]d [0001] 10ss

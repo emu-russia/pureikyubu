@@ -249,6 +249,9 @@ namespace DSP
 
 			case DspInstruction::XORI: text = "xori"; break;
 			case DspInstruction::XORR: text = "xorr"; break;
+
+			case DspInstruction::LSN: text = "lsn"; break;
+			case DspInstruction::ASN: text = "asn"; break;
 		}
 
 		while (text.size() < 5)

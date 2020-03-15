@@ -238,10 +238,25 @@ namespace DSP
 			//CMPI * 	0000 00[1]d [1000] 0000 iiii iiii iiii iiii 
 			//TCLR * 	0000 00[1]d [1010] 0000 iiii iiii iiii iiii 
 			//TSET * 	0000 00[1]d [1100] 0000 iiii iiii iiii iiii 
+			//LSN		0000 00[1]0 [1100] 1010
+			//ASN		0000 00[1]0 [1100] 1011
 			//ILRR * 	0000 00[1]d [0001] 00ss
 			//ILRRD * 	0000 00[1]d [0001] 01ss
 			//ILRRI * 	0000 00[1]d [0001] 10ss
 			//ILRRN * 	0000 00[1]d [0001] 11ss
+
+			if (info.instrBits == 0x02ca)
+			{
+				info.logic = true;
+				info.instr = DspInstruction::LSN;
+				return true;
+			}
+			else if (info.instrBits == 0x02cb)
+			{
+				info.logic = true;
+				info.instr = DspInstruction::ASN;
+				return true;
+			}
 
 			switch ((info.instrBits >> 4) & 0xf)
 			{

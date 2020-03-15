@@ -156,6 +156,11 @@ namespace DSP
 		XORI,		///< Logical XOR (exclusive OR) of accumulator mid part $acD.m with immediate value I. 
 		XORR,		///< LogicalXOR(exclusiveOR)middlepartofaccumulator$acD.mwithhighpartofsecondaryaccumulator $axS.h. 
 
+		// Weird
+
+		LSN,		///< Logically shifts right accumulator $ACC0 by lower 7-bit (signed) value in $AC1.M (if value negative, becomes left shift)
+		ASN,		///< Arithmetically shifts right accumulator $ACC0 by lower 7-bit (signed) value in $AC1.M (if value negative, becomes left shift)
+
 		// TODO: DIV (?)
 
 		Max,
