@@ -121,13 +121,13 @@ void DspMain ()			// 800E
 				ix1 = CMBL;
 				break;
 
-			// Set ix3  		(iram_addr)
+			// Set ix3  		(iram_length)
 			case 0xA002:
 				ac0m = WaitCpuMailbox();
 				ix3 = CMBL;
 				break;
 
-			// Set ix2 			(iram_length)
+			// Set ix2 			(iram_addr)
 			case 0xc002:
 				ac0m = WaitCpuMailbox();
 				ix2 = CMBL;			
@@ -283,12 +283,12 @@ uint16_t WaitDspMailbox()			// 807E
 80B8 1F F9       	mrr  	ac1.m, ax0.h
 80B9 B9 00       	tst  	ac1             	     	
 80BA 02 95 80 CE 	jeq  	$0x80CE
-80BC 00 FA FF CE 	sr   	$(DSMAH), ax1.l
+80BC 00 FA FF CE 	sr   	$(DSMAH), ax1.l 		// dram_mmem_addr
 80BE 00 F8 FF CF 	sr   	$(DSMAL), ax0.l
 80C0 00 9E 00 00 	lri  	ac0.m, #0x0000
 80C2 00 FE FF C9 	sr   	$(DSCR), ac0.m
-80C4 00 FB FF CD 	sr   	$(DSPA), ax1.h
-80C6 00 F9 FF CB 	sr   	$(DSBL), ax0.h
+80C4 00 FB FF CD 	sr   	$(DSPA), ax1.h  		// dram_addr
+80C6 00 F9 FF CB 	sr   	$(DSBL), ax0.h 			// dram_length
 80C8 00 DE FF C9 	lr   	ac0.m, $(DSCR)
 80CA 02 A0 00 04 	tclr	ac0.m, #0x0004
 80CC 02 9C 80 C8 	jnok  	$0x80C8
@@ -297,16 +297,16 @@ uint16_t WaitDspMailbox()			// 807E
 80CF 1F E7       	mrr  	ac1.m, ix3
 80D0 B9 00       	tst  	ac1             	     	
 80D1 02 95 80 E5 	jeq  	$0x80E5
-80D3 00 E4 FF CE 	sr   	$(DSMAH), ix0
+80D3 00 E4 FF CE 	sr   	$(DSMAH), ix0			 // iram_mmem_addr
 80D5 00 E5 FF CF 	sr   	$(DSMAL), ix1
 80D7 00 9E 00 02 	lri  	ac0.m, #0x0002
 80D9 00 FE FF C9 	sr   	$(DSCR), ac0.m
-80DB 00 E6 FF CD 	sr   	$(DSPA), ix2
-80DD 00 E7 FF CB 	sr   	$(DSBL), ix3
+80DB 00 E6 FF CD 	sr   	$(DSPA), ix2 			// iram_addr
+80DD 00 E7 FF CB 	sr   	$(DSBL), ix3 			// iram_length
 80DF 00 DE FF C9 	lr   	ac0.m, $(DSCR)
 80E1 02 A0 00 04 	tclr	ac0.m, #0x0004
 80E3 02 9C 80 DF 	jnok  	$0x80DF
-80E5 17 0F       	jmpr 	ar0
+80E5 17 0F       	jmpr 	ar0						// Goto ucode entrypoint  (dsp_init_vector)
 80E6 00 21       	halt 	
 ```
 

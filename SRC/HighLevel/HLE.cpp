@@ -12,14 +12,6 @@ void os_trap()   { PC = PPC_LR - 4; DBHalt("High level trap (pc: %08X)!\n", PC);
 
 // HLE Ignore (you know what are you doing!)
 static const char *osignore[] = {
-    // stubs for audio/DSP
-    //"__OSInitAudioSystem"       ,
-    //"__AI_SRC_INIT"             ,
-    //"DSPSendCommands2__FPUlUlPFUs_v",
-    //"DsetupTable__FUlUlUlUlUl"  ,
-    //"DsetDolbyDelay__FUlUs"     ,
-    //"__AXOutInitDSP"            ,
-
     // video
     //"VIWaitForRetrace"          ,
 
@@ -30,7 +22,6 @@ static const char *osignore[] = {
 
 // HLE which return 0 as result
 static const char *osret0[] = {
-    "VerifyID"                  ,
 
     // Terminator
     "HLE_RETURN0",

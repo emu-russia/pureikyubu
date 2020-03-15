@@ -265,7 +265,7 @@ namespace DSP
 			CpuToDspMailboxShadow[0], (uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
 		DBReport("Dsp2Cpu Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
 			DspToCpuMailboxShadow[0], (uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
-		DBReport("Dma: MmemAddr: 0x%08X, DspAddr: 0x%04X, BlockSize: 0x%04X, Control: %i\n",
+		DBReport("Dma: MmemAddr: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
 			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
 	}
 
@@ -682,6 +682,9 @@ namespace DSP
 	{
 		uint8_t* ptr = nullptr;
 
+		DBReport("DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
+			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+
 		if (DmaRegs.control.Imem)
 		{
 			ptr = TranslateIMem(DmaRegs.dspAddr);
@@ -699,11 +702,11 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize * sizeof(uint16_t));
+			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
 		}
 		else
 		{
-			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize * sizeof(uint16_t));
+			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
 		}
 	}
 

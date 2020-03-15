@@ -89,6 +89,16 @@ namespace DSP
 		}
 	}
 
+	void DspInterpreter::JMPR(AnalyzeInfo& info)
+	{
+		core->regs.pc = core->MoveFromReg(info.paramBits[0]);
+	}
+
+	void DspInterpreter::LR(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
+	}
+
 	void DspInterpreter::LRI(AnalyzeInfo& info)
 	{
 		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
@@ -167,9 +177,19 @@ namespace DSP
 		core->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
 	}
 
+	void DspInterpreter::SR(AnalyzeInfo& info)
+	{
+		core->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
+	}
+
 	void DspInterpreter::SRS(AnalyzeInfo& info)
 	{
 		core->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
+	}
+
+	void DspInterpreter::TST(AnalyzeInfo& info)
+	{
+		Flags(core->regs.ac[info.paramBits[0]]);
 	}
 
 	#pragma endregion "Top Instructions"
@@ -264,7 +284,9 @@ namespace DSP
 			case DspInstruction::HALT: HALT(info); break;
 
 			case DspInstruction::Jcc: Jcc(info); break;
+			case DspInstruction::JMPR: JMPR(info); break;
 
+			case DspInstruction::LR: LR(info); break;
 			case DspInstruction::LRI: LRI(info); break;
 			case DspInstruction::LRIS: LRIS(info); break;
 			case DspInstruction::LRS: LRS(info); break;
@@ -284,7 +306,10 @@ namespace DSP
 			case DspInstruction::SBCLR: SBCLR(info); break;
 
 			case DspInstruction::SI: SI(info); break;
+			case DspInstruction::SR: SR(info); break;
 			case DspInstruction::SRS: SRS(info); break;
+
+			case DspInstruction::TST: TST(info); break;
 
 			case DspInstruction::NOP:
 			case DspInstruction::NX:

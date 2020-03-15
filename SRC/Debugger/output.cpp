@@ -113,8 +113,15 @@ void con_printline(const char *text)
         }
         else if(*text == '\t')
         {
-            int tbend = (con.X % 4) + 4;
-            while(tbend--) con_printchar(' ');
+            int numToRound = con.X + 1;
+            int multiple = 4;
+            int untilX = ((((numToRound)+(multiple)-1) / (multiple)) * (multiple));
+
+            int numspaces = untilX - con.X;
+            while (numspaces--)
+            {
+                con_printchar(' ');
+            }
             text++;
         }
         else con_printchar(*text++);

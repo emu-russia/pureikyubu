@@ -1099,7 +1099,7 @@ namespace DSP
 
 					if ((info.instrBits & 0b1000000000000) != 0)
 					{
-						// TST16
+						// TST
 						info.instr = DspInstruction::TST;
 					}
 					else
