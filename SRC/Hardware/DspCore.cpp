@@ -102,10 +102,7 @@ namespace DSP
 
 		regs.pc = IROM_START_ADDRESS;			// IROM start
 
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
-		DspToCpuMailbox[1] = DspToCpuMailboxShadow[1] = 0;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] = 0;
-		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
+		ResetIfx();
 	}
 
 	void DspCore::Run()
@@ -268,6 +265,8 @@ namespace DSP
 			CpuToDspMailboxShadow[0], (uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
 		DBReport("Dsp2Cpu Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
 			DspToCpuMailboxShadow[0], (uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
+		DBReport("Dma: MmemAddr: 0x%08X, DspAddr: 0x%04X, BlockSize: 0x%04X, Control: %i\n",
+			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
 	}
 
 	#pragma endregion "Debug"
@@ -473,6 +472,17 @@ namespace DSP
 		{
 			switch (addr)
 			{
+				case (DspAddress)DspHardwareRegs::DSMAH:
+					return DmaRegs.mmemAddr.h;
+				case (DspAddress)DspHardwareRegs::DSMAL:
+					return DmaRegs.mmemAddr.l;
+				case (DspAddress)DspHardwareRegs::DSPA:
+					return DmaRegs.dspAddr;
+				case (DspAddress)DspHardwareRegs::DSCR:
+					return DmaRegs.control.bits;
+				case (DspAddress)DspHardwareRegs::DSBL:
+					return DmaRegs.blockSize;
+
 				case (DspAddress)DspHardwareRegs::CMBH:
 					return CpuToDspReadHi();
 				case (DspAddress)DspHardwareRegs::CMBL:
@@ -504,6 +514,23 @@ namespace DSP
 		{
 			switch (addr)
 			{
+				case (DspAddress)DspHardwareRegs::DSMAH:
+					DmaRegs.mmemAddr.h = value & 0x03ff;
+					break;
+				case (DspAddress)DspHardwareRegs::DSMAL:
+					DmaRegs.mmemAddr.l = value & ~3;
+					break;
+				case (DspAddress)DspHardwareRegs::DSPA:
+					DmaRegs.dspAddr = value & ~1;
+					break;
+				case (DspAddress)DspHardwareRegs::DSCR:
+					DmaRegs.control.bits = value & 3;
+					break;
+				case (DspAddress)DspHardwareRegs::DSBL:
+					DmaRegs.blockSize = value & ~3;
+					DoDma();
+					break;
+
 				case (DspAddress)DspHardwareRegs::CMBH:
 					DolwinError(__FILE__, "DSP is not allowed to write processor Mailbox!");
 					break;
@@ -636,5 +663,50 @@ namespace DSP
 	}
 
 	#pragma endregion "Flipper interface"
+
+
+	#pragma region "IFX"
+
+	void DspCore::ResetIfx()
+	{
+		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
+		DspToCpuMailbox[1] = DspToCpuMailboxShadow[1] = 0;
+		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] = 0;
+		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
+
+		memset(&DmaRegs, 0, sizeof(DmaRegs));
+	}
+
+	/// Instant DMA
+	void DspCore::DoDma()
+	{
+		uint8_t* ptr = nullptr;
+
+		if (DmaRegs.control.Imem)
+		{
+			ptr = TranslateIMem(DmaRegs.dspAddr);
+		}
+		else
+		{
+			ptr = TranslateDMem(DmaRegs.dspAddr);
+		}
+
+		if (ptr == nullptr)
+		{
+			DBHalt("DspCore::DoDma: invalid dsp address: 0x%04X\n", DmaRegs.dspAddr);
+			return;
+		}
+
+		if (DmaRegs.control.Dsp2Mmem)
+		{
+			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize * sizeof(uint16_t));
+		}
+		else
+		{
+			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize * sizeof(uint16_t));
+		}
+	}
+
+	#pragma endregion "IFX"
 
 }

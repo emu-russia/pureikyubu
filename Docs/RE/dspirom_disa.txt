@@ -239,7 +239,7 @@ uint16_t WaitDspMailbox()			// 807E
 
 ```
 
-## Unused (?)
+## DspMem -> MainMem
 
 
 ```
@@ -274,7 +274,7 @@ uint16_t WaitDspMailbox()			// 807E
 80B4 02 DF       	ret  	
 ```
 
-## Run microcode
+## Load and Run microcode
 
 ```
 80B5 8E 00       	clr40	                	     	
@@ -292,6 +292,7 @@ uint16_t WaitDspMailbox()			// 807E
 80C8 00 DE FF C9 	lr   	ac0.m, $(DSCR)
 80CA 02 A0 00 04 	tclr	ac0.m, #0x0004
 80CC 02 9C 80 C8 	jnok  	$0x80C8
+
 80CE 89 00       	clr  	ac1             	     	
 80CF 1F E7       	mrr  	ac1.m, ix3
 80D0 B9 00       	tst  	ac1             	     	
@@ -307,11 +308,51 @@ uint16_t WaitDspMailbox()			// 807E
 80E3 02 9C 80 DF 	jnok  	$0x80DF
 80E5 17 0F       	jmpr 	ar0
 80E6 00 21       	halt 	
+```
+
+```c++
+void LoadRunUcode()			// 80B5
+{
+	clr40();
+	ac0 = ac1 = 0;
+	ac1m = ax0h;
+
+	if (ac1)
+	{
+		DSMAH = ax1l;
+		DSMAL = ax0l;
+		DSCR = 0; 			// DMEM Dma, Mmem->DSP
+		DSPA = ax1h;
+		DSBL = ax0h;
+
+		while (DSCR & 4) ;		// Wait Dma
+	}
+
+	ac1 = 0;
+	ac1m = ix3;
+
+	if (ac1)
+	{
+		DSMAH = ix0;
+		DSMAL = ix1;
+		DSCR = 2;			// IMEM Dma, Mmem->DSP
+		DSPA = ix2;
+		DSBL = ix3;
+
+		while (DSCR & 4) ;		// Wait Dma
+	}
+
+	jmpr ar0;		// Goto ucode entrypoint
+	halt;
+}
+
+```
 
 // -----------------------------------------------------------------------------------------------------
 
 ## Mixing Routines
 
+```
 80E7 81 50       	clr  	ac0             	l    	ax1.l, @ar0
 80E8 89 49       	clr  	ac1             	l    	ax0.h, @ar1
 80E9 B0 72       	mulx 	ax0.h, ax1.l    	l    	ac0.m, @ar2
@@ -586,9 +627,10 @@ uint16_t WaitDspMailbox()			// 807E
 81F6 1B 7F       	srri 	@ar3, ac1.m
 81F7 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 81F8 02 DF       	ret  	
+```
 
 
-
+```
 81F9 81 50       	clr  	ac0             	l    	ax1.l, @ar0
 81FA 89 49       	clr  	ac1             	l    	ax0.h, @ar1
 81FB B0 72       	mulx 	ax0.h, ax1.l    	l    	ac0.m, @ar2
@@ -726,9 +768,10 @@ uint16_t WaitDspMailbox()			// 807E
 827F 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 8280 1F 63       	mrr  	ax1.h, ar3
 8281 02 DF       	ret  	
+```
 
 
-
+```
 8282 1C E3       	mrr  	ix3, ar3
 8283 81 00       	clr  	ac0             	     	
 8284 89 71       	clr  	ac1             	l    	ac0.m, @ar1
@@ -1204,9 +1247,10 @@ uint16_t WaitDspMailbox()			// 807E
 845A 1B 7F       	srri 	@ar3, ac1.m
 845B 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 845C 02 DF       	ret  	
+```
 
 
-
+```
 845D 1C E3       	mrr  	ix3, ar3
 845E 81 00       	clr  	ac0             	     	
 845F 89 71       	clr  	ac1             	l    	ac0.m, @ar1
@@ -1445,7 +1489,7 @@ uint16_t WaitDspMailbox()			// 807E
 8548 1B 7F       	srri 	@ar3, ac1.m
 8549 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 854A 02 DF       	ret  	
-
+```
 
 
 // -----------------------------------------------------------------------------------------------------
@@ -1453,6 +1497,7 @@ uint16_t WaitDspMailbox()			// 807E
 ## Accelerator and DMA (?)
 
 
+```
 854B 8E 00       	clr40	                	     	
 854C 00 80 08 00 	lri  	ar0, #0x0800
 854E 00 92 00 FF 	lri  	config, #0x00FF
@@ -1587,9 +1632,9 @@ uint16_t WaitDspMailbox()			// 807E
 860C 16 CB 00 04 	si   	$(DSBL), #0x0004
 860E 02 BF 86 3D 	call 	$0x863D
 8610 02 DF       	ret  	
+```
 
-
-
+```
 8611 18 DA       	lrrd 	ax1.l, @ar2
 8612 18 DB       	lrrd 	ax1.h, @ar2
 8613 18 DD       	lrrd 	ac1.l, @ar2
@@ -1634,15 +1679,18 @@ uint16_t WaitDspMailbox()			// 807E
 863A F5 57       	lsr16	ac1             	ln   	ax1.l, @ar3
 863B 19 7F       	lrri 	ac1.m, @ar3
 863C 02 DF       	ret  	
+```
 
 
-
+```
 863D 00 DF FF C9 	lr   	ac1.m, $(DSCR)
 863F 03 C0 00 04 	tset 	ac1.m, #0x0004
 8641 02 9D 86 3D 	jok  	$0x863D
 8643 02 DF       	ret  	
+```
 
 
+```
 8644 8E 00       	clr40	                	     	
 8645 00 81 08 00 	lri  	ar1, #0x0800
 8647 00 92 00 FF 	lri  	config, #0x00FF
@@ -1753,8 +1801,10 @@ uint16_t WaitDspMailbox()			// 807E
 86E0 16 CB 00 04 	si   	$(DSBL), #0x0004
 86E2 02 BF 86 3D 	call 	$0x863D
 86E4 02 DF       	ret  	
+```
 
 
+```
 86E5 19 99       	lrrn 	ax0.h, @ar0
 86E6 19 9C       	lrrn 	ac0.l, @ar0
 86E7 1C DC       	mrr  	ix2, ac0.l
@@ -1820,9 +1870,10 @@ uint16_t WaitDspMailbox()			// 807E
 8723 33 00       	xorr 	ac1.m, ax1.h    	     	
 8724 1A DF       	srrd 	@ar2, ac1.m
 8725 02 DF       	ret  	
+```
 
 
-
+```
 8726 8E 00       	clr40	                	     	
 8727 00 81 08 00 	lri  	ar1, #0x0800
 8729 00 92 00 FF 	lri  	config, #0x00FF
@@ -1952,9 +2003,10 @@ uint16_t WaitDspMailbox()			// 807E
 87DA 16 CB 00 04 	si   	$(DSBL), #0x0004
 87DC 02 BF 86 3D 	call 	$0x863D
 87DE 02 DF       	ret  	
+```
 
 
-
+```
 87DF 1F FC       	mrr  	ac1.m, ac0.l
 87E0 31 66       	xorr 	ac1.m, ax0.h    	ln   	ac0.l, @ar2
 87E1 F5 43       	lsr16	ac1             	l    	ax0.l, @ar3
@@ -2000,9 +2052,10 @@ uint16_t WaitDspMailbox()			// 807E
 8809 39 2E       	orr  	ac1.m, ax0.h    	sn   	@ar2, ac1.l
 880A 1B 5F       	srri 	@ar2, ac1.m
 880B 02 DF       	ret  	
+```
 
 
-
+```
 880C 8E 00       	clr40	                	     	
 880D 00 81 08 00 	lri  	ar1, #0x0800
 880F 00 92 00 FF 	lri  	config, #0x00FF
@@ -2125,9 +2178,10 @@ uint16_t WaitDspMailbox()			// 807E
 88B6 16 CB 00 04 	si   	$(DSBL), #0x0004
 88B8 02 BF 86 3D 	call 	$0x863D
 88BA 02 DF       	ret  	
+```
 
 
-
+```
 88BB 19 D8       	lrrn 	ax0.l, @ar2
 88BC 19 DA       	lrrn 	ax1.l, @ar2
 88BD 48 56       	addax	ac0, ax0        	ln   	ax1.l, @ar2
@@ -2181,6 +2235,7 @@ uint16_t WaitDspMailbox()			// 807E
 88ED 00 00       	nop  	
 88EE 00 00       	nop  	
 88EF 00 00       	nop  	
+```
 
 ... [Address] = Address (filler)
 

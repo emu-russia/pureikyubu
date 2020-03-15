@@ -196,6 +196,33 @@ namespace DSP
 		std::atomic<uint16_t> CpuToDspMailbox[2];		///< CMBH, CMBL
 		uint16_t CpuToDspMailboxShadow[2];
 
+		struct
+		{
+			union
+			{
+				struct
+				{
+					uint16_t	l;
+					uint16_t	h;
+				};
+				uint32_t	bits;
+			} mmemAddr;
+			DspAddress  dspAddr;
+			uint16_t	blockSize;
+			union
+			{
+				struct
+				{
+					unsigned Dsp2Mmem : 1;		/// 0: MMEM -> DSP, 1: DSP -> MMEM
+					unsigned Imem : 1;			/// 0: DMEM, 1: IMEM
+				};
+				uint16_t	bits;
+			} control;
+		} DmaRegs;
+
+		void ResetIfx();
+		void DoDma();
+
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		///< max instruction size
