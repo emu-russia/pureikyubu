@@ -437,8 +437,7 @@ MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR
 
 ```
 MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-CMPAXH *    1100 t001 xxxx xxxx         // CMPAXH $acT  (?)
-???         1101 t001 xxxx xxxx         // ???
+CMPAR *     110r s001 xxxx xxxx         // CMPAR $acS, $axR.h 
 MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 

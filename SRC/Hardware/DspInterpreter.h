@@ -44,7 +44,7 @@ namespace DSP
 		void CMP(AnalyzeInfo& info);
 		void CMPI(AnalyzeInfo& info);
 		void CMPIS(AnalyzeInfo& info);
-		void CMPAXH(AnalyzeInfo& info);
+		void CMPAR(AnalyzeInfo& info);
 
 		void DAR(AnalyzeInfo& info);
 		void DEC(AnalyzeInfo& info);

@@ -708,6 +708,16 @@ namespace DSP
 		{
 			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
 		}
+
+		// Dump ucode
+#if 1
+		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
+		{
+			char filename[0x100] = { 0, };
+			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%s.bin", DmaRegs.blockSize, ldat.gameID);
+			FileSave(filename, ptr, DmaRegs.blockSize);
+		}
+#endif
 	}
 
 	#pragma endregion "IFX"
