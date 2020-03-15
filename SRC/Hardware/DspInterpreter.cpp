@@ -42,7 +42,7 @@ namespace DSP
 
 	void DspInterpreter::TSET(AnalyzeInfo& info)
 	{
-		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) != 0;
+		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
 	}
 
 	void DspInterpreter::CALLcc(AnalyzeInfo& info)
