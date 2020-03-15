@@ -1513,8 +1513,8 @@ void LoadRunUcode()			// 80B5
 855C 2E CF       	srs  	$(DSMAL), ac0.m
 855D 00 E0 FF CD 	sr   	$(DSPA), ar0
 855F 2D CB       	srs  	$(DSBL), ac1.l
-8560 02 BF 86 3D 	call 	$0x863D
-8562 29 D1       	srs  	$(UnkHW_FFD1), ax0.h
+8560 02 BF 86 3D 	call 	$0x863D 							// WaitDspDma
+8562 29 D1       	srs  	$(ACFMT), ax0.h
 8563 29 D4       	srs  	$(ACSAH), ax0.h
 8564 29 D5       	srs  	$(ACSAL), ax0.h
 8565 16 D6 01 FF 	si   	$(ACEAH), #0x01FF
@@ -1572,7 +1572,7 @@ void LoadRunUcode()			// 80B5
 85B1 00 85 04 10 	lri  	ix1, #0x0410
 85B3 00 86 04 0E 	lri  	ix2, #0x040E
 85B5 00 87 FF FE 	lri  	ix3, #0xFFFE
-85B7 16 D1 00 05 	si   	$(UnkHW_FFD1), #0x0005
+85B7 16 D1 00 05 	si   	$(ACFMT), #0x0005
 85B9 16 D4 00 00 	si   	$(ACSAH), #0x0000
 85BB 16 D5 00 00 	si   	$(ACSAL), #0x0000
 85BD 16 D6 00 00 	si   	$(ACEAH), #0x0000
@@ -1630,7 +1630,7 @@ void LoadRunUcode()			// 80B5
 8609 2E CF       	srs  	$(DSMAL), ac0.m
 860A 16 CD 04 0A 	si   	$(DSPA), #0x040A
 860C 16 CB 00 04 	si   	$(DSBL), #0x0004
-860E 02 BF 86 3D 	call 	$0x863D
+860E 02 BF 86 3D 	call 	$0x863D 							// WaitDspDma
 8610 02 DF       	ret  	
 ```
 
@@ -1681,6 +1681,8 @@ void LoadRunUcode()			// 80B5
 863C 02 DF       	ret  	
 ```
 
+## WaitDspDma
+
 
 ```
 863D 00 DF FF C9 	lr   	ac1.m, $(DSCR)
@@ -1705,8 +1707,8 @@ void LoadRunUcode()			// 80B5
 8654 2E CF       	srs  	$(DSMAL), ac0.m
 8655 00 E1 FF CD 	sr   	$(DSPA), ar1
 8657 2D CB       	srs  	$(DSBL), ac1.l
-8658 02 BF 86 3D 	call 	$0x863D
-865A 29 D1       	srs  	$(UnkHW_FFD1), ax0.h
+8658 02 BF 86 3D 	call 	$0x863D 						// WaitDspDma
+865A 29 D1       	srs  	$(ACFMT), ax0.h
 865B 29 D4       	srs  	$(ACSAH), ax0.h
 865C 29 D5       	srs  	$(ACSAL), ax0.h
 865D 16 D6 01 FF 	si   	$(ACEAH), #0x01FF
@@ -1758,7 +1760,7 @@ void LoadRunUcode()			// 80B5
 86A1 71 31       	addaxl	ac1, ax0.l     	s    	@ar1, ac0.m
 86A2 1B 3D       	srri 	@ar1, ac1.l
 86A3 1B 31       	srri 	@ar1, ac1.h
-86A4 28 D1       	srs  	$(UnkHW_FFD1), ax0.l
+86A4 28 D1       	srs  	$(ACFMT), ax0.l
 86A5 28 D4       	srs  	$(ACSAH), ax0.l
 86A6 28 D5       	srs  	$(ACSAL), ax0.l
 86A7 16 D6 07 FF 	si   	$(ACEAH), #0x07FF
@@ -1799,7 +1801,7 @@ void LoadRunUcode()			// 80B5
 86DD 2E CF       	srs  	$(DSMAL), ac0.m
 86DE 16 CD 04 0A 	si   	$(DSPA), #0x040A
 86E0 16 CB 00 04 	si   	$(DSBL), #0x0004
-86E2 02 BF 86 3D 	call 	$0x863D
+86E2 02 BF 86 3D 	call 	$0x863D 					// WaitDspDma
 86E4 02 DF       	ret  	
 ```
 
@@ -1886,8 +1888,8 @@ void LoadRunUcode()			// 80B5
 8734 2E CF       	srs  	$(DSMAL), ac0.m
 8735 00 E1 FF CD 	sr   	$(DSPA), ar1
 8737 2D CB       	srs  	$(DSBL), ac1.l
-8738 02 BF 86 3D 	call 	$0x863D
-873A 29 D1       	srs  	$(UnkHW_FFD1), ax0.h
+8738 02 BF 86 3D 	call 	$0x863D 						// WaitDspDma
+873A 29 D1       	srs  	$(ACFMT), ax0.h
 873B 29 D4       	srs  	$(ACSAH), ax0.h
 873C 29 D5       	srs  	$(ACSAL), ax0.h
 873D 16 D6 01 FF 	si   	$(ACEAH), #0x01FF
@@ -1934,7 +1936,7 @@ void LoadRunUcode()			// 80B5
 877A 71 31       	addaxl	ac1, ax0.l     	s    	@ar1, ac0.m
 877B 1B 3D       	srri 	@ar1, ac1.l
 877C 1B 31       	srri 	@ar1, ac1.h
-877D 28 D1       	srs  	$(UnkHW_FFD1), ax0.l
+877D 28 D1       	srs  	$(ACFMT), ax0.l
 877E 28 D4       	srs  	$(ACSAH), ax0.l
 877F 28 D5       	srs  	$(ACSAL), ax0.l
 8780 16 D6 07 FF 	si   	$(ACEAH), #0x07FF
@@ -2001,7 +2003,7 @@ void LoadRunUcode()			// 80B5
 87D7 2E CF       	srs  	$(DSMAL), ac0.m
 87D8 16 CD 04 0A 	si   	$(DSPA), #0x040A
 87DA 16 CB 00 04 	si   	$(DSBL), #0x0004
-87DC 02 BF 86 3D 	call 	$0x863D
+87DC 02 BF 86 3D 	call 	$0x863D 					// WaitDspDma
 87DE 02 DF       	ret  	
 ```
 
@@ -2070,8 +2072,8 @@ void LoadRunUcode()			// 80B5
 881C 2E CF       	srs  	$(DSMAL), ac0.m
 881D 00 E1 FF CD 	sr   	$(DSPA), ar1
 881F 2D CB       	srs  	$(DSBL), ac1.l
-8820 02 BF 86 3D 	call 	$0x863D
-8822 29 D1       	srs  	$(UnkHW_FFD1), ax0.h
+8820 02 BF 86 3D 	call 	$0x863D 						// WaitDspDma
+8822 29 D1       	srs  	$(ACFMT), ax0.h
 8823 29 D4       	srs  	$(ACSAH), ax0.h
 8824 29 D5       	srs  	$(ACSAL), ax0.h
 8825 16 D6 01 FF 	si   	$(ACEAH), #0x01FF
@@ -2123,7 +2125,7 @@ void LoadRunUcode()			// 80B5
 8869 71 31       	addaxl	ac1, ax0.l     	s    	@ar1, ac0.m
 886A 1B 3D       	srri 	@ar1, ac1.l
 886B 1B 31       	srri 	@ar1, ac1.h
-886C 16 D1 00 18 	si   	$(UnkHW_FFD1), #0x0018
+886C 16 D1 00 18 	si   	$(ACFMT), #0x0018
 886E 28 D4       	srs  	$(ACSAH), ax0.l
 886F 28 D5       	srs  	$(ACSAL), ax0.l
 8870 16 D6 07 FF 	si   	$(ACEAH), #0x07FF
@@ -2176,7 +2178,7 @@ void LoadRunUcode()			// 80B5
 88B3 2E CF       	srs  	$(DSMAL), ac0.m
 88B4 16 CD 04 0A 	si   	$(DSPA), #0x040A
 88B6 16 CB 00 04 	si   	$(DSBL), #0x0004
-88B8 02 BF 86 3D 	call 	$0x863D
+88B8 02 BF 86 3D 	call 	$0x863D 						// WaitDspDma
 88BA 02 DF       	ret  	
 ```
 
