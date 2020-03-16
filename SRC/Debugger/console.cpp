@@ -113,6 +113,8 @@ void con_open()
     con.update |= CON_UPDATE_ALL;
 
     DBReport("Debugger is running. Type help for quick reference.\n");
+
+    con_refresh();
 }
 
 void con_close()
@@ -155,9 +157,9 @@ void con_start()
 
     for(;;)
     {
-        UpdateMainWindow(true);
         con_read_input(1);
         con_refresh();
+        Sleep(10);
     }
 }
 
@@ -166,4 +168,19 @@ void con_break(const char *reason)
     if(reason) con_print("\n" GREEN "debugger breaks%s. press F5 to continue.\n", reason);
     if(emu.running) emu.running = false;
     con_set_disa_cur(PC);
+}
+
+void con_command(std::vector<std::string>& args, int lnum)
+{
+    auto it = con.cmds.find(args[0]);
+
+    if (it != con.cmds.end())
+    {
+        it->second(args);
+    }
+    else
+    {
+        if (lnum) con_print("unknown script command in line %i, see \'" GREEN "help" NORM "\'", lnum);
+        else con_print("unknown command, try \'" GREEN "help" NORM "\'");
+    }
 }

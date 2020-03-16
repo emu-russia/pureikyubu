@@ -1,5 +1,4 @@
-// Dolwin debugger interface.
-// Note: every debugger call must include if(emu.doldebug) check!
+// Dolwin debugger interface
 
 #pragma once
 
@@ -24,11 +23,9 @@
 #define EXI     CYAN "EXI: "
 #define MC      CYAN "MC : "
 
-// '\n' is supported (no auto-linefeed!)
+// '\n' is supported (no auto-linefeed)
 extern  void (*DBHalt)(const char *text, ...);    // always breaks emulation
 extern  void (*DBReport)(const char *text, ...);  // do debugger output
 
-void    DBOpen();                           // open debugger window ("integrate")
+void    DBOpen();                           // open debugger window in its own thread
 void    DBClose();                          // close debugger completely
-void    DBRedraw();                         // redraw console, GUI, what else
-void    DBStart();                          // start debugger loop, from PC

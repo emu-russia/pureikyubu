@@ -248,7 +248,7 @@ static void log_console_output(char *txt)
             if (con.logf)
             {
                 fprintf(con.logf, "<html>\n");
-                fprintf(con.logf, "<style>pre { font-family: Small; font-size: 8pt; }</style>\n");
+                fprintf(con.logf, "<style>pre { font-family: Courier New; font-size: 8pt; }</style>\n");
                 fprintf(con.logf, "<body bgcolor=#000000>\n");
                 fprintf(con.logf, "<pre>\n");
             }
@@ -259,10 +259,11 @@ static void log_console_output(char *txt)
             fprintf(con.logf, "%s", txt);
         }
 
-        if(!nwrites-- && con.logf)
+        if(!nwrites--)
         {
             nwrites = 10;
-            fflush(con.logf);
+            if (con.logf)
+                fflush(con.logf);
         }
     }
 }
@@ -336,12 +337,14 @@ static void con_update_scroll_window()
     // where to get buffer line
     line = (roll.autoscroll) ? (roll.rollpos - back) : (roll.viewpos - back);
     line += 1;
+    MySpinLock::Lock(&con.reportLock);
     for(i=1; i<wind.roll_h; i++)
     {
         if(line >= 0) con_print_at(0, y, roll.data[line]);
         line++;
         y++;
     }
+    MySpinLock::Unlock(&con.reportLock);
 }
 
 void con_fullscreen(bool full)

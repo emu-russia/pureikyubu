@@ -8,6 +8,7 @@ namespace DSP
 	DspCore::DspCore(HWConfig* config)
 	{
 		threadHandle = CreateThread(NULL, 0, DspThreadProc, this, CREATE_SUSPENDED, &threadId);
+		assert(threadHandle != INVALID_HANDLE_VALUE);
 
 		Reset();
 
@@ -52,6 +53,7 @@ namespace DSP
 	DspCore::~DspCore()
 	{
 		TerminateThread(threadHandle, 0);
+		WaitForSingleObject(threadHandle, 1000);
 
 		delete interp;
 	}

@@ -95,16 +95,9 @@ void EMUOpen()
     OnMainWindowOpened();
 
     // start emulation!
-    if (emu.doldebug)
+    while (emu.running)
     {
-        DBStart();
-    }
-    else
-    {
-        while (emu.running)
-        {
-            IPTExecuteOpcode();
-        }
+        IPTExecuteOpcode();
     }
 }
 

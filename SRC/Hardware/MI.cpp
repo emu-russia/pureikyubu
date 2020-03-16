@@ -28,10 +28,17 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
-        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-        *reg = (uint32_t)*ptr;
+        if (mi.BootromPresent)
+        {
+            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            *reg = (uint32_t)*ptr;
+        }
+        else
+        {
+            *reg = 0xFF;
+        }
         return;
     }
 
@@ -70,7 +77,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
         return;
     }
@@ -107,10 +114,17 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
-        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+        if (mi.BootromPresent)
+        {
+            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+        }
+        else
+        {
+            *reg = 0xFFFF;
+        }
         return;
     }
 
@@ -149,7 +163,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
         return;
     }
@@ -186,10 +200,17 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
-        ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-        *reg = MEMSwap(*(uint32_t*)ptr);
+        if (mi.BootromPresent)
+        {
+            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            *reg = MEMSwap(*(uint32_t*)ptr);
+        }
+        else
+        {
+            *reg = 0xFFFFFFFF;
+        }
         return;
     }
 
@@ -228,7 +249,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
         return;
     }
@@ -262,7 +283,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 
 void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
 {
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
         assert(true);
     }
@@ -288,7 +309,7 @@ void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
 
 void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
 {
-    if (pa >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    if (pa >= BOOTROM_START_ADDRESS)
     {
         return;
     }
@@ -464,12 +485,19 @@ void LoadBootrom(HWConfig* config)
 
     if (strlen(config->BootromFilename) == 0)
     {
+        DBReport(YEL "Bootrom not loaded (not specified)\n");
         return;
     }
 
     uint32_t bootromImageSize = 0;
 
     mi.bootrom = (uint8_t *)FileLoad(config->BootromFilename, &bootromImageSize);
+
+    if (mi.bootrom == nullptr)
+    {
+        DBReport(YEL "Cannot load Bootrom: %s\n", config->BootromFilename);
+        return;
+    }
 
     if (bootromImageSize != mi.bootromSize)
     {
@@ -513,7 +541,7 @@ void LoadBootrom(HWConfig* config)
 
     // Show version
 
-    DBReport("Loaded and descrambled valid Bootrom\n");
+    DBReport(YEL "Loaded and descrambled valid Bootrom\n");
     DBReport(NORM "%s", (char*)mi.bootrom);
 }
 

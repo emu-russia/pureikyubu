@@ -51,7 +51,7 @@ void DVDRead(void *buffer, int length)
     GCMRead((uint8_t *)buffer, length);
 }
 
-long DVDOpenFile(char *dvdfile)
+long DVDOpenFile(const char *dvdfile)
 {
     // DVD is not selected
     if(!dvd.selected) return 0;

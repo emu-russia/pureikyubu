@@ -13,4 +13,4 @@ void DVDRead(void *buffer, int length);
 // open file in DVD root. return file position, or 0 if no such file.
 // note : current DVD must be selected first!
 // example use : s32 banner = DVDOpenFile("/opening.bnr");
-long DVDOpenFile(char *dvdfile);
+long DVDOpenFile(const char *dvdfile);

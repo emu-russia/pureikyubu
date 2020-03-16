@@ -203,9 +203,8 @@ static void FontLoad(uint8_t **font, uint32_t fontsize, char *filename)
     {
 failed: DolwinError(
             "EXI Message",
-            "Cannot load bootrom font :\n"
-            "%s\n", filename);
-        // halt
+            "Cannot load bootrom font: %s\n", filename);
+        return;
     }
     memset(*font, 0, fontsize); // clear
 

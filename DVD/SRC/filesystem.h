@@ -52,4 +52,4 @@ typedef struct
 
 // externals
 BOOL    dvd_fs_init();
-int     dvd_open(char *path, DVDFileEntry *root=NULL);
+int     dvd_open(const char *path, DVDFileEntry *root=NULL);

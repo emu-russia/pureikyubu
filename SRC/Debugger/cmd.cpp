@@ -43,25 +43,10 @@ void cmd_init_handlers()
     dsp_init_handlers();
 }
 
-void con_command(int argc, char argv[][CON_LINELEN], int lnum)
-{
-    auto it = con.cmds.find(argv[0]);
-
-    if ( it != con.cmds.end())
-    {
-        it->second(argc, argv);
-    }
-    else
-    {
-        if (lnum) con_print("unknown script command in line %i, see \'" GREEN "help" NORM "\'", lnum);
-        else con_print("unknown command, try \'" GREEN "help" NORM "\'");
-    }
-}
-
 // ---------------------------------------------------------------------------
 // help
 
-void cmd_help(int argc, char argv[][CON_LINELEN])
+void cmd_help(std::vector<std::string>& args)
 {
     con_print(CYAN  "--- cpu debug commands --------------------------------------------------------");
     con_print(WHITE "    .                    " NORM "- view code at pc");
@@ -154,12 +139,12 @@ void cmd_help(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // special
 
-void cmd_showpc(int argc, char argv[][CON_LINELEN])
+void cmd_showpc(std::vector<std::string>& args)
 {
     con_set_disa_cur(PC);
 }
 
-void cmd_showldst(int argc, char argv[][CON_LINELEN])
+void cmd_showldst(std::vector<std::string>& args)
 {
     if (wind.ldst)
     {
@@ -168,7 +153,7 @@ void cmd_showldst(int argc, char argv[][CON_LINELEN])
     }
 }
 
-void cmd_unload(int argc, char argv[][CON_LINELEN])
+void cmd_unload(std::vector<std::string>& args)
 {
     if (emu.running)
     {
@@ -177,7 +162,7 @@ void cmd_unload(int argc, char argv[][CON_LINELEN])
     else con_print("not loaded.\n");
 }
 
-void cmd_exit(int argc, char argv[][CON_LINELEN])
+void cmd_exit(std::vector<std::string>& args)
 {
     con_print(GREEN ": exiting...\n");
     con_refresh();
@@ -190,9 +175,9 @@ void cmd_exit(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // blr
 
-void cmd_blr(int argc, char argv[][CON_LINELEN])
+void cmd_blr(std::vector<std::string>& args)
 {
-    if(argc > 2)
+    if(args.size() > 2)
     {
         con_print("syntax : blr [value]\n");
         con_print("when [value] is specified, pair of instructions is inserted : \n");
@@ -217,9 +202,9 @@ void cmd_blr(int argc, char argv[][CON_LINELEN])
         if(op == 0x4e800020) return;
 
         int ofs = 0;
-        if(argc >= 2)           // value, to simulate "return X"
+        if(args.size() >= 2)           // value, to simulate "return X"
         {
-            uint32_t iVal = strtoul(argv[1], NULL, 0) & 0xffff;
+            uint32_t iVal = strtoul(args[1].c_str(), NULL, 0) & 0xffff;
             mi.ram[pa+0] = 0x38;
             mi.ram[pa+1] = 0;
             mi.ram[pa+2] = (uint8_t)(iVal >> 8);
@@ -239,9 +224,9 @@ void cmd_blr(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // boot
 
-void cmd_boot(int argc, char argv[][CON_LINELEN])
+void cmd_boot(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : boot <file>\n");
         con_print("path can be relative\n");
@@ -252,7 +237,7 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
     {
         char filepath[0x1000];
         
-        strncpy_s(filepath, sizeof(filepath), argv[1], 255);
+        strncpy_s(filepath, sizeof(filepath), args[1].c_str(), 255);
 
         FILE* f = nullptr;
         fopen_s(&f, filepath, "rb");
@@ -272,9 +257,9 @@ void cmd_boot(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // d
 
-void cmd_d(int argc, char argv[][CON_LINELEN])
+void cmd_d(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : d <addr> OR d <symbol> OR d <reg> [ofs]\n");
         con_print("numbers can be decimal, or hex with \'0x\' prefix.\n");
@@ -293,12 +278,12 @@ void cmd_d(int argc, char argv[][CON_LINELEN])
         con.update |= CON_UPDATE_DATA;
 
         // first check for register form
-        if(argv[1][0] == 'r' && isdigit(argv[1][1]))
+        if(args[1].c_str()[0] == 'r' && isdigit(args[1].c_str()[1]))
         {
             uint32_t reg, ofs = 0;
-            int n = strtoul(&argv[1][1], NULL, 10);
+            int n = strtoul(&args[1].c_str()[1], NULL, 10);
             reg = GPR[n];
-            if(argc >= 3) ofs = strtoul(argv[2], NULL, 0);
+            if(args.size() >= 3) ofs = strtoul(args[2].c_str(), NULL, 0);
             ofs &= 0xffff;
             if(ofs & 0x8000) ofs |= 0xffff0000;
             addr = reg + (int32_t)ofs;
@@ -307,7 +292,7 @@ void cmd_d(int argc, char argv[][CON_LINELEN])
         }
 
         // now check for symbol
-        addr = SYMAddress(argv[1]);
+        addr = SYMAddress(args[1].c_str());
         if(addr)
         {
             con.data = addr;
@@ -315,7 +300,7 @@ void cmd_d(int argc, char argv[][CON_LINELEN])
         }
 
         // simply address
-        con.data = strtoul(argv[1], NULL, 0);
+        con.data = strtoul(args[1].c_str(), NULL, 0);
     }
 }
 
@@ -365,12 +350,12 @@ static void disa_line (FILE *f, uint32_t opcode, uint32_t addr)
     fprintf (f, "\n");
 }
 
-void cmd_disa(int argc, char argv[][CON_LINELEN])
+void cmd_disa(std::vector<std::string>& args)
 {
     uint32_t start_addr, sa, end_addr;
     FILE *f;
 
-    if (argc < 3)
+    if (args.size() < 3)
     {
         con_print ("syntax : disa <start_addr> <end_addr>\n");
         con_print ("disassemble code between `start_addr` and `end_addr` and dump it into disa.txt\n");
@@ -383,9 +368,9 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
             con_print ("not loaded\n");
         }
 
-        start_addr = strtoul ( argv[1], NULL, 0 );
+        start_addr = strtoul ( args[1].c_str(), NULL, 0 );
         sa = start_addr;
-        end_addr = strtoul ( argv[2], NULL, 0 );
+        end_addr = strtoul ( args[2].c_str(), NULL, 0 );
 
         f = nullptr;
         fopen_s ( &f, "Data\\disa.txt", "wt" );
@@ -410,7 +395,7 @@ void cmd_disa(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // dop
 
-void cmd_dop(int argc, char argv[][CON_LINELEN])
+void cmd_dop(std::vector<std::string>& args)
 {
     if(ldat.patchNum == 0)
     {
@@ -423,9 +408,9 @@ void cmd_dop(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // dvdopen
 
-void cmd_dvdopen(int argc, char argv[][CON_LINELEN])
+void cmd_dvdopen(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : dvdopen <file>\n");
         con_print("path must be absolute, including root prefix '/'\n");
@@ -434,18 +419,18 @@ void cmd_dvdopen(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        uint32_t ofs = DVDOpenFile(argv[1]);
-        if(ofs) con_print(GREEN "0x%08X : %s\n", ofs, argv[1]);
-        else con_print(BRED "not found : %s\n", argv[1]);
+        uint32_t ofs = DVDOpenFile(args[1].c_str());
+        if(ofs) con_print(GREEN "0x%08X : %s\n", ofs, args[1].c_str());
+        else con_print(BRED "not found : %s\n", args[1].c_str());
     }
 }
 
 // ---------------------------------------------------------------------------
 // full
 
-void cmd_full(int argc, char argv[][CON_LINELEN])
+void cmd_full(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : full <0/1>\n");
         con_print("set \"fullscreen\" console mode.\n");
@@ -453,7 +438,7 @@ void cmd_full(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        con_fullscreen(atoi(argv[1]) & 1);
+        con_fullscreen(atoi(args[1].c_str()) & 1);
         con.update |= CON_UPDATE_ALL;
     }
 }
@@ -461,9 +446,9 @@ void cmd_full(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // log
 
-void cmd_log(int argc, char argv[][CON_LINELEN])
+void cmd_log(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : log [dev] <0/1>\n");
         con_print(GREEN "dev" NORM " is specified device :\n");
@@ -481,9 +466,9 @@ void cmd_log(int argc, char argv[][CON_LINELEN])
         con_print("                : " GREEN "log ax 1\n");
         con_print("see also        : " GREEN "logfile\n");
     }
-    else if(argc < 3)
+    else if(args.size() < 3)
     {
-        con.log = atoi(argv[1]);
+        con.log = atoi(args[1].c_str());
         if(con.log) con_print(GREEN "log enabled (logfile: %s)", con.logfile);
         else
         {
@@ -509,9 +494,9 @@ void cmd_log(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // logfile
 
-void cmd_logfile(int argc, char argv[][CON_LINELEN])
+void cmd_logfile(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : logfile <filename>\n");
         con_print("filename can be relative. default filename is %s\n", CON_LOG_FILE);
@@ -520,7 +505,7 @@ void cmd_logfile(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        strncpy_s (con.logfile, sizeof(con.logfile), argv[1], sizeof(con.logfile));
+        strncpy_s (con.logfile, sizeof(con.logfile), args[1].c_str(), sizeof(con.logfile));
         con_print("logging into " GREEN "%s\n", con.logfile);
     }
 }
@@ -528,9 +513,9 @@ void cmd_logfile(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // lr
 
-void cmd_lr(int argc, char argv[][CON_LINELEN])
+void cmd_lr(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : lr <level>\n");
         con_print("level - chain depth (number of calls). use \'*\' to show whole chain.\n");
@@ -549,8 +534,8 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
             return;
         }
 
-        int level = atoi(argv[1]);
-        if(argv[1][0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
+        int level = atoi(args[1].c_str());
+        if(args[1].c_str()[0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
         MEMReadWord(SP, &sp);
         if(level == MAX_LEVEL) con_print( "LR Back Chain (max levels) :\n");
         else con_print( "LR Back Chain (%i levels) :\n", level);
@@ -581,9 +566,9 @@ void cmd_lr(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // name
 
-void cmd_name(int argc, char argv[][CON_LINELEN])
+void cmd_name(std::vector<std::string>& args)
 {
-    if(argc < 3)
+    if(args.size() < 3)
     {
         con_print("syntax : name <addr> <symbol> OR name . <symbol> OR name * <symbol>\n");
         con_print("give name to function or memory variable (add symbol).\n");
@@ -597,7 +582,7 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
     else
     {
         uint32_t address = 0;
-        if(argv[1][0] == '*')
+        if(args[1].c_str()[0] == '*')
         {
             uint32_t branchAddr = con.disa_cursor, op;
             uint32_t pa = MEMEffectiveToPhysical(branchAddr, 0);
@@ -613,12 +598,12 @@ void cmd_name(int argc, char argv[][CON_LINELEN])
             }
             else address = 0;
         }
-        else if(argv[1][0] == '.') address = con.disa_cursor;
-        else address = strtoul(argv[1], NULL, 0);
+        else if(args[1].c_str()[0] == '.') address = con.disa_cursor;
+        else address = strtoul(args[1].c_str(), NULL, 0);
         if(address != 0)
         {
-            con_print(YEL "new symbol: %08X %s\n", address, argv[2]);
-            SYMAddNew(address, argv[2]);
+            con_print(YEL "new symbol: %08X %s\n", address, args[2].c_str());
+            SYMAddNew(address, args[2].c_str());
             con.update |= CON_UPDATE_ALL;
         }
         else con_print(BRED "wrong address!\n");
@@ -647,7 +632,7 @@ static uint32_t get_nop(uint32_t ea)
     return 0;   // not present
 }
 
-void cmd_nop(int argc, char argv[][CON_LINELEN])
+void cmd_nop(std::vector<std::string>& args)
 {
     if(emu.running) return;
 
@@ -663,7 +648,7 @@ void cmd_nop(int argc, char argv[][CON_LINELEN])
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
 }
 
-void cmd_denop(int argc, char argv[][CON_LINELEN])
+void cmd_denop(std::vector<std::string>& args)
 {
     if(emu.running) return;
 
@@ -684,7 +669,7 @@ void cmd_denop(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // ostest
 
-void cmd_ostest(int argc, char argv[][CON_LINELEN])
+void cmd_ostest(std::vector<std::string>& args)
 {
     OSCheckContextStruct();
 }
@@ -692,7 +677,7 @@ void cmd_ostest(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // plist
 
-void cmd_plist(int argc, char argv[][CON_LINELEN])
+void cmd_plist(std::vector<std::string>& args)
 {
     if(ldat.patchNum == 0)
     {
@@ -741,7 +726,7 @@ void cmd_plist(int argc, char argv[][CON_LINELEN])
 // r
 
 // Get pointer to Gekko register.
-static uint32_t *getreg (char *name)
+static uint32_t *getreg (const char *name)
 {
     if (!_stricmp(name, "r0")) return &GPR[0];
     else if (!_stricmp(name, "r1")) return &GPR[1];
@@ -930,9 +915,9 @@ static void describe_msr (uint32_t msr_val)
     else con_print("MSR[LE] : 0, processor runs in big-endian mode\n");
 }
 
-void cmd_r (int argc, char argv[][CON_LINELEN])
+void cmd_r (std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print ("Syntax : r <reg> OR r <reg> <op> <val> OR r <reg> <op> <reg>\n");
         con_print ("sp, sd1, sd2 semantics are supported for reg name.\n");
@@ -950,125 +935,62 @@ void cmd_r (int argc, char argv[][CON_LINELEN])
     {
         uint32_t (*op)(uint32_t a, uint32_t b) = NULL;
 
-        uint32_t *n = getreg (argv[1]);
+        uint32_t *n = getreg (args[1].c_str());
         if(n == NULL)
         {
-            con_print ("unknown register : %s\n", argv[1]);
+            con_print ("unknown register : %s\n", args[1].c_str());
             return;
         }
 
         // show register
-        if(argc <= 3)
+        if(args.size() <= 3)
         {
-            if (!_stricmp (argv[1], "msr")) describe_msr (*n);
-            else con_print ("%s = %i (0x%X)\n", argv[1], *n, *n);
+            if (!_stricmp (args[1].c_str(), "msr")) describe_msr (*n);
+            else con_print ("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
             return;
         }
 
         // Get operation.
-        if (!strcmp (argv[2], "=")) op = op_replace;
-        else if (!strcmp (argv[2], "+")) op = op_add;
-        else if (!strcmp (argv[2], "-")) op = op_sub;
-        else if (!strcmp (argv[2], "*")) op = op_mul;
-        else if (!strcmp (argv[2], "/")) op = op_div;
-        else if (!strcmp (argv[2], "|")) op = op_or;
-        else if (!strcmp (argv[2], "&")) op = op_and;
-        else if (!strcmp (argv[2], "^")) op = op_xor;
-        else if (!strcmp (argv[2], "<<")) op = op_shl;
-        else if (!strcmp (argv[2], ">>")) op = op_shr;
+        if (!strcmp (args[2].c_str(), "=")) op = op_replace;
+        else if (!strcmp (args[2].c_str(), "+")) op = op_add;
+        else if (!strcmp (args[2].c_str(), "-")) op = op_sub;
+        else if (!strcmp (args[2].c_str(), "*")) op = op_mul;
+        else if (!strcmp (args[2].c_str(), "/")) op = op_div;
+        else if (!strcmp (args[2].c_str(), "|")) op = op_or;
+        else if (!strcmp (args[2].c_str(), "&")) op = op_and;
+        else if (!strcmp (args[2].c_str(), "^")) op = op_xor;
+        else if (!strcmp (args[2].c_str(), "<<")) op = op_shl;
+        else if (!strcmp (args[2].c_str(), ">>")) op = op_shr;
         if (op == NULL)
         {
-            con_print ("Unknown operation: %s\n", argv[2]);
+            con_print ("Unknown operation: %s\n", args[2].c_str());
             return;
         }
 
         // New value
-        uint32_t *m = getreg (argv[3]);
+        uint32_t *m = getreg (args[3].c_str());
         if (m == NULL)
         {
-            int i = strtoul (argv[3], NULL, 0);
-            con_print ("%s %s %i (0x%X)\n", argv[1], argv[2], i, i);
+            int i = strtoul (args[3].c_str(), NULL, 0);
+            con_print ("%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
             *n = op(*n, i);
         }
         else
         {
-            con_print ("%s %s %s\n", argv[1], argv[2], argv[3]);
+            con_print ("%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
             *n = op(*n, *m);
         }
         con_update(CON_UPDATE_REGS | CON_UPDATE_DISA);
     }
 }
 
-/*
-
-// -1, if unknown register
-static int getreg(char *str)
-{
-    if(str[0] == 'r')
-    {
-        if(!isdigit(str[1])) return -1;
-        return atoi(str + 1);
-    }
-    else if(!stricmp(str, "sp")) return 1;
-    else if(!stricmp(str, "sd1")) return 13;
-    else if(!stricmp(str, "sd2")) return 2;
-    else return -1;
-}
-
-void cmd_r(int argc, char argv[][CON_LINELEN])
-{
-    if(argc < 2)
-    {
-        con_print("syntax : r <reg> OR r <reg> <val> OR r <reg> <reg>\n");
-        con_print("sp, sd1, sd2 semantics are supported for reg name.\n");
-        con_print("value can be decimal, or hex with \'0x\' prefix.\n");
-        con_print("examples of use : " GREEN "r sp\n");
-        con_print("                  " GREEN "r r3 12\n");
-        con_print("                  " GREEN "r r7 0xffff\n");
-        con_print("                  " GREEN "r r7 sd1\n");
-    }
-    else
-    {
-        int n = getreg(argv[1]);
-        if(n == -1)
-        {
-            con_print("unknown register : %s\n", argv[1]);
-            return;
-        }
-
-        // show register
-        if(argc < 3)
-        {
-            con_print("r%i = %i (0x%X)\n", n, GPR[n], GPR[n]);
-            return;
-        }
-
-        // set new value
-        int m = getreg(argv[2]);
-        if(m == -1)
-        {
-            u32 i = strtoul(argv[2], NULL, 0);
-            con_print("r%i = %i (0x%X)\n", n, i, i);
-            GPR[n] = i;
-            return;
-        }
-        else
-        {
-            con_print("r%i = r%i\n", n, m);
-            GPR[n] = GPR[m];
-        }
-    }
-}
-
-*/
-
 // ---------------------------------------------------------------------------
 // sop
 
-void cmd_sop(int argc, char argv[][CON_LINELEN])
+void cmd_sop(std::vector<std::string>& args)
 {
     uint32_t saddr;
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : sop <opcode>\n");
         con_print("search range is not greater 16384 bytes.\n");
@@ -1088,12 +1010,12 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);
-            if(!_stricmp(disa.mnemonic, argv[1])) break;
+            if(!_stricmp(disa.mnemonic, args[1].c_str())) break;
         }
-        if(saddr == eaddr) con_print(GREEN "%s " NORM "not found. last address : %08X\n", argv[1], saddr);
+        if(saddr == eaddr) con_print(GREEN "%s " NORM "not found. last address : %08X\n", args[1].c_str(), saddr);
         else
         {
-            con_print(GREEN "%s " NORM "found at address : %08X\n", argv[1], saddr);
+            con_print(GREEN "%s " NORM "found at address : %08X\n", args[1].c_str(), saddr);
             con_set_disa_cur(saddr);
         }
         con.update |= CON_UPDATE_DISA;
@@ -1103,9 +1025,9 @@ void cmd_sop(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // stat
 
-void cmd_stat(int argc, char argv[][CON_LINELEN])
+void cmd_stat(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : stat <dev>\n");
         con_print(GREEN "dev" NORM " is specified device :\n");
@@ -1123,7 +1045,7 @@ void cmd_stat(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        #define IFDEV(n) if(!strncmp(argv[1], n, strlen(n)))
+        #define IFDEV(n) if(!strncmp(args[1].c_str(), n, strlen(n)))
         IFDEV("vi")
         {
             VIStats();
@@ -1137,9 +1059,9 @@ void cmd_stat(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // syms
 
-void cmd_syms(int argc, char argv[][CON_LINELEN])
+void cmd_syms(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : syms <string> OR syms *\n");
         con_print("<string> is the first occurance of symbol to find.\n");
@@ -1151,16 +1073,16 @@ void cmd_syms(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        SYMList(argv[1]);
+        SYMList(args[1].c_str());
     }
 }
 
 // ---------------------------------------------------------------------------
 // savemap
 
-void cmd_savemap(int argc, char argv[][CON_LINELEN])
+void cmd_savemap(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : savemap <file> OR savemap .\n");
         con_print(". is used to update current loaded map.\n");
@@ -1171,8 +1093,8 @@ void cmd_savemap(int argc, char argv[][CON_LINELEN])
     }
     else
     {
-        if(!strcmp(argv[1], ".")) SaveMAP();
-        else SaveMAP(argv[1]);
+        if(!strcmp(args[1].c_str(), ".")) SaveMAP();
+        else SaveMAP(args[1].c_str());
     }
 }
 
@@ -1191,12 +1113,13 @@ static int testempty(char *str)
     return 1;
 }
 
-void cmd_script(int argc, char argv[][CON_LINELEN])
+void cmd_script(std::vector<std::string>& args)
 {
     int i;
-    char* file;
+    const char* file;
+    std::vector<std::string> commandArgs;
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
         con_print("syntax : script <file>\n");
         con_print("path can be relative\n");
@@ -1205,7 +1128,7 @@ void cmd_script(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    file = argv[1];
+    file = args[1].c_str();
 
     con_print(YEL "loading script: %s\n", file);
 
@@ -1289,7 +1212,14 @@ void cmd_script(int argc, char argv[][CON_LINELEN])
         con_tokenizing(line);
         line[0] = 0;
         con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
-        con_command(roll.tokencount, roll.tokens);
+
+        commandArgs.clear();
+        for (int i = 0; i < roll.tokencount; i++)
+        {
+            commandArgs.push_back(roll.tokens[i]);
+        }
+
+        con_command(commandArgs);
     }
     free(sbuf);
 
@@ -1300,9 +1230,9 @@ void cmd_script(int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // sd1, sd2
 
-void cmd_sdCommon(int sd, int argc, char argv[][CON_LINELEN])
+void cmd_sdCommon(int sd, std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : sd%i <ofs>\n", sd);
         con_print("offset is a 16-bit signed dec/hex number.\n");
@@ -1315,7 +1245,7 @@ void cmd_sdCommon(int sd, int argc, char argv[][CON_LINELEN])
         if(sd == 1) sda = SDA1;
         else sda = SDA2;
 
-        uint32_t ofs = strtoul(argv[1], NULL, 0);
+        uint32_t ofs = strtoul(args[1].c_str(), NULL, 0);
         ofs &= 0xffff;
         if(ofs & 0x8000) ofs |= 0xffff0000;
         con.data = sda + (int32_t)ofs;
@@ -1323,20 +1253,20 @@ void cmd_sdCommon(int sd, int argc, char argv[][CON_LINELEN])
     }
 }
 
-void cmd_sd1(int argc, char argv[][CON_LINELEN])
+void cmd_sd1(std::vector<std::string>& args)
 {
-    return cmd_sdCommon(1, argc, argv);
+    return cmd_sdCommon(1, args);
 }
 
-void cmd_sd2(int argc, char argv[][CON_LINELEN])
+void cmd_sd2(std::vector<std::string>& args)
 {
-    return cmd_sdCommon(2, argc, argv);
+    return cmd_sdCommon(2, args);
 }
 
 // ---------------------------------------------------------------------------
 // top10
 
-void cmd_top10(int argc, char argv[][CON_LINELEN])
+void cmd_top10(std::vector<std::string>& args)
 {
     HLEGetTop10(hle.top10);
     con_print("HLE Greatest Hits!!\n");
@@ -1429,12 +1359,12 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
     }
 }
 
-void cmd_tree (int argc, char argv[][CON_LINELEN])
+void cmd_tree (std::vector<std::string>& args)
 {
     uint32_t start_addr;
     FILE * f;
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
         con_print ("syntax : tree <start_addr> \n");
         con_print ("create call tree of function at `start_addr`, including subcalls and dump it into calltree.txt\n");
@@ -1449,8 +1379,8 @@ void cmd_tree (int argc, char argv[][CON_LINELEN])
             return;
         }
 
-        start_addr = SYMAddress(argv[1]);
-        if ( start_addr == 0 ) start_addr = strtoul ( argv[1], NULL, 0 );
+        start_addr = SYMAddress(args[1].c_str());
+        if ( start_addr == 0 ) start_addr = strtoul ( args[1].c_str(), NULL, 0 );
 
         con_print ( "Creating call tree from 0x%08X\n", start_addr );
 
@@ -1469,9 +1399,9 @@ void cmd_tree (int argc, char argv[][CON_LINELEN])
 // ---------------------------------------------------------------------------
 // u
 
-void cmd_u(int argc, char argv[][CON_LINELEN])
+void cmd_u(std::vector<std::string>& args)
 {
-    if(argc < 2)
+    if(args.size() < 2)
     {
         con_print("syntax : u <addr> OR u <symbol> OR u lr OR u ctr\n");
         con_print("numbers can be decimal, or hex with \'0x\' prefix.\n");
@@ -1485,19 +1415,19 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
         uint32_t addr = 0;
 
         // first check for link/counter registers
-        if(!_stricmp(argv[1], "lr"))
+        if(!_stricmp(args[1].c_str(), "lr"))
         {
             con_set_disa_cur(PPC_LR);
             return;
         }
-        if(!_stricmp(argv[1], "ctr"))
+        if(!_stricmp(args[1].c_str(), "ctr"))
         {
             con_set_disa_cur(CTR);
             return;
         }
 
         // now check for symbol
-        addr = SYMAddress(argv[1]);
+        addr = SYMAddress(args[1].c_str());
         if(addr)
         {
             con_set_disa_cur(addr);
@@ -1505,6 +1435,6 @@ void cmd_u(int argc, char argv[][CON_LINELEN])
         }
 
         // simply address
-        con_set_disa_cur(strtoul(argv[1], NULL, 0));
+        con_set_disa_cur(strtoul(args[1].c_str(), NULL, 0));
     }
 }

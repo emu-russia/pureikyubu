@@ -145,22 +145,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // during main window creation).
     CreateMainWindow();
 
-    // roll main loop
+    // Idle loop
     for(;;)
     {
         // Idle loop
-        while(!emu.running)
-        {
-            if(emu.doldebug)
-            {
-                DBStart();
-            }
-            else
-            {
-                Sleep(10);
-                UpdateMainWindow(emu.running);
-            }
-        }
+        UpdateMainWindow(false);
     }
 
     // should never reach this point. Dolwin always exit()'s.

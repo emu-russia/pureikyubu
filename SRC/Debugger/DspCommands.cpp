@@ -23,49 +23,49 @@ void dsp_init_handlers()
 
 void dsp_help()
 {
-    con_print(CYAN  "--- dsp debug commands --------------------------------------------------------");
-    con_print(WHITE "    dspdisa              " NORM "- Disassemble DSP code into text file");
-    con_print(WHITE "    dregs                " NORM "- Show DSP registers");
-    con_print(WHITE "    dmem                 " NORM "- Dump DSP DMEM");
-    con_print(WHITE "    imem                 " NORM "- Dump DSP IMEM");
-    con_print(WHITE "    drun                 " NORM "- Run DSP thread until break, halt or dstop");
-    con_print(WHITE "    dstop                " NORM "- Stop DSP thread");
-    con_print(WHITE "    dstep                " NORM "- Step DSP instruction");
-    con_print(WHITE "    dbrk                 " NORM "- Add IMEM breakpoint");
-    con_print(WHITE "    dlist                " NORM "- List IMEM breakpoints");
-    con_print(WHITE "    dunbrk               " NORM "- Clear all IMEM breakpoints");
-    con_print(WHITE "    dpc                  " NORM "- Set DSP program counter");
-    con_print(WHITE "    dreset               " NORM "- Issue DSP reset");
-    con_print(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter");
-    con_print(WHITE "    dst                  " NORM "- Dump DSP call stack");
-    con_print(WHITE "    difx                 " NORM "- Dump DSP IFX (internal hardware)");
-    con_print("\n");
+    DBReport(CYAN  "--- dsp debug commands --------------------------------------------------------\n");
+    DBReport(WHITE "    dspdisa              " NORM "- Disassemble DSP code into text file\n");
+    DBReport(WHITE "    dregs                " NORM "- Show DSP registers\n");
+    DBReport(WHITE "    dmem                 " NORM "- Dump DSP DMEM\n");
+    DBReport(WHITE "    imem                 " NORM "- Dump DSP IMEM\n");
+    DBReport(WHITE "    drun                 " NORM "- Run DSP thread until break, halt or dstop\n");
+    DBReport(WHITE "    dstop                " NORM "- Stop DSP thread\n");
+    DBReport(WHITE "    dstep                " NORM "- Step DSP instruction\n");
+    DBReport(WHITE "    dbrk                 " NORM "- Add IMEM breakpoint\n");
+    DBReport(WHITE "    dlist                " NORM "- List IMEM breakpoints\n");
+    DBReport(WHITE "    dunbrk               " NORM "- Clear all IMEM breakpoints\n");
+    DBReport(WHITE "    dpc                  " NORM "- Set DSP program counter\n");
+    DBReport(WHITE "    dreset               " NORM "- Issue DSP reset\n");
+    DBReport(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter\n");
+    DBReport(WHITE "    dst                  " NORM "- Dump DSP call stack\n");
+    DBReport(WHITE "    difx                 " NORM "- Dump DSP IFX (internal hardware)\n");
+    DBReport("\n");
 }
 
 // disasm dsp ucode to file
-void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
+void cmd_dspdisa(std::vector<std::string>& args)
 {
-    if (argc < 2)
+    if (args.size() < 2)
     {
-        con_print("syntax: dspdisa <dsp_ucode.bin> [start_addr]\n");
-        con_print("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
-        con_print("start_addr in DSP slots;\n");
-        con_print("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
+        DBReport("syntax: dspdisa <dsp_ucode.bin> [start_addr]\n");
+        DBReport("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
+        DBReport("start_addr in DSP slots;\n");
+        DBReport("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
         return;
     }
 
     size_t start_addr = 0;      // in DSP slots (halfwords)
 
-    if (argc >= 3)
+    if (args.size() >= 3)
     {
-        start_addr = strtoul(argv[2], nullptr, 0);
+        start_addr = strtoul(args[2].c_str(), nullptr, 0);
     }
 
     uint32_t ucodeSize = 0;
-    uint8_t* ucode = (uint8_t*)FileLoad(argv[1], &ucodeSize);
+    uint8_t* ucode = (uint8_t*)FileLoad(args[1].c_str(), &ucodeSize);
     if (!ucode)
     {
-        con_print("Failed to load %s\n", argv[1]);
+        DBReport("Failed to load %s\n", args[1].c_str());
         return;
     }
 
@@ -74,7 +74,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
     if (!f)
     {
         free(ucode);
-        con_print("Failed to create dsp_disa.txt\n");
+        DBReport("Failed to create dsp_disa.txt\n");
         return;
     }
 
@@ -84,7 +84,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 
     if (f)
     {
-        fprintf(f, "// Disassembled %s\n\n", argv[1]);
+        fprintf(f, "// Disassembled %s\n\n", args[1].c_str());
     }
 
     while (bytesLeft != 0)
@@ -96,7 +96,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
         bool result = DSP::Analyzer::Analyze(ucodePtr, ucodeSize - 2 * offset, info);
         if (!result)
         {
-            con_print("DSP::Analyze failed at offset: 0x%08X\n", offset);
+            DBReport("DSP::Analyze failed at offset: 0x%08X\n", offset);
             break;
         }
 
@@ -126,7 +126,7 @@ void cmd_dspdisa(int argc, char argv[][CON_LINELEN])
 }
 
 // Show dsp registers
-void cmd_dregs(int argc, char argv[][CON_LINELEN])
+void cmd_dregs(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -159,7 +159,7 @@ void cmd_dregs(int argc, char argv[][CON_LINELEN])
 }
 
 // Dump DSP DMEM
-void cmd_dmem(int argc, char argv[][CON_LINELEN])
+void cmd_dmem(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -167,26 +167,26 @@ void cmd_dmem(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
-        con_print("syntax: dmem <dsp_addr>, dmem .\n");
-        con_print("Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
-        con_print("dmem . will dump 0x800 bytes at dmem address 0\n");
-        con_print("example of use: dmem 0x8000\n");
+        DBReport("syntax: dmem <dsp_addr>, dmem .\n");
+        DBReport("Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
+        DBReport("dmem . will dump 0x800 bytes at dmem address 0\n");
+        DBReport("example of use: dmem 0x8000\n");
         return;
     }
 
     DSP::DspAddress dsp_addr = 0;
     size_t bytes = 32;
 
-    if (argv[1][0] == '.')
+    if (args[1].c_str()[0] == '.')
     {
         dsp_addr = 0;
         bytes = 0x800;
     }
     else
     {
-        dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+        dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
     }
 
     DBReport("DMEM Dump %i bytes\n", bytes);
@@ -213,7 +213,7 @@ void cmd_dmem(int argc, char argv[][CON_LINELEN])
 }
 
 // Dump DSP IMEM
-void cmd_imem(int argc, char argv[][CON_LINELEN])
+void cmd_imem(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -221,25 +221,25 @@ void cmd_imem(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
-        con_print("syntax: imem <dsp_addr>, imem .\n");
-        con_print("Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
-        con_print("imem . will dump 32 bytes of imem at program counter address.\n");
-        con_print("example of use: imem 0\n");
+        DBReport("syntax: imem <dsp_addr>, imem .\n");
+        DBReport("Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
+        DBReport("imem . will dump 32 bytes of imem at program counter address.\n");
+        DBReport("example of use: imem 0\n");
         return;
     }
 
     DSP::DspAddress dsp_addr = 0;
     size_t bytes = 32;
 
-    if (argv[1][0] == '.')
+    if (args[1].c_str()[0] == '.')
     {
         dsp_addr = dspCore->regs.pc;
     }
     else
     {
-        dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+        dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
     }
     
     DBReport("IMEM Dump %i bytes\n", bytes);
@@ -266,7 +266,7 @@ void cmd_imem(int argc, char argv[][CON_LINELEN])
 }
 
 // Run DSP thread until break, halt or dstop
-void cmd_drun(int argc, char argv[][CON_LINELEN])
+void cmd_drun(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -278,7 +278,7 @@ void cmd_drun(int argc, char argv[][CON_LINELEN])
 }
 
 // Stop DSP thread
-void cmd_dstop(int argc, char argv[][CON_LINELEN])
+void cmd_dstop(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -290,7 +290,7 @@ void cmd_dstop(int argc, char argv[][CON_LINELEN])
 }
 
 // Step DSP instruction
-void cmd_dstep(int argc, char argv[][CON_LINELEN])
+void cmd_dstep(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -336,7 +336,7 @@ void cmd_dstep(int argc, char argv[][CON_LINELEN])
 }
 
 // Add IMEM breakpoint
-void cmd_dbrk(int argc, char argv[][CON_LINELEN])
+void cmd_dbrk(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -344,15 +344,15 @@ void cmd_dbrk(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
-        con_print("syntax: dbrk <dsp_addr>\n");
-        con_print("Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n");
-        con_print("example of use: dbrk 0x8020\n");
+        DBReport("syntax: dbrk <dsp_addr>\n");
+        DBReport("Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n");
+        DBReport("example of use: dbrk 0x8020\n");
         return;
     }
 
-    DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
 
     dspCore->AddBreakpoint(dsp_addr);
 
@@ -360,7 +360,7 @@ void cmd_dbrk(int argc, char argv[][CON_LINELEN])
 }
 
 // List IMEM breakpoints
-void cmd_dlist(int argc, char argv[][CON_LINELEN])
+void cmd_dlist(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -374,7 +374,7 @@ void cmd_dlist(int argc, char argv[][CON_LINELEN])
 }
 
 // Clear all IMEM breakpoints
-void cmd_dunbrk(int argc, char argv[][CON_LINELEN])
+void cmd_dunbrk(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -388,7 +388,7 @@ void cmd_dunbrk(int argc, char argv[][CON_LINELEN])
 }
 
 // Set DSP program counter
-void cmd_dpc(int argc, char argv[][CON_LINELEN])
+void cmd_dpc(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -402,19 +402,19 @@ void cmd_dpc(int argc, char argv[][CON_LINELEN])
         return;
     }
 
-    if (argc < 2)
+    if (args.size() < 2)
     {
-        con_print("syntax: dpc <dsp_addr>\n");
-        con_print("Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n");
-        con_print("example of use: dpc 0x8000\n");
+        DBReport("syntax: dpc <dsp_addr>\n");
+        DBReport("Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n");
+        DBReport("example of use: dpc 0x8000\n");
         return;
     }
 
-    dspCore->regs.pc = (DSP::DspAddress)strtoul(argv[1], nullptr, 0);
+    dspCore->regs.pc = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
 }
 
 // Issue DSP reset
-void cmd_dreset(int argc, char argv[][CON_LINELEN])
+void cmd_dreset(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -426,7 +426,7 @@ void cmd_dreset(int argc, char argv[][CON_LINELEN])
 }
 
 // Disassemble some DSP instructions at program counter
-void cmd_du(int argc, char argv[][CON_LINELEN])
+void cmd_du(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -469,7 +469,7 @@ void cmd_du(int argc, char argv[][CON_LINELEN])
 }
 
 // Dump DSP call stack
-void cmd_dst(int argc, char argv[][CON_LINELEN])
+void cmd_dst(std::vector<std::string>& args)
 {
     if (!dspCore)
     {
@@ -492,7 +492,7 @@ void cmd_dst(int argc, char argv[][CON_LINELEN])
 }
 
 // Dump DSP IFX
-void cmd_difx(int argc, char argv[][CON_LINELEN])
+void cmd_difx(std::vector<std::string>& args)
 {
     if (!dspCore)
     {

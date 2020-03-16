@@ -159,7 +159,6 @@ void VIUpdate()
             // show system time and do some win32 update
             SetStatusText(STATUS_TIME, OSTimeFormat(UTBR));
             UpdateProfiler();
-            UpdateMainWindow(1);
         }
         vi.pos &= ~0x07ff0000;
         vi.pos |= (currentBeamPos & 0x7ff) << 16;

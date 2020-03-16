@@ -15,11 +15,14 @@
 #include "cpuview.h"   // cpu view (disassembly)
 #include "memview.h"   // memory (data) view
 
+typedef void (*cmd_handler)(std::vector<std::string>& args);
+
 // console controls
 void    con_open();
 void    con_close();
 void    con_start();
 void    con_break(const char *reason=NULL);
+void    con_command(std::vector<std::string>& args, int lnum = 0);
 
 #pragma pack(push, 8)
 

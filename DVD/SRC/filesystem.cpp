@@ -88,17 +88,19 @@ BOOL dvd_fs_init()
 
 // convert DVD file name into file position on the disk
 // 0, if file not found
-int dvd_open(char *path, DVDFileEntry *root)
+int dvd_open(const char *path, DVDFileEntry *root)
 {
     int  slashPos;
-    char search[DVD_MAXPATH], *slash, *p;
+    char Path[DVD_MAXPATH], *PathPtr, search[DVD_MAXPATH], *slash, *p;
     DVDFileEntry *curr, *next;
 
     // if FST not loaded, then no files
     if(fst == NULL) return 0;
 
     // remove root slash
-    if((*path == '/' || *path == '\\') && root == NULL) path++;
+    strcpy_s(Path, sizeof(Path), path);
+    PathPtr = Path;
+    if((*Path == '/' || *Path == '\\') && root == NULL) PathPtr++;
 
     // starting from DVD root
     if(root == NULL) root = fst;
@@ -107,7 +109,7 @@ int dvd_open(char *path, DVDFileEntry *root)
     memset(search, 0, DVD_MAXPATH);
 
     // replace all '\' by '/'
-    p = path;
+    p = PathPtr;
     while(*p)
     {
         if(*p == '\\') *p++ = '/';
@@ -115,17 +117,17 @@ int dvd_open(char *path, DVDFileEntry *root)
     }
 
     // find delimiter
-    slash = strchr(path, '/');
+    slash = strchr(PathPtr, '/');
     if(slash == NULL) slashPos = -1;
-    else slashPos = (int)(slash - path);
+    else slashPos = (int)(slash - PathPtr);
 
     if(slashPos == -1)  // search in current dir
     {
-        strcpy_s(search, sizeof(search), path);
+        strcpy_s(search, sizeof(search), PathPtr);
     }
     else                // search in another dir
     {
-        strncpy_s(search, sizeof(search), path, slashPos);
+        strncpy_s(search, sizeof(search), PathPtr, slashPos);
     }
 
     // search file

@@ -521,11 +521,6 @@ static void LoadIniSettings()
         cpu.bailout = atoi(str);
         if(cpu.bailout <= 0) cpu.bailout = 1;
     }
-
-    // show CPU timing setup
-    char buf[64];
-    sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
-    SetStatusText(STATUS_TIMING, buf);
 }
 
 static void AutoloadMap()
@@ -727,6 +722,11 @@ static void DoLoadFile(char *filename)
     {
         LoadIniSettings();
     }
+
+    // show CPU timing setup
+    char buf[64];
+    sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
+    SetStatusText(STATUS_TIMING, buf);
 }
 
 // set next file to load

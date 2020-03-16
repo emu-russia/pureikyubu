@@ -22,6 +22,5 @@
 #include "../UserMenu/Emulator.h"
 #include "../UserMenu/Loader.h"
 #include "../UserMenu/UserFile.h"
-#include "../UserMenu/UserWindow.h"
 
 #include "Debugger.h"

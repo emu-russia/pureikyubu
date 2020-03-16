@@ -222,6 +222,7 @@ static int testempty(char *str)
 
 static void con_roll_edit_key(char ascii, int vkey, int ctrl)
 {
+    std::vector<std::string> args;
     if(ascii >= 0x20 && ascii < 256)
     {
         roll.editlen = (int)strlen(roll.editline);
@@ -262,7 +263,11 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
                 con_tokenizing(roll.editline);
                 roll.editpos = roll.editlen = roll.editline[0] = 0;
                 con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
-                con_command(roll.tokencount, roll.tokens);
+                for (int i = 0; i < roll.tokencount; i++)
+                {
+                    args.push_back(roll.tokens[i]);
+                }
+                con_command(args);
                 break;
             case VK_UP:
                 if(!roll.autoscroll)
