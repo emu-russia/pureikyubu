@@ -650,8 +650,11 @@ void EIOpen(HWConfig * config)
     exi.sel = -1;           // deselect MX device
     SRAMLoad(&exi.sram);    // load sram
     RTCUpdate();
-    FontLoad( &exi.ansiFont, ANSI_SIZE, config->ansiFilename );
-    FontLoad( &exi.sjisFont, SJIS_SIZE, config->sjisFilename );
+    if (!mi.BootromPresent)
+    {
+        FontLoad(&exi.ansiFont, ANSI_SIZE, config->ansiFilename);
+        FontLoad(&exi.sjisFont, SJIS_SIZE, config->sjisFilename);
+    }
 
     // set traps for EXI channel 0 registers
     MISetTrap(32, EXI0_CSR , exi0_read_csr , exi0_write_csr) ;
