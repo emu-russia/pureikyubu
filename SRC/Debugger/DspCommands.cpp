@@ -441,7 +441,25 @@ void cmd_du(std::vector<std::string>& args)
     }
 
     size_t instrCount = 8;
-    DSP::DspAddress addr = dspCore->regs.pc;
+    DSP::DspAddress addr = 0;
+
+    if (args.size() < 2)
+    {
+        addr = dspCore->regs.pc;
+    }
+    else
+    {
+        addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
+    }
+
+    if (args.size() < 3)
+    {
+        instrCount = 8;
+    }
+    else
+    {
+        instrCount = atoi (args[2].c_str());
+    }
 
     while (instrCount--)
     {
