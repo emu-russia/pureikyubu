@@ -40,7 +40,8 @@ void cmd_init_handlers()
     con.cmds["q"] = cmd_exit;
     con.cmds["x"] = cmd_exit;
 
-    dsp_init_handlers();
+    Debug::dsp_init_handlers();
+    Debug::hw_init_handlers();
 }
 
 // ---------------------------------------------------------------------------
@@ -71,7 +72,8 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    reset                - reset emulator\n");
     DBReport("\n");
 
-    dsp_help();
+    Debug::hw_help();
+    Debug::dsp_help();
 
     DBReport(  "--- high-level commands -------------------------------------------------------\n");
     DBReport( "    stat                 - show hardware state/statistics\n");

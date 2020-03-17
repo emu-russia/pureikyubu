@@ -36,3 +36,4 @@ void    cmd_top10(std::vector<std::string>& args);		// show HLE calls toplist
 void    cmd_u(std::vector<std::string>& args);			// set disassembly address
 
 #include "DspCommands.h"    // dsp command handlers
+#include "HwCommands.h"    // HW debug command handlers

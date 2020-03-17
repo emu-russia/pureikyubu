@@ -24,3 +24,7 @@
 #include "../UserMenu/UserFile.h"
 
 #include "Debugger.h"
+
+#include "console.h"
+#include "GekkoDisasm.h"    // Gekko disassembler
+#include "DspDisasm.h"		// DSP disassembler

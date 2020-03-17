@@ -27,6 +27,7 @@
     <ClCompile Include="..\DspCommands.cpp" />
     <ClCompile Include="..\DspDisasm.cpp" />
     <ClCompile Include="..\GekkoDisasm.cpp" />
+    <ClCompile Include="..\HwCommands.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\memview.cpp" />
     <ClCompile Include="..\output.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="..\DspCommands.h" />
     <ClInclude Include="..\DspDisasm.h" />
     <ClInclude Include="..\GekkoDisasm.h" />
+    <ClInclude Include="..\HwCommands.h" />
     <ClInclude Include="..\input.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />
