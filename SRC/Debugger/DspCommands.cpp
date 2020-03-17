@@ -23,22 +23,22 @@ void dsp_init_handlers()
 
 void dsp_help()
 {
-    DBReport(CYAN  "--- dsp debug commands --------------------------------------------------------\n");
-    DBReport(WHITE "    dspdisa              " NORM "- Disassemble DSP code into text file\n");
-    DBReport(WHITE "    dregs                " NORM "- Show DSP registers\n");
-    DBReport(WHITE "    dmem                 " NORM "- Dump DSP DMEM\n");
-    DBReport(WHITE "    imem                 " NORM "- Dump DSP IMEM\n");
-    DBReport(WHITE "    drun                 " NORM "- Run DSP thread until break, halt or dstop\n");
-    DBReport(WHITE "    dstop                " NORM "- Stop DSP thread\n");
-    DBReport(WHITE "    dstep                " NORM "- Step DSP instruction\n");
-    DBReport(WHITE "    dbrk                 " NORM "- Add IMEM breakpoint\n");
-    DBReport(WHITE "    dlist                " NORM "- List IMEM breakpoints\n");
-    DBReport(WHITE "    dunbrk               " NORM "- Clear all IMEM breakpoints\n");
-    DBReport(WHITE "    dpc                  " NORM "- Set DSP program counter\n");
-    DBReport(WHITE "    dreset               " NORM "- Issue DSP reset\n");
-    DBReport(WHITE "    du                   " NORM "- Disassemble some DSP instructions at program counter\n");
-    DBReport(WHITE "    dst                  " NORM "- Dump DSP call stack\n");
-    DBReport(WHITE "    difx                 " NORM "- Dump DSP IFX (internal hardware)\n");
+    DBReport("--- dsp debug commands --------------------------------------------------------\n");
+    DBReport("    dspdisa              - Disassemble DSP code into text file\n");
+    DBReport("    dregs                - Show DSP registers\n");
+    DBReport("    dmem                 - Dump DSP DMEM\n");
+    DBReport("    imem                 - Dump DSP IMEM\n");
+    DBReport("    drun                 - Run DSP thread until break, halt or dstop\n");
+    DBReport("    dstop                - Stop DSP thread\n");
+    DBReport("    dstep                - Step DSP instruction\n");
+    DBReport("    dbrk                 - Add IMEM breakpoint\n");
+    DBReport("    dlist                - List IMEM breakpoints\n");
+    DBReport("    dunbrk               - Clear all IMEM breakpoints\n");
+    DBReport("    dpc                  - Set DSP program counter\n");
+    DBReport("    dreset               - Issue DSP reset\n");
+    DBReport("    du                   - Disassemble some DSP instructions at program counter\n");
+    DBReport("    dst                  - Dump DSP call stack\n");
+    DBReport("    difx                 - Dump DSP IFX (internal hardware)\n");
     DBReport("\n");
 }
 
@@ -196,7 +196,7 @@ void cmd_dmem(std::vector<std::string>& args)
         uint8_t* ptr = dspCore->TranslateDMem(dsp_addr);
         if (ptr == nullptr)
         {
-            DBReport(_DSP "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
+            DBReport2(DbgChannel::DSP, "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
             break;
         }
 
@@ -249,7 +249,7 @@ void cmd_imem(std::vector<std::string>& args)
         uint8_t* ptr = dspCore->TranslateIMem(dsp_addr);
         if (ptr == nullptr)
         {
-            DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
+            DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
             break;
         }
 
@@ -300,7 +300,7 @@ void cmd_dstep(std::vector<std::string>& args)
 
     if (dspCore->IsRunning())
     {
-        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
         return;
     }
 
@@ -313,7 +313,7 @@ void cmd_dstep(std::vector<std::string>& args)
     uint8_t* imemPtr = dspCore->TranslateIMem(pcAddr);
     if (imemPtr == nullptr)
     {
-    	DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
+    	DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
     	return;
     }
 
@@ -321,7 +321,7 @@ void cmd_dstep(std::vector<std::string>& args)
 
     if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
     {
-        DBReport(_DSP "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
+        DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
         return;
     }
 
@@ -398,7 +398,7 @@ void cmd_dpc(std::vector<std::string>& args)
 
     if (dspCore->IsRunning())
     {
-        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
         return;
     }
 
@@ -436,7 +436,7 @@ void cmd_du(std::vector<std::string>& args)
 
     if (dspCore->IsRunning())
     {
-        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
         return;
     }
 
@@ -466,7 +466,7 @@ void cmd_du(std::vector<std::string>& args)
         uint8_t* imemPtr = dspCore->TranslateIMem(addr);
         if (imemPtr == nullptr)
         {
-            DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
+            DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
             break;
         }
 
@@ -474,7 +474,7 @@ void cmd_du(std::vector<std::string>& args)
 
         if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
         {
-            DBReport(_DSP "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
+            DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
             return;
         }
 
@@ -497,7 +497,7 @@ void cmd_dst(std::vector<std::string>& args)
 
     if (dspCore->IsRunning())
     {
-        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
         return;
     }
 
@@ -520,7 +520,7 @@ void cmd_difx(std::vector<std::string>& args)
 
     if (dspCore->IsRunning())
     {
-        DBReport(_DSP "It is impossible while running DSP thread.\n");
+        DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
         return;
     }
 

@@ -60,7 +60,7 @@ static void BootApploader()
     // something weird, like : appLoaderFunc1 (see Zelda dump - it 
     // has some compilation garbage parts from bootrom, hehe).
 
-    DBReport( YEL "booting apploader..\n");
+    DBReport2( DbgChannel::HLE, "booting apploader..\n");
 
     // set OSReport dummy
     CPUWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
@@ -92,7 +92,7 @@ static void BootApploader()
     CPUReadWord(0x81300008, &_main);
     CPUReadWord(0x8130000c, &_epilog);
 
-    DBReport( YEL "apploader interface : init : %08X main : %08X close : %08X\n", 
+    DBReport2(DbgChannel::HLE, "apploader interface : init : %08X main : %08X close : %08X\n",
               _prolog, _main, _epilog );
 
     // execute apploader prolog
@@ -122,7 +122,7 @@ static void BootApploader()
             DVDSeek(offs);
             DVDRead(&mi.ram[addr & RAMMASK], size);
 
-            DBReport( YEL "apploader read : offs : %08X size : %08X addr : %08X\n",
+            DBReport2(DbgChannel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
                       offs, size, addr );
         }
 
@@ -137,7 +137,7 @@ static void BootApploader()
     HWEnableUpdate(true);
 
     PC = GPR[3];
-    DBReport( NORM "\n");
+    DBReport("\n");
 }
 
 // RTC -> TBR
@@ -151,11 +151,11 @@ static void __SyncTime(bool rtc)
 
     RTCUpdate();
 
-    DBReport(GREEN "updating timer value..\n");
+    DBReport2(DbgChannel::HLE, "updating timer value..\n");
 
     int32_t counterBias = (int32_t)MEMSwap(exi.sram.counterBias);
     int32_t rtcValue = exi.rtcVal + counterBias;
-    DBReport(GREEN "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
+    DBReport2(DbgChannel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
 
     int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
     int64_t systemTime;
@@ -163,7 +163,7 @@ static void __SyncTime(bool rtc)
     systemTime += newTime - TBR;
     CPUWriteDouble(0x800030d8, (uint64_t *)&systemTime);
     TBR = newTime;
-    DBReport(GREEN "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
+    DBReport2(DbgChannel::HLE, "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
 
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)

@@ -116,7 +116,7 @@ void CPUTick()
         if(MSR & MSR_EE)
         {
             cpu.decreq = 1;
-            DBReport(CPU "decrementer exception (OS alarm), pc:%08X\n", PC);
+            DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
         }
     }
 }

@@ -149,7 +149,7 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
                 );
             }
         }
-        DBReport(YEL "patched API call: %08X %s\n", symbol->eaddr, symName);
+        DBReport2(DbgChannel::HLE, "patched API call: %08X %s\n", symbol->eaddr, symName);
     }
     else return;
 }
@@ -250,7 +250,7 @@ void SYMList(const char *str)
         if( ((*str == '*') || !_strnicmp(str, symbol->savedName, len)) && !symbol->emuSymbol )
         {
             DBReport(
-                "%02i:%03i " CYAN "<%08X> " GREEN "%s\n", 
+                "%02i:%03i <%08X> %s\n", 
                 tag, i, symbol->eaddr, symbol->savedName
             );
             cnt++;

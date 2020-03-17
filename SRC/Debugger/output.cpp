@@ -22,7 +22,6 @@ static const char *logcol[] = {
     "<font color=#FFFF00>",
     "<font color=#FFFFFF>"
 };
-static const char *logcurcol;
 
 // ---------------------------------------------------------------------------
 
@@ -189,23 +188,22 @@ void con_set_autoscroll(bool value)
 }
 
 // generate HTML text
-static char * string_to_HTML_string(char *txt)
+static char * string_to_HTML_string(char *txt, char *html, size_t htmlSize)
 {
-    static char html[0x1000];
     char *ptr = html;
     size_t len = strlen(txt);
 
-    logcurcol = NULL;
-    ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "%s", logcol[7]);
+    const char * logcurcol = logcol[(int)ConColor::NORM];
+    ptr += sprintf_s (ptr, htmlSize - (ptr - html), "%s", logcurcol);
 
     for(int n=0; n<len;)
     {
         char c = txt[n];
         if(c == 1)
         {
-            if(logcurcol) ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "</font>");
+            ptr += sprintf_s(ptr, htmlSize - (ptr - html), "</font>");
             logcurcol = logcol[txt[n+1]];
-            ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "%s", logcurcol);
+            ptr += sprintf_s(ptr, htmlSize - (ptr - html), "%s", logcurcol);
             n+=2;
         }
         else if(c == 2)
@@ -214,12 +212,12 @@ static char * string_to_HTML_string(char *txt)
         }
         else if(c == '<')
         {
-            ptr += sprintf_s(ptr, sizeof(html) - (ptr - html), "&lt;");
+            ptr += sprintf_s(ptr, htmlSize - (ptr - html), "&lt;");
             n++;
         }
         else if(c == '>')
         {
-            ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "&gt;");
+            ptr += sprintf_s (ptr, htmlSize - (ptr - html), "&gt;");
             n++;
         }
         else
@@ -229,8 +227,8 @@ static char * string_to_HTML_string(char *txt)
         }
     }
 
-    if(logcurcol) ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "</font>");
-    ptr += sprintf_s (ptr, sizeof(html) - (ptr - html), "\n");
+    ptr += sprintf_s (ptr, htmlSize - (ptr - html), "</font>");
+    ptr += sprintf_s (ptr, htmlSize - (ptr - html), "\n");
     *ptr++ = 0;
     return html;
 }
@@ -271,11 +269,12 @@ static void log_console_output(char *txt)
 void con_add_roller_line(const char *txt, int err)
 {
     char line[0x1000], *ptr = (char *)txt;
+    char html[0x1000] = { 0, };
 
     // insert error color
     if(err)
     {
-        sprintf_s(line, sizeof(line), BRED "%s", txt);
+        sprintf_s(line, sizeof(line), "\x1%c%s", ConColor::BRED, txt);
         ptr = line;
     }
 
@@ -283,7 +282,7 @@ void con_add_roller_line(const char *txt, int err)
     MySpinLock::Lock(&con.reportLock);
     roll.rollpos = con_wraproll(roll.rollpos, 1);
     strncpy_s(roll.data[roll.rollpos], sizeof(roll.data[roll.rollpos]), ptr, CON_LINELEN-1);
-    log_console_output(string_to_HTML_string(ptr));
+    log_console_output(string_to_HTML_string(ptr, html, sizeof(html)));
     MySpinLock::Unlock(&con.reportLock);
     con_update(CON_UPDATE_MSGS);
 }
@@ -322,7 +321,7 @@ static void con_update_scroll_window()
     memset(con.buf[wind.roll_y + 1], 0, (sizeof(CHAR_INFO) * (wind.roll_h - 1) * CON_WIDTH));
     con_attr(0, 3);
     con_fill_line(wind.roll_y);
-    if(wind.focus == WCONSOLE) con_print_at(0, wind.roll_y, WHITE "\x1f");
+    if(wind.focus == WCONSOLE) con_printf_at(0, wind.roll_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.roll_y, "F4");
     con_print_at(6, wind.roll_y, " console output");
@@ -473,10 +472,8 @@ void con_error(const char *txt, ...)
     // emulator can do output, even if console closed
     if(!con.active) return;
 
-    sprintf_s(buf, sizeof(buf), BRED);
     va_start(arg, txt);
-    size_t bredlen = strlen(BRED);
-    vsprintf_s(buf + bredlen, sizeof(buf) - bredlen, txt, arg);
+    vsprintf_s(buf, sizeof(buf), txt, arg);
     va_end(arg);
     buf[strlen(buf) + 1] = 0;
 
@@ -504,7 +501,7 @@ void con_error(const char *txt, ...)
     con_break();
 }
 
-void con_print(const char *txt, ...)
+void con_print(ConColor col, const char *txt, ...)
 {
     char    buf[0x1000];
     va_list arg;
@@ -512,10 +509,11 @@ void con_print(const char *txt, ...)
     // emulator can do output, even if console closed
     if(!con.active) return;
 
-    sprintf_s(buf, sizeof(buf), NORM);
+    buf[0] = 1;
+    buf[1] = (int)col;
+
     va_start(arg, txt);
-    size_t normlen = strlen(NORM);
-    vsprintf_s (buf + normlen, sizeof(buf) - normlen, txt, arg);
+    vsprintf_s (buf + 2, sizeof(buf) - 2, txt, arg);
     va_end(arg);
     buf[strlen(buf) + 1] = 0;
 

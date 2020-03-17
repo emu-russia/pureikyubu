@@ -79,7 +79,7 @@ static void con_function_key(int vkey, int ctrl)
         case VK_F12:    // Skip
             PC += 4;
             con.update |= CON_UPDATE_DISA;
-            DBReport(YEL "skipped!\n");
+            DBReport2(DbgChannel::CPU, "skipped!\n");
             break;
     }
 }
@@ -152,7 +152,7 @@ void con_tokenizing(char *line)
             {
                 if(endl)
                 {
-                    con_print(BRED "Open quotation\n");
+                    con_print(ConColor::BRED, "Open quotation\n");
                     return;
                 }
 
@@ -167,7 +167,7 @@ void con_tokenizing(char *line)
 
             if(roll.tokencount >= CON_TOKENCNT)
             {
-                con_print(BRED "Too many args (>%i) or need quotes\n", CON_TOKENCNT);
+                con_print(ConColor::BRED, "Too many args (>%i) or need quotes\n", CON_TOKENCNT);
                 return;
             }
 
@@ -193,7 +193,7 @@ void con_tokenizing(char *line)
 
             if(roll.tokencount >= CON_TOKENCNT)
             {
-                con_print(BRED "Too many args (>%i) or need quotes\n", CON_TOKENCNT);
+                con_print(ConColor::BRED, "Too many args (>%i) or need quotes\n", CON_TOKENCNT);
                 return;
             }
 
@@ -259,7 +259,7 @@ static void con_roll_edit_key(char ascii, int vkey, int ctrl)
                 roll.historypos++;
                 if(roll.historypos > 255) roll.historypos = 0;
                 roll.historycur = roll.historypos;
-                con_print(": %s", roll.editline);
+                con_print(ConColor::NORM, ": %s", roll.editline);
                 con_tokenizing(roll.editline);
                 roll.editpos = roll.editlen = roll.editline[0] = 0;
                 con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
@@ -483,7 +483,7 @@ static void disa_navigate()
     disa.pc = addr;
     PPCDisasm (&disa);
 
-    if(disa.iclass & PPC_DISA_BRANCH) disa_goto(disa.target);
+    if(disa.iclass & PPC_DISA_BRANCH) disa_goto((uint32_t)disa.target);
 }
 
 static void con_disa_key(char ascii, int vkey, int ctrl)

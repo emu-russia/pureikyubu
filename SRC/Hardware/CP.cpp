@@ -118,7 +118,7 @@ static void DONE_INT()
         SetStatusText(STATUS_PROGRESS, "First GX access", 1);
         vi.xfb = 0;     // disable VI output
     }
-    DBReport(GREEN "PE_DONE (frame:%u)", fifo.done_num);
+    DBReport2(DbgChannel::PE, "PE_DONE (frame:%u)", fifo.done_num);
 
     if(fifo.gxpoll) SIPoll();
 
@@ -132,7 +132,7 @@ static void DONE_INT()
 static void TOKEN_INT()
 {
     vi.frames++;
-    DBReport(GREEN "PE_TOKEN (%04X)", fifo.pe.token);
+    DBReport2(DbgChannel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
     
     if(fifo.gxpoll) SIPoll();
 
@@ -276,14 +276,14 @@ static void printCP()
     char lw = (fifo.cp.cr & CP_CR_UVFEN)? ('L') : ('-');    // low-wmark
     char hw = (fifo.cp.cr & CP_CR_OVFEN)? ('H') : ('-');    // high-wmark
 
-    DBReport(CP GREEN "%sfifo configuration:%c%c%c", md, bp, lw, hw);
-    DBReport(YEL"   base :%08X", 0x80000000 | fifo.cp.base);
-    DBReport(YEL"   top  :%08X", 0x80000000 | fifo.cp.top);
-    DBReport(YEL"   low  :%08X", 0x80000000 | fifo.cp.lomark);
-    DBReport(YEL"   high :%08X", 0x80000000 | fifo.cp.himark);
-    DBReport(YEL"   cnt  :%08X", fifo.cp.cnt);
-    DBReport(YEL"   wrptr:%08X", 0x80000000 | fifo.cp.wrptr);
-    DBReport(YEL"   rdptr:%08X", 0x80000000 | fifo.cp.rdptr);
+    DBReport("CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
+    DBReport("   base :%08X", 0x80000000 | fifo.cp.base);
+    DBReport("   top  :%08X", 0x80000000 | fifo.cp.top);
+    DBReport("   low  :%08X", 0x80000000 | fifo.cp.lomark);
+    DBReport("   high :%08X", 0x80000000 | fifo.cp.himark);
+    DBReport("   cnt  :%08X", fifo.cp.cnt);
+    DBReport("   wrptr:%08X", 0x80000000 | fifo.cp.wrptr);
+    DBReport("   rdptr:%08X", 0x80000000 | fifo.cp.rdptr);
 }
 
 static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base >> 16; }
@@ -337,11 +337,11 @@ static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { fifo.pi.wr
 // show PI fifo configuration
 static void printPI()
 {
-    DBReport(PI GREEN "fifo configuration");
-    DBReport(YEL"   base :%08X", 0x80000000 | fifo.pi.base);
-    DBReport(YEL"   top  :%08X", 0x80000000 | fifo.pi.top);
-    DBReport(YEL"   wrptr:%08X", 0x80000000 | fifo.pi.wrptr);
-    DBReport(YEL"   wrap :%i", (fifo.pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
+    DBReport("PI fifo configuration");
+    DBReport("   base :%08X", 0x80000000 | fifo.pi.base);
+    DBReport("   top  :%08X", 0x80000000 | fifo.pi.top);
+    DBReport("   wrptr:%08X", 0x80000000 | fifo.pi.wrptr);
+    DBReport("   wrap :%i", (fifo.pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
 }
 
 //
@@ -390,7 +390,7 @@ static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 void CPOpen(HWConfig * config)
 {
-    DBReport(CYAN "FIFO: Command processor (for GX)\n");
+    DBReport2(DbgChannel::CP, "Command processor (for GX)\n");
 
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));

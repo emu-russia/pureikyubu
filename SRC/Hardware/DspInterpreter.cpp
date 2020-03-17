@@ -262,7 +262,7 @@ namespace DSP
 		{
 			if (core->TestBreakpoint(core->regs.pc))
 			{
-				DBReport(_DSP "IMEM breakpoint at 0x%04X\n", core->regs.pc);
+				DBReport2(DbgChannel::DSP, "IMEM breakpoint at 0x%04X\n", core->regs.pc);
 				core->Suspend();
 				return;
 			}
@@ -316,7 +316,7 @@ namespace DSP
 				break;
 
 			default:
-				DBHalt(_DSP "Unknown instruction at 0x%04X\n", core->regs.pc);
+				DBHalt("DSP Unknown instruction at 0x%04X\n", core->regs.pc);
 				core->Suspend();
 				return;
 		}
@@ -329,7 +329,7 @@ namespace DSP
 				case DspInstructionEx::NOP2: break;
 
 				default:
-					DBHalt(_DSP "Unknown packed instruction at 0x%04X\n", core->regs.pc);
+					DBHalt("DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
 					core->Suspend();
 					return;
 			}
@@ -352,13 +352,13 @@ namespace DSP
 		uint8_t* imemPtr = core->TranslateIMem(imemAddr);
 		if (imemPtr == nullptr)
 		{
-			DBReport(_DSP "TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
+			DBHalt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
 			return;
 		}
 
 		if (!Analyzer::Analyze(imemPtr, DspCore::MaxInstructionSizeInBytes, info))
 		{
-			DBReport(_DSP "DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
+			DBHalt("DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
 			return;
 		}
 

@@ -117,7 +117,7 @@ void EXIUpdateInterrupts()
 
 void EXIAttach(int chan)
 {
-    if(exi.log) DBReport(EXI "attaching device at channel %i\n", chan);
+    if(exi.log) DBReport2(DbgChannel::EXI, "attaching device at channel %i\n", chan);
 
     // set attach flag
     exi.regs[chan].csr |= EXI_CSR_EXT;
@@ -129,7 +129,7 @@ void EXIAttach(int chan)
 
 void EXIDetach(int chan)
 {
-    if(exi.log) DBReport(EXI "detaching device at channel %i\n", chan);
+    if(exi.log) DBReport2(DbgChannel::EXI, "detaching device at channel %i\n", chan);
 
     // clear attach flag
     exi.regs[chan].csr &= ~EXI_CSR_EXT;
@@ -161,7 +161,7 @@ static void SRAMLoad(SRAM *s)
     }
     else
     {
-        DBReport(YEL "SRAM loading failed from %s\n\n", SRAM_FILE);
+        DBReport2(DbgChannel::EXI, "SRAM loading failed from %s\n\n", SRAM_FILE);
     }
 }
 
@@ -251,7 +251,7 @@ void UnknownTransfer()
     // dont do nothing on the exi transfer
     if(exi.log)
     {
-        DBReport(EXI "unknown transfer (channel:%i, device:%i)\n", exi.chan, exi.sel);
+        DBReport2(DbgChannel::EXI, "unknown transfer (channel:%i, device:%i)\n", exi.chan, exi.sel);
     }
 }
 
@@ -273,7 +273,7 @@ void MXTransfer()
                 {
                     if(exi.regs[0].len > sizeof(SRAM))
                     {
-                        DBReport(EXI "wrong input buffer size for SRAM read dma\n");
+                        DBReport2(DbgChannel::EXI, "wrong input buffer size for SRAM read dma\n");
                         return;
                     }
                     memcpy(&mi.ram[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
@@ -298,7 +298,7 @@ void MXTransfer()
                             exi.regs[0].len
                         );
                     }
-                    if(exi.log) DBReport( EXI "ansi font copy to %08X (%i)\n", 
+                    if(exi.log) DBReport2(DbgChannel::EXI, "ansi font copy to %08X (%i)\n",
                                           exi.regs[0].madr | 0x80000000, exi.regs[0].len );
                     return;
                 }
@@ -321,7 +321,7 @@ void MXTransfer()
                             exi.regs[0].len
                         );
                     }
-                    if(exi.log) DBReport( EXI "sjis font copy to %08X (%i)\n",
+                    if(exi.log) DBReport2(DbgChannel::EXI, "sjis font copy to %08X (%i)\n",
                                           exi.regs[0].madr | 0x80000000, exi.regs[0].len );
                     return;
                 }
@@ -335,14 +335,14 @@ void MXTransfer()
                         &mi.bootrom[ofs],
                         exi.regs[0].len
                     );
-                    if(exi.log) DBReport( EXI "bootrom copy to %08X (%i)\n",
+                    if(exi.log) DBReport2(DbgChannel::EXI, "bootrom copy to %08X (%i)\n",
                                           exi.regs[0].madr | 0x80000000, exi.regs[0].len );
                     return;
                 }
 
                 if(ofs)
                 {
-                    if(exi.log) DBReport(EXI "unknown MX chip dma read\n");
+                    if(exi.log) DBReport2(DbgChannel::EXI, "unknown MX chip dma read\n");
                 }
             }
             else                // immediate access
@@ -390,7 +390,7 @@ void MXTransfer()
                             exi.mxaddr += 4 << 6;
                             break;
                     }
-                    if(exi.log) DBReport(EXI "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len+1);
+                    if(exi.log) DBReport2(DbgChannel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len+1);
                     return;
                 }
                 else if(ofs == 0x20010000)
@@ -407,7 +407,7 @@ void MXTransfer()
         {
             if(dma)             // dma
             {
-                DBReport(BRED EXI "unknown MX chip write dma\n");
+                DBHalt("EXI: unknown MX chip write dma\n");
                 return;
             }
             else                // immediate access
@@ -429,7 +429,7 @@ void MXTransfer()
                         // SRAM immediate writes
                         uint32_t pos = (((ofs - 256) >> 6) & 0x3F);
 
-                        if(exi.log) DBReport( EXI "SRAM write immediate pos %d data %08x bytes %08x\n",
+                        if(exi.log) DBReport2(DbgChannel::EXI, "SRAM write immediate pos %d data %08x bytes %08x\n",
                                               pos, exi.regs[0].data, bytes );
 
                         memcpy(((uint8_t *)&exi.sram) + pos, &data, bytes);
@@ -448,11 +448,11 @@ void MXTransfer()
                             {
                                 exi.uart[exi.upos] = 0;
                                 exi.upos = 0;
-                                if(exi.osReport) DBReport(GREEN "%s", uartf(exi.uart));
+                                if(exi.osReport) DBReport2(DbgChannel::Info, "%s", uartf(exi.uart));
                             }
                         }
                     }
-                    else DBReport(BRED "EXI : Unknown MX chip write immediate to %08X", ofs);
+                    else DBReport2(DbgChannel::EXI, "Unknown MX chip write immediate to %08X", ofs);
                 }
             }
             return;
@@ -462,7 +462,7 @@ void MXTransfer()
         {
             if(EXI_CR_RW(exi.regs[0].cr))
             {
-                DBReport(EXI "unknown EXI transfer mode for MX chip\n");
+                DBReport2(DbgChannel::EXI, "unknown EXI transfer mode for MX chip\n");
             }
         }
     }
@@ -478,7 +478,7 @@ void ADTransfer()
         {
             if(exi.ad16_cmd == 0) exi.regs[2].data = 0x04120000;
             else if(exi.ad16_cmd == 0xa2000000) exi.regs[2].data = exi.ad16 << 16;
-            else DBReport(EXI "unknown AD16 command\n");
+            else DBReport2(DbgChannel::EXI, "unknown AD16 command\n");
             return;
         }
 
@@ -493,11 +493,11 @@ void ADTransfer()
             {
                 if(exi.ad16_cmd != 0xa0000000)
                 {
-                    DBReport(EXI "unknown AD command (%08X)\n", exi.ad16_cmd);
+                    DBReport2(DbgChannel::EXI, "unknown AD command (%08X)\n", exi.ad16_cmd);
                     return;
                 }
                 exi.ad16 = exi.regs[2].data >> 16;
-                if(exi.log) DBReport(EXI "AD16 set to %04X\n", exi.ad16);
+                if(exi.log) DBReport2(DbgChannel::EXI, "AD16 set to %04X\n", exi.ad16);
             }
             return;
         }
@@ -506,7 +506,7 @@ void ADTransfer()
         {
             if(EXI_CR_RW(exi.regs[2].cr))
             {
-                DBReport(EXI "unknown EXI transfer mode for AD16\n");
+                DBReport2(DbgChannel::EXI, "unknown EXI transfer mode for AD16\n");
             }
         }
     }
@@ -597,7 +597,7 @@ static void exi_write_cr(int chan, uint32_t data)
     {
         if(exi.sel == -1)
         {
-            DBReport(EXI "device should be selected before transfer\n");
+            DBReport2(DbgChannel::EXI, "device should be selected before transfer\n");
             return;
         }
 
@@ -636,7 +636,7 @@ static void __fastcall exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[
 
 void EIOpen(HWConfig * config)
 {
-    DBReport(CYAN "EXI: External devices interface bus\n");
+    DBReport2(DbgChannel::EXI, "External devices interface bus\n");
 
     // clear registers
     memset(&exi, 0, sizeof(EIControl));

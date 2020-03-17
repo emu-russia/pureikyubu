@@ -46,7 +46,7 @@ void con_update_dump_window()
 {
     con_fill_line(wind.data_y);
     con_attr(0, 3);
-    if(wind.focus == WDATA) con_print_at(0, wind.data_y, WHITE "\x1f");
+    if(wind.focus == WDATA) con_printf_at(0, wind.data_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.data_y, "F2");
     con_printf_at(6, wind.data_y, 
@@ -76,7 +76,6 @@ void con_update_dump_window()
 // ---------------------------------------------------------------------------
 // memory editing mode
 
-#define MEDHL    BPUR       // highlight color
 static uint8_t   *medbuf;   // 16*H buffer
 static uint8_t   *oldbuf;   // old 16*H buffer
 static uint8_t   *medmask;  // mask 16*H buffer
@@ -88,7 +87,7 @@ static void con_memedit_draw_hdr()
 {
     con_fill_line(wind.data_y);
     con_attr(0, 3);
-    if(wind.focus == WDATA) con_print_at(0, wind.data_y, WHITE "\x1f");
+    if(wind.focus == WDATA) con_printf_at(0, wind.data_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.data_y, "F2");
     con_printf_at(6, wind.data_y, 
@@ -109,13 +108,13 @@ static void con_memedit_draw()
             uint8_t m = medmask[16*row + col];
             uint8_t c = medbuf[16*row + col];
             if(m & 0xf0)
-                {con_printf_at(10 + col * 3, wind.data_y + row + 1, MEDHL"%01X", c >> 4);}
+                {con_printf_at(10 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::BPUR, c >> 4);}
             else
-                {con_printf_at(10 + col * 3, wind.data_y + row + 1, NORM "%01X", c >> 4);}
+                {con_printf_at(10 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::NORM, c >> 4);}
             if(m & 0x0f)
-                {con_printf_at(11 + col * 3, wind.data_y + row + 1, MEDHL"%01X", c & 0x0f);}
+                {con_printf_at(11 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::BPUR, c & 0x0f);}
             else
-                {con_printf_at(11 + col * 3, wind.data_y + row + 1, NORM "%01X", c & 0x0f);}
+                {con_printf_at(11 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::NORM, c & 0x0f);}
         }
 
         for(col=0; col<8; col++)
@@ -123,13 +122,13 @@ static void con_memedit_draw()
             uint8_t m = medmask[16*row + col + 8];
             uint8_t c = medbuf[16*row + col + 8];
             if(m & 0xf0)
-                {con_printf_at(35 + col * 3, wind.data_y + row + 1, MEDHL"%01X", c >> 4);}
+                {con_printf_at(35 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::BPUR, c >> 4);}
             else
-                {con_printf_at(35 + col * 3, wind.data_y + row + 1, NORM "%01X", c >> 4);}
+                {con_printf_at(35 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::NORM, c >> 4);}
             if(m & 0x0f)
-                {con_printf_at(36 + col * 3, wind.data_y + row + 1, MEDHL"%01X", c & 0x0f);}
+                {con_printf_at(36 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::BPUR, c & 0x0f);}
             else
-                {con_printf_at(36 + col * 3, wind.data_y + row + 1, NORM "%01X", c & 0x0f);}
+                {con_printf_at(36 + col * 3, wind.data_y + row + 1, "\x1%c%01X", ConColor::NORM, c & 0x0f);}
         }
 
         for(col=0; col<16; col++)
@@ -137,9 +136,9 @@ static void con_memedit_draw()
             uint8_t c = medbuf[16*row + col];
             if(c < ' ') c = '.';
             if(medmask[16*row + col])
-                con_printf_at(60 + col, wind.data_y + row + 1, MEDHL"%c", c);
+                con_printf_at(60 + col, wind.data_y + row + 1, "\x1%c%c", ConColor::BPUR, c);
             else
-                con_printf_at(60 + col, wind.data_y + row + 1, NORM "%c", c);
+                con_printf_at(60 + col, wind.data_y + row + 1, "\x1%c%c", ConColor::NORM, c);
         }
     }
 

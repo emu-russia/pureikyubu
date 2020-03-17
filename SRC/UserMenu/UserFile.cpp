@@ -123,7 +123,8 @@ char * FileOpen(HWND hwnd, FILE_TYPE type)
 
         // Browse for a folder and return its PIDL. 
         pidlBrowse = SHBrowseForFolder(&bi);
-        if(result = (pidlBrowse != NULL))
+        result = (pidlBrowse != NULL);
+        if(result)
         {
             SHGetPathFromIDList(pidlBrowse, lpBuffer); 
             strcpy_s(szFileName, sizeof(szFileName), lpBuffer);
@@ -241,7 +242,7 @@ char * FileShortName(const char *filename, int lvl)
 
     if(c == lvl)
     {
-        sprintf(&tempBuf[3], "...%s", &ptr[i]);
+        sprintf_s(&tempBuf[3], sizeof(tempBuf) - 3, "...%s", &ptr[i]);
     }
     else return ptr - 3;
 

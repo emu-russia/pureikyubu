@@ -46,7 +46,7 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
         fprintf(mapFile, "%08x %s\n", address, symbol);        
     }
 
-    DBReport(YEL "New map entry: %08X %s\n", address, symbol);
+    DBReport2(DbgChannel::HLE, "New map entry: %08X %s\n", address, symbol);
     itemsUpdated ++;
     fclose (mapFile);
 }
@@ -64,13 +64,13 @@ void SaveMAP(const char *mapname /*="this"*/)
     {
         if(hle.mapfile[0] == 0)
         {
-            DBReport(BRED "No map file loaded! Symbols will be saved to " DEFAULT_MAP "\n");
+            DBReport2(DbgChannel::Error, "No map file loaded! Symbols will be saved to " DEFAULT_MAP "\n");
             mapname = DEFAULT_MAP;
         }
         else mapname = hle.mapfile;
     }
 
-    DBReport(YEL "saving/updating map : %s ...\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "saving/updating map : %s ...\n\n", mapname);
 
     // load MAP symbols
     SYMSetWorkspace(mapSet);
@@ -81,7 +81,7 @@ void SaveMAP(const char *mapname /*="this"*/)
     mapName = (char *)mapname;
     appendStarted = itemsUpdated = 0;
     SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
-    if ( itemsUpdated == 0 ) DBReport (YEL "nothing to update\n");
+    if ( itemsUpdated == 0 ) DBReport2 (DbgChannel::HLE, "nothing to update\n");
 
     // restore old workspace
     SYMKill();

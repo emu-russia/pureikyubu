@@ -536,7 +536,7 @@ void SIPoll()
 
 void SIOpen(bool fake)
 {
-    DBReport(CYAN "SI: Serial interface driver\n");
+    DBReport2(DbgChannel::SI, "Serial interface driver\n");
 
     si.fake = fake;         // set fake mode ?
 

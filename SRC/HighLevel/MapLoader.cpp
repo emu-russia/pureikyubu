@@ -52,7 +52,7 @@ static int LoadMapCW(char *mapname)
 
     fclose(map);
 
-    DBReport(YEL "CW format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "CW format map loaded : %s\n\n", mapname);
     return MAP_FORMAT_CW;
 }
 
@@ -93,7 +93,7 @@ static int LoadMapGCC(char *mapname)
 
     fclose(map);
 
-    DBReport(YEL "GCC format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "GCC format map loaded : %s\n\n", mapname);
     return MAP_FORMAT_GCC;
 }
 
@@ -173,7 +173,7 @@ static int LoadMapRAW(char *mapname)
     }
     free(mapbuf);
 
-    DBReport(YEL "RAW format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "RAW format map loaded : %s\n\n", mapname);
     return MAP_FORMAT_RAW;
 }
 
@@ -196,7 +196,7 @@ int LoadMAP(char *mapname, bool add)
     f = fopen(mapname, "r");
     if(!f)
     {
-        DBReport(YEL "cannot %s MAP : %s\n", (add) ? "add" : "load", mapname);
+        DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", mapname);
         hle.mapfile[0] = 0;
         return MAP_FORMAT_BAD;
     }

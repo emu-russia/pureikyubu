@@ -165,7 +165,7 @@ void con_start()
 
 void con_break(const char *reason)
 {
-    if(reason) con_print("\n" GREEN "debugger breaks%s. press F5 to continue.\n", reason);
+    if(reason) con_print(ConColor::GREEN, "\ndebugger breaks%s. press F5 to continue.\n", reason);
     if(emu.running) emu.running = false;
     con_set_disa_cur(PC);
 }
@@ -180,7 +180,7 @@ void con_command(std::vector<std::string>& args, int lnum)
     }
     else
     {
-        if (lnum) con_print("unknown script command in line %i, see \'" GREEN "help" NORM "\'", lnum);
-        else con_print("unknown command, try \'" GREEN "help" NORM "\'");
+        if (lnum) con_print(ConColor::NORM, "unknown script command in line %i, see \'help\'", lnum);
+        else con_print(ConColor::NORM, "unknown command, try \'help\'");
     }
 }

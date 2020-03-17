@@ -1,24 +1,23 @@
 // color codes for console
-// format: control byte, color byte
-// control byte:
-//   0x1 - set foreground color 
-//   0x2 - set background color
-#define DBLUE   "\x1\x1"
-#define GREEN   "\x1\x2"
-#define CYAN    "\x1\x3"
-#define RED     "\x1\x4"
-#define PUR     "\x1\x5"
-#define BROWN   "\x1\x6"
-#define NORM    "\x1\x7"
-#define GRAY    "\x1\x8"
-#define BLUE    "\x1\x9"
-#define BGREEN  "\x1\xa"
-#define BCYAN   "\x1\xb"
-#define BRED    "\x1\xc"
-#define BPUR    "\x1\xd"
-#define YEL     "\x1\xe"
-#define YELLOW  "\x1\xe"
-#define WHITE   "\x1\xf"
+enum class ConColor
+{
+    DBLUE = 1,
+    GREEN,
+    CYAN,
+    RED,
+    PUR,
+    BROWN,
+    NORM,
+    GRAY,
+    BLUE,
+    BGREEN,
+    BCYAN,
+    BRED,
+    BPUR,
+    YEL,
+    YELLOW = YEL,
+    WHITE,
+};
 
 // default log filename
 #define CON_LOG_FILE        "DebugSession.htm"
@@ -120,4 +119,4 @@ void    con_fullscreen(bool full);
 void    con_update(uint32_t mask);
 void    con_refresh(bool showpc=false);
 void    con_error(const char *txt, ...);
-void    con_print(const char *txt, ...);
+void    con_print(ConColor col, const char *txt, ...);

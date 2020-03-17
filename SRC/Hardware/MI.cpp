@@ -338,32 +338,32 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
 
 static void __fastcall def_hw_read8(uint32_t addr, uint32_t* reg)
 {
-    DBHalt(BRED "Unhandled HW access:  R8 %08X", addr);
+    DBHalt("MI: Unhandled HW access:  R8 %08X", addr);
 }
 
 static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
 {
-    DBHalt(BRED "Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
+    DBHalt("MI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
 }
 
 static void __fastcall def_hw_read16(uint32_t addr, uint32_t* reg)
 {
-    DBHalt(BRED "Unhandled HW access: R16 %08X", addr);
+    DBHalt("MI: Unhandled HW access: R16 %08X", addr);
 }
 
 static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
 {
-    DBHalt(BRED "Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
+    DBHalt("MI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
 }
 
 static void __fastcall def_hw_read32(uint32_t addr, uint32_t* reg)
 {
-    DBHalt(BRED "Unhandled HW access: R32 %08X", addr);
+    DBHalt("MI: Unhandled HW access: R32 %08X", addr);
 }
 
 static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
 {
-    DBHalt(BRED "Unhandled HW access: W32 %08X = %08X", addr, data);
+    DBHalt("MI: Unhandled HW access: W32 %08X = %08X", addr, data);
 }
 
 // ---------------------------------------------------------------------------
@@ -485,7 +485,7 @@ void LoadBootrom(HWConfig* config)
 
     if (strlen(config->BootromFilename) == 0)
     {
-        DBReport(YEL "Bootrom not loaded (not specified)\n");
+        DBReport2(DbgChannel::MI, "Bootrom not loaded (not specified)\n");
         return;
     }
 
@@ -495,7 +495,7 @@ void LoadBootrom(HWConfig* config)
 
     if (mi.bootrom == nullptr)
     {
-        DBReport(YEL "Cannot load Bootrom: %s\n", config->BootromFilename);
+        DBReport2(DbgChannel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);
         return;
     }
 
@@ -541,13 +541,13 @@ void LoadBootrom(HWConfig* config)
 
     // Show version
 
-    DBReport(YEL "Loaded and descrambled valid Bootrom\n");
-    DBReport(NORM "%s", (char*)mi.bootrom);
+    DBReport2(DbgChannel::MI, "Loaded and descrambled valid Bootrom\n");
+    DBReport("%s", (char*)mi.bootrom);
 }
 
 void MIOpen(HWConfig * config)
 {
-    DBReport(CYAN "MI: Flipper memory interface\n");
+    DBReport2(DbgChannel::MI, "Flipper memory interface\n");
 
     // now any access will generate unhandled warning,
     // if emulator try to read or write register,

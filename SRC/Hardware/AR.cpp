@@ -46,8 +46,8 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
 
         // inform developer about aram transfers
         // and do some alignment checks
-        if(type == RAM_TO_ARAM) DBReport(AR "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
-        else DBReport(AR "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
+        if(type == RAM_TO_ARAM) DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
+        else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
 
         VERIFY(maddr & 0x1f, "main memory address is not a multiple of 32 bytes!");
         VERIFY(size & 0x1f, "DMA transfer length is not a multiple of 32 bytes!");
@@ -75,7 +75,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
                 // IRAM is mapped as the first 8 Kbytes of ARAM
                 memcpy(&dspCore->iram[aaddr], &mi.ram[maddr], size);
 
-                DBReport(_DSP "MMEM -> IRAM transfer %d bytes.\n", size);
+                DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", size);
 
                 // Dump it
 #if 0
@@ -191,7 +191,7 @@ static void __fastcall ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = a
 
 void AROpen()
 {
-    DBReport(CYAN "AR: Aux. memory (ARAM) driver\n");
+    DBReport2(DbgChannel::AR, "Aux. memory (ARAM) driver\n");
 
     // reallocate ARAM
     ARAM = (uint8_t *)malloc(ARAMSIZE);

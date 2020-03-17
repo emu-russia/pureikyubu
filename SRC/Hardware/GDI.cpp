@@ -15,7 +15,7 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
     BITMAPINFO* bmi;
     uint8_t     *DIBase;
 
-    DBReport(CYAN "GDI: Windows DIB for video interface\n");
+    DBReport2(DbgChannel::VI, "Windows DIB for video interface\n");
 
     if(gdi_init == TRUE) return TRUE;
 

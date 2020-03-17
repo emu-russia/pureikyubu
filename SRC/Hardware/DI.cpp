@@ -12,7 +12,7 @@ void DIOpenCover()
 {
     if(di.coverst == TRUE) return;
     di.coverst = TRUE;
-    DBReport(DI "cover opened\n");
+    DBReport2(DbgChannel::DI, "cover opened\n");
 
     if(di.running)
     {
@@ -31,7 +31,7 @@ void DICloseCover()
 {
     if(di.coverst == FALSE) return;
     di.coverst = FALSE;
-    DBReport(DI "cover closed\n");
+    DBReport2(DbgChannel::DI, "cover closed\n");
 
     if(di.running)
     {
@@ -87,7 +87,7 @@ static void DICommand()
             DVDRead(&mi.ram[dimar], DILEN);
             EndProfileDVD();
 
-            DBReport( DI "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n", 
+            DBReport2(DbgChannel::DI, "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n",
                       DIMAR, seek, DILEN );
             DILEN = 0;
             break;
@@ -110,7 +110,7 @@ static void DICommand()
                 di.strseekOld  = di.strseek;
                 di.strcountOld = di.strcount;
 
-                DBReport( DI "DVD Streaming!! DVD positioned on track, starting %08X, %i bytes long.\n",
+                DBReport2(DbgChannel::DI, "DVD Streaming!! DVD positioned on track, starting %08X, %i bytes long.\n",
                           di.strseek, di.strcount );
 
                 // stream playback is enabled automatically
@@ -337,7 +337,7 @@ void DIStreamUpdate()
 
 void DIOpen()
 {
-    DBReport(CYAN "DI: DVD interface hardware\n");
+    DBReport2(DbgChannel::DI, "DVD interface hardware\n");
 
     // current DVD is set by Loader, or when disk is swapped by UserWindow.
 

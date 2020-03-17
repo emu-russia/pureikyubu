@@ -22,7 +22,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
     if((symbol = SYMName(addr)) != nullptr)
     {
-        con_printf_at(0, line, GREEN "%s\n", symbol);
+        con_printf_at(0, line, "\x1%c%s\n", ConColor::GREEN, symbol);
         line++;
         addend++;
 
@@ -31,14 +31,14 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
     if(opcode == 1 /* no memory */)
     {
-        con_printf_at( 0, line, NORM "%08X  ", addr);
-        con_printf_at(10, line, CYAN "%08X  ", 0);
-        con_printf_at(20, line, NORM "???");
+        con_printf_at( 0, line, "\x1%c%08X  ", ConColor::NORM, addr);
+        con_printf_at(10, line, "\x1%c%08X  ", ConColor::CYAN, 0);
+        con_printf_at(20, line, "\x1%c???", ConColor::NORM);
         return addend;
     }
 
-    con_printf_at( 0, line, NORM "%08X  ", addr);
-    con_printf_at(10, line, CYAN "%08X  ", opcode);
+    con_printf_at( 0, line, "\x1%c%08X  ", ConColor::NORM, addr);
+    con_printf_at(10, line, "\x1%c%08X  ", ConColor::NORM, opcode);
 
     disa.instr = opcode;
     disa.pc = addr;
@@ -49,27 +49,31 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
     {
         // ignore other bclr/bcctr opcodes,
         // to easily locate end of function
-        con_printf_at(20, line, GREEN "blr");
+        con_printf_at(20, line, "\x1%cblr", ConColor::GREEN);
     }
     
     else if(disa.iclass & PPC_DISA_BRANCH)
     {
-        con_printf_at(20, line, GREEN "%-12s%s", disa.mnemonic, disa.operands);
-        if(disa.target > addr) con_printline(CYAN " \x19");
-        else if (disa.target < addr) con_printline(CYAN " \x18");
-        else con_printline(CYAN " \x1b");
+        const char* dir;
+
+        if (disa.target > addr) dir = " \x19";
+        else if (disa.target < addr) dir = " \x18";
+        else dir = " \x1b";
+
+        con_printf_at(20, line, "\x1%c%-12s%s\x1%c%s", 
+            ConColor::GREEN, disa.mnemonic, disa.operands, ConColor::CYAN, dir);
 
         if((symbol = SYMName((uint32_t)disa.target)) != nullptr)
         {
-            con_printf_at(47, line, BROWN " ; %s", symbol);
+            con_printf_at(47, line, "\x1%c ; %s", ConColor::BROWN, symbol);
         }
     }
     
-    else con_printf_at(20, line, NORM "%-12s%s", disa.mnemonic, disa.operands);
+    else con_printf_at(20, line, "\x1%c%-12s%s", ConColor::NORM, disa.mnemonic, disa.operands);
 
     if ((disa.iclass & PPC_DISA_INTEGER) && disa.mnemonic[0] == 'r' && disa.mnemonic[1] == 'l')
     {
-        con_printf_at (60, line, NORM "mask:0x%08X", (uint32_t)disa.target);
+        con_printf_at (60, line, "\x1%cmask:0x%08X", ConColor::NORM, (uint32_t)disa.target);
     }
 
     return addend;
@@ -96,7 +100,7 @@ void con_ldst_info()
             wind.ldst_disp = GPR[ra] + simm;
             con_attr(0, 3);
             con_fill_line(wind.disa_y);
-            if(wind.focus == WDISA) con_print_at(0, wind.disa_y, WHITE "\x1f");
+            if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
             con_attr(0, 3);
             con_print_at(2, wind.disa_y, "F3");
             con_printf_at(6, wind.disa_y, "<%08X> %s",
@@ -109,10 +113,9 @@ void con_ldst_info()
 
 void con_update_disa_window()
 {
-    int line;
     con_attr(0, 3);
     con_fill_line(wind.disa_y);
-    if(wind.focus == WDISA) con_print_at(0, wind.disa_y, WHITE "\x1f");
+    if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.disa_y, "F3");
     con_printf_at(

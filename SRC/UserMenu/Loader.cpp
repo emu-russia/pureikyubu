@@ -59,7 +59,7 @@ uint32_t LoadDOL(char *dolname)
     fread(&dh, 1, sizeof(DolHeader), dol);
     MEMSwapArea((uint32_t *)&dh, sizeof(DolHeader));
 
-    DBReport( YEL "loading DOL (%i b).\n", 
+    DBReport2(DbgChannel::Loader, "loading DOL (%i b).\n",
               DOLSize(&dh) );
 
     // load all text (code) sections
@@ -72,8 +72,8 @@ uint32_t LoadDOL(char *dolname)
             fseek(dol, dh.textOffset[i], SEEK_SET);
             fread(addr, 1, dh.textSize[i], dol);
 
-            DBReport(
-                YEL "   text section %08X->%08X, size %i b\n",
+            DBReport2(DbgChannel::Loader,
+                "   text section %08X->%08X, size %i b\n",
                 dh.textOffset[i],
                 dh.textAddress[i], dh.textSize[i]
             );
@@ -90,8 +90,8 @@ uint32_t LoadDOL(char *dolname)
             fseek(dol, dh.dataOffset[i], SEEK_SET);
             fread(addr, 1, dh.dataSize[i], dol);
 
-            DBReport(
-                YEL "   data section %08X->%08X, size %i b\n", 
+            DBReport2(DbgChannel::Loader,
+                "   data section %08X->%08X, size %i b\n", 
                 dh.dataOffset[i],
                 dh.dataAddress[i], dh.dataSize[i]
             );
@@ -108,7 +108,7 @@ uint32_t LoadDOL(char *dolname)
 
     // DO NOT CLEAR BSS !
 
-    DBReport(YEL "   DOL entrypoint %08X\n\n", dh.entryPoint);
+    DBReport2(DbgChannel::Loader, "   DOL entrypoint %08X\n\n", dh.entryPoint);
     fclose(dol);
     return dh.entryPoint;
 }
@@ -122,7 +122,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     // swap DOL header
     MEMSwapArea((uint32_t *)dol, sizeof(DolHeader));
 
-    DBReport( YEL "loading DOL from %08X (%i b).\n", 
+    DBReport2(DbgChannel::Loader, "loading DOL from %08X (%i b).\n",
               ofs, DOLSize(dol) );
 
     // load all text (code) sections
@@ -133,8 +133,8 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
             uint8_t*addr = &mi.ram[dol->textAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
-            DBReport(
-                YEL "   text section %08X->%08X, size %i b\n",
+            DBReport2(DbgChannel::Loader,
+                "   text section %08X->%08X, size %i b\n",
                 ofs + dol->textOffset[i],
                 dol->textAddress[i], dol->textSize[i]
             );
@@ -149,8 +149,8 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
             uint8_t *addr = &mi.ram[dol->dataAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
-            DBReport(
-                YEL "   data section %08X->%08X, size %i b\n", 
+            DBReport2(DbgChannel::Loader,
+                "   data section %08X->%08X, size %i b\n", 
                 ofs + dol->dataOffset[i],
                 dol->dataAddress[i], dol->dataSize[i]
             );
@@ -159,7 +159,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 
     // DO NOT CLEAR BSS !
 
-    DBReport(YEL "   DOL entrypoint %08X\n\n", dol->entryPoint);
+    DBReport2(DbgChannel::Loader, "   DOL entrypoint %08X\n\n", dol->entryPoint);
 
     return dol->entryPoint;
 }
@@ -361,7 +361,7 @@ uint32_t LoadBIN(char *binname)
     fread(&mi.ram[org], 1, fsize, bin);
     fclose(bin);
 
-    DBReport(YEL "loaded binary file at %08X (%s)\n\n", org, FileSmartSize(fsize));
+    DBReport2(DbgChannel::Loader, "loaded binary file at %08X (%s)\n\n", org, FileSmartSize(fsize));
     org |= 0x80000000;
     return org;     // its me =:)
 }
@@ -391,8 +391,8 @@ bool LoadPatch(char * patchname, bool add)
     if(f == NULL) return false;
 
     // print notification in debugger
-    if(add) DBReport(YEL "added patch : %s\n", patchname);
-    else DBReport(YEL "loaded patch : %s\n", patchname);
+    if(add) DBReport2(DbgChannel::Loader, "added patch : %s\n", patchname);
+    else DBReport2(DbgChannel::Loader, "loaded patch : %s\n", patchname);
 
     // remove current patch table (if not adding)
     if(!add)
@@ -453,13 +453,13 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
             {
                 case PATCH_SIZE_8:
                     ptr[0] = data[0];
-                    DBReport( YEL "patch : (u8)[%08X] = %02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch : (u8)[%08X] = %02X\n", ea,
                               ptr[0] );
                     break;
                 case PATCH_SIZE_16:
                     ptr[0] = data[0];
                     ptr[1] = data[1];
-                    DBReport( YEL "patch : (u16)[%08X] = %02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch : (u16)[%08X] = %02X%02X\n", ea,
                               ptr[0], ptr[1] );
                     break;
                 case PATCH_SIZE_32:
@@ -467,7 +467,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
                     ptr[1] = data[1];
                     ptr[2] = data[2];
                     ptr[3] = data[3];
-                    DBReport( YEL "patch : (u32)[%08X] = %02X%02X%02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch : (u32)[%08X] = %02X%02X%02X%02X\n", ea,
                               ptr[0], ptr[1], ptr[2], ptr[3] );
                     break;
                 case PATCH_SIZE_64:
@@ -479,7 +479,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
                     ptr[5] = data[5];
                     ptr[6] = data[6];
                     ptr[7] = data[7];
-                    DBReport( YEL "patch : (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch : (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
                               ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
                     break;
             }
@@ -543,14 +543,14 @@ static void AutoloadMap()
     if(ok) return;
 
     // sorry, no maps for this DVD/executable
-    DBReport( YEL "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
+    DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
 
     // Step 3: make new map (find symbols)
     if(GetConfigInt(USER_MAKEMAP, USER_MAKEMAP_DEFAULT))
     {
         if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
         else sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", name);
-        DBReport( YEL "Making new MAP file : %s\n\n", mapname);
+        DBReport2(DbgChannel::Loader, "Making new MAP file : %s\n\n", mapname);
         MAPInit(mapname);
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
@@ -739,15 +739,15 @@ void LoadFile(char *filename)
 // reload last file
 void ReloadFile()
 {
-    DBReport(
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
-        GREEN "GC File Loader.\n"
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
+    DBReport2(DbgChannel::Info,
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
+        "GC File Loader.\n"
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
     if(strlen(ldat.currentFile))
     {
-        DBReport(YEL "loading file : \"%s\"\n\n", ldat.currentFile);
+        DBReport2(DbgChannel::Loader, "loading file : \"%s\"\n\n", ldat.currentFile);
         DoLoadFile(ldat.currentFile);
     }
 }

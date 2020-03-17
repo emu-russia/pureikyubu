@@ -48,91 +48,91 @@ void cmd_init_handlers()
 
 void cmd_help(std::vector<std::string>& args)
 {
-    DBReport(CYAN  "--- cpu debug commands --------------------------------------------------------\n");
-    DBReport(WHITE "    .                    " NORM "- view code at pc\n");
-    DBReport(WHITE "    *                    " NORM "- view data, pointed by load/store opcode\n");
-    DBReport(WHITE "    u                    " NORM "- view code at specified address\n");
-    DBReport(WHITE "    d                    " NORM "- view data at specified address\n");
-    DBReport(WHITE "    sd1                  " NORM "- quick form of d-command, using SDA1\n");
-    DBReport(WHITE "    sd2                  " NORM "- quick form of d-command, using SDA2\n");
-    DBReport(WHITE "    r                    " NORM "- show / change CPU register\n");
-    DBReport(WHITE "    ps                   " NORM "- show / change paired-single register\n");
-    DBReport(WHITE "    pc                   " NORM "- set program counter\n");
+    DBReport(  "--- cpu debug commands --------------------------------------------------------\n");
+    DBReport( "    .                    - view code at pc\n");
+    DBReport( "    *                    - view data, pointed by load/store opcode\n");
+    DBReport( "    u                    - view code at specified address\n");
+    DBReport( "    d                    - view data at specified address\n");
+    DBReport( "    sd1                  - quick form of d-command, using SDA1\n");
+    DBReport( "    sd2                  - quick form of d-command, using SDA2\n");
+    DBReport( "    r                    - show / change CPU register\n");
+    DBReport( "    ps                   - show / change paired-single register\n");
+    DBReport( "    pc                   - set program counter\n");
 
-    DBReport(WHITE "    nop                  " NORM "- insert NOP opcode at cursor\n");
-    DBReport(WHITE "    denop                " NORM "- restore old NOP'ed value\n");
-    DBReport(WHITE "    blr [value]          " NORM "- insert BLR opcode at cursor (with value)\n");
-    //  DBReport(WHITE "    b <addr>             " NORM "- toggle code breakpoint at <addr> (max=%i)\n", MAX_BPNUM);
-    //  DBReport(WHITE "    bm [8|16|32] <addr>  " NORM "- toggle data breakpoint at <addr> (max=%i)\n", MAX_BPNUM);
-    DBReport(WHITE "    bc                   " NORM "- clear all code breakpoints\n");
-    //  DBReport(WHITE "    bmc                  " NORM "- clear all data breakpoints\n");
-    DBReport(WHITE "    run                  " NORM "- execute until next breakpoint\n");
-    DBReport(WHITE "    stop                 " NORM "- stop debugging\n");
-    DBReport(WHITE "    reset                " NORM "- reset emulator\n");
+    DBReport( "    nop                  - insert NOP opcode at cursor\n");
+    DBReport( "    denop                - restore old NOP'ed value\n");
+    DBReport( "    blr [value]          - insert BLR opcode at cursor (with value)\n");
+    //  DBReport( "    b <addr>             - toggle code breakpoint at <addr> (max=%i)\n", MAX_BPNUM);
+    //  DBReport( "    bm [8|16|32] <addr>  - toggle data breakpoint at <addr> (max=%i)\n", MAX_BPNUM);
+    DBReport( "    bc                   - clear all code breakpoints\n");
+    //  DBReport( "    bmc                  - clear all data breakpoints\n");
+    DBReport( "    run                  - execute until next breakpoint\n");
+    DBReport( "    stop                 - stop debugging\n");
+    DBReport( "    reset                - reset emulator\n");
     DBReport("\n");
 
     dsp_help();
 
-    DBReport(CYAN  "--- high-level commands -------------------------------------------------------\n");
-    DBReport(WHITE "    stat                 " NORM "- show hardware state/statistics\n");
-    DBReport(WHITE "    syms                 " NORM "- list symbolic information\n");
-    DBReport(WHITE "    name                 " NORM "- name function (add symbol)\n");
-    DBReport(WHITE "    dvdopen              " NORM "- get file position (use DVD plugin)\n");
-    DBReport(WHITE "    ostest               " NORM "- test OS internals\n");
-    DBReport(WHITE "    top10                " NORM "- show HLE calls toplist\n");
-    //  DBReport(WHITE "    alarm                " NORM "- generate decrementer exception\n");
-    //  DBReport(WHITE "    bcb                  " NORM "- list all registered branch callbacks\n");    
-    //  DBReport(WHITE "    hlestats             " NORM "- show HLE-subsystem state\n");
-    DBReport(WHITE "    savemap              " NORM "- save symbolic map into file\n");
+    DBReport(  "--- high-level commands -------------------------------------------------------\n");
+    DBReport( "    stat                 - show hardware state/statistics\n");
+    DBReport( "    syms                 - list symbolic information\n");
+    DBReport( "    name                 - name function (add symbol)\n");
+    DBReport( "    dvdopen              - get file position (use DVD plugin)\n");
+    DBReport( "    ostest               - test OS internals\n");
+    DBReport( "    top10                - show HLE calls toplist\n");
+    //  DBReport( "    alarm                - generate decrementer exception\n");
+    //  DBReport( "    bcb                  - list all registered branch callbacks\n");    
+    //  DBReport( "    hlestats             - show HLE-subsystem state\n");
+    DBReport( "    savemap              - save symbolic map into file\n");
     DBReport("\n");
 
-    DBReport(CYAN  "--- patch controls ------------------------------------------------------------\n");
-    DBReport(WHITE "    dop                  " NORM "- apply patches immediately (only with freeze=1)\n");
-    DBReport(WHITE "    plist                " NORM "- list all patch data\n");
-    DBReport(WHITE "    pload                " NORM "- load patch file (unload previous)\n");
-    DBReport(WHITE "    padd                 " NORM "- add patch file (do not unload previous)\n");
-    DBReport(WHITE "    patch                " NORM "- insert memory patch\n");
+    DBReport(  "--- patch controls ------------------------------------------------------------\n");
+    DBReport( "    dop                  - apply patches immediately (only with freeze=1)\n");
+    DBReport( "    plist                - list all patch data\n");
+    DBReport( "    pload                - load patch file (unload previous)\n");
+    DBReport( "    padd                 - add patch file (do not unload previous)\n");
+    DBReport( "    patch                - insert memory patch\n");
     DBReport("\n");
 
-    DBReport(CYAN  "--- misc commands -------------------------------------------------------------\n");
-    DBReport(WHITE "    boot                 " NORM "- boot DVD/executable (from file or list)\n");
-    DBReport(WHITE "    reboot               " NORM "- reload last file\n");
-    DBReport(WHITE "    unload               " NORM "- unload current file\n");
-    DBReport(WHITE "    sop                  " NORM "- search opcode (forward) from cursor address\n");
-    DBReport(WHITE "    lr                   " NORM "- show LR back chain (\"branch history\"\n");
-    DBReport(WHITE "    script               " NORM "- execute batch script\n");
-    //  DBReport(WHITE "    mapmem               " NORM "- add memory mapper\n");
-    DBReport(WHITE "    log                  " NORM "- enable/disable log output)\n");
-    DBReport(WHITE "    logfile              " NORM "- choose HTML log-file for ouput\n");
-    DBReport(WHITE "    full                 " NORM "- set full screen console mode\n");
-    DBReport(WHITE "    shot                 " NORM "- take screenshot in ????.tga\n");
-    DBReport(WHITE "    memst                " NORM "- memory allocation stats\n");
-    DBReport(WHITE "    memtst               " NORM "- memory test (" YEL "WARNING" NORM ")\n");
-    DBReport(WHITE "    cls                  " NORM "- clear message buffer\n");
-    DBReport(WHITE "    colors               " NORM "- colored output test\n");
-    DBReport(WHITE "    disa                 " NORM "- disassemble code into text file\n");
-    DBReport(WHITE "    tree                 " NORM "- show call tree\n");
-    DBReport(WHITE "    [q]uit, e[x]it       " NORM "- exit to OS\n");
+    DBReport(  "--- misc commands -------------------------------------------------------------\n");
+    DBReport( "    boot                 - boot DVD/executable (from file or list)\n");
+    DBReport( "    reboot               - reload last file\n");
+    DBReport( "    unload               - unload current file\n");
+    DBReport( "    sop                  - search opcode (forward) from cursor address\n");
+    DBReport( "    lr                   - show LR back chain (\"branch history\"\n");
+    DBReport( "    script               - execute batch script\n");
+    //  DBReport( "    mapmem               - add memory mapper\n");
+    DBReport( "    log                  - enable/disable log output)\n");
+    DBReport( "    logfile              - choose HTML log-file for ouput\n");
+    DBReport( "    full                 - set full screen console mode\n");
+    DBReport( "    shot                 - take screenshot in ????.tga\n");
+    DBReport( "    memst                - memory allocation stats\n");
+    DBReport( "    memtst               - memory test (WARNING)\n");
+    DBReport( "    cls                  - clear message buffer\n");
+    DBReport( "    colors               - colored output test\n");
+    DBReport( "    disa                 - disassemble code into text file\n");
+    DBReport( "    tree                 - show call tree\n");
+    DBReport( "    [q]uit, e[x]it       - exit to OS\n");
     DBReport("\n");
 
-    DBReport(CYAN  "--- functional keys -----------------------------------------------------------\n");
-    DBReport(WHITE "    F1                   " NORM "- update registers\n");
-    DBReport(WHITE "    F2                   " NORM "- memory view\n");
-    DBReport(WHITE "    F3                   " NORM "- disassembly\n");
-    DBReport(WHITE "    F4                   " NORM "- command string\n");
-    DBReport(WHITE "    F5                   " NORM "- run, stop\n");
-    DBReport(WHITE "    F6, ^F6              " NORM "- switch registers\n");
-    DBReport(WHITE "    F9                   " NORM "- toggle autokill breakpoint\n");
-    DBReport(WHITE "    ^F9                  " NORM "- toggle breakpoint\n");
-    DBReport(WHITE "    F10                  " NORM "- step over\n");
-    DBReport(WHITE "    F11                  " NORM "- single step (Google: disable f11 windows 10 console)");
-    DBReport(WHITE "    F12                  " NORM "- skip instruction\n");
+    DBReport(  "--- functional keys -----------------------------------------------------------\n");
+    DBReport( "    F1                   - update registers\n");
+    DBReport( "    F2                   - memory view\n");
+    DBReport( "    F3                   - disassembly\n");
+    DBReport( "    F4                   - command string\n");
+    DBReport( "    F5                   - run, stop\n");
+    DBReport( "    F6, ^F6              - switch registers\n");
+    DBReport( "    F9                   - toggle autokill breakpoint\n");
+    DBReport( "    ^F9                  - toggle breakpoint\n");
+    DBReport( "    F10                  - step over\n");
+    DBReport( "    F11                  - single step (Google: disable f11 windows 10 console)");
+    DBReport( "    F12                  - skip instruction\n");
     DBReport("\n");
 
-    DBReport(CYAN  "--- misc keys -----------------------------------------------------------------\n");
-    DBReport(WHITE "    PGUP, PGDN           " NORM "- scroll windows\n");
-    DBReport(WHITE "    ENTER, ESC           " NORM "- follow/return branch (in disasm window)\n");
-    DBReport(WHITE "    ENTER                " NORM "- memory edit (in memview window)\n");
+    DBReport( "--- misc keys -----------------------------------------------------------------\n");
+    DBReport( "    PGUP, PGDN           - scroll windows\n");
+    DBReport( "    ENTER, ESC           - follow/return branch (in disasm window)\n");
+    DBReport( "    ENTER                - memory edit (in memview window)\n");
     DBReport("\n");
 }
 
@@ -164,7 +164,7 @@ void cmd_unload(std::vector<std::string>& args)
 
 void cmd_exit(std::vector<std::string>& args)
 {
-    DBReport(GREEN ": exiting...\n");
+    DBReport(": exiting...\n");
     con_refresh();
     Sleep(10);
     EMUClose();
@@ -181,14 +181,14 @@ void cmd_blr(std::vector<std::string>& args)
     {
         DBReport("syntax : blr [value]\n");
         DBReport("when [value] is specified, pair of instructions is inserted : \n");
-        DBReport(GREEN "    " "li [value]\n");
-        DBReport(GREEN "    " "blr\n");
+        DBReport("    li [value]\n");
+        DBReport("    blr\n");
         DBReport("(with exception, if BLR is already present at cursor.\n");
         DBReport("16-bit value can be decimal, or hex with \'0x\' prefix.\n");
-        DBReport("examples of use : " GREEN "blr\n");
-        DBReport("                  " GREEN "blr 0\n");
-        DBReport("                  " GREEN "blr 1\n");
-        DBReport("see also        : " GREEN "nop\n");
+        DBReport("examples of use : blr\n");
+        DBReport("                  blr 0\n");
+        DBReport("                  blr 1\n");
+        DBReport("see also        : nop\n");
     }
     else
     {
@@ -230,8 +230,8 @@ void cmd_boot(std::vector<std::string>& args)
     {
         DBReport("syntax : boot <file>\n");
         DBReport("path can be relative\n");
-        DBReport("examples of use : " GREEN "boot c:\\luigimansion.gcm\n");
-        DBReport("                  " GREEN "boot PONG.dol\n");
+        DBReport("examples of use : boot c:\\luigimansion.gcm\n");
+        DBReport("                  boot PONG.dol\n");
     }
     else
     {
@@ -265,11 +265,11 @@ void cmd_d(std::vector<std::string>& args)
         DBReport("numbers can be decimal, or hex with \'0x\' prefix.\n");
         DBReport("offset is a 16-bit signed dec/hex number.\n");
         DBReport("\'small data\' regs are used as r13 and r2.\n");
-        DBReport("examples of use : " GREEN "d 0x8023bc00\n");
-        DBReport("                  " GREEN "d main\n");
-        DBReport("                  " GREEN "d r5\n");
-        DBReport("                  " GREEN "d r9 0x8250\n");
-        DBReport("see also        : " GREEN "sd1 sd2 *\n");
+        DBReport("examples of use : d 0x8023bc00\n");
+        DBReport("                  d main\n");
+        DBReport("                  d r5\n");
+        DBReport("                  d r9 0x8250\n");
+        DBReport("see also        : sd1 sd2 *\n");
     }
     else
     {
@@ -359,7 +359,7 @@ void cmd_disa(std::vector<std::string>& args)
     {
         DBReport("syntax : disa <start_addr> <end_addr>\n");
         DBReport("disassemble code between `start_addr` and `end_addr` and dump it into disa.txt\n");
-        DBReport("example of use : " GREEN "disa 0x81300000 0x81350000\n");
+        DBReport("example of use : disa 0x81300000 0x81350000\n");
     }
     else
     {
@@ -399,7 +399,7 @@ void cmd_dop(std::vector<std::string>& args)
 {
     if(ldat.patchNum == 0)
     {
-        DBReport(YEL "no patch data loaded.\n");
+        DBReport("no patch data loaded.\n");
         return;
     }
     else ApplyPatches();
@@ -414,14 +414,14 @@ void cmd_dvdopen(std::vector<std::string>& args)
     {
         DBReport("syntax : dvdopen <file>\n");
         DBReport("path must be absolute, including root prefix '/'\n");
-        DBReport("examples of use : " GREEN "dvdopen \"/opening.bnr\"\n");
-        DBReport("                  " GREEN "dvdopen \"/gxTests/tex-02/ia8_odd.tpl\"\n");
+        DBReport("examples of use : dvdopen \"/opening.bnr\"\n");
+        DBReport("                  dvdopen \"/gxTests/tex-02/ia8_odd.tpl\"\n");
     }
     else
     {
         uint32_t ofs = DVDOpenFile(args[1].c_str());
-        if(ofs) DBReport(GREEN "0x%08X : %s\n", ofs, args[1].c_str());
-        else DBReport(BRED "not found : %s\n", args[1].c_str());
+        if(ofs) DBReport("0x%08X : %s\n", ofs, args[1].c_str());
+        else DBReport("not found : %s\n", args[1].c_str());
     }
 }
 
@@ -434,7 +434,7 @@ void cmd_full(std::vector<std::string>& args)
     {
         DBReport("syntax : full <0/1>\n");
         DBReport("set \"fullscreen\" console mode.\n");
-        DBReport("examples of use : " GREEN "full 1\n");
+        DBReport("examples of use : full 1\n");
     }
     else
     {
@@ -451,7 +451,7 @@ void cmd_log(std::vector<std::string>& args)
     if(args.size() < 2)
     {
         DBReport("syntax : log [dev] <0/1>\n");
-        DBReport(GREEN "dev" NORM " is specified device :\n");
+        DBReport("dev is specified device :\n");
         DBReport("    fifo : GX command processor\n");
         DBReport("    vi   : video interface\n");
         DBReport("    pi   : interrupts\n");
@@ -460,16 +460,16 @@ void cmd_log(std::vector<std::string>& args)
         DBReport("    di   : DVD\n");
         DBReport("    si   : serial interface (joypads)\n");
         DBReport("    exi  : EXI devices\n");
-        DBReport("examples of use : " GREEN "log 1\n");
-        DBReport("                : " GREEN "log 0\n");
-        DBReport("                : " GREEN "log pi 0\n");
-        DBReport("                : " GREEN "log ax 1\n");
-        DBReport("see also        : " GREEN "logfile\n");
+        DBReport("examples of use : log 1\n");
+        DBReport("                : log 0\n");
+        DBReport("                : log pi 0\n");
+        DBReport("                : log ax 1\n");
+        DBReport("see also        : logfile\n");
     }
     else if(args.size() < 3)
     {
         con.log = atoi(args[1].c_str());
-        if(con.log) con_print(GREEN "log enabled (logfile: %s)", con.logfile);
+        if(con.log) DBReport("log enabled (logfile: %s)", con.logfile);
         else
         {
             if(con.logf)
@@ -480,7 +480,7 @@ void cmd_log(std::vector<std::string>& args)
                 fclose(con.logf);
                 con.logf = NULL;
             }
-            DBReport(GREEN "log disabled\n");
+            DBReport("log disabled\n");
         }
     }
     else
@@ -500,13 +500,13 @@ void cmd_logfile(std::vector<std::string>& args)
     {
         DBReport("syntax : logfile <filename>\n");
         DBReport("filename can be relative. default filename is %s\n", CON_LOG_FILE);
-        DBReport("examples of use : " GREEN "logfile log.htm\n");
-        DBReport("see also        : " GREEN "log\n");
+        DBReport("examples of use : logfile log.htm\n");
+        DBReport("see also        : log\n");
     }
     else
     {
         strncpy_s (con.logfile, sizeof(con.logfile), args[1].c_str(), sizeof(con.logfile));
-        DBReport("logging into " GREEN "%s\n", con.logfile);
+        DBReport("logging into %s\n", con.logfile);
     }
 }
 
@@ -519,8 +519,8 @@ void cmd_lr(std::vector<std::string>& args)
     {
         DBReport("syntax : lr <level>\n");
         DBReport("level - chain depth (number of calls). use \'*\' to show whole chain.\n");
-        DBReport("examples of use : " GREEN "lr 10\n");
-        DBReport("                : " GREEN "lr *\n");
+        DBReport("examples of use : lr 10\n");
+        DBReport("                : lr *\n");
     }
     else
     {
@@ -537,8 +537,8 @@ void cmd_lr(std::vector<std::string>& args)
         int level = atoi(args[1].c_str());
         if(args[1].c_str()[0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
         MEMReadWord(SP, &sp);
-        if(level == MAX_LEVEL) con_print( "LR Back Chain (max levels) :\n");
-        else con_print( "LR Back Chain (%i levels) :\n", level);
+        if(level == MAX_LEVEL) DBReport( "LR Back Chain (max levels) :\n");
+        else DBReport( "LR Back Chain (%i levels) :\n", level);
 
         for(int i=0; i<level; i++)
         {
@@ -551,9 +551,9 @@ void cmd_lr(std::vector<std::string>& args)
             if(disa.iclass & PPC_DISA_BRANCH)
             {
                 char * symbol = SYMName((uint32_t)disa.target);
-                if(symbol) DBReport( NORM "%-3i: " GREEN "%-12s%-12s " BROWN "(%s)\n",
+                if(symbol) DBReport("%-3i: %-12s%-12s (%s)\n",
                                       i+1, disa.mnemonic, disa.operands, symbol );
-                else       DBReport( NORM "%-3i: " GREEN "%-12s%-12s " "\n",
+                else       DBReport("%-3i: %-12s%-12s " "\n",
                                       i+1, disa.mnemonic, disa.operands );
             }
             MEMReadWord(sp, &sp);           // walk stack
@@ -574,10 +574,10 @@ void cmd_name(std::vector<std::string>& args)
         DBReport("give name to function or memory variable (add symbol).\n");
         DBReport("when using . (dot), symbol will be added by cursor address position.\n");
         DBReport("when using * , symbol will be added by branch relocation.\n");
-        DBReport("examples of use : " GREEN "name 0x80003100 __start\n");
-        DBReport("                  " GREEN "name . main\n");
-        DBReport("                  " GREEN "name * OSCall\n");
-        DBReport("see also        : " GREEN "syms savemap loadmap addmap\n");
+        DBReport("examples of use : name 0x80003100 __start\n");
+        DBReport("                  name . main\n");
+        DBReport("                  name * OSCall\n");
+        DBReport("see also        : syms savemap loadmap addmap\n");
     }
     else
     {
@@ -602,11 +602,11 @@ void cmd_name(std::vector<std::string>& args)
         else address = strtoul(args[1].c_str(), NULL, 0);
         if(address != 0)
         {
-            DBReport(YEL "new symbol: %08X %s\n", address, args[2].c_str());
+            DBReport("new symbol: %08X %s\n", address, args[2].c_str());
             SYMAddNew(address, args[2].c_str());
             con.update |= CON_UPDATE_ALL;
         }
-        else DBReport(BRED "wrong address!\n");
+        else DBReport("wrong address!\n");
     }
 }
 
@@ -681,7 +681,7 @@ void cmd_plist(std::vector<std::string>& args)
 {
     if(ldat.patchNum == 0)
     {
-        DBReport(YEL "no patch data loaded.\n");
+        DBReport("no patch data loaded.\n");
         return;
     }
 
@@ -695,22 +695,22 @@ void cmd_plist(std::vector<std::string>& args)
         switch(p->dataSize)
         {
             case PATCH_SIZE_8:
-                fmt = "%.3i: %08X " YEL "%02X" NORM "%02X%02X%02X%02X%02X%02X%02X %i %i\n";
+                fmt = "%.3i: %08X %02X %02X%02X%02X%02X%02X%02X%02X %i %i\n";
                 break;
             case PATCH_SIZE_16:
-                fmt = "%.3i: %08X " YEL "%02X%02X" NORM "%02X%02X%02X%02X%02X%02X %i %i\n";
+                fmt = "%.3i: %08X %02X%02X %02X%02X%02X%02X%02X%02X %i %i\n";
                 break;
             case PATCH_SIZE_32:
-                fmt = "%.3i: %08X " YEL "%02X%02X%02X%02X" NORM "%02X%02X%02X%02X %i %i\n";
+                fmt = "%.3i: %08X %02X%02X%02X%02X %02X%02X%02X%02X %i %i\n";
                 break;
             case PATCH_SIZE_64:
-                fmt = "%.3i: %08X " YEL "%02X%02X%02X%02X%02X%02X%02X%02X" NORM " %i %i\n";
+                fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
                 break;
             default:
                 fmt = "PATCH DAMAGED!";
         }
 
-        con_print(
+        DBReport(
             fmt,
             i+1,
             MEMSwap(p->effectiveAddress),
@@ -719,7 +719,7 @@ void cmd_plist(std::vector<std::string>& args)
             MEMSwapHalf(p->dataSize), MEMSwapHalf(p->freeze) & 1
         );
     }
-    con_print("-----------------------------------\n");
+    DBReport("-----------------------------------\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -923,13 +923,13 @@ void cmd_r (std::vector<std::string>& args)
         DBReport("sp, sd1, sd2 semantics are supported for reg name.\n");
         DBReport("Value can be decimal, or hex with \'0x\' prefix.\n");
         DBReport("Possible operations are: = + - * / | & ^ << >>\n");
-        DBReport("Examples of use : " GREEN "r sp\n");
-        DBReport("                  " GREEN "r r3 = 12\n");
-        DBReport("                  " GREEN "r r7 | 0x8020\n");
-        DBReport("                  " GREEN "r msr\n");
-        DBReport("                  " GREEN "r hid2 | 2\n");
-        DBReport("                  " GREEN "r r7 = sd1\n");
-        DBReport("See also        : " GREEN "fr\n");
+        DBReport("Examples of use : r sp\n");
+        DBReport("                  r r3 = 12\n");
+        DBReport("                  r r7 | 0x8020\n");
+        DBReport("                  r msr\n");
+        DBReport("                  r hid2 | 2\n");
+        DBReport("                  r r7 = sd1\n");
+        DBReport("See also        : fr\n");
     }
     else
     {
@@ -994,8 +994,8 @@ void cmd_sop(std::vector<std::string>& args)
     {
         DBReport("syntax : sop <opcode>\n");
         DBReport("search range is not greater 16384 bytes.\n");
-        DBReport("examples of use : " GREEN "sop mtlr\n");
-        DBReport("                  " GREEN "sop psq_l\n");
+        DBReport("examples of use : sop mtlr\n");
+        DBReport("                  sop psq_l\n");
     }
     else
     {
@@ -1012,10 +1012,10 @@ void cmd_sop(std::vector<std::string>& args)
             PPCDisasm (&disa);
             if(!_stricmp(disa.mnemonic, args[1].c_str())) break;
         }
-        if(saddr == eaddr) DBReport(GREEN "%s " NORM "not found. last address : %08X\n", args[1].c_str(), saddr);
+        if(saddr == eaddr) DBReport("%s not found. last address : %08X\n", args[1].c_str(), saddr);
         else
         {
-            DBReport(GREEN "%s " NORM "found at address : %08X\n", args[1].c_str(), saddr);
+            DBReport("%s found at address : %08X\n", args[1].c_str(), saddr);
             con_set_disa_cur(saddr);
         }
         con.update |= CON_UPDATE_DISA;
@@ -1030,7 +1030,7 @@ void cmd_stat(std::vector<std::string>& args)
     if(args.size() < 2)
     {
         DBReport("syntax : stat <dev>\n");
-        DBReport(GREEN "dev" NORM " is specified device :\n");
+        DBReport("dev is specified device :\n");
         DBReport("    cpu  : Gekko processor\n");
         DBReport("    fifo : GX command processor\n");
         DBReport("    vi   : video interface\n");
@@ -1040,8 +1040,8 @@ void cmd_stat(std::vector<std::string>& args)
         DBReport("    di   : DVD\n");
         DBReport("    si   : serial interface (joypads)\n");
         DBReport("    exi  : EXI devices\n");
-        DBReport("examples of use : " GREEN "stat cpu\n");
-        DBReport("                : " GREEN "stat vi\n");
+        DBReport("examples of use : stat cpu\n");
+        DBReport("                : stat vi\n");
     }
     else
     {
@@ -1066,10 +1066,10 @@ void cmd_syms(std::vector<std::string>& args)
         DBReport("syntax : syms <string> OR syms *\n");
         DBReport("<string> is the first occurance of symbol to find.\n");
         DBReport("* - list all symbols (possible overflow of message buffer).\n");
-        DBReport("examples of use : " GREEN "syms ma\n");
-        DBReport("                  " GREEN "syms __z\n");
-        DBReport("                  " GREEN "syms *\n");
-        DBReport("see also        : " GREEN "name savemap loadmap addmap\n");
+        DBReport("examples of use : syms ma\n");
+        DBReport("                  syms __z\n");
+        DBReport("                  syms *\n");
+        DBReport("see also        : name savemap loadmap addmap\n");
     }
     else
     {
@@ -1087,9 +1087,9 @@ void cmd_savemap(std::vector<std::string>& args)
         DBReport("syntax : savemap <file> OR savemap .\n");
         DBReport(". is used to update current loaded map.\n");
         DBReport("path can be relative\n");
-        DBReport("examples of use : " GREEN "savemap .\n");
-        DBReport("                  " GREEN "savemap data\\my.map\n");
-        DBReport("see also        : " GREEN "name loadmap addmap\n");
+        DBReport("examples of use : savemap .\n");
+        DBReport("                  savemap data\\my.map\n");
+        DBReport("see also        : name loadmap addmap\n");
     }
     else
     {
@@ -1123,14 +1123,14 @@ void cmd_script(std::vector<std::string>& args)
     {
         DBReport("syntax : script <file>\n");
         DBReport("path can be relative\n");
-        DBReport("examples of use : " GREEN "script data\\zelda.cmd\n");
-        DBReport("                  " GREEN "script c:\\luigi.cmd\n");
+        DBReport("examples of use : script data\\zelda.cmd\n");
+        DBReport("                  script c:\\luigi.cmd\n");
         return;
     }
 
     file = args[1].c_str();
 
-    con_print(YEL "loading script: %s\n", file);
+    DBReport("loading script: %s\n", file);
 
     // following code is copied from MAPLoad :)
 
@@ -1139,7 +1139,7 @@ void cmd_script(std::vector<std::string>& args)
     fopen_s (&f, file, "rt");
     if(!f)
     {
-        DBReport(RED "cannot open script file!\n");
+        DBReport("cannot open script file!\n");
         return ;
     }
 
@@ -1167,7 +1167,7 @@ void cmd_script(std::vector<std::string>& args)
         if(sbuf[i] < ' ') sbuf[i] = '\n';
     }
 
-    DBReport(YEL "executing script...\n");
+    DBReport("executing script...\n");
 
     int cnt = 1;
     char *ptr = sbuf;
@@ -1223,7 +1223,7 @@ void cmd_script(std::vector<std::string>& args)
     }
     free(sbuf);
 
-    DBReport(YEL "\ndone execute script.\n");
+    DBReport( "\ndone execute script.\n");
     con.update |= CON_UPDATE_ALL;
 }
 
@@ -1236,8 +1236,8 @@ void cmd_sdCommon(int sd, std::vector<std::string>& args)
     {
         DBReport("syntax : sd%i <ofs>\n", sd);
         DBReport("offset is a 16-bit signed dec/hex number.\n");
-        DBReport("examples of use : " GREEN "sd%i 0x8250\n", sd);
-        DBReport("see also        : " GREEN "d *\n");
+        DBReport("examples of use : sd%i 0x8250\n", sd);
+        DBReport("see also        : d *\n");
     }
     else
     {
@@ -1273,7 +1273,7 @@ void cmd_top10(std::vector<std::string>& args)
     for(int i=0; i<10; i++)
     {
         DBReport(
-            "%-2i: " GREEN "%s" NORM " (%i calls)\n",
+            "%-2i: %s (%i calls)\n",
             i+1, HLEGetHitNameByIndex(hle.top10[i]), hle.hitrate[hle.top10[i]]
         );
     }
@@ -1366,10 +1366,10 @@ void cmd_tree (std::vector<std::string>& args)
 
     if (args.size() < 2)
     {
-        DBReport("syntax : tree <start_addr> \n");
+        DBReport("syntax: tree <start_addr> \n");
         DBReport("create call tree of function at `start_addr`, including subcalls and dump it into calltree.txt\n");
         DBReport("`start_addr` can be symbolic or direct address.\n");
-        DBReport("example of use : " GREEN "tree main\n");
+        DBReport("example of use: tree main\n");
     }
     else
     {
@@ -1405,10 +1405,10 @@ void cmd_u(std::vector<std::string>& args)
     {
         DBReport("syntax : u <addr> OR u <symbol> OR u lr OR u ctr\n");
         DBReport("numbers can be decimal, or hex with \'0x\' prefix.\n");
-        DBReport("examples of use : " GREEN "u 0x8023bc00\n");
-        DBReport("                  " GREEN "u main\n");
-        DBReport("                  " GREEN "u lr\n");
-        DBReport("see also        : " GREEN ". ENTER-key ESC-key\n");
+        DBReport("examples of use : u 0x8023bc00\n");
+        DBReport("                  u main\n");
+        DBReport("                  u lr\n");
+        DBReport("see also        : . ENTER-key ESC-key\n");
     }
     else
     {

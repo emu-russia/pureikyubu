@@ -121,29 +121,29 @@ OP(MTSPR)
             "DBAT0U", "DBAT0L", "DBAT1U", "DBAT1L",
             "DBAT2U", "DBAT2L", "DBAT3U", "DBAT3L"
         };
-        DBReport( CPU "%s <- %08X (IR:%i DR:%i pc:%08X)\n", 
+        DBReport2( DbgChannel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n", 
                   bat[spr-528], RRS, msr_ir(), msr_dr(), PC );
     }
     else switch(spr)
     {
         // decrementer
         case    22:
-            DBReport(CPU "set decrementer (OS alarm) to %08X\n", RRS);
+            DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
             break;
 
         // page table base
         case    25:
-            DBReport( CPU "SDR <- %08X (IR:%i DR:%i pc:%08X)\n", 
+            DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
                       RRS, msr_ir(), msr_dr(), PC );
             break;
 
         case    284:
             cpu.tb.Part.l = RRS;
-            DBReport(CPU "set TBL : %08X\n", cpu.tb.Part.l);
+            DBReport2(DbgChannel::CPU, "set TBL : %08X\n", cpu.tb.Part.l);
             break;
         case    285:
             cpu.tb.Part.u = RRS;
-            DBReport(CPU "set TBH : %08X\n", cpu.tb.Part.u);
+            DBReport2(DbgChannel::CPU, "set TBH : %08X\n", cpu.tb.Part.u);
             break;
 
         // write gathering buffer

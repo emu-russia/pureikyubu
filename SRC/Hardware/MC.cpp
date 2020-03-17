@@ -154,7 +154,7 @@ Memcard memcard[2];
 
 static uint32_t __fastcall MCCalculateOffset (uint32_t mc_address) {
 	if (mc_address & MEMCARD_BA_EXTRABYTES)
-		DBReport (RED "MC :: Extra bytes are not supported");
+		DBHalt ("MC :: Extra bytes are not supported\n");
     return        (mc_address & 0x0000007F) |
                  ((mc_address & 0x00000300) >> 1) |
                  ((mc_address & 0x7FFF0000) >> 7);
@@ -164,11 +164,11 @@ static void __fastcall MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t
     if (SyncSave == TRUE) // Bad idea!!
     {
         if (fseek(memcard->file, offset, SEEK_SET) != 0) {
-			DBReport (RED "MC :: Error at seeking the memcard file.");
+            DBHalt("MC :: Error at seeking the memcard file.\n");
 			return;
 		}
         if (fwrite(&memcard->data[offset], size, 1, memcard->file) != 1) {
-			DBReport (RED "MC :: Error at writing the memcard file.");
+            DBHalt("MC :: Error at writing the memcard file.\n");
 		}
     }
 }
@@ -205,7 +205,7 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
         size = exi->len;
     }
     else {
-        DBReport(RED "MC : Unhandled Imm Page Program.");
+        DBHalt("MC : Unhandled Imm Page Program.\n");
 		return;
     }
 
@@ -213,7 +213,7 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
     offset = MCCalculateOffset(auxdata);
 
 	if (offset >=  memcard->size + size) {
-		DBReport (RED "MC :: PageProgram offset is out of range");
+        DBHalt("MC :: PageProgram offset is out of range\n");
 		return;
 	}
 
@@ -250,7 +250,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
     offset = MCCalculateOffset(auxdata);
 
     if (offset >=  memcard->size + size) {
-		DBReport (RED "MC :: ReadArray offset is out of range");
+        DBHalt("MC :: ReadArray offset is out of range\n");
         return;
     }
 
@@ -278,7 +278,7 @@ static void __fastcall MCSectorEraseProc (Memcard * memcard){
     offset = MCCalculateOffset(memcard->commandData);
 
     if (offset >=  memcard->size) {
-		DBReport (RED "MC :: Erase sector is out of range");
+        DBHalt("MC :: Erase sector is out of range\n");
         return;
     }
 
@@ -317,9 +317,9 @@ static void __fastcall MCEnableInterruptsProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     if ( memcard->commandData & (0x01 << 24) ) 
-        DBReport ("Enable Interrupts");
+        DBReport2 (DbgChannel::MC, "Enable Interrupts\n");
     else
-        DBReport ("Disable Interrupts");
+        DBReport2 (DbgChannel::MC, "Disable Interrupts\n");
 }
 /**********************************MCReadIdProc*********************************************/
 static void __fastcall MCReadIdProc (Memcard * memcard){
@@ -388,11 +388,11 @@ void MCTransfer () {
                         }
 
                     if (i >= Num_Memcard_ValidCommands) {
-                        DBReport (RED "MC :: Unrecognized Memcard Command %02x", auxmc->Command);
+                        DBHalt("MC :: Unrecognized Memcard Command %02x\n", auxmc->Command);
                         auxmc->Command = MEMCARD_COMMAND_UNDEFINED;
                     }
                     else {
-                        DBReport (MC "Recognized Memcard Command %02x", auxmc->Command);
+                        DBReport2 (DbgChannel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
                     }
                 }
                 else if (auxmc->databytesread < auxmc->databytes) {
@@ -403,7 +403,7 @@ void MCTransfer () {
                     auxmc->dummybytesread++;
                 }
                 else 
-                    DBReport (RED "MC :: Extra bytes at transfer , data : %02x", (uint8_t)(auxdata >> 24));
+                    DBHalt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
                 auxdata = auxdata << 8;
                 auxbytes--;
             }
@@ -511,7 +511,7 @@ void    MCUseFile(int cardnum, const char *path, bool connect) {
  */ 
 void MCOpen (HWConfig * config)
 {
-    DBReport(CYAN "MC: Memory cards");
+    DBReport2 (DbgChannel::MC, "Memory cards\n");
 
     MCOpened = TRUE;
     memset(memcard, 0 , 2 * sizeof (Memcard));

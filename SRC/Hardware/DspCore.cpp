@@ -26,7 +26,7 @@ namespace DSP
 		}
 		else
 		{
-			DBReport(YEL "Loaded DSP IROM: %s\n", config->DspIromFilename);
+			DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", config->DspIromFilename);
 			memcpy(irom, iromImage, IROM_SIZE);
 			free(iromImage);
 		}
@@ -42,12 +42,12 @@ namespace DSP
 		}
 		else
 		{
-			DBReport(YEL "Loaded DSP DROM: %s\n", config->DspDromFilename);
+			DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", config->DspDromFilename);
 			memcpy(drom, dromImage, DROM_SIZE);
 			free(dromImage);
 		}
 
-		DBReport(CYAN "DSPCore: Ready\n");
+		DBReport2(DbgChannel::DSP, "DSPCore: Ready\n");
 	}
 
 	DspCore::~DspCore()
@@ -75,7 +75,7 @@ namespace DSP
 
 	void DspCore::Reset()
 	{
-		DBReport(_DSP "DspCore::Reset");
+		DBReport2(DbgChannel::DSP, "DspCore::Reset");
 
 		savedGekkoTicks = cpu.tb.uval;
 
@@ -112,7 +112,7 @@ namespace DSP
 		if (!running)
 		{
 			ResumeThread(threadHandle);
-			DBReport(_DSP "DspCore::Run");
+			DBReport2(DbgChannel::DSP, "DspCore::Run");
 			savedGekkoTicks = cpu.tb.uval;
 			running = true;
 		}
@@ -123,7 +123,7 @@ namespace DSP
 		if (running)
 		{
 			running = false;
-			DBReport(_DSP "DspCore::Suspend");
+			DBReport2(DbgChannel::DSP, "DspCore::Suspend");
 			SuspendThread(threadHandle);
 		}
 	}
@@ -188,7 +188,7 @@ namespace DSP
 	{
 		if (IsRunning())
 		{
-			DBReport(_DSP "It is impossible while running DSP thread.\n");
+			DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
 			return;
 		}
 
@@ -494,7 +494,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DMBL:
 					return DspToCpuReadLo();
 				default:
-					DBHalt(_DSP "Unknown HW read 0x%04X\n", addr);
+					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
 					break;
 			}
 			return 0;
@@ -534,10 +534,10 @@ namespace DSP
 					break;
 
 				case (DspAddress)DspHardwareRegs::CMBH:
-					DolwinError(__FILE__, "DSP is not allowed to write processor Mailbox!");
+					DBHalt("DSP is not allowed to write processor Mailbox!");
 					break;
 				case (DspAddress)DspHardwareRegs::CMBL:
-					DolwinError(__FILE__, "DSP is not allowed to write processor Mailbox!");
+					DBHalt("DSP is not allowed to write processor Mailbox!");
 					break;
 				case (DspAddress)DspHardwareRegs::DMBH:
 					DspToCpuWriteHi(value);
@@ -546,7 +546,7 @@ namespace DSP
 					DspToCpuWriteLo(value);
 					break;
 				default:
-					DBHalt(_DSP "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					DBHalt("DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
 					break;
 			}
 			return;
@@ -585,7 +585,7 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBHalt (_DSP BRED "DspCore::DSPSetIntBit (not implemented!)\n");
+			DBHalt ("DspCore::DSPSetIntBit (not implemented!)\n");
 			Suspend();
 		}
 	}
@@ -612,13 +612,13 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		DBReport("DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+		DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
 		CpuToDspMailboxShadow[0] = value;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		DBReport("DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+		DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
@@ -641,13 +641,13 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		DBReport("DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
+		DBReport2(DbgChannel::DSP, "DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
 		DspToCpuMailboxShadow[0] = value;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		DBReport("DspHardwareRegs::DMBL = 0x%04X\n", value);
+		DBReport2(DbgChannel::DSP, "DspHardwareRegs::DMBL = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}
@@ -684,7 +684,7 @@ namespace DSP
 	{
 		uint8_t* ptr = nullptr;
 
-		DBReport("DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
+		DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
 			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
 
 		if (DmaRegs.control.Imem)

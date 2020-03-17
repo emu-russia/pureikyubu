@@ -261,8 +261,8 @@ void OSFillFPUContext(void)
 
 void __OSContextInit(void)
 {
-    DBReport( GREEN "HLE OS context driver installed.\n");
-    DBReport( GREEN "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
+    DBReport2(DbgChannel::HLE, "HLE OS context driver installed.\n");
+    DBReport2(DbgChannel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
 
     __OSDefaultThread = NULL;
     CPUWriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);

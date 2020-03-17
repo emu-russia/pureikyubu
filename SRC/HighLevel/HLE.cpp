@@ -5,7 +5,7 @@ HLEControl hle;
 
 // ---------------------------------------------------------------------------
 
-void os_ignore() { DBReport(GREEN "High level ignore (pc: %08X, %s)\n", PC, SYMName(PC)); }
+void os_ignore() { DBReport2(DbgChannel::HLE, "High level ignore (pc: %08X, %s)\n", PC, SYMName(PC)); }
 void os_ret0()   { GPR[3] = NULL; }
 void os_ret1()   { GPR[3] = 1; }
 void os_trap()   { PC = PPC_LR - 4; DBHalt("High level trap (pc: %08X)!\n", PC); }
@@ -99,10 +99,10 @@ void HLESetCall(const char * name, void (*call)())
 
 void HLEOpen()
 {
-    DBReport(
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
-        GREEN "Highlevel Initialization.\n"
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
+    DBReport2(DbgChannel::Info,
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
+        "Highlevel Initialization.\n"
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
     // set high level calls

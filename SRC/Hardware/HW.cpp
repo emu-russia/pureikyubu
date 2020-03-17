@@ -11,10 +11,10 @@ DSP::DspCore* dspCore;      // instance of dsp core
 
 void HWOpen(HWConfig* config)
 {
-    DBReport(
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
-        GREEN "Hardware Initialization.\n"
-        GREEN "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
+    DBReport2(DbgChannel::Info,
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
+        "Hardware Initialization.\n"
+        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
     MIOpen(config); // memory protection and 1T-SRAM interface

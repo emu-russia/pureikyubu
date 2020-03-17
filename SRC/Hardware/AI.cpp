@@ -88,7 +88,7 @@ void AIDINT()
     if(AIDCR & AIDCR_AIINTMSK)
     {
         PIAssertInt(PI_INTERRUPT_DSP);
-        DBReport(AI "AIDINT");
+        DBReport2(DbgChannel::AI, "AIDINT");
     }
 }
 
@@ -103,19 +103,19 @@ static void AIStartDMA(uint32_t addr, long bytes)
 {
     addr &= RAMMASK;
     AXPlayAudio(&mi.ram[addr], bytes);
-    DBReport(AI "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
+    DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
 }
 
 static void AIStopDMA()
 {
     AXPlayAudio(0, 0);
-    DBReport(AI "DMA stopped\n");
+    DBReport2(DbgChannel::AI, "DMA stopped\n");
 }
 
 static void AISetDMASampleRate(long rate)
 {
     AXSetRate(ai.dmaRate = rate);
-    DBReport(AI "DMA sample rate : %i\n", ai.dmaRate);
+    DBReport2(DbgChannel::AI, "DMA sample rate : %i\n", ai.dmaRate);
 }
 
 //
@@ -194,7 +194,7 @@ void AISINT()
         if(ai.cr & AICR_AIINTMSK)
         {
             PIAssertInt(PI_INTERRUPT_AI);
-            DBReport(AIS "AISINT\n");
+            DBReport2(DbgChannel::AIS, "AISINT\n");
         }
     }
 }
@@ -214,14 +214,14 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     // enable sample counter
     if(ai.cr & AICR_PSTAT)
     {
-        DBReport(AIS "start streaming clock\n");
+        DBReport2(DbgChannel::AIS, "start streaming clock\n");
     }
-    else DBReport(AIS "stop streaming clock\n");
+    else DBReport2(DbgChannel::AIS, "stop streaming clock\n");
 
     // reset sample counter
     if(ai.cr & AICR_SCRESET)
     {
-        DBReport(AIS "reset sample counter\n");
+        DBReport2(DbgChannel::AIS, "reset sample counter\n");
         ai.scnt = 0;
         ai.cr &= ~AICR_SCRESET;
     }
@@ -242,7 +242,7 @@ static void __fastcall write_dummy(uint32_t addr, uint32_t data) {}
 // interrupt trigger
 static void __fastcall write_it(uint32_t addr, uint32_t data)
 {
-    DBReport(AIS "set trigger to : 0x%08X\n", data);
+    DBReport2(DbgChannel::AIS, "set trigger to : 0x%08X\n", data);
     ai.it = data;
 }
 static void __fastcall read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it; }
@@ -266,8 +266,8 @@ static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = ds
 static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadHi(); }
 static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(); }
 
-static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }
-static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DolwinError(__FILE__, "Processor is not allowed to write DSP Mailbox!"); }
+static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
+static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
 
 // ---------------------------------------------------------------------------
 
@@ -295,7 +295,7 @@ void AIUpdate()
 
 void AIOpen(HWConfig* config)
 {
-    DBReport(CYAN "AI: Audio interface (DMA and DSP)\n");
+    DBReport2(DbgChannel::AI, "Audio interface (DMA and DSP)\n");
 
     // clear regs
     memset(&ai, 0, sizeof(AIControl));

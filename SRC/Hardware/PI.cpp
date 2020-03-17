@@ -41,7 +41,7 @@ static void printOut(uint32_t mask, const char *fix)
         if(mask & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%sINT ", intdesc(m));
     }
     *p = 0;
-    DBReport(PI "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
+    DBReport2(DbgChannel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
 }
 
 // generate interrupt (if pending)
@@ -112,7 +112,7 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
         }
         *p = 0;
 
-        DBReport(PI "unmasked : %s\n", buf);
+        DBReport2(DbgChannel::PI, "unmasked : %s\n", buf);
     }
 
     PICheckInterrupts();
@@ -162,7 +162,7 @@ static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
 
 void PIOpen(HWConfig* config)
 {
-    DBReport(CYAN "PI: Processor interface (interrupts)\n");
+    DBReport2(DbgChannel::PI, "Processor interface (interrupts)\n");
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
