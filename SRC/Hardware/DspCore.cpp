@@ -223,7 +223,8 @@ namespace DSP
 		{
 			if (regs.ac[i].bits != prevState->ac[i].bits)
 			{
-				DBReport("ac%i: 0x%llX\n", i, regs.ac[i]);
+				DBReport("ac%i: 0x%04X_%04X_%04X\n", i, 
+					regs.ac[i].h, regs.ac[i].m, regs.ac[i].l);
 			}
 		}
 
@@ -231,7 +232,8 @@ namespace DSP
 		{
 			if (regs.ax[i].bits != prevState->ax[i].bits)
 			{
-				DBReport("ax%i: 0x%llX\n", i, regs.ax[i]);
+				DBReport("ax%i: 0x%04X_%04X\n", i, 
+					regs.ax[i].h, regs.ax[i].l);
 			}
 		}
 

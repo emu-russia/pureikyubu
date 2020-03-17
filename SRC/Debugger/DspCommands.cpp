@@ -36,7 +36,7 @@ void dsp_help()
     DBReport("    dunbrk               - Clear all IMEM breakpoints\n");
     DBReport("    dpc                  - Set DSP program counter\n");
     DBReport("    dreset               - Issue DSP reset\n");
-    DBReport("    du                   - Disassemble some DSP instructions at program counter\n");
+    DBReport("    du                   - Disassemble some DSP instructions at pc / address\n");
     DBReport("    dst                  - Dump DSP call stack\n");
     DBReport("    difx                 - Dump DSP IFX (internal hardware)\n");
     DBReport("\n");

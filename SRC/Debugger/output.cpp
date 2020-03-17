@@ -266,17 +266,13 @@ static void log_console_output(char *txt)
     }
 }
 
-void con_add_roller_line(const char *txt, int err)
+void con_add_roller_line(const char *txt, ConColor col)
 {
     char line[0x1000], *ptr = (char *)txt;
     char html[0x1000] = { 0, };
 
-    // insert error color
-    if(err)
-    {
-        sprintf_s(line, sizeof(line), "\x1%c%s", ConColor::BRED, txt);
-        ptr = line;
-    }
+    sprintf_s(line, sizeof(line), "\x1%c%s", col, txt);
+    ptr = line;
 
     // roll console "roller" 1 line up
     MySpinLock::Lock(&con.reportLock);
@@ -482,7 +478,7 @@ void con_error(const char *txt, ...)
     {
         while(*p && *p == '\n')
         {
-            con_add_roller_line("", 0);
+            con_add_roller_line("", ConColor::BRED);
             p++;
         }
 
@@ -490,7 +486,7 @@ void con_error(const char *txt, ...)
         while(*p && *p != '\n') p++;
         *p = 0;
 
-        if(*s) con_add_roller_line(s, 1);
+        if(*s) con_add_roller_line(s, ConColor::BRED);
         p++;
     }
 
@@ -509,11 +505,8 @@ void con_print(ConColor col, const char *txt, ...)
     // emulator can do output, even if console closed
     if(!con.active) return;
 
-    buf[0] = 1;
-    buf[1] = (int)col;
-
     va_start(arg, txt);
-    vsprintf_s (buf + 2, sizeof(buf) - 2, txt, arg);
+    vsprintf_s (buf, sizeof(buf), txt, arg);
     va_end(arg);
     buf[strlen(buf) + 1] = 0;
 
@@ -522,7 +515,7 @@ void con_print(ConColor col, const char *txt, ...)
     {
         while(*p && *p == '\n')
         {
-            con_add_roller_line("", 0);
+            con_add_roller_line("", col);
             p++;
         }
 
@@ -530,7 +523,7 @@ void con_print(ConColor col, const char *txt, ...)
         while(*p && *p != '\n') p++;
         *p = 0;
 
-        if(*s) con_add_roller_line(s, 0);
+        if(*s) con_add_roller_line(s, col);
         p++;
     }
 }

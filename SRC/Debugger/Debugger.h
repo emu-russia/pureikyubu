@@ -6,7 +6,7 @@
 #include "GekkoDisasm.h"    // Gekko disassembler
 #include "DspDisasm.h"		// DSP disassembler
 
-// hardware messages output channel
+// Debug messages output channel
 enum class DbgChannel
 {
 	Void = 0,

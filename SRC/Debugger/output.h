@@ -113,7 +113,7 @@ void    con_fill_line(int y);
 void    con_clear_line(int y, uint16_t attr=7);
 void    con_printf_at(int x, int y, const char *txt, ...);
 void    con_set_autoscroll(bool value);
-void    con_add_roller_line(const char *txt, int err);
+void    con_add_roller_line(const char *txt, ConColor col);
 void    con_change_focus(FOCUSWND newfocus);
 void    con_fullscreen(bool full);
 void    con_update(uint32_t mask);
