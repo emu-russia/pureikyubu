@@ -539,6 +539,7 @@ namespace DSP
 				else
 				{
 					// LSL, LSR, ASL, ASR
+					bool rightShift = false;
 
 					switch ((info.instrBits >> 6) & 3)
 					{
@@ -547,12 +548,14 @@ namespace DSP
 							break;
 						case 1:
 							info.instr = DspInstruction::LSR;
+							rightShift = true;
 							break;
 						case 2:
 							info.instr = DspInstruction::ASL;
 							break;
 						case 3:
 							info.instr = DspInstruction::ASR;
+							rightShift = true;
 							break;
 					}
 					info.logic = true;
@@ -560,10 +563,25 @@ namespace DSP
 					uint16_t rr = ((info.instrBits & 0b100000000) != 0) ? 1 : 0;
 					uint8_t ii = info.instrBits & 0x3f;
 
+					// This strange shift behavior is suspiciously looks like bit rotation, but let it be as it is
+					if (rightShift)
+					{
+						if (ii & 0b100000)
+							ii |= 0b11000000;
+					}
+
 					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + rr), rr))
 						return false;
-					if (!AddImmOperand(info, DspParameter::Byte, ii))
-						return false;
+					if (rightShift)
+					{
+						if (!AddImmOperand(info, DspParameter::SignedByte, (int8_t)ii))
+							return false;
+					}
+					else
+					{
+						if (!AddImmOperand(info, DspParameter::Byte, ii))
+							return false;
+					}
 				}
 				break;
 			case 2:			// LRR / SRR

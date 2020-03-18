@@ -16,6 +16,8 @@
 #define AIS_IT              0x0C006C0C      // AIS interrupt timing
 
 // AI/DSP Control Register mask (bits 10 and 11 are unknown)
+#define AIDCR_UNKNOWN_11    (1 << 11)       // Clear bit11, clear bit10   ---\  
+#define AIDCR_UNKNOWN_10    (1 << 10)       // Wait until bit10 not clear <--/
 #define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
 #define AIDCR_DSPINTMSK     (1 << 8)        // DSP interrupt mask (ReadWrite)
 #define AIDCR_DSPINT        (1 << 7)        // DSP interrupt status (ReadWrite-Clear)

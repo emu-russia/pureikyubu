@@ -26,6 +26,7 @@
     <ClCompile Include="..\Debugger.cpp" />
     <ClCompile Include="..\DspCommands.cpp" />
     <ClCompile Include="..\DspDisasm.cpp" />
+    <ClCompile Include="..\GekkoCommands.cpp" />
     <ClCompile Include="..\GekkoDisasm.cpp" />
     <ClCompile Include="..\HwCommands.cpp" />
     <ClCompile Include="..\input.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="..\Debugger.h" />
     <ClInclude Include="..\DspCommands.h" />
     <ClInclude Include="..\DspDisasm.h" />
+    <ClInclude Include="..\GekkoCommands.h" />
     <ClInclude Include="..\GekkoDisasm.h" />
     <ClInclude Include="..\HwCommands.h" />
     <ClInclude Include="..\input.h" />

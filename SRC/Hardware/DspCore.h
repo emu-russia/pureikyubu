@@ -33,8 +33,16 @@ namespace DSP
 		struct
 		{
 			uint16_t	l;
-			uint16_t	m;
-			uint16_t	h;
+			union
+			{
+				struct
+				{
+					uint16_t	m;
+					uint16_t	h;
+				};
+				uint32_t hm;
+				int32_t shm;
+			};
 		};
 		uint64_t	bits;
 		int64_t		sbits;
@@ -50,6 +58,18 @@ namespace DSP
 		uint32_t	bits;
 		int32_t		sbits;
 	} DspShortAccumulator;
+
+	typedef union _DspProduct
+	{
+		struct
+		{
+			uint16_t l;
+			uint16_t m1;
+			uint16_t m2;
+			uint16_t h;
+		};
+		uint64_t bitsUnpacked;
+	} DspProduct;
 
 	typedef union _DspStatus
 	{
@@ -128,7 +148,7 @@ namespace DSP
 		std::vector<DspAddress> st[4];	///< Stack registers
 		DspLongAccumulator ac[2];		///< 40-bit Accumulators
 		DspShortAccumulator ax[2];		///< 32-bit Accumulators
-		uint64_t prod;		///< Product register
+		DspProduct prod;		///< Product register
 		uint16_t cr;		///< config
 		DspStatus sr;		///< status
 		DspAddress pc;		///< Program counter
@@ -191,8 +211,8 @@ namespace DSP
 		std::vector<DspAddress> breakpoints;		///< IMEM breakpoints
 		MySpinLock::LOCK breakPointsSpinLock;
 
-		const uint32_t GekkoTicksPerDspInstruction = 10;		///< How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 100;		///< How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 5;		///< How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 50;		///< How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 

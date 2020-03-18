@@ -113,11 +113,11 @@ namespace DSP
 			regs.ax[i].bits = 0;
 		}
 
-		regs.prod = 0;
+		regs.prod.bitsUnpacked = 0;
 		regs.cr = 0;
 		regs.sr.bits = 0;
 
-		regs.pc = IROM_START_ADDRESS;			// IROM start
+		regs.pc = IROM_START_ADDRESS;		// IROM start
 
 		ResetIfx();
 	}
@@ -218,9 +218,10 @@ namespace DSP
 			DBReport("pc: 0x%04X\n", regs.pc);
 		}
 
-		if (regs.prod != prevState->prod)
+		if (regs.prod.bitsUnpacked != prevState->prod.bitsUnpacked)
 		{
-			DBReport("prod: 0x%llX\n", regs.prod);
+			DBReport("prod: 0x%04X_%04X_%04X_%04X\n", 
+				regs.prod.h, regs.prod.m2, regs.prod.m1, regs.prod.l );
 		}
 
 		if (regs.cr != prevState->cr)
@@ -334,16 +335,16 @@ namespace DSP
 				regs.sr.bits = val;
 				break;
 			case (int)DspRegister::prodl:
-				// Read only
+				regs.prod.l = val;
 				break;
 			case (int)DspRegister::prodm1:
-				// Read only
+				regs.prod.m1 = val;
 				break;
 			case (int)DspRegister::prodh:
-				// Read only
+				regs.prod.h = val;
 				break;
 			case (int)DspRegister::prodm2:
-				// Read only
+				regs.prod.m2 = val;
 				break;
 			case (int)DspRegister::ax0l:
 				regs.ax[0].l = val;
@@ -405,17 +406,13 @@ namespace DSP
 			case (int)DspRegister::sr:
 				return regs.sr.bits;
 			case (int)DspRegister::prodl:
-				// TODO: Prod
-				return 0;
+				return regs.prod.l;
 			case (int)DspRegister::prodm1:
-				// TODO: Prod
-				return 0;
+				return regs.prod.m1;
 			case (int)DspRegister::prodh:
-				// TODO: Prod
-				return 0;
+				return regs.prod.h;
 			case (int)DspRegister::prodm2:
-				// TODO: Prod
-				return 0;
+				return regs.prod.m2;
 			case (int)DspRegister::ax0l:
 				return regs.ax[0].l;
 			case (int)DspRegister::ax0h:
@@ -611,7 +608,7 @@ namespace DSP
 		if (val)
 		{
 			DBReport2(DbgChannel::DSP, "Reset\n");
-			Exception(DspException::RESET);
+			HardReset();
 		}
 	}
 

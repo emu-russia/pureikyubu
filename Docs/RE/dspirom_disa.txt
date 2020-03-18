@@ -121,7 +121,7 @@ void DspMain ()			// 800E
 				ix1 = CMBL;
 				break;
 
-			// Set ix3  		(iram_length)
+			// Set ix3  		(iram_length bytes)
 			case 0xA002:
 				ac0m = WaitCpuMailbox();
 				ix3 = CMBL;

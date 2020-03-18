@@ -24,6 +24,7 @@ namespace Debug
         con.cmds["dst"] = cmd_dst;
         con.cmds["difx"] = cmd_difx;
         con.cmds["cpumbox"] = cmd_cpumbox;
+        con.cmds["dspmbox"] = cmd_dspmbox;
         con.cmds["dspint"] = cmd_dspint;
     }
 
@@ -47,6 +48,7 @@ namespace Debug
         DBReport("    dst                  - Dump DSP call stack\n");
         DBReport("    difx                 - Dump DSP IFX (internal hardware)\n");
         DBReport("    cpumbox              - Write message to CPU Mailbox\n");
+        DBReport("    dspmbox              - Read message from DSP Mailbox\n");
         DBReport("    dspint               - Send CPU->DSP interrupt\n");
         DBReport("\n");
     }
@@ -147,7 +149,7 @@ namespace Debug
         DSP::DspRegs regsChanged = dspCore->regs;
 
         regsChanged.pc = ~regsChanged.pc;
-        regsChanged.prod = ~regsChanged.prod;
+        regsChanged.prod.bitsUnpacked = ~regsChanged.prod.bitsUnpacked;
         regsChanged.cr = ~regsChanged.cr;
         regsChanged.sr.bits = ~regsChanged.sr.bits;
 
@@ -441,7 +443,7 @@ namespace Debug
             return;
         }
 
-        dspCore->DSPSetResetBit(1);
+        dspCore->HardReset();
     }
 
     // Disassemble some DSP instructions at program counter
@@ -568,6 +570,27 @@ namespace Debug
         
         dspCore->CpuToDspWriteHi(value >> 16);
         dspCore->CpuToDspWriteLo((uint16_t)value);
+    }
+
+    // Read message from DSP Mailbox
+    void cmd_dspmbox(std::vector<std::string>& args)
+    {
+        if (!dspCore)
+        {
+            DBReport("DspCore not ready\n");
+            return;
+        }
+
+        uint32_t value = 0;
+
+        value |= dspCore->DspToCpuReadHi() << 16;
+        if ((value & 0x80000000) == 0)
+        {
+            DBReport("No DSP message.\n");
+            return;
+        }
+        value |= dspCore->DspToCpuReadLo();
+        DBReport("DSP Message: 0x%08X\n", value);
     }
 
     // Send CPU->DSP interrupt

@@ -37,3 +37,4 @@ void    cmd_u(std::vector<std::string>& args);			// set disassembly address
 
 #include "DspCommands.h"    // dsp command handlers
 #include "HwCommands.h"    // HW debug command handlers
+#include "GekkoCommands.h"		// Processor debug commands

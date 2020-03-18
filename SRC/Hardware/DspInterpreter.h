@@ -178,13 +178,17 @@ namespace DSP
 		void LDAXM(AnalyzeInfo& info);
 		void LDAXNM(AnalyzeInfo& info);
 
+		// Helpers
+
 		static int64_t SignExtend40(int64_t);
 		bool Condition(ConditionCode cc);
 		void Flags40(int64_t ac);
 		void Flags(DspLongAccumulator ac);
 		void Dispatch(AnalyzeInfo& info);
+		void SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count);
+		bool CheckLoop();
 
-		// TODO: Cache analyzeinfo for IROM addresses
+		// TODO: Cache analyzeinfo?
 
 	public:
 		DspInterpreter(DspCore * parent);

@@ -23,6 +23,7 @@ namespace Debug
 	void cmd_dst(std::vector<std::string>& args);	// Dump DSP call stack
 	void cmd_difx(std::vector<std::string>& args);	// Dump DSP IFX
 	void cmd_cpumbox(std::vector<std::string>& args);	// Write message to CPU Mailbox
+	void cmd_dspmbox(std::vector<std::string>& args);	// Read message from DSP Mailbox
 	void cmd_dspint(std::vector<std::string>& args);	// Send CPU->DSP interrupt
 	void cmd_dreg(std::vector<std::string>& args);	// Modify DSP register
 }

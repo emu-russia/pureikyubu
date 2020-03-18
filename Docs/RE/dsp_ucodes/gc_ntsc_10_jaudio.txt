@@ -60,6 +60,8 @@ Start()			// 0010
 	r8 = r9 = r10 = r11 = 0xFFFF;
 	config = 0xFF;
 
+	// Clear DRAM (8 KBytes)
+
 	ac1m = 0x1000;
 	ar0 = 0;
 	while (ac1m--)
@@ -88,16 +90,33 @@ Start()			// 0010
 003B 1F FE       	mrr  	ac1.m, ac0.m
 003C 03 40 00 FF 	andi 	ac1.m, #0x00FF
 003E 00 FF 03 44 	sr   	$0x0344, ac1.m
-0040 14 79       	lsr  	ac0, #0x39
+0040 14 79       	lsr  	ac0, -7
 0041 02 40 00 7E 	andi 	ac0.m, #0x007E
 0043 02 00 00 62 	addi 	ac0.m, #0x0062 				// Switch
 0045 00 FE 03 43 	sr   	$0x0343, ac0.m
 0047 1C 1E       	mrr  	ar0, ac0.m
 0048 17 0F       	jmpr 	ar0
 
+```c++
+void MainLoop() 		// 0031
+{
+	// Wait CPU message
+	ac0 = ac1 = 0;
+	while ( ((ac0m = CMBH) & 0x8000) == 0 );     // CMBH: | 10[cc cccc] [pppp pppp] |
 
-## Case 0
+	*(0x0345) = CMBL;
 
+	ac1m = ac0m & 0xFF;
+	*(0x0344) = ac1m;	 			// pp (Lower 8 bits of CMBH)
+
+	ac0m = 0x0062 + (ac0m >> 7) & 0x7E; 		// Case (cc). Shift with a mask automatically multiply case by 2 for the correct jump
+	*(0x0343) = ac0m; 		// Jump Table 1 case address
+
+	jmp  ac0m; 			// Switch-case
+}
+```
+
+## Case 0 (Reply OK)
 
 0049 00 9E 80 00 	lri  	ac0.m, #0x8000
 004B 00 DC 03 43 	lr   	ac0.l, $0x0343
@@ -124,8 +143,9 @@ Start()			// 0010
 005F 02 9C 00 5C 	jnok 	$0x005C
 0061 02 DF       	ret  	
 
+## Jump Table 1
 
-0062 02 9F 00 49 	j    	$0x0049 			// 0
+0062 02 9F 00 49 	j    	$0x0049 			// 0  (Nothing, reply OK)
 0064 02 9F 02 BD 	j    	$0x02BD 			// 1
 0066 02 9F 04 70 	j    	$0x0470 			// 2
 0068 02 9F 00 31 	j    	$0x0031 			// 3  (MainLoop)
@@ -152,6 +172,8 @@ Start()			// 0010
 0085 2F CB       	srs  	$(DSBL), ac1.m
 0086 02 BF 00 8F 	call 	$0x008F
 0088 02 DF       	ret  	
+
+
 0089 19 3E       	lrri 	ac0.m, @ar1
 008A 19 3C       	lrri 	ac0.l, @ar1
 008B 2F CD       	srs  	$(DSPA), ac1.m
@@ -215,7 +237,7 @@ Start()			// 0010
 00C8 2C D7       	srs  	$(ACEAL), ac0.l
 00C9 1F DA       	mrr  	ac0.m, ax1.l
 00CA 1F 98       	mrr  	ac0.l, ax0.l
-00CB 14 7F       	lsr  	ac0, #0x3F
+00CB 14 7F       	lsr  	ac0, -1
 00CC 2E D8       	srs  	$(ACCAH), ac0.m
 00CD 2C D9       	srs  	$(ACCAL), ac0.l
 00CE 1F 40       	mrr  	ax1.l, ar0
@@ -247,7 +269,7 @@ Start()			// 0010
 00EF 02 9F 00 49 	j    	$0x0049
 
 
-## Case 4
+## Case 5
 
 00F1 00 80 03 46 	lri  	ar0, #0x0346
 00F3 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -336,7 +358,7 @@ Start()			// 0010
 014B 81 00       	clr  	ac0             	     	
 014C 00 DE 04 02 	lr   	ac0.m, $0x0402
 014E 00 FE 03 62 	sr   	$0x0362, ac0.m
-0150 14 74       	lsr  	ac0, #0x34
+0150 14 74       	lsr  	ac0, -12
 0151 1F 7E       	mrr  	ax1.h, ac0.m
 0152 1F 3C       	mrr  	ax0.h, ac0.l
 0153 89 00       	clr  	ac1             	     	
@@ -371,7 +393,7 @@ Start()			// 0010
 017C 1F E0       	mrr  	ac1.m, ar0
 017D 81 00       	clr  	ac0             	     	
 017E 00 DE 03 62 	lr   	ac0.m, $0x0362
-0180 14 74       	lsr  	ac0, #0x34
+0180 14 74       	lsr  	ac0, -12
 0181 1F 7E       	mrr  	ax1.h, ac0.m
 0182 1F 3C       	mrr  	ax0.h, ac0.l
 0183 8F 00       	set40	                	     	
@@ -531,6 +553,8 @@ Start()			// 0010
 0242 00 FC 04 18 	sr   	$0x0418, ac0.l
 0244 02 9F 04 E7 	j    	$0x04E7
 
+## Jump Table 2
+
 0246 02 9F 02 57 	j    	$0x0257
 0248 02 9F 02 8F 	j    	$0x028F
 024A 02 9F 02 77 	j    	$0x0277
@@ -552,7 +576,7 @@ Start()			// 0010
 0262 02 7D       	ifok 	
 0263 1B 19       	srri 	@ar0, ax0.h
 0264 48 00       	addax	ac0, ax0        	     	
-0265 14 7F       	lsr  	ac0, #0x3F
+0265 14 7F       	lsr  	ac0, -1
 0266 02 DF       	ret  	
 0267 14 01       	lsl  	ac0, #0x01
 0268 00 9B C0 00 	lri  	ax1.h, #0xC000
@@ -564,7 +588,7 @@ Start()			// 0010
 0272 02 7D       	ifok 	
 0273 1B 19       	srri 	@ar0, ax0.h
 0274 48 00       	addax	ac0, ax0        	     	
-0275 14 7F       	lsr  	ac0, #0x3F
+0275 14 7F       	lsr  	ac0, -1
 0276 02 DF       	ret  	
 0277 14 01       	lsl  	ac0, #0x01
 0278 00 81 0C A0 	lri  	ar1, #0x0CA0
@@ -582,7 +606,7 @@ Start()			// 0010
 028A 49 00       	addax	ac1, ax0        	     	
 028B 1F E2       	mrr  	ac1.m, ar2
 028C 4C 39       	add  	ac0, ac1        	s    	@ar1, ac1.m
-028D 14 7F       	lsr  	ac0, #0x3F
+028D 14 7F       	lsr  	ac0, -1
 028E 02 DF       	ret  	
 028F 10 50       	loopi	#0x50
 0290 48 20       	addax	ac0, ax0        	s    	@ar0, ac0.l
@@ -607,7 +631,7 @@ Start()			// 0010
 02A9 34 0E       	andr 	ac0.m, ax0.h    	nr   	ar2, ix2
 02AA 1B 19       	srri 	@ar0, ax0.h
 02AB 1F C2       	mrr  	ac0.m, ar2
-02AC 14 7A       	lsr  	ac0, #0x3A
+02AC 14 7A       	lsr  	ac0, -6
 02AD 02 DF       	ret  	
 02AE 10 50       	loopi	#0x50
 02AF 1B 18       	srri 	@ar0, ax0.l
@@ -620,7 +644,7 @@ Start()			// 0010
 02B8 48 A2       	addax	ac0, ax0        	sl   	ac0.m, ax1.l
 02B9 48 A2       	addax	ac0, ax0        	sl   	ac0.m, ax1.l
 02BA 48 A2       	addax	ac0, ax0        	sl   	ac0.m, ax1.l
-02BB 14 6F       	lsr  	ac0, #0x2F
+02BB 14 6F       	lsr  	ac0, -17
 02BC 02 DF       	ret  	
 
 
@@ -704,6 +728,8 @@ Start()			// 0010
 0335 1B 7E       	srri 	@ar3, ac0.m
 0336 1B 7A       	srri 	@ar3, ax1.l
 0337 02 DF       	ret  	
+
+
 0338 19 1E       	lrri 	ac0.m, @ar0
 0339 19 1A       	lrri 	ax1.l, @ar0
 033A 00 7F 03 3F 	bloop	ac1.m, $0x033F
@@ -717,7 +743,7 @@ Start()			// 0010
 
 
 0342 8A 00       	m2   	                	     	
-0343 15 7F       	lsr  	ac1, #0x3F
+0343 15 7F       	lsr  	ac1, -1
 0344 1C 20       	mrr  	ar1, ar0
 0345 1C 03       	mrr  	ar0, ar3
 0346 19 3A       	lrri 	ax1.l, @ar1
@@ -733,7 +759,7 @@ Start()			// 0010
 
 
 
-0351 00 83 FF A0 	lri  	ar3, #0xFFA0
+0351 00 83 FF A0 	lri  	ar3, #0xFFA0   				// Unknown hardware FFA0
 0353 00 80 03 00 	lri  	ar0, #0x0300
 0355 00 9F 00 0E 	lri  	ac1.m, #0x000E
 0357 11 08 03 5C 	bloopi	#0x08, $0x035C
@@ -1035,7 +1061,7 @@ Start()			// 0010
 0516 13 00       	sbclr	6
 0517 1C 7E       	mrr  	ar3, ac0.m
 0518 19 5E       	lrri 	ac0.m, @ar2
-0519 14 FA       	asr  	ac0, #0x3A
+0519 14 FA       	asr  	ac0, -6
 051A 1F 5E       	mrr  	ax1.l, ac0.m
 051B 1F 1C       	mrr  	ax0.l, ac0.l
 051C 18 5F       	lrr  	ac1.m, @ar2
@@ -1258,7 +1284,7 @@ Start()			// 0010
 0650 22 1C       	lrs  	ax1.l, $0x001C
 0651 20 1D       	lrs  	ax0.l, $0x001D
 0652 48 00       	addax	ac0, ax0        	     	
-0653 14 7C       	lsr  	ac0, #0x3C
+0653 14 7C       	lsr  	ac0, -4
 0654 2E 1E       	srs  	$0x001E, ac0.m
 0655 2C 1F       	srs  	$0x001F, ac0.l
 0656 23 40       	lrs  	ax1.h, $0x0040
@@ -1285,7 +1311,7 @@ Start()			// 0010
 066C 81 00       	clr  	ac0             	     	
 066D 26 4A       	lrs  	ac0.m, $0x004A
 066E 24 4B       	lrs  	ac0.l, $0x004B
-066F 14 7C       	lsr  	ac0, #0x3C
+066F 14 7C       	lsr  	ac0, -4
 0670 58 00       	subax	ac0, ax0        	     	
 0671 02 95 06 7A 	jeq  	$0x067A
 0673 02 BF 06 EC 	call 	$0x06EC
@@ -1397,7 +1423,7 @@ Start()			// 0010
 0705 02 40 00 1E 	andi 	ac0.m, #0x001E
 0707 02 00 03 00 	addi 	ac0.m, #0x0300
 0709 1C 3E       	mrr  	ar1, ac0.m
-070A 15 7C       	lsr  	ac1, #0x3C
+070A 15 7C       	lsr  	ac1, -4
 070B 03 40 00 0F 	andi 	ac1.m, #0x000F
 070D 0A 11       	lris 	ax1.l, 17
 070E 55 00       	subr 	ac1, ax1.l      	     	
@@ -1732,12 +1758,12 @@ Start()			// 0010
 08C3 26 4A       	lrs  	ac0.m, $0x004A
 08C4 24 4B       	lrs  	ac0.l, $0x004B
 08C5 5A 00       	subax	ac0, ax1        	     	
-08C6 14 7C       	lsr  	ac0, #0x3C
+08C6 14 7C       	lsr  	ac0, -4
 08C7 2E 22       	srs  	$0x0022, ac0.m
 08C8 2C 23       	srs  	$0x0023, ac0.l
 08C9 26 1C       	lrs  	ac0.m, $0x001C
 08CA 24 1D       	lrs  	ac0.l, $0x001D
-08CB 14 7C       	lsr  	ac0, #0x3C
+08CB 14 7C       	lsr  	ac0, -4
 08CC 22 40       	lrs  	ax1.l, $0x0040
 08CD C0 10       	mulc 	ac0.m, ax0.h    	mv   	ax0.l, ac0.l
 08CE 96 00       	mulmv	ax0.l, ax0.h, ac0	     	
@@ -1762,7 +1788,7 @@ Start()			// 0010
 08E4 02 40 00 1E 	andi 	ac0.m, #0x001E
 08E6 02 00 03 00 	addi 	ac0.m, #0x0300
 08E8 1C 3E       	mrr  	ar1, ac0.m
-08E9 15 7C       	lsr  	ac1, #0x3C
+08E9 15 7C       	lsr  	ac1, -4
 08EA 03 40 00 0F 	andi 	ac1.m, #0x000F
 08EC 0A 11       	lris 	ax1.l, 17
 08ED 55 00       	subr 	ac1, ax1.l      	     	
