@@ -81,7 +81,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
                 DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", size);
 
                 // Dump it
-#if 1
+#if 0
                 FileSave("Data\\dsp_stub.bin", dspCore->iram, size);
 #endif
             }
