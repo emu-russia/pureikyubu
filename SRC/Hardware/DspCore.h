@@ -78,6 +78,8 @@ namespace DSP
 
 	} DspStatus;
 
+	#pragma pack (pop)
+
 	enum class DspRegister
 	{
 		ar0 = 0,		///< Addressing register 0 
@@ -116,8 +118,6 @@ namespace DSP
 		ac0m,			///< 40-bit Accumulator 0 (mid)
 		ac1m,			///< 40-bit Accumulator 1 (mid)
 	};
-
-	#pragma pack (pop)
 
 	typedef struct _DspRegs
 	{
@@ -168,6 +168,20 @@ namespace DSP
 		ACGAN = 0xFFDE,
 
 		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
+	};
+
+	// Known DSP exceptions
+
+	enum class DspException
+	{
+		RESET = 0,
+		STOVF,			// Stack underflow/overflow
+		Unknown2,
+		Unknown3,
+		Unknown4,
+		ACCOV,			// Accelerator address overflow
+		Unknown6,
+		INT,			// External interrupt (from CPU)
 	};
 
 	class DspInterpreter;
@@ -247,7 +261,9 @@ namespace DSP
 		DspCore(HWConfig* config);
 		~DspCore();
 
-		void Reset();
+		void Exception(DspException id);
+		void ReturnFromException();
+		void HardReset();
 
 		void Run();
 		bool IsRunning() { return running; }

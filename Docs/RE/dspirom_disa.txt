@@ -4,11 +4,11 @@
 
 ```
 8000 00 92 00 FF 	lri  	config, #0x00FF
-8002 12 06       	sbset	#0x0C
-8003 12 02       	sbset	#0x08
-8004 12 03       	sbset	#0x09
-8005 12 04       	sbset	#0x0A
-8006 12 05       	sbset	#0x0B
+8002 12 06       	sbset	12
+8003 12 02       	sbset	8
+8004 12 03       	sbset	9
+8005 12 04       	sbset	10
+8006 12 05       	sbset	11
 8007 8E 00       	clr40	                	     	
 8008 8C 00       	clr15	                	     	
 8009 8B 00       	m0   	                	     	

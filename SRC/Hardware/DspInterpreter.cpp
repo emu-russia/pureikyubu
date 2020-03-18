@@ -162,6 +162,11 @@ namespace DSP
 		}
 	}
 
+	void DspInterpreter::RTI(AnalyzeInfo& info)
+	{
+		core->ReturnFromException();
+	}
+
 	void DspInterpreter::SBSET(AnalyzeInfo& info)
 	{
 		core->regs.sr.bits |= (1 << info.ImmOperand.Byte);
@@ -301,6 +306,7 @@ namespace DSP
 			case DspInstruction::MRR: MRR(info); break;
 
 			case DspInstruction::RETcc: RETcc(info); break;
+			case DspInstruction::RTI: RTI(info); break;
 
 			case DspInstruction::SBSET: SBSET(info); break;
 			case DspInstruction::SBCLR: SBCLR(info); break;

@@ -10,7 +10,7 @@ namespace DSP
 		threadHandle = CreateThread(NULL, 0, DspThreadProc, this, CREATE_SUSPENDED, &threadId);
 		assert(threadHandle != INVALID_HANDLE_VALUE);
 
-		Reset();
+		HardReset();
 
 		interp = new DspInterpreter(this);
 		assert(interp);
@@ -73,7 +73,22 @@ namespace DSP
 		return 0;
 	}
 
-	void DspCore::Reset()
+	void DspCore::Exception(DspException id)
+	{
+		regs.st[0].push_back(regs.pc);
+		regs.st[1].push_back((DspAddress)regs.sr.bits);
+		regs.pc = (DspAddress)id * 2;
+	}
+
+	void DspCore::ReturnFromException()
+	{
+		regs.sr.bits = (uint16_t)regs.st[1].back();
+		regs.st[1].pop_back();
+		regs.pc = regs.st[0].back();
+		regs.st[0].pop_back();
+	}
+
+	void DspCore::HardReset()
 	{
 		DBReport2(DbgChannel::DSP, "DspCore::Reset");
 
@@ -595,7 +610,8 @@ namespace DSP
 	{
 		if (val)
 		{
-			Reset();
+			DBReport2(DbgChannel::DSP, "Reset\n");
+			Exception(DspException::RESET);
 		}
 	}
 
@@ -608,8 +624,8 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBHalt ("DspCore::DSPSetIntBit (not implemented!)\n");
-			Suspend();
+			DBReport2(DbgChannel::DSP, "Interrupt\n");
+			Exception(DspException::INT);
 		}
 	}
 
