@@ -24,8 +24,8 @@
 
 // AIDCR bits (bits 10 and 11 are unknown)
 #define AIDCR_DSPDMA        (1 << 9)        // dsp task dma in progress, if set
-#define AIDCR_DSPINTMSK     (1 << 8)        // * interrupt mask   (RW)
-#define AIDCR_DSPINT        (1 << 7)        // * interrupt active (RWC)
+#define AIDCR_DSPINTMSK     (1 << 8)        // dsp interrupt mask   (RW)
+#define AIDCR_DSPINT        (1 << 7)        // dsp interrupt active (RWC)
 #define AIDCR_ARINTMSK      (1 << 6)
 #define AIDCR_ARINT         (1 << 5)
 #define AIDCR_AIINTMSK      (1 << 4)
@@ -34,14 +34,15 @@
 #define AIDCR_PIINT         (1 << 1)        // assert DSP PI interrupt
 #define AIDCR_RES           (1 << 0)        // reset DSP
 
-static  u16 DSPInitCode[0x40] = {
+static  u16 DSPInitCode[0x40] = {       // 128 bytes
     0x029F, 0x0010, 0x029F, 0x0033, 0x029F, 0x0034, 0x029F, 0x0035,
     0x029F, 0x0036, 0x029F, 0x0037, 0x029F, 0x0038, 0x029F, 0x0039,
     0x1206, 0x1203, 0x1204, 0x1205, 0x0080, 0x8000, 0x0088, 0xFFFF,
     0x0084, 0x1000, 0x0064, 0x001D, 0x0218, 0x0000, 0x8100, 0x1C1E,
     0x0044, 0x1B1E, 0x0084, 0x0800, 0x0064, 0x0027, 0x191E, 0x0000,
     0x00DE, 0xFFFC, 0x02A0, 0x8000, 0x029C, 0x0028, 0x16FC, 0x0054,
-    0x16FD, 0x4348, 0x0021, 0x02FF, 0x02FF, 0x02FF, 0x02FF, 0x02FF
+    0x16FD, 0x4348, 0x0021, 0x02FF, 0x02FF, 0x02FF, 0x02FF, 0x02FF,
+    0x02FF, 0x02FF, 0x02FF, 0x02FF, 0x0000, 0x0000, 0x0000, 0x0000,
 };
 
 // ---------------------------------------------------------------------------
@@ -68,7 +69,7 @@ void __OSInitAudioSystem()
     // send DSP initialization ucode to ARAM at offset 0
     AR_DMA_MMADDR = OSCachedToPhysical(0x81000000);
     AR_DMA_ARADDR = 0;
-    AR_DMA_CNT = 32;
+    AR_DMA_CNT = 32;        // Actually 32 * 4 bytes
 
     // wait DMA complete
     u16 old = AIDCR;    // keep AIDCR_DSPDMA
@@ -82,7 +83,7 @@ void __OSInitAudioSystem()
     // send DSP initialization ucode to ARAM at offset 0 (again)
     AR_DMA_MMADDR = OSCachedToPhysical(0x81000000);
     AR_DMA_ARADDR = 0;
-    AR_DMA_CNT = 32;
+    AR_DMA_CNT = 32;        // Actually 32 * 4 bytes
 
     // wait DMA complete
     u16 old = AIDCR;    // keep AIDCR_DSPDMA

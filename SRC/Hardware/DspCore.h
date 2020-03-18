@@ -147,6 +147,7 @@ namespace DSP
 		DSCR = 0xFFC9,		///< DMA control 
 		DSBL = 0xFFCB,		///< Block size 
 
+		ACDAT2 = 0xFFD3,	///< Another accelerator data (R/W)
 		ACSAH = 0xFFD4,		///< Accelerator start address H 
 		ACSAL = 0xFFD5,		///< Accelerator start address L 
 		ACEAH = 0xFFD6,		///< Accelerator end address H 

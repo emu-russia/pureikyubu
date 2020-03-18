@@ -1,19 +1,19 @@
-// Disassembled GameCube NTSC 1.0 BIOS JAudio ucode
+# Disassembled GameCube NTSC 1.0 BIOS JAudio ucode
 
 0000 02 9F 00 10 	j    	$0x0010
 0002 00 00       	nop  	
 0003 00 00       	nop  	
-0004 02 FF       	??? 02FF
+0004 02 FF       	rti
 0005 00 00       	nop  	
-0006 02 FF       	??? 02FF
+0006 02 FF       	rti
 0007 00 00       	nop  	
-0008 02 FF       	??? 02FF
+0008 02 FF       	rti
 0009 00 00       	nop  	
-000A 02 FF       	??? 02FF
+000A 02 FF       	rti
 000B 00 00       	nop  	
-000C 02 FF       	??? 02FF
+000C 02 FF       	rti
 000D 00 00       	nop  	
-000E 02 FF       	??? 02FF
+000E 02 FF       	rti
 000F 00 00       	nop  	
 
 ## Start
@@ -43,6 +43,38 @@
 002C 26 FC       	lrs  	ac0.m, $(DMBH)
 002D 02 A0 80 00 	tclr 	ac0.m, #0x8000
 002F 02 9C 00 2C 	jnok 	$0x002C
+
+```c++
+Start()			// 0010
+{
+	sr.hwz = 0;
+	sr.ie = 0;			// Interrupt disable
+	sr.unk10 = 1;
+	sr.eie = 0;			// External interrupt disable
+	sr.unk12 = 0;
+
+	clr40();
+	clr15();
+	m0();
+
+	r8 = r9 = r10 = r11 = 0xFFFF;
+	config = 0xFF;
+
+	ac1m = 0x1000;
+	ar0 = 0;
+	while (ac1m--)
+	{
+		*ar0++ = 0;
+	}
+
+	ac0m = CMBL; 		// Discard unreplied CPU message
+
+	DMBH = 0x8888;		// "Anyone?" message from ucode
+	DMBL = 0x1111;
+
+	while ( (DMBH & 0x8000) != 0 ) ;
+}
+```
 
 ## MainLoop
 
@@ -157,7 +189,7 @@
 00AE 02 40 7F FF 	andi 	ac0.m, #0x7FFF
 00B0 02 BF 00 BA 	call 	$0x00BA
 00B2 00 7A 00 B8 	bloop	ax1.l, $0x00B8
-00B4 26 D3       	lrs  	ac0.m, $(UnkHW_FFD3)
+00B4 26 D3       	lrs  	ac0.m, $(ACDAT2)
 00B5 1B 3E       	srri 	@ar1, ac0.m
 00B6 00 00       	nop  	
 00B7 00 00       	nop  	
@@ -194,7 +226,7 @@
 00D4 02 BF 00 BA 	call 	$0x00BA
 00D6 00 7A 00 DD 	bloop	ax1.l, $0x00DD
 00D8 19 3E       	lrri 	ac0.m, @ar1
-00D9 2E D3       	srs  	$(UnkHW_FFD3), ac0.m
+00D9 2E D3       	srs  	$(ACDAT2), ac0.m
 00DA 00 00       	nop  	
 00DB 00 00       	nop  	
 00DC 00 00       	nop  	
@@ -1357,7 +1389,7 @@
 06F8 00 9F 00 05 	lri  	ac1.m, #0x0005 					// AC Mode
 06FA 02 BF 01 03 	call 	$0x0103
 06FC 00 92 00 04 	lri  	config, #0x0004
-06FE 00 80 FF D3 	lri  	ar0, #0xFFD3
+06FE 00 80 FF D3 	lri  	ar0, #0xFFD3       			// ACDAT2
 0700 00 84 00 00 	lri  	ix0, #0x0000
 0702 19 9E       	lrrn 	ac0.m, @ar0
 0703 1F FE       	mrr  	ac1.m, ac0.m
@@ -1722,7 +1754,7 @@
 08D9 2E 04       	srs  	$0x0004, ac0.m
 08DA 02 DF       	ret  	
 08DB 00 FF 03 60 	sr   	$0x0360, ac1.m
-08DD 00 80 FF D3 	lri  	ar0, #0xFFD3
+08DD 00 80 FF D3 	lri  	ar0, #0xFFD3 				// ACDAT2
 08DF 00 84 00 00 	lri  	ix0, #0x0000
 08E1 19 9E       	lrrn 	ac0.m, @ar0
 08E2 1F FE       	mrr  	ac1.m, ac0.m

@@ -613,9 +613,17 @@ namespace Debug
         {
             std::string reglist = "";
 
+            int regscount = 0;
+
             for (int i = 0; i < _countof(dspRegNames); i++)
             {
                 reglist += std::string(dspRegNames[i]) + " ";
+                regscount++;
+                if (regscount >= 8)
+                {
+                    regscount = 0;
+                    reglist += "\n";
+                }
             }
 
             DBReport("syntax: dreg <register> <value>\n");

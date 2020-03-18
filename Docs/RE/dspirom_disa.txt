@@ -1,6 +1,6 @@
 # Disassembled dsp_irom.bin
 
-Send sync mail (0x8071FEED).
+## Send sync mail (0x8071FEED).
 
 ```
 8000 00 92 00 FF 	lri  	config, #0x00FF

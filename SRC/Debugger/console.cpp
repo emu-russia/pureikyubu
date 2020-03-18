@@ -47,6 +47,7 @@ void con_open()
     // clear internal structures
     memset(&roll, 0, sizeof(ROLLControl));
     memset(&wind, 0, sizeof(WINDControl));
+    memset(con.buf, 0, sizeof(con.buf));
 
     cmd_init_handlers();
 

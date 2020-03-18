@@ -329,6 +329,7 @@ namespace DSP
 			case DspHardwareRegs::DSCR: text = "DSCR"; break;
 			case DspHardwareRegs::DSBL: text = "DSBL"; break;
 
+			case DspHardwareRegs::ACDAT2: text = "ACDAT2"; break;
 			case DspHardwareRegs::ACSAH: text = "ACSAH"; break;
 			case DspHardwareRegs::ACSAL: text = "ACSAL"; break;
 			case DspHardwareRegs::ACEAH: text = "ACEAH"; break;

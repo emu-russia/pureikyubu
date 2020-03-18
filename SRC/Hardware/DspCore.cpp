@@ -452,6 +452,11 @@ namespace DSP
 		{
 			return &drom[(addr - DROM_START_ADDRESS) << 1];
 		}
+		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + IROM_SIZE))
+		{
+			// In the OSInitAudioSystem stub code IROM probing was noticed, so we conclude that IROM is also accessible by DMEM readings
+			return &irom[(addr - IROM_START_ADDRESS) << 1];
+		}
 		else
 		{
 			return nullptr;
@@ -495,6 +500,10 @@ namespace DSP
 					return DspToCpuReadHi();
 				case (DspAddress)DspHardwareRegs::DMBL:
 					return DspToCpuReadLo();
+
+				case (DspAddress)DspHardwareRegs::DIRQ:
+					break;
+
 				default:
 					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
 					break;
@@ -509,6 +518,7 @@ namespace DSP
 			return MEMSwapHalf(*(uint16_t*)ptr);
 		}
 
+		DBHalt("DSP Unmapped DMEM read 0x%04X\n", addr);
 		return 0;
 	}
 
@@ -547,6 +557,14 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DMBL:
 					DspToCpuWriteLo(value);
 					break;
+
+				case (DspAddress)DspHardwareRegs::DIRQ:
+					if (value & 1)
+					{
+						DSPAssertInt();
+					}
+					break;
+
 				default:
 					DBHalt("DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
 					break;
@@ -561,8 +579,11 @@ namespace DSP
 			if (ptr)
 			{
 				*(uint16_t*)ptr = MEMSwapHalf(value);
+				return;
 			}
 		}
+
+		DBHalt("DSP Unmapped DMEM write 0x%04X = 0x%04X\n", addr, value);
 	}
 
 	#pragma endregion "Memory Engine"

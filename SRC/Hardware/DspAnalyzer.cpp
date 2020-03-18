@@ -231,6 +231,7 @@ namespace DSP
 			//JMP cc * 	0000 00[1]0 [1001] cccc aaaa aaaa aaaa aaaa
 			//CALL cc * 0000 00[1]0 [1011] cccc aaaa aaaa aaaa aaaa
 			//RET cc * 	0000 00[1]0 [1101] cccc 
+			//RTI		0000 00[1]0 [1111] 1111
 			//ADDI * 	0000 00[1]d [0000] 0000 iiii iiii iiii iiii 
 			//XORI * 	0000 00[1]d [0010] 0000 iiii iiii iiii iiii 
 			//ANDI * 	0000 00[1]d [0100] 0000 iiii iiii iiii iiii 
@@ -306,6 +307,15 @@ namespace DSP
 					info.instr = DspInstruction::RETcc;
 					info.cc = (ConditionCode)(info.instrBits & 0xf);
 					info.flowControl = true;
+					break;
+				}
+				case 0b1111:		// RTI
+				{
+					if ((info.instrBits & 0xf) == 0xf)
+					{
+						info.instr = DspInstruction::RTI;
+						info.flowControl = true;
+					}
 					break;
 				}
 				case 0b0000:		// ADDI
