@@ -441,7 +441,7 @@ namespace Debug
             return;
         }
 
-        dspCore->Reset();
+        dspCore->DSPSetResetBit(1);
     }
 
     // Disassemble some DSP instructions at program counter
