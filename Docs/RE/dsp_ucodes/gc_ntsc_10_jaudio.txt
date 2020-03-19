@@ -1,4 +1,5 @@
 # Disassembled GameCube NTSC 1.0 BIOS JAudio ucode
+# DspUcode_1280_.bin
 
 0000 02 9F 00 10 	j    	$0x0010
 0002 00 00       	nop  	
@@ -80,6 +81,7 @@ Start()			// 0010
 
 ## MainLoop
 
+```
 0031 81 00       	clr  	ac0             	     	
 0032 89 00       	clr  	ac1             	     	
 0033 26 FE       	lrs  	ac0.m, $(CMBH)
@@ -96,6 +98,7 @@ Start()			// 0010
 0045 00 FE 03 43 	sr   	$0x0343, ac0.m
 0047 1C 1E       	mrr  	ar0, ac0.m
 0048 17 0F       	jmpr 	ar0
+```
 
 ```c++
 void MainLoop() 		// 0031
@@ -118,14 +121,16 @@ void MainLoop() 		// 0031
 
 ## Case 0 (Reply OK)
 
+```
 0049 00 9E 80 00 	lri  	ac0.m, #0x8000
 004B 00 DC 03 43 	lr   	ac0.l, $0x0343
 004D 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox
 004F 02 9F 00 31 	j    	$0x0031				// MainLoop
-
+```
 
 ## ReadCpuMailbox
 
+```
 0051 26 FE       	lrs  	ac0.m, $(CMBH)
 0052 02 C0 80 00 	tset 	ac0.m, #0x8000
 0054 02 9C 00 51 	jnok 	$0x0051
@@ -133,18 +138,22 @@ void MainLoop() 		// 0031
 0057 1B 1E       	srri 	@ar0, ac0.m
 0058 1B 1C       	srri 	@ar0, ac0.l
 0059 02 DF       	ret  
+```
 
 ## WriteDspMailbox
 
+```
 005A 2E FC       	srs  	$(DMBH), ac0.m
 005B 2C FD       	srs  	$(DMBL), ac0.l
 005C 26 FC       	lrs  	ac0.m, $(DMBH)
 005D 02 A0 80 00 	tclr 	ac0.m, #0x8000
 005F 02 9C 00 5C 	jnok 	$0x005C
 0061 02 DF       	ret  	
+```
 
 ## Jump Table 1
 
+```
 0062 02 9F 00 49 	j    	$0x0049 			// 0  (Nothing, reply OK)
 0064 02 9F 02 BD 	j    	$0x02BD 			// 1
 0066 02 9F 04 70 	j    	$0x0470 			// 2
@@ -158,7 +167,9 @@ void MainLoop() 		// 0031
 0076 02 9F 07 41 	j    	$0x0741  			// 10
 0078 02 9F 06 18 	j    	$0x0618 			// 11
 007A 02 9F 02 03 	j    	$0x0203  			// 12
+```
 
+## DSP DMA
 
 007C 19 3E       	lrri 	ac0.m, @ar1
 007D 19 3C       	lrri 	ac0.l, @ar1
@@ -180,12 +191,13 @@ void MainLoop() 		// 0031
 008C 0F 01       	lris 	ac1.m, 1
 008D 02 9F 00 80 	j    	$0x0080
 
-
-
 008F 26 C9       	lrs  	ac0.m, $(DSCR)
 0090 02 A0 00 04 	tclr 	ac0.m, #0x0004
 0092 02 9C 00 8F 	jnok 	$0x008F
 0094 02 DF       	ret  	
+
+
+
 0095 19 3E       	lrri 	ac0.m, @ar1
 0096 19 3C       	lrri 	ac0.l, @ar1
 0097 00 FF FF CD 	sr   	$(DSPA), ac1.m
@@ -197,11 +209,15 @@ void MainLoop() 		// 0031
 00A1 15 01       	lsl  	ac1, #0x01
 00A2 00 FF FF CB 	sr   	$(DSBL), ac1.m
 00A4 02 DF       	ret  	
+
+## WaitDspDma
+
+```
 00A5 00 DE FF C9 	lr   	ac0.m, $(DSCR)
 00A7 02 A0 00 04 	tclr 	ac0.m, #0x0004
 00A9 02 9C 00 A5 	jnok 	$0x00A5
 00AB 02 DF       	ret  	
-
+```
 
 ## DspAcc stuff
 
@@ -701,7 +717,7 @@ void MainLoop() 		// 0031
 030E 00 81 03 4C 	lri  	ar1, #0x034C
 0310 00 9F 0A 00 	lri  	ac1.m, #0x0A00
 0312 00 80 00 04 	lri  	ar0, #0x0004
-0314 02 BF 00 A5 	call 	$0x00A5
+0314 02 BF 00 A5 	call 	$0x00A5 				// WaitDspDma
 0316 02 BF 00 7C 	call 	$0x007C
 0318 00 81 03 4C 	lri  	ar1, #0x034C
 031A 00 9F 04 00 	lri  	ac1.m, #0x0400

@@ -12,8 +12,8 @@ namespace Debug
 	void gekko_help()
 	{
 		DBReport("--- Gekko debug commands -----------------------------------------------------\n");
-		DBReport("    run				   - Run processor until break or stop\n");
-		DBReport("    stop				   - Stop processor execution\n");
+		DBReport("    run                  - Run processor until break or stop\n");
+		DBReport("    stop                 - Stop processor execution\n");
 		DBReport("\n");
 	}
 

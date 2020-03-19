@@ -73,6 +73,39 @@ void con_update_dump_window()
     }
 }
 
+void con_data_key(char ascii, int vkey, int ctrl)
+{
+    UNREFERENCED_PARAMETER(ascii);
+    UNREFERENCED_PARAMETER(ctrl);
+
+    switch(vkey)
+    {
+        case VK_HOME:
+            con.data = (uint32_t)(1<<31);
+            break;
+        case VK_END:
+            con.data = (RAMSIZE | (1<<31)) - ((wind.data_h - 1) * 16);
+            break;
+        case VK_NEXT:
+            con.data += ((wind.data_h - 1) * 16);
+            break;
+        case VK_PRIOR:
+            con.data -= ((wind.data_h - 1) * 16);
+            break;
+        case VK_UP:
+            con.data -= 16;
+            break;
+        case VK_DOWN:
+            con.data += 16;
+            break;
+        case VK_RETURN:
+            con_memedit();
+            break;
+    }
+
+    con.update |= CON_UPDATE_DATA;
+}
+
 // ---------------------------------------------------------------------------
 // memory editing mode
 
