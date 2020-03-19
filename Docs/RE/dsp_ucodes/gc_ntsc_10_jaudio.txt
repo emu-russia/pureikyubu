@@ -124,7 +124,7 @@ void MainLoop() 		// 0031
 ```
 0049 00 9E 80 00 	lri  	ac0.m, #0x8000
 004B 00 DC 03 43 	lr   	ac0.l, $0x0343
-004D 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox
+004D 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox (0x80000343)
 004F 02 9F 00 31 	j    	$0x0031				// MainLoop
 ```
 
@@ -138,6 +138,17 @@ void MainLoop() 		// 0031
 0057 1B 1E       	srri 	@ar0, ac0.m
 0058 1B 1C       	srri 	@ar0, ac0.l
 0059 02 DF       	ret  
+```
+
+```c++
+uint16_t *ReadCpuMailbox (uint16_t * ar0)
+{
+	while ( ((ac0m = CMBH) & 0x8000) == 0 ) ;
+	ac0l = CMBL;
+	*ar0++ = ac0m; 		// High
+	*ar0++ = ac0l;		// Low
+	return ar0;
+}
 ```
 
 ## WriteDspMailbox
@@ -973,7 +984,7 @@ void MainLoop() 		// 0031
 0470 02 BF 04 61 	call 	$0x0461
 0472 00 9E 80 00 	lri  	ac0.m, #0x8000
 0474 00 DC 03 41 	lr   	ac0.l, $0x0341
-0476 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox
+0476 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox (0x80000341)
 0478 81 00       	clr  	ac0             	     	
 0479 00 FE 03 55 	sr   	$0x0355, ac0.m
 047B 02 BF 04 4A 	call 	$0x044A
@@ -1245,7 +1256,7 @@ void MainLoop() 		// 0031
 060E 02 BF 00 8B 	call 	$0x008B
 0610 00 9E 82 00 	lri  	ac0.m, #0x8200
 0612 00 DC 03 44 	lr   	ac0.l, $0x0344
-0614 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox
+0614 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox (0x82000344)
 0616 02 9F 00 31 	j    	$0x0031 		// MainLoop
 
 

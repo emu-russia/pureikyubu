@@ -200,11 +200,7 @@ void SYMAddNew(uint32_t addr, const char *name, bool emuSymbol /* false */)
     work->symhash[tag] = (work->symhash[tag] != NULL) ?
         ( (SYM *)realloc(work->symhash[tag], sizeof(SYM) * (i + 1)) ) :
         ( (SYM *)malloc(sizeof(SYM)) );
-    if(work->symhash[tag] == NULL)
-    {
-        DolwinError( "SYMAddNew in HighLevel\\Symbols.cpp",
-                     "Not enough memory for new symbol (n=%i).", i );
-    }
+    assert(work->symhash[tag]);
     work->symhash[tag][i].eaddr = addr;
     work->symhash[tag][i].savedName = strsave(name);
     work->symhash[tag][i].routine = NULL;

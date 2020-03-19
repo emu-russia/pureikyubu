@@ -18,7 +18,8 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
     con_clear_line(line, con.attr);
 
-    if((symbol = SYMName(addr)) != nullptr)
+    symbol = SYMName(addr);
+    if(symbol)
     {
         con_printf_at(0, line, "\x1%c%s\n", ConColor::GREEN, symbol);
         line++;
@@ -61,7 +62,8 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
         con_printf_at(20, line, "\x1%c%-12s%s\x1%c%s", 
             ConColor::GREEN, disa.mnemonic, disa.operands, ConColor::CYAN, dir);
 
-        if((symbol = SYMName((uint32_t)disa.target)) != nullptr)
+        symbol = SYMName((uint32_t)disa.target);
+        if(symbol)
         {
             con_printf_at(47, line, "\x1%c ; %s", ConColor::BROWN, symbol);
         }
