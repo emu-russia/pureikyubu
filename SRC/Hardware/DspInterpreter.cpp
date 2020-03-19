@@ -539,7 +539,7 @@ namespace DSP
 
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
-		// Test breakpoints
+		// Test breakpoints and canaries
 		if (core->IsRunning())
 		{
 			if (core->TestBreakpoint(core->regs.pc))
@@ -548,6 +548,8 @@ namespace DSP
 				core->Suspend();
 				return;
 			}
+
+			core->TestCanary(core->regs.pc);
 		}
 
 		// Regular instructions ("top")

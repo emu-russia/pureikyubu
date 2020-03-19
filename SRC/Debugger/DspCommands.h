@@ -15,8 +15,10 @@ namespace Debug
 	void cmd_dstop(std::vector<std::string>& args);	// Stop DSP thread
 	void cmd_dstep(std::vector<std::string>& args);	// Step DSP instruction
 	void cmd_dbrk(std::vector<std::string>& args);	// Add IMEM breakpoint
+	void cmd_dcan(std::vector<std::string>& args);	// Add IMEM canary
 	void cmd_dbrkclr(std::vector<std::string>& args);	// Clear all IMEM breakpoints
-	void cmd_dlist(std::vector<std::string>& args);	// List IMEM breakpoints
+	void cmd_dcanclr(std::vector<std::string>& args);	// Clear all IMEM canaries
+	void cmd_dlist(std::vector<std::string>& args);	// List IMEM breakpoints and canaries
 	void cmd_dpc(std::vector<std::string>& args);	// Set DSP pc
 	void cmd_dreset(std::vector<std::string>& args);	// Issue DSP reset
 	void cmd_du(std::vector<std::string>& args);		// Disassemble some DSP instructions at program counter

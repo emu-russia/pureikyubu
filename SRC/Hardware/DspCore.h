@@ -20,6 +20,8 @@ DspCore uses the interpreter and recompiler at the same time, of their own free 
 #pragma once
 
 #include <vector>
+#include <map>
+#include <string>
 #include <atomic>
 
 namespace DSP
@@ -211,6 +213,9 @@ namespace DSP
 		std::vector<DspAddress> breakpoints;		///< IMEM breakpoints
 		MySpinLock::LOCK breakPointsSpinLock;
 
+		std::map<DspAddress, std::string> canaries;		///< When the PC is equal to the canary address, a debug message is displayed
+		MySpinLock::LOCK canariesSpinLock;
+
 		const uint32_t GekkoTicksPerDspInstruction = 5;		///< How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 50;		///< How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
@@ -297,6 +302,10 @@ namespace DSP
 		void ListBreakpoints();
 		void ClearBreakpoints();
 		bool TestBreakpoint(DspAddress imemAddress);
+		void AddCanary(DspAddress imemAddress, std::string text);
+		void ListCanaries();
+		void ClearCanaries();
+		bool TestCanary(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
 		void DumpIfx();

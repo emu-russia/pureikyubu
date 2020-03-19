@@ -16,8 +16,10 @@ namespace Debug
         con.cmds["dstop"] = cmd_dstop;
         con.cmds["dstep"] = cmd_dstep;
         con.cmds["dbrk"] = cmd_dbrk;
+        con.cmds["dcan"] = cmd_dcan;
         con.cmds["dlist"] = cmd_dlist;
         con.cmds["dbrkclr"] = cmd_dbrkclr;
+        con.cmds["dcanclr"] = cmd_dcanclr;
         con.cmds["dpc"] = cmd_dpc;
         con.cmds["dreset"] = cmd_dreset;
         con.cmds["du"] = cmd_du;
@@ -40,8 +42,10 @@ namespace Debug
         DBReport("    dstop                - Stop DSP thread\n");
         DBReport("    dstep [n]            - Step DSP instruction(s)\n");
         DBReport("    dbrk                 - Add IMEM breakpoint\n");
+        DBReport("    dcan                 - Add IMEM canary\n");
         DBReport("    dlist                - List IMEM breakpoints\n");
         DBReport("    dbrkclr              - Clear all IMEM breakpoints\n");
+        DBReport("    dcanclr              - Clear all IMEM canaries\n");
         DBReport("    dpc                  - Set DSP program counter\n");
         DBReport("    dreset               - Issue DSP reset\n");
         DBReport("    du [addr] [count]    - Disassemble some DSP instructions at pc / address\n");
@@ -380,7 +384,32 @@ namespace Debug
         DBReport("DSP breakpoint added: 0x%04X\n", dsp_addr);
     }
 
-    // List IMEM breakpoints
+    // Add IMEM canary
+    void cmd_dcan(std::vector<std::string>& args)
+    {
+        if (!dspCore)
+        {
+            DBReport("DspCore not ready\n");
+            return;
+        }
+
+        if (args.size() < 3)
+        {
+            DBReport("syntax: dcan <dsp_addr> <message>\n");
+            DBReport("Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n");
+            DBReport("When the PC is equal to the canary address, a debug message is displayed\n");
+            DBReport("example of use: dcan 0x10 \"Ucode entrypoint\"\n");
+            return;
+        }
+
+        DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
+
+        dspCore->AddCanary(dsp_addr, args[2]);
+
+        DBReport("DSP canary added: 0x%04X\n", dsp_addr);
+    }
+
+    // List IMEM breakpoints and canaries
     void cmd_dlist(std::vector<std::string>& args)
     {
         if (!dspCore)
@@ -392,6 +421,10 @@ namespace Debug
         DBReport("DSP breakpoints:\n");
 
         dspCore->ListBreakpoints();
+
+        DBReport("DSP canaries:\n");
+
+        dspCore->ListCanaries();
     }
 
     // Clear all IMEM breakpoints
@@ -406,6 +439,20 @@ namespace Debug
         dspCore->ClearBreakpoints();
 
         DBReport("DSP breakpoints cleared.\n");
+    }
+
+    // Clear all IMEM canaries
+    void cmd_dcanclr(std::vector<std::string>& args)
+    {
+        if (!dspCore)
+        {
+            DBReport("DspCore not ready\n");
+            return;
+        }
+
+        dspCore->ClearCanaries();
+
+        DBReport("DSP canaries cleared.\n");
     }
 
     // Set DSP program counter

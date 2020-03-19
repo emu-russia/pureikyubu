@@ -198,6 +198,46 @@ namespace DSP
 		return found;
 	}
 
+	void DspCore::AddCanary(DspAddress imemAddress, std::string text)
+	{
+		MySpinLock::Lock(&canariesSpinLock);
+		canaries[imemAddress] = text;
+		MySpinLock::Unlock(&canariesSpinLock);
+	}
+
+	void DspCore::ListCanaries()
+	{
+		MySpinLock::Lock(&canariesSpinLock);
+		for (auto it = canaries.begin(); it != canaries.end(); ++it)
+		{
+			DBReport("0x%04X: %s\n", it->first, it->second);
+		}
+		MySpinLock::Unlock(&canariesSpinLock);
+	}
+
+	void DspCore::ClearCanaries()
+	{
+		MySpinLock::Lock(&canariesSpinLock);
+		canaries.clear();
+		MySpinLock::Unlock(&canariesSpinLock);
+	}
+
+	bool DspCore::TestCanary(DspAddress imemAddress)
+	{
+		MySpinLock::Lock(&canariesSpinLock);
+
+		auto it = canaries.find(imemAddress);
+		if (it != canaries.end())
+		{
+			DBReport2(DbgChannel::DSP, it->second.c_str());
+			MySpinLock::Unlock(&canariesSpinLock);
+			return true;
+		}
+
+		MySpinLock::Unlock(&canariesSpinLock);
+		return false;
+	}
+
 	/// Execute single instruction (by interpreter)
 	void DspCore::Step()
 	{
