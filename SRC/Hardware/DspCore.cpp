@@ -66,8 +66,6 @@ namespace DSP
 		{
 			// Do DSP actions
 			core->Update();
-
-			Sleep(1);
 		}
 
 		return 0;
@@ -545,11 +543,11 @@ namespace DSP
 					return DmaRegs.blockSize;
 
 				case (DspAddress)DspHardwareRegs::CMBH:
-					return CpuToDspReadHi();
+					return CpuToDspReadHi(true);
 				case (DspAddress)DspHardwareRegs::CMBL:
 					return CpuToDspReadLo();
 				case (DspAddress)DspHardwareRegs::DMBH:
-					return DspToCpuReadHi();
+					return DspToCpuReadHi(true);
 				case (DspAddress)DspHardwareRegs::DMBL:
 					return DspToCpuReadLo();
 
@@ -615,6 +613,27 @@ namespace DSP
 					{
 						DSPAssertInt();
 					}
+					break;
+
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA0:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA1:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA2:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA3:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA4:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA5:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA6:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA7:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA8:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA9:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAA:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAB:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAC:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAD:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAE:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAF:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB0:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB1:
+					DBReport2(DbgChannel::DSP, "Known unknown HW write 0x%04X = 0x%04X\n", addr, value);
 					break;
 
 				default:
@@ -699,9 +718,20 @@ namespace DSP
 		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
 
-	uint16_t DspCore::CpuToDspReadHi()
+	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
 	{
-		return CpuToDspMailbox[0];
+		uint16_t value = CpuToDspMailbox[0];
+
+		// If DSP is running and is in a waiting cycle for a message from the CPU, 
+		// we put it in the HALT state until the processor sends a message through the Mailbox.
+
+		//if ((value & 0x8000) == 0 && IsRunning() && ReadByDsp)
+		//{
+		//	DBReport2(DbgChannel::DSP, "Wait CPU Mailbox\n");
+		//	Suspend();
+		//}
+
+		return value;
 	}
 
 	uint16_t DspCore::CpuToDspReadLo()
@@ -728,7 +758,7 @@ namespace DSP
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}
 
-	uint16_t DspCore::DspToCpuReadHi()
+	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
 	{
 		return DspToCpuMailbox[0];
 	}
@@ -792,7 +822,7 @@ namespace DSP
 		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 		{
 			char filename[0x100] = { 0, };
-			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%s.bin", DmaRegs.blockSize, ldat.gameID);
+			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%ws.bin", DmaRegs.blockSize, ldat.gameID);
 			FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif

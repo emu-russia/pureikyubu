@@ -61,7 +61,7 @@ BOOL FileSave(const char *filename, void *data, uint32_t size)
 // open file dialog
 char * FileOpen(HWND hwnd, FILE_TYPE type)
 {
-    OPENFILENAME ofn;
+    OPENFILENAMEA ofn;
     char szFileName[1024];
     char szFileTitle[1024];
     char lastDir[1024], prevDir[1024];
@@ -91,7 +91,7 @@ char * FileOpen(HWND hwnd, FILE_TYPE type)
     {
         // Dumbiest Windows code. Hell.. I just needed "char * BrowseDirectory(hwnd)"..
 
-        BROWSEINFO bi; 
+        BROWSEINFOA bi; 
         LPSTR lpBuffer=NULL; 
         LPITEMIDLIST pidlRoot=NULL;     // PIDL for root folder 
         LPITEMIDLIST pidlBrowse=NULL;   // PIDL selected by user
@@ -122,11 +122,11 @@ char * FileOpen(HWND hwnd, FILE_TYPE type)
         bi.lParam           = 0;
 
         // Browse for a folder and return its PIDL. 
-        pidlBrowse = SHBrowseForFolder(&bi);
+        pidlBrowse = SHBrowseForFolderA(&bi);
         result = (pidlBrowse != NULL);
         if(result)
         {
-            SHGetPathFromIDList(pidlBrowse, lpBuffer); 
+            SHGetPathFromIDListA(pidlBrowse, lpBuffer); 
             strcpy_s(szFileName, sizeof(szFileName), lpBuffer);
      
             // Free the PIDL returned by SHBrowseForFolder.
@@ -182,7 +182,7 @@ char * FileOpen(HWND hwnd, FILE_TYPE type)
         ofn.lpstrDefExt         = "";
         ofn.Flags               = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
 
-        result = GetOpenFileName(&ofn);
+        result = GetOpenFileNameA(&ofn);
     }
 
     if(result)

@@ -22,7 +22,7 @@ namespace DSP
 		static inline std::string ToHexString(uint16_t address)
 		{
 			char buf[0x100] = { 0, };
-			sprintf_s(buf, sizeof(buf), "%04X", address);
+			sprintf_s(buf, _countof(buf), "%04X", address);
 			return std::string(buf);
 		}
 
@@ -30,7 +30,7 @@ namespace DSP
 		static inline std::string ToHexString(uint8_t Byte)
 		{
 			char buf[0x100] = { 0, };
-			sprintf_s(buf, sizeof(buf), "%02X", Byte);
+			sprintf_s(buf, _countof(buf), "%02X", Byte);
 			return std::string(buf);
 		}
 

@@ -49,7 +49,7 @@ static INT_PTR CALLBACK AboutProc(
                 __DATE__,
                 __TIME__
             );
-            SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
+            SetDlgItemTextA(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
             return TRUE;
         }
 

@@ -17,10 +17,10 @@ static  HACCEL  hAccel;
 // set default values of statusbar parts
 static void ResetStatusBar()
 {
-    SetStatusText(STATUS_PROGRESS,  "Idle");
-    SetStatusText(STATUS_FPS,       "");
-    SetStatusText(STATUS_TIMING,    "");
-    SetStatusText(STATUS_TIME,      "");
+    SetStatusText(STATUS_PROGRESS,  L"Idle");
+    SetStatusText(STATUS_FPS,       L"");
+    SetStatusText(STATUS_TIMING,    L"");
+    SetStatusText(STATUS_TIME,      L"");
 }
 
 // create status bar window
@@ -51,7 +51,7 @@ static void CreateStatusBar()
 }
 
 // change text in specified statusbar part
-void SetStatusText(int sbPart, const char *text, bool post)
+void SetStatusText(int sbPart, const wchar_t *text, bool post)
 {
     if(wnd.hStatusWindow == NULL) return;
     if(post)
@@ -65,9 +65,9 @@ void SetStatusText(int sbPart, const char *text, bool post)
 }
 
 // get text of statusbar part
-char *GetStatusText(int sbPart)
+wchar_t *GetStatusText(int sbPart)
 {
-    static char sbText[256];
+    static wchar_t sbText[256];
 
     if(wnd.hStatusWindow == NULL) return NULL;
 
@@ -124,7 +124,7 @@ static int GetMenuItemIndex(HMENU hMenu, char *item)
 
     while(index < GetMenuItemCount(hMenu))
     {
-        if(GetMenuString(hMenu, index, buf, sizeof(buf)-1, MF_BYPOSITION))
+        if(GetMenuStringA(hMenu, index, buf, sizeof(buf)-1, MF_BYPOSITION))
         {
             if(!strcmp(item, buf)) return index;
         }
@@ -177,7 +177,7 @@ void UpdateRecentMenu(HWND hwnd)
     // if no recent, add empty
     if(GetConfigInt(USER_RECENT_NUM, USER_RECENT_NUM_DEFAULT) == 0)
     {
-        AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, "None");
+        AppendMenuA(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, "None");
     }
     else
     {
@@ -187,7 +187,7 @@ void UpdateRecentMenu(HWND hwnd)
         for(int i=0, n = RecentNum; i<RecentNum; i++, n--)
         {
             sprintf_s(buf, sizeof(buf), "%s", FileShortName(GetRecentEntry(n), 3));
-            AppendMenu(hReloadMenu, MF_STRING, ID_FILE_RECENT_1+i, buf);
+            AppendMenuA(hReloadMenu, MF_STRING, ID_FILE_RECENT_1+i, buf);
         }
     }
 
@@ -289,12 +289,12 @@ void ModifySwapControls(BOOL state)
 {
     if(state)       // opened
     {
-        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, "&Close Cover");
+        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, L"&Close Cover");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_ENABLED);
     }
     else            // closed
     {
-        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, "&Open Cover");
+        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, L"&Open Cover");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_GRAYED);
     }
 }
@@ -304,7 +304,7 @@ void ModifySelectorControls(bool active)
 {
     if(active)
     {
-        SetMenuItemText(wnd.hMainMenu, ID_OPTIONS_VIEW_DISABLE, "&Disable Selector");
+        SetMenuItemText(wnd.hMainMenu, ID_OPTIONS_VIEW_DISABLE, L"&Disable Selector");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_EDITINFO, MF_BYCOMMAND | MF_ENABLED);
         EnableMenuItem(wnd.hMainMenu, ID_FILE_REFRESH, MF_BYCOMMAND | MF_ENABLED);
         EnableMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_ENABLED);
@@ -315,7 +315,7 @@ void ModifySelectorControls(bool active)
     }
     else
     {
-        SetMenuItemText(wnd.hMainMenu, ID_OPTIONS_VIEW_DISABLE, "&Enable Selector");
+        SetMenuItemText(wnd.hMainMenu, ID_OPTIONS_VIEW_DISABLE, L"&Enable Selector");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_EDITINFO, MF_BYCOMMAND | MF_GRAYED);
         EnableMenuItem(wnd.hMainMenu, ID_FILE_REFRESH, MF_BYCOMMAND | MF_GRAYED);
         EnableMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_GRAYED);
@@ -458,7 +458,7 @@ void OnMainWindowOpened()
         }
         sprintf_s (newTitle, sizeof(newTitle), prefix, gameTitle);
     }
-    SetWindowText(wnd.hMainWindow, newTitle);
+    SetWindowTextA(wnd.hMainWindow, newTitle);
 
     // user profiler
     OpenProfiler(GetConfigInt(USER_PROFILE, USER_PROFILE_DEFAULT));
@@ -471,7 +471,7 @@ void OnMainWindowOpened()
 void OnMainWindowClosing()
 {
     // restore current working directory
-    SetCurrentDirectory(ldat.cwd);
+    SetCurrentDirectoryA(ldat.cwd);
 
     // enable selector
     CreateSelector();
@@ -485,7 +485,7 @@ void OnMainWindowClosing()
     UpdateWindow(wnd.hMainWindow);
 
     // set to Idle
-    SetWindowText(wnd.hMainWindow, WIN_NAME);
+    SetWindowText(wnd.hMainWindow, WIN_NAMEW);
     ResetStatusBar();
 
     // set loading cursor
@@ -790,9 +790,9 @@ loadFile:
                 case ID_DUMP_RAM:
                     if (mi.ram)
                     {
-                        SetStatusText(STATUS_PROGRESS, "Dumping main memory...");
+                        SetStatusText(STATUS_PROGRESS, L"Dumping main memory...");
                         FileSave("RAM.bin", mi.ram, RAMSIZE);
-                        SetStatusText(STATUS_PROGRESS, "Main memory dumped in RAM.bin");
+                        SetStatusText(STATUS_PROGRESS, L"Main memory dumped in RAM.bin");
                     }
                     return 0;
 
@@ -800,9 +800,9 @@ loadFile:
                 case ID_DUMP_ARAM:
                     if (ARAM)
                     {
-                        SetStatusText(STATUS_PROGRESS, "Dumping aux. memory...");
+                        SetStatusText(STATUS_PROGRESS, L"Dumping aux. memory...");
                         FileSave("ARAM.bin", ARAM, ARAMSIZE);
-                        SetStatusText(STATUS_PROGRESS, "Aux. memory dumped in ARAM.bin");
+                        SetStatusText(STATUS_PROGRESS, L"Aux. memory dumped in ARAM.bin");
                     }
                     return 0;
 
@@ -811,7 +811,7 @@ loadFile:
                     if (mi.ram)
                     {
                         FileSave("lomem.bin", mi.ram, 0x3100);
-                        SetStatusText(STATUS_PROGRESS, "OS low memory dumped in lomem.bin");
+                        SetStatusText(STATUS_PROGRESS, L"OS low memory dumped in lomem.bin");
                     }
                     return 0;
 
@@ -854,7 +854,7 @@ loadFile:
                         DBOpen();
                         emu.doldebug = TRUE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
-                        SetStatusText(STATUS_PROGRESS, "Debugger opened");
+                        SetStatusText(STATUS_PROGRESS, L"Debugger opened");
                     }
                     else
                     {   // close
@@ -862,7 +862,7 @@ loadFile:
                         DBClose();
                         emu.doldebug = FALSE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
-                        SetStatusText(STATUS_PROGRESS, "Debugger closed");
+                        SetStatusText(STATUS_PROGRESS, L"Debugger closed");
                     }
                     return 0;
 
@@ -911,7 +911,7 @@ loadFile:
             char fileName[256];
 
             strcpy_s(fileName, sizeof(fileName), "");
-            DragQueryFile((HDROP)wParam, 0, fileName, sizeof(fileName));
+            DragQueryFileA((HDROP)wParam, 0, fileName, sizeof(fileName));
             DragFinish((HDROP)wParam);
 
             // extension filter
@@ -1007,28 +1007,22 @@ HWND CreateMainWindow()
     wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
     wc.hInstance     = hInstance;
     wc.lpfnWndProc   = WindowProc;
-    wc.lpszClassName = "GAMECUBE" "CLASS";
+    wc.lpszClassName = L"GAMECUBECLASS";
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MAIN_MENU);
     wc.style         = 0;
 
-    VERIFY(
-        RegisterClass(&wc) == 0, 
-        "Couldn't register " "GAMECUBE" " window class!"
-    );
+    assert(RegisterClass(&wc));
 
-    CreateWindowEx(
+    wnd.hMainWindow = CreateWindowEx(
         0,
-        "GAMECUBE" "CLASS", WIN_NAME,
+        L"GAMECUBECLASS", WIN_NAMEW,
         WIN_STYLE, 
         20, 30,
         400, 300,
         NULL, NULL,
         hInstance, NULL);
 
-    VERIFY(
-        wnd.hMainWindow == NULL,
-        "Couldn't create " APPNAME " main window!"
-    );
+    assert(wnd.hMainWindow);
 
     ShowWindow(wnd.hMainWindow, SW_NORMAL);
     UpdateWindow(wnd.hMainWindow);
@@ -1073,7 +1067,7 @@ void CenterChildWindow(HWND hParent, HWND hChild)
     }
 }
 
-void SetMenuItemText(HMENU hmenu, UINT id, char *text)
+void SetMenuItemText(HMENU hmenu, UINT id, wchar_t *text)
 {
     MENUITEMINFO info;
 

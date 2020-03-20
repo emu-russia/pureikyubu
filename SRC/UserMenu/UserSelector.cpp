@@ -44,16 +44,7 @@ static void add_path(char *path)
         return;
     }
 
-    // extend list
-    if(usel.paths) usel.paths = (char **)realloc(usel.paths, sizeof(char **) * (usel.pathnum + 1));
-    else usel.paths = (char **)malloc(sizeof(char **));
-    VERIFY(usel.paths == NULL, "Not enough memory to extend PATH list.");
-
-    // save new path, and increase "pathnum"
-    usel.paths[usel.pathnum] = (char *)malloc(len);
-    VERIFY(usel.paths[usel.pathnum] == NULL, "Not enough memory for new PATH.");
-    strcpy_s(usel.paths[usel.pathnum], len, path);
-    usel.pathnum++;
+    usel.paths.push_back(path);
 }
 
 // load PATH user variable and cut it on pieces into "paths" list
@@ -64,20 +55,7 @@ static void load_path()
     int  n = 0;
 
     // delete current pathlist
-    for(int i=0; i<usel.pathnum; i++)
-    {
-        if(usel.paths[i])
-        {
-            free(usel.paths[i]);
-            usel.paths[i] = NULL;
-        }
-    }
-    if(usel.paths)
-    {
-        free(usel.paths);
-        usel.paths = NULL;
-        usel.pathnum = 0;
-    }
+    usel.paths.clear();
 
     // search new paths (separated by ';') until ending '\0'
     ptr = var;
@@ -115,14 +93,20 @@ bool AddSelectorPath(char *fullPath)
 
     fix_path(fullPath);
 
-    for(i=0; i<usel.pathnum; i++)
+    bool exists = false;
+
+    for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
     {
-        if(!_stricmp(fullPath, usel.paths[i])) break;
+        if (!_stricmp(fullPath, it->c_str()))
+        {
+            exists = true;
+            break;
+        }
     }
 
-    if(i == usel.pathnum)
+    if(!exists)
     {
-        char temp[100000];
+        char temp[0x10000];
         char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
         VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
         if(!_stricmp(old, "<EMPTY>"))
@@ -157,7 +141,7 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
     int pack = is565();
     int width = (usel.smallIcons) ? (DVD_BANNER_WIDTH >> 1) : (DVD_BANNER_WIDTH);
     int height = (usel.smallIcons) ? (DVD_BANNER_HEIGHT >> 1) : (DVD_BANNER_HEIGHT);
-    HDC hdc = CreateDC("DISPLAY", NULL, NULL, NULL);
+    HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
     int bitdepth = GetDeviceCaps(hdc, BITSPIXEL);
     int bpp = bitdepth / 8;
     int bcount = width * height * bpp;
@@ -382,10 +366,10 @@ static void add_item(int index)
 // insert new file into filelist
 static void add_file(char *file, int fsize, int type)
 {
-    UserFile    item;
+    UserFile    * item = new UserFile;
     DVDBanner2  *bnr;
 
-    memset(&item, 0, sizeof(UserFile));
+    memset(item, 0, sizeof(UserFile));
 
     // check file size (for stupid user)
     if((fsize == 0) || (fsize > 0x57058000 /* 1.5 gb */ ))
@@ -400,9 +384,9 @@ static void add_file(char *file, int fsize, int type)
     fclose(f);
 
     // save file info
-    item.type = type;
-    item.size = fsize;
-    strcpy_s(item.name, sizeof(item.name), file);
+    item->type = type;
+    item->size = fsize;
+    strcpy_s(item->name, sizeof(item->name), file);
 
     if(type == SELECTOR_FILE_DVD)
     {
@@ -420,25 +404,25 @@ static void add_file(char *file, int fsize, int type)
         diskID[4] = 0;
 
         // set GameID
-        sprintf_s ( item.id, sizeof(item.id), "%.4s%02X",
+        sprintf_s ( item->id, sizeof(item->id), "%.4s%02X",
                  diskID, DVDBannerChecksum((void *)bnr) );
 
         // set game name and comment
-        if(GetGameInfo(item.id, item.title, item.comment) == FALSE)
+        if(GetGameInfo(item->id, item->title, item->comment) == FALSE)
         {
             // use banner info instead (and remove line-feeds)
-            strncpy_s(item.title, sizeof(item.title), (char *)bnr->comments[0].longTitle, MAX_TITLE);
-            strncpy_s(item.comment, sizeof(item.comment), (char *)bnr->comments[0].comment, MAX_COMMENT);
-            fix_string(item.title);
-            fix_string(item.comment);
+            strncpy_s(item->title, sizeof(item->title), (char *)bnr->comments[0].longTitle, MAX_TITLE);
+            strncpy_s(item->comment, sizeof(item->comment), (char *)bnr->comments[0].comment, MAX_COMMENT);
+            fix_string(item->title);
+            fix_string(item->comment);
         }
 
         // convert banner to RGB and add into bannerlist
         int a, b;
         bool res = add_banner(bnr->image, &a, &b);
         if(res == FALSE) return;    // we cant :(
-        item.icon[0] = a;
-        item.icon[1] = b;
+        item->icon[0] = a;
+        item->icon[1] = b;
         free(bnr);
     }
     else if(type == SELECTOR_FILE_EXEC)
@@ -464,33 +448,23 @@ static void add_file(char *file, int fsize, int type)
         else if(!stricmp(ext, ".dol")) sprintf(item.id, "D%02X%03X", size, checksum);
         else
 /*/
-        strcpy_s (item.id, sizeof(item.id), "-");
+        strcpy_s (item->id, sizeof(item->id), "-");
 
-        if(GetGameInfo(name, item.title, item.comment) == FALSE)
+        if(GetGameInfo(name, item->title, item->comment) == FALSE)
         {
-            strcpy_s (item.title, sizeof(item.title), name);
-            item.comment[0] = 0;
+            strcpy_s (item->title, sizeof(item->title), name);
+            item->comment[0] = 0;
         }
     }
     else VERIFY(type, "Unknown selector file type.");
 
     // extend filelist
     MySpinLock::Lock(&usel.filesLock);
-    if(usel.files)
-    {
-        usel.files = (UserFile *)realloc(usel.files, 
-                      sizeof(UserFile)*(usel.filenum + 1) );
-    }
-    else
-    {
-        usel.files = (UserFile *)malloc(sizeof(UserFile));
-    }
-    assert(usel.files);
-    memcpy(&usel.files[usel.filenum], &item, sizeof(UserFile));
+    usel.files.push_back(item);
     MySpinLock::Unlock(&usel.filesLock);
 
     // add new item
-    add_item(usel.filenum++);
+    add_item(usel.files.size() - 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -519,7 +493,6 @@ static void reset_columns()
         lvcol.pszText = SELECTOR_COLUMN_##text;                     \
         ListView_InsertColumn(usel.hSelectorWindow, id, &lvcol);    \
     }
-
 
     ADDCOL(LEFT  , (usel.smallIcons) ? (57) : (105), BANNER , 0);
     ADDCOL(LEFT  , 200, TITLE  , 1);
@@ -614,7 +587,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     if(!ListView_GetItem(usel.hSelectorWindow, &lvi)) return;
     lvi.state   = ListView_GetItemState(usel.hSelectorWindow, ID, - 1);
     selected    = (lvi.state & LVIS_SELECTED) ? (TRUE) : (FALSE);
-    file        = &usel.files[lvi.lParam];
+    file        = usel.files[lvi.lParam];
 
     // select background brush
     if(selected)
@@ -628,11 +601,18 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         SetTextColor(DC, GetSysColor(COLOR_WINDOWTEXT));
     }
 
-    // show item number for debugger's 'boot {n}' command
     if(selected)
     {
-        char progress[1024];
-        sprintf_s(progress, sizeof(progress), "#%i: %s", (int)lvi.lParam + 1, file->name);
+        wchar_t progress[1024];
+        char* namePtr = file->name;
+        wchar_t* progressPtr = progress;
+
+        while (*namePtr)
+        {
+            *progressPtr++ = *namePtr++;
+        }
+        *progressPtr++ = 0;
+
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -672,7 +652,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        char text[0x1000] = { 0, };
+        wchar_t text[0x1000] = { 0, };
         UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
@@ -684,8 +664,8 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc.left  = rc.right;
         rc.right+= lvc.cx;
 
-        ListView_GetItemText(usel.hSelectorWindow, ID, col, text, sizeof(text));
-        size_t len = strlen(text);
+        ListView_GetItemText(usel.hSelectorWindow, ID, col, text, _countof(text) - 1);
+        size_t len = wcslen(text);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
@@ -709,7 +689,7 @@ void UpdateSelector()
     char search[2 * MAX_PATH], *mask[] = { "*.dol", "*.elf", "*.gcm", "*.iso", NULL };
     char found[2 * MAX_PATH];
     int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
-    WIN32_FIND_DATA fd = { 0 };
+    WIN32_FIND_DATAA fd = { 0 };
     HANDLE hfff;
     int dir = 0;
 
@@ -719,11 +699,11 @@ void UpdateSelector()
     // destroy old filelist and path data
     ListView_DeleteAllItems(usel.hSelectorWindow);
     MySpinLock::Lock(&usel.filesLock);
-    if(usel.files)
+    while (!usel.files.empty())
     {
-        free(usel.files);
-        usel.files = NULL;
-        usel.filenum = 0;
+        UserFile* file = usel.files.back();
+        usel.files.pop_back();
+        delete file;
     }
     MySpinLock::Unlock(&usel.filesLock);
     ImageList_Remove(bannerList, -1);
@@ -736,7 +716,7 @@ void UpdateSelector()
     usel.filter = GetConfigInt(USER_FILTER, USER_FILTER_DEFAULT);
 
     // search all directories
-    while(dir < usel.pathnum)
+    while(dir < usel.paths.size())
     {
         int m = 0;
         uint32_t filter = MEMSwap(usel.filter);
@@ -747,20 +727,22 @@ void UpdateSelector()
             filter >>= 8;
             if(!allow) { m++; continue; }
 
-            sprintf_s(search, sizeof(search), "%s%s", usel.paths[dir], mask[m]);
+            sprintf_s(search, sizeof(search), "%s%s", usel.paths[dir].c_str(), mask[m]);
 
-            hfff = FindFirstFile(search, &fd);
+            memset(&fd, 0, sizeof(fd));
+
+            hfff = FindFirstFileA(search, &fd);
             if(hfff != INVALID_HANDLE_VALUE)
             {
                 do
                 {
-                    if(~fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                    if((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
-                        sprintf_s(found, sizeof(found), "%s%s", usel.paths[dir], fd.cFileName);
+                        sprintf_s(found, sizeof(found), "%s%s", usel.paths[dir].c_str(), fd.cFileName);
                         add_file(found, fd.nFileSizeLow, type[m]);
                     }
                 }
-                while(FindNextFile(hfff, &fd));
+                while(FindNextFileA(hfff, &fd));
             }
             FindClose(hfff);
 
@@ -785,24 +767,24 @@ int SelectorGetSelected()
 {
     int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
     if(item == -1) return -1;
-    usel.selected = &usel.files[item];
+    usel.selected = usel.files[item];
     return item;
 }
 
 void SelectorSetSelected(int item)
 {
-    if(item >= usel.filenum) return;
+    if(item >= usel.files.size()) return;
     ListView_SetItemState(usel.hSelectorWindow, item, LVNI_SELECTED, LVNI_SELECTED);
     ListView_EnsureVisible(usel.hSelectorWindow, item, FALSE);
-    usel.selected = &usel.files[item];
+    usel.selected = usel.files[item];
 }
 
 // if file not present, keep selection unchanged
 void SelectorSetSelected(char *filename)
 {
-    for(int i=0; i<usel.filenum; i++)
+    for(int i=0; i<usel.files.size(); i++)
     {
-        if(!_stricmp(filename, usel.files[i].name))
+        if(!_stricmp(filename, usel.files[i]->name))
         {
             SelectorSetSelected(i);
             break;
@@ -817,17 +799,42 @@ void SelectorSetSelected(char *filename)
 static void getdispinfo(LPNMHDR pnmh)
 {
     LV_DISPINFO *lpdi = (LV_DISPINFO *)pnmh;
-    UserFile    *file = &usel.files[lpdi->item.lParam];
-    char        *len  = FileSmartSize(file->size);
 
-    #define DISP(n, text) case n: strcpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, text); break
-    switch(lpdi->item.iSubItem)
+    if (lpdi->item.lParam < 0)
+        return;
+
+    UserFile    *file = usel.files[lpdi->item.lParam];
+    char* ansiStr = nullptr;
+
+    switch (lpdi->item.iSubItem)
     {
-        DISP(0, " ");
-        DISP(1, file->title);
-        DISP(2, len);
-        DISP(3, file->id);
-        DISP(4, file->comment);
+        case 0:
+            ansiStr = " ";
+            break;
+        case 1:         // Title
+            ansiStr = file->title;
+            break;
+        case 2:         // Length
+            ansiStr = FileSmartSize(file->size);
+            break;
+        case 3:         // ID
+            ansiStr = file->id;
+            break;
+        case 4:         // Comment
+            ansiStr = file->comment;
+            break;
+    }
+
+    if (ansiStr)
+    {
+        wchar_t* widePtr = lpdi->item.pszText;
+        char* ansiPtr = ansiStr;
+
+        while (*ansiPtr)
+        {
+            *widePtr++ = *ansiPtr++;
+        }
+        *widePtr++ = 0;
     }
 }
 
@@ -846,17 +853,30 @@ static void columnclick(int col)
 static void mouseclick(int rmb)
 {
     int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
-    UserFile *file = &usel.files[item];
+
+    if (usel.files.size() == 0 || item < 0)
+        return;
+
+    UserFile *file = usel.files[item];
 
     if(item == -1)          // empty field
     {
-        SetStatusText(STATUS_PROGRESS, "Idle");
+        SetStatusText(STATUS_PROGRESS, L"Idle");
     }
     else                    // file selected
     {
         // show item
-        char progress[1024];
-        sprintf_s(progress, sizeof(progress), "%s", file->name);
+        wchar_t progress[1024];
+        
+        char* namePtr = file->name;
+        wchar_t* progressPtr = progress;
+
+        while (*namePtr)
+        {
+            *progressPtr++ = *namePtr++;
+        }
+        *progressPtr++ = 0;
+
         SetStatusText(STATUS_PROGRESS, progress);
     }
 
@@ -864,7 +884,7 @@ static void mouseclick(int rmb)
     {
         usel.hFileMenu = GetSubMenu(wnd.hPopupMenu, ID_POPUP_FILE);
 
-        SetMenuItemText(usel.hFileMenu, ID_FILE_COMPRESS, "&Compress...");
+        SetMenuItemText(usel.hFileMenu, ID_FILE_COMPRESS, L"&Compress...");
 
         // hide "Compress..", if file is executable
         if(file->type == SELECTOR_FILE_EXEC)
@@ -891,11 +911,11 @@ static void mouseclick(int rmb)
 static void doubleclick()
 {
     int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
-    if(item == -1) return;
 
-    UserFile *file = &usel.files[item];
-    char filename[0x1000];
-    strcpy_s(filename, sizeof(filename), file->name);
+    if (usel.files.size() == 0 || item < 0)
+        return;
+
+    char* filename = usel.files[item]->name;
 
     // load file
     LoadFile(filename);
@@ -923,9 +943,9 @@ void NotifySelector(LPNMHDR pnmh)
 void ScrollSelector(int letter)
 {
     letter = tolower(letter);
-    for(int n=0; n<usel.filenum; n++)
+    for(int n=0; n<usel.files.size(); n++)
     {
-        UserFile *file = &usel.files[n];
+        UserFile *file = usel.files[n];
         int c = tolower(file->title[0]);
         if(c == letter)
         {
@@ -978,9 +998,9 @@ static int sort_by_comment(const void *cmp1, const void *cmp2)
 static int get_dvd_files()
 {
     int sum = 0;
-    for(int i=0; i<usel.filenum; i++)
+    for(int i=0; i<usel.files.size(); i++)
     {
-        UserFile *file = &usel.files[i];
+        UserFile *file = usel.files[i];
         if(file->type == SELECTOR_FILE_DVD) sum++;
     }
     return sum;
@@ -999,24 +1019,24 @@ void SortSelector(int sortBy)
         switch(sortBy)
         {
             case SELECTOR_SORT_DEFAULT:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_type);
-                qsort(usel.files, dvds, sizeof(UserFile), sort_by_title);
-                qsort(&usel.files[dvds], usel.filenum-dvds, sizeof(UserFile), sort_by_title);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_type);
+                //qsort(usel.files, dvds, sizeof(UserFile), sort_by_title);
+                //qsort(&usel.files[dvds], usel.filenum-dvds, sizeof(UserFile), sort_by_title);
                 break;
             case SELECTOR_SORT_FILENAME:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_filename);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_filename);
                 break;
             case SELECTOR_SORT_TITLE:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_title);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_title);
                 break;
             case SELECTOR_SORT_SIZE:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_size);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_size);
                 break;
             case SELECTOR_SORT_ID:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_gameid);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_gameid);
                 break;
             case SELECTOR_SORT_COMMENT:
-                qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_comment);
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_comment);
                 break;
             default:
                 return;
@@ -1028,17 +1048,17 @@ void SortSelector(int sortBy)
     else
     {
         // swap it, if same sort method
-        for(int i=0; i<usel.filenum/2; i++)
-        {
-            UserFile tmp = usel.files[i];
-            usel.files[i]  = usel.files[usel.filenum-i-1];
-            usel.files[usel.filenum-i-1] = tmp;
-        }
+        //for(int i=0; i<usel.filenum/2; i++)
+        //{
+        //    UserFile tmp = usel.files[i];
+        //    usel.files[i]  = usel.files[usel.filenum-i-1];
+        //    usel.files[usel.filenum-i-1] = tmp;
+        //}
     }
 
     // rebuild filelist
     ListView_DeleteAllItems(usel.hSelectorWindow);
-    for(int i=0; i<usel.filenum; i++) add_item(i);
+    for(int i=0; i<usel.files.size(); i++) add_item(i);
 }
 
 // ---------------------------------------------------------------------------
@@ -1065,13 +1085,6 @@ void CreateSelector()
     HWND parent = wnd.hMainWindow;
     HINSTANCE hinst = GetModuleHandle(NULL);
     InitCommonControls();
-
-    // check DVD accesibility. set filter to
-    // *dol/*elf only, if DVD plugin is not loaded
-    if(DVDSetCurrent == NULL)
-    {
-        SetConfigInt(USER_FILTER, 0xffff0000);
-    }
 
     // create selector window
     usel.hSelectorWindow = CreateWindowEx(WS_EX_CLIENTEDGE, WC_LISTVIEW, NULL,
@@ -1111,11 +1124,11 @@ void CloseSelector()
     if(!usel.opened) return;
 
     // destroy filelist
-    if(usel.files)
+    while (!usel.files.empty())
     {
-        free(usel.files);
-        usel.files = NULL;
-        usel.filenum = 0;
+        UserFile* file = usel.files.back();
+        usel.files.pop_back();
+        delete file;
     }
 
     // destroy bannerlist

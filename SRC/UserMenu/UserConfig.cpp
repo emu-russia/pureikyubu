@@ -18,7 +18,7 @@ static int RegOpen(LPSTR subKey = USER_KEY_NAME)
 {
     if(RegKey) RegClose();
 
-    if(RegOpenKeyEx(
+    if(RegOpenKeyExA(
         USER_REG_HKEY,
         subKey,
         0, KEY_ALL_ACCESS,
@@ -35,7 +35,7 @@ static void RegCreate(LPSTR subKey = USER_KEY_NAME)
 
     if(RegKey) RegClose();
 
-    RegCreateKeyEx(
+    RegCreateKeyExA(
         USER_REG_HKEY,
         subKey,
         0, NULL,
@@ -49,7 +49,7 @@ static void RegDelete(LPSTR subKey = USER_KEY_NAME)
 {
     if(RegKey) RegClose();
 
-    RegDeleteKey(USER_REG_HKEY, subKey);
+    RegDeleteKeyA(USER_REG_HKEY, subKey);
     RegKey = NULL;
 }
 
@@ -59,14 +59,14 @@ static void RegQuery(int s, char *name, LPBYTE var)
 
     if(!RegKey) return;
 
-    RegQueryValueEx(RegKey, name, 0, &type, var, &size);
+    RegQueryValueExA(RegKey, name, 0, &type, var, &size);
 }
 
 static void RegSet(char *name, LPBYTE var, int size, DWORD type)
 {
     if(!RegKey) return;
 
-    RegSetValueEx(RegKey, name, 0, type, var, size);
+    RegSetValueExA(RegKey, name, 0, type, var, size);
 }
 
 // ---------------------------------------------------------------------------
@@ -161,7 +161,7 @@ static BOOL SectionPresent(char *gameId)
 {
     char sectionData[0x1000];
 
-    int length = GetPrivateProfileSection(
+    int length = GetPrivateProfileSectionA(
         gameId,
         sectionData,
         sizeof(sectionData),
@@ -180,7 +180,7 @@ BOOL GetGameInfo(char *gameId, char title[64], char comment[128])
     }
 
     // read alternate game title
-    GetPrivateProfileString(
+    GetPrivateProfileStringA(
         gameId,
         "alttitle",
         "Unknown",
@@ -190,7 +190,7 @@ BOOL GetGameInfo(char *gameId, char title[64], char comment[128])
     );
 
     // read comments
-    GetPrivateProfileString(
+    GetPrivateProfileStringA(
         gameId,
         "comment",
         "Get updated GAMES.INI",
@@ -215,7 +215,7 @@ void SetGameInfo(char *gameId, char title[64], char comment[128])
     }
 
     // write alternate game title
-    WritePrivateProfileString(
+    WritePrivateProfileStringA(
         gameId,
         "alttitle",
         title,
@@ -223,7 +223,7 @@ void SetGameInfo(char *gameId, char title[64], char comment[128])
     );
 
     // write comments
-    WritePrivateProfileString(
+    WritePrivateProfileStringA(
         gameId,
         "comment",
         present ? comment : newComment,
@@ -235,7 +235,7 @@ char *GetIniVar(char *gameId, char *var)
 {
     static char buf[256];
 
-    GetPrivateProfileString(
+    GetPrivateProfileStringA(
         gameId,
         var,
         "ERROR",

@@ -105,7 +105,7 @@ void UpdateProfiler()
 {
     if(Profiler)
     {
-        char buf[128], mips[128];
+        wchar_t buf[128], mips[128];
 
         if((GetTickCount() - checkTime) < 1000) return;
         checkTime = GetTickCount();
@@ -134,7 +134,7 @@ void UpdateProfiler()
         diff = cur - fpsTime;
         if(diff >= ONE_SECOND)
         {
-            sprintf_s(buf, sizeof(buf), "FPS:%u", vi.frames);
+            swprintf_s(buf, _countof(buf), L"FPS:%u", vi.frames);
             vi.frames = 0;
             SetStatusText(STATUS_FPS, buf);
             MyReadTimeStampCounter(&fpsTime);
@@ -145,21 +145,19 @@ void UpdateProfiler()
         diff = cur - mipsTime;
         if(cur >= ONE_SECOND)
         {
-            sprintf_s(mips, sizeof(mips), "%.1f", (float)cpu.ops / 1000000.0f);
+            swprintf_s(mips, _countof(mips), L"%.1f", (float)cpu.ops / 1000000.0f);
             cpu.ops = 0;
             MyReadTimeStampCounter(&mipsTime);
         }
         else
         {
-            char * st = GetStatusText(STATUS_PROGRESS);
-            sscanf(st, "mips:%s ", mips);
+            wchar_t * st = GetStatusText(STATUS_PROGRESS);
+            swscanf(st, L"mips:%s ", mips);
         }
 
         // update status bar
         {
-            //sprintf(buf, "mips:%s  core:%-2.1f  fifo:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f", 
-            //sprintf(buf, "mips:%s  core:%-2.1f  gfx:%-2.1f  snd:%-2.1f  pad:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
-            sprintf_s (buf, sizeof(buf), "mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
+            swprintf_s (buf, _countof(buf), L"mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f",
                 mips,
                 (double)cpuTime * 100 / (double)total,
                 (double)gfxTime * 100 / (double)total,

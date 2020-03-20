@@ -38,21 +38,21 @@ static void AddFont(HWND hwndDlg, char *file)
         FontAnsiList[AnsiSelected] = (char *)malloc(strlen(file) + 1);
         strcpy(FontAnsiList[AnsiSelected++], file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-        SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
+        SendDlgItemMessageA(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
     else
     {   // Sjis type
         FontSjisList[SjisSelected] = (char *)malloc(strlen(file) + 1);
         strcpy(FontSjisList[SjisSelected++], file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-        SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
+        SendDlgItemMessageA(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
 }
 
 static void EnumFonts(HWND hwndDlg)
 {
     char FontPath[256];
-    WIN32_FIND_DATA fd;
+    WIN32_FIND_DATAA fd;
     HANDLE hfff;
     int i, Aselected = -1, Sselected = -1;
 
@@ -77,7 +77,7 @@ static void EnumFonts(HWND hwndDlg)
     SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_RESETCONTENT, 0, 0);
 
     sprintf_s(FontPath, sizeof(FontPath), "%s\\*.szp", FontsDir);
-    hfff = FindFirstFile(FontPath, &fd);
+    hfff = FindFirstFileA(FontPath, &fd);
 
     if(hfff == INVALID_HANDLE_VALUE) return;
     else
@@ -91,7 +91,7 @@ static void EnumFonts(HWND hwndDlg)
             Sselected = SjisSelected;
     }
 
-    while(FindNextFile(hfff, &fd))
+    while(FindNextFileA(hfff, &fd))
     {
         sprintf_s(FontPath, sizeof(FontPath), "%s\\%s", FontsDir, fd.cFileName);
         AddFont(hwndDlg, FontPath);

@@ -104,8 +104,8 @@ static void GL_CloseSubsystem()
 {
     if(frameReady) GL_EndFrame();
 
-    wglMakeCurrent(NULL, NULL);
     wglDeleteContext(hglrc);
+    wglMakeCurrent(NULL, NULL);
 }
 
 // ---------------------------------------------------------------------------

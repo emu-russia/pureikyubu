@@ -115,7 +115,7 @@ static void DONE_INT()
     fifo.done_num++; vi.frames++;
     if(fifo.done_num == 1)
     {
-        SetStatusText(STATUS_PROGRESS, "First GX access", 1);
+        SetStatusText(STATUS_PROGRESS, L"First GX access", 1);
         vi.xfb = 0;     // disable VI output
     }
     DBReport2(DbgChannel::PE, "PE_DONE (frame:%u)", fifo.done_num);

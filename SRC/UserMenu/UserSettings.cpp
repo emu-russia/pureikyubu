@@ -29,15 +29,15 @@ static char * tabs[] =
 static struct ConsoleVersion
 {
     uint32_t ver;
-    char*   info;
+    wchar_t*   info;
 } consoleVersion[] = {
-    { 0x00000001, "0x00000001: Retail 1" },
-    { 0x00000002, "0x00000002: HW2 production board" },
-    { 0x00000003, "0x00000003: The latest production board" },
-    { 0x10000004, "0x10000004: 1st Devkit HW" },
-    { 0x10000005, "0x10000005: 2nd Devkit HW" },
-    { 0x10000006, "0x10000006: The latest Devkit HW" },
-    { 0xffffffff, "0x%08X: User defined" }
+    { 0x00000001, L"0x00000001: Retail 1" },
+    { 0x00000002, L"0x00000002: HW2 production board" },
+    { 0x00000003, L"0x00000003: The latest production board" },
+    { 0x10000004, L"0x10000004: 1st Devkit HW" },
+    { 0x10000005, L"0x10000005: 2nd Devkit HW" },
+    { 0x10000006, L"0x10000006: The latest Devkit HW" },
+    { 0xffffffff, L"0x%08X: User defined" }
 };
 
 static struct Tooltip
@@ -95,29 +95,29 @@ static void LoadSettings(int n)         // dialogs created
         EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
 
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_RESETCONTENT, 0, 0);
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Interpreter");
+        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)L"Interpreter");
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_SETCURSEL, 0, 0);
 
         bool selected = GetConfigInt(USER_MMU, USER_MMU_DEFAULT);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_RESETCONTENT, 0, 0);
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Simple translation");
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)"Advanced (Linux)");
+        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)L"Simple translation");
+        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)L"Advanced (Mmu)");
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_SETCURSEL, selected, 0);
 
         int cf = GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT);
-        SetDlgItemText(hDlg, IDC_COUNTER_FACTOR, int2str(cf));
+        SetDlgItemTextA(hDlg, IDC_COUNTER_FACTOR, int2str(cf));
         int delay = GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT);
-        SetDlgItemText(hDlg, IDC_COUNTER_DELAY, int2str(delay));
+        SetDlgItemTextA(hDlg, IDC_COUNTER_DELAY, int2str(delay));
         int bail = GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT);
-        SetDlgItemText(hDlg, IDC_BAILOUT, int2str(bail));
+        SetDlgItemTextA(hDlg, IDC_BAILOUT, int2str(bail));
 
         char buf[256];
         sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_CF_DEFAULT);
-        SetDlgItemText(hDlg, IDC_CF_DEFAULT, buf);
+        SetDlgItemTextA(hDlg, IDC_CF_DEFAULT, buf);
         sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_DELAY_DEFAULT);
-        SetDlgItemText(hDlg, IDC_DELAY_DEFAULT, buf);
+        SetDlgItemTextA(hDlg, IDC_DELAY_DEFAULT, buf);
         sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_TIME_DEFAULT);
-        SetDlgItemText(hDlg, IDC_BAILOUT_DEFAULT, buf);
+        SetDlgItemTextA(hDlg, IDC_BAILOUT_DEFAULT, buf);
 
         settingsLoaded[0] = TRUE;
     }
@@ -125,10 +125,22 @@ static void LoadSettings(int n)         // dialogs created
     // GUI/Selector
     if(n == 1)
     {
-        for(int i=0; i<usel.pathnum; i++)
+        for(int i=0; i<usel.paths.size(); i++)
         {
+            wchar_t widePath[0x1000] = { 0, };
+            char* path = (char *)usel.paths[i].c_str();
+
+            wchar_t* widePtr = widePath;
+            char* pathPtr = path;
+
+            while (*pathPtr)
+            {
+                *widePtr++ = *pathPtr++;
+            }
+            *widePtr++ = 0;
+
             SendDlgItemMessage( hDlg, IDC_PATHLIST, LB_ADDSTRING,
-                                0, (LPARAM)usel.paths[i] );
+                                0, (LPARAM)widePath);
         }
 
         needSelUpdate = FALSE;
@@ -154,19 +166,19 @@ static void LoadSettings(int n)         // dialogs created
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_RESETCONTENT, 0, 0);
         do
         {
-            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)consoleVersion[i].info);
+            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)consoleVersion[i].info);
         } while(consoleVersion[++i].ver != 0xffffffff);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            char buf[100];
-            sprintf_s(buf, sizeof(buf), consoleVersion[selected].info, ver);
-            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)buf);
+            wchar_t buf[100];
+            swprintf_s(buf, _countof(buf), consoleVersion[selected].info, ver);
+            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)buf);
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
-        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_BOOTROM_DEFAULT));
-        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_DSP_DROM_DEFAULT));
-        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_DSP_IROM_DEFAULT));
+        SetDlgItemTextA(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_BOOTROM_DEFAULT));
+        SetDlgItemTextA(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_DSP_DROM_DEFAULT));
+        SetDlgItemTextA(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_DSP_IROM_DEFAULT));
 
         CheckDlgButton(hDlg, IDC_RTC, BST_UNCHECKED);
         BOOL flag = GetConfigInt(USER_RTC, USER_RTC_DEFAULT);
@@ -205,21 +217,22 @@ static void SaveSettings()              // OK pressed
         int selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
         SetConfigInt(USER_MMU, selected);
 
-        GetDlgItemText(hDlg, IDC_COUNTER_FACTOR, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_COUNTER_FACTOR, buf, sizeof(buf));
         cpu.cf = atoi(buf); if(cpu.cf <= 0) cpu.cf = 1;
         SetConfigInt(USER_CPU_CF, cpu.cf);
-        GetDlgItemText(hDlg, IDC_COUNTER_DELAY, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_COUNTER_DELAY, buf, sizeof(buf));
         cpu.delay = atoi(buf); if(cpu.delay <= 0) cpu.delay = 1;
         SetConfigInt(USER_CPU_DELAY, cpu.delay);
-        GetDlgItemText(hDlg, IDC_BAILOUT, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_BAILOUT, buf, sizeof(buf));
         cpu.bailout = atoi(buf); if(cpu.bailout <= 0) cpu.bailout = 1;
         SetConfigInt(USER_CPU_TIME, cpu.bailout);
 
         if(emu.running)
         {
             // update view of CPU timing setup
-            sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
-            SetStatusText(STATUS_TIMING, buf);
+            wchar_t timings[0x100] = { 0, };
+            swprintf_s(timings, _countof(timings), L"%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
+            SetStatusText(STATUS_TIMING, timings);
         }
     }
 
@@ -228,31 +241,29 @@ static void SaveSettings()              // OK pressed
     {
         HWND hDlg = hChildDlg[1];
 
-        char text[1024];
+        wchar_t text[0x1000] = { 0, };
         int max = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
 
         // delete all dirs
-        for(i=0; i<usel.pathnum; i++)
-        {
-            if(usel.paths[i])
-            {
-                free(usel.paths[i]);
-                usel.paths[i] = NULL;
-            }
-        }
-        if(usel.paths)
-        {
-            free(usel.paths);
-            usel.paths = NULL;
-            usel.pathnum = 0;
-        }
+        usel.paths.clear();
         SetConfigString(USER_PATH, "<EMPTY>");
 
         // add dirs again
         for(i=0; i<max; i++)
         {
             SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
-            AddSelectorPath(text);
+
+            char path[0x1000] = { 0, };
+            char* pathPtr = path;
+            wchar_t* widePtr = text;
+
+            while (*widePtr)
+            {
+                *pathPtr++ = *widePtr++;
+            }
+            *pathPtr++ = 0;
+
+            AddSelectorPath(path);
         }
 
         // update selector layout, if PATH has changed
@@ -276,11 +287,11 @@ static void SaveSettings()              // OK pressed
         }
         else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver);
 
-        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_BOOTROM_FILE, buf, sizeof(buf));
         SetConfigString(USER_BOOTROM, buf);
-        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_DSPDROM_FILE, buf, sizeof(buf));
         SetConfigString(USER_DSP_DROM, buf);
-        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf, sizeof(buf));
+        GetDlgItemTextA(hDlg, IDC_DSPIROM_FILE, buf, sizeof(buf));
         SetConfigString(USER_DSP_IROM, buf);
 
         BOOL flag = IsDlgButtonChecked(hDlg, IDC_RTC);
@@ -459,33 +470,33 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                     file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
                     if (file != nullptr)
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file);
+                        SetDlgItemTextA(hDlg, IDC_BOOTROM_FILE, file);
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, "");
+                        SetDlgItemTextA(hDlg, IDC_BOOTROM_FILE, "");
                     }
                     break;
                 case IDC_CHOOSE_DSPDROM:
                     file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
                     if (file != nullptr)
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file);
+                        SetDlgItemTextA(hDlg, IDC_DSPDROM_FILE, file);
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, "");
+                        SetDlgItemTextA(hDlg, IDC_DSPDROM_FILE, "");
                     }
                     break;
                 case IDC_CHOOSE_DSPIROM:
                     file = FileOpen(wnd.hMainWindow, FILE_TYPE::FILE_TYPE_ALL);
                     if (file != nullptr)
                     {
-                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file);
+                        SetDlgItemTextA(hDlg, IDC_DSPIROM_FILE, file);
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, "");
+                        SetDlgItemTextA(hDlg, IDC_DSPIROM_FILE, "");
                     }
                     break;
             }
@@ -522,14 +533,14 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     hParentWnd  = hParent;
     hParentInst = hInst;
 
-    PROPSHEETPAGE psp[4];
-    PROPSHEETHEADER psh;
+    PROPSHEETPAGEA psp[4];
+    PROPSHEETHEADERA psh;
 
     // Emulator page
     psp[0].dwSize = sizeof(PROPSHEETPAGE);
     psp[0].dwFlags = PSP_USETITLE;
     psp[0].hInstance = hParentInst;
-    psp[0].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_EMU);
+    psp[0].pszTemplate = MAKEINTRESOURCEA(IDD_SETTINGS_EMU);
     psp[0].pfnDlgProc = EmulatorSettingsProc;
     psp[0].pszTitle = tabs[0];
     psp[0].lParam = 0;
@@ -539,7 +550,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psp[1].dwSize = sizeof(PROPSHEETPAGE);
     psp[1].dwFlags = PSP_USETITLE;
     psp[1].hInstance = hParentInst;
-    psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GUI);
+    psp[1].pszTemplate = MAKEINTRESOURCEA(IDD_SETTINGS_GUI);
     psp[1].pfnDlgProc = UserMenuSettingsProc;
     psp[1].pszTitle = tabs[1];
     psp[1].lParam = 0;
@@ -550,7 +561,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psp[2].dwSize = sizeof(PROPSHEETPAGE);
     psp[2].dwFlags = PSP_USETITLE;
     psp[2].hInstance = hParentInst;
-    psp[2].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_HW);
+    psp[2].pszTemplate = MAKEINTRESOURCEA(IDD_SETTINGS_HW);
     psp[2].pfnDlgProc = HardwareSettingsProc;
     psp[2].pszTitle = tabs[2];
     psp[2].lParam = 0;
@@ -561,7 +572,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psp[3].dwSize = sizeof(PROPSHEETPAGE);
     psp[3].dwFlags = PSP_USETITLE;
     psp[3].hInstance = hParentInst;
-    psp[3].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_HLE);
+    psp[3].pszTemplate = MAKEINTRESOURCEA(IDD_SETTINGS_HLE);
     psp[3].pfnDlgProc = HighLevelSettingsProc;
     psp[3].pszTitle = tabs[3];
     psp[3].lParam = 0;
@@ -577,11 +588,11 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psh.pszCaption = "Configure " APPNAME;
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
-    psh.ppsp = (LPCPROPSHEETPAGE)&psp;
+    psh.ppsp = (LPCPROPSHEETPAGEA)&psp;
     psh.pfnCallback = NULL;
     settingsLoaded[3] = FALSE;
 
-    PropertySheet(&psh);    // blocking call
+    PropertySheetA(&psh);    // blocking call
 }
 
 
@@ -619,10 +630,10 @@ static INT_PTR CALLBACK EditFileProc(
             _splitpath(usel.selected->name, drive, dir, name, ext);
             sprintf_s(path, sizeof(path), "%s%s", drive, dir);
             sprintf_s(fullname, sizeof(fullname), "%s%s", name, ext);
-            SetDlgItemText(hwndDlg, IDC_FILE_INFO_TITLE, usel.selected->title);
-            SetDlgItemText(hwndDlg, IDC_FILE_INFO_COMMENT, usel.selected->comment);
-            SetDlgItemText(hwndDlg, IDC_FILE_INFO_FILENAME, fullname);
-            SetDlgItemText(hwndDlg, IDC_FILE_INFO_PATH, path);
+            SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_TITLE, usel.selected->title);
+            SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_COMMENT, usel.selected->comment);
+            SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_FILENAME, fullname);
+            SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_PATH, path);
             return TRUE;
         }
 
@@ -644,9 +655,9 @@ static INT_PTR CALLBACK EditFileProc(
             if(wParam == IDOK)
             {
                 // save information and update selector
-                GetDlgItemText( hwndDlg, IDC_FILE_INFO_TITLE, 
+                GetDlgItemTextA( hwndDlg, IDC_FILE_INFO_TITLE, 
                                 usel.selected->title, MAX_TITLE);
-                GetDlgItemText( hwndDlg, IDC_FILE_INFO_COMMENT, 
+                GetDlgItemTextA( hwndDlg, IDC_FILE_INFO_COMMENT, 
                                 usel.selected->comment, MAX_COMMENT);
                 if(usel.selected->type == SELECTOR_FILE_DVD)
                 {
@@ -682,16 +693,16 @@ static INT_PTR CALLBACK EditFileProc(
                         DVDBanner2 * bnr = (DVDBanner2 *)DVDLoadBanner(usel.selected->name);
                         fix_string((char *)bnr->comments[0].longTitle);
                         fix_string((char *)bnr->comments[0].comment);
-                        SetDlgItemText(hwndDlg, IDC_FILE_INFO_TITLE, (char *)bnr->comments[0].longTitle);
-                        SetDlgItemText(hwndDlg, IDC_FILE_INFO_COMMENT, (char *)bnr->comments[0].comment);
+                        SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_TITLE, (char *)bnr->comments[0].longTitle);
+                        SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_COMMENT, (char *)bnr->comments[0].comment);
                         free(bnr);
                     }
                     else
                     {
                         char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
                         _splitpath(usel.selected->name, drive, dir, name, ext);
-                        SetDlgItemText(hwndDlg, IDC_FILE_INFO_TITLE, name);
-                        SetDlgItemText(hwndDlg, IDC_FILE_INFO_COMMENT, "");
+                        SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_TITLE, name);
+                        SetDlgItemTextA(hwndDlg, IDC_FILE_INFO_COMMENT, "");
                     }
                     return FALSE;
                 }
@@ -710,7 +721,7 @@ void EditFileInformation(HWND hwnd)
     // choose the first selected item
     int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
     if(item == -1) return;
-    else usel.selected = &usel.files[item];
+    else usel.selected = usel.files[item];
 
     DialogBox(
         GetModuleHandle(NULL),
@@ -736,7 +747,7 @@ static void filter_string(HWND hDlg, uint32_t filter)
     }
     ptr[-1] = 0;
 
-    SetDlgItemText(hDlg, IDC_FILE_FILTER, buf);
+    SetDlgItemTextA(hDlg, IDC_FILE_FILTER, buf);
 }
 
 static void check_filter(HWND hDlg, uint32_t filter)

@@ -28,6 +28,10 @@
 #define APPDESC     "Nintendo Gamecube Emulator for Windows"
 #define APPVER      "0.11"
 
+#define APPNAMEW    L"Dolwin"
+#define APPDESCW    L"Nintendo Gamecube Emulator for Windows"
+#define APPVERW     L"0.11"
+
 // ---------------------------------------------------------------------------
 // Dolwin includes
 

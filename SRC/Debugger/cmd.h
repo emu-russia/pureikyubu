@@ -34,6 +34,7 @@ void    cmd_syms(std::vector<std::string>& args);		// show symbolic info
 void    cmd_tree(std::vector<std::string>& args);		// show call tree
 void    cmd_top10(std::vector<std::string>& args);		// show HLE calls toplist
 void    cmd_u(std::vector<std::string>& args);			// set disassembly address
+void    cmd_sleep(std::vector<std::string>& args);		// Sleep specified number of milliseconds
 
 #include "DspCommands.h"    // dsp command handlers
 #include "HwCommands.h"    // HW debug command handlers

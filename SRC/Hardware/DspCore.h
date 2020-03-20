@@ -189,6 +189,27 @@ namespace DSP
 		ACYN2 = 0xFFDC,
 		ACGAN = 0xFFDE,
 
+		// Unknown (TAP Filter?)
+
+		UNKNOWN_FFA0,
+		UNKNOWN_FFA1,
+		UNKNOWN_FFA2,
+		UNKNOWN_FFA3,
+		UNKNOWN_FFA4,
+		UNKNOWN_FFA5,
+		UNKNOWN_FFA6,
+		UNKNOWN_FFA7,
+		UNKNOWN_FFA8,
+		UNKNOWN_FFA9,
+		UNKNOWN_FFAA,
+		UNKNOWN_FFAB,
+		UNKNOWN_FFAC,
+		UNKNOWN_FFAD,
+		UNKNOWN_FFAE,
+		UNKNOWN_FFAF,
+		UNKNOWN_FFB0,
+		UNKNOWN_FFB1,
+
 		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
 	};
 
@@ -335,12 +356,12 @@ namespace DSP
 		// CPU->DSP Mailbox
 		void CpuToDspWriteHi(uint16_t value);
 		void CpuToDspWriteLo(uint16_t value);
-		uint16_t CpuToDspReadHi();
+		uint16_t CpuToDspReadHi(bool ReadByDsp);
 		uint16_t CpuToDspReadLo();
 		// DSP->CPU Mailbox
 		void DspToCpuWriteHi(uint16_t value);
 		void DspToCpuWriteLo(uint16_t value);
-		uint16_t DspToCpuReadHi();
+		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo();
 
 	};

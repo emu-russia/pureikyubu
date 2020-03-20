@@ -1,7 +1,7 @@
 // WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin
 // should take care about proper window style itself !!
 #define WIN_STYLE   ( WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX)
-#define WIN_NAME    APPNAME " - " APPDESC " (" APPVER ")"
+#define WIN_NAMEW   APPNAMEW    L" - "  APPDESCW    L" ("   APPVERW     L")"
 
 // status bar parts enumerator
 enum STATUS_ENUM
@@ -12,8 +12,8 @@ enum STATUS_ENUM
     STATUS_TIME,                // time counter
 };
 
-void    SetStatusText(int sbPart, const char *text, bool post=false);
-char*   GetStatusText(int sbPart);
+void SetStatusText(int sbPart, const wchar_t *text, bool post=false);
+wchar_t* GetStatusText(int sbPart);
 
 void    StartProgress(int range, int delta);
 void    StepProgress();
@@ -35,7 +35,7 @@ void    UpdateMainWindow(bool peek=true);
 
 // utilities
 void    SetAlwaysOnTop(HWND hwnd, BOOL state);
-void    SetMenuItemText(HMENU hmenu, UINT id, char *text);
+void    SetMenuItemText(HMENU hmenu, UINT id, wchar_t *text);
 void    CenterChildWindow(HWND hParent, HWND hChild);
 
 // all important data is placed here

@@ -630,7 +630,7 @@ namespace Debug
 
         uint32_t value = 0;
 
-        value |= dspCore->DspToCpuReadHi() << 16;
+        value |= dspCore->DspToCpuReadHi(true) << 16;
         if ((value & 0x80000000) == 0)
         {
             DBReport("No DSP message.\n");

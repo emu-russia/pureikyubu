@@ -1,5 +1,8 @@
 #pragma once
 
+#include <list>
+#include <string>
+
 // file type (*.bin is not supported, and can be opened only by File->Open)
 enum SELECTOR_FILE
 {
@@ -24,11 +27,11 @@ typedef struct UserFile
 } UserFile;
 
 // selector columns
-#define SELECTOR_COLUMN_BANNER  "Icon"
-#define SELECTOR_COLUMN_TITLE   "Title"
-#define SELECTOR_COLUMN_SIZE    "Size"
-#define SELECTOR_COLUMN_GAMEID  "Game ID"
-#define SELECTOR_COLUMN_COMMENT "Comment"
+#define SELECTOR_COLUMN_BANNER  L"Icon"
+#define SELECTOR_COLUMN_TITLE   L"Title"
+#define SELECTOR_COLUMN_SIZE    L"Size"
+#define SELECTOR_COLUMN_GAMEID  L"Game ID"
+#define SELECTOR_COLUMN_COMMENT L"Comment"
 
 // sort by ..
 enum SELECTOR_SORT
@@ -71,16 +74,13 @@ typedef struct UserSelector
     UserFile*   selected;           // first selected item (temporary for edit file dialog)
 
     // path list, where to search files.
-    char**      paths;
-    int         pathnum;
+    std::vector<std::string> paths;
 
     // file filter
     uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]
 
-    // we are using self-extended file list, so file count is
-    // unlimited in theory (limited only by system resources).
-    UserFile*   files;              // file list
-    int         filenum;            // file count
+    // list of found files
+    std::vector<UserFile*> files;
     MySpinLock::LOCK filesLock;
 } UserSelector;
 

@@ -106,7 +106,7 @@ static void db_report2(DbgChannel chan, const char* text, ...)
     }
 
     va_start(arg, text);
-    vsprintf_s(buf, sizeof(buf), text, arg);
+    vsprintf_s(buf, sizeof(buf) - 1, text, arg);
     va_end(arg);
 
     con_print(col, "%s%s", prefix, buf);
@@ -118,7 +118,7 @@ static void db_report(const char* text, ...)
     va_list arg;
 
     va_start(arg, text);
-    vsprintf_s(buf, sizeof(buf), text, arg);
+    vsprintf_s(buf, sizeof(buf) - 1, text, arg);
     va_end(arg);
 
     db_report2(DbgChannel::Norm, buf);

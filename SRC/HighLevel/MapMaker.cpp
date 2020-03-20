@@ -143,7 +143,7 @@ void MAPInit(char * mapname)
     Map_marksSize = 0;
     Map_marks = (opMarker *)malloc(Map_marksMaxSize * sizeof(opMarker));
 
-    SetStatusText(STATUS_PROGRESS, "Please, wait until emulator making new MAP");
+    SetStatusText(STATUS_PROGRESS, L"Please, wait until emulator making new MAP");
     Sleep(1000);
 }
 
@@ -264,8 +264,19 @@ void MAPFinish()
                 }
 
                 // show status
-                SetStatusText(STATUS_PROGRESS, name);
-                Sleep(10);
+                {
+                    wchar_t wideName[0x100] = { 0, };
+
+                    wchar_t* wideNamePtr = wideName;
+                    char* namePtr = name;
+                    while (*namePtr)
+                    {
+                        *wideNamePtr++ = *namePtr++;
+                    }
+                    *wideNamePtr++ = 0;
+
+                    SetStatusText(STATUS_PROGRESS, wideNamePtr);
+                }
 
                 namelen = strlen(name);
                 if (namelen >= MAP_MAXFUNCNAME) {

@@ -22,7 +22,7 @@ void DolwinError(const char *title, const char *fmt, ...)
     }
     else
     {
-        MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+        MessageBoxA(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
         exit(1);    // return bad
     }
 }
@@ -38,7 +38,7 @@ BOOL DolwinQuestion(const char *title, const char *fmt, ...)
     vsprintf_s(buf, sizeof(buf), fmt, arg);
     va_end(arg);
 
-    int btn = MessageBox(
+    int btn = MessageBoxA(
         NULL,
         buf,
         title,
@@ -62,7 +62,7 @@ void DolwinReport(const char *fmt, ...)
     vsprintf_s(buf, sizeof(buf), fmt, arg);
     va_end(arg);
 
-    MessageBox(NULL, buf, APPNAME " Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
+    MessageBoxA(NULL, buf, APPNAME " Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
 }
 
 // ---------------------------------------------------------------------------
@@ -74,7 +74,7 @@ static void LockMultipleCalls()
     static  HANDLE  dolwinsem;
 
     // mutex will fail if semephore already exists
-    dolwinsem = CreateMutex(NULL, 0, APPNAME);
+    dolwinsem = CreateMutexA(NULL, 0, APPNAME);
     if(dolwinsem == NULL)
     {
         DolwinReport("We are already running " APPNAME "!!");
@@ -82,19 +82,19 @@ static void LockMultipleCalls()
     }
     CloseHandle(dolwinsem);
 
-    dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
+    dolwinsem = CreateSemaphoreA(NULL, 0, 1, APPNAME);
 }
 
 // set proper current working directory, create missing directories
 static void InitFileSystem(HINSTANCE hInst)
 {
     // set current working directory relative to Dolwin executable
-    GetModuleFileName(hInst, ldat.cwd, 1024);
+    GetModuleFileNameA(hInst, ldat.cwd, 1024);
     *(strrchr(ldat.cwd, '\\') + 1) = 0;
-    SetCurrentDirectory(ldat.cwd);
+    SetCurrentDirectoryA(ldat.cwd);
 
     // make sure, that Dolwin has data directory.
-    CreateDirectory(".\\Data", NULL);
+    CreateDirectoryA(".\\Data", NULL);
 }
 
 // return file name without quotes

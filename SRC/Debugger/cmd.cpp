@@ -35,6 +35,7 @@ void cmd_init_handlers()
     con.cmds["tree"] = cmd_tree;
     con.cmds["u"] = cmd_u;
     con.cmds["unload"] = cmd_unload;
+    con.cmds["sleep"] = cmd_sleep;
     con.cmds["exit"] = cmd_exit;
     con.cmds["quit"] = cmd_exit;
     con.cmds["q"] = cmd_exit;
@@ -116,6 +117,7 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    colors               - colored output test\n");
     DBReport( "    disa                 - disassemble code into text file\n");
     DBReport( "    tree                 - show call tree\n");
+    DBReport( "    sleep                - Sleep specified number of milliseconds\n");
     DBReport( "    [q]uit, e[x]it       - exit to OS\n");
     DBReport("\n");
 
@@ -1441,4 +1443,17 @@ void cmd_u(std::vector<std::string>& args)
         // simply address
         con_set_disa_cur(strtoul(args[1].c_str(), NULL, 0));
     }
+}
+
+// Sleep specified number of milliseconds
+void cmd_sleep(std::vector<std::string>& args)
+{
+    if (args.size() < 2)
+    {
+        DBReport("syntax : sleep <milliseconds>\n");
+        DBReport("examples of use : sleep 1000\n");
+        return;
+    }
+
+    Sleep(atoi(args[1].c_str()));
 }

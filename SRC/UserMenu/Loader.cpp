@@ -606,12 +606,12 @@ static BOOL SetGameIDAndTitle(char *filename)
 static void DoLoadFile(char *filename)
 {
     uint32_t entryPoint = 0;
-    char statusText[0x1000];
+    wchar_t statusText[0x1000];
     bool bootrom = false;
     ULONGLONG s_time = GetTickCount64();
 
     // loading progress
-    sprintf_s(statusText, sizeof(statusText), "Loading %s", filename);
+    swprintf_s(statusText, _countof(statusText), L"Loading %s", filename);
     SetStatusText(STATUS_PROGRESS, statusText);
 
     // load file
@@ -711,7 +711,7 @@ static void DoLoadFile(char *filename)
     // show boot time
     ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
-    sprintf_s (statusText, sizeof(statusText), "Boot time %1.2f sec", ldat.boottime);
+    swprintf_s (statusText, _countof(statusText), L"Boot time %1.2f sec", ldat.boottime);
     SetStatusText(STATUS_PROGRESS, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
@@ -724,8 +724,8 @@ static void DoLoadFile(char *filename)
     }
 
     // show CPU timing setup
-    char buf[64];
-    sprintf_s(buf, sizeof(buf), "%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
+    wchar_t buf[64];
+    swprintf_s(buf, _countof(buf), L"%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
     SetStatusText(STATUS_TIMING, buf);
 }
 
