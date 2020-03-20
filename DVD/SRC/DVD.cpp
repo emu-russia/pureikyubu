@@ -8,28 +8,26 @@ DVD dvd;
 
 bool DVDSetCurrent(char *file)
 {
-    // close previously selected file
-    GCMClose();
-
     // try to open file
     FILE* f = nullptr;
     fopen_s(&f, file, "rb");
-    if(!f) return FALSE;
+    if(!f) return false;
     fclose(f);
 
     // select current DVD
-    BOOL res = GCMSelectFile(file);
-
-    // init filesystem
-    if(res)
-    {
-        res = dvd_fs_init();
-    }
-
+    bool res = GCMSelectFile(file);
     if (!res)
         return res;
 
-    return res;
+    // init filesystem
+    res = dvd_fs_init();
+    if (!res)
+    {
+        GCMSelectFile(nullptr);
+        return res;
+    }
+
+    return true;
 }
 
 // ---------------------------------------------------------------------------

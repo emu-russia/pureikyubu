@@ -66,7 +66,7 @@ static void db_report2(DbgChannel chan, const char* text, ...)
             break;
         case DbgChannel::DSP:
             prefix = "DSP: ";
-            col = ConColor::CYAN;
+            col = ConColor::BPUR;
             break;
         case DbgChannel::DI:
             prefix = "DI : ";

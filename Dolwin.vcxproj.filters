@@ -96,9 +96,6 @@
     <ClInclude Include="SRC\UserMenu\DVDBanner.h">
       <Filter>User Menu</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\UserMenu\nobanner.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
     <ClInclude Include="SRC\UserMenu\Loader.h">
       <Filter>User Menu</Filter>
     </ClInclude>

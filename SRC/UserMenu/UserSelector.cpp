@@ -86,18 +86,22 @@ static void load_path()
 // called after loading of new file (see Emulator\Loader.cpp)
 bool AddSelectorPath(char *fullPath)
 {
+    char path[0x1000] = { 0 };
+
     int i;
-    // spell will be checked RTL, so fullPath[0] doesnt crash when fullPath = NULL
-    if( (fullPath[0] == 0) || (fullPath == NULL) )
+    if (fullPath == nullptr)
+        return false;
+    if (fullPath[0] == 0)
         return false;
 
-    fix_path(fullPath);
+    strcpy_s(path, sizeof(path) - 1, fullPath);
+    fix_path(path);
 
     bool exists = false;
 
     for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
     {
-        if (!_stricmp(fullPath, it->c_str()))
+        if (!_stricmp(path, it->c_str()))
         {
             exists = true;
             break;
@@ -110,11 +114,11 @@ bool AddSelectorPath(char *fullPath)
         char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
         VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
         if(!_stricmp(old, "<EMPTY>"))
-            sprintf_s(temp, sizeof(temp), "%s", fullPath);
+            sprintf_s(temp, sizeof(temp), "%s", path);
         else
-            sprintf_s(temp, sizeof(temp), "%s;%s", old, fullPath);
+            sprintf_s(temp, sizeof(temp), "%s;%s", old, path);
         SetConfigString(USER_PATH, temp);
-        add_path(fullPath);
+        add_path(path);
         return true;
     }
     else return false;
@@ -374,6 +378,24 @@ static void add_file(char *file, int fsize, int type)
         return;
     }
 
+    // check already present
+    bool found = false;
+    MySpinLock::Lock(&usel.filesLock);
+    for (auto it = usel.files.begin(); it != usel.files.end(); ++it)
+    {
+        UserFile* entry = *it;
+
+        if (!_stricmp(entry->name, file))
+        {
+            found = true;
+            break;
+        }
+    }
+    MySpinLock::Unlock(&usel.filesLock);
+
+    if (found)
+        return;
+
     // try to open file
     FILE* f = nullptr;
     fopen_s(&f, file, "rb");
@@ -391,13 +413,6 @@ static void add_file(char *file, int fsize, int type)
 
     if(type == SELECTOR_FILE_DVD)
     {
-        // try to set current DVD
-        if (DVDSetCurrent(file) == FALSE)
-        {
-            delete item;
-            return;
-        }
-
         // load DVD banner
         bnr = (DVDBanner2 *)DVDLoadBanner(file);
         if (bnr == nullptr)
@@ -407,7 +422,7 @@ static void add_file(char *file, int fsize, int type)
         }
 
         // get DiskID
-        char diskID[8];
+        char diskID[0x10] = { 0 };
         DVDSetCurrent(file);
         DVDSeek(0);
         DVDRead(diskID, 4);
@@ -698,9 +713,6 @@ void UpdateSelector()
     WIN32_FIND_DATA fd = { 0 };
     HANDLE hfff;
     int dir = 0;
-
-    // https://github.com/ogamespec/dolwin/issues/25
-    return;
 
     // opened ?
     if(!usel.opened) return;

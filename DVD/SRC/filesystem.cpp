@@ -46,6 +46,36 @@ static DVDFileEntry *fst_prepare(DVDFileEntry *root)
 // initialize filesystem
 BOOL dvd_fs_init()
 {
+    // Check DiskID
+
+    char diskId[5] = { 0 };
+
+    DVDSeek(DVD_ID_OFFSET);
+    DVDRead(diskId, 4);
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (!isalnum(diskId[i]))
+        {
+            return FALSE;
+        }
+    }
+
+    // Check Apploader
+
+    char apploaderBytes[5] = { 0 };
+
+    DVDSeek(DVD_APPLDR_OFFSET);
+    DVDRead(apploaderBytes, 4);
+
+    for (int i = 0; i < 4; i++)
+    {
+        if (!isdigit(apploaderBytes[i]))
+        {
+            return FALSE;
+        }
+    }
+
     // load tables
     DVDSeek(DVD_BB2_OFFSET);
     DVDRead(&bb2, sizeof(DVDBB2));

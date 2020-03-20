@@ -65,7 +65,6 @@ void PIAssertInt(uint32_t mask)
     {
         printOut(mask, "asserted");
     }
-    PICheckInterrupts();
 }
 
 // clear interrupt
@@ -89,8 +88,7 @@ static void __fastcall read_intsr(uint32_t addr, uint32_t *reg)
 // writes turns them off ?
 static void __fastcall write_intsr(uint32_t addr, uint32_t data)
 {
-    INTSR &= ~data;
-    PICheckInterrupts();
+    PIClearInt(data);
 }
 
 static void __fastcall read_intmr(uint32_t addr, uint32_t *reg)
@@ -114,8 +112,6 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
 
         DBReport2(DbgChannel::PI, "unmasked : %s\n", buf);
     }
-
-    PICheckInterrupts();
 }
 
 //

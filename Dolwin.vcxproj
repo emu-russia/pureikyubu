@@ -245,7 +245,6 @@
     <ClInclude Include="SRC\UserMenu\DVDBanner.h" />
     <ClInclude Include="SRC\UserMenu\Emulator.h" />
     <ClInclude Include="SRC\UserMenu\Loader.h" />
-    <ClInclude Include="SRC\UserMenu\nobanner.h" />
     <ClInclude Include="SRC\UserMenu\SjisTable.h" />
     <ClInclude Include="SRC\UserMenu\User.h" />
     <ClInclude Include="SRC\UserMenu\UserAbout.h" />

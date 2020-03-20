@@ -611,6 +611,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DIRQ:
 					if (value & 1)
 					{
+						DBReport2(DbgChannel::DSP, "DspHardwareRegs::DIRQ\n");
 						DSPAssertInt();
 					}
 					break;
@@ -631,6 +632,9 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAD:
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAE:
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAF:
+					DBReport2(DbgChannel::DSP, "Known unknown (FIR?) HW write 0x%04X = 0x%04X\n", addr, value);
+					break;
+
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB0:
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB1:
 					DBReport2(DbgChannel::DSP, "Known unknown HW write 0x%04X = 0x%04X\n", addr, value);

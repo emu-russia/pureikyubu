@@ -62,7 +62,7 @@ typedef struct AIREG
 typedef struct AIControl
 {
     // AID
-    uint16_t    dcr;            // AI/DSP control register
+    std::atomic<uint16_t>    dcr;   // AI/DSP control register
     AIREG       madr;           // DMA address
     uint16_t    len;            // DMA control/DMA length (length of audio data)
     uint16_t    dcnt;           // DMA count-down

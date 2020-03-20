@@ -2,9 +2,6 @@
 // we are using DVD plugin for disk operations.
 #include "dolphin.h"
 
-// banner for damaged DVD images.
-#include "nobanner.h"
-
 void * DVDLoadBanner(char *dvdFile)
 {
     int fsize = FileSize(dvdFile);
@@ -25,7 +22,11 @@ void * DVDLoadBanner(char *dvdFile)
         DVDSeek(bnrofs);
         DVDRead((uint8_t *)banner, sizeof(DVDBanner2));
     }
-    else memcpy(banner, nobanner, sizeof(DVDBanner));
+    else
+    {
+        free(banner);
+        return nullptr;
+    }
 
     return banner;
 }

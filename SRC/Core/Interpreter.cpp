@@ -51,6 +51,11 @@ JumpPC:
 // interpreter exception
 void IPTException(uint32_t code)
 {
+    if (cpu.exception)
+    {
+        DBHalt("CPU Double Fault!\n");
+    }
+
     // save regs
     SRR0 = PC;
     SRR1 = MSR;

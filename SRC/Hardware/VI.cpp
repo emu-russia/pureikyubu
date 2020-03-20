@@ -1,6 +1,4 @@
 // VI - video interface (TV stuff).
-// 0.09 was very stupid, so I completely rewrote whole module;
-// now "wait retrace" will never hung in homedev demos.
 #include "pch.h"
 
 /* ---------------------------------------------------------------------------

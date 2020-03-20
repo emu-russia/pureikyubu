@@ -3,40 +3,48 @@
 #include "pch.h"
 
 // local data
-static FILE*    gcm_file;       // selected GCM file
+static char     gcm_filename[0x1000];
 static int      gcm_size;       // size of opened file
 static int      seekval;        // current DVD position
 
 // ---------------------------------------------------------------------------
 
-BOOL GCMSelectFile(char *file)
+bool GCMSelectFile(char *file)
 {
+    FILE* gcm_file;
+
+    gcm_filename[0] = 0;
     dvd.selected = false;
 
-    GCMClose();
+    if (file == nullptr)
+    {
+        return true;
+    }
 
     // open GCM file
     fopen_s(&gcm_file, file, "rb");
-    if(!gcm_file) return FALSE;
+    if(!gcm_file) return false;
 
     // get file size
     fseek(gcm_file, 0, SEEK_END);
     gcm_size = ftell(gcm_file);
     fseek(gcm_file, 0, SEEK_SET);
 
+    fclose(gcm_file);
+
     // protect from damaged GCMs
     if(gcm_size < DVD_APPLDR_OFFSET)
     {
-        GCMClose();
-        return FALSE;
+        return false;
     }
 
     // reset position
     seekval = 0;
 
+    strcpy_s(gcm_filename, sizeof(gcm_filename) - 1, file);
     dvd.selected = true;
 
-    return TRUE;
+    return true;
 }
 
 void GCMSeek(int position)
@@ -46,6 +54,13 @@ void GCMSeek(int position)
 
 void GCMRead(uint8_t*buf, int length)
 {
+    FILE* gcm_file;
+
+    if (gcm_filename[0] == 0)
+        return;
+
+    fopen_s(&gcm_file, gcm_filename, "rb");
+
     if(gcm_file)
     {
         // out of DVD
@@ -53,6 +68,7 @@ void GCMRead(uint8_t*buf, int length)
         {
             memset(buf, 0, length);     // fill by zeroes
             seekval += length;
+            fclose(gcm_file);
             return;
         }
 
@@ -62,6 +78,7 @@ void GCMRead(uint8_t*buf, int length)
         {
             memset(buf, 0, length);     // fill by zeroes
             seekval += length;
+            fclose(gcm_file);
             return;
         }
 
@@ -83,18 +100,9 @@ void GCMRead(uint8_t*buf, int length)
             fseek(gcm_file, seekval, SEEK_SET);
             if(dvd.frdm) fread(buf, length, 1, gcm_file);
             else fread(buf, 1, length, gcm_file);
+            fclose(gcm_file);
             seekval += length;
         }
     }
     else memset(buf, 0, length);        // fill by zeroes
-}
-
-void GCMClose()
-{
-    // close GCM file (if opened)
-    if(gcm_file)
-    {
-        fclose(gcm_file);
-        gcm_file = NULL;
-    }
 }
