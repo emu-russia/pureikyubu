@@ -247,24 +247,24 @@ namespace DSP
 
 	void DspInterpreter::LRR(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->regs.ar[info.paramBits[1]]);
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
 	}
 
 	void DspInterpreter::LRRD(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->regs.ar[info.paramBits[1]]);
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]--;
 	}
 
 	void DspInterpreter::LRRI(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->regs.ar[info.paramBits[1]]);
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]++;
 	}
 
 	void DspInterpreter::LRRN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->regs.ar[info.paramBits[1]]);
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
 	}
 
