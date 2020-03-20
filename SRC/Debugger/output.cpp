@@ -151,12 +151,12 @@ void con_cursorxy(int x, int y)
     SetConsoleCursorPosition(con.output, cr);
 }
 
-void con_fill_line(int y)
+void con_fill_line(int y, int charCode)
 {
     for(int i = 0; i < CON_WIDTH; i++)
     {
-        con.buf[y][i].Attributes = 3 << 4;
-        con.buf[y][i].Char.AsciiChar = (char)0xC4;
+        con.buf[y][i].Attributes = con.attr;
+        con.buf[y][i].Char.AsciiChar = (char)charCode;
     }
 }
 
@@ -316,7 +316,7 @@ static void con_update_scroll_window()
     // cleanup window and skip header line
     memset(con.buf[wind.roll_y + 1], 0, (sizeof(CHAR_INFO) * (wind.roll_h - 1) * CON_WIDTH));
     con_attr(0, 3);
-    con_fill_line(wind.roll_y);
+    con_fill_line(wind.roll_y, 0xc4);
     if(wind.focus == WCONSOLE) con_printf_at(0, wind.roll_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.roll_y, "F4");

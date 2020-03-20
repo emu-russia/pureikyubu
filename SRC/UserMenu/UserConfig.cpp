@@ -83,7 +83,7 @@ char *GetConfigString(char *var, char *defVal, char *path)
     }
 
     memset(buf, 0, sizeof(buf));
-    RegQuery(256, var, (LPBYTE)buf);
+    RegQuery(sizeof(buf) - 1, var, (LPBYTE)buf);
 
     if(strlen(buf) == 0)
     {
@@ -119,7 +119,7 @@ int GetConfigInt(char *var, int defVal, char *path)
     }
 
     memset(buf, 0, sizeof(buf));
-    RegQuery(256, var, (LPBYTE)buf);
+    RegQuery(sizeof(buf) - 1, var, (LPBYTE)buf);
 
     if(strlen(buf) == 0)
     {

@@ -109,7 +109,7 @@ void    con_gotoxy(int X, int Y);
 void    con_print_at(int X, int Y, const char *text);
 void    con_status(const char *txt);
 void    con_cursorxy(int x, int y);
-void    con_fill_line(int y);
+void    con_fill_line(int y, int charCode);
 void    con_clear_line(int y, uint16_t attr=7);
 void    con_printf_at(int x, int y, const char *txt, ...);
 void    con_set_autoscroll(bool value);

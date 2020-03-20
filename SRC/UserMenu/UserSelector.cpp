@@ -699,6 +699,9 @@ void UpdateSelector()
     HANDLE hfff;
     int dir = 0;
 
+    // https://github.com/ogamespec/dolwin/issues/25
+    return;
+
     // opened ?
     if(!usel.opened) return;
 

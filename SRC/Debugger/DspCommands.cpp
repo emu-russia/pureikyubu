@@ -27,7 +27,8 @@ namespace Debug
         con.cmds["difx"] = cmd_difx;
         con.cmds["cpumbox"] = cmd_cpumbox;
         con.cmds["dspmbox"] = cmd_dspmbox;
-        con.cmds["dspint"] = cmd_dspint;
+        con.cmds["cpudspint"] = cmd_cpudspint;
+        con.cmds["dspcpuint"] = cmd_dspcpuint;
     }
 
     void dsp_help()
@@ -53,7 +54,8 @@ namespace Debug
         DBReport("    difx                 - Dump DSP IFX (internal hardware)\n");
         DBReport("    cpumbox              - Write message to CPU Mailbox\n");
         DBReport("    dspmbox              - Read message from DSP Mailbox\n");
-        DBReport("    dspint               - Send CPU->DSP interrupt\n");
+        DBReport("    cpudspint            - Send CPU->DSP interrupt\n");
+        DBReport("    dspcpuint            - Send DSP->CPU interrupt\n");
         DBReport("\n");
     }
 
@@ -641,7 +643,7 @@ namespace Debug
     }
 
     // Send CPU->DSP interrupt
-    void cmd_dspint(std::vector<std::string>& args)
+    void cmd_cpudspint(std::vector<std::string>& args)
     {
         if (!dspCore)
         {
@@ -650,6 +652,12 @@ namespace Debug
         }
 
         dspCore->DSPSetIntBit(true);
+    }
+
+    // Send DSP->CPU interrupt
+    void cmd_dspcpuint(std::vector<std::string>& args)
+    {
+        DSPAssertInt();
     }
 
     // Modify DSP register

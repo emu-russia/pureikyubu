@@ -44,7 +44,8 @@ static const char *charbyte(uint32_t addr)
 
 void con_update_dump_window()
 {
-    con_fill_line(wind.data_y);
+    con_attr(0, 3);
+    con_fill_line(wind.data_y, 0xc4);
     con_attr(0, 3);
     if(wind.focus == WDATA) con_printf_at(0, wind.data_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
@@ -118,7 +119,7 @@ static BOOL      medmode;   // 0=byte edit, 1=ascii edit
 
 static void con_memedit_draw_hdr()
 {
-    con_fill_line(wind.data_y);
+    con_fill_line(wind.data_y, 0xc4);
     con_attr(0, 3);
     if(wind.focus == WDATA) con_printf_at(0, wind.data_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);

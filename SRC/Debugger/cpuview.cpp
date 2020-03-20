@@ -99,7 +99,7 @@ void con_ldst_info()
             int32_t simm = ((int32_t)(int16_t)(uint16_t)op);
             wind.ldst_disp = GPR[ra] + simm;
             con_attr(0, 3);
-            con_fill_line(wind.disa_y);
+            con_fill_line(wind.disa_y, 0xc4);
             if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
             con_attr(0, 3);
             con_print_at(2, wind.disa_y, "F3");
@@ -114,7 +114,7 @@ void con_ldst_info()
 void con_update_disa_window()
 {
     con_attr(0, 3);
-    con_fill_line(wind.disa_y);
+    con_fill_line(wind.disa_y, 0xc4);
     if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);
     con_print_at(2, wind.disa_y, "F3");

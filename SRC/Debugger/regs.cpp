@@ -259,7 +259,14 @@ static void con_print_mmu()
 void con_update_registers()
 {
     con_attr(7, 0);
-    con_fill_line(wind.regs_y);
+
+    for (int i = 0; i < wind.regs_h; i++)
+    {
+        con_fill_line(wind.regs_y + i, ' ');
+    }
+
+    con_attr(0, 3);
+    con_fill_line(wind.regs_y, 0xc4);
     con_attr(0, 3);
     if(wind.focus == WREGS) con_printf_at(0, wind.regs_y, "\x1%c\x1f", ConColor::WHITE);
     con_attr(0, 3);

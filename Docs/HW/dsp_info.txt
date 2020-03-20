@@ -203,6 +203,16 @@ Bits 10 and 11 are used during DSP initialization, in DSPInit and __OSInitAudioS
         while(DSPCR & 0x0400);      // wait bit10 clear
 ```
 
+## Mailboxes and interrupts
+
+Some UCode (in particular, AX UCode) signal an interrupt to the processor, after writing to DSP->CPU Mailbox:
+
+```
+003A 16 FC DC D1    si      $(DMBH), #0xDCD1
+003C 16 FD 00 01    si      $(DMBL), #0x0000
+003E 16 FB 00 01    si      $(DIRQ), #0x0001
+```
+
 ## Internal DSP Hardware
 
 Some description of DSP accelerator in US Patent 6,643,744:

@@ -189,7 +189,7 @@ namespace DSP
 		ACYN2 = 0xFFDC,
 		ACGAN = 0xFFDE,
 
-		// Unknown (TAP Filter?)
+		// Unknown (FIR Filters?)
 
 		UNKNOWN_FFA0,
 		UNKNOWN_FFA1,
@@ -207,6 +207,9 @@ namespace DSP
 		UNKNOWN_FFAD,
 		UNKNOWN_FFAE,
 		UNKNOWN_FFAF,
+
+		// Unknown
+
 		UNKNOWN_FFB0,
 		UNKNOWN_FFB1,
 
