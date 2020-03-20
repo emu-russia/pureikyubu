@@ -112,6 +112,9 @@ char * FixCommandLine(char *lpCmdLine)
     return lpCmdLine;
 }
 
+// keyboard accelerators (no need to be shared)
+static  HACCEL  hAccel;
+
 // entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -145,11 +148,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // during main window creation).
     CreateMainWindow();
 
+    hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
+
     // Idle loop
     for(;;)
     {
+        MSG msg;
+
         // Idle loop
-        UpdateMainWindow(false);
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
     }
 
     // should never reach this point. Dolwin always exit()'s.

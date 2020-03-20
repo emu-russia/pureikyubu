@@ -31,7 +31,6 @@ void    OnMainWindowClosing();
 void    OnMainWindowClosed();
 HWND    CreateMainWindow();
 void    ResizeMainWindow(int width, int height);
-void    UpdateMainWindow(bool peek=true);
 
 // utilities
 void    SetAlwaysOnTop(HWND hwnd, BOOL state);

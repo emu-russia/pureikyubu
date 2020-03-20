@@ -12,7 +12,7 @@ void * DVDLoadBanner(char *dvdFile)
     uint32_t bnrofs;
 
     banner = (DVDBanner2 *)malloc(sizeof(DVDBanner2));
-    VERIFY(banner == NULL, "Not enough memory for DVD banner data.");
+    assert(banner);
 
     // load DVD banner, or copy error-banner, if DVD is damaged
     if(fsize)

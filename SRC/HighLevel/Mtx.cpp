@@ -61,7 +61,7 @@ void MTXOpen()
     BOOL flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
     if(flag == FALSE) return;
 
-    DBReport( GREEN "Geometry library install (extensions MMX:%i, SSE:%i).\n",
+    DBReport2( DbgChannel::HLE, "Geometry library install (extensions MMX:%i, SSE:%i).\n",
               IsMMXPresent(), IsSSEPresent() );
 
     // select between multimedia extension and C

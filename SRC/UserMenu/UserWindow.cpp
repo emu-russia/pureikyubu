@@ -8,9 +8,6 @@
 // all important data is placed here
 UserWindow wnd;
 
-// keyboard accelerators (no need to be shared)
-static  HACCEL  hAccel;
-
 // ---------------------------------------------------------------------------
 // statusbar
 
@@ -362,7 +359,6 @@ static void OnMainWindowCreate(HWND hwnd)
 
     // load accelerators
     InitCommonControls();
-    hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
     // always on top (not in debug)
     wnd.ontop = GetConfigInt(USER_ONTOP, USER_ONTOP_DEFAULT) & 1;
@@ -444,18 +440,12 @@ void OnMainWindowOpened()
     char prefix[] = { APPNAME " - Running %s" };
     if(ldat.dvd)
     {
-        if(GetGameInfo(ldat.gameID, gameTitle, comment) == 0)
-        {
-            sprintf_s (gameTitle, sizeof(gameTitle), "%s", ldat.currentFileName);
-        }
+        sprintf_s (gameTitle, sizeof(gameTitle), "%s", ldat.currentFileName);
         sprintf_s (newTitle, sizeof(newTitle), prefix, gameTitle);
     }
     else
     {
-        if(GetGameInfo(ldat.currentFileName, gameTitle, comment) == 0)
-        {
-            sprintf_s (gameTitle, sizeof(gameTitle), "%s demo", ldat.currentFileName);
-        }
+        sprintf_s (gameTitle, sizeof(gameTitle), "%s demo", ldat.currentFileName);
         sprintf_s (newTitle, sizeof(newTitle), prefix, gameTitle);
     }
     SetWindowTextA(wnd.hMainWindow, newTitle);
@@ -478,11 +468,6 @@ void OnMainWindowClosing()
     ModifySelectorControls(usel.active);
     EnableMenuItem(GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
         wnd.hMainMenu, "&Options")), 1, MF_BYPOSITION | MF_ENABLED);
-
-    // redraw window
-    ShowWindow(wnd.hMainWindow, SW_HIDE);
-    ShowWindow(wnd.hMainWindow, SW_RESTORE);
-    UpdateWindow(wnd.hMainWindow);
 
     // set to Idle
     SetWindowText(wnd.hMainWindow, WIN_NAMEW);
@@ -535,35 +520,6 @@ void ResizeMainWindow(int width, int height)
     // move window
     MoveWindow(wnd.hMainWindow, x, y, w, h, TRUE);
     SendMessage(wnd.hMainWindow, WM_SIZE, 0, 0);
-}
-
-// update message queue
-void UpdateMainWindow(bool peek)
-{
-    static MSG msg;
-
-    if(peek)
-    {
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            if(!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
-    else
-    {
-        if(GetMessage(&msg, NULL, 0, 0))
-        {
-            if(!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-    }
 }
 
 // main window procedure : "return 0" to leave, "break" to continue DefWindowProc()
@@ -753,13 +709,6 @@ loadFile:
                 {
                     name = usel.selected->name;
                     goto loadFile;
-                }
-
-                // edit file information
-                case ID_FILE_EDITINFO:
-                {
-                    EditFileInformation(hwnd);
-                    return 0;
                 }
 
                 // edit file filter

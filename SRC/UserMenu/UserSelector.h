@@ -2,6 +2,7 @@
 
 #include <list>
 #include <string>
+#include <atomic>
 
 // file type (*.bin is not supported, and can be opened only by File->Open)
 enum SELECTOR_FILE
@@ -19,7 +20,7 @@ typedef struct UserFile
 {
     int     type;                   // see above (one of SELECTOR_FILE_*)
     int     size;                   // file size
-    char    id[8];                  // GameID = DiskID + banner checksum
+    char    id[0x10];               // GameID = DiskID + banner checksum
     char    name[2*MAX_PATH+2];     // file path and name
     char    title[MAX_TITLE];       // alternate file name
     char    comment[MAX_COMMENT];   // some notes
@@ -82,6 +83,9 @@ typedef struct UserSelector
     // list of found files
     std::vector<UserFile*> files;
     MySpinLock::LOCK filesLock;
+
+    std::atomic<bool> updateInProgress;
+
 } UserSelector;
 
 extern  UserSelector usel;

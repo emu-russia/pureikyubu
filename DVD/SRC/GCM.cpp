@@ -13,8 +13,9 @@ BOOL GCMSelectFile(char *file)
 {
     dvd.selected = false;
 
+    GCMClose();
+
     // open GCM file
-    gcm_file = nullptr;
     fopen_s(&gcm_file, file, "rb");
     if(!gcm_file) return FALSE;
 

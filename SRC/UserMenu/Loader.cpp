@@ -500,29 +500,6 @@ void UnloadPatch()
 // ---------------------------------------------------------------------------
 // file loader engine
 
-static void LoadIniSettings()
-{
-    // overwrite CPU timing by INI settings
-    char *str = GetIniVar(ldat.gameID, "cf");
-    if(str)
-    {
-        cpu.cf = atoi(str);
-        if(cpu.cf <= 0) cpu.cf = 1;
-    }
-    str = GetIniVar(ldat.gameID, "delay");
-    if(str)
-    {
-        cpu.delay = atoi(str);
-        if(cpu.delay <= 0) cpu.delay = 1;
-    }
-    str = GetIniVar(ldat.gameID, "bailout");
-    if(str)
-    {
-        cpu.bailout = atoi(str);
-        if(cpu.bailout <= 0) cpu.bailout = 1;
-    }
-}
-
 static void AutoloadMap()
 {
     // get map file name
@@ -716,12 +693,6 @@ static void DoLoadFile(char *filename)
 
     // set entrypoint (for DVD, PC will set in apploader)
     if(!ldat.dvd) PC = entryPoint;
-
-    // now onverride config by INI settings
-    if (!bootrom)
-    {
-        LoadIniSettings();
-    }
 
     // show CPU timing setup
     wchar_t buf[64];

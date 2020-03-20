@@ -12,11 +12,6 @@ int     GetConfigInt(char *var, int defVal, char *path = USER_KEY_NAME);
 void    SetConfigInt(char *var, int newVal, char *path = USER_KEY_NAME);
 void    KillConfigInt(char *var, char *path = USER_KEY_NAME);
 
-// game ini API
-BOOL    GetGameInfo(char *gameId, char title[64], char comment[128]);
-void    SetGameInfo(char *gameId, char title[64], char comment[128]);
-char *  GetIniVar(char *gameId, char *var);
-
 // ---------------------------------------------------------------------------
 // Dolwin User Variables list (a-z, for every sub-system).
 // ---------------------------------------------------------------------------
