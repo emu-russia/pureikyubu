@@ -1194,7 +1194,7 @@ namespace DSP
 	bool Analyzer::GroupCD(AnalyzeInfo& info)
 	{
 		//MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-		//CMPAR *	  110r s001 xxxx xxxx         // CMPAR $acS, $axR.h 
+		//CMPAR *	  110r s001 xxxx xxxx         // CMPAR $acS, $ax1.l/h  (r=0: low, r=1: high) 
 		//MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 		//MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 		//MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
@@ -1220,7 +1220,7 @@ namespace DSP
 
 					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + ss), ss))
 						return false;
-					if (!AddParam(info, rr ? DspParameter::ax1h : DspParameter::ax0h, rr))
+					if (!AddParam(info, rr ? DspParameter::ax1h : DspParameter::ax1l, rr))
 						return false;
 				}
 				else

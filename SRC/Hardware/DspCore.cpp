@@ -835,7 +835,7 @@ namespace DSP
 		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 		{
 			char filename[0x100] = { 0, };
-			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%ws.bin", DmaRegs.blockSize, ldat.gameID);
+			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%s.bin", DmaRegs.blockSize, ldat.gameID);
 			FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
