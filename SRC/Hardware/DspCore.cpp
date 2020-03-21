@@ -208,7 +208,7 @@ namespace DSP
 		MySpinLock::Lock(&canariesSpinLock);
 		for (auto it = canaries.begin(); it != canaries.end(); ++it)
 		{
-			DBReport("0x%04X: %s\n", it->first, it->second);
+			DBReport("0x%04X: %s\n", it->first, it->second.c_str());
 		}
 		MySpinLock::Unlock(&canariesSpinLock);
 	}

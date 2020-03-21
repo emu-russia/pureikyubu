@@ -1,6 +1,19 @@
 # Disassembled AX Ucode from Bust-a-Move 3000
 # DspUcode_1f20_g3seD8.bin
 
+## Overview
+
+Features:
+- Does not use IROM procedures to work with Accelerator (uses its own)
+- DOES use 4 big IROM procedures ("Mixing Routines(?)")
+- Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Commands packet are saved in Dmem 0x0C00
+- The first UInt16 in the next command sequence selects Command from JumpTable1
+- Only 20 commands exists (0-19)
+
+## Interrupts
+
+
+```
 0000 00 00       	nop  	
 0001 00 00       	nop  	
 0002 02 9F 0E B3 	j    	$0x0EB3 			// Stack Overflow + Reset
@@ -10,6 +23,7 @@
 000A 02 9F 0E F3 	j    	$0x0EF3 			// ACCOV 
 000C 02 9F 0F 25 	j    	$0x0F25 			// Unk6 Rti
 000E 02 9F 0F 2B 	j    	$0x0F2B 			// INT Rti
+```
 
 ## Start
 
@@ -90,7 +104,7 @@
 006B B1 00       	tst  	ac0             	     	
 006C 02 91 00 7E 	jl   	$0x007E  			// CmdBlock.Ushort0 < 0
 006E 0A 13       	lris 	ax1.l, 19 					// ax1.l = 19 (const)
-006F C1 00       	cmpar	ac0, ax0.h      	     	 // ax0  -- Where? :p     Must be cmpar ac0, ax1.l
+006F C1 00       	cmpar	ac0, ax0.h      	     	 // ax0  -- Where? :p     Must be cmpar ac0, ax1.l  ??
 0070 02 92 00 7E 	jg   	$0x007E
 0072 00 9F 0C C8 	lri  	ac1.m, #0x0CC8  			// Jump Table 1
 0074 4C 00       	add  	ac0, ac1        	     	
@@ -105,7 +119,7 @@
 0080 2E FD       	srs  	$(DMBL), ac0.m
 0081 00 21       	halt 	
 
-Example command block
+Example command block (command 0x0000)
 
 ```
 0C00 00 00 80 19 70 00 00 07 80 19 2C E0 00 02 80 19
@@ -116,7 +130,7 @@ Example command block
 
 ## ----------------------------------------------------------------------------------------------------------------
 
-## Case 0x12
+## Command 0x12
 
 0082 8D 00       	set15	                	     	
 0083 8F 00       	set40	                	     	
@@ -196,7 +210,7 @@ Example command block
 00E3 2E C9       	srs  	$(DSCR), ac0.m
 00E4 00 9E 01 40 	lri  	ac0.m, #0x0140
 00E6 2E CB       	srs  	$(DSBL), ac0.m
-00E7 02 BF 06 94 	call 	$0x0694
+00E7 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 00E9 8A 48       	m2   	                	l    	ax0.h, @ar0
 00EA 00 83 0E 48 	lri  	ar3, #0x0E48
 00EC 00 80 00 00 	lri  	ar0, #0x0000
@@ -239,7 +253,7 @@ Example command block
 0118 00 C0 0E 45 	lr   	ar0, $0x0E45
 011A 02 9F 00 68 	j    	$0x0068
 
-## Case 0
+## Command 0
 
 011C 81 00       	clr  	ac0             	     	
 011D 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -247,11 +261,11 @@ Example command block
 011F 2E CE       	srs  	$(DSMAH), ac0.m
 0120 2F CF       	srs  	$(DSMAL), ac1.m
 0121 00 9E 0E 48 	lri  	ac0.m, #0x0E48
-0123 2E CD       	srs  	$(DSPA), ac0.m
+0123 2E CD       	srs  	$(DSPA), ac0.m 			// Dsp Dmem 0xE48
 0124 0E 00       	lris 	ac0.m, 0
-0125 2E C9       	srs  	$(DSCR), ac0.m
+0125 2E C9       	srs  	$(DSCR), ac0.m 			// Mode: 0 (MMEM -> DSP, DMEM)
 0126 00 9E 00 40 	lri  	ac0.m, #0x0040
-0128 2E CB       	srs  	$(DSBL), ac0.m
+0128 2E CB       	srs  	$(DSBL), ac0.m 			// Block size 0x40
 0129 00 81 0E 48 	lri  	ar1, #0x0E48
 012B 00 82 00 00 	lri  	ar2, #0x0000
 012D 00 9B 00 9F 	lri  	ax1.h, #0x009F
@@ -259,7 +273,7 @@ Example command block
 0131 81 00       	clr  	ac0             	     	
 0132 89 00       	clr  	ac1             	     	
 0133 8F 00       	set40	                	     	
-0134 02 BF 06 94 	call 	$0x0694
+0134 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 0136 19 3E       	lrri 	ac0.m, @ar1
 0137 19 3C       	lrri 	ac0.l, @ar1
 0138 B1 00       	tst  	ac0             	     	
@@ -393,7 +407,7 @@ Example command block
 01D5 1B 5C       	srri 	@ar2, ac0.l
 01D6 02 9F 00 68 	j    	$0x0068
 
-## Case 1
+## Command 1
 
 01D8 00 85 FF FF 	lri  	ix1, #0xFFFF
 01DA 81 50       	clr  	ac0             	l    	ax1.l, @ar0
@@ -429,7 +443,7 @@ Example command block
 0205 16 CD 00 00 	si   	$(DSPA), #0x0000
 0207 16 C9 00 01 	si   	$(DSCR), #0x0001
 0209 16 CB 07 80 	si   	$(DSBL), #0x0780
-020B 02 BF 06 94 	call 	$0x0694
+020B 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 020D 02 9F 00 68 	j    	$0x0068
 020F 81 00       	clr  	ac0             	     	
 0210 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -479,11 +493,11 @@ Example command block
 024C 05 03       	addis	ac1.m, 3
 024D 03 40 FF F0 	andi 	ac1.m, #0xFFF0
 024F 2F CB       	srs  	$(DSBL), ac1.m
-0250 02 BF 06 94 	call 	$0x0694
+0250 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 0252 00 80 0C 00 	lri  	ar0, #0x0C00
 0254 02 9F 00 68 	j    	$0x0068
 
-## Case 2
+## Command 2
 
 0256 81 00       	clr  	ac0             	     	
 0257 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -512,7 +526,7 @@ Example command block
 027A 1B 5F       	srri 	@ar2, ac1.m
 027B 00 9F 0A 40 	lri  	ac1.m, #0x0A40
 027D 1B 5F       	srri 	@ar2, ac1.m
-027E 02 BF 06 94 	call 	$0x0694
+027E 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 0280 00 DE 0B A7 	lr   	ac0.m, $0x0BA7
 0282 00 DF 0B A8 	lr   	ac1.m, $0x0BA8
 0284 2E CE       	srs  	$(DSMAH), ac0.m
@@ -536,7 +550,7 @@ Example command block
 029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m
 02A0 00 DE 0B 86 	lr   	ac0.m, $0x0B86
 02A2 00 9A 00 0F 	lri  	ax1.l, #0x000F
-02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC
+02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC  			// Jump Table 2
 02A6 34 00       	andr 	ac0.m, ax0.h    	     	
 02A7 4C 00       	add  	ac0, ac1        	     	
 02A8 1C 7E       	mrr  	ar3, ac0.m
@@ -572,7 +586,7 @@ Example command block
 02D6 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
 02D8 00 FF 0E 42 	sr   	$0x0E42, ac1.m
 02DA 00 FF 0E 43 	sr   	$0x0E43, ac1.m
-02DC 02 BF 06 94 	call 	$0x0694
+02DC 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 02DE 00 DE 0B 9C 	lr   	ac0.m, $0x0B9C
 02E0 2E CE       	srs  	$(DSMAH), ac0.m
 02E1 00 DE 0B 9D 	lr   	ac0.m, $0x0B9D
@@ -580,17 +594,17 @@ Example command block
 02E4 16 CD 0C C0 	si   	$(DSPA), #0x0CC0
 02E6 16 C9 00 00 	si   	$(DSCR), #0x0000
 02E8 16 CB 00 40 	si   	$(DSBL), #0x0040
-02EA 02 BF 06 94 	call 	$0x0694
+02EA 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 02EC 02 9F 00 68 	j    	$0x0068
 02EE 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
 02F0 00 FF 0E 42 	sr   	$0x0E42, ac1.m
 02F2 00 FF 0E 40 	sr   	$0x0E40, ac1.m
 02F4 00 FF 0E 41 	sr   	$0x0E41, ac1.m
 02F6 00 FF 0E 43 	sr   	$0x0E43, ac1.m
-02F8 02 BF 06 94 	call 	$0x0694
+02F8 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 02FA 02 9F 00 68 	j    	$0x0068
 
-## Case 3
+## Command 3
 
 02FC 8E 00       	clr40	                	     	
 02FD 00 E0 0E 07 	sr   	$0x0E07, ar0
@@ -901,7 +915,7 @@ Example command block
 0481 2E CD       	srs  	$(DSPA), ac0.m
 0482 16 C9 00 01 	si   	$(DSCR), #0x0001
 0484 16 CB 00 40 	si   	$(DSBL), #0x0040
-0486 02 BF 06 94 	call 	$0x0694
+0486 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0488 81 00       	clr  	ac0             	     	
 0489 89 00       	clr  	ac1             	     	
 048A 00 DE 0B 82 	lr   	ac0.m, $0x0B82
@@ -911,7 +925,7 @@ Example command block
 0490 16 CD 0B 80 	si   	$(DSPA), #0x0B80
 0492 16 C9 00 01 	si   	$(DSCR), #0x0001
 0494 16 CB 00 D0 	si   	$(DSBL), #0x00D0
-0496 02 BF 06 94 	call 	$0x0694
+0496 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0498 81 00       	clr  	ac0             	     	
 0499 00 DE 0B 80 	lr   	ac0.m, $0x0B80
 049B 00 DC 0B 81 	lr   	ac0.l, $0x0B81
@@ -943,7 +957,7 @@ Example command block
 04C5 1B 5F       	srri 	@ar2, ac1.m
 04C6 00 9F 0A 40 	lri  	ac1.m, #0x0A40
 04C8 1B 5F       	srri 	@ar2, ac1.m
-04C9 02 BF 06 94 	call 	$0x0694
+04C9 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 04CB 00 DE 0B A7 	lr   	ac0.m, $0x0BA7
 04CD 00 DF 0B A8 	lr   	ac1.m, $0x0BA8
 04CF 2E CE       	srs  	$(DSMAH), ac0.m
@@ -967,7 +981,7 @@ Example command block
 04E9 00 FE 0E 16 	sr   	$0x0E16, ac0.m
 04EB 00 DE 0B 86 	lr   	ac0.m, $0x0B86
 04ED 00 9A 00 0F 	lri  	ax1.l, #0x000F
-04EF 00 9F 0C DC 	lri  	ac1.m, #0x0CDC
+04EF 00 9F 0C DC 	lri  	ac1.m, #0x0CDC 				// Jump Table 2
 04F1 34 00       	andr 	ac0.m, ax0.h    	     	
 04F2 4C 00       	add  	ac0, ac1        	     	
 04F3 1C 7E       	mrr  	ar3, ac0.m
@@ -1003,7 +1017,7 @@ Example command block
 0521 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
 0523 00 FF 0E 42 	sr   	$0x0E42, ac1.m
 0525 00 FF 0E 43 	sr   	$0x0E43, ac1.m
-0527 02 BF 06 94 	call 	$0x0694
+0527 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0529 00 DE 0B 9C 	lr   	ac0.m, $0x0B9C
 052B 2E CE       	srs  	$(DSMAH), ac0.m
 052C 00 DE 0B 9D 	lr   	ac0.m, $0x0B9D
@@ -1011,7 +1025,7 @@ Example command block
 052F 16 CD 0C C0 	si   	$(DSPA), #0x0CC0
 0531 16 C9 00 00 	si   	$(DSCR), #0x0000
 0533 16 CB 00 40 	si   	$(DSBL), #0x0040
-0535 02 BF 06 94 	call 	$0x0694
+0535 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0537 00 C0 0E 07 	lr   	ar0, $0x0E07
 0539 02 9F 02 FC 	j    	$0x02FC
 053B 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
@@ -1019,9 +1033,12 @@ Example command block
 053F 00 FF 0E 40 	sr   	$0x0E40, ac1.m
 0541 00 FF 0E 41 	sr   	$0x0E41, ac1.m
 0543 00 FF 0E 43 	sr   	$0x0E43, ac1.m
-0545 02 BF 06 94 	call 	$0x0694
+0545 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0547 00 C0 0E 07 	lr   	ar0, $0x0E07
 0549 02 9F 02 FC 	j    	$0x02FC
+
+## Command 4
+
 054B 8E 00       	clr40	                	     	
 054C 00 86 04 00 	lri  	ix2, #0x0400
 054E 81 00       	clr  	ac0             	     	
@@ -1033,9 +1050,11 @@ Example command block
 0554 2E CD       	srs  	$(DSPA), ac0.m
 0555 16 C9 00 01 	si   	$(DSCR), #0x0001
 0557 16 CB 07 80 	si   	$(DSBL), #0x0780
-0559 02 BF 06 94 	call 	$0x0694
+0559 02 BF 06 94 	call 	$0x0694  					// WaitDspDma
 055B 02 BF 05 BC 	call 	$0x05BC
 055D 02 9F 00 68 	j    	$0x0068
+
+
 055F 8E 00       	clr40	                	     	
 0560 00 86 07 C0 	lri  	ix2, #0x07C0
 0562 81 00       	clr  	ac0             	     	
@@ -1047,7 +1066,7 @@ Example command block
 0568 2E CD       	srs  	$(DSPA), ac0.m
 0569 16 C9 00 01 	si   	$(DSCR), #0x0001
 056B 16 CB 07 80 	si   	$(DSBL), #0x0780
-056D 02 BF 06 94 	call 	$0x0694
+056D 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 056F 02 BF 05 BC 	call 	$0x05BC
 0571 02 9F 00 68 	j    	$0x0068
 0573 8C 00       	clr15	                	     	
@@ -1066,7 +1085,7 @@ Example command block
 0584 00 83 00 00 	lri  	ar3, #0x0000
 0586 00 82 01 40 	lri  	ar2, #0x0140
 0588 00 99 00 80 	lri  	ax0.h, #0x0080
-058A 02 BF 06 94 	call 	$0x0694
+058A 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 058C 11 05 05 A4 	bloopi	#0x05, $0x05A4
 058E 1F 61       	mrr  	ax1.h, ar1
 058F 11 20 05 96 	bloopi	#0x20, $0x0596
@@ -1094,14 +1113,32 @@ Example command block
 05A6 02 A0 00 04 	tclr 	ac0.m, #0x0004
 05A8 02 9C 05 A5 	jnok 	$0x05A5
 05AA 02 9F 00 68 	j    	$0x0068
+
+## Command
+
 05AC 02 9F 00 68 	j    	$0x0068
+
+## Command
+
 05AE 02 9F 00 68 	j    	$0x0068
+
+## Command
+
 05B0 02 9F 00 68 	j    	$0x0068
+
+## Command 0xf (Ax Tasks)
+
 05B2 16 FC DC D1 	si   	$(DMBH), #0xDCD1
 05B4 16 FD 00 02 	si   	$(DMBL), #0x0002
 05B6 16 FB 00 01 	si   	$(DIRQ), #0x0001
-05B8 02 9F 0F 34 	j    	$0x0F34
+05B8 02 9F 0F 34 	j    	$0x0F34 							// SwitchAxTask
+
+##
+
 05BA 02 9F 00 45 	j    	$0x0045
+
+##
+
 05BC 8E 00       	clr40	                	     	
 05BD 19 1F       	lrri 	ac1.m, @ar0
 05BE 19 1D       	lrri 	ac1.l, @ar0
@@ -1205,7 +1242,7 @@ Example command block
 0631 00 FF 0E 1D 	sr   	$0x0E1D, ac1.m
 0633 00 FD 0E 1E 	sr   	$0x0E1E, ac1.l
 0635 89 00       	clr  	ac1             	     	
-0636 02 BF 06 94 	call 	$0x0694
+0636 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0638 11 04 06 64 	bloopi	#0x04, $0x0664
 063A 00 DA 0E 1D 	lr   	ax1.l, $0x0E1D
 063C 00 D8 0E 1E 	lr   	ax0.l, $0x0E1E
@@ -2243,7 +2280,7 @@ Example command block
 0C3C 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C3E 02 9F 0B DB 	j    	$0x0BDB
 
-## Case 
+## 
 
 0C40 00 C0 0E 43 	lr   	ar0, $0x0E43
 0C42 00 81 0B 95 	lri  	ar1, #0x0B95
@@ -2253,7 +2290,7 @@ Example command block
 0C49 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C4B 02 9F 0B E7 	j    	$0x0BE7
 
-## Case
+## 
 
 0C4D 00 C0 0E 43 	lr   	ar0, $0x0E43
 0C4F 00 81 0B 95 	lri  	ar1, #0x0B95
@@ -2312,7 +2349,7 @@ Example command block
 0CB6 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CB8 02 9F 0C 06 	j    	$0x0C06
 
-## Case
+## 
 
 0CBA 00 C0 0E 43 	lr   	ar0, $0x0E43
 0CBC 00 81 0B 95 	lri  	ar1, #0x0B95
@@ -2322,28 +2359,31 @@ Example command block
 0CC4 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CC6 02 9F 0C 13 	j    	$0x0C13
 
-## Jump Table 1
+## Jump Table 1  (Command)
 
-0CC8 01 1C     	0
-0CC9 01 D8  	1
+0CC8 01 1C     	0 					// Init(?)
+0CC9 01 D8  	1 
 0CCA 02 56 		2
 0CCB 02 FC 		3
 0CCC 05 4B 		4
 0CCD 05 5F 		5
 0CCE 01 FF 		6
 0CCF 06 AC 		7
-0CD0 0D 52 		8
+0CD0 0D 52 		8 					// Dma (not interesting)
 0CD1 01 F9 		9
-0CD2 05 B0  	0xa
-0CD3 05 AC 		0xb
-0CD4 05 AE 		0xc
+0CD2 05 B0  	0xa 				// Bogus
+0CD3 05 AC 		0xb 				// Bogus
+0CD4 05 AE 		0xc 				// Bogus
 0CD5 02 43 		0xd
 0CD6 05 73 		0xe
-0CD7 05 B2 		0xf
-0CD8 0D CC 		0x10
+0CD7 05 B2 		0xf 				// Ax Tasks
+0CD8 0D CC 		0x10 				// Dma (not interesting)
 0CD9 02 0F 		0x11
 0CDA 00 82   	0x12
-0CDB 0E 42 		0x13
+0CDB 0E 42 		0x13 				// Dma (not interesting)
+
+## Jump Table 2
+
 0CDC 08 A0
 0CDD 08 A1
 0CDE 08 AD
@@ -2460,11 +2500,14 @@ Example command block
 0D4D 07 95
 0D4E 08 3F
 
+## Some Table
 
+0D4F 10 00
+0D50 12 00
+0D51 14 00
 
-0D4F 10 00       	loopi	#0x00
-0D50 12 00       	sbset	6
-0D51 14 00       	lsl  	ac0, #0x00
+## Command 8
+
 0D52 8E 00       	clr40	                	     	
 0D53 81 00       	clr  	ac0             	     	
 0D54 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -2555,9 +2598,13 @@ Example command block
 0DC1 16 CD 0E 80 	si   	$(DSPA), #0x0E80
 0DC3 16 C9 00 01 	si   	$(DSCR), #0x0001
 0DC5 16 CB 01 00 	si   	$(DSBL), #0x0100
-0DC7 02 BF 06 94 	call 	$0x0694
+0DC7 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0DC9 1C 04       	mrr  	ar0, ix0
 0DCA 02 9F 00 68 	j    	$0x0068
+
+## Command 0x10
+
+
 0DCC 8E 00       	clr40	                	     	
 0DCD 81 00       	clr  	ac0             	     	
 0DCE 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -2567,7 +2614,7 @@ Example command block
 0DD2 16 CD 07 C0 	si   	$(DSPA), #0x07C0
 0DD4 16 C9 00 01 	si   	$(DSCR), #0x0001
 0DD6 16 CB 05 00 	si   	$(DSBL), #0x0500
-0DD8 02 BF 06 94 	call 	$0x0694
+0DD8 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0DDA 81 00       	clr  	ac0             	     	
 0DDB 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0DDC 19 1C       	lrri 	ac0.l, @ar0
@@ -2637,6 +2684,9 @@ Example command block
 0E27 1B 5D       	srri 	@ar2, ac1.l
 0E28 1C 04       	mrr  	ar0, ix0
 0E29 02 9F 00 68 	j    	$0x0068
+
+## DmemCpyAdd
+
 0E2B 8F 00       	set40	                	     	
 0E2C 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E2D 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
@@ -2659,6 +2709,12 @@ Example command block
 0E3F 1B 5D       	srri 	@ar2, ac1.l
 0E40 8E 00       	clr40	                	     	
 0E41 02 DF       	ret  	
+
+## Command 0x13
+
+Copy something to IMEM and DMEM
+
+```
 0E42 8E 00       	clr40	                	     	
 0E43 81 00       	clr  	ac0             	     	
 0E44 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -2666,18 +2722,18 @@ Example command block
 0E46 2E CE       	srs  	$(DSMAH), ac0.m
 0E47 2C CF       	srs  	$(DSMAL), ac0.l
 0E48 16 CD 04 00 	si   	$(DSPA), #0x0400
-0E4A 16 C9 00 01 	si   	$(DSCR), #0x0001
+0E4A 16 C9 00 01 	si   	$(DSCR), #0x0001 								// Mode 1 (MMEM -> DSP, IMEM)
 0E4C 16 CB 07 80 	si   	$(DSBL), #0x0780
-0E4E 02 BF 06 94 	call 	$0x0694
+0E4E 02 BF 06 94 	call 	$0x0694 										// WaitDspDma
 0E50 81 00       	clr  	ac0             	     	
 0E51 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0E52 19 1C       	lrri 	ac0.l, @ar0
 0E53 2E CE       	srs  	$(DSMAH), ac0.m
 0E54 2C CF       	srs  	$(DSMAL), ac0.l
 0E55 16 CD 0A 40 	si   	$(DSPA), #0x0A40
-0E57 16 C9 00 01 	si   	$(DSCR), #0x0001
+0E57 16 C9 00 01 	si   	$(DSCR), #0x0001 							// Mode 1 (MMEM -> DSP, IMEM)
 0E59 16 CB 02 80 	si   	$(DSBL), #0x0280
-0E5B 02 BF 06 94 	call 	$0x0694
+0E5B 02 BF 06 94 	call 	$0x0694 									// WaitDspDma
 0E5D 81 00       	clr  	ac0             	     	
 0E5E 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0E5F 19 1C       	lrri 	ac0.l, @ar0
@@ -2689,8 +2745,8 @@ Example command block
 0E68 00 81 0E 48 	lri  	ar1, #0x0E48
 0E6A 00 82 00 00 	lri  	ar2, #0x0000
 0E6C 00 83 00 00 	lri  	ar3, #0x0000
-0E6E 02 BF 06 94 	call 	$0x0694
-0E70 02 BF 0E 2B 	call 	$0x0E2B
+0E6E 02 BF 06 94 	call 	$0x0694 									// WaitDspDma
+0E70 02 BF 0E 2B 	call 	$0x0E2B 			// DmemCpyAdd
 0E72 81 00       	clr  	ac0             	     	
 0E73 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0E74 19 1C       	lrri 	ac0.l, @ar0
@@ -2702,8 +2758,8 @@ Example command block
 0E7D 00 81 0E 48 	lri  	ar1, #0x0E48
 0E7F 00 82 01 40 	lri  	ar2, #0x0140
 0E81 00 83 01 40 	lri  	ar3, #0x0140
-0E83 02 BF 06 94 	call 	$0x0694
-0E85 02 BF 0E 2B 	call 	$0x0E2B
+0E83 02 BF 06 94 	call 	$0x0694 									// WaitDspDma
+0E85 02 BF 0E 2B 	call 	$0x0E2B 			// DmemCpyAdd
 0E87 81 00       	clr  	ac0             	     	
 0E88 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0E89 19 1C       	lrri 	ac0.l, @ar0
@@ -2715,8 +2771,8 @@ Example command block
 0E92 00 81 0E 48 	lri  	ar1, #0x0E48
 0E94 00 82 07 C0 	lri  	ar2, #0x07C0
 0E96 00 83 07 C0 	lri  	ar3, #0x07C0
-0E98 02 BF 06 94 	call 	$0x0694
-0E9A 02 BF 0E 2B 	call 	$0x0E2B
+0E98 02 BF 06 94 	call 	$0x0694 										// WaitDspDma
+0E9A 02 BF 0E 2B 	call 	$0x0E2B 			// DmemCpyAdd
 0E9C 81 00       	clr  	ac0             	     	
 0E9D 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0E9E 19 1C       	lrri 	ac0.l, @ar0
@@ -2728,9 +2784,10 @@ Example command block
 0EA7 00 81 0E 48 	lri  	ar1, #0x0E48
 0EA9 00 82 09 00 	lri  	ar2, #0x0900
 0EAB 00 83 09 00 	lri  	ar3, #0x0900
-0EAD 02 BF 06 94 	call 	$0x0694
-0EAF 02 BF 0E 2B 	call 	$0x0E2B
+0EAD 02 BF 06 94 	call 	$0x0694 									// WaitDspDma
+0EAF 02 BF 0E 2B 	call 	$0x0E2B 			// DmemCpyAdd
 0EB1 02 9F 00 68 	j    	$0x0068
+```
 
 ## Stack Overflow + Reset Handler
 
@@ -2852,16 +2909,23 @@ Example command block
 0F2E 00 00       	nop  	
 0F2F 02 FF       	rti  	
 
-##
+## ----------------------------------------------------------------------------------------------------------------
 
-0F30 0F 42       	lris 	ac1.m, 66
-0F31 0F 45       	lris 	ac1.m, 69
-0F32 0F 7D       	lris 	ac1.m, 125
-0F33 0F 80       	lris 	ac1.m, -128
-0F34 8E 00       	clr40	                	     	
+## Ax Tasks Handler
+
+## Jump Table 3
+
+0F30 0F 42
+0F31 0F 45
+0F32 0F 7D
+0F33 0F 80
+
+## SwitchAxTask
+
+0F34 8E 00       	clr40
 0F35 81 00       	clr  	ac0             	     	
 0F36 89 00       	clr  	ac1             	     	
-0F37 02 BF 0F 83 	call 	$0x0F83
+0F37 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F39 27 FF       	lrs  	ac1.m, $(CMBL)
 0F3A 00 9E 0F 30 	lri  	ac0.m, #0x0F30
 0F3C 4C 00       	add  	ac0, ac1        	     	
@@ -2870,11 +2934,15 @@ Example command block
 0F3F 1C 7F       	mrr  	ar3, ac1.m
 0F40 17 6F       	jmpr 	ar3
 0F41 00 21       	halt 	
+
+
 0F42 02 9F 00 30 	j    	$0x0030
 0F44 00 21       	halt 	
+
+
 0F45 81 00       	clr  	ac0             	     	
 0F46 89 00       	clr  	ac1             	     	
-0F47 02 BF 0F 83 	call 	$0x0F83
+0F47 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F49 24 FF       	lrs  	ac0.l, $(CMBL)
 0F4A 02 BF 0F 89 	call 	$0x0F89
 0F4C 25 FF       	lrs  	ac1.l, $(CMBL)
@@ -2887,7 +2955,7 @@ Example command block
 0F55 2D CB       	srs  	$(DSBL), ac1.l
 0F56 81 00       	clr  	ac0             	     	
 0F57 89 00       	clr  	ac1             	     	
-0F58 02 BF 0F 83 	call 	$0x0F83
+0F58 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F5A 24 FF       	lrs  	ac0.l, $(CMBL)
 0F5B 1C 9E       	mrr  	ix0, ac0.m
 0F5C 1C BC       	mrr  	ix1, ac0.l
@@ -2898,30 +2966,37 @@ Example command block
 0F63 1C DF       	mrr  	ix2, ac1.m
 0F64 1C FD       	mrr  	ix3, ac1.l
 0F65 81 00       	clr  	ac0             	     	
-0F66 02 BF 0F 83 	call 	$0x0F83
+0F66 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F68 26 FF       	lrs  	ac0.m, $(CMBL)
 0F69 1C 1E       	mrr  	ar0, ac0.m
 0F6A 89 00       	clr  	ac1             	     	
 0F6B 02 BF 0F 89 	call 	$0x0F89
 0F6D 20 FF       	lrs  	ax0.l, $(CMBL)
 0F6E 1F 5F       	mrr  	ax1.l, ac1.m
-0F6F 02 BF 0F 83 	call 	$0x0F83
+0F6F 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F71 21 FF       	lrs  	ax0.h, $(CMBL)
-0F72 02 BF 0F 83 	call 	$0x0F83
+0F72 02 BF 0F 83 	call 	$0x0F83 				// ReadCpuMessage
 0F74 23 FF       	lrs  	ax1.h, $(CMBL)
 0F75 26 C9       	lrs  	ac0.m, $(DSCR)
 0F76 02 A0 00 04 	tclr 	ac0.m, #0x0004
 0F78 02 9C 0F 75 	jnok 	$0x0F75
-0F7A 02 9F 80 B5 	j    	$0x80B5
+0F7A 02 9F 80 B5 	j    	$0x80B5  				// LoadRunUcode (ar0)
+
 0F7C 00 21       	halt 	
 0F7D 02 9F 80 00 	j    	$0x8000
 0F7F 00 21       	halt 	
 0F80 02 9F 00 45 	j    	$0x0045
 0F82 00 21       	halt 	
+
+## ReadCpuMessage
+
 0F83 26 FE       	lrs  	ac0.m, $(CMBH)
 0F84 02 C0 80 00 	tset 	ac0.m, #0x8000
 0F86 02 9C 0F 83 	jnok 	$0x0F83
 0F88 02 DF       	ret  	
+
+## WaitCpuReadMessage
+
 0F89 27 FE       	lrs  	ac1.m, $(CMBH)
 0F8A 03 C0 80 00 	tset 	ac1.m, #0x8000
 0F8C 02 9C 0F 89 	jnok 	$0x0F89

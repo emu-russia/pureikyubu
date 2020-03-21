@@ -785,108 +785,108 @@ namespace DSP
 
 	void DspInterpreter::DR(AnalyzeInfo& info)
 	{
-		core->regs.ar[info.paramBits[0]]--;
+		core->regs.ar[info.paramExBits[0]]--;
 	}
 
 	void DspInterpreter::IR(AnalyzeInfo& info)
 	{
-		core->regs.ar[info.paramBits[0]]++;
+		core->regs.ar[info.paramExBits[0]]++;
 	}
 
 	void DspInterpreter::NR(AnalyzeInfo& info)
 	{
-		core->regs.ar[info.paramBits[0]] += core->regs.ix[info.paramBits[0]];
+		core->regs.ar[info.paramExBits[0]] += core->regs.ix[info.paramExBits[0]];
 	}
 
 	void DspInterpreter::MV(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->MoveFromReg(info.paramBits[1]));
+		core->MoveToReg(info.paramExBits[0], core->MoveFromReg(info.paramExBits[1]));
 	}
 
 	void DspInterpreter::S(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
-		core->regs.ar[info.paramBits[0]]++;
+		core->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
+		core->regs.ar[info.paramExBits[0]]++;
 	}
 
 	void DspInterpreter::SN(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
-		core->regs.ar[info.paramBits[0]] += core->regs.ix[info.paramBits[0]];
+		core->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
+		core->regs.ar[info.paramExBits[0]] += core->regs.ix[info.paramExBits[0]];
 	}
 
 	void DspInterpreter::L(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
-		core->regs.ar[info.paramBits[1]]++;
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[info.paramExBits[1]]));
+		core->regs.ar[info.paramExBits[1]]++;
 	}
 
 	void DspInterpreter::LN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
-		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[info.paramExBits[1]]));
+		core->regs.ar[info.paramExBits[1]] += core->regs.ix[info.paramExBits[1]];
 	}
 
 	void DspInterpreter::LS(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramExBits[1]].m);
 		core->regs.ar[0]++;
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::SL(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
-		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramExBits[0]].m);
+		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
 		core->regs.ar[0]++;
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LSN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramExBits[1]].m);
 		core->regs.ar[0] += core->regs.ix[0];
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::SLN(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
-		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramExBits[0]].m);
+		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
 		core->regs.ar[0] += core->regs.ix[0];
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LSM(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramExBits[1]].m);
 		core->regs.ar[0]++;
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
 	void DspInterpreter::SLM(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
-		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramExBits[0]].m);
+		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
 		core->regs.ar[0]++;
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
 	void DspInterpreter::LSNM(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramExBits[1]].m);
 		core->regs.ar[0] += core->regs.ix[0];
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
 	void DspInterpreter::SLNM(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
-		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramExBits[0]].m);
+		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
 		core->regs.ar[0] += core->regs.ix[0];
 		core->regs.ar[3] += core->regs.ix[3];
 	}
@@ -904,16 +904,16 @@ namespace DSP
 
 	void DspInterpreter::LDCommon(AnalyzeInfo& info)
 	{
-		if (info.paramBits[0])
+		if (info.paramExBits[0])
 		{
-			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramBits[2]]);		// S
+			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);		// S
 		}
 		else
 		{
-			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramBits[2]]);		// S
+			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);		// S
 		}
 
-		if (info.paramBits[1])
+		if (info.paramExBits[1])
 		{
 			core->regs.ax[1].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S  ???
 		}
@@ -926,28 +926,28 @@ namespace DSP
 	void DspInterpreter::LD(AnalyzeInfo& info)
 	{
 		LDCommon(info);
-		core->regs.ar[info.paramBits[2]]++;
+		core->regs.ar[info.paramExBits[2]]++;
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LDN(AnalyzeInfo& info)
 	{
 		LDCommon(info);
-		core->regs.ar[info.paramBits[2]] += core->regs.ix[info.paramBits[2]];
+		core->regs.ar[info.paramExBits[2]] += core->regs.ix[info.paramExBits[2]];
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LDM(AnalyzeInfo& info)
 	{
 		LDCommon(info);
-		core->regs.ar[info.paramBits[2]]++;
+		core->regs.ar[info.paramExBits[2]]++;
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
 	void DspInterpreter::LDNM(AnalyzeInfo& info)
 	{
 		LDCommon(info);
-		core->regs.ar[info.paramBits[2]] += core->regs.ix[info.paramBits[2]];
+		core->regs.ar[info.paramExBits[2]] += core->regs.ix[info.paramExBits[2]];
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
@@ -957,35 +957,35 @@ namespace DSP
 
 	void DspInterpreter::LDAXCommon(AnalyzeInfo& info)
 	{
-		core->regs.ax[info.paramBits[0]].h = core->ReadDMem(core->regs.ar[info.paramBits[1]]);		// S
-		core->regs.ax[info.paramBits[0]].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
+		core->regs.ax[info.paramExBits[0]].h = core->ReadDMem(core->regs.ar[info.paramExBits[1]]);		// S
+		core->regs.ax[info.paramExBits[0]].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
 	}
 
 	void DspInterpreter::LDAX(AnalyzeInfo& info)
 	{
 		LDAXCommon(info);
-		core->regs.ar[info.paramBits[1]]++;
+		core->regs.ar[info.paramExBits[1]]++;
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LDAXN(AnalyzeInfo& info)
 	{
 		LDAXCommon(info);
-		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+		core->regs.ar[info.paramExBits[1]] += core->regs.ix[info.paramExBits[1]];
 		core->regs.ar[3]++;
 	}
 
 	void DspInterpreter::LDAXM(AnalyzeInfo& info)
 	{
 		LDAXCommon(info);
-		core->regs.ar[info.paramBits[1]]++;
+		core->regs.ar[info.paramExBits[1]]++;
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
 	void DspInterpreter::LDAXNM(AnalyzeInfo& info)
 	{
 		LDAXCommon(info);
-		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+		core->regs.ar[info.paramExBits[1]] += core->regs.ix[info.paramExBits[1]];
 		core->regs.ar[3] += core->regs.ix[3];
 	}
 
