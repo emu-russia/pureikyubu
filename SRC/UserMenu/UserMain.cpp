@@ -165,7 +165,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
         }
 
-        Sleep(100);
+        Sleep(10);
     }
 
     // should never reach this point. Dolwin always exit()'s.

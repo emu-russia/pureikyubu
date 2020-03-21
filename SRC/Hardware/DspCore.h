@@ -338,6 +338,7 @@ namespace DSP
 
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
+		int64_t PackProd();
 
 		// Memory engine
 

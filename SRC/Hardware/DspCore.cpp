@@ -471,6 +471,20 @@ namespace DSP
 		return 0;
 	}
 
+	int64_t DspCore::PackProd()
+	{
+		int64_t hi = (int64_t)regs.prod.h << 32;
+		int64_t mid = ((int64_t)regs.prod.m1 + (int64_t)regs.prod.m2) << 16;
+		int64_t low = regs.prod.l;
+		int64_t res = hi + mid + low;
+		// Sign extend 40
+		if (res & 0x8000000000)
+		{
+			res |= 0xffffff0000000000;
+		}
+		return res;
+	}
+
 	#pragma endregion "Register access"
 
 

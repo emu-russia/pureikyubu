@@ -28,6 +28,13 @@ namespace DSP
 
 	#pragma region "Top Instructions"
 
+	void DspInterpreter::ABS(AnalyzeInfo& info)
+	{
+		int n = info.paramBits[0];
+		core->regs.ac[n].sbits = core->regs.ac[n].sbits >= 0 ? core->regs.ac[n].sbits : -core->regs.ac[n].sbits;
+		Flags(core->regs.ac[n]);
+	}
+
 	void DspInterpreter::ADD(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
@@ -111,6 +118,24 @@ namespace DSP
 		Flags(core->regs.ac[d]);
 	}
 
+	void DspInterpreter::ASL(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits <<= info.ImmOperand.SignedByte;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::ASR(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits >>= -info.ImmOperand.SignedByte;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::ASR16(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits >>= 16;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
 	{
 		SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
@@ -149,11 +174,68 @@ namespace DSP
 		Flags(core->regs.ac[n]);
 	}
 
+	void DspInterpreter::CLRL(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].l = 0;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::CLRP(AnalyzeInfo& info)
+	{
+		core->regs.prod.l = 0;
+		core->regs.prod.m1 = 0xfff0;
+		core->regs.prod.h = 0x00ff;
+		core->regs.prod.m2 = 0x10;
+	}
+
 	void DspInterpreter::CMP(AnalyzeInfo& info)
 	{
 		int64_t a = SignExtend40(core->regs.ac[0].sbits);
 		int64_t b = SignExtend40(core->regs.ac[1].sbits);
 		Flags40(a - b);
+	}
+
+	void DspInterpreter::CMPI(AnalyzeInfo& info)
+	{
+		DspLongAccumulator acc;
+		acc.hm = core->regs.ac[info.paramBits[0]].hm;
+		acc.l = 0;
+		acc.shm -= (int32_t)(int16_t)info.ImmOperand.UnsignedShort;
+		Flags(acc);
+	}
+
+	void DspInterpreter::CMPIS(AnalyzeInfo& info)
+	{
+		DspLongAccumulator acc;
+		acc.hm = core->regs.ac[info.paramBits[0]].hm;
+		acc.l = 0;
+		acc.shm -= (int32_t)(int16_t)info.ImmOperand.SignedByte;
+		Flags(acc);
+	}
+
+	void DspInterpreter::CMPAR(AnalyzeInfo& info)
+	{
+		DspLongAccumulator acc;
+		acc.sbits = core->regs.ac[info.paramBits[0]].sbits;
+		acc.sbits -= (int64_t)core->regs.ax[info.paramBits[1]].sbits;
+		Flags(acc);
+	}
+
+	void DspInterpreter::DAR(AnalyzeInfo& info)
+	{
+		core->regs.ar[info.paramBits[0]]--;
+	}
+
+	void DspInterpreter::DEC(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits--;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::DECM(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].hm--;
+		Flags(core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::HALT(AnalyzeInfo& info)
@@ -164,6 +246,18 @@ namespace DSP
 	void DspInterpreter::IAR(AnalyzeInfo& info)
 	{
 		core->regs.ar[info.paramBits[0]]++;
+	}
+
+	void DspInterpreter::INC(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits++;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::INCM(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].hm++;
+		Flags(core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::IFcc(AnalyzeInfo& info)
@@ -331,9 +425,55 @@ namespace DSP
 		core->regs.sr.sxm = 1;
 	}
 
+	void DspInterpreter::MOV(AnalyzeInfo& info)
+	{
+		int d = info.paramBits[0];
+		core->regs.ac[d] = core->regs.ac[1 - d];
+		Flags(core->regs.ac[d]);
+	}
+
+	void DspInterpreter::MOVAX(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits = (int64_t)core->regs.ax[info.paramBits[1]].sbits;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::MOVNP(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits = -core->PackProd();
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::MOVP(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits = core->PackProd();
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::MOVPZ(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits = core->PackProd();
+		core->regs.ac[info.paramBits[0]].l = 0;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::MOVR(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].hm = (int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]);
+		core->regs.ac[info.paramBits[0]].l = 0;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
 	void DspInterpreter::MRR(AnalyzeInfo& info)
 	{
 		core->MoveToReg(info.paramBits[0], core->MoveFromReg(info.paramBits[1]));
+	}
+
+	void DspInterpreter::NEG(AnalyzeInfo& info)
+	{
+		int n = info.paramBits[0];
+		core->regs.ac[n].sbits = -core->regs.ac[n].sbits;
+		Flags(core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ORC(AnalyzeInfo& info)
@@ -423,9 +563,43 @@ namespace DSP
 		core->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
 	}
 
+	void DspInterpreter::SUB(AnalyzeInfo& info)
+	{
+		int d = info.paramBits[0];
+		core->regs.ac[d].sbits -= core->regs.ac[1 - d].sbits;
+		Flags(core->regs.ac[d]);
+	}
+
+	void DspInterpreter::SUBAX(AnalyzeInfo& info)
+	{
+		int64_t ax = (int64_t)core->regs.ax[info.paramBits[1]].sbits;
+		core->regs.ac[info.paramBits[0]].sbits -= ax;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::SUBP(AnalyzeInfo& info)
+	{
+		core->regs.ac[info.paramBits[0]].sbits -= core->PackProd();
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::SUBR(AnalyzeInfo& info)
+	{
+		int64_t reg = (int64_t)(int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]);
+		core->regs.ac[info.paramBits[0]].sbits -= reg;
+		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
 	void DspInterpreter::TST(AnalyzeInfo& info)
 	{
 		Flags(core->regs.ac[info.paramBits[0]]);
+	}
+
+	void DspInterpreter::TSTAXH(AnalyzeInfo& info)
+	{
+		DspLongAccumulator axh;
+		axh.sbits = (int64_t)(int32_t)(int16_t)core->regs.ax[info.paramBits[0]].h;
+		Flags(axh);
 	}
 
 	void DspInterpreter::XORI(AnalyzeInfo& info)
@@ -446,6 +620,212 @@ namespace DSP
 
 
 	#pragma region "Bottom Instructions"
+
+	void DspInterpreter::DR(AnalyzeInfo& info)
+	{
+		core->regs.ar[info.paramBits[0]]--;
+	}
+
+	void DspInterpreter::IR(AnalyzeInfo& info)
+	{
+		core->regs.ar[info.paramBits[0]]++;
+	}
+
+	void DspInterpreter::NR(AnalyzeInfo& info)
+	{
+		core->regs.ar[info.paramBits[0]] += core->regs.ix[info.paramBits[0]];
+	}
+
+	void DspInterpreter::MV(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->MoveFromReg(info.paramBits[1]));
+	}
+
+	void DspInterpreter::S(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->regs.ar[info.paramBits[0]]++;
+	}
+
+	void DspInterpreter::SN(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->regs.ar[info.paramBits[0]] += core->regs.ix[info.paramBits[0]];
+	}
+
+	void DspInterpreter::L(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->regs.ar[info.paramBits[1]]++;
+	}
+
+	void DspInterpreter::LN(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+	}
+
+	void DspInterpreter::LS(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->regs.ar[0]++;
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::SL(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
+		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->regs.ar[0]++;
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LSN(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->regs.ar[0] += core->regs.ix[0];
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::SLN(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
+		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->regs.ar[0] += core->regs.ix[0];
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LSM(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->regs.ar[0]++;
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	void DspInterpreter::SLM(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
+		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->regs.ar[0]++;
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	void DspInterpreter::LSNM(AnalyzeInfo& info)
+	{
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[0]));
+		core->WriteDMem(core->regs.ar[3], core->regs.ac[info.paramBits[1]].m);
+		core->regs.ar[0] += core->regs.ix[0];
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	void DspInterpreter::SLNM(AnalyzeInfo& info)
+	{
+		core->WriteDMem(core->regs.ar[0], core->regs.ac[info.paramBits[0]].m);
+		core->MoveToReg(info.paramBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->regs.ar[0] += core->regs.ix[0];
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	// TODO: The last 2 groups of opcodes look very crazy. Need to reverse UCodes and understand in context how they actually work.
+
+	// Подозрительно похоже что вместо ar3 на самом деле используется ar[S] и ar[3-S], как мы это видели в опкодах ранее.
+	// Поэтому на ar[S] и ar[3] в примерах показанные как ar[0] и ar[3] на самом деле будут ar[0] и ar[3 - 0].
+	// Suspiciously, instead of ar3 - ar[S] and ar[3-S] are actually used, as we saw in the opcodes earlier.
+	// Therefore, on ar[S] and ar[3] in the examples shown as ar[0] and ar[3] will actually be ar[0] and ar[3-0].
+
+	// LD $ax0.d, $ax1.r, @$arS 
+	// ax0.d (d = Low/High) = *arS;  ax1.r (r = Low/High) = *ar3
+	// Postincrement arS, ar3
+
+	void DspInterpreter::LDCommon(AnalyzeInfo& info)
+	{
+		if (info.paramBits[0])
+		{
+			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramBits[2]]);		// S
+		}
+		else
+		{
+			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramBits[2]]);		// S
+		}
+
+		if (info.paramBits[1])
+		{
+			core->regs.ax[1].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S  ???
+		}
+		else
+		{
+			core->regs.ax[1].h = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
+		}
+	}
+
+	void DspInterpreter::LD(AnalyzeInfo& info)
+	{
+		LDCommon(info);
+		core->regs.ar[info.paramBits[2]]++;
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LDN(AnalyzeInfo& info)
+	{
+		LDCommon(info);
+		core->regs.ar[info.paramBits[2]] += core->regs.ix[info.paramBits[2]];
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LDM(AnalyzeInfo& info)
+	{
+		LDCommon(info);
+		core->regs.ar[info.paramBits[2]]++;
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	void DspInterpreter::LDNM(AnalyzeInfo& info)
+	{
+		LDCommon(info);
+		core->regs.ar[info.paramBits[2]] += core->regs.ix[info.paramBits[2]];
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	// LDAX $axR, @$arS
+	// axR.h = *arS;  axR.l = *ar3;
+	// Postincrement arS, ar3
+
+	void DspInterpreter::LDAXCommon(AnalyzeInfo& info)
+	{
+		core->regs.ax[info.paramBits[0]].h = core->ReadDMem(core->regs.ar[info.paramBits[1]]);		// S
+		core->regs.ax[info.paramBits[0]].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
+	}
+
+	void DspInterpreter::LDAX(AnalyzeInfo& info)
+	{
+		LDAXCommon(info);
+		core->regs.ar[info.paramBits[1]]++;
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LDAXN(AnalyzeInfo& info)
+	{
+		LDAXCommon(info);
+		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+		core->regs.ar[3]++;
+	}
+
+	void DspInterpreter::LDAXM(AnalyzeInfo& info)
+	{
+		LDAXCommon(info);
+		core->regs.ar[info.paramBits[1]]++;
+		core->regs.ar[3] += core->regs.ix[3];
+	}
+
+	void DspInterpreter::LDAXNM(AnalyzeInfo& info)
+	{
+		LDAXCommon(info);
+		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
+		core->regs.ar[3] += core->regs.ix[3];
+	}
 
 	#pragma endregion "Bottom Instructions"
 
@@ -555,6 +935,8 @@ namespace DSP
 		// Regular instructions ("top")
 		switch (info.instr)
 		{
+			case DspInstruction::ABS: ABS(info); break;
+
 			case DspInstruction::ADD: ADD(info); break;
 			case DspInstruction::ADDARN: ADDARN(info); break;
 			case DspInstruction::ADDAX: ADDAX(info); break;
@@ -571,18 +953,33 @@ namespace DSP
 			case DspInstruction::ANDI: ANDI(info); break;
 			case DspInstruction::ANDR: ANDR(info); break;
 
+			case DspInstruction::ASL: ASL(info); break;
+			case DspInstruction::ASR: ASR(info); break;
+			case DspInstruction::ASR16: ASR16(info); break;
+
 			case DspInstruction::BLOOP: BLOOP(info); break;
 			case DspInstruction::BLOOPI: BLOOPI(info); break;
 			case DspInstruction::CALLcc: CALLcc(info); break;
 			case DspInstruction::CALLR: CALLR(info); break;
 
 			case DspInstruction::CLR: CLR(info); break;
+			case DspInstruction::CLRL: CLRL(info); break;
+			case DspInstruction::CLRP: CLRP(info); break;
 
 			case DspInstruction::CMP: CMP(info); break;
+			case DspInstruction::CMPI: CMPI(info); break;
+			case DspInstruction::CMPIS: CMPIS(info); break;
+			case DspInstruction::CMPAR: CMPAR(info); break;
+
+			case DspInstruction::DAR: DAR(info); break;
+			case DspInstruction::DEC: DEC(info); break;
+			case DspInstruction::DECM: DECM(info); break;
 
 			case DspInstruction::HALT: HALT(info); break;
 
 			case DspInstruction::IAR: IAR(info); break;
+			case DspInstruction::INC: INC(info); break;
+			case DspInstruction::INCM: INCM(info); break;
 
 			case DspInstruction::IFcc: IFcc(info); break;
 
@@ -617,7 +1014,15 @@ namespace DSP
 			case DspInstruction::CLR40: CLR40(info); break;
 			case DspInstruction::SET40: SET40(info); break;
 
+			case DspInstruction::MOV: MOV(info); break;
+			case DspInstruction::MOVAX: MOVAX(info); break;
+			case DspInstruction::MOVNP: MOVNP(info); break;
+			case DspInstruction::MOVP: MOVP(info); break;
+			case DspInstruction::MOVPZ: MOVPZ(info); break;
+			case DspInstruction::MOVR: MOVR(info); break;
 			case DspInstruction::MRR: MRR(info); break;
+
+			case DspInstruction::NEG: NEG(info); break;
 
 			case DspInstruction::ORC: ORC(info); break;
 			case DspInstruction::ORI: ORI(info); break;
@@ -637,7 +1042,13 @@ namespace DSP
 			case DspInstruction::SRRN: SRRN(info); break;
 			case DspInstruction::SRS: SRS(info); break;
 
+			case DspInstruction::SUB: SUB(info); break;
+			case DspInstruction::SUBAX: SUBAX(info); break;
+			case DspInstruction::SUBP: SUBP(info); break;
+			case DspInstruction::SUBR: SUBR(info); break;
+
 			case DspInstruction::TST: TST(info); break;
+			case DspInstruction::TSTAXH: TSTAXH(info); break;
 
 			case DspInstruction::XORI: XORI(info); break;
 			case DspInstruction::XORR: XORR(info); break;
@@ -657,6 +1068,34 @@ namespace DSP
 		{
 			switch (info.instrEx)
 			{
+				case DspInstructionEx::DR: DR(info); break;
+				case DspInstructionEx::IR: IR(info); break;
+				case DspInstructionEx::NR: NR(info); break;
+				case DspInstructionEx::MV: MV(info); break;
+				case DspInstructionEx::S: S(info); break;
+				case DspInstructionEx::SN: SN(info); break;
+				case DspInstructionEx::L: L(info); break;
+				case DspInstructionEx::LN: LN(info); break;
+
+				case DspInstructionEx::LS: LS(info); break;
+				case DspInstructionEx::SL: SL(info); break;
+				case DspInstructionEx::LSN: LSN(info); break;
+				case DspInstructionEx::SLN: SLN(info); break;
+				case DspInstructionEx::LSM: LSM(info); break;
+				case DspInstructionEx::SLM: SLM(info); break;
+				case DspInstructionEx::LSNM: LSNM(info); break;
+				case DspInstructionEx::SLNM: SLNM(info); break;
+
+				case DspInstructionEx::LD: LD(info); break;
+				case DspInstructionEx::LDN: LDN(info); break;
+				case DspInstructionEx::LDM: LDM(info); break;
+				case DspInstructionEx::LDNM: LDNM(info); break;
+
+				case DspInstructionEx::LDAX: LDAX(info); break;
+				case DspInstructionEx::LDAXN: LDAXN(info); break;
+				case DspInstructionEx::LDAXM: LDAXM(info); break;
+				case DspInstructionEx::LDAXNM: LDAXNM(info); break;
+
 				case DspInstructionEx::NOP2: break;
 
 				default:

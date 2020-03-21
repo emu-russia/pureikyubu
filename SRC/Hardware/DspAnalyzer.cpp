@@ -1482,7 +1482,7 @@ namespace DSP
 					info.instrEx = DspInstructionEx::L;
 				}
 
-				if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+				if (!AddParamEx(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 					return false;
 				if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_regs + ss), ss))
 					return false;
@@ -1533,7 +1533,7 @@ namespace DSP
 
 				if (load)
 				{
-					if (!AddParamEx(info, (DspParameter)(0x18 + dd), dd))
+					if (!AddParamEx(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 						return false;
 					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ac0m + ss), ss))
 						return false;

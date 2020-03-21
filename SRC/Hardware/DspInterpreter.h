@@ -53,6 +53,8 @@ namespace DSP
 		void HALT(AnalyzeInfo& info);
 
 		void IAR(AnalyzeInfo& info);
+		void INC(AnalyzeInfo& info);
+		void INCM(AnalyzeInfo& info);
 
 		void IFcc(AnalyzeInfo& info);
 
@@ -60,9 +62,6 @@ namespace DSP
 		void ILRRD(AnalyzeInfo& info);
 		void ILRRI(AnalyzeInfo& info);
 		void ILRRN(AnalyzeInfo& info);
-
-		void INC(AnalyzeInfo& info);
-		void INCM(AnalyzeInfo& info);
 
 		void Jcc(AnalyzeInfo& info);
 		void JMPR(AnalyzeInfo& info);
@@ -187,6 +186,8 @@ namespace DSP
 		void Dispatch(AnalyzeInfo& info);
 		void SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count);
 		bool CheckLoop();
+		void LDCommon(AnalyzeInfo& info);
+		void LDAXCommon(AnalyzeInfo& info);
 
 		// TODO: Cache analyzeinfo?
 
