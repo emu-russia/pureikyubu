@@ -884,7 +884,7 @@ Example command packet (staring from command 0x0000)
 045B 19 1A       	lrri 	ax1.l, @ar0
 045C F8 58       	addpaxz	ac0, ax0      	l    	ax1.h, @ar0
 045D FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
-045E F8 B1       	addpaxz	ac0, ax0      	ls   	ax1.h, ac1.m
+045E F8 B1       	addpaxz	ac0, ax0     	ls   	ax1.h, ac1.m
 045F FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
 0460 F8 B1       	addpaxz	ac0, ax0      	ls   	ax1.h, ac1.m
 0461 FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m

@@ -108,6 +108,14 @@ namespace DSP
 
 	void DspInterpreter::ADDPAXZ(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a, b, c;
+		a.sbits = core->PackProd();
+		b.shm = core->regs.ax[info.paramBits[1]].sbits;
+		b.l = 0;
+		c.shm = a.shm + b.shm;
+		c.l = 0;
+		core->regs.ac[info.paramBits[0]] = c;
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDR(AnalyzeInfo& info)
@@ -1242,7 +1250,7 @@ namespace DSP
 			case DspInstruction::ADDI: ADDI(info); break;
 			case DspInstruction::ADDIS: ADDIS(info); break;
 			case DspInstruction::ADDP: ADDP(info); break;
-			//case DspInstruction::ADDPAXZ: ADDPAXZ(info); break;
+			case DspInstruction::ADDPAXZ: ADDPAXZ(info); break;
 			case DspInstruction::ADDR: ADDR(info); break;
 
 			case DspInstruction::ANDC: ANDC(info); break;

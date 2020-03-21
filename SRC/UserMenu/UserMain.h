@@ -17,3 +17,5 @@ void    DolwinReport(const char *fmt, ...);
             __LINE__,                                                       \
             msg)                                                            \
     , 0))
+
+extern HACCEL  hAccel;

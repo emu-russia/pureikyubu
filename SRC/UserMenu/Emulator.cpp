@@ -94,10 +94,28 @@ void EMUOpen()
     // take care about user interface
     OnMainWindowOpened();
 
+    int64_t nextGuiUpdate = cpu.tb.sval + cpu.one_second / 100;
+
     // start emulation!
     while (emu.running)
     {
+        MSG msg;
+
         IPTExecuteOpcode();
+
+        if (cpu.tb.sval >= nextGuiUpdate)
+        {
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+            {
+                if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+            }
+
+            nextGuiUpdate = cpu.tb.sval + cpu.one_second / 100;
+        }
     }
 }
 

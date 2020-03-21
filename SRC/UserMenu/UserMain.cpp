@@ -113,7 +113,7 @@ char * FixCommandLine(char *lpCmdLine)
 }
 
 // keyboard accelerators (no need to be shared)
-static  HACCEL  hAccel;
+HACCEL  hAccel;
 
 // entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
