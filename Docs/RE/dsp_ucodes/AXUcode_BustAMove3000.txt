@@ -6,7 +6,7 @@
 Features:
 - Does not use IROM procedures to work with Accelerator (uses its own)
 - DOES use 4 big IROM procedures ("Mixing Routines(?)")
-- Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Commands packet are saved in Dmem 0x0C00
+- Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Commands packet saved in Dmem 0x0C00
 - The first UInt16 in the next command sequence selects Command from JumpTable1
 - Only 20 commands exists (0-19)
 

@@ -516,11 +516,6 @@ namespace DSP
 		{
 			return &drom[(addr - DROM_START_ADDRESS) << 1];
 		}
-		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + IROM_SIZE))
-		{
-			// In the OSInitAudioSystem stub code IROM probing was noticed, so we conclude that IROM is also accessible by DMEM readings
-			return &irom[(addr - IROM_START_ADDRESS) << 1];
-		}
 		else
 		{
 			return nullptr;

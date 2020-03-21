@@ -25,7 +25,7 @@
 001B 00 84 10 00 	lri  	ix0, #0x1000
 
 001D 00 64 00 20 	bloop	ix0, $0x0020
-001F 02 18       	ilrri	ac0.m, @ar0
+001F 02 18       	ilrri	ac0.m, @ar0  			// Probe IROM by ILRR instruction
 0020 00 00       	nop
 
 0021 00 80 10 00 	lri  	ar0, #0x1000
@@ -33,7 +33,7 @@
 0025 00 84 08 00 	lri  	ix0, #0x0800
 
 0027 00 64 00 2A 	bloop	ix0, $0x002A
-0029 19 1E       	lrri 	ac0.m, @ar0
+0029 19 1E       	lrri 	ac0.m, @ar0 			// Prom DROM
 002A 00 00       	nop  	
 
 002B 26 FC       	lrs  	ac0.m, $(DMBH)
@@ -62,7 +62,7 @@ void Reset () 		// 0010
 	ix0 = 0x1000;
 	while (ix0--)
 	{
-		ac0m = *ar0++;
+		ac0m = *ar0++; 			// via ILRR
 	}
 
 	// Probe 0x1000 reads (4 Kbytes)   DROM
