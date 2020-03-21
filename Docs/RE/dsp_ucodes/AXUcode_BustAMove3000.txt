@@ -119,11 +119,11 @@ Features:
 0080 2E FD       	srs  	$(DMBL), ac0.m
 0081 00 21       	halt 	
 
-Example command block (command 0x0000)
+Example command packet (staring from command 0x0000)
 
 ```
-0C00 00 00 80 19 70 00 00 07 80 19 2C E0 00 02 80 19
-0C10 80 19 2C E0 80 19 2A 60 00 0F 00 00 00 00 00 00
+0C00 [00 00] [80 19 70 00] [00 07] [80 19 2C E0] [00 02] [80 19
+0C10 80 19 2C E0 80 19 2A 60] [00 0F] [00 00] 00 00 00 00
 ...
 
 ```
@@ -2936,7 +2936,7 @@ Copy something to IMEM and DMEM
 0F41 00 21       	halt 	
 
 
-0F42 02 9F 00 30 	j    	$0x0030
+0F42 02 9F 00 30 	j    	$0x0030 			// Reply Ready
 0F44 00 21       	halt 	
 
 
