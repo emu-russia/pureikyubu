@@ -11,6 +11,11 @@ The interpreter is not involved in instruction decoding. It receives ready-made 
 
 This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
 
+## Various Notes from known Macronix datasheets
+
+- Branch and call instructions are not allowed within program loop
+- TRAP-- Always call to hex 000C address
+
 */
 
 #include "pch.h"
@@ -190,6 +195,7 @@ namespace DSP
 
 	void DspInterpreter::CMP(AnalyzeInfo& info)
 	{
+		// xxx
 		int64_t a = SignExtend40(core->regs.ac[0].sbits);
 		int64_t b = SignExtend40(core->regs.ac[1].sbits);
 		Flags40(a - b);
@@ -213,11 +219,13 @@ namespace DSP
 		Flags(acc);
 	}
 
+	// Compares accumulator $acS with accumulator axR.h.
+
 	void DspInterpreter::CMPAR(AnalyzeInfo& info)
 	{
 		DspLongAccumulator acc;
 		acc.sbits = core->regs.ac[info.paramBits[0]].sbits;
-		acc.sbits -= (int64_t)core->regs.ax[info.paramBits[1]].sbits;
+		acc.sbits -= (int64_t)(int32_t)(int16_t)core->regs.ax[info.paramBits[1]].h;
 		Flags(acc);
 	}
 
@@ -274,24 +282,24 @@ namespace DSP
 
 	void DspInterpreter::ILRR(AnalyzeInfo& info)
 	{
-		core->regs.ac[info.paramBits[0]].m = core->ReadDMem(core->regs.ar[info.paramBits[1]]);
+		core->regs.ac[info.paramBits[0]].m = core->ReadIMem(core->regs.ar[info.paramBits[1]]);
 	}
 
 	void DspInterpreter::ILRRD(AnalyzeInfo& info)
 	{
-		core->regs.ac[info.paramBits[0]].m = core->ReadDMem(core->regs.ar[info.paramBits[1]]);
+		core->regs.ac[info.paramBits[0]].m = core->ReadIMem(core->regs.ar[info.paramBits[1]]);
 		core->regs.ar[info.paramBits[1]]--;
 	}
 
 	void DspInterpreter::ILRRI(AnalyzeInfo& info)
 	{
-		core->regs.ac[info.paramBits[0]].m = core->ReadDMem(core->regs.ar[info.paramBits[1]]);
+		core->regs.ac[info.paramBits[0]].m = core->ReadIMem(core->regs.ar[info.paramBits[1]]);
 		core->regs.ar[info.paramBits[1]]++;
 	}
 
 	void DspInterpreter::ILRRN(AnalyzeInfo& info)
 	{
-		core->regs.ac[info.paramBits[0]].m = core->ReadDMem(core->regs.ar[info.paramBits[1]]);
+		core->regs.ac[info.paramBits[0]].m = core->ReadIMem(core->regs.ar[info.paramBits[1]]);
 		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
 	}
 
@@ -617,6 +625,160 @@ namespace DSP
 	}
 
 	#pragma endregion "Top Instructions"
+
+
+	#pragma region "Multiplier Instructions"
+
+	void Madd32x16(int32_t a, int16_t b)
+	{
+	}
+
+	void Madd16x16(int16_t a, int16_t b)
+	{
+	}
+
+	void Msub32x16(int32_t a, int16_t b)
+	{
+	}
+
+	void Msub16x16(int16_t a, int16_t b)
+	{
+	}
+
+	void Mul16x16(int16_t a, int16_t b)
+	{
+	}
+
+	void Mul32x32(int32_t a, int32_t b)
+	{
+	}
+
+	void DspInterpreter::MADD(AnalyzeInfo& info)
+	{
+		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS
+		// (treat them both as signed) and add result to product register. 
+		//Madd16x16
+	}
+
+	void DspInterpreter::MADDC(AnalyzeInfo& info)
+	{
+		// Multiply middle part of accumulator $acS.m by high part of secondary accumulator $axT.h
+		// (treat them both as signed) and add result to product register.
+		//Madd32x16
+	}
+
+	void DspInterpreter::MADDX(AnalyzeInfo& info)
+	{
+		//Multiply one part of secondary accumulator $ax0 (selected by S) by one part of secondary accumulator $ax1 (selected by T)
+		// (treat them both as signed) and add result to product register. 
+		//Madd16x16
+	}
+
+	void DspInterpreter::MSUB(AnalyzeInfo& info)
+	{
+		//Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS 
+		//(treat them both as signed) and subtract result from product register. 
+		//Msub16x16
+	}
+
+	void DspInterpreter::MSUBC(AnalyzeInfo& info)
+	{	
+		//Multiply middle part of accumulator $acS.m by high part of secondary accumulator $axT.h
+		// (treat them both as signed) and subtract result from product register.
+		//Msub32x16
+	}
+
+	void DspInterpreter::MSUBX(AnalyzeInfo& info)
+	{
+		//Multiply one part of secondary accumulator $ax0 (selected by S) by one part of secondary accumulator $ax1 (selected by T) 
+		// (treat them both as signed) and subtract result from product register. 
+		//Msub16x16
+	}
+
+	void DspInterpreter::MUL(AnalyzeInfo& info)
+	{
+		//Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS (treat them both as signed). 
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULAC(AnalyzeInfo& info)
+	{
+		// Add product register to accumulator register $acR.
+		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS(treat them both as signed).
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULC(AnalyzeInfo& info)
+	{
+		//Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS (treat them both as signed).
+		//Mul32x16
+	}
+
+	void DspInterpreter::MULCAC(AnalyzeInfo& info)
+	{
+		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS(treat them both as signed).
+		// Add product register before multiplication to accumulator $acR.
+		//Mul32x16
+	}
+
+	void DspInterpreter::MULCMV(AnalyzeInfo& info)
+	{
+		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS(treat them both as signed).
+		// Move product register before multiplication to accumulator $acR.
+		//Mul32x16
+	}
+
+	void DspInterpreter::MULCMVZ(AnalyzeInfo& info)
+	{
+		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS (treat them both as signed). 
+		// Move product register before multiplication to accumulator $acR. Set low part of accumulator $acR.l to zero. 
+		//Mul32x16
+	}
+
+	void DspInterpreter::MULMV(AnalyzeInfo& info)
+	{
+		// Move product register to accumulator register $acR. Multiply low part $axS.l of secondary accumulator Register$axS by high part $axS.h of secondary accumulator $axS
+		// (treat them both as signed). 
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULMVZ(AnalyzeInfo& info)
+	{
+		// Move product register to accumulator register $acRand clear low part of accumulator register $acR.l.
+		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS(treat them both as signed).
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULX(AnalyzeInfo& info)
+	{
+		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
+		//Part is selected by S and T bits. Zero selects low part, one selects high part.
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULXAC(AnalyzeInfo& info)
+	{
+		//Add product register to accumulator register $acR. Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
+		//Part is selected by S and T bits. Zero selects low part, one selects high part. 
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULXMV(AnalyzeInfo& info)
+	{
+		//Move product register to accumulator register $acR. Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
+		//Part is selected by S and T bits. Zero selects low part, one selects high part. 
+		//Mul16x16
+	}
+
+	void DspInterpreter::MULXMVZ(AnalyzeInfo& info)
+	{
+		//Move product register to accumulator register $acR and clear low part of accumulator register $acR.l. 
+		//Multiply one part $ax0 by one part $ax1 (treat them both as signed).
+		//Part is selected by S and T bits. Zero selects low part, one selects high part.
+		//Mul16x16
+	}
+
+	#pragma region "Multiplier Instructions"
 
 
 	#pragma region "Bottom Instructions"
@@ -1052,6 +1214,25 @@ namespace DSP
 
 			case DspInstruction::XORI: XORI(info); break;
 			case DspInstruction::XORR: XORR(info); break;
+
+			//case DspInstruction::MADD: MADD(info); break;
+			//case DspInstruction::MADDC: MADDC(info); break;
+			//case DspInstruction::MADDX: MADDX(info); break;
+			//case DspInstruction::MSUB: MSUB(info); break;
+			//case DspInstruction::MSUBC: MSUBC(info); break;
+			//case DspInstruction::MSUBX: MSUBX(info); break;
+			//case DspInstruction::MUL: MUL(info); break;
+			//case DspInstruction::MULAC: MULAC(info); break;
+			//case DspInstruction::MULC: MULC(info); break;
+			//case DspInstruction::MULCAC: MULCAC(info); break;
+			//case DspInstruction::MULCMV: MULCMV(info); break;
+			//case DspInstruction::MULCMVZ: MULCMVZ(info); break;
+			//case DspInstruction::MULMV: MULMV(info); break;
+			//case DspInstruction::MULMVZ: MULMVZ(info); break;
+			//case DspInstruction::MULX: MULX(info); break;
+			//case DspInstruction::MULXAC: MULXAC(info); break;
+			//case DspInstruction::MULXMV: MULXMV(info); break;
+			//case DspInstruction::MULXMVZ: MULXMVZ(info); break;
 
 			case DspInstruction::NOP:
 			case DspInstruction::NX:

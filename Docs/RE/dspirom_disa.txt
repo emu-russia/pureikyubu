@@ -156,7 +156,7 @@ void DspMain ()			// 800E
 			case 0xD001:
 				WaitCpuMailbox ();
 				ar0 = CMBL;
-				sub_80B5 ();
+				LoadRunUcode (ar0);
 
 				halt; 					// Never reach here
 
@@ -241,6 +241,7 @@ uint16_t WaitDspMailbox()			// 807E
 
 ## DspMem -> MainMem
 
+Unused(?)
 
 ```
 8084 00 21       	halt 	
@@ -311,7 +312,7 @@ uint16_t WaitDspMailbox()			// 807E
 ```
 
 ```c++
-void LoadRunUcode()			// 80B5
+void LoadRunUcode(ar0)			// 80B5
 {
 	clr40();
 	ac0 = ac1 = 0;
@@ -350,7 +351,7 @@ void LoadRunUcode()			// 80B5
 
 // -----------------------------------------------------------------------------------------------------
 
-## Mixing Routines
+## Mixing Routines (?)
 
 ```
 80E7 81 50       	clr  	ac0             	l    	ax1.l, @ar0
@@ -629,6 +630,7 @@ void LoadRunUcode()			// 80B5
 81F8 02 DF       	ret  	
 ```
 
+## 
 
 ```
 81F9 81 50       	clr  	ac0             	l    	ax1.l, @ar0
@@ -1249,6 +1251,8 @@ void LoadRunUcode()			// 80B5
 845C 02 DF       	ret  	
 ```
 
+##
+
 
 ```
 845D 1C E3       	mrr  	ix3, ar3
@@ -1690,6 +1694,10 @@ void LoadRunUcode()			// 80B5
 8641 02 9D 86 3D 	jok  	$0x863D
 8643 02 DF       	ret  	
 ```
+
+## 
+
+Called from IPL, CardUnlock
 
 
 ```
@@ -2181,6 +2189,8 @@ void LoadRunUcode()			// 80B5
 88B8 02 BF 86 3D 	call 	$0x863D 						// WaitDspDma
 88BA 02 DF       	ret  	
 ```
+
+##
 
 
 ```

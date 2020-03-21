@@ -226,7 +226,7 @@ namespace DSP
 		Unknown3,
 		Unknown4,
 		ACCOV,			// Accelerator address overflow
-		Unknown6,
+		Unknown6,		// Trap?
 		INT,			// External interrupt (from CPU)
 	};
 
