@@ -112,7 +112,7 @@ namespace DSP
 		}
 
 		regs.prod.bitsUnpacked = 0;
-		regs.cr = 0;
+		regs.bank = 0;
 		regs.sr.bits = 0;
 
 		regs.pc = IROM_START_ADDRESS;		// IROM start
@@ -262,9 +262,9 @@ namespace DSP
 				regs.prod.h, regs.prod.m2, regs.prod.m1, regs.prod.l );
 		}
 
-		if (regs.cr != prevState->cr)
+		if (regs.bank != prevState->bank)
 		{
-			DBReport("cr: 0x%04X\n", regs.cr);
+			DBReport("bank: 0x%04X\n", regs.bank);
 		}
 
 		if (regs.sr.bits != prevState->sr.bits)
@@ -366,8 +366,8 @@ namespace DSP
 			case (int)DspRegister::ac1h:
 				regs.ac[1].h = val;
 				break;
-			case (int)DspRegister::config:
-				regs.cr = val;
+			case (int)DspRegister::bank:
+				regs.bank = val;
 				break;
 			case (int)DspRegister::sr:
 				regs.sr.bits = val;
@@ -439,8 +439,8 @@ namespace DSP
 				return regs.ac[0].h;
 			case (int)DspRegister::ac1h:
 				return regs.ac[1].h;
-			case (int)DspRegister::config:
-				return regs.cr;
+			case (int)DspRegister::bank:
+				return regs.bank;
 			case (int)DspRegister::sr:
 				return regs.sr.bits;
 			case (int)DspRegister::prodl:

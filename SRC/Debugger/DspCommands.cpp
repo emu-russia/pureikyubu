@@ -156,7 +156,7 @@ namespace Debug
 
         regsChanged.pc = ~regsChanged.pc;
         regsChanged.prod.bitsUnpacked = ~regsChanged.prod.bitsUnpacked;
-        regsChanged.cr = ~regsChanged.cr;
+        regsChanged.bank = ~regsChanged.bank;
         regsChanged.sr.bits = ~regsChanged.sr.bits;
 
         for (int i = 0; i < 4; i++)

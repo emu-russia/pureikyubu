@@ -77,23 +77,23 @@ namespace DSP
 	{
 		struct
 		{
-			unsigned c : 1;			///< Carry
-			unsigned o : 1;			///< Overﬂow 
-			unsigned z : 1;			///< Arithmetic zero 
-			unsigned s : 1;		///< Sign
-			unsigned as : 1;	///< Above s32 
-			unsigned tt : 1;	///< Top two bits are equal 
-			unsigned ok : 1;	///< 1: Bit test OK, 0: Bit test not OK
-			unsigned os : 1;	///< Overflow (sticky)
-			unsigned hwz : 1;	///< Hardwired to 0? 
-			unsigned ie : 1;	///< Interrupt enable 
+			unsigned c : 1;			/// Carry
+			unsigned o : 1;			/// Overﬂow 
+			unsigned z : 1;			/// Arithmetic zero 
+			unsigned s : 1;		/// Sign
+			unsigned as : 1;	/// Above s32 
+			unsigned tt : 1;	/// Top two bits are equal 
+			unsigned ok : 1;	/// 1: Bit test OK, 0: Bit test not OK
+			unsigned os : 1;	/// Overflow (sticky)
+			unsigned hwz : 1;	/// Hardwired to 0? 
+			unsigned ie : 1;	/// Interrupt enable 
 			unsigned unk10 : 1;
-			unsigned eie : 1;		///< External interrupt enable 
+			unsigned eie : 1;		/// External interrupt enable 
 			unsigned unk12 : 1;
 			// Not actually status, but ALU control
-			unsigned am : 1;		///< Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
-			unsigned sxm : 1;	///< Sign extension mode (0 = clr40, 1 = set40)
-			unsigned su : 1;	///< Operands are signed (1 = unsigned) 
+			unsigned am : 1;		/// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
+			unsigned sxm : 1;	/// Sign extension mode (0 = clr40, 1 = set40)
+			unsigned su : 1;	/// Operands are signed (1 = unsigned) 
 		};
 
 		uint16_t bits;
@@ -125,7 +125,7 @@ namespace DSP
 		st3,			///< Loop counter register 
 		ac0h,			///< 40-bit Accumulator 0 (high) 
 		ac1h,			///< 40-bit Accumulator 1 (high) 
-		config,			///< Config register 
+		bank,			///< Bank register (LRS/SRS)
 		sr,				///< Status register 
 		prodl,			///< Product register (low) 
 		prodm1,			///< Product register (mid 1) 
@@ -151,7 +151,8 @@ namespace DSP
 		DspLongAccumulator ac[2];		///< 40-bit Accumulators
 		DspShortAccumulator ax[2];		///< 32-bit Accumulators
 		DspProduct prod;		///< Product register
-		uint16_t cr;		///< config
+		// https://github.com/dolphin-emu/dolphin/wiki/Zelda-Microcode#unknown-registers
+		uint16_t bank;		///< bank (lrs/srs)
 		DspStatus sr;		///< status
 		DspAddress pc;		///< Program counter
 	} DspRegs;

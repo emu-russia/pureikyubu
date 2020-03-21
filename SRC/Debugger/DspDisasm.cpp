@@ -30,7 +30,7 @@ namespace DSP
 			case DspParameter::st3: text = "st3"; break;
 			case DspParameter::ac0h: text = "ac0.h"; break;
 			case DspParameter::ac1h: text = "ac1.h"; break;
-			case DspParameter::config: text = "config"; break;
+			case DspParameter::bank: text = "bank"; break;
 			case DspParameter::sr: text = "sr"; break;
 			case DspParameter::prodl: text = "prod.l"; break;
 			case DspParameter::prodm1: text = "prod.m1"; break;
