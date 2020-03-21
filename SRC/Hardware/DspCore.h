@@ -92,7 +92,7 @@ namespace DSP
 			unsigned unk12 : 1;
 			// Not actually status, but ALU control
 			unsigned am : 1;		/// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
-			unsigned sxm : 1;	/// Sign extension mode (0 = clr40, 1 = set40)
+			unsigned sxm : 1;	/// Sign extension mode (0 = clr40, 1 = set40)  (16-bit operands only?)
 			unsigned su : 1;	/// Operands are signed (1 = unsigned) 
 		};
 

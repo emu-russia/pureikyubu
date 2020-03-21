@@ -36,16 +36,20 @@ namespace DSP
 	void DspInterpreter::ABS(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].sbits = SignExtend40(core->regs.ac[n].sbits) >= 0 ? core->regs.ac[n].sbits : -core->regs.ac[n].sbits;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ADD(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
+		DspLongAccumulator b;
+		b.sbits = SignExtend40(core->regs.ac[1 - d].sbits);
 		core->regs.ac[d].sbits = SignExtend40(core->regs.ac[d].sbits);
 		core->regs.ac[d].sbits += SignExtend40(core->regs.ac[1 - d].sbits);
-		Flags(core->regs.ac[d]);
+		Flags(a, b, core->regs.ac[d]);
 	}
 
 	void DspInterpreter::ADDARN(AnalyzeInfo& info)
@@ -55,52 +59,73 @@ namespace DSP
 
 	void DspInterpreter::ADDAX(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = SignExtend40((int64_t)core->regs.ax[info.paramBits[1]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits += SignExtend40((int64_t)core->regs.ax[info.paramBits[1]].sbits);
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDAXL(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = SignExtend16(core->regs.ax[info.paramBits[1]].l);
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		core->regs.ac[info.paramBits[0]].sbits += SignExtend40((int64_t)(int32_t)core->regs.ax[info.paramBits[1]].l);
-		Flags(core->regs.ac[info.paramBits[0]]);
+		core->regs.ac[info.paramBits[0]].sbits += SignExtend16(core->regs.ax[info.paramBits[1]].l);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDI(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.shm = (int32_t)(int16_t)info.ImmOperand.UnsignedShort;
+		b.l = 0;
 		core->regs.ac[info.paramBits[0]].shm += (int32_t)(int16_t)info.ImmOperand.UnsignedShort;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDIS(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.shm = (int32_t)(int16_t)info.ImmOperand.SignedByte;
+		b.l = 0;
 		core->regs.ac[info.paramBits[0]].shm += (int32_t)(int16_t)info.ImmOperand.SignedByte;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDP(AnalyzeInfo& info)
 	{
-		DBHalt("DspInterpreter::ADDP\n");
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = core->PackProd();
+		core->regs.ac[info.paramBits[0]].sbits += core->PackProd();
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ADDPAXZ(AnalyzeInfo& info)
 	{
-		DBHalt("DspInterpreter::ADDPAXZ\n");
 	}
 
 	void DspInterpreter::ADDR(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = SignExtend16(core->MoveFromReg(info.paramBits[1]));
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		core->regs.ac[info.paramBits[0]].sbits += SignExtend40((int64_t)(int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]));
-		Flags(core->regs.ac[info.paramBits[0]]);
+		core->regs.ac[info.paramBits[0]].sbits += SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ANDC(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].m &= core->regs.ac[1 - n].m;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::TCLR(AnalyzeInfo& info)
@@ -116,35 +141,40 @@ namespace DSP
 	void DspInterpreter::ANDI(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].m &= info.ImmOperand.UnsignedShort;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ANDR(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
 		core->regs.ac[d].m &= core->regs.ax[info.paramBits[1]].h;
-		Flags(core->regs.ac[d]);
+		Flags(a, a, core->regs.ac[d]);
 	}
 
 	void DspInterpreter::ASL(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].sbits <<= info.ImmOperand.SignedByte;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ASR(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits >>= -info.ImmOperand.SignedByte;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::ASR16(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits >>= 16;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
@@ -181,14 +211,16 @@ namespace DSP
 	void DspInterpreter::CLR(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].bits = 0;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::CLRL(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].l = 0;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::CLRP(AnalyzeInfo& info)
@@ -201,39 +233,47 @@ namespace DSP
 
 	void DspInterpreter::CMP(AnalyzeInfo& info)
 	{
-		int64_t a = SignExtend40(core->regs.ac[0].sbits);
-		int64_t b = SignExtend40(core->regs.ac[1].sbits);
-		Flags40(a - b);
+		DspLongAccumulator a, b, c;
+		a.sbits = SignExtend40(core->regs.ac[0].sbits);
+		b.sbits = -SignExtend40(core->regs.ac[1].sbits);
+		c.sbits = a.sbits + b.sbits;
+		Flags(a, b, c);
 	}
 
 	void DspInterpreter::CMPI(AnalyzeInfo& info)
 	{
-		DspLongAccumulator acc;
-		acc.hm = core->regs.ac[info.paramBits[0]].hm;
-		acc.l = 0;
-		acc.shm -= (int32_t)(int16_t)info.ImmOperand.UnsignedShort;
-		Flags(acc);
+		DspLongAccumulator a, b, c;
+		a.hm = core->regs.ac[info.paramBits[0]].hm;
+		a.l = 0;
+		b.hm = (int32_t)(int16_t)info.ImmOperand.UnsignedShort;
+		b.l = 0;
+		b.sbits = -b.sbits;
+		c.sbits = a.sbits + b.sbits;
+		Flags(a, b, c);
 	}
 
 	void DspInterpreter::CMPIS(AnalyzeInfo& info)
 	{
-		DspLongAccumulator acc;
-		acc.hm = core->regs.ac[info.paramBits[0]].hm;
-		acc.l = 0;
-		acc.shm -= (int32_t)(int16_t)info.ImmOperand.SignedByte;
-		Flags(acc);
+		DspLongAccumulator a, b, c;
+		a.hm = core->regs.ac[info.paramBits[0]].hm;
+		a.l = 0;
+		b.hm = (int32_t)(int16_t)info.ImmOperand.SignedByte;
+		b.l = 0;
+		b.sbits = -b.sbits;
+		c.sbits = a.sbits + b.sbits;
+		Flags(a, b, c);
 	}
 
-	// Compares accumulator $acS with accumulator axR.h.
+	// Compares accumulator $acS.m with accumulator ax1.[l|h]
 
 	void DspInterpreter::CMPAR(AnalyzeInfo& info)
 	{
-		DspLongAccumulator acc;
-		acc.sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		int64_t ax = (info.paramBits[1] ? (int64_t)(int32_t)(int16_t)core->regs.ax[1].h :
-			(int64_t)(int32_t)(int16_t)core->regs.ax[1].l);
-		acc.sbits -= ax;
-		Flags(acc);
+		DspLongAccumulator a, b, c;
+		a.sbits = SignExtend16(core->regs.ac[info.paramBits[0]].m);
+		b.sbits = info.paramBits[1] ? SignExtend16(core->regs.ax[1].h) : SignExtend16(core->regs.ax[1].l);
+		b.sbits = -b.sbits;
+		c.sbits = a.sbits + b.sbits;
+		Flags(a, b, c);
 	}
 
 	void DspInterpreter::DAR(AnalyzeInfo& info)
@@ -243,14 +283,16 @@ namespace DSP
 
 	void DspInterpreter::DEC(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].sbits--;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::DECM(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].hm--;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::HALT(AnalyzeInfo& info)
@@ -265,14 +307,16 @@ namespace DSP
 
 	void DspInterpreter::INC(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].sbits++;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::INCM(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		core->regs.ac[info.paramBits[0]].hm++;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, a, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::IFcc(AnalyzeInfo& info)
@@ -386,29 +430,33 @@ namespace DSP
 	void DspInterpreter::LSL(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].bits <<= info.ImmOperand.Byte;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::LSL16(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].bits <<= 16;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::LSR(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].bits >>= -info.ImmOperand.SignedByte;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::LSR16(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
 		core->regs.ac[n].bits >>= 16;
-		Flags(core->regs.ac[n]);
+		Flags(a, a, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::M2(AnalyzeInfo& info)
@@ -444,40 +492,58 @@ namespace DSP
 	void DspInterpreter::MOV(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
+		DspLongAccumulator b = core->regs.ac[1 - d];
 		core->regs.ac[d] = core->regs.ac[1 - d];
-		Flags(core->regs.ac[d]);
+		Flags(a, b, core->regs.ac[d]);
 	}
 
 	void DspInterpreter::MOVAX(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = (int64_t)core->regs.ax[info.paramBits[1]].sbits;
 		core->regs.ac[info.paramBits[0]].sbits = (int64_t)core->regs.ax[info.paramBits[1]].sbits;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::MOVNP(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = -core->PackProd();
 		core->regs.ac[info.paramBits[0]].sbits = -core->PackProd();
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::MOVP(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = core->PackProd();
 		core->regs.ac[info.paramBits[0]].sbits = core->PackProd();
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::MOVPZ(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = core->PackProd();
 		core->regs.ac[info.paramBits[0]].sbits = core->PackProd();
 		core->regs.ac[info.paramBits[0]].l = 0;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::MOVR(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.hm = (int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]);
+		b.l = 0;
 		core->regs.ac[info.paramBits[0]].hm = (int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]);
 		core->regs.ac[info.paramBits[0]].l = 0;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::MRR(AnalyzeInfo& info)
@@ -488,29 +554,41 @@ namespace DSP
 	void DspInterpreter::NEG(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
+		DspLongAccumulator b;
+		b.sbits = -SignExtend40(core->regs.ac[n].sbits);
 		core->regs.ac[n].sbits = -SignExtend40(core->regs.ac[n].sbits);
-		Flags(core->regs.ac[n]);
+		Flags(a, b, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ORC(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
+		DspLongAccumulator b;
+		b.sbits = core->regs.ac[1 - n].m;
 		core->regs.ac[n].m |= core->regs.ac[1 - n].m;
-		Flags(core->regs.ac[n]);
+		Flags(a, b, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ORI(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
+		DspLongAccumulator b;
+		b.sbits = info.ImmOperand.UnsignedShort;
 		core->regs.ac[n].m |= info.ImmOperand.UnsignedShort;
-		Flags(core->regs.ac[n]);
+		Flags(a, b, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::ORR(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
+		DspLongAccumulator b;
+		b.sbits = core->regs.ax[info.paramBits[1]].h;
 		core->regs.ac[d].m |= core->regs.ax[info.paramBits[1]].h;
-		Flags(core->regs.ac[d]);
+		Flags(a, b, core->regs.ac[d]);
 	}
 
 	void DspInterpreter::RETcc(AnalyzeInfo& info)
@@ -583,57 +661,77 @@ namespace DSP
 	void DspInterpreter::SUB(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
+		DspLongAccumulator b;
+		b.sbits = -SignExtend40(core->regs.ac[1 - d].sbits);
 		core->regs.ac[d].sbits = SignExtend40(core->regs.ac[d].sbits);
 		core->regs.ac[d].sbits -= SignExtend40(core->regs.ac[1 - d].sbits);
-		Flags(core->regs.ac[d]);
+		Flags(a, b, core->regs.ac[d]);
 	}
 
 	void DspInterpreter::SUBAX(AnalyzeInfo& info)
 	{
 		int64_t ax = (int64_t)core->regs.ax[info.paramBits[1]].sbits;
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = -ax;
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits -= ax;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::SUBP(AnalyzeInfo& info)
 	{
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = -core->PackProd();
 		core->regs.ac[info.paramBits[0]].sbits -= core->PackProd();
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::SUBR(AnalyzeInfo& info)
 	{
-		int64_t reg = (int64_t)(int32_t)(int16_t)core->MoveFromReg(info.paramBits[1]);
+		int64_t reg = SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
+		DspLongAccumulator b;
+		b.sbits = -reg;
 		core->regs.ac[info.paramBits[0]].sbits = SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
 		core->regs.ac[info.paramBits[0]].sbits -= reg;
-		Flags(core->regs.ac[info.paramBits[0]]);
+		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::TST(AnalyzeInfo& info)
 	{
-		Flags(core->regs.ac[info.paramBits[0]]);
+		DspLongAccumulator zr = { 0 };
+		Flags(zr, zr, core->regs.ac[info.paramBits[0]]);
 	}
 
 	void DspInterpreter::TSTAXH(AnalyzeInfo& info)
 	{
+		DspLongAccumulator zr = { 0 };
 		DspLongAccumulator axh;
-		axh.sbits = (int64_t)(int32_t)(int16_t)core->regs.ax[info.paramBits[0]].h;
-		Flags(axh);
+		axh.sbits = SignExtend16(core->regs.ax[info.paramBits[0]].h);
+		Flags(zr, zr, axh);
 	}
 
 	void DspInterpreter::XORI(AnalyzeInfo& info)
 	{
 		int n = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[n];
+		DspLongAccumulator b;
+		b.sbits = info.ImmOperand.UnsignedShort;
 		core->regs.ac[n].m ^= info.ImmOperand.UnsignedShort;
-		Flags(core->regs.ac[n]);
+		Flags(a, b, core->regs.ac[n]);
 	}
 
 	void DspInterpreter::XORR(AnalyzeInfo& info)
 	{
 		int d = info.paramBits[0];
+		DspLongAccumulator a = core->regs.ac[d];
+		DspLongAccumulator b;
+		b.sbits = core->regs.ax[info.paramBits[1]].h;
 		core->regs.ac[d].m ^= core->regs.ax[info.paramBits[1]].h;
-		Flags(core->regs.ac[d]);
+		Flags(a, b, core->regs.ac[d]);
 	}
 
 	#pragma endregion "Top Instructions"
@@ -1012,6 +1110,16 @@ namespace DSP
 		return a;
 	}
 
+	int64_t DspInterpreter::SignExtend16(int16_t a)
+	{
+		int64_t res = a;
+		if ((res & 0x8000) && core->regs.sr.sxm)
+		{
+			res |= 0xffffffffffff0000;
+		}
+		return res;
+	}
+
 	bool DspInterpreter::Condition(ConditionCode cc)
 	{
 		switch (cc)
@@ -1022,7 +1130,7 @@ namespace DSP
 			case ConditionCode::LE: return (core->regs.sr.s != core->regs.sr.o) && (core->regs.sr.z != 0);
 			case ConditionCode::NE: return core->regs.sr.z == 0;
 			case ConditionCode::EQ: return core->regs.sr.z != 0;
-			case ConditionCode::NC: return core->regs.sr.o == 0;
+			case ConditionCode::NC: return core->regs.sr.c == 0;
 			case ConditionCode::C: return core->regs.sr.c != 0;
 			case ConditionCode::BelowS32: return core->regs.sr.as == 0;
 			case ConditionCode::AboveS32: return core->regs.sr.as != 0;
@@ -1037,15 +1145,30 @@ namespace DSP
 
 	// 32-bit accumulator does not involved in flags calculations
 
-	void DspInterpreter::Flags40(int64_t ac)
+	void DspInterpreter::Flags40(int64_t a, int64_t b, int64_t res)
 	{
-		bool carry = (ac & 0x10000000000) != 0;
-		bool zero = (ac & 0xffffffffff) == 0;
-		bool aboveS32 = (ac & 0xff00000000) == 0;		// Correct?
-		bool msb = (ac & 0x8000000000) != 0 ? true : false;
-		bool afterMsb = (ac & 0x4000000000) != 0 ? true : false;
-		// the overflow flag is usually generated by an exclusive or of the internal carry into and out of the sign bit
-		bool ovf = msb ^ afterMsb ^ carry;		// Afair
+		bool carry = (res & 0x10000000000) != 0;
+		bool zero = (res & 0xffffffffff) == 0;
+		bool aboveS32 = (res & 0xff00000000) == 0;		// Correct?
+		bool msb = (res & 0x8000000000) != 0 ? true : false;
+		bool afterMsb = (res & 0x4000000000) != 0 ? true : false;
+		// http://teaching.idallen.com/dat2343/10f/notes/040_overflow.txt
+		//1. If the sum of two numbers with the sign bits off yields a result number
+		//   with the sign bit on, the "overflow" flag is turned on.
+		//   0100 + 0100 = 1000 (overflow flag is turned on)
+		//2. If the sum of two numbers with the sign bits on yields a result number
+		//   with the sign bit off, the "overflow" flag is turned on.
+		//   1000 + 1000 = 0000 (overflow flag is turned on)
+		//A human need only remember that, when doing signed math, adding
+		//two numbers of the same sign must produce a result of the same sign,
+		//otherwise overflow happened.
+		bool aMsb = (a & 0x8000000000) != 0 ? true : false;
+		bool bMsb = (b & 0x8000000000) != 0 ? true : false;
+		bool ovf = false;
+		if (aMsb == bMsb)
+		{
+			ovf = aMsb != msb;
+		}
 
 		core->regs.sr.c = carry;
 		core->regs.sr.o = ovf;
@@ -1055,9 +1178,9 @@ namespace DSP
 		core->regs.sr.as = aboveS32;
 	}
 
-	void DspInterpreter::Flags(DspLongAccumulator ac)
+	void DspInterpreter::Flags(DspLongAccumulator a, DspLongAccumulator b, DspLongAccumulator res)
 	{
-		Flags40(SignExtend40(ac.bits));
+		Flags40(SignExtend40(a.bits), SignExtend40(b.bits), SignExtend40(res.bits));
 	}
 
 	void DspInterpreter::SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count)
@@ -1119,7 +1242,7 @@ namespace DSP
 			case DspInstruction::ADDI: ADDI(info); break;
 			case DspInstruction::ADDIS: ADDIS(info); break;
 			case DspInstruction::ADDP: ADDP(info); break;
-			case DspInstruction::ADDPAXZ: ADDPAXZ(info); break;
+			//case DspInstruction::ADDPAXZ: ADDPAXZ(info); break;
 			case DspInstruction::ADDR: ADDR(info); break;
 
 			case DspInstruction::ANDC: ANDC(info); break;

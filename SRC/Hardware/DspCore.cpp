@@ -112,7 +112,7 @@ namespace DSP
 		}
 
 		regs.prod.bitsUnpacked = 0;
-		regs.bank = 0;
+		regs.bank = 0xFF;
 		regs.sr.bits = 0;
 
 		regs.pc = IROM_START_ADDRESS;		// IROM start

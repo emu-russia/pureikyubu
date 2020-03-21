@@ -906,7 +906,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0406 18 1E       	lrr  	ac0.m, @ar0
 0407 00 DB 03 91 	lr   	ax1.h, $0x0391
 0409 74 00       	incm 	ac0             	     	
-040A D1 00       	cmpar	ac0, ax1.h      	     	
+040A D1 00       	cmpar	ac0.m, ax1.h      	     	
 040B 02 70       	ifge 	
 040C 81 00       	clr  	ac0             	     	
 040D 1B 1E       	srri 	@ar0, ac0.m
@@ -1690,7 +1690,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 084A 54 00       	subr 	ac0, ax1.l      	     	
 084B 1F 7E       	mrr  	ax1.h, ac0.m
 084C 02 BF 06 99 	call 	$0x0699
-084E D9 00       	cmpar	ac1, ax1.h      	     	
+084E D9 00       	cmpar	ac1.m, ax1.h      	     	
 084F 02 92 08 5C 	jg   	$0x085C
 0851 02 95 08 58 	jeq  	$0x0858
 0853 26 19       	lrs  	ac0.m, $0x0019

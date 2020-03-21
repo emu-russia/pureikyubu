@@ -104,7 +104,7 @@ Features:
 006B B1 00       	tst  	ac0             	     	
 006C 02 91 00 7E 	jl   	$0x007E  			// CmdBlock.Ushort0 < 0
 006E 0A 13       	lris 	ax1.l, 19 					// ax1.l = 19
-006F C1 00       	cmpar	ac0, ax1.l 			// ac > 19 ?
+006F C1 00       	cmpar	ac0.m, ax1.l 			// ac0.m > 19 ?
 0070 02 92 00 7E 	jg   	$0x007E
 0072 00 9F 0C C8 	lri  	ac1.m, #0x0CC8  			// Jump Table 1
 0074 4C 00       	add  	ac0, ac1        	     	
