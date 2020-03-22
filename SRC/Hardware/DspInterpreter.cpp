@@ -1230,7 +1230,7 @@ namespace DSP
 		{
 			if (core->TestBreakpoint(core->regs.pc))
 			{
-				DBReport2(DbgChannel::DSP, "IMEM breakpoint at 0x%04X\n", core->regs.pc);
+				DBHalt("DSP: IMEM breakpoint at 0x%04X\n", core->regs.pc);
 				core->Suspend();
 				return;
 			}

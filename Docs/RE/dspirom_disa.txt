@@ -1583,8 +1583,8 @@ void LoadRunUcode(ar0)			// 80B5
 85C1 16 D8 00 00 	si   	$(ACCAH), #0x0000
 85C3 16 D9 00 00 	si   	$(ACCAL), #0x0000
 85C5 16 DA 00 00 	si   	$(ACPDS), #0x0000
-85C7 16 A0 F9 B8 	si   	$(ADPCM_A10), #0xF9B8
-85C9 16 A1 FE C7 	si   	$(ADPCM_A20), #0xFEC7
+85C7 16 A0 F9 B8 	si   	$(ADPCM_A00), #0xF9B8
+85C9 16 A1 FE C7 	si   	$(ADPCM_A10), #0xFEC7
 85CB 16 DE 08 00 	si   	$(ACGAN), #0x0800
 85CD 16 DB 00 00 	si   	$(ACYN1), #0x0000
 85CF 16 DC 00 00 	si   	$(ACYN2), #0x0000
@@ -2146,8 +2146,8 @@ Called from IPL, CardUnlock
 8879 2E D8       	srs  	$(ACCAH), ac0.m
 887A 2C D9       	srs  	$(ACCAL), ac0.l
 887B 28 DA       	srs  	$(ACPDS), ax0.l
-887C 16 A0 09 78 	si   	$(ADPCM_A10), #0x0978
-887E 16 A1 E5 41 	si   	$(ADPCM_A20), #0xE541
+887C 16 A0 09 78 	si   	$(ADPCM_A00), #0x0978
+887E 16 A1 E5 41 	si   	$(ADPCM_A10), #0xE541
 8880 16 DE FC 82 	si   	$(ACGAN), #0xFC82
 8882 28 DB       	srs  	$(ACYN1), ax0.l
 8883 00 80 FF DD 	lri  	ar0, #0xFFDD

@@ -79,6 +79,7 @@ typedef struct AIControl
     int64_t     dmaTime;        // audio DMA update time 
 
     int64_t     one_second;     // one CPU second in timer ticks
+    bool        log;            // Enable AI log
 } AIControl;
 
 extern  AIControl ai;

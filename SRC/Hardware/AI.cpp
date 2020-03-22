@@ -88,7 +88,10 @@ void AIDINT()
     if(AIDCR & AIDCR_AIINTMSK)
     {
         PIAssertInt(PI_INTERRUPT_DSP);
-        DBReport2(DbgChannel::AI, "AIDINT");
+        if (ai.log)
+        {
+            DBReport2(DbgChannel::AI, "AIDINT");
+        }
     }
 }
 
@@ -103,19 +106,28 @@ static void AIStartDMA(uint32_t addr, long bytes)
 {
     addr &= RAMMASK;
     AXPlayAudio(&mi.ram[addr], bytes);
-    DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
+    }
 }
 
 static void AIStopDMA()
 {
     AXPlayAudio(0, 0);
-    DBReport2(DbgChannel::AI, "DMA stopped\n");
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "DMA stopped\n");
+    }
 }
 
 static void AISetDMASampleRate(long rate)
 {
     AXSetRate(ai.dmaRate = rate);
-    DBReport2(DbgChannel::AI, "DMA sample rate : %i\n", ai.dmaRate);
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "DMA sample rate : %i\n", ai.dmaRate);
+    }
 }
 
 //
@@ -194,7 +206,10 @@ void AISINT()
         if(ai.cr & AICR_AIINTMSK)
         {
             PIAssertInt(PI_INTERRUPT_AI);
-            DBReport2(DbgChannel::AIS, "AISINT\n");
+            if (ai.log)
+            {
+                DBReport2(DbgChannel::AIS, "AISINT\n");
+            }
         }
     }
 }
@@ -212,16 +227,22 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     }
 
     // enable sample counter
-    if(ai.cr & AICR_PSTAT)
+    if (ai.log)
     {
-        DBReport2(DbgChannel::AIS, "start streaming clock\n");
+        if (ai.cr & AICR_PSTAT)
+        {
+            DBReport2(DbgChannel::AIS, "start streaming clock\n");
+        }
+        else DBReport2(DbgChannel::AIS, "stop streaming clock\n");
     }
-    else DBReport2(DbgChannel::AIS, "stop streaming clock\n");
 
     // reset sample counter
     if(ai.cr & AICR_SCRESET)
     {
-        DBReport2(DbgChannel::AIS, "reset sample counter\n");
+        if (ai.log)
+        {
+            DBReport2(DbgChannel::AIS, "reset sample counter\n");
+        }
         ai.scnt = 0;
         ai.cr &= ~AICR_SCRESET;
     }
@@ -242,7 +263,10 @@ static void __fastcall write_dummy(uint32_t addr, uint32_t data) {}
 // interrupt trigger
 static void __fastcall write_it(uint32_t addr, uint32_t data)
 {
-    DBReport2(DbgChannel::AIS, "set trigger to : 0x%08X\n", data);
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AIS, "set trigger to : 0x%08X\n", data);
+    }
     ai.it = data;
 }
 static void __fastcall read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it; }
@@ -302,6 +326,7 @@ void AIOpen(HWConfig* config)
     ai.dmaRate = 32000;     // was division by 0 in AIGetTime
     
     ai.one_second = config->one_second;
+    ai.log = false;
 
     // set register traps
     MISetTrap(16, AI_DCR, read_aidcr, write_aidcr);

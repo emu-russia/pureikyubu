@@ -225,7 +225,7 @@ namespace Debug
                 ptr[0xc], ptr[0xd], ptr[0xe], ptr[0xf]);
 
             bytes -= 0x10;
-            dsp_addr += 0x10;
+            dsp_addr += 8;
         }
     }
 
@@ -278,7 +278,7 @@ namespace Debug
                 ptr[0xc], ptr[0xd], ptr[0xe], ptr[0xf]);
 
             bytes -= 0x10;
-            dsp_addr += 0x10;
+            dsp_addr += 8;
         }
     }
 

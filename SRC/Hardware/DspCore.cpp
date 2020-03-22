@@ -684,52 +684,52 @@ namespace DSP
 					Accel.AdpcmGan = value;
 					break;
 
-				case (DspAddress)DspHardwareRegs::ADPCM_A10:
+				case (DspAddress)DspHardwareRegs::ADPCM_A00:
 					Accel.AdpcmCoef[0] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A20:
+				case (DspAddress)DspHardwareRegs::ADPCM_A10:
 					Accel.AdpcmCoef[1] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A11:
+				case (DspAddress)DspHardwareRegs::ADPCM_A20:
 					Accel.AdpcmCoef[2] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A21:
+				case (DspAddress)DspHardwareRegs::ADPCM_A30:
 					Accel.AdpcmCoef[3] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A12:
+				case (DspAddress)DspHardwareRegs::ADPCM_A40:
 					Accel.AdpcmCoef[4] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A22:
+				case (DspAddress)DspHardwareRegs::ADPCM_A50:
 					Accel.AdpcmCoef[5] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A13:
+				case (DspAddress)DspHardwareRegs::ADPCM_A60:
 					Accel.AdpcmCoef[6] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A23:
+				case (DspAddress)DspHardwareRegs::ADPCM_A70:
 					Accel.AdpcmCoef[7] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A14:
+				case (DspAddress)DspHardwareRegs::ADPCM_A01:
 					Accel.AdpcmCoef[8] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A24:
+				case (DspAddress)DspHardwareRegs::ADPCM_A11:
 					Accel.AdpcmCoef[9] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A15:
+				case (DspAddress)DspHardwareRegs::ADPCM_A21:
 					Accel.AdpcmCoef[10] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A25:
+				case (DspAddress)DspHardwareRegs::ADPCM_A31:
 					Accel.AdpcmCoef[11] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A16:
+				case (DspAddress)DspHardwareRegs::ADPCM_A41:
 					Accel.AdpcmCoef[12] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A26:
+				case (DspAddress)DspHardwareRegs::ADPCM_A51:
 					Accel.AdpcmCoef[13] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A17:
+				case (DspAddress)DspHardwareRegs::ADPCM_A61:
 					Accel.AdpcmCoef[14] = value;
 					break;
-				case (DspAddress)DspHardwareRegs::ADPCM_A27:
+				case (DspAddress)DspHardwareRegs::ADPCM_A71:
 					Accel.AdpcmCoef[15] = value;
 					break;
 
@@ -893,8 +893,8 @@ namespace DSP
 	{
 		uint8_t* ptr = nullptr;
 
-		DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
-			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		//DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
+		//	DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
 
 		if (DmaRegs.control.Imem)
 		{
@@ -934,6 +934,23 @@ namespace DSP
 	/// Decode (in case of ADPCM) and read data by accelerator
 	uint16_t DspCore::AccelReadData()
 	{
+		// The format parameter specifies the type of sample the DSP must read from ARAM, which in turn dictates the addressing mode
+		// of the DSP’s streaming cache.If the sample is encoded as "raw" 16 - bit PCM, the cache will address ARAM in 16 - bit words.
+		// For 8 - bit PCM, the cache will address ARAM as bytes.For ADPCM samples, the cache will address ARAM as 4 - bit nibbles.
+
+		// If the current sample address exceeds the loop-end address, the streaming cache will reset itself to the loop-start position and assert an interrupt.
+
+		// The user must prepare a "zero buffer" in ARAM for use with one shot samples.The "zero buffer" must be at least 256 bytes longand
+		// filled with zeros.The "zero buffer" must be located at address returned by calling ARGetBaseAddress() and should be 8 byte
+		// aligned.The DSP places current address at the "zero buffer" once the end of a one shot sample is reached.This arrangement
+		// ensures that the DSP plays silence for the remainder of the frame after a voice finishes.The loop address for a one shot sample is ignored by the DSP.
+
+		// DSP ADPCM frames are eight bytes long.The first byte is the frame header(predictor and scale).The following seven bytes are a payload of 14 samples.
+		// DSP ADPCM buffers must be eigth byte aligned in ARAM as the decoder uses this alignment to program predictor and scale for each frame.
+		// DSP ADPCM buffer do not have to end on a eight byte boundry.ARAM addressing for DSP ADPCM(loopAddress, endAddress, currentAddress) buffers must 
+		// never point to the frame header.The following formula computes nibble address offset for DSP ADPCM addressing: 
+		// nibbleAddress = ((sample / 14) * 16) + (sample % 14) + 2;
+
 		return 0;
 	}
 
