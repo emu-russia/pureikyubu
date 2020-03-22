@@ -2255,5 +2255,7 @@ Called from IPL, CardUnlock
 
 // Possible checksum
 
+```
 8FFE 06 E2
 8FFF 88 45
+```

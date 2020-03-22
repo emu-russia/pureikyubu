@@ -1,5 +1,4 @@
-# Disassembled AX Ucode from Bust-a-Move 3000
-# DspUcode_1f20_g3seD8.bin
+# Disassembled AX Ucode from Bust-a-Move 3000 (DspUcode_1F20_G3SED8.bin)
 
 ## Overview
 
@@ -45,11 +44,13 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0x000 | Used by Command 0. Copy from Command 7 640B Frame |
 | 0x140 | Copy from Command 7 640B Frame |
 | 0x280 | Zero 640B Frame buffer (Command 7) |
-| 0x3C0 | 0x80 bytes Dma2 from Command 2 |
+| 0x3C0 | Loaded AXPBUPDATE Update Data (0x80 bytes Dma2 from Command 2) |
 | 0xB80 | Voice Parameters Block (0xD0 bytes) (Command 2) |
 | 0xC00 | Command packet (0x180 bytes max) |
 | 0xCC0 | AXPBITDBUFFER (initial time delay). Optional Dma3 0x40 bytes from Command Setup2 |
-| 0xE08 | Pointers  [0x0000] [0x0140] [0x0280] [0x0400] [0x0540] [0x0680] [0x07C0] [0x0900] [0x0A40] (Command 2) |
+| 0xE07 | Saved ar0 (Mixer) |
+| 0xE08 | Pointers  \[0x0000\] \[0x0140\] \[0x0280\] \[0x0400\] \[0x0540\] \[0x0680\] \[0x07C0\] \[0x0900\] \[0x0A40\] (Command 2) |
+| 0xE15 | JumpTable5\[n\] (Sample Rate Converter) |
 | 0xE48 | Temp buffer (common) |
 
 
@@ -70,6 +71,7 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 
 ## Start
 
+```
 0010 13 02       	sbclr	8
 0011 13 03       	sbclr	9
 0012 12 04       	sbset	10
@@ -92,9 +94,11 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 002A 02 A0 80 00 	tclr 	ac0.m, #0x8000
 002C 02 9C 00 29 	jnok 	$0x0029
 002E 02 9F 00 45 	j    	$0x0045
+```
 
 ## Reply Ready
 
+```
 0030 13 02       	sbclr	8
 0031 13 03       	sbclr	9
 0032 12 04       	sbset	10
@@ -110,9 +114,11 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 0040 26 FC       	lrs  	ac0.m, $(DMBH) 			// Wait Cpu read Dsp mailbox
 0041 02 A0 80 00 	tclr 	ac0.m, #0x8000
 0043 02 9C 00 40 	jnok 	$0x0040
+```
 
 ## Wait command + DMEM command block (0xc00)
 
+```
 0045 8E 00       	clr40	                	     	
 0046 81 00       	clr  	ac0             	     	
 0047 89 00       	clr  	ac1             	     	
@@ -138,9 +144,11 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 0063 2F CB       	srs  	$(DSBL), ac1.m
 0064 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0066 00 80 0C 00 	lri  	ar0, #0x0C00
+```
 
 ## Process Command Block
 
+```
 0068 8E 00       	clr40	                	     	
 0069 81 00       	clr  	ac0             	     	
 006A 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -161,11 +169,13 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 007E 16 FC BA AD 	si   	$(DMBH), #0xBAAD 			// 0xBAAD_[CmdBlock.Ushort0]
 0080 2E FD       	srs  	$(DMBL), ac0.m
 0081 00 21       	halt 	
+```
 
 ## ----------------------------------------------------------------------------------------------------------------
 
 ## Command 0x12
 
+```
 0082 8D 00       	set15	                	     	
 0083 8F 00       	set40	                	     	
 0084 8A 00       	m2   	                	     	
@@ -286,9 +296,11 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 0117 91 41       	asr16	ac0             	l    	ax0.l, @ar1
 0118 00 C0 0E 45 	lr   	ar0, $0x0E45
 011A 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0 Init?
 
+```
 011C 81 00       	clr  	ac0             	     	
 011D 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 011E 8E 78       	clr40	                	l    	ac1.m, @ar0
@@ -440,6 +452,7 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 01D4 1B 5E       	srri 	@ar2, ac0.m
 01D5 1B 5C       	srri 	@ar2, ac0.l
 01D6 02 9F 00 68 	j    	$0x0068
+```
 
 Single Dma transfer 0x40 bytes.
 
@@ -454,6 +467,7 @@ Example 0xE48 Dma contents:
 
 ## Command 1
 
+```
 01D8 00 85 FF FF 	lri  	ix1, #0xFFFF
 01DA 81 50       	clr  	ac0             	l    	ax1.l, @ar0
 01DB 89 40       	clr  	ac1             	l    	ax0.l, @ar0
@@ -473,15 +487,19 @@ Example 0xE48 Dma contents:
 01F3 00 81 07 C0 	lri  	ar1, #0x07C0
 01F5 02 BF 06 29 	call 	$0x0629 					// Command1_Sub1
 01F7 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 9
 
+```
 01F9 00 86 07 C0 	lri  	ix2, #0x07C0
 01FB 02 BF 05 BC 	call 	$0x05BC
 01FD 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 6  -- CopyOut (0x780 bytes, starting 0x0)
 
+```
 01FF 81 00       	clr  	ac0             	     	
 0200 8E 00       	clr40	                	     	
 0201 19 1E       	lrri 	ac0.m, @ar0
@@ -493,6 +511,7 @@ Example 0xE48 Dma contents:
 0209 16 CB 07 80 	si   	$(DSBL), #0x0780
 020B 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 020D 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0x11 - Read 0x280 bytes (Dmem 0xE48) and save with partially changing the sign in one array and with a change in sign (NEG) in another 2 arrays. Clear array 0x280.
 
@@ -582,6 +601,7 @@ Command_0x11() 			// 020F
 
 ## Command 0xD -- Reload command list
 
+```
 0243 8E 70       	clr40	                	l    	ac0.m, @ar0
 0244 89 60       	clr  	ac1             	l    	ac0.l, @ar0
 0245 19 1F       	lrri 	ac1.m, @ar0
@@ -595,9 +615,11 @@ Command_0x11() 			// 020F
 0250 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 0252 00 80 0C 00 	lri  	ar0, #0x0C00
 0254 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 2 - Setup Voice Parameters Block (0xExx variables)
 
+```
 0256 81 00       	clr  	ac0             	     	
 0257 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0258 8E 78       	clr40	                	l    	ac1.m, @ar0
@@ -636,7 +658,7 @@ Command_0x11() 			// 020F
 028C 81 00       	clr  	ac0             	     	
 028D 89 00       	clr  	ac1             	     	
 028E 00 DE 0B 84 	lr   	ac0.m, $0x0B84 
-0290 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C 				// Jump Table 5 (Cmd2)
+0290 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C 				// Jump Table 5 (Cmd2) (Sample Rate Converter)
 0292 4C 00       	add  	ac0, ac1        	     	
 0293 1C 7E       	mrr  	ar3, ac0.m
 0294 02 13       	ilrr 	ac0.m, @ar3
@@ -702,6 +724,7 @@ Command_0x11() 			// 020F
 02F6 00 FF 0E 43 	sr   	$0x0E43, ac1.m
 02F8 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 02FA 02 9F 00 68 	j    	$0x0068
+```
 
 Example payload:
 
@@ -710,29 +733,120 @@ voice parameter block
 ```c++
 typedef struct _AXPB
 {
-    u16             nextHi;     // pointer to next parameter buffer (MRAM)
+    u16             nextHi;     // pointer to next parameter buffer (MRAM) 
     u16             nextLo;
                     
     u16             currHi;     // pointer to this parameter buffer (MRAM)
     u16             currLo;
                     
-    u16             srcSelect;  // Select type of SRC (none,4-tap,linear)
-    u16             coefSelect; // Coef. to be used with 4-tap SRC
+    u16             srcSelect;  // Select type of SRC
+    u16             coefSelect; // Coef. to be used with 4-tap SRC  (from DROM)
     u16             mixerCtrl;  // Mixer control bits
                     
-    u16             state;      // current state (see below)
-    u16             type;       // type of voice (stream)
+    u16             state;      // current state (0 - STOP, 1 - RUN)
+    u16             type;       // type of voice (0 - NORMAL, 1 - STREAM)
                     
-    AXPBMIX         mix;    
-    AXPBITD         itd;
-    AXPBUPDATE      update;
-    AXPBDPOP        dpop;
-    AXPBVE          ve;
-    AXPBFIR         fir;
-    AXPBADDR        addr;
-    AXPBADPCM       adpcm;
-    AXPBSRC         src;
-    AXPBADPCMLOOP   adpcmLoop;
+    AXPBMIX         mix;     		// mixing (mixing values in .15, 0x8000 = ca. 1.0) 			0xB89
+    {
+	    u16     vL;                 
+	    u16     vDeltaL;
+	    u16     vR;
+	    u16     vDeltaR;
+	    
+	    u16     vAuxAL;
+	    u16     vDeltaAuxAL;
+	    u16     vAuxAR;
+	    u16     vDeltaAuxAR;
+	    
+	    u16     vAuxBL;
+	    u16     vDeltaAuxBL;
+	    u16     vAuxBR;
+	    u16     vDeltaAuxBR;
+	    
+	    u16     vAuxBS;
+	    u16     vDeltaAuxBS;
+	    u16     vS;
+	    u16     vDeltaS;
+	    u16     vAuxAS;
+	    u16     vDeltaAuxAS;    
+    }
+    AXPBITD         itd; 			// initial time delay   	0xB9B
+    {
+	    u16     flag;               //  on or off for this voice
+	    u16     bufferHi;           //  MRAM buffer
+	    u16     bufferLo;           //  
+	    u16     shiftL;             //  phase shift samples left (current)
+	    u16     shiftR;             //  phase shift samples right (current)
+	    u16     targetShiftL;       //  phase shift samples left (target)
+	    u16     targetShiftR;       //  phase shift samples right (target)    
+    }
+    AXPBUPDATE      update;  		// 0xBA2	
+    {
+    	u16     updNum[5];          // number of updates per 1ms step
+    	u16     dataHi;             // location of update data in MRAM
+    	u16     dataLo;
+    }
+    AXPBDPOP        dpop;		// depop data (last amplitudes mixed into buffers) 		0xBA9
+    {
+	    s16     aL;
+	    s16     aAuxAL;
+	    s16     aAuxBL;
+	    
+	    s16     aR;
+	    s16     aAuxAR;
+	    s16     aAuxBR;
+	    
+	    s16     aS;
+	    s16     aAuxAS;
+	    s16     aAuxBS;    
+    }
+    AXPBVE          ve; 		// volume envelope  0xBB2
+    {
+	    u16     currentVolume;              // .15 volume at start of frame
+	    s16     currentDelta;               // signed per sample delta delta    
+    }
+    AXPBFIR         fir;			// FIR filter info (currently unused)  0xBB4
+    {
+	    u16     numCoefs;       // reserved, keep zero
+	    u16     coefsHi;        // reserved, keep zero
+	    u16     coefsLo;        // reserved, keep zero    
+    }
+    AXPBADDR        addr;		// buffer addressing  0xBB7
+    {
+	    u16     loopFlag;                   // 0 = one-shot, 1=looping  
+	    u16     format;                     // sample format used (see below)
+	    u16     loopAddressHi;              // Start of loop (this will point to a shared "zero" buffer if one-shot mode is active)
+	    u16     loopAddressLo;
+	    u16     endAddressHi;               // End of sample (and loop)
+	    u16     endAddressLo;
+	    u16     currentAddressHi;           // Current playback position
+	    u16     currentAddressLo;    
+    }
+    AXPBADPCM       adpcm;		// ADPCM decoder state    +0xBBF
+    {
+	    u16     a[8][2];            //  coef table a1[0],a2[0],a1[1],a2[1]....
+
+	    u16     gain;               //  gain to be applied (0 for ADPCM, 0x0800 for PCM8/16)
+	    
+	    u16     pred_scale;         //  predictor / scale combination (nibbles, as in hardware)
+	    u16     yn1;                //  y[n - 1]
+	    u16     yn2;                //  y[n - 2]
+    }
+    AXPBSRC         src;  			// 	sample rate converter state  	0xBD3
+    {
+	    u16     ratioHi;            //  sampling ratio, integer
+	    u16     ratioLo;            //  sampling ratio, fraction
+	    
+	    u16     currentAddressFrac; //  current fractional sample position
+	    
+	    u16     last_samples[4];    //  last 4 input samples    
+    }
+    AXPBADPCMLOOP   adpcmLoop;		// ADPCM loop parameters 	0xBDA
+    {
+	    u16     loop_pred_scale;    //  predictor / scale combination (nibbles, as in hardware)
+	    u16     loop_yn1;           //  y[n - 1]
+	    u16     loop_yn2;           //  y[n - 2]
+    }
 
     u16             pad[3];     // 32 byte alignment
 
@@ -740,34 +854,19 @@ typedef struct _AXPB
 ```
 
 ```
-80197040  80 19 71 2C 80 19 70 40  [00 00] [00 00] [00 00] [00 00]    		[JumpTable5]  [ Coef Table ] [ JumpTable4 | JumpTable3 | JumpTable2 : 4444 4443 3333 2222]  [state]
-80197050  [00 00] [00 00 00 00 00 00  00 00 00 00 00 00 00 00   		[type] [AXPBMIX ... ]
-80197060  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-80197070  00 00 00 00 00 00] [00 00]  [80 19 AB 40] [00 00] [00 00] 			if (*0x0B9B != 0)  AXPBITD  Optional Dma3 0x40 bytes -> 0xCC0   |  [0x0E40] [0x0E41]
-80197080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [80 19 		 Dma2: 0x80 bytes, Dmem 0x3c0  (AXPBUPDATE?)
-80197090  BB 40] 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-801970A0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [00 00] 					AXPBADDR 
-801970B0  [00 00] [00 00 00 00] [00 00  00 00] [00 00 00 00] 00 00  		AXPBADPCM
-801970C0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-801970D0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-801970E0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-801970F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-80197100  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
-```
-
-```c++
-typedef struct _AXPBADDR
-{                                       // all values are mesured in samples:
-    u16     loopFlag;                   // 0 = one-shot, 1=looping  
-    u16     format;                     // sample format used (see below)
-    u16     loopAddressHi;              // Start of loop (this will point to a shared "zero" buffer if one-shot mode is active)
-    u16     loopAddressLo;
-    u16     endAddressHi;               // End of sample (and loop)
-    u16     endAddressLo;
-    u16     currentAddressHi;           // Current playback position
-    u16     currentAddressLo;
-
-} AXPBADDR;
+0xB80  80 19 71 2C 80 19 70 40  [00 00] [00 00] [00 00] [00 00]    		[JumpTable5(SRC)]  [ Coef Table ] [ JumpTable4 | JumpTable3 | JumpTable2 : 4444 4443 3333 2222]  [state]
+0xB88  [00 00] [00 00 00 00 00 00  00 00 00 00 00 00 00 00   		[type] [AXPBMIX ... ]
+0xB90  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xB98  00 00 00 00 00 00] [00 00]  [80 19 AB 40] [00 00] [00 00] 			if (*0x0B9B != 0)  AXPBITD  Optional Dma3 0x40 bytes -> 0xCC0   |  [0x0E40] [0x0E41]
+0xBA0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [80 19 		 Dma2: 0x80 bytes, Dmem 0x3c0  (AXPBUPDATE?)
+0xBA8  BB 40] 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xBB0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [00 00] 					AXPBADDR 
+0xBB8  [00 00] [00 00 00 00] [00 00  00 00] [00 00 00 00] 00 00  		AXPBADPCM
+0xBC0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xBC8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xBD0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xBD8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+0xBE0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 ```
 
 ... Looks like linked list
@@ -797,22 +896,25 @@ DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
 
 ## Mixer
 
+See AX_Mixer.md
+
 ## Command 3
 
+```
 02FC 8E 00       	clr40	                	     	
-02FD 00 E0 0E 07 	sr   	$0x0E07, ar0
-02FF 00 80 0B A2 	lri  	ar0, #0x0BA2 					// 
-0301 00 81 03 C0 	lri  	ar1, #0x03C0
+02FD 00 E0 0E 07 	sr   	$0x0E07, ar0 		// Save ar0
+02FF 00 80 0B A2 	lri  	ar0, #0x0BA2 					// AXPBUPDATE
+0301 00 81 03 C0 	lri  	ar1, #0x03C0 			// 0x80 bytes Dma2 from Command 2  (Loaded Update Data)
 0303 0E 05       	lris 	ac0.m, 5
 0304 00 FE 0E 04 	sr   	$0x0E04, ac0.m
 0306 89 00       	clr  	ac1             	     	
-0307 81 50       	clr  	ac0             	l    	ax1.l, @ar0
+0307 81 50       	clr  	ac0             	l    	ax1.l, @ar0   		// ax1.l = updNum[0]
 0308 00 9F 0B 80 	lri  	ac1.m, #0x0B80
 030A 00 7A 03 0F 	bloop	ax1.l, $0x030F
-030C 19 3E       	lrri 	ac0.m, @ar1
-030D 4C 49       	add  	ac0, ac1        	l    	ax0.h, @ar1
-030E 1C 5E       	mrr  	ar2, ac0.m
-030F 1A 59       	srr  	@ar2, ax0.h
+	030C 19 3E       	lrri 	ac0.m, @ar1
+	030D 4C 49       	add  	ac0, ac1        	l    	ax0.h, @ar1
+	030E 1C 5E       	mrr  	ar2, ac0.m
+	030F 1A 59       	srr  	@ar2, ax0.h
 0310 00 83 0E 05 	lri  	ar3, #0x0E05
 0312 1B 61       	srri 	@ar3, ar1
 0313 1B 60       	srri 	@ar3, ar0
@@ -823,7 +925,7 @@ DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
 031B 00 DE 0E 42 	lr   	ac0.m, $0x0E42
 031D 00 FE 0E 1C 	sr   	$0x0E1C, ac0.m
 031F 00 C3 0E 15 	lr   	ar3, $0x0E15
-0321 17 7F       	callr	ar3
+0321 17 7F       	callr	ar3 						// Sample Rate Converter
 0322 8E 00       	clr40	                	     	
 0323 8A 00       	m2   	                	     	
 0324 81 00       	clr  	ac0             	     	
@@ -1161,7 +1263,7 @@ DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
 04D7 81 00       	clr  	ac0             	     	
 04D8 89 00       	clr  	ac1             	     	
 04D9 00 DE 0B 84 	lr   	ac0.m, $0x0B84
-04DB 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C
+04DB 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C 
 04DD 4C 00       	add  	ac0, ac1        	     	
 04DE 1C 7E       	mrr  	ar3, ac0.m
 04DF 02 13       	ilrr 	ac0.m, @ar3
@@ -1219,7 +1321,7 @@ DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
 0531 16 C9 00 00 	si   	$(DSCR), #0x0000
 0533 16 CB 00 40 	si   	$(DSBL), #0x0040
 0535 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
-0537 00 C0 0E 07 	lr   	ar0, $0x0E07
+0537 00 C0 0E 07 	lr   	ar0, $0x0E07 		// Restore ar0
 0539 02 9F 02 FC 	j    	$0x02FC
 053B 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
 053D 00 FF 0E 42 	sr   	$0x0E42, ac1.m
@@ -1227,13 +1329,15 @@ DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
 0541 00 FF 0E 41 	sr   	$0x0E41, ac1.m
 0543 00 FF 0E 43 	sr   	$0x0E43, ac1.m
 0545 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
-0547 00 C0 0E 07 	lr   	ar0, $0x0E07
+0547 00 C0 0E 07 	lr   	ar0, $0x0E07 		// Restore ar0
 0549 02 9F 02 FC 	j    	$0x02FC
+```
 
 ## -----------------------------------------------------------------------------------------------------------------
 
 ## Command 4 -- CopyOut 3 (0x780 bytes, starting 0x400) + sub_05BC
 
+```
 __AXGetAuxAInput -> [4] [AuxAInput] [AuxAOutput]
 
 054B 8E 00       	clr40	                	     	
@@ -1250,9 +1354,11 @@ __AXGetAuxAInput -> [4] [AuxAInput] [AuxAOutput]
 0559 02 BF 06 94 	call 	$0x0694  					// WaitDspDma
 055B 02 BF 05 BC 	call 	$0x05BC
 055D 02 9F 00 68 	j    	$0x0068
+```
 
 # Command 5  -- CopyOut 2 (0x780 bytes, starting 0x7C0) + sub_05BC
 
+```
 __AXGetAuxBInput -> [5 | 0x10] 
 
 055F 8E 00       	clr40	                	     	
@@ -1269,9 +1375,11 @@ __AXGetAuxBInput -> [5 | 0x10]
 056D 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 056F 02 BF 05 BC 	call 	$0x05BC
 0571 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0xE  - Copy out 640B + 640B bytes (2 Frames)
 
+```
 0573 8C 00       	clr15	                	     	
 0574 8A 00       	m2   	                	     	
 0575 81 00       	clr  	ac0             	     	
@@ -1316,32 +1424,44 @@ __AXGetAuxBInput -> [5 | 0x10]
 05A6 02 A0 00 04 	tclr 	ac0.m, #0x0004
 05A8 02 9C 05 A5 	jnok 	$0x05A5
 05AA 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0xB
 
+```
 05AC 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0xC
 
+```
 05AE 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0xA
 
+```
 05B0 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0xf (Ax Tasks)
 
+```
 05B2 16 FC DC D1 	si   	$(DMBH), #0xDCD1
 05B4 16 FD 00 02 	si   	$(DMBL), #0x0002
 05B6 16 FB 00 01 	si   	$(DIRQ), #0x0001
 05B8 02 9F 0F 34 	j    	$0x0F34 							// SwitchAxTask
+```
 
 ##
 
+```
 05BA 02 9F 00 45 	j    	$0x0045
+```
 
 ## AUX related. Called from commands 4, 5, 9
 
+```
 05BC 8E 00       	clr40	                	     	
 05BD 19 1F       	lrri 	ac1.m, @ar0
 05BE 19 1D       	lrri 	ac1.l, @ar0
@@ -1437,9 +1557,11 @@ __AXGetAuxBInput -> [5 | 0x10]
 0626 1B 5D       	srri 	@ar2, ac1.l
 0627 1C 05       	mrr  	ar0, ix1
 0628 02 DF       	ret  	
+```
 
 ## Command1_Sub1
 
+```
 0629 8E 00       	clr40	                	     	
 062A 00 9B 0E 48 	lri  	ax1.h, #0x0E48
 062C 00 9D 00 C0 	lri  	ac1.l, #0x00C0
@@ -1486,9 +1608,11 @@ __AXGetAuxBInput -> [5 | 0x10]
 0674 00 83 0E A8 	lri  	ar3, #0x0EA8
 0676 02 BF 06 84 	call 	$0x0684
 0678 02 DF       	ret  	
+```
 
 ## 
 
+```
 0679 8E 00       	clr40	                	     	
 067A 00 FA FF CE 	sr   	$(DSMAH), ax1.l
 067C 00 F8 FF CF 	sr   	$(DSMAL), ax0.l
@@ -1496,9 +1620,11 @@ __AXGetAuxBInput -> [5 | 0x10]
 0680 16 C9 00 00 	si   	$(DSCR), #0x0000
 0682 2D CB       	srs  	$(DSBL), ac1.l
 0683 02 DF       	ret  	
+```
 
 ## 
 
+```
 0684 8F 00       	set40	                	     	
 0685 8D 00       	set15	                	     	
 0686 8A 00       	m2   	                	     	
@@ -1514,39 +1640,49 @@ __AXGetAuxBInput -> [5 | 0x10]
 0691 A0 39       	mulx 	ax0.l, ax1.l    	s    	@ar1, ac1.m
 0692 B6 29       	mulxmv	ax0.h, ax1.l, ac0	s    	@ar1, ac1.l
 0693 02 DF       	ret  	
+```
 
 ## WaitDspDma
 
+```
 0694 26 C9       	lrs  	ac0.m, $(DSCR)
 0695 02 A0 00 04 	tclr 	ac0.m, #0x0004
 0697 02 9C 06 94 	jnok 	$0x0694
 0699 02 DF       	ret  	
+```
 
 ## WaitCpuMailbox (unused)
 
+```
 069A 26 FE       	lrs  	ac0.m, $(CMBH)
 069B 02 C0 80 00 	tset 	ac0.m, #0x8000
 069D 02 9C 06 9A 	jnok 	$0x069A
 069F 02 DF       	ret  	
+```
 
 ## WaitDspMailbox (unused)
 
+```
 06A0 26 FC       	lrs  	ac0.m, $(DMBH)
 06A1 02 A0 80 00 	tclr 	ac0.m, #0x8000
 06A3 02 9C 06 A0 	jnok 	$0x06A0
 06A5 02 DF       	ret  	
+```
 
 ## WaitDspMailbox2 (unused)
 
+```
 06A6 26 FC       	lrs  	ac0.m, $(DMBH)
 06A7 02 A0 80 00 	tclr 	ac0.m, #0x8000
 06A9 02 9C 06 A6 	jnok 	$0x06A6
 06AB 02 DF       	ret  	
+```
 
 ## Command 7 - Load 640B Frame buffer (STEREO)
 
 Setup STEREO.
 
+```
 06AC 81 00       	clr  	ac0             	     	
 06AD 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 06AE 8E 60       	clr40	                	l    	ac0.l, @ar0
@@ -1585,10 +1721,11 @@ Setup STEREO.
 06DC 1B 3C       	srri 	@ar1, ac0.l 		// *ar1++ = ac0l;
 06DD 1C 04       	mrr  	ar0, ix0 				// Restore ar0
 06DE 02 9F 00 68 	j    	$0x0068
+```
 
-0x0000 - Copy from Command 7 640B
-0x0140 - Copy from Command 7 640B
-0x0280 - Zero 640B buffer
+- 0x0000 - Copy from Command 7 640B
+- 0x0140 - Copy from Command 7 640B
+- 0x0280 - Zero 640B buffer
 
 Example 0xE48:
 
@@ -1614,6 +1751,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ## SRC [0] - N64 type polyphase filter (4-tap)
 
+```
 06E0 00 82 0B B8 	lri  	ar2, #0x0BB8
 06E2 19 5E       	lrri 	ac0.m, @ar2
 06E3 2E D1       	srs  	$(ACFMT), ac0.m   						// AXPBADDR.format
@@ -1779,9 +1917,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0791 1B 3E       	srri 	@ar1, ac0.m
 0792 00 E1 0E 42 	sr   	$0x0E42, ar1
 0794 02 DF       	ret  	
+```
 
 ## SRC [1]  - Linear interpolator
 
+```
 0795 00 82 0B B8 	lri  	ar2, #0x0BB8
 0797 19 5E       	lrri 	ac0.m, @ar2
 0798 2E D1       	srs  	$(ACFMT), ac0.m
@@ -1937,9 +2077,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 083B 81 39       	clr  	ac0             	s    	@ar1, ac1.m
 083C 00 E1 0E 42 	sr   	$0x0E42, ar1 				// *0xE41 = ar1
 083E 02 DF       	ret  	
+```
 
 ## SRC [2]  - No SRC (1:1)
 
+```
 083F 00 82 0B B8 	lri  	ar2, #0x0BB8
 0841 19 5E       	lrri 	ac0.m, @ar2
 0842 2E D1       	srs  	$(ACFMT), ac0.m 					// 
@@ -2026,15 +2168,19 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 089C 27 D8       	lrs  	ac1.m, $(ACCAH)
 089D 00 FF 0B BD 	sr   	$0x0BBD, ac1.m
 089F 02 DF       	ret  	
+```
 
 ## -----------------------------------------------------------------------------------------------------------------
 
 ## Call IROM Mixer
 
+```
 08A0 02 DF       	ret  	
+```
 
 ##
 
+```
 08A1 00 C0 0E 40 	lr   	ar0, $0x0E40
 08A3 00 81 0B 89 	lri  	ar1, #0x0B89
 08A5 00 C2 0E 08 	lr   	ar2, $0x0E08
@@ -2486,9 +2632,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0BE2 02 BF 81 F9 	call 	$0x81F9
 0BE4 00 F8 0B AE 	sr   	$0x0BAE, ax0.l
 0BE6 02 DF       	ret  	
+```
 
 ## Switch return
 
+```
 0BE7 00 C0 0E 43 	lr   	ar0, $0x0E43
 0BE9 00 81 0B 91 	lri  	ar1, #0x0B91
 0BEB 00 C2 0E 0E 	lr   	ar2, $0x0E0E
@@ -2499,9 +2647,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0BF4 00 F8 0B AB 	sr   	$0x0BAB, ax0.l
 0BF6 00 FB 0B AE 	sr   	$0x0BAE, ax1.h
 0BF8 02 DF       	ret  	
+```
 
 ## 
 
+```
 0BF9 00 C0 0E 43 	lr   	ar0, $0x0E43
 0BFB 00 81 0B 91 	lri  	ar1, #0x0B91
 0BFD 00 C2 0E 0E 	lr   	ar2, $0x0E0E
@@ -2540,9 +2690,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0C3A 02 BF 81 F9 	call 	$0x81F9
 0C3C 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C3E 02 9F 0B DB 	j    	$0x0BDB
+```
 
 ## 
 
+```
 0C40 00 C0 0E 43 	lr   	ar0, $0x0E43
 0C42 00 81 0B 95 	lri  	ar1, #0x0B95
 0C44 00 C2 0E 10 	lr   	ar2, $0x0E10
@@ -2550,9 +2702,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0C47 02 BF 81 F9 	call 	$0x81F9
 0C49 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C4B 02 9F 0B E7 	j    	$0x0BE7
+```
 
 ## 
 
+```
 0C4D 00 C0 0E 43 	lr   	ar0, $0x0E43
 0C4F 00 81 0B 95 	lri  	ar1, #0x0B95
 0C51 00 C2 0E 10 	lr   	ar2, $0x0E10
@@ -2609,9 +2763,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CB4 02 BF 84 5D 	call 	$0x845D
 0CB6 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CB8 02 9F 0C 06 	j    	$0x0C06
+```
 
 ## 
 
+```
 0CBA 00 C0 0E 43 	lr   	ar0, $0x0E43
 0CBC 00 81 0B 95 	lri  	ar1, #0x0B95
 0CBE 00 C2 0E 10 	lr   	ar2, $0x0E10
@@ -2619,11 +2775,13 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CC2 02 BF 84 5D 	call 	$0x845D 							// Call IROM
 0CC4 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CC6 02 9F 0C 13 	j    	$0x0C13
+```
 
 ## ------------------------------------------------------------------------------------------------------------
 
 ## Jump Table 1  (Command)
 
+```
 0CC8 01 1C     	0 					// Init(?)
 0CC9 01 D8  	1 
 0CCA 02 56 		2 					// Setup Voice Parameters Block (0xExx variables)
@@ -2644,9 +2802,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CD9 02 0F 		0x11 				// Setup SURROUND. Load and process 640B Frame buffer
 0CDA 00 82   	0x12  				// To test ABS instruction and some multiplications :p
 0CDB 0E 42 		0x13 				// Copy something from DRAM to MMEM
+```
 
 ## Jump Table 2
 
+```
 0CDC 08 A0 							// Bogus (ret)
 0CDD 08 A1
 0CDE 08 AD
@@ -2663,9 +2823,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CE9 09 5C
 0CEA 09 75
 0CEB 09 8E
+```
 
 ## Jump Table 3 (Cmd2)
 
+```
 0CEC 08 A0 							// Bogus (ret)
 0CED 09 AD
 0CEE 09 B9
@@ -2698,9 +2860,11 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0D09 0A 95
 0D0A 0A A3
 0D0B 0A B1
+```
 
 ## Jump Table 4 (Cmd2)
 
+```
 0D0C 08 A0 							// Bogus (ret)
 0D0D 0A BF
 0D0E 0A CB
@@ -2765,12 +2929,15 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0D49 0C 9E
 0D4A 0C AC
 0D4B 0C BA
+```
 
 ## Sample Rate Converter (SRC) Table
 
+```
 0D4C 06 E0 								// 4-tap
 0D4D 07 95 								// linear
 0D4E 08 3F 								// none
+```
 
 ## Coef Table
 
@@ -2786,6 +2953,7 @@ Coef. to be used with 4-tap SRC.
 
 ## Command 8
 
+```
 0D52 8E 00       	clr40	                	     	
 0D53 81 00       	clr  	ac0             	     	
 0D54 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -2879,9 +3047,11 @@ Coef. to be used with 4-tap SRC.
 0DC7 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 0DC9 1C 04       	mrr  	ar0, ix0
 0DCA 02 9F 00 68 	j    	$0x0068
+```
 
 ## Command 0x10 - AUX Related
 
+```
 0DCC 8E 00       	clr40	                	     	
 0DCD 81 00       	clr  	ac0             	     	
 0DCE 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -2961,9 +3131,11 @@ Coef. to be used with 4-tap SRC.
 0E27 1B 5D       	srri 	@ar2, ac1.l
 0E28 1C 04       	mrr  	ar0, ix0
 0E29 02 9F 00 68 	j    	$0x0068
+```
 
 ## DmemCpyAdd
 
+```
 0E2B 8F 00       	set40	                	     	
 0E2C 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E2D 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
@@ -2986,6 +3158,7 @@ Coef. to be used with 4-tap SRC.
 0E3F 1B 5D       	srri 	@ar2, ac1.l
 0E40 8E 00       	clr40	                	     	
 0E41 02 DF       	ret  	
+```
 
 ## Command 0x13
 
@@ -3068,6 +3241,7 @@ Copy something from DRAM to MMEM
 
 ## Stack Overflow + Reset Handler
 
+```
 0EB3 8E 00       	clr40	                	     	
 0EB4 16 FC EC C0 	si   	$(DMBH), #0xECC0
 0EB6 1F CC       	mrr  	ac0.m, st0
@@ -3080,9 +3254,11 @@ Copy something from DRAM to MMEM
 0EBF 00 00       	nop  	
 0EC0 00 00       	nop  	
 0EC1 02 FF       	rti  	
+```
 
 ## Unk2 Interrupt Handler
 
+```
 0EC2 8E 00       	clr40	                	     	
 0EC3 00 F0 0E 17 	sr   	$0x0E17, ac0.h
 0EC5 00 FE 0E 18 	sr   	$0x0E18, ac0.m
@@ -3102,9 +3278,11 @@ Copy something from DRAM to MMEM
 0EDB 00 00       	nop  	
 0EDC 00 00       	nop  	
 0EDD 02 FF       	rti  	
+```
 
 ## Unk3 Interrupt Handler
 
+```
 0EDE 8E 00       	clr40	                	     	
 0EDF 1D BC       	mrr  	st1, ac0.l
 0EE0 1D BE       	mrr  	st1, ac0.m
@@ -3117,18 +3295,22 @@ Copy something from DRAM to MMEM
 0EEA 1F CD       	mrr  	ac0.m, st1
 0EEB 1F 8D       	mrr  	ac0.l, st1
 0EEC 02 FF       	rti  	
+```
 
 ## Unused Unknown4 interrupt
 
+```
 0EED 00 00       	nop  	
 0EEE 00 00       	nop  	
 0EEF 00 00       	nop  	
 0EF0 00 00       	nop  	
 0EF1 00 00       	nop  	
 0EF2 02 FF       	rti  	
+```
 
 ## Accelerator Overflow Handler
 
+```
 0EF3 8E 00       	clr40	                	     	
 0EF4 1D BC       	mrr  	st1, ac0.l
 0EF5 1D BE       	mrr  	st1, ac0.m
@@ -3168,23 +3350,28 @@ Copy something from DRAM to MMEM
 0F22 1F CD       	mrr  	ac0.m, st1
 0F23 1F 8D       	mrr  	ac0.l, st1
 0F24 02 FF       	rti  	
+```
 
 ## Unk6 Interrupt Handler
 
+```
 0F25 00 00       	nop  	
 0F26 00 00       	nop  	
 0F27 00 00       	nop  	
 0F28 00 00       	nop  	
 0F29 00 00       	nop  	
 0F2A 02 FF       	rti  	
+```
 
 ## INT Interrupt Handler
 
+```
 0F2B 00 00       	nop  	
 0F2C 00 00       	nop  	
 0F2D 00 00       	nop  	
 0F2E 00 00       	nop  	
 0F2F 02 FF       	rti  	
+```
 
 ## ----------------------------------------------------------------------------------------------------------------
 
@@ -3192,13 +3379,16 @@ Copy something from DRAM to MMEM
 
 ## Jump Table
 
+```
 0F30 0F 42   				// Just reply Ready (finish command packet execution)
 0F31 0F 45  			// Load another task  (prepare parameters and call IROM LoadRunUcode procedure)
 0F32 0F 7D 				// Soft reset DSP
 0F33 0F 80 				// Wait another command packet
+```
 
 ## SwitchAxTask
 
+```
 0F34 8E 00       	clr40
 0F35 81 00       	clr  	ac0             	     	
 0F36 89 00       	clr  	ac1             	     	
@@ -3264,18 +3454,23 @@ Copy something from DRAM to MMEM
 0F7F 00 21       	halt 	
 0F80 02 9F 00 45 	j    	$0x0045
 0F82 00 21       	halt 	
+```
 
 ## ReadCpuMessage
 
+```
 0F83 26 FE       	lrs  	ac0.m, $(CMBH)
 0F84 02 C0 80 00 	tset 	ac0.m, #0x8000
 0F86 02 9C 0F 83 	jnok 	$0x0F83
 0F88 02 DF       	ret  	
+```
 
 ## WaitCpuReadMessage
 
+```
 0F89 27 FE       	lrs  	ac1.m, $(CMBH)
 0F8A 03 C0 80 00 	tset 	ac1.m, #0x8000
 0F8C 02 9C 0F 89 	jnok 	$0x0F89
 0F8E 02 DF       	ret  	
 0F8F 00 00       	nop  	
+```

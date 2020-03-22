@@ -187,14 +187,28 @@ namespace DSP
 
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
 	{
-		SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
-		core->regs.pc += 2;
+		if (core->MoveFromReg(info.paramBits[0]) != 0)
+		{
+			SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
+			core->regs.pc += 2;
+		}
+		else
+		{
+			core->regs.pc = info.ImmOperand.Address + 1;
+		}
 	}
 
 	void DspInterpreter::BLOOPI(AnalyzeInfo& info)
 	{
-		SetLoop(core->regs.pc + 2, info.ImmOperand2.Address, info.ImmOperand.Byte);
-		core->regs.pc += 2;
+		if (info.ImmOperand.Byte != 0)
+		{
+			SetLoop(core->regs.pc + 2, info.ImmOperand2.Address, info.ImmOperand.Byte);
+			core->regs.pc += 2;
+		}
+		else
+		{
+			core->regs.pc = info.ImmOperand2.Address + 1;
+		}
 	}
 
 	void DspInterpreter::CALLcc(AnalyzeInfo& info)
@@ -381,14 +395,28 @@ namespace DSP
 
 	void DspInterpreter::LOOP(AnalyzeInfo& info)
 	{
-		SetLoop(core->regs.pc + 1, core->regs.pc + 1, core->MoveFromReg(info.paramBits[0]));
-		core->regs.pc++;
+		if (core->MoveFromReg(info.paramBits[0]) != 0)
+		{
+			SetLoop(core->regs.pc + 1, core->regs.pc + 1, core->MoveFromReg(info.paramBits[0]));
+			core->regs.pc++;
+		}
+		else
+		{
+			core->regs.pc += 2;
+		}
 	}
 
 	void DspInterpreter::LOOPI(AnalyzeInfo& info)
 	{
-		SetLoop(core->regs.pc + 1, core->regs.pc + 1, info.ImmOperand.Byte);
-		core->regs.pc++;
+		if (info.ImmOperand.Byte != 0)
+		{
+			SetLoop(core->regs.pc + 1, core->regs.pc + 1, info.ImmOperand.Byte);
+			core->regs.pc++;
+		}
+		else
+		{
+			core->regs.pc += 2;
+		}
 	}
 
 	void DspInterpreter::LR(AnalyzeInfo& info)
