@@ -56,6 +56,7 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0xE07 | Saved global ar0 | Mixer |
 | 0xE08 | SampleBuf Pointers[9]. Initial values: { 0x0000, 0x0140, 0x0280, 0x0400, 0x0540, 0x0680, 0x07C0, 0x0900, 0x0A40 } | Command 2, Mixer |
 | 0xE15 | Sample Rate Converter type | Mixer |
+| 0xE16 | Coefficient Table type | Mixer |
 | 0xE40 | | |
 | 0xE41 | | |
 | 0xE42 | | |
@@ -677,7 +678,7 @@ Command_0x11() 			// 020F
 029B 4C 00       	add  	ac0, ac1        	     	
 029C 1C 7E       	mrr  	ar3, ac0.m
 029D 02 13       	ilrr 	ac0.m, @ar3
-029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m 				// *0xE16 = SomeTable[n]
+029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m 				// *0xE16 = CoefTable[n]
 02A0 00 DE 0B 86 	lr   	ac0.m, $0x0B86
 02A2 00 9A 00 0F 	lri  	ax1.l, #0x000F
 02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC  			// Jump Table 2 (Cmd2)
@@ -757,26 +758,26 @@ typedef struct _AXPB
                     
     AXPBMIX         mix;     		// mixing (mixing values in .15, 0x8000 = ca. 1.0) 			0xB89
     {
-	    u16     vL;                 
+	    u16     vL;                 	// 0xB89
 	    u16     vDeltaL;
-	    u16     vR;
+	    u16     vR; 					// 0xB8B
 	    u16     vDeltaR;
 	    
-	    u16     vAuxAL;
+	    u16     vAuxAL; 				// 0xB8D
 	    u16     vDeltaAuxAL;
-	    u16     vAuxAR;
+	    u16     vAuxAR; 				// 0xB8F
 	    u16     vDeltaAuxAR;
 	    
-	    u16     vAuxBL;
+	    u16     vAuxBL; 				// 0xB91
 	    u16     vDeltaAuxBL;
-	    u16     vAuxBR;
+	    u16     vAuxBR; 				// 0xB93
 	    u16     vDeltaAuxBR;
 	    
-	    u16     vAuxBS;
+	    u16     vAuxBS; 				// 0xB95
 	    u16     vDeltaAuxBS;
-	    u16     vS;
+	    u16     vS; 					// 0xB97
 	    u16     vDeltaS;
-	    u16     vAuxAS;
+	    u16     vAuxAS; 				// 0xB99
 	    u16     vDeltaAuxAS;    
     }
     AXPBITD         itd; 			// initial time delay   	0xB9B
@@ -2105,7 +2106,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 ```
 083F 00 82 0B B8 	lri  	ar2, #0x0BB8
 0841 19 5E       	lrri 	ac0.m, @ar2
-0842 2E D1       	srs  	$(ACFMT), ac0.m 					// 
+0842 2E D1       	srs  	$(ACFMT), ac0.m 	
 0843 19 5E       	lrri 	ac0.m, @ar2
 0844 2E D4       	srs  	$(ACSAH), ac0.m
 0845 19 5E       	lrri 	ac0.m, @ar2
@@ -2193,7 +2194,9 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ## -----------------------------------------------------------------------------------------------------------------
 
-## Call IROM Mixer
+## Mixer Controls. Call IROM Mixer
+
+## Bogus
 
 ```
 08A0 02 DF       	ret  	
@@ -2203,21 +2206,21 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ```
 08A1 00 C0 0E 40 	lr   	ar0, $0x0E40
-08A3 00 81 0B 89 	lri  	ar1, #0x0B89
+08A3 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 08A5 00 C2 0E 08 	lr   	ar2, $0x0E08
 08A7 1C 62       	mrr  	ar3, ar2
 08A8 02 BF 81 F9 	call 	$0x81F9
 08AA 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 08AC 02 DF       	ret  	
 08AD 00 C0 0E 41 	lr   	ar0, $0x0E41
-08AF 00 81 0B 8B 	lri  	ar1, #0x0B8B
+08AF 00 81 0B 8B 	lri  	ar1, #0x0B8B 				// vR
 08B1 00 C2 0E 09 	lr   	ar2, $0x0E09
 08B3 1C 62       	mrr  	ar3, ar2
 08B4 02 BF 81 F9 	call 	$0x81F9
 08B6 00 F8 0B AC 	sr   	$0x0BAC, ax0.l
 08B8 02 DF       	ret  	
 08B9 00 C0 0E 40 	lr   	ar0, $0x0E40
-08BB 00 81 0B 89 	lri  	ar1, #0x0B89
+08BB 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 08BD 00 C2 0E 08 	lr   	ar2, $0x0E08
 08BF 1C 62       	mrr  	ar3, ar2
 08C0 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2227,40 +2230,40 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 08C8 00 FB 0B AC 	sr   	$0x0BAC, ax1.h
 08CA 02 DF       	ret  	
 08CB 00 C0 0E 43 	lr   	ar0, $0x0E43
-08CD 00 81 0B 97 	lri  	ar1, #0x0B97
+08CD 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 08CF 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 08D1 1C 62       	mrr  	ar3, ar2
 08D2 02 BF 81 F9 	call 	$0x81F9
 08D4 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 08D6 02 DF       	ret  	
 08D7 00 C0 0E 40 	lr   	ar0, $0x0E40
-08D9 00 81 0B 89 	lri  	ar1, #0x0B89
+08D9 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 08DB 00 C2 0E 08 	lr   	ar2, $0x0E08
 08DD 1C 62       	mrr  	ar3, ar2
 08DE 02 BF 81 F9 	call 	$0x81F9
 08E0 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 08E2 00 C0 0E 43 	lr   	ar0, $0x0E43
-08E4 00 81 0B 97 	lri  	ar1, #0x0B97
+08E4 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 08E6 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 08E8 1C 62       	mrr  	ar3, ar2
 08E9 02 BF 81 F9 	call 	$0x81F9
 08EB 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 08ED 02 DF       	ret  	
 08EE 00 C0 0E 41 	lr   	ar0, $0x0E41
-08F0 00 81 0B 8B 	lri  	ar1, #0x0B8B
+08F0 00 81 0B 8B 	lri  	ar1, #0x0B8B 				// vR
 08F2 00 C2 0E 09 	lr   	ar2, $0x0E09
 08F4 1C 62       	mrr  	ar3, ar2
 08F5 02 BF 81 F9 	call 	$0x81F9
 08F7 00 F8 0B AC 	sr   	$0x0BAC, ax0.l
 08F9 00 C0 0E 43 	lr   	ar0, $0x0E43
-08FB 00 81 0B 97 	lri  	ar1, #0x0B97
+08FB 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 08FD 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 08FF 1C 62       	mrr  	ar3, ar2
 0900 02 BF 81 F9 	call 	$0x81F9
 0902 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 0904 02 DF       	ret  	
 0905 00 C0 0E 40 	lr   	ar0, $0x0E40
-0907 00 81 0B 89 	lri  	ar1, #0x0B89
+0907 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 0909 00 C2 0E 08 	lr   	ar2, $0x0E08
 090B 1C 62       	mrr  	ar3, ar2
 090C 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2269,28 +2272,28 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0912 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 0914 00 FB 0B AC 	sr   	$0x0BAC, ax1.h
 0916 00 C0 0E 43 	lr   	ar0, $0x0E43
-0918 00 81 0B 97 	lri  	ar1, #0x0B97
+0918 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 091A 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 091C 1C 62       	mrr  	ar3, ar2
 091D 02 BF 81 F9 	call 	$0x81F9
 091F 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 0921 02 DF       	ret  	
 0922 00 C0 0E 40 	lr   	ar0, $0x0E40
-0924 00 81 0B 89 	lri  	ar1, #0x0B89
+0924 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 0926 00 C2 0E 08 	lr   	ar2, $0x0E08
 0928 00 83 0E 48 	lri  	ar3, #0x0E48
 092A 02 BF 84 5D 	call 	$0x845D
 092C 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 092E 02 DF       	ret  	
 092F 00 C0 0E 41 	lr   	ar0, $0x0E41
-0931 00 81 0B 8B 	lri  	ar1, #0x0B8B
+0931 00 81 0B 8B 	lri  	ar1, #0x0B8B 				// vR
 0933 00 C2 0E 09 	lr   	ar2, $0x0E09
 0935 00 83 0E 48 	lri  	ar3, #0x0E48
 0937 02 BF 84 5D 	call 	$0x845D
 0939 00 F8 0B AC 	sr   	$0x0BAC, ax0.l
 093B 02 DF       	ret  	
 093C 00 C0 0E 40 	lr   	ar0, $0x0E40
-093E 00 81 0B 89 	lri  	ar1, #0x0B89
+093E 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 0940 00 C2 0E 08 	lr   	ar2, $0x0E08
 0942 00 83 0E 48 	lri  	ar3, #0x0E48
 0944 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2300,40 +2303,40 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 094C 00 FB 0B AC 	sr   	$0x0BAC, ax1.h
 094E 02 DF       	ret  	
 094F 00 C0 0E 43 	lr   	ar0, $0x0E43
-0951 00 81 0B 97 	lri  	ar1, #0x0B97
+0951 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 0953 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 0955 00 83 0E 48 	lri  	ar3, #0x0E48
 0957 02 BF 84 5D 	call 	$0x845D
 0959 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 095B 02 DF       	ret  	
 095C 00 C0 0E 40 	lr   	ar0, $0x0E40
-095E 00 81 0B 89 	lri  	ar1, #0x0B89
+095E 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 0960 00 C2 0E 08 	lr   	ar2, $0x0E08
 0962 00 83 0E 48 	lri  	ar3, #0x0E48
 0964 02 BF 84 5D 	call 	$0x845D
 0966 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 0968 00 C0 0E 43 	lr   	ar0, $0x0E43
-096A 00 81 0B 97 	lri  	ar1, #0x0B97
+096A 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 096C 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 096E 00 83 0E 48 	lri  	ar3, #0x0E48
 0970 02 BF 84 5D 	call 	$0x845D
 0972 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 0974 02 DF       	ret  	
 0975 00 C0 0E 41 	lr   	ar0, $0x0E41
-0977 00 81 0B 8B 	lri  	ar1, #0x0B8B
+0977 00 81 0B 8B 	lri  	ar1, #0x0B8B 				// vR
 0979 00 C2 0E 09 	lr   	ar2, $0x0E09
 097B 00 83 0E 48 	lri  	ar3, #0x0E48
 097D 02 BF 84 5D 	call 	$0x845D
 097F 00 F8 0B AC 	sr   	$0x0BAC, ax0.l
 0981 00 C0 0E 43 	lr   	ar0, $0x0E43
-0983 00 81 0B 97 	lri  	ar1, #0x0B97
+0983 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 0985 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 0987 00 83 0E 48 	lri  	ar3, #0x0E48
 0989 02 BF 84 5D 	call 	$0x845D
 098B 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 098D 02 DF       	ret  	
 098E 00 C0 0E 40 	lr   	ar0, $0x0E40
-0990 00 81 0B 89 	lri  	ar1, #0x0B89
+0990 00 81 0B 89 	lri  	ar1, #0x0B89 				// vL
 0992 00 C2 0E 08 	lr   	ar2, $0x0E08
 0994 00 83 0E 48 	lri  	ar3, #0x0E48
 0996 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2342,28 +2345,28 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 099C 00 F8 0B A9 	sr   	$0x0BA9, ax0.l
 099E 00 FB 0B AC 	sr   	$0x0BAC, ax1.h
 09A0 00 C0 0E 43 	lr   	ar0, $0x0E43
-09A2 00 81 0B 97 	lri  	ar1, #0x0B97
+09A2 00 81 0B 97 	lri  	ar1, #0x0B97 				// vS
 09A4 00 C2 0E 0A 	lr   	ar2, $0x0E0A
 09A6 00 83 0E 48 	lri  	ar3, #0x0E48
 09A8 02 BF 84 5D 	call 	$0x845D
 09AA 00 F8 0B AF 	sr   	$0x0BAF, ax0.l
 09AC 02 DF       	ret  	
 09AD 00 C0 0E 40 	lr   	ar0, $0x0E40
-09AF 00 81 0B 8D 	lri  	ar1, #0x0B8D
+09AF 00 81 0B 8D 	lri  	ar1, #0x0B8D 				// vAuxAL
 09B1 00 C2 0E 0B 	lr   	ar2, $0x0E0B
 09B3 1C 62       	mrr  	ar3, ar2
 09B4 02 BF 81 F9 	call 	$0x81F9
 09B6 00 F8 0B AA 	sr   	$0x0BAA, ax0.l
 09B8 02 DF       	ret  	
 09B9 00 C0 0E 41 	lr   	ar0, $0x0E41
-09BB 00 81 0B 8F 	lri  	ar1, #0x0B8F
+09BB 00 81 0B 8F 	lri  	ar1, #0x0B8F 				// vAuxAR
 09BD 00 C2 0E 0C 	lr   	ar2, $0x0E0C
 09BF 1C 62       	mrr  	ar3, ar2
 09C0 02 BF 81 F9 	call 	$0x81F9
 09C2 00 F8 0B AD 	sr   	$0x0BAD, ax0.l
 09C4 02 DF       	ret  	
 09C5 00 C0 0E 40 	lr   	ar0, $0x0E40
-09C7 00 81 0B 8D 	lri  	ar1, #0x0B8D
+09C7 00 81 0B 8D 	lri  	ar1, #0x0B8D 				// vAuxAL
 09C9 00 C2 0E 0B 	lr   	ar2, $0x0E0B
 09CB 1C 62       	mrr  	ar3, ar2
 09CC 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2373,21 +2376,21 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 09D4 00 FB 0B AD 	sr   	$0x0BAD, ax1.h
 09D6 02 DF       	ret  	
 09D7 00 C0 0E 40 	lr   	ar0, $0x0E40
-09D9 00 81 0B 8D 	lri  	ar1, #0x0B8D
+09D9 00 81 0B 8D 	lri  	ar1, #0x0B8D 				// vAuxAL
 09DB 00 C2 0E 0B 	lr   	ar2, $0x0E0B
 09DD 00 83 0E 48 	lri  	ar3, #0x0E48
 09DF 02 BF 84 5D 	call 	$0x845D
 09E1 00 F8 0B AA 	sr   	$0x0BAA, ax0.l
 09E3 02 DF       	ret  	
 09E4 00 C0 0E 41 	lr   	ar0, $0x0E41
-09E6 00 81 0B 8F 	lri  	ar1, #0x0B8F
+09E6 00 81 0B 8F 	lri  	ar1, #0x0B8F 				// vAuxAR
 09E8 00 C2 0E 0C 	lr   	ar2, $0x0E0C
 09EA 00 83 0E 48 	lri  	ar3, #0x0E48
 09EC 02 BF 84 5D 	call 	$0x845D
 09EE 00 F8 0B AD 	sr   	$0x0BAD, ax0.l
 09F0 02 DF       	ret  	
 09F1 00 C0 0E 40 	lr   	ar0, $0x0E40
-09F3 00 81 0B 8D 	lri  	ar1, #0x0B8D
+09F3 00 81 0B 8D 	lri  	ar1, #0x0B8D 				// vAuxAL
 09F5 00 C2 0E 0B 	lr   	ar2, $0x0E0B
 09F7 00 83 0E 48 	lri  	ar3, #0x0E48
 09F9 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2397,119 +2400,119 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0A01 00 FB 0B AD 	sr   	$0x0BAD, ax1.h
 0A03 02 DF       	ret  	
 0A04 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A06 00 81 0B 99 	lri  	ar1, #0x0B99
+0A06 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A08 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A0A 1C 62       	mrr  	ar3, ar2
 0A0B 02 BF 81 F9 	call 	$0x81F9
 0A0D 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A0F 02 DF       	ret  	
 0A10 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A12 00 81 0B 99 	lri  	ar1, #0x0B99
+0A12 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A14 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A16 1C 62       	mrr  	ar3, ar2
 0A17 02 BF 81 F9 	call 	$0x81F9
 0A19 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A1B 02 9F 09 AD 	j    	$0x09AD
 0A1D 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A1F 00 81 0B 99 	lri  	ar1, #0x0B99
+0A1F 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A21 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A23 1C 62       	mrr  	ar3, ar2
 0A24 02 BF 81 F9 	call 	$0x81F9
 0A26 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A28 02 9F 09 B9 	j    	$0x09B9
 0A2A 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A2C 00 81 0B 99 	lri  	ar1, #0x0B99
+0A2C 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A2E 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A30 1C 62       	mrr  	ar3, ar2
 0A31 02 BF 81 F9 	call 	$0x81F9
 0A33 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A35 02 9F 09 C5 	j    	$0x09C5
 0A37 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A39 00 81 0B 99 	lri  	ar1, #0x0B99
+0A39 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A3B 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A3D 1C 62       	mrr  	ar3, ar2
 0A3E 02 BF 81 F9 	call 	$0x81F9
 0A40 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A42 02 9F 09 D7 	j    	$0x09D7
 0A44 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A46 00 81 0B 99 	lri  	ar1, #0x0B99
+0A46 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A48 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A4A 1C 62       	mrr  	ar3, ar2
 0A4B 02 BF 81 F9 	call 	$0x81F9
 0A4D 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A4F 02 9F 09 E4 	j    	$0x09E4
 0A51 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A53 00 81 0B 99 	lri  	ar1, #0x0B99
+0A53 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A55 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A57 1C 62       	mrr  	ar3, ar2
 0A58 02 BF 81 F9 	call 	$0x81F9
 0A5A 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A5C 02 9F 09 F1 	j    	$0x09F1
 0A5E 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A60 00 81 0B 99 	lri  	ar1, #0x0B99
+0A60 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A62 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A64 00 83 0E 48 	lri  	ar3, #0x0E48
 0A66 02 BF 84 5D 	call 	$0x845D
 0A68 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A6A 02 DF       	ret  	
 0A6B 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A6D 00 81 0B 99 	lri  	ar1, #0x0B99
+0A6D 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A6F 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A71 00 83 0E 48 	lri  	ar3, #0x0E48
 0A73 02 BF 84 5D 	call 	$0x845D
 0A75 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A77 02 9F 09 AD 	j    	$0x09AD
 0A79 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A7B 00 81 0B 99 	lri  	ar1, #0x0B99
+0A7B 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A7D 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A7F 00 83 0E 48 	lri  	ar3, #0x0E48
 0A81 02 BF 84 5D 	call 	$0x845D
 0A83 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A85 02 9F 09 B9 	j    	$0x09B9
 0A87 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A89 00 81 0B 99 	lri  	ar1, #0x0B99
+0A89 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A8B 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A8D 00 83 0E 48 	lri  	ar3, #0x0E48
 0A8F 02 BF 84 5D 	call 	$0x845D
 0A91 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0A93 02 9F 09 C5 	j    	$0x09C5
 0A95 00 C0 0E 43 	lr   	ar0, $0x0E43
-0A97 00 81 0B 99 	lri  	ar1, #0x0B99
+0A97 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0A99 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0A9B 00 83 0E 48 	lri  	ar3, #0x0E48
 0A9D 02 BF 84 5D 	call 	$0x845D
 0A9F 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0AA1 02 9F 09 D7 	j    	$0x09D7
 0AA3 00 C0 0E 43 	lr   	ar0, $0x0E43
-0AA5 00 81 0B 99 	lri  	ar1, #0x0B99
+0AA5 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0AA7 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0AA9 00 83 0E 48 	lri  	ar3, #0x0E48
 0AAB 02 BF 84 5D 	call 	$0x845D
 0AAD 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0AAF 02 9F 09 E4 	j    	$0x09E4
 0AB1 00 C0 0E 43 	lr   	ar0, $0x0E43
-0AB3 00 81 0B 99 	lri  	ar1, #0x0B99
+0AB3 00 81 0B 99 	lri  	ar1, #0x0B99 				// vAuxAS
 0AB5 00 C2 0E 0D 	lr   	ar2, $0x0E0D
 0AB7 00 83 0E 48 	lri  	ar3, #0x0E48
 0AB9 02 BF 84 5D 	call 	$0x845D
 0ABB 00 F8 0B B0 	sr   	$0x0BB0, ax0.l
 0ABD 02 9F 09 F1 	j    	$0x09F1
 0ABF 00 C0 0E 40 	lr   	ar0, $0x0E40
-0AC1 00 81 0B 91 	lri  	ar1, #0x0B91
+0AC1 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0AC3 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0AC5 1C 62       	mrr  	ar3, ar2
 0AC6 02 BF 81 F9 	call 	$0x81F9
 0AC8 00 F8 0B AB 	sr   	$0x0BAB, ax0.l
 0ACA 02 DF       	ret  	
 0ACB 00 C0 0E 41 	lr   	ar0, $0x0E41
-0ACD 00 81 0B 93 	lri  	ar1, #0x0B93
+0ACD 00 81 0B 93 	lri  	ar1, #0x0B93 				// vAuxBR
 0ACF 00 C2 0E 0F 	lr   	ar2, $0x0E0F
 0AD1 1C 62       	mrr  	ar3, ar2
 0AD2 02 BF 81 F9 	call 	$0x81F9
 0AD4 00 F8 0B AE 	sr   	$0x0BAE, ax0.l
 0AD6 02 DF       	ret  	
 0AD7 00 C0 0E 40 	lr   	ar0, $0x0E40
-0AD9 00 81 0B 91 	lri  	ar1, #0x0B91
+0AD9 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0ADB 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0ADD 1C 62       	mrr  	ar3, ar2
 0ADE 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2519,21 +2522,21 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0AE6 00 FB 0B AE 	sr   	$0x0BAE, ax1.h
 0AE8 02 DF       	ret  	
 0AE9 00 C0 0E 40 	lr   	ar0, $0x0E40
-0AEB 00 81 0B 91 	lri  	ar1, #0x0B91
+0AEB 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0AED 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0AEF 00 83 0E 48 	lri  	ar3, #0x0E48
 0AF1 02 BF 84 5D 	call 	$0x845D
 0AF3 00 F8 0B AB 	sr   	$0x0BAB, ax0.l
 0AF5 02 DF       	ret  	
 0AF6 00 C0 0E 41 	lr   	ar0, $0x0E41
-0AF8 00 81 0B 93 	lri  	ar1, #0x0B93
+0AF8 00 81 0B 93 	lri  	ar1, #0x0B93 				// vAuxBR
 0AFA 00 C2 0E 0F 	lr   	ar2, $0x0E0F
 0AFC 00 83 0E 48 	lri  	ar3, #0x0E48
 0AFE 02 BF 84 5D 	call 	$0x845D
 0B00 00 F8 0B AE 	sr   	$0x0BAE, ax0.l
 0B02 02 DF       	ret  	
 0B03 00 C0 0E 40 	lr   	ar0, $0x0E40
-0B05 00 81 0B 91 	lri  	ar1, #0x0B91
+0B05 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0B07 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0B09 00 83 0E 48 	lri  	ar3, #0x0E48
 0B0B 00 C4 0E 41 	lr   	ix0, $0x0E41
@@ -2543,111 +2546,111 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0B13 00 FB 0B AE 	sr   	$0x0BAE, ax1.h
 0B15 02 DF       	ret  	
 0B16 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B18 00 81 0B 95 	lri  	ar1, #0x0B95
+0B18 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B1A 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B1C 1C 62       	mrr  	ar3, ar2
 0B1D 02 BF 81 F9 	call 	$0x81F9
 0B1F 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B21 02 DF       	ret  	
 0B22 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B24 00 81 0B 95 	lri  	ar1, #0x0B95
+0B24 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B26 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B28 1C 62       	mrr  	ar3, ar2
 0B29 02 BF 81 F9 	call 	$0x81F9
 0B2B 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B2D 02 9F 0A BF 	j    	$0x0ABF
 0B2F 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B31 00 81 0B 95 	lri  	ar1, #0x0B95
+0B31 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B33 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B35 1C 62       	mrr  	ar3, ar2
 0B36 02 BF 81 F9 	call 	$0x81F9
 0B38 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B3A 02 9F 0A CB 	j    	$0x0ACB
 0B3C 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B3E 00 81 0B 95 	lri  	ar1, #0x0B95
+0B3E 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B40 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B42 1C 62       	mrr  	ar3, ar2
 0B43 02 BF 81 F9 	call 	$0x81F9
 0B45 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B47 02 9F 0A D7 	j    	$0x0AD7
 0B49 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B4B 00 81 0B 95 	lri  	ar1, #0x0B95
+0B4B 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B4D 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B4F 1C 62       	mrr  	ar3, ar2
 0B50 02 BF 81 F9 	call 	$0x81F9
 0B52 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B54 02 9F 0A E9 	j    	$0x0AE9
 0B56 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B58 00 81 0B 95 	lri  	ar1, #0x0B95
+0B58 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B5A 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B5C 1C 62       	mrr  	ar3, ar2
 0B5D 02 BF 81 F9 	call 	$0x81F9
 0B5F 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B61 02 9F 0A F6 	j    	$0x0AF6
 0B63 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B65 00 81 0B 95 	lri  	ar1, #0x0B95
+0B65 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B67 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B69 1C 62       	mrr  	ar3, ar2
 0B6A 02 BF 81 F9 	call 	$0x81F9
 0B6C 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B6E 02 9F 0B 03 	j    	$0x0B03
 0B70 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B72 00 81 0B 95 	lri  	ar1, #0x0B95
+0B72 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B74 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B76 00 83 0E 48 	lri  	ar3, #0x0E48
 0B78 02 BF 84 5D 	call 	$0x845D
 0B7A 02 DF       	ret  	
 0B7B 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B7D 00 81 0B 95 	lri  	ar1, #0x0B95
+0B7D 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B7F 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B81 00 83 0E 48 	lri  	ar3, #0x0E48
 0B83 02 BF 84 5D 	call 	$0x845D
 0B85 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B87 02 9F 0A BF 	j    	$0x0ABF
 0B89 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B8B 00 81 0B 95 	lri  	ar1, #0x0B95
+0B8B 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B8D 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B8F 00 83 0E 48 	lri  	ar3, #0x0E48
 0B91 02 BF 84 5D 	call 	$0x845D
 0B93 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0B95 02 9F 0A CB 	j    	$0x0ACB
 0B97 00 C0 0E 43 	lr   	ar0, $0x0E43
-0B99 00 81 0B 95 	lri  	ar1, #0x0B95
+0B99 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0B9B 00 C2 0E 10 	lr   	ar2, $0x0E10
 0B9D 00 83 0E 48 	lri  	ar3, #0x0E48
 0B9F 02 BF 84 5D 	call 	$0x845D
 0BA1 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0BA3 02 9F 0A D7 	j    	$0x0AD7
 0BA5 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BA7 00 81 0B 95 	lri  	ar1, #0x0B95
+0BA7 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0BA9 00 C2 0E 10 	lr   	ar2, $0x0E10
 0BAB 00 83 0E 48 	lri  	ar3, #0x0E48
 0BAD 02 BF 84 5D 	call 	$0x845D
 0BAF 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0BB1 02 9F 0A E9 	j    	$0x0AE9
 0BB3 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BB5 00 81 0B 95 	lri  	ar1, #0x0B95
+0BB5 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0BB7 00 C2 0E 10 	lr   	ar2, $0x0E10
 0BB9 00 83 0E 48 	lri  	ar3, #0x0E48
 0BBB 02 BF 84 5D 	call 	$0x845D
 0BBD 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0BBF 02 9F 0A F6 	j    	$0x0AF6
 0BC1 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BC3 00 81 0B 95 	lri  	ar1, #0x0B95
+0BC3 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0BC5 00 C2 0E 10 	lr   	ar2, $0x0E10
 0BC7 00 83 0E 48 	lri  	ar3, #0x0E48
 0BC9 02 BF 84 5D 	call 	$0x845D
 0BCB 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0BCD 02 9F 0B 03 	j    	$0x0B03
 0BCF 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BD1 00 81 0B 91 	lri  	ar1, #0x0B91
+0BD1 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0BD3 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0BD5 1C 62       	mrr  	ar3, ar2
 0BD6 02 BF 81 F9 	call 	$0x81F9
 0BD8 00 F8 0B AB 	sr   	$0x0BAB, ax0.l
 0BDA 02 DF       	ret  	
 0BDB 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BDD 00 81 0B 93 	lri  	ar1, #0x0B93
+0BDD 00 81 0B 93 	lri  	ar1, #0x0B93 				// vAuxBR
 0BDF 00 C2 0E 0F 	lr   	ar2, $0x0E0F
 0BE1 1C 62       	mrr  	ar3, ar2
 0BE2 02 BF 81 F9 	call 	$0x81F9
@@ -2659,7 +2662,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ```
 0BE7 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BE9 00 81 0B 91 	lri  	ar1, #0x0B91
+0BE9 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0BEB 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0BED 1C 62       	mrr  	ar3, ar2
 0BEE 00 C4 0E 43 	lr   	ix0, $0x0E43
@@ -2674,21 +2677,21 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ```
 0BF9 00 C0 0E 43 	lr   	ar0, $0x0E43
-0BFB 00 81 0B 91 	lri  	ar1, #0x0B91
+0BFB 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0BFD 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0BFF 00 83 0E 48 	lri  	ar3, #0x0E48
 0C01 02 BF 84 5D 	call 	$0x845D
 0C03 00 F8 0B AB 	sr   	$0x0BAB, ax0.l
 0C05 02 DF       	ret  	
 0C06 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C08 00 81 0B 93 	lri  	ar1, #0x0B93
+0C08 00 81 0B 93 	lri  	ar1, #0x0B93 				// vAuxBR
 0C0A 00 C2 0E 0F 	lr   	ar2, $0x0E0F
 0C0C 00 83 0E 48 	lri  	ar3, #0x0E48
 0C0E 02 BF 84 5D 	call 	$0x845D
 0C10 00 F8 0B AE 	sr   	$0x0BAE, ax0.l
 0C12 02 DF       	ret  	
 0C13 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C15 00 81 0B 91 	lri  	ar1, #0x0B91
+0C15 00 81 0B 91 	lri  	ar1, #0x0B91 				// vAuxBL
 0C17 00 C2 0E 0E 	lr   	ar2, $0x0E0E
 0C19 00 83 0E 48 	lri  	ar3, #0x0E48
 0C1B 00 C4 0E 43 	lr   	ix0, $0x0E43
@@ -2698,99 +2701,84 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0C23 00 FB 0B AE 	sr   	$0x0BAE, ax1.h
 0C25 02 DF       	ret  	
 0C26 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C28 00 81 0B 95 	lri  	ar1, #0x0B95
+0C28 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C2A 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C2C 1C 62       	mrr  	ar3, ar2
 0C2D 02 BF 81 F9 	call 	$0x81F9
 0C2F 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C31 02 9F 0B CF 	j    	$0x0BCF
 0C33 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C35 00 81 0B 95 	lri  	ar1, #0x0B95
+0C35 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C37 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C39 1C 62       	mrr  	ar3, ar2
 0C3A 02 BF 81 F9 	call 	$0x81F9
 0C3C 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C3E 02 9F 0B DB 	j    	$0x0BDB
-```
-
-## 
-
-```
 0C40 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C42 00 81 0B 95 	lri  	ar1, #0x0B95
+0C42 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C44 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C46 1C 62       	mrr  	ar3, ar2
 0C47 02 BF 81 F9 	call 	$0x81F9
 0C49 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C4B 02 9F 0B E7 	j    	$0x0BE7
-```
-
-## 
-
-```
 0C4D 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C4F 00 81 0B 95 	lri  	ar1, #0x0B95
+0C4F 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C51 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C53 1C 62       	mrr  	ar3, ar2
 0C54 02 BF 81 F9 	call 	$0x81F9
 0C56 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C58 02 9F 0B F9 	j    	$0x0BF9
 0C5A 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C5C 00 81 0B 95 	lri  	ar1, #0x0B95
+0C5C 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C5E 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C60 1C 62       	mrr  	ar3, ar2
 0C61 02 BF 81 F9 	call 	$0x81F9
 0C63 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C65 02 9F 0C 06 	j    	$0x0C06
 0C67 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C69 00 81 0B 95 	lri  	ar1, #0x0B95
+0C69 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C6B 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C6D 1C 62       	mrr  	ar3, ar2
 0C6E 02 BF 81 F9 	call 	$0x81F9
 0C70 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C72 02 9F 0C 13 	j    	$0x0C13
 0C74 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C76 00 81 0B 95 	lri  	ar1, #0x0B95
+0C76 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C78 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C7A 00 83 0E 48 	lri  	ar3, #0x0E48
 0C7C 02 BF 84 5D 	call 	$0x845D
 0C7E 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C80 02 9F 0B CF 	j    	$0x0BCF
 0C82 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C84 00 81 0B 95 	lri  	ar1, #0x0B95
+0C84 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C86 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C88 00 83 0E 48 	lri  	ar3, #0x0E48
 0C8A 02 BF 84 5D 	call 	$0x845D
 0C8C 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C8E 02 9F 0B DB 	j    	$0x0BDB
 0C90 00 C0 0E 43 	lr   	ar0, $0x0E43
-0C92 00 81 0B 95 	lri  	ar1, #0x0B95
+0C92 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0C94 00 C2 0E 10 	lr   	ar2, $0x0E10
 0C96 00 83 0E 48 	lri  	ar3, #0x0E48
 0C98 02 BF 84 5D 	call 	$0x845D
 0C9A 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0C9C 02 9F 0B E7 	j    	$0x0BE7
 0C9E 00 C0 0E 43 	lr   	ar0, $0x0E43
-0CA0 00 81 0B 95 	lri  	ar1, #0x0B95
+0CA0 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0CA2 00 C2 0E 10 	lr   	ar2, $0x0E10
 0CA4 00 83 0E 48 	lri  	ar3, #0x0E48
 0CA6 02 BF 84 5D 	call 	$0x845D
 0CA8 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CAA 02 9F 0B F9 	j    	$0x0BF9
 0CAC 00 C0 0E 43 	lr   	ar0, $0x0E43
-0CAE 00 81 0B 95 	lri  	ar1, #0x0B95
+0CAE 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0CB0 00 C2 0E 10 	lr   	ar2, $0x0E10
 0CB2 00 83 0E 48 	lri  	ar3, #0x0E48
 0CB4 02 BF 84 5D 	call 	$0x845D
 0CB6 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CB8 02 9F 0C 06 	j    	$0x0C06
-```
-
-## 
-
-```
 0CBA 00 C0 0E 43 	lr   	ar0, $0x0E43
-0CBC 00 81 0B 95 	lri  	ar1, #0x0B95
+0CBC 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0CBE 00 C2 0E 10 	lr   	ar2, $0x0E10
 0CC0 00 83 0E 48 	lri  	ar3, #0x0E48
 0CC2 02 BF 84 5D 	call 	$0x845D 							// Call IROM
@@ -2805,7 +2793,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 ```
 0CC8 01 1C     	0 					// Init(?)
 0CC9 01 D8  	1 
-0CCA 02 56 		2 					// Setup Voice Parameters Block (0xExx variables)
+0CCA 02 56 		2 					// Setup Voice Parameters Block
 0CCB 02 FC 		3 					// Mixer
 0CCC 05 4B 		4 					// CopyOut 3 (0x780 bytes, starting 0x400) + sub_05BC(0x400)
 0CCD 05 5F 		5 					// CopyOut 2 (0x780 bytes, starting 0x7C0) + sub_05BC(0x7C0)
@@ -2829,10 +2817,10 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ```
 0CDC 08 A0 							// Bogus (ret)
-0CDD 08 A1
-0CDE 08 AD
-0CDF 08 B9
-0CE0 08 CB
+0CDD 08 A1 					// vL
+0CDE 08 AD 					// vR
+0CDF 08 B9 					// vL
+0CE0 08 CB 					// vS
 0CE1 08 D7
 0CE2 08 EE
 0CE3 09 05

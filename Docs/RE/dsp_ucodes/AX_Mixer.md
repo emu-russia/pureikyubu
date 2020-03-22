@@ -360,14 +360,14 @@ See complete disasm in AXUcode_BustAMove3000.
 04A0 00 C0 0E 07 	lr   	ar0, $0x0E07 			// No more VPBs in list.  Restore ar0    
 04A2 02 9F 00 68 	j    	$0x0068
 
-// 0xExx pointers
+// Reinit SampleBuf pointers
 
 04A4 2E CE       	srs  	$(DSMAH), ac0.m
 04A5 2C CF       	srs  	$(DSMAL), ac0.l
 04A6 16 CD 0B 80 	si   	$(DSPA), #0x0B80
 04A8 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
 04AA 16 CB 00 D0 	si   	$(DSBL), #0x00D0
-04AC 00 82 0E 08 	lri  	ar2, #0x0E08 					// 0xExx pointers, meaning still yet unknown. Command 2 do the same
+04AC 00 82 0E 08 	lri  	ar2, #0x0E08 					// Reinit SampleBuf pointers
 04AE 00 9F 00 00 	lri  	ac1.m, #0x0000
 04B0 1B 5F       	srri 	@ar2, ac1.m
 04B1 00 9F 01 40 	lri  	ac1.m, #0x0140

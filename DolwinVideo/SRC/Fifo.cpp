@@ -1152,6 +1152,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
 
             default:
             {
+#if 0
                 GFXError(
                     "Damaged FIFO buffer (in DL)! Some of attributes are not emulated :\n"
                     "\n"
@@ -1255,6 +1256,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                     );
                 }
                 fclose(f);
+#endif
             }
         }
     }
@@ -1799,7 +1801,7 @@ static void gx_command(uint8_t cmd)
             
             default:
             {
-                gx_bad_fifo();
+                //gx_bad_fifo();
             }
         }
 }
