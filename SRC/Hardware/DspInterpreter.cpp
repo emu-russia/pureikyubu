@@ -106,11 +106,13 @@ namespace DSP
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
+	// Fixed error in original Duddie doc: addpaxz acD.m, ax1.[l|h]
+
 	void DspInterpreter::ADDPAXZ(AnalyzeInfo& info)
 	{
 		DspLongAccumulator a, b, c;
 		a.sbits = core->PackProd();
-		b.shm = core->regs.ax[info.paramBits[1]].sbits;
+		b.shm = info.paramBits[1] ? (int32_t)(int16_t)core->regs.ax[1].h : (int32_t)(int16_t)core->regs.ax[1].l;
 		b.l = 0;
 		c.shm = a.shm + b.shm;
 		c.l = 0;
@@ -248,9 +250,9 @@ namespace DSP
 	void DspInterpreter::CLRP(AnalyzeInfo& info)
 	{
 		core->regs.prod.l = 0;
-		core->regs.prod.m1 = 0xfff0;
-		core->regs.prod.h = 0x00ff;
-		core->regs.prod.m2 = 0x10;
+		core->regs.prod.m1 = 0;
+		core->regs.prod.h = 0;
+		core->regs.prod.m2 = 0;
 	}
 
 	void DspInterpreter::CMP(AnalyzeInfo& info)

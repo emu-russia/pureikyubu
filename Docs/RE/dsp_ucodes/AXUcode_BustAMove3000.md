@@ -25,7 +25,7 @@ Example command list packet (staring from command 0x0000)
 Decoded:
 [00 00] [80 19 70 00] 					Init
 [00 07] [80 19 2C E0] 					Load last played 640B Frame buffer (STEREO)
-[00 02] [80 19 70 40] 					Setup Voice Parameters Block
+[00 02] [80 19 70 40] 					Setup first Voice Parameters Block
 [00 03] [00 12 80 00] 					Mix
 [00 0A] [80 0D F9 80] 					Bogus
 [00 0E] [80 19 2C E0] [80 19 2A 60] 	Copy out 640B + 640B bytes (2 Frames)
@@ -39,19 +39,28 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 
 ## Memory Map
 
-| Dmem Address | Meaning |
-|---|---|
-| 0x000 | Used by Command 0. Copy from Command 7 640B Frame |
-| 0x140 | Copy from Command 7 640B Frame |
-| 0x280 | Zero 640B Frame buffer (Command 7) |
-| 0x3C0 | Loaded AXPBUPDATE Update Data (0x80 bytes Dma2 from Command 2) |
-| 0xB80 | Voice Parameters Block (0xD0 bytes) (Command 2) |
-| 0xC00 | Command packet (0x180 bytes max) |
-| 0xCC0 | AXPBITDBUFFER (initial time delay). Optional Dma3 0x40 bytes from Command Setup2 |
-| 0xE07 | Saved ar0 (Mixer) |
-| 0xE08 | Pointers  \[0x0000\] \[0x0140\] \[0x0280\] \[0x0400\] \[0x0540\] \[0x0680\] \[0x07C0\] \[0x0900\] \[0x0A40\] (Command 2) |
-| 0xE15 | JumpTable5\[n\] (Sample Rate Converter) |
-| 0xE48 | Temp buffer (common) |
+| Dmem Address | Meaning | Used |
+|---|---|---|
+| 0x000 - 0xA40 | Sample buffers |
+| 0x000 | Copy from Command 7 640B Frame | Command 0, 7 |
+| 0x140 | Copy from Command 7 640B Frame | Command 7 |
+| 0x280 | Zero 640B Frame buffer | Command 7 |
+| 0x3C0 | Loaded AXPBUPDATE Update Data (0x80 bytes Dma2 from Command 2) | Command 2 |
+| 0xB80 | Voice Parameters Block (0xD0 bytes) (Command 2) | Command 2 |
+| 0xC00 | Command packet (0x180 bytes max) | Main |
+| 0xCC0 | Loaded AXPBITDBUFFER (initial time delay). Optional Dma3 0x40 bytes from Command 2 | Command 2 |
+| 0xCE0 | | |
+| 0xE04 | AXPBUPDATE Update Counter (counting down from 5) | Mixer |
+| 0xE05 | Saved local ar1 | Mixer |
+| 0xE06 | Saved local ar0 | Mixer |
+| 0xE07 | Saved global ar0 | Mixer |
+| 0xE08 | SampleBuf Pointers[9]. Initial values: { 0x0000, 0x0140, 0x0280, 0x0400, 0x0540, 0x0680, 0x07C0, 0x0900, 0x0A40 } | Command 2, Mixer |
+| 0xE15 | Sample Rate Converter type | Mixer |
+| 0xE40 | | |
+| 0xE41 | | |
+| 0xE42 | | |
+| 0xE43 | | |
+| 0xE48 | Temp buffer | common |
 
 
 ## Interrupts
@@ -617,7 +626,7 @@ Command_0x11() 			// 020F
 0254 02 9F 00 68 	j    	$0x0068
 ```
 
-## Command 2 - Setup Voice Parameters Block (0xExx variables)
+## Command 2 - Setup Voice Parameters Block (and SampleBuf pointers)
 
 ```
 0256 81 00       	clr  	ac0             	     	
@@ -628,8 +637,8 @@ Command_0x11() 			// 020F
 025B 16 CD 0B 80 	si   	$(DSPA), #0x0B80 			// 0xB80
 025D 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
 025F 16 CB 00 D0 	si   	$(DSBL), #0x00D0 			// 0xD0 bytes
-0261 00 82 0E 08 	lri  	ar2, #0x0E08 			// 0xE08  -- pointers  [0x0000] [0x0140] [0x0280] [0x0400] [0x0540] [0x0680] [0x07C0] [0x0900] [0x0A40]
-0263 00 9F 00 00 	lri  	ac1.m, #0x0000
+0261 00 82 0E 08 	lri  	ar2, #0x0E08 			// 0xE08  -- SampleBuf pointers  [0x0000] [0x0140] [0x0280] [0x0400] [0x0540] [0x0680] [0x07C0] [0x0900] [0x0A40]
+0263 00 9F 00 00 	lri  	ac1.m, #0x0000 					// They advanced every 1ms (5 times)
 0265 1B 5F       	srri 	@ar2, ac1.m
 0266 00 9F 01 40 	lri  	ac1.m, #0x0140
 0268 1B 5F       	srri 	@ar2, ac1.m
@@ -652,7 +661,7 @@ Command_0x11() 			// 020F
 0282 00 DF 0B A8 	lr   	ac1.m, $0x0BA8
 0284 2E CE       	srs  	$(DSMAH), ac0.m
 0285 2F CF       	srs  	$(DSMAL), ac1.m
-0286 16 CD 03 C0 	si   	$(DSPA), #0x03C0 			// 0x3C0
+0286 16 CD 03 C0 	si   	$(DSPA), #0x03C0 			// 0x3C0  		--  Load Update Data Block
 0288 16 C9 00 00 	si   	$(DSCR), #0x0000
 028A 16 CB 00 80 	si   	$(DSBL), #0x0080 			// 0x80 bytes
 028C 81 00       	clr  	ac0             	     	
@@ -733,10 +742,10 @@ voice parameter block
 ```c++
 typedef struct _AXPB
 {
-    u16             nextHi;     // pointer to next parameter buffer (MRAM) 
+    u16             nextHi;     // pointer to next parameter buffer (MRAM)  	0xB80
     u16             nextLo;
                     
-    u16             currHi;     // pointer to this parameter buffer (MRAM)
+    u16             currHi;     // pointer to this parameter buffer (MRAM)    0xB82
     u16             currLo;
                     
     u16             srcSelect;  // Select type of SRC
@@ -854,7 +863,7 @@ typedef struct _AXPB
 ```
 
 ```
-0xB80  80 19 71 2C 80 19 70 40  [00 00] [00 00] [00 00] [00 00]    		[JumpTable5(SRC)]  [ Coef Table ] [ JumpTable4 | JumpTable3 | JumpTable2 : 4444 4443 3333 2222]  [state]
+0xB80  80 19 71 2C 80 19 70 40  [00 00] [00 00] [00 00] [00 00]    		[JumpTable5(SRC)]  [ Coef Table ] [ mixerCtrl: JumpTable4 | JumpTable3 | JumpTable2 : 4444 4443 3333 2222]  [state]
 0xB88  [00 00] [00 00 00 00 00 00  00 00 00 00 00 00 00 00   		[type] [AXPBMIX ... ]
 0xB90  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 0xB98  00 00 00 00 00 00] [00 00]  [80 19 AB 40] [00 00] [00 00] 			if (*0x0B9B != 0)  AXPBITD  Optional Dma3 0x40 bytes -> 0xCC0   |  [0x0E40] [0x0E41]
@@ -867,6 +876,18 @@ typedef struct _AXPB
 0xBD0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 0xBD8  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
 0xBE0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+mixerCtrl:
+
+```
+#define AX_PB_MIXCTRL_RAMPING   0x0008  // Ramping is active
+#define AX_PB_MIXCTRL_CONSTANT  0x0000  // Ramping is inactive
+#define AX_PB_MIXCTRL_SURROUND  0x0004  // Surround is active
+#define AX_PB_MIXCTRL_STEREO    0x0000  // Surround is inactive
+#define AX_PB_MIXCTRL_MAIN      0x0000  // Main bus active
+#define AX_PB_MIXCTRL_AUXA      0x0001  // AuxA active (additive to above)
+#define AX_PB_MIXCTRL_AUXB      0x0002  // AuxB active (additive to above)
 ```
 
 ... Looks like linked list
@@ -1178,15 +1199,15 @@ See AX_Mixer.md
 0459 1C 03       	mrr  	ar0, ar3
 045A 1F F5       	mrr  	ac1.m, prod.m1
 045B 19 1A       	lrri 	ax1.l, @ar0
-045C F8 58       	addpaxz	ac0, ax0      	l    	ax1.h, @ar0
-045D FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
-045E F8 B1       	addpaxz	ac0, ax0     	ls   	ax1.h, ac1.m
-045F FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
-0460 F8 B1       	addpaxz	ac0, ax0      	ls   	ax1.h, ac1.m
-0461 FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
-0462 F8 B1       	addpaxz	ac0, ax0      	ls   	ax1.h, ac1.m
-0463 FB A0       	addpaxz	ac1, ax1      	ls   	ax1.l, ac0.m
-0464 F8 3B       	addpaxz	ac0, ax0      	s    	@ar3, ac1.m
+045C F8 58       	addpaxz	ac0, ax1.l     	l    	ax1.h, @ar0 
+045D FB A0       	addpaxz	ac1, ax1.h     	ls   	ax1.l, ac0.m 
+045E F8 B1       	addpaxz	ac0, ax1.l     	ls   	ax1.h, ac1.m 
+045F FB A0       	addpaxz	ac1, ax1.h     	ls   	ax1.l, ac0.m
+0460 F8 B1       	addpaxz	ac0, ax1.l     	ls   	ax1.h, ac1.m
+0461 FB A0       	addpaxz	ac1, ax1.h     	ls   	ax1.l, ac0.m
+0462 F8 B1       	addpaxz	ac0, ax1.l     	ls   	ax1.h, ac1.m
+0463 FB A0       	addpaxz	ac1, ax1.h     	ls   	ax1.l, ac0.m
+0464 F8 3B       	addpaxz	ac0, ax1.l     	s    	@ar3, ac1.m
 0465 1B 7E       	srri 	@ar3, ac0.m
 0466 00 83 0E 04 	lri  	ar3, #0x0E04
 0468 81 00       	clr  	ac0             	     	
@@ -2060,7 +2081,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0827 8D 00       	set15	                	     	
 0828 8B 00       	m0   	                	     	
 0829 8F 00       	set40	                	     	
-082A 00 C1 0E 42 	lr   	ar1, $0x0E42 				// ar1 = *0xE41
+082A 00 C1 0E 42 	lr   	ar1, $0x0E42 				// ar1 = *0xE42
 082C 00 82 0D 80 	lri  	ar2, #0x0D80
 082E 81 00       	clr  	ac0             	     	
 082F 11 20 08 3B 	bloopi	#0x20, $0x083B
@@ -2073,9 +2094,9 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0837 1F 5E       	mrr  	ax1.l, ac0.m
 0838 19 59       	lrri 	ax0.h, @ar2
 0839 B0 00       	mulx 	ax0.h, ax1.l    	     	
-083A FB 00       	addpaxz	ac1, ax1      	     	
+083A FB 00       	addpaxz	ac1, ax1.h      	     	
 083B 81 39       	clr  	ac0             	s    	@ar1, ac1.m
-083C 00 E1 0E 42 	sr   	$0x0E42, ar1 				// *0xE41 = ar1
+083C 00 E1 0E 42 	sr   	$0x0E42, ar1 				// *0xE42 = ar1
 083E 02 DF       	ret  	
 ```
 

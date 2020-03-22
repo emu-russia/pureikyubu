@@ -353,6 +353,10 @@ void LoadRunUcode(ar0)			// 80B5
 
 ## Mixing Routines
 
+They only look scary, in fact, they simply mix 32 samples with a duration of 1 ms.
+
+This trick is called unroll the loop.
+
 ```
 80E7 81 50       	clr  	ac0             	l    	ax1.l, @ar0
 80E8 89 49       	clr  	ac1             	l    	ax0.h, @ar1
@@ -1494,7 +1498,6 @@ void LoadRunUcode(ar0)			// 80B5
 8549 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 854A 02 DF       	ret  	
 ```
-
 
 // -----------------------------------------------------------------------------------------------------
 

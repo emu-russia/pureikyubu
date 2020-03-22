@@ -1304,7 +1304,7 @@ namespace DSP
 		//MADD *      1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
 		//LSR16 *     1111 010d xxxx xxxx         // LSR16 $acD
 		//MSUB *      1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
-		//ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $axS 
+		//ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $ax1.[l|h] 
 		//CLRL *      1111 110d xxxx xxxx         // CLRL $acD.l 
 		//MOVPZ *     1111 111d xxxx xxxx         // MOVPZ $acD 
 
@@ -1346,7 +1346,7 @@ namespace DSP
 				info.instr = DspInstruction::ADDPAXZ;
 				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
 					return false;
-				if (!AddParam(info, (DspParameter)((int)DspParameter::ax0 + ss), ss))
+				if (!AddParam(info, ss ? DspParameter::ax1h : DspParameter::ax1l, ss))
 					return false;
 				break;
 			case 0b110:		// CLRL
