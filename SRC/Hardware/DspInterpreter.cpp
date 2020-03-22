@@ -423,7 +423,7 @@ namespace DSP
 
 	void DspInterpreter::LR(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], info.ImmOperand.UnsignedShort);
+		core->MoveToReg(info.paramBits[0], core->ReadDMem(info.ImmOperand.UnsignedShort));
 	}
 
 	void DspInterpreter::LRI(AnalyzeInfo& info)

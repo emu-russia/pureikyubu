@@ -240,7 +240,7 @@ See complete disasm in AXUcode_BustAMove3000.
 040D 17 7F       	callr	ar3 							// JumpTable4[n]
 040E 81 00       	clr  	ac0             	     	
 
-// Initial Time Delay
+// Initial Time Delay processing
 
 040F 00 DE 0B 9B 	lr   	ac0.m, $0x0B9B 				// AXPBITD.flag != 0
 0411 B1 00       	tst  	ac0             	     	

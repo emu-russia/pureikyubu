@@ -5,7 +5,7 @@
 Features:
 - The command exchange is asynchronous - the AX library sends the "command package" and continues to work further. When the DSP processes the packet, it generates a DIRQ interrupt.
 - Does not use IROM procedures to work with Accelerator (uses its own)
-- DOES use 4 big IROM procedures ("Mixing Routines(?)")
+- DOES use 4 big IROM procedures ("Mixing Routines")
 - Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Command list saved in Dmem 0x0C00
 - The first UInt16 in the next command sequence selects Command from JumpTable1
 - Only 20 commands exists (0-19)
@@ -45,11 +45,11 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0x000 | Copy from Command 7 640B Frame | Command 0, 7 |
 | 0x140 | Copy from Command 7 640B Frame | Command 7 |
 | 0x280 | Zero 640B Frame buffer | Command 7 |
-| 0x3C0 | Loaded AXPBUPDATE Update Data (0x80 bytes Dma2 from Command 2) | Command 2 |
-| 0xB80 | Voice Parameters Block (0xD0 bytes) (Command 2) | Command 2 |
+| 0x3C0 | Loaded VPB Update Data Block (0x80 bytes) | Command 2 |
+| 0xB80 | Current Voice Parameters Block (0xD0 bytes) (Command 2) | Command 2 |
 | 0xC00 | Command packet (0x180 bytes max) | Main |
-| 0xCC0 | Loaded AXPBITDBUFFER (initial time delay). Optional Dma3 0x40 bytes from Command 2 | Command 2 |
-| 0xCE0 | | |
+| 0xCC0 | Loaded VPB Initial Time Delay Buffer (0x40 bytes) | Command 2 |
+| 0xCE0 | ITD Related? | |
 | 0xE04 | AXPBUPDATE Update Counter (counting down from 5) | Mixer |
 | 0xE05 | Saved local ar1 | Mixer |
 | 0xE06 | Saved local ar0 | Mixer |
@@ -57,10 +57,10 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0xE08 | SampleBuf Pointers[9]. Initial values: { 0x0000, 0x0140, 0x0280, 0x0400, 0x0540, 0x0680, 0x07C0, 0x0900, 0x0A40 } | Command 2, Mixer |
 | 0xE15 | Sample Rate Converter type | Mixer |
 | 0xE16 | Coefficient Table type | Mixer |
-| 0xE40 | | |
-| 0xE41 | | |
-| 0xE42 | | |
-| 0xE43 | | |
+| 0xE40 | Mixer related? | |
+| 0xE41 | Mixer related? | |
+| 0xE42 | Mixer related? | |
+| 0xE43 | Mixer related? | |
 | 0xE48 | Temp buffer | common |
 
 
