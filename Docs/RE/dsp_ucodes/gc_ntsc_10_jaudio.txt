@@ -1,6 +1,12 @@
 # Disassembled GameCube NTSC 1.0 BIOS JAudio ucode
 # DspUcode_1280_.bin
 
+## Overview
+
+- Command exchanges are synchronous using Mailbox. DSP interrupt is not used.
+
+## Interrupts
+
 0000 02 9F 00 10 	j    	$0x0010
 0002 00 00       	nop  	
 0003 00 00       	nop  	

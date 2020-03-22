@@ -561,7 +561,31 @@ namespace DSP
 					return DspToCpuReadLo();
 
 				case (DspAddress)DspHardwareRegs::DIRQ:
-					break;
+					return 0;
+
+				case (DspAddress)DspHardwareRegs::ACSAH:
+					return Accel.StartAddress.h;
+				case (DspAddress)DspHardwareRegs::ACSAL:
+					return Accel.StartAddress.l;
+				case (DspAddress)DspHardwareRegs::ACEAH:
+					return Accel.EndAddress.h;
+				case (DspAddress)DspHardwareRegs::ACEAL:
+					return Accel.EndAddress.l;
+				case (DspAddress)DspHardwareRegs::ACCAH:
+					return Accel.CurrAddress.h;
+				case (DspAddress)DspHardwareRegs::ACCAL:
+					return Accel.CurrAddress.l;
+
+				case (DspAddress)DspHardwareRegs::ACFMT:
+					return Accel.Fmt;
+				case (DspAddress)DspHardwareRegs::ACPDS:
+					return Accel.AdpcmPds;
+				case (DspAddress)DspHardwareRegs::ACYN1:
+					return Accel.AdpcmYn1;
+				case (DspAddress)DspHardwareRegs::ACYN2:
+					return Accel.AdpcmYn2;
+				case (DspAddress)DspHardwareRegs::ACGAN:
+					return Accel.AdpcmGan;
 
 				default:
 					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
@@ -625,23 +649,88 @@ namespace DSP
 					}
 					break;
 
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA0:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA1:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA2:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA3:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA4:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA5:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA6:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA7:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA8:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFA9:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAA:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAB:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAC:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAD:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAE:
-				case (DspAddress)DspHardwareRegs::UNKNOWN_FFAF:
-					DBReport2(DbgChannel::DSP, "Known unknown (FIR?) HW write 0x%04X = 0x%04X\n", addr, value);
+				case (DspAddress)DspHardwareRegs::ACSAH:
+					Accel.StartAddress.h = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACSAL:
+					Accel.StartAddress.l = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACEAH:
+					Accel.EndAddress.h = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACEAL:
+					Accel.EndAddress.l = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACCAH:
+					Accel.CurrAddress.h = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACCAL:
+					Accel.CurrAddress.l = value;
+					break;
+
+				case (DspAddress)DspHardwareRegs::ACFMT:
+					Accel.Fmt = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACPDS:
+					Accel.AdpcmPds = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACYN1:
+					Accel.AdpcmYn1 = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACYN2:
+					Accel.AdpcmYn2 = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ACGAN:
+					Accel.AdpcmGan = value;
+					break;
+
+				case (DspAddress)DspHardwareRegs::ADPCM_A10:
+					Accel.AdpcmCoef[0] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A20:
+					Accel.AdpcmCoef[1] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A11:
+					Accel.AdpcmCoef[2] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A21:
+					Accel.AdpcmCoef[3] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A12:
+					Accel.AdpcmCoef[4] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A22:
+					Accel.AdpcmCoef[5] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A13:
+					Accel.AdpcmCoef[6] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A23:
+					Accel.AdpcmCoef[7] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A14:
+					Accel.AdpcmCoef[8] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A24:
+					Accel.AdpcmCoef[9] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A15:
+					Accel.AdpcmCoef[10] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A25:
+					Accel.AdpcmCoef[11] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A16:
+					Accel.AdpcmCoef[12] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A26:
+					Accel.AdpcmCoef[13] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A17:
+					Accel.AdpcmCoef[14] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A27:
+					Accel.AdpcmCoef[15] = value;
 					break;
 
 				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB0:
@@ -796,6 +885,7 @@ namespace DSP
 		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
+		memset(&Accel, 0, sizeof(Accel));
 	}
 
 	/// Instant DMA
@@ -839,6 +929,12 @@ namespace DSP
 			FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
+	}
+
+	/// Decode (in case of ADPCM) and read data by accelerator
+	uint16_t DspCore::AccelReadData()
+	{
+		return 0;
 	}
 
 	#pragma endregion "IFX"

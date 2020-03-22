@@ -351,7 +351,7 @@ void LoadRunUcode(ar0)			// 80B5
 
 // -----------------------------------------------------------------------------------------------------
 
-## Mixing Routines (?)
+## Mixing Routines
 
 ```
 80E7 81 50       	clr  	ac0             	l    	ax1.l, @ar0
@@ -1498,8 +1498,7 @@ void LoadRunUcode(ar0)			// 80B5
 
 // -----------------------------------------------------------------------------------------------------
 
-## Accelerator and DMA (?)
-
+## Accelerator
 
 ```
 854B 8E 00       	clr40	                	     	
@@ -1576,19 +1575,19 @@ void LoadRunUcode(ar0)			// 80B5
 85B1 00 85 04 10 	lri  	ix1, #0x0410
 85B3 00 86 04 0E 	lri  	ix2, #0x040E
 85B5 00 87 FF FE 	lri  	ix3, #0xFFFE
-85B7 16 D1 00 05 	si   	$(ACFMT), #0x0005
+85B7 16 D1 00 05 	si   	$(ACFMT), #0x0005 						// Format 5?
 85B9 16 D4 00 00 	si   	$(ACSAH), #0x0000
 85BB 16 D5 00 00 	si   	$(ACSAL), #0x0000
 85BD 16 D6 00 00 	si   	$(ACEAH), #0x0000
 85BF 16 D7 00 FF 	si   	$(ACEAL), #0x00FF
 85C1 16 D8 00 00 	si   	$(ACCAH), #0x0000
 85C3 16 D9 00 00 	si   	$(ACCAL), #0x0000
-85C5 16 DA 00 00 	si   	$(UnkHW_FFDA), #0x0000
-85C7 16 A0 F9 B8 	si   	$(UnkHW_FFA0), #0xF9B8
-85C9 16 A1 FE C7 	si   	$(UnkHW_FFA1), #0xFEC7
-85CB 16 DE 08 00 	si   	$(UnkHW_FFDE), #0x0800
-85CD 16 DB 00 00 	si   	$(UnkHW_FFDB), #0x0000
-85CF 16 DC 00 00 	si   	$(UnkHW_FFDC), #0x0000
+85C5 16 DA 00 00 	si   	$(ACPDS), #0x0000
+85C7 16 A0 F9 B8 	si   	$(ADPCM_A10), #0xF9B8
+85C9 16 A1 FE C7 	si   	$(ADPCM_A20), #0xFEC7
+85CB 16 DE 08 00 	si   	$(ACGAN), #0x0800
+85CD 16 DB 00 00 	si   	$(ACYN1), #0x0000
+85CF 16 DC 00 00 	si   	$(ACYN2), #0x0000
 85D1 1F E4       	mrr  	ac1.m, ix0
 85D2 19 18       	lrri 	ax0.l, @ar0
 85D3 00 F8 FF DF 	sr   	$(UnkHW_FFDF), ax0.l
@@ -1637,6 +1636,8 @@ void LoadRunUcode(ar0)			// 80B5
 860E 02 BF 86 3D 	call 	$0x863D 							// WaitDspDma
 8610 02 DF       	ret  	
 ```
+
+## More LFSR?
 
 ```
 8611 18 DA       	lrrd 	ax1.l, @ar2
@@ -1957,7 +1958,7 @@ Called from IPL, CardUnlock
 878B 2C D9       	srs  	$(ACCAL), ac0.l
 878C 00 DE 08 00 	lr   	ac0.m, $0x0800
 878E 14 78       	lsr  	ac0, #0x38
-878F 2E DA       	srs  	$(UnkHW_FFDA), ac0.m
+878F 2E DA       	srs  	$(ACPDS), ac0.m
 8790 16 A0 01 BA 	si   	$(UnkHW_FFA0), #0x01BA
 8792 16 A1 04 B0 	si   	$(UnkHW_FFA1), #0x04B0
 8794 16 A2 04 4D 	si   	$(UnkHW_FFA2), #0x044D
@@ -1966,8 +1967,8 @@ Called from IPL, CardUnlock
 879A 16 A5 04 52 	si   	$(UnkHW_FFA5), #0x0452
 879C 16 A6 05 7A 	si   	$(UnkHW_FFA6), #0x057A
 879E 16 A7 01 BF 	si   	$(UnkHW_FFA7), #0x01BF
-87A0 28 DB       	srs  	$(UnkHW_FFDB), ax0.l
-87A1 28 DC       	srs  	$(UnkHW_FFDC), ax0.l
+87A0 28 DB       	srs  	$(ACYN1), ax0.l
+87A1 28 DC       	srs  	$(ACYN2), ax0.l
 87A2 00 80 FF DD 	lri  	ar0, #0xFFDD
 87A4 00 81 04 09 	lri  	ar1, #0x0409
 87A6 00 82 04 0F 	lri  	ar2, #0x040F
@@ -2015,6 +2016,7 @@ Called from IPL, CardUnlock
 87DE 02 DF       	ret  	
 ```
 
+## LFSR ? Crypto ?
 
 ```
 87DF 1F FC       	mrr  	ac1.m, ac0.l
@@ -2143,18 +2145,18 @@ Called from IPL, CardUnlock
 8878 14 01       	lsl  	ac0, #0x01
 8879 2E D8       	srs  	$(ACCAH), ac0.m
 887A 2C D9       	srs  	$(ACCAL), ac0.l
-887B 28 DA       	srs  	$(UnkHW_FFDA), ax0.l
-887C 16 A0 09 78 	si   	$(UnkHW_FFA0), #0x0978
-887E 16 A1 E5 41 	si   	$(UnkHW_FFA1), #0xE541
-8880 16 DE FC 82 	si   	$(UnkHW_FFDE), #0xFC82
-8882 28 DB       	srs  	$(UnkHW_FFDB), ax0.l
+887B 28 DA       	srs  	$(ACPDS), ax0.l
+887C 16 A0 09 78 	si   	$(ADPCM_A10), #0x0978
+887E 16 A1 E5 41 	si   	$(ADPCM_A20), #0xE541
+8880 16 DE FC 82 	si   	$(ACGAN), #0xFC82
+8882 28 DB       	srs  	$(ACYN1), ax0.l
 8883 00 80 FF DD 	lri  	ar0, #0xFFDD
 8885 00 81 04 09 	lri  	ar1, #0x0409
 8887 00 82 04 0F 	lri  	ar2, #0x040F
 8889 00 85 04 10 	lri  	ix1, #0x0410
 888B 00 86 FF FF 	lri  	ix2, #0xFFFF
 888D 00 87 FF FC 	lri  	ix3, #0xFFFC
-888F 28 DC       	srs  	$(UnkHW_FFDC), ax0.l
+888F 28 DC       	srs  	$(ACYN2), ax0.l
 8890 00 DE 04 03 	lr   	ac0.m, $0x0403
 8892 78 00       	decm 	ac0             	     	
 8893 1F 3E       	mrr  	ax0.h, ac0.m
@@ -2190,7 +2192,7 @@ Called from IPL, CardUnlock
 88BA 02 DF       	ret  	
 ```
 
-##
+## LFSR ? Crypto ?
 
 
 ```

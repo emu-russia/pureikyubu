@@ -58,8 +58,8 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
         PIClearInt(PI_INTERRUPT_DSP);
     }
 
-    // ARAM hack (DMA always ready)
-    AIDCR &= ~AIDCR_ARDMA;
+    // DSP DMA always ready
+    AIDCR &= ~AIDCR_DSPDMA;
 
     // DSP controls
     dspCore->DSPSetResetBit((AIDCR >> 0) & 1);

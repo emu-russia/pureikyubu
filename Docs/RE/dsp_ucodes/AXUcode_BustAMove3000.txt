@@ -4,11 +4,25 @@
 ## Overview
 
 Features:
+- The command exchange is asynchronous - the AX library sends the "command package" and continues to work further. When the DSP processes the packet, it generates a DIRQ interrupt.
 - Does not use IROM procedures to work with Accelerator (uses its own)
 - DOES use 4 big IROM procedures ("Mixing Routines(?)")
-- Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Commands packet saved in Dmem 0x0C00
+- Commands are transmitted in 0x180 byte packet (multiple commands in single packet). Command list saved in Dmem 0x0C00
 - The first UInt16 in the next command sequence selects Command from JumpTable1
 - Only 20 commands exists (0-19)
+- Register ar0 stores the current pointer in the command list (starting address 0xC00)
+- Most of the information on data structure formats was obtained from the ax.h header from the Dolphin SDK
+
+## Memory Map
+
+| Dmem Address | Meaning |
+|---|---|
+| 0x3C0 | 0x80 bytes Dma2 from Command Setup2 |
+| 0xB80 | Mmem -> Dram 0xD0 bytes from (Command 2) |
+| 0xCC0 | Optional Dma3 0x40 bytes from Command Setup2 |
+| 0xE08 | Pointers  [0x0000] [0x0140] [0x0280] [0x0400] [0x0540] [0x0680] [0x07C0] [0x0900] [0x0A40] (Command 2) |
+| 0xE48 | Temp buffer for small Mmem -> Dmem Dma (Commands 0, 7, 0x11, 0x12) |
+
 
 ## Interrupts
 
@@ -44,7 +58,7 @@ Features:
 0021 00 FE 0E 31 	sr   	$0x0E31, ac0.m 			// Dmem_0E31 = 0
 0023 16 FC DC D1 	si   	$(DMBH), #0xDCD1 			// DspMailbox = 0xDCD10000 - Hello
 0025 16 FD 00 00 	si   	$(DMBL), #0x0000
-0027 16 FB 00 01 	si   	$(DIRQ), #0x0001  				// CPU Interrupt
+0027 16 FB 00 01 	si   	$(DIRQ), #0x0001  				// CPU Interrupt   (DSP ready for another command packet)
 0029 26 FC       	lrs  	ac0.m, $(DMBH)  		// Wait Cpu read Dsp mailbox
 002A 02 A0 80 00 	tclr 	ac0.m, #0x8000
 002C 02 9C 00 29 	jnok 	$0x0029
@@ -63,7 +77,7 @@ Features:
 0038 00 92 00 FF 	lri  	config, #0x00FF
 003A 16 FC DC D1 	si   	$(DMBH), #0xDCD1 		// DspMailbox = 0xDCD10001 	- Ready
 003C 16 FD 00 01 	si   	$(DMBL), #0x0001
-003E 16 FB 00 01 	si   	$(DIRQ), #0x0001
+003E 16 FB 00 01 	si   	$(DIRQ), #0x0001 			// CPU Interrupt   (DSP ready for another command packet)
 0040 26 FC       	lrs  	ac0.m, $(DMBH) 			// Wait Cpu read Dsp mailbox
 0041 02 A0 80 00 	tclr 	ac0.m, #0x8000
 0043 02 9C 00 40 	jnok 	$0x0040
@@ -88,7 +102,7 @@ Features:
 005A 02 40 7F FF 	andi 	ac0.m, #0x7FFF
 005C 2E CE       	srs  	$(DSMAH), ac0.m   		// DSMA = MainMemAddress & 0x7FFFFFFF
 005D 2F CF       	srs  	$(DSMAL), ac1.m
-005E 16 CD 0C 00 	si   	$(DSPA), #0x0C00 		// Dmem 0x0C00
+005E 16 CD 0C 00 	si   	$(DSPA), #0x0C00 		// Dmem 0x0C00 (save command list)
 0060 81 00       	clr  	ac0             	     	
 0061 2E C9       	srs  	$(DSCR), ac0.m 			// Mode: 0 (MMEM -> DSP, DMEM)
 0062 1F FB       	mrr  	ac1.m, ax1.h
@@ -119,13 +133,15 @@ Features:
 0080 2E FD       	srs  	$(DMBL), ac0.m
 0081 00 21       	halt 	
 
-Example command packet (staring from command 0x0000)
+Example command list packet (staring from command 0x0000)
 
 ```
 0C00 [00 00] [80 19 70 00] [00 07] [80 19 2C E0] [00 02] [80 19
-0C10 80 19 2C E0 80 19 2A 60] [00 0F] [00 00] 00 00 00 00
+0C10 80 19] [2C E0] [80 19 2A 60] [00 0F] [00 00] 00 00 00 00
 ...
 
+It can be seen that the list contains an unknown command 0x2CE0. When I dumped the commands, the emulator was launched as a development console (Console = 0x10000006, DevkitHW).
+Apparently, the AX library inserted some kind of debugging command, which is not in the Retail version of the microcode.
 
 ## ----------------------------------------------------------------------------------------------------------------
 
@@ -252,7 +268,7 @@ Example command packet (staring from command 0x0000)
 0118 00 C0 0E 45 	lr   	ar0, $0x0E45
 011A 02 9F 00 68 	j    	$0x0068
 
-## Command 0
+## Command 0 Init?
 
 011C 81 00       	clr  	ac0             	     	
 011D 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -266,14 +282,14 @@ Example command packet (staring from command 0x0000)
 0126 00 9E 00 40 	lri  	ac0.m, #0x0040
 0128 2E CB       	srs  	$(DSBL), ac0.m 			// Block size 0x40
 0129 00 81 0E 48 	lri  	ar1, #0x0E48
-012B 00 82 00 00 	lri  	ar2, #0x0000
+012B 00 82 00 00 	lri  	ar2, #0x0000  		
 012D 00 9B 00 9F 	lri  	ax1.h, #0x009F
 012F 00 9A 01 40 	lri  	ax1.l, #0x0140
 0131 81 00       	clr  	ac0             	     	
 0132 89 00       	clr  	ac1             	     	
 0133 8F 00       	set40	                	     	
 0134 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
-0136 19 3E       	lrri 	ac0.m, @ar1
+0136 19 3E       	lrri 	ac0.m, @ar1 				// Parse 0xE48 block  -> Dmem 0x0000
 0137 19 3C       	lrri 	ac0.l, @ar1
 0138 B1 00       	tst  	ac0             	     	
 0139 19 3F       	lrri 	ac1.m, @ar1
@@ -406,6 +422,15 @@ Example command packet (staring from command 0x0000)
 01D5 1B 5C       	srri 	@ar2, ac0.l
 01D6 02 9F 00 68 	j    	$0x0068
 
+Example 0xE48 contents:
+
+```
+0E48 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E58 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E68 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+0E78 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+```
+
 ## Command 1
 
 01D8 00 85 FF FF 	lri  	ix1, #0xFFFF
@@ -427,11 +452,14 @@ Example command packet (staring from command 0x0000)
 01F3 00 81 07 C0 	lri  	ar1, #0x07C0
 01F5 02 BF 06 29 	call 	$0x0629
 01F7 02 9F 00 68 	j    	$0x0068
+
+## Command 9
+
 01F9 00 86 07 C0 	lri  	ix2, #0x07C0
 01FB 02 BF 05 BC 	call 	$0x05BC
 01FD 02 9F 00 68 	j    	$0x0068
 
-
+## Command 6  -- Patch UCode (0x780 bytes, starting 0x0)
 
 01FF 81 00       	clr  	ac0             	     	
 0200 8E 00       	clr40	                	     	
@@ -440,22 +468,26 @@ Example command packet (staring from command 0x0000)
 0203 2E CE       	srs  	$(DSMAH), ac0.m
 0204 2C CF       	srs  	$(DSMAL), ac0.l
 0205 16 CD 00 00 	si   	$(DSPA), #0x0000
-0207 16 C9 00 01 	si   	$(DSCR), #0x0001
+0207 16 C9 00 01 	si   	$(DSCR), #0x0001 		// MMEM -> IRAM
 0209 16 CB 07 80 	si   	$(DSBL), #0x0780
 020B 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
 020D 02 9F 00 68 	j    	$0x0068
+
+## Command 0x11 - Read 0x280 bytes (Dmem 0xE48) and save with partially changing the sign in one array and with a change in sign (NEG) in another 2 arrays. Clear array 0x280.
+
+```
 020F 81 00       	clr  	ac0             	     	
 0210 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0211 8E 60       	clr40	                	l    	ac0.l, @ar0
 0212 2E CE       	srs  	$(DSMAH), ac0.m
 0213 2C CF       	srs  	$(DSMAL), ac0.l
-0214 16 CD 0E 48 	si   	$(DSPA), #0x0E48
-0216 16 C9 00 00 	si   	$(DSCR), #0x0000
+0214 16 CD 0E 48 	si   	$(DSPA), #0x0E48 			// 0xE48
+0216 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
 0218 89 00       	clr  	ac1             	     	
-0219 0D 20       	lris 	ac1.l, 32
+0219 0D 20       	lris 	ac1.l, 32 					// 32 bytes
 021A 2D CB       	srs  	$(DSBL), ac1.l
 021B 4C 00       	add  	ac0, ac1        	     	
-021C 1C 80       	mrr  	ix0, ar0
+021C 1C 80       	mrr  	ix0, ar0 				// Save ar0
 021D 00 80 02 80 	lri  	ar0, #0x0280
 021F 00 81 00 00 	lri  	ar1, #0x0000
 0221 00 82 01 40 	lri  	ar2, #0x0140
@@ -466,12 +498,12 @@ Example command packet (staring from command 0x0000)
 0229 02 9C 02 26 	jnok 	$0x0226
 022B 2E CE       	srs  	$(DSMAH), ac0.m
 022C 2C CF       	srs  	$(DSMAL), ac0.l
-022D 16 CD 0E 58 	si   	$(DSPA), #0x0E58
-022F 16 C9 00 00 	si   	$(DSCR), #0x0000
-0231 16 CB 02 60 	si   	$(DSBL), #0x0260
+022D 16 CD 0E 58 	si   	$(DSPA), #0x0E58 			// 0xE58
+022F 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
+0231 16 CB 02 60 	si   	$(DSBL), #0x0260 			// 0x260 bytes
 0233 00 9F 00 A0 	lri  	ac1.m, #0x00A0
 0235 8F 00       	set40	                	     	
-0236 00 7F 02 3F 	bloop	ac1.m, $0x023F
+0236 00 7F 02 3F 	bloop	ac1.m, $0x023F 			// count: 0xA0
 0238 19 7E       	lrri 	ac0.m, @ar3
 0239 1B 1A       	srri 	@ar0, ax1.l
 023A 19 7C       	lrri 	ac0.l, @ar3
@@ -480,8 +512,51 @@ Example command packet (staring from command 0x0000)
 023D 7C 22       	neg  	ac0             	s    	@ar2, ac0.l
 023E 1B 3E       	srri 	@ar1, ac0.m
 023F 1B 3C       	srri 	@ar1, ac0.l
-0240 1C 04       	mrr  	ar0, ix0
+0240 1C 04       	mrr  	ar0, ix0 				// Restore ar0
 0241 02 9F 00 68 	j    	$0x0068
+```
+
+```c++
+Command_0x11() 			// 020F
+{
+	uint16_t MmemHi = *ar0++;
+	uint16_t MmemLo = *ar0++;
+
+	DmaMmemDram (MmemHi, MmemLo, 0xE48, 32);
+	WaitDspDma();
+
+	DmaMmemDram (MmemHi, MmemLo + 32, 0xE58, 0x0260);
+
+	// Total Dma size 0x280 bytes
+
+	ar0 = 0x280;
+	ar1 = 0;
+	ar2 = 0x140;
+	ar3 = 0xE48;
+
+	// Save with partially changing the sign in one array and with a change in sign (NEG) in another 2 arrays. Clear array 0x280
+
+	int i = 0x280 / 4;
+	while (i--)
+	{
+		*ar0++ = 0;
+		*ar0++ = 0;
+
+		ac0m = *ar3++;
+		ac0l = *ar3++;
+		
+		*ar2++ = ac0m;
+		ac0 = -ac0;
+		*ar2++ = ac0l;
+
+		*ar1++ = ac0m;
+		*ar1++ = ac0l;
+	}
+}
+```
+
+## Command 0xD -- Reload command list
+
 0243 8E 70       	clr40	                	l    	ac0.m, @ar0
 0244 89 60       	clr  	ac1             	l    	ac0.l, @ar0
 0245 19 1F       	lrri 	ac1.m, @ar0
@@ -496,17 +571,17 @@ Example command packet (staring from command 0x0000)
 0252 00 80 0C 00 	lri  	ar0, #0x0C00
 0254 02 9F 00 68 	j    	$0x0068
 
-## Command 2
+## Command 2 - Setup Voice Parameters Block (0xExx variables)
 
 0256 81 00       	clr  	ac0             	     	
 0257 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 0258 8E 78       	clr40	                	l    	ac1.m, @ar0
 0259 2E CE       	srs  	$(DSMAH), ac0.m
 025A 2F CF       	srs  	$(DSMAL), ac1.m
-025B 16 CD 0B 80 	si   	$(DSPA), #0x0B80
-025D 16 C9 00 00 	si   	$(DSCR), #0x0000
-025F 16 CB 00 D0 	si   	$(DSBL), #0x00D0
-0261 00 82 0E 08 	lri  	ar2, #0x0E08
+025B 16 CD 0B 80 	si   	$(DSPA), #0x0B80 			// 0xB80
+025D 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
+025F 16 CB 00 D0 	si   	$(DSBL), #0x00D0 			// 0xD0 bytes
+0261 00 82 0E 08 	lri  	ar2, #0x0E08 			// 0xE08  -- pointers  [0x0000] [0x0140] [0x0280] [0x0400] [0x0540] [0x0680] [0x07C0] [0x0900] [0x0A40]
 0263 00 9F 00 00 	lri  	ac1.m, #0x0000
 0265 1B 5F       	srri 	@ar2, ac1.m
 0266 00 9F 01 40 	lri  	ac1.m, #0x0140
@@ -526,82 +601,172 @@ Example command packet (staring from command 0x0000)
 027B 00 9F 0A 40 	lri  	ac1.m, #0x0A40
 027D 1B 5F       	srri 	@ar2, ac1.m
 027E 02 BF 06 94 	call 	$0x0694 				// WaitDspDma
-0280 00 DE 0B A7 	lr   	ac0.m, $0x0BA7
+0280 00 DE 0B A7 	lr   	ac0.m, $0x0BA7 					 // Mmem Address: [0x0BA7] [0x0BA8]   (from Dma above)
 0282 00 DF 0B A8 	lr   	ac1.m, $0x0BA8
 0284 2E CE       	srs  	$(DSMAH), ac0.m
 0285 2F CF       	srs  	$(DSMAL), ac1.m
-0286 16 CD 03 C0 	si   	$(DSPA), #0x03C0
+0286 16 CD 03 C0 	si   	$(DSPA), #0x03C0 			// 0x3C0
 0288 16 C9 00 00 	si   	$(DSCR), #0x0000
-028A 16 CB 00 80 	si   	$(DSBL), #0x0080
+028A 16 CB 00 80 	si   	$(DSBL), #0x0080 			// 0x80 bytes
 028C 81 00       	clr  	ac0             	     	
 028D 89 00       	clr  	ac1             	     	
-028E 00 DE 0B 84 	lr   	ac0.m, $0x0B84
-0290 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C
+028E 00 DE 0B 84 	lr   	ac0.m, $0x0B84 
+0290 00 9F 0D 4C 	lri  	ac1.m, #0x0D4C 				// Jump Table 5 (Cmd2)
 0292 4C 00       	add  	ac0, ac1        	     	
 0293 1C 7E       	mrr  	ar3, ac0.m
 0294 02 13       	ilrr 	ac0.m, @ar3
-0295 00 FE 0E 15 	sr   	$0x0E15, ac0.m
+0295 00 FE 0E 15 	sr   	$0x0E15, ac0.m 				// *0xE15 = JumpTable5[n]
 0297 00 DE 0B 85 	lr   	ac0.m, $0x0B85
-0299 00 9F 0D 4F 	lri  	ac1.m, #0x0D4F
+0299 00 9F 0D 4F 	lri  	ac1.m, #0x0D4F 				// Coef Table
 029B 4C 00       	add  	ac0, ac1        	     	
 029C 1C 7E       	mrr  	ar3, ac0.m
 029D 02 13       	ilrr 	ac0.m, @ar3
-029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m
+029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m 				// *0xE16 = SomeTable[n]
 02A0 00 DE 0B 86 	lr   	ac0.m, $0x0B86
 02A2 00 9A 00 0F 	lri  	ax1.l, #0x000F
-02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC  			// Jump Table 2
+02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC  			// Jump Table 2 (Cmd2)
 02A6 34 00       	andr 	ac0.m, ax0.h    	     	
 02A7 4C 00       	add  	ac0, ac1        	     	
 02A8 1C 7E       	mrr  	ar3, ac0.m
 02A9 02 13       	ilrr 	ac0.m, @ar3
-02AA 00 FE 0E 14 	sr   	$0x0E14, ac0.m
+02AA 00 FE 0E 14 	sr   	$0x0E14, ac0.m  			// *0xE14 = JumpTable2[n]
 02AC 00 DE 0B 86 	lr   	ac0.m, $0x0B86
 02AE 00 9A 00 1F 	lri  	ax1.l, #0x001F
-02B0 00 9F 0C EC 	lri  	ac1.m, #0x0CEC
+02B0 00 9F 0C EC 	lri  	ac1.m, #0x0CEC 				// Jump Table 3 (Cmd2)
 02B2 14 FC       	asr  	ac0, -4
 02B3 34 00       	andr 	ac0.m, ax0.h    	     	
 02B4 4C 00       	add  	ac0, ac1        	     	
 02B5 1C 7E       	mrr  	ar3, ac0.m
 02B6 02 13       	ilrr 	ac0.m, @ar3
-02B7 00 FE 0E 46 	sr   	$0x0E46, ac0.m
+02B7 00 FE 0E 46 	sr   	$0x0E46, ac0.m 				// *0xE46 = JumpTable3[n]
 02B9 00 DE 0B 86 	lr   	ac0.m, $0x0B86
-02BB 00 9F 0D 0C 	lri  	ac1.m, #0x0D0C
+02BB 00 9F 0D 0C 	lri  	ac1.m, #0x0D0C 				// Jump Table 4 (Cmd2)
 02BD 14 F7       	asr  	ac0, -9
 02BE 4C 00       	add  	ac0, ac1        	     	
 02BF 1C 7E       	mrr  	ar3, ac0.m
 02C0 02 13       	ilrr 	ac0.m, @ar3
-02C1 00 FE 0E 47 	sr   	$0x0E47, ac0.m
+02C1 00 FE 0E 47 	sr   	$0x0E47, ac0.m 				// *0xE47 = JumpTable4[n]
 02C3 81 00       	clr  	ac0             	     	
-02C4 00 DE 0B 9B 	lr   	ac0.m, $0x0B9B
+02C4 00 DE 0B 9B 	lr   	ac0.m, $0x0B9B  			// if (*0x0B9B != 0)
 02C6 B1 00       	tst  	ac0             	     	
-02C7 02 95 02 EE 	jeq  	$0x02EE
-02C9 89 00       	clr  	ac1             	     	
-02CA 00 DF 0B 9E 	lr   	ac1.m, $0x0B9E
-02CC 03 00 0C C0 	addi 	ac1.m, #0x0CC0
-02CE 00 FF 0E 40 	sr   	$0x0E40, ac1.m
-02D0 00 DF 0B 9F 	lr   	ac1.m, $0x0B9F
-02D2 03 00 0C C0 	addi 	ac1.m, #0x0CC0
-02D4 00 FF 0E 41 	sr   	$0x0E41, ac1.m
-02D6 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
-02D8 00 FF 0E 42 	sr   	$0x0E42, ac1.m
-02DA 00 FF 0E 43 	sr   	$0x0E43, ac1.m
-02DC 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
-02DE 00 DE 0B 9C 	lr   	ac0.m, $0x0B9C
-02E0 2E CE       	srs  	$(DSMAH), ac0.m
-02E1 00 DE 0B 9D 	lr   	ac0.m, $0x0B9D
-02E3 2E CF       	srs  	$(DSMAL), ac0.m
-02E4 16 CD 0C C0 	si   	$(DSPA), #0x0CC0
-02E6 16 C9 00 00 	si   	$(DSCR), #0x0000
-02E8 16 CB 00 40 	si   	$(DSBL), #0x0040
-02EA 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
-02EC 02 9F 00 68 	j    	$0x0068
+02C7 02 95 02 EE 	jeq  	$0x02EE  		
+	02C9 89 00       	clr  	ac1             	     	
+	02CA 00 DF 0B 9E 	lr   	ac1.m, $0x0B9E
+	02CC 03 00 0C C0 	addi 	ac1.m, #0x0CC0
+	02CE 00 FF 0E 40 	sr   	$0x0E40, ac1.m
+	02D0 00 DF 0B 9F 	lr   	ac1.m, $0x0B9F
+	02D2 03 00 0C C0 	addi 	ac1.m, #0x0CC0
+	02D4 00 FF 0E 41 	sr   	$0x0E41, ac1.m
+	02D6 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
+	02D8 00 FF 0E 42 	sr   	$0x0E42, ac1.m
+	02DA 00 FF 0E 43 	sr   	$0x0E43, ac1.m
+	02DC 02 BF 06 94 	call 	$0x0694 					// WaitDspDma  (0x80 bytes)
+	02DE 00 DE 0B 9C 	lr   	ac0.m, $0x0B9C
+	02E0 2E CE       	srs  	$(DSMAH), ac0.m
+	02E1 00 DE 0B 9D 	lr   	ac0.m, $0x0B9D
+	02E3 2E CF       	srs  	$(DSMAL), ac0.m
+	02E4 16 CD 0C C0 	si   	$(DSPA), #0x0CC0 			// Dmem 0xCC0
+	02E6 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
+	02E8 16 CB 00 40 	si   	$(DSBL), #0x0040 			// 0x40 bytes
+	02EA 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
+	02EC 02 9F 00 68 	j    	$0x0068
 02EE 00 9F 0C E0 	lri  	ac1.m, #0x0CE0
-02F0 00 FF 0E 42 	sr   	$0x0E42, ac1.m
+02F0 00 FF 0E 42 	sr   	$0x0E42, ac1.m 
 02F2 00 FF 0E 40 	sr   	$0x0E40, ac1.m
 02F4 00 FF 0E 41 	sr   	$0x0E41, ac1.m
 02F6 00 FF 0E 43 	sr   	$0x0E43, ac1.m
 02F8 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 02FA 02 9F 00 68 	j    	$0x0068
+
+Example payload:
+
+voice parameter block
+
+```c++
+typedef struct _AXPB
+{
+    u16             nextHi;     // pointer to next parameter buffer (MRAM)
+    u16             nextLo;
+                    
+    u16             currHi;     // pointer to this parameter buffer (MRAM)
+    u16             currLo;
+                    
+    u16             srcSelect;  // Select type of SRC (none,4-tap,linear)
+    u16             coefSelect; // Coef. to be used with 4-tap SRC
+    u16             mixerCtrl;  // Mixer control bits
+                    
+    u16             state;      // current state (see below)
+    u16             type;       // type of voice (stream)
+                    
+    AXPBMIX         mix;    
+    AXPBITD         itd;
+    AXPBUPDATE      update;
+    AXPBDPOP        dpop;
+    AXPBVE          ve;
+    AXPBFIR         fir;
+    AXPBADDR        addr;
+    AXPBADPCM       adpcm;
+    AXPBSRC         src;
+    AXPBADPCMLOOP   adpcmLoop;
+
+    u16             pad[3];     // 32 byte alignment
+
+} AXPB;
+```
+
+```
+80197040  80 19 71 2C 80 19 70 40  [00 00] [00 00] [00 00] 00 00    		[JumpTable5]  [ Coef Table ] [ JumpTable4 | JumpTable3 | JumpTable2 : 4444 4443 3333 2222]
+80197050  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80197060  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80197070  00 00 00 00 00 00 [00 00]  [80 19 AB 40] [00 00] [00 00] 			if (*0x0B9B != 0)  AXPBITD  Optional Dma3 0x40 bytes -> 0xCC0   |  [0x0E40] [0x0E41]
+80197080  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [80 19 		 Dma2: 0x80 bytes, Dmem 0x3c0  (AXPBUPDATE?)
+80197090  BB 40] 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+801970A0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 [00 00] 					AXPBADDR 
+801970B0  [00 00] [00 00 00 00] [00 00  00 00] [00 00 00 00] 00 00  		AXPBADPCM
+801970C0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+801970D0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+801970E0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+801970F0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80197100  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+```c++
+typedef struct _AXPBADDR
+{                                       // all values are mesured in samples:
+    u16     loopFlag;                   // 0 = one-shot, 1=looping  
+    u16     format;                     // sample format used (see below)
+    u16     loopAddressHi;              // Start of loop (this will point to a shared "zero" buffer if one-shot mode is active)
+    u16     loopAddressLo;
+    u16     endAddressHi;               // End of sample (and loop)
+    u16     endAddressLo;
+    u16     currentAddressHi;           // Current playback position
+    u16     currentAddressLo;
+
+} AXPBADDR;
+```
+
+... Looks like linked list
+
+```
+8019712C  80 19 72 18 80 19 71 2C  00 00 00 00 00 00 00 00
+8019713C  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+```
+80197218  80 19 73 04 80 19 72 18  00 00 00 00 00 00 00 00
+80197228  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+```
+80197304  80 19 73 F0 80 19 73 04  00 00 00 00 00 00 00 00
+80197314  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+Dma logs:
+
+```
+DSP: DspCore::Dma: Mmem: 0x00197040, DspAddr: 0x0B80, Size: 0x00D0, Ctrl: 0
+```
 
 ## Command 3
 
@@ -973,7 +1138,7 @@ Example command packet (staring from command 0x0000)
 04DF 02 13       	ilrr 	ac0.m, @ar3
 04E0 00 FE 0E 15 	sr   	$0x0E15, ac0.m
 04E2 00 DE 0B 85 	lr   	ac0.m, $0x0B85
-04E4 00 9F 0D 4F 	lri  	ac1.m, #0x0D4F
+04E4 00 9F 0D 4F 	lri  	ac1.m, #0x0D4F 				// Coef Table
 04E6 4C 00       	add  	ac0, ac1        	     	
 04E7 1C 7E       	mrr  	ar3, ac0.m
 04E8 02 13       	ilrr 	ac0.m, @ar3
@@ -1036,7 +1201,7 @@ Example command packet (staring from command 0x0000)
 0547 00 C0 0E 07 	lr   	ar0, $0x0E07
 0549 02 9F 02 FC 	j    	$0x02FC
 
-## Command 4
+## Command 4 -- Patch UCode 3 (0x780 bytes, starting 0x400) + sub_05BC
 
 054B 8E 00       	clr40	                	     	
 054C 00 86 04 00 	lri  	ix2, #0x0400
@@ -1047,12 +1212,13 @@ Example command packet (staring from command 0x0000)
 0552 2C CF       	srs  	$(DSMAL), ac0.l
 0553 1F C6       	mrr  	ac0.m, ix2
 0554 2E CD       	srs  	$(DSPA), ac0.m
-0555 16 C9 00 01 	si   	$(DSCR), #0x0001
+0555 16 C9 00 01 	si   	$(DSCR), #0x0001 			// MMEM -> IRAM
 0557 16 CB 07 80 	si   	$(DSBL), #0x0780
 0559 02 BF 06 94 	call 	$0x0694  					// WaitDspDma
 055B 02 BF 05 BC 	call 	$0x05BC
 055D 02 9F 00 68 	j    	$0x0068
 
+# Command 5  -- Patch UCode 2 (0x780 bytes, starting 0x7C0) + sub_05BC
 
 055F 8E 00       	clr40	                	     	
 0560 00 86 07 C0 	lri  	ix2, #0x07C0
@@ -1063,11 +1229,14 @@ Example command packet (staring from command 0x0000)
 0566 2C CF       	srs  	$(DSMAL), ac0.l
 0567 1F C6       	mrr  	ac0.m, ix2
 0568 2E CD       	srs  	$(DSPA), ac0.m
-0569 16 C9 00 01 	si   	$(DSCR), #0x0001
+0569 16 C9 00 01 	si   	$(DSCR), #0x0001 			// MMEM -> IRAM
 056B 16 CB 07 80 	si   	$(DSBL), #0x0780
 056D 02 BF 06 94 	call 	$0x0694 					// WaitDspDma
 056F 02 BF 05 BC 	call 	$0x05BC
 0571 02 9F 00 68 	j    	$0x0068
+
+## Command 0xE
+
 0573 8C 00       	clr15	                	     	
 0574 8A 00       	m2   	                	     	
 0575 81 00       	clr  	ac0             	     	
@@ -1113,15 +1282,15 @@ Example command packet (staring from command 0x0000)
 05A8 02 9C 05 A5 	jnok 	$0x05A5
 05AA 02 9F 00 68 	j    	$0x0068
 
-## Command
+## Command 0xB
 
 05AC 02 9F 00 68 	j    	$0x0068
 
-## Command
+## Command 0xC
 
 05AE 02 9F 00 68 	j    	$0x0068
 
-## Command
+## Command 0xA
 
 05B0 02 9F 00 68 	j    	$0x0068
 
@@ -1136,7 +1305,7 @@ Example command packet (staring from command 0x0000)
 
 05BA 02 9F 00 45 	j    	$0x0045
 
-##
+## Called from commands 4, 5, 9
 
 05BC 8E 00       	clr40	                	     	
 05BD 19 1F       	lrri 	ac1.m, @ar0
@@ -1233,6 +1402,9 @@ Example command packet (staring from command 0x0000)
 0626 1B 5D       	srri 	@ar2, ac1.l
 0627 1C 05       	mrr  	ar0, ix1
 0628 02 DF       	ret  	
+
+## 
+
 0629 8E 00       	clr40	                	     	
 062A 00 9B 0E 48 	lri  	ax1.h, #0x0E48
 062C 00 9D 00 C0 	lri  	ac1.l, #0x00C0
@@ -1279,6 +1451,9 @@ Example command packet (staring from command 0x0000)
 0674 00 83 0E A8 	lri  	ar3, #0x0EA8
 0676 02 BF 06 84 	call 	$0x0684
 0678 02 DF       	ret  	
+
+## 
+
 0679 8E 00       	clr40	                	     	
 067A 00 FA FF CE 	sr   	$(DSMAH), ax1.l
 067C 00 F8 FF CF 	sr   	$(DSMAL), ax0.l
@@ -1286,6 +1461,9 @@ Example command packet (staring from command 0x0000)
 0680 16 C9 00 00 	si   	$(DSCR), #0x0000
 0682 2D CB       	srs  	$(DSBL), ac1.l
 0683 02 DF       	ret  	
+
+## 
+
 0684 8F 00       	set40	                	     	
 0685 8D 00       	set15	                	     	
 0686 8A 00       	m2   	                	     	
@@ -1309,47 +1487,57 @@ Example command packet (staring from command 0x0000)
 0697 02 9C 06 94 	jnok 	$0x0694
 0699 02 DF       	ret  	
 
+## WaitCpuMailbox (unused)
 
 069A 26 FE       	lrs  	ac0.m, $(CMBH)
 069B 02 C0 80 00 	tset 	ac0.m, #0x8000
 069D 02 9C 06 9A 	jnok 	$0x069A
 069F 02 DF       	ret  	
+
+## WaitDspMailbox (unused)
+
 06A0 26 FC       	lrs  	ac0.m, $(DMBH)
 06A1 02 A0 80 00 	tclr 	ac0.m, #0x8000
 06A3 02 9C 06 A0 	jnok 	$0x06A0
 06A5 02 DF       	ret  	
+
+## WaitDspMailbox2 (unused)
+
 06A6 26 FC       	lrs  	ac0.m, $(DMBH)
 06A7 02 A0 80 00 	tclr 	ac0.m, #0x8000
 06A9 02 9C 06 A6 	jnok 	$0x06A6
 06AB 02 DF       	ret  	
+
+## Command 7 - Copy some buffers
+
 06AC 81 00       	clr  	ac0             	     	
 06AD 89 70       	clr  	ac1             	l    	ac0.m, @ar0
 06AE 8E 60       	clr40	                	l    	ac0.l, @ar0
 06AF 2E CE       	srs  	$(DSMAH), ac0.m
 06B0 2C CF       	srs  	$(DSMAL), ac0.l
-06B1 16 CD 0E 48 	si   	$(DSPA), #0x0E48
-06B3 16 C9 00 00 	si   	$(DSCR), #0x0000
+06B1 16 CD 0E 48 	si   	$(DSPA), #0x0E48 			// 0xE48
+06B3 16 C9 00 00 	si   	$(DSCR), #0x0000 			// MMEM -> DRAM
 06B5 89 00       	clr  	ac1             	     	
 06B6 0D 20       	lris 	ac1.l, 32
-06B7 2D CB       	srs  	$(DSBL), ac1.l
+06B7 2D CB       	srs  	$(DSBL), ac1.l 				// 32 bytes
 06B8 4C 00       	add  	ac0, ac1        	     	
-06B9 1C 80       	mrr  	ix0, ar0
+06B9 1C 80       	mrr  	ix0, ar0 					// Save ar0
 06BA 00 80 02 80 	lri  	ar0, #0x0280
 06BC 00 81 00 00 	lri  	ar1, #0x0000
 06BE 00 82 01 40 	lri  	ar2, #0x0140
 06C0 00 83 0E 48 	lri  	ar3, #0x0E48
 06C2 0A 00       	lris 	ax1.l, 0
-06C3 27 C9       	lrs  	ac1.m, $(DSCR)
+06C3 27 C9       	lrs  	ac1.m, $(DSCR) 				// Wait Dma
 06C4 03 A0 00 04 	tclr 	ac1.m, #0x0004
 06C6 02 9C 06 C3 	jnok 	$0x06C3
 06C8 2E CE       	srs  	$(DSMAH), ac0.m
-06C9 2C CF       	srs  	$(DSMAL), ac0.l
-06CA 16 CD 0E 58 	si   	$(DSPA), #0x0E58
+06C9 2C CF       	srs  	$(DSMAL), ac0.l 				// MmemAddr + 32
+06CA 16 CD 0E 58 	si   	$(DSPA), #0x0E58 			// 0xE58
 06CC 16 C9 00 00 	si   	$(DSCR), #0x0000
-06CE 16 CB 02 60 	si   	$(DSBL), #0x0260
+06CE 16 CB 02 60 	si   	$(DSBL), #0x0260 		// 0x260 bytes
 06D0 00 9F 00 A0 	lri  	ac1.m, #0x00A0
 06D2 8F 00       	set40	                	     	
-06D3 00 7F 06 DC 	bloop	ac1.m, $0x06DC
+06D3 00 7F 06 DC 	bloop	ac1.m, $0x06DC 				// Wait Dma? :p
 06D5 19 7E       	lrri 	ac0.m, @ar3
 06D6 1B 1A       	srri 	@ar0, ax1.l
 06D7 19 7C       	lrri 	ac0.l, @ar3
@@ -1360,23 +1548,46 @@ Example command packet (staring from command 0x0000)
 06DC 1B 3C       	srri 	@ar1, ac0.l
 06DD 1C 04       	mrr  	ar0, ix0
 06DE 02 9F 00 68 	j    	$0x0068
+
+Example 0xE48:
+
+```
+80192CE0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80192CF0  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80192D00  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+80192D10  00 00 00 00 00 00 00 00  00 00 00 00 00 00 00 00
+```
+
+Dma logs (0x280 bytes in total):
+
+```
+DSP: DspCore::Dma: Mmem: 0x00192CE0, DspAddr: 0x0E48, Size: 0x0020, Ctrl: 0
+DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
+```
+
+## -----------------------------------------------------------------------------------------------------------------
+
+## Sample Rate Converters
+
+## SRC [0] - N64 type polyphase filter (4-tap)
+
 06E0 00 82 0B B8 	lri  	ar2, #0x0BB8
 06E2 19 5E       	lrri 	ac0.m, @ar2
-06E3 2E D1       	srs  	$(ACFMT), ac0.m
+06E3 2E D1       	srs  	$(ACFMT), ac0.m   						// AXPBADDR.format
 06E4 19 5E       	lrri 	ac0.m, @ar2
-06E5 2E D4       	srs  	$(ACSAH), ac0.m
+06E5 2E D4       	srs  	$(ACSAH), ac0.m 						// AXPBADDR.loopAddressHi
 06E6 19 5E       	lrri 	ac0.m, @ar2
-06E7 2E D5       	srs  	$(ACSAL), ac0.m
+06E7 2E D5       	srs  	$(ACSAL), ac0.m 						// AXPBADDR.loopAddressLo
 06E8 19 5E       	lrri 	ac0.m, @ar2
-06E9 2E D6       	srs  	$(ACEAH), ac0.m
+06E9 2E D6       	srs  	$(ACEAH), ac0.m 						// AXPBADDR.endAddressHi
 06EA 19 5E       	lrri 	ac0.m, @ar2
-06EB 2E D7       	srs  	$(ACEAL), ac0.m
+06EB 2E D7       	srs  	$(ACEAL), ac0.m 						// AXPBADDR.endAddressLo
 06EC 19 5E       	lrri 	ac0.m, @ar2
-06ED 2E D8       	srs  	$(ACCAH), ac0.m
+06ED 2E D8       	srs  	$(ACCAH), ac0.m 						// AXPBADDR.currentAddressHi
 06EE 19 5E       	lrri 	ac0.m, @ar2
-06EF 2E D9       	srs  	$(ACCAL), ac0.m
+06EF 2E D9       	srs  	$(ACCAL), ac0.m 						// AXPBADDR.currentAddressLo
 06F0 19 5E       	lrri 	ac0.m, @ar2
-06F1 2E A0       	srs  	$(UnkHW_FFA0), ac0.m
+06F1 2E A0       	srs  	$(UnkHW_FFA0), ac0.m 					// AXPBADPCM.a[0][0]
 06F2 19 5E       	lrri 	ac0.m, @ar2
 06F3 2E A1       	srs  	$(UnkHW_FFA1), ac0.m
 06F4 19 5E       	lrri 	ac0.m, @ar2
@@ -1408,32 +1619,32 @@ Example command packet (staring from command 0x0000)
 070E 19 5E       	lrri 	ac0.m, @ar2
 070F 2E AF       	srs  	$(UnkHW_FFAF), ac0.m
 0710 19 5E       	lrri 	ac0.m, @ar2
-0711 2E DE       	srs  	$(ACGAN), ac0.m
+0711 2E DE       	srs  	$(ACGAN), ac0.m 						// AXPBADPCM.gain
 0712 19 5E       	lrri 	ac0.m, @ar2
-0713 2E DA       	srs  	$(ACPDS), ac0.m
+0713 2E DA       	srs  	$(ACPDS), ac0.m 						// AXPBADPCM.pred_scale
 0714 19 5E       	lrri 	ac0.m, @ar2
-0715 2E DB       	srs  	$(ACYN1), ac0.m
+0715 2E DB       	srs  	$(ACYN1), ac0.m 						// AXPBADPCM.yn1
 0716 19 5E       	lrri 	ac0.m, @ar2
-0717 2E DC       	srs  	$(ACYN2), ac0.m
+0717 2E DC       	srs  	$(ACYN2), ac0.m 						// AXPBADPCM.yn2
 0718 8C 00       	clr15	                	     	
 0719 8A 00       	m2   	                	     	
 071A 8E 00       	clr40	                	     	
 071B 00 D8 0E 16 	lr   	ax0.l, $0x0E16
-071D 19 5B       	lrri 	ax1.h, @ar2
-071E 19 59       	lrri 	ax0.h, @ar2
+071D 19 5B       	lrri 	ax1.h, @ar2 					// AXPBSRC.ratioHi
+071E 19 59       	lrri 	ax0.h, @ar2 					// AXPBSRC.ratioLo
 071F 81 00       	clr  	ac0             	     	
-0720 19 5C       	lrri 	ac0.l, @ar2
+0720 19 5C       	lrri 	ac0.l, @ar2 					// AXPBSRC.currentAddressFrac
 0721 00 80 0E 48 	lri  	ar0, #0x0E48
-0723 19 5F       	lrri 	ac1.m, @ar2
+0723 19 5F       	lrri 	ac1.m, @ar2 					// AXPBSRC.last_samples[0]
 0724 1B 1F       	srri 	@ar0, ac1.m
-0725 19 5F       	lrri 	ac1.m, @ar2
+0725 19 5F       	lrri 	ac1.m, @ar2 					// AXPBSRC.last_samples[1]
 0726 1B 1F       	srri 	@ar0, ac1.m
-0727 19 5F       	lrri 	ac1.m, @ar2
+0727 19 5F       	lrri 	ac1.m, @ar2 					// AXPBSRC.last_samples[2]
 0728 1B 1F       	srri 	@ar0, ac1.m
-0729 18 5F       	lrr  	ac1.m, @ar2
-072A 1B 1F       	srri 	@ar0, ac1.m
+0729 18 5F       	lrr  	ac1.m, @ar2 					// AXPBSRC.last_samples[3]
+072A 1B 1F       	srri 	@ar0, ac1.m 
 072B 6B 00       	movax	ac1, ax1        	     	
-072C 15 05       	lsl  	ac1, #0x05
+072C 15 05       	lsl  	ac1, #0x05 
 072D 4D 00       	add  	ac1, ac0        	     	
 072E 15 7E       	lsr  	ac1, -2
 072F 1C 9F       	mrr  	ix0, ac1.m
@@ -1448,27 +1659,27 @@ Example command packet (staring from command 0x0000)
 0738 1C BF       	mrr  	ix1, ac1.m
 0739 00 9A 01 FC 	lri  	ax1.l, #0x01FC
 073B 00 9E 0E 48 	lri  	ac0.m, #0x0E48
-073D 00 81 FF DD 	lri  	ar1, #0xFFDD
+073D 00 81 FF DD 	lri  	ar1, #0xFFDD  				// Accelerator data
 073F 00 83 0D 80 	lri  	ar3, #0x0D80
 0741 00 64 07 52 	bloop	ix0, $0x0752
-0743 18 27       	lrr  	ix3, @ar1
+0743 18 27       	lrr  	ix3, @ar1  					// Read sample
 0744 1B 07       	srri 	@ar0, ix3
 0745 4A 00       	addax	ac0, ax1        	     	
 0746 1F FC       	mrr  	ac1.m, ac0.l
-0747 18 27       	lrr  	ix3, @ar1
+0747 18 27       	lrr  	ix3, @ar1 					// Read sample
 0748 1B 07       	srri 	@ar0, ix3
 0749 15 79       	lsr  	ac1, -7
 074A 35 00       	andr 	ac1.m, ax0.h    	     	
-074B 18 27       	lrr  	ix3, @ar1
+074B 18 27       	lrr  	ix3, @ar1 					// Read sample
 074C 1B 07       	srri 	@ar0, ix3
 074D 41 00       	addr 	ac1, ax0.l      	     	
 074E 1B 7E       	srri 	@ar3, ac0.m
-074F 18 27       	lrr  	ix3, @ar1
+074F 18 27       	lrr  	ix3, @ar1 					// Read sample
 0750 1B 07       	srri 	@ar0, ix3
 0751 1B 7F       	srri 	@ar3, ac1.m
 0752 00 00       	nop  	
 0753 00 65 07 58 	bloop	ix1, $0x0758
-0755 18 27       	lrr  	ix3, @ar1
+0755 18 27       	lrr  	ix3, @ar1 				// Read sample
 0756 1B 07       	srri 	@ar0, ix3
 0757 00 00       	nop  	
 0758 00 00       	nop  	
@@ -1491,8 +1702,8 @@ Example command packet (staring from command 0x0000)
 076A 18 9F       	lrrd 	ac1.m, @ar0
 076B 1A DF       	srrd 	@ar2, ac1.m
 076C 1A DC       	srrd 	@ar2, ac0.l
-076D 00 82 0B D2 	lri  	ar2, #0x0BD2
-076F 27 DC       	lrs  	ac1.m, $(ACYN2)
+076D 00 82 0B D2 	lri  	ar2, #0x0BD2  					// Save last accelerator state to VB
+076F 27 DC       	lrs  	ac1.m, $(ACYN2)   
 0770 1A DF       	srrd 	@ar2, ac1.m
 0771 27 DB       	lrs  	ac1.m, $(ACYN1)
 0772 1A DF       	srrd 	@ar2, ac1.m
@@ -1505,7 +1716,7 @@ Example command packet (staring from command 0x0000)
 077A 1A DF       	srrd 	@ar2, ac1.m
 077B 8F 00       	set40	                	     	
 077C 00 C1 0E 42 	lr   	ar1, $0x0E42
-077E 00 82 0D 80 	lri  	ar2, #0x0D80
+077E 00 82 0D 80 	lri  	ar2, #0x0D80  					// Do some fun
 0780 19 40       	lrri 	ar0, @ar2
 0781 19 43       	lrri 	ar3, @ar2
 0782 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
@@ -1525,6 +1736,9 @@ Example command packet (staring from command 0x0000)
 0791 1B 3E       	srri 	@ar1, ac0.m
 0792 00 E1 0E 42 	sr   	$0x0E42, ar1
 0794 02 DF       	ret  	
+
+## SRC [1]  - Linear interpolator
+
 0795 00 82 0B B8 	lri  	ar2, #0x0BB8
 0797 19 5E       	lrri 	ac0.m, @ar2
 0798 2E D1       	srs  	$(ACFMT), ac0.m
@@ -1610,7 +1824,7 @@ Example command packet (staring from command 0x0000)
 07E9 1C BF       	mrr  	ix1, ac1.m
 07EA 00 9A 01 FC 	lri  	ax1.l, #0x01FC
 07EC 00 9E 0E 49 	lri  	ac0.m, #0x0E49
-07EE 00 81 FF DD 	lri  	ar1, #0xFFDD
+07EE 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Accelerator data
 07F0 00 83 0D 80 	lri  	ar3, #0x0D80
 07F2 00 64 08 03 	bloop	ix0, $0x0803
 07F4 18 27       	lrr  	ix3, @ar1
@@ -1663,7 +1877,7 @@ Example command packet (staring from command 0x0000)
 0827 8D 00       	set15	                	     	
 0828 8B 00       	m0   	                	     	
 0829 8F 00       	set40	                	     	
-082A 00 C1 0E 42 	lr   	ar1, $0x0E42
+082A 00 C1 0E 42 	lr   	ar1, $0x0E42 				// ar1 = *0xE41
 082C 00 82 0D 80 	lri  	ar2, #0x0D80
 082E 81 00       	clr  	ac0             	     	
 082F 11 20 08 3B 	bloopi	#0x20, $0x083B
@@ -1678,14 +1892,14 @@ Example command packet (staring from command 0x0000)
 0839 B0 00       	mulx 	ax0.h, ax1.l    	     	
 083A FB 00       	addpaxz	ac1, ax1      	     	
 083B 81 39       	clr  	ac0             	s    	@ar1, ac1.m
-083C 00 E1 0E 42 	sr   	$0x0E42, ar1
+083C 00 E1 0E 42 	sr   	$0x0E42, ar1 				// *0xE41 = ar1
 083E 02 DF       	ret  	
 
-## 
+## SRC [2]  - No SRC (1:1)
 
 083F 00 82 0B B8 	lri  	ar2, #0x0BB8
 0841 19 5E       	lrri 	ac0.m, @ar2
-0842 2E D1       	srs  	$(ACFMT), ac0.m
+0842 2E D1       	srs  	$(ACFMT), ac0.m 					// 
 0843 19 5E       	lrri 	ac0.m, @ar2
 0844 2E D4       	srs  	$(ACSAH), ac0.m
 0845 19 5E       	lrri 	ac0.m, @ar2
@@ -1739,7 +1953,7 @@ Example command packet (staring from command 0x0000)
 0875 19 5E       	lrri 	ac0.m, @ar2
 0876 2E DC       	srs  	$(ACYN2), ac0.m
 0877 00 C0 0E 42 	lr   	ar0, $0x0E42
-0879 00 81 FF DD 	lri  	ar1, #0xFFDD
+0879 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Accelerator data
 087B 11 20 08 80 	bloopi	#0x20, $0x0880
 087D 18 24       	lrr  	ix0, @ar1
 087E 1B 04       	srri 	@ar0, ix0
@@ -1769,6 +1983,11 @@ Example command packet (staring from command 0x0000)
 089C 27 D8       	lrs  	ac1.m, $(ACCAH)
 089D 00 FF 0B BD 	sr   	$0x0BBD, ac1.m
 089F 02 DF       	ret  	
+
+## -----------------------------------------------------------------------------------------------------------------
+
+##
+
 08A0 02 DF       	ret  	
 
 ##
@@ -2362,28 +2581,28 @@ Example command packet (staring from command 0x0000)
 
 0CC8 01 1C     	0 					// Init(?)
 0CC9 01 D8  	1 
-0CCA 02 56 		2
+0CCA 02 56 		2 					// Setup Voice Parameters Block (0xExx variables)
 0CCB 02 FC 		3
-0CCC 05 4B 		4
-0CCD 05 5F 		5
-0CCE 01 FF 		6
-0CCF 06 AC 		7
+0CCC 05 4B 		4 					// Patch UCode 3 (0x780 bytes, starting 0x400) + sub_05BC(0x400)
+0CCD 05 5F 		5 					// Patch UCode 2 (0x780 bytes, starting 0x7C0) + sub_05BC(0x7C0)
+0CCE 01 FF 		6 					// Patch UCode (0x780 bytes)
+0CCF 06 AC 		7 					// Copy some buffers
 0CD0 0D 52 		8 					// Dma (not interesting)
-0CD1 01 F9 		9
+0CD1 01 F9 		9 					// sub_05BC(0x7C0)
 0CD2 05 B0  	0xa 				// Bogus
 0CD3 05 AC 		0xb 				// Bogus
 0CD4 05 AE 		0xc 				// Bogus
-0CD5 02 43 		0xd
+0CD5 02 43 		0xd 				// Reload command list at 0xc00, reset ar0
 0CD6 05 73 		0xe
 0CD7 05 B2 		0xf 				// Ax Tasks
 0CD8 0D CC 		0x10 				// Dma (not interesting)
-0CD9 02 0F 		0x11
-0CDA 00 82   	0x12
+0CD9 02 0F 		0x11 		// Read 0x280 bytes (Dmem 0xE48) and save with partially changing the sign in one array and with a change in sign (NEG) in another 2 arrays. Clear array 0x280.
+0CDA 00 82   	0x12  		// To test ABS instruction and some multiplications
 0CDB 0E 42 		0x13 				// Dma (not interesting)
 
 ## Jump Table 2
 
-0CDC 08 A0
+0CDC 08 A0 							// Bogus (ret)
 0CDD 08 A1
 0CDE 08 AD
 0CDF 08 B9
@@ -2391,7 +2610,7 @@ Example command packet (staring from command 0x0000)
 0CE1 08 D7
 0CE2 08 EE
 0CE3 09 05
-0CE4 08 A0
+0CE4 08 A0 							// Bogus (ret)
 0CE5 09 22
 0CE6 09 2F
 0CE7 09 3C
@@ -2399,11 +2618,14 @@ Example command packet (staring from command 0x0000)
 0CE9 09 5C
 0CEA 09 75
 0CEB 09 8E
-0CEC 08 A0
+
+## Jump Table 3 (Cmd2)
+
+0CEC 08 A0 							// Bogus (ret)
 0CED 09 AD
 0CEE 09 B9
 0CEF 09 C5
-0CF0 08 A0
+0CF0 08 A0 							// Bogus (ret)
 0CF1 09 D7
 0CF2 09 E4
 0CF3 09 F1
@@ -2415,11 +2637,11 @@ Example command packet (staring from command 0x0000)
 0CF9 0A 37
 0CFA 0A 44
 0CFB 0A 51
-0CFC 08 A0
+0CFC 08 A0 							// Bogus (ret)
 0CFD 09 AD
 0CFE 09 B9
 0CFF 09 C5
-0D00 08 A0
+0D00 08 A0 							// Bogus (ret)
 0D01 09 D7
 0D02 09 E4
 0D03 09 F1
@@ -2431,11 +2653,14 @@ Example command packet (staring from command 0x0000)
 0D09 0A 95
 0D0A 0A A3
 0D0B 0A B1
-0D0C 08 A0
+
+## Jump Table 4 (Cmd2)
+
+0D0C 08 A0 							// Bogus (ret)
 0D0D 0A BF
 0D0E 0A CB
 0D0F 0A D7
-0D10 08 A0
+0D10 08 A0 							// Bogus (ret)
 0D11 0A E9
 0D12 0A F6
 0D13 0B 03
@@ -2447,11 +2672,11 @@ Example command packet (staring from command 0x0000)
 0D19 0B 49
 0D1A 0B 56
 0D1B 0B 63
-0D1C 08 A0
+0D1C 08 A0 							// Bogus (ret)
 0D1D 0A BF
 0D1E 0A CB
 0D1F 0A D7
-0D20 08 A0
+0D20 08 A0 							// Bogus (ret)
 0D21 0A E9
 0D22 0A F6
 0D23 0B 03
@@ -2467,8 +2692,8 @@ Example command packet (staring from command 0x0000)
 0D2D 0B CF
 0D2E 0B DB
 0D2F 0B E7
-0D30 08 A0
-0D31 0B F9
+0D30 08 A0 							// Bogus (ret)
+0D31 0B F9 
 0D32 0C 06
 0D33 0C 13
 0D34 0B 16
@@ -2483,7 +2708,7 @@ Example command packet (staring from command 0x0000)
 0D3D 0B CF
 0D3E 0B DB
 0D3F 0B E7
-0D40 08 A0
+0D40 08 A0 							// Bogus (ret)
 0D41 0B F9
 0D42 0C 06
 0D43 0C 13
@@ -2495,15 +2720,24 @@ Example command packet (staring from command 0x0000)
 0D49 0C 9E
 0D4A 0C AC
 0D4B 0C BA
-0D4C 06 E0
-0D4D 07 95
-0D4E 08 3F
 
-## Some Table
+## Sample Rate Converter (SRC) Table
 
-0D4F 10 00
-0D50 12 00
-0D51 14 00
+0D4C 06 E0 								// 4-tap
+0D4D 07 95 								// linear
+0D4E 08 3F 								// none
+
+## Coef Table
+
+Looks like DROM coefficient memory addresses.
+
+Coef. to be used with 4-tap SRC.
+
+```
+0D4F 10 00 							// 8KHz low pass response
+0D50 12 00 							// 12.8KHz N64 type response
+0D51 14 00 							// 16KHz response
+```
 
 ## Command 8
 
@@ -2912,12 +3146,12 @@ Copy something to IMEM and DMEM
 
 ## Ax Tasks Handler
 
-## Jump Table 3
+## Jump Table
 
-0F30 0F 42
-0F31 0F 45
-0F32 0F 7D
-0F33 0F 80
+0F30 0F 42   				// Just reply Ready (finish command packet execution)
+0F31 0F 45  			// Load another task  (prepare parameters and call IROM LoadRunUcode procedure)
+0F32 0F 7D 				// Soft reset DSP
+0F33 0F 80 				// Wait another command packet
 
 ## SwitchAxTask
 

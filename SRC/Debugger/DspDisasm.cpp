@@ -346,6 +346,23 @@ namespace DSP
 			case DspHardwareRegs::ACYN2: text = "ACYN2"; break;
 			case DspHardwareRegs::ACGAN: text = "ACGAN"; break;
 
+			case DspHardwareRegs::ADPCM_A10: text = "ADPCM_A10"; break;
+			case DspHardwareRegs::ADPCM_A20: text = "ADPCM_A20"; break;
+			case DspHardwareRegs::ADPCM_A11: text = "ADPCM_A11"; break;
+			case DspHardwareRegs::ADPCM_A21: text = "ADPCM_A21"; break;
+			case DspHardwareRegs::ADPCM_A12: text = "ADPCM_A12"; break;
+			case DspHardwareRegs::ADPCM_A22: text = "ADPCM_A22"; break;
+			case DspHardwareRegs::ADPCM_A13: text = "ADPCM_A13"; break;
+			case DspHardwareRegs::ADPCM_A23: text = "ADPCM_A23"; break;
+			case DspHardwareRegs::ADPCM_A14: text = "ADPCM_A14"; break;
+			case DspHardwareRegs::ADPCM_A24: text = "ADPCM_A24"; break;
+			case DspHardwareRegs::ADPCM_A15: text = "ADPCM_A15"; break;
+			case DspHardwareRegs::ADPCM_A25: text = "ADPCM_A25"; break;
+			case DspHardwareRegs::ADPCM_A16: text = "ADPCM_A16"; break;
+			case DspHardwareRegs::ADPCM_A26: text = "ADPCM_A26"; break;
+			case DspHardwareRegs::ADPCM_A17: text = "ADPCM_A17"; break;
+			case DspHardwareRegs::ADPCM_A27: text = "ADPCM_A27"; break;
+
 			default:
 				text = "UnkHW_" + ToHexString((uint16_t)address);
 		}

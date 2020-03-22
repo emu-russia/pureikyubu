@@ -229,7 +229,7 @@ void AXRegisterCallback(AXUserCallback callback)
     1 NTSC frame 486000000 / 50 = 9720000 ticks per second
     1 PAL  frame 486000000 / 60 = 8100000 ticks per second
 
-    AX always plays 160 16-bit stereo samples per audio frame
+    AX always plays 160 16-bit stereo samples per audio frame (160 * 2 * 2 = 640 bytes)
     so AX frame length is 0.005 seconds for 32000 hz (5 msec)
     and 0.00333333333.. seconds for 48000 hz (4 msec)
 

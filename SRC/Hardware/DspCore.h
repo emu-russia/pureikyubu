@@ -143,78 +143,70 @@ namespace DSP
 
 	typedef struct _DspRegs
 	{
-		uint32_t clearingPaddy;		///< To use {0} on structure
-		uint16_t ar[4];		///< Addressing registers
-		uint16_t ix[4];		///< Indexing registers
-		uint16_t gpr[4];	///< General purpose (r8-r11)
-		std::vector<DspAddress> st[4];	///< Stack registers
-		DspLongAccumulator ac[2];		///< 40-bit Accumulators
-		DspShortAccumulator ax[2];		///< 32-bit Accumulators
-		DspProduct prod;		///< Product register
+		uint32_t clearingPaddy;		/// To use {0} on structure
+		uint16_t ar[4];		/// Addressing registers
+		uint16_t ix[4];		/// Indexing registers
+		uint16_t gpr[4];	/// General purpose (r8-r11)
+		std::vector<DspAddress> st[4];	/// Stack registers
+		DspLongAccumulator ac[2];		/// 40-bit Accumulators
+		DspShortAccumulator ax[2];		/// 32-bit Accumulators
+		DspProduct prod;		/// Product register
 		// https://github.com/dolphin-emu/dolphin/wiki/Zelda-Microcode#unknown-registers
-		uint16_t bank;		///< bank (lrs/srs)
-		DspStatus sr;		///< status
-		DspAddress pc;		///< Program counter
+		uint16_t bank;		/// bank (lrs/srs)
+		DspStatus sr;		/// status
+		DspAddress pc;		/// Program counter
 	} DspRegs;
 
 	enum class DspHardwareRegs
 	{
-		CMBH = 0xFFFE,		///< CPU->DSP Mailbox H 
-		CMBL = 0xFFFF,		///< CPU->DSP Mailbox L 
-		DMBH = 0xFFFC,		///< DSP->CPU Mailbox H 
-		DMBL = 0xFFFD,		///< DSP->CPU Mailbox L 
+		CMBH = 0xFFFE,		/// CPU->DSP Mailbox H 
+		CMBL = 0xFFFF,		/// CPU->DSP Mailbox L 
+		DMBH = 0xFFFC,		/// DSP->CPU Mailbox H 
+		DMBL = 0xFFFD,		/// DSP->CPU Mailbox L 
 
-		DSMAH = 0xFFCE,		///< Memory address H 
-		DSMAL = 0xFFCF,		///< Memory address L 
-		DSPA = 0xFFCD,		///< DSP memory address 
-		DSCR = 0xFFC9,		///< DMA control 
-		DSBL = 0xFFCB,		///< Block size 
+		DSMAH = 0xFFCE,		/// Memory address H 
+		DSMAL = 0xFFCF,		/// Memory address L 
+		DSPA = 0xFFCD,		/// DSP memory address 
+		DSCR = 0xFFC9,		/// DMA control 
+		DSBL = 0xFFCB,		/// Block size 
 
-		ACDAT2 = 0xFFD3,	///< Another accelerator data (R/W)
-		ACSAH = 0xFFD4,		///< Accelerator start address H 
-		ACSAL = 0xFFD5,		///< Accelerator start address L 
-		ACEAH = 0xFFD6,		///< Accelerator end address H 
-		ACEAL = 0xFFD7,		///< Accelerator end address L 
-		ACCAH = 0xFFD8,		///< Accelerator current address H 
-		ACCAL = 0xFFD9,		///< Accelerator current address L 
-		ACDAT = 0xFFDD,		///< Accelerator data
-		AMDM = 0xFFEF,		///< ARAM DMA Request Mask
-
-		DIRQ = 0xFFFB,		///< IRQ request
-
+		ACDAT2 = 0xFFD3,	/// Another accelerator data (R/W)
+		ACSAH = 0xFFD4,		/// Accelerator start address H 
+		ACSAL = 0xFFD5,		/// Accelerator start address L 
+		ACEAH = 0xFFD6,		/// Accelerator end address H 
+		ACEAL = 0xFFD7,		/// Accelerator end address L 
+		ACCAH = 0xFFD8,		/// Accelerator current address H 
+		ACCAL = 0xFFD9,		/// Accelerator current address L 
+		ACDAT = 0xFFDD,		/// Accelerator data
+		AMDM = 0xFFEF,		/// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
-
-		ACFMT = 0xFFD1,
-		ACPDS = 0xFFDA,
-		ACYN1 = 0xFFDB,
-		ACYN2 = 0xFFDC,
-		ACGAN = 0xFFDE,
-
-		// Unknown (FIR Filters?)
-
-		UNKNOWN_FFA0 = 0xFFA0,
-		UNKNOWN_FFA1 = 0xFFA1,
-		UNKNOWN_FFA2 = 0xFFA2,
-		UNKNOWN_FFA3 = 0xFFA3,
-		UNKNOWN_FFA4 = 0xFFA4,
-		UNKNOWN_FFA5 = 0xFFA5,
-		UNKNOWN_FFA6 = 0xFFA6,
-		UNKNOWN_FFA7 = 0xFFA7,
-		UNKNOWN_FFA8 = 0xFFA8,
-		UNKNOWN_FFA9 = 0xFFA9,
-		UNKNOWN_FFAA = 0xFFAA,
-		UNKNOWN_FFAB = 0xFFAB,
-		UNKNOWN_FFAC = 0xFFAC,
-		UNKNOWN_FFAD = 0xFFAD,
-		UNKNOWN_FFAE = 0xFFAE,
-		UNKNOWN_FFAF = 0xFFAF,
-
+		ACFMT = 0xFFD1,			/// sample format used
+		ACPDS = 0xFFDA,			/// predictor / scale combination
+		ACYN1 = 0xFFDB,			/// y[n - 1]
+		ACYN2 = 0xFFDC,			/// y[n - 2]
+		ACGAN = 0xFFDE,			/// gain to be applied (0 for ADPCM, 0x0800 for PCM8/16)
+		// ADPCM coef table
+		ADPCM_A10 = 0xFFA0,
+		ADPCM_A20 = 0xFFA1,
+		ADPCM_A11 = 0xFFA2,
+		ADPCM_A21 = 0xFFA3,
+		ADPCM_A12 = 0xFFA4,
+		ADPCM_A22 = 0xFFA5,
+		ADPCM_A13 = 0xFFA6,
+		ADPCM_A23 = 0xFFA7,
+		ADPCM_A14 = 0xFFA8,
+		ADPCM_A24 = 0xFFA9,
+		ADPCM_A15 = 0xFFAA,
+		ADPCM_A25 = 0xFFAB,
+		ADPCM_A16 = 0xFFAC,
+		ADPCM_A26 = 0xFFAD,
+		ADPCM_A17 = 0xFFAE,
+		ADPCM_A27 = 0xFFAF,
 		// Unknown
-
 		UNKNOWN_FFB0 = 0xFFB0,
 		UNKNOWN_FFB1 = 0xFFB1,
 
-		// TODO: What about sample-rate/ADPCM converter mentioned in patents/sdk?
+		DIRQ = 0xFFFB,		/// IRQ request
 	};
 
 	// Known DSP exceptions
@@ -229,6 +221,16 @@ namespace DSP
 		ACCOV,			// Accelerator address overflow
 		Unknown6,		// Trap?
 		INT,			// External interrupt (from CPU)
+	};
+
+	// Accelerator sample format
+
+	enum class AccelFormat
+	{
+		Unknown5 = 0x0005,		/// Seen in IROM
+		Pcm16 = 0x000A,			/// Signed 16 bit PCM mono
+		Pcm8 = 0x0019,			/// Signed 8 bit PCM mono
+		Adpcm = 0x0000,			/// ADPCM encoded (both standard & extended)
 	};
 
 	class DspInterpreter;
@@ -285,8 +287,34 @@ namespace DSP
 			} control;
 		} DmaRegs;
 
+		struct
+		{
+			uint16_t Fmt;					// Sample format
+			uint16_t AdpcmCoef[16];			
+			uint16_t AdpcmPds;				// predictor / scale combination
+			uint16_t AdpcmYn1;				// y[n - 1]
+			uint16_t AdpcmYn2;				// y[n - 2]
+			uint16_t AdpcmGan;				// gain to be applied
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			} StartAddress;
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			} EndAddress;
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			} CurrAddress;
+		} Accel;
+
 		void ResetIfx();
 		void DoDma();
+		uint16_t AccelReadData();
 
 	public:
 
