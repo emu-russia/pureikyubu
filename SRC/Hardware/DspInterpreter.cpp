@@ -777,30 +777,6 @@ namespace DSP
 
 	#pragma region "Multiplier Instructions"
 
-	void Madd32x16(int32_t a, int16_t b)
-	{
-	}
-
-	void Madd16x16(int16_t a, int16_t b)
-	{
-	}
-
-	void Msub32x16(int32_t a, int16_t b)
-	{
-	}
-
-	void Msub16x16(int16_t a, int16_t b)
-	{
-	}
-
-	void Mul16x16(int16_t a, int16_t b)
-	{
-	}
-
-	void Mul32x32(int32_t a, int32_t b)
-	{
-	}
-
 	void DspInterpreter::MADD(AnalyzeInfo& info)
 	{
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS
@@ -899,23 +875,25 @@ namespace DSP
 
 	void DspInterpreter::MULX(AnalyzeInfo& info)
 	{
-		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
-		//Part is selected by S and T bits. Zero selects low part, one selects high part.
-		//Mul16x16
+		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
+		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
+		core->PackProd(a * b);
 	}
 
 	void DspInterpreter::MULXAC(AnalyzeInfo& info)
 	{
-		//Add product register to accumulator register $acR. Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
-		//Part is selected by S and T bits. Zero selects low part, one selects high part. 
-		//Mul16x16
+		core->regs.ac[info.paramBits[2]].sbits += core->PackProd();
+		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
+		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
+		core->PackProd(a * b);
 	}
 
 	void DspInterpreter::MULXMV(AnalyzeInfo& info)
 	{
-		//Move product register to accumulator register $acR. Multiply one part $ax0 by one part $ax1 (treat them both as signed). 
-		//Part is selected by S and T bits. Zero selects low part, one selects high part. 
-		//Mul16x16
+		core->regs.ac[info.paramBits[2]].sbits = core->PackProd();
+		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
+		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
+		core->PackProd(a * b);
 	}
 
 	void DspInterpreter::MULXMVZ(AnalyzeInfo& info)
@@ -1151,7 +1129,7 @@ namespace DSP
 	int64_t DspInterpreter::SignExtend16(int16_t a)
 	{
 		int64_t res = a;
-		if ((res & 0x8000) && core->regs.sr.sxm)
+		if (res & 0x8000)
 		{
 			res |= 0xffffffffffff0000;
 		}
@@ -1403,9 +1381,9 @@ namespace DSP
 			//case DspInstruction::MULCMVZ: MULCMVZ(info); break;
 			//case DspInstruction::MULMV: MULMV(info); break;
 			//case DspInstruction::MULMVZ: MULMVZ(info); break;
-			//case DspInstruction::MULX: MULX(info); break;
-			//case DspInstruction::MULXAC: MULXAC(info); break;
-			//case DspInstruction::MULXMV: MULXMV(info); break;
+			case DspInstruction::MULX: MULX(info); break;
+			case DspInstruction::MULXAC: MULXAC(info); break;
+			case DspInstruction::MULXMV: MULXMV(info); break;
 			//case DspInstruction::MULXMVZ: MULXMVZ(info); break;
 
 			case DspInstruction::NOP:

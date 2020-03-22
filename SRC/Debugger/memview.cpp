@@ -44,6 +44,12 @@ static const char *charbyte(uint32_t addr)
 
 void con_update_dump_window()
 {
+    con_attr(7, 0);
+    for (int i = 0; i < wind.data_h; i++)
+    {
+        con_fill_line(wind.data_y + i, ' ');
+    }
+
     con_attr(0, 3);
     con_fill_line(wind.data_y, 0xc4);
     con_attr(0, 3);

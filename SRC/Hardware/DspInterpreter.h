@@ -179,8 +179,8 @@ namespace DSP
 
 		// Helpers
 
-		int64_t SignExtend40(int64_t);
-		int64_t SignExtend16(int16_t);
+		static int64_t SignExtend40(int64_t);
+		static int64_t SignExtend16(int16_t);
 		bool Condition(ConditionCode cc);
 		void Flags40(int64_t a, int64_t b, int64_t res);
 		void Flags(DspLongAccumulator a, DspLongAccumulator b, DspLongAccumulator res);

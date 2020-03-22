@@ -92,8 +92,8 @@ namespace DSP
 			unsigned unk12 : 1;
 			// Not actually status, but ALU control
 			unsigned am : 1;		/// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
-			unsigned sxm : 1;	/// Sign extension mode (0 = clr40, 1 = set40)  (16-bit operands only?)
-			unsigned su : 1;	/// Operands are signed (1 = unsigned) 
+			unsigned sxm : 1;	/// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
+			unsigned su : 1;	/// Operands are signed (1 = unsigned)
 		};
 
 		uint16_t bits;
@@ -368,6 +368,7 @@ namespace DSP
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
 		int64_t PackProd();
+		void PackProd(int64_t val);
 
 		// Memory engine
 

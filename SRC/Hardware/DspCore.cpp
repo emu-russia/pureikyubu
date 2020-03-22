@@ -404,9 +404,17 @@ namespace DSP
 				break;
 			case (int)DspRegister::ac0m:
 				regs.ac[0].m = val;
+				if (regs.sr.sxm)
+				{
+					regs.ac[0].h = (val & 0x8000) ? 0xFFFF : 0;
+				}
 				break;
 			case (int)DspRegister::ac1m:
 				regs.ac[1].m = val;
+				if (regs.sr.sxm)
+				{
+					regs.ac[1].h = (val & 0x8000) ? 0xFFFF : 0;
+				}
 				break;
 		}
 	}
@@ -483,6 +491,16 @@ namespace DSP
 			res |= 0xffffff0000000000;
 		}
 		return res;
+	}
+
+	void DspCore::PackProd(int64_t val)
+	{
+		DspLongAccumulator acc;
+		acc.sbits = val;
+		regs.prod.h = acc.h;
+		regs.prod.m2 = 0;
+		regs.prod.m1 = acc.m;
+		regs.prod.l = acc.l;
 	}
 
 	#pragma endregion "Register access"
@@ -589,6 +607,7 @@ namespace DSP
 
 				default:
 					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
+					Suspend();
 					break;
 			}
 			return 0;
@@ -602,6 +621,7 @@ namespace DSP
 		}
 
 		DBHalt("DSP Unmapped DMEM read 0x%04X\n", addr);
+		Suspend();
 		return 0;
 	}
 
@@ -630,9 +650,11 @@ namespace DSP
 
 				case (DspAddress)DspHardwareRegs::CMBH:
 					DBHalt("DSP is not allowed to write processor Mailbox!");
+					Suspend();
 					break;
 				case (DspAddress)DspHardwareRegs::CMBL:
 					DBHalt("DSP is not allowed to write processor Mailbox!");
+					Suspend();
 					break;
 				case (DspAddress)DspHardwareRegs::DMBH:
 					DspToCpuWriteHi(value);
@@ -740,6 +762,7 @@ namespace DSP
 
 				default:
 					DBHalt("DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					Suspend();
 					break;
 			}
 			return;
@@ -757,6 +780,7 @@ namespace DSP
 		}
 
 		DBHalt("DSP Unmapped DMEM write 0x%04X = 0x%04X\n", addr, value);
+		Suspend();
 	}
 
 	#pragma endregion "Memory Engine"
