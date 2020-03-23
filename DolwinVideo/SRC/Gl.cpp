@@ -304,7 +304,7 @@ static void GL_RenderTriangle(
     ApplyModelview(mv[2], v2->pos);
 
 #ifndef WIREFRAME
-    if(xfRegs.numtex)
+    if(xfRegs.numtex && tID[0])
     {
         glEnable(GL_TEXTURE_2D);
         glBindTexture(GL_TEXTURE_2D, tID[0]->bind);
@@ -325,7 +325,7 @@ static void GL_RenderTriangle(
             }
 
             // texture hack
-            if(xfRegs.numtex)
+            if(xfRegs.numtex && tID[0])
             {
                 DoTexGen(vn[v]);
                 tgout[0].out[0] *= tID[0]->ds;
