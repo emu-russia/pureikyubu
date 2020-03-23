@@ -33,7 +33,7 @@ namespace Debug
 
     void dsp_help()
     {
-        DBReport("--- dsp debug commands --------------------------------------------------------\n");
+        DBReport2(DbgChannel::Header, "## DSP Debug Commands\n");
         DBReport("    dspdisa              - Disassemble DSP code into text file\n");
         DBReport("    dregs                - Show DSP registers\n");
         DBReport("    dreg <reg> <value>   - Modify DSP register\n");

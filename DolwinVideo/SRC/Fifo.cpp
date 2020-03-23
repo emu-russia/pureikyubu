@@ -735,7 +735,7 @@ static uint32_t gx_needbytes(uint8_t cmd)
 
 static void GPCallList(uint8_t *fifoPtr, uint32_t count)
 {
-    uint8_t  *endptr  = &fifoPtr[count];
+    uint8_t  *endptr  = &fifoPtr[count & 0xffff];
     uint8_t  *readptr = fifoPtr;
     uint8_t  cmd;
 

@@ -13,7 +13,7 @@ namespace Debug
 
 	void hw_help()
 	{
-		DBReport("--- hw debug commands --------------------------------------------------------\n");
+		DBReport2(DbgChannel::Header, "## HW Debug Commands\n");
 		DBReport("    ramload              - Load binary file to main memory\n");
 		DBReport("    ramsave              - Save main memory content to file\n");
 		DBReport("    aramload             - Load binary file to ARAM\n");

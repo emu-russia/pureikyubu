@@ -51,7 +51,7 @@ void cmd_init_handlers()
 
 void cmd_help(std::vector<std::string>& args)
 {
-    DBReport(  "--- cpu debug commands --------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## cpu debug commands\n");
     DBReport( "    .                    - view code at pc\n");
     DBReport( "    *                    - view data, pointed by load/store opcode\n");
     DBReport( "    u                    - view code at specified address\n");
@@ -78,7 +78,7 @@ void cmd_help(std::vector<std::string>& args)
     Debug::hw_help();
     Debug::dsp_help();
 
-    DBReport(  "--- high-level commands -------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## high-level commands\n");
     DBReport( "    stat                 - show hardware state/statistics\n");
     DBReport( "    syms                 - list symbolic information\n");
     DBReport( "    name                 - name function (add symbol)\n");
@@ -91,7 +91,7 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    savemap              - save symbolic map into file\n");
     DBReport("\n");
 
-    DBReport(  "--- patch controls ------------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## Patch controls\n");
     DBReport( "    dop                  - apply patches immediately (only with freeze=1)\n");
     DBReport( "    plist                - list all patch data\n");
     DBReport( "    pload                - load patch file (unload previous)\n");
@@ -99,7 +99,7 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    patch                - insert memory patch\n");
     DBReport("\n");
 
-    DBReport(  "--- misc commands -------------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## Misc commands\n");
     DBReport( "    boot                 - boot DVD/executable (from file or list)\n");
     DBReport( "    reboot               - reload last file\n");
     DBReport( "    unload               - unload current file\n");
@@ -121,7 +121,7 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    [q]uit, e[x]it       - exit to OS\n");
     DBReport("\n");
 
-    DBReport(  "--- functional keys -----------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## Functional keys\n");
     DBReport( "    F1                   - update registers\n");
     DBReport( "    F2                   - memory view\n");
     DBReport( "    F3                   - disassembly\n");
@@ -135,7 +135,7 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    F12                  - skip instruction\n");
     DBReport("\n");
 
-    DBReport( "--- misc keys -----------------------------------------------------------------\n");
+    DBReport2(DbgChannel::Header, "## Misc keys\n");
     DBReport( "    PGUP, PGDN           - scroll windows\n");
     DBReport( "    ENTER, ESC           - follow/return branch (in disasm window)\n");
     DBReport( "    ENTER                - memory edit (in memview window)\n");

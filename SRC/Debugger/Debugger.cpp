@@ -35,6 +35,9 @@ static void db_report2(DbgChannel chan, const char* text, ...)
         case DbgChannel::Error:
             col = ConColor::BRED;
             break;
+        case DbgChannel::Header:
+            col = ConColor::CYAN;
+            break;
 
         case DbgChannel::CP:
             prefix = "CP : ";

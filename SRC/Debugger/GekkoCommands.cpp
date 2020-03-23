@@ -11,7 +11,7 @@ namespace Debug
 
 	void gekko_help()
 	{
-		DBReport("--- Gekko debug commands -----------------------------------------------------\n");
+		DBReport2(DbgChannel::Header, "## Gekko Debug Commands\n");
 		DBReport("    run                  - Run processor until break or stop\n");
 		DBReport("    stop                 - Stop processor execution\n");
 		DBReport("\n");

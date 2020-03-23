@@ -10,6 +10,7 @@ enum class DbgChannel
 	Norm,
 	Info,
 	Error,
+	Header,
 
 	CP,
 	PE,
