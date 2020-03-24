@@ -1,68 +1,14 @@
+// memory engine
 #include "pch.h"
 
 // shared data
 MEMControl mem;
-
-uint32_t (__fastcall *MEMEffectiveToPhysical)(uint32_t ea, bool IR); // translate
-
-// ---------------------------------------------------------------------------
-// memory sub-system management (init stuff)
-
-void MEMOpen(int mode)
-{
-    if(mem.opened)
-        return;
-
-    // select memory mode
-    MEMSelect(mode);
-
-    mem.opened = true;
-}
-
-void MEMClose()
-{
-    if(!mem.opened)
-        return;
-
-    mem.opened = false;
-}
-
-// ---------------------------------------------------------------------------
-// memory engine
-
-// forward referencies
-uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR=0);
-uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR=0);
-
-// select memory mode
-void MEMSelect(int mode, bool save)
-{
-    // select translation mode
-    if(mode)    // MMU
-    {
-        // set advanced translation
-        MEMEffectiveToPhysical = MMUEffectiveToPhysical;
-    }
-    else        // simple
-    {
-        // no mmu
-        MEMEffectiveToPhysical = GCEffectiveToPhysical;
-    }
-
-    // save variable
-    if(save)
-    {
-        mem.mmu = mode;
-    }
-}
 
 // ---------------------------------------------------------------------------
 // simple translation (only for Dolphin OS)
 
 uint32_t __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR)
 {
-    if(!mem.opened) return -1;
-
     // Required to run bootrom
     if (ea >= BOOTROM_START_ADDRESS)
     {
@@ -83,7 +29,7 @@ void __fastcall MEMReadByte(uint32_t addr, uint32_t *reg)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIReadByte(pa, reg);
 }
 
@@ -97,7 +43,7 @@ void __fastcall MEMWriteByte(uint32_t addr, uint32_t data)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIWriteByte(pa, data);
 }
 
@@ -111,7 +57,7 @@ void __fastcall MEMReadHalf(uint32_t addr, uint32_t *reg)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIReadHalf(pa, reg);
 }
 
@@ -126,7 +72,7 @@ void __fastcall MEMReadHalfS(uint32_t addr, uint32_t *reg)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIReadHalf(pa, reg);
     if (*reg & 0x8000) *reg |= 0xffff0000;
 }
@@ -141,7 +87,7 @@ void __fastcall MEMWriteHalf(uint32_t addr, uint32_t data)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIWriteHalf(pa, data);
 }
 
@@ -155,7 +101,7 @@ void __fastcall MEMReadWord(uint32_t addr, uint32_t *reg)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIReadWord(pa, reg);
 }
 
@@ -169,7 +115,7 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
         return;
     }
     
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIWriteWord(pa, data);
 }
 
@@ -197,7 +143,7 @@ void __fastcall MEMReadDouble(uint32_t addr, uint64_t *_reg)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIReadDouble(pa, _reg);
 }
 
@@ -220,7 +166,7 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *_data)
         return;
     }
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, false);
+    uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIWriteDouble(pa, _data);
 }
 
@@ -228,7 +174,7 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *_data)
 // return 1, if cannot fetch (no memory)
 void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode)
 {
-    uint32_t pa = MEMEffectiveToPhysical(addr, true);
+    uint32_t pa = GCEffectiveToPhysical(addr, true);
     MIReadWord(pa, opcode);
 }
 
@@ -251,7 +197,6 @@ static uint32_t *ibatl[4] = { &IBAT0L, &IBAT1L, &IBAT2L, &IBAT3L };
 uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
 {
     uint32_t pa;
-    if(!mem.opened) return -1;
 
     // ea = effective address
     // pa = physical address

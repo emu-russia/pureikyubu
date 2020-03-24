@@ -96,9 +96,10 @@ uint32_t LoadDOL(char *dolname)
         }
     }
 
-    HWConfig config = { 0 };
-    EMUGetHwConfig(&config);
-    BootROM(false, config.exi_rtc, config.consoleVer);
+    HWConfig * config = new HWConfig;
+    assert(config);
+    EMUGetHwConfig(config);
+    BootROM(false, config->exi_rtc, config->consoleVer, emu.core);
 
     // Setup registers
     SP = 0x816ffffc;
@@ -443,7 +444,11 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
         if(p->freeze || load)
         {
             uint32_t ea = MEMSwap(p->effectiveAddress);
-            uint32_t pa = MEMEffectiveToPhysical(ea, false);
+            uint32_t pa = -1;
+            if (emu.core)
+            {
+                pa = emu.core->EffectiveToPhysical(ea, true);
+            }
             if(pa == -1) continue;
 
             uint8_t * ptr = (uint8_t *)&mi.ram[pa], * data = (uint8_t *)(&(p->data));
@@ -667,9 +672,9 @@ static void DoLoadFile(char *filename)
     // simulate bootrom
     if (!bootrom)
     {
-        HWConfig config = { 0 };
-        EMUGetHwConfig(&config);
-        BootROM(ldat.dvd, config.exi_rtc, config.consoleVer);
+        HWConfig* config = new HWConfig;
+        EMUGetHwConfig(config);
+        BootROM(ldat.dvd, config->exi_rtc, config->consoleVer, emu.core);
         Sleep(10);
     }
 

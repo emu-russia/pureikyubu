@@ -76,14 +76,9 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
                 size *= 4;
 
                 // IRAM is mapped as the first 8 Kbytes of ARAM
-                memcpy(&dspCore->iram[aaddr], &mi.ram[maddr], size);
+                memcpy(&DspCore->iram[aaddr], &mi.ram[maddr], size);
 
                 DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", size);
-
-                // Dump it
-#if 0
-                FileSave("Data\\dsp_stub.bin", dspCore->iram, size);
-#endif
             }
             else
             {

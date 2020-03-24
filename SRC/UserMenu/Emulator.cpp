@@ -41,27 +41,6 @@ void EMUGetHwConfig(HWConfig * config)
     strcpy_s(config->DspIromFilename, sizeof(config->DspIromFilename), GetConfigString(USER_DSP_IROM, USER_DSP_IROM_DEFAULT));
 }
 
-// this function is called once, during Dolwin life-time
-void EMUInit()
-{
-    assert(!emu.loaded);
-    if(emu.initok == true) return;
-
-    MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
-    MEMSelect(0, 0);
-
-    emu.initok = true;
-}
-
-// this function is called last, during Dolwin life-time
-void EMUDie()
-{
-    assert(!emu.loaded);
-    if(emu.initok == false) return;
-
-    emu.initok = false;
-}
-
 // this function calls every time, after user loading new file
 void EMUOpen()
 {
@@ -71,20 +50,15 @@ void EMUOpen()
     OnMainWindowOpened();
 
     // open other sub-systems
-    MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
-    MEMSelect(mem.mmu, 0);
     emu.core = new Gekko::GekkoCore;
     assert(emu.core);
 
     HWConfig* hwconfig = new HWConfig;
     memset(hwconfig, 0, sizeof(HWConfig));
     EMUGetHwConfig(hwconfig);
-    HWOpen(hwconfig);
+    emu.hw = new Flipper::Flipper(hwconfig);
+    assert(emu.hw);
     delete hwconfig;
-
-    assert(GXOpen(mi.ram, wnd.hMainWindow));
-    assert(AXOpen());
-    assert(PADOpen());
 
     ReloadFile();   // PC will be set here
     HLEOpen();
@@ -100,16 +74,13 @@ void EMUClose()
     if (!emu.loaded)
         return;
 
+    HLEClose();
+
     delete emu.core;
     emu.core = nullptr;
 
-    // close other sub-systems
-    PADClose();
-    AXClose();
-    GXClose();
-    HLEClose();
-    HWClose();
-    MEMClose();
+    delete emu.hw;
+    emu.hw = nullptr;
 
     // take care about user interface
     OnMainWindowClosed();

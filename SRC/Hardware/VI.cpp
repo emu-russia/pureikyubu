@@ -71,7 +71,7 @@ void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
     uint32_t *rgbbuf = (uint32_t *)dib;
     int count = 320 * 480;
     
-    if(yuvbuf == NULL) return;
+    if(!yuvbuf || !rgbbuf) return;
 
     // simple blitting, without effects
     BeginProfileGfx();
@@ -382,12 +382,12 @@ void VIOpen(HWConfig * config)
     // open GDI (if need)
     if(vi.xfb)
     {
-        bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
-        if(!res)
-        {
-            DolwinReport("VI cant startup GDI");
-            vi.xfb = false;
-        }
+        //bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
+        //if(!res)
+        //{
+        //    DolwinReport("VI cant startup GDI");
+        //    vi.xfb = false;
+        //}
     }
 
     // set traps to VI registers

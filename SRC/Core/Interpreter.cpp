@@ -2,7 +2,7 @@
 #include "pch.h"
 
 // parse and execute single opcode
-void IPTExecuteOpcode()
+void IPTExecuteOpcode(Gekko::GekkoCore * core)
 {
     // execute one instruction
     // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
@@ -22,7 +22,7 @@ void IPTExecuteOpcode()
     }
 
     // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)
-    CPUTick();
+    core->Tick();
     if(cpu.branch)
     {
         if(cpu.decreq)

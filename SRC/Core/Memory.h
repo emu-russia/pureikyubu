@@ -10,6 +10,9 @@
 
 // ---------------------------------------------------------------------------
 
+extern uint32_t  __fastcall GCEffectiveToPhysical(uint32_t ea, bool IR = 0);
+extern uint32_t  __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR = 0);
+
 // memory read/write routines (thats all you need for CPU)
 void __fastcall MEMReadByte(uint32_t addr, uint32_t *reg);      // load byte
 void __fastcall MEMWriteByte(uint32_t addr, uint32_t data);     // store byte
@@ -21,9 +24,6 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data);     // store word
 void __fastcall MEMReadDouble(uint32_t addr, uint64_t *reg);    // load doubleword
 void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data);  // store doubleword
 void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode);
-
-// memory mapper API
-extern uint32_t(__fastcall *MEMEffectiveToPhysical)(uint32_t ea, bool IR); // translate
 
 // other memory APIs
 void    MEMOpen(int mode);                                      // open
@@ -40,9 +40,6 @@ void    MEMSwapAreaHalf(uint16_t *addr, int count);       // swap shorts
 // memory control/state block (all important data is here)
 typedef struct MEMControl
 {
-    // latch variables
-    bool        opened;             // opened ?
-
     // memory state
     int         mmu;                // translation mode (0: simple, 1: mmu)
     bool        ir, dr;             // remap request

@@ -24,7 +24,14 @@ static void con_function_key(int vkey, int ctrl)
         case VK_F5:
             if (emu.core)
             {
-                if (emu.core->IsRunning()) con_break();
+                if (emu.core->IsRunning())
+                {
+                    con_break();
+                }
+                else
+                {
+                    emu.core->Run();
+                }
             }
             break;
         case VK_F6:

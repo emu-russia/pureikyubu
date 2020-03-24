@@ -45,16 +45,13 @@ static void ReadFST()
 
 // execute apploader (apploader base is 0x81200000)
 // this is exact apploader emulation. it is safe and checked.
-static void BootApploader()
+static void BootApploader(Gekko::GekkoCore * core)
 {
     uint32_t     appHeader[8];           // apploader header information
     uint32_t     appSize;                // size of apploader image
     uint32_t     appEntryPoint;
     uint32_t     _prolog, _main, _epilog;
     uint32_t     offs, size, addr;       // return of apploader main
-
-    // disable hardware update
-    HWEnableUpdate(false);
 
     // I use prolog/epilog terms here, but Nintendo is using 
     // something weird, like : appLoaderFunc1 (see Zelda dump - it 
@@ -85,7 +82,7 @@ static void BootApploader()
     // execute entrypoint
     PC = appEntryPoint;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode();
+    while(PC) IPTExecuteOpcode(core);
 
     // get apploader interface offsets
     CPUReadWord(0x81300004, &_prolog);
@@ -99,7 +96,7 @@ static void BootApploader()
     GPR[3] = 0x81300000;            // OSReport callback as parameter
     PC = _prolog;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode();
+    while(PC) IPTExecuteOpcode(core);
 
     // execute apploader main
     do
@@ -111,7 +108,7 @@ static void BootApploader()
 
         PC = _main;
         PPC_LR = 0;
-        while(PC) IPTExecuteOpcode();
+        while(PC) IPTExecuteOpcode(core);
 
         CPUReadWord(0x81300004, &addr);
         CPUReadWord(0x81300008, &size);
@@ -131,10 +128,7 @@ static void BootApploader()
     // execute apploader epilog
     PC = _epilog;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode();
-
-    // enable hardware update
-    HWEnableUpdate(true);
+    while(PC) IPTExecuteOpcode(core);
 
     PC = GPR[3];
     DBReport("\n");
@@ -166,7 +160,7 @@ static void __SyncTime(bool rtc)
     DBReport2(DbgChannel::HLE, "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
 
-void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
+void BootROM(bool dvd, bool rtc, uint32_t consoleVer, Gekko::GekkoCore* core)
 {
     // set initial MMU state, according with BS2/Dolphin OS
     for(int sr=0; sr<16; sr++)              // unmounted
@@ -226,7 +220,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
         if(id[3] == 'P') CPUWriteWord(0x800000CC, 1);   // set to PAL
         else CPUWriteWord(0x800000CC, 0);
 
-        BootApploader();
+        BootApploader(core);
     }
     else
     {

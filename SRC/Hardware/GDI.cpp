@@ -15,9 +15,9 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
     BITMAPINFO* bmi;
     uint8_t     *DIBase;
 
-    DBReport2(DbgChannel::VI, "Windows DIB for video interface\n");
-
     if(gdi_init == TRUE) return TRUE;
+
+    DBReport2(DbgChannel::VI, "Windows DIB for video interface\n");
 
     bmi = (BITMAPINFO *)calloc(sizeof(BITMAPINFO) + 16*4, 1);
     if(bmi == NULL) return FALSE;
@@ -42,7 +42,9 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     free(bmi);
 
-    return (gdi_init = TRUE);
+    gdi_init = TRUE;
+
+    return TRUE;
 }
 
 void GDIClose(HWND hwnd)

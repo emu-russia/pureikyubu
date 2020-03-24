@@ -113,6 +113,12 @@ void con_ldst_info()
 
 void con_update_disa_window()
 {
+    uint32_t pa = -1;
+    if (emu.core)
+    {
+        pa = emu.core->EffectiveToPhysical(con.disa_cursor, true);
+    }
+
     con_attr(0, 3);
     con_fill_line(wind.disa_y, 0xc4);
     if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
@@ -121,7 +127,7 @@ void con_update_disa_window()
     con_printf_at(
         6, wind.disa_y, 
         " cursor:%08X phys:%08X pc:%08X", 
-        con.disa_cursor, MEMEffectiveToPhysical(con.disa_cursor, 0), PC);
+        pa, PC);
     con_attr(7, 0);
 
     con_ldst_info();
@@ -172,7 +178,11 @@ static void disa_navigate()
     PPCD_CB    disa;
     uint32_t op = 0, addr = con.disa_cursor;
 
-    uint32_t pa = MEMEffectiveToPhysical(addr, 0);
+    uint32_t pa = -1;
+    if (emu.core)
+    {
+        pa = emu.core->EffectiveToPhysical(addr, true);
+    }
     if(pa != -1) MEMFetch(pa, &op);
     if(op == 0) return;
 

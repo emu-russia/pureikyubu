@@ -59,23 +59,6 @@ void CPUOpen()
     MSR &= ~(MSR_DR | MSR_IR);
 }
 
-// modify CPU counters
-void CPUTick()
-{
-    UTBR++;         // timer
-
-    uint32_t old = PPC_DEC;
-    PPC_DEC--;          // decrementer
-    if((old ^ PPC_DEC) & 0x80000000)
-    {
-        if(MSR & MSR_EE)
-        {
-            cpu.decreq = 1;
-            DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
-        }
-    }
-}
-
 namespace Gekko
 {
     DWORD WINAPI GekkoCore::GekkoThreadProc(LPVOID lpParameter)
@@ -84,7 +67,7 @@ namespace Gekko
 
         while (true)
         {
-            IPTExecuteOpcode();
+            IPTExecuteOpcode(core);
         }
     }
 
@@ -120,9 +103,31 @@ namespace Gekko
         }
     }
 
+    // Modify CPU counters
+    void GekkoCore::Tick()
+    {
+        UTBR += CounterStep;         // timer
+
+        uint32_t old = PPC_DEC;
+        PPC_DEC--;          // decrementer
+        if ((old ^ PPC_DEC) & 0x80000000)
+        {
+            if (MSR & MSR_EE)
+            {
+                cpu.decreq = 1;
+                DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
+            }
+        }
+    }
+
     int64_t GekkoCore::GetTicks()
     {
         return cpu.tb.sval;
+    }
+
+    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, bool IR)
+    {
+        return GCEffectiveToPhysical(ea, IR);
     }
 
 }

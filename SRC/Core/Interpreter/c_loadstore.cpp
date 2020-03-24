@@ -423,7 +423,7 @@ OP(LWARX)
     uint32_t ea = RRB;
     if(RA) ea += RRA;
     cpu.RESERVE = true;
-    cpu.RESERVE_ADDR = MEMEffectiveToPhysical(ea, 0);
+    cpu.RESERVE_ADDR = GCEffectiveToPhysical(ea, 0);
     CPUReadWord(ea, &RRD);
 }
 

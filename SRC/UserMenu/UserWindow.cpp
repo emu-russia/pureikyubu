@@ -333,9 +333,6 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainWindow = hwnd;
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
-    // take care about emulator
-    EMUInit();
-
     // run once ?
     if(GetConfigInt(USER_RUNONCE, USER_RUNONCE_DEFAULT))
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
@@ -415,7 +412,6 @@ static void OnMainWindowDestroy()
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 
     EMUClose();     // completely close the Dolwin
-    EMUDie();
     exit(1);        // return good
 }
 

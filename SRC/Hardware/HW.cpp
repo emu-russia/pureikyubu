@@ -2,9 +2,7 @@
 // IMPORTANT: whole HW should use physical CPU addressing, not effective!
 #include "pch.h"
 
-static bool hw_assert;      // assert on not implemented HW in non DEBUG
-static bool update;         // 1: HW update enabled
-DSP::DspCore* dspCore;      // instance of dsp core
+DSP::DspCore* DspCore;      // instance of dsp core
 
 // ---------------------------------------------------------------------------
 // init and update
@@ -27,20 +25,18 @@ void HWOpen(HWConfig* config)
     SIOpen();       // GC controllers
     PIOpen(config); // interrupts, console regs
 
-    dspCore = new DSP::DspCore(config);
-    assert(dspCore);
-
-    HWEnableUpdate(1);
+    DspCore = new DSP::DspCore(config);
+    assert(DspCore);
 
     DBReport("\n");
 }
 
 void HWClose()
 {
-    if (dspCore)
+    if (DspCore)
     {
-        delete dspCore;
-        dspCore = nullptr;
+        delete DspCore;
+        DspCore = nullptr;
     }
 
     ARClose();      // release ARAM
@@ -54,27 +50,37 @@ void HWClose()
 // we are using OS time (TBR), as counter basis.
 void HWUpdate()
 {
-    if(update)
-    {
-        // check for pending interrupts
-        PICheckInterrupts();
+    // check for pending interrupts
+    PICheckInterrupts();
 
-        // update joypads and video
-        VIUpdate();     // PADs are updated there (SIPoll)
-        CPUpdate();     // GX fifo
+    // update joypads and video
+    VIUpdate();     // PADs are updated there (SIPoll)
+    CPUpdate();     // GX fifo
 
-        // update audio and DSP
-        BeginProfileSfx();
-        AIUpdate();
-        //dspCore->Update();        // Updated by own thread
-        EndProfileSfx();
+    // update audio and DSP
+    BeginProfileSfx();
+    AIUpdate();
+    //dspCore->Update();        // Updated by own thread
+    EndProfileSfx();
 
-        //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));
-    }
+    //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));
 }
 
-// allow/disallow HW update
-void HWEnableUpdate(bool en)
+namespace Flipper
 {
-    update = en;
+    Flipper::Flipper(HWConfig* config)
+    {
+        HWOpen(config);
+        assert(GXOpen(mi.ram, wnd.hMainWindow));
+        assert(AXOpen());
+        assert(PADOpen());
+    }
+
+    Flipper::~Flipper()
+    {
+        PADClose();
+        AXClose();
+        GXClose();
+        HWClose();
+    }
 }

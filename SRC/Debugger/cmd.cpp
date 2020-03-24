@@ -174,7 +174,6 @@ void cmd_exit(std::vector<std::string>& args)
     con_refresh();
     Sleep(10);
     EMUClose();
-    EMUDie();
     exit(0);
 }
 
@@ -201,7 +200,11 @@ void cmd_blr(std::vector<std::string>& args)
         if(emu.loaded) return;
 
         uint32_t ea = con.disa_cursor;
-        uint32_t pa = MEMEffectiveToPhysical(ea, 0);
+        uint32_t pa = -1;
+        if (emu.core)
+        {
+            pa = emu.core->EffectiveToPhysical(ea, true);
+        }
         if(pa == -1) return;
 
         uint32_t op = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
@@ -564,7 +567,14 @@ void cmd_lr(std::vector<std::string>& args)
                                       i+1, disa.mnemonic, disa.operands );
             }
             MEMReadWord(sp, &sp);           // walk stack
-            if(!sp || MEMEffectiveToPhysical(sp, 0) == -1) break;
+
+            uint32_t pa = -1;
+            if (emu.core)
+            {
+                pa = emu.core->EffectiveToPhysical(sp, true);
+            }
+
+            if(!sp || pa == -1) break;
         }
         #undef MAX_LEVEL
     }
@@ -592,7 +602,11 @@ void cmd_name(std::vector<std::string>& args)
         if(args[1].c_str()[0] == '*')
         {
             uint32_t branchAddr = con.disa_cursor, op;
-            uint32_t pa = MEMEffectiveToPhysical(branchAddr, 0);
+            uint32_t pa = -1;
+            if (emu.core)
+            {
+                pa = emu.core->EffectiveToPhysical(branchAddr, true);
+            }
             if(pa != -1)
             {
                 PPCD_CB disa;
@@ -644,7 +658,11 @@ void cmd_nop(std::vector<std::string>& args)
     if(!emu.loaded) return;
 
     uint32_t ea = con.disa_cursor;
-    uint32_t pa = MEMEffectiveToPhysical(ea, 0);
+    uint32_t pa = -1;
+    if (emu.core)
+    {
+        pa = emu.core->EffectiveToPhysical(ea, true);
+    }
     if(pa == -1) return;
     
     uint32_t old = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
@@ -660,7 +678,11 @@ void cmd_denop(std::vector<std::string>& args)
     if(!emu.loaded) return;
 
     uint32_t ea = con.disa_cursor;
-    uint32_t pa = MEMEffectiveToPhysical(ea, 0);
+    uint32_t pa = -1;
+    if (emu.core)
+    {
+        pa = emu.core->EffectiveToPhysical(ea, true);
+    }
     if(pa == -1) return;
 
     uint32_t old = get_nop(ea);
@@ -1012,7 +1034,11 @@ void cmd_sop(std::vector<std::string>& args)
         {
             PPCD_CB disa;
             uint32_t op = 0;
-            uint32_t pa = MEMEffectiveToPhysical(saddr, 0);
+            uint32_t pa = -1;
+            if (emu.core)
+            {
+                pa = emu.core->EffectiveToPhysical(saddr, true);
+            }
             if(pa != -1) MEMFetch(pa, &op);
             disa.instr = op;
             disa.pc = saddr;

@@ -209,9 +209,6 @@ extern void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
 extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
 extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 
-// controls
-void    CPUTick();                  // modify counters
-
 // there is no need in CPUStop
 
 // CPU control/state block (all important data is here)
@@ -250,6 +247,8 @@ namespace Gekko
 {
     class GekkoCore
     {
+        static const int CounterStep = 5;
+
         HANDLE threadHandle = INVALID_HANDLE_VALUE;
         DWORD threadId = 0;
 
@@ -265,7 +264,11 @@ namespace Gekko
         bool IsRunning() { return running; }
         void Suspend();
 
+        void Tick();
         int64_t GetTicks();
+
+        // translate
+        uint32_t EffectiveToPhysical(uint32_t ea, bool IR); 
 
     };
 }

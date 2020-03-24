@@ -147,7 +147,7 @@ void HLEExecuteCallback(uint32_t entryPoint)
     uint32_t old = PPC_LR;
     PC = entryPoint;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode();
+    //TODO: while(PC) IPTExecuteOpcode();
     PC = PPC_LR = old;
 }
 

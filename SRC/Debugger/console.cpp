@@ -202,7 +202,7 @@ void con_command(std::vector<std::string>& args, int lnum)
 // step into instruction
 void con_step_into()
 {
-    IPTExecuteOpcode();
+    IPTExecuteOpcode(emu.core);
     con.text = PC - 4 * wind.disa_h / 2 + 4;
     con.update |= CON_UPDATE_ALL;
 }
