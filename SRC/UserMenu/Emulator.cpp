@@ -52,8 +52,6 @@ void EMUOpen()
     if (emu.loaded)
         return;
 
-    OnMainWindowOpened();
-
     // open other sub-systems
     emu.core = new Gekko::GekkoCore;
     assert(emu.core);
@@ -67,6 +65,8 @@ void EMUOpen()
 
     ReloadFile();   // PC will be set here
     HLEOpen();
+
+    OnMainWindowOpened();
 
     emu.loaded = true;
 

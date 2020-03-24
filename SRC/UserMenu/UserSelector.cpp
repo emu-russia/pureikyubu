@@ -1098,6 +1098,7 @@ void CreateSelector()
     if(usel.opened) return;
 
     usel.updateInProgress = false;
+    usel.filesLock = MySpinLock::LOCK_IS_FREE;
 
     HWND parent = wnd.hMainWindow;
     HINSTANCE hinst = GetModuleHandle(NULL);

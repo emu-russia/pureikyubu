@@ -1731,7 +1731,7 @@ Called from IPL, CardUnlock
 8666 03 60 80 00 	ori  	ac1.m, #0x8000
 8668 2F D8       	srs  	$(ACCAH), ac1.m
 8669 2D D9       	srs  	$(ACCAL), ac1.l
-866A 00 80 FF D3 	lri  	ar0, #0xFFD3
+866A 00 80 FF D3 	lri  	ar0, #0xFFD3 					// RAW accelerator data (R/W)
 866C 00 84 00 00 	lri  	ix0, #0x0000
 866E 00 DF 04 03 	lr   	ac1.m, $0x0403
 8670 03 C0 00 01 	tset 	ac1.m, #0x0001
@@ -1741,11 +1741,11 @@ Called from IPL, CardUnlock
 8676 00 9B 00 18 	lri  	ax1.h, #0x0018
 8678 81 79       	clr  	ac0             	l    	ac1.m, @ar1
 8679 00 66 86 7F 	bloop	ix2, $0x867F
-867B 35 BC       	andr 	ac1.m, ax0.h    	lsnm 	ax1.h, ac0.m
-867C 37 93       	andr 	ac1.m, ax1.h    	sl   	ac1.m, ax0.h
-867D F5 00       	lsr16	ac1             	     	
-867E 70 17       	addaxl	ac0, ax0.l     	mv   	ax0.h, ac1.m
-867F 72 79       	addaxl	ac0, ax1.l     	l    	ac1.m, @ar1
+	867B 35 BC       	andr 	ac1.m, ax0.h    	lsnm 	ax1.h, ac0.m
+	867C 37 93       	andr 	ac1.m, ax1.h    	sl   	ac1.m, ax0.h
+	867D F5 00       	lsr16	ac1             	     	
+	867E 70 17       	addaxl	ac0, ax0.l     	mv   	ax0.h, ac1.m
+	867F 72 79       	addaxl	ac0, ax1.l     	l    	ac1.m, @ar1
 8680 02 9C 86 85 	jnok  	$0x8685
 8682 35 BC       	andr 	ac1.m, ax0.h    	lsnm 	ax1.h, ac0.m
 8683 1F 1F       	mrr  	ax0.l, ac1.m

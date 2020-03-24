@@ -605,6 +605,11 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::ACGAN:
 					return Accel.AdpcmGan;
 
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					return AccelReadData(true);
+				case (DspAddress)DspHardwareRegs::ACDAT:
+					return AccelReadData(false);
+
 				default:
 					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
 					Suspend();
@@ -704,6 +709,10 @@ namespace DSP
 					break;
 				case (DspAddress)DspHardwareRegs::ACGAN:
 					Accel.AdpcmGan = value;
+					break;
+
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					AccelWriteData(value);
 					break;
 
 				case (DspAddress)DspHardwareRegs::ADPCM_A00:
