@@ -1,3 +1,10 @@
+// color type
+typedef union
+{
+    struct { uint8_t     A, B, G, R; };
+    uint32_t     RGBA;
+} Color;
+
 // current vertex data, to renderer
 typedef struct
 {
@@ -53,8 +60,5 @@ typedef struct
     void    (*SetCullMode)(int mode);
 } Renderer;
 
-extern  Renderer *gfx;
-
 void    GPFrameDone();
 extern  BOOL      frame_done;
-

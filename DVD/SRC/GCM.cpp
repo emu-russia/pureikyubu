@@ -57,7 +57,10 @@ void GCMRead(uint8_t*buf, int length)
     FILE* gcm_file;
 
     if (gcm_filename[0] == 0)
+    {
+        memset(buf, 0, length);        // fill by zeroes
         return;
+    }
 
     fopen_s(&gcm_file, gcm_filename, "rb");
 

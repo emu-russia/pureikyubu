@@ -25,11 +25,6 @@ void __fastcall MEMReadDouble(uint32_t addr, uint64_t *reg);    // load doublewo
 void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data);  // store doubleword
 void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode);
 
-// other memory APIs
-void    MEMOpen(int mode);                                      // open
-void    MEMClose();                                             // close
-void    MEMSelect(int mode, bool save=true);                    // select translation mode
-
 extern "C" uint32_t __fastcall MEMSwap(uint32_t data);          // swap long
 extern "C" uint16_t __fastcall MEMSwapHalf(uint16_t data);      // swap short
 void    MEMSwapArea(uint32_t *addr, int count);           // swap longs

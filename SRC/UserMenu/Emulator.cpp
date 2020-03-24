@@ -65,7 +65,10 @@ void EMUOpen()
 
     emu.loaded = true;
 
-    emu.core->Run();
+    if (!emu.doldebug)
+    {
+        emu.core->Run();
+    }
 }
 
 // this function calls every time, after user stops emulation

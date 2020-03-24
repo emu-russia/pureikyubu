@@ -38,8 +38,9 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
     hwndMain = _hwndMain;
 
     RAM = ramPtr;
-    gfx = &ogl;         // hack : select opengl as default
-    res = gfx->OpenSubsystem(hwndMain);
+
+    res = ogl.OpenSubsystem(_hwndMain);
+    assert(res);
 
     // vertex programs extension
     //SetupVertexShaders();
@@ -60,15 +61,13 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
 
     gxOpened = true;
 
-    return res;
+    return true;
 }
 
 void GXClose()
 {
     if (!gxOpened)
         return;
-
-    gfx->CloseSubsystem();
 
     TexFree();
 

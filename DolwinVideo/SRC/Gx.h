@@ -15,13 +15,7 @@
 #include <gl/gl.h>
 #include <gl/glu.h>
 #include <intrin.h>
-
-// color type
-typedef union
-{
-    struct { uint8_t     A, B, G, R; };
-    uint32_t     RGBA;
-} Color;
+#include <assert.h>
 
 // other project includes
 #include "Config.h"

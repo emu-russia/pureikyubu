@@ -1,6 +1,8 @@
 // default C interpreter (opcode parser)
 #include "pch.h"
 
+int HwUpdateTimeout = 100;
+
 // parse and execute single opcode
 void IPTExecuteOpcode(Gekko::GekkoCore * core)
 {
@@ -17,7 +19,12 @@ void IPTExecuteOpcode(Gekko::GekkoCore * core)
     // time to update HW (possible CPU_EXCEPTION_INTERRUPT)
     if(cpu.branch)
     {
-        HWUpdate();
+        HwUpdateTimeout--;
+        if (HwUpdateTimeout == 0)
+        {
+            HwUpdateTimeout = 100;
+            HWUpdate();
+        }
         if(cpu.exception) goto JumpPC;
     }
 

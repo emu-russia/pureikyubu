@@ -326,9 +326,6 @@ void ModifySelectorControls(bool active)
 // called once, during main window creation
 static void OnMainWindowCreate(HWND hwnd)
 {
-    // set loading cursor
-    SetCursor(LoadCursor(NULL, IDC_WAIT));
-
     // save handlers
     wnd.hMainWindow = hwnd;
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
@@ -400,9 +397,6 @@ static void OnMainWindowCreate(HWND hwnd)
 
     // simulate close operation, like we just stopped emu
     OnMainWindowClosed();
-
-    // set cursor back to normal
-    SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 // called once, when Dolwin exits to OS
@@ -441,9 +435,6 @@ void OnMainWindowOpened()
 
     // user profiler
     OpenProfiler(GetConfigInt(USER_PROFILE, USER_PROFILE_DEFAULT));
-
-    // set cursor back to normal
-    SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 // emulation stop in progress

@@ -44,7 +44,11 @@ void DVDSeek(int position)
 void DVDRead(void *buffer, int length)
 {
     // DVD is not selected
-    if(!dvd.selected) return;
+    if (!dvd.selected)
+    {
+        memset(buffer, 0, length);        // fill by zeroes
+        return;
+    }
 
     GCMRead((uint8_t *)buffer, length);
 }

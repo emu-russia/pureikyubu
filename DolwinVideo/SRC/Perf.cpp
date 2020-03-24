@@ -10,14 +10,14 @@ void PerfInit()
     HANDLE hRes, hResLoad;
 
     FILE* f = fopen("Data\\FONT.BMP", "rb");
-    VERIFY(f == NULL);
+    assert(f);
 
     fseek(f, 0, SEEK_END);
     int fontSize = ftell(f);
     fseek(f, 0, SEEK_SET);
 
     fontbuf = new uint8_t [fontSize];
-    VERIFY(fontbuf == NULL);
+    assert(fontbuf);
 
     fread(fontbuf, 1, fontSize, f);
     fclose(f);
@@ -58,8 +58,8 @@ void PerfPrintf(int x, int y, const char *fmt, ...)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glEnable(GL_TEXTURE_2D);
 
-    gfx->SetViewport(0, 0, 640, 480, 1, 16777215.0f);
-    gfx->SetScissor(0, 0, 640, 480);
+    ogl.SetViewport(0, 0, 640, 480, 1, 16777215.0f);
+    ogl.SetScissor(0, 0, 640, 480);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();

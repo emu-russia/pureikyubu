@@ -801,6 +801,6 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
 
 void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt)
 {
-    VERIFY(tmem >= sizeof(tlut));
+    assert(tmem < sizeof(tlut));
     memcpy(&tlut[tmem], &RAM[addr], cnt * 16 * 2);
 }
