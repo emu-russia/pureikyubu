@@ -114,7 +114,7 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
         *(uint32_t*)ptr = MEMSwap(data);
         return;
     }
-    
+   
     uint32_t pa = GCEffectiveToPhysical(addr, false);
     MIWriteWord(pa, data);
 }

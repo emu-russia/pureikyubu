@@ -100,6 +100,8 @@ typedef struct VIControl
 
     HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks
+
+    bool        videoEncoderFuse;
 } VIControl;
 
 extern  VIControl vi;

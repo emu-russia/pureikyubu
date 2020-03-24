@@ -16,6 +16,10 @@ void EMUGetHwConfig(HWConfig * config)
     config->vi_stretch = GetConfigInt(USER_VI_STRETCH, USER_VI_STRETCH_DEFAULT) & 1;
     config->vcount = GetConfigInt(USER_VI_COUNT, USER_VI_COUNT_DEFAULT);
 
+    // There is Fuse on the motherboard, which determines the video encoder mode. 
+    // Some games test it in VIConfigure and try to set the mode according to Fuse. But the program code does not allow this (example - Zelda PAL Version)
+    config->videoEncoderFuse = ldat.gameID[3] == 'P' ? 0 : 1;
+
     config->rswhack = GetConfigInt(USER_PI_RSWHACK, USER_PI_RSWHACK_DEFAULT) & 1;
     config->consoleVer = GetConfigInt(USER_CONSOLE, USER_CONSOLE_DEFAULT);
 

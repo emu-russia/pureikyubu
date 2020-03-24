@@ -17,6 +17,7 @@ typedef struct _HWConfig
     bool        vi_xfb;
     bool        vi_stretch;
     uint32_t    vcount;
+    bool        videoEncoderFuse;       // 1 - PAL, 0 - NTSC
 
     // PI
     uint32_t    consoleVer;
