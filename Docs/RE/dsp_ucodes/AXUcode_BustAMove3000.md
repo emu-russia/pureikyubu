@@ -2818,27 +2818,30 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 
 ## Jump Table 1  (Command)
 
+// https://blog.lse.epita.fr/articles/38-emulating-the-gamecube-audio-processing-in-dolphin.html
+// https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/Core/HW/DSPHLE/UCodes/AX.h
+
 ```
 0CC8 01 1C     	0 					// Init(?)
-0CC9 01 D8  	1 
+0CC9 01 D8  	1  					// Download and Volume Mix
 0CCA 02 56 		2 					// Setup Voice Parameters Block
 0CCB 02 FC 		3 					// Mixer
-0CCC 05 4B 		4 					// CopyOut 3 (0x780 bytes, starting 0x400) + sub_05BC(0x400)
-0CCD 05 5F 		5 					// CopyOut 2 (0x780 bytes, starting 0x7C0) + sub_05BC(0x7C0)
-0CCE 01 FF 		6 					// CopyOut (0x780 bytes)
-0CCF 06 AC 		7 					// Setup STEREO. Load and process 640B Frame buffer
+0CCC 05 4B 		4 					// MIX_AUXA. CopyOut 3 (0x780 bytes, starting 0x400) + sub_05BC(0x400)
+0CCD 05 5F 		5 					// MIX_AUXB. CopyOut 2 (0x780 bytes, starting 0x7C0) + sub_05BC(0x7C0)
+0CCE 01 FF 		6 					// UPLOAD_LRS. CopyOut (0x780 bytes = 640 * 3)
+0CCF 06 AC 		7 					// CMD_SET_LR. Setup STEREO. Load and process 640B Frame buffer
 0CD0 0D 52 		8 					// Dma
-0CD1 01 F9 		9 					// sub_05BC(0x7C0)
+0CD1 01 F9 		9 					// CMD_MIX_AUXB_NOWRITE. sub_05BC(0x7C0)
 0CD2 05 B0  	0xa 				// Bogus
 0CD3 05 AC 		0xb 				// Bogus
 0CD4 05 AE 		0xc 				// Bogus
 0CD5 02 43 		0xd 				// Reload command list at 0xc00, reset ar0
-0CD6 05 73 		0xe 				// Copy out 640B + 640B bytes (2 Frames)
+0CD6 05 73 		0xe 				// OUTPUT. interlaces L/R channel, clamp to 16 bits and send to RAM. Copy out 640B + 640B bytes (2 Frames)
 0CD7 05 B2 		0xf 				// Ax Tasks
-0CD8 0D CC 		0x10 				// AUX Related Dma
-0CD9 02 0F 		0x11 				// Setup SURROUND. Load and process 640B Frame buffer
+0CD8 0D CC 		0x10 				// CMD_MIX_AUXB_LR. AUX Related Dma
+0CD9 02 0F 		0x11 				// CMD_SET_OPPOSITE_LR. Setup SURROUND. Load and process 640B Frame buffer
 0CDA 00 82   	0x12  				// To test ABS instruction and some multiplications :p
-0CDB 0E 42 		0x13 				// Copy something from DRAM to MMEM
+0CDB 0E 42 		0x13 				// CMD_SEND_AUX_AND_MIX. Copy something from DRAM to MMEM
 ```
 
 ## Jump Table 2

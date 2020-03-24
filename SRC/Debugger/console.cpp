@@ -147,6 +147,9 @@ void con_close()
     con.active = FALSE;
 }
 
+static void dummy(const char* text, ...) {}
+static void dummy2(DbgChannel chan, const char* text, ...) {}
+
 void con_start()
 {
     uint32_t main = SYMAddress("main");
@@ -156,18 +159,26 @@ void con_start()
     con.update = CON_UPDATE_ALL;
     con_refresh();
 
-    for(;;)
+    while (!con.exitPending)
     {
         con_read_input(1);
         con_refresh();
         Sleep(10);
     }
+
+    con_close();
+
+    DBHalt = dummy;
+    DBReport = dummy;
+    DBReport2 = dummy2;
+
+    con.exitPending = false;
 }
 
 void con_break(const char *reason)
 {
     if(reason) con_print(ConColor::GREEN, "\ndebugger breaks%s. press F5 to continue.\n", reason);
-    if(emu.running) emu.running = false;
+    if (emu.core) emu.core->Suspend();
     con_set_disa_cur(PC);
 }
 
@@ -184,4 +195,14 @@ void con_command(std::vector<std::string>& args, int lnum)
         if (lnum) con_print(ConColor::NORM, "unknown script command in line %i, see \'help\'", lnum);
         else con_print(ConColor::NORM, "unknown command, try \'help\'");
     }
+}
+
+// execution
+
+// step into instruction
+void con_step_into()
+{
+    IPTExecuteOpcode();
+    con.text = PC - 4 * wind.disa_h / 2 + 4;
+    con.update |= CON_UPDATE_ALL;
 }

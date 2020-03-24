@@ -372,7 +372,7 @@ void con_update(uint32_t mask)
 {
     if(!con.active) return;
 
-    if(!emu.running)
+    if(!emu.loaded)
     {
         con.update |= mask;
         return;

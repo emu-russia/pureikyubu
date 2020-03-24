@@ -115,6 +115,32 @@ char * FixCommandLine(char *lpCmdLine)
 // keyboard accelerators (no need to be shared)
 HACCEL  hAccel;
 
+// Gui update thread
+DWORD WINAPI GuiUpdateThreadProc(LPVOID lpParameter)
+{
+    hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
+
+    // init emu and user interface (emulator will be initialized
+    // during main window creation).
+    CreateMainWindow();
+
+    // Update Gui
+    for (;;)
+    {
+        MSG msg;
+
+        // Idle loop
+        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
+            {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }
+        }
+    }
+}
+
 // entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
@@ -130,42 +156,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         LockMultipleCalls();
     }
 
-    // check command line (used by frontends)
-    if(strlen(lpCmdLine) && lpCmdLine)
-    {
-        ldat.cmdline = TRUE;
+    // Start Gui update thread
+    HANDLE threadHandle;
+    DWORD threadId;
 
-        CreateMainWindow();
-
-        LoadFile(FixCommandLine(lpCmdLine));
-        EMUClose();
-        EMUOpen();
-        // will exits after closing emulation
-        // returning control back to frontend
-    }
-
-    // init emu and user interface (emulator will be initialized
-    // during main window creation).
-    CreateMainWindow();
-
-    hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
+    threadHandle = CreateThread(NULL, 0, GuiUpdateThreadProc, nullptr, 0, &threadId);
+    assert(threadHandle != INVALID_HANDLE_VALUE);
 
     // Idle loop
     for(;;)
     {
-        MSG msg;
-
-        // Idle loop
-        while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-        {
-            if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
-            {
-                TranslateMessage(&msg);
-                DispatchMessage(&msg);
-            }
-        }
-
-        Sleep(10);
+        Sleep(100);
     }
 
     // should never reach this point. Dolwin always exit()'s.

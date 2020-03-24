@@ -14,15 +14,10 @@ void IPTExecuteOpcode()
 
     // according to manual, decrementer has lower priority rather external interrupt
     
-    // time to update HW ? (possible CPU_EXCEPTION_INTERRUPT)
+    // time to update HW (possible CPU_EXCEPTION_INTERRUPT)
     if(cpu.branch)
     {
-        cpu.bailout--;
-        if(cpu.bailout <= 0)
-        {
-            cpu.bailout = cpu.bailtime;
-            HWUpdate();
-        }
+        HWUpdate();
         if(cpu.exception) goto JumpPC;
     }
 

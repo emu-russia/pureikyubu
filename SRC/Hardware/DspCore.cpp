@@ -955,27 +955,19 @@ namespace DSP
 #endif
 	}
 
-	/// Decode (in case of ADPCM) and read data by accelerator
-	uint16_t DspCore::AccelReadData()
+	/// Read data by accelerator and optionally decode (raw=false)
+	uint16_t DspCore::AccelReadData(bool raw)
 	{
-		// The format parameter specifies the type of sample the DSP must read from ARAM, which in turn dictates the addressing mode
-		// of the DSP’s streaming cache.If the sample is encoded as "raw" 16 - bit PCM, the cache will address ARAM in 16 - bit words.
-		// For 8 - bit PCM, the cache will address ARAM as bytes.For ADPCM samples, the cache will address ARAM as 4 - bit nibbles.
 
 		// If the current sample address exceeds the loop-end address, the streaming cache will reset itself to the loop-start position and assert an interrupt.
 
-		// The user must prepare a "zero buffer" in ARAM for use with one shot samples.The "zero buffer" must be at least 256 bytes longand
-		// filled with zeros.The "zero buffer" must be located at address returned by calling ARGetBaseAddress() and should be 8 byte
-		// aligned.The DSP places current address at the "zero buffer" once the end of a one shot sample is reached.This arrangement
-		// ensures that the DSP plays silence for the remainder of the frame after a voice finishes.The loop address for a one shot sample is ignored by the DSP.
-
-		// DSP ADPCM frames are eight bytes long.The first byte is the frame header(predictor and scale).The following seven bytes are a payload of 14 samples.
-		// DSP ADPCM buffers must be eigth byte aligned in ARAM as the decoder uses this alignment to program predictor and scale for each frame.
-		// DSP ADPCM buffer do not have to end on a eight byte boundry.ARAM addressing for DSP ADPCM(loopAddress, endAddress, currentAddress) buffers must 
-		// never point to the frame header.The following formula computes nibble address offset for DSP ADPCM addressing: 
-		// nibbleAddress = ((sample / 14) * 16) + (sample % 14) + 2;
-
 		return 0;
+	}
+
+	// Write RAW data to ARAM
+	void DspCore::AccelWriteData(uint16_t data)
+	{
+
 	}
 
 	#pragma endregion "IFX"

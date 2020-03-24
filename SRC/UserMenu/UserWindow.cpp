@@ -402,7 +402,7 @@ static void OnMainWindowCreate(HWND hwnd)
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
     // simulate close operation, like we just stopped emu
-    OnMainWindowClosing();
+    OnMainWindowClosed();
 
     // set cursor back to normal
     SetCursor(LoadCursor(NULL, IDC_ARROW));
@@ -417,13 +417,6 @@ static void OnMainWindowDestroy()
     EMUClose();     // completely close the Dolwin
     EMUDie();
     exit(1);        // return good
-}
-
-// emulation start in progress
-void OnMainWindowOpening()
-{
-    // set loading cursor
-    SetCursor(LoadCursor(NULL, IDC_WAIT));
 }
 
 // emulation has started - do proper actions
@@ -458,7 +451,7 @@ void OnMainWindowOpened()
 }
 
 // emulation stop in progress
-void OnMainWindowClosing()
+void OnMainWindowClosed()
 {
     // restore current working directory
     SetCurrentDirectoryA(ldat.cwd);
@@ -472,16 +465,6 @@ void OnMainWindowClosing()
     // set to Idle
     SetWindowText(wnd.hMainWindow, WIN_NAMEW);
     ResetStatusBar();
-
-    // set loading cursor
-    SetCursor(LoadCursor(NULL, IDC_WAIT));
-}
-
-// emulation is stopped - do proper actions
-void OnMainWindowClosed()
-{
-    // set cursor back to normal
-    SetCursor(LoadCursor(NULL, IDC_ARROW));
 }
 
 // ---------------------------------------------------------------------------

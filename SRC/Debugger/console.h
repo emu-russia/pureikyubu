@@ -10,7 +10,6 @@
 #include "output.h"    // text output and refresh
 #include "input.h"     // keyboard input
 #include "cmd.h"       // command processor
-#include "break.h"     // breakpoints control
 #include "regs.h"      // registers view
 #include "cpuview.h"   // cpu view (disassembly)
 #include "memview.h"   // memory (data) view
@@ -23,6 +22,7 @@ void    con_close();
 void    con_start();
 void    con_break(const char *reason=NULL);
 void    con_command(std::vector<std::string>& args, int lnum = 0);
+void    con_step_into();
 
 #pragma pack(push, 8)
 
@@ -54,6 +54,7 @@ public:
     int                 nopNum = 0;
     std::map<std::string, cmd_handler> cmds;
     MySpinLock::LOCK    reportLock;
+    std::atomic<bool>   exitPending = false;
 };
 
 #pragma pack(pop)

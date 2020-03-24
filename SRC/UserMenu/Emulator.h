@@ -16,8 +16,9 @@ void    EMUClose();         // [STOP]
 typedef struct Emulator
 {
     bool    initok;         // sub-systems are ready
-    bool    running;        // running game (not Idle)
+    bool    loaded;         // file loaded
     bool    doldebug;       // debugger active
+    Gekko::GekkoCore* core;
 } Emulator;
 
 extern  Emulator emu;

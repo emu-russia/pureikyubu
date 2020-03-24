@@ -170,14 +170,14 @@ namespace DSP
 		DSCR = 0xFFC9,		/// DMA control 
 		DSBL = 0xFFCB,		/// Block size 
 
-		ACDAT2 = 0xFFD3,	/// Another accelerator data (R/W)
+		ACDAT2 = 0xFFD3,	/// RAW accelerator data (R/W)
 		ACSAH = 0xFFD4,		/// Accelerator start address H 
 		ACSAL = 0xFFD5,		/// Accelerator start address L 
 		ACEAH = 0xFFD6,		/// Accelerator end address H 
 		ACEAL = 0xFFD7,		/// Accelerator end address L 
 		ACCAH = 0xFFD8,		/// Accelerator current address H 
 		ACCAL = 0xFFD9,		/// Accelerator current address L 
-		ACDAT = 0xFFDD,		/// Accelerator data
+		ACDAT = 0xFFDD,		/// Decoded Accelerator data (Read)
 		AMDM = 0xFFEF,		/// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
 		ACFMT = 0xFFD1,			/// sample format used
@@ -227,7 +227,8 @@ namespace DSP
 
 	enum class AccelFormat
 	{
-		Unknown5 = 0x0005,		/// Seen in IROM
+		RawByte = 0x0005,		/// Seen in IROM
+		RawUInt16 = 0x0006,		/// 
 		Pcm16 = 0x000A,			/// Signed 16 bit PCM mono
 		Pcm8 = 0x0019,			/// Signed 8 bit PCM mono
 		Adpcm = 0x0000,			/// ADPCM encoded (both standard & extended)
@@ -250,8 +251,8 @@ namespace DSP
 
 		bool running = false;
 
-		HANDLE threadHandle;
-		DWORD threadId;
+		HANDLE threadHandle = INVALID_HANDLE_VALUE;
+		DWORD threadId = 0;
 
 		static DWORD WINAPI DspThreadProc(LPVOID lpParameter);
 
@@ -314,7 +315,8 @@ namespace DSP
 
 		void ResetIfx();
 		void DoDma();
-		uint16_t AccelReadData();
+		uint16_t AccelReadData(bool raw);
+		void AccelWriteData(uint16_t data);
 
 	public:
 

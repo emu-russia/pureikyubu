@@ -8,7 +8,7 @@ enum STATUS_ENUM
 {
     STATUS_PROGRESS = 1,        // current emu state
     STATUS_FPS,                 // fps counter
-    STATUS_TIMING,              // cpu timing (CF - Delay - Bailout)
+    STATUS_TIMING,              // * Obsolete *
     STATUS_TIME,                // time counter
 };
 
@@ -25,9 +25,7 @@ void    AddRecentFile(char *path);
 void    LoadRecentFile(int index);
 
 // window controls API
-void    OnMainWindowOpening();
 void    OnMainWindowOpened();
-void    OnMainWindowClosing();
 void    OnMainWindowClosed();
 HWND    CreateMainWindow();
 void    ResizeMainWindow(int width, int height);

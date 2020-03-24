@@ -161,7 +161,7 @@ void cmd_showldst(std::vector<std::string>& args)
 
 void cmd_unload(std::vector<std::string>& args)
 {
-    if (emu.running)
+    if (emu.loaded)
     {
         EMUClose();
     }
@@ -198,7 +198,7 @@ void cmd_blr(std::vector<std::string>& args)
     }
     else
     {
-        if(emu.running) return;
+        if(emu.loaded) return;
 
         uint32_t ea = con.disa_cursor;
         uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -369,9 +369,10 @@ void cmd_disa(std::vector<std::string>& args)
     }
     else
     {
-        if(!emu.running)
+        if(!emu.loaded)
         {
             DBReport("not loaded\n");
+            return;
         }
 
         start_addr = strtoul ( args[1].c_str(), NULL, 0 );
@@ -534,7 +535,7 @@ void cmd_lr(std::vector<std::string>& args)
         PPCD_CB disa;
         uint32_t sp;
 
-        if(!emu.running || !SP)
+        if(!emu.loaded || !SP)
         {
             DBReport("not running, or no calls.\n");
             return;
@@ -640,7 +641,7 @@ static uint32_t get_nop(uint32_t ea)
 
 void cmd_nop(std::vector<std::string>& args)
 {
-    if(emu.running) return;
+    if(!emu.loaded) return;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -656,7 +657,7 @@ void cmd_nop(std::vector<std::string>& args)
 
 void cmd_denop(std::vector<std::string>& args)
 {
-    if(emu.running) return;
+    if(!emu.loaded) return;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = MEMEffectiveToPhysical(ea, 0);
@@ -1379,7 +1380,7 @@ void cmd_tree (std::vector<std::string>& args)
     }
     else
     {
-        if(!emu.running)
+        if(!emu.loaded)
         {
             DBReport("not loaded\n");
             return;

@@ -20,13 +20,19 @@ namespace Debug
 	// Run processor until break or stop
 	void cmd_run(std::vector<std::string>& args)
 	{
-		if (!emu.running) con_run_execute();
+		if (emu.core)
+		{
+			emu.core->Run();
+		}
 	}
 
 	// Stop processor execution
 	void cmd_stop(std::vector<std::string>& args)
 	{
-		if (emu.running) con_break();
+		if (emu.core)
+		{
+			if (emu.core->IsRunning()) con_break();
+		}
 	}
 
 }

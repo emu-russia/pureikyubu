@@ -792,7 +792,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 
 
 
-0351 00 83 FF A0 	lri  	ar3, #0xFFA0   				// Unknown hardware FFA0
+0351 00 83 FF A0 	lri  	ar3, #0xFFA0   				// ADPCM coef table start
 0353 00 80 03 00 	lri  	ar0, #0x0300
 0355 00 9F 00 0E 	lri  	ac1.m, #0x000E
 0357 11 08 03 5C 	bloopi	#0x08, $0x035C

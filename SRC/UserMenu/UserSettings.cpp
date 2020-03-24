@@ -104,21 +104,6 @@ static void LoadSettings(int n)         // dialogs created
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)L"Advanced (Mmu)");
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_SETCURSEL, selected, 0);
 
-        int cf = GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_COUNTER_FACTOR, int2str(cf));
-        int delay = GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_COUNTER_DELAY, int2str(delay));
-        int bail = GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_BAILOUT, int2str(bail));
-
-        char buf[256];
-        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_CF_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_CF_DEFAULT, buf);
-        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_DELAY_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_DELAY_DEFAULT, buf);
-        sprintf_s(buf, sizeof(buf), "(Default: %i)", USER_CPU_TIME_DEFAULT);
-        SetDlgItemTextA(hDlg, IDC_BAILOUT_DEFAULT, buf);
-
         settingsLoaded[0] = TRUE;
     }
 
@@ -216,24 +201,6 @@ static void SaveSettings()              // OK pressed
         HWND hDlg = hChildDlg[0];
         int selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
         SetConfigInt(USER_MMU, selected);
-
-        GetDlgItemTextA(hDlg, IDC_COUNTER_FACTOR, buf, sizeof(buf));
-        cpu.cf = atoi(buf); if(cpu.cf <= 0) cpu.cf = 1;
-        SetConfigInt(USER_CPU_CF, cpu.cf);
-        GetDlgItemTextA(hDlg, IDC_COUNTER_DELAY, buf, sizeof(buf));
-        cpu.delay = atoi(buf); if(cpu.delay <= 0) cpu.delay = 1;
-        SetConfigInt(USER_CPU_DELAY, cpu.delay);
-        GetDlgItemTextA(hDlg, IDC_BAILOUT, buf, sizeof(buf));
-        cpu.bailout = atoi(buf); if(cpu.bailout <= 0) cpu.bailout = 1;
-        SetConfigInt(USER_CPU_TIME, cpu.bailout);
-
-        if(emu.running)
-        {
-            // update view of CPU timing setup
-            wchar_t timings[0x100] = { 0, };
-            swprintf_s(timings, _countof(timings), L"%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
-            SetStatusText(STATUS_TIMING, timings);
-        }
     }
 
     // GUI/Selector

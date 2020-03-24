@@ -22,8 +22,10 @@ static void con_function_key(int vkey, int ctrl)
             con_change_focus(WCONSOLE); // Console (roll)
             break;
         case VK_F5:
-            if(emu.running) con_break();
-            else con_run_execute();
+            if (emu.core)
+            {
+                if (emu.core->IsRunning()) con_break();
+            }
             break;
         case VK_F6:
             // Switch Registers View
@@ -71,7 +73,7 @@ static void con_function_key(int vkey, int ctrl)
             con.update |= CON_UPDATE_DISA;
             break;
         case VK_F10:    // Step Over
-            con_step_over();
+            // TODO: con_step_over();
             break;
         case VK_F11:    // Step Into
             con_step_into();

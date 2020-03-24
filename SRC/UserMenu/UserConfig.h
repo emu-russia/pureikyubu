@@ -21,15 +21,6 @@ void    KillConfigInt(char *var, char *path = USER_KEY_NAME);
 #define USER_BINORG     "BINORG"            // binary file loading offset (physical address)
 #define USER_BINORG_DEFAULT     0x3100
 
-#define USER_CPU_CF     "CPU_CF"            // CPU counter factor
-#define USER_CPU_CF_DEFAULT     1
-
-#define USER_CPU_DELAY  "CPU_DELAY"         // TBR/DEC update delay (number of instructions)
-#define USER_CPU_DELAY_DEFAULT  12
-
-#define USER_CPU_TIME   "CPU_TIME"          // CPU bailout initial time
-#define USER_CPU_TIME_DEFAULT   1
-
 #define USER_DOLDEBUG   "DOLDEBUG"          // enable debugger
 #define USER_DOLDEBUG_DEFAULT   FALSE
 

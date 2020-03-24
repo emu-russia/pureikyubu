@@ -1,6 +1,4 @@
-// this is formerly 0.09 UserLoader. I was figured, that its more 
-// close to Emulator, rather than UserMenu.
-// supported formats are :
+// Supported formats are :
 //      .patch      - patching files (new)
 //      .dol        - GAMECUBE custom executable
 //      .elf        - standard executable
@@ -693,11 +691,6 @@ static void DoLoadFile(char *filename)
 
     // set entrypoint (for DVD, PC will set in apploader)
     if(!ldat.dvd) PC = entryPoint;
-
-    // show CPU timing setup
-    wchar_t buf[64];
-    swprintf_s(buf, _countof(buf), L"%i - %i - %i", cpu.cf, cpu.delay, cpu.bailout);
-    SetStatusText(STATUS_TIMING, buf);
 }
 
 // set next file to load

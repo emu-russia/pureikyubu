@@ -23,53 +23,12 @@ void (*CPUStart)();
 
 // ---------------------------------------------------------------------------
 
-static bool IsMMXPresent()
+// select the core, before run
+void CPUOpen()
 {
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x800000) != 0;
-}
-
-static bool IsSSEPresent()
-{
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x2000000) != 0;
-}
-
-// init tables, allocate memory
-void CPUInit()
-{
-    cpu.mmx = IsMMXPresent();
-    cpu.sse = IsSSEPresent();
-
     // setup interpreter tables
     IPTInitTables();
-}
 
-// free CPU resources
-void CPUFini()
-{
-}
-
-// select the core, before run
-void CPUOpen(int bailout, int delay, int counterFactor)
-{
-    cpu.mmx = IsMMXPresent();
-    cpu.sse = IsSSEPresent();
-
-    // CPU bailout - number of CPU instructions to update hardware
-    cpu.bailout = bailout;
-    if(cpu.bailout <= 0) cpu.bailout = 1;
-    cpu.bailtime = cpu.bailout;
-
-    // CPU delay - number of CPU instructions to update TBR/DEC
-    cpu.delay = delay;
-    //if(cpu.delay > CPU_MAX_DELAY) cpu.delay = CPU_MAX_DELAY;
-    if(cpu.delay <= 0) cpu.delay = 1;
-    cpu.delayVal = cpu.delay;
-
-    cpu.cf = counterFactor;
     cpu.one_second = CPU_TIMER_CLOCK;
     cpu.decreq = 0;
 
@@ -103,14 +62,10 @@ void CPUOpen(int bailout, int delay, int counterFactor)
 // modify CPU counters
 void CPUTick()
 {
-    cpu.delayVal--;
-    if(cpu.delayVal == 0) cpu.delayVal = cpu.delay;
-    else return;
-
-    UTBR += cpu.cf;         // timer
+    UTBR++;         // timer
 
     uint32_t old = PPC_DEC;
-    PPC_DEC -= cpu.cf;          // decrementer
+    PPC_DEC--;          // decrementer
     if((old ^ PPC_DEC) & 0x80000000)
     {
         if(MSR & MSR_EE)
@@ -119,4 +74,55 @@ void CPUTick()
             DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
         }
     }
+}
+
+namespace Gekko
+{
+    DWORD WINAPI GekkoCore::GekkoThreadProc(LPVOID lpParameter)
+    {
+        GekkoCore* core = (GekkoCore*)lpParameter;
+
+        while (true)
+        {
+            IPTExecuteOpcode();
+        }
+    }
+
+    GekkoCore::GekkoCore()
+    {
+        CPUOpen();
+
+        threadHandle = CreateThread(NULL, 0, GekkoThreadProc, this, CREATE_SUSPENDED, &threadId);
+        assert(threadHandle != INVALID_HANDLE_VALUE);
+    }
+
+    GekkoCore::~GekkoCore()
+    {
+        TerminateThread(threadHandle, 0);
+        WaitForSingleObject(threadHandle, 1000);
+    }
+
+    void GekkoCore::Run()
+    {
+        if (!running)
+        {
+            ResumeThread(threadHandle);
+            running = true;
+        }
+    }
+
+    void GekkoCore::Suspend()
+    {
+        if (running)
+        {
+            running = false;
+            SuspendThread(threadHandle);
+        }
+    }
+
+    int64_t GekkoCore::GetTicks()
+    {
+        return cpu.tb.sval;
+    }
+
 }

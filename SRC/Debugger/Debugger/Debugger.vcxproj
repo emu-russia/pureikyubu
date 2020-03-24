@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\break.cpp" />
     <ClCompile Include="..\cmd.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\cpuview.cpp" />
@@ -41,7 +40,6 @@
     <ClCompile Include="..\regs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\break.h" />
     <ClInclude Include="..\cmd.h" />
     <ClInclude Include="..\console.h" />
     <ClInclude Include="..\cpuview.h" />

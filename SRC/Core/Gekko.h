@@ -1,5 +1,7 @@
 // PPC definitions and structures for interpreter and recompiler cores
 
+#include <Windows.h>
+
 // GC bus clock is running on 1/3 of CPU clock, and timer is
 // running on 1/4 of bus clock (1/12 of CPU clock)
 #define CPU_CORE_CLOCK  486000000u  // 486 mhz (its not 485, stop bugging me!)
@@ -208,9 +210,6 @@ extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
 extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 
 // controls
-void    CPUInit();
-void    CPUFini();
-void    CPUOpen(int bailout, int delay, int counterFactor);
 void    CPUTick();                  // modify counters
 
 // there is no need in CPUStop
@@ -227,18 +226,12 @@ typedef struct CPUControl
     uint32_t    msr;                // machine state reg
     uint32_t    fpscr;              // FP status/control reg (rounding only for now)
     uint32_t    pc;                 // program counter
-    TBREG       tb;                 // time-base counter (timer)
+    TBREG       tb;         // time-base counter (timer)
 
-    int32_t     bailout;            // update HW, if < 0
-    int32_t     bailtime;           // initial "bailout" value
     int64_t     one_second;         // one second in timer ticks
-    uint32_t    cf;                 // counter factor
-    uint32_t    delay, delayVal;    // TBR/DEC update delay (number of instructions)
     bool        decreq;             // decrementer exception request
 
     uint32_t    core;               // see CPU core enumeration
-    bool        mmx;                // 1: mmx supported
-    bool        sse;                // 1: sse supported
     uint32_t    ops;                // instruction counter (only for debug!)
 
     // for default interpreter
@@ -252,3 +245,27 @@ typedef struct CPUControl
 } CPUControl;
 
 extern  CPUControl cpu;
+
+namespace Gekko
+{
+    class GekkoCore
+    {
+        HANDLE threadHandle = INVALID_HANDLE_VALUE;
+        DWORD threadId = 0;
+
+        bool running = false;
+
+        static DWORD WINAPI GekkoThreadProc(LPVOID lpParameter);
+
+    public:
+        GekkoCore();
+        ~GekkoCore();
+
+        void Run();
+        bool IsRunning() { return running; }
+        void Suspend();
+
+        int64_t GetTicks();
+
+    };
+}

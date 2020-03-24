@@ -178,7 +178,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
                                 IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_FALSE );
 
-            if (emu.running == TRUE) {
+            if (emu.loaded == TRUE) {
                 EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE), FALSE);
                 EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_TRUE), FALSE);
             }
@@ -288,7 +288,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     strcat_s(buf, sizeof(buf), buf2);
                 }
 
-                if (emu.running == FALSE) {
+                if (emu.loaded == FALSE) {
                     if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED  )
                         SyncSave = FALSE;
                     else

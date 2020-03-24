@@ -44,10 +44,9 @@ void EMUGetHwConfig(HWConfig * config)
 // this function is called once, during Dolwin life-time
 void EMUInit()
 {
-    assert(!emu.running);
+    assert(!emu.loaded);
     if(emu.initok == true) return;
 
-    CPUInit();
     MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
     MEMSelect(0, 0);
 
@@ -57,10 +56,8 @@ void EMUInit()
 // this function is called last, during Dolwin life-time
 void EMUDie()
 {
-    assert(!emu.running);
+    assert(!emu.loaded);
     if(emu.initok == false) return;
-
-    CPUFini();
 
     emu.initok = false;
 }
@@ -68,21 +65,22 @@ void EMUDie()
 // this function calls every time, after user loading new file
 void EMUOpen()
 {
-    emu.running = true;
+    if (emu.loaded)
+        return;
 
-    OnMainWindowOpening();
+    OnMainWindowOpened();
 
     // open other sub-systems
     MEMOpen(GetConfigInt(USER_MMU, USER_MMU_DEFAULT));
     MEMSelect(mem.mmu, 0);
-    CPUOpen(
-        GetConfigInt(USER_CPU_TIME, USER_CPU_TIME_DEFAULT),
-        GetConfigInt(USER_CPU_DELAY, USER_CPU_DELAY_DEFAULT),
-        GetConfigInt(USER_CPU_CF, USER_CPU_CF_DEFAULT) );
+    emu.core = new Gekko::GekkoCore;
+    assert(emu.core);
 
-    HWConfig hwconfig = { 0 };
-    EMUGetHwConfig(&hwconfig);
-    HWOpen(&hwconfig);
+    HWConfig* hwconfig = new HWConfig;
+    memset(hwconfig, 0, sizeof(HWConfig));
+    EMUGetHwConfig(hwconfig);
+    HWOpen(hwconfig);
+    delete hwconfig;
 
     assert(GXOpen(mi.ram, wnd.hMainWindow));
     assert(AXOpen());
@@ -91,41 +89,19 @@ void EMUOpen()
     ReloadFile();   // PC will be set here
     HLEOpen();
 
-    // take care about user interface
-    OnMainWindowOpened();
+    emu.loaded = true;
 
-    int64_t nextGuiUpdate = cpu.tb.sval + cpu.one_second / 100;
-
-    // start emulation!
-    while (emu.running)
-    {
-        MSG msg;
-
-        IPTExecuteOpcode();
-
-        if (cpu.tb.sval >= nextGuiUpdate)
-        {
-            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
-            {
-                if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
-                {
-                    TranslateMessage(&msg);
-                    DispatchMessage(&msg);
-                }
-            }
-
-            nextGuiUpdate = cpu.tb.sval + cpu.one_second / 100;
-        }
-    }
+    emu.core->Run();
 }
 
 // this function calls every time, after user stops emulation
 void EMUClose()
 {
-    emu.running = false;
+    if (!emu.loaded)
+        return;
 
-    // take care about user interface
-    OnMainWindowClosing();
+    delete emu.core;
+    emu.core = nullptr;
 
     // close other sub-systems
     PADClose();
@@ -137,6 +113,8 @@ void EMUClose()
 
     // take care about user interface
     OnMainWindowClosed();
+
+    emu.loaded = false;
 }
 
 // you can use EMUClose(), then EMUOpen() to reset emulator, 
