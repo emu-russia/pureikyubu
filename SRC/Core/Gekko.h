@@ -247,7 +247,7 @@ namespace Gekko
 {
     class GekkoCore
     {
-        static const int CounterStep = 1;
+        static const int CounterStep = 5;
 
         HANDLE threadHandle = INVALID_HANDLE_VALUE;
         DWORD threadId = 0;

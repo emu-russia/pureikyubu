@@ -7,12 +7,12 @@ BOOL        frame_done=1;
 // rendering complete, swap buffers, sync to vretrace
 void GPFrameDone()
 {
-    ogl.EndFrame();
+    GL_EndFrame();
     frame_done = 1;
 }
 
 // make screenshot
 void GPMakeSnapshot(char *path)
 {
-    ogl.MakeSnapshot(path);
+    GL_MakeSnapshot(path);
 }

@@ -884,8 +884,8 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                         vtx = &quad[n];
                         readptr = FifoWalk(vatnum, readptr);
                     }
-                    ogl.RenderTriangle(&quad[0], &quad[1], &quad[2]);
-                    ogl.RenderTriangle(&quad[0], &quad[2], &quad[3]);
+                    GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
+                    GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
                     vtxnum -= 4;
                 }
                 break;
@@ -921,7 +921,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                         vtx = &tri[n];
                         readptr = FifoWalk(vatnum, readptr);
                     }
-                    ogl.RenderTriangle(&tri[0], &tri[1], &tri[2]);
+                    GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
                     vtxnum -= 3;
                 }
                 break;
@@ -965,7 +965,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                     readptr = FifoWalk(vatnum, readptr);
                     if(c > 2) c = 0;
 
-                    ogl.RenderTriangle(
+                    GL_RenderTriangle(
                         &tri[order[0]],
                         &tri[order[1]], 
                         &tri[order[2]]
@@ -1017,7 +1017,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                     readptr = FifoWalk(vatnum, readptr);
                     c = (c == 2) ? (c = 1) : (c = 2);
 
-                    ogl.RenderTriangle(
+                    GL_RenderTriangle(
                         &tri[0],
                         &tri[order[0]],
                         &tri[order[1]]
@@ -1061,7 +1061,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                     readptr = FifoWalk(vatnum, readptr);
                     vtx = &v[1];
                     readptr = FifoWalk(vatnum, readptr);
-                    ogl.RenderLine(&v[0], &v[1]);
+                    GL_RenderLine(&v[0], &v[1]);
                     vtxnum -= 2;
                 }
                 break;
@@ -1103,7 +1103,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                     readptr = FifoWalk(vatnum, readptr);
                     if(c > 1) c = 0;
 
-                    ogl.RenderLine(
+                    GL_RenderLine(
                         &v[order[0]],
                         &v[order[1]]
                     );
@@ -1142,7 +1142,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 {
                     vtx = &p;
                     readptr = FifoWalk(vatnum, readptr);
-                    ogl.RenderPoint(vtx);
+                    GL_RenderPoint(vtx);
                 }
                 break;
             }
@@ -1379,7 +1379,8 @@ static void gx_command(uint8_t cmd)
     if(frame_done)
     {
         lastFifoSize = 0;
-        ogl.BeginFrame();
+        GL_OpenSubsystem();
+        GL_BeginFrame();
         frame_done = 0;
     }
 
@@ -1533,8 +1534,8 @@ static void gx_command(uint8_t cmd)
                         vtx = &quad[n];
                         accptr = FifoWalk(vatnum, accptr);
                     }
-                    ogl.RenderTriangle(&quad[0], &quad[1], &quad[2]);
-                    ogl.RenderTriangle(&quad[0], &quad[2], &quad[3]);
+                    GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
+                    GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
                     vtxnum -= 4;
                 }
                 break;
@@ -1570,7 +1571,7 @@ static void gx_command(uint8_t cmd)
                         vtx = &tri[n];
                         accptr = FifoWalk(vatnum, accptr);
                     }
-                    ogl.RenderTriangle(&tri[0], &tri[1], &tri[2]);
+                    GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
                     vtxnum -= 3;
                 }
                 break;
@@ -1614,7 +1615,7 @@ static void gx_command(uint8_t cmd)
                     accptr = FifoWalk(vatnum, accptr);
                     if(c > 2) c = 0;
 
-                    ogl.RenderTriangle(
+                    GL_RenderTriangle(
                         &tri[order[0]],
                         &tri[order[1]], 
                         &tri[order[2]]
@@ -1666,7 +1667,7 @@ static void gx_command(uint8_t cmd)
                     accptr = FifoWalk(vatnum, accptr);
                     c = (c == 2) ? (c = 1) : (c = 2);
 
-                    ogl.RenderTriangle(
+                    GL_RenderTriangle(
                         &tri[0],
                         &tri[order[0]],
                         &tri[order[1]]
@@ -1710,7 +1711,7 @@ static void gx_command(uint8_t cmd)
                     accptr = FifoWalk(vatnum, accptr);
                     vtx = &v[1];
                     accptr = FifoWalk(vatnum, accptr);
-                    ogl.RenderLine(&v[0], &v[1]);
+                    GL_RenderLine(&v[0], &v[1]);
                     vtxnum -= 2;
                 }
                 break;
@@ -1752,7 +1753,7 @@ static void gx_command(uint8_t cmd)
                     accptr = FifoWalk(vatnum, accptr);
                     if(c > 1) c = 0;
 
-                    ogl.RenderLine(
+                    GL_RenderLine(
                         &v[order[0]],
                         &v[order[1]]
                     );
@@ -1791,7 +1792,7 @@ static void gx_command(uint8_t cmd)
                 {
                     vtx = &p;
                     accptr = FifoWalk(vatnum, accptr);
-                    ogl.RenderPoint(vtx);
+                    GL_RenderPoint(vtx);
                 }
                 break;
             }

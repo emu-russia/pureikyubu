@@ -513,7 +513,7 @@ void loadBPReg(unsigned index, uint32_t value)
             bpRegs.genmode.hex = value;
             //GFXError("%i", bpRegs.genmode.cull);
 
-            ogl.SetCullMode(cull_modes[bpRegs.genmode.cull]);
+            GL_SetCullMode(cull_modes[bpRegs.genmode.cull]);
         }
         return;
 
@@ -533,7 +533,7 @@ void loadBPReg(unsigned index, uint32_t value)
             h = bpRegs.scis1.suh - bpRegs.scis0.suy + 1;
 
             //GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
-            ogl.SetScissor(x, y, w, h);
+            GL_SetScissor(x, y, w, h);
         }
         return;
         
@@ -549,7 +549,7 @@ void loadBPReg(unsigned index, uint32_t value)
             h = bpRegs.scis1.suh - bpRegs.scis0.suy + 1;
 
             //GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
-            ogl.SetScissor(x, y, w, h);
+            GL_SetScissor(x, y, w, h);
         }
         return;
 
@@ -574,7 +574,7 @@ void loadBPReg(unsigned index, uint32_t value)
         case PE_COPY_CLEAR_Z:
         {
             copyClearZ = value & 0xffffff;
-            ogl.SetClear(copyClearRGBA, copyClearZ);
+            GL_SetClear(copyClearRGBA, copyClearZ);
         }
         return;
 
@@ -1008,7 +1008,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
                 Matrix[3][3] = 1.0f;
             }
 
-            ogl.SetProjection((float*)Matrix);
+            GL_SetProjection((float*)Matrix);
         }
         return;
 
@@ -1045,7 +1045,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
             zn = -((xfRegs.vp_scale[2] / 16777215.0f) - zf);
 
             //GFXError("viewport (%.2f, %.2f)-(%.2f, %.2f), %f, %f", x, y, w, h, zn, zf);
-            ogl.SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
+            GL_SetViewport((int)x, (int)y, (int)w, (int)h, zn, zf);
         }
         return;
 

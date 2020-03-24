@@ -39,7 +39,7 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
 
     RAM = ramPtr;
 
-    res = ogl.OpenSubsystem(_hwndMain);
+    res = GL_LazyOpenSubsystem(_hwndMain);
     assert(res);
 
     // vertex programs extension
@@ -56,9 +56,6 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
     // flush texture cache
     TexInit();
 
-    // prepare on-screen font texture
-    PerfInit();
-
     gxOpened = true;
 
     return true;
@@ -68,6 +65,8 @@ void GXClose()
 {
     if (!gxOpened)
         return;
+
+    GL_CloseSubsystem();
 
     TexFree();
 

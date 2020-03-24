@@ -22,6 +22,9 @@ static uint32_t  scr_w = 640, scr_h = 480;
 // perfomance counters
 static uint32_t  frames, tris, pts, lines;
 
+static HWND savedHwnd;
+static bool opened = false;
+
 // ---------------------------------------------------------------------------
 
 static int GL_SetPixelFormat(HDC hdc)
@@ -54,8 +57,18 @@ static int GL_SetPixelFormat(HDC hdc)
     return 1;
 }
 
-static BOOL GL_OpenSubsystem(HWND hwnd)
+BOOL GL_LazyOpenSubsystem(HWND hwnd)
 {
+    savedHwnd = hwnd;
+    return TRUE;
+}
+
+BOOL GL_OpenSubsystem()
+{
+    if (opened)
+        return TRUE;
+    HWND hwnd = savedHwnd;
+
     hdcgl = GetDC(hwnd);
     
     if(hdcgl == NULL) return FALSE;
@@ -97,15 +110,22 @@ static BOOL GL_OpenSubsystem(HWND hwnd)
     // clear performance counters
     frames = tris = pts = lines = 0;
 
+    // prepare on-screen font texture
+    PerfInit();
+
+    opened = true;
+
     return TRUE;
 }
 
-static void GL_CloseSubsystem()
+void GL_CloseSubsystem()
 {
     if(frameReady) GL_EndFrame();
 
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(hglrc);
+
+    opened = false;
 }
 
 // ---------------------------------------------------------------------------
@@ -119,7 +139,7 @@ static FILE *  snap_file;
 static uint32_t     snap_w, snap_h;
 
 // init rendering (call before drawing FIFO primitives)
-static void GL_BeginFrame()
+void GL_BeginFrame()
 {
     if(frameReady) return;
 
@@ -207,14 +227,14 @@ void GL_EndFrame()
 // ---------------------------------------------------------------------------
 
 // load projection matrix
-static void GL_SetProjection(float *mtx)
+void GL_SetProjection(float *mtx)
 {
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf((GLfloat *)mtx);
     glMatrixMode(GL_MODELVIEW);
 }
 
-static void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
+void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
 {
     //h += 32;
 #ifndef NO_VIEWPORT
@@ -223,7 +243,7 @@ static void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar)
 #endif
 }
 
-static void GL_SetScissor(int x, int y, int w, int h)
+void GL_SetScissor(int x, int y, int w, int h)
 {
     //h += 32;
 #ifndef NO_VIEWPORT
@@ -232,7 +252,7 @@ static void GL_SetScissor(int x, int y, int w, int h)
 }
 
 // set clear rules
-static void GL_SetClear(Color clr, uint32_t z)
+void GL_SetClear(Color clr, uint32_t z)
 {
     cr = clr.R;
     cg = clr.G;
@@ -260,7 +280,7 @@ static void GL_SetClear(Color clr, uint32_t z)
 /*/
 }
 
-static void GL_SetCullMode(int mode)
+void GL_SetCullMode(int mode)
 {
 /*/
     switch(mode)
@@ -290,7 +310,7 @@ static void GL_SetCullMode(int mode)
 // platform rendering layer
 //
 
-static void GL_RenderTriangle(
+void GL_RenderTriangle(
     const Vertex  *v0,
     const Vertex  *v1,
     const Vertex  *v2)
@@ -493,26 +513,3 @@ void GL_SaveBitmap(uint8_t *buf)
 {
     GL_DoSnapshot(TRUE, NULL, buf, 160, 120);
 }
-
-// ---------------------------------------------------------------------------
-
-// setup ogl renderer descriptor
-Renderer    ogl = {
-    GL_OpenSubsystem,
-    GL_CloseSubsystem,
-
-    GL_BeginFrame,
-    GL_EndFrame,
-    GL_MakeSnapshot,
-    GL_SaveBitmap,
-
-    GL_RenderTriangle,
-    GL_RenderLine,
-    GL_RenderPoint,
-
-    GL_SetProjection,
-    GL_SetViewport,
-    GL_SetScissor,
-    GL_SetClear,
-    GL_SetCullMode
-};

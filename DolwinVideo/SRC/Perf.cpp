@@ -58,8 +58,8 @@ void PerfPrintf(int x, int y, const char *fmt, ...)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glEnable(GL_TEXTURE_2D);
 
-    ogl.SetViewport(0, 0, 640, 480, 1, 16777215.0f);
-    ogl.SetScissor(0, 0, 640, 480);
+    GL_SetViewport(0, 0, 640, 480, 1, 16777215.0f);
+    GL_SetScissor(0, 0, 640, 480);
 
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
