@@ -226,7 +226,10 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
         case 0x1C:      // video buffer hi (TOP)
             vi.tfbl &= 0x0000ffff;
             vi.tfbl |= data << 16;
-            DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            }
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
             else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
@@ -234,7 +237,10 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
         case 0x1E:      // video buffer low (TOP)
             vi.tfbl &= 0xffff0000;
             vi.tfbl |= (uint16_t)data;
-            DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            }
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
             else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
@@ -243,7 +249,10 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
             vi.bfbl &= 0x0000ffff;
             vi.bfbl |= data << 16;
             vi.bfbl &= 0xffffff;
-            DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
             return;
@@ -251,7 +260,10 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
             vi.bfbl &= 0xffff0000;
             vi.bfbl |= (uint16_t)data;
             vi.bfbl &= 0xffffff;
-            DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
             return;
@@ -311,13 +323,19 @@ static void __fastcall vi_write32(uint32_t addr, uint32_t data)
             return;
         case 0x1C:      // video buffer (TOP)
             vi.tfbl = data & 0xffffff;
-            DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
+            }
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
             else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
             return;
         case 0x24:      // video buffer (BOTTOM)
             vi.bfbl = data & 0xffffff;
-            DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            if (vi.log)
+            {
+                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
             return;
@@ -382,12 +400,12 @@ void VIOpen(HWConfig * config)
     // open GDI (if need)
     if(vi.xfb)
     {
-        //bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
-        //if(!res)
-        //{
-        //    DolwinReport("VI cant startup GDI");
-        //    vi.xfb = false;
-        //}
+        bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
+        if(!res)
+        {
+            DolwinReport("VI cant startup GDI");
+            vi.xfb = false;
+        }
     }
 
     // set traps to VI registers
