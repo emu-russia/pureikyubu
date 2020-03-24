@@ -15,6 +15,31 @@ Dolwin is composed as project for Microsoft Visual Studio. Main language is simp
 
 (Readme from SourceForge)
 
+## Building
+
+Build using Visual Studio 2019. To build, open Dolwin.sln and click Build.
+
+Temporary files will be in the Output folder.
+
+The executable will be at the root (Dolwin.exe).
+
+## Solution structure
+
+All solution projects are independent components (or try to be like that).
+
+Currently, work is underway to encapsulate components in their namespaces, but the legacy code from version 0.10 does not make it so simple.
+
+Currently, the following namespaces are quietly formed:
+
+- Debug: for debugging functionality
+- Gekko: for the core of the Gekko CPU
+- Flipper: for various internal Flipper hardware modules (AI, VI, EXI, etc.)
+- DSP: for GameCube DSP
+- DVD: for a DVD unit (now the functionality is limited to reading images of ISO discs)
+- GX: for the Flipper GPU
+
+The user interface will most likely be rewritten as a Managed C# application. In the meantime, it's just like a piece of code from version 0.10.
+
 ## Why "Dolwin"?
 
 Dolwin was originally stands for "Nintendo *Dol*phin Emulator for *Win*dows" (Dolphin is GameCube codename).
