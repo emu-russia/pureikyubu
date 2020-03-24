@@ -40,6 +40,10 @@ Currently, the following namespaces are quietly formed:
 
 The user interface will most likely be rewritten as a Managed C# application. In the meantime, it's just like a piece of code from version 0.10.
 
+## Third-party code
+
+I try not to use third-party libraries without special need.
+
 ## Why "Dolwin"?
 
 Dolwin was originally stands for "Nintendo *Dol*phin Emulator for *Win*dows" (Dolphin is GameCube codename).
