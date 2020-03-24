@@ -745,7 +745,7 @@ void UpdateSelector()
     while(dir < usel.paths.size())
     {
         int m = 0;
-        uint32_t filter = MEMSwap(usel.filter);
+        uint32_t filter = _byteswap_ulong(usel.filter);
 
         while(mask[m])
         {

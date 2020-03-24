@@ -421,7 +421,7 @@ void MXTransfer()
                 else
                 {
                     uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
-                    uint32_t data = MEMSwap(exi.regs[0].data);
+                    uint32_t data = _byteswap_ulong(exi.regs[0].data);
 
                     ofs = exi.mxaddr & 0x7fffffff;
                     if((ofs >= 0x20000100) && (ofs <= 0x20001000))

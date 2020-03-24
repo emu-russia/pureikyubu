@@ -130,4 +130,28 @@ namespace Gekko
         return GCEffectiveToPhysical(ea, IR);
     }
 
+    // Swap longs (no need in assembly, used by tools)
+    void GekkoCore::SwapArea(uint32_t* addr, int count)
+    {
+        uint32_t* until = addr + count / sizeof(uint32_t);
+
+        while (addr != until)
+        {
+            *addr = _byteswap_ulong(*addr);
+            addr++;
+        }
+    }
+
+    // Swap shorts (no need in assembly, used by tools)
+    void GekkoCore::SwapAreaHalf(uint16_t* addr, int count)
+    {
+        uint16_t* until = addr + count / sizeof(uint16_t);
+
+        while (addr != until)
+        {
+            *addr = _byteswap_ushort(*addr);
+            addr++;
+        }
+    }
+
 }

@@ -247,6 +247,9 @@ namespace Gekko
 {
     class GekkoCore
     {
+        // How many ticks Gekko takes to execute one instruction. 
+        // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
+        // Therefore, we are a little tricky and “slow down” the work of the emulated processor (we make several ticks per 1 instruction).
         static const int CounterStep = 5;
 
         HANDLE threadHandle = INVALID_HANDLE_VALUE;
@@ -269,6 +272,9 @@ namespace Gekko
 
         // translate
         uint32_t EffectiveToPhysical(uint32_t ea, bool IR); 
+
+        static void SwapArea(uint32_t* addr, int count);
+        static void SwapAreaHalf(uint16_t* addr, int count);
 
     };
 }

@@ -55,7 +55,7 @@ uint32_t LoadDOL(char *dolname)
 
     // load DOL header and swap it for loader
     fread(&dh, 1, sizeof(DolHeader), dol);
-    MEMSwapArea((uint32_t *)&dh, sizeof(DolHeader));
+    Gekko::GekkoCore::SwapArea((uint32_t *)&dh, sizeof(DolHeader));
 
     DBReport2(DbgChannel::Loader, "loading DOL (%i b).\n",
               DOLSize(&dh) );
@@ -119,7 +119,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     #define ADDPTR(p1, p2) (uint8_t *)((uint8_t*)(p1)+(uint32_t)(p2))
 
     // swap DOL header
-    MEMSwapArea((uint32_t *)dol, sizeof(DolHeader));
+    Gekko::GekkoCore::SwapArea((uint32_t *)dol, sizeof(DolHeader));
 
     DBReport2(DbgChannel::Loader, "loading DOL from %08X (%i b).\n",
               ofs, DOLSize(dol) );
@@ -443,7 +443,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
         Patch * p = &ldat.patches[i];
         if(p->freeze || load)
         {
-            uint32_t ea = MEMSwap(p->effectiveAddress);
+            uint32_t ea = _byteswap_ulong(p->effectiveAddress);
             uint32_t pa = -1;
             if (emu.core)
             {

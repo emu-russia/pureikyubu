@@ -3,7 +3,7 @@
 
 #define PARAM(n)    GPR[3+n]
 #define RET_VAL     GPR[3]
-#define SWAP        MEMSwap
+#define SWAP        _byteswap_ulong
 
 // internal OS vars
 static  uint32_t     __OSPhysicalContext;    // OS_PHYSICAL_CONTEXT

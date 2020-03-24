@@ -266,7 +266,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
     if (exi->cr & EXI_CR_DMA) {
     }
     else {
-        exi->data = MEMSwap ( exi->data ) << (auxbytes - 4);
+        exi->data = _byteswap_ulong( exi->data ) << (auxbytes - 4);
     }
 }
 /**********************************MCSectorEraseProc*********************************************/

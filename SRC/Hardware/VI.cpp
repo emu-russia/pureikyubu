@@ -186,7 +186,7 @@ static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
     {
         case 0x02:      // display control
             *reg = vi.disp_cr & ~1;
-            *reg |= vi.videoEncoderFuse;
+            //*reg |= vi.videoEncoderFuse ? 1 : 0;
             return;
         case 0x1C:      // video buffer hi (TOP)
             *reg = vi.tfbl >> 16;
@@ -297,7 +297,7 @@ static void __fastcall vi_read32(uint32_t addr, uint32_t *reg)
     {
         case 0x00:      // display control
             *reg = (uint32_t)(vi.disp_cr & ~1);
-            *reg |= vi.videoEncoderFuse;
+            //*reg |= vi.videoEncoderFuse ? 1 : 0;
             return;
         case 0x1C:      // video buffer (TOP)
             *reg = vi.tfbl;

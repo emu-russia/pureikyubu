@@ -577,7 +577,7 @@ static void filter_string(HWND hDlg, uint32_t filter)
     char buf[64], *ptr = buf;
     char * mask[] = { "*.dol", "*.elf", "*.gcm", "*.iso" };
 
-    filter = MEMSwap(filter);
+    filter = _byteswap_ulong(filter);
 
     for(int i=0; i<4; i++)
     {

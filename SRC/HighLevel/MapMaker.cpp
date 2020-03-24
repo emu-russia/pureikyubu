@@ -42,7 +42,7 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
     uint32_t opcode, auxop, op, op2, op3;
 
     for (offset = offsetStart; offset <= offsetEnd; offset+=4) {
-        opcode = MEMSwap(*((uint32_t *)&mi.ram[offset & RAMMASK]));
+        opcode = _byteswap_ulong(*((uint32_t *)&mi.ram[offset & RAMMASK]));
         op = opcode & 0xFC000000; 
         op2 = 0;
         op3 = 0;
@@ -194,7 +194,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
     MAPAddMark (offsetStart, FALSE);
     while(offsetStart < offsetEnd) {
 
-        opcode = MEMSwap(*((uint32_t *)&mi.ram[offsetStart & RAMMASK]));
+        opcode = _byteswap_ulong(*((uint32_t *)&mi.ram[offsetStart & RAMMASK]));
         op = opcode >> 26, op2 = 0;
 
         switch (op) {

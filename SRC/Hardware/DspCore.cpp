@@ -546,7 +546,7 @@ namespace DSP
 
 		if (ptr)
 		{
-			return MEMSwapHalf(*(uint16_t*)ptr);
+			return _byteswap_ushort(*(uint16_t*)ptr);
 		}
 
 		return 0;
@@ -617,7 +617,7 @@ namespace DSP
 
 		if (ptr)
 		{
-			return MEMSwapHalf(*(uint16_t*)ptr);
+			return _byteswap_ushort(*(uint16_t*)ptr);
 		}
 
 		DBHalt("DSP Unmapped DMEM read 0x%04X\n", addr);
@@ -774,7 +774,7 @@ namespace DSP
 
 			if (ptr)
 			{
-				*(uint16_t*)ptr = MEMSwapHalf(value);
+				*(uint16_t*)ptr = _byteswap_ushort(value);
 				return;
 			}
 		}

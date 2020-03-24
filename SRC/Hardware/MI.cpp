@@ -119,7 +119,7 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
         if (mi.BootromPresent)
         {
             ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-            *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+            *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
         }
         else
         {
@@ -146,7 +146,7 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+        *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
     }
     else
     {
@@ -186,7 +186,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *(uint16_t*)ptr = MEMSwapHalf((uint16_t)data);
+        *(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
     }
 }
 
@@ -205,7 +205,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
         if (mi.BootromPresent)
         {
             ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-            *reg = MEMSwap(*(uint32_t*)ptr);
+            *reg = _byteswap_ulong(*(uint32_t*)ptr);
         }
         else
         {
@@ -232,7 +232,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *reg = MEMSwap(*(uint32_t*)ptr);
+        *reg = _byteswap_ulong(*(uint32_t*)ptr);
     }
     else
     {
@@ -272,7 +272,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *(uint32_t*)ptr = MEMSwap(data);
+        *(uint32_t*)ptr = _byteswap_ulong(data);
     }
 }
 
@@ -281,7 +281,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 // (because all regs are generally integers)
 //
 
-void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
+void __fastcall MIReadDouble(uint32_t pa, uint64_t* reg)
 {
     if (pa >= BOOTROM_START_ADDRESS)
     {
@@ -290,24 +290,17 @@ void __fastcall MIReadDouble(uint32_t pa, uint64_t* _reg)
 
     if (pa >= RAMSIZE || mi.ram == nullptr)
     {
-        *_reg = 0;
+        *reg = 0;
         return;
     }
 
-    uint8_t* buf = &mi.ram[pa], * reg = (uint8_t*)_reg;
+    uint8_t* buf = &mi.ram[pa];
 
     // bus load doubleword
-    reg[0] = buf[7];
-    reg[1] = buf[6];
-    reg[2] = buf[5];
-    reg[3] = buf[4];
-    reg[4] = buf[3];
-    reg[5] = buf[2];
-    reg[6] = buf[1];
-    reg[7] = buf[0];
+    *reg = _byteswap_uint64(*(uint64_t*)buf);
 }
 
-void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
+void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
 {
     if (pa >= BOOTROM_START_ADDRESS)
     {
@@ -319,17 +312,10 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* _data)
         return;
     }
 
-    uint8_t* buf = &mi.ram[pa], * data = (uint8_t*)_data;
+    uint8_t* buf = &mi.ram[pa];
 
     // bus store doubleword
-    buf[0] = data[7];
-    buf[1] = data[6];
-    buf[2] = data[5];
-    buf[3] = data[4];
-    buf[4] = data[3];
-    buf[5] = data[2];
-    buf[6] = data[1];
-    buf[7] = data[0];
+    *(uint64_t*)buf = _byteswap_uint64 (*data);
 }
 
 // ---------------------------------------------------------------------------

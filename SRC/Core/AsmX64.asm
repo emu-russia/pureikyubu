@@ -5,8 +5,6 @@ public AddOverflow
 public AddCarryOverflow
 public AddXer2
 public Rotl32
-public MEMSwap
-public MEMSwapHalf
 
 public CarryBit
 public OverflowBit
@@ -65,20 +63,6 @@ Rotl32 proc
     mov     eax, edx
     ret
 Rotl32 endp
-
-MEMSwap proc
-    bswap   ecx
-    xor     rax, rax
-    mov     eax, ecx
-    ret
-MEMSwap endp
-
-MEMSwapHalf proc
-    xchg    ch, cl
-    xor     rax, rax
-    mov     ax, cx
-    ret
-MEMSwapHalf endp
 
 .data
 

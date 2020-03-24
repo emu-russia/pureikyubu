@@ -8,8 +8,6 @@ public @AddOverflow@8
 public @AddCarryOverflow@8
 public @AddXer2@8
 public @Rotl32@8
-public @MEMSwap@4
-public @MEMSwapHalf@4
 
 public _CarryBit
 public _OverflowBit
@@ -67,19 +65,6 @@ public _OverflowBit
     mov     eax, edx
     ret
 @Rotl32@8 endp
-
-@MEMSwap@4 proc
-    bswap   ecx
-    mov     eax, ecx
-    ret
-@MEMSwap@4 endp
-
-@MEMSwapHalf@4 proc
-    xchg    ch, cl
-    mov     eax, ecx
-    and     eax, 0ffffh
-    ret
-@MEMSwapHalf@4 endp
 
 .data
 

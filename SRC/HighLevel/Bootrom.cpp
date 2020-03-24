@@ -24,10 +24,10 @@ static void ReadFST()
     // FST memory address is calculated, by adjusting bb[4] with "DOL LIMIT";
     // DOL limit is fixed to 4 mb, for most apploaders (in release date range
     // from AnimalCrossing to Zelda: Wind Waker).
-    fstOffs = MEMSwap(bb2[1]);
-    fstSize = ROUND32(MEMSwap(bb2[2]));
-    fstMaxSize = ROUND32(MEMSwap(bb2[3]));
-    fstAddr = MEMSwap(bb2[4]) + RAMSIZE - DOL_LIMIT;
+    fstOffs = _byteswap_ulong(bb2[1]);
+    fstSize = ROUND32(_byteswap_ulong(bb2[2]));
+    fstMaxSize = ROUND32(_byteswap_ulong(bb2[3]));
+    fstAddr = _byteswap_ulong(bb2[4]) + RAMSIZE - DOL_LIMIT;
 
     // load FST into memory
     DVDSeek(fstOffs);
@@ -64,7 +64,7 @@ static void BootApploader(Gekko::GekkoCore * core)
 
     DVDSeek(0x2440);                // apploader offset
     DVDRead((uint8_t *)appHeader, 32);   // read apploader header
-    MEMSwapArea(appHeader, 32);     // and swap it
+    Gekko::GekkoCore::SwapArea(appHeader, 32);     // and swap it
 
     // save apploader info
     appEntryPoint = appHeader[4];
@@ -147,7 +147,7 @@ static void __SyncTime(bool rtc)
 
     DBReport2(DbgChannel::HLE, "updating timer value..\n");
 
-    int32_t counterBias = (int32_t)MEMSwap(exi.sram.counterBias);
+    int32_t counterBias = (int32_t)_byteswap_ulong(exi.sram.counterBias);
     int32_t rtcValue = exi.rtcVal + counterBias;
     DBReport2(DbgChannel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
 

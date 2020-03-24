@@ -15,14 +15,26 @@ static char*            files;          // string table
 
 #define FSTOFS(lo, hi) (((uint32_t)hi << 16) | lo)
 
+// Swap longs (no need in assembly, used by tools)
+static void SwapArea(uint32_t* addr, int count)
+{
+    uint32_t* until = addr + count / sizeof(uint32_t);
+
+    while (addr != until)
+    {
+        *addr = _byteswap_ulong(*addr);
+        addr++;
+    }
+}
+
 // swap bytes in FST (for x86)
 // return beginning of strings table (or NULL, if bad FST)
 static DVDFileEntry *fst_prepare(DVDFileEntry *root)
 {
     root->nameOffsetLo = (root->nameOffsetLo << 8)| 
                          (root->nameOffsetLo >> 8);
-    root->fileOffset   = MEMSwap(root->fileOffset);
-    root->fileLength   = MEMSwap(root->fileLength);
+    root->fileOffset   = _byteswap_ulong(root->fileOffset);
+    root->fileLength   = _byteswap_ulong(root->fileLength);
 
     if(root->isDir)
     {
@@ -79,7 +91,7 @@ BOOL dvd_fs_init()
     // load tables
     DVDSeek(DVD_BB2_OFFSET);
     DVDRead(&bb2, sizeof(DVDBB2));
-    MEMSwapArea((uint32_t *)&bb2, sizeof(DVDBB2));
+    SwapArea((uint32_t *)&bb2, sizeof(DVDBB2));
 
     // delete previous FST
     if(fst)

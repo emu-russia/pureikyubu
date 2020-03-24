@@ -270,7 +270,7 @@ OP(LHBRX)
     uint32_t val;
     if(RA) CPUReadHalf(RRA + RRB, &val);
     else CPUReadHalf(RRB, &val);
-    RRD = MEMSwapHalf((uint16_t)val);
+    RRD = _byteswap_ushort((uint16_t)val);
 }
 
 // ea = (ra | 0) + rb
@@ -280,23 +280,23 @@ OP(LWBRX)
     uint32_t val;
     if(RA) CPUReadWord(RRA + RRB, &val);
     else CPUReadWord(RRB, &val);
-    RRD = MEMSwap(val);
+    RRD = _byteswap_ulong(val);
 }
 
 // ea = (ra | 0) + rb
 // MEM(ea, 2) = rs[24-31] || rs[16-23]
 OP(STHBRX)
 {
-    if(RA) CPUWriteHalf(RRA + RRB, MEMSwapHalf((uint16_t)RRS));
-    else CPUWriteHalf(RRB, MEMSwapHalf((uint16_t)RRS));
+    if(RA) CPUWriteHalf(RRA + RRB, _byteswap_ushort((uint16_t)RRS));
+    else CPUWriteHalf(RRB, _byteswap_ushort((uint16_t)RRS));
 }
 
 // ea = (ra | 0) + rb
 // MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
 OP(STWBRX)
 {
-    if(RA) CPUWriteWord(RRA + RRB, MEMSwap(RRS));
-    else CPUWriteWord(RRB, MEMSwap(RRS));
+    if(RA) CPUWriteWord(RRA + RRB, _byteswap_ulong(RRS));
+    else CPUWriteWord(RRB, _byteswap_ulong(RRS));
 }
 
 // ea = (ra | 0) + SIMM

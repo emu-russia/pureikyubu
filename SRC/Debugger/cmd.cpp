@@ -207,7 +207,7 @@ void cmd_blr(std::vector<std::string>& args)
         }
         if(pa == -1) return;
 
-        uint32_t op = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
+        uint32_t op = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
         if(op == 0x4e800020) return;
 
         int ofs = 0;
@@ -546,17 +546,17 @@ void cmd_lr(std::vector<std::string>& args)
 
         int level = atoi(args[1].c_str());
         if(args[1].c_str()[0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
-        MEMReadWord(SP, &sp);
+        CPUReadWord(SP, &sp);
         if(level == MAX_LEVEL) DBReport( "LR Back Chain (max levels) :\n");
         else DBReport( "LR Back Chain (%i levels) :\n", level);
 
         for(int i=0; i<level; i++)
         {
             uint32_t read_pc;
-            MEMReadWord(sp+4, &read_pc);    // read LR value from stack
+            CPUReadWord(sp+4, &read_pc);    // read LR value from stack
             disa.pc = read_pc;
             disa.pc -= 4;                   // set to branch opcode
-            MEMReadWord((uint32_t)disa.pc, &disa.instr); // read branch
+            CPUReadWord((uint32_t)disa.pc, &disa.instr); // read branch
             PPCDisasm (&disa);                    // disasm
             if(disa.iclass & PPC_DISA_BRANCH)
             {
@@ -566,7 +566,7 @@ void cmd_lr(std::vector<std::string>& args)
                 else       DBReport("%-3i: %-12s%-12s " "\n",
                                       i+1, disa.mnemonic, disa.operands );
             }
-            MEMReadWord(sp, &sp);           // walk stack
+            CPUReadWord(sp, &sp);           // walk stack
 
             uint32_t pa = -1;
             if (emu.core)
@@ -610,7 +610,7 @@ void cmd_name(std::vector<std::string>& args)
             if(pa != -1)
             {
                 PPCD_CB disa;
-                MEMReadWord(branchAddr, &op);
+                CPUReadWord(branchAddr, &op);
                 disa.pc = branchAddr;
                 disa.instr = op;
                 PPCDisasm (&disa);
@@ -665,7 +665,7 @@ void cmd_nop(std::vector<std::string>& args)
     }
     if(pa == -1) return;
     
-    uint32_t old = MEMSwap(*(uint32_t*)(&mi.ram[pa]));
+    uint32_t old = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
     mi.ram[pa] = 0x60;
     mi.ram[pa+1] = mi.ram[pa+2] = mi.ram[pa+3] = 0;
     add_nop(ea, old);
@@ -742,10 +742,10 @@ void cmd_plist(std::vector<std::string>& args)
         DBReport(
             fmt,
             i+1,
-            MEMSwap(p->effectiveAddress),
+            _byteswap_ulong(p->effectiveAddress),
             data[0], data[1], data[2], data[3],
             data[4], data[5], data[6], data[7],
-            MEMSwapHalf(p->dataSize), MEMSwapHalf(p->freeze) & 1
+            _byteswap_ushort(p->dataSize), _byteswap_ushort(p->freeze) & 1
         );
     }
     DBReport("-----------------------------------\n");

@@ -16,7 +16,6 @@
 
 #include "../Debugger/Debugger.h"
 
-#include "../Core/Memory.h"
 #include "../Core/Gekko.h"
 
 #include "../UserMenu/UserMain.h"

@@ -53,7 +53,7 @@ void __fastcall MEMReadHalf(uint32_t addr, uint32_t *reg)
     if (addr >= 0xe0000000)
     {
         uint8_t* ptr = &mem.lc[addr & 0x3ffff];
-        *reg = (uint32_t)MEMSwapHalf(*(uint16_t*)ptr);
+        *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
         return;
     }
 
@@ -67,7 +67,7 @@ void __fastcall MEMReadHalfS(uint32_t addr, uint32_t *reg)
     if (addr >= 0xe0000000)
     {
         uint8_t* ptr = &mem.lc[addr & 0x3ffff];
-        *reg = MEMSwapHalf(*(uint16_t*)ptr);
+        *reg = _byteswap_ushort(*(uint16_t*)ptr);
         if (*reg & 0x8000) *reg |= 0xffff0000;
         return;
     }
@@ -83,7 +83,7 @@ void __fastcall MEMWriteHalf(uint32_t addr, uint32_t data)
     if (addr >= 0xe0000000)
     {
         uint8_t* ptr = &mem.lc[addr & 0x3ffff];
-        *(uint16_t*)ptr = MEMSwapHalf((uint16_t)data);
+        *(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
         return;
     }
 
@@ -97,7 +97,7 @@ void __fastcall MEMReadWord(uint32_t addr, uint32_t *reg)
     if (addr >= 0xe0000000)
     {
         uint8_t* ptr = &mem.lc[addr & 0x3ffff];
-        *reg = MEMSwap(*(uint32_t*)ptr);
+        *reg = _byteswap_ulong(*(uint32_t*)ptr);
         return;
     }
 
@@ -111,7 +111,7 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
     if (addr >= 0xe0000000)
     {
         uint8_t* ptr = &mem.lc[addr & 0x3ffff];
-        *(uint32_t*)ptr = MEMSwap(data);
+        *(uint32_t*)ptr = _byteswap_ulong(data);
         return;
     }
    
@@ -239,31 +239,4 @@ uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
     }
 
     return -1;
-}
-
-// ---------------------------------------------------------------------------
-// swap endianness
-
-// swap longs (no need in assembly, used by tools)
-void MEMSwapArea(uint32_t *addr, int count)
-{
-    uint32_t *until = addr + count / sizeof(uint32_t);
-
-    while(addr != until)
-    {
-        *addr = MEMSwap(*addr);
-        addr++;
-    }
-}
-
-// swap shorts (no need in assembly, used by tools)
-void MEMSwapAreaHalf(uint16_t *addr, int count)
-{
-    uint16_t *until = addr + count / sizeof(uint16_t);
-
-    while(addr != until)
-    {
-        *addr = MEMSwapHalf(*addr);
-        addr++;
-    }    
 }

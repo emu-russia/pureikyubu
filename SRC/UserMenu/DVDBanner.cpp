@@ -39,7 +39,7 @@ uint8_t DVDBannerChecksum(void *banner)
     uint32_t         sum  = 0;
 
     // select banner type
-    if(MEMSwap(bnr->id) == DVD_BANNER_ID)   // US/JAP
+    if(_byteswap_ulong(bnr->id) == DVD_BANNER_ID)   // US/JAP
     {
         buf = (uint8_t *)bnr;
         for(int i=0; i<sizeof(DVDBanner); i++)

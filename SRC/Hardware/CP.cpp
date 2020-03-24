@@ -360,7 +360,7 @@ void __fastcall write_fifo8(uint32_t addr, uint32_t data)
 
 void __fastcall write_fifo16(uint32_t addr, uint32_t data)
 {
-    uint16_t h = MEMSwapHalf((uint16_t)data);
+    uint16_t h = _byteswap_ushort((uint16_t)data);
 
     BeginProfileGfx();
     GXWriteFifo((uint8_t *)&h, 2);
@@ -370,7 +370,7 @@ void __fastcall write_fifo16(uint32_t addr, uint32_t data)
 
 void __fastcall write_fifo32(uint32_t addr, uint32_t data)
 {
-    uint32_t w = MEMSwap(data);
+    uint32_t w = _byteswap_ulong(data);
 
     BeginProfileGfx();
     GXWriteFifo((uint8_t *)&w, 4);
