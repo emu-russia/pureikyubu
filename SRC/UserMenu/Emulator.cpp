@@ -31,8 +31,8 @@ void EMUGetHwConfig(HWConfig * config)
     strcpy_s (config->ansiFilename, sizeof(config->ansiFilename), GetConfigString(USER_ANSI, USER_ANSI_DEFAULT));
     strcpy_s (config->sjisFilename, sizeof(config->sjisFilename), GetConfigString(USER_SJIS, USER_SJIS_DEFAULT));
 
-    config->MemcardA_Connected = GetConfigInt(MemcardA_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
-    config->MemcardB_Connected = GetConfigInt(MemcardB_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
+    config->MemcardA_Connected = false;// GetConfigInt(MemcardA_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
+    config->MemcardB_Connected = false;// GetConfigInt(MemcardB_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
     strcpy_s (config->MemcardA_Filename, sizeof(config->MemcardA_Filename), GetConfigString(MemcardA_Filename_Key, "*", HKEY_MEMCARD));
     strcpy_s (config->MemcardB_Filename, sizeof(config->MemcardB_Filename), GetConfigString(MemcardB_Filename_Key, "*", HKEY_MEMCARD));
     config->Memcard_SyncSave = GetConfigInt(Memcard_SyncSave_Key, FALSE, HKEY_MEMCARD) & 1;

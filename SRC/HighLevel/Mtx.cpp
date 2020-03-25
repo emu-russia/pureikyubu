@@ -25,7 +25,7 @@ static void print_mtx(MatrixPtr ptr, const char *name="")
 {
     MatrixFPtr m = (MatrixFPtr)ptr;
 
-    MEMSwapArea((uint32_t *)ptr, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)ptr, 3*4*4);
     DolwinReport( "%s\n"
                   "%f %f %f %f\n"
                   "%f %f %f %f\n"
@@ -35,7 +35,7 @@ static void print_mtx(MatrixPtr ptr, const char *name="")
                   MTX(m)[0][0], MTX(m)[0][1], MTX(m)[0][2], MTX(m)[0][3],
                   MTX(m)[1][0], MTX(m)[1][1], MTX(m)[1][2], MTX(m)[1][3],
                   MTX(m)[2][0], MTX(m)[2][1], MTX(m)[2][2], MTX(m)[2][3] );
-    MEMSwapArea((uint32_t *)ptr, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)ptr, 3*4*4);
 }
 
 /* ---------------------------------------------------------------------------
@@ -150,8 +150,8 @@ void C_MTXConcat(void)
     //print_mtx((MatrixPtr)a, "a C");
     //print_mtx((MatrixPtr)b, "b C");
 
-    MEMSwapArea((uint32_t *)a, 3*4*4);
-    MEMSwapArea((uint32_t *)b, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)a, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)b, 3*4*4);
 
     // m = a x b
     MTX(m)[0][0] = MTX(a)[0][0]*MTX(b)[0][0] + MTX(a)[0][1]*MTX(b)[1][0] + MTX(a)[0][2]*MTX(b)[2][0];
@@ -170,9 +170,9 @@ void C_MTXConcat(void)
     MTX(m)[2][3] = MTX(a)[2][0]*MTX(b)[0][3] + MTX(a)[2][1]*MTX(b)[1][3] + MTX(a)[2][2]*MTX(b)[2][3] + MTX(a)[2][3];
 
     // restore A and B
-    MEMSwapArea((uint32_t *)a, 3*4*4);
-    MEMSwapArea((uint32_t *)b, 3*4*4);
-    MEMSwapArea((uint32_t *)m, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)a, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)b, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)m, 3*4*4);
 
     //print_mtx((MatrixPtr)m, "m C");
 
@@ -326,8 +326,8 @@ void SIMD_MTXConcat(void)
     //print_mtx((MatrixPtr)a, "a");
     //print_mtx((MatrixPtr)b, "b");
 
-    MEMSwapArea((uint32_t *)a, 3*4*4);
-    MEMSwapArea((uint32_t *)b, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)a, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)b, 3*4*4);
 
     // m = a x b. SSE gives 7 movs, 3 adds, 3 muls (shufps swaps are neglegible)
     __asm   mov     eax, dword ptr a
@@ -344,9 +344,9 @@ void SIMD_MTXConcat(void)
     MTX(m)[2][3] += MTX(a)[2][3];
 
     // restore A and B
-    MEMSwapArea((uint32_t *)a, 3*4*4);
-    MEMSwapArea((uint32_t *)b, 3*4*4);
-    MEMSwapArea((uint32_t *)m, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)a, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)b, 3*4*4);
+    Gekko::GekkoCore::SwapArea((uint32_t *)m, 3*4*4);
 
     //print_mtx((MatrixPtr)m, "m");
 
