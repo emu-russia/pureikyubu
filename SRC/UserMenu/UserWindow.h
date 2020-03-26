@@ -38,7 +38,7 @@ void    CenterChildWindow(HWND hParent, HWND hChild);
 // all important data is placed here
 typedef struct UserWindow
 {
-    BOOL    ontop;              // main window is on top ?
+    bool    ontop;              // main window is on top ?
 
     HWND    hMainWindow;        // main window
     HWND    hStatusWindow;      // statusbar window

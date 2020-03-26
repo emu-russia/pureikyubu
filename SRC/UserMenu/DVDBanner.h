@@ -43,5 +43,5 @@ typedef struct DVDBanner2
 } DVDBanner2;
 
 // banner API
-void*   DVDLoadBanner(char *dvdFile);           // free() required!
+void*   DVDLoadBanner(TCHAR *dvdFile);           // free() required!
 uint8_t DVDBannerChecksum(void *banner);

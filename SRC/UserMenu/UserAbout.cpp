@@ -1,7 +1,7 @@
 // Dolwin about dialog
 #include "dolphin.h"
 
-static BOOL opened = FALSE;
+static bool opened = false;
 static HWND dlgAbout;
 
 // dialog procedure
@@ -58,7 +58,7 @@ static INT_PTR CALLBACK AboutProc(
         {
             DestroyWindow(dlgAbout);
             dlgAbout = NULL;
-            opened = FALSE;
+            opened = false;
             break;
         }
         case WM_COMMAND:
@@ -67,14 +67,14 @@ static INT_PTR CALLBACK AboutProc(
             {
                 DestroyWindow(dlgAbout);
                 dlgAbout = NULL;
-                opened = FALSE;
+                opened = false;
                 return TRUE;
             }
             if(wParam == IDOK)
             {
                 DestroyWindow(dlgAbout);
                 dlgAbout = NULL;
-                opened = FALSE;
+                opened = false;
                 return TRUE;
             }
             break;
@@ -97,5 +97,5 @@ void AboutDialog(HWND hwndParent)
         AboutProc
     );
 
-    opened = TRUE;
+    opened = true;
 }

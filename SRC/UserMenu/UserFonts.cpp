@@ -2,35 +2,35 @@
 #include "dolphin.h"
 
 static HWND     parentWnd;
-static char     FontsDir[] = ".\\Data";         // font placeholder
-static char*    FontAnsiList[256];              // list for combo box
-static char*    FontSjisList[256];              // list for combo box
+static TCHAR    FontsDir[] = _T(".\\Data");     // font placeholder
+static TCHAR*   FontAnsiList[256];              // list for combo box
+static TCHAR*   FontSjisList[256];              // list for combo box
 static int      AnsiSelected, SjisSelected;     // current selected in combo
-static char     FontAnsiFile[MAX_PATH];         // copy of USER_ANSI variable
-static char     FontSjisFile[MAX_PATH];         // copy of USER_SJIS variable
+static TCHAR    FontAnsiFile[MAX_PATH];         // copy of user variable
+static TCHAR    FontSjisFile[MAX_PATH];         // copy of user variables
 
 // ---------------------------------------------------------------------------
 
-static void FontSetAnsiFile(char *filename)
+static void FontSetAnsiFile(TCHAR *filename)
 {
     strcpy_s(FontAnsiFile, sizeof(FontAnsiFile), filename);
-    SetConfigString(USER_ANSI, FontAnsiFile);
+    SetConfigString(USER_ANSI, FontAnsiFile, USER_HW);
 }
 
-static void FontSetSjisFile(char *filename)
+static void FontSetSjisFile(TCHAR *filename)
 {
     strcpy_s(FontSjisFile, sizeof(FontSjisFile), filename);
-    SetConfigString(USER_SJIS, FontSjisFile);
+    SetConfigString(USER_SJIS, FontSjisFile, USER_HW);
 }
 
-static void AddFont(HWND hwndDlg, char *file)
+static void AddFont(HWND hwndDlg, TCHAR *file)
 {
     // split path
-    char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+    TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
     _splitpath(file, drive, dir, name, ext);
 
     // check font type
-    int size = FileSize(file);
+    size_t size = UI::FileSize(file);
     BOOL is_ansi = (size <= ANSI_SIZE);
 
     if(is_ansi)
@@ -38,14 +38,14 @@ static void AddFont(HWND hwndDlg, char *file)
         FontAnsiList[AnsiSelected] = (char *)malloc(strlen(file) + 1);
         strcpy(FontAnsiList[AnsiSelected++], file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-        SendDlgItemMessageA(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
+        SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
     else
     {   // Sjis type
         FontSjisList[SjisSelected] = (char *)malloc(strlen(file) + 1);
         strcpy(FontSjisList[SjisSelected++], file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
-        SendDlgItemMessageA(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
+        SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
 }
 
@@ -210,8 +210,8 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 void FontConfigure(HWND hParent)
 {
-    FontSetAnsiFile(GetConfigString(USER_ANSI, USER_ANSI_DEFAULT));
-    FontSetSjisFile(GetConfigString(USER_SJIS, USER_SJIS_DEFAULT));
+    FontSetAnsiFile(GetConfigString(USER_ANSI, USER_HW));
+    FontSetSjisFile(GetConfigString(USER_SJIS, USER_HW));
 
     DialogBox(
         GetModuleHandle(NULL),

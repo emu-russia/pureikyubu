@@ -7,8 +7,7 @@ void    EMUGetHwConfig(HWConfig* config);
 // emulator controls API
 void    EMUOpen();          // [START]
 void    EMUClose();         // [STOP]
-
-// EMUReset = [STOP], [START]
+void    EMUReset();         // Reset
 
 // all important data is placed here
 typedef struct Emulator

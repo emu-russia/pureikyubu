@@ -173,7 +173,6 @@ static void SRAMSave(SRAM *s)
 //
 // update real-time clock register
 // bootrom is updating time-base registers, using RTC value
-// Nintendo guaranteed, that RTC will be valid till year 2006
 //
 
 #define MAGIC_VALUE 0x386d4380  // seconds between 1970 and 2000
@@ -181,11 +180,7 @@ static void SRAMSave(SRAM *s)
 // use to get updated RTC
 void RTCUpdate()
 {
-    if(exi.rtc)
-    {
-        exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
-    }
-    else exi.rtcVal = 0;
+    exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
 }
 
 //
@@ -644,7 +639,6 @@ void EIOpen(HWConfig * config)
     // load user variables
     exi.log = config->exi_log;
     exi.osReport = config->exi_osReport;
-    exi.rtc = config->exi_rtc;
     
     // reset devices
     exi.sel = -1;           // deselect MX device

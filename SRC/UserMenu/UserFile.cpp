@@ -77,16 +77,16 @@ namespace UI
         switch (type)
         {
             case FileType::All:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_LASTDIR_ALL_DEFAULT));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
                 break;
             case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_LASTDIR_DVD_DEFAULT));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
                 break;
             case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_LASTDIR_MAP_DEFAULT));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
                 break;
             case FileType::Patch:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_LASTDIR_PATCH_DEFAULT));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_UI));
                 break;
         }
 
@@ -202,16 +202,16 @@ namespace UI
             switch (type)
             {
                 case FileType::All:
-                    SetConfigString(USER_LASTDIR_ALL, lastDir);
+                    SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
                     break;
                 case FileType::Dvd:
-                    SetConfigString(USER_LASTDIR_DVD, lastDir);
+                    SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
                     break;
                 case FileType::Map:
-                    SetConfigString(USER_LASTDIR_MAP, lastDir);
+                    SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
                 case FileType::Patch:
-                    SetConfigString(USER_LASTDIR_PATCH, lastDir);
+                    SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
                     break;
             }
 
