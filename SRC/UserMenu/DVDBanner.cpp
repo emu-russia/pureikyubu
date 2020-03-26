@@ -2,9 +2,9 @@
 // we are using DVD plugin for disk operations.
 #include "dolphin.h"
 
-void * DVDLoadBanner(char *dvdFile)
+void * DVDLoadBanner(TCHAR *dvdFile)
 {
-    int fsize = FileSize(dvdFile);
+    int fsize = UI::FileSize(dvdFile);
     DVDBanner2 * banner;
     uint32_t bnrofs;
 

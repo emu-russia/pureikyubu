@@ -18,19 +18,16 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <intrin.h>
+#include <tchar.h>
 #include "resource.h"
 
 // ---------------------------------------------------------------------------
 // compile-time triggers.
 
 // version info, used everywhere in emu.
-#define APPNAME     "Dolwin"
-#define APPDESC     "Nintendo Gamecube Emulator for Windows"
-#define APPVER      "0.11"
-
-#define APPNAMEW    L"Dolwin"
-#define APPDESCW    L"Nintendo Gamecube Emulator for Windows"
-#define APPVERW     L"0.11"
+#define APPNAME     _T("Dolwin")
+#define APPDESC     _T("Nintendo Gamecube Emulator for Windows")
+#define APPVER      _T("0.11")
 
 // ---------------------------------------------------------------------------
 // Dolwin includes

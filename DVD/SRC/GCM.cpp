@@ -3,13 +3,13 @@
 #include "pch.h"
 
 // local data
-static char     gcm_filename[0x1000];
+static TCHAR    gcm_filename[0x1000];
 static int      gcm_size;       // size of opened file
 static int      seekval;        // current DVD position
 
 // ---------------------------------------------------------------------------
 
-bool GCMSelectFile(char *file)
+bool GCMSelectFile(TCHAR *file)
 {
     FILE* gcm_file;
 
@@ -22,7 +22,7 @@ bool GCMSelectFile(char *file)
     }
 
     // open GCM file
-    fopen_s(&gcm_file, file, "rb");
+    _tfopen_s(&gcm_file, file, _T("rb"));
     if(!gcm_file) return false;
 
     // get file size
@@ -41,7 +41,7 @@ bool GCMSelectFile(char *file)
     // reset position
     seekval = 0;
 
-    strcpy_s(gcm_filename, sizeof(gcm_filename) - 1, file);
+    _tcscpy_s(gcm_filename, _countof(gcm_filename) - 1, file);
     dvd.selected = true;
 
     return true;
@@ -62,7 +62,7 @@ void GCMRead(uint8_t*buf, int length)
         return;
     }
 
-    fopen_s(&gcm_file, gcm_filename, "rb");
+    _tfopen_s (&gcm_file, gcm_filename, _T("rb"));
 
     if(gcm_file)
     {

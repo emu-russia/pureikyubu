@@ -511,21 +511,21 @@ static void reset_columns()
     {                                                               \
         lvcol.fmt = LVCFMT_##align;                                 \
         lvcol.cx  = width;                                          \
-        lvcol.pszText = SELECTOR_COLUMN_##text;                     \
+        lvcol.pszText = text;                                       \
         ListView_InsertColumn(usel.hSelectorWindow, id, &lvcol);    \
     }
 
-    ADDCOL(LEFT  , (usel.smallIcons) ? (57) : (105), BANNER , 0);
-    ADDCOL(LEFT  , 200, TITLE  , 1);
-    ADDCOL(CENTER, 60 , SIZE   , 2);
-    ADDCOL(CENTER, 60 , GAMEID , 3);
+    ADDCOL(LEFT  , (usel.smallIcons) ? (57) : (105), SELECTOR_COLUMN_BANNER, 0);
+    ADDCOL(LEFT  , 200, SELECTOR_COLUMN_TITLE, 1);
+    ADDCOL(CENTER, 60 , SELECTOR_COLUMN_SIZE, 2);
+    ADDCOL(CENTER, 60 , SELECTOR_COLUMN_GAMEID, 3);
 
     // last one is tricky
     int commentWidth = usel.width - 
                        (((usel.smallIcons) ? (57) : (105))+200+60+60) - 
                        GetSystemMetrics(SM_CXVSCROLL) - 4;
     if(commentWidth < 190) commentWidth = 190;
-    ADDCOL(LEFT  , commentWidth, COMMENT, 4);
+    ADDCOL(LEFT  , commentWidth, SELECTOR_COLUMN_COMMENT, 4);
 }
 
 void ResizeSelector(int width, int height)
@@ -673,7 +673,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        wchar_t text[0x1000] = { 0, };
+        TCHAR text[0x1000] = { 0, };
         UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
@@ -686,7 +686,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc.right+= lvc.cx;
 
         ListView_GetItemText(usel.hSelectorWindow, ID, col, text, _countof(text) - 1);
-        size_t len = wcslen(text);
+        size_t len = _tcslen(text);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
@@ -707,8 +707,8 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    wchar_t search[2 * MAX_PATH], *mask[] = { L"*.dol", L"*.elf", L"*.gcm", L"*.iso", NULL };
-    wchar_t found[2 * MAX_PATH];
+    TCHAR search[2 * MAX_PATH], *mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso"), NULL };
+    TCHAR found[2 * MAX_PATH];
     int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
     WIN32_FIND_DATA fd = { 0 };
     HANDLE hfff;
@@ -753,7 +753,7 @@ void UpdateSelector()
             filter >>= 8;
             if(!allow) { m++; continue; }
 
-            swprintf_s(search, _countof(search), L"%S%ws", usel.paths[dir].c_str(), mask[m]);
+            _stprintf_s(search, _countof(search), _T("%S%ws"), usel.paths[dir].c_str(), mask[m]);
 
             memset(&fd, 0, sizeof(fd));
 
@@ -764,13 +764,13 @@ void UpdateSelector()
                 {
                     if((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
-                        swprintf_s(found, _countof(found), L"%S%ws", usel.paths[dir].c_str(), fd.cFileName);
+                        _stprintf_s(found, _countof(found), _T("%S%ws"), usel.paths[dir].c_str(), fd.cFileName);
 
                         // Add file in list
                         {
                             char ansiFilename[0x1000] = { 0, };
                             char* ansiPtr = ansiFilename;
-                            wchar_t* widePtr = found;
+                            TCHAR* widePtr = found;
 
                             while (*widePtr)
                             {
@@ -869,7 +869,7 @@ static void getdispinfo(LPNMHDR pnmh)
 
     if (ansiStr)
     {
-        wchar_t* widePtr = lpdi->item.pszText;
+        TCHAR* widePtr = lpdi->item.pszText;
         char* ansiPtr = ansiStr;
 
         while (*ansiPtr)

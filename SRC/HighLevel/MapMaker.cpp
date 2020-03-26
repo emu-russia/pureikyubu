@@ -21,7 +21,7 @@ int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
 
-#define MAPDAT_FILE   ".\\Data\\makemap.dat"
+#define MAPDAT_FILE   _T(".\\Data\\makemap.dat")
 #define MAP_MAXFUNCNAME 100
 
 /*
@@ -83,8 +83,8 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
  */
 static void MAPOpen ()
 {
-    uint32_t size = 0;
-    Map_buffer = (uint8_t *)FileLoad(MAPDAT_FILE, &size);
+    size_t size = 0;
+    Map_buffer = (uint8_t *)UI::FileLoad(MAPDAT_FILE, &size);
     if (Map_buffer == NULL) return;
     Map_functionsSize = *(uint32_t *)(Map_buffer);
     Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));
@@ -134,7 +134,7 @@ static char * MAPFind (uint32_t checksum)
 /*
  * Starts the creation of a new map
  */
-void MAPInit(char * mapname)
+void MAPInit(TCHAR * mapname)
 {
     MAPOpen ();
     Map = fopen(mapname, "w");

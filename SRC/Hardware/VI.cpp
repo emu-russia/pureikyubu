@@ -171,13 +171,13 @@ void VIUpdate()
 static void __fastcall vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
-    DolwinReport("VI READ8");
+    UI::DolwinReport(_T("VI READ8"));
     *reg = 0;
 }
 
 static void __fastcall vi_write8(uint32_t addr, uint32_t data)
 {
-    DolwinReport("VI WRITE8");
+    UI::DolwinReport(_T("VI WRITE8"));
 }
 
 static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
@@ -406,7 +406,7 @@ void VIOpen(HWConfig * config)
         bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
         if(!res)
         {
-            DolwinReport("VI cant startup GDI");
+            UI::DolwinReport(_T("VI cant startup GDI"));
             vi.xfb = false;
         }
     }

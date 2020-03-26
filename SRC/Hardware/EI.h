@@ -72,7 +72,7 @@ typedef struct SRAM
 #define SJIS_SIZE   0x4D000
 
 // location of SRAM dump in Dolwin filesystem 
-#define SRAM_FILE   ".\\Data\\sram.bin"
+#define SRAM_FILE   _T(".\\Data\\sram.bin")
 
 // ---------------------------------------------------------------------------
 // hardware API

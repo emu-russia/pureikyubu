@@ -146,7 +146,7 @@ static void TOKEN_INT()
 static void CP_BREAK()
 {
     fifo.cp.sr |= CP_SR_BPINT;
-    DolwinReport("BPOINT!");
+    UI::DolwinReport(_T("BPOINT!"));
     PIAssertInt(PI_INTERRUPT_CP);
 }
 

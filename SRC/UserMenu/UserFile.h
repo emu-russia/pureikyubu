@@ -1,17 +1,24 @@
 // Dolwin file utilities API
 
-typedef enum _FILE_TYPE
+namespace UI
 {
-    FILE_TYPE_ALL = 1,
-    FILE_TYPE_DVD,
-    FILE_TYPE_MAP,
-    FILE_TYPE_PATCH,
-    FILE_TYPE_DIR,
-} FILE_TYPE;
-                                                            // dont forget to :
-int     FileSize(const char *filename);
-void*   FileLoad(const char *filename, uint32_t *size=NULL);           // free!
-BOOL    FileSave(const char *filename, void *data, uint32_t size);
-char*   FileOpen(HWND hwnd, FILE_TYPE type=FILE_TYPE_ALL);        // copy away!
-char*   FileShortName(const char *filename, int lvl=3);           // copy away!
-char*   FileSmartSize(uint32_t size);                            // copy away!
+
+    enum class FileType
+    {
+        All = 1,
+        Dvd,
+        Map,
+        Patch,
+        Directory,
+    };
+
+    // dont forget to :
+
+    size_t FileSize(const TCHAR * filename);
+    void* FileLoad(const TCHAR * filename, size_t* size = nullptr);           // free!
+    bool FileSave(const TCHAR * filename, void* data, uint32_t size);
+    TCHAR* FileOpen(HWND hwnd, FileType type = FileType::All);        // copy away!
+    TCHAR* FileShortName(const TCHAR * filename, int lvl = 3);           // copy away!
+    TCHAR* FileSmartSize(size_t size);                            // copy away!
+
+};

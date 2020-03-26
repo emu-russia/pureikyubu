@@ -422,7 +422,7 @@ void MCTransfer () {
         }
         break;
     default:
-        DolwinError("Memcard Error", "Unknown memcard transfer type");
+        UI::DolwinError(_T("Memcard Error"), _T("Unknown memcard transfer type"));
     }
 }
 
@@ -461,7 +461,7 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        DolwinError ( "Memcard Error", "Wrong card id for creating file.");
+        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
         return FALSE;
     }
 
@@ -469,14 +469,14 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
     fopen_s(&newfile, path, "wb") ;
 
 	if (newfile == NULL) {
-        DolwinReport("Error while trying to create memcard file.");
+        UI::DolwinReport(_T("Error while trying to create memcard file."));
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            DolwinReport("Error while trying to write memcard file.");
+            UI::DolwinReport(_T("Error while trying to write memcard file."));
 
 			fclose (newfile);
             return FALSE;
@@ -525,8 +525,8 @@ void MCOpen (HWConfig * config)
     /* load settings */
     Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
     Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
-    strcpy_s(memcard[MEMCARD_SLOTA].filename, sizeof(memcard[MEMCARD_SLOTA].filename), config->MemcardA_Filename);
-    strcpy_s(memcard[MEMCARD_SLOTB].filename, sizeof(memcard[MEMCARD_SLOTB].filename), config->MemcardB_Filename);
+    _tcscpy_s(memcard[MEMCARD_SLOTA].filename, _countof(memcard[MEMCARD_SLOTA].filename) - 1, config->MemcardA_Filename);
+    _tcscpy_s(memcard[MEMCARD_SLOTB].filename, _countof(memcard[MEMCARD_SLOTB].filename) - 1, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
     if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
@@ -601,7 +601,7 @@ bool MCConnect (int cardnum) {
     case MEMCARD_SLOTB:
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
 
-        int memcardSize = FileSize(memcard[cardnum].filename);
+        size_t memcardSize = UI::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
         fopen_s(&memcard[cardnum].file, memcard[cardnum].filename, "r+b");
@@ -609,12 +609,12 @@ bool MCConnect (int cardnum) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
-            DolwinReport(
-                "Couldnt open memcard (slot %c),\n"
-                "location : %s\n\n"
-                "Check path or file attributes.",
+            UI::DolwinReport(
+                _T("Couldnt open memcard (slot %c),\n")
+                _T("location : %s\n\n")
+                _T("Check path or file attributes."),
                 slt[cardnum],
-                FileShortName(memcard[cardnum].filename)
+                UI::FileShortName(memcard[cardnum].filename)
             );
             return FALSE;
         }

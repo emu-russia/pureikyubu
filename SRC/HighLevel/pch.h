@@ -9,6 +9,7 @@
 #include <string.h>
 #include <intrin.h>
 #include <time.h>
+#include <tchar.h>
 
 #include "../UserMenu/UserSpinLock.h"
 

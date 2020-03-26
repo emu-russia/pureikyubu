@@ -404,18 +404,6 @@ IDI_GCN_ICON            ICON                    "GCN.ico"
 
 IDI_GCN_SMALL_ICON      ICON                    "GCN_sm.ico"
 
-IDI_MOREICON1           ICON                    "moreicon1.ico"
-
-IDI_MOREICON2           ICON                    "moreicon2.ico"
-
-IDI_MOREICON3           ICON                    "moreicon3.ico"
-
-IDI_MOREICON4           ICON                    "moreicon4.ico"
-
-IDI_MOREICON5           ICON                    "moreicon5.ico"
-
-IDI_MOREICON6           ICON                    "moreicon6.ico"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //

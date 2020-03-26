@@ -1,0 +1,43 @@
+{
+	"emulator":
+	{
+
+	},
+
+	"hardware":
+	{
+
+	},
+
+	"controllers":
+	{
+		"port0":
+		{
+			"connected": false
+		},
+		"port1":
+		{
+			"connected": false
+		},
+		"port2":
+		{
+			"connected": false
+		},
+		"port3":
+		{
+			"connected": false
+		},
+	},
+
+	"memcards":
+	{
+		"slotA":
+		{
+			"connected": false
+		},
+		"slotB":
+		{
+			"connected": false
+		}
+	}
+}

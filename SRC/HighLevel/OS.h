@@ -77,4 +77,4 @@ void    OSRestoreInterrupts ( void );
 --------------------------------------------------------------------------- */
 
 void    OSCheckContextStruct();
-wchar_t*   OSTimeFormat(uint64_t tbr, bool noDate=false);
+TCHAR*   OSTimeFormat(uint64_t tbr, bool noDate=false);

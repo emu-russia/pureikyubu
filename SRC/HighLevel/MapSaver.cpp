@@ -4,7 +4,7 @@
 // Simple MAP overwrite is stupid.
 #include "pch.h"
 
-#define DEFAULT_MAP "Data\\default.map"
+#define DEFAULT_MAP _T("Data\\default.map")
 //#define HEX "0x"
 #define HEX
 
@@ -55,7 +55,7 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
 // there can be two cases of this call : save map into specified file and update current map
 // if there is not map loaded, all new symbols will go in default.map
 // saved map is appended (mean no file overwrite, and add new symbols to the end)
-void SaveMAP(const char *mapname /*="this"*/)
+void SaveMAP(const TCHAR *mapname /*="this"*/)
 {
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
@@ -64,7 +64,7 @@ void SaveMAP(const char *mapname /*="this"*/)
     {
         if(hle.mapfile[0] == 0)
         {
-            DBReport2(DbgChannel::Error, "No map file loaded! Symbols will be saved to " DEFAULT_MAP "\n");
+            DBReport2(DbgChannel::Error, "No map file loaded! Symbols will be saved to default map\n");
             mapname = DEFAULT_MAP;
         }
         else mapname = hle.mapfile;
@@ -74,7 +74,7 @@ void SaveMAP(const char *mapname /*="this"*/)
 
     // load MAP symbols
     SYMSetWorkspace(mapSet);
-    mapFormat = LoadMAP((char *)mapname);
+    mapFormat = LoadMAP(mapname);
     if(mapFormat == 0) return;  // :(
 
     // find new map entries to append file

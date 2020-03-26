@@ -146,10 +146,10 @@ void EXIDetach(int chan)
 static void SRAMLoad(SRAM *s)
 {
     uint8_t * buf;
-    uint32_t size;
+    size_t size;
 
     // load data from file in temporary buffer
-    buf = (uint8_t *)FileLoad(SRAM_FILE, &size);
+    buf = (uint8_t *)UI::FileLoad(SRAM_FILE, &size);
     memset(s, 0, sizeof(SRAM));
 
     // copy less or equal bytes from buffer to SRAM
@@ -167,7 +167,7 @@ static void SRAMLoad(SRAM *s)
 
 static void SRAMSave(SRAM *s)
 {
-    FileSave(SRAM_FILE, s, sizeof(SRAM));
+    UI::FileSave(SRAM_FILE, s, sizeof(SRAM));
 }
 
 //
@@ -192,24 +192,24 @@ void RTCUpdate()
 // load ANSI and SJIS fonts
 //
 
-static void FontLoad(uint8_t **font, uint32_t fontsize, char *filename)
+static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
 {
     uint8_t * buf;
-    uint32_t size;
+    size_t size;
 
     // allocate memory for font data
     *font = (uint8_t *)malloc(fontsize);
     if(*font == NULL)
     {
-failed: DolwinError(
-            "EXI Message",
-            "Cannot load bootrom font: %s\n", filename);
+failed: UI::DolwinError(
+            _T("EXI Message"),
+            _T("Cannot load bootrom font: %s\n"), filename);
         return;
     }
     memset(*font, 0, fontsize); // clear
 
     // load data from file in temporary buffer
-    buf = (uint8_t *)FileLoad(filename, &size);
+    buf = (uint8_t *)UI::FileLoad(filename, &size);
     if(buf != NULL)
     {
         if(size > fontsize) memcpy(*font, buf, fontsize);
@@ -398,7 +398,7 @@ void MXTransfer()
                     exi.regs[0].data = 0x03000000;
                     return;
                 }
-                else DolwinQuestion("EXI Module", "Unknown MX chip read immediate from %08X", ofs);
+                else UI::DolwinQuestion(_T("EXI Module"), _T("Unknown MX chip read immediate from %08X"), ofs);
             }
             return;
         }

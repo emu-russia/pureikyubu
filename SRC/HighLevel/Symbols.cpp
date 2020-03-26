@@ -118,7 +118,8 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
     SYM *symbol = symfind(symName);
 
     // check address
-    VERIFY((uint64_t)routine & ~0x03ffffff, "High-level call is too high in memory.");
+    // High-level call is too high in memory.
+    assert(((uint64_t)routine & ~0x03ffffff) == 0);
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)
@@ -159,12 +160,7 @@ static char * strsave(const char *str)
 {
     size_t len = strlen(str) + 1;
     char *saved = (char *)malloc(len);
-    if(saved == NULL)
-    {
-        DolwinError( "strsave in HighLevel\\Symbols.cpp",
-                     "Not enough memory for new string : %s\n\n", str );
-        // halt !
-    }
+    assert(saved);
     strcpy(saved, str);
     return saved;
 }

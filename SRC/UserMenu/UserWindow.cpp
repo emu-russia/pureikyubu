@@ -14,10 +14,10 @@ UserWindow wnd;
 // set default values of statusbar parts
 static void ResetStatusBar()
 {
-    SetStatusText(STATUS_PROGRESS,  L"Idle");
-    SetStatusText(STATUS_FPS,       L"");
-    SetStatusText(STATUS_TIMING,    L"");
-    SetStatusText(STATUS_TIME,      L"");
+    SetStatusText(STATUS_ENUM::Progress,  _T("Idle"));
+    SetStatusText(STATUS_ENUM::Fps,       _T(""));
+    SetStatusText(STATUS_ENUM::Timing,    _T(""));
+    SetStatusText(STATUS_ENUM::Time,      _T(""));
 }
 
 // create status bar window
@@ -34,8 +34,7 @@ static void CreateStatusBar()
         wnd.hMainWindow,
         ID_STATUS_BAR
     );
-
-    VERIFY(wnd.hStatusWindow == NULL, "Couldnt create " APPNAME " status bar window!");
+    assert(wnd.hStatusWindow);
 
     // depart statusbar
     SendMessage( wnd.hStatusWindow, 
@@ -48,7 +47,7 @@ static void CreateStatusBar()
 }
 
 // change text in specified statusbar part
-void SetStatusText(int sbPart, const wchar_t *text, bool post)
+void SetStatusText(STATUS_ENUM sbPart, const TCHAR *text, bool post)
 {
     if(wnd.hStatusWindow == NULL) return;
     if(post)
@@ -62,14 +61,13 @@ void SetStatusText(int sbPart, const wchar_t *text, bool post)
 }
 
 // get text of statusbar part
-wchar_t *GetStatusText(int sbPart)
+TCHAR *GetStatusText(STATUS_ENUM sbPart)
 {
-    static wchar_t sbText[256];
+    static TCHAR sbText[256] = { 0, };
 
     if(wnd.hStatusWindow == NULL) return NULL;
 
-    sbText[0] = 0;
-    SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)(sbPart | 0), (LPARAM)sbText);
+    SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)(sbPart), (LPARAM)sbText);
     return sbText;
 }
 
@@ -373,7 +371,6 @@ static void OnMainWindowCreate(HWND hwnd)
 
     // selector disabled ?
     usel.active = GetConfigInt(USER_SELECTOR, USER_SELECTOR_DEFAULT);
-    if(ldat.cmdline) usel.active = false;
     ModifySelectorControls(usel.active);
 
     // icon size
@@ -450,7 +447,7 @@ void OnMainWindowClosed()
         wnd.hMainMenu, "&Options")), 1, MF_BYPOSITION | MF_ENABLED);
 
     // set to Idle
-    SetWindowText(wnd.hMainWindow, WIN_NAMEW);
+    SetWindowText(wnd.hMainWindow, WIN_NAME);
     ResetStatusBar();
 }
 
@@ -532,7 +529,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             {
                 // load DVD/executable (START)
                 case ID_FILE_LOAD:
-                    if((name = FileOpen(hwnd)) != nullptr)
+                    if((name = UI::FileOpen(hwnd)) != nullptr)
                     {
 loadFile:
                         LoadFile(name);
@@ -580,7 +577,7 @@ loadFile:
 
                 // set new current DVD image
                 case ID_FILE_CHANGEDVD:
-                    if((name = FileOpen(hwnd, FILE_TYPE_DVD)) != nullptr && DIGetCoverState())
+                    if((name = UI::FileOpen(hwnd, UI::FileType::Dvd)) != nullptr && DIGetCoverState())
                     {
                         if(!_stricmp(name, ldat.currentFile)) return 0;  // same
                         if(DVDSetCurrent(name) == FALSE) return 0;      // bad
@@ -709,9 +706,9 @@ loadFile:
                 case ID_DUMP_RAM:
                     if (mi.ram)
                     {
-                        SetStatusText(STATUS_PROGRESS, L"Dumping main memory...");
-                        FileSave("RAM.bin", mi.ram, RAMSIZE);
-                        SetStatusText(STATUS_PROGRESS, L"Main memory dumped in RAM.bin");
+                        SetStatusText(STATUS_ENUM::Progress, _T("Dumping main memory..."));
+                        UI::FileSave(_T("RAM.bin"), mi.ram, RAMSIZE);
+                        SetStatusText(STATUS_ENUM::Progress, _T("Main memory dumped in RAM.bin"));
                     }
                     return 0;
 
@@ -719,9 +716,9 @@ loadFile:
                 case ID_DUMP_ARAM:
                     if (ARAM)
                     {
-                        SetStatusText(STATUS_PROGRESS, L"Dumping aux. memory...");
-                        FileSave("ARAM.bin", ARAM, ARAMSIZE);
-                        SetStatusText(STATUS_PROGRESS, L"Aux. memory dumped in ARAM.bin");
+                        SetStatusText(STATUS_ENUM::Progress, _T("Dumping aux. memory..."));
+                        UI::FileSave(_T("ARAM.bin"), ARAM, ARAMSIZE);
+                        SetStatusText(STATUS_ENUM::Progress, _T("Aux. memory dumped in ARAM.bin"));
                     }
                     return 0;
 
@@ -729,8 +726,8 @@ loadFile:
                 case ID_DUMP_LOMEM:
                     if (mi.ram)
                     {
-                        FileSave("lomem.bin", mi.ram, 0x3100);
-                        SetStatusText(STATUS_PROGRESS, L"OS low memory dumped in lomem.bin");
+                        UI::FileSave(_T("lomem.bin"), mi.ram, 0x3100);
+                        SetStatusText(STATUS_ENUM::Progress, _T("OS low memory dumped in lomem.bin"));
                     }
                     return 0;
 
@@ -750,7 +747,7 @@ loadFile:
 
                 // load patch data
                 case ID_LOAD_PATCH:
-                    if((name = FileOpen(hwnd, FILE_TYPE_PATCH)) != nullptr)
+                    if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
                         UnloadPatch();
                         LoadPatch(name, 0);
@@ -759,7 +756,7 @@ loadFile:
 
                 // add new patch data
                 case ID_ADD_PATCH:
-                    if((name = FileOpen(hwnd, FILE_TYPE_PATCH)) != nullptr)
+                    if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
                         LoadPatch(name, 1);
                     }
@@ -773,7 +770,7 @@ loadFile:
                         DBOpen();
                         emu.doldebug = TRUE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
-                        SetStatusText(STATUS_PROGRESS, L"Debugger opened");
+                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger opened"));
                     }
                     else
                     {   // close
@@ -781,7 +778,7 @@ loadFile:
                         DBClose();
                         emu.doldebug = FALSE;
                         SetConfigInt(USER_DOLDEBUG, emu.doldebug);
-                        SetStatusText(STATUS_PROGRESS, L"Debugger closed");
+                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
                     }
                     return 0;
 
@@ -918,7 +915,7 @@ HWND CreateMainWindow()
     HINSTANCE hInstance = GetModuleHandle(NULL);
     WNDCLASS wc;
 
-    VERIFY(wnd.hMainWindow != NULL, "Main window is already created!");
+    assert(wnd.hMainWindow == nullptr);
 
     wc.cbClsExtra    = wc.cbWndExtra = 0;
     wc.hbrBackground = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
@@ -926,7 +923,7 @@ HWND CreateMainWindow()
     wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
     wc.hInstance     = hInstance;
     wc.lpfnWndProc   = WindowProc;
-    wc.lpszClassName = L"GAMECUBECLASS";
+    wc.lpszClassName = _T("GAMECUBECLASS");
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MAIN_MENU);
     wc.style         = 0;
 
@@ -934,7 +931,7 @@ HWND CreateMainWindow()
 
     wnd.hMainWindow = CreateWindowEx(
         0,
-        L"GAMECUBECLASS", WIN_NAMEW,
+        _T("GAMECUBECLASS"), WIN_NAME,
         WIN_STYLE, 
         20, 30,
         400, 300,

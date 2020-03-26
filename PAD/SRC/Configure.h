@@ -43,7 +43,7 @@ enum
     VKEY_FOR_START,
     
     VKEY_FOR_MAX
-}; // phew, at last!
+};
 
 typedef struct
 {

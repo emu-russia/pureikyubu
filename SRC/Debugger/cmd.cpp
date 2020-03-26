@@ -407,7 +407,7 @@ void cmd_disa(std::vector<std::string>& args)
 
 void cmd_dop(std::vector<std::string>& args)
 {
-    if(ldat.patchNum == 0)
+    if(ldat.patches.size() == 0)
     {
         DBReport("no patch data loaded.\n");
         return;
@@ -708,16 +708,17 @@ void cmd_ostest(std::vector<std::string>& args)
 
 void cmd_plist(std::vector<std::string>& args)
 {
-    if(ldat.patchNum == 0)
+    if(ldat.patches.size() == 0)
     {
         DBReport("no patch data loaded.\n");
         return;
     }
 
     DBReport("i----addr-----data-------------s-f-\n");
-    for(uint32_t i=0; i<ldat.patchNum; i++)
+    int count = 0;
+    for(auto it= ldat.patches.begin(); it != ldat.patches.end(); ++it)
     {
-        Patch * p = &ldat.patches[i];
+        Patch * p = *it;
         uint8_t * data = (uint8_t *)&p->data;
         const char * fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
 
@@ -741,12 +742,14 @@ void cmd_plist(std::vector<std::string>& args)
 
         DBReport(
             fmt,
-            i+1,
+            count + 1,
             _byteswap_ulong(p->effectiveAddress),
             data[0], data[1], data[2], data[3],
             data[4], data[5], data[6], data[7],
             _byteswap_ushort(p->dataSize), _byteswap_ushort(p->freeze) & 1
         );
+
+        count++;
     }
     DBReport("-----------------------------------\n");
 }
@@ -1165,34 +1168,13 @@ void cmd_script(std::vector<std::string>& args)
 
     DBReport("loading script: %s\n", file);
 
-    // following code is copied from MAPLoad :)
-
-    int size = FileSize(file);
-    FILE* f = nullptr;
-    fopen_s (&f, file, "rt");
-    if(!f)
+    size_t size = 0;
+    char* sbuf = (char* )UI::FileLoad(file, &size);
+    if (!sbuf)
     {
         DBReport("cannot open script file!\n");
-        return ;
-    }
-
-    // allocate memory
-    char *sbuf = (char *)malloc(size + 1);
-    if(sbuf == NULL)
-    {
-        fclose(f);
-        DBReport(
-            "Not enough memory to load script.\n"
-            "file size : %ib\n\n",
-            size
-        );
         return;
     }
-
-    // load from file
-    fread(sbuf, size, 1, f);
-    fclose(f);
-    sbuf[size] = 0;
 
     // remove all garbage, like tabs
     for(i=0; i<size; i++)

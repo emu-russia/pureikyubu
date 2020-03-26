@@ -9,4 +9,4 @@ enum MAP_FORMAT
 
 // 0: cannot load map
 // >0: map loaded (MAP_FORMAT returned)
-int LoadMAP(char *mapname, bool add=false);
+int LoadMAP(const TCHAR *mapname, bool add=false);

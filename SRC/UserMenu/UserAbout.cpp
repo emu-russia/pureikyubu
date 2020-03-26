@@ -14,7 +14,7 @@ static INT_PTR CALLBACK AboutProc(
 {
     UNREFERENCED_PARAMETER(lParam);
 
-    char tmpbuf[256];    
+    TCHAR tmpbuf[256];    
 
     switch(uMsg)
     {
@@ -26,22 +26,22 @@ static INT_PTR CALLBACK AboutProc(
             SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
             CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-            sprintf_s(
+            _stprintf_s(
                 tmpbuf,
-                sizeof(tmpbuf),
-                APPNAME " - " APPDESC "\n"
-                "Copyright 2003-2020, Dolwin team\n"
-                "Build version %s (%s, %s) "
+                _countof(tmpbuf) - 1,
+                APPNAME _T(" - ") APPDESC _T("\n")
+                _T("Copyright 2003-2020, Dolwin team\n")
+                _T("Build version %s (%s, %s) ")
 #ifdef      _DEBUG
-                "debug "
+                _T("debug ")
 #else
-                "release "
+                _T("release ")
 #endif
 
 #if         _M_X64
-                "X64"
+                _T("X64")
 #else
-                "X86"
+                _T("X86")
 #endif
 
                 ,
@@ -49,7 +49,7 @@ static INT_PTR CALLBACK AboutProc(
                 __DATE__,
                 __TIME__
             );
-            SetDlgItemTextA(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
+            SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
             return TRUE;
         }
 

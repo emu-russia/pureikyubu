@@ -116,24 +116,6 @@
     <Image Include="RES\GCN_sm.ico">
       <Filter>User Menu\Resource Files</Filter>
     </Image>
-    <Image Include="RES\moreicon1.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
-    <Image Include="RES\moreicon2.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
-    <Image Include="RES\moreicon3.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
-    <Image Include="RES\moreicon4.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
-    <Image Include="RES\moreicon5.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
-    <Image Include="RES\moreicon6.ico">
-      <Filter>User Menu\Resource Files</Filter>
-    </Image>
     <Image Include="RES\padArrows.bmp">
       <Filter>User Menu\Resource Files</Filter>
     </Image>

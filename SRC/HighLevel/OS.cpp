@@ -343,7 +343,7 @@ void OSCheckContextStruct()
 
 // covert GC time to human-usable time string;
 // example output : "30 Jun 2004 3:06:14:127"
-wchar_t * OSTimeFormat(uint64_t tbr, bool noDate /* false */)
+TCHAR* OSTimeFormat(uint64_t tbr, bool noDate /* false */)
 {
     // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
     // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
@@ -364,20 +364,20 @@ wchar_t * OSTimeFormat(uint64_t tbr, bool noDate /* false */)
     FileTimeToSystemTime(&fileTime, &sysTime);
 
     // format string
-    static const wchar_t *mnstr[12] =
-        { L"Jan", L"Feb", L"Mar", L"Apr",
-          L"May", L"Jun", L"Jul", L"Aug",
-          L"Sep", L"Oct", L"Nov", L"Dec"
+    static const TCHAR *mnstr[12] =
+        { _T("Jan"), _T("Feb"), _T("Mar"), _T("Apr"),
+          _T("May"), _T("Jun"), _T("Jul"), _T("Aug"),
+          _T("Sep"), _T("Oct"), _T("Nov"), _T("Dec")
         };
-    static wchar_t gcTime[256];
+    static TCHAR gcTime[256];
     if(noDate)
     {
-        wsprintf( gcTime, L"%02i:%02i:%02i:%03i",
+        _stprintf_s ( gcTime, _countof(gcTime) - 1, _T("%02i:%02i:%02i:%03i"),
                 sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds );
     }
     else
     {
-        wsprintf( gcTime, L"%i %s %i %02i:%02i:%02i:%03i",
+        _stprintf_s ( gcTime, _countof(gcTime) - 1, _T("%i %s %i %02i:%02i:%02i:%03i"),
                 sysTime.wDay, mnstr[sysTime.wMonth - 1], sysTime.wYear,
                 sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds );
     }

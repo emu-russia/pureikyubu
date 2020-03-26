@@ -45,7 +45,7 @@
 
 /* structure of a memcard buffer */
 typedef struct Memcard {
-    char filename[256]; // filename where the memcard data is stores 
+    TCHAR filename[0x1000]; // filename where the memcard data is stores 
     FILE * file;        // pointer to that file
     uint32_t size;           // size of the memcard in bytes
     uint8_t * data;          // pointer to the memcard raw data (stored in little endian order)

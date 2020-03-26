@@ -42,7 +42,7 @@ uint32_t DOLSize(DolHeader *dol)
 // return DOL entrypoint, or 0 if cannot load
 // we dont need to translate address, because DOL loading goes
 // under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadDOL(char *dolname)
+uint32_t LoadDOL(TCHAR *dolname)
 {
     int i;
     FILE        *dol;
@@ -328,7 +328,7 @@ uint32_t LoadELF(char *elfname)
 
 // return BINORG offset, or 0 if cannot load.
 // use physical addressing!
-uint32_t LoadBIN(char *binname)
+uint32_t LoadBIN(TCHAR * binname)
 {
     uint32_t org = GetConfigInt(USER_BINORG, USER_BINORG_DEFAULT);
 
@@ -336,7 +336,7 @@ uint32_t LoadBIN(char *binname)
     if(org >= RAMSIZE) return 0;
 
     // get file size
-    int fsize = FileSize(binname);
+    int fsize = UI::FileSize(binname);
 
     // try to load file
     FILE* bin = nullptr;
@@ -360,7 +360,7 @@ uint32_t LoadBIN(char *binname)
     fread(&mi.ram[org], 1, fsize, bin);
     fclose(bin);
 
-    DBReport2(DbgChannel::Loader, "loaded binary file at %08X (%s)\n\n", org, FileSmartSize(fsize));
+    DBReport2(DbgChannel::Loader, "loaded binary file at %08X (0x%08X)\n\n", org, fsize);
     org |= 0x80000000;
     return org;     // its me =:)
 }
@@ -372,7 +372,7 @@ uint32_t LoadBIN(char *binname)
 
 // return 1, if patch loaded OK.
 // "add" can be used to extend current patch table.
-bool LoadPatch(char * patchname, bool add)
+bool LoadPatch(TCHAR * patchname, bool add)
 {
     // allowed ?
     // since "enable" flag is loaded only here, it is not important
@@ -382,7 +382,7 @@ bool LoadPatch(char * patchname, bool add)
     if(!ldat.enablePatch) return true;
 
     // count patchnum
-    int patchNum = FileSize(patchname) / sizeof(Patch);
+    int patchNum = UI::FileSize(patchname) / sizeof(Patch);
 
     // try to open file
     FILE* f = nullptr;
@@ -492,11 +492,11 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
 
 void UnloadPatch()
 {
-    if(ldat.patches)
+    while (!ldat.patches.empty())
     {
-        free(ldat.patches);
-        ldat.patches = NULL;
-        ldat.patchNum = 0;
+        Patch* patch = ldat.patches.back();
+        ldat.patches.pop_back();
+        delete patch;
     }
 }
 
@@ -559,7 +559,7 @@ static void AutoloadPatch()
     // sorry, no patches for this DVD/executable
 }
 
-static BOOL SetGameIDAndTitle(char *filename)
+static BOOL SetGameIDAndTitle(TCHAR *filename)
 {
     // try to set current DVD
     if(DVDSetCurrent(filename) == FALSE) return FALSE;

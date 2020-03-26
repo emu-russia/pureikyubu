@@ -1,3 +1,6 @@
+
+#pragma once
+
 // ---------------------------------------------------------------------------
 // DOL format definitions
 
@@ -22,7 +25,7 @@ typedef struct DolHeader
 } DolHeader;
 
 uint32_t     DOLSize(DolHeader *dol);
-uint32_t     LoadDOL(char *dolname);
+uint32_t     LoadDOL(TCHAR *dolname);
 uint32_t     LoadDOLFromMemory(DolHeader *dol, uint32_t ofs);
 
 // ---------------------------------------------------------------------------
@@ -116,12 +119,12 @@ typedef struct ElfPhdr
 #define PF_MASKOS   0x00ff0000
 #define PF_MASKPROC 0xff000000
 
-uint32_t     LoadELF(char *elfname);
+uint32_t     LoadELF(TCHAR *elfname);
 
 // ---------------------------------------------------------------------------
 // load binary file
 
-uint32_t     LoadBIN(char *binname);
+uint32_t     LoadBIN(TCHAR *binname);
 
 // ---------------------------------------------------------------------------
 // patch file definitions (*.patch is new one, not old *.ppf)
@@ -154,7 +157,7 @@ typedef struct Patch
 } Patch;
 #pragma pack()
 
-bool    LoadPatch(char * patchname, bool add=false);
+bool    LoadPatch(TCHAR * patchname, bool add=false);
 void    ApplyPatches(bool load=0, int32_t a=0, int32_t b=-1);
 void    UnloadPatch();
 
@@ -162,24 +165,21 @@ void    UnloadPatch();
 // loader
 
 // loader API
-void    LoadFile(char *filename);
+void    LoadFile(TCHAR *filename);
 void    ReloadFile();
 
 // all loader variables are placed here
 typedef struct LoaderData
 {
-    bool    cmdline;                // loaded from command line ?
-    char    cwd[1024];              // current working directory
-    uint32_t     binOffset;              // binary file loading offset
-    bool    dvd;                    // 1, if loaded file is DVD image
-    char    gameID[16];             // GameID, for dvd
-    char    currentFile[0x1000];    // next file to be loaded or re-loaded
-    char    currentFileName[256];   // name of loaded file (without extension)
+    TCHAR   cwd[0x1000];            // current working directory
+    uint32_t     binOffset;         // binary file loading offset
+    bool    dvd;                    // true: loaded file is DVD image
+    TCHAR   gameID[16];             // GameID, for dvd
+    TCHAR   currentFile[0x1000];    // next file to be loaded or re-loaded
+    TCHAR   currentFileName[256];   // name of loaded file (without extension)
     float   boottime;               // in seconds
-
-    bool    enablePatch;            // allow patches, if 1
-    uint32_t     patchNum;               // number of patches in table
-    Patch*  patches;                // patch table
+    bool    enablePatch;            // true: allow patches
+    std::vector<Patch*> patches;    // patches 
 } LoaderData;
 
 extern  LoaderData ldat;

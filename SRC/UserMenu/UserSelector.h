@@ -5,10 +5,10 @@
 #include <atomic>
 
 // file type (*.bin is not supported, and can be opened only by File->Open)
-enum SELECTOR_FILE
+enum class SELECTOR_FILE
 {
-    SELECTOR_FILE_EXEC = 1,         // any GC executable (*.dol, *.elf)
-    SELECTOR_FILE_DVD               // any DVD image (*.gcm, *.gmp)
+    Executable = 1,     // any GC executable (*.dol, *.elf)
+    Dvd                 // any DVD image (*.gcm, *.iso)
 };
 
 // file info limits
@@ -18,21 +18,21 @@ enum SELECTOR_FILE
 // file entry
 typedef struct UserFile
 {
-    int     type;                   // see above (one of SELECTOR_FILE_*)
-    int     size;                   // file size
-    char    id[0x10];               // GameID = DiskID + banner checksum
-    char    name[2*MAX_PATH+2];     // file path and name
-    char    title[MAX_TITLE];       // alternate file name
-    char    comment[MAX_COMMENT];   // some notes
+    SELECTOR_FILE   type;                   // see above (one of SELECTOR_FILE_*)
+    size_t  size;                   // file size
+    TCHAR   id[0x10];               // GameID = DiskID + banner checksum
+    TCHAR   name[2*MAX_PATH+2];     // file path and name
+    TCHAR   title[MAX_TITLE];       // alternate file name
+    TCHAR   comment[MAX_COMMENT];   // some notes
     int     icon[2];                // banner/icon + same but highlighted
 } UserFile;
 
 // selector columns
-#define SELECTOR_COLUMN_BANNER  L"Icon"
-#define SELECTOR_COLUMN_TITLE   L"Title"
-#define SELECTOR_COLUMN_SIZE    L"Size"
-#define SELECTOR_COLUMN_GAMEID  L"Game ID"
-#define SELECTOR_COLUMN_COMMENT L"Comment"
+#define SELECTOR_COLUMN_BANNER  _T("Icon")
+#define SELECTOR_COLUMN_TITLE   _T("Title")
+#define SELECTOR_COLUMN_SIZE    _T("Size")
+#define SELECTOR_COLUMN_GAMEID  _T("Game ID")
+#define SELECTOR_COLUMN_COMMENT _T("Comment")
 
 // sort by ..
 enum SELECTOR_SORT
@@ -49,12 +49,12 @@ enum SELECTOR_SORT
 void    CreateSelector();
 void    CloseSelector();
 void    SetSelectorIconSize(bool smallIcon);
-bool    AddSelectorPath(char *fullPath);            // FALSE, if path duplicated
+bool    AddSelectorPath(TCHAR *fullPath);            // FALSE, if path duplicated
 void    ResizeSelector(int width, int height);
 void    UpdateSelector();
 int     SelectorGetSelected();
 void    SelectorSetSelected(int item);
-void    SelectorSetSelected(char *filename);
+void    SelectorSetSelected(TCHAR *filename);
 void    SortSelector(int sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void    NotifySelector(LPNMHDR pnmh);
@@ -75,7 +75,7 @@ typedef struct UserSelector
     UserFile*   selected;           // first selected item (temporary for edit file dialog)
 
     // path list, where to search files.
-    std::vector<std::string> paths;
+    std::vector<TCHAR *> paths;
 
     // file filter
     uint32_t    filter;             // every 8-bits masking extension : [DOL][ELF][GCM][GMP]

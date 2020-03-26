@@ -1,19 +1,19 @@
 // WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin
 // should take care about proper window style itself !!
 #define WIN_STYLE   ( WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX)
-#define WIN_NAMEW   APPNAMEW    L" - "  APPDESCW    L" ("   APPVERW     L")"
+#define WIN_NAME    APPNAME _T(" - ") APPDESC _T(" (") APPVER _T(")")
 
 // status bar parts enumerator
-enum STATUS_ENUM
+enum class STATUS_ENUM
 {
-    STATUS_PROGRESS = 1,        // current emu state
-    STATUS_FPS,                 // fps counter
-    STATUS_TIMING,              // * Obsolete *
-    STATUS_TIME,                // time counter
+    Progress = 1,        // current emu state
+    Fps,                 // fps counter
+    Timing,              // * Obsolete *
+    Time,                // time counter
 };
 
-void SetStatusText(int sbPart, const wchar_t *text, bool post=false);
-wchar_t* GetStatusText(int sbPart);
+void SetStatusText(STATUS_ENUM sbPart, const TCHAR *text, bool post=false);
+TCHAR* GetStatusText(STATUS_ENUM sbPart);
 
 void    StartProgress(int range, int delta);
 void    StepProgress();
@@ -21,7 +21,7 @@ void    StopProgress();
 
 // recent files menu
 void    UpdateRecentMenu(HWND hwnd);
-void    AddRecentFile(char *path);
+void    AddRecentFile(TCHAR *path);
 void    LoadRecentFile(int index);
 
 // window controls API
@@ -32,7 +32,7 @@ void    ResizeMainWindow(int width, int height);
 
 // utilities
 void    SetAlwaysOnTop(HWND hwnd, BOOL state);
-void    SetMenuItemText(HMENU hmenu, UINT id, wchar_t *text);
+void    SetMenuItemText(HMENU hmenu, UINT id, TCHAR *text);
 void    CenterChildWindow(HWND hParent, HWND hChild);
 
 // all important data is placed here

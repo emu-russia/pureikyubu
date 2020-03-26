@@ -6,63 +6,77 @@
 // ---------------------------------------------------------------------------
 // basic application output
 
-// fatal error
-void DolwinError(const char *title, const char *fmt, ...)
+namespace UI
 {
-    va_list arg;
-    char buf[0x1000];
 
-    va_start(arg, fmt);
-    vsprintf_s(buf, sizeof(buf), fmt, arg);
-    va_end(arg);
-
-    if (emu.doldebug)
+    // fatal error
+    void DolwinError(const TCHAR* title, const TCHAR* fmt, ...)
     {
-        DBHalt(buf);
+        va_list arg;
+        TCHAR buf[0x1000];
+
+        va_start(arg, fmt);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        va_end(arg);
+
+        if (emu.doldebug)
+        {
+            char ansiText[0x1000] = { 0, }, * ansiPtr = ansiText;
+
+            TCHAR* tcharPtr = buf;
+            while (*tcharPtr)
+            {
+                *ansiPtr++ = (char)tcharPtr++;
+            }
+            *ansiPtr++ = 0;
+
+            DBHalt(buf);
+        }
+        else
+        {
+            MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+            exit(1);    // return bad
+        }
     }
-    else
+
+    // fatal error, if user answers no
+    // return TRUE if "yes", and FALSE if "no"
+    BOOL DolwinQuestion(const TCHAR* title, const TCHAR* fmt, ...)
     {
-        MessageBoxA(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
-        exit(1);    // return bad
+        va_list arg;
+        TCHAR buf[0x1000];
+
+        va_start(arg, fmt);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        va_end(arg);
+
+        int btn = MessageBox(
+            NULL,
+            buf,
+            title,
+            MB_RETRYCANCEL | MB_ICONHAND | MB_TOPMOST
+            );
+        if (btn == IDCANCEL)
+        {
+            SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
+            return FALSE;
+        }
+        else return TRUE;
     }
-}
 
-// fatal error, if user answers no
-// return TRUE if "yes", and FALSE if "no"
-BOOL DolwinQuestion(const char *title, const char *fmt, ...)
-{
-    va_list arg;
-    char buf[0x1000];
-
-    va_start(arg, fmt);
-    vsprintf_s(buf, sizeof(buf), fmt, arg);
-    va_end(arg);
-
-    int btn = MessageBoxA(
-        NULL,
-        buf,
-        title,
-        MB_RETRYCANCEL | MB_ICONHAND | MB_TOPMOST
-    );
-    if(btn == IDCANCEL)
+    // application message
+    void DolwinReport(const TCHAR* fmt, ...)
     {
-        SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
-        return FALSE;
+        va_list arg;
+        TCHAR buf[0x1000];
+
+        va_start(arg, fmt);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        va_end(arg);
+
+        MessageBox(NULL, buf, APPNAME _T(" Reports"), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
     }
-    else return TRUE;
-}
 
-// application message
-void DolwinReport(const char *fmt, ...)
-{
-    va_list arg;
-    char buf[0x1000];
-
-    va_start(arg, fmt);
-    vsprintf_s(buf, sizeof(buf), fmt, arg);
-    va_end(arg);
-
-    MessageBoxA(NULL, buf, APPNAME " Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
 }
 
 // ---------------------------------------------------------------------------
@@ -77,7 +91,7 @@ static void LockMultipleCalls()
     dolwinsem = CreateMutexA(NULL, 0, APPNAME);
     if(dolwinsem == NULL)
     {
-        DolwinReport("We are already running " APPNAME "!!");
+        UI::DolwinReport(_T("We are already running ") APPNAME _T("!!"));
         exit(0);    // return good
     }
     CloseHandle(dolwinsem);
@@ -94,7 +108,7 @@ static void InitFileSystem(HINSTANCE hInst)
     SetCurrentDirectoryA(ldat.cwd);
 
     // make sure, that Dolwin has data directory.
-    CreateDirectoryA(".\\Data", NULL);
+    CreateDirectory(_T(".\\Data"), NULL);
 }
 
 // return file name without quotes

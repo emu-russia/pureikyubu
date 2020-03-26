@@ -49,8 +49,10 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         if(type == RAM_TO_ARAM) DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
         else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
 
-        VERIFY(maddr & 0x1f, "main memory address is not a multiple of 32 bytes!");
-        VERIFY(size & 0x1f, "DMA transfer length is not a multiple of 32 bytes!");
+        // main memory address is not a multiple of 32 bytes
+        assert((maddr & 0x1f) == 0);
+        // DMA transfer length is not a multiple of 32 bytes!
+        assert((size & 0x1f) == 0);
 
         // ARAM driver is trying to check for expansion
         // by reading ARAM on high addresses
