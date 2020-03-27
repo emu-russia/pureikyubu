@@ -103,9 +103,9 @@ static void LockMultipleCalls()
 static void InitFileSystem(HINSTANCE hInst)
 {
     // set current working directory relative to Dolwin executable
-    GetModuleFileNameA(hInst, ldat.cwd, 1024);
-    *(strrchr(ldat.cwd, '\\') + 1) = 0;
-    SetCurrentDirectoryA(ldat.cwd);
+    GetModuleFileName(hInst, ldat.cwd, sizeof(ldat.cwd));
+    *(_tcsrchr(ldat.cwd, _T('\\')) + 1) = 0;
+    SetCurrentDirectory(ldat.cwd);
 
     // make sure, that Dolwin has data directory.
     CreateDirectory(_T(".\\Data"), NULL);
@@ -139,7 +139,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     InitFileSystem(hInstance);
 
     // run Dolwin once ?
-    if(GetConfigInt(USER_RUNONCE, USER_RUNONCE_DEFAULT) == TRUE)
+    if(GetConfigInt(USER_RUNONCE, USER_UI) != 0)
     {
         LockMultipleCalls();
     }
@@ -167,6 +167,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     // should never reach this point. Dolwin always exit()'s.
-    DolwinError("ERROR", APPNAME " ERROR >>> SHOULD NEVER REACH HERE :)");
+    UI::DolwinError(_T("ERROR"), APPNAME _T(" ERROR >>> SHOULD NEVER REACH HERE :)"));
     return 1;   // return bad
 }

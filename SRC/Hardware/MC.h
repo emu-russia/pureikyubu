@@ -29,8 +29,7 @@
 #define MEMCARD_SLOTA         0
 #define MEMCARD_SLOTB         1
 
-/* Names of the keys used to store to configuration in the windows register */
-#define HKEY_MEMCARD   USER_KEY_NAME "\\Memcard"
+/* Names of the keys used to store to configuration */
 #define MemcardA_Connected_Key "MemcardA_Connected"
 #define MemcardB_Connected_Key "MemcardB_Connected"
 #define MemcardA_Filename_Key "MemcardA_Filename"

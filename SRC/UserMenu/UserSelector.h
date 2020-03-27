@@ -35,14 +35,14 @@ typedef struct UserFile
 #define SELECTOR_COLUMN_COMMENT _T("Comment")
 
 // sort by ..
-enum SELECTOR_SORT
+enum class SELECTOR_SORT
 {
-    SELECTOR_SORT_DEFAULT = 1,      // first by icon, then by title
-    SELECTOR_SORT_FILENAME,
-    SELECTOR_SORT_TITLE,
-    SELECTOR_SORT_SIZE,
-    SELECTOR_SORT_ID,
-    SELECTOR_SORT_COMMENT
+    Default = 1,      // first by icon, then by title
+    Filename,
+    Title,
+    Size,
+    ID,
+    Comment,
 };
 
 // selector API
@@ -66,13 +66,12 @@ typedef struct UserSelector
     bool        active;             // 1, if enabled (under control of UserWindow)
     bool        opened;             // 1, if visible
     bool        smallIcons;         // show small icons
-    int         sortBy;             // sort rule (one of SELECTOR_SORT_*)
+    SELECTOR_SORT   sortBy;         // sort rule (one of SELECTOR_SORT_*)
     int         width;              // selector width
     int         height;             // selector height
 
     HWND        hSelectorWindow;    // selector window handler
     HMENU       hFileMenu;          // popup file menu
-    UserFile*   selected;           // first selected item (temporary for edit file dialog)
 
     // path list, where to search files.
     std::vector<TCHAR *> paths;

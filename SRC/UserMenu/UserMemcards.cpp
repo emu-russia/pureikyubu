@@ -3,13 +3,13 @@
 int um_num;
 BOOL um_filechanged;
 
-static char *NewMemcardFileProc(HWND hwnd, char * lastDir)
+static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
 {
-    char prevc[256];
-    OPENFILENAMEA ofn;
-    char szFileName[120];
-    char szFileTitle[120];
-    static char LoadedFile[256];
+    TCHAR prevc[MAX_PATH];
+    OPENFILENAME ofn;
+    TCHAR szFileName[120];
+    TCHAR szFileTitle[120];
+    static TCHAR LoadedFile[MAX_PATH];
 
     _getcwd(prevc, 255);
 
@@ -54,13 +54,13 @@ static char *NewMemcardFileProc(HWND hwnd, char * lastDir)
     }
 }
 
-static char *ChooseMemcardFileProc(HWND hwnd, char * lastDir)
+static TCHAR *ChooseMemcardFileProc(HWND hwnd, TCHAR * lastDir)
 {
-    char prevc[256];
-    OPENFILENAMEA ofn;
-    char szFileName[120];
-    char szFileTitle[120];
-    static char LoadedFile[256];
+    TCHAR prevc[MAX_PATH];
+    OPENFILENAME ofn;
+    TCHAR szFileName[120];
+    TCHAR szFileTitle[120];
+    static TCHAR LoadedFile[MAX_PATH];
 
     _getcwd(prevc, 255);
 

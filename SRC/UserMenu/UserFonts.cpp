@@ -51,7 +51,7 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
 
 static void EnumFonts(HWND hwndDlg)
 {
-    char FontPath[256];
+    TCHAR FontPath[MAX_PATH];
     WIN32_FIND_DATAA fd;
     HANDLE hfff;
     int i, Aselected = -1, Sselected = -1;

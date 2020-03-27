@@ -78,14 +78,8 @@
 
 	"memcards":
 	{
-		"syncSave": false,
-		"slotA":
-		{
-			"connected": false
-		},
-		"slotB":
-		{
-			"connected": false
-		}
+		"Memcard_SyncSave": false,
+		"MemcardA_Connected": false,
+		"MemcardB_Connected": false
 	}
 }

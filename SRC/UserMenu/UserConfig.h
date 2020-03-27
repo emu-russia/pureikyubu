@@ -15,6 +15,8 @@ void    SetConfigInt(char *var, int newVal, char* path);
 #define USER_CORE		"core"
 #define USER_HW			"hardware"
 #define USER_HLE		"hle"
+#define USER_PADS		"controllers"
+#define USER_MEMCARDS	"memcards"
 
 // UI
 

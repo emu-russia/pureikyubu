@@ -9,7 +9,6 @@
 #define CPU_CORE_CLOCK  486000000u  // 486 mhz (its not 485, stop bugging me!)
 #define CPU_BUS_CLOCK   (CPU_CORE_CLOCK / 3)
 #define CPU_TIMER_CLOCK (CPU_BUS_CLOCK / 4)
-#define CPU_MAX_DELAY   12
 
 // ---------------------------------------------------------------------------
 // registers and their bitfields

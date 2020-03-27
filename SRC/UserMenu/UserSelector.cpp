@@ -34,13 +34,13 @@ static void fix_string(char *str)
 }
 
 // add new path into "paths" list
-static void add_path(char *path)
+static void add_path(TCHAR *path)
 {
     // check path size
     size_t len = strlen(path) + 1;
     if(len >= MAX_PATH)
     {
-        DolwinReport("Too long path string : %s", path);
+        UI::DolwinReport(_T("Too long path string : %s"), path);
         return;
     }
 
@@ -50,8 +50,8 @@ static void add_path(char *path)
 // load PATH user variable and cut it on pieces into "paths" list
 static void load_path()
 {
-    char *var = GetConfigString(USER_PATH, USER_PATH_DEFAULT), *ptr;
-    char path[MAX_PATH+1];
+    TCHAR *var = GetConfigString(USER_PATH, USER_UI), *ptr;
+    TCHAR path[MAX_PATH+1];
     int  n = 0;
 
     // delete current pathlist
@@ -84,7 +84,7 @@ static void load_path()
 }
 
 // called after loading of new file (see Emulator\Loader.cpp)
-bool AddSelectorPath(char *fullPath)
+bool AddSelectorPath(TCHAR *fullPath)
 {
     char path[0x1000] = { 0 };
 
@@ -110,14 +110,13 @@ bool AddSelectorPath(char *fullPath)
 
     if(!exists)
     {
-        char temp[0x10000];
-        char * old = GetConfigString(USER_PATH, USER_PATH_DEFAULT);
-        VERIFY(strlen(old) >= (sizeof(temp) - 1000), "Argh, overflow!");
+        TCHAR temp[0x10000];
+        TCHAR * old = GetConfigString(USER_PATH, USER_UI);
         if(!_stricmp(old, "<EMPTY>"))
             sprintf_s(temp, sizeof(temp), "%s", path);
         else
             sprintf_s(temp, sizeof(temp), "%s;%s", old, path);
-        SetConfigString(USER_PATH, temp);
+        SetConfigString(USER_PATH, temp, USER_UI);
         add_path(path);
         return true;
     }
@@ -127,13 +126,6 @@ bool AddSelectorPath(char *fullPath)
 // ---------------------------------------------------------------------------
 // add new file (extend filelist, convert banner, put it into list)
 
-// return color format in 16-bit videomode
-static int is565()
-{
-    #pragma message ("Hack, until I find solution!")
-    return 1;   // HACK, until I know how
-}
-
 #define PACKRGB555(r, g, b) (uint16_t)((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
 #define PACKRGB565(r, g, b) (uint16_t)((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
 
@@ -142,10 +134,9 @@ static int is565()
 // return FALSE, if we cant convert banner (or something bad)
 static bool add_banner(uint8_t *banner, int *bA, int *bB)
 {
-    int pack = is565();
     int width = (usel.smallIcons) ? (DVD_BANNER_WIDTH >> 1) : (DVD_BANNER_WIDTH);
     int height = (usel.smallIcons) ? (DVD_BANNER_HEIGHT >> 1) : (DVD_BANNER_HEIGHT);
-    HDC hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    HDC hdc = CreateDC(_T("DISPLAY"), NULL, NULL, NULL);
     int bitdepth = GetDeviceCaps(hdc, BITSPIXEL);
     int bpp = bitdepth / 8;
     int bcount = width * height * bpp;
@@ -286,16 +277,8 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
             }
             else if(bitdepth == 16)
             {
-                if(pack)        // 565
-                {
-                    p = PACKRGB565(r, g, b);
-                    ph= PACKRGB565(rh, gh, bh);
-                }
-                else            // 555 (on old boxes)
-                {
-                    p = PACKRGB555(r, g, b);
-                    ph= PACKRGB555(rh, gh, bh);
-                }
+                p = PACKRGB565(r, g, b);
+                ph= PACKRGB565(rh, gh, bh);
 
                 *ptrA16 = p;
                 *ptrB16 = ph;
@@ -368,7 +351,7 @@ static void add_item(int index)
 }
 
 // insert new file into filelist
-static void add_file(char *file, int fsize, int type)
+static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
 {
     DVDBanner2  *bnr;
 
@@ -411,7 +394,7 @@ static void add_file(char *file, int fsize, int type)
     item->size = fsize;
     strcpy_s(item->name, sizeof(item->name), file);
 
-    if(type == SELECTOR_FILE_DVD)
+    if(type == SELECTOR_FILE::Dvd)
     {
         // load DVD banner
         bnr = (DVDBanner2 *)DVDLoadBanner(file);
@@ -450,7 +433,7 @@ static void add_file(char *file, int fsize, int type)
         item->icon[1] = b;
         free(bnr);
     }
-    else if(type == SELECTOR_FILE_EXEC)
+    else if(type == SELECTOR_FILE::Executable)
     {
         // rip filename
         char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
@@ -477,7 +460,10 @@ static void add_file(char *file, int fsize, int type)
         strcpy_s (item->title, sizeof(item->title), name);
         item->comment[0] = 0;
     }
-    else VERIFY(type, "Unknown selector file type.");
+    else
+    {
+        assert(0);
+    }
 
     // extend filelist
     MySpinLock::Lock(&usel.filesLock);
@@ -624,17 +610,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     if(selected)
     {
-        wchar_t progress[1024];
-        char* namePtr = file->name;
-        wchar_t* progressPtr = progress;
-
-        while (*namePtr)
-        {
-            *progressPtr++ = *namePtr++;
-        }
-        *progressPtr++ = 0;
-
-        SetStatusText(STATUS_PROGRESS, progress);
+        SetStatusText(STATUS_ENUM::Progress, file->name);
     }
 
     // fill background
@@ -645,12 +621,12 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     ListView_GetItemRect(usel.hSelectorWindow, ID, &rc, LVIR_ICON);
     switch(file->type)
     {
-        case SELECTOR_FILE_DVD:
+        case SELECTOR_FILE::Dvd:
             ImageList_Draw( bannerList, file->icon[selected], DC,
                             rc.left, rc.top, ILD_NORMAL );
             break;
 
-        case SELECTOR_FILE_EXEC:
+        case SELECTOR_FILE::Executable:
             HICON hIcon;
             if(usel.smallIcons)
             {
@@ -702,6 +678,9 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
             free(buf);
         } else DrawText(DC, text, len, &rc2, fmt);
     }
+
+    #undef ID
+    #undef DC
 }
 
 // update filelist (reload and redraw)
@@ -709,7 +688,7 @@ void UpdateSelector()
 {
     TCHAR search[2 * MAX_PATH], *mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso"), NULL };
     TCHAR found[2 * MAX_PATH];
-    int  type[] = { SELECTOR_FILE_EXEC, SELECTOR_FILE_EXEC, SELECTOR_FILE_DVD, SELECTOR_FILE_DVD };
+    SELECTOR_FILE  type[] = { SELECTOR_FILE::Executable, SELECTOR_FILE::Executable, SELECTOR_FILE::Dvd, SELECTOR_FILE::Dvd };
     WIN32_FIND_DATA fd = { 0 };
     HANDLE hfff;
     int dir = 0;
@@ -739,7 +718,7 @@ void UpdateSelector()
     //list_path();
 
     // load file filter
-    usel.filter = GetConfigInt(USER_FILTER, USER_FILTER_DEFAULT);
+    usel.filter = GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
     while(dir < usel.paths.size())
@@ -798,7 +777,7 @@ void UpdateSelector()
     UpdateWindow(usel.hSelectorWindow);
 
     // re-sort (we need to save old value, to avoid swap of filelist)
-    int oldSort = usel.sortBy;
+    SELECTOR_SORT oldSort = usel.sortBy;
     usel.sortBy = 0;
     SortSelector(oldSort);
 
@@ -809,7 +788,6 @@ int SelectorGetSelected()
 {
     int item = ListView_GetNextItem(usel.hSelectorWindow, -1, LVNI_SELECTED);
     if(item == -1) return -1;
-    usel.selected = usel.files[item];
     return item;
 }
 
@@ -818,7 +796,6 @@ void SelectorSetSelected(int item)
     if(item >= usel.files.size()) return;
     ListView_SetItemState(usel.hSelectorWindow, item, LVNI_SELECTED, LVNI_SELECTED);
     ListView_EnsureVisible(usel.hSelectorWindow, item, FALSE);
-    usel.selected = usel.files[item];
 }
 
 // if file not present, keep selection unchanged
@@ -903,23 +880,12 @@ static void mouseclick(int rmb)
 
     if(item == -1)          // empty field
     {
-        SetStatusText(STATUS_PROGRESS, L"Idle");
+        SetStatusText(STATUS_ENUM::Progress, _T("Idle"));
     }
     else                    // file selected
     {
         // show item
-        wchar_t progress[1024];
-        
-        char* namePtr = file->name;
-        wchar_t* progressPtr = progress;
-
-        while (*namePtr)
-        {
-            *progressPtr++ = *namePtr++;
-        }
-        *progressPtr++ = 0;
-
-        SetStatusText(STATUS_PROGRESS, progress);
+        SetStatusText(STATUS_ENUM::Progress, file->name);
     }
 }
 
@@ -1016,12 +982,12 @@ static int get_dvd_files()
     for(int i=0; i<usel.files.size(); i++)
     {
         UserFile *file = usel.files[i];
-        if(file->type == SELECTOR_FILE_DVD) sum++;
+        if(file->type == SELECTOR_FILE::Dvd) sum++;
     }
     return sum;
 }
 
-void SortSelector(int sortBy)
+void SortSelector(SELECTOR_SORT sortBy)
 {
     // opened ?
     if(!usel.opened) return;
@@ -1033,32 +999,31 @@ void SortSelector(int sortBy)
 
         switch(sortBy)
         {
-            case SELECTOR_SORT_DEFAULT:
+            default:
+            case SELECTOR_SORT::Default:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_type);
                 //qsort(usel.files, dvds, sizeof(UserFile), sort_by_title);
                 //qsort(&usel.files[dvds], usel.filenum-dvds, sizeof(UserFile), sort_by_title);
                 break;
-            case SELECTOR_SORT_FILENAME:
+            case SELECTOR_SORT::Filename:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_filename);
                 break;
-            case SELECTOR_SORT_TITLE:
+            case SELECTOR_SORT::Title:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_title);
                 break;
-            case SELECTOR_SORT_SIZE:
+            case SELECTOR_SORT::Size:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_size);
                 break;
-            case SELECTOR_SORT_ID:
+            case SELECTOR_SORT::ID:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_gameid);
                 break;
-            case SELECTOR_SORT_COMMENT:
+            case SELECTOR_SORT::Comment:
                 //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_comment);
                 break;
-            default:
-                return;
         }
 
         usel.sortBy = sortBy;
-        SetConfigInt(USER_SORTVIEW, usel.sortBy);
+        SetConfigInt(USER_SORTVIEW, (int)usel.sortBy, USER_UI);
     }
     else
     {
@@ -1117,7 +1082,7 @@ void CreateSelector()
     SetFocus(usel.hSelectorWindow);
 
     // retrieve icon size
-    bool iconSize = GetConfigInt(USER_SMALLICONS, USER_SMALLICONS_DEFAULT);
+    bool iconSize = GetConfigInt(USER_SMALLICONS, USER_UI) != 0 : true : false;
 
     // set "opened" flag (for following calls)
     usel.opened = TRUE;
@@ -1126,11 +1091,11 @@ void CreateSelector()
     SetSelectorIconSize(iconSize);
 
     // sort files
-    usel.sortBy = 0;
-    SortSelector(GetConfigInt(USER_SORTVIEW, USER_SORTVIEW_DEFAULT));
+    usel.sortBy = SELECTOR_SORT::Default;
+    SortSelector(GetConfigInt(USER_SORTVIEW, USER_UI));
 
     // scroll to last loaded file
-    SelectorSetSelected(GetConfigString(USER_LASTFILE, USER_LASTFILE_DEFAULT));
+    SelectorSetSelected(GetConfigString(USER_LASTFILE, USER_UI));
 }
 
 void CloseSelector()
@@ -1171,7 +1136,7 @@ void SetSelectorIconSize(bool smallIcon)
     if(!usel.opened) return;
 
     usel.smallIcons = smallIcon & 1;    // protect bool
-    SetConfigInt(USER_SMALLICONS, usel.smallIcons);
+    SetConfigInt(USER_SMALLICONS, usel.smallIcons, USER_UI);
 
     // destroy bannerlist
     if(bannerList)
@@ -1187,12 +1152,7 @@ void SetSelectorIconSize(bool smallIcon)
         int w = (usel.smallIcons) ? (DVD_BANNER_WIDTH >> 1) : (DVD_BANNER_WIDTH);
         int h = (usel.smallIcons) ? (DVD_BANNER_HEIGHT >> 1) : (DVD_BANNER_HEIGHT);
         bannerList = ImageList_Create(w, h, ILC_COLOR24, 10, 10);
-        if(bannerList == NULL)
-        {
-            DolwinReport("Failed to create selector image list.");
-            CloseSelector();
-            return;
-        }
+        assert(bannerList);
         ListView_SetImageList(usel.hSelectorWindow, bannerList, LVSIL_SMALL);
     }
 

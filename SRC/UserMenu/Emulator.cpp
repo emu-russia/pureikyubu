@@ -26,20 +26,20 @@ void EMUGetHwConfig(HWConfig * config)
     config->exi_log = GetConfigInt(USER_EXI_LOG, USER_HW) & 1;
     config->exi_osReport = GetConfigInt(USER_OS_REPORT, USER_HW) & 1;
 
-    strcpy_s (config->ansiFilename, sizeof(config->ansiFilename), GetConfigString(USER_ANSI, USER_HW));
-    strcpy_s (config->sjisFilename, sizeof(config->sjisFilename), GetConfigString(USER_SJIS, USER_HW));
+    _tcscpy_s (config->ansiFilename, _countof(config->ansiFilename) - 1, GetConfigString(USER_ANSI, USER_HW));
+    _tcscpy_s (config->sjisFilename, _countof(config->sjisFilename) - 1, GetConfigString(USER_SJIS, USER_HW));
 
-    config->MemcardA_Connected = false;// GetConfigInt(MemcardA_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
-    config->MemcardB_Connected = false;// GetConfigInt(MemcardB_Connected_Key, FALSE, HKEY_MEMCARD) & 1;
-    strcpy_s (config->MemcardA_Filename, sizeof(config->MemcardA_Filename), GetConfigString(MemcardA_Filename_Key, "*", HKEY_MEMCARD));
-    strcpy_s (config->MemcardB_Filename, sizeof(config->MemcardB_Filename), GetConfigString(MemcardB_Filename_Key, "*", HKEY_MEMCARD));
-    config->Memcard_SyncSave = GetConfigInt(Memcard_SyncSave_Key, FALSE, HKEY_MEMCARD) & 1;
+    config->MemcardA_Connected = false;// GetConfigInt(MemcardA_Connected_Key, FALSE, USER_MEMCARDS) != 0;
+    config->MemcardB_Connected = false;// GetConfigInt(MemcardB_Connected_Key, FALSE, USER_MEMCARDS) != 0;
+    _tcscpy_s (config->MemcardA_Filename, _countof(config->MemcardA_Filename) - 1, GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS));
+    _tcscpy_s (config->MemcardB_Filename, _countof(config->MemcardB_Filename) - 1, GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS));
+    config->Memcard_SyncSave = GetConfigInt(Memcard_SyncSave_Key, USER_MEMCARDS) != 0;
 
     config->one_second = cpu.one_second;
 
-    strcpy_s(config->BootromFilename, sizeof(config->BootromFilename), GetConfigString(USER_BOOTROM, USER_HW));
-    strcpy_s(config->DspDromFilename, sizeof(config->DspDromFilename), GetConfigString(USER_DSP_DROM, USER_HW));
-    strcpy_s(config->DspIromFilename, sizeof(config->DspIromFilename), GetConfigString(USER_DSP_IROM, USER_HW));
+    _tcscpy_s (config->BootromFilename, _countof(config->BootromFilename) - 1, GetConfigString(USER_BOOTROM, USER_HW));
+    _tcscpy_s (config->DspDromFilename, _countof(config->DspDromFilename) - 1, GetConfigString(USER_DSP_DROM, USER_HW));
+    _tcscpy_s (config->DspIromFilename, _countof(config->DspIromFilename) - 1, GetConfigString(USER_DSP_IROM, USER_HW));
 }
 
 // this function calls every time, after user loading new file
