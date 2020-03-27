@@ -40,6 +40,8 @@ Old descriptions contain a lot of "Runglish", newer ones I compose using machine
 
 All documents are quietly redone as Markdown.
 
+I also try to remove the silly style of presentation everywhere. We got older :p
+
 Graphic schemes are created in the yEd (https://www.yworks.com/products/yed).
 
 ## RnD
