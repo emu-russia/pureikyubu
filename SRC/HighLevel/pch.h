@@ -11,7 +11,7 @@
 #include <time.h>
 #include <tchar.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "../Core/Gekko.h"
 #include "../Core/Interpreter.h"

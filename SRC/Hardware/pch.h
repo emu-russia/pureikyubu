@@ -11,7 +11,7 @@
 #include <tchar.h>
 #include <Windows.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "Hardware.h"
 

@@ -115,12 +115,10 @@ static void DONE_INT()
     fifo.done_num++; vi.frames++;
     if(fifo.done_num == 1)
     {
-        SetStatusText(STATUS_PROGRESS, L"First GX access", 1);
+        SetStatusText(STATUS_ENUM::Progress, _T("First GX access"), true);
         vi.xfb = 0;     // disable VI output
     }
     DBReport2(DbgChannel::PE, "PE_DONE (frame:%u)", fifo.done_num);
-
-    if(fifo.gxpoll) SIPoll();
 
     fifo.pe.sr |= PE_SR_DONE;
     if(fifo.pe.sr & PE_SR_DONEMSK)
@@ -133,8 +131,6 @@ static void TOKEN_INT()
 {
     vi.frames++;
     DBReport2(DbgChannel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
-    
-    if(fifo.gxpoll) SIPoll();
 
     fifo.pe.sr |= PE_SR_TOKEN;
     if(fifo.pe.sr & PE_SR_TOKENMSK)
@@ -396,8 +392,6 @@ void CPOpen(HWConfig * config)
     memset(&fifo, 0, sizeof(FifoControl));
 
     fifo.time = TBR + 100;
-
-    fifo.gxpoll = config->gxpoll;
 
     // command processor
     MISetTrap(16, CP_SR         , read_cp_sr, NULL);

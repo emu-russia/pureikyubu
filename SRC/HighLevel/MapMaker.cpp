@@ -137,13 +137,13 @@ static char * MAPFind (uint32_t checksum)
 void MAPInit(TCHAR * mapname)
 {
     MAPOpen ();
-    Map = fopen(mapname, "w");
+    Map = _tfopen(mapname, _T("w"));
 
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
     Map_marks = (opMarker *)malloc(Map_marksMaxSize * sizeof(opMarker));
 
-    SetStatusText(STATUS_PROGRESS, L"Please, wait until emulator making new MAP");
+    SetStatusText(STATUS_ENUM::Progress, _T("Please, wait until emulator making new MAP"));
     Sleep(1000);
 }
 
@@ -265,9 +265,9 @@ void MAPFinish()
 
                 // show status
                 {
-                    wchar_t wideName[0x100] = { 0, };
+                    TCHAR wideName[0x100] = { 0, };
 
-                    wchar_t* wideNamePtr = wideName;
+                    TCHAR* wideNamePtr = wideName;
                     char* namePtr = name;
                     while (*namePtr)
                     {
@@ -275,7 +275,7 @@ void MAPFinish()
                     }
                     *wideNamePtr++ = 0;
 
-                    SetStatusText(STATUS_PROGRESS, wideNamePtr);
+                    SetStatusText(STATUS_ENUM::Progress, wideNamePtr);
                 }
 
                 namelen = strlen(name);

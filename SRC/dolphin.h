@@ -32,7 +32,7 @@
 // ---------------------------------------------------------------------------
 // Dolwin includes
 
-#include "UserMenu/UserSpinLock.h"
+#include "Common/Spinlock.h"
 #include "Core/Gekko.h"
 #include "Core/Interpreter.h"
 #include "HighLevel/HighLevel.h"

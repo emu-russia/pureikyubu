@@ -2,6 +2,8 @@
 
 #include <Windows.h>
 
+#include <vector>
+
 // GC bus clock is running on 1/3 of CPU clock, and timer is
 // running on 1/4 of bus clock (1/12 of CPU clock)
 #define CPU_CORE_CLOCK  486000000u  // 486 mhz (its not 485, stop bugging me!)
@@ -258,6 +260,11 @@ namespace Gekko
         bool running = false;
 
         static DWORD WINAPI GekkoThreadProc(LPVOID lpParameter);
+
+        std::vector<uint32_t> breakPointsExecute;
+        std::vector<uint32_t> breakPointsRead;
+        std::vector<uint32_t> breakPointsWrite;
+        MySpinLock::LOCK breakPointsLock = MySpinLock::LOCK_IS_FREE;
 
     public:
         GekkoCore();

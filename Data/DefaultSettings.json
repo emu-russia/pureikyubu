@@ -78,6 +78,7 @@
 
 	"memcards":
 	{
+		"syncSave": false,
 		"slotA":
 		{
 			"connected": false

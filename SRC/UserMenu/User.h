@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "UserSpinLock.h"		// Spinlocks for multithreaded environment
 #include "UserMain.h"           // application entrypoint
 #include "UserFile.h"           // various file utilities
 #include "UserConfig.h"         // Dolwin configuration

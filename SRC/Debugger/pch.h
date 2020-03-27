@@ -8,9 +8,10 @@
 #include <string.h>
 #include <intrin.h>
 #include <time.h>
+#include <tchar.h>
 #include <Windows.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "../Core/Memory.h"
 #include "../Core/Gekko.h"
