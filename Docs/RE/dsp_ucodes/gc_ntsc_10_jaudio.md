@@ -4,9 +4,14 @@
 ## Overview
 
 - Command exchanges are synchronous using Mailbox. DSP interrupt is not used.
+- Looks easier than AX Ucode
+- IROM is called only in one place (it looks like it is Sample Rate Converter). DSP Coefficients not used (DROM 0x1000)
 
 ## Interrupts
 
+All interrupt handlers except #0 are stubs.
+
+```
 0000 02 9F 00 10 	j    	$0x0010
 0002 00 00       	nop  	
 0003 00 00       	nop  	
@@ -22,9 +27,11 @@
 000D 00 00       	nop  	
 000E 02 FF       	rti
 000F 00 00       	nop  	
+```
 
 ## Start
 
+```
 0010 13 02       	sbclr	8
 0011 13 03       	sbclr	9
 0012 12 04       	sbset	10
@@ -50,6 +57,7 @@
 002C 26 FC       	lrs  	ac0.m, $(DMBH)
 002D 02 A0 80 00 	tclr 	ac0.m, #0x8000
 002F 02 9C 00 2C 	jnok 	$0x002C
+```
 
 ```c++
 Start()			// 0010
@@ -188,6 +196,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 
 ## DSP DMA
 
+```
 007C 19 3E       	lrri 	ac0.m, @ar1
 007D 19 3C       	lrri 	ac0.l, @ar1
 007E 2F CD       	srs  	$(DSPA), ac1.m
@@ -226,6 +235,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 00A1 15 01       	lsl  	ac1, #0x01
 00A2 00 FF FF CB 	sr   	$(DSBL), ac1.m
 00A4 02 DF       	ret  	
+```
 
 ## WaitDspDma
 
@@ -238,7 +248,7 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 
 ## DspAcc stuff
 
-
+```
 00AC 19 3E       	lrri 	ac0.m, @ar1
 00AD 19 3C       	lrri 	ac0.l, @ar1
 00AE 02 40 7F FF 	andi 	ac0.m, #0x7FFF
@@ -250,11 +260,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 00B7 00 00       	nop  	
 00B8 00 00       	nop  	
 00B9 02 DF       	ret  	
-
+```
 
 ## DspAcc stuff
 
-
+```
 00BA 1C 3F       	mrr  	ar1, ac1.m
 00BB 00 9F 00 05 	lri  	ac1.m, #0x0005
 00BD 2F D1       	srs  	$(ACFMT), ac1.m 			// AC Mode
@@ -287,10 +297,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 00DC 00 00       	nop  	
 00DD 00 00       	nop  	
 00DE 02 DF       	ret  	
-
+```
 
 ## Case 4
 
+```
 00DF 00 80 03 46 	lri  	ar0, #0x0346
 00E1 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 00E3 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -300,10 +311,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 00EB 00 C0 03 45 	lr   	ar0, $0x0345
 00ED 02 BF 00 7C 	call 	$0x007C
 00EF 02 9F 00 49 	j    	$0x0049
-
+```
 
 ## Case 5
 
+```
 00F1 00 80 03 46 	lri  	ar0, #0x0346
 00F3 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 00F5 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -313,11 +325,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 00FD 00 C0 03 45 	lr   	ar0, $0x0345
 00FF 02 BF 00 89 	call 	$0x0089
 0101 02 9F 00 49 	j    	$0x0049
-
+```
 
 ## DspAcc stuff
 
-
+```
 0103 00 92 00 FF 	lri  	config, #0x00FF
 0105 2F D1       	srs  	$(ACFMT), ac1.m
 0106 03 40 00 03 	andi 	ac1.m, #0x0003
@@ -545,10 +557,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0200 1B 5F       	srri 	@ar2, ac1.m
 0201 1B 5E       	srri 	@ar2, ac0.m
 0202 02 DF       	ret  	
-
+```
 
 ## Case 12
 
+```
 0203 00 80 03 46 	lri  	ar0, #0x0346
 0205 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 0207 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -580,14 +593,16 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0239 00 DF 04 40 	lr   	ac1.m, $0x0440
 023B 15 01       	lsl  	ac1, #0x01
 023C 03 40 00 7E 	andi 	ac1.m, #0x007E
-023E 03 00 02 46 	addi 	ac1.m, #0x0246
+023E 03 00 02 46 	addi 	ac1.m, #0x0246 					// Jump Table 2
 0240 1C 5F       	mrr  	ar2, ac1.m
 0241 17 5F       	callr	ar2
 0242 00 FC 04 18 	sr   	$0x0418, ac0.l
 0244 02 9F 04 E7 	j    	$0x04E7
+```
 
 ## Jump Table 2
 
+```
 0246 02 9F 02 57 	j    	$0x0257
 0248 02 9F 02 8F 	j    	$0x028F
 024A 02 9F 02 77 	j    	$0x0277
@@ -597,8 +612,9 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0252 02 9F 02 B1 	j    	$0x02B1
 0254 02 9F 02 AE 	j    	$0x02AE
 0256 02 DF       	ret  	
+```
 
-
+```
 0257 14 01       	lsl  	ac0, #0x01
 0258 00 9B C0 00 	lri  	ax1.h, #0xC000
 025A 00 99 40 00 	lri  	ax0.h, #0x4000
@@ -679,12 +695,12 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 02BA 48 A2       	addax	ac0, ax0        	sl   	ac0.m, ax1.l
 02BB 14 6F       	lsr  	ac0, -17
 02BC 02 DF       	ret  	
-
+```
 
 
 ## Case 1
 
-
+```
 02BD 00 80 03 80 	lri  	ar0, #0x0380
 02BF 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 02C1 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -981,12 +997,12 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 046C 00 FE 03 8E 	sr   	$0x038E, ac0.m
 046E 17 3F       	callr	ar1 						// ReadCpuMailbox
 046F 02 DF       	ret  	
-
+```
 
 
 ## Case 2
 
-
+```
 0470 02 BF 04 61 	call 	$0x0461
 0472 00 9E 80 00 	lri  	ac0.m, #0x8000
 0474 00 DC 03 41 	lr   	ac0.l, $0x0341
@@ -1148,10 +1164,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 056B 00 00       	nop  	
 056C 00 00       	nop  	
 056D 02 9F 00 31 	j    	$0x0031 		// MainLoop
-
+```
 
 ## Case 7
 
+```
 056F 00 80 03 46 	lri  	ar0, #0x0346
 0571 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 0573 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -1180,10 +1197,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0599 00 C0 03 45 	lr   	ar0, $0x0345
 059B 02 BF 00 8B 	call 	$0x008B
 059D 02 9F 00 49 	j    	$0x0049
-
+```
 
 ## Case 9
 
+```
 059F 00 80 03 46 	lri  	ar0, #0x0346
 05A1 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 05A3 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -1200,10 +1218,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 05B5 00 C0 03 45 	lr   	ar0, $0x0345
 05B7 02 BF 00 8B 	call 	$0x008B
 05B9 02 9F 00 49 	j    	$0x0049
-
+```
 
 ## Case 6
 
+```
 05BB 00 80 03 46 	lri  	ar0, #0x0346
 05BD 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 05BF 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -1220,10 +1239,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 05D1 00 C0 03 45 	lr   	ar0, $0x0345
 05D3 02 BF 00 8B 	call 	$0x008B
 05D5 02 9F 00 49 	j    	$0x0049
-
+```
 
 ## Case 8
 
+```
 05D7 00 80 03 46 	lri  	ar0, #0x0346
 05D9 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 05DB 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
@@ -1264,19 +1284,19 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 0612 00 DC 03 44 	lr   	ac0.l, $0x0344
 0614 02 BF 00 5A 	call 	$0x005A 				// WriteDspMailbox (0x82000344)
 0616 02 9F 00 31 	j    	$0x0031 		// MainLoop
-
+```
 
 ## Case 11
 
+```
 0618 00 80 03 46 	lri  	ar0, #0x0346
 061A 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 061C 00 81 03 46 	lri  	ar1, #0x0346
 061E 00 9F 04 00 	lri  	ac1.m, #0x0400
 0620 00 C0 03 45 	lr   	ar0, $0x0345
 0622 02 BF 00 7C 	call 	$0x007C
-0624 02 BF 86 44 	call 	$0x8644 					// Call IROM
+0624 02 BF 86 44 	call 	$0x8644 					// Call IROM  (SRC?)
 0626 02 9F 00 49 	j    	$0x0049
-
 
 
 
@@ -1502,10 +1522,11 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 073D 89 00       	clr  	ac1             	     	
 073E 00 DF 03 60 	lr   	ac1.m, $0x0360
 0740 02 DF       	ret  	
-
+```
 
 ## Case 10
 
+```
 0741 00 80 03 46 	lri  	ar0, #0x0346
 0743 02 BF 00 51 	call 	$0x0051 				// ReadCpuMailbox
 0745 81 00       	clr  	ac0             	     	
@@ -1897,3 +1918,4 @@ uint16_t *ReadCpuMailbox (uint16_t * ar0)
 093D 00 00       	nop  	
 093E 00 00       	nop  	
 093F 00 00       	nop  	
+```
