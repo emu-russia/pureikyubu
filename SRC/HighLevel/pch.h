@@ -22,6 +22,6 @@
 
 #include "../Debugger/Debugger.h"
 
-#include "../UserMenu/UserMain.h"
-#include "../UserMenu/UserFile.h"
-#include "../UserMenu/UserWindow.h"
+#include "../UI/UserMain.h"
+#include "../UI/UserFile.h"
+#include "../UI/UserWindow.h"

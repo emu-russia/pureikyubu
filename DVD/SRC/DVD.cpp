@@ -6,7 +6,7 @@ DVD dvd;
 // ---------------------------------------------------------------------------
 // select current dvd 
 
-bool DVDSetCurrent(TCHAR *file)
+bool DVDSetCurrent(const TCHAR *file)
 {
     // try to open file
     FILE* f = nullptr;

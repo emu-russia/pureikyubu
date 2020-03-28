@@ -134,7 +134,7 @@ static char * MAPFind (uint32_t checksum)
 /*
  * Starts the creation of a new map
  */
-void MAPInit(TCHAR * mapname)
+void MAPInit(const TCHAR * mapname)
 {
     MAPOpen ();
     Map = _tfopen(mapname, _T("w"));

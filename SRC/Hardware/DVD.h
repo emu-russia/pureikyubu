@@ -4,7 +4,7 @@
 
 // set current DVD image for read/seek/open file operations
 // return 1 if no errors, and 0 if cannot use file
-bool DVDSetCurrent(char *file);
+bool DVDSetCurrent(const TCHAR *file);
 
 // seek and read operations on current DVD
 void DVDSeek(int position);

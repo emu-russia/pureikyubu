@@ -445,7 +445,7 @@ bool    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -492,14 +492,14 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, const char *path, bool connect) {
+void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
 
     // Invalid memcard number
     assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
-    strcpy_s(memcard[cardnum].filename, sizeof(memcard[cardnum].filename), path);
+    _tcscpy_s(memcard[cardnum].filename, _countof(memcard[cardnum].filename) - 1, path);
 
     if (connect == TRUE) MCConnect(cardnum);
 }

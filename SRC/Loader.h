@@ -165,7 +165,7 @@ void    UnloadPatch();
 // loader
 
 // loader API
-void    LoadFile(TCHAR *filename);
+void    LoadFile(const TCHAR *filename);
 void    ReloadFile();
 
 // all loader variables are placed here

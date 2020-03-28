@@ -19,10 +19,10 @@
 
 #include "../Core/Gekko.h"
 
-#include "../UserMenu/UserMain.h"
-#include "../UserMenu/UserFile.h"
-#include "../UserMenu/UserProfiler.h"
-#include "../UserMenu/UserWindow.h"
-#include "../UserMenu/Loader.h"
+#include "../UI/UserMain.h"
+#include "../UI/UserFile.h"
+#include "../UI/UserProfiler.h"
+#include "../UI/UserWindow.h"
+#include "../Loader.h"
 
 #include "../HighLevel/HighLevel.h"

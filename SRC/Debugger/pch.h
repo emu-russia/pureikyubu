@@ -20,9 +20,9 @@
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
 
-#include "../UserMenu/Emulator.h"
-#include "../UserMenu/Loader.h"
-#include "../UserMenu/UserFile.h"
+#include "../Emulator.h"
+#include "../Loader.h"
+#include "../UI/UserFile.h"
 
 #include "Debugger.h"
 

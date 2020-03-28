@@ -9,7 +9,7 @@ static int      seekval;        // current DVD position
 
 // ---------------------------------------------------------------------------
 
-bool GCMSelectFile(TCHAR *file)
+bool GCMSelectFile(const TCHAR *file)
 {
     FILE* gcm_file;
 

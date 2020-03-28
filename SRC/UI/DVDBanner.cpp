@@ -1,6 +1,6 @@
 // DVD banner helpers for file selector. 
 // we are using DVD plugin for disk operations.
-#include "dolphin.h"
+#include "pch.h"
 
 void * DVDLoadBanner(TCHAR *dvdFile)
 {

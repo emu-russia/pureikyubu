@@ -1,143 +1,76 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="User Menu">
-      <UniqueIdentifier>{9ac656bd-c11c-4483-8b88-d88d8e6c617b}</UniqueIdentifier>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{19bf8c3f-1651-4c26-ac10-07becfa157bb}</UniqueIdentifier>
     </Filter>
-    <Filter Include="User Menu\Resource Files">
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{cd8bd20d-47aa-4d22-aa1a-7a0a89bfe011}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
       <UniqueIdentifier>{8b89c15e-a9b8-492f-9de2-300059b1a186}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\UserMenu\UserAbout.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserConfig.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserFile.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserFonts.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserMain.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserMemcards.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserProfiler.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserSelector.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserSettings.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\UserWindow.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\DVDBanner.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\Loader.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\UserMenu\Emulator.cpp">
-      <Filter>User Menu</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="SRC\UserMenu\User.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserAbout.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserConfig.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserFile.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserFonts.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserMain.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserMemcards.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserProfiler.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserSelector.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserSettings.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\UserWindow.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
     <ClInclude Include="RES\resource.h">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\dolphin.h" />
-    <ClInclude Include="SRC\UserMenu\SjisTable.h">
-      <Filter>User Menu</Filter>
+    <ClInclude Include="SRC\Emulator.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\UserMenu\DVDBanner.h">
-      <Filter>User Menu</Filter>
+    <ClInclude Include="SRC\Loader.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\UserMenu\Loader.h">
-      <Filter>User Menu</Filter>
-    </ClInclude>
-    <ClInclude Include="SRC\UserMenu\Emulator.h">
-      <Filter>User Menu</Filter>
+    <ClInclude Include="SRC\dolphin.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="RES\Dolwin.ico">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\GCN.ico">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\GCN_sm.ico">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padArrows.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padButtons.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padStart.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padStick.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padSubStick.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padTriggerL.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
     <Image Include="RES\padTriggerR.bmp">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RES\Dolwin.rc">
-      <Filter>User Menu\Resource Files</Filter>
+      <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SRC\Emulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

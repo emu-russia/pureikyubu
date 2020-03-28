@@ -99,7 +99,7 @@ uint32_t LoadDOL(TCHAR *dolname)
     HWConfig * config = new HWConfig;
     assert(config);
     EMUGetHwConfig(config);
-    BootROM(false, config->exi_rtc, config->consoleVer, emu.core);
+    BootROM(false, false, config->consoleVer, emu.core);
 
     // Setup registers
     SP = 0x816ffffc;
@@ -330,7 +330,7 @@ uint32_t LoadELF(char *elfname)
 // use physical addressing!
 uint32_t LoadBIN(TCHAR * binname)
 {
-    uint32_t org = GetConfigInt(USER_BINORG, USER_BINORG_DEFAULT);
+    uint32_t org = GetConfigInt(USER_BINORG, USER_LOADER);
 
     // binary file loading address is above RAM
     if(org >= RAMSIZE) return 0;
@@ -378,7 +378,7 @@ bool LoadPatch(TCHAR * patchname, bool add)
     // since "enable" flag is loaded only here, it is not important
     // to load it in standalone patch Init routine. simply if there are
     // no patch files loaded, there is nothing to apply.
-    ldat.enablePatch = GetConfigInt(USER_PATCH, USER_PATCH_DEFAULT);
+    ldat.enablePatch = GetConfigInt(USER_PATCH, USER_LOADER);
     if(!ldat.enablePatch) return true;
 
     // count patchnum
@@ -412,6 +412,7 @@ bool LoadPatch(TCHAR * patchname, bool add)
 
         fread(&ldat.patches[ldat.patchNum], sizeof(Patch), patchNum, f);
         ldat.patchNum += patchNum;
+
         ApplyPatches(true, ldat.patchNum - patchNum);
     }
     else
@@ -436,11 +437,11 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
     if(!ldat.enablePatch) return;
 
     // b = MAX ?
-    if(b==-1) b = ldat.patchNum - 1;
+    if(b==-1) b = ldat.patches.size() - 1;
     
     for(int32_t i=a; i<=b; i++)     // i = [a; b]
     {
-        Patch * p = &ldat.patches[i];
+        Patch * p = ldat.patches[i];
         if(p->freeze || load)
         {
             uint32_t ea = _byteswap_ulong(p->effectiveAddress);
@@ -526,7 +527,7 @@ static void AutoloadMap()
     DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
 
     // Step 3: make new map (find symbols)
-    if(GetConfigInt(USER_MAKEMAP, USER_MAKEMAP_DEFAULT))
+    if(GetConfigInt(USER_MAKEMAP, USER_LOADER))
     {
         if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
         else sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", name);
@@ -586,13 +587,13 @@ static BOOL SetGameIDAndTitle(TCHAR *filename)
 static void DoLoadFile(char *filename)
 {
     uint32_t entryPoint = 0;
-    wchar_t statusText[0x1000];
+    TCHAR statusText[0x1000];
     bool bootrom = false;
     ULONGLONG s_time = GetTickCount64();
 
     // loading progress
-    swprintf_s(statusText, _countof(statusText), L"Loading %s", filename);
-    SetStatusText(STATUS_PROGRESS, statusText);
+    _stprintf_s(statusText, _countof(statusText), _T("Loading %s"), filename);
+    SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // load file
     if (!_stricmp(filename, "Bootrom"))
@@ -639,8 +640,8 @@ static void DoLoadFile(char *filename)
     // file load success?
     if(entryPoint == 0 && !ldat.dvd)
     {
-        DolwinError( "Cannot load file!",
-                      "\'%s\'\n",
+        UI::DolwinError( _T("Cannot load file!"),
+                      _T("\'%s\'\n"),
                       filename);
     }
     else
@@ -674,7 +675,7 @@ static void DoLoadFile(char *filename)
     {
         HWConfig* config = new HWConfig;
         EMUGetHwConfig(config);
-        BootROM(ldat.dvd, config->exi_rtc, config->consoleVer, emu.core);
+        BootROM(ldat.dvd, false, config->consoleVer, emu.core);
         Sleep(10);
     }
 
@@ -691,18 +692,18 @@ static void DoLoadFile(char *filename)
     // show boot time
     ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
-    swprintf_s (statusText, _countof(statusText), L"Boot time %1.2f sec", ldat.boottime);
-    SetStatusText(STATUS_PROGRESS, statusText);
+    _stprintf_s (statusText, _countof(statusText), _T("Boot time %1.2f sec"), ldat.boottime);
+    SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
     if(!ldat.dvd) PC = entryPoint;
 }
 
 // set next file to load
-void LoadFile(char *filename)
+void LoadFile(const TCHAR *filename)
 {
-    strcpy_s(ldat.currentFile, sizeof(ldat.currentFile), filename);
-    SetConfigString(USER_LASTFILE, ldat.currentFile);
+    _tcscpy_s(ldat.currentFile, _countof(ldat.currentFile) - 1, filename);
+    SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }
 
 // reload last file
