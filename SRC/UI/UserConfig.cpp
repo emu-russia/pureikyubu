@@ -1,6 +1,8 @@
 // Dolwin user variables access. Json-based.
 #include "pch.h"
 
+// TODO: See ya until next time :p
+
 TCHAR *GetConfigString(const char *var, const char *path)
 {
 	return nullptr;
