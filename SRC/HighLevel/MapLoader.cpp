@@ -4,7 +4,7 @@
 
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
-static int LoadMapCW(char *mapname)
+static int LoadMapCW(const TCHAR *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024], token1[256];
@@ -15,7 +15,7 @@ static int LoadMapCW(char *mapname)
     int     flags;
     char    procName[512];
 
-    map = fopen(mapname, "r");
+    _tfopen_s(&map, mapname, _T("r"));
     if(!map) return MAP_FORMAT_BAD;
 
     while(!feof(map))
@@ -57,7 +57,7 @@ static int LoadMapCW(char *mapname)
 }
 
 // load GCC-generated map file
-static int LoadMapGCC(char *mapname)
+static int LoadMapGCC(const TCHAR *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024];
@@ -68,7 +68,7 @@ static int LoadMapGCC(char *mapname)
     char    par1[512];
     char    par2[512];
 
-    map = fopen(mapname, "r");
+    _tfopen_s(&map, mapname, _T("r"));
     if(!map) return MAP_FORMAT_BAD;
 
     while(!feof(map))
@@ -98,29 +98,13 @@ static int LoadMapGCC(char *mapname)
 }
 
 // load Dolwin format map-file
-static int LoadMapRAW(char *mapname)
+static int LoadMapRAW(const TCHAR *mapname)
 {
     int i;
-    int size = FileSize(mapname);
-    FILE *f = fopen(mapname, "rt");
+    size_t size = UI::FileSize(mapname);
 
-    // allocate memory
-    char *mapbuf = (char *)malloc(size + 1);
-    if(mapbuf == NULL)
-    {
-        DBHalt(
-            "Not enough memory to load MAP.\n"
-            "file name : %s\n"
-            "file size : %ib\n\n",
-            mapname, size
-        );
-        return MAP_FORMAT_BAD;
-    }
-
-    // load from file
-    fread(mapbuf, size, 1, f);
-    fclose(f);
-    mapbuf[size] = 0;
+    char* mapbuf = (char *)UI::FileLoad(mapname);
+    assert(mapbuf);
 
     // remove all garbage, like tabs
     for(i=0; i<size; i++)
@@ -178,7 +162,7 @@ static int LoadMapRAW(char *mapname)
 }
 
 // wrapper for all map formats. FALSE is returned, if cannot load map file.
-int LoadMAP(char *mapname, bool add)
+int LoadMAP(const TCHAR *mapname, bool add)
 {
     FILE *f;
     char sign[256];
@@ -190,10 +174,10 @@ int LoadMAP(char *mapname, bool add)
     }
 
     // copy name for MAP saver (with SaveMAP "this" parameter)
-    strncpy(hle.mapfile, mapname, sizeof(hle.mapfile));
+    _tcscpy(hle.mapfile, mapname);
 
     // try to open
-    f = fopen(mapname, "r");
+    _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
         DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", mapname);

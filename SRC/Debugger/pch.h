@@ -8,9 +8,10 @@
 #include <string.h>
 #include <intrin.h>
 #include <time.h>
+#include <tchar.h>
 #include <Windows.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "../Core/Memory.h"
 #include "../Core/Gekko.h"
@@ -19,9 +20,9 @@
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
 
-#include "../UserMenu/Emulator.h"
-#include "../UserMenu/Loader.h"
-#include "../UserMenu/UserFile.h"
+#include "../Emulator.h"
+#include "../Loader.h"
+#include "../UI/UserFile.h"
 
 #include "Debugger.h"
 

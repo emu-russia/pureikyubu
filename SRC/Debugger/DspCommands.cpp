@@ -78,8 +78,8 @@ namespace Debug
             start_addr = strtoul(args[2].c_str(), nullptr, 0);
         }
 
-        uint32_t ucodeSize = 0;
-        uint8_t* ucode = (uint8_t*)FileLoad(args[1].c_str(), &ucodeSize);
+        size_t ucodeSize = 0;
+        uint8_t* ucode = (uint8_t*)UI::FileLoad(args[1].c_str(), &ucodeSize);
         if (!ucode)
         {
             DBReport("Failed to load %s\n", args[1].c_str());

@@ -21,7 +21,7 @@ int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
 
-#define MAPDAT_FILE   ".\\Data\\makemap.dat"
+#define MAPDAT_FILE   _T(".\\Data\\makemap.dat")
 #define MAP_MAXFUNCNAME 100
 
 /*
@@ -83,8 +83,8 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
  */
 static void MAPOpen ()
 {
-    uint32_t size = 0;
-    Map_buffer = (uint8_t *)FileLoad(MAPDAT_FILE, &size);
+    size_t size = 0;
+    Map_buffer = (uint8_t *)UI::FileLoad(MAPDAT_FILE, &size);
     if (Map_buffer == NULL) return;
     Map_functionsSize = *(uint32_t *)(Map_buffer);
     Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));
@@ -134,16 +134,16 @@ static char * MAPFind (uint32_t checksum)
 /*
  * Starts the creation of a new map
  */
-void MAPInit(char * mapname)
+void MAPInit(const TCHAR * mapname)
 {
     MAPOpen ();
-    Map = fopen(mapname, "w");
+    Map = _tfopen(mapname, _T("w"));
 
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
     Map_marks = (opMarker *)malloc(Map_marksMaxSize * sizeof(opMarker));
 
-    SetStatusText(STATUS_PROGRESS, L"Please, wait until emulator making new MAP");
+    SetStatusText(STATUS_ENUM::Progress, _T("Please, wait until emulator making new MAP"));
     Sleep(1000);
 }
 
@@ -265,9 +265,9 @@ void MAPFinish()
 
                 // show status
                 {
-                    wchar_t wideName[0x100] = { 0, };
+                    TCHAR wideName[0x100] = { 0, };
 
-                    wchar_t* wideNamePtr = wideName;
+                    TCHAR* wideNamePtr = wideName;
                     char* namePtr = name;
                     while (*namePtr)
                     {
@@ -275,7 +275,7 @@ void MAPFinish()
                     }
                     *wideNamePtr++ = 0;
 
-                    SetStatusText(STATUS_PROGRESS, wideNamePtr);
+                    SetStatusText(STATUS_ENUM::Progress, wideNamePtr);
                 }
 
                 namelen = strlen(name);

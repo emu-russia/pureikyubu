@@ -72,7 +72,7 @@ typedef struct SRAM
 #define SJIS_SIZE   0x4D000
 
 // location of SRAM dump in Dolwin filesystem 
-#define SRAM_FILE   ".\\Data\\sram.bin"
+#define SRAM_FILE   _T(".\\Data\\sram.bin")
 
 // ---------------------------------------------------------------------------
 // hardware API
@@ -85,7 +85,6 @@ typedef struct EIControl
     SRAM        sram;           // battery-backed memory (misc console settings)
     uint8_t*    ansiFont;       // bootrom font (loaded from file)
     uint8_t*    sjisFont;
-    bool        rtc;            // 1: RTC enabled
     uint32_t    rtcVal;         // last updated RTC value
     uint32_t    ad16;           // trace step
     char        uart[256];      // UART I/O buffer

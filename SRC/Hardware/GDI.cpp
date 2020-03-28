@@ -77,29 +77,14 @@ void GDIRefresh()
 {
     if(gdi_init)
     {
-        if(vi.stretch)
-        {
-            StretchBlt(
-                hdcMainWnd,
-                0, 0,
-                gdi_width, gdi_height,
-                hdcWndComp,
-                0, 0,
-                bm_width, -bm_height,
-                SRCCOPY
-            );
-        }
-        else
-        {
-            BitBlt(
-                hdcMainWnd,
-                0, 0, 
-                gdi_width, gdi_height,
-                hdcWndComp,
-                0, 0,
-                SRCCOPY
-            );
-        }
+        BitBlt(
+            hdcMainWnd,
+            0, 0, 
+            gdi_width, gdi_height,
+            hdcWndComp,
+            0, 0,
+            SRCCOPY
+        );
     }
 }
 

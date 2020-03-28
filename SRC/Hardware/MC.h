@@ -29,8 +29,7 @@
 #define MEMCARD_SLOTA         0
 #define MEMCARD_SLOTB         1
 
-/* Names of the keys used to store to configuration in the windows register */
-#define HKEY_MEMCARD   USER_KEY_NAME "\\Memcard"
+/* Names of the keys used to store to configuration */
 #define MemcardA_Connected_Key "MemcardA_Connected"
 #define MemcardB_Connected_Key "MemcardB_Connected"
 #define MemcardA_Filename_Key "MemcardA_Filename"
@@ -45,7 +44,7 @@
 
 /* structure of a memcard buffer */
 typedef struct Memcard {
-    char filename[256]; // filename where the memcard data is stores 
+    TCHAR filename[0x1000]; // filename where the memcard data is stores 
     FILE * file;        // pointer to that file
     uint32_t size;           // size of the memcard in bytes
     uint8_t * data;          // pointer to the memcard raw data (stored in little endian order)
@@ -120,14 +119,14 @@ bool    MCIsConnected(int cardnum);
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id);
+bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id);
 
 /*
  * Sets the memcard to use the specified file. If the memcard is connected, 
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, const char *path, bool connect);
+void    MCUseFile(int cardnum, const TCHAR *path, bool connect);
 
 /* 
  * Starts the memcard system and loads the saved settings.

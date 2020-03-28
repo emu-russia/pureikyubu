@@ -1,7 +1,9 @@
+#pragma once
+
 /*
  * Starts the creation of a new map
  */
-void MAPInit(char * mapname);
+void MAPInit(const TCHAR * mapname);
 
 /*
  * Adds a mark to the opcode at the specified offset.

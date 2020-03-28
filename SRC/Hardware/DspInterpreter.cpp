@@ -1456,12 +1456,14 @@ namespace DSP
 		if (imemPtr == nullptr)
 		{
 			DBHalt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
+			core->Suspend();
 			return;
 		}
 
 		if (!Analyzer::Analyze(imemPtr, DspCore::MaxInstructionSizeInBytes, info))
 		{
 			DBHalt("DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
+			core->Suspend();
 			return;
 		}
 

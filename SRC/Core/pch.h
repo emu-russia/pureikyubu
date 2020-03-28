@@ -14,7 +14,7 @@
 #include <string.h>
 #include <intrin.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "Memory.h"
 #include "Gekko.h"

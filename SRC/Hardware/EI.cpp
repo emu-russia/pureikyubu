@@ -146,10 +146,10 @@ void EXIDetach(int chan)
 static void SRAMLoad(SRAM *s)
 {
     uint8_t * buf;
-    uint32_t size;
+    size_t size;
 
     // load data from file in temporary buffer
-    buf = (uint8_t *)FileLoad(SRAM_FILE, &size);
+    buf = (uint8_t *)UI::FileLoad(SRAM_FILE, &size);
     memset(s, 0, sizeof(SRAM));
 
     // copy less or equal bytes from buffer to SRAM
@@ -167,13 +167,12 @@ static void SRAMLoad(SRAM *s)
 
 static void SRAMSave(SRAM *s)
 {
-    FileSave(SRAM_FILE, s, sizeof(SRAM));
+    UI::FileSave(SRAM_FILE, s, sizeof(SRAM));
 }
 
 //
 // update real-time clock register
 // bootrom is updating time-base registers, using RTC value
-// Nintendo guaranteed, that RTC will be valid till year 2006
 //
 
 #define MAGIC_VALUE 0x386d4380  // seconds between 1970 and 2000
@@ -181,35 +180,31 @@ static void SRAMSave(SRAM *s)
 // use to get updated RTC
 void RTCUpdate()
 {
-    if(exi.rtc)
-    {
-        exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
-    }
-    else exi.rtcVal = 0;
+    exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
 }
 
 //
 // load ANSI and SJIS fonts
 //
 
-static void FontLoad(uint8_t **font, uint32_t fontsize, char *filename)
+static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
 {
     uint8_t * buf;
-    uint32_t size;
+    size_t size;
 
     // allocate memory for font data
     *font = (uint8_t *)malloc(fontsize);
     if(*font == NULL)
     {
-failed: DolwinError(
-            "EXI Message",
-            "Cannot load bootrom font: %s\n", filename);
+failed: UI::DolwinError(
+            _T("EXI Message"),
+            _T("Cannot load bootrom font: %s\n"), filename);
         return;
     }
     memset(*font, 0, fontsize); // clear
 
     // load data from file in temporary buffer
-    buf = (uint8_t *)FileLoad(filename, &size);
+    buf = (uint8_t *)UI::FileLoad(filename, &size);
     if(buf != NULL)
     {
         if(size > fontsize) memcpy(*font, buf, fontsize);
@@ -398,7 +393,7 @@ void MXTransfer()
                     exi.regs[0].data = 0x03000000;
                     return;
                 }
-                else DolwinQuestion("EXI Module", "Unknown MX chip read immediate from %08X", ofs);
+                else UI::DolwinQuestion(_T("EXI Module"), _T("Unknown MX chip read immediate from %08X"), ofs);
             }
             return;
         }
@@ -644,7 +639,6 @@ void EIOpen(HWConfig * config)
     // load user variables
     exi.log = config->exi_log;
     exi.osReport = config->exi_osReport;
-    exi.rtc = config->exi_rtc;
     
     // reset devices
     exi.sel = -1;           // deselect MX device

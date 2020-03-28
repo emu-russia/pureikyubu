@@ -422,7 +422,7 @@ void MCTransfer () {
         }
         break;
     default:
-        DolwinError("Memcard Error", "Unknown memcard transfer type");
+        UI::DolwinError(_T("Memcard Error"), _T("Unknown memcard transfer type"));
     }
 }
 
@@ -445,7 +445,7 @@ bool    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -461,22 +461,22 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        DolwinError ( "Memcard Error", "Wrong card id for creating file.");
+        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
         return FALSE;
     }
 
     newfile = nullptr;
-    fopen_s(&newfile, path, "wb") ;
+    _tfopen_s(&newfile, path, _T("wb")) ;
 
 	if (newfile == NULL) {
-        DolwinReport("Error while trying to create memcard file.");
+        UI::DolwinReport(_T("Error while trying to create memcard file."));
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            DolwinReport("Error while trying to write memcard file.");
+            UI::DolwinReport(_T("Error while trying to write memcard file."));
 
 			fclose (newfile);
             return FALSE;
@@ -492,16 +492,16 @@ bool    MCCreateMemcardFile(const char *path, uint16_t memcard_id) {
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, const char *path, bool connect) {
+void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
 
     // Invalid memcard number
     assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
     if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
-    strcpy_s(memcard[cardnum].filename, sizeof(memcard[cardnum].filename), path);
+    _tcscpy_s(memcard[cardnum].filename, _countof(memcard[cardnum].filename) - 1, path);
 
-    if (connect == TRUE) MCConnect(cardnum);
+    if (connect == true) MCConnect(cardnum);
 }
 
 /* 
@@ -525,18 +525,18 @@ void MCOpen (HWConfig * config)
     /* load settings */
     Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
     Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
-    strcpy_s(memcard[MEMCARD_SLOTA].filename, sizeof(memcard[MEMCARD_SLOTA].filename), config->MemcardA_Filename);
-    strcpy_s(memcard[MEMCARD_SLOTB].filename, sizeof(memcard[MEMCARD_SLOTB].filename), config->MemcardB_Filename);
+    _tcscpy_s(memcard[MEMCARD_SLOTA].filename, _countof(memcard[MEMCARD_SLOTA].filename) - 1, config->MemcardA_Filename);
+    _tcscpy_s(memcard[MEMCARD_SLOTB].filename, _countof(memcard[MEMCARD_SLOTB].filename) - 1, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
-    if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
+    if (memcard[MEMCARD_SLOTA].filename[0] == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        const char * filename = ".\\Data\\MemCardA.mci";
+        const TCHAR * filename = _T(".\\Data\\MemCardA.mci");
         FILE * fileptr;
 
         fileptr = nullptr;
-        fopen_s(&fileptr, filename, "rb");
+        _tfopen_s(&fileptr, filename, _T("rb"));
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -550,14 +550,14 @@ void MCOpen (HWConfig * config)
             Memcard_Connected[MEMCARD_SLOTA] = TRUE;
         }
     }
-    if (strcmp(memcard[MEMCARD_SLOTB].filename, "*") == 0) {
+    if (memcard[MEMCARD_SLOTB].filename[0] == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        const char * filename = ".\\Data\\MemCardB.mci";
+        const TCHAR * filename = _T(".\\Data\\MemCardB.mci");
         FILE * fileptr;
 
         fileptr = nullptr;
-        fopen_s(&fileptr, filename, "rb");
+        _tfopen_s (&fileptr, filename, _T("rb"));
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -601,20 +601,20 @@ bool MCConnect (int cardnum) {
     case MEMCARD_SLOTB:
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
 
-        int memcardSize = FileSize(memcard[cardnum].filename);
+        size_t memcardSize = UI::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
-        fopen_s(&memcard[cardnum].file, memcard[cardnum].filename, "r+b");
+        _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
         if (memcard[cardnum].file == NULL) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
-            DolwinReport(
-                "Couldnt open memcard (slot %c),\n"
-                "location : %s\n\n"
-                "Check path or file attributes.",
+            UI::DolwinReport(
+                _T("Couldnt open memcard (slot %c),\n")
+                _T("location : %s\n\n")
+                _T("Check path or file attributes."),
                 slt[cardnum],
-                FileShortName(memcard[cardnum].filename)
+                UI::FileShortName(memcard[cardnum].filename)
             );
             return FALSE;
         }
@@ -623,18 +623,18 @@ bool MCConnect (int cardnum) {
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
-            MessageBoxA (NULL,"memcard file doesnt have a valid size", "Memcard Error", 0);
+            MessageBox (NULL, _T("memcard file doesnt have a valid size"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
         }
 
-        memcard[cardnum].size = memcardSize;
+        memcard[cardnum].size = (uint32_t)memcardSize;
         memcard[cardnum].data = (uint8_t *)malloc(memcard[cardnum].size);
 
         if (memcard[cardnum].data == NULL) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-            MessageBoxA (NULL,"couldnt allocate enough memory for memcard", "Memcard Error", 0);
+            MessageBox (NULL, _T("couldnt allocate enough memory for memcard"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -642,7 +642,7 @@ bool MCConnect (int cardnum) {
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
 //          DBReport(YEL "error at locating file cursor\n");
-            MessageBoxA (NULL ,"error at locating file cursor", "Memcard Error", 0);
+            MessageBox (NULL , _T("error at locating file cursor"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);
@@ -652,7 +652,7 @@ bool MCConnect (int cardnum) {
 
         if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
 //          DBReport(YEL "error at reading the memcard file\n");
-            MessageBoxA (NULL,"error at reading the memcard file", "Memcard Error", 0);
+            MessageBox (NULL, _T("error at reading the memcard file"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);

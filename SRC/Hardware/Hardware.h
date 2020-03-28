@@ -15,7 +15,6 @@ typedef struct _HWConfig
 	HWND	    hwndMain;
     bool        vi_log;
     bool        vi_xfb;
-    bool        vi_stretch;
     uint32_t    vcount;
     bool        videoEncoderFuse;       // 1 - PAL, 0 - NTSC
 
@@ -26,25 +25,21 @@ typedef struct _HWConfig
     // EI
     bool        exi_log;
     bool        exi_osReport;
-    bool        exi_rtc;
-    char        ansiFilename[0x1000];
-    char        sjisFilename[0x1000];
+    TCHAR       ansiFilename[0x1000];
+    TCHAR       sjisFilename[0x1000];
 
     // MC
     bool        MemcardA_Connected;
     bool        MemcardB_Connected;
-    char        MemcardA_Filename[0x1000];
-    char        MemcardB_Filename[0x1000];
+    TCHAR       MemcardA_Filename[0x1000];
+    TCHAR       MemcardB_Filename[0x1000];
     bool        Memcard_SyncSave;
-
-    // CP
-    bool        gxpoll;         // 1: poll controllers after GX draw done
 
     int64_t     one_second;         // one CPU second in timer ticks
 
-    char        BootromFilename[0x1000];
-    char        DspDromFilename[0x1000];
-    char        DspIromFilename[0x1000];
+    TCHAR       BootromFilename[0x1000];
+    TCHAR       DspDromFilename[0x1000];
+    TCHAR       DspIromFilename[0x1000];
 
 } HWConfig;
 

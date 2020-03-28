@@ -6,11 +6,11 @@ DVD dvd;
 // ---------------------------------------------------------------------------
 // select current dvd 
 
-bool DVDSetCurrent(char *file)
+bool DVDSetCurrent(const TCHAR *file)
 {
     // try to open file
     FILE* f = nullptr;
-    fopen_s(&f, file, "rb");
+    _tfopen_s (&f, file, _T("rb"));
     if(!f) return false;
     fclose(f);
 

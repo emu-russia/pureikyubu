@@ -96,7 +96,6 @@ typedef struct VIControl
 
     bool        log;        // do debugger log output
     uint32_t    frames;     // frames rendered (can be used by both VI and GX)
-    bool        stretch;    // 1: stretch VI framebuffer to fit whole window
 
     HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks

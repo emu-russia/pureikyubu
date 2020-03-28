@@ -9,8 +9,9 @@
 #include <string.h>
 #include <intrin.h>
 #include <time.h>
+#include <tchar.h>
 
-#include "../UserMenu/UserSpinLock.h"
+#include "../Common/Spinlock.h"
 
 #include "../Core/Gekko.h"
 #include "../Core/Interpreter.h"
@@ -21,6 +22,6 @@
 
 #include "../Debugger/Debugger.h"
 
-#include "../UserMenu/UserMain.h"
-#include "../UserMenu/UserFile.h"
-#include "../UserMenu/UserWindow.h"
+#include "../UI/UserMain.h"
+#include "../UI/UserFile.h"
+#include "../UI/UserWindow.h"

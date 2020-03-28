@@ -79,8 +79,10 @@ static void DICommand()
             break;
 
         case 0xA8:          // read sector (disk id) (DMA)
-            VERIFY(!(DICR & DI_CR_DMA), "Non-DMA disk transfer");
-            VERIFY(DILEN & 0x1f, "Not aligned disk DMA transfer. Should be on 32-byte boundary!");
+            // Non-DMA disk transfer
+            assert(DICR & DI_CR_DMA);
+            // Not aligned disk DMA transfer. Should be on 32-byte boundary!
+            assert((DILEN & 0x1f) == 0);
 
             BeginProfileDVD();
             DVDSeek(seek);
@@ -144,17 +146,17 @@ static void DICommand()
 
         // unknown command
         default:
-            DolwinError(
-                "DVD Subsystem Failure",
-                "Unknown DVD command : %08X\n\n"
-                "type:%s\n"
-                "dma:%s\n"
-                "madr:%08X\n"
-                "dlen:%08X\n"
-                "imm:%08X\n",
+            UI::DolwinError(
+                _T("DVD Subsystem Failure"),
+                _T("Unknown DVD command : %08X\n\n")
+                _T("type:%s\n")
+                _T("dma:%s\n")
+                _T("madr:%08X\n")
+                _T("dlen:%08X\n")
+                _T("imm:%08X\n"),
                 di.cmdbuf[0],
-                (DICR & DI_CR_RW) ? ("write") : ("read"),
-                (DICR & DI_CR_DMA) ? ("yes") : ("no"),
+                (DICR & DI_CR_RW) ? (_T("write")) : (_T("read")),
+                (DICR & DI_CR_DMA) ? (_T("yes")) : (_T("no")),
                 DIMAR,
                 DILEN,
                 di.immbuf

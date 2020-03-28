@@ -17,8 +17,8 @@ namespace DSP
 
 		// Load IROM
 
-		uint32_t iromImageSize = 0;
-		uint8_t* iromImage = (uint8_t *)FileLoad(config->DspIromFilename, &iromImageSize);
+		size_t iromImageSize = 0;
+		uint8_t* iromImage = (uint8_t *)UI::FileLoad(config->DspIromFilename, &iromImageSize);
 
 		if (!iromImage || iromImageSize != IROM_SIZE)
 		{
@@ -33,8 +33,8 @@ namespace DSP
 
 		// Load DROM
 
-		uint32_t dromImageSize = 0;
-		uint8_t* dromImage = (uint8_t*)FileLoad(config->DspDromFilename, &dromImageSize);
+		size_t dromImageSize = 0;
+		uint8_t* dromImage = (uint8_t*)UI::FileLoad(config->DspDromFilename, &dromImageSize);
 
 		if (!dromImage || dromImageSize != DROM_SIZE)
 		{
@@ -957,9 +957,9 @@ namespace DSP
 #if 1
 		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 		{
-			char filename[0x100] = { 0, };
-			sprintf_s(filename, sizeof(filename), "Data\\DspUcode_%04X_%s.bin", DmaRegs.blockSize, ldat.gameID);
-			FileSave(filename, ptr, DmaRegs.blockSize);
+			TCHAR filename[0x100] = { 0, };
+			_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X_%s.bin"), DmaRegs.blockSize, ldat.gameID);
+			UI::FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
 	}

@@ -39,8 +39,8 @@ namespace Debug
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
 
-		uint32_t dataSize = 0;
-		uint8_t* data = (uint8_t *)FileLoad(args[1].c_str(), &dataSize);
+		size_t dataSize = 0;
+		uint8_t* data = (uint8_t *)UI::FileLoad(args[1].c_str(), &dataSize);
 
 		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
 		{
@@ -84,7 +84,7 @@ namespace Debug
 			return;
 		}
 
-		if (!FileSave(args[1].c_str(), &mi.ram[address], dataSize))
+		if (!UI::FileSave(args[1].c_str(), &mi.ram[address], dataSize))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}
@@ -108,8 +108,8 @@ namespace Debug
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
 
-		uint32_t dataSize = 0;
-		uint8_t* data = (uint8_t*)FileLoad(args[1].c_str(), &dataSize);
+		size_t dataSize = 0;
+		uint8_t* data = (uint8_t*)UI::FileLoad(args[1].c_str(), &dataSize);
 
 		if (address >= ARAMSIZE || (address + dataSize) >= ARAMSIZE)
 		{
@@ -153,7 +153,7 @@ namespace Debug
 			return;
 		}
 
-		if (!FileSave(args[1].c_str(), &aram.mem[address], dataSize))
+		if (!UI::FileSave(args[1].c_str(), &aram.mem[address], dataSize))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}

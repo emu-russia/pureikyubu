@@ -170,12 +170,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Console Version:",IDC_STATIC,12,12,60,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CONSOLE_VER,72,12,144,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
-    CONTROL         "Real-Time Clock (Default: disabled)",IDC_RTC,"Button",BS_AUTOCHECKBOX,12,228,138,12
     LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,30,204,30
-    CONTROL         "Poll controllers after GX draw done (Default: disabled)",IDC_GX_POLL,
-                    "Button",BS_AUTOCHECKBOX,12,210,192,12
-    CONTROL         "Stretch video framebuffer to fit whole window (buggy)",IDC_VI_STRETCH,
-                    "Button",BS_AUTOCHECKBOX,12,192,192,12
     PUSHBUTTON      "Choose...",IDC_CHOOSE_BOOTROM,168,78,48,14
     EDITTEXT        IDC_BOOTROM_FILE,12,78,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
     LTEXT           "Bootrom file:",IDC_STATIC,12,66,96,10
@@ -404,18 +399,6 @@ IDI_GCN_ICON            ICON                    "GCN.ico"
 
 IDI_GCN_SMALL_ICON      ICON                    "GCN_sm.ico"
 
-IDI_MOREICON1           ICON                    "moreicon1.ico"
-
-IDI_MOREICON2           ICON                    "moreicon2.ico"
-
-IDI_MOREICON3           ICON                    "moreicon3.ico"
-
-IDI_MOREICON4           ICON                    "moreicon4.ico"
-
-IDI_MOREICON5           ICON                    "moreicon5.ico"
-
-IDI_MOREICON6           ICON                    "moreicon6.ico"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -522,7 +505,6 @@ BEGIN
             MENUITEM "Change DVD...",               ID_FILE_CHANGEDVD
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Game INI Settings...",       ID_FILE_EDITINFO
         MENUITEM "&Refresh View\tF5",           ID_FILE_REFRESH
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_FILE_EXIT
@@ -614,17 +596,6 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "A&bout Dolwin...",            ID_HELP_ABOUT
-    END
-END
-
-IDR_POPUP_MENU MENU
-BEGIN
-    POPUP "File"
-    BEGIN
-        MENUITEM "&Boot!",                      ID_FILE_BOOT
-        MENUITEM "Compress...",                 ID_FILE_COMPRESS
-        MENUITEM SEPARATOR
-        MENUITEM "Game &INI Settings...",       ID_FILE_EDITINFO
     END
 END
 

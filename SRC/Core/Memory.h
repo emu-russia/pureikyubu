@@ -32,7 +32,6 @@ typedef struct MEMControl
 {
     // memory state
     int         mmu;                // translation mode (0: simple, 1: mmu)
-    bool        ir, dr;             // remap request
 
     uint8_t     lc[0x40000+4096];   // L2 locked cache
 } MEMControl;

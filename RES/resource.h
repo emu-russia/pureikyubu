@@ -11,7 +11,6 @@
 #define ID_SELECTOR                     106
 #define IDI_GCN_ICON                    107
 #define IDI_GCN_SMALL_ICON              108
-#define IDR_POPUP_MENU                  109
 #define IDD_FILE_FILTER                 111
 #define IDD_EDIT_FILE_INFO              113
 #define IDD_MEMCARD_SETTINGS            115
@@ -196,9 +195,7 @@
 #define ID_FILE_LOAD                    40040
 #define ID_FILE_UNLOAD                  40041
 #define ID_OPTIONS_VIEW_SORTBY_6        40043
-#define ID_FILE_COMPRESS                40044
 #define ID_FILE_INFO                    40045
-#define ID_FILE_BOOT                    40046
 #define ID_OPTIONS_VIEW_SORTBY_7        40047
 #define ID_FILE_RELOAD                  40050
 #define ID_OPTIONS_VIEW_FILEFILTER      40051

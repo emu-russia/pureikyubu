@@ -1,19 +1,3 @@
-// registry settings
-#define USER_REG_HKEY    HKEY_CURRENT_USER
-#define USER_KEY_NAME    "Software\\Dolwin Emulator\\PAD Plugin"
-
-// user variables API
-char *  GetConfigString(char *var, char *defVal, char *path = USER_KEY_NAME);
-void    SetConfigString(char *var, char *newVal, char *path = USER_KEY_NAME);
-int     GetConfigInt(char *var, int defVal, char *path = USER_KEY_NAME);
-void    SetConfigInt(char *var, int newVal, char *path = USER_KEY_NAME);
-
-// ---------------------------------------------------------------------------
-// PAD Plugin Variables list (a-z).
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// other stuff
 
 enum
 {
@@ -43,11 +27,11 @@ enum
     VKEY_FOR_START,
     
     VKEY_FOR_MAX
-}; // phew, at last!
+};
 
 typedef struct
 {
-    int     plugged;                // 1 / 0 = yes / no
+    bool    plugged;
     int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
 } PADCONF;
 

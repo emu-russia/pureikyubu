@@ -155,7 +155,7 @@ void VIUpdate()
             vi.frames++;
 
             // show system time and do some win32 update
-            SetStatusText(STATUS_TIME, OSTimeFormat(UTBR));
+            SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
             UpdateProfiler();
         }
         vi.pos &= ~0x07ff0000;
@@ -171,13 +171,13 @@ void VIUpdate()
 static void __fastcall vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
-    DolwinReport("VI READ8");
+    UI::DolwinReport(_T("VI READ8"));
     *reg = 0;
 }
 
 static void __fastcall vi_write8(uint32_t addr, uint32_t data)
 {
-    DolwinReport("VI WRITE8");
+    UI::DolwinReport(_T("VI WRITE8"));
 }
 
 static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
@@ -382,7 +382,6 @@ void VIOpen(HWConfig * config)
     // read VI settings
     vi.log = config->vi_log;
     vi.xfb = config->vi_xfb;
-    vi.stretch = config->vi_stretch;
     vi.videoEncoderFuse = config->videoEncoderFuse;
 
     // vertical count value
@@ -406,7 +405,7 @@ void VIOpen(HWConfig * config)
         bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
         if(!res)
         {
-            DolwinReport("VI cant startup GDI");
+            UI::DolwinReport(_T("VI cant startup GDI"));
             vi.xfb = false;
         }
     }

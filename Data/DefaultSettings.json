@@ -1,0 +1,91 @@
+{
+	"info":
+	{
+		"description": "Default Dolwin configuration. Loaded before Settings.json"
+	},
+
+	"ui":
+	{
+		"DOLDEBUG": false,
+		"FILTER": 4294967295,
+		"LASTDIR_ALL": ".\\",
+		"LASTDIR_DVD": ".\\",
+		"LASTDIR_MAP": ".\\Data",
+		"LASTDIR_PATCH": ".\\Data",
+		"LASTFILE": "",
+		"ONTOP": false,
+		"PATH": ".\\",
+		"PROFILE": true,
+		"RECENT0": "",
+		"RECENT1": "",
+		"RECENT2": "",
+		"RECENT3": "",
+		"RECENT4": "",
+		"RECENTNUM": 0,
+		"RUNONCE": true,
+		"SELECTOR": true,
+		"SMALLICONS": false,
+		"SORTVIEW": 1
+	},
+
+	"loader":
+	{
+		"BINORG": 12544,
+		"MAKEMAP": true,
+		"PATCH": true
+	},
+
+	"core":
+	{
+		"MMU": 0
+	},
+
+	"hardware":
+	{
+		"ANSI_FONT": "Data\\AnsiFont.szp",
+		"SJIS_FONT": "Data\\SjisFont.szp",
+		"CONSOLE": 3,
+		"EXI_LOG": true,
+		"OS_REPORT": true,
+		"RSWHACK": true,
+		"VI_COUNT": 0,
+		"VI_LOG": true,
+		"VI_XFB": true,
+		"BOOTROM": "",
+		"DSP_DROM": "",
+		"DSP_IROM": "",
+	},
+
+	"hle":
+	{
+		"HLEMTX": false
+	},
+
+	"controllers":
+	{
+		"PluggedIn_0": false,
+		"PluggedIn_1": false,
+		"PluggedIn_2": false,
+		"PluggedIn_3": false
+	},
+
+	"memcards":
+	{
+		"Memcard_SyncSave": false,
+		"MemcardA_Connected": false,
+		"MemcardB_Connected": false
+	},
+
+	"testing":
+	{
+		"SomeUTF8String": "Я могу есть стекло, оно мне не вредит",
+		"Japan": "私はガラスを食べることができます、それは私に害を与えません",
+		"Arabic": "يمكنني أكل الزجاج ، لا يؤذيني ",
+		"English": "I can eat glass, it doesn't hurts me",
+		"Boolean": true,
+		"Float": 3.1415,
+		"SomeArray": [ 1, 2, 3],
+		"EmptyArray": [],
+		"EmptyObject": {}
+	}
+}
