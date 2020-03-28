@@ -501,7 +501,7 @@ void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
     _tcscpy_s(memcard[cardnum].filename, _countof(memcard[cardnum].filename) - 1, path);
 
-    if (connect == TRUE) MCConnect(cardnum);
+    if (connect == true) MCConnect(cardnum);
 }
 
 /* 
@@ -623,7 +623,7 @@ bool MCConnect (int cardnum) {
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
-            MessageBoxA (NULL,"memcard file doesnt have a valid size", "Memcard Error", 0);
+            MessageBox (NULL, _T("memcard file doesnt have a valid size"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -634,7 +634,7 @@ bool MCConnect (int cardnum) {
 
         if (memcard[cardnum].data == NULL) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-            MessageBoxA (NULL,"couldnt allocate enough memory for memcard", "Memcard Error", 0);
+            MessageBox (NULL, _T("couldnt allocate enough memory for memcard"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = NULL;
             return FALSE;
@@ -642,7 +642,7 @@ bool MCConnect (int cardnum) {
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
 //          DBReport(YEL "error at locating file cursor\n");
-            MessageBoxA (NULL ,"error at locating file cursor", "Memcard Error", 0);
+            MessageBox (NULL , _T("error at locating file cursor"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);
@@ -652,7 +652,7 @@ bool MCConnect (int cardnum) {
 
         if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
 //          DBReport(YEL "error at reading the memcard file\n");
-            MessageBoxA (NULL,"error at reading the memcard file", "Memcard Error", 0);
+            MessageBox (NULL, _T("error at reading the memcard file"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
             memcard[cardnum].data = NULL;
             fclose(memcard[cardnum].file);

@@ -170,12 +170,7 @@ FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
     LTEXT           "Console Version:",IDC_STATIC,12,12,60,12,SS_CENTERIMAGE
     COMBOBOX        IDC_CONSOLE_VER,72,12,144,12,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
-    CONTROL         "Real-Time Clock (Default: disabled)",IDC_RTC,"Button",BS_AUTOCHECKBOX,12,228,138,12
     LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,30,204,30
-    CONTROL         "Poll controllers after GX draw done (Default: disabled)",IDC_GX_POLL,
-                    "Button",BS_AUTOCHECKBOX,12,210,192,12
-    CONTROL         "Stretch video framebuffer to fit whole window (buggy)",IDC_VI_STRETCH,
-                    "Button",BS_AUTOCHECKBOX,12,192,192,12
     PUSHBUTTON      "Choose...",IDC_CHOOSE_BOOTROM,168,78,48,14
     EDITTEXT        IDC_BOOTROM_FILE,12,78,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
     LTEXT           "Bootrom file:",IDC_STATIC,12,66,96,10

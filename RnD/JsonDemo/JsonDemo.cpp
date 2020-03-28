@@ -72,6 +72,65 @@ void SerializeDemo()
     std::cout << str;
 }
 
+void CloneDemo()
+{
+    Json one, two;
+    char text[0x1000] = { 0, };
+
+    // Make one
+
+    Json::Value* outer = one.root.AddObject(nullptr);
+
+    outer->AddInt("a", 1);
+    Json::Value* inner = outer->AddObject("inner");
+    inner->AddInt("b", 2);
+
+    // Clone
+
+    two.Clone(&one);
+
+    // Show clone
+
+    size_t actualSize = 0;
+
+    two.Serialize(text, sizeof(text) - 1, actualSize);
+    std::string str(text, actualSize);
+
+    std::cout << str;
+}
+
+void MergeDemo()
+{
+    Json one, two;
+    char text[0x1000] = { 0, };
+
+    // Make one
+
+    Json::Value* outer = one.root.AddObject(nullptr);
+
+    outer->AddInt("a", 1);
+    outer->AddInt("b", 2);
+
+    // Make two
+
+    outer = two.root.AddObject(nullptr);
+
+    outer->AddInt("b", 777);
+
+    // Merge
+
+    one.Merge(&two);
+
+    // Show clone
+
+    size_t actualSize = 0;
+
+    one.Serialize(text, sizeof(text) - 1, actualSize);
+    std::string str(text, actualSize);
+
+    std::cout << str;
+}
+
 int main()
 {
     std::cout << "Hello JsonDemo!\n";
@@ -82,5 +141,13 @@ int main()
 
     std::cout << "SerializeDemo\n";
     SerializeDemo();
+    std::cout << "\n";
+
+    std::cout << "CloneDemo\n";
+    CloneDemo();
+    std::cout << "\n";
+
+    std::cout << "MergeDemo\n";
+    MergeDemo();
     std::cout << "\n";
 }

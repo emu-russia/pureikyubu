@@ -962,6 +962,17 @@ public:
 			return child;
 		}
 
+		Value* ReplaceString(const TCHAR* str)
+		{
+			assert(type == ValueType::String);
+			if (value.AsString)
+			{
+				delete[] value.AsString;
+			}
+			value.AsString = CloneStr(str);
+			return this;
+		}
+
 		Value* AddObject(const char* name)
 		{
 			Value* child = new Value(this);
@@ -980,9 +991,108 @@ public:
 			return child;
 		}
 
+		Value* Add(Value * parent, Value* other)
+		{
+			Value* child = new Value(parent);
+			child->type = other->type;
+			child->name = CloneName(other->name);
+			switch (other->type)
+			{
+				case ValueType::Array:
+				case ValueType::Object:
+					for (auto it = other->children.begin(); it != other->children.end(); ++it)
+					{
+						child->children.push_back(Add(child, *it));
+					}
+					break;
+				case ValueType::Bool:
+					child->value.AsBool = other->value.AsBool;
+					break;
+				case ValueType::Int:
+					child->value.AsInt = other->value.AsInt;
+					break;
+				case ValueType::Float:
+					child->value.AsFloat = other->value.AsFloat;
+					break;
+				case ValueType::String:
+					child->value.AsString = CloneStr(other->value.AsString);
+					break;
+			}
+			return child;
+		}
+
+		Value* Replace(Value* parent, Value* other)
+		{
+			Value* child = nullptr;
+			bool newChild = false;
+
+			if (other->name != nullptr)
+			{
+				child = parent->ByName(other->name);
+			}
+			else
+			{
+				child = parent->ByType(other->type);
+			}
+
+			if (child != nullptr)
+			{
+				if (child->type != other->type)
+				{
+					child = nullptr;
+				}
+			}
+
+			if (child == nullptr)
+			{
+				child = new Value(parent);
+				newChild = true;
+			}
+
+			child->type = other->type;
+			if (child->name)
+			{
+				delete[] child->name;
+			}
+			child->name = CloneName(other->name);
+
+			switch (other->type)
+			{
+				case ValueType::Array:
+				case ValueType::Object:
+					for (auto it = other->children.begin(); it != other->children.end(); ++it)
+					{
+						Value* sibling = Replace(child, *it);
+						if (sibling != nullptr)
+						{
+							child->children.push_back(sibling);
+						}
+					}
+					break;
+				case ValueType::Bool:
+					child->value.AsBool = other->value.AsBool;
+					break;
+				case ValueType::Int:
+					child->value.AsInt = other->value.AsInt;
+					break;
+				case ValueType::Float:
+					child->value.AsFloat = other->value.AsFloat;
+					break;
+				case ValueType::String:
+					if (child->value.AsString)
+					{
+						delete[] child->value.AsString;
+					}
+					child->value.AsString = CloneStr(other->value.AsString);
+					break;
+			}
+
+			return newChild ? child : nullptr;
+		}
+
 		// Access
 
-		Value* ByName(const char* name)
+		Value * ByName(const char* byName)
 		{
 			for (auto it = children.begin(); it != children.end(); ++it)
 			{
@@ -991,7 +1101,21 @@ public:
 				if (child->name == nullptr)
 					continue;
 
-				if (!strcmp(child->name, name))
+				if (!strcmp(child->name, byName))
+				{
+					return child;
+				}
+			}
+			return nullptr;
+		}
+
+		Value* ByType(const ValueType byType)
+		{
+			for (auto it = children.begin(); it != children.end(); ++it)
+			{
+				Value* child = *it;
+
+				if (child->type == byType)
 				{
 					return child;
 				}
@@ -1125,14 +1249,25 @@ public:
 	{
 		DestroyValue(&root);
 
-
+		for (auto it = other->root.children.begin(); it != other->root.children.end(); ++it)
+		{
+			Value * child = root.Add(&root, *it);
+			root.children.push_back(child);
+		}
 	}
 
 	// Merge
 
 	void Merge(Json* other)
 	{
-
+		for (auto it = other->root.children.begin(); it != other->root.children.end(); ++it)
+		{
+			Value* child = root.Replace(&root, *it);
+			if (child != nullptr)
+			{
+				root.children.push_back(child);
+			}
+		}
 	}
 
 };

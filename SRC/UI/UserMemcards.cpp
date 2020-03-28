@@ -113,7 +113,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
     UNREFERENCED_PARAMETER(lParam);
 
     int index;
-    TCHAR buf[256];
+    TCHAR buf[256] = { 0 };
 
     switch(uMsg)
     {
@@ -125,7 +125,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
                 int blocks, kb;
                 blocks = Memcard_ValidSizes[index] / Memcard_BlockSize;
                 kb = Memcard_ValidSizes[index] / 1024;
-                swprintf_s (buf, _countof(buf), L"%d blocks  (%d Kb)", blocks, kb);
+                _stprintf_s (buf, _countof(buf) - 1, _T("%d blocks  (%d Kb)"), blocks, kb);
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_INSERTSTRING, (WPARAM)index, (LPARAM)buf);
             }
             SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_SETCURSEL, (WPARAM)0,  (LPARAM)0);
@@ -157,7 +157,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
  */
 static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR buf[256], buf2[256], *filename;
+    TCHAR buf[MAX_PATH] = { 0 }, buf2[MAX_PATH] = { 0 }, * filename;
     long newsize;
 
     switch(uMsg)
@@ -186,22 +186,22 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             if (Memcard_Connected[um_num] == TRUE)
                 CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
 
-            memcpy(buf, memcard[um_num].filename, sizeof(memcard[um_num].filename));
+            _tcscpy(buf, memcard[um_num].filename);
             filename = _tcsrchr(buf, _T('\\'));
             if (filename == NULL) {
-                SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
                 *filename = _T('\0');
                 filename++;
-                SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-                SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
 
-            if (memcard[um_num].connected == TRUE) {
+            if (memcard[um_num].connected) {
                 _stprintf_s (buf, _countof(buf) - 1, _T("Size: %d usable blocks (%d Kb)"),
                     (int)(memcard[um_num].size / Memcard_BlockSize - 5), (int)(memcard[um_num].size / 1024));
-                SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
@@ -232,13 +232,13 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
                 filename = _tcsrchr(buf, _T('\\'));
                 if (filename == NULL) {
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
                 else {
                     *filename = '\0';
                     filename++;
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
 
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
@@ -247,20 +247,20 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 return TRUE;
 
             case IDC_MEMCARD_CHOOSEFILE:
-                SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = ChooseMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
                 _tcscpy_s (buf, _countof(buf) - 1, filename );
 
                 filename = _tcsrchr(buf, _T('\\'));
                 if (filename == NULL) {
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
                 else {
                     *filename = '\0';
                     filename++;
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
 
@@ -282,8 +282,8 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                         return TRUE;
                     }
 
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)(Pathsize+1), (LPARAM)(LPCTSTR)buf);
-                    SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT,  (WPARAM)(Fnsize+1), (LPARAM)(LPCTSTR)buf2);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)(Pathsize+1), (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT,  (WPARAM)(Fnsize+1), (LPARAM)(LPCTSTR)buf2);
 
                     _tcscat_s(buf, _countof(buf) - 1, _T("\\"));
                     _tcscat_s(buf, _countof(buf) - 1, buf2);
@@ -299,10 +299,10 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     /* memcard is supposed to be connected */
 
                     if (um_filechanged == TRUE) /* file was changed */
-                        MCUseFile(um_num, buf, TRUE);
+                        MCUseFile(um_num, buf, true);
                     else if (Memcard_Connected[um_num] == FALSE || memcard[um_num].connected == FALSE )
                             if (MCConnect (um_num) == FALSE)
-                                MessageBoxA(wnd.hMainWindow, "Error while trying to connect the memcards.", "Memcard Error", 0) ;
+                                MessageBox(wnd.hMainWindow, _T("Error while trying to connect the memcards."), _T("Memcard Error"), 0) ;
 
                     Memcard_Connected[um_num] = TRUE;
                 }
@@ -310,11 +310,11 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     /* memcard is supposed to be disconnected */
 
                     if (um_filechanged == TRUE) /* file was changed */
-                        MCUseFile(um_num, buf, FALSE);
-                    else if (Memcard_Connected[um_num] == TRUE || memcard[um_num].connected == TRUE )
+                        MCUseFile(um_num, buf, false);
+                    else if (Memcard_Connected[um_num] || memcard[um_num].connected )
                                 MCDisconnect(um_num);
 
-                    Memcard_Connected[um_num] = FALSE;
+                    Memcard_Connected[um_num] = false;
                 }
 
                 EndDialog(hwndDlg, 0);

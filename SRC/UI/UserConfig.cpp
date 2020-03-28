@@ -89,7 +89,7 @@ static void SaveSettings()
 
 	try
 	{
-		settings.GetSerializedTextSize(bogus, sizeof(bogus), textSize);
+		settings.GetSerializedTextSize(bogus, -1, textSize);
 	}
 	catch (...)
 	{
@@ -124,11 +124,14 @@ TCHAR *GetConfigString(const char *var, const char *path)
 
 	LoadSettings();
 
-	Json::Value* section = defaultSettings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
 	Json::Value* value = section->ByName(var);
-	assert(value);
+	if (value == nullptr)
+	{
+		value = section->AddString(var, _T(""));
+	}
 
 	assert(value->type == Json::ValueType::String);
 
@@ -139,9 +142,26 @@ TCHAR *GetConfigString(const char *var, const char *path)
 
 void SetConfigString(const char *var, TCHAR *newVal, const char *path)
 {
+	MySpinLock::Lock(&settingsLock);
+
 	LoadSettings();
 
-	// Bogus
+	Json::Value * section = settings.root.children.back()->ByName(path);
+	assert(section);
+
+	Json::Value* value = section->ByName(var);
+	if (value == nullptr)
+	{
+		value = section->AddString(var, newVal);
+	}
+
+	assert(value->type == Json::ValueType::String);
+
+	value->ReplaceString(newVal);
+
+	SaveSettings();
+
+	MySpinLock::Unlock(&settingsLock);
 }
 
 int GetConfigInt(const char *var, const char *path)
@@ -150,11 +170,14 @@ int GetConfigInt(const char *var, const char *path)
 
 	LoadSettings();
 
-	Json::Value* section = defaultSettings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
 	Json::Value* value = section->ByName(var);
-	assert(value);
+	if (value == nullptr)
+	{
+		value = section->AddInt(var, 0);
+	}
 
 	assert(value->type == Json::ValueType::Int);
 
@@ -169,15 +192,20 @@ void SetConfigInt(const char *var, int newVal, const char *path)
 
 	LoadSettings();
 
-	Json::Value* section = defaultSettings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
 	Json::Value* value = section->ByName(var);
-	assert(value);
+	if (value == nullptr)
+	{
+		value = section->AddInt(var, newVal);
+	}
 
 	assert(value->type == Json::ValueType::Int);
 
 	value->value.AsInt = (uint64_t)newVal;
+
+	SaveSettings();
 
 	MySpinLock::Unlock(&settingsLock);
 }
@@ -188,11 +216,14 @@ bool GetConfigBool(const char* var, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = defaultSettings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
 	Json::Value* value = section->ByName(var);
-	assert(value);
+	if (value == nullptr)
+	{
+		value = section->AddBool(var, false);
+	}
 
 	assert(value->type == Json::ValueType::Bool);
 
@@ -207,15 +238,20 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 
 	LoadSettings();
 
-	Json::Value* section = defaultSettings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
 	Json::Value* value = section->ByName(var);
-	assert(value);
+	if (value == nullptr)
+	{
+		value = section->AddBool(var, newVal);
+	}
 
 	assert(value->type == Json::ValueType::Bool);
 
 	value->value.AsBool = newVal;
+
+	SaveSettings();
 
 	MySpinLock::Unlock(&settingsLock);
 }
