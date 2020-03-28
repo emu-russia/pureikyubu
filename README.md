@@ -72,3 +72,9 @@ Many thanks to our Beta-testers, for bug and compatibility reports.
 Dolwin Beta-team: Chrono, darkreign, Jeil, Knuckles, MasterPhW and Posty.
 
 Thanks to Martin for web-hosting on Emulation64.com
+
+## Contacts
+
+Official Discord channel: https://discord.gg/2RFBeB
+Skype: ogamespec
+Email: ogamespec@gmail.com
