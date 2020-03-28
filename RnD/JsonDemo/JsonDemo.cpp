@@ -1,4 +1,4 @@
-// JsonDemo.cpp : This file contains the 'main' function. Program execution begins and ends there.
+﻿// JsonDemo.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
 
 #include <iostream>
@@ -46,13 +46,13 @@ void SerializeDemo()
     // Add some values
 
     Json::Value* outer = json.root.AddObject(nullptr);
-
+    
     outer->AddInt("Int", 12);
     outer->AddBool("Bool", false);
 
     Json::Value * inner = outer->AddObject("Inner");
 
-    inner->AddString("Str", _T("Hello!"));
+    inner->AddString("Str", _T("Hello!\nThis is lineeed\nTab\t\t\tXXX\n Энд немного русского языка"));
     inner->AddNull("Void");
 
     // Serialize and print
@@ -69,6 +69,9 @@ int main()
 {
     std::cout << "Hello JsonDemo!\n";
 
+    //DeserializeDemo();
 
     SerializeDemo();
+
+
 }

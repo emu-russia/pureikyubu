@@ -75,12 +75,96 @@ private:
 
 	// Simple TCHAR to UTF-8 Converter + Escaping
 
-	static void EmitEscapedString(SerializeContext* ctx, std::string & str)
+	static void EmitCodePoint(SerializeContext* ctx, int cp)
 	{
+		uint8_t c[4] = { 0 };
+		int utf8Size = 0;
+
+		// http://www.zedwood.com/article/cpp-utf8-char-to-codepoint
+		if (cp <= 0x7F) { c[0] = cp; utf8Size = 1; }
+		else if (cp <= 0x7FF) { c[0] = (cp >> 6) + 192; c[1] = (cp & 63) + 128; utf8Size = 2; }
+		else if (0xd800 <= cp && cp <= 0xdfff) { throw "Invalid block of utf8"; }
+		else if (cp <= 0xFFFF) { c[0] = (cp >> 12) + 224; c[1] = ((cp >> 6) & 63) + 128; c[2] = (cp & 63) + 128; utf8Size = 3; }
+		else if (cp <= 0x10FFFF) { c[0] = (cp >> 18) + 240; c[1] = ((cp >> 12) & 63) + 128; c[2] = ((cp >> 6) & 63) + 128; c[3] = (cp & 63) + 128; utf8Size = 4; }
+		else { throw "Unsupported codepoint range"; }
+
+		for (int i = 0; i < utf8Size; i++)
+		{
+			EmitChar(ctx, c[i]);
+		}
 	}
 
-	static void EmitEscapedWString(SerializeContext* ctx, std::wstring & str)
+	static void EmitTcharString(SerializeContext* ctx, TCHAR * str)
 	{
+		TCHAR* ptr = str;
+		while (*ptr)
+		{
+			int cp = (int)*ptr;
+
+			// Escaping
+
+			switch (cp)
+			{
+				case '\"':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, '\"');
+					break;
+				case '\\': 
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, '\\');
+					break;
+				case '/': 
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, '/');
+					break;
+				case '\b':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, 'b');
+					break;
+				case '\f':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, 'f');
+					break;
+				case '\n':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, 'n');
+					break;
+				case '\r':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, 'r');
+					break;
+				case '\t':
+					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, 't');
+					break;
+				default:
+					EmitCodePoint(ctx, cp);
+			}
+
+			// Unescaping
+
+#if 0
+			if (cp == '\\')
+			{
+				assert(*ptr);
+				cp = *ptr++;
+				switch (cp)
+				{
+					case '\"': cp = '\"'; break;
+					case '\\': cp = '\\'; break;
+					case '/': cp = '/'; break;
+					case 'b': cp = '\b'; break;
+					case 'f': cp = '\f'; break;
+					case 'n': cp = '\n'; break;
+					case 'r': cp = '\r'; break;
+					case 't': cp = '\t'; break;
+					case 'u': throw "uXXXX not supported";
+				}
+			}
+#endif
+
+			ptr++;
+		}
 	}
 
 	// Indentation
@@ -97,20 +181,323 @@ private:
 
 	// Deserialize 
 
-	// Simple UTF-8 to TCHAR Converter + Unescaping
-
-	std::string & EscapedUtf8ToString(void* utf8String, size_t utf8StringSizeInBytes)
+	typedef struct _DeserializeContext
 	{
-		std::string str;
+		uint8_t* ptr;
+		size_t offset;
+		size_t maxSize;
+	} DeserializeContext;
 
-		return str;
+	static bool IsWhiteSpace(uint8_t value)
+	{
+		switch (value)
+		{
+			case ' ':
+			case '\r':
+			case '\n':
+			case '\t':
+				return true;
+		}
+		return false;
 	}
 
-	std::wstring & EscapedUtf8ToWString(void* utf8String, size_t utf8StringSizeInBytes)
+	static bool IsControl(uint8_t value)
 	{
-		std::wstring str;
+		switch (value)
+		{
+			case '{':
+			case '}':
+			case '[':
+			case ']':
+			case ':':
+			case ',':
+				return true;
+		}
+		return false;
+	}
 
-		return str;
+	// Json Token
+
+	enum class TokenType : char
+	{
+		Unknown = '?',
+		EndOfStream = 'E',
+		ObjectStart = '{',
+		ObjectEnd = '}',
+		ArrayStart = '[',
+		ArrayEnd = ']',
+		Colon = ':',
+		Comma = ',',
+		Int = 'I',
+		Float = 'F',
+		True = 't',
+		False = 'f',
+		Null = 'N',
+		String = 'S',
+	};
+
+	class Token
+	{
+	public:
+		TokenType type = TokenType::Unknown;
+		union
+		{
+			int AsInt;
+			float AsFloat;
+			bool AsBool;
+			TCHAR* AsString = nullptr;
+		} value;
+
+		void Dump()
+		{
+			switch (type)
+			{
+				case TokenType::EndOfStream:
+					std::cout << "EndOfStream" << std::endl;
+					break;
+
+				case TokenType::ObjectStart:
+					std::cout << "ObjectStart" << std::endl;
+					break;
+				case TokenType::ObjectEnd:
+					std::cout << "ObjectEnd" << std::endl;
+					break;
+
+				case TokenType::ArrayStart:
+					std::cout << "ArrayStart" << std::endl;
+					break;
+				case TokenType::ArrayEnd:
+					std::cout << "ArrayEnd" << std::endl;
+					break;
+
+				case TokenType::Colon:
+					std::cout << "Colon" << std::endl;
+					break;
+				case TokenType::Comma:
+					std::cout << "Comma" << std::endl;
+					break;
+
+				case TokenType::Int:
+					std::cout << "Int: " << value.AsInt << std::endl;
+					break;
+				case TokenType::Float:
+					std::cout << "Float: " << value.AsFloat << std::endl;
+					break;
+
+				case TokenType::True:
+					std::cout << "True" << std::endl;
+					break;
+				case TokenType::False:
+					std::cout << "False" << std::endl;
+					break;
+				case TokenType::Null:
+					std::cout << "Null" << std::endl;
+					break;
+
+				case TokenType::String:
+					std::cout << "String" << std::endl;
+					break;
+
+				default:
+					std::cout << "Unknown " << (int)type << std::endl;
+					break;
+			}
+		}
+	};
+
+	static bool GetLiteral(DeserializeContext* ctx, Token& token)
+	{
+		// :p
+		if (ctx->offset < (ctx->maxSize - 4))
+		{
+			if (ctx->ptr[0] == 'n' && ctx->ptr[1] == 'u' && ctx->ptr[2] == 'l' && ctx->ptr[3] == 'l')
+			{
+				token.type = TokenType::Null;
+				ctx->ptr += 4;
+				ctx->offset += 4;
+				return true;
+			}
+			else if (ctx->ptr[0] == 't' && ctx->ptr[1] == 'r' && ctx->ptr[2] == 'u' && ctx->ptr[3] == 'e')
+			{
+				token.type = TokenType::True;
+				ctx->ptr += 4;
+				ctx->offset += 4;
+				return true;
+			}
+		}
+		else if (ctx->offset < (ctx->maxSize - 5))
+		{
+			if (ctx->ptr[0] == 'f' && ctx->ptr[1] == 'a' && ctx->ptr[2] == 'l' && ctx->ptr[3] == 's' && ctx->ptr[4] == 'e')
+			{
+				token.type = TokenType::False;
+				ctx->ptr += 5;
+				ctx->offset += 5;
+				return true;
+			}
+		}
+		return false;
+	}
+
+	static bool GetString(DeserializeContext* ctx, Token& token)
+	{
+		return false;
+	}
+
+	static bool IsAllowed(uint8_t val, char *allowed)
+	{
+		char* ptr = allowed;
+		while (*ptr)
+		{
+			if (*ptr == val)
+				return true;
+			ptr++;
+		}
+		return false;
+	}
+
+	static bool GetFloat(DeserializeContext* ctx, Token& token)
+	{
+		char allowedChars[] = "0123456789.eE-";
+		char number[0x100] = { 0, };
+		int numberLen = 0;
+
+		size_t offset = ctx->offset;
+
+		while (offset < ctx->maxSize)
+		{
+			assert(numberLen < (sizeof(number) - 1));
+
+			if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
+			{
+				break;
+			}
+
+			if (!IsAllowed(ctx->ptr[offset], allowedChars))
+			{
+				return false;
+			}
+
+			numberLen++;
+			offset++;
+		}
+
+		if (numberLen != 0)
+		{
+			number[numberLen] = 0;
+			token.type = TokenType::Float;
+			token.value.AsFloat = (float)atof(number);
+			return true;
+		}
+
+		return false;
+	}
+
+	static bool GetInt(DeserializeContext* ctx, Token& token)
+	{
+		char allowedChars[] = "0123456789";
+		char number[0x100] = { 0, };
+		int numberLen = 0;
+
+		size_t offset = ctx->offset;
+
+		while (offset < ctx->maxSize)
+		{
+			assert(numberLen < (sizeof(number) - 1));
+
+			if (IsWhiteSpace(ctx->ptr[offset]) || IsControl(ctx->ptr[offset]))
+			{
+				break;
+			}
+
+			if (!IsAllowed(ctx->ptr[offset], allowedChars))
+			{
+				return false;
+			}
+
+			numberLen++;
+			offset++;
+		}
+
+		if (numberLen != 0)
+		{
+			number[numberLen] = 0;
+			token.type = TokenType::Int;
+			token.value.AsInt = atoi(number);
+			return true;
+		}
+
+		return false;
+	}
+
+	static void GetToken(Token & token, DeserializeContext* ctx)
+	{
+		while (ctx->offset < ctx->maxSize)
+		{
+			if (IsWhiteSpace(ctx->ptr[0]))
+			{
+				ctx->ptr++;
+				ctx->offset++;
+			}
+			else break;
+		}
+
+		if (ctx->offset >= ctx->maxSize)
+		{
+			token.type = TokenType::EndOfStream;
+			return;
+		}
+
+		switch (ctx->ptr[0])
+		{
+			case '{':
+				token.type = TokenType::ObjectStart;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+			case '}':
+				token.type = TokenType::ObjectEnd;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+			case '[':
+				token.type = TokenType::ArrayStart;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+			case ']':
+				token.type = TokenType::ArrayEnd;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+			case ':':
+				token.type = TokenType::Colon;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+			case ',':
+				token.type = TokenType::Comma;
+				ctx->ptr++;
+				ctx->offset++;
+				return;
+		}
+
+		// Try get literal
+		if (GetLiteral(ctx, token))
+			return;
+
+		// Try get String
+		if (GetString(ctx, token))
+			return;
+
+		// Try get Int
+		if (GetInt(ctx, token))
+			return;
+
+		// Try get Float
+		if (GetFloat(ctx, token))
+			return;
+
+		throw "Unknown Token!";
 	}
 
 	#pragma endregion "De-Serialization Related"
@@ -128,7 +515,7 @@ public:
 		Float = 'F',
 		String = 'S',
 		Bool = 'B',
-		Null = 'Z',
+		Null = 'N',
 	};
 
 	class Value
@@ -169,8 +556,7 @@ public:
 
 		void Serialize(SerializeContext * ctx, int depth)
 		{
-			std::string tempString;
-			std::wstring tempWString;
+			TCHAR temp[0x100] = { 0, };
 
 			assert(depth < MaxDepth);
 
@@ -226,47 +612,34 @@ public:
 					Json::EmitText(ctx, value.AsBool ? "true" : "false");
 					break;
 				case ValueType::Int:
-					if (sizeof(TCHAR) == sizeof(wchar_t))
-					{
-						tempWString = std::to_wstring(value.AsInt);
-						EmitEscapedWString(ctx, tempWString);
-					}
-					else
-					{
-						tempString = std::to_string(value.AsInt);
-						EmitEscapedString(ctx, tempString);
-					}
+					_stprintf_s(temp, _countof(temp) - 1, _T("%I64u"), value.AsInt);
+					EmitTcharString(ctx, temp);
 					break;
 				case ValueType::Float:
-					if (sizeof(TCHAR) == sizeof(wchar_t))
-					{
-						tempWString = std::to_wstring(value.AsFloat);
-						EmitEscapedWString(ctx, tempWString);
-					}
-					else
-					{
-						tempString = std::to_string(value.AsFloat);
-						EmitEscapedString(ctx, tempString);
-					}
+					_stprintf_s(temp, _countof(temp) - 1, _T("%.4f"), value.AsFloat);
+					EmitTcharString(ctx, temp);
 					break;
 				case ValueType::String:
 					Json::EmitChar(ctx, '\"');
-					if (sizeof(TCHAR) == sizeof(wchar_t))
-					{
-						tempWString = std::wstring((wchar_t *)value.AsTchar, _tcslen(value.AsTchar));
-						EmitEscapedWString(ctx, tempWString);
-					}
-					else
-					{
-						tempString = std::string((char*)value.AsTchar, _tcslen(value.AsTchar));
-						EmitEscapedString(ctx, tempString);
-					}
+					EmitTcharString(ctx, value.AsTchar);
 					Json::EmitChar(ctx, '\"');
 					break;
 				default:
 					throw "Unknown ValueType";
 			}
 		}	// Serialize
+
+		void Deserialize(DeserializeContext* ctx)
+		{
+			Token token;
+
+			do
+			{
+				Json::GetToken(token, ctx);
+				token.Dump();
+			} while (token.type != TokenType::EndOfStream);
+
+		}
 
 		// Dynamic modification
 
@@ -387,6 +760,15 @@ public:
 
 	void Deserialize(void* text, size_t textSize)
 	{
+		DeserializeContext ctx = { 0 };
+		
+		assert(text);
+
+		ctx.ptr = (uint8_t *)text;
+		ctx.offset = 0;
+		ctx.maxSize = textSize;
+
+		root.AddObject(nullptr)->Deserialize(&ctx);
 	}
 
 };
