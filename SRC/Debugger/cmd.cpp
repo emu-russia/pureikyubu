@@ -1129,7 +1129,7 @@ void cmd_savemap(std::vector<std::string>& args)
     }
     else
     {
-        if(!strcmp(args[1].c_str(), ".")) SaveMAP();
+        if(!strcmp(args[1].c_str(), ".")) SaveMAP("this");
         else SaveMAP(args[1].c_str());
     }
 }

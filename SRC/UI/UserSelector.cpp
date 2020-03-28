@@ -61,10 +61,10 @@ static void load_path()
     ptr = var;
     while(*ptr)
     {
-        char c = *ptr++;
+        TCHAR c = *ptr++;
 
         // add new one
-        if(c == ';')
+        if(c == _T(';'))
         {
             path[n++] = 0;
             fix_path(path);
@@ -88,7 +88,6 @@ bool AddSelectorPath(TCHAR *fullPath)
 {
     TCHAR path[0x1000] = { 0 };
 
-    int i;
     if (fullPath == nullptr)
         return false;
     if (fullPath[0] == 0)
@@ -415,10 +414,15 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         }
 
         // get DiskID
-        char diskID[0x10] = { 0 };
+        char diskIDRaw[0x10] = { 0 };
+        TCHAR diskID[0x10] = { 0 };
         DVDSetCurrent(file);
         DVDSeek(0);
-        DVDRead(diskID, 4);
+        DVDRead(diskIDRaw, 4);
+        diskID[0] = diskIDRaw[0];
+        diskID[1] = diskIDRaw[1];
+        diskID[2] = diskIDRaw[2];
+        diskID[3] = diskIDRaw[3];
         diskID[4] = 0;
 
         // set GameID
@@ -748,7 +752,7 @@ void UpdateSelector()
             filter >>= 8;
             if(!allow) { m++; continue; }
 
-            _stprintf_s(search, _countof(search), _T("%S%ws"), usel.paths[dir], mask[m]);
+            _stprintf_s(search, _countof(search), _T("%s%s"), usel.paths[dir], mask[m]);
 
             memset(&fd, 0, sizeof(fd));
 
@@ -759,7 +763,7 @@ void UpdateSelector()
                 {
                     if((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
-                        _stprintf_s(found, _countof(found), _T("%S%ws"), usel.paths[dir], fd.cFileName);
+                        _stprintf_s(found, _countof(found), _T("%s%s"), usel.paths[dir], fd.cFileName);
                         // Add file in list
                         add_file(found, fd.nFileSizeLow, type[m]);
                     }

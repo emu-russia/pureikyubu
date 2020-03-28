@@ -152,7 +152,7 @@ void UpdateProfiler()
         else
         {
             TCHAR * st = GetStatusText(STATUS_ENUM::Progress);
-            _stscanf_s (st, L"mips:%s ", mips);
+            _stscanf (st, L"mips:%s ", mips);
         }
 
         // update status bar

@@ -466,7 +466,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     }
 
     newfile = nullptr;
-    fopen_s(&newfile, path, "wb") ;
+    _tfopen_s(&newfile, path, _T("wb")) ;
 
 	if (newfile == NULL) {
         UI::DolwinReport(_T("Error while trying to create memcard file."));
@@ -529,14 +529,14 @@ void MCOpen (HWConfig * config)
     _tcscpy_s(memcard[MEMCARD_SLOTB].filename, _countof(memcard[MEMCARD_SLOTB].filename) - 1, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
-    if (strcmp(memcard[MEMCARD_SLOTA].filename, "*") == 0) {
+    if (memcard[MEMCARD_SLOTA].filename[0] == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        const char * filename = ".\\Data\\MemCardA.mci";
+        const TCHAR * filename = _T(".\\Data\\MemCardA.mci");
         FILE * fileptr;
 
         fileptr = nullptr;
-        fopen_s(&fileptr, filename, "rb");
+        _tfopen_s(&fileptr, filename, _T("rb"));
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -550,14 +550,14 @@ void MCOpen (HWConfig * config)
             Memcard_Connected[MEMCARD_SLOTA] = TRUE;
         }
     }
-    if (strcmp(memcard[MEMCARD_SLOTB].filename, "*") == 0) {
+    if (memcard[MEMCARD_SLOTB].filename[0] == 0) {
         /* there is no info in the registry. use a default memcard */
 
-        const char * filename = ".\\Data\\MemCardB.mci";
+        const TCHAR * filename = _T(".\\Data\\MemCardB.mci");
         FILE * fileptr;
 
         fileptr = nullptr;
-        fopen_s(&fileptr, filename, "rb");
+        _tfopen_s (&fileptr, filename, _T("rb"));
         if (fileptr == NULL) {
             /* if default memcard doesn't exist, create it */
             if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
@@ -604,7 +604,7 @@ bool MCConnect (int cardnum) {
         size_t memcardSize = UI::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
-        fopen_s(&memcard[cardnum].file, memcard[cardnum].filename, "r+b");
+        _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
         if (memcard[cardnum].file == NULL) {
             static char slt[2] = { 'A', 'B' };
 
@@ -629,7 +629,7 @@ bool MCConnect (int cardnum) {
             return FALSE;
         }
 
-        memcard[cardnum].size = memcardSize;
+        memcard[cardnum].size = (uint32_t)memcardSize;
         memcard[cardnum].data = (uint8_t *)malloc(memcard[cardnum].size);
 
         if (memcard[cardnum].data == NULL) {

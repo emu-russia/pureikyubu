@@ -152,7 +152,7 @@ static void SaveSettings()              // OK pressed
         HWND hDlg = hChildDlg[1];
 
         TCHAR text[0x1000] = { 0, };
-        int max = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+        int max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
 
         // delete all dirs
         usel.paths.clear();
@@ -306,7 +306,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                         fix_path(path);
 
                         // check if already present
-                        max = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+                        max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
                         for(i=0; i<max; i++)
                         {
                             SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);

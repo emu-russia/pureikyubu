@@ -60,7 +60,7 @@ void SaveMAP(const TCHAR *mapname /*="this"*/)
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
 
-    if(!_stricmp(mapname, "this"))
+    if(!_tcsicmp(mapname, _T("this")))
     {
         if(hle.mapfile[0] == 0)
         {
@@ -86,4 +86,17 @@ void SaveMAP(const TCHAR *mapname /*="this"*/)
     // restore old workspace
     SYMKill();
     SYMSetWorkspace(thisSet);
+}
+
+void SaveMAP(const char* mapname)
+{
+    TCHAR tcharStr[MAX_PATH] = { 0, };
+    char* ansiPtr = (char*)mapname;
+    TCHAR* tcharPtr = tcharStr;
+    while (*ansiPtr)
+    {
+        *tcharPtr++ = *ansiPtr++;
+    }
+    *tcharPtr++ = 0;
+    SaveMAP(tcharStr);
 }

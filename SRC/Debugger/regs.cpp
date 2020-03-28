@@ -211,7 +211,7 @@ static void describe_bat_reg (int x, int y, uint32_t up, uint32_t lo, int instr)
 
     con_printf_at (x, y, "\x1%c%08X->%08X" " %-6s" " %c%c%c%c" " %s %s" " \x1%c%s" ,
         ConColor::NORM,
-        EStart, PStart, UI::FileSmartSize(blkSize), 
+        EStart, PStart, UI::FileSmartSizeA(blkSize), 
         w ? 'W' : '-',
         i ? 'I' : '-',
         m ? 'M' : '-',

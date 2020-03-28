@@ -50,7 +50,7 @@ uint32_t LoadDOL(TCHAR *dolname)
 
     // try to open file
     dol = nullptr;
-    fopen_s(&dol, dolname, "rb");
+    _tfopen_s(&dol, dolname, _T("rb"));
     if(!dol) return 0;
 
     // load DOL header and swap it for loader
@@ -253,7 +253,7 @@ static void Elf_SwapInit(int is_little)
 // return ELF entrypoint, or 0 if cannot load
 // we dont need to translate address, because DOL loading goes
 // under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadELF(char *elfname)
+uint32_t LoadELF(TCHAR *elfname)
 {
     unsigned long elf_entrypoint;
     FILE        *f;
@@ -262,7 +262,7 @@ uint32_t LoadELF(char *elfname)
     int         i;
 
     f = nullptr;
-    fopen_s(&f, elfname, "rb");
+    _tfopen_s(&f, elfname, _T("rb"));
     if(!f) return 0;
 
     // check header
@@ -340,7 +340,7 @@ uint32_t LoadBIN(TCHAR * binname)
 
     // try to load file
     FILE* bin = nullptr;
-    fopen_s(&bin, binname, "rb");
+    _tfopen_s(&bin, binname, _T("rb"));
     if(bin == NULL) return 0;
 
     // nothing to load ?
@@ -385,9 +385,8 @@ bool LoadPatch(TCHAR * patchname, bool add)
     int patchNum = UI::FileSize(patchname) / sizeof(Patch);
 
     // try to open file
-    FILE* f = nullptr;
-    fopen_s(&f, patchname, "rb");
-    if(f == NULL) return false;
+    if (!UI::FileExists(patchname))
+        return false;
 
     // print notification in debugger
     if(add) DBReport2(DbgChannel::Loader, "added patch : %s\n", patchname);
@@ -404,28 +403,37 @@ bool LoadPatch(TCHAR * patchname, bool add)
     {
         if(patchNum == 0) return true;  // nothing to add
 
-        ldat.patches = (Patch *)realloc(
-            ldat.patches, 
-            (patchNum + ldat.patchNum) * sizeof(Patch)
-        );
-        if(ldat.patches == NULL) return false;
+        size_t oldPatchCount = ldat.patches.size();
 
-        fread(&ldat.patches[ldat.patchNum], sizeof(Patch), patchNum, f);
-        ldat.patchNum += patchNum;
+        Patch* patches = (Patch*)UI::FileLoad(patchname);
 
-        ApplyPatches(true, ldat.patchNum - patchNum);
+        for (int i = 0; i < patchNum; i++)
+        {
+            Patch* next = new Patch;
+            *next = patches[i];
+
+            ldat.patches.push_back(next);
+        }
+
+        free(patches);
+        ApplyPatches(true, oldPatchCount);
     }
     else
     {
-        ldat.patches = (Patch *)malloc(patchNum * sizeof(Patch));
-        if(ldat.patches == NULL) return false;
+        Patch* patches = (Patch * )UI::FileLoad(patchname);
 
-        fread(ldat.patches, sizeof(Patch), patchNum, f);
-        ldat.patchNum = patchNum;
+        for (int i = 0; i < patchNum; i++)
+        {
+            Patch* next = new Patch;
+            *next = patches[i];
+
+            ldat.patches.push_back(next);
+        }
+
+        free(patches);
         ApplyPatches(true);
     }
 
-    fclose(f);
     return true;
 }
 
@@ -507,19 +515,19 @@ void UnloadPatch()
 static void AutoloadMap()
 {
     // get map file name
-    char mapname[4*1024];
-    char drive[1024], dir[1024], name[1024], ext[1024];
-    _splitpath(ldat.currentFile, drive, dir, name, ext);
+    TCHAR mapname[4*1024];
+    TCHAR drive[1024], dir[1024], name[1024], ext[1024];
+    _tsplitpath (ldat.currentFile, drive, dir, name, ext);
 
     // Step 1: try to load map from Data directory
-    if(ldat.dvd) sprintf_s(mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
-    else sprintf_s(mapname, sizeof(mapname), ".\\Data\\%s.map", name);
+    if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
+    else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
     int ok = LoadMAP(mapname);
     if(ok) return;
  
     // Step 2: try to load map from file directory
-    if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), "%s%s%s.map", drive, dir, ldat.gameID);
-    else sprintf_s (mapname, sizeof(mapname), "%s%s%s.map", drive, dir, name);
+    if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, ldat.gameID);
+    else _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, name);
     ok = LoadMAP(mapname);
     if(ok) return;
 
@@ -529,8 +537,8 @@ static void AutoloadMap()
     // Step 3: make new map (find symbols)
     if(GetConfigInt(USER_MAKEMAP, USER_LOADER))
     {
-        if(ldat.dvd) sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", ldat.gameID);
-        else sprintf_s (mapname, sizeof(mapname), ".\\Data\\%s.map", name);
+        if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
+        else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
         DBReport2(DbgChannel::Loader, "Making new MAP file : %s\n\n", mapname);
         MAPInit(mapname);
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
@@ -542,19 +550,19 @@ static void AutoloadMap()
 static void AutoloadPatch()
 {
     // get patch file name
-    char patch[4*1024];
-    char drive[1024], dir[1024], name[1024], ext[1024];
-    _splitpath(ldat.currentFile, drive, dir, name, ext);
+    TCHAR patch[4*1024];
+    TCHAR drive[1024], dir[1024], name[1024], ext[1024];
+    _tsplitpath (ldat.currentFile, drive, dir, name, ext);
 
     // Step 1: try to load patch from Data directory
-    if(ldat.dvd) sprintf_s (patch, sizeof(patch), ".\\Data\\%s.patch", ldat.gameID);
-    else sprintf_s (patch, sizeof(patch), ".\\Data\\%s.patch", name);
+    if(ldat.dvd) _stprintf_s (patch, _countof(patch) - 1, _T(".\\Data\\%s.patch"), ldat.gameID);
+    else _stprintf_s (patch, _countof (patch) - 1, _T(".\\Data\\%s.patch"), name);
     BOOL ok = LoadPatch(patch);
     if(ok) return;
 
     // Step 2: try to load patch from file directory
-    if(ldat.dvd) sprintf_s (patch, sizeof(patch), "%s%s%s.patch", drive, dir, ldat.gameID);
-    else sprintf_s (patch, sizeof(patch), "%s%s%s.patch", drive, dir, name);
+    if(ldat.dvd) _stprintf_s (patch, _countof (patch) - 1, _T("%s%s%s.patch"), drive, dir, ldat.gameID);
+    else _stprintf_s(patch, _countof (patch) - 1, _T("%s%s%s.patch"), drive, dir, name);
     LoadPatch(patch);
 
     // sorry, no patches for this DVD/executable
@@ -574,17 +582,23 @@ static BOOL SetGameIDAndTitle(TCHAR *filename)
     DVDRead(diskID, 4);
     diskID[4] = 0;
 
-    strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), (char *)bnr->comments[0].longTitle);
+    char* ansiPtr = (char*)bnr->comments[0].longTitle;
+    TCHAR* tcharPtr = ldat.currentFileName;
+
+    while (*ansiPtr)
+    {
+        *tcharPtr++ = *ansiPtr++;
+    }
 
     // set GameID
-    sprintf_s ( ldat.gameID, sizeof(ldat.gameID), "%.4s%02X",
+    _stprintf_s( ldat.gameID, sizeof(ldat.gameID), _T("%.4s%02X"),
              diskID, DVDBannerChecksum((void *)bnr) );
     free(bnr);
     return TRUE;
 }
 
 // load any Dolwin-supported file
-static void DoLoadFile(char *filename)
+static void DoLoadFile(TCHAR *filename)
 {
     uint32_t entryPoint = 0;
     TCHAR statusText[0x1000];
@@ -596,7 +610,7 @@ static void DoLoadFile(char *filename)
     SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // load file
-    if (!_stricmp(filename, "Bootrom"))
+    if (!_tcsicmp(filename, _T("Bootrom")))
     {
         entryPoint = BOOTROM_START_ADDRESS + 0x100;
         ldat.gameID[0] = 0;
@@ -605,32 +619,32 @@ static void DoLoadFile(char *filename)
     }
     else
     {
-        char* extension = strrchr(filename, '.');
+        TCHAR * extension = _tcsrchr(filename, _T('.'));
         
-        if (!_stricmp(extension, ".dol"))
+        if (!_tcsicmp(extension, _T(".dol")))
         {
             entryPoint = LoadDOL(filename);
             ldat.gameID[0] = 0;
             ldat.dvd = false;
         }
-        else if (!_stricmp(extension, ".elf"))
+        else if (!_tcsicmp(extension, _T(".elf")))
         {
             entryPoint = LoadELF(filename);
             ldat.gameID[0] = 0;
             ldat.dvd = false;
         }
-        else if (!_stricmp(extension, ".bin"))
+        else if (!_tcsicmp(extension, _T(".bin")))
         {
             entryPoint = LoadBIN(filename);
             ldat.gameID[0] = 0;
             ldat.dvd = false;
         }
-        else if (!_stricmp(extension, ".iso"))
+        else if (!_tcsicmp(extension, _T(".iso")))
         {
             DVDSetCurrent(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
         }
-        else if (!_stricmp(extension, ".gcm"))
+        else if (!_tcsicmp(extension, _T(".gcm")))
         {
             DVDSetCurrent(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
@@ -646,14 +660,14 @@ static void DoLoadFile(char *filename)
     }
     else
     {
-        char fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-        _splitpath(filename, drive, dir, name, ext);
-        sprintf_s(fullPath, sizeof(fullPath), "%s%s", drive, dir);
+        TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+        _tsplitpath (filename, drive, dir, name, ext);
+        _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
         
         // Set title to loaded executables
         if (!ldat.dvd)
         {
-            strcpy_s(ldat.currentFileName, sizeof(ldat.currentFileName), name);
+            _tcscpy_s(ldat.currentFileName, _countof(ldat.currentFileName) - 1, name);
         }
         else
         {
@@ -706,6 +720,18 @@ void LoadFile(const TCHAR *filename)
     SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }
 
+void LoadFile(const char* filename)
+{
+    char* ansiPtr = (char *)filename;
+    TCHAR* tcharPtr = ldat.currentFile;
+    while (*ansiPtr)
+    {
+        *tcharPtr++ = *ansiPtr++;
+    }
+    *tcharPtr++ = 0;
+    SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
+}
+
 // reload last file
 void ReloadFile()
 {
@@ -715,7 +741,7 @@ void ReloadFile()
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
-    if(strlen(ldat.currentFile))
+    if(_tcslen(ldat.currentFile))
     {
         DBReport2(DbgChannel::Loader, "loading file : \"%s\"\n\n", ldat.currentFile);
         DoLoadFile(ldat.currentFile);

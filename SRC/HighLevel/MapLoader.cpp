@@ -15,7 +15,7 @@ static int LoadMapCW(const TCHAR *mapname)
     int     flags;
     char    procName[512];
 
-    map = fopen(mapname, "r");
+    _tfopen_s(&map, mapname, _T("r"));
     if(!map) return MAP_FORMAT_BAD;
 
     while(!feof(map))
@@ -68,7 +68,7 @@ static int LoadMapGCC(const TCHAR *mapname)
     char    par1[512];
     char    par2[512];
 
-    map = fopen(mapname, "r");
+    _tfopen_s(&map, mapname, _T("r"));
     if(!map) return MAP_FORMAT_BAD;
 
     while(!feof(map))
@@ -174,10 +174,10 @@ int LoadMAP(const TCHAR *mapname, bool add)
     }
 
     // copy name for MAP saver (with SaveMAP "this" parameter)
-    strncpy(hle.mapfile, mapname, sizeof(hle.mapfile));
+    _tcscpy(hle.mapfile, mapname);
 
     // try to open
-    f = fopen(mapname, "r");
+    _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
         DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", mapname);

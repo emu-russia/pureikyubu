@@ -5,6 +5,15 @@
 namespace UI
 {
 
+    bool FileExists(const TCHAR* filename)
+    {
+        FILE* f = nullptr;
+        _tfopen_s(&f, filename, _T("rb"));
+        if (f == NULL) return false;
+        fclose(f);
+        return true;
+    }
+
     // Get file size
     size_t FileSize(const TCHAR * filename)
     {
@@ -50,11 +59,55 @@ namespace UI
         return buffer;
     }
 
+    // Load data from file
+    void* FileLoad(const char* filename, size_t* size)
+    {
+        FILE* f;
+        uint8_t* buffer;
+        size_t  filesize;
+
+        if (size) *size = 0;
+
+        f = nullptr;
+        fopen_s(&f, filename, "rb");
+        if (f == NULL) return NULL;
+
+        fseek(f, 0, SEEK_END);
+        filesize = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        buffer = (uint8_t*)malloc(filesize + 1);
+        if (buffer == NULL)
+        {
+            fclose(f);
+            return NULL;
+        }
+
+        fread(buffer, filesize, 1, f);
+        fclose(f);
+
+        buffer[filesize] = 0;
+
+        if (size) *size = filesize;
+        return buffer;
+    }
+
     // Save data in file
     bool FileSave(const TCHAR * filename, void* data, size_t size)
     {
         FILE* f = nullptr;
         _tfopen_s (&f, filename, _T("wb"));
+        if (f == NULL) return FALSE;
+
+        fwrite(data, size, 1, f);
+        fclose(f);
+        return TRUE;
+    }
+
+    bool FileSave(const char* filename, void* data, size_t size)
+    {
+        FILE* f = nullptr;
+        fopen_s(&f, filename, "wb");
         if (f == NULL) return FALSE;
 
         fwrite(data, size, 1, f);
@@ -257,23 +310,43 @@ namespace UI
     }
 
     // nice value of KB, MB or GB, for output
-    TCHAR * FileSmartSize(uint32_t size)
+    TCHAR * FileSmartSize(size_t size)
     {
         static TCHAR tempBuf[1024] = { 0 };
 
         if (size < 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%i byte"), size);
+            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi byte"), size);
         }
         else if (size < 1024 * 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%i KB"), size / 1024);
+            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi KB"), size / 1024);
         }
         else if (size < 1024 * 1024 * 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%i MB"), size / 1024 / 1024);
+            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi MB"), size / 1024 / 1024);
         }
         else _stprintf_s(tempBuf, sizeof(tempBuf), _T("%1.1f GB"), (float)size / 1024 / 1024 / 1024);
+        return tempBuf;
+    }
+
+    char* FileSmartSizeA(size_t size)
+    {
+        static char tempBuf[1024] = { 0 };
+
+        if (size < 1024)
+        {
+            sprintf_s(tempBuf, sizeof(tempBuf), "%zi byte", size);
+        }
+        else if (size < 1024 * 1024)
+        {
+            sprintf_s(tempBuf, sizeof(tempBuf), "%zi KB", size / 1024);
+        }
+        else if (size < 1024 * 1024 * 1024)
+        {
+            sprintf_s(tempBuf, sizeof(tempBuf), "%zi MB", size / 1024 / 1024);
+        }
+        else sprintf_s(tempBuf, sizeof(tempBuf), "%1.1f GB", (float)size / 1024 / 1024 / 1024);
         return tempBuf;
     }
 
