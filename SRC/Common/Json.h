@@ -13,6 +13,7 @@
 class Json
 {
 	static const int MaxDepth = 255;			// Foolproof
+	static const int MaxStringSize = 0x1000;	// Foolproof
 
 public:
 	class Value;
@@ -32,9 +33,9 @@ private:
 
 		if (value->type == ValueType::String)
 		{
-			if (value->value.AsTchar)
+			if (value->value.AsString)
 			{
-				delete [] value->value.AsTchar;
+				delete [] value->value.AsString;
 			}
 		}
 
@@ -42,6 +43,14 @@ private:
 		{
 			delete [] value->name;
 		}
+	}
+
+	static TCHAR* CloneStr(const TCHAR* str)
+	{
+		size_t len = _tcslen(str);
+		TCHAR* clone = new TCHAR[len + 1];
+		_tcscpy_s(clone, len + 1, str);
+		return clone;
 	}
 
 	#pragma region "Serialization Related"
@@ -141,28 +150,6 @@ private:
 					EmitCodePoint(ctx, cp);
 			}
 
-			// Unescaping
-
-#if 0
-			if (cp == '\\')
-			{
-				assert(*ptr);
-				cp = *ptr++;
-				switch (cp)
-				{
-					case '\"': cp = '\"'; break;
-					case '\\': cp = '\\'; break;
-					case '/': cp = '/'; break;
-					case 'b': cp = '\b'; break;
-					case 'f': cp = '\f'; break;
-					case 'n': cp = '\n'; break;
-					case 'r': cp = '\r'; break;
-					case 't': cp = '\t'; break;
-					case 'u': throw "uXXXX not supported";
-				}
-			}
-#endif
-
 			ptr++;
 		}
 	}
@@ -242,7 +229,7 @@ private:
 		TokenType type = TokenType::Unknown;
 		union
 		{
-			int AsInt;
+			uint64_t AsInt;
 			float AsFloat;
 			bool AsBool;
 			TCHAR* AsString = nullptr;
@@ -278,7 +265,9 @@ private:
 					break;
 
 				case TokenType::Int:
-					std::cout << "Int: " << value.AsInt << std::endl;
+					std::cout << "Int: ";
+					_tprintf (_T("%I64u"), value.AsInt);
+					std::cout << std::endl;
 					break;
 				case TokenType::Float:
 					std::cout << "Float: " << value.AsFloat << std::endl;
@@ -295,7 +284,9 @@ private:
 					break;
 
 				case TokenType::String:
-					std::cout << "String" << std::endl;
+					std::cout << "String: ";
+					_tprintf(_T("%s"), value.AsString);
+					std::cout << std::endl;
 					break;
 
 				default:
@@ -325,7 +316,8 @@ private:
 				return true;
 			}
 		}
-		else if (ctx->offset < (ctx->maxSize - 5))
+
+		if (ctx->offset < (ctx->maxSize - 5))
 		{
 			if (ctx->ptr[0] == 'f' && ctx->ptr[1] == 'a' && ctx->ptr[2] == 'l' && ctx->ptr[3] == 's' && ctx->ptr[4] == 'e')
 			{
@@ -335,11 +327,109 @@ private:
 				return true;
 			}
 		}
+
 		return false;
+	}
+
+	static int FetchCodepoint(DeserializeContext* ctx)
+	{
+		// http://www.zedwood.com/article/cpp-utf8-char-to-codepoint
+
+		assert(ctx->offset < ctx->maxSize);
+		unsigned char u0 = ctx->ptr[0]; if (u0 >= 0 && u0 <= 127)
+		{
+			ctx->offset++;
+			ctx->ptr++;
+			return u0;
+		}
+		ctx->offset++;
+		ctx->ptr++;
+
+		assert(ctx->offset < ctx->maxSize);
+		unsigned char u1 = ctx->ptr[0]; if (u0 >= 192 && u0 <= 223)
+		{
+			ctx->offset++;
+			ctx->ptr++;
+			return (u0 - 192) * 64 + (u1 - 128);
+		}
+		ctx->offset++;
+		ctx->ptr++;
+
+		if (u0 == 0xed && (u1 & 0xa0) == 0xa0) throw "code points, 0xd800 to 0xdfff";
+
+		assert(ctx->offset < ctx->maxSize);
+		unsigned char u2 = ctx->ptr[0]; if (u0 >= 224 && u0 <= 239)
+		{
+			ctx->offset++;
+			ctx->ptr++;
+			return (u0 - 224) * 4096 + (u1 - 128) * 64 + (u2 - 128);
+		}
+		ctx->offset++;
+		ctx->ptr++;
+
+		assert(ctx->offset < ctx->maxSize);
+		unsigned char u3 = ctx->ptr[0]; if (u0 >= 240 && u0 <= 247)
+		{
+			ctx->offset++;
+			ctx->ptr++;
+			return (u0 - 240) * 262144 + (u1 - 128) * 4096 + (u2 - 128) * 64 + (u3 - 128);
+		}
+		ctx->offset++;
+		ctx->ptr++;
+
+		throw "Invalid codepoint range";
 	}
 
 	static bool GetString(DeserializeContext* ctx, Token& token)
 	{
+		TCHAR str[MaxStringSize] = { 0, };
+		size_t strSize = 0;
+
+		if (ctx->ptr[0] != '\"')
+			return false;
+
+		ctx->offset++;
+		ctx->ptr++;
+
+		while (ctx->offset < ctx->maxSize)
+		{
+			assert(strSize < MaxStringSize);
+
+			int cp = FetchCodepoint(ctx);
+
+			// End of string?
+
+			if (cp == '\"')
+			{
+				str[strSize] = 0;
+				token.type = TokenType::String;
+				token.value.AsString = CloneStr(str);
+				return true;
+			}
+
+			// Unescaping
+
+			if (cp == '\\')
+			{
+				cp = FetchCodepoint(ctx);
+				switch (cp)
+				{
+					case '\"': cp = '\"'; break;
+					case '\\': cp = '\\'; break;
+					case '/': cp = '/'; break;
+					case 'b': cp = '\b'; break;
+					case 'f': cp = '\f'; break;
+					case 'n': cp = '\n'; break;
+					case 'r': cp = '\r'; break;
+					case 't': cp = '\t'; break;
+					case 'u': throw "uXXXX not supported";
+					default: throw "Invalid escape sequence";
+				}
+			}
+
+			str[strSize++] = (TCHAR)cp;
+		}
+
 		return false;
 	}
 
@@ -361,9 +451,9 @@ private:
 		char number[0x100] = { 0, };
 		int numberLen = 0;
 
-		size_t offset = ctx->offset;
+		size_t offset = 0;
 
-		while (offset < ctx->maxSize)
+		while (offset < (ctx->maxSize - ctx->offset))
 		{
 			assert(numberLen < (sizeof(number) - 1));
 
@@ -377,8 +467,7 @@ private:
 				return false;
 			}
 
-			numberLen++;
-			offset++;
+			number[numberLen++] = ctx->ptr[offset++];
 		}
 
 		if (numberLen != 0)
@@ -386,6 +475,8 @@ private:
 			number[numberLen] = 0;
 			token.type = TokenType::Float;
 			token.value.AsFloat = (float)atof(number);
+			ctx->offset += numberLen;
+			ctx->ptr += numberLen;
 			return true;
 		}
 
@@ -398,9 +489,9 @@ private:
 		char number[0x100] = { 0, };
 		int numberLen = 0;
 
-		size_t offset = ctx->offset;
+		size_t offset = 0;
 
-		while (offset < ctx->maxSize)
+		while (offset < (ctx->maxSize - ctx->offset))
 		{
 			assert(numberLen < (sizeof(number) - 1));
 
@@ -414,15 +505,16 @@ private:
 				return false;
 			}
 
-			numberLen++;
-			offset++;
+			number[numberLen++] = ctx->ptr[offset++];
 		}
 
 		if (numberLen != 0)
 		{
 			number[numberLen] = 0;
 			token.type = TokenType::Int;
-			token.value.AsInt = atoi(number);
+			token.value.AsInt = strtoull(number, nullptr, 10);
+			ctx->offset += numberLen;
+			ctx->ptr += numberLen;
 			return true;
 		}
 
@@ -531,14 +623,6 @@ public:
 			return clone;
 		}
 
-		TCHAR* CloneStr(const TCHAR* str)
-		{
-			size_t len = _tcslen(str);
-			TCHAR* clone = new TCHAR[len + 1];
-			_tcscpy_s(clone, len+1, str);
-			return clone;
-		}
-
 	public:
 		Value* parent = nullptr;
 		ValueType type = ValueType::Unknown;
@@ -549,10 +633,17 @@ public:
 		{
 			float AsFloat;
 			uint64_t AsInt;
-			TCHAR* AsTchar = nullptr;	// Only the String value type requires the release of the stored value.
+			TCHAR* AsString = nullptr;	// Only the String value type requires the release of the stored value.
 			bool AsBool;
 		} value;
 		std::list<Value*> children;
+
+		Value() { }
+
+		Value(Value* _parent)
+		{
+			this->parent = _parent;
+		}
 
 		void Serialize(SerializeContext * ctx, int depth)
 		{
@@ -621,7 +712,7 @@ public:
 					break;
 				case ValueType::String:
 					Json::EmitChar(ctx, '\"');
-					EmitTcharString(ctx, value.AsTchar);
+					EmitTcharString(ctx, value.AsString);
 					Json::EmitChar(ctx, '\"');
 					break;
 				default:
@@ -633,11 +724,25 @@ public:
 		{
 			Token token;
 
-			do
+			switch (type)
 			{
-				Json::GetToken(token, ctx);
-				token.Dump();
-			} while (token.type != TokenType::EndOfStream);
+
+
+			}
+
+			// DEBUG: Dump token stream
+
+			//do
+			//{
+			//	Json::GetToken(token, ctx);
+			//	token.Dump();
+
+			//	if (token.type == TokenType::String && token.value.AsString != nullptr)
+			//	{
+			//		delete[] token.value.AsString;
+			//	}
+
+			//} while (token.type != TokenType::EndOfStream);
 
 		}
 
@@ -645,7 +750,7 @@ public:
 
 		Value* AddInt(const char* name, int value)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Int;
 			child->name = CloneName(name);
 			child->value.AsInt = value;
@@ -655,7 +760,7 @@ public:
 
 		Value* AddFloat(const char* name, float value)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Float;
 			child->name = CloneName(name);
 			child->value.AsFloat = value;
@@ -665,7 +770,7 @@ public:
 
 		Value* AddNull(const char* name)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Null;
 			child->name = CloneName(name);
 			children.push_back(child);
@@ -674,7 +779,7 @@ public:
 
 		Value* AddBool(const char* name, bool value)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Bool;
 			child->name = CloneName(name);
 			child->value.AsBool = value;
@@ -684,17 +789,17 @@ public:
 
 		Value* AddString(const char* name, const TCHAR * str)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::String;
 			child->name = CloneName(name);
-			child->value.AsTchar = CloneStr(str);
+			child->value.AsString = CloneStr(str);
 			children.push_back(child);
 			return child;
 		}
 
 		Value* AddObject(const char* name)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Object;
 			child->name = CloneName(name);
 			children.push_back(child);
@@ -703,7 +808,7 @@ public:
 
 		Value* AddArray(const char* name)
 		{
-			Value* child = new Value;
+			Value* child = new Value(this);
 			child->type = ValueType::Array;
 			child->name = CloneName(name);
 			children.push_back(child);
@@ -724,6 +829,63 @@ public:
 				}
 			}
 			return nullptr;
+		}
+
+		// Debug
+
+		void Dump(int depth = 0)
+		{
+			for (int i = 0; i < depth; i++)
+			{
+				std::cout << "    ";
+			}
+
+			switch (type)
+			{
+				case ValueType::Object:
+					std::cout << "Object: ";
+					for (auto it = children.begin(); it != children.end(); ++it)
+					{
+						Value* child = *it;
+						child->Dump(depth + 1);
+					}
+					break;
+				case ValueType::Array:
+					std::cout << "Array: ";
+					for (auto it = children.begin(); it != children.end(); ++it)
+					{
+						Value* child = *it;
+						child->Dump(depth + 1);
+					}
+					break;
+
+				case ValueType::Bool:
+					if (name) std::cout << name << ": ";
+					std::cout << value.AsBool ? "True" : "False";
+					break;
+				case ValueType::Null:
+					if (name) std::cout << name << ": ";
+					std::cout << "Null";
+					break;
+
+				case ValueType::Int:
+					if (name) std::cout << name << ": ";
+					std::cout << "Int: ";
+					_tprintf(_T("%I64u"), value.AsInt);
+					break;
+				case ValueType::Float:
+					if (name) std::cout << name << ": ";
+					std::cout << "Float: " << (int)value.AsFloat;
+					break;
+
+				case ValueType::String:
+					if (name) std::cout << name << ": ";
+					std::cout << "String: ";
+					_tprintf(_T("%s"), value.AsString);
+					break;
+			}
+
+			std::cout << std::endl;
 		}
 
 	};

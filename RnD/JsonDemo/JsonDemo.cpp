@@ -34,8 +34,15 @@ void DeserializeDemo()
     json.Deserialize(jsonText, jsonTextSize);
     delete[] jsonText;
 
-    // Print contents
+    // Serialize what happens
 
+    char text[0x1000] = { 0, };
+    size_t actualSize = 0;
+
+    json.Serialize(text, sizeof(text) - 1, actualSize);
+    std::string str(text, actualSize);
+
+    std::cout << str;
 }
 
 void SerializeDemo()
@@ -69,9 +76,11 @@ int main()
 {
     std::cout << "Hello JsonDemo!\n";
 
-    //DeserializeDemo();
+    std::cout << "DeserializeDemo\n";
+    DeserializeDemo();
+    std::cout << "\n";
 
+    std::cout << "SerializeDemo\n";
     SerializeDemo();
-
-
+    std::cout << "\n";
 }
