@@ -277,7 +277,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
                     if (Fnsize+1 + Pathsize+1 >= sizeof (memcard[um_num].filename)) {
-                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %i characters."), sizeof (memcard[um_num].filename) );
+                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %zi characters."), sizeof (memcard[um_num].filename) );
                         MessageBox(hwndDlg, buf, _T("Invalid filename"), 0);
                         return TRUE;
                     }

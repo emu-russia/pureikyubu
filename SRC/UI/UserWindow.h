@@ -44,7 +44,6 @@ typedef struct UserWindow
     HWND    hStatusWindow;      // statusbar window
     HWND    hProgress;          // progress bar
     HMENU   hMainMenu;          // main menu
-    HMENU   hPopupMenu;         // popup menus
 } UserWindow;
 
 extern  UserWindow wnd;

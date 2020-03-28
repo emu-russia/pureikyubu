@@ -26,7 +26,7 @@ void PADLoadConfig(HWND hwndDlg)
 
     // Plugged or not
     sprintf_s(parm, sizeof(parm), "PluggedIn""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].plugged = GetConfigInt(parm, 0);
+    pad.config[pad.padToConfigure].plugged = GetConfigBool(parm, 0);
 
     //
     // Buttons 8|
@@ -224,7 +224,7 @@ void PADLoadConfig(HWND hwndDlg)
         else SetDlgItemText(hwndDlg, IDC_BUTTON_START, GetVKDesc(vkey));
     }
 
-    if(pad.config[pad.padToConfigure].plugged == 0)
+    if(!pad.config[pad.padToConfigure].plugged)
     {
         CheckDlgButton(hwndDlg, IDC_CHECK_PLUG, BST_UNCHECKED);
 
@@ -341,7 +341,7 @@ void PADClearConfig(HWND hwndDlg)
 {
     int i;
 
-    pad.config[pad.padToConfigure].plugged = 0;
+    pad.config[pad.padToConfigure].plugged = false;
 
     for(i=0; i<VKEY_FOR_MAX; i++)
     {
@@ -660,7 +660,7 @@ INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                             EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_Y), TRUE);
                             EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_START), TRUE);
 
-                            pad.config[pad.padToConfigure].plugged = 1;
+                            pad.config[pad.padToConfigure].plugged = true;
                         }
                         else
                         {
@@ -693,7 +693,7 @@ INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
                             EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_Y), FALSE);
                             EnableWindow(GetDlgItem(hwndDlg, IDC_BUTTON_START), FALSE);
 
-                            pad.config[pad.padToConfigure].plugged = 0;
+                            pad.config[pad.padToConfigure].plugged = false;
                         }
                     return FALSE;
 

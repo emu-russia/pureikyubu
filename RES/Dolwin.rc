@@ -510,7 +510,6 @@ BEGIN
             MENUITEM "Change DVD...",               ID_FILE_CHANGEDVD
         END
         MENUITEM SEPARATOR
-        MENUITEM "&Game INI Settings...",       ID_FILE_EDITINFO
         MENUITEM "&Refresh View\tF5",           ID_FILE_REFRESH
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_FILE_EXIT
@@ -602,17 +601,6 @@ BEGIN
     POPUP "&Help"
     BEGIN
         MENUITEM "A&bout Dolwin...",            ID_HELP_ABOUT
-    END
-END
-
-IDR_POPUP_MENU MENU
-BEGIN
-    POPUP "File"
-    BEGIN
-        MENUITEM "&Boot!",                      ID_FILE_BOOT
-        MENUITEM "Compress...",                 ID_FILE_COMPRESS
-        MENUITEM SEPARATOR
-        MENUITEM "Game &INI Settings...",       ID_FILE_EDITINFO
     END
 END
 

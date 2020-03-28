@@ -63,7 +63,7 @@ static void LoadSettings(int n)         // dialogs created
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)_T("Interpreter"));
         SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_SETCURSEL, 0, 0);
 
-        bool selected = GetConfigInt(USER_MMU, USER_CORE);
+        int selected = GetConfigInt(USER_MMU, USER_CORE);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_RESETCONTENT, 0, 0);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)_T("Simple translation"));
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)_T("Advanced (Mmu)"));
@@ -75,10 +75,10 @@ static void LoadSettings(int n)         // dialogs created
     // GUI/Selector
     if(n == 1)
     {
-        for(int i=0; i<usel.paths.size(); i++)
+        for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
         {
-            SendDlgItemMessage( hDlg, IDC_PATHLIST, LB_ADDSTRING,
-                                0, (LPARAM)usel.paths[i]);
+            TCHAR* path = *it;
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path);
         }
 
         needSelUpdate = FALSE;
@@ -108,8 +108,8 @@ static void LoadSettings(int n)         // dialogs created
         } while(consoleVersion[++i].ver != 0xffffffff);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            wchar_t buf[100];
-            swprintf_s(buf, _countof(buf), consoleVersion[selected].info, ver);
+            TCHAR buf[100];
+            _stprintf_s(buf, _countof(buf) - 1, consoleVersion[selected].info, ver);
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)buf);
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
@@ -126,7 +126,7 @@ static void LoadSettings(int n)         // dialogs created
     {
         CheckDlgButton(hDlg, IDC_MTXHLE, BST_UNCHECKED);
         CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_UNCHECKED);
-        BOOL flag = GetConfigInt(USER_HLE_MTX, USER_HLE);
+        BOOL flag = GetConfigBool(USER_HLE_MTX, USER_HLE);
         if(flag) CheckDlgButton(hDlg, IDC_MTXHLE, BST_CHECKED);
 
         settingsLoaded[3] = TRUE;
@@ -199,12 +199,13 @@ static void SaveSettings()              // OK pressed
     {
         HWND hDlg = hChildDlg[3];
         BOOL flag = IsDlgButtonChecked(hDlg, IDC_MTXHLE);
-        SetConfigInt(USER_HLE_MTX, flag, USER_HLE);
+        SetConfigBool(USER_HLE_MTX, flag, USER_HLE);
     }
 }
 
 void ResetAllSettings()
 {
+    // Danger zone
 }
 
 // make sure path have ending '\\'
@@ -215,15 +216,6 @@ static void fix_path(TCHAR *path)
     {
         path[n]   = _T('\\');
         path[n+1] = 0;
-    }
-}
-
-// remove all control symbols (below space)
-static void fix_string(char *str)
-{
-    for(size_t i=0; i<strlen(str); i++)
-    {
-        if(str[i] < ' ') str[i] = ' ';
     }
 }
 
@@ -323,7 +315,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                     }
                     break;
                 case IDC_KILLPATH:
-                    curSel = SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
+                    curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
                     SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
                     needSelUpdate = TRUE;
                     break;
@@ -402,8 +394,6 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 
 static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    char buf[256];
-
     switch(message)
     {
         case WM_INITDIALOG:
@@ -548,11 +538,6 @@ static INT_PTR CALLBACK FileFilterProc(
             // set dialog appearance
             ShowWindow(hwndDlg, SW_NORMAL);
             SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
-
-            // check DVD accesibility. disable DVD image
-            // extensions if DVD plugin is not loaded
-            EnableWindow(GetDlgItem(hwndDlg, IDC_GCM_FILTER), DVDSetCurrent != NULL);
-            EnableWindow(GetDlgItem(hwndDlg, IDC_GMP_FILTER), DVDSetCurrent != NULL);
 
             // fill by default info
             usel.filter = GetConfigInt(USER_FILTER, USER_UI);

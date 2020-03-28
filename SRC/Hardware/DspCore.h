@@ -28,6 +28,9 @@ namespace DSP
 {
 	typedef uint32_t DspAddress;		///< in halfwords slots 
 
+	#pragma warning (push)
+	#pragma warning (disable: 4201)
+
 	#pragma pack (push, 1)
 
 	typedef union _DspLongAccumulator
@@ -401,4 +404,7 @@ namespace DSP
 		uint16_t DspToCpuReadLo();
 
 	};
+
+	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union
+
 }

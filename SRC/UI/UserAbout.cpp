@@ -46,8 +46,8 @@ static INT_PTR CALLBACK AboutProc(
 
                 ,
                 APPVER,
-                __DATE__,
-                __TIME__
+                _T(__DATE__),
+                _T(__TIME__)
             );
             SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
             return TRUE;

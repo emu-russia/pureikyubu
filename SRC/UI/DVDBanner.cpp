@@ -4,7 +4,7 @@
 
 void * DVDLoadBanner(TCHAR *dvdFile)
 {
-    int fsize = UI::FileSize(dvdFile);
+    size_t fsize = UI::FileSize(dvdFile);
     DVDBanner2 * banner;
     uint32_t bnrofs;
 

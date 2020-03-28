@@ -26,7 +26,7 @@ namespace UI
             TCHAR* tcharPtr = buf;
             while (*tcharPtr)
             {
-                *ansiPtr++ = (char)tcharPtr++;
+                *ansiPtr++ = (char)*tcharPtr++;
             }
             *ansiPtr++ = 0;
 
@@ -139,7 +139,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     InitFileSystem(hInstance);
 
     // run Dolwin once ?
-    if(GetConfigInt(USER_RUNONCE, USER_UI) != 0)
+    if(GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
     }

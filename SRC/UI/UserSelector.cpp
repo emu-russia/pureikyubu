@@ -33,6 +33,14 @@ static void fix_string(TCHAR *str)
     }
 }
 
+static TCHAR* CloneStr(const TCHAR* str)
+{
+    size_t len = _tcslen(str);
+    TCHAR* clone = new TCHAR[len + 1];
+    _tcscpy_s(clone, len + 1, str);
+    return clone;
+}
+
 // add new path into "paths" list
 static void add_path(TCHAR *path)
 {
@@ -44,18 +52,23 @@ static void add_path(TCHAR *path)
         return;
     }
 
-    usel.paths.push_back(path);
+    usel.paths.push_back(CloneStr(path));
 }
 
 // load PATH user variable and cut it on pieces into "paths" list
 static void load_path()
 {
     TCHAR *var = GetConfigString(USER_PATH, USER_UI), *ptr;
-    TCHAR path[MAX_PATH+1];
+    TCHAR path[0x1000];
     int  n = 0;
 
     // delete current pathlist
-    usel.paths.clear();
+    while (!usel.paths.empty())
+    {
+        TCHAR* tStr = usel.paths.back();
+        usel.paths.pop_back();
+        delete[] tStr;
+    }
 
     // search new paths (separated by ';') until ending '\0'
     ptr = var;
@@ -67,6 +80,9 @@ static void load_path()
         if(c == _T(';'))
         {
             path[n++] = 0;
+            path[n++] = 0;
+            path[n++] = 0;
+            path[n++] = 0;  // Safety trailer
             fix_path(path);
             add_path(path);
             n = 0;
@@ -78,6 +94,9 @@ static void load_path()
     if(n)
     {
         path[n++] = 0;
+        path[n++] = 0;
+        path[n++] = 0;
+        path[n++] = 0;      // Safety trailer
         fix_path(path);
         add_path(path);
     }
@@ -338,10 +357,9 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
 }
 
 // add new item
-static void add_item(int index)
+static void add_item(size_t index)
 {
-    LV_ITEM lvi;
-    memset(&lvi, 0, sizeof(LV_ITEM));
+    LV_ITEM lvi = { 0 };
     lvi.mask    = LVIF_TEXT | LVIF_PARAM;
     lvi.iItem   = ListView_GetItemCount(usel.hSelectorWindow);
     lvi.lParam  = (LPARAM)index;
@@ -1090,7 +1108,7 @@ void CreateSelector()
     SetFocus(usel.hSelectorWindow);
 
     // retrieve icon size
-    bool iconSize = GetConfigInt(USER_SMALLICONS, USER_UI) != 0 ? true : false;
+    bool iconSize = GetConfigBool(USER_SMALLICONS, USER_UI);
 
     // set "opened" flag (for following calls)
     usel.opened = TRUE;
@@ -1143,8 +1161,8 @@ void SetSelectorIconSize(bool smallIcon)
     // opened ?
     if(!usel.opened) return;
 
-    usel.smallIcons = smallIcon & 1;    // protect bool
-    SetConfigInt(USER_SMALLICONS, usel.smallIcons, USER_UI);
+    usel.smallIcons = smallIcon;
+    SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
 
     // destroy bannerlist
     if(bannerList)

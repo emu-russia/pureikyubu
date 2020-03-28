@@ -336,7 +336,7 @@ uint32_t LoadBIN(TCHAR * binname)
     if(org >= RAMSIZE) return 0;
 
     // get file size
-    int fsize = UI::FileSize(binname);
+    size_t fsize = UI::FileSize(binname);
 
     // try to load file
     FILE* bin = nullptr;
@@ -378,11 +378,11 @@ bool LoadPatch(TCHAR * patchname, bool add)
     // since "enable" flag is loaded only here, it is not important
     // to load it in standalone patch Init routine. simply if there are
     // no patch files loaded, there is nothing to apply.
-    ldat.enablePatch = GetConfigInt(USER_PATCH, USER_LOADER);
+    ldat.enablePatch = GetConfigBool(USER_PATCH, USER_LOADER);
     if(!ldat.enablePatch) return true;
 
     // count patchnum
-    int patchNum = UI::FileSize(patchname) / sizeof(Patch);
+    size_t patchNum = UI::FileSize(patchname) / sizeof(Patch);
 
     // try to open file
     if (!UI::FileExists(patchname))
@@ -416,7 +416,7 @@ bool LoadPatch(TCHAR * patchname, bool add)
         }
 
         free(patches);
-        ApplyPatches(true, oldPatchCount);
+        ApplyPatches(true, (int32_t)oldPatchCount);
     }
     else
     {
@@ -445,7 +445,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
     if(!ldat.enablePatch) return;
 
     // b = MAX ?
-    if(b==-1) b = ldat.patches.size() - 1;
+    if(b==-1) b = (int32_t)ldat.patches.size() - 1;
     
     for(int32_t i=a; i<=b; i++)     // i = [a; b]
     {
@@ -453,7 +453,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
         if(p->freeze || load)
         {
             uint32_t ea = _byteswap_ulong(p->effectiveAddress);
-            uint32_t pa = -1;
+            uint32_t pa = (uint32_t)-1;
             if (emu.core)
             {
                 pa = emu.core->EffectiveToPhysical(ea, true);
@@ -535,7 +535,7 @@ static void AutoloadMap()
     DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
 
     // Step 3: make new map (find symbols)
-    if(GetConfigInt(USER_MAKEMAP, USER_LOADER))
+    if(GetConfigBool(USER_MAKEMAP, USER_LOADER))
     {
         if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
         else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);

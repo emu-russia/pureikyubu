@@ -4,15 +4,13 @@
 // emulator state
 Emulator emu;
 
-// ---------------------------------------------------------------------------
-
 void EMUGetHwConfig(HWConfig * config)
 {
     config->ramsize = RAMSIZE;
     config->hwndMain = wnd.hMainWindow;
 
-    config->vi_log = GetConfigInt(USER_VI_LOG, USER_HW) & 1;
-    config->vi_xfb = GetConfigInt(USER_VI_XFB, USER_HW) & 1;
+    config->vi_log = GetConfigBool(USER_VI_LOG, USER_HW);
+    config->vi_xfb = GetConfigBool(USER_VI_XFB, USER_HW);
     config->vcount = GetConfigInt(USER_VI_COUNT, USER_HW);
 
     // There is Fuse on the motherboard, which determines the video encoder mode. 
@@ -20,20 +18,20 @@ void EMUGetHwConfig(HWConfig * config)
     // https://www.ifixit.com/Guide/Nintendo+GameCube+Regional+Modification+Selector+Switch/35482
     config->videoEncoderFuse = ldat.gameID[3] == 'P' ? 0 : 1;
 
-    config->rswhack = GetConfigInt(USER_PI_RSWHACK, USER_HW) & 1;
+    config->rswhack = GetConfigBool(USER_PI_RSWHACK, USER_HW);
     config->consoleVer = GetConfigInt(USER_CONSOLE, USER_HW);
 
-    config->exi_log = GetConfigInt(USER_EXI_LOG, USER_HW) & 1;
-    config->exi_osReport = GetConfigInt(USER_OS_REPORT, USER_HW) & 1;
+    config->exi_log = GetConfigBool(USER_EXI_LOG, USER_HW);
+    config->exi_osReport = GetConfigBool(USER_OS_REPORT, USER_HW);
 
     _tcscpy_s (config->ansiFilename, _countof(config->ansiFilename) - 1, GetConfigString(USER_ANSI, USER_HW));
     _tcscpy_s (config->sjisFilename, _countof(config->sjisFilename) - 1, GetConfigString(USER_SJIS, USER_HW));
 
-    config->MemcardA_Connected = false;// GetConfigInt(MemcardA_Connected_Key, FALSE, USER_MEMCARDS) != 0;
-    config->MemcardB_Connected = false;// GetConfigInt(MemcardB_Connected_Key, FALSE, USER_MEMCARDS) != 0;
+    config->MemcardA_Connected = false;// GetConfigBool(MemcardA_Connected_Key, FALSE, USER_MEMCARDS);
+    config->MemcardB_Connected = false;// GetConfigBool(MemcardB_Connected_Key, FALSE, USER_MEMCARDS);
     _tcscpy_s (config->MemcardA_Filename, _countof(config->MemcardA_Filename) - 1, GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS));
     _tcscpy_s (config->MemcardB_Filename, _countof(config->MemcardB_Filename) - 1, GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS));
-    config->Memcard_SyncSave = GetConfigInt(Memcard_SyncSave_Key, USER_MEMCARDS) != 0;
+    config->Memcard_SyncSave = GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
 
     config->one_second = cpu.one_second;
 

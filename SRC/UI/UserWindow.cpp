@@ -329,19 +329,19 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
     // run once ?
-    if(GetConfigInt(USER_RUNONCE, USER_UI))
+    if(GetConfigBool(USER_RUNONCE, USER_UI))
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
     else
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
 
     // allow patches ?
-    if(GetConfigInt(USER_PATCH, USER_LOADER))
+    if(GetConfigBool(USER_PATCH, USER_LOADER))
         CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
     else
         CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
 
     // debugger enabled ?
-    emu.doldebug = GetConfigInt(USER_DOLDEBUG, USER_UI) != 0;
+    emu.doldebug = GetConfigBool(USER_DOLDEBUG, USER_UI);
     CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
     if(emu.doldebug)
     {
@@ -353,7 +353,7 @@ static void OnMainWindowCreate(HWND hwnd)
     InitCommonControls();
 
     // always on top (not in debug)
-    wnd.ontop = GetConfigInt(USER_ONTOP, USER_UI) != 0;
+    wnd.ontop = GetConfigBool(USER_ONTOP, USER_UI);
     if(wnd.ontop) CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_CHECKED);
     else CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_UNCHECKED);
     SetAlwaysOnTop(wnd.hMainWindow, wnd.ontop);
@@ -365,16 +365,15 @@ static void OnMainWindowCreate(HWND hwnd)
     ModifySwapControls(0);
 
     // child windows
-    wnd.hPopupMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_POPUP_MENU));
     CreateStatusBar();
     ResizeMainWindow(640, 480-32);  // 32 pixels overscan
 
     // selector disabled ?
-    usel.active = GetConfigInt(USER_SELECTOR, USER_UI) != 0;
+    usel.active = GetConfigBool(USER_SELECTOR, USER_UI);
     ModifySelectorControls(usel.active);
 
     // icon size
-    bool smallSize = GetConfigInt(USER_SMALLICONS, USER_UI) != 0;
+    bool smallSize = GetConfigBool(USER_SMALLICONS, USER_UI);
     if(smallSize)
     {
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_UNCHECKED);
@@ -416,7 +415,7 @@ void OnMainWindowOpened()
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
     // set new title for main window
-    TCHAR newTitle[1024], gameTitle[64], comment[128];
+    TCHAR newTitle[1024], gameTitle[64];
     const TCHAR prefix[] = { APPNAME _T(" - Running %s") };
     if(ldat.dvd)
     {
@@ -431,7 +430,7 @@ void OnMainWindowOpened()
     SetWindowText(wnd.hMainWindow, newTitle);
 
     // user profiler
-    OpenProfiler(GetConfigInt(USER_PROFILE, USER_UI) != 0);
+    OpenProfiler(GetConfigBool(USER_PROFILE, USER_UI));
 }
 
 // emulation stop in progress
@@ -492,7 +491,6 @@ void ResizeMainWindow(int width, int height)
 // main window procedure : "return 0" to leave, "break" to continue DefWindowProc()
 static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    FILE *f;
     TCHAR* name;
     int recent;
 
@@ -600,8 +598,8 @@ loadFile:
 
                 // always on top
                 case ID_OPTIONS_ALWAYSONTOP:
-                    wnd.ontop ^= 1;
-                    SetConfigInt(USER_ONTOP, wnd.ontop & 1, USER_UI);
+                    wnd.ontop = wnd.ontop ? false : true;
+                    SetConfigBool(USER_ONTOP, wnd.ontop, USER_UI);
                     if(wnd.ontop) CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_BYCOMMAND | MF_CHECKED);
                     else CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_BYCOMMAND | MF_UNCHECKED);
                     SetAlwaysOnTop(hwnd, wnd.ontop);
@@ -620,13 +618,13 @@ loadFile:
                         ResetStatusBar();
                         ModifySelectorControls(false);
                         usel.active = false;
-                        SetConfigInt(USER_SELECTOR, 0, USER_UI);
+                        SetConfigBool(USER_SELECTOR, false, USER_UI);
                     }
                     else
                     {
                         ModifySelectorControls(true);
                         usel.active = true;
-                        SetConfigInt(USER_SELECTOR, 1, USER_UI);
+                        SetConfigBool(USER_SELECTOR, true, USER_UI);
                         CreateSelector();
                     }
                     return 0;
@@ -685,15 +683,15 @@ loadFile:
 
                 // multiple instancies on/off
                 case ID_RUN_ONCE:
-                    if(GetConfigInt(USER_RUNONCE, USER_UI))
+                    if(GetConfigBool(USER_RUNONCE, USER_UI))
                     {   // off
                         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
-                        SetConfigInt(USER_RUNONCE, FALSE, USER_UI);
+                        SetConfigBool(USER_RUNONCE, false, USER_UI);
                     }
                     else
                     {   // on
                         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
-                        SetConfigInt(USER_RUNONCE, TRUE, USER_UI);
+                        SetConfigBool(USER_RUNONCE, true, USER_UI);
                     }
                     return 0;
 
@@ -728,7 +726,7 @@ loadFile:
 
                 // enable patches
                 case ID_ALLOW_PATCHES:
-                    if(GetConfigInt(USER_PATCH, USER_LOADER))
+                    if(GetConfigBool(USER_PATCH, USER_LOADER))
                     {   // off
                         CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
                         ldat.enablePatch = false;
@@ -738,7 +736,7 @@ loadFile:
                         CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
                         ldat.enablePatch = true;
                     }
-                    SetConfigInt(USER_PATCH, ldat.enablePatch, USER_LOADER);
+                    SetConfigBool(USER_PATCH, ldat.enablePatch, USER_LOADER);
                     return 0;
 
                 // load patch data
@@ -774,7 +772,7 @@ loadFile:
                         emu.doldebug = false;
                         SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
                     }
-                    SetConfigInt(USER_DOLDEBUG, emu.doldebug, USER_UI);
+                    SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
                     return 0;
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

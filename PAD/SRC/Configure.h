@@ -31,7 +31,7 @@ enum
 
 typedef struct
 {
-    int     plugged;                // 1 / 0 = yes / no
+    bool    plugged;
     int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
 } PADCONF;
 

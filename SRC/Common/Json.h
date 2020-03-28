@@ -68,25 +68,28 @@ private:
 
 	// Base procedure for generating the text.
 
-	static void EmitChar(SerializeContext* ctx, uint8_t val)
+	static void EmitChar(SerializeContext* ctx, uint8_t val, bool sizeOnly)
 	{
 		assert(*ctx->actualSize < ctx->maxSize);
 
-		(*ctx->ptr)[0] = val;
-		(*ctx->ptr)++;
+		if (!sizeOnly)
+		{
+			(*ctx->ptr)[0] = val;
+			(*ctx->ptr)++;
+		}
 		(*ctx->actualSize)++;
 	}
 
-	static void EmitText(SerializeContext* ctx, const char* text)
+	static void EmitText(SerializeContext* ctx, const char* text, bool sizeOnly)
 	{
 		uint8_t* ptr = (uint8_t*)text;
 		while (*ptr)
-			EmitChar(ctx, *ptr++);
+			EmitChar(ctx, *ptr++, sizeOnly);
 	}
 
 	// Simple TCHAR to UTF-8 Converter + Escaping
 
-	static void EmitCodePoint(SerializeContext* ctx, int cp)
+	static void EmitCodePoint(SerializeContext* ctx, int cp, bool sizeOnly)
 	{
 		uint8_t c[4] = { 0 };
 		int utf8Size = 0;
@@ -101,11 +104,11 @@ private:
 
 		for (int i = 0; i < utf8Size; i++)
 		{
-			EmitChar(ctx, c[i]);
+			EmitChar(ctx, c[i], sizeOnly);
 		}
 	}
 
-	static void EmitTcharString(SerializeContext* ctx, TCHAR * str)
+	static void EmitTcharString(SerializeContext* ctx, TCHAR * str, bool sizeOnly)
 	{
 		TCHAR* ptr = str;
 		while (*ptr)
@@ -117,39 +120,39 @@ private:
 			switch (cp)
 			{
 				case '\"':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, '\"');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, '\"', sizeOnly);
 					break;
 				case '\\': 
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, '\\');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, '\\', sizeOnly);
 					break;
 				case '/': 
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, '/');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, '/', sizeOnly);
 					break;
 				case '\b':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, 'b');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, 'b', sizeOnly);
 					break;
 				case '\f':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, 'f');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, 'f', sizeOnly);
 					break;
 				case '\n':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, 'n');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, 'n', sizeOnly);
 					break;
 				case '\r':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, 'r');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, 'r', sizeOnly);
 					break;
 				case '\t':
-					EmitCodePoint(ctx, '\\');
-					EmitCodePoint(ctx, 't');
+					EmitCodePoint(ctx, '\\', sizeOnly);
+					EmitCodePoint(ctx, 't', sizeOnly);
 					break;
 				default:
-					EmitCodePoint(ctx, cp);
+					EmitCodePoint(ctx, cp, sizeOnly);
 			}
 
 			ptr++;
@@ -158,10 +161,10 @@ private:
 
 	// Indentation
 
-	static void Indent(SerializeContext* ctx, int depth)
+	static void Indent(SerializeContext* ctx, int depth, bool sizeOnly)
 	{
 		while (depth--)
-			Json::EmitText(ctx, "  ");
+			Json::EmitText(ctx, "  ", sizeOnly);
 	}
 
 	#pragma endregion "Serialization Related"
@@ -782,7 +785,7 @@ public:
 			this->parent = _parent;
 		}
 
-		void Serialize(SerializeContext * ctx, int depth)
+		void Serialize(SerializeContext * ctx, int depth, bool sizeOnly)
 		{
 			TCHAR temp[0x100] = { 0, };
 
@@ -791,66 +794,66 @@ public:
 			switch (type)
 			{
 				case ValueType::Object:
-					Indent(ctx, depth);
-					Json::EmitText(ctx, "{\r\n");
+					Indent(ctx, depth, sizeOnly);
+					Json::EmitText(ctx, "{\r\n", sizeOnly);
 
 					for (auto it = children.begin(); it != children.end(); ++it)
 					{
 						if (it != children.begin())
 						{
-							Json::EmitText(ctx, ",\r\n");
+							Json::EmitText(ctx, ",\r\n", sizeOnly);
 						}
 
 						Value* child = *it;
 
-						Indent(ctx, depth + 1);
-						Json::EmitChar(ctx, '\"');
-						Json::EmitText(ctx, child->name);
-						Json::EmitChar(ctx, '\"');
-						Json::EmitText(ctx, " : ");
+						Indent(ctx, depth + 1, sizeOnly);
+						Json::EmitChar(ctx, '\"', sizeOnly);
+						Json::EmitText(ctx, child->name, sizeOnly);
+						Json::EmitChar(ctx, '\"', sizeOnly);
+						Json::EmitText(ctx, " : ", sizeOnly);
 
-						child->Serialize(ctx, depth + 1);
+						child->Serialize(ctx, depth + 1, sizeOnly);
 					}
 
-					Indent(ctx, depth);
-					Json::EmitText(ctx, "}\r\n");
+					Indent(ctx, depth, sizeOnly);
+					Json::EmitText(ctx, "}\r\n", sizeOnly);
 					break;
 				case ValueType::Array:
-					Indent(ctx, depth);
-					Json::EmitText(ctx, "[ ");
+					Indent(ctx, depth, sizeOnly);
+					Json::EmitText(ctx, "[ ", sizeOnly);
 
 					for (auto it = children.begin(); it != children.end(); ++it)
 					{
 						if (it != children.begin())
 						{
-							Json::EmitText(ctx, ", ");
+							Json::EmitText(ctx, ", ", sizeOnly);
 						}
 
 						Value* child = *it;
-						child->Serialize(ctx, depth + 1);
+						child->Serialize(ctx, depth + 1, sizeOnly);
 					}
 
-					Indent(ctx, depth);
-					Json::EmitChar(ctx, ']');
+					Indent(ctx, depth, sizeOnly);
+					Json::EmitChar(ctx, ']', sizeOnly);
 					break;
 				case ValueType::Null:
-					Json::EmitText(ctx, "null");
+					Json::EmitText(ctx, "null", sizeOnly);
 					break;
 				case ValueType::Bool:
-					Json::EmitText(ctx, value.AsBool ? "true" : "false");
+					Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
 					break;
 				case ValueType::Int:
 					_stprintf_s(temp, _countof(temp) - 1, _T("%I64u"), value.AsInt);
-					EmitTcharString(ctx, temp);
+					EmitTcharString(ctx, temp, sizeOnly);
 					break;
 				case ValueType::Float:
 					_stprintf_s(temp, _countof(temp) - 1, _T("%.4f"), value.AsFloat);
-					EmitTcharString(ctx, temp);
+					EmitTcharString(ctx, temp, sizeOnly);
 					break;
 				case ValueType::String:
-					Json::EmitChar(ctx, '\"');
-					EmitTcharString(ctx, value.AsString);
-					Json::EmitChar(ctx, '\"');
+					Json::EmitChar(ctx, '\"', sizeOnly);
+					EmitTcharString(ctx, value.AsString, sizeOnly);
+					Json::EmitChar(ctx, '\"', sizeOnly);
 					break;
 				default:
 					throw "Unknown ValueType";
@@ -985,6 +988,9 @@ public:
 			{
 				Value* child = *it;
 
+				if (child->name == nullptr)
+					continue;
+
 				if (!strcmp(child->name, name))
 				{
 					return child;
@@ -1080,7 +1086,23 @@ public:
 
 		for (auto it = root.children.begin(); it != root.children.end(); ++it)
 		{
-			(*it)->Serialize(&ctx, 0);
+			(*it)->Serialize(&ctx, 0, false);
+		}
+	}
+
+	void GetSerializedTextSize(void* text, size_t maxTextSize, size_t& actualTextSize)
+	{
+		actualTextSize = 0;
+
+		SerializeContext ctx = { 0 };
+
+		ctx.ptr = (uint8_t**)&text;
+		ctx.maxSize = maxTextSize;
+		ctx.actualSize = &actualTextSize;
+
+		for (auto it = root.children.begin(); it != root.children.end(); ++it)
+		{
+			(*it)->Serialize(&ctx, 0, true);
 		}
 	}
 
@@ -1095,6 +1117,22 @@ public:
 		ctx.maxSize = textSize;
 
 		root.AddObject(nullptr)->Deserialize(&ctx, nullptr);
+	}
+
+	// Clone
+
+	void Clone(Json* other)
+	{
+		DestroyValue(&root);
+
+
+	}
+
+	// Merge
+
+	void Merge(Json* other)
+	{
+
 	}
 
 };
