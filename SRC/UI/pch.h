@@ -17,11 +17,12 @@
 #include <tchar.h>
 #include "../../RES/resource.h"
 
-#include "User.h"
-
 #include "../Common/Spinlock.h"
+#include "../Common/Json.h"
 #include "../Core/Gekko.h"
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 #include "../Emulator.h"
 #include "../Loader.h"
+
+#include "User.h"

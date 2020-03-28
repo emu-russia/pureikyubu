@@ -152,12 +152,12 @@ void UpdateProfiler()
         else
         {
             TCHAR * st = GetStatusText(STATUS_ENUM::Progress);
-            swscanf(st, L"mips:%s ", mips);
+            _stscanf_s (st, L"mips:%s ", mips);
         }
 
         // update status bar
         {
-            swprintf_s (buf, _countof(buf), _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f"),
+            _stprintf_s (buf, _countof(buf) - 1, _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f"),
                 mips,
                 (double)cpuTime * 100 / (double)total,
                 (double)gfxTime * 100 / (double)total,

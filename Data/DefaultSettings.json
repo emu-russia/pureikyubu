@@ -63,10 +63,13 @@
 
 	"controllers":
 	{
-		"port0_connected": false,
-		"port1_connected": false,
-		"port2_connected": false,
-		"port3_connected": false
+		"PluggedIn_0": false,
+
+		
+
+		"PluggedIn_1": false,
+		"PluggedIn_2": false,
+		"PluggedIn_3": false
 	},
 
 	"memcards":
@@ -83,6 +86,9 @@
 		"Arabic": "يمكنني أكل الزجاج ، لا يؤذيني ",
 		"English": "I can eat glass, it doesn't hurts me",
 		"Boolean": true,
-		"Float": 3.1415
+		"Float": 3.1415,
+		"SomeArray": [ 1, 2, 3],
+		"EmptyArray": [],
+		"EmptyObject": {}
 	}
 }

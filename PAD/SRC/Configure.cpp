@@ -33,57 +33,57 @@ void PADLoadConfig(HWND hwndDlg)
     //
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_UP""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_DOWN""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_LEFT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_RIGHT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXUP""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXDOWN""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXLEFT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXRIGHT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERL""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERR""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERZ""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_A""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_B""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_X""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_Y""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_START""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = GetConfigInt(parm, -1);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = GetConfigInt(parm, USER_PADS);
 
     //
     // Enable buttons
@@ -128,99 +128,99 @@ void PADLoadConfig(HWND hwndDlg)
     if(hwndDlg)
     {
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_UP, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_A, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_A, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_A, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_B, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_B, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_B, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_X, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_X, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_X, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_Y, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START];
-        if(vkey == -1) SetDlgItemText(hwndDlg, IDC_BUTTON_START, "...");
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_START, "...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_START, GetVKDesc(vkey));
     }
 
@@ -275,65 +275,65 @@ void PADSaveConfig(HWND hwndDlg)
 
     // Plugged or not
     sprintf_s(parm, sizeof(parm), "PluggedIn""_%i", pad.padToConfigure);
-    if(pad.config[pad.padToConfigure].plugged) SetConfigInt(parm, 1);
-    else SetConfigInt(parm, 0);
+    if(pad.config[pad.padToConfigure].plugged) SetConfigInt(parm, 1, USER_PADS);
+    else SetConfigInt(parm, 0, USER_PADS);
 
     //
     // Buttons
     //
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_UP""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_DOWN""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_LEFT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_RIGHT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXUP""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXDOWN""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXLEFT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXRIGHT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERL""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERR""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERZ""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_A""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_B""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_X""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_Y""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_START""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START]);
+    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START], USER_PADS);
 }
 
 // reset all butons and unplug pad

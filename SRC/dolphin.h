@@ -22,14 +22,6 @@
 #include "resource.h"
 
 // ---------------------------------------------------------------------------
-// compile-time triggers.
-
-// version info, used everywhere in emu.
-#define APPNAME     _T("Dolwin")
-#define APPDESC     _T("Nintendo Gamecube Emulator for Windows")
-#define APPVER      _T("0.11")
-
-// ---------------------------------------------------------------------------
 // Dolwin includes
 
 #include "Common/Spinlock.h"
@@ -39,3 +31,5 @@
 #include "Hardware/Hardware.h"
 #include "Debugger/Debugger.h"
 #include "UI/User.h"
+#include "Loader.h"
+#include "Emulator.h"

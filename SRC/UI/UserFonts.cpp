@@ -13,13 +13,13 @@ static TCHAR    FontSjisFile[MAX_PATH];         // copy of user variables
 
 static void FontSetAnsiFile(TCHAR *filename)
 {
-    strcpy_s(FontAnsiFile, sizeof(FontAnsiFile), filename);
+    _tcscpy_s(FontAnsiFile, _countof(FontAnsiFile) - 1, filename);
     SetConfigString(USER_ANSI, FontAnsiFile, USER_HW);
 }
 
 static void FontSetSjisFile(TCHAR *filename)
 {
-    strcpy_s(FontSjisFile, sizeof(FontSjisFile), filename);
+    _tcscpy_s (FontSjisFile, _countof(FontSjisFile) - 1, filename);
     SetConfigString(USER_SJIS, FontSjisFile, USER_HW);
 }
 
@@ -27,7 +27,11 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
 {
     // split path
     TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-    _splitpath(file, drive, dir, name, ext);
+    _tsplitpath_s (file, 
+        drive, _countof(drive) - 1, 
+        dir, _countof(dir) - 1, 
+        name, _countof(name) - 1, 
+        ext, _countof(ext) - 1 );
 
     // check font type
     size_t size = UI::FileSize(file);
@@ -35,15 +39,17 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
 
     if(is_ansi)
     {   // Ansi type
-        FontAnsiList[AnsiSelected] = (char *)malloc(strlen(file) + 1);
-        strcpy(FontAnsiList[AnsiSelected++], file);
+        size_t sizeInChars = (_tcslen(file) + 1);
+        FontAnsiList[AnsiSelected] = (TCHAR *)malloc(sizeInChars * sizeof(TCHAR));
+        _tcscpy_s(FontAnsiList[AnsiSelected++], sizeInChars, file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
         SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
     else
     {   // Sjis type
-        FontSjisList[SjisSelected] = (char *)malloc(strlen(file) + 1);
-        strcpy(FontSjisList[SjisSelected++], file);
+        size_t sizeInChars = (_tcslen(file) + 1);
+        FontSjisList[SjisSelected] = (TCHAR *)malloc(sizeInChars * sizeof(TCHAR));
+        _tcscpy_s(FontSjisList[SjisSelected++], sizeInChars, file);
         //SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)FileShortName(file));
         SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_INSERTSTRING, -1, (LPARAM)(LPSTR)name);
     }
@@ -51,8 +57,8 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
 
 static void EnumFonts(HWND hwndDlg)
 {
-    TCHAR FontPath[MAX_PATH];
-    WIN32_FIND_DATAA fd;
+    TCHAR FontPath[MAX_PATH] = { 0 };
+    WIN32_FIND_DATA fd;
     HANDLE hfff;
     int i, Aselected = -1, Sselected = -1;
 
@@ -76,29 +82,29 @@ static void EnumFonts(HWND hwndDlg)
     SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_RESETCONTENT, 0, 0);
     SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_RESETCONTENT, 0, 0);
 
-    sprintf_s(FontPath, sizeof(FontPath), "%s\\*.szp", FontsDir);
-    hfff = FindFirstFileA(FontPath, &fd);
+    _stprintf_s (FontPath, _countof(FontPath) - 1, _T("%s\\*.szp"), FontsDir);
+    hfff = FindFirstFile(FontPath, &fd);
 
     if(hfff == INVALID_HANDLE_VALUE) return;
     else
     {
-        sprintf_s(FontPath, sizeof(FontPath), "%s\\%s", FontsDir, fd.cFileName);
+        _stprintf_s (FontPath, _countof(FontPath) - 1, _T("%s\\%s"), FontsDir, fd.cFileName);
         AddFont(hwndDlg, FontPath);
 
-        if(!strcmp(FontAnsiFile, FontPath))
+        if(!_tcscmp(FontAnsiFile, FontPath))
             Aselected = AnsiSelected;
-        if(!strcmp(FontSjisFile, FontPath))
+        if(!_tcscmp(FontSjisFile, FontPath))
             Sselected = SjisSelected;
     }
 
-    while(FindNextFileA(hfff, &fd))
+    while(FindNextFile(hfff, &fd))
     {
-        sprintf_s(FontPath, sizeof(FontPath), "%s\\%s", FontsDir, fd.cFileName);
+        _stprintf_s (FontPath, _countof(FontPath) - 1, _T("%s\\%s"), FontsDir, fd.cFileName);
         AddFont(hwndDlg, FontPath);
 
-        if(!strcmp(FontAnsiFile, FontPath))
+        if(!_tcscmp(FontAnsiFile, FontPath))
             Aselected = AnsiSelected;
-        if(!strcmp(FontSjisFile, FontPath))
+        if(!_tcscmp(FontSjisFile, FontPath))
             Sselected = SjisSelected;
     }
 
@@ -178,10 +184,10 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
                 AnsiSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_GETCURSEL, 0, 0);
                 SjisSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_GETCURSEL, 0, 0);
 
-                if (strcmp(FontAnsiList[AnsiSelected], FontAnsiFile) != 0)
+                if (_tcscmp(FontAnsiList[AnsiSelected], FontAnsiFile) != 0)
                     FontSetAnsiFile(FontAnsiList[AnsiSelected]);
 
-                if (strcmp(FontSjisList[SjisSelected], FontSjisFile) != 0)
+                if (_tcscmp(FontSjisList[SjisSelected], FontSjisFile) != 0)
                     FontSetSjisFile(FontSjisList[SjisSelected]);
 
                 for(i=0; i<256; i++)

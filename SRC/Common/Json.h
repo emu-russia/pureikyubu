@@ -12,8 +12,10 @@
 
 class Json
 {
-	static const int MaxDepth = 255;			// Foolproof
-	static const int MaxStringSize = 0x1000;	// Foolproof
+	// Foolproof
+	static const int MaxDepth = 255;
+	static const int MaxStringSize = 0x1000;
+	static const int MaxElements = 255;
 
 public:
 	class Value;
@@ -235,6 +237,7 @@ private:
 			TCHAR* AsString = nullptr;
 		} value;
 
+#if 0
 		void Dump()
 		{
 			switch (type)
@@ -294,6 +297,8 @@ private:
 					break;
 			}
 		}
+#endif
+
 	};
 
 	static bool GetLiteral(DeserializeContext* ctx, Token& token)
@@ -623,6 +628,138 @@ public:
 			return clone;
 		}
 
+		char* CloneTcharName(const TCHAR* name)
+		{
+			if (name == nullptr)		// Name can be null
+				return nullptr;
+
+			size_t len = _tcslen(name);
+			char* clone = new char[len + 1];
+
+			for (size_t i = 0; i < len; i++)
+			{
+				clone[i] = (char)name[i];
+			}
+			clone[len] = 0;
+
+			return clone;
+		}
+
+		void DeserializeObject(DeserializeContext* ctx)
+		{
+			Token token, colon, comma;
+
+			type = ValueType::Object;
+
+			int counter = 0;
+
+			while (true)
+			{
+				Value* child = nullptr;
+
+				assert(counter < MaxElements);
+
+				Json::GetToken(token, ctx);
+
+				switch (token.type)
+				{
+					case TokenType::String:
+
+						Json::GetToken(colon, ctx);
+						assert(colon.type == TokenType::Colon);
+
+						child = new Value(this);
+						children.push_back(child);
+						child->Deserialize(ctx, token.value.AsString);
+
+						if (token.value.AsString != nullptr)
+						{
+							delete[] token.value.AsString;
+						}
+
+						counter++;
+
+						Json::GetToken(comma, ctx);
+						if (comma.type == TokenType::Comma)
+						{
+							break;
+						}
+						else if (comma.type == TokenType::ObjectEnd)
+						{
+							return;
+						}
+						else
+						{
+							throw "Json Object Syntax Error";
+						}
+
+						break;
+
+					case TokenType::ObjectEnd:
+						return;
+				}
+			}
+		}
+
+		void DeserializeArray(DeserializeContext* ctx)
+		{
+			Token token;
+
+			type = ValueType::Array;
+		
+			int counter = 0;
+
+			while (true)
+			{
+				assert(counter < MaxElements);
+
+				// Check empty arrays
+
+				while (ctx->offset < ctx->maxSize)
+				{
+					if (IsWhiteSpace(ctx->ptr[0]))
+					{
+						ctx->ptr++;
+						ctx->offset++;
+					}
+					else break;
+				}
+
+				if (ctx->offset >= ctx->maxSize)
+				{
+					throw "Json Array Syntax Error";
+				}
+
+				if (ctx->ptr[0] == ']')
+				{
+					Json::GetToken(token, ctx);		// Eat end array token
+					break;
+				}
+
+				// Array element
+
+				Value* child = new Value(this);
+				children.push_back(child);
+				child->Deserialize(ctx, nullptr);
+
+				counter++;
+
+				Json::GetToken(token, ctx);
+
+				switch (token.type)
+				{
+					case TokenType::Comma:
+						break;
+
+					case TokenType::ArrayEnd:
+						return;
+
+					default:
+						throw "Json Array Syntax Error";
+				}
+			}
+		}
+
 	public:
 		Value* parent = nullptr;
 		ValueType type = ValueType::Unknown;
@@ -720,30 +857,55 @@ public:
 			}
 		}	// Serialize
 
-		void Deserialize(DeserializeContext* ctx)
+		void Deserialize(DeserializeContext* ctx, TCHAR * name)
 		{
-			Token token;
+			Token token, key;
 
-			switch (type)
+			this->name = CloneTcharName(name);
+
+			Json::GetToken(token, ctx);
+
+			switch (token.type)
 			{
+				case TokenType::ObjectStart:
+					DeserializeObject(ctx);
+					break;
+				case TokenType::ArrayStart:
+					DeserializeArray(ctx);
+					break;
 
+				case TokenType::String:
+					type = ValueType::String;
+					value.AsString = CloneStr(token.value.AsString);
+					if (token.value.AsString != nullptr)
+					{
+						delete[] token.value.AsString;
+					}
+					break;
+				case TokenType::Int:
+					type = ValueType::Int;
+					value.AsInt = token.value.AsInt;
+					break;
+				case TokenType::Float:
+					type = ValueType::Float;
+					value.AsFloat = token.value.AsFloat;
+					break;
+				case TokenType::True:
+					type = ValueType::Bool;
+					value.AsBool = true;
+					break;
+				case TokenType::False:
+					type = ValueType::Bool;
+					value.AsBool = false;
+					break;
+				case TokenType::Null:
+					type = ValueType::Null;
+					break;
 
+				default:
+					throw "Json Syntax Error";
+					break;
 			}
-
-			// DEBUG: Dump token stream
-
-			//do
-			//{
-			//	Json::GetToken(token, ctx);
-			//	token.Dump();
-
-			//	if (token.type == TokenType::String && token.value.AsString != nullptr)
-			//	{
-			//		delete[] token.value.AsString;
-			//	}
-
-			//} while (token.type != TokenType::EndOfStream);
-
 		}
 
 		// Dynamic modification
@@ -833,6 +995,7 @@ public:
 
 		// Debug
 
+#if 0
 		void Dump(int depth = 0)
 		{
 			for (int i = 0; i < depth; i++)
@@ -887,6 +1050,7 @@ public:
 
 			std::cout << std::endl;
 		}
+#endif
 
 	};
 
@@ -930,7 +1094,7 @@ public:
 		ctx.offset = 0;
 		ctx.maxSize = textSize;
 
-		root.AddObject(nullptr)->Deserialize(&ctx);
+		root.AddObject(nullptr)->Deserialize(&ctx, nullptr);
 	}
 
 };

@@ -230,7 +230,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 /* create the file */
                 if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE ;
 
-                filename = strrchr(buf, '\\');
+                filename = _tcsrchr(buf, _T('\\'));
                 if (filename == NULL) {
                     SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
@@ -250,9 +250,9 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = ChooseMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
-                strcpy_s (buf, sizeof(buf), filename );
+                _tcscpy_s (buf, _countof(buf) - 1, filename );
 
-                filename = strrchr(buf, '\\');
+                filename = _tcsrchr(buf, _T('\\'));
                 if (filename == NULL) {
                     SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
@@ -277,16 +277,16 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
                     if (Fnsize+1 + Pathsize+1 >= sizeof (memcard[um_num].filename)) {
-                        sprintf_s (buf, sizeof(buf), "File full path must be less than %i characters.", sizeof (memcard[um_num].filename) );
-                        MessageBoxA(hwndDlg, buf, "Invalid filename", 0);
+                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %i characters."), sizeof (memcard[um_num].filename) );
+                        MessageBox(hwndDlg, buf, _T("Invalid filename"), 0);
                         return TRUE;
                     }
 
                     SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)(Pathsize+1), (LPARAM)(LPCTSTR)buf);
                     SendDlgItemMessageA(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT,  (WPARAM)(Fnsize+1), (LPARAM)(LPCTSTR)buf2);
 
-                    strcat_s(buf, sizeof(buf), "\\");
-                    strcat_s(buf, sizeof(buf), buf2);
+                    _tcscat_s(buf, _countof(buf) - 1, _T("\\"));
+                    _tcscat_s(buf, _countof(buf) - 1, buf2);
                 }
 
                 if (emu.loaded == FALSE) {

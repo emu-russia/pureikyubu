@@ -3,6 +3,7 @@
 #include <list>
 #include <string>
 #include <atomic>
+#include <vector>
 
 // file type (*.bin is not supported, and can be opened only by File->Open)
 enum class SELECTOR_FILE

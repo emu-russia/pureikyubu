@@ -113,9 +113,9 @@ bool AddSelectorPath(TCHAR *fullPath)
         TCHAR temp[0x10000] = { 0, };
         TCHAR * old = GetConfigString(USER_PATH, USER_UI);
         if(_tcslen(old) == 0)
-            sprintf_s(temp, sizeof(temp), "%s", path);
+            _stprintf_s (temp, _countof (temp) - 1, _T("%s"), path);
         else
-            sprintf_s(temp, sizeof(temp), "%s;%s", old, path);
+            _stprintf_s (temp, _countof(temp) - 1, _T("%s;%s"), old, path);
         SetConfigString(USER_PATH, temp, USER_UI);
         add_path(path);
         return true;
@@ -350,6 +350,16 @@ static void add_item(int index)
     ListView_InsertItem(usel.hSelectorWindow, &lvi); 
 }
 
+static void CoptAnsiStringAsTcharString(TCHAR* dest, const char* src)
+{
+    char* ansiPtr = (char*)src;
+    TCHAR* tcharPtr = (TCHAR*)dest;
+    while (*ansiPtr)
+    {
+        *tcharPtr++ = *ansiPtr++;
+    }
+}
+
 // insert new file into filelist
 static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
 {
@@ -368,7 +378,7 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
     {
         UserFile* entry = *it;
 
-        if (!_stricmp(entry->name, file))
+        if (!_tcsicmp(entry->name, file))
         {
             found = true;
             break;
@@ -381,7 +391,7 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
 
     // try to open file
     FILE* f = nullptr;
-    fopen_s(&f, file, "rb");
+    _tfopen_s (&f, file, _T("rb"));
     if(f == NULL) return;
     fclose(f);
 
@@ -392,7 +402,7 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
     // save file info
     item->type = type;
     item->size = fsize;
-    strcpy_s(item->name, sizeof(item->name), file);
+    _tcscpy_s(item->name, _countof(item->name) - 1, file);
 
     if(type == SELECTOR_FILE::Dvd)
     {
@@ -412,12 +422,12 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         diskID[4] = 0;
 
         // set GameID
-        sprintf_s ( item->id, sizeof(item->id), "%.4s%02X",
+        _stprintf_s ( item->id, _countof(item->id) - 1, _T("%.4s%02X"),
                  diskID, DVDBannerChecksum((void *)bnr) );
 
         // use banner info and remove line-feeds
-        strncpy_s(item->title, sizeof(item->title), (char *)bnr->comments[0].longTitle, MAX_TITLE);
-        strncpy_s(item->comment, sizeof(item->comment), (char *)bnr->comments[0].comment, MAX_COMMENT);
+        CoptAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
+        CoptAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
         fix_string(item->title);
         fix_string(item->comment);
 
@@ -436,8 +446,13 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
     else if(type == SELECTOR_FILE::Executable)
     {
         // rip filename
-        char drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-        _splitpath(file, drive, dir, name, ext);
+        TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+
+        _tsplitpath_s(file,
+            drive, _countof(drive) - 1,
+            dir, _countof(dir) - 1,
+            name, _countof(name) - 1,
+            ext, _countof(ext) - 1);
         //strlwr(name);
 
         // set ID
@@ -456,8 +471,8 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         else if(!stricmp(ext, ".dol")) sprintf(item.id, "D%02X%03X", size, checksum);
         else
 /*/
-        strcpy_s (item->id, sizeof(item->id), "-");
-        strcpy_s (item->title, sizeof(item->title), name);
+        _tcscpy_s (item->id, _countof(item->id) - 1, _T("-"));
+        _tcscpy_s (item->title, _countof(item->title) - 1, name);
         item->comment[0] = 0;
     }
     else

@@ -32,7 +32,7 @@ void    ResizeMainWindow(int width, int height);
 
 // utilities
 void    SetAlwaysOnTop(HWND hwnd, BOOL state);
-void    SetMenuItemText(HMENU hmenu, UINT id, TCHAR *text);
+void    SetMenuItemText(HMENU hmenu, UINT id, const TCHAR *text);
 void    CenterChildWindow(HWND hParent, HWND hChild);
 
 // all important data is placed here
