@@ -5,6 +5,7 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 */
 
 #include "pch.h"
+#include "../UI/UserFile.h"
 
 namespace DVD
 {
@@ -12,22 +13,71 @@ namespace DVD
 	{
 		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
 
+		// Load dvddata structure
+
+		size_t dvdDataInfoTextSize = 0;
+		void* dvdDataInfoText = UI::FileLoad(DvdDataJson, &dvdDataInfoTextSize);
+		if (!dvdDataInfoText)
+		{
+			DBReport("Failed to load DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
+			return;
+		}
+
+		try
+		{
+			DvdDataInfo.Deserialize(dvdDataInfoText, dvdDataInfoTextSize);
+		}
+		catch (...)
+		{
+			DBReport("Failed to Deserialize DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
+			free(dvdDataInfoText);
+			return;
+		}
+
+		free(dvdDataInfoText);
+
+		// Generate data blobs
+
 		if (!GenDiskId())
+		{
+			DBReport("Failed to GenDiskId\n");
 			return;
+		}
 		if (!GenApploader())
+		{
+			DBReport("Failed to GenApploader\n");
 			return;
+		}
 		if (!GenBi2())
+		{
+			DBReport("Failed to GenBi2\n");
 			return;
+		}
 		if (!GenDvdData())
+		{
+			DBReport("Failed to GenDvdData\n");
 			return;
+		}
 		if (!GenDol())
+		{
+			DBReport("Failed to GenDol\n");
 			return;
-		if(!GenBb2())
+		}
+		if (!GenBb2())
+		{
+			DBReport("Failed to GenBb2\n");
 			return;
+		}
+
+		// Generate map
 
 		if (!GenMap())
+		{
+			DBReport("Failed to GenMap\n");
 			return;
+		}
 
+		DBReport2(DbgChannel::DVD, "DolphinSDK mounted!\n");
 		mounted = true;
 	}
 

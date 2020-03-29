@@ -6,6 +6,8 @@
 #include <list>
 #include <tchar.h>
 
+#include "../Common/Json.h"
+
 namespace DVD
 {
 	class MountDolphinSdk
@@ -13,6 +15,9 @@ namespace DVD
 		bool mounted = false;
 		uint32_t currentSeek = 0;
 		TCHAR directory[0x1000] = { 0 };
+
+		Json DvdDataInfo;
+		const TCHAR* DvdDataJson = _T("Data\\DolphinSdkDvdData.json");
 
 		const TCHAR* AppldrPath = _T("/HW2/boot/apploader.img");
 		const TCHAR* Bi2Path = _T("/X86/bin/bi2.bin");
