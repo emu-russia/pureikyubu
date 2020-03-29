@@ -46,7 +46,7 @@ void DICloseCover()
     }
 }
 
-// 1: cover open, 0: closed
+// true: cover open, false: closed
 bool DIGetCoverState()
 {
     return di.coverst;

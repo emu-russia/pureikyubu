@@ -5,6 +5,19 @@
 // size of DVD image
 #define DVD_SIZE            0x57058000  // 1.4 GB
 
+// DiskID
+
+typedef struct _DiskID
+{
+    char gameName[4];
+    char company[2];
+    uint8_t diskNumber;
+    uint8_t gameVersion;
+    uint8_t streaming;
+    uint8_t streamingBufSize;
+    uint8_t padding[22];
+} DiskID;
+
 //
 // general DVD tables (BB2, BI2)
 //
@@ -15,9 +28,9 @@
 #define DVD_BI2_OFFSET      0x0440  // BI2
 #define DVD_APPLDR_OFFSET   0x2440  // apploader
 
-typedef struct
+typedef struct _DVDBB2
 {
-    uint32_t     bootFilePosition;
+    uint32_t     bootFilePosition;          // Where DOL executable is 
     uint32_t     FSTPosition;
     uint32_t     FSTLength;
     uint32_t     FSTMaxLength;
@@ -40,7 +53,7 @@ typedef struct
 #pragma warning (push)
 #pragma warning (disable: 4201)
 
-typedef struct
+typedef struct _DVDFileEntry
 {
     uint8_t      isDir;                  // 1, if directory
     uint8_t      nameOffsetHi;

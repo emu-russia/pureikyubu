@@ -7,26 +7,38 @@ namespace DVD
 	// Show DDU Status Information
 	static Json::Value* DvdInfo(std::vector<std::string>& args)
 	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
 		if (dvd.mountedImage)
 		{
 			DBReport("Mounted as disk image: %s\n", Debug::Hub.TcharToString(dvd.gcm_filename).c_str());
 			DBReport("GCM Size: 0x%08X bytes\n", dvd.gcm_size);
 			DBReport("Current seek position: 0x%08X\n", dvd.seekval);
+
+			output->AddString(nullptr, dvd.gcm_filename);
+			output->AddInt(nullptr, dvd.seekval);
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			DBReport("Mounted as SDK directory: %s\n", "TODO");
+			DBReport("Mounted as SDK directory: %s\n", Debug::Hub.TcharToString(dvd.mountedSdk->GetDirectory()));
+			DBReport("Current seek position: 0x%08X\n", dvd.mountedSdk->GetSeek());
+
+			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
+			output->AddInt(nullptr, dvd.mountedSdk->GetSeek());
 		}
 		else
 		{
 			DBReport("Disk Unmounted\n");
 		}
 
-		DBReport("Lid status: %s\n", DIGetCoverState() == 1 ? "Open" : "Closed");
+		DBReport("Lid status: %s\n", DIGetCoverState() ? "Open" : "Closed");
 
-		// TODO: Return info
+		output->AddBool(nullptr, DIGetCoverState());
 
-		return nullptr;
+		// Return info
+
+		return output;
 	}
 
 	// Mount GC DVD image (GCM)
