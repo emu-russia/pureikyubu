@@ -96,3 +96,13 @@ void EMUReset()
     EMUClose();
     EMUOpen();
 }
+
+void EMUCtor()
+{
+    DVD::InitSubsystem();
+}
+
+void EMUDtor()
+{
+    DVD::ShutdownSubsystem();
+}

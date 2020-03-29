@@ -60,8 +60,8 @@ BOOL dvd_fs_init()
 
     char diskId[5] = { 0 };
 
-    DVDSeek(DVD_ID_OFFSET);
-    DVDRead(diskId, 4);
+    DVD::Seek(DVD_ID_OFFSET);
+    DVD::Read(diskId, 4);
 
     for (int i = 0; i < 4; i++)
     {
@@ -75,8 +75,8 @@ BOOL dvd_fs_init()
 
     char apploaderBytes[5] = { 0 };
 
-    DVDSeek(DVD_APPLDR_OFFSET);
-    DVDRead(apploaderBytes, 4);
+    DVD::Seek(DVD_APPLDR_OFFSET);
+    DVD::Read(apploaderBytes, 4);
 
     for (int i = 0; i < 4; i++)
     {
@@ -87,8 +87,8 @@ BOOL dvd_fs_init()
     }
 
     // load tables
-    DVDSeek(DVD_BB2_OFFSET);
-    DVDRead(&bb2, sizeof(DVDBB2));
+    DVD::Seek(DVD_BB2_OFFSET);
+    DVD::Read(&bb2, sizeof(DVDBB2));
     SwapArea((uint32_t *)&bb2, sizeof(DVDBB2));
 
     // delete previous FST
@@ -110,8 +110,8 @@ BOOL dvd_fs_init()
     {
         return FALSE;
     }
-    DVDSeek(bb2.FSTPosition);
-    DVDRead(fst, fstSize);
+    DVD::Seek(bb2.FSTPosition);
+    DVD::Read(fst, fstSize);
         
     // swap bytes in FST and find offset of string table
     files = (char *)fst_prepare(fst);

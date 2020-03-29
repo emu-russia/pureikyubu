@@ -350,4 +350,47 @@ namespace UI
         return tempBuf;
     }
 
+    void* FileLoad(std::wstring filename, size_t& size)
+    {
+        FILE* f;
+        uint8_t* buffer;
+        size_t  filesize;
+
+        size = 0;
+
+        f = nullptr;
+        _wfopen_s(&f, filename.c_str(), L"rb");
+        if (f == NULL) return NULL;
+
+        fseek(f, 0, SEEK_END);
+        filesize = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        buffer = new uint8_t[filesize + 1];
+        if (buffer == NULL)
+        {
+            fclose(f);
+            return NULL;
+        }
+
+        fread(buffer, filesize, 1, f);
+        fclose(f);
+
+        buffer[filesize] = 0;
+
+        size = filesize;
+        return buffer;
+    }
+
+    bool FileSave(std::wstring filename, void* data, size_t size)
+    {
+        FILE* f = nullptr;
+        _wfopen_s(&f, filename.c_str(), L"wb");
+        if (f == NULL) return FALSE;
+
+        fwrite(data, size, 1, f);
+        fclose(f);
+        return TRUE;
+    }
+
 }

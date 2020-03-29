@@ -89,9 +89,6 @@
     <ClInclude Include="..\DI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DVD.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\EFB.h">
       <Filter>Header Files</Filter>
     </ClInclude>

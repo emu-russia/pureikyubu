@@ -1,4 +1,9 @@
-// filesystem definitions
+// GAMECUBE Disk Structures
+
+#pragma once
+
+// size of DVD image
+#define DVD_SIZE            0x57058000  // 1.4 GB
 
 //
 // general DVD tables (BB2, BI2)
@@ -30,6 +35,11 @@ typedef struct
 #define DVD_FST_MAX_SIZE 0x00100000 // 1 mb
 #define DVD_MAXPATH      256        // path length
 
+#pragma pack(push, 1)
+
+#pragma warning (push)
+#pragma warning (disable: 4201)
+
 typedef struct
 {
     uint8_t      isDir;                  // 1, if directory
@@ -50,6 +60,6 @@ typedef struct
     };
 } DVDFileEntry;
 
-// externals
-BOOL    dvd_fs_init();
-int     dvd_open(const char *path, DVDFileEntry *root=NULL);
+#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union
+
+#pragma pack(pop)

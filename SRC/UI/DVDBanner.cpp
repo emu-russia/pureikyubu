@@ -14,13 +14,13 @@ void * DVDLoadBanner(TCHAR *dvdFile)
     // load DVD banner, or copy error-banner, if DVD is damaged
     if(fsize)
     {
-        DVDSetCurrent(dvdFile);
-        bnrofs = DVDOpenFile("/" DVD_BANNER_FILENAME);
+        DVD::MountFile(dvdFile);
+        bnrofs = DVD::OpenFile("/" DVD_BANNER_FILENAME);
     } else bnrofs = 0;
     if(bnrofs)
     {
-        DVDSeek(bnrofs);
-        DVDRead((uint8_t *)banner, sizeof(DVDBanner2));
+        DVD::Seek(bnrofs);
+        DVD::Read((uint8_t *)banner, sizeof(DVDBanner2));
     }
     else
     {

@@ -7,26 +7,26 @@ namespace Debug
 	void dsp_init_handlers();
 	void dsp_help();
 
-	void cmd_dspdisa(std::vector<std::string>& args);	// disasm dsp ucode to file
-	void cmd_dregs(std::vector<std::string>& args);	// Show dsp registers
-	void cmd_dmem(std::vector<std::string>& args);	// Dump DSP DMEM
-	void cmd_imem(std::vector<std::string>& args);	// Dump DSP IMEM
-	void cmd_drun(std::vector<std::string>& args);	// Run DSP thread until break, halt or dstop
-	void cmd_dstop(std::vector<std::string>& args);	// Stop DSP thread
-	void cmd_dstep(std::vector<std::string>& args);	// Step DSP instruction
-	void cmd_dbrk(std::vector<std::string>& args);	// Add IMEM breakpoint
-	void cmd_dcan(std::vector<std::string>& args);	// Add IMEM canary
-	void cmd_dbrkclr(std::vector<std::string>& args);	// Clear all IMEM breakpoints
-	void cmd_dcanclr(std::vector<std::string>& args);	// Clear all IMEM canaries
-	void cmd_dlist(std::vector<std::string>& args);	// List IMEM breakpoints and canaries
-	void cmd_dpc(std::vector<std::string>& args);	// Set DSP pc
-	void cmd_dreset(std::vector<std::string>& args);	// Issue DSP reset
-	void cmd_du(std::vector<std::string>& args);		// Disassemble some DSP instructions at program counter
-	void cmd_dst(std::vector<std::string>& args);	// Dump DSP call stack
-	void cmd_difx(std::vector<std::string>& args);	// Dump DSP IFX
-	void cmd_cpumbox(std::vector<std::string>& args);	// Write message to CPU Mailbox
-	void cmd_dspmbox(std::vector<std::string>& args);	// Read message from DSP Mailbox
-	void cmd_cpudspint(std::vector<std::string>& args);	// Send CPU->DSP interrupt
-	void cmd_dspcpuint(std::vector<std::string>& args);	// Send DSP->CPU interrupt
-	void cmd_dreg(std::vector<std::string>& args);	// Modify DSP register
+	Json::Value* cmd_dspdisa(std::vector<std::string>& args);	// disasm dsp ucode to file
+	Json::Value* cmd_dregs(std::vector<std::string>& args);	// Show dsp registers
+	Json::Value* cmd_dmem(std::vector<std::string>& args);	// Dump DSP DMEM
+	Json::Value* cmd_imem(std::vector<std::string>& args);	// Dump DSP IMEM
+	Json::Value* cmd_drun(std::vector<std::string>& args);	// Run DSP thread until break, halt or dstop
+	Json::Value* cmd_dstop(std::vector<std::string>& args);	// Stop DSP thread
+	Json::Value* cmd_dstep(std::vector<std::string>& args);	// Step DSP instruction
+	Json::Value* cmd_dbrk(std::vector<std::string>& args);	// Add IMEM breakpoint
+	Json::Value* cmd_dcan(std::vector<std::string>& args);	// Add IMEM canary
+	Json::Value* cmd_dbrkclr(std::vector<std::string>& args);	// Clear all IMEM breakpoints
+	Json::Value* cmd_dcanclr(std::vector<std::string>& args);	// Clear all IMEM canaries
+	Json::Value* cmd_dlist(std::vector<std::string>& args);	// List IMEM breakpoints and canaries
+	Json::Value* cmd_dpc(std::vector<std::string>& args);	// Set DSP pc
+	Json::Value* cmd_dreset(std::vector<std::string>& args);	// Issue DSP reset
+	Json::Value* cmd_du(std::vector<std::string>& args);		// Disassemble some DSP instructions at program counter
+	Json::Value* cmd_dst(std::vector<std::string>& args);	// Dump DSP call stack
+	Json::Value* cmd_difx(std::vector<std::string>& args);	// Dump DSP IFX
+	Json::Value* cmd_cpumbox(std::vector<std::string>& args);	// Write message to CPU Mailbox
+	Json::Value* cmd_dspmbox(std::vector<std::string>& args);	// Read message from DSP Mailbox
+	Json::Value* cmd_cpudspint(std::vector<std::string>& args);	// Send CPU->DSP interrupt
+	Json::Value* cmd_dspcpuint(std::vector<std::string>& args);	// Send DSP->CPU interrupt
+	Json::Value* cmd_dreg(std::vector<std::string>& args);	// Modify DSP register
 }

@@ -250,7 +250,7 @@
     <ProjectReference Include="SRC\DolwinVideo\DolwinVideo.vcxproj">
       <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
     </ProjectReference>
-    <ProjectReference Include="SRC\DVD\DVD.vcxproj">
+    <ProjectReference Include="SRC\DVD\Scripts\DVD.vcxproj">
       <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
     </ProjectReference>
     <ProjectReference Include="SRC\Hardware\GCNHardware\GCNHardware.vcxproj">

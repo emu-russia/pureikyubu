@@ -280,9 +280,9 @@ static void SelectSort()
 }
 
 // change Swap Controls
-void ModifySwapControls(BOOL state)
+void ModifySwapControls(bool stateOpened)
 {
-    if(state)       // opened
+    if(stateOpened)       // opened
     {
         SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, _T("&Close Cover"));
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_ENABLED);
@@ -362,7 +362,7 @@ static void OnMainWindowCreate(HWND hwnd)
     UpdateRecentMenu(wnd.hMainWindow);
 
     // dvd swap controls
-    ModifySwapControls(0);
+    ModifySwapControls(false);
 
     // child windows
     CreateStatusBar();
@@ -402,6 +402,7 @@ static void OnMainWindowDestroy()
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 
     EMUClose();     // completely close the Dolwin
+    EMUDtor();
     exit(1);        // return good
 }
 
@@ -564,12 +565,12 @@ loadFile:
                     if(DIGetCoverState())   // close lid
                     {
                         DICloseCover();
-                        ModifySwapControls(0);
+                        ModifySwapControls(false);
                     }
                     else                    // open lid
                     {
                         DIOpenCover();
-                        ModifySwapControls(1);
+                        ModifySwapControls(true);
                     }
                     return 0;
 
@@ -578,11 +579,11 @@ loadFile:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Dvd)) != nullptr && DIGetCoverState())
                     {
                         if(!_tcsicmp(name, ldat.currentFile)) return 0;  // same
-                        if(DVDSetCurrent(name) == FALSE) return 0;      // bad
+                        if(!DVD::MountFile(name)) return 0;      // bad
 
                         // close lid
                         DICloseCover();
-                        ModifySwapControls(0);
+                        ModifySwapControls(false);
                     }
                     return 0;
 

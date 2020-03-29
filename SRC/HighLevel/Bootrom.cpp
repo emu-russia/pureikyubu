@@ -17,8 +17,8 @@ static void ReadFST()
     uint32_t     fstAddr, fstOffs, fstSize, fstMaxSize;
 
     // read BB2
-    DVDSeek(0x420);
-    DVDRead((uint8_t *)bb2, 32);
+    DVD::Seek(0x420);
+    DVD::Read((uint8_t *)bb2, 32);
 
     // rounding is not important, but present in new apploaders.
     // FST memory address is calculated, by adjusting bb[4] with "DOL LIMIT";
@@ -30,8 +30,8 @@ static void ReadFST()
     fstAddr = _byteswap_ulong(bb2[4]) + RAMSIZE - DOL_LIMIT;
 
     // load FST into memory
-    DVDSeek(fstOffs);
-    DVDRead(&mi.ram[fstAddr & RAMMASK], fstSize);
+    DVD::Seek(fstOffs);
+    DVD::Read(&mi.ram[fstAddr & RAMMASK], fstSize);
 
     // save fst configuration in lomem
     CPUWriteWord(0x80000038, fstAddr);
@@ -62,8 +62,8 @@ static void BootApploader(Gekko::GekkoCore * core)
     // set OSReport dummy
     CPUWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
 
-    DVDSeek(0x2440);                // apploader offset
-    DVDRead((uint8_t *)appHeader, 32);   // read apploader header
+    DVD::Seek(0x2440);                // apploader offset
+    DVD::Read((uint8_t *)appHeader, 32);   // read apploader header
     Gekko::GekkoCore::SwapArea(appHeader, 32);     // and swap it
 
     // save apploader info
@@ -71,8 +71,8 @@ static void BootApploader(Gekko::GekkoCore * core)
     appSize = appHeader[5];
 
     // load apploader image
-    DVDSeek(0x2460);
-    DVDRead(&mi.ram[0x81200000 & RAMMASK], appSize);
+    DVD::Seek(0x2460);
+    DVD::Read(&mi.ram[0x81200000 & RAMMASK], appSize);
 
     // set parameters for apploader entrypoint
     GPR[3] = 0x81300004;            // save apploader _prolog offset
@@ -116,8 +116,8 @@ static void BootApploader(Gekko::GekkoCore * core)
 
         if(size)
         {
-            DVDSeek(offs);
-            DVDRead(&mi.ram[addr & RAMMASK], size);
+            DVD::Seek(offs);
+            DVD::Read(&mi.ram[addr & RAMMASK], size);
 
             DBReport2(DbgChannel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
                       offs, size, addr );
@@ -212,8 +212,8 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer, Gekko::GekkoCore* core)
     if(dvd)
     {
         // read disk ID information to 0x80000000
-        DVDSeek(0);
-        DVDRead(mi.ram, 32);
+        DVD::Seek(0);
+        DVD::Read(mi.ram, 32);
 
         // additional PAL/NTSC selection hack for old VIConfigure()
         char *id = (char *)mi.ram;

@@ -95,7 +95,7 @@ private:
 		int utf8Size = 0;
 
 		// http://www.zedwood.com/article/cpp-utf8-char-to-codepoint
-		if (cp <= 0x7F) { c[0] = cp; utf8Size = 1; }
+		if (cp <= 0x7F) { c[0] = (uint8_t)cp; utf8Size = 1; }
 		else if (cp <= 0x7FF) { c[0] = (cp >> 6) + 192; c[1] = (cp & 63) + 128; utf8Size = 2; }
 		else if (0xd800 <= cp && cp <= 0xdfff) { throw "Invalid block of utf8"; }
 		else if (cp <= 0xFFFF) { c[0] = (cp >> 12) + 224; c[1] = ((cp >> 6) & 63) + 128; c[2] = (cp & 63) + 128; utf8Size = 3; }
@@ -620,28 +620,28 @@ public:
 
 	class Value
 	{
-		char* CloneName(const char* name)
+		char* CloneName(const char* otherName)
 		{
-			if (name == nullptr)		// Name can be null
+			if (otherName == nullptr)		// Name can be null
 				return nullptr;
 
-			size_t len = strlen(name);
+			size_t len = strlen(otherName);
 			char* clone = new char[len + 1];
-			strcpy_s(clone, len+1, name);
+			strcpy_s(clone, len+1, otherName);
 			return clone;
 		}
 
-		char* CloneTcharName(const TCHAR* name)
+		char* CloneTcharName(const TCHAR* otherName)
 		{
-			if (name == nullptr)		// Name can be null
+			if (otherName == nullptr)		// Name can be null
 				return nullptr;
 
-			size_t len = _tcslen(name);
+			size_t len = _tcslen(otherName);
 			char* clone = new char[len + 1];
 
 			for (size_t i = 0; i < len; i++)
 			{
-				clone[i] = (char)name[i];
+				clone[i] = (char)otherName[i];
 			}
 			clone[len] = 0;
 
@@ -860,11 +860,11 @@ public:
 			}
 		}	// Serialize
 
-		void Deserialize(DeserializeContext* ctx, TCHAR * name)
+		void Deserialize(DeserializeContext* ctx, TCHAR * keyName)
 		{
 			Token token, key;
 
-			this->name = CloneTcharName(name);
+			this->name = CloneTcharName(keyName);
 
 			Json::GetToken(token, ctx);
 
@@ -913,50 +913,50 @@ public:
 
 		// Dynamic modification
 
-		Value* AddInt(const char* name, int value)
+		Value* AddInt(const char* keyName, int _value)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Int;
-			child->name = CloneName(name);
-			child->value.AsInt = value;
+			child->name = CloneName(keyName);
+			child->value.AsInt = _value;
 			children.push_back(child);
 			return child;
 		}
 
-		Value* AddFloat(const char* name, float value)
+		Value* AddFloat(const char* keyName, float _value)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Float;
-			child->name = CloneName(name);
-			child->value.AsFloat = value;
+			child->name = CloneName(keyName);
+			child->value.AsFloat = _value;
 			children.push_back(child);
 			return child;
 		}
 
-		Value* AddNull(const char* name)
+		Value* AddNull(const char* keyName)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Null;
-			child->name = CloneName(name);
+			child->name = CloneName(keyName);
 			children.push_back(child);
 			return child;
 		}
 
-		Value* AddBool(const char* name, bool value)
+		Value* AddBool(const char* keyName, bool _value)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Bool;
-			child->name = CloneName(name);
-			child->value.AsBool = value;
+			child->name = CloneName(keyName);
+			child->value.AsBool = _value;
 			children.push_back(child);
 			return child;
 		}
 
-		Value* AddString(const char* name, const TCHAR * str)
+		Value* AddString(const char* keyName, const TCHAR * str)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::String;
-			child->name = CloneName(name);
+			child->name = CloneName(keyName);
 			child->value.AsString = CloneStr(str);
 			children.push_back(child);
 			return child;
@@ -973,27 +973,27 @@ public:
 			return this;
 		}
 
-		Value* AddObject(const char* name)
+		Value* AddObject(const char* keyName)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Object;
-			child->name = CloneName(name);
+			child->name = CloneName(keyName);
 			children.push_back(child);
 			return child;
 		}
 
-		Value* AddArray(const char* name)
+		Value* AddArray(const char* keyName)
 		{
 			Value* child = new Value(this);
 			child->type = ValueType::Array;
-			child->name = CloneName(name);
+			child->name = CloneName(keyName);
 			children.push_back(child);
 			return child;
 		}
 
-		Value* Add(Value * parent, Value* other)
+		Value* Add(Value * _parent, Value* other)
 		{
-			Value* child = new Value(parent);
+			Value* child = new Value(_parent);
 			child->type = other->type;
 			child->name = CloneName(other->name);
 			switch (other->type)
@@ -1021,18 +1021,18 @@ public:
 			return child;
 		}
 
-		Value* Replace(Value* parent, Value* other)
+		Value* Replace(Value* _parent, Value* other)
 		{
 			Value* child = nullptr;
 			bool newChild = false;
 
 			if (other->name != nullptr)
 			{
-				child = parent->ByName(other->name);
+				child = _parent->ByName(other->name);
 			}
 			else
 			{
-				child = parent->ByType(other->type);
+				child = _parent->ByType(other->type);
 			}
 
 			if (child != nullptr)

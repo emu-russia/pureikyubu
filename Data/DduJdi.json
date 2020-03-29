@@ -1,0 +1,55 @@
+{
+	"info":
+	{
+		"description": "GAMECUBE Disk Drive Unit Jey-Dai specs.",
+		"helpGroup": "DVD Debug Commands"
+	},
+
+	"can": {
+		"MountIso": {
+			"help": "Mount GC DVD image (GCM)",
+			"args": 1,
+			"output": "Success/Fail"
+		},
+
+		"OpenLid": {
+			"help": "Simulate opening of the drive cover"
+		},
+
+		"CloseLid": {
+			"help": "Simulate closing of the drive cover"
+		},
+
+		"DvdStats": {
+			"help": "Show some stats"
+		},
+
+		"MountSDK": {
+			"help": "Mount Dolphin SDK folder as virtual disk",
+			"args": 1,
+			"output": "Success/Fail"
+		},
+
+		"UnmountDvd": {
+			"help": "Unmount DVD (extract virtual disk)"
+		},
+
+		"DvdSeek": {
+			"help": "Seek at DVD offset",
+			"args":  1
+		},
+
+		"DvdRead": {
+			"help": "Read DVD data",
+			"args": 1,
+			"output": "Array [] of bytes"
+		},
+
+		"DvdOpenFile": {
+			"help": "Open file on DVD filesystem",
+			"args": 1,
+			"output": "File offset in bytes. 0 if file not found."
+		}
+
+	}
+}

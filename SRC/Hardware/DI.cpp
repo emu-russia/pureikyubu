@@ -85,8 +85,8 @@ static void DICommand()
             assert((DILEN & 0x1f) == 0);
 
             BeginProfileDVD();
-            DVDSeek(seek);
-            DVDRead(&mi.ram[dimar], DILEN);
+            DVD::Seek(seek);
+            DVD::Read(&mi.ram[dimar], DILEN);
             EndProfileDVD();
 
             DBReport2(DbgChannel::DI, "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n",
@@ -303,8 +303,8 @@ void DIStreamUpdate()
                     di.strcount : 
                     DVD_STREAM_BLK ;
         BeginProfileDVD();
-        DVDSeek(di.strseek);
-        DVDRead(di.workArea, count);
+        DVD::Seek(di.strseek);
+        DVD::Read(di.workArea, count);
         EndProfileDVD();
         
         BeginProfileSfx();

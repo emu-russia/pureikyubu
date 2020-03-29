@@ -29,6 +29,7 @@
     <ClCompile Include="..\GekkoDisasm.cpp" />
     <ClCompile Include="..\HwCommands.cpp" />
     <ClCompile Include="..\input.cpp" />
+    <ClCompile Include="..\Jdi.cpp" />
     <ClCompile Include="..\memview.cpp" />
     <ClCompile Include="..\output.cpp" />
     <ClCompile Include="..\pch.cpp">
@@ -50,6 +51,7 @@
     <ClInclude Include="..\GekkoDisasm.h" />
     <ClInclude Include="..\HwCommands.h" />
     <ClInclude Include="..\input.h" />
+    <ClInclude Include="..\Jdi.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />
     <ClInclude Include="..\pch.h" />

@@ -1,20 +1,19 @@
-// simple GCM reading.
-// format can be detected only by file extension.
+// simple GCM image reading.
 #include "pch.h"
 
 // local data
 static TCHAR    gcm_filename[0x1000];
-static int      gcm_size;       // size of opened file
+static int      gcm_size;       // size of mounted file
 static int      seekval;        // current DVD position
 
 // ---------------------------------------------------------------------------
 
-bool GCMSelectFile(const TCHAR *file)
+bool GCMMountFile(const TCHAR *file)
 {
     FILE* gcm_file;
 
     gcm_filename[0] = 0;
-    dvd.selected = false;
+    dvd.mountedImage = false;
 
     if (file == nullptr)
     {
@@ -42,7 +41,7 @@ bool GCMSelectFile(const TCHAR *file)
     seekval = 0;
 
     _tcscpy_s(gcm_filename, _countof(gcm_filename) - 1, file);
-    dvd.selected = true;
+    dvd.mountedImage = true;
 
     return true;
 }
@@ -52,7 +51,7 @@ void GCMSeek(int position)
     seekval = position;
 }
 
-void GCMRead(uint8_t*buf, int length)
+void GCMRead(uint8_t*buf, size_t length)
 {
     FILE* gcm_file;
 
@@ -70,7 +69,7 @@ void GCMRead(uint8_t*buf, int length)
         if(seekval >= DVD_SIZE)
         {
             memset(buf, 0, length);     // fill by zeroes
-            seekval += length;
+            seekval += (int)length;
             fclose(gcm_file);
             return;
         }
@@ -80,7 +79,7 @@ void GCMRead(uint8_t*buf, int length)
         if(seekval >= gcm_size)
         {
             memset(buf, 0, length);     // fill by zeroes
-            seekval += length;
+            seekval += (int)length;
             fclose(gcm_file);
             return;
         }
@@ -101,10 +100,10 @@ void GCMRead(uint8_t*buf, int length)
         if(length)
         {
             fseek(gcm_file, seekval, SEEK_SET);
-            if(dvd.frdm) fread(buf, length, 1, gcm_file);
-            else fread(buf, 1, length, gcm_file);
+            // https://stackoverflow.com/questions/295994/what-is-the-rationale-for-fread-fwrite-taking-size-and-count-as-arguments
+            fread(buf, 1, length, gcm_file);
             fclose(gcm_file);
-            seekval += length;
+            seekval += (int)length;
         }
     }
     else memset(buf, 0, length);        // fill by zeroes

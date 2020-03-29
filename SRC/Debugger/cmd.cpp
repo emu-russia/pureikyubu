@@ -49,7 +49,7 @@ void cmd_init_handlers()
 // ---------------------------------------------------------------------------
 // help
 
-void cmd_help(std::vector<std::string>& args)
+Json::Value* cmd_help(std::vector<std::string>& args)
 {
     DBReport2(DbgChannel::Header, "## cpu debug commands\n");
     DBReport( "    .                    - view code at pc\n");
@@ -77,6 +77,7 @@ void cmd_help(std::vector<std::string>& args)
     Debug::gekko_help();
     Debug::hw_help();
     Debug::dsp_help();
+    Debug::Help();
 
     DBReport2(DbgChannel::Header, "## high-level commands\n");
     DBReport( "    stat                 - show hardware state/statistics\n");
@@ -140,35 +141,39 @@ void cmd_help(std::vector<std::string>& args)
     DBReport( "    ENTER, ESC           - follow/return branch (in disasm window)\n");
     DBReport( "    ENTER                - memory edit (in memview window)\n");
     DBReport("\n");
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // special
 
-void cmd_showpc(std::vector<std::string>& args)
+Json::Value* cmd_showpc(std::vector<std::string>& args)
 {
     con_set_disa_cur(PC);
+    return nullptr;
 }
 
-void cmd_showldst(std::vector<std::string>& args)
+Json::Value* cmd_showldst(std::vector<std::string>& args)
 {
     if (wind.ldst)
     {
         con.data = wind.ldst_disp;
         con.update |= CON_UPDATE_DATA;
     }
+    return nullptr;
 }
 
-void cmd_unload(std::vector<std::string>& args)
+Json::Value* cmd_unload(std::vector<std::string>& args)
 {
     if (emu.loaded)
     {
         EMUClose();
     }
     else DBReport("not loaded.\n");
+    return nullptr;
 }
 
-void cmd_exit(std::vector<std::string>& args)
+Json::Value* cmd_exit(std::vector<std::string>& args)
 {
     DBReport(": exiting...\n");
     con_refresh();
@@ -180,7 +185,7 @@ void cmd_exit(std::vector<std::string>& args)
 // ---------------------------------------------------------------------------
 // blr
 
-void cmd_blr(std::vector<std::string>& args)
+Json::Value* cmd_blr(std::vector<std::string>& args)
 {
     if(args.size() > 2)
     {
@@ -197,7 +202,7 @@ void cmd_blr(std::vector<std::string>& args)
     }
     else
     {
-        if(emu.loaded) return;
+        if(emu.loaded) return nullptr;
 
         uint32_t ea = con.disa_cursor;
         uint32_t pa = -1;
@@ -205,10 +210,10 @@ void cmd_blr(std::vector<std::string>& args)
         {
             pa = emu.core->EffectiveToPhysical(ea, true);
         }
-        if(pa == -1) return;
+        if(pa == -1) return nullptr;
 
         uint32_t op = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
-        if(op == 0x4e800020) return;
+        if(op == 0x4e800020) return nullptr;
 
         int ofs = 0;
         if(args.size() >= 2)           // value, to simulate "return X"
@@ -228,12 +233,14 @@ void cmd_blr(std::vector<std::string>& args)
 
         con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // boot
 
-void cmd_boot(std::vector<std::string>& args)
+Json::Value* cmd_boot(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -253,7 +260,7 @@ void cmd_boot(std::vector<std::string>& args)
         if(!f)
         {
             DBReport("file not exist! filepath=%s\n", filepath);
-            return;
+            return nullptr;
         }
         else fclose(f);
 
@@ -261,12 +268,13 @@ void cmd_boot(std::vector<std::string>& args)
         EMUClose();
         EMUOpen();
     }
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // d
 
-void cmd_d(std::vector<std::string>& args)
+Json::Value* cmd_d(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -297,7 +305,7 @@ void cmd_d(std::vector<std::string>& args)
             if(ofs & 0x8000) ofs |= 0xffff0000;
             addr = reg + (int32_t)ofs;
             con.data = addr;
-            return;
+            return nullptr;
         }
 
         // now check for symbol
@@ -305,12 +313,13 @@ void cmd_d(std::vector<std::string>& args)
         if(addr)
         {
             con.data = addr;
-            return;
+            return nullptr;
         }
 
         // simply address
         con.data = strtoul(args[1].c_str(), NULL, 0);
     }
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -359,7 +368,7 @@ static void disa_line (FILE *f, uint32_t opcode, uint32_t addr)
     fprintf (f, "\n");
 }
 
-void cmd_disa(std::vector<std::string>& args)
+Json::Value* cmd_disa(std::vector<std::string>& args)
 {
     uint32_t start_addr, sa, end_addr;
     FILE *f;
@@ -375,7 +384,7 @@ void cmd_disa(std::vector<std::string>& args)
         if(!emu.loaded)
         {
             DBReport("not loaded\n");
-            return;
+            return nullptr;
         }
 
         start_addr = strtoul ( args[1].c_str(), NULL, 0 );
@@ -387,7 +396,7 @@ void cmd_disa(std::vector<std::string>& args)
         if (!f)
         {
             DBReport( "Cannot open output file!\n");
-            return;
+            return nullptr;
         }
 
         for (start_addr; start_addr<end_addr; start_addr+=4)
@@ -400,25 +409,28 @@ void cmd_disa(std::vector<std::string>& args)
         DBReport( "Disassembling from 0x%08X to 0x%08X... done\n", sa, end_addr );
         fclose (f);
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // dop
 
-void cmd_dop(std::vector<std::string>& args)
+Json::Value* cmd_dop(std::vector<std::string>& args)
 {
     if(ldat.patches.size() == 0)
     {
         DBReport("no patch data loaded.\n");
-        return;
+        return nullptr;
     }
     else ApplyPatches();
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // dvdopen
 
-void cmd_dvdopen(std::vector<std::string>& args)
+Json::Value* cmd_dvdopen(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -429,16 +441,18 @@ void cmd_dvdopen(std::vector<std::string>& args)
     }
     else
     {
-        uint32_t ofs = DVDOpenFile(args[1].c_str());
+        uint32_t ofs = DVD::OpenFile(args[1].c_str());
         if(ofs) DBReport("0x%08X : %s\n", ofs, args[1].c_str());
         else DBReport("not found : %s\n", args[1].c_str());
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // full
 
-void cmd_full(std::vector<std::string>& args)
+Json::Value* cmd_full(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -451,12 +465,14 @@ void cmd_full(std::vector<std::string>& args)
         con_fullscreen(atoi(args[1].c_str()) & 1);
         con.update |= CON_UPDATE_ALL;
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // log
 
-void cmd_log(std::vector<std::string>& args)
+Json::Value* cmd_log(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -499,12 +515,14 @@ void cmd_log(std::vector<std::string>& args)
         DBReport("unknown device!\n");
         #undef IFDEV
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // logfile
 
-void cmd_logfile(std::vector<std::string>& args)
+Json::Value* cmd_logfile(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -518,12 +536,14 @@ void cmd_logfile(std::vector<std::string>& args)
         strncpy_s (con.logfile, sizeof(con.logfile), args[1].c_str(), sizeof(con.logfile));
         DBReport("logging into %s\n", con.logfile);
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // lr
 
-void cmd_lr(std::vector<std::string>& args)
+Json::Value* cmd_lr(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -541,7 +561,7 @@ void cmd_lr(std::vector<std::string>& args)
         if(!emu.loaded || !SP)
         {
             DBReport("not running, or no calls.\n");
-            return;
+            return nullptr;
         }
 
         int level = atoi(args[1].c_str());
@@ -578,12 +598,14 @@ void cmd_lr(std::vector<std::string>& args)
         }
         #undef MAX_LEVEL
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // name
 
-void cmd_name(std::vector<std::string>& args)
+Json::Value* cmd_name(std::vector<std::string>& args)
 {
     if(args.size() < 3)
     {
@@ -629,6 +651,8 @@ void cmd_name(std::vector<std::string>& args)
         }
         else DBReport("wrong address!\n");
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -653,9 +677,9 @@ static uint32_t get_nop(uint32_t ea)
     return 0;   // not present
 }
 
-void cmd_nop(std::vector<std::string>& args)
+Json::Value* cmd_nop(std::vector<std::string>& args)
 {
-    if(!emu.loaded) return;
+    if(!emu.loaded) return nullptr;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = -1;
@@ -663,7 +687,7 @@ void cmd_nop(std::vector<std::string>& args)
     {
         pa = emu.core->EffectiveToPhysical(ea, true);
     }
-    if(pa == -1) return;
+    if(pa == -1) return nullptr;
     
     uint32_t old = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
     mi.ram[pa] = 0x60;
@@ -671,11 +695,12 @@ void cmd_nop(std::vector<std::string>& args)
     add_nop(ea, old);
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
+    return nullptr;
 }
 
-void cmd_denop(std::vector<std::string>& args)
+Json::Value* cmd_denop(std::vector<std::string>& args)
 {
-    if(!emu.loaded) return;
+    if(!emu.loaded) return nullptr;
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = -1;
@@ -683,35 +708,37 @@ void cmd_denop(std::vector<std::string>& args)
     {
         pa = emu.core->EffectiveToPhysical(ea, true);
     }
-    if(pa == -1) return;
+    if(pa == -1) return nullptr;
 
     uint32_t old = get_nop(ea);
-    if(old == 0) return;
+    if(old == 0) return nullptr;
     mi.ram[pa+0] = (uint8_t)(old >> 24);
     mi.ram[pa+1] = (uint8_t)(old >> 16);
     mi.ram[pa+2] = (uint8_t)(old >>  8);
     mi.ram[pa+3] = (uint8_t)(old >>  0);
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // ostest
 
-void cmd_ostest(std::vector<std::string>& args)
+Json::Value* cmd_ostest(std::vector<std::string>& args)
 {
     OSCheckContextStruct();
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // plist
 
-void cmd_plist(std::vector<std::string>& args)
+Json::Value* cmd_plist(std::vector<std::string>& args)
 {
     if(ldat.patches.size() == 0)
     {
         DBReport("no patch data loaded.\n");
-        return;
+        return nullptr;
     }
 
     DBReport("i----addr-----data-------------s-f-\n");
@@ -752,6 +779,7 @@ void cmd_plist(std::vector<std::string>& args)
         count++;
     }
     DBReport("-----------------------------------\n");
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -947,7 +975,7 @@ static void describe_msr (uint32_t msr_val)
     else DBReport("MSR[LE] : 0, processor runs in big-endian mode\n");
 }
 
-void cmd_r (std::vector<std::string>& args)
+Json::Value* cmd_r (std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -971,7 +999,7 @@ void cmd_r (std::vector<std::string>& args)
         if(n == NULL)
         {
             DBReport("unknown register : %s\n", args[1].c_str());
-            return;
+            return nullptr;
         }
 
         // show register
@@ -979,7 +1007,7 @@ void cmd_r (std::vector<std::string>& args)
         {
             if (!_stricmp (args[1].c_str(), "msr")) describe_msr (*n);
             else DBReport("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
-            return;
+            return nullptr;
         }
 
         // Get operation.
@@ -996,7 +1024,7 @@ void cmd_r (std::vector<std::string>& args)
         if (op == NULL)
         {
             DBReport("Unknown operation: %s\n", args[2].c_str());
-            return;
+            return nullptr;
         }
 
         // New value
@@ -1014,12 +1042,14 @@ void cmd_r (std::vector<std::string>& args)
         }
         con_update(CON_UPDATE_REGS | CON_UPDATE_DISA);
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // sop
 
-void cmd_sop(std::vector<std::string>& args)
+Json::Value* cmd_sop(std::vector<std::string>& args)
 {
     uint32_t saddr;
     if(args.size() < 2)
@@ -1056,12 +1086,14 @@ void cmd_sop(std::vector<std::string>& args)
         }
         con.update |= CON_UPDATE_DISA;
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // stat
 
-void cmd_stat(std::vector<std::string>& args)
+Json::Value* cmd_stat(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -1085,17 +1117,19 @@ void cmd_stat(std::vector<std::string>& args)
         IFDEV("vi")
         {
             VIStats();
-            return;
+            return nullptr;
         }
         else DBReport("unknown device!\n");
         #undef IFDEV
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // syms
 
-void cmd_syms(std::vector<std::string>& args)
+Json::Value* cmd_syms(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -1111,12 +1145,14 @@ void cmd_syms(std::vector<std::string>& args)
     {
         SYMList(args[1].c_str());
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // savemap
 
-void cmd_savemap(std::vector<std::string>& args)
+Json::Value* cmd_savemap(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -1132,6 +1168,8 @@ void cmd_savemap(std::vector<std::string>& args)
         if(!strcmp(args[1].c_str(), ".")) SaveMAP("this");
         else SaveMAP(args[1].c_str());
     }
+
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -1149,7 +1187,7 @@ static int testempty(char *str)
     return 1;
 }
 
-void cmd_script(std::vector<std::string>& args)
+Json::Value* cmd_script(std::vector<std::string>& args)
 {
     int i;
     const char* file;
@@ -1161,7 +1199,7 @@ void cmd_script(std::vector<std::string>& args)
         DBReport("path can be relative\n");
         DBReport("examples of use : script data\\zelda.cmd\n");
         DBReport("                  script c:\\luigi.cmd\n");
-        return;
+        return nullptr;
     }
 
     file = args[1].c_str();
@@ -1173,7 +1211,7 @@ void cmd_script(std::vector<std::string>& args)
     if (!sbuf)
     {
         DBReport("cannot open script file!\n");
-        return;
+        return nullptr;
     }
 
     // remove all garbage, like tabs
@@ -1240,12 +1278,13 @@ void cmd_script(std::vector<std::string>& args)
 
     DBReport( "\ndone execute script.\n");
     con.update |= CON_UPDATE_ALL;
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // sd1, sd2
 
-void cmd_sdCommon(int sd, std::vector<std::string>& args)
+Json::Value* cmd_sdCommon(int sd, std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -1266,14 +1305,15 @@ void cmd_sdCommon(int sd, std::vector<std::string>& args)
         con.data = sda + (int32_t)ofs;
         con.update |= CON_UPDATE_DATA;
     }
+    return nullptr;
 }
 
-void cmd_sd1(std::vector<std::string>& args)
+Json::Value* cmd_sd1(std::vector<std::string>& args)
 {
     return cmd_sdCommon(1, args);
 }
 
-void cmd_sd2(std::vector<std::string>& args)
+Json::Value* cmd_sd2(std::vector<std::string>& args)
 {
     return cmd_sdCommon(2, args);
 }
@@ -1281,7 +1321,7 @@ void cmd_sd2(std::vector<std::string>& args)
 // ---------------------------------------------------------------------------
 // top10
 
-void cmd_top10(std::vector<std::string>& args)
+Json::Value* cmd_top10(std::vector<std::string>& args)
 {
     HLEGetTop10(hle.top10);
     DBReport("HLE Greatest Hits!!\n");
@@ -1293,6 +1333,7 @@ void cmd_top10(std::vector<std::string>& args)
         );
     }
     HLEResetHitrate();
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
@@ -1374,7 +1415,7 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
     }
 }
 
-void cmd_tree (std::vector<std::string>& args)
+Json::Value* cmd_tree (std::vector<std::string>& args)
 {
     uint32_t start_addr;
     FILE * f;
@@ -1391,7 +1432,7 @@ void cmd_tree (std::vector<std::string>& args)
         if(!emu.loaded)
         {
             DBReport("not loaded\n");
-            return;
+            return nullptr;
         }
 
         start_addr = SYMAddress(args[1].c_str());
@@ -1409,12 +1450,13 @@ void cmd_tree (std::vector<std::string>& args)
         dump_subcalls ( start_addr, f, 0 );
         fclose ( f );
     }
+    return nullptr;
 }
 
 // ---------------------------------------------------------------------------
 // u
 
-void cmd_u(std::vector<std::string>& args)
+Json::Value* cmd_u(std::vector<std::string>& args)
 {
     if(args.size() < 2)
     {
@@ -1433,12 +1475,12 @@ void cmd_u(std::vector<std::string>& args)
         if(!_stricmp(args[1].c_str(), "lr"))
         {
             con_set_disa_cur(PPC_LR);
-            return;
+            return nullptr;
         }
         if(!_stricmp(args[1].c_str(), "ctr"))
         {
             con_set_disa_cur(CTR);
-            return;
+            return nullptr;
         }
 
         // now check for symbol
@@ -1446,23 +1488,26 @@ void cmd_u(std::vector<std::string>& args)
         if(addr)
         {
             con_set_disa_cur(addr);
-            return;
+            return nullptr;
         }
 
         // simply address
         con_set_disa_cur(strtoul(args[1].c_str(), NULL, 0));
     }
+
+    return nullptr;
 }
 
 // Sleep specified number of milliseconds
-void cmd_sleep(std::vector<std::string>& args)
+Json::Value* cmd_sleep(std::vector<std::string>& args)
 {
     if (args.size() < 2)
     {
         DBReport("syntax : sleep <milliseconds>\n");
         DBReport("examples of use : sleep 1000\n");
-        return;
+        return nullptr;
     }
 
     Sleep(atoi(args[1].c_str()));
+    return nullptr;
 }

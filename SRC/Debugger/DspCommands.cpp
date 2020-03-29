@@ -60,7 +60,7 @@ namespace Debug
     }
 
     // disasm dsp ucode to file
-    void cmd_dspdisa(std::vector<std::string>& args)
+    Json::Value* cmd_dspdisa(std::vector<std::string>& args)
     {
         if (args.size() < 2)
         {
@@ -68,7 +68,7 @@ namespace Debug
             DBReport("disassemble dsp ucode from binary file and dump it into dspdisa.txt\n");
             DBReport("start_addr in DSP slots;\n");
             DBReport("example of use: dspdisa Data\\dsp_irom.bin 0x8000\n");
-            return;
+            return nullptr;
         }
 
         size_t start_addr = 0;      // in DSP slots (halfwords)
@@ -83,7 +83,7 @@ namespace Debug
         if (!ucode)
         {
             DBReport("Failed to load %s\n", args[1].c_str());
-            return;
+            return nullptr;
         }
 
         FILE* f = nullptr;
@@ -92,7 +92,7 @@ namespace Debug
         {
             free(ucode);
             DBReport("Failed to create dsp_disa.txt\n");
-            return;
+            return nullptr;
         }
 
         uint8_t* ucodePtr = ucode;
@@ -140,15 +140,16 @@ namespace Debug
         }
 
         DBReport("Done.\n");
+        return nullptr;
     }
 
     // Show dsp registers
-    void cmd_dregs(std::vector<std::string>& args)
+    Json::Value* cmd_dregs(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         // A special trick to display all registers (we intentionally make them dirty by inverting bits)
@@ -173,15 +174,16 @@ namespace Debug
         }
 
         DspCore->DumpRegs(&regsChanged);
+        return nullptr;
     }
 
     // Dump DSP DMEM
-    void cmd_dmem(std::vector<std::string>& args)
+    Json::Value* cmd_dmem(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 2)
@@ -190,7 +192,7 @@ namespace Debug
             DBReport("Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
             DBReport("dmem . will dump 0x800 bytes at dmem address 0\n");
             DBReport("example of use: dmem 0x8000\n");
-            return;
+            return nullptr;
         }
 
         DSP::DspAddress dsp_addr = 0;
@@ -227,15 +229,16 @@ namespace Debug
             bytes -= 0x10;
             dsp_addr += 8;
         }
+        return nullptr;
     }
 
     // Dump DSP IMEM
-    void cmd_imem(std::vector<std::string>& args)
+    Json::Value* cmd_imem(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 2)
@@ -244,7 +247,7 @@ namespace Debug
             DBReport("Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n");
             DBReport("imem . will dump 32 bytes of imem at program counter address.\n");
             DBReport("example of use: imem 0\n");
-            return;
+            return nullptr;
         }
 
         DSP::DspAddress dsp_addr = 0;
@@ -280,45 +283,48 @@ namespace Debug
             bytes -= 0x10;
             dsp_addr += 8;
         }
+        return nullptr;
     }
 
     // Run DSP thread until break, halt or dstop
-    void cmd_drun(std::vector<std::string>& args)
+    Json::Value* cmd_drun(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->Run();
+        return nullptr;
     }
 
     // Stop DSP thread
-    void cmd_dstop(std::vector<std::string>& args)
+    Json::Value* cmd_dstop(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->Suspend();
+        return nullptr;
     }
 
     // Step DSP instruction
-    void cmd_dstep(std::vector<std::string>& args)
+    Json::Value* cmd_dstep(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         int n = 1;
@@ -340,7 +346,7 @@ namespace Debug
             if (imemPtr == nullptr)
             {
                 DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
-                return;
+                return nullptr;
             }
 
             DSP::AnalyzeInfo info = { 0 };
@@ -348,7 +354,7 @@ namespace Debug
             if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
             {
                 DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
-                return;
+                return nullptr;
             }
 
             std::string code = DSP::DspDisasm::Disasm(pcAddr, info);
@@ -360,15 +366,16 @@ namespace Debug
             // Dump modified regs
             DspCore->DumpRegs(&prevRegs);
         }
+        return nullptr;
     }
 
     // Add IMEM breakpoint
-    void cmd_dbrk(std::vector<std::string>& args)
+    Json::Value* cmd_dbrk(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 2)
@@ -376,7 +383,7 @@ namespace Debug
             DBReport("syntax: dbrk <dsp_addr>\n");
             DBReport("Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n");
             DBReport("example of use: dbrk 0x8020\n");
-            return;
+            return nullptr;
         }
 
         DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
@@ -384,15 +391,16 @@ namespace Debug
         DspCore->AddBreakpoint(dsp_addr);
 
         DBReport("DSP breakpoint added: 0x%04X\n", dsp_addr);
+        return nullptr;
     }
 
     // Add IMEM canary
-    void cmd_dcan(std::vector<std::string>& args)
+    Json::Value* cmd_dcan(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 3)
@@ -401,7 +409,7 @@ namespace Debug
             DBReport("Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n");
             DBReport("When the PC is equal to the canary address, a debug message is displayed\n");
             DBReport("example of use: dcan 0x10 \"Ucode entrypoint\"\n");
-            return;
+            return nullptr;
         }
 
         DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
@@ -409,15 +417,16 @@ namespace Debug
         DspCore->AddCanary(dsp_addr, args[2]);
 
         DBReport("DSP canary added: 0x%04X\n", dsp_addr);
+        return nullptr;
     }
 
     // List IMEM breakpoints and canaries
-    void cmd_dlist(std::vector<std::string>& args)
+    Json::Value* cmd_dlist(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DBReport("DSP breakpoints:\n");
@@ -427,49 +436,52 @@ namespace Debug
         DBReport("DSP canaries:\n");
 
         DspCore->ListCanaries();
+        return nullptr;
     }
 
     // Clear all IMEM breakpoints
-    void cmd_dbrkclr(std::vector<std::string>& args)
+    Json::Value* cmd_dbrkclr(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->ClearBreakpoints();
 
         DBReport("DSP breakpoints cleared.\n");
+        return nullptr;
     }
 
     // Clear all IMEM canaries
-    void cmd_dcanclr(std::vector<std::string>& args)
+    Json::Value* cmd_dcanclr(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->ClearCanaries();
 
         DBReport("DSP canaries cleared.\n");
+        return nullptr;
     }
 
     // Set DSP program counter
-    void cmd_dpc(std::vector<std::string>& args)
+    Json::Value* cmd_dpc(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 2)
@@ -477,37 +489,39 @@ namespace Debug
             DBReport("syntax: dpc <dsp_addr>\n");
             DBReport("Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n");
             DBReport("example of use: dpc 0x8000\n");
-            return;
+            return nullptr;
         }
 
         DspCore->regs.pc = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
+        return nullptr;
     }
 
     // Issue DSP reset
-    void cmd_dreset(std::vector<std::string>& args)
+    Json::Value* cmd_dreset(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->HardReset();
+        return nullptr;
     }
 
     // Disassemble some DSP instructions at program counter
-    void cmd_du(std::vector<std::string>& args)
+    Json::Value* cmd_du(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         size_t instrCount = 8;
@@ -545,7 +559,7 @@ namespace Debug
             if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
             {
                 DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
-                return;
+                return nullptr;
             }
 
             std::string code = DSP::DspDisasm::Disasm(addr, info);
@@ -554,21 +568,22 @@ namespace Debug
 
             addr += (DSP::DspAddress)(info.sizeInBytes >> 1);
         }
+        return nullptr;
     }
 
     // Dump DSP call stack
-    void cmd_dst(std::vector<std::string>& args)
+    Json::Value* cmd_dst(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         DBReport("DSP Call Stack:\n");
@@ -577,57 +592,60 @@ namespace Debug
         {
             DBReport("0x%04X\n", *it);
         }
+        return nullptr;
     }
 
     // Dump DSP IFX
-    void cmd_difx(std::vector<std::string>& args)
+    Json::Value* cmd_difx(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         DBReport("DSP IFX Dump:\n");
 
         DspCore->DumpIfx();
+        return nullptr;
     }
 
     // Write message to CPU Mailbox
-    void cmd_cpumbox(std::vector<std::string>& args)
+    Json::Value* cmd_cpumbox(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (args.size() < 2)
         {
             DBReport("syntax: cpumbox <value>\n");
             DBReport("example of use: cpumbox 0x8001FEED\n");
-            return;
+            return nullptr;
         }
 
         uint32_t value = strtoul(args[1].c_str(), nullptr, 0);
         
         DspCore->CpuToDspWriteHi(value >> 16);
         DspCore->CpuToDspWriteLo((uint16_t)value);
+        return nullptr;
     }
 
     // Read message from DSP Mailbox
-    void cmd_dspmbox(std::vector<std::string>& args)
+    Json::Value* cmd_dspmbox(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         uint32_t value = 0;
@@ -636,43 +654,46 @@ namespace Debug
         if ((value & 0x80000000) == 0)
         {
             DBReport("No DSP message.\n");
-            return;
+            return nullptr;
         }
         value |= DspCore->DspToCpuReadLo();
         DBReport("DSP Message: 0x%08X\n", value);
+        return nullptr;
     }
 
     // Send CPU->DSP interrupt
-    void cmd_cpudspint(std::vector<std::string>& args)
+    Json::Value* cmd_cpudspint(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         DspCore->DSPSetIntBit(true);
+        return nullptr;
     }
 
     // Send DSP->CPU interrupt
-    void cmd_dspcpuint(std::vector<std::string>& args)
+    Json::Value* cmd_dspcpuint(std::vector<std::string>& args)
     {
         DSPAssertInt();
+        return nullptr;
     }
 
     // Modify DSP register
-    void cmd_dreg(std::vector<std::string>& args)
+    Json::Value* cmd_dreg(std::vector<std::string>& args)
     {
         if (!DspCore)
         {
             DBReport("DspCore not ready\n");
-            return;
+            return nullptr;
         }
 
         if (DspCore->IsRunning())
         {
             DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
-            return;
+            return nullptr;
         }
 
         static const char* dspRegNames[] = {
@@ -708,7 +729,7 @@ namespace Debug
             DBReport("Register names: %s\n", reglist.c_str());
             DBReport("example of use: dreg ar0 0x300\n");
 
-            return;
+            return nullptr;
         }
 
         uint16_t value = (uint16_t)strtoul(args[2].c_str(), nullptr, 0);
@@ -727,10 +748,11 @@ namespace Debug
         if (regIndex < 0)
         {
             DBReport("Invalid register name: %s\n", args[1].c_str());
-            return;
+            return nullptr;
         }
 
         DspCore->MoveToReg(regIndex, value);
+        return nullptr;
     }
 
 }

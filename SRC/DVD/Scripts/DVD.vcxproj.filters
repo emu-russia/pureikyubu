@@ -11,34 +11,50 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Src\DVD.cpp">
+    <ClCompile Include="..\DduCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\filesystem.cpp">
+    <ClCompile Include="..\DVD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Src\GCM.cpp">
+    <ClCompile Include="..\filesystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\pch.cpp">
+    <ClCompile Include="..\GCM.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MountSDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Src\DVD.h">
+    <ClInclude Include="..\DduCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\filesystem.h">
+    <ClInclude Include="..\DVD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Src\GCM.h">
+    <ClInclude Include="..\filesystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\pch.h">
+    <ClInclude Include="..\GCM.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DvdStructs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\MountSDK.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Readme.md" />
+    <None Include="..\Readme.md" />
+    <None Include="..\..\..\Data\DduJdi.json" />
   </ItemGroup>
 </Project>

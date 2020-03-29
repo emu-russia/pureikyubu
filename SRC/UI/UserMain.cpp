@@ -34,6 +34,7 @@ namespace UI
         }
         else
         {
+            EMUDtor();
             MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
             exit(1);    // return bad
         }
@@ -149,6 +150,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // init emu and user interface (emulator will be initialized
     // during main window creation).
     CreateMainWindow();
+
+    EMUCtor();
 
     // Idle loop
     for(;;)

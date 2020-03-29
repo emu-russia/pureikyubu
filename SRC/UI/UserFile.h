@@ -25,4 +25,7 @@ namespace UI
     TCHAR* FileSmartSize(size_t size);                            // copy away!
     char* FileSmartSizeA(size_t size);                            // copy away!
 
+    void* FileLoad(std::wstring filename, size_t& size);           // delete []
+    bool FileSave(std::wstring filename, void* data, size_t size);
+
 };

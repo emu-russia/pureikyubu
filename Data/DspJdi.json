@@ -23,7 +23,7 @@
 		"dregs":
 		{
 			"help": "Show DSP registers",
-			"output": []
+			"output": "Array [] of all DSP registers contents"
 		},
 
 		"dreg":
@@ -43,7 +43,7 @@
 				"dmem . will dump 0x800 bytes at dmem address 0\n",
 				"example of use: dmem 0x8000\n"
 			],
-			"output": []
+			"output": "Array [] of memory data"
 		}
 
 

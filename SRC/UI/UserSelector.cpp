@@ -434,9 +434,9 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         // get DiskID
         char diskIDRaw[0x10] = { 0 };
         TCHAR diskID[0x10] = { 0 };
-        DVDSetCurrent(file);
-        DVDSeek(0);
-        DVDRead(diskIDRaw, 4);
+        DVD::MountFile(file);
+        DVD::Seek(0);
+        DVD::Read(diskIDRaw, 4);
         diskID[0] = diskIDRaw[0];
         diskID[1] = diskIDRaw[1];
         diskID[2] = diskIDRaw[2];
@@ -706,7 +706,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc2.left += 2;
         rc2.right-= 2;
 
-        if( (file->id[3] == 'J') &&     // sick check (but no alternative)
+        if( (file->id[3] == _T('J')) &&     // sick check (but no alternative)
             (col == 1 || col == 4))     // title or comment only
         {
             uint16_t *buf; uint32_t size, chars;

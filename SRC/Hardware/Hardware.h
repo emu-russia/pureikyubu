@@ -47,7 +47,7 @@ typedef struct _HWConfig
 #include "AX.h"
 #include "GX.h"
 #include "PAD.h"
-#include "DVD.h"
+#include "../DVD/DVD.h"
 
 #include "DspCore.h"
 

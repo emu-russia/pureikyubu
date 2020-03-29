@@ -571,15 +571,15 @@ static void AutoloadPatch()
 static BOOL SetGameIDAndTitle(TCHAR *filename)
 {
     // try to set current DVD
-    if(DVDSetCurrent(filename) == FALSE) return FALSE;
+    if(!DVD::MountFile(filename)) return FALSE;
 
     // load DVD banner
     DVDBanner2 * bnr = (DVDBanner2 *)DVDLoadBanner(filename);
 
     // get DiskID
     char diskID[8];
-    DVDSeek(0);
-    DVDRead(diskID, 4);
+    DVD::Seek(0);
+    DVD::Read(diskID, 4);
     diskID[4] = 0;
 
     char* ansiPtr = (char*)bnr->comments[0].longTitle;
@@ -641,12 +641,12 @@ static void DoLoadFile(TCHAR *filename)
         }
         else if (!_tcsicmp(extension, _T(".iso")))
         {
-            DVDSetCurrent(filename);
+            DVD::MountFile(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
         }
         else if (!_tcsicmp(extension, _T(".gcm")))
         {
-            DVDSetCurrent(filename);
+            DVD::MountFile(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
         }
     }
