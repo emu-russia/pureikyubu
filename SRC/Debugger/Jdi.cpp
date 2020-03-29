@@ -6,7 +6,7 @@ namespace Debug
 
     JdiHub::JdiHub() {}
 
-    // Delete all JDI nodes.
+    // Delete all JDI nodes
 
     JdiHub::~JdiHub()
     {
@@ -18,7 +18,7 @@ namespace Debug
         }
     }
 
-    // The debugging console can only display text encoded in Ansi.
+    // The debugging console can only display text encoded in Ansi
 
     std::string JdiHub::TcharToString(TCHAR* text)
     {
@@ -32,6 +32,8 @@ namespace Debug
         *ansiPtr++ = 0;
         return std::string(ansiText);
     }
+
+    // Reflection of the command delegate by its text name
 
     void JdiHub::AddCmd(std::string name, CmdDelegate command)
     {
@@ -196,6 +198,8 @@ namespace Debug
         return args.size() >= (argsJson->value.AsInt + 1);
     }
 
+    // Print a description of the command if the command is called with insufficient arguments.
+
     void JdiHub::PrintUsage(Json::Value* cmd)
     {
         Json::Value* usage = cmd->ByName("usage");
@@ -216,6 +220,8 @@ namespace Debug
             }
         }
     }
+
+    // Run JDI Command. Argument checking is performed automatically.
 
     Json::Value* JdiHub::Execute(std::vector<std::string>& args)
     {
@@ -243,6 +249,8 @@ namespace Debug
 
         return it->second(args);
     }
+
+    // Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
 
     bool JdiHub::CommandExists(std::vector<std::string>& args)
     {

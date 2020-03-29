@@ -10,4 +10,4 @@ There are thoughts to add emulation of DVD Firmaware, so as not to emulate the H
 
 ## DDU JDI
 
-The debugging interface specification provided by this component is in Data\\DduJdi.json.
+The debugging interface specification provided by this component can be found in Data\\DduJdi.json.
