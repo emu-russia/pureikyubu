@@ -3,4 +3,4 @@
 #include <tchar.h>
 
 #include "PAD.h"
-#include "UI/UserConfig.h"
+#include "../UI/UserConfig.h"
