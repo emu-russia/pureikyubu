@@ -151,8 +151,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // during main window creation).
     CreateMainWindow();
 
-    EMUCtor();
-
     // Idle loop
     for(;;)
     {

@@ -6,10 +6,15 @@
 	},
 
 	"can": {
+		"DvdInfo": {
+			"help": "Show DDU Status Information",
+		},
+
 		"MountIso": {
 			"help": "Mount GC DVD image (GCM)",
+			"hints": "<file>",
 			"args": 1,
-			"output": "Success/Fail"
+			"output": "Bool Success/Fail"
 		},
 
 		"OpenLid": {
@@ -26,8 +31,9 @@
 
 		"MountSDK": {
 			"help": "Mount Dolphin SDK folder as virtual disk",
+			"hints": "<dir>",
 			"args": 1,
-			"output": "Success/Fail"
+			"output": "Bool Success/Fail"
 		},
 
 		"UnmountDvd": {
@@ -36,18 +42,27 @@
 
 		"DvdSeek": {
 			"help": "Seek at DVD offset",
+			"hints": "<pos>",
 			"args":  1
 		},
 
 		"DvdRead": {
 			"help": "Read DVD data",
+			"hints": "<len>",
 			"args": 1,
 			"output": "Array [] of bytes"
 		},
 
 		"DvdOpenFile": {
 			"help": "Open file on DVD filesystem",
+			"hints": "<file>",
 			"args": 1,
+			"usage": [
+        		"Syntax: DvdOpenFile <file>\n",
+        		"path must be absolute, including root prefix '/'\n",
+        		"Examples of use: DvdOpenFile \"/opening.bnr\"\n",
+        		"                 DvdOpenFile \"/gxTests/tex-02/ia8_odd.tpl\"\n"
+			],
 			"output": "File offset in bytes. 0 if file not found."
 		}
 

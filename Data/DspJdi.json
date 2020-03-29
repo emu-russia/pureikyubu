@@ -1,7 +1,7 @@
 {
 	"info":
 	{
-		"description": "Dolwin DSP JDI (WIP). More detailed description of Jey-Day infrastructure will be later.",
+		"description": "Dolwin DSP JDI",
 		"helpGroup": "DSP Debug Commands"
 	},
 
@@ -13,10 +13,10 @@
 			"args": 1,
 			"usage":
 			[
-				"syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
+				"Syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
 				"disassemble dsp ucode from binary file and dump it into dspdisa.txt\n",
 				"start_addr in DSP slots;\n",
-				"example of use: dspdisa Data\\dsp_irom.bin 0x8000\n"
+				"Example of use: dspdisa Data\\dsp_irom.bin 0x8000\n"
 			]
 		},
 
@@ -38,10 +38,10 @@
 			"args": 1,
 			"usage":
 			[
-				"syntax: dmem <dsp_addr>, dmem .\n",
+				"Syntax: dmem <dsp_addr>, dmem .\n",
 				"Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"dmem . will dump 0x800 bytes at dmem address 0\n",
-				"example of use: dmem 0x8000\n"
+				"Example of use: dmem 0x8000\n"
 			],
 			"output": "Array [] of memory data"
 		}

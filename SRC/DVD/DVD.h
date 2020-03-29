@@ -40,6 +40,10 @@ namespace DVD
 typedef struct
 {
     bool mountedImage;
+    TCHAR gcm_filename[0x1000];
+    int   gcm_size;       // size of mounted file
+    int   seekval;        // current DVD position
+
     DVD::MountDolphinSdk* mountedSdk;
 } DVDControl;
 

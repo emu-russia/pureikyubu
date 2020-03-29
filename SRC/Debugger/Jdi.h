@@ -22,13 +22,19 @@ namespace Debug
 
 		std::list<Json*> nodes;
 
+		Json::Value* CommandByName(std::string& name);
+		bool CheckParameters(Json::Value* cmd, std::vector<std::string>& args);
+		void PrintUsage(Json::Value* cmd);
+
 	public:
 		JdiHub();
 		~JdiHub();
 
+		std::string TcharToString(TCHAR* text);
+
 		void AddCmd(std::string name, CmdDelegate command);
 
-		void AddJson(std::wstring filename, JdiReflector reflector);
+		void AddNode(std::wstring filename, JdiReflector reflector);
 
 		void Help();
 		Json::Value* Execute(std::vector<std::string>& args);
@@ -38,9 +44,5 @@ namespace Debug
 
 	// External API
 
-	void AddCmd(std::string name, CmdDelegate command);
-	void AddJson(std::wstring filename, JdiReflector reflector);
-	void Help();
-	Json::Value* Execute(std::vector<std::string>& args);
-	bool CommandExists(std::vector<std::string>& args);
+	extern JdiHub Hub;
 }

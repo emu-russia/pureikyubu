@@ -186,9 +186,13 @@ void con_command(std::vector<std::string>& args, int lnum)
 {
     // Poke Jdi
 
-    if (Debug::CommandExists(args))
+    if (Debug::Hub.CommandExists(args))
     {
-        Debug::Execute(args);
+        Json::Value * output = Debug::Hub.Execute(args);
+        if (output != nullptr)
+        {
+            delete output;
+        }
         return;
     }
 

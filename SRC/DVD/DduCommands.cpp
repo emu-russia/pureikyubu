@@ -4,6 +4,31 @@
 
 namespace DVD
 {
+	// Show DDU Status Information
+	static Json::Value* DvdInfo(std::vector<std::string>& args)
+	{
+		if (dvd.mountedImage)
+		{
+			DBReport("Mounted as disk image: %s\n", Debug::Hub.TcharToString(dvd.gcm_filename).c_str());
+			DBReport("GCM Size: 0x%08X bytes\n", dvd.gcm_size);
+			DBReport("Current seek position: 0x%08X\n", dvd.seekval);
+		}
+		else if (dvd.mountedSdk != nullptr)
+		{
+			DBReport("Mounted as SDK directory: %s\n", "TODO");
+		}
+		else
+		{
+			DBReport("Disk Unmounted\n");
+		}
+
+		DBReport("Lid status: %s\n", DIGetCoverState() == 1 ? "Open" : "Closed");
+
+		// TODO: Return info
+
+		return nullptr;
+	}
+
 	// Mount GC DVD image (GCM)
 	static Json::Value* MountIso(std::vector<std::string>& args)
 	{
@@ -11,11 +36,11 @@ namespace DVD
 
 		if (result)
 		{
-			DBReport("Mounted disk image: %s\n", args[1].c_str());
+			DBReport2(DbgChannel::DVD, "Mounted disk image: %s\n", args[1].c_str());
 		}
 		else
 		{
-			DBReport("Failed to mount disk image: %s\n", args[1].c_str());
+			DBReport2(DbgChannel::Error, "Failed to mount disk image: %s\n", args[1].c_str());
 		}
 
 		Json::Value* output = new Json::Value();
@@ -48,6 +73,8 @@ namespace DVD
 	// Show some stats
 	static Json::Value* DvdStats(std::vector<std::string>& args)
 	{
+		DBReport2(DbgChannel::DVD, "DvdStats Bogus\n");
+
 		// Bogus
 		return nullptr;
 	}
@@ -59,11 +86,11 @@ namespace DVD
 
 		if (result)
 		{
-			DBReport("Mounted SDK: %s\n", args[1].c_str());
+			DBReport2(DbgChannel::DVD, "Mounted SDK: %s\n", args[1].c_str());
 		}
 		else
 		{
-			DBReport("Failed to mount SDK: %s\n", args[1].c_str());
+			DBReport2(DbgChannel::Error, "Failed to mount SDK: %s\n", args[1].c_str());
 		}
 
 		Json::Value* output = new Json::Value();
@@ -77,7 +104,7 @@ namespace DVD
 	static Json::Value* UnmountDvd(std::vector<std::string>& args)
 	{
 		Unmount();
-		DBReport("DVD unmounted\n");
+		DBReport2( DbgChannel::DVD, "Unmounted\n");
 		return nullptr;
 	}
 
@@ -94,12 +121,22 @@ namespace DVD
 	{
 		size_t size = strtoul(args[1].c_str(), nullptr, 0);
 
+		if (size > 1024 * 1024)
+		{
+			DBReport("Too big\n");
+			return nullptr;
+		}
+
 		// Allocate buffer
 
 		uint8_t* buf = new uint8_t[size];
 		assert(buf);
 
 		Read(buf, size);
+
+		// Print first 32 Bytes
+
+		// TODO
 
 		// Return output
 
@@ -112,6 +149,8 @@ namespace DVD
 		}
 
 		delete[] buf;
+
+		DBReport2(DbgChannel::DVD, "Read %zi bytes\n", size);
 
 		return output;
 	}
@@ -139,14 +178,16 @@ namespace DVD
 
 	void DvdCommandsReflector()
 	{
-		Debug::AddCmd("MountIso", MountIso);
-		Debug::AddCmd("OpenLid", OpenLid);
-		Debug::AddCmd("CloseLid", CloseLid);
-		Debug::AddCmd("DvdStats", DvdStats);
-		Debug::AddCmd("MountSDK", MountSDK);
-		Debug::AddCmd("UnmountDvd", UnmountDvd);
-		Debug::AddCmd("DvdSeek", DvdSeek);
-		Debug::AddCmd("DvdRead", DvdRead);
-		Debug::AddCmd("DvdOpenFile", DvdOpenFile);
+		Debug::Hub.AddCmd("DvdInfo", DvdInfo);
+		Debug::Hub.AddCmd("MountIso", MountIso);
+		Debug::Hub.AddCmd("OpenLid", OpenLid);
+		Debug::Hub.AddCmd("CloseLid", CloseLid);
+		Debug::Hub.AddCmd("DvdStats", DvdStats);
+		Debug::Hub.AddCmd("MountSDK", MountSDK);
+		Debug::Hub.AddCmd("UnmountDvd", UnmountDvd);
+		Debug::Hub.AddCmd("DvdSeek", DvdSeek);
+		Debug::Hub.AddCmd("DvdRead", DvdRead);
+		Debug::Hub.AddCmd("DvdOpenFile", DvdOpenFile);
 	}
+
 }

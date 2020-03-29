@@ -385,6 +385,9 @@ static void OnMainWindowCreate(HWND hwnd)
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
     }
 
+    // emulator
+    EMUCtor();
+
     // select sort method
     SelectSort();
 

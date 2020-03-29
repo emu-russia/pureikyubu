@@ -447,6 +447,8 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         _stprintf_s ( item->id, _countof(item->id) - 1, _T("%.4s%02X"),
                  diskID, DVDBannerChecksum((void *)bnr) );
 
+        DVD::Unmount();
+
         // use banner info and remove line-feeds
         CoptAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
         CoptAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);

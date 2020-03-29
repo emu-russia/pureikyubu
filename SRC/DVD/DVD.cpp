@@ -30,6 +30,8 @@ namespace DVD
             return res;
         }
 
+        Seek(0);
+
         return true;
     }
 
@@ -133,7 +135,7 @@ namespace DVD
 
     void InitSubsystem()
     {
-        Debug::AddJson(DDU_JDI_JSON, DvdCommandsReflector);
+        Debug::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
     }
 
     void ShutdownSubsystem()

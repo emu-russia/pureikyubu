@@ -96,6 +96,10 @@ static void db_report2(DbgChannel chan, const char* text, ...)
             prefix = "MC : ";
             col = ConColor::CYAN;
             break;
+        case DbgChannel::DVD:
+            prefix = "DVD: ";
+            col = ConColor::BGREEN;
+            break;
 
         case DbgChannel::Loader:
             col = ConColor::YEL;

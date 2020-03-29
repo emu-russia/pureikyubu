@@ -13,7 +13,6 @@ void cmd_init_handlers()
     con.cmds["denop"] = cmd_denop;
     con.cmds["disa"] = cmd_disa;
     con.cmds["dop"] = cmd_dop;
-    con.cmds["dvdopen"] = cmd_dvdopen;
     con.cmds["full"] = cmd_full;
     con.cmds["help"] = cmd_help;
     con.cmds["log"] = cmd_log;
@@ -77,13 +76,12 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     Debug::gekko_help();
     Debug::hw_help();
     Debug::dsp_help();
-    Debug::Help();
+    Debug::Hub.Help();
 
     DBReport2(DbgChannel::Header, "## high-level commands\n");
     DBReport( "    stat                 - show hardware state/statistics\n");
     DBReport( "    syms                 - list symbolic information\n");
     DBReport( "    name                 - name function (add symbol)\n");
-    DBReport( "    dvdopen              - get file position (use DVD plugin)\n");
     DBReport( "    ostest               - test OS internals\n");
     DBReport( "    top10                - show HLE calls toplist\n");
     //  DBReport( "    alarm                - generate decrementer exception\n");
@@ -424,28 +422,6 @@ Json::Value* cmd_dop(std::vector<std::string>& args)
         return nullptr;
     }
     else ApplyPatches();
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// dvdopen
-
-Json::Value* cmd_dvdopen(std::vector<std::string>& args)
-{
-    if(args.size() < 2)
-    {
-        DBReport("syntax : dvdopen <file>\n");
-        DBReport("path must be absolute, including root prefix '/'\n");
-        DBReport("examples of use : dvdopen \"/opening.bnr\"\n");
-        DBReport("                  dvdopen \"/gxTests/tex-02/ia8_odd.tpl\"\n");
-    }
-    else
-    {
-        uint32_t ofs = DVD::OpenFile(args[1].c_str());
-        if(ofs) DBReport("0x%08X : %s\n", ofs, args[1].c_str());
-        else DBReport("not found : %s\n", args[1].c_str());
-    }
-
     return nullptr;
 }
 
