@@ -5,11 +5,11 @@ JDI (pronounced _"Jay-Dai"_) is a Dolwin service and debugging interface that co
 The following entities are included in the JDI infrastructure:
 - Json description of component debugging commands (_JDI Node_)
 - Implementation of debugging commands (encapsulated inside the component)
-- The common hub (_JDI Hub_) through which the execution of commands
+- The common hub (_JDI Hub_) through which the execution of commands is performed
 
 The main idea is to isolate the internal state of the emulator components, with the ability to access them using Json.
 
-Each component implements a separate JDI Node. All JDI Node are accessible through a single hub (**Debug::Hub**).
+Each component implements a separate JDI Node. All JDI Nodes are accessible through a single hub (**Debug::Hub**).
 
 ## Json JDI Node format
 

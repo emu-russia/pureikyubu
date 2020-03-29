@@ -779,6 +779,19 @@ loadFile:
                     SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
                     return 0;
 
+                // Mount Dolphin SDK as DVD
+                case ID_DEVELOPMENT_MOUNTSDK:
+                {
+                    TCHAR* dolphinSdkDir = UI::FileOpen(wnd.hMainWindow, UI::FileType::Directory);
+                    if (dolphinSdkDir != nullptr)
+                    {
+                        std::vector<std::string> cmd1 {"MountSDK", Debug::Hub.TcharToString(dolphinSdkDir)};
+                        Json::Value * output = Debug::Hub.Execute(cmd1);
+                        if (output != nullptr) delete output;
+                    }
+                }
+                return 0;
+
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // options dialogs
 
