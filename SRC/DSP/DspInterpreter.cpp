@@ -1,23 +1,4 @@
-/*
-
-# GameCube DSP interpreter
-
-The development idea is as follows - to do at least something (critical mass of code), then do some reverse engineering
-of the microcodes and IROM and bring the emulation to an adequate state.
-
-## Interpreter architecture
-
-The interpreter is not involved in instruction decoding. It receives ready-made information from the analyzer (AnalyzeInfo struct).
-
-This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
-
-## Various Notes from known Macronix datasheets
-
-- Branch and call instructions are not allowed within program loop
-- TRAP-- Always call to hex 000C address
-
-*/
-
+// GameCube DSP interpreter
 #include "pch.h"
 
 namespace DSP

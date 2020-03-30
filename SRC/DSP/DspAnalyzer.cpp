@@ -1,21 +1,4 @@
-/*
-# DSP analyzer
-
-## What's going on here?
-
-This component analyzes the DSP instructions and is used by all interested systems (disassembler, interpreter and recompiler). 
-That is, in fact, this is a universal decoder.
-
-I decided to divide all the DSP instructions into groups (by higher 4 bits). Decoder implemented as simple if-else.
-
-Hybrid (packaged) instructions are stored into two different groups in AnalyseInfo struct.
-
-The simplest example of AnalyzeInfo consumption can be found in the disassembler.
-
-The DSP instruction format is so tightly packed and has a lot of entropy, so I could make a mistake in decoding somewhere. All this then has to appear.
-
-*/
-
+// DSP analyzer
 #include "pch.h"
 
 namespace DSP

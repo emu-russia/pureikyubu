@@ -54,4 +54,8 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\DspJdi.json" />
+    <None Include="..\Readme.md" />
+  </ItemGroup>
 </Project>

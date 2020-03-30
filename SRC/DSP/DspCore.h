@@ -1,22 +1,5 @@
 ﻿// Low-level DSP core
 
-/*
-
-# How does the DSP core work
-
-The Run method executes the Update method until it is stopped by the Suspend method or it encounters a breakpoint.
-
-Suspend method stops DSP thread execution indifinitely (same as HALT instruction).
-
-The Step debugging method is used to unconditionally execute next DSP instruction (by interpreter).
-
-The Update method checks the value of Gekko TBR. If its value has exceeded the limit for the execution of one DSP instruction (or segment in case of Jitc),
-interpreter/Jitc Execute method is called.
-
-DspCore uses the interpreter and recompiler at the same time, of their own free will, depending on the situation.
-
-*/
-
 #pragma once
 
 #include <vector>
@@ -26,7 +9,7 @@ DspCore uses the interpreter and recompiler at the same time, of their own free 
 
 namespace DSP
 {
-	typedef uint32_t DspAddress;		///< in halfwords slots 
+	typedef uint32_t DspAddress;		// in halfwords slots 
 
 	#pragma warning (push)
 	#pragma warning (disable: 4201)
@@ -80,23 +63,23 @@ namespace DSP
 	{
 		struct
 		{
-			unsigned c : 1;			/// Carry
-			unsigned o : 1;			/// Overﬂow 
-			unsigned z : 1;			/// Arithmetic zero 
-			unsigned s : 1;		/// Sign
-			unsigned as : 1;	/// Above s32 
-			unsigned tt : 1;	/// Top two bits are equal 
-			unsigned ok : 1;	/// 1: Bit test OK, 0: Bit test not OK
-			unsigned os : 1;	/// Overflow (sticky)
-			unsigned hwz : 1;	/// Hardwired to 0? 
-			unsigned ie : 1;	/// Interrupt enable 
+			unsigned c : 1;			// Carry
+			unsigned o : 1;			// Overﬂow 
+			unsigned z : 1;			// Arithmetic zero 
+			unsigned s : 1;		// Sign
+			unsigned as : 1;	// Above s32 
+			unsigned tt : 1;	// Top two bits are equal 
+			unsigned ok : 1;	// 1: Bit test OK, 0: Bit test not OK
+			unsigned os : 1;	// Overflow (sticky)
+			unsigned hwz : 1;	// Hardwired to 0? 
+			unsigned ie : 1;	// Interrupt enable 
 			unsigned unk10 : 1;
-			unsigned eie : 1;		/// External interrupt enable 
+			unsigned eie : 1;		// External interrupt enable 
 			unsigned unk12 : 1;
 			// Not actually status, but ALU control
-			unsigned am : 1;		/// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
-			unsigned sxm : 1;	/// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
-			unsigned su : 1;	/// Operands are signed (1 = unsigned)
+			unsigned am : 1;		// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
+			unsigned sxm : 1;	// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
+			unsigned su : 1;	// Operands are signed (1 = unsigned)
 		};
 
 		uint16_t bits;
@@ -107,87 +90,87 @@ namespace DSP
 
 	enum class DspRegister
 	{
-		ar0 = 0,		///< Addressing register 0 
-		ar1,			///< Addressing register 1 
-		ar2,			///< Addressing register 2 
-		ar3,			///< Addressing register 3 
+		ar0 = 0,		// Addressing register 0 
+		ar1,			// Addressing register 1 
+		ar2,			// Addressing register 2 
+		ar3,			// Addressing register 3 
 		indexRegs,
-		ix0 = indexRegs,	///< Indexing register 0 
-		ix1,			///< Indexing register 1
-		ix2,			///< Indexing register 2
-		ix3,			///< Indexing register 3
+		ix0 = indexRegs,	// Indexing register 0 
+		ix1,			// Indexing register 1
+		ix2,			// Indexing register 2
+		ix3,			// Indexing register 3
 		gprs,
 		r8 = gprs,
 		r9,
 		r10,
 		r11,
 		stackRegs,
-		st0 = stackRegs,	///< Call stack register 
-		st1,			///< Data stack register 
-		st2,			///< Loop address stack register 
-		st3,			///< Loop counter register 
-		ac0h,			///< 40-bit Accumulator 0 (high) 
-		ac1h,			///< 40-bit Accumulator 1 (high) 
-		bank,			///< Bank register (LRS/SRS)
-		sr,				///< Status register 
-		prodl,			///< Product register (low) 
-		prodm1,			///< Product register (mid 1) 
-		prodh,			///< Product register (high) 
-		prodm2,			///< Product register (mid 2) 
-		ax0l,			///< 32-bit Accumulator 0 (low) 
-		ax0h,			///< 32-bit Accumulator 0 (high) 
-		ax1l,			///< 32-bit Accumulator 1 (low) 
-		ax1h,			///< 32-bit Accumulator 1 (high
-		ac0l,			///< 40-bit Accumulator 0 (low) 
-		ac1l,			///< 40-bit Accumulator 1 (low) 
-		ac0m,			///< 40-bit Accumulator 0 (mid)
-		ac1m,			///< 40-bit Accumulator 1 (mid)
+		st0 = stackRegs,	// Call stack register 
+		st1,			// Data stack register 
+		st2,			// Loop address stack register 
+		st3,			// Loop counter register 
+		ac0h,			// 40-bit Accumulator 0 (high) 
+		ac1h,			// 40-bit Accumulator 1 (high) 
+		bank,			// Bank register (LRS/SRS)
+		sr,				// Status register 
+		prodl,			// Product register (low) 
+		prodm1,			// Product register (mid 1) 
+		prodh,			// Product register (high) 
+		prodm2,			// Product register (mid 2) 
+		ax0l,			// 32-bit Accumulator 0 (low) 
+		ax0h,			// 32-bit Accumulator 0 (high) 
+		ax1l,			// 32-bit Accumulator 1 (low) 
+		ax1h,			// 32-bit Accumulator 1 (high
+		ac0l,			// 40-bit Accumulator 0 (low) 
+		ac1l,			// 40-bit Accumulator 1 (low) 
+		ac0m,			// 40-bit Accumulator 0 (mid)
+		ac1m,			// 40-bit Accumulator 1 (mid)
 	};
 
 	typedef struct _DspRegs
 	{
-		uint32_t clearingPaddy;		/// To use {0} on structure
-		uint16_t ar[4];		/// Addressing registers
-		uint16_t ix[4];		/// Indexing registers
-		uint16_t gpr[4];	/// General purpose (r8-r11)
-		std::vector<DspAddress> st[4];	/// Stack registers
-		DspLongAccumulator ac[2];		/// 40-bit Accumulators
-		DspShortAccumulator ax[2];		/// 32-bit Accumulators
-		DspProduct prod;		/// Product register
+		uint32_t clearingPaddy;		// To use {0} on structure
+		uint16_t ar[4];		// Addressing registers
+		uint16_t ix[4];		// Indexing registers
+		uint16_t gpr[4];	// General purpose (r8-r11)
+		std::vector<DspAddress> st[4];	// Stack registers
+		DspLongAccumulator ac[2];		// 40-bit Accumulators
+		DspShortAccumulator ax[2];		// 32-bit Accumulators
+		DspProduct prod;		// Product register
 		// https://github.com/dolphin-emu/dolphin/wiki/Zelda-Microcode#unknown-registers
-		uint16_t bank;		/// bank (lrs/srs)
-		DspStatus sr;		/// status
-		DspAddress pc;		/// Program counter
+		uint16_t bank;		// bank (lrs/srs)
+		DspStatus sr;		// status
+		DspAddress pc;		// Program counter
 	} DspRegs;
 
 	enum class DspHardwareRegs
 	{
-		CMBH = 0xFFFE,		/// CPU->DSP Mailbox H 
-		CMBL = 0xFFFF,		/// CPU->DSP Mailbox L 
-		DMBH = 0xFFFC,		/// DSP->CPU Mailbox H 
-		DMBL = 0xFFFD,		/// DSP->CPU Mailbox L 
+		CMBH = 0xFFFE,		// CPU->DSP Mailbox H 
+		CMBL = 0xFFFF,		// CPU->DSP Mailbox L 
+		DMBH = 0xFFFC,		// DSP->CPU Mailbox H 
+		DMBL = 0xFFFD,		// DSP->CPU Mailbox L 
 
-		DSMAH = 0xFFCE,		/// Memory address H 
-		DSMAL = 0xFFCF,		/// Memory address L 
-		DSPA = 0xFFCD,		/// DSP memory address 
-		DSCR = 0xFFC9,		/// DMA control 
-		DSBL = 0xFFCB,		/// Block size 
+		DSMAH = 0xFFCE,		// Memory address H 
+		DSMAL = 0xFFCF,		// Memory address L 
+		DSPA = 0xFFCD,		// DSP memory address 
+		DSCR = 0xFFC9,		// DMA control 
+		DSBL = 0xFFCB,		// Block size 
 
-		ACDAT2 = 0xFFD3,	/// RAW accelerator data (R/W)
-		ACSAH = 0xFFD4,		/// Accelerator start address H 
-		ACSAL = 0xFFD5,		/// Accelerator start address L 
-		ACEAH = 0xFFD6,		/// Accelerator end address H 
-		ACEAL = 0xFFD7,		/// Accelerator end address L 
-		ACCAH = 0xFFD8,		/// Accelerator current address H 
-		ACCAL = 0xFFD9,		/// Accelerator current address L 
-		ACDAT = 0xFFDD,		/// Decoded Accelerator data (Read)
-		AMDM = 0xFFEF,		/// ARAM DMA Request Mask
+		ACDAT2 = 0xFFD3,	// RAW accelerator data (R/W)
+		ACSAH = 0xFFD4,		// Accelerator start address H 
+		ACSAL = 0xFFD5,		// Accelerator start address L 
+		ACEAH = 0xFFD6,		// Accelerator end address H 
+		ACEAL = 0xFFD7,		// Accelerator end address L 
+		ACCAH = 0xFFD8,		// Accelerator current address H 
+		ACCAL = 0xFFD9,		// Accelerator current address L 
+		ACDAT = 0xFFDD,		// Decoded Accelerator data (Read)
+		AMDM = 0xFFEF,		// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
-		ACFMT = 0xFFD1,			/// sample format used
-		ACPDS = 0xFFDA,			/// predictor / scale combination
-		ACYN1 = 0xFFDB,			/// y[n - 1]
-		ACYN2 = 0xFFDC,			/// y[n - 2]
-		ACGAN = 0xFFDE,			/// gain to be applied (0 for ADPCM, 0x0800 for PCM8/16)
+		ACFMT = 0xFFD1,			// sample format used
+		ACPDS = 0xFFDA,			// predictor / scale combination
+		ACYN1 = 0xFFDB,			// y[n - 1]
+		ACYN2 = 0xFFDC,			// y[n - 2]
+		ACGAN = 0xFFDE,			// gain to be applied (0 for ADPCM, 0x0800 for PCM8/16)
 		// ADPCM coef table
 		ADPCM_A00 = 0xFFA0,
 		ADPCM_A10 = 0xFFA1,
@@ -209,7 +192,7 @@ namespace DSP
 		UNKNOWN_FFB0 = 0xFFB0,
 		UNKNOWN_FFB1 = 0xFFB1,
 
-		DIRQ = 0xFFFB,		/// IRQ request
+		DIRQ = 0xFFFB,		// IRQ request
 	};
 
 	// Known DSP exceptions
@@ -230,25 +213,25 @@ namespace DSP
 
 	enum class AccelFormat
 	{
-		RawByte = 0x0005,		/// Seen in IROM
-		RawUInt16 = 0x0006,		/// 
-		Pcm16 = 0x000A,			/// Signed 16 bit PCM mono
-		Pcm8 = 0x0019,			/// Signed 8 bit PCM mono
-		Adpcm = 0x0000,			/// ADPCM encoded (both standard & extended)
+		RawByte = 0x0005,		// Seen in IROM
+		RawUInt16 = 0x0006,		// 
+		Pcm16 = 0x000A,			// Signed 16 bit PCM mono
+		Pcm8 = 0x0019,			// Signed 8 bit PCM mono
+		Adpcm = 0x0000,			// ADPCM encoded (both standard & extended)
 	};
 
 	class DspInterpreter;
 
 	class DspCore
 	{
-		std::vector<DspAddress> breakpoints;		///< IMEM breakpoints
+		std::vector<DspAddress> breakpoints;		// IMEM breakpoints
 		MySpinLock::LOCK breakPointsSpinLock = MySpinLock::LOCK_IS_FREE;
 
-		std::map<DspAddress, std::string> canaries;		///< When the PC is equal to the canary address, a debug message is displayed
+		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		MySpinLock::LOCK canariesSpinLock = MySpinLock::LOCK_IS_FREE;
 
-		const uint32_t GekkoTicksPerDspInstruction = 5;		///< How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 50;		///< How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 50;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 
@@ -261,10 +244,10 @@ namespace DSP
 
 		DspInterpreter* interp;
 
-		std::atomic<uint16_t> DspToCpuMailbox[2];		///< DMBH, DMBL
+		std::atomic<uint16_t> DspToCpuMailbox[2];		// DMBH, DMBL
 		uint16_t DspToCpuMailboxShadow[2];
 
-		std::atomic<uint16_t> CpuToDspMailbox[2];		///< CMBH, CMBL
+		std::atomic<uint16_t> CpuToDspMailbox[2];		// CMBH, CMBL
 		uint16_t CpuToDspMailboxShadow[2];
 
 		struct
@@ -284,8 +267,8 @@ namespace DSP
 			{
 				struct
 				{
-					unsigned Dsp2Mmem : 1;		/// 0: MMEM -> DSP, 1: DSP -> MMEM
-					unsigned Imem : 1;			/// 0: DMEM, 1: IMEM
+					unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
+					unsigned Imem : 1;			// 0: DMEM, 1: IMEM
 				};
 				uint16_t	bits;
 			} control;
@@ -323,7 +306,7 @@ namespace DSP
 
 	public:
 
-		static const size_t MaxInstructionSizeInBytes = 4;		///< max instruction size
+		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
 
 		static const size_t IRAM_SIZE = (8 * 1024);
 		static const size_t IROM_SIZE = (8 * 1024);
@@ -332,7 +315,7 @@ namespace DSP
 
 		static const size_t IROM_START_ADDRESS = 0x8000;
 		static const size_t DROM_START_ADDRESS = 0x1000;
-		static const size_t IFX_START_ADDRESS = 0xFF00;		///< Internal dsp "hardware"
+		static const size_t IFX_START_ADDRESS = 0xFF00;		// Internal dsp "hardware"
 
 		DspRegs regs;
 

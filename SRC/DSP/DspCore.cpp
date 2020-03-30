@@ -1,6 +1,7 @@
 // Low-level DSP core
 
 #include "pch.h"
+#include "../UI/UserFile.h"
 
 namespace DSP
 {

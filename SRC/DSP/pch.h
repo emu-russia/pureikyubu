@@ -11,8 +11,6 @@
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 
-#include "../UI/UserFile.h"
-
 #include "DspCore.h"
 #include "DspAnalyzer.h"
 #include "DspInterpreter.h"

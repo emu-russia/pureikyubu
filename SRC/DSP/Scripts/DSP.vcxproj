@@ -39,6 +39,10 @@
     <ClInclude Include="..\DspInterpreter.h" />
     <ClInclude Include="..\pch.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\DspJdi.json" />
+    <None Include="..\Readme.md" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <ProjectGuid>{0336D67C-249D-4C48-BD80-8E05CE711A58}</ProjectGuid>

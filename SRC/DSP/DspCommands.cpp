@@ -1,39 +1,10 @@
 // Dsp debug commands
 
 #include "pch.h"
+#include "../UI/UserFile.h"
 
 namespace DSP
 {
-
-    void dsp_help()
-    {
-/*
-        DBReport2(DbgChannel::Header, "## DSP Debug Commands\n");
-        DBReport("    dspdisa              - Disassemble DSP code into text file\n");
-        DBReport("    dregs                - Show DSP registers\n");
-        DBReport("    dreg <reg> <value>   - Modify DSP register\n");
-        DBReport("    dmem                 - Dump DSP DMEM\n");
-        DBReport("    imem                 - Dump DSP IMEM\n");
-        DBReport("    drun                 - Run DSP thread until break, halt or dstop\n");
-        DBReport("    dstop                - Stop DSP thread\n");
-        DBReport("    dstep [n]            - Step DSP instruction(s)\n");
-        DBReport("    dbrk                 - Add IMEM breakpoint\n");
-        DBReport("    dcan                 - Add IMEM canary\n");
-        DBReport("    dlist                - List IMEM breakpoints\n");
-        DBReport("    dbrkclr              - Clear all IMEM breakpoints\n");
-        DBReport("    dcanclr              - Clear all IMEM canaries\n");
-        DBReport("    dpc                  - Set DSP program counter\n");
-        DBReport("    dreset               - Issue DSP reset\n");
-        DBReport("    du [addr] [count]    - Disassemble some DSP instructions at pc / address\n");
-        DBReport("    dst                  - Dump DSP call stack\n");
-        DBReport("    difx                 - Dump DSP IFX (internal hardware)\n");
-        DBReport("    cpumbox              - Write message to CPU Mailbox\n");
-        DBReport("    dspmbox              - Read message from DSP Mailbox\n");
-        DBReport("    cpudspint            - Send CPU->DSP interrupt\n");
-        DBReport("    dspcpuint            - Send DSP->CPU interrupt\n");
-        DBReport("\n");
-*/
-    }
 
     // disasm dsp ucode to file
     static Json::Value* cmd_dspdisa(std::vector<std::string>& args)
