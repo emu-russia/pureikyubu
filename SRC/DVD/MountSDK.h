@@ -25,6 +25,7 @@ namespace DVD
 		const TCHAR* DolPath = _T("pong.dol");			// SDK contains demos only in ELF format :/
 
 		std::vector<uint8_t> DiskId;
+		std::vector<uint8_t> GameName;
 		std::vector<uint8_t> AppldrData;
 		std::vector<uint8_t> Dol;
 		std::vector<uint8_t> Bb2Data;
@@ -36,6 +37,7 @@ namespace DVD
 		bool GenApploader();
 		bool GenDol();
 		bool GenBi2();
+		bool GenFst();
 		bool GenDvdData();
 		bool GenBb2();
 
@@ -43,6 +45,18 @@ namespace DVD
 		bool GenMap();
 		void MapVector(std::vector<uint8_t>& v, uint32_t offset);
 		uint8_t* Translate(uint32_t offset, size_t requestedSize, size_t& maxSize);
+
+		uint32_t RoundUp32(uint32_t offset)
+		{
+			return (offset + 31) & ~0x1f;
+		}
+
+		uint32_t RoundUpSector(uint32_t offset)
+		{
+			return (offset + (DVD_SECTOR_SIZE - 1)) & ~(DVD_SECTOR_SIZE - 1);
+		}
+
+		void SwapArea(void* _addr, int sizeInBytes);
 
 	public:
 		MountDolphinSdk(const TCHAR* DolphinSDKPath);

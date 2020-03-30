@@ -578,7 +578,7 @@ void ResizeSelector(int width, int height)
     }
 }
 
-static uint16_t * SjisToUnicode(TCHAR * sjisText, uint32_t * size, uint32_t * chars)
+static uint16_t * SjisToUnicode(TCHAR * sjisText, size_t * size, size_t * chars)
 {
     uint16_t * unicodeText , *ptrU , uchar, schar;
     TCHAR *ptrS;
@@ -719,7 +719,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         if( DVD::RegionById(DiskId) == DVD::Region::JPN &&
             (col == 1 || col == 4))     // title or comment only
         {
-            uint16_t *buf; uint32_t size, chars;
+            uint16_t *buf; size_t size, chars;
             buf = SjisToUnicode(text, &size, &chars);
             DrawTextW(DC, (wchar_t *)buf, chars, &rc2, fmt);
             free(buf);

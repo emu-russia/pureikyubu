@@ -5,7 +5,12 @@
 // size of DVD image
 #define DVD_SIZE            0x57058000  // 1.4 GB
 
+// Sector size
+#define DVD_SECTOR_SIZE     2048
+
 // DiskID
+
+#define DVD_DISKID_MAGIC 0xC2339F3D
 
 typedef struct _DiskID
 {
@@ -15,7 +20,8 @@ typedef struct _DiskID
     uint8_t gameVersion;
     uint8_t streaming;
     uint8_t streamingBufSize;
-    uint8_t padding[22];
+    uint8_t padding[18];
+    uint32_t magicNumber;       // DVD_DISKID_MAGIC
 } DiskID;
 
 //
@@ -24,6 +30,7 @@ typedef struct _DiskID
 
 // offsets
 #define DVD_ID_OFFSET       0x0000  // disk id
+#define DVD_GAMENAME_OFFSET 0x0020  // Game name (0x400) bytes
 #define DVD_BB2_OFFSET      0x0420  // BB2
 #define DVD_BI2_OFFSET      0x0440  // BI2
 #define DVD_APPLDR_OFFSET   0x2440  // apploader

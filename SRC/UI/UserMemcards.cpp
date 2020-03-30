@@ -272,7 +272,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             case IDOK:
                 if (um_filechanged == TRUE )
                 {
-                    int Fnsize, Pathsize;
+                    size_t Fnsize, Pathsize;
                     Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 

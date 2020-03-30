@@ -27,8 +27,8 @@ void EMUGetHwConfig(HWConfig * config)
     _tcscpy_s (config->ansiFilename, _countof(config->ansiFilename) - 1, GetConfigString(USER_ANSI, USER_HW));
     _tcscpy_s (config->sjisFilename, _countof(config->sjisFilename) - 1, GetConfigString(USER_SJIS, USER_HW));
 
-    config->MemcardA_Connected = GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
-    config->MemcardB_Connected = GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
+    config->MemcardA_Connected = false;// GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
+    config->MemcardB_Connected = false;// GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
     _tcscpy_s (config->MemcardA_Filename, _countof(config->MemcardA_Filename) - 1, GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS));
     _tcscpy_s (config->MemcardB_Filename, _countof(config->MemcardB_Filename) - 1, GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS));
     config->Memcard_SyncSave = GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);

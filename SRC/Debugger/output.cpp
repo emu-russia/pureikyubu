@@ -69,7 +69,7 @@ void con_blt_region(int regY, int regH)
 {
     COORD       pos = { 0, (SHORT)regY };
     COORD       sz = { CON_WIDTH, CON_HEIGHT };
-    SMALL_RECT  rgn = { 0, (SHORT)regY, 79, (SHORT)(regY + regH - 1) };
+    SMALL_RECT  rgn = { 0, (SHORT)regY, CON_WIDTH-1, (SHORT)(regY + regH - 1) };
     BOOL        success = WriteConsoleOutputA(con.output, *con.buf, sz, pos, &rgn);
 }
 
