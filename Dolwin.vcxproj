@@ -244,7 +244,7 @@
     <ProjectReference Include="SRC\Core\GekkoCore\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
     </ProjectReference>
-    <ProjectReference Include="SRC\Debugger\Debugger\Debugger.vcxproj">
+    <ProjectReference Include="SRC\Debugger\Scripts\Debugger.vcxproj">
       <Project>{7fc22f72-a07b-404a-bce4-7a950ea3c44b}</Project>
     </ProjectReference>
     <ProjectReference Include="SRC\DolwinVideo\DolwinVideo.vcxproj">

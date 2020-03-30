@@ -30,6 +30,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\Region.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DduCommands.h" />
@@ -39,6 +40,7 @@
     <ClInclude Include="..\GCM.h" />
     <ClInclude Include="..\MountSDK.h" />
     <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\Region.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\DduJdi.json" />

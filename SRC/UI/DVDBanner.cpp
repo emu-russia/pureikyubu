@@ -23,7 +23,6 @@ void * DVDLoadBanner(TCHAR *dvdFile)
     {
         DVD::Seek(bnrofs);
         DVD::Read((uint8_t *)banner, sizeof(DVDBanner2));
-        DVD::Unmount();
     }
     else
     {

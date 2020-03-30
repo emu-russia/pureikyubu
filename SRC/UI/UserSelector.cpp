@@ -367,14 +367,15 @@ static void add_item(size_t index)
     ListView_InsertItem(usel.hSelectorWindow, &lvi); 
 }
 
-static void CoptAnsiStringAsTcharString(TCHAR* dest, const char* src)
+static void CopyAnsiStringAsTcharString(TCHAR* dest, const char* src)
 {
     char* ansiPtr = (char*)src;
     TCHAR* tcharPtr = (TCHAR*)dest;
     while (*ansiPtr)
     {
-        *tcharPtr++ = *ansiPtr++;
+        *tcharPtr++ = (uint8_t)*ansiPtr++;
     }
+    *tcharPtr++ = 0;
 }
 
 // insert new file into filelist
@@ -450,8 +451,8 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
         DVD::Unmount();
 
         // use banner info and remove line-feeds
-        CoptAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
-        CoptAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
+        CopyAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
+        CopyAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
         fix_string(item->title);
         fix_string(item->comment);
 
@@ -577,13 +578,14 @@ void ResizeSelector(int width, int height)
     }
 }
 
-static uint16_t * SjisToUnicode(uint8_t * sjisText, uint32_t * size, uint32_t * chars)
+static uint16_t * SjisToUnicode(TCHAR * sjisText, uint32_t * size, uint32_t * chars)
 {
     uint16_t * unicodeText , *ptrU , uchar, schar;
-    uint8_t *ptrS;
+    TCHAR *ptrS;
 
-    *size = strlen((char *)sjisText) * 2;
+    *size = _tcslen(sjisText) * sizeof(wchar_t);
     unicodeText = (uint16_t *)malloc(*size);
+    assert(unicodeText);
     memset(unicodeText, 0, *size);
 
     ptrU = unicodeText;
@@ -708,11 +710,17 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc2.left += 2;
         rc2.right-= 2;
 
-        if( (file->id[3] == _T('J')) &&     // sick check (but no alternative)
+        char DiskId[4] = { 0 };
+        DiskId[0] = (char)file->id[0];
+        DiskId[1] = (char)file->id[1];
+        DiskId[2] = (char)file->id[2];
+        DiskId[3] = (char)file->id[3];
+
+        if( DVD::RegionById(DiskId) == DVD::Region::JPN &&
             (col == 1 || col == 4))     // title or comment only
         {
             uint16_t *buf; uint32_t size, chars;
-            buf = SjisToUnicode((uint8_t *)text, &size, &chars);
+            buf = SjisToUnicode(text, &size, &chars);
             DrawTextW(DC, (wchar_t *)buf, chars, &rc2, fmt);
             free(buf);
         } else DrawText(DC, text, len, &rc2, fmt);

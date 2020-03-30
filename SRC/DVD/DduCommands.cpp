@@ -4,7 +4,7 @@
 
 namespace DVD
 {
-	// Show DDU Status Information
+	// Get DDU Status Information
 	static Json::Value* DvdInfo(std::vector<std::string>& args)
 	{
 		Json::Value* output = new Json::Value();
@@ -14,18 +14,18 @@ namespace DVD
 		{
 			DBReport("Mounted as disk image: %s\n", Debug::Hub.TcharToString(dvd.gcm_filename).c_str());
 			DBReport("GCM Size: 0x%08X bytes\n", dvd.gcm_size);
-			DBReport("Current seek position: 0x%08X\n", dvd.seekval);
+			DBReport("Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.gcm_filename);
-			output->AddInt(nullptr, dvd.seekval);
+			output->AddInt(nullptr, GetSeek());
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
 			DBReport("Mounted as SDK directory: %s\n", Debug::Hub.TcharToString(dvd.mountedSdk->GetDirectory()));
-			DBReport("Current seek position: 0x%08X\n", dvd.mountedSdk->GetSeek());
+			DBReport("Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
-			output->AddInt(nullptr, dvd.mountedSdk->GetSeek());
+			output->AddInt(nullptr, GetSeek());
 		}
 		else
 		{
@@ -65,7 +65,7 @@ namespace DVD
 	// Simulate opening of the drive cover
 	static Json::Value* OpenLid(std::vector<std::string>& args)
 	{
-		if (DIGetCoverState() == 0)
+		if (DIGetCoverState() == false)
 		{
 			DIOpenCover();
 		}
@@ -75,7 +75,7 @@ namespace DVD
 	// Simulate closing of the drive cover
 	static Json::Value* CloseLid(std::vector<std::string>& args)
 	{
-		if (DIGetCoverState() == 1)
+		if (DIGetCoverState() == true)
 		{
 			DICloseCover();
 		}
@@ -135,7 +135,13 @@ namespace DVD
 
 		if (size > 1024 * 1024)
 		{
-			DBReport("Too big\n");
+			DBReport2(DbgChannel::Error, "Too big\n");
+			return nullptr;
+		}
+
+		if (!IsMounted())
+		{
+			DBReport2(DbgChannel::DVD, "Not mounted!\n");
 			return nullptr;
 		}
 
@@ -144,11 +150,32 @@ namespace DVD
 		uint8_t* buf = new uint8_t[size];
 		assert(buf);
 
+		int seekPos = GetSeek();
 		Read(buf, size);
 
 		// Print first 32 Bytes
 
-		// TODO
+		char hexDump[0x200] = { 0, };
+		char asciiDump[0x200] = { 0, };
+		char* ptr = hexDump;
+		char* ptr2 = asciiDump;
+
+		size_t bytes = min(32, size);
+		for (size_t i=0, breakCounter=0; i< bytes; i++)
+		{
+			ptr += sprintf_s(ptr, sizeof(hexDump) - (ptr - hexDump), "%02X ", buf[i]);
+			ptr2 += sprintf_s(ptr2, sizeof(asciiDump) - (ptr2 - asciiDump), "%c", (32 <= buf[i] && buf[i] < 128) ? buf[i] : '.');
+
+			breakCounter++;
+			if (breakCounter >= 16)
+			{
+				DBReport("0x%08X %s %s\n", seekPos, hexDump, asciiDump);
+				breakCounter = 0;
+				ptr = hexDump;
+				ptr2 = asciiDump;
+				seekPos += 16;
+			}
+		}
 
 		// Return output
 

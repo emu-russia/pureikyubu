@@ -7,7 +7,7 @@
 
 	"can": {
 		"DvdInfo": {
-			"help": "Show DDU Status Information",
+			"help": "Get DDU Status Information",
 			"output": "Array [String File/Dir, Int Seek, Bool LidStatus (true: Open, false: Close)]"
 		},
 
@@ -15,6 +15,10 @@
 			"help": "Mount GC DVD image (GCM)",
 			"hints": "<file>",
 			"args": 1,
+			"usage": [
+				"Syntax: MountIso <file>\n",
+				"Examples of use: MountIso C:\\Isos\\mygame.iso\n"
+			],
 			"output": "Bool Success/Fail"
 		},
 
@@ -34,6 +38,10 @@
 			"help": "Mount Dolphin SDK folder as virtual disk",
 			"hints": "<dir>",
 			"args": 1,
+			"usage": [
+				"Syntax: MountSDK <dir>\n",
+				"Examples of use: MountSDK C:\\DolphinSDK\n"
+			],			
 			"output": "Bool Success/Fail"
 		},
 
@@ -44,13 +52,25 @@
 		"DvdSeek": {
 			"help": "Seek at DVD offset",
 			"hints": "<pos>",
-			"args":  1
+			"args":  1,
+			"usage": [
+				"Syntax: DvdSeek <offset>\n",
+				"Offset (in bytes) must not be greater current DVD size.\n",
+				"Examples of use: DvdSeek 0\n",
+				"                 DvdSeek 0x2440\n"
+			]
 		},
 
 		"DvdRead": {
 			"help": "Read DVD data",
 			"hints": "<len>",
 			"args": 1,
+			"usage": [
+				"Syntax: DvdRead <length>\n",
+				"First 32 Bytes will be dumped on screen. Length must not greater 1 MByte.\n",
+				"Examples of use: DvdRead 32\n",
+				"                 DvdRead 0x1000\n"
+			],
 			"output": "Array [] of bytes"
 		},
 
@@ -59,10 +79,10 @@
 			"hints": "<file>",
 			"args": 1,
 			"usage": [
-        		"Syntax: DvdOpenFile <file>\n",
-        		"path must be absolute, including root prefix '/'\n",
-        		"Examples of use: DvdOpenFile \"/opening.bnr\"\n",
-        		"                 DvdOpenFile \"/gxTests/tex-02/ia8_odd.tpl\"\n"
+				"Syntax: DvdOpenFile <file>\n",
+				"path must be absolute, including root prefix '/'\n",
+				"Examples of use: DvdOpenFile \"/opening.bnr\"\n",
+				"                 DvdOpenFile \"/gxTests/tex-02/ia8_odd.tpl\"\n"
 			],
 			"output": "File offset in bytes. 0 if file not found."
 		}

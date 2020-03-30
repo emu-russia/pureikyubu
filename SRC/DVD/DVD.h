@@ -22,8 +22,11 @@ namespace DVD
     // Unmount
     void Unmount();
 
+    bool IsMounted();
+
     // Seek and read operations on mounted DVD
     void Seek(int position);
+    int GetSeek();
     void Read(void* buffer, size_t length);
 
     // Open file in DVD root. Return file position, or 0 if no such file.
@@ -35,6 +38,7 @@ namespace DVD
 // other include files
 #include "filesystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
 #include "MountSDK.h"
+#include "Region.h"
 
 // all important data is placed here
 typedef struct

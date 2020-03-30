@@ -22,7 +22,7 @@ namespace DVD
 		const TCHAR* AppldrPath = _T("/HW2/boot/apploader.img");
 		const TCHAR* Bi2Path = _T("/X86/bin/bi2.bin");
 		const TCHAR* FilesRoot = _T("/dvddata");
-		const TCHAR* DolPath = _T("/pong.dol");			// SDK contains demos only in ELF format :/
+		const TCHAR* DolPath = _T("pong.dol");			// SDK contains demos only in ELF format :/
 
 		std::vector<uint8_t> DiskId;
 		std::vector<uint8_t> AppldrData;

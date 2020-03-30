@@ -89,6 +89,11 @@ namespace DVD
         }
     }
 
+    bool IsMounted()
+    {
+        return (dvd.mountedImage || dvd.mountedImage);
+    }
+
     // dvd operations on current mounted dvd
 
     void Seek(int position)
@@ -103,8 +108,24 @@ namespace DVD
         }
     }
 
+    int GetSeek()
+    {
+        if (dvd.mountedImage)
+        {
+            return dvd.seekval;
+        }
+        else if (dvd.mountedSdk)
+        {
+            return dvd.mountedSdk->GetSeek();
+        }
+        else return 0;
+    }
+
     void Read(void *buffer, size_t length)
     {
+        if (length == 0)
+            return;
+
         if (dvd.mountedImage)
         {
             GCMRead((uint8_t*)buffer, length);
