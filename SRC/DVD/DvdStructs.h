@@ -49,11 +49,11 @@ typedef struct _DVDBB2
 // BI2 is omitted here..
 
 //
-// file string table (FST)
+// file string table (FST):  { [FST Entry] [FST Entry] ... } { NameTable }
 //
 
 #define DVD_FST_MAX_SIZE 0x00100000 // 1 mb
-#define DVD_MAXPATH      256        // path length
+#define DVD_MAXPATH      256        // Complete path length, including root /
 
 #pragma pack(push, 1)
 
@@ -63,19 +63,19 @@ typedef struct _DVDBB2
 typedef struct _DVDFileEntry
 {
     uint8_t      isDir;                  // 1, if directory
-    uint8_t      nameOffsetHi;
+    uint8_t      nameOffsetHi;      // Relative to FST start
     uint16_t     nameOffsetLo;
     union
     {
         struct                      // file
         {
-            uint32_t     fileOffset;
-            uint32_t     fileLength;
+            uint32_t     fileOffset;        // Relative to disk start (0)
+            uint32_t     fileLength;        // In bytes
         };
         struct                      // directory
         {
-            uint32_t     parentOffset;   // previous
-            uint32_t     nextOffset;     // next
+            uint32_t     parentOffset;   // parent directory FST index
+            uint32_t     nextOffset;     // next directory FST index
         };
     };
 } DVDFileEntry;

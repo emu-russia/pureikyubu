@@ -31,20 +31,30 @@ namespace DVD
 		std::vector<uint8_t> Bb2Data;
 		std::vector<uint8_t> Bi2Data;
 		std::vector<uint8_t> FstData;
-		std::vector<uint8_t> UserFilesData;
+		std::vector<uint8_t> NameTableData;
+
+		uint32_t userFilesStart = 16 * 1024 * 1024;
+		uint32_t userFilesOffset = 0;
 
 		bool GenDiskId();
 		bool GenApploader();
 		bool GenDol();
 		bool GenBi2();
-		bool GenFst();
-		bool GenDvdData();
 		bool GenBb2();
 
+		void AddString(std::string str);
+		void ParseDvdDataEntryForFst(Json::Value* entry);
+		void WalkAndGenerateFst(Json::Value* entry);
+		bool GenFst();
+
 		std::list<std::tuple<uint8_t*, uint32_t, size_t>> mapping;
+		std::list<std::tuple<TCHAR *, uint32_t, size_t>> fileMapping;
 		bool GenMap();
+		bool GenFileMap();
 		void MapVector(std::vector<uint8_t>& v, uint32_t offset);
-		uint8_t* Translate(uint32_t offset, size_t requestedSize, size_t& maxSize);
+		void MapFile(TCHAR *path, uint32_t offset);
+		uint8_t* TranslateMemory(uint32_t offset, size_t requestedSize, size_t& maxSize);
+		FILE* TranslateFile(uint32_t offset, size_t requestedSize, size_t& maxSize);
 
 		uint32_t RoundUp32(uint32_t offset)
 		{

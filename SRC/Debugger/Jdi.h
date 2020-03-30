@@ -43,6 +43,7 @@ namespace Debug
 		Json::Value* Execute(std::vector<std::string>& args);
 		bool CommandExists(std::vector<std::string>& args);
 
+		void Dump(Json::Value * value, int depth=0);
 	};
 
 	// External API

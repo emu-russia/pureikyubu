@@ -1123,65 +1123,6 @@ public:
 			return nullptr;
 		}
 
-		// Debug
-
-#if 0
-		void Dump(int depth = 0)
-		{
-			for (int i = 0; i < depth; i++)
-			{
-				std::cout << "    ";
-			}
-
-			switch (type)
-			{
-				case ValueType::Object:
-					std::cout << "Object: ";
-					for (auto it = children.begin(); it != children.end(); ++it)
-					{
-						Value* child = *it;
-						child->Dump(depth + 1);
-					}
-					break;
-				case ValueType::Array:
-					std::cout << "Array: ";
-					for (auto it = children.begin(); it != children.end(); ++it)
-					{
-						Value* child = *it;
-						child->Dump(depth + 1);
-					}
-					break;
-
-				case ValueType::Bool:
-					if (name) std::cout << name << ": ";
-					std::cout << value.AsBool ? "True" : "False";
-					break;
-				case ValueType::Null:
-					if (name) std::cout << name << ": ";
-					std::cout << "Null";
-					break;
-
-				case ValueType::Int:
-					if (name) std::cout << name << ": ";
-					std::cout << "Int: ";
-					_tprintf(_T("%I64u"), value.AsInt);
-					break;
-				case ValueType::Float:
-					if (name) std::cout << name << ": ";
-					std::cout << "Float: " << (int)value.AsFloat;
-					break;
-
-				case ValueType::String:
-					if (name) std::cout << name << ": ";
-					std::cout << "String: ";
-					_tprintf(_T("%s"), value.AsString);
-					break;
-			}
-
-			std::cout << std::endl;
-		}
-#endif
-
 	};
 
 	// Deserialized root

@@ -58,11 +58,6 @@ namespace DVD
 			DBReport("Failed to GenFst\n");
 			return;
 		}
-		if (!GenDvdData())
-		{
-			DBReport("Failed to GenDvdData\n");
-			return;
-		}
 		if (!GenDol())
 		{
 			DBReport("Failed to GenDol\n");
@@ -74,11 +69,16 @@ namespace DVD
 			return;
 		}
 
-		// Generate map
+		// Generate mapping
 
 		if (!GenMap())
 		{
 			DBReport("Failed to GenMap\n");
+			return;
+		}
+		if (!GenFileMap())
+		{
+			DBReport("Failed to GenFileMap\n");
 			return;
 		}
 
@@ -96,7 +96,15 @@ namespace DVD
 		mapping.push_back(entry);
 	}
 
-	uint8_t* MountDolphinSdk::Translate(uint32_t offset, size_t requestedSize, size_t& maxSize)
+	void MountDolphinSdk::MapFile(TCHAR* path, uint32_t offset)
+	{
+		size_t size = UI::FileSize(path);
+		std::tuple<TCHAR*, uint32_t, size_t> entry(path, offset, size);
+		fileMapping.push_back(entry);
+	}
+
+	// Check memory mapping
+	uint8_t* MountDolphinSdk::TranslateMemory(uint32_t offset, size_t requestedSize, size_t& maxSize)
 	{
 		for (auto it = mapping.begin(); it != mapping.end(); ++it)
 		{
@@ -108,6 +116,30 @@ namespace DVD
 			{
 				maxSize = min(requestedSize, (startingOffset + size) - offset);
 				return ptr + (offset - startingOffset);
+			}
+		}
+		return nullptr;
+	}
+
+	// Check file mapping
+	FILE * MountDolphinSdk::TranslateFile(uint32_t offset, size_t requestedSize, size_t& maxSize)
+	{
+		for (auto it = fileMapping.begin(); it != fileMapping.end(); ++it)
+		{
+			TCHAR* file = std::get<0>(*it);
+			uint32_t startingOffset = std::get<1>(*it);
+			size_t size = std::get<2>(*it);
+
+			if (startingOffset <= offset && offset < (startingOffset + size))
+			{
+				maxSize = min(requestedSize, (startingOffset + size) - offset);
+
+				FILE* f;
+				_tfopen_s(&f, file, _T("rb"));
+				assert(f);
+
+				fseek(f, offset - startingOffset, SEEK_SET);
+				return f;
 			}
 		}
 		return nullptr;
@@ -141,7 +173,7 @@ namespace DVD
 
 		size_t maxLength = 0;
 		
-		uint8_t* ptr = Translate(currentSeek, length, maxLength);
+		uint8_t* ptr = TranslateMemory(currentSeek, length, maxLength);
 		if (ptr != nullptr)
 		{
 			memcpy(buffer, ptr, maxLength);
@@ -152,7 +184,20 @@ namespace DVD
 		}
 		else
 		{
-			memset(buffer, 0, length);
+			FILE* f = TranslateFile(currentSeek, length, maxLength);
+			if (f != nullptr)
+			{
+				fread(buffer, 1, maxLength, f);
+				if (maxLength < length)
+				{
+					memset((uint8_t*)buffer + maxLength, 0, length - maxLength);
+				}
+				fclose(f);
+			}
+			else
+			{
+				memset(buffer, 0, length);
+			}
 		}
 
 		currentSeek += (uint32_t)length;
@@ -233,14 +278,163 @@ namespace DVD
 		return true;
 	}
 
-	bool MountDolphinSdk::GenFst()
+	void MountDolphinSdk::AddString(std::string str)
 	{
-		return true;
+		for (int i = 0; i < str.size(); i++)
+		{
+			NameTableData.push_back(str[i]);
+		}
+		NameTableData.push_back(0);
 	}
 
-	bool MountDolphinSdk::GenDvdData()
+	void MountDolphinSdk::ParseDvdDataEntryForFst(Json::Value* entry)
 	{
-		return true;
+		if (entry->type == Json::ValueType::Object)
+		{
+			// Directory
+
+			// Save directory name offset
+			size_t nameOffset = NameTableData.size();
+			if (entry->name)
+			{
+				AddString(entry->name);
+			}
+			entry->AddInt("nameOffset", (int)nameOffset);
+
+		}
+		else if (entry->type == Json::ValueType::String)
+		{
+			bool skipMeta = false;
+
+			if (entry->parent->name && entry->parent->type == Json::ValueType::Array)
+			{
+				if (!_stricmp(entry->parent->name, "filePaths"))
+				{
+					skipMeta = true;
+				}
+			}
+
+			// File
+
+			if (!skipMeta)
+			{
+				std::string path = Debug::Hub.TcharToString(entry->value.AsString);
+
+				size_t nameOffset = NameTableData.size();
+				AddString(path);
+
+				Json::Value* parent = entry->parent;
+
+				// Save file name offset
+				Json::Value* nameOffsets = entry->parent->ByName("nameOffsets");
+				if (nameOffsets == nullptr)
+				{
+					nameOffsets = parent->AddArray("nameOffsets");
+				}
+				assert(nameOffsets);
+
+				nameOffsets->AddInt(nullptr, (int)nameOffset);
+
+				do
+				{
+					if (parent)
+					{
+						if (parent->type == Json::ValueType::Object)
+						{
+							path = (parent->name ? parent->name + std::string("/") : "/") + path;
+						}
+
+						parent = parent->parent;
+					}
+
+				} while (parent != nullptr);
+
+				assert(path.size() < DVD_MAXPATH);
+
+				// Save file offset and size
+
+				//DBReport("Processing file: %s\n", path.c_str());
+
+				TCHAR filePath[0x1000] = { 0, };
+
+				_tcscat_s(filePath, _countof(filePath) - 1, directory);
+				_tcscat_s(filePath, _countof(filePath) - 1, _T("/dvddata"));
+				TCHAR* filePathPtr = filePath + _tcslen(filePath);
+
+				for (int i = 0; i < path.size(); i++)
+				{
+					*filePathPtr++ = (TCHAR)path[i];
+				}
+				*filePathPtr++ = 0;
+
+				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
+				if (fileOffsets == nullptr)
+				{
+					fileOffsets = entry->parent->AddArray("fileOffsets");
+				}
+				assert(fileOffsets);
+
+				fileOffsets->AddInt(nullptr, userFilesStart + userFilesOffset);
+
+				size_t fileSize = UI::FileSize(filePath);
+
+				Json::Value* fileSizes = entry->parent->ByName("fileSizes");
+				if (fileSizes == nullptr)
+				{
+					fileSizes = entry->parent->AddArray("fileSizes");
+				}
+				assert(fileSizes);
+
+				fileSizes->AddInt(nullptr, (int)fileSize);
+
+				userFilesOffset += RoundUp32((uint32_t)fileSize);
+
+				Json::Value* filePaths = entry->parent->ByName("filePaths");
+				if (filePaths == nullptr)
+				{
+					filePaths = entry->parent->AddArray("filePaths");
+				}
+				assert(filePaths);
+
+				filePaths->AddString(nullptr, filePath);
+			}
+		}
+
+		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		{
+			ParseDvdDataEntryForFst(*it);
+		}
+	}
+
+	void MountDolphinSdk::WalkAndGenerateFst(Json::Value* entry)
+	{
+
+	}
+
+	// The basic idea behind generating FST is to walk by DvdDataJson.
+	// When traversing a structure a specific userData is attached to each node.
+	// After generation, this userData is collected in a common collection (FST).
+	bool MountDolphinSdk::GenFst()
+	{
+		try
+		{
+			ParseDvdDataEntryForFst(DvdDataInfo.root.children.back());
+		}
+		catch (...)
+		{
+			DBReport("ParseDvdDataEntryForFst failed!\n");
+			return false;
+		}
+
+		Debug::Hub.Dump(DvdDataInfo.root.children.back());
+
+		WalkAndGenerateFst(DvdDataInfo.root.children.back());
+
+		//UI::FileSave(_T("Data\\StringTable.bin"), StringTableData.data(), StringTableData.size());
+
+		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
+
+		return false;
 	}
 
 	bool MountDolphinSdk::GenBb2()
@@ -251,8 +445,8 @@ namespace DVD
 		bb2.FSTLength = (uint32_t)FstData.size();
 		bb2.FSTMaxLength = bb2.FSTLength;
 		bb2.FSTPosition = RoundUpSector(bb2.bootFilePosition + (uint32_t)Dol.size() + DVD_SECTOR_SIZE);
-		bb2.userPosition = RoundUpSector(bb2.FSTPosition + (uint32_t)FstData.size() + DVD_SECTOR_SIZE);
-		bb2.userLength = (uint32_t)UserFilesData.size();
+		bb2.userPosition = 0;
+		bb2.userLength = 0;
 
 		Bb2Data.resize(sizeof(DVDBB2));
 		memcpy(Bb2Data.data(), &bb2, sizeof(bb2));
@@ -273,11 +467,17 @@ namespace DVD
 
 		MapVector(Dol, bb2->bootFilePosition);
 		MapVector(FstData, bb2->FSTPosition);
-		MapVector(UserFilesData, bb2->userPosition);
 
 		SwapArea(bb2, sizeof(DVDBB2));
 
 		return true;
+	}
+
+	bool MountDolphinSdk::GenFileMap()
+	{
+		userFilesOffset = 0;
+
+		return false;
 	}
 
 	void MountDolphinSdk::SwapArea(void* _addr, int sizeInBytes)

@@ -306,4 +306,64 @@ namespace Debug
 
         return exists;
     }
+
+	void JdiHub::Dump(Json::Value* value, int depth)
+	{
+		char indent[0x100] = { 0, };
+		char* indentPtr = indent;
+
+		for (int i = 0; i < depth; i++)
+		{
+			*indentPtr++ = ' ';
+			*indentPtr++ = ' ';
+		}
+		*indentPtr++ = 0;
+
+		switch (value->type)
+		{
+            case Json::ValueType::Object:
+				DBReport("%sObject %s: ", indent,
+                    value->name ? value->name : "");
+				for (auto it = value->children.begin(); it != value->children.end(); ++it)
+				{
+					Json::Value* child = *it;
+					Dump(child, depth + 1);
+				}
+				break;
+			case Json::ValueType::Array:
+				DBReport("%sArray %s: ", indent,
+                    value->name ? value->name : "");
+				for (auto it = value->children.begin(); it != value->children.end(); ++it)
+				{
+					Json::Value* child = *it;
+					Dump(child, depth + 1);
+				}
+				break;
+
+			case Json::ValueType::Bool:
+				DBReport("%s%s: Bool %s", indent, 
+                    value->name ? value->name : "",
+                    value->value.AsBool ? "True" : "False");
+				break;
+			case Json::ValueType::Null:
+				DBReport("%s%s: Null", indent,
+                    value->name ? value->name : "");
+				break;
+
+			case Json::ValueType::Int:
+				DBReport("%s%s: Int: %I64u", indent,
+                    value->name ? value->name : "", value->value.AsInt);
+				break;
+			case Json::ValueType::Float:
+				DBReport("%s%s: Float: %.4f", indent,
+                    value->name ? value->name : "", value->value.AsFloat);
+				break;
+
+			case Json::ValueType::String:
+				DBReport("%s%s: String: %s", indent,
+                    value->name ? value->name : "", Debug::Hub.TcharToString(value->value.AsString).c_str());
+				break;
+		}
+	}
+
 }
