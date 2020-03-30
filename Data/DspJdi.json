@@ -33,12 +33,12 @@
 			"args": 2,
 			"usage":
 			[
-            	"Syntax: dreg <register> <value>\n",
+				"Syntax: dreg <register> <value>\n",
 				"Register names: ar0 ar1 ar2 ar3 ix0 ix1 ix2 ix3",
 				"r8 r9 r10 r11 st0 st1 st2 st3",
 				"ac0h ac1h config sr prodl prodm1 prodh prodm2",
 				"ax0l ax0h ax1l ax1h ac0l ac1l ac0m ac1m",
-            	"Example of use: dreg ar0 0x300\n",
+				"Example of use: dreg ar0 0x300\n",
 			]
 		},
 
@@ -62,10 +62,10 @@
 			"args": 1,
 			"usage":
 			[
-            	"Syntax: imem <dsp_addr>, imem .\n",
-            	"Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
-            	"imem . will dump 32 bytes of imem at program counter address.\n",
-            	"Example of use: imem 0\n"
+				"Syntax: imem <dsp_addr>, imem .\n",
+				"Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"imem . will dump 32 bytes of imem at program counter address.\n",
+				"Example of use: imem 0\n"
 			],
 			"output": "Array [] of memory data"
 		},
@@ -92,9 +92,9 @@
 			"args": 1,
 			"usage":
 			[
-            	"Syntax: dbrk <dsp_addr>\n",
-            	"Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n",
-            	"Example of use: dbrk 0x8020\n"
+				"Syntax: dbrk <dsp_addr>\n",
+				"Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"Example of use: dbrk 0x8020\n"
 			]
 		},
 
@@ -104,10 +104,10 @@
 			"args": 2,
 			"usage":
 			[
-            	"Syntax: dcan <dsp_addr> <message>\n",
-            	"Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n",
-            	"When the PC is equal to the canary address, a debug message is displayed\n",
-            	"Example of use: dcan 0x10 \"Ucode entrypoint\"\n"
+				"Syntax: dcan <dsp_addr> <message>\n",
+				"Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"When the PC is equal to the canary address, a debug message is displayed\n",
+				"Example of use: dcan 0x10 \"Ucode entrypoint\"\n"
 			]
 		},
 
@@ -132,9 +132,9 @@
 			"args": 1,
 			"usage":
 			[
-            	"Syntax: dpc <dsp_addr>\n",
-            	"Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n",
-            	"Example of use: dpc 0x8000\n"
+				"Syntax: dpc <dsp_addr>\n",
+				"Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"Example of use: dpc 0x8000\n"
 			]
 		},
 
@@ -165,8 +165,8 @@
 			"args": 1,
 			"usage":
 			[
-            	"Syntax: cpumbox <value>\n",
-            	"Example of use: cpumbox 0x8001FEED\n"
+				"Syntax: cpumbox <value>\n",
+				"Example of use: cpumbox 0x8001FEED\n"
 			]
 		},
 

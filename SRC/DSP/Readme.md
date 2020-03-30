@@ -45,3 +45,7 @@ This is a new concept of emulation of processor systems, which I decided to try 
 
 - Branch and call instructions are not allowed within program loop
 - TRAP-- Always call to hex 000C address
+
+## DSP JDI
+
+The debugging interface specification provided by this component can be found in Data\DspJdi.json.
