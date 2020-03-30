@@ -99,10 +99,12 @@ void EMUReset()
 
 void EMUCtor()
 {
+    DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
 }
 
 void EMUDtor()
 {
+    DSP::DspCore::ShutdownSubsystem();
     DVD::ShutdownSubsystem();
 }

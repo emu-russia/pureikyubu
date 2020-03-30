@@ -1,7 +1,7 @@
 // hardware registers base (physical address)
 #define HW_BASE         0x0C000000
 
-extern	DSP::DspCore* DspCore;      // instance of dsp core
+extern	DSP::DspCore* dspCore;      // instance of dsp core
 
 // hardware API
 void    HWUpdate();

@@ -236,7 +236,7 @@ namespace DSP
 		return false;
 	}
 
-	/// Execute single instruction (by interpreter)
+	// Execute single instruction (by interpreter)
 	void DspCore::Step()
 	{
 		if (IsRunning())
@@ -248,7 +248,7 @@ namespace DSP
 		interp->ExecuteInstr();
 	}
 
-	/// Print only registers different from previous ones
+	// Print only registers different from previous ones
 	void DspCore::DumpRegs(DspRegs* prevState)
 	{
 		if (regs.pc != prevState->pc)
@@ -316,7 +316,7 @@ namespace DSP
 		}
 	}
 
-	/// Dump IFX State
+	// Dump IFX State
 	void DspCore::DumpIfx()
 	{
 		DBReport("Cpu2Dsp Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
@@ -921,7 +921,7 @@ namespace DSP
 		memset(&Accel, 0, sizeof(Accel));
 	}
 
-	/// Instant DMA
+	// Instant DMA
 	void DspCore::DoDma()
 	{
 		uint8_t* ptr = nullptr;
@@ -958,13 +958,13 @@ namespace DSP
 		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 		{
 			TCHAR filename[0x100] = { 0, };
-			_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X_%s.bin"), DmaRegs.blockSize, ldat.gameID);
+			_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X.bin"), DmaRegs.blockSize);
 			UI::FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
 	}
 
-	/// Read data by accelerator and optionally decode (raw=false)
+	// Read data by accelerator and optionally decode (raw=false)
 	uint16_t DspCore::AccelReadData(bool raw)
 	{
 
@@ -980,5 +980,15 @@ namespace DSP
 	}
 
 	#pragma endregion "IFX"
+
+	void DspCore::InitSubsystem()
+	{
+		Debug::Hub.AddNode(DSP_JDI_JSON, dsp_init_handlers);
+	}
+
+	void DspCore::ShutdownSubsystem()
+	{
+		Debug::Hub.RemoveNode(DSP_JDI_JSON);
+	}
 
 }

@@ -27,9 +27,6 @@
     <ClCompile Include="..\Debugger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\DspDisasm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\GekkoDisasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -46,9 +43,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\regs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\DspCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\HwCommands.cpp">
@@ -74,9 +68,6 @@
     <ClInclude Include="..\Debugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DspDisasm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\GekkoDisasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -93,9 +84,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\regs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\DspCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\HwCommands.h">

@@ -7,19 +7,28 @@ namespace Debug
     JdiHub::JdiHub() {}
 
     // Delete all JDI nodes
-
     JdiHub::~JdiHub()
     {
-        while (!nodes.empty())
+        for (auto it = nodes.begin(); it != nodes.end(); ++it)
         {
-            Json* node = nodes.back();
-            nodes.pop_back();
-            delete node;
+            if (it->second)
+                delete it->second;
         }
+        nodes.clear();
+    }
+
+    uint32_t JdiHub::SimpleHash(std::wstring str)
+    {
+        size_t size = str.size();
+        unsigned h = 37;
+        for (int i=0; i<size; i++)
+        {
+            h = (h * 54059) ^ (str[i] * 76963);
+        }
+        return h % 86969;
     }
 
     // The debugging console can only display text encoded in Ansi
-
     std::string JdiHub::TcharToString(TCHAR* text)
     {
         char ansiText[0x100] = { 0, };
@@ -34,7 +43,6 @@ namespace Debug
     }
 
     // Reflection of the command delegate by its text name
-
     void JdiHub::AddCmd(std::string name, CmdDelegate command)
     {
         MySpinLock::Lock(&reflexMapLock);
@@ -43,7 +51,6 @@ namespace Debug
     }
 
     // Register JDI node.
-
     void JdiHub::AddNode(std::wstring filename, JdiReflector reflector)
     {
         Json* json = new Json();
@@ -56,18 +63,55 @@ namespace Debug
 
         delete[] jsonText;
 
-        nodes.push_back(json);
+        nodes[SimpleHash(filename)] = json;
 
         reflector();
     }
 
-    // Display help on the basis of meta information from the "can" records of registered JDI nodes.
+    // Deregister JDI node.
+    void JdiHub::RemoveNode(std::wstring filename)
+    {
+        auto it = nodes.find(SimpleHash(filename));
+        if (it != nodes.end())
+        {
+            if (it->second)
+            {
+                // Remove commands
+                Json* node = it->second;
 
+                Json::Value* rootObj = node->root.children.back();
+                if (rootObj->type == Json::ValueType::Object)
+                {
+                    Json::Value* can = rootObj->ByName("can");
+                    if (can != nullptr)
+                    {
+                        for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
+                        {
+                            Json::Value* next = *cmd;
+
+                            MySpinLock::Lock(&reflexMapLock);
+                            auto it = reflexMap.find(next->name);
+                            if (it != reflexMap.end())
+                            {
+                                reflexMap.erase(it);
+                            }
+                            MySpinLock::Unlock(&reflexMapLock);
+                        }
+                    }
+                }
+
+                delete node;
+            }
+            nodes.erase(it);
+        }
+    }
+
+    // Display help on the basis of meta information from the "can" records of registered JDI nodes.
     void JdiHub::Help()
     {
         for (auto it = nodes.begin(); it != nodes.end(); ++it)
         {
-            Json* node = *it;
+            Json* node = it->second;
             if (node->root.children.size() == 0)
                 continue;
 
@@ -153,12 +197,11 @@ namespace Debug
     }
 
     // Get "can" entry by command name. Iterates over all available JDI nodes.
-
     Json::Value * JdiHub::CommandByName(std::string& name)
     {
         for (auto it = nodes.begin(); it != nodes.end(); ++it)
         {
-            Json* node = *it;
+            Json* node = it->second;
             if (node->root.children.size() == 0)
                 continue;
 
@@ -199,7 +242,6 @@ namespace Debug
     }
 
     // Print a description of the command if the command is called with insufficient arguments.
-
     void JdiHub::PrintUsage(Json::Value* cmd)
     {
         Json::Value* usage = cmd->ByName("usage");
@@ -222,7 +264,6 @@ namespace Debug
     }
 
     // Run JDI Command. Argument checking is performed automatically.
-
     Json::Value* JdiHub::Execute(std::vector<std::string>& args)
     {
         if (args.size() == 0)
@@ -251,7 +292,6 @@ namespace Debug
     }
 
     // Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
-
     bool JdiHub::CommandExists(std::vector<std::string>& args)
     {
         bool exists = false;

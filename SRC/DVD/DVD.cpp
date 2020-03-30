@@ -141,6 +141,7 @@ namespace DVD
     void ShutdownSubsystem()
     {
         Unmount();
+        Debug::Hub.RemoveNode(DDU_JDI_JSON);
     }
 
 }

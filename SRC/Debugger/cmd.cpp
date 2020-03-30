@@ -41,7 +41,6 @@ void cmd_init_handlers()
     con.cmds["x"] = cmd_exit;
 
     Debug::gekko_init_handlers();
-    Debug::dsp_init_handlers();
     Debug::hw_init_handlers();
 }
 
@@ -75,7 +74,6 @@ Json::Value* cmd_help(std::vector<std::string>& args)
 
     Debug::gekko_help();
     Debug::hw_help();
-    Debug::dsp_help();
     Debug::Hub.Help();
 
     DBReport2(DbgChannel::Header, "## high-level commands\n");

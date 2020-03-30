@@ -250,6 +250,9 @@
     <ProjectReference Include="SRC\DolwinVideo\DolwinVideo.vcxproj">
       <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
     </ProjectReference>
+    <ProjectReference Include="SRC\DSP\Scripts\DSP.vcxproj">
+      <Project>{0336d67c-249d-4c48-bd80-8e05ce711a58}</Project>
+    </ProjectReference>
     <ProjectReference Include="SRC\DVD\Scripts\DVD.vcxproj">
       <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
     </ProjectReference>

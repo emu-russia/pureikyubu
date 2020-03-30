@@ -36,6 +36,5 @@ Json::Value* cmd_top10(std::vector<std::string>& args);		// show HLE calls topli
 Json::Value* cmd_u(std::vector<std::string>& args);			// set disassembly address
 Json::Value* cmd_sleep(std::vector<std::string>& args);		// Sleep specified number of milliseconds
 
-#include "DspCommands.h"    // dsp command handlers
 #include "HwCommands.h"    // HW debug command handlers
 #include "GekkoCommands.h"		// Processor debug commands

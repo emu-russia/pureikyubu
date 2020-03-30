@@ -403,6 +403,8 @@ namespace DSP
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo();
 
+		static void InitSubsystem();
+		static void ShutdownSubsystem();
 	};
 
 	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union

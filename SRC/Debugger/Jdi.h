@@ -20,11 +20,13 @@ namespace Debug
 		std::map<std::string, CmdDelegate> reflexMap;
 		MySpinLock::LOCK reflexMapLock = MySpinLock::LOCK_IS_FREE;
 
-		std::list<Json*> nodes;
+		std::map<uint32_t, Json*> nodes;
 
 		Json::Value* CommandByName(std::string& name);
 		bool CheckParameters(Json::Value* cmd, std::vector<std::string>& args);
 		void PrintUsage(Json::Value* cmd);
+
+		uint32_t SimpleHash(std::wstring str);
 
 	public:
 		JdiHub();
@@ -35,6 +37,7 @@ namespace Debug
 		void AddCmd(std::string name, CmdDelegate command);
 
 		void AddNode(std::wstring filename, JdiReflector reflector);
+		void RemoveNode(std::wstring filename);
 
 		void Help();
 		Json::Value* Execute(std::vector<std::string>& args);

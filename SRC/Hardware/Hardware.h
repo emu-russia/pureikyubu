@@ -49,7 +49,7 @@ typedef struct _HWConfig
 #include "PAD.h"
 #include "../DVD/DVD.h"
 
-#include "DspCore.h"
+#include "../DSP/DspCore.h"
 
 // hardware controls
 #include "HW.h"
@@ -68,5 +68,3 @@ typedef struct _HWConfig
 #include "EI.h"
 #include "MC.h"
 #include "IPLDescrambler.h"
-#include "DspAnalyzer.h"
-#include "DspInterpreter.h"
