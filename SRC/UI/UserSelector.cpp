@@ -721,9 +721,9 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         {
             uint16_t *buf; size_t size, chars;
             buf = SjisToUnicode(text, &size, &chars);
-            DrawTextW(DC, (wchar_t *)buf, chars, &rc2, fmt);
+            DrawTextW(DC, (wchar_t *)buf, (int)chars, &rc2, fmt);
             free(buf);
-        } else DrawText(DC, text, len, &rc2, fmt);
+        } else DrawText(DC, text, (int)len, &rc2, fmt);
     }
 
     #undef ID
@@ -995,7 +995,7 @@ static int sort_by_title(const void *cmp1, const void *cmp2)
 static int sort_by_size(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return (f1->size - f2->size);
+    return (int)(f1->size - f2->size);
 }
 
 static int sort_by_gameid(const void *cmp1, const void *cmp2)

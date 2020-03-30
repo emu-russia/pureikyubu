@@ -301,6 +301,8 @@ namespace DVD
 			}
 			entry->AddInt("nameOffset", (int)nameOffset);
 
+			// Save parent and next directory FST index
+
 		}
 		else if (entry->type == Json::ValueType::String)
 		{
@@ -326,10 +328,10 @@ namespace DVD
 				Json::Value* parent = entry->parent;
 
 				// Save file name offset
-				Json::Value* nameOffsets = entry->parent->ByName("nameOffsets");
+				Json::Value* nameOffsets = entry->parent->parent->ByName("nameOffsets");
 				if (nameOffsets == nullptr)
 				{
-					nameOffsets = parent->AddArray("nameOffsets");
+					nameOffsets = entry->parent->parent->AddArray("nameOffsets");
 				}
 				assert(nameOffsets);
 
@@ -367,10 +369,10 @@ namespace DVD
 				}
 				*filePathPtr++ = 0;
 
-				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
+				Json::Value* fileOffsets = entry->parent->parent->ByName("fileOffsets");
 				if (fileOffsets == nullptr)
 				{
-					fileOffsets = entry->parent->AddArray("fileOffsets");
+					fileOffsets = entry->parent->parent->AddArray("fileOffsets");
 				}
 				assert(fileOffsets);
 
@@ -378,10 +380,10 @@ namespace DVD
 
 				size_t fileSize = UI::FileSize(filePath);
 
-				Json::Value* fileSizes = entry->parent->ByName("fileSizes");
+				Json::Value* fileSizes = entry->parent->parent->ByName("fileSizes");
 				if (fileSizes == nullptr)
 				{
-					fileSizes = entry->parent->AddArray("fileSizes");
+					fileSizes = entry->parent->parent->AddArray("fileSizes");
 				}
 				assert(fileSizes);
 
@@ -389,10 +391,10 @@ namespace DVD
 
 				userFilesOffset += RoundUp32((uint32_t)fileSize);
 
-				Json::Value* filePaths = entry->parent->ByName("filePaths");
+				Json::Value* filePaths = entry->parent->parent->ByName("filePaths");
 				if (filePaths == nullptr)
 				{
-					filePaths = entry->parent->AddArray("filePaths");
+					filePaths = entry->parent->parent->AddArray("filePaths");
 				}
 				assert(filePaths);
 
@@ -408,7 +410,70 @@ namespace DVD
 
 	void MountDolphinSdk::WalkAndGenerateFst(Json::Value* entry)
 	{
+		DVDFileEntry fstEntry = { 0 };
 
+		if (entry->type == Json::ValueType::Object)
+		{
+			// Directory
+
+			fstEntry.isDir = 1;
+
+			Json::Value* nameOffset = entry->ByName("nameOffset");
+			assert(nameOffset);
+
+			if (nameOffset)
+			{
+				fstEntry.nameOffsetHi = (uint8_t)(nameOffset->value.AsInt >> 16);
+				fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset->value.AsInt);
+			}
+		}
+		else if (entry->type == Json::ValueType::Array)
+		{
+			// Files
+
+			if (!_stricmp(entry->name, "files"))
+			{
+				Json::Value* nameOffsets = entry->parent->ByName("nameOffsets");
+				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
+				Json::Value* fileSizes = entry->parent->ByName("fileSizes");
+				assert(nameOffsets && fileOffsets && fileSizes);
+
+				if (nameOffsets && fileOffsets && fileSizes)
+				{
+					auto nameOffsetsIt = nameOffsets->children.begin();
+					auto fileOffsetsIt = fileOffsets->children.begin();
+					auto fileSizesIt = fileSizes->children.begin();
+
+					while (nameOffsetsIt != nameOffsets->children.end())
+					{
+						fstEntry.isDir = 0;
+
+						uint32_t nameOffset = (uint32_t)(*nameOffsetsIt)->value.AsInt;
+						uint32_t fileOffset = (uint32_t)(*fileOffsetsIt)->value.AsInt;
+						uint32_t fileSize = (uint32_t)(*fileSizesIt)->value.AsInt;
+
+						fstEntry.nameOffsetHi = (uint8_t)(nameOffset >> 16);
+						fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset);
+
+						fstEntry.fileOffset = _byteswap_ulong(fileOffset);
+						fstEntry.fileLength = _byteswap_ulong(fileSize);
+
+						nameOffsetsIt++;
+						fileOffsetsIt++;
+						fileSizesIt++;
+					}
+				}
+			}
+
+			return;
+		}
+
+		FstData.insert(FstData.end(), (uint8_t *)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
+
+		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		{
+			WalkAndGenerateFst(*it);
+		}
 	}
 
 	// The basic idea behind generating FST is to walk by DvdDataJson.
@@ -426,15 +491,23 @@ namespace DVD
 			return false;
 		}
 
-		Debug::Hub.Dump(DvdDataInfo.root.children.back());
+		//Debug::Hub.Dump(DvdDataInfo.root.children.back());
 
-		WalkAndGenerateFst(DvdDataInfo.root.children.back());
-
-		//UI::FileSave(_T("Data\\StringTable.bin"), StringTableData.data(), StringTableData.size());
+		try
+		{
+			WalkAndGenerateFst(DvdDataInfo.root.children.back());
+		}
+		catch (...)
+		{
+			DBReport("WalkAndGenerateFst failed!\n");
+			return false;
+		}
 
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		return false;
+		//UI::FileSave(_T("Data\\FST.bin"), FstData.data(), FstData.size());
+
+		return true;
 	}
 
 	bool MountDolphinSdk::GenBb2()
@@ -473,11 +546,57 @@ namespace DVD
 		return true;
 	}
 
+	void MountDolphinSdk::WalkAndMapFiles(Json::Value* entry)
+	{
+		if (entry->type == Json::ValueType::Array)
+		{
+			// Files
+
+			if (!_stricmp(entry->name, "files"))
+			{
+				Json::Value* filePaths = entry->parent->ByName("filePaths");
+				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
+				assert(filePaths && fileOffsets);
+
+				if (filePaths && fileOffsets)
+				{
+					auto filePathsIt = filePaths->children.begin();
+					auto fileOffsetsIt = fileOffsets->children.begin();
+
+					while (filePathsIt != filePaths->children.end())
+					{
+						MapFile((*filePathsIt)->value.AsString, (*fileOffsetsIt)->value.AsInt);
+
+						filePathsIt++;
+						fileOffsetsIt++;
+					}
+				}
+			}
+
+			return;
+		}
+
+		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		{
+			WalkAndGenerateFst(*it);
+		}
+	}
+
 	bool MountDolphinSdk::GenFileMap()
 	{
 		userFilesOffset = 0;
 
-		return false;
+		try
+		{
+			WalkAndMapFiles(DvdDataInfo.root.children.back());
+		}
+		catch (...)
+		{
+			DBReport("WalkAndMapFiles failed!\n");
+			return false;
+		}
+
+		return true;
 	}
 
 	void MountDolphinSdk::SwapArea(void* _addr, int sizeInBytes)

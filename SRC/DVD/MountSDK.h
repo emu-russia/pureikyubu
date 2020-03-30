@@ -50,6 +50,7 @@ namespace DVD
 		std::list<std::tuple<uint8_t*, uint32_t, size_t>> mapping;
 		std::list<std::tuple<TCHAR *, uint32_t, size_t>> fileMapping;
 		bool GenMap();
+		void WalkAndMapFiles(Json::Value* entry);
 		bool GenFileMap();
 		void MapVector(std::vector<uint8_t>& v, uint32_t offset);
 		void MapFile(TCHAR *path, uint32_t offset);
