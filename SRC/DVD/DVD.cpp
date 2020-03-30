@@ -91,7 +91,7 @@ namespace DVD
 
     bool IsMounted()
     {
-        return (dvd.mountedImage || dvd.mountedImage);
+        return (dvd.mountedImage || dvd.mountedSdk != nullptr);
     }
 
     // dvd operations on current mounted dvd

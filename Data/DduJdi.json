@@ -92,7 +92,8 @@
 		},
 
 		"DumpFst": {
-			"help": "Dump mounted DVD filesystem"
+			"help": "Dump mounted DVD filesystem",
+			"hints": "[0|1]"
 		}
 
 	}

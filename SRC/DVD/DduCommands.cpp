@@ -33,7 +33,7 @@ namespace DVD
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			DBReport("Mounted as SDK directory: %s\n", Debug::Hub.TcharToString(dvd.mountedSdk->GetDirectory()));
+			DBReport("Mounted as SDK directory: %s\n", Debug::Hub.TcharToString(dvd.mountedSdk->GetDirectory()).c_str());
 			DBReport("Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
@@ -252,7 +252,7 @@ namespace DVD
 		return nullptr;
 	}
 
-	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry)
+	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry, Json::Value * parent, int dumpMode)
 	{
 		entry->nameOffsetLo = _byteswap_ushort(entry->nameOffsetLo);
 		entry->fileOffset = _byteswap_ulong(entry->fileOffset);
@@ -262,10 +262,18 @@ namespace DVD
 		{
 			// Directory
 
-			DBReport("Dir[%i]: name: 0x%X, parent: %i, next: %i\n",
-				entry - fst,
-				((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
-				entry->parentOffset, entry->nextOffset);
+			if (dumpMode)
+			{
+				DBReport("Dir[%i]: name: 0x%X, parent: %i, next: %i\n",
+					entry - fst,
+					((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
+					entry->parentOffset, entry->nextOffset);
+			}
+
+			char dirNameAsInt[0x100] = { 0, };
+
+			sprintf_s(dirNameAsInt, sizeof(dirNameAsInt) - 1, "%i", ((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo);
+			Json::Value* dir = parent->AddObject(dirNameAsInt);
 
 			DVDFileEntry* until = &fst[entry->nextOffset];
 			DVDFileEntry* next = entry + 1;
@@ -273,7 +281,7 @@ namespace DVD
 
 			while (next < until)
 			{
-				next = DumpFstDir(fst, next);
+				next = DumpFstDir(fst, next, dir, dumpMode);
 				assert(next >= last);
 				last = next;
 			}
@@ -284,22 +292,77 @@ namespace DVD
 		{
 			// File
 
-			DBReport("File[%i]: name: 0x%X, offset: 0x%X, len: 0x%X\n",
-				entry - fst,
-				((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
-				entry->fileOffset, entry->fileLength);
+			if (dumpMode)
+			{
+				DBReport("File[%i]: name: 0x%X, offset: 0x%X, len: 0x%X\n",
+					entry - fst,
+					((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
+					entry->fileOffset, entry->fileLength);
+			}
+
+			Json::Value* files = parent->ByName("files");
+			if (!files)
+			{
+				files = parent->AddArray("files");
+			}
+			assert(files);
+
+			files->AddInt(nullptr, ((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo);
 
 			return entry + 1;
 		}
 	}
 
+	static void DumpFstEntry(Json::Value* entry, std::map<uint32_t, std::string>& stringsMap, int depth)
+	{
+		char indent[0x200] = { 0, };
+		char* indentPtr = indent;
+
+		for (int i = 0; i < depth; i++)
+		{
+			*indentPtr++ = ' ';
+			*indentPtr++ = ' ';
+		}
+		*indentPtr++ = 0;
+
+		if (entry->type == Json::ValueType::Object)
+		{
+			if (entry->name)
+			{
+				uint32_t offset = (uint32_t)atoi(entry->name);
+				
+				DBReport("%s%s\n", indent, depth != 0 ? stringsMap[offset].c_str() : "/");
+			}
+			else
+			{
+				DBReport("%s/\n", indent);
+			}
+		}
+		else if (entry->type == Json::ValueType::Int)
+		{
+			DBReport("%s%s\n", indent, stringsMap[(uint32_t)entry->value.AsInt].c_str());
+		}
+
+		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		{
+			DumpFstEntry(*it, stringsMap, depth + 1);
+		}
+	}
+
 	// Dump mounted DVD filesystem
+	// dumpMode: 0 - simple, 1 - advanced
 	static Json::Value* DumpFst(std::vector<std::string>& args)
 	{
 		if (!IsMounted())
 		{
 			DBReport2(DbgChannel::DVD, "Not mounted!\n");
 			return nullptr;
+		}
+
+		int dumpMode = 0;
+		if (args.size() >= 2)
+		{
+			dumpMode = atoi(args[1].c_str()) & 1;
 		}
 
 		// Get FST location
@@ -322,7 +385,11 @@ namespace DVD
 
 		// Dump entries
 
-		char * stringsTable = (char*)DumpFstDir((DVDFileEntry*)fst, (DVDFileEntry*)fst);
+		Json root;
+
+		root.root.AddObject(nullptr);
+
+		char * stringsTable = (char*)DumpFstDir((DVDFileEntry*)fst, (DVDFileEntry*)fst, &root.root, dumpMode);
 		size_t stringsTableSize = bb2.FSTLength - (stringsTable - (char*)fst);
 
 		// Dump strings
@@ -330,17 +397,29 @@ namespace DVD
 		size_t offset = 0, savedOffset = offset;
 		char name[0x200] = { 0, };
 		char* namePtr = name;
+		std::map<uint32_t, std::string> stringsMap;
 
 		while (offset < stringsTableSize)
 		{
 			*namePtr++ = stringsTable[offset];
 			if (stringsTable[offset] == 0)
 			{
-				DBReport("name[0x%X]: %s\n", savedOffset, name);
+				if (dumpMode)
+				{
+					DBReport("name[0x%X]: %s\n", savedOffset, name);
+				}
+				stringsMap[(uint32_t)savedOffset] = name;
 				namePtr = name;
 				savedOffset = offset + 1;
 			}
 			offset++;
+		}
+
+		// Dump json
+
+		if (!dumpMode)
+		{
+			DumpFstEntry(root.root.children.back(), stringsMap, 0);
 		}
 
 		delete[] fst;

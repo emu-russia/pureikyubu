@@ -107,7 +107,7 @@ namespace DVD
 			if (startingOffset <= offset && offset < (startingOffset + size))
 			{
 				maxSize = min(requestedSize, (startingOffset + size) - offset);
-				return ptr + offset;
+				return ptr + (offset - startingOffset);
 			}
 		}
 		return nullptr;
@@ -133,6 +133,12 @@ namespace DVD
 			return;
 		}
 
+		if (currentSeek >= DVD_SIZE)
+		{
+			memset(buffer, 0, length);
+			return;
+		}
+
 		size_t maxLength = 0;
 		
 		uint8_t* ptr = Translate(currentSeek, length, maxLength);
@@ -148,6 +154,8 @@ namespace DVD
 		{
 			memset(buffer, 0, length);
 		}
+
+		currentSeek += (uint32_t)length;
 	}
 
 	#pragma region "Data Generators"
@@ -169,6 +177,7 @@ namespace DVD
 		id->magicNumber = _byteswap_ulong(DVD_DISKID_MAGIC);
 
 		GameName.resize(0x400);
+		memset(GameName.data(), 0, GameName.size());
 		strcpy_s((char *)GameName.data(), 0x100, "Dolphin SDK");
 
 		return true;
@@ -245,8 +254,6 @@ namespace DVD
 		bb2.userPosition = RoundUpSector(bb2.FSTPosition + (uint32_t)FstData.size() + DVD_SECTOR_SIZE);
 		bb2.userLength = (uint32_t)UserFilesData.size();
 
-		SwapArea(&bb2, sizeof(bb2));
-
 		Bb2Data.resize(sizeof(DVDBB2));
 		memcpy(Bb2Data.data(), &bb2, sizeof(bb2));
 
@@ -267,6 +274,8 @@ namespace DVD
 		MapVector(Dol, bb2->bootFilePosition);
 		MapVector(FstData, bb2->FSTPosition);
 		MapVector(UserFilesData, bb2->userPosition);
+
+		SwapArea(bb2, sizeof(DVDBB2));
 
 		return true;
 	}

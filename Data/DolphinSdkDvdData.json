@@ -1,9 +1,4 @@
 {
-	"files":
-	[
-		"gxTextrs.tpl",
-		"opening.bnr"
-	],
 
 	"audio":
 	{
@@ -15,7 +10,9 @@
 				"dtk_gs.adp",
 				"dtk_spl.adp"
 			]
-		}
+		},
+		
+		"files": []
 	},
 
 	
@@ -227,6 +224,12 @@
 			"test1.txt",
 			"test2.txt"
 		]
-	}
+	},
+
+	"files":
+	[
+		"gxTextrs.tpl",
+		"opening.bnr"
+	]	
 
 }
