@@ -70,7 +70,7 @@ void con_blt_region(int regY, int regH)
     COORD       pos = { 0, (SHORT)regY };
     COORD       sz = { CON_WIDTH, CON_HEIGHT };
     SMALL_RECT  rgn = { 0, (SHORT)regY, 79, (SHORT)(regY + regH - 1) };
-    BOOL        success = WriteConsoleOutput(con.output, *con.buf, sz, pos, &rgn);
+    BOOL        success = WriteConsoleOutputA(con.output, *con.buf, sz, pos, &rgn);
 }
 
 void con_nextline()
@@ -172,7 +172,7 @@ void con_clear_line(int y, uint16_t attr)
 void con_printf_at(int x, int y, const char *txt, ...)
 {
     va_list     varg;
-    static char buf[256];
+    char buf[0x200] = { 0, };
 
     va_start(varg, txt);
     vsprintf_s (buf, sizeof(buf), txt, varg);

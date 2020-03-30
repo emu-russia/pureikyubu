@@ -23,11 +23,11 @@ namespace DSP
 
 		if (!iromImage || iromImageSize != IROM_SIZE)
 		{
-			DBReport("Failed to load DSP IROM: %s\n", config->DspIromFilename);
+			DBReport("Failed to load DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
 		}
 		else
 		{
-			DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", config->DspIromFilename);
+			DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
 			memcpy(irom, iromImage, IROM_SIZE);
 			free(iromImage);
 		}
@@ -39,11 +39,11 @@ namespace DSP
 
 		if (!dromImage || dromImageSize != DROM_SIZE)
 		{
-			DBReport("Failed to load DSP DROM: %s\n", config->DspDromFilename);
+			DBReport("Failed to load DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
 		}
 		else
 		{
-			DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", config->DspDromFilename);
+			DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
 			memcpy(drom, dromImage, DROM_SIZE);
 			free(dromImage);
 		}

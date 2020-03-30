@@ -4,6 +4,18 @@
 
 namespace DVD
 {
+	static void SwapArea(void* _addr, int count)
+	{
+		uint32_t* addr = (uint32_t *)_addr;
+		uint32_t* until = addr + count / sizeof(uint32_t);
+
+		while (addr != until)
+		{
+			*addr = _byteswap_ulong(*addr);
+			addr++;
+		}
+	}
+
 	// Get DDU Status Information
 	static Json::Value* DvdInfo(std::vector<std::string>& args)
 	{
@@ -215,6 +227,127 @@ namespace DVD
 		return output;
 	}
 
+	// Dump mounted DVDBB2 struct
+	static Json::Value* DumpBb2(std::vector<std::string>& args)
+	{
+		if (!IsMounted())
+		{
+			DBReport2(DbgChannel::DVD, "Not mounted!\n");
+			return nullptr;
+		}
+
+		DVDBB2 bb2 = { 0 };
+
+		Seek(DVD_BB2_OFFSET);
+		Read(&bb2, sizeof(bb2));
+		SwapArea(&bb2, sizeof(bb2));
+
+		DBReport("DVDBB2::bootFilePosition: 0x%08X\n", bb2.bootFilePosition);
+		DBReport("DVDBB2::FSTPosition: 0x%08X\n", bb2.FSTPosition);
+		DBReport("DVDBB2::FSTLength: 0x%08X\n", bb2.FSTLength);
+		DBReport("DVDBB2::FSTMaxLength: 0x%08X\n", bb2.FSTMaxLength);
+		DBReport("DVDBB2::userPosition: 0x%08X\n", bb2.userPosition);
+		DBReport("DVDBB2::userLength: 0x%08X\n", bb2.userLength);
+
+		return nullptr;
+	}
+
+	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry)
+	{
+		entry->nameOffsetLo = _byteswap_ushort(entry->nameOffsetLo);
+		entry->fileOffset = _byteswap_ulong(entry->fileOffset);
+		entry->fileLength = _byteswap_ulong(entry->fileLength);
+
+		if (entry->isDir)
+		{
+			// Directory
+
+			DBReport("Dir[%i]: name: 0x%X, parent: %i, next: %i\n",
+				entry - fst,
+				((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
+				entry->parentOffset, entry->nextOffset);
+
+			DVDFileEntry* until = &fst[entry->nextOffset];
+			DVDFileEntry* next = entry + 1;
+			DVDFileEntry* last = next;
+
+			while (next < until)
+			{
+				next = DumpFstDir(fst, next);
+				assert(next >= last);
+				last = next;
+			}
+
+			return until;
+		}
+		else
+		{
+			// File
+
+			DBReport("File[%i]: name: 0x%X, offset: 0x%X, len: 0x%X\n",
+				entry - fst,
+				((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
+				entry->fileOffset, entry->fileLength);
+
+			return entry + 1;
+		}
+	}
+
+	// Dump mounted DVD filesystem
+	static Json::Value* DumpFst(std::vector<std::string>& args)
+	{
+		if (!IsMounted())
+		{
+			DBReport2(DbgChannel::DVD, "Not mounted!\n");
+			return nullptr;
+		}
+
+		// Get FST location
+
+		DVDBB2 bb2 = { 0 };
+
+		Seek (DVD_BB2_OFFSET);
+		Read(&bb2, sizeof(bb2));
+		SwapArea(&bb2, sizeof(bb2));
+
+		// Load FST
+
+		uint8_t* fst = new uint8_t[bb2.FSTLength];
+		assert(fst);
+
+		memset(fst, 0, bb2.FSTLength);
+
+		Seek(bb2.FSTPosition);
+		Read(fst, bb2.FSTLength);
+
+		// Dump entries
+
+		char * stringsTable = (char*)DumpFstDir((DVDFileEntry*)fst, (DVDFileEntry*)fst);
+		size_t stringsTableSize = bb2.FSTLength - (stringsTable - (char*)fst);
+
+		// Dump strings
+
+		size_t offset = 0, savedOffset = offset;
+		char name[0x200] = { 0, };
+		char* namePtr = name;
+
+		while (offset < stringsTableSize)
+		{
+			*namePtr++ = stringsTable[offset];
+			if (stringsTable[offset] == 0)
+			{
+				DBReport("name[0x%X]: %s\n", savedOffset, name);
+				namePtr = name;
+				savedOffset = offset + 1;
+			}
+			offset++;
+		}
+
+		delete[] fst;
+
+		return nullptr;
+	}
+
 	void DvdCommandsReflector()
 	{
 		Debug::Hub.AddCmd("DvdInfo", DvdInfo);
@@ -227,6 +360,8 @@ namespace DVD
 		Debug::Hub.AddCmd("DvdSeek", DvdSeek);
 		Debug::Hub.AddCmd("DvdRead", DvdRead);
 		Debug::Hub.AddCmd("DvdOpenFile", DvdOpenFile);
+		Debug::Hub.AddCmd("DumpBb2", DumpBb2);
+		Debug::Hub.AddCmd("DumpFst", DumpFst);
 	}
 
 }

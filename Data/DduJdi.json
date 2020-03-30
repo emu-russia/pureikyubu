@@ -41,7 +41,7 @@
 			"usage": [
 				"Syntax: MountSDK <dir>\n",
 				"Examples of use: MountSDK C:\\DolphinSDK\n"
-			],			
+			],
 			"output": "Bool Success/Fail"
 		},
 
@@ -52,7 +52,7 @@
 		"DvdSeek": {
 			"help": "Seek at DVD offset",
 			"hints": "<pos>",
-			"args":  1,
+			"args": 1,
 			"usage": [
 				"Syntax: DvdSeek <offset>\n",
 				"Offset (in bytes) must not be greater current DVD size.\n",
@@ -85,6 +85,14 @@
 				"                 DvdOpenFile \"/gxTests/tex-02/ia8_odd.tpl\"\n"
 			],
 			"output": "File offset in bytes. 0 if file not found."
+		},
+
+		"DumpBb2": {
+			"help": "Dump mounted DVDBB2 struct"
+		},
+
+		"DumpFst": {
+			"help": "Dump mounted DVD filesystem"
 		}
 
 	}
