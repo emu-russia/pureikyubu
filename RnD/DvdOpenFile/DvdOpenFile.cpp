@@ -8,7 +8,7 @@
 #define NameOffset(hi, lo) (((uint32_t)(hi) << 16) | (lo))
 
 static DVDFileEntry* fst;
-static DVDFileEntry* currentDir;
+static int currentDir;
 static char* nameTable;
 
 // swap bytes in FST (little-endian)
@@ -45,9 +45,10 @@ static char* fst_prepare(DVDFileEntry* root)
     return nameTablePtr;
 }
 
+// <0: Bad path
 static int DVDConvertPathToEntrynum(char* path)
 {
-    return 0;
+    return -1;
 }
 
 int main(int argc, char **argv)
@@ -96,7 +97,7 @@ int main(int argc, char **argv)
 
     // Get entrynum
 
-    currentDir = fst;
+    currentDir = 0;
 
     int entryNum = DVDConvertPathToEntrynum(dvdPath);
 

@@ -10,25 +10,27 @@
 8000F0B4  3B370000  addi        r25, r23, 0
 8000F0B8  3BE39958  subi        r31, r3, 0x66A8
 8000F0BC  834D8328  lwz         r26, -0x7CD8 (r13)
+
 8000F0C0  88770000  lbz         r3, 0 (r23)
 8000F0C4  7C600775  extsb.      r0, r3
 8000F0C8  4082000C  bne-        0x8000F0D4 
 8000F0CC  7F43D378  mr          r3, r26
 8000F0D0  480002AC  b           0x8000F37C 
+
 8000F0D4  7C600774  extsb       r0, r3
-8000F0D8  2C00002F  cmpwi       r0, 47
+8000F0D8  2C00002F  cmpwi       r0, 47 					// '/'
 8000F0DC  40820010  bne-        0x8000F0EC 
 8000F0E0  3B400000  li          r26, 0
 8000F0E4  3AF70001  addi        r23, r23, 1
 8000F0E8  4BFFFFD8  b           0x8000F0C0 
-8000F0EC  2C00002E  cmpwi       r0, 46
+8000F0EC  2C00002E  cmpwi       r0, 46 					// '.'
 8000F0F0  40820074  bne-        0x8000F164 
 8000F0F4  88770001  lbz         r3, 1 (r23)
 8000F0F8  7C600774  extsb       r0, r3
-8000F0FC  2C00002E  cmpwi       r0, 46
+8000F0FC  2C00002E  cmpwi       r0, 46 					// '.'
 8000F100  40820044  bne-        0x8000F144 
 8000F104  88770002  lbz         r3, 2 (r23)
-8000F108  2C03002F  cmpwi       r3, 47
+8000F108  2C03002F  cmpwi       r3, 47 					// '/'
 8000F10C  4082001C  bne-        0x8000F128 
 8000F110  1C7A000C  mulli       r3, r26, 12
 8000F114  808D831C  lwz         r4, -0x7CE4 (r13)
@@ -43,7 +45,7 @@
 8000F138  7C630214  add         r3, r3, r0
 8000F13C  80630004  lwz         r3, 4 (r3)
 8000F140  4800023C  b           0x8000F37C 
-8000F144  2C00002F  cmpwi       r0, 47
+8000F144  2C00002F  cmpwi       r0, 47 					// '/'
 8000F148  4082000C  bne-        0x8000F154 
 8000F14C  3AF70002  addi        r23, r23, 2
 8000F150  4BFFFF70  b           0x8000F0C0 
@@ -71,7 +73,7 @@
 8000F1A8  3B1C0001  addi        r24, r28, 1
 8000F1AC  38A00001  li          r5, 1
 8000F1B0  48000010  b           0x8000F1C0 
-8000F1B4  2C000020  cmpwi       r0, 32
+8000F1B4  2C000020  cmpwi       r0, 32 					// ' '
 8000F1B8  40820008  bne-        0x8000F1C0 
 8000F1BC  38800001  li          r4, 1
 8000F1C0  3B9C0001  addi        r28, r28, 1
@@ -79,7 +81,7 @@
 8000F1C8  7C600775  extsb.      r0, r3
 8000F1CC  41820010  beq-        0x8000F1DC 
 8000F1D0  7C600774  extsb       r0, r3
-8000F1D4  2C00002F  cmpwi       r0, 47
+8000F1D4  2C00002F  cmpwi       r0, 47 					// '/'
 8000F1D8  4082FFA8  bne+        0x8000F180 
 8000F1DC  2C050001  cmpwi       r5, 1
 8000F1E0  40820014  bne-        0x8000F1F4 
@@ -148,7 +150,7 @@
 8000F2DC  7C000775  extsb.      r0, r0
 8000F2E0  4082FFC4  bne+        0x8000F2A4 
 8000F2E4  88750000  lbz         r3, 0 (r21)
-8000F2E8  2C03002F  cmpwi       r3, 47
+8000F2E8  2C03002F  cmpwi       r3, 47 						// '/'
 8000F2EC  4182000C  beq-        0x8000F2F8 
 8000F2F0  7C600775  extsb.      r0, r3
 8000F2F4  4082000C  bne-        0x8000F300 
@@ -176,7 +178,7 @@
 8000F34C  7C1D002E  lwzx        r0, r29, r0
 8000F350  7C1A0040  cmplw       r26, r0
 8000F354  4180FF10  blt+        0x8000F264 
-8000F358  3860FFFF  li          r3, -1
+8000F358  3860FFFF  li          r3, -1 						// Bad path
 8000F35C  48000020  b           0x8000F37C 
 8000F360  2C1E0000  cmpwi       r30, 0
 8000F364  4082000C  bne-        0x8000F370 
@@ -185,12 +187,15 @@
 8000F370  7EFBBA14  add         r23, r27, r23
 8000F374  3AF70001  addi        r23, r23, 1
 8000F378  4BFFFD48  b           0x8000F0C0 
+
 8000F37C  BA810018  lmw         r20, 24 (r1)
 8000F380  8001004C  lwz         r0, 76 (r1)
 8000F384  38210048  addi        r1, r1, 72
 8000F388  7C0803A6  mtlr        r0
 8000F38C  4E800020  blr
 ```
+
+
 
 ```c++
 
