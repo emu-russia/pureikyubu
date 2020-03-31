@@ -99,12 +99,14 @@ void EMUReset()
 
 void EMUCtor()
 {
+    Debug::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
 }
 
 void EMUDtor()
 {
+    Debug::Hub.RemoveNode(EMU_JDI_JSON);
     DSP::DspCore::ShutdownSubsystem();
     DVD::ShutdownSubsystem();
 }

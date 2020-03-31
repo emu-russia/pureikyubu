@@ -21,3 +21,5 @@ typedef struct Emulator
 } Emulator;
 
 extern  Emulator emu;
+
+#include "EmuCommands.h"

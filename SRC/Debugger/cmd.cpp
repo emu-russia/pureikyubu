@@ -103,15 +103,10 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     DBReport( "    sop                  - search opcode (forward) from cursor address\n");
     DBReport( "    lr                   - show LR back chain (\"branch history\")\n");
     DBReport( "    script               - execute batch script\n");
-    //  DBReport( "    mapmem               - add memory mapper\n");
     DBReport( "    log                  - enable/disable log output)\n");
     DBReport( "    logfile              - choose HTML log-file for ouput\n");
     DBReport( "    full                 - set full screen console mode\n");
-    DBReport( "    shot                 - take screenshot in ????.bmp\n");
-    DBReport( "    memst                - memory allocation stats\n");
-    DBReport( "    memtst               - memory test (WARNING)\n");
     DBReport( "    cls                  - clear message buffer\n");
-    DBReport( "    colors               - colored output test\n");
     DBReport( "    disa                 - disassemble code into text file\n");
     DBReport( "    tree                 - show call tree\n");
     DBReport( "    sleep                - Sleep specified number of milliseconds\n");

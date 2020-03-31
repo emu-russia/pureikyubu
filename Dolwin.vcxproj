@@ -217,6 +217,7 @@
   <ItemGroup>
     <ClInclude Include="RES\resource.h" />
     <ClInclude Include="SRC\dolphin.h" />
+    <ClInclude Include="SRC\EmuCommands.h" />
     <ClInclude Include="SRC\Emulator.h" />
     <ClInclude Include="SRC\Loader.h" />
   </ItemGroup>
@@ -270,9 +271,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Data\EmuJdi.json" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="SRC\EmuCommands.cpp" />
     <ClCompile Include="SRC\Emulator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
