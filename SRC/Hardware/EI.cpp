@@ -180,8 +180,7 @@ static void SRAMSave(SRAM *s)
 // use to get updated RTC
 void RTCUpdate()
 {
-    //exi.rtcVal = MAGIC_VALUE + (uint32_t)time(NULL);
-    exi.rtcVal = 0;
+    exi.rtcVal = (uint32_t)time(NULL) - MAGIC_VALUE;
 }
 
 //

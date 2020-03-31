@@ -23,8 +23,8 @@
       "args": 2,
       "hints": "<file> <cmd>",
       "usage": [
-        "Syntax: FileSave <file> <cmd>\n",
-        "Save data returned by another command (cmd) to specifed file.\n",
+        "Syntax: FileSave <file> <cmd ...>\n",
+        "Save data returned by another command (cmd) to specified file.\n",
         "Example: FileSave \"Data\\FST.bin\" DumpFst\n"
       ]
     }
