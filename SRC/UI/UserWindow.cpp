@@ -908,10 +908,10 @@ loadFile:
 
 // self-explanatory.. creates main window and all child windows.
 // window size will be set to default 400x300.
-HWND CreateMainWindow()
+HWND CreateMainWindow(HINSTANCE hInstance)
 {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    WNDCLASS wc;
+    WNDCLASS wc = { 0 };
+    const TCHAR CLASS_NAME[] = _T("GAMECUBECLASS");
 
     assert(wnd.hMainWindow == nullptr);
 
@@ -921,15 +921,17 @@ HWND CreateMainWindow()
     wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
     wc.hInstance     = hInstance;
     wc.lpfnWndProc   = WindowProc;
-    wc.lpszClassName = _T("GAMECUBECLASS");
+    wc.lpszClassName = CLASS_NAME;
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MAIN_MENU);
     wc.style         = 0;
 
-    assert(RegisterClass(&wc));
+    ATOM classAtom = RegisterClass(&wc);
+    assert(classAtom != 0);
 
     wnd.hMainWindow = CreateWindowEx(
         0,
-        _T("GAMECUBECLASS"), WIN_NAME,
+        CLASS_NAME,
+        WIN_NAME,
         WIN_STYLE, 
         20, 30,
         400, 300,

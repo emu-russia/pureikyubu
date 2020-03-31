@@ -27,7 +27,7 @@ void    LoadRecentFile(int index);
 // window controls API
 void    OnMainWindowOpened();
 void    OnMainWindowClosed();
-HWND    CreateMainWindow();
+HWND    CreateMainWindow(HINSTANCE hInst);
 void    ResizeMainWindow(int width, int height);
 
 // utilities

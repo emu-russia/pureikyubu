@@ -149,7 +149,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // init emu and user interface (emulator will be initialized
     // during main window creation).
-    CreateMainWindow();
+    CreateMainWindow(hInstance);
 
     // Idle loop
     for(;;)

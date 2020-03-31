@@ -21,20 +21,19 @@ typedef struct MatrixF
 
 #define MTX(mx)  mx->data
 
-static void print_mtx(MatrixPtr ptr, const char *name="")
+static void print_mtx(MatrixPtr ptr)
 {
     MatrixFPtr m = (MatrixFPtr)ptr;
 
     Gekko::GekkoCore::SwapArea((uint32_t *)ptr, 3*4*4);
-    DolwinReport( "%s\n"
-                  "%f %f %f %f\n"
-                  "%f %f %f %f\n"
-                  "%f %f %f %f\n",
+    UI::DolwinReport(
+        _T("%f %f %f %f\n")
+        _T("%f %f %f %f\n")
+        _T("%f %f %f %f\n"),
 
-                  name,
-                  MTX(m)[0][0], MTX(m)[0][1], MTX(m)[0][2], MTX(m)[0][3],
-                  MTX(m)[1][0], MTX(m)[1][1], MTX(m)[1][2], MTX(m)[1][3],
-                  MTX(m)[2][0], MTX(m)[2][1], MTX(m)[2][2], MTX(m)[2][3] );
+        MTX(m)[0][0], MTX(m)[0][1], MTX(m)[0][2], MTX(m)[0][3],
+        MTX(m)[1][0], MTX(m)[1][1], MTX(m)[1][2], MTX(m)[1][3],
+        MTX(m)[2][0], MTX(m)[2][1], MTX(m)[2][2], MTX(m)[2][3] );
     Gekko::GekkoCore::SwapArea((uint32_t *)ptr, 3*4*4);
 }
 
