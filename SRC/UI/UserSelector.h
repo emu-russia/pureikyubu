@@ -61,6 +61,7 @@ void    SortSelector(SELECTOR_SORT sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void    NotifySelector(LPNMHDR pnmh);
 void    ScrollSelector(int letter);
+uint16_t* SjisToUnicode(TCHAR* sjisText, size_t* size, size_t* chars);
 
 // all important data is placed here
 typedef struct UserSelector

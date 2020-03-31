@@ -1477,8 +1477,8 @@ Json::Value* cmd_sleep(std::vector<std::string>& args)
 {
     if (args.size() < 2)
     {
-        DBReport("syntax : sleep <milliseconds>\n");
-        DBReport("examples of use : sleep 1000\n");
+        DBReport("Syntax: sleep <milliseconds>\n");
+        DBReport("Examples of use: sleep 1000\n");
         return nullptr;
     }
 

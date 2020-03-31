@@ -13,7 +13,6 @@ Json::Value* cmd_d(std::vector<std::string>& args);			// show data at address
 Json::Value* cmd_denop(std::vector<std::string>& args);		// restore old NOP'ed value
 Json::Value* cmd_disa(std::vector<std::string>& args);		// dump disassembly to text file
 Json::Value* cmd_dop(std::vector<std::string>& args);		// apply patches
-Json::Value* cmd_dvdopen(std::vector<std::string>& args);	// get DVD file position
 Json::Value* cmd_full(std::vector<std::string>& args);		// full screen mode
 Json::Value* cmd_help(std::vector<std::string>& args);		// help
 Json::Value* cmd_log(std::vector<std::string>& args);		// log control

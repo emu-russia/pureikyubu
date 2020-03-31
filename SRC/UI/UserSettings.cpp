@@ -489,7 +489,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 
 static void filter_string(HWND hDlg, uint32_t filter)
 {
-    TCHAR buf[64], *ptr = buf;
+    TCHAR buf[64] = { 0 }, * ptr = buf;
     const TCHAR * mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso") };
 
     filter = _byteswap_ulong(filter);
@@ -499,7 +499,6 @@ static void filter_string(HWND hDlg, uint32_t filter)
         if(filter & 0xff) ptr += _stprintf_s(ptr, _countof(buf) - (ptr - buf), _T("%s;"), mask[i]);
         filter >>= 8;
     }
-    ptr[-1] = 0;
 
     SetDlgItemText(hDlg, IDC_FILE_FILTER, buf);
 }

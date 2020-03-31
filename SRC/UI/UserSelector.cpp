@@ -578,12 +578,12 @@ void ResizeSelector(int width, int height)
     }
 }
 
-static uint16_t * SjisToUnicode(TCHAR * sjisText, size_t * size, size_t * chars)
+uint16_t * SjisToUnicode(TCHAR * sjisText, size_t * size, size_t * chars)
 {
     uint16_t * unicodeText , *ptrU , uchar, schar;
     TCHAR *ptrS;
 
-    *size = _tcslen(sjisText) * sizeof(wchar_t);
+    *size = (_tcslen(sjisText) + 1) * sizeof(wchar_t);
     unicodeText = (uint16_t *)malloc(*size);
     assert(unicodeText);
     memset(unicodeText, 0, *size);

@@ -62,12 +62,12 @@ namespace DVD
         }
 
         // init filesystem
-        //if (!dvd_fs_init())
-        //{
-        //    delete dvd.mountedSdk;
-        //    dvd.mountedSdk = nullptr;
-        //    return false;
-        //}
+        if (!dvd_fs_init())
+        {
+            delete dvd.mountedSdk;
+            dvd.mountedSdk = nullptr;
+            return false;
+        }
 
         dvd.mountedSdk->Seek(0);
 

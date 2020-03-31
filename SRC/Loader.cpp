@@ -589,7 +589,31 @@ static BOOL SetGameIDAndTitle(TCHAR *filename)
 
     while (*ansiPtr)
     {
-        *tcharPtr++ = *ansiPtr++;
+        *tcharPtr++ = (uint8_t)*ansiPtr++;
+    }
+    *tcharPtr++ = 0;
+
+    // Convert SJIS Title to Unicode
+
+    if (DVD::RegionById(diskID) == DVD::Region::JPN)
+    {
+        size_t size, chars;
+        uint16_t* widePtr = SjisToUnicode(ldat.currentFileName, &size, &chars);
+        uint16_t* unicodePtr;
+
+        if (widePtr)
+        {
+            TCHAR* tcharPtr = ldat.currentFileName;
+            unicodePtr = widePtr;
+
+            while (*unicodePtr)
+            {
+                *tcharPtr++ = *unicodePtr++;
+            }
+            *tcharPtr++ = 0;
+
+            free(widePtr);
+        }
     }
 
     // set GameID

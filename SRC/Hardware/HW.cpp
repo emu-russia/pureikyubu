@@ -71,9 +71,9 @@ namespace Flipper
     Flipper::Flipper(HWConfig* config)
     {
         HWOpen(config);
-        assert(GXOpen(mi.ram, wnd.hMainWindow));
-        assert(AXOpen());
-        assert(PADOpen());
+        GXOpen(mi.ram, wnd.hMainWindow);
+        AXOpen();
+        PADOpen();
     }
 
     Flipper::~Flipper()

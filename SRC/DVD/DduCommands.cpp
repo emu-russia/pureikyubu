@@ -240,6 +240,14 @@ namespace DVD
 
 		Seek(DVD_BB2_OFFSET);
 		Read(&bb2, sizeof(bb2));
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+		for (int i = 0; i < sizeof(bb2); i++)
+		{
+			output->AddInt(nullptr, ((uint8_t *)&bb2)[i]);
+		}
+
 		SwapArea(&bb2, sizeof(bb2));
 
 		DBReport("DVDBB2::bootFilePosition: 0x%08X\n", bb2.bootFilePosition);
@@ -249,7 +257,7 @@ namespace DVD
 		DBReport("DVDBB2::userPosition: 0x%08X\n", bb2.userPosition);
 		DBReport("DVDBB2::userLength: 0x%08X\n", bb2.userLength);
 
-		return nullptr;
+		return output;
 	}
 
 	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry, Json::Value * parent, int dumpMode)
@@ -345,7 +353,7 @@ namespace DVD
 
 		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 		{
-			DumpFstEntry(*it, stringsMap, depth + 1);
+			DumpFstEntry(*it, stringsMap, entry->type == Json::ValueType::Array ? depth : depth + 1);
 		}
 	}
 
@@ -382,6 +390,15 @@ namespace DVD
 
 		Seek(bb2.FSTPosition);
 		Read(fst, bb2.FSTLength);
+
+		// Output FST contents
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+		for (int i = 0; i < bb2.FSTLength; i++)
+		{
+			output->AddInt(nullptr, fst[i]);
+		}
 
 		// Dump entries
 
@@ -424,7 +441,7 @@ namespace DVD
 
 		delete[] fst;
 
-		return nullptr;
+		return output;
 	}
 
 	void DvdCommandsReflector()

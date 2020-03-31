@@ -17,7 +17,7 @@ static void ReadFST()
     uint32_t     fstAddr, fstOffs, fstSize, fstMaxSize;
 
     // read BB2
-    DVD::Seek(0x420);
+    DVD::Seek(DVD_BB2_OFFSET);
     DVD::Read((uint8_t *)bb2, 32);
 
     // rounding is not important, but present in new apploaders.
@@ -27,7 +27,7 @@ static void ReadFST()
     fstOffs = _byteswap_ulong(bb2[1]);
     fstSize = ROUND32(_byteswap_ulong(bb2[2]));
     fstMaxSize = ROUND32(_byteswap_ulong(bb2[3]));
-    fstAddr = _byteswap_ulong(bb2[4]) + RAMSIZE - DOL_LIMIT;
+    fstAddr = _byteswap_ulong(bb2[4]);
 
     // load FST into memory
     DVD::Seek(fstOffs);
@@ -62,7 +62,7 @@ static void BootApploader(Gekko::GekkoCore * core)
     // set OSReport dummy
     CPUWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
 
-    DVD::Seek(0x2440);                // apploader offset
+    DVD::Seek(DVD_APPLDR_OFFSET);                // apploader offset
     DVD::Read((uint8_t *)appHeader, 32);   // read apploader header
     Gekko::GekkoCore::SwapArea(appHeader, 32);     // and swap it
 

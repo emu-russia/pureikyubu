@@ -306,16 +306,16 @@ namespace DVD
 			entry->AddInt("entryId", entryCounter);
 			entryCounter++;
 
-			// Reset siblings counter
-			entry->AddInt("siblings", 0);
+			// Reset totalChildren counter
+			entry->AddInt("totalChildren", 0);
 
-			// Update parent sibling counters
+			// Update parent totalChildren counters
 			Json::Value * parent = entry->parent;
 			while (parent)
 			{
-				Json::Value* siblings = parent->ByName("siblings");
+				Json::Value* totalChildren = parent->ByName("totalChildren");
 
-				if (siblings) siblings->value.AsInt++;
+				if (totalChildren) totalChildren->value.AsInt++;
 
 				parent = parent->parent;		// :p
 			}
@@ -423,18 +423,30 @@ namespace DVD
 				parent = entry->parent;
 				while (parent)
 				{
-					Json::Value* siblings = parent->ByName("siblings");
+					Json::Value* totalChildren = parent->ByName("totalChildren");
 
-					if (siblings) siblings->value.AsInt++;
+					if (totalChildren) totalChildren->value.AsInt++;
 
 					parent = parent->parent;		// :p
 				}
 			}
 		}
 
+		Json::Value* lastObject = nullptr;
+
 		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 		{
-			ParseDvdDataEntryForFst(*it);
+			Json::Value * child = *it;
+			ParseDvdDataEntryForFst(child);
+			if (child->type == Json::ValueType::Object)
+			{
+				lastObject = child;
+			}
+		}
+
+		if (lastObject)
+		{
+			lastObject->AddBool("last", true);
 		}
 	}
 
@@ -465,11 +477,13 @@ namespace DVD
 			}
 
 			Json::Value* entryId = entry->ByName("entryId");
-			Json::Value* siblings = entry->ByName("siblings");
+			Json::Value* totalChildren = entry->ByName("totalChildren");
 
-			if (entryId && siblings)
+			if (entryId && totalChildren)
 			{
-				fstEntry.nextOffset = _byteswap_ulong((uint32_t)(entryId->value.AsInt + siblings->value.AsInt) + 1);
+				Json::Value* last = entry->ByName("last");
+
+				fstEntry.nextOffset = _byteswap_ulong((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
 			}
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
@@ -565,8 +579,8 @@ namespace DVD
 		bb2.FSTLength = (uint32_t)FstData.size();
 		bb2.FSTMaxLength = bb2.FSTLength;
 		bb2.FSTPosition = RoundUpSector(bb2.bootFilePosition + (uint32_t)Dol.size() + DVD_SECTOR_SIZE);
-		bb2.userPosition = 0;
-		bb2.userLength = 0;
+		bb2.userPosition = 0x81300000 - 256*1024;
+		bb2.userLength = 256 * 1024;
 
 		Bb2Data.resize(sizeof(DVDBB2));
 		memcpy(Bb2Data.data(), &bb2, sizeof(bb2));

@@ -88,12 +88,14 @@
 		},
 
 		"DumpBb2": {
-			"help": "Dump mounted DVDBB2 struct"
+			"help": "Dump mounted DVDBB2 struct",
+			"output": "Array [] of bytes"
 		},
 
 		"DumpFst": {
 			"help": "Dump mounted DVD filesystem",
-			"hints": "[0|1]"
+			"hints": "[0|1]",
+			"output": "Array [] of bytes"
 		}
 
 	}

@@ -41,8 +41,8 @@ typedef struct _DVDBB2
     uint32_t     FSTPosition;
     uint32_t     FSTLength;
     uint32_t     FSTMaxLength;
-    uint32_t     userPosition;
-    uint32_t     userLength;
+    uint32_t     userPosition;          // FST location in memory. A strange architectural solution, one could do OSAlloc.
+    uint32_t     userLength;            // FST size in memory
     uint8_t      padding[8];
 } DVDBB2;
 

@@ -748,7 +748,7 @@ loadFile:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
                         UnloadPatch();
-                        LoadPatch(name, 0);
+                        LoadPatch(name, false);
                     }
                     return 0;
 
@@ -756,7 +756,7 @@ loadFile:
                 case ID_ADD_PATCH:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
-                        LoadPatch(name, 1);
+                        LoadPatch(name, true);
                     }
                     return 0;
 
