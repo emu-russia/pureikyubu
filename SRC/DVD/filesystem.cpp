@@ -27,30 +27,33 @@ static void SwapArea(uint32_t* addr, int count)
 
 // swap bytes in FST (for x86)
 // return beginning of strings table (or NULL, if bad FST)
-static DVDFileEntry *fst_prepare(DVDFileEntry *root)
+static char *fst_prepare(DVDFileEntry *root)
 {
-    root->nameOffsetLo = (root->nameOffsetLo << 8)| 
-                         (root->nameOffsetLo >> 8);
+    char* nameTablePtr = nullptr;
+
+    root->nameOffsetLo = _byteswap_ushort(root->nameOffsetLo);
     root->fileOffset   = _byteswap_ulong(root->fileOffset);
     root->fileLength   = _byteswap_ulong(root->fileLength);
 
-    if(root->isDir)
+    // Check root: must have no parent, has zero nameOfset and non-zero nextOffset.
+    if (! (root->parentOffset == 0 && FSTOFS(root->nameOffsetLo, root->nameOffsetHi) == 0 && root->nextOffset != 0) )
     {
-        DVDFileEntry *follow, *next, *last;
-
-        follow = &fst[root->nextOffset];
-        next = root + 1;
-        last = next;
-
-        while(next < follow)
-        {
-            next = fst_prepare(next);
-            if(next < last) return NULL;    // damaged
-            last = next;
-        }
-        return follow;
+        return nullptr;
     }
-    else return root + 1;
+
+    nameTablePtr = (char*)&root[root->nextOffset];
+
+    // Starting from next after root
+    for (uint32_t i = 1; i < root->nextOffset; i++)
+    {
+        DVDFileEntry* entry = &root[i];
+
+        entry->nameOffsetLo = _byteswap_ushort(entry->nameOffsetLo);
+        entry->fileOffset = _byteswap_ulong(entry->fileOffset);
+        entry->fileLength = _byteswap_ulong(entry->fileLength);
+    }
+
+    return nameTablePtr;
 }
 
 // initialize filesystem
