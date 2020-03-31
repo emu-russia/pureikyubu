@@ -2,7 +2,7 @@
 // IMPORTANT: whole HW should use physical CPU addressing, not effective!
 #include "pch.h"
 
-DSP::DspCore* DspCore;      // instance of dsp core
+DSP::DspCore* dspCore;      // instance of dsp core
 
 // ---------------------------------------------------------------------------
 // init and update
@@ -25,18 +25,18 @@ void HWOpen(HWConfig* config)
     SIOpen();       // GC controllers
     PIOpen(config); // interrupts, console regs
 
-    DspCore = new DSP::DspCore(config);
-    assert(DspCore);
+    dspCore = new DSP::DspCore(config);
+    assert(dspCore);
 
     DBReport("\n");
 }
 
 void HWClose()
 {
-    if (DspCore)
+    if (dspCore)
     {
-        delete DspCore;
-        DspCore = nullptr;
+        delete dspCore;
+        dspCore = nullptr;
     }
 
     ARClose();      // release ARAM
@@ -71,9 +71,9 @@ namespace Flipper
     Flipper::Flipper(HWConfig* config)
     {
         HWOpen(config);
-        assert(GXOpen(mi.ram, wnd.hMainWindow));
-        assert(AXOpen());
-        assert(PADOpen());
+        GXOpen(mi.ram, wnd.hMainWindow);
+        AXOpen();
+        PADOpen();
     }
 
     Flipper::~Flipper()

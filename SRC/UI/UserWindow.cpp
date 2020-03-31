@@ -280,9 +280,9 @@ static void SelectSort()
 }
 
 // change Swap Controls
-void ModifySwapControls(BOOL state)
+void ModifySwapControls(bool stateOpened)
 {
-    if(state)       // opened
+    if(stateOpened)       // opened
     {
         SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, _T("&Close Cover"));
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_ENABLED);
@@ -362,7 +362,7 @@ static void OnMainWindowCreate(HWND hwnd)
     UpdateRecentMenu(wnd.hMainWindow);
 
     // dvd swap controls
-    ModifySwapControls(0);
+    ModifySwapControls(false);
 
     // child windows
     CreateStatusBar();
@@ -385,6 +385,9 @@ static void OnMainWindowCreate(HWND hwnd)
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
     }
 
+    // emulator
+    EMUCtor();
+
     // select sort method
     SelectSort();
 
@@ -402,6 +405,7 @@ static void OnMainWindowDestroy()
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 
     EMUClose();     // completely close the Dolwin
+    EMUDtor();
     exit(1);        // return good
 }
 
@@ -564,12 +568,12 @@ loadFile:
                     if(DIGetCoverState())   // close lid
                     {
                         DICloseCover();
-                        ModifySwapControls(0);
+                        ModifySwapControls(false);
                     }
                     else                    // open lid
                     {
                         DIOpenCover();
-                        ModifySwapControls(1);
+                        ModifySwapControls(true);
                     }
                     return 0;
 
@@ -578,11 +582,11 @@ loadFile:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Dvd)) != nullptr && DIGetCoverState())
                     {
                         if(!_tcsicmp(name, ldat.currentFile)) return 0;  // same
-                        if(DVDSetCurrent(name) == FALSE) return 0;      // bad
+                        if(!DVD::MountFile(name)) return 0;      // bad
 
                         // close lid
                         DICloseCover();
-                        ModifySwapControls(0);
+                        ModifySwapControls(false);
                     }
                     return 0;
 
@@ -744,7 +748,7 @@ loadFile:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
                         UnloadPatch();
-                        LoadPatch(name, 0);
+                        LoadPatch(name, false);
                     }
                     return 0;
 
@@ -752,7 +756,7 @@ loadFile:
                 case ID_ADD_PATCH:
                     if((name = UI::FileOpen(hwnd, UI::FileType::Patch)) != nullptr)
                     {
-                        LoadPatch(name, 1);
+                        LoadPatch(name, true);
                     }
                     return 0;
 
@@ -774,6 +778,19 @@ loadFile:
                     }
                     SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
                     return 0;
+
+                // Mount Dolphin SDK as DVD
+                case ID_DEVELOPMENT_MOUNTSDK:
+                {
+                    TCHAR* dolphinSdkDir = UI::FileOpen(wnd.hMainWindow, UI::FileType::Directory);
+                    if (dolphinSdkDir != nullptr)
+                    {
+                        std::vector<std::string> cmd1 {"MountSDK", Debug::Hub.TcharToString(dolphinSdkDir)};
+                        Json::Value * output = Debug::Hub.Execute(cmd1);
+                        if (output != nullptr) delete output;
+                    }
+                }
+                return 0;
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // options dialogs
@@ -891,10 +908,10 @@ loadFile:
 
 // self-explanatory.. creates main window and all child windows.
 // window size will be set to default 400x300.
-HWND CreateMainWindow()
+HWND CreateMainWindow(HINSTANCE hInstance)
 {
-    HINSTANCE hInstance = GetModuleHandle(NULL);
-    WNDCLASS wc;
+    WNDCLASS wc = { 0 };
+    const TCHAR CLASS_NAME[] = _T("GAMECUBECLASS");
 
     assert(wnd.hMainWindow == nullptr);
 
@@ -904,15 +921,17 @@ HWND CreateMainWindow()
     wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
     wc.hInstance     = hInstance;
     wc.lpfnWndProc   = WindowProc;
-    wc.lpszClassName = _T("GAMECUBECLASS");
+    wc.lpszClassName = CLASS_NAME;
     wc.lpszMenuName  = MAKEINTRESOURCE(IDR_MAIN_MENU);
     wc.style         = 0;
 
-    assert(RegisterClass(&wc));
+    ATOM classAtom = RegisterClass(&wc);
+    assert(classAtom != 0);
 
     wnd.hMainWindow = CreateWindowEx(
         0,
-        _T("GAMECUBECLASS"), WIN_NAME,
+        CLASS_NAME,
+        WIN_NAME,
         WIN_STYLE, 
         20, 30,
         400, 300,

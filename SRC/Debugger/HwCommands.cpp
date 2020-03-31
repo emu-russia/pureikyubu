@@ -22,19 +22,19 @@ namespace Debug
 	}
 
 	// Load binary file to main memory
-	void cmd_ramload(std::vector<std::string>& args)
+	Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{
 		if (!mi.ram)
 		{
 			DBReport("Not loaded!\n");
-			return;
+			return nullptr;
 		}
 
 		if (args.size() < 3)
 		{
 			DBReport("syntax: ramload <file> <address>\n");
 			DBReport("example of use: ramload lomem.bin 0x80000000\n");
-			return;
+			return nullptr;
 		}
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
@@ -46,33 +46,34 @@ namespace Debug
 		{
 			free(data);
 			DBReport("Address out of range!\n");
-			return;
+			return nullptr;
 		}
 
 		if (!data)
 		{
 			DBReport("Failed to load: %s\n", args[1].c_str());
-			return;
+			return nullptr;
 		}
 
 		memcpy(&mi.ram[address], data, dataSize);
 		free(data);
+		return nullptr;
 	}
 
 	// Save main memory content to file
-	void cmd_ramsave(std::vector<std::string>& args)
+	Json::Value* cmd_ramsave(std::vector<std::string>& args)
 	{
 		if (!mi.ram)
 		{
 			DBReport("Not loaded!\n");
-			return;
+			return nullptr;
 		}
 
 		if (args.size() < 4)
 		{
 			DBReport("syntax: ramsave <file> <address> <size>\n");
 			DBReport("example of use: ramsave lomem.bin 0x80000000 0x3300\n");
-			return;
+			return nullptr;
 		}
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
@@ -81,29 +82,30 @@ namespace Debug
 		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
 		{
 			DBReport("Address out of range!\n");
-			return;
+			return nullptr;
 		}
 
 		if (!UI::FileSave(args[1].c_str(), &mi.ram[address], dataSize))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}
+		return nullptr;
 	}
 
 	// Load binary file to ARAM
-	void cmd_aramload(std::vector<std::string>& args)
+	Json::Value* cmd_aramload(std::vector<std::string>& args)
 	{
 		if (!aram.mem)
 		{
 			DBReport("Not loaded!\n");
-			return;
+			return nullptr;
 		}
 
 		if (args.size() < 3)
 		{
 			DBReport("syntax: aramload <file> <address>\n");
 			DBReport("example of use: aramload samples.bin 0x10000\n");
-			return;
+			return nullptr;
 		}
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
@@ -115,33 +117,34 @@ namespace Debug
 		{
 			free(data);
 			DBReport("Address out of range!\n");
-			return;
+			return nullptr;
 		}
 
 		if (!data)
 		{
 			DBReport("Failed to load: %s\n", args[1].c_str());
-			return;
+			return nullptr;
 		}
 
 		memcpy(&aram.mem[address], data, dataSize);
 		free(data);
+		return nullptr;
 	}
 
 	// Save ARAM content to file
-	void cmd_aramsave(std::vector<std::string>& args)
+	Json::Value* cmd_aramsave(std::vector<std::string>& args)
 	{
 		if (!aram.mem)
 		{
 			DBReport("Not loaded!\n");
-			return;
+			return nullptr;
 		}
 
 		if (args.size() < 4)
 		{
 			DBReport("syntax: aramsave <file> <address> <size>\n");
 			DBReport("example of use: aramsave samples.bin 0x10000 0x200\n");
-			return;
+			return nullptr;
 		}
 
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
@@ -150,13 +153,14 @@ namespace Debug
 		if (address >= ARAMSIZE || (address + dataSize) >= ARAMSIZE)
 		{
 			DBReport("Address out of range!\n");
-			return;
+			return nullptr;
 		}
 
 		if (!UI::FileSave(args[1].c_str(), &aram.mem[address], dataSize))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}
+		return nullptr;
 	}
 
 };

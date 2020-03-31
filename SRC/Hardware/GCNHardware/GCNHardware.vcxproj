@@ -24,9 +24,6 @@
     <ClCompile Include="..\AudioNull.cpp" />
     <ClCompile Include="..\CP.cpp" />
     <ClCompile Include="..\DI.cpp" />
-    <ClCompile Include="..\DspCore.cpp" />
-    <ClCompile Include="..\DspAnalyzer.cpp" />
-    <ClCompile Include="..\DspInterpreter.cpp" />
     <ClCompile Include="..\EFB.cpp" />
     <ClCompile Include="..\EI.cpp" />
     <ClCompile Include="..\GDI.cpp" />
@@ -50,10 +47,6 @@
     <ClInclude Include="..\AX.h" />
     <ClInclude Include="..\CP.h" />
     <ClInclude Include="..\DI.h" />
-    <ClInclude Include="..\DspCore.h" />
-    <ClInclude Include="..\DspAnalyzer.h" />
-    <ClInclude Include="..\DspInterpreter.h" />
-    <ClInclude Include="..\DVD.h" />
     <ClInclude Include="..\EFB.h" />
     <ClInclude Include="..\EI.h" />
     <ClInclude Include="..\GDI.h" />

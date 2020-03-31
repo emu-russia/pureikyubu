@@ -23,8 +23,8 @@ enum class ConColor
 #define CON_LOG_FILE        "DebugSession.htm"
 
 // console window dimensions
-#define CON_WIDTH   80
-#define CON_HEIGHT  60
+#define CON_WIDTH   120
+#define CON_HEIGHT  100
 
 // update regions
 #define CON_UPDATE_REGS     (0x0001)    // registers window
@@ -35,7 +35,7 @@ enum class ConColor
 #define CON_UPDATE_STAT     (0x0020)    // status line
 #define CON_UPDATE_ALL      (0x003f)    // all
 
-#define CON_LINES           1000        // size of message buffers
+#define CON_LINES           (32*1024)   // Size of message history (lines)
 #define CON_LINELEN         (CON_WIDTH+1)
 #define CON_TOKENCNT        5           // max amount of cmd params
 

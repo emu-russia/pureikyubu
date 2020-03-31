@@ -33,9 +33,9 @@ static INT_PTR CALLBACK AboutProc(
                 _T("Copyright 2003-2020, Dolwin team\n")
                 _T("Build version %s (%s, %s) ")
 #ifdef      _DEBUG
-                _T("debug ")
+                _T("Debug ")
 #else
-                _T("release ")
+                _T("Release ")
 #endif
 
 #if         _M_X64

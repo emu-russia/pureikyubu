@@ -554,6 +554,8 @@ BEGIN
         MENUITEM "Add Patch...",                ID_ADD_PATCH
         MENUITEM SEPARATOR
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "Mount DolphinSDK as DVD...",  ID_DEVELOPMENT_MOUNTSDK
     END
     POPUP "&Options"
     BEGIN

@@ -184,6 +184,20 @@ void con_break(const char *reason)
 
 void con_command(std::vector<std::string>& args, int lnum)
 {
+    // Poke Jdi
+
+    if (Debug::Hub.CommandExists(args))
+    {
+        Json::Value * output = Debug::Hub.Execute(args);
+        if (output != nullptr)
+        {
+            delete output;
+        }
+        return;
+    }
+
+    // Legacy commands (will be migrated to Jdi afterwards)
+
     auto it = con.cmds.find(args[0]);
 
     if (it != con.cmds.end())

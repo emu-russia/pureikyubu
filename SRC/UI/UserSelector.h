@@ -13,13 +13,13 @@ enum class SELECTOR_FILE
 };
 
 // file info limits
-#define MAX_TITLE       128         // 64 wasnt enough :(
-#define MAX_COMMENT     128
+#define MAX_TITLE       0x100
+#define MAX_COMMENT     0x100
 
 // file entry
 typedef struct UserFile
 {
-    SELECTOR_FILE   type;                   // see above (one of SELECTOR_FILE_*)
+    SELECTOR_FILE   type;           // see above (one of SELECTOR_FILE_*)
     size_t  size;                   // file size
     TCHAR   id[0x10];               // GameID = DiskID + banner checksum
     TCHAR   name[2*MAX_PATH+2];     // file path and name
@@ -61,6 +61,7 @@ void    SortSelector(SELECTOR_SORT sortBy);
 void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void    NotifySelector(LPNMHDR pnmh);
 void    ScrollSelector(int letter);
+uint16_t* SjisToUnicode(TCHAR* sjisText, size_t* size, size_t* chars);
 
 // all important data is placed here
 typedef struct UserSelector

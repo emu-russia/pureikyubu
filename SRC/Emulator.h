@@ -5,6 +5,8 @@
 void    EMUGetHwConfig(HWConfig* config);
 
 // emulator controls API
+void    EMUCtor();
+void    EMUDtor();
 void    EMUOpen();          // [START]
 void    EMUClose();         // [STOP]
 void    EMUReset();         // Reset
@@ -19,3 +21,5 @@ typedef struct Emulator
 } Emulator;
 
 extern  Emulator emu;
+
+#include "EmuCommands.h"

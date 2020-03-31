@@ -24,6 +24,9 @@
     <ClInclude Include="SRC\dolphin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SRC\EmuCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="RES\Dolwin.ico">
@@ -64,12 +67,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="Data\EmuJdi.json" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SRC\Emulator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SRC\Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SRC\EmuCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

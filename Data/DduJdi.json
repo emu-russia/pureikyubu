@@ -1,0 +1,102 @@
+{
+	"info":
+	{
+		"description": "GAMECUBE Disk Drive Unit Jey-Dai specs.",
+		"helpGroup": "DVD Debug Commands"
+	},
+
+	"can": {
+		"DvdInfo": {
+			"help": "Get DDU Status Information",
+			"output": "Array [String File/Dir, Int Seek, Bool LidStatus (true: Open, false: Close)]"
+		},
+
+		"MountIso": {
+			"help": "Mount GC DVD image (GCM)",
+			"hints": "<file>",
+			"args": 1,
+			"usage": [
+				"Syntax: MountIso <file>\n",
+				"Examples of use: MountIso C:\\Isos\\mygame.iso\n"
+			],
+			"output": "Bool Success/Fail"
+		},
+
+		"OpenLid": {
+			"help": "Simulate opening of the drive cover"
+		},
+
+		"CloseLid": {
+			"help": "Simulate closing of the drive cover"
+		},
+
+		"DvdStats": {
+			"help": "Show some stats"
+		},
+
+		"MountSDK": {
+			"help": "Mount Dolphin SDK folder as virtual disk",
+			"hints": "<dir>",
+			"args": 1,
+			"usage": [
+				"Syntax: MountSDK <dir>\n",
+				"Examples of use: MountSDK C:\\DolphinSDK\n"
+			],
+			"output": "Bool Success/Fail"
+		},
+
+		"UnmountDvd": {
+			"help": "Unmount DVD (extract virtual disk)"
+		},
+
+		"DvdSeek": {
+			"help": "Seek at DVD offset",
+			"hints": "<pos>",
+			"args": 1,
+			"usage": [
+				"Syntax: DvdSeek <offset>\n",
+				"Offset (in bytes) must not be greater current DVD size.\n",
+				"Examples of use: DvdSeek 0\n",
+				"                 DvdSeek 0x2440\n"
+			]
+		},
+
+		"DvdRead": {
+			"help": "Read DVD data",
+			"hints": "<len>",
+			"args": 1,
+			"usage": [
+				"Syntax: DvdRead <length>\n",
+				"First 32 Bytes will be dumped on screen. Length must not greater 1 MByte.\n",
+				"Examples of use: DvdRead 32\n",
+				"                 DvdRead 0x1000\n"
+			],
+			"output": "Array [] of bytes"
+		},
+
+		"DvdOpenFile": {
+			"help": "Open file on DVD filesystem",
+			"hints": "<file>",
+			"args": 1,
+			"usage": [
+				"Syntax: DvdOpenFile <file>\n",
+				"path must be absolute, including root prefix '/'\n",
+				"Examples of use: DvdOpenFile \"/opening.bnr\"\n",
+				"                 DvdOpenFile \"/gxTests/tex-02/ia8_odd.tpl\"\n"
+			],
+			"output": "File offset in bytes. 0 if file not found."
+		},
+
+		"DumpBb2": {
+			"help": "Dump mounted DVDBB2 struct",
+			"output": "Array [] of bytes"
+		},
+
+		"DumpFst": {
+			"help": "Dump mounted DVD filesystem",
+			"hints": "[0|1]",
+			"output": "Array [] of bytes"
+		}
+
+	}
+}

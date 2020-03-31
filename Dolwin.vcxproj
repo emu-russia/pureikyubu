@@ -109,7 +109,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalOptions>/MACHINE:I386 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalDependencies>opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3d9.lib;d3dcompiler.lib;opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -143,7 +143,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3d9.lib;d3dcompiler.lib;opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -175,7 +175,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3d9.lib;d3dcompiler.lib;opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention />
@@ -204,7 +204,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>D3d9.lib;d3dcompiler.lib;opengl32.lib;comctl32.lib;odbc32.lib;odbccp32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <SubSystem>Windows</SubSystem>
       <DataExecutionPrevention>
@@ -217,6 +217,7 @@
   <ItemGroup>
     <ClInclude Include="RES\resource.h" />
     <ClInclude Include="SRC\dolphin.h" />
+    <ClInclude Include="SRC\EmuCommands.h" />
     <ClInclude Include="SRC\Emulator.h" />
     <ClInclude Include="SRC\Loader.h" />
   </ItemGroup>
@@ -244,13 +245,16 @@
     <ProjectReference Include="SRC\Core\GekkoCore\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
     </ProjectReference>
-    <ProjectReference Include="SRC\Debugger\Debugger\Debugger.vcxproj">
+    <ProjectReference Include="SRC\Debugger\Scripts\Debugger.vcxproj">
       <Project>{7fc22f72-a07b-404a-bce4-7a950ea3c44b}</Project>
     </ProjectReference>
     <ProjectReference Include="SRC\DolwinVideo\DolwinVideo.vcxproj">
       <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
     </ProjectReference>
-    <ProjectReference Include="SRC\DVD\DVD.vcxproj">
+    <ProjectReference Include="SRC\DSP\Scripts\DSP.vcxproj">
+      <Project>{0336d67c-249d-4c48-bd80-8e05ce711a58}</Project>
+    </ProjectReference>
+    <ProjectReference Include="SRC\DVD\Scripts\DVD.vcxproj">
       <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
     </ProjectReference>
     <ProjectReference Include="SRC\Hardware\GCNHardware\GCNHardware.vcxproj">
@@ -262,14 +266,16 @@
     <ProjectReference Include="SRC\PAD\PAD.vcxproj">
       <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>
     </ProjectReference>
-    <ProjectReference Include="SRC\UI\UI\UI.vcxproj">
+    <ProjectReference Include="SRC\UI\Scripts\UI.vcxproj">
       <Project>{31b0b5f5-2a81-4e71-8d3a-50aa859ae991}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Data\EmuJdi.json" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="SRC\EmuCommands.cpp" />
     <ClCompile Include="SRC\Emulator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

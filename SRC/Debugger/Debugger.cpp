@@ -96,6 +96,10 @@ static void db_report2(DbgChannel chan, const char* text, ...)
             prefix = "MC : ";
             col = ConColor::CYAN;
             break;
+        case DbgChannel::DVD:
+            prefix = "DVD: ";
+            col = ConColor::BGREEN;
+            break;
 
         case DbgChannel::Loader:
             col = ConColor::YEL;
@@ -139,14 +143,16 @@ static DWORD WINAPI DBThreadProc(LPVOID lpParameter)
     return 0;
 }
 
-void DBOpen()           // open debugger window
+// Open debugger window
+void DBOpen()
 {
     // start debugger thread
     consoleThreadHandle = CreateThread(NULL, 0, DBThreadProc, &con, 0, &consoleThreadId);
     assert(consoleThreadHandle != INVALID_HANDLE_VALUE);
 }
 
-void DBClose()          // close debugger window
+// Close debugger window
+void DBClose()
 {
     con.exitPending = true;
 }

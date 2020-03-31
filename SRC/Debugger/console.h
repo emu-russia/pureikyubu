@@ -14,8 +14,6 @@
 #include "cpuview.h"   // cpu view (disassembly)
 #include "memview.h"   // memory (data) view
 
-typedef void (*cmd_handler)(std::vector<std::string>& args);
-
 // console controls
 void    con_open();
 void    con_close();
@@ -52,7 +50,7 @@ public:
     FILE*               logf = nullptr;         // file descriptor
     NOPHistory*         nopHist = nullptr;
     int                 nopNum = 0;
-    std::map<std::string, cmd_handler> cmds;
+    std::map<std::string, Debug::CmdDelegate> cmds;
     MySpinLock::LOCK    reportLock = MySpinLock::LOCK_IS_FREE;
     std::atomic<bool>   exitPending = false;
 };

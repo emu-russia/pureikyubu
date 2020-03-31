@@ -1,0 +1,36 @@
+{
+  "info": {
+    "description": "Dolwin Emulator Jey-Dai specs.",
+    "helpGroup": "EMU Debug Commands"
+  },
+
+  "can": {
+
+    "FileLoad": {
+      "help": "Load file",
+      "args": 1,
+      "hints": "<file>",
+      "usage": [
+        "Syntax: FileLoad <file>\n",
+        "Commands outputs Array of bytes [], which can be used by other commands.\n",
+        "Example: FileLoad \"Data\\AnsiFont.szp\"\n"
+      ],
+      "output": "Array bytes []"
+    },
+
+    "FileSave": {
+      "help": "Save file",
+      "args": 2,
+      "hints": "<file> <cmd>",
+      "usage": [
+        "Syntax: FileSave <file> <cmd ...>\n",
+        "Save data returned by another command (cmd) to specified file.\n",
+        "Example: FileSave \"Data\\FST.bin\" DumpFst\n"
+      ]
+    }
+
+  },
+
+  "todo": [ "Open", "Close", "Reset", "Exit" ]
+
+}

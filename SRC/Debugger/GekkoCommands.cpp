@@ -18,21 +18,23 @@ namespace Debug
 	}
 
 	// Run processor until break or stop
-	void cmd_run(std::vector<std::string>& args)
+	Json::Value* cmd_run(std::vector<std::string>& args)
 	{
 		if (emu.core)
 		{
 			emu.core->Run();
 		}
+		return nullptr;
 	}
 
 	// Stop processor execution
-	void cmd_stop(std::vector<std::string>& args)
+	Json::Value* cmd_stop(std::vector<std::string>& args)
 	{
 		if (emu.core)
 		{
 			if (emu.core->IsRunning()) con_break();
 		}
+		return nullptr;
 	}
 
 }

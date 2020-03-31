@@ -57,8 +57,8 @@ uint32_t LoadDOL(TCHAR *dolname)
     fread(&dh, 1, sizeof(DolHeader), dol);
     Gekko::GekkoCore::SwapArea((uint32_t *)&dh, sizeof(DolHeader));
 
-    DBReport2(DbgChannel::Loader, "loading DOL (%i b).\n",
-              DOLSize(&dh) );
+    DBReport2(DbgChannel::Loader, "loading DOL %s (%i b).\n",
+              Debug::Hub.TcharToString(dolname).c_str(), DOLSize(&dh) );
 
     // load all text (code) sections
     for(i=0; i<DOL_NUM_TEXT; i++)
@@ -389,8 +389,8 @@ bool LoadPatch(TCHAR * patchname, bool add)
         return false;
 
     // print notification in debugger
-    if(add) DBReport2(DbgChannel::Loader, "added patch : %s\n", patchname);
-    else DBReport2(DbgChannel::Loader, "loaded patch : %s\n", patchname);
+    if(add) DBReport2(DbgChannel::Loader, "added patch : %s\n", Debug::Hub.TcharToString(patchname).c_str());
+    else DBReport2(DbgChannel::Loader, "loaded patch : %s\n", Debug::Hub.TcharToString(patchname).c_str());
 
     // remove current patch table (if not adding)
     if(!add)
@@ -539,7 +539,7 @@ static void AutoloadMap()
     {
         if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
         else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
-        DBReport2(DbgChannel::Loader, "Making new MAP file : %s\n\n", mapname);
+        DBReport2(DbgChannel::Loader, "Making new MAP file : %s\n\n", Debug::Hub.TcharToString(mapname).c_str());
         MAPInit(mapname);
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
@@ -570,29 +570,55 @@ static void AutoloadPatch()
 
 static BOOL SetGameIDAndTitle(TCHAR *filename)
 {
-    // try to set current DVD
-    if(DVDSetCurrent(filename) == FALSE) return FALSE;
-
     // load DVD banner
     DVDBanner2 * bnr = (DVDBanner2 *)DVDLoadBanner(filename);
 
     // get DiskID
-    char diskID[8];
-    DVDSeek(0);
-    DVDRead(diskID, 4);
-    diskID[4] = 0;
+    char diskID[8] = { 0 };
+    TCHAR diskIdTchar[8] = { 0 };
+    DVD::Seek(0);
+    DVD::Read(diskID, 4);
+    diskIdTchar[0] = diskID[0];
+    diskIdTchar[1] = diskID[1];
+    diskIdTchar[2] = diskID[2];
+    diskIdTchar[3] = diskID[3];
+    diskIdTchar[4] = 0;
 
     char* ansiPtr = (char*)bnr->comments[0].longTitle;
     TCHAR* tcharPtr = ldat.currentFileName;
 
     while (*ansiPtr)
     {
-        *tcharPtr++ = *ansiPtr++;
+        *tcharPtr++ = (uint8_t)*ansiPtr++;
+    }
+    *tcharPtr++ = 0;
+
+    // Convert SJIS Title to Unicode
+
+    if (DVD::RegionById(diskID) == DVD::Region::JPN)
+    {
+        size_t size, chars;
+        uint16_t* widePtr = SjisToUnicode(ldat.currentFileName, &size, &chars);
+        uint16_t* unicodePtr;
+
+        if (widePtr)
+        {
+            TCHAR* tcharPtr = ldat.currentFileName;
+            unicodePtr = widePtr;
+
+            while (*unicodePtr)
+            {
+                *tcharPtr++ = *unicodePtr++;
+            }
+            *tcharPtr++ = 0;
+
+            free(widePtr);
+        }
     }
 
     // set GameID
     _stprintf_s( ldat.gameID, sizeof(ldat.gameID), _T("%.4s%02X"),
-             diskID, DVDBannerChecksum((void *)bnr) );
+        diskIdTchar, DVDBannerChecksum((void *)bnr) );
     free(bnr);
     return TRUE;
 }
@@ -641,12 +667,12 @@ static void DoLoadFile(TCHAR *filename)
         }
         else if (!_tcsicmp(extension, _T(".iso")))
         {
-            DVDSetCurrent(filename);
+            DVD::MountFile(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
         }
         else if (!_tcsicmp(extension, _T(".gcm")))
         {
-            DVDSetCurrent(filename);
+            DVD::MountFile(filename);
             ldat.dvd = SetGameIDAndTitle(filename);
         }
     }
@@ -743,7 +769,7 @@ void ReloadFile()
 
     if(_tcslen(ldat.currentFile))
     {
-        DBReport2(DbgChannel::Loader, "loading file : \"%s\"\n\n", ldat.currentFile);
+        DBReport2(DbgChannel::Loader, "loading file : \"%s\"\n\n", Debug::Hub.TcharToString(ldat.currentFile).c_str());
         DoLoadFile(ldat.currentFile);
     }
 }

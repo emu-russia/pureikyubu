@@ -1,7 +1,7 @@
 {
 	"info":
 	{
-		"description": "Dolwin DSP JDI (WIP). More detailed description of Jey-Day infrastructure will be later.",
+		"description": "Dolwin DSP JDI",
 		"helpGroup": "DSP Debug Commands"
 	},
 
@@ -13,23 +13,33 @@
 			"args": 1,
 			"usage":
 			[
-				"syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
+				"Syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
 				"disassemble dsp ucode from binary file and dump it into dspdisa.txt\n",
 				"start_addr in DSP slots;\n",
-				"example of use: dspdisa Data\\dsp_irom.bin 0x8000\n"
+				"Example of use: dspdisa Data\\dsp_irom.bin 0x8000\n"
 			]
 		},
 
 		"dregs":
 		{
 			"help": "Show DSP registers",
-			"output": []
+			"output": "Array [] of all DSP registers contents"
 		},
 
 		"dreg":
 		{
 			"help": "Modify DSP register",
 			"hints": "<reg> <value>",
+			"args": 2,
+			"usage":
+			[
+				"Syntax: dreg <register> <value>\n",
+				"Register names: ar0 ar1 ar2 ar3 ix0 ix1 ix2 ix3",
+				"r8 r9 r10 r11 st0 st1 st2 st3",
+				"ac0h ac1h config sr prodl prodm1 prodh prodm2",
+				"ax0l ax0h ax1l ax1h ac0l ac1l ac0m ac1m",
+				"Example of use: dreg ar0 0x300\n",
+			]
 		},
 
 		"dmem":
@@ -38,14 +48,142 @@
 			"args": 1,
 			"usage":
 			[
-				"syntax: dmem <dsp_addr>, dmem .\n",
+				"Syntax: dmem <dsp_addr>, dmem .\n",
 				"Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"dmem . will dump 0x800 bytes at dmem address 0\n",
-				"example of use: dmem 0x8000\n"
+				"Example of use: dmem 0x8000\n"
 			],
-			"output": []
-		}
+			"output": "Array [] of memory data"
+		},
 
+		"imem":
+		{
+			"help": "Dump DSP IMEM",
+			"args": 1,
+			"usage":
+			[
+				"Syntax: imem <dsp_addr>, imem .\n",
+				"Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"imem . will dump 32 bytes of imem at program counter address.\n",
+				"Example of use: imem 0\n"
+			],
+			"output": "Array [] of memory data"
+		},
+
+		"drun":
+		{
+			"help": "Run DSP thread until break, halt or dstop"
+		},
+
+		"dstop":
+		{
+			"help": "Stop DSP thread"
+		},
+
+		"dstep":
+		{
+			"help": "Step DSP instruction(s)",
+			"hints": "[n]"
+		},
+
+		"dbrk":
+		{
+			"help": "Add IMEM breakpoint",
+			"args": 1,
+			"usage":
+			[
+				"Syntax: dbrk <dsp_addr>\n",
+				"Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"Example of use: dbrk 0x8020\n"
+			]
+		},
+
+		"dcan":
+		{
+			"help": "Add IMEM canary",
+			"args": 2,
+			"usage":
+			[
+				"Syntax: dcan <dsp_addr> <message>\n",
+				"Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"When the PC is equal to the canary address, a debug message is displayed\n",
+				"Example of use: dcan 0x10 \"Ucode entrypoint\"\n"
+			]
+		},
+
+		"dlist":
+		{
+			"help": "List IMEM breakpoints / canaries"
+		},
+
+		"dbrkclr":
+		{
+			"help": "Clear all IMEM breakpoints"
+		},
+
+		"dcanclr":
+		{
+			"help": "Clear all IMEM canaries"
+		},
+
+		"dpc":
+		{
+			"help": "Set DSP program counter",
+			"args": 1,
+			"usage":
+			[
+				"Syntax: dpc <dsp_addr>\n",
+				"Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n",
+				"Example of use: dpc 0x8000\n"
+			]
+		},
+
+		"dreset":
+		{
+			"help": "Issue DSP reset"
+		},
+
+		"du":
+		{
+			"help": "Disassemble some DSP instructions at pc / address",
+			"hints": "[addr] [count]"
+		},
+
+		"dst":
+		{
+			"help": "Dump DSP call stack"
+		},
+
+		"difx":
+		{
+			"help": "Dump DSP IFX"
+		},
+
+		"cpumbox":
+		{
+			"help": "Write message to CPU Mailbox",
+			"args": 1,
+			"usage":
+			[
+				"Syntax: cpumbox <value>\n",
+				"Example of use: cpumbox 0x8001FEED\n"
+			]
+		},
+
+		"dspmbox":
+		{
+			"help": "Read message from DSP Mailbox"
+		},
+
+		"cpudspint":
+		{
+			"help": "Send CPU->DSP interrupt"
+		},
+
+		"dspcpuint":
+		{
+			"help": "Send DSP->CPU interrupt"
+		}
 
 	}
 }

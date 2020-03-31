@@ -62,18 +62,18 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
     AIDCR &= ~AIDCR_DSPDMA;
 
     // DSP controls
-    DspCore->DSPSetResetBit((AIDCR >> 0) & 1);
-    DspCore->DSPSetIntBit  ((AIDCR >> 1) & 1);
-    DspCore->DSPSetHaltBit ((AIDCR >> 2) & 1);
+    dspCore->DSPSetResetBit((AIDCR >> 0) & 1);
+    dspCore->DSPSetIntBit  ((AIDCR >> 1) & 1);
+    dspCore->DSPSetHaltBit ((AIDCR >> 2) & 1);
 }
 
 static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
-    AIDCR |= DspCore->DSPGetResetBit() << 0;
-    AIDCR |= DspCore->DSPGetIntBit()   << 1;
-    AIDCR |= DspCore->DSPGetHaltBit()  << 2;
+    AIDCR |= dspCore->DSPGetResetBit() << 0;
+    AIDCR |= dspCore->DSPGetIntBit()   << 1;
+    AIDCR |= dspCore->DSPGetHaltBit()  << 2;
 
     *reg = AIDCR;
 }
@@ -282,13 +282,13 @@ static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr;
 // ---------------------------------------------------------------------------
 // DSP mailbox controls
 
-static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { DspCore->CpuToDspWriteHi((uint16_t)data); }
-static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { DspCore->CpuToDspWriteLo((uint16_t)data); }
-static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DspCore->CpuToDspReadHi(false); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DspCore->CpuToDspReadLo(); }
+static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteHi((uint16_t)data); }
+static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteLo((uint16_t)data); }
+static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadHi(false); }
+static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadLo(); }
 
-static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DspCore->DspToCpuReadHi(false); }
-static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DspCore->DspToCpuReadLo(); }
+static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadHi(false); }
+static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(); }
 
 static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
 static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }

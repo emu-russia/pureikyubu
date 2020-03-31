@@ -1,31 +1,33 @@
 // DVD banner helpers for file selector. 
-// we are using DVD plugin for disk operations.
 #include "pch.h"
 
 void * DVDLoadBanner(TCHAR *dvdFile)
 {
     size_t fsize = UI::FileSize(dvdFile);
-    DVDBanner2 * banner;
-    uint32_t bnrofs;
+    DVDBanner2* banner = nullptr;
+    uint32_t bnrofs = 0;
 
     banner = (DVDBanner2 *)malloc(sizeof(DVDBanner2));
     assert(banner);
 
-    // load DVD banner, or copy error-banner, if DVD is damaged
+    // load DVD banner
     if(fsize)
     {
-        DVDSetCurrent(dvdFile);
-        bnrofs = DVDOpenFile("/" DVD_BANNER_FILENAME);
-    } else bnrofs = 0;
+        if (DVD::MountFile(dvdFile))
+        {
+            bnrofs = DVD::OpenFile("/" DVD_BANNER_FILENAME);
+        }
+    }
+
     if(bnrofs)
     {
-        DVDSeek(bnrofs);
-        DVDRead((uint8_t *)banner, sizeof(DVDBanner2));
+        DVD::Seek(bnrofs);
+        DVD::Read((uint8_t *)banner, sizeof(DVDBanner2));
     }
     else
     {
         free(banner);
-        return nullptr;
+        banner = nullptr;
     }
 
     return banner;

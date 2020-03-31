@@ -52,7 +52,7 @@ static int LoadMapCW(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "CW format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "CW format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT_CW;
 }
 
@@ -93,7 +93,7 @@ static int LoadMapGCC(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "GCC format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "GCC format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT_GCC;
 }
 
@@ -157,7 +157,7 @@ static int LoadMapRAW(const TCHAR *mapname)
     }
     free(mapbuf);
 
-    DBReport2(DbgChannel::HLE, "RAW format map loaded : %s\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "RAW format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT_RAW;
 }
 
@@ -180,7 +180,7 @@ int LoadMAP(const TCHAR *mapname, bool add)
     _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
-        DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", mapname);
+        DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
         hle.mapfile[0] = 0;
         return MAP_FORMAT_BAD;
     }
