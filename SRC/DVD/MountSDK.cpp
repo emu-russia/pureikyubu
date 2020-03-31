@@ -92,7 +92,7 @@ namespace DVD
 
 	void MountDolphinSdk::MapVector(std::vector<uint8_t>& v, uint32_t offset)
 	{
-		std::tuple<uint8_t*, uint32_t, size_t> entry(v.data(), offset, v.size());
+		std::tuple<std::vector<uint8_t>&, uint32_t, size_t> entry(v, offset, v.size());
 		mapping.push_back(entry);
 	}
 
@@ -108,7 +108,7 @@ namespace DVD
 	{
 		for (auto it = mapping.begin(); it != mapping.end(); ++it)
 		{
-			uint8_t * ptr = std::get<0>(*it);
+			uint8_t * ptr = std::get<0>(*it).data();
 			uint32_t startingOffset = std::get<1>(*it);
 			size_t size = std::get<2>(*it);
 
@@ -223,7 +223,7 @@ namespace DVD
 
 		GameName.resize(0x400);
 		memset(GameName.data(), 0, GameName.size());
-		strcpy_s((char *)GameName.data(), 0x100, "Dolphin SDK");
+		strcpy_s((char *)GameName.data(), 0x100, "GameCube SDK");
 
 		return true;
 	}
@@ -301,8 +301,24 @@ namespace DVD
 			}
 			entry->AddInt("nameOffset", (int)nameOffset);
 
-			// Save parent and next directory FST index
+			// Save current FST index for directory
 
+			entry->AddInt("entryId", entryCounter);
+			entryCounter++;
+
+			// Reset siblings counter
+			entry->AddInt("siblings", 0);
+
+			// Update parent sibling counters
+			Json::Value * parent = entry->parent;
+			while (parent)
+			{
+				Json::Value* siblings = parent->ByName("siblings");
+
+				if (siblings) siblings->value.AsInt++;
+
+				parent = parent->parent;		// :p
+			}
 		}
 		else if (entry->type == Json::ValueType::String)
 		{
@@ -399,6 +415,20 @@ namespace DVD
 				assert(filePaths);
 
 				filePaths->AddString(nullptr, filePath);
+				
+				// Adjust counters
+				entryCounter++;
+
+				// Update parent sibling counters
+				parent = entry->parent;
+				while (parent)
+				{
+					Json::Value* siblings = parent->ByName("siblings");
+
+					if (siblings) siblings->value.AsInt++;
+
+					parent = parent->parent;		// :p
+				}
 			}
 		}
 
@@ -426,6 +456,23 @@ namespace DVD
 				fstEntry.nameOffsetHi = (uint8_t)(nameOffset->value.AsInt >> 16);
 				fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset->value.AsInt);
 			}
+
+			if (entry->parent)
+			{
+				Json::Value* parentId = entry->parent->ByName("entryId");
+				if (parentId)
+					fstEntry.parentOffset = _byteswap_ulong((uint32_t)parentId->value.AsInt);
+			}
+
+			Json::Value* entryId = entry->ByName("entryId");
+			Json::Value* siblings = entry->ByName("siblings");
+
+			if (entryId && siblings)
+			{
+				fstEntry.nextOffset = _byteswap_ulong((uint32_t)(entryId->value.AsInt + siblings->value.AsInt) + 1);
+			}
+
+			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 		}
 		else if (entry->type == Json::ValueType::Array)
 		{
@@ -458,6 +505,8 @@ namespace DVD
 						fstEntry.fileOffset = _byteswap_ulong(fileOffset);
 						fstEntry.fileLength = _byteswap_ulong(fileSize);
 
+						FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
+
 						nameOffsetsIt++;
 						fileOffsetsIt++;
 						fileSizesIt++;
@@ -467,8 +516,6 @@ namespace DVD
 
 			return;
 		}
-
-		FstData.insert(FstData.end(), (uint8_t *)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 
 		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 		{
@@ -491,7 +538,7 @@ namespace DVD
 			return false;
 		}
 
-		//Debug::Hub.Dump(DvdDataInfo.root.children.back());
+		Debug::Hub.Dump(DvdDataInfo.root.children.back());
 
 		try
 		{
@@ -505,7 +552,7 @@ namespace DVD
 
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		//UI::FileSave(_T("Data\\FST.bin"), FstData.data(), FstData.size());
+		UI::FileSave(_T("Data\\DolphinSdkFST.bin"), FstData.data(), FstData.size());
 
 		return true;
 	}
@@ -565,7 +612,7 @@ namespace DVD
 
 					while (filePathsIt != filePaths->children.end())
 					{
-						MapFile((*filePathsIt)->value.AsString, (*fileOffsetsIt)->value.AsInt);
+						MapFile((*filePathsIt)->value.AsString, (uint32_t)(*fileOffsetsIt)->value.AsInt);
 
 						filePathsIt++;
 						fileOffsetsIt++;

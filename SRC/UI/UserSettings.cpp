@@ -496,7 +496,7 @@ static void filter_string(HWND hDlg, uint32_t filter)
 
     for(int i=0; i<4; i++)
     {
-        if(filter & 0xff) ptr += _stprintf_s(ptr, (ptr - buf), _T("%s;"), mask[i]);
+        if(filter & 0xff) ptr += _stprintf_s(ptr, _countof(buf) - (ptr - buf), _T("%s;"), mask[i]);
         filter >>= 8;
     }
     ptr[-1] = 0;

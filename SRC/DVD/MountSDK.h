@@ -35,6 +35,7 @@ namespace DVD
 
 		uint32_t userFilesStart = 16 * 1024 * 1024;
 		uint32_t userFilesOffset = 0;
+		int entryCounter = 0;
 
 		bool GenDiskId();
 		bool GenApploader();
@@ -47,7 +48,7 @@ namespace DVD
 		void WalkAndGenerateFst(Json::Value* entry);
 		bool GenFst();
 
-		std::list<std::tuple<uint8_t*, uint32_t, size_t>> mapping;
+		std::list<std::tuple<std::vector<uint8_t> &, uint32_t, size_t>> mapping;
 		std::list<std::tuple<TCHAR *, uint32_t, size_t>> fileMapping;
 		bool GenMap();
 		void WalkAndMapFiles(Json::Value* entry);
