@@ -7,9 +7,9 @@
 
 #define NameOffset(hi, lo) (((uint32_t)(hi) << 16) | (lo))
 
-static DVDFileEntry* fst;
-static int currentDir;
-static char* nameTable;
+static DVDFileEntry* FstStart;
+static int currentDirectory;
+static char* FstStringStart;
 
 // swap bytes in FST (little-endian)
 // return beginning of strings table (or NULL, if bad FST)
@@ -45,10 +45,120 @@ static char* fst_prepare(DVDFileEntry* root)
     return nameTablePtr;
 }
 
+
 // <0: Bad path
 static int DVDConvertPathToEntrynum(char* path)
 {
-    return -1;
+    // currentDirectory assigned by DVDChangeDir
+    int entry = currentDirectory;         // running entry
+
+    // Loop1
+    while (true)
+    {
+        if (path[0] == 0)
+            return entry;
+
+        // Current/parent directory walk
+
+        if (path[0] == '/')
+        {
+            entry = 0;      // root
+            path++;
+            continue;   // Loop1
+        }
+
+        if (path[0] == '.')
+        {
+            if (path[1] == '.')
+            {
+                if (path[2] == '/')
+                {
+                    entry = FstStart[entry].parentOffset;
+                    path += 3;
+                    continue;   // Loop1
+                }
+                if (path[2] == 0)
+                {
+                    return FstStart[entry].parentOffset;
+                }
+            }
+            else
+            {
+                if (path[1] == '/')
+                {
+                    path += 2;
+                    continue;   // Loop1
+                }
+                if (path[1] == 0)
+                {
+                    return entry;
+                }
+            }
+        }
+
+        // Get a pointer to the end of a file or directory name (the end is 0 or /)
+        char* endPathPtr;
+
+        if (true)
+        {
+            endPathPtr = path;
+            while (!(endPathPtr[0] == 0 || endPathPtr[0] == '/'))
+            {
+                endPathPtr++;
+            }
+        }
+
+        // if-else Block 2
+
+        bool afterNameCharNZ = endPathPtr[0] != 0;      // after-name character != 0
+        int prevEntry = entry;          // Save previous entry
+        size_t nameSize = endPathPtr - path;        // path element nameSize
+        entry++;              // Increment entry
+
+        // Loop2
+        while (true)
+        {
+            if ((int)FstStart[prevEntry].nextOffset <= entry)   // Walk forward only
+                return -1;      // Bad FST
+
+            // Loop2 - Group 1  -- Compare names
+            if (FstStart[entry].isDir || afterNameCharNZ == false /* after-name is 0 */)
+            {
+                char *r21 = path;      // r21 -- current pathPtr to inner loop
+                int nameOffset = (FstStart[entry].nameOffsetHi << 16) | FstStart[entry].nameOffsetLo;
+                char* r20 = &FstStringStart[nameOffset & 0xFFFFFF];     // r20 -- ptr to current entry name
+
+                bool same;
+                while (true)
+                {
+                    if (*r20 == 0)
+                    {
+                        same = (*r21 == '/' || *r21 == 0);
+                        break;
+                    }
+
+                    if (_tolower(*r20++) != _tolower(*r21++))
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+
+                if (same)
+                {
+                    if (afterNameCharNZ == false)
+                        return entry;
+                    path += nameSize + 1;
+                    break;      // break Loop2
+                }
+            }
+
+            // Walk next directory/file at same level
+            entry = FstStart[entry].isDir ? FstStart[entry].nextOffset : (entry + 1);
+
+        }   // Loop2
+
+    }   // Loop1
 }
 
 int main(int argc, char **argv)
@@ -57,7 +167,7 @@ int main(int argc, char **argv)
 
     if (argc < 3)
     {
-        printf("Use: DvdOpenFile \"/path/to/file\" FST.bin\n");
+        printf("Use: DvdOpenFile \"/path/to/dir/or/file\" FST.bin\n");
         return 0;
     }
 
@@ -85,10 +195,10 @@ int main(int argc, char **argv)
 
     // Swap endianess
 
-    fst = (DVDFileEntry *)ptr;
+    FstStart = (DVDFileEntry *)ptr;
 
-    nameTable = fst_prepare(fst);
-    if (!nameTable)
+    FstStringStart = fst_prepare(FstStart);
+    if (!FstStringStart)
     {
         printf("fst_prepare failed!\n");
         delete[] ptr;
@@ -97,7 +207,7 @@ int main(int argc, char **argv)
 
     // Get entrynum
 
-    currentDir = 0;
+    currentDirectory = 0;
 
     int entryNum = DVDConvertPathToEntrynum(dvdPath);
 

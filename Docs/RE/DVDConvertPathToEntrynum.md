@@ -18,19 +18,19 @@
 8000F0D0  480002AC  b           0x8000F37C 
 
 8000F0D4  7C600774  extsb       r0, r3
-8000F0D8  2C00002F  cmpwi       r0, 47 					// '/'
+8000F0D8  2C00002F  cmpwi       r0, 47                  // '/'
 8000F0DC  40820010  bne-        0x8000F0EC 
 8000F0E0  3B400000  li          r26, 0
 8000F0E4  3AF70001  addi        r23, r23, 1
 8000F0E8  4BFFFFD8  b           0x8000F0C0 
-8000F0EC  2C00002E  cmpwi       r0, 46 					// '.'
+8000F0EC  2C00002E  cmpwi       r0, 46                  // '.'
 8000F0F0  40820074  bne-        0x8000F164 
 8000F0F4  88770001  lbz         r3, 1 (r23)
 8000F0F8  7C600774  extsb       r0, r3
-8000F0FC  2C00002E  cmpwi       r0, 46 					// '.'
+8000F0FC  2C00002E  cmpwi       r0, 46                  // '.'
 8000F100  40820044  bne-        0x8000F144 
 8000F104  88770002  lbz         r3, 2 (r23)
-8000F108  2C03002F  cmpwi       r3, 47 					// '/'
+8000F108  2C03002F  cmpwi       r3, 47                  // '/'
 8000F10C  4082001C  bne-        0x8000F128 
 8000F110  1C7A000C  mulli       r3, r26, 12
 8000F114  808D831C  lwz         r4, -0x7CE4 (r13)
@@ -45,7 +45,7 @@
 8000F138  7C630214  add         r3, r3, r0
 8000F13C  80630004  lwz         r3, 4 (r3)
 8000F140  4800023C  b           0x8000F37C 
-8000F144  2C00002F  cmpwi       r0, 47 					// '/'
+8000F144  2C00002F  cmpwi       r0, 47                  // '/'
 8000F148  4082000C  bne-        0x8000F154 
 8000F14C  3AF70002  addi        r23, r23, 2
 8000F150  4BFFFF70  b           0x8000F0C0 
@@ -73,7 +73,7 @@
 8000F1A8  3B1C0001  addi        r24, r28, 1
 8000F1AC  38A00001  li          r5, 1
 8000F1B0  48000010  b           0x8000F1C0 
-8000F1B4  2C000020  cmpwi       r0, 32 					// ' '
+8000F1B4  2C000020  cmpwi       r0, 32                  // ' '
 8000F1B8  40820008  bne-        0x8000F1C0 
 8000F1BC  38800001  li          r4, 1
 8000F1C0  3B9C0001  addi        r28, r28, 1
@@ -81,7 +81,7 @@
 8000F1C8  7C600775  extsb.      r0, r3
 8000F1CC  41820010  beq-        0x8000F1DC 
 8000F1D0  7C600774  extsb       r0, r3
-8000F1D4  2C00002F  cmpwi       r0, 47 					// '/'
+8000F1D4  2C00002F  cmpwi       r0, 47                  // '/'
 8000F1D8  4082FFA8  bne+        0x8000F180 
 8000F1DC  2C050001  cmpwi       r5, 1
 8000F1E0  40820014  bne-        0x8000F1F4 
@@ -119,7 +119,7 @@
 8000F260  480000E4  b           0x8000F344 
 8000F264  1F9A000C  mulli       r28, r26, 12
 8000F268  7C83E02E  lwzx        r4, r3, r28
-8000F26C  5480000F  rlwinm.     r0, r4, 0, 0, 7			// mask:0xFF000000
+8000F26C  5480000F  rlwinm.     r0, r4, 0, 0, 7         // mask:0xFF000000
 8000F270  4082000C  bne-        0x8000F27C 
 8000F274  38000000  li          r0, 0
 8000F278  48000008  b           0x8000F280 
@@ -129,7 +129,7 @@
 8000F288  2C1E0001  cmpwi       r30, 1
 8000F28C  41820080  beq-        0x8000F30C 
 8000F290  806D8320  lwz         r3, -0x7CE0 (r13)
-8000F294  5480023E  rlwinm      r0, r4, 0, 8, 31			// mask:0x00FFFFFF
+8000F294  5480023E  rlwinm      r0, r4, 0, 8, 31            // mask:0x00FFFFFF
 8000F298  3AB70000  addi        r21, r23, 0
 8000F29C  7E830214  add         r20, r3, r0
 8000F2A0  48000038  b           0x8000F2D8 
@@ -150,7 +150,7 @@
 8000F2DC  7C000775  extsb.      r0, r0
 8000F2E0  4082FFC4  bne+        0x8000F2A4 
 8000F2E4  88750000  lbz         r3, 0 (r21)
-8000F2E8  2C03002F  cmpwi       r3, 47 						// '/'
+8000F2E8  2C03002F  cmpwi       r3, 47                      // '/'
 8000F2EC  4182000C  beq-        0x8000F2F8 
 8000F2F0  7C600775  extsb.      r0, r3
 8000F2F4  4082000C  bne-        0x8000F300 
@@ -162,7 +162,7 @@
 8000F30C  800D831C  lwz         r0, -0x7CE4 (r13)
 8000F310  7C60E214  add         r3, r0, r28
 8000F314  80030000  lwz         r0, 0 (r3)
-8000F318  5400000F  rlwinm.     r0, r0, 0, 0, 7			// mask:0xFF000000
+8000F318  5400000F  rlwinm.     r0, r0, 0, 0, 7         // mask:0xFF000000
 8000F31C  4082000C  bne-        0x8000F328 
 8000F320  38000000  li          r0, 0
 8000F324  48000008  b           0x8000F32C 
@@ -178,7 +178,7 @@
 8000F34C  7C1D002E  lwzx        r0, r29, r0
 8000F350  7C1A0040  cmplw       r26, r0
 8000F354  4180FF10  blt+        0x8000F264 
-8000F358  3860FFFF  li          r3, -1 						// Bad path
+8000F358  3860FFFF  li          r3, -1                      // Bad path
 8000F35C  48000020  b           0x8000F37C 
 8000F360  2C1E0000  cmpwi       r30, 0
 8000F364  4082000C  bne-        0x8000F370 
@@ -198,9 +198,157 @@
 
 
 ```c++
+int currentDirectory = 0;
+bool __DVDLongFileNameFlag = true;
+DVDFileEntry* FstStart;
+char* FstStringStart;
 
-int DVDConvertPathToEntrynum (char * path)
+int DVDConvertPathToEntrynum (char * path /* r3 */ )
 {
+    // 8000F09C
+    r23 = r3;               // r23 - pathPtr
+    //r31
+    //"DVDConvertEntrynumToPath(possibly DVDOpen or DVDChangeDir or DVDOpenDir): specified directory or file (%s) doesn't match standard 8.3 format. "
+    //"This is a temporary restriction and will be removed soon\n"
+    r25 = r3;       // r25 - backup path parameter (for OSPanic)
+    r26 = currentDirectory;         // r26 -- dirEntry  (currentDirectory assigned by DVDChangeDir)
+
+    // 8000F0C0 - Loop1
+    while (true)
+    {
+        r3 = r23[0];
+        if (r3 == 0)
+            return r26;
+
+        // if-else Block 1 -- Current/parent directory walk
+
+        // 8000F0D4
+        if (r3 == '/')
+        {
+            r26 = 0;
+            r23++;
+            continue;   // Loop1
+        }
+
+        // 8000F0EC
+        if (r3 == '.')
+        {
+            r3 = r23[1];
+
+            if (r3 == '.')
+            {
+                r3 = r23[2];
+                if (r3 == '/')
+                {
+                    r26 = FstStart[r26].parentOffset;
+                    r23 += 3;
+                    continue;   // Loop1
+                }
+                // 8000F128
+                if (r3 == 0)
+                {
+                    return FstStart[r26].parentOffset;
+                }           
+            }
+            else
+            {
+                // 8000F144
+                if (r3 == '/')
+                {
+                    r23 += 2;
+                    continue;   // Loop1
+                }
+                // 8000F154
+                if (r3 == 0)
+                {
+                    return r26;
+                }           
+            }
+        }
+
+        // 8000F164 -- __DVDLongFileNameFlag
+        // r28 -- Get a pointer to the end of a file or directory name (the end is 0 or /)
+
+        if (__DVDLongFileNameFlag)
+        {
+            r28 = r23;
+            while ( !(r28[0] == 0 || r28[0] == '/') )
+            {
+                r28++;
+            }
+        }
+        else
+        {
+            // Loop 1 - Group 2  -- 8.3 Format. Omitted
+
+            //r31- "DVDConvertEntrynumToPath(possibly DVDOpen or DVDChangeDir or DVDOpenDir): specified directory or file (%s) doesn't match standard 8.3 format. "
+            //"This is a temporary restriction and will be removed soon\n"
+            //r25- path
+        }
+
+        // if-else Block 2
+
+        r30 = r28[0] != 0;      // r30 - after-name character != 0
+        //8000F254
+        r29 = r26;          // Save previous dirEntry
+        r27 = r28 - r23;        // r27 -- nameSize
+        r26++;              // Increment dirEntry
+
+        // Loop2
+        while (true)
+        {
+            //8000F344
+            r0 = FstStart[r29].nextOffset;
+            if (r0 <= r26)
+                return -1;      // Bad FST
+
+            // if-else Block3
+            // 8000F264
+            r28 = r26 * 12;             // Pre-calculus
+            r0 = FstStart[r26].isDir;
+
+            // Loop2 - Group 1  -- Compare names
+            if (FstStart[r26].isDir || r30 == false /* after-name is 0 */)
+            {
+                // 8000F290
+                r21 = r23;      // r21 -- current pathPtr to inner loop
+                r20 = &FstStringStart[FstStart[r26].nameOffsetDirFlag & 0xFFFFFF];     // r20 -- ptr to current entry name
+
+                bool same;
+                while (true)
+                {
+                    // 8000F2D8
+                    if (*r20 == 0)
+                    {
+                        same = (*r21 == '/' || *r21 == 0);
+                        break;
+                    }
+
+                    // 8000F2A4
+                    if ( tolower (*r20++) != tolower (*r21++) )
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+
+                // Loop 2 - Group 3
+                if (same)
+                {
+                    if (r30 == false)
+                        return r26;
+                    // 8000F370
+                    r23 += r27 + 1;
+                    break;      // break Loop2
+                }
+            }
+
+            // Loop 2 - Group 2 - Walk next directory/file at same level
+            // 8000F30C
+            r26 = FstStart[r26].isDir ? FstStart[r26].nextOffset : (r26 + 1);
+        }
+
+    }
 
 }
 
