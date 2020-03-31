@@ -1,12 +1,11 @@
-// DVD filesystem.
-// I just cleaned hotquik's code a bit.
+// DVD filesystem access.
 #include "pch.h"
 
 // local data
 static DVDBB2           bb2;
-static DVDFileEntry*    fst;            // Loaded FST (byte-swapped as little-endian)
+static DVDFileEntry* FstStart;            // Loaded FST (byte-swapped as little-endian)
 static uint32_t         fstSize;        // Size of loaded FST in bytes (not greater DVD_FST_MAX_SIZE)
-static char*            files;          // Strings(name) table
+static char* FstStringStart;          // Strings(name) table
 
 #define FSTOFS(lo, hi) (((uint32_t)hi << 16) | lo)
 
@@ -95,10 +94,10 @@ bool dvd_fs_init()
     SwapArea((uint32_t *)&bb2, sizeof(DVDBB2));
 
     // delete previous FST
-    if(fst)
+    if(FstStart)
     {
-        free(fst);
-        fst = NULL;
+        free(FstStart);
+        FstStart = NULL;
         fstSize = 0;
     }
 
@@ -108,20 +107,20 @@ bool dvd_fs_init()
     {
         return false;
     }
-    fst = (DVDFileEntry *)malloc(fstSize);
-    if(fst == NULL)
+    FstStart = (DVDFileEntry *)malloc(fstSize);
+    if(FstStart == NULL)
     {
         return false;
     }
     DVD::Seek(bb2.FSTPosition);
-    DVD::Read(fst, fstSize);
+    DVD::Read(FstStart, fstSize);
         
     // swap bytes in FST and find offset of string table
-    files = fst_prepare(fst);
-    if(!files)
+    FstStringStart = fst_prepare(FstStart);
+    if(!FstStringStart)
     {
-        free(fst);
-        fst = NULL;
+        free(FstStart);
+        FstStart = NULL;
         return false;
     }
 
@@ -129,68 +128,133 @@ bool dvd_fs_init()
     return true;
 }
 
+// Base on reversing of original method.
+// <0: Bad path
+static int DVDConvertPathToEntrynum(const char* _path)
+{
+    char* path = (char *)_path;
+
+    // currentDirectory assigned by DVDChangeDir
+    int entry = 0;         // running entry
+
+    // Loop1
+    while (true)
+    {
+        if (path[0] == 0)
+            return entry;
+
+        // Current/parent directory walk
+
+        if (path[0] == '/')
+        {
+            entry = 0;      // root
+            path++;
+            continue;   // Loop1
+        }
+
+        if (path[0] == '.')
+        {
+            if (path[1] == '.')
+            {
+                if (path[2] == '/')
+                {
+                    entry = FstStart[entry].parentOffset;
+                    path += 3;
+                    continue;   // Loop1
+                }
+                if (path[2] == 0)
+                {
+                    return FstStart[entry].parentOffset;
+                }
+            }
+            else
+            {
+                if (path[1] == '/')
+                {
+                    path += 2;
+                    continue;   // Loop1
+                }
+                if (path[1] == 0)
+                {
+                    return entry;
+                }
+            }
+        }
+
+        // Get a pointer to the end of a file or directory name (the end is 0 or /)
+        char* endPathPtr;
+
+        if (true)
+        {
+            endPathPtr = path;
+            while (!(endPathPtr[0] == 0 || endPathPtr[0] == '/'))
+            {
+                endPathPtr++;
+            }
+        }
+
+        // if-else Block 2
+
+        bool afterNameCharNZ = endPathPtr[0] != 0;      // after-name character != 0
+        int prevEntry = entry;          // Save previous entry
+        size_t nameSize = endPathPtr - path;        // path element nameSize
+        entry++;              // Increment entry
+
+        // Loop2
+        while (true)
+        {
+            if ((int)FstStart[prevEntry].nextOffset <= entry)   // Walk forward only
+                return -1;      // Bad FST
+
+            // Loop2 - Group 1  -- Compare names
+            if (FstStart[entry].isDir || afterNameCharNZ == false /* after-name is 0 */)
+            {
+                char* r21 = path;      // r21 -- current pathPtr to inner loop
+                int nameOffset = (FstStart[entry].nameOffsetHi << 16) | FstStart[entry].nameOffsetLo;
+                char* r20 = &FstStringStart[nameOffset & 0xFFFFFF];     // r20 -- ptr to current entry name
+
+                bool same;
+                while (true)
+                {
+                    if (*r20 == 0)
+                    {
+                        same = (*r21 == '/' || *r21 == 0);
+                        break;
+                    }
+
+                    if (_tolower(*r20++) != _tolower(*r21++))
+                    {
+                        same = false;
+                        break;
+                    }
+                }
+
+                if (same)
+                {
+                    if (afterNameCharNZ == false)
+                        return entry;
+                    path += nameSize + 1;
+                    break;      // break Loop2
+                }
+            }
+
+            // Walk next directory/file at same level
+            entry = FstStart[entry].isDir ? FstStart[entry].nextOffset : (entry + 1);
+
+        }   // Loop2
+
+    }   // Loop1
+}
+
 // convert DVD file name into file position on the disk
 // 0, if file not found
-int dvd_open(const char *path, DVDFileEntry *root)
+int dvd_open(const char *path)
 {
-    int  slashPos;
-    char Path[DVD_MAXPATH], * PathPtr, search[DVD_MAXPATH] = { 0 }, * slash, * p;
-    DVDFileEntry *curr, *next;
-
-    // if FST not loaded, then no files
-    if(!fst) return 0;
-
-    // remove root slash
-    strcpy_s(Path, sizeof(Path), path);
-    PathPtr = Path;
-    if((*Path == '/' || *Path == '\\') && root == NULL) PathPtr++;
-
-    // starting from DVD root
-    if(root == NULL) root = fst;
-    if(!root->isDir) return 0;
-
-    // replace all '\' by '/'
-    p = PathPtr;
-    while(*p)
+    int entry = DVDConvertPathToEntrynum(path);
+    if (entry < 0)
     {
-        if(*p == '\\') *p++ = '/';
-        else p++;
+        return 0;
     }
 
-    // find delimiter
-    slash = strchr(PathPtr, '/');
-    if(slash == NULL) slashPos = -1;
-    else slashPos = (int)(slash - PathPtr);
-
-    if(slashPos == -1)  // search in current dir
-    {
-        strcpy_s(search, sizeof(search), PathPtr);
-    }
-    else                // search in another dir
-    {
-        strncpy_s(search, sizeof(search), PathPtr, slashPos);
-    }
-
-    // search file
-    next = &fst[root->nextOffset];
-    curr = root + 1;
-    while(curr < next)
-    {
-        if(!_stricmp(search, &files[FSTOFS(curr->nameOffsetLo, curr->nameOffsetHi)]))
-            break;
-        if(curr->isDir) curr = &fst[curr->nextOffset];
-        else            curr = curr + 1;
-    }
-
-    // file found ?
-    if(curr < (DVDFileEntry *)files)
-    {
-        if(slashPos == -1) return curr->fileOffset;
-        else
-        {
-            if(curr->isDir) return dvd_open(&search[slashPos+1], curr);
-            else return 0;
-        }
-    }
-    else return 0;
+    return (int)FstStart[entry].fileOffset;
 }

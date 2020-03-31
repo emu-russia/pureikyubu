@@ -579,8 +579,8 @@ namespace DVD
 		bb2.FSTLength = (uint32_t)FstData.size();
 		bb2.FSTMaxLength = bb2.FSTLength;
 		bb2.FSTPosition = RoundUpSector(bb2.bootFilePosition + (uint32_t)Dol.size() + DVD_SECTOR_SIZE);
-		bb2.userPosition = 0x81300000 - 256*1024;
-		bb2.userLength = 256 * 1024;
+		bb2.userPosition = 0x80030000;
+		bb2.userLength = RoundUpSector(bb2.FSTLength);
 
 		Bb2Data.resize(sizeof(DVDBB2));
 		memcpy(Bb2Data.data(), &bb2, sizeof(bb2));
@@ -639,7 +639,7 @@ namespace DVD
 
 		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 		{
-			WalkAndGenerateFst(*it);
+			WalkAndMapFiles(*it);
 		}
 	}
 

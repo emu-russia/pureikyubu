@@ -6,7 +6,7 @@ The DVDConvertPathToEntrynum method is used to convert the file path to the inde
 
 ## Usage
 
-DvdOpenFile "/path/to/file" FST.bin
+DvdOpenFile "/path/to/dir/or/file" FST.bin
 
 You will need a copy of FST from disk, the easiest way is to make it with the command from debugger:
 

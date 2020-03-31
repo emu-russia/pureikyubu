@@ -1,8 +1,14 @@
 typedef struct
 {
-    u8      isDir;                  // 1, if directory
-    u8      nameOffsetHi;
-    u16     nameOffsetLo;
+    union
+    {
+	struct {
+    		u8      isDir;                  // 1, if directory
+    		u8      nameOffsetHi;
+    		u16     nameOffsetLo;
+	};
+	uint32 nameOffsetDirFlag;
+    };
     union
     {
         struct                      // root entry
