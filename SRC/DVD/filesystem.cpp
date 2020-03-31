@@ -4,12 +4,9 @@
 
 // local data
 static DVDBB2           bb2;
-static DVDFileEntry*    fst;            // not above DVD_FST_MAX_SIZE!
-static uint32_t         fstSize;        // size of loaded FST
-static char*            files;          // string table
-
-// ---------------------------------------------------------------------------
-// file system
+static DVDFileEntry*    fst;            // Loaded FST (byte-swapped as little-endian)
+static uint32_t         fstSize;        // Size of loaded FST in bytes (not greater DVD_FST_MAX_SIZE)
+static char*            files;          // Strings(name) table
 
 #define FSTOFS(lo, hi) (((uint32_t)hi << 16) | lo)
 
@@ -25,7 +22,7 @@ static void SwapArea(uint32_t* addr, int count)
     }
 }
 
-// swap bytes in FST (for x86)
+// swap bytes in FST (little-endian)
 // return beginning of strings table (or NULL, if bad FST)
 static char *fst_prepare(DVDFileEntry *root)
 {
@@ -36,7 +33,10 @@ static char *fst_prepare(DVDFileEntry *root)
     root->fileLength   = _byteswap_ulong(root->fileLength);
 
     // Check root: must have no parent, has zero nameOfset and non-zero nextOffset.
-    if (! (root->parentOffset == 0 && FSTOFS(root->nameOffsetLo, root->nameOffsetHi) == 0 && root->nextOffset != 0) )
+    if (! ( root->isDir && 
+        root->parentOffset == 0 && 
+        FSTOFS(root->nameOffsetLo, root->nameOffsetHi) == 0 && 
+        root->nextOffset != 0 ) )
     {
         return nullptr;
     }
@@ -57,7 +57,7 @@ static char *fst_prepare(DVDFileEntry *root)
 }
 
 // initialize filesystem
-BOOL dvd_fs_init()
+bool dvd_fs_init()
 {
     // Check DiskID
 
@@ -70,7 +70,7 @@ BOOL dvd_fs_init()
     {
         if (!isalnum(diskId[i]))
         {
-            return FALSE;
+            return false;
         }
     }
 
@@ -85,7 +85,7 @@ BOOL dvd_fs_init()
     {
         if (!isdigit(apploaderBytes[i]))
         {
-            return FALSE;
+            return false;
         }
     }
 
@@ -106,27 +106,27 @@ BOOL dvd_fs_init()
     fstSize = bb2.FSTLength;
     if(fstSize > DVD_FST_MAX_SIZE)
     {
-        return FALSE;
+        return false;
     }
     fst = (DVDFileEntry *)malloc(fstSize);
     if(fst == NULL)
     {
-        return FALSE;
+        return false;
     }
     DVD::Seek(bb2.FSTPosition);
     DVD::Read(fst, fstSize);
         
     // swap bytes in FST and find offset of string table
-    files = (char *)fst_prepare(fst);
-    if(files == NULL)
+    files = fst_prepare(fst);
+    if(!files)
     {
         free(fst);
         fst = NULL;
-        return FALSE;
+        return false;
     }
 
     // FST loaded ok
-    return TRUE;
+    return true;
 }
 
 // convert DVD file name into file position on the disk
@@ -134,11 +134,11 @@ BOOL dvd_fs_init()
 int dvd_open(const char *path, DVDFileEntry *root)
 {
     int  slashPos;
-    char Path[DVD_MAXPATH], *PathPtr, search[DVD_MAXPATH], *slash, *p;
+    char Path[DVD_MAXPATH], * PathPtr, search[DVD_MAXPATH] = { 0 }, * slash, * p;
     DVDFileEntry *curr, *next;
 
     // if FST not loaded, then no files
-    if(fst == NULL) return 0;
+    if(!fst) return 0;
 
     // remove root slash
     strcpy_s(Path, sizeof(Path), path);
@@ -148,8 +148,6 @@ int dvd_open(const char *path, DVDFileEntry *root)
     // starting from DVD root
     if(root == NULL) root = fst;
     if(!root->isDir) return 0;
-
-    memset(search, 0, DVD_MAXPATH);
 
     // replace all '\' by '/'
     p = PathPtr;
