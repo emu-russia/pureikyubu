@@ -75,6 +75,6 @@ Thanks to Martin for web-hosting on Emulation64.com
 
 ## Contacts
 
-- Official Discord channel: https://discord.gg/2RFBeB
+- Official Discord channel: https://discord.gg/Ehz8PYA
 - Skype: ogamespec
 - Email: ogamespec@gmail.com
