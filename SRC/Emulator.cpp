@@ -16,7 +16,15 @@ void EMUGetHwConfig(HWConfig * config)
     // There is Fuse on the motherboard, which determines the video encoder mode. 
     // Some games test it in VIConfigure and try to set the mode according to Fuse. But the program code does not allow this (example - Zelda PAL Version)
     // https://www.ifixit.com/Guide/Nintendo+GameCube+Regional+Modification+Selector+Switch/35482
-    config->videoEncoderFuse = ldat.gameID[3] == 'P' ? 0 : 1;
+    char id[4] = { 0 };
+
+    id[0] = ldat.gameID[0];
+    id[1] = ldat.gameID[1];
+    id[2] = ldat.gameID[2];
+    id[3] = ldat.gameID[3];
+
+    DVD::Region region = DVD::RegionById(id);
+    config->videoEncoderFuse = DVD::IsNtsc(region) ? 1 : 0;
 
     config->rswhack = GetConfigBool(USER_PI_RSWHACK, USER_HW);
     config->consoleVer = GetConfigInt(USER_CONSOLE, USER_HW);
