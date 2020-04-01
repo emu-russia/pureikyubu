@@ -1,0 +1,13 @@
+echo "GameCube NTSC 1.0 BIOS JAudio ucode canaries"
+
+dcan 0x02BD "1: Load VPB"
+dcan 0x0470 "2: Process"
+dcan 0x00DF "4: DmemLoad"
+dcan 0x00F1 "5: DmemSave"
+dcan 0x05BB "6: ReadARAM"
+dcan 0x056F "7: Memcpy"
+dcan 0x05D7 "8: ???"
+dcan 0x059F "9: SmallMemcpy"
+dcan 0x0741 "10: ???"
+dcan 0x0618 "11: Call IROM SRC?"
+dcan 0x0203 "12: Tone Generators (?)"

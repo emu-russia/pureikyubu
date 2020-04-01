@@ -559,62 +559,62 @@ namespace DSP
 		{
 			switch (addr)
 			{
-				case (DspAddress)DspHardwareRegs::DSMAH:
-					return DmaRegs.mmemAddr.h;
-				case (DspAddress)DspHardwareRegs::DSMAL:
-					return DmaRegs.mmemAddr.l;
-				case (DspAddress)DspHardwareRegs::DSPA:
-					return DmaRegs.dspAddr;
-				case (DspAddress)DspHardwareRegs::DSCR:
-					return DmaRegs.control.bits;
-				case (DspAddress)DspHardwareRegs::DSBL:
-					return DmaRegs.blockSize;
+			case (DspAddress)DspHardwareRegs::DSMAH:
+				return DmaRegs.mmemAddr.h;
+			case (DspAddress)DspHardwareRegs::DSMAL:
+				return DmaRegs.mmemAddr.l;
+			case (DspAddress)DspHardwareRegs::DSPA:
+				return DmaRegs.dspAddr;
+			case (DspAddress)DspHardwareRegs::DSCR:
+				return DmaRegs.control.bits;
+			case (DspAddress)DspHardwareRegs::DSBL:
+				return DmaRegs.blockSize;
 
-				case (DspAddress)DspHardwareRegs::CMBH:
-					return CpuToDspReadHi(true);
-				case (DspAddress)DspHardwareRegs::CMBL:
-					return CpuToDspReadLo();
-				case (DspAddress)DspHardwareRegs::DMBH:
-					return DspToCpuReadHi(true);
-				case (DspAddress)DspHardwareRegs::DMBL:
-					return DspToCpuReadLo();
+			case (DspAddress)DspHardwareRegs::CMBH:
+				return CpuToDspReadHi(true);
+			case (DspAddress)DspHardwareRegs::CMBL:
+				return CpuToDspReadLo(true);
+			case (DspAddress)DspHardwareRegs::DMBH:
+				return DspToCpuReadHi(true);
+			case (DspAddress)DspHardwareRegs::DMBL:
+				return DspToCpuReadLo(true);
 
-				case (DspAddress)DspHardwareRegs::DIRQ:
-					return 0;
+			case (DspAddress)DspHardwareRegs::DIRQ:
+				return 0;
 
-				case (DspAddress)DspHardwareRegs::ACSAH:
-					return Accel.StartAddress.h;
-				case (DspAddress)DspHardwareRegs::ACSAL:
-					return Accel.StartAddress.l;
-				case (DspAddress)DspHardwareRegs::ACEAH:
-					return Accel.EndAddress.h;
-				case (DspAddress)DspHardwareRegs::ACEAL:
-					return Accel.EndAddress.l;
-				case (DspAddress)DspHardwareRegs::ACCAH:
-					return Accel.CurrAddress.h;
-				case (DspAddress)DspHardwareRegs::ACCAL:
-					return Accel.CurrAddress.l;
+			case (DspAddress)DspHardwareRegs::ACSAH:
+				return Accel.StartAddress.h;
+			case (DspAddress)DspHardwareRegs::ACSAL:
+				return Accel.StartAddress.l;
+			case (DspAddress)DspHardwareRegs::ACEAH:
+				return Accel.EndAddress.h;
+			case (DspAddress)DspHardwareRegs::ACEAL:
+				return Accel.EndAddress.l;
+			case (DspAddress)DspHardwareRegs::ACCAH:
+				return Accel.CurrAddress.h;
+			case (DspAddress)DspHardwareRegs::ACCAL:
+				return Accel.CurrAddress.l;
 
-				case (DspAddress)DspHardwareRegs::ACFMT:
-					return Accel.Fmt;
-				case (DspAddress)DspHardwareRegs::ACPDS:
-					return Accel.AdpcmPds;
-				case (DspAddress)DspHardwareRegs::ACYN1:
-					return Accel.AdpcmYn1;
-				case (DspAddress)DspHardwareRegs::ACYN2:
-					return Accel.AdpcmYn2;
-				case (DspAddress)DspHardwareRegs::ACGAN:
-					return Accel.AdpcmGan;
+			case (DspAddress)DspHardwareRegs::ACFMT:
+				return Accel.Fmt;
+			case (DspAddress)DspHardwareRegs::ACPDS:
+				return Accel.AdpcmPds;
+			case (DspAddress)DspHardwareRegs::ACYN1:
+				return Accel.AdpcmYn1;
+			case (DspAddress)DspHardwareRegs::ACYN2:
+				return Accel.AdpcmYn2;
+			case (DspAddress)DspHardwareRegs::ACGAN:
+				return Accel.AdpcmGan;
 
-				case (DspAddress)DspHardwareRegs::ACDAT2:
-					return AccelReadData(true);
-				case (DspAddress)DspHardwareRegs::ACDAT:
-					return AccelReadData(false);
+			case (DspAddress)DspHardwareRegs::ACDAT2:
+				return AccelReadData(true);
+			case (DspAddress)DspHardwareRegs::ACDAT:
+				return AccelReadData(false);
 
-				default:
-					DBHalt("DSP Unknown HW read 0x%04X\n", addr);
-					Suspend();
-					break;
+			default:
+				DBHalt("DSP Unknown HW read 0x%04X\n", addr);
+				Suspend();
+				break;
 			}
 			return 0;
 		}
@@ -626,9 +626,12 @@ namespace DSP
 			return _byteswap_ushort(*(uint16_t*)ptr);
 		}
 
-		DBHalt("DSP Unmapped DMEM read 0x%04X\n", addr);
-		Suspend();
-		return 0;
+		if (haltOnUnmappedMemAccess)
+		{
+			DBHalt("DSP Unmapped DMEM read 0x%04X\n", addr);
+			Suspend();
+		}
+		return 0xFFFF;
 	}
 
 	void DspCore::WriteDMem(DspAddress addr, uint16_t value)
@@ -789,8 +792,11 @@ namespace DSP
 			}
 		}
 
-		DBHalt("DSP Unmapped DMEM write 0x%04X = 0x%04X\n", addr, value);
-		Suspend();
+		if (haltOnUnmappedMemAccess)
+		{
+			DBHalt("DSP Unmapped DMEM write 0x%04X = 0x%04X\n", addr, value);
+			Suspend();
+		}
 	}
 
 	#pragma endregion "Memory Engine"
@@ -870,10 +876,13 @@ namespace DSP
 		return value;
 	}
 
-	uint16_t DspCore::CpuToDspReadLo()
+	uint16_t DspCore::CpuToDspReadLo(bool ReadByDsp)
 	{
 		uint16_t value = CpuToDspMailbox[1];
-		CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
+		if (ReadByDsp)
+		{
+			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
+		}
 		return value;
 	}
 
@@ -883,26 +892,31 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspHardwareRegs::DMBH = 0x%04X (Shadowed)\n", value);
+		DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
 		DspToCpuMailboxShadow[0] = value;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspHardwareRegs::DMBL = 0x%04X\n", value);
+		DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
 		DspToCpuMailbox[1] = value;
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}
 
 	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
 	{
-		return DspToCpuMailbox[0];
+		uint16_t value = DspToCpuMailbox[0];
+
+		return value;
 	}
 
-	uint16_t DspCore::DspToCpuReadLo()
+	uint16_t DspCore::DspToCpuReadLo(bool ReadByDsp)
 	{
 		uint16_t value = DspToCpuMailbox[1];
-		DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
+		if (!ReadByDsp)
+		{
+			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
+		}
 		return value;
 	}
 
@@ -955,7 +969,7 @@ namespace DSP
 		}
 
 		// Dump ucode
-#if 1
+#if 0
 		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 		{
 			TCHAR filename[0x100] = { 0, };

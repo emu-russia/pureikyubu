@@ -51,19 +51,23 @@ void HWClose()
 void HWUpdate()
 {
     // check for pending interrupts
-    PICheckInterrupts();
+    if (PICheckInterrupts())
+        return;
 
     // update joypads and video
     VIUpdate();     // PADs are updated there (SIPoll)
+    if (PICheckInterrupts())
+        return;
     CPUpdate();     // GX fifo
+    if (PICheckInterrupts())
+        return;
 
     // update audio and DSP
     BeginProfileSfx();
     AIUpdate();
-    //dspCore->Update();        // Updated by own thread
     EndProfileSfx();
-
-    //DBReport(YEL "*** HW UPDATE *** (%s)\n", OSTimeFormat(UTBR, 1));
+    if (PICheckInterrupts())
+        return;
 }
 
 namespace Flipper

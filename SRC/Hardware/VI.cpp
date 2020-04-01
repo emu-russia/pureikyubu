@@ -426,3 +426,8 @@ void VIClose()
     // even if XFB wasn't enabled, before start
     GDIClose(vi.hwndMain);
 }
+
+void VISetEncoderFuse(int value)
+{
+    vi.videoEncoderFuse = value;
+}

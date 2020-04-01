@@ -100,7 +100,7 @@ typedef struct VIControl
     HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks
 
-    bool        videoEncoderFuse;
+    int         videoEncoderFuse;
 } VIControl;
 
 extern  VIControl vi;
@@ -109,5 +109,7 @@ void    VIUpdate();
 void    VIStats();
 void    VIOpen(HWConfig* config);
 void    VIClose();
+
+void    VISetEncoderFuse(int value);
 
 #pragma pack(pop)

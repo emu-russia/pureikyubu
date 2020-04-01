@@ -538,13 +538,14 @@ namespace DSP
 
         uint32_t value = 0;
 
+        // Simulate reading by DSP
         value |= dspCore->DspToCpuReadHi(true) << 16;
         if ((value & 0x80000000) == 0)
         {
             DBReport("No DSP message.\n");
             return nullptr;
         }
-        value |= dspCore->DspToCpuReadLo();
+        value |= dspCore->DspToCpuReadLo(true);
         DBReport("DSP Message: 0x%08X\n", value);
         return nullptr;
     }

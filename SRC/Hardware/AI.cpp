@@ -285,10 +285,10 @@ static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr;
 static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteHi((uint16_t)data); }
 static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { dspCore->CpuToDspWriteLo((uint16_t)data); }
 static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadHi(false); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadLo(); }
+static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->CpuToDspReadLo(false); }
 
 static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadHi(false); }
-static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(); }
+static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = dspCore->DspToCpuReadLo(false); }
 
 static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
 static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
@@ -349,6 +349,7 @@ void AIOpen(HWConfig* config)
 
 void DSPAssertInt()
 {
+    DBReport("DSPAssertInt\n");
     AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {

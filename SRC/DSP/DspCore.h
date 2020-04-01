@@ -230,8 +230,8 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		MySpinLock::LOCK canariesSpinLock = MySpinLock::LOCK_IS_FREE;
 
-		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 50;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 20;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 
@@ -244,11 +244,15 @@ namespace DSP
 
 		DspInterpreter* interp;
 
-		std::atomic<uint16_t> DspToCpuMailbox[2];		// DMBH, DMBL
+		uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
 		uint16_t DspToCpuMailboxShadow[2];
+		MySpinLock::LOCK DspToCpuLock = MySpinLock::LOCK_IS_FREE;
 
-		std::atomic<uint16_t> CpuToDspMailbox[2];		// CMBH, CMBL
+		uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
 		uint16_t CpuToDspMailboxShadow[2];
+		MySpinLock::LOCK CpuToDspLock = MySpinLock::LOCK_IS_FREE;
+
+		bool haltOnUnmappedMemAccess = false;
 
 		struct
 		{
@@ -379,12 +383,12 @@ namespace DSP
 		void CpuToDspWriteHi(uint16_t value);
 		void CpuToDspWriteLo(uint16_t value);
 		uint16_t CpuToDspReadHi(bool ReadByDsp);
-		uint16_t CpuToDspReadLo();
+		uint16_t CpuToDspReadLo(bool ReadByDsp);
 		// DSP->CPU Mailbox
 		void DspToCpuWriteHi(uint16_t value);
 		void DspToCpuWriteLo(uint16_t value);
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
-		uint16_t DspToCpuReadLo();
+		uint16_t DspToCpuReadLo(bool ReadByDsp);
 
 		static void InitSubsystem();
 		static void ShutdownSubsystem();

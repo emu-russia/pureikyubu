@@ -699,35 +699,6 @@ loadFile:
                     }
                     return 0;
 
-                // dump main memory
-                case ID_DUMP_RAM:
-                    if (mi.ram)
-                    {
-                        SetStatusText(STATUS_ENUM::Progress, _T("Dumping main memory..."));
-                        UI::FileSave(_T("RAM.bin"), mi.ram, RAMSIZE);
-                        SetStatusText(STATUS_ENUM::Progress, _T("Main memory dumped in RAM.bin"));
-                    }
-                    return 0;
-
-                // dump aux. memory
-                case ID_DUMP_ARAM:
-                    if (ARAM)
-                    {
-                        SetStatusText(STATUS_ENUM::Progress, _T("Dumping aux. memory..."));
-                        UI::FileSave(_T("ARAM.bin"), ARAM, ARAMSIZE);
-                        SetStatusText(STATUS_ENUM::Progress, _T("Aux. memory dumped in ARAM.bin"));
-                    }
-                    return 0;
-
-                // dump OS low memory
-                case ID_DUMP_LOMEM:
-                    if (mi.ram)
-                    {
-                        UI::FileSave(_T("lomem.bin"), mi.ram, 0x3100);
-                        SetStatusText(STATUS_ENUM::Progress, _T("OS low memory dumped in lomem.bin"));
-                    }
-                    return 0;
-
                 // enable patches
                 case ID_ALLOW_PATCHES:
                     if(GetConfigBool(USER_PATCH, USER_LOADER))

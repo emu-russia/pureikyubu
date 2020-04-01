@@ -43,8 +43,14 @@ This is a new concept of emulation of processor systems, which I decided to try 
 
 ### Various Notes from known Macronix datasheets
 
-- Branch and call instructions are not allowed within program loop
 - TRAP-- Always call to hex 000C address
+
+## Mailbox Sync
+
+Specifics of Mailbox registers (registers consist of two halves) impose some features on their emulation.
+
+When accessed, Dead Lock may occur when the processor hangs on the polling DSP Mailbox, and the DSP hangs on polling the CPU Mailbox. 
+This happens due to the almost simultaneous writing to both Mailbox from two "ends".
 
 ## DSP JDI
 

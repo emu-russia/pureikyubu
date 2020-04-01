@@ -513,37 +513,6 @@ BEGIN
     BEGIN
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
         MENUITEM SEPARATOR
-        POPUP "Log Output", GRAYED
-        BEGIN
-            MENUITEM "CPU Gekko (Full)",            ID_DEVELOPMENT_LOGOUTPUT_CPUGEKKO
-            MENUITEM "Devkit HW (OSReport)",        ID_DEVELOPMENT_LOGOUTPUT_DEBUGGERHWOSREPORT
-            MENUITEM SEPARATOR
-            MENUITEM "GX - Fifo Writes",            ID_DEVELOPMENT_LOGOUTPUT_GXFIFO
-            MENUITEM "VI - Video Interface",        ID_DEVELOPMENT_LOGOUTPUT_VIDEOVI
-            MENUITEM "PI - Processor Interface",    ID_DEVELOPMENT_LOGOUTPUT_PIPROCESSORINTERFACE
-            MENUITEM "MI - Memory Interface",       ID_DEVELOPMENT_LOGOUTPUT_MIMEMORYINTERFACE
-            MENUITEM "AX - Audio (DMA/Stream)",     ID_DEVELOPMENT_LOGOUTPUT_AXDMAANDSTREAMING
-            MENUITEM "DI - DVD Interface",          ID_DEVELOPMENT_LOGOUTPUT_DIDVDINTERFACE
-            MENUITEM "SI - Serial Interface",       ID_DEVELOPMENT_LOGOUTPUT_SISERIALINTERFACE
-            MENUITEM "EXI - Expansion Interface",   ID_DEVELOPMENT_LOGOUTPUT_EXIEXPANSIONINTERFACE
-        END
-        POPUP "Dump"
-        BEGIN
-            MENUITEM "Main Memory (RAM.bin)",       ID_DUMP_RAM
-            MENUITEM "Aux. RAM (ARAM.bin)",         ID_DUMP_ARAM
-            MENUITEM "OS Low Memory (lomem.bin)",   ID_DUMP_LOMEM
-        END
-        POPUP "Assert Interrupt", GRAYED
-        BEGIN
-            MENUITEM "VI Sync",                     ID_ASSERTINTERRUPT_VIINT
-            MENUITEM "AI DMA",                      ID_ASSERTINTERRUPT_AIDMA
-            MENUITEM "AI Stream",                   ID_ASSERTINTERRUPT_AISTREAM
-            MENUITEM "CP Draw Done",                ID_ASSERTINTERRUPT_CPDRAWDONE
-            MENUITEM "CP Draw Token",               ID_ASSERTINTERRUPT_CPDRAWTOKEN
-            MENUITEM "SI Controller Poll",          ID_ASSERTINTERRUPT_SI
-            MENUITEM "DVD Transfer End",            ID_ASSERTINTERRUPT_DVD
-        END
-        MENUITEM SEPARATOR
         MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
         MENUITEM "&Load Symbols...",            ID_LOAD_MAP, GRAYED
         MENUITEM "&Add Symbols...",             ID_ADD_MAP, GRAYED

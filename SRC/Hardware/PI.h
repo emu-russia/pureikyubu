@@ -39,7 +39,7 @@ extern  PIControl pi;
 #define INTSR   pi.intsr
 #define INTMR   pi.intmr
 
-void    PICheckInterrupts();    // call to check for pending interrupt(s)
+bool    PICheckInterrupts();    // call to check for pending interrupt(s)
 void    PIAssertInt(uint32_t mask);  // set interrupt(s)
 void    PIClearInt(uint32_t mask);   // clear interrupt(s)
 void    PIOpen(HWConfig * config);

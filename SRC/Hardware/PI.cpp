@@ -45,7 +45,7 @@ static void printOut(uint32_t mask, const char *fix)
 }
 
 // generate interrupt (if pending)
-void PICheckInterrupts()
+bool PICheckInterrupts()
 {
     if((INTSR & INTMR) && (MSR & MSR_EE))
     {
@@ -54,25 +54,33 @@ void PICheckInterrupts()
             printOut(INTSR, "signaled");
         }
         CPUException(CPU_EXCEPTION_INTERRUPT);
+        return true;
     }
+    return false;
 }
 
-// assert (look, not generate!) interrupt
+// assert (watch, not generate!) interrupt
 void PIAssertInt(uint32_t mask)
 {
     INTSR |= mask;
-    if((INTMR & mask) && pi.log)
+    if((INTMR & mask))
     {
-        printOut(mask, "asserted");
+        if (pi.log)
+        {
+            printOut(mask, "asserted");
+        }
     }
 }
 
 // clear interrupt
 void PIClearInt(uint32_t mask)
 { 
-    if((INTSR & mask) && pi.log)
+    if((INTSR & mask))
     {
-        printOut(mask, "cleared");
+        if (pi.log)
+        {
+            printOut(mask, "cleared");
+        }
     }
     INTSR &= ~mask;
 }
@@ -162,7 +170,7 @@ void PIOpen(HWConfig* config)
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
-    pi.log = false;// true;
+    pi.log = false;
 
     // clear interrupt registers
     INTSR = INTMR = 0;
