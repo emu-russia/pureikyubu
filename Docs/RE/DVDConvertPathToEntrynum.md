@@ -1,5 +1,7 @@
 # DVDConvertPathToEntrynum
 
+## Disassembly
+
 ```
 8000F09C  7C0802A6  mflr        r0
 8000F0A0  90010004  stw         r0, 4 (r1)
@@ -195,7 +197,11 @@
 8000F38C  4E800020  blr
 ```
 
+## Call Graph
 
+![PNG](DVDConvertPathToEntrynum.png)
+
+## C++
 
 ```c++
 int currentDirectory = 0;
