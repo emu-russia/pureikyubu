@@ -1,5 +1,5 @@
 // some math calculations
-#include "GX.h"
+#include "pch.h"
 
 // normalize (clamp vector to 1.0 length)
 void VECNormalize(float *vec)

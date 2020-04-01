@@ -89,7 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>GX.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -107,7 +107,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>GX.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -126,7 +126,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>GX.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -147,7 +147,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>GX.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
@@ -161,42 +161,43 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="SRC\Config.h" />
-    <ClInclude Include="SRC\Fifo.h" />
-    <ClInclude Include="SRC\GL.H" />
-    <ClInclude Include="SRC\Gpl.h" />
-    <ClInclude Include="SRC\GPRegs.h" />
-    <ClInclude Include="SRC\Gx.h" />
-    <ClInclude Include="SRC\Light.h" />
-    <ClInclude Include="SRC\Perf.h" />
-    <ClInclude Include="SRC\Plug.h" />
-    <ClInclude Include="SRC\Stages.h" />
-    <ClInclude Include="SRC\Tev.h" />
-    <ClInclude Include="SRC\Tex.h" />
-    <ClInclude Include="SRC\Texgen.h" />
-    <ClInclude Include="SRC\XF.H" />
+    <ClInclude Include="..\Config.h" />
+    <ClInclude Include="..\Fifo.h" />
+    <ClInclude Include="..\GL.H" />
+    <ClInclude Include="..\Gpl.h" />
+    <ClInclude Include="..\GPRegs.h" />
+    <ClInclude Include="..\Light.h" />
+    <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\Perf.h" />
+    <ClInclude Include="..\Plug.h" />
+    <ClInclude Include="..\Stages.h" />
+    <ClInclude Include="..\Tev.h" />
+    <ClInclude Include="..\Tex.h" />
+    <ClInclude Include="..\Texgen.h" />
+    <ClInclude Include="..\XF.H" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\Fifo.cpp" />
-    <ClCompile Include="SRC\Gl.cpp" />
-    <ClCompile Include="SRC\Gpl.cpp" />
-    <ClCompile Include="SRC\GPRegs.cpp" />
-    <ClCompile Include="SRC\Light.cpp" />
-    <ClCompile Include="SRC\Perf.cpp" />
-    <ClCompile Include="SRC\Plug.cpp">
+    <ClCompile Include="..\Fifo.cpp" />
+    <ClCompile Include="..\Gl.cpp" />
+    <ClCompile Include="..\Gpl.cpp" />
+    <ClCompile Include="..\GPRegs.cpp" />
+    <ClCompile Include="..\Light.cpp" />
+    <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="SRC\Stages.cpp" />
-    <ClCompile Include="SRC\Tev.cpp" />
-    <ClCompile Include="SRC\Tex.cpp" />
-    <ClCompile Include="SRC\Texgen.cpp" />
-    <ClCompile Include="SRC\XF.CPP" />
+    <ClCompile Include="..\Perf.cpp" />
+    <ClCompile Include="..\Plug.cpp" />
+    <ClCompile Include="..\Stages.cpp" />
+    <ClCompile Include="..\Tev.cpp" />
+    <ClCompile Include="..\Tex.cpp" />
+    <ClCompile Include="..\Texgen.cpp" />
+    <ClCompile Include="..\XF.CPP" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Readme.md" />
+    <None Include="..\Readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

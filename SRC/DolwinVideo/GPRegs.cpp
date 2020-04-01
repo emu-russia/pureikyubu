@@ -1,5 +1,5 @@
 // all gfx state registers here
-#include "GX.h"
+#include "pch.h"
 
 static      FILE *gplog;
 

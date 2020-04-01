@@ -1,5 +1,5 @@
 // texture generators
-#include "GX.h"
+#include "pch.h"
 
 TexGenOut   tgout[8];
 

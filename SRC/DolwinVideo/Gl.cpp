@@ -1,6 +1,6 @@
 // Opengl platform engine
 // limitations : lines and points are COLOR0 only (no lit, tev)
-#include "GX.h"
+#include "pch.h"
 
 //
 // local data

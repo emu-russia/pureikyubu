@@ -1,5 +1,5 @@
 // texture manager
-#include "GX.h"
+#include "pch.h"
 
 #define MAX 32
 

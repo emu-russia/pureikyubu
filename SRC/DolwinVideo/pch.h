@@ -1,5 +1,7 @@
 // common include file
 
+#pragma once
+
 //#define WIREFRAME
 #define NO_VIEWPORT
 #define TEXMODE     GL_MODULATE

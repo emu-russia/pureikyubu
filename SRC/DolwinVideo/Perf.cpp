@@ -1,5 +1,5 @@
 // perfomance monitor (shows on-screen info)
-#include "GX.h"
+#include "pch.h"
 
 static  UINT    perftex;
 static  uint8_t *fontbuf;
@@ -7,7 +7,6 @@ static  uint8_t *fontbuf;
 void PerfInit()
 {
     HINSTANCE hInst = hPlugin;
-    HANDLE hRes, hResLoad;
 
     FILE* f = fopen("Data\\FONT.BMP", "rb");
     assert(f);

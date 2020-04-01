@@ -1,5 +1,5 @@
 // pipeline callbacks implementation
-#include "Gx.h"
+#include "pch.h"
 
 extern float   fracDenom[8][VTX_MAX_ATTR];             // fraction denominant
 extern Vertex* vtx;

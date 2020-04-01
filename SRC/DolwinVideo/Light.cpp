@@ -15,7 +15,7 @@
 // shit, vertex shaders are useless without pixel shaders
 // i wish, someone donate me last Radeon
 //
-#include "GX.h"
+#include "pch.h"
 
 BOOL    vtxShaders;
 

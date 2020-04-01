@@ -3,7 +3,7 @@
 
 ## Overview
 
-- Command exchanges are synchronous using Mailbox. DSP interrupt is not used.
+- Command exchanges are synchronous using Mailbox polling. DSP interrupt is not used.
 - Looks easier than AX Ucode
 - IROM is called only in one place (it looks like it is Sample Rate Converter). DSP Coefficients not used (DROM 0x1000)
 

@@ -1,7 +1,7 @@
 // task of this module is approximate every TEV stage 
 // to one of following modes : DECAL, MODULATE, BLEND, REPLACE or PASSCLR
 // if TEV stage doesnt fits to any of supported modes, use PASSCLR
-#include "GX.h"
+#include "pch.h"
 
 TEVStage    tevs[16];
 

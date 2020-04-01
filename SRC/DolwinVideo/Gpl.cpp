@@ -1,5 +1,5 @@
 // graphics platform interface
-#include "GX.h"
+#include "pch.h"
 
 Vertex      tri[3];             // triangle to be rendered
 BOOL        frame_done=1;

@@ -11,28 +11,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SRC\PAD.cpp">
+    <ClCompile Include="..\Configure.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\Configure.cpp">
+    <ClCompile Include="..\PAD.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SRC\pch.cpp">
+    <ClCompile Include="..\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SRC\PAD.h">
+    <ClInclude Include="..\Configure.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Configure.h">
+    <ClInclude Include="..\PAD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\pch.h">
+    <ClInclude Include="..\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Readme.md" />
+    <None Include="..\Readme.md" />
   </ItemGroup>
 </Project>

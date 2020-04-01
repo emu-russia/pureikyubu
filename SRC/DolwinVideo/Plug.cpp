@@ -1,5 +1,5 @@
-// plugin interface
-#include "GX.h"
+// External interface
+#include "pch.h"
 
 uint8_t* RAM;
 HINSTANCE   hPlugin;
