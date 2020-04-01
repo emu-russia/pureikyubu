@@ -171,19 +171,19 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             else if (um_num == 1)
                 SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)_T("Memcard B Settings"));
 
-            if (SyncSave == TRUE)
+            if (SyncSave)
                 CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
                                 IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_TRUE );
             else 
                 CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
                                 IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_FALSE );
 
-            if (emu.loaded == TRUE) {
+            if (emu.loaded) {
                 EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE), FALSE);
                 EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_TRUE), FALSE);
             }
 
-            if (Memcard_Connected[um_num] == TRUE)
+            if (Memcard_Connected[um_num])
                 CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
 
             _tcscpy(buf, memcard[um_num].filename);
@@ -241,7 +241,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
 
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
 
                 um_filechanged = TRUE;
                 return TRUE;
@@ -262,7 +262,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
 
                 um_filechanged = TRUE;
                 return TRUE;
@@ -289,11 +289,11 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     _tcscat_s(buf, _countof(buf) - 1, buf2);
                 }
 
-                if (emu.loaded == FALSE) {
+                if (!emu.loaded) {
                     if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED  )
-                        SyncSave = FALSE;
+                        SyncSave = false;
                     else
-                        SyncSave = TRUE;
+                        SyncSave = true;
                 }
                 if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_CONNECTED) == BST_CHECKED ) {
                     /* memcard is supposed to be connected */
@@ -304,7 +304,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                             if (MCConnect (um_num) == FALSE)
                                 MessageBox(wnd.hMainWindow, _T("Error while trying to connect the memcards."), _T("Memcard Error"), 0) ;
 
-                    Memcard_Connected[um_num] = TRUE;
+                    Memcard_Connected[um_num] = true;
                 }
                 else {
                     /* memcard is supposed to be disconnected */
@@ -316,6 +316,20 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
                     Memcard_Connected[um_num] = false;
                 }
+
+                // Writeback settings
+
+                if (um_num == 0)
+                {
+                    SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
+                    SetConfigString(MemcardA_Filename_Key, memcard[0].filename, USER_MEMCARDS);
+                }
+                else
+                {
+                    SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
+                    SetConfigString(MemcardB_Filename_Key, memcard[1].filename, USER_MEMCARDS);
+                }
+                SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 
                 EndDialog(hwndDlg, 0);
                 return TRUE;
@@ -331,12 +345,12 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
  * Calls the memcard settings dialog
  */ 
 void MemcardConfigure(int num, HWND hParent) {
-    BOOL opened;
+    bool openedBefore;
     if ((num != 0) && (num != 1)) return ;
     um_num = num;
 
-    opened = MCOpened;
-    if (opened == FALSE)
+    openedBefore = MCOpened;
+    if (!openedBefore)
     {
         HWConfig confg = { 0 };
         EMUGetHwConfig(&confg);
@@ -347,6 +361,6 @@ void MemcardConfigure(int num, HWND hParent) {
         MAKEINTRESOURCE(IDD_MEMCARD_SETTINGS),
         hParent,
         MemcardSettingsProc);
-    if (opened == FALSE)
+    if (!openedBefore)
         MCClose ();
 }

@@ -579,7 +579,7 @@ void MCOpen (HWConfig * config)
  * Disconnects both Memcard. Closes the memcard system and saves the current settings
  */ 
 void MCClose () {
-    MCOpened = FALSE;
+    MCOpened = false;
     MCDisconnect();
 }
 
