@@ -27,14 +27,19 @@ static void ReadFST()
     fstOffs = _byteswap_ulong(bb2[1]);
     fstSize = ROUND32(_byteswap_ulong(bb2[2]));
     fstMaxSize = ROUND32(_byteswap_ulong(bb2[3]));
-    fstAddr = _byteswap_ulong(bb2[4]);
+    fstAddr = _byteswap_ulong(bb2[4]);      // Ignore this
+
+    uint32_t ArenaHi = 0;
+    CPUReadWord(0x80000034, &ArenaHi);
+    ArenaHi -= fstSize;
+    CPUWriteWord(0x80000034, ArenaHi);
 
     // load FST into memory
     DVD::Seek(fstOffs);
-    DVD::Read(&mi.ram[fstAddr & RAMMASK], fstSize);
+    DVD::Read(&mi.ram[ArenaHi & RAMMASK], fstSize);
 
     // save fst configuration in lomem
-    CPUWriteWord(0x80000038, fstAddr);
+    CPUWriteWord(0x80000038, ArenaHi);
     CPUWriteWord(0x8000003c, fstMaxSize);
 
     // adjust arenaHi (OSInit will override it anyway, but not home demos)
@@ -224,7 +229,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer, Gekko::GekkoCore* core)
     }
     else
     {
-        CPUWriteWord(0x80000034, SP);
+        CPUWriteWord(0x80000034, SP - 0x10000);
 
         ReadFST(); // load FST, for demos
     }
