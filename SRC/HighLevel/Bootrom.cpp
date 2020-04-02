@@ -50,7 +50,7 @@ static void ReadFST()
 
 // execute apploader (apploader base is 0x81200000)
 // this is exact apploader emulation. it is safe and checked.
-static void BootApploader(Gekko::GekkoCore * core)
+static void BootApploader()
 {
     uint32_t     appHeader[8];           // apploader header information
     uint32_t     appSize;                // size of apploader image
@@ -87,7 +87,10 @@ static void BootApploader(Gekko::GekkoCore * core)
     // execute entrypoint
     PC = appEntryPoint;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode(core);
+    while (PC)
+    {
+        Gekko::Gekko->Step();
+    }
 
     // get apploader interface offsets
     CPUReadWord(0x81300004, &_prolog);
@@ -101,7 +104,10 @@ static void BootApploader(Gekko::GekkoCore * core)
     GPR[3] = 0x81300000;            // OSReport callback as parameter
     PC = _prolog;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode(core);
+    while (PC)
+    {
+        Gekko::Gekko->Step();
+    }
 
     // execute apploader main
     do
@@ -113,7 +119,10 @@ static void BootApploader(Gekko::GekkoCore * core)
 
         PC = _main;
         PPC_LR = 0;
-        while(PC) IPTExecuteOpcode(core);
+        while (PC)
+        {
+            Gekko::Gekko->Step();
+        }
 
         CPUReadWord(0x81300004, &addr);
         CPUReadWord(0x81300008, &size);
@@ -133,7 +142,10 @@ static void BootApploader(Gekko::GekkoCore * core)
     // execute apploader epilog
     PC = _epilog;
     PPC_LR = 0;
-    while(PC) IPTExecuteOpcode(core);
+    while (PC)
+    {
+        Gekko::Gekko->Step();
+    }
 
     PC = GPR[3];
     DBReport("\n");
@@ -165,7 +177,7 @@ static void __SyncTime(bool rtc)
     DBReport2(DbgChannel::HLE, "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
 }
 
-void BootROM(bool dvd, bool rtc, uint32_t consoleVer, Gekko::GekkoCore* core)
+void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 {
     // set initial MMU state, according with BS2/Dolphin OS
     for(int sr=0; sr<16; sr++)              // unmounted
@@ -225,7 +237,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer, Gekko::GekkoCore* core)
         if(id[3] == 'P') CPUWriteWord(0x800000CC, 1);   // set to PAL
         else CPUWriteWord(0x800000CC, 0);
 
-        BootApploader(core);
+        BootApploader();
     }
     else
     {

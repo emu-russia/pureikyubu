@@ -44,8 +44,8 @@ void EMUOpen()
         return;
 
     // open other sub-systems
-    emu.core = new Gekko::GekkoCore;
-    assert(emu.core);
+    Gekko::Gekko = new Gekko::GekkoCore;
+    assert(Gekko::Gekko);
 
     HWConfig* hwconfig = new HWConfig;
     memset(hwconfig, 0, sizeof(HWConfig));
@@ -79,7 +79,7 @@ void EMUOpen()
 
     if (!emu.doldebug)
     {
-        emu.core->Run();
+        Gekko::Gekko->Run();
     }
 }
 
@@ -91,8 +91,8 @@ void EMUClose()
 
     HLEClose();
 
-    delete emu.core;
-    emu.core = nullptr;
+    delete Gekko::Gekko;
+    Gekko::Gekko = nullptr;
 
     delete emu.hw;
     emu.hw = nullptr;

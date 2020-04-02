@@ -39,9 +39,6 @@ void cmd_init_handlers()
     con.cmds["quit"] = cmd_exit;
     con.cmds["q"] = cmd_exit;
     con.cmds["x"] = cmd_exit;
-
-    Debug::gekko_init_handlers();
-    Debug::hw_init_handlers();
 }
 
 // ---------------------------------------------------------------------------
@@ -72,8 +69,6 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     DBReport( "    reset                - reset emulator\n");
     DBReport("\n");
 
-    Debug::gekko_help();
-    Debug::hw_help();
     Debug::Hub.Help();
 
     DBReport2(DbgChannel::Header, "## high-level commands\n");
@@ -197,9 +192,9 @@ Json::Value* cmd_blr(std::vector<std::string>& args)
 
         uint32_t ea = con.disa_cursor;
         uint32_t pa = -1;
-        if (emu.core)
+        if (Gekko::Gekko)
         {
-            pa = emu.core->EffectiveToPhysical(ea, true);
+            pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
         }
         if(pa == -1) return nullptr;
 
@@ -558,9 +553,9 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
             CPUReadWord(sp, &sp);           // walk stack
 
             uint32_t pa = -1;
-            if (emu.core)
+            if (Gekko::Gekko)
             {
-                pa = emu.core->EffectiveToPhysical(sp, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(sp, true);
             }
 
             if(!sp || pa == -1) break;
@@ -594,9 +589,9 @@ Json::Value* cmd_name(std::vector<std::string>& args)
         {
             uint32_t branchAddr = con.disa_cursor, op;
             uint32_t pa = -1;
-            if (emu.core)
+            if (Gekko::Gekko)
             {
-                pa = emu.core->EffectiveToPhysical(branchAddr, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(branchAddr, true);
             }
             if(pa != -1)
             {
@@ -652,9 +647,9 @@ Json::Value* cmd_nop(std::vector<std::string>& args)
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = -1;
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(ea, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
     }
     if(pa == -1) return nullptr;
     
@@ -673,9 +668,9 @@ Json::Value* cmd_denop(std::vector<std::string>& args)
 
     uint32_t ea = con.disa_cursor;
     uint32_t pa = -1;
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(ea, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
     }
     if(pa == -1) return nullptr;
 
@@ -1037,9 +1032,9 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
             PPCD_CB disa;
             uint32_t op = 0;
             uint32_t pa = -1;
-            if (emu.core)
+            if (Gekko::Gekko)
             {
-                pa = emu.core->EffectiveToPhysical(saddr, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(saddr, true);
             }
             if(pa != -1) MEMFetch(pa, &op);
             disa.instr = op;

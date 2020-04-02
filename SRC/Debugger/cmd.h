@@ -34,6 +34,3 @@ Json::Value* cmd_tree(std::vector<std::string>& args);		// show call tree
 Json::Value* cmd_top10(std::vector<std::string>& args);		// show HLE calls toplist
 Json::Value* cmd_u(std::vector<std::string>& args);			// set disassembly address
 Json::Value* cmd_sleep(std::vector<std::string>& args);		// Sleep specified number of milliseconds
-
-#include "HwCommands.h"    // HW debug command handlers
-#include "GekkoCommands.h"		// Processor debug commands

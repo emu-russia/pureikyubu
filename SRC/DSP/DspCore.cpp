@@ -8,8 +8,8 @@ namespace DSP
 
 	DspCore::DspCore(HWConfig* config)
 	{
-		threadHandle = CreateThread(NULL, 0, DspThreadProc, this, CREATE_SUSPENDED, &threadId);
-		assert(threadHandle != INVALID_HANDLE_VALUE);
+		dspThread = new Thread(DspThreadProc, true, this);
+		assert(dspThread);
 
 		HardReset();
 
@@ -53,23 +53,19 @@ namespace DSP
 
 	DspCore::~DspCore()
 	{
-		TerminateThread(threadHandle, 0);
-		WaitForSingleObject(threadHandle, 1000);
-
+		delete dspThread;
 		delete interp;
 	}
 
-	DWORD WINAPI DspCore::DspThreadProc(LPVOID lpParameter)
+	void DspCore::DspThreadProc(void * Parameter)
 	{
-		DspCore* core = (DspCore*)lpParameter;
+		DspCore* core = (DspCore*)Parameter;
 
 		while (true)
 		{
 			// Do DSP actions
 			core->Update();
 		}
-
-		return 0;
 	}
 
 	void DspCore::Exception(DspException id)
@@ -123,23 +119,15 @@ namespace DSP
 
 	void DspCore::Run()
 	{
-		if (!running)
-		{
-			ResumeThread(threadHandle);
-			DBReport2(DbgChannel::DSP, "DspCore::Run");
-			savedGekkoTicks = cpu.tb.uval;
-			running = true;
-		}
+		dspThread->Resume();
+		DBReport2(DbgChannel::DSP, "DspCore::Run");
+		savedGekkoTicks = cpu.tb.uval;
 	}
 
 	void DspCore::Suspend()
 	{
-		if (running)
-		{
-			running = false;
-			DBReport2(DbgChannel::DSP, "DspCore::Suspend");
-			SuspendThread(threadHandle);
-		}
+		DBReport2(DbgChannel::DSP, "DspCore::Suspend");
+		dspThread->Suspend();
 	}
 
 	void DspCore::Update()
@@ -840,7 +828,7 @@ namespace DSP
 
 	bool DspCore::DSPGetHaltBit()
 	{
-		return !running;
+		return !dspThread->IsRunning();
 	}
 
 	// CPU->DSP Mailbox

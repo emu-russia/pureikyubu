@@ -16,7 +16,6 @@ typedef struct Emulator
 {
     bool    loaded;         // file loaded
     bool    doldebug;       // debugger active
-    Gekko::GekkoCore* core;
     Flipper::Flipper* hw;
 } Emulator;
 

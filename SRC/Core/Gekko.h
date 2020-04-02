@@ -1,19 +1,12 @@
-// PPC definitions and structures for interpreter and recompiler cores
+// Gekko processor core public interface.
 
-#include <Windows.h>
+#pragma once
 
+#include "../Common/Thread.h"
 #include <vector>
+#include "GekkoDefs.h"
 
-// GC bus clock is running on 1/3 of CPU clock, and timer is
-// running on 1/4 of bus clock (1/12 of CPU clock)
-#define CPU_CORE_CLOCK  486000000u  // 486 mhz (its not 485, stop bugging me!)
-#define CPU_BUS_CLOCK   (CPU_CORE_CLOCK / 3)
-#define CPU_TIMER_CLOCK (CPU_BUS_CLOCK / 4)
-
-// ---------------------------------------------------------------------------
-// registers and their bitfields
-
-// name registers
+// registers
 #define GPR     cpu.gpr
 #define SPR     cpu.spr
 #define PPC_SR  cpu.sr
@@ -88,27 +81,6 @@ typedef union TBREG
     } Part;
 } TBREG;
 
-#define BIT(n)              (1 << (31-n))
-
-// Machine State Flags
-#define MSR_RESERVED        0xFFFA0088
-#define MSR_POW             (BIT(13))               // Power management enable
-#define MSR_ILE             (BIT(15))               // Exception little-endian mode
-#define MSR_EE              (BIT(16))               // External interrupt enable
-#define MSR_PR              (BIT(17))               // User privilege level
-#define MSR_FP              (BIT(18))               // Floating-point available
-#define MSR_ME              (BIT(19))               // Machine check enable
-#define MSR_FE0             (BIT(20))               // Floating-point exception mode 0
-#define MSR_SE              (BIT(21))               // Single-step trace enable
-#define MSR_BE              (BIT(22))               // Branch trace enable
-#define MSR_FE1             (BIT(23))               // Floating-point exception mode 1
-#define MSR_IP              (BIT(25))               // Exception prefix
-#define MSR_IR              (BIT(26))               // Instruction address translation
-#define MSR_DR              (BIT(27))               // Data address translation
-#define MSR_PM              (BIT(29))               // Performance monitor mode
-#define MSR_RI              (BIT(30))               // Recoverable exception
-#define MSR_LE              (BIT(31))               // Little-endian mode enable
-
 // ** Gekko specific **
 
 #define PS0(n)      (cpu.fpr[n].dbl)
@@ -132,13 +104,6 @@ typedef union TBREG
 #define DMAU        (SPR[922])          // locked cache DMA
 #define DMAL        (SPR[923])
 
-#define HID2_LSQE   0x80000000          // PS load/store quantization
-#define HID2_WPE    0x40000000          // gathering enabled
-#define HID2_PSE    0x20000000          // PS-mode
-#define HID2_LCE    0x10000000          // cache is locked
-
-#define WPAR_ADDR   0xffffffe0          // accumulation address
-#define WPAR_BNE    0x1                 // buffer not empty
 #define WPE         (HID2 & HID2_WPE)
 
 #define LSQE        (HID2 & HID2_LSQE)
@@ -150,50 +115,7 @@ typedef union TBREG
 #define PSW         (op & 0x8000)
 #define PSI         ((op >> 12) & 7)
 
-// ---------------------------------------------------------------------------
-// exception vectors (physical, because translation is disabled in exceptions)
-
-#define CPU_EXCEPTION_RESET         0x0100
-#define CPU_EXCEPTION_MACHINE       0x0200
-#define CPU_EXCEPTION_DSI           0x0300
-#define CPU_EXCEPTION_ISI           0x0400
-#define CPU_EXCEPTION_INTERRUPT     0x0500
-#define CPU_EXCEPTION_ALIGN         0x0600
-#define CPU_EXCEPTION_PROGRAM       0x0700
-#define CPU_EXCEPTION_FPUNAVAIL     0x0800
-#define CPU_EXCEPTION_DECREMENTER   0x0900
-#define CPU_EXCEPTION_SYSCALL       0x0C00
-#define CPU_EXCEPTION_PERFMON       0x0D00
-#define CPU_EXCEPTION_IABR          0x1300
-#define CPU_EXCEPTION_THERMAL       0x1700
-
 extern  void (*CPUException)(uint32_t vector);
-
-/*/ ---------------------------------------------------------------------------
-
-    Exception Notes:
-    ----------------
-
-    We support : DSI(?), ISI(?), Interrupt, Alignment(?), Program, FP Unavail,
-    Decrementer, Syscall.
-    (?) - only in advanced memory mode (MMU), or optionally.
-
-    Common processing :
-
-        SRR0 - PC (address where to resume execution, after 'rfi')
-        SRR1 - copied MSR bits.
-
-    MSR processing :
-
-        1. SRR[0, 5-9, 16-31] are copied from MSR.
-        2. disable translation - clear MSR[IR] & MSR[DR]
-        3. select exception base (not used in emu) :
-                0x000nnnnn if MSR[IP] = 0
-                0xFFFnnnnn if MSR[IP] = 1
-        4. MSR[RI] must be always 1 in emu!
-        5. on Interrupt and Decrementer MSR[EE] is cleared also.
-
---------------------------------------------------------------------------- /*/
 
 // ---------------------------------------------------------------------------
 // CPU externals
@@ -209,8 +131,6 @@ extern void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t*reg);
 extern void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
 extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
 extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
-
-// there is no need in CPUStop
 
 // CPU control/state block (all important data is here)
 typedef struct CPUControl
@@ -253,12 +173,8 @@ namespace Gekko
         // Therefore, we are a little tricky and “slow down” the work of the emulated processor (we make several ticks per 1 instruction).
         static const int CounterStep = 12;
 
-        HANDLE threadHandle = INVALID_HANDLE_VALUE;
-        DWORD threadId = 0;
-
-        bool running = false;
-
-        static DWORD WINAPI GekkoThreadProc(LPVOID lpParameter);
+        Thread* gekkoThread = nullptr;
+        static void GekkoThreadProc(void* Parameter);
 
         std::vector<uint32_t> breakPointsExecute;
         std::vector<uint32_t> breakPointsRead;
@@ -269,9 +185,9 @@ namespace Gekko
         GekkoCore();
         ~GekkoCore();
 
-        void Run();
-        bool IsRunning() { return running; }
-        void Suspend();
+        void Run() { gekkoThread->Resume(); }
+        bool IsRunning() { return gekkoThread->IsRunning(); }
+        void Suspend() { gekkoThread->Suspend(); }
 
         void Tick();
         int64_t GetTicks();
@@ -282,5 +198,8 @@ namespace Gekko
         static void SwapArea(uint32_t* addr, int count);
         static void SwapAreaHalf(uint16_t* addr, int count);
 
+        void Step();
     };
+
+    extern GekkoCore* Gekko;
 }

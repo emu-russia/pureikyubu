@@ -78,6 +78,8 @@ namespace Flipper
         GXOpen(mi.ram, wnd.hMainWindow);
         AXOpen();
         PADOpen();
+
+        Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
     }
 
     Flipper::~Flipper()

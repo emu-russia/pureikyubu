@@ -19,6 +19,8 @@
 #include "Memory.h"
 #include "Gekko.h"
 #include "Interpreter.h"
+#include "GekkoCommands.h"
+#include "GekkoDisasm.h"
 
 #include "Interpreter/c_tables.h"
 #include "Interpreter/c_integer.h"

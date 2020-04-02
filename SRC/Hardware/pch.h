@@ -14,6 +14,7 @@
 #include "../Common/Spinlock.h"
 
 #include "Hardware.h"
+#include "HwCommands.h"
 
 #include "../Debugger/Debugger.h"
 

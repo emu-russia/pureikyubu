@@ -21,49 +21,13 @@ void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t *data);
 // run from PC (using interpreter/debugger/recompiler)
 void (*CPUStart)();
 
-// ---------------------------------------------------------------------------
-
-// select the core, before run
-void CPUOpen()
-{
-    // setup interpreter tables
-    IPTInitTables();
-
-    cpu.one_second = CPU_TIMER_CLOCK;
-    cpu.decreq = 0;
-
-    // select core
-    CPUException = IPTException;
-
-    // set CPU memory operations to default (using MEM*);
-    // debugger will override them by DB* calls after start, if need.
-    CPUReadByte     = MEMReadByte;
-    CPUWriteByte    = MEMWriteByte;
-    CPUReadHalf     = MEMReadHalf;
-    CPUReadHalfS    = MEMReadHalfS;
-    CPUWriteHalf    = MEMWriteHalf;
-    CPUReadWord     = MEMReadWord;
-    CPUWriteWord    = MEMWriteWord;
-    CPUReadDouble   = MEMReadDouble;
-    CPUWriteDouble  = MEMWriteDouble;
-
-    // clear opcode counter (used for MIPS calculaion)
-    cpu.ops = 0;
-
-    // we dont care about CPU registers, because they are 
-    // undefined, since any GC program is virtually loaded
-    // after BOOTROM. although, we should set some system
-    // registers for correct MMU emulation (see Bootrom.cpp).
-
-    // Disable translation for now
-    MSR &= ~(MSR_DR | MSR_IR);
-}
-
 namespace Gekko
 {
-    DWORD WINAPI GekkoCore::GekkoThreadProc(LPVOID lpParameter)
+    GekkoCore* Gekko;
+
+    void GekkoCore::GekkoThreadProc(void* Parameter)
     {
-        GekkoCore* core = (GekkoCore*)lpParameter;
+        GekkoCore* core = (GekkoCore*)Parameter;
 
         while (true)
         {
@@ -73,34 +37,49 @@ namespace Gekko
 
     GekkoCore::GekkoCore()
     {
-        CPUOpen();
+        // setup interpreter tables
+        IPTInitTables();
 
-        threadHandle = CreateThread(NULL, 0, GekkoThreadProc, this, CREATE_SUSPENDED, &threadId);
-        assert(threadHandle != INVALID_HANDLE_VALUE);
+        cpu.one_second = CPU_TIMER_CLOCK;
+        cpu.decreq = 0;
+
+        // select core
+        CPUException = IPTException;
+
+        // set CPU memory operations to default (using MEM*);
+        // debugger will override them by DB* calls after start, if need.
+        CPUReadByte = MEMReadByte;
+        CPUWriteByte = MEMWriteByte;
+        CPUReadHalf = MEMReadHalf;
+        CPUReadHalfS = MEMReadHalfS;
+        CPUWriteHalf = MEMWriteHalf;
+        CPUReadWord = MEMReadWord;
+        CPUWriteWord = MEMWriteWord;
+        CPUReadDouble = MEMReadDouble;
+        CPUWriteDouble = MEMWriteDouble;
+
+        // clear opcode counter (used for MIPS calculaion)
+        cpu.ops = 0;
+
+        // we dont care about CPU registers, because they are 
+        // undefined, since any GC program is virtually loaded
+        // after BOOTROM. although, we should set some system
+        // registers for correct MMU emulation (see Bootrom.cpp).
+
+        // Disable translation for now
+        MSR &= ~(MSR_DR | MSR_IR);
+
+        Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
+
+        gekkoThread = new Thread(GekkoThreadProc, true, this);
+        assert(gekkoThread);
     }
 
     GekkoCore::~GekkoCore()
     {
-        TerminateThread(threadHandle, 0);
-        WaitForSingleObject(threadHandle, 1000);
-    }
+        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
 
-    void GekkoCore::Run()
-    {
-        if (!running)
-        {
-            ResumeThread(threadHandle);
-            running = true;
-        }
-    }
-
-    void GekkoCore::Suspend()
-    {
-        if (running)
-        {
-            running = false;
-            SuspendThread(threadHandle);
-        }
+        delete gekkoThread;
     }
 
     // Modify CPU counters
@@ -152,6 +131,11 @@ namespace Gekko
             *addr = _byteswap_ushort(*addr);
             addr++;
         }
+    }
+
+    void GekkoCore::Step()
+    {
+        IPTExecuteOpcode(this);
     }
 
 }

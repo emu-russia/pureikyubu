@@ -1,0 +1,49 @@
+{
+  "info": {
+    "description": "Various commands for debugging hardware (Flipper). Available only after emulation has been started.",
+    "helpGroup": "HW Debug Commands"
+  },
+
+  "can": {
+
+    "ramload": {
+      "help": "Load binary file to main memory",
+      "args": 2,
+      "usage": [
+        "Syntax: ramload <file> <address>\n",
+        "Example of use: ramload lomem.bin 0x80000000\n"
+      ]
+    },
+
+    "ramsave": {
+      "help": "Save main memory content to file",
+      "args": 3,
+      "usage": [
+        "Syntax: ramsave <file> <address> <size>\n",
+        "Example of use: ramsave lomem.bin 0x80000000 0x3300\n"
+      ]
+    },
+
+    "aramload": {
+      "help": "Load binary file to ARAM",
+      "args": 2,
+      "usage": [
+        "Syntax: aramload <file> <address>\n",
+        "Example of use: aramload samples.bin 0x10000\n"
+      ]
+    },
+
+    "aramsave": {
+      "help": "Save ARAM content to file",
+      "args": 3,
+      "usage": [
+        "Syntax: aramsave <file> <address> <size>\n",
+        "Example of use: aramsave samples.bin 0x10000 0x200\n"
+      ]
+    }
+
+  },
+
+  "todo": [ "Parametrize input/output Arrays"]
+
+}

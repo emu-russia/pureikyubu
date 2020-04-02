@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <atomic>
+#include "../Common/Thread.h"
 
 namespace DSP
 {
@@ -235,12 +236,8 @@ namespace DSP
 
 		uint64_t savedGekkoTicks = 0;
 
-		bool running = false;
-
-		HANDLE threadHandle = INVALID_HANDLE_VALUE;
-		DWORD threadId = 0;
-
-		static DWORD WINAPI DspThreadProc(LPVOID lpParameter);
+		Thread* dspThread = nullptr;
+		static void DspThreadProc(void* Parameter);
 
 		DspInterpreter* interp;
 
@@ -336,7 +333,7 @@ namespace DSP
 		void HardReset();
 
 		void Run();
-		bool IsRunning() { return running; }
+		bool IsRunning() { return dspThread->IsRunning(); }
 		void Suspend();
 
 		void Update();

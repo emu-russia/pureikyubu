@@ -178,7 +178,7 @@ void con_start()
 void con_break(const char *reason)
 {
     if(reason) con_print(ConColor::GREEN, "\ndebugger breaks%s. press F5 to continue.\n", reason);
-    if (emu.core) emu.core->Suspend();
+    if (Gekko::Gekko) Gekko::Gekko->Suspend();
     con_set_disa_cur(PC);
 }
 
@@ -216,7 +216,10 @@ void con_command(std::vector<std::string>& args, int lnum)
 // step into instruction
 void con_step_into()
 {
-    IPTExecuteOpcode(emu.core);
-    con.text = PC - 4 * wind.disa_h / 2 + 4;
-    con.update |= CON_UPDATE_ALL;
+    if (Gekko::Gekko)
+    {
+        Gekko::Gekko->Step();
+        con.text = PC - 4 * wind.disa_h / 2 + 4;
+        con.update |= CON_UPDATE_ALL;
+    }
 }

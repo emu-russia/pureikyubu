@@ -28,6 +28,7 @@
     <ClCompile Include="..\EI.cpp" />
     <ClCompile Include="..\GDI.cpp" />
     <ClCompile Include="..\HW.cpp" />
+    <ClCompile Include="..\HwCommands.cpp" />
     <ClCompile Include="..\IPLDescrambler.cpp" />
     <ClCompile Include="..\MC.cpp" />
     <ClCompile Include="..\MI.cpp" />
@@ -53,6 +54,7 @@
     <ClInclude Include="..\GX.h" />
     <ClInclude Include="..\Hardware.h" />
     <ClInclude Include="..\HW.h" />
+    <ClInclude Include="..\HwCommands.h" />
     <ClInclude Include="..\IPLDescrambler.h" />
     <ClInclude Include="..\MC.h" />
     <ClInclude Include="..\MI.h" />
@@ -61,6 +63,9 @@
     <ClInclude Include="..\PI.h" />
     <ClInclude Include="..\SI.h" />
     <ClInclude Include="..\VI.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\HWJdi.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

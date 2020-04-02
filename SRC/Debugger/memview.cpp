@@ -8,9 +8,9 @@ static const char *hexbyte(uint32_t addr)
     // check address
     uint32_t pa = -1;
         
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(addr, 0);
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, 0);
     }
 
     if (mi.ram)
@@ -35,9 +35,9 @@ static const char *charbyte(uint32_t addr)
     // check address
     uint32_t pa = -1;
     
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(addr, 0);
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, 0);
     }
 
     if (mi.ram && pa != -1)
@@ -61,9 +61,9 @@ void con_update_dump_window()
     }
 
     uint32_t pa = -1;
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(con.data, 0);
+        pa = Gekko::Gekko->EffectiveToPhysical(con.data, 0);
     }
 
     con_attr(0, 3);

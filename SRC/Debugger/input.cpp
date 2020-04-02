@@ -22,15 +22,15 @@ static void con_function_key(int vkey, int ctrl)
             con_change_focus(WCONSOLE); // Console (roll)
             break;
         case VK_F5:
-            if (emu.core)
+            if (Gekko::Gekko)
             {
-                if (emu.core->IsRunning())
+                if (Gekko::Gekko->IsRunning())
                 {
                     con_break();
                 }
                 else
                 {
-                    emu.core->Run();
+                    Gekko::Gekko->Run();
                 }
             }
             break;

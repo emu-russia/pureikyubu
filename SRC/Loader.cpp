@@ -99,7 +99,7 @@ uint32_t LoadDOL(TCHAR *dolname)
     HWConfig * config = new HWConfig;
     assert(config);
     EMUGetHwConfig(config);
-    BootROM(false, false, config->consoleVer, emu.core);
+    BootROM(false, false, config->consoleVer);
 
     // Setup registers
     SP = 0x816ffffc;
@@ -454,9 +454,9 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
         {
             uint32_t ea = _byteswap_ulong(p->effectiveAddress);
             uint32_t pa = (uint32_t)-1;
-            if (emu.core)
+            if (Gekko::Gekko)
             {
-                pa = emu.core->EffectiveToPhysical(ea, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
             }
             if(pa == -1) continue;
 
@@ -715,7 +715,7 @@ static void DoLoadFile(TCHAR *filename)
     {
         HWConfig* config = new HWConfig;
         EMUGetHwConfig(config);
-        BootROM(ldat.dvd, false, config->consoleVer, emu.core);
+        BootROM(ldat.dvd, false, config->consoleVer);
         Sleep(10);
     }
 

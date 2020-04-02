@@ -14,7 +14,6 @@
 #include "../Common/Spinlock.h"
 
 #include "../Core/Gekko.h"
-#include "../Core/Interpreter.h"
 
 #include "HighLevel.h"
 

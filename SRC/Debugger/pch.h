@@ -15,7 +15,7 @@
 
 #include "../Core/Memory.h"
 #include "../Core/Gekko.h"
-#include "../Core/Interpreter.h"
+#include "../Core/GekkoDisasm.h"
 
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
@@ -27,5 +27,3 @@
 #include "Debugger.h"
 
 #include "console.h"
-#include "GekkoDisasm.h"    // Gekko disassembler
-

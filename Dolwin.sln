@@ -9,6 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{B89488
 		SRC\Common\Json.h = SRC\Common\Json.h
 		SRC\Common\Readme.md = SRC\Common\Readme.md
 		SRC\Common\Spinlock.h = SRC\Common\Spinlock.h
+		SRC\Common\Thread.h = SRC\Common\Thread.h
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DVD", "SRC\DVD\Scripts\DVD.vcxproj", "{A995D286-033C-4EED-B171-6CE61D28C88F}"

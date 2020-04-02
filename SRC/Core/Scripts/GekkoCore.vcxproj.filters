@@ -75,6 +75,15 @@
     <ClInclude Include="..\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\GekkoCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GekkoDisasm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GekkoDefs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Interpreter\c_branch.cpp">
@@ -131,6 +140,12 @@
     <ClCompile Include="..\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\GekkoCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GekkoDisasm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\AsmX64.asm">
@@ -142,5 +157,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />
+    <None Include="..\..\..\Data\GekkoCoreJdi.json" />
   </ItemGroup>
 </Project>

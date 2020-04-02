@@ -114,9 +114,9 @@ void con_ldst_info()
 void con_update_disa_window()
 {
     uint32_t pa = -1;
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(con.disa_cursor, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(con.disa_cursor, true);
     }
 
     con_attr(0, 3);
@@ -179,9 +179,9 @@ static void disa_navigate()
     uint32_t op = 0, addr = con.disa_cursor;
 
     uint32_t pa = -1;
-    if (emu.core)
+    if (Gekko::Gekko)
     {
-        pa = emu.core->EffectiveToPhysical(addr, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, true);
     }
     if(pa != -1) MEMFetch(pa, &op);
     if(op == 0) return;
