@@ -154,14 +154,12 @@ void VIUpdate()
             if(vi.xfb) YUVBlit(vi.xfbbuf, vi.gfxbuf);
             vi.frames++;
 
-            // show system time and do some win32 update
+            // show system time
             SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
             UpdateProfiler();
         }
         vi.pos &= ~0x07ff0000;
         vi.pos |= (currentBeamPos & 0x7ff) << 16;
-
-        // sync CPU clock with VI
     }
 }
 

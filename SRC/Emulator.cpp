@@ -50,8 +50,8 @@ void EMUOpen()
     HWConfig* hwconfig = new HWConfig;
     memset(hwconfig, 0, sizeof(HWConfig));
     EMUGetHwConfig(hwconfig);
-    emu.hw = new Flipper::Flipper(hwconfig);
-    assert(emu.hw);
+    Flipper::HW = new Flipper::Flipper(hwconfig);
+    assert(Flipper::HW);
     delete hwconfig;
 
     ReloadFile();   // PC will be set here
@@ -94,8 +94,8 @@ void EMUClose()
     delete Gekko::Gekko;
     Gekko::Gekko = nullptr;
 
-    delete emu.hw;
-    emu.hw = nullptr;
+    delete Flipper::HW;
+    Flipper::HW = nullptr;
 
     // take care about user interface
     OnMainWindowClosed();

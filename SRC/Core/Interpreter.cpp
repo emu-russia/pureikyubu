@@ -1,4 +1,4 @@
-// default C interpreter (opcode parser)
+// Gekko interpreter
 #include "pch.h"
 
 // parse and execute single opcode
@@ -15,10 +15,10 @@ void IPTExecuteOpcode(Gekko::GekkoCore * core)
     // according to manual, decrementer has lower priority rather external interrupt
     
     // time to update HW (possible CPU_EXCEPTION_INTERRUPT)
-    if(cpu.branch)
+    if (cpu.branch)
     {
-        HWUpdate();
-        if(cpu.exception) goto JumpPC;
+        Flipper::HW->Update();
+        if (cpu.exception) goto JumpPC;
     }
 
     // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)

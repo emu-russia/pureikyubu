@@ -16,7 +16,6 @@ typedef struct Emulator
 {
     bool    loaded;         // file loaded
     bool    doldebug;       // debugger active
-    Flipper::Flipper* hw;
 } Emulator;
 
 extern  Emulator emu;
