@@ -79,8 +79,37 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 	return nullptr;
 }
 
+// Sleep specified number of milliseconds
+static Json::Value* cmd_sleep(std::vector<std::string>& args)
+{
+	Sleep(atoi(args[1].c_str()));
+	return nullptr;
+}
+
+// Echo
+static Json::Value* cmd_echo(std::vector<std::string>& args)
+{
+	DBReport("%s\n", args[1].c_str());
+	return nullptr;
+}
+
+// Exit
+Json::Value* cmd_exit(std::vector<std::string>& args)
+{
+	DBReport(": exiting...\n");
+	EMUClose();
+	EMUDtor();
+	exit(0);
+}
+
 void EmuReflector()
 {
 	Debug::Hub.AddCmd("FileLoad", EmuFileLoad);
 	Debug::Hub.AddCmd("FileSave", EmuFileSave);
+	Debug::Hub.AddCmd("sleep", cmd_sleep);
+	Debug::Hub.AddCmd("echo", cmd_echo);
+	Debug::Hub.AddCmd("exit", cmd_exit);
+	Debug::Hub.AddCmd("quit", cmd_exit);
+	Debug::Hub.AddCmd("x", cmd_exit);
+	Debug::Hub.AddCmd("q", cmd_exit);
 }

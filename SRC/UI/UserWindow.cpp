@@ -404,9 +404,8 @@ static void OnMainWindowDestroy()
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 
-    EMUClose();     // completely close the Dolwin
-    EMUDtor();
-    exit(1);        // return good
+    std::vector<std::string> cmd { "exit" };
+    Debug::Hub.Execute(cmd);
 }
 
 // emulation has started - do proper actions

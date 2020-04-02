@@ -34,11 +34,6 @@ void cmd_init_handlers()
     con.cmds["tree"] = cmd_tree;
     con.cmds["u"] = cmd_u;
     con.cmds["unload"] = cmd_unload;
-    con.cmds["sleep"] = cmd_sleep;
-    con.cmds["exit"] = cmd_exit;
-    con.cmds["quit"] = cmd_exit;
-    con.cmds["q"] = cmd_exit;
-    con.cmds["x"] = cmd_exit;
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +99,6 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     DBReport( "    cls                  - clear message buffer\n");
     DBReport( "    disa                 - disassemble code into text file\n");
     DBReport( "    tree                 - show call tree\n");
-    DBReport( "    sleep                - Sleep specified number of milliseconds\n");
     DBReport( "    [q]uit, e[x]it       - exit to OS\n");
     DBReport("\n");
 
@@ -157,15 +151,6 @@ Json::Value* cmd_unload(std::vector<std::string>& args)
     }
     else DBReport("not loaded.\n");
     return nullptr;
-}
-
-Json::Value* cmd_exit(std::vector<std::string>& args)
-{
-    DBReport(": exiting...\n");
-    con_refresh();
-    Sleep(10);
-    EMUClose();
-    exit(0);
 }
 
 // ---------------------------------------------------------------------------
@@ -1459,19 +1444,5 @@ Json::Value* cmd_u(std::vector<std::string>& args)
         con_set_disa_cur(strtoul(args[1].c_str(), NULL, 0));
     }
 
-    return nullptr;
-}
-
-// Sleep specified number of milliseconds
-Json::Value* cmd_sleep(std::vector<std::string>& args)
-{
-    if (args.size() < 2)
-    {
-        DBReport("Syntax: sleep <milliseconds>\n");
-        DBReport("Examples of use: sleep 1000\n");
-        return nullptr;
-    }
-
-    Sleep(atoi(args[1].c_str()));
     return nullptr;
 }

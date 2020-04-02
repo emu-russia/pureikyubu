@@ -27,10 +27,43 @@
         "Save data returned by another command (cmd) to specified file.\n",
         "Example: FileSave \"Data\\FST.bin\" DumpFst\n"
       ]
+    },
+
+    "sleep": {
+      "help": "Sleep specified number of milliseconds",
+      "args": 1,
+      "hints": "<msec>",
+      "usage": [
+        "Syntax: sleep <milliseconds>\n",
+        "Examples of use: sleep 1000\n"
+      ]
+    },
+
+    "echo": {
+      "help": "Echo",
+      "args": 1,
+      "hints": "<text>",
+      "usage": [
+        "Syntax: echo <text>\n",
+        "Examples of use: echo \"Hello, world!\"\n"
+      ]
+    },
+
+    "exit": {
+      "help": "Exit"
+    },
+    "quit": {
+      "help": "Exit"
+    },
+    "x": {
+      "help": "Exit"
+    },
+    "q": {
+      "help": "Exit"
     }
 
   },
 
-  "todo": [ "Open", "Close", "Reset", "Exit" ]
+  "todo": [ "Open", "Close", "Reset" ]
 
 }

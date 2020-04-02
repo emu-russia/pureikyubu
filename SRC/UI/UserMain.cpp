@@ -1,6 +1,5 @@
 // Dolwin entrypoint (WinMain) and fail-safe application messages.
 // WinMain() should never return. 
-// exit() should return 0, for good reason. 1, for bad.
 #include "pch.h"
 
 // ---------------------------------------------------------------------------
@@ -34,9 +33,9 @@ namespace UI
         }
         else
         {
-            EMUDtor();
             MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
-            exit(1);    // return bad
+            std::vector<std::string> cmd{ "exit" };
+            Debug::Hub.Execute(cmd);
         }
     }
 

@@ -6,7 +6,6 @@ void	cmd_init_handlers();
 Json::Value* cmd_showpc(std::vector<std::string>& args);		// set disassembly cursor to PC
 Json::Value* cmd_showldst(std::vector<std::string>& args);	// show data pointed by LD/ST-opcode
 Json::Value* cmd_unload(std::vector<std::string>& args);		// unload file
-Json::Value* cmd_exit(std::vector<std::string>& args);		// exit
 Json::Value* cmd_blr(std::vector<std::string>& args);		// insert BLR instruction at cursor (with value)
 Json::Value* cmd_boot(std::vector<std::string>& args);		// load file
 Json::Value* cmd_d(std::vector<std::string>& args);			// show data at address
@@ -33,4 +32,3 @@ Json::Value* cmd_syms(std::vector<std::string>& args);		// show symbolic info
 Json::Value* cmd_tree(std::vector<std::string>& args);		// show call tree
 Json::Value* cmd_top10(std::vector<std::string>& args);		// show HLE calls toplist
 Json::Value* cmd_u(std::vector<std::string>& args);			// set disassembly address
-Json::Value* cmd_sleep(std::vector<std::string>& args);		// Sleep specified number of milliseconds

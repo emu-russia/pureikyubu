@@ -450,7 +450,7 @@ BEGIN
             VALUE "LegalCopyright", "© 2003-2020 Dolwin Team."
             VALUE "OriginalFilename", "Dolwin.exe"
             VALUE "ProductName", "Dolwin"
-            VALUE "ProductVersion", "0, 1, 0, 0"
+            VALUE "ProductVersion", "0, 0, 1, 2"
         END
     END
     BLOCK "VarFileInfo"
