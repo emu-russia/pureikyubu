@@ -27,12 +27,12 @@ Based on US patents 6,609,977, 7,369,665.
 
 ## Audio DMA Registers
 
-|Mnemonic|Offset|Description|
-|---|---|---|
-|AID_MADRH|0x0C005030|DMA start address (High)|
-|AID_MADRL|0x0C005032|DMA start address (Low)|
-|AID_LEN|0x0C005036|DMA control/DMA length (length of audio data) (% 32)|
-|AID_CNT|0x0C00503A|Counts down to zero showing how many bytes are left (% 32)|
+|Mnemonic|Offset|Size|Description|
+|---|---|---|---|
+|AID_MADRH|0x0C005030|16 bits|DMA start address (High)|
+|AID_MADRL|0x0C005032|16 bits|DMA start address (Low)|
+|AID_LEN|0x0C005036|16 bits|Bit15: DMA control, Bits14-0: DMA length (length of audio data in 32 Byte blocks)|
+|AID_CNT|0x0C00503A|16 bits|Counts down to zero showing how many 32 Byte blocks are left|
 
 ## Audio Streaming Interface Registers
 
@@ -83,3 +83,51 @@ Based on US patents 6,609,977, 7,369,665.
 |Bits|Mnemonic|Type|Reset|Description|
 |---|---|---|---|---|
 |31:0|AIIT|R|0x0|Audio Interface Interrupt Timing: This register indicates the stereo sample count to issue an audio interface interrupt to the main processor. The interrupt is issued when the value of the AISLRCNT register matches the content of this register.|
+
+## Emulation Strategies
+
+By its nature, AI is a streaming device, that is, it is not very clear how to emulate it :P
+
+### What we have
+
+On the DVD side:
+- LR samples from DVDs come one at a time at a frequency of 32 or 48 kHz. Here immediately there is a dullness - if they come one at a time, but with different frequencies - how to give them to the mixer?
+- Volume: after SRC, samples pass the Volume control. Then they get into the mixer.
+- It is possible to count samples and generate interrupt when counter reach value.
+
+From the side of AI DMA:
+- Samples come in AI FIFO by 32Byte packets
+- Switching the AI ​​DMA frequency is not possible (fixed 48 kHz)
+
+### Howto
+
+DMA execution must be based on emulated Gekko ticks (TBR). Sound playback should NOT be tied to the GekkoCore - we pool the accumulated sample buffer and start the sound on the backend, when it reach limit.
+
+That is, sound emulation is seen as follows:
+- AI DMA thread feeding mixer by 32Byte chunks. DMA speed is tied to TBR (executed N Gekko ticks -> shoved another 32 bytes)
+- DVD Audio working in its own thread also feeds the Mixer for 1 sample. In this case, the AIS interrupt is checked on the counter. Here you need to pre-cache ADPCM from disk, since DVD::Read from the GCM image will slow down the thing.
+- Mixer simply accumulates a sample buffer (mixing AI and DVD Audio) until a critical mass is typed there (the frame length is configurable). After that, all this accumulated buffer is asynchronously shoved into the playback backend.
+
+## Стратегии эмуляции (Rus)
+
+По своей природе AI - потоковое устройство, то есть не очень понятно как его эмулировать)
+
+### Что у нас есть
+
+Со стороны DVD:
+- LR-Сэмплы от DVD приходят по одному на частоте 32 или 48 kHz. Тут сразу возникает затуп - если они приходят по одному, но с разной частотой - как их отдавать в миксер?
+- Volume: после SRC сэмплы проходят контроль Volume (громкости). После чего попадают в Миксер.
+- Есть возможность считать сэмплы и сгенерировать прерывание по счетчику
+
+Со стороны AI DMA:
+- Сэмлпы приходят пачкой в AI FIFO (которое, судя по реверсу размером 32 байта)
+- Переключать частоту AI DMA нельзя (фиксированно 48 kHz)
+
+### Как эмулировать
+
+Выполнение DMA должно происходить с привязкой к тикам Gekko (TBR). Воспроизведение звука НЕ должно быть привязано к ядру - мы пуляем накопленный буфер сэмплов (какого размера?) и запускаем звук на бэкенде.
+
+То есть эмуляция звука видится следующим образом:
+- AI DMA работая в потоке фидит Миксер. Скорость DMA завязана на TBR (выполнили N тиков Gekko - пихнули ещё 32 байта)
+- DVD Audio работая в потоке тоже фидит Миксер по 1 сэмплу. При этом проверяется прерывание AIS по счетчику. Тут нужно сделать прекэширование ADPCM с диска, так как DVD::Read побайтово из образа GCM будет тормозить (размер кэша вынесем в параметры класса)
+- Миксер просто накапливает буфер сэмплов (миксуя AI и DVD Audio), пока там не наберется критическая масса (длину фрейма вынесем в параметры класса). После этого весь этот накопленный буфер асинхронно пихается в бэкенд на воспроизведение.
