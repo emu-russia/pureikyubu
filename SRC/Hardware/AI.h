@@ -89,6 +89,7 @@ void    AISINT();
 
 void    AIUpdate();
 void    AIOpen(HWConfig * config);
+void    AIClose();
 
 void    DSPAssertInt();
 

@@ -100,7 +100,7 @@ static void DICommand()
         case 0xE3:          // stop motor (IMM)
             // stop motor is experimental thing and its not used in regular SDK DVD library
             // should we disable streaming ?
-            //di.streaming = 0;
+            di.streaming = false;
             break;
 
         case 0xE1:          // set stream (IMM).
@@ -116,7 +116,7 @@ static void DICommand()
                           di.strseek, di.strcount );
 
                 // stream playback is enabled automatically
-                di.streaming = 1;
+                di.streaming = true;
                 DIStreamUpdate();
             }
 /*/
@@ -131,17 +131,12 @@ static void DICommand()
             break;
 
         case 0xE2:          // get stream status (IMM)
-            di.immbuf = di.streaming;
+            di.immbuf = di.streaming ? 1 : 0;
             break;
 
         case 0xE4:          // stream control (IMM)
             di.streaming = (di.cmdbuf[0] >> 16) & 1;
-            DBReport( "DVD Streaming!! Play(?) : %s\n",
-                      di.streaming ? "On" : "Off" );
-            if(di.streaming == 0)
-            {
-                AXPlayStream(0, 0);
-            }
+            DBReport2(DbgChannel::DI, "DVD Streaming. Play(?) : %s\n", di.streaming ? "On" : "Off" );
             break;
 
         // unknown command
@@ -296,20 +291,17 @@ static void __fastcall write_immbuf_l(uint32_t addr, uint32_t data)  { di.immbuf
 
 void DIStreamUpdate()
 {
+    int32_t count = 32;
+
     if(di.streaming)
     {
         // load new data
-        int32_t count = (di.strcount < DVD_STREAM_BLK) ?
-                    di.strcount : 
-                    DVD_STREAM_BLK ;
         BeginProfileDVD();
         DVD::Seek(di.strseek);
         DVD::Read(di.workArea, count);
         EndProfileDVD();
-        
-        BeginProfileSfx();
-        AXPlayStream(di.workArea, count);
-        EndProfileSfx();
+
+        Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::DvdAudio, di.workArea, count);
 
         // step forward
         di.strseek += count;
@@ -321,15 +313,15 @@ void DIStreamUpdate()
             di.strseekOld  = di.strseek;
             di.strcountOld = di.strcount;
         }
+    }
 
-        // *** update stream sample counter ***
-        if(ai.cr & AICR_PSTAT)
+    // *** update stream sample counter ***
+    if (ai.cr & AICR_PSTAT)
+    {
+        ai.scnt += count;
+        if (ai.scnt >= ai.it)
         {
-            ai.scnt += count / 32 - 4;
-            if(ai.scnt >= ai.it)
-            {
-                AISINT();
-            }
+            AISINT();
         }
     }
 }
@@ -345,8 +337,6 @@ void DIOpen()
 
     // clear registers and close cover
     memset(&di, 0, sizeof(DIControl));
-
-    AXPlayStream(0, 0);
 
     di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
     assert(di.workArea);

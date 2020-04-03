@@ -46,12 +46,12 @@ Based on US patents 6,609,977, 7,369,665.
 |---|---|---|---|---|
 |31:6| |R|0|Reserved|
 |6|DFR|RW|0|Not mentioned in patent. AI DMA Sample Rate. 0: 32000 Hz, 1: 48000 Hz|
-|5|SCRESET|RW|0|Sample Counter Reset: When a `1` is written to this bit the AISLRCNT register is rest to 0. Read: always 0. Write: 0 = No effect, 1 = Reset AISLRCNT register|
-|4|AIINTVLD|RW|0|Audio Interface Interrupt Valid. This bit controls whether AIINT is affected by the AIIT register matching AISLRCNT. Once set, AIINT will hold its last value. 0 = March affects AIINT. 1 = AIINT hold last value.|
+|5|SCRESET|RW|0|Sample Counter Reset: When a `1` is written to this bit the AISCNT register is rest to 0. Read: always 0. Write: 0 = No effect, 1 = Reset AISCNT register|
+|4|AIINTVLD|RW|0|Audio Interface Interrupt Valid. This bit controls whether AIINT is affected by the AIIT register matching AISCNT. Once set, AIINT will hold its last value. 0 = Match affects AIINT. 1 = AIINT hold last value.|
 |3|AIINT|RW|0|Audio Interface Interrupt Status and clear. On read this bit indicates the current status of the audio interface interrupt. When a `1` is written to this register, the interrupt is cleared. This interrupt indicates that the AIIT register matches the AISLRCNT. This bit asserts regardless of the setting of AICR[AIMSK]. Write: 0 = No effect, 1 = Clear Audio Interface interrupt. Read: 0 = Audio Interface Interrupt has not been requested, 1 = Audio Interface Interrupt has been requested.|
 |2|AIINTMSK|RW|0|Audio interface Interrupt Mask: 0 = interrupt masked, 1 = Interrupt enabled|
 |1|AFR|RW|0|Auxiliary Frequency Register: Controls the sample rate of the streaming audio data. When set to 32 kHz sample rate, the SRC will convert the streaming audio data to 48 kHz. This bit should only be changed when Streaming Audio is stopped (AICR[PSTAT] set to 0). 0 = 32 kHz sample rate, 1 = 48 kHz sample rate
-|0|PSTAT|RW|0|Playing Status: This bit enables the AISLR clock which controls the playing/stopping of audio streaming. When this bit is AISLRCNT register will increment for every stereo pair of samples output. 0 = Stop or Pause streaming audio (AISLR clock disabled), 1 = Play streaming audio (AISLR clock enabled)|
+|0|PSTAT|RW|0|Playing Status: This bit enables the AISLR clock which controls the playing/stopping of audio streaming. When this bit is AISCNT register will increment for every stereo pair of samples output. 0 = Stop or Pause streaming audio (AISLR clock disabled), 1 = Play streaming audio (AISLR clock enabled)|
 
 ### AIVR: Audio Interface Volume Register
 

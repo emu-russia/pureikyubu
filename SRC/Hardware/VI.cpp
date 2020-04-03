@@ -143,12 +143,6 @@ void VIUpdate()
 
             // patch memory every frame
             ApplyPatches();
-
-            // poll controllers
-            SIPoll();
-
-            // update DVD audio
-            DIStreamUpdate();
             
             // draw XFB
             if(vi.xfb) YUVBlit(vi.xfbbuf, vi.gfxbuf);

@@ -19,6 +19,8 @@ namespace Flipper
 		Thread* hwUpdateThread = nullptr;
 
 	public:
+		AudioMixer* Mixer = nullptr;
+
 		Flipper(HWConfig* config);
 		~Flipper();
 

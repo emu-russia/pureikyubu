@@ -52,7 +52,8 @@ namespace Flipper
         DBReport("\n");
 
         GXOpen(mi.ram, wnd.hMainWindow);
-        AXOpen();
+        Mixer = new AudioMixer;
+        assert(Mixer);
         PADOpen();
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
@@ -67,7 +68,7 @@ namespace Flipper
         Debug::Hub.RemoveNode(HW_JDI_JSON);
 
         PADClose();
-        AXClose();
+        delete Mixer;
         GXClose();
 
         if (dspCore)
@@ -86,13 +87,15 @@ namespace Flipper
     void Flipper::Update()
     {
         // update joypads and video
-        VIUpdate();     // PADs are updated there (SIPoll)
+        VIUpdate();
+        SIPoll();
         CPUpdate();     // GX fifo - Bogus
 
-        // update audio and DSP
-        BeginProfileSfx();
+        // update audio
         AIUpdate();
-        EndProfileSfx();
+
+        // update DVD audio
+        DIStreamUpdate();
     }
 
 }

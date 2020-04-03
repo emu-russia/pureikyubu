@@ -1,3 +1,8 @@
+
+#pragma once
+
+#define SI_POLLING_INTERVAL     0x10000      // In Gekko ticks
+
 #pragma pack(push, 1)
 
 // SI registers (all registers are 32-bit)
@@ -90,14 +95,13 @@ typedef struct SIControl
     PADState            pad[4];         // PAD state (inbuf replacement)
     bool                rumble[4];      // rumble support flags for every controller
                                         // filled when SI is inited, by checking PADSetRumble
-
-    bool                fake;           // SI is in fake mode
     bool                log;            // do debugger log output
+    int64_t             pollingTime;    // Saved Gekko TBR for polling
 } SIControl;
 
 extern  SIControl si;
 
 void    SIPoll();
-void    SIOpen(bool fake=false);
+void    SIOpen();
 
 #pragma pack(pop)
