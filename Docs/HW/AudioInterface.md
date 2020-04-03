@@ -27,6 +27,8 @@ Based on US patents 6,609,977, 7,369,665.
 
 ## Audio DMA Registers
 
+|Mnemonic|Offset|Description|
+|---|---|---|
 |AID_MADRH|0x0C005030|DMA start address (High)|
 |AID_MADRL|0x0C005032|DMA start address (Low)|
 |AID_LEN|0x0C005036|DMA control/DMA length (length of audio data) (% 32)|
