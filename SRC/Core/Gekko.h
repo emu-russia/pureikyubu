@@ -6,6 +6,8 @@
 #include <vector>
 #include "GekkoDefs.h"
 
+// TODO: Get rid of this non-incapsulated mess
+
 // registers
 #define GPR     cpu.gpr
 #define SPR     cpu.spr
@@ -115,8 +117,6 @@ typedef union TBREG
 #define PSW         (op & 0x8000)
 #define PSI         ((op >> 12) & 7)
 
-extern  void (*CPUException)(uint32_t vector);
-
 // ---------------------------------------------------------------------------
 // CPU externals
 
@@ -148,8 +148,6 @@ typedef struct CPUControl
 
     int64_t     one_second;         // one second in timer ticks
     bool        decreq;             // decrementer exception request
-
-    uint32_t    core;               // see CPU core enumeration
     uint32_t    ops;                // instruction counter (only for debug!)
 
     // for default interpreter
@@ -166,6 +164,8 @@ extern  CPUControl cpu;
 
 namespace Gekko
 {
+    class Interpreter;
+
     class GekkoCore
     {
         // How many ticks Gekko takes to execute one instruction. 
@@ -180,6 +180,8 @@ namespace Gekko
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
         MySpinLock::LOCK breakPointsLock = MySpinLock::LOCK_IS_FREE;
+
+        Interpreter* interp;
 
     public:
         GekkoCore();
@@ -199,6 +201,12 @@ namespace Gekko
         static void SwapAreaHalf(uint16_t* addr, int count);
 
         void Step();
+
+        bool intFlag = false;      // INT signal
+
+        void AssertInterrupt();
+        void ClearInterrupt();
+        void Exception(uint32_t code);
     };
 
     extern GekkoCore* Gekko;

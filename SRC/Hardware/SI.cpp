@@ -462,8 +462,12 @@ static void __fastcall no_read(uint32_t addr, uint32_t *reg)
 
 void SIPoll()
 {
-    if(si.fake) return;
-    BeginProfilePAD();
+    int64_t ticks = Gekko::Gekko->GetTicks();
+    if (ticks < si.pollingTime)
+    {
+        return;
+    }
+    si.pollingTime = ticks + SI_POLLING_INTERVAL;
 
     if(SI_POLL_REG & SI_POLL_EN0)
     {
@@ -527,21 +531,19 @@ void SIPoll()
         // assert processor interrupt
         PIAssertInt(PI_INTERRUPT_SI);
     }
-
-    EndProfilePAD();
 }
 
 // ---------------------------------------------------------------------------
 // init
 
-void SIOpen(bool fake)
+void SIOpen()
 {
     DBReport2(DbgChannel::SI, "Serial interface driver\n");
 
-    si.fake = fake;         // set fake mode ?
-
     // clear all registers
     memset(&si, 0, sizeof(SIControl));
+
+    si.pollingTime = Gekko::Gekko->GetTicks() + SI_POLLING_INTERVAL;
 
     // these values are actually written when IPL boots
     // meaning is unknown (some pad command) and no need to be known
@@ -584,30 +586,5 @@ void SIOpen(bool fake)
     for(unsigned ofs=0; ofs<128; ofs+=4)
     {
         MISetTrap(32, SI_COMBUF | ofs, read_sicom, write_sicom);
-    }
-
-    // fake SI for debug
-    if(fake)
-    {
-        MISetTrap(32, SI_CHAN0_OUTBUF, no_read, no_write);
-        MISetTrap(32, SI_CHAN0_INBUFH, no_read, NULL);
-        MISetTrap(32, SI_CHAN0_INBUFL, no_read, NULL);
-        MISetTrap(32, SI_CHAN1_OUTBUF, no_read, no_write);
-        MISetTrap(32, SI_CHAN1_INBUFH, no_read, NULL);
-        MISetTrap(32, SI_CHAN1_INBUFL, no_read, NULL);
-        MISetTrap(32, SI_CHAN2_OUTBUF, no_read, no_write);
-        MISetTrap(32, SI_CHAN2_INBUFH, no_read, NULL);
-        MISetTrap(32, SI_CHAN2_INBUFL, no_read, NULL);
-        MISetTrap(32, SI_CHAN3_OUTBUF, no_read, no_write);
-        MISetTrap(32, SI_CHAN3_INBUFH, no_read, NULL);
-        MISetTrap(32, SI_CHAN3_INBUFL, no_read, NULL);
-        MISetTrap(32, SI_POLL  , no_read, no_write);
-        MISetTrap(32, SI_COMCSR, no_read, no_write);
-        MISetTrap(32, SI_SR    , no_read, no_write);
-        MISetTrap(32, SI_EXILK , no_read, no_write);
-        for(unsigned ofs=0; ofs<128; ofs+=4)
-        {
-            MISetTrap(32, SI_COMBUF | ofs, no_read, no_write);
-        }
     }
 }

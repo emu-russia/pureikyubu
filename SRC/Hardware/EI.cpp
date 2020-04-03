@@ -98,11 +98,8 @@ void EXIUpdateInterrupts()
         )
     )
     {
-        if (!(INTSR & PI_INTERRUPT_EXI))
-        {
-            // assert CPU interrupt
-            PIAssertInt(PI_INTERRUPT_EXI);
-        }
+        // assert CPU interrupt
+        PIAssertInt(PI_INTERRUPT_EXI);
     }
     else
     {

@@ -1,20 +1,43 @@
-// AX (audio) interface
+// AX audio mixer
 
 #pragma once
 
-// AXOpen() should be called before emulation started, to initialize
-// plugin. AXClose() is called, when emulation is stopped, to shutdown plugin.
-bool AXOpen();
-void AXClose();
+namespace Flipper
+{
+	enum class AudioSampleRate
+	{
+		Rate_32000 = 0,
+		Rate_48000,
+	};
 
-// play DMA audio buffer (big-endian, 16-bit), AXPlayAudio(0, 0) - to stop.
-void AXPlayAudio(void * buffer, long length);
+	enum class AxChannel
+	{
+		AudioDma = 0,
+		DvdAudio,
+		Max,
+	};
 
-// set DMA sample rate (32000/48000), stream sample rate is always 48000.
-void AXSetRate(long rate);
+	class AudioRing
+	{
+	public:
+		AudioRing();
+		~AudioRing();
+	};
 
-// play stream data (raw data, read from DVD), AXPlayStream(0, 0) - to stop.
-void AXPlayStream(void * buffer, long length);
+	class AudioMixer
+	{
+		AudioRing** Sources = nullptr;
+		size_t numSources = 0;
 
-// set stream volume (0..255), you cant set DMA volume in hardware.
-void AXSetVolume(unsigned char left, unsigned char right);
+	public:
+		AudioMixer();
+		~AudioMixer();
+
+		void SetVolumeL(AxChannel channel, uint8_t volume);
+		void SetVolumeR(AxChannel channel, uint8_t volume);
+
+		void SetSampleRate(AxChannel channel, AudioSampleRate value);
+
+		void PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize);
+	};
+}

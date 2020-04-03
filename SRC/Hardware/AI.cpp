@@ -102,31 +102,54 @@ static int64_t AIGetTime(long dmaBytes, long rate)
     return samples * (ai.one_second / rate);
 }
 
-static void AIStartDMA(uint32_t addr, long bytes)
+static void AIStartDMA()
 {
-    addr &= RAMMASK;
-    AXPlayAudio(&mi.ram[addr], bytes);
+    ai.dcnt = ai.len & ~AID_EN;
+    ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", addr | (1 << 31), bytes);
+        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.lastDma | (1 << 31), ai.dcnt * 32);
     }
+}
+
+// Simulate AI FIFO
+static void AIResumeDMA()
+{
+    int bytes = 32;
+
+    Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.lastDma & RAMMASK], bytes);
+
+    ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
+
+    ai.lastDma += bytes;
+    ai.dcnt--;
 }
 
 static void AIStopDMA()
 {
-    AXPlayAudio(0, 0);
+    ai.len &= ~AID_EN;
+    ai.dcnt = 0;
     if (ai.log)
     {
         DBReport2(DbgChannel::AI, "DMA stopped\n");
     }
 }
 
-static void AISetDMASampleRate(long rate)
+static void AISetDMASampleRate(Flipper::AudioSampleRate rate)
 {
-    AXSetRate(ai.dmaRate = rate);
+    Flipper::HW->Mixer->SetSampleRate(Flipper::AxChannel::AudioDma, rate);
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA sample rate : %i\n", ai.dmaRate);
+        DBReport2(DbgChannel::AI, "DMA sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
+    }
+}
+
+static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
+{
+    Flipper::HW->Mixer->SetSampleRate(Flipper::AxChannel::DvdAudio, rate);
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AIS, "DVD Audio sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
     }
 }
 
@@ -173,13 +196,15 @@ static void __fastcall write_len(uint32_t addr, uint32_t data)
 {
     ai.len = (uint16_t)data;
 
-    // begin audio dma transfer
+    // start/stop audio dma transfer
     if(ai.len & AID_EN)
     {
-        ai.dcnt = ai.len & ~AID_EN;
-        AIStartDMA(ai.lastDma, ai.dcnt * 32);
+        AIStartDMA();
     }
-    else AIStopDMA();
+    else
+    {
+        AIStopDMA();
+    }
 }
 static void __fastcall read_len(uint32_t addr, uint32_t *reg) { *reg = ai.len; }
 
@@ -189,8 +214,7 @@ static void __fastcall read_len(uint32_t addr, uint32_t *reg) { *reg = ai.len; }
 
 static void __fastcall read_dcnt(uint32_t addr, uint32_t *reg)
 {
-    *reg = ai.dcnt--;
-    if(ai.dcnt & 0x8000) ai.dcnt = 0;
+    *reg = ai.dcnt;
 }
 
 // ---------------------------------------------------------------------------
@@ -248,8 +272,14 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     }
 
     // set DMA sample rate
-    if(ai.cr & AICR_DFR) AISetDMASampleRate(48000);
-    else AISetDMASampleRate(32000);
+    if(ai.cr & AICR_DFR) AISetDMASampleRate(Flipper::AudioSampleRate::Rate_48000);
+    else AISetDMASampleRate(Flipper::AudioSampleRate::Rate_32000);
+
+    // set DVD Audio sample rate
+    if (ai.cr & AICR_AFR) AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_48000);
+    else AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_32000);
+
+    ai.dmaRate = ai.cr & AICR_DFR ? 48000 : 32000;
 }
 static void __fastcall read_cr(uint32_t addr, uint32_t *reg)     { *reg = ai.cr; }
 
@@ -275,7 +305,9 @@ static void __fastcall read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it;
 static void __fastcall write_vr(uint32_t addr, uint32_t data)
 {
     ai.vr = (uint16_t)data;
-    AXSetVolume((uint8_t)ai.vr, (uint8_t)(ai.vr >> 8));
+
+    Flipper::HW->Mixer->SetVolumeL(Flipper::AxChannel::DvdAudio, (uint8_t)ai.vr);
+    Flipper::HW->Mixer->SetVolumeR(Flipper::AxChannel::DvdAudio, (uint8_t)(ai.vr >> 8));
 }
 static void __fastcall read_vr(uint32_t addr, uint32_t *reg)     { *reg = ai.vr; }
 
@@ -298,22 +330,15 @@ static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("P
 void AIUpdate()
 {
     // *** update audio DMA ***
-    if((TBR >= ai.dmaTime) && (ai.len & AID_EN))
+    if((Gekko::Gekko->GetTicks() >= ai.dmaTime) && (ai.len & AID_EN))
     {
-        AIDINT();
-        ai.dcnt = ai.len & ~AID_EN;
-        ai.dmaTime = TBR + AIGetTime(ai.dcnt * 32, ai.dmaRate);
-        AIStartDMA(ai.lastDma, ai.dcnt * 32);
-    }
-
-    // *** update stream sample counter ***
-    if(ai.cr & AICR_PSTAT)
-    {
-        if(!di.streaming) ai.scnt++;
-        if(ai.scnt >= ai.it)
+        if (ai.dcnt == 0)
         {
-            AISINT();
+            AIStopDMA();
+            AIDINT();
+            return;
         }
+        AIResumeDMA();
     }
 }
 
@@ -323,10 +348,16 @@ void AIOpen(HWConfig* config)
 
     // clear regs
     memset(&ai, 0, sizeof(AIControl));
-    ai.dmaRate = 32000;     // was division by 0 in AIGetTime
     
+    ai.dmaTime = Gekko::Gekko->GetTicks();
     ai.one_second = config->one_second;
-    ai.log = false;
+    ai.dmaRate = ai.cr & AICR_DFR ? 48000 : 32000;
+    ai.log = true;
+
+    Flipper::HW->Mixer->SetVolumeL(Flipper::AxChannel::DvdAudio, 0);
+    Flipper::HW->Mixer->SetVolumeR(Flipper::AxChannel::DvdAudio, 0);
+    Flipper::HW->Mixer->SetVolumeL(Flipper::AxChannel::AudioDma, 0xff);
+    Flipper::HW->Mixer->SetVolumeR(Flipper::AxChannel::AudioDma, 0xff);
 
     // set register traps
     MISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
@@ -345,6 +376,11 @@ void AIOpen(HWConfig* config)
     MISetTrap(32, AIS_VR  , read_vr  , write_vr);
     MISetTrap(32, AIS_SCNT, read_scnt, NULL);
     MISetTrap(32, AIS_IT  , read_it  , write_it);
+}
+
+void AIClose()
+{
+    AIStopDMA();
 }
 
 void DSPAssertInt()

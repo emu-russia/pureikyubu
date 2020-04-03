@@ -119,15 +119,21 @@ namespace DSP
 
 	void DspCore::Run()
 	{
-		dspThread->Resume();
-		DBReport2(DbgChannel::DSP, "DspCore::Run");
-		savedGekkoTicks = cpu.tb.uval;
+		if (!dspThread->IsRunning())
+		{
+			dspThread->Resume();
+			DBReport2(DbgChannel::DSP, "DspCore::Run");
+			savedGekkoTicks = cpu.tb.uval;
+		}
 	}
 
 	void DspCore::Suspend()
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::Suspend");
-		dspThread->Suspend();
+		if (dspThread->IsRunning())
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::Suspend");
+			dspThread->Suspend();
+		}
 	}
 
 	void DspCore::Update()

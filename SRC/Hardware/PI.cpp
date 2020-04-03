@@ -44,45 +44,48 @@ static void printOut(uint32_t mask, const char *fix)
     DBReport2(DbgChannel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
 }
 
-// generate interrupt (if pending)
-bool PICheckInterrupts()
-{
-    if((INTSR & INTMR) && (MSR & MSR_EE))
-    {
-        if (pi.log)
-        {
-            printOut(INTSR, "signaled");
-        }
-        CPUException(CPU_EXCEPTION_INTERRUPT);
-        return true;
-    }
-    return false;
-}
-
-// assert (watch, not generate!) interrupt
+// assert interrupt
 void PIAssertInt(uint32_t mask)
 {
-    INTSR |= mask;
-    if((INTMR & mask))
+    pi.intsr |= mask;
+    if(pi.intmr & mask)
     {
         if (pi.log)
         {
             printOut(mask, "asserted");
         }
     }
+
+    if (pi.intsr & pi.intmr)
+    {
+        Gekko::Gekko->AssertInterrupt();
+    }
+    else
+    {
+        Gekko::Gekko->ClearInterrupt();
+    }
 }
 
 // clear interrupt
 void PIClearInt(uint32_t mask)
 { 
-    if((INTSR & mask))
+    if(pi.intsr & mask)
     {
         if (pi.log)
         {
             printOut(mask, "cleared");
         }
     }
-    INTSR &= ~mask;
+    pi.intsr &= ~mask;
+
+    if (pi.intsr & pi.intmr)
+    {
+        Gekko::Gekko->AssertInterrupt();
+    }
+    else
+    {
+        Gekko::Gekko->ClearInterrupt();
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -90,7 +93,7 @@ void PIClearInt(uint32_t mask)
 
 static void __fastcall read_intsr(uint32_t addr, uint32_t *reg)
 {
-    *reg = INTSR | ((pi.rswhack & 1) << 16);
+    *reg = pi.intsr | ((pi.rswhack & 1) << 16);
 }
 
 // writes turns them off ?
@@ -101,20 +104,20 @@ static void __fastcall write_intsr(uint32_t addr, uint32_t data)
 
 static void __fastcall read_intmr(uint32_t addr, uint32_t *reg)
 {
-    *reg = INTMR;
+    *reg = pi.intmr;
 }
 
 static void __fastcall write_intmr(uint32_t addr, uint32_t data)
 {
-    INTMR = data;
+    pi.intmr = data;
 
     // print out list of masked interrupts
-    if(INTMR && pi.log)
+    if(pi.intmr && pi.log)
     {
         char buf[256], *p = buf;
         for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
         {
-            if(INTMR & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%s ", intdesc(m));
+            if(pi.intmr & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%s ", intdesc(m));
         }
         *p = 0;
 
@@ -173,7 +176,7 @@ void PIOpen(HWConfig* config)
     pi.log = false;
 
     // clear interrupt registers
-    INTSR = INTMR = 0;
+    pi.intsr = pi.intmr = 0;
 
     // set interrupt registers hooks
     MISetTrap(32, PI_INTSR   , read_intsr, write_intsr);

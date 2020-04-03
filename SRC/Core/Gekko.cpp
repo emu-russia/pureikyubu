@@ -4,9 +4,6 @@
 // CPU control/state block (all important data is here)
 CPUControl cpu;
 
-// generate exception
-void (*CPUException)(uint32_t vector);
-
 // memory operations (using MEM* or DB* read/write operations)
 void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t *reg);
 void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
@@ -31,20 +28,18 @@ namespace Gekko
 
         while (true)
         {
-            IPTExecuteOpcode(core);
+            core->interp->ExecuteOpcode();
         }
     }
 
     GekkoCore::GekkoCore()
     {
-        // setup interpreter tables
-        IPTInitTables();
+        interp = new Interpreter(this);
+        assert(interp);
 
         cpu.one_second = CPU_TIMER_CLOCK;
         cpu.decreq = 0;
-
-        // select core
-        CPUException = IPTException;
+        intFlag = false;
 
         // set CPU memory operations to default (using MEM*);
         // debugger will override them by DB* calls after start, if need.
@@ -80,6 +75,7 @@ namespace Gekko
         Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
 
         delete gekkoThread;
+        delete interp;
     }
 
     // Modify CPU counters
@@ -88,7 +84,7 @@ namespace Gekko
         UTBR += CounterStep;         // timer
 
         uint32_t old = PPC_DEC;
-        PPC_DEC--;          // decrementer
+        PPC_DEC -= CounterStep;          // decrementer
         if ((old ^ PPC_DEC) & 0x80000000)
         {
             if (MSR & MSR_EE)
@@ -135,7 +131,22 @@ namespace Gekko
 
     void GekkoCore::Step()
     {
-        IPTExecuteOpcode(this);
+        interp->ExecuteOpcode();
+    }
+
+    void GekkoCore::AssertInterrupt()
+    {
+        intFlag = true;
+    }
+
+    void GekkoCore::ClearInterrupt()
+    {
+        intFlag = false;
+    }
+
+    void GekkoCore::Exception(uint32_t code)
+    {
+        interp->Exception(code);
     }
 
 }

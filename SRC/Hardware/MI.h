@@ -64,6 +64,7 @@ void __fastcall MIReadWord(uint32_t phys_addr, uint32_t* reg);
 void __fastcall MIWriteWord(uint32_t phys_addr, uint32_t data);
 void __fastcall MIReadDouble(uint32_t phys_addr, uint64_t* reg);
 void __fastcall MIWriteDouble(uint32_t phys_addr, uint64_t* data);
+void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 
 typedef struct _MIControl
 {

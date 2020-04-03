@@ -373,7 +373,7 @@ Json::Value* cmd_disa(std::vector<std::string>& args)
         for (start_addr; start_addr<end_addr; start_addr+=4)
         {
             uint32_t opcode;
-            MEMFetch(start_addr, &opcode);
+            CPUReadWord(start_addr, &opcode);
             disa_line ( f, opcode, start_addr );
         }
 
@@ -1021,7 +1021,7 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
             {
                 pa = Gekko::Gekko->EffectiveToPhysical(saddr, true);
             }
-            if(pa != -1) MEMFetch(pa, &op);
+            if(pa != -1) CPUReadWord(pa, &op);
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);
@@ -1341,7 +1341,7 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
     while ( bailout-- )
     {
         uint32_t opcode;
-        MEMFetch(address, &opcode);
+        CPUReadWord(address, &opcode);
         if ( opcode == 0x4e800020 || opcode == 0 ) break;
 
         disa.instr = opcode;

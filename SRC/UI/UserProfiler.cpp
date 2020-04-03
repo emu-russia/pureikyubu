@@ -13,9 +13,8 @@ static  BOOL    Profiler;   // uservar
 static  int64_t     startTime, stopTime;
 static  int64_t     gfxStartTime, gfxStopTime;
 static  int64_t     sfxStartTime, sfxStopTime;
-static  int64_t     padStartTime, padStopTime;
 static  int64_t     dvdStartTime, dvdStopTime;
-static  int64_t     cpuTime, gfxTime, sfxTime, padTime, dvdTime, idleTime;
+static  int64_t     cpuTime, gfxTime, sfxTime, dvdTime, idleTime;
 static  int64_t     ONE_SECOND;
 static  int64_t     fpsTime, mipsTime;
 static  DWORD       checkTime;
@@ -90,7 +89,7 @@ void OpenProfiler(bool enable)
     // reset counters
     if(Profiler)
     {
-        cpuTime = gfxTime = sfxTime = padTime = dvdTime = idleTime = 0;
+        cpuTime = gfxTime = sfxTime = dvdTime = idleTime = 0;
         ONE_SECOND = (int64_t)((double)GetClockSpeed() * (double)1000000.0);
         MyReadTimeStampCounter(&startTime);
         MyReadTimeStampCounter(&fpsTime);
@@ -114,7 +113,7 @@ void UpdateProfiler()
         MyReadTimeStampCounter(&stopTime);
         int64_t total = stopTime - startTime;
 
-        cpuTime = total - gfxTime - sfxTime - padTime - dvdTime;
+        cpuTime = total - gfxTime - sfxTime - dvdTime;
         int64_t cur; MyReadTimeStampCounter(&cur);
         int64_t diff = cur - startTime;
 
@@ -157,12 +156,11 @@ void UpdateProfiler()
 
         // update status bar
         {
-            _stprintf_s (buf, _countof(buf) - 1, _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  input:%-2.1f  dvd:%-2.1f  idle:%-2.1f"),
+            _stprintf_s (buf, _countof(buf) - 1, _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  dvd:%-2.1f  idle:%-2.1f"),
                 mips,
                 (double)cpuTime * 100 / (double)total,
                 (double)gfxTime * 100 / (double)total,
                 (double)sfxTime * 100 / (double)total,
-                (double)padTime * 100 / (double)total,
                 (double)dvdTime * 100 / (double)total,
                 (double)idleTime* 100 / (double)total
             );
@@ -170,7 +168,7 @@ void UpdateProfiler()
         }
 
         // reset counters
-        cpuTime = gfxTime = sfxTime = padTime = dvdTime = idleTime = 0;
+        cpuTime = gfxTime = sfxTime = dvdTime = idleTime = 0;
         MyReadTimeStampCounter(&startTime);
     }
 }
@@ -186,10 +184,6 @@ void EndProfileGfx()   { if(Profiler) { MyReadTimeStampCounter(&gfxStopTime);
 void BeginProfileSfx() { if(Profiler) MyReadTimeStampCounter(&sfxStartTime); }
 void EndProfileSfx()   { if(Profiler) { MyReadTimeStampCounter(&sfxStopTime);
                          sfxTime += sfxStopTime - sfxStartTime; } }
-
-void BeginProfilePAD() { if(Profiler) MyReadTimeStampCounter(&padStartTime); }
-void EndProfilePAD()   { if(Profiler) { MyReadTimeStampCounter(&padStopTime);
-                         padTime += padStopTime - padStartTime; } }
 
 void BeginProfileDVD() { if(Profiler) MyReadTimeStampCounter(&dvdStartTime); }
 void EndProfileDVD()   { if(Profiler) { MyReadTimeStampCounter(&dvdStopTime);

@@ -23,7 +23,6 @@ void __fastcall MEMReadWord(uint32_t addr, uint32_t *reg);      // load word
 void __fastcall MEMWriteWord(uint32_t addr, uint32_t data);     // store word
 void __fastcall MEMReadDouble(uint32_t addr, uint64_t *reg);    // load doubleword
 void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data);  // store doubleword
-void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode);
 
 // ---------------------------------------------------------------------------
 
@@ -37,3 +36,13 @@ typedef struct MEMControl
 } MEMControl;
 
 extern  MEMControl mem;
+
+namespace Gekko
+{
+    class Mmu
+    {
+    public:
+        Mmu();
+        ~Mmu();
+    };
+}
