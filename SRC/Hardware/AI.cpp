@@ -112,6 +112,7 @@ static void AIStartDMA()
     }
 }
 
+// Simulate AI FIFO
 static void AIResumeDMA()
 {
     int bytes = 32;

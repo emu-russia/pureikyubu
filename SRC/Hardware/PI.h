@@ -1,9 +1,11 @@
 // PI registers (all registers are 32-bit, 99% sure)
 
+#pragma once
+
 #define PI_INTSR            0x0C003000      // master interrupt reg
 #define PI_INTMR            0x0C003004      // master interrupt mask
-#define PI_MB_REV           0x0C00302C      // console revision
 #define PI_RST_CODE         0x0C003024      // reset code
+#define PI_MB_REV           0x0C00302C      // console revision
 
 // PI interrupt regs mask
 #define PI_INTERRUPT_HSP        0x2000      // high-speed port

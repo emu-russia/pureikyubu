@@ -27,6 +27,7 @@ namespace Flipper
 	class AudioMixer
 	{
 		AudioRing** Sources = nullptr;
+		size_t numSources = 0;
 
 	public:
 		AudioMixer();
