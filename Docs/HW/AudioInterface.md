@@ -45,6 +45,7 @@ Based on US patents 6,609,977, 7,369,665.
 |Bits|Mnemonic|Type|Reset|Description|
 |---|---|---|---|---|
 |31:6| |R|0|Reserved|
+|6|DFR|RW|0|Not mentioned in patent. AI DMA Sample Rate. 0: 32000 Hz, 1: 48000 Hz|
 |5|SCRESET|RW|0|Sample Counter Reset: When a `1` is written to this bit the AISLRCNT register is rest to 0. Read: always 0. Write: 0 = No effect, 1 = Reset AISLRCNT register|
 |4|AIINTVLD|RW|0|Audio Interface Interrupt Valid. This bit controls whether AIINT is affected by the AIIT register matching AISLRCNT. Once set, AIINT will hold its last value. 0 = March affects AIINT. 1 = AIINT hold last value.|
 |3|AIINT|RW|0|Audio Interface Interrupt Status and clear. On read this bit indicates the current status of the audio interface interrupt. When a `1` is written to this register, the interrupt is cleared. This interrupt indicates that the AIIT register matches the AISLRCNT. This bit asserts regardless of the setting of AICR[AIMSK]. Write: 0 = No effect, 1 = Clear Audio Interface interrupt. Read: 0 = Audio Interface Interrupt has not been requested, 1 = Audio Interface Interrupt has been requested.|
@@ -91,13 +92,13 @@ By its nature, AI is a streaming device, that is, it is not very clear how to em
 ### What we have
 
 On the DVD side:
-- LR samples from DVDs come one at a time at a frequency of 32 or 48 kHz. Here immediately there is a dullness - if they come one at a time, but with different frequencies - how to give them to the mixer?
+- LR samples from DVDs come one at a time at 32 or 48 kHz sample rate. Here immediately there is a dullness - if they come one at a time, but with different frequencies - how to give them to the mixer?
 - Volume: after SRC, samples pass the Volume control. Then they get into the mixer.
 - It is possible to count samples and generate interrupt when counter reach value.
 
 From the side of AI DMA:
 - Samples come in AI FIFO by 32Byte packets
-- Switching the AI ​​DMA frequency is not possible (fixed 48 kHz)
+- Switching the AI ​​DMA sample rate is controlled by AICR[DFR] bit (not mentioned in patent)
 
 ### Howto
 
@@ -115,13 +116,13 @@ That is, sound emulation is seen as follows:
 ### Что у нас есть
 
 Со стороны DVD:
-- LR-Сэмплы от DVD приходят по одному на частоте 32 или 48 kHz. Тут сразу возникает затуп - если они приходят по одному, но с разной частотой - как их отдавать в миксер?
+- LR-Сэмплы от DVD приходят по одному на частоте сэмплирования 32 или 48 kHz. Тут сразу возникает затуп - если они приходят по одному, но с разной частотой - как их отдавать в миксер?
 - Volume: после SRC сэмплы проходят контроль Volume (громкости). После чего попадают в Миксер.
 - Есть возможность считать сэмплы и сгенерировать прерывание по счетчику
 
 Со стороны AI DMA:
 - Сэмлпы приходят пачкой в AI FIFO (которое, судя по реверсу размером 32 байта)
-- Переключать частоту AI DMA нельзя (фиксированно 48 kHz)
+- Переключать частоту сэмплирования AI DMA можно битом AICR[DFR]
 
 ### Как эмулировать
 
@@ -131,3 +132,36 @@ That is, sound emulation is seen as follows:
 - AI DMA работая в потоке фидит Миксер. Скорость DMA завязана на TBR (выполнили N тиков Gekko - пихнули ещё 32 байта)
 - DVD Audio работая в потоке тоже фидит Миксер по 1 сэмплу. При этом проверяется прерывание AIS по счетчику. Тут нужно сделать прекэширование ADPCM с диска, так как DVD::Read побайтово из образа GCM будет тормозить (размер кэша вынесем в параметры класса)
 - Миксер просто накапливает буфер сэмплов (миксуя AI и DVD Audio), пока там не наберется критическая масса (длину фрейма вынесем в параметры класса). После этого весь этот накопленный буфер асинхронно пихается в бэкенд на воспроизведение.
+
+### Частота сэмлирования
+
+К выбору размера буфера для проигрывания на стороне бэкенда и стратегии SRC.
+
+- 1 секунда звука при 48000 сэмплов = 48000 * 2 (разрядность) * 2 (L/R) = 192000 байт
+- 32 байта при 48000 Hz = 8 сэмплов = 0.16666(7) миллисекунд звука
+- 1 секунда звука при 32000 сэмплов = 32000 * 2 * 2 = 128000 байт
+- 32 байта при 32000 Hz = 0.25 миллисекунд
+
+Так как миксер выдает всегда 48 kHz сэмплы, все расчеты будут на их основе.
+
+Примем размер фрейма равным кадровой частоте:
+- 1 кадр PAL = 40 миллисекунд ~ 240 32 байтовых блоков = 7680 байт
+- 1 кадр NTSC = 33.33(3) миллисекунд ~ 200 32 байтовых блоков = 6400 байт
+
+То есть 16 Кбайт для звукового буфера хватит с запасом.
+
+Теперь нужно посчитать сколько нужно кэшировать блоков для SRC на частоте сэмплирования 32000 Hz.
+- PAL: 160 32 байтовых блоков
+- NTSC: 133 32 байтовых блоков
+
+Таким образом в миксере будем собирать (в 32-байтовых блоках):
+|Sample rate|PAL|NTSC|
+|---|---|---|
+|32000|160|133|
+|48000|240|200|
+
+### Что делать, если один канал выключен
+
+Вместо сэмплов будут нули.
+
+Переключение частоты сэмплирования хотя бы одного источника инвалидирует звуковой буфер.
