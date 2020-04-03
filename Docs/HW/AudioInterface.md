@@ -18,9 +18,9 @@ Based on US patents 6,609,977, 7,369,665.
 
 |Name|Dir|Type|Description|
 |---|---|---|---|
-|AID|O|LVCMOS|Audio Interface Data Out: AIDO is an output signal. AIDO drives the serial bit stream of the Left/Right Audio data driven out to the stereo audio DAC, synchronized by the rising edge of the bit clock AOCLKO and AILRO signal which determines if the current word is a left sample or a right sample.|
-|AILR|O|LVCMOS|Audio Interface Left Right Out: AILRO is an output signal. AILRO is a frame signal for the serial bit stream and determines the left/right channel of the current word An edge of AILRO also acts as a sample conversion signal to the DAC. AILRO toggles at the sample rate frequency (48 kHz).|
-|AICLK|O|LVCMOS|Audio Interface Clock Out: AICLKO is an output signal. AICLKO is the bit clock for the AIDO serial bit stream.|
+|AID|O|LVCMOS|Audio Interface Data Out: AID is an output signal. AID drives the serial bit stream of the Left/Right Audio data driven out to the stereo audio DAC, synchronized by the rising edge of the bit clock AICLK and AILR signal which determines if the current word is a left sample or a right sample.|
+|AILR|O|LVCMOS|Audio Interface Left Right Out: AILR is an output signal. AILR is a frame signal for the serial bit stream and determines the left/right channel of the current word. An edge of AILR also acts as a sample conversion signal to the DAC. AILR toggles at the sample rate frequency (48 kHz).|
+|AICLK|O|LVCMOS|Audio Interface Clock Out: AICLK is an output signal. AICLK is the bit clock for the AID serial bit stream.|
 |AISD|I|LVCMOS|Audio Interface Streaming Data: AISD is an input signal AISD is the serial bit stream of the Left Right audio data driven in from the Disk drive, synchronized by the rising edge of the bit clock.|
 |AISLR|O|LVCMOS|Audio Interface Streaming Left Right: AISLR is an output signal. AISLR is a frame signal for the serial bit stream and determines the left/right channel of the current word. AISLR toggles at the sample rate frequency (32 kHz/48 kHz). This signal also controls the flow of the audio data. After this current stereo sample is received, if AISLR does not toggle, the Disk assumes that the stream is stopped/paused and sends 0’ as data. The Disk does not begin sending data until it has received a high-low-high sequence.|
 |AISCLK|O|LCMOS|Audio Interface Streaming Clock: AISCLK is an output signal. AISCLK is the bit clock for the AISD serial bit stream. The AISCLK is a free running clock.|
