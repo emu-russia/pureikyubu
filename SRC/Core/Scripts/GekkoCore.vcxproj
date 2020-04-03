@@ -151,22 +151,8 @@
     <ClInclude Include="..\GekkoDefs.h" />
     <ClInclude Include="..\GekkoDisasm.h" />
     <ClInclude Include="..\Interpreter.h" />
-    <ClInclude Include="..\Interpreter\c_branch.h" />
-    <ClInclude Include="..\Interpreter\c_compare.h" />
-    <ClInclude Include="..\Interpreter\c_condition.h" />
-    <ClInclude Include="..\Interpreter\c_floatingpoint.h" />
-    <ClInclude Include="..\Interpreter\c_fploadstore.h" />
-    <ClInclude Include="..\Interpreter\c_integer.h" />
-    <ClInclude Include="..\Interpreter\c_loadstore.h" />
-    <ClInclude Include="..\Interpreter\c_logical.h" />
-    <ClInclude Include="..\Interpreter\c_pairedsingle.h" />
-    <ClInclude Include="..\Interpreter\c_psloadstore.h" />
-    <ClInclude Include="..\Interpreter\c_rotate.h" />
-    <ClInclude Include="..\Interpreter\c_shift.h" />
-    <ClInclude Include="..\Interpreter\c_system.h" />
-    <ClInclude Include="..\Interpreter\c_tables.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
-    <ClInclude Include="..\Memory.h" />
+    <ClInclude Include="..\Mmu.h" />
     <ClInclude Include="..\pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -263,7 +249,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="..\Memory.cpp" />
+    <ClCompile Include="..\Mmu.cpp" />
     <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>

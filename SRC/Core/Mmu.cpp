@@ -170,14 +170,6 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *_data)
     MIWriteDouble(pa, _data);
 }
 
-// fetch opcode
-// return 1, if cannot fetch (no memory)
-void __fastcall MEMFetch(uint32_t addr, uint32_t* opcode)
-{
-    uint32_t pa = GCEffectiveToPhysical(addr, true);
-    MIReadWord(pa, opcode);
-}
-
 // ---------------------------------------------------------------------------
 // PPC MMU simulation (used by GC-Linux and other advanced stuff).
 // we are using memory map table, to speed up address translation.

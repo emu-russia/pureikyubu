@@ -36,9 +36,6 @@ typedef struct PIControl
 
 extern  PIControl pi;
 
-#define INTSR   pi.intsr
-#define INTMR   pi.intmr
-
 bool    PICheckInterrupts();    // call to check for pending interrupt(s)
 void    PIAssertInt(uint32_t mask);  // set interrupt(s)
 void    PIClearInt(uint32_t mask);   // clear interrupt(s)

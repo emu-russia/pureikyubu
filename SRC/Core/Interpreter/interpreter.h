@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define OP(name) void __fastcall c_##name##(uint32_t op)
+#define OP(name) void Interpreter::c_##name##(uint32_t op)
 
 #define COMPUTE_CR0(r)                                                                \
 {                                                                                     \

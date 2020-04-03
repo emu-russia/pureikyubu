@@ -85,9 +85,10 @@ void con_ldst_info()
     PPCD_CB    disa;
     wind.ldst = FALSE;
 
+    if (CPUReadWord != nullptr)
     {
         uint32_t op;
-        MEMFetch(con.disa_cursor & ~3, &op);
+        CPUReadWord(con.disa_cursor & ~3, &op);
 
         disa.pc = con.disa_cursor;
         disa.instr = op;
@@ -137,7 +138,14 @@ void con_update_disa_window()
 
     for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
     {
-        MEMFetch(addr, &op);
+        if (CPUReadWord != nullptr)
+        {
+            CPUReadWord(addr, &op);
+        }
+        else
+        {
+            op = 0;
+        }
 
         int n = con_disa_line(line, op, addr);
         if(n > 1) wind.disa_sub_h += n - 1;
@@ -183,7 +191,7 @@ static void disa_navigate()
     {
         pa = Gekko::Gekko->EffectiveToPhysical(addr, true);
     }
-    if(pa != -1) MEMFetch(pa, &op);
+    if(pa != -1) CPUReadWord(pa, &op);
     if(op == 0) return;
 
     memset(&disa, 0, sizeof(PPCD_CB));

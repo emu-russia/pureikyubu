@@ -13,7 +13,6 @@
 
 #include "../Common/Spinlock.h"
 
-#include "../Core/Memory.h"
 #include "../Core/Gekko.h"
 #include "../Core/GekkoDisasm.h"
 

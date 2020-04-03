@@ -318,6 +318,15 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
     *(uint64_t*)buf = _byteswap_uint64 (*data);
 }
 
+void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
+{
+    // Hack for now
+    for (int i = 0; i < 8; i++)
+    {
+        MIWriteWord(phys_addr + 4*i, _byteswap_ulong (*(uint32_t*)(&burstData[4*i])) );
+    }
+}
+
 // ---------------------------------------------------------------------------
 // default hardware R/W operations.
 // emulation is halted on unknown register access, if hw_assert = 1
