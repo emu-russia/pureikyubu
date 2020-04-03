@@ -20,9 +20,10 @@ namespace Flipper
         while (true)
         {
             int64_t ticks = Gekko::Gekko->GetTicks();
-            if (ticks != flipper->hwUpdateTbrValue)
+            if (ticks >= flipper->hwUpdateTbrValue)
             {
-                flipper->hwUpdateTbrValue = ticks;
+                flipper->hwUpdateTbrValue = ticks + 200;
+                flipper->Update();
             }
         }
     }
@@ -56,12 +57,12 @@ namespace Flipper
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
-        //hwUpdateThread = new Thread(HwUpdateThread, false, this);
+        hwUpdateThread = new Thread(HwUpdateThread, false, this);
     }
 
     Flipper::~Flipper()
     {
-        //delete hwUpdateThread;
+        delete hwUpdateThread;
 
         Debug::Hub.RemoveNode(HW_JDI_JSON);
 
@@ -84,24 +85,14 @@ namespace Flipper
 
     void Flipper::Update()
     {
-        // check for pending interrupts
-        if (PICheckInterrupts())
-            return;
-
         // update joypads and video
         VIUpdate();     // PADs are updated there (SIPoll)
-        if (PICheckInterrupts())
-            return;
         CPUpdate();     // GX fifo - Bogus
-        if (PICheckInterrupts())
-            return;
 
         // update audio and DSP
         BeginProfileSfx();
         AIUpdate();
         EndProfileSfx();
-        if (PICheckInterrupts())
-            return;
     }
 
 }

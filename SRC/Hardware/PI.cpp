@@ -44,21 +44,6 @@ static void printOut(uint32_t mask, const char *fix)
     DBReport2(DbgChannel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, PC, UTBR);
 }
 
-// generate interrupt (if pending)
-bool PICheckInterrupts()
-{
-    if((pi.intsr & pi.intmr) && (MSR & MSR_EE))
-    {
-        if (pi.log)
-        {
-            printOut(pi.intsr, "signaled");
-        }
-        Gekko::Gekko->Exception(CPU_EXCEPTION_INTERRUPT);
-        return true;
-    }
-    return false;
-}
-
 // assert interrupt
 void PIAssertInt(uint32_t mask)
 {
@@ -69,6 +54,10 @@ void PIAssertInt(uint32_t mask)
         {
             printOut(mask, "asserted");
         }
+    }
+
+    if (pi.intsr & pi.intmr)
+    {
         Gekko::Gekko->AssertInterrupt();
     }
     else
@@ -89,7 +78,7 @@ void PIClearInt(uint32_t mask)
     }
     pi.intsr &= ~mask;
 
-    if (pi.intmr & mask)
+    if (pi.intsr & pi.intmr)
     {
         Gekko::Gekko->AssertInterrupt();
     }

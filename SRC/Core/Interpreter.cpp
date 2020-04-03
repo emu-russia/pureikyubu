@@ -8,12 +8,6 @@ namespace Gekko
     {
         uint32_t op, pa;
 
-        //if (core->intFlag && (MSR & MSR_EE))
-        //{
-        //    Exception(CPU_EXCEPTION_INTERRUPT);
-        //    goto JumpPC;
-        //}
-
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
         pa = GCEffectiveToPhysical(PC, true);
@@ -22,22 +16,19 @@ namespace Gekko
         c_1[op >> 26](op); cpu.ops++;
         if (cpu.exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
 
-        if (cpu.branch)
+        if (cpu.branch && core->intFlag && (MSR & MSR_EE))
         {
-            Flipper::HW->Update();
-            if (cpu.exception) goto JumpPC;
+            Exception(CPU_EXCEPTION_INTERRUPT);
+            goto JumpPC;
         }
 
         // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)
         core->Tick();
-        if (cpu.branch)
+        if (cpu.branch && cpu.decreq && (MSR & MSR_EE))
         {
-            if (cpu.decreq)
-            {
-                cpu.decreq = 0;
-                Exception(CPU_EXCEPTION_DECREMENTER);
-                if (cpu.exception) goto JumpPC;
-            }
+            cpu.decreq = 0;
+            Exception(CPU_EXCEPTION_DECREMENTER);
+            if (cpu.exception) goto JumpPC;
         }
 
         // branch or exception ?
@@ -69,9 +60,7 @@ namespace Gekko
         // Gekko exceptions are always recoverable
         MSR |= MSR_RI;
 
-        // clear MSR[EE] when interrupt/DEC exception
-        /*if((code == CPU_EXCEPTION_INTERRUPT) ||
-           (code == CPU_EXCEPTION_DECREMENTER)) */MSR &= ~MSR_EE;
+        MSR &= ~MSR_EE;
 
         // change PC and set exception flag
         PC = code;
