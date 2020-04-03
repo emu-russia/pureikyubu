@@ -84,7 +84,7 @@ namespace Gekko
         UTBR += CounterStep;         // timer
 
         uint32_t old = PPC_DEC;
-        PPC_DEC--;          // decrementer
+        PPC_DEC -= CounterStep;          // decrementer
         if ((old ^ PPC_DEC) & 0x80000000)
         {
             if (MSR & MSR_EE)
