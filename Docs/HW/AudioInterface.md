@@ -44,7 +44,7 @@ Based on US patents 6,609,977, 7,369,665.
 
 |Bits|Mnemonic|Type|Reset|Description|
 |---|---|---|---|---|
-|31:6| |R|0|Reserved|
+|31:7| |R|0|Reserved|
 |6|DFR|RW|0|Not mentioned in patent. AI DMA Sample Rate. 0: 32000 Hz, 1: 48000 Hz|
 |5|SCRESET|RW|0|Sample Counter Reset: When a `1` is written to this bit the AISCNT register is rest to 0. Read: always 0. Write: 0 = No effect, 1 = Reset AISCNT register|
 |4|AIINTVLD|RW|0|Audio Interface Interrupt Valid. This bit controls whether AIINT is affected by the AIIT register matching AISCNT. Once set, AIINT will hold its last value. 0 = Match affects AIINT. 1 = AIINT hold last value.|
