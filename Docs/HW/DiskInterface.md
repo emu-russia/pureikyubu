@@ -110,7 +110,7 @@ DI Registers base is 0x0C006000 (physical addressing).
 |Bits|Mnemonic|Type|Reset|Description|
 |---|---|---|---|---|
 |31:3| |R|0|Reserved|
-|2|CVRINT|R|0|Mass Storage Device Cover Interrupt Status: On read this bit indicates the current status of the Mass Storage Device Cover interrupt. When a `1` is written to this bit, the internal interrupt is cleared. The Mass Storage Device Cover Interrupt is asserted when the status of the DICOVER signal changes (e.g., when the cover is opened or closed). Write: 0 = No effect, 1 = Clear Cover Interrupt. Read: 0 = Cover Interrupt has not been requested, 1 = Cover Event Interrupt has been requested|
+|2|CVRINT|RWC|0|Mass Storage Device Cover Interrupt Status: On read this bit indicates the current status of the Mass Storage Device Cover interrupt. When a `1` is written to this bit, the internal interrupt is cleared. The Mass Storage Device Cover Interrupt is asserted when the status of the DICOVER signal changes (e.g., when the cover is opened or closed). Write: 0 = No effect, 1 = Clear Cover Interrupt. Read: 0 = Cover Interrupt has not been requested, 1 = Cover Event Interrupt has been requested|
 |1|CVRINTMSK|RW|0|Cover Interrupt Mask: Interrupt masking prevents the interrupt from being sent to the main processor, but does not affect the assertion of DISR[DEINT]. 0 = Interrupt masked, 1 = Interrupt enabled|
 |0|CVR|R|\*|Cover Status: This bit reflects the current state of the DICOVER signal. 0 = Cover is closed, 1 = Cover is open (\*)The reset state of DICVR[CVR] reflects the state of the DICOVER signal.|
 

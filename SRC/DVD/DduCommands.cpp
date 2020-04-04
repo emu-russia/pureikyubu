@@ -44,9 +44,9 @@ namespace DVD
 			DBReport("Disk Unmounted\n");
 		}
 
-		DBReport("Lid status: %s\n", DIGetCoverState() ? "Open" : "Closed");
+		DBReport("Lid status: %s\n", (DDU.GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
 
-		output->AddBool(nullptr, DIGetCoverState());
+		output->AddBool(nullptr, DDU.GetCoverStatus() == CoverStatus::Open ? true : false);
 
 		// Return info
 
@@ -77,20 +77,14 @@ namespace DVD
 	// Simulate opening of the drive cover
 	static Json::Value* OpenLid(std::vector<std::string>& args)
 	{
-		if (DIGetCoverState() == false)
-		{
-			DIOpenCover();
-		}
+		DDU.OpenCover();
 		return nullptr;
 	}
 
 	// Simulate closing of the drive cover
 	static Json::Value* CloseLid(std::vector<std::string>& args)
 	{
-		if (DIGetCoverState() == true)
-		{
-			DICloseCover();
-		}
+		DDU.CloseCover();
 		return nullptr;
 	}
 
@@ -395,7 +389,7 @@ namespace DVD
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
-		for (int i = 0; i < bb2.FSTLength; i++)
+		for (uint32_t i = 0; i < bb2.FSTLength; i++)
 		{
 			output->AddInt(nullptr, fst[i]);
 		}

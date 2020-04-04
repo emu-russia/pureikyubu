@@ -8,54 +8,24 @@ DIControl di;
 // ---------------------------------------------------------------------------
 // cover control
 
-void DIOpenCover()
+static void DIOpenCover()
 {
-    if(di.coverst == true) return;
-    di.coverst = true;
-    if (di.log)
+    // cover interrupt
+    DICVR |= DI_CVR_CVRINT;
+    if(DICVR & DI_CVR_CVRINTMSK)
     {
-        DBReport2(DbgChannel::DI, "cover opened\n");
-    }
-
-    if(di.powered)
-    {
-        DICVR |= DI_CVR_CVR;    // set cover flag
-        
-        // cover interrupt
-        DICVR |= DI_CVR_CVRINT;
-        if(DICVR & DI_CVR_CVRINTMSK)
-        {
-            PIAssertInt(PI_INTERRUPT_DI);
-        }
+        PIAssertInt(PI_INTERRUPT_DI);
     }
 }
 
-void DICloseCover()
+static void DICloseCover()
 {
-    if(di.coverst == false) return;
-    di.coverst = false;
-    if (di.log)
+    // cover interrupt
+    DICVR |= DI_CVR_CVRINT;
+    if(DICVR & DI_CVR_CVRINTMSK)
     {
-        DBReport2(DbgChannel::DI, "cover closed\n");
+        PIAssertInt(PI_INTERRUPT_DI);
     }
-
-    if(di.powered)
-    {
-        DICVR &= ~DI_CVR_CVR;   // clear cover flag
-
-        // cover interrupt
-        DICVR |= DI_CVR_CVRINT;
-        if(DICVR & DI_CVR_CVRINTMSK)
-        {
-            PIAssertInt(PI_INTERRUPT_DI);
-        }
-    }
-}
-
-// true: cover open, false: closed
-bool DIGetCoverState()
-{
-    return di.coverst;
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +213,17 @@ static void __fastcall write_cvr(uint32_t addr, uint32_t data)
     if(data & DI_CVR_CVRINTMSK) DICVR |= DI_CVR_CVRINTMSK;
     else DICVR &= ~DI_CVR_CVRINTMSK;
 }
-static void __fastcall read_cvr(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)DICVR; }
+static void __fastcall read_cvr(uint32_t addr, uint32_t *reg)
+{
+    uint32_t value = DICVR & ~DI_CVR_CVR;
+
+    if (DVD::DDU.GetCoverStatus() == DVD::CoverStatus::Open)
+    {
+        value |= DI_CVR_CVR;
+    }
+
+    *reg = value;
+}
 
 // dma registers
 static void __fastcall read_mar(uint32_t addr, uint32_t *reg)  { *reg = DIMAR; }
@@ -306,7 +286,7 @@ static void __fastcall write_immbuf_l(uint32_t addr, uint32_t data)  { di.immbuf
 
 void DIStreamUpdate()
 {
-    int32_t count = 32;
+    int32_t count = sizeof(di.workArea);
 
     if(di.streaming && (ai.cr & AICR_PSTAT))
     {
@@ -347,16 +327,16 @@ void DIOpen()
 {
     DBReport2(DbgChannel::DI, "DVD interface hardware\n");
 
-    // current DVD is set by Loader, or when disk is swapped by UserWindow.
+    // Current DVD is set by Loader, or when disk is swapped by UI.
 
-    // clear registers and close cover
+    // clear registers
     memset(&di, 0, sizeof(DIControl));
 
-    di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
-    assert(di.workArea);
-    memset(di.workArea, 0, DVD_STREAM_BLK);
-
     di.log = true;
+
+    // Register cover interrupt handlers
+    DVD::DDU.SetCoverOpenCallback(DIOpenCover);
+    DVD::DDU.SetCoverCloseCallback(DICloseCover);
 
     // set 32-bit register traps
     MISetTrap(32, DI_SR     , read_sr      , write_sr);
@@ -391,17 +371,10 @@ void DIOpen()
     MISetTrap(16, DI_IMMBUF_L , read_immbuf_l  , write_immbuf_l);
     MISetTrap(16, DI_CFG_H    , read_cfg       , NULL);
     MISetTrap(16, DI_CFG_L    , read_cfg       , NULL);
-
-    di.powered = true;
 }
 
 void DIClose()
 {
-    if(di.workArea)
-    {
-        free(di.workArea);
-        di.workArea = NULL;
-    }
-
-    di.powered = false;
+    DVD::DDU.SetCoverOpenCallback(nullptr);
+    DVD::DDU.SetCoverCloseCallback(nullptr);
 }

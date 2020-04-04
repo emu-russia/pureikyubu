@@ -1,9 +1,5 @@
 #pragma pack(push, 1)
 
-// size of DVD data
-#define DVD_SIZE         0x57058000     // approx. 1.4 GB
-#define DVD_STREAM_BLK   32768          // size of single ADPCM block for playback update
-
 // DI registers 
 //                       (32-bit)
 #define DI_SR            0x0C006000     // Status Register
@@ -75,21 +71,16 @@ typedef struct DIControl
     uint32_t        immbuf;
     uint32_t        cfg;
 
-    bool            coverst;        // Mechanical lid status. true: cover open, false: closed
     bool            streaming;      // true: streaming audio enabled
     uint32_t        strseek;        // streaming position on disk
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
-    uint8_t         *workArea;      // streaming work area
-    bool            powered;        // DIOpen'ed
+    uint8_t         workArea[32];   // streaming work area
     bool            log;
 } DIControl;
 
 extern  DIControl di;
 
-void    DIOpenCover();          // open
-void    DICloseCover();         // close
-bool    DIGetCoverState();      // 1: cover open, 0: closed
-void    DIStreamUpdate();       // update DVD streaming playback, called every VIINT
+void    DIStreamUpdate();       // update DVD streaming playback
 void    DIOpen();
 void    DIClose();
 

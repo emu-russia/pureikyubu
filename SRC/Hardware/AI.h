@@ -93,6 +93,6 @@ void    AIUpdate();
 void    AIOpen(HWConfig * config);
 void    AIClose();
 
-void    DSPAssertInt();
+void    DSPAssertInt();     // Used by DspCore
 
 #pragma pack(pop)

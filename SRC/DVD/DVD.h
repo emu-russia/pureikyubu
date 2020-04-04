@@ -52,3 +52,6 @@ typedef struct
 } DVDControl;
 
 extern DVDControl dvd;             // share with other modules
+
+// DDU Core
+#include "DduCore.h"

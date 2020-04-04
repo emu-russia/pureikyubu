@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\DduCommands.cpp" />
+    <ClCompile Include="..\DduCore.cpp" />
     <ClCompile Include="..\DVD.cpp" />
     <ClCompile Include="..\filesystem.cpp" />
     <ClCompile Include="..\GCM.cpp" />
@@ -34,6 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DduCommands.h" />
+    <ClInclude Include="..\DduCore.h" />
     <ClInclude Include="..\DVD.h" />
     <ClInclude Include="..\DvdStructs.h" />
     <ClInclude Include="..\filesystem.h" />
