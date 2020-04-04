@@ -8,7 +8,7 @@ DI is used to control Disk Drive Uint (DDU). From the application side, you can 
 - Immediate commands
 - Via DI DMA
 
-Immediate commands are used for quick control (stop the engine, start DVD Audio Stream, etc.).
+Immediate commands are used for quick control (stop the motor, start DVD Audio Stream, etc.).
 
 DI DMA is mainly used to transfer data from DVD (but there is also a "secret" debugging functionality).
 
