@@ -17,16 +17,9 @@ namespace Gekko
     // not implemented opcode
     OP(NI)
     {
-        char text[256];
-
-        // disassemble
-        sprintf(
-            text, "%08X  <%08X>  (%i, %i)",
-            PC, op, op >> 26, op & 0x7ff);
-
         DBHalt("** CPU ERROR **\n"
-            "unimplemented opcode : %s\n\n",
-            text);
+            "unimplemented opcode : %08X <%08X> (%i, %i)\n",
+            PC, op, op >> 26, op & 0x7ff);
     }
 
     // switch to extension opcode table

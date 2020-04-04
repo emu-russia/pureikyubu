@@ -96,9 +96,9 @@ void AIDINT()
 }
 
 // how much time AI DMA need to playback "n" bytes.
-static int64_t AIGetTime(long dmaBytes, long rate)
+int64_t AIGetTime(size_t dmaBytes, long rate)
 {
-    long samples = dmaBytes / 4;    // left+right, 16-bit
+    size_t samples = dmaBytes / 4;    // left+right, 16-bit
     return samples * (ai.one_second / rate);
 }
 
@@ -108,30 +108,42 @@ static void AIStartDMA()
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.lastDma | (1 << 31), ai.dcnt * 32);
+        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr | (1 << 31), ai.dcnt * 32);
     }
 }
 
 // Simulate AI FIFO
 static void AIResumeDMA()
 {
+    if (ai.dcnt == 0 || (ai.len & AID_EN) == 0)
+        return;
+
     int bytes = 32;
 
-    Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.lastDma & RAMMASK], bytes);
+    Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.currentDmaAddr & RAMMASK], bytes);
 
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
 
-    ai.lastDma += bytes;
+    ai.currentDmaAddr += bytes;
     ai.dcnt--;
 }
 
 static void AIStopDMA()
 {
-    ai.len &= ~AID_EN;
+    ai.dmaTime = -1;
     ai.dcnt = 0;
     if (ai.log)
     {
         DBReport2(DbgChannel::AI, "DMA stopped\n");
+    }
+}
+
+static void AIRestartDMA()
+{
+    if (ai.len & AID_EN)
+    {
+        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
+        ai.dcnt = ai.len & ~AID_EN;
     }
 }
 
@@ -168,7 +180,7 @@ static void __fastcall write_dmah(uint32_t addr, uint32_t data)
     if(ai.madr.valid[0] && ai.madr.valid[1])
     {
         ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.lastDma = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
+        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
     }
 }
 
@@ -181,7 +193,7 @@ static void __fastcall write_dmal(uint32_t addr, uint32_t data)
     if(ai.madr.valid[0] && ai.madr.valid[1])
     {
         ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.lastDma = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
+        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
     }
 }
 
@@ -224,7 +236,7 @@ static void __fastcall read_dcnt(uint32_t addr, uint32_t *reg)
 void AISINT()
 {
     // only if AIINT is validated
-    if(ai.cr & AICR_AIINTVLD)
+    if((ai.cr & AICR_AIINTVLD) == 0)
     {
         ai.cr |= AICR_AIINT;
         if(ai.cr & AICR_AIINTMSK)
@@ -334,11 +346,13 @@ void AIUpdate()
     {
         if (ai.dcnt == 0)
         {
-            AIStopDMA();
+            AIRestartDMA();
             AIDINT();
-            return;
         }
-        AIResumeDMA();
+        else
+        {
+            AIResumeDMA();
+        }
     }
 }
 
@@ -349,15 +363,10 @@ void AIOpen(HWConfig* config)
     // clear regs
     memset(&ai, 0, sizeof(AIControl));
     
-    ai.dmaTime = Gekko::Gekko->GetTicks();
     ai.one_second = config->one_second;
     ai.dmaRate = ai.cr & AICR_DFR ? 48000 : 32000;
-    ai.log = true;
-
-    Flipper::HW->Mixer->SetVolumeL(Flipper::AxChannel::DvdAudio, 0);
-    Flipper::HW->Mixer->SetVolumeR(Flipper::AxChannel::DvdAudio, 0);
-    Flipper::HW->Mixer->SetVolumeL(Flipper::AxChannel::AudioDma, 0xff);
-    Flipper::HW->Mixer->SetVolumeR(Flipper::AxChannel::AudioDma, 0xff);
+    ai.log = false;
+    AIStopDMA();
 
     // set register traps
     MISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
@@ -385,7 +394,7 @@ void AIClose()
 
 void DSPAssertInt()
 {
-    DBReport("DSPAssertInt\n");
+    DBReport2(DbgChannel::AI, "DSPAssertInt\n");
     AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {

@@ -74,9 +74,9 @@ typedef struct AIControl
     uint32_t    it;             // sample counter trigger
 
     // helpers
-    uint32_t    lastDma;        // last valid DMA address
+    uint32_t    currentDmaAddr; // current DMA address
     int32_t     dmaRate;        // copy of DFR value (32000/48000)
-    int64_t     dmaTime;        // audio DMA update time 
+    uint64_t    dmaTime;        // audio DMA update time 
 
     int64_t     one_second;     // one CPU second in timer ticks
     bool        log;            // Enable AI log
@@ -86,6 +86,8 @@ extern  AIControl ai;
 
 void    AIDINT();
 void    AISINT();
+
+int64_t AIGetTime(size_t dmaBytes, long rate);
 
 void    AIUpdate();
 void    AIOpen(HWConfig * config);

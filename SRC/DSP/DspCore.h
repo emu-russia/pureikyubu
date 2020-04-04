@@ -231,8 +231,8 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		MySpinLock::LOCK canariesSpinLock = MySpinLock::LOCK_IS_FREE;
 
-		const uint32_t GekkoTicksPerDspInstruction = 20;		// How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 200;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 1000;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 

@@ -12,7 +12,10 @@ void DIOpenCover()
 {
     if(di.coverst == TRUE) return;
     di.coverst = TRUE;
-    DBReport2(DbgChannel::DI, "cover opened\n");
+    if (di.log)
+    {
+        DBReport2(DbgChannel::DI, "cover opened\n");
+    }
 
     if(di.running)
     {
@@ -31,7 +34,10 @@ void DICloseCover()
 {
     if(di.coverst == FALSE) return;
     di.coverst = FALSE;
-    DBReport2(DbgChannel::DI, "cover closed\n");
+    if (di.log)
+    {
+        DBReport2(DbgChannel::DI, "cover closed\n");
+    }
 
     if(di.running)
     {
@@ -68,8 +74,12 @@ static void DIINT()
 // execute DVD command
 static void DICommand()
 {
-    uint32_t seek = di.cmdbuf[1] << 2;
     uint32_t dimar = DIMAR & RAMMASK;
+
+    if (di.log)
+    {
+        //DBReport2(DbgChannel::DI, "%08X %08X %08X\n", di.cmdbuf[0], di.cmdbuf[1], di.cmdbuf[2]);
+    }
 
     switch(di.cmdbuf[0] >> 24)
     {
@@ -81,16 +91,19 @@ static void DICommand()
         case 0xA8:          // read sector (disk id) (DMA)
             // Non-DMA disk transfer
             assert(DICR & DI_CR_DMA);
-            // Not aligned disk DMA transfer. Should be on 32-byte boundary!
+            // Not aligned disk DMA transfer. Should be on 32-byte boundary.
             assert((DILEN & 0x1f) == 0);
 
             BeginProfileDVD();
-            DVD::Seek(seek);
+            DVD::Seek(di.cmdbuf[1] << 2);
             DVD::Read(&mi.ram[dimar], DILEN);
             EndProfileDVD();
 
-            DBReport2(DbgChannel::DI, "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n",
-                      DIMAR, seek, DILEN );
+            if (di.log)
+            {
+                DBReport2(DbgChannel::DI, "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n",
+                    DIMAR, di.cmdbuf[1] << 2, DILEN);
+            }
             DILEN = 0;
             break;
 
@@ -98,9 +111,10 @@ static void DICommand()
             break;
 
         case 0xE3:          // stop motor (IMM)
-            // stop motor is experimental thing and its not used in regular SDK DVD library
-            // should we disable streaming ?
-            di.streaming = false;
+            if (di.log)
+            {
+                DBReport2(DbgChannel::DI, "Stop Motor\n");
+            }
             break;
 
         case 0xE1:          // set stream (IMM).
@@ -109,34 +123,35 @@ static void DICommand()
                 di.strseek  = di.cmdbuf[1] << 2;
                 di.strcount = di.cmdbuf[2];
 
-                di.strseekOld  = di.strseek;
-                di.strcountOld = di.strcount;
-
-                DBReport2(DbgChannel::DI, "DVD Streaming!! DVD positioned on track, starting %08X, %i bytes long.\n",
-                          di.strseek, di.strcount );
-
-                // stream playback is enabled automatically
-                di.streaming = true;
-                DIStreamUpdate();
+                if (di.log)
+                {
+                    DBReport2(DbgChannel::DI, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
+                        di.strseek, di.strcount);
+                }
             }
-/*/
-            else
-            {
-                // disable stream playback.
-                // I dont know why, but DVD library ignoring 0xE4 stream control command :(
-                di.streaming = 0;
-                AXPlayStream(0, 0);
-            }
-/*/
             break;
 
         case 0xE2:          // get stream status (IMM)
-            di.immbuf = di.streaming ? 1 : 0;
+            switch ((di.cmdbuf[0] >> 16) & 0xFF)
+            {
+                case 0:             // Get stream enable
+                    di.immbuf = di.streaming & 1;
+                    break;
+                case 1:             // Get stream address
+                    di.immbuf = di.strseek >> 2;
+                    break;
+                default:
+                    DBReport2(DbgChannel::DI, "Unknown GetStreamStatus: %i\n", (di.cmdbuf[0] >> 16) & 0xFF);
+                    break;
+            }
             break;
 
         case 0xE4:          // stream control (IMM)
             di.streaming = (di.cmdbuf[0] >> 16) & 1;
-            DBReport2(DbgChannel::DI, "DVD Streaming. Play(?) : %s\n", di.streaming ? "On" : "Off" );
+            if (di.log)
+            {
+                DBReport2(DbgChannel::DI, "DVD Streaming. Play(?) : %s\n", di.streaming ? "On" : "Off");
+            }
             break;
 
         // unknown command
@@ -293,7 +308,7 @@ void DIStreamUpdate()
 {
     int32_t count = 32;
 
-    if(di.streaming)
+    if(di.streaming && (ai.cr & AICR_PSTAT))
     {
         // load new data
         BeginProfileDVD();
@@ -307,11 +322,10 @@ void DIStreamUpdate()
         di.strseek += count;
         di.strcount -= count;
 
-        // reset playback
-        if(di.strcount <= 0)
+        if (di.strcount <= 0)
         {
-            di.strseekOld  = di.strseek;
-            di.strcountOld = di.strcount;
+            DBReport2(DbgChannel::DI, "Streaming stops\n");
+            di.streaming = false;
         }
     }
 
@@ -341,6 +355,8 @@ void DIOpen()
     di.workArea = (uint8_t *)malloc(DVD_STREAM_BLK + 1024);
     assert(di.workArea);
     memset(di.workArea, 0, DVD_STREAM_BLK);
+
+    di.log = true;
 
     // set 32-bit register traps
     MISetTrap(32, DI_SR     , read_sr      , write_sr);

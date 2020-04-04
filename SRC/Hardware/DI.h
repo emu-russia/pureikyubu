@@ -78,12 +78,11 @@ typedef struct DIControl
     bool            coverst;        // 1: cover open, 0: closed
     bool            streaming;      // 1: streaming audio enabled
     uint32_t        strseek;        // streaming position on disk
-    uint32_t        strseekOld;     // initial streaming position on disk
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
-    int32_t         strcountOld;    // initial streaming counter
     uint8_t         *workArea;      // streaming work area
 
     bool            running;        // DI subsystem is online
+    bool            log;
 } DIControl;
 
 extern  DIControl di;

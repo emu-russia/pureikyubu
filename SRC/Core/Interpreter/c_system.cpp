@@ -127,70 +127,70 @@ namespace Gekko
         else switch (spr)
         {
             // decrementer
-        case    22:
-            DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
-            break;
+            case    22:
+                //DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
+                break;
 
             // page table base
-        case    25:
-            DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
-                RRS, msr_ir(), msr_dr(), PC);
-            break;
+            case    25:
+                DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+                    RRS, msr_ir(), msr_dr(), PC);
+                break;
 
-        case    284:
-            cpu.tb.Part.l = RRS;
-            DBReport2(DbgChannel::CPU, "set TBL : %08X\n", cpu.tb.Part.l);
-            break;
-        case    285:
-            cpu.tb.Part.u = RRS;
-            DBReport2(DbgChannel::CPU, "set TBH : %08X\n", cpu.tb.Part.u);
-            break;
+            case    284:
+                cpu.tb.Part.l = RRS;
+                DBReport2(DbgChannel::CPU, "set TBL : %08X\n", cpu.tb.Part.l);
+                break;
+            case    285:
+                cpu.tb.Part.u = RRS;
+                DBReport2(DbgChannel::CPU, "set TBH : %08X\n", cpu.tb.Part.u);
+                break;
 
             // write gathering buffer
-        case    921:
-            assert(RRS == 0x0C008000);
-            break;
+            case    921:
+                //assert(RRS == 0x0C008000);
+                break;
 
             // locked cache dma (dirty hack)
-        case    922:    // DMAU
-            SPR[spr] = RRS;
-            break;
-        case    923:    // DMAL
-        {
-            SPR[spr] = RRS;
-            if (SPR[923] & 2)
+            case    922:    // DMAU
+                SPR[spr] = RRS;
+                break;
+            case    923:    // DMAL
             {
-                uint32_t maddr = SPR[922] & ~0x1f;
-                uint32_t lcaddr = SPR[923] & ~0x1f;
-                uint32_t length = ((SPR[922] & 0x1f) << 2) | ((SPR[923] >> 2) & 3);
-                if (length == 0) length = 128;
-                if (SPR[923] & 0x10)
-                {   // load
-                    memcpy(
-                        &mi.ram[maddr & RAMMASK],
-                        &mem.lc[lcaddr & 0x3ffff],
-                        length * 32
-                    );
-                }
-                else
-                {   // store
-                    memcpy(
-                        &mem.lc[lcaddr & 0x3ffff],
-                        &mi.ram[maddr & RAMMASK],
-                        length * 32
-                    );
-                }
-            }
-
-            /*/
-                        DolwinQuestion(
-                            "Non-predictable situation!",
-                            "Locked cache is not implemented!\n"
-                            "Are you sure, you want to continue?"
+                SPR[spr] = RRS;
+                if (SPR[923] & 2)
+                {
+                    uint32_t maddr = SPR[922] & ~0x1f;
+                    uint32_t lcaddr = SPR[923] & ~0x1f;
+                    uint32_t length = ((SPR[922] & 0x1f) << 2) | ((SPR[923] >> 2) & 3);
+                    if (length == 0) length = 128;
+                    if (SPR[923] & 0x10)
+                    {   // load
+                        memcpy(
+                            &mi.ram[maddr & RAMMASK],
+                            &mem.lc[lcaddr & 0x3ffff],
+                            length * 32
                         );
-            /*/
-        }
-        break;
+                    }
+                    else
+                    {   // store
+                        memcpy(
+                            &mem.lc[lcaddr & 0x3ffff],
+                            &mi.ram[maddr & RAMMASK],
+                            length * 32
+                        );
+                    }
+                }
+
+                /*/
+                            DolwinQuestion(
+                                "Non-predictable situation!",
+                                "Locked cache is not implemented!\n"
+                                "Are you sure, you want to continue?"
+                            );
+                /*/
+            }
+            break;
         }
 
         // default

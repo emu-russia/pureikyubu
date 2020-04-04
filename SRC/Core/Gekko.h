@@ -4,6 +4,7 @@
 
 #include "../Common/Thread.h"
 #include <vector>
+#include <atomic>
 #include "GekkoDefs.h"
 
 // TODO: Get rid of this non-incapsulated mess
@@ -154,7 +155,7 @@ typedef struct CPUControl
     bool        exception;          // exception pending
     bool        branch;             // non-linear PC change
     uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-    bool        RESERVE;            // for lwarx/stwcx.
+    std::atomic<bool> RESERVE;            // for lwarx/stwcx.   
     uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
     float       ldScale[64];        // for paired-single loads
     float       stScale[64];        // for paired-single stores

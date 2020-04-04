@@ -27,12 +27,12 @@ namespace Gekko
 
         switch (type)
         {
-        case 4: flt = (float)(uint8_t)data; break;     // U8
-        case 5: flt = (float)(uint16_t)data; break;    // U16
-        case 6: flt = (float)(int8_t)data; break;     // S8
-        case 7: flt = (float)(int16_t)data; break;    // S16
-        case 0:
-        default: flt = *((float*)&data); break;
+            case 4: flt = (float)(uint8_t)data; break;     // U8
+            case 5: flt = (float)(uint16_t)data; break;    // U16
+            case 6: flt = (float)(int8_t)data; break;     // S8
+            case 7: flt = (float)(int16_t)data; break;    // S16
+            case 0:
+            default: flt = *((float*)&data); break;
         }
 
         return flt * cpu.ldScale[scale];

@@ -36,6 +36,14 @@ namespace Flipper
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
+        Mixer = new AudioMixer;
+        assert(Mixer);
+
+        Mixer->SetVolumeL(AxChannel::DvdAudio, 0);
+        Mixer->SetVolumeR(AxChannel::DvdAudio, 0);
+        Mixer->SetVolumeL(AxChannel::AudioDma, 0xff);
+        Mixer->SetVolumeR(AxChannel::AudioDma, 0xff);
+
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
         CPOpen(config); // fifo
@@ -52,8 +60,6 @@ namespace Flipper
         DBReport("\n");
 
         GXOpen(mi.ram, wnd.hMainWindow);
-        Mixer = new AudioMixer;
-        assert(Mixer);
         PADOpen();
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);

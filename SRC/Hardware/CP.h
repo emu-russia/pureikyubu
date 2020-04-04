@@ -99,6 +99,7 @@ typedef struct FifoControl
     long        token;
     uint32_t    done_num;   // number of drawdone (PE_FINISH) events
     int64_t     time;       // fifo update time
+    bool        log;
 } FifoControl;
 
 extern  FifoControl fifo;
