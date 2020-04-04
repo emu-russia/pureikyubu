@@ -31,8 +31,21 @@ Based on US patents 6,609,977, 7,369,665.
 |---|---|---|---|
 |AID_MADRH|0x0C005030|16 bits|DMA start address (High)|
 |AID_MADRL|0x0C005032|16 bits|DMA start address (Low)|
-|AID_LEN|0x0C005036|16 bits|Bit15: DMA control, Bits14-0: DMA length (length of audio data in 32 Byte blocks)|
+|AID_LEN|0x0C005036|16 bits|Bit15: DMA control (1: start DMA, 0: stop DMA), Bits14-0: DMA length (length of audio data in 32 Byte blocks)|
 |AID_CNT|0x0C00503A|16 bits|Counts down to zero showing how many 32 Byte blocks are left|
+
+DMA is performed in blocks of 32 bytes.
+
+When the DMA Counter reaches 0, an AID_INT interrupt is generated, and if the AID_EN bit is set (bit 15 of the AID_LEN register), then the DMA restarts:
+- The starting address is set in accordance with the registers AID_MADRH and AID_MADRL
+- Register AID_CNT is set to the initial value (from register AID_LEN)
+
+The current DMA address is also stored in some registers, but it has not yet been investigated exactly where.
+
+Thus, the game logic for playing Audio DMA is as follows:
+- Once configured DMA Sample buffer (registers AID_MADRH / AID_MADRL), filled with zeros and DMA is turned on (AID_EN = 1)
+- DMA never stops (if you want to play sound)
+- In the AID_INT interrupt handler, the sound buffer is "refreshed" by new samples received from DSP or from somewhere else.
 
 ## Audio Streaming Interface Registers
 

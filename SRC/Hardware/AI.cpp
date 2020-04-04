@@ -95,7 +95,7 @@ void AIDINT()
     }
 }
 
-// how much time AI DMA need to playback "n" bytes.
+// how much time AI DMA need to playback "n" bytes in Gekko ticks
 int64_t AIGetTime(size_t dmaBytes, long rate)
 {
     size_t samples = dmaBytes / 4;    // left+right, 16-bit

@@ -8,8 +8,8 @@
 #define AI_DCR              0x0C00500A      // AI/DSP control register
 #define AID_MADRH           0x0C005030      // DMA start address (High)
 #define AID_MADRL           0x0C005032      // DMA start address (Low)
-#define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data) (% 32)
-#define AID_CNT             0x0C00503A      // counts down to zero showing how many bytes are left (% 32)
+#define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
+#define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
 #define AIS_CR              0x0C006C00      // AIS control register 
 #define AIS_VR              0x0C006C04      // AIS volume register
 #define AIS_SCNT            0x0C006C08      // AIS sample counter
