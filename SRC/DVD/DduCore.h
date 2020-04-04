@@ -64,7 +64,7 @@ namespace DVD
 			closeCoverCallback = callback;
 		}
 
-		// Handling of DIRSTb signal
+		// Handling of DIRST signal
 		void Reset();
 
 		void SetErrorCallback(DduCallback callback)

@@ -10,9 +10,9 @@ DI is used to control Disk Drive Uint (DDU). From the application side, you can 
 
 Immediate commands are used for quick control (stop the motor, start DVD Audio Stream, etc.).
 
-DI DMA is mainly used to transfer data from DVD (but there is also a "secret" debugging functionality).
+DI DMA is mainly used to transfer data from DVD (but there is also a hidden debugging functionality).
 
-DVD Audio is streamed (The received PCM sample is transferred directly to AI).
+DVD Audio is streamed, sample-by-sample (The received PCM sample is transferred directly to AI).
 
 ![Flipper DI](Flipper_DI.png)
 

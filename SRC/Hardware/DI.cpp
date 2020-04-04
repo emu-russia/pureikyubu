@@ -39,6 +39,7 @@ static void DIErrorCallback()
     {
         PIAssertInt(PI_INTERRUPT_DI);
     }
+    EndProfileDVD();
 }
 
 // ---------------------------------------------------------------------------
@@ -54,6 +55,7 @@ static void DIBreak()
     {
         PIAssertInt(PI_INTERRUPT_DI);
     }
+    EndProfileDVD();
 }
 
 // DDU transfer complete interrupt
