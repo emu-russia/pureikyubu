@@ -1,7 +1,8 @@
+#pragma once
+
 #pragma pack(push, 1)
 
-// DI registers 
-//                       (32-bit)
+// DI registers (32-bit)
 #define DI_SR            0x0C006000     // Status Register
 #define DI_CVR           0x0C006004     // Cover Register
 #define DI_CMDBUF0       0x0C006008     // Command Buffer 0
@@ -12,27 +13,6 @@
 #define DI_CR            0x0C00601C     // Control Register
 #define DI_IMMBUF        0x0C006020     // Immediate Data Buffer
 #define DI_CFG           0x0C006024     // Configuration Register
-//                       (16-bit)
-#define DI_SR_H          0x0C006000
-#define DI_SR_L          0x0C006002
-#define DI_CVR_H         0x0C006004
-#define DI_CVR_L         0x0C006006
-#define DI_CMDBUF0_H     0x0C006008
-#define DI_CMDBUF0_L     0x0C00600A
-#define DI_CMDBUF1_H     0x0C00600C
-#define DI_CMDBUF1_L     0x0C00600E
-#define DI_CMDBUF2_H     0x0C006010
-#define DI_CMDBUF2_L     0x0C006012
-#define DI_MAR_H         0x0C006014
-#define DI_MAR_L         0x0C006016
-#define DI_LEN_H         0x0C006018
-#define DI_LEN_L         0x0C00601A
-#define DI_CR_H          0x0C00601C
-#define DI_CR_L          0x0C00601E
-#define DI_IMMBUF_H      0x0C006020
-#define DI_IMMBUF_L      0x0C006022
-#define DI_CFG_H         0x0C006024
-#define DI_CFG_L         0x0C006026
 
 #define DISR             di.sr
 #define DICVR            di.cvr
@@ -52,12 +32,14 @@
 // DI Cover Register mask
 #define DI_CVR_CVRINT    (1 << 2)
 #define DI_CVR_CVRINTMSK (1 << 1)
-#define DI_CVR_CVR       (1 << 0)
+#define DI_CVR_CVR       (1 << 0)           // 0 = Cover is closed, 1 = Cover is open
 
 // DI Control Register mask
-#define DI_CR_RW         (1 << 2)
-#define DI_CR_DMA        (1 << 1)
+#define DI_CR_RW         (1 << 2)           // 0 = Read Command (DDU->Host), 1 = Write Command (Host->DDU)
+#define DI_CR_DMA        (1 << 1)           // 0 = Immediate Mode, 1 = DMA Mode
 #define DI_CR_TSTART     (1 << 0)
+
+#define DI_DIMAR_MASK    0x03fffffe0        // Valid bits of DIMAR
 
 // ---------------------------------------------------------------------------
 // hardware API
@@ -67,20 +49,29 @@ typedef struct DIControl
 {
     uint32_t        sr, cvr, cr;    // DI registers
     uint32_t        mar, len;
-    uint32_t        cmdbuf[3];
-    uint32_t        immbuf;
+    uint8_t         cmdbuf[12];
+    uint8_t         immbuf[4];
     uint32_t        cfg;
+    uint8_t         dmaFifo[32];
 
+    int             dduToHostByteCounter;
+    int             hostToDduByteCounter;
+
+    // PHASING OUT
     bool            streaming;      // true: streaming audio enabled
     uint32_t        strseek;        // streaming position on disk
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
     uint8_t         workArea[32];   // streaming work area
+
+
     bool            log;
 } DIControl;
 
 extern  DIControl di;
 
+// PHASING OUT
 void    DIStreamUpdate();       // update DVD streaming playback
+
 void    DIOpen();
 void    DIClose();
 
