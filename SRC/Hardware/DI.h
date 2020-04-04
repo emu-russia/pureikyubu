@@ -75,13 +75,12 @@ typedef struct DIControl
     uint32_t        immbuf;
     uint32_t        cfg;
 
-    bool            coverst;        // 1: cover open, 0: closed
-    bool            streaming;      // 1: streaming audio enabled
+    bool            coverst;        // Mechanical lid status. true: cover open, false: closed
+    bool            streaming;      // true: streaming audio enabled
     uint32_t        strseek;        // streaming position on disk
     int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
     uint8_t         *workArea;      // streaming work area
-
-    bool            running;        // DI subsystem is online
+    bool            powered;        // DIOpen'ed
     bool            log;
 } DIControl;
 

@@ -4,7 +4,7 @@
 
 #define PI_INTSR            0x0C003000      // master interrupt reg
 #define PI_INTMR            0x0C003004      // master interrupt mask
-#define PI_RST_CODE         0x0C003024      // reset code
+#define PI_RST_CODE         0x0C003024      // reset code (mentioned in patents as "PI General Reset Register")
 #define PI_MB_REV           0x0C00302C      // console revision
 
 // PI interrupt regs mask

@@ -10,14 +10,14 @@ DIControl di;
 
 void DIOpenCover()
 {
-    if(di.coverst == TRUE) return;
-    di.coverst = TRUE;
+    if(di.coverst == true) return;
+    di.coverst = true;
     if (di.log)
     {
         DBReport2(DbgChannel::DI, "cover opened\n");
     }
 
-    if(di.running)
+    if(di.powered)
     {
         DICVR |= DI_CVR_CVR;    // set cover flag
         
@@ -32,14 +32,14 @@ void DIOpenCover()
 
 void DICloseCover()
 {
-    if(di.coverst == FALSE) return;
-    di.coverst = FALSE;
+    if(di.coverst == false) return;
+    di.coverst = false;
     if (di.log)
     {
         DBReport2(DbgChannel::DI, "cover closed\n");
     }
 
-    if(di.running)
+    if(di.powered)
     {
         DICVR &= ~DI_CVR_CVR;   // clear cover flag
 
@@ -392,7 +392,7 @@ void DIOpen()
     MISetTrap(16, DI_CFG_H    , read_cfg       , NULL);
     MISetTrap(16, DI_CFG_L    , read_cfg       , NULL);
 
-    di.running = true;
+    di.powered = true;
 }
 
 void DIClose()
@@ -403,5 +403,5 @@ void DIClose()
         di.workArea = NULL;
     }
 
-    di.running = false;
+    di.powered = false;
 }
