@@ -394,7 +394,11 @@ void AIClose()
 
 void DSPAssertInt()
 {
-    DBReport2(DbgChannel::AI, "DSPAssertInt\n");
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "DSPAssertInt\n");
+    }
+
     AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {

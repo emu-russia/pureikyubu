@@ -23,6 +23,25 @@ namespace DVD
 	typedef uint8_t (*HostToDduCallback)();
 	typedef void (*DduToHostCallback)(uint8_t data);
 
+	typedef struct _DduStats
+	{
+		int64_t bytesRead;
+		int64_t bytesWrite;
+		int dduToHostTransferCount;
+		int hostToDduTransferCount;
+	} DduStats;
+
+	enum class DduThreadState
+	{
+		Idle = 0,
+		WriteCommand,
+		ReadManufactureInfo,
+		ReadDvdData,
+		GetStreamEnable,
+		GetStreamOffset,
+		GetStreamBogus,
+	};
+
 	class DduCore
 	{
 		CoverStatus coverStatus = CoverStatus::Close;
@@ -38,12 +57,27 @@ namespace DVD
 		DduBusDirection busDir;
 		HostToDduCallback hostToDduCallback = nullptr;
 		DduToHostCallback dduToHostCallback = nullptr;
+		uint8_t commandBuffer[12] = { 0 };
+		int commandPtr = 0;
+		uint8_t immediateBuffer[4] = { 0 };
+		int immediateBufferPtr = 0;
+		static const size_t cacheSize = 32 * 1024;
+		uint8_t* dataCache = nullptr;
+		uint8_t* streamingCache = nullptr;
+		int dataCachePtr = 0;
+		int streaminCachePtr = 0;
+		DduThreadState state = DduThreadState::Idle;
+		uint32_t seekVal = 0;
+		uint32_t streamSeekVal = 0;
+		uint32_t streamCount = 0;
 
 		Thread* dduThread = nullptr;
 		static void DduThreadProc(void* Parameter);
 
 		Thread* dvdAudioThread = nullptr;
 		static void DvdAudioThreadProc(void* Parameter);
+
+		void ExecuteCommand();
 
 	public:
 		DduCore();
@@ -88,6 +122,8 @@ namespace DVD
 
 		// DVD Audio related
 
+
+		DduStats stats = { 0 };
 	};
 
 	extern DduCore DDU;

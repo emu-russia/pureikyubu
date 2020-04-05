@@ -7,7 +7,14 @@ namespace DVD
 	DduCore::DduCore()
 	{
 		dduThread = new Thread(DduThreadProc, true, this);
+		assert(dduThread);
 		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this);
+		assert(dvdAudioThread);
+
+		dataCache = new uint8_t[cacheSize];
+		assert(dataCache);
+		streamingCache = new uint8_t[cacheSize];
+		assert(streamingCache);
 
 		Reset();
 	}
@@ -16,31 +23,228 @@ namespace DVD
 	{
 		delete dduThread;
 		delete dvdAudioThread;
+		delete[] dataCache;
+		delete[] streamingCache;
+	}
+
+	void DduCore::ExecuteCommand()
+	{
+		// Execute command
+
+		errorState = false;
+
+		DBReport2(DbgChannel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+			commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
+			commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
+			commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
+
+		switch (commandBuffer[0])
+		{
+			// read manufacture info (DMA)
+			case 0x12:
+				state = DduThreadState::ReadManufactureInfo;
+				break;
+
+			// read sector (disk id)
+			case 0xA8:
+				state = DduThreadState::ReadDvdData;
+				{
+					uint32_t seekTemp = (commandBuffer[4] << 24) |
+						(commandBuffer[5] << 16) |
+						(commandBuffer[6] << 8) |
+						(commandBuffer[7]);
+					seekVal = seekTemp << 2;
+				}
+				dataCachePtr = cacheSize;
+				break;
+
+			// seek
+			case 0xAB:
+				state = DduThreadState::Idle;
+				break;
+
+			// set stream (IMM)
+			case 0xE1:
+				state = DduThreadState::Idle;
+
+				{
+					uint32_t seekTemp = (commandBuffer[4] << 24) |
+						(commandBuffer[5] << 16) |
+						(commandBuffer[6] << 8) |
+						(commandBuffer[7]);
+					streamSeekVal = seekTemp << 2;
+					streamCount = (commandBuffer[8] << 24) |
+						(commandBuffer[9] << 16) |
+						(commandBuffer[10] << 8) |
+						(commandBuffer[11]);
+				}
+
+				DBReport2(DbgChannel::DVD, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
+					streamSeekVal, streamCount);
+				break;
+
+			// get stream status (IMM)
+			case 0xE2:
+				switch (commandBuffer[1])
+				{
+					case 0:             // Get stream enable
+						state = DduThreadState::GetStreamEnable;
+						immediateBuffer[0] = 0;
+						immediateBuffer[1] = 0;
+						immediateBuffer[2] = 0;
+						immediateBuffer[3] = dvdAudioThread->IsRunning() ? 1 : 0;
+						immediateBufferPtr = 0;
+						break;
+					case 1:             // Get stream address
+						state = DduThreadState::GetStreamOffset;
+						{
+							uint32_t seekTemp = streamSeekVal >> 2;
+							immediateBuffer[0] = (seekTemp >> 24) & 0xff;
+							immediateBuffer[1] = (seekTemp >> 16) & 0xff;
+							immediateBuffer[2] = (seekTemp >> 8) & 0xff;
+							immediateBuffer[3] = (seekTemp) & 0xff;
+						}
+						immediateBufferPtr = 0;
+						break;
+					default:
+						state = DduThreadState::GetStreamBogus;
+						immediateBuffer[0] = 0;
+						immediateBuffer[1] = 0;
+						immediateBuffer[2] = 0;
+						immediateBuffer[3] = 0;
+						immediateBufferPtr = 0;
+						DBReport2(DbgChannel::DVD, "Unknown GetStreamStatus: %i\n", commandBuffer[1]);
+						break;
+				}
+				break;
+
+			// stop motor
+			case 0xE3:
+				state = DduThreadState::Idle;
+				break;
+
+			// stream control (IMM)
+			case 0xE4:
+				state = DduThreadState::Idle;
+
+				if (commandBuffer[1] & 1)
+				{
+					dvdAudioThread->Resume();
+				}
+				else
+				{
+					dvdAudioThread->Suspend();
+				}
+
+				DBReport2(DbgChannel::DVD, "DVD Streaming. Play(?) : %s\n", (commandBuffer[1] & 1) ? "On" : "Off");
+				break;
+
+			default:
+				state = DduThreadState::Idle;
+
+				DBReport2(DbgChannel::DVD, "Unknown command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+					commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
+					commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
+					commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
+				break;
+		}
+
+		commandPtr = 0;
 	}
 
 	void DduCore::DduThreadProc(void* Parameter)
 	{
 		DduCore* core = (DduCore*)Parameter;
 
-		// Until break or transfer completed
-		while (core->ddBusBusy)
+		while (true)
 		{
-			if (core->busDir == DduBusDirection::HostToDdu)
+			// Until break or transfer completed
+			while (core->ddBusBusy)
 			{
+				if (core->busDir == DduBusDirection::HostToDdu)
+				{
+					switch (core->state)
+					{
+						case DduThreadState::WriteCommand:
+							if (core->commandPtr < sizeof(core->commandBuffer))
+							{
+								core->commandBuffer[core->commandPtr] = core->hostToDduCallback();
+								core->commandPtr++;
+							}
 
-			}
-			else
-			{
+							if (core->commandPtr >= sizeof(core->commandBuffer))
+							{
+								core->ExecuteCommand();
+							}
+							break;
 
+						// Hidden debug commands are not supported yet
+
+						default:
+							core->DeviceError();
+							break;
+					}
+				}
+				else
+				{
+					switch (core->state)
+					{
+						case DduThreadState::ReadDvdData:
+							// Read-ahead new DVD data
+							if (core->dataCachePtr >= core->cacheSize)
+							{
+								Seek(core->seekVal);
+								Read(core->dataCache, core->cacheSize);
+								core->seekVal += core->cacheSize;
+
+								if (core->seekVal >= DVD_SIZE)
+								{
+									core->DeviceError();
+								}
+
+								core->dataCachePtr = 0;
+							}
+
+							core->dduToHostCallback(core->dataCache[core->dataCachePtr]);
+							core->dataCachePtr++;
+							break;
+
+						case DduThreadState::ReadManufactureInfo:
+							core->dduToHostCallback(0);
+							break;
+
+						case DduThreadState::GetStreamEnable:
+						case DduThreadState::GetStreamOffset:
+						case DduThreadState::GetStreamBogus:
+							if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
+							{
+								core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr]);
+								core->immediateBufferPtr++;
+							}
+							else
+							{
+								core->DeviceError();
+							}
+							break;
+
+						case DduThreadState::Idle:
+							break;
+
+						default:
+							core->DeviceError();
+							break;
+					}
+				}
 			}
+
+			// Sleep until next transfer
+			core->dduThread->Suspend();
 		}
-
-		// Sleep until next transfer
-		core->dduThread->Suspend();
 	}
 
 	void DduCore::DvdAudioThreadProc(void* Parameter)
 	{
+		Sleep(10);
 
 		// Sleep until streaming is not started again
 	}
@@ -50,6 +254,9 @@ namespace DVD
 		dduThread->Suspend();
 		ddBusBusy = false;
 		errorState = false;
+		commandPtr = 0;
+		dataCachePtr = cacheSize;
+		state = DduThreadState::WriteCommand;
 	}
 
 	void DduCore::Break()
@@ -92,7 +299,7 @@ namespace DVD
 	void DduCore::DeviceError()
 	{
 		DBReport2(DbgChannel::DVD, "DeviceError\n");
-		// Will deassert DIERRb after the next command is received from the host
+		// Will deassert DIERR after the next command is received from the host
 		errorState = true;
 		ddBusBusy = false;
 		if (errorCallback)
@@ -106,8 +313,8 @@ namespace DVD
 	{
 		DBReport2(DbgChannel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
 
-		errorState = false;
 		ddBusBusy = true;
+		busDir = direction;
 
 		dduThread->Resume();
 	}
@@ -116,115 +323,32 @@ namespace DVD
 	{
 		DBReport2(DbgChannel::DVD, "TransferComplete");
 		ddBusBusy = false;
+
+		switch (state)
+		{
+			case DduThreadState::WriteCommand:
+				// Invalidate reading cache
+				dataCachePtr = cacheSize;
+				break;
+
+			case DduThreadState::Idle:
+			case DduThreadState::ReadDvdData:
+			case DduThreadState::ReadManufactureInfo:
+			case DduThreadState::GetStreamEnable:
+			case DduThreadState::GetStreamOffset:
+			case DduThreadState::GetStreamBogus:
+				state = DduThreadState::WriteCommand;
+				break;
+		}
+
+		if (busDir == DduBusDirection::DduToHost)
+		{
+			stats.dduToHostTransferCount++;
+		}
+		else
+		{
+			stats.hostToDduTransferCount++;
+		}
 	}
-
-// execute DVD command
-#if 0
-static void DICommand()
-{
-    uint32_t dimar = DIMAR & RAMMASK;
-
-    if (di.log)
-    {
-        //DBReport2(DbgChannel::DI, "%08X %08X %08X\n", di.cmdbuf[0], di.cmdbuf[1], di.cmdbuf[2]);
-    }
-
-    switch(di.cmdbuf[0] >> 24)
-    {
-        case 0x12:          // read manufacture info (DMA)
-            memset(&mi.ram[dimar], 0, 0x20);
-            DILEN = 0;
-            break;
-
-        case 0xA8:          // read sector (disk id) (DMA)
-            // Non-DMA disk transfer
-            assert(DICR & DI_CR_DMA);
-            // Not aligned disk DMA transfer. Should be on 32-byte boundary.
-            assert((DILEN & 0x1f) == 0);
-
-            BeginProfileDVD();
-            DVD::Seek(di.cmdbuf[1] << 2);
-            DVD::Read(&mi.ram[dimar], DILEN);
-            EndProfileDVD();
-
-            if (di.log)
-            {
-                DBReport2(DbgChannel::DI, "dma transfer (dimar:%08X, ofs:%08X, len:%i b)\n",
-                    DIMAR, di.cmdbuf[1] << 2, DILEN);
-            }
-            DILEN = 0;
-            break;
-
-        case 0xAB:          // seek
-            break;
-
-        case 0xE3:          // stop motor (IMM)
-            if (di.log)
-            {
-                DBReport2(DbgChannel::DI, "Stop Motor\n");
-            }
-            break;
-
-        case 0xE1:          // set stream (IMM).
-            if(di.cmdbuf[1] << 2)
-            {
-                di.strseek  = di.cmdbuf[1] << 2;
-                di.strcount = di.cmdbuf[2];
-
-                if (di.log)
-                {
-                    DBReport2(DbgChannel::DI, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
-                        di.strseek, di.strcount);
-                }
-            }
-            break;
-
-        case 0xE2:          // get stream status (IMM)
-            switch ((di.cmdbuf[0] >> 16) & 0xFF)
-            {
-                case 0:             // Get stream enable
-                    di.immbuf = di.streaming & 1;
-                    break;
-                case 1:             // Get stream address
-                    di.immbuf = di.strseek >> 2;
-                    break;
-                default:
-                    DBReport2(DbgChannel::DI, "Unknown GetStreamStatus: %i\n", (di.cmdbuf[0] >> 16) & 0xFF);
-                    break;
-            }
-            break;
-
-        case 0xE4:          // stream control (IMM)
-            di.streaming = (di.cmdbuf[0] >> 16) & 1;
-            if (di.log)
-            {
-                DBReport2(DbgChannel::DI, "DVD Streaming. Play(?) : %s\n", di.streaming ? "On" : "Off");
-            }
-            break;
-
-        // unknown command
-        default:
-            UI::DolwinError(
-                _T("DVD Subsystem Failure"),
-                _T("Unknown DVD command : %08X\n\n")
-                _T("type:%s\n")
-                _T("dma:%s\n")
-                _T("madr:%08X\n")
-                _T("dlen:%08X\n")
-                _T("imm:%08X\n"),
-                di.cmdbuf[0],
-                (DICR & DI_CR_RW) ? (_T("write")) : (_T("read")),
-                (DICR & DI_CR_DMA) ? (_T("yes")) : (_T("no")),
-                DIMAR,
-                DILEN,
-                di.immbuf
-            );
-            return;
-    }
-
-    DICR &= ~DI_CR_TSTART;
-    DIINT();
-}
-#endif 
 
 }

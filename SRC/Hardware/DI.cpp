@@ -4,6 +4,10 @@
 // DI state (registers and other data)
 DIControl di;
 
+static uint8_t DIHostToDduCallbackCommand();
+static uint8_t DIHostToDduCallbackData();
+static void DIDduToHostCallback(uint8_t data);
+
 // ---------------------------------------------------------------------------
 // cover control. Callbacks are issued from DDU 
 
@@ -39,6 +43,9 @@ static void DIErrorCallback()
     {
         PIAssertInt(PI_INTERRUPT_DI);
     }
+
+    DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
+
     EndProfileDVD();
 }
 
@@ -48,6 +55,7 @@ static void DIErrorCallback()
 // DI breaks itself only after finishing next 32 Byte chunk of data
 static void DIBreak()
 {
+    DICR &= ~DI_CR_TSTART;
     DISR &= ~DI_SR_BRK;
 
     DISR |= DI_SR_BRKINT;
@@ -55,6 +63,9 @@ static void DIBreak()
     {
         PIAssertInt(PI_INTERRUPT_DI);
     }
+
+    DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
+
     EndProfileDVD();
 }
 
@@ -68,10 +79,46 @@ static void DITransferComplete()
     {
         PIAssertInt(PI_INTERRUPT_DI);
     }
+
+    DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
+
     EndProfileDVD();
 }
 
-static uint8_t DIHostToDduCallback()
+static uint8_t DIHostToDduCallbackCommand()
+{
+    uint8_t data = 0;
+
+    // DI Imm Write Command (DILEN ignored)
+
+    if (di.hostToDduByteCounter < sizeof(di.cmdbuf))
+    {
+        data = di.cmdbuf[di.hostToDduByteCounter++];
+    }
+
+    if (di.hostToDduByteCounter >= sizeof(di.cmdbuf))
+    {
+        // Dont stop DDU Bus clock
+
+        // Issue transfer data
+
+        DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackData, DIDduToHostCallback);
+        DVD::DDU.StartTransfer(DICR & DI_CR_RW ? DVD::DduBusDirection::HostToDdu : DVD::DduBusDirection::DduToHost);
+
+        if (DICR & DI_CR_RW)
+        {
+            di.hostToDduByteCounter = 32;       // A special value that overloads the FIFO before reading the first byte from the DDU side.
+        }
+        else
+        {
+            di.dduToHostByteCounter = 0;
+        }
+    }
+
+    return data;
+}
+
+static uint8_t DIHostToDduCallbackData()
 {
     uint8_t data = 0;
 
@@ -81,6 +128,8 @@ static uint8_t DIHostToDduCallback()
 
         if (di.hostToDduByteCounter >= 32)
         {
+            di.hostToDduByteCounter = 0;
+
             if (DILEN)
             {
                 uint32_t dimar = DIMAR & DI_DIMAR_MASK;
@@ -89,40 +138,34 @@ static uint8_t DIHostToDduCallback()
                 DILEN -= 32;
             }
 
-            di.hostToDduByteCounter = 0;
+            if (DILEN == 0)
+            {
+                DVD::DDU.TransferComplete();        // Stop DDU Bus clock
+                DITransferComplete();
+                return 0;
+            }
+
+            if (DISR & DI_SR_BRK)
+            {
+                // Can break only after writing next chunk
+                DIBreak();
+                return 0;
+            }
         }
 
         data = di.dmaFifo[di.hostToDduByteCounter];
         di.hostToDduByteCounter++;
-
-        if (di.hostToDduByteCounter >= 32 && DILEN == 0)
-        {
-            DVD::DDU.TransferComplete();        // Stop DDU Bus clock
-            DITransferComplete();
-        }
-
-        if (di.hostToDduByteCounter >= 32 && (DISR & DI_SR_BRK))
-        {
-            // Can break only after writing next chunk
-            DIBreak();
-        }
     }
     else
     {
-        // DI Imm Write Command (DILEN ignored)
-
-        if (di.hostToDduByteCounter >= 32)
+        if (di.hostToDduByteCounter < sizeof(di.immbuf))
         {
-            di.hostToDduByteCounter = 0;
+            data = di.immbuf[di.hostToDduByteCounter++];
         }
 
-        if (di.hostToDduByteCounter < sizeof(di.cmdbuf))
+        if (di.hostToDduByteCounter >= sizeof(di.immbuf))
         {
-            data = di.cmdbuf[di.hostToDduByteCounter++];
-        }
-        else
-        {
-            DVD::DDU.TransferComplete();    // Stop DDU Bus clock
+            DVD::DDU.TransferComplete();        // Stop DDU Bus clock
             DITransferComplete();
         }
     }
@@ -140,6 +183,8 @@ static void DIDduToHostCallback(uint8_t data)
         di.dduToHostByteCounter++;
         if (di.dduToHostByteCounter >= 32)
         {
+            di.dduToHostByteCounter = 0;
+
             if (DISR & DI_SR_BRK)
             {
                 // Can break only after reading next chunk
@@ -154,12 +199,12 @@ static void DIDduToHostCallback(uint8_t data)
                 DIMAR += 32;
                 DILEN -= 32;
             }
-            else
+
+            if (DILEN == 0)
             {
                 DVD::DDU.TransferComplete();    // Stop DDU Bus clock
                 DITransferComplete();
             }
-            di.dduToHostByteCounter = 0;
         }
     }
     else
@@ -171,8 +216,10 @@ static void DIDduToHostCallback(uint8_t data)
             di.immbuf[di.dduToHostByteCounter] = data;
             di.dduToHostByteCounter++;
         }
-        else
+
+        if (di.dduToHostByteCounter >= sizeof(di.immbuf))
         {
+            di.dduToHostByteCounter = 0;
             DVD::DDU.TransferComplete();    // Stop DDU Bus clock
             DITransferComplete();
         }
@@ -230,18 +277,11 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     // start command
     if(DICR & DI_CR_TSTART)
     {
-        // Issue transfer
+        // Issue command
 
-        DVD::DDU.StartTransfer(DICR & DI_CR_RW ? DVD::DduBusDirection::HostToDdu : DVD::DduBusDirection::DduToHost);
-
-        if (DICR & DI_CR_RW)
-        {
-            di.hostToDduByteCounter = 32;       // A special value that overloads the FIFO before reading the first byte from the DDU side.
-        }
-        else
-        {
-            di.dduToHostByteCounter = 0;
-        }
+        di.hostToDduByteCounter = 0;
+        DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
+        DVD::DDU.StartTransfer(DVD::DduBusDirection::HostToDdu);
 
         BeginProfileDVD();
     }
@@ -369,7 +409,7 @@ void DIOpen()
     DVD::DDU.SetCoverOpenCallback(DIOpenCover);
     DVD::DDU.SetCoverCloseCallback(DICloseCover);
     DVD::DDU.SetErrorCallback(DIErrorCallback);
-    DVD::DDU.SetTransferCallbacks(DIHostToDduCallback, DIDduToHostCallback);
+    DVD::DDU.SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 
     // set 32-bit register traps
     MISetTrap(32, DI_SR     , read_sr      , write_sr);
