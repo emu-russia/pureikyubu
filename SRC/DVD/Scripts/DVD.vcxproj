@@ -46,6 +46,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\DduJdi.json" />
+    <None Include="..\..\..\Docs\HW\DiskInterface.md" />
+    <None Include="..\..\..\Docs\RE\FSTNotes.md" />
     <None Include="..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

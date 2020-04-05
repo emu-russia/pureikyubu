@@ -48,7 +48,7 @@ namespace DVD
 
 		switch (commandBuffer[0])
 		{
-			// read manufacture info (DMA)
+			// Inquiry, read manufacture info (DMA)
 			case 0x12:
 				state = DduThreadState::ReadBogusData;
 				break;

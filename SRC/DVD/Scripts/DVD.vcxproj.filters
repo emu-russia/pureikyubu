@@ -68,5 +68,7 @@
   <ItemGroup>
     <None Include="..\Readme.md" />
     <None Include="..\..\..\Data\DduJdi.json" />
+    <None Include="..\..\..\Docs\HW\DiskInterface.md" />
+    <None Include="..\..\..\Docs\RE\FSTNotes.md" />
   </ItemGroup>
 </Project>

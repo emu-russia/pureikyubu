@@ -63,7 +63,7 @@ typedef struct _DVDBB2
 typedef struct _DVDFileEntry
 {
     uint8_t      isDir;                  // 1, if directory
-    uint8_t      nameOffsetHi;      // Relative to FST start
+    uint8_t      nameOffsetHi;      // Relative to Name Table start
     uint16_t     nameOffsetLo;
     union
     {
@@ -79,6 +79,8 @@ typedef struct _DVDFileEntry
         };
     };
 } DVDFileEntry;
+
+// Additional information: FSTNotes.md
 
 #pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union
 
