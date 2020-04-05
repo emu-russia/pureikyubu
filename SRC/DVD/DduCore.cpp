@@ -52,7 +52,7 @@ namespace DVD
 				state = DduThreadState::ReadBogusData;
 				break;
 
-			// read sector (disk id)
+			// read sector / disk id
 			case 0xA8:
 				state = DduThreadState::ReadDvdData;
 				{
@@ -63,10 +63,17 @@ namespace DVD
 					seekVal = seekTemp << 2;
 
 					// Use transaction size as hint for pre-caching
-					transactionSize = (commandBuffer[8] << 24) |
-						(commandBuffer[9] << 16) |
-						(commandBuffer[10] << 8) |
-						(commandBuffer[11]);
+					if (commandBuffer[3] == 0x40)
+					{
+						transactionSize = sizeof(DiskID);
+					}
+					else
+					{
+						transactionSize = (commandBuffer[8] << 24) |
+							(commandBuffer[9] << 16) |
+							(commandBuffer[10] << 8) |
+							(commandBuffer[11]);
+					}
 				}
 				// Invalidate reading cache
 				dataCachePtr = dataCacheSize;

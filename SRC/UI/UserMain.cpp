@@ -155,6 +155,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
         MSG msg;
 
+        while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
+        {
+            Sleep(1);
+        }
+
         // Idle loop
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
