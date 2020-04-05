@@ -125,11 +125,6 @@ namespace DVD
 						break;
 					default:
 						state = DduThreadState::GetStreamBogus;
-						immediateBuffer[0] = 0;
-						immediateBuffer[1] = 0;
-						immediateBuffer[2] = 0;
-						immediateBuffer[3] = 0;
-						immediateBufferPtr = 0;
 						DBReport2(DbgChannel::DVD, "Unknown GetStreamStatus: %i\n", commandBuffer[1]);
 						break;
 				}
@@ -142,7 +137,7 @@ namespace DVD
 
 			// stream control (IMM)
 			case 0xE4:
-				state = DduThreadState::ReadBogusData;
+				state = DduThreadState::Idle;
 
 				if (commandBuffer[1] & 1)
 				{
@@ -160,7 +155,7 @@ namespace DVD
 				break;
 
 			default:
-				state = DduThreadState::ReadBogusData;
+				state = DduThreadState::Idle;
 
 				DBReport2(DbgChannel::DVD, "Unknown DDU command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 					commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
@@ -274,6 +269,7 @@ namespace DVD
 			}
 
 			// Sleep until next transfer
+			DBReport("dduThread->Suspend\n");
 			core->dduThread->Suspend();
 		}
 	}
@@ -342,7 +338,6 @@ namespace DVD
 		{
 			errorCallback();
 		}
-		dduThread->Suspend();
 	}
 
 	void DduCore::StartTransfer(DduBusDirection direction)
@@ -357,6 +352,7 @@ namespace DVD
 
 		savedGekkoTicks = Gekko::Gekko->GetTicks() + dduTicksPerByte;
 
+		DBReport("dduThread->Resume\n");
 		dduThread->Resume();
 	}
 
