@@ -48,14 +48,14 @@ void GCMSeek(int position)
     dvd.seekval = position;
 }
 
-void GCMRead(uint8_t*buf, size_t length)
+bool GCMRead(uint8_t*buf, size_t length)
 {
     FILE* gcm_file;
 
     if (dvd.gcm_filename[0] == 0)
     {
         memset(buf, 0, length);        // fill by zeroes
-        return;
+        return true;
     }
 
     _tfopen_s (&gcm_file, dvd.gcm_filename, _T("rb"));
@@ -68,7 +68,7 @@ void GCMRead(uint8_t*buf, size_t length)
             memset(buf, 0, length);     // fill by zeroes
             dvd.seekval += (int)length;
             fclose(gcm_file);
-            return;
+            return false;
         }
 
         // GCM files can be less than 1.4 GB,
@@ -78,7 +78,7 @@ void GCMRead(uint8_t*buf, size_t length)
             memset(buf, 0, length);     // fill by zeroes
             dvd.seekval += (int)length;
             fclose(gcm_file);
-            return;
+            return true;
         }
 
         // wrap, if seek is near to out of DVD
@@ -98,10 +98,17 @@ void GCMRead(uint8_t*buf, size_t length)
         {
             fseek(gcm_file, dvd.seekval, SEEK_SET);
             // https://stackoverflow.com/questions/295994/what-is-the-rationale-for-fread-fwrite-taking-size-and-count-as-arguments
-            fread(buf, 1, length, gcm_file);
+            size_t bytesRead = fread(buf, 1, length, gcm_file);
             fclose(gcm_file);
             dvd.seekval += (int)length;
+            return (bytesRead == length);
         }
     }
-    else memset(buf, 0, length);        // fill by zeroes
+    else
+    {
+        memset(buf, 0, length);        // fill by zeroes
+        return false;
+    }
+
+    return true;
 }

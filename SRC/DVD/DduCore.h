@@ -35,7 +35,7 @@ namespace DVD
 	{
 		Idle = 0,
 		WriteCommand,
-		ReadManufactureInfo,
+		ReadBogusData,
 		ReadDvdData,
 		GetStreamEnable,
 		GetStreamOffset,
@@ -44,6 +44,11 @@ namespace DVD
 
 	class DduCore
 	{
+		static const int transferRate = 2000000;	// Bytes / second
+		int64_t savedGekkoTicks = 0;
+		int64_t dduTicksPerByte = 0;
+		bool transferRateNoLimit = false;
+		
 		CoverStatus coverStatus = CoverStatus::Close;
 		DduCallback openCoverCallback = nullptr;
 		DduCallback closeCoverCallback = nullptr;
@@ -61,7 +66,8 @@ namespace DVD
 		int commandPtr = 0;
 		uint8_t immediateBuffer[4] = { 0 };
 		int immediateBufferPtr = 0;
-		static const size_t cacheSize = 32 * 1024;
+		static const size_t dataCacheSize = 512 * 1024;
+		static const size_t streamCacheSize = 32 * 1024;
 		uint8_t* dataCache = nullptr;
 		uint8_t* streamingCache = nullptr;
 		int dataCachePtr = 0;
@@ -70,6 +76,7 @@ namespace DVD
 		uint32_t seekVal = 0;
 		uint32_t streamSeekVal = 0;
 		uint32_t streamCount = 0;
+		size_t transactionSize = 0;
 
 		Thread* dduThread = nullptr;
 		static void DduThreadProc(void* Parameter);
@@ -78,6 +85,8 @@ namespace DVD
 		static void DvdAudioThreadProc(void* Parameter);
 
 		void ExecuteCommand();
+
+		bool log = true;
 
 	public:
 		DduCore();

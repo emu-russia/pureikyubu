@@ -10,6 +10,7 @@
 #include <windows.h>
 
 #include "../Debugger/Debugger.h"
+#include "../Core/Gekko.h"
 
 #include "DVD.h"
 #include "GCM.h"            // very simple GCM reading (for .gcm files)

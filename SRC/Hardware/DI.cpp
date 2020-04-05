@@ -426,6 +426,8 @@ void DIOpen()
 
 void DIClose()
 {
+    DVD::DDU.TransferComplete();
+
     DVD::DDU.SetCoverOpenCallback(nullptr);
     DVD::DDU.SetCoverCloseCallback(nullptr);
     DVD::DDU.SetErrorCallback(nullptr);

@@ -6,15 +6,19 @@ namespace DVD
 
 	DduCore::DduCore()
 	{
+		dduTicksPerByte = Gekko::Gekko->OneSecond() / transferRate;
+
 		dduThread = new Thread(DduThreadProc, true, this);
 		assert(dduThread);
 		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this);
 		assert(dvdAudioThread);
 
-		dataCache = new uint8_t[cacheSize];
+		dataCache = new uint8_t[dataCacheSize];
 		assert(dataCache);
-		streamingCache = new uint8_t[cacheSize];
+		memset(dataCache, 0, dataCacheSize);
+		streamingCache = new uint8_t[streamCacheSize];
 		assert(streamingCache);
+		memset(streamingCache, 0, streamCacheSize);
 
 		Reset();
 	}
@@ -33,16 +37,19 @@ namespace DVD
 
 		errorState = false;
 
-		DBReport2(DbgChannel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
-			commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
-			commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
-			commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
+		if (log)
+		{
+			DBReport2(DbgChannel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+				commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
+				commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
+				commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
+		}
 
 		switch (commandBuffer[0])
 		{
 			// read manufacture info (DMA)
 			case 0x12:
-				state = DduThreadState::ReadManufactureInfo;
+				state = DduThreadState::ReadBogusData;
 				break;
 
 			// read sector (disk id)
@@ -54,18 +61,25 @@ namespace DVD
 						(commandBuffer[6] << 8) |
 						(commandBuffer[7]);
 					seekVal = seekTemp << 2;
+
+					// Use transaction size as hint for pre-caching
+					transactionSize = (commandBuffer[8] << 24) |
+						(commandBuffer[9] << 16) |
+						(commandBuffer[10] << 8) |
+						(commandBuffer[11]);
 				}
-				dataCachePtr = cacheSize;
+				// Invalidate reading cache
+				dataCachePtr = dataCacheSize;
 				break;
 
 			// seek
 			case 0xAB:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 				break;
 
 			// set stream (IMM)
 			case 0xE1:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 
 				{
 					uint32_t seekTemp = (commandBuffer[4] << 24) |
@@ -79,8 +93,11 @@ namespace DVD
 						(commandBuffer[11]);
 				}
 
-				DBReport2(DbgChannel::DVD, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
-					streamSeekVal, streamCount);
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
+						streamSeekVal, streamCount);
+				}
 				break;
 
 			// get stream status (IMM)
@@ -120,12 +137,12 @@ namespace DVD
 
 			// stop motor
 			case 0xE3:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 				break;
 
 			// stream control (IMM)
 			case 0xE4:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 
 				if (commandBuffer[1] & 1)
 				{
@@ -136,13 +153,16 @@ namespace DVD
 					dvdAudioThread->Suspend();
 				}
 
-				DBReport2(DbgChannel::DVD, "DVD Streaming. Play(?) : %s\n", (commandBuffer[1] & 1) ? "On" : "Off");
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "DVD Streaming. Play(?) : %s\n", (commandBuffer[1] & 1) ? "On" : "Off");
+				}
 				break;
 
 			default:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 
-				DBReport2(DbgChannel::DVD, "Unknown command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+				DBReport2(DbgChannel::DVD, "Unknown DDU command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 					commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
 					commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
 					commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
@@ -158,6 +178,20 @@ namespace DVD
 
 		while (true)
 		{
+			// Wait Gekko ticks
+			if (!core->transferRateNoLimit)
+			{
+				int64_t ticks = Gekko::Gekko->GetTicks();
+				if (ticks >= core->savedGekkoTicks)
+				{
+					core->savedGekkoTicks = ticks + core->dduTicksPerByte;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
 			// Until break or transfer completed
 			while (core->ddBusBusy)
 			{
@@ -191,13 +225,15 @@ namespace DVD
 					{
 						case DduThreadState::ReadDvdData:
 							// Read-ahead new DVD data
-							if (core->dataCachePtr >= core->cacheSize)
+							if (core->dataCachePtr >= core->dataCacheSize)
 							{
 								Seek(core->seekVal);
-								Read(core->dataCache, core->cacheSize);
-								core->seekVal += core->cacheSize;
+								size_t bytes = min(core->dataCacheSize, core->transactionSize);
+								bool readResult = Read(core->dataCache, bytes);
+								core->seekVal += bytes;
+								core->transactionSize -= bytes;
 
-								if (core->seekVal >= DVD_SIZE)
+								if (core->seekVal >= DVD_SIZE || !readResult)
 								{
 									core->DeviceError();
 								}
@@ -209,7 +245,7 @@ namespace DVD
 							core->dataCachePtr++;
 							break;
 
-						case DduThreadState::ReadManufactureInfo:
+						case DduThreadState::ReadBogusData:
 							core->dduToHostCallback(0);
 							break;
 
@@ -255,14 +291,14 @@ namespace DVD
 		ddBusBusy = false;
 		errorState = false;
 		commandPtr = 0;
-		dataCachePtr = cacheSize;
+		dataCachePtr = dataCacheSize;
 		state = DduThreadState::WriteCommand;
 	}
 
 	void DduCore::Break()
 	{
 		// Abort data transfer
-		DBReport2(DbgChannel::DVD, "Break");
+		DBReport2(DbgChannel::DVD, "DDU Break");
 		ddBusBusy = false;
 	}
 
@@ -298,7 +334,7 @@ namespace DVD
 
 	void DduCore::DeviceError()
 	{
-		DBReport2(DbgChannel::DVD, "DeviceError\n");
+		DBReport2(DbgChannel::DVD, "DDU DeviceError\n");
 		// Will deassert DIERR after the next command is received from the host
 		errorState = true;
 		ddBusBusy = false;
@@ -311,29 +347,38 @@ namespace DVD
 
 	void DduCore::StartTransfer(DduBusDirection direction)
 	{
-		DBReport2(DbgChannel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
+		if (log)
+		{
+			DBReport2(DbgChannel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
+		}
 
 		ddBusBusy = true;
 		busDir = direction;
+
+		savedGekkoTicks = Gekko::Gekko->GetTicks() + dduTicksPerByte;
 
 		dduThread->Resume();
 	}
 
 	void DduCore::TransferComplete()
 	{
-		DBReport2(DbgChannel::DVD, "TransferComplete");
+		if (log)
+		{
+			DBReport2(DbgChannel::DVD, "TransferComplete");
+		}
+
 		ddBusBusy = false;
 
 		switch (state)
 		{
 			case DduThreadState::WriteCommand:
 				// Invalidate reading cache
-				dataCachePtr = cacheSize;
+				dataCachePtr = dataCacheSize;
 				break;
 
 			case DduThreadState::Idle:
 			case DduThreadState::ReadDvdData:
-			case DduThreadState::ReadManufactureInfo:
+			case DduThreadState::ReadBogusData:
 			case DduThreadState::GetStreamEnable:
 			case DduThreadState::GetStreamOffset:
 			case DduThreadState::GetStreamBogus:
