@@ -25,6 +25,7 @@ namespace DVD
 
 	DduCore::~DduCore()
 	{
+		TransferComplete();
 		delete dduThread;
 		delete dvdAudioThread;
 		delete[] dataCache;
