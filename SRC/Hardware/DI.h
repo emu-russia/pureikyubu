@@ -57,20 +57,10 @@ typedef struct DIControl
     int             dduToHostByteCounter;
     int             hostToDduByteCounter;
 
-    // PHASING OUT
-    bool            streaming;      // true: streaming audio enabled
-    uint32_t        strseek;        // streaming position on disk
-    int32_t         strcount;       // streaming counter (streaming will stop, when reach zero)
-    uint8_t         workArea[32];   // streaming work area
-
-
     bool            log;
 } DIControl;
 
 extern  DIControl di;
-
-// PHASING OUT
-void    DIStreamUpdate();       // update DVD streaming playback
 
 void    DIOpen();
 void    DIClose();

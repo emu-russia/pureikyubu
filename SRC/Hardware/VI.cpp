@@ -369,7 +369,7 @@ void VIOpen(HWConfig * config)
     memset(&vi, 0, sizeof(VIControl));
 
     vi.hwndMain = config->hwndMain;
-    vi.one_second = config->one_second;
+    vi.one_second = Gekko::Gekko->OneSecond();
 
     // read VI settings
     vi.log = config->vi_log;

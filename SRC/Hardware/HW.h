@@ -6,8 +6,6 @@
 // hardware registers base (physical address)
 #define HW_BASE         0x0C000000
 
-extern	DSP::DspCore* dspCore;      // instance of dsp core
-
 namespace Flipper
 {
 	class Flipper
@@ -19,6 +17,7 @@ namespace Flipper
 		Thread* hwUpdateThread = nullptr;
 
 	public:
+		DSP::DspCore* DSP;      // instance of dsp core
 		AudioMixer* Mixer = nullptr;
 
 		Flipper(HWConfig* config);

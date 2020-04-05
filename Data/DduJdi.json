@@ -34,6 +34,10 @@
 			"help": "Show some stats"
 		},
 
+		"DvdResetStats": {
+			"help": "Reset stats"
+		},
+
 		"MountSDK": {
 			"help": "Mount Dolphin SDK folder as virtual disk",
 			"hints": "<dir>",

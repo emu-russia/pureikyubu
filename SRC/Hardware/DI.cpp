@@ -353,45 +353,6 @@ static void __fastcall write_immbuf(uint32_t addr, uint32_t data)  { *(uint32_t*
 static void __fastcall read_cfg(uint32_t addr, uint32_t *reg) { *reg = 0; }
 
 // ---------------------------------------------------------------------------
-// step DVD stream buffer
-
-void DIStreamUpdate()
-{
-    int32_t count = sizeof(di.workArea);
-
-    if(di.streaming && (ai.cr & AICR_PSTAT))
-    {
-        // load new data
-        BeginProfileDVD();
-        DVD::Seek(di.strseek);
-        DVD::Read(di.workArea, count);
-        EndProfileDVD();
-
-        Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::DvdAudio, di.workArea, count);
-
-        // step forward
-        di.strseek += count;
-        di.strcount -= count;
-
-        if (di.strcount <= 0)
-        {
-            DBReport2(DbgChannel::DI, "Streaming stops\n");
-            di.streaming = false;
-        }
-    }
-
-    // *** update stream sample counter ***
-    if (ai.cr & AICR_PSTAT)
-    {
-        ai.scnt += count;
-        if (ai.scnt >= ai.it)
-        {
-            AISINT();
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------
 // init
 
 void DIOpen()

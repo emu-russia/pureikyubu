@@ -2,8 +2,6 @@
 // IMPORTANT: whole HW should use physical CPU addressing, not effective!
 #include "pch.h"
 
-DSP::DspCore* dspCore;      // instance of dsp core
-
 namespace Flipper
 {
     Flipper* HW;
@@ -39,11 +37,6 @@ namespace Flipper
         Mixer = new AudioMixer;
         assert(Mixer);
 
-        Mixer->SetVolumeL(AxChannel::DvdAudio, 0);
-        Mixer->SetVolumeR(AxChannel::DvdAudio, 0);
-        Mixer->SetVolumeL(AxChannel::AudioDma, 0xff);
-        Mixer->SetVolumeR(AxChannel::AudioDma, 0xff);
-
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
         CPOpen(config); // fifo
@@ -54,8 +47,8 @@ namespace Flipper
         SIOpen();       // GC controllers
         PIOpen(config); // interrupts, console regs
 
-        dspCore = new DSP::DspCore(config);
-        assert(dspCore);
+        DSP = new DSP::DspCore(config);
+        assert(DSP);
 
         DBReport("\n");
 
@@ -77,11 +70,7 @@ namespace Flipper
         delete Mixer;
         GXClose();
 
-        if (dspCore)
-        {
-            delete dspCore;
-            dspCore = nullptr;
-        }
+        delete DSP;
 
         ARClose();      // release ARAM
         EIClose();      // take care about closing of memcards and BBA
@@ -96,12 +85,6 @@ namespace Flipper
         VIUpdate();
         SIPoll();
         CPUpdate();     // GX fifo - Bogus
-
-        // update audio
-        AIUpdate();
-
-        // update DVD audio
-        DIStreamUpdate();
     }
 
 }

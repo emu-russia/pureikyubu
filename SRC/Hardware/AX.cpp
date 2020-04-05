@@ -20,14 +20,6 @@ namespace Flipper
 	{
 	}
 
-	void AudioMixer::SetVolumeL(AxChannel channel, uint8_t volume)
-	{
-	}
-
-	void AudioMixer::SetVolumeR(AxChannel channel, uint8_t volume)
-	{
-	}
-
 	void AudioMixer::SetSampleRate(AxChannel channel, AudioSampleRate value)
 	{
 	}

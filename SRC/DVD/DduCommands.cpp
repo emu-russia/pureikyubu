@@ -91,9 +91,22 @@ namespace DVD
 	// Show some stats
 	static Json::Value* DvdStats(std::vector<std::string>& args)
 	{
-		DBReport2(DbgChannel::DVD, "DvdStats Bogus\n");
+		DBReport("DvdStats:\n");
 
-		// Bogus
+		DBReport("BytesRead: %I64u\n", DDU.stats.bytesRead);
+		DBReport("BytesWrite: %I64u\n", DDU.stats.bytesWrite);
+		DBReport("Host->DDU transfers: %i\n", DDU.stats.hostToDduTransferCount);
+		DBReport("DDU->Host transfers: %i\n", DDU.stats.dduToHostTransferCount);
+		DBReport("SampleCounter: %I64u\n", DDU.stats.sampleCounter);
+
+		return nullptr;
+	}
+
+	// Reset stats
+	static Json::Value* DvdResetStats(std::vector<std::string>& args)
+	{
+		DDU.ResetStats();
+
 		return nullptr;
 	}
 
@@ -445,6 +458,7 @@ namespace DVD
 		Debug::Hub.AddCmd("OpenLid", OpenLid);
 		Debug::Hub.AddCmd("CloseLid", CloseLid);
 		Debug::Hub.AddCmd("DvdStats", DvdStats);
+		Debug::Hub.AddCmd("DvdResetStats", DvdResetStats);
 		Debug::Hub.AddCmd("MountSDK", MountSDK);
 		Debug::Hub.AddCmd("UnmountDvd", UnmountDvd);
 		Debug::Hub.AddCmd("DvdSeek", DvdSeek);

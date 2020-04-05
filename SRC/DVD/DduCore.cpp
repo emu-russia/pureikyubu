@@ -6,8 +6,6 @@ namespace DVD
 
 	DduCore::DduCore()
 	{
-		dduTicksPerByte = Gekko::Gekko->OneSecond() / transferRate;
-
 		dduThread = new Thread(DduThreadProc, true, this);
 		assert(dduThread);
 		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this);
@@ -37,6 +35,7 @@ namespace DVD
 		// Execute command
 
 		errorState = false;
+		errorCode = 0;
 
 		if (log)
 		{
@@ -110,7 +109,7 @@ namespace DVD
 						immediateBuffer[0] = 0;
 						immediateBuffer[1] = 0;
 						immediateBuffer[2] = 0;
-						immediateBuffer[3] = dvdAudioThread->IsRunning() ? 1 : 0;
+						immediateBuffer[3] = streamEnabledByDduCommand ? 1 : 0;
 						immediateBufferPtr = 0;
 						break;
 					case 1:             // Get stream address
@@ -138,16 +137,20 @@ namespace DVD
 
 			// stream control (IMM)
 			case 0xE4:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 
 				if (commandBuffer[1] & 1)
 				{
-					dvdAudioThread->Resume();
+					SetDvdAudioSampleRate(sampleRate);
+					streamEnabledByDduCommand = true;
 				}
 				else
 				{
-					dvdAudioThread->Suspend();
+					streamEnabledByDduCommand = false;
 				}
+
+				// Invalidate streaming cache
+				streamingCachePtr = streamCacheSize;
 
 				if (log)
 				{
@@ -156,7 +159,7 @@ namespace DVD
 				break;
 
 			default:
-				state = DduThreadState::Idle;
+				state = DduThreadState::ReadBogusData;
 
 				DBReport2(DbgChannel::DVD, "Unknown DDU command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 					commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
@@ -199,6 +202,7 @@ namespace DVD
 							if (core->commandPtr < sizeof(core->commandBuffer))
 							{
 								core->commandBuffer[core->commandPtr] = core->hostToDduCallback();
+								core->stats.bytesWrite++;
 								core->commandPtr++;
 							}
 
@@ -211,7 +215,7 @@ namespace DVD
 						// Hidden debug commands are not supported yet
 
 						default:
-							core->DeviceError();
+							core->DeviceError(0);
 							break;
 					}
 				}
@@ -221,28 +225,30 @@ namespace DVD
 					{
 						case DduThreadState::ReadDvdData:
 							// Read-ahead new DVD data
-							if (core->dataCachePtr >= core->dataCacheSize)
+							if (core->dataCachePtr >= dataCacheSize)
 							{
 								Seek(core->seekVal);
-								size_t bytes = min(core->dataCacheSize, core->transactionSize);
+								size_t bytes = min(dataCacheSize, core->transactionSize);
 								bool readResult = Read(core->dataCache, bytes);
 								core->seekVal += bytes;
 								core->transactionSize -= bytes;
 
 								if (core->seekVal >= DVD_SIZE || !readResult)
 								{
-									core->DeviceError();
+									core->DeviceError(0);
 								}
 
 								core->dataCachePtr = 0;
 							}
 
 							core->dduToHostCallback(core->dataCache[core->dataCachePtr]);
+							core->stats.bytesRead++;
 							core->dataCachePtr++;
 							break;
 
 						case DduThreadState::ReadBogusData:
 							core->dduToHostCallback(0);
+							core->stats.bytesRead++;
 							break;
 
 						case DduThreadState::GetStreamEnable:
@@ -251,11 +257,12 @@ namespace DVD
 							if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
 							{
 								core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr]);
+								core->stats.bytesRead++;
 								core->immediateBufferPtr++;
 							}
 							else
 							{
-								core->DeviceError();
+								core->DeviceError(0);
 							}
 							break;
 
@@ -263,33 +270,148 @@ namespace DVD
 							break;
 
 						default:
-							core->DeviceError();
+							core->DeviceError(0);
 							break;
 					}
 				}
 			}
 
 			// Sleep until next transfer
-			DBReport("dduThread->Suspend\n");
 			core->dduThread->Suspend();
+		}
+	}
+
+	// Enabling AISCLK forces the DDU to issue samples out even if there are none (zeros goes to output).
+	void DduCore::EnableAudioStreamClock(bool enable)
+	{
+		if (enable)
+		{
+			dvdAudioThread->Resume();
+		}
+		else
+		{
+			dvdAudioThread->Suspend();
 		}
 	}
 
 	void DduCore::DvdAudioThreadProc(void* Parameter)
 	{
-		Sleep(10);
+		uint16_t sample[2] = { 0, 0 };
+		DduCore* core = (DduCore*)Parameter;
 
-		// Sleep until streaming is not started again
+		while (true)
+		{
+			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will output only zeros.
+
+			// If its time to send sample
+			int64_t ticks = Gekko::Gekko->GetTicks();
+			if (ticks < core->nextGekkoTicksToSample)
+			{
+				continue;
+			}
+			core->nextGekkoTicksToSample = ticks + core->TicksPerSample();
+
+			// Invalidate cache
+			if (core->streamEnabledByDduCommand)
+			{
+				if (core->streamingCachePtr >= streamCacheSize)
+				{
+					Seek(core->streamSeekVal);
+					bool readResult = Read(core->streamingCache, streamCacheSize);
+
+					if (!readResult)
+					{
+						core->DeviceError(0);
+					}
+				}
+			}
+
+			// From changing the playback frequency, the size of the ADPCM data does not change. The frequency of samples output to the outside changes.
+
+			if (core->streamEnabledByDduCommand)
+			{
+				uint8_t* rawPtr = &core->streamingCache[core->streamingCachePtr];
+
+				// TODO: Decode next Adpcm sample (LR)
+				// Dirty hack to hear some noise
+				sample[0] = (rawPtr[0] << 8) | rawPtr[1];
+				sample[1] = (rawPtr[2] << 8) | rawPtr[3];
+
+				core->streamSeekVal += 4;
+				core->streamingCachePtr += 4;
+			}
+			else
+			{
+				sample[0] = 0;
+				sample[1] = 0;
+			}
+
+			// Send sample
+
+			if (core->streamCallback)
+			{
+				if (core->streamClockEnabled)
+				{
+					core->streamCallback(sample[0], sample[1]);
+				}
+				else
+				{
+					// If AIS clock is disabled just send zeros
+					core->streamCallback(0, 0);
+				}
+			}
+
+			core->stats.sampleCounter++;
+
+			if (core->streamEnabledByDduCommand)
+			{
+				core->streamCount--;
+				if (core->streamCount == 0)
+				{
+					core->streamEnabledByDduCommand = false;
+				}
+			}
+		}
 	}
 
+	// Calculates how many Gekko ticks takes 1 sample, at the selected sample rate.
+	int64_t DduCore::TicksPerSample()
+	{
+		if (sampleRate == DvdAudioSampleRate::Rate_32000)
+		{
+			// 32 kHz means 32,000 LR samples per second come from DVD Audio.
+			// To find out how many ticks a sample takes, you need to divide the number of Gekko ticks per second by 32000.
+			return gekkoOneSecond / 32000;
+		}
+		else
+		{
+			return gekkoOneSecond / 48000;
+		}
+	}
+
+	void DduCore::SetDvdAudioSampleRate(DvdAudioSampleRate rate)
+	{
+		sampleRate = rate;
+		nextGekkoTicksToSample = Gekko::Gekko->GetTicks() + TicksPerSample();
+	}
+
+	// Reset internal state. If you forget something, then it will come out later..
 	void DduCore::Reset()
 	{
 		dduThread->Suspend();
+		dvdAudioThread->Suspend();
 		ddBusBusy = false;
 		errorState = false;
 		commandPtr = 0;
 		dataCachePtr = dataCacheSize;
+		streamingCachePtr = streamCacheSize;
 		state = DduThreadState::WriteCommand;
+		ResetStats();
+		streamClockEnabled = false;
+		gekkoOneSecond = Gekko::Gekko->OneSecond();
+		dduTicksPerByte = gekkoOneSecond / transferRate;
+		SetDvdAudioSampleRate(DvdAudioSampleRate::Rate_48000);
+		streamEnabledByDduCommand = false;
 	}
 
 	void DduCore::Break()
@@ -329,11 +451,12 @@ namespace DVD
 		}
 	}
 
-	void DduCore::DeviceError()
+	void DduCore::DeviceError(uint32_t reason)
 	{
-		DBReport2(DbgChannel::DVD, "DDU DeviceError\n");
+		DBReport2(DbgChannel::DVD, "DDU DeviceError: %08X\n", reason);
 		// Will deassert DIERR after the next command is received from the host
 		errorState = true;
+		errorCode = reason;
 		ddBusBusy = false;
 		if (errorCallback)
 		{
@@ -353,7 +476,6 @@ namespace DVD
 
 		savedGekkoTicks = Gekko::Gekko->GetTicks() + dduTicksPerByte;
 
-		DBReport("dduThread->Resume\n");
 		dduThread->Resume();
 	}
 

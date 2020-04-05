@@ -33,9 +33,6 @@ namespace Flipper
 		AudioMixer();
 		~AudioMixer();
 
-		void SetVolumeL(AxChannel channel, uint8_t volume);
-		void SetVolumeR(AxChannel channel, uint8_t volume);
-
 		void SetSampleRate(AxChannel channel, AudioSampleRate value);
 
 		void PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize);

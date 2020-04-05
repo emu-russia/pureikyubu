@@ -35,8 +35,6 @@ typedef struct _HWConfig
     TCHAR       MemcardB_Filename[0x1000];
     bool        Memcard_SyncSave;
 
-    int64_t     one_second;         // one CPU second in timer ticks
-
     TCHAR       BootromFilename[0x1000];
     TCHAR       DspDromFilename[0x1000];
     TCHAR       DspIromFilename[0x1000];

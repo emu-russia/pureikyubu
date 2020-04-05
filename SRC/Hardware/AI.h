@@ -33,13 +33,13 @@
 #define AID_EN              (1 << 15)
 
 // Audio Interface Control Register mask
-#define AICR_DFR            (1 << 6)        // AID sample rate (HW2 only)
+#define AICR_DFR            (1 << 6)        // AID sample rate (HW2 only). 0 - 32000, 1 - 48000
 #define AICR_SCRESET        (1 << 5)        // reset sample counter
-#define AICR_AIINTVLD       (1 << 4)        // allowing to set AIINT
-#define AICR_AIINT          (1 << 3)        // interrupt status
-#define AICR_AIINTMSK       (1 << 2)        // interrupt mask
-#define AICR_AFR            (1 << 1)        // AIS sample rate
-#define AICR_PSTAT          (1 << 0)        // turn on/off streaming clock
+#define AICR_AIINTVLD       (1 << 4)        // This bit controls whether AIINT is affected by the AIIT register matching (0 - match affects, 1 - not)
+#define AICR_AIINT          (1 << 3)        // AIS interrupt status
+#define AICR_AIINTMSK       (1 << 2)        // AIS interrupt mask
+#define AICR_AFR            (1 << 1)        // AIS sample rate. 0 - 32000, 1 - 48000
+#define AICR_PSTAT          (1 << 0)        // This bit enables the DDU AISLR clock
 
 // sample rate (DFR and AFR bits)
 #define AI_32000            0
@@ -62,7 +62,7 @@ typedef struct AIREG
 typedef struct AIControl
 {
     // AID
-    std::atomic<uint16_t>    dcr;   // AI/DSP control register
+    std::atomic<uint16_t> dcr;  // AI/DSP control register
     AIREG       madr;           // DMA address
     uint16_t    len;            // DMA control/DMA length (length of audio data)
     uint16_t    dcnt;           // DMA count-down
@@ -78,18 +78,18 @@ typedef struct AIControl
     int32_t     dmaRate;        // copy of DFR value (32000/48000)
     uint64_t    dmaTime;        // audio DMA update time 
 
+    Thread*     audioThread;    // The main AI thread that receives samples from AI DMA FIFO and DVD Audio (which accumulate in AIS FIFO).
+                                // When FIFOs overflow - AudioThread Feed Mixer.
+
+    uint8_t     streamFifo[32];
+    size_t      streamFifoPtr;
+
     int64_t     one_second;     // one CPU second in timer ticks
     bool        log;            // Enable AI log
 } AIControl;
 
 extern  AIControl ai;
 
-void    AIDINT();
-void    AISINT();
-
-int64_t AIGetTime(size_t dmaBytes, long rate);
-
-void    AIUpdate();
 void    AIOpen(HWConfig * config);
 void    AIClose();
 
