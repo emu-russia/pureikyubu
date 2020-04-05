@@ -77,7 +77,7 @@ namespace DVD
 		bool Mounted() { return mounted; }
 
 		void Seek(int position);
-		void Read(void* buffer, size_t length);
+		bool Read(void* buffer, size_t length);
 
 		int GetSeek() { return currentSeek; }
 		TCHAR* GetDirectory() { return directory; }

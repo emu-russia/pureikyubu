@@ -155,20 +155,22 @@ namespace DVD
 		currentSeek = (uint32_t)position;
 	}
 
-	void MountDolphinSdk::Read(void* buffer, size_t length)
+	bool MountDolphinSdk::Read(void* buffer, size_t length)
 	{
+		bool result = true;
+
 		assert(buffer);
 
 		if (!mounted)
 		{
 			memset(buffer, 0, length);
-			return;
+			return true;
 		}
 
 		if (currentSeek >= DVD_SIZE)
 		{
 			memset(buffer, 0, length);
-			return;
+			return false;
 		}
 
 		size_t maxLength = 0;
@@ -197,10 +199,12 @@ namespace DVD
 			else
 			{
 				memset(buffer, 0, length);
+				result = false;
 			}
 		}
 
 		currentSeek += (uint32_t)length;
+		return result;
 	}
 
 	#pragma region "Data Generators"

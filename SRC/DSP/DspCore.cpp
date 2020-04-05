@@ -669,7 +669,10 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DIRQ:
 					if (value & 1)
 					{
-						DBReport2(DbgChannel::DSP, "DspHardwareRegs::DIRQ\n");
+						if (log)
+						{
+							DBReport2(DbgChannel::DSP, "DspHardwareRegs::DIRQ\n");
+						}
 						DSPAssertInt();
 					}
 					break;
@@ -843,13 +846,19 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+		if (log)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+		}
 		CpuToDspMailboxShadow[0] = value;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+		if (log)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+		}
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
@@ -886,13 +895,19 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
+		if (log)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
+		}
 		DspToCpuMailboxShadow[0] = value;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
+		if (log)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
+		}
 		DspToCpuMailbox[1] = value;
 		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}

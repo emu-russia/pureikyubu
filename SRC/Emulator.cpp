@@ -44,9 +44,7 @@ void EMUOpen()
         return;
 
     // open other sub-systems
-    Gekko::Gekko = new Gekko::GekkoCore;
-    assert(Gekko::Gekko);
-
+    Gekko::Gekko->Reset();
     HWConfig* hwconfig = new HWConfig;
     memset(hwconfig, 0, sizeof(HWConfig));
     EMUGetHwConfig(hwconfig);
@@ -91,11 +89,10 @@ void EMUClose()
 
     HLEClose();
 
-    delete Gekko::Gekko;
-    Gekko::Gekko = nullptr;
-
     delete Flipper::HW;
     Flipper::HW = nullptr;
+
+    Gekko::Gekko->Suspend();
 
     // take care about user interface
     OnMainWindowClosed();
@@ -112,6 +109,8 @@ void EMUReset()
 
 void EMUCtor()
 {
+    Gekko::Gekko = new Gekko::GekkoCore;
+    assert(Gekko::Gekko);
     Debug::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
@@ -122,4 +121,6 @@ void EMUDtor()
     Debug::Hub.RemoveNode(EMU_JDI_JSON);
     DSP::DspCore::ShutdownSubsystem();
     DVD::ShutdownSubsystem();
+    delete Gekko::Gekko;
+    Gekko::Gekko = nullptr;
 }

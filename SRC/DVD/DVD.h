@@ -27,7 +27,7 @@ namespace DVD
     // Seek and read operations on mounted DVD
     void Seek(int position);
     int GetSeek();
-    void Read(void* buffer, size_t length);
+    bool Read(void* buffer, size_t length);
 
     // Open file in DVD root. Return file position, or 0 if no such file.
     // Note: DVD must be mounted first!
@@ -52,3 +52,6 @@ typedef struct
 } DVDControl;
 
 extern DVDControl dvd;             // share with other modules
+
+// DDU Core
+#include "DduCore.h"

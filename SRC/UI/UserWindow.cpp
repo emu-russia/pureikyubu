@@ -564,27 +564,27 @@ loadFile:
 
                 // open/close DVD lid
                 case ID_FILE_COVER:
-                    if(DIGetCoverState())   // close lid
+                    if(DVD::DDU.GetCoverStatus() == DVD::CoverStatus::Open)   // close lid
                     {
-                        DICloseCover();
+                        DVD::DDU.CloseCover();
                         ModifySwapControls(false);
                     }
                     else                    // open lid
                     {
-                        DIOpenCover();
+                        DVD::DDU.OpenCover();
                         ModifySwapControls(true);
                     }
                     return 0;
 
                 // set new current DVD image
                 case ID_FILE_CHANGEDVD:
-                    if((name = UI::FileOpen(hwnd, UI::FileType::Dvd)) != nullptr && DIGetCoverState())
+                    if((name = UI::FileOpen(hwnd, UI::FileType::Dvd)) != nullptr && DVD::DDU.GetCoverStatus() == DVD::CoverStatus::Open)
                     {
                         if(!_tcsicmp(name, ldat.currentFile)) return 0;  // same
                         if(!DVD::MountFile(name)) return 0;      // bad
 
                         // close lid
-                        DICloseCover();
+                        DVD::DDU.CloseCover();
                         ModifySwapControls(false);
                     }
                     return 0;

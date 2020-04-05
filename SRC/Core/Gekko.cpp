@@ -37,6 +37,27 @@ namespace Gekko
         interp = new Interpreter(this);
         assert(interp);
 
+        Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
+
+        gekkoThread = new Thread(GekkoThreadProc, true, this);
+        assert(gekkoThread);
+
+        Reset();
+    }
+
+    GekkoCore::~GekkoCore()
+    {
+        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
+
+        delete gekkoThread;
+        delete interp;
+    }
+
+    // Reset processor
+    void GekkoCore::Reset()
+    {
+        gekkoThread->Suspend();
+
         cpu.one_second = CPU_TIMER_CLOCK;
         cpu.decreq = 0;
         intFlag = false;
@@ -63,19 +84,6 @@ namespace Gekko
 
         // Disable translation for now
         MSR &= ~(MSR_DR | MSR_IR);
-
-        Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
-
-        gekkoThread = new Thread(GekkoThreadProc, true, this);
-        assert(gekkoThread);
-    }
-
-    GekkoCore::~GekkoCore()
-    {
-        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
-
-        delete gekkoThread;
-        delete interp;
     }
 
     // Modify CPU counters
@@ -98,6 +106,12 @@ namespace Gekko
     int64_t GekkoCore::GetTicks()
     {
         return cpu.tb.sval;
+    }
+
+    // 1 second of emulated CPU time.
+    int64_t GekkoCore::OneSecond()
+    {
+        return CPU_TIMER_CLOCK;
     }
 
     uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, bool IR)

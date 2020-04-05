@@ -131,23 +131,25 @@ namespace DVD
         else return 0;
     }
 
-    void Read(void *buffer, size_t length)
+    bool Read(void *buffer, size_t length)
     {
         if (length == 0)
-            return;
+            return true;
 
         if (dvd.mountedImage)
         {
-            GCMRead((uint8_t*)buffer, length);
+            return GCMRead((uint8_t*)buffer, length);
         }
         else if (dvd.mountedSdk)
         {
-            dvd.mountedSdk->Read((uint8_t*)buffer, length);
+            return dvd.mountedSdk->Read((uint8_t*)buffer, length);
         }
         else
         {
             memset(buffer, 0, length);        // fill by zeroes
         }
+
+        return true;
     }
 
     long OpenFile(const char *dvdfile)

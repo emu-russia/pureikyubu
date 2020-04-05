@@ -342,7 +342,7 @@ static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("P
 void AIUpdate()
 {
     // *** update audio DMA ***
-    if((Gekko::Gekko->GetTicks() >= ai.dmaTime) && (ai.len & AID_EN))
+    if(((uint64_t)Gekko::Gekko->GetTicks() >= ai.dmaTime) && (ai.len & AID_EN))
     {
         if (ai.dcnt == 0)
         {
@@ -394,7 +394,11 @@ void AIClose()
 
 void DSPAssertInt()
 {
-    DBReport2(DbgChannel::AI, "DSPAssertInt\n");
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "DSPAssertInt\n");
+    }
+
     AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {
