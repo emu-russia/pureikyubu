@@ -42,6 +42,7 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     free(bmi);
 
+    GDIResize(width, height);
     gdi_init = TRUE;
 
     return TRUE;

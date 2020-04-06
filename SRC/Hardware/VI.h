@@ -88,7 +88,6 @@ typedef struct VIControl
     uint32_t    mode;       // see VI modes
     bool        inter;      // 1, if interlace
     uint32_t    vcount;     // number of lines for single frame
-    bool        auto_vcnt;
     int64_t     vtime;      // frame timer
     int64_t     one_frame;  // frame length in CPU timer ticks
 

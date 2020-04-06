@@ -106,11 +106,11 @@ static void vi_set_timing()
     {
         case VI_NTSC_LIKE:
             vi.one_frame = vi.one_second / 30;
-            if(vi.auto_vcnt) vi.vcount = (vi.inter) ? VI_NTSC_INTER : VI_NTSC_NON_INTER;
+            vi.vcount = (vi.inter) ? VI_NTSC_INTER : VI_NTSC_NON_INTER;
             break;
         case VI_PAL_LIKE:
             vi.one_frame = vi.one_second / 25;
-            if(vi.auto_vcnt) vi.vcount = (vi.inter) ? VI_PAL_INTER : VI_PAL_NON_INTER;
+            vi.vcount = (vi.inter) ? VI_PAL_INTER : VI_PAL_NON_INTER;
             break;
     }
 }
@@ -118,12 +118,32 @@ static void vi_set_timing()
 // step line counter(s), update GUI and poll controller
 void VIUpdate()
 {
-    if((TBR - vi.vtime) >= vi.one_frame / vi.vcount)
+    if((TBR - vi.vtime) >= (vi.one_frame / vi.vcount))
     {
         vi.vtime = TBR;
 
         uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
         uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
+
+        // vertical counter
+        if (currentBeamPos >= vi.vcount)
+        {
+            currentBeamPos = 1;
+
+            // patch memory every frame
+            ApplyPatches();
+
+            // draw XFB
+            if (vi.xfb)
+            {
+                YUVBlit(vi.xfbbuf, vi.gfxbuf);
+            }
+            vi.frames++;
+
+            // show system time
+            SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
+            UpdateProfiler();
+        }
 
         // generate VIINT ?
         currentBeamPos++;
@@ -136,22 +156,6 @@ void VIUpdate()
             }
         }
 
-        // vertical counter
-        if(currentBeamPos > vi.vcount)
-        {
-            currentBeamPos = 1;
-
-            // patch memory every frame
-            ApplyPatches();
-            
-            // draw XFB
-            if(vi.xfb) YUVBlit(vi.xfbbuf, vi.gfxbuf);
-            vi.frames++;
-
-            // show system time
-            SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
-            UpdateProfiler();
-        }
         vi.pos &= ~0x07ff0000;
         vi.pos |= (currentBeamPos & 0x7ff) << 16;
     }
@@ -375,14 +379,6 @@ void VIOpen(HWConfig * config)
     vi.log = config->vi_log;
     vi.xfb = config->vi_xfb;
     vi.videoEncoderFuse = config->videoEncoderFuse;
-
-    // vertical count value
-    vi.vcount = config->vcount;
-    vi.auto_vcnt = (vi.vcount == 0);
-    if(!vi.auto_vcnt)
-    {
-        if(vi.log) DBReport2(DbgChannel::VI, "manual timing enabled (vcount: %i)\n", vi.vcount);
-    }
 
     // reset VI timing
     vi_set_timing();

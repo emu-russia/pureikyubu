@@ -20,7 +20,7 @@ namespace Flipper
             int64_t ticks = Gekko::Gekko->GetTicks();
             if (ticks >= flipper->hwUpdateTbrValue)
             {
-                flipper->hwUpdateTbrValue = ticks + 200;
+                flipper->hwUpdateTbrValue = ticks + 100;
                 flipper->Update();
             }
         }
@@ -34,7 +34,7 @@ namespace Flipper
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
-        Mixer = new AudioMixer;
+        Mixer = new AudioMixer(config);
         assert(Mixer);
 
         MIOpen(config); // memory protection and 1T-SRAM interface

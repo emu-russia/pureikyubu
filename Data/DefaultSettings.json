@@ -48,7 +48,6 @@
 		"EXI_LOG": true,
 		"OS_REPORT": true,
 		"RSWHACK": true,
-		"VI_COUNT": 0,
 		"VI_LOG": true,
 		"VI_XFB": true,
 		"BOOTROM": "",

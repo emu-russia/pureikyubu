@@ -45,16 +45,18 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
     if(AIDCR & AIDCR_DSPINT)
     {
         AIDCR &= ~AIDCR_DSPINT;
-        PIClearInt(PI_INTERRUPT_DSP);
     }
     if(AIDCR & AIDCR_ARINT)
     {
         AIDCR &= ~AIDCR_ARINT;
-        PIClearInt(PI_INTERRUPT_DSP);
     }
     if(AIDCR & AIDCR_AIINT)
     {
         AIDCR &= ~AIDCR_AIINT;
+    }
+
+    if ((AIDCR & AIDCR_DSPINT) == 0 && (AIDCR & AIDCR_ARINT) == 0 && (AIDCR & AIDCR_AIINT) == 0)
+    {
         PIClearInt(PI_INTERRUPT_DSP);
     }
 
@@ -275,6 +277,7 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
             DBReport2(DbgChannel::AIS, "start streaming clock\n");
         }
         DVD::DDU.EnableAudioStreamClock(true);
+        ai.streamFifoPtr = 0;
     }
     else
     {
@@ -297,8 +300,8 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     }
 
     // set DMA sample rate
-    if(ai.cr & AICR_DFR) AISetDMASampleRate(Flipper::AudioSampleRate::Rate_48000);
-    else AISetDMASampleRate(Flipper::AudioSampleRate::Rate_32000);
+    if(ai.cr & AICR_DFR) AISetDMASampleRate(Flipper::AudioSampleRate::Rate_32000);
+    else AISetDMASampleRate(Flipper::AudioSampleRate::Rate_48000);
 
     // set DVD Audio sample rate
     if (ai.cr & AICR_AFR) AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_48000);

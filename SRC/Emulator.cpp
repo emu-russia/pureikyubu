@@ -11,7 +11,6 @@ void EMUGetHwConfig(HWConfig * config)
 
     config->vi_log = GetConfigBool(USER_VI_LOG, USER_HW);
     config->vi_xfb = GetConfigBool(USER_VI_XFB, USER_HW);
-    config->vcount = GetConfigInt(USER_VI_COUNT, USER_HW);
 
     config->videoEncoderFuse = 0;
 
@@ -87,10 +86,10 @@ void EMUClose()
 
     HLEClose();
 
+    Gekko::Gekko->Suspend();
+
     delete Flipper::HW;
     Flipper::HW = nullptr;
-
-    Gekko::Gekko->Suspend();
 
     // take care about user interface
     OnMainWindowClosed();
