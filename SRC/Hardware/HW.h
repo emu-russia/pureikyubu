@@ -8,6 +8,8 @@
 
 namespace Flipper
 {
+	class AudioMixer;
+
 	class Flipper
 	{
 		static void HwUpdateThread(void* Parameter);

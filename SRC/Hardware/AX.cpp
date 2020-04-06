@@ -29,7 +29,7 @@ namespace Flipper
 
 		desc.dwSize = sizeof(DSBUFFERDESC);
 		desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME;
-		desc.dwBufferBytes = 64*1024;
+		desc.dwBufferBytes = ringSize;
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
@@ -78,8 +78,10 @@ namespace Flipper
 	{
 		HRESULT hr = DS_OK;
 
-		//HRESULT hr = DSBuffer->Stop();
-		//assert(hr == DS_OK);
+		if (lockEntireBuffer)
+		{
+			Enable(false);
+		}
 
 		PVOID part1 = nullptr;
 		DWORD part1Size = 0;
@@ -89,7 +91,8 @@ namespace Flipper
 		// Let's try not to interrupt DSound yet and output the sound to WriteCursor.
 		// If this is bad, we will lock the entire buffer and output the sound to 0.
 
-		hr = DSBuffer->Lock(0, frameSize, &part1, &part1Size, &part2, &part2Size, DSBLOCK_FROMWRITECURSOR);
+		hr = DSBuffer->Lock(0, frameSize, &part1, &part1Size, &part2, &part2Size, 
+			lockEntireBuffer ? DSBLOCK_ENTIREBUFFER : DSBLOCK_FROMWRITECURSOR );
 		assert(hr == DS_OK);
 
 		uint8_t* ptr = (uint8_t *)part1;
@@ -110,8 +113,12 @@ namespace Flipper
 		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
 		assert(hr == DS_OK);
 
-		//hr = DSBuffer->Play(0, 0, 0);
-		//assert(hr == DS_OK);
+		if (lockEntireBuffer)
+		{
+			hr = DSBuffer->SetCurrentPosition(0);
+			assert(hr == DS_OK);
+			Enable(true);
+		}
 	}
 
 	void AudioRing::Enable(bool enable)
@@ -122,7 +129,10 @@ namespace Flipper
 
 	void AudioRing::SetSampleRate(AudioSampleRate value)
 	{
-		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 : 48000);
+		// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ee418143(v=vs.85)
+		// Sample rate should be multiplied by 2 for the stereo sound
+
+		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 * 2 : 48000 * 2);
 		assert(hr == DS_OK);
 	}
 

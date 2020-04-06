@@ -41,7 +41,6 @@ typedef struct _HWConfig
 } HWConfig;
 
 // external interfaces (previously plugins)
-#include "AX.h"
 #include "GX.h"
 #include "PAD.h"
 #include "../DVD/DVD.h"
