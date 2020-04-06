@@ -29,7 +29,7 @@ namespace Flipper
 
 		desc.dwSize = sizeof(DSBUFFERDESC);
 		desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME;
-		desc.dwBufferBytes = ringSize;
+		desc.dwBufferBytes = 64*1024;
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
@@ -37,9 +37,6 @@ namespace Flipper
 		assert(hr == DS_OK);
 
 		hr = DSBuffer->SetVolume(DSBVOLUME_MAX);
-		assert(hr == DS_OK);
-
-		hr = DSBuffer->Play(0, 0, DSBPLAY_LOOPING);
 		assert(hr == DS_OK);
 	}
 

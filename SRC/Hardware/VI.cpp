@@ -125,6 +125,17 @@ void VIUpdate()
         uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
         uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
 
+        // generate VIINT ?
+        currentBeamPos++;
+        if(currentBeamPos == triggerBeamPos)
+        {
+            vi.int0 |= VI_INT_INT;
+            if(vi.int0 & VI_INT_ENB)
+            {
+                PIAssertInt(PI_INTERRUPT_VI);
+            }
+        }
+
         // vertical counter
         if (currentBeamPos >= vi.vcount)
         {
@@ -143,17 +154,6 @@ void VIUpdate()
             // show system time
             SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
             UpdateProfiler();
-        }
-
-        // generate VIINT ?
-        currentBeamPos++;
-        if(currentBeamPos == triggerBeamPos)
-        {
-            vi.int0 |= VI_INT_INT;
-            if(vi.int0 & VI_INT_ENB)
-            {
-                PIAssertInt(PI_INTERRUPT_VI);
-            }
         }
 
         vi.pos &= ~0x07ff0000;
