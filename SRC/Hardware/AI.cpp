@@ -216,10 +216,12 @@ static void __fastcall write_len(uint32_t addr, uint32_t data)
     if(ai.len & AID_EN)
     {
         AIStartDMA();
+        Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, true);
     }
     else
     {
         AIStopDMA();
+        Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, false);
     }
 }
 static void __fastcall read_len(uint32_t addr, uint32_t *reg)
@@ -277,6 +279,7 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
             DBReport2(DbgChannel::AIS, "start streaming clock\n");
         }
         DVD::DDU.EnableAudioStreamClock(true);
+        Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, true);
         ai.streamFifoPtr = 0;
     }
     else
@@ -286,6 +289,7 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
             DBReport2(DbgChannel::AIS, "stop streaming clock\n");
         }
         DVD::DDU.EnableAudioStreamClock(false);
+        Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, false);
     }
 
     // reset sample counter
@@ -300,14 +304,20 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     }
 
     // set DMA sample rate
-    if(ai.cr & AICR_DFR) AISetDMASampleRate(Flipper::AudioSampleRate::Rate_32000);
-    else AISetDMASampleRate(Flipper::AudioSampleRate::Rate_48000);
+    if (ai.cr & AICR_DFR)
+    {
+        ai.dmaRate = 32000;
+        AISetDMASampleRate(Flipper::AudioSampleRate::Rate_32000);
+    }
+    else
+    {
+        ai.dmaRate = 48000;
+        AISetDMASampleRate(Flipper::AudioSampleRate::Rate_48000);
+    }
 
     // set DVD Audio sample rate
     if (ai.cr & AICR_AFR) AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_48000);
     else AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_32000);
-
-    ai.dmaRate = ai.cr & AICR_DFR ? 48000 : 32000;
 }
 static void __fastcall read_cr(uint32_t addr, uint32_t *reg)
 {
@@ -470,7 +480,7 @@ void AIOpen(HWConfig* config)
     assert(ai.audioThread);
 
     ai.one_second = Gekko::Gekko->OneSecond();
-    ai.dmaRate = ai.cr & AICR_DFR ? 48000 : 32000;
+    ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
     ai.log = false;
     AIStopDMA();
 

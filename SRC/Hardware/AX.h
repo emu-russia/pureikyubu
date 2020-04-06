@@ -42,12 +42,13 @@ namespace Flipper
 		uint8_t FetchByte();
 		void EmitSound();
 
-		IDirectSoundBuffer8 * DSBuffer = nullptr;
+		LPDIRECTSOUNDBUFFER DSBuffer = nullptr;
 
 	public:
 		AudioRing(AudioMixer * parentInst);
 		~AudioRing();
 
+		void Enable(bool enable);
 		void SetSampleRate(AudioSampleRate value);
 		void PushBytes(uint8_t* sampleData, size_t sampleDataSize);
 	};
@@ -65,6 +66,8 @@ namespace Flipper
 	public:
 		AudioMixer(HWConfig* config);
 		~AudioMixer();
+
+		void Enable(AxChannel channel, bool enable);
 
 		void SetSampleRate(AxChannel channel, AudioSampleRate value);
 

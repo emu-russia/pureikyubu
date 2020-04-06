@@ -33,15 +33,8 @@ namespace Flipper
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
-		IDirectSoundBuffer* tempBuffer;
-
-		hr = mixer->lpds->CreateSoundBuffer(&desc, &tempBuffer, NULL);
+		hr = mixer->lpds->CreateSoundBuffer(&desc, &DSBuffer, NULL);
 		assert(hr == DS_OK);
-
-		hr = tempBuffer->QueryInterface(IID_IDirectSoundBuffer8, (void **)&DSBuffer);
-		assert(hr == DS_OK);
-
-		tempBuffer->Release();
 
 		hr = DSBuffer->SetVolume(DSBVOLUME_MAX);
 		assert(hr == DS_OK);
@@ -124,13 +117,16 @@ namespace Flipper
 		//assert(hr == DS_OK);
 	}
 
+	void AudioRing::Enable(bool enable)
+	{
+		HRESULT hr = enable ? DSBuffer->Play(0, 0, DSBPLAY_LOOPING) : DSBuffer->Stop();
+		assert(hr == DS_OK);
+	}
+
 	void AudioRing::SetSampleRate(AudioSampleRate value)
 	{
-		if (DSBuffer)
-		{
-			HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 : 48000);
-			assert(hr == DS_OK);
-		}
+		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 : 48000);
+		assert(hr == DS_OK);
 	}
 
 	void AudioRing::PushBytes(uint8_t* sampleData, size_t sampleDataSize)
@@ -199,6 +195,7 @@ namespace Flipper
 
 			// Set default sample rate
 			Sources[i]->SetSampleRate(AudioSampleRate::Rate_48000);
+			Sources[i]->Enable(false);
 		}
 	}
 
@@ -213,6 +210,19 @@ namespace Flipper
 
 		PrimaryBuffer->Release();
 		lpds->Release();
+	}
+
+	void AudioMixer::Enable(AxChannel channel, bool enable)
+	{
+		switch (channel)
+		{
+			case AxChannel::AudioDma:
+				Sources[0]->Enable(enable);
+				break;
+			case AxChannel::DvdAudio:
+				Sources[1]->Enable(enable);
+				break;
+		}
 	}
 
 	void AudioMixer::SetSampleRate(AxChannel channel, AudioSampleRate value)
