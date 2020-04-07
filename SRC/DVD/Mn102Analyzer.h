@@ -111,29 +111,32 @@ namespace DVD
 		Ind_D3_A2,
 		Ind_D3_A3,
 
+		MDR,
+		PSW,
+
 	};
 
 	// Condition code for branch instructions
 	enum class MnCond
 	{
-		Unknown = 0,
+		Unknown = -1,
 
-		LT,
-		GT,
-		GE,
-		LE,
-		CS,
-		HI,
-		CC,
-		LS,
-		EQ,
-		NE,
-		RA,
+		LT = 0,
+		GT = 1,
+		GE = 2,
+		LE = 3,
+		CS = 4,
+		HI = 5,
+		CC = 6,
+		LS = 7,
+		EQ = 8,
+		NE = 9,
+		RA = 0xa,
 
-		VC,
-		VS,
-		NC,
-		NS,
+		VC = 0xc,
+		VS = 0xd,
+		NC = 0xe,
+		NS = 0xf,
 	};
 
 	typedef struct _MnInstrInfo
@@ -145,7 +148,7 @@ namespace DVD
 
 		size_t numOp;
 		MnOperand op[2];
-		int opBits[2];
+		int opBits[2];			// If one of the operands is in the form (Di, An), then Di and An saved as one
 
 		union
 		{
@@ -162,10 +165,26 @@ namespace DVD
 
 	class MnAnalyze
 	{
+		uint8_t* instrPtr = nullptr;		// Temporary pointer
+
+		bool Main(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F0(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F1(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F2(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F3(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F4(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F5(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool F7(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+
+		bool FetchImm8(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool FetchImm16(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+		bool FetchImm24(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info);
+
+		bool AddOp(MnInstrInfo* info, MnOperand op, int bits);
 
 	public:
 
-		static bool Analyze(uint8_t * instrPtr, MnInstrInfo * info);
+		bool Analyze(uint8_t * instrPtr, size_t instrMaxSize, MnInstrInfo * info);
 
 	};
 }

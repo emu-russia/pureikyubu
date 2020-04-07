@@ -115,8 +115,6 @@ typedef union TBREG
 #define LD_TYPE(n)  ((GQR[n] >> 16) & 7)
 #define ST_SCALE(n) ((GQR[n] >>  8) & 0x3f)
 #define ST_TYPE(n)  ((GQR[n]      ) & 7)
-#define PSW         (op & 0x8000)
-#define PSI         ((op >> 12) & 7)
 
 // ---------------------------------------------------------------------------
 // CPU externals

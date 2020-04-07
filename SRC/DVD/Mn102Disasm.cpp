@@ -178,6 +178,9 @@ namespace DVD
 			case MnOperand::Ind_D3_A2: text = "(d3, a2)"; break;
 			case MnOperand::Ind_D3_A3: text = "(d3, a3)"; break;
 
+			case MnOperand::MDR: text = "mdr"; break;
+			case MnOperand::PSW: text = "psw"; break;
+
 			default:
 				text = "???";
 				break;
