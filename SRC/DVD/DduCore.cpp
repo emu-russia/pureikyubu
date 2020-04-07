@@ -237,7 +237,7 @@ namespace DVD
 								Seek(core->seekVal);
 								size_t bytes = min(dataCacheSize, core->transactionSize);
 								bool readResult = Read(core->dataCache, bytes);
-								core->seekVal += bytes;
+								core->seekVal += (uint32_t)bytes;
 								core->transactionSize -= bytes;
 
 								if (core->seekVal >= DVD_SIZE || !readResult)
