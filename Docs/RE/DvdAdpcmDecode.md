@@ -52,7 +52,7 @@ for (int i=0; i<28; i++)
 
 ```c++
 
-int16_t DecodeLeftSample ( uint16_t arg_0, int16_t arg_4, bool init)
+int16_t DecodeLeftSample ( int arg_0, int arg_4, bool init)
 {
 	int16_t res;
 
@@ -64,12 +64,12 @@ int16_t DecodeLeftSample ( uint16_t arg_0, int16_t arg_4, bool init)
 	}
 	else
 	{
-		var_4 = arg_4 >> 4;
-		var_8 = arg_4 & 0xF;
+		int var_4 = arg_4 >> 4;
+		int var_8 = arg_4 & 0xF;
 
-		var_18 = MulSomething ( var_4, dword_429028, dword_429030); 	//ax 
+		int32_t var_18 = MulSomething ( var_4, dword_429028, dword_429030);
 		var_C = Shifts1 (arg_0, var_8);
-		var_14 = Shifts2 (var_C, var_18);
+		int32_t var_14 = Shifts2 (var_C, var_18);
 		res = Clamp (var_14);
 
 		dword_429030 = dword_429028;
@@ -79,64 +79,59 @@ int16_t DecodeLeftSample ( uint16_t arg_0, int16_t arg_4, bool init)
 	return res;
 }
 
-// Чё-то умножаем
-int MulSomething (arg_0, arg_4, arg_8 )
+int32_t  MulSomething (int arg_0, int32_t arg_4, int32_t arg_8 )
 {
-	var_10 = arg_0;
+	int16_t var_4;
+    int16_t var_8;
 
-	switch (var_10)
+	switch (arg_0)
 	{
 		case 0:
 			var_4 = 0;
 			var_8 = 0;
 			break;
 		case 1:
-			var_4 = 0x3c;
+			var_4 = 60;
 			var_8 = 0;
 			break;
 		case 2:
-			var_4 = 0x73;
-			var_8 = 0xFFCC;
+			var_4 = 115;
+			var_8 = -52;
 			break;
 		case 3:
-			var_4 = 0x62;
-			var_8 = 0xFFC9;
+			var_4 = 98;
+			var_8 = -55;
 			break;
 	}
 
-	// Нужно смотреть мануал, я всегда забываю где хранятся результаты умножения
-	movsx   edx, [ebp+var_4]
-	imul    edx, [ebp+arg_4]
-	movsx   eax, [ebp+var_8]
-	imul    eax, [ebp+arg_8]
+    int32_t edx = var_4 * arg_4;
+    int32_t eax = var_8 * arg_8;
 
-	var_C = (edx + eax + 0x20) >> 6;
-
-	var_C = max ( -0x200000‬, min (var_C, 0x1FFFFF));
+	int32_t var_C = (edx + eax + 32) >> 6;
+	int32_t var_C = max ( -0x200000‬, min (var_C, 0x1FFFFF));
 
 	return var_C;
 }
 
-// Кручу-верчу-наебать-хочу 1
-int16_t Shifts1 (int arg_0, int8_t arg_4)
+int16_t Shifts1 (int arg_0, int arg_4)
 {
-	int32_t var_4 = arg_0 << 12;
+	int32_t var_4 = (int32_t)arg_0 << 12;
 	int32_t edx = var_4 >> arg_4;
-	return dx;
+	return (int16_t)dx;
 }
 
-// Кручу-верчу-наебать-хочу 2
-int Shifts2 (int16_t arg_0, arg_4)
+int32_t Shifts2 (int16_t arg_0, int32_t arg_4)
 {
-	return (arg_0 << 6) + arg_4;
+	return ((int32_t)arg_0 << 6) + arg_4;
 }
 
 // Clamp
-int16_t Clamp (arg_0)
+int16_t Clamp (int32_t arg_0)
 {
-	var_8 = arg_0 >> 6; 		// sar
+	int32_t var_8 = arg_0 >> 6;
+    int16_t var_4;
 
-	if (var_8 >= 0xFFFF8000)
+	if (var_8 >= -0x8000)
 	{
 		if (var_8 <= 0x7FFF)
 		{
