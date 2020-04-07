@@ -18,3 +18,4 @@
 
 #include "Mn102Analyzer.h"
 #include "Mn102Disasm.h"
+#include "DvdAdpcmDecode.h"

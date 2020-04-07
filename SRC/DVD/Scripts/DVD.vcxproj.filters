@@ -41,6 +41,9 @@
     <ClCompile Include="..\Mn102Disasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DvdAdpcmDecode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DduCommands.h">
@@ -74,6 +77,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Mn102Disasm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\DvdAdpcmDecode.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

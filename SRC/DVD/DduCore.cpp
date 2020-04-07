@@ -149,6 +149,7 @@ namespace DVD
 				if (commandBuffer[1] & 1)
 				{
 					SetDvdAudioSampleRate(sampleRate);
+					DvdAudioInitDecoder();
 					streamEnabledByDduCommand = true;
 				}
 				else
