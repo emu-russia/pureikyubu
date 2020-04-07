@@ -33,7 +33,7 @@ namespace Flipper
 		// It should not be longer than 1 PAL / NTSC video frame, but not less than 1/3 video frame.
 
 		static const size_t ringSize = 0x10000;
-		static const size_t frameSize = 0x2000;				// Audio frame size
+		static const size_t frameSize = 0x1000;				// Audio frame size
 		uint8_t* ringBuffer = nullptr;
 		size_t ringWritePtr = 0;
 		size_t ringReadPtr = 0;

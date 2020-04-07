@@ -129,20 +129,18 @@ namespace Flipper
 
 	void AudioRing::SetSampleRate(AudioSampleRate value)
 	{
-		// https://docs.microsoft.com/en-us/previous-versions/windows/desktop/ee418143(v=vs.85)
-		// Sample rate should be multiplied by 2 for the stereo sound
-
-		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 * 2 : 48000 * 2);
+		HRESULT hr = DSBuffer->SetFrequency(value == AudioSampleRate::Rate_32000 ? 32000 : 48000);
 		assert(hr == DS_OK);
 	}
 
 	void AudioRing::PushBytes(uint8_t* sampleData, size_t sampleDataSize)
 	{
-		while (sampleDataSize--)
+		while (sampleDataSize != 0)
 		{
 			ringBuffer[ringWritePtr + 1] = *sampleData++;
 			ringBuffer[ringWritePtr] = *sampleData++;
 			ringWritePtr += 2;
+			sampleDataSize -= 2;
 			if (ringWritePtr >= ringSize)
 			{
 				ringWritePtr = 0;
