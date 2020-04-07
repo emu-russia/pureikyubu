@@ -52,7 +52,7 @@ for (int i=0; i<28; i++)
 
 ```c++
 
-int16_t DecodeLeftSample ( uint16_t a, int16_t p, bool init)
+int16_t DecodeLeftSample ( uint16_t arg_0, int16_t arg_4, bool init)
 {
 	int16_t res;
 
@@ -64,11 +64,11 @@ int16_t DecodeLeftSample ( uint16_t a, int16_t p, bool init)
 	}
 	else
 	{
-		var_4 = p >> 4;
-		var_8 = p & 0xF;
+		var_4 = arg_4 >> 4;
+		var_8 = arg_4 & 0xF;
 
 		var_18 = MulSomething ( var_4, dword_429028, dword_429030); 	//ax 
-		var_C = Shifts1 (a, var_8);
+		var_C = Shifts1 (arg_0, var_8);
 		var_14 = Shifts2 (var_C, var_18);
 		res = Clamp (var_14);
 
