@@ -80,38 +80,20 @@ int16_t Clamp(int32_t arg_0)
     return (int16_t)var_4;
 }
 
-int16_t DecodeLeftSample(int arg_0, int arg_4)
+int16_t DecodeSample(int arg_0, int arg_4, int Yn[2])
 {
     int16_t res;
 
     int var_4 = arg_4 >> 4;
     int var_8 = arg_4 & 0xF;
 
-    int32_t var_18 = MulSomething(var_4, YnLeft[0], YnLeft[1]);
+    int32_t var_18 = MulSomething(var_4, Yn[0], Yn[1]);
     int16_t var_C = Shifts1(arg_0, var_8);
     int32_t var_14 = Shifts2(var_C, var_18);
     res = Clamp(var_14);
 
-    YnLeft[1] = YnLeft[0];
-    YnLeft[0] = var_14;
-
-    return res;
-}
-
-int16_t DecodeRightSample(int arg_0, int arg_4)
-{
-    int16_t res;
-
-    int var_4 = arg_4 >> 4;
-    int var_8 = arg_4 & 0xF;
-
-    int32_t var_18 = MulSomething(var_4, YnRight[0], YnRight[1]);
-    int16_t var_C = Shifts1(arg_0, var_8);
-    int32_t var_14 = Shifts2(var_C, var_18);
-    res = Clamp(var_14);
-
-    YnRight[1] = YnRight[0];
-    YnRight[0] = var_14;
+    Yn[1] = Yn[0];
+    Yn[0] = var_14;
 
     return res;
 }
@@ -122,7 +104,7 @@ void DvdAudioDecode(uint8_t adpcmBuffer[32], uint16_t pcmBuffer[2 * 28])
 
     for (int i = 0; i < 28; i++)
     {
-        pcmBuffer[2 * i] = _byteswap_ushort(DecodeLeftSample(adpcmData[i] & 0xF, adpcmBuffer[0]));
-        pcmBuffer[2 * i + 1] = _byteswap_ushort(DecodeRightSample(adpcmData[i] >> 4, adpcmBuffer[1]));
+        pcmBuffer[2 * i] = _byteswap_ushort(DecodeSample(adpcmData[i] & 0xF, adpcmBuffer[0], YnLeft));
+        pcmBuffer[2 * i + 1] = _byteswap_ushort(DecodeSample(adpcmData[i] >> 4, adpcmBuffer[1], YnRight));
     }
 }
