@@ -1,4 +1,4 @@
-# GC DVD ADPCM Deocoder
+# GC DVD ADPCM Decoder
 
 Based on dtkmake reversing.
 
@@ -43,9 +43,6 @@ LRSample pcmData[28];
 
 for (int i=0; i<28; i++)
 {
-	var_D0[count] = adpcmData[i] & 0xF;
-	var_CF[count] = adpcmData[i] >> 4;
-
 	pcmData[i].l = DecodeLeftSample ( adpcmData[i] & 0xF, adpcmBuf[0], 0);
 	pcmData[i].r = DecodeRightSample ( adpcmData[i] >> 4, adpcmBuf[1], 0);
 }
@@ -160,7 +157,6 @@ int16_t Clamp (arg_0)
 
 
 ```
-
 
 ## Write chunk into WAV
 
