@@ -56,6 +56,8 @@ namespace Flipper
 
 		size_t framesPerEmit = maxFrames / 2;
 
+		int bufferMode = DSBPLAY_LOOPING;
+
 	public:
 		AudioRing(AudioMixer * parentInst);
 		~AudioRing();

@@ -411,8 +411,8 @@ static void AIStreamCallback(uint16_t l, uint16_t r)
     int rightVolume = (uint8_t)(ai.vr >> 8);
     l = _byteswap_ushort(l);
     r = _byteswap_ushort(r);
-    l = AdjustVolume(l, leftVolume);
-    r = AdjustVolume(r, rightVolume);
+    //l = AdjustVolume(l, leftVolume);
+    //r = AdjustVolume(r, rightVolume);
 
     // Put sample in FIFO
     uint16_t* ptr = (uint16_t *)&ai.streamFifo[ai.streamFifoPtr];

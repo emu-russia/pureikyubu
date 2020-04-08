@@ -29,14 +29,11 @@ namespace Flipper
 
 		desc.dwSize = sizeof(DSBUFFERDESC);
 		desc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME;
-		desc.dwBufferBytes = 512*1024;
+		desc.dwBufferBytes = ringSize;
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
 		hr = mixer->lpds->CreateSoundBuffer(&desc, &DSBuffer, NULL);
-		assert(hr == DS_OK);
-
-		hr = DSBuffer->Stop();
 		assert(hr == DS_OK);
 
 		hr = DSBuffer->SetVolume(DSBVOLUME_MAX);
@@ -144,7 +141,7 @@ namespace Flipper
 
 		if (enable)
 		{
-			hr = DSBuffer->Play(0, 0, DSBPLAY_LOOPING);
+			hr = DSBuffer->Play(0, 0, bufferMode);
 			assert(hr == DS_OK);
 
 			enabled = true;
@@ -231,7 +228,7 @@ namespace Flipper
 		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
 		assert(hr == DS_OK);
 
-		hr = DSBuffer->Play(0, 0, DSBPLAY_LOOPING);
+		hr = DSBuffer->Play(0, 0, bufferMode);
 		assert(hr == DS_OK);
 	}
 
