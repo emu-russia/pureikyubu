@@ -35,7 +35,7 @@ Currently, the following namespaces are quietly formed:
 - Gekko: for the core of the Gekko CPU
 - Flipper: for various internal Flipper hardware modules (AI, VI, EXI, etc.)
 - DSP: for GameCube DSP
-- DVD: for a DVD unit (now the functionality is limited to reading images of ISO discs)
+- DVD: for a disk drive unit (DDU)
 - GX: for the Flipper GPU
 
 The user interface will most likely be rewritten as a Managed C# application. In the meantime, it's just like a piece of code from version 0.10.

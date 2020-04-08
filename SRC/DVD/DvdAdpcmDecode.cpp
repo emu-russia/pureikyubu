@@ -1,4 +1,3 @@
-
 #include "pch.h"
 
 int32_t YnLeft[2], YnRight[2];

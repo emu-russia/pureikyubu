@@ -32,8 +32,9 @@ namespace Flipper
 		// The frameSize size is not very large and not very small.
 		// It should not be longer than 1 PAL / NTSC video frame, but not less than 1/3 video frame.
 
-		static const size_t ringSize = 0x10000;
+		static const size_t maxFrames = 32;
 		static const size_t frameSize = 0x1000;				// Audio frame size
+		static const size_t ringSize = maxFrames * frameSize;
 		uint8_t* ringBuffer = nullptr;
 		size_t ringWritePtr = 0;
 		size_t ringReadPtr = 0;
@@ -44,7 +45,16 @@ namespace Flipper
 
 		LPDIRECTSOUNDBUFFER DSBuffer = nullptr;
 
-		bool lockEntireBuffer = false;
+		bool enabled = false;
+
+		size_t frameCounter = 0;
+
+		void DumpDSBuffer();
+		void DumpRing();
+
+		void WaitBufferOverflow(void);
+
+		size_t framesPerEmit = maxFrames / 2;
 
 	public:
 		AudioRing(AudioMixer * parentInst);

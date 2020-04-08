@@ -128,7 +128,7 @@ bool dvd_fs_init()
     return true;
 }
 
-// Base on reversing of original method.
+// Based on reversing of original method.
 // <0: Bad path
 static int DVDConvertPathToEntrynum(const char* _path)
 {

@@ -28,12 +28,15 @@ namespace Flipper
 		DSBUFFERDESC desc = { 0 };
 
 		desc.dwSize = sizeof(DSBUFFERDESC);
-		desc.dwFlags = DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME;
-		desc.dwBufferBytes = ringSize;
+		desc.dwFlags = DSBCAPS_CTRLPOSITIONNOTIFY | DSBCAPS_CTRLFREQUENCY | DSBCAPS_CTRLVOLUME;
+		desc.dwBufferBytes = 512*1024;
 		desc.lpwfxFormat = &waveFmt;
 		desc.guid3DAlgorithm = GUID_NULL;
 
 		hr = mixer->lpds->CreateSoundBuffer(&desc, &DSBuffer, NULL);
+		assert(hr == DS_OK);
+
+		hr = DSBuffer->Stop();
 		assert(hr == DS_OK);
 
 		hr = DSBuffer->SetVolume(DSBVOLUME_MAX);
@@ -74,31 +77,50 @@ namespace Flipper
 		return byte;
 	}
 
+	void AudioRing::WaitBufferOverflow(void)
+	{
+		HRESULT hr = DS_OK;
+		DWORD dwWriteCursor, dwPlayCursor;
+
+		hr = DSBuffer->GetCurrentPosition(&dwPlayCursor, &dwWriteCursor);
+		assert(hr == DS_OK);
+
+		if (dwPlayCursor < dwWriteCursor)
+		{
+			while (dwPlayCursor < dwWriteCursor)
+			{
+				hr = DSBuffer->GetCurrentPosition(&dwPlayCursor, &dwWriteCursor);
+				assert(hr == DS_OK);
+			}
+		}
+	}
+
 	void AudioRing::EmitSound()
 	{
 		HRESULT hr = DS_OK;
 
-		if (lockEntireBuffer)
-		{
-			Enable(false);
-		}
+		if (!enabled)
+			return;
+
+		// Wait
+
+		//WaitBufferOverflow();
+
+		// Lock and load
 
 		PVOID part1 = nullptr;
 		DWORD part1Size = 0;
 		PVOID part2 = nullptr;
 		DWORD part2Size = 0;
 
-		// Let's try not to interrupt DSound yet and output the sound to WriteCursor.
-		// If this is bad, we will lock the entire buffer and output the sound to 0.
-
-		hr = DSBuffer->Lock(0, frameSize, &part1, &part1Size, &part2, &part2Size, 
-			lockEntireBuffer ? DSBLOCK_ENTIREBUFFER : DSBLOCK_FROMWRITECURSOR );
+		hr = DSBuffer->Lock(0, frameSize * framesPerEmit, &part1, &part1Size, &part2, &part2Size,
+			DSBLOCK_FROMWRITECURSOR );
 		assert(hr == DS_OK);
 
 		uint8_t* ptr = (uint8_t *)part1;
 		size_t lockedBufferSize = part1Size;
 
-		size_t byteCount = frameSize;
+		size_t byteCount = frameSize * framesPerEmit;
 		while (byteCount--)
 		{
 			*ptr++ = FetchByte();
@@ -107,24 +129,38 @@ namespace Flipper
 			{
 				ptr = (uint8_t *)part2;
 				lockedBufferSize = part2Size;
+				if (!ptr)
+					break;
 			}
 		}
 
 		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
 		assert(hr == DS_OK);
-
-		if (lockEntireBuffer)
-		{
-			hr = DSBuffer->SetCurrentPosition(0);
-			assert(hr == DS_OK);
-			Enable(true);
-		}
 	}
 
 	void AudioRing::Enable(bool enable)
 	{
-		HRESULT hr = enable ? DSBuffer->Play(0, 0, DSBPLAY_LOOPING) : DSBuffer->Stop();
-		assert(hr == DS_OK);
+		HRESULT hr = DS_OK;
+
+		if (enable)
+		{
+			hr = DSBuffer->Play(0, 0, DSBPLAY_LOOPING);
+			assert(hr == DS_OK);
+
+			enabled = true;
+
+			ringReadPtr = ringWritePtr = 0;
+		}
+		else
+		{
+			hr = DSBuffer->Stop();
+			assert(hr == DS_OK);
+
+			hr = DSBuffer->SetCurrentPosition(0);
+			assert(hr == DS_OK);
+
+			enabled = false;
+		}
 	}
 
 	void AudioRing::SetSampleRate(AudioSampleRate value)
@@ -147,10 +183,66 @@ namespace Flipper
 			}
 		}
 
-		if (CurrentSize() >= frameSize)
+		if (CurrentSize() >= frameSize * framesPerEmit && enabled)
 		{
 			EmitSound();
+
+			frameCounter += framesPerEmit;
+
+			//if (frameCounter >= 5)
+			//{
+			//	DumpRing();
+			//	DumpDSBuffer();
+			//	exit(0);
+			//}
 		}
+	}
+
+	void AudioRing::DumpDSBuffer()
+	{
+		HRESULT hr = DS_OK;
+
+		char filename[0x100] = { 0, };
+		sprintf_s(filename, sizeof(filename), "Data\\AXDSBuffer_%04i.bin", frameCounter);
+
+		hr = DSBuffer->Stop();
+		assert(hr == DS_OK);
+
+		DWORD readCursor = 0;
+		DWORD writeCursor = 0;
+
+		hr = DSBuffer->GetCurrentPosition(&readCursor, &writeCursor);
+		assert(hr == DS_OK);
+
+		DBReport2(DbgChannel::AX, "frame: %i, readCursor: %i, writeCursor: %i\n", frameCounter, readCursor, writeCursor);
+
+		PVOID part1 = nullptr;
+		DWORD part1Size = 0;
+		PVOID part2 = nullptr;
+		DWORD part2Size = 0;
+
+		hr = DSBuffer->Lock(0, 0, &part1, &part1Size, &part2, &part2Size,
+			DSBLOCK_ENTIREBUFFER);
+		assert(hr == DS_OK);
+
+		UI::FileSave(filename, part1, part1Size);
+		DBReport2(DbgChannel::AX, "DSBuffer dumped to: %s\n", filename);
+
+		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
+		assert(hr == DS_OK);
+
+		hr = DSBuffer->Play(0, 0, DSBPLAY_LOOPING);
+		assert(hr == DS_OK);
+	}
+
+	void AudioRing::DumpRing()
+	{
+		char filename[0x100] = { 0, };
+		sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04i.bin", frameCounter);
+
+		DBReport2(DbgChannel::AX, "frame: %i, readPtr: %i, writePtr: %i\n", frameCounter, ringReadPtr, ringWritePtr);
+		UI::FileSave(filename, ringBuffer, ringSize);
+		DBReport2(DbgChannel::AX, "Ring dumped to: %s\n", filename);
 	}
 
 	AudioMixer::AudioMixer(HWConfig *config)

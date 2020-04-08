@@ -170,6 +170,8 @@ namespace DVD
 					}
 					else
 					{
+						DvdAudioInitDecoder();
+
 						if (log)
 						{
 							DBReport2(DbgChannel::DVD, "DVD Bogus Streaming setup (ignored)\n");
@@ -516,7 +518,7 @@ namespace DVD
 			return;
 
 		coverStatus = CoverStatus::Open;
-		DBReport2(DbgChannel::DVD, "cover opened\n");
+		DBReport2(DbgChannel::DVD, "Cover opened\n");
 
 		// Notify host hardware
 		if (openCoverCallback)
@@ -531,7 +533,7 @@ namespace DVD
 			return;
 
 		coverStatus = CoverStatus::Close;
-		DBReport2(DbgChannel::DVD, "cover closed\n");
+		DBReport2(DbgChannel::DVD, "Cover closed\n");
 
 		// Notify host hardware
 		if (closeCoverCallback)

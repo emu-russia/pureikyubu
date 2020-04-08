@@ -28,6 +28,7 @@ enum class DbgChannel
 	EXI,
 	MC,
 	DVD,
+	AX,
 
 	Loader,
 	HLE,
