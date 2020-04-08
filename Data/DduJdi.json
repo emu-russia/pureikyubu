@@ -100,6 +100,17 @@
 			"help": "Dump mounted DVD filesystem",
 			"hints": "[0|1]",
 			"output": "Array [] of bytes"
+		},
+
+		"MnDisa": {
+			"help": "Disassemble DVD Firmware",
+			"hints": "<file>",
+			"args": 1,
+			"usage": [
+				"Syntax: MnDisa <file>",
+				"Disassembles specified firmware dump in disa.txt",
+				"Example: MnDisa gc-dvd-20010608.bin"
+			]
 		}
 
 	}

@@ -219,41 +219,17 @@ namespace Flipper
 
 	void AudioMixer::Enable(AxChannel channel, bool enable)
 	{
-		switch (channel)
-		{
-			case AxChannel::AudioDma:
-				Sources[0]->Enable(enable);
-				break;
-			case AxChannel::DvdAudio:
-				Sources[1]->Enable(enable);
-				break;
-		}
+		Sources[(int)channel]->Enable(enable);
 	}
 
 	void AudioMixer::SetSampleRate(AxChannel channel, AudioSampleRate value)
 	{
-		switch (channel)
-		{
-			case AxChannel::AudioDma:
-				Sources[0]->SetSampleRate(value);
-				break;
-			case AxChannel::DvdAudio:
-				Sources[1]->SetSampleRate(value);
-				break;
-		}
+		Sources[(int)channel]->SetSampleRate(value);
 	}
 
 	void AudioMixer::PushBytes(AxChannel channel, uint8_t* sampleData, size_t sampleDataSize)
 	{
-		switch (channel)
-		{
-			case AxChannel::AudioDma:
-				Sources[0]->PushBytes(sampleData, sampleDataSize);
-				break;
-			case AxChannel::DvdAudio:
-				Sources[1]->PushBytes(sampleData, sampleDataSize);
-				break;
-		}
+		Sources[(int)channel]->PushBytes(sampleData, sampleDataSize);
 	}
 
 }

@@ -15,3 +15,7 @@
 #include "DVD.h"
 #include "GCM.h"            // very simple GCM reading (for .gcm files)
 #include "DduCommands.h"
+
+#include "Mn102Analyzer.h"
+#include "Mn102Disasm.h"
+#include "DvdAdpcmDecode.h"

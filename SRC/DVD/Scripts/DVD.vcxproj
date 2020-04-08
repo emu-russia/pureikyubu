@@ -22,8 +22,11 @@
     <ClCompile Include="..\DduCommands.cpp" />
     <ClCompile Include="..\DduCore.cpp" />
     <ClCompile Include="..\DVD.cpp" />
+    <ClCompile Include="..\DvdAdpcmDecode.cpp" />
     <ClCompile Include="..\filesystem.cpp" />
     <ClCompile Include="..\GCM.cpp" />
+    <ClCompile Include="..\Mn102Analyzer.cpp" />
+    <ClCompile Include="..\Mn102Disasm.cpp" />
     <ClCompile Include="..\MountSDK.cpp" />
     <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -37,9 +40,12 @@
     <ClInclude Include="..\DduCommands.h" />
     <ClInclude Include="..\DduCore.h" />
     <ClInclude Include="..\DVD.h" />
+    <ClInclude Include="..\DvdAdpcmDecode.h" />
     <ClInclude Include="..\DvdStructs.h" />
     <ClInclude Include="..\filesystem.h" />
     <ClInclude Include="..\GCM.h" />
+    <ClInclude Include="..\Mn102Analyzer.h" />
+    <ClInclude Include="..\Mn102Disasm.h" />
     <ClInclude Include="..\MountSDK.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\Region.h" />

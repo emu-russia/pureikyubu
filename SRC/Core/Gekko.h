@@ -115,8 +115,6 @@ typedef union TBREG
 #define LD_TYPE(n)  ((GQR[n] >> 16) & 7)
 #define ST_SCALE(n) ((GQR[n] >>  8) & 0x3f)
 #define ST_TYPE(n)  ((GQR[n]      ) & 7)
-#define PSW         (op & 0x8000)
-#define PSI         ((op >> 12) & 7)
 
 // ---------------------------------------------------------------------------
 // CPU externals
@@ -172,7 +170,7 @@ namespace Gekko
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and “slow down” the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 1;
+        static const int CounterStep = 12;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);

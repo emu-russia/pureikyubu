@@ -450,6 +450,13 @@ namespace DVD
 
 		return output;
 	}
+	
+	// Disassemble DVD Firmware
+	static Json::Value* MnDisa(std::vector<std::string>& args)
+	{
+
+		return nullptr;
+	}
 
 	void DvdCommandsReflector()
 	{
@@ -466,6 +473,7 @@ namespace DVD
 		Debug::Hub.AddCmd("DvdOpenFile", DvdOpenFile);
 		Debug::Hub.AddCmd("DumpBb2", DumpBb2);
 		Debug::Hub.AddCmd("DumpFst", DumpFst);
+		Debug::Hub.AddCmd("MnDisa", MnDisa);
 	}
 
 }

@@ -84,7 +84,6 @@ namespace Flipper
         // update joypads and video
         VIUpdate();
         SIPoll();
-        CPUpdate();     // GX fifo - Bogus
     }
 
 }

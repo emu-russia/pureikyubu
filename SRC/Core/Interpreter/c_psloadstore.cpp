@@ -5,6 +5,8 @@
 
 namespace Gekko
 {
+    #define GEKKO_PSW   (op & 0x8000)
+    #define GEKKO_PSI   ((op >> 12) & 7)
 
     /*/ ---------------------------------------------------------------------------
 
@@ -78,13 +80,13 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             uint32_t EA = op & 0xfff, data0, data1;
-            int32_t d = RD, type = LD_TYPE(PSI);
-            uint8_t scale = (uint8_t)LD_SCALE(PSI);
+            int32_t d = RD, type = LD_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)LD_SCALE(GEKKO_PSI);
 
             if (EA & 0x800) EA |= 0xfffff000;
             if (RA) EA += RRA;
 
-            if (PSW)
+            if (GEKKO_PSW)
             {
                 if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
                 else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
@@ -164,13 +166,13 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             uint32_t EA = op & 0xfff, data0, data1;
-            int32_t d = RD, type = LD_TYPE(PSI);
-            uint8_t scale = (uint8_t)LD_SCALE(PSI);
+            int32_t d = RD, type = LD_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)LD_SCALE(GEKKO_PSI);
 
             if (EA & 0x800) EA |= 0xfffff000;
             if (RA) EA += RRA;
 
-            if (PSW)
+            if (GEKKO_PSW)
             {
                 if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
                 else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
@@ -257,13 +259,13 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             uint32_t EA = op & 0xfff;
-            int32_t d = RS, type = ST_TYPE(PSI);
-            uint8_t scale = (uint8_t)ST_SCALE(PSI);
+            int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
 
             if (EA & 0x800) EA |= 0xfffff000;
             if (RA) EA += RRA;
 
-            if (PSW)
+            if (GEKKO_PSW)
             {
                 if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
                 else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
@@ -289,8 +291,8 @@ namespace Gekko
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB;
-            int32_t d = RS, type = ST_TYPE(PSI);
-            uint8_t scale = (uint8_t)ST_SCALE(PSI);
+            int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
 
             if (RA) EA += RRA;
 
@@ -319,13 +321,13 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             uint32_t EA = op & 0xfff;
-            int32_t d = RS, type = ST_TYPE(PSI);
-            uint8_t scale = (uint8_t)ST_SCALE(PSI);
+            int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
 
             if (EA & 0x800) EA |= 0xfffff000;
             if (RA) EA += RRA;
 
-            if (PSW)
+            if (GEKKO_PSW)
             {
                 if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
                 else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
@@ -353,8 +355,8 @@ namespace Gekko
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB;
-            int32_t d = RS, type = ST_TYPE(PSI);
-            uint8_t scale = (uint8_t)ST_SCALE(PSI);
+            int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
+            uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
 
             if (RA) EA += RRA;
 
