@@ -51,6 +51,7 @@ for (int i=0; i<28; i++)
 ### Decode Sample
 
 ```c++
+typedef int Nibble;
 
 int16_t DecodeLeftSample ( int arg_0, int arg_4, bool init)
 {
@@ -58,31 +59,31 @@ int16_t DecodeLeftSample ( int arg_0, int arg_4, bool init)
 
     if (init)
     {
-        dword_429028 = 0;           // Для Right sample просто две других аналогичных переменных
-        dword_429030 = 0;
+        Yn[0] = 0;           // Для Right sample просто две других аналогичных переменных
+        Yn[1] = 0;
         res = 0;
     }
     else
     {
-        int var_4 = arg_4 >> 4;
-        int var_8 = arg_4 & 0xF;
+        Nibble var_4 = arg_4 >> 4;
+        Nibble var_8 = arg_4 & 0xF;
 
-        int32_t var_18 = MulSomething ( var_4, dword_429028, dword_429030);
-        var_C = Shifts1 (arg_0, var_8);
-        int32_t var_14 = Shifts2 (var_C, var_18);
-        res = Clamp (var_14);
+        int32_t var_18 = MulSomething(var_4, Yn[0], Yn[1]);
+        int16_t var_C = Shifts1(arg_0, var_8);
+        int32_t var_14 = Shifts2(var_C, var_18);
+        res = Clamp(var_14);
 
-        dword_429030 = dword_429028;
-        dword_429028 = var_14;
+        Yn[1] = Yn[0];
+        Yn[0] = var_14;
     }
 
     return res;
 }
 
-int32_t  MulSomething (int arg_0, int32_t arg_4, int32_t arg_8 )
+int32_t MulSomething(Nibble arg_0, int32_t arg_4, int32_t arg_8)
 {
-    int16_t var_4;
-    int16_t var_8;
+    int16_t var_4 = 0;
+    int16_t var_8 = 0;
 
     switch (arg_0)
     {
@@ -104,52 +105,30 @@ int32_t  MulSomething (int arg_0, int32_t arg_4, int32_t arg_8 )
             break;
     }
 
-    int32_t edx = var_4 * arg_4;
-    int32_t eax = var_8 * arg_8;
+    int32_t edx = (int32_t)var_4 * arg_4;
+    int32_t eax = (int32_t)var_8 * arg_8;
 
     int32_t var_C = (edx + eax + 32) >> 6;
-    int32_t var_C = max ( -0x200000‬, min (var_C, 0x1FFFFF));
-
-    return var_C;
+    return max(-0x200000, min(var_C, 0x1FFFFF) );
 }
 
-int16_t Shifts1 (int arg_0, int arg_4)
+int16_t Shifts1(Nibble arg_0, Nibble arg_4)
 {
-    int32_t var_4 = (int32_t)arg_0 << 12;
-    int32_t edx = var_4 >> arg_4;
-    return (int16_t)dx;
+    int16_t var_4 = (int16_t)arg_0 << 12;
+    return var_4 >> arg_4;
 }
 
-int32_t Shifts2 (int16_t arg_0, int32_t arg_4)
+int32_t Shifts2(int16_t arg_0, int32_t arg_4)
 {
     return ((int32_t)arg_0 << 6) + arg_4;
 }
 
 // Clamp
-int16_t Clamp (int32_t arg_0)
+uint16_t Clamp(int32_t arg_0)
 {
     int32_t var_8 = arg_0 >> 6;
-    int16_t var_4;
-
-    if (var_8 >= -0x8000)
-    {
-        if (var_8 <= 0x7FFF)
-        {
-            var_4 = var_8;
-        }
-        else
-        {
-            var_4 = 0x7FFF;
-        }
-    }
-    else
-    {
-        var_4 = 0x8000;
-    }
-
-    return var_4;
+    return (uint16_t)max(-0x8000, min(var_8, 0x7FFF));
 }
-
 
 ```
 
