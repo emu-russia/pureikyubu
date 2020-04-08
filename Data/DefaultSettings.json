@@ -42,13 +42,13 @@
 
 	"hardware":
 	{
-		"ANSI_FONT": "Data\\AnsiFont.szp",
-		"SJIS_FONT": "Data\\SjisFont.szp",
+		"ANSI": "Data\\AnsiFont.szp",
+		"SJIS": "Data\\SjisFont.szp",
 		"CONSOLE": 3,
 		"EXI_LOG": true,
 		"OS_REPORT": true,
 		"RSWHACK": true,
-		"VI_LOG": true,
+		"VI_LOG": false,
 		"VI_XFB": true,
 		"BOOTROM": "",
 		"DSP_DROM": "",
