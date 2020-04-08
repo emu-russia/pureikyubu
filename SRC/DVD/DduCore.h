@@ -83,11 +83,8 @@ namespace DVD
 		uint8_t immediateBuffer[4] = { 0 };
 		int immediateBufferPtr = 0;
 		static const size_t dataCacheSize = 512 * 1024;
-		static const size_t streamCacheSize = 32 * 1024;
 		uint8_t* dataCache = nullptr;			// Data cache used for speculative loading of DVD data for ReadSector command
-		uint8_t* streamingCache = nullptr;		// The stream cache is used to store raw ADPCM data (undecoded)
 		int dataCachePtr = 0;
-		int streamingCachePtr = 0;
 		DduThreadState state = DduThreadState::Idle;		// DduThread internal state
 		uint32_t seekVal = 0;						// Current seek for ReadSector command (data cache size based)
 		size_t transactionSize = 0;					// Hint for the next data transaction
@@ -99,7 +96,7 @@ namespace DVD
 		Thread* dvdAudioThread = nullptr;
 		static void DvdAudioThreadProc(void* Parameter);
 		uint32_t streamSeekVal = 0;					// Current seek for streaming (sample-based)
-		uint32_t streamCount = 0;				// Decoded LR sample counter
+		int32_t streamCount = 0;				// Decoded LR sample counter
 		DduStreamCallback streamCallback = nullptr;
 		bool streamClockEnabled = false;
 		DvdAudioSampleRate sampleRate = DvdAudioSampleRate::Rate_32000;
@@ -107,10 +104,21 @@ namespace DVD
 		int64_t gekkoOneSecond = 0;
 		int64_t TicksPerSample();
 		bool streamEnabledByDduCommand = false;
+		static const size_t streamCacheSize = 32 * 1024;
+		uint8_t* streamingCache = nullptr;		// The stream cache is used to store raw ADPCM data (undecoded)
+		int streamingCachePtr = 0;
+		uint16_t pcmPlaybackBuffer[2 * 28] = { 0 };
+		size_t pcmPlaybackCounter = 0;
+		FILE* adpcmStreamFile = nullptr;
+		bool adpcmStreamDump = false;
+		FILE* decodedStreamFile = nullptr;
+		bool decodedStreamDump = false;
 
 #pragma endregion "DVD Audio processing"
 
 		bool log = true;
+		bool logCommands = false;
+		bool logTransfers = false;
 
 	public:
 		DduCore();

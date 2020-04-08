@@ -19,10 +19,28 @@ namespace DVD
 		memset(streamingCache, 0, streamCacheSize);
 
 		Reset();
+
+		if (adpcmStreamDump)
+		{
+			fopen_s(&adpcmStreamFile, "Data\\DvdAdpcm.bin", "wb");
+		}
+		if (decodedStreamDump)
+		{
+			fopen_s(&decodedStreamFile, "Data\\DvdDecodedPcm.bin", "wb");
+		}
 	}
 
 	DduCore::~DduCore()
 	{
+		if (adpcmStreamFile)
+		{
+			fclose(adpcmStreamFile);
+		}
+		if (decodedStreamFile)
+		{
+			fclose(decodedStreamFile);
+		}
+
 		TransferComplete();
 		delete dduThread;
 		delete dvdAudioThread;
@@ -37,7 +55,7 @@ namespace DVD
 		errorState = false;
 		errorCode = 0;
 
-		if (log)
+		if (logCommands)
 		{
 			DBReport2(DbgChannel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 				commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
@@ -47,9 +65,13 @@ namespace DVD
 
 		switch (commandBuffer[0])
 		{
-			// Inquiry, read manufacture info (DMA)
+			// Inquiry (DVDLowInquiry), read manufacture info	(DMA)
 			case 0x12:
 				state = DduThreadState::ReadBogusData;
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "DVD Inquiry.\n");
+				}
 				break;
 
 			// read sector / disk id
@@ -77,14 +99,40 @@ namespace DVD
 				}
 				// Invalidate reading cache
 				dataCachePtr = dataCacheSize;
+
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "DVD Read: 0x%08X, %i bytes\n", seekVal, transactionSize);
+				}
 				break;
 
-			// seek
+			// seek (DVDLowSeek)	(IMM)
 			case 0xAB:
 				state = DduThreadState::ReadBogusData;
+
+				{
+					uint32_t seekTemp = (commandBuffer[4] << 24) |
+						(commandBuffer[5] << 16) |
+						(commandBuffer[6] << 8) |
+						(commandBuffer[7]);
+
+					if (log)
+					{
+						DBReport2(DbgChannel::DVD, "Seek: 0x%08X (ignored)\n", seekTemp << 2);
+					}
+				}
 				break;
 
-			// set stream (IMM)
+			// Request Error (DVDLowRequestError)	(IMM)
+			case 0xE0:
+				state = DduThreadState::ReadBogusData;
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "Request Error\n");
+				}
+				break;
+
+			// set stream (DVDLowAudioStream) (IMM)
 			case 0xE1:
 				state = DduThreadState::ReadBogusData;
 
@@ -93,21 +141,45 @@ namespace DVD
 						(commandBuffer[5] << 16) |
 						(commandBuffer[6] << 8) |
 						(commandBuffer[7]);
-					streamSeekVal = seekTemp << 2;
-					streamCount = (commandBuffer[8] << 24) |
-						(commandBuffer[9] << 16) |
-						(commandBuffer[10] << 8) |
-						(commandBuffer[11]);
-				}
 
-				if (log)
-				{
-					DBReport2(DbgChannel::DVD, "DVD Streaming setup. DVD positioned on track, starting %08X, %i bytes long.\n",
-						streamSeekVal, streamCount);
+					// The SDK first sets the address of the stream, and then for some reason resets it to 0.
+					// We make the assumption that the value 0 should be ignored.
+					if (seekTemp != 0)
+					{
+						streamSeekVal = seekTemp << 2;
+						streamCount = (commandBuffer[8] << 24) |
+							(commandBuffer[9] << 16) |
+							(commandBuffer[10] << 8) |
+							(commandBuffer[11]);
+
+						SetDvdAudioSampleRate(sampleRate);
+						DvdAudioInitDecoder();
+						streamEnabledByDduCommand = true;
+
+						// Invalidate streaming cache
+						streamingCachePtr = streamCacheSize;
+
+						// Invalidate PCM buffer
+						pcmPlaybackCounter = sizeof(pcmPlaybackBuffer);
+
+						if (log)
+						{
+							DBReport2(DbgChannel::DVD, "DVD Streaming setup: stream start 0x%08X, counter: %i\n",
+								streamSeekVal, streamCount);
+						}
+					}
+					else
+					{
+						if (log)
+						{
+							DBReport2(DbgChannel::DVD, "DVD Bogus Streaming setup (ignored)\n");
+						}
+					}
+
 				}
 				break;
 
-			// get stream status (IMM)
+			// get stream status (DVDLowRequestAudioStatus) (IMM)
 			case 0xE2:
 				switch (commandBuffer[1])
 				{
@@ -137,32 +209,24 @@ namespace DVD
 				}
 				break;
 
-			// stop motor
+			// stop motor (DVDLowStopMotor)		(IMM)
 			case 0xE3:
 				state = DduThreadState::ReadBogusData;
+				if (log)
+				{
+					DBReport2(DbgChannel::DVD, "Stop motor.\n");
+				}
 				break;
 
-			// stream control (IMM)
+			// Set Audio Buffer (DVDLowAudioBufferConfig)  (IMM)
+			// It looks like it's setting up a FIFO buffer that stores decoded PCM samples of the next 32 Bytes ADPCM chunk.
 			case 0xE4:
 				state = DduThreadState::ReadBogusData;
 
-				if (commandBuffer[1] & 1)
-				{
-					SetDvdAudioSampleRate(sampleRate);
-					DvdAudioInitDecoder();
-					streamEnabledByDduCommand = true;
-				}
-				else
-				{
-					streamEnabledByDduCommand = false;
-				}
-
-				// Invalidate streaming cache
-				streamingCachePtr = streamCacheSize;
-
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "DVD Streaming. Play(?) : %s\n", (commandBuffer[1] & 1) ? "On" : "Off");
+					DBReport2(DbgChannel::DVD, "SetAudioBuffer: Trig: %i, Enable: %i, Size: %i\n", 
+						commandBuffer[0] & 3, commandBuffer[2] & 0x80 ? 1 : 0, commandBuffer[3] & 0xf);
 				}
 				break;
 
@@ -324,12 +388,23 @@ namespace DVD
 			{
 				if (core->streamingCachePtr >= streamCacheSize)
 				{
+					core->streamingCachePtr = 0;
 					Seek(core->streamSeekVal);
 					bool readResult = Read(core->streamingCache, streamCacheSize);
 
-					if (!readResult)
+					if (core->log)
 					{
-						core->DeviceError(0);
+						//DBReport2(DbgChannel::DVD, "Streaming Seek: 0x%08X, Byte[0]: 0x%02X\n", core->streamSeekVal, core->streamingCache[0]);
+					}
+
+					//if (!readResult)
+					//{
+					//	core->DeviceError(0);
+					//}
+
+					if (core->adpcmStreamDump && core->adpcmStreamFile)
+					{
+						fwrite(core->streamingCache, 1, streamCacheSize, core->adpcmStreamFile);
 					}
 				}
 			}
@@ -338,15 +413,26 @@ namespace DVD
 
 			if (core->streamEnabledByDduCommand)
 			{
-				uint8_t* rawPtr = &core->streamingCache[core->streamingCachePtr];
+				if (core->pcmPlaybackCounter >= sizeof(core->pcmPlaybackBuffer))
+				{
+					// Decode next ADPCM chunk
+					DvdAudioDecode(&core->streamingCache[core->streamingCachePtr], core->pcmPlaybackBuffer);
 
-				// TODO: Decode next Adpcm sample (LR)
-				// Dirty hack to hear some noise
-				sample[0] = (rawPtr[0] << 8) | rawPtr[1];
-				sample[1] = (rawPtr[2] << 8) | rawPtr[3];
+					if (core->decodedStreamDump && core->decodedStreamFile)
+					{
+						fwrite(core->pcmPlaybackBuffer, 1, sizeof(core->pcmPlaybackBuffer), core->decodedStreamFile);
+					}
 
-				core->streamSeekVal += 4;
-				core->streamingCachePtr += 4;
+					core->streamingCachePtr += 32;
+					core->streamSeekVal += 32;
+					core->streamCount -= 32;
+					core->pcmPlaybackCounter = 0;
+				}
+
+				uint8_t* rawPtr = (uint8_t *)core->pcmPlaybackBuffer + core->pcmPlaybackCounter;
+				sample[0] = *(uint16_t *)rawPtr;
+				sample[1] = *(uint16_t *)(rawPtr + 2);
+				core->pcmPlaybackCounter += 4;
 			}
 			else
 			{
@@ -358,25 +444,21 @@ namespace DVD
 
 			if (core->streamCallback)
 			{
-				if (core->streamClockEnabled)
-				{
-					core->streamCallback(sample[0], sample[1]);
-				}
-				else
-				{
-					// If AIS clock is disabled just send zeros
-					core->streamCallback(0, 0);
-				}
+				core->streamCallback(sample[0], sample[1]);
 			}
 
 			core->stats.sampleCounter++;
 
 			if (core->streamEnabledByDduCommand)
 			{
-				core->streamCount--;
-				if (core->streamCount == 0)
+				if (core->streamCount <= 0)
 				{
 					core->streamEnabledByDduCommand = false;
+
+					if (core->log)
+					{
+						DBReport2(DbgChannel::DVD, "DVD streaming stopped by counter value reach zero\n");
+					}
 				}
 			}
 		}
@@ -415,7 +497,6 @@ namespace DVD
 		streamingCachePtr = streamCacheSize;
 		state = DduThreadState::WriteCommand;
 		ResetStats();
-		streamClockEnabled = false;
 		gekkoOneSecond = Gekko::Gekko->OneSecond();
 		dduTicksPerByte = gekkoOneSecond / transferRate;
 		SetDvdAudioSampleRate(DvdAudioSampleRate::Rate_48000);
@@ -474,7 +555,7 @@ namespace DVD
 
 	void DduCore::StartTransfer(DduBusDirection direction)
 	{
-		if (log)
+		if (logTransfers)
 		{
 			DBReport2(DbgChannel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
 		}
@@ -489,7 +570,7 @@ namespace DVD
 
 	void DduCore::TransferComplete()
 	{
-		if (log)
+		if (logTransfers)
 		{
 			DBReport2(DbgChannel::DVD, "TransferComplete");
 		}
