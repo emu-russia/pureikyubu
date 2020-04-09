@@ -4,7 +4,7 @@ This section contains a description of DI. Based on US patent 6,609,977.
 
 ## Overview
 
-DI is used to control Disk Drive Uint (DDU). From the application side, you can interact in two ways:
+DI is used to control Disk Drive Unit (DDU). From the application side, you can interact in two ways:
 - Immediate commands
 - Via DI DMA
 
