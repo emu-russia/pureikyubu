@@ -20,9 +20,12 @@ namespace Flipper
             int64_t ticks = Gekko::Gekko->GetTicks();
             if (ticks >= flipper->hwUpdateTbrValue)
             {
-                flipper->hwUpdateTbrValue = ticks + 100;
+                flipper->hwUpdateTbrValue = ticks + 200;
                 flipper->Update();
             }
+
+            //flipper->Update();
+            //Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
         }
     }
 
@@ -57,7 +60,7 @@ namespace Flipper
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
-        hwUpdateThread = new Thread(HwUpdateThread, false, this);
+        hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
     }
 
     Flipper::~Flipper()

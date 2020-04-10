@@ -8,7 +8,7 @@ namespace DSP
 
 	DspCore::DspCore(HWConfig* config)
 	{
-		dspThread = new Thread(DspThreadProc, true, this);
+		dspThread = new Thread(DspThreadProc, true, this, "DspCore");
 		assert(dspThread);
 
 		HardReset();
@@ -151,33 +151,33 @@ namespace DSP
 
 	void DspCore::AddBreakpoint(DspAddress imemAddress)
 	{
-		MySpinLock::Lock(&breakPointsSpinLock);
+		breakPointsSpinLock.Lock();
 		breakpoints.push_back(imemAddress);
-		MySpinLock::Unlock(&breakPointsSpinLock);
+		breakPointsSpinLock.Unlock();
 	}
 
 	void DspCore::ListBreakpoints()
 	{
-		MySpinLock::Lock(&breakPointsSpinLock);
+		breakPointsSpinLock.Lock();
 		for (auto it = breakpoints.begin(); it != breakpoints.end(); ++it)
 		{
 			DBReport("0x%04X\n", *it);
 		}
-		MySpinLock::Unlock(&breakPointsSpinLock);
+		breakPointsSpinLock.Unlock();
 	}
 
 	void DspCore::ClearBreakpoints()
 	{
-		MySpinLock::Lock(&breakPointsSpinLock);
+		breakPointsSpinLock.Lock();
 		breakpoints.clear();
-		MySpinLock::Unlock(&breakPointsSpinLock);
+		breakPointsSpinLock.Unlock();
 	}
 
 	bool DspCore::TestBreakpoint(DspAddress imemAddress)
 	{
 		bool found = false;
 
-		MySpinLock::Lock(&breakPointsSpinLock);
+		breakPointsSpinLock.Lock();
 		for (auto it = breakpoints.begin(); it != breakpoints.end(); ++it)
 		{
 			if (*it == imemAddress)
@@ -186,48 +186,48 @@ namespace DSP
 				break;
 			}
 		}
-		MySpinLock::Unlock(&breakPointsSpinLock);
+		breakPointsSpinLock.Unlock();
 
 		return found;
 	}
 
 	void DspCore::AddCanary(DspAddress imemAddress, std::string text)
 	{
-		MySpinLock::Lock(&canariesSpinLock);
+		canariesSpinLock.Lock();
 		canaries[imemAddress] = text;
-		MySpinLock::Unlock(&canariesSpinLock);
+		canariesSpinLock.Unlock();
 	}
 
 	void DspCore::ListCanaries()
 	{
-		MySpinLock::Lock(&canariesSpinLock);
+		canariesSpinLock.Lock();
 		for (auto it = canaries.begin(); it != canaries.end(); ++it)
 		{
 			DBReport("0x%04X: %s\n", it->first, it->second.c_str());
 		}
-		MySpinLock::Unlock(&canariesSpinLock);
+		canariesSpinLock.Unlock();
 	}
 
 	void DspCore::ClearCanaries()
 	{
-		MySpinLock::Lock(&canariesSpinLock);
+		canariesSpinLock.Lock();
 		canaries.clear();
-		MySpinLock::Unlock(&canariesSpinLock);
+		canariesSpinLock.Unlock();
 	}
 
 	bool DspCore::TestCanary(DspAddress imemAddress)
 	{
-		MySpinLock::Lock(&canariesSpinLock);
+		canariesSpinLock.Lock();
 
 		auto it = canaries.find(imemAddress);
 		if (it != canaries.end())
 		{
 			DBReport2(DbgChannel::DSP, it->second.c_str());
-			MySpinLock::Unlock(&canariesSpinLock);
+			canariesSpinLock.Unlock();
 			return true;
 		}
 
-		MySpinLock::Unlock(&canariesSpinLock);
+		canariesSpinLock.Unlock();
 		return false;
 	}
 

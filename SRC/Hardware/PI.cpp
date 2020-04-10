@@ -173,7 +173,7 @@ void PIOpen(HWConfig* config)
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
-    pi.log = false;
+    pi.log = true;
 
     // clear interrupt registers
     pi.intsr = pi.intmr = 0;

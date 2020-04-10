@@ -4,6 +4,7 @@
 
 #include "../Common/Thread.h"
 #include <vector>
+#include <list>
 #include <atomic>
 #include "GekkoDefs.h"
 
@@ -165,6 +166,20 @@ namespace Gekko
 {
     class Interpreter;
 
+    enum class GekkoWaiter : int
+    {
+        HwUpdate = 0,
+        DspCore,
+        FlipperAi,
+        Max,
+    };
+
+    typedef struct _WaitQueueEntry
+    {
+        std::atomic<uint64_t> tbrValue;
+        Thread* thread;
+    } WaitQueueEntry;
+
     class GekkoCore
     {
         // How many ticks Gekko takes to execute one instruction. 
@@ -178,9 +193,13 @@ namespace Gekko
         std::vector<uint32_t> breakPointsExecute;
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
-        MySpinLock::LOCK breakPointsLock = MySpinLock::LOCK_IS_FREE;
+        SpinLock breakPointsLock;
 
         Interpreter* interp;
+
+        WaitQueueEntry waitQueue[(int)GekkoWaiter::Max] = { 0 };
+        SpinLock waitQueueLock;
+        void DispatchWaitQueue();
 
     public:
         GekkoCore();
@@ -209,6 +228,9 @@ namespace Gekko
         void AssertInterrupt();
         void ClearInterrupt();
         void Exception(uint32_t code);
+
+        void WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread);
+
     };
 
     extern GekkoCore* Gekko;

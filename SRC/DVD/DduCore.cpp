@@ -6,9 +6,9 @@ namespace DVD
 
 	DduCore::DduCore()
 	{
-		dduThread = new Thread(DduThreadProc, true, this);
+		dduThread = new Thread(DduThreadProc, true, this, "DvdData");
 		assert(dduThread);
-		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this);
+		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this, "DvdAudio");
 		assert(dvdAudioThread);
 
 		dataCache = new uint8_t[dataCacheSize];

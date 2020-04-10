@@ -17,6 +17,7 @@ namespace Flipper
 		int64_t hwUpdateTbrValue = 0;
 
 		Thread* hwUpdateThread = nullptr;
+		static const size_t ticksToHwUpdate = 100;
 
 	public:
 		DSP::DspCore* DSP;      // instance of dsp core

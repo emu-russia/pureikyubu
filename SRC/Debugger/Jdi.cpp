@@ -45,9 +45,9 @@ namespace Debug
     // Reflection of the command delegate by its text name
     void JdiHub::AddCmd(std::string name, CmdDelegate command)
     {
-        MySpinLock::Lock(&reflexMapLock);
+        reflexMapLock.Lock();
         reflexMap[name] = command;
-        MySpinLock::Unlock(&reflexMapLock);
+        reflexMapLock.Unlock();
     }
 
     // Register JDI node.
@@ -89,13 +89,13 @@ namespace Debug
                         {
                             Json::Value* next = *cmd;
 
-                            MySpinLock::Lock(&reflexMapLock);
+                            reflexMapLock.Lock();
                             auto it = reflexMap.find(next->name);
                             if (it != reflexMap.end())
                             {
                                 reflexMap.erase(it);
                             }
-                            MySpinLock::Unlock(&reflexMapLock);
+                            reflexMapLock.Unlock();
                         }
                     }
                 }
@@ -279,14 +279,14 @@ namespace Debug
             return nullptr;
         }
 
-        MySpinLock::Lock(&reflexMapLock);
+        reflexMapLock.Lock();
         auto it = reflexMap.find(args[0]);
         if (it == reflexMap.end())
         {
-            MySpinLock::Unlock(&reflexMapLock);
+            reflexMapLock.Unlock();
             return nullptr;
         }
-        MySpinLock::Unlock(&reflexMapLock);
+        reflexMapLock.Unlock();
 
         return it->second(args);
     }
@@ -299,10 +299,10 @@ namespace Debug
         if (args.size() == 0)
             return false;
 
-        MySpinLock::Lock(&reflexMapLock);
+        reflexMapLock.Lock();
         auto it = reflexMap.find(args[0]);
         exists = it != reflexMap.end();
-        MySpinLock::Unlock(&reflexMapLock);
+        reflexMapLock.Unlock();
 
         return exists;
     }

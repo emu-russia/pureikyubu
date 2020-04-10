@@ -39,7 +39,7 @@ namespace Gekko
 
         Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
-        gekkoThread = new Thread(GekkoThreadProc, true, this);
+        gekkoThread = new Thread(GekkoThreadProc, true, this, "GekkoCore");
         assert(gekkoThread);
 
         Reset();
@@ -101,6 +101,8 @@ namespace Gekko
                 DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
             }
         }
+
+        //DispatchWaitQueue();
     }
 
     int64_t GekkoCore::GetTicks()
@@ -161,6 +163,32 @@ namespace Gekko
     void GekkoCore::Exception(uint32_t code)
     {
         interp->Exception(code);
+    }
+
+    void GekkoCore::DispatchWaitQueue()
+    {
+        waitQueueLock.Lock();
+        for (int i = 0; i < (int)GekkoWaiter::Max; i++)
+        {
+            if (cpu.tb.uval >= waitQueue[i].tbrValue)
+            {
+                waitQueue[i].tbrValue = -1;
+                if (waitQueue[i].thread)
+                {
+                    waitQueue[i].thread->Resume();
+                }
+            }
+        }
+        waitQueueLock.Unlock();
+    }
+
+    void GekkoCore::WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread)
+    {
+        waitQueueLock.Lock();
+        waitQueue[(int)disignation].tbrValue = GetTicks() + gekkoTicks;
+        waitQueue[(int)disignation].thread = thread;
+        waitQueueLock.Unlock();
+        thread->Suspend();
     }
 
 }

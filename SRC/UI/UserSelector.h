@@ -64,8 +64,9 @@ void    ScrollSelector(int letter);
 uint16_t* SjisToUnicode(TCHAR* sjisText, size_t* size, size_t* chars);
 
 // all important data is placed here
-typedef struct UserSelector
+class UserSelector
 {
+public:
     bool        active;             // 1, if enabled (under control of UserWindow)
     bool        opened;             // 1, if visible
     bool        smallIcons;         // show small icons
@@ -84,10 +85,10 @@ typedef struct UserSelector
 
     // list of found files
     std::vector<UserFile*> files;
-    MySpinLock::LOCK filesLock;
+    SpinLock filesLock;
 
     std::atomic<bool> updateInProgress;
 
-} UserSelector;
+};
 
 extern  UserSelector usel;

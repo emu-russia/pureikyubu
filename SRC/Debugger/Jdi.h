@@ -18,7 +18,7 @@ namespace Debug
 	class JdiHub
 	{
 		std::map<std::string, CmdDelegate> reflexMap;
-		MySpinLock::LOCK reflexMapLock = MySpinLock::LOCK_IS_FREE;
+		SpinLock reflexMapLock;
 
 		std::map<uint32_t, Json*> nodes;
 

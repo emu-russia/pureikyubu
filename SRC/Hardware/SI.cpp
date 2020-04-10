@@ -82,6 +82,14 @@ static void SICommand(int chan, uint8_t *ptr)
     }
 }
 
+static void SIClearInterrupt()
+{
+    if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
+    {
+        PIClearInt(PI_INTERRUPT_SI);
+    }
+}
+
 // ---------------------------------------------------------------------------
 // register traps
 
@@ -186,7 +194,7 @@ static void __fastcall si_inh0(uint32_t addr, uint32_t *reg)          // high
         SI_SR_RDST3)) == 0)
     {
         SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-        PIClearInt(PI_INTERRUPT_SI);
+        SIClearInterrupt();
     }
 
     *reg = res;
@@ -225,7 +233,7 @@ static void __fastcall si_inh1(uint32_t addr, uint32_t *reg)          // high
         SI_SR_RDST3)) == 0)
     {
         SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-        PIClearInt(PI_INTERRUPT_SI);
+        SIClearInterrupt();
     }
 
     *reg = res;
@@ -264,7 +272,7 @@ static void __fastcall si_inh2(uint32_t addr, uint32_t *reg)          // high
         SI_SR_RDST3)) == 0)
     {
         SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-        PIClearInt(PI_INTERRUPT_SI);
+        SIClearInterrupt();
     }
 
     *reg = res;
@@ -303,7 +311,7 @@ static void __fastcall si_inh3(uint32_t addr, uint32_t *reg)          // high
         SI_SR_RDST3)) == 0)
     {
         SI_COMCSR_REG &= ~SI_COMCSR_RDSTINT;
-        PIClearInt(PI_INTERRUPT_SI);
+        SIClearInterrupt();
     }
 
     *reg = res;
@@ -368,7 +376,7 @@ static void __fastcall write_commcsr(uint32_t addr, uint32_t data)
     if(data & SI_COMCSR_TCINT)
     {
         SI_COMCSR_REG &= ~SI_COMCSR_TCINT;
-        PIClearInt(PI_INTERRUPT_SI);
+        SIClearInterrupt();
     }
 
     // change RDST interrupt mask
