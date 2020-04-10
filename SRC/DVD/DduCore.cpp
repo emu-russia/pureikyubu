@@ -2,7 +2,7 @@
 
 namespace DVD
 {
-	DduCore DDU;		// Singletone
+	DduCore * DDU;
 
 	DduCore::DduCore()
 	{

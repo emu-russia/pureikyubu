@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma pack(push, 1)
-
 // DI registers (32-bit)
 #define DI_SR            0x0C006000     // Status Register
 #define DI_CVR           0x0C006004     // Cover Register
@@ -64,5 +62,3 @@ extern  DIControl di;
 
 void    DIOpen();
 void    DIClose();
-
-#pragma pack(pop)

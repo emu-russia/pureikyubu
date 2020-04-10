@@ -102,7 +102,7 @@ namespace Gekko
             }
         }
 
-        //DispatchWaitQueue();
+        DispatchWaitQueue();
     }
 
     int64_t GekkoCore::GetTicks()
@@ -167,7 +167,6 @@ namespace Gekko
 
     void GekkoCore::DispatchWaitQueue()
     {
-        waitQueueLock.Lock();
         for (int i = 0; i < (int)GekkoWaiter::Max; i++)
         {
             if (cpu.tb.uval >= waitQueue[i].tbrValue)
@@ -179,15 +178,12 @@ namespace Gekko
                 }
             }
         }
-        waitQueueLock.Unlock();
     }
 
     void GekkoCore::WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread)
     {
-        waitQueueLock.Lock();
         waitQueue[(int)disignation].tbrValue = GetTicks() + gekkoTicks;
         waitQueue[(int)disignation].thread = thread;
-        waitQueueLock.Unlock();
         thread->Suspend();
     }
 

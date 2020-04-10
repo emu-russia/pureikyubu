@@ -169,12 +169,16 @@ namespace DVD
     void InitSubsystem()
     {
         Debug::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
+
+        DDU = new DduCore;
+        assert(DDU);
     }
 
     void ShutdownSubsystem()
     {
         Unmount();
         Debug::Hub.RemoveNode(DDU_JDI_JSON);
+        delete DDU;
     }
 
 }

@@ -44,9 +44,9 @@ namespace DVD
 			DBReport("Disk Unmounted\n");
 		}
 
-		DBReport("Lid status: %s\n", (DDU.GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
+		DBReport("Lid status: %s\n", (DDU->GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
 
-		output->AddBool(nullptr, DDU.GetCoverStatus() == CoverStatus::Open ? true : false);
+		output->AddBool(nullptr, DDU->GetCoverStatus() == CoverStatus::Open ? true : false);
 
 		// Return info
 
@@ -77,14 +77,14 @@ namespace DVD
 	// Simulate opening of the drive cover
 	static Json::Value* OpenLid(std::vector<std::string>& args)
 	{
-		DDU.OpenCover();
+		DDU->OpenCover();
 		return nullptr;
 	}
 
 	// Simulate closing of the drive cover
 	static Json::Value* CloseLid(std::vector<std::string>& args)
 	{
-		DDU.CloseCover();
+		DDU->CloseCover();
 		return nullptr;
 	}
 
@@ -93,11 +93,11 @@ namespace DVD
 	{
 		DBReport("DvdStats:\n");
 
-		DBReport("BytesRead: %I64u\n", DDU.stats.bytesRead);
-		DBReport("BytesWrite: %I64u\n", DDU.stats.bytesWrite);
-		DBReport("Host->DDU transfers: %i\n", DDU.stats.hostToDduTransferCount);
-		DBReport("DDU->Host transfers: %i\n", DDU.stats.dduToHostTransferCount);
-		DBReport("SampleCounter: %I64u\n", DDU.stats.sampleCounter);
+		DBReport("BytesRead: %I64u\n", DDU->stats.bytesRead);
+		DBReport("BytesWrite: %I64u\n", DDU->stats.bytesWrite);
+		DBReport("Host->DDU transfers: %i\n", DDU->stats.hostToDduTransferCount);
+		DBReport("DDU->Host transfers: %i\n", DDU->stats.dduToHostTransferCount);
+		DBReport("SampleCounter: %I64u\n", DDU->stats.sampleCounter);
 
 		return nullptr;
 	}
@@ -105,7 +105,7 @@ namespace DVD
 	// Reset stats
 	static Json::Value* DvdResetStats(std::vector<std::string>& args)
 	{
-		DDU.ResetStats();
+		DDU->ResetStats();
 
 		return nullptr;
 	}

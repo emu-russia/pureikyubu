@@ -1,4 +1,4 @@
-#pragma pack(push, 1)
+#pragma once
 
 // AI registers (AID regs are 16-bit, AIS regs are 32-bit)
 #define DSP_OUTMBOXH        0x0C005000      // CPU->DSP mailbox
@@ -90,5 +90,3 @@ void    AIOpen(HWConfig * config);
 void    AIClose();
 
 void    DSPAssertInt();     // Used by DspCore
-
-#pragma pack(pop)

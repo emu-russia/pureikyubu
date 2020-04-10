@@ -3,8 +3,6 @@
 
 #define SI_POLLING_INTERVAL     0x10000      // In Gekko ticks
 
-#pragma pack(push, 1)
-
 // SI registers (all registers are 32-bit)
 
 #define SI_CHAN0_OUTBUF     0x0C006400      // Channel 0 Output Buffer
@@ -103,5 +101,3 @@ extern  SIControl si;
 
 void    SIPoll();
 void    SIOpen();
-
-#pragma pack(pop)

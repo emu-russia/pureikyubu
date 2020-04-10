@@ -84,7 +84,7 @@ static void SICommand(int chan, uint8_t *ptr)
 
 static void SIClearInterrupt()
 {
-    if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
+    //if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
     {
         PIClearInt(PI_INTERRUPT_SI);
     }

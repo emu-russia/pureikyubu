@@ -6,7 +6,6 @@
 #include <Windows.h>
 #endif
 
-#include <string>
 #include "Spinlock.h"
 #include "../Debugger/Debugger.h"
 
@@ -22,22 +21,6 @@ class Thread
 
 	WrappedContext ctx = { 0 };
 
-#ifdef _WINDOWS
-	HANDLE threadHandle = INVALID_HANDLE_VALUE;
-	DWORD threadId = 0;
-	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter)
-	{
-		WrappedContext* wrappedCtx = (WrappedContext*)lpParameter;
-
-		if (wrappedCtx->proc)
-		{
-			wrappedCtx->proc(wrappedCtx->context);
-		}
-
-		return 0;
-	}
-#endif
-
 	bool running = false;
 	SpinLock resumeLock;
 	int resumeCounter = 0;
@@ -45,60 +28,22 @@ class Thread
 
 	char threadName[0x100] = { 0 };
 
+#ifdef _WINDOWS
+	HANDLE threadHandle = INVALID_HANDLE_VALUE;
+	DWORD threadId = 0;
+	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
+#endif
+
 public:
 
 	// Create thread
-	Thread(ThreadProc threadProc, bool suspended, void * context, const char * name)
-	{
-		running = !suspended;
-		strcpy_s(threadName, sizeof(threadName) - 1, name);
-
-#ifdef _WINDOWS
-		ctx.context = context;
-		ctx.proc = threadProc;
-		threadHandle = CreateThread(NULL, 0, RingleaderThreadProc, this, suspended ? CREATE_SUSPENDED : 0, &threadId);
-		assert(threadHandle != INVALID_HANDLE_VALUE);
-#endif
-	}
+	Thread(ThreadProc threadProc, bool suspended, void* context, const char* name);
 
 	// Join thread
-	~Thread()
-	{
-#ifdef _WINDOWS
-		TerminateThread(threadHandle, 0);
-		WaitForSingleObject(threadHandle, 1000);
-#endif
-	}
+	~Thread();
 
-	void Resume()
-	{
-		if (!running)
-		{
-#ifdef _WINDOWS
-			ResumeThread(threadHandle);
-#endif
-			running = true;
-			resumeCounter++;
-			DBReport("%s Resume\n", threadName);
-		}
-	}
-
-	void Suspend()
-	{
-		if (running)
-		{
-			running = false;
-			suspendCounter++;
-			DBReport("%s Suspend\n", threadName);
-#ifdef _WINDOWS
-			SuspendThread(threadHandle);
-#endif
-		}
-	}
-
-	bool IsRunning()
-	{
-		return running;
-	}
+	void Resume();
+	void Suspend();
+	bool IsRunning() { return running; }
 
 };

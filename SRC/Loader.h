@@ -140,7 +140,7 @@ uint32_t     LoadBIN(TCHAR *binname);
 #define PATCH_SIZE_64   0x0800
 
 // data in patch is in big-endian PPC format
-#pragma pack(1)
+#pragma pack(push, 1)
 typedef struct Patch
 {
     uint32_t     effectiveAddress;       // CPU effective address to apply patch there
@@ -155,7 +155,7 @@ typedef struct Patch
     // 00000: 80 00 B4 94 00 00 00 04 4E 80 00 20 00 00 00 00
     //        |address  |freeze|size |blr opcode |dummy data|
 } Patch;
-#pragma pack()
+#pragma pack(pop)
 
 bool    LoadPatch(TCHAR * patchname, bool add=false);
 void    ApplyPatches(bool load=0, int32_t a=0, int32_t b=-1);

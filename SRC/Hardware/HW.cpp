@@ -17,15 +17,15 @@ namespace Flipper
         // TODO: Add update queue
         while (true)
         {
-            int64_t ticks = Gekko::Gekko->GetTicks();
-            if (ticks >= flipper->hwUpdateTbrValue)
-            {
-                flipper->hwUpdateTbrValue = ticks + 200;
-                flipper->Update();
-            }
+            //int64_t ticks = Gekko::Gekko->GetTicks();
+            //if (ticks >= flipper->hwUpdateTbrValue)
+            //{
+            //    flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
+            //    flipper->Update();
+            //}
 
-            //flipper->Update();
-            //Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
+            flipper->Update();
+            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
         }
     }
 
@@ -61,6 +61,8 @@ namespace Flipper
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
         hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
+        assert(hwUpdateThread);
+        Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, hwUpdateThread);
     }
 
     Flipper::~Flipper()

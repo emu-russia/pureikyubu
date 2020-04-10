@@ -191,5 +191,5 @@ namespace DVD
 		}
 	};
 
-	extern DduCore DDU;
+	extern DduCore * DDU;
 }

@@ -1,4 +1,4 @@
-#pragma pack(push, 1)
+#pragma once
 
 // EXI registers (all registers are 32-bit)
 //                      (chan 0)
@@ -112,5 +112,3 @@ void    EXIDetach(int chan);    // disconnect device
 
 void    EIOpen(HWConfig* config);
 void    EIClose();
-
-#pragma pack(pop)
