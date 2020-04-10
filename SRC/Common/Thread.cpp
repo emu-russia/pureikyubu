@@ -43,7 +43,7 @@ void Thread::Resume()
 #endif
 		running = true;
 		resumeCounter++;
-		DBReport("%s Resume\n", threadName);
+		//DBReport("%s Resume\n", threadName);
 	}
 	resumeLock.Unlock();
 }
@@ -54,7 +54,7 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
-		DBReport("%s Suspend\n", threadName);
+		//DBReport("%s Suspend\n", threadName);
 #ifdef _WINDOWS
 		SuspendThread(threadHandle);
 #endif

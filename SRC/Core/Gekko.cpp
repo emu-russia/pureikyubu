@@ -43,10 +43,20 @@ namespace Gekko
         assert(gekkoThread);
 
         Reset();
+
+        msec = OneSecond() / 1000;
     }
 
     GekkoCore::~GekkoCore()
     {
+        for (int i = 0; i < (int)GekkoWaiter::Max; i++)
+        {
+            if (waitQueue[i].thread)
+            {
+                waitQueue[i].thread->Suspend();
+            }
+        }
+
         Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
 
         delete gekkoThread;
@@ -102,7 +112,12 @@ namespace Gekko
             }
         }
 
-        DispatchWaitQueue();
+        dispatchQueueCounter++;
+        if (dispatchQueueCounter >= dispatchQueuePeriod)
+        {
+            dispatchQueueCounter = 0;
+            DispatchWaitQueue();
+        }
     }
 
     int64_t GekkoCore::GetTicks()
@@ -167,7 +182,9 @@ namespace Gekko
 
     void GekkoCore::DispatchWaitQueue()
     {
-        for (int i = 0; i < (int)GekkoWaiter::Max; i++)
+        int i;
+
+        for (i = 0; i < (int)GekkoWaiter::Max; i++)
         {
             if (cpu.tb.uval >= waitQueue[i].tbrValue)
             {
@@ -182,9 +199,18 @@ namespace Gekko
 
     void GekkoCore::WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread)
     {
-        waitQueue[(int)disignation].tbrValue = GetTicks() + gekkoTicks;
-        waitQueue[(int)disignation].thread = thread;
-        thread->Suspend();
+        if (gekkoTicks < ((uint64_t)OneMillisecond() << 4))
+        {
+            waitQueue[(int)disignation].tbrValue = -1;
+            waitQueue[(int)disignation].thread = thread;
+        }
+        else
+        {
+            waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
+            waitQueue[(int)disignation].thread = thread;
+            someoneNotSleep = true;
+            thread->Suspend();
+        }
     }
 
 }

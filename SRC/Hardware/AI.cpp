@@ -466,6 +466,8 @@ static void AIUpdate(void *Parameter)
                 }
             }
         }
+
+        //Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
     }
 }
 
@@ -483,6 +485,7 @@ void AIOpen(HWConfig* config)
 
     ai.one_second = Gekko::Gekko->OneSecond();
     ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
+    ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
     ai.log = false;
     AIStopDMA();
 
