@@ -391,7 +391,7 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
 
     // check already present
     bool found = false;
-    MySpinLock::Lock(&usel.filesLock);
+    usel.filesLock.Lock();
     for (auto it = usel.files.begin(); it != usel.files.end(); ++it)
     {
         UserFile* entry = *it;
@@ -402,7 +402,7 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
             break;
         }
     }
-    MySpinLock::Unlock(&usel.filesLock);
+    usel.filesLock.Unlock();
 
     if (found)
         return;
@@ -506,9 +506,9 @@ static void add_file(TCHAR *file, int fsize, SELECTOR_FILE type)
     }
 
     // extend filelist
-    MySpinLock::Lock(&usel.filesLock);
+    usel.filesLock.Lock();
     usel.files.push_back(item);
-    MySpinLock::Unlock(&usel.filesLock);
+    usel.filesLock.Unlock();
 
     // add listview item
     add_item(usel.files.size() - 1);
@@ -751,14 +751,14 @@ void UpdateSelector()
 
     // destroy old filelist and path data
     ListView_DeleteAllItems(usel.hSelectorWindow);
-    MySpinLock::Lock(&usel.filesLock);
+    usel.filesLock.Lock();
     while (!usel.files.empty())
     {
         UserFile* file = usel.files.back();
         usel.files.pop_back();
         delete file;
     }
-    MySpinLock::Unlock(&usel.filesLock);
+    usel.filesLock.Unlock();
     ImageList_Remove(bannerList, -1);
 
     // build search path list (even if selector closed)
@@ -1099,7 +1099,6 @@ void CreateSelector()
     if(usel.opened) return;
 
     usel.updateInProgress = false;
-    usel.filesLock = MySpinLock::LOCK_IS_FREE;
 
     HWND parent = wnd.hMainWindow;
     HINSTANCE hinst = GetModuleHandle(NULL);

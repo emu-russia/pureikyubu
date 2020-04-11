@@ -156,11 +156,11 @@ static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
 
     if (rate == Flipper::AudioSampleRate::Rate_48000)
     {
-        DVD::DDU.SetDvdAudioSampleRate(DVD::DvdAudioSampleRate::Rate_48000);
+        DVD::DDU->SetDvdAudioSampleRate(DVD::DvdAudioSampleRate::Rate_48000);
     }
     else
     {
-        DVD::DDU.SetDvdAudioSampleRate(DVD::DvdAudioSampleRate::Rate_32000);
+        DVD::DDU->SetDvdAudioSampleRate(DVD::DvdAudioSampleRate::Rate_32000);
     }
 
     if (ai.log)
@@ -278,7 +278,7 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
         {
             DBReport2(DbgChannel::AIS, "start streaming clock\n");
         }
-        DVD::DDU.EnableAudioStreamClock(true);
+        DVD::DDU->EnableAudioStreamClock(true);
         Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, true);
         ai.streamFifoPtr = 0;
     }
@@ -288,7 +288,7 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
         {
             DBReport2(DbgChannel::AIS, "stop streaming clock\n");
         }
-        DVD::DDU.EnableAudioStreamClock(false);
+        DVD::DDU->EnableAudioStreamClock(false);
         Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, false);
     }
 
@@ -466,6 +466,10 @@ static void AIUpdate(void *Parameter)
                 }
             }
         }
+        else
+        {
+            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
+        }
     }
 }
 
@@ -476,13 +480,14 @@ void AIOpen(HWConfig* config)
     // clear regs
     memset(&ai, 0, sizeof(AIControl));
     
-    DVD::DDU.SetStreamCallback(AIStreamCallback);
+    DVD::DDU->SetStreamCallback(AIStreamCallback);
 
-    ai.audioThread = new Thread(AIUpdate, true, nullptr);
+    ai.audioThread = new Thread(AIUpdate, true, nullptr, "AI");
     assert(ai.audioThread);
 
     ai.one_second = Gekko::Gekko->OneSecond();
     ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
+    ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
     ai.log = false;
     AIStopDMA();
 
@@ -510,5 +515,5 @@ void AIClose()
     AIStopDMA();
     delete ai.audioThread;
     ai.audioThread = nullptr;
-    DVD::DDU.SetStreamCallback(nullptr);
+    DVD::DDU->SetStreamCallback(nullptr);
 }

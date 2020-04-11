@@ -200,6 +200,14 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
         return;
     }
 
+    // bus load word
+    if (pa < mi.ramSize)
+    {
+        ptr = &mi.ram[pa];
+        *reg = _byteswap_ulong(*(uint32_t*)ptr);
+        return;
+    }
+
     if (pa >= BOOTROM_START_ADDRESS)
     {
         if (mi.BootromPresent)
@@ -228,16 +236,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    // bus load word
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *reg = _byteswap_ulong(*(uint32_t*)ptr);
-    }
-    else
-    {
-        *reg = 0;
-    }
+    *reg = 0;
 }
 
 void __fastcall MIWriteWord(uint32_t pa, uint32_t data)

@@ -39,14 +39,24 @@ namespace Gekko
 
         Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
-        gekkoThread = new Thread(GekkoThreadProc, true, this);
+        gekkoThread = new Thread(GekkoThreadProc, true, this, "GekkoCore");
         assert(gekkoThread);
 
         Reset();
+
+        msec = OneSecond() / 1000;
     }
 
     GekkoCore::~GekkoCore()
     {
+        for (int i = 0; i < (int)GekkoWaiter::Max; i++)
+        {
+            if (waitQueue[i].thread)
+            {
+                waitQueue[i].thread->Suspend();
+            }
+        }
+
         Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
 
         delete gekkoThread;
@@ -99,6 +109,16 @@ namespace Gekko
             {
                 cpu.decreq = 1;
                 DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
+            }
+        }
+
+        if (waitQueueEnabled)
+        {
+            dispatchQueueCounter++;
+            if (dispatchQueueCounter >= dispatchQueuePeriod)
+            {
+                dispatchQueueCounter = 0;
+                DispatchWaitQueue();
             }
         }
     }
@@ -161,6 +181,54 @@ namespace Gekko
     void GekkoCore::Exception(uint32_t code)
     {
         interp->Exception(code);
+    }
+
+    void GekkoCore::DispatchWaitQueue()
+    {
+        int i;
+
+        for (i = 0; i < (int)GekkoWaiter::Max; i++)
+        {
+            if (waitQueue[i].requireSuspend)
+            {
+                waitQueue[i].requireSuspend = false;
+                if (!waitQueue[i].suspended)
+                {
+                    waitQueue[i].thread->Suspend();
+                    waitQueue[i].suspended = true;
+                }
+            }
+            else
+            {
+                if (cpu.tb.uval >= waitQueue[i].tbrValue)
+                {
+                    waitQueue[i].tbrValue = -1;
+                    if (waitQueue[i].thread)
+                    {
+                        waitQueue[i].thread->Resume();
+                    }
+                }
+            }
+        }
+    }
+
+    void GekkoCore::WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread)
+    {
+        if (!waitQueueEnabled)
+            return;
+
+        waitQueue[(int)disignation].thread = thread;
+
+        // If the tick value is too small, we will not sleep the thread, because suspend/resume will take more resources than just sleep.
+        if (gekkoTicks < msec)
+        {
+            waitQueue[(int)disignation].tbrValue = -1;
+        }
+        else
+        {
+            waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
+            waitQueue[(int)disignation].requireSuspend = true;
+        }
     }
 
 }

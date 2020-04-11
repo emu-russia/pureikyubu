@@ -40,3 +40,13 @@ We support: DSI(?), ISI(?), Interrupt, Alignment(?), Program, FP Unavail, Decrem
 4. MSR[RI] must be always 1 in emu!
 5. on Interrupt and Decrementer MSR[EE] is cleared also.
 ```
+
+## Gekko Wait Thread Queue
+
+Wait Thread Queue is an optimization of threads that are tied to polling Gekko TBR value.
+
+Without optimization, the threads in the loop check the TBR value until it reaches the required value, and then do their work and wait again.
+
+With this design, the processor will spend resources on polling the TBR value.
+
+The idea of optimization is put to sleep such threads until the TBR value is needed, then wake the thread up and it will immediately begin to do its job, without polling the TBR.

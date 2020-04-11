@@ -9,20 +9,22 @@ namespace Flipper
     // This thread acts as the HWUpdate of Dolwin 0.10.
     // Previously, an HWUpdate call occurred after each Gekko instruction (or so).
     // This was tied only to update VI, SI and AI.
-    // After switching to multitasking, leave the old HWUpdate update mechanism, will be gradually replaced by other threads of different different Flipper components.
+    // After switching to multitasking, leave the old HWUpdate update mechanism, will be gradually replaced by other threads of different Flipper components.
     void Flipper::HwUpdateThread(void* Parameter)
     {
         Flipper* flipper = (Flipper*)Parameter;
 
-        // TODO: Add update queue
         while (true)
         {
             int64_t ticks = Gekko::Gekko->GetTicks();
-            if (ticks >= flipper->hwUpdateTbrValue)
+            if (ticks < flipper->hwUpdateTbrValue)
             {
-                flipper->hwUpdateTbrValue = ticks + 100;
-                flipper->Update();
+                Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
+                continue;
             }
+            flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
+
+            flipper->Update();
         }
     }
 
@@ -57,7 +59,9 @@ namespace Flipper
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
-        hwUpdateThread = new Thread(HwUpdateThread, false, this);
+        hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
+        assert(hwUpdateThread);
+        Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, hwUpdateThread);
     }
 
     Flipper::~Flipper()

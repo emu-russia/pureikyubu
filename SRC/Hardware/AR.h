@@ -1,4 +1,4 @@
-#pragma pack(push, 1)
+#pragma once
 
 #define ARAMSIZE        (16 * 1024 * 1024)  // 16 mb
 #define ARAM            aram.mem
@@ -40,5 +40,3 @@ void    AROpen();
 void    ARClose();
 
 extern  ARControl aram;
-
-#pragma pack(pop)

@@ -275,11 +275,11 @@ void con_add_roller_line(const char *txt, ConColor col)
     ptr = line;
 
     // roll console "roller" 1 line up
-    MySpinLock::Lock(&con.reportLock);
+    con.reportLock.Lock();
     roll.rollpos = con_wraproll(roll.rollpos, 1);
     strncpy_s(roll.data[roll.rollpos], sizeof(roll.data[roll.rollpos]), ptr, CON_LINELEN-1);
     log_console_output(string_to_HTML_string(ptr, html, sizeof(html)));
-    MySpinLock::Unlock(&con.reportLock);
+    con.reportLock.Unlock();
     con_update(CON_UPDATE_MSGS);
 }
 
@@ -332,14 +332,14 @@ static void con_update_scroll_window()
     // where to get buffer line
     line = (roll.autoscroll) ? (roll.rollpos - back) : (roll.viewpos - back);
     line += 1;
-    MySpinLock::Lock(&con.reportLock);
+    con.reportLock.Lock();
     for(i=1; i<wind.roll_h; i++)
     {
         if(line >= 0) con_print_at(0, y, roll.data[line]);
         line++;
         y++;
     }
-    MySpinLock::Unlock(&con.reportLock);
+    con.reportLock.Unlock();
 }
 
 void con_fullscreen(bool full)

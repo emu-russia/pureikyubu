@@ -51,7 +51,7 @@ public:
     NOPHistory*         nopHist = nullptr;
     int                 nopNum = 0;
     std::map<std::string, Debug::CmdDelegate> cmds;
-    MySpinLock::LOCK    reportLock = MySpinLock::LOCK_IS_FREE;
+    SpinLock            reportLock;
     std::atomic<bool>   exitPending = false;
 };
 

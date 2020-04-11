@@ -226,10 +226,10 @@ namespace DSP
 	class DspCore
 	{
 		std::vector<DspAddress> breakpoints;		// IMEM breakpoints
-		MySpinLock::LOCK breakPointsSpinLock = MySpinLock::LOCK_IS_FREE;
+		SpinLock breakPointsSpinLock;
 
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
-		MySpinLock::LOCK canariesSpinLock = MySpinLock::LOCK_IS_FREE;
+		SpinLock canariesSpinLock;
 
 		const uint32_t GekkoTicksPerDspInstruction = 100;		// How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 500;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
@@ -243,11 +243,11 @@ namespace DSP
 
 		uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
 		uint16_t DspToCpuMailboxShadow[2];
-		MySpinLock::LOCK DspToCpuLock = MySpinLock::LOCK_IS_FREE;
+		SpinLock DspToCpuLock;
 
 		uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
 		uint16_t CpuToDspMailboxShadow[2];
-		MySpinLock::LOCK CpuToDspLock = MySpinLock::LOCK_IS_FREE;
+		SpinLock CpuToDspLock;
 
 		bool haltOnUnmappedMemAccess = false;
 		bool log = false;

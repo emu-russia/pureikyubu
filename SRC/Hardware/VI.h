@@ -1,7 +1,5 @@
 #pragma once
 
-#pragma pack(push, 1)
-
 // VI registers (can be accessed from any offset and by any size, 1, 2 or 4 bytes)
 
 #define VI_VERT_TIMING          0x0C002000      // Vertical Timing Register
@@ -112,5 +110,3 @@ void    VIOpen(HWConfig* config);
 void    VIClose();
 
 void    VISetEncoderFuse(int value);
-
-#pragma pack(pop)

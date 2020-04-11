@@ -1,10 +1,13 @@
-// edgbla requested a portable thread implementation.
+// Portable thread implementation.
 
 #pragma once
 
 #ifdef _WINDOWS
 #include <Windows.h>
 #endif
+
+#include "Spinlock.h"
+#include "../Debugger/Debugger.h"
 
 typedef void (*ThreadProc)(void* param);
 
@@ -18,73 +21,29 @@ class Thread
 
 	WrappedContext ctx = { 0 };
 
+	bool running = false;
+	SpinLock resumeLock;
+	int resumeCounter = 0;
+	int suspendCounter = 0;
+
+	char threadName[0x100] = { 0 };
+
 #ifdef _WINDOWS
 	HANDLE threadHandle = INVALID_HANDLE_VALUE;
 	DWORD threadId = 0;
-	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter)
-	{
-		WrappedContext* wrappedCtx = (WrappedContext*)lpParameter;
-
-		if (wrappedCtx->proc)
-		{
-			wrappedCtx->proc(wrappedCtx->context);
-		}
-
-		return 0;
-	}
+	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
 #endif
-
-	bool running = false;
 
 public:
 
 	// Create thread
-	Thread(ThreadProc threadProc, bool suspended, void * context)
-	{
-		running = !suspended;
-
-#ifdef _WINDOWS
-		ctx.context = context;
-		ctx.proc = threadProc;
-		threadHandle = CreateThread(NULL, 0, RingleaderThreadProc, this, suspended ? CREATE_SUSPENDED : 0, &threadId);
-		assert(threadHandle != INVALID_HANDLE_VALUE);
-#endif
-	}
+	Thread(ThreadProc threadProc, bool suspended, void* context, const char* name);
 
 	// Join thread
-	~Thread()
-	{
-#ifdef _WINDOWS
-		TerminateThread(threadHandle, 0);
-		WaitForSingleObject(threadHandle, 1000);
-#endif
-	}
+	~Thread();
 
-	void Resume()
-	{
-		if (!running)
-		{
-#ifdef _WINDOWS
-			ResumeThread(threadHandle);
-#endif
-			running = true;
-		}
-	}
-
-	void Suspend()
-	{
-		if (running)
-		{
-			running = false;
-#ifdef _WINDOWS
-			SuspendThread(threadHandle);
-#endif
-		}
-	}
-
-	bool IsRunning()
-	{
-		return running;
-	}
+	void Resume();
+	void Suspend();
+	bool IsRunning() { return running; }
 
 };

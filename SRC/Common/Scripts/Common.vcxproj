@@ -19,59 +19,30 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\AI.cpp" />
-    <ClCompile Include="..\AR.cpp" />
-    <ClCompile Include="..\AX.cpp" />
-    <ClCompile Include="..\CP.cpp" />
-    <ClCompile Include="..\DI.cpp" />
-    <ClCompile Include="..\EFB.cpp" />
-    <ClCompile Include="..\EI.cpp" />
-    <ClCompile Include="..\GDI.cpp" />
-    <ClCompile Include="..\HW.cpp" />
-    <ClCompile Include="..\HwCommands.cpp" />
-    <ClCompile Include="..\IPLDescrambler.cpp" />
-    <ClCompile Include="..\MC.cpp" />
-    <ClCompile Include="..\MI.cpp" />
+    <ClInclude Include="..\Json.h" />
+    <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\Spinlock.h" />
+    <ClInclude Include="..\Thread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\Json.cpp" />
     <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\PI.cpp" />
-    <ClCompile Include="..\SI.cpp" />
-    <ClCompile Include="..\VI.cpp" />
+    <ClCompile Include="..\Spinlock.cpp" />
+    <ClCompile Include="..\Thread.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\AI.h" />
-    <ClInclude Include="..\AR.h" />
-    <ClInclude Include="..\AX.h" />
-    <ClInclude Include="..\CP.h" />
-    <ClInclude Include="..\DI.h" />
-    <ClInclude Include="..\EFB.h" />
-    <ClInclude Include="..\EI.h" />
-    <ClInclude Include="..\GDI.h" />
-    <ClInclude Include="..\GX.h" />
-    <ClInclude Include="..\Hardware.h" />
-    <ClInclude Include="..\HW.h" />
-    <ClInclude Include="..\HwCommands.h" />
-    <ClInclude Include="..\IPLDescrambler.h" />
-    <ClInclude Include="..\MC.h" />
-    <ClInclude Include="..\MI.h" />
-    <ClInclude Include="..\PAD.h" />
-    <ClInclude Include="..\pch.h" />
-    <ClInclude Include="..\PI.h" />
-    <ClInclude Include="..\SI.h" />
-    <ClInclude Include="..\VI.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\Data\HWJdi.json" />
+    <None Include="..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{C43F1C9F-177B-46A8-BE31-08189D25AD43}</ProjectGuid>
+    <ProjectGuid>{8F4F6AE1-B308-4C7F-81FC-4CDDD2302C95}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>GCNHardware</RootNamespace>
+    <RootNamespace>Common</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -135,7 +106,9 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -150,7 +123,9 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -165,7 +140,11 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -182,7 +161,11 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>

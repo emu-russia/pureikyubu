@@ -15,7 +15,7 @@ New settings are saved only in Settings.json.
 
 #include "pch.h"
 
-static MySpinLock::LOCK settingsLock = MySpinLock::LOCK_IS_FREE;
+static SpinLock settingsLock;
 static bool SettingsLoaded = false;
 static Json defaultSettings;		// singletone. Autodeleted at exit
 static Json settings;		// singletone. Autodeleted at exit
@@ -120,7 +120,7 @@ static void SaveSettings()
 
 TCHAR *GetConfigString(const char *var, const char *path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -135,14 +135,14 @@ TCHAR *GetConfigString(const char *var, const char *path)
 
 	assert(value->type == Json::ValueType::String);
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 
 	return value->value.AsString;
 }
 
 void SetConfigString(const char *var, TCHAR *newVal, const char *path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -161,12 +161,12 @@ void SetConfigString(const char *var, TCHAR *newVal, const char *path)
 
 	SaveSettings();
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 }
 
 int GetConfigInt(const char *var, const char *path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -181,14 +181,14 @@ int GetConfigInt(const char *var, const char *path)
 
 	assert(value->type == Json::ValueType::Int);
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 
 	return (int)value->value.AsInt;
 }
 
 void SetConfigInt(const char *var, int newVal, const char *path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -207,12 +207,12 @@ void SetConfigInt(const char *var, int newVal, const char *path)
 
 	SaveSettings();
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 }
 
 bool GetConfigBool(const char* var, const char* path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -227,14 +227,14 @@ bool GetConfigBool(const char* var, const char* path)
 
 	assert(value->type == Json::ValueType::Bool);
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 
 	return (int)value->value.AsBool;
 }
 
 void SetConfigBool(const char* var, bool newVal, const char* path)
 {
-	MySpinLock::Lock(&settingsLock);
+	settingsLock.Lock();
 
 	LoadSettings();
 
@@ -253,7 +253,7 @@ void SetConfigBool(const char* var, bool newVal, const char* path)
 
 	SaveSettings();
 
-	MySpinLock::Unlock(&settingsLock);
+	settingsLock.Unlock();
 }
 
 #pragma endregion "Legacy Dolwin config API"
