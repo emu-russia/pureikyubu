@@ -146,7 +146,7 @@ typedef struct CPUControl
 
     int64_t     one_second;         // one second in timer ticks
     bool        decreq;             // decrementer exception request
-    uint32_t    ops;                // instruction counter (only for debug!)
+    size_t      ops;                // instruction counter (only for debug!)
 
     // for default interpreter
     bool        exception;          // exception pending

@@ -1,3 +1,5 @@
+// Old code from: https://github.com/ogamespec/ppcd
+
 // Very accurate PowerPC Architecture disassembler (both 32 and 64-bit instructions are supported)
 
 // Branch Target in output parameters is NOT relative. Its already precalculated

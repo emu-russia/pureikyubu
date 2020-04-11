@@ -149,9 +149,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\Gekko.h" />
+    <ClInclude Include="..\GekkoAnalyzer.h" />
     <ClInclude Include="..\GekkoCommands.h" />
     <ClInclude Include="..\GekkoDefs.h" />
-    <ClInclude Include="..\GekkoDisasm.h" />
+    <ClInclude Include="..\GekkoDisasmOld.h" />
     <ClInclude Include="..\Interpreter.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
     <ClInclude Include="..\Mmu.h" />
@@ -164,8 +165,9 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="..\GekkoAnalyzer.cpp" />
     <ClCompile Include="..\GekkoCommands.cpp" />
-    <ClCompile Include="..\GekkoDisasm.cpp" />
+    <ClCompile Include="..\GekkoDisasmOld.cpp" />
     <ClCompile Include="..\Interpreter.cpp" />
     <ClCompile Include="..\Interpreter\c_branch.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
@@ -260,18 +262,18 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <MASM Include="..\AsmX64.asm">
+    <None Include="..\..\..\Data\GekkoCoreJdi.json" />
+    <None Include="..\Readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\Interpreter\AsmX64.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </MASM>
-    <MASM Include="..\AsmX86.asm">
+    <MASM Include="..\Interpreter\AsmX86.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </MASM>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\..\Data\GekkoCoreJdi.json" />
-    <None Include="..\Readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

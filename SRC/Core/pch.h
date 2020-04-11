@@ -19,9 +19,10 @@
 
 #include "Mmu.h"
 #include "Gekko.h"
+#include "GekkoAnalyzer.h"
 #include "Interpreter.h"
 #include "GekkoCommands.h"
-#include "GekkoDisasm.h"
+#include "GekkoDisasmOld.h"
 
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
