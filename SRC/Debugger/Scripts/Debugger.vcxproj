@@ -24,7 +24,6 @@
     <ClCompile Include="..\cpuview.cpp" />
     <ClCompile Include="..\Debugger.cpp" />
     <ClCompile Include="..\input.cpp" />
-    <ClCompile Include="..\Jdi.cpp" />
     <ClCompile Include="..\memview.cpp" />
     <ClCompile Include="..\output.cpp" />
     <ClCompile Include="..\pch.cpp">
@@ -41,7 +40,6 @@
     <ClInclude Include="..\cpuview.h" />
     <ClInclude Include="..\Debugger.h" />
     <ClInclude Include="..\input.h" />
-    <ClInclude Include="..\Jdi.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />
     <ClInclude Include="..\pch.h" />

@@ -12,6 +12,7 @@
 #include <Windows.h>
 
 #include "../Common/Spinlock.h"
+#include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"
 #include "../Core/GekkoDisasm.h"

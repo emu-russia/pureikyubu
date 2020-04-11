@@ -12,6 +12,7 @@
 #include <tchar.h>
 
 #include "../Common/Spinlock.h"
+#include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"
 

@@ -25,6 +25,7 @@
 // Dolwin includes
 
 #include "Common/Spinlock.h"
+#include "Common/Jdi.h"
 #include "Core/Gekko.h"
 #include "Core/Interpreter.h"
 #include "HighLevel/HighLevel.h"

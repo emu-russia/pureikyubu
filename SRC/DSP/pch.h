@@ -6,6 +6,7 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"
+#include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"				// For TimeBase
 #include "../Hardware/Hardware.h"

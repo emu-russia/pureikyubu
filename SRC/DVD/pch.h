@@ -9,6 +9,8 @@
 #include <tchar.h>
 #include <windows.h>
 
+#include "../Common/Jdi.h"
+
 #include "../Debugger/Debugger.h"
 #include "../Core/Gekko.h"
 

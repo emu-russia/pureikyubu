@@ -7,8 +7,8 @@
 #include <list>
 #include <string>
 
-#include "../Common/Spinlock.h"
-#include "../Common/Json.h"
+#include "Spinlock.h"
+#include "Json.h"
 
 namespace Debug
 {
