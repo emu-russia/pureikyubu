@@ -124,50 +124,32 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
 // (because all regs are generally integers)
 //
 
-void __fastcall MEMReadDouble(uint32_t addr, uint64_t *_reg)
+void __fastcall MEMReadDouble(uint32_t addr, uint64_t *reg)
 {
     // Locked cache
     if (addr >= 0xe0000000)
     {
-        uint8_t* buf = &mem.lc[addr & 0x3ffff], *reg = (uint8_t*)_reg;
-
-        reg[0] = buf[7];
-        reg[1] = buf[6];
-        reg[2] = buf[5];
-        reg[3] = buf[4];
-        reg[4] = buf[3];
-        reg[5] = buf[2];
-        reg[6] = buf[1];
-        reg[7] = buf[0];
-
+        uint8_t* buf = &mem.lc[addr & 0x3ffff];
+        *reg = _byteswap_uint64(*(uint64_t *)buf);
         return;
     }
 
     uint32_t pa = GCEffectiveToPhysical(addr, false);
-    MIReadDouble(pa, _reg);
+    MIReadDouble(pa, reg);
 }
 
-void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *_data)
+void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data)
 {
     // Locked cache
     if (addr >= 0xe0000000)
     {
-        uint8_t* buf = &mem.lc[addr & 0x3ffff], * data = (uint8_t*)_data;
-
-        buf[0] = data[7];
-        buf[1] = data[6];
-        buf[2] = data[5];
-        buf[3] = data[4];
-        buf[4] = data[3];
-        buf[5] = data[2];
-        buf[6] = data[1];
-        buf[7] = data[0];
-
+        uint8_t* buf = &mem.lc[addr & 0x3ffff];
+        *(uint64_t *)buf = _byteswap_uint64(*data);
         return;
     }
 
     uint32_t pa = GCEffectiveToPhysical(addr, false);
-    MIWriteDouble(pa, _data);
+    MIWriteDouble(pa, data);
 }
 
 // ---------------------------------------------------------------------------

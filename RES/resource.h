@@ -12,7 +12,6 @@
 #define IDI_GCN_ICON                    107
 #define IDI_GCN_SMALL_ICON              108
 #define IDD_FILE_FILTER                 111
-#define IDD_EDIT_FILE_INFO              113
 #define IDD_MEMCARD_SETTINGS            115
 #define IDD_MEMCARD_CHOOSESIZE          116
 #define IDD_FONT_SETTINGS               117
@@ -37,7 +36,6 @@
 #define ID_ASSERTINTERRUPT_VIINT        139
 #define ID_ASSERTINTERRUPT_DVD          140
 #define ID_ASSERTINTERRUPT_SI           141
-#define IDD_PATCH_EDITOR                142
 #define IDD_ABOUT                       143
 #define IDB_BITMAP1                     144
 #define IDB_BITMAP2                     145
@@ -51,13 +49,8 @@
 #define IDC_FILE_FILTER                 1001
 #define IDC_DOL_FILTER                  1002
 #define IDC_ELF_FILTER                  1003
-#define IDC_FILE_INFO_DEFAULT           1003
 #define IDC_GCM_FILTER                  1004
-#define IDC_FILE_INFO_COMMENT           1004
 #define IDC_GMP_FILTER                  1005
-#define IDC_FILE_INFO_FILENAME          1005
-#define IDC_FILE_INFO_PATH              1006
-#define IDC_FILE_INFO_TITLE             1007
 #define IDC_FONT_ANSICOMBO              1012
 #define IDC_FONT_SJISCOMBO              1013
 #define IDC_MEMCARD_CONNECTED           1014
@@ -69,7 +62,6 @@
 #define IDC_MEMCARD_NEW                 1020
 #define IDC_MEMCARD_SIZES               1021
 #define IDC_MEMCARD_SIZEDESC            1022
-#define IDC_CHECK1                      1025
 #define IDC_USEMMX                      1025
 #define IDC_CPU_CORE                    1026
 #define IDC_SIMULATE_APPLDR             1026
@@ -89,7 +81,6 @@
 #define IDC_MMXFLAG                     1038
 #define IDC_DSP_FAKE                    1039
 #define IDC_SSEFLAG                     1039
-#define IDC_BUTTON1                     1040
 #define IDC_KEEP_ARENA                  1040
 #define IDC_KILLPATH                    1040
 #define IDC_CONSOLE_VER                 1041
@@ -108,17 +99,6 @@
 #define IDC_CHECK2                      1049
 #define IDC_ENSURE_WINDALL              1049
 #define IDC_PATHLIST                    1052
-#define IDC_EDIT1                       1053
-#define IDC_COMBO1                      1054
-#define IDC_EDIT2                       1055
-#define IDC_EDIT3                       1056
-#define IDC_EDIT4                       1064
-#define IDC_EDIT5                       1065
-#define IDC_EDIT6                       1066
-#define IDC_EDIT7                       1067
-#define IDC_EDIT8                       1068
-#define IDC_EDIT9                       1069
-#define IDC_EDIT10                      1070
 #define IDC_ABOUT_RELEASE               1071
 #define IDC_BUTTON_X                    1072
 #define IDC_BUTTON_START                1073
@@ -254,7 +234,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        154
+#define _APS_NEXT_RESOURCE_VALUE        155
 #define _APS_NEXT_COMMAND_VALUE         40102
 #define _APS_NEXT_CONTROL_VALUE         1106
 #define _APS_NEXT_SYMED_VALUE           101
