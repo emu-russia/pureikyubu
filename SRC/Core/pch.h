@@ -23,6 +23,7 @@
 #include "Interpreter.h"
 #include "GekkoCommands.h"
 #include "GekkoDisasmOld.h"
+#include "GekkoDisasm.h"
 
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"

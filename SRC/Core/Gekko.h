@@ -7,6 +7,7 @@
 #include <list>
 #include <atomic>
 #include "GekkoDefs.h"
+#include "GekkoAnalyzer.h"
 
 // TODO: Get rid of this non-incapsulated mess
 

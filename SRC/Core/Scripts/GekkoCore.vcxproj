@@ -152,6 +152,7 @@
     <ClInclude Include="..\GekkoAnalyzer.h" />
     <ClInclude Include="..\GekkoCommands.h" />
     <ClInclude Include="..\GekkoDefs.h" />
+    <ClInclude Include="..\GekkoDisasm.h" />
     <ClInclude Include="..\GekkoDisasmOld.h" />
     <ClInclude Include="..\Interpreter.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
@@ -167,6 +168,7 @@
     </ClCompile>
     <ClCompile Include="..\GekkoAnalyzer.cpp" />
     <ClCompile Include="..\GekkoCommands.cpp" />
+    <ClCompile Include="..\GekkoDisasm.cpp" />
     <ClCompile Include="..\GekkoDisasmOld.cpp" />
     <ClCompile Include="..\Interpreter.cpp" />
     <ClCompile Include="..\Interpreter\c_branch.cpp">

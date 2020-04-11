@@ -45,6 +45,9 @@
     <ClInclude Include="..\GekkoDisasmOld.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\GekkoDisasm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Interpreter\c_branch.cpp">
@@ -108,6 +111,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\GekkoDisasmOld.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\GekkoDisasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

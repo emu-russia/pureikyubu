@@ -109,8 +109,8 @@ namespace Gekko
 		extsb_d,
 		extsh,
 		extsh_d,
-		cltlzw,
-		cltlzw_d,
+		cntlzw,
+		cntlzw_d,
 
 		// Integer Rotate Instructions
 		rlwinm,
@@ -395,6 +395,88 @@ namespace Gekko
 		tlbie,
 		tlbsync,
 
+	};
+
+	enum class Param : int
+	{
+		Unknown = -1,
+		Reg,
+		FReg,
+		Simm,
+		Uimm,
+		Crf,
+		RegOffset,
+		Num,
+		Spr,
+		Sr,
+		Tbr,
+		Crb,
+		CRM,
+		FM,
+		Address,
+	};
+
+	typedef struct _AnalyzeInfo
+	{
+		uint32_t	instrBits;
+		Instruction instr;
+
+		size_t numParam;
+		Param param[5];
+		int paramBits[5];
+
+		union
+		{
+			int16_t Signed;
+			uint16_t Unsigned;
+			uint32_t Address;
+		} Imm;
+
+		uint32_t pc;
+
+		bool flow;
+
+	} AnalyzeInfo;
+
+	class Analyzer
+	{
+		static void OpMain(uint32_t instr, AnalyzeInfo* info);
+		static void Op19(uint32_t instr, AnalyzeInfo* info);
+		static void Op31(uint32_t instr, AnalyzeInfo* info);
+		static void Op59(uint32_t instr, AnalyzeInfo* info);
+		static void Op63(uint32_t instr, AnalyzeInfo* info);
+		static void Op4(uint32_t instr, AnalyzeInfo* info);
+
+		static void OpMainFast(uint32_t instr, AnalyzeInfo* info);
+		static void Op19Fast(uint32_t instr, AnalyzeInfo* info);
+		static void Op31Fast(uint32_t instr, AnalyzeInfo* info);
+		static void Op59Fast(uint32_t instr, AnalyzeInfo* info);
+		static void Op63Fast(uint32_t instr, AnalyzeInfo* info);
+		static void Op4Fast(uint32_t instr, AnalyzeInfo* info);
+
+		static void Dab(uint32_t instr, AnalyzeInfo* info);
+		static void DabFast(uint32_t instr, AnalyzeInfo* info);
+		static void DaSimm(uint32_t instr, AnalyzeInfo* info);
+		static void DaSimmFast(uint32_t instr, AnalyzeInfo* info);
+		static void Da(uint32_t instr, AnalyzeInfo* info);
+		static void DaFast(uint32_t instr, AnalyzeInfo* info);
+		static void Asb(uint32_t instr, AnalyzeInfo* info);
+		static void AsbFast(uint32_t instr, AnalyzeInfo* info);
+		static void AsUimm(uint32_t instr, AnalyzeInfo* info);
+		static void AsUimmFast(uint32_t instr, AnalyzeInfo* info);
+		static void TargetAddr(uint32_t instr, AnalyzeInfo* info);
+		static void TargetAddrFast(uint32_t instr, AnalyzeInfo* info);
+		static void BoBiTargetAddr(uint32_t instr, AnalyzeInfo* info);
+		static void BoBiTargetAddrFast(uint32_t instr, AnalyzeInfo* info);
+		static void BoBi(uint32_t instr, AnalyzeInfo* info);
+		static void BoBiFast(uint32_t instr, AnalyzeInfo* info);
+
+	public:
+
+		static void Analyze(uint32_t pc, uint32_t instr, AnalyzeInfo* info);
+
+		// The fast version is used if the user knows the number of parameters.
+		static void AnalyzeFast(uint32_t pc, uint32_t instr, AnalyzeInfo* info);
 	};
 
 }
