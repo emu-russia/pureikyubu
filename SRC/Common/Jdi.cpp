@@ -58,7 +58,7 @@ namespace Debug
         size_t jsonTextSize = 0;
 
         // Load Json
-        FILE* f;
+        FILE* f = nullptr;
         _wfopen_s(&f, filename.c_str(), L"rb");
         assert(f);
 
