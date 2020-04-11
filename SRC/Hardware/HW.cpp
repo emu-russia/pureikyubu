@@ -16,8 +16,15 @@ namespace Flipper
 
         while (true)
         {
+            int64_t ticks = Gekko::Gekko->GetTicks();
+            if (ticks < flipper->hwUpdateTbrValue)
+            {
+                Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
+                continue;
+            }
+            flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
+
             flipper->Update();
-            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
         }
     }
 

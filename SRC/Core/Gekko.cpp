@@ -112,11 +112,14 @@ namespace Gekko
             }
         }
 
-        dispatchQueueCounter++;
-        if (dispatchQueueCounter >= dispatchQueuePeriod)
+        if (waitQueueEnabled)
         {
-            dispatchQueueCounter = 0;
-            DispatchWaitQueue();
+            dispatchQueueCounter++;
+            if (dispatchQueueCounter >= dispatchQueuePeriod)
+            {
+                dispatchQueueCounter = 0;
+                DispatchWaitQueue();
+            }
         }
     }
 
@@ -186,12 +189,24 @@ namespace Gekko
 
         for (i = 0; i < (int)GekkoWaiter::Max; i++)
         {
-            if (cpu.tb.uval >= waitQueue[i].tbrValue)
+            if (waitQueue[i].requireSuspend)
             {
-                waitQueue[i].tbrValue = -1;
-                if (waitQueue[i].thread)
+                waitQueue[i].requireSuspend = false;
+                if (!waitQueue[i].suspended)
                 {
-                    waitQueue[i].thread->Resume();
+                    waitQueue[i].thread->Suspend();
+                    waitQueue[i].suspended = true;
+                }
+            }
+            else
+            {
+                if (cpu.tb.uval >= waitQueue[i].tbrValue)
+                {
+                    waitQueue[i].tbrValue = -1;
+                    if (waitQueue[i].thread)
+                    {
+                        waitQueue[i].thread->Resume();
+                    }
                 }
             }
         }
@@ -199,17 +214,20 @@ namespace Gekko
 
     void GekkoCore::WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread)
     {
-        if (gekkoTicks < ((uint64_t)OneMillisecond() << 4))
+        if (!waitQueueEnabled)
+            return;
+
+        waitQueue[(int)disignation].thread = thread;
+
+        // If the tick value is too small, we will not sleep the thread, because suspend/resume will take more resources than just sleep.
+        if (gekkoTicks < msec)
         {
             waitQueue[(int)disignation].tbrValue = -1;
-            waitQueue[(int)disignation].thread = thread;
         }
         else
         {
             waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
-            waitQueue[(int)disignation].thread = thread;
-            someoneNotSleep = true;
-            thread->Suspend();
+            waitQueue[(int)disignation].requireSuspend = true;
         }
     }
 

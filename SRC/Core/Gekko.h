@@ -120,8 +120,6 @@ typedef union TBREG
 // ---------------------------------------------------------------------------
 // CPU externals
 
-// CPU memory operations. using MEM* or DB* read/write operations,
-// (depending on whenever Debugger is running or not)
 extern void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t*reg);
 extern void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
 extern void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t*reg);
@@ -179,14 +177,16 @@ namespace Gekko
     {
         uint64_t tbrValue;
         Thread* thread;
+        bool requireSuspend;
+        bool suspended;
     } WaitQueueEntry;
 
     class GekkoCore
     {
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
-        // Therefore, we are a little tricky and “slow down” the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 5;
+        // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
+        static const int CounterStep = 2;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
@@ -198,12 +198,12 @@ namespace Gekko
 
         Interpreter* interp;
 
+        bool waitQueueEnabled = true;   // Let's see how this mechanism will show itself. You can always turn it off.
         WaitQueueEntry waitQueue[(int)GekkoWaiter::Max] = { 0 };
         SpinLock waitQueueLock;
         void DispatchWaitQueue();
-        bool someoneNotSleep = true;
-        int dispatchQueuePeriod = 5;
-        int dispatchQueueCounter = 0;
+        int dispatchQueuePeriod = 20;    // It makes no sense to check waitQueue every tick. +/- some ticks back and forth do not play a role.
+        int dispatchQueueCounter = 0;       
 
         uint64_t msec;
 
@@ -222,7 +222,7 @@ namespace Gekko
         int64_t OneSecond();
         int64_t OneMillisecond() { return msec; }
 
-        // translate
+        // Translate address by Mmu
         uint32_t EffectiveToPhysical(uint32_t ea, bool IR); 
 
         static void SwapArea(uint32_t* addr, int count);
@@ -236,6 +236,7 @@ namespace Gekko
         void ClearInterrupt();
         void Exception(uint32_t code);
 
+        // The thread that polls the TBR may ask the Gekko core to wake him up at the right time.
         void WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread);
 
     };

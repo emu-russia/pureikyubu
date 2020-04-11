@@ -466,8 +466,10 @@ static void AIUpdate(void *Parameter)
                 }
             }
         }
-
-        //Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
+        else
+        {
+            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
+        }
     }
 }
 
