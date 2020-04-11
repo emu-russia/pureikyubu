@@ -30,7 +30,7 @@ static INT_PTR CALLBACK AboutProc(
                 tmpbuf,
                 _countof(tmpbuf) - 1,
                 APPNAME _T(" - ") APPDESC _T("\n")
-                _T("Copyright 2003-2020, Dolwin team\n")
+                _T("Copyright 2003,2004,2020, Dolwin team\n")
                 _T("Build version %s (%s, %s) ")
 #ifdef      _DEBUG
                 _T("Debug ")
