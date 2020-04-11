@@ -59,10 +59,6 @@ static void LoadSettings(int n)         // dialogs created
         CheckDlgButton(hDlg, IDC_ENSURE_WINDALL, BST_UNCHECKED);
         EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
 
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_RESETCONTENT, 0, 0);
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_INSERTSTRING, -1, (LPARAM)_T("Interpreter"));
-        SendDlgItemMessage(hDlg, IDC_CPU_CORE, CB_SETCURSEL, 0, 0);
-
         int selected = GetConfigInt(USER_MMU, USER_CORE);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_RESETCONTENT, 0, 0);
         SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)_T("Simple translation"));
