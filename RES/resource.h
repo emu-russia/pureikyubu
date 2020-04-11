@@ -135,6 +135,7 @@
 #define IDC_PAD_CONFIG_DEFAULT          1104
 #define IDC_BOOTROM_FILE                1105
 #define IDC_DSPDROM_FILE                1106
+#define IDC_SYSLINK1                    1106
 #define IDC_DSPIROM_FILE                1107
 #define ID_FILE_RECENT_1                40003
 #define ID_FILE_RECENT_2                40004
@@ -234,9 +235,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        155
+#define _APS_NEXT_RESOURCE_VALUE        156
 #define _APS_NEXT_COMMAND_VALUE         40102
-#define _APS_NEXT_CONTROL_VALUE         1106
+#define _APS_NEXT_CONTROL_VALUE         1107
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

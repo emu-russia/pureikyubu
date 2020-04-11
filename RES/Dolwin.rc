@@ -228,26 +228,14 @@ BEGIN
     PUSHBUTTON      "Default",IDC_PAD_CONFIG_DEFAULT,48,234,36,17
 END
 
-IDD_ABOUT DIALOGEX 20, 20, 257, 306
+IDD_ABOUT DIALOGEX 20, 20, 257, 63
 STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About Dolwin"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "OK",IDOK,200,287,50,15
-    ICON            IDI_DOLWIN_ICON,IDC_STATIC,11,8,20,20
+    DEFPUSHBUTTON   "OK",IDOK,198,43,50,15
+    ICON            IDI_DOLWIN_ICON,IDC_STATIC,11,8,21,20
     LTEXT           "Dolwin - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2020, Dolwin team\nBuild version 0.11 (21:23:32 5 Mar 2020)",IDC_ABOUT_RELEASE,48,5,186,25
-    CONTROL         "",IDC_STATIC,"Static",SS_GRAYFRAME,0,282,255,1,WS_EX_STATICEDGE
-    LTEXT           "Dolwin development team:\n   org        \t: coding, project designer\n   hotquik \t: coding, web page maintainer",IDC_STATIC,48,34,192,25
-    LTEXT           "Many thanks to Dolphin-emu development team:\nF|RES and ector, for great emu, help and info.",IDC_STATIC,48,120,186,18
-    LTEXT           "Greets: Alex Raider, Chrono, Costis, CrowTRobo, darkreign, DesktopMan, ector, emu_kidid, F|RES, Jeil, groepaz, Knuckles, Masken, MasterPhW, Martin64, monk, Posty, Titanik, tmbinc.. never forget old friends :p",IDC_STATIC,48,85,195,36
-    LTEXT           "Important persons: Frank Wille (PPC disassembler) and Gilles Mouchard (ppcemul). Thank you guys.",IDC_STATIC,48,144,180,20
-    LTEXT           "Special thanks to hysteria for ""testing materials"".",IDC_STATIC,48,192,174,8
-    LTEXT           "Respect to Nintendo and Dr. Wei Yen!",IDC_STATIC,48,231,200,8
-    LTEXT           "Dolwin is not sponsored or licensed by Nintendo. It is not affiliated with Nintendo by any way. All logos and/or trademarks are property of their respective owners. Dolwin may not sold commercially, without permission of its authors.",IDC_STATIC,48,243,200,35,SS_SUNKEN
-    LTEXT           "Dolwin beta testing team:\n   Chrono, darkreign, Jeil, Knuckles, MasterPhW, Posty",IDC_STATIC,48,63,192,18
-    LTEXT           "Thanks to Martin64, for web hosting.",IDC_STATIC,48,180,126,8
-    LTEXT           "Thanks to our beta-testing team, for bug reports.",IDC_STATIC,48,168,162,8
-    LTEXT           "Big Kickass to some GC game developers for doing silly games on such nice system!",IDC_STATIC,48,210,186,18
 END
 
 
@@ -322,7 +310,7 @@ BEGIN
     IDD_ABOUT, DIALOG
     BEGIN
         RIGHTMARGIN, 248
-        BOTTOMMARGIN, 301
+        BOTTOMMARGIN, 58
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -539,6 +527,11 @@ BEGIN
 END
 
 IDD_SETTINGS_HW AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ABOUT AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

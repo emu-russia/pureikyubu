@@ -39,9 +39,9 @@ static INT_PTR CALLBACK AboutProc(
 #endif
 
 #if         _M_X64
-                _T("X64")
+                _T("x64")
 #else
-                _T("X86")
+                _T("x86")
 #endif
 
                 ,
