@@ -66,6 +66,18 @@ namespace Gekko
 				break;
 			case 28: info->instr = Instruction::andi_d; AsUimm(instr, info); break;
 			case 29: info->instr = Instruction::andis_d; AsUimm(instr, info); break;
+			case 11:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpi; CrfDaSimm(instr, info);
+				}
+				break;
+			case 10:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpli; CrfDaUimm(instr, info);
+				}
+				break;
 		}
 	}
 
@@ -99,6 +111,18 @@ namespace Gekko
 				break;
 			case 28: info->instr = Instruction::andi_d; AsUimmFast(instr, info); break;
 			case 29: info->instr = Instruction::andis_d; AsUimmFast(instr, info); break;
+			case 11:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpi; CrfDaSimmFast(instr, info);
+				}
+				break;
+			case 10:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpli; CrfDaUimmFast(instr, info);
+				}
+				break;
 		}
 	}
 
@@ -113,6 +137,15 @@ namespace Gekko
 
 			case 16 * 2: info->instr = Instruction::bclr; BoBi(instr, info); break;
 			case (16 * 2) | LKBit: info->instr = Instruction::bclrl; BoBi(instr, info); break;
+
+			case 257 * 2: info->instr = Instruction::crand; CrbDab(instr, info); break;
+			case 129 * 2: info->instr = Instruction::crandc; CrbDab(instr, info); break;
+			case 289 * 2: info->instr = Instruction::creqv; CrbDab(instr, info); break;
+			case 225 * 2: info->instr = Instruction::crnand; CrbDab(instr, info); break;
+			case 33 * 2: info->instr = Instruction::crnor; CrbDab(instr, info); break;
+			case 449 * 2: info->instr = Instruction::cror; CrbDab(instr, info); break;
+			case 417 * 2: info->instr = Instruction::crorc; CrbDab(instr, info); break;
+			case 193 * 2: info->instr = Instruction::crxor; CrbDab(instr, info); break;
 		}
 	}
 
@@ -125,6 +158,15 @@ namespace Gekko
 
 			case 16 * 2: info->instr = Instruction::bclr; BoBiFast(instr, info); break;
 			case (16 * 2) | LKBit: info->instr = Instruction::bclrl; BoBiFast(instr, info); break;
+
+			case 257 * 2: info->instr = Instruction::crand; CrbDabFast(instr, info); break;
+			case 129 * 2: info->instr = Instruction::crandc; CrbDabFast(instr, info); break;
+			case 289 * 2: info->instr = Instruction::creqv; CrbDabFast(instr, info); break;
+			case 225 * 2: info->instr = Instruction::crnand; CrbDabFast(instr, info); break;
+			case 33 * 2: info->instr = Instruction::crnor; CrbDabFast(instr, info); break;
+			case 449 * 2: info->instr = Instruction::cror; CrbDabFast(instr, info); break;
+			case 417 * 2: info->instr = Instruction::crorc; CrbDabFast(instr, info); break;
+			case 193 * 2: info->instr = Instruction::crxor; CrbDabFast(instr, info); break;
 		}
 	}
 
@@ -167,6 +209,53 @@ namespace Gekko
 			case 60 * 2: info->instr = Instruction::andc; Asb(instr, info); break;
 			case (60 * 2) | RcBit: info->instr = Instruction::andc_d; Asb(instr, info); break;
 
+			case 0: 
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmp; CrfDab(instr, info);
+				}
+				break;
+
+			case 32*2:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpl; CrfDab(instr, info);
+				}
+				break;
+
+			case 26 * 2: info->instr = Instruction::cntlzw; As(instr, info); break;
+			case (26 * 2) | RcBit: info->instr = Instruction::cntlzw_d; As(instr, info); break;
+
+			case 86 * 2: info->instr = Instruction::dcbf; Ab(instr, info); break;
+			case 470 * 2: info->instr = Instruction::dcbi; Ab(instr, info); break;
+			case 54 * 2: info->instr = Instruction::dcbst; Ab(instr, info); break;
+			case 278 * 2: info->instr = Instruction::dcbt; Ab(instr, info); break;
+			case 246 * 2: info->instr = Instruction::dcbtst; Ab(instr, info); break;
+			case 1014 * 2: info->instr = Instruction::dcbz; Ab(instr, info); break;
+
+			case 491 * 2: info->instr = Instruction::divw; Dab(instr, info); break;
+			case (491 * 2) | RcBit: info->instr = Instruction::divw_d; Dab(instr, info); break;
+			case (491 * 2) | OEBit: info->instr = Instruction::divwo; Dab(instr, info); break;
+			case (491 * 2) | OEBit | RcBit: info->instr = Instruction::divwo_d; Dab(instr, info); break;
+
+			case 459 * 2: info->instr = Instruction::divwu; Dab(instr, info); break;
+			case (459 * 2) | RcBit: info->instr = Instruction::divwu_d; Dab(instr, info); break;
+			case (459 * 2) | OEBit: info->instr = Instruction::divwuo; Dab(instr, info); break;
+			case (459 * 2) | OEBit | RcBit: info->instr = Instruction::divwuo_d; Dab(instr, info); break;
+
+			case 310 * 2: info->instr = Instruction::eciwx; Dab(instr, info); break;
+			case 438 * 2: info->instr = Instruction::ecowx; Dab(instr, info); break;
+
+			case 854 * 2: info->instr = Instruction::eieio; break;
+
+			case 284* 2: info->instr = Instruction::eqv; Asb(instr, info); break;
+			case (284 * 2) | RcBit: info->instr = Instruction::eqv_d; Asb(instr, info); break;
+
+			case 954 * 2: info->instr = Instruction::extsb; As(instr, info); break;
+			case (954 * 2) | RcBit: info->instr = Instruction::extsb_d; As(instr, info); break;
+			case 922 * 2: info->instr = Instruction::extsh; As(instr, info); break;
+			case (922 * 2) | RcBit: info->instr = Instruction::extsh_d; As(instr, info); break;
+
 		}
 
 	}
@@ -206,6 +295,53 @@ namespace Gekko
 			case 60 * 2: info->instr = Instruction::andc; AsbFast(instr, info); break;
 			case (60 * 2) | RcBit: info->instr = Instruction::andc_d; AsbFast(instr, info); break;
 
+			case 0:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmp; CrfDabFast(instr, info);
+				}
+				break;
+
+			case 32 * 2:
+				if ((DIS_RD & 1) == 0)
+				{
+					info->instr = Instruction::cmpl; CrfDabFast(instr, info);
+				}
+				break;
+
+			case 26 * 2: info->instr = Instruction::cntlzw; AsFast(instr, info); break;
+			case (26 * 2) | RcBit: info->instr = Instruction::cntlzw_d; AsFast(instr, info); break;
+
+			case 86 * 2: info->instr = Instruction::dcbf; AbFast(instr, info); break;
+			case 470 * 2: info->instr = Instruction::dcbi; AbFast(instr, info); break;
+			case 54 * 2: info->instr = Instruction::dcbst; AbFast(instr, info); break;
+			case 278 * 2: info->instr = Instruction::dcbt; AbFast(instr, info); break;
+			case 246 * 2: info->instr = Instruction::dcbtst; AbFast(instr, info); break;
+			case 1014 * 2: info->instr = Instruction::dcbz; AbFast(instr, info); break;
+
+			case 491 * 2: info->instr = Instruction::divw; DabFast(instr, info); break;
+			case (491 * 2) | RcBit: info->instr = Instruction::divw_d; DabFast(instr, info); break;
+			case (491 * 2) | OEBit: info->instr = Instruction::divwo; DabFast(instr, info); break;
+			case (491 * 2) | OEBit | RcBit: info->instr = Instruction::divwo_d; DabFast(instr, info); break;
+
+			case 459 * 2: info->instr = Instruction::divwu; DabFast(instr, info); break;
+			case (459 * 2) | RcBit: info->instr = Instruction::divwu_d; DabFast(instr, info); break;
+			case (459 * 2) | OEBit: info->instr = Instruction::divwuo; DabFast(instr, info); break;
+			case (459 * 2) | OEBit | RcBit: info->instr = Instruction::divwuo_d; DabFast(instr, info); break;
+
+			case 310 * 2: info->instr = Instruction::eciwx; DabFast(instr, info); break;
+			case 438 * 2: info->instr = Instruction::ecowx; DabFast(instr, info); break;
+
+			case 854 * 2: info->instr = Instruction::eieio; break;
+
+			case 284 * 2: info->instr = Instruction::eqv; AsbFast(instr, info); break;
+			case (284 * 2) | RcBit: info->instr = Instruction::eqv_d; AsbFast(instr, info); break;
+
+			case 954 * 2: info->instr = Instruction::extsb; AsFast(instr, info); break;
+			case (954 * 2) | RcBit: info->instr = Instruction::extsb_d; AsFast(instr, info); break;
+			case 922 * 2: info->instr = Instruction::extsh; AsFast(instr, info); break;
+			case (922 * 2) | RcBit: info->instr = Instruction::extsh_d; AsFast(instr, info); break;
+
 		}
 
 	}
@@ -224,10 +360,25 @@ namespace Gekko
 
 	}
 
+	#pragma region "Primary 4"
+
 	void Analyzer::Op4(uint32_t instr, AnalyzeInfo* info)
 	{
-
+		switch (instr & 0x7ff)
+		{
+			case 1014 * 2: info->instr = Instruction::dcbz_l; Ab(instr, info); break;
+		}
 	}
+
+	void Analyzer::Op4Fast(uint32_t instr, AnalyzeInfo* info)
+	{
+		switch (instr & 0x7ff)
+		{
+			case 1014 * 2: info->instr = Instruction::dcbz_l; AbFast(instr, info); break;
+		}
+	}
+
+	#pragma endregion "Primary 4"
 
 	#pragma region "Parameters"
 
@@ -363,6 +514,98 @@ namespace Gekko
 		info->flow = true;
 	}
 
+	void Analyzer::CrfDab(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::Crf;
+		info->param[1] = Param::Reg;
+		info->param[2] = Param::Reg;
+		CrfDabFast(instr, info);
+	}
+
+	void Analyzer::CrfDabFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD >> 2;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RB;
+	}
+
+	void Analyzer::CrfDaSimm(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::Crf;
+		info->param[1] = Param::Reg;
+		info->param[2] = Param::Simm;
+		CrfDaSimmFast(instr, info);
+	}
+
+	void Analyzer::CrfDaSimmFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD >> 2;
+		info->paramBits[1] = DIS_RA;
+		info->Imm.Signed = DIS_SIMM;
+	}
+
+	void Analyzer::CrfDaUimm(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::Crf;
+		info->param[1] = Param::Reg;
+		info->param[2] = Param::Simm;
+		CrfDaUimmFast(instr, info);
+	}
+
+	void Analyzer::CrfDaUimmFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD >> 2;
+		info->paramBits[1] = DIS_RA;
+		info->Imm.Unsigned = DIS_UIMM;
+	}
+
+	void Analyzer::As(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 2;
+		info->param[0] = Param::Reg;
+		info->param[1] = Param::Reg;
+		AsFast(instr, info);
+	}
+
+	void Analyzer::AsFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RA;
+		info->paramBits[1] = DIS_RS;
+	}
+
+	void Analyzer::CrbDab(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::Crb;
+		info->param[1] = Param::Crb;
+		info->param[2] = Param::Crb;
+		CrbDabFast(instr, info);
+	}
+
+	void Analyzer::CrbDabFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RB;
+	}
+
+	void Analyzer::Ab(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 2;
+		info->param[0] = Param::Reg;
+		info->param[1] = Param::Reg;
+		AbFast(instr, info);
+	}
+
+	void Analyzer::AbFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RA;
+		info->paramBits[1] = DIS_RB;
+	}
+
 	#pragma endregion "Parameters"
 
 	void Analyzer::Analyze(uint32_t pc, uint32_t instr, AnalyzeInfo* info)
@@ -374,6 +617,7 @@ namespace Gekko
 
 		switch (instr >> 26)
 		{
+			case 4: Op4(instr, info); break;
 			case 19: Op19(instr, info); break;
 			case 31: Op31(instr, info); break;
 			default: OpMain(instr, info); break;
@@ -388,6 +632,7 @@ namespace Gekko
 
 		switch (instr >> 26)
 		{
+			case 4: Op4Fast(instr, info); break;
 			case 19: Op19Fast(instr, info); break;
 			case 31: Op31Fast(instr, info); break;
 			default: OpMainFast(instr, info); break;

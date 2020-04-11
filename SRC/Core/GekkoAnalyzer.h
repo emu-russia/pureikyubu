@@ -470,6 +470,18 @@ namespace Gekko
 		static void BoBiTargetAddrFast(uint32_t instr, AnalyzeInfo* info);
 		static void BoBi(uint32_t instr, AnalyzeInfo* info);
 		static void BoBiFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDab(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDabFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDaSimm(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDaSimmFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDaUimm(uint32_t instr, AnalyzeInfo* info);
+		static void CrfDaUimmFast(uint32_t instr, AnalyzeInfo* info);
+		static void As(uint32_t instr, AnalyzeInfo* info);
+		static void AsFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrbDab(uint32_t instr, AnalyzeInfo* info);
+		static void CrbDabFast(uint32_t instr, AnalyzeInfo* info);
+		static void Ab(uint32_t instr, AnalyzeInfo* info);
+		static void AbFast(uint32_t instr, AnalyzeInfo* info);
 
 	public:
 
