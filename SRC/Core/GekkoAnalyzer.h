@@ -524,6 +524,10 @@ namespace Gekko
 		static void SprSFast(uint32_t instr, AnalyzeInfo* info);
 		static void SrS(uint32_t instr, AnalyzeInfo* info);
 		static void SrSFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrRegOffsetWi(uint32_t instr, AnalyzeInfo* info);
+		static void FrRegOffsetWiFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrAbWi(uint32_t instr, AnalyzeInfo* info);
+		static void FrAbWiFast(uint32_t instr, AnalyzeInfo* info);
 
 	public:
 
