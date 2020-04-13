@@ -456,6 +456,8 @@ namespace Gekko
 
 		static void Dab(uint32_t instr, AnalyzeInfo* info);
 		static void DabFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrDRegAb(uint32_t instr, AnalyzeInfo* info);
+		static void FrDRegAbFast(uint32_t instr, AnalyzeInfo* info);
 		static void DaSimm(uint32_t instr, AnalyzeInfo* info);
 		static void DaSimmFast(uint32_t instr, AnalyzeInfo* info);
 		static void Da(uint32_t instr, AnalyzeInfo* info);
@@ -494,6 +496,8 @@ namespace Gekko
 		static void FrDacFast(uint32_t instr, AnalyzeInfo* info);
 		static void DaOffset(uint32_t instr, AnalyzeInfo* info);
 		static void DaOffsetFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrdaOffset(uint32_t instr, AnalyzeInfo* info);
+		static void FrdaOffsetFast(uint32_t instr, AnalyzeInfo* info);
 		static void DaNb(uint32_t instr, AnalyzeInfo* info);
 		static void DaNbFast(uint32_t instr, AnalyzeInfo* info);
 		static void Crfds(uint32_t instr, AnalyzeInfo* info);
@@ -502,6 +506,8 @@ namespace Gekko
 		static void CrfdFast(uint32_t instr, AnalyzeInfo* info);
 		static void D(uint32_t instr, AnalyzeInfo* info);
 		static void DFast(uint32_t instr, AnalyzeInfo* info);
+		static void B(uint32_t instr, AnalyzeInfo* info);
+		static void BFast(uint32_t instr, AnalyzeInfo* info);
 		static void Frd(uint32_t instr, AnalyzeInfo* info);
 		static void FrdFast(uint32_t instr, AnalyzeInfo* info);
 		static void DSpr(uint32_t instr, AnalyzeInfo* info);
@@ -528,6 +534,18 @@ namespace Gekko
 		static void FrRegOffsetWiFast(uint32_t instr, AnalyzeInfo* info);
 		static void FrAbWi(uint32_t instr, AnalyzeInfo* info);
 		static void FrAbWiFast(uint32_t instr, AnalyzeInfo* info);
+		static void AsImm3(uint32_t instr, AnalyzeInfo* info);
+		static void AsImm3Fast(uint32_t instr, AnalyzeInfo* info);
+		static void AsbImm2(uint32_t instr, AnalyzeInfo* info);
+		static void AsbImm2Fast(uint32_t instr, AnalyzeInfo* info);
+		static void AsImm(uint32_t instr, AnalyzeInfo* info);
+		static void AsImmFast(uint32_t instr, AnalyzeInfo* info);
+		static void SaImm(uint32_t instr, AnalyzeInfo* info);
+		static void SaImmFast(uint32_t instr, AnalyzeInfo* info);
+		static void ImmAb(uint32_t instr, AnalyzeInfo* info);
+		static void ImmAbFast(uint32_t instr, AnalyzeInfo* info);
+		static void ImmASimm(uint32_t instr, AnalyzeInfo* info);
+		static void ImmASimmFast(uint32_t instr, AnalyzeInfo* info);
 
 	public:
 
