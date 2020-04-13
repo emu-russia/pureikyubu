@@ -492,6 +492,38 @@ namespace Gekko
 		static void FrDacbFast(uint32_t instr, AnalyzeInfo* info);
 		static void FrDac(uint32_t instr, AnalyzeInfo* info);
 		static void FrDacFast(uint32_t instr, AnalyzeInfo* info);
+		static void DaOffset(uint32_t instr, AnalyzeInfo* info);
+		static void DaOffsetFast(uint32_t instr, AnalyzeInfo* info);
+		static void DaNb(uint32_t instr, AnalyzeInfo* info);
+		static void DaNbFast(uint32_t instr, AnalyzeInfo* info);
+		static void Crfds(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdsFast(uint32_t instr, AnalyzeInfo* info);
+		static void Crfd(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdFast(uint32_t instr, AnalyzeInfo* info);
+		static void D(uint32_t instr, AnalyzeInfo* info);
+		static void DFast(uint32_t instr, AnalyzeInfo* info);
+		static void Frd(uint32_t instr, AnalyzeInfo* info);
+		static void FrdFast(uint32_t instr, AnalyzeInfo* info);
+		static void DSpr(uint32_t instr, AnalyzeInfo* info);
+		static void DSprFast(uint32_t instr, AnalyzeInfo* info);
+		static void DSr(uint32_t instr, AnalyzeInfo* info);
+		static void DSrFast(uint32_t instr, AnalyzeInfo* info);
+		static void Db(uint32_t instr, AnalyzeInfo* info);
+		static void DbFast(uint32_t instr, AnalyzeInfo* info);
+		static void DTbr(uint32_t instr, AnalyzeInfo* info);
+		static void DTbrFast(uint32_t instr, AnalyzeInfo* info);
+		static void Crms(uint32_t instr, AnalyzeInfo* info);
+		static void CrmsFast(uint32_t instr, AnalyzeInfo* info);
+		static void Crbd(uint32_t instr, AnalyzeInfo* info);
+		static void CrbdFast(uint32_t instr, AnalyzeInfo* info);
+		static void FmFrb(uint32_t instr, AnalyzeInfo* info);
+		static void FmFrbFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdImm(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdImmFast(uint32_t instr, AnalyzeInfo* info);
+		static void SprS(uint32_t instr, AnalyzeInfo* info);
+		static void SprSFast(uint32_t instr, AnalyzeInfo* info);
+		static void SrS(uint32_t instr, AnalyzeInfo* info);
+		static void SrSFast(uint32_t instr, AnalyzeInfo* info);
 
 	public:
 
