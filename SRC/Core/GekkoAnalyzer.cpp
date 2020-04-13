@@ -146,6 +146,8 @@ namespace Gekko
 			case 449 * 2: info->instr = Instruction::cror; CrbDab(instr, info); break;
 			case 417 * 2: info->instr = Instruction::crorc; CrbDab(instr, info); break;
 			case 193 * 2: info->instr = Instruction::crxor; CrbDab(instr, info); break;
+
+			case 150 * 2: info->instr = Instruction::isync; break;
 		}
 	}
 
@@ -167,6 +169,8 @@ namespace Gekko
 			case 449 * 2: info->instr = Instruction::cror; CrbDabFast(instr, info); break;
 			case 417 * 2: info->instr = Instruction::crorc; CrbDabFast(instr, info); break;
 			case 193 * 2: info->instr = Instruction::crxor; CrbDabFast(instr, info); break;
+
+			case 150 * 2: info->instr = Instruction::isync; break;
 		}
 	}
 
@@ -256,6 +260,7 @@ namespace Gekko
 			case 922 * 2: info->instr = Instruction::extsh; As(instr, info); break;
 			case (922 * 2) | RcBit: info->instr = Instruction::extsh_d; As(instr, info); break;
 
+			case 982 * 2: info->instr = Instruction::icbi; Ab(instr, info); break;
 		}
 
 	}
@@ -342,23 +347,202 @@ namespace Gekko
 			case 922 * 2: info->instr = Instruction::extsh; AsFast(instr, info); break;
 			case (922 * 2) | RcBit: info->instr = Instruction::extsh_d; AsFast(instr, info); break;
 
+			case 982 * 2: info->instr = Instruction::icbi; AbFast(instr, info); break;
 		}
 
 	}
 
 	#pragma endregion "Primary 31"
 
-
+	#pragma region "Primary 59"
 
 	void Analyzer::Op59(uint32_t instr, AnalyzeInfo* info)
 	{
+		switch (instr & 0x7ff)
+		{
+			case 21 * 2: info->instr = Instruction::fadds; FrDab(instr, info); break;
+			case (21 * 2) | RcBit: info->instr = Instruction::fadds_d; FrDab(instr, info); break;
 
+			case 18 * 2: info->instr = Instruction::fdivs; FrDab(instr, info); break;
+			case (18 * 2) | RcBit: info->instr = Instruction::fdivs_d; FrDab(instr, info); break;
+
+			case 29 * 2: info->instr = Instruction::fmadds; FrDacb(instr, info); break;
+			case (29 * 2) | RcBit: info->instr = Instruction::fmadds_d; FrDacb(instr, info); break;
+			case 28 * 2: info->instr = Instruction::fmsubs; FrDacb(instr, info); break;
+			case (28 * 2) | RcBit: info->instr = Instruction::fmsubs_d; FrDacb(instr, info); break;
+
+			case 25 * 2: info->instr = Instruction::fmuls; FrDac(instr, info); break;
+			case (25 * 2) | RcBit: info->instr = Instruction::fmuls_d; FrDac(instr, info); break;
+
+			case 31 * 2: info->instr = Instruction::fnmadds; FrDacb(instr, info); break;
+			case (31 * 2) | RcBit: info->instr = Instruction::fnmadds_d; FrDacb(instr, info); break;
+
+			case 30 * 2: info->instr = Instruction::fnmsubs; FrDacb(instr, info); break;
+			case (30 * 2) | RcBit: info->instr = Instruction::fnmsubs_d; FrDacb(instr, info); break;
+
+			case 24 * 2: info->instr = Instruction::fres; FrDb(instr, info); break;
+			case (24 * 2) | RcBit: info->instr = Instruction::fres_d; FrDb(instr, info); break;
+
+			case 20 * 2: info->instr = Instruction::fsubs; FrDab(instr, info); break;
+			case (20 * 2) | RcBit: info->instr = Instruction::fsubs_d; FrDab(instr, info); break;
+		}
 	}
+
+	void Analyzer::Op59Fast(uint32_t instr, AnalyzeInfo* info)
+	{
+		switch (instr & 0x7ff)
+		{
+			case 21 * 2: info->instr = Instruction::fadds; FrDabFast(instr, info); break;
+			case (21 * 2) | RcBit: info->instr = Instruction::fadds_d; FrDabFast(instr, info); break;
+
+			case 18 * 2: info->instr = Instruction::fdivs; FrDabFast(instr, info); break;
+			case (18 * 2) | RcBit: info->instr = Instruction::fdivs_d; FrDabFast(instr, info); break;
+
+			case 29 * 2: info->instr = Instruction::fmadds; FrDacbFast(instr, info); break;
+			case (29 * 2) | RcBit: info->instr = Instruction::fmadds_d; FrDacbFast(instr, info); break;
+			case 28 * 2: info->instr = Instruction::fmsubs; FrDacbFast(instr, info); break;
+			case (28 * 2) | RcBit: info->instr = Instruction::fmsubs_d; FrDacbFast(instr, info); break;
+
+			case 25 * 2: info->instr = Instruction::fmuls; FrDacFast(instr, info); break;
+			case (25 * 2) | RcBit: info->instr = Instruction::fmuls_d; FrDacFast(instr, info); break;
+
+			case 31 * 2: info->instr = Instruction::fnmadds; FrDacbFast(instr, info); break;
+			case (31 * 2) | RcBit: info->instr = Instruction::fnmadds_d; FrDacbFast(instr, info); break;
+
+			case 30 * 2: info->instr = Instruction::fnmsubs; FrDacbFast(instr, info); break;
+			case (30 * 2) | RcBit: info->instr = Instruction::fnmsubs_d; FrDacbFast(instr, info); break;
+
+			case 24 * 2: info->instr = Instruction::fres; FrDbFast(instr, info); break;
+			case (24 * 2) | RcBit: info->instr = Instruction::fres_d; FrDbFast(instr, info); break;
+
+			case 20 * 2: info->instr = Instruction::fsubs; FrDabFast(instr, info); break;
+			case (20 * 2) | RcBit: info->instr = Instruction::fsubs_d; FrDabFast(instr, info); break;
+		}
+	}
+
+	#pragma endregion "Primary 59"
+
+	#pragma region "Primary 63"
 
 	void Analyzer::Op63(uint32_t instr, AnalyzeInfo* info)
 	{
+		switch (instr & 0x7ff)
+		{
+			case 264 * 2: info->instr = Instruction::fabs; FrDb(instr, info); break;
+			case (264 * 2) | RcBit: info->instr = Instruction::fabs_d; FrDb(instr, info); break;
 
+			case 21 * 2: info->instr = Instruction::fadd; FrDab(instr, info); break;
+			case (21 * 2) | RcBit: info->instr = Instruction::fadd_d; FrDab(instr, info); break;
+
+			case 32 * 2: info->instr = Instruction::fcmpo; CrfdFrAb(instr, info); break;
+			case 0: info->instr = Instruction::fcmpu; CrfdFrAb(instr, info); break;
+
+			case 14 * 2: info->instr = Instruction::fctiw; FrDb(instr, info); break;
+			case (14 * 2) | RcBit: info->instr = Instruction::fctiw_d; FrDb(instr, info); break;
+			case 15 * 2: info->instr = Instruction::fctiwz; FrDb(instr, info); break;
+			case (15 * 2) | RcBit: info->instr = Instruction::fctiwz_d; FrDb(instr, info); break;
+
+			case 18 * 2: info->instr = Instruction::fdiv; FrDab(instr, info); break;
+			case (18 * 2) | RcBit: info->instr = Instruction::fdiv_d; FrDab(instr, info); break;
+
+			case 29 * 2: info->instr = Instruction::fmadd; FrDacb(instr, info); break;
+			case (29 * 2) | RcBit: info->instr = Instruction::fmadd_d; FrDacb(instr, info); break;
+
+			case 72 * 2: info->instr = Instruction::fmr; FrDb(instr, info); break;
+			case (72 * 2) | RcBit: info->instr = Instruction::fmr_d; FrDb(instr, info); break;
+
+			case 28 * 2: info->instr = Instruction::fmsub; FrDacb(instr, info); break;
+			case (28 * 2) | RcBit: info->instr = Instruction::fmsub_d; FrDacb(instr, info); break;
+
+			case 25 * 2: info->instr = Instruction::fmul; FrDac(instr, info); break;
+			case (25 * 2) | RcBit: info->instr = Instruction::fmul_d; FrDac(instr, info); break;
+
+			case 136 * 2: info->instr = Instruction::fnabs; FrDb(instr, info); break;
+			case (136 * 2) | RcBit: info->instr = Instruction::fnabs_d; FrDb(instr, info); break;
+
+			case 40 * 2: info->instr = Instruction::fneg; FrDb(instr, info); break;
+			case (40 * 2) | RcBit: info->instr = Instruction::fneg_d; FrDb(instr, info); break;
+
+			case 31 * 2: info->instr = Instruction::fnmadd; FrDacb(instr, info); break;
+			case (31 * 2) | RcBit: info->instr = Instruction::fnmadd_d; FrDacb(instr, info); break;
+
+			case 30 * 2: info->instr = Instruction::fnmsub; FrDacb(instr, info); break;
+			case (30 * 2) | RcBit: info->instr = Instruction::fnmsub_d; FrDacb(instr, info); break;
+
+			case 12 * 2: info->instr = Instruction::frsp; FrDb(instr, info); break;
+			case (12 * 2) | RcBit: info->instr = Instruction::frsp_d; FrDb(instr, info); break;
+
+			case 26 * 2: info->instr = Instruction::frsqrte; FrDb(instr, info); break;
+			case (26 * 2) | RcBit: info->instr = Instruction::frsqrte_d; FrDb(instr, info); break;
+
+			case 23 * 2: info->instr = Instruction::fsel; FrDacb(instr, info); break;
+			case (23 * 2) | RcBit: info->instr = Instruction::fsel_d; FrDacb(instr, info); break;
+
+			case 20 * 2: info->instr = Instruction::fsub; FrDab(instr, info); break;
+			case (20 * 2) | RcBit: info->instr = Instruction::fsub_d; FrDab(instr, info); break;
+		}
 	}
+
+	void Analyzer::Op63Fast(uint32_t instr, AnalyzeInfo* info)
+	{
+		switch (instr & 0x7ff)
+		{
+			case 264 * 2: info->instr = Instruction::fabs; FrDbFast(instr, info); break;
+			case (264 * 2) | RcBit: info->instr = Instruction::fabs_d; FrDbFast(instr, info); break;
+
+			case 21 * 2: info->instr = Instruction::fadd; FrDabFast(instr, info); break;
+			case (21 * 2) | RcBit: info->instr = Instruction::fadd_d; FrDabFast(instr, info); break;
+
+			case 32 * 2: info->instr = Instruction::fcmpo; CrfdFrAbFast(instr, info); break;
+			case 0: info->instr = Instruction::fcmpu; CrfdFrAbFast(instr, info); break;
+
+			case 14 * 2: info->instr = Instruction::fctiw; FrDbFast(instr, info); break;
+			case (14 * 2) | RcBit: info->instr = Instruction::fctiw_d; FrDbFast(instr, info); break;
+			case 15 * 2: info->instr = Instruction::fctiwz; FrDbFast(instr, info); break;
+			case (15 * 2) | RcBit: info->instr = Instruction::fctiwz_d; FrDbFast(instr, info); break;
+
+			case 18 * 2: info->instr = Instruction::fdiv; FrDabFast(instr, info); break;
+			case (18 * 2) | RcBit: info->instr = Instruction::fdiv_d; FrDabFast(instr, info); break;
+
+			case 29 * 2: info->instr = Instruction::fmadd; FrDacbFast(instr, info); break;
+			case (29 * 2) | RcBit: info->instr = Instruction::fmadd_d; FrDacbFast(instr, info); break;
+
+			case 72 * 2: info->instr = Instruction::fmr; FrDbFast(instr, info); break;
+			case (72 * 2) | RcBit: info->instr = Instruction::fmr_d; FrDbFast(instr, info); break;
+
+			case 28 * 2: info->instr = Instruction::fmsub; FrDacbFast(instr, info); break;
+			case (28 * 2) | RcBit: info->instr = Instruction::fmsub_d; FrDacbFast(instr, info); break;
+
+			case 25 * 2: info->instr = Instruction::fmul; FrDacFast(instr, info); break;
+			case (25 * 2) | RcBit: info->instr = Instruction::fmul_d; FrDacFast(instr, info); break;
+
+			case 136 * 2: info->instr = Instruction::fnabs; FrDbFast(instr, info); break;
+			case (136 * 2) | RcBit: info->instr = Instruction::fnabs_d; FrDbFast(instr, info); break;
+
+			case 40 * 2: info->instr = Instruction::fneg; FrDbFast(instr, info); break;
+			case (40 * 2) | RcBit: info->instr = Instruction::fneg_d; FrDbFast(instr, info); break;
+
+			case 31 * 2: info->instr = Instruction::fnmadd; FrDacbFast(instr, info); break;
+			case (31 * 2) | RcBit: info->instr = Instruction::fnmadd_d; FrDacbFast(instr, info); break;
+
+			case 30 * 2: info->instr = Instruction::fnmsub; FrDacbFast(instr, info); break;
+			case (30 * 2) | RcBit: info->instr = Instruction::fnmsub_d; FrDacbFast(instr, info); break;
+
+			case 12 * 2: info->instr = Instruction::frsp; FrDbFast(instr, info); break;
+			case (12 * 2) | RcBit: info->instr = Instruction::frsp_d; FrDbFast(instr, info); break;
+
+			case 26 * 2: info->instr = Instruction::frsqrte; FrDbFast(instr, info); break;
+			case (26 * 2) | RcBit: info->instr = Instruction::frsqrte_d; FrDbFast(instr, info); break;
+
+			case 23 * 2: info->instr = Instruction::fsel; FrDacbFast(instr, info); break;
+			case (23 * 2) | RcBit: info->instr = Instruction::fsel_d; FrDacbFast(instr, info); break;
+
+			case 20 * 2: info->instr = Instruction::fsub; FrDabFast(instr, info); break;
+			case (20 * 2) | RcBit: info->instr = Instruction::fsub_d; FrDabFast(instr, info); break;
+		}
+	}
+
+	#pragma endregion "Primary 63"
 
 	#pragma region "Primary 4"
 
@@ -606,6 +790,86 @@ namespace Gekko
 		info->paramBits[1] = DIS_RB;
 	}
 
+	void Analyzer::FrDb(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 2;
+		info->param[0] = Param::FReg;
+		info->param[1] = Param::FReg;
+		FrDbFast(instr, info);
+	}
+
+	void Analyzer::FrDbFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD;
+		info->paramBits[1] = DIS_RB;
+	}
+
+	void Analyzer::FrDab(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::FReg;
+		info->param[1] = Param::FReg;
+		info->param[2] = Param::FReg;
+		FrDabFast(instr, info);
+	}
+
+	void Analyzer::FrDabFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RB;
+	}
+
+	void Analyzer::CrfdFrAb(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::Crf;
+		info->param[1] = Param::FReg;
+		info->param[2] = Param::FReg;
+		CrfdFrAbFast(instr, info);
+	}
+
+	void Analyzer::CrfdFrAbFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD >> 2;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RB;
+	}
+
+	void Analyzer::FrDacb(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 4;
+		info->param[0] = Param::FReg;
+		info->param[1] = Param::FReg;
+		info->param[2] = Param::FReg;
+		info->param[3] = Param::FReg;
+		FrDacbFast(instr, info);
+	}
+
+	void Analyzer::FrDacbFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RC;
+		info->paramBits[3] = DIS_RB;
+	}
+
+	void Analyzer::FrDac(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->numParam = 3;
+		info->param[0] = Param::FReg;
+		info->param[1] = Param::FReg;
+		info->param[2] = Param::FReg;
+		FrDacFast(instr, info);
+	}
+
+	void Analyzer::FrDacFast(uint32_t instr, AnalyzeInfo* info)
+	{
+		info->paramBits[0] = DIS_RD;
+		info->paramBits[1] = DIS_RA;
+		info->paramBits[2] = DIS_RC;
+	}
+
 	#pragma endregion "Parameters"
 
 	void Analyzer::Analyze(uint32_t pc, uint32_t instr, AnalyzeInfo* info)
@@ -620,6 +884,8 @@ namespace Gekko
 			case 4: Op4(instr, info); break;
 			case 19: Op19(instr, info); break;
 			case 31: Op31(instr, info); break;
+			case 59: Op59(instr, info); break;
+			case 63: Op63(instr, info); break;
 			default: OpMain(instr, info); break;
 		}
 	}
@@ -635,6 +901,8 @@ namespace Gekko
 			case 4: Op4Fast(instr, info); break;
 			case 19: Op19Fast(instr, info); break;
 			case 31: Op31Fast(instr, info); break;
+			case 59: Op59Fast(instr, info); break;
+			case 63: Op63Fast(instr, info); break;
 			default: OpMainFast(instr, info); break;
 		}
 	}

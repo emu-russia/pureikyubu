@@ -482,6 +482,16 @@ namespace Gekko
 		static void CrbDabFast(uint32_t instr, AnalyzeInfo* info);
 		static void Ab(uint32_t instr, AnalyzeInfo* info);
 		static void AbFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrDb(uint32_t instr, AnalyzeInfo* info);
+		static void FrDbFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrDab(uint32_t instr, AnalyzeInfo* info);
+		static void FrDabFast(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdFrAb(uint32_t instr, AnalyzeInfo* info);
+		static void CrfdFrAbFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrDacb(uint32_t instr, AnalyzeInfo* info);
+		static void FrDacbFast(uint32_t instr, AnalyzeInfo* info);
+		static void FrDac(uint32_t instr, AnalyzeInfo* info);
+		static void FrDacFast(uint32_t instr, AnalyzeInfo* info);
 
 	public:
 

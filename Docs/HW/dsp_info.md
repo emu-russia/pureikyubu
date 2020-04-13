@@ -279,7 +279,7 @@ The format of the values ​​is set by the ACFMT register:
 |0x0019|Pcm8|
 |0x0000|Adpcm|
 
-The ACPCN1, ACYN2, ACGAN, ACPDS, and 16 coefficient registers are also involved in the ADPCM decoding process.
+The ACYN1, ACYN2, ACGAN, ACPDS, and 16 coefficient registers are also involved in the ADPCM decoding process.
 
 ## Known DSP Microcodes
 

@@ -2,24 +2,16 @@
 
 ![PNG](/Docs/ScreenShots/Bootrom_NTSC_Dolwin.png)
 
-Dolwin is an emulator of Nintendo GameCube console.
-This platform is based on PowerPC-derivative processor, produced by IBM Corp. and codenamed Gekko.
-Dolwin mainly purposed to emulate homebrewn applications.
+Dolwin is work-in-progress emulator of Nintendo GameCube console.
 
-Emulator is using such techinques as interpreter and just-in-time compiler (TODO).
-It has debugger interface to trace emulated application. Dolwin has friendly user interface and file list selector.
+The goal of the emulator is to research the hardware features of GameCube and reverse engineer technologies used to develop games for this platform.
+GameCube is the hardware masterpiece of Nintendo engineers and it's a pleasure to explore this device and discover something new for yourself.
 
-Dolwin supports high-level emulation (known as HLE) of GameCube operating system and some additional system calls.
-
-Dolwin is composed as project for Microsoft Visual Studio. Main language is simplified C++, with some x86/x64 assembly optimizations.
-
-(Readme from SourceForge)
+This project is revived from 2004 in 2020.
 
 ## Building
 
 Build using Visual Studio 2019. To build, open Dolwin.sln and click Build.
-
-Temporary files will be in the Output folder.
 
 The executable will be at the root (Dolwin.exe).
 
@@ -48,8 +40,6 @@ I try not to use third-party libraries without special need.
 
 Dolwin was originally stands for "Nintendo *Dol*phin Emulator for *Win*dows" (Dolphin is GameCube codename).
 Later "Dolphin" was changed to "GameCube", so that there is no confusion with another emulator - Dolphin-emu.
-
-This project is revived from 2004 in 2020.
 
 ## Greets
 
