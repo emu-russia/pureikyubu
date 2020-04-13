@@ -45,5 +45,3 @@ extern  void (*DBReport2)(DbgChannel chan, const char *text, ...);
 
 void    DBOpen();                           // open debugger window in its own thread
 void    DBClose();                          // close debugger completely
-
-#include "Jdi.h"

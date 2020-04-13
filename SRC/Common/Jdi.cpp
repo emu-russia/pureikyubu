@@ -56,9 +56,26 @@ namespace Debug
         Json* json = new Json();
 
         size_t jsonTextSize = 0;
-        void* jsonText = UI::FileLoad(filename, jsonTextSize);
+
+        // Load Json
+        FILE* f = nullptr;
+        _wfopen_s(&f, filename.c_str(), L"rb");
+        assert(f);
+
+        fseek(f, 0, SEEK_END);
+        jsonTextSize = ftell(f);
+        fseek(f, 0, SEEK_SET);
+
+        uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
         assert(jsonText);
 
+        size_t read = fread(jsonText, 1, jsonTextSize, f);
+        assert(read == jsonTextSize);
+        fclose(f);
+
+        jsonText[jsonTextSize] = 0;         // Safety zero trailer
+
+        // Parse
         json->Deserialize(jsonText, jsonTextSize);
 
         delete[] jsonText;

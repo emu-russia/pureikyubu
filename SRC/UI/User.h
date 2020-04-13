@@ -5,7 +5,7 @@
 // version info
 #define APPNAME     _T("Dolwin")
 #define APPDESC     _T("Nintendo Gamecube Emulator for Windows")
-#define APPVER      _T("0.13")
+#define APPVER      _T("0.D")
 
 #include "UserMain.h"           // application entrypoint
 #include "UserFile.h"           // various file utilities

@@ -12,9 +12,10 @@
 #include <Windows.h>
 
 #include "../Common/Spinlock.h"
+#include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"
-#include "../Core/GekkoDisasm.h"
+#include "../Core/GekkoDisasmOld.h"
 
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"

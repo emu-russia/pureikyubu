@@ -33,13 +33,19 @@
     <ClInclude Include="..\GekkoCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\GekkoDisasm.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\GekkoDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Mmu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GekkoAnalyzer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GekkoDisasmOld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\GekkoDisasm.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -98,23 +104,29 @@
     <ClCompile Include="..\GekkoCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\GekkoDisasm.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\Mmu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="..\AsmX64.asm">
+    <ClCompile Include="..\GekkoAnalyzer.cpp">
       <Filter>Source Files</Filter>
-    </MASM>
-    <MASM Include="..\AsmX86.asm">
+    </ClCompile>
+    <ClCompile Include="..\GekkoDisasmOld.cpp">
       <Filter>Source Files</Filter>
-    </MASM>
+    </ClCompile>
+    <ClCompile Include="..\GekkoDisasm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />
     <None Include="..\..\..\Data\GekkoCoreJdi.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="..\Interpreter\AsmX64.asm">
+      <Filter>Interpreter</Filter>
+    </MASM>
+    <MASM Include="..\Interpreter\AsmX86.asm">
+      <Filter>Interpreter</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

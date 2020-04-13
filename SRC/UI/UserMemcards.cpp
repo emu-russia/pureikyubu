@@ -158,7 +158,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
 static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     TCHAR buf[MAX_PATH] = { 0 }, buf2[MAX_PATH] = { 0 }, * filename;
-    long newsize;
+    size_t newsize;
 
     switch(uMsg)
     {
