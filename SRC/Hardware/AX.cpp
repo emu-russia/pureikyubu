@@ -110,7 +110,7 @@ namespace Flipper
 		PVOID part2 = nullptr;
 		DWORD part2Size = 0;
 
-		hr = DSBuffer->Lock(0, frameSize * framesPerEmit, &part1, &part1Size, &part2, &part2Size,
+		hr = DSBuffer->Lock(0, (DWORD)(frameSize * framesPerEmit), &part1, &part1Size, &part2, &part2Size,
 			DSBLOCK_FROMWRITECURSOR );
 		assert(hr == DS_OK);
 
@@ -200,7 +200,7 @@ namespace Flipper
 		HRESULT hr = DS_OK;
 
 		char filename[0x100] = { 0, };
-		sprintf_s(filename, sizeof(filename), "Data\\AXDSBuffer_%04i.bin", frameCounter);
+		sprintf_s(filename, sizeof(filename), "Data\\AXDSBuffer_%04i.bin", (int)frameCounter);
 
 		hr = DSBuffer->Stop();
 		assert(hr == DS_OK);
@@ -235,7 +235,7 @@ namespace Flipper
 	void AudioRing::DumpRing()
 	{
 		char filename[0x100] = { 0, };
-		sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04i.bin", frameCounter);
+		sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04i.bin", (int)frameCounter);
 
 		DBReport2(DbgChannel::AX, "frame: %i, readPtr: %i, writePtr: %i\n", frameCounter, ringReadPtr, ringWritePtr);
 		UI::FileSave(filename, ringBuffer, ringSize);

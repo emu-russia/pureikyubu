@@ -20,8 +20,8 @@
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
 
-#include "../Emulator.h"
-#include "../Loader.h"
+#include "../Dolwin/Emulator.h"
+#include "../Dolwin/Loader.h"
 #include "../UI/UserFile.h"
 
 #include "Debugger.h"

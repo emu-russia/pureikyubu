@@ -45,6 +45,9 @@
     <ClCompile Include="..\Symbols.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\HleCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Bootrom.h">
@@ -80,5 +83,12 @@
     <ClInclude Include="..\Symbols.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\HleCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\HLEJdi.json" />
+    <None Include="..\Readme.md" />
   </ItemGroup>
 </Project>

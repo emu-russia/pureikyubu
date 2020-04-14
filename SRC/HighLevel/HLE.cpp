@@ -135,11 +135,15 @@ void HLEOpen()
 #if !_M_X64
     MTXOpen();
 #endif
+
+    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
 }
 
 void HLEClose()
 {
     SYMKill();
+
+    Debug::Hub.RemoveNode(HLE_JDI_JSON);
 }
 
 void HLEExecuteCallback(uint32_t entryPoint)

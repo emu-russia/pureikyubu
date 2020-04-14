@@ -12,72 +12,72 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="RES\resource.h">
+    <ClInclude Include="..\..\..\RES\resource.h">
       <Filter>Resource Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Emulator.h">
+    <ClInclude Include="..\dolphin.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\Loader.h">
+    <ClInclude Include="..\EmuCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\dolphin.h">
+    <ClInclude Include="..\Emulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SRC\EmuCommands.h">
+    <ClInclude Include="..\Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="RES\Dolwin.ico">
+    <None Include="..\..\..\README.md" />
+    <None Include="..\..\..\Data\EmuJdi.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\EmuCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Emulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\..\RES\Dolwin.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\GCN.ico">
+    <Image Include="..\..\..\RES\GCN.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\GCN_sm.ico">
+    <Image Include="..\..\..\RES\GCN_sm.ico">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padArrows.bmp">
+    <Image Include="..\..\..\RES\padArrows.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padButtons.bmp">
+    <Image Include="..\..\..\RES\padButtons.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padStart.bmp">
+    <Image Include="..\..\..\RES\padStart.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padStick.bmp">
+    <Image Include="..\..\..\RES\padStick.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padSubStick.bmp">
+    <Image Include="..\..\..\RES\padSubStick.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padTriggerL.bmp">
+    <Image Include="..\..\..\RES\padTriggerL.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="RES\padTriggerR.bmp">
+    <Image Include="..\..\..\RES\padTriggerR.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="RES\Dolwin.rc">
+    <ResourceCompile Include="..\..\..\RES\Dolwin.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="README.md" />
-    <None Include="Data\EmuJdi.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="SRC\Emulator.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\Loader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="SRC\EmuCommands.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

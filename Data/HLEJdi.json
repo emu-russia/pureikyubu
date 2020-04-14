@@ -1,0 +1,54 @@
+{
+  "info": {
+    "description": "HLE debug commands. Available only after emulation has been started.",
+    "helpGroup": "High-level commands"
+  },
+
+  "can": {
+
+    "syms": {
+      "help": "list symbolic information",
+      "args": 1,
+      "usage": [
+        "Syntax: syms <string> OR syms *\n",
+        "<string> is the first occurance of symbol to find.\n",
+        "* - list all symbols (possible overflow of message buffer).\n",
+        "Examples of use: syms ma\n",
+        "                 syms __z\n",
+        "                 syms *\n",
+        "See also: name savemap loadmap addmap\n"
+      ]
+    },
+
+    "name": {
+      "help": "name function (add symbol)",
+      "args": 2,
+      "usage": [
+        "Syntax: name <addr> <symbol>\n",
+        "give name to function or memory variable (add symbol).\n",
+        "Example: name 0x80003100 __start\n",
+        "See also: syms savemap loadmap addmap\n"
+      ]
+    },
+
+    "savemap": {
+      "help": "save symbolic map into file",
+      "args": 1,
+      "usage": [
+        "Syntax: savemap <file> OR savemap .\n",
+        ". is used to update current loaded map.\n",
+        "path can be relative\n",
+        "Examples of use: savemap .\n",
+        "                 savemap Data\\my.map\n",
+        "See also: name loadmap addmap\n"
+      ]
+    },
+
+    "threads": {
+      "help": "Dump DolphinOS threads",
+      "info": "Some games freeze in one of the threads, polling something. If you look from the debugger, the context switches back and forth and it is difficult to catch such moments. Dumping current Dolphin OS threads will simplify the task."
+    }
+
+  }
+
+}

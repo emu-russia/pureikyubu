@@ -1,2 +1,3 @@
-void    SaveMAP(const TCHAR *mapname = _T("this"));
+#pragma once
+
 void	SaveMAP(const char* mapname);

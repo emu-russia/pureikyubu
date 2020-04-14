@@ -12,7 +12,23 @@
 
     "stop": {
       "help": "Stop processor execution"
-    }
+    },
 
+    "r": {
+      "help": "show / change CPU register",
+      "args": 1,
+      "usage": [
+            "Syntax : r <reg> OR r <reg> <op> <val> OR r <reg> <op> <reg>\n",
+            "sp, sd1, sd2 semantics are supported for reg name.\n",
+            "Value can be decimal, or hex with '0x' prefix.\n",
+            "Possible operations are: = + - * / | & ^ << >>\n",
+            "Examples of use: r sp\n",
+            "                 r r3 = 12\n",
+            "                 r r7 | 0x8020\n",
+            "                 r msr\n",
+            "                 r hid2 | 2\n",
+            "                 r r7 = sd1\n"
+      ]
+    }
   }
 }

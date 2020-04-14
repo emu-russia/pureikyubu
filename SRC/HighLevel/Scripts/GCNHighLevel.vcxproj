@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\Bootrom.cpp" />
     <ClCompile Include="..\HLE.cpp" />
+    <ClCompile Include="..\HleCommands.cpp" />
     <ClCompile Include="..\MapLoader.cpp" />
     <ClCompile Include="..\MapMaker.cpp" />
     <ClCompile Include="..\MapSaver.cpp" />
@@ -47,6 +48,7 @@
     <ClInclude Include="..\Bootrom.h" />
     <ClInclude Include="..\HighLevel.h" />
     <ClInclude Include="..\HLE.h" />
+    <ClInclude Include="..\HleCommands.h" />
     <ClInclude Include="..\MapLoader.h" />
     <ClInclude Include="..\MapMaker.h" />
     <ClInclude Include="..\MapSaver.h" />
@@ -55,6 +57,10 @@
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\Stdc.h" />
     <ClInclude Include="..\Symbols.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\HLEJdi.json" />
+    <None Include="..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

@@ -341,7 +341,7 @@ void OSCheckContextStruct()
     DBReport("OSContext size: %i(%i)/%i\n", sizeof(OSContext), 712, OS_CONTEXT_SIZE);
 }
 
-// covert GC time to human-usable time string;
+// Convert GC time to human-usable time string;
 // example output : "30 Jun 2004 3:06:14:127"
 TCHAR* OSTimeFormat(uint64_t tbr, bool noDate /* false */)
 {

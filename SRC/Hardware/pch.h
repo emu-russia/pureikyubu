@@ -25,7 +25,7 @@
 #include "../UI/UserFile.h"
 #include "../UI/UserProfiler.h"
 #include "../UI/UserWindow.h"
-#include "../Loader.h"
+#include "../Dolwin/Loader.h"
 
 #include "../HighLevel/HighLevel.h"
 
