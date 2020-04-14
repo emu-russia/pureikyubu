@@ -47,6 +47,15 @@
     "threads": {
       "help": "Dump DolphinOS threads",
       "info": "Some games freeze in one of the threads, polling something. If you look from the debugger, the context switches back and forth and it is difficult to catch such moments. Dumping current Dolphin OS threads will simplify the task."
+    },
+
+    "DumpContext": {
+      "help": "Dump thread context",
+      "args": 1,
+      "usage": [
+        "Syntax: DumpContext <addr>",
+        "You must be sure that the address you provide is a pointer to the context, otherwise you will get garbage."
+      ]
     }
 
   }

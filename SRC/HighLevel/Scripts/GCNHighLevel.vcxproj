@@ -20,15 +20,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Bootrom.cpp" />
+    <ClCompile Include="..\DumpThreads.cpp" />
     <ClCompile Include="..\HLE.cpp" />
     <ClCompile Include="..\HleCommands.cpp" />
     <ClCompile Include="..\MapLoader.cpp" />
     <ClCompile Include="..\MapMaker.cpp" />
     <ClCompile Include="..\MapSaver.cpp" />
-    <ClCompile Include="..\Mtx.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\Mtx.cpp" />
     <ClCompile Include="..\OS.cpp" />
     <ClCompile Include="..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -37,8 +35,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Stdc.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
@@ -47,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Bootrom.h" />
+    <ClInclude Include="..\DumpThreads.h" />
     <ClInclude Include="..\HighLevel.h" />
     <ClInclude Include="..\HLE.h" />
     <ClInclude Include="..\HleCommands.h" />

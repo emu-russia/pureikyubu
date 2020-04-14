@@ -38,6 +38,12 @@ namespace HLE
 
     static Json::Value* cmd_threads(std::vector<std::string>& args)
     {
+        DumpDolphinOsThreads();
+        return nullptr;
+    }
+
+    static Json::Value* DumpContext(std::vector<std::string>& args)
+    {
         DBReport("Bogus!\n");
         return nullptr;
     }
@@ -48,5 +54,6 @@ namespace HLE
         Debug::Hub.AddCmd("name", cmd_name);
         Debug::Hub.AddCmd("savemap", cmd_savemap);
         Debug::Hub.AddCmd("threads", cmd_threads);
+        Debug::Hub.AddCmd("DumpContext", DumpContext);
 	}
 }

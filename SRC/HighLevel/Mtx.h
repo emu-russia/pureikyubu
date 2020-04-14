@@ -1,3 +1,5 @@
+#pragma once
+
 void    MTXOpen();
 
 /* ---------------------------------------------------------------------------
@@ -20,14 +22,6 @@ void    C_MTXConcat         (void);
 void    C_MTXTranspose      (void);
 void    C_MTXInverse        (void);
 void    C_MTXInvXpose       (void);
-
-// SIMD version
-void    SIMD_MTXIdentity    (void);
-void    SIMD_MTXCopy        (void);
-void    SIMD_MTXConcat      (void);
-void    SIMD_MTXTranspose   (void);
-void    SIMD_MTXInverse     (void);
-void    SIMD_MTXInvXpose    (void);
 
 /* ---------------------------------------------------------------------------
     Matrix-vector

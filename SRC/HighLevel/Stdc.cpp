@@ -3,32 +3,18 @@
 
 #define PARAM(n)    GPR[3+n]
 #define RET_VAL     GPR[3]
-#define SWAP        MEMSwap
-
-static bool IsMMXPresent()
-{
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x800000) != 0;
-}
-
-static bool IsSSEPresent()
-{
-    int cpuInfo[4];
-    __cpuid(cpuInfo, 1);
-    return (cpuInfo[3] & 0x2000000) != 0;
-}
+#define SWAP        _byteswap_ulong
 
 // fast longlong swap, invented by org
-static void swap_double(void *srcPtr)
+static void swap_double(void* srcPtr)
 {
-    uint8_t *src = (uint8_t *)srcPtr;
+    uint8_t* src = (uint8_t*)srcPtr;
     register uint8_t t;
 
-    for(int i=0; i<4; i++)
+    for (int i = 0; i < 4; i++)
     {
-        t = src[7-i];
-        src[7-i] = src[i];
+        t = src[7 - i];
+        src[7 - i] = src[i];
         src[i] = t;
     }
 }
@@ -37,73 +23,23 @@ static void swap_double(void *srcPtr)
     Memory operations
 --------------------------------------------------------------------------- */
 
-// fast mmx version
-static void mmx_memcpy(uint8_t *dest, uint8_t *src, uint32_t cnt)
-{
-    int tail = cnt % 8, qwords = cnt >> 3;
-
-    if(qwords)
-    {
-        while(qwords--)
-        {
-            __asm   mov     eax, src
-            __asm   mov     edx, dest
-            __asm   movq    mm0, [eax]
-            __asm   movq    [edx], mm0
-            src += 8;
-            dest += 8;
-        }
-        __asm       emms
-    }
-
-    if(tail) memcpy(dest, src, tail);
-}
-
-// fast sse version (well, not as fast, as I've seen in some asm sources, but enough)
-static void sse_memcpy_u(uint8_t *dest, uint8_t *src, uint32_t cnt)
-{
-    int tail = cnt % 16, dqwords = cnt >> 4;
-
-    if(dqwords)
-    {
-        while(dqwords--)
-        {
-            __asm   mov     eax, src
-            __asm   mov     edx, dest
-            __asm   movups  xmm0, [eax]     // unaligned
-            __asm   movups  [edx], xmm0
-            src += 16;
-            dest += 16;
-        }
-        __asm       emms
-    }
-
-    if(tail) memcpy(dest, src, tail);
-}
-
 // void *memcpy( void *dest, const void *src, size_t count );
 void HLE_memcpy()
 {
     HLEHit(HLE_MEMCPY);
 
     uint32_t eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
-    uint32_t paDest = MEMEffectiveToPhysical(eaDest, 0);
-    uint32_t paSrc = MEMEffectiveToPhysical(eaSrc, 0);
+    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
+    uint32_t paSrc = Gekko::Gekko->EffectiveToPhysical(eaSrc, false);
 
-#ifdef  _DEBUG
-    VERIFY(paDest == -1, "memcpy dest unmapped");
-    VERIFY(paSrc == -1, "memcpy src unmapped");
-    VERIFY( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
-    VERIFY( (paSrc + cnt) > RAMSIZE, "memcpy src. Out of bounds");
-#endif
+    assert( paDest != -1);
+    assert( paSrc != -1);
+    assert( (paDest + cnt) < RAMSIZE);
+    assert( (paSrc + cnt) < RAMSIZE);
 
 //  DBReport( GREEN "memcpy(0x%08X, 0x%08X, %i(%s))\n", 
 //            eaDest, eaSrc, cnt, FileSmartSize(cnt) );
 
-    if(IsSSEPresent()) sse_memcpy_u(&mi.ram[paDest], &mi.ram[paSrc], cnt);
-    else
-    if(IsMMXPresent()) mmx_memcpy(&mi.ram[paDest], &mi.ram[paSrc], cnt);
-    else
     memcpy(&mi.ram[paDest], &mi.ram[paSrc], cnt);
 }
 
@@ -113,15 +49,14 @@ void HLE_memset()
     HLEHit(HLE_MEMSET);
 
     uint32_t eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
-    uint32_t paDest = MEMEffectiveToPhysical(eaDest, 0);
+    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
 
-#ifdef  _DEBUG
-    VERIFY(paDest == -1, "memcpy dest unmapped");
-    VERIFY( (paDest + cnt) > RAMSIZE, "memcpy dest. Out of bounds");
-#endif
+    assert(paDest != -1);
+    assert( (paDest + cnt) < RAMSIZE);
 
 //  DBReport( GREEN "memcpy(0x%08X, %i(%c), %i(%s))\n", 
 //            eaDest, c, cnt, FileSmartSize(cnt) );
+
     memset(&mi.ram[paDest], c, cnt);
 }
 
@@ -155,7 +90,7 @@ void HLE_modf()
 {
     HLEHit(HLE_MODF);
 
-    double * intptr = (double *)(&mi.ram[MEMEffectiveToPhysical(PARAM(0), 0)]);
+    double * intptr = (double *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
     
     FPRD(1) = modf(FPRD(1), intptr);
     swap_double(intptr);
@@ -166,7 +101,7 @@ void HLE_frexp()
 {
     HLEHit(HLE_FREXP);
 
-    uint32_t * expptr = (uint32_t *)(&mi.ram[MEMEffectiveToPhysical(PARAM(0), 0)]);
+    uint32_t * expptr = (uint32_t *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
     *expptr = SWAP(*expptr);

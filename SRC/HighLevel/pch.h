@@ -28,3 +28,4 @@
 
 #include "HleCommands.h"
 #include "TimeFormat.h"
+#include "DumpThreads.h"
