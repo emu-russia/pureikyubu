@@ -210,7 +210,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\EmuJdi.json" />
-    <None Include="..\..\..\README.md" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\EmuCommands.cpp" />

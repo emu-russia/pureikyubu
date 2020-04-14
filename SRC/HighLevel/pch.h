@@ -27,3 +27,4 @@
 #include "../UI/UserWindow.h"
 
 #include "HleCommands.h"
+#include "TimeFormat.h"

@@ -23,7 +23,7 @@
 #define     OS_CONTEXT_STATE_EXC        2   // set when saved by exception
 
 // CPU context
-typedef struct OSContext
+typedef struct _OSContext
 {
     // GPRs
     uint32_t     gpr[32];
@@ -77,4 +77,3 @@ void    OSRestoreInterrupts ( void );
 --------------------------------------------------------------------------- */
 
 void    OSCheckContextStruct();
-TCHAR*   OSTimeFormat(uint64_t tbr, bool noDate=false);

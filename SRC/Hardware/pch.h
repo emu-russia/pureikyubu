@@ -27,6 +27,6 @@
 #include "../UI/UserWindow.h"
 #include "../Dolwin/Loader.h"
 
-#include "../HighLevel/HighLevel.h"
+#include "../HighLevel/TimeFormat.h"
 
 #include "AX.h"

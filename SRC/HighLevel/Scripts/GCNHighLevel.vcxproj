@@ -43,6 +43,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\Symbols.cpp" />
+    <ClCompile Include="..\TimeFormat.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Bootrom.h" />
@@ -57,6 +58,7 @@
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\Stdc.h" />
     <ClInclude Include="..\Symbols.h" />
+    <ClInclude Include="..\TimeFormat.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\HLEJdi.json" />

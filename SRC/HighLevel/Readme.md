@@ -13,7 +13,7 @@ Also, sometimes it is required to ignore some OS calls in order to skip those pl
 - HLE Traps
 - Bootrom and Apploader emulation (Apploader is a special application on the game disc that is used to load the main application)
 - Symbolic information support (Map files and Map Maker)
-- OSTimeFormat: Convert GC time to human-usable time string
+- OSTimeFormat: Convert GC time to human-readable string
 - Dumping Dolphin OS threads
 
 ## HLE Traps

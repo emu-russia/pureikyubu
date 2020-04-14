@@ -29,7 +29,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\README.md" />
     <None Include="..\..\..\Data\EmuJdi.json" />
   </ItemGroup>
   <ItemGroup>
