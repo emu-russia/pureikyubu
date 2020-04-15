@@ -580,3 +580,16 @@ void MIClose()
 
     MIClearTraps();
 }
+
+uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
+{
+    if (!mi.ram || bytes == 0)
+        return nullptr;
+
+    if (physAddr < (RAMSIZE - bytes))
+    {
+        return &mi.ram[physAddr];
+    }
+    
+    return nullptr;
+}

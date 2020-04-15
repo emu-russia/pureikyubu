@@ -1,5 +1,9 @@
+// general include file for whole project. must be included first.
 
 #pragma once
+
+// ---------------------------------------------------------------------------
+// compiler and SDK include files.
 
 #include <assert.h>
 #include <stdint.h>
@@ -15,15 +19,18 @@
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
-#include "../../RES/resource.h"
+#include "resource.h"
+
+// ---------------------------------------------------------------------------
+// Dolwin includes
 
 #include "../Common/Spinlock.h"
-#include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Core/Gekko.h"
+#include "../Core/Interpreter.h"
+#include "../HighLevel/HighLevel.h"
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
-#include "../Dolwin/Emulator.h"
-#include "../Dolwin/Loader.h"
-
-#include "User.h"
+#include "../UI/User.h"
+#include "Loader.h"
+#include "Emulator.h"

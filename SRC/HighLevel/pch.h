@@ -25,3 +25,7 @@
 #include "../UI/UserMain.h"
 #include "../UI/UserFile.h"
 #include "../UI/UserWindow.h"
+
+#include "HleCommands.h"
+#include "TimeFormat.h"
+#include "DumpThreads.h"

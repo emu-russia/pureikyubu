@@ -1,0 +1,68 @@
+{
+  "info": {
+    "description": "HLE debug commands. Available only after emulation has been started.",
+    "helpGroup": "High-level commands"
+  },
+
+  "can": {
+
+    "syms": {
+      "help": "list symbolic information",
+      "args": 1,
+      "usage": [
+        "Syntax: syms <string> OR syms *\n",
+        "<string> is the first occurance of symbol to find.\n",
+        "* - list all symbols (possible overflow of message buffer).\n",
+        "Examples of use: syms ma\n",
+        "                 syms __z\n",
+        "                 syms *\n",
+        "See also: name savemap loadmap addmap\n"
+      ]
+    },
+
+    "name": {
+      "help": "name function (add symbol)",
+      "args": 2,
+      "usage": [
+        "Syntax: name <addr> <symbol>\n",
+        "give name to function or memory variable (add symbol).\n",
+        "Example: name 0x80003100 __start\n",
+        "See also: syms savemap loadmap addmap\n"
+      ]
+    },
+
+    "savemap": {
+      "help": "save symbolic map into file",
+      "args": 1,
+      "usage": [
+        "Syntax: savemap <file> OR savemap .\n",
+        ". is used to update current loaded map.\n",
+        "path can be relative\n",
+        "Examples of use: savemap .\n",
+        "                 savemap Data\\my.map\n",
+        "See also: name loadmap addmap\n"
+      ]
+    },
+
+    "DumpThreads": {
+      "help": "Dump DolphinOS threads",
+      "info": "Some games freeze in one of the threads, polling something. If you look from the debugger, the context switches back and forth and it is difficult to catch such moments. Dumping current Dolphin OS threads will simplify the task.",
+      "output": "Array [Active Threads]"
+    },
+
+    "DumpContext": {
+      "help": "Dump thread context",
+      "args": 1,
+      "usage": [
+        "Syntax: DumpContext <effective_addr> [display]",
+        "You must be sure that the address you provide is a pointer to the context, otherwise you will get garbage.",
+        "Address must be effective address (DolphinOS)",
+        "display: 1 - show on screen, 0 - return only serialized context (do not show). Default value is 1.",
+        "Example: DumpContext 0x80331200 1"
+      ],
+      "output": "Array [ UInt32 gpr[32], Float fpr[32], Float psr[32], UInt32 gqr[32], UInt32 cr, UInt32 lr, UInt32 ctr, UInt32 xer, UInt32 fpscr, UInt32 srr0, UInt32 srr1, UInt16 mode, UInt16 state]  (see OSContext struct)"
+    }
+
+  }
+
+}

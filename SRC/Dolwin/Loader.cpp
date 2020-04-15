@@ -517,7 +517,12 @@ static void AutoloadMap()
     // get map file name
     TCHAR mapname[4*1024];
     TCHAR drive[1024], dir[1024], name[1024], ext[1024];
-    _tsplitpath (ldat.currentFile, drive, dir, name, ext);
+
+    _tsplitpath_s(ldat.currentFile,
+        drive, _countof(drive) - 1,
+        dir, _countof(dir) - 1,
+        name, _countof(name) - 1,
+        ext, _countof(ext) - 1);
 
     // Step 1: try to load map from Data directory
     if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
@@ -552,7 +557,12 @@ static void AutoloadPatch()
     // get patch file name
     TCHAR patch[4*1024];
     TCHAR drive[1024], dir[1024], name[1024], ext[1024];
-    _tsplitpath (ldat.currentFile, drive, dir, name, ext);
+
+    _tsplitpath_s(ldat.currentFile,
+        drive, _countof(drive) - 1,
+        dir, _countof(dir) - 1,
+        name, _countof(name) - 1,
+        ext, _countof(ext) - 1);
 
     // Step 1: try to load patch from Data directory
     if(ldat.dvd) _stprintf_s (patch, _countof(patch) - 1, _T(".\\Data\\%s.patch"), ldat.gameID);
@@ -603,7 +613,7 @@ static BOOL SetGameIDAndTitle(TCHAR *filename)
 
         if (widePtr)
         {
-            TCHAR* tcharPtr = ldat.currentFileName;
+            tcharPtr = ldat.currentFileName;
             unicodePtr = widePtr;
 
             while (*unicodePtr)
@@ -687,7 +697,13 @@ static void DoLoadFile(TCHAR *filename)
     else
     {
         TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-        _tsplitpath (filename, drive, dir, name, ext);
+
+        _tsplitpath_s(filename,
+            drive, _countof(drive) - 1,
+            dir, _countof(dir) - 1,
+            name, _countof(name) - 1,
+            ext, _countof(ext) - 1);
+
         _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
         
         // Set title to loaded executables

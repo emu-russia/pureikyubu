@@ -118,6 +118,8 @@ static void vi_set_timing()
 // step line counter(s), update GUI and poll controller
 void VIUpdate()
 {
+    TCHAR gcTime[256];
+
     if((TBR - vi.vtime) >= (vi.one_frame / vi.vcount))
     {
         vi.vtime = TBR;
@@ -152,7 +154,8 @@ void VIUpdate()
             vi.frames++;
 
             // show system time
-            SetStatusText(STATUS_ENUM::Time, OSTimeFormat(UTBR));
+            HLE::OSTimeFormat(gcTime, UTBR, false);
+            SetStatusText(STATUS_ENUM::Time, gcTime);
             UpdateProfiler();
         }
 

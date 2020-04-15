@@ -55,12 +55,12 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
 // there can be two cases of this call : save map into specified file and update current map
 // if there is not map loaded, all new symbols will go in default.map
 // saved map is appended (mean no file overwrite, and add new symbols to the end)
-void SaveMAP(const TCHAR *mapname /*="this"*/)
+static void SaveMAP2(const TCHAR *mapname)
 {
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
 
-    if(!_tcsicmp(mapname, _T("this")))
+    if(!mapname)
     {
         if(hle.mapfile[0] == 0)
         {
@@ -70,7 +70,7 @@ void SaveMAP(const TCHAR *mapname /*="this"*/)
         else mapname = hle.mapfile;
     }
 
-    DBReport2(DbgChannel::HLE, "saving/updating map : %s ...\n\n", mapname);
+    DBReport2(DbgChannel::HLE, "Saving/updating map: %s ...\n\n", mapname);
 
     // load MAP symbols
     SYMSetWorkspace(mapSet);
@@ -81,7 +81,7 @@ void SaveMAP(const TCHAR *mapname /*="this"*/)
     mapName = (char *)mapname;
     appendStarted = itemsUpdated = 0;
     SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
-    if ( itemsUpdated == 0 ) DBReport2 (DbgChannel::HLE, "nothing to update\n");
+    if ( itemsUpdated == 0 ) DBReport2 (DbgChannel::HLE, "Nothing to update\n");
 
     // restore old workspace
     SYMKill();
@@ -90,6 +90,12 @@ void SaveMAP(const TCHAR *mapname /*="this"*/)
 
 void SaveMAP(const char* mapname)
 {
+    if (!mapname)
+    {
+        SaveMAP2((TCHAR *)nullptr);
+        return;
+    }
+
     TCHAR tcharStr[MAX_PATH] = { 0, };
     char* ansiPtr = (char*)mapname;
     TCHAR* tcharPtr = tcharStr;
@@ -98,5 +104,5 @@ void SaveMAP(const char* mapname)
         *tcharPtr++ = *ansiPtr++;
     }
     *tcharPtr++ = 0;
-    SaveMAP(tcharStr);
+    SaveMAP2(tcharStr);
 }

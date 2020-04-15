@@ -22,8 +22,12 @@
 #define     OS_CONTEXT_STATE_FPSAVED    1   // set when FPU is saved
 #define     OS_CONTEXT_STATE_EXC        2   // set when saved by exception
 
+#define OS_CONTEXT_FRAME_SIZE     768
+
+#pragma pack(push, 1)
+
 // CPU context
-typedef struct OSContext
+typedef struct _OSContext
 {
     // GPRs
     uint32_t     gpr[32];
@@ -31,7 +35,11 @@ typedef struct OSContext
     uint32_t     cr, lr, ctr, xer;
 
     // FPRs (or paired-single 0-part)
-    double     fpr[32];
+    union
+    {
+        double      fpr[32];
+        uint64_t    fprAsUint[32];
+    };
 
     uint32_t     fpscr_pad;
     uint32_t     fpscr;          // dummy in emulator
@@ -45,11 +53,54 @@ typedef struct OSContext
 
     // gekko-specific regs
     uint32_t     gqr[8];         // quantization mode regs
-    double       psr[32];        // paired-single 1-part
+
+    uint32_t    padding;
+
+    union
+    {
+        double      psr[32];        // paired-single 1-part
+        uint64_t    psrAsUint[32];
+    };
 
 } OSContext;
 
-#define OS_CONTEXT_SIZE     768
+typedef struct _OSThreadLink
+{
+    uint32_t    next;
+    uint32_t    prev;
+} OSThreadLink;
+
+typedef struct _OSThreadQueue
+{
+    uint32_t    head;
+    uint32_t    tail;
+} OSThreadQueue;
+
+typedef OSThreadQueue OSMutexQueue;
+
+typedef struct _OSThread
+{
+    OSContext   context;
+
+    uint16_t    state;
+    uint16_t    attr;
+    int32_t     suspend;
+    uint32_t    priority;
+    uint32_t    base;
+    uint32_t    val;
+
+    uint32_t    queue;
+    OSThreadLink link;
+    OSThreadQueue queueJoin;
+    uint32_t    mutex;
+    OSMutexQueue queueMutex;
+    OSThreadLink linkActive;
+
+    uint32_t    stackBase;
+    uint32_t    stackEnd;
+} OSThread;
+
+#pragma pack(pop)
 
 // os calls
 void    OSSetCurrentContext ( void );
@@ -77,4 +128,3 @@ void    OSRestoreInterrupts ( void );
 --------------------------------------------------------------------------- */
 
 void    OSCheckContextStruct();
-TCHAR*   OSTimeFormat(uint64_t tbr, bool noDate=false);
