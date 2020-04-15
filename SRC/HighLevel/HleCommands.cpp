@@ -36,7 +36,7 @@ namespace HLE
         return nullptr;
     }
 
-    static Json::Value* cmd_threads(std::vector<std::string>& args)
+    static Json::Value* DumpThreads(std::vector<std::string>& args)
     {
         DumpDolphinOsThreads();
         return nullptr;
@@ -44,8 +44,15 @@ namespace HLE
 
     static Json::Value* DumpContext(std::vector<std::string>& args)
     {
-        DBReport("Bogus!\n");
-        return nullptr;
+        uint32_t effectiveAddr = strtoul(args[1].c_str(), nullptr, 0);
+
+        bool display = true;
+        if (args.size() >= 3)
+        {
+            display = atoi(args[2].c_str()) != 0 ? true : false;
+        }
+        
+        return DumpDolphinOsContext(effectiveAddr, display);
     }
 
 	void JdiReflector()
@@ -53,7 +60,7 @@ namespace HLE
         Debug::Hub.AddCmd("syms", cmd_syms);
         Debug::Hub.AddCmd("name", cmd_name);
         Debug::Hub.AddCmd("savemap", cmd_savemap);
-        Debug::Hub.AddCmd("threads", cmd_threads);
+        Debug::Hub.AddCmd("DumpThreads", DumpThreads);
         Debug::Hub.AddCmd("DumpContext", DumpContext);
 	}
 }

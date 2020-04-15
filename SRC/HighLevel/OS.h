@@ -31,7 +31,11 @@ typedef struct _OSContext
     uint32_t     cr, lr, ctr, xer;
 
     // FPRs (or paired-single 0-part)
-    double     fpr[32];
+    union
+    {
+        double      fpr[32];
+        uint64_t    fprAsUint[32];
+    };
 
     uint32_t     fpscr_pad;
     uint32_t     fpscr;          // dummy in emulator
@@ -45,7 +49,11 @@ typedef struct _OSContext
 
     // gekko-specific regs
     uint32_t     gqr[8];         // quantization mode regs
-    double       psr[32];        // paired-single 1-part
+    union
+    {
+        double      psr[32];        // paired-single 1-part
+        uint64_t    psrAsUint[32];
+    };
 
 } OSContext;
 

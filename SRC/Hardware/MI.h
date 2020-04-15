@@ -87,3 +87,5 @@ void    MISetTrap(
     void (__fastcall* wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
 void    MIOpen(HWConfig * config);
 void	MIClose();
+
+uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes);

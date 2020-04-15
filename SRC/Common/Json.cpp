@@ -742,6 +742,28 @@ Json::Value* Json::Value::AddInt(const char* keyName, int _value)
 	return child;
 }
 
+Json::Value* Json::Value::AddUInt16(const char* keyName, uint16_t _value)
+{
+	Value* child = new Value(this);
+	child->type = ValueType::Int;
+	child->name = CloneName(keyName);
+	child->value.AsInt = 0;
+	child->value.AsUint16 = _value;
+	children.push_back(child);
+	return child;
+}
+
+Json::Value* Json::Value::AddUInt32(const char* keyName, uint32_t _value)
+{
+	Value* child = new Value(this);
+	child->type = ValueType::Int;
+	child->name = CloneName(keyName);
+	child->value.AsInt = 0;
+	child->value.AsUint32 = _value;
+	children.push_back(child);
+	return child;
+}
+
 Json::Value* Json::Value::AddFloat(const char* keyName, float _value)
 {
 	Value* child = new Value(this);

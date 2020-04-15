@@ -165,6 +165,8 @@ public:
 		// Dynamic modification
 
 		Value* AddInt(const char* keyName, int _value);
+		Value* AddUInt16(const char* keyName, uint16_t _value);
+		Value* AddUInt32(const char* keyName, uint32_t _value);
 		Value* AddFloat(const char* keyName, float _value);
 		Value* AddNull(const char* keyName);
 		Value* AddBool(const char* keyName, bool _value);
