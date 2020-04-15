@@ -237,12 +237,12 @@ namespace HLE
 
 		for (int i = 0; i < 32; i++)
 		{
-			output->AddFloat(nullptr, context.fpr[i]);
+			output->AddFloat(nullptr, (float)context.fpr[i]);
 		}
 
 		for (int i = 0; i < 32; i++)
 		{
-			output->AddFloat(nullptr, context.psr[i]);
+			output->AddFloat(nullptr, (float)context.psr[i]);
 		}
 
 		for (int i = 0; i < 8; i++)
