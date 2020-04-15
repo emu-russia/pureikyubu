@@ -46,7 +46,8 @@
 
     "DumpThreads": {
       "help": "Dump DolphinOS threads",
-      "info": "Some games freeze in one of the threads, polling something. If you look from the debugger, the context switches back and forth and it is difficult to catch such moments. Dumping current Dolphin OS threads will simplify the task."
+      "info": "Some games freeze in one of the threads, polling something. If you look from the debugger, the context switches back and forth and it is difficult to catch such moments. Dumping current Dolphin OS threads will simplify the task.",
+      "output": "Array [Active Threads]"
     },
 
     "DumpContext": {

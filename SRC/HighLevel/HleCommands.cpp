@@ -38,8 +38,13 @@ namespace HLE
 
     static Json::Value* DumpThreads(std::vector<std::string>& args)
     {
-        DumpDolphinOsThreads();
-        return nullptr;
+        bool display = true;
+        if (args.size() >= 2)
+        {
+            display = atoi(args[1].c_str()) != 0 ? true : false;
+        }
+
+        return DumpDolphinOsThreads(display);
     }
 
     static Json::Value* DumpContext(std::vector<std::string>& args)

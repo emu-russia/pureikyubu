@@ -22,6 +22,10 @@
 #define     OS_CONTEXT_STATE_FPSAVED    1   // set when FPU is saved
 #define     OS_CONTEXT_STATE_EXC        2   // set when saved by exception
 
+#define OS_CONTEXT_FRAME_SIZE     768
+
+#pragma pack(push, 1)
+
 // CPU context
 typedef struct _OSContext
 {
@@ -49,6 +53,9 @@ typedef struct _OSContext
 
     // gekko-specific regs
     uint32_t     gqr[8];         // quantization mode regs
+
+    uint32_t    padding;
+
     union
     {
         double      psr[32];        // paired-single 1-part
@@ -57,7 +64,43 @@ typedef struct _OSContext
 
 } OSContext;
 
-#define OS_CONTEXT_SIZE     768
+typedef struct _OSThreadLink
+{
+    uint32_t    next;
+    uint32_t    prev;
+} OSThreadLink;
+
+typedef struct _OSThreadQueue
+{
+    uint32_t    head;
+    uint32_t    tail;
+} OSThreadQueue;
+
+typedef OSThreadQueue OSMutexQueue;
+
+typedef struct _OSThread
+{
+    OSContext   context;
+
+    uint16_t    state;
+    uint16_t    attr;
+    int32_t     suspend;
+    uint32_t    priority;
+    uint32_t    base;
+    uint32_t    val;
+
+    uint32_t    queue;
+    OSThreadLink link;
+    OSThreadQueue queueJoin;
+    uint32_t    mutex;
+    OSMutexQueue queueMutex;
+    OSThreadLink linkActive;
+
+    uint32_t    stackBase;
+    uint32_t    stackEnd;
+} OSThread;
+
+#pragma pack(pop)
 
 // os calls
 void    OSSetCurrentContext ( void );

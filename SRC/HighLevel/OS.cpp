@@ -338,5 +338,5 @@ void OSCheckContextStruct()
     for(i=0; i<32; i++)
         DBReport("PSR[%i] = %i\n", i, (uint8_t*)&context.psr[i] - (uint8_t*)&context.gpr[0]);
 
-    DBReport("OSContext size: %i(%i)/%i\n", sizeof(OSContext), 712, OS_CONTEXT_SIZE);
+    DBReport("OSContext size: %i(%i)/frame size: %i\n", sizeof(OSContext), 712, OS_CONTEXT_FRAME_SIZE);
 }

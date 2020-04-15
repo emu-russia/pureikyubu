@@ -4,7 +4,7 @@
 
 namespace HLE
 {
-	void DumpDolphinOsThreads();
+	Json::Value* DumpDolphinOsThreads(bool displayOnScreen);
 
 	Json::Value* DumpDolphinOsContext(uint32_t effectiveAddr, bool displayOnScreen);
 }
