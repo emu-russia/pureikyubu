@@ -25,6 +25,21 @@
         "Syntax: echo <text>\n",
         "Examples of use: echo \"Hello, world!\"\n"
       ]
+    },
+
+    "StartProfiler": {
+      "help": "Start Gekko profiling",
+      "args": 1,
+      "usage": [
+        "Syntax: StartProfiler <json> [ms]",
+        "Specify the Json file name where the collected information will be saved, after calling the StopProfiler command.",
+        "The interval is specified in milliseconds. Possible values are 2-50. The default is 5.",
+        "Example: StartProfiler Data\\sampleData.json 10"
+      ]
+    },
+
+    "StopProfiler": {
+      "help": "Stop Gekko profiling"
     }
 
   }

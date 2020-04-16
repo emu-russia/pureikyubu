@@ -129,11 +129,13 @@
       <TypeLibraryName>.\Debug/DVD.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DVD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -162,11 +164,13 @@
       <TypeLibraryName>.\Debug/DVD.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;DVD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -197,7 +201,6 @@
       <TypeLibraryName>.\Release/DVD.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DVD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -229,7 +232,6 @@
       <TypeLibraryName>.\Release/DVD.tlb</TypeLibraryName>
     </Midl>
     <ClCompile>
-      <AdditionalIncludeDirectories>.\SRC;.\RES;..\SRC;..\SRC\UserMenu;..\SRC\HighLevel;..\SRC\Hardware;..\SRC\Emulator;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;DVD_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>

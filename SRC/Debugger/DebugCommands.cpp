@@ -108,9 +108,52 @@ namespace Debug
         return nullptr;
     }
 
+    static SamplingProfiler* profiler = nullptr;
+
+    static Json::Value* StartProfiler(std::vector<std::string>& args)
+    {
+        if (profiler)
+        {
+            DBReport("Already started.\n");
+            return nullptr;
+        }
+
+        int period = 5;
+        if (args.size() > 2)
+        {
+            period = atoi(args[2].c_str());
+            period = min(2, max(period, 50));
+        }
+
+        profiler = new SamplingProfiler(args[1].c_str(), period);
+        assert(profiler);
+
+        DBReport("Profiler started.\n");
+
+        return nullptr;
+    }
+
+    static Json::Value* StopProfiler(std::vector<std::string>& args)
+    {
+        if (profiler == nullptr)
+        {
+            DBReport("Not started.\n");
+            return nullptr;
+        }
+
+        delete profiler;
+        profiler = nullptr;
+
+        DBReport("Profiler stopped.\n");
+
+        return nullptr;
+    }
+
 	void Reflector()
 	{
         Debug::Hub.AddCmd("script", cmd_script);
         Debug::Hub.AddCmd("echo", cmd_echo);
+        Debug::Hub.AddCmd("StartProfiler", StartProfiler);
+        Debug::Hub.AddCmd("StopProfiler", StopProfiler);
 	}
 }

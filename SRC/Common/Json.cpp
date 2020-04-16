@@ -764,6 +764,16 @@ Json::Value* Json::Value::AddUInt32(const char* keyName, uint32_t _value)
 	return child;
 }
 
+Json::Value* Json::Value::AddUInt64(const char* keyName, uint64_t _value)
+{
+	Value* child = new Value(this);
+	child->type = ValueType::Int;
+	child->name = CloneName(keyName);
+	child->value.AsInt = _value;
+	children.push_back(child);
+	return child;
+}
+
 Json::Value* Json::Value::AddFloat(const char* keyName, float _value)
 {
 	Value* child = new Value(this);
