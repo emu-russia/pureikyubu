@@ -60,6 +60,35 @@
     },
     "q": {
       "help": "Exit"
+    },
+
+    "GetLoaded": {
+      "help": "Get the full path of the loaded file",
+      "info": "Used by other components to obtain information about the currently running game or DOL file.",
+      "output": "{ loaded: PathString }"
+    },
+
+    "boot": {
+      "help": "boot DVD/executable from file",
+      "args": 1,
+      "usage": [
+        "Syntax: boot <file>\n",
+        "path can be relative\n",
+        "Examples of use: boot c:\\luigimansion.gcm\n",
+        "                 boot PONG.dol\n"
+      ]
+    },
+
+    "unload": {
+      "help": "unload current file"
+    },
+
+    "plist": {
+      "help": "list all patch data"
+    },
+
+    "dop": {
+      "help": "apply patches"
     }
 
   },

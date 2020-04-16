@@ -15,7 +15,7 @@
 #include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"
-#include "../Core/GekkoDisasmOld.h"
+#include "../Core/GekkoDisasmOld.h"			// PHASED OUT
 
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
@@ -27,3 +27,4 @@
 #include "Debugger.h"
 
 #include "console.h"
+#include "SamplingProfiler.h"

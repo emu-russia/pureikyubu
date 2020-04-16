@@ -105,4 +105,3 @@ typedef struct FifoControl
 extern  FifoControl fifo;
 
 void    CPOpen(HWConfig* config);
-void    CPUpdate();

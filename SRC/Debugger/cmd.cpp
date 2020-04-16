@@ -1,4 +1,6 @@
-// command processor
+// Debug commands processor
+// This module is a legacy from version 0.10. Will gradually be replaced by a more advanced JDI system.
+
 #include "pch.h"
 
 // ---------------------------------------------------------------------------
@@ -8,25 +10,21 @@ void cmd_init_handlers()
     con.cmds["."] = cmd_showpc;
     con.cmds["*"] = cmd_showldst;
     con.cmds["blr"] = cmd_blr;
-    con.cmds["boot"] = cmd_boot;
     con.cmds["d"] = cmd_d;
     con.cmds["denop"] = cmd_denop;
     con.cmds["disa"] = cmd_disa;
-    con.cmds["dop"] = cmd_dop;
     con.cmds["full"] = cmd_full;
     con.cmds["help"] = cmd_help;
     con.cmds["log"] = cmd_log;
     con.cmds["logfile"] = cmd_logfile;
     con.cmds["lr"] = cmd_lr;
     con.cmds["nop"] = cmd_nop;
-    con.cmds["plist"] = cmd_plist;
     con.cmds["script"] = cmd_script;
     con.cmds["sd1"] = cmd_sd1;
     con.cmds["sd2"] = cmd_sd2;
     con.cmds["sop"] = cmd_sop;
     con.cmds["tree"] = cmd_tree;
     con.cmds["u"] = cmd_u;
-    con.cmds["unload"] = cmd_unload;
 }
 
 // ---------------------------------------------------------------------------
@@ -55,18 +53,12 @@ Json::Value* cmd_help(std::vector<std::string>& args)
 
     Debug::Hub.Help();
 
-    DBReport2(DbgChannel::Header, "## Patch controls\n");
-    DBReport( "    dop                  - apply patches immediately (only with freeze=1)\n");
-    DBReport( "    plist                - list all patch data\n");
-    DBReport( "    pload                - load patch file (unload previous)\n");
-    DBReport( "    padd                 - add patch file (do not unload previous)\n");
-    DBReport( "    patch                - insert memory patch\n");
-    DBReport("\n");
+    //DBReport( "    pload                - load patch file (unload previous)\n");
+    //DBReport( "    padd                 - add patch file (do not unload previous)\n");
+    //DBReport( "    patch                - insert memory patch\n");
 
     DBReport2(DbgChannel::Header, "## Misc commands\n");
-    DBReport( "    boot                 - boot DVD/executable (from file or list)\n");
     DBReport( "    reboot               - reload last file\n");
-    DBReport( "    unload               - unload current file\n");
     DBReport( "    sop                  - search opcode (forward) from cursor address\n");
     DBReport( "    lr                   - show LR back chain (\"branch history\")\n");
     DBReport( "    script               - execute batch script\n");
@@ -116,16 +108,6 @@ Json::Value* cmd_showldst(std::vector<std::string>& args)
         con.data = wind.ldst_disp;
         con.update |= CON_UPDATE_DATA;
     }
-    return nullptr;
-}
-
-Json::Value* cmd_unload(std::vector<std::string>& args)
-{
-    if (emu.loaded)
-    {
-        EMUClose();
-    }
-    else DBReport("not loaded.\n");
     return nullptr;
 }
 
@@ -181,40 +163,6 @@ Json::Value* cmd_blr(std::vector<std::string>& args)
         con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
     }
 
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// boot
-
-Json::Value* cmd_boot(std::vector<std::string>& args)
-{
-    if(args.size() < 2)
-    {
-        DBReport("syntax : boot <file>\n");
-        DBReport("path can be relative\n");
-        DBReport("examples of use : boot c:\\luigimansion.gcm\n");
-        DBReport("                  boot PONG.dol\n");
-    }
-    else
-    {
-        char filepath[0x1000];
-        
-        strncpy_s(filepath, sizeof(filepath), args[1].c_str(), 255);
-
-        FILE* f = nullptr;
-        fopen_s(&f, filepath, "rb");
-        if(!f)
-        {
-            DBReport("file not exist! filepath=%s\n", filepath);
-            return nullptr;
-        }
-        else fclose(f);
-
-        LoadFile(filepath);
-        EMUClose();
-        EMUOpen();
-    }
     return nullptr;
 }
 
@@ -357,20 +305,6 @@ Json::Value* cmd_disa(std::vector<std::string>& args)
         fclose (f);
     }
 
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// dop
-
-Json::Value* cmd_dop(std::vector<std::string>& args)
-{
-    if(ldat.patches.size() == 0)
-    {
-        DBReport("no patch data loaded.\n");
-        return nullptr;
-    }
-    else ApplyPatches();
     return nullptr;
 }
 
@@ -590,58 +524,6 @@ Json::Value* cmd_denop(std::vector<std::string>& args)
     mi.ram[pa+3] = (uint8_t)(old >>  0);
 
     con.update |= (CON_UPDATE_DISA | CON_UPDATE_DATA);
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// plist
-
-Json::Value* cmd_plist(std::vector<std::string>& args)
-{
-    if(ldat.patches.size() == 0)
-    {
-        DBReport("no patch data loaded.\n");
-        return nullptr;
-    }
-
-    DBReport("i----addr-----data-------------s-f-\n");
-    int count = 0;
-    for(auto it= ldat.patches.begin(); it != ldat.patches.end(); ++it)
-    {
-        Patch * p = *it;
-        uint8_t * data = (uint8_t *)&p->data;
-        const char * fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
-
-        switch(p->dataSize)
-        {
-            case PATCH_SIZE_8:
-                fmt = "%.3i: %08X %02X %02X%02X%02X%02X%02X%02X%02X %i %i\n";
-                break;
-            case PATCH_SIZE_16:
-                fmt = "%.3i: %08X %02X%02X %02X%02X%02X%02X%02X%02X %i %i\n";
-                break;
-            case PATCH_SIZE_32:
-                fmt = "%.3i: %08X %02X%02X%02X%02X %02X%02X%02X%02X %i %i\n";
-                break;
-            case PATCH_SIZE_64:
-                fmt = "%.3i: %08X %02X%02X%02X%02X%02X%02X%02X%02X %i %i\n";
-                break;
-            default:
-                fmt = "PATCH DAMAGED!";
-        }
-
-        DBReport(
-            fmt,
-            count + 1,
-            _byteswap_ulong(p->effectiveAddress),
-            data[0], data[1], data[2], data[3],
-            data[4], data[5], data[6], data[7],
-            _byteswap_ushort(p->dataSize), _byteswap_ushort(p->freeze) & 1
-        );
-
-        count++;
-    }
-    DBReport("-----------------------------------\n");
     return nullptr;
 }
 

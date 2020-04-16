@@ -11,6 +11,8 @@
 
 // TODO: Get rid of this non-incapsulated mess
 
+// PHASED OUT
+
 // registers
 #define GPR     cpu.gpr
 #define SPR     cpu.spr
@@ -158,6 +160,8 @@ typedef struct CPUControl
     float       ldScale[64];        // for paired-single loads
     float       stScale[64];        // for paired-single stores
 } CPUControl;
+
+// PHASED OUT (will be integrated in GekkoCore)
 
 extern  CPUControl cpu;
 

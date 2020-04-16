@@ -33,6 +33,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\regs.cpp" />
+    <ClCompile Include="..\SamplingProfiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cmd.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="..\output.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\regs.h" />
+    <ClInclude Include="..\SamplingProfiler.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
