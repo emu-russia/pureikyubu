@@ -6,12 +6,12 @@ namespace Debug
 	{
 		SamplingProfiler* profiler = (SamplingProfiler *)Parameter;
 
-		while (true)
+		while (!profiler->thread->Terminated())
 		{
 			uint64_t ticks = Gekko::Gekko->GetTicks();
 			if (ticks >= profiler->savedGekkoTbr)
 			{
-				profiler->savedGekkoTbr = ticks;
+				profiler->savedGekkoTbr = ticks + profiler->pollingInterval;
 
 				profiler->sampleData->AddUInt64(nullptr, ticks);
 				profiler->sampleData->AddUInt32(nullptr, PC);
@@ -41,8 +41,7 @@ namespace Debug
 
 	SamplingProfiler::~SamplingProfiler()
 	{
-		thread->Suspend();
-		delete thread;
+		thread->Terminate();
 
 		size_t textSize = 0;
 

@@ -436,7 +436,7 @@ static void AIStreamCallback(uint16_t l, uint16_t r)
 // Update audio DMA thread
 static void AIUpdate(void *Parameter)
 {
-    while (true)
+    while (!ai.audioThread->Terminated())
     {
         if ((uint64_t)Gekko::Gekko->GetTicks() >= ai.dmaTime)
         {

@@ -61,7 +61,7 @@ namespace DSP
 	{
 		DspCore* core = (DspCore*)Parameter;
 
-		while (true)
+		while (!core->dspThread->Terminated())
 		{
 			// Do DSP actions
 			core->Update();

@@ -106,6 +106,7 @@ void HLEOpen()
     );
 
     // set high level calls
+#if 0
     int32_t n = 0;
     while(osignore[n])
     {
@@ -128,11 +129,12 @@ void HLEOpen()
         HLESetCall(oscalls[n].name, oscalls[n].call);
         n++;
     }
+#endif
   
     HLEResetHitrate();
 
     // Geometry library
-    MTXOpen();
+    //MTXOpen();
 
     Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
 }
