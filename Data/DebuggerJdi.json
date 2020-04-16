@@ -1,0 +1,32 @@
+{
+  "info": {
+    "description": "Debugger Controls. In Sense, control the appearance of the debugger and other auxiliary commands.",
+    "helpGroup": "Debugger Controls"
+  },
+
+  "can": {
+
+    "script": {
+      "help": "execute batch script",
+      "args": 1,
+      "usage": [
+        "Syntax: script <file>\n",
+        "path can be relative\n",
+        "Examples of use: script data\\zelda.cmd\n",
+        "                 script c:\\luigi.cmd\n"
+      ]
+    },
+
+    "echo": {
+      "help": "Echo",
+      "args": 1,
+      "hints": "<text>",
+      "usage": [
+        "Syntax: echo <text>\n",
+        "Examples of use: echo \"Hello, world!\"\n"
+      ]
+    }
+
+  }
+
+}

@@ -1,7 +1,7 @@
 {
   "info": {
     "description": "Dolwin Emulator Jey-Dai specs.",
-    "helpGroup": "EMU Debug Commands"
+    "helpGroup": "EMU Control Commands"
   },
 
   "can": {
@@ -36,16 +36,6 @@
       "usage": [
         "Syntax: sleep <milliseconds>\n",
         "Examples of use: sleep 1000\n"
-      ]
-    },
-
-    "echo": {
-      "help": "Echo",
-      "args": 1,
-      "hints": "<text>",
-      "usage": [
-        "Syntax: echo <text>\n",
-        "Examples of use: echo \"Hello, world!\"\n"
       ]
     },
 
@@ -93,6 +83,6 @@
 
   },
 
-  "todo": [ "Open", "Close", "Reset" ]
+  "todo": [ "Reset" ]
 
 }

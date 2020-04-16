@@ -45,6 +45,9 @@
     <ClCompile Include="..\SamplingProfiler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DebugCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cmd.h">
@@ -77,5 +80,11 @@
     <ClInclude Include="..\SamplingProfiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\DebugCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\DebuggerJdi.json" />
   </ItemGroup>
 </Project>

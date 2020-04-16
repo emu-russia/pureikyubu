@@ -15,7 +15,6 @@ Json::Value* cmd_log(std::vector<std::string>& args);		// log control
 Json::Value* cmd_logfile(std::vector<std::string>& args);	// set log file
 Json::Value* cmd_lr(std::vector<std::string>& args);			// show LR back chain
 Json::Value* cmd_nop(std::vector<std::string>& args);		// insert NOP instruction at cursor
-Json::Value* cmd_script(std::vector<std::string>& args);		// execute batch script
 Json::Value* cmd_sd1(std::vector<std::string>& args);		// show data at "small data #1" register
 Json::Value* cmd_sd2(std::vector<std::string>& args);		// show data at "small data #2" register
 Json::Value* cmd_sop(std::vector<std::string>& args);		// search opcodes (down)

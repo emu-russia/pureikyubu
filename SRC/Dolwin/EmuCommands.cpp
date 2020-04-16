@@ -85,13 +85,6 @@ static Json::Value* cmd_sleep(std::vector<std::string>& args)
 	return nullptr;
 }
 
-// Echo
-static Json::Value* cmd_echo(std::vector<std::string>& args)
-{
-	DBReport("%s\n", args[1].c_str());
-	return nullptr;
-}
-
 // Exit
 static Json::Value* cmd_exit(std::vector<std::string>& args)
 {
@@ -142,6 +135,8 @@ static Json::Value* cmd_boot(std::vector<std::string>& args)
 
 static Json::Value* cmd_unload(std::vector<std::string>& args)
 {
+	UNREFERENCED_PARAMETER(args);
+
 	if (emu.loaded)
 	{
 		EMUClose();
@@ -152,6 +147,8 @@ static Json::Value* cmd_unload(std::vector<std::string>& args)
 
 static Json::Value* cmd_dop(std::vector<std::string>& args)
 {
+	UNREFERENCED_PARAMETER(args);
+
 	if (ldat.patches.size() == 0)
 	{
 		DBReport("no patch data loaded.\n");
@@ -163,6 +160,8 @@ static Json::Value* cmd_dop(std::vector<std::string>& args)
 
 static Json::Value* cmd_plist(std::vector<std::string>& args)
 {
+	UNREFERENCED_PARAMETER(args);
+
 	if (ldat.patches.size() == 0)
 	{
 		DBReport("no patch data loaded.\n");
@@ -215,7 +214,6 @@ void EmuReflector()
 	Debug::Hub.AddCmd("FileLoad", EmuFileLoad);
 	Debug::Hub.AddCmd("FileSave", EmuFileSave);
 	Debug::Hub.AddCmd("sleep", cmd_sleep);
-	Debug::Hub.AddCmd("echo", cmd_echo);
 	Debug::Hub.AddCmd("exit", cmd_exit);
 	Debug::Hub.AddCmd("quit", cmd_exit);
 	Debug::Hub.AddCmd("x", cmd_exit);

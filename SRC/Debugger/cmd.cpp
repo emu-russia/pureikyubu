@@ -19,7 +19,6 @@ void cmd_init_handlers()
     con.cmds["logfile"] = cmd_logfile;
     con.cmds["lr"] = cmd_lr;
     con.cmds["nop"] = cmd_nop;
-    con.cmds["script"] = cmd_script;
     con.cmds["sd1"] = cmd_sd1;
     con.cmds["sd2"] = cmd_sd2;
     con.cmds["sop"] = cmd_sop;
@@ -61,7 +60,6 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     DBReport( "    reboot               - reload last file\n");
     DBReport( "    sop                  - search opcode (forward) from cursor address\n");
     DBReport( "    lr                   - show LR back chain (\"branch history\")\n");
-    DBReport( "    script               - execute batch script\n");
     DBReport( "    log                  - enable/disable log output)\n");
     DBReport( "    logfile              - choose HTML log-file for ouput\n");
     DBReport( "    full                 - set full screen console mode\n");
@@ -568,115 +566,6 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
         con.update |= CON_UPDATE_DISA;
     }
 
-    return nullptr;
-}
-
-// ---------------------------------------------------------------------------
-// script
-
-static int testempty(char *str)
-{
-    int i, len = (int)strlen(str);
-
-    for(i=0; i<len; i++)
-    {
-        if(str[i] != 0x20) return 0;
-    }
-
-    return 1;
-}
-
-Json::Value* cmd_script(std::vector<std::string>& args)
-{
-    int i;
-    const char* file;
-    std::vector<std::string> commandArgs;
-
-    if (args.size() < 2)
-    {
-        DBReport("syntax : script <file>\n");
-        DBReport("path can be relative\n");
-        DBReport("examples of use : script data\\zelda.cmd\n");
-        DBReport("                  script c:\\luigi.cmd\n");
-        return nullptr;
-    }
-
-    file = args[1].c_str();
-
-    DBReport("loading script: %s\n", file);
-
-    size_t size = 0;
-    char* sbuf = (char* )UI::FileLoad(file, &size);
-    if (!sbuf)
-    {
-        DBReport("cannot open script file!\n");
-        return nullptr;
-    }
-
-    // remove all garbage, like tabs
-    for(i=0; i<size; i++)
-    {
-        if(sbuf[i] < ' ') sbuf[i] = '\n';
-    }
-
-    DBReport("executing script...\n");
-
-    int cnt = 1;
-    char *ptr = sbuf;
-    while(*ptr)
-    {
-        char line[1000];
-        line[i = 0] = 0;
-
-        // cut string
-        while(*ptr == '\n') ptr++;
-        if(!*ptr) break;
-        while(*ptr != '\n') line[i++] = *ptr++;
-        line[i++] = 0;
-
-        // remove comments
-        char *p = line;
-        while(*p)
-        {
-            if(p[0] == '/' && p[1] == '/')
-            {
-                *p = 0;
-                break;
-            }
-            p++;
-        }
-
-        // remove spaces at the end
-        p = &line[strlen(line) - 1];
-        while(*p <= ' ') p--;
-        if(*p) p[1] = 0;
-
-        // remove spaces at the beginning
-        p = line;
-        while(*p <= ' ' && *p) p++;
-
-        // empty string ?
-        if(!*p) continue;
-
-        // execute line
-        if(testempty(line)) continue;
-        DBReport("%i: %s", cnt++, line);
-        con_tokenizing(line);
-        line[0] = 0;
-        con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
-
-        commandArgs.clear();
-        for (int i = 0; i < roll.tokencount; i++)
-        {
-            commandArgs.push_back(roll.tokens[i]);
-        }
-
-        con_command(commandArgs);
-    }
-    free(sbuf);
-
-    DBReport( "\ndone execute script.\n");
-    con.update |= CON_UPDATE_ALL;
     return nullptr;
 }
 

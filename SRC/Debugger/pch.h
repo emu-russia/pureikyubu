@@ -28,3 +28,4 @@
 
 #include "console.h"
 #include "SamplingProfiler.h"
+#include "DebugCommands.h"

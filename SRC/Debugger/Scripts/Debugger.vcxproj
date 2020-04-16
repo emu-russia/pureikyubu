@@ -22,6 +22,7 @@
     <ClCompile Include="..\cmd.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\cpuview.cpp" />
+    <ClCompile Include="..\DebugCommands.cpp" />
     <ClCompile Include="..\Debugger.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\memview.cpp" />
@@ -39,6 +40,7 @@
     <ClInclude Include="..\cmd.h" />
     <ClInclude Include="..\console.h" />
     <ClInclude Include="..\cpuview.h" />
+    <ClInclude Include="..\DebugCommands.h" />
     <ClInclude Include="..\Debugger.h" />
     <ClInclude Include="..\input.h" />
     <ClInclude Include="..\memview.h" />
@@ -46,6 +48,9 @@
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\regs.h" />
     <ClInclude Include="..\SamplingProfiler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\DebuggerJdi.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
