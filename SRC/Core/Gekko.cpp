@@ -26,7 +26,7 @@ namespace Gekko
     {
         GekkoCore* core = (GekkoCore*)Parameter;
 
-        while (!core->gekkoThread->Terminated())
+        while (true)
         {
             core->interp->ExecuteOpcode();
         }

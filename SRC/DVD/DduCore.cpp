@@ -249,7 +249,7 @@ namespace DVD
 	{
 		DduCore* core = (DduCore*)Parameter;
 
-		while (!core->dduThread->Terminated())
+		while (true)
 		{
 			// Wait Gekko ticks
 			if (!core->transferRateNoLimit)
@@ -374,7 +374,7 @@ namespace DVD
 		uint16_t sample[2] = { 0, 0 };
 		DduCore* core = (DduCore*)Parameter;
 
-		while (!core->dvdAudioThread->Terminated())
+		while (true)
 		{
 			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will output only zeros.
 

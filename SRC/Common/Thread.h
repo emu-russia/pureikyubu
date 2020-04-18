@@ -26,8 +26,6 @@ class Thread
 	int resumeCounter = 0;
 	int suspendCounter = 0;
 
-	bool terminateFlag = false;
-
 	char threadName[0x100] = { 0 };
 
 #ifdef _WINDOWS
@@ -46,10 +44,4 @@ public:
 	void Resume();
 	void Suspend();
 	bool IsRunning() { return running; }
-
-	void Terminate()
-	{
-		terminateFlag = true;
-	}
-	bool Terminated() { return terminateFlag; }
 };

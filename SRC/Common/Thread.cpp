@@ -17,8 +17,6 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 	running = !suspended;
 	strcpy_s(threadName, sizeof(threadName) - 1, name);
 
-	terminateFlag = false;
-
 #ifdef _WINDOWS
 	ctx.context = context;
 	ctx.proc = threadProc;
@@ -29,8 +27,6 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 
 Thread::~Thread()
 {
-	terminateFlag = true;
-
 #ifdef _WINDOWS
 	TerminateThread(threadHandle, 0);
 	WaitForSingleObject(threadHandle, 1000);

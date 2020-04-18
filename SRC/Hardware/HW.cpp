@@ -14,7 +14,7 @@ namespace Flipper
     {
         Flipper* flipper = (Flipper*)Parameter;
 
-        while (!flipper->hwUpdateThread->Terminated())
+        while (true)
         {
             int64_t ticks = Gekko::Gekko->GetTicks();
             if (ticks < flipper->hwUpdateTbrValue)

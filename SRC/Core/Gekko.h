@@ -155,7 +155,7 @@ typedef struct CPUControl
     bool        exception;          // exception pending
     bool        branch;             // non-linear PC change
     uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-    std::atomic<bool> RESERVE;            // for lwarx/stwcx.   
+    bool        RESERVE;            // for lwarx/stwcx.   
     uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
     float       ldScale[64];        // for paired-single loads
     float       stScale[64];        // for paired-single stores
