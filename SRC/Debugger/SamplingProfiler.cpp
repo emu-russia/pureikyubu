@@ -13,10 +13,8 @@ namespace Debug
 			{
 				profiler->savedGekkoTbr = ticks + profiler->pollingInterval;
 
-				profiler->jsonLock->Lock();
-				profiler->sampleData->AddUInt64(nullptr, ticks);
-				profiler->sampleData->AddUInt32(nullptr, PC);
-				profiler->jsonLock->Unlock();
+				//profiler->sampleData->AddUInt64(nullptr, ticks);
+				//profiler->sampleData->AddUInt32(nullptr, PC);
 			}
 		}
 	}
@@ -24,9 +22,6 @@ namespace Debug
 	SamplingProfiler::SamplingProfiler(const char* jsonFileName, int periodMs)
 	{
 		strcpy_s(filename, sizeof(filename) - 1, jsonFileName);
-
-		jsonLock = new SpinLock;
-		assert(jsonLock);
 
 		pollingInterval = periodMs * Gekko::Gekko->OneMillisecond();
 		savedGekkoTbr = Gekko::Gekko->GetTicks() + pollingInterval;
@@ -46,8 +41,7 @@ namespace Debug
 
 	SamplingProfiler::~SamplingProfiler()
 	{
-		delete jsonLock;
-		delete thread;
+		thread->Suspend();
 
 		size_t textSize = 0;
 
@@ -62,6 +56,8 @@ namespace Debug
 
 		delete [] jsonText;
 		delete json;
+
+		delete thread;
 	}
 
 }

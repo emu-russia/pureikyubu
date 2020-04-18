@@ -36,6 +36,7 @@ void PerfClose()
     if (fontbuf)
     {
         delete[] fontbuf;
+        fontbuf = nullptr;
     }
 }
 

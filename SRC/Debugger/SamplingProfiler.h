@@ -20,8 +20,6 @@ namespace Debug
 		Json::Value* rootObj = nullptr;
 		Json::Value* sampleData = nullptr;
 
-		SpinLock* jsonLock = nullptr;
-
 	public:
 		SamplingProfiler(const char* jsonFileName, int periodMs);
 		~SamplingProfiler();

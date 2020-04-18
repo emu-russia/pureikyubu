@@ -20,17 +20,23 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 #ifdef _WINDOWS
 	ctx.context = context;
 	ctx.proc = threadProc;
-	threadHandle = CreateThread(NULL, 0, RingleaderThreadProc, &ctx, suspended ? CREATE_SUSPENDED : 0, &threadId);
+	threadHandle = CreateThread(NULL, StackSize, RingleaderThreadProc, &ctx, suspended ? CREATE_SUSPENDED : 0, &threadId);
 	assert(threadHandle != INVALID_HANDLE_VALUE);
 #endif
+
+	DBReport("Thread: %s\n", threadName);
 }
 
 Thread::~Thread()
 {
+	Suspend();
+
 #ifdef _WINDOWS
 	TerminateThread(threadHandle, 0);
 	WaitForSingleObject(threadHandle, 1000);
 #endif
+
+	DBReport("~Thread: %s\n", threadName);
 }
 
 void Thread::Resume()
