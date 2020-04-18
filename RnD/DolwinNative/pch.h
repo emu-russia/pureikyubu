@@ -14,15 +14,3 @@
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
-
-#include "../../SRC/HighLevel/HighLevel.h"
-#include "../../SRC/Hardware/Hardware.h"
-#include "../../SRC/Core/Memory.h"
-#include "../../SRC/Core/Gekko.h"
-#include "../../SRC/Core/Interpreter.h"
-
-#include "DebuggerStubs.h"
-#include "UserStubs.h"
-#include "StatusLine.h"
-#include "File.h"
-#include "Profiler.h"
