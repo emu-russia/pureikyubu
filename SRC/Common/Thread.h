@@ -32,7 +32,7 @@ class Thread
 	HANDLE threadHandle = INVALID_HANDLE_VALUE;
 	DWORD threadId = 0;
 	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
-	static const size_t StackSize = 0x1000;
+	static const size_t StackSize = 0;
 #endif
 public:
 

@@ -41,7 +41,7 @@ namespace Debug
 
 	SamplingProfiler::~SamplingProfiler()
 	{
-		thread->Suspend();
+		delete thread;
 
 		size_t textSize = 0;
 
@@ -56,8 +56,6 @@ namespace Debug
 
 		delete [] jsonText;
 		delete json;
-
-		delete thread;
 	}
 
 }
