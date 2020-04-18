@@ -32,8 +32,8 @@ namespace Gekko
     // high level call
     OP(HL)
     {
-        // Dolwin module base should be specified in project properties
-        void (*pcall)() = (void (*)())((void*)op);
+        // Dolwin module base should be specified as 0x400000 in project properties
+        void (*pcall)() = (void (*)())((void*)(uint64_t)op);
 
         if (op == 0)
         {
