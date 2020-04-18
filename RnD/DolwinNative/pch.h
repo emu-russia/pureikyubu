@@ -14,3 +14,6 @@
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
+
+#include "../../SRC/Hardware/Hardware.h"
+#include "../../SRC/Dolwin/Emulator.h"

@@ -19,7 +19,7 @@
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
-#include "resource.h"
+#include "../../RES/resource.h"
 
 // ---------------------------------------------------------------------------
 // Dolwin includes

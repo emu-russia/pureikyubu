@@ -70,14 +70,14 @@
 #define BATBRPN(batl)   (batl >> 17)
 
 // floating point register
-typedef union FPREG
+typedef union _FPREG
 {
     double         dbl;
     uint64_t       uval;
 } FPREG;
 
 // time-base
-typedef union TBREG
+typedef union _TBREG
 {
     int64_t         sval;               // for comparsion
     uint64_t        uval;               // for incrementing
