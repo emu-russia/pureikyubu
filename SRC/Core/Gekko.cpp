@@ -100,6 +100,8 @@ namespace Gekko
         cpu.tb.uval = 0;
         PPC_DEC = 0;
         CTR = 0;
+
+        dispatchQueueCounter = 0;
     }
 
     // Modify CPU counters

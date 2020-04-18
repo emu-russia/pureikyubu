@@ -9,12 +9,12 @@ namespace Debug
 		while (true)
 		{
 			uint64_t ticks = Gekko::Gekko->GetTicks();
-			if (ticks >= profiler->savedGekkoTbr)
+			if (ticks >= (profiler->savedGekkoTbr + profiler->pollingInterval))
 			{
-				profiler->savedGekkoTbr = ticks + profiler->pollingInterval;
+				profiler->savedGekkoTbr = ticks;
 
-				//profiler->sampleData->AddUInt64(nullptr, ticks);
-				//profiler->sampleData->AddUInt32(nullptr, PC);
+				profiler->sampleData->AddUInt64(nullptr, ticks);
+				profiler->sampleData->AddUInt32(nullptr, PC);
 			}
 		}
 	}
@@ -24,7 +24,7 @@ namespace Debug
 		strcpy_s(filename, sizeof(filename) - 1, jsonFileName);
 
 		pollingInterval = periodMs * Gekko::Gekko->OneMillisecond();
-		savedGekkoTbr = Gekko::Gekko->GetTicks() + pollingInterval;
+		savedGekkoTbr = Gekko::Gekko->GetTicks();
 
 		json = new Json();
 		assert(json);
