@@ -1,4 +1,6 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
+// When Dolwin starts in a managed environment, the interop library calls EMUCtor at boot and EMUDtor at exit.
+// All other interactions are made through JDI calls (CallJdi).
+
 #include "pch.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -20,9 +22,4 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             break;
     }
     return TRUE;
-}
-
-extern "C" __declspec(dllexport) void Test()
-{
-    MessageBox(NULL, _T("Test"), _T("Test"), MB_OK);
 }
