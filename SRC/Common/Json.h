@@ -26,6 +26,7 @@ private:
 	void DestroyValue(Value* value);
 
 	static TCHAR* CloneStr(const TCHAR* str);
+	static TCHAR* CloneAnsiStr(const char* str);
 
 	#pragma region "Serialization Related"
 
@@ -129,7 +130,6 @@ public:
 
 	class Value
 	{
-		char* CloneName(const char* otherName);
 		char* CloneTcharName(const TCHAR* otherName);
 		void DeserializeObject(DeserializeContext* ctx);
 		void DeserializeArray(DeserializeContext* ctx);
@@ -172,6 +172,7 @@ public:
 		Value* AddNull(const char* keyName);
 		Value* AddBool(const char* keyName, bool _value);
 		Value* AddString(const char* keyName, const TCHAR* str);
+		Value* AddAnsiString(const char* keyName, const char* str);
 		Value* ReplaceString(const TCHAR* str);
 		Value* AddObject(const char* keyName);
 		Value* AddArray(const char* keyName);
@@ -182,6 +183,8 @@ public:
 
 		Value* ByName(const char* byName);
 		Value* ByType(const ValueType byType);
+
+		char* CloneName(const char* otherName);
 	};
 
 	// Deserialized root

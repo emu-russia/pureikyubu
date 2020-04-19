@@ -215,6 +215,7 @@ static Json::Value* cmd_reset(std::vector<std::string>& args)
 	return nullptr;
 }
 
+// Return true if emulation state is `Loaded`
 static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
 {
 	Json::Value* output = new Json::Value();
@@ -222,6 +223,17 @@ static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
 
 	output->value.AsBool = emu.loaded;
 	
+	return output;
+}
+
+// Get emulator version
+static Json::Value* GetVersionInternal(std::vector<std::string>& args)
+{
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddString(nullptr, APPVER);
+
 	return output;
 }
 
@@ -241,4 +253,5 @@ void EmuReflector()
 	Debug::Hub.AddCmd("plist", cmd_plist);
 	Debug::Hub.AddCmd("reset", cmd_reset);
 	Debug::Hub.AddCmd("IsLoaded", IsLoadedInternal);
+	Debug::Hub.AddCmd("GetVersion", GetVersionInternal);
 }

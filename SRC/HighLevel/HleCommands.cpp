@@ -1,4 +1,4 @@
-// HLE JDI. Available only after emulation has been started.
+// HLE JDI. Some commands available only after emulation has been started.
 #include "pch.h"
 
 namespace HLE
@@ -73,6 +73,64 @@ namespace HLE
         return DumpDolphinOsContext(effectiveAddr, display);
     }
 
+    static Json::Value* UnloadMap(std::vector<std::string>& args)
+    {
+        SYMKill();
+        hle.mapfile[0] = 0;
+        return nullptr;
+    }
+
+    static Json::Value* LoadMap(std::vector<std::string>& args)
+    {
+        SYMKill();
+        hle.mapfile[0] = 0;
+        LoadMAP(args[1].c_str(), false);
+        return nullptr;
+    }
+
+    static Json::Value* AddMap(std::vector<std::string>& args)
+    {
+        if (hle.mapfile[0] == 0)
+        {
+            LoadMAP(args[1].c_str(), false);
+        }
+        else
+        {
+            LoadMAP(args[1].c_str(), true);
+        }
+        return nullptr;
+    }
+
+    static Json::Value* AddressByName(std::vector<std::string>& args)
+    {
+        uint32_t address = SYMAddress(args[1].c_str());
+
+        if (address == 0)
+            return nullptr;
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsInt = 0;
+        output->value.AsUint32 = address;
+
+        return output;
+    }
+
+    static Json::Value* NameByAddress(std::vector<std::string>& args)
+    {
+        char* name = SYMName(strtoul(args[1].c_str(), nullptr, 0));
+
+        if (!name)
+            return nullptr;
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        output->AddAnsiString(nullptr, name);
+        return output;
+    }
+
 	void JdiReflector()
 	{
         Debug::Hub.AddCmd("syms", cmd_syms);
@@ -80,5 +138,10 @@ namespace HLE
         Debug::Hub.AddCmd("savemap", cmd_savemap);
         Debug::Hub.AddCmd("DumpThreads", DumpThreads);
         Debug::Hub.AddCmd("DumpContext", DumpContext);
+        Debug::Hub.AddCmd("UnloadMap", UnloadMap);
+        Debug::Hub.AddCmd("LoadMap", LoadMap);
+        Debug::Hub.AddCmd("AddMap", AddMap);
+        Debug::Hub.AddCmd("AddressByName", AddressByName);
+        Debug::Hub.AddCmd("NameByAddress", NameByAddress);
 	}
 }

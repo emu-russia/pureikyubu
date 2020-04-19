@@ -90,6 +90,12 @@
       "internal": true,
       "help": "Return true if emulation state is `Loaded`",
       "output": "Bool"
+    },
+
+    "GetVersion": {
+      "internal": true,
+      "help": "Get emulator version",
+      "output": "Array: [String]"
     }
 
   }

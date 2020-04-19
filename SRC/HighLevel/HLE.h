@@ -6,8 +6,6 @@ void    os_trap();
 // HLE state variables
 typedef struct HLEControl
 {
-    bool        lastHwAssert;   // saved HW_ASSERT uvar flag
-
     // current loaded map file
     TCHAR       mapfile[0x1000];
 } HLEControl;

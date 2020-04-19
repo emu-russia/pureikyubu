@@ -15,5 +15,6 @@
 #include <intrin.h>
 #include <tchar.h>
 
+#include "../../SRC/Common/Jdi.h"
 #include "../../SRC/Hardware/Hardware.h"
 #include "../../SRC/Dolwin/Emulator.h"

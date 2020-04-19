@@ -10,3 +10,4 @@ enum class MAP_FORMAT : int
 };
 
 MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add=false);
+MAP_FORMAT LoadMAP(const char* mapname, bool add = false);

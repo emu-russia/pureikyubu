@@ -200,3 +200,18 @@ MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
     }
     return format;
 }
+
+MAP_FORMAT LoadMAP(const char* mapname, bool add)
+{
+    TCHAR tcharStr[0x1000] = { 0, };
+    TCHAR* tcharPtr = tcharStr;
+    char* charPtr = (char*)mapname;
+
+    while (*charPtr)
+    {
+        *tcharPtr++ = *charPtr++;
+    }
+    *tcharPtr++ = 0;
+
+    return LoadMAP(tcharStr, add);
+}

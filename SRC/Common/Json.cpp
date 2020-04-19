@@ -32,6 +32,20 @@ TCHAR* Json::CloneStr(const TCHAR* str)
 	return clone;
 }
 
+TCHAR* Json::CloneAnsiStr(const char* str)
+{
+	size_t len = strlen(str);
+	TCHAR* clone = new TCHAR[len + 1];
+	TCHAR* tcharPtr = clone;
+	char* charPtr = (char*)str;
+	while (*charPtr)
+	{
+		*tcharPtr++ = *charPtr++;
+	}
+	*tcharPtr++ = 0;
+	return clone;
+}
+
 #pragma region "Serialization Related"
 
 void Json::EmitChar(SerializeContext* ctx, uint8_t val, bool sizeOnly)
@@ -809,6 +823,16 @@ Json::Value* Json::Value::AddString(const char* keyName, const TCHAR* str)
 	child->type = ValueType::String;
 	child->name = CloneName(keyName);
 	child->value.AsString = CloneStr(str);
+	children.push_back(child);
+	return child;
+}
+
+Json::Value* Json::Value::AddAnsiString(const char* keyName, const char* str)
+{
+	Value* child = new Value(this);
+	child->type = ValueType::String;
+	child->name = CloneName(keyName);
+	child->value.AsString = CloneAnsiStr(str);
 	children.push_back(child);
 	return child;
 }

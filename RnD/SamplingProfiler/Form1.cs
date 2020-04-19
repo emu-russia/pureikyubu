@@ -15,6 +15,13 @@ namespace SamplingProfiler
         public Form1()
         {
             InitializeComponent();
+
+            Jdi.InitEmu();
+        }
+
+        private void Form1_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Jdi.ShutdownEmu();
         }
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
@@ -47,5 +54,11 @@ namespace SamplingProfiler
         {
 
         }
+
+        private void checkVersionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string reply = Jdi.CallJdi("GetVersion");
+        }
+
     }
 }
