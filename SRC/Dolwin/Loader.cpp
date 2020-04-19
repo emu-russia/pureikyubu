@@ -57,7 +57,7 @@ uint32_t LoadDOL(TCHAR *dolname)
     fread(&dh, 1, sizeof(DolHeader), dol);
     Gekko::GekkoCore::SwapArea((uint32_t *)&dh, sizeof(DolHeader));
 
-    DBReport2(DbgChannel::Loader, "loading DOL %s (%i b).\n",
+    DBReport2(DbgChannel::Loader, "Loading DOL %s (%i b).\n",
               Debug::Hub.TcharToString(dolname).c_str(), DOLSize(&dh) );
 
     // load all text (code) sections
@@ -121,7 +121,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     // swap DOL header
     Gekko::GekkoCore::SwapArea((uint32_t *)dol, sizeof(DolHeader));
 
-    DBReport2(DbgChannel::Loader, "loading DOL from %08X (%i b).\n",
+    DBReport2(DbgChannel::Loader, "Loading DOL from %08X (%i b).\n",
               ofs, DOLSize(dol) );
 
     // load all text (code) sections
@@ -360,7 +360,7 @@ uint32_t LoadBIN(TCHAR * binname)
     fread(&mi.ram[org], 1, fsize, bin);
     fclose(bin);
 
-    DBReport2(DbgChannel::Loader, "loaded binary file at %08X (0x%08X)\n\n", org, fsize);
+    DBReport2(DbgChannel::Loader, "Loaded binary file at %08X (0x%08X)\n\n", org, fsize);
     org |= 0x80000000;
     return org;     // its me =:)
 }
@@ -389,8 +389,8 @@ bool LoadPatch(TCHAR * patchname, bool add)
         return false;
 
     // print notification in debugger
-    if(add) DBReport2(DbgChannel::Loader, "added patch : %s\n", Debug::Hub.TcharToString(patchname).c_str());
-    else DBReport2(DbgChannel::Loader, "loaded patch : %s\n", Debug::Hub.TcharToString(patchname).c_str());
+    if(add) DBReport2(DbgChannel::Loader, "Added patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
+    else DBReport2(DbgChannel::Loader, "Loaded patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
 
     // remove current patch table (if not adding)
     if(!add)
@@ -465,13 +465,13 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
             {
                 case PATCH_SIZE_8:
                     ptr[0] = data[0];
-                    DBReport2(DbgChannel::Loader, "patch : (u8)[%08X] = %02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch: (u8)[%08X] = %02X\n", ea,
                               ptr[0] );
                     break;
                 case PATCH_SIZE_16:
                     ptr[0] = data[0];
                     ptr[1] = data[1];
-                    DBReport2(DbgChannel::Loader, "patch : (u16)[%08X] = %02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch: (u16)[%08X] = %02X%02X\n", ea,
                               ptr[0], ptr[1] );
                     break;
                 case PATCH_SIZE_32:
@@ -479,7 +479,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
                     ptr[1] = data[1];
                     ptr[2] = data[2];
                     ptr[3] = data[3];
-                    DBReport2(DbgChannel::Loader, "patch : (u32)[%08X] = %02X%02X%02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch: (u32)[%08X] = %02X%02X%02X%02X\n", ea,
                               ptr[0], ptr[1], ptr[2], ptr[3] );
                     break;
                 case PATCH_SIZE_64:
@@ -491,7 +491,7 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
                     ptr[5] = data[5];
                     ptr[6] = data[6];
                     ptr[7] = data[7];
-                    DBReport2(DbgChannel::Loader, "patch : (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
+                    DBReport2(DbgChannel::Loader, "patch: (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
                               ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
                     break;
             }
@@ -515,8 +515,8 @@ void UnloadPatch()
 static void AutoloadMap()
 {
     // get map file name
-    TCHAR mapname[4*1024];
-    TCHAR drive[1024], dir[1024], name[1024], ext[1024];
+    TCHAR mapname[0x1000];
+    TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
     _tsplitpath_s(ldat.currentFile,
         drive, _countof(drive) - 1,
@@ -527,14 +527,14 @@ static void AutoloadMap()
     // Step 1: try to load map from Data directory
     if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
     else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
-    int ok = LoadMAP(mapname);
-    if(ok) return;
+    MAP_FORMAT format = LoadMAP(mapname);
+    if(format != MAP_FORMAT::BAD) return;
  
     // Step 2: try to load map from file directory
     if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, ldat.gameID);
     else _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, name);
-    ok = LoadMAP(mapname);
-    if(ok) return;
+    format = LoadMAP(mapname);
+    if(format != MAP_FORMAT::BAD) return;
 
     // sorry, no maps for this DVD/executable
     DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
@@ -544,7 +544,7 @@ static void AutoloadMap()
     {
         if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
         else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
-        DBReport2(DbgChannel::Loader, "Making new MAP file : %s\n\n", Debug::Hub.TcharToString(mapname).c_str());
+        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", Debug::Hub.TcharToString(mapname).c_str());
         MAPInit(mapname);
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
@@ -555,8 +555,8 @@ static void AutoloadMap()
 static void AutoloadPatch()
 {
     // get patch file name
-    TCHAR patch[4*1024];
-    TCHAR drive[1024], dir[1024], name[1024], ext[1024];
+    TCHAR patch[0x1000];
+    TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
     _tsplitpath_s(ldat.currentFile,
         drive, _countof(drive) - 1,
@@ -567,7 +567,7 @@ static void AutoloadPatch()
     // Step 1: try to load patch from Data directory
     if(ldat.dvd) _stprintf_s (patch, _countof(patch) - 1, _T(".\\Data\\%s.patch"), ldat.gameID);
     else _stprintf_s (patch, _countof (patch) - 1, _T(".\\Data\\%s.patch"), name);
-    BOOL ok = LoadPatch(patch);
+    bool ok = LoadPatch(patch);
     if(ok) return;
 
     // Step 2: try to load patch from file directory
@@ -578,7 +578,7 @@ static void AutoloadPatch()
     // sorry, no patches for this DVD/executable
 }
 
-static BOOL SetGameIDAndTitle(TCHAR *filename)
+static bool SetGameIDAndTitle(TCHAR *filename)
 {
     // load DVD banner
     DVDBanner2 * bnr = (DVDBanner2 *)DVDLoadBanner(filename);
@@ -630,7 +630,8 @@ static BOOL SetGameIDAndTitle(TCHAR *filename)
     _stprintf_s( ldat.gameID, sizeof(ldat.gameID), _T("%.4s%02X"),
         diskIdTchar, DVDBannerChecksum((void *)bnr) );
     free(bnr);
-    return TRUE;
+
+    return true;
 }
 
 // load any Dolwin-supported file
@@ -785,7 +786,7 @@ void ReloadFile()
 
     if(_tcslen(ldat.currentFile))
     {
-        DBReport2(DbgChannel::Loader, "loading file : \"%s\"\n\n", Debug::Hub.TcharToString(ldat.currentFile).c_str());
+        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", Debug::Hub.TcharToString(ldat.currentFile).c_str());
         DoLoadFile(ldat.currentFile);
     }
 }

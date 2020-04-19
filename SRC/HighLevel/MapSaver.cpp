@@ -1,14 +1,13 @@
 // MAP saver is moved to stand-alone module, because MAP saving operation
 // is not easy, like you may think. We should watch for MAP file formats
 // and try to append symbols into alredy present MAP.
-// Simple MAP overwrite is stupid.
 #include "pch.h"
 
 #define DEFAULT_MAP _T("Data\\default.map")
 //#define HEX "0x"
 #define HEX
 
-static int mapFormat;
+static MAP_FORMAT mapFormat;
 static char *mapName;
 static FILE* mapFile = NULL;
 static BOOL appendStarted;
@@ -26,20 +25,20 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
         fprintf(mapFile, "\n");
     }
 
-    if(mapFormat == MAP_FORMAT_RAW)
+    if(mapFormat == MAP_FORMAT::RAW)
     {
         //80002300 Symbol
         // * or * (dont care)
         //0x80002300 Symbol
         fprintf(mapFile, HEX "%08X %s\n", address, symbol);
     }
-    else if(mapFormat == MAP_FORMAT_CW)
+    else if(mapFormat == MAP_FORMAT::CW)
     {
         //00000000 000000f0 80003100 0 __start
         // ignore size (set to 4)
         fprintf(mapFile, "00000000 00000004 %08X 0 %s\n", address, symbol);
     }
-    else if(mapFormat == MAP_FORMAT_GCC)
+    else if(mapFormat == MAP_FORMAT::GCC)
     {
         //0x8000ab00 Symbol
         // its not clear for me, because its hotquik's stuff :o)
@@ -75,7 +74,7 @@ static void SaveMAP2(const TCHAR *mapname)
     // load MAP symbols
     SYMSetWorkspace(mapSet);
     mapFormat = LoadMAP(mapname);
-    if(mapFormat == 0) return;  // :(
+    if(mapFormat == MAP_FORMAT::BAD) return;  // :(
 
     // find new map entries to append file
     mapName = (char *)mapname;

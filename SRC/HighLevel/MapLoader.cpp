@@ -1,10 +1,10 @@
-// MAP files loader. currently there are support for three MAP file formats : 
+// MAP files loader. currently there are support for three MAP file formats: 
 // Dolwin custom ("RAW"), CodeWarrior and GCC-like.
 #include "pch.h"
 
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
-static int LoadMapCW(const TCHAR *mapname)
+static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024], token1[256];
@@ -16,7 +16,7 @@ static int LoadMapCW(const TCHAR *mapname)
     char    procName[512];
 
     _tfopen_s(&map, mapname, _T("r"));
-    if(!map) return MAP_FORMAT_BAD;
+    if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
     {
@@ -52,12 +52,12 @@ static int LoadMapCW(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "CW format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
-    return MAP_FORMAT_CW;
+    DBReport2(DbgChannel::HLE, "CodeWarrior format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    return MAP_FORMAT::CW;
 }
 
 // load GCC-generated map file
-static int LoadMapGCC(const TCHAR *mapname)
+static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024];
@@ -69,7 +69,7 @@ static int LoadMapGCC(const TCHAR *mapname)
     char    par2[512];
 
     _tfopen_s(&map, mapname, _T("r"));
-    if(!map) return MAP_FORMAT_BAD;
+    if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
     {
@@ -93,12 +93,12 @@ static int LoadMapGCC(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "GCC format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
-    return MAP_FORMAT_GCC;
+    DBReport2(DbgChannel::HLE, "GCC format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    return MAP_FORMAT::GCC;
 }
 
 // load Dolwin format map-file
-static int LoadMapRAW(const TCHAR *mapname)
+static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
 {
     int i;
     size_t size = UI::FileSize(mapname);
@@ -157,17 +157,17 @@ static int LoadMapRAW(const TCHAR *mapname)
     }
     free(mapbuf);
 
-    DBReport2(DbgChannel::HLE, "RAW format map loaded : %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
-    return MAP_FORMAT_RAW;
+    DBReport2(DbgChannel::HLE, "RAW format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    return MAP_FORMAT::RAW;
 }
 
-// wrapper for all map formats. FALSE is returned, if cannot load map file.
-int LoadMAP(const TCHAR *mapname, bool add)
+// wrapper for all map formats.
+MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
 {
     FILE *f;
     char sign[256];
 
-    // delete previous MAP symbols ?
+    // delete previous MAP symbols?
     if(!add)
     {
         SYMKill();
@@ -180,21 +180,21 @@ int LoadMAP(const TCHAR *mapname, bool add)
     _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
-        DBReport2(DbgChannel::HLE, "cannot %s MAP : %s\n", (add) ? "add" : "load", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+        DBReport2(DbgChannel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
         hle.mapfile[0] = 0;
-        return MAP_FORMAT_BAD;
+        return MAP_FORMAT::BAD;
     }
 
     // recognize map format
     fread(sign, 1, 256, f);
     fclose(f);
 
-    int format;
+    MAP_FORMAT format;
     if(!strncmp(sign, "Link map", 8)) format = LoadMapCW(mapname);
     else if(!strncmp(sign, "Archive member", 14)) format = LoadMapGCC(mapname);
     else format = LoadMapRAW(mapname);
 
-    if(format == MAP_FORMAT_BAD)
+    if(format == MAP_FORMAT::BAD)
     {
         hle.mapfile[0] = 0;
     }

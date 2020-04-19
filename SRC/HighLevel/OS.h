@@ -9,6 +9,8 @@
 #define OS_PHYSICAL_CONTEXT     0x800000C0      // OSContext *
 #define OS_CURRENT_CONTEXT      0x800000D4      // OSContext *
 #define OS_DEFAULT_THREAD       0x800000D8      // OSThread *
+#define OS_LINK_ACTIVE          0x800000DC      // OSThreadLink
+#define OS_CURRENT_THREAD       0x800000E4      // OSThread *
 
 /* ---------------------------------------------------------------------------
     Context API
@@ -122,9 +124,3 @@ void    __OSContextInit     ( void );
 void    OSDisableInterrupts ( void );
 void    OSEnableInterrupts  ( void );
 void    OSRestoreInterrupts ( void );
-
-/* ---------------------------------------------------------------------------
-    Utilities for emulator
---------------------------------------------------------------------------- */
-
-void    OSCheckContextStruct();

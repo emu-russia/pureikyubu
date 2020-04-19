@@ -1,6 +1,6 @@
-// symbols can be identified by tag. tag is sum of all ciphers
-// of lower word of effective address. max tag value = 60, so
-// we have hash for 61 entries (tag=0..60).
+#pragma once
+
+#include <map>
 
 // symbolic entry
 typedef struct SYM
@@ -8,20 +8,18 @@ typedef struct SYM
     uint32_t eaddr;             // effective address
     char*   savedName;          // symbolic description
     void    (*routine)();       // associated high-level call
-    bool    emuSymbol;          // 1, when symbol from Dolwin.exe
 } SYM;
 
 // all important variables are here
 typedef struct SYMControl
 {
-    SYM*        symhash[61];    // symbol list
-    int         symcount[61];
+    std::map<uint32_t, SYM*> symmap;
 } SYMControl;
 
 extern  SYMControl sym;
 
 // API for emulator
-void    SYMAddNew(uint32_t addr, const char *name, bool emuSymbol=false);
+void    SYMAddNew(uint32_t addr, const char *name);
 void    SYMSetHighlevel(const char *symName, void (*routine)());
 uint32_t SYMAddress(const char *symName);
 char*   SYMName(uint32_t symAddr);

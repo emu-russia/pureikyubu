@@ -60,7 +60,7 @@ namespace HLE
 	{
 		// Get pointer to __OSLinkActive
 
-		uint32_t linkActiveEffectiveAddr = 0x800000DC;
+		uint32_t linkActiveEffectiveAddr = OS_LINK_ACTIVE;
 
 		uint32_t linkActivePa = Gekko::Gekko->EffectiveToPhysical(linkActiveEffectiveAddr, false);
 		if (linkActivePa == -1)
