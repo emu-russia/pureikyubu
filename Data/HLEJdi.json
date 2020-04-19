@@ -104,6 +104,26 @@
         "Example: NameByAddress 0x80031000"
       ],
       "output": "Array: [String] / nullptr (not found)"
+    },
+
+    "OSTime": {
+      "internal": true,
+      "help": "Convert Geeko ticks to human-readable time",
+      "args": 1,
+      "usage": [
+        "Syntax: OSTime <GekkoTbrValue>"
+      ],
+      "output": "Array: [String]"
+    },
+
+    "GetNearestName": {
+      "internal": true,
+      "help": "Get the symbol closest to the specified address and offset relative to the start of the symbol.",
+      "args": 1,
+      "usage": [
+        "Syntax: GetNearestName <address>"
+      ],
+      "output": "Object: { String name, Int offset } / nullptr (not found)"
     }
 
   }

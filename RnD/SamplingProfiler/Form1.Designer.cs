@@ -42,7 +42,14 @@
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.checkVersionToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
+            this.openFileDialogMap = new System.Windows.Forms.OpenFileDialog();
+            this.openFileDialogJson = new System.Windows.Forms.OpenFileDialog();
+            this.dumpSamplesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openFileDialogBin = new System.Windows.Forms.OpenFileDialog();
+            this.listView1 = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -135,7 +142,8 @@
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.checkVersionToolStripMenuItem});
+            this.checkVersionToolStripMenuItem,
+            this.dumpSamplesToolStripMenuItem});
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
             this.debugToolStripMenuItem.Text = "Debug";
@@ -147,16 +155,65 @@
             this.checkVersionToolStripMenuItem.Text = "Check Version";
             this.checkVersionToolStripMenuItem.Click += new System.EventHandler(this.checkVersionToolStripMenuItem_Click);
             // 
-            // openFileDialog1
+            // openFileDialogMap
             // 
-            this.openFileDialog1.DefaultExt = "map";
-            this.openFileDialog1.Filter = "Map files|*.map|All files|*.*";
+            this.openFileDialogMap.DefaultExt = "map";
+            this.openFileDialogMap.Filter = "Map files|*.map|All files|*.*";
+            // 
+            // openFileDialogJson
+            // 
+            this.openFileDialogJson.DefaultExt = "json";
+            this.openFileDialogJson.Filter = "JSON files|*.json|All files|*.*";
+            // 
+            // dumpSamplesToolStripMenuItem
+            // 
+            this.dumpSamplesToolStripMenuItem.Name = "dumpSamplesToolStripMenuItem";
+            this.dumpSamplesToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.dumpSamplesToolStripMenuItem.Text = "Dump Samples";
+            this.dumpSamplesToolStripMenuItem.Click += new System.EventHandler(this.dumpSamplesToolStripMenuItem_Click);
+            // 
+            // openFileDialogBin
+            // 
+            this.openFileDialogBin.DefaultExt = "bin";
+            this.openFileDialogBin.Filter = "Binary files|*.bin|All files|*.*";
+            // 
+            // listView1
+            // 
+            this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3});
+            this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.listView1.FullRowSelect = true;
+            this.listView1.HideSelection = false;
+            this.listView1.Location = new System.Drawing.Point(0, 24);
+            this.listView1.Name = "listView1";
+            this.listView1.Size = new System.Drawing.Size(635, 348);
+            this.listView1.TabIndex = 1;
+            this.listView1.UseCompatibleStateImageBehavior = false;
+            this.listView1.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Address (name)";
+            this.columnHeader1.Width = 278;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Time spent";
+            this.columnHeader2.Width = 116;
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Number of entries";
+            this.columnHeader3.Width = 186;
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(635, 372);
+            this.Controls.Add(this.listView1);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
@@ -185,7 +242,14 @@
         private System.Windows.Forms.ToolStripMenuItem exitToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem checkVersionToolStripMenuItem;
-        private System.Windows.Forms.OpenFileDialog openFileDialog1;
+        private System.Windows.Forms.OpenFileDialog openFileDialogMap;
+        private System.Windows.Forms.OpenFileDialog openFileDialogJson;
+        private System.Windows.Forms.ToolStripMenuItem dumpSamplesToolStripMenuItem;
+        private System.Windows.Forms.OpenFileDialog openFileDialogBin;
+        private System.Windows.Forms.ListView listView1;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader columnHeader3;
     }
 }
 

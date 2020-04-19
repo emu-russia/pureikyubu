@@ -131,6 +131,39 @@ namespace HLE
         return output;
     }
 
+    static Json::Value* OSTimeInternal(std::vector<std::string>& args)
+    {
+        TCHAR timeStr[0x100] = { 0, };
+
+        OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        output->AddString(nullptr, timeStr);
+
+        return output;
+    }
+
+    static Json::Value* GetNearestNameInternal(std::vector<std::string>& args)
+    {
+        uint32_t address = strtoul(args[1].c_str(), nullptr, 0);
+
+        size_t offset = 0;
+        char* nearestName = SYMGetNearestName(address, offset);
+
+        if (!nearestName)
+            return nullptr;
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Object;
+
+        output->AddAnsiString("name", nearestName);
+        output->AddInt("offset", offset);
+
+        return output;
+    }
+
 	void JdiReflector()
 	{
         Debug::Hub.AddCmd("syms", cmd_syms);
@@ -143,5 +176,7 @@ namespace HLE
         Debug::Hub.AddCmd("AddMap", AddMap);
         Debug::Hub.AddCmd("AddressByName", AddressByName);
         Debug::Hub.AddCmd("NameByAddress", NameByAddress);
+        Debug::Hub.AddCmd("OSTime", OSTimeInternal);
+        Debug::Hub.AddCmd("GetNearestName", GetNearestNameInternal);
 	}
 }

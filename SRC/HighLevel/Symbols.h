@@ -23,6 +23,7 @@ void    SYMAddNew(uint32_t addr, const char *name);
 void    SYMSetHighlevel(const char *symName, void (*routine)());
 uint32_t SYMAddress(const char *symName);
 char*   SYMName(uint32_t symAddr);
+char* SYMGetNearestName(uint32_t address, size_t& offset);
 void    SYMKill();
 void    SYMList(const char *str="*");
 

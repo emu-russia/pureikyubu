@@ -80,6 +80,34 @@ char * SYMName(uint32_t symAddr)
     return it->second->savedName;
 }
 
+// Get the symbol closest to the specified address and offset relative to the start of the symbol.
+char* SYMGetNearestName(uint32_t address, size_t& offset)
+{
+    int minDelta = INT_MAX;
+    SYM* nearestSymbol = nullptr;
+
+    offset = 0;
+
+    for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
+    {
+        if (address >= it->first)
+        {
+            int delta = address - it->first;
+            if (delta < minDelta)
+            {
+                minDelta = delta;
+                nearestSymbol = it->second;
+            }
+        }
+    }
+
+    if (nearestSymbol == nullptr)
+        return nullptr;
+
+    offset = address - nearestSymbol->eaddr;
+    return nearestSymbol->savedName;
+}
+
 // associate high-level call with symbol
 // (if CPU reaches label, it jumps to HLE call)
 void SYMSetHighlevel(const char *symName, void (*routine)())

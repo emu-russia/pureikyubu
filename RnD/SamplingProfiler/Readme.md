@@ -2,6 +2,8 @@
 
 Utility application for analyzing data collected using the Sampling Profiler (`StartProfiler` and `StopProfiler` commands).
 
+![SamplingProfilerDemo](SamplingProfilerDemo.png)
+
 ## Controls
 
 Input data:
