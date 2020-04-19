@@ -64,11 +64,6 @@
 #define UTBR    cpu.tb.uval
 #define PC      cpu.pc
 
-// BAT fields
-#define BATBEPI(batu)   (batu >> 17)
-#define BATBL(batu)     ((batu >> 2) & 0x7ff)
-#define BATBRPN(batl)   (batl >> 17)
-
 // floating point register
 typedef union _FPREG
 {
@@ -111,15 +106,6 @@ typedef union _TBREG
 #define DMAU        (SPR[922])          // locked cache DMA
 #define DMAL        (SPR[923])
 
-#define WPE         (HID2 & HID2_WPE)
-
-#define LSQE        (HID2 & HID2_LSQE)
-#define PSE         (HID2 & HID2_PSE)
-#define LD_SCALE(n) ((GQR[n] >> 24) & 0x3f)
-#define LD_TYPE(n)  ((GQR[n] >> 16) & 7)
-#define ST_SCALE(n) ((GQR[n] >>  8) & 0x3f)
-#define ST_TYPE(n)  ((GQR[n]      ) & 7)
-
 // ---------------------------------------------------------------------------
 // CPU externals
 
@@ -134,7 +120,7 @@ extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
 extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 
 // CPU control/state block (all important data is here)
-typedef struct CPUControl
+typedef struct _CPUControl
 {
     // CPU state (all registers)
     uint32_t    gpr[32];            // general purpose regs

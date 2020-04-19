@@ -32,7 +32,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -42,7 +42,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -72,7 +72,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -82,7 +82,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -112,7 +112,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -122,7 +122,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -152,7 +152,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -162,7 +162,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -173,7 +173,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = 1.0 / FPRD(RB);
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -183,7 +183,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = 1.0 / FPRD(RB);
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -251,7 +251,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -261,7 +261,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -291,7 +291,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -301,7 +301,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -331,7 +331,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -341,7 +341,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -371,7 +371,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
     }
@@ -381,7 +381,7 @@ namespace Gekko
         if (MSR & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
-            if (PSE) PS1(RD) = PS0(RD);
+            if (HID2 & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -391,7 +391,7 @@ namespace Gekko
     {
         if (MSR & MSR_FP)
         {
-            if (PSE)
+            if (HID2 & HID2_PSE)
             {
                 PS0(RD) = (float)FPRD(RB);
                 PS1(RD) = PS0(RD);
@@ -405,7 +405,7 @@ namespace Gekko
     {
         if (MSR & MSR_FP)
         {
-            if (PSE)
+            if (HID2 & HID2_PSE)
             {
                 PS0(RD) = (float)FPRD(RB);
                 PS1(RD) = PS0(RD);

@@ -22,7 +22,7 @@ namespace Gekko
             if (RA) CPUReadWord(RRA + SIMM, (uint32_t*)&res);
             else CPUReadWord(SIMM, (uint32_t*)&res);
 
-            if (PSE) PS0(RD) = PS1(RD) = (double)res;
+            if (HID2 & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -42,7 +42,7 @@ namespace Gekko
             if (RA) CPUReadWord(RRA + RRB, (uint32_t*)&res);
             else CPUReadWord(RRB, (uint32_t*)&res);
 
-            if (PSE) PS0(RD) = PS1(RD) = (double)res;
+            if (HID2 & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
         }
         else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
@@ -63,7 +63,7 @@ namespace Gekko
 
             CPUReadWord(ea, (uint32_t*)&res);
 
-            if (PSE) PS0(RD) = PS1(RD) = (double)res;
+            if (HID2 & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
 
             RRA = ea;
@@ -86,7 +86,7 @@ namespace Gekko
 
             CPUReadWord(ea, (uint32_t*)&res);
 
-            if (PSE) PS0(RD) = PS1(RD) = (double)res;
+            if (HID2 & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
 
             RRA = ea;
@@ -157,7 +157,7 @@ namespace Gekko
         {
             float data;
 
-            if (PSE) data = (float)PS0(RS);
+            if (HID2 & HID2_PSE) data = (float)PS0(RS);
             else data = (float)FPRD(RS);
 
             if (RA) CPUWriteWord(RRA + SIMM, *(uint32_t*)&data);
@@ -175,7 +175,7 @@ namespace Gekko
             float num;
             uint32_t* data = (uint32_t*)&num;
 
-            if (PSE) num = (float)PS0(RS);
+            if (HID2 & HID2_PSE) num = (float)PS0(RS);
             else num = (float)FPRD(RS);
 
             if (RA) CPUWriteWord(RRA + RRB, *data);
@@ -194,7 +194,7 @@ namespace Gekko
             float data;
             uint32_t ea = RRA + SIMM;
 
-            if (PSE) data = (float)PS0(RS);
+            if (HID2 & HID2_PSE) data = (float)PS0(RS);
             else data = (float)FPRD(RS);
 
             CPUWriteWord(ea, *(uint32_t*)&data);
@@ -214,7 +214,7 @@ namespace Gekko
             uint32_t* data = (uint32_t*)&num;
             uint32_t ea = RRA + RRB;
 
-            if (PSE) num = (float)PS0(RS);
+            if (HID2 & HID2_PSE) num = (float)PS0(RS);
             else num = (float)FPRD(RS);
 
             CPUWriteWord(ea, *data);

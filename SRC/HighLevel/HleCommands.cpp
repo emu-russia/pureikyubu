@@ -159,7 +159,7 @@ namespace HLE
         output->type = Json::ValueType::Object;
 
         output->AddAnsiString("name", nearestName);
-        output->AddInt("offset", offset);
+        output->AddInt("offset", (int)offset);
 
         return output;
     }

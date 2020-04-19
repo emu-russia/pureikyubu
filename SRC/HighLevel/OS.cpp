@@ -199,7 +199,7 @@ void OSLoadFPUContext(void)
 
         for(int i=0; i<32; i++)
         {
-            if(PSE)
+            if(HID2 & HID2_PSE)
             {
                 cpu.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
                 swap_double(&cpu.ps1[i].uval);
@@ -222,7 +222,7 @@ void OSSaveFPUContext(void)
     {
         *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
         swap_double(&c->fpr[i]);
-        if(PSE)
+        if(HID2 & HID2_PSE)
         {
             *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
             swap_double(&c->psr[i]);
@@ -241,7 +241,7 @@ void OSFillFPUContext(void)
     {
         *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
         swap_double(&c->fpr[i]);
-        if(PSE)
+        if(HID2 & HID2_PSE)
         {
             *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
             swap_double(&c->psr[i]);
