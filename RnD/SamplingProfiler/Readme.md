@@ -2,7 +2,8 @@
 
 Utility application for analyzing data collected using the Sampling Profiler (`StartProfiler` and `StopProfiler` commands).
 
-![SamplingProfilerDemo](SamplingProfilerDemo.png)
+Example profiling of smp-onetri demo with map:
+![SamplingProfilerDemo](/RnD/SamplingProfiler/SamplingProfilerDemo.png)
 
 ## Controls
 
