@@ -3,9 +3,28 @@
 
 namespace Gekko
 {
-	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple)
+	// Not all simplified instructions are supported. Some of those presented in the manual are so simplified that they only confuse.
+	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple, bool skipOperand[5])
 	{
 		simple = false;
+
+		// Trap
+
+		// Compare
+
+		// Addi
+
+		// Bcx
+
+		// Condition Register
+
+		// Mtcrf
+
+		// Special-purpose reg
+
+		// Tbrs
+
+		// Nop (Ori)
 
 		return "";
 	}
@@ -544,7 +563,7 @@ namespace Gekko
 				sprintf_s(text, sizeof(text) - 1, "0x%02X", paramBits);
 				break;
 			case Param::Address:
-				sprintf_s(text, sizeof(text) - 1, "0x%08X", info->pc + info->Imm.Address);
+				sprintf_s(text, sizeof(text) - 1, "0x%08X", info->Imm.Address);
 				break;
 		}
 
@@ -554,6 +573,8 @@ namespace Gekko
 	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info)
 	{
 		std::string text = "";
+		// Some simplified instructions hide part of the operands.
+		bool skipOperand[5] = { false, false, false, false, false };
 
 		// Address
 
@@ -566,7 +587,7 @@ namespace Gekko
 		// Instruction name
 
 		bool simple = false;
-		std::string instrText = SimplifiedInstruction(info, simple);
+		std::string instrText = SimplifiedInstruction(info, simple, skipOperand);
 		if (simple)
 		{
 			char instrName[0x20];
@@ -586,6 +607,9 @@ namespace Gekko
 
 		for (int i = 0; i < info->numParam; i++)
 		{
+			if (skipOperand[i])
+				continue;
+
 			if (firstParam)
 			{
 				firstParam = false;
