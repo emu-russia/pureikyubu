@@ -76,8 +76,7 @@ namespace SamplingProfiler
             {
                 Jdi.CallJdi ("AddMap \"" + openFileDialogMap.FileName + "\"");
 
-                string reply = Jdi.CallJdi("AddressByName OSInit");
-                Console.WriteLine(reply);
+                RenderSampleData(sampleData.Analyze());
             }
         }
 
