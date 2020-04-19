@@ -1,6 +1,6 @@
 // Emu debug commands
 
-#include "dolphin.h"
+#include "pch.h"
 
 static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 {
@@ -209,6 +209,12 @@ static Json::Value* cmd_plist(std::vector<std::string>& args)
 	return nullptr;
 }
 
+static Json::Value* cmd_reset(std::vector<std::string>& args)
+{
+	EMUReset();
+	return nullptr;
+}
+
 void EmuReflector()
 {
 	Debug::Hub.AddCmd("FileLoad", EmuFileLoad);
@@ -223,4 +229,5 @@ void EmuReflector()
 	Debug::Hub.AddCmd("unload", cmd_unload);
 	Debug::Hub.AddCmd("dop", cmd_dop);
 	Debug::Hub.AddCmd("plist", cmd_plist);
+	Debug::Hub.AddCmd("reset", cmd_reset);
 }

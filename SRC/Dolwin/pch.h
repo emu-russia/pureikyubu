@@ -1,5 +1,3 @@
-// general include file for whole project. must be included first.
-
 #pragma once
 
 // ---------------------------------------------------------------------------
@@ -32,5 +30,6 @@
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 #include "../UI/User.h"
+
 #include "Loader.h"
 #include "Emulator.h"

@@ -79,10 +79,12 @@
 
     "dop": {
       "help": "apply patches"
+    },
+
+    "reset": {
+      "help": "Reset emulation"
     }
 
-  },
-
-  "todo": [ "Reset" ]
+  }
 
 }

@@ -4,7 +4,7 @@
 //      .elf        - standard executable
 //      .bin        - binary file (loaded at BINORG offset)
 //      .gcm        - game master data (GC DVD images)
-#include "dolphin.h"
+#include "pch.h"
 
 // all loader variables are placed here
 LoaderData ldat;

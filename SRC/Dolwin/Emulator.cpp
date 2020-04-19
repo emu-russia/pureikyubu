@@ -1,5 +1,5 @@
 // Emulator controls
-#include "dolphin.h"
+#include "pch.h"
 
 // emulator state
 Emulator emu;
