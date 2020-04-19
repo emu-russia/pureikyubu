@@ -176,6 +176,15 @@ namespace Debug
 				TCHAR* helpText = (TCHAR *)_T("");
 				TCHAR* hintsText = (TCHAR*)_T("");
 
+				// Skip internal commands
+
+				Json::Value* internalUse = next->ByName("internal");
+				if (internalUse != nullptr)
+				{
+					if (internalUse->value.AsBool)
+						continue;
+				}
+
 				Json::Value* help = next->ByName("help");
 				if (help != nullptr)
 				{
@@ -306,6 +315,21 @@ namespace Debug
 		reflexMapLock.Unlock();
 
 		return it->second(args);
+	}
+
+	// Quickly execute a command without parameters.
+	Json::Value* JdiHub::ExecuteFast(char* command)
+	{
+		reflexMapLock.Lock();
+		auto it = reflexMap.find(command);
+		if (it == reflexMap.end())
+		{
+			reflexMapLock.Unlock();
+			return nullptr;
+		}
+		reflexMapLock.Unlock();
+
+		return it->second(noArgs);
 	}
 
 	// Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.

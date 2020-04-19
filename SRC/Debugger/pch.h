@@ -21,7 +21,6 @@
 #include "../HighLevel/HighLevel.h"
 
 #include "../Dolwin/Emulator.h"
-#include "../Dolwin/Loader.h"
 #include "../UI/UserFile.h"
 
 #include "Debugger.h"

@@ -53,6 +53,7 @@
     },
 
     "GetLoaded": {
+      "internal": true,
       "help": "Get the full path of the loaded file",
       "info": "Used by other components to obtain information about the currently running game or DOL file.",
       "output": "{ loaded: PathString }"
@@ -83,6 +84,12 @@
 
     "reset": {
       "help": "Reset emulation"
+    },
+
+    "IsLoaded": {
+      "internal": true,
+      "help": "Return true if emulation state is `Loaded`",
+      "output": "Bool"
     }
 
   }

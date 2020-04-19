@@ -96,7 +96,7 @@ static Json::Value* cmd_exit(std::vector<std::string>& args)
 	exit(0);
 }
 
-static Json::Value* GetLoaded(std::vector<std::string>& args)
+static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
 {
 	UNREFERENCED_PARAMETER(args);
 
@@ -151,7 +151,7 @@ static Json::Value* cmd_dop(std::vector<std::string>& args)
 
 	if (ldat.patches.size() == 0)
 	{
-		DBReport("no patch data loaded.\n");
+		//DBReport("no patch data loaded.\n");
 		return nullptr;
 	}
 	else ApplyPatches();
@@ -215,6 +215,16 @@ static Json::Value* cmd_reset(std::vector<std::string>& args)
 	return nullptr;
 }
 
+static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
+{
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Bool;
+
+	output->value.AsBool = emu.loaded;
+	
+	return output;
+}
+
 void EmuReflector()
 {
 	Debug::Hub.AddCmd("FileLoad", EmuFileLoad);
@@ -224,10 +234,11 @@ void EmuReflector()
 	Debug::Hub.AddCmd("quit", cmd_exit);
 	Debug::Hub.AddCmd("x", cmd_exit);
 	Debug::Hub.AddCmd("q", cmd_exit);
-	Debug::Hub.AddCmd("GetLoaded", GetLoaded);
+	Debug::Hub.AddCmd("GetLoaded", GetLoadedInternal);
 	Debug::Hub.AddCmd("boot", cmd_boot);
 	Debug::Hub.AddCmd("unload", cmd_unload);
 	Debug::Hub.AddCmd("dop", cmd_dop);
 	Debug::Hub.AddCmd("plist", cmd_plist);
 	Debug::Hub.AddCmd("reset", cmd_reset);
+	Debug::Hub.AddCmd("IsLoaded", IsLoadedInternal);
 }

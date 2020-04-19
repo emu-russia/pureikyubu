@@ -3,7 +3,7 @@
 This component is used to control host emulation (GameCube).
 
 You can assume that the "Loaded" state is equivalent to the fact that the GameCube is on (powered), 
-and the "Runing" state is equivalent to the main Gekko clock is running.
+and the "Running" state is equivalent to the main Gekko clock is running.
 
 The architecture of the emulator is designed in such a way that the running Gekko thread is the main driving force of the emulator.
 All other emulation threads are based on the Gekko emulated timer (Time Base Register).

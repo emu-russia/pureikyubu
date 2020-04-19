@@ -3,6 +3,19 @@
 
 namespace HLE
 {
+    // Ask the emulator whether it is loaded or not.
+    static bool IsLoaded()
+    {
+        Json::Value* loaded = Debug::Hub.ExecuteFast("IsLoaded");
+        if (!loaded)
+            return false;
+
+        bool isLoaded = loaded->value.AsBool;
+        delete loaded;
+
+        return isLoaded;
+    }
+
     static Json::Value* cmd_syms(std::vector<std::string>& args)
     {
         SYMList(args[1].c_str());
@@ -24,20 +37,17 @@ namespace HLE
 
     static Json::Value* cmd_savemap(std::vector<std::string>& args)
     {
-        if (args.size() < 2)
-        {
-        }
-        else
-        {
-            if (!strcmp(args[1].c_str(), ".")) SaveMAP(nullptr);
-            else SaveMAP(args[1].c_str());
-        }
+        if (!strcmp(args[1].c_str(), ".")) SaveMAP(nullptr);
+        else SaveMAP(args[1].c_str());
 
         return nullptr;
     }
 
     static Json::Value* DumpThreads(std::vector<std::string>& args)
     {
+        if (!IsLoaded())
+            return nullptr;
+
         bool display = true;
         if (args.size() >= 2)
         {
@@ -49,6 +59,9 @@ namespace HLE
 
     static Json::Value* DumpContext(std::vector<std::string>& args)
     {
+        if (!IsLoaded())
+            return nullptr;
+
         uint32_t effectiveAddr = strtoul(args[1].c_str(), nullptr, 0);
 
         bool display = true;

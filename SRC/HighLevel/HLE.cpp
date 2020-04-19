@@ -97,6 +97,16 @@ void HLESetCall(const char * name, void (*call)())
     SYMSetHighlevel(name, call);
 }
 
+void HLEInit()
+{
+    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
+}
+
+void HLEShutdown()
+{
+    Debug::Hub.RemoveNode(HLE_JDI_JSON);
+}
+
 void HLEOpen()
 {
     DBReport2(DbgChannel::Info,
@@ -131,15 +141,11 @@ void HLEOpen()
 
     // Geometry library
     //MTXOpen();
-
-    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
 }
 
 void HLEClose()
 {
     SYMKill();
-
-    Debug::Hub.RemoveNode(HLE_JDI_JSON);
 }
 
 void HLEExecuteCallback(uint32_t entryPoint)
@@ -147,6 +153,6 @@ void HLEExecuteCallback(uint32_t entryPoint)
     uint32_t old = PPC_LR;
     PC = entryPoint;
     PPC_LR = 0;
-    //TODO: while(PC) IPTExecuteOpcode();
+    while (PC) Gekko::Gekko->Step();
     PC = PPC_LR = old;
 }

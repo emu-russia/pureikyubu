@@ -144,7 +144,7 @@ void VIUpdate()
             currentBeamPos = 1;
 
             // patch memory every frame
-            ApplyPatches();
+            Debug::Hub.ExecuteFast("dop");
 
             // draw XFB
             if (vi.xfb)

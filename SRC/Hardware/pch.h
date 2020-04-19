@@ -25,7 +25,6 @@
 #include "../UI/UserFile.h"
 #include "../UI/UserProfiler.h"
 #include "../UI/UserWindow.h"
-#include "../Dolwin/Loader.h"
 
 #include "../HighLevel/TimeFormat.h"
 

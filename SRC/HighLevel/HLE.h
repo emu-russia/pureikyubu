@@ -15,6 +15,8 @@ typedef struct HLEControl
 extern  HLEControl hle;
 
 void    HLESetCall(const char *name, void (*call)());
+void    HLEInit();
+void    HLEShutdown();
 void    HLEOpen();
 void    HLEClose();
 void    HLEExecuteCallback(uint32_t entryPoint);
