@@ -12,3 +12,5 @@ Input data:
 - Symbolic information (Map). Supports CodeWarrior and Dolwin RAW map formats.
 
 More information can be found in Docs\\EMU folder.
+
+You also need Dolwin Data folder.

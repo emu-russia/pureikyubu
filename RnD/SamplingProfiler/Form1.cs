@@ -26,7 +26,11 @@ namespace SamplingProfiler
         {
             InitializeComponent();
 
+#if DEBUG
             AllocConsole();
+#else
+            debugToolStripMenuItem.Visible = false;
+#endif
 
             Jdi.InitEmu();
         }
