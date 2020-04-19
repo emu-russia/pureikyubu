@@ -8,11 +8,16 @@ namespace Gekko
 {
 	class GekkoDisasm
 	{
-		static std::string HexToString(uint32_t value);
-		static std::string SimplifiedInstruction(bool& simple);
+		static std::string HexToStr(uint8_t value);
+		static std::string HexToStr(uint16_t value);
+		static std::string HexToStr(uint32_t value);
+
+		static std::string SimplifiedInstruction(AnalyzeInfo* info, bool& simple);
 		static std::string InstrToString(AnalyzeInfo* info);
 		static std::string SprName(int spr);
-		static std::string ParamToString(Param * param);
+		static std::string TbrName(int tbr);
+		static std::string Imm(int val, bool forceHex, bool useSign);
+		static std::string ParamToString(Param param, int paramBits, AnalyzeInfo* info);
 
 	public:
 
