@@ -130,6 +130,7 @@ public:
 
 	class Value
 	{
+		char* CloneName(const char* otherName);
 		char* CloneTcharName(const TCHAR* otherName);
 		void DeserializeObject(DeserializeContext* ctx);
 		void DeserializeArray(DeserializeContext* ctx);
@@ -176,6 +177,7 @@ public:
 		Value* ReplaceString(const TCHAR* str);
 		Value* AddObject(const char* keyName);
 		Value* AddArray(const char* keyName);
+		Value* AddValue(const char* keyName, Value* value);
 		Value* Add(Value* _parent, Value* other);
 		Value* Replace(Value* _parent, Value* other);
 
@@ -183,8 +185,6 @@ public:
 
 		Value* ByName(const char* byName);
 		Value* ByType(const ValueType byType);
-
-		char* CloneName(const char* otherName);
 	};
 
 	// Deserialized root

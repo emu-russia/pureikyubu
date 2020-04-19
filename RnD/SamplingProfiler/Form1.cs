@@ -8,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using System.Runtime.InteropServices;
+
 namespace SamplingProfiler
 {
     public partial class Form1 : Form
@@ -15,6 +17,8 @@ namespace SamplingProfiler
         public Form1()
         {
             InitializeComponent();
+
+            AllocConsole();
 
             Jdi.InitEmu();
         }
@@ -52,13 +56,23 @@ namespace SamplingProfiler
 
         private void addSymbolsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (openFileDialog1.ShowDialog() == DialogResult.OK)
+            {
+                Jdi.CallJdi ("AddMap \"" + openFileDialog1.FileName + "\"");
 
+                string reply = Jdi.CallJdi("AddressByName OSInit");
+                Console.WriteLine(reply);
+            }
         }
 
         private void checkVersionToolStripMenuItem_Click(object sender, EventArgs e)
         {
             string reply = Jdi.CallJdi("GetVersion");
+
+            Console.WriteLine("Version: " + reply);
         }
 
+        [DllImport("kernel32")]
+        static extern bool AllocConsole();
     }
 }

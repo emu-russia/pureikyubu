@@ -866,6 +866,17 @@ Json::Value* Json::Value::AddArray(const char* keyName)
 	return child;
 }
 
+Json::Value* Json::Value::AddValue(const char* keyName, Json::Value* value)
+{
+	if (value->name)
+	{
+		delete[] value->name;
+	}
+	value->name = CloneName(keyName);
+	children.push_back(value);
+	return value;
+}
+
 Json::Value* Json::Value::Add(Value* _parent, Value* other)
 {
 	Value* child = new Value(_parent);

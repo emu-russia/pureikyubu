@@ -102,22 +102,14 @@ extern "C" __declspec(dllexport) char* CallJdi(char* request)
     }
 
     Json::Value *rootObj = json.root.AddObject(nullptr);
-
-    if (output->name)
-    {
-        delete[] output->name;
-    }
-    output->name = output->CloneName("reply");
-    rootObj->Add(rootObj, output);
-
-    delete output;
+    rootObj->AddValue("reply", output);
 
     size_t jsonTextSize = 0;
     json.GetSerializedTextSize(nullptr, -1, jsonTextSize);
 
-    char * jsonText = (char*)::CoTaskMemAlloc(jsonTextSize);
+    char * jsonText = (char*)::CoTaskMemAlloc(jsonTextSize + 1);
     assert(jsonText);
-    memset(jsonText, 0, jsonTextSize);
+    memset(jsonText, 0, jsonTextSize + 1);
 
     json.Serialize(jsonText, jsonTextSize, jsonTextSize);
 
