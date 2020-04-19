@@ -29,6 +29,7 @@ The section contains entries with descriptions of debug commands. Important prop
 - **args**: number of required arguments (not counting **args[0]**)
 - **usage**: detailed help for the command if it was called with insufficient arguments
 - **output**: an informative hint in case the command returns some data in the form of **Json::Value**
+- **internal**: the command is not displayed in the `help` list. Internal use.
 
 All properties except the **help** property are optional.
 

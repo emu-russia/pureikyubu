@@ -76,6 +76,7 @@ namespace Flipper
 
         delete DSP;
 
+        AIClose();
         ARClose();      // release ARAM
         EIClose();      // take care about closing of memcards and BBA
         VIClose();      // close GDI (if opened)

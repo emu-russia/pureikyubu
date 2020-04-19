@@ -15,7 +15,7 @@ class Json
 	// Foolproof
 	static const int MaxDepth = 255;
 	static const int MaxStringSize = 0x1000;
-	static const int MaxElements = 255;
+	static const int MaxElements = 255;				// Deserialize only
 
 public:
 	class Value;
@@ -26,6 +26,7 @@ private:
 	void DestroyValue(Value* value);
 
 	static TCHAR* CloneStr(const TCHAR* str);
+	static TCHAR* CloneAnsiStr(const char* str);
 
 	#pragma region "Serialization Related"
 
@@ -167,13 +168,16 @@ public:
 		Value* AddInt(const char* keyName, int _value);
 		Value* AddUInt16(const char* keyName, uint16_t _value);
 		Value* AddUInt32(const char* keyName, uint32_t _value);
+		Value* AddUInt64(const char* keyName, uint64_t _value);
 		Value* AddFloat(const char* keyName, float _value);
 		Value* AddNull(const char* keyName);
 		Value* AddBool(const char* keyName, bool _value);
 		Value* AddString(const char* keyName, const TCHAR* str);
+		Value* AddAnsiString(const char* keyName, const char* str);
 		Value* ReplaceString(const TCHAR* str);
 		Value* AddObject(const char* keyName);
 		Value* AddArray(const char* keyName);
+		Value* AddValue(const char* keyName, Value* value);
 		Value* Add(Value* _parent, Value* other);
 		Value* Replace(Value* _parent, Value* other);
 

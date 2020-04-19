@@ -1,5 +1,5 @@
 // Emulator controls
-#include "dolphin.h"
+#include "pch.h"
 
 // emulator state
 Emulator emu;
@@ -111,6 +111,7 @@ void EMUCtor()
     Debug::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
+    HLEInit();
 }
 
 void EMUDtor()
@@ -120,4 +121,5 @@ void EMUDtor()
     DVD::ShutdownSubsystem();
     delete Gekko::Gekko;
     Gekko::Gekko = nullptr;
+    HLEShutdown();
 }

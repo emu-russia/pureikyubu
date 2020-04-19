@@ -1,0 +1,47 @@
+{
+  "info": {
+    "description": "Debugger Controls. In Sense, control the appearance of the debugger and other auxiliary commands.",
+    "helpGroup": "Debugger Controls"
+  },
+
+  "can": {
+
+    "script": {
+      "help": "execute batch script",
+      "args": 1,
+      "usage": [
+        "Syntax: script <file>\n",
+        "path can be relative\n",
+        "Examples of use: script data\\zelda.cmd\n",
+        "                 script c:\\luigi.cmd\n"
+      ]
+    },
+
+    "echo": {
+      "help": "Echo",
+      "args": 1,
+      "hints": "<text>",
+      "usage": [
+        "Syntax: echo <text>\n",
+        "Examples of use: echo \"Hello, world!\"\n"
+      ]
+    },
+
+    "StartProfiler": {
+      "help": "Start Gekko profiling",
+      "args": 1,
+      "usage": [
+        "Syntax: StartProfiler <json> [ms]",
+        "Specify the Json file name where the collected information will be saved, after calling the StopProfiler command.",
+        "The interval is specified in milliseconds. Possible values are 2-50. The default is 5.",
+        "Example: StartProfiler Data\\sampleData.json 10"
+      ]
+    },
+
+    "StopProfiler": {
+      "help": "Stop Gekko profiling"
+    }
+
+  }
+
+}

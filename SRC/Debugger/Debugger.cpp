@@ -153,10 +153,14 @@ void DBOpen()
     // start debugger thread
     consoleThreadHandle = CreateThread(NULL, 0, DBThreadProc, &con, 0, &consoleThreadId);
     assert(consoleThreadHandle != INVALID_HANDLE_VALUE);
+
+    Debug::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
 }
 
 // Close debugger window
 void DBClose()
 {
     con.exitPending = true;
+
+    Debug::Hub.RemoveNode(DEBUGGER_JDI_JSON);
 }

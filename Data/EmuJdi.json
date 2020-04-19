@@ -1,7 +1,7 @@
 {
   "info": {
     "description": "Dolwin Emulator Jey-Dai specs.",
-    "helpGroup": "EMU Debug Commands"
+    "helpGroup": "EMU Control Commands"
   },
 
   "can": {
@@ -39,16 +39,6 @@
       ]
     },
 
-    "echo": {
-      "help": "Echo",
-      "args": 1,
-      "hints": "<text>",
-      "usage": [
-        "Syntax: echo <text>\n",
-        "Examples of use: echo \"Hello, world!\"\n"
-      ]
-    },
-
     "exit": {
       "help": "Exit"
     },
@@ -60,10 +50,54 @@
     },
     "q": {
       "help": "Exit"
+    },
+
+    "GetLoaded": {
+      "internal": true,
+      "help": "Get the full path of the loaded file",
+      "info": "Used by other components to obtain information about the currently running game or DOL file.",
+      "output": "{ loaded: PathString }"
+    },
+
+    "boot": {
+      "help": "boot DVD/executable from file",
+      "args": 1,
+      "usage": [
+        "Syntax: boot <file>\n",
+        "path can be relative\n",
+        "Examples of use: boot c:\\luigimansion.gcm\n",
+        "                 boot PONG.dol\n"
+      ]
+    },
+
+    "unload": {
+      "help": "unload current file"
+    },
+
+    "plist": {
+      "help": "list all patch data"
+    },
+
+    "dop": {
+      "help": "apply patches"
+    },
+
+    "reset": {
+      "help": "Reset emulation"
+    },
+
+    "IsLoaded": {
+      "internal": true,
+      "help": "Return true if emulation state is `Loaded`",
+      "output": "Bool"
+    },
+
+    "GetVersion": {
+      "internal": true,
+      "help": "Get emulator version",
+      "output": "Array: [String]"
     }
 
-  },
-
-  "todo": [ "Open", "Close", "Reset" ]
+  }
 
 }

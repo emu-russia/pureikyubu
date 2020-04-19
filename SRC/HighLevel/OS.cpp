@@ -35,8 +35,6 @@ static void swap_double(void *srcPtr)
 
 void OSSetCurrentContext(void)
 {
-    HLEHit(HLE_OS_SET_CURRENT_CONTEXT);
-
     __OSCurrentContext  = PARAM(0);
     __OSPhysicalContext = __OSCurrentContext & RAMMASK; // simple translation
     CPUWriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
@@ -63,15 +61,12 @@ void OSSetCurrentContext(void)
 
 void OSGetCurrentContext(void)
 {
-    HLEHit(HLE_OS_GET_CURRENT_CONTEXT);
-
     RET_VAL = __OSCurrentContext;
 }
 
 void OSSaveContext(void)
 {
     int i;
-    HLEHit(HLE_OS_SAVE_CONTEXT);
 
     OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
@@ -106,8 +101,6 @@ void OSSaveContext(void)
 // see Symbols.cpp, SYMSetHighlevel, line 97
 void OSLoadContext(void)
 {
-    HLEHit(HLE_OS_LOAD_CONTEXT);
-
     OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     // thread switch on OSDisableInterrupts is omitted, because
@@ -158,8 +151,6 @@ void OSLoadContext(void)
 
 void OSClearContext(void)
 {
-    HLEHit(HLE_OS_CLEAR_CONTEXT);
-
     OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
     c->mode = 0;
@@ -175,7 +166,6 @@ void OSClearContext(void)
 void OSInitContext(void)
 {
     int i;
-    HLEHit(HLE_OS_INIT_CONTEXT);
 
     OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
 
@@ -276,8 +266,6 @@ void __OSContextInit(void)
 // called VERY often!
 void OSDisableInterrupts(void)
 {
-    HLEHit(HLE_OS_DISABLE_INTERRUPTS);
-
     uint32_t prev = MSR;
     MSR &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
@@ -286,8 +274,6 @@ void OSDisableInterrupts(void)
 // this one is rare
 void OSEnableInterrupts(void)
 {
-    HLEHit(HLE_OS_ENABLE_INTERRUPTS);
-
     uint32_t prev = MSR;
     MSR |= MSR_EE;
     RET_VAL = (prev >> 15) & 1;
@@ -296,47 +282,8 @@ void OSEnableInterrupts(void)
 // called VERY often!
 void OSRestoreInterrupts(void)
 {
-    HLEHit(HLE_OS_RESTORE_INTERRUPTS);
-
     uint32_t prev = MSR;
     if(PARAM(0)) MSR |= MSR_EE;
     else MSR &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
-}
-
-/* ---------------------------------------------------------------------------
-    Utils
---------------------------------------------------------------------------- */
-
-// show OSContext data align offsets
-void OSCheckContextStruct()
-{
-    int i;
-    OSContext context;
-
-    for(i=0; i<32; i++)
-        DBReport("GPR[%i] = %i\n", i, (uint8_t*)&context.gpr[i] - (uint8_t*)&context.gpr[0]);
-
-    DBReport("CR = %i\n", (uint8_t*)&context.cr - (uint8_t*)&context.gpr[0]);
-    DBReport("LR = %i\n", (uint8_t*)&context.lr - (uint8_t*)&context.gpr[0]);
-    DBReport("CTR = %i\n", (uint8_t*)&context.ctr - (uint8_t*)&context.gpr[0]);
-    DBReport("XER = %i\n", (uint8_t*)&context.xer - (uint8_t*)&context.gpr[0]);
-
-    for(i=0; i<32; i++)
-        DBReport("FPR[%i] = %i\n", i, (uint8_t*)&context.fpr[i] - (uint8_t*)&context.gpr[0]);
-
-    DBReport("FPSCR = %i\n", (uint8_t*)&context.fpscr_pad - (uint8_t*)&context.gpr[0]);
-
-    DBReport("SRR0 = %i\n", (uint8_t*)&context.srr[0] - (uint8_t*)&context.gpr[0]);
-    DBReport("SRR1 = %i\n", (uint8_t*)&context.srr[1] - (uint8_t*)&context.gpr[0]);
-
-    DBReport("mode = %i\n", (uint8_t*)&context.mode - (uint8_t*)&context.gpr[0]);
-    DBReport("state = %i\n", (uint8_t*)&context.state - (uint8_t*)&context.gpr[0]);
-
-    for(i=0; i<8; i++)
-        DBReport("GQR[%i] = %i\n", i, (uint8_t*)&context.gqr[i] - (uint8_t*)&context.gpr[0]);
-    for(i=0; i<32; i++)
-        DBReport("PSR[%i] = %i\n", i, (uint8_t*)&context.psr[i] - (uint8_t*)&context.gpr[0]);
-
-    DBReport("OSContext size: %i(%i)/frame size: %i\n", sizeof(OSContext), 712, OS_CONTEXT_FRAME_SIZE);
 }

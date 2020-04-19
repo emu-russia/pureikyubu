@@ -11,6 +11,8 @@
 
 // TODO: Get rid of this non-incapsulated mess
 
+// PHASED OUT
+
 // registers
 #define GPR     cpu.gpr
 #define SPR     cpu.spr
@@ -68,14 +70,14 @@
 #define BATBRPN(batl)   (batl >> 17)
 
 // floating point register
-typedef union FPREG
+typedef union _FPREG
 {
     double         dbl;
     uint64_t       uval;
 } FPREG;
 
 // time-base
-typedef union TBREG
+typedef union _TBREG
 {
     int64_t         sval;               // for comparsion
     uint64_t        uval;               // for incrementing
@@ -153,11 +155,13 @@ typedef struct CPUControl
     bool        exception;          // exception pending
     bool        branch;             // non-linear PC change
     uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-    std::atomic<bool> RESERVE;            // for lwarx/stwcx.   
+    bool        RESERVE;            // for lwarx/stwcx.   
     uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
     float       ldScale[64];        // for paired-single loads
     float       stScale[64];        // for paired-single stores
 } CPUControl;
+
+// PHASED OUT (will be integrated in GekkoCore)
 
 extern  CPUControl cpu;
 

@@ -133,8 +133,7 @@ void con_close()
     }
 
     // close console
-    CloseHandle(con.input);
-    CloseHandle(con.output);
+    // Don't touch console handles, they can be used by Visual Studio or by other parasites.
     FreeConsole();
 
     // close log file

@@ -26,8 +26,6 @@ static void swap_double(void* srcPtr)
 // void *memcpy( void *dest, const void *src, size_t count );
 void HLE_memcpy()
 {
-    HLEHit(HLE_MEMCPY);
-
     uint32_t eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
     uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
     uint32_t paSrc = Gekko::Gekko->EffectiveToPhysical(eaSrc, false);
@@ -46,8 +44,6 @@ void HLE_memcpy()
 // void *memset( void *dest, int c, size_t count );
 void HLE_memset()
 {
-    HLEHit(HLE_MEMSET);
-
     uint32_t eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
     uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
 
@@ -72,24 +68,18 @@ void HLE_memset()
 // double sin(double x)
 void HLE_sin()
 {
-    HLEHit(HLE_SIN);
-
     FPRD(1) = sin(FPRD(1));
 }
 
 // double cos(double x)
 void HLE_cos()
 {
-    HLEHit(HLE_COS);
-
     FPRD(1) = cos(FPRD(1));
 }
 
 // double modf(double x, double * intptr)
 void HLE_modf()
 {
-    HLEHit(HLE_MODF);
-
     double * intptr = (double *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
     
     FPRD(1) = modf(FPRD(1), intptr);
@@ -99,8 +89,6 @@ void HLE_modf()
 // double frexp(double x, int * expptr)
 void HLE_frexp()
 {
-    HLEHit(HLE_FREXP);
-
     uint32_t * expptr = (uint32_t *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
@@ -110,23 +98,17 @@ void HLE_frexp()
 // double ldexp(double x, int exp)
 void HLE_ldexp()
 {
-    HLEHit(HLE_LDEXP);
-
     FPRD(1) = ldexp(FPRD(1), (int)PARAM(0));
 }
 
 // double floor(double x)
 void HLE_floor()
 {
-    HLEHit(HLE_FLOOR);
-
     FPRD(1) = floor(FPRD(1));
 }
 
 // double ceil(double x)
 void HLE_ceil()
 {
-    HLEHit(HLE_CEIL);
-
     FPRD(1) = ceil(FPRD(1));
 }

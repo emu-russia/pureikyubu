@@ -97,6 +97,16 @@ void HLESetCall(const char * name, void (*call)())
     SYMSetHighlevel(name, call);
 }
 
+void HLEInit()
+{
+    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
+}
+
+void HLEShutdown()
+{
+    Debug::Hub.RemoveNode(HLE_JDI_JSON);
+}
+
 void HLEOpen()
 {
     DBReport2(DbgChannel::Info,
@@ -128,20 +138,14 @@ void HLEOpen()
         HLESetCall(oscalls[n].name, oscalls[n].call);
         n++;
     }
-  
-    HLEResetHitrate();
 
     // Geometry library
-    MTXOpen();
-
-    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
+    //MTXOpen();
 }
 
 void HLEClose()
 {
     SYMKill();
-
-    Debug::Hub.RemoveNode(HLE_JDI_JSON);
 }
 
 void HLEExecuteCallback(uint32_t entryPoint)
@@ -149,66 +153,6 @@ void HLEExecuteCallback(uint32_t entryPoint)
     uint32_t old = PPC_LR;
     PC = entryPoint;
     PPC_LR = 0;
-    //TODO: while(PC) IPTExecuteOpcode();
+    while (PC) Gekko::Gekko->Step();
     PC = PPC_LR = old;
-}
-
-void HLEResetHitrate()
-{
-    // clear hitrate history
-    for(int i=0; i<HLE_HITRATE_MAX; i++)
-        hle.hitrate[i] = 0;
-}
-
-void HLEGetTop10(int toplist[10])
-{
-    int top[HLE_HITRATE_MAX];
-    memcpy(top, hle.hitrate, sizeof(hle.hitrate));
-
-    for(int i=0; i<10; i++)
-    {
-        int maxval = top[1], maxid = 1;
-        for(int id=2; id<HLE_HITRATE_MAX; id++)
-        {
-            if(top[id] >= maxval && top[id])
-            {
-                maxval = top[id];
-                maxid  = id;
-            }
-        }
-        if(top[maxid] == 0) maxid = 0;
-        top[maxid] = 0;
-        toplist[i] = maxid;
-    }
-}
-
-const char * HLEGetHitNameByIndex(int idx)
-{
-    // compiler should build nice jump table for us
-    switch(idx)
-    {
-        case 0: return "No pretender";
-
-        case HLE_OS_DISABLE_INTERRUPTS: return "OSDisableInterrupts";
-        case HLE_OS_ENABLE_INTERRUPTS: return "OSEnableInterrupts";
-        case HLE_OS_RESTORE_INTERRUPTS: return "OSRestoreInterrupts";
-
-        case HLE_OS_SET_CURRENT_CONTEXT: return "OSSetCurrentContext";
-        case HLE_OS_GET_CURRENT_CONTEXT: return "OSGetCurrentContext";
-        case HLE_OS_SAVE_CONTEXT: return "OSSaveContext";
-        case HLE_OS_LOAD_CONTEXT: return "OSLoadContext";
-        case HLE_OS_CLEAR_CONTEXT: return "OSClearContext";
-        case HLE_OS_INIT_CONTEXT: return "OSInitContext";
-
-        case HLE_MEMCPY: return "memcpy";
-        case HLE_MEMSET: return "memset";
-
-        case HLE_MTX_IDENTITY: return "MTXIdentity";
-        case HLE_MTX_COPY: return "MTXCopy";
-        case HLE_MTX_CONCAT: return "MTXConcat";
-        case HLE_MTX_TRANSPOSE: return "MTXTranspose";
-        case HLE_MTX_INVERSE: return "MTXInverse";
-        case HLE_MTX_INVXPOSE: return "MTXInvXpose";
-    }
-    return "Unknown call";
 }

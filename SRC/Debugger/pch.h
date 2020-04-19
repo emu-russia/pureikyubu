@@ -15,15 +15,16 @@
 #include "../Common/Jdi.h"
 
 #include "../Core/Gekko.h"
-#include "../Core/GekkoDisasmOld.h"
+#include "../Core/GekkoDisasmOld.h"			// PHASED OUT
 
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"
 
 #include "../Dolwin/Emulator.h"
-#include "../Dolwin/Loader.h"
 #include "../UI/UserFile.h"
 
 #include "Debugger.h"
 
 #include "console.h"
+#include "SamplingProfiler.h"
+#include "DebugCommands.h"

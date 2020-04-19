@@ -2,327 +2,351 @@
 
 namespace Debug
 {
-    JdiHub Hub;      // Singletone.
+	JdiHub Hub;      // Singletone.
 
-    JdiHub::JdiHub() {}
+	JdiHub::JdiHub() {}
 
-    // Delete all JDI nodes
-    JdiHub::~JdiHub()
-    {
-        for (auto it = nodes.begin(); it != nodes.end(); ++it)
-        {
-            if (it->second)
-                delete it->second;
-        }
-        nodes.clear();
-    }
+	// Delete all JDI nodes
+	JdiHub::~JdiHub()
+	{
+		for (auto it = nodes.begin(); it != nodes.end(); ++it)
+		{
+			if (it->second)
+				delete it->second;
+		}
+		nodes.clear();
+	}
 
-    uint32_t JdiHub::SimpleHash(std::wstring str)
-    {
-        size_t size = str.size();
-        unsigned h = 37;
-        for (int i=0; i<size; i++)
-        {
-            h = (h * 54059) ^ (str[i] * 76963);
-        }
-        return h % 86969;
-    }
+	uint32_t JdiHub::SimpleHash(std::wstring str)
+	{
+		size_t size = str.size();
+		unsigned h = 37;
+		for (int i=0; i<size; i++)
+		{
+			h = (h * 54059) ^ (str[i] * 76963);
+		}
+		return h % 86969;
+	}
 
-    // The debugging console can only display text encoded in Ansi
-    std::string JdiHub::TcharToString(TCHAR* text)
-    {
-        char ansiText[0x100] = { 0, };
-        char* ansiPtr = ansiText;
-        TCHAR* tcharPtr = text;
-        while (*tcharPtr)
-        {
-            *ansiPtr++ = (char)*tcharPtr++;
-        }
-        *ansiPtr++ = 0;
-        return std::string(ansiText);
-    }
+	// The debugging console can only display text encoded in Ansi
+	std::string JdiHub::TcharToString(TCHAR* text)
+	{
+		char ansiText[0x100] = { 0, };
+		char* ansiPtr = ansiText;
+		TCHAR* tcharPtr = text;
+		while (*tcharPtr)
+		{
+			*ansiPtr++ = (char)*tcharPtr++;
+		}
+		*ansiPtr++ = 0;
+		return std::string(ansiText);
+	}
 
-    // Reflection of the command delegate by its text name
-    void JdiHub::AddCmd(std::string name, CmdDelegate command)
-    {
-        reflexMapLock.Lock();
-        reflexMap[name] = command;
-        reflexMapLock.Unlock();
-    }
+	// Reflection of the command delegate by its text name
+	void JdiHub::AddCmd(std::string name, CmdDelegate command)
+	{
+		reflexMapLock.Lock();
+		reflexMap[name] = command;
+		reflexMapLock.Unlock();
+	}
 
-    // Register JDI node.
-    void JdiHub::AddNode(std::wstring filename, JdiReflector reflector)
-    {
-        Json* json = new Json();
+	// Register JDI node.
+	void JdiHub::AddNode(std::wstring filename, JdiReflector reflector)
+	{
+		Json* json = new Json();
 
-        size_t jsonTextSize = 0;
+		size_t jsonTextSize = 0;
 
-        // Load Json
-        FILE* f = nullptr;
-        _wfopen_s(&f, filename.c_str(), L"rb");
-        assert(f);
+		// Load Json
+		FILE* f = nullptr;
+		_wfopen_s(&f, filename.c_str(), L"rb");
+		assert(f);
 
-        fseek(f, 0, SEEK_END);
-        jsonTextSize = ftell(f);
-        fseek(f, 0, SEEK_SET);
+		fseek(f, 0, SEEK_END);
+		jsonTextSize = ftell(f);
+		fseek(f, 0, SEEK_SET);
 
-        uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
-        assert(jsonText);
+		uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
+		assert(jsonText);
 
-        size_t read = fread(jsonText, 1, jsonTextSize, f);
-        assert(read == jsonTextSize);
-        fclose(f);
+		size_t read = fread(jsonText, 1, jsonTextSize, f);
+		assert(read == jsonTextSize);
+		fclose(f);
 
-        jsonText[jsonTextSize] = 0;         // Safety zero trailer
+		jsonText[jsonTextSize] = 0;         // Safety zero trailer
 
-        // Parse
-        json->Deserialize(jsonText, jsonTextSize);
+		// Parse
+		json->Deserialize(jsonText, jsonTextSize);
 
-        delete[] jsonText;
+		delete[] jsonText;
 
-        nodes[SimpleHash(filename)] = json;
+		nodes[SimpleHash(filename)] = json;
 
-        reflector();
-    }
+		reflector();
+	}
 
-    // Deregister JDI node.
-    void JdiHub::RemoveNode(std::wstring filename)
-    {
-        auto it = nodes.find(SimpleHash(filename));
-        if (it != nodes.end())
-        {
-            if (it->second)
-            {
-                // Remove commands
-                Json* node = it->second;
+	// Deregister JDI node.
+	void JdiHub::RemoveNode(std::wstring filename)
+	{
+		auto it = nodes.find(SimpleHash(filename));
+		if (it != nodes.end())
+		{
+			if (it->second)
+			{
+				// Remove commands
+				Json* node = it->second;
 
-                Json::Value* rootObj = node->root.children.back();
-                if (rootObj->type == Json::ValueType::Object)
-                {
-                    Json::Value* can = rootObj->ByName("can");
-                    if (can != nullptr)
-                    {
-                        for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
-                        {
-                            Json::Value* next = *cmd;
+				Json::Value* rootObj = node->root.children.back();
+				if (rootObj->type == Json::ValueType::Object)
+				{
+					Json::Value* can = rootObj->ByName("can");
+					if (can != nullptr)
+					{
+						for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
+						{
+							Json::Value* next = *cmd;
 
-                            reflexMapLock.Lock();
-                            auto it = reflexMap.find(next->name);
-                            if (it != reflexMap.end())
-                            {
-                                reflexMap.erase(it);
-                            }
-                            reflexMapLock.Unlock();
-                        }
-                    }
-                }
+							reflexMapLock.Lock();
+							auto it = reflexMap.find(next->name);
+							if (it != reflexMap.end())
+							{
+								reflexMap.erase(it);
+							}
+							reflexMapLock.Unlock();
+						}
+					}
+				}
 
-                delete node;
-            }
-            nodes.erase(it);
-        }
-    }
+				delete node;
+			}
+			nodes.erase(it);
+		}
+	}
 
-    // Display help on the basis of meta information from the "can" records of registered JDI nodes.
-    void JdiHub::Help()
-    {
-        for (auto it = nodes.begin(); it != nodes.end(); ++it)
-        {
-            Json* node = it->second;
-            if (node->root.children.size() == 0)
-                continue;
+	// Display help on the basis of meta information from the "can" records of registered JDI nodes.
+	void JdiHub::Help()
+	{
+		for (auto it = nodes.begin(); it != nodes.end(); ++it)
+		{
+			Json* node = it->second;
+			if (node->root.children.size() == 0)
+				continue;
 
-            Json::Value* rootObj = node->root.children.back();
-            if (rootObj->type != Json::ValueType::Object)
-                continue;
+			Json::Value* rootObj = node->root.children.back();
+			if (rootObj->type != Json::ValueType::Object)
+				continue;
 
-            // Print help group header
+			// Print help group header
 
-            TCHAR* helpGroupHead = nullptr;
-            Json::Value* info = rootObj->ByName("info");
-            if (info == nullptr)
-            {
-                helpGroupHead = (TCHAR *)_T("Jdi with missing info");
-            }
-            else
-            {
-                Json::Value* helpGroup = info->ByName("helpGroup");
-                if (helpGroup != nullptr)
-                {
-                    helpGroupHead = helpGroup->type == Json::ValueType::String ?
-                        helpGroup->value.AsString : 
-                        (TCHAR*)_T("Jdi with invalid helpGroup");
-                }
-                else
-                {
-                    helpGroupHead = (TCHAR*)_T("Jdi with missing helpGroup");
-                }
-                helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : (TCHAR *)_T("Jdi with missing helpGroup");
-            }
+			TCHAR* helpGroupHead = nullptr;
+			Json::Value* info = rootObj->ByName("info");
+			if (info == nullptr)
+			{
+				helpGroupHead = (TCHAR *)_T("Jdi with missing info");
+			}
+			else
+			{
+				Json::Value* helpGroup = info->ByName("helpGroup");
+				if (helpGroup != nullptr)
+				{
+					helpGroupHead = helpGroup->type == Json::ValueType::String ?
+						helpGroup->value.AsString : 
+						(TCHAR*)_T("Jdi with invalid helpGroup");
+				}
+				else
+				{
+					helpGroupHead = (TCHAR*)_T("Jdi with missing helpGroup");
+				}
+				helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : (TCHAR *)_T("Jdi with missing helpGroup");
+			}
 
-            DBReport2( DbgChannel::Header, "## %s\n", TcharToString(helpGroupHead).c_str());
+			DBReport2( DbgChannel::Header, "## %s\n", TcharToString(helpGroupHead).c_str());
 
-            // Enumerate can commands help texts
+			// Enumerate can commands help texts
 
-            Json::Value* can = rootObj->ByName("can");
-            if (can == nullptr)
-                continue;
+			Json::Value* can = rootObj->ByName("can");
+			if (can == nullptr)
+				continue;
 
-            for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
-            {
-                char nameWithHint[0x100] = { 0, };
+			for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
+			{
+				char nameWithHint[0x100] = { 0, };
 
-                Json::Value* next = *cmd;
-                TCHAR* helpText = (TCHAR *)_T("");
-                TCHAR* hintsText = (TCHAR*)_T("");
+				Json::Value* next = *cmd;
+				TCHAR* helpText = (TCHAR *)_T("");
+				TCHAR* hintsText = (TCHAR*)_T("");
 
-                Json::Value* help = next->ByName("help");
-                if (help != nullptr)
-                {
-                    if (help->type == Json::ValueType::String)
-                    {
-                        helpText = help->value.AsString;
-                    }
-                }
+				// Skip internal commands
 
-                Json::Value* hints = next->ByName("hints");
-                if (hints != nullptr)
-                {
-                    if (hints->type == Json::ValueType::String)
-                    {
-                        hintsText = hints->value.AsString;
-                    }
-                }
+				Json::Value* internalUse = next->ByName("internal");
+				if (internalUse != nullptr)
+				{
+					if (internalUse->value.AsBool)
+						continue;
+				}
 
-                strcpy_s(nameWithHint, sizeof(nameWithHint) - 1, next->name);
-                strcat_s(nameWithHint, sizeof(nameWithHint) - 1, " ");
-                strcat_s(nameWithHint, sizeof(nameWithHint) - 1, TcharToString(hintsText).c_str());
+				Json::Value* help = next->ByName("help");
+				if (help != nullptr)
+				{
+					if (help->type == Json::ValueType::String)
+					{
+						helpText = help->value.AsString;
+					}
+				}
 
-                size_t nameWithHintSize = strlen(nameWithHint);
-                size_t i = nameWithHintSize;
-                while (i < 20)
-                {
-                    nameWithHint[i++] = ' ';
-                }
-                nameWithHint[i++] = '\0';
+				Json::Value* hints = next->ByName("hints");
+				if (hints != nullptr)
+				{
+					if (hints->type == Json::ValueType::String)
+					{
+						hintsText = hints->value.AsString;
+					}
+				}
 
-                DBReport("    %s - %s\n", nameWithHint, TcharToString(helpText).c_str());
-            }
+				strcpy_s(nameWithHint, sizeof(nameWithHint) - 1, next->name);
+				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, " ");
+				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, TcharToString(hintsText).c_str());
 
-            DBReport("\n");
-        }
-    }
+				size_t nameWithHintSize = strlen(nameWithHint);
+				size_t i = nameWithHintSize;
+				while (i < 20)
+				{
+					nameWithHint[i++] = ' ';
+				}
+				nameWithHint[i++] = '\0';
 
-    // Get "can" entry by command name. Iterates over all available JDI nodes.
-    Json::Value * JdiHub::CommandByName(std::string& name)
-    {
-        for (auto it = nodes.begin(); it != nodes.end(); ++it)
-        {
-            Json* node = it->second;
-            if (node->root.children.size() == 0)
-                continue;
+				DBReport("    %s - %s\n", nameWithHint, TcharToString(helpText).c_str());
+			}
 
-            Json::Value* rootObj = node->root.children.back();
-            if (rootObj->type != Json::ValueType::Object)
-                continue;
+			DBReport("\n");
+		}
+	}
 
-            Json::Value* can = rootObj->ByName("can");
-            if (can == nullptr)
-                continue;
+	// Get "can" entry by command name. Iterates over all available JDI nodes.
+	Json::Value * JdiHub::CommandByName(std::string& name)
+	{
+		for (auto it = nodes.begin(); it != nodes.end(); ++it)
+		{
+			Json* node = it->second;
+			if (node->root.children.size() == 0)
+				continue;
 
-            for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
-            {
-                Json::Value* next = *cmd;
+			Json::Value* rootObj = node->root.children.back();
+			if (rootObj->type != Json::ValueType::Object)
+				continue;
 
-                if (!_stricmp(next->name, name.c_str()))
-                {
-                    return next;
-                }
-            }
-        }
+			Json::Value* can = rootObj->ByName("can");
+			if (can == nullptr)
+				continue;
 
-        return nullptr;
-    }
+			for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
+			{
+				Json::Value* next = *cmd;
 
-    bool JdiHub::CheckParameters(Json::Value* cmd, std::vector<std::string>& args)
-    {
-        Json::Value* argsJson = cmd->ByName("args");
-        if (argsJson == nullptr)
-            return true;
-        if (argsJson->type != Json::ValueType::Int)
-            return true;
-        
-        // The command argument list contains the command name as args[0].
-        // The "args" parameter in JDI specifies the minimum number of actual arguments, ignoring the command name.
+				if (!_stricmp(next->name, name.c_str()))
+				{
+					return next;
+				}
+			}
+		}
 
-        return args.size() >= (argsJson->value.AsInt + 1);
-    }
+		return nullptr;
+	}
 
-    // Print a description of the command if the command is called with insufficient arguments.
-    void JdiHub::PrintUsage(Json::Value* cmd)
-    {
-        Json::Value* usage = cmd->ByName("usage");
-        if (usage == nullptr)
-            return;
-        if (usage->type != Json::ValueType::Array)
-            return;
+	bool JdiHub::CheckParameters(Json::Value* cmd, std::vector<std::string>& args)
+	{
+		Json::Value* argsJson = cmd->ByName("args");
+		if (argsJson == nullptr)
+			return true;
+		if (argsJson->type != Json::ValueType::Int)
+			return true;
+		
+		// The command argument list contains the command name as args[0].
+		// The "args" parameter in JDI specifies the minimum number of actual arguments, ignoring the command name.
 
-        // Print usage text lines
+		return args.size() >= (argsJson->value.AsInt + 1);
+	}
 
-        for (auto it = usage->children.begin(); it != usage->children.end(); ++it)
-        {
-            Json::Value* line = *it;
+	// Print a description of the command if the command is called with insufficient arguments.
+	void JdiHub::PrintUsage(Json::Value* cmd)
+	{
+		Json::Value* usage = cmd->ByName("usage");
+		if (usage == nullptr)
+			return;
+		if (usage->type != Json::ValueType::Array)
+			return;
 
-            if (line->type == Json::ValueType::String)
-            {
-                DBReport("%s", TcharToString(line->value.AsString).c_str());
-            }
-        }
-    }
+		// Print usage text lines
 
-    // Run JDI Command. Argument checking is performed automatically.
-    Json::Value* JdiHub::Execute(std::vector<std::string>& args)
-    {
-        if (args.size() == 0)
-            return nullptr;
+		for (auto it = usage->children.begin(); it != usage->children.end(); ++it)
+		{
+			Json::Value* line = *it;
 
-        Json::Value* cmd = CommandByName(args[0]);
-        if (cmd == nullptr)
-            return nullptr;
+			if (line->type == Json::ValueType::String)
+			{
+				DBReport("%s", TcharToString(line->value.AsString).c_str());
+			}
+		}
+	}
 
-        if (!CheckParameters(cmd, args))
-        {
-            PrintUsage(cmd);
-            return nullptr;
-        }
+	// Run JDI Command. Argument checking is performed automatically.
+	Json::Value* JdiHub::Execute(std::vector<std::string>& args)
+	{
+		if (args.size() == 0)
+			return nullptr;
 
-        reflexMapLock.Lock();
-        auto it = reflexMap.find(args[0]);
-        if (it == reflexMap.end())
-        {
-            reflexMapLock.Unlock();
-            return nullptr;
-        }
-        reflexMapLock.Unlock();
+		Json::Value* cmd = CommandByName(args[0]);
+		if (cmd == nullptr)
+			return nullptr;
 
-        return it->second(args);
-    }
+		if (!CheckParameters(cmd, args))
+		{
+			PrintUsage(cmd);
+			return nullptr;
+		}
 
-    // Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
-    bool JdiHub::CommandExists(std::vector<std::string>& args)
-    {
-        bool exists = false;
+		reflexMapLock.Lock();
+		auto it = reflexMap.find(args[0]);
+		if (it == reflexMap.end())
+		{
+			reflexMapLock.Unlock();
+			return nullptr;
+		}
+		reflexMapLock.Unlock();
 
-        if (args.size() == 0)
-            return false;
+		return it->second(args);
+	}
 
-        reflexMapLock.Lock();
-        auto it = reflexMap.find(args[0]);
-        exists = it != reflexMap.end();
-        reflexMapLock.Unlock();
+	// Quickly execute a command without parameters.
+	Json::Value* JdiHub::ExecuteFast(char* command)
+	{
+		reflexMapLock.Lock();
+		auto it = reflexMap.find(command);
+		if (it == reflexMap.end())
+		{
+			reflexMapLock.Unlock();
+			return nullptr;
+		}
+		reflexMapLock.Unlock();
 
-        return exists;
-    }
+		return it->second(noArgs);
+	}
+
+	// Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
+	bool JdiHub::CommandExists(std::vector<std::string>& args)
+	{
+		bool exists = false;
+
+		if (args.size() == 0)
+			return false;
+
+		reflexMapLock.Lock();
+		auto it = reflexMap.find(args[0]);
+		exists = it != reflexMap.end();
+		reflexMapLock.Unlock();
+
+		return exists;
+	}
 
 	void JdiHub::Dump(Json::Value* value, int depth)
 	{
@@ -338,9 +362,9 @@ namespace Debug
 
 		switch (value->type)
 		{
-            case Json::ValueType::Object:
+			case Json::ValueType::Object:
 				DBReport("%sObject %s: ", indent,
-                    value->name ? value->name : "");
+					value->name ? value->name : "");
 				for (auto it = value->children.begin(); it != value->children.end(); ++it)
 				{
 					Json::Value* child = *it;
@@ -349,7 +373,7 @@ namespace Debug
 				break;
 			case Json::ValueType::Array:
 				DBReport("%sArray %s: ", indent,
-                    value->name ? value->name : "");
+					value->name ? value->name : "");
 				for (auto it = value->children.begin(); it != value->children.end(); ++it)
 				{
 					Json::Value* child = *it;
@@ -359,26 +383,26 @@ namespace Debug
 
 			case Json::ValueType::Bool:
 				DBReport("%s%s: Bool %s", indent, 
-                    value->name ? value->name : "",
-                    value->value.AsBool ? "True" : "False");
+					value->name ? value->name : "",
+					value->value.AsBool ? "True" : "False");
 				break;
 			case Json::ValueType::Null:
 				DBReport("%s%s: Null", indent,
-                    value->name ? value->name : "");
+					value->name ? value->name : "");
 				break;
 
 			case Json::ValueType::Int:
 				DBReport("%s%s: Int: %I64u", indent,
-                    value->name ? value->name : "", value->value.AsInt);
+					value->name ? value->name : "", value->value.AsInt);
 				break;
 			case Json::ValueType::Float:
 				DBReport("%s%s: Float: %.4f", indent,
-                    value->name ? value->name : "", value->value.AsFloat);
+					value->name ? value->name : "", value->value.AsFloat);
 				break;
 
 			case Json::ValueType::String:
 				DBReport("%s%s: String: %s", indent,
-                    value->name ? value->name : "", Debug::Hub.TcharToString(value->value.AsString).c_str());
+					value->name ? value->name : "", Debug::Hub.TcharToString(value->value.AsString).c_str());
 				break;
 		}
 	}

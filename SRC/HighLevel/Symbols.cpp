@@ -14,30 +14,14 @@ static SYMControl *work = &sym; // current workspace (in use)
 // find first occurency of symbol in list
 static SYM * symfind(const char *symName)
 {
-    SYM *symbol = NULL;
-
-    // walk all
-    for(int tag=0; tag<61; tag++)
-    for(int i=0; i<work->symcount[tag]; i++)
+    for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
     {
-        if(!strcmp(work->symhash[tag][i].savedName, symName))
+        if (!strcmp(it->second->savedName, symName))
         {
-            symbol = &work->symhash[tag][i]; // found!
-            return symbol;
+            return it->second;
         }
     }
-
-    return NULL;
-}
-
-// calculate tag - sum of all ciphers in lower word of address
-static int gettag(uint32_t addr)
-{
-    uint32_t lo = (uint16_t)addr;
-    return ((lo >>  0) & 0xf) +         // value = 0...60
-           ((lo >>  4) & 0xf) +
-           ((lo >>  8) & 0xf) +
-           ((lo >> 12) & 0xf);
+    return nullptr;
 }
 
 void SYMSetWorkspace(SYMControl *useIt)
@@ -51,30 +35,22 @@ void SYMCompareWorkspaces (
     void (*DiffCallback)(uint32_t ea, char * name)
 )
 {
-    // walk all
-    for(int tag=0; tag<61; tag++)
-    for(int i=0; i<source->symcount[tag]; i++)
+    for (auto sourceId = source->symmap.begin(); sourceId != source->symmap.end(); ++sourceId)
     {
-        BOOL found = FALSE;
-        SYM *symbol = &source->symhash[tag][i];
-        if( !symbol->emuSymbol && symbol )
+        bool found = false;
+
+        for (auto destIt = dest->symmap.begin(); destIt != dest->symmap.end(); ++destIt)
         {
-            for(int tag2=0; tag2<61; tag2++)
+            if (!strcmp(sourceId->second->savedName, destIt->second->savedName))
             {
-                for(int i2=0; i2<dest->symcount[tag2]; i2++)
-                {
-                    SYM *symbol2 = &dest->symhash[tag][i];
-                    if(symbol2->emuSymbol || symbol2 == NULL) continue;
-                    if(!strcmp(symbol->savedName, symbol2->savedName))
-                    {
-                        found = TRUE;
-                        break;
-                    }
-                }
-                if(found) break;
+                found = true;
+                break;
             }
-            if(!found)
-                DiffCallback(symbol->eaddr, symbol->savedName);
+        }
+
+        if (!found)
+        {
+            DiffCallback(sourceId->second->eaddr, sourceId->second->savedName);
         }
     }
 }
@@ -94,20 +70,42 @@ uint32_t SYMAddress(const char *symName)
 // if label is not specified, return NULL
 char * SYMName(uint32_t symAddr)
 {
-    // calculate tag
-    int tag = gettag(symAddr);
+    auto it = work->symmap.find(symAddr);
 
-    // walk all
-    for(int i=0; i<work->symcount[tag]; i++)
+    if (it == work->symmap.end())
     {
-        if(work->symhash[tag][i].eaddr == symAddr)
+        return nullptr;
+    }
+
+    return it->second->savedName;
+}
+
+// Get the symbol closest to the specified address and offset relative to the start of the symbol.
+char* SYMGetNearestName(uint32_t address, size_t& offset)
+{
+    int minDelta = INT_MAX;
+    SYM* nearestSymbol = nullptr;
+
+    offset = 0;
+
+    for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
+    {
+        if (address >= it->first)
         {
-            return work->symhash[tag][i].savedName;
+            int delta = address - it->first;
+            if (delta < minDelta)
+            {
+                minDelta = delta;
+                nearestSymbol = it->second;
+            }
         }
     }
 
-    // symbol not found
-    return NULL;
+    if (nearestSymbol == nullptr)
+        return nullptr;
+
+    offset = address - nearestSymbol->eaddr;
+    return nearestSymbol->savedName;
 }
 
 // associate high-level call with symbol
@@ -152,79 +150,59 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
         }
         DBReport2(DbgChannel::HLE, "patched API call: %08X %s\n", symbol->eaddr, symName);
     }
-    else return;
 }
 
 // save string in memory
 static char * strsave(const char *str)
 {
     size_t len = strlen(str) + 1;
-    char *saved = (char *)malloc(len);
+    char *saved = new char[len];
     assert(saved);
     strcpy(saved, str);
     return saved;
 }
 
 // add new symbol
-void SYMAddNew(uint32_t addr, const char *name, bool emuSymbol /* false */)
+void SYMAddNew(uint32_t addr, const char *name)
 {
-    int i;
-    // calculate tag
-    int tag = gettag(addr);
+    SYM* symbol = symfind(name);
 
-    // ignore NULL address
-    if(addr == 0) return;
-
-    // check if already present
-    for(i=0; i<work->symcount[tag]; i++)
+    if (symbol != nullptr)
     {
-        // if yes, then replace
-        if(work->symhash[tag][i].eaddr == addr)
+        // Replace name
+        if (symbol->savedName)
         {
-            if(work->symhash[tag][i].savedName)
-            {
-                free(work->symhash[tag][i].savedName);
-                work->symhash[tag][i].savedName = NULL;
-            }
-            work->symhash[tag][i].savedName = strsave(name);
-            return;
+            delete[] symbol->savedName;
+            symbol->savedName = nullptr;
         }
+        symbol->savedName = strsave(name);
     }
+    else
+    {
+        // Add new
+        SYM* sym = new SYM;
 
-    // if not, then add new
-    i = work->symcount[tag];
-    work->symhash[tag] = (work->symhash[tag] != NULL) ?
-        ( (SYM *)realloc(work->symhash[tag], sizeof(SYM) * (i + 1)) ) :
-        ( (SYM *)malloc(sizeof(SYM)) );
-    assert(work->symhash[tag]);
-    work->symhash[tag][i].eaddr = addr;
-    work->symhash[tag][i].savedName = strsave(name);
-    work->symhash[tag][i].routine = NULL;
-    work->symhash[tag][i].emuSymbol = emuSymbol;
-    work->symcount[tag]++;
+        sym->eaddr = addr;
+        sym->savedName = strsave(name);
+        sym->routine = nullptr;
+
+        work->symmap[addr] = sym;
+    }
 }
 
-// remove all symbols (delete list)
+// Remove all symbols
 void SYMKill()
 {
-    // kill 'em all
-    for(int tag=0; tag<61; tag++)
+    for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
     {
-        for(int i=0; i<work->symcount[tag]; i++)
+        if (it->second->savedName)
         {
-            if(work->symhash[tag][i].savedName)
-            {
-                free(work->symhash[tag][i].savedName);
-                work->symhash[tag][i].savedName = NULL;
-            }
+            delete[] it->second->savedName;
         }
-        if(work->symhash[tag])
-        {
-            free(work->symhash[tag]);
-            work->symhash[tag] = NULL;
-        }
-        work->symcount[tag] = 0;
+        delete it->second;
     }
+
+    work->symmap.clear();
 }
 
 // list symbols, matching first occurence of "str".
@@ -232,19 +210,14 @@ void SYMKill()
 void SYMList(const char *str)
 {
     size_t len = strlen(str), cnt = 0;
-    DBReport("tag:id <address> symbol\n\n");
+    DBReport("<address> symbol\n\n");
 
-    // walk all
-    for(int tag=0; tag<61; tag++)
-    for(int i=0; i<work->symcount[tag]; i++)
+    for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
     {
-        SYM *symbol = &work->symhash[tag][i];
-        if( ((*str == '*') || !_strnicmp(str, symbol->savedName, len)) && !symbol->emuSymbol )
+        SYM* symbol = it->second;
+        if (((*str == '*') || !_strnicmp(str, symbol->savedName, len)))
         {
-            DBReport(
-                "%02i:%03i <%08X> %s\n", 
-                tag, i, symbol->eaddr, symbol->savedName
-            );
+            DBReport("<%08X> %s\n", symbol->eaddr, symbol->savedName);
             cnt++;
         }
     }

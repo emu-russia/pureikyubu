@@ -1,4 +1,4 @@
-// HLE JDI. Available only after emulation has been started.
+// HLE JDI. Some commands available only after emulation has been started.
 
 #pragma once
 

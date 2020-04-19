@@ -1,12 +1,13 @@
-enum MAP_FORMAT
-{
-    MAP_FORMAT_BAD = 0,
+#pragma once
 
-    MAP_FORMAT_RAW,             // MAP format, invented by org
-    MAP_FORMAT_CW,              // CodeWarrior
-    MAP_FORMAT_GCC,             // GCC
+enum class MAP_FORMAT : int
+{
+    BAD = 0,
+
+    RAW,             // MAP format, invented by org
+    CW,              // CodeWarrior
+    GCC,             // GCC
 };
 
-// 0: cannot load map
-// >0: map loaded (MAP_FORMAT returned)
-int LoadMAP(const TCHAR *mapname, bool add=false);
+MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add=false);
+MAP_FORMAT LoadMAP(const char* mapname, bool add = false);

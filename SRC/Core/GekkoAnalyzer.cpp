@@ -350,7 +350,7 @@ namespace Gekko
 			case (202 * 2) | OEBit: info->instr = Instruction::addzeo; Da(instr, info); break;
 			case (202 * 2) | OEBit | RcBit: info->instr = Instruction::addzeo_d; Da(instr, info); break;
 
-			case 28 * 2: info->instr = Instruction::and; Asb(instr, info); break;
+			case 28 * 2: info->instr = Instruction::_and; Asb(instr, info); break;
 			case (28 * 2) | RcBit: info->instr = Instruction::and_d; Asb(instr, info); break;
 
 			case 60 * 2: info->instr = Instruction::andc; Asb(instr, info); break;
@@ -454,7 +454,7 @@ namespace Gekko
 			case (104 * 2) | OEBit | RcBit: info->instr = Instruction::nego_d; Da(instr, info); break;
 			case 124 * 2: info->instr = Instruction::nor; Asb(instr, info); break;
 			case (124 * 2) | RcBit: info->instr = Instruction::nor_d; Asb(instr, info); break;
-			case 444 * 2: info->instr = Instruction::or; Asb(instr, info); break;
+			case 444 * 2: info->instr = Instruction::_or; Asb(instr, info); break;
 			case (444 * 2) | RcBit: info->instr = Instruction::or_d; Asb(instr, info); break;
 			case 412 * 2: info->instr = Instruction:: orc; Asb(instr, info); break;
 			case (412 * 2) | RcBit: info->instr = Instruction::orc_d; Asb(instr, info); break;
@@ -513,7 +513,7 @@ namespace Gekko
 			case 566 * 2: info->instr = Instruction::tlbsync; break;
 			case 4 * 2: info->instr = Instruction::tw; ImmAb(instr, info); info->flow = true; break;
 
-			case 316 * 2: info->instr = Instruction::xor; Asb(instr, info); break;
+			case 316 * 2: info->instr = Instruction::_xor; Asb(instr, info); break;
 			case (316 * 2) | RcBit: info->instr = Instruction::xor_d; Asb(instr, info); break;
 		}
 	}
@@ -547,7 +547,7 @@ namespace Gekko
 			case (202 * 2) | OEBit: info->instr = Instruction::addzeo; DaFast(instr, info); break;
 			case (202 * 2) | OEBit | RcBit: info->instr = Instruction::addzeo_d; DaFast(instr, info); break;
 
-			case 28 * 2: info->instr = Instruction::and; AsbFast(instr, info); break;
+			case 28 * 2: info->instr = Instruction::_and; AsbFast(instr, info); break;
 			case (28 * 2) | RcBit: info->instr = Instruction::and_d; AsbFast(instr, info); break;
 
 			case 60 * 2: info->instr = Instruction::andc; AsbFast(instr, info); break;
@@ -651,7 +651,7 @@ namespace Gekko
 			case (104 * 2) | OEBit | RcBit: info->instr = Instruction::nego_d; DaFast(instr, info); break;
 			case 124 * 2: info->instr = Instruction::nor; AsbFast(instr, info); break;
 			case (124 * 2) | RcBit: info->instr = Instruction::nor_d; AsbFast(instr, info); break;
-			case 444 * 2: info->instr = Instruction:: or ; AsbFast(instr, info); break;
+			case 444 * 2: info->instr = Instruction::_or ; AsbFast(instr, info); break;
 			case (444 * 2) | RcBit: info->instr = Instruction::or_d; AsbFast(instr, info); break;
 			case 412 * 2: info->instr = Instruction::orc; AsbFast(instr, info); break;
 			case (412 * 2) | RcBit: info->instr = Instruction::orc_d; AsbFast(instr, info); break;
@@ -710,7 +710,7 @@ namespace Gekko
 			case 566 * 2: info->instr = Instruction::tlbsync; break;
 			case 4 * 2: info->instr = Instruction::tw; ImmAbFast(instr, info); info->flow = true; break;
 
-			case 316 * 2: info->instr = Instruction::xor; AsbFast(instr, info); break;
+			case 316 * 2: info->instr = Instruction::_xor; AsbFast(instr, info); break;
 			case (316 * 2) | RcBit: info->instr = Instruction::xor_d; AsbFast(instr, info); break;
 		}
 	}

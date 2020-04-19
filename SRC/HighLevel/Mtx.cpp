@@ -71,8 +71,6 @@ static Matrix tmpMatrix[4];
 
 void C_MTXIdentity(void)
 {
-    HLEHit(HLE_MTX_IDENTITY);
-
     MatrixPtr m = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
 
     MTX(m)[0][0] = ONE;  MTX(m)[0][1] = ZERO; MTX(m)[0][2] = ZERO; MTX(m)[0][3] = ZERO;
@@ -82,8 +80,6 @@ void C_MTXIdentity(void)
 
 void C_MTXCopy(void)
 {
-    HLEHit(HLE_MTX_COPY);
-
     MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
     MatrixPtr dst = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
 
@@ -99,8 +95,6 @@ void C_MTXCopy(void)
 
 void C_MTXConcat(void)
 {
-    HLEHit(HLE_MTX_CONCAT);
-
     MatrixFPtr a = (MatrixFPtr)(&mi.ram[PARAM(0) & RAMMASK]);
     MatrixFPtr b = (MatrixFPtr)(&mi.ram[PARAM(1) & RAMMASK]);
     MatrixFPtr axb = (MatrixFPtr)(&mi.ram[PARAM(2) & RAMMASK]);
@@ -153,8 +147,6 @@ void C_MTXConcat(void)
 
 void C_MTXTranspose(void)
 {
-    HLEHit(HLE_MTX_TRANSPOSE);
-
     MatrixPtr src = (MatrixPtr)(&mi.ram[PARAM(0) & RAMMASK]);
     MatrixPtr xPose = (MatrixPtr)(&mi.ram[PARAM(1) & RAMMASK]);
     MatrixPtr t = (&tmpMatrix[0]), m;
@@ -183,12 +175,8 @@ void C_MTXTranspose(void)
 
 void C_MTXInverse(void)
 {
-    HLEHit(HLE_MTX_INVERSE);
-
 }
 
 void C_MTXInvXpose(void)
 {
-    HLEHit(HLE_MTX_INVXPOSE);
-
 }

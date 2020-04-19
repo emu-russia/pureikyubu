@@ -22,6 +22,7 @@
     <ClCompile Include="..\cmd.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\cpuview.cpp" />
+    <ClCompile Include="..\DebugCommands.cpp" />
     <ClCompile Include="..\Debugger.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\memview.cpp" />
@@ -33,17 +34,23 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\regs.cpp" />
+    <ClCompile Include="..\SamplingProfiler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\cmd.h" />
     <ClInclude Include="..\console.h" />
     <ClInclude Include="..\cpuview.h" />
+    <ClInclude Include="..\DebugCommands.h" />
     <ClInclude Include="..\Debugger.h" />
     <ClInclude Include="..\input.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\regs.h" />
+    <ClInclude Include="..\SamplingProfiler.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Data\DebuggerJdi.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -113,7 +120,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -128,7 +135,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -143,7 +150,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
@@ -160,7 +167,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>

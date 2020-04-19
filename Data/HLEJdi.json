@@ -61,6 +61,69 @@
         "Example: DumpContext 0x80331200 1"
       ],
       "output": "Array [ UInt32 gpr[32], Float fpr[32], Float psr[32], UInt32 gqr[32], UInt32 cr, UInt32 lr, UInt32 ctr, UInt32 xer, UInt32 fpscr, UInt32 srr0, UInt32 srr1, UInt16 mode, UInt16 state]  (see OSContext struct)"
+    },
+
+    "UnloadMap": {
+      "help": "Unload map and clear all symbols"
+    },
+
+    "LoadMap": {
+      "help": "Unload map and load new one",
+      "args": 1,
+      "usage": [
+        "Syntax: LoadMap <file>",
+        "Example: LoadMap pong.map"
+      ]
+    },
+
+    "AddMap": {
+      "help": "Add symbols from another map",
+      "args": 1,
+      "usage": [
+        "Syntax: AddMap <file>",
+        "If the Map file is not loaded, it loads the specifed Map and makes it current, instead of adding.",
+        "Example: AddMap pong.map"
+      ]
+    },
+
+    "AddressByName": {
+      "help": "Get address by symbol name",
+      "args": 1,
+      "usage": [
+        "Syntax: AddressByName <name>",
+        "Example: AddressByName OSInit"
+      ],
+      "output": "UInt32 / nullptr (not found)"
+    },
+
+    "NameByAddress": {
+      "help": "Get symbol name by address",
+      "args": 1,
+      "usage": [
+        "Syntax: NameByAddress <address>",
+        "Example: NameByAddress 0x80031000"
+      ],
+      "output": "Array: [String] / nullptr (not found)"
+    },
+
+    "OSTime": {
+      "internal": true,
+      "help": "Convert Geeko ticks to human-readable time",
+      "args": 1,
+      "usage": [
+        "Syntax: OSTime <GekkoTbrValue>"
+      ],
+      "output": "Array: [String]"
+    },
+
+    "GetNearestName": {
+      "internal": true,
+      "help": "Get the symbol closest to the specified address and offset relative to the start of the symbol.",
+      "args": 1,
+      "usage": [
+        "Syntax: GetNearestName <address>"
+      ],
+      "output": "Object: { String name, Int offset } / nullptr (not found)"
     }
 
   }

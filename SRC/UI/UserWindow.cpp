@@ -427,7 +427,14 @@ void OnMainWindowOpened()
     }
     else
     {
-        _stprintf_s (gameTitle, _countof(gameTitle) - 1, _T("%s demo"), ldat.currentFileName);
+        if (!_tcscmp(ldat.currentFileName, _T("Bootrom")))
+        {
+            _stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
+        }
+        else
+        {
+            _stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s demo"), ldat.currentFileName);
+        }
         _stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
     }
     SetWindowText(wnd.hMainWindow, newTitle);

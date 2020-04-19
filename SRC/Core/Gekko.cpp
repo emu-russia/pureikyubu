@@ -69,7 +69,9 @@ namespace Gekko
         gekkoThread->Suspend();
 
         cpu.one_second = CPU_TIMER_CLOCK;
-        cpu.decreq = 0;
+        cpu.decreq = false;
+        cpu.exception = false;
+        cpu.branch = false;
         intFlag = false;
 
         // set CPU memory operations to default (using MEM*);
@@ -94,6 +96,12 @@ namespace Gekko
 
         // Disable translation for now
         MSR &= ~(MSR_DR | MSR_IR);
+
+        cpu.tb.uval = 0;
+        PPC_DEC = 0;
+        CTR = 0;
+
+        dispatchQueueCounter = 0;
     }
 
     // Modify CPU counters

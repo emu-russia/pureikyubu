@@ -85,11 +85,11 @@ namespace Gekko
 			case Instruction::oris: return "oris";
 			case Instruction::xori: return "xori";
 			case Instruction::xoris: return "xoris";
-			case Instruction::and: return "and";
+			case Instruction::_and: return "and";
 			case Instruction::and_d: return "and.";
-			case Instruction::or: return "or";
+			case Instruction::_or: return "or";
 			case Instruction::or_d: return "or.";
-			case Instruction::xor: return "xor";
+			case Instruction::_xor: return "xor";
 			case Instruction::xor_d: return "xor.";
 			case Instruction::nand: return "nand";
 			case Instruction::nand_d: return "nand.";

@@ -1,4 +1,6 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
+// When Dolwin starts in a managed environment, the interop library calls EMUCtor at boot and EMUDtor at exit.
+// All other interactions are made through JDI calls (CallJdi).
+
 #include "pch.h"
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -9,41 +11,117 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     switch (ul_reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
+        case DLL_PROCESS_DETACH:
         case DLL_THREAD_ATTACH:
         case DLL_THREAD_DETACH:
-        case DLL_PROCESS_DETACH:
             break;
     }
     return TRUE;
 }
 
-extern "C" __declspec(dllexport) void Test()
+#define endl    ( line[p] == 0 )
+#define space   ( line[p] == 0x20 )
+#define quot    ( line[p] == '\'' )
+#define dquot   ( line[p] == '\"' )
+
+static void Tokenize(char* line, std::vector<std::string> & args)
 {
-    MessageBox(NULL, _T("Test"), _T("Test"), MB_OK);
+    int p, start, end;
+    p = start = end = 0;
+
+    args.clear();
+
+    // while not end line
+    while (!endl)
+    {
+        // skip space first, if any
+        while (space) p++;
+        if (!endl && (quot || dquot))
+        {   // quotation, need special case
+            p++;
+            start = p;
+            while (1)
+            {
+                if (endl)
+                {
+                    throw "Open quotation";
+                    return;
+                }
+
+                if (quot || dquot)
+                {
+                    end = p;
+                    p++;
+                    break;
+                }
+                else p++;
+            }
+
+            args.push_back(std::string(line + start, end - start));
+        }
+        else if (!endl)
+        {
+            start = p;
+            while (1)
+            {
+                if (endl || space || quot || dquot)
+                {
+                    end = p;
+                    break;
+                }
+
+                p++;
+            }
+
+            args.push_back(std::string(line + start, end - start));
+        }
+    }
 }
 
-// set current DVD image for read/seek/open file operations
-// return 1 if no errors, and 0 if cannot use file
-extern "C" __declspec(dllexport) bool _N_DVDSetCurrent(char* file)
+#undef space
+#undef quot
+#undef dquot
+#undef endl
+
+extern "C" __declspec(dllexport) char* CallJdi(char* request)
 {
-    return DVDSetCurrent(file);
+    Json json;
+    std::vector<std::string> args;
+
+    Tokenize(request, args);
+
+    Json::Value* output = Debug::Hub.Execute(args);
+    if (output == nullptr)
+    {
+        char * text = (char*)::CoTaskMemAlloc(3);
+        assert(text);
+        text[0] = '{';
+        text[1] = '}';
+        text[2] = 0;
+        return text;
+    }
+
+    Json::Value *rootObj = json.root.AddObject(nullptr);
+    rootObj->AddValue("reply", output);
+
+    size_t jsonTextSize = 0;
+    json.GetSerializedTextSize(nullptr, -1, jsonTextSize);
+
+    char * jsonText = (char*)::CoTaskMemAlloc(jsonTextSize + 1);
+    assert(jsonText);
+    memset(jsonText, 0, jsonTextSize + 1);
+
+    json.Serialize(jsonText, jsonTextSize, jsonTextSize);
+
+    return jsonText;
 }
 
-// seek and read operations on current DVD
-extern "C" __declspec(dllexport) void _N_DVDSeek(int position)
+extern "C" __declspec(dllexport) void InitEmu()
 {
-    DVDSeek(position);
+    EMUCtor();
 }
 
-extern "C" __declspec(dllexport) void _N_DVDRead(void* buffer, int length)
+extern "C" __declspec(dllexport) void ShutdownEmu()
 {
-    DVDRead(buffer, length);
-}
-
-// open file in DVD root. return file position, or 0 if no such file.
-// note : current DVD must be selected first!
-// example use : s32 banner = DVDOpenFile("/opening.bnr");
-extern "C" __declspec(dllexport) long _N_DVDOpenFile(char* dvdfile)
-{
-    return DVDOpenFile(dvdfile);
+    EMUDtor();
 }

@@ -95,7 +95,6 @@
   <ItemGroup>
     <Compile Include="Config.cs" />
     <Compile Include="DolwinNativeDll.cs" />
-    <Compile Include="Emulator.cs" />
     <Compile Include="FileUtils.cs" />
     <Compile Include="FormAbout.cs">
       <SubType>Form</SubType>
@@ -109,7 +108,6 @@
     <Compile Include="FormMain.Designer.cs">
       <DependentUpon>FormMain.cs</DependentUpon>
     </Compile>
-    <Compile Include="Loader.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormAbout.resx">
