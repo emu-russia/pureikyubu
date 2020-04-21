@@ -418,7 +418,7 @@ void OnMainWindowOpened()
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
     // set new title for main window
-    TCHAR newTitle[1024], gameTitle[64];
+    TCHAR newTitle[1024], gameTitle[0x200];
     const TCHAR prefix[] = { APPNAME _T(" - Running %s") };
     if(ldat.dvd)
     {

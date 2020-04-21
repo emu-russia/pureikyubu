@@ -1,3 +1,4 @@
+// This module contains only basic tests.
 #include "pch.h"
 #include "CppUnitTest.h"
 
