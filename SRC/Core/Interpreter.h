@@ -368,6 +368,17 @@ namespace Gekko
 		// setup extension tables 
 		void InitTables();
 
+		bool        exception = false;          // exception pending
+		bool        branch = false;             // non-linear PC change
+		uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
+		bool        RESERVE;            // for lwarx/stwcx.   
+		uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
+		float       ldScale[64];        // for paired-single loads
+		float       stScale[64];        // for paired-single stores
+
+		static float dequantize(uint32_t data, int type, uint8_t scale);
+		static uint32_t quantize(float data, int type, uint8_t scale);
+
 	public:
 		Interpreter(GekkoCore* _core)
 		{
@@ -381,7 +392,7 @@ namespace Gekko
 		}
 
 		void ExecuteOpcode();
-		void Exception(uint32_t code);
+		void Exception(Gekko::Exception code);
 	};
 
 }

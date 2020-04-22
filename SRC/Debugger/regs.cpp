@@ -19,8 +19,8 @@ void con_memorize_cpu_regs()
     for(int i=0; i<32; i++)
     {
         gpr_old[i] = GPR[i];
-        ps0_old[i].uval = cpu.fpr[i].uval;
-        ps1_old[i].uval = cpu.ps1[i].uval;
+        ps0_old[i].uval = Gekko::Gekko->regs.fpr[i].uval;
+        ps1_old[i].uval = Gekko::Gekko->regs.ps1[i].uval;
     }
 }
 
@@ -32,7 +32,8 @@ static void con_print_other_regs()
     con_printf_at(28, 5, "\x1%cdec \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_DEC);
     con_printf_at(28, 8, "\x1%cpc  \x1%c%08X", ConColor::CYAN, ConColor::NORM, PC);
     con_printf_at(28, 9, "\x1%clr  \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_LR);
-    con_printf_at(28,14, "\x1%ctbr \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, cpu.tb.Part.u, cpu.tb.Part.l);
+    con_printf_at(28,14, "\x1%ctbr \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, 
+        Gekko::Gekko->regs.tb.Part.u, Gekko::Gekko->regs.tb.Part.l);
 
     con_printf_at(42, 1, "\x1%cmsr   \x1%c%08X", ConColor::CYAN, ConColor::NORM, MSR);
     con_printf_at(42, 2, "\x1%cfpscr \x1%c%08X", ConColor::CYAN, ConColor::NORM, FPSCR);
@@ -93,7 +94,7 @@ static void con_print_fpreg(int x, int y, int num)
 {
     ULARGE_INTEGER li;
 
-    if(cpu.fpr[num].uval != ps0_old[num].uval)
+    if(Gekko::Gekko->regs.fpr[num].uval != ps0_old[num].uval)
     {
         if(FPRD(num) >= 0.0) con_printf_at(x, y, "\x1%cf%-2i  \x1%c%e", ConColor::CYAN, num, ConColor::GREEN, FPRD(num));
         else con_printf_at(x, y, "\x1%cf%-2i \x1%c%e", ConColor::CYAN, num, ConColor::GREEN, FPRD(num));
@@ -101,7 +102,7 @@ static void con_print_fpreg(int x, int y, int num)
         li.QuadPart = FPRU(num);
         con_printf_at(x + 20, y, "\x1%c%.8X %.8X", ConColor::GREEN, li.HighPart, li.LowPart);
 
-        ps0_old[num].uval = cpu.fpr[num].uval;
+        ps0_old[num].uval = Gekko::Gekko->regs.fpr[num].uval;
     }
     else
     {
@@ -115,12 +116,12 @@ static void con_print_fpreg(int x, int y, int num)
 
 static void con_print_ps(int x, int y, int num)
 {
-    if(cpu.fpr[num].uval != ps0_old[num].uval)
+    if(Gekko::Gekko->regs.fpr[num].uval != ps0_old[num].uval)
     {
         if(PS0(num) >= 0.0f) con_printf_at(x, y, "\x1%cps%-2i  \x1%c%.4e", ConColor::CYAN, num, ConColor::GREEN, PS0(num));
         else con_printf_at(x, y, "\x1%cps%-2i \x1%c%.4e", ConColor::CYAN, num, ConColor::GREEN, PS0(num));
         
-        ps0_old[num].uval = cpu.fpr[num].uval;
+        ps0_old[num].uval = Gekko::Gekko->regs.fpr[num].uval;
     }
     else
     {
@@ -128,12 +129,12 @@ static void con_print_ps(int x, int y, int num)
         else con_printf_at(x, y, "\x1%cps%-2i \x1%c%.4e", ConColor::CYAN, num, ConColor::NORM, PS0(num));
     }
 
-    if(cpu.ps1[num].uval != ps1_old[num].uval)
+    if(Gekko::Gekko->regs.ps1[num].uval != ps1_old[num].uval)
     {
         if(PS1(num) >= 0.0f) con_printf_at(x + 18, y, "\x1%c %.4e", ConColor::GREEN, PS1(num));
         else con_printf_at(x + 18, y, "\x1%c%.4e", ConColor::GREEN, PS1(num));
         
-        ps1_old[num].uval = cpu.ps1[num].uval;
+        ps1_old[num].uval = Gekko::Gekko->regs.ps1[num].uval;
     }
     else
     {

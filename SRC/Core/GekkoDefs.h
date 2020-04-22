@@ -38,16 +38,79 @@
 
 // Exception vectors (physical address)
 
-#define CPU_EXCEPTION_RESET         0x0100
-#define CPU_EXCEPTION_MACHINE       0x0200
-#define CPU_EXCEPTION_DSI           0x0300
-#define CPU_EXCEPTION_ISI           0x0400
-#define CPU_EXCEPTION_INTERRUPT     0x0500
-#define CPU_EXCEPTION_ALIGN         0x0600
-#define CPU_EXCEPTION_PROGRAM       0x0700
-#define CPU_EXCEPTION_FPUNAVAIL     0x0800
-#define CPU_EXCEPTION_DECREMENTER   0x0900
-#define CPU_EXCEPTION_SYSCALL       0x0C00
-#define CPU_EXCEPTION_PERFMON       0x0D00
-#define CPU_EXCEPTION_IABR          0x1300
-#define CPU_EXCEPTION_THERMAL       0x1700
+namespace Gekko
+{
+	enum class Exception : uint32_t
+	{
+		RESET = 0x0100,
+		MACHINE = 0x0200,
+		DSI = 0x0300,
+		ISI = 0x0400,
+		INTERRUPT = 0x0500,
+		ALIGN = 0x0600,
+		PROGRAM = 0x0700,
+		FPUNAVAIL = 0x0800,
+		DECREMENTER = 0x0900,
+		SYSCALL = 0x0C00,
+		PERFMON = 0x0D00,
+		IABR = 0x1300,
+		THERMAL = 0x1700,
+	};
+}
+
+// Sprs
+
+namespace Gekko
+{
+	enum class SPR : int
+	{
+		XER = 1,
+		LR = 8,
+		CTR = 9,
+		DSISR = 18,
+		DAR = 19,
+		DEC = 22,
+		SDR1 = 25,
+		SRR0 = 26,
+		SRR1 = 27,
+		SPRG0 = 272,
+		SPRG1 = 273,
+		SPRG2 = 274,
+		SPRG3 = 275,
+		EAR = 282,
+		PVR = 287,
+		IBAT0U = 528,
+		IBAT0L = 529,
+		IBAT1U = 530,
+		IBAT1L = 531,
+		IBAT2U = 532,
+		IBAT2L = 533,
+		IBAT3U = 534,
+		IBAT3L = 535,
+		DBAT0U = 536,
+		DBAT0L = 537,
+		DBAT1U = 538,
+		DBAT1L = 539,
+		DBAT2U = 540,
+		DBAT2L = 541,
+		DBAT3U = 542,
+		DBAT3L = 543,
+		HID0 = 1008,
+		HID1 = 1009,
+		IABR = 1010,
+		DABR = 1013,
+		GQRs = 912,
+		GQR0 = 912,
+		GQR1 = 913,
+		GQR2 = 914,
+		GQR3 = 915,
+		GQR4 = 916,
+		GQR5 = 917,
+		GQR6 = 918,
+		GQR7 = 919,
+		HID2 = 920,
+		WPAR = 921,
+		DMAU = 922,
+		DMAL = 923,
+	};
+}

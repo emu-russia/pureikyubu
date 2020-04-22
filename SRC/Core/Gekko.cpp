@@ -1,9 +1,6 @@
 // CPU controls 
 #include "pch.h"
 
-// CPU control/state block (all important data is here)
-CPUControl cpu;
-
 // memory operations (using MEM* or DB* read/write operations)
 void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t *reg);
 void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
@@ -68,11 +65,10 @@ namespace Gekko
     {
         gekkoThread->Suspend();
 
-        cpu.one_second = CPU_TIMER_CLOCK;
-        cpu.decreq = false;
-        cpu.exception = false;
-        cpu.branch = false;
+        one_second = CPU_TIMER_CLOCK;
         intFlag = false;
+        ops = 0;
+        dispatchQueueCounter = 0;
 
         // set CPU memory operations to default (using MEM*);
         // debugger will override them by DB* calls after start, if need.
@@ -86,37 +82,31 @@ namespace Gekko
         CPUReadDouble = MEMReadDouble;
         CPUWriteDouble = MEMWriteDouble;
 
-        // clear opcode counter (used for MIPS calculaion)
-        cpu.ops = 0;
+        // Registers
 
-        // we dont care about CPU registers, because they are 
-        // undefined, since any GC program is virtually loaded
-        // after BOOTROM. although, we should set some system
-        // registers for correct MMU emulation (see Bootrom.cpp).
+        memset(&regs, 0, sizeof(regs));
 
         // Disable translation for now
-        MSR &= ~(MSR_DR | MSR_IR);
+        regs.msr &= ~(MSR_DR | MSR_IR);
 
-        cpu.tb.uval = 0;
-        PPC_DEC = 0;
-        CTR = 0;
-
-        dispatchQueueCounter = 0;
+        regs.tb.uval = 0;
+        regs.spr[22] = 0;   // DEC
+        regs.spr[9] = 0;    // CTR
     }
 
     // Modify CPU counters
     void GekkoCore::Tick()
     {
-        UTBR += CounterStep;         // timer
+        regs.tb.uval += CounterStep;         // timer
 
-        uint32_t old = PPC_DEC;
-        PPC_DEC--;          // decrementer
-        if ((old ^ PPC_DEC) & 0x80000000)
+        uint32_t old = regs.spr[(int)SPR::DEC];
+        regs.spr[(int)SPR::DEC]--;          // decrementer
+        if ((old ^ regs.spr[(int)SPR::DEC]) & 0x80000000)
         {
-            if (MSR & MSR_EE)
+            if (regs.msr & MSR_EE)
             {
-                cpu.decreq = 1;
-                DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", PC);
+                decreq = 1;
+                DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
             }
         }
 
@@ -133,7 +123,7 @@ namespace Gekko
 
     int64_t GekkoCore::GetTicks()
     {
-        return cpu.tb.sval;
+        return regs.tb.sval;
     }
 
     // 1 second of emulated CPU time.
@@ -186,7 +176,7 @@ namespace Gekko
         intFlag = false;
     }
 
-    void GekkoCore::Exception(uint32_t code)
+    void GekkoCore::Exception(Gekko::Exception code)
     {
         interp->Exception(code);
     }
@@ -208,7 +198,7 @@ namespace Gekko
             }
             else
             {
-                if (cpu.tb.uval >= waitQueue[i].tbrValue)
+                if (regs.tb.uval >= waitQueue[i].tbrValue)
                 {
                     waitQueue[i].tbrValue = -1;
                     if (waitQueue[i].thread)

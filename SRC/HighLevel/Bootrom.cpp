@@ -174,7 +174,7 @@ static void __SyncTime(bool rtc)
     systemTime += newTime - TBR;
     CPUWriteDouble(0x800030d8, (uint64_t *)&systemTime);
     TBR = newTime;
-    DBReport2(DbgChannel::HLE, "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
+    DBReport2(DbgChannel::HLE, "new timer: 0x%llx\n\n", Gekko::Gekko->GetTicks());
 }
 
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
@@ -217,7 +217,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
-    memcpy( &mi.ram[CPU_EXCEPTION_SYSCALL],
+    memcpy( &mi.ram[Gekko::Exception::SYSCALL],
             default_syscall, 
             sizeof(default_syscall) );
 

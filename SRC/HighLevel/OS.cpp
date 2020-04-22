@@ -201,11 +201,11 @@ void OSLoadFPUContext(void)
         {
             if(HID2 & HID2_PSE)
             {
-                cpu.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
-                swap_double(&cpu.ps1[i].uval);
+                Gekko::Gekko->regs.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
+                swap_double(&Gekko::Gekko->regs.ps1[i].uval);
             }
-            cpu.fpr[i].uval = *(uint64_t *)(&c->fpr[i]);
-            swap_double(&cpu.fpr[i].uval);
+            Gekko::Gekko->regs.fpr[i].uval = *(uint64_t *)(&c->fpr[i]);
+            swap_double(&Gekko::Gekko->regs.fpr[i].uval);
         }
     }
 }
@@ -220,11 +220,11 @@ void OSSaveFPUContext(void)
 
     for(int i=0; i<32; i++)
     {
-        *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = Gekko::Gekko->regs.fpr[i].uval;
         swap_double(&c->fpr[i]);
         if(HID2 & HID2_PSE)
         {
-            *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = Gekko::Gekko->regs.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }
@@ -239,11 +239,11 @@ void OSFillFPUContext(void)
 
     for(int i=0; i<32; i++)
     {
-        *(uint64_t *)(&c->fpr[i]) = cpu.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = Gekko::Gekko->regs.fpr[i].uval;
         swap_double(&c->fpr[i]);
         if(HID2 & HID2_PSE)
         {
-            *(uint64_t *)(&c->psr[i]) = cpu.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = Gekko::Gekko->regs.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }

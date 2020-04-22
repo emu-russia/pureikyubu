@@ -12,7 +12,7 @@ namespace Gekko
     // CR0 (if .)
     OP(RLWINM)
     {
-        uint32_t m = cpu.rotmask[MB][ME];
+        uint32_t m = Gekko::Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(SH, RRS);
         uint32_t res = r & m;
         RRA = res;
@@ -25,7 +25,7 @@ namespace Gekko
     // ra = r & m
     OP(RLWNM)
     {
-        uint32_t m = cpu.rotmask[MB][ME];
+        uint32_t m = Gekko::Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(RRB & 0x1f, RRS);
         uint32_t res = r & m;
         RRA = res;
@@ -39,7 +39,7 @@ namespace Gekko
     // CR0 (if .)
     OP(RLWIMI)
     {
-        uint32_t m = cpu.rotmask[MB][ME];
+        uint32_t m = Gekko::Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(SH, RRS);
         uint32_t res = (r & m) | (RRA & ~m);
         RRA = res;
