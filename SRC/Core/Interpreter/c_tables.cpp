@@ -19,7 +19,7 @@ namespace Gekko
     {
         DBHalt("** CPU ERROR **\n"
             "unimplemented opcode : %08X <%08X> (%i, %i)\n",
-            Gekko::Gekko->regs.pc, op, op >> 26, op & 0x7ff);
+            Gekko->regs.pc, op, op >> 26, op & 0x7ff);
     }
 
     // switch to extension opcode table
@@ -40,7 +40,7 @@ namespace Gekko
             DBHalt(
                 "Something goes wrong in interpreter, \n"
                 "program is trying to execute NULL opcode.\n\n"
-                "pc:%08X", Gekko::Gekko->regs.pc);
+                "pc:%08X", Gekko->regs.pc);
             return;
         }
 

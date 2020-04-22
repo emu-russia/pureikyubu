@@ -47,7 +47,7 @@ namespace Gekko
             default: flt = *((float*)&data); break;
         }
 
-        return flt * Gekko::Gekko->interp->ldScale[scale];
+        return flt * Gekko->interp->ldScale[scale];
     }
 
     // float -> INT (I = ROUND(F * 2 ** S))
@@ -55,7 +55,7 @@ namespace Gekko
     {
         uint32_t uval;
 
-        data *= Gekko::Gekko->interp->stScale[scale];
+        data *= Gekko->interp->stScale[scale];
 
         switch (type)
         {

@@ -316,7 +316,7 @@ namespace Gekko
 
         for (int r = RD; r < 32; r++, ea += 4)
         {
-            CPUReadWord(ea, &Gekko::Gekko->regs.gpr[r]);
+            CPUReadWord(ea, &Gekko->regs.gpr[r]);
         }
     }
 
@@ -334,7 +334,7 @@ namespace Gekko
 
         for (int r = RS; r < 32; r++, ea += 4)
         {
-            CPUWriteWord(ea, Gekko::Gekko->regs.gpr[r]);
+            CPUWriteWord(ea, Gekko->regs.gpr[r]);
         }
     }
 
@@ -362,7 +362,7 @@ namespace Gekko
             if (i == 0)
             {
                 i = 4;
-                Gekko::Gekko->regs.gpr[rd] = r;
+                Gekko->regs.gpr[rd] = r;
                 rd++;
                 rd %= 32;
                 r = 0;
@@ -380,7 +380,7 @@ namespace Gekko
             r <<= 8;
             i--;
         }
-        Gekko::Gekko->regs.gpr[rd] = r;
+        Gekko->regs.gpr[rd] = r;
     }
 
     // ea = (ra | 0)
@@ -404,7 +404,7 @@ namespace Gekko
         {
             if (i == 0)
             {
-                r = Gekko::Gekko->regs.gpr[rs];
+                r = Gekko->regs.gpr[rs];
                 rs++;
                 rs %= 32;
                 i = 4;
@@ -425,8 +425,8 @@ namespace Gekko
     {
         uint32_t ea = RRB;
         if (RA) ea += RRA;
-        Gekko::Gekko->interp->RESERVE = true;
-        Gekko::Gekko->interp->RESERVE_ADDR = GCEffectiveToPhysical(ea, 0);
+        Gekko->interp->RESERVE = true;
+        Gekko->interp->RESERVE_ADDR = GCEffectiveToPhysical(ea, 0);
         CPUReadWord(ea, &RRD);
     }
 
@@ -443,13 +443,13 @@ namespace Gekko
         uint32_t ea = RRB;
         if (RA) ea += RRA;
 
-        Gekko::Gekko->regs.cr &= 0x0fffffff;
+        Gekko->regs.cr &= 0x0fffffff;
 
-        if (Gekko::Gekko->interp->RESERVE)
+        if (Gekko->interp->RESERVE)
         {
             CPUWriteWord(ea, RRS);
             SET_CR0_EQ;
-            Gekko::Gekko->interp->RESERVE = false;
+            Gekko->interp->RESERVE = false;
         }
 
         if (IS_XER_SO) SET_CR0_SO;

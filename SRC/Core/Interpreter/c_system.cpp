@@ -17,7 +17,7 @@ namespace Gekko
             (((uint32_t)a > (uint32_t)b) && (to & 0x01)))
         {
             // pseudo-branch (to resume from next instruction after 'rfi')
-            Gekko::Gekko->regs.pc += 4;
+            Gekko->regs.pc += 4;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
     }
@@ -35,7 +35,7 @@ namespace Gekko
             (((uint32_t)a > (uint32_t)b) && (to & 0x01)))
         {
             // pseudo-branch (to resume from next instruction after 'rfi')
-            Gekko::Gekko->regs.pc += 4;
+            Gekko->regs.pc += 4;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
     }
@@ -44,7 +44,7 @@ namespace Gekko
     OP(SC)
     {
         // pseudo-branch (to resume from next instruction after 'rfi')
-        Gekko::Gekko->regs.pc += 4;
+        Gekko->regs.pc += 4;
         Gekko->Exception(Gekko::Exception::SYSCALL);
     }
 
@@ -53,8 +53,8 @@ namespace Gekko
     {
         Gekko->regs.msr &= ~(0x87C0FF73 | 0x00040000);
         Gekko->regs.msr |= Gekko->regs.spr[(int)SPR::SRR1] & 0x87C0FF73;
-        Gekko::Gekko->regs.pc = Gekko->regs.spr[(int)SPR::SRR0] & ~3;
-        Gekko::Gekko->interp->branch = true;
+        Gekko->regs.pc = Gekko->regs.spr[(int)SPR::SRR0] & ~3;
+        Gekko->interp->branch = true;
     }
 
     // ---------------------------------------------------------------------------
@@ -75,7 +75,7 @@ namespace Gekko
             {
                 a = (d >> (i << 2)) & 0xf;
                 m = (0xf << (i << 2));
-                Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & ~m) | (a << (i << 2));
+                Gekko->regs.cr = (Gekko->regs.cr & ~m) | (a << (i << 2));
             }
         }
     }
@@ -85,27 +85,27 @@ namespace Gekko
     OP(MCRXR)
     {
         uint32_t mask = 0xf0000000 >> (4 * CRFD);
-        Gekko::Gekko->regs.cr &= ~mask;
-        Gekko::Gekko->regs.cr |= (Gekko->regs.spr[(int)SPR::XER] & 0xf0000000) >> (4 * CRFD);
+        Gekko->regs.cr &= ~mask;
+        Gekko->regs.cr |= (Gekko->regs.spr[(int)SPR::XER] & 0xf0000000) >> (4 * CRFD);
         Gekko->regs.spr[(int)SPR::XER] &= ~0xf0000000;
     }
 
     // rd = cr
     OP(MFCR)
     {
-        RRD = Gekko::Gekko->regs.cr;
+        RRD = Gekko->regs.cr;
     }
 
     // msr = rs
     OP(MTMSR)
     {
-        Gekko::Gekko->regs.msr = RRS;
+        Gekko->regs.msr = RRS;
     }
 
     // rd = msr
     OP(MFMSR)
     {
-        RRD = Gekko::Gekko->regs.msr;
+        RRD = Gekko->regs.msr;
     }
 
     // spr = rs
@@ -122,7 +122,7 @@ namespace Gekko
                 "DBAT2U", "DBAT2L", "DBAT3U", "DBAT3L"
             };
             DBReport2(DbgChannel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
-                bat[spr - 528], RRS, msr_ir(), msr_dr(), Gekko::Gekko->regs.pc);
+                bat[spr - 528], RRS, msr_ir(), msr_dr(), Gekko->regs.pc);
         }
         else switch (spr)
         {
@@ -134,16 +134,16 @@ namespace Gekko
             // page table base
             case    25:
                 DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
-                    RRS, msr_ir(), msr_dr(), Gekko::Gekko->regs.pc);
+                    RRS, msr_ir(), msr_dr(), Gekko->regs.pc);
                 break;
 
             case    284:
-                Gekko::Gekko->regs.tb.Part.l = RRS;
-                DBReport2(DbgChannel::CPU, "set TBL : %08X\n", Gekko::Gekko->regs.tb.Part.l);
+                Gekko->regs.tb.Part.l = RRS;
+                DBReport2(DbgChannel::CPU, "set TBL : %08X\n", Gekko->regs.tb.Part.l);
                 break;
             case    285:
-                Gekko::Gekko->regs.tb.Part.u = RRS;
-                DBReport2(DbgChannel::CPU, "set TBH : %08X\n", Gekko::Gekko->regs.tb.Part.u);
+                Gekko->regs.tb.Part.u = RRS;
+                DBReport2(DbgChannel::CPU, "set TBH : %08X\n", Gekko->regs.tb.Part.u);
                 break;
 
             // write gathering buffer
@@ -153,18 +153,18 @@ namespace Gekko
 
             // locked cache dma (dirty hack)
             case    922:    // DMAU
-                Gekko::Gekko->regs.spr[spr] = RRS;
+                Gekko->regs.spr[spr] = RRS;
                 break;
             case    923:    // DMAL
             {
-                Gekko::Gekko->regs.spr[spr] = RRS;
-                if (Gekko::Gekko->regs.spr[923] & 2)
+                Gekko->regs.spr[spr] = RRS;
+                if (Gekko->regs.spr[923] & 2)
                 {
-                    uint32_t maddr = Gekko::Gekko->regs.spr[922] & ~0x1f;
-                    uint32_t lcaddr = Gekko::Gekko->regs.spr[923] & ~0x1f;
-                    uint32_t length = ((Gekko::Gekko->regs.spr[922] & 0x1f) << 2) | ((Gekko::Gekko->regs.spr[923] >> 2) & 3);
+                    uint32_t maddr = Gekko->regs.spr[922] & ~0x1f;
+                    uint32_t lcaddr = Gekko->regs.spr[923] & ~0x1f;
+                    uint32_t length = ((Gekko->regs.spr[922] & 0x1f) << 2) | ((Gekko->regs.spr[923] >> 2) & 3);
                     if (length == 0) length = 128;
-                    if (Gekko::Gekko->regs.spr[923] & 0x10)
+                    if (Gekko->regs.spr[923] & 0x10)
                     {   // load
                         memcpy(
                             &mi.ram[maddr & RAMMASK],
@@ -194,13 +194,13 @@ namespace Gekko
         }
 
         // default
-        Gekko::Gekko->regs.spr[spr] = RRS;
+        Gekko->regs.spr[spr] = RRS;
     }
 
     // rd = spr
     OP(MFSPR)
     {
-        RRD = Gekko::Gekko->regs.spr[(RB << 5) | RA];
+        RRD = Gekko->regs.spr[(RB << 5) | RA];
     }
 
     // rd = tbr
@@ -210,12 +210,12 @@ namespace Gekko
 
         if (tbr == 268)
         {
-            RRD = Gekko::Gekko->regs.tb.Part.l;
+            RRD = Gekko->regs.tb.Part.l;
             return;
         }
         else if (tbr == 269)
         {
-            RRD = Gekko::Gekko->regs.tb.Part.u;
+            RRD = Gekko->regs.tb.Part.u;
             return;
         }
     }
@@ -223,25 +223,25 @@ namespace Gekko
     // sr[a] = rs
     OP(MTSR)
     {
-        Gekko::Gekko->regs.sr[RA] = RRS;
+        Gekko->regs.sr[RA] = RRS;
     }
 
     // sr[rb] = rs
     OP(MTSRIN)
     {
-        Gekko::Gekko->regs.sr[RRB & 0xf] = RRS;
+        Gekko->regs.sr[RRB & 0xf] = RRS;
     }
 
     // rd = sr[a]
     OP(MFSR)
     {
-        RRD = Gekko::Gekko->regs.sr[RA];
+        RRD = Gekko->regs.sr[RA];
     }
 
     // rd = sr[rb]
     OP(MFSRIN)
     {
-        RRD = Gekko::Gekko->regs.sr[RRB & 0xf];
+        RRD = Gekko->regs.sr[RRB & 0xf];
     }
 
     // ---------------------------------------------------------------------------
