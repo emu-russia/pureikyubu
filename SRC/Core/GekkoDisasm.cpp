@@ -35,6 +35,43 @@ namespace Gekko
 
 		// Compare
 
+		else if (info->instr == Instruction::cmp)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmpw";
+		}
+		else if (info->instr == Instruction::cmpi)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmpwi";
+		}
+		else if (info->instr == Instruction::cmpl)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmplw";
+		}
+		else if (info->instr == Instruction::cmpli)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmplwi";
+		}
+
 		// Addi
 
 		// Bcx
