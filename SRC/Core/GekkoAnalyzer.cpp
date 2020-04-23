@@ -106,18 +106,18 @@ namespace Gekko
 			case 61: info->instr = Instruction::psq_stu; FrRegOffsetWi(instr, info); break;
 
 			case 20:
-				if (Rc) info->instr = Instruction::rlwimi;
-				else  info->instr = Instruction::rlwimi_d;
+				if (Rc) info->instr = Instruction::rlwimi_d;
+				else  info->instr = Instruction::rlwimi;
 				AsImm3(instr, info);
 				break;
 			case 21:
-				if (Rc) info->instr = Instruction::rlwinm;
-				else  info->instr = Instruction::rlwinm_d;
+				if (Rc) info->instr = Instruction::rlwinm_d;
+				else  info->instr = Instruction::rlwinm;
 				AsImm3(instr, info);
 				break;
 			case 23:
-				if (Rc) info->instr = Instruction::rlwnm;
-				else  info->instr = Instruction::rlwnm_d;
+				if (Rc) info->instr = Instruction::rlwnm_d;
+				else  info->instr = Instruction::rlwnm;
 				AsbImm2(instr, info);
 				break;
 
@@ -217,18 +217,18 @@ namespace Gekko
 			case 61: info->instr = Instruction::psq_stu; FrRegOffsetWiFast(instr, info); break;
 
 			case 20:
-				if (Rc) info->instr = Instruction::rlwimi;
-				else  info->instr = Instruction::rlwimi_d;
+				if (Rc) info->instr = Instruction::rlwimi_d;
+				else  info->instr = Instruction::rlwimi;
 				AsImm3Fast(instr, info);
 				break;
 			case 21:
-				if (Rc) info->instr = Instruction::rlwinm;
-				else  info->instr = Instruction::rlwinm_d;
+				if (Rc) info->instr = Instruction::rlwinm_d;
+				else  info->instr = Instruction::rlwinm;
 				AsImm3Fast(instr, info);
 				break;
 			case 23:
-				if (Rc) info->instr = Instruction::rlwnm;
-				else  info->instr = Instruction::rlwnm_d;
+				if (Rc) info->instr = Instruction::rlwnm_d;
+				else  info->instr = Instruction::rlwnm;
 				AsbImm2Fast(instr, info);
 				break;
 

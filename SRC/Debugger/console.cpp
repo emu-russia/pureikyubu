@@ -61,7 +61,7 @@ void con_open()
     wind.focus = WCONSOLE;
     wind.regs_h = 17;
     wind.data_h = 8;
-    wind.disa_h = 18; // 16
+    wind.disa_h = 28;
     wind.disa_sub_h = 0;
     con_recalc_wnds();
 

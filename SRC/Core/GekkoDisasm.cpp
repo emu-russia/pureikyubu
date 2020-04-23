@@ -6,9 +6,32 @@ namespace Gekko
 	// Not all simplified instructions are supported. Some of those presented in the manual are so simplified that they only confuse.
 	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple, bool skipOperand[5])
 	{
+		static const char* t_cond[32] = {
+			NULL, "lgt", "llt", NULL, "eq", "lge", "lle", NULL,
+			"gt", NULL, NULL, NULL, "ge", NULL, NULL, NULL,
+			"lt", NULL, NULL, NULL, "le", NULL, NULL, NULL,
+			"ne", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+		};
+
+		char simplified[0x40] = { 0, };
 		simple = false;
 
 		// Trap
+
+		if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
+		{
+			sprintf_s(simplified, sizeof(simplified) - 1, "tw%si", t_cond[info->paramBits[0]]);
+			skipOperand[0] = true;
+			simple = true;
+			return simplified;
+		}
+		else if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
+		{
+			sprintf_s(simplified, sizeof(simplified) - 1, "tw%s", t_cond[info->paramBits[0]]);
+			skipOperand[0] = true;
+			simple = true;
+			return simplified;
+		}
 
 		// Compare
 
