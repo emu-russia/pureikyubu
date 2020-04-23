@@ -11,7 +11,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
     bgcur = (addr == con.disa_cursor) ? (8) : (0);
     //bgbp = (con_is_code_bp(addr)) ? (4) : (0);
     bgbp = 0;
-    bg = (addr == PC) ? (1) : (0);
+    bg = (addr == Gekko::Gekko->regs.pc) ? (1) : (0);
     bg = bg ^ bgcur ^ bgbp;
     fg = 7;
     con_attr(fg, bg);
@@ -98,7 +98,7 @@ void con_ldst_info()
         {
             int ra = ((op >> 16) & 0x1f);
             int32_t simm = ((int32_t)(int16_t)(uint16_t)op);
-            wind.ldst_disp = GPR[ra] + simm;
+            wind.ldst_disp = Gekko::Gekko->regs.gpr[ra] + simm;
             con_attr(0, 3);
             con_fill_line(wind.disa_y, 0xc4);
             if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
@@ -128,7 +128,7 @@ void con_update_disa_window()
     con_printf_at(
         6, wind.disa_y, 
         " cursor:%08X phys:%08X pc:%08X", 
-        pa, PC);
+        pa, Gekko::Gekko->regs.pc);
     con_attr(7, 0);
 
     con_ldst_info();

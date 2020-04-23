@@ -1,6 +1,11 @@
 // registers view
 #include "pch.h"
 
+#define FPRU(n) (Gekko::Gekko->regs.fpr[n].uval)
+#define FPRD(n) (Gekko::Gekko->regs.fpr[n].dbl)
+#define PS0(n)  (Gekko::Gekko->regs.fpr[n].dbl)
+#define PS1(n)  (Gekko::Gekko->regs.ps1[n].dbl)
+
 // register memory
 static uint32_t gpr_old[32];
 static FPREG ps0_old[32], ps1_old[32];
@@ -18,7 +23,7 @@ void con_memorize_cpu_regs()
 {
     for(int i=0; i<32; i++)
     {
-        gpr_old[i] = GPR[i];
+        gpr_old[i] = Gekko::Gekko->regs.gpr[i];
         ps0_old[i].uval = Gekko::Gekko->regs.fpr[i].uval;
         ps1_old[i].uval = Gekko::Gekko->regs.ps1[i].uval;
     }
@@ -26,54 +31,54 @@ void con_memorize_cpu_regs()
 
 static void con_print_other_regs()
 {
-    con_printf_at(28, 1, "\x1%ccr  \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_CR);
-    con_printf_at(28, 2, "\x1%cxer \x1%c%08X", ConColor::CYAN, ConColor::NORM, XER);
-    con_printf_at(28, 4, "\x1%cctr \x1%c%08X", ConColor::CYAN, ConColor::NORM, CTR);
-    con_printf_at(28, 5, "\x1%cdec \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_DEC);
-    con_printf_at(28, 8, "\x1%cpc  \x1%c%08X", ConColor::CYAN, ConColor::NORM, PC);
-    con_printf_at(28, 9, "\x1%clr  \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_LR);
+    con_printf_at(28, 1, "\x1%ccr  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.cr);
+    con_printf_at(28, 2, "\x1%cxer \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER]);
+    con_printf_at(28, 4, "\x1%cctr \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::CTR]);
+    con_printf_at(28, 5, "\x1%cdec \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DEC]);
+    con_printf_at(28, 8, "\x1%cpc  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.pc);
+    con_printf_at(28, 9, "\x1%clr  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR]);
     con_printf_at(28,14, "\x1%ctbr \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, 
         Gekko::Gekko->regs.tb.Part.u, Gekko::Gekko->regs.tb.Part.l);
 
-    con_printf_at(42, 1, "\x1%cmsr   \x1%c%08X", ConColor::CYAN, ConColor::NORM, MSR);
-    con_printf_at(42, 2, "\x1%cfpscr \x1%c%08X", ConColor::CYAN, ConColor::NORM, FPSCR);
-    con_printf_at(42, 4, "\x1%chid0  \x1%c%08X", ConColor::CYAN, ConColor::NORM, HID0);
-    con_printf_at(42, 5, "\x1%chid1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, HID1);
-    con_printf_at(42, 6, "\x1%chid2  \x1%c%08X", ConColor::CYAN, ConColor::NORM, HID2);
-    con_printf_at(42, 8, "\x1%cwpar  \x1%c%08X", ConColor::CYAN, ConColor::NORM, WPAR);
-    con_printf_at(42, 9, "\x1%cdmau  \x1%c%08X", ConColor::CYAN, ConColor::NORM, DMAU);
-    con_printf_at(42,10, "\x1%cdmal  \x1%c%08X", ConColor::CYAN, ConColor::NORM, DMAL);
+    con_printf_at(42, 1, "\x1%cmsr   \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.msr);
+    con_printf_at(42, 2, "\x1%cfpscr \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.fpscr);
+    con_printf_at(42, 4, "\x1%chid0  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID0]);
+    con_printf_at(42, 5, "\x1%chid1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID1]);
+    con_printf_at(42, 6, "\x1%chid2  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2]);
+    con_printf_at(42, 8, "\x1%cwpar  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR]);
+    con_printf_at(42, 9, "\x1%cdmau  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DMAU]);
+    con_printf_at(42,10, "\x1%cdmal  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DMAL]);
 
-    con_printf_at(58, 1, "\x1%cdsisr \x1%c%08X", ConColor::CYAN, ConColor::NORM, DSISR);
-    con_printf_at(58, 2, "\x1%cdar   \x1%c%08X", ConColor::CYAN, ConColor::NORM, PPC_DAR);
-    con_printf_at(58, 4, "\x1%csrr0  \x1%c%08X", ConColor::CYAN, ConColor::NORM, SRR0);
-    con_printf_at(58, 5, "\x1%csrr1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, SRR1);
-    con_printf_at(58, 8, "\x1%csprg0 \x1%c%08X", ConColor::CYAN, ConColor::NORM, SPRG0);
-    con_printf_at(58, 9, "\x1%csprg1 \x1%c%08X", ConColor::CYAN, ConColor::NORM, SPRG1);
-    con_printf_at(58,10, "\x1%csprg2 \x1%c%08X", ConColor::CYAN, ConColor::NORM, SPRG2);
-    con_printf_at(58,11, "\x1%csprg3 \x1%c%08X", ConColor::CYAN, ConColor::NORM, SPRG3);
-    con_printf_at(58,13, "\x1%cear   \x1%c%08X", ConColor::CYAN, ConColor::NORM, EAR);
-    con_printf_at(58,14, "\x1%cpvr   \x1%c%08X", ConColor::CYAN, ConColor::NORM, PVR);
+    con_printf_at(58, 1, "\x1%cdsisr \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DSISR]);
+    con_printf_at(58, 2, "\x1%cdar   \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DAR]);
+    con_printf_at(58, 4, "\x1%csrr0  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SRR0]);
+    con_printf_at(58, 5, "\x1%csrr1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SRR1]);
+    con_printf_at(58, 8, "\x1%csprg0 \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SPRG0]);
+    con_printf_at(58, 9, "\x1%csprg1 \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SPRG1]);
+    con_printf_at(58,10, "\x1%csprg2 \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SPRG2]);
+    con_printf_at(58,11, "\x1%csprg3 \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SPRG3]);
+    con_printf_at(58,13, "\x1%cear   \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::EAR]);
+    con_printf_at(58,14, "\x1%cpvr   \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::PVR]);
 
     // Some cpu flags.
-    con_printf_at(74, 1, "\x1%c%s", ConColor::CYAN, (MSR & MSR_PR) ? "UISA" : "OEA");       // Supervisor?
-    con_printf_at(74, 2, "\x1%c%s", ConColor::CYAN, (MSR & MSR_EE) ? "EE" : "NE");          // Interrupts enabled?
-    con_printf_at(74, 4, "\x1%cPSE \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_PSE) ? 1 : 0); // Paired Single mode?
-    con_printf_at(74, 5, "\x1%cLSQ \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
-    con_printf_at(74, 6, "\x1%cWPE \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_WPE) ? 1 : 0); // Gather buffer?
-    con_printf_at(74, 7, "\x1%cLC  \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_LCE) ? 1 : 0); // Cache locked?
+    con_printf_at(74, 1, "\x1%c%s", ConColor::CYAN, (Gekko::Gekko->regs.msr & MSR_PR) ? "UISA" : "OEA");       // Supervisor?
+    con_printf_at(74, 2, "\x1%c%s", ConColor::CYAN, (Gekko::Gekko->regs.msr & MSR_EE) ? "EE" : "NE");          // Interrupts enabled?
+    con_printf_at(74, 4, "\x1%cPSE \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE) ? 1 : 0); // Paired Single mode?
+    con_printf_at(74, 5, "\x1%cLSQ \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
+    con_printf_at(74, 6, "\x1%cWPE \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE) ? 1 : 0); // Gather buffer?
+    con_printf_at(74, 7, "\x1%cLC  \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_LCE) ? 1 : 0); // Cache locked?
 }
 
 static void con_print_gprreg(int x, int y, int num)
 {
-    if(GPR[num] != gpr_old[num])
+    if(Gekko::Gekko->regs.gpr[num] != gpr_old[num])
     {
-        con_printf_at(x, y, "\x1%c%-3s \x1%c%.8X", ConColor::CYAN, gprnames[num], ConColor::GREEN, GPR[num]);
-        gpr_old[num] = GPR[num];
+        con_printf_at(x, y, "\x1%c%-3s \x1%c%.8X", ConColor::CYAN, gprnames[num], ConColor::GREEN, Gekko::Gekko->regs.gpr[num]);
+        gpr_old[num] = Gekko::Gekko->regs.gpr[num];
     }
     else
     {
-        con_printf_at(x, y, "\x1%c%-3s \x1%c%.8X", ConColor::CYAN, gprnames[num], ConColor::NORM, GPR[num]);
+        con_printf_at(x, y, "\x1%c%-3s \x1%c%.8X", ConColor::CYAN, gprnames[num], ConColor::NORM, Gekko::Gekko->regs.gpr[num]);
     }
 }
 
@@ -166,11 +171,11 @@ static void con_print_psrs()
 
     for(y=1; y<=8; y++)
     {
-        con_printf_at(64, y, "\x1%cgqr%i \x1%c%08X", ConColor::CYAN, y - 1, ConColor::NORM, GQR[y - 1]);
+        con_printf_at(64, y, "\x1%cgqr%i \x1%c%08X", ConColor::CYAN, y - 1, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::GQRs + y - 1]);
     }
 
-    con_printf_at (64, 10, "\x1%cPSE   \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_PSE) ? 1 : 0); // Paired Single mode?
-    con_printf_at (64, 11, "\x1%cLSQ   \x1%c%i", ConColor::CYAN, ConColor::NORM, (HID2 & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
+    con_printf_at (64, 10, "\x1%cPSE   \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE) ? 1 : 0); // Paired Single mode?
+    con_printf_at (64, 11, "\x1%cLSQ   \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_LSQE)? 1 : 0); // Load/Store Quantization?
 }
 
 // -----------------------------------------------------------------------------------------
@@ -225,35 +230,35 @@ static void describe_bat_reg (int x, int y, uint32_t up, uint32_t lo, int instr)
 
 static void con_print_mmu()
 {
-    con_printf_at (0, 11,"\x1%csdr1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, SDR1);
+    con_printf_at (0, 11,"\x1%csdr1  \x1%c%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::SDR1]);
 
-    con_printf_at (0, 13,"\x1%cIR    \x1%c%i", ConColor::CYAN, ConColor::NORM, (MSR & MSR_IR) ? 1 : 0);
-    con_printf_at (0, 14,"\x1%cDR    \x1%c%i", ConColor::CYAN, ConColor::NORM, (MSR & MSR_DR) ? 1 : 0);
+    con_printf_at (0, 13,"\x1%cIR    \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.msr & MSR_IR) ? 1 : 0);
+    con_printf_at (0, 14,"\x1%cDR    \x1%c%i", ConColor::CYAN, ConColor::NORM, (Gekko::Gekko->regs.msr & MSR_DR) ? 1 : 0);
     
-    con_printf_at (0, 1, "\x1%cdbat0 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, DBAT0U, DBAT0L);
-    con_printf_at (0, 2, "\x1%cdbat1 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, DBAT1U, DBAT1L);
-    con_printf_at (0, 3, "\x1%cdbat2 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, DBAT2U, DBAT2L);
-    con_printf_at (0, 4, "\x1%cdbat3 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, DBAT3U, DBAT3L);
+    con_printf_at (0, 1, "\x1%cdbat0 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L]);
+    con_printf_at (0, 2, "\x1%cdbat1 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L]);
+    con_printf_at (0, 3, "\x1%cdbat2 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L]);
+    con_printf_at (0, 4, "\x1%cdbat3 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L]);
 
-    con_printf_at (0, 6, "\x1%cibat0 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, IBAT0U, IBAT0L);
-    con_printf_at (0, 7, "\x1%cibat1 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, IBAT1U, IBAT1L);
-    con_printf_at (0, 8, "\x1%cibat2 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, IBAT2U, IBAT2L);
-    con_printf_at (0, 9, "\x1%cibat3 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, IBAT3U, IBAT3L);
+    con_printf_at (0, 6, "\x1%cibat0 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0L]);
+    con_printf_at (0, 7, "\x1%cibat1 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1L]);
+    con_printf_at (0, 8, "\x1%cibat2 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2L]);
+    con_printf_at (0, 9, "\x1%cibat3 \x1%c%08X:%08X", ConColor::CYAN, ConColor::NORM, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3L]);
 
-    describe_bat_reg(24, 1, DBAT0U, DBAT0L, 0);
-    describe_bat_reg(24, 2, DBAT1U, DBAT1L, 0);
-    describe_bat_reg(24, 3, DBAT2U, DBAT2L, 0);
-    describe_bat_reg(24, 4, DBAT3U, DBAT3L, 0);
+    describe_bat_reg(24, 1, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L], 0);
+    describe_bat_reg(24, 2, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L], 0);
+    describe_bat_reg(24, 3, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L], 0);
+    describe_bat_reg(24, 4, Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L], 0);
 
-    describe_bat_reg(24, 6, IBAT0U, IBAT0L, 1);
-    describe_bat_reg(24, 7, IBAT1U, IBAT1L, 1);
-    describe_bat_reg(24, 8, IBAT2U, IBAT2L, 1);
-    describe_bat_reg(24, 9, IBAT3U, IBAT3L, 1);
+    describe_bat_reg(24, 6, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0L], 1);
+    describe_bat_reg(24, 7, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1L], 1);
+    describe_bat_reg(24, 8, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2L], 1);
+    describe_bat_reg(24, 9, Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3U], Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3L], 1);
 
     for(int n=0, y=1; n<16; n++, y++)
     {
-        const ConColor prefix = PPC_SR[y-1] & 0x80000000 ? ConColor::BRED : ConColor::NORM;
-        con_printf_at (64, y, "\x1%csr%-2i  " "\x1%c" "%08X", ConColor::CYAN, y-1, prefix, PPC_SR[y-1]);
+        const ConColor prefix = Gekko::Gekko->regs.sr[y-1] & 0x80000000 ? ConColor::BRED : ConColor::NORM;
+        con_printf_at (64, y, "\x1%csr%-2i  " "\x1%c" "%08X", ConColor::CYAN, y-1, prefix, Gekko::Gekko->regs.sr[y-1]);
     }
 }
 

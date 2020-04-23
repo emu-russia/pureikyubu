@@ -398,7 +398,7 @@ void con_refresh(bool showpc)
     if(con.active == FALSE) return;
     if(showpc)
     {
-        con_set_disa_cur(PC);
+        con_set_disa_cur(Gekko::Gekko->regs.pc);
     }
     if(con.update == 0) return;
 

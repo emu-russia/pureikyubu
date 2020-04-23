@@ -332,6 +332,15 @@ namespace Debug
 		return it->second(noArgs);
 	}
 
+	bool JdiHub::ExecuteFastBool(char* command)
+	{
+		Json::Value* output = ExecuteFast(command);
+		assert(output);
+		bool value = output->value.AsBool;
+		delete output;
+		return value;
+	}
+
 	uint32_t JdiHub::ExecuteFastUInt32(char* command)
 	{
 		Json::Value* output = ExecuteFast(command);

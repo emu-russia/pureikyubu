@@ -328,6 +328,9 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainWindow = hwnd;
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
+    // emulator
+    EMUCtor();
+
     // run once ?
     if(GetConfigBool(USER_RUNONCE, USER_UI))
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
@@ -384,9 +387,6 @@ static void OnMainWindowCreate(HWND hwnd)
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_UNCHECKED);
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
     }
-
-    // emulator
-    EMUCtor();
 
     // select sort method
     SelectSort();
