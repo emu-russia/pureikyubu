@@ -86,7 +86,7 @@ static void con_function_key(int vkey, int ctrl)
             con_step_into();
             break;
         case VK_F12:    // Skip
-            PC += 4;
+            Gekko::Gekko->regs.pc += 4;
             con.update |= CON_UPDATE_DISA;
             DBReport2(DbgChannel::CPU, "skipped!\n");
             break;

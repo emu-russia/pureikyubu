@@ -87,7 +87,7 @@ namespace DSP
 	{
 		DBReport2(DbgChannel::DSP, "DspCore::Reset");
 
-		savedGekkoTicks = cpu.tb.uval;
+		savedGekkoTicks = Gekko::Gekko->GetTicks();
 
 		for (int i = 0; i < _countof(regs.st); i++)
 		{
@@ -123,7 +123,7 @@ namespace DSP
 		{
 			dspThread->Resume();
 			DBReport2(DbgChannel::DSP, "DspCore::Run");
-			savedGekkoTicks = cpu.tb.uval;
+			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 	}
 
@@ -138,7 +138,7 @@ namespace DSP
 
 	void DspCore::Update()
 	{
-		uint64_t ticks = cpu.tb.uval;
+		uint64_t ticks = Gekko::Gekko->GetTicks();
 
 		if (ticks >= (savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{

@@ -44,6 +44,8 @@ namespace Debug
 		void Help();
 		Json::Value* Execute(std::vector<std::string>& args);
 		Json::Value* ExecuteFast(char* command);
+		bool ExecuteFastBool(char* command);
+		uint32_t ExecuteFastUInt32(char* command);
 		bool CommandExists(std::vector<std::string>& args);
 
 		void Dump(Json::Value * value, int depth=0);

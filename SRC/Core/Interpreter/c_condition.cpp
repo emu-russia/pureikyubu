@@ -10,11 +10,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a & b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = CR[crba] | CR[crbb]
@@ -22,11 +22,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a | b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = CR[crba] ^ CR[crbb]
@@ -34,11 +34,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a ^ b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = !(CR[crba] & CR[crbb])
@@ -46,11 +46,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (!(a & b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = !(CR[crba] | CR[crbb])
@@ -58,11 +58,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (!(a | b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = CR[crba] EQV CR[crbb]
@@ -70,11 +70,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (!(a ^ b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = CR[crba] & ~CR[crbb]
@@ -82,11 +82,11 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a & (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[crbd] = CR[crba] | ~CR[crbb]
@@ -94,18 +94,18 @@ namespace Gekko
     {
         uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
 
-        uint32_t a = (PPC_CR >> (31 - crba)) & 1;
-        uint32_t b = (PPC_CR >> (31 - crbb)) & 1;
+        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a | (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        PPC_CR = (PPC_CR & m) | d;
+        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
     }
 
     // CR[4*crfd .. 4*crfd + 3] = CR[4*crfs .. 4*crfs + 3]
     OP(MCRF)
     {
         int32_t crfd = 4 * (7 - CRFD), crfs = 4 * (7 - CRFS);
-        PPC_CR = (PPC_CR & (~(0xf << crfd))) | (((PPC_CR >> crfs) & 0xf) << crfd);
+        Gekko->regs.cr = (Gekko->regs.cr & (~(0xf << crfd))) | (((Gekko->regs.cr >> crfs) & 0xf) << crfd);
     }
 
 }

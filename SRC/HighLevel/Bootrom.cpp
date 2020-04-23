@@ -80,14 +80,14 @@ static void BootApploader()
     DVD::Read(&mi.ram[0x81200000 & RAMMASK], appSize);
 
     // set parameters for apploader entrypoint
-    GPR[3] = 0x81300004;            // save apploader _prolog offset
-    GPR[4] = 0x81300008;            // main
-    GPR[5] = 0x8130000c;            // _epilog
+    Gekko::Gekko->regs.gpr[3] = 0x81300004;            // save apploader _prolog offset
+    Gekko::Gekko->regs.gpr[4] = 0x81300008;            // main
+    Gekko::Gekko->regs.gpr[5] = 0x8130000c;            // _epilog
 
     // execute entrypoint
-    PC = appEntryPoint;
-    PPC_LR = 0;
-    while (PC)
+    Gekko::Gekko->regs.pc = appEntryPoint;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = 0;
+    while (Gekko::Gekko->regs.pc)
     {
         Gekko::Gekko->Step();
     }
@@ -101,10 +101,10 @@ static void BootApploader()
               _prolog, _main, _epilog );
 
     // execute apploader prolog
-    GPR[3] = 0x81300000;            // OSReport callback as parameter
-    PC = _prolog;
-    PPC_LR = 0;
-    while (PC)
+    Gekko::Gekko->regs.gpr[3] = 0x81300000;            // OSReport callback as parameter
+    Gekko::Gekko->regs.pc = _prolog;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = 0;
+    while (Gekko::Gekko->regs.pc)
     {
         Gekko::Gekko->Step();
     }
@@ -113,13 +113,13 @@ static void BootApploader()
     do
     {
         // apploader main parameters
-        GPR[3] = 0x81300004;        // memory address
-        GPR[4] = 0x81300008;        // size
-        GPR[5] = 0x8130000c;        // disk offset
+        Gekko::Gekko->regs.gpr[3] = 0x81300004;        // memory address
+        Gekko::Gekko->regs.gpr[4] = 0x81300008;        // size
+        Gekko::Gekko->regs.gpr[5] = 0x8130000c;        // disk offset
 
-        PC = _main;
-        PPC_LR = 0;
-        while (PC)
+        Gekko::Gekko->regs.pc = _main;
+        Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = 0;
+        while (Gekko::Gekko->regs.pc)
         {
             Gekko::Gekko->Step();
         }
@@ -137,17 +137,17 @@ static void BootApploader()
                       offs, size, addr );
         }
 
-    } while(GPR[3] != 0);
+    } while(Gekko::Gekko->regs.gpr[3] != 0);
 
     // execute apploader epilog
-    PC = _epilog;
-    PPC_LR = 0;
-    while (PC)
+    Gekko::Gekko->regs.pc = _epilog;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = 0;
+    while (Gekko::Gekko->regs.pc)
     {
         Gekko::Gekko->Step();
     }
 
-    PC = GPR[3];
+    Gekko::Gekko->regs.pc = Gekko::Gekko->regs.gpr[3];
     DBReport("\n");
 }
 
@@ -156,7 +156,7 @@ static void __SyncTime(bool rtc)
 {
     if(!rtc)
     {
-        TBR = 0;
+        Gekko::Gekko->regs.tb.uval = 0;
         return;
     }
 
@@ -171,10 +171,10 @@ static void __SyncTime(bool rtc)
     int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
     int64_t systemTime;
     CPUReadDouble(0x800030d8, (uint64_t *)&systemTime);
-    systemTime += newTime - TBR;
+    systemTime += newTime - Gekko::Gekko->regs.tb.sval;
     CPUWriteDouble(0x800030d8, (uint64_t *)&systemTime);
-    TBR = newTime;
-    DBReport2(DbgChannel::HLE, "new timer: %08X%08X\n\n", cpu.tb.Part.u, cpu.tb.Part.l);
+    Gekko::Gekko->regs.tb.sval = newTime;
+    DBReport2(DbgChannel::HLE, "new timer: 0x%llx\n\n", Gekko::Gekko->GetTicks());
 }
 
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
@@ -182,28 +182,28 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     // set initial MMU state, according with BS2/Dolphin OS
     for(int sr=0; sr<16; sr++)              // unmounted
     {
-        PPC_SR[sr] = 0x80000000;
+        Gekko::Gekko->regs.sr[sr] = 0x80000000;
     }
     // DBATs
-    DBAT0U = 0x80001fff; DBAT0L = 0x00000002;   // 0x80000000, 256mb, cached
-    DBAT1U = 0xc0001fff; DBAT1L = 0x0000002a;   // 0xC0000000, 256mb, uncached
-    DBAT2U = 0x00000000; DBAT2L = 0x00000000;   // undefined
-    DBAT3U = 0x00000000; DBAT3L = 0x00000000;   // undefined
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U] = 0x80001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L] = 0x00000002;   // 0x80000000, 256mb, cached
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U] = 0xc0001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L] = 0x0000002a;   // 0xC0000000, 256mb, uncached
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U] = 0x00000000; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L] = 0x00000000;   // undefined
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U] = 0x00000000; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L] = 0x00000000;   // undefined
     // IBATs
-    IBAT0U = DBAT0U; IBAT0L = DBAT0L;
-    IBAT1U = DBAT1U; IBAT1L = DBAT1L;
-    IBAT2U = DBAT2U; IBAT2L = DBAT2L;
-    IBAT3U = DBAT3U; IBAT3L = DBAT3L;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L];
     // MSR MMU bits
-    MSR |= (MSR_IR | MSR_DR);               // enable translation
+    Gekko::Gekko->regs.msr |= (MSR_IR | MSR_DR);               // enable translation
     // page table
-    SDR1 = 0;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::SDR1] = 0;
 
-    MSR &= ~MSR_EE;                         // disable interrupts/DEC
-    MSR |= MSR_FP;                          // enable FP
+    Gekko::Gekko->regs.msr &= ~MSR_EE;                         // disable interrupts/DEC
+    Gekko::Gekko->regs.msr |= MSR_FP;                          // enable FP
 
     // from gc-linux dev mailing list
-    PVR = 0x00083214;
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::PVR] = 0x00083214;
 
     // RTC -> TBR
     __SyncTime(rtc);
@@ -217,13 +217,13 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
-    memcpy( &mi.ram[CPU_EXCEPTION_SYSCALL],
+    memcpy( &mi.ram[(int)Gekko::Exception::SYSCALL],
             default_syscall, 
             sizeof(default_syscall) );
 
     // set stack
-    SP = 0x816ffffc;
-    SDA1 = 0x81100000;      // Fake sda1
+    Gekko::Gekko->regs.gpr[1] = 0x816ffffc;
+    Gekko::Gekko->regs.gpr[13] = 0x81100000;      // Fake sda1
 
     // simulate or boot apploader, if dvd
     if(dvd)
@@ -241,7 +241,7 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     }
     else
     {
-        CPUWriteWord(0x80000034, SP - 0x10000);
+        CPUWriteWord(0x80000034, Gekko::Gekko->regs.gpr[1] - 0x10000);
 
         ReadFST(); // load FST, for demos
     }

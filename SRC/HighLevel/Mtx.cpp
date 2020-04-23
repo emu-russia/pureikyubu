@@ -4,8 +4,8 @@
 
 #include "pch.h"
 
-#define PARAM(n)    GPR[3+n]
-#define RET_VAL     GPR[3]
+#define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
+#define RET_VAL     Gekko::Gekko->regs.gpr[3]
 #define SWAP        _byteswap_ulong
 
 // pre-swapped 1.0f and 0.0f

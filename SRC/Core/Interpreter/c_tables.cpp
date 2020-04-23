@@ -19,7 +19,7 @@ namespace Gekko
     {
         DBHalt("** CPU ERROR **\n"
             "unimplemented opcode : %08X <%08X> (%i, %i)\n",
-            PC, op, op >> 26, op & 0x7ff);
+            Gekko->regs.pc, op, op >> 26, op & 0x7ff);
     }
 
     // switch to extension opcode table
@@ -40,7 +40,7 @@ namespace Gekko
             DBHalt(
                 "Something goes wrong in interpreter, \n"
                 "program is trying to execute NULL opcode.\n\n"
-                "pc:%08X", PC);
+                "pc:%08X", Gekko->regs.pc);
             return;
         }
 
@@ -59,7 +59,7 @@ namespace Gekko
             for (int me = 0; me < 32; me++)
             {
                 uint32_t mask = ((uint32_t)-1 >> mb) ^ ((me >= 31) ? 0 : ((uint32_t)-1) >> (me + 1));
-                cpu.rotmask[mb][me] = (mb > me) ? (~mask) : (mask);
+                rotmask[mb][me] = (mb > me) ? (~mask) : (mask);
             }
         }
 
@@ -75,7 +75,7 @@ namespace Gekko
             {
                 factor = 0 + (scale & 0x1f);
             }
-            cpu.ldScale[scale] = powf(2, -1.0f * (float)factor);
+            ldScale[scale] = powf(2, -1.0f * (float)factor);
         }
 
         // build paired-single store scale
@@ -90,7 +90,7 @@ namespace Gekko
             {
                 factor = 0 + (scale & 0x1f);
             }
-            cpu.stScale[scale] = powf(2, +1.0f * (float)factor);
+            stScale[scale] = powf(2, +1.0f * (float)factor);
         }
 
         // set all tables to default "not implemented" opcode

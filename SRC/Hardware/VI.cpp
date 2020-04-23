@@ -100,7 +100,7 @@ static void vi_set_timing()
     vi.inter = (reg & VI_CR_NIN) ? 0 : 1;
     vi.mode  = VI_CR_FMT(reg);
     if(vi.mode == 2) vi.mode = VI_NTSC_LIKE; // MPAL same as NTSC
-    vi.vtime = TBR;
+    vi.vtime = Gekko::Gekko->GetTicks();
 
     switch(vi.mode)
     {
@@ -120,9 +120,9 @@ void VIUpdate()
 {
     TCHAR gcTime[256];
 
-    if((TBR - vi.vtime) >= (vi.one_frame / vi.vcount))
+    if((Gekko::Gekko->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
     {
-        vi.vtime = TBR;
+        vi.vtime = Gekko::Gekko->GetTicks();
 
         uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
         uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
@@ -154,7 +154,7 @@ void VIUpdate()
             vi.frames++;
 
             // show system time
-            HLE::OSTimeFormat(gcTime, UTBR, false);
+            HLE::OSTimeFormat(gcTime, Gekko::Gekko->GetTicks(), false);
             SetStatusText(STATUS_ENUM::Time, gcTime);
             UpdateProfiler();
         }

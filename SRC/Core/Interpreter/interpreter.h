@@ -6,49 +6,49 @@
 
 #define COMPUTE_CR0(r)                                                                \
 {                                                                                     \
-    (PPC_CR = (PPC_CR & 0xfffffff)                   |                                \
-    ((XER & (1 << 31)) ? (0x10000000) : (0)) |                                        \
+    (Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xfffffff)                   |  \
+    ((Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 31)) ? (0x10000000) : (0)) |    \
     (((int32_t)(r) < 0) ? (0x80000000) : (((int32_t)(r) > 0) ? (0x40000000) : (0x20000000))));\
 }
 
 #define COMPUTE_CR1()                                                                 \
 {                                                                                     \
-    PPC_CR = (PPC_CR & 0xf0ffffff) | ((FPSCR & 0xf0000000) >> 4);                     \
+    Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xf0ffffff) | ((Gekko::Gekko->regs.fpscr & 0xf0000000) >> 4);    \
 }
 
-#define SET_CR_LT(n)    (PPC_CR |=  (1 << (3 + 4 * (7 - n))))
-#define SET_CR_GT(n)    (PPC_CR |=  (1 << (2 + 4 * (7 - n))))
-#define SET_CR_EQ(n)    (PPC_CR |=  (1 << (1 + 4 * (7 - n))))
-#define SET_CR_SO(n)    (PPC_CR |=  (1 << (    4 * (7 - n))))
-#define RESET_CR_LT(n)  (PPC_CR &= ~(1 << (3 + 4 * (7 - n))))
-#define RESET_CR_GT(n)  (PPC_CR &= ~(1 << (2 + 4 * (7 - n))))
-#define RESET_CR_EQ(n)  (PPC_CR &= ~(1 << (1 + 4 * (7 - n))))
-#define RESET_CR_SO(n)  (PPC_CR &= ~(1 << (    4 * (7 - n))))
+#define SET_CR_LT(n)    (Gekko::Gekko->regs.cr |=  (1 << (3 + 4 * (7 - n))))
+#define SET_CR_GT(n)    (Gekko::Gekko->regs.cr |=  (1 << (2 + 4 * (7 - n))))
+#define SET_CR_EQ(n)    (Gekko::Gekko->regs.cr |=  (1 << (1 + 4 * (7 - n))))
+#define SET_CR_SO(n)    (Gekko::Gekko->regs.cr |=  (1 << (    4 * (7 - n))))
+#define RESET_CR_LT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (3 + 4 * (7 - n))))
+#define RESET_CR_GT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (2 + 4 * (7 - n))))
+#define RESET_CR_EQ(n)  (Gekko::Gekko->regs.cr &= ~(1 << (1 + 4 * (7 - n))))
+#define RESET_CR_SO(n)  (Gekko::Gekko->regs.cr &= ~(1 << (    4 * (7 - n))))
 
-#define SET_CR0_LT      (PPC_CR |=  (1 << 31))
-#define SET_CR0_GT      (PPC_CR |=  (1 << 30))
-#define SET_CR0_EQ      (PPC_CR |=  (1 << 29))
-#define SET_CR0_SO      (PPC_CR |=  (1 << 28))
-#define RESET_CR0_LT    (PPC_CR &= ~(1 << 31))
-#define RESET_CR0_GT    (PPC_CR &= ~(1 << 30))
-#define RESET_CR0_EQ    (PPC_CR &= ~(1 << 29))
-#define RESET_CR0_SO    (PPC_CR &= ~(1 << 28))
+#define SET_CR0_LT      (Gekko::Gekko->regs.cr |=  (1 << 31))
+#define SET_CR0_GT      (Gekko::Gekko->regs.cr |=  (1 << 30))
+#define SET_CR0_EQ      (Gekko::Gekko->regs.cr |=  (1 << 29))
+#define SET_CR0_SO      (Gekko::Gekko->regs.cr |=  (1 << 28))
+#define RESET_CR0_LT    (Gekko::Gekko->regs.cr &= ~(1 << 31))
+#define RESET_CR0_GT    (Gekko::Gekko->regs.cr &= ~(1 << 30))
+#define RESET_CR0_EQ    (Gekko::Gekko->regs.cr &= ~(1 << 29))
+#define RESET_CR0_SO    (Gekko::Gekko->regs.cr &= ~(1 << 28))
 
-#define SET_XER_SO      (XER |=  (1 << 31))
-#define SET_XER_OV      (XER |=  (1 << 30))
-#define SET_XER_CA      (XER |=  (1 << 29))
+#define SET_XER_SO      (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] |=  (1 << 31))
+#define SET_XER_OV      (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] |=  (1 << 30))
+#define SET_XER_CA      (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] |=  (1 << 29))
 
-#define RESET_XER_SO    (XER &= ~(1 << 31))
-#define RESET_XER_OV    (XER &= ~(1 << 30))
-#define RESET_XER_CA    (XER &= ~(1 << 29))
+#define RESET_XER_SO    (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] &= ~(1 << 31))
+#define RESET_XER_OV    (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] &= ~(1 << 30))
+#define RESET_XER_CA    (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] &= ~(1 << 29))
 
-#define IS_XER_SO       (XER & (1 << 31))
-#define IS_XER_OV       (XER & (1 << 30))
-#define IS_XER_CA       (XER & (1 << 29))
+#define IS_XER_SO       (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 31))
+#define IS_XER_OV       (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 30))
+#define IS_XER_CA       (Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 29))
 
 #define IS_NAN(n)       (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0)
 #define IS_SNAN(n)      (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0 && ((n) & 0x0008000000000000) == 0)
-#define SET_CRF(n, c)   (PPC_CR = (PPC_CR & (~(0xf0000000 >> (4 * n)))) | (c << (4 * (7 - n))))
+#define SET_CRF(n, c)   (Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & (~(0xf0000000 >> (4 * n)))) | (c << (4 * (7 - n))))
 
 extern "C" uint32_t CarryBit;
 extern "C" uint32_t OverflowBit;
@@ -83,8 +83,8 @@ extern "C" uint32_t __fastcall Rotl32(int sa, uint32_t data);
 #define FM          ((op >> 17) & 0xff)
 
 // fast R*-field register addressing
-#define RRD         GPR[RD]
-#define RRS         GPR[RS]
-#define RRA         GPR[RA]
-#define RRB         GPR[RB]
-#define RRC         GPR[RC]
+#define RRD         Gekko::Gekko->regs.gpr[RD]
+#define RRS         Gekko::Gekko->regs.gpr[RS]
+#define RRA         Gekko::Gekko->regs.gpr[RA]
+#define RRB         Gekko::Gekko->regs.gpr[RB]
+#define RRC         Gekko::Gekko->regs.gpr[RC]

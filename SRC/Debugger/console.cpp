@@ -66,7 +66,7 @@ void con_open()
     con_recalc_wnds();
 
     con.data = 0x80000000;
-    con.text = PC;
+    con.text = Gekko::Gekko->regs.pc;
     con_set_disa_cur(con.text);
     strcpy_s (con.logfile, sizeof(con.logfile), CON_LOG_FILE);
 
@@ -153,7 +153,7 @@ void con_start()
 {
     uint32_t main = SYMAddress("main");
     if(main) con_set_disa_cur(main);
-    else con_set_disa_cur(PC);
+    else con_set_disa_cur(Gekko::Gekko->regs.pc);
 
     con.update = CON_UPDATE_ALL;
     con_refresh();
@@ -178,7 +178,7 @@ void con_break(const char *reason)
 {
     if(reason) con_print(ConColor::GREEN, "\ndebugger breaks%s. press F5 to continue.\n", reason);
     if (Gekko::Gekko) Gekko::Gekko->Suspend();
-    con_set_disa_cur(PC);
+    con_set_disa_cur(Gekko::Gekko->regs.pc);
 }
 
 void con_command(std::vector<std::string>& args, int lnum)
@@ -218,7 +218,7 @@ void con_step_into()
     if (Gekko::Gekko)
     {
         Gekko::Gekko->Step();
-        con.text = PC - 4 * wind.disa_h / 2 + 4;
+        con.text = Gekko::Gekko->regs.pc - 4 * wind.disa_h / 2 + 4;
         con.update |= CON_UPDATE_ALL;
     }
 }

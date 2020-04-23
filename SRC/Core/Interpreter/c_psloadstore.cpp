@@ -8,6 +8,16 @@ namespace Gekko
     #define GEKKO_PSW   (op & 0x8000)
     #define GEKKO_PSI   ((op >> 12) & 7)
 
+    #define LD_SCALE(n) ((Gekko->regs.spr[(int)SPR::GQRs + n] >> 24) & 0x3f)
+    #define LD_TYPE(n)  ((Gekko->regs.spr[(int)SPR::GQRs + n] >> 16) & 7)
+    #define ST_SCALE(n) ((Gekko->regs.spr[(int)SPR::GQRs + n] >>  8) & 0x3f)
+    #define ST_TYPE(n)  ((Gekko->regs.spr[(int)SPR::GQRs + n]      ) & 7)
+
+    #define FPRU(n) (Gekko->regs.fpr[n].uval)
+    #define FPRD(n) (Gekko->regs.fpr[n].dbl)
+    #define PS0(n)  (Gekko->regs.fpr[n].dbl)
+    #define PS1(n)  (Gekko->regs.ps1[n].dbl)
+
     /*/ ---------------------------------------------------------------------------
 
        Quantization data types :
@@ -23,7 +33,7 @@ namespace Gekko
     --------------------------------------------------------------------------- /*/
 
     // INT -> float (F = I * 2 ** -S)
-    static float dequantize(uint32_t data, int type, uint8_t scale)
+    float Interpreter::dequantize(uint32_t data, int type, uint8_t scale)
     {
         float flt;
 
@@ -37,15 +47,15 @@ namespace Gekko
             default: flt = *((float*)&data); break;
         }
 
-        return flt * cpu.ldScale[scale];
+        return flt * Gekko->interp->ldScale[scale];
     }
 
     // float -> INT (I = ROUND(F * 2 ** S))
-    static uint32_t quantize(float data, int type, uint8_t scale)
+    uint32_t Interpreter::quantize(float data, int type, uint8_t scale)
     {
         uint32_t uval;
 
-        data *= cpu.stScale[scale];
+        data *= Gekko->interp->stScale[scale];
 
         switch (type)
         {
@@ -77,7 +87,7 @@ namespace Gekko
 
     OP(PSQ_L)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t EA = op & 0xfff, data0, data1;
             int32_t d = RD, type = LD_TYPE(GEKKO_PSI);
@@ -115,12 +125,12 @@ namespace Gekko
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_LX)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB, data0, data1;
@@ -158,12 +168,12 @@ namespace Gekko
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_LU)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t EA = op & 0xfff, data0, data1;
             int32_t d = RD, type = LD_TYPE(GEKKO_PSI);
@@ -203,12 +213,12 @@ namespace Gekko
 
             RRA = EA;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_LUX)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB, data0, data1;
@@ -248,7 +258,7 @@ namespace Gekko
 
             RRA = EA;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     // ---------------------------------------------------------------------------
@@ -256,7 +266,7 @@ namespace Gekko
 
     OP(PSQ_ST)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t EA = op & 0xfff;
             int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
@@ -282,12 +292,12 @@ namespace Gekko
                 else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_STX)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB;
@@ -313,12 +323,12 @@ namespace Gekko
                 else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_STU)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t EA = op & 0xfff;
             int32_t d = RS, type = ST_TYPE(GEKKO_PSI);
@@ -346,12 +356,12 @@ namespace Gekko
 
             RRA = EA;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PSQ_STUX)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int i = (op >> 7) & 7;
             uint32_t EA = RRB;
@@ -379,7 +389,7 @@ namespace Gekko
 
             RRA = EA;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
 }

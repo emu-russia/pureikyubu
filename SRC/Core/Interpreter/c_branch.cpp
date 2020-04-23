@@ -10,7 +10,7 @@ namespace Gekko
     {
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
-        PC = PC + target;
+        Gekko->regs.pc = Gekko->regs.pc + target;
     }
 
     // PC = EXTS(LI || 0b00)
@@ -18,7 +18,7 @@ namespace Gekko
     {
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
-        PC = target;
+        Gekko->regs.pc = target;
     }
 
     // LR = PC + 4, PC = PC + EXTS(LI || 0b00)
@@ -26,8 +26,8 @@ namespace Gekko
     {
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
-        PPC_LR = PC + 4;
-        PC = PC + target;
+        Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
+        Gekko->regs.pc = Gekko->regs.pc + target;
     }
 
     // LR = PC + 4, PC = EXTS(LI || 0b00)
@@ -35,14 +35,14 @@ namespace Gekko
     {
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
-        PPC_LR = PC + 4;
-        PC = target;
+        Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
+        Gekko->regs.pc = target;
     }
 
     OP(BX)
     {
         bx[op & 3](op);
-        cpu.branch = true;
+        Gekko->interp->branch = true;
     }
 
     // ---------------------------------------------------------------------------
@@ -55,17 +55,17 @@ namespace Gekko
 
         if (BO(2) == 0)
         {
-            CTR--;
+            Gekko->regs.spr[(int)SPR::CTR]--;
 
-            if (BO(3)) ctr_ok = (CTR == 0);
-            else ctr_ok = (CTR != 0);
+            if (BO(3)) ctr_ok = (Gekko->regs.spr[(int)Gekko::SPR::CTR] == 0);
+            else ctr_ok = (Gekko->regs.spr[(int)Gekko::SPR::CTR] != 0);
         }
         else ctr_ok = true;
 
         if (BO(0) == 0)
         {
-            if (BO(1)) cond_ok = ((PPC_CR << bi) & 0x80000000) != 0;
-            else cond_ok = ((PPC_CR << bi) & 0x80000000) == 0;
+            if (BO(1)) cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) != 0;
+            else cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) == 0;
         }
         else cond_ok = true;
 
@@ -85,13 +85,13 @@ namespace Gekko
     {
         if (bc(op))
         {
-            if (op & 1) PPC_LR = PC + 4; // LK
+            if (op & 1) Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4; // LK
 
             uint32_t target = op & 0xfffc;
             if (target & 0x8000) target |= 0xffff0000;
-            if (op & 2) PC = target; // AA
-            else PC += target;
-            cpu.branch = true;
+            if (op & 2) Gekko->regs.pc = target; // AA
+            else Gekko->regs.pc += target;
+            Gekko->interp->branch = true;
         }
     }
 
@@ -104,8 +104,8 @@ namespace Gekko
     {
         if (bc(op))
         {
-            PC = PPC_LR & ~3;
-            cpu.branch = true;
+            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
+            Gekko->interp->branch = true;
         }
     }
 
@@ -120,10 +120,10 @@ namespace Gekko
     {
         if (bc(op))
         {
-            uint32_t lr = PC + 4;
-            PC = PPC_LR & ~3;
-            PPC_LR = lr;
-            cpu.branch = true;
+            uint32_t lr = Gekko->regs.pc + 4;
+            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
+            Gekko->regs.spr[(int)SPR::LR] = lr;
+            Gekko->interp->branch = true;
         }
     }
 
@@ -137,8 +137,8 @@ namespace Gekko
 
         if (BO(0) == 0)
         {
-            if (BO(1)) cond_ok = ((PPC_CR << bi) & 0x80000000) != 0;
-            else cond_ok = ((PPC_CR << bi) & 0x80000000) == 0;
+            if (BO(1)) cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) != 0;
+            else cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) == 0;
         }
         else cond_ok = true;
 
@@ -153,8 +153,8 @@ namespace Gekko
     {
         if (bctr(op))
         {
-            PC = CTR & ~3;
-            cpu.branch = true;
+            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
+            Gekko->interp->branch = true;
         }
     }
 
@@ -167,9 +167,9 @@ namespace Gekko
     {
         if (bctr(op))
         {
-            PPC_LR = PC + 4;
-            PC = CTR & ~3;
-            cpu.branch = true;
+            Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
+            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
+            Gekko->interp->branch = true;
         }
     }
 }

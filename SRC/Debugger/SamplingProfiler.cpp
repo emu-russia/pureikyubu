@@ -14,7 +14,7 @@ namespace Debug
 				profiler->savedGekkoTbr = ticks;
 
 				profiler->sampleData->AddUInt64(nullptr, ticks);
-				profiler->sampleData->AddUInt32(nullptr, PC);
+				profiler->sampleData->AddUInt32(nullptr, Gekko::Gekko->regs.pc);
 			}
 		}
 	}

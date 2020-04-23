@@ -721,7 +721,7 @@ namespace Gekko
 
 	void Analyzer::Op59(uint32_t instr, AnalyzeInfo* info)
 	{
-		switch (instr & 0x7ff)
+		switch (instr & 0x3f)
 		{
 			case 21 * 2: info->instr = Instruction::fadds; FrDab(instr, info); break;
 			case (21 * 2) | RcBit: info->instr = Instruction::fadds_d; FrDab(instr, info); break;
@@ -731,6 +731,7 @@ namespace Gekko
 
 			case 29 * 2: info->instr = Instruction::fmadds; FrDacb(instr, info); break;
 			case (29 * 2) | RcBit: info->instr = Instruction::fmadds_d; FrDacb(instr, info); break;
+
 			case 28 * 2: info->instr = Instruction::fmsubs; FrDacb(instr, info); break;
 			case (28 * 2) | RcBit: info->instr = Instruction::fmsubs_d; FrDacb(instr, info); break;
 
@@ -753,7 +754,7 @@ namespace Gekko
 
 	void Analyzer::Op59Fast(uint32_t instr, AnalyzeInfo* info)
 	{
-		switch (instr & 0x7ff)
+		switch (instr & 0x3f)
 		{
 			case 21 * 2: info->instr = Instruction::fadds; FrDabFast(instr, info); break;
 			case (21 * 2) | RcBit: info->instr = Instruction::fadds_d; FrDabFast(instr, info); break;
@@ -763,6 +764,7 @@ namespace Gekko
 
 			case 29 * 2: info->instr = Instruction::fmadds; FrDacbFast(instr, info); break;
 			case (29 * 2) | RcBit: info->instr = Instruction::fmadds_d; FrDacbFast(instr, info); break;
+
 			case 28 * 2: info->instr = Instruction::fmsubs; FrDacbFast(instr, info); break;
 			case (28 * 2) | RcBit: info->instr = Instruction::fmsubs_d; FrDacbFast(instr, info); break;
 
@@ -989,7 +991,7 @@ namespace Gekko
 			case (21 * 2) | RcBit: info->instr = Instruction::ps_add_d; FrDab(instr, info); break;
 			case 32 * 2: info->instr = Instruction::ps_cmpo0; CrfdFrAb(instr, info); break;
 			case 96 * 2: info->instr = Instruction::ps_cmpo1; CrfdFrAb(instr, info); break;
-			case 0: info->instr = Instruction::ps_cmpu0; CrfdFrAb(instr, info); break;
+			case 0	   : info->instr = Instruction::ps_cmpu0; CrfdFrAb(instr, info); break;
 			case 64 * 2: info->instr = Instruction::ps_cmpu1; CrfdFrAb(instr, info); break;
 			case 18 * 2: info->instr = Instruction::ps_div; FrDab(instr, info); break;
 			case (18 * 2) | RcBit: info->instr = Instruction::ps_div_d; FrDab(instr, info); break;
@@ -1068,7 +1070,7 @@ namespace Gekko
 			case (21 * 2) | RcBit: info->instr = Instruction::ps_add_d; FrDabFast(instr, info); break;
 			case 32 * 2: info->instr = Instruction::ps_cmpo0; CrfdFrAbFast(instr, info); break;
 			case 96 * 2: info->instr = Instruction::ps_cmpo1; CrfdFrAbFast(instr, info); break;
-			case 0: info->instr = Instruction::ps_cmpu0; CrfdFrAbFast(instr, info); break;
+			case 0	   : info->instr = Instruction::ps_cmpu0; CrfdFrAbFast(instr, info); break;
 			case 64 * 2: info->instr = Instruction::ps_cmpu1; CrfdFrAbFast(instr, info); break;
 			case 18 * 2: info->instr = Instruction::ps_div; FrDabFast(instr, info); break;
 			case (18 * 2) | RcBit: info->instr = Instruction::ps_div_d; FrDabFast(instr, info); break;

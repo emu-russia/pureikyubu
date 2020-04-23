@@ -144,8 +144,8 @@ void UpdateProfiler()
         diff = cur - mipsTime;
         if(cur >= ONE_SECOND)
         {
-            _stprintf_s (mips, _countof(mips) - 1, _T("%.1f"), (float)cpu.ops / 1000000.0f);
-            cpu.ops = 0;
+            _stprintf_s (mips, _countof(mips) - 1, _T("%.1f"), (float)Gekko::Gekko->GetOpcodeCount() / 1000000.0f);
+            Gekko::Gekko->ResetOpcodeCount();
             MyReadTimeStampCounter(&mipsTime);
         }
         else

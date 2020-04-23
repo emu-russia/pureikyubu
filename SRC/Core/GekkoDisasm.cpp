@@ -3,8 +3,54 @@
 
 namespace Gekko
 {
+	// Not all simplified instructions are supported. Some of those presented in the manual are so simplified that they only confuse.
+	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple, bool skipOperand[5])
+	{
+		simple = false;
 
-	std::string InstrToString(AnalyzeInfo* info)
+		// Trap
+
+		// Compare
+
+		// Addi
+
+		// Bcx
+
+		// Condition Register
+
+		// Mtcrf
+
+		// Special-purpose reg
+
+		// Tbrs
+
+		// Nop (Ori)
+
+		return "";
+	}
+
+	std::string GekkoDisasm::HexToStr(uint8_t value)
+	{
+		char buf[0x10] = { 0, };
+		sprintf_s(buf, sizeof(buf) - 1, "%02X", value);
+		return std::string(buf);
+	}
+
+	std::string GekkoDisasm::HexToStr(uint16_t value)
+	{
+		char buf[0x10] = { 0, };
+		sprintf_s(buf, sizeof(buf) - 1, "%04X", value);
+		return std::string(buf);
+	}
+
+	std::string GekkoDisasm::HexToStr(uint32_t value)
+	{
+		char buf[0x10] = { 0, };
+		sprintf_s(buf, sizeof(buf) - 1, "%08X", value);
+		return std::string(buf);
+	}
+
+	std::string GekkoDisasm::InstrToString(AnalyzeInfo* info)
 	{
 		// This switch-case spent approximately 4200 Joules.
 		switch (info->instr)
@@ -359,12 +405,222 @@ namespace Gekko
 			case Instruction::tlbsync: return "tlbsync";
 		}
 
-		return "Invalid";
+		return "";
+	}
+
+	std::string GekkoDisasm::SprName(int spr)
+	{
+		char def[0x10] = { 0, };
+
+		switch (spr)
+		{
+			// General architecture special-purpose registers.
+			case 1: return "XER";
+			case 8: return "LR";
+			case 9: return "CTR";
+			case 18: return "DSISR";
+			case 19: return "DAR";
+			case 22: return "DEC";
+			case 25: return "SDR1";
+			case 26: return "SRR0";
+			case 27: return "SRR1";
+			case 272: return "SPRG0";
+			case 273: return "SPRG1";
+			case 274: return "SPRG2";
+			case 275: return "SPRG3";
+			case 284: return "TBL";
+			case 285: return "TBU";
+			case 287: return "PVR";
+			case 528: return "IBAT0U";
+			case 529: return "IBAT0L";
+			case 530: return "IBAT1U";
+			case 531: return "IBAT1L";
+			case 532: return "IBAT2U";
+			case 533: return "IBAT2L";
+			case 534: return "IBAT3U";
+			case 535: return "IBAT3L";
+			case 536: return "DBAT0U";
+			case 537: return "DBAT0L";
+			case 538: return "DBAT1U";
+			case 539: return "DBAT1L";
+			case 540: return "DBAT2U";
+			case 541: return "DBAT2L";
+			case 542: return "DBAT3U";
+			case 543: return "DBAT3L";
+
+			// Gekko-specific SPRs
+			case 282: return "EAR";
+			case 912: return "GQR0";
+			case 913: return "GQR1";
+			case 914: return "GQR2";
+			case 915: return "GQR3";
+			case 916: return "GQR4";
+			case 917: return "GQR5";
+			case 918: return "GQR6";
+			case 919: return "GQR7";
+			case 920: return "HID2";
+			case 921: return "WPAR";
+			case 922: return "DMAU";
+			case 923: return "DMAL";
+			case 936: return "UMMCR0";
+			case 940: return "UMMCR1";
+			case 937: return "UPMC1";
+			case 938: return "UPMC2";
+			case 939: return "USIA";
+			case 941: return "UPMC3";
+			case 942: return "UPMC4";
+			case 943: return "USDA";
+			case 952: return "MMCR0";
+			case 953: return "PMC1";
+			case 954: return "PMC2";
+			case 955: return "SIA";
+			case 956: return "MMCR1";
+			case 957: return "PMC3";
+			case 958: return "PMC4";
+			case 959: return "SDA";
+			case 1008: return "HID0";
+			case 1009: return "HID1";
+			case 1010: return "IABR";
+			case 1013: return "DABR";
+			case 1017: return "L2CR";
+			case 1019: return "ICTC";
+			case 1020: return "THRM1";
+			case 1021: return "THRM2";
+			case 1022: return "THRM3";
+		}
+
+		sprintf_s(def, sizeof(def) - 1, "%u", spr);
+		return def;
+	}
+
+	std::string GekkoDisasm::TbrName(int tbr)
+	{
+		switch(tbr)
+		{
+			// General architecture time-base registers.
+			case 268: return "TBL";
+			case 269: return "TBU";
+		}
+
+		char def[8];
+		sprintf_s(def, sizeof(def) - 1, "%u", tbr);
+		return def;
+	}
+
+	// Smart SIMM formatting
+	std::string GekkoDisasm::Imm(int val, bool forceHex, bool useSign)
+	{
+		char out[16];
+		if (((val >= -256) && (val <= 256)) && !forceHex) sprintf_s(out, sizeof(out) - 1, "%i", val);
+		else
+		{
+			uint16_t hexval = (uint16_t)val;
+			if ((hexval & 0x8000) && useSign) sprintf_s(out, sizeof(out) - 1, "-0x%04X", ((~hexval) & 0xffff) + 1);
+			else sprintf_s(out, sizeof(out) - 1, "0x%04X", hexval);
+		}
+		return out;
+	}
+
+	std::string GekkoDisasm::ParamToString(Param param, int paramBits, AnalyzeInfo* info)
+	{
+		char text[0x20] = { 0, };
+
+		switch (param)
+		{
+			case Param::Reg:
+				sprintf_s(text, sizeof(text) - 1, "r%i", paramBits);
+				break;
+			case Param::FReg:
+				sprintf_s(text, sizeof(text) - 1, "fr%i", paramBits);
+				break;
+			case Param::Simm:
+				return Imm((int)(int32_t)info->Imm.Signed, false, true);
+			case Param::Uimm:
+				return Imm(info->Imm.Unsigned, true, false);
+			case Param::Crf:
+				sprintf_s(text, sizeof(text) - 1, "cr%i", paramBits);
+				break;
+			case Param::RegOffset:
+				sprintf_s(text, sizeof(text) - 1, "%s (r%i)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
+				break;
+			case Param::Num:
+				sprintf_s(text, sizeof(text) - 1, "%i", paramBits);
+				break;
+			case Param::Spr:
+				return SprName(paramBits);
+			case Param::Sr:
+				sprintf_s(text, sizeof(text) - 1, "%i", paramBits);
+				break;
+			case Param::Tbr:
+				return TbrName(paramBits);
+			case Param::Crb:
+				sprintf_s(text, sizeof(text) - 1, "cr%i", paramBits);
+				break;
+			case Param::CRM:
+				sprintf_s(text, sizeof(text) - 1, "0x%02X", paramBits);
+				break;
+			case Param::FM:
+				sprintf_s(text, sizeof(text) - 1, "0x%02X", paramBits);
+				break;
+			case Param::Address:
+				sprintf_s(text, sizeof(text) - 1, "0x%08X", info->Imm.Address);
+				break;
+		}
+
+		return text;
 	}
 
 	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info)
 	{
 		std::string text = "";
+		// Some simplified instructions hide part of the operands.
+		bool skipOperand[5] = { false, false, false, false, false };
+
+		// Address
+
+		text += HexToStr(pc) + "  ";
+
+		// Code bytes
+
+		text += HexToStr(info->instrBits) + "  ";
+
+		// Instruction name
+
+		bool simple = false;
+		std::string instrText = SimplifiedInstruction(info, simple, skipOperand);
+		if (simple)
+		{
+			char instrName[0x20];
+			sprintf_s(instrName, sizeof(instrName) - 1, "%-10s ", instrText.c_str());
+			text += instrName;
+		}
+		else
+		{
+			char instrName[0x20];
+			sprintf_s(instrName, sizeof(instrName) - 1, "%-10s ", InstrToString(info).c_str());
+			text += instrName;
+		}
+
+		// Parameters
+
+		bool firstParam = true;
+
+		for (int i = 0; i < info->numParam; i++)
+		{
+			if (skipOperand[i])
+				continue;
+
+			if (firstParam)
+			{
+				firstParam = false;
+			}
+			else
+			{
+				text += ", ";
+			}
+
+			text += ParamToString(info->param[i], info->paramBits[i], info);
+		}
 
 		return text;
 	}

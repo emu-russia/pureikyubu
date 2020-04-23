@@ -153,6 +153,9 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data)
 }
 
 // ---------------------------------------------------------------------------
+
+// TODO: Not Implemented (https://github.com/ogamespec/dolwin/issues/9)
+
 // PPC MMU simulation (used by GC-Linux and other advanced stuff).
 // we are using memory map table, to speed up address translation.
 // we should "remap" tables, after changing of some PPC system registers, or 
@@ -163,13 +166,19 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data)
 // we do not support access rights for BAT logic (in that case we must have two
 // standalone lookup talbes for Load and Store operations).
 
-static uint32_t *dbatu[4] = { &DBAT0U, &DBAT1U, &DBAT2U, &DBAT3U };
-static uint32_t *dbatl[4] = { &DBAT0L, &DBAT1L, &DBAT2L, &DBAT3L };
-static uint32_t *ibatu[4] = { &IBAT0U, &IBAT1U, &IBAT2U, &IBAT3U };
-static uint32_t *ibatl[4] = { &IBAT0L, &IBAT1L, &IBAT2L, &IBAT3L };
+// BAT fields
+#define BATBEPI(batu)   (batu >> 17)
+#define BATBL(batu)     ((batu >> 2) & 0x7ff)
+#define BATBRPN(batl)   (batl >> 17)
+
+//static uint32_t *dbatu[4] = { &DBAT0U, &DBAT1U, &DBAT2U, &DBAT3U };
+//static uint32_t *dbatl[4] = { &DBAT0L, &DBAT1L, &DBAT2L, &DBAT3L };
+//static uint32_t *ibatu[4] = { &IBAT0U, &IBAT1U, &IBAT2U, &IBAT3U };
+//static uint32_t *ibatl[4] = { &IBAT0L, &IBAT1L, &IBAT2L, &IBAT3L };
 
 uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
 {
+#if 0
     uint32_t pa;
 
     // ea = effective address
@@ -211,6 +220,7 @@ uint32_t __fastcall MMUEffectiveToPhysical(uint32_t ea, bool IR)
             }
         }
     }
+#endif
 
     return -1;
 }

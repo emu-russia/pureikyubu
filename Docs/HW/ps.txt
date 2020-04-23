@@ -67,7 +67,7 @@
      |00100| D 00|  A  |  B  |    32    |0|     ps_cmpo0
      |00100| D 00|  A  |  B  |    96    |0|     ps_cmpo1
      |00100| D 00|  A  |  B  |     0    |0|     ps_cmpu0
-     |00100| D 00|  A  |  B  |    64    |0|     ps_cmpu0
+     |00100| D 00|  A  |  B  |    64    |0|     ps_cmpu1
      |00100|  D  |  A  |  B  |    18    |R|     ps_div
      |00100|  D  |  A  |  B  |   528    |R|     ps_merge00
      |00100|  D  |  A  |  B  |   560    |R|     ps_merge01

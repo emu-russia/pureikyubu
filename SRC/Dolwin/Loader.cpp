@@ -102,8 +102,8 @@ uint32_t LoadDOL(TCHAR *dolname)
     BootROM(false, false, config->consoleVer);
 
     // Setup registers
-    SP = 0x816ffffc;
-    SDA1 = 0x81100000;      // Fake sda1
+    Gekko::Gekko->regs.gpr[1] = 0x816ffffc;
+    Gekko::Gekko->regs.gpr[13] = 0x81100000;      // Fake sda1
 
     // DO NOT CLEAR BSS !
 
@@ -753,7 +753,7 @@ static void DoLoadFile(TCHAR *filename)
     SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
-    if(!ldat.dvd) PC = entryPoint;
+    if(!ldat.dvd) Gekko::Gekko->regs.pc = entryPoint;
 }
 
 // set next file to load

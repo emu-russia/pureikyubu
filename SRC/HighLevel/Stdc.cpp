@@ -1,9 +1,10 @@
 // Std C runtime
 #include "pch.h"
 
-#define PARAM(n)    GPR[3+n]
-#define RET_VAL     GPR[3]
+#define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
+#define RET_VAL     Gekko::Gekko->regs.gpr[3]
 #define SWAP        _byteswap_ulong
+#define FPRD(n)     Gekko::Gekko->regs.fpr[n].dbl
 
 // fast longlong swap, invented by org
 static void swap_double(void* srcPtr)

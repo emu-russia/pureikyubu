@@ -74,8 +74,7 @@ void con_update_dump_window()
     con_print_at(2, wind.data_y, "F2");
     con_printf_at(6, wind.data_y, 
         " phys:%08X stack:%08X sda1:%08X sda2:%08X", 
-        pa, SP, SDA1, SDA2
-    );
+        pa, Gekko::Gekko->regs.gpr[1], Gekko::Gekko->regs.gpr[13], Gekko::Gekko->regs.gpr[2] );
     con_attr(7, 0);
 
     for(int row=0; row<wind.data_h-1; row++)

@@ -328,6 +328,9 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainWindow = hwnd;
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
+    // emulator
+    EMUCtor();
+
     // run once ?
     if(GetConfigBool(USER_RUNONCE, USER_UI))
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
@@ -385,9 +388,6 @@ static void OnMainWindowCreate(HWND hwnd)
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
     }
 
-    // emulator
-    EMUCtor();
-
     // select sort method
     SelectSort();
 
@@ -418,7 +418,7 @@ void OnMainWindowOpened()
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
     // set new title for main window
-    TCHAR newTitle[1024], gameTitle[64];
+    TCHAR newTitle[1024], gameTitle[0x200];
     const TCHAR prefix[] = { APPNAME _T(" - Running %s") };
     if(ldat.dvd)
     {

@@ -298,7 +298,7 @@ void CPOpen(HWConfig * config)
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));
 
-    fifo.time = TBR + 100;
+    fifo.time = Gekko::Gekko->GetTicks() + 100;
     fifo.log = false;
 
     // command processor

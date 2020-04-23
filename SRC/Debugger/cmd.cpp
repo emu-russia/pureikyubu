@@ -95,7 +95,7 @@ Json::Value* cmd_help(std::vector<std::string>& args)
 
 Json::Value* cmd_showpc(std::vector<std::string>& args)
 {
-    con_set_disa_cur(PC);
+    con_set_disa_cur(Gekko::Gekko->regs.pc);
     return nullptr;
 }
 
@@ -192,7 +192,7 @@ Json::Value* cmd_d(std::vector<std::string>& args)
         {
             uint32_t reg, ofs = 0;
             int n = strtoul(&args[1].c_str()[1], NULL, 10);
-            reg = GPR[n];
+            reg = Gekko::Gekko->regs.gpr[n];
             if(args.size() >= 3) ofs = strtoul(args[2].c_str(), NULL, 0);
             ofs &= 0xffff;
             if(ofs & 0x8000) ofs |= 0xffff0000;
@@ -415,7 +415,7 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
         PPCD_CB disa;
         uint32_t sp;
 
-        if(!emu.loaded || !SP)
+        if(!emu.loaded || !Gekko::Gekko->regs.gpr[1])
         {
             DBReport("not running, or no calls.\n");
             return nullptr;
@@ -423,7 +423,7 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
 
         int level = atoi(args[1].c_str());
         if(args[1].c_str()[0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
-        CPUReadWord(SP, &sp);
+        CPUReadWord(Gekko::Gekko->regs.gpr[1], &sp);
         if(level == MAX_LEVEL) DBReport( "LR Back Chain (max levels) :\n");
         else DBReport( "LR Back Chain (%i levels) :\n", level);
 
@@ -584,8 +584,8 @@ Json::Value* cmd_sdCommon(int sd, std::vector<std::string>& args)
     else
     {
         uint32_t sda;
-        if(sd == 1) sda = SDA1;
-        else sda = SDA2;
+        if(sd == 1) sda = Gekko::Gekko->regs.gpr[13];
+        else sda = Gekko::Gekko->regs.gpr[2];
 
         uint32_t ofs = strtoul(args[1].c_str(), NULL, 0);
         ofs &= 0xffff;
@@ -744,12 +744,12 @@ Json::Value* cmd_u(std::vector<std::string>& args)
         // first check for link/counter registers
         if(!_stricmp(args[1].c_str(), "lr"))
         {
-            con_set_disa_cur(PPC_LR);
+            con_set_disa_cur(Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR]);
             return nullptr;
         }
         if(!_stricmp(args[1].c_str(), "ctr"))
         {
-            con_set_disa_cur(CTR);
+            con_set_disa_cur(Gekko::Gekko->regs.spr[(int)Gekko::SPR::CTR]);
             return nullptr;
         }
 

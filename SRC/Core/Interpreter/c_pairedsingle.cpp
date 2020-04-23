@@ -4,15 +4,19 @@
 
 namespace Gekko
 {
+    #define FPRU(n) (Gekko->regs.fpr[n].uval)
+    #define FPRD(n) (Gekko->regs.fpr[n].dbl)
+    #define PS0(n)  (Gekko->regs.fpr[n].dbl)
+    #define PS1(n)  (Gekko->regs.ps1[n].dbl)
 
     OP(PS_ADD)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) + PS0(RB);
             PS1(RD) = PS1(RA) + PS1(RB);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_ADDD)
@@ -22,12 +26,12 @@ namespace Gekko
 
     OP(PS_SUB)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) - PS0(RB);
             PS1(RD) = PS1(RA) - PS1(RB);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_SUBD)
@@ -37,12 +41,12 @@ namespace Gekko
 
     OP(PS_MUL)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) * PS0(RC);
             PS1(RD) = PS1(RA) * PS1(RC);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MULD)
@@ -52,12 +56,12 @@ namespace Gekko
 
     OP(PS_DIV)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) / PS0(RB);
             PS1(RD) = PS1(RA) / PS1(RB);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_DIVD)
@@ -67,12 +71,12 @@ namespace Gekko
 
     OP(PS_RES)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = 1.0f / PS0(RB);
             PS1(RD) = 1.0f / PS1(RB);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_RESD)
@@ -82,12 +86,12 @@ namespace Gekko
 
     OP(PS_RSQRTE)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = 1.0f / sqrt(PS0(RB));
             PS1(RD) = 1.0f / sqrt(PS1(RB));
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_RSQRTED)
@@ -97,12 +101,12 @@ namespace Gekko
 
     OP(PS_SEL)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = (PS0(RA) >= 0.0) ? (PS0(RC)) : (PS0(RB));
             PS1(RD) = (PS1(RA) >= 0.0) ? (PS1(RC)) : (PS1(RB));
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_SELD)
@@ -112,14 +116,14 @@ namespace Gekko
 
     OP(PS_MULS0)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double m0 = PS0(RA) * PS0(RC);
             double m1 = PS1(RA) * PS0(RC);
             PS0(RD) = m0;
             PS1(RD) = m1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MULS0D)
@@ -129,14 +133,14 @@ namespace Gekko
 
     OP(PS_MULS1)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double m0 = PS0(RA) * PS1(RC);
             double m1 = PS1(RA) * PS1(RC);
             PS0(RD) = m0;
             PS1(RD) = m1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MULS1D)
@@ -146,14 +150,14 @@ namespace Gekko
 
     OP(PS_SUM0)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = PS0(RA) + PS1(RB);
             double s1 = PS1(RC);
             PS0(RD) = s0;
             PS1(RD) = s1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_SUM0D)
@@ -163,14 +167,14 @@ namespace Gekko
 
     OP(PS_SUM1)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = PS0(RC);
             double s1 = PS0(RA) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_SUM1D)
@@ -180,7 +184,7 @@ namespace Gekko
 
     OP(PS_MADD)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS0(RB);
@@ -191,7 +195,7 @@ namespace Gekko
             c = PS1(RC);
             PS1(RD) = (a * c) + b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MADDD)
@@ -201,7 +205,7 @@ namespace Gekko
 
     OP(PS_MSUB)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS0(RB);
@@ -212,7 +216,7 @@ namespace Gekko
             c = PS1(RC);
             PS1(RD) = (a * c) - b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MSUBD)
@@ -222,7 +226,7 @@ namespace Gekko
 
     OP(PS_NMADD)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS0(RB);
@@ -233,7 +237,7 @@ namespace Gekko
             c = PS1(RC);
             PS1(RD) = -((a * c) + b);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_NMADDD)
@@ -243,7 +247,7 @@ namespace Gekko
 
     OP(PS_NMSUB)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS0(RB);
@@ -254,7 +258,7 @@ namespace Gekko
             c = PS1(RC);
             PS1(RD) = -((a * c) - b);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_NMSUBD)
@@ -264,14 +268,14 @@ namespace Gekko
 
     OP(PS_MADDS0)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = (PS0(RA) * PS0(RC)) + PS0(RB);
             double s1 = (PS1(RA) * PS0(RC)) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MADDS0D)
@@ -281,14 +285,14 @@ namespace Gekko
 
     OP(PS_MADDS1)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = (PS0(RA) * PS1(RC)) + PS0(RB);
             double s1 = (PS1(RA) * PS1(RC)) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MADDS1D)
@@ -298,7 +302,7 @@ namespace Gekko
 
     OP(PS_CMPU0)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
             double a = PS0(RA), b = PS0(RB);
@@ -315,12 +319,12 @@ namespace Gekko
 
             SET_CRF(n, c);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_CMPU1)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
             double a = PS1(RA), b = PS1(RB);
@@ -337,12 +341,12 @@ namespace Gekko
 
             SET_CRF(n, c);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_CMPO0)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
             double a = PS0(RA), b = PS0(RB);
@@ -359,12 +363,12 @@ namespace Gekko
 
             SET_CRF(n, c);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_CMPO1)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
             double a = PS1(RA), b = PS1(RB);
@@ -381,17 +385,17 @@ namespace Gekko
 
             SET_CRF(n, c);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MR)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double p0 = PS0(RB), p1 = PS1(RB);
             PS0(RD) = p0, PS1(RD) = p1;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MRD)
@@ -401,12 +405,12 @@ namespace Gekko
 
     OP(PS_NEG)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = -PS0(RB);
             PS1(RD) = -PS1(RB);
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_NEGD)
@@ -436,14 +440,14 @@ namespace Gekko
 
     OP(PS_MERGE00)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS0(RB);
             PS0(RD) = a;
             PS1(RD) = b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MERGE00D)
@@ -453,14 +457,14 @@ namespace Gekko
 
     OP(PS_MERGE01)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
             double b = PS1(RB);
             PS0(RD) = a;
             PS1(RD) = b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MERGE01D)
@@ -470,14 +474,14 @@ namespace Gekko
 
     OP(PS_MERGE10)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS1(RA);
             double b = PS0(RB);
             PS0(RD) = a;
             PS1(RD) = b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MERGE10D)
@@ -487,14 +491,14 @@ namespace Gekko
 
     OP(PS_MERGE11)
     {
-        if (MSR & MSR_FP)
+        if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS1(RA);
             double b = PS1(RB);
             PS0(RD) = a;
             PS1(RD) = b;
         }
-        else Gekko->Exception(CPU_EXCEPTION_FPUNAVAIL);
+        else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
 
     OP(PS_MERGE11D)

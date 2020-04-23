@@ -10,61 +10,62 @@ namespace Gekko
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-        pa = GCEffectiveToPhysical(PC, true);
+        pa = GCEffectiveToPhysical(Gekko->regs.pc, true);
         MIReadWord(pa, &op);
-        if (cpu.exception) goto JumpPC;  // ISI
-        c_1[op >> 26](op); cpu.ops++;
-        if (cpu.exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
+        if (exception) goto JumpPC;  // ISI
+        c_1[op >> 26](op); Gekko->ops++;
+        if (exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
 
-        if (cpu.branch && core->intFlag && (MSR & MSR_EE))
+        if (branch && core->intFlag && (Gekko->regs.msr & MSR_EE))
         {
-            Exception(CPU_EXCEPTION_INTERRUPT);
+            Exception(Gekko::Exception::INTERRUPT);
             goto JumpPC;
         }
 
         // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)
         core->Tick();
-        if (cpu.branch && cpu.decreq && (MSR & MSR_EE))
+        if (branch && Gekko->decreq && (Gekko->regs.msr & MSR_EE))
         {
-            cpu.decreq = 0;
-            Exception(CPU_EXCEPTION_DECREMENTER);
-            if (cpu.exception) goto JumpPC;
+            Gekko->decreq = 0;
+            Exception(Gekko::Exception::DECREMENTER);
+            if (exception) goto JumpPC;
         }
 
         // branch or exception ?
-        if (cpu.branch)
+        if (branch)
         {
         JumpPC:
-            cpu.exception = false;
-            cpu.branch = false;
+            exception = false;
+            branch = false;
 
         }
-        else PC += 4;
+        else Gekko->regs.pc += 4;
     }
 
     // interpreter exception
-    void Interpreter::Exception(uint32_t code)
+    void Interpreter::Exception(Gekko::Exception code)
     {
-        if (cpu.exception)
+        if (exception)
         {
             DBHalt("CPU Double Fault!\n");
         }
 
         // save regs
-        SRR0 = PC;
-        SRR1 = MSR;
+      
+        Gekko->regs.spr[(int)Gekko::SPR::SRR0] = Gekko->regs.pc;
+        Gekko->regs.spr[(int)Gekko::SPR::SRR1] = Gekko->regs.msr;
 
         // disable address translation
-        MSR &= ~(MSR_IR | MSR_DR);
+        Gekko->regs.msr &= ~(MSR_IR | MSR_DR);
 
         // Gekko exceptions are always recoverable
-        MSR |= MSR_RI;
+        Gekko->regs.msr |= MSR_RI;
 
-        MSR &= ~MSR_EE;
+        Gekko->regs.msr &= ~MSR_EE;
 
         // change PC and set exception flag
-        PC = code;
-        cpu.exception = true;
+        Gekko->regs.pc = (uint32_t)code;
+        exception = true;
     }
 
 }
