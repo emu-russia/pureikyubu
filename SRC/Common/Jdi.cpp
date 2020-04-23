@@ -332,6 +332,15 @@ namespace Debug
 		return it->second(noArgs);
 	}
 
+	uint32_t JdiHub::ExecuteFastUInt32(char* command)
+	{
+		Json::Value* output = ExecuteFast(command);
+		assert(output);
+		uint32_t value = output->value.AsUint32;
+		delete output;
+		return value;
+	}
+
 	// Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
 	bool JdiHub::CommandExists(std::vector<std::string>& args)
 	{
