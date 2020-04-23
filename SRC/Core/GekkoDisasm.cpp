@@ -72,7 +72,41 @@ namespace Gekko
 			return "cmplwi";
 		}
 
-		// Addi
+		// Add
+
+		else if (info->instr == Instruction::addi && info->paramBits[1] == 0)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "li";
+		}
+		else if (info->instr == Instruction::addis && info->paramBits[1] == 0)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "lis";
+		}
+		else if (info->instr == Instruction::addic && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subic";
+		}
+		else if (info->instr == Instruction::addic_d && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subic.";
+		}
+		else if (info->instr == Instruction::addis && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subis";
+		}
 
 		// Bcx
 
