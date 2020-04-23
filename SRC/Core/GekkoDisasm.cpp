@@ -112,13 +112,91 @@ namespace Gekko
 
 		// Condition Register
 
+		else if (info->instr == Instruction::creqv && info->paramBits[0] == info->paramBits[1] && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			simple = true;
+			return "crset";
+		}
+		else if (info->instr == Instruction::crxor && info->paramBits[0] == info->paramBits[1] && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			simple = true;
+			return "crclr";
+		}
+		else if (info->instr == Instruction::crnor && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "crnot";
+		}
+		else if (info->instr == Instruction::cror && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "crmove";
+		}
+
 		// Mtcrf
+
+		else if (info->instr == Instruction::mtcrf && info->paramBits[0] == 0xff)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mctr";
+		}
 
 		// Special-purpose reg
 
-		// Tbrs
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 1)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtxer";
+		}
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 8)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtlr";
+		}
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 9)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtctr";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 1)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mfxer";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 8)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mflr";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 9)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mfctr";
+		}
 
 		// Nop (Ori)
+
+		else if (info->instrBits == 0x6000'0000)
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			skipOperand[2] = true;
+			simple = true;
+			return "nop";
+		}
 
 		return "";
 	}
@@ -504,8 +582,6 @@ namespace Gekko
 
 	std::string GekkoDisasm::SprName(int spr)
 	{
-		char def[0x10] = { 0, };
-
 		switch (spr)
 		{
 			// General architecture special-purpose registers.
@@ -583,6 +659,7 @@ namespace Gekko
 			case 1022: return "THRM3";
 		}
 
+		char def[0x10] = { 0, };
 		sprintf_s(def, sizeof(def) - 1, "%u", spr);
 		return def;
 	}
@@ -596,7 +673,7 @@ namespace Gekko
 			case 269: return "TBU";
 		}
 
-		char def[8];
+		char def[8] = { 0, };
 		sprintf_s(def, sizeof(def) - 1, "%u", tbr);
 		return def;
 	}
