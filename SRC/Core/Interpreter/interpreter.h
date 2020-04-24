@@ -6,14 +6,14 @@
 
 #define COMPUTE_CR0(r)                                                                \
 {                                                                                     \
-    (Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xfffffff)                   |  \
-    ((Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 31)) ? (0x10000000) : (0)) |    \
-    (((int32_t)(r) < 0) ? (0x80000000) : (((int32_t)(r) > 0) ? (0x40000000) : (0x20000000))));\
+    (Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0x0fff'ffff)                   |  \
+    ((Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] & (1 << 31)) ? (0x1000'0000) : (0)) |    \
+    (((int32_t)(r) < 0) ? (0x8000'0000) : (((int32_t)(r) > 0) ? (0x4000'0000) : (0x2000'0000))));\
 }
 
 #define COMPUTE_CR1()                                                                 \
 {                                                                                     \
-    Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xf0ffffff) | ((Gekko::Gekko->regs.fpscr & 0xf0000000) >> 4);    \
+    Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xf0ff'ffff) | ((Gekko::Gekko->regs.fpscr & 0xf000'0000) >> 4);    \
 }
 
 #define SET_CR_LT(n)    (Gekko::Gekko->regs.cr |=  (1 << (3 + 4 * (7 - n))))

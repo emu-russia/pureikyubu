@@ -229,4 +229,9 @@ namespace Gekko
         }
     }
 
+    void GekkoCore::ExecuteOpcodeDebug(uint32_t pc, uint32_t instr)
+    {
+        interp->ExecuteOpcodeDirect(pc, instr);
+    }
+
 }

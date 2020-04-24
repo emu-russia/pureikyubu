@@ -39,6 +39,9 @@
     <ClCompile Include="GekkoIsaTests\BitFactoryTest.cpp">
       <Filter>GekkoIsaTests</Filter>
     </ClCompile>
+    <ClCompile Include="GekkoIsaTests\Addcx.cpp">
+      <Filter>GekkoIsaTests</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">

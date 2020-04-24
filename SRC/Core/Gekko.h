@@ -145,6 +145,8 @@ namespace Gekko
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
 
+        void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
+
     };
 
     extern GekkoCore* Gekko;

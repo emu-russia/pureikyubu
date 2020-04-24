@@ -42,6 +42,13 @@ namespace Gekko
         else Gekko->regs.pc += 4;
     }
 
+    // For testing
+    void Interpreter::ExecuteOpcodeDirect(uint32_t pc, uint32_t instr)
+    {
+        Gekko->regs.pc = pc;
+        c_1[instr >> 26](instr);
+    }
+
     // interpreter exception
     void Interpreter::Exception(Gekko::Exception code)
     {
