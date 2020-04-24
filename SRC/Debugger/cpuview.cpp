@@ -41,7 +41,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
     std::string text = Gekko::GekkoDisasm::Disasm(addr, &info);
 
-    if(info.flow)
+    if(info.flow && info.Imm.Address != 0)
     {
         const char* dir;
 
@@ -158,7 +158,7 @@ static void disa_navigate()
 
     std::string text = Gekko::GekkoDisasm::Disasm(addr, &info);
 
-    if(info.flow) disa_goto(info.Imm.Address);
+    if(info.flow && info.Imm.Address != 0) disa_goto(info.Imm.Address);
 }
 
 void con_disa_key(char ascii, int vkey, int ctrl)

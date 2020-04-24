@@ -405,13 +405,13 @@ namespace Gekko
 		FReg,
 		Simm,
 		Uimm,
-		Crf,
+		Crf,			// 111xx
 		RegOffset,
 		Num,
 		Spr,
 		Sr,
 		Tbr,
-		Crb,
+		Crb,			// 11111
 		CRM,
 		FM,
 		Address,
