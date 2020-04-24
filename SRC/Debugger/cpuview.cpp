@@ -3,7 +3,6 @@
 
 static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 {
-    PPCD_CB    disa;
     int bg, fg, bgcur, bgbp;
     char *symbol;
     int addend = 1;
@@ -36,80 +35,42 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
         return addend;
     }
 
-    con_printf_at( 0, line, "\x1%c%08X  ", ConColor::NORM, addr);
-    con_printf_at(10, line, "\x1%c%08X  ", ConColor::NORM, opcode);
+    Gekko::AnalyzeInfo info = { 0 };
 
-    disa.instr = opcode;
-    disa.pc = addr;
+    Gekko::Analyzer::Analyze(addr, opcode, &info);
 
-    PPCDisasm (&disa);
+    std::string text = Gekko::GekkoDisasm::Disasm(addr, &info);
 
-    if(opcode == 0x4e800020 /* blr */)
-    {
-        // ignore other bclr/bcctr opcodes,
-        // to easily locate end of function
-        con_printf_at(20, line, "\x1%cblr", ConColor::GREEN);
-    }
-    
-    else if(disa.iclass & PPC_DISA_BRANCH)
+    if(info.flow && info.Imm.Address != 0)
     {
         const char* dir;
 
-        if (disa.target > addr) dir = " \x19";
-        else if (disa.target < addr) dir = " \x18";
+        if (info.Imm.Address > addr) dir = " \x19";
+        else if (info.Imm.Address < addr) dir = " \x18";
         else dir = " \x1b";
 
-        con_printf_at(20, line, "\x1%c%-12s%s\x1%c%s", 
-            ConColor::GREEN, disa.mnemonic, disa.operands, ConColor::CYAN, dir);
+        con_printf_at(0, line, "\x1%c%s\x1%c%s", 
+            ConColor::GREEN, text.c_str(), ConColor::CYAN, dir);
 
-        symbol = SYMName((uint32_t)disa.target);
+        symbol = SYMName(info.Imm.Address);
         if(symbol)
         {
             con_printf_at(47, line, "\x1%c ; %s", ConColor::BROWN, symbol);
         }
     }
     
-    else con_printf_at(20, line, "\x1%c%-12s%s", ConColor::NORM, disa.mnemonic, disa.operands);
+    else con_printf_at(0, line, "\x1%c%s", ConColor::NORM, text.c_str());
 
-    if ((disa.iclass & PPC_DISA_INTEGER) && disa.mnemonic[0] == 'r' && disa.mnemonic[1] == 'l')
+    if (text[0] == 'r' && text[1] == 'l')
     {
-        con_printf_at (60, line, "\x1%cmask:0x%08X", ConColor::NORM, (uint32_t)disa.target);
+        int mb = info.paramBits[3];
+        int me = info.paramBits[4];
+        uint32_t mask = ((uint32_t)-1 >> mb) ^ ((me >= 31) ? 0 : ((uint32_t)-1) >> (me + 1));
+
+        con_printf_at (60, line, "\x1%cmask:0x%08X", ConColor::NORM, mask);
     }
 
     return addend;
-}
-
-// show pointer to data
-void con_ldst_info()
-{
-    PPCD_CB    disa;
-    wind.ldst = FALSE;
-
-    if (CPUReadWord != nullptr)
-    {
-        uint32_t op;
-        CPUReadWord(con.disa_cursor & ~3, &op);
-
-        disa.pc = con.disa_cursor;
-        disa.instr = op;
-        PPCDisasm (&disa);
-
-        if(disa.iclass & PPC_DISA_LDST)
-        {
-            int ra = ((op >> 16) & 0x1f);
-            int32_t simm = ((int32_t)(int16_t)(uint16_t)op);
-            wind.ldst_disp = Gekko::Gekko->regs.gpr[ra] + simm;
-            con_attr(0, 3);
-            con_fill_line(wind.disa_y, 0xc4);
-            if(wind.focus == WDISA) con_printf_at(0, wind.disa_y, "\x1%c\x1f", ConColor::WHITE);
-            con_attr(0, 3);
-            con_print_at(2, wind.disa_y, "F3");
-            con_printf_at(6, wind.disa_y, "<%08X> %s",
-                wind.ldst_disp, SYMName(wind.ldst_disp));
-            con_attr(7, 0);
-            wind.ldst = TRUE;
-        }
-    }
 }
 
 void con_update_disa_window()
@@ -130,8 +91,6 @@ void con_update_disa_window()
         " cursor:%08X phys:%08X pc:%08X", 
         pa, Gekko::Gekko->regs.pc);
     con_attr(7, 0);
-
-    con_ldst_info();
 
     uint32_t op, addr = con.text & ~3;
     wind.disa_sub_h = 0;
@@ -183,7 +142,6 @@ static void disa_return()
 
 static void disa_navigate()
 {
-    PPCD_CB    disa;
     uint32_t op = 0, addr = con.disa_cursor;
 
     uint32_t pa = -1;
@@ -194,12 +152,13 @@ static void disa_navigate()
     if(pa != -1) CPUReadWord(pa, &op);
     if(op == 0) return;
 
-    memset(&disa, 0, sizeof(PPCD_CB));
-    disa.instr = op;
-    disa.pc = addr;
-    PPCDisasm (&disa);
+    Gekko::AnalyzeInfo info = { 0 };
 
-    if(disa.iclass & PPC_DISA_BRANCH) disa_goto((uint32_t)disa.target);
+    Gekko::Analyzer::Analyze(addr, op, &info);
+
+    std::string text = Gekko::GekkoDisasm::Disasm(addr, &info);
+
+    if(info.flow && info.Imm.Address != 0) disa_goto(info.Imm.Address);
 }
 
 void con_disa_key(char ascii, int vkey, int ctrl)
@@ -258,6 +217,5 @@ void con_disa_key(char ascii, int vkey, int ctrl)
             break;
     }
 
-    con_ldst_info();
     con.update |= CON_UPDATE_DISA;
 }

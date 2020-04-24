@@ -3,28 +3,333 @@
 
 namespace Gekko
 {
+	// Branch conditional.
+	// Disp:1 - branch with displacement..
+	// Disp:0 - branch by register (L:1 for LR, L:0 for CTR).
+	std::string GekkoDisasm::Bcx(AnalyzeInfo* info, bool Disp, bool L, bool & simple, bool skipOperand[5])
+	{
+		int bo = info->paramBits[0], bi = info->paramBits[1];
+		uint16_t uimm = info->Imm.Unsigned;
+
+		char mnem[0x20] = { 0, };
+
+		// Branch suffix: AA || LK.
+		static const char *b_opt[4] = { "", "l", "a", "la" };
+
+		// Branch condition code: 4 * BO[1] + (BI & 3)
+		static const char * b_cond[8] = {
+			"ge", "le", "ne", "ns", "lt", "gt", "eq", "so"
+		};
+
+		// Branch on CTR code: BO[0..3]
+		static const char * b_ctr[16] = {
+			"dnzf", "dzf", NULL, NULL, "dnzt", "dzt", NULL, NULL,
+			"dnz", "dz", NULL, NULL, NULL, NULL, NULL, NULL
+		};
+
+		uint32_t bd = 0;
+		const char *r = Disp ? "" : (L ? "lr" : "ctr");
+
+		// Calculate displacement
+		if(Disp)
+		{
+			bd = uimm & ~3;
+			if(bd & 0x8000) bd |= 0xffffffffffff0000;
+		}
+
+		// Calculate branch prediction hint
+		char y = (bo & 1) ^ ((((int32_t)bd < 0) && Disp) ? 1 : 0);
+		y = y ? '+' : '-';
+
+		if(bo & 4)              // No CTR decrement                         // BO[2]
+		{
+			if(bo & 16)         // Branch always                            // BO[0]
+			{
+				sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s", r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1]);
+				skipOperand[0] = true;
+				skipOperand[1] = true;
+				simple = true;
+				return mnem;
+			}
+			else                // Branch conditional
+			{
+				const char *cond = b_cond[((bo & 8) >> 1) | (bi & 3)];
+				if(cond != NULL)                                            // BO[1]
+				{
+					sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s%s%c", cond, r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
+					skipOperand[0] = true;
+					if (bi >= 4)
+					{
+						info->param[1] = Param::Crf;
+						info->paramBits[1] = bi >> 2;
+					}
+					else
+					{
+						skipOperand[1] = true;
+					}
+					simple = true;
+					return mnem;
+				}
+			}
+		}
+		else                    // Decrement CTR
+		{
+			if(b_ctr[bo >> 1])
+			{
+				sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
+				skipOperand[0] = true;
+				if (bo & 16)
+				{
+					skipOperand[1] = true;
+				}
+				simple = true;
+				return mnem;
+			}
+		}
+
+		simple = false;
+		return "";
+	}
+
 	// Not all simplified instructions are supported. Some of those presented in the manual are so simplified that they only confuse.
 	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple, bool skipOperand[5])
 	{
+		static const char* t_cond[32] = {
+			NULL, "lgt", "llt", NULL, "eq", "lge", "lle", NULL,
+			"gt", NULL, NULL, NULL, "ge", NULL, NULL, NULL,
+			"lt", NULL, NULL, NULL, "le", NULL, NULL, NULL,
+			"ne", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+		};
+
+		char simplified[0x40] = { 0, };
 		simple = false;
 
 		// Trap
 
+		if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
+		{
+			sprintf_s(simplified, sizeof(simplified) - 1, "tw%si", t_cond[info->paramBits[0]]);
+			skipOperand[0] = true;
+			simple = true;
+			return simplified;
+		}
+		else if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
+		{
+			sprintf_s(simplified, sizeof(simplified) - 1, "tw%s", t_cond[info->paramBits[0]]);
+			skipOperand[0] = true;
+			simple = true;
+			return simplified;
+		}
+
 		// Compare
 
-		// Addi
+		else if (info->instr == Instruction::cmp)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmpw";
+		}
+		else if (info->instr == Instruction::cmpi)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmpwi";
+		}
+		else if (info->instr == Instruction::cmpl)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmplw";
+		}
+		else if (info->instr == Instruction::cmpli)
+		{
+			if (info->paramBits[0] == 0)
+			{
+				skipOperand[0] = true;
+			}
+			simple = true;
+			return "cmplwi";
+		}
+
+		// Add
+
+		else if (info->instr == Instruction::addi && info->paramBits[1] == 0)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "li";
+		}
+		else if (info->instr == Instruction::addis && info->paramBits[1] == 0)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "lis";
+		}
+		else if (info->instr == Instruction::addic && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subic";
+		}
+		else if (info->instr == Instruction::addic_d && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subic.";
+		}
+		else if (info->instr == Instruction::addis && info->Imm.Unsigned & 0x8000)
+		{
+			info->Imm.Unsigned = ~(info->Imm.Unsigned) + 1;
+			info->param[2] = Param::Simm;
+			simple = true;
+			return "subis";
+		}
 
 		// Bcx
 
+		if (info->instr == Instruction::bc || info->instr == Instruction::bca || info->instr == Instruction::bcl || info->instr == Instruction::bcla)
+		{
+			return Bcx(info, true, false, simple, skipOperand);
+		}
+		else if (info->instr == Instruction::bcctr || info->instr == Instruction::bcctrl)
+		{
+			return Bcx(info, false, false, simple, skipOperand);
+		}
+		else if (info->instr == Instruction::bclr || info->instr == Instruction::bclrl)
+		{
+			return Bcx(info, false, true, simple, skipOperand);
+		}
+
 		// Condition Register
+
+		else if (info->instr == Instruction::creqv && info->paramBits[0] == info->paramBits[1] && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			simple = true;
+			return "crset";
+		}
+		else if (info->instr == Instruction::crxor && info->paramBits[0] == info->paramBits[1] && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			simple = true;
+			return "crclr";
+		}
+		else if (info->instr == Instruction::crnor && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "crnot";
+		}
+		else if (info->instr == Instruction::cror && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "crmove";
+		}
 
 		// Mtcrf
 
+		else if (info->instr == Instruction::mtcrf && info->paramBits[0] == 0xff)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mctr";
+		}
+
 		// Special-purpose reg
 
-		// Tbrs
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 1)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtxer";
+		}
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 8)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtlr";
+		}
+		else if (info->instr == Instruction::mtspr && info->paramBits[0] == 9)
+		{
+			skipOperand[0] = true;
+			simple = true;
+			return "mtctr";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 1)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mfxer";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 8)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mflr";
+		}
+		else if (info->instr == Instruction::mfspr && info->paramBits[1] == 9)
+		{
+			skipOperand[1] = true;
+			simple = true;
+			return "mfctr";
+		}
+
+		// Norx
+
+		else if (info->instr == Instruction::nor && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "not";
+		}
+
+		// Orx
+
+		else if (info->instr == Instruction::_or && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "mr";
+		}
+		else if (info->instr == Instruction::or_d && info->paramBits[1] == info->paramBits[2])
+		{
+			skipOperand[2] = true;
+			simple = true;
+			return "mr.";
+		}
 
 		// Nop (Ori)
+
+		else if (info->instrBits == 0x6000'0000)
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			skipOperand[2] = true;
+			simple = true;
+			return "nop";
+		}
+		else if (info->instrBits == 0x7FE0'0008)
+		{
+			skipOperand[0] = true;
+			skipOperand[1] = true;
+			skipOperand[2] = true;
+			simple = true;
+			return "trap";
+		}
 
 		return "";
 	}
@@ -410,8 +715,6 @@ namespace Gekko
 
 	std::string GekkoDisasm::SprName(int spr)
 	{
-		char def[0x10] = { 0, };
-
 		switch (spr)
 		{
 			// General architecture special-purpose registers.
@@ -489,6 +792,7 @@ namespace Gekko
 			case 1022: return "THRM3";
 		}
 
+		char def[0x10] = { 0, };
 		sprintf_s(def, sizeof(def) - 1, "%u", spr);
 		return def;
 	}
@@ -502,7 +806,7 @@ namespace Gekko
 			case 269: return "TBU";
 		}
 
-		char def[8];
+		char def[8] = { 0, };
 		sprintf_s(def, sizeof(def) - 1, "%u", tbr);
 		return def;
 	}

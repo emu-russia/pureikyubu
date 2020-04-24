@@ -1,0 +1,18 @@
+{
+  "info": {
+    "description": "Processor debug commands. Available only after emulation has been started.",
+    "helpGroup": "Gekko Debug Commands"
+  },
+
+  "can": {
+
+    "run": {
+      "help": "Run processor until break or stop"
+    },
+
+    "stop": {
+      "help": "Stop processor execution"
+    }
+
+  }
+}
