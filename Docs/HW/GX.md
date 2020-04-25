@@ -94,6 +94,18 @@ GX state stored in 3 sets of registers:
 
 Writing to registers is performed by special FIFO commands. Partially registers are mapped to physical memory.
 
+### CP Regs
+
+TBD.
+
+### XF Regs
+
+TBD.
+
+### BP Regs
+
+TBD.
+
 ## Vertex Cache/Command Processor FIFO
 
 The command processor fetches:
@@ -180,16 +192,32 @@ The rasterizer(s) is able to draw the following graphic primitives:
 
 ## Transform Unit (XF)
 
+TBD.
+
 ## Texture Unit
+
+TBD.
 
 ## Texture Cache (TMEM)
 
+TBD.
+
 ## Texture Environment Unit (TEV)
+
+TBD.
 
 ## Embedded Frame Buffer (EFB)
 
+TBD.
+
 ### Color/Z Compare (C/Z)
+
+TBD.
 
 ### Pixel Engine / Copy (PE)
 
+TBD.
+
 ## GX Verify
+
+TBD.
