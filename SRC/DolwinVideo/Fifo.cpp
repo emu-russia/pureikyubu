@@ -30,36 +30,35 @@ uint8_t  cmdidle=1;
 
 // stage callbacks
 
-// helper function
-// (no need anymore)
-static char *getAttrDesc(VTX_ATTR attr)
+// Helper function
+static std::string AttrToString(VTX_ATTR attr)
 {
     switch(attr)
     {
-        case VTX_POSMATIDX:     return (char *)"Position Matrix Index";
-        case VTX_TEX0MTXIDX:    return (char*)"Texture Coordinate 0 Matrix Index";
-        case VTX_TEX1MTXIDX:    return (char*)"Texture Coordinate 1 Matrix Index";
-        case VTX_TEX2MTXIDX:    return (char*)"Texture Coordinate 2 Matrix Index";
-        case VTX_TEX3MTXIDX:    return (char*)"Texture Coordinate 3 Matrix Index";
-        case VTX_TEX4MTXIDX:    return (char*)"Texture Coordinate 4 Matrix Index";
-        case VTX_TEX5MTXIDX:    return (char*)"Texture Coordinate 5 Matrix Index";
-        case VTX_TEX6MTXIDX:    return (char*)"Texture Coordinate 6 Matrix Index";
-        case VTX_TEX7MTXIDX:    return (char*)"Texture Coordinate 7 Matrix Index";
-        case VTX_POS:           return (char*)"Position";
-        case VTX_NRM:           return (char*)"Normal or Normal/Binormal/Tangent";
-        case VTX_COLOR0:        return (char*)"Color 0";
-        case VTX_COLOR1:        return (char*)"Color 1";
-        case VTX_TEXCOORD0:     return (char*)"Texture Coordinate 0";
-        case VTX_TEXCOORD1:     return (char*)"Texture Coordinate 1";
-        case VTX_TEXCOORD2:     return (char*)"Texture Coordinate 2";
-        case VTX_TEXCOORD3:     return (char*)"Texture Coordinate 3";
-        case VTX_TEXCOORD4:     return (char*)"Texture Coordinate 4";
-        case VTX_TEXCOORD5:     return (char*)"Texture Coordinate 5";
-        case VTX_TEXCOORD6:     return (char*)"Texture Coordinate 6";
-        case VTX_TEXCOORD7:     return (char*)"Texture Coordinate 7";
-        case VTX_MAX_ATTR :     return (char*)"MAX attr";
+        case VTX_POSMATIDX:     return "Position Matrix Index";
+        case VTX_TEX0MTXIDX:    return "Texture Coordinate 0 Matrix Index";
+        case VTX_TEX1MTXIDX:    return "Texture Coordinate 1 Matrix Index";
+        case VTX_TEX2MTXIDX:    return "Texture Coordinate 2 Matrix Index";
+        case VTX_TEX3MTXIDX:    return "Texture Coordinate 3 Matrix Index";
+        case VTX_TEX4MTXIDX:    return "Texture Coordinate 4 Matrix Index";
+        case VTX_TEX5MTXIDX:    return "Texture Coordinate 5 Matrix Index";
+        case VTX_TEX6MTXIDX:    return "Texture Coordinate 6 Matrix Index";
+        case VTX_TEX7MTXIDX:    return "Texture Coordinate 7 Matrix Index";
+        case VTX_POS:           return "Position";
+        case VTX_NRM:           return "Normal or Normal/Binormal/Tangent";
+        case VTX_COLOR0:        return "Color 0";
+        case VTX_COLOR1:        return "Color 1";
+        case VTX_TEXCOORD0:     return "Texture Coordinate 0";
+        case VTX_TEXCOORD1:     return "Texture Coordinate 1";
+        case VTX_TEXCOORD2:     return "Texture Coordinate 2";
+        case VTX_TEXCOORD3:     return "Texture Coordinate 3";
+        case VTX_TEXCOORD4:     return "Texture Coordinate 4";
+        case VTX_TEXCOORD5:     return "Texture Coordinate 5";
+        case VTX_TEXCOORD6:     return "Texture Coordinate 6";
+        case VTX_TEXCOORD7:     return "Texture Coordinate 7";
+        case VTX_MAX_ATTR :     return "MAX attr";
     }
-    return (char*)"unknown";
+    return "Unknown attribute";
 }
 
 // calculate size of current vertex
@@ -569,10 +568,10 @@ void FifoReconfigure(
 
         default:
         {
-            GFXError(
+            DBHalt(
                 "Fifo reconfigure failure! "
                 "Unhandled vertex attribute %s.",
-                getAttrDesc(attr)
+                AttrToString(attr).c_str()
             );
         }
         return;
@@ -592,25 +591,6 @@ void FifoReconfigure(
 /*/
 
     for(unsigned v=0; v<8; v++) VtxSize[v] = gx_vtxsize(v);
-}
-
-// ---------------------------------------------------------------------------
-
-// byte-swapping, used commonly 
-// TODO : convert on asm to speed-up
-
-uint32_t swap32(uint32_t data)
-{
-    return ((data >> 24) & 0x000000ff) |
-           ((data >>  8) & 0x0000ff00) |
-           ((data <<  8) & 0x00ff0000) |
-           ((data << 24) & 0xff000000) ;
-}
-
-uint16_t swap16(uint16_t data)
-{
-    return ((data & 0x00ff) << 8) |
-           ((data & 0xff00) >> 8) ;
 }
 
 // ---------------------------------------------------------------------------
@@ -663,7 +643,7 @@ static uint32_t gx_needbytes(uint8_t cmd)
             
         case OP_CMD_LOAD_XFREG:
         {
-            uint16_t len = swap16(*(uint16_t*)readptr) + 1;
+            uint16_t len = _byteswap_ushort(*(uint16_t*)readptr) + 1;
             return 2 + 4 * len;
         }
 
@@ -725,7 +705,7 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_POINT | 6:
         case OP_CMD_DRAW_POINT | 7:
         {
-            unsigned vtxnum = swap16(*(uint16_t *)readptr);
+            int vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
             return vtxnum * VtxSize[cmd & 7];
         }
     }
@@ -749,7 +729,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 break;
 
             case OP_CMD_CALL_DL:
-                GFXError("Nested display list");
+                DBHalt("Call FIFO Not Implemented!");
                 readptr += 8;
                 break;
 
@@ -758,7 +738,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             
             case OP_CMD_LOAD_BPREG:
             {
-                uint32_t word = swap32(*(uint32_t *)readptr);
+                uint32_t word = _byteswap_ulong(*(uint32_t *)readptr);
                 readptr += 4;
                 loadBPReg(word >> 24, word & 0xffffff);
                 break;
@@ -767,7 +747,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             case OP_CMD_LOAD_CPREG:
             {
                 uint8_t index = *readptr++;
-                uint32_t word = swap32(*(uint32_t *)readptr);
+                uint32_t word = _byteswap_ulong(*(uint32_t *)readptr);
                 readptr += 4;
                 loadCPReg(index, word);
                 break;
@@ -778,16 +758,16 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 uint16_t reg, len, index;
                 uint32_t *regData;
 
-                len = swap16(*(uint16_t *)readptr) + 1;
+                len = _byteswap_ushort(*(uint16_t *)readptr) + 1;
                 readptr += 2;
-                index = swap16(*(uint16_t *)readptr);
+                index = _byteswap_ushort(*(uint16_t *)readptr);
                 readptr += 2;
 
                 // reverse bytes
                 regData = (uint32_t *)readptr;
                 for(reg=0; reg<len; reg++, readptr+=4)
                 {
-                    regData[reg] = swap32(regData[reg]);
+                    regData[reg] = _byteswap_ulong(regData[reg]);
                 }
 
                 loadXFRegs(index, len, regData);
@@ -799,9 +779,9 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -813,9 +793,9 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -827,9 +807,9 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -841,9 +821,9 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -867,7 +847,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 static   Vertex   quad[4];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -903,7 +883,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 static   Vertex   tri[3];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -940,7 +920,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 static   Vertex   tri[3];
                 unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -992,7 +972,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 static   Vertex   tri[3];
                 unsigned c = 2, order[2] = { 1, 2 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -1043,7 +1023,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 static   Vertex   v[2];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -1080,7 +1060,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
                 static   Vertex   v[2];
                 unsigned c = 1, order[2] = { 0, 1 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -1127,7 +1107,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
             {
                 static  Vertex  p;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)readptr);
                 usevat = vatnum;
                 readptr += 2;
                                                             /*/
@@ -1266,7 +1246,7 @@ static void GPCallList(uint8_t *fifoPtr, uint32_t count)
 static void gx_bad_fifo()
 {
             {
-                GFXError(
+                DBHalt(
                     "Damaged FIFO buffer! Some of attributes are not emulated :\n"
                     "\n"
                     "VCD configuration :\n"
@@ -1395,8 +1375,8 @@ static void gx_command(uint8_t cmd)
                 p32 = (uint32_t *)accptr;
 
                 GPCallList(
-                    &RAM[swap32(p32[0]) & RAMMASK], 
-                    swap32(p32[1])
+                    &RAM[_byteswap_ulong(p32[0]) & RAMMASK], 
+                    _byteswap_ulong(p32[1])
                 );
 
                 accptr += 8;
@@ -1407,7 +1387,7 @@ static void gx_command(uint8_t cmd)
             
             case OP_CMD_LOAD_BPREG:
             {
-                uint32_t word = swap32(*(uint32_t *)accptr);
+                uint32_t word = _byteswap_ulong(*(uint32_t *)accptr);
                 accptr += 4;
                 loadBPReg(word >> 24, word & 0xffffff);
                 break;
@@ -1416,7 +1396,7 @@ static void gx_command(uint8_t cmd)
             case OP_CMD_LOAD_CPREG:
             {
                 uint8_t index = *accptr++;
-                uint32_t word = swap32(*(uint32_t *)accptr);
+                uint32_t word = _byteswap_ulong(*(uint32_t *)accptr);
                 accptr += 4;
                 loadCPReg(index, word);
                 break;
@@ -1427,16 +1407,16 @@ static void gx_command(uint8_t cmd)
                 uint16_t reg, len, index;
                 uint32_t *regData;
 
-                len = swap16(*(uint16_t *)accptr) + 1;
+                len = _byteswap_ushort(*(uint16_t *)accptr) + 1;
                 accptr += 2;
-                index = swap16(*(uint16_t *)accptr);
+                index = _byteswap_ushort(*(uint16_t *)accptr);
                 accptr += 2;
 
                 // reverse bytes
                 regData = (uint32_t *)accptr;
                 for(reg=0; reg<len; reg++, accptr+=4)
                 {
-                    regData[reg] = swap32(regData[reg]);
+                    regData[reg] = _byteswap_ulong(regData[reg]);
                 }
 
                 loadXFRegs(index, len, regData);
@@ -1448,9 +1428,9 @@ static void gx_command(uint8_t cmd)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -1462,9 +1442,9 @@ static void gx_command(uint8_t cmd)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -1476,9 +1456,9 @@ static void gx_command(uint8_t cmd)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -1490,9 +1470,9 @@ static void gx_command(uint8_t cmd)
             {
                 u16 idx, start, len;
 
-                idx = swap16(*(u16 *)readptr);
+                idx = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
-                start = swap16(*(u16 *)readptr);
+                start = _byteswap_ushort(*(u16 *)readptr);
                 readptr += 2;
                 len = (start >> 12) + 1;
                 start &= 0xfff;
@@ -1516,7 +1496,7 @@ static void gx_command(uint8_t cmd)
             {
                 static   Vertex   quad[4];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1553,7 +1533,7 @@ static void gx_command(uint8_t cmd)
             {
                 static   Vertex   tri[3];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1590,7 +1570,7 @@ static void gx_command(uint8_t cmd)
                 static   Vertex   tri[3];
                 unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1642,7 +1622,7 @@ static void gx_command(uint8_t cmd)
                 static   Vertex   tri[3];
                 unsigned c = 2, order[2] = { 1, 2 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1693,7 +1673,7 @@ static void gx_command(uint8_t cmd)
             {
                 static   Vertex   v[2];
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1730,7 +1710,7 @@ static void gx_command(uint8_t cmd)
                 static   Vertex   v[2];
                 unsigned c = 1, order[2] = { 0, 1 }, tmp;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1777,7 +1757,7 @@ static void gx_command(uint8_t cmd)
             {
                 static  Vertex  p;
                 unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
+                unsigned vtxnum = _byteswap_ushort(*(uint16_t *)accptr);
                 usevat = vatnum;
                 accptr += 2;
                                                             /*/
@@ -1808,7 +1788,7 @@ static void gx_command(uint8_t cmd)
 }
 
 
-void GXWriteFifo(uint8_t *dataPtr, uint32_t length)
+void GXWriteFifo(uint8_t dataPtr[32])
 {
     lastFifoSize += length;
 

@@ -1,3 +1,5 @@
+#pragma once
+
 // define fifo pipeline callbacks
 
 uint8_t* __fastcall pos_idx(uint8_t* ptr);

@@ -1,3 +1,6 @@
+
+#pragma once
+
 // color type
 typedef union
 {

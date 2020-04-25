@@ -19,6 +19,8 @@
 #include <intrin.h>
 #include <assert.h>
 
+#include <string>
+
 // other project includes
 #include "Config.h"
 #include "Plug.h"
@@ -33,3 +35,5 @@
 #include "Texgen.h"
 #include "Tev.h"
 #include "GPRegs.h"
+
+#include "../Debugger/Debugger.h"

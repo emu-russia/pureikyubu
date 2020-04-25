@@ -16,7 +16,7 @@ CPMemory    cpRegs;
 BPMemory    bpRegs;
 XFMemory    xfRegs;
 
-uint32_t         cpLoads, bpLoads, xfLoads;
+uint32_t    cpLoads, bpLoads, xfLoads;
 
 // ---------------------------------------------------------------------------
 
@@ -491,7 +491,7 @@ void loadBPReg(unsigned index, uint32_t value)
 
         case PE_TOKEN:
         {
-            if (GxDrawToken)
+            if (GxDrawToken && (uint16_t)value == bpRegs.tokint)
             {
                 GxDrawToken(bpRegs.tokint);
             }

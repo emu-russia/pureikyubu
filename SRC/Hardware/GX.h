@@ -12,7 +12,7 @@ long GXOpen(uint8_t* ramPtr, HWND hwndMain);
 void GXClose();
 
 // add new data to graphics fifo. draw next primitive, if there are enough data.
-void GXWriteFifo(uint8_t *dataPtr, uint32_t length);
+void GXWriteFifo(uint8_t dataPtr[32]);
 
 typedef void (*GXDrawDoneCallback)();
 typedef void (*GXDrawTokenCallback)(uint16_t tokenValue);

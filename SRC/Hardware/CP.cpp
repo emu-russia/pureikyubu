@@ -119,7 +119,7 @@ static void CPThread(void* Param)
 
             fifo.cp.sr &= ~CP_SR_CMD_IDLE;
             BeginProfileGfx();
-            GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK], 32);
+            GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK]);
             EndProfileGfx();
             fifo.cp.sr |= CP_SR_CMD_IDLE;
 

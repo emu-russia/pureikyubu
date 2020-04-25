@@ -102,8 +102,8 @@ uint8_t * __fastcall pos_xy_u16_d(uint8_t *ptr)
 
     // swap position data
     uint16_t u[2];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -119,8 +119,8 @@ uint8_t * __fastcall pos_xy_s16_d(uint8_t*ptr)
 
     // swap position data
     int16_t u[2];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -136,8 +136,8 @@ uint8_t * __fastcall pos_xy_f32_d(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = swap32(ptr32[0]);
-    u[1] = swap32(ptr32[1]);
+    u[0] = _byteswap_ulong(ptr32[0]);
+    u[1] = _byteswap_ulong(ptr32[1]);
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -184,9 +184,9 @@ uint8_t * __fastcall pos_xyz_u16_d(uint8_t *ptr)
 
     // swap position data
     uint16_t  u[3];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
-    u[2] = swap16(ptr16[2]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
+    u[2] = _byteswap_ushort(ptr16[2]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -202,9 +202,9 @@ uint8_t * __fastcall pos_xyz_s16_d(uint8_t *ptr)
 
     // swap position data
     int16_t u[3];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
-    u[2] = swap16(ptr16[2]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
+    u[2] = _byteswap_ushort(ptr16[2]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -220,9 +220,9 @@ uint8_t * __fastcall pos_xyz_f32_d(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[0]);
-    u[1] = swap32(ptr32[1]);
-    u[2] = swap32(ptr32[2]);
+    u[0] = _byteswap_ulong(ptr32[0]);
+    u[1] = _byteswap_ulong(ptr32[1]);
+    u[2] = _byteswap_ulong(ptr32[2]);
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -276,8 +276,8 @@ uint8_t * __fastcall pos_xy_s16_x8(uint8_t *ptr)
 
     // swap position data
     int16_t u[2];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -294,9 +294,9 @@ uint8_t * __fastcall pos_xyz_s16_x8(uint8_t *ptr)
 
     // swap position data
     int16_t u[3];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
-    u[2] = swap16(ptr16[n + 2]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
+    u[2] = _byteswap_ushort(ptr16[n + 2]);
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -313,9 +313,9 @@ uint8_t * __fastcall pos_xyz_f32_x8(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
-    u[2] = swap32(ptr32[n + 2]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
+    u[2] = _byteswap_ulong(ptr32[n + 2]);
 
     // save swapped data in vertex descriptor
     float *fu = (float *)u;
@@ -329,15 +329,15 @@ uint8_t * __fastcall pos_xyz_f32_x8(uint8_t *ptr)
 uint8_t * __fastcall pos_xyz_s16_x16(uint8_t *ptr)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_POS] / sizeof(int16_t));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     int16_t u[3];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
-    u[2] = swap16(ptr16[n + 2]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
+    u[2] = _byteswap_ushort(ptr16[n + 2]);
 
     // save swapped data in vertex descriptor
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -350,15 +350,15 @@ uint8_t * __fastcall pos_xyz_s16_x16(uint8_t *ptr)
 uint8_t * __fastcall pos_xyz_f32_x16(uint8_t *ptr)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_POS] / sizeof(float));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
-    u[2] = swap32(ptr32[n + 2]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
+    u[2] = _byteswap_ulong(ptr32[n + 2]);
 
     // save swapped data in vertex descriptor
     float *fu = (float *)u;
@@ -409,9 +409,9 @@ uint8_t * __fastcall nrm_xyz_u16_d(uint8_t *ptr)
 
     // swap position data
     uint16_t u[3];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
-    u[2] = swap16(ptr16[2]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
+    u[2] = _byteswap_ushort(ptr16[2]);
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -427,9 +427,9 @@ uint8_t * __fastcall nrm_xyz_s16_d(uint8_t *ptr)
 
     // swap position data
     int16_t u[3];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
-    u[2] = swap16(ptr16[2]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
+    u[2] = _byteswap_ushort(ptr16[2]);
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -445,9 +445,9 @@ uint8_t * __fastcall nrm_xyz_f32_d(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[0]);
-    u[1] = swap32(ptr32[1]);
-    u[2] = swap32(ptr32[2]);
+    u[0] = _byteswap_ulong(ptr32[0]);
+    u[1] = _byteswap_ulong(ptr32[1]);
+    u[2] = _byteswap_ulong(ptr32[2]);
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -466,9 +466,9 @@ uint8_t * __fastcall nrm_nbt_f32_d(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[0]);
-    u[1] = swap32(ptr32[1]);
-    u[2] = swap32(ptr32[2]);
+    u[0] = _byteswap_ulong(ptr32[0]);
+    u[1] = _byteswap_ulong(ptr32[1]);
+    u[2] = _byteswap_ulong(ptr32[2]);
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -524,9 +524,9 @@ uint8_t * __fastcall nrm_xyz_s16_x8(uint8_t *ptr)
 
     // swap position data
     int16_t u[3];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
-    u[2] = swap16(ptr16[n + 2]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
+    u[2] = _byteswap_ushort(ptr16[n + 2]);
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0]);
@@ -543,9 +543,9 @@ uint8_t * __fastcall nrm_xyz_f32_x8(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
-    u[2] = swap32(ptr32[n + 2]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
+    u[2] = _byteswap_ulong(ptr32[n + 2]);
 
     // save swapped data in vertex descriptor
     float *fu = (float *)u;
@@ -563,9 +563,9 @@ uint8_t * __fastcall nrm_nbt_s16_x8(uint8_t *ptr)
 
     // swap normal data
     int16_t u[3];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
-    u[2] = swap16(ptr16[n + 2]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
+    u[2] = _byteswap_ushort(ptr16[n + 2]);
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0]);
@@ -578,15 +578,15 @@ uint8_t * __fastcall nrm_nbt_s16_x8(uint8_t *ptr)
 uint8_t * __fastcall nrm_xyz_s16_x16(uint8_t *ptr)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_NRM] / sizeof(int16_t));
     ptr += 2;
 
     // swap normal data
     int16_t u[3];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
-    u[2] = swap16(ptr16[n + 2]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
+    u[2] = _byteswap_ushort(ptr16[n + 2]);
 
     // save swapped data in vertex descriptor
     vtx->nrm[0] = (float)u[0];
@@ -600,15 +600,15 @@ uint8_t * __fastcall nrm_xyz_s16_x16(uint8_t *ptr)
 uint8_t * __fastcall nrm_xyz_f32_x16(uint8_t *ptr)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_NRM] / sizeof(float));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
-    u[2] = swap32(ptr32[n + 2]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
+    u[2] = _byteswap_ulong(ptr32[n + 2]);
 
     // save swapped data in vertex descriptor
     float *fu = (float *)u;
@@ -625,7 +625,7 @@ uint8_t * __fastcall nrm_xyz_f32_x16(uint8_t *ptr)
 
 uint8_t * __fastcall clr0_rgb_rgb565_d(uint8_t *ptr)
 {
-    uint16_t p = swap16(*(uint16_t *)ptr);
+    uint16_t p = _byteswap_ushort(*(uint16_t *)ptr);
 
     uint8_t r = p >> 11;
     uint8_t g = (p >> 5) & 0x3f;
@@ -651,7 +651,7 @@ uint8_t * __fastcall clr0_rgb_rgb8_d(uint8_t *ptr)
 
 uint8_t * __fastcall clr0_rgba_rgba4_d(uint8_t *ptr)
 {
-    uint16_t p = swap16(*(uint16_t *)ptr);
+    uint16_t p = _byteswap_ushort(*(uint16_t *)ptr);
 
     uint8_t r = (p >>12) & 0xf;
     uint8_t g = (p >> 8) & 0xf;
@@ -705,7 +705,7 @@ uint8_t * __fastcall clr0_rgba_rgba8_x8(uint8_t *ptr)
 uint8_t * __fastcall clr0_rgb_rgb8_x16(uint8_t *ptr)
 {
     uint8_t *ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t));
     ptr += 2;
 
@@ -720,7 +720,7 @@ uint8_t * __fastcall clr0_rgb_rgb8_x16(uint8_t *ptr)
 uint8_t * __fastcall clr0_rgba_rgba8_x16(uint8_t *ptr)
 {
     uint8_t *ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t));
     ptr += 2;
 
@@ -791,8 +791,8 @@ uint8_t * __fastcall tex0_st_u16_d(uint8_t *ptr)
 
     // swap position data
     uint16_t u[2];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
@@ -807,8 +807,8 @@ uint8_t * __fastcall tex0_st_s16_d(uint8_t *ptr)
 
     // swap position data
     uint16_t u[2];
-    u[0] = swap16(ptr16[0]);
-    u[1] = swap16(ptr16[1]);
+    u[0] = _byteswap_ushort(ptr16[0]);
+    u[1] = _byteswap_ushort(ptr16[1]);
 
     //GFXError("u[0]:%04X, u[1]:%04X, %i", u[0], u[1], cpRegs.vatA[usevat].tex0shft);
 
@@ -827,8 +827,8 @@ uint8_t * __fastcall tex0_st_f32_d(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = swap32(ptr32[0]);
-    u[1] = swap32(ptr32[1]);
+    u[0] = _byteswap_ulong(ptr32[0]);
+    u[1] = _byteswap_ulong(ptr32[1]);
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -862,8 +862,8 @@ uint8_t * __fastcall tex0_st_u16_x8(uint8_t *ptr)
 
     // swap position data
     uint16_t u[2];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
@@ -879,8 +879,8 @@ uint8_t * __fastcall tex0_st_s16_x8(uint8_t *ptr)
 
     // swap position data
     int16_t u[2];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
@@ -896,8 +896,8 @@ uint8_t * __fastcall tex0_st_f32_x8(uint8_t *ptr)
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
 
     // save swapped data in vertex descriptor
     float *fu = (float *)u;
@@ -910,7 +910,7 @@ uint8_t * __fastcall tex0_st_f32_x8(uint8_t *ptr)
 uint8_t * __fastcall tex0_s_u8_x16(uint8_t *ptr)
 {
     uint8_t *ptr8 = (uint8_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint8_t));
     ptr += 2;
 
@@ -927,14 +927,14 @@ uint8_t * __fastcall tex0_s_u8_x16(uint8_t *ptr)
 uint8_t * __fastcall tex0_st_u16_x16(uint8_t *ptr)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint16_t));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint16_t u[2];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
 
     // save swapped data in vertex descriptor
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
@@ -946,14 +946,14 @@ uint8_t * __fastcall tex0_st_u16_x16(uint8_t *ptr)
 uint8_t * __fastcall tex0_st_s16_x16(uint8_t *ptr)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int16_t));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     int16_t u[2];
-    u[0] = swap16(ptr16[n + 0]);
-    u[1] = swap16(ptr16[n + 1]);
+    u[0] = _byteswap_ushort(ptr16[n + 0]);
+    u[1] = _byteswap_ushort(ptr16[n + 1]);
 
     // save swapped data in vertex descriptor
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
@@ -965,14 +965,14 @@ uint8_t * __fastcall tex0_st_s16_x16(uint8_t *ptr)
 uint8_t * __fastcall tex0_st_f32_x16(uint8_t *ptr)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = swap16(*((uint16_t *)ptr));
+    unsigned n = _byteswap_ushort(*((uint16_t *)ptr));
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(float));
     ptr += 2;
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = swap32(ptr32[n + 0]);
-    u[1] = swap32(ptr32[n + 1]);
+    u[0] = _byteswap_ulong(ptr32[n + 0]);
+    u[1] = _byteswap_ulong(ptr32[n + 1]);
 
     // save swapped data in vertex descriptor
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];

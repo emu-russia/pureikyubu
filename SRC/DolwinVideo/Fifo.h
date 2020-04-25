@@ -1,4 +1,6 @@
 
+#pragma once
+
 // vertex attributes
 typedef enum
 {
@@ -48,10 +50,6 @@ typedef enum
 #define OP_CMD_DRAW_POINT       0xB8
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-// commonly used
-uint32_t     swap32(uint32_t data);
-uint16_t     swap16(uint16_t data);
 
 extern  uint32_t     lastFifoSize;
 
