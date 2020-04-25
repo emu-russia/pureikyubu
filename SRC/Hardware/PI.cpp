@@ -1,5 +1,4 @@
-// PI - processor interface (interrupts and console control regs)
-// PI fifo located in CP.cpp module
+// PI - processor interface (interrupts and console control regs, FIFO)
 #include "pch.h"
 
 // PI state (registers and other data)
@@ -164,6 +163,27 @@ static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
     *reg = 0;
 }
 
+//
+// PI fifo (CPU)
+//
+
+static void __fastcall read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = pi.base & ~0x1f; }
+static void __fastcall write_pi_base(uint32_t addr, uint32_t data)  { pi.base = data & ~0x1f; }
+static void __fastcall read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = pi.top & ~0x1f; }
+static void __fastcall write_pi_top(uint32_t addr, uint32_t data)   { pi.top = data & ~0x1f; }
+static void __fastcall read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = pi.wrptr & ~0x1f; }
+static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { pi.wrptr = data & ~0x1f; }
+
+// show PI fifo configuration
+void DumpPIFIFO()
+{
+    DBReport("PI fifo configuration");
+    DBReport("   base :0x%08X", pi.base);
+    DBReport("   top  :0x%08X", pi.top);
+    DBReport("   wrptr:0x%08X", pi.wrptr);
+    DBReport("   wrap :%i", (pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
+}
+
 // ---------------------------------------------------------------------------
 // init
 
@@ -184,4 +204,9 @@ void PIOpen(HWConfig* config)
     MISetTrap(32, PI_MB_REV  , read_mbrev, NULL);
     MISetTrap( 8, PI_RST_CODE, read_reset, write_reset);
     MISetTrap(32, PI_RST_CODE, read_reset, write_reset);
+
+    // processor interface (CPU fifo)
+    MISetTrap(32, PI_BASE , read_pi_base , write_pi_base);
+    MISetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
+    MISetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
 }

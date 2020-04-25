@@ -1,6 +1,4 @@
-// all fifo-related stuff here:
-// CP - command processor, PE - pixel engine,
-// PI fifo - processor interface fifo
+// CP - command processor, PE - pixel engine.
 #include "pch.h"
 
 FifoControl fifo;
@@ -21,9 +19,9 @@ static void DONE_INT()
         DBReport2(DbgChannel::PE, "PE_DONE (frame:%u)", fifo.done_num);
     }
 
-    fifo.pe.sr |= PE_SR_DONE;
     if(fifo.pe.sr & PE_SR_DONEMSK)
     {
+        fifo.pe.sr |= PE_SR_DONE;
         PIAssertInt(PI_INTERRUPT_PE_FINISH);
     }
 }
@@ -36,62 +34,105 @@ static void TOKEN_INT()
         DBReport2(DbgChannel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
     }
 
-    fifo.pe.sr |= PE_SR_TOKEN;
     if(fifo.pe.sr & PE_SR_TOKENMSK)
     {
+        fifo.pe.sr |= PE_SR_TOKEN;
         PIAssertInt(PI_INTERRUPT_PE_TOKEN);
     }
 }
 
 static void CP_BREAK()
 {
-    fifo.cp.sr |= CP_SR_BPINT;
-    if (fifo.log)
+    if (fifo.cp.cr & CP_CR_BPINTEN && (fifo.cp.sr & CP_SR_BPINT) == 0)
     {
-        UI::DolwinReport(_T("BPOINT!"));
+        fifo.cp.sr |= CP_SR_BPINT;
+        PIAssertInt(PI_INTERRUPT_CP);
+        DBReport2(DbgChannel::CP, "BREAK");
     }
-    PIAssertInt(PI_INTERRUPT_CP);
 }
 
-// Advance PI write pointer, CP pointer, check for breakpoint
-static void fifo_flow(uint32_t nbytes)
+static void CP_OVF()
 {
-    // PI fifo flow
-    fifo.pi.wrptr &= ~PI_WRPTR_WRAP;
-    fifo.pi.wrptr += nbytes;
-    if(fifo.pi.wrptr >= fifo.pi.top)
+    if (fifo.cp.cr & CP_CR_OVFEN && (fifo.cp.sr & CP_SR_OVF) == 0)
     {
-        fifo.pi.wrptr  = fifo.pi.base;
-        fifo.pi.wrptr |= PI_WRPTR_WRAP;
+        fifo.cp.sr |= CP_SR_OVF;
+        PIAssertInt(PI_INTERRUPT_CP);
+        DBReport2(DbgChannel::CP, "OVF");
     }
+}
 
-    // CP fifo flow (dummy)
-    fifo.cp.wrptr = fifo.pi.wrptr;
-    fifo.cp.cnt ^= 31;
-
-    // breakpoint check
-    if(fifo.cp.cr & CP_CR_BPEN)
+static void CP_UVF()
+{
+    if (fifo.cp.cr & CP_CR_UVFEN && (fifo.cp.sr & CP_SR_UVF) == 0)
     {
-        if((fifo.cp.wrptr & ~31) == (fifo.cp.bpptr & ~31))
+        fifo.cp.sr |= CP_SR_UVF;
+        PIAssertInt(PI_INTERRUPT_CP);
+        DBReport2(DbgChannel::CP, "UVF");
+    }
+}
+
+static void CPDrawDoneCallback()
+{
+    DONE_INT();
+}
+
+static void CPDrawTokenCallback(uint16_t tokenValue)
+{
+    fifo.pe.token = tokenValue;
+    TOKEN_INT();
+}
+
+static void CPThread(void* Param)
+{
+    while (true)
+    {
+        // Calculate count
+        if (fifo.cp.wrptr >= fifo.cp.rdptr)
+        {
+            fifo.cp.cnt = fifo.cp.wrptr - fifo.cp.rdptr;
+        }
+        else
+        {
+            fifo.cp.cnt = (fifo.cp.top - fifo.cp.rdptr) + (fifo.cp.wrptr - fifo.cp.base);
+        }
+
+        // Watermarks logic. Active only in linked-mode.
+        if (fifo.cp.cnt > fifo.cp.himark && (fifo.cp.cr & CP_CR_WPINC))
+        {
+            CP_OVF();
+        }
+        if (fifo.cp.cnt < fifo.cp.lomark && (fifo.cp.cr & CP_CR_WPINC))
+        {
+            CP_UVF();
+        }
+
+        // Breakpoint
+        if ((fifo.cp.rdptr & ~0x1f) == (fifo.cp.bpptr & ~0x1f) && (fifo.cp.cr & CP_CR_BPEN))
         {
             CP_BREAK();
         }
-    }
 
-    // draw events
+        // Advance read pointer.
+        if (fifo.cp.cnt != 0 && fifo.cp.cr & CP_CR_RDEN && (fifo.cp.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+        {
+            fifo.cp.sr &= ~CP_SR_RD_IDLE;
 
-    // "draw done"
-    if(fifo.drawdone)
-    {
-        fifo.drawdone = 0;
-        DONE_INT();
-    }
+            fifo.cp.sr &= ~CP_SR_CMD_IDLE;
+            BeginProfileGfx();
+            GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK], 32);
+            EndProfileGfx();
+            fifo.cp.sr |= CP_SR_CMD_IDLE;
 
-    // "draw sync"
-    if(fifo.token)
-    {
-        fifo.token = 0;
-        TOKEN_INT();
+            fifo.cp.rdptr += 32;
+            if (fifo.cp.rdptr == fifo.cp.top)
+            {
+                fifo.cp.rdptr = fifo.cp.base;
+            }
+        }
+        else
+        {
+            fifo.cp.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+        }
     }
 }
 
@@ -134,9 +175,6 @@ static void __fastcall read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo
 
 static void __fastcall read_cp_sr(uint32_t addr, uint32_t *reg)
 {
-    // GP is always ready for action
-    fifo.cp.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
-
     *reg = fifo.cp.sr;
 }
 
@@ -145,9 +183,13 @@ static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
     fifo.cp.cr = (uint16_t)data;
 
     // clear breakpoint
-    if(data & CP_CR_BPCLR)
+    if((data & CP_CR_BPEN) == 0)
     {
         fifo.cp.sr &= ~CP_SR_BPINT;
+    }
+
+    if ((fifo.cp.sr & CP_SR_BPINT) == 0 && (fifo.cp.sr & CP_SR_OVF) == 0 && (fifo.cp.sr & CP_SR_UVF) == 0)
+    {
         PIClearInt(PI_INTERRUPT_CP);
     }
 }
@@ -159,11 +201,14 @@ static void __fastcall write_cp_clr(uint32_t addr, uint32_t data)
     if(data & CP_CLR_OVFCLR)
     {
         fifo.cp.sr &= ~CP_SR_OVF;
-        PIClearInt(PI_INTERRUPT_CP);
     }
     if(data & CP_CLR_UVFCLR)
     {
         fifo.cp.sr &= ~CP_SR_UVF;
+    }
+
+    if ((fifo.cp.sr & CP_SR_BPINT) == 0 && (fifo.cp.sr & CP_SR_OVF) == 0 && (fifo.cp.sr & CP_SR_UVF) == 0)
+    {
         PIClearInt(PI_INTERRUPT_CP);
     }
 }
@@ -171,15 +216,17 @@ static void __fastcall write_cp_clr(uint32_t addr, uint32_t data)
 // pointers
 
 // show CP fifo configuration
-static void printCP()
+void DumpCPFIFO()
 {
     // fifo modes
     char*md = (fifo.cp.cr & CP_CR_WPINC) ? ((char *)"immediate ") : ((char *)"multi-");
-    char bp = (fifo.cp.cr & CP_CR_BPEN) ? ('B') : ('-');    // breakpoint
-    char lw = (fifo.cp.cr & CP_CR_UVFEN)? ('L') : ('-');    // low-wmark
-    char hw = (fifo.cp.cr & CP_CR_OVFEN)? ('H') : ('-');    // high-wmark
+    char bp = (fifo.cp.cr & CP_CR_BPEN) ? ('B') : ('b');    // breakpoint
+    char lw = (fifo.cp.cr & CP_CR_UVFEN)? ('U') : ('u');    // low-wmark
+    char hw = (fifo.cp.cr & CP_CR_OVFEN)? ('O') : ('o');    // high-wmark
 
     DBReport("CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
+    DBReport("control :0x%08X", fifo.cp.cr);
+    DBReport(" status :0x%08X", fifo.cp.sr);
     DBReport("   base :0x%08X", fifo.cp.base);
     DBReport("   top  :0x%08X", fifo.cp.top);
     DBReport("   low  :0x%08X", fifo.cp.lomark);
@@ -191,61 +238,40 @@ static void printCP()
 
 static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base >> 16; }
 static void __fastcall write_cp_baseh(uint32_t addr, uint32_t data)   { fifo.cp.base = data << 16; }
-static void __fastcall read_cp_basel(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base & 0xffff; }
-static void __fastcall write_cp_basel(uint32_t addr, uint32_t data)   { fifo.cp.base = data & 0xffff; }
+static void __fastcall read_cp_basel(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base & 0xffe0; }
+static void __fastcall write_cp_basel(uint32_t addr, uint32_t data)   { fifo.cp.base = data & 0xffe0; }
 static void __fastcall read_cp_toph(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.top >> 16; }
 static void __fastcall write_cp_toph(uint32_t addr, uint32_t data)    { fifo.cp.top = data << 16; }
-static void __fastcall read_cp_topl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.top & 0xffff; }
-static void __fastcall write_cp_topl(uint32_t addr, uint32_t data)    { fifo.cp.top = data & 0xffff; }
+static void __fastcall read_cp_topl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.top & 0xffe0; }
+static void __fastcall write_cp_topl(uint32_t addr, uint32_t data)    { fifo.cp.top = data & 0xffe0; }
 
 static void __fastcall read_cp_hmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himark >> 16; }
 static void __fastcall write_cp_hmarkh(uint32_t addr, uint32_t data)  { fifo.cp.himark = data << 16; }
-static void __fastcall read_cp_hmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himark & 0xffff; }
-static void __fastcall write_cp_hmarkl(uint32_t addr, uint32_t data)  { fifo.cp.himark = data & 0xffff; }
+static void __fastcall read_cp_hmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himark & 0xffe0; }
+static void __fastcall write_cp_hmarkl(uint32_t addr, uint32_t data)  { fifo.cp.himark = data & 0xffe0; }
 static void __fastcall read_cp_lmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomark >> 16; }
 static void __fastcall write_cp_lmarkh(uint32_t addr, uint32_t data)  { fifo.cp.lomark = data << 16; }
-static void __fastcall read_cp_lmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomark & 0xffff; }
-static void __fastcall write_cp_lmarkl(uint32_t addr, uint32_t data)  { fifo.cp.lomark = data & 0xffff; }
+static void __fastcall read_cp_lmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomark & 0xffe0; }
+static void __fastcall write_cp_lmarkl(uint32_t addr, uint32_t data)  { fifo.cp.lomark = data & 0xffe0; }
 
 static void __fastcall read_cp_cnth(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnt >> 16 ; }
 static void __fastcall write_cp_cnth(uint32_t addr, uint32_t data)    { fifo.cp.cnt = data << 16; }
-static void __fastcall read_cp_cntl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnt & 0xffff; }
-static void __fastcall write_cp_cntl(uint32_t addr, uint32_t data)    { fifo.cp.cnt = data & 0xffff; }
+static void __fastcall read_cp_cntl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnt & 0xffe0; }
+static void __fastcall write_cp_cntl(uint32_t addr, uint32_t data)    { fifo.cp.cnt = data & 0xffe0; }
 
 static void __fastcall read_cp_wrptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptr >> 16; }
 static void __fastcall write_cp_wrptrh(uint32_t addr, uint32_t data)  { fifo.cp.wrptr = data << 16; }
-static void __fastcall read_cp_wrptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptr & 0xffff; }
-static void __fastcall write_cp_wrptrl(uint32_t addr, uint32_t data)  { fifo.cp.wrptr = data & 0xffff; }
+static void __fastcall read_cp_wrptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptr & 0xffe0; }
+static void __fastcall write_cp_wrptrl(uint32_t addr, uint32_t data)  { fifo.cp.wrptr = data & 0xffe0; }
 static void __fastcall read_cp_rdptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptr >> 16; }
 static void __fastcall write_cp_rdptrh(uint32_t addr, uint32_t data)  { fifo.cp.rdptr = data << 16; }
-static void __fastcall read_cp_rdptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptr & 0xffff; }
-static void __fastcall write_cp_rdptrl(uint32_t addr, uint32_t data)  { fifo.cp.rdptr = data & 0xffff; }
+static void __fastcall read_cp_rdptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptr & 0xffe0; }
+static void __fastcall write_cp_rdptrl(uint32_t addr, uint32_t data)  { fifo.cp.rdptr = data & 0xffe0; }
 
 static void __fastcall read_cp_bpptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptr >> 16; }
 static void __fastcall write_cp_bpptrh(uint32_t addr, uint32_t data)  { fifo.cp.bpptr = data << 16; }
-static void __fastcall read_cp_bpptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptr & 0xffff; }
-static void __fastcall write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptr = data & 0xffff; }
-
-//
-// PI fifo (CPU)
-//
-
-static void __fastcall read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = fifo.pi.base; }
-static void __fastcall write_pi_base(uint32_t addr, uint32_t data)  { fifo.pi.base = data; }
-static void __fastcall read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = fifo.pi.top; }
-static void __fastcall write_pi_top(uint32_t addr, uint32_t data)   { fifo.pi.top = data; }
-static void __fastcall read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pi.wrptr; }
-static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { fifo.pi.wrptr = data; }
-
-// show PI fifo configuration
-static void printPI()
-{
-    DBReport("PI fifo configuration");
-    DBReport("   base :0x%08X", fifo.pi.base);
-    DBReport("   top  :0x%08X", fifo.pi.top);
-    DBReport("   wrptr:0x%08X", fifo.pi.wrptr);
-    DBReport("   wrap :%i", (fifo.pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
-}
+static void __fastcall read_cp_bpptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptr & 0xffe0; }
+static void __fastcall write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptr = data & 0xffe0; }
 
 //
 // stubs
@@ -264,7 +290,7 @@ void CPOpen(HWConfig * config)
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));
 
-    fifo.log = false;
+    fifo.log = true;
 
     // command processor
     MISetTrap(16, CP_SR         , read_cp_sr, NULL);
@@ -297,16 +323,13 @@ void CPOpen(HWConfig * config)
     MISetTrap(16, PE_SR        , read_pe_sr, write_pe_sr);
     MISetTrap(16, PE_TOKEN     , read_pe_token, NULL);
 
-    // processor interface (CPU fifo)
-    MISetTrap(32, PI_BASE , read_pi_base , write_pi_base);
-    MISetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
-    MISetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
+    GXSetDrawCallbacks(CPDrawDoneCallback, CPDrawTokenCallback);
 
-    GXSetTokens(&fifo.drawdone, &fifo.token, &fifo.pe.token);
+    fifo.thread = new Thread(CPThread, true, nullptr, "CPThread");
+    assert(fifo.thread);
 }
 
-void GXFifoWriteBurst(uint8_t data[32])
+void CPClose()
 {
-    GXWriteFifo(data, 32);
-    fifo_flow(32);
+    delete fifo.thread;
 }

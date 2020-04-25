@@ -1,5 +1,13 @@
 // all gfx registers definitions here
 
+#pragma once
+
+typedef void (*GXDrawDoneCallback)();
+typedef void (*GXDrawTokenCallback)(uint16_t tokenValue);
+
+extern GXDrawDoneCallback GxDrawDone;
+extern GXDrawTokenCallback GxDrawToken;
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // register names

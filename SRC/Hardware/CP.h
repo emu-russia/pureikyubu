@@ -1,8 +1,5 @@
 #pragma once
 
-// GX fifo scratch buffer (attached to PI fifo, when 0x0C008000)
-#define GX_FIFO         0x0C008000
-
 // CP registers. CPU accessing CP regs by 16-bit reads and writes
 #define CP_SR           0x0C000000      // status register
 #define CP_CR           0x0C000002      // control register
@@ -26,11 +23,6 @@
 #define PE_SR           0x0C00100A      // status register
 #define PE_TOKEN        0x0C00100E      // last token value
 
-// PI fifo registers. CPU accessing them by 32-bit reads and writes
-#define PI_BASE         0x0C00300C      // CPU fifo base
-#define PI_TOP          0x0C003010      // CPU fifo top
-#define PI_WRPTR        0x0C003014      // CPU fifo write pointer
-
 // CP status register mask layout
 #define CP_SR_OVF       (1 << 0)        // FIFO overflow (fifo_count > FIFO_HICNT)
 #define CP_SR_UVF       (1 << 1)        // FIFO underflow (fifo_count < FIFO_LOCNT)
@@ -40,11 +32,11 @@
 
 // CP control register mask layout
 #define CP_CR_RDEN      (1 << 0)        // Enable FIFO reads, reset value is 0 disable
-#define CP_CR_BPCLR     (1 << 1)        // FIFO break point enable bit, reset value is 0 disable. Write 0 to clear BPINT
+#define CP_CR_BPEN      (1 << 1)        // FIFO break point enable bit, reset value is 0 disable. Write 0 to clear BPINT
 #define CP_CR_OVFEN     (1 << 2)        // FIFO overflow interrupt enable, reset value is 0 disable
 #define CP_CR_UVFEN     (1 << 3)        // FIFO underflow interrupt enable, reset value is 0 disable
 #define CP_CR_WPINC     (1 << 4)        // FIFO write pointer increment enable, reset value is 1 enable
-#define CP_CR_BPEN      (1 << 5)        // FIFO break point interrupt enable, reset value is 0 disable
+#define CP_CR_BPINTEN   (1 << 5)        // FIFO break point interrupt enable, reset value is 0 disable
 
 // CP clear register mask layout
 #define CP_CLR_OVFCLR   (1 << 0)        // clear FIFO overflow interrupt
@@ -55,9 +47,6 @@
 #define PE_SR_TOKEN     (1 << 1)
 #define PE_SR_DONEMSK   (1 << 2)
 #define PE_SR_TOKENMSK  (1 << 3)
-
-// PI wrap bit
-#define PI_WRPTR_WRAP   (1 << 27)
 
 // CP registers
 typedef struct CPRegs
@@ -77,14 +66,6 @@ typedef struct PERegs
     uint16_t     token;      // last token
 } PERegs;
 
-// PI registers
-typedef struct PIRegs
-{
-    uint32_t     base;
-    uint32_t     top;
-    uint32_t     wrptr;      // also WRAP bit
-} PIRegs;
-
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -93,15 +74,13 @@ typedef struct FifoControl
 {
     CPRegs      cp;     // command processor registers
     PERegs      pe;     // pixel engine registers
-    PIRegs      pi;     // processor (CPU) fifo regs
-    
-    long        drawdone;   // events
-    long        token;
     uint32_t    done_num;   // number of drawdone (PE_FINISH) events
     bool        log;
+    Thread*     thread;     // CP FIFO thread
 } FifoControl;
 
 extern  FifoControl fifo;
 
 void    CPOpen(HWConfig* config);
-void    GXFifoWriteBurst(uint8_t data[32]);
+void    CPClose();
+void    DumpCPFIFO();

@@ -3,14 +3,13 @@
 
 static      FILE *gplog;
 
-long            *peDrawDone, *peToken;
-unsigned short  *tokenVal;
+GXDrawDoneCallback GxDrawDone;
+GXDrawTokenCallback GxDrawToken;
 
-void GXSetTokens(long *drawdone, long *token, unsigned short *val)
+void GXSetDrawCallbacks(GXDrawDoneCallback drawDoneCb, GXDrawTokenCallback drawTokenCb)
 {
-    peDrawDone = drawdone;
-    peToken = token;
-    tokenVal = val;
+    GxDrawDone = drawDoneCb;
+    GxDrawToken = drawTokenCb;
 }
 
 CPMemory    cpRegs;
@@ -476,7 +475,10 @@ void loadBPReg(unsigned index, uint32_t value)
         case PE_DONE:
         {
             GPFrameDone();
-            *peDrawDone = 1;
+            if (GxDrawDone)
+            {
+                GxDrawDone();
+            }
         }
         return;
 
@@ -489,10 +491,9 @@ void loadBPReg(unsigned index, uint32_t value)
 
         case PE_TOKEN:
         {
-            *tokenVal = (uint16_t)value;
-            if(bpRegs.tokint == *tokenVal)
+            if (GxDrawToken)
             {
-                *peToken = 1;
+                GxDrawToken(bpRegs.tokint);
             }
         }
         return;

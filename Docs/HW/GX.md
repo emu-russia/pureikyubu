@@ -77,27 +77,6 @@ PI FIFO is used to generate a command list. It acts as a producer.
 
 As you can see, PI FIFO knows nothing about the mode in which it works: linked or multi-buffer. This logic is implemented entirely in the GX command processor.
 
-## Internal State Registers
-
-GX state stored in 3 sets of registers:
-- CP Regs
-- XF Regs
-- SU Regs
-
-Writing to registers is performed by special FIFO commands. Partially registers are mapped to physical memory.
-
-### CP Regs
-
-TBD.
-
-### XF Regs
-
-TBD.
-
-### SU Regs
-
-TBD.
-
 ## Vertex Cache/Command Processor FIFO
 
 The command processor fetches:
@@ -182,10 +161,31 @@ The vertex cache is an 8K, 8-way set-associative cache. It is possible to invali
 
 More description can be found in US6717577 "VERTEX CACHE FOR 3D COMPUTER GRAPHICS".
 
+## Internal State Registers
+
+GX state stored in 3 sets of registers:
+- CP Regs
+- XF Regs
+- SU Regs
+
+Writing to registers is performed by special FIFO commands. Partially registers are mapped to physical memory.
+
+### CP Regs
+
+TBD.
+
+### XF Regs
+
+TBD.
+
+### SU Regs
+
+TBD.
+
 ## Setup/Rasterizer (SU/RAS)
 
 Terminology:
-- The primitive is what the GX can draw. Triangle, dot, etc.
+- The primitive is what the GX can draw. Triangle, point, etc.
 - Primitives consist of vertices;
 - Each vertex contains a set of attributes (position, color etc.). At least position attribute must be present;
 - Attributes can be Direct and Indexed. Direct attributes are contained in the command list itself. For indexed attributes, the command list contains only the index. A buffer with attributes is located in the main memory and is additionally cached in Vertex cache.
@@ -210,7 +210,9 @@ TBD.
 
 TBD.
 
-## Embedded Frame Buffer (EFB)
+## Pixel Engine
+
+### Embedded Frame Buffer (EFB)
 
 TBD.
 
@@ -218,7 +220,7 @@ TBD.
 
 TBD.
 
-### Pixel Engine / Copy (PE)
+### Pixel Engine Copy (PEC)
 
 TBD.
 

@@ -4,6 +4,9 @@
 
 #define PI_INTSR            0x0C003000      // master interrupt reg
 #define PI_INTMR            0x0C003004      // master interrupt mask
+#define PI_BASE             0x0C00300C      // PI fifo base
+#define PI_TOP              0x0C003010      // PI fifo top
+#define PI_WRPTR            0x0C003014      // PI fifo write pointer
 #define PI_RST_CODE         0x0C003024      // reset code (mentioned in patents as "PI General Reset Register")
 #define PI_MB_REV           0x0C00302C      // console revision
 
@@ -23,6 +26,9 @@
 #define PI_INTERRUPT_RSW        0x0002      // reset "switch"
 #define PI_INTERRUPT_ERROR      0x0001      // GP verify failed
 
+// PI write pointer wrap bit
+#define PI_WRPTR_WRAP   (1 << 27)
+
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -34,6 +40,10 @@ typedef struct PIControl
     bool        rswhack;        // reset "switch" hack
     bool        log;            // log interrupts
     uint32_t    consoleVer;     // console version
+    // PI FIFO
+    uint32_t    base;
+    uint32_t    top;
+    uint32_t    wrptr;          // also WRAP bit
 } PIControl;
 
 extern  PIControl pi;
@@ -41,3 +51,4 @@ extern  PIControl pi;
 void    PIAssertInt(uint32_t mask);  // set interrupt(s)
 void    PIClearInt(uint32_t mask);   // clear interrupt(s)
 void    PIOpen(HWConfig * config);
+void    DumpPIFIFO();

@@ -93,11 +93,20 @@ namespace Flipper
 		return nullptr;
 	}
 
+	// Dump PI/CP FIFO configuration
+	static Json::Value* DumpFifo(std::vector<std::string>& args)
+	{
+		DumpPIFIFO();
+		DumpCPFIFO();
+		return nullptr;
+	}
+
 	void hw_init_handlers()
 	{
 		Debug::Hub.AddCmd("ramload", cmd_ramload);
 		Debug::Hub.AddCmd("ramsave", cmd_ramsave);
 		Debug::Hub.AddCmd("aramload", cmd_aramload);
 		Debug::Hub.AddCmd("aramsave", cmd_aramsave);
+		Debug::Hub.AddCmd("DumpFifo", DumpFifo);
 	}
 };

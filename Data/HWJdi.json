@@ -40,6 +40,10 @@
         "Syntax: aramsave <file> <address> <size>\n",
         "Example of use: aramsave samples.bin 0x10000 0x200\n"
       ]
+    },
+
+    "DumpFifo": {
+      "help": "Dump PI/CP FIFO configuration"
     }
 
   },
