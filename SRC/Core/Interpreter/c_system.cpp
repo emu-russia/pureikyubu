@@ -200,7 +200,21 @@ namespace Gekko
     // rd = spr
     OP(MFSPR)
     {
-        RRD = Gekko->regs.spr[(RB << 5) | RA];
+        int spr = (RB << 5) | RA;
+        uint32_t value;
+
+        switch (spr)
+        {
+            case (int)SPR::WPAR:
+                value = (Gekko->regs.spr[spr] & ~0x1f) | (Gekko->gatherBuffer.NotEmpty() ? 1 : 0);
+                break;
+
+            default:
+                value = Gekko->regs.spr[spr];
+                break;
+        }
+
+        RRD = value;
     }
 
     // rd = tbr

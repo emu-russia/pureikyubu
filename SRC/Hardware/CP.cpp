@@ -1,6 +1,6 @@
-// all fifo-related stuff here :
+// all fifo-related stuff here:
 // CP - command processor, PE - pixel engine,
-// PI fifo - processor interface fifo.
+// PI fifo - processor interface fifo
 #include "pch.h"
 
 FifoControl fifo;
@@ -53,7 +53,7 @@ static void CP_BREAK()
     PIAssertInt(PI_INTERRUPT_CP);
 }
 
-// count PI write pointer, CP pointer, check for breakpoint
+// Advance PI write pointer, CP pointer, check for breakpoint
 static void fifo_flow(uint32_t nbytes)
 {
     // PI fifo flow
@@ -170,23 +170,23 @@ static void __fastcall write_cp_clr(uint32_t addr, uint32_t data)
 
 // pointers
 
-// show GP fifo configuration
+// show CP fifo configuration
 static void printCP()
 {
     // fifo modes
-    char*md = (fifo.cp.cr & CP_CR_LINK) ? ((char *)"immediate ") : ((char *)"multi-");
+    char*md = (fifo.cp.cr & CP_CR_WPINC) ? ((char *)"immediate ") : ((char *)"multi-");
     char bp = (fifo.cp.cr & CP_CR_BPEN) ? ('B') : ('-');    // breakpoint
     char lw = (fifo.cp.cr & CP_CR_UVFEN)? ('L') : ('-');    // low-wmark
     char hw = (fifo.cp.cr & CP_CR_OVFEN)? ('H') : ('-');    // high-wmark
 
     DBReport("CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
-    DBReport("   base :%08X", 0x80000000 | fifo.cp.base);
-    DBReport("   top  :%08X", 0x80000000 | fifo.cp.top);
-    DBReport("   low  :%08X", 0x80000000 | fifo.cp.lomark);
-    DBReport("   high :%08X", 0x80000000 | fifo.cp.himark);
-    DBReport("   cnt  :%08X", fifo.cp.cnt);
-    DBReport("   wrptr:%08X", 0x80000000 | fifo.cp.wrptr);
-    DBReport("   rdptr:%08X", 0x80000000 | fifo.cp.rdptr);
+    DBReport("   base :0x%08X", fifo.cp.base);
+    DBReport("   top  :0x%08X", fifo.cp.top);
+    DBReport("   low  :0x%08X", fifo.cp.lomark);
+    DBReport("   high :0x%08X", fifo.cp.himark);
+    DBReport("   cnt  :0x%08X", fifo.cp.cnt);
+    DBReport("   wrptr:0x%08X", fifo.cp.wrptr);
+    DBReport("   rdptr:0x%08X", fifo.cp.rdptr);
 }
 
 static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.base >> 16; }
@@ -241,44 +241,10 @@ static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { fifo.pi.wr
 static void printPI()
 {
     DBReport("PI fifo configuration");
-    DBReport("   base :%08X", 0x80000000 | fifo.pi.base);
-    DBReport("   top  :%08X", 0x80000000 | fifo.pi.top);
-    DBReport("   wrptr:%08X", 0x80000000 | fifo.pi.wrptr);
+    DBReport("   base :0x%08X", fifo.pi.base);
+    DBReport("   top  :0x%08X", fifo.pi.top);
+    DBReport("   wrptr:0x%08X", fifo.pi.wrptr);
     DBReport("   wrap :%i", (fifo.pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
-}
-
-//
-// PI fifo buffer (scratch space, for non-redirected fifo)
-//
-
-void __fastcall write_fifo8(uint32_t addr, uint32_t data)
-{
-    uint8_t b = (uint8_t)data;
-
-    BeginProfileGfx();
-    GXWriteFifo(&b, 1);
-    fifo_flow(1);
-    EndProfileGfx();
-}
-
-void __fastcall write_fifo16(uint32_t addr, uint32_t data)
-{
-    uint16_t h = _byteswap_ushort((uint16_t)data);
-
-    BeginProfileGfx();
-    GXWriteFifo((uint8_t *)&h, 2);
-    fifo_flow(2);
-    EndProfileGfx();
-}
-
-void __fastcall write_fifo32(uint32_t addr, uint32_t data)
-{
-    uint32_t w = _byteswap_ulong(data);
-
-    BeginProfileGfx();
-    GXWriteFifo((uint8_t *)&w, 4);
-    fifo_flow(4);
-    EndProfileGfx();
 }
 
 //
@@ -298,7 +264,6 @@ void CPOpen(HWConfig * config)
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));
 
-    fifo.time = Gekko::Gekko->GetTicks() + 100;
     fifo.log = false;
 
     // command processor
@@ -337,13 +302,11 @@ void CPOpen(HWConfig * config)
     MISetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
     MISetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
 
-    // scratch PI fifo buffer
-    MISetTrap(8 , GX_FIFO  , NULL, write_fifo8);
-    MISetTrap(16, GX_FIFO  , NULL, write_fifo16);
-    MISetTrap(32, GX_FIFO  , NULL, write_fifo32);
-    MISetTrap(8 , GX_FIFO+4, NULL, write_fifo8);
-    MISetTrap(16, GX_FIFO+4, NULL, write_fifo16);
-    MISetTrap(32, GX_FIFO+4, NULL, write_fifo32);
-
     GXSetTokens(&fifo.drawdone, &fifo.token, &fifo.pe.token);
+}
+
+void GXFifoWriteBurst(uint8_t data[32])
+{
+    GXWriteFifo(data, 32);
+    fifo_flow(32);
 }

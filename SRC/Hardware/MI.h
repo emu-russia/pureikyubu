@@ -1,6 +1,6 @@
 // Flipper memory controller
 
-// GC physical memory map. This is physical addresses, not effective.
+// GC physical memory map.
 /*/
     00000000  24MB  Main Memory (RAM)
     08000000   2MB  Embedded Framebuffer (EFB)
@@ -14,7 +14,7 @@
     0C006400        Serial Interface (SI)
     0C006800        External Interface (EXI)
     0C006C00        Audio Streaming Interface (AIS)
-    0C008000        PI FIFO (GX)
+    0C008000        GX FIFO
     FFF00000   2MB  Boot ROM
 
     EFB - this is not straight "direct" access. reads and writes
@@ -33,8 +33,6 @@
     "BS" (Bootstrap?) will run and load IPL menu up to
     0x81300000 address (already effective!). then IPL menu (or "BS2")
     will run, with disabled EXI scrambler.
-    Dolwin is simulating all BS and BS2 activities before running
-    any DVD/executable. see HighLevel\Bootrom.cpp for details.
 /*/
 
 #pragma once

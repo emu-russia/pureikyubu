@@ -43,7 +43,7 @@
 #define CP_CR_BPCLR     (1 << 1)        // FIFO break point enable bit, reset value is 0 disable. Write 0 to clear BPINT
 #define CP_CR_OVFEN     (1 << 2)        // FIFO overflow interrupt enable, reset value is 0 disable
 #define CP_CR_UVFEN     (1 << 3)        // FIFO underflow interrupt enable, reset value is 0 disable
-#define CP_CR_LINK      (1 << 4)        // FIFO write pointer increment enable, reset value is 1 enable
+#define CP_CR_WPINC     (1 << 4)        // FIFO write pointer increment enable, reset value is 1 enable
 #define CP_CR_BPEN      (1 << 5)        // FIFO break point interrupt enable, reset value is 0 disable
 
 // CP clear register mask layout
@@ -98,10 +98,10 @@ typedef struct FifoControl
     long        drawdone;   // events
     long        token;
     uint32_t    done_num;   // number of drawdone (PE_FINISH) events
-    int64_t     time;       // fifo update time
     bool        log;
 } FifoControl;
 
 extern  FifoControl fifo;
 
 void    CPOpen(HWConfig* config);
+void    GXFifoWriteBurst(uint8_t data[32]);
