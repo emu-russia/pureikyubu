@@ -36,21 +36,11 @@ Write Gather Buffer is enabled by setting a bit in the Gekko HID2 register.
 
 ## GX FIFOs
 
-There is no normal documentation. There are only extensive descriptions of the interaction between the processor and the GX contained in the patents and documentation of the Dolphin SDK. The software interface of the GX library for working with FIFO is architecturally very poor (a poor object representation of entities was chosen; as a result, it turned out to be incomprehensible to an ordinary programmer).
-
 There are two FIFOs: PI FIFO and CP FIFO. PI FIFO belongs to the Gekko processor and is accessible through PI registers. CP FIFO refers to the GX and is configured with its own CP registers.
 
 Processor-GX interaction diagram using the FIFOs mechanism:
 
 ![GX_FIFO](GX_FIFO.png)
-
-GX FIFOs can work in two modes: linked mode (immediate) and multi-buffer mode (by itself).
-
-In linked-mode CP FIFO synchronously reads until CP Rdptr becomes equal to PI Wrptr. It also can be synchronized with the CP FIFO Watermark mechanism (see below). As stated in the patent, the Watermark mechanism only works in linked mode.
-
-In multi-buffer mode, CP FIFO works on its own, constantly reading from the CP Rdptr address.
-
-As you can see, when executing the display list (Call FIFO command), there must be another FIFO inside the GX that has nothing to do with the main CP FIFO.
 
 ## Processor Interface FIFO
 
@@ -79,7 +69,7 @@ PI FIFO is used to generate a command list. It acts as a producer.
 |Bits|Name|Meaning|
 |----|----|-------|
 |31:28| |Reserved(?)|
-|27|WRAP|Set to `1` after Wrptr becomes equal to the value of Top. When is it reset?|
+|27|WRAP|Set to `1` after Wrptr becomes equal to the value of Top. When is it reset? It looks like a subsequent write to FIFO automatically clears the bit.|
 |26:5|WRPTR|The current address for writing the next 32 bytes of FIFO data. Writing is made when the processor performs a burst transaction at the address 0x0C008000. After write, the value is increased by 32. When the value becomes equal to Top, Wrptr is set to Base and the Wrap bit is set.|
 |4:0|0|Zeroes|
 
@@ -149,6 +139,16 @@ Reading FIFOs from the GX side are always set to 32 byte chunks.
 |CP_FIFO_RPTRH|9:0|bits 25:15 of the FIFO read pointer|
 |CP_FIFO_BRKL|15:5|bits 15:5 of the FIFO read address break point|
 |CP_FIFO_BRKH|9:0|bits 9:0 if the FIFO read address break point|
+
+CP FIFO operates in two modes: linked mode and multi-buffer mode.
+
+Linked mode is turned on by bit 4 in the CP_ENABLE register. In this mode, writing another portion of data to FIFO 0x0C008000 causes CP Wrptr to increase its value by 32. At the same time, writing to 0x0C008000 is processed by the PI FIFO mechanism (see above). This interaction causes the CP to start processing FIFOs whenever possible, as the distance between CP Rdptr and CP Wrptr has changed.
+
+In Linked mode, Watermark logic is activated. If the FIFO size (FIFO_COUNT) becomes smaller than FIFO_LOCNT, a FIFO underflow is generated. If the FIFO size becomes larger than FIFO_HICNT, a FIFO overflow interrupt is generated. When underflow/overflow interrupts are active CP stops reading new data.
+
+Breakpoint logic is mode-independent (?). When FIFO_RPTR becomes equal to FIFO_BRK, a Breakpoint interrupt is generated.
+
+In multi-buffer mode, the CP processes FIFO until the FIFO size (FIFO_COUNT) is greater than 0. FIFO_COUNT is the distance between CP Wrptr and CP Rdptr.
 
 ### FIFO Command Format
 
