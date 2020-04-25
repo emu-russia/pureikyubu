@@ -42,6 +42,8 @@ Processor-GX interaction diagram using the FIFOs mechanism:
 
 ![GX_FIFO](GX_FIFO.png)
 
+Call FIFO is processed separately and does not depend on PI/CP FIFOs.
+
 ## Processor Interface FIFO
 
 PI FIFO is used to generate a command list. It acts as a producer.
