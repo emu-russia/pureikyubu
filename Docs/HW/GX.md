@@ -178,6 +178,8 @@ Vertex cache is used to cache those attributes of graphic primitives that are no
 
 The vertex cache is an 8K, 8-way set-associative cache. It is possible to invalidate the cache with a special command from the command list (V$\_Invalidate).
 
+More description can be found in US6717577 "VERTEX CACHE FOR 3D COMPUTER GRAPHICS".
+
 ## Setup/Rasterizer (SU/RAS)
 
 Terminology:
