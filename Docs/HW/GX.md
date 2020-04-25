@@ -12,7 +12,7 @@ Internal GX arhitecture:
 
 So that you can estimate the complexity of each GX component, here is a picture with the layout of the main areas of the Flipper chip:
 
-![Flipper_ASIC](Flipper_ASIC/flipper_floorplan.jpg)
+![Flipper_ASIC](../RE/Flipper_ASIC/flipper_floorplan.jpg)
 
 ## Gekko Write Gather Buffer
 
