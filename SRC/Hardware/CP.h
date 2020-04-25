@@ -48,15 +48,85 @@
 #define PE_SR_DONEMSK   (1 << 2)
 #define PE_SR_TOKENMSK  (1 << 3)
 
+#pragma pack(push, 8)
+
 // CP registers
 typedef struct CPRegs
 {
     uint16_t     sr;         // status
     uint16_t     cr;         // control
-    uint32_t     base, top;
-    uint32_t     lomark, himark;
-    uint32_t     cnt;
-    uint32_t     wrptr, rdptr, bpptr;
+    union
+    {
+        struct
+        {
+            uint16_t basel;
+            uint16_t baseh;
+        };
+        uint32_t     base;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t topl;
+            uint16_t toph;
+        };
+        uint32_t     top;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t lomarkl;
+            uint16_t lomarkh;
+        };
+        uint32_t     lomark;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t himarkl;
+            uint16_t himarkh;
+        };
+        uint32_t     himark;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t cntl;
+            uint16_t cnth;
+        };
+        uint32_t     cnt;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t wrptrl;
+            uint16_t wrptrh;
+        };
+        uint32_t     wrptr;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t rdptrl;
+            uint16_t rdptrh;
+        };
+        uint32_t     rdptr;
+    };
+    union
+    {
+        struct
+        {
+            uint16_t bpptrl;
+            uint16_t bpptrh;
+        };
+        uint32_t     bpptr;
+    };
 } CPRegs;
 
 // PE registers
@@ -65,6 +135,8 @@ typedef struct PERegs
     uint16_t     sr;         // status register
     uint16_t     token;      // last token
 } PERegs;
+
+#pragma pack(pop)
 
 // ---------------------------------------------------------------------------
 // hardware API

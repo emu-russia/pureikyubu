@@ -224,6 +224,6 @@ TBD.
 
 TBD.
 
-## GX Verify
+## GP Metrics
 
 TBD.

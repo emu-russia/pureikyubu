@@ -13,7 +13,7 @@ namespace Gekko
 		void WriteBytes(uint8_t* data, size_t size);
 		size_t GatherSize();
 
-		bool log = true;
+		bool log = false;
 
 	public:
 
