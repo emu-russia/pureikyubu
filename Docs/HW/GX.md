@@ -82,7 +82,7 @@ As you can see, PI FIFO knows nothing about the mode in which it works: linked o
 GX state stored in 3 sets of registers:
 - CP Regs
 - XF Regs
-- BP Regs
+- SU Regs
 
 Writing to registers is performed by special FIFO commands. Partially registers are mapped to physical memory.
 
@@ -94,7 +94,7 @@ TBD.
 
 TBD.
 
-### BP Regs
+### SU Regs
 
 TBD.
 
