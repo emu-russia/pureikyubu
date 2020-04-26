@@ -45,11 +45,11 @@
 // EXI registers block
 typedef struct EXIRegs
 {
-    uint32_t         csr;            // communication register 
-    uint32_t         madr;           // memory address (32 byte aligned)
-    uint32_t         len;            // size (32 bytes aligned)
-    uint32_t         cr;             // control register
-    uint32_t         data;           // immediate data register
+    volatile uint32_t         csr;            // communication register 
+    volatile uint32_t         madr;           // memory address (32 byte aligned)
+    volatile uint32_t         len;            // size (32 bytes aligned)
+    volatile uint32_t         cr;             // control register
+    volatile uint32_t         data;           // immediate data register
 } EXIRegs;
 
 // SRAM structure layout. see YAGCD for details.

@@ -77,15 +77,15 @@
 // VI state (registers and other data)
 typedef struct VIControl
 {
-    uint16_t    disp_cr;    // display configuration register
-    uint32_t    tfbl;       // video buffer (top field)
-    uint32_t    bfbl;       // video buffer (bottom field)
-    uint32_t    pos;        // beam position
-    uint32_t    int0;       // INT0 status
+    volatile uint16_t    disp_cr;    // display configuration register
+    volatile uint32_t    tfbl;       // video buffer (top field)
+    volatile uint32_t    bfbl;       // video buffer (bottom field)
+    volatile uint32_t    pos;        // beam position
+    volatile uint32_t    int0;       // INT0 status
 
-    uint32_t    mode;       // see VI modes
+    volatile uint32_t    mode;       // see VI modes
     bool        inter;      // 1, if interlace
-    uint32_t    vcount;     // number of lines for single frame
+    volatile uint32_t    vcount;     // number of lines for single frame
     int64_t     vtime;      // frame timer
     int64_t     one_frame;  // frame length in CPU timer ticks
 

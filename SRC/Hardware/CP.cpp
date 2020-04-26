@@ -6,6 +6,8 @@ FifoControl fifo;
 // ---------------------------------------------------------------------------
 // fifo
 
+// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
+
 static void DONE_INT()
 {
     fifo.done_num++; vi.frames++;
@@ -93,10 +95,6 @@ static void CPThread(void* Param)
             continue;
         }
         fifo.updateTbrValue = ticks + fifo.tickPerFifo;
-
-#ifndef _DEBUG
-        DBReport("CPThread");
-#endif
 
         // Calculate count
         if (fifo.cp.wrptr >= fifo.cp.rdptr)

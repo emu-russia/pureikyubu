@@ -62,7 +62,7 @@ typedef struct CPRegs
             uint16_t basel;
             uint16_t baseh;
         };
-        uint32_t     base;
+        volatile uint32_t     base;
     };
     union
     {
@@ -71,7 +71,7 @@ typedef struct CPRegs
             uint16_t topl;
             uint16_t toph;
         };
-        uint32_t     top;
+        volatile uint32_t     top;
     };
     union
     {
@@ -80,7 +80,7 @@ typedef struct CPRegs
             uint16_t lomarkl;
             uint16_t lomarkh;
         };
-        uint32_t     lomark;
+        volatile uint32_t     lomark;
     };
     union
     {
@@ -89,7 +89,7 @@ typedef struct CPRegs
             uint16_t himarkl;
             uint16_t himarkh;
         };
-        uint32_t     himark;
+        volatile uint32_t     himark;
     };
     union
     {
@@ -98,7 +98,7 @@ typedef struct CPRegs
             uint16_t cntl;
             uint16_t cnth;
         };
-        uint32_t     cnt;
+        volatile uint32_t     cnt;
     };
     union
     {
@@ -107,7 +107,7 @@ typedef struct CPRegs
             uint16_t wrptrl;
             uint16_t wrptrh;
         };
-        uint32_t     wrptr;
+        volatile uint32_t     wrptr;
     };
     union
     {
@@ -116,7 +116,7 @@ typedef struct CPRegs
             uint16_t rdptrl;
             uint16_t rdptrh;
         };
-        uint32_t     rdptr;
+        volatile uint32_t     rdptr;
     };
     union
     {
@@ -125,7 +125,7 @@ typedef struct CPRegs
             uint16_t bpptrl;
             uint16_t bpptrh;
         };
-        uint32_t     bpptr;
+        volatile uint32_t     bpptr;
     };
 } CPRegs;
 

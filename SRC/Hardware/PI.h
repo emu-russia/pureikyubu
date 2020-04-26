@@ -35,15 +35,15 @@
 // PI state (registers and other data)
 typedef struct PIControl
 {
-    uint32_t    intsr;          // interrupt cause
-    uint32_t    intmr;          // interrupt mask
+    volatile uint32_t    intsr;          // interrupt cause
+    volatile uint32_t    intmr;          // interrupt mask
     bool        rswhack;        // reset "switch" hack
     bool        log;            // log interrupts
     uint32_t    consoleVer;     // console version
     // PI FIFO
-    uint32_t    base;
-    uint32_t    top;
-    uint32_t    wrptr;          // also WRAP bit
+    volatile uint32_t    base;
+    volatile uint32_t    top;
+    volatile uint32_t    wrptr;          // also WRAP bit
 } PIControl;
 
 extern  PIControl pi;
