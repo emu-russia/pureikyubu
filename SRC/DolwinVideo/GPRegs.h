@@ -861,6 +861,6 @@ extern  uint8_t   *RAM;
 // registers loading (using fifo writes)
 void    loadCPReg(unsigned index, uint32_t value);
 void    loadBPReg(unsigned index, uint32_t value);
-void    loadXFRegs(unsigned startIndex, unsigned amount, uint32_t *regData);
+void    loadXFRegs(unsigned startIndex, unsigned amount);
 
 extern  uint32_t cpLoads, bpLoads, xfLoads;

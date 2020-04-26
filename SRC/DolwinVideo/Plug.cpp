@@ -28,9 +28,6 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
 
     // reset pipeline
     FifoReconfigure(VTX_MAX_ATTR, 0, 0, 0, 0, 0);
-    accptr = accum;
-    acclen = 0;
-    cmdidle=1;
     frame_done=1;
 
     // flush texture cache

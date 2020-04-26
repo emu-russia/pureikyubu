@@ -29,6 +29,7 @@
 #include "XF.h"
 #include "GL.h"
 #include "Stages.h"
+#include "FifoProcessor.h"
 #include "Fifo.h"
 #include "Light.h"
 #include "Tex.h"

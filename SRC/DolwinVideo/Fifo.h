@@ -63,7 +63,4 @@ void FifoReconfigure(
     unsigned    fmt,        // attribute "fmt"
     unsigned    frac);
 
-extern uint8_t  accum[1024*1024+32];// primitive accumulation buffer
-extern uint8_t  *accptr;             // current offset in accum
-extern size_t   acclen;             // length of accumulated data
-extern uint8_t  cmdidle;
+extern GX::FifoProcessor GxFifo;
