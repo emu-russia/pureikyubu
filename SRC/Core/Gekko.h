@@ -5,7 +5,6 @@
 #include "../Common/Thread.h"
 #include <vector>
 #include <list>
-#include <atomic>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -20,8 +19,8 @@ typedef union _FPREG
 // time-base
 typedef union _TBREG
 {
-    int64_t         sval;               // for comparsion
-    uint64_t        uval;               // for incrementing
+    volatile int64_t   sval;               // for comparsion
+    volatile uint64_t  uval;               // for incrementing
     struct
     {
         uint32_t     l;                  // for output
@@ -58,6 +57,7 @@ typedef struct _GekkoRegs
 namespace Gekko
 {
     class Interpreter;
+    class Jitc;
 
     enum class GekkoWaiter : int
     {
@@ -94,6 +94,7 @@ namespace Gekko
         SpinLock breakPointsLock;
 
         Interpreter* interp;
+        Jitc* jitc;
 
         bool waitQueueEnabled = true;   // Let's see how this mechanism will show itself. You can always turn it off.
         WaitQueueEntry waitQueue[(int)GekkoWaiter::Max] = { 0 };
@@ -135,8 +136,8 @@ namespace Gekko
 
         void Step();
 
-        bool decreq = false;       // decrementer exception request
-        bool intFlag = false;      // INT signal
+        volatile bool decreq = false;       // decrementer exception request
+        volatile bool intFlag = false;      // INT signal
 
         void AssertInterrupt();
         void ClearInterrupt();

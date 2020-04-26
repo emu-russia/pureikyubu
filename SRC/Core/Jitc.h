@@ -1,3 +1,4 @@
+// Gekko recompiler.
 
 #pragma once
 
@@ -9,9 +10,16 @@ namespace Gekko
 	class CodeSegment
 	{
 	public:
-		uint32_t addr;
-		size_t size;
-		std::vector<uint8_t> code;
+		uint32_t addr = 0;		// Starting Gekko code address (effective)
+		size_t size = 0;		// Size of Gekko code in bytes
+		std::vector<uint8_t> code;	  // Automatically inflates when necessary
+
+		void Run();
+
+		void Write8(uint8_t data);
+		void Write16(uint16_t data);
+		void Write32(uint32_t data);
+		void Write64(uint64_t data);
 	};
 
 	class Jitc
@@ -20,17 +28,24 @@ namespace Gekko
 
 		std::map<uint32_t, CodeSegment*> segments;
 
+		CodeSegment* SegmentCompiled(uint32_t addr);
+		CodeSegment* CompileSegment(uint32_t addr);
+		void CompileInstr(AnalyzeInfo* info, CodeSegment* segment);
+
+		void InvalidateAll();
+
+		// Gekko ISA
+
+		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
+
 	public:
 		Jitc(GekkoCore* _core);
 		~Jitc();
 
-		bool SegmentCompiled(uint32_t addr);
-		void CompileSegment(uint32_t addr);
-
-		void RunSegment(uint32_t addr);
-
 		void Invalidate(uint32_t addr, size_t size);
 
+		void Execute();
+		void Reset();
 	};
 
 }

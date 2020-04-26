@@ -159,7 +159,6 @@
     <ClInclude Include="..\Interpreter.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
     <ClInclude Include="..\Jitc.h" />
-    <ClInclude Include="..\JitcX64\All.h" />
     <ClInclude Include="..\Mmu.h" />
     <ClInclude Include="..\pch.h" />
   </ItemGroup>

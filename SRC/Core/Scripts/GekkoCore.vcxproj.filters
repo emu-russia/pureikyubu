@@ -54,9 +54,6 @@
     <ClInclude Include="..\GatherBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\JitcX64\All.h">
-      <Filter>JitcX64</Filter>
-    </ClInclude>
     <ClInclude Include="..\Jitc.h">
       <Filter>Header Files</Filter>
     </ClInclude>

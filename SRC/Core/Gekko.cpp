@@ -1,7 +1,7 @@
 // CPU controls 
 #include "pch.h"
 
-// memory operations (using MEM* or DB* read/write operations)
+// Memory operations
 void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t *reg);
 void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
 void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t *reg);
@@ -11,9 +11,6 @@ void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t *reg);
 void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
 void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t *reg);
 void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t *data);
-
-// run from PC (using interpreter/debugger/recompiler)
-void (*CPUStart)();
 
 namespace Gekko
 {
@@ -33,6 +30,9 @@ namespace Gekko
     {
         interp = new Interpreter(this);
         assert(interp);
+
+        jitc = new Jitc(this);
+        assert(jitc);
 
         Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
@@ -58,6 +58,7 @@ namespace Gekko
 
         delete gekkoThread;
         delete interp;
+        delete jitc;
     }
 
     // Reset processor
@@ -70,8 +71,7 @@ namespace Gekko
         ops = 0;
         dispatchQueueCounter = 0;
 
-        // set CPU memory operations to default (using MEM*);
-        // debugger will override them by DB* calls after start, if need.
+        // Set CPU memory operations
         CPUReadByte = MEMReadByte;
         CPUWriteByte = MEMWriteByte;
         CPUReadHalf = MEMReadHalf;
@@ -94,6 +94,8 @@ namespace Gekko
         regs.spr[9] = 0;    // CTR
 
         gatherBuffer.Reset();
+
+        jitc->Reset();
     }
 
     // Modify CPU counters
