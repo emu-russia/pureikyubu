@@ -2,7 +2,7 @@
 #include "pch.h"
 
 // normalize (clamp vector to 1.0 length)
-void VECNormalize(float *vec)
+void VECNormalize(float vec[3])
 {
     float d = (float)sqrt(
         vec[0] * vec[0] + 

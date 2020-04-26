@@ -12,9 +12,6 @@
 //
 // only COLOR0 (no ALPHA0, COLOR1, ALPHA1)
 //
-// shit, vertex shaders are useless without pixel shaders
-// i wish, someone donate me last Radeon
-//
 #include "pch.h"
 
 BOOL    vtxShaders;

@@ -327,13 +327,13 @@ static void __fastcall write_len(uint32_t addr, uint32_t data) { DILEN = data; }
 
 static void DISetCommandBuffer(int n, uint32_t value)
 {
-    uint8_t* ptr = &di.cmdbuf[n * 4];
+    volatile uint8_t* ptr = &di.cmdbuf[n * 4];
     *(uint32_t*)ptr = _byteswap_ulong(value);
 }
 
 static uint32_t DIGetCommandBuffer(int n)
 {
-    uint8_t* ptr = &di.cmdbuf[n * 4];
+    volatile uint8_t* ptr = &di.cmdbuf[n * 4];
     return _byteswap_ulong(*(uint32_t*)ptr);
 }
 

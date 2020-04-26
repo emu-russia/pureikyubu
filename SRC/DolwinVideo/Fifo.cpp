@@ -5,61 +5,55 @@
 // local data
 //
 
-static  uint8_t      *(__fastcall *pipeline[VTX_MAX_ATTR][8])(uint8_t *ptr); // fifo attr callbacks
+static  void (__fastcall *pipeline[VTX_MAX_ATTR][8])(GX::FifoProcessor* fifo); // fifo attr callbacks
 
 float   fracDenom[8][VTX_MAX_ATTR];             // fraction denominant
 
 Vertex  *vtx;                                   // current vertex to 
                                                         // collect data
-static  int     VtxSize[8];
+int     VtxSize[8];
 
 unsigned usevat;                                // current VAT
 
 static  FILE    *filog;                                 // fifo log
 
-uint32_t     lastFifoSize;
-
-uint8_t  accum[1024*1024+32];// primitive accumulation buffer
-uint8_t *accptr;             // current offset in accum
-size_t   acclen;             // length of accumulated data
 uint8_t  gxcmd;              // next fifo command to execute
-uint32_t need;               // need bytes for command
-uint8_t  cmdidle=1;
+
+GX::FifoProcessor GxFifo;
 
 // ---------------------------------------------------------------------------
 
 // stage callbacks
 
-// helper function
-// (no need anymore)
-static char *getAttrDesc(VTX_ATTR attr)
+// Helper function
+static std::string AttrToString(VTX_ATTR attr)
 {
     switch(attr)
     {
-        case VTX_POSMATIDX:     return (char *)"Position Matrix Index";
-        case VTX_TEX0MTXIDX:    return (char*)"Texture Coordinate 0 Matrix Index";
-        case VTX_TEX1MTXIDX:    return (char*)"Texture Coordinate 1 Matrix Index";
-        case VTX_TEX2MTXIDX:    return (char*)"Texture Coordinate 2 Matrix Index";
-        case VTX_TEX3MTXIDX:    return (char*)"Texture Coordinate 3 Matrix Index";
-        case VTX_TEX4MTXIDX:    return (char*)"Texture Coordinate 4 Matrix Index";
-        case VTX_TEX5MTXIDX:    return (char*)"Texture Coordinate 5 Matrix Index";
-        case VTX_TEX6MTXIDX:    return (char*)"Texture Coordinate 6 Matrix Index";
-        case VTX_TEX7MTXIDX:    return (char*)"Texture Coordinate 7 Matrix Index";
-        case VTX_POS:           return (char*)"Position";
-        case VTX_NRM:           return (char*)"Normal or Normal/Binormal/Tangent";
-        case VTX_COLOR0:        return (char*)"Color 0";
-        case VTX_COLOR1:        return (char*)"Color 1";
-        case VTX_TEXCOORD0:     return (char*)"Texture Coordinate 0";
-        case VTX_TEXCOORD1:     return (char*)"Texture Coordinate 1";
-        case VTX_TEXCOORD2:     return (char*)"Texture Coordinate 2";
-        case VTX_TEXCOORD3:     return (char*)"Texture Coordinate 3";
-        case VTX_TEXCOORD4:     return (char*)"Texture Coordinate 4";
-        case VTX_TEXCOORD5:     return (char*)"Texture Coordinate 5";
-        case VTX_TEXCOORD6:     return (char*)"Texture Coordinate 6";
-        case VTX_TEXCOORD7:     return (char*)"Texture Coordinate 7";
-        case VTX_MAX_ATTR :     return (char*)"MAX attr";
+        case VTX_POSMATIDX:     return "Position Matrix Index";
+        case VTX_TEX0MTXIDX:    return "Texture Coordinate 0 Matrix Index";
+        case VTX_TEX1MTXIDX:    return "Texture Coordinate 1 Matrix Index";
+        case VTX_TEX2MTXIDX:    return "Texture Coordinate 2 Matrix Index";
+        case VTX_TEX3MTXIDX:    return "Texture Coordinate 3 Matrix Index";
+        case VTX_TEX4MTXIDX:    return "Texture Coordinate 4 Matrix Index";
+        case VTX_TEX5MTXIDX:    return "Texture Coordinate 5 Matrix Index";
+        case VTX_TEX6MTXIDX:    return "Texture Coordinate 6 Matrix Index";
+        case VTX_TEX7MTXIDX:    return "Texture Coordinate 7 Matrix Index";
+        case VTX_POS:           return "Position";
+        case VTX_NRM:           return "Normal or Normal/Binormal/Tangent";
+        case VTX_COLOR0:        return "Color 0";
+        case VTX_COLOR1:        return "Color 1";
+        case VTX_TEXCOORD0:     return "Texture Coordinate 0";
+        case VTX_TEXCOORD1:     return "Texture Coordinate 1";
+        case VTX_TEXCOORD2:     return "Texture Coordinate 2";
+        case VTX_TEXCOORD3:     return "Texture Coordinate 3";
+        case VTX_TEXCOORD4:     return "Texture Coordinate 4";
+        case VTX_TEXCOORD5:     return "Texture Coordinate 5";
+        case VTX_TEXCOORD6:     return "Texture Coordinate 6";
+        case VTX_TEXCOORD7:     return "Texture Coordinate 7";
+        case VTX_MAX_ATTR :     return "MAX attr";
     }
-    return (char*)"unknown";
+    return "Unknown attribute";
 }
 
 // calculate size of current vertex
@@ -374,8 +368,6 @@ void FifoReconfigure(
         // reset pipeline 
         case VTX_MAX_ATTR:
         {
-            lastFifoSize = 0;
-
             for(unsigned vatnum=0; vatnum<8; vatnum++)
             {
                 for(unsigned attr=0; attr<VTX_MAX_ATTR; attr++)
@@ -569,10 +561,10 @@ void FifoReconfigure(
 
         default:
         {
-            GFXError(
+            DBHalt(
                 "Fifo reconfigure failure! "
                 "Unhandled vertex attribute %s.",
-                getAttrDesc(attr)
+                AttrToString(attr).c_str()
             );
         }
         return;
@@ -596,31 +588,10 @@ void FifoReconfigure(
 
 // ---------------------------------------------------------------------------
 
-// byte-swapping, used commonly 
-// TODO : convert on asm to speed-up
-
-uint32_t swap32(uint32_t data)
-{
-    return ((data >> 24) & 0x000000ff) |
-           ((data >>  8) & 0x0000ff00) |
-           ((data <<  8) & 0x00ff0000) |
-           ((data << 24) & 0xff000000) ;
-}
-
-uint16_t swap16(uint16_t data)
-{
-    return ((data & 0x00ff) << 8) |
-           ((data & 0xff00) >> 8) ;
-}
-
-// ---------------------------------------------------------------------------
-
-// TODO : implement fifo, as _real_ fifo, not like that crappy one
-
 // collect data
-static uint8_t *FifoWalk(unsigned vatnum, uint8_t *ptr)
+static void FifoWalk(unsigned vatnum, GX::FifoProcessor * fifo)
 {
-    register uint8_t *(__fastcall *stageCB)(uint8_t *ptr);
+    void (__fastcall *stageCB)(GX::FifoProcessor * fifo);
 
     // overrided by 'mtxidx' attributes
     xfRegs.posidx = xfRegs.matidxA.pos;
@@ -636,36 +607,232 @@ static uint8_t *FifoWalk(unsigned vatnum, uint8_t *ptr)
     for(unsigned stage=0; stage<VTX_MAX_ATTR; stage++)
     {
         stageCB = pipeline[stage][vatnum];
-        if(stageCB) ptr = stageCB(ptr);
+        if(stageCB) stageCB(fifo);
     }
-
-    return ptr;
 }
 
-static uint32_t gx_needbytes(uint8_t cmd)
+static void GxBadFifo(uint8_t command)
 {
-    uint8_t *readptr = accptr;
+    DBHalt(
+        "Unimplemented command : 0x%02X\n"
+        "VCD configuration :\n"
+        "pmidx:%i\n"
+        "t0idx:%i\t tex0:%i\n"
+        "t1idx:%i\t tex1:%i\n"
+        "t2idx:%i\t tex2:%i\n"
+        "t3idx:%i\t tex3:%i\n"
+        "t4idx:%i\t tex4:%i\n"
+        "t5idx:%i\t tex5:%i\n"
+        "t6idx:%i\t tex6:%i\n"
+        "t7idx:%i\t tex7:%i\n"
+        "pos:%i\n"
+        "nrm:%i\n"
+        "col0:%i\n"
+        "col1:%i\n",
+        command,
+        cpRegs.vcdLo.pmidx,
+        cpRegs.vcdLo.t0midx, cpRegs.vcdHi.tex0,
+        cpRegs.vcdLo.t1midx, cpRegs.vcdHi.tex1,
+        cpRegs.vcdLo.t2midx, cpRegs.vcdHi.tex2,
+        cpRegs.vcdLo.t3midx, cpRegs.vcdHi.tex3,
+        cpRegs.vcdLo.t4midx, cpRegs.vcdHi.tex4,
+        cpRegs.vcdLo.t5midx, cpRegs.vcdHi.tex5,
+        cpRegs.vcdLo.t6midx, cpRegs.vcdHi.tex6,
+        cpRegs.vcdLo.t7midx, cpRegs.vcdHi.tex7,
+        cpRegs.vcdLo.pos,
+        cpRegs.vcdLo.nrm,
+        cpRegs.vcdLo.col0,
+        cpRegs.vcdLo.col1
+    );
+}
+
+static void GxCommand(GX::FifoProcessor * fifo)
+{
+    if(frame_done)
+    {
+        GL_OpenSubsystem();
+        GL_BeginFrame();
+        frame_done = 0;
+    }
+
+    uint8_t cmd = fifo->Read8();
+
+    //DBReport2(DbgChannel::GP, "GxCommand: 0x%02X\n", cmd);
 
     switch(cmd)
     {
+        // do nothing
         case OP_CMD_NOP:
-        case OP_CMD_INV:
-            return 0;
+            break;
 
-        case OP_CMD_CALL_DL:
-            return 8;
+        case OP_CMD_INV | 0:
+        case OP_CMD_INV | 1:
+        case OP_CMD_INV | 2:
+        case OP_CMD_INV | 3:
+        case OP_CMD_INV | 4:
+        case OP_CMD_INV | 5:
+        case OP_CMD_INV | 6:
+        case OP_CMD_INV | 7:
+            DBReport2(DbgChannel::GP, "Invalidate V$\n");
+            break;
 
-        case OP_CMD_LOAD_BPREG:
-            return 4;
-
-        case OP_CMD_LOAD_CPREG:
-            return 5;
-            
-        case OP_CMD_LOAD_XFREG:
+        case OP_CMD_CALL_DL | 0:
+        case OP_CMD_CALL_DL | 1:
+        case OP_CMD_CALL_DL | 2:
+        case OP_CMD_CALL_DL | 3:
+        case OP_CMD_CALL_DL | 4:
+        case OP_CMD_CALL_DL | 5:
+        case OP_CMD_CALL_DL | 6:
+        case OP_CMD_CALL_DL | 7:
         {
-            uint16_t len = swap16(*(uint16_t*)readptr) + 1;
-            return 2 + 4 * len;
+            uint32_t physAddress = fifo->Read32() & RAMMASK;
+            uint8_t* fifoPtr = &RAM[physAddress];
+            size_t size = fifo->Read32() & ~0x1f;
+
+            DBReport2(DbgChannel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
+
+            GX::FifoProcessor* callDlFifo = new GX::FifoProcessor(fifoPtr, size);
+
+            while (callDlFifo->EnoughToExecute())
+            {
+                GxCommand(callDlFifo);
+            }
+
+            delete callDlFifo;
+            break;
         }
+
+        // ---------------------------------------------------------------
+        // loading of internal regs
+            
+        case OP_CMD_LOAD_BPREG | 0:
+        case OP_CMD_LOAD_BPREG | 1:
+        case OP_CMD_LOAD_BPREG | 2:
+        case OP_CMD_LOAD_BPREG | 3:
+        case OP_CMD_LOAD_BPREG | 4:
+        case OP_CMD_LOAD_BPREG | 5:
+        case OP_CMD_LOAD_BPREG | 6:
+        case OP_CMD_LOAD_BPREG | 7:
+        case OP_CMD_LOAD_BPREG | 8:
+        case OP_CMD_LOAD_BPREG | 0xa:
+        case OP_CMD_LOAD_BPREG | 0xb:
+        case OP_CMD_LOAD_BPREG | 0xc:
+        case OP_CMD_LOAD_BPREG | 0xd:
+        case OP_CMD_LOAD_BPREG | 0xe:
+        case OP_CMD_LOAD_BPREG | 0xf:
+        {
+            uint32_t word = fifo->Read32();
+            loadBPReg(word >> 24, word & 0xffffff);
+            break;
+        }
+
+        case OP_CMD_LOAD_CPREG | 0:
+        case OP_CMD_LOAD_CPREG | 1:
+        case OP_CMD_LOAD_CPREG | 2:
+        case OP_CMD_LOAD_CPREG | 3:
+        case OP_CMD_LOAD_CPREG | 4:
+        case OP_CMD_LOAD_CPREG | 5:
+        case OP_CMD_LOAD_CPREG | 6:
+        case OP_CMD_LOAD_CPREG | 7:
+        {
+            uint8_t index = fifo->Read8();
+            uint32_t word = fifo->Read32();
+            loadCPReg(index, word);
+            break;
+        }
+
+        case OP_CMD_LOAD_XFREG | 0:
+        case OP_CMD_LOAD_XFREG | 1:
+        case OP_CMD_LOAD_XFREG | 2:
+        case OP_CMD_LOAD_XFREG | 3:
+        case OP_CMD_LOAD_XFREG | 4:
+        case OP_CMD_LOAD_XFREG | 5:
+        case OP_CMD_LOAD_XFREG | 6:
+        case OP_CMD_LOAD_XFREG | 7:
+        {
+            uint16_t len, index;
+
+            len = fifo->Read16() + 1;
+            index = fifo->Read16();
+
+            loadXFRegs(index, len, fifo);
+            break;
+        }
+
+        case OP_CMD_LOAD_INDXA | 0:
+        case OP_CMD_LOAD_INDXA | 1:
+        case OP_CMD_LOAD_INDXA | 2:
+        case OP_CMD_LOAD_INDXA | 3:
+        case OP_CMD_LOAD_INDXA | 4:
+        case OP_CMD_LOAD_INDXA | 5:
+        case OP_CMD_LOAD_INDXA | 6:
+        case OP_CMD_LOAD_INDXA | 7:
+        {
+            uint16_t idx, start, len;
+            idx = fifo->Read16();
+            start = fifo->Read16();
+            len = (start >> 12) + 1;
+            start &= 0xfff;
+            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
+            break;
+        }
+
+        case OP_CMD_LOAD_INDXB | 0:
+        case OP_CMD_LOAD_INDXB | 1:
+        case OP_CMD_LOAD_INDXB | 2:
+        case OP_CMD_LOAD_INDXB | 3:
+        case OP_CMD_LOAD_INDXB | 4:
+        case OP_CMD_LOAD_INDXB | 5:
+        case OP_CMD_LOAD_INDXB | 6:
+        case OP_CMD_LOAD_INDXB | 7:
+        {
+            uint16_t idx, start, len;
+            idx = fifo->Read16();
+            start = fifo->Read16();
+            len = (start >> 12) + 1;
+            start &= 0xfff;
+            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
+            break;
+        }
+
+        case OP_CMD_LOAD_INDXC | 0:
+        case OP_CMD_LOAD_INDXC | 1:
+        case OP_CMD_LOAD_INDXC | 2:
+        case OP_CMD_LOAD_INDXC | 3:
+        case OP_CMD_LOAD_INDXC | 4:
+        case OP_CMD_LOAD_INDXC | 5:
+        case OP_CMD_LOAD_INDXC | 6:
+        case OP_CMD_LOAD_INDXC | 7:
+        {
+            uint16_t idx, start, len;
+            idx = fifo->Read16();
+            start = fifo->Read16();
+            len = (start >> 12) + 1;
+            start &= 0xfff;
+            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
+            break;
+        }
+
+        case OP_CMD_LOAD_INDXD | 0:
+        case OP_CMD_LOAD_INDXD | 1:
+        case OP_CMD_LOAD_INDXD | 2:
+        case OP_CMD_LOAD_INDXD | 3:
+        case OP_CMD_LOAD_INDXD | 4:
+        case OP_CMD_LOAD_INDXD | 5:
+        case OP_CMD_LOAD_INDXD | 6:
+        case OP_CMD_LOAD_INDXD | 7:
+        {
+            uint16_t idx, start, len;
+            idx = fifo->Read16();
+            start = fifo->Read16();
+            len = (start >> 12) + 1;
+            start &= 0xfff;
+            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
+            break;
+        }
+
+        // ---------------------------------------------------------------
+        // draw commands
 
         // 0x80
         case OP_CMD_DRAW_QUAD | 0:
@@ -676,6 +843,35 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_QUAD | 5:
         case OP_CMD_DRAW_QUAD | 6:
         case OP_CMD_DRAW_QUAD | 7:
+        {
+            static   Vertex   quad[4];
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                1---2       tri1: 0-1-2
+                |  /|       tri2: 0-2-3
+                | / |
+                |/  |
+                0---3
+                                                        /*/
+
+            while(vtxnum > 0)
+            {
+                for(unsigned n=0; n<4; n++)
+                {
+                    vtx = &quad[n];
+                    FifoWalk(vatnum, fifo);
+                }
+                GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
+                GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
+                vtxnum -= 4;
+            }
+            break;
+        }
+
+        // 0x90
         case OP_CMD_DRAW_TRIANGLE | 0:
         case OP_CMD_DRAW_TRIANGLE | 1:
         case OP_CMD_DRAW_TRIANGLE | 2:
@@ -684,6 +880,34 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_TRIANGLE | 5:
         case OP_CMD_DRAW_TRIANGLE | 6:
         case OP_CMD_DRAW_TRIANGLE | 7:
+        {
+            static   Vertex   tri[3];
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                1---2       tri: 0-1-2
+                |  /
+                | /
+                |/
+                0  
+                                                        /*/
+
+            while(vtxnum > 0)
+            {
+                for(unsigned n=0; n<3; n++)
+                {
+                    vtx = &tri[n];
+                    FifoWalk(vatnum, fifo);
+                }
+                GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
+                vtxnum -= 3;
+            }
+            break;
+        }
+
+        // 0x98 
         case OP_CMD_DRAW_STRIP | 0:
         case OP_CMD_DRAW_STRIP | 1:
         case OP_CMD_DRAW_STRIP | 2:
@@ -692,6 +916,50 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_STRIP | 5:
         case OP_CMD_DRAW_STRIP | 6:
         case OP_CMD_DRAW_STRIP | 7:
+        {
+            static   Vertex   tri[3];
+            unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                    1---3---5   tri1: 0-1-2
+                   /|  /|  /    tri2: 1-2-3
+                  / | / | /     tri3: 2-3-4
+                 /  |/  |/      tri4: 3-4-5
+                0---2---4       ...
+                                                        /*/
+            if(vtxnum == 0) break;
+            assert(vtxnum >= 3);
+
+            vtx = &tri[0];
+            FifoWalk(vatnum, fifo);
+            vtx = &tri[1];
+            FifoWalk(vatnum, fifo);
+            vtxnum -= 2;
+
+            while(vtxnum-- > 0)
+            {
+                vtx = &tri[c++];
+                FifoWalk(vatnum, fifo);
+                if(c > 2) c = 0;
+
+                GL_RenderTriangle(
+                    &tri[order[0]],
+                    &tri[order[1]], 
+                    &tri[order[2]]
+                );
+
+                tmp      = order[0];
+                order[0] = order[1];
+                order[1] = order[2];
+                order[2] = tmp;
+            }
+            break;
+        }
+
+        // 0xA0
         case OP_CMD_DRAW_FAN | 0:
         case OP_CMD_DRAW_FAN | 1:
         case OP_CMD_DRAW_FAN | 2:
@@ -700,6 +968,50 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_FAN | 5:
         case OP_CMD_DRAW_FAN | 6:
         case OP_CMD_DRAW_FAN | 7:
+        {
+            static   Vertex   tri[3];
+            unsigned c = 2, order[2] = { 1, 2 }, tmp;
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                1---2---3   tri1: 0-1-2
+                |  /  _/    tri2: 0-2-3
+                | / _/      trin: 0-[n-1]-n
+                |/_/    
+                0/
+                                                        /*/
+            if(vtxnum == 0) break;
+            assert(vtxnum >= 3);
+
+            vtx = &tri[0];
+            FifoWalk(vatnum, fifo);
+            vtx = &tri[1];
+            FifoWalk(vatnum, fifo);
+            vtxnum -= 2;
+
+            while(vtxnum-- > 0)
+            {
+                vtx = &tri[c];
+                FifoWalk(vatnum, fifo);
+                c = (c == 2) ? (c = 1) : (c = 2);
+
+                GL_RenderTriangle(
+                    &tri[0],
+                    &tri[order[0]],
+                    &tri[order[1]]
+                );
+
+                // order[0] <-> order[1]
+                tmp      = order[0];
+                order[0] = order[1];
+                order[1] = tmp;
+            }
+            break;
+        }
+
+        // 0xA8
         case OP_CMD_DRAW_LINE | 0:
         case OP_CMD_DRAW_LINE | 1:
         case OP_CMD_DRAW_LINE | 2:
@@ -708,6 +1020,34 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_LINE | 5:
         case OP_CMD_DRAW_LINE | 6:
         case OP_CMD_DRAW_LINE | 7:
+        {
+            static   Vertex   v[2];
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                    1   3   5
+                   /   /   / 
+                  /   /   / 
+                 /   /   /      
+                0   2   4       
+                                                        /*/
+            if(vtxnum == 0) break;
+
+            while(vtxnum > 0)
+            {
+                vtx = &v[0];
+                FifoWalk(vatnum, fifo);
+                vtx = &v[1];
+                FifoWalk(vatnum, fifo);
+                GL_RenderLine(&v[0], &v[1]);
+                vtxnum -= 2;
+            }
+            break;
+        }
+
+        // 0xB0
         case OP_CMD_DRAW_LINESTRIP | 0:
         case OP_CMD_DRAW_LINESTRIP | 1:
         case OP_CMD_DRAW_LINESTRIP | 2:
@@ -716,6 +1056,46 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_LINESTRIP | 5:
         case OP_CMD_DRAW_LINESTRIP | 6:
         case OP_CMD_DRAW_LINESTRIP | 7:
+        {
+            static   Vertex   v[2];
+            unsigned c = 1, order[2] = { 0, 1 }, tmp;
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                    1   3   5
+                   /|  /|  / 
+                  / | / | /  
+                 /  |/  |/   
+                0   2   4    
+                                                        /*/
+            if(vtxnum == 0) break;
+            assert(vtxnum >= 2);
+
+            vtx = &v[0];
+            FifoWalk(vatnum, fifo);
+            vtxnum--;
+
+            while(vtxnum-- > 0)
+            {
+                vtx = &v[c++];
+                FifoWalk(vatnum, fifo);
+                if(c > 1) c = 0;
+
+                GL_RenderLine(
+                    &v[order[0]],
+                    &v[order[1]]
+                );
+
+                tmp      = order[0];
+                order[0] = order[1];
+                order[1] = tmp;
+            }
+            break;
+        }
+
+        // 0xB8
         case OP_CMD_DRAW_POINT | 0:
         case OP_CMD_DRAW_POINT | 1:
         case OP_CMD_DRAW_POINT | 2:
@@ -725,1113 +1105,46 @@ static uint32_t gx_needbytes(uint8_t cmd)
         case OP_CMD_DRAW_POINT | 6:
         case OP_CMD_DRAW_POINT | 7:
         {
-            unsigned vtxnum = swap16(*(uint16_t *)readptr);
-            return vtxnum * VtxSize[cmd & 7];
+            static  Vertex  p;
+            unsigned vatnum = cmd & 7;
+            unsigned vtxnum = fifo->Read16();
+            usevat = vatnum;
+            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i\n", vtxnum);
+                                                        /*/
+                0---0       tri: 0-0-0 (1x1x1 tri)
+                |  /
+                | /
+                |/
+                0  
+                                                        /*/
+
+            while(vtxnum-- > 0)
+            {
+                vtx = &p;
+                FifoWalk(vatnum, fifo);
+                GL_RenderPoint(vtx);
+            }
+            break;
         }
-    }
 
-    return 1;
-}
-
-static void GPCallList(uint8_t *fifoPtr, uint32_t count)
-{
-    uint8_t  *endptr  = &fifoPtr[count & 0xffff];
-    uint8_t  *readptr = fifoPtr;
-    uint8_t  cmd;
-
-    while((uint8_t*)readptr < (uint8_t*)endptr)
-    {
-        switch(cmd = *readptr++)
-        {
-            // do nothing
-            case OP_CMD_NOP:
-            case OP_CMD_INV:
-                break;
-
-            case OP_CMD_CALL_DL:
-                GFXError("Nested display list");
-                readptr += 8;
-                break;
-
-            // ---------------------------------------------------------------
-            // loading of internal regs
+        // ---------------------------------------------------------------
+        // Unknown/unsupported fifo command
             
-            case OP_CMD_LOAD_BPREG:
-            {
-                uint32_t word = swap32(*(uint32_t *)readptr);
-                readptr += 4;
-                loadBPReg(word >> 24, word & 0xffffff);
-                break;
-            }
-
-            case OP_CMD_LOAD_CPREG:
-            {
-                uint8_t index = *readptr++;
-                uint32_t word = swap32(*(uint32_t *)readptr);
-                readptr += 4;
-                loadCPReg(index, word);
-                break;
-            }
-
-            case OP_CMD_LOAD_XFREG:
-            {
-                uint16_t reg, len, index;
-                uint32_t *regData;
-
-                len = swap16(*(uint16_t *)readptr) + 1;
-                readptr += 2;
-                index = swap16(*(uint16_t *)readptr);
-                readptr += 2;
-
-                // reverse bytes
-                regData = (uint32_t *)readptr;
-                for(reg=0; reg<len; reg++, readptr+=4)
-                {
-                    regData[reg] = swap32(regData[reg]);
-                }
-
-                loadXFRegs(index, len, regData);
-                break;
-            }
-
-/*/
-            case OP_CMD_LOAD_INDXA:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXB:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXC:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXD:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-/*/
-
-            // ---------------------------------------------------------------
-            // draw commands
-
-            // 0x80
-            case OP_CMD_DRAW_QUAD | 0:
-            case OP_CMD_DRAW_QUAD | 1:
-            case OP_CMD_DRAW_QUAD | 2:
-            case OP_CMD_DRAW_QUAD | 3:
-            case OP_CMD_DRAW_QUAD | 4:
-            case OP_CMD_DRAW_QUAD | 5:
-            case OP_CMD_DRAW_QUAD | 6:
-            case OP_CMD_DRAW_QUAD | 7:
-            {
-                static   Vertex   quad[4];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                    1---2       tri1: 0-1-2
-                    |  /|       tri2: 0-2-3
-                    | / |
-                    |/  |
-                    0---3
-                                                            /*/
-                while(vtxnum > 0)
-                {
-                    for(unsigned n=0; n<4; n++)
-                    {
-                        vtx = &quad[n];
-                        readptr = FifoWalk(vatnum, readptr);
-                    }
-                    GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
-                    GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
-                    vtxnum -= 4;
-                }
-                break;
-            }
-
-            // 0x90
-            case OP_CMD_DRAW_TRIANGLE | 0:
-            case OP_CMD_DRAW_TRIANGLE | 1:
-            case OP_CMD_DRAW_TRIANGLE | 2:
-            case OP_CMD_DRAW_TRIANGLE | 3:
-            case OP_CMD_DRAW_TRIANGLE | 4:
-            case OP_CMD_DRAW_TRIANGLE | 5:
-            case OP_CMD_DRAW_TRIANGLE | 6:
-            case OP_CMD_DRAW_TRIANGLE | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                    1---2       tri: 0-1-2
-                    |  /
-                    | /
-                    |/
-                    0  
-                                                            /*/
-                while(vtxnum > 0)
-                {
-
-                    for(unsigned n=0; n<3; n++)
-                    {
-                        vtx = &tri[n];
-                        readptr = FifoWalk(vatnum, readptr);
-                    }
-                    GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
-                    vtxnum -= 3;
-                }
-                break;
-            }
-
-            // 0x98 - not sure !
-            case OP_CMD_DRAW_STRIP | 0:
-            case OP_CMD_DRAW_STRIP | 1:
-            case OP_CMD_DRAW_STRIP | 2:
-            case OP_CMD_DRAW_STRIP | 3:
-            case OP_CMD_DRAW_STRIP | 4:
-            case OP_CMD_DRAW_STRIP | 5:
-            case OP_CMD_DRAW_STRIP | 6:
-            case OP_CMD_DRAW_STRIP | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                        1---3---5   tri1: 0-1-2
-                       /|  /|  /    tri2: 1-2-3
-                      / | / | /     tri3: 2-3-4
-                     /  |/  |/      tri4: 3-4-5
-                    0---2---4       ...
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 3);
-
-                vtx = &tri[0];
-                readptr = FifoWalk(vatnum, readptr);
-                vtx = &tri[1];
-                readptr = FifoWalk(vatnum, readptr);
-                vtxnum -= 2;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &tri[c++];
-                    readptr = FifoWalk(vatnum, readptr);
-                    if(c > 2) c = 0;
-
-                    GL_RenderTriangle(
-                        &tri[order[0]],
-                        &tri[order[1]], 
-                        &tri[order[2]]
-                    );
-
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = order[2];
-                    order[2] = tmp;
-                }
-                break;
-            }
-
-            // 0xA0
-            case OP_CMD_DRAW_FAN | 0:
-            case OP_CMD_DRAW_FAN | 1:
-            case OP_CMD_DRAW_FAN | 2:
-            case OP_CMD_DRAW_FAN | 3:
-            case OP_CMD_DRAW_FAN | 4:
-            case OP_CMD_DRAW_FAN | 5:
-            case OP_CMD_DRAW_FAN | 6:
-            case OP_CMD_DRAW_FAN | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned c = 2, order[2] = { 1, 2 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                    1---2---3   tri1: 0-1-2
-                    |  /  _/    tri2: 0-2-3
-                    | / _/      trin: 0-[n-1]-n
-                    |/_/    
-                    0/
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 3);
-
-                vtx = &tri[0];
-                readptr = FifoWalk(vatnum, readptr);
-                vtx = &tri[1];
-                readptr = FifoWalk(vatnum, readptr);
-                vtxnum -= 2;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &tri[c];
-                    readptr = FifoWalk(vatnum, readptr);
-                    c = (c == 2) ? (c = 1) : (c = 2);
-
-                    GL_RenderTriangle(
-                        &tri[0],
-                        &tri[order[0]],
-                        &tri[order[1]]
-                    );
-
-                    // order[0] <-> order[1]
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = tmp;
-                }
-                break;
-            }
-
-            // 0xA8
-            case OP_CMD_DRAW_LINE | 0:
-            case OP_CMD_DRAW_LINE | 1:
-            case OP_CMD_DRAW_LINE | 2:
-            case OP_CMD_DRAW_LINE | 3:
-            case OP_CMD_DRAW_LINE | 4:
-            case OP_CMD_DRAW_LINE | 5:
-            case OP_CMD_DRAW_LINE | 6:
-            case OP_CMD_DRAW_LINE | 7:
-            {
-                static   Vertex   v[2];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                        1   3   5
-                       /   /   / 
-                      /   /   / 
-                     /   /   /      
-                    0   2   4       
-                                                            /*/
-                if(vtxnum == 0) break;
-
-                while(vtxnum > 0)
-                {
-                    vtx = &v[0];
-                    readptr = FifoWalk(vatnum, readptr);
-                    vtx = &v[1];
-                    readptr = FifoWalk(vatnum, readptr);
-                    GL_RenderLine(&v[0], &v[1]);
-                    vtxnum -= 2;
-                }
-                break;
-            }
-
-            // 0xB0
-            case OP_CMD_DRAW_LINESTRIP | 0:
-            case OP_CMD_DRAW_LINESTRIP | 1:
-            case OP_CMD_DRAW_LINESTRIP | 2:
-            case OP_CMD_DRAW_LINESTRIP | 3:
-            case OP_CMD_DRAW_LINESTRIP | 4:
-            case OP_CMD_DRAW_LINESTRIP | 5:
-            case OP_CMD_DRAW_LINESTRIP | 6:
-            case OP_CMD_DRAW_LINESTRIP | 7:
-            {
-                static   Vertex   v[2];
-                unsigned c = 1, order[2] = { 0, 1 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                        1   3   5
-                       /|  /|  / 
-                      / | / | /  
-                     /  |/  |/   
-                    0   2   4    
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 2);
-
-                vtx = &v[0];
-                readptr = FifoWalk(vatnum, readptr);
-                vtxnum--;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &v[c++];
-                    readptr = FifoWalk(vatnum, readptr);
-                    if(c > 1) c = 0;
-
-                    GL_RenderLine(
-                        &v[order[0]],
-                        &v[order[1]]
-                    );
-
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = tmp;
-                }
-                break;
-            }
-
-            // 0xB8
-            case OP_CMD_DRAW_POINT | 0:
-            case OP_CMD_DRAW_POINT | 1:
-            case OP_CMD_DRAW_POINT | 2:
-            case OP_CMD_DRAW_POINT | 3:
-            case OP_CMD_DRAW_POINT | 4:
-            case OP_CMD_DRAW_POINT | 5:
-            case OP_CMD_DRAW_POINT | 6:
-            case OP_CMD_DRAW_POINT | 7:
-            {
-                static  Vertex  p;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)readptr);
-                usevat = vatnum;
-                readptr += 2;
-                                                            /*/
-                    0---0       tri: 0-0-0 (1x1x1 tri)
-                    |  /
-                    | /
-                    |/
-                    0  
-                                                            /*/
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &p;
-                    readptr = FifoWalk(vatnum, readptr);
-                    GL_RenderPoint(vtx);
-                }
-                break;
-            }
-
-            // ---------------------------------------------------------------
-            // unknown fifo command
-
-            default:
-            {
-#if 0
-                GFXError(
-                    "Damaged FIFO buffer (in DL)! Some of attributes are not emulated :\n"
-                    "\n"
-                    "VCD configuration :\n"
-                    "pmidx:%i\n"
-                    "t0idx:%i\t tex0:%i\n"
-                    "t1idx:%i\t tex1:%i\n"
-                    "t2idx:%i\t tex2:%i\n"
-                    "t3idx:%i\t tex3:%i\n"
-                    "t4idx:%i\t tex4:%i\n"
-                    "t5idx:%i\t tex5:%i\n"
-                    "t6idx:%i\t tex6:%i\n"
-                    "t7idx:%i\t tex7:%i\n"
-                    "pos:%i\n"
-                    "nrm:%i\n"
-                    "col0:%i\n"
-                    "col1:%i\n"
-                    "\n"
-                    "Additional information is saved to fifo.txt",
-                    cpRegs.vcdLo.pmidx,
-                    cpRegs.vcdLo.t0midx, cpRegs.vcdHi.tex0,
-                    cpRegs.vcdLo.t1midx, cpRegs.vcdHi.tex1,
-                    cpRegs.vcdLo.t2midx, cpRegs.vcdHi.tex2,
-                    cpRegs.vcdLo.t3midx, cpRegs.vcdHi.tex3,
-                    cpRegs.vcdLo.t4midx, cpRegs.vcdHi.tex4,
-                    cpRegs.vcdLo.t5midx, cpRegs.vcdHi.tex5,
-                    cpRegs.vcdLo.t6midx, cpRegs.vcdHi.tex6,
-                    cpRegs.vcdLo.t7midx, cpRegs.vcdHi.tex7,
-                    cpRegs.vcdLo.pos,
-                    cpRegs.vcdLo.nrm,
-                    cpRegs.vcdLo.col0,
-                    cpRegs.vcdLo.col1
-                );
-
-                FILE *f = fopen("fifo.txt", "w");
-                fprintf(f,
-                    "Damaged FIFO buffer! Some of attributes are not emulated :\n"
-                    "\n"
-                    "VCD configuration :\n"
-                    "\n"
-                    "pmidx:%i\n"
-                    "t0idx:%i\t tex0:%i\n"
-                    "t1idx:%i\t tex1:%i\n"
-                    "t2idx:%i\t tex2:%i\n"
-                    "t3idx:%i\t tex3:%i\n"
-                    "t4idx:%i\t tex4:%i\n"
-                    "t5idx:%i\t tex5:%i\n"
-                    "t6idx:%i\t tex6:%i\n"
-                    "t7idx:%i\t tex7:%i\n"
-                    "pos:%i\n"
-                    "nrm:%i\n"
-                    "col0:%i\n"
-                    "col1:%i\n"
-                    "\n",
-                    cpRegs.vcdLo.pmidx,
-                    cpRegs.vcdLo.t0midx, cpRegs.vcdHi.tex0,
-                    cpRegs.vcdLo.t1midx, cpRegs.vcdHi.tex1,
-                    cpRegs.vcdLo.t2midx, cpRegs.vcdHi.tex2,
-                    cpRegs.vcdLo.t3midx, cpRegs.vcdHi.tex3,
-                    cpRegs.vcdLo.t4midx, cpRegs.vcdHi.tex4,
-                    cpRegs.vcdLo.t5midx, cpRegs.vcdHi.tex5,
-                    cpRegs.vcdLo.t6midx, cpRegs.vcdHi.tex6,
-                    cpRegs.vcdLo.t7midx, cpRegs.vcdHi.tex7,
-                    cpRegs.vcdLo.pos,
-                    cpRegs.vcdLo.nrm,
-                    cpRegs.vcdLo.col0,
-                    cpRegs.vcdLo.col1                    
-                );
-                fprintf(f, "Current VAT number : %i\n\n", usevat);
-                for(unsigned v=0; v<8; v++)
-                {
-                    fprintf(f,
-                        "VAT%i configuration :\n"
-                        "\n"
-                        "pos : (%i %i %i)\n"
-                        "nrm : (%i %i)\n"
-                        "col0: (%i %i)\n"
-                        "col1: (%i %i)\n"
-                        "tex0: (%i %i %i)\n"
-                        "tex1: (%i %i %i)\n"
-                        "tex2: (%i %i %i)\n"
-                        "tex3: (%i %i %i)\n"
-                        "tex4: (%i %i %i)\n"
-                        "tex5: (%i %i %i)\n"
-                        "tex6: (%i %i %i)\n"
-                        "tex7: (%i %i %i)\n"
-                        "\n",
-                        v,
-                        cpRegs.vatA[v].poscnt, cpRegs.vatA[v].posfmt, cpRegs.vatA[v].posshft,
-                        cpRegs.vatA[v].nrmcnt, cpRegs.vatA[v].nrmfmt,
-                        cpRegs.vatA[v].col0cnt, cpRegs.vatA[v].col0fmt,
-                        cpRegs.vatA[v].col1cnt, cpRegs.vatA[v].col1fmt,
-                        cpRegs.vatA[v].tex0cnt, cpRegs.vatA[v].tex0fmt, cpRegs.vatA[v].tex0shft,
-                        cpRegs.vatB[v].tex1cnt, cpRegs.vatB[v].tex1fmt, cpRegs.vatB[v].tex1shft,
-                        cpRegs.vatB[v].tex2cnt, cpRegs.vatB[v].tex2fmt, cpRegs.vatB[v].tex2shft,
-                        cpRegs.vatB[v].tex3cnt, cpRegs.vatB[v].tex3fmt, cpRegs.vatB[v].tex3shft,
-                        cpRegs.vatB[v].tex4cnt, cpRegs.vatB[v].tex4fmt, cpRegs.vatC[v].tex4shft,
-                        cpRegs.vatC[v].tex5cnt, cpRegs.vatC[v].tex5fmt, cpRegs.vatC[v].tex5shft,
-                        cpRegs.vatC[v].tex6cnt, cpRegs.vatC[v].tex6fmt, cpRegs.vatC[v].tex6shft,
-                        cpRegs.vatC[v].tex7cnt, cpRegs.vatC[v].tex7fmt, cpRegs.vatC[v].tex7shft
-                    );
-                }
-                fclose(f);
-#endif
-            }
-        }
-    }
-}
-
-
-static void gx_bad_fifo()
-{
-            {
-                GFXError(
-                    "Damaged FIFO buffer! Some of attributes are not emulated :\n"
-                    "\n"
-                    "VCD configuration :\n"
-                    "pmidx:%i\n"
-                    "t0idx:%i\t tex0:%i\n"
-                    "t1idx:%i\t tex1:%i\n"
-                    "t2idx:%i\t tex2:%i\n"
-                    "t3idx:%i\t tex3:%i\n"
-                    "t4idx:%i\t tex4:%i\n"
-                    "t5idx:%i\t tex5:%i\n"
-                    "t6idx:%i\t tex6:%i\n"
-                    "t7idx:%i\t tex7:%i\n"
-                    "pos:%i\n"
-                    "nrm:%i\n"
-                    "col0:%i\n"
-                    "col1:%i\n"
-                    "\n"
-                    "Additional information is saved to fifo.txt",
-                    cpRegs.vcdLo.pmidx,
-                    cpRegs.vcdLo.t0midx, cpRegs.vcdHi.tex0,
-                    cpRegs.vcdLo.t1midx, cpRegs.vcdHi.tex1,
-                    cpRegs.vcdLo.t2midx, cpRegs.vcdHi.tex2,
-                    cpRegs.vcdLo.t3midx, cpRegs.vcdHi.tex3,
-                    cpRegs.vcdLo.t4midx, cpRegs.vcdHi.tex4,
-                    cpRegs.vcdLo.t5midx, cpRegs.vcdHi.tex5,
-                    cpRegs.vcdLo.t6midx, cpRegs.vcdHi.tex6,
-                    cpRegs.vcdLo.t7midx, cpRegs.vcdHi.tex7,
-                    cpRegs.vcdLo.pos,
-                    cpRegs.vcdLo.nrm,
-                    cpRegs.vcdLo.col0,
-                    cpRegs.vcdLo.col1
-                );
-
-                FILE *f = fopen("fifo.txt", "w");
-                fprintf(f,
-                    "Damaged FIFO buffer! Some of attributes are not emulated :\n"
-                    "\n"
-                    "VCD configuration :\n"
-                    "\n"
-                    "pmidx:%i\n"
-                    "t0idx:%i\t tex0:%i\n"
-                    "t1idx:%i\t tex1:%i\n"
-                    "t2idx:%i\t tex2:%i\n"
-                    "t3idx:%i\t tex3:%i\n"
-                    "t4idx:%i\t tex4:%i\n"
-                    "t5idx:%i\t tex5:%i\n"
-                    "t6idx:%i\t tex6:%i\n"
-                    "t7idx:%i\t tex7:%i\n"
-                    "pos:%i\n"
-                    "nrm:%i\n"
-                    "col0:%i\n"
-                    "col1:%i\n"
-                    "\n",
-                    cpRegs.vcdLo.pmidx,
-                    cpRegs.vcdLo.t0midx, cpRegs.vcdHi.tex0,
-                    cpRegs.vcdLo.t1midx, cpRegs.vcdHi.tex1,
-                    cpRegs.vcdLo.t2midx, cpRegs.vcdHi.tex2,
-                    cpRegs.vcdLo.t3midx, cpRegs.vcdHi.tex3,
-                    cpRegs.vcdLo.t4midx, cpRegs.vcdHi.tex4,
-                    cpRegs.vcdLo.t5midx, cpRegs.vcdHi.tex5,
-                    cpRegs.vcdLo.t6midx, cpRegs.vcdHi.tex6,
-                    cpRegs.vcdLo.t7midx, cpRegs.vcdHi.tex7,
-                    cpRegs.vcdLo.pos,
-                    cpRegs.vcdLo.nrm,
-                    cpRegs.vcdLo.col0,
-                    cpRegs.vcdLo.col1                    
-                );
-                fprintf(f, "Current VAT number : %i\n\n", usevat);
-                for(unsigned v=0; v<8; v++)
-                {
-                    fprintf(f,
-                        "VAT%i configuration :\n"
-                        "\n"
-                        "pos : (%i %i %i)\n"
-                        "nrm : (%i %i)\n"
-                        "col0: (%i %i)\n"
-                        "col1: (%i %i)\n"
-                        "tex0: (%i %i %i)\n"
-                        "tex1: (%i %i %i)\n"
-                        "tex2: (%i %i %i)\n"
-                        "tex3: (%i %i %i)\n"
-                        "tex4: (%i %i %i)\n"
-                        "tex5: (%i %i %i)\n"
-                        "tex6: (%i %i %i)\n"
-                        "tex7: (%i %i %i)\n"
-                        "\n",
-                        v,
-                        cpRegs.vatA[v].poscnt, cpRegs.vatA[v].posfmt, cpRegs.vatA[v].posshft,
-                        cpRegs.vatA[v].nrmcnt, cpRegs.vatA[v].nrmfmt,
-                        cpRegs.vatA[v].col0cnt, cpRegs.vatA[v].col0fmt,
-                        cpRegs.vatA[v].col1cnt, cpRegs.vatA[v].col1fmt,
-                        cpRegs.vatA[v].tex0cnt, cpRegs.vatA[v].tex0fmt, cpRegs.vatA[v].tex0shft,
-                        cpRegs.vatB[v].tex1cnt, cpRegs.vatB[v].tex1fmt, cpRegs.vatB[v].tex1shft,
-                        cpRegs.vatB[v].tex2cnt, cpRegs.vatB[v].tex2fmt, cpRegs.vatB[v].tex2shft,
-                        cpRegs.vatB[v].tex3cnt, cpRegs.vatB[v].tex3fmt, cpRegs.vatB[v].tex3shft,
-                        cpRegs.vatB[v].tex4cnt, cpRegs.vatB[v].tex4fmt, cpRegs.vatC[v].tex4shft,
-                        cpRegs.vatC[v].tex5cnt, cpRegs.vatC[v].tex5fmt, cpRegs.vatC[v].tex5shft,
-                        cpRegs.vatC[v].tex6cnt, cpRegs.vatC[v].tex6fmt, cpRegs.vatC[v].tex6shft,
-                        cpRegs.vatC[v].tex7cnt, cpRegs.vatC[v].tex7fmt, cpRegs.vatC[v].tex7shft
-                    );
-                }
-                fclose(f);
-            }
-}
-
-static void gx_command(uint8_t cmd)
-{
-    uint32_t *p32;
-
-    if(frame_done)
-    {
-        lastFifoSize = 0;
-        GL_OpenSubsystem();
-        GL_BeginFrame();
-        frame_done = 0;
-    }
-
-        switch(cmd)
+        default:
         {
-            // do nothing
-            case OP_CMD_NOP:
-            case OP_CMD_INV:
-                break;
-
-            case OP_CMD_CALL_DL:
-                p32 = (uint32_t *)accptr;
-
-                GPCallList(
-                    &RAM[swap32(p32[0]) & RAMMASK], 
-                    swap32(p32[1])
-                );
-
-                accptr += 8;
-                break;
-
-            // ---------------------------------------------------------------
-            // loading of internal regs
-            
-            case OP_CMD_LOAD_BPREG:
-            {
-                uint32_t word = swap32(*(uint32_t *)accptr);
-                accptr += 4;
-                loadBPReg(word >> 24, word & 0xffffff);
-                break;
-            }
-
-            case OP_CMD_LOAD_CPREG:
-            {
-                uint8_t index = *accptr++;
-                uint32_t word = swap32(*(uint32_t *)accptr);
-                accptr += 4;
-                loadCPReg(index, word);
-                break;
-            }
-
-            case OP_CMD_LOAD_XFREG:
-            {
-                uint16_t reg, len, index;
-                uint32_t *regData;
-
-                len = swap16(*(uint16_t *)accptr) + 1;
-                accptr += 2;
-                index = swap16(*(uint16_t *)accptr);
-                accptr += 2;
-
-                // reverse bytes
-                regData = (uint32_t *)accptr;
-                for(reg=0; reg<len; reg++, accptr+=4)
-                {
-                    regData[reg] = swap32(regData[reg]);
-                }
-
-                loadXFRegs(index, len, regData);
-                break;
-            }
-
-/*/
-            case OP_CMD_LOAD_INDXA:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXB:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXC:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-
-            case OP_CMD_LOAD_INDXD:
-            {
-                u16 idx, start, len;
-
-                idx = swap16(*(u16 *)readptr);
-                readptr += 2;
-                start = swap16(*(u16 *)readptr);
-                readptr += 2;
-                len = (start >> 12) + 1;
-                start &= 0xfff;
-
-                break;
-            }
-/*/
-
-            // ---------------------------------------------------------------
-            // draw commands
-
-            // 0x80
-            case OP_CMD_DRAW_QUAD | 0:
-            case OP_CMD_DRAW_QUAD | 1:
-            case OP_CMD_DRAW_QUAD | 2:
-            case OP_CMD_DRAW_QUAD | 3:
-            case OP_CMD_DRAW_QUAD | 4:
-            case OP_CMD_DRAW_QUAD | 5:
-            case OP_CMD_DRAW_QUAD | 6:
-            case OP_CMD_DRAW_QUAD | 7:
-            {
-                static   Vertex   quad[4];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                    1---2       tri1: 0-1-2
-                    |  /|       tri2: 0-2-3
-                    | / |
-                    |/  |
-                    0---3
-                                                            /*/
-
-                while(vtxnum > 0)
-                {
-                    for(unsigned n=0; n<4; n++)
-                    {
-                        vtx = &quad[n];
-                        accptr = FifoWalk(vatnum, accptr);
-                    }
-                    GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
-                    GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
-                    vtxnum -= 4;
-                }
-                break;
-            }
-
-            // 0x90
-            case OP_CMD_DRAW_TRIANGLE | 0:
-            case OP_CMD_DRAW_TRIANGLE | 1:
-            case OP_CMD_DRAW_TRIANGLE | 2:
-            case OP_CMD_DRAW_TRIANGLE | 3:
-            case OP_CMD_DRAW_TRIANGLE | 4:
-            case OP_CMD_DRAW_TRIANGLE | 5:
-            case OP_CMD_DRAW_TRIANGLE | 6:
-            case OP_CMD_DRAW_TRIANGLE | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                    1---2       tri: 0-1-2
-                    |  /
-                    | /
-                    |/
-                    0  
-                                                            /*/
-
-                while(vtxnum > 0)
-                {
-                    for(unsigned n=0; n<3; n++)
-                    {
-                        vtx = &tri[n];
-                        accptr = FifoWalk(vatnum, accptr);
-                    }
-                    GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
-                    vtxnum -= 3;
-                }
-                break;
-            }
-
-            // 0x98 - not sure !
-            case OP_CMD_DRAW_STRIP | 0:
-            case OP_CMD_DRAW_STRIP | 1:
-            case OP_CMD_DRAW_STRIP | 2:
-            case OP_CMD_DRAW_STRIP | 3:
-            case OP_CMD_DRAW_STRIP | 4:
-            case OP_CMD_DRAW_STRIP | 5:
-            case OP_CMD_DRAW_STRIP | 6:
-            case OP_CMD_DRAW_STRIP | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned c = 2, order[3] = { 0, 1, 2 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                        1---3---5   tri1: 0-1-2
-                       /|  /|  /    tri2: 1-2-3
-                      / | / | /     tri3: 2-3-4
-                     /  |/  |/      tri4: 3-4-5
-                    0---2---4       ...
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 3);
-
-                vtx = &tri[0];
-                accptr = FifoWalk(vatnum, accptr);
-                vtx = &tri[1];
-                accptr = FifoWalk(vatnum, accptr);
-                vtxnum -= 2;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &tri[c++];
-                    accptr = FifoWalk(vatnum, accptr);
-                    if(c > 2) c = 0;
-
-                    GL_RenderTriangle(
-                        &tri[order[0]],
-                        &tri[order[1]], 
-                        &tri[order[2]]
-                    );
-
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = order[2];
-                    order[2] = tmp;
-                }
-                break;
-            }
-
-            // 0xA0
-            case OP_CMD_DRAW_FAN | 0:
-            case OP_CMD_DRAW_FAN | 1:
-            case OP_CMD_DRAW_FAN | 2:
-            case OP_CMD_DRAW_FAN | 3:
-            case OP_CMD_DRAW_FAN | 4:
-            case OP_CMD_DRAW_FAN | 5:
-            case OP_CMD_DRAW_FAN | 6:
-            case OP_CMD_DRAW_FAN | 7:
-            {
-                static   Vertex   tri[3];
-                unsigned c = 2, order[2] = { 1, 2 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                    1---2---3   tri1: 0-1-2
-                    |  /  _/    tri2: 0-2-3
-                    | / _/      trin: 0-[n-1]-n
-                    |/_/    
-                    0/
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 3);
-
-                vtx = &tri[0];
-                accptr = FifoWalk(vatnum, accptr);
-                vtx = &tri[1];
-                accptr = FifoWalk(vatnum, accptr);
-                vtxnum -= 2;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &tri[c];
-                    accptr = FifoWalk(vatnum, accptr);
-                    c = (c == 2) ? (c = 1) : (c = 2);
-
-                    GL_RenderTriangle(
-                        &tri[0],
-                        &tri[order[0]],
-                        &tri[order[1]]
-                    );
-
-                    // order[0] <-> order[1]
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = tmp;
-                }
-                break;
-            }
-
-            // 0xA8
-            case OP_CMD_DRAW_LINE | 0:
-            case OP_CMD_DRAW_LINE | 1:
-            case OP_CMD_DRAW_LINE | 2:
-            case OP_CMD_DRAW_LINE | 3:
-            case OP_CMD_DRAW_LINE | 4:
-            case OP_CMD_DRAW_LINE | 5:
-            case OP_CMD_DRAW_LINE | 6:
-            case OP_CMD_DRAW_LINE | 7:
-            {
-                static   Vertex   v[2];
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                        1   3   5
-                       /   /   / 
-                      /   /   / 
-                     /   /   /      
-                    0   2   4       
-                                                            /*/
-                if(vtxnum == 0) break;
-
-                while(vtxnum > 0)
-                {
-                    vtx = &v[0];
-                    accptr = FifoWalk(vatnum, accptr);
-                    vtx = &v[1];
-                    accptr = FifoWalk(vatnum, accptr);
-                    GL_RenderLine(&v[0], &v[1]);
-                    vtxnum -= 2;
-                }
-                break;
-            }
-
-            // 0xB0
-            case OP_CMD_DRAW_LINESTRIP | 0:
-            case OP_CMD_DRAW_LINESTRIP | 1:
-            case OP_CMD_DRAW_LINESTRIP | 2:
-            case OP_CMD_DRAW_LINESTRIP | 3:
-            case OP_CMD_DRAW_LINESTRIP | 4:
-            case OP_CMD_DRAW_LINESTRIP | 5:
-            case OP_CMD_DRAW_LINESTRIP | 6:
-            case OP_CMD_DRAW_LINESTRIP | 7:
-            {
-                static   Vertex   v[2];
-                unsigned c = 1, order[2] = { 0, 1 }, tmp;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                        1   3   5
-                       /|  /|  / 
-                      / | / | /  
-                     /  |/  |/   
-                    0   2   4    
-                                                            /*/
-                if(vtxnum == 0) break;
-                assert(vtxnum >= 2);
-
-                vtx = &v[0];
-                accptr = FifoWalk(vatnum, accptr);
-                vtxnum--;
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &v[c++];
-                    accptr = FifoWalk(vatnum, accptr);
-                    if(c > 1) c = 0;
-
-                    GL_RenderLine(
-                        &v[order[0]],
-                        &v[order[1]]
-                    );
-
-                    tmp      = order[0];
-                    order[0] = order[1];
-                    order[1] = tmp;
-                }
-                break;
-            }
-
-            // 0xB8
-            case OP_CMD_DRAW_POINT | 0:
-            case OP_CMD_DRAW_POINT | 1:
-            case OP_CMD_DRAW_POINT | 2:
-            case OP_CMD_DRAW_POINT | 3:
-            case OP_CMD_DRAW_POINT | 4:
-            case OP_CMD_DRAW_POINT | 5:
-            case OP_CMD_DRAW_POINT | 6:
-            case OP_CMD_DRAW_POINT | 7:
-            {
-                static  Vertex  p;
-                unsigned vatnum = cmd & 7;
-                unsigned vtxnum = swap16(*(uint16_t *)accptr);
-                usevat = vatnum;
-                accptr += 2;
-                                                            /*/
-                    0---0       tri: 0-0-0 (1x1x1 tri)
-                    |  /
-                    | /
-                    |/
-                    0  
-                                                            /*/
-
-                while(vtxnum-- > 0)
-                {
-                    vtx = &p;
-                    accptr = FifoWalk(vatnum, accptr);
-                    GL_RenderPoint(vtx);
-                }
-                break;
-            }
-
-            // ---------------------------------------------------------------
-            // unknown fifo command
-            
-            default:
-            {
-                //gx_bad_fifo();
-            }
+            GxBadFifo(cmd);
+            break;
         }
+    }
 }
 
 
-void GXWriteFifo(uint8_t *dataPtr, uint32_t length)
+void GXWriteFifo(uint8_t dataPtr[32])
 {
-    lastFifoSize += length;
+    GxFifo.WriteBytes(dataPtr);
 
-    memcpy(&accptr[acclen], dataPtr, length);
-    acclen += length;
-
-    if(cmdidle)
+    while (GxFifo.EnoughToExecute())
     {
-        if(acclen >= 3)
-        {
-            gxcmd = *accptr++; acclen--;
-            need  = gx_needbytes(gxcmd);
-            cmdidle = 0;
-        }
-    }
-
-    if(acclen >= (need+2) && !cmdidle)
-    {
-        uint8_t *was = accptr;
-        gx_command(gxcmd);
-        acclen -= (uint8_t*)accptr - (uint8_t*)was;
-        memcpy(accum, accptr, acclen);
-        accptr = accum;
-        cmdidle = 1;
+        GxCommand(&GxFifo);
     }
 }

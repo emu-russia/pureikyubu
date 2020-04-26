@@ -1,3 +1,5 @@
+#pragma once
+
 enum
 {
     TEV_DECAL = 0,

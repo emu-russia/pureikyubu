@@ -319,7 +319,12 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
 
 void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-    // Hack for now
+    if (phys_addr == GX_FIFO)
+    {
+        GXFifoWriteBurst(burstData);
+        return;
+    }
+
     for (int i = 0; i < 8; i++)
     {
         MIWriteWord(phys_addr + 4*i, _byteswap_ulong (*(uint32_t*)(&burstData[4*i])) );
@@ -328,7 +333,7 @@ void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 // ---------------------------------------------------------------------------
 // default hardware R/W operations.
-// emulation is halted on unknown register access, if hw_assert = 1
+// emulation is halted on unknown register access.
 
 static void __fastcall def_hw_read8(uint32_t addr, uint32_t* reg)
 {

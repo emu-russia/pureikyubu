@@ -51,8 +51,31 @@ Burst transactions are used for the following purposes:
 - Cache Fill
 - Transfer to Flipper contents of Write-Gather Buffer
 
-## Emulation Strategies
+## PI Registers
 
-- Single beat read-write emulated by MIRead / MIWrite
-- Burst Write-Gather Buffer transactions are transmitted in 32-byte packets for processing GX FIFO
-- The cache is emulated simply: 2 copies of the main memory are created, one for Data Access and one for Instruction Access. The dcbst / dcbi / icbi instructions simply copy the contents from one buffer to another (from the cache to main memory and vice versa).
+### PI FIFO Registers
+
+### PI FIFO Base (0x0C00300C)
+
+|Bits|Name|Meaning|
+|----|----|-------|
+|31:27| |Reserved(?)|
+|26:5|BASE|The value to write Wrptr after the PI FIFO overflow (when Wrptr becomes Top).|
+|4:0|0|Zeroes|
+
+### PI FIFO Top (0x0C003010)
+
+|Bits|Name|Meaning|
+|----|----|-------|
+|31:27| |Reserved(?)|
+|26:5|TOP|Monitors PI FIFO overflow. When Wrptr becomes Top, Wrptr is reset to Base.|
+|4:0|0|Zeroes|
+
+### PI FIFO Write Pointer (0x0C003014)
+
+|Bits|Name|Meaning|
+|----|----|-------|
+|31:28| |Reserved(?)|
+|27|WRAP|Set to `1` after Wrptr becomes equal to the value of Top. When is it reset?|
+|26:5|WRPTR|The current address for writing the next 32 bytes of FIFO data. Writing is made when the processor performs a burst transaction at the address 0x0C008000. After write, the value is increased by 32. When the value becomes equal to Top, Wrptr is set to Base and the Wrap bit is set.|
+|4:0|0|Zeroes|

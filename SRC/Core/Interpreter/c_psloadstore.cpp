@@ -59,24 +59,24 @@ namespace Gekko
 
         switch (type)
         {
-        case 4:                                 // U8
-            if (data < 0) data = 0;
-            if (data > 255) data = 255;
-            uval = (uint8_t)(uint32_t)data; break;
-        case 5:                                 // U16
-            if (data < 0) data = 0;
-            if (data > 65535) data = 65535;
-            uval = (uint16_t)(uint32_t)data; break;
-        case 6:                                 // S8
-            if (data < -128) data = -128;
-            if (data > 127) data = 127;
-            uval = (int8_t)(uint8_t)(int32_t)(uint32_t)data; break;
-        case 7:                                 // S16
-            if (data < -32768) data = -32768;
-            if (data > 32767) data = 32767;
-            uval = (int16_t)(uint16_t)(int32_t)(uint32_t)data; break;
-        case 0:
-        default: *((float*)&uval) = data; break;
+            case 4:                                 // U8
+                if (data < 0) data = 0;
+                if (data > 255) data = 255;
+                uval = (uint8_t)(uint32_t)data; break;
+            case 5:                                 // U16
+                if (data < 0) data = 0;
+                if (data > 65535) data = 65535;
+                uval = (uint16_t)(uint32_t)data; break;
+            case 6:                                 // S8
+                if (data < -128) data = -128;
+                if (data > 127) data = 127;
+                uval = (int8_t)(uint8_t)(int32_t)(uint32_t)data; break;
+            case 7:                                 // S16
+                if (data < -32768) data = -32768;
+                if (data > 32767) data = 32767;
+                uval = (int16_t)(uint16_t)(int32_t)(uint32_t)data; break;
+            case 0:
+            default: *((float*)&uval) = data; break;
         }
 
         return uval;

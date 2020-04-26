@@ -1,4 +1,6 @@
 
+#pragma once
+
 // vertex attributes
 typedef enum
 {
@@ -32,7 +34,7 @@ typedef enum
 #define OP_CMD_NOP              0x00
 #define OP_CMD_INV              0x48
 #define OP_CMD_CALL_DL          0x40
-#define OP_CMD_LOAD_BPREG       0x61
+#define OP_CMD_LOAD_BPREG       0x60
 #define OP_CMD_LOAD_CPREG       0x08
 #define OP_CMD_LOAD_XFREG       0x10
 #define OP_CMD_LOAD_INDXA       0x20
@@ -49,10 +51,6 @@ typedef enum
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
-// commonly used
-uint32_t     swap32(uint32_t data);
-uint16_t     swap16(uint16_t data);
-
 extern  uint32_t     lastFifoSize;
 
 // for gpregs module
@@ -64,8 +62,3 @@ void FifoReconfigure(
     unsigned    cnt,        // attribute "cnt"
     unsigned    fmt,        // attribute "fmt"
     unsigned    frac);
-
-extern uint8_t  accum[1024*1024+32];// primitive accumulation buffer
-extern uint8_t  *accptr;             // current offset in accum
-extern size_t   acclen;             // length of accumulated data
-extern uint8_t  cmdidle;

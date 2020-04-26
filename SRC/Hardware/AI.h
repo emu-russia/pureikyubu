@@ -59,15 +59,15 @@ typedef struct AIControl
 {
     // AID
     std::atomic<uint16_t> dcr;  // AI/DSP control register
-    AIREG       madr;           // DMA address
-    uint16_t    len;            // DMA control/DMA length (length of audio data)
-    uint16_t    dcnt;           // DMA count-down
+    volatile AIREG       madr;           // DMA address
+    volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
+    volatile uint16_t    dcnt;           // DMA count-down
 
     // AIS
-    uint32_t    cr;             // AIS control reg
-    uint32_t    vr;             // AIS volume
-    uint32_t    scnt;           // sample counter
-    uint32_t    it;             // sample counter trigger
+    volatile uint32_t    cr;             // AIS control reg
+    volatile uint32_t    vr;             // AIS volume
+    volatile uint32_t    scnt;           // sample counter
+    volatile uint32_t    it;             // sample counter trigger
 
     // helpers
     uint32_t    currentDmaAddr; // current DMA address

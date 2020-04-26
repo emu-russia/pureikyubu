@@ -1,12 +1,15 @@
+
+#pragma once
+
 // color type
-typedef union
+typedef union _Color
 {
     struct { uint8_t     A, B, G, R; };
     uint32_t     RGBA;
 } Color;
 
 // current vertex data, to renderer
-typedef struct
+typedef struct _Vertex
 {
     float       pos[3];         // x, y, z
     float       nrm[3];         // x, y, z, normalized to [0, 1]
