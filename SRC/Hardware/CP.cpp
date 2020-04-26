@@ -33,6 +33,7 @@ static void TOKEN_INT()
     {
         DBReport2(DbgChannel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
     }
+    vi.xfb = 0;     // disable VI output
 
     if(fifo.pe.sr & PE_SR_TOKENMSK)
     {

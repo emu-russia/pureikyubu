@@ -493,6 +493,7 @@ void loadBPReg(size_t index, uint32_t value)
         {
             if (GxDrawToken && (uint16_t)value == bpRegs.tokint)
             {
+                GPFrameDone();
                 GxDrawToken(bpRegs.tokint);
             }
         }
