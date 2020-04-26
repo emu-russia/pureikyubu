@@ -970,11 +970,17 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
+			if (DmaRegs.mmemAddr.bits < (RAMSIZE - DmaRegs.blockSize))
+			{
+				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
+			}
 		}
 		else
 		{
-			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+			if (DmaRegs.mmemAddr.bits < (RAMSIZE - DmaRegs.blockSize))
+			{
+				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+			}
 		}
 
 		// Dump ucode

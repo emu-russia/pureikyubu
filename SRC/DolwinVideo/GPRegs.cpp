@@ -3,31 +3,30 @@
 
 static      FILE *gplog;
 
-long            *peDrawDone, *peToken;
-unsigned short  *tokenVal;
+GXDrawDoneCallback GxDrawDone;
+GXDrawTokenCallback GxDrawToken;
 
-void GXSetTokens(long *drawdone, long *token, unsigned short *val)
+void GXSetDrawCallbacks(GXDrawDoneCallback drawDoneCb, GXDrawTokenCallback drawTokenCb)
 {
-    peDrawDone = drawdone;
-    peToken = token;
-    tokenVal = val;
+    GxDrawDone = drawDoneCb;
+    GxDrawToken = drawTokenCb;
 }
 
 CPMemory    cpRegs;
 BPMemory    bpRegs;
 XFMemory    xfRegs;
 
-uint32_t         cpLoads, bpLoads, xfLoads;
+uint32_t    cpLoads, bpLoads, xfLoads;
 
 // ---------------------------------------------------------------------------
 
 // index range = 00..FF
 // reg size = 32 bit
-void loadCPReg(unsigned index, uint32_t value)
+void loadCPReg(size_t index, uint32_t value)
 {
     cpLoads++;
 
-    //GFXError("unknown CP load, index: %02X, data: %08X\n", index, value);
+    DBReport2(DbgChannel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
 
     switch(index)
     {
@@ -461,14 +460,14 @@ static void tryLoadTex(int id)
 
 // index range = 00..FF
 // reg size = 24 bit (value is already masked)
-void loadBPReg(unsigned index, uint32_t value)
+void loadBPReg(size_t index, uint32_t value)
 {
     static Color    copyClearRGBA;
     static uint32_t      copyClearZ;
 
     bpLoads++;
 
-    //GFXError("unknown BP load, index: %02X, data: %08X\n", index, value);
+    DBReport2(DbgChannel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
 
     switch(index)
     {
@@ -476,7 +475,10 @@ void loadBPReg(unsigned index, uint32_t value)
         case PE_DONE:
         {
             GPFrameDone();
-            *peDrawDone = 1;
+            if (GxDrawDone)
+            {
+                GxDrawDone();
+            }
         }
         return;
 
@@ -489,10 +491,10 @@ void loadBPReg(unsigned index, uint32_t value)
 
         case PE_TOKEN:
         {
-            *tokenVal = (uint16_t)value;
-            if(bpRegs.tokint == *tokenVal)
+            if (GxDrawToken && (uint16_t)value == bpRegs.tokint)
             {
-                *peToken = 1;
+                GPFrameDone();
+                GxDrawToken(bpRegs.tokint);
             }
         }
         return;
@@ -872,7 +874,7 @@ void loadBPReg(unsigned index, uint32_t value)
 
 // index range = 0000..FFFF
 // reg size = 32 bit
-void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
+void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
 {
     xfLoads += amount;
 
@@ -887,11 +889,10 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
     // load geometry matrix
     if((startIdx >= 0x0000) && (startIdx < 0x0400))
     {
-        memcpy(
-            (void *)((uint8_t *)xfRegs.posmtx + 4 * startIdx), 
-            regData, 
-            amount * sizeof(float)
-        );
+        for (int i = 0; i < amount; i++)
+        {
+            *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = fifo->ReadFloat();
+        }
 
 #ifdef  GPLOG
         fprintf(gplog, "load position matrix, start index: %04X\n", startIdx);
@@ -907,20 +908,18 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
     // load normal matrix
     else if((startIdx >= 0x0400) && (startIdx < 0x0500))
     {
-        memcpy(
-            (void *)((uint8_t *)xfRegs.nrmmtx + 4 * (startIdx - 0x400)), 
-            regData, 
-            amount * sizeof(float)
-        );
+        for (int i = 0; i < amount; i++)
+        {
+            *(float*)(((uint8_t*)xfRegs.nrmmtx + 4 * (startIdx - 0x400)) + 4 * i) = fifo->ReadFloat();
+        }
     }
     // load post-trans matrix
     else if((startIdx >= 0x0500) && (startIdx < 0x0600))
     {
-        memcpy(
-            (void *)((uint8_t *)xfRegs.postmtx + 4 * (startIdx - 0x500)), 
-            regData, 
-            amount * sizeof(float)
-        );
+        for (int i = 0; i < amount; i++)
+        {
+            *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = fifo->ReadFloat();
+        }
 
 #ifdef  GPLOG
         fprintf(gplog, "load post-transform matrix, start index: %04X\n", startIdx);
@@ -941,7 +940,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_MATINDEX_A:
         {
-            xfRegs.matidxA.matidx = regData[0];
+            xfRegs.matidxA.matidx = fifo->Read32();
             xfRegs.posidx = xfRegs.matidxA.pos;
             xfRegs.texidx[0] = xfRegs.matidxA.tex0;
             xfRegs.texidx[1] = xfRegs.matidxA.tex1;
@@ -953,7 +952,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_MATINDEX_B:
         {
-            xfRegs.matidxB.matidx = regData[0];
+            xfRegs.matidxB.matidx = fifo->Read32();
             xfRegs.texidx[4] = xfRegs.matidxB.tex4;
             xfRegs.texidx[5] = xfRegs.matidxB.tex5;
             xfRegs.texidx[6] = xfRegs.matidxB.tex6;
@@ -967,7 +966,16 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_PROJECTION:
         {
-            float *pMatrix = (float *)regData;
+            float pMatrix[7];
+
+            pMatrix[0] = fifo->ReadFloat();
+            pMatrix[1] = fifo->ReadFloat();
+            pMatrix[2] = fifo->ReadFloat();
+            pMatrix[3] = fifo->ReadFloat();
+            pMatrix[4] = fifo->ReadFloat();
+            pMatrix[5] = fifo->ReadFloat();
+            pMatrix[6] = fifo->ReadFloat();
+
             float Matrix[4][4];
             if (pMatrix[6] == 0)
             {
@@ -1018,20 +1026,19 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_VIEWPORT:
         {
-            float *data = (float *)regData;
             float w, h, x, y, zf, zn;
 
             //
             // read coefficients
             //
 
-            xfRegs.vp_scale[0] = data[0];   // w / 2
-            xfRegs.vp_scale[1] = data[1];   // -h / 2
-            xfRegs.vp_scale[2] = data[2];   // ZMAX * (zfar - znear)
+            xfRegs.vp_scale[0] = fifo->ReadFloat();   // w / 2
+            xfRegs.vp_scale[1] = fifo->ReadFloat();   // -h / 2
+            xfRegs.vp_scale[2] = fifo->ReadFloat();   // ZMAX * (zfar - znear)
 
-            xfRegs.vp_offs[0] = data[3];    // x + w/2 + 342
-            xfRegs.vp_offs[1] = data[4];    // y + h/2 + 342
-            xfRegs.vp_offs[2] = data[5];    // ZMAX * zfar
+            xfRegs.vp_offs[0] = fifo->ReadFloat();    // x + w/2 + 342
+            xfRegs.vp_offs[1] = fifo->ReadFloat();    // y + h/2 + 342
+            xfRegs.vp_offs[2] = fifo->ReadFloat();    // ZMAX * zfar
 
             //
             // convert them to human usable form
@@ -1063,7 +1070,27 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
         case XF_LIGHT7:
         {
             unsigned lnum = (startIdx >> 4) & 7;
-            memcpy(&xfRegs.light[lnum], regData, sizeof(LightObj));
+
+            xfRegs.light[lnum].rsrv[0] = fifo->Read32();
+            xfRegs.light[lnum].rsrv[1] = fifo->Read32();
+            xfRegs.light[lnum].rsrv[2] = fifo->Read32();
+            xfRegs.light[lnum].color.RGBA = fifo->Read32();
+
+            xfRegs.light[lnum].a[0] = fifo->ReadFloat();
+            xfRegs.light[lnum].a[1] = fifo->ReadFloat();
+            xfRegs.light[lnum].a[2] = fifo->ReadFloat();
+
+            xfRegs.light[lnum].k[0] = fifo->ReadFloat();
+            xfRegs.light[lnum].k[1] = fifo->ReadFloat();
+            xfRegs.light[lnum].k[2] = fifo->ReadFloat();
+
+            xfRegs.light[lnum].pos[0] = fifo->ReadFloat();
+            xfRegs.light[lnum].pos[1] = fifo->ReadFloat();
+            xfRegs.light[lnum].pos[2] = fifo->ReadFloat();
+
+            xfRegs.light[lnum].dir[0] = fifo->ReadFloat();
+            xfRegs.light[lnum].dir[1] = fifo->ReadFloat();
+            xfRegs.light[lnum].dir[2] = fifo->ReadFloat();
         }
         return;
 
@@ -1073,25 +1100,25 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_AMBIENT0:
         {
-            xfRegs.ambient[0].RGBA = regData[0];
+            xfRegs.ambient[0].RGBA = fifo->Read32();
         }
         return;
 
         case XF_AMBIENT1:
         {
-            xfRegs.ambient[1].RGBA = regData[0];
+            xfRegs.ambient[1].RGBA = fifo->Read32();
         }
         return;
 
         case XF_MATERIAL0:
         {
-            xfRegs.material[0].RGBA = regData[0];
+            xfRegs.material[0].RGBA = fifo->Read32();
         }
         return;
 
         case XF_MATERIAL1:
         {
-            xfRegs.material[1].RGBA = regData[0];
+            xfRegs.material[1].RGBA = fifo->Read32();
         }
         return;
 
@@ -1101,7 +1128,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_COLOR0CNTL:
         {
-            xfRegs.color[0].Chan = regData[0];
+            xfRegs.color[0].Chan = fifo->Read32();
 
             // change light mask
             xfRegs.colmask[0][0] = (xfRegs.color[0].Light0) ? (TRUE) : (FALSE);
@@ -1117,7 +1144,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_COLOR1CNTL:
         {
-            xfRegs.color[1].Chan = regData[0];
+            xfRegs.color[1].Chan = fifo->Read32();
 
             // change light mask
             xfRegs.colmask[0][1] = (xfRegs.color[1].Light0) ? (TRUE) : (FALSE);
@@ -1133,7 +1160,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_ALPHA0CNTL:
         {
-            xfRegs.alpha[0].Chan = regData[0];
+            xfRegs.alpha[0].Chan = fifo->Read32();
 
             // change light mask
             xfRegs.amask[0][0] = (xfRegs.alpha[0].Light0) ? (TRUE) : (FALSE);
@@ -1149,7 +1176,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_ALPHA1CNTL:
         {
-            xfRegs.alpha[1].Chan = regData[0];
+            xfRegs.alpha[1].Chan = fifo->Read32();
 
             // change light mask
             xfRegs.amask[0][1] = (xfRegs.alpha[1].Light0) ? (TRUE) : (FALSE);
@@ -1169,7 +1196,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_DUALTEX:
         {
-            xfRegs.dualtex = regData[0];
+            xfRegs.dualtex = fifo->Read32();
             //GFXError("dual texgen : %s", (regData[0]) ? ("on") : ("off"));
         }
         return;
@@ -1184,6 +1211,9 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
         case XF_DUALGEN7:
         {
             unsigned n = startIdx - XF_DUALGEN0;
+
+            fifo->Read32();
+
             //ASSERT(amount != 1);
 
             //xfRegs.dual[n].hex = regData[0];
@@ -1209,7 +1239,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_NUMCOLS:
         {
-            xfRegs.numcol = regData[0];
+            xfRegs.numcol = fifo->Read32();
         }
         return;
 
@@ -1219,7 +1249,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         case XF_NUMTEX:
         {
-            xfRegs.numtex = regData[0];
+            xfRegs.numtex = fifo->Read32();
         }
         return;
 
@@ -1258,7 +1288,7 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
                 "", "", ""
             };
 
-			xfRegs.texgen[num].hex = regData[0];
+			xfRegs.texgen[num].hex = fifo->Read32();
 
 /*/
             GFXError(
@@ -1287,6 +1317,11 @@ void loadXFRegs(unsigned startIdx, unsigned amount, uint32_t *regData)
 
         default:
         {
+            while (amount--)
+            {
+                fifo->Read32();
+            }
+
 #ifdef  GPLOG
             fprintf(gplog, "unknown XF load, start index: %04X\n", startIdx);
             

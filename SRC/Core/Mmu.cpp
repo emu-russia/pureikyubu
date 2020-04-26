@@ -44,6 +44,16 @@ void __fastcall MEMWriteByte(uint32_t addr, uint32_t data)
     }
 
     uint32_t pa = GCEffectiveToPhysical(addr, false);
+    
+    if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+    {
+        if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+        {
+            Gekko::Gekko->gatherBuffer.Write8((uint8_t)data);
+            return;
+        }
+    }
+    
     MIWriteByte(pa, data);
 }
 
@@ -88,6 +98,16 @@ void __fastcall MEMWriteHalf(uint32_t addr, uint32_t data)
     }
 
     uint32_t pa = GCEffectiveToPhysical(addr, false);
+
+    if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+    {
+        if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+        {
+            Gekko::Gekko->gatherBuffer.Write16((uint16_t)data);
+            return;
+        }
+    }
+
     MIWriteHalf(pa, data);
 }
 
@@ -116,6 +136,16 @@ void __fastcall MEMWriteWord(uint32_t addr, uint32_t data)
     }
    
     uint32_t pa = GCEffectiveToPhysical(addr, false);
+
+    if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+    {
+        if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+        {
+            Gekko::Gekko->gatherBuffer.Write32(data);
+            return;
+        }
+    }
+
     MIWriteWord(pa, data);
 }
 
@@ -149,6 +179,16 @@ void __fastcall MEMWriteDouble(uint32_t addr, uint64_t *data)
     }
 
     uint32_t pa = GCEffectiveToPhysical(addr, false);
+
+    if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+    {
+        if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+        {
+            Gekko::Gekko->gatherBuffer.Write64(*data);
+            return;
+        }
+    }
+
     MIWriteDouble(pa, data);
 }
 

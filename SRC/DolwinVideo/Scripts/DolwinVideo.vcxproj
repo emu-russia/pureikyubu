@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="..\Config.h" />
     <ClInclude Include="..\Fifo.h" />
+    <ClInclude Include="..\FifoProcessor.h" />
     <ClInclude Include="..\GL.H" />
     <ClInclude Include="..\Gpl.h" />
     <ClInclude Include="..\GPRegs.h" />
@@ -164,6 +165,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Fifo.cpp" />
+    <ClCompile Include="..\FifoProcessor.cpp" />
     <ClCompile Include="..\Gl.cpp" />
     <ClCompile Include="..\Gpl.cpp" />
     <ClCompile Include="..\GPRegs.cpp" />

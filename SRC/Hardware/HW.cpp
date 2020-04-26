@@ -70,18 +70,19 @@ namespace Flipper
 
         Debug::Hub.RemoveNode(HW_JDI_JSON);
 
-        PADClose();
-        delete Mixer;
-        GXClose();
-
         delete DSP;
 
+        CPClose();
         AIClose();
         ARClose();      // release ARAM
         EIClose();      // take care about closing of memcards and BBA
         VIClose();      // close GDI (if opened)
         DIClose();      // release streaming buffer
         MIClose();
+
+        PADClose();
+        delete Mixer;
+        GXClose();
     }
 
     void Flipper::Update()

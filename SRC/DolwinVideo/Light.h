@@ -1,3 +1,6 @@
+
+#pragma once
+
 extern  Color   rasca[2];
 
 void    DoLights(const Vertex *v);

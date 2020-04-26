@@ -8,6 +8,7 @@
 #include <atomic>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
+#include "GatherBuffer.h"
 
 // floating point register
 typedef union _FPREG
@@ -106,6 +107,8 @@ namespace Gekko
         size_t      ops;                // instruction counter (only for debug!)
 
     public:
+
+        GatherBuffer gatherBuffer;
 
         // TODO: Will be hidden more
         GekkoRegs regs;

@@ -79,7 +79,7 @@ static void DumpTexture(Color *rgbaBuf, uint32_t addr, int fmt, int width, int h
             uint8_t  rgb[3];     // RGB triplet
             {
                 Color c;
-                c.RGBA = swap32(rgbaBuf->RGBA);
+                c.RGBA = _byteswap_ulong(rgbaBuf->RGBA);
                 rgb[0] = c.B;   // B
                 rgb[1] = c.G;   // G
                 rgb[2] = c.R;   // R
@@ -108,7 +108,7 @@ static void GetTlutCol(Color *c, unsigned id, unsigned entry)
 
         case 1:     // RGB565
         {
-            uint16_t p = swap16(*tptr);
+            uint16_t p = _byteswap_ushort(*tptr);
 
             uint8_t r = p >> 11;
             uint8_t g = (p >> 5) & 0x3f;
@@ -123,7 +123,7 @@ static void GetTlutCol(Color *c, unsigned id, unsigned entry)
 
         case 2:     // RGB5A3
         {
-            uint16_t p = swap16(*tptr);
+            uint16_t p = _byteswap_ushort(*tptr);
             if(p >> 15)
             {
                 p &= ~0x8000;   // clear A-bit
@@ -154,7 +154,7 @@ static void GetTlutCol(Color *c, unsigned id, unsigned entry)
 
         default:
         {
-            GFXError("unknown tlut format : %i", fmt);
+            DBHalt("GX: Unknown TLUT format: %i", fmt);
         }
     }
 }
@@ -332,7 +332,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 texbuf[ofs].G =
                 texbuf[ofs].B = *ptr << 4;
                 texbuf[ofs].A = *ptr >> 4;
-                texbuf[ofs].RGBA = swap32(texbuf[ofs].RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
                 ptr++;
             }
             break;
@@ -354,7 +354,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 texbuf[ofs].R = 
                 texbuf[ofs].G =
                 texbuf[ofs].B = *ptr++;
-                texbuf[ofs].RGBA = swap32(texbuf[ofs].RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
             }
             break;
         }
@@ -371,7 +371,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
             for(u=0; u<4; u++)
             {
                 unsigned ofs = width * (t + v) + s + u;
-                uint16_t p = swap16(*ptr++);
+                uint16_t p = _byteswap_ushort(*ptr++);
 
                 uint8_t r = p >> 11;
                 uint8_t g = (p >> 5) & 0x3f;
@@ -381,7 +381,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 texbuf[ofs].G = (g << 2) | (g >> 4);
                 texbuf[ofs].B = (b << 3) | (b >> 2);
                 texbuf[ofs].A = 255;
-                texbuf[ofs].RGBA = swap32(texbuf[ofs].RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
             }
             break;
         }
@@ -398,7 +398,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
             for(u=0; u<4; u++)
             {
                 unsigned ofs = width * (t + v) + s + u;
-                uint16_t p = swap16(*ptr++);
+                uint16_t p = _byteswap_ushort(*ptr++);
                 if(p >> 15)
                 {
                     p &= ~0x8000;   // clear A-bit
@@ -424,7 +424,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     texbuf[ofs].B = (b << 4) | b;
                     texbuf[ofs].A = a | (a << 3) | ((a << 9) & 3);
                 }
-                texbuf[ofs].RGBA = swap32(texbuf[ofs].RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
             }
             break;
         }
@@ -452,7 +452,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     unsigned ofs = width * (t + v) + s + u;
                     texbuf[ofs].G = *ptr++;
                     texbuf[ofs].B = *ptr++;
-                    texbuf[ofs].RGBA = swap32(texbuf[ofs].RGBA);
+                    texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
                 }
             }
             break;
@@ -473,10 +473,10 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 unsigned ofs = width * (t + v) + s + u;
                 uint8_t e = *ptr++;
                 GetTlutCol(&rgba, id, e >> 4);
-                texbuf[ofs].RGBA = swap32(rgba.RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
                 ofs++;
                 GetTlutCol(&rgba, id, e & 0xf);
-                texbuf[ofs].RGBA = swap32(rgba.RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
             }
             break;
         }
@@ -496,7 +496,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 int ofs = width * (t + v) + s + u;
                 uint8_t idx = *ptr++;
                 GetTlutCol(&rgba, id, idx);
-                texbuf[ofs].RGBA = swap32(rgba.RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
             }
             break;
         }
@@ -514,9 +514,9 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
             for(u=0; u<4; u++)
             {
                 unsigned ofs = width * (t + v) + s + u;
-                uint16_t idx = swap16(*ptr++) & 0x3ff;
+                uint16_t idx = _byteswap_ushort(*ptr++) & 0x3ff;
                 GetTlutCol(&rgba, id, idx);
-                texbuf[ofs].RGBA = swap32(rgba.RGBA);
+                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
             }
             break;
         };
@@ -541,7 +541,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 ptr += sizeof(S3TC_BLK);
                 for(v=0; v<4; v++)
                 {
-                    p = swap16(blk.rgb0);
+                    p = _byteswap_ushort(blk.rgb0);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -550,7 +550,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     rgb[0].G = (g << 2) | (g >> 4);
                     rgb[0].B = (b << 3) | (b >> 2);
 
-                    p = swap16(blk.rgb1);
+                    p = _byteswap_ushort(blk.rgb1);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -589,7 +589,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     {
                         unsigned ofs = width * (t + v) + s + u;
                         uint8_t p = (texel >> shft) & 3;
-                        texbuf[ofs].RGBA = swap32(rgb[p].RGBA);
+                        texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
                     }
                 }
 
@@ -598,7 +598,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 ptr += sizeof(S3TC_BLK);
                 for(v=0; v<4; v++)
                 {
-                    p = swap16(blk.rgb0);
+                    p = _byteswap_ushort(blk.rgb0);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -607,7 +607,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     rgb[0].G = (g << 2) | (g >> 4);
                     rgb[0].B = (b << 3) | (b >> 2);
 
-                    p = swap16(blk.rgb1);
+                    p = _byteswap_ushort(blk.rgb1);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -646,7 +646,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     {
                         unsigned ofs = width * (t + v) + s + u;
                         uint8_t p = (texel >> shft) & 3;
-                        texbuf[ofs].RGBA = swap32(rgb[p].RGBA);
+                        texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
                     }
                 }
 
@@ -655,7 +655,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 ptr += sizeof(S3TC_BLK);
                 for(v=4; v<8; v++)
                 {
-                    p = swap16(blk.rgb0);
+                    p = _byteswap_ushort(blk.rgb0);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -664,7 +664,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     rgb[0].G = (g << 2) | (g >> 4);
                     rgb[0].B = (b << 3) | (b >> 2);
 
-                    p = swap16(blk.rgb1);
+                    p = _byteswap_ushort(blk.rgb1);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -703,7 +703,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     {
                         unsigned ofs = width * (t + v) + s + u;
                         uint8_t p = (texel >> shft) & 3;
-                        texbuf[ofs].RGBA = swap32(rgb[p].RGBA);
+                        texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
                     }
                 }
 
@@ -712,7 +712,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                 ptr += sizeof(S3TC_BLK);
                 for(v=4; v<8; v++)
                 {
-                    p = swap16(blk.rgb0);
+                    p = _byteswap_ushort(blk.rgb0);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -722,7 +722,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     rgb[0].B = (b << 3) | (b >> 2);
                     rgb[0].A = 255;
 
-                    p = swap16(blk.rgb1);
+                    p = _byteswap_ushort(blk.rgb1);
                     r = p >> 11;
                     g = (p >> 5) & 0x3f;
                     b = p & 0x1f;
@@ -762,7 +762,7 @@ void LoadTexture(uint32_t addr, int id, int fmt, int width, int height)
                     {
                         unsigned ofs = width * (t + v) + s + u;
                         uint8_t p = (texel >> shft) & 3;
-                        texbuf[ofs].RGBA = swap32(rgb[p].RGBA);
+                        texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
                     }
                 }
             }

@@ -1,3 +1,5 @@
+#pragma once
+
 // texture entry
 typedef struct
 {

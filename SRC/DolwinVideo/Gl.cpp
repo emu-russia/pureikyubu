@@ -195,13 +195,12 @@ void GL_EndFrame()
             "pts:%u\n"
             "lines:%u\n"
             "\n"
-            "fifo:%ub\n"
             "cp:%u\nbp:%u\nxf:%u\n\n"
             "colors:%i\n"
             "texgens:%i\n"
             "tevnum:%i\n",
             frames, tris, pts, lines,
-            lastFifoSize, cpLoads, bpLoads, xfLoads,
+            cpLoads, bpLoads, xfLoads,
             xfRegs.numcol, xfRegs.numtex, bpRegs.genmode.ntev + 1
         );
     }

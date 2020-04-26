@@ -92,6 +92,8 @@ namespace Gekko
         regs.tb.uval = 0;
         regs.spr[22] = 0;   // DEC
         regs.spr[9] = 0;    // CTR
+
+        gatherBuffer.Reset();
     }
 
     // Modify CPU counters

@@ -26,6 +26,7 @@
     <ClCompile Include="..\DI.cpp" />
     <ClCompile Include="..\EFB.cpp" />
     <ClCompile Include="..\EI.cpp" />
+    <ClCompile Include="..\FIFO.cpp" />
     <ClCompile Include="..\GDI.cpp" />
     <ClCompile Include="..\HW.cpp" />
     <ClCompile Include="..\HwCommands.cpp" />
@@ -50,6 +51,7 @@
     <ClInclude Include="..\DI.h" />
     <ClInclude Include="..\EFB.h" />
     <ClInclude Include="..\EI.h" />
+    <ClInclude Include="..\FIFO.h" />
     <ClInclude Include="..\GDI.h" />
     <ClInclude Include="..\GX.h" />
     <ClInclude Include="..\Hardware.h" />
