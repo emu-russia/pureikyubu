@@ -149,6 +149,8 @@ typedef struct FifoControl
     uint32_t    done_num;   // number of drawdone (PE_FINISH) events
     bool        log;
     Thread*     thread;     // CP FIFO thread
+    size_t      tickPerFifo;
+    int64_t     updateTbrValue;
 } FifoControl;
 
 extern  FifoControl fifo;

@@ -859,8 +859,8 @@ extern  uint8_t   *RAM;
 #define RAMMASK   0x03FFFFFF
 
 // registers loading (using fifo writes)
-void    loadCPReg(unsigned index, uint32_t value);
-void    loadBPReg(unsigned index, uint32_t value);
-void    loadXFRegs(unsigned startIndex, unsigned amount);
+void    loadCPReg(size_t index, uint32_t value);
+void    loadBPReg(size_t index, uint32_t value);
+void    loadXFRegs(size_t startIndex, size_t amount, GX::FifoProcessor* fifo);
 
 extern  uint32_t cpLoads, bpLoads, xfLoads;

@@ -5,14 +5,15 @@ namespace GX
 {
 	class FifoProcessor
 	{
-		static const size_t fifoSize = 64 * 1024;
-
-		uint8_t* fifo;
-		size_t readPtr;
-		size_t writePtr;
+		size_t fifoSize = 1024 * 1024;
+		uint8_t* fifo = nullptr;
+		size_t readPtr = 0;
+		size_t writePtr = 0;
+		bool allocated = false;
 
 	public:
 		FifoProcessor();
+		FifoProcessor(uint8_t *fifoPtr, size_t size);	// Call FIFO
 		~FifoProcessor();
 
 		void WriteBytes(uint8_t dataPtr[32]);
@@ -25,5 +26,8 @@ namespace GX
 		uint16_t Read16();
 		uint32_t Read32();
 		float ReadFloat();
+
+		uint8_t Peek8(size_t offset);
+		uint8_t Peek16(size_t offset);
 	};
 }

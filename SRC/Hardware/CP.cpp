@@ -86,6 +86,17 @@ static void CPThread(void* Param)
 {
     while (true)
     {
+        int64_t ticks = Gekko::Gekko->GetTicks();
+        if (ticks < fifo.updateTbrValue)
+        {
+            continue;
+        }
+        fifo.updateTbrValue = ticks + fifo.tickPerFifo;
+
+#ifndef _DEBUG
+        DBReport("CPThread");
+#endif
+
         // Calculate count
         if (fifo.cp.wrptr >= fifo.cp.rdptr)
         {
@@ -183,7 +194,7 @@ static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
     fifo.cp.cr = (uint16_t)data;
 
     // clear breakpoint
-    if((data & CP_CR_BPEN) == 0)
+    if(data & CP_CR_BPEN)
     {
         fifo.cp.sr &= ~CP_SR_BPINT;
     }
@@ -234,6 +245,7 @@ void DumpCPFIFO()
     DBReport("   cnt  :0x%08X", fifo.cp.cnt);
     DBReport("   wrptr:0x%08X", fifo.cp.wrptr);
     DBReport("   rdptr:0x%08X", fifo.cp.rdptr);
+    DBReport("   break:0x%08X", fifo.cp.bpptr);
 }
 
 static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.baseh; }
@@ -324,6 +336,9 @@ void CPOpen(HWConfig * config)
     MISetTrap(16, PE_TOKEN     , read_pe_token, NULL);
 
     GXSetDrawCallbacks(CPDrawDoneCallback, CPDrawTokenCallback);
+
+    fifo.tickPerFifo = 100;
+    fifo.updateTbrValue = Gekko::Gekko->GetTicks() + fifo.tickPerFifo;
 
     fifo.thread = new Thread(CPThread, false, nullptr, "CPThread");
     assert(fifo.thread);

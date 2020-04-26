@@ -34,7 +34,7 @@ typedef enum
 #define OP_CMD_NOP              0x00
 #define OP_CMD_INV              0x48
 #define OP_CMD_CALL_DL          0x40
-#define OP_CMD_LOAD_BPREG       0x61
+#define OP_CMD_LOAD_BPREG       0x60
 #define OP_CMD_LOAD_CPREG       0x08
 #define OP_CMD_LOAD_XFREG       0x10
 #define OP_CMD_LOAD_INDXA       0x20
@@ -62,5 +62,3 @@ void FifoReconfigure(
     unsigned    cnt,        // attribute "cnt"
     unsigned    fmt,        // attribute "fmt"
     unsigned    frac);
-
-extern GX::FifoProcessor GxFifo;

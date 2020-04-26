@@ -9,61 +9,61 @@ extern unsigned usevat;                                // current VAT
 
 // Matrix index
 
-void __fastcall pos_idx()
+void __fastcall pos_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.posidx = GxFifo.Read8();
+    xfRegs.posidx = fifo->Read8();
     //GFXError("fifo posidx : %i", xfRegs.posidx);
 }
 
-void __fastcall t0_idx()
+void __fastcall t0_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[0] = GxFifo.Read8();
+    xfRegs.texidx[0] = fifo->Read8();
 }
 
-void __fastcall t1_idx()
+void __fastcall t1_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[1] = GxFifo.Read8();
+    xfRegs.texidx[1] = fifo->Read8();
 }
 
-void __fastcall t2_idx()
+void __fastcall t2_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[2] = GxFifo.Read8();
+    xfRegs.texidx[2] = fifo->Read8();
 }
 
-void __fastcall t3_idx()
+void __fastcall t3_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[3] = GxFifo.Read8();
+    xfRegs.texidx[3] = fifo->Read8();
 }
 
-void __fastcall t4_idx()
+void __fastcall t4_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[4] = GxFifo.Read8();
+    xfRegs.texidx[4] = fifo->Read8();
 }
 
-void __fastcall t5_idx()
+void __fastcall t5_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[5] = GxFifo.Read8();
+    xfRegs.texidx[5] = fifo->Read8();
 }
 
-void __fastcall t6_idx()
+void __fastcall t6_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[6] = GxFifo.Read8();
+    xfRegs.texidx[6] = fifo->Read8();
 }
 
-void __fastcall t7_idx()
+void __fastcall t7_idx(GX::FifoProcessor* fifo)
 {
-    xfRegs.texidx[7] = GxFifo.Read8();
+    xfRegs.texidx[7] = fifo->Read8();
 }
 
 // ---------------------------------------------------------------------------
 
 // Position
 
-void __fastcall pos_xy_u8_d()
+void __fastcall pos_xy_u8_d(GX::FifoProcessor* fifo)
 {
     uint8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -71,11 +71,11 @@ void __fastcall pos_xy_u8_d()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_s8_d()
+void __fastcall pos_xy_s8_d(GX::FifoProcessor* fifo)
 {
     int8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -83,12 +83,12 @@ void __fastcall pos_xy_s8_d()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_u16_d()
+void __fastcall pos_xy_u16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -96,12 +96,12 @@ void __fastcall pos_xy_u16_d()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_s16_d()
+void __fastcall pos_xy_s16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[2];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -109,12 +109,12 @@ void __fastcall pos_xy_s16_d()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_f32_d()
+void __fastcall pos_xy_f32_d(GX::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = GxFifo.Read32();
-    u[1] = GxFifo.Read32();
+    u[0] = fifo->Read32();
+    u[1] = fifo->Read32();
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -123,12 +123,12 @@ void __fastcall pos_xy_f32_d()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xyz_u8_d()
+void __fastcall pos_xyz_u8_d(GX::FifoProcessor* fifo)
 {
     uint8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
-    u[2] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
+    u[2] = fifo->Read8();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -136,12 +136,12 @@ void __fastcall pos_xyz_u8_d()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_s8_d()
+void __fastcall pos_xyz_s8_d(GX::FifoProcessor* fifo)
 {
     int8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
-    u[2] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
+    u[2] = fifo->Read8();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -149,13 +149,13 @@ void __fastcall pos_xyz_s8_d()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_u16_d()
+void __fastcall pos_xyz_u16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t  u[3];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
-    u[2] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
+    u[2] = fifo->Read16();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -163,13 +163,13 @@ void __fastcall pos_xyz_u16_d()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_s16_d()
+void __fastcall pos_xyz_s16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[3];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
-    u[2] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
+    u[2] = fifo->Read16();
 
     // fractional convertion
     vtx->pos[0] = ((float)u[0]) / fracDenom[usevat][VTX_POS];
@@ -177,13 +177,13 @@ void __fastcall pos_xyz_s16_d()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_f32_d()
+void __fastcall pos_xyz_f32_d(GX::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = GxFifo.Read32();
-    u[1] = GxFifo.Read32();
-    u[2] = GxFifo.Read32();
+    u[0] = fifo->Read32();
+    u[1] = fifo->Read32();
+    u[2] = fifo->Read32();
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -192,10 +192,10 @@ void __fastcall pos_xyz_f32_d()
     vtx->pos[2] = v[2];
 }
 
-void __fastcall pos_xy_u8_x8()
+void __fastcall pos_xy_u8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(uint8_t)) * (fifo->Read8());
 
     // swap position data
     uint8_t u[2];
@@ -208,10 +208,10 @@ void __fastcall pos_xy_u8_x8()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_s8_x8()
+void __fastcall pos_xy_s8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int8_t)) * (fifo->Read8());
 
     // swap position data
     int8_t u[2];
@@ -224,10 +224,10 @@ void __fastcall pos_xy_s8_x8()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xy_s16_x8()
+void __fastcall pos_xy_s16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (fifo->Read8());
 
     // swap position data
     int16_t u[2];
@@ -240,10 +240,10 @@ void __fastcall pos_xy_s16_x8()
     vtx->pos[2] = 1.0f;
 }
 
-void __fastcall pos_xyz_s16_x8()
+void __fastcall pos_xyz_s16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (fifo->Read8());
 
     // swap position data
     int16_t u[3];
@@ -257,10 +257,10 @@ void __fastcall pos_xyz_s16_x8()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_f32_x8()
+void __fastcall pos_xyz_f32_x8(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(float)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(float)) * (fifo->Read8());
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
@@ -275,10 +275,10 @@ void __fastcall pos_xyz_f32_x8()
     vtx->pos[2] = fu[2];
 }
 
-void __fastcall pos_xyz_s16_x16()
+void __fastcall pos_xyz_s16_x16(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_POS] / sizeof(int16_t));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -293,10 +293,10 @@ void __fastcall pos_xyz_s16_x16()
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void __fastcall pos_xyz_f32_x16()
+void __fastcall pos_xyz_f32_x16(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_POS];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_POS] / sizeof(float));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -316,12 +316,12 @@ void __fastcall pos_xyz_f32_x16()
 
 // Normal data
 
-void __fastcall nrm_xyz_u8_d()
+void __fastcall nrm_xyz_u8_d(GX::FifoProcessor* fifo)
 {
     uint8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
-    u[2] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
+    u[2] = fifo->Read8();
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -329,12 +329,12 @@ void __fastcall nrm_xyz_u8_d()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_s8_d()
+void __fastcall nrm_xyz_s8_d(GX::FifoProcessor* fifo)
 {
     int8_t u[3];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
-    u[2] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
+    u[2] = fifo->Read8();
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -342,13 +342,13 @@ void __fastcall nrm_xyz_s8_d()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_u16_d()
+void __fastcall nrm_xyz_u16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[3];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
-    u[2] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
+    u[2] = fifo->Read16();
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -356,13 +356,13 @@ void __fastcall nrm_xyz_u16_d()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_s16_d()
+void __fastcall nrm_xyz_s16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[3];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
-    u[2] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
+    u[2] = fifo->Read16();
 
     // fractional convertion
     vtx->nrm[0] = ((float)u[0])/* / fracDenom[usevat][VTX_NRM]*/;
@@ -370,13 +370,13 @@ void __fastcall nrm_xyz_s16_d()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_f32_d()
+void __fastcall nrm_xyz_f32_d(GX::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = GxFifo.Read32();
-    u[1] = GxFifo.Read32();
-    u[2] = GxFifo.Read32();
+    u[0] = fifo->Read32();
+    u[1] = fifo->Read32();
+    u[2] = fifo->Read32();
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -387,13 +387,13 @@ void __fastcall nrm_xyz_f32_d()
 
 // normal only
 // TODO : make ortho for nbt
-void __fastcall nrm_nbt_f32_d()
+void __fastcall nrm_nbt_f32_d(GX::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
-    u[0] = GxFifo.Read32();
-    u[1] = GxFifo.Read32();
-    u[2] = GxFifo.Read32();
+    u[0] = fifo->Read32();
+    u[1] = fifo->Read32();
+    u[2] = fifo->Read32();
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -402,10 +402,10 @@ void __fastcall nrm_nbt_f32_d()
     vtx->nrm[2] = v[2];
 }
 
-void __fastcall nrm_xyz_u8_x8()
+void __fastcall nrm_xyz_u8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (fifo->Read8());
 
     // swap position data
     uint8_t u[3];
@@ -419,10 +419,10 @@ void __fastcall nrm_xyz_u8_x8()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_s8_x8()
+void __fastcall nrm_xyz_s8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (fifo->Read8());
 
     // swap position data
     int8_t u[3];
@@ -436,10 +436,10 @@ void __fastcall nrm_xyz_s8_x8()
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void __fastcall nrm_xyz_s16_x8()
+void __fastcall nrm_xyz_s16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (fifo->Read8());
 
     // swap position data
     int16_t u[3];
@@ -453,10 +453,10 @@ void __fastcall nrm_xyz_s16_x8()
     vtx->nrm[2] = ((float)u[2]);
 }
 
-void __fastcall nrm_xyz_f32_x8()
+void __fastcall nrm_xyz_f32_x8(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(float)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(float)) * (fifo->Read8());
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
@@ -471,10 +471,10 @@ void __fastcall nrm_xyz_f32_x8()
     vtx->nrm[2] = fu[2];
 }
 
-void __fastcall nrm_nbt_s16_x8()
+void __fastcall nrm_nbt_s16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (fifo->Read8());
 
     // swap normal data
     int16_t u[3];
@@ -488,10 +488,10 @@ void __fastcall nrm_nbt_s16_x8()
     vtx->nrm[2] = ((float)u[2]);
 }
 
-void __fastcall nrm_xyz_s16_x16()
+void __fastcall nrm_xyz_s16_x16(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_NRM] / sizeof(int16_t));
 
     // swap normal data
@@ -506,10 +506,10 @@ void __fastcall nrm_xyz_s16_x16()
     vtx->nrm[2] = (float)u[2];
 }
 
-void __fastcall nrm_xyz_f32_x16()
+void __fastcall nrm_xyz_f32_x16(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_NRM];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_NRM] / sizeof(float));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -529,9 +529,9 @@ void __fastcall nrm_xyz_f32_x16()
 
 // Color 0
 
-void __fastcall clr0_rgb_rgb565_d()
+void __fastcall clr0_rgb_rgb565_d(GX::FifoProcessor* fifo)
 {
-    uint16_t p = GxFifo.Read16();
+    uint16_t p = fifo->Read16();
 
     uint8_t r = p >> 11;
     uint8_t g = (p >> 5) & 0x3f;
@@ -543,17 +543,17 @@ void __fastcall clr0_rgb_rgb565_d()
     vtx->col[0].A = 255;
 }
 
-void __fastcall clr0_rgb_rgb8_d()
+void __fastcall clr0_rgb_rgb8_d(GX::FifoProcessor* fifo)
 {
-    vtx->col[0].R = GxFifo.Read8();
-    vtx->col[0].G = GxFifo.Read8();
-    vtx->col[0].B = GxFifo.Read8();
+    vtx->col[0].R = fifo->Read8();
+    vtx->col[0].G = fifo->Read8();
+    vtx->col[0].B = fifo->Read8();
     vtx->col[0].A = 255;
 }
 
-void __fastcall clr0_rgba_rgba4_d()
+void __fastcall clr0_rgba_rgba4_d(GX::FifoProcessor* fifo)
 {
-    uint16_t p = GxFifo.Read16();
+    uint16_t p = fifo->Read16();
 
     uint8_t r = (p >>12) & 0xf;
     uint8_t g = (p >> 8) & 0xf;
@@ -566,18 +566,18 @@ void __fastcall clr0_rgba_rgba4_d()
     vtx->col[0].A = (a << 4) | a;
 }
 
-void __fastcall clr0_rgba_rgba8_d()
+void __fastcall clr0_rgba_rgba8_d(GX::FifoProcessor* fifo)
 {
-    vtx->col[0].R = GxFifo.Read8();
-    vtx->col[0].G = GxFifo.Read8();
-    vtx->col[0].B = GxFifo.Read8();
-    vtx->col[0].A = GxFifo.Read8();
+    vtx->col[0].R = fifo->Read8();
+    vtx->col[0].G = fifo->Read8();
+    vtx->col[0].B = fifo->Read8();
+    vtx->col[0].A = fifo->Read8();
 }
 
-void __fastcall clr0_rgb_rgba8_x8()
+void __fastcall clr0_rgb_rgba8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (fifo->Read8());
 
     vtx->col[0].R = ptr8[n + 0];
     vtx->col[0].G = ptr8[n + 1];
@@ -585,10 +585,10 @@ void __fastcall clr0_rgb_rgba8_x8()
     vtx->col[0].A = 255;
 }
 
-void __fastcall clr0_rgba_rgba8_x8()
+void __fastcall clr0_rgba_rgba8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t *ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (fifo->Read8());
 
     vtx->col[0].R = ptr8[n + 0];
     vtx->col[0].G = ptr8[n + 1];
@@ -596,10 +596,10 @@ void __fastcall clr0_rgba_rgba8_x8()
     vtx->col[0].A = ptr8[n + 3];
 }
 
-void __fastcall clr0_rgb_rgb8_x16()
+void __fastcall clr0_rgb_rgb8_x16(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t));
 
     vtx->col[0].R = ptr8[n + 0];
@@ -608,10 +608,10 @@ void __fastcall clr0_rgb_rgb8_x16()
     vtx->col[0].A = 255;
 }
 
-void __fastcall clr0_rgba_rgba8_x16()
+void __fastcall clr0_rgba_rgba8_x16(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t));
 
     vtx->col[0].R = ptr8[n + 0];
@@ -624,10 +624,10 @@ void __fastcall clr0_rgba_rgba8_x16()
 
 // Color 1
 
-void __fastcall clr1_rgba_rgba8_x8()
+void __fastcall clr1_rgba_rgba8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR1];
-    unsigned n = (cpRegs.arstride[VTX_COLOR1] / sizeof(uint8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_COLOR1] / sizeof(uint8_t)) * (fifo->Read8());
 
     vtx->col[1].R = ptr8[n + 0];
     vtx->col[1].G = ptr8[n + 1];
@@ -639,48 +639,48 @@ void __fastcall clr1_rgba_rgba8_x8()
 
 // Texture coord 0
 
-void __fastcall tex0_st_u8_d()
+void __fastcall tex0_st_u8_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint8_t u[2];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_s8_d()
+void __fastcall tex0_st_s8_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     int8_t u[2];
-    u[0] = GxFifo.Read8();
-    u[1] = GxFifo.Read8();
+    u[0] = fifo->Read8();
+    u[1] = fifo->Read8();
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_u16_d()
+void __fastcall tex0_st_u16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
 
     // fractional convertion
     vtx->tcoord[0][0] = ((float)u[0]) / fracDenom[usevat][VTX_TEXCOORD0];
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_s16_d()
+void __fastcall tex0_st_s16_d(GX::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
-    u[0] = GxFifo.Read16();
-    u[1] = GxFifo.Read16();
+    u[0] = fifo->Read16();
+    u[1] = fifo->Read16();
 
     //GFXError("u[0]:%04X, u[1]:%04X, %i", u[0], u[1], cpRegs.vatA[usevat].tex0shft);
 
@@ -691,12 +691,12 @@ void __fastcall tex0_st_s16_d()
     //GFXError("s:%f, t:%f", vtx->tcoord[0][0], vtx->tcoord[0][1]);
 }
 
-void __fastcall tex0_st_f32_d()
+void __fastcall tex0_st_f32_d(GX::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
-    u[0] = GxFifo.Read32();
-    u[1] = GxFifo.Read32();
+    u[0] = fifo->Read32();
+    u[1] = fifo->Read32();
 
     // save swapped data in vertex descriptor
     float *v = (float *)u;
@@ -704,10 +704,10 @@ void __fastcall tex0_st_f32_d()
     vtx->tcoord[0][1] = v[1];
 }
 
-void __fastcall tex0_st_s8_x8()
+void __fastcall tex0_st_s8_x8(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int8_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int8_t)) * (fifo->Read8());
 
     // swap position data
     int8_t u[2];
@@ -719,10 +719,10 @@ void __fastcall tex0_st_s8_x8()
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_u16_x8()
+void __fastcall tex0_st_u16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint16_t)) * (fifo->Read8());
 
     // swap position data
     uint16_t u[2];
@@ -734,10 +734,10 @@ void __fastcall tex0_st_u16_x8()
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_s16_x8()
+void __fastcall tex0_st_s16_x8(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int16_t)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int16_t)) * (fifo->Read8());
 
     // swap position data
     int16_t u[2];
@@ -749,10 +749,10 @@ void __fastcall tex0_st_s16_x8()
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_f32_x8()
+void __fastcall tex0_st_f32_x8(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(float)) * (GxFifo.Read8());
+    unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(float)) * (fifo->Read8());
 
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
@@ -765,10 +765,10 @@ void __fastcall tex0_st_f32_x8()
     vtx->tcoord[0][1] = fu[1];
 }
 
-void __fastcall tex0_s_u8_x16()
+void __fastcall tex0_s_u8_x16(GX::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint8_t));
 
     uint8_t u[2];
@@ -779,10 +779,10 @@ void __fastcall tex0_s_u8_x16()
     vtx->tcoord[0][1] = 1.0f;
 }
 
-void __fastcall tex0_st_u16_x16()
+void __fastcall tex0_st_u16_x16(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint16_t));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -795,10 +795,10 @@ void __fastcall tex0_st_u16_x16()
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_s16_x16()
+void __fastcall tex0_st_s16_x16(GX::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int16_t));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -811,10 +811,10 @@ void __fastcall tex0_st_s16_x16()
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void __fastcall tex0_st_f32_x16()
+void __fastcall tex0_st_f32_x16(GX::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_TEXCOORD0];
-    unsigned n = GxFifo.Read16();
+    unsigned n = fifo->Read16();
     n *= (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(float));
 
     // we need to swap "floats", so "u" is used as temporary buffer
@@ -831,104 +831,104 @@ void __fastcall tex0_st_f32_x16()
 
 // Texture coord 1
 
-void __fastcall tex1_s_u8_x8()
+void __fastcall tex1_s_u8_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_s_s8_x8()
+void __fastcall tex1_s_s8_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_s_u16_x8()
+void __fastcall tex1_s_u16_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_s_s16_x8()
+void __fastcall tex1_s_s16_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_s_f32_x8()
+void __fastcall tex1_s_f32_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_st_u8_x8()
+void __fastcall tex1_st_u8_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_st_s8_x8()
+void __fastcall tex1_st_s8_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_st_u16_x8()
+void __fastcall tex1_st_u16_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_st_s16_x8()
+void __fastcall tex1_st_s16_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_st_f32_x8()
+void __fastcall tex1_st_f32_x8(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read8();
+    fifo->Read8();
 }
 
-void __fastcall tex1_s_u8_x16()
+void __fastcall tex1_s_u8_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_s_s8_x16()
+void __fastcall tex1_s_s8_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_s_u16_x16()
+void __fastcall tex1_s_u16_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_s_s16_x16()
+void __fastcall tex1_s_s16_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_s_f32_x16()
+void __fastcall tex1_s_f32_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_st_u8_x16()
+void __fastcall tex1_st_u8_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_st_s8_x16()
+void __fastcall tex1_st_s8_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_st_u16_x16()
+void __fastcall tex1_st_u16_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_st_s16_x16()
+void __fastcall tex1_st_s16_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
-void __fastcall tex1_st_f32_x16()
+void __fastcall tex1_st_f32_x16(GX::FifoProcessor* fifo)
 {
-    GxFifo.Read16();
+    fifo->Read16();
 }
 
 // ---------------------------------------------------------------------------
@@ -961,7 +961,7 @@ void __fastcall tex1_st_f32_x16()
 // attr[TYPE][CNT][FMT]
 //
 
-void (__fastcall *posattr[4][2][5])() = {
+void (__fastcall *posattr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XY
     { NULL, NULL, NULL, NULL, NULL }    // XYZ
@@ -985,7 +985,7 @@ void (__fastcall *posattr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *nrmattr[4][3][5])() = {
+void (__fastcall *nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XYZ
     { NULL, NULL, NULL, NULL, NULL },   // NBT
@@ -1015,7 +1015,7 @@ void (__fastcall *nrmattr[4][3][5])() = {
 
 // ---------------------------------------------------------------------------
 
-void (__fastcall *col0attr[4][2][6])() = {
+void (__fastcall *col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1039,7 +1039,7 @@ void (__fastcall *col0attr[4][2][6])() = {
 //  RGB565  RGB8  RGBX8 RGBA4 RGBA6 RGBA8
 };
 
-void (__fastcall *col1attr[4][2][6])() = {
+void (__fastcall *col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1065,7 +1065,7 @@ void (__fastcall *col1attr[4][2][6])() = {
 
 // ---------------------------------------------------------------------------
 
-void (__fastcall *tex0attr[4][2][5])() = {
+void (__fastcall *tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1089,7 +1089,7 @@ void (__fastcall *tex0attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex1attr[4][2][5])() = {
+void (__fastcall *tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1113,7 +1113,7 @@ void (__fastcall *tex1attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex2attr[4][2][5])() = {
+void (__fastcall *tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1137,7 +1137,7 @@ void (__fastcall *tex2attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex3attr[4][2][5])() = {
+void (__fastcall *tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1161,7 +1161,7 @@ void (__fastcall *tex3attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex4attr[4][2][5])() = {
+void (__fastcall *tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1185,7 +1185,7 @@ void (__fastcall *tex4attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex5attr[4][2][5])() = {
+void (__fastcall *tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1209,7 +1209,7 @@ void (__fastcall *tex5attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex6attr[4][2][5])() = {
+void (__fastcall *tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1233,7 +1233,7 @@ void (__fastcall *tex6attr[4][2][5])() = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex7attr[4][2][5])() = {
+void (__fastcall *tex7attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
