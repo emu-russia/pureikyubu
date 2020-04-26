@@ -16,6 +16,9 @@
     <Filter Include="Interpreter">
       <UniqueIdentifier>{ccb9afbe-0ef1-4123-b97e-cd2aa94e9455}</UniqueIdentifier>
     </Filter>
+    <Filter Include="JitcX64">
+      <UniqueIdentifier>{7829da66-7107-4b73-8d97-85e7f7cfc1b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Interpreter\interpreter.h">
@@ -49,6 +52,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\GatherBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\JitcX64\All.h">
+      <Filter>JitcX64</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Jitc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\BitFactory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -121,6 +133,15 @@
     </ClCompile>
     <ClCompile Include="..\GatherBuffer.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JitcX64\Addx.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Jitc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JitcX64\Fallback.cpp">
+      <Filter>JitcX64</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
