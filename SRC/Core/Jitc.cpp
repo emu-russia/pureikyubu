@@ -59,7 +59,10 @@ namespace Gekko
 				break;
 		}
 
-		segments[addr] = segment;
+		segments[segment->addr] = segment;
+
+		DWORD notNeeded;
+		VirtualProtect(segment->code.data(), segment->code.size(), PAGE_EXECUTE_READWRITE, &notNeeded);
 
 		return segment;
 	}

@@ -23,6 +23,7 @@ namespace Gekko
         while (true)
         {
             core->interp->ExecuteOpcode();
+            //core->jitc->Execute();
         }
     }
 
