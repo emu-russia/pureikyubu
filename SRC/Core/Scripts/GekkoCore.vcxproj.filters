@@ -57,9 +57,6 @@
     <ClInclude Include="..\Jitc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\BitFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Interpreter\c_branch.cpp">

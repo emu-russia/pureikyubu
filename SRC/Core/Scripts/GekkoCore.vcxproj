@@ -152,7 +152,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\BitFactory.h" />
     <ClInclude Include="..\GatherBuffer.h" />
     <ClInclude Include="..\Gekko.h" />
     <ClInclude Include="..\GekkoAnalyzer.h" />

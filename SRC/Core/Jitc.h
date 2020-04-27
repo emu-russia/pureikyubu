@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <map>
+#include <unordered_map>
 #include <vector>
 
 namespace Gekko
@@ -27,7 +27,7 @@ namespace Gekko
 	{
 		GekkoCore* core;		// Saved instance of the parent core
 
-		std::map<uint32_t, CodeSegment*> segments;
+		std::unordered_map<uint32_t, CodeSegment*> segments;
 
 		CodeSegment* SegmentCompiled(uint32_t addr);
 		CodeSegment* CompileSegment(uint32_t addr);
