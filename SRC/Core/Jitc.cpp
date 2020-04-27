@@ -35,6 +35,8 @@ namespace Gekko
 
 		size_t maxInstructions = 0x100;
 
+		Prolog(segment);
+
 		while (maxInstructions--)
 		{
 			uint32_t physicalAddress = core->EffectiveToPhysical(addr, true);
@@ -58,6 +60,8 @@ namespace Gekko
 			if (info.flow)
 				break;
 		}
+
+		Epilog(segment);
 
 		segments[segment->addr] = segment;
 
@@ -111,7 +115,28 @@ namespace Gekko
 
 	void Jitc::Invalidate(uint32_t addr, size_t size)
 	{
+		for (auto it = segments.begin(); it != segments.end(); ++it)
+		{
+			CodeSegment* seg = it->second;
+			if (seg != nullptr)
+			{
+				// If a invalidated region crosses a segment somehow, invalidate the entire segment.
 
+				if (addr >= seg->addr && seg->addr < (addr + size))
+				{
+					delete it->second;
+					it->second = nullptr;
+					continue;
+				}
+
+				if (seg->addr >= addr && addr < (seg->addr + seg->size))
+				{
+					delete it->second;
+					it->second = nullptr;
+					continue;
+				}
+			}
+		}
 	}
 
 	void Jitc::Execute()

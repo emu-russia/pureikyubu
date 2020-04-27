@@ -68,4 +68,37 @@ namespace Gekko
         exception = true;
     }
 
+    bool Interpreter::ExecuteInterpeterFallback()
+    {
+        uint32_t op, pa;
+
+        // execute one instruction
+        // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
+        pa = GCEffectiveToPhysical(core->regs.pc, true);
+        MIReadWord(pa, &op);
+        if (exception) goto JumpPC;  // ISI
+        c_1[op >> 26](op); core->ops++;
+        if (exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
+
+        core->Tick();
+
+        if (exception)
+        {
+        JumpPC:
+            branch = false;
+            exception = false;
+            return true;
+        }
+        
+        if (branch)
+        {
+            branch = false;
+        }
+        else
+        {
+            core->regs.pc += 4;
+        }
+        return false;
+    }
+
 }

@@ -36,6 +36,9 @@ namespace Gekko
 
 		// Gekko ISA
 
+		void Prolog(CodeSegment* seg);
+		void Epilog(CodeSegment* seg);
+
 		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
 
 	public:

@@ -22,8 +22,8 @@ namespace Gekko
 
         while (true)
         {
-            core->interp->ExecuteOpcode();
-            //core->jitc->Execute();
+            //core->interp->ExecuteOpcode();
+            core->jitc->Execute();
         }
     }
 
@@ -232,6 +232,11 @@ namespace Gekko
             waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
             waitQueue[(int)disignation].requireSuspend = true;
         }
+    }
+
+    bool GekkoCore::ExecuteInterpeterFallback()
+    {
+        return Gekko->interp->ExecuteInterpeterFallback();
     }
 
 }

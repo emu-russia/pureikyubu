@@ -140,6 +140,9 @@
     <ClCompile Include="..\JitcX64\Fallback.cpp">
       <Filter>JitcX64</Filter>
     </ClCompile>
+    <ClCompile Include="..\JitcX64\Common.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />

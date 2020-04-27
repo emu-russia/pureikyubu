@@ -79,11 +79,12 @@ namespace Gekko
     class GekkoCore
     {
         friend Interpreter;
+        friend Jitc;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 2;
+        static const int CounterStep = 1;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
@@ -148,6 +149,8 @@ namespace Gekko
 
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
+
+        static bool ExecuteInterpeterFallback();
 
     };
 
