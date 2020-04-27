@@ -10,6 +10,7 @@ namespace Gekko
 	class CodeSegment
 	{
 	public:
+		GekkoCore* core;		// Parent core
 		uint32_t addr = 0;		// Starting Gekko code address (effective)
 		size_t size = 0;		// Size of Gekko code in bytes
 		std::vector<uint8_t> code;	  // Automatically inflates when necessary
@@ -38,6 +39,7 @@ namespace Gekko
 
 		void Prolog(CodeSegment* seg);
 		void Epilog(CodeSegment* seg);
+		size_t EpilogSize();
 
 		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
 

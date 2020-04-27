@@ -58,6 +58,7 @@ namespace Gekko
 {
     class Interpreter;
     class Jitc;
+    class CodeSegment;
 
     enum class GekkoWaiter : int
     {
@@ -80,11 +81,12 @@ namespace Gekko
     {
         friend Interpreter;
         friend Jitc;
+        friend CodeSegment;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 1;
+        static const int CounterStep = 12;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
@@ -107,6 +109,7 @@ namespace Gekko
         uint64_t    msec;
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
+        size_t      segmentsExecuted;   // The number of completed recompiler segments.
 
     public:
 

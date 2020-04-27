@@ -20,13 +20,15 @@ namespace Gekko
 		seg->Write16(0xd0ff);
 
 		//0:  84 c0                   test   al, al
-		//2:  74 01                   je     5 <label>
-		//4:  c3                      ret
-		//0000000000000005 <label>:
+		//2:  74 01                   je     EpilogSize <label>
+		//4:  ...                     <EPILOG>
+		//00000000000xxx <label>:
 
 		seg->Write16(0xc084);
-		seg->Write16(0x0174);
-		seg->Write8(0xc3);
+		seg->Write8(0x74);
+		seg->Write8((uint8_t)EpilogSize());
+		Epilog(seg);
+
 	}
 
 }

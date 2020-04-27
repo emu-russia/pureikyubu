@@ -45,4 +45,9 @@ namespace Gekko
 		seg->Write8(0xc3);
 	}
 
+	size_t Jitc::EpilogSize()
+	{
+		return 21;
+	}
+
 }

@@ -45,6 +45,8 @@ namespace Gekko
     // interpreter exception
     void Interpreter::Exception(Gekko::Exception code)
     {
+        //DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+
         if (exception)
         {
             DBHalt("CPU Double Fault!\n");

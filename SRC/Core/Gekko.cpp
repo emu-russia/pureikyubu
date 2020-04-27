@@ -97,6 +97,7 @@ namespace Gekko
         gatherBuffer.Reset();
 
         jitc->Reset();
+        segmentsExecuted = 0;
     }
 
     // Modify CPU counters

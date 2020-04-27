@@ -32,6 +32,7 @@ namespace Gekko
 
 		segment->addr = addr;
 		segment->code.reserve(0x100);
+		segment->core = core;
 
 		size_t maxInstructions = 0x100;
 
@@ -73,8 +74,12 @@ namespace Gekko
 
 	void CodeSegment::Run()
 	{
+		//DBReport2(DbgChannel::CPU, "Run code segment: 0x%08X, segs: %i\n", addr, core->segmentsExecuted);
+
 		void (*codePtr)() = (void (*)())code.data();
 		codePtr();
+
+		core->segmentsExecuted++;
 	}
 
 	void CodeSegment::Write8(uint8_t data)
