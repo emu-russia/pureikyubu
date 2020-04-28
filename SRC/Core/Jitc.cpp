@@ -40,12 +40,12 @@ namespace Gekko
 
 		while (maxInstructions--)
 		{
-			uint32_t physicalAddress = core->EffectiveToPhysical(addr, true);
+			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute);
 			uint32_t instr;
 
-			if (physicalAddress == -1)
+			if (physicalAddress == BadAddress)
 			{
-				// ISI
+				core->Exception(Exception::ISI);
 				break;
 			}
 

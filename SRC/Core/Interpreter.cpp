@@ -115,8 +115,15 @@ namespace Gekko
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-        pa = GCEffectiveToPhysical(core->regs.pc, true);
-        MIReadWord(pa, &op);
+        pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute);
+        if (pa == Gekko::BadAddress)
+        {
+            Exception(Exception::ISI);
+        }
+        else
+        {
+            MIReadWord(pa, &op);
+        }
         if (exception) goto JumpPC;  // ISI
         c_1[op >> 26](op); core->ops++;
         if (exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
