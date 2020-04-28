@@ -295,7 +295,7 @@ Json::Value* cmd_disa(std::vector<std::string>& args)
         for (start_addr; start_addr<end_addr; start_addr+=4)
         {
             uint32_t opcode;
-            CPUReadWord(start_addr, &opcode);
+            Gekko::Gekko->ReadWord(start_addr, &opcode);
             disa_line ( f, opcode, start_addr );
         }
 
@@ -423,17 +423,17 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
 
         int level = atoi(args[1].c_str());
         if(args[1].c_str()[0] == '*' || level > MAX_LEVEL) level = MAX_LEVEL;
-        CPUReadWord(Gekko::Gekko->regs.gpr[1], &sp);
+        Gekko::Gekko->ReadWord(Gekko::Gekko->regs.gpr[1], &sp);
         if(level == MAX_LEVEL) DBReport( "LR Back Chain (max levels) :\n");
         else DBReport( "LR Back Chain (%i levels) :\n", level);
 
         for(int i=0; i<level; i++)
         {
             uint32_t read_pc;
-            CPUReadWord(sp+4, &read_pc);    // read LR value from stack
+            Gekko::Gekko->ReadWord(sp+4, &read_pc);    // read LR value from stack
             disa.pc = read_pc;
             disa.pc -= 4;                   // set to branch opcode
-            CPUReadWord((uint32_t)disa.pc, &disa.instr); // read branch
+            Gekko::Gekko->ReadWord((uint32_t)disa.pc, &disa.instr); // read branch
             PPCDisasm (&disa);                    // disasm
             if(disa.iclass & PPC_DISA_BRANCH)
             {
@@ -443,7 +443,7 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
                 else       DBReport("%-3i: %-12s%-12s " "\n",
                                       i+1, disa.mnemonic, disa.operands );
             }
-            CPUReadWord(sp, &sp);           // walk stack
+            Gekko::Gekko->ReadWord(sp, &sp);           // walk stack
 
             uint32_t pa = -1;
             if (Gekko::Gekko)
@@ -551,7 +551,7 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
             {
                 pa = Gekko::Gekko->EffectiveToPhysical(saddr, true);
             }
-            if(pa != -1) CPUReadWord(pa, &op);
+            if(pa != -1) Gekko::Gekko->ReadWord(pa, &op);
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);
@@ -662,7 +662,7 @@ static void dump_subcalls ( uint32_t address, FILE * f, int level )
     while ( bailout-- )
     {
         uint32_t opcode;
-        CPUReadWord(address, &opcode);
+        Gekko::Gekko->ReadWord(address, &opcode);
         if ( opcode == 0x4e800020 || opcode == 0 ) break;
 
         disa.instr = opcode;

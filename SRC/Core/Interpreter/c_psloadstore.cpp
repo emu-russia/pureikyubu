@@ -98,9 +98,9 @@ namespace Gekko
 
             if (GEKKO_PSW)
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
@@ -109,15 +109,15 @@ namespace Gekko
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-                if ((type == 4) || (type == 6)) CPUReadByte(EA + 1, &data1);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA + 2, &data1);
-                else CPUReadWord(EA + 4, &data1);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA + 1, &data1);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA + 2, &data1);
+                else Gekko->ReadWord(EA + 4, &data1);
                 if (type == 6) if (data0 & 0x80) data1 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data1 |= 0xffff0000;
 
@@ -141,9 +141,9 @@ namespace Gekko
 
             if (op & 0x400 /* W */)
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
@@ -152,15 +152,15 @@ namespace Gekko
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-                if ((type == 4) || (type == 6)) CPUReadByte(EA + 1, &data1);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA + 2, &data1);
-                else CPUReadWord(EA + 4, &data1);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA + 1, &data1);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA + 2, &data1);
+                else Gekko->ReadWord(EA + 4, &data1);
                 if (type == 6) if (data0 & 0x80) data1 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data1 |= 0xffff0000;
 
@@ -184,9 +184,9 @@ namespace Gekko
 
             if (GEKKO_PSW)
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
@@ -195,15 +195,15 @@ namespace Gekko
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-                if ((type == 4) || (type == 6)) CPUReadByte(EA + 1, &data1);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA + 2, &data1);
-                else CPUReadWord(EA + 4, &data1);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA + 1, &data1);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA + 2, &data1);
+                else Gekko->ReadWord(EA + 4, &data1);
                 if (type == 6) if (data0 & 0x80) data1 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data1 |= 0xffff0000;
 
@@ -229,9 +229,9 @@ namespace Gekko
 
             if (op & 0x400 /* W */)
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
@@ -240,15 +240,15 @@ namespace Gekko
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUReadByte(EA, &data0);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA, &data0);
-                else CPUReadWord(EA, &data0);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA, &data0);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA, &data0);
+                else Gekko->ReadWord(EA, &data0);
                 if (type == 6) if (data0 & 0x80) data0 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data0 |= 0xffff0000;
 
-                if ((type == 4) || (type == 6)) CPUReadByte(EA + 1, &data1);
-                else if ((type == 5) || (type == 7)) CPUReadHalf(EA + 2, &data1);
-                else CPUReadWord(EA + 4, &data1);
+                if ((type == 4) || (type == 6)) Gekko->ReadByte(EA + 1, &data1);
+                else if ((type == 5) || (type == 7)) Gekko->ReadHalf(EA + 2, &data1);
+                else Gekko->ReadWord(EA + 4, &data1);
                 if (type == 6) if (data0 & 0x80) data1 |= 0xffffff00;
                 if (type == 7) if (data0 & 0x8000) data1 |= 0xffff0000;
 
@@ -277,19 +277,19 @@ namespace Gekko
 
             if (GEKKO_PSW)
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-                else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+                else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -308,19 +308,19 @@ namespace Gekko
 
             if (op & 0x400)
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-                else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+                else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -339,19 +339,19 @@ namespace Gekko
 
             if (GEKKO_PSW)
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-                else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+                else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
 
             RRA = EA;
@@ -372,19 +372,19 @@ namespace Gekko
 
             if (op & 0x400)
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
             }
             else
             {
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA, quantize((float)PS0(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA, quantize((float)PS0(d), type, scale));
-                else CPUWriteWord(EA, quantize((float)PS0(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+                else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if ((type == 4) || (type == 6)) CPUWriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-                else if ((type == 5) || (type == 7)) CPUWriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-                else CPUWriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+                if ((type == 4) || (type == 6)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+                else if ((type == 5) || (type == 7)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+                else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
 
             RRA = EA;

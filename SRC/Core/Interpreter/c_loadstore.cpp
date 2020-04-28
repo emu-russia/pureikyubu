@@ -12,16 +12,16 @@ namespace Gekko
     // rd = 0x000000 || MEM(ea, 1)
     OP(LBZ)
     {
-        if (RA) CPUReadByte(RRA + SIMM, &RRD);
-        else CPUReadByte(SIMM, &RRD);
+        if (RA) Gekko->ReadByte(RRA + SIMM, &RRD);
+        else Gekko->ReadByte(SIMM, &RRD);
     }
 
     // ea = (ra | 0) + rb
     // rd = 0x000000 || MEM(ea, 1)
     OP(LBZX)
     {
-        if (RA) CPUReadByte(RRA + RRB, &RRD);
-        else CPUReadByte(RRB, &RRD);
+        if (RA) Gekko->ReadByte(RRA + RRB, &RRD);
+        else Gekko->ReadByte(RRB, &RRD);
     }
 
     // ea = ra + SIMM
@@ -30,7 +30,7 @@ namespace Gekko
     OP(LBZU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUReadByte(ea, &RRD);
+        Gekko->ReadByte(ea, &RRD);
         RRA = ea;
     }
 
@@ -40,7 +40,7 @@ namespace Gekko
     OP(LBZUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUReadByte(ea, &RRD);
+        Gekko->ReadByte(ea, &RRD);
         RRA = ea;
     }
 
@@ -48,16 +48,16 @@ namespace Gekko
     // rd = 0x0000 || MEM(ea, 2)
     OP(LHZ)
     {
-        if (RA) CPUReadHalf(RRA + SIMM, &RRD);
-        else CPUReadHalf(SIMM, &RRD);
+        if (RA) Gekko->ReadHalf(RRA + SIMM, &RRD);
+        else Gekko->ReadHalf(SIMM, &RRD);
     }
 
     // ea = (ra | 0) + rb
     // rd = 0x0000 || MEM(ea, 2)
     OP(LHZX)
     {
-        if (RA) CPUReadHalf(RRA + RRB, &RRD);
-        else CPUReadHalf(RRB, &RRD);
+        if (RA) Gekko->ReadHalf(RRA + RRB, &RRD);
+        else Gekko->ReadHalf(RRB, &RRD);
     }
 
     // ea = ra + SIMM
@@ -66,7 +66,7 @@ namespace Gekko
     OP(LHZU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUReadHalf(ea, &RRD);
+        Gekko->ReadHalf(ea, &RRD);
         RRA = ea;
     }
 
@@ -76,7 +76,7 @@ namespace Gekko
     OP(LHZUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUReadHalf(ea, &RRD);
+        Gekko->ReadHalf(ea, &RRD);
         RRA = ea;
     }
 
@@ -84,16 +84,16 @@ namespace Gekko
     // rd = (signed)MEM(ea, 2)
     OP(LHA)
     {
-        if (RA) CPUReadHalfS(RRA + SIMM, &RRD);
-        else CPUReadHalfS(SIMM, &RRD);
+        if (RA) Gekko->ReadHalfS(RRA + SIMM, &RRD);
+        else Gekko->ReadHalfS(SIMM, &RRD);
     }
 
     // ea = (ra | 0) + rb
     // rd = (signed)MEM(ea, 2)
     OP(LHAX)
     {
-        if (RA) CPUReadHalfS(RRA + RRB, &RRD);
-        else CPUReadHalfS(RRB, &RRD);
+        if (RA) Gekko->ReadHalfS(RRA + RRB, &RRD);
+        else Gekko->ReadHalfS(RRB, &RRD);
     }
 
     // ea = ra + SIMM
@@ -102,7 +102,7 @@ namespace Gekko
     OP(LHAU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUReadHalfS(ea, &RRD);
+        Gekko->ReadHalfS(ea, &RRD);
         RRA = ea;
     }
 
@@ -112,7 +112,7 @@ namespace Gekko
     OP(LHAUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUReadHalfS(ea, &RRD);
+        Gekko->ReadHalfS(ea, &RRD);
         RRA = ea;
     }
 
@@ -120,16 +120,16 @@ namespace Gekko
     // rd = MEM(ea, 4)
     OP(LWZ)
     {
-        if (RA) CPUReadWord(RRA + SIMM, &RRD);
-        else CPUReadWord(SIMM, &RRD);
+        if (RA) Gekko->ReadWord(RRA + SIMM, &RRD);
+        else Gekko->ReadWord(SIMM, &RRD);
     }
 
     // ea = (ra | 0) + rb
     // rd = MEM(ea, 4)
     OP(LWZX)
     {
-        if (RA) CPUReadWord(RRA + RRB, &RRD);
-        else CPUReadWord(RRB, &RRD);
+        if (RA) Gekko->ReadWord(RRA + RRB, &RRD);
+        else Gekko->ReadWord(RRB, &RRD);
     }
 
     // ea = ra + SIMM
@@ -138,7 +138,7 @@ namespace Gekko
     OP(LWZU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUReadWord(ea, &RRD);
+        Gekko->ReadWord(ea, &RRD);
         RRA = ea;
     }
 
@@ -148,7 +148,7 @@ namespace Gekko
     OP(LWZUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUReadWord(ea, &RRD);
+        Gekko->ReadWord(ea, &RRD);
         RRA = ea;
     }
 
@@ -159,16 +159,16 @@ namespace Gekko
     // MEM(ea, 1) = rs[24-31]
     OP(STB)
     {
-        if (RA) CPUWriteByte(RRA + SIMM, RRS);
-        else CPUWriteByte(SIMM, RRS);
+        if (RA) Gekko->WriteByte(RRA + SIMM, RRS);
+        else Gekko->WriteByte(SIMM, RRS);
     }
 
     // ea = (ra | 0) + rb
     // MEM(ea, 1) = rs[24-31]
     OP(STBX)
     {
-        if (RA) CPUWriteByte(RRA + RRB, RRS);
-        else CPUWriteByte(RRB, RRS);
+        if (RA) Gekko->WriteByte(RRA + RRB, RRS);
+        else Gekko->WriteByte(RRB, RRS);
     }
 
     // ea = ra + SIMM
@@ -177,7 +177,7 @@ namespace Gekko
     OP(STBU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUWriteByte(ea, RRS);
+        Gekko->WriteByte(ea, RRS);
         RRA = ea;
     }
 
@@ -187,7 +187,7 @@ namespace Gekko
     OP(STBUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUWriteByte(ea, RRS);
+        Gekko->WriteByte(ea, RRS);
         RRA = ea;
     }
 
@@ -195,16 +195,16 @@ namespace Gekko
     // MEM(ea, 2) = rs[16-31]
     OP(STH)
     {
-        if (RA) CPUWriteHalf(RRA + SIMM, RRS);
-        else CPUWriteHalf(SIMM, RRS);
+        if (RA) Gekko->WriteHalf(RRA + SIMM, RRS);
+        else Gekko->WriteHalf(SIMM, RRS);
     }
 
     // ea = (ra | 0) + rb
     // MEM(ea, 2) = rs[16-31]
     OP(STHX)
     {
-        if (RA) CPUWriteHalf(RRA + RRB, RRS);
-        else CPUWriteHalf(RRB, RRS);
+        if (RA) Gekko->WriteHalf(RRA + RRB, RRS);
+        else Gekko->WriteHalf(RRB, RRS);
     }
 
     // ea = ra + SIMM
@@ -213,7 +213,7 @@ namespace Gekko
     OP(STHU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUWriteHalf(ea, RRS);
+        Gekko->WriteHalf(ea, RRS);
         RRA = ea;
     }
 
@@ -223,7 +223,7 @@ namespace Gekko
     OP(STHUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUWriteHalf(ea, RRS);
+        Gekko->WriteHalf(ea, RRS);
         RRA = ea;
     }
 
@@ -231,16 +231,16 @@ namespace Gekko
     // MEM(ea, 4) = rs
     OP(STW)
     {
-        if (RA) CPUWriteWord(RRA + SIMM, RRS);
-        else CPUWriteWord(SIMM, RRS);
+        if (RA) Gekko->WriteWord(RRA + SIMM, RRS);
+        else Gekko->WriteWord(SIMM, RRS);
     }
 
     // ea = (ra | 0) + rb
     // MEM(ea, 4) = rs
     OP(STWX)
     {
-        if (RA) CPUWriteWord(RRA + RRB, RRS);
-        else CPUWriteWord(RRB, RRS);
+        if (RA) Gekko->WriteWord(RRA + RRB, RRS);
+        else Gekko->WriteWord(RRB, RRS);
     }
 
     // ea = ra + SIMM
@@ -249,7 +249,7 @@ namespace Gekko
     OP(STWU)
     {
         uint32_t ea = RRA + SIMM;
-        CPUWriteWord(ea, RRS);
+        Gekko->WriteWord(ea, RRS);
         RRA = ea;
     }
 
@@ -259,7 +259,7 @@ namespace Gekko
     OP(STWUX)
     {
         uint32_t ea = RRA + RRB;
-        CPUWriteWord(ea, RRS);
+        Gekko->WriteWord(ea, RRS);
         RRA = ea;
     }
 
@@ -271,8 +271,8 @@ namespace Gekko
     OP(LHBRX)
     {
         uint32_t val;
-        if (RA) CPUReadHalf(RRA + RRB, &val);
-        else CPUReadHalf(RRB, &val);
+        if (RA) Gekko->ReadHalf(RRA + RRB, &val);
+        else Gekko->ReadHalf(RRB, &val);
         RRD = _byteswap_ushort((uint16_t)val);
     }
 
@@ -281,8 +281,8 @@ namespace Gekko
     OP(LWBRX)
     {
         uint32_t val;
-        if (RA) CPUReadWord(RRA + RRB, &val);
-        else CPUReadWord(RRB, &val);
+        if (RA) Gekko->ReadWord(RRA + RRB, &val);
+        else Gekko->ReadWord(RRB, &val);
         RRD = _byteswap_ulong(val);
     }
 
@@ -290,16 +290,16 @@ namespace Gekko
     // MEM(ea, 2) = rs[24-31] || rs[16-23]
     OP(STHBRX)
     {
-        if (RA) CPUWriteHalf(RRA + RRB, _byteswap_ushort((uint16_t)RRS));
-        else CPUWriteHalf(RRB, _byteswap_ushort((uint16_t)RRS));
+        if (RA) Gekko->WriteHalf(RRA + RRB, _byteswap_ushort((uint16_t)RRS));
+        else Gekko->WriteHalf(RRB, _byteswap_ushort((uint16_t)RRS));
     }
 
     // ea = (ra | 0) + rb
     // MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
     OP(STWBRX)
     {
-        if (RA) CPUWriteWord(RRA + RRB, _byteswap_ulong(RRS));
-        else CPUWriteWord(RRB, _byteswap_ulong(RRS));
+        if (RA) Gekko->WriteWord(RRA + RRB, _byteswap_ulong(RRS));
+        else Gekko->WriteWord(RRB, _byteswap_ulong(RRS));
     }
 
     // ea = (ra | 0) + SIMM
@@ -316,7 +316,7 @@ namespace Gekko
 
         for (int r = RD; r < 32; r++, ea += 4)
         {
-            CPUReadWord(ea, &Gekko->regs.gpr[r]);
+            Gekko->ReadWord(ea, &Gekko->regs.gpr[r]);
         }
     }
 
@@ -334,7 +334,7 @@ namespace Gekko
 
         for (int r = RS; r < 32; r++, ea += 4)
         {
-            CPUWriteWord(ea, Gekko->regs.gpr[r]);
+            Gekko->WriteWord(ea, Gekko->regs.gpr[r]);
         }
     }
 
@@ -367,7 +367,7 @@ namespace Gekko
                 rd %= 32;
                 r = 0;
             }
-            CPUReadByte(ea, &val);
+            Gekko->ReadByte(ea, &val);
             r <<= 8;
             r |= (uint8_t)val;
             ea++;
@@ -409,7 +409,7 @@ namespace Gekko
                 rs %= 32;
                 i = 4;
             }
-            CPUWriteByte(ea, r >> 24);
+            Gekko->WriteByte(ea, r >> 24);
             r <<= 8;
             ea++;
             i--;
@@ -426,8 +426,8 @@ namespace Gekko
         uint32_t ea = RRB;
         if (RA) ea += RRA;
         Gekko->interp->RESERVE = true;
-        Gekko->interp->RESERVE_ADDR = GCEffectiveToPhysical(ea, 0);
-        CPUReadWord(ea, &RRD);
+        Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, 0);
+        Gekko->ReadWord(ea, &RRD);
     }
 
     // ea = (ra | 0) + rb
@@ -447,7 +447,7 @@ namespace Gekko
 
         if (Gekko->interp->RESERVE)
         {
-            CPUWriteWord(ea, RRS);
+            Gekko->WriteWord(ea, RRS);
             SET_CR0_EQ;
             Gekko->interp->RESERVE = false;
         }

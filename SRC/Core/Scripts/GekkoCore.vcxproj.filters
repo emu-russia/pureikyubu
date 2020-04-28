@@ -36,9 +36,6 @@
     <ClInclude Include="..\GekkoDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Mmu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\GekkoAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>

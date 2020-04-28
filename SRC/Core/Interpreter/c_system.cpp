@@ -168,14 +168,14 @@ namespace Gekko
                     {   // load
                         memcpy(
                             &mi.ram[maddr & RAMMASK],
-                            &mem.lc[lcaddr & 0x3ffff],
+                            &Gekko->lc[lcaddr & 0x3ffff],
                             length * 32
                         );
                     }
                     else
                     {   // store
                         memcpy(
-                            &mem.lc[lcaddr & 0x3ffff],
+                            &Gekko->lc[lcaddr & 0x3ffff],
                             &mi.ram[maddr & RAMMASK],
                             length * 32
                         );

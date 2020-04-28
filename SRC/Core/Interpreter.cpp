@@ -10,7 +10,7 @@ namespace Gekko
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-        pa = GCEffectiveToPhysical(Gekko->regs.pc, true);
+        pa = core->EffectiveToPhysical(Gekko->regs.pc, true);
         MIReadWord(pa, &op);
         if (exception) goto JumpPC;  // ISI
         c_1[op >> 26](op); Gekko->ops++;

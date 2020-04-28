@@ -157,7 +157,6 @@
     <ClInclude Include="..\GekkoDisasmOld.h" />
     <ClInclude Include="..\Interpreter.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
-    <ClInclude Include="..\Mmu.h" />
     <ClInclude Include="..\pch.h" />
   </ItemGroup>
   <ItemGroup>

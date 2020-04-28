@@ -70,17 +70,7 @@ namespace Gekko
         ops = 0;
         dispatchQueueCounter = 0;
 
-        // set CPU memory operations to default (using MEM*);
-        // debugger will override them by DB* calls after start, if need.
-        CPUReadByte = MEMReadByte;
-        CPUWriteByte = MEMWriteByte;
-        CPUReadHalf = MEMReadHalf;
-        CPUReadHalfS = MEMReadHalfS;
-        CPUWriteHalf = MEMWriteHalf;
-        CPUReadWord = MEMReadWord;
-        CPUWriteWord = MEMWriteWord;
-        CPUReadDouble = MEMReadDouble;
-        CPUWriteDouble = MEMWriteDouble;
+        //EffectiveToPhysical = &GekkoCore::EffectiveToPhysicalNoMmu;
 
         // Registers
 
@@ -132,11 +122,6 @@ namespace Gekko
     int64_t GekkoCore::OneSecond()
     {
         return CPU_TIMER_CLOCK;
-    }
-
-    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, bool IR)
-    {
-        return GCEffectiveToPhysical(ea, IR);
     }
 
     // Swap longs (no need in assembly, used by tools)
@@ -229,6 +214,11 @@ namespace Gekko
             waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
             waitQueue[(int)disignation].requireSuspend = true;
         }
+    }
+
+    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, bool IR)
+    {
+        return EffectiveToPhysicalNoMmu(ea, IR);
     }
 
 }

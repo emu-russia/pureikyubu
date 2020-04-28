@@ -4,8 +4,6 @@
 
 #include "../Common/Thread.h"
 #include <vector>
-#include <list>
-#include <atomic>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -28,19 +26,6 @@ typedef union _TBREG
         uint32_t     u;
     } Part;
 } TBREG;
-
-// ---------------------------------------------------------------------------
-// CPU externals
-
-extern void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t*reg);
-extern void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
-extern void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t*reg);
-extern void (__fastcall *CPUReadHalfS)(uint32_t addr, uint32_t*reg);
-extern void (__fastcall *CPUWriteHalf)(uint32_t addr, uint32_t data);
-extern void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t*reg);
-extern void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
-extern void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t*reg);
-extern void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t*data);
 
 typedef struct _GekkoRegs
 {
@@ -88,6 +73,7 @@ namespace Gekko
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
 
+        // TODO:
         std::vector<uint32_t> breakPointsExecute;
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
@@ -105,6 +91,15 @@ namespace Gekko
         uint64_t    msec;
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
+
+        // TODO: Research cache emulation #14
+        uint8_t     lc[0x40000 + 4096];   // L2 locked cache
+        
+        uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, bool IR);
+        uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, bool IR);
+
+        bool decreq = false;       // decrementer exception request
+        bool intFlag = false;      // INT signal
 
     public:
 
@@ -127,16 +122,7 @@ namespace Gekko
         int64_t OneSecond();
         int64_t OneMillisecond() { return msec; }
 
-        // Translate address by Mmu
-        uint32_t EffectiveToPhysical(uint32_t ea, bool IR); 
-
-        static void SwapArea(uint32_t* addr, int count);
-        static void SwapAreaHalf(uint16_t* addr, int count);
-
         void Step();
-
-        bool decreq = false;       // decrementer exception request
-        bool intFlag = false;      // INT signal
 
         void AssertInterrupt();
         void ClearInterrupt();
@@ -147,6 +133,27 @@ namespace Gekko
 
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
+
+#pragma region "Memory interface"
+
+        // Centralized hub for access to the data bus (memory) from CPU side.
+        void __fastcall ReadByte(uint32_t addr, uint32_t* reg);
+        void __fastcall WriteByte(uint32_t addr, uint32_t data);
+        void __fastcall ReadHalf(uint32_t addr, uint32_t* reg);
+        void __fastcall ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
+        void __fastcall WriteHalf(uint32_t addr, uint32_t data);
+        void __fastcall ReadWord(uint32_t addr, uint32_t* reg);
+        void __fastcall WriteWord(uint32_t addr, uint32_t data);
+        void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
+        void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
+
+        // Translate address by Mmu
+        uint32_t EffectiveToPhysical(uint32_t ea, bool IR);
+
+        static void SwapArea(uint32_t* addr, int count);
+        static void SwapAreaHalf(uint16_t* addr, int count);
+
+#pragma endregion "Memory interface"
 
     };
 

@@ -11,7 +11,6 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
 
-#include "Mmu.h"
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"

@@ -97,9 +97,9 @@ void con_update_disa_window()
 
     for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
     {
-        if (CPUReadWord != nullptr)
+        if (Gekko::Gekko)
         {
-            CPUReadWord(addr, &op);
+            Gekko::Gekko->ReadWord(addr, &op);
         }
         else
         {
@@ -149,7 +149,7 @@ static void disa_navigate()
     {
         pa = Gekko::Gekko->EffectiveToPhysical(addr, true);
     }
-    if(pa != -1) CPUReadWord(pa, &op);
+    if(pa != -1) Gekko::Gekko->ReadWord(pa, &op);
     if(op == 0) return;
 
     Gekko::AnalyzeInfo info = { 0 };
