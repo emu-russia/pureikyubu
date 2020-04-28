@@ -36,6 +36,15 @@
 #define WPAR_ADDR   0xffffffe0          // accumulation address
 #define WPAR_BNE    0x1                 // buffer not empty
 
+#define GEKKO_CR0_LT    (1 << 31)		// Result < 0
+#define GEKKO_CR0_GT    (1 << 30)		// Result > 0
+#define GEKKO_CR0_EQ    (1 << 29)		// Result == 0
+#define GEKKO_CR0_SO    (1 << 28)		// Copied from XER[SO]
+
+#define GEKKO_XER_SO    (1 << 31)		// Sticky overflow
+#define GEKKO_XER_OV    (1 << 30)		// Overflow 
+#define GEKKO_XER_CA    (1 << 29)		// Carry
+
 // Exception vectors (physical address)
 
 namespace Gekko

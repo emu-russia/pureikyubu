@@ -235,6 +235,11 @@ namespace Gekko
         }
     }
 
+    void GekkoCore::ExecuteOpcodeDebug(uint32_t pc, uint32_t instr)
+    {
+        interp->ExecuteOpcodeDirect(pc, instr);
+    }
+
     bool GekkoCore::ExecuteInterpeterFallback()
     {
         return Gekko->interp->ExecuteInterpeterFallback();

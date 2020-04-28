@@ -174,6 +174,7 @@ namespace Gekko
         void ResetOpcodeCount() { ops = 0; }
 
         static bool ExecuteInterpeterFallback();
+        void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
 
 #pragma region "Memory interface"
 

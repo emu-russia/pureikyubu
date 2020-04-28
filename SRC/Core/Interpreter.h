@@ -392,6 +392,7 @@ namespace Gekko
 		}
 
 		void ExecuteOpcode();
+		void ExecuteOpcodeDirect(uint32_t pc, uint32_t instr);
 		void Exception(Gekko::Exception code);
 		bool ExecuteInterpeterFallback();
 	};
