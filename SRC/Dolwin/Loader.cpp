@@ -456,9 +456,9 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
             uint32_t pa = (uint32_t)-1;
             if (Gekko::Gekko)
             {
-                pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
             }
-            if(pa == -1) continue;
+            if(pa == Gekko::BadAddress) continue;
 
             uint8_t * ptr = (uint8_t *)&mi.ram[pa], * data = (uint8_t *)(&(p->data));
             switch(p->dataSize)

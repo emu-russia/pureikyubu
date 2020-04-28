@@ -168,14 +168,14 @@ namespace Gekko
                     {   // load
                         memcpy(
                             &mi.ram[maddr & RAMMASK],
-                            &mem.lc[lcaddr & 0x3ffff],
+                            &Gekko->lc[lcaddr & 0x3ffff],
                             length * 32
                         );
                     }
                     else
                     {   // store
                         memcpy(
-                            &mem.lc[lcaddr & 0x3ffff],
+                            &Gekko->lc[lcaddr & 0x3ffff],
                             &mi.ram[maddr & RAMMASK],
                             length * 32
                         );
@@ -280,6 +280,7 @@ namespace Gekko
 
     OP(TLBIE)
     {
+        Gekko->tlb.Invalidate(RRB);
     }
 
     // ---------------------------------------------------------------------------
@@ -292,6 +293,17 @@ namespace Gekko
     OP(DCBST) {}
     OP(DCBF) {}
     OP(DCBI) {}
-    OP(ICBI) {}
+    
+    OP(ICBI)
+    {
+        uint32_t address = RRB;
+        if (RA)
+        {
+            address += RRA;
+        }
+        address &= ~0x1f;
+
+        Gekko->jitc->Invalidate(address, 32);
+    }
 
 }

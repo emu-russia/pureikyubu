@@ -126,23 +126,23 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
 
         // if first opcode is 'BLR', then just leave it
         uint32_t op;
-        CPUReadWord(symbol->eaddr, &op);
+        Gekko::Gekko->ReadWord(symbol->eaddr, &op);
         if(op != 0x4e800020)
         {
-            CPUWriteWord(
+            Gekko::Gekko->WriteWord(
                 symbol->eaddr,          // add patch
                 (uint32_t)((uint64_t)routine & 0x03ffffff)  // 000: high-level opcode
             );
             if(!_stricmp(symName, "OSLoadContext"))
             {
-                CPUWriteWord(
+                Gekko::Gekko->WriteWord(
                     symbol->eaddr + 4,  // return to caller
                     0x4c000064          // rfi
                 );
             }
             else
             {
-                CPUWriteWord(
+                Gekko::Gekko->WriteWord(
                     symbol->eaddr + 4,  // return to caller
                     0x4e800020          // blr
                 );

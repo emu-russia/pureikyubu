@@ -30,17 +30,17 @@ static void ReadFST()
     fstAddr = _byteswap_ulong(bb2[4]);      // Ignore this
 
     uint32_t ArenaHi = 0;
-    CPUReadWord(0x80000034, &ArenaHi);
+    Gekko::Gekko->ReadWord(0x80000034, &ArenaHi);
     ArenaHi -= fstSize;
-    CPUWriteWord(0x80000034, ArenaHi);
+    Gekko::Gekko->WriteWord(0x80000034, ArenaHi);
 
     // load FST into memory
     DVD::Seek(fstOffs);
     DVD::Read(&mi.ram[ArenaHi & RAMMASK], fstSize);
 
     // save fst configuration in lomem
-    CPUWriteWord(0x80000038, ArenaHi);
-    CPUWriteWord(0x8000003c, fstMaxSize);
+    Gekko::Gekko->WriteWord(0x80000038, ArenaHi);
+    Gekko::Gekko->WriteWord(0x8000003c, fstMaxSize);
 
     // adjust arenaHi (OSInit will override it anyway, but not home demos)
     // arenaLo set to 0
@@ -65,7 +65,7 @@ static void BootApploader()
     DBReport2( DbgChannel::HLE, "booting apploader..\n");
 
     // set OSReport dummy
-    CPUWriteWord(0x81300000, 0x4e800020 /* blr opcode */);
+    Gekko::Gekko->WriteWord(0x81300000, 0x4e800020 /* blr opcode */);
 
     DVD::Seek(DVD_APPLDR_OFFSET);                // apploader offset
     DVD::Read((uint8_t *)appHeader, 32);   // read apploader header
@@ -93,9 +93,9 @@ static void BootApploader()
     }
 
     // get apploader interface offsets
-    CPUReadWord(0x81300004, &_prolog);
-    CPUReadWord(0x81300008, &_main);
-    CPUReadWord(0x8130000c, &_epilog);
+    Gekko::Gekko->ReadWord(0x81300004, &_prolog);
+    Gekko::Gekko->ReadWord(0x81300008, &_main);
+    Gekko::Gekko->ReadWord(0x8130000c, &_epilog);
 
     DBReport2(DbgChannel::HLE, "apploader interface : init : %08X main : %08X close : %08X\n",
               _prolog, _main, _epilog );
@@ -124,9 +124,9 @@ static void BootApploader()
             Gekko::Gekko->Step();
         }
 
-        CPUReadWord(0x81300004, &addr);
-        CPUReadWord(0x81300008, &size);
-        CPUReadWord(0x8130000c, &offs);
+        Gekko::Gekko->ReadWord(0x81300004, &addr);
+        Gekko::Gekko->ReadWord(0x81300008, &size);
+        Gekko::Gekko->ReadWord(0x8130000c, &offs);
 
         if(size)
         {
@@ -170,9 +170,9 @@ static void __SyncTime(bool rtc)
 
     int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
     int64_t systemTime;
-    CPUReadDouble(0x800030d8, (uint64_t *)&systemTime);
+    Gekko::Gekko->ReadDouble(0x800030d8, (uint64_t *)&systemTime);
     systemTime += newTime - Gekko::Gekko->regs.tb.sval;
-    CPUWriteDouble(0x800030d8, (uint64_t *)&systemTime);
+    Gekko::Gekko->WriteDouble(0x800030d8, (uint64_t *)&systemTime);
     Gekko::Gekko->regs.tb.sval = newTime;
     DBReport2(DbgChannel::HLE, "new timer: 0x%llx\n\n", Gekko::Gekko->GetTicks());
 }
@@ -209,11 +209,11 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     __SyncTime(rtc);
 
     // modify important OS low memory variables (lomem) (BS)
-    CPUWriteWord(0x8000002c, consoleVer);   // console type
-    CPUWriteWord(0x80000028, RAMSIZE);      // memsize
-    CPUWriteWord(0x800000f0, RAMSIZE);      // simmemsize
-    CPUWriteWord(0x800000f8, CPU_BUS_CLOCK);
-    CPUWriteWord(0x800000fc, CPU_CORE_CLOCK);
+    Gekko::Gekko->WriteWord(0x8000002c, consoleVer);   // console type
+    Gekko::Gekko->WriteWord(0x80000028, RAMSIZE);      // memsize
+    Gekko::Gekko->WriteWord(0x800000f0, RAMSIZE);      // simmemsize
+    Gekko::Gekko->WriteWord(0x800000f8, CPU_BUS_CLOCK);
+    Gekko::Gekko->WriteWord(0x800000fc, CPU_CORE_CLOCK);
 
     // install default syscall. not important for Dolphin OS,
     // but should be installed to avoid crash on SC opcode.
@@ -234,14 +234,14 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
         // additional PAL/NTSC selection hack for old VIConfigure()
         char *id = (char *)mi.ram;
-        if(id[3] == 'P') CPUWriteWord(0x800000CC, 1);   // set to PAL
-        else CPUWriteWord(0x800000CC, 0);
+        if(id[3] == 'P') Gekko::Gekko->WriteWord(0x800000CC, 1);   // set to PAL
+        else Gekko::Gekko->WriteWord(0x800000CC, 0);
 
         BootApploader();
     }
     else
     {
-        CPUWriteWord(0x80000034, Gekko::Gekko->regs.gpr[1] - 0x10000);
+        Gekko::Gekko->WriteWord(0x80000034, Gekko::Gekko->regs.gpr[1] - 0x10000);
 
         ReadFST(); // load FST, for demos
     }
