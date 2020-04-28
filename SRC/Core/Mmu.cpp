@@ -388,9 +388,11 @@ namespace Gekko
                 continue;
             }
 
-            // Valid and suitable?
+            // Valid and suitable? (PTE [VSID, API, V] = Seg Desc [VSID], EA[API], 1)
 
-            if (pte[0] & 0x8000'0000)
+            if (pte[0] & 0x8000'0000 &&
+                ((pte[0] >> 7) & 0xffffff) == ((vpn >> 16) & 0xffffff) &&
+                (pte[0] & 0x3f) == ((vpn >> 10) & 0x3f) )
             {
                 // Referenced
                 pte[1] |= 0x100;
