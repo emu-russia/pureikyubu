@@ -417,16 +417,16 @@ namespace Gekko
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
     {
         uint32_t pa;
-        //if (!tlb.Exists(ea, pa))
+        if (!tlb.Exists(ea, pa))
         {
             if (!BlockAddressTranslation(ea, pa, type))
             {
                 pa = SegmentTranslation(ea, type);
             }
-            //if (pa != BadAddress)
-            //{
-            //    tlb.Map(ea, pa);
-            //}
+            if (pa != BadAddress)
+            {
+                tlb.Map(ea, pa);
+            }
         }
         return pa;
     }
