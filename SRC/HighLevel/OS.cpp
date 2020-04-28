@@ -37,8 +37,8 @@ void OSSetCurrentContext(void)
 {
     __OSCurrentContext  = PARAM(0);
     __OSPhysicalContext = __OSCurrentContext & RAMMASK; // simple translation
-    CPUWriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
-    CPUWriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
+    Gekko::Gekko->WriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
+    Gekko::Gekko->WriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
 
     OSContext *c = (OSContext *)(&mi.ram[__OSPhysicalContext]);
 
@@ -159,7 +159,7 @@ void OSClearContext(void)
     if(PARAM(0) == __OSDefaultThread/*context*/) 
     {
         __OSDefaultThread = NULL;
-        CPUWriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
+        Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
     }
 }
 
@@ -255,7 +255,7 @@ void __OSContextInit(void)
     DBReport2(DbgChannel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
 
     __OSDefaultThread = NULL;
-    CPUWriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
+    Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
     Gekko::Gekko->regs.msr |= (MSR_FP | MSR_RI);
 }
 

@@ -23,8 +23,8 @@ namespace Gekko
         {
             float res;
 
-            if (RA) CPUReadWord(RRA + SIMM, (uint32_t*)&res);
-            else CPUReadWord(SIMM, (uint32_t*)&res);
+            if (RA) Gekko->ReadWord(RRA + SIMM, (uint32_t*)&res);
+            else Gekko->ReadWord(SIMM, (uint32_t*)&res);
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -43,8 +43,8 @@ namespace Gekko
         {
             float res;
 
-            if (RA) CPUReadWord(RRA + RRB, (uint32_t*)&res);
-            else CPUReadWord(RRB, (uint32_t*)&res);
+            if (RA) Gekko->ReadWord(RRA + RRB, (uint32_t*)&res);
+            else Gekko->ReadWord(RRB, (uint32_t*)&res);
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -65,7 +65,7 @@ namespace Gekko
             uint32_t ea = RRA + SIMM;
             float res;
 
-            CPUReadWord(ea, (uint32_t*)&res);
+            Gekko->ReadWord(ea, (uint32_t*)&res);
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -88,7 +88,7 @@ namespace Gekko
             uint32_t ea = RRA + RRB;
             float res;
 
-            CPUReadWord(ea, (uint32_t*)&res);
+            Gekko->ReadWord(ea, (uint32_t*)&res);
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -104,8 +104,8 @@ namespace Gekko
     {
         if (Gekko->regs.msr & MSR_FP)
         {
-            if (RA) CPUReadDouble(RRA + SIMM, &FPRU(RD));
-            else CPUReadDouble(SIMM, &FPRU(RD));
+            if (RA) Gekko->ReadDouble(RRA + SIMM, &FPRU(RD));
+            else Gekko->ReadDouble(SIMM, &FPRU(RD));
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -116,8 +116,8 @@ namespace Gekko
     {
         if (Gekko->regs.msr & MSR_FP)
         {
-            if (RA) CPUReadDouble(RRA + RRB, &FPRU(RD));
-            else CPUReadDouble(RRB, &FPRU(RD));
+            if (RA) Gekko->ReadDouble(RRA + RRB, &FPRU(RD));
+            else Gekko->ReadDouble(RRB, &FPRU(RD));
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -130,7 +130,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + SIMM;
-            CPUReadDouble(ea, &FPRU(RD));
+            Gekko->ReadDouble(ea, &FPRU(RD));
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -144,7 +144,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + RRB;
-            CPUReadDouble(ea, &FPRU(RD));
+            Gekko->ReadDouble(ea, &FPRU(RD));
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -164,8 +164,8 @@ namespace Gekko
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) data = (float)PS0(RS);
             else data = (float)FPRD(RS);
 
-            if (RA) CPUWriteWord(RRA + SIMM, *(uint32_t*)&data);
-            else CPUWriteWord(SIMM, *(uint32_t*)&data);
+            if (RA) Gekko->WriteWord(RRA + SIMM, *(uint32_t*)&data);
+            else Gekko->WriteWord(SIMM, *(uint32_t*)&data);
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -182,8 +182,8 @@ namespace Gekko
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) num = (float)PS0(RS);
             else num = (float)FPRD(RS);
 
-            if (RA) CPUWriteWord(RRA + RRB, *data);
-            else CPUWriteWord(RRB, *data);
+            if (RA) Gekko->WriteWord(RRA + RRB, *data);
+            else Gekko->WriteWord(RRB, *data);
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -201,7 +201,7 @@ namespace Gekko
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) data = (float)PS0(RS);
             else data = (float)FPRD(RS);
 
-            CPUWriteWord(ea, *(uint32_t*)&data);
+            Gekko->WriteWord(ea, *(uint32_t*)&data);
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -221,7 +221,7 @@ namespace Gekko
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) num = (float)PS0(RS);
             else num = (float)FPRD(RS);
 
-            CPUWriteWord(ea, *data);
+            Gekko->WriteWord(ea, *data);
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -233,8 +233,8 @@ namespace Gekko
     {
         if (Gekko->regs.msr & MSR_FP)
         {
-            if (RA) CPUWriteDouble(RRA + SIMM, &FPRU(RS));
-            else CPUWriteDouble(SIMM, &FPRU(RS));
+            if (RA) Gekko->WriteDouble(RRA + SIMM, &FPRU(RS));
+            else Gekko->WriteDouble(SIMM, &FPRU(RS));
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -245,8 +245,8 @@ namespace Gekko
     {
         if (Gekko->regs.msr & MSR_FP)
         {
-            if (RA) CPUWriteDouble(RRA + RRB, &FPRU(RS));
-            else CPUWriteDouble(RRB, &FPRU(RS));
+            if (RA) Gekko->WriteDouble(RRA + RRB, &FPRU(RS));
+            else Gekko->WriteDouble(RRB, &FPRU(RS));
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -259,7 +259,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + SIMM;
-            CPUWriteDouble(ea, &FPRU(RS));
+            Gekko->WriteDouble(ea, &FPRU(RS));
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -273,7 +273,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + RRB;
-            CPUWriteDouble(ea, &FPRU(RS));
+            Gekko->WriteDouble(ea, &FPRU(RS));
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -289,8 +289,8 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t val = (uint32_t)(FPRU(RS) & 0x00000000ffffffff);
-            if (RA) CPUWriteWord(RRA + RRB, val);
-            else CPUWriteWord(RRB, val);
+            if (RA) Gekko->WriteWord(RRA + RRB, val);
+            else Gekko->WriteWord(RRB, val);
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }

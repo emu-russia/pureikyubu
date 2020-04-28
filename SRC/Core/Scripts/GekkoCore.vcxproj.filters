@@ -39,9 +39,6 @@
     <ClInclude Include="..\GekkoDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Mmu.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\GekkoAnalyzer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -55,6 +52,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Jitc.h">
+      <Filter>Header Files</Filter>      
+    </ClInclude>      
+    <ClInclude Include="..\TLB.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -139,6 +139,9 @@
     </ClCompile>
     <ClCompile Include="..\JitcX64\Common.cpp">
       <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\TLB.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

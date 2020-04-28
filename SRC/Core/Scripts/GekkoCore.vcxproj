@@ -162,8 +162,8 @@
     <ClInclude Include="..\Interpreter.h" />
     <ClInclude Include="..\Interpreter\interpreter.h" />
     <ClInclude Include="..\Jitc.h" />
-    <ClInclude Include="..\Mmu.h" />
     <ClInclude Include="..\pch.h" />
+    <ClInclude Include="..\TLB.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\GatherBuffer.cpp" />
@@ -288,6 +288,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\TLB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\GekkoCoreJdi.json" />

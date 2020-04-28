@@ -11,7 +11,6 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
 
-#include "Mmu.h"
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"
@@ -19,6 +18,7 @@
 #include "GekkoDisasmOld.h"
 #include "GekkoDisasm.h"
 #include "Jitc.h"
+#include "TLB.h"
 
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
