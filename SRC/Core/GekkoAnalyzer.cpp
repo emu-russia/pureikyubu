@@ -1834,6 +1834,7 @@ namespace Gekko
 	void Analyzer::AnalyzeFast(uint32_t pc, uint32_t instr, AnalyzeInfo* info)
 	{
 		info->instr = Instruction::Unknown;
+		info->instrBits = instr;
 		info->pc = pc;
 		info->flow = false;
 

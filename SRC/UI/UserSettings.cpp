@@ -1,15 +1,6 @@
 // Dolwin settings dialog (to configure user variables)
 #include "pch.h"
 
-/*/
-    Settings control behaviours are : normal, sticky and locked. 
-    Normal: Can be changed anytime, emulator state also modified with control
-    modifying.
-    Sticky: Can be changed anytime, but emulator state will be modified after
-    game Reload.
-    Locked: Cannot be changed while emu running. 
-/*/
-
 // all user variables (except memory cards vars) are placed in UserConfig.h
 
 // parent window and instance
@@ -58,12 +49,6 @@ static void LoadSettings(int n)         // dialogs created
     {
         CheckDlgButton(hDlg, IDC_ENSURE_WINDALL, BST_UNCHECKED);
         EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
-
-        int selected = GetConfigInt(USER_MMU, USER_CORE);
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_RESETCONTENT, 0, 0);
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)_T("Simple translation"));
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_INSERTSTRING, -1, (LPARAM)_T("Advanced (Mmu)"));
-        SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_SETCURSEL, selected, 0);
 
         settingsLoaded[0] = TRUE;
     }
@@ -132,14 +117,11 @@ static void LoadSettings(int n)         // dialogs created
 static void SaveSettings()              // OK pressed
 {
     int i;
-    TCHAR buf[256] = { 0, };
+    TCHAR buf[0x1000] = { 0, };
 
     // Emulator
     if(settingsLoaded[0])
     {
-        HWND hDlg = hChildDlg[0];
-        int selected = (int)SendDlgItemMessage(hDlg, IDC_MEMORY_MODE, CB_GETCURSEL, 0, 0);
-        SetConfigInt(USER_MMU, selected, USER_CORE);
     }
 
     // GUI/Selector

@@ -17,6 +17,7 @@
 #include "GekkoCommands.h"
 #include "GekkoDisasmOld.h"
 #include "GekkoDisasm.h"
+#include "Jitc.h"
 #include "TLB.h"
 
 #include "../Hardware/Hardware.h"

@@ -49,10 +49,6 @@ void SetConfigBool(const char* var, bool newVal, const char* path);
 #define USER_MAKEMAP    "MAKEMAP"			// 1: make map file, if missing (find symbols)
 #define USER_PATCH      "PATCH"             // patches allowed, if 1
 
-// Core section variables
-
-#define USER_MMU        "MMU"               // memory translation mode (0: simple, 1: mmu)
-
 // Hardware section variables
 
 #define USER_ANSI       "ANSI"              // bootrom ANSI font

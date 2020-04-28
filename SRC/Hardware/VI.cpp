@@ -170,13 +170,13 @@ void VIUpdate()
 static void __fastcall vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
-    UI::DolwinReport(_T("VI READ8"));
+    DBReport2(DbgChannel::VI, "VI READ8");
     *reg = 0;
 }
 
 static void __fastcall vi_write8(uint32_t addr, uint32_t data)
 {
-    UI::DolwinReport(_T("VI WRITE8"));
+    DBReport2(DbgChannel::VI, "VI WRITE8");
 }
 
 static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)

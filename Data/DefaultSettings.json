@@ -37,7 +37,6 @@
 
 	"core":
 	{
-		"MMU": 0
 	},
 
 	"hardware":

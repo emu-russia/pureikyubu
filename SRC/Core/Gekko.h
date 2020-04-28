@@ -19,8 +19,8 @@ typedef union _FPREG
 // time-base
 typedef union _TBREG
 {
-    int64_t         sval;               // for comparsion
-    uint64_t        uval;               // for incrementing
+    volatile int64_t   sval;               // for comparsion
+    volatile uint64_t  uval;               // for incrementing
     struct
     {
         uint32_t     l;                  // for output
@@ -44,6 +44,8 @@ typedef struct _GekkoRegs
 namespace Gekko
 {
     class Interpreter;
+    class Jitc;
+    class CodeSegment;
 
     enum class GekkoWaiter : int
     {
@@ -84,11 +86,13 @@ namespace Gekko
     class GekkoCore
     {
         friend Interpreter;
+        friend Jitc;
+        friend CodeSegment;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 2;
+        static const int CounterStep = 12;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
@@ -100,6 +104,7 @@ namespace Gekko
         SpinLock breakPointsLock;
 
         Interpreter* interp;
+        Jitc* jitc;
 
         bool waitQueueEnabled = true;   // Let's see how this mechanism will show itself. You can always turn it off.
         WaitQueueEntry waitQueue[(int)GekkoWaiter::Max] = { 0 };
@@ -111,6 +116,7 @@ namespace Gekko
         uint64_t    msec;
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
+        size_t      segmentsExecuted;   // The number of completed recompiler segments.
 
         // TODO: Research cache emulation #14
         uint8_t     lc[0x40000 + 4096];   // L2 locked cache
@@ -118,8 +124,8 @@ namespace Gekko
         uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type);
         uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type);
 
-        bool decreq = false;       // decrementer exception request
-        bool intFlag = false;      // INT signal
+        volatile bool decreq = false;       // decrementer exception request
+        volatile bool intFlag = false;      // INT signal
 
         MmuResult MmuLastResult = MmuResult::Ok;
 
@@ -166,6 +172,8 @@ namespace Gekko
 
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
+
+        static bool ExecuteInterpeterFallback();
 
 #pragma region "Memory interface"
 

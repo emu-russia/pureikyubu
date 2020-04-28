@@ -7,7 +7,7 @@
 namespace Gekko
 {
     // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
-    // (as well as those who they pretend, for example, or HLE Debugger).
+    // (as well as those who they pretend, for example HLE or Debugger).
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {

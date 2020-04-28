@@ -293,6 +293,17 @@ namespace Gekko
     OP(DCBST) {}
     OP(DCBF) {}
     OP(DCBI) {}
-    OP(ICBI) {}
+    
+    OP(ICBI)
+    {
+        uint32_t address = RRB;
+        if (RA)
+        {
+            address += RRA;
+        }
+        address &= ~0x1f;
+
+        Gekko->jitc->Invalidate(address, 32);
+    }
 
 }

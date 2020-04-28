@@ -393,6 +393,7 @@ namespace Gekko
 
 		void ExecuteOpcode();
 		void Exception(Gekko::Exception code);
+		bool ExecuteInterpeterFallback();
 	};
 
 }

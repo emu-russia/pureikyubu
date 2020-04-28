@@ -12,6 +12,7 @@ namespace Gekko
         while (true)
         {
             core->interp->ExecuteOpcode();
+            //core->jitc->Execute();
         }
     }
 
@@ -19,6 +20,9 @@ namespace Gekko
     {
         interp = new Interpreter(this);
         assert(interp);
+
+        jitc = new Jitc(this);
+        assert(jitc);
 
         Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
@@ -44,6 +48,7 @@ namespace Gekko
 
         delete gekkoThread;
         delete interp;
+        delete jitc;
     }
 
     // Reset processor
@@ -93,6 +98,10 @@ namespace Gekko
         regs.spr[9] = 0;    // CTR
 
         gatherBuffer.Reset();
+
+        jitc->Reset();
+        segmentsExecuted = 0;
+
         tlb.InvalidateAll();
     }
 
@@ -224,6 +233,11 @@ namespace Gekko
             waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
             waitQueue[(int)disignation].requireSuspend = true;
         }
+    }
+
+    bool GekkoCore::ExecuteInterpeterFallback()
+    {
+        return Gekko->interp->ExecuteInterpeterFallback();
     }
 
     uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type)
