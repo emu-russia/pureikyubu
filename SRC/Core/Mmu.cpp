@@ -239,8 +239,6 @@ namespace Gekko
     {
         // Ignore BAT access rights for now (not used in embodiment system)
 
-        // It can potentially be optimized using LUTs when BAT registers are changed.
-
         if (type == MmuAccess::Execute)
         {
             if ((regs.msr & MSR_IR) == 0)
@@ -293,9 +291,11 @@ namespace Gekko
 
     uint32_t __fastcall GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type)
     {
+        int ptegUpper;
+
         // Direct Store (T=1) not supported.
 
-        // Ignore protection and PTE Access/Modify for now.
+        // Ignore protection for now.
 
         uint32_t sr = regs.sr[ea >> 28];
 
@@ -305,53 +305,126 @@ namespace Gekko
             return BadAddress;
         }
 
-        // Calculate PTE physical address
+        // Calculate PTEG physical addresses
 
         uint64_t vpn = (((uint64_t)sr & 0x00ffffff) << 16) | ((ea >> 12) & 0xffff);
         uint32_t hash = (uint32_t)(vpn >> 16) ^ ((uint32_t)vpn & 0x1fff);
-        hash = ~hash;
 
         uint32_t sdr = regs.spr[(int)SPR::SDR1];
 
-        int ptegUpper = (sdr >> 16) & 0x1ff;
+        uint32_t primaryPteAddr = 0;
+        ptegUpper = (sdr >> 16) & 0x1ff;
         ptegUpper |= (sdr & 0x1ff) & ((hash >> 10) & 0x1ff);
+        primaryPteAddr |= sdr & 0xfe00'0000;
+        primaryPteAddr |= ptegUpper << 16;
+        primaryPteAddr |= (hash & 0x3ff) << 6;
 
-        uint32_t pteAddr = 0;
-        pteAddr |= sdr & 0xfe00'0000;
-        pteAddr |= ptegUpper << 16;
-        pteAddr |= (hash & 0x3ff) << 6;
+        hash = ~hash;
 
-        // Load PTE
+        uint32_t secondaryPteAddr = 0;
+        ptegUpper = (sdr >> 16) & 0x1ff;
+        ptegUpper |= (sdr & 0x1ff) & ((hash >> 10) & 0x1ff);
+        secondaryPteAddr |= sdr & 0xfe00'0000;
+        secondaryPteAddr |= ptegUpper << 16;
+        secondaryPteAddr |= (hash & 0x3ff) << 6;
 
-        uint32_t pte[2];
+        // Try Primary PTEGs
 
-        MIReadWord(pteAddr, &pte[0]);
-        MIReadWord(pteAddr + 4, &pte[1]);
-
-        if ((pte[0] & 0x8000'0000) == 0)
+        for (int i = 0; i < 8; i++)
         {
-            MmuLastResult = MmuResult::PageFault;
-            return BadAddress;
+            // Load PTE
+
+            uint32_t pte[2];
+
+            MIReadWord(primaryPteAddr, &pte[0]);
+            MIReadWord(primaryPteAddr + 4, &pte[1]);
+
+            // Check Hash Bit
+
+            if ((pte[0] & 0x40) != 0)
+            {
+                primaryPteAddr += 8;
+                continue;
+            }
+
+            // Valid and suitable? (PTE [VSID, API, V] = Seg Desc [VSID], EA[API], 1)
+
+            if (pte[0] & 0x8000'0000 && 
+                ((pte[0] >> 7) & 0xffffff) == ((vpn >> 16) & 0xffffff) &&
+                (pte[0] & 0x3f) == ((vpn >> 10) & 0x3f) )
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                if (type == MmuAccess::Write)
+                {
+                    pte[1] |= 0x80;     // Changed
+                }
+                MIWriteWord(primaryPteAddr + 4, pte[1]);
+
+                uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                MmuLastResult = MmuResult::Ok;
+                return pa;
+            }
+
+            primaryPteAddr += 8;
         }
 
-        uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
-        MmuLastResult = MmuResult::Ok;
-        return pa;
+        // Try Secondary PTEGs
+
+        for (int i = 0; i < 8; i++)
+        {
+            // Load PTE
+
+            uint32_t pte[2];
+
+            MIReadWord(secondaryPteAddr, &pte[0]);
+            MIReadWord(secondaryPteAddr + 4, &pte[1]);
+
+            // Check Hash Bit
+
+            if ((pte[0] & 0x40) == 0)
+            {
+                secondaryPteAddr += 8;
+                continue;
+            }
+
+            // Valid and suitable?
+
+            if (pte[0] & 0x8000'0000)
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                if (type == MmuAccess::Write)
+                {
+                    pte[1] |= 0x80;     // Changed
+                }
+                MIWriteWord(secondaryPteAddr + 4, pte[1]);
+
+                uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                MmuLastResult = MmuResult::Ok;
+                return pa;
+            }
+
+            secondaryPteAddr += 8;
+        }
+
+        MmuLastResult = MmuResult::PageFault;
+        return BadAddress;
     }
 
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
     {
         uint32_t pa;
-        if (!tlb.Exists(ea, pa))
+        //if (!tlb.Exists(ea, pa))
         {
             if (!BlockAddressTranslation(ea, pa, type))
             {
                 pa = SegmentTranslation(ea, type);
             }
-            if (pa != BadAddress)
-            {
-                tlb.Map(ea, pa);
-            }
+            //if (pa != BadAddress)
+            //{
+            //    tlb.Map(ea, pa);
+            //}
         }
         return pa;
     }
