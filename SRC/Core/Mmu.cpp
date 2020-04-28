@@ -1,8 +1,13 @@
 // Gekko Memory interface
+
+// MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
+
 #include "pch.h"
 
 namespace Gekko
 {
+    // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
+    // (as well as those who they pretend, for example, or HLE Debugger).
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
@@ -14,7 +19,14 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
+
         MIReadByte(pa, reg);
     }
 
@@ -28,7 +40,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
     
         if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
         {
@@ -52,7 +70,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
         MIReadHalf(pa, reg);
     }
 
@@ -72,7 +96,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
 
         if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
         {
@@ -96,7 +126,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
         MIReadWord(pa, reg);
     }
 
@@ -110,7 +146,13 @@ namespace Gekko
             return;
         }
    
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
 
         if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
         {
@@ -124,11 +166,6 @@ namespace Gekko
         MIWriteWord(pa, data);
     }
 
-    //
-    // fortunately longlongs are never used in GC hardware access
-    // (because all regs are generally integers)
-    //
-
     void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
         // Locked cache
@@ -139,7 +176,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
         MIReadDouble(pa, reg);
     }
 
@@ -153,7 +196,13 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = EffectiveToPhysical(addr, false);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        if (pa == BadAddress)
+        {
+            regs.spr[(int)SPR::DAR] = addr;
+            Exception(Exception::DSI);
+            return;
+        }
 
         if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
         {
@@ -169,7 +218,7 @@ namespace Gekko
 
 #pragma region "MMU"
 
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, bool IR)
+    uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type)
     {
         // Required to run bootrom
         if (ea >= BOOTROM_START_ADDRESS)
@@ -186,58 +235,125 @@ namespace Gekko
     #define BATBL(batu)     ((batu >> 2) & 0x7ff)
     #define BATBRPN(batl)   (batl >> 17)
 
-    //static uint32_t *dbatu[4] = { &DBAT0U, &DBAT1U, &DBAT2U, &DBAT3U };
-    //static uint32_t *dbatl[4] = { &DBAT0L, &DBAT1L, &DBAT2L, &DBAT3L };
-    //static uint32_t *ibatu[4] = { &IBAT0U, &IBAT1U, &IBAT2U, &IBAT3U };
-    //static uint32_t *ibatl[4] = { &IBAT0L, &IBAT1L, &IBAT2L, &IBAT3L };
-
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, bool IR)
+    bool __fastcall GekkoCore::BlockAddressTranslation(uint32_t ea, uint32_t &pa, MmuAccess type)
     {
-    #if 0
-        uint32_t pa;
+        // Ignore BAT access rights for now (not used in embodiment system)
 
-        // ea = effective address
-        // pa = physical address
-        // pn = page number
+        // It can potentially be optimized using LUTs when BAT registers are changed.
 
-        // perform direct translation
-        if(IR)
+        if (type == MmuAccess::Execute)
         {
-            if(!(MSR & MSR_IR)) return pa = ea;
+            if ((regs.msr & MSR_IR) == 0)
+            {
+                pa = ea;
+                return true;
+            }
 
-            for(int n=0; n<4; n++)
+            for (int n = 0; n < 4; n++)
             {
                 uint32_t bepi = BATBEPI(*ibatu[n]);
-                uint32_t bl   = BATBL(*ibatu[n]);
-                uint32_t tst  = (ea >> 17) & (0x7800 | ~bl);
-                if(bepi == tst)
+                uint32_t bl = BATBL(*ibatu[n]);
+                uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
+                if (bepi == tst)
                 {
                     pa = BATBRPN(*ibatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
-                    return pa;
+                    MmuLastResult = MmuResult::Ok;
+                    return true;
                 }
             }
         }
         else
         {
-            if(!(MSR & MSR_DR)) return pa = ea;
+            if ((regs.msr & MSR_DR) == 0)
+            {
+                pa = ea;
+                return true;
+            }
 
-            for(int n=0; n<4; n++)
+            for (int n = 0; n < 4; n++)
             {
                 uint32_t bepi = BATBEPI(*dbatu[n]);
-                uint32_t bl   = BATBL(*dbatu[n]);
-                uint32_t tst  = (ea >> 17) & (0x7800 | ~bl);
-                if(bepi == tst)
+                uint32_t bl = BATBL(*dbatu[n]);
+                uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
+                if (bepi == tst)
                 {
                     pa = BATBRPN(*dbatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
-                    return pa;
+                    MmuLastResult = MmuResult::Ok;
+                    return true;
                 }
             }
         }
-    #endif
 
-        return -1;
+        // No BAT match, continue page table translation
+
+        return false;
+    }
+
+    uint32_t __fastcall GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type)
+    {
+        // Direct Store (T=1) not supported.
+
+        // Ignore protection and PTE Access/Modify for now.
+
+        uint32_t sr = regs.sr[ea >> 28];
+
+        if (sr & 0x1000'0000 && type == MmuAccess::Execute)
+        {
+            MmuLastResult = MmuResult::NoExecute;
+            return BadAddress;
+        }
+
+        // Calculate PTE physical address
+
+        uint64_t vpn = (((uint64_t)sr & 0x00ffffff) << 16) | ((ea >> 12) & 0xffff);
+        uint32_t hash = (uint32_t)(vpn >> 16) ^ ((uint32_t)vpn & 0x1fff);
+        hash = ~hash;
+
+        uint32_t sdr = regs.spr[(int)SPR::SDR1];
+
+        int ptegUpper = (sdr >> 16) & 0x1ff;
+        ptegUpper |= (sdr & 0x1ff) & ((hash >> 10) & 0x1ff);
+
+        uint32_t pteAddr = 0;
+        pteAddr |= sdr & 0xfe00'0000;
+        pteAddr |= ptegUpper << 16;
+        pteAddr |= (hash & 0x3ff) << 6;
+
+        // Load PTE
+
+        uint32_t pte[2];
+
+        MIReadWord(pteAddr, &pte[0]);
+        MIReadWord(pteAddr + 4, &pte[1]);
+
+        if ((pte[0] & 0x8000'0000) == 0)
+        {
+            MmuLastResult = MmuResult::PageFault;
+            return BadAddress;
+        }
+
+        uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+        MmuLastResult = MmuResult::Ok;
+        return pa;
+    }
+
+    uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
+    {
+        uint32_t pa;
+        if (!tlb.Exists(ea, pa))
+        {
+            if (!BlockAddressTranslation(ea, pa, type))
+            {
+                pa = SegmentTranslation(ea, type);
+            }
+            if (pa != BadAddress)
+            {
+                tlb.Map(ea, pa);
+            }
+        }
+        return pa;
     }
 
 #pragma endregion "MMU"

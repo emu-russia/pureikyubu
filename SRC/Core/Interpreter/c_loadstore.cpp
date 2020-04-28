@@ -426,7 +426,7 @@ namespace Gekko
         uint32_t ea = RRB;
         if (RA) ea += RRA;
         Gekko->interp->RESERVE = true;
-        Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, 0);
+        Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read);
         Gekko->ReadWord(ea, &RRD);
     }
 

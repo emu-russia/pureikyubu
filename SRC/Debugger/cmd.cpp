@@ -132,12 +132,12 @@ Json::Value* cmd_blr(std::vector<std::string>& args)
         if(emu.loaded) return nullptr;
 
         uint32_t ea = con.disa_cursor;
-        uint32_t pa = -1;
+        uint32_t pa = Gekko::BadAddress;
         if (Gekko::Gekko)
         {
-            pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
+            pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
         }
-        if(pa == -1) return nullptr;
+        if(pa == Gekko::BadAddress) return nullptr;
 
         uint32_t op = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
         if(op == 0x4e800020) return nullptr;
@@ -445,13 +445,13 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
             }
             Gekko::Gekko->ReadWord(sp, &sp);           // walk stack
 
-            uint32_t pa = -1;
+            uint32_t pa = Gekko::BadAddress;
             if (Gekko::Gekko)
             {
-                pa = Gekko::Gekko->EffectiveToPhysical(sp, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(sp, Gekko::MmuAccess::Execute);
             }
 
-            if(!sp || pa == -1) break;
+            if(!sp || pa == Gekko::BadAddress) break;
         }
         #undef MAX_LEVEL
     }
@@ -486,12 +486,12 @@ Json::Value* cmd_nop(std::vector<std::string>& args)
     if(!emu.loaded) return nullptr;
 
     uint32_t ea = con.disa_cursor;
-    uint32_t pa = -1;
+    uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
     }
-    if(pa == -1) return nullptr;
+    if(pa == Gekko::BadAddress) return nullptr;
     
     uint32_t old = _byteswap_ulong(*(uint32_t*)(&mi.ram[pa]));
     mi.ram[pa] = 0x60;
@@ -507,12 +507,12 @@ Json::Value* cmd_denop(std::vector<std::string>& args)
     if(!emu.loaded) return nullptr;
 
     uint32_t ea = con.disa_cursor;
-    uint32_t pa = -1;
+    uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(ea, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
     }
-    if(pa == -1) return nullptr;
+    if(pa == Gekko::BadAddress) return nullptr;
 
     uint32_t old = get_nop(ea);
     if(old == 0) return nullptr;
@@ -546,12 +546,12 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
         {
             PPCD_CB disa;
             uint32_t op = 0;
-            uint32_t pa = -1;
+            uint32_t pa = Gekko::BadAddress;
             if (Gekko::Gekko)
             {
-                pa = Gekko::Gekko->EffectiveToPhysical(saddr, true);
+                pa = Gekko::Gekko->EffectiveToPhysical(saddr, Gekko::MmuAccess::Execute);
             }
-            if(pa != -1) Gekko::Gekko->ReadWord(pa, &op);
+            if(pa != Gekko::BadAddress) Gekko::Gekko->ReadWord(pa, &op);
             disa.instr = op;
             disa.pc = saddr;
             PPCDisasm (&disa);

@@ -7,6 +7,7 @@
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
+#include "TLB.h"
 
 // floating point register
 typedef union _FPREG
@@ -53,6 +54,25 @@ namespace Gekko
         Max,
     };
 
+    enum class MmuAccess
+    {
+        Read = 0,
+        Write,
+        Execute,
+    };
+
+    // MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
+    constexpr uint32_t BadAddress = 0xffffffff;
+
+    // So that the consumer can understand what went wrong.
+    enum class MmuResult
+    {
+        Ok = 0,
+        PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
+        Protected,      // Block/page protection violation 
+        NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
+    };
+
     typedef struct _WaitQueueEntry
     {
         uint64_t tbrValue;
@@ -68,7 +88,7 @@ namespace Gekko
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 2;
+        static const int CounterStep = 12;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
@@ -95,11 +115,24 @@ namespace Gekko
         // TODO: Research cache emulation #14
         uint8_t     lc[0x40000 + 4096];   // L2 locked cache
         
-        uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, bool IR);
-        uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, bool IR);
+        uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type);
+        uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type);
 
         bool decreq = false;       // decrementer exception request
         bool intFlag = false;      // INT signal
+
+        MmuResult MmuLastResult = MmuResult::Ok;
+
+        // For convenient access to BAT registers (Mmu related)
+        uint32_t *dbatu[4];
+        uint32_t *dbatl[4];
+        uint32_t *ibatu[4];
+        uint32_t *ibatl[4];
+
+        bool __fastcall BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type);
+        uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type);
+
+        TLB tlb;
 
     public:
 
@@ -148,7 +181,7 @@ namespace Gekko
         void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
 
         // Translate address by Mmu
-        uint32_t EffectiveToPhysical(uint32_t ea, bool IR);
+        uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type);
 
         static void SwapArea(uint32_t* addr, int count);
         static void SwapAreaHalf(uint16_t* addr, int count);

@@ -75,10 +75,10 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
 
 void con_update_disa_window()
 {
-    uint32_t pa = -1;
+    uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(con.disa_cursor, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(con.disa_cursor, Gekko::MmuAccess::Execute);
     }
 
     con_attr(0, 3);
@@ -144,12 +144,12 @@ static void disa_navigate()
 {
     uint32_t op = 0, addr = con.disa_cursor;
 
-    uint32_t pa = -1;
+    uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(addr, true);
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute);
     }
-    if(pa != -1) Gekko::Gekko->ReadWord(pa, &op);
+    if(pa != Gekko::BadAddress) Gekko::Gekko->ReadWord(pa, &op);
     if(op == 0) return;
 
     Gekko::AnalyzeInfo info = { 0 };
