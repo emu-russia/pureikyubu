@@ -28,11 +28,11 @@ static void swap_double(void* srcPtr)
 void HLE_memcpy()
 {
     uint32_t eaDest = PARAM(0), eaSrc = PARAM(1), cnt = PARAM(2);
-    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
-    uint32_t paSrc = Gekko::Gekko->EffectiveToPhysical(eaSrc, false);
+    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, Gekko::MmuAccess::Read);
+    uint32_t paSrc = Gekko::Gekko->EffectiveToPhysical(eaSrc, Gekko::MmuAccess::Read);
 
-    assert( paDest != -1);
-    assert( paSrc != -1);
+    assert( paDest != Gekko::BadAddress);
+    assert( paSrc != Gekko::BadAddress);
     assert( (paDest + cnt) < RAMSIZE);
     assert( (paSrc + cnt) < RAMSIZE);
 
@@ -46,9 +46,9 @@ void HLE_memcpy()
 void HLE_memset()
 {
     uint32_t eaDest = PARAM(0), c = PARAM(1), cnt = PARAM(2);
-    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, false);
+    uint32_t paDest = Gekko::Gekko->EffectiveToPhysical(eaDest, Gekko::MmuAccess::Read);
 
-    assert(paDest != -1);
+    assert(paDest != Gekko::BadAddress);
     assert( (paDest + cnt) < RAMSIZE);
 
 //  DBReport( GREEN "memcpy(0x%08X, %i(%c), %i(%s))\n", 
@@ -81,7 +81,7 @@ void HLE_cos()
 // double modf(double x, double * intptr)
 void HLE_modf()
 {
-    double * intptr = (double *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
+    double * intptr = (double *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read)]);
     
     FPRD(1) = modf(FPRD(1), intptr);
     swap_double(intptr);
@@ -90,7 +90,7 @@ void HLE_modf()
 // double frexp(double x, int * expptr)
 void HLE_frexp()
 {
-    uint32_t * expptr = (uint32_t *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), false)]);
+    uint32_t * expptr = (uint32_t *)(&mi.ram[Gekko::Gekko->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read)]);
     
     FPRD(1) = frexp(FPRD(1), (int *)expptr);
     *expptr = SWAP(*expptr);

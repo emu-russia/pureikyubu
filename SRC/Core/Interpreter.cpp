@@ -10,8 +10,15 @@ namespace Gekko
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-        pa = GCEffectiveToPhysical(Gekko->regs.pc, true);
-        MIReadWord(pa, &op);
+        pa = core->EffectiveToPhysical(Gekko->regs.pc, MmuAccess::Execute);
+        if (pa == Gekko::BadAddress)
+        {
+            Exception(Exception::ISI);
+        }
+        else
+        {
+            MIReadWord(pa, &op);
+        }
         if (exception) goto JumpPC;  // ISI
         c_1[op >> 26](op); Gekko->ops++;
         if (exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
@@ -54,6 +61,38 @@ namespace Gekko
       
         Gekko->regs.spr[(int)Gekko::SPR::SRR0] = Gekko->regs.pc;
         Gekko->regs.spr[(int)Gekko::SPR::SRR1] = Gekko->regs.msr;
+
+        // Special processing for MMU
+        if (code == Exception::ISI)
+        {
+            switch (core->MmuLastResult)
+            {
+                case MmuResult::PageFault:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x4000'0000;
+                    break;
+
+                case MmuResult::Protected:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0800'0000;
+                    break;
+
+                case MmuResult::NoExecute:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x1000'0000;
+                    break;
+            }
+        }
+        else if (code == Exception::DSI)
+        {
+            switch (core->MmuLastResult)
+            {
+                case MmuResult::PageFault:
+                    Gekko->regs.spr[(int)Gekko::SPR::DSISR] |= 0x4000'0000;
+                    break;
+
+                case MmuResult::Protected:
+                    Gekko->regs.spr[(int)Gekko::SPR::DSISR] |= 0x0800'0000;
+                    break;
+            }
+        }
 
         // disable address translation
         Gekko->regs.msr &= ~(MSR_IR | MSR_DR);

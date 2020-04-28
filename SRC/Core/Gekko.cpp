@@ -1,20 +1,6 @@
 // CPU controls 
 #include "pch.h"
 
-// memory operations (using MEM* or DB* read/write operations)
-void (__fastcall *CPUReadByte)(uint32_t addr, uint32_t *reg);
-void (__fastcall *CPUWriteByte)(uint32_t addr, uint32_t data);
-void (__fastcall *CPUReadHalf)(uint32_t addr, uint32_t *reg);
-void (__fastcall *CPUReadHalfS)(uint32_t addr, uint32_t *reg);
-void (__fastcall *CPUWriteHalf)(uint32_t addr, uint32_t data);
-void (__fastcall *CPUReadWord)(uint32_t addr, uint32_t *reg);
-void (__fastcall *CPUWriteWord)(uint32_t addr, uint32_t data);
-void (__fastcall *CPUReadDouble)(uint32_t addr, uint64_t *reg);
-void (__fastcall *CPUWriteDouble)(uint32_t addr, uint64_t *data);
-
-// run from PC (using interpreter/debugger/recompiler)
-void (*CPUStart)();
-
 namespace Gekko
 {
     GekkoCore* Gekko;
@@ -70,17 +56,30 @@ namespace Gekko
         ops = 0;
         dispatchQueueCounter = 0;
 
-        // set CPU memory operations to default (using MEM*);
-        // debugger will override them by DB* calls after start, if need.
-        CPUReadByte = MEMReadByte;
-        CPUWriteByte = MEMWriteByte;
-        CPUReadHalf = MEMReadHalf;
-        CPUReadHalfS = MEMReadHalfS;
-        CPUWriteHalf = MEMWriteHalf;
-        CPUReadWord = MEMReadWord;
-        CPUWriteWord = MEMWriteWord;
-        CPUReadDouble = MEMReadDouble;
-        CPUWriteDouble = MEMWriteDouble;
+        // TODO: Make switchable
+        //EffectiveToPhysical = &GekkoCore::EffectiveToPhysicalNoMmu;
+
+        // BAT registers are scattered across the SPR address space. This is not very convenient, we will make it convenient.
+
+        dbatu[0] = &regs.spr[(int)SPR::DBAT0U];
+        dbatu[1] = &regs.spr[(int)SPR::DBAT1U];
+        dbatu[2] = &regs.spr[(int)SPR::DBAT2U];
+        dbatu[3] = &regs.spr[(int)SPR::DBAT3U];
+
+        dbatl[0] = &regs.spr[(int)SPR::DBAT0L];
+        dbatl[1] = &regs.spr[(int)SPR::DBAT1L];
+        dbatl[2] = &regs.spr[(int)SPR::DBAT2L];
+        dbatl[3] = &regs.spr[(int)SPR::DBAT3L];
+
+        ibatu[0] = &regs.spr[(int)SPR::IBAT0U];
+        ibatu[1] = &regs.spr[(int)SPR::IBAT1U];
+        ibatu[2] = &regs.spr[(int)SPR::IBAT2U];
+        ibatu[3] = &regs.spr[(int)SPR::IBAT3U];
+
+        ibatl[0] = &regs.spr[(int)SPR::IBAT0L];
+        ibatl[1] = &regs.spr[(int)SPR::IBAT1L];
+        ibatl[2] = &regs.spr[(int)SPR::IBAT2L];
+        ibatl[3] = &regs.spr[(int)SPR::IBAT3L];
 
         // Registers
 
@@ -94,6 +93,7 @@ namespace Gekko
         regs.spr[9] = 0;    // CTR
 
         gatherBuffer.Reset();
+        tlb.InvalidateAll();
     }
 
     // Modify CPU counters
@@ -132,11 +132,6 @@ namespace Gekko
     int64_t GekkoCore::OneSecond()
     {
         return CPU_TIMER_CLOCK;
-    }
-
-    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, bool IR)
-    {
-        return GCEffectiveToPhysical(ea, IR);
     }
 
     // Swap longs (no need in assembly, used by tools)
@@ -229,6 +224,12 @@ namespace Gekko
             waitQueue[(int)disignation].tbrValue = (uint64_t)GetTicks() + gekkoTicks;
             waitQueue[(int)disignation].requireSuspend = true;
         }
+    }
+
+    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type)
+    {
+        //return EffectiveToPhysicalNoMmu(ea, type);
+        return EffectiveToPhysicalMmu(ea, type);
     }
 
 }

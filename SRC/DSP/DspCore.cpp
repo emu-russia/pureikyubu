@@ -970,14 +970,14 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			if (DmaRegs.mmemAddr.bits < (RAMSIZE - DmaRegs.blockSize))
+			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
 			{
 				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
 			}
 		}
 		else
 		{
-			if (DmaRegs.mmemAddr.bits < (RAMSIZE - DmaRegs.blockSize))
+			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
 			{
 				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
 			}
