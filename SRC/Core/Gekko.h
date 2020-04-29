@@ -71,7 +71,9 @@ namespace Gekko
     {
         Ok = 0,
         PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
-        Protected,      // Block/page protection violation 
+        ProtectedFetch,    // Block/page protection violation 
+        ProtectedRead,     // Block/page protection violation 
+        ProtectedWrite,    // Block/page protection violation 
         NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
     };
 
@@ -92,7 +94,7 @@ namespace Gekko
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
         // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 2;
+        static const int CounterStep = 12;
 
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);

@@ -306,17 +306,17 @@ namespace Gekko
         int key;
         if (regs.msr & MSR_PR)
         {
-            key = sr & 0x2000'0000 ? 4 : 0;
+            key = sr & 0x2000'0000 ? 4 : 0;     // Kp
         }
         else
         {
-            key = sr & 0x4000'0000 ? 4 : 0;
+            key = sr & 0x4000'0000 ? 4 : 0;     // Ks
         }
 
         // Calculate PTEG physical addresses
 
         uint64_t vpn = (((uint64_t)sr & 0x00ffffff) << 16) | ((ea >> 12) & 0xffff);
-        uint32_t hash = ((uint32_t)(vpn >> 16) & 0x7ffff) ^ ((uint32_t)vpn & 0x1fff);
+        uint32_t hash = ((uint32_t)(vpn >> 16) & 0x7ffff) ^ ((uint32_t)vpn & 0xffff);
 
         uint32_t sdr = regs.spr[(int)SPR::SDR1];
 
@@ -390,7 +390,19 @@ namespace Gekko
 
                 if (protectViolation)
                 {
-                    MmuLastResult = MmuResult::Protected;
+                    switch (type)
+                    {
+                        case MmuAccess::Read:
+                            MmuLastResult = MmuResult::ProtectedRead;
+                            break;
+                        case MmuAccess::Write:
+                            MmuLastResult = MmuResult::ProtectedWrite;
+                            break;
+                        case MmuAccess::Execute:
+                            MmuLastResult = MmuResult::ProtectedFetch;
+                            break;
+                    }
+
                     return BadAddress;
                 }
 
@@ -457,7 +469,19 @@ namespace Gekko
 
                 if (protectViolation)
                 {
-                    MmuLastResult = MmuResult::Protected;
+                    switch (type)
+                    {
+                        case MmuAccess::Read:
+                            MmuLastResult = MmuResult::ProtectedRead;
+                            break;
+                        case MmuAccess::Write:
+                            MmuLastResult = MmuResult::ProtectedWrite;
+                            break;
+                        case MmuAccess::Execute:
+                            MmuLastResult = MmuResult::ProtectedFetch;
+                            break;
+                    }
+
                     return BadAddress;
                 }
 
