@@ -295,8 +295,6 @@ namespace Gekko
 
         // Direct Store (T=1) not supported.
 
-        // Ignore protection for now.
-
         uint32_t sr = regs.sr[ea >> 28];
 
         if (sr & 0x1000'0000 && type == MmuAccess::Execute)
@@ -305,10 +303,20 @@ namespace Gekko
             return BadAddress;
         }
 
+        int key;
+        if (regs.msr & MSR_PR)
+        {
+            key = sr & 0x2000'0000 ? 4 : 0;
+        }
+        else
+        {
+            key = sr & 0x4000'0000 ? 4 : 0;
+        }
+
         // Calculate PTEG physical addresses
 
         uint64_t vpn = (((uint64_t)sr & 0x00ffffff) << 16) | ((ea >> 12) & 0xffff);
-        uint32_t hash = (uint32_t)(vpn >> 16) ^ ((uint32_t)vpn & 0x1fff);
+        uint32_t hash = ((uint32_t)(vpn >> 16) & 0x7ffff) ^ ((uint32_t)vpn & 0x1fff);
 
         uint32_t sdr = regs.spr[(int)SPR::SDR1];
 
@@ -355,11 +363,36 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                if (type == MmuAccess::Write)
+
+                // Check Protection
+                int pp = key | (pte[1] & 3);
+                bool protectViolation = false;
+                if (type == MmuAccess::Read || type == MmuAccess::Execute)
+                {
+                    if (pp == 0b100)
+                    {
+                        protectViolation = true;
+                    }
+                }
+                else if (type == MmuAccess::Write)
+                {
+                    if (pp == 0b011 || pp == 0b100 || pp == 0b101 || pp == 0b111)
+                    {
+                        protectViolation = true;
+                    }
+                }
+
+                if (type == MmuAccess::Write && !protectViolation)
                 {
                     pte[1] |= 0x80;     // Changed
                 }
                 MIWriteWord(primaryPteAddr + 4, pte[1]);
+
+                if (protectViolation)
+                {
+                    MmuLastResult = MmuResult::Protected;
+                    return BadAddress;
+                }
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
                 MmuLastResult = MmuResult::Ok;
@@ -396,11 +429,37 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                if (type == MmuAccess::Write)
+
+                // Check Protection
+                int pp = key | (pte[1] & 3);
+                bool protectViolation = false;
+                if (type == MmuAccess::Read || type == MmuAccess::Execute)
                 {
-                    pte[1] |= 0x80;     // Changed
+                    if (pp == 0b100)
+                    {
+                        protectViolation = true;
+                    }
+                }
+                else if (type == MmuAccess::Write)
+                {
+                    if (pp == 0b011 || pp == 0b100 || pp == 0b101 || pp == 0b111)
+                    {
+                        protectViolation = true;
+                    }
+                }
+
+                // Changed
+                if (type == MmuAccess::Write && !protectViolation)
+                {
+                    pte[1] |= 0x80;
                 }
                 MIWriteWord(secondaryPteAddr + 4, pte[1]);
+
+                if (protectViolation)
+                {
+                    MmuLastResult = MmuResult::Protected;
+                    return BadAddress;
+                }
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
                 MmuLastResult = MmuResult::Ok;
@@ -417,16 +476,16 @@ namespace Gekko
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
     {
         uint32_t pa;
-        if (!tlb.Exists(ea, pa))
+        //if (!tlb.Exists(ea, pa))
         {
             if (!BlockAddressTranslation(ea, pa, type))
             {
                 pa = SegmentTranslation(ea, type);
             }
-            if (pa != BadAddress)
-            {
-                tlb.Map(ea, pa);
-            }
+            //if (pa != BadAddress)
+            //{
+            //    tlb.Map(ea, pa);
+            //}
         }
         return pa;
     }
