@@ -54,6 +54,7 @@ namespace Gekko
         DduData,
         DduAudio,
         FlipperAi,
+        GxCommandProcessor,
         Max,
     };
 
@@ -108,11 +109,18 @@ namespace Gekko
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
 
-        // TODO:
         std::vector<uint32_t> breakPointsExecute;
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
+
+        void TestBreakpoints();
+        void TestReadBreakpoints(uint32_t accessAddress);
+        void TestWriteBreakpoints(uint32_t accessAddress);
+
+        bool EnableTestBreakpoints = false;
+        bool EnableTestReadBreakpoints = false;
+        bool EnableTestWriteBreakpoints = false;
 
         Interpreter* interp;
         Jitc* jitc;
@@ -212,6 +220,15 @@ namespace Gekko
         static void SwapAreaHalf(uint16_t* addr, int count);
 
 #pragma endregion "Memory interface"
+
+#pragma region "Breakpoints"
+
+        void AddBreakpoint(uint32_t addr);
+        void AddReadBreak(uint32_t addr);
+        void AddWriteBreak(uint32_t addr);
+        void ClearBreakpoints();
+
+#pragma endregion "Breakpoints"
 
     };
 

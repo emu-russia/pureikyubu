@@ -11,6 +11,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
+        TestReadBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -30,6 +32,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
+        TestWriteBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -59,6 +63,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
+        TestReadBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -84,6 +90,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
+        TestWriteBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -113,6 +121,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
+        TestReadBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -132,6 +142,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
+        TestWriteBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -161,6 +173,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
+        TestReadBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -182,6 +196,8 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
+        TestWriteBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {

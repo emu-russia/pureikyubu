@@ -510,7 +510,10 @@ namespace Gekko
 		if (MemToCache)
 		{   // 1 load - transfer from external memory to locked cache
 
-			DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+			}
 
 			for (size_t i = 0; i < numBursts; i++)
 			{
@@ -522,7 +525,10 @@ namespace Gekko
 		else
 		{   // 0 store -  transfer from locked cache to external memory 
 
-			DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+			}
 
 			for (size_t i = 0; i < numBursts; i++)
 			{
