@@ -381,7 +381,7 @@ namespace Gekko
 
         if (addr != BadAddress)
         {
-            DBHalt("Gekko suspended trying to read: 0x%08X\n", addr);
+            DBHalt("Gekko suspended trying to write: 0x%08X\n", addr);
         }
     }
 
