@@ -1,14 +1,9 @@
 // Floating-Point Load and Store Instructions
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {
-    #define FPRU(n) (Gekko->regs.fpr[n].uval)
-    #define FPRD(n) (Gekko->regs.fpr[n].dbl)
-    #define PS0(n)  (Gekko->regs.fpr[n].dbl)
-    #define PS1(n)  (Gekko->regs.ps1[n].dbl)
-
     // ---------------------------------------------------------------------------
     // loads
 

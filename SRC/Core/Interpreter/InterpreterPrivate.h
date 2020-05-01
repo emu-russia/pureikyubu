@@ -88,3 +88,8 @@ extern "C" uint32_t __fastcall Rotl32(int sa, uint32_t data);
 #define RRA         Gekko::Gekko->regs.gpr[RA]
 #define RRB         Gekko::Gekko->regs.gpr[RB]
 #define RRC         Gekko::Gekko->regs.gpr[RC]
+
+#define FPRU(n) (Gekko->regs.fpr[n].uval)
+#define FPRD(n) (Gekko->regs.fpr[n].dbl)
+#define PS0(n)  (Gekko->regs.fpr[n].dbl)
+#define PS1(n)  (Gekko->regs.ps1[n].dbl)

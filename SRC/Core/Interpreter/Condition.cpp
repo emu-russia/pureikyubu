@@ -1,6 +1,6 @@
 // Condition Register Logical Instructions
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {

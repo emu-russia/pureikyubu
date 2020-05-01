@@ -1,6 +1,6 @@
 // Branch Instructions
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {

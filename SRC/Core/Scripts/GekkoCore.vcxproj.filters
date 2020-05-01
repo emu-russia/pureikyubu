@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Interpreter\interpreter.h">
-      <Filter>Interpreter</Filter>
-    </ClInclude>
     <ClInclude Include="..\Gekko.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -59,6 +56,9 @@
     </ClInclude>
     <ClInclude Include="..\Cache.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Interpreter\InterpreterPrivate.h">
+      <Filter>Interpreter</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -161,7 +161,7 @@
     <ClInclude Include="..\GekkoDisasm.h" />
     <ClInclude Include="..\GekkoDisasmOld.h" />
     <ClInclude Include="..\Interpreter.h" />
-    <ClInclude Include="..\Interpreter\interpreter.h" />
+    <ClInclude Include="..\Interpreter\InterpreterPrivate.h" />
     <ClInclude Include="..\Jitc.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\TLB.h" />

@@ -1,7 +1,7 @@
 // Paired Single Load and Store Instructions
 // used for fast type casting and matrix transfers.
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {
@@ -12,11 +12,6 @@ namespace Gekko
     #define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((Gekko->regs.spr[(int)SPR::GQRs + n] >> 16) & 7)
     #define ST_SCALE(n) ((Gekko->regs.spr[(int)SPR::GQRs + n] >>  8) & 0x3f)
     #define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((Gekko->regs.spr[(int)SPR::GQRs + n]      ) & 7)
-
-    #define FPRU(n) (Gekko->regs.fpr[n].uval)
-    #define FPRD(n) (Gekko->regs.fpr[n].dbl)
-    #define PS0(n)  (Gekko->regs.fpr[n].dbl)
-    #define PS1(n)  (Gekko->regs.ps1[n].dbl)
 
     // INT -> float (F = I * 2 ** -S)
     float Interpreter::dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale)

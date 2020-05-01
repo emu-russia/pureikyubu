@@ -1,6 +1,6 @@
 // Integer Load and Store Instructions
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {
