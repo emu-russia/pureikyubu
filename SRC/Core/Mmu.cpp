@@ -254,6 +254,10 @@ namespace Gekko
 
             for (int n = 0; n < 4; n++)
             {
+                bool valid = (*ibatu[n] & 3) != 0;
+                if (!valid)
+                    continue;
+
                 uint32_t bepi = BATBEPI(*ibatu[n]);
                 uint32_t bl = BATBL(*ibatu[n]);
                 uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
@@ -278,6 +282,10 @@ namespace Gekko
 
             for (int n = 0; n < 4; n++)
             {
+                bool valid = (*dbatu[n] & 3) != 0;
+                if (!valid)
+                    continue;
+
                 uint32_t bepi = BATBEPI(*dbatu[n]);
                 uint32_t bl = BATBL(*dbatu[n]);
                 uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
