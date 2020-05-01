@@ -326,7 +326,7 @@ namespace Gekko
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
         if (pa != Gekko::BadAddress)
         {
-            Gekko->cache.TouchForStore(pa);
+            Gekko->cache.Touch(pa);
         }
         else
         {

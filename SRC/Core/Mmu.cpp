@@ -300,6 +300,7 @@ namespace Gekko
         {
             if ((regs.msr & MSR_IR) == 0)
             {
+                LastWIMG = WIMG_G;
                 pa = ea;
                 return true;
             }
@@ -313,6 +314,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*ibatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
+                    LastWIMG = (*ibatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -322,7 +324,7 @@ namespace Gekko
         {
             if ((regs.msr & MSR_DR) == 0)
             {
-                LastWIMG = WIMG_I;
+                LastWIMG = WIMG_M | WIMG_G;
                 pa = ea;
                 return true;
             }

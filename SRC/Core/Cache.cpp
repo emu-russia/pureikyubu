@@ -13,330 +13,357 @@
 
 namespace Gekko
 {
-    Cache::Cache()
-    {
-        cacheData = new uint8_t[cacheSize];
-        assert(cacheData);
+	Cache::Cache()
+	{
+		cacheData = new uint8_t[cacheSize];
+		assert(cacheData);
 
-        modifiedBlocks = new bool[cacheSize >> 5];
-        assert(modifiedBlocks);
+		modifiedBlocks = new bool[cacheSize >> 5];
+		assert(modifiedBlocks);
 
-        invalidBlocks = new bool[cacheSize >> 5];
-        assert(invalidBlocks);
+		invalidBlocks = new bool[cacheSize >> 5];
+		assert(invalidBlocks);
 
-        Reset();
-    }
+		Reset();
+	}
 
-    Cache::~Cache()
-    {
-        delete[] cacheData;
-        delete[] modifiedBlocks;
-        delete[] invalidBlocks;
-    }
+	Cache::~Cache()
+	{
+		delete[] cacheData;
+		delete[] modifiedBlocks;
+		delete[] invalidBlocks;
+	}
 
-    void Cache::Reset()
-    {
-        DBReport2(DbgChannel::CPU, "Cache::Reset\n");
+	void Cache::Reset()
+	{
+		DBReport2(DbgChannel::CPU, "Cache::Reset\n");
 
-        for (size_t i = 0; i < (cacheSize >> 5); i++)
-        {
-            modifiedBlocks[i] = false;
-            invalidBlocks[i] = true;
-        }
-    }
+		for (size_t i = 0; i < (cacheSize >> 5); i++)
+		{
+			modifiedBlocks[i] = false;
+			invalidBlocks[i] = true;
+		}
+	}
 
-    bool Cache::IsDirty(uint32_t pa)
-    {
-        size_t blockNum = pa >> 5;
-        return modifiedBlocks[blockNum];
-    }
+	bool Cache::IsDirty(uint32_t pa)
+	{
+		size_t blockNum = pa >> 5;
+		return modifiedBlocks[blockNum];
+	}
 
-    void Cache::SetDirty(uint32_t pa, bool dirty)
-    {
-        size_t blockNum = pa >> 5;
+	void Cache::SetDirty(uint32_t pa, bool dirty)
+	{
+		size_t blockNum = pa >> 5;
 
-        if (dirty == modifiedBlocks[blockNum])
-            return;
+		if (dirty == modifiedBlocks[blockNum])
+			return;
 
-        modifiedBlocks[blockNum] = dirty;
+		modifiedBlocks[blockNum] = dirty;
 
-        if (log && dirty)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::SetDirty. pa: 0x%08X\n", pa & ~0x1f);
-        }
-    }
+		if (log >= CacheLogLevel::MemOps && dirty)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::SetDirty. pa: 0x%08X\n", pa & ~0x1f);
+		}
+	}
 
-    bool Cache::IsInvalid(uint32_t pa)
-    {
-        size_t blockNum = pa >> 5;
-        return invalidBlocks[blockNum];
-    }
+	bool Cache::IsInvalid(uint32_t pa)
+	{
+		size_t blockNum = pa >> 5;
+		return invalidBlocks[blockNum];
+	}
 
-    void Cache::SetInvalid(uint32_t pa, bool invalid)
-    {
-        size_t blockNum = pa >> 5;
+	void Cache::SetInvalid(uint32_t pa, bool invalid)
+	{
+		size_t blockNum = pa >> 5;
 
-        if (invalid == invalidBlocks[blockNum])
-            return;
+		if (invalid == invalidBlocks[blockNum])
+			return;
 
-        invalidBlocks[blockNum] = invalid;
+		invalidBlocks[blockNum] = invalid;
 
-        if (log && invalid)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::SetInvalid. pa: 0x%08X\n", pa & ~0x1f);
-        }
-    }
+		if (log >= CacheLogLevel::MemOps && invalid)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::SetInvalid. pa: 0x%08X\n", pa & ~0x1f);
+		}
+	}
 
-    void Cache::Flush(uint32_t pa)
-    {
-        if (pa >= cacheSize)
-            return;
+	void Cache::Flush(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
 
-        if (IsDirty(pa))
-        {
-            MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
-            SetDirty(pa, false);
-        }
-        SetInvalid(pa, true);
-    }
+		if (IsDirty(pa))
+		{
+			MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+			SetDirty(pa, false);
+		}
+		SetInvalid(pa, true);
 
-    void Cache::Invalidate(uint32_t pa)
-    {
-        if (pa >= cacheSize)
-            return;
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Flush 0x%08X\n", pa);
+		}
+	}
 
-        SetInvalid(pa, true);
-    }
+	void Cache::Invalidate(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
 
-    void Cache::Store(uint32_t pa)
-    {
-        if (pa >= cacheSize)
-            return;
+		SetInvalid(pa, true);
 
-        if (IsDirty(pa))
-        {
-            MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
-            SetDirty(pa, false);
-        }
-    }
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Invalidate 0x%08X\n", pa);
+		}
+	}
 
-    void Cache::Touch(uint32_t pa)
-    {
-    }
+	void Cache::Store(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
 
-    void Cache::TouchForStore(uint32_t pa)
-    {
-    }
+		if (IsDirty(pa))
+		{
+			MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+			SetDirty(pa, false);
+		}
 
-    void Cache::Zero(uint32_t pa)
-    {
-        if (pa >= cacheSize)
-            return;
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Store 0x%08X\n", pa);
+		}
+	}
 
-        memset(&cacheData[pa & ~0x1f], 0, 32);
-        SetDirty(pa, true);
-        SetInvalid(pa, false);
-    }
+	void Cache::Touch(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
 
-    void Cache::ZeroLocked(uint32_t pa)
-    {
-        // TODO
-    }
+		MIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		SetDirty(pa, true);
+		SetInvalid(pa, false);
 
-    void __fastcall Cache::ReadByte(uint32_t addr, uint32_t* reg)
-    {
-        if (addr >= cacheSize)
-            return;
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Touch 0x%08X\n", pa);
+		}
+	}
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::ReadByte busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+	void Cache::Zero(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-            SetDirty(addr, false);
-        }
-        *reg = cacheData[addr];
+		memset(&cacheData[pa & ~0x1f], 0, 32);
+		SetDirty(pa, true);
+		SetInvalid(pa, false);
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::ReadByte. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
-        }
-    }
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Zero 0x%08X\n", pa);
+		}
+	}
 
-    void __fastcall Cache::WriteByte(uint32_t addr, uint32_t data)
-    {
-        if (addr >= cacheSize)
-            return;
+	void Cache::ZeroLocked(uint32_t pa)
+	{
+		// TODO
+	}
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::WriteByte busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+	void __fastcall Cache::ReadByte(uint32_t addr, uint32_t* reg)
+	{
+		if (addr >= cacheSize)
+			return;
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-        }
-        cacheData[addr] = (uint8_t)data;
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::ReadByte busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::WriteByte. addr: 0x%08X, data: 0x%08X\n", addr, data);
-        }
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+			SetDirty(addr, false);
+		}
+		*reg = cacheData[addr];
 
-        SetDirty(addr, true);
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadByte. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+		}
+	}
 
-    void __fastcall Cache::ReadHalf(uint32_t addr, uint32_t* reg)
-    {
-        if (addr >= cacheSize)
-            return;
+	void __fastcall Cache::WriteByte(uint32_t addr, uint32_t data)
+	{
+		if (addr >= cacheSize)
+			return;
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::ReadHalf busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::WriteByte busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-            SetDirty(addr, false);
-        }
-        *reg = _byteswap_ushort(*(uint16_t *)&cacheData[addr]);
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+		}
+		cacheData[addr] = (uint8_t)data;
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::ReadHalf. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
-        }
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteByte. addr: 0x%08X, data: 0x%08X\n", addr, data);
+		}
 
-    void __fastcall Cache::WriteHalf(uint32_t addr, uint32_t data)
-    {
-        if (addr >= cacheSize)
-            return;
+		SetDirty(addr, true);
+	}
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::WriteHalf busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+	void __fastcall Cache::ReadHalf(uint32_t addr, uint32_t* reg)
+	{
+		if (addr >= cacheSize)
+			return;
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-        }
-        *(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::ReadHalf busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::WriteHalf. addr: 0x%08X, data: 0x%08X\n", addr, data);
-        }
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+			SetDirty(addr, false);
+		}
+		*reg = _byteswap_ushort(*(uint16_t *)&cacheData[addr]);
 
-        SetDirty(addr, true);
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadHalf. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+		}
+	}
 
-    void __fastcall Cache::ReadWord(uint32_t addr, uint32_t* reg)
-    {
-        if (addr >= cacheSize)
-            return;
+	void __fastcall Cache::WriteHalf(uint32_t addr, uint32_t data)
+	{
+		if (addr >= cacheSize)
+			return;
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::ReadWord busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::WriteHalf busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-            SetDirty(addr, false);
-        }
-        *reg = _byteswap_ulong(*(uint32_t*)&cacheData[addr]);
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+		}
+		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::ReadWord. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
-        }
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteHalf. addr: 0x%08X, data: 0x%08X\n", addr, data);
+		}
 
-    void __fastcall Cache::WriteWord(uint32_t addr, uint32_t data)
-    {
-        if (addr >= cacheSize)
-            return;
+		SetDirty(addr, true);
+	}
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::WriteWord busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+	void __fastcall Cache::ReadWord(uint32_t addr, uint32_t* reg)
+	{
+		if (addr >= cacheSize)
+			return;
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-        }
-        *(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::ReadWord busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::WriteWord. addr: 0x%08X, data: 0x%08X\n", addr, data);
-        }
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+			SetDirty(addr, false);
+		}
+		*reg = _byteswap_ulong(*(uint32_t*)&cacheData[addr]);
 
-        SetDirty(addr, true);
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadWord. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+		}
+	}
 
-    void __fastcall Cache::ReadDouble(uint32_t addr, uint64_t* reg)
-    {
-        if (addr >= cacheSize)
-            return;
+	void __fastcall Cache::WriteWord(uint32_t addr, uint32_t data)
+	{
+		if (addr >= cacheSize)
+			return;
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::ReadDouble busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::WriteWord busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-            SetDirty(addr, false);
-        }
-        *reg = _byteswap_uint64(*(uint64_t*)&cacheData[addr]);
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+		}
+		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::ReadDouble. addr: 0x%08X, *reg: 0x%llX\n", addr, *reg);
-        }
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteWord. addr: 0x%08X, data: 0x%08X\n", addr, data);
+		}
 
-    void __fastcall Cache::WriteDouble(uint32_t addr, uint64_t* data)
-    {
-        if (addr >= cacheSize)
-            return;
+		SetDirty(addr, true);
+	}
 
-        if (IsInvalid(addr))
-        {
-            if (log)
-            {
-                DBReport2(DbgChannel::CPU, "Cache::WriteDouble busrt cache: 0x%08X\n", addr & ~0x1f);
-            }
+	void __fastcall Cache::ReadDouble(uint32_t addr, uint64_t* reg)
+	{
+		if (addr >= cacheSize)
+			return;
 
-            MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
-            SetInvalid(addr, false);
-        }
-        *(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::ReadDouble busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
 
-        if (log)
-        {
-            DBReport2(DbgChannel::CPU, "Cache::WriteDouble. addr: 0x%08X, data: 0x%llX\n", addr, data);
-        }
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+			SetDirty(addr, false);
+		}
+		*reg = _byteswap_uint64(*(uint64_t*)&cacheData[addr]);
 
-        SetDirty(addr, true);
-    }
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadDouble. addr: 0x%08X, *reg: 0x%llX\n", addr, *reg);
+		}
+	}
+
+	void __fastcall Cache::WriteDouble(uint32_t addr, uint64_t* data)
+	{
+		if (addr >= cacheSize)
+			return;
+
+		if (IsInvalid(addr))
+		{
+			if (log >= CacheLogLevel::MemOps)
+			{
+				DBReport2(DbgChannel::CPU, "Cache::WriteDouble busrt cache: 0x%08X\n", addr & ~0x1f);
+			}
+
+			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			SetInvalid(addr, false);
+		}
+		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
+
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteDouble. addr: 0x%08X, data: 0x%llX\n", addr, data);
+		}
+
+		SetDirty(addr, true);
+	}
 
 }
