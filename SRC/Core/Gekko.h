@@ -114,6 +114,7 @@ namespace Gekko
         std::vector<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
 
+        bool TestBreakpointForJitc(uint32_t addr);
         void TestBreakpoints();
         void TestReadBreakpoints(uint32_t accessAddress);
         void TestWriteBreakpoints(uint32_t accessAddress);

@@ -259,6 +259,7 @@ namespace Gekko
     {
         breakPointsLock.Lock();
         breakPointsExecute.push_back(addr);
+        jitc->Invalidate(addr, 4);
         breakPointsLock.Unlock();
         EnableTestBreakpoints = true;
     }
@@ -291,6 +292,27 @@ namespace Gekko
         EnableTestWriteBreakpoints = false;
     }
 
+    bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
+    {
+        if (!EnableTestBreakpoints)
+            return false;
+
+        bool exists = false;
+
+        breakPointsLock.Lock();
+        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+        {
+            if (*it == addr)
+            {
+                exists = true;
+                break;
+            }
+        }
+        breakPointsLock.Unlock();
+
+        return exists;
+    }
+
     void GekkoCore::TestBreakpoints()
     {
         if (!EnableTestBreakpoints)
@@ -304,6 +326,7 @@ namespace Gekko
             if (*it == regs.pc)
             {
                 addr = *it;
+                break;
             }
         }
         breakPointsLock.Unlock();
@@ -327,6 +350,7 @@ namespace Gekko
             if (*it == accessAddress)
             {
                 addr = *it;
+                break;
             }
         }
         breakPointsLock.Unlock();
@@ -350,6 +374,7 @@ namespace Gekko
             if (*it == accessAddress)
             {
                 addr = *it;
+                break;
             }
         }
         breakPointsLock.Unlock();
