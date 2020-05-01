@@ -82,14 +82,14 @@ boot:
 # Configure memory model:
 #
 # DBAT0: 80001FFF 00000002    Write-back cached main memory, 256MB block.
-# DBAT1: C0001FFF 0000002A    Write-through cached main memory, 256MB block.
+# DBAT1: C0001FFF 0000002A    Cache inhibited, Guarded, 256MB block.
 # DBAT2: 00000000 xxxxxxxx    Dont care, reserved.
 # DBAT3: FFF0001F FFF00001    Bootrom, 1MB block (temporary for BS)
 #
 # IBAT0: 80001FFF 00000002    Write-back cached main memory, 256MB block.
 # IBAT1: 00000000 xxxxxxxx    Dont care, reserved.
 # IBAT2: 00000000 xxxxxxxx    Dont care, reserved.
-# IBAT3: FFF0001F FFF00001    Bootrom, 1MB block (temporary for BS)
+# IBAT3: FFF0001F FFF00001    Cache inhibited, Guarded, Bootrom, 1MB block (temporary for BS)
         lis         r4, 0x0000
         addi        r4, r4, 2
         lis         r3, 0x8000

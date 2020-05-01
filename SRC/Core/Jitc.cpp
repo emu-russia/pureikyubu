@@ -40,6 +40,9 @@ namespace Gekko
 
 		while (maxInstructions--)
 		{
+			if (core->TestBreakpointForJitc(addr))
+				break;
+
 			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute);
 			uint32_t instr;
 

@@ -20,6 +20,9 @@ namespace Gekko
         DBHalt("** CPU ERROR **\n"
             "unimplemented opcode : %08X <%08X> (%i, %i)\n",
             Gekko->regs.pc, op, op >> 26, op & 0x7ff);
+
+        Gekko->PrCause = PrivilegedCause::IllegalInstruction;
+        Gekko->Exception(Exception::PROGRAM);
     }
 
     // switch to extension opcode table

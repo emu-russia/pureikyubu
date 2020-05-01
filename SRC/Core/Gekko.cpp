@@ -11,6 +11,8 @@ namespace Gekko
 
         while (true)
         {
+            core->TestBreakpoints();
+
             core->interp->ExecuteOpcode();
             //core->jitc->Execute();
         }
@@ -94,8 +96,9 @@ namespace Gekko
         regs.msr &= ~(MSR_DR | MSR_IR);
 
         regs.tb.uval = 0;
-        regs.spr[22] = 0;   // DEC
-        regs.spr[9] = 0;    // CTR
+        regs.spr[(int)SPR::HID1] = 0x8000'0000;
+        regs.spr[(int)SPR::DEC] = 0;
+        regs.spr[(int)SPR::CTR] = 0;
 
         gatherBuffer.Reset();
 
@@ -103,6 +106,7 @@ namespace Gekko
         segmentsExecuted = 0;
 
         tlb.InvalidateAll();
+        cache.Reset();
     }
 
     // Modify CPU counters
@@ -249,6 +253,136 @@ namespace Gekko
     {
         //return EffectiveToPhysicalNoMmu(ea, type);
         return EffectiveToPhysicalMmu(ea, type);
+    }
+
+    void GekkoCore::AddBreakpoint(uint32_t addr)
+    {
+        breakPointsLock.Lock();
+        breakPointsExecute.push_back(addr);
+        jitc->Invalidate(addr, 4);
+        breakPointsLock.Unlock();
+        EnableTestBreakpoints = true;
+    }
+
+    void GekkoCore::AddReadBreak(uint32_t addr)
+    {
+        breakPointsLock.Lock();
+        breakPointsRead.push_back(addr);
+        breakPointsLock.Unlock();
+        EnableTestReadBreakpoints = true;
+    }
+
+    void GekkoCore::AddWriteBreak(uint32_t addr)
+    {
+        breakPointsLock.Lock();
+        breakPointsWrite.push_back(addr);
+        breakPointsLock.Unlock();
+        EnableTestWriteBreakpoints = true;
+    }
+
+    void GekkoCore::ClearBreakpoints()
+    {
+        breakPointsLock.Lock();
+        breakPointsExecute.clear();
+        breakPointsRead.clear();
+        breakPointsWrite.clear();
+        breakPointsLock.Unlock();
+        EnableTestBreakpoints = false;
+        EnableTestReadBreakpoints = false;
+        EnableTestWriteBreakpoints = false;
+    }
+
+    bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
+    {
+        if (!EnableTestBreakpoints)
+            return false;
+
+        bool exists = false;
+
+        breakPointsLock.Lock();
+        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+        {
+            if (*it == addr)
+            {
+                exists = true;
+                break;
+            }
+        }
+        breakPointsLock.Unlock();
+
+        return exists;
+    }
+
+    void GekkoCore::TestBreakpoints()
+    {
+        if (!EnableTestBreakpoints)
+            return;
+
+        uint32_t addr = BadAddress;
+
+        breakPointsLock.Lock();
+        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+        {
+            if (*it == regs.pc)
+            {
+                addr = *it;
+                break;
+            }
+        }
+        breakPointsLock.Unlock();
+
+        if (addr != BadAddress)
+        {
+            DBHalt("Gekko suspended at addr: 0x%08X\n", addr);
+        }
+    }
+
+    void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
+    {
+        if (!EnableTestReadBreakpoints)
+            return;
+
+        uint32_t addr = BadAddress;
+
+        breakPointsLock.Lock();
+        for (auto it = breakPointsRead.begin(); it != breakPointsRead.end(); ++it)
+        {
+            if (*it == accessAddress)
+            {
+                addr = *it;
+                break;
+            }
+        }
+        breakPointsLock.Unlock();
+
+        if (addr != BadAddress)
+        {
+            DBHalt("Gekko suspended trying to read: 0x%08X\n", addr);
+        }
+    }
+
+    void GekkoCore::TestWriteBreakpoints(uint32_t accessAddress)
+    {
+        if (!EnableTestWriteBreakpoints)
+            return;
+
+        uint32_t addr = BadAddress;
+
+        breakPointsLock.Lock();
+        for (auto it = breakPointsWrite.begin(); it != breakPointsWrite.end(); ++it)
+        {
+            if (*it == accessAddress)
+            {
+                addr = *it;
+                break;
+            }
+        }
+        breakPointsLock.Unlock();
+
+        if (addr != BadAddress)
+        {
+            DBHalt("Gekko suspended trying to read: 0x%08X\n", addr);
+        }
     }
 
 }

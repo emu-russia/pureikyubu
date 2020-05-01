@@ -18,6 +18,8 @@ XFMemory    xfRegs;
 
 uint32_t    cpLoads, bpLoads, xfLoads;
 
+static bool GpRegsLog = false;
+
 // ---------------------------------------------------------------------------
 
 // index range = 00..FF
@@ -26,7 +28,10 @@ void loadCPReg(size_t index, uint32_t value)
 {
     cpLoads++;
 
-    DBReport2(DbgChannel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
+    if (GpRegsLog)
+    {
+        DBReport2(DbgChannel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
+    }
 
     switch(index)
     {
@@ -467,7 +472,10 @@ void loadBPReg(size_t index, uint32_t value)
 
     bpLoads++;
 
-    DBReport2(DbgChannel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
+    if (GpRegsLog)
+    {
+        DBReport2(DbgChannel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
+    }
 
     switch(index)
     {
@@ -876,7 +884,7 @@ void loadBPReg(size_t index, uint32_t value)
 // reg size = 32 bit
 void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
 {
-    xfLoads += amount;
+    xfLoads += (uint32_t)amount;
 
 #if 0
     GFXError("unknown XF load, start index: %04X, n : %i\n", startIdx, amount);
@@ -1210,7 +1218,7 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
         case XF_DUALGEN6:
         case XF_DUALGEN7:
         {
-            unsigned n = startIdx - XF_DUALGEN0;
+            size_t n = startIdx - XF_DUALGEN0;
 
             fifo->Read32();
 
