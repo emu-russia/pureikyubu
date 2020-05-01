@@ -55,10 +55,10 @@
 #define HID0_BHT	0x0000'0004
 #define HID0_NOOPTI	0x0000'0001
 
-#define HID2_LSQE   0x80000000          // PS load/store quantization
-#define HID2_WPE    0x40000000          // gathering enabled
-#define HID2_PSE    0x20000000          // PS-mode
-#define HID2_LCE    0x10000000          // cache is locked
+#define HID2_LSQE   0x8000'0000          // PS load/store quantization
+#define HID2_WPE    0x4000'0000          // gathering enabled
+#define HID2_PSE    0x2000'0000          // PS-mode
+#define HID2_LCE    0x1000'0000          // cache is locked
 
 #define WPAR_ADDR   0xffffffe0          // accumulation address
 #define WPAR_BNE    0x1                 // buffer not empty

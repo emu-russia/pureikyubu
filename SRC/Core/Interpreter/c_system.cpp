@@ -18,6 +18,7 @@ namespace Gekko
         {
             // pseudo-branch (to resume from next instruction after 'rfi')
             Gekko->regs.pc += 4;
+            Gekko->PrCause = PrivilegedCause::Trap;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
     }
@@ -36,6 +37,7 @@ namespace Gekko
         {
             // pseudo-branch (to resume from next instruction after 'rfi')
             Gekko->regs.pc += 4;
+            Gekko->PrCause = PrivilegedCause::Trap;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
     }
@@ -99,12 +101,26 @@ namespace Gekko
     // msr = rs
     OP(MTMSR)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         Gekko->regs.msr = RRS;
     }
 
     // rd = msr
     OP(MFMSR)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         RRD = Gekko->regs.msr;
     }
 
@@ -127,12 +143,12 @@ namespace Gekko
         else switch (spr)
         {
             // decrementer
-            case    22:
+            case (int)SPR::DEC:
                 //DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
                 break;
 
             // page table base
-            case    25:
+            case (int)SPR::SDR1:
                 DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
                     RRS, msr_ir(), msr_dr(), Gekko->regs.pc);
                 break;
@@ -147,7 +163,7 @@ namespace Gekko
                 break;
 
             // write gathering buffer
-            case    921:
+            case (int)SPR::WPAR:
                 //assert(RRS == 0x0C008000);
                 break;
 
@@ -155,6 +171,7 @@ namespace Gekko
             {
                 uint32_t bits = RRS;
                 Gekko->cache.Enable((bits & HID0_DCE) ? true : false);
+                Gekko->cache.Freeze((bits & HID0_DLOCK) ? true : false);
                 if (bits & HID0_DCFI)
                 {
                     Gekko->cache.Reset();
@@ -163,10 +180,10 @@ namespace Gekko
             break;
 
             // locked cache dma (dirty hack)
-            case    922:    // DMAU
+            case (int)SPR::DMAU:
                 Gekko->regs.spr[spr] = RRS;
                 break;
-            case    923:    // DMAL
+            case (int)SPR::DMAL:
             {
                 Gekko->regs.spr[spr] = RRS;
                 if (Gekko->regs.spr[923] & 2)
@@ -220,6 +237,11 @@ namespace Gekko
                 value = (Gekko->regs.spr[spr] & ~0x1f) | (Gekko->gatherBuffer.NotEmpty() ? 1 : 0);
                 break;
 
+            case (int)SPR::HID1:
+                // Gekko PLL_CFG = 0b1000
+                value = 0x8000'0000;
+                break;
+
             default:
                 value = Gekko->regs.spr[spr];
                 break;
@@ -248,24 +270,52 @@ namespace Gekko
     // sr[a] = rs
     OP(MTSR)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         Gekko->regs.sr[RA] = RRS;
     }
 
     // sr[rb] = rs
     OP(MTSRIN)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         Gekko->regs.sr[RRB & 0xf] = RRS;
     }
 
     // rd = sr[a]
     OP(MFSR)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         RRD = Gekko->regs.sr[RA];
     }
 
     // rd = sr[rb]
     OP(MFSRIN)
     {
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         RRD = Gekko->regs.sr[RRB & 0xf];
     }
 
@@ -326,7 +376,7 @@ namespace Gekko
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
         if (pa != Gekko::BadAddress)
         {
-            Gekko->cache.Touch(pa);
+            Gekko->cache.TouchForStore(pa);
         }
         else
         {
@@ -358,7 +408,7 @@ namespace Gekko
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
         if (pa != Gekko::BadAddress)
         {
-            Gekko->cache.ZeroLocked(ea);
+            Gekko->cache.ZeroLocked(pa);
         }
         else
         {
@@ -374,7 +424,7 @@ namespace Gekko
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
         if (pa != Gekko::BadAddress)
         {
-            Gekko->cache.Store(ea);
+            Gekko->cache.Store(pa);
         }
         else
         {
@@ -402,6 +452,13 @@ namespace Gekko
     OP(DCBI)
     {
         uint32_t ea = RA ? RRA + RRB : RRB;
+
+        if (Gekko->regs.msr & MSR_PR)
+        {
+            Gekko->PrCause = PrivilegedCause::Privileged;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
 
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
         if (pa != Gekko::BadAddress)

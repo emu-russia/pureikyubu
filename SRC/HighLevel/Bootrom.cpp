@@ -1,6 +1,8 @@
 // BS and BS2 (IPL) simulation.
 #include "pch.h"
 
+// The simulation of BS and BS2 is performed with the cache turned off virtually.
+
 static uint32_t default_syscall[] = {    // default exception handler
     0x2c01004c,     // isync
     0xac04007c,     // sync
@@ -249,8 +251,4 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
         ReadFST(); // load FST, for demos
     }
-
-    // Enable data cache
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID0] = HID0_DCE;
-    Gekko::Gekko->cache.Enable(true);
 }

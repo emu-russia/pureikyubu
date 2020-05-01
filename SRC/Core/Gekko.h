@@ -65,7 +65,7 @@ namespace Gekko
     };
 
     // MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
-    constexpr uint32_t BadAddress = 0xffffffff;
+    constexpr uint32_t BadAddress = 0xffff'ffff;
 
     // So that the consumer can understand what went wrong.
     enum class MmuResult
@@ -74,6 +74,16 @@ namespace Gekko
         PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
         Protected,      // Block/page protection violation 
         NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
+    };
+
+    // The reason the PROGRAM exception occurred.
+    enum class PrivilegedCause
+    {
+        None = 0,
+        FpuEnabled,
+        IllegalInstruction,
+        Privileged,
+        Trap,
     };
 
     typedef struct _WaitQueueEntry
@@ -142,9 +152,15 @@ namespace Gekko
 
         TLB tlb;
 
+        PrivilegedCause PrCause;
+
     public:
 
         GatherBuffer gatherBuffer;
+
+        // The instruction cache is not emulated because it is accessed only in one direction (Read).
+        // Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
+
         Cache cache;
 
         // TODO: Will be hidden more

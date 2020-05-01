@@ -6,9 +6,6 @@
 // If cached access is performed, all reads and writes are made from this buffer, otherwise from RAM.
 // Invalidation causes new data to be loaded from RAM into the cache buffer.
 
-// The instruction cache is not emulated because it is accessed only in one direction (Read).
-// Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
-
 #include "pch.h"
 
 namespace Gekko
@@ -42,6 +39,31 @@ namespace Gekko
 		{
 			modifiedBlocks[i] = false;
 			invalidBlocks[i] = true;
+		}
+	}
+
+	void Cache::Enable(bool enable)
+	{
+		enabled = enable;
+
+		if (DisableForDebugReasons)
+		{
+			enabled = false;
+		}
+
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Enable %i\n", enable ? 1 : 0);
+		}
+	}
+
+	void Cache::Freeze(bool freeze)
+	{
+		frozen = freeze;
+
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::Freeze %i\n", freeze ? 1 : 0);
 		}
 	}
 
@@ -94,7 +116,7 @@ namespace Gekko
 
 		if (IsDirty(pa))
 		{
-			MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+			CastOut(pa);
 			SetDirty(pa, false);
 		}
 		SetInvalid(pa, true);
@@ -125,7 +147,7 @@ namespace Gekko
 
 		if (IsDirty(pa))
 		{
-			MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+			CastOut(pa);
 			SetDirty(pa, false);
 		}
 
@@ -140,13 +162,28 @@ namespace Gekko
 		if (pa >= cacheSize)
 			return;
 
-		MIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
-		SetDirty(pa, true);
+		CastIn(pa);
 		SetInvalid(pa, false);
+		SetDirty(pa, false);			// Valid & Not Dirty
 
 		if (log >= CacheLogLevel::Commands)
 		{
 			DBReport2(DbgChannel::CPU, "Cache::Touch 0x%08X\n", pa);
+		}
+	}
+
+	void Cache::TouchForStore(uint32_t pa)
+	{
+		if (pa >= cacheSize)
+			return;
+
+		CastIn(pa);
+		SetInvalid(pa, false);
+		SetDirty(pa, true);				// Valid & Dirty
+
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::TouchForStore 0x%08X\n", pa);
 		}
 	}
 
@@ -170,6 +207,38 @@ namespace Gekko
 		// TODO
 	}
 
+	// The documentation says that the cache is casted by single-beat transactions, but for speed we will do casting by burts.
+
+	void Cache::CastIn(uint32_t pa)
+	{
+		assert(pa < cacheSize);
+
+		if (frozen)
+			return;
+
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::CastIn: 0x%08X\n", pa & ~0x1f);
+		}
+
+		MIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+	}
+
+	void Cache::CastOut(uint32_t pa)
+	{
+		assert(pa < cacheSize);
+
+		if (frozen)
+			return;
+
+		if (log >= CacheLogLevel::MemOps)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::CastOut: 0x%08X\n", pa & ~0x1f);
+		}
+
+		MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+	}
+
 	void __fastcall Cache::ReadByte(uint32_t addr, uint32_t* reg)
 	{
 		if (addr >= cacheSize)
@@ -177,12 +246,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::ReadByte busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
@@ -201,12 +265,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::WriteByte busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 		}
 		cacheData[addr] = (uint8_t)data;
@@ -226,12 +285,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::ReadHalf busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
@@ -250,12 +304,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::WriteHalf busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 		}
 		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
@@ -275,12 +324,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::ReadWord busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
@@ -299,12 +343,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::WriteWord busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 		}
 		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
@@ -324,12 +363,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::ReadDouble busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
@@ -348,12 +382,7 @@ namespace Gekko
 
 		if (IsInvalid(addr))
 		{
-			if (log >= CacheLogLevel::MemOps)
-			{
-				DBReport2(DbgChannel::CPU, "Cache::WriteDouble busrt cache: 0x%08X\n", addr & ~0x1f);
-			}
-
-			MIReadBurst(addr & ~0x1f, &cacheData[addr & ~0x1f]);
+			CastIn(addr);
 			SetInvalid(addr, false);
 		}
 		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);

@@ -19,7 +19,7 @@ namespace Gekko
 		// A sign that the cache block is dirty (does not match the value in RAM).
 		bool * modifiedBlocks;
 
-		// Cache block invalid, must be bursed-in before use
+		// Cache block invalid, must be casted-in before use
 		bool * invalidBlocks;
 
 		bool IsDirty(uint32_t pa);
@@ -29,8 +29,15 @@ namespace Gekko
 		void SetInvalid(uint32_t pa, bool invalid);
 
 		bool enabled = false;
+		bool frozen = false;
 
 		CacheLogLevel log = CacheLogLevel::Commands;
+
+		void CastIn(uint32_t pa);		// Mem -> Cache
+		void CastOut(uint32_t pa);		// Cache -> Mem
+
+		// You can disable cache emulation for debugging purposes.
+		bool DisableForDebugReasons = false;
 
 	public:
 		Cache();
@@ -38,8 +45,11 @@ namespace Gekko
 
 		void Reset();
 
-		void Enable(bool enable) { enabled = enable; }
+		void Enable(bool enable);
 		bool IsEnabled() { return enabled; }
+
+		void Freeze(bool freeze);
+		bool IsFrozen() { return frozen; }
 
 		// Physical addressing
 
@@ -47,6 +57,7 @@ namespace Gekko
 		void Invalidate(uint32_t pa);
 		void Store(uint32_t pa);
 		void Touch(uint32_t pa);
+		void TouchForStore(uint32_t pa);
 		void Zero(uint32_t pa);
 		void ZeroLocked(uint32_t pa);
 
