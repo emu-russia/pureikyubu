@@ -74,13 +74,15 @@ namespace Gekko
         // Special processing for MMU
         if (code == Exception::ISI)
         {
+            Gekko->regs.spr[(int)Gekko::SPR::SRR1] &= 0x0fff'ffff;
+
             switch (core->MmuLastResult)
             {
                 case MmuResult::PageFault:
                     Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x4000'0000;
                     break;
 
-                case MmuResult::Protected:
+                case MmuResult::ProtectedFetch:
                     Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0800'0000;
                     break;
 
@@ -91,14 +93,19 @@ namespace Gekko
         }
         else if (code == Exception::DSI)
         {
+            Gekko->regs.spr[(int)Gekko::SPR::DSISR] = 0;
+
             switch (core->MmuLastResult)
             {
                 case MmuResult::PageFault:
                     Gekko->regs.spr[(int)Gekko::SPR::DSISR] |= 0x4000'0000;
                     break;
 
-                case MmuResult::Protected:
+                case MmuResult::ProtectedRead:
                     Gekko->regs.spr[(int)Gekko::SPR::DSISR] |= 0x0800'0000;
+                    break;
+                case MmuResult::ProtectedWrite:
+                    Gekko->regs.spr[(int)Gekko::SPR::DSISR] |= 0x0A00'0000;
                     break;
             }
         }
@@ -128,8 +135,7 @@ namespace Gekko
         // disable address translation
         core->regs.msr &= ~(MSR_IR | MSR_DR);
 
-        // Gekko exceptions are always recoverable
-        core->regs.msr |= MSR_RI;
+        core->regs.msr &= ~MSR_RI;
 
         core->regs.msr &= ~MSR_EE;
 

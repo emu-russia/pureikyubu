@@ -73,7 +73,9 @@ namespace Gekko
     {
         Ok = 0,
         PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
-        Protected,      // Block/page protection violation 
+        ProtectedFetch,    // Block/page protection violation 
+        ProtectedRead,     // Block/page protection violation 
+        ProtectedWrite,    // Block/page protection violation 
         NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
     };
 
