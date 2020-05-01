@@ -17,10 +17,10 @@ namespace Gekko
 		const size_t cacheSize = 0x01800000;    // 24 MBytes
 
 		// A sign that the cache block is dirty (does not match the value in RAM).
-		bool * modifiedBlocks;
+		bool * modifiedBlocks = nullptr;
 
 		// Cache block invalid, must be casted-in before use
-		bool * invalidBlocks;
+		bool * invalidBlocks = nullptr;
 
 		bool IsDirty(uint32_t pa);
 		void SetDirty(uint32_t pa, bool dirty);
@@ -39,6 +39,9 @@ namespace Gekko
 		// You can disable cache emulation for debugging purposes.
 		bool DisableForDebugReasons = false;
 
+		uint8_t* LockedCache = nullptr;
+		bool lcenabled = false;
+
 	public:
 		Cache();
 		~Cache();
@@ -50,6 +53,9 @@ namespace Gekko
 
 		void Freeze(bool freeze);
 		bool IsFrozen() { return frozen; }
+
+		void LockedEnable(bool enable);
+		bool IsLockedEnable() { return lcenabled; }
 
 		// Physical addressing
 
@@ -69,5 +75,9 @@ namespace Gekko
 		void __fastcall WriteWord(uint32_t addr, uint32_t data);
 		void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
 		void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
+
+		uint32_t LockedCacheAddr = 0;
+
+		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes);
 	};
 }

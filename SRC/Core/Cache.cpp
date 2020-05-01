@@ -6,6 +6,8 @@
 // If cached access is performed, all reads and writes are made from this buffer, otherwise from RAM.
 // Invalidation causes new data to be loaded from RAM into the cache buffer.
 
+// We do not support scattering for a locked cache and assume that it is locked as a fixed chunk.
+
 #include "pch.h"
 
 namespace Gekko
@@ -20,6 +22,9 @@ namespace Gekko
 
 		invalidBlocks = new bool[cacheSize >> 5];
 		assert(invalidBlocks);
+
+		LockedCache = new uint8_t[16 * 1024];
+		assert(LockedCache);
 
 		Reset();
 	}
@@ -64,6 +69,16 @@ namespace Gekko
 		if (log >= CacheLogLevel::Commands)
 		{
 			DBReport2(DbgChannel::CPU, "Cache::Freeze %i\n", freeze ? 1 : 0);
+		}
+	}
+
+	void Cache::LockedEnable(bool enable)
+	{
+		lcenabled = enable;
+
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::LockedEnable %i\n", enable ? 1 : 0);
 		}
 	}
 
@@ -204,7 +219,12 @@ namespace Gekko
 
 	void Cache::ZeroLocked(uint32_t pa)
 	{
-		// TODO
+		if (log >= CacheLogLevel::Commands)
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ZeroLocked 0x%08X\n", pa);
+		}
+
+		LockedCacheAddr = pa & ~0x3FFF;
 	}
 
 	// The documentation says that the cache is casted by single-beat transactions, but for speed we will do casting by burts.
@@ -241,6 +261,17 @@ namespace Gekko
 
 	void __fastcall Cache::ReadByte(uint32_t addr, uint32_t* reg)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*reg = (uint32_t)*ptr;
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -260,6 +291,17 @@ namespace Gekko
 
 	void __fastcall Cache::WriteByte(uint32_t addr, uint32_t data)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*ptr = (uint8_t)data;
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -280,6 +322,17 @@ namespace Gekko
 
 	void __fastcall Cache::ReadHalf(uint32_t addr, uint32_t* reg)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -299,6 +352,17 @@ namespace Gekko
 
 	void __fastcall Cache::WriteHalf(uint32_t addr, uint32_t data)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -319,6 +383,17 @@ namespace Gekko
 
 	void __fastcall Cache::ReadWord(uint32_t addr, uint32_t* reg)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*reg = _byteswap_ulong(*(uint32_t*)ptr);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -338,6 +413,17 @@ namespace Gekko
 
 	void __fastcall Cache::WriteWord(uint32_t addr, uint32_t data)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* ptr = &LockedCache[addr & 0x3fff];
+				*(uint32_t*)ptr = _byteswap_ulong(data);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -358,6 +444,17 @@ namespace Gekko
 
 	void __fastcall Cache::ReadDouble(uint32_t addr, uint64_t* reg)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* buf = &LockedCache[addr & 0x3fff];
+				*reg = _byteswap_uint64(*(uint64_t*)buf);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -377,6 +474,17 @@ namespace Gekko
 
 	void __fastcall Cache::WriteDouble(uint32_t addr, uint64_t* data)
 	{
+		// Locked cache
+		if (IsLockedEnable())
+		{
+			if ((addr & ~0x3fff) == LockedCacheAddr)
+			{
+				uint8_t* buf = &LockedCache[addr & 0x3fff];
+				*(uint64_t*)buf = _byteswap_uint64(*data);
+				return;
+			}
+		}
+
 		if (addr >= cacheSize)
 			return;
 
@@ -393,6 +501,36 @@ namespace Gekko
 		}
 
 		SetDirty(addr, true);
+	}
+
+	void Cache::LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes)
+	{
+		size_t numBursts = bytes / 32;
+
+		if (MemToCache)
+		{   // 1 load - transfer from external memory to locked cache
+
+			DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+
+			for (size_t i = 0; i < numBursts; i++)
+			{
+				MIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				memaddr += 32;
+				lcaddr += 32;
+			}
+		}
+		else
+		{   // 0 store -  transfer from locked cache to external memory 
+
+			DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+
+			for (size_t i = 0; i < numBursts; i++)
+			{
+				MIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				memaddr += 32;
+				lcaddr += 32;
+			}
+		}
 	}
 
 }

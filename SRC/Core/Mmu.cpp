@@ -11,14 +11,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t * ptr = &lc[addr & 0x3ffff];
-            *reg = (uint32_t)*ptr;
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -38,14 +30,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *ptr = (uint8_t)data;
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -75,14 +59,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -108,14 +84,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -145,14 +113,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *reg = _byteswap_ulong(*(uint32_t*)ptr);
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -172,14 +132,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *(uint32_t*)ptr = _byteswap_ulong(data);
-            return;
-        }
-   
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -209,14 +161,6 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* buf = &lc[addr & 0x3ffff];
-            *reg = _byteswap_uint64(*(uint64_t *)buf);
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
         {
@@ -231,19 +175,13 @@ namespace Gekko
             return;
         }
 
+        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+
         MIReadDouble(pa, reg);
     }
 
     void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* buf = &lc[addr & 0x3ffff];
-            *(uint64_t *)buf = _byteswap_uint64(*data);
-            return;
-        }
-
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -268,6 +206,8 @@ namespace Gekko
                 return;
         }
 
+        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+
         MIWriteDouble(pa, data);
     }
 
@@ -277,8 +217,15 @@ namespace Gekko
     {
         LastWIMG = WIMG_I;      // Caching inhibited
 
+        // Locked cache
+        if ((ea & ~0x3fff) == cache.LockedCacheAddr && cache.IsLockedEnable())
+        {
+            LastWIMG = 0;
+            return ea;
+        }
+
         // Required to run bootrom
-        if (ea >= BOOTROM_START_ADDRESS)
+        if ((ea & ~0xfffff) == BOOTROM_START_ADDRESS)
         {
             return ea;
         }

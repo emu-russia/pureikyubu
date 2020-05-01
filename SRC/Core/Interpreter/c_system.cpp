@@ -179,44 +179,46 @@ namespace Gekko
             }
             break;
 
-            // locked cache dma (dirty hack)
+            case (int)SPR::HID1:
+                // Read only
+                return;
+
+            case (int)SPR::HID2:
+            {
+                uint32_t bits = RRS;
+                Gekko->cache.LockedEnable((bits & HID2_LCE) ? true : false);
+            }
+            break;
+
+            // Locked cache DMA
+
             case (int)SPR::DMAU:
                 Gekko->regs.spr[spr] = RRS;
+                DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
                 break;
             case (int)SPR::DMAL:
             {
                 Gekko->regs.spr[spr] = RRS;
-                if (Gekko->regs.spr[923] & 2)
+                DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
+                if (Gekko->regs.spr[(int)SPR::DMAL] & 2)
                 {
-                    uint32_t maddr = Gekko->regs.spr[922] & ~0x1f;
-                    uint32_t lcaddr = Gekko->regs.spr[923] & ~0x1f;
-                    uint32_t length = ((Gekko->regs.spr[922] & 0x1f) << 2) | ((Gekko->regs.spr[923] >> 2) & 3);
+                    uint32_t maddr = Gekko->regs.spr[(int)SPR::DMAU] & ~0x1f;
+                    uint32_t lcaddr = Gekko->regs.spr[(int)SPR::DMAL] & ~0x1f;
+                    size_t length = ((Gekko->regs.spr[(int)SPR::DMAU] & 0x1f) << 2) | ((Gekko->regs.spr[(int)SPR::DMAL] >> 2) & 3);
                     if (length == 0) length = 128;
-                    if (Gekko->regs.spr[923] & 0x10)
-                    {   // load
-                        memcpy(
-                            &mi.ram[maddr & RAMMASK],
-                            &Gekko->lc[lcaddr & 0x3ffff],
-                            length * 32
-                        );
-                    }
-                    else
-                    {   // store
-                        memcpy(
-                            &Gekko->lc[lcaddr & 0x3ffff],
-                            &mi.ram[maddr & RAMMASK],
-                            length * 32
-                        );
+                    if (Gekko->cache.IsLockedEnable())
+                    {
+                        Gekko->cache.LockedCacheDma(
+                            (Gekko->regs.spr[(int)SPR::DMAL] & 0x10) ? true : false,
+                            maddr,
+                            lcaddr,
+                            length);
                     }
                 }
 
-                /*/
-                            DolwinQuestion(
-                                "Non-predictable situation!",
-                                "Locked cache is not implemented!\n"
-                                "Are you sure, you want to continue?"
-                            );
-                /*/
+                // It makes no sense to implement such a small Queue. We make all transactions instant.
+
+                Gekko->regs.spr[spr] &= ~3;     // DMA_T = DMA_F = 0
             }
             break;
         }
@@ -345,7 +347,7 @@ namespace Gekko
     }
 
     // ---------------------------------------------------------------------------
-    // caches
+    // Caches
 
     OP(DCBT)
     {
@@ -403,6 +405,13 @@ namespace Gekko
 
     OP(DCBZ_L)
     {
+        if ((Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_LCE) == 0)
+        {
+            Gekko->PrCause = PrivilegedCause::IllegalInstruction;
+            Gekko->Exception(Exception::PROGRAM);
+            return;
+        }
+
         uint32_t ea = RA ? RRA + RRB : RRB;
 
         uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);

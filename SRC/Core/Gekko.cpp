@@ -94,8 +94,9 @@ namespace Gekko
         regs.msr &= ~(MSR_DR | MSR_IR);
 
         regs.tb.uval = 0;
-        regs.spr[22] = 0;   // DEC
-        regs.spr[9] = 0;    // CTR
+        regs.spr[(int)SPR::HID1] = 0x8000'0000;
+        regs.spr[(int)SPR::DEC] = 0;
+        regs.spr[(int)SPR::CTR] = 0;
 
         gatherBuffer.Reset();
 

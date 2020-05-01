@@ -128,9 +128,6 @@ namespace Gekko
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
         size_t      segmentsExecuted;   // The number of completed recompiler segments.
-
-        // TODO: Research cache emulation #14
-        uint8_t     lc[0x40000 + 4096];   // L2 locked cache
         
         uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type);
         uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type);
