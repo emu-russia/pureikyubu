@@ -30,8 +30,7 @@ namespace Gekko
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
         {
             cache.ReadByte(pa, reg);
-            if (LastWIMG & WIMG_W)
-                return;
+            return;
         }
 
         MIReadByte(pa, reg);
@@ -95,8 +94,7 @@ namespace Gekko
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
         {
             cache.ReadHalf(pa, reg);
-            if (LastWIMG & WIMG_W)
-                return;
+            return;
         }
 
         MIReadHalf(pa, reg);
@@ -166,8 +164,7 @@ namespace Gekko
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
         {
             cache.ReadWord(pa, reg);
-            if (LastWIMG & WIMG_W)
-                return;
+            return;
         }
 
         MIReadWord(pa, reg);
@@ -231,8 +228,7 @@ namespace Gekko
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
         {
             cache.ReadDouble(pa, reg);
-            if (LastWIMG & WIMG_W)
-                return;
+            return;
         }
 
         MIReadDouble(pa, reg);
@@ -326,6 +322,7 @@ namespace Gekko
         {
             if ((regs.msr & MSR_DR) == 0)
             {
+                LastWIMG = WIMG_I;
                 pa = ea;
                 return true;
             }
@@ -490,17 +487,11 @@ namespace Gekko
 
         LastWIMG = 0;
 
-        if (!tlb.Exists(ea, pa))
+        if (!BlockAddressTranslation(ea, pa, type))
         {
-            if (!BlockAddressTranslation(ea, pa, type))
-            {
-                pa = SegmentTranslation(ea, type);
-            }
-            if (pa != BadAddress)
-            {
-                tlb.Map(ea, pa);
-            }
+            pa = SegmentTranslation(ea, type);
         }
+
         return pa;
     }
 

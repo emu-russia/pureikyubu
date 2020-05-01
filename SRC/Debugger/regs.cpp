@@ -199,10 +199,10 @@ static void describe_bat_reg (int x, int y, uint32_t up, uint32_t lo, int instr)
     uint32_t vs = (up >> 1) & 1;
     uint32_t vp = up & 1;
     uint32_t brpn = (lo >> 17) & 0x7fff;
-    uint32_t w = (lo >> 5) & 1;
-    uint32_t i = (lo >> 4) & 1;
-    uint32_t m = (lo >> 3) & 1;
-    uint32_t g = (lo >> 2) & 1;
+    uint32_t w = (lo >> 6) & 1;
+    uint32_t i = (lo >> 5) & 1;
+    uint32_t m = (lo >> 4) & 1;
+    uint32_t g = (lo >> 3) & 1;
     uint32_t pp = lo & 3;
 
     uint32_t EStart = bepi << 17, PStart = brpn << 17;

@@ -180,20 +180,24 @@ static void __SyncTime(bool rtc)
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 {
     // set initial MMU state, according with BS2/Dolphin OS
-    for(int sr=0; sr<16; sr++)              // unmounted
+    for(int sr=0; sr<16; sr++)
     {
         Gekko::Gekko->regs.sr[sr] = 0x80000000;
     }
     // DBATs
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U] = 0x80001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L] = 0x00000002;   // 0x80000000, 256mb, cached
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U] = 0xc0001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L] = 0x0000002a;   // 0xC0000000, 256mb, uncached
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U] = 0x80001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L] = 0x00000002;   // 0x80000000, 256mb, Write-back cached
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U] = 0xc0001fff; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L] = 0x0000002a;   // 0xC0000000, 256mb, Cache inhibited, Guarded
     Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U] = 0x00000000; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L] = 0x00000000;   // undefined
     Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U] = 0x00000000; Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L] = 0x00000000;   // undefined
     // IBATs
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L];
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L];
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L];
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U]; Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0U];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT0L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT0L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1U];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT1L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT1L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2U];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT2L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT2L];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3U] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3U];
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::IBAT3L] = Gekko::Gekko->regs.spr[(int)Gekko::SPR::DBAT3L];
     // MSR MMU bits
     Gekko::Gekko->regs.msr |= (MSR_IR | MSR_DR);               // enable translation
     // page table
@@ -201,9 +205,6 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
     Gekko::Gekko->regs.msr &= ~MSR_EE;                         // disable interrupts/DEC
     Gekko::Gekko->regs.msr |= MSR_FP;                          // enable FP
-
-    // Enable data cache
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID0] = HID0_DCE;
 
     // from gc-linux dev mailing list
     Gekko::Gekko->regs.spr[(int)Gekko::SPR::PVR] = 0x00083214;
@@ -248,4 +249,8 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 
         ReadFST(); // load FST, for demos
     }
+
+    // Enable data cache
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID0] = HID0_DCE;
+    Gekko::Gekko->cache.Enable(true);
 }

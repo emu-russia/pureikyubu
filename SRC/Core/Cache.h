@@ -25,7 +25,7 @@ namespace Gekko
 
         bool enabled = false;
 
-        bool log = true;
+        bool log = false;
 
 	public:
 		Cache();

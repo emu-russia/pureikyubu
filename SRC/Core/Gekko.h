@@ -141,11 +141,11 @@ namespace Gekko
         uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type);
 
         TLB tlb;
-        Cache cache;
 
     public:
 
         GatherBuffer gatherBuffer;
+        Cache cache;
 
         // TODO: Will be hidden more
         GekkoRegs regs;
