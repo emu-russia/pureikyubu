@@ -8,6 +8,7 @@
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
 #include "TLB.h"
+#include "Cache.h"
 
 // floating point register
 typedef union _FPREG
@@ -53,6 +54,7 @@ namespace Gekko
         DduData,
         DduAudio,
         FlipperAi,
+        GxCommandProcessor,
         Max,
     };
 
@@ -64,7 +66,7 @@ namespace Gekko
     };
 
     // MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
-    constexpr uint32_t BadAddress = 0xffffffff;
+    constexpr uint32_t BadAddress = 0xffff'ffff;
 
     // So that the consumer can understand what went wrong.
     enum class MmuResult
@@ -75,6 +77,16 @@ namespace Gekko
         ProtectedRead,     // Block/page protection violation 
         ProtectedWrite,    // Block/page protection violation 
         NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
+    };
+
+    // The reason the PROGRAM exception occurred.
+    enum class PrivilegedCause
+    {
+        None = 0,
+        FpuEnabled,
+        IllegalInstruction,
+        Privileged,
+        Trap,
     };
 
     typedef struct _WaitQueueEntry
@@ -99,11 +111,19 @@ namespace Gekko
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
 
-        // TODO:
         std::vector<uint32_t> breakPointsExecute;
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
+
+        bool TestBreakpointForJitc(uint32_t addr);
+        void TestBreakpoints();
+        void TestReadBreakpoints(uint32_t accessAddress);
+        void TestWriteBreakpoints(uint32_t accessAddress);
+
+        bool EnableTestBreakpoints = false;
+        bool EnableTestReadBreakpoints = false;
+        bool EnableTestWriteBreakpoints = false;
 
         Interpreter* interp;
         Jitc* jitc;
@@ -119,9 +139,6 @@ namespace Gekko
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
         size_t      segmentsExecuted;   // The number of completed recompiler segments.
-
-        // TODO: Research cache emulation #14
-        uint8_t     lc[0x40000 + 4096];   // L2 locked cache
         
         uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type);
         uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type);
@@ -130,6 +147,7 @@ namespace Gekko
         volatile bool intFlag = false;      // INT signal
 
         MmuResult MmuLastResult = MmuResult::Ok;
+        int LastWIMG = 0;       // The value of the WIMG bits after the last address translation.
 
         // For convenient access to BAT registers (Mmu related)
         uint32_t *dbatu[4];
@@ -142,9 +160,16 @@ namespace Gekko
 
         TLB tlb;
 
+        PrivilegedCause PrCause;
+
     public:
 
         GatherBuffer gatherBuffer;
+
+        // The instruction cache is not emulated because it is accessed only in one direction (Read).
+        // Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
+
+        Cache cache;
 
         // TODO: Will be hidden more
         GekkoRegs regs;
@@ -198,6 +223,15 @@ namespace Gekko
         static void SwapAreaHalf(uint16_t* addr, int count);
 
 #pragma endregion "Memory interface"
+
+#pragma region "Breakpoints"
+
+        void AddBreakpoint(uint32_t addr);
+        void AddReadBreak(uint32_t addr);
+        void AddWriteBreak(uint32_t addr);
+        void ClearBreakpoints();
+
+#pragma endregion "Breakpoints"
 
     };
 

@@ -6,18 +6,15 @@
 
 namespace Gekko
 {
+    // Left until all lurking bugs are eliminated.
+    #define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000
+
     // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
     // (as well as those who they pretend, for example HLE or Debugger).
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t * ptr = &lc[addr & 0x3ffff];
-            *reg = (uint32_t)*ptr;
-            return;
-        }
+        TestReadBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
@@ -27,18 +24,24 @@ namespace Gekko
             return;
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadByte(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.ReadByte(pa, reg);
+            return;
+        }
+
         MIReadByte(pa, reg);
     }
 
     void __fastcall GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *ptr = (uint8_t)data;
-            return;
-        }
+        TestWriteBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
@@ -57,18 +60,25 @@ namespace Gekko
             }
         }
     
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteByte(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteByte(pa, data);
+            return;
+        }
+
         MIWriteByte(pa, data);
     }
 
     void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
-            return;
-        }
+        TestReadBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
@@ -77,6 +87,19 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadHalf(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.ReadHalf(pa, reg);
+            return;
+        }
+
         MIReadHalf(pa, reg);
     }
 
@@ -88,13 +111,7 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
-            return;
-        }
+        TestWriteBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
@@ -113,18 +130,25 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteHalf(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteHalf(pa, data);
+            return;
+        }
+
         MIWriteHalf(pa, data);
     }
 
     void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *reg = _byteswap_ulong(*(uint32_t*)ptr);
-            return;
-        }
+        TestReadBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
@@ -133,19 +157,26 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadWord(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.ReadWord(pa, reg);
+            return;
+        }
+
         MIReadWord(pa, reg);
     }
 
     void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* ptr = &lc[addr & 0x3ffff];
-            *(uint32_t*)ptr = _byteswap_ulong(data);
-            return;
-        }
-   
+        TestWriteBreakpoints(addr);
+
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
         {
@@ -163,18 +194,25 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteWord(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteWord(pa, data);
+            return;
+        }
+
         MIWriteWord(pa, data);
     }
 
     void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* buf = &lc[addr & 0x3ffff];
-            *reg = _byteswap_uint64(*(uint64_t *)buf);
-            return;
-        }
+        TestReadBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
         if (pa == BadAddress)
@@ -183,18 +221,27 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadDouble(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.ReadDouble(pa, reg);
+            return;
+        }
+
+        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+
         MIReadDouble(pa, reg);
     }
 
     void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
-        // Locked cache
-        if (addr >= 0xe0000000)
-        {
-            uint8_t* buf = &lc[addr & 0x3ffff];
-            *(uint64_t *)buf = _byteswap_uint64(*data);
-            return;
-        }
+        TestWriteBreakpoints(addr);
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
         if (pa == BadAddress)
@@ -213,6 +260,21 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteDouble(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteDouble(pa, data);
+            return;
+        }
+
+        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+
         MIWriteDouble(pa, data);
     }
 
@@ -220,8 +282,17 @@ namespace Gekko
 
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type)
     {
+        LastWIMG = WIMG_I;      // Caching inhibited
+
+        // Locked cache
+        if ((ea & ~0x3fff) == cache.LockedCacheAddr && cache.IsLockedEnable())
+        {
+            LastWIMG = 0;
+            return ea;
+        }
+
         // Required to run bootrom
-        if (ea >= BOOTROM_START_ADDRESS)
+        if ((ea & ~0xfffff) == BOOTROM_START_ADDRESS)
         {
             return ea;
         }
@@ -243,12 +314,17 @@ namespace Gekko
         {
             if ((regs.msr & MSR_IR) == 0)
             {
+                LastWIMG = WIMG_G;
                 pa = ea;
                 return true;
             }
 
             for (int n = 0; n < 4; n++)
             {
+                bool valid = (*ibatu[n] & 3) != 0;
+                if (!valid)
+                    continue;
+
                 uint32_t bepi = BATBEPI(*ibatu[n]);
                 uint32_t bl = BATBL(*ibatu[n]);
                 uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
@@ -256,6 +332,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*ibatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
+                    LastWIMG = (*ibatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -265,12 +342,17 @@ namespace Gekko
         {
             if ((regs.msr & MSR_DR) == 0)
             {
+                LastWIMG = WIMG_M | WIMG_G;
                 pa = ea;
                 return true;
             }
 
             for (int n = 0; n < 4; n++)
             {
+                bool valid = (*dbatu[n] & 3) != 0;
+                if (!valid)
+                    continue;
+
                 uint32_t bepi = BATBEPI(*dbatu[n]);
                 uint32_t bl = BATBL(*dbatu[n]);
                 uint32_t tst = (ea >> 17) & (0x7800 | ~bl);
@@ -278,6 +360,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*dbatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
+                    LastWIMG = (*dbatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -407,8 +490,18 @@ namespace Gekko
                 }
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                if (type != MmuAccess::Execute)
+                {
+                    LastWIMG = (pte[1] >> 3) & 0xf;
+                }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
+            }
+            else
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                MIWriteWord(primaryPteAddr + 4, pte[1]);
             }
 
             primaryPteAddr += 8;
@@ -486,8 +579,18 @@ namespace Gekko
                 }
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                if (type != MmuAccess::Execute)
+                {
+                    LastWIMG = (pte[1] >> 3) & 0xf;
+                }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
+            }
+            else
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                MIWriteWord(secondaryPteAddr + 4, pte[1]);
             }
 
             secondaryPteAddr += 8;
@@ -500,17 +603,14 @@ namespace Gekko
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
     {
         uint32_t pa;
-        //if (!tlb.Exists(ea, pa))
+
+        LastWIMG = 0;
+
+        if (!BlockAddressTranslation(ea, pa, type))
         {
-            if (!BlockAddressTranslation(ea, pa, type))
-            {
-                pa = SegmentTranslation(ea, type);
-            }
-            //if (pa != BadAddress)
-            //{
-            //    tlb.Map(ea, pa);
-            //}
+            pa = SegmentTranslation(ea, type);
         }
+
         return pa;
     }
 

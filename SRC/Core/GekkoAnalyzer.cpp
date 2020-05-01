@@ -36,8 +36,8 @@ namespace Gekko
 	#define Rc          LK
 	#define RcBit       1
 	#define LKBit       1
-	#define DIS_SPR     ((instr >> 11) & 0x3ff)
-	#define DIS_TBR     ((instr >> 11) & 0x3ff)
+	#define DIS_SPR     ((DIS_RB << 5) | DIS_RA)
+	#define DIS_TBR     ((DIS_RB << 5) | DIS_RA)
 
 	void Analyzer::OpMain(uint32_t instr, AnalyzeInfo* info)
 	{

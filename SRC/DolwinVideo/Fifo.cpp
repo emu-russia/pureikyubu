@@ -673,7 +673,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
         case OP_CMD_INV | 5:
         case OP_CMD_INV | 6:
         case OP_CMD_INV | 7:
-            DBReport2(DbgChannel::GP, "Invalidate V$\n");
+            //DBReport2(DbgChannel::GP, "Invalidate V$\n");
             break;
 
         case OP_CMD_CALL_DL | 0:

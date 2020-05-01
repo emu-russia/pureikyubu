@@ -109,6 +109,28 @@ namespace Gekko
                     break;
             }
         }
+        
+        // Special processing for Program
+        if (code == Exception::PROGRAM)
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::SRR1] &= 0x0000'ffff;
+
+            switch (core->PrCause)
+            {
+                case PrivilegedCause::FpuEnabled:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0010'0000;
+                    break;
+                case PrivilegedCause::IllegalInstruction:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0008'0000;
+                    break;
+                case PrivilegedCause::Privileged:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0004'0000;
+                    break;
+                case PrivilegedCause::Trap:
+                    Gekko->regs.spr[(int)Gekko::SPR::SRR1] |= 0x0002'0000;
+                    break;
+            }
+        }
 
         // disable address translation
         core->regs.msr &= ~(MSR_IR | MSR_DR);

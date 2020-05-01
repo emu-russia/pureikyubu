@@ -215,60 +215,81 @@ namespace Gekko
 
 	static Json::Value* cmd_r(std::vector<std::string>& args)
 	{
-		if (args.size() < 2)
+		uint32_t(*op)(uint32_t a, uint32_t b) = NULL;
+
+		uint32_t* n = getreg(args[1].c_str());
+		if (n == NULL)
 		{
+			DBReport("unknown register : %s\n", args[1].c_str());
+			return nullptr;
+		}
+
+		// show register
+		if (args.size() <= 3)
+		{
+			if (!_stricmp(args[1].c_str(), "msr")) describe_msr(*n);
+			else DBReport("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
+			return nullptr;
+		}
+
+		// Get operation.
+		if (!strcmp(args[2].c_str(), "=")) op = op_replace;
+		else if (!strcmp(args[2].c_str(), "+")) op = op_add;
+		else if (!strcmp(args[2].c_str(), "-")) op = op_sub;
+		else if (!strcmp(args[2].c_str(), "*")) op = op_mul;
+		else if (!strcmp(args[2].c_str(), "/")) op = op_div;
+		else if (!strcmp(args[2].c_str(), "|")) op = op_or;
+		else if (!strcmp(args[2].c_str(), "&")) op = op_and;
+		else if (!strcmp(args[2].c_str(), "^")) op = op_xor;
+		else if (!strcmp(args[2].c_str(), "<<")) op = op_shl;
+		else if (!strcmp(args[2].c_str(), ">>")) op = op_shr;
+		if (op == NULL)
+		{
+			DBReport("Unknown operation: %s\n", args[2].c_str());
+			return nullptr;
+		}
+
+		// New value
+		uint32_t* m = getreg(args[3].c_str());
+		if (m == NULL)
+		{
+			int i = strtoul(args[3].c_str(), NULL, 0);
+			DBReport("%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
+			*n = op(*n, i);
 		}
 		else
 		{
-			uint32_t(*op)(uint32_t a, uint32_t b) = NULL;
-
-			uint32_t* n = getreg(args[1].c_str());
-			if (n == NULL)
-			{
-				DBReport("unknown register : %s\n", args[1].c_str());
-				return nullptr;
-			}
-
-			// show register
-			if (args.size() <= 3)
-			{
-				if (!_stricmp(args[1].c_str(), "msr")) describe_msr(*n);
-				else DBReport("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
-				return nullptr;
-			}
-
-			// Get operation.
-			if (!strcmp(args[2].c_str(), "=")) op = op_replace;
-			else if (!strcmp(args[2].c_str(), "+")) op = op_add;
-			else if (!strcmp(args[2].c_str(), "-")) op = op_sub;
-			else if (!strcmp(args[2].c_str(), "*")) op = op_mul;
-			else if (!strcmp(args[2].c_str(), "/")) op = op_div;
-			else if (!strcmp(args[2].c_str(), "|")) op = op_or;
-			else if (!strcmp(args[2].c_str(), "&")) op = op_and;
-			else if (!strcmp(args[2].c_str(), "^")) op = op_xor;
-			else if (!strcmp(args[2].c_str(), "<<")) op = op_shl;
-			else if (!strcmp(args[2].c_str(), ">>")) op = op_shr;
-			if (op == NULL)
-			{
-				DBReport("Unknown operation: %s\n", args[2].c_str());
-				return nullptr;
-			}
-
-			// New value
-			uint32_t* m = getreg(args[3].c_str());
-			if (m == NULL)
-			{
-				int i = strtoul(args[3].c_str(), NULL, 0);
-				DBReport("%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
-				*n = op(*n, i);
-			}
-			else
-			{
-				DBReport("%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
-				*n = op(*n, *m);
-			}
+			DBReport("%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
+			*n = op(*n, *m);
 		}
 
+		return nullptr;
+	}
+
+	static Json::Value* cmd_b(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+		Gekko->AddBreakpoint(addr);
+		return nullptr;
+	}
+
+	static Json::Value* cmd_br(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+		Gekko->AddReadBreak(addr);
+		return nullptr;
+	}
+
+	static Json::Value* cmd_bw(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+		Gekko->AddWriteBreak(addr);
+		return nullptr;
+	}
+
+	static Json::Value* cmd_bc(std::vector<std::string>& args)
+	{
+		Gekko->ClearBreakpoints();
 		return nullptr;
 	}
 
@@ -277,5 +298,9 @@ namespace Gekko
 		Debug::Hub.AddCmd("run", cmd_run);
 		Debug::Hub.AddCmd("stop", cmd_stop);
 		Debug::Hub.AddCmd("r", cmd_r);
+		Debug::Hub.AddCmd("b", cmd_b);
+		Debug::Hub.AddCmd("br", cmd_br);
+		Debug::Hub.AddCmd("bw", cmd_bw);
+		Debug::Hub.AddCmd("bc", cmd_bc);
 	}
 }

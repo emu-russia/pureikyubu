@@ -317,6 +317,14 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
     *(uint64_t*)buf = _byteswap_uint64 (*data);
 }
 
+void __fastcall MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
+{
+    if ((phys_addr + 32) >= RAMSIZE)
+        return;
+
+    memcpy(burstData, &mi.ram[phys_addr], 32);
+}
+
 void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
     if (phys_addr == GX_FIFO)
@@ -325,10 +333,10 @@ void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
         return;
     }
 
-    for (int i = 0; i < 8; i++)
-    {
-        MIWriteWord(phys_addr + 4*i, _byteswap_ulong (*(uint32_t*)(&burstData[4*i])) );
-    }
+    if ((phys_addr + 32) >= RAMSIZE)
+        return;
+
+    memcpy(&mi.ram[phys_addr], burstData, 32);
 }
 
 // ---------------------------------------------------------------------------

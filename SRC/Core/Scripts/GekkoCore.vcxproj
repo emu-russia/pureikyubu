@@ -152,6 +152,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\Cache.h" />
     <ClInclude Include="..\GatherBuffer.h" />
     <ClInclude Include="..\Gekko.h" />
     <ClInclude Include="..\GekkoAnalyzer.h" />
@@ -166,6 +167,7 @@
     <ClInclude Include="..\TLB.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Cache.cpp" />
     <ClCompile Include="..\GatherBuffer.cpp" />
     <ClCompile Include="..\Gekko.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">pch.h</PrecompiledHeaderFile>
