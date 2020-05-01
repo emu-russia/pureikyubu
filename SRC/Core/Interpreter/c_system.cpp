@@ -151,6 +151,17 @@ namespace Gekko
                 //assert(RRS == 0x0C008000);
                 break;
 
+            case (int)SPR::HID0:
+            {
+                uint32_t bits = RRS;
+                Gekko->cache.Enable((bits & HID0_DCE) ? true : false);
+                if (bits & HID0_DCFI)
+                {
+                    Gekko->cache.Reset();
+                }
+            }
+            break;
+
             // locked cache dma (dirty hack)
             case    922:    // DMAU
                 Gekko->regs.spr[spr] = RRS;
@@ -286,21 +297,127 @@ namespace Gekko
     // ---------------------------------------------------------------------------
     // caches
 
-    OP(DCBT) {}
-    OP(DCBTST) {}
-    OP(DCBZ) {}
-    OP(DCBZ_L) {}
-    OP(DCBST) {}
-    OP(DCBF) {}
-    OP(DCBI) {}
+    OP(DCBT)
+    {
+        if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
+            return;
+
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.Touch(pa);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBTST)
+    {
+        if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
+            return;
+
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.TouchForStore(pa);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBZ)
+    {
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.Zero(pa);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBZ_L)
+    {
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.ZeroLocked(ea);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBST)
+    {
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.Store(ea);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBF)
+    {
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.Flush(pa);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
+
+    OP(DCBI)
+    {
+        uint32_t ea = RA ? RRA + RRB : RRB;
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        if (pa != Gekko::BadAddress)
+        {
+            Gekko->cache.Invalidate(pa);
+        }
+        else
+        {
+            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
+            Gekko->Exception(Exception::DSI);
+        }
+    }
     
     OP(ICBI)
     {
-        uint32_t address = RRB;
-        if (RA)
-        {
-            address += RRA;
-        }
+        uint32_t address = RA ? RRA + RRB : RRB;
         address &= ~0x1f;
 
         Gekko->jitc->Invalidate(address, 32);

@@ -202,6 +202,9 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
     Gekko::Gekko->regs.msr &= ~MSR_EE;                         // disable interrupts/DEC
     Gekko::Gekko->regs.msr |= MSR_FP;                          // enable FP
 
+    // Enable data cache
+    Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID0] = HID0_DCE;
+
     // from gc-linux dev mailing list
     Gekko::Gekko->regs.spr[(int)Gekko::SPR::PVR] = 0x00083214;
 

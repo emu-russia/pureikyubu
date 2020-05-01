@@ -27,6 +27,13 @@ namespace Gekko
             return;
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadByte(pa, reg);
+            if (LastWIMG & WIMG_W)
+                return;
+        }
+
         MIReadByte(pa, reg);
     }
 
@@ -57,6 +64,13 @@ namespace Gekko
             }
         }
     
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteByte(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
         MIWriteByte(pa, data);
     }
 
@@ -77,6 +91,14 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadHalf(pa, reg);
+            if (LastWIMG & WIMG_W)
+                return;
+        }
+
         MIReadHalf(pa, reg);
     }
 
@@ -113,6 +135,13 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteHalf(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
         MIWriteHalf(pa, data);
     }
 
@@ -133,6 +162,14 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadWord(pa, reg);
+            if (LastWIMG & WIMG_W)
+                return;
+        }
+
         MIReadWord(pa, reg);
     }
 
@@ -163,6 +200,13 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteWord(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
         MIWriteWord(pa, data);
     }
 
@@ -183,6 +227,14 @@ namespace Gekko
             Exception(Exception::DSI);
             return;
         }
+
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadDouble(pa, reg);
+            if (LastWIMG & WIMG_W)
+                return;
+        }
+
         MIReadDouble(pa, reg);
     }
 
@@ -213,6 +265,13 @@ namespace Gekko
             }
         }
 
+        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.WriteDouble(pa, data);
+            if ((LastWIMG & WIMG_W) == 0)
+                return;
+        }
+
         MIWriteDouble(pa, data);
     }
 
@@ -220,6 +279,8 @@ namespace Gekko
 
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type)
     {
+        LastWIMG = WIMG_I;      // Caching inhibited
+
         // Required to run bootrom
         if (ea >= BOOTROM_START_ADDRESS)
         {
@@ -278,6 +339,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*dbatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
+                    LastWIMG = (*dbatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -362,6 +424,10 @@ namespace Gekko
                 MIWriteWord(primaryPteAddr + 4, pte[1]);
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                if (type != MmuAccess::Execute)
+                {
+                    LastWIMG = (pte[1] >> 3) & 0xf;
+                }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
             }
@@ -403,6 +469,10 @@ namespace Gekko
                 MIWriteWord(secondaryPteAddr + 4, pte[1]);
 
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
+                if (type != MmuAccess::Execute)
+                {
+                    LastWIMG = (pte[1] >> 3) & 0xf;
+                }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
             }
@@ -417,6 +487,9 @@ namespace Gekko
     uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
     {
         uint32_t pa;
+
+        LastWIMG = 0;
+
         if (!tlb.Exists(ea, pa))
         {
             if (!BlockAddressTranslation(ea, pa, type))

@@ -103,6 +103,7 @@ namespace Gekko
         segmentsExecuted = 0;
 
         tlb.InvalidateAll();
+        cache.Reset();
     }
 
     // Modify CPU counters

@@ -28,6 +28,33 @@
 #define MSR_RI              (MSR_BIT(30))               // Recoverable exception
 #define MSR_LE              (MSR_BIT(31))               // Little-endian mode enable
 
+#define HID0_EMCP	0x8000'0000
+#define HID0_DBP	0x4000'0000
+#define HID0_EBA	0x2000'0000
+#define HID0_EBD	0x1000'0000
+#define HID0_BCLK	0x0800'0000
+#define HID0_ECLK	0x0200'0000
+#define HID0_PAR	0x0100'0000
+#define HID0_DOZE	0x0080'0000
+#define HID0_NAP	0x0040'0000
+#define HID0_SLEEP	0x0020'0000
+#define HID0_DPM	0x0010'0000
+#define HID0_NHR	0x0001'0000			// Not hard reset (software-use only)
+#define HID0_ICE	0x0000'8000
+#define HID0_DCE	0x0000'4000
+#define HID0_ILOCK	0x0000'2000
+#define HID0_DLOCK	0x0000'1000
+#define HID0_ICFI	0x0000'0800
+#define HID0_DCFI	0x0000'0400
+#define HID0_SPD	0x0000'0200
+#define HID0_IFEM	0x0000'0100
+#define HID0_SGE	0x0000'0080
+#define HID0_DCFA	0x0000'0040
+#define HID0_BTIC	0x0000'0020
+#define HID0_ABE	0x0000'0008
+#define HID0_BHT	0x0000'0004
+#define HID0_NOOPTI	0x0000'0001
+
 #define HID2_LSQE   0x80000000          // PS load/store quantization
 #define HID2_WPE    0x40000000          // gathering enabled
 #define HID2_PSE    0x20000000          // PS-mode
@@ -44,6 +71,12 @@
 #define GEKKO_XER_SO    (1 << 31)		// Sticky overflow
 #define GEKKO_XER_OV    (1 << 30)		// Overflow 
 #define GEKKO_XER_CA    (1 << 29)		// Carry
+
+// WIMG Bits
+#define WIMG_W		8				// Write-through 
+#define WIMG_I		4				// Caching-inhibited 
+#define WIMG_M		2				// Bus lock on access
+#define WIMG_G		1				// Guarded (block out-of-order access)
 
 // Exception vectors (physical address)
 

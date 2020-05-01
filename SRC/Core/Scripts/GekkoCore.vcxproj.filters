@@ -52,9 +52,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\Jitc.h">
-      <Filter>Header Files</Filter>      
-    </ClInclude>      
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\TLB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Cache.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -141,6 +144,9 @@
       <Filter>JitcX64</Filter>
     </ClCompile>
     <ClCompile Include="..\TLB.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Cache.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

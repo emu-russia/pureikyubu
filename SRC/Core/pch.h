@@ -19,6 +19,7 @@
 #include "GekkoDisasm.h"
 #include "Jitc.h"
 #include "TLB.h"
+#include "Cache.h"
 
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"

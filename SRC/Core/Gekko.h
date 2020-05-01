@@ -8,6 +8,7 @@
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
 #include "TLB.h"
+#include "Cache.h"
 
 // floating point register
 typedef union _FPREG
@@ -128,6 +129,7 @@ namespace Gekko
         volatile bool intFlag = false;      // INT signal
 
         MmuResult MmuLastResult = MmuResult::Ok;
+        int LastWIMG = 0;       // The value of the WIMG bits after the last address translation.
 
         // For convenient access to BAT registers (Mmu related)
         uint32_t *dbatu[4];
@@ -139,6 +141,7 @@ namespace Gekko
         uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type);
 
         TLB tlb;
+        Cache cache;
 
     public:
 

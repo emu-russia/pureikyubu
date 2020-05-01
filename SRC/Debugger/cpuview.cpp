@@ -97,13 +97,15 @@ void con_update_disa_window()
 
     for(int line=wind.disa_y+1; line<wind.disa_y+wind.disa_h; line++, addr+=4)
     {
+        op = 0;
+
         if (Gekko::Gekko)
         {
-            Gekko::Gekko->ReadWord(addr, &op);
-        }
-        else
-        {
-            op = 0;
+            pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute);
+            if (pa != Gekko::BadAddress)
+            {
+                MIReadWord(pa, &op);
+            }
         }
 
         int n = con_disa_line(line, op, addr);
@@ -149,7 +151,10 @@ static void disa_navigate()
     {
         pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute);
     }
-    if(pa != Gekko::BadAddress) Gekko::Gekko->ReadWord(pa, &op);
+    if (pa != Gekko::BadAddress)
+    {
+        MIReadWord(pa, &op);
+    }
     if(op == 0) return;
 
     Gekko::AnalyzeInfo info = { 0 };
