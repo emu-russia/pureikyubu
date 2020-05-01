@@ -272,7 +272,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -302,7 +302,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -333,7 +333,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -363,7 +363,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -394,7 +394,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -424,7 +424,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -455,7 +455,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))
@@ -485,7 +485,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize)
+		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
 		if (IsInvalid(addr))

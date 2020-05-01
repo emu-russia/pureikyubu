@@ -361,11 +361,6 @@ namespace Gekko
         {
             Gekko->cache.Touch(pa);
         }
-        else
-        {
-            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
-            Gekko->Exception(Exception::DSI);
-        }
     }
 
     OP(DCBTST)
@@ -375,15 +370,12 @@ namespace Gekko
 
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        // TouchForStore is also made architecturally as a Read operation so that the MMU does not set the "Changed" bit for PTE.
+
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.TouchForStore(pa);
-        }
-        else
-        {
-            Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
-            Gekko->Exception(Exception::DSI);
         }
     }
 
@@ -403,9 +395,13 @@ namespace Gekko
         }
     }
 
+    // DCBZ_L is used for the alien Locked Cache address mapping mechanism.
+    // For example, calling dcbz_l 0xE0000000 will make this address be associated with Locked Cache for subsequent Load/Store operations.
+    // Locked Cache is saved in RAM by another alien mechanism (DMA).
+
     OP(DCBZ_L)
     {
-        if ((Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_LCE) == 0)
+        if (!Gekko->cache.IsLockedEnable())
         {
             Gekko->PrCause = PrivilegedCause::IllegalInstruction;
             Gekko->Exception(Exception::PROGRAM);

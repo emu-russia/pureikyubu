@@ -6,6 +6,9 @@
 
 namespace Gekko
 {
+    // Left until all lurking bugs are eliminated.
+    #define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000
+
     // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
     // (as well as those who they pretend, for example HLE or Debugger).
 
@@ -22,6 +25,12 @@ namespace Gekko
         }
 
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadByte(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
         {
             cache.ReadByte(pa, reg);
             return;
@@ -58,6 +67,12 @@ namespace Gekko
                 return;
         }
 
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteByte(pa, data);
+            return;
+        }
+
         MIWriteByte(pa, data);
     }
 
@@ -74,6 +89,12 @@ namespace Gekko
         }
 
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadHalf(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
         {
             cache.ReadHalf(pa, reg);
             return;
@@ -116,6 +137,12 @@ namespace Gekko
                 return;
         }
 
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteHalf(pa, data);
+            return;
+        }
+
         MIWriteHalf(pa, data);
     }
 
@@ -132,6 +159,12 @@ namespace Gekko
         }
 
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadWord(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
         {
             cache.ReadWord(pa, reg);
             return;
@@ -168,6 +201,12 @@ namespace Gekko
                 return;
         }
 
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteWord(pa, data);
+            return;
+        }
+
         MIWriteWord(pa, data);
     }
 
@@ -184,6 +223,12 @@ namespace Gekko
         }
 
         if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        {
+            cache.ReadDouble(pa, reg);
+            return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
         {
             cache.ReadDouble(pa, reg);
             return;
@@ -220,6 +265,12 @@ namespace Gekko
             cache.WriteDouble(pa, data);
             if ((LastWIMG & WIMG_W) == 0)
                 return;
+        }
+
+        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+        {
+            cache.WriteDouble(pa, data);
+            return;
         }
 
         // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
@@ -401,6 +452,12 @@ namespace Gekko
                 MmuLastResult = MmuResult::Ok;
                 return pa;
             }
+            else
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                MIWriteWord(primaryPteAddr + 4, pte[1]);
+            }
 
             primaryPteAddr += 8;
         }
@@ -445,6 +502,12 @@ namespace Gekko
                 }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
+            }
+            else
+            {
+                // Referenced
+                pte[1] |= 0x100;
+                MIWriteWord(secondaryPteAddr + 4, pte[1]);
             }
 
             secondaryPteAddr += 8;

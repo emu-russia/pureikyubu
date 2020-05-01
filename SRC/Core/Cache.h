@@ -31,13 +31,14 @@ namespace Gekko
 		bool enabled = false;
 		bool frozen = false;
 
-		CacheLogLevel log = CacheLogLevel::Commands;
+		CacheLogLevel log = CacheLogLevel::None;
 
 		void CastIn(uint32_t pa);		// Mem -> Cache
 		void CastOut(uint32_t pa);		// Cache -> Mem
 
 		// You can disable cache emulation for debugging purposes.
-		bool DisableForDebugReasons = false;
+		// This does not apply to a locked cache.
+		bool DisableForDebugReasons = true;
 
 		uint8_t* LockedCache = nullptr;
 		bool lcenabled = false;
