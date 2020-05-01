@@ -62,48 +62,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\Interpreter\c_branch.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_compare.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_condition.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_floatingpoint.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_fploadstore.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_integer.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_loadstore.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_logical.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_pairedsingle.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_psloadstore.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_rotate.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_shift.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_system.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
-    <ClCompile Include="..\Interpreter\c_tables.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
     <ClCompile Include="..\Gekko.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -148,6 +106,48 @@
     </ClCompile>
     <ClCompile Include="..\Cache.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Branch.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Compare.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Condition.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\FloatingPoint.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\FPLoadStore.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Integer.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\LoadStore.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Logical.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\PairedSingle.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\PSLoadStore.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Rotate.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Shift.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\System.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Interpreter\Tables.cpp">
+      <Filter>Interpreter</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
