@@ -156,3 +156,17 @@ namespace Gekko
 		DMAL = 923,
 	};
 }
+
+// Quantization data types
+
+enum class GEKKO_QUANT_TYPE
+{
+	SINGLE_FLOAT = 0,		// single-precision floating-point (no conversion)
+	RESERVED1,
+	RESERVED2,
+	RESERVED3,
+	U8 = 4,			// unsigned 8 bit integer
+	U16 = 5,		// unsigned 16 bit integer
+	S8 = 6,			// signed 8 bit integer
+	S16 = 7,		// signed 16 bit integer
+};
