@@ -399,6 +399,8 @@ namespace Gekko
 				SetInvalid(nextCacheLineAddr, false);
 				SetDirty(nextCacheLineAddr, false);
 			}
+
+			SetDirty(nextCacheLineAddr, true);
 		}
 
 		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
@@ -490,6 +492,8 @@ namespace Gekko
 				SetInvalid(nextCacheLineAddr, false);
 				SetDirty(nextCacheLineAddr, false);
 			}
+
+			SetDirty(nextCacheLineAddr, true);
 		}
 
 		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
@@ -581,6 +585,8 @@ namespace Gekko
 				SetInvalid(nextCacheLineAddr, false);
 				SetDirty(nextCacheLineAddr, false);
 			}
+
+			SetDirty(nextCacheLineAddr, true);
 		}
 
 		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
