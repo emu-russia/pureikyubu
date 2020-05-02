@@ -461,6 +461,8 @@ namespace Gekko
         }
         else
         {
+            DBHalt("DCBF DSI: 0x%08X\n", ea);
+
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
         }
@@ -484,6 +486,8 @@ namespace Gekko
         }
         else
         {
+            DBHalt("DCBI DSI: 0x%08X\n", ea);
+
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
         }
