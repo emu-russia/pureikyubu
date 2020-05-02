@@ -336,6 +336,11 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
+		if ((addr & 0x1f) >= (32 - sizeof(uint16_t)))
+		{
+			DBHalt("Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+		}
+
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
@@ -365,6 +370,11 @@ namespace Gekko
 
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
+
+		if ((addr & 0x1f) >= (32 - sizeof(uint16_t)))
+		{
+			DBHalt("Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+		}
 
 		if (IsInvalid(addr))
 		{
@@ -397,6 +407,11 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
+		if ((addr & 0x1f) >= (32 - sizeof(uint32_t)))
+		{
+			DBHalt("Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+		}
+
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
@@ -426,6 +441,11 @@ namespace Gekko
 
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
+
+		if ((addr & 0x1f) >= (32 - sizeof(uint32_t)))
+		{
+			DBHalt("Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+		}
 
 		if (IsInvalid(addr))
 		{
@@ -458,6 +478,11 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
+		if ((addr & 0x1f) >= (32 - sizeof(uint64_t)))
+		{
+			DBHalt("Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+		}
+
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
@@ -487,6 +512,11 @@ namespace Gekko
 
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
+
+		if ((addr & 0x1f) >= (32 - sizeof(uint64_t)))
+		{
+			DBHalt("Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+		}
 
 		if (IsInvalid(addr))
 		{

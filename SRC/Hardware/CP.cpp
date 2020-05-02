@@ -194,7 +194,7 @@ static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
     fifo.cp.cr = (uint16_t)data;
 
     // clear breakpoint
-    if(data & CP_CR_BPEN)
+    if((data & CP_CR_BPINTEN) == 0)
     {
         fifo.cp.sr &= ~CP_SR_BPINT;
     }
@@ -325,6 +325,16 @@ void CPOpen(HWConfig * config)
     MISetTrap(16, CP_RDPTR + 2  , read_cp_rdptrh, write_cp_rdptrh);
     MISetTrap(16, CP_BPPTR      , read_cp_bpptrl, write_cp_bpptrl);
     MISetTrap(16, CP_BPPTR + 2  , read_cp_bpptrh, write_cp_bpptrh);
+    
+    // I-Ninja. TODO: Research
+    MISetTrap(16, 0x0c00'0040, no_read, nullptr);
+    MISetTrap(16, 0x0c00'0042, no_read, nullptr);
+    MISetTrap(16, 0x0c00'0044, no_read, nullptr);
+    MISetTrap(16, 0x0c00'0046, no_read, nullptr);
+    MISetTrap(16, 0x0c00'0048, no_read, nullptr);
+    MISetTrap(16, 0x0c00'004a, no_read, nullptr);
+    MISetTrap(16, 0x0c00'004c, no_read, nullptr);
+    MISetTrap(16, 0x0c00'004e, no_read, nullptr);
 
     // pixel engine
     MISetTrap(16, PE_ZCR       , no_read, no_write);
