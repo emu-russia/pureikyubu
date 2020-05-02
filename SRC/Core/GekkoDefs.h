@@ -176,7 +176,7 @@ enum class GEKKO_QUANT_TYPE
 #define GEKKO_DMAU_MEM_ADDR 0xffff'ffe0
 #define GEKKO_DMAU_DMA_LEN_U  0x1f
 #define GEKKO_DMAL_LC_ADDR 0xffff'ffe0
-#define GEKKO_DMAL_DMA_LD 0x10
+#define GEKKO_DMAL_DMA_LD 0x10		// 0 Store - transfer from locked cache to external memory. 1 Load - transfer from external memory to locked cache.
 #define GEKKO_DMA_LEN_SHIFT 2
 #define GEKKO_DMAL_DMA_LEN_L 3
 #define GEKKO_DMAL_DMA_T 2

@@ -169,7 +169,8 @@ namespace Gekko
 
             // write gathering buffer
             case (int)SPR::WPAR:
-                //assert(RRS == 0x0C008000);
+                // A mtspr to WPAR invalidates the data.
+                Gekko->gatherBuffer.Reset();
                 break;
 
             case (int)SPR::HID0:
