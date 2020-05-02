@@ -54,25 +54,25 @@ PI FIFO is used to generate a command list. It acts as a producer.
 
 |Bits|Name|Meaning|
 |----|----|-------|
-|31:27| |Reserved(?)|
-|26:5|BASE|The value to write Wrptr after the PI FIFO overflow (when Wrptr becomes Top).|
+|31:26| |Reserved(?)|
+|25:5|BASE|The value to write Wrptr after the PI FIFO overflow (when Wrptr becomes Top).|
 |4:0|0|Zeroes|
 
 ### PI FIFO Top (0x0C003010)
 
 |Bits|Name|Meaning|
 |----|----|-------|
-|31:27| |Reserved(?)|
-|26:5|TOP|Monitors PI FIFO overflow. When Wrptr becomes Top, Wrptr is reset to Base.|
+|31:26| |Reserved(?)|
+|25:5|TOP|Monitors PI FIFO overflow. When Wrptr becomes Top, Wrptr is reset to Base.|
 |4:0|0|Zeroes|
 
 ### PI FIFO Write Pointer (0x0C003014)
 
 |Bits|Name|Meaning|
 |----|----|-------|
-|31:28| |Reserved(?)|
-|27|WRAP|Set to `1` after Wrptr becomes equal to the value of Top. When is it reset? It looks like a subsequent write to FIFO automatically clears the bit.|
-|26:5|WRPTR|The current address for writing the next 32 bytes of FIFO data. Writing is made when the processor performs a burst transaction at the address 0x0C008000. After write, the value is increased by 32. When the value becomes equal to Top, Wrptr is set to Base and the Wrap bit is set.|
+|31:27| |Reserved(?)|
+|26|WRAP|Set to `1` after Wrptr becomes equal to the value of Top. When is it reset? It looks like a subsequent write to FIFO automatically clears the bit.|
+|25:5|WRPTR|The current address for writing the next 32 bytes of FIFO data. Writing is made when the processor performs a burst transaction at the address 0x0C008000. After write, the value is increased by 32. When the value becomes equal to Top, Wrptr is set to Base and the Wrap bit is set.|
 |4:0|0|Zeroes|
 
 As you can see, PI FIFO knows nothing about the mode in which it works: linked or multi-buffer. This logic is implemented entirely in the GX command processor.

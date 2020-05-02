@@ -342,6 +342,21 @@ namespace Gekko
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_ushort(*(uint16_t *)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -371,6 +386,23 @@ namespace Gekko
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+
+			SetDirty(nextCacheLineAddr, true);
+		}
+
 		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -403,6 +435,21 @@ namespace Gekko
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_ulong(*(uint32_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -432,6 +479,23 @@ namespace Gekko
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+
+			SetDirty(nextCacheLineAddr, true);
+		}
+
 		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -464,6 +528,21 @@ namespace Gekko
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_uint64(*(uint64_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -493,6 +572,23 @@ namespace Gekko
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+
+			SetDirty(nextCacheLineAddr, true);
+		}
+
 		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -503,19 +599,17 @@ namespace Gekko
 		SetDirty(addr, true);
 	}
 
-	void Cache::LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes)
+	void Cache::LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts)
 	{
-		size_t numBursts = bytes / 32;
-
 		if (MemToCache)
 		{   // 1 load - transfer from external memory to locked cache
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+				DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
-			for (size_t i = 0; i < numBursts; i++)
+			for (size_t i = 0; i < bursts; i++)
 			{
 				MIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
@@ -527,10 +621,10 @@ namespace Gekko
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+				DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
-			for (size_t i = 0; i < numBursts; i++)
+			for (size_t i = 0; i < bursts; i++)
 			{
 				MIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;

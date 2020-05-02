@@ -319,7 +319,7 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
 
 void __fastcall MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-    if ((phys_addr + 32) >= RAMSIZE)
+    if ((phys_addr + 32) > RAMSIZE)
         return;
 
     memcpy(burstData, &mi.ram[phys_addr], 32);
@@ -333,7 +333,7 @@ void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
         return;
     }
 
-    if ((phys_addr + 32) >= RAMSIZE)
+    if ((phys_addr + 32) > RAMSIZE)
         return;
 
     memcpy(&mi.ram[phys_addr], burstData, 32);

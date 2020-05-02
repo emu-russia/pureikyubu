@@ -376,8 +376,8 @@ namespace Gekko
 		float       ldScale[64];        // for paired-single loads
 		float       stScale[64];        // for paired-single stores
 
-		static float dequantize(uint32_t data, int type, uint8_t scale);
-		static uint32_t quantize(float data, int type, uint8_t scale);
+		static float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
+		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
 	public:
 		Interpreter(GekkoCore* _core)

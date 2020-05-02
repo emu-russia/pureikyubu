@@ -285,7 +285,7 @@ namespace Gekko
         LastWIMG = WIMG_I;      // Caching inhibited
 
         // Locked cache
-        if ((ea & ~0x3fff) == cache.LockedCacheAddr && cache.IsLockedEnable())
+        if ((ea & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS && cache.IsLockedEnable())
         {
             LastWIMG = 0;
             return ea;

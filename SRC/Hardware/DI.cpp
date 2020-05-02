@@ -133,7 +133,7 @@ static uint8_t DIHostToDduCallbackData()
             if (DILEN)
             {
                 uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-                memcpy(di.dmaFifo, &mi.ram[dimar], 32);
+                MIReadBurst(dimar, di.dmaFifo);
                 DIMAR += 32;
                 DILEN -= 32;
             }
@@ -195,7 +195,7 @@ static void DIDduToHostCallback(uint8_t data)
             if (DILEN)
             {
                 uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-                memcpy(&mi.ram[dimar], di.dmaFifo, 32);
+                MIWriteBurst(dimar, di.dmaFifo);
                 DIMAR += 32;
                 DILEN -= 32;
             }

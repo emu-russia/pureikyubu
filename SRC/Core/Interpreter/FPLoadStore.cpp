@@ -1,14 +1,9 @@
 // Floating-Point Load and Store Instructions
 #include "../pch.h"
-#include "interpreter.h"
+#include "InterpreterPrivate.h"
 
 namespace Gekko
 {
-    #define FPRU(n) (Gekko->regs.fpr[n].uval)
-    #define FPRD(n) (Gekko->regs.fpr[n].dbl)
-    #define PS0(n)  (Gekko->regs.fpr[n].dbl)
-    #define PS1(n)  (Gekko->regs.ps1[n].dbl)
-
     // ---------------------------------------------------------------------------
     // loads
 
@@ -25,6 +20,8 @@ namespace Gekko
 
             if (RA) Gekko->ReadWord(RRA + SIMM, (uint32_t*)&res);
             else Gekko->ReadWord(SIMM, (uint32_t*)&res);
+
+            if (Gekko->interp->exception) return;
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -46,6 +43,8 @@ namespace Gekko
             if (RA) Gekko->ReadWord(RRA + RRB, (uint32_t*)&res);
             else Gekko->ReadWord(RRB, (uint32_t*)&res);
 
+            if (Gekko->interp->exception) return;
+
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
         }
@@ -66,6 +65,8 @@ namespace Gekko
             float res;
 
             Gekko->ReadWord(ea, (uint32_t*)&res);
+
+            if (Gekko->interp->exception) return;
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -89,6 +90,8 @@ namespace Gekko
             float res;
 
             Gekko->ReadWord(ea, (uint32_t*)&res);
+
+            if (Gekko->interp->exception) return;
 
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(RD) = PS1(RD) = (double)res;
             else FPRD(RD) = (double)res;
@@ -131,6 +134,7 @@ namespace Gekko
         {
             uint32_t ea = RRA + SIMM;
             Gekko->ReadDouble(ea, &FPRU(RD));
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -145,6 +149,7 @@ namespace Gekko
         {
             uint32_t ea = RRA + RRB;
             Gekko->ReadDouble(ea, &FPRU(RD));
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -202,6 +207,7 @@ namespace Gekko
             else data = (float)FPRD(RS);
 
             Gekko->WriteWord(ea, *(uint32_t*)&data);
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -222,6 +228,7 @@ namespace Gekko
             else num = (float)FPRD(RS);
 
             Gekko->WriteWord(ea, *data);
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -260,6 +267,7 @@ namespace Gekko
         {
             uint32_t ea = RRA + SIMM;
             Gekko->WriteDouble(ea, &FPRU(RS));
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
@@ -274,6 +282,7 @@ namespace Gekko
         {
             uint32_t ea = RRA + RRB;
             Gekko->WriteDouble(ea, &FPRU(RS));
+            if (Gekko->interp->exception) return;
             RRA = ea;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);

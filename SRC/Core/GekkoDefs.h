@@ -120,6 +120,8 @@ namespace Gekko
 		SPRG2 = 274,
 		SPRG3 = 275,
 		EAR = 282,
+		TBL = 284,
+		TBU = 285,
 		PVR = 287,
 		IBAT0U = 528,
 		IBAT0L = 529,
@@ -156,3 +158,26 @@ namespace Gekko
 		DMAL = 923,
 	};
 }
+
+// Quantization data types
+
+enum class GEKKO_QUANT_TYPE
+{
+	SINGLE_FLOAT = 0,		// single-precision floating-point (no conversion)
+	RESERVED1,
+	RESERVED2,
+	RESERVED3,
+	U8 = 4,			// unsigned 8 bit integer
+	U16 = 5,		// unsigned 16 bit integer
+	S8 = 6,			// signed 8 bit integer
+	S16 = 7,		// signed 16 bit integer
+};
+
+#define GEKKO_DMAU_MEM_ADDR 0xffff'ffe0
+#define GEKKO_DMAU_DMA_LEN_U  0x1f
+#define GEKKO_DMAL_LC_ADDR 0xffff'ffe0
+#define GEKKO_DMAL_DMA_LD 0x10		// 0 Store - transfer from locked cache to external memory. 1 Load - transfer from external memory to locked cache.
+#define GEKKO_DMA_LEN_SHIFT 2
+#define GEKKO_DMAL_DMA_LEN_L 3
+#define GEKKO_DMAL_DMA_T 2
+#define GEKKO_DMAL_DMA_F 1

@@ -41,6 +41,7 @@ namespace Gekko
 		bool DisableForDebugReasons = true;
 
 		uint8_t* LockedCache = nullptr;
+		uint32_t LockedCacheAddr = 0;
 		bool lcenabled = false;
 
 	public:
@@ -77,8 +78,6 @@ namespace Gekko
 		void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
 		void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
 
-		uint32_t LockedCacheAddr = 0;
-
-		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes);
+		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 	};
 }

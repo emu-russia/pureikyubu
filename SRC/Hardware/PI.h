@@ -27,7 +27,7 @@
 #define PI_INTERRUPT_ERROR      0x0001      // GP verify failed
 
 // PI write pointer wrap bit
-#define PI_WRPTR_WRAP   (1 << 27)
+#define PI_WRPTR_WRAP   0x0400'0000
 
 // ---------------------------------------------------------------------------
 // hardware API
