@@ -135,6 +135,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
+    // Required by HLE Subsystem
+    assert((uint64_t)hInstance <= 0x400000);
+
     // prepare file system
     InitFileSystem(hInstance);
 

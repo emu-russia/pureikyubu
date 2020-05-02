@@ -61,9 +61,6 @@ namespace Gekko
     // ---------------------------------------------------------------------------
     // system registers
 
-    static inline bool msr_ir() { return (Gekko->regs.msr & MSR_IR) ? true : false; }
-    static inline bool msr_dr() { return (Gekko->regs.msr & MSR_DR) ? true : false; }
-
     // mask = (4)CRM[0] || (4)CRM[1] || ... || (4)CRM[7]
     // CR = (rs & mask) | (CR & ~mask)
     OP(MTCRF)
@@ -136,8 +133,12 @@ namespace Gekko
                 "DBAT0U", "DBAT0L", "DBAT1U", "DBAT1L",
                 "DBAT2U", "DBAT2L", "DBAT3U", "DBAT3L"
             };
+
+            bool msr_ir = (Gekko->regs.msr & MSR_IR) ? true : false;
+            bool msr_dr = (Gekko->regs.msr & MSR_DR) ? true : false;
+
             DBReport2(DbgChannel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
-                bat[spr - 528], RRS, msr_ir(), msr_dr(), Gekko->regs.pc);
+                bat[spr - 528], RRS, msr_ir, msr_dr, Gekko->regs.pc);
         }
         else switch (spr)
         {
@@ -148,17 +149,22 @@ namespace Gekko
 
             // page table base
             case (int)SPR::SDR1:
-                DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
-                    RRS, msr_ir(), msr_dr(), Gekko->regs.pc);
-                break;
+            {
+                bool msr_ir = (Gekko->regs.msr & MSR_IR) ? true : false;
+                bool msr_dr = (Gekko->regs.msr & MSR_DR) ? true : false;
 
-            case    284:
+                DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+                    RRS, msr_ir, msr_dr, Gekko->regs.pc);
+            }
+            break;
+
+            case (int)SPR::TBL:
                 Gekko->regs.tb.Part.l = RRS;
-                DBReport2(DbgChannel::CPU, "set TBL : %08X\n", Gekko->regs.tb.Part.l);
+                DBReport2(DbgChannel::CPU, "Set TBL: 0x%08X\n", Gekko->regs.tb.Part.l);
                 break;
-            case    285:
+            case (int)SPR::TBU:
                 Gekko->regs.tb.Part.u = RRS;
-                DBReport2(DbgChannel::CPU, "set TBH : %08X\n", Gekko->regs.tb.Part.u);
+                DBReport2(DbgChannel::CPU, "Set TBU: 0x%08X\n", Gekko->regs.tb.Part.u);
                 break;
 
             // write gathering buffer
@@ -193,22 +199,23 @@ namespace Gekko
 
             case (int)SPR::DMAU:
                 Gekko->regs.spr[spr] = RRS;
-                DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
+                //DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
                 break;
             case (int)SPR::DMAL:
             {
                 Gekko->regs.spr[spr] = RRS;
-                DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
-                if (Gekko->regs.spr[(int)SPR::DMAL] & 2)
+                //DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
+                if (Gekko->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_DMA_T)
                 {
-                    uint32_t maddr = Gekko->regs.spr[(int)SPR::DMAU] & ~0x1f;
-                    uint32_t lcaddr = Gekko->regs.spr[(int)SPR::DMAL] & ~0x1f;
-                    size_t length = ((Gekko->regs.spr[(int)SPR::DMAU] & 0x1f) << 2) | ((Gekko->regs.spr[(int)SPR::DMAL] >> 2) & 3);
+                    uint32_t maddr = Gekko->regs.spr[(int)SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
+                    uint32_t lcaddr = Gekko->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_LC_ADDR;
+                    size_t length = ((Gekko->regs.spr[(int)SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
+                        ((Gekko->regs.spr[(int)SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
                     if (length == 0) length = 128;
                     if (Gekko->cache.IsLockedEnable())
                     {
                         Gekko->cache.LockedCacheDma(
-                            (Gekko->regs.spr[(int)SPR::DMAL] & 0x10) ? true : false,
+                            (Gekko->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
                             maddr,
                             lcaddr,
                             length);
@@ -217,7 +224,8 @@ namespace Gekko
 
                 // It makes no sense to implement such a small Queue. We make all transactions instant.
 
-                Gekko->regs.spr[spr] &= ~3;     // DMA_T = DMA_F = 0
+                Gekko->regs.spr[spr] &= ~(GEKKO_DMAL_DMA_T | GEKKO_DMAL_DMA_F);
+                return;
             }
             break;
         }

@@ -79,6 +79,6 @@ namespace Gekko
 
 		uint32_t LockedCacheAddr = 0;
 
-		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes);
+		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 	};
 }

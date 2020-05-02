@@ -503,19 +503,17 @@ namespace Gekko
 		SetDirty(addr, true);
 	}
 
-	void Cache::LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bytes)
+	void Cache::LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts)
 	{
-		size_t numBursts = bytes / 32;
-
 		if (MemToCache)
 		{   // 1 load - transfer from external memory to locked cache
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+				DBReport2(DbgChannel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
-			for (size_t i = 0; i < numBursts; i++)
+			for (size_t i = 0; i < bursts; i++)
 			{
 				MIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
@@ -527,10 +525,10 @@ namespace Gekko
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, len: %i\n", memaddr, lcaddr, bytes);
+				DBReport2(DbgChannel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
-			for (size_t i = 0; i < numBursts; i++)
+			for (size_t i = 0; i < bursts; i++)
 			{
 				MIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
