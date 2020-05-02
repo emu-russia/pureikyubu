@@ -182,6 +182,10 @@ namespace Gekko
                 {
                     Gekko->cache.Reset();
                 }
+                if (bits & HID0_ICFI)
+                {
+                    Gekko->jitc->Reset();
+                }
             }
             break;
 
@@ -287,7 +291,7 @@ namespace Gekko
             return;
         }
 
-        Gekko->regs.sr[RA] = RRS;
+        Gekko->regs.sr[RA & 0xf] = RRS;
     }
 
     // sr[rb] = rs
@@ -313,7 +317,7 @@ namespace Gekko
             return;
         }
 
-        RRD = Gekko->regs.sr[RA];
+        RRD = Gekko->regs.sr[RA & 0xf];
     }
 
     // rd = sr[rb]

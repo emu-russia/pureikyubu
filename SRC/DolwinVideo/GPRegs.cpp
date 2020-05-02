@@ -18,7 +18,7 @@ XFMemory    xfRegs;
 
 uint32_t    cpLoads, bpLoads, xfLoads;
 
-static bool GpRegsLog = true;
+static bool GpRegsLog = false;
 
 // ---------------------------------------------------------------------------
 

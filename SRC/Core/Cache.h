@@ -38,9 +38,10 @@ namespace Gekko
 
 		// You can disable cache emulation for debugging purposes.
 		// This does not apply to a locked cache.
-		bool DisableForDebugReasons = true;
+		bool DisableForDebugReasons = false;
 
 		uint8_t* LockedCache = nullptr;
+		uint32_t LockedCacheAddr = 0;
 		bool lcenabled = false;
 
 	public:
@@ -76,8 +77,6 @@ namespace Gekko
 		void __fastcall WriteWord(uint32_t addr, uint32_t data);
 		void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
 		void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
-
-		uint32_t LockedCacheAddr = 0;
 
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 	};

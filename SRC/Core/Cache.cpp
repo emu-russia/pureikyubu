@@ -336,17 +336,27 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint16_t)))
-		{
-			DBHalt("Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_ushort(*(uint16_t *)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -371,16 +381,26 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint16_t)))
-		{
-			DBHalt("Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -407,17 +427,27 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint32_t)))
-		{
-			DBHalt("Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_ulong(*(uint32_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -442,16 +472,26 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint32_t)))
-		{
-			DBHalt("Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -478,17 +518,27 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint64_t)))
-		{
-			DBHalt("Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 			SetDirty(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*reg = _byteswap_uint64(*(uint64_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
@@ -513,16 +563,26 @@ namespace Gekko
 		if (addr >= cacheSize || DisableForDebugReasons)
 			return;
 
-		if ((addr & 0x1f) >= (32 - sizeof(uint64_t)))
-		{
-			DBHalt("Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
-		}
-
 		if (IsInvalid(addr))
 		{
 			CastIn(addr);
 			SetInvalid(addr, false);
 		}
+
+		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
+		{
+			DBReport2(DbgChannel::CPU, "Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+
+			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
+
+			if (IsInvalid(nextCacheLineAddr))
+			{
+				CastIn(nextCacheLineAddr);
+				SetInvalid(nextCacheLineAddr, false);
+				SetDirty(nextCacheLineAddr, false);
+			}
+		}
+
 		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
 
 		if (log >= CacheLogLevel::MemOps)
