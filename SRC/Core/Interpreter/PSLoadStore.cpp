@@ -96,7 +96,7 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = 1.0f;
@@ -107,17 +107,19 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
                 else Gekko->ReadWord(EA + 4, &data1);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
+
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -149,7 +151,7 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = 1.0f;
@@ -160,19 +162,20 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
                 else Gekko->ReadWord(EA + 4, &data1);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
 
             RRA = EA;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -204,7 +207,7 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = 1.0f;
@@ -215,19 +218,20 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
                 else Gekko->ReadWord(EA + 4, &data1);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
 
             RRA = EA;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -258,7 +262,7 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = 1.0f;
@@ -269,17 +273,19 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
                 else Gekko->ReadWord(EA, &data0);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
                 else Gekko->ReadWord(EA + 4, &data1);
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 PS0(d) = (double)dequantize(data0, type, scale);
                 PS1(d) = (double)dequantize(data1, type, scale);
             }
+
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -319,12 +325,16 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
                 else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
                 else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
+
+            if (Gekko->exception) return;
+
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -362,16 +372,17 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
                 else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
                 else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
 
-            if (Gekko->interp->exception) return;
+            if (Gekko->exception) return;
 
             RRA = EA;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -409,16 +420,17 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
                 else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
                 else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
 
-            if (Gekko->interp->exception) return;
+            if (Gekko->exception) return;
 
             RRA = EA;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -455,12 +467,16 @@ namespace Gekko
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
                 else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-                if (Gekko->interp->exception) return;
+                if (Gekko->exception) return;
 
                 if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
                 else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
                 else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
             }
+
+            if (Gekko->exception) return;
+
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }

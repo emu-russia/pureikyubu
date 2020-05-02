@@ -145,6 +145,7 @@ namespace Gekko
 
         volatile bool decreq = false;       // decrementer exception request
         volatile bool intFlag = false;      // INT signal
+        volatile bool exception = false;    // exception pending
 
         MmuResult MmuLastResult = MmuResult::Ok;
         int LastWIMG = 0;       // The value of the WIMG bits after the last address translation.
@@ -184,6 +185,7 @@ namespace Gekko
         void Reset();
 
         void Tick();
+        static void TickForJitc();
         int64_t GetTicks();
         int64_t OneSecond();
         int64_t OneMillisecond() { return msec; }

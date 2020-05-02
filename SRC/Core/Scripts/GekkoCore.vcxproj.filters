@@ -89,9 +89,6 @@
     <ClCompile Include="..\GatherBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\JitcX64\Addx.cpp">
-      <Filter>JitcX64</Filter>
-    </ClCompile>
     <ClCompile Include="..\Jitc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -148,6 +145,15 @@
     </ClCompile>
     <ClCompile Include="..\Interpreter\Tables.cpp">
       <Filter>Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JitcX64\JitcInteger.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JitcX64\JitcRotate.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\MemoryHub.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

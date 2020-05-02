@@ -14,6 +14,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadByte(RRA + SIMM, &RRD);
         else Gekko->ReadByte(SIMM, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -22,6 +24,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadByte(RRA + RRB, &RRD);
         else Gekko->ReadByte(RRB, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -31,8 +35,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->ReadByte(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -42,8 +47,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->ReadByte(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -52,6 +58,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadHalf(RRA + SIMM, &RRD);
         else Gekko->ReadHalf(SIMM, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -60,6 +68,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadHalf(RRA + RRB, &RRD);
         else Gekko->ReadHalf(RRB, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -69,8 +79,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->ReadHalf(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -80,8 +91,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->ReadHalf(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -90,6 +102,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadHalfS(RRA + SIMM, &RRD);
         else Gekko->ReadHalfS(SIMM, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -98,6 +112,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadHalfS(RRA + RRB, &RRD);
         else Gekko->ReadHalfS(RRB, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -107,8 +123,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->ReadHalfS(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -118,8 +135,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->ReadHalfS(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -128,6 +146,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadWord(RRA + SIMM, &RRD);
         else Gekko->ReadWord(SIMM, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -136,6 +156,8 @@ namespace Gekko
     {
         if (RA) Gekko->ReadWord(RRA + RRB, &RRD);
         else Gekko->ReadWord(RRB, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -145,8 +167,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->ReadWord(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -156,8 +179,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->ReadWord(ea, &RRD);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -169,6 +193,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteByte(RRA + SIMM, RRS);
         else Gekko->WriteByte(SIMM, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -177,6 +203,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteByte(RRA + RRB, RRS);
         else Gekko->WriteByte(RRB, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -186,8 +214,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->WriteByte(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -197,8 +226,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->WriteByte(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -207,6 +237,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteHalf(RRA + SIMM, RRS);
         else Gekko->WriteHalf(SIMM, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -215,6 +247,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteHalf(RRA + RRB, RRS);
         else Gekko->WriteHalf(RRB, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -224,8 +258,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->WriteHalf(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -235,8 +270,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->WriteHalf(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -245,6 +281,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteWord(RRA + SIMM, RRS);
         else Gekko->WriteWord(SIMM, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -253,6 +291,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteWord(RRA + RRB, RRS);
         else Gekko->WriteWord(RRB, RRS);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + SIMM
@@ -262,8 +302,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + SIMM;
         Gekko->WriteWord(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ea = ra + rb
@@ -273,8 +314,9 @@ namespace Gekko
     {
         uint32_t ea = RRA + RRB;
         Gekko->WriteWord(ea, RRS);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRA = ea;
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -287,8 +329,9 @@ namespace Gekko
         uint32_t val;
         if (RA) Gekko->ReadHalf(RRA + RRB, &val);
         else Gekko->ReadHalf(RRB, &val);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRD = _byteswap_ushort((uint16_t)val);
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -298,8 +341,9 @@ namespace Gekko
         uint32_t val;
         if (RA) Gekko->ReadWord(RRA + RRB, &val);
         else Gekko->ReadWord(RRB, &val);
-        if (Gekko->interp->exception) return;
+        if (Gekko->exception) return;
         RRD = _byteswap_ulong(val);
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -308,6 +352,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteHalf(RRA + RRB, _byteswap_ushort((uint16_t)RRS));
         else Gekko->WriteHalf(RRB, _byteswap_ushort((uint16_t)RRS));
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -316,6 +362,8 @@ namespace Gekko
     {
         if (RA) Gekko->WriteWord(RRA + RRB, _byteswap_ulong(RRS));
         else Gekko->WriteWord(RRB, _byteswap_ulong(RRS));
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -333,8 +381,9 @@ namespace Gekko
         for (int r = RD; r < 32; r++, ea += 4)
         {
             Gekko->ReadWord(ea, &Gekko->regs.gpr[r]);
-            if (Gekko->interp->exception) break;
+            if (Gekko->exception) return;
         }
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + SIMM
@@ -352,8 +401,9 @@ namespace Gekko
         for (int r = RS; r < 32; r++, ea += 4)
         {
             Gekko->WriteWord(ea, Gekko->regs.gpr[r]);
-            if (Gekko->interp->exception) break;
+            if (Gekko->exception) return;
         }
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0)
@@ -386,7 +436,7 @@ namespace Gekko
                 r = 0;
             }
             Gekko->ReadByte(ea, &val);
-            if (Gekko->interp->exception) return;
+            if (Gekko->exception) return;
             r <<= 8;
             r |= (uint8_t)val;
             ea++;
@@ -400,6 +450,7 @@ namespace Gekko
             i--;
         }
         Gekko->regs.gpr[rd] = r;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0)
@@ -429,12 +480,13 @@ namespace Gekko
                 i = 4;
             }
             Gekko->WriteByte(ea, r >> 24);
-            if (Gekko->interp->exception) return;
+            if (Gekko->exception) return;
             r <<= 8;
             ea++;
             i--;
             n--;
         }
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -448,6 +500,8 @@ namespace Gekko
         Gekko->interp->RESERVE = true;
         Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read);
         Gekko->ReadWord(ea, &RRD);
+        if (Gekko->exception) return;
+        Gekko->regs.pc += 4;
     }
 
     // ea = (ra | 0) + rb
@@ -468,12 +522,13 @@ namespace Gekko
         if (Gekko->interp->RESERVE)
         {
             Gekko->WriteWord(ea, RRS);
-            if (Gekko->interp->exception) return;
+            if (Gekko->exception) return;
             SET_CR0_EQ;
             Gekko->interp->RESERVE = false;
         }
 
         if (IS_XER_SO) SET_CR0_SO;
+        Gekko->regs.pc += 4;
     }
 
 }

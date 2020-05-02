@@ -10,6 +10,7 @@ namespace Gekko
     {
         if (RA) RRD = RRA + SIMM;
         else RRD = SIMM;
+        Gekko->regs.pc += 4;
     }
 
     // rd = (ra | 0) + (SIMM || 0x0000)
@@ -17,12 +18,14 @@ namespace Gekko
     {
         if (RA) RRD = RRA + (SIMM << 16);
         else RRD = SIMM << 16;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb
     OP(ADD)
     {
         RRD = RRA + RRB;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, CR0
@@ -31,6 +34,7 @@ namespace Gekko
         uint32_t res = RRA + RRB;
         RRD = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, XER
@@ -49,6 +53,7 @@ namespace Gekko
             SET_XER_SO;
         }
         else RESET_XER_OV;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, CR0, XER
@@ -68,12 +73,14 @@ namespace Gekko
         }
         else RESET_XER_OV;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + 1
     OP(SUBF)
     {
         RRD = ~RRA + RRB + 1;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + 1, CR0
@@ -82,6 +89,7 @@ namespace Gekko
         uint32_t res = ~RRA + RRB + 1;
         RRD = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + 1, XER
@@ -107,6 +115,7 @@ namespace Gekko
 
         RRD = res;
         if (carry) SET_XER_CA; else RESET_XER_CA;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + SIMM, CR0, XER
@@ -121,6 +130,7 @@ namespace Gekko
         RRD = res;
         if (carry) SET_XER_CA; else RESET_XER_CA;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~RRA + SIMM + 1, XER
@@ -134,6 +144,7 @@ namespace Gekko
 
         RRD = res;
         if (carry) SET_XER_CA; else RESET_XER_CA;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, XER[CA]
@@ -147,6 +158,7 @@ namespace Gekko
 
         RRD = res;
         if (carry) SET_XER_CA; else RESET_XER_CA;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, XER[CA], CR0
@@ -161,6 +173,7 @@ namespace Gekko
         RRD = res;
         if (carry) SET_XER_CA; else RESET_XER_CA;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, XER[CA], XER[OV]
@@ -181,6 +194,7 @@ namespace Gekko
             SET_XER_SO;
         }
         else RESET_XER_OV;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb, XER[CA], XER[OV], CR0
@@ -202,6 +216,7 @@ namespace Gekko
         }
         else RESET_XER_OV;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + 1, XER[CA]
@@ -215,6 +230,7 @@ namespace Gekko
 
         if (carry) SET_XER_CA; else RESET_XER_CA;
         RRD = res;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + 1, XER[CA], CR0
@@ -229,6 +245,7 @@ namespace Gekko
         if (carry) SET_XER_CA; else RESET_XER_CA;
         RRD = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -293,72 +310,84 @@ namespace Gekko
     OP(ADDE)
     {
         ADDXER2(RRA, RRB, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + rb + XER[CA], CR0, XER
     OP(ADDED)
     {
         ADDXER2D(RRA, RRB, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + XER[CA], XER
     OP(SUBFE)
     {
         ADDXER2(~RRA, RRB, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + rb + XER[CA], CR0, XER
     OP(SUBFED)
     {
         ADDXER2D(~RRA, RRB, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + XER[CA] - 1 (0xffffffff), XER
     OP(ADDME)
     {
         ADDXER(RRA - 1, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + XER[CA] - 1 (0xffffffff), CR0, XER
     OP(ADDMED)
     {
         ADDXERD(RRA - 1, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + XER[CA] - 1, XER
     OP(SUBFME)
     {
         ADDXER(~RRA - 1, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + XER[CA] - 1, CR0, XER
     OP(SUBFMED)
     {
         ADDXERD(~RRA - 1, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + XER[CA], XER
     OP(ADDZE)
     {
         ADDXER(RRA, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra + XER[CA], CR0, XER
     OP(ADDZED)
     {
         ADDXERD(RRA, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + XER[CA], XER
     OP(SUBFZE)
     {
         ADDXER(~RRA, op);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + XER[CA], CR0, XER
     OP(SUBFZED)
     {
         ADDXERD(~RRA, op);
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -367,6 +396,7 @@ namespace Gekko
     OP(NEG)
     {
         RRD = ~RRA + 1;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ~ra + 1, CR0
@@ -375,6 +405,7 @@ namespace Gekko
         uint32_t res = ~RRA + 1;
         RRD = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -384,6 +415,7 @@ namespace Gekko
     OP(MULLI)
     {
         RRD = RRA * SIMM;
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-48] = ra * rb
@@ -393,6 +425,7 @@ namespace Gekko
         int32_t a = RRA, b = RRB;
         int64_t res = (int64_t)a * (int64_t)b;
         RRD = (int32_t)(res & 0x00000000ffffffff);
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-48] = ra * rb
@@ -404,6 +437,7 @@ namespace Gekko
         int64_t res = (int64_t)a * (int64_t)b;
         RRD = (int32_t)(res & 0x00000000ffffffff);
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-63] = ra * rb
@@ -413,6 +447,7 @@ namespace Gekko
         int64_t a = (int32_t)RRA, b = (int32_t)RRB, res = a * b;
         res = (res >> 32);
         RRD = (int32_t)res;
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-63] = ra * rb
@@ -424,6 +459,7 @@ namespace Gekko
         res = (res >> 32);
         RRD = (int32_t)res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-63] = ra * rb
@@ -433,6 +469,7 @@ namespace Gekko
         uint64_t a = RRA, b = RRB, res = a * b;
         res = (res >> 32);
         RRD = (uint32_t)res;
+        Gekko->regs.pc += 4;
     }
 
     // prod[0-63] = ra * rb
@@ -444,6 +481,7 @@ namespace Gekko
         res = (res >> 32);
         RRD = (uint32_t)res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra / rb (signed)
@@ -451,6 +489,7 @@ namespace Gekko
     {
         int32_t a = RRA, b = RRB;
         if (b) RRD = a / b;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra / rb (signed), CR0
@@ -463,6 +502,7 @@ namespace Gekko
             RRD = res;
             COMPUTE_CR0(res);
         }
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra / rb (unsigned)
@@ -470,6 +510,7 @@ namespace Gekko
     {
         uint32_t a = RRA, b = RRB, res = 0;
         if (b) RRD = a / b;
+        Gekko->regs.pc += 4;
     }
 
     // rd = ra / rb (unsigned), CR0
@@ -482,6 +523,7 @@ namespace Gekko
             RRD = res;
             COMPUTE_CR0(res);
         }
+        Gekko->regs.pc += 4;
     }
 
 }

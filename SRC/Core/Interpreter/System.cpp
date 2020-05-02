@@ -20,6 +20,10 @@ namespace Gekko
             Gekko->PrCause = PrivilegedCause::Trap;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
+        else
+        {
+            Gekko->regs.pc += 4;
+        }
     }
 
     OP(TW)
@@ -39,6 +43,10 @@ namespace Gekko
             Gekko->PrCause = PrivilegedCause::Trap;
             Gekko->Exception(Gekko::Exception::PROGRAM);
         }
+        else
+        {
+            Gekko->regs.pc += 4;
+        }
     }
 
     // syscall
@@ -55,7 +63,6 @@ namespace Gekko
         Gekko->regs.msr &= ~(0x87C0FF73 | 0x00040000);
         Gekko->regs.msr |= Gekko->regs.spr[(int)SPR::SRR1] & 0x87C0FF73;
         Gekko->regs.pc = Gekko->regs.spr[(int)SPR::SRR0] & ~3;
-        Gekko->interp->branch = true;
     }
 
     // ---------------------------------------------------------------------------
@@ -76,6 +83,7 @@ namespace Gekko
                 Gekko->regs.cr = (Gekko->regs.cr & ~m) | (a << (i << 2));
             }
         }
+        Gekko->regs.pc += 4;
     }
 
     // CR[4 * crfD .. 4 * crfd + 3] = XER[0-3]
@@ -86,12 +94,14 @@ namespace Gekko
         Gekko->regs.cr &= ~mask;
         Gekko->regs.cr |= (Gekko->regs.spr[(int)SPR::XER] & 0xf0000000) >> (4 * CRFD);
         Gekko->regs.spr[(int)SPR::XER] &= ~0xf0000000;
+        Gekko->regs.pc += 4;
     }
 
     // rd = cr
     OP(MFCR)
     {
         RRD = Gekko->regs.cr;
+        Gekko->regs.pc += 4;
     }
 
     // msr = rs
@@ -105,6 +115,7 @@ namespace Gekko
         }
 
         Gekko->regs.msr = RRS;
+        Gekko->regs.pc += 4;
     }
 
     // rd = msr
@@ -118,7 +129,11 @@ namespace Gekko
         }
 
         RRD = Gekko->regs.msr;
+        Gekko->regs.pc += 4;
     }
+
+    // We do not support access rights to SPRs, since all applications on the emulated system are executed with OEA rights.
+    // A detailed study of all SPRs in all modes is in Docs\HW\SPR.txt. If necessary, it will be possible to wind the rights properly.
 
     // spr = rs
     OP(MTSPR)
@@ -191,6 +206,7 @@ namespace Gekko
 
             case (int)SPR::HID1:
                 // Read only
+                Gekko->regs.pc += 4;
                 return;
 
             case (int)SPR::HID2:
@@ -230,6 +246,7 @@ namespace Gekko
                 // It makes no sense to implement such a small Queue. We make all transactions instant.
 
                 Gekko->regs.spr[spr] &= ~(GEKKO_DMAL_DMA_T | GEKKO_DMAL_DMA_F);
+                Gekko->regs.pc += 4;
                 return;
             }
             break;
@@ -237,6 +254,7 @@ namespace Gekko
 
         // default
         Gekko->regs.spr[spr] = RRS;
+        Gekko->regs.pc += 4;
     }
 
     // rd = spr
@@ -262,6 +280,7 @@ namespace Gekko
         }
 
         RRD = value;
+        Gekko->regs.pc += 4;
     }
 
     // rd = tbr
@@ -272,13 +291,13 @@ namespace Gekko
         if (tbr == 268)
         {
             RRD = Gekko->regs.tb.Part.l;
-            return;
         }
         else if (tbr == 269)
         {
             RRD = Gekko->regs.tb.Part.u;
-            return;
         }
+
+        Gekko->regs.pc += 4;
     }
 
     // sr[a] = rs
@@ -292,6 +311,7 @@ namespace Gekko
         }
 
         Gekko->regs.sr[RA & 0xf] = RRS;
+        Gekko->regs.pc += 4;
     }
 
     // sr[rb] = rs
@@ -305,6 +325,7 @@ namespace Gekko
         }
 
         Gekko->regs.sr[RRB & 0xf] = RRS;
+        Gekko->regs.pc += 4;
     }
 
     // rd = sr[a]
@@ -318,6 +339,7 @@ namespace Gekko
         }
 
         RRD = Gekko->regs.sr[RA & 0xf];
+        Gekko->regs.pc += 4;
     }
 
     // rd = sr[rb]
@@ -331,6 +353,7 @@ namespace Gekko
         }
 
         RRD = Gekko->regs.sr[RRB & 0xf];
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -338,24 +361,29 @@ namespace Gekko
 
     OP(EIEIO)
     {
+        Gekko->regs.pc += 4;
     }
 
     OP(SYNC)
     {
+        Gekko->regs.pc += 4;
     }
 
     // instruction synchronize. Dolwin interpreter is not super-scalar. :)
     OP(ISYNC)
     {
+        Gekko->regs.pc += 4;
     }
 
     OP(TLBSYNC)
     {
+        Gekko->regs.pc += 4;
     }
 
     OP(TLBIE)
     {
         Gekko->tlb.Invalidate(RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ---------------------------------------------------------------------------
@@ -373,6 +401,7 @@ namespace Gekko
         {
             Gekko->cache.Touch(pa);
         }
+        Gekko->regs.pc += 4;
     }
 
     OP(DCBTST)
@@ -389,6 +418,7 @@ namespace Gekko
         {
             Gekko->cache.TouchForStore(pa);
         }
+        Gekko->regs.pc += 4;
     }
 
     OP(DCBZ)
@@ -404,7 +434,9 @@ namespace Gekko
         {
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
+            return;
         }
+        Gekko->regs.pc += 4;
     }
 
     // DCBZ_L is used for the alien Locked Cache address mapping mechanism.
@@ -431,7 +463,9 @@ namespace Gekko
         {
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
+            return;
         }
+        Gekko->regs.pc += 4;
     }
 
     OP(DCBST)
@@ -447,7 +481,9 @@ namespace Gekko
         {
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
+            return;
         }
+        Gekko->regs.pc += 4;
     }
 
     OP(DCBF)
@@ -461,11 +497,11 @@ namespace Gekko
         }
         else
         {
-            DBHalt("DCBF DSI: 0x%08X\n", ea);
-
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
+            return;
         }
+        Gekko->regs.pc += 4;
     }
 
     OP(DCBI)
@@ -486,19 +522,22 @@ namespace Gekko
         }
         else
         {
-            DBHalt("DCBI DSI: 0x%08X\n", ea);
-
             Gekko->regs.spr[(int)Gekko::SPR::DAR] = ea;
             Gekko->Exception(Exception::DSI);
+            return;
         }
+        Gekko->regs.pc += 4;
     }
     
+    // Used as a hint to JITC so that it can invalidate the compiled code at this address.
+
     OP(ICBI)
     {
         uint32_t address = RA ? RRA + RRB : RRB;
         address &= ~0x1f;
 
         Gekko->jitc->Invalidate(address, 32);
+        Gekko->regs.pc += 4;
     }
 
 }

@@ -15,6 +15,7 @@ namespace Gekko
         uint32_t d = (a & b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] | CR[crbb]
@@ -27,6 +28,7 @@ namespace Gekko
         uint32_t d = (a | b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] ^ CR[crbb]
@@ -39,6 +41,7 @@ namespace Gekko
         uint32_t d = (a ^ b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = !(CR[crba] & CR[crbb])
@@ -51,6 +54,7 @@ namespace Gekko
         uint32_t d = (!(a & b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = !(CR[crba] | CR[crbb])
@@ -63,6 +67,7 @@ namespace Gekko
         uint32_t d = (!(a | b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] EQV CR[crbb]
@@ -75,6 +80,7 @@ namespace Gekko
         uint32_t d = (!(a ^ b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] & ~CR[crbb]
@@ -87,6 +93,7 @@ namespace Gekko
         uint32_t d = (a & (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] | ~CR[crbb]
@@ -99,6 +106,7 @@ namespace Gekko
         uint32_t d = (a | (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
         Gekko->regs.cr = (Gekko->regs.cr & m) | d;
+        Gekko->regs.pc += 4;
     }
 
     // CR[4*crfd .. 4*crfd + 3] = CR[4*crfs .. 4*crfs + 3]
@@ -106,6 +114,7 @@ namespace Gekko
     {
         int32_t crfd = 4 * (7 - CRFD), crfs = 4 * (7 - CRFS);
         Gekko->regs.cr = (Gekko->regs.cr & (~(0xf << crfd))) | (((Gekko->regs.cr >> crfs) & 0xf) << crfd);
+        Gekko->regs.pc += 4;
     }
 
 }

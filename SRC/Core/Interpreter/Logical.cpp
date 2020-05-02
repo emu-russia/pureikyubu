@@ -11,6 +11,7 @@ namespace Gekko
         uint32_t res = RRS & UIMM;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs & (UIMM || 0x0000), CR0
@@ -19,36 +20,42 @@ namespace Gekko
         uint32_t res = RRS & (op << 16);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | (0x0000 || UIMM)
     OP(ORI)
     {
         RRA = RRS | UIMM;
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | (UIMM || 0x0000)
     OP(ORIS)
     {
         RRA = RRS | (op << 16);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs ^ (0x0000 || UIMM)
     OP(XORI)
     {
         RRA = RRS ^ UIMM;
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs ^ (UIMM || 0x0000)
     OP(XORIS)
     {
         RRA = RRS ^ (op << 16);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs & rb
     OP(AND)
     {
         RRA = RRS & RRB;
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs & rb, CR0
@@ -57,12 +64,14 @@ namespace Gekko
         uint32_t res = RRS & RRB;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | rb
     OP(OR)
     {
         RRA = RRS | RRB;
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | rb, CR0
@@ -71,12 +80,14 @@ namespace Gekko
         uint32_t res = RRS | RRB;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs ^ rb
     OP(XOR)
     {
         RRA = RRS ^ RRB;
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs ^ rb, CR0
@@ -85,12 +96,14 @@ namespace Gekko
         uint32_t res = RRS ^ RRB;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = ~(rs & rb)
     OP(NAND)
     {
         RRA = ~(RRS & RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ra = ~(rs & rb), CR0
@@ -99,12 +112,14 @@ namespace Gekko
         uint32_t res = ~(RRS & RRB);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = ~(rs | rb)
     OP(NOR)
     {
         RRA = ~(RRS | RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ra = ~(rs | rb), CR0
@@ -113,12 +128,14 @@ namespace Gekko
         uint32_t res = ~(RRS | RRB);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs EQV rb
     OP(EQV)
     {
         RRA = ~(RRS ^ RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs EQV rb, CR0
@@ -127,12 +144,14 @@ namespace Gekko
         uint32_t res = ~(RRS ^ RRB);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs & ~rb
     OP(ANDC)
     {
         RRA = RRS & (~RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs & ~rb, CR0
@@ -141,12 +160,14 @@ namespace Gekko
         uint32_t res = RRS & (~RRB);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | ~rb
     OP(ORC)
     {
         RRA = RRS | (~RRB);
+        Gekko->regs.pc += 4;
     }
 
     // ra = rs | ~rb, CR0
@@ -155,6 +176,7 @@ namespace Gekko
         uint32_t res = RRS | (~RRB);
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // sign = rs[24]
@@ -163,6 +185,7 @@ namespace Gekko
     OP(EXTSB)
     {
         RRA = (uint32_t)(int32_t)(int8_t)(uint8_t)RRS;
+        Gekko->regs.pc += 4;
     }
 
     // sign = rs[24]
@@ -174,6 +197,7 @@ namespace Gekko
         uint32_t res = (uint32_t)(int32_t)(int8_t)(uint8_t)RRS;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // sign = rs[16]
@@ -182,6 +206,7 @@ namespace Gekko
     OP(EXTSH)
     {
         RRA = (uint32_t)(int32_t)(int16_t)(uint16_t)RRS;
+        Gekko->regs.pc += 4;
     }
 
     // sign = rs[16]
@@ -193,6 +218,7 @@ namespace Gekko
         uint32_t res = (uint32_t)(int32_t)(int16_t)(uint16_t)RRS;
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = 0
@@ -209,6 +235,7 @@ namespace Gekko
         }
 
         RRA = n;
+        Gekko->regs.pc += 4;
     }
 
     // n = 0
@@ -227,6 +254,7 @@ namespace Gekko
 
         RRA = n;
         COMPUTE_CR0(n);
+        Gekko->regs.pc += 4;
     }
 
 }
