@@ -1,4 +1,3 @@
-
 #include "pch.h"
 
 namespace Gekko
@@ -34,6 +33,8 @@ namespace Gekko
 		segment->code.reserve(0x100);
 		segment->core = core;
 
+		// Usually this is enough, but if the segment is larger, nothing bad will happen, it will just break into several parts.
+
 		size_t maxInstructions = 0x100;
 
 		Prolog(segment);
@@ -45,6 +46,10 @@ namespace Gekko
 
 			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute);
 			uint32_t instr;
+
+			// TODO: This moment needs to be rethinked. It makes little sense to generate ISI in the compilation process, 
+			// you need to do this in the process of executing compiled code.
+			// Most likely you need to inject code to generate ISI and break segment compilation.
 
 			if (physicalAddress == BadAddress)
 			{
