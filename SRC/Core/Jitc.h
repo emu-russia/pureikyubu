@@ -40,8 +40,17 @@ namespace Gekko
 		void Prolog(CodeSegment* seg);
 		void Epilog(CodeSegment* seg);
 		size_t EpilogSize();
+		void AddPc(CodeSegment* seg);
+		void CallTick(CodeSegment* seg);
 
 		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
+
+		void Add(AnalyzeInfo* info, CodeSegment* seg);
+		void Addd(AnalyzeInfo* info, CodeSegment* seg);
+		void Addo(AnalyzeInfo* info, CodeSegment* seg);
+		void Addod(AnalyzeInfo* info, CodeSegment* seg);
+
+		void Rlwinm(AnalyzeInfo* info, CodeSegment* seg);
 
 	public:
 		Jitc(GekkoCore* _core);

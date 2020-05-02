@@ -17,6 +17,7 @@ namespace Gekko
         uint32_t res = r & m;
         RRA = res;
         if (op & 1) COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -30,6 +31,7 @@ namespace Gekko
         uint32_t res = r & m;
         RRA = res;
         if (op & 1) COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = SH
@@ -44,6 +46,7 @@ namespace Gekko
         uint32_t res = (r & m) | (RRA & ~m);
         RRA = res;
         if (op & 1) COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
 }

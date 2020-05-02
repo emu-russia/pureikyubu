@@ -18,6 +18,7 @@ namespace Gekko
 
         if (n & 0x20) RRA = 0;
         else RRA = RRS << (n & 0x1f);
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -38,6 +39,7 @@ namespace Gekko
 
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -53,6 +55,7 @@ namespace Gekko
 
         if (n & 0x20) RRA = 0;
         else RRA = RRS >> (n & 0x1f);
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -73,6 +76,7 @@ namespace Gekko
 
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = SH
@@ -99,6 +103,7 @@ namespace Gekko
         }
 
         RRA = res;
+        Gekko->regs.pc += 4;
     }
 
     // n = SH
@@ -127,6 +132,7 @@ namespace Gekko
 
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -169,6 +175,7 @@ namespace Gekko
         }
 
         RRA = res;
+        Gekko->regs.pc += 4;
     }
 
     // n = rb[27-31]
@@ -213,6 +220,7 @@ namespace Gekko
 
         RRA = res;
         COMPUTE_CR0(res);
+        Gekko->regs.pc += 4;
     }
 
 }

@@ -5,6 +5,24 @@
 namespace Gekko
 {
 
+    void Interpreter::BranchCheck()
+    {
+        if (Gekko->intFlag && (Gekko->regs.msr & MSR_EE))
+        {
+            Gekko->Exception(Gekko::Exception::INTERRUPT);
+            Gekko->exception = false;
+            return;
+        }
+
+        // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)
+        Gekko->Tick();
+        if (Gekko->decreq && (Gekko->regs.msr & MSR_EE))
+        {
+            Gekko->decreq = false;
+            Gekko->Exception(Gekko::Exception::DECREMENTER);
+        }
+    }
+
     // PC = PC + EXTS(LI || 0b00)
     OP(B)
     {
@@ -42,7 +60,7 @@ namespace Gekko
     OP(BX)
     {
         bx[op & 3](op);
-        Gekko->interp->branch = true;
+        BranchCheck();
     }
 
     // ---------------------------------------------------------------------------
@@ -91,7 +109,11 @@ namespace Gekko
             if (target & 0x8000) target |= 0xffff0000;
             if (op & 2) Gekko->regs.pc = target; // AA
             else Gekko->regs.pc += target;
-            Gekko->interp->branch = true;
+            BranchCheck();
+        }
+        else
+        {
+            Gekko->regs.pc += 4;
         }
     }
 
@@ -105,7 +127,11 @@ namespace Gekko
         if (bc(op))
         {
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
-            Gekko->interp->branch = true;
+            BranchCheck();
+        }
+        else
+        {
+            Gekko->regs.pc += 4;
         }
     }
 
@@ -123,7 +149,11 @@ namespace Gekko
             uint32_t lr = Gekko->regs.pc + 4;
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
             Gekko->regs.spr[(int)SPR::LR] = lr;
-            Gekko->interp->branch = true;
+            BranchCheck();
+        }
+        else
+        {
+            Gekko->regs.pc += 4;
         }
     }
 
@@ -154,7 +184,11 @@ namespace Gekko
         if (bctr(op))
         {
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
-            Gekko->interp->branch = true;
+            BranchCheck();
+        }
+        else
+        {
+            Gekko->regs.pc += 4;
         }
     }
 
@@ -169,7 +203,11 @@ namespace Gekko
         {
             Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
-            Gekko->interp->branch = true;
+            BranchCheck();
+        }
+        else
+        {
+            Gekko->regs.pc += 4;
         }
     }
 }

@@ -158,17 +158,24 @@ namespace Gekko
 
 		segment->Run();
 
-		if (core->intFlag && (core->regs.msr & MSR_EE))
+		// Branch-specific checks
+
+		if (!core->exception)
 		{
-			core->Exception(Gekko::Exception::INTERRUPT);
-			return;
+			if (core->intFlag && (core->regs.msr & MSR_EE))
+			{
+				core->Exception(Gekko::Exception::INTERRUPT);
+				return;
+			}
+
+			if (core->decreq && (core->regs.msr & MSR_EE))
+			{
+				core->decreq = false;
+				core->Exception(Gekko::Exception::DECREMENTER);
+			}
 		}
 
-		if (core->decreq && (core->regs.msr & MSR_EE))
-		{
-			core->decreq = false;
-			core->Exception(Gekko::Exception::DECREMENTER);
-		}
+		core->exception = false;
 	}
 
 	void Jitc::Reset()
@@ -180,6 +187,13 @@ namespace Gekko
 	{
 		switch (info->instr)
 		{
+			case Instruction::add: Add(info, segment); break;
+			//case Instruction::add_d: Addd(info, segment); break;
+			//case Instruction::addo: Addo(info, segment); break;
+			//case Instruction::addo_d: Addod(info, segment); break;
+
+			case Instruction::rlwinm: Rlwinm(info, segment); break;
+
 			default:
 				FallbackStub(info, segment);
 				break;

@@ -10,6 +10,7 @@ namespace Gekko
         {
             PS0(RD) = PS0(RA) + PS0(RB);
             PS1(RD) = PS1(RA) + PS1(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -25,6 +26,7 @@ namespace Gekko
         {
             PS0(RD) = PS0(RA) - PS0(RB);
             PS1(RD) = PS1(RA) - PS1(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -40,6 +42,7 @@ namespace Gekko
         {
             PS0(RD) = PS0(RA) * PS0(RC);
             PS1(RD) = PS1(RA) * PS1(RC);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -55,6 +58,7 @@ namespace Gekko
         {
             PS0(RD) = PS0(RA) / PS0(RB);
             PS1(RD) = PS1(RA) / PS1(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -70,6 +74,7 @@ namespace Gekko
         {
             PS0(RD) = 1.0f / PS0(RB);
             PS1(RD) = 1.0f / PS1(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -85,6 +90,7 @@ namespace Gekko
         {
             PS0(RD) = 1.0f / sqrt(PS0(RB));
             PS1(RD) = 1.0f / sqrt(PS1(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -100,6 +106,7 @@ namespace Gekko
         {
             PS0(RD) = (PS0(RA) >= 0.0) ? (PS0(RC)) : (PS0(RB));
             PS1(RD) = (PS1(RA) >= 0.0) ? (PS1(RC)) : (PS1(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -117,6 +124,7 @@ namespace Gekko
             double m1 = PS1(RA) * PS0(RC);
             PS0(RD) = m0;
             PS1(RD) = m1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -134,6 +142,7 @@ namespace Gekko
             double m1 = PS1(RA) * PS1(RC);
             PS0(RD) = m0;
             PS1(RD) = m1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -151,6 +160,7 @@ namespace Gekko
             double s1 = PS1(RC);
             PS0(RD) = s0;
             PS1(RD) = s1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -168,6 +178,7 @@ namespace Gekko
             double s1 = PS0(RA) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -189,6 +200,7 @@ namespace Gekko
             b = PS1(RB);
             c = PS1(RC);
             PS1(RD) = (a * c) + b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -210,6 +222,7 @@ namespace Gekko
             b = PS1(RB);
             c = PS1(RC);
             PS1(RD) = (a * c) - b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -231,6 +244,7 @@ namespace Gekko
             b = PS1(RB);
             c = PS1(RC);
             PS1(RD) = -((a * c) + b);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -252,6 +266,7 @@ namespace Gekko
             b = PS1(RB);
             c = PS1(RC);
             PS1(RD) = -((a * c) - b);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -269,6 +284,7 @@ namespace Gekko
             double s1 = (PS1(RA) * PS0(RC)) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -286,6 +302,7 @@ namespace Gekko
             double s1 = (PS1(RA) * PS1(RC)) + PS1(RB);
             PS0(RD) = s0;
             PS1(RD) = s1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -313,6 +330,7 @@ namespace Gekko
             else c = 2;
 
             SET_CRF(n, c);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -335,6 +353,7 @@ namespace Gekko
             else c = 2;
 
             SET_CRF(n, c);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -357,6 +376,7 @@ namespace Gekko
             else c = 2;
 
             SET_CRF(n, c);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -379,6 +399,7 @@ namespace Gekko
             else c = 2;
 
             SET_CRF(n, c);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -389,6 +410,7 @@ namespace Gekko
         {
             double p0 = PS0(RB), p1 = PS1(RB);
             PS0(RD) = p0, PS1(RD) = p1;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -404,6 +426,7 @@ namespace Gekko
         {
             PS0(RD) = -PS0(RB);
             PS1(RD) = -PS1(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -441,6 +464,7 @@ namespace Gekko
             double b = PS0(RB);
             PS0(RD) = a;
             PS1(RD) = b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -458,6 +482,7 @@ namespace Gekko
             double b = PS1(RB);
             PS0(RD) = a;
             PS1(RD) = b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -475,6 +500,7 @@ namespace Gekko
             double b = PS0(RB);
             PS0(RD) = a;
             PS1(RD) = b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -492,6 +518,7 @@ namespace Gekko
             double b = PS1(RB);
             PS0(RD) = a;
             PS1(RD) = b;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }

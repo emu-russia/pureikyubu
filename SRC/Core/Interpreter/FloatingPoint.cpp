@@ -13,6 +13,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) + FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -23,6 +24,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) + FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -33,6 +35,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -44,6 +47,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -53,6 +57,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) - FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -63,6 +68,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) - FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -73,6 +79,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -84,6 +91,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -93,6 +101,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -103,6 +112,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -113,6 +123,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -124,6 +135,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -133,6 +145,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) / FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -143,6 +156,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) / FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -153,6 +167,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -164,6 +179,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -174,6 +190,7 @@ namespace Gekko
         {
             FPRD(RD) = 1.0 / FPRD(RB);
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -185,6 +202,7 @@ namespace Gekko
             FPRD(RD) = 1.0 / FPRD(RB);
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -194,6 +212,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = 1.0 / sqrt(FPRD(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -204,6 +223,7 @@ namespace Gekko
         {
             FPRD(RD) = 1.0 / sqrt(FPRD(RB));
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -213,6 +233,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -223,6 +244,7 @@ namespace Gekko
         {
             FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -232,6 +254,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -242,6 +265,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -252,6 +276,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -263,6 +288,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -272,6 +298,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -282,6 +309,7 @@ namespace Gekko
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -292,6 +320,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -303,6 +332,7 @@ namespace Gekko
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -312,6 +342,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -322,6 +353,7 @@ namespace Gekko
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -332,6 +364,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -343,6 +376,7 @@ namespace Gekko
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -352,6 +386,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -362,6 +397,7 @@ namespace Gekko
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -372,6 +408,7 @@ namespace Gekko
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -383,6 +420,7 @@ namespace Gekko
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -397,6 +435,7 @@ namespace Gekko
                 PS1(RD) = PS0(RD);
             }
             else FPRD(RD) = (float)FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -412,6 +451,7 @@ namespace Gekko
             }
             else FPRD(RD) = (float)FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -421,6 +461,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -431,6 +472,7 @@ namespace Gekko
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -440,6 +482,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -450,6 +493,7 @@ namespace Gekko
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -459,6 +503,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -469,6 +514,7 @@ namespace Gekko
         {
             FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -478,6 +524,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -488,6 +535,7 @@ namespace Gekko
         {
             FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -497,6 +545,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) | 0x8000000000000000;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -507,6 +556,7 @@ namespace Gekko
         {
             FPRU(RD) = FPRU(RB) | 0x8000000000000000;
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -534,6 +584,7 @@ namespace Gekko
             {
                 Gekko->regs.fpscr = Gekko->regs.fpscr | 0x01000000;
             }
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -558,6 +609,7 @@ namespace Gekko
             {
                 Gekko->regs.fpscr = Gekko->regs.fpscr | 0x01000000;
             }
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -571,6 +623,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -582,6 +635,7 @@ namespace Gekko
         {
             FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -592,6 +646,7 @@ namespace Gekko
         uint32_t fp = (Gekko->regs.fpscr >> (28 - RA)) & 0xf;
         Gekko->regs.cr &= ~(0xf0000000 >> RD);
         Gekko->regs.cr |= fp << (28 - RD);
+        Gekko->regs.pc += 4;
     }
 
     // mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
@@ -610,6 +665,7 @@ namespace Gekko
         }
 
         Gekko->regs.fpscr = ((uint32_t)FPRU(RB) & m) | (Gekko->regs.fpscr & ~m);
+        Gekko->regs.pc += 4;
     }
 
     // mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
@@ -629,6 +685,7 @@ namespace Gekko
 
         Gekko->regs.fpscr = ((uint32_t)FPRU(RB) & m) | (Gekko->regs.fpscr & ~m);
         COMPUTE_CR1();
+        Gekko->regs.pc += 4;
     }
 
     // FPSCR(crbD) = 0 (clear bit)
@@ -636,6 +693,7 @@ namespace Gekko
     {
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr &= ~m;
+        Gekko->regs.pc += 4;
     }
 
     // FPSCR(crbD) = 0 (clear bit), CR1
@@ -644,6 +702,7 @@ namespace Gekko
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr &= ~m;
         COMPUTE_CR1();
+        Gekko->regs.pc += 4;
     }
 
     // FPSCR(crbD) = 1 (set bit)
@@ -651,6 +710,7 @@ namespace Gekko
     {
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
+        Gekko->regs.pc += 4;
     }
 
     // FPSCR(crbD) = 1 (set bit), CR1
@@ -659,6 +719,7 @@ namespace Gekko
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
         COMPUTE_CR1();
+        Gekko->regs.pc += 4;
     }
 
     // fd = fb
@@ -667,6 +728,7 @@ namespace Gekko
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB);
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }
@@ -677,6 +739,7 @@ namespace Gekko
         {
             FPRU(RD) = FPRU(RB);
             COMPUTE_CR1();
+            Gekko->regs.pc += 4;
         }
         else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
     }

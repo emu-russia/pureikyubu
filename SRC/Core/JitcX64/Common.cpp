@@ -50,4 +50,28 @@ namespace Gekko
 		return 21;
 	}
 
+	// PC = PC + 4
+	void Jitc::AddPc(CodeSegment* seg)
+	{
+		seg->Write16(0xb848);
+		seg->Write64((uint64_t)&core->regs.pc);
+		seg->Write8(0x83);
+		seg->Write16(0x0400);
+	}
+
+	void Jitc::CallTick(CodeSegment* seg)
+	{
+		// Call core->Tick
+
+		//0:  48 b8 cd ab 78 56 34    movabs rax,0x12345678abcd
+		//7:  12 00 00
+		//17: ff d0                   call   rax
+
+		uint64_t fnPtr = (uint64_t)GekkoCore::TickForJitc;
+
+		seg->Write16(0xb848);
+		seg->Write64(fnPtr);
+		seg->Write16(0xd0ff);
+	}
+
 }

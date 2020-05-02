@@ -14,6 +14,9 @@ namespace Gekko
             core->TestBreakpoints();
 
             core->interp->ExecuteOpcode();
+
+            // For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
+
             //core->jitc->Execute();
         }
     }
@@ -136,6 +139,12 @@ namespace Gekko
         }
     }
 
+    void GekkoCore::TickForJitc()
+    {
+        Gekko::Gekko->Tick();
+        Gekko::Gekko->ops++;
+    }
+
     int64_t GekkoCore::GetTicks()
     {
         return regs.tb.sval;
@@ -188,7 +197,89 @@ namespace Gekko
 
     void GekkoCore::Exception(Gekko::Exception code)
     {
-        interp->Exception(code);
+        //DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+
+        if (exception)
+        {
+            DBHalt("CPU Double Fault!\n");
+        }
+
+        // save regs
+
+        regs.spr[(int)Gekko::SPR::SRR0] = regs.pc;
+        regs.spr[(int)Gekko::SPR::SRR1] = regs.msr;
+
+        // Special processing for MMU
+        if (code == Exception::ISI)
+        {
+            regs.spr[(int)Gekko::SPR::SRR1] &= 0x0fff'ffff;
+
+            switch (MmuLastResult)
+            {
+                case MmuResult::PageFault:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x4000'0000;
+                    break;
+
+                case MmuResult::ProtectedFetch:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x0800'0000;
+                    break;
+
+                case MmuResult::NoExecute:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x1000'0000;
+                    break;
+            }
+        }
+        else if (code == Exception::DSI)
+        {
+            regs.spr[(int)Gekko::SPR::DSISR] = 0;
+
+            switch (MmuLastResult)
+            {
+                case MmuResult::PageFault:
+                    regs.spr[(int)Gekko::SPR::DSISR] |= 0x4000'0000;
+                    break;
+
+                case MmuResult::ProtectedRead:
+                    regs.spr[(int)Gekko::SPR::DSISR] |= 0x0800'0000;
+                    break;
+                case MmuResult::ProtectedWrite:
+                    regs.spr[(int)Gekko::SPR::DSISR] |= 0x0A00'0000;
+                    break;
+            }
+        }
+
+        // Special processing for Program
+        if (code == Exception::PROGRAM)
+        {
+            regs.spr[(int)Gekko::SPR::SRR1] &= 0x0000'ffff;
+
+            switch (PrCause)
+            {
+                case PrivilegedCause::FpuEnabled:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x0010'0000;
+                    break;
+                case PrivilegedCause::IllegalInstruction:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x0008'0000;
+                    break;
+                case PrivilegedCause::Privileged:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x0004'0000;
+                    break;
+                case PrivilegedCause::Trap:
+                    regs.spr[(int)Gekko::SPR::SRR1] |= 0x0002'0000;
+                    break;
+            }
+        }
+
+        // disable address translation
+        regs.msr &= ~(MSR_IR | MSR_DR);
+
+        regs.msr &= ~MSR_RI;
+
+        regs.msr &= ~MSR_EE;
+
+        // change PC and set exception flag
+        regs.pc = (uint32_t)code;
+        exception = true;
     }
 
     void GekkoCore::DispatchWaitQueue()

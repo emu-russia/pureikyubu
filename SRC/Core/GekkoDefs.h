@@ -181,3 +181,11 @@ enum class GEKKO_QUANT_TYPE
 #define GEKKO_DMAL_DMA_LEN_L 3
 #define GEKKO_DMAL_DMA_T 2
 #define GEKKO_DMAL_DMA_F 1
+
+// BAT fields
+#define BATBEPI(batu)   (batu >> 17)
+#define BATBL(batu)     ((batu >> 2) & 0x7ff)
+#define BATBRPN(batl)   (batl >> 17)
+
+// Left until all lurking bugs are eliminated.
+#define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000

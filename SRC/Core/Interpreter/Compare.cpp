@@ -21,6 +21,7 @@ namespace Gekko
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
         if (a == b) SET_CR_EQ(crfd); else RESET_CR_EQ(crfd);
         if (IS_XER_SO) SET_CR_SO(crfd); else RESET_CR_SO(crfd);
+        Gekko->regs.pc += 4;
     }
 
     // a = ra (signed)
@@ -39,6 +40,7 @@ namespace Gekko
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
         if (a == b) SET_CR_EQ(crfd); else RESET_CR_EQ(crfd);
         if (IS_XER_SO) SET_CR_SO(crfd); else RESET_CR_SO(crfd);
+        Gekko->regs.pc += 4;
     }
 
     // a = ra (unsigned)
@@ -57,6 +59,7 @@ namespace Gekko
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
         if (a == b) SET_CR_EQ(crfd); else RESET_CR_EQ(crfd);
         if (IS_XER_SO) SET_CR_SO(crfd); else RESET_CR_SO(crfd);
+        Gekko->regs.pc += 4;
     }
 
     // a = ra (unsigned)
@@ -76,6 +79,7 @@ namespace Gekko
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
         if (a == b) SET_CR_EQ(crfd); else RESET_CR_EQ(crfd);
         if (IS_XER_SO) SET_CR_SO(crfd); else RESET_CR_SO(crfd);
+        Gekko->regs.pc += 4;
     }
 
 }

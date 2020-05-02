@@ -368,8 +368,6 @@ namespace Gekko
 		// setup extension tables 
 		void InitTables();
 
-		bool        exception = false;          // exception pending
-		bool        branch = false;             // non-linear PC change
 		uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
 		bool        RESERVE;            // for lwarx/stwcx.   
 		uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
@@ -378,6 +376,8 @@ namespace Gekko
 
 		static float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
 		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
+
+		static void BranchCheck();
 
 	public:
 		Interpreter(GekkoCore* _core)
@@ -393,8 +393,9 @@ namespace Gekko
 
 		void ExecuteOpcode();
 		void ExecuteOpcodeDirect(uint32_t pc, uint32_t instr);
-		void Exception(Gekko::Exception code);
 		bool ExecuteInterpeterFallback();
+
+		uint32_t GetRotMask(int mb, int me);
 	};
 
 }
