@@ -1,6 +1,8 @@
 # GekkoCore
 
-This core is in transition state from the old 0.10 sources to a more advanced multi-threaded approach.
+The main component that emulates the GameCube Gekko processor. GekkoCore components are shown in the diagram:
+
+![GekkoCore](/Docs/EMU/GekkoCore.png)
 
 ## A few key features
 
@@ -18,28 +20,6 @@ But while the core is based on an interpreter - the speed is about 10-20 FPS :P
 ## Why assembler modules are needed
 
 Used in the interpreter to easily get the Overflow and Carry flags. They are obtained directly from your X86 / X64 processor.
-
-## Exception Notes
-
-We support: DSI(?), ISI(?), Interrupt, Alignment(?), Program, FP Unavail, Decrementer, Syscall.
-(?) - only in advanced memory mode (MMU), or optionally.
-
-### Common processing
-
-- SRR0: PC (address where to resume execution, after 'rfi')
-- SRR1: copied MSR bits.
-
-### MSR processing
-
-```
-1. SRR[0, 5-9, 16-31] are copied from MSR.
-2. disable translation - clear MSR[IR] & MSR[DR]
-3. select exception base (not used in emu) :
-    0x000nnnnn if MSR[IP] = 0
-    0xFFFnnnnn if MSR[IP] = 1
-4. MSR[RI] must be always 1 in emu!
-5. on Interrupt and Decrementer MSR[EE] is cleared also.
-```
 
 ## Gekko Wait Thread Queue
 
