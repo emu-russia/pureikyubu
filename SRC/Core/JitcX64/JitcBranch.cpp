@@ -39,6 +39,8 @@ namespace Gekko
 
 		seg->Write16(0x06c7);
 		seg->Write32(info->Imm.Address);
+
+		CallTick(seg);
 	}
 
 }
