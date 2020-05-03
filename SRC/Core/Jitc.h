@@ -68,6 +68,9 @@ namespace Gekko
 		static void __fastcall ReadDouble(uint32_t addr, uint64_t* reg) { Gekko->ReadDouble(addr, reg); }
 		static void __fastcall WriteDouble(uint32_t addr, uint64_t* data) { Gekko->WriteDouble(addr, data); }
 
+		// This segment is not involved in invalidation, so as not to disrupt the code.
+		CodeSegment* currentSegment = nullptr;
+
 	public:
 		Jitc(GekkoCore* _core);
 		~Jitc();

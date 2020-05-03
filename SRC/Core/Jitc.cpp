@@ -119,6 +119,11 @@ namespace Gekko
 		{
 			if (it->second)
 			{
+				if (it->second == currentSegment)
+				{
+					continue;
+				}
+
 				delete it->second;
 				it->second = nullptr;
 			}
@@ -137,16 +142,22 @@ namespace Gekko
 
 				if (addr >= seg->addr && seg->addr < (addr + size))
 				{
-					delete it->second;
-					it->second = nullptr;
-					continue;
+					if (it->second != currentSegment)
+					{
+						delete it->second;
+						it->second = nullptr;
+						continue;
+					}
 				}
 
 				if (seg->addr >= addr && addr < (seg->addr + seg->size))
 				{
-					delete it->second;
-					it->second = nullptr;
-					continue;
+					if (it->second != currentSegment)
+					{
+						delete it->second;
+						it->second = nullptr;
+						continue;
+					}
 				}
 			}
 		}
@@ -154,14 +165,14 @@ namespace Gekko
 
 	void Jitc::Execute()
 	{
-		CodeSegment* segment = SegmentCompiled(core->regs.pc);
-		if (segment == nullptr)
+		currentSegment = SegmentCompiled(core->regs.pc);
+		if (currentSegment == nullptr)
 		{
-			segment = CompileSegment(core->regs.pc);
+			currentSegment = CompileSegment(core->regs.pc);
 		}
-		assert(segment);
+		assert(currentSegment);
 
-		segment->Run();
+		currentSegment->Run();
 
 		// Branch-specific checks
 
