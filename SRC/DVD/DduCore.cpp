@@ -261,7 +261,6 @@ namespace DVD
 				}
 				else
 				{
-					Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::DduData, core->dduTicksPerByte, core->dduThread);
 					continue;
 				}
 			}
@@ -382,7 +381,6 @@ namespace DVD
 			int64_t ticks = Gekko::Gekko->GetTicks();
 			if (ticks < core->nextGekkoTicksToSample)
 			{
-				Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::DduAudio, core->TicksPerSample(), core->dvdAudioThread);
 				continue;
 			}
 			core->nextGekkoTicksToSample = ticks + core->TicksPerSample();

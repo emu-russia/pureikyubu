@@ -48,16 +48,6 @@ namespace Gekko
     class Jitc;
     class CodeSegment;
 
-    enum class GekkoWaiter : int
-    {
-        HwUpdate = 0,
-        DduData,
-        DduAudio,
-        FlipperAi,
-        GxCommandProcessor,
-        Max,
-    };
-
     enum class MmuAccess
     {
         Read = 0,
@@ -89,14 +79,6 @@ namespace Gekko
         Trap,
     };
 
-    typedef struct _WaitQueueEntry
-    {
-        uint64_t tbrValue;
-        Thread* thread;
-        bool requireSuspend;
-        bool suspended;
-    } WaitQueueEntry;
-
     class GekkoCore
     {
         friend Interpreter;
@@ -127,13 +109,6 @@ namespace Gekko
 
         Interpreter* interp;
         Jitc* jitc;
-
-        bool waitQueueEnabled = true;   // Let's see how this mechanism will show itself. You can always turn it off.
-        WaitQueueEntry waitQueue[(int)GekkoWaiter::Max] = { 0 };
-        SpinLock waitQueueLock;
-        void DispatchWaitQueue();
-        int dispatchQueuePeriod = 20;    // It makes no sense to check waitQueue every tick. +/- some ticks back and forth do not play a role.
-        int dispatchQueueCounter = 0;       
 
         uint64_t    msec;
         int64_t     one_second;         // one second in timer ticks
@@ -195,9 +170,6 @@ namespace Gekko
         void AssertInterrupt();
         void ClearInterrupt();
         void Exception(Gekko::Exception code);
-
-        // The thread that polls the TBR may ask the Gekko core to wake him up at the right time.
-        void WakeMeUp(GekkoWaiter disignation, uint64_t gekkoTicks, Thread* thread);
 
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }

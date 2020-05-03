@@ -468,10 +468,6 @@ static void AIUpdate(void *Parameter)
                 }
             }
         }
-        else
-        {
-            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
-        }
     }
 }
 

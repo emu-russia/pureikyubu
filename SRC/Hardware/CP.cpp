@@ -92,7 +92,6 @@ static void CPThread(void* Param)
         int64_t ticks = Gekko::Gekko->GetTicks();
         if (ticks < fifo.updateTbrValue)
         {
-            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::GxCommandProcessor, fifo.tickPerFifo, fifo.thread);
             continue;
         }
         fifo.updateTbrValue = ticks + fifo.tickPerFifo;
@@ -352,7 +351,6 @@ void CPOpen(HWConfig * config)
 
     fifo.thread = new Thread(CPThread, false, nullptr, "CPThread");
     assert(fifo.thread);
-    Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::GxCommandProcessor, fifo.tickPerFifo, fifo.thread);
 }
 
 void CPClose()

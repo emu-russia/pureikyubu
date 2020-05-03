@@ -21,16 +21,6 @@ But while the core is based on an interpreter - the speed is about 10-20 FPS :P
 
 Used in the interpreter to easily get the Overflow and Carry flags. They are obtained directly from your X86 / X64 processor.
 
-## Gekko Wait Thread Queue
-
-Wait Thread Queue is an optimization of threads that are tied to polling Gekko TBR value.
-
-Without optimization, the threads in the loop check the TBR value until it reaches the required value, and then do their work and wait again.
-
-With this design, the processor will spend resources on polling the TBR value.
-
-The idea of optimization is put to sleep such threads until the TBR value is needed, then wake the thread up and it will immediately begin to do its job, without polling the TBR.
-
 ## MMU
 
 GekkoCore supports MMU emulation, while it is still an experimental feature that requires debugging. Subsequently, as the MMU will work more or less correctly, 
