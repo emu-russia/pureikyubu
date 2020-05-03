@@ -155,6 +155,12 @@
     <ClCompile Include="..\MemoryHub.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\JitcX64\JitcBranch.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\JitcX64\JitcLoadStore.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />

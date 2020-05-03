@@ -118,8 +118,6 @@ static void vi_set_timing()
 // step line counter(s), update GUI and poll controller
 void VIUpdate()
 {
-    TCHAR gcTime[256];
-
     if((Gekko::Gekko->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
     {
         vi.vtime = Gekko::Gekko->GetTicks();
@@ -150,13 +148,8 @@ void VIUpdate()
             if (vi.xfb)
             {
                 YUVBlit(vi.xfbbuf, vi.gfxbuf);
+                vi.frames++;
             }
-            vi.frames++;
-
-            // show system time
-            HLE::OSTimeFormat(gcTime, Gekko::Gekko->GetTicks(), false);
-            SetStatusText(STATUS_ENUM::Time, gcTime);
-            UpdateProfiler();
         }
 
         vi.pos &= ~0x07ff0000;

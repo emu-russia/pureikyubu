@@ -123,7 +123,9 @@ static void AIFeedMixer()
 
     int bytes = 32;
 
+    BeginProfileSfx();
     Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.currentDmaAddr & RAMMASK], bytes);
+    EndProfileSfx();
 
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
 
@@ -465,10 +467,6 @@ static void AIUpdate(void *Parameter)
                     ai.audioThread->Suspend();
                 }
             }
-        }
-        else
-        {
-            Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::FlipperAi, AIGetTime(32, ai.dmaRate), ai.audioThread);
         }
     }
 }

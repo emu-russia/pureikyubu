@@ -14,9 +14,8 @@ static  int64_t     startTime, stopTime;
 static  int64_t     gfxStartTime, gfxStopTime;
 static  int64_t     sfxStartTime, sfxStopTime;
 static  int64_t     dvdStartTime, dvdStopTime;
-static  int64_t     cpuTime, gfxTime, sfxTime, dvdTime, idleTime;
+static  int64_t     cpuTime, gfxTime, sfxTime, dvdTime;
 static  int64_t     ONE_SECOND;
-static  int64_t     fpsTime, mipsTime;
 static  DWORD       checkTime;
 
 // ---------------------------------------------------------------------------
@@ -89,11 +88,9 @@ void OpenProfiler(bool enable)
     // reset counters
     if(Profiler)
     {
-        cpuTime = gfxTime = sfxTime = dvdTime = idleTime = 0;
+        cpuTime = gfxTime = sfxTime = dvdTime = 0;
         ONE_SECOND = (int64_t)((double)GetClockSpeed() * (double)1000000.0);
         MyReadTimeStampCounter(&startTime);
-        MyReadTimeStampCounter(&fpsTime);
-        MyReadTimeStampCounter(&mipsTime);
     }
 
     checkTime = GetTickCount();
@@ -102,6 +99,8 @@ void OpenProfiler(bool enable)
 // update after every fifo call
 void UpdateProfiler()
 {
+    TCHAR gcTime[256];
+
     if(Profiler)
     {
         TCHAR buf[128], mips[128];
@@ -117,59 +116,34 @@ void UpdateProfiler()
         int64_t cur; MyReadTimeStampCounter(&cur);
         int64_t diff = cur - startTime;
 
-        // calculate how long we can be in idle state (VSYNC, as in real)
-        // current emulation speed is not allowing to waste any time
-        idleTime = 0;
-/*/
-        if(diff < ONE_SECOND / 60)
-        {
-            idleTime = (ONE_SECOND / 60) - diff;
-            total += idleTime;
-        }
-/*/
-
         // frames per second
-        MyReadTimeStampCounter(&cur);
-        diff = cur - fpsTime;
-        if(diff >= ONE_SECOND)
-        {
-            _stprintf_s (buf, _countof(buf) - 1, _T("FPS:%u"), vi.frames);
-            vi.frames = 0;
-            SetStatusText(STATUS_ENUM::Fps, buf);
-            MyReadTimeStampCounter(&fpsTime);
-        }
+        _stprintf_s(buf, _countof(buf) - 1, _T("FPS:%zi"), vi.frames);
+        vi.frames = 0;
+        SetStatusText(STATUS_ENUM::Fps, buf);
 
-        // calculate MIPS
-        MyReadTimeStampCounter(&cur);
-        diff = cur - mipsTime;
-        if(cur >= ONE_SECOND)
-        {
-            _stprintf_s (mips, _countof(mips) - 1, _T("%.1f"), (float)Gekko::Gekko->GetOpcodeCount() / 1000000.0f);
-            Gekko::Gekko->ResetOpcodeCount();
-            MyReadTimeStampCounter(&mipsTime);
-        }
-        else
-        {
-            TCHAR * st = GetStatusText(STATUS_ENUM::Progress);
-            _stscanf (st, L"mips:%s ", mips);
-        }
+        // MIPS
+        _stprintf_s (mips, _countof(mips) - 1, _T("%.1f"), (float)Gekko::Gekko->GetOpcodeCount() / 1000000.0f);
+        Gekko::Gekko->ResetOpcodeCount();
 
         // update status bar
         {
-            _stprintf_s (buf, _countof(buf) - 1, _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  dvd:%-2.1f  idle:%-2.1f"),
+            _stprintf_s (buf, _countof(buf) - 1, _T("mips:%s  core:%-2.1f  video:%-2.1f  sound:%-2.1f  dvd:%-2.1f"),
                 mips,
                 (double)cpuTime * 100 / (double)total,
                 (double)gfxTime * 100 / (double)total,
                 (double)sfxTime * 100 / (double)total,
-                (double)dvdTime * 100 / (double)total,
-                (double)idleTime* 100 / (double)total
+                (double)dvdTime * 100 / (double)total
             );
             SetStatusText(STATUS_ENUM::Progress, buf);
         }
 
         // reset counters
-        cpuTime = gfxTime = sfxTime = dvdTime = idleTime = 0;
+        cpuTime = gfxTime = sfxTime = dvdTime = 0;
         MyReadTimeStampCounter(&startTime);
+
+        // show system time
+        HLE::OSTimeFormat(gcTime, Gekko::Gekko->GetTicks(), false);
+        SetStatusText(STATUS_ENUM::Time, gcTime);
     }
 }
 

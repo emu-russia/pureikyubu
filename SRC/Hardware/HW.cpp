@@ -19,7 +19,6 @@ namespace Flipper
             int64_t ticks = Gekko::Gekko->GetTicks();
             if (ticks < flipper->hwUpdateTbrValue)
             {
-                Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, flipper->hwUpdateThread);
                 continue;
             }
             flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
@@ -61,7 +60,6 @@ namespace Flipper
 
         hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
         assert(hwUpdateThread);
-        Gekko::Gekko->WakeMeUp(Gekko::GekkoWaiter::HwUpdate, Flipper::ticksToHwUpdate, hwUpdateThread);
     }
 
     Flipper::~Flipper()

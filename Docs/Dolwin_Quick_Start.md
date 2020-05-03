@@ -10,6 +10,12 @@ Visual Studio solution upgraded to VS2019. There should not be a problem with th
 
 Both X86 and X64 targets are supported.
 
+## Dolwin Architecture
+
+Key components are shown in the diagram:
+
+![Dolwin_Architecture](/Docs/EMU/DolwinArchitecture.png)
+
 ## Trends
 
 - Emulator development has become more Agile. Basic milestones can be viewed on Github (https://github.com/ogamespec/dolwin/milestones)
