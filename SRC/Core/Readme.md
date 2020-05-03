@@ -31,21 +31,44 @@ With this design, the processor will spend resources on polling the TBR value.
 
 The idea of optimization is put to sleep such threads until the TBR value is needed, then wake the thread up and it will immediately begin to do its job, without polling the TBR.
 
-# Dolwin Recompiler Architecture
+## MMU
+
+GekkoCore supports MMU emulation, while it is still an experimental feature that requires debugging. Subsequently, as the MMU will work more or less correctly, 
+the TLB functionality will gradually turn on.
+
+TLB is the history of MMU translations, to speed up address translation. TLB is implemented as `std :: unordered_map`.
+
+## Cache Support
+
+Supported data cache emulation and Locked L1 Data Cache.
+
+Emulation of instruction cache and L2 Cache is not required. The instructions are always executed in one direction (Fetch), so there is no need to store them in the cache, 
+you can immediately take them from memory. L2 Cache is also not required, since it works completely transparently for executable programs (there is no way to perform operations
+with it using any instructions).
+
+## Interpreter Architecture
+
+The interpreter inherited from version 0.10, therefore, despite the scheme at the beginning, it does not use Analyzer. Perhaps this will change when I get my hands to it.
+
+For now it is a classic interpreter in every sense. We take the opcode, decode and execute.
+
+To speed up the operation of some instructions (Paired-Single Load Store and Rotate), pre-prepared tables are used.
+
+## Recompiler Architecture
 
 A recompiler or just-in-time compiler (JITC) is a widespread practice for optimizing emulators. Executable code of the emulated system (in this case, IBM Gekko) is translated into the executable code of the processor where the emulator is running (in this case, Intel X86/X64).
 
-## Basics
+### Basics
 
-The Dolwin recompiler translates code into sections called "segments". Each segment is a continuous section of Gekko code (that is, the segment ends on the first branch instruction, or any other instruction that non-linearly changes the Program Counter register).
+The recompiler translates code into sections called "segments". Each segment is a continuous section of Gekko code (that is, the segment ends on the first branch instruction, or any other instruction that non-linearly changes the Program Counter register).
 
-All recompiled segments are stored in a cache arranged as `std::map`. The key is the starting address of the segment.
+All recompiled segments are stored in a cache arranged as `std::unordered_map`. The key is the starting address >> 2 (all Gekko instructions are 4 byte aligned) of the segment.
 
 ```c++
-std::map<uint32_t, CodeSegment*> segments;
+std::unordered_map<uint32_t, CodeSegment*> segments;
 ```
 
-## Segment Translation
+### Segment Translation
 
 Segment translation is the actual process of recompiling a Gekko code segment into X86/X64 code.
 
@@ -55,15 +78,15 @@ Translation of individual instructions is carried out with the participation of 
 
 All instructions translators are located in the JitcX64 folder (for translating the X64 code) and JitcX86 (for translating the X86). In total, Gekko contains about 350 instructions, so there are many corresponding modules there :P
 
-Code generation does not use any assemblers in order not to bloat source code. For these purposes, a small BitFactory class is used.
+Code generation does not use any assemblers in order not to bloat source code. The CodeSegment class contains Write methods for generating binary code directly as raw bytes (X86/X64).
 
-## Interpreter Fallback
+### Interpreter Fallback
 
 At the initial stages of development (or for testing), it is possible to translate the code in such a way that the execution of the instruction is passed to the interpreter.
 
 The code implementing this is in the Fallback.cpp module.
 
-## Recompiler Invalidation
+### Recompiler Invalidation
 
 From time to time, an emulated program loads new software modules (overlays). In this case, the new code is loaded into the memory in place of the old code.
 
@@ -71,7 +94,7 @@ Gekko has a handy mechanism for tracking this. The `icbi` instruction is used to
 
 The recompiler is also invalidated after setting or removing breakpoints.
 
-## Running Recompiled Code
+### Running Recompiled Code
 
 The Gekko run loop in recompilation mode looks something like this:
 
@@ -90,7 +113,7 @@ RunSegment(Gekko::PC);
 
 ```
 
-## Register Caching
+### Register Caching
 
 There are advanced recompilation techniques where the register values of the previous segment instruction are used for the next. This technique is called register caching.
 

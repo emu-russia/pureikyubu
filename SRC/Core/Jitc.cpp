@@ -14,7 +14,7 @@ namespace Gekko
 
 	CodeSegment* Jitc::SegmentCompiled(uint32_t addr)
 	{
-		auto it = segments.find(addr);
+		auto it = segments.find(addr >> 2);
 
 		if (it != segments.end())
 		{
@@ -72,7 +72,7 @@ namespace Gekko
 
 		Epilog(segment);
 
-		segments[segment->addr] = segment;
+		segments[segment->addr >> 2] = segment;
 
 		DWORD notNeeded;
 		VirtualProtect(segment->code.data(), segment->code.size(), PAGE_EXECUTE_READWRITE, &notNeeded);
@@ -188,19 +188,27 @@ namespace Gekko
 		InvalidateAll();
 	}
 
-	void Jitc::CompileInstr(AnalyzeInfo* info, CodeSegment* segment)
+	void Jitc::CompileInstr(AnalyzeInfo* info, CodeSegment* seg)
 	{
 		switch (info->instr)
 		{
-			case Instruction::add: Add(info, segment); break;
-			//case Instruction::add_d: Addd(info, segment); break;
-			//case Instruction::addo: Addo(info, segment); break;
-			//case Instruction::addo_d: Addod(info, segment); break;
+			case Instruction::add: Add(info, seg); break;
+			//case Instruction::add_d: Addd(info, seg); break;
+			//case Instruction::addo: Addo(info, seg); break;
+			//case Instruction::addo_d: Addod(info, seg); break;
 
-			case Instruction::rlwinm: Rlwinm(info, segment); break;
+			case Instruction::b: Branch(info, seg, false); break;
+			case Instruction::ba: Branch(info, seg, false); break;
+			case Instruction::bl: Branch(info, seg, true); break;
+			case Instruction::bla: Branch(info, seg, true); break;
+
+			case Instruction::lbz: LoadImm(info, seg, ReadByte); break;
+			case Instruction::lwz: LoadImm(info, seg, ReadWord); break;
+
+			case Instruction::rlwinm: Rlwinm(info, seg); break;
 
 			default:
-				FallbackStub(info, segment);
+				FallbackStub(info, seg);
 				break;
 		}
 	}

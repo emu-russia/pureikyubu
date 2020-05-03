@@ -94,7 +94,7 @@ typedef struct VIControl
     RGBQUAD*    gfxbuf;     // DIB
 
     bool        log;        // do debugger log output
-    uint32_t    frames;     // frames rendered (can be used by both VI and GX)
+    size_t      frames;     // frames rendered by VI/GX
 
     HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks

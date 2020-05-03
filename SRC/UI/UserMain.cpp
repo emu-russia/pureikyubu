@@ -160,6 +160,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
         {
+            UpdateProfiler();
             Sleep(1);
         }
 

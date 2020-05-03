@@ -43,6 +43,9 @@ namespace Gekko
 		void AddPc(CodeSegment* seg);
 		void CallTick(CodeSegment* seg);
 
+		typedef void(__fastcall* LoadDelegate)(uint32_t addr, uint32_t* reg);
+		typedef void(__fastcall* StoreDelegate)(uint32_t addr, uint32_t* reg);
+
 		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
 
 		void Add(AnalyzeInfo* info, CodeSegment* seg);
@@ -50,7 +53,20 @@ namespace Gekko
 		void Addo(AnalyzeInfo* info, CodeSegment* seg);
 		void Addod(AnalyzeInfo* info, CodeSegment* seg);
 
+		void Branch(AnalyzeInfo* info, CodeSegment* seg, bool link);
+
+		void LoadImm(AnalyzeInfo* info, CodeSegment* seg, LoadDelegate loadProc);
+
 		void Rlwinm(AnalyzeInfo* info, CodeSegment* seg);
+
+		static void __fastcall ReadByte(uint32_t addr, uint32_t* reg) { Gekko->ReadByte(addr, reg); }
+		static void __fastcall WriteByte(uint32_t addr, uint32_t data) { Gekko->WriteByte(addr, data); }
+		static void __fastcall ReadHalf(uint32_t addr, uint32_t* reg) { Gekko->ReadHalf(addr, reg); }
+		static void __fastcall WriteHalf(uint32_t addr, uint32_t data) { Gekko->WriteHalf(addr, data); }
+		static void __fastcall ReadWord(uint32_t addr, uint32_t* reg) { Gekko->ReadWord(addr, reg); }
+		static void __fastcall WriteWord(uint32_t addr, uint32_t data) { Gekko->WriteWord(addr, data); }
+		static void __fastcall ReadDouble(uint32_t addr, uint64_t* reg) { Gekko->ReadDouble(addr, reg); }
+		static void __fastcall WriteDouble(uint32_t addr, uint64_t* data) { Gekko->WriteDouble(addr, data); }
 
 	public:
 		Jitc(GekkoCore* _core);
