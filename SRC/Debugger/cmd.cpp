@@ -131,11 +131,12 @@ Json::Value* cmd_blr(std::vector<std::string>& args)
     {
         if(emu.loaded) return nullptr;
 
+        int WIMG;
         uint32_t ea = con.disa_cursor;
         uint32_t pa = Gekko::BadAddress;
         if (Gekko::Gekko)
         {
-            pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
+            pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
         }
         if(pa == Gekko::BadAddress) return nullptr;
 
@@ -448,7 +449,8 @@ Json::Value* cmd_lr(std::vector<std::string>& args)
             uint32_t pa = Gekko::BadAddress;
             if (Gekko::Gekko)
             {
-                pa = Gekko::Gekko->EffectiveToPhysical(sp, Gekko::MmuAccess::Execute);
+                int WIMG;
+                pa = Gekko::Gekko->EffectiveToPhysical(sp, Gekko::MmuAccess::Execute, WIMG);
             }
 
             if(!sp || pa == Gekko::BadAddress) break;
@@ -489,7 +491,8 @@ Json::Value* cmd_nop(std::vector<std::string>& args)
     uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
     }
     if(pa == Gekko::BadAddress) return nullptr;
     
@@ -510,7 +513,8 @@ Json::Value* cmd_denop(std::vector<std::string>& args)
     uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
     }
     if(pa == Gekko::BadAddress) return nullptr;
 
@@ -549,7 +553,8 @@ Json::Value* cmd_sop(std::vector<std::string>& args)
             uint32_t pa = Gekko::BadAddress;
             if (Gekko::Gekko)
             {
-                pa = Gekko::Gekko->EffectiveToPhysical(saddr, Gekko::MmuAccess::Execute);
+                int WIMG;
+                pa = Gekko::Gekko->EffectiveToPhysical(saddr, Gekko::MmuAccess::Execute, WIMG);
             }
             if(pa != Gekko::BadAddress) Gekko::Gekko->ReadWord(pa, &op);
             disa.instr = op;

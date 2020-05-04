@@ -44,7 +44,8 @@ namespace Gekko
 			if (core->TestBreakpointForJitc(addr))
 				break;
 
-			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute);
+			int WIMG;
+			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
 			uint32_t instr;
 
 			// TODO: This moment needs to be rethinked. It makes little sense to generate ISI in the compilation process, 

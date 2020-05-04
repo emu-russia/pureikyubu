@@ -6,12 +6,13 @@ namespace Gekko
     // parse and execute single opcode
     void Interpreter::ExecuteOpcode()
     {
+        int WIMG;
         uint32_t op, pa;
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
         //pa = core->EffectiveToPhysical(Gekko->regs.pc, MmuAccess::Execute);
-        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute);
+        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
             Gekko->Exception(Exception::ISI);
@@ -49,12 +50,13 @@ namespace Gekko
 
     bool Interpreter::ExecuteInterpeterFallback()
     {
+        int WIMG;
         uint32_t op, pa;
 
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
         //pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute);
-        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute);
+        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
             Gekko->Exception(Exception::ISI);

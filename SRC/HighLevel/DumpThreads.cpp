@@ -10,9 +10,11 @@ namespace HLE
 
 	static bool LoadOsThread(uint32_t ea, OSThread* thread)
 	{
+		int WIMG;
+
 		// Translate effective address
 
-		uint32_t threadPa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read);
+		uint32_t threadPa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
 		if (threadPa == Gekko::BadAddress)
 		{
 			DBReport("Invalid thread effective address: 0x%08X\n", ea);
@@ -58,11 +60,13 @@ namespace HLE
 
 	Json::Value* DumpDolphinOsThreads(bool displayOnScreen)
 	{
+		int WIMG;
+
 		// Get pointer to __OSLinkActive
 
 		uint32_t linkActiveEffectiveAddr = OS_LINK_ACTIVE;
 
-		uint32_t linkActivePa = Gekko::Gekko->EffectiveToPhysical(linkActiveEffectiveAddr, Gekko::MmuAccess::Read);
+		uint32_t linkActivePa = Gekko::Gekko->EffectiveToPhysical(linkActiveEffectiveAddr, Gekko::MmuAccess::Read, WIMG);
 		if (linkActivePa == Gekko::BadAddress)
 		{
 			if (displayOnScreen)
@@ -134,9 +138,11 @@ namespace HLE
 
 	Json::Value* DumpDolphinOsContext(uint32_t effectiveAddr, bool displayOnScreen)
 	{
+		int WIMG;
+
 		// Get context pointer
 
-		uint32_t physAddr = Gekko::Gekko->EffectiveToPhysical(effectiveAddr, Gekko::MmuAccess::Read);
+		uint32_t physAddr = Gekko::Gekko->EffectiveToPhysical(effectiveAddr, Gekko::MmuAccess::Read, WIMG);
 
 		if (physAddr == Gekko::BadAddress)
 		{

@@ -349,6 +349,13 @@ namespace Gekko
 		return nullptr;
 	}
 
+	static Json::Value* CacheLog(std::vector<std::string>& args)
+	{
+		CacheLogLevel level = (CacheLogLevel)atoi(args[1].c_str());
+		Gekko->cache.SetLogLevel(level);
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		Debug::Hub.AddCmd("run", cmd_run);
@@ -358,5 +365,6 @@ namespace Gekko
 		Debug::Hub.AddCmd("br", cmd_br);
 		Debug::Hub.AddCmd("bw", cmd_bw);
 		Debug::Hub.AddCmd("bc", cmd_bc);
+		Debug::Hub.AddCmd("CacheLog", CacheLog);
 	}
 }

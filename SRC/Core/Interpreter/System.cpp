@@ -196,12 +196,18 @@ namespace Gekko
                 if (bits & HID0_DCFI)
                 {
                     bits &= ~HID0_DCFI;
-                    Gekko->cache.Reset();
+
+                    // On a real system, after a global cache invalidation, the data still remains in the L2 cache.
+                    // We cannot afford global invalidation, as the L2 cache is not supported.
+
+                    DBReport2(DbgChannel::CPU, "Data Cache Flash Invalidate\n");
                 }
                 if (bits & HID0_ICFI)
                 {
                     bits &= ~HID0_ICFI;
                     Gekko->jitc->Reset();
+
+                    DBReport2(DbgChannel::CPU, "Instruction Cache Flash Invalidate\n");
                 }
 
                 Gekko->regs.spr[spr] = bits;
@@ -415,12 +421,14 @@ namespace Gekko
 
     OP(DCBT)
     {
+        int WIMG;
+
         if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
             return;
 
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.Touch(pa);
@@ -430,6 +438,8 @@ namespace Gekko
 
     OP(DCBTST)
     {
+        int WIMG;
+
         if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
             return;
 
@@ -437,7 +447,7 @@ namespace Gekko
 
         // TouchForStore is also made architecturally as a Read operation so that the MMU does not set the "Changed" bit for PTE.
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.TouchForStore(pa);
@@ -447,9 +457,10 @@ namespace Gekko
 
     OP(DCBZ)
     {
+        int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.Zero(pa);
@@ -469,6 +480,8 @@ namespace Gekko
 
     OP(DCBZ_L)
     {
+        int WIMG;
+
         if (!Gekko->cache.IsLockedEnable())
         {
             Gekko->PrCause = PrivilegedCause::IllegalInstruction;
@@ -478,7 +491,7 @@ namespace Gekko
 
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.ZeroLocked(pa);
@@ -494,9 +507,10 @@ namespace Gekko
 
     OP(DCBST)
     {
+        int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.Store(pa);
@@ -512,9 +526,10 @@ namespace Gekko
 
     OP(DCBF)
     {
+        int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.Flush(pa);
@@ -530,6 +545,7 @@ namespace Gekko
 
     OP(DCBI)
     {
+        int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
         if (Gekko->regs.msr & MSR_PR)
@@ -539,7 +555,7 @@ namespace Gekko
             return;
         }
 
-        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write);
+        uint32_t pa = Gekko->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
         if (pa != Gekko::BadAddress)
         {
             Gekko->cache.Invalidate(pa);

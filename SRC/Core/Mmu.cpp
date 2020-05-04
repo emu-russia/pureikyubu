@@ -1,8 +1,6 @@
 // MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
 
-// The result of the MMU is placed in two variables (GekkoCore):
-// - LastWIMG
-// - MmuLastResult
+// The result of the MMU is placed in MmuLastResult and translated address as output.
 
 // We also use BadAddress as a signal that the translation did not pass (a special address that is usually not used by anyone).
 
@@ -13,14 +11,14 @@ namespace Gekko
 
     // A simple translation, which is configured by the Dolphin OS software environment (until it starts using MMU for ARAM mapping).
 
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type)
+    uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
     {
-        LastWIMG = WIMG_I;      // Caching inhibited
+        WIMG = WIMG_I;      // Caching inhibited
 
         // Locked cache
         if ((ea & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS && cache.IsLockedEnable())
         {
-            LastWIMG = 0;
+            WIMG = 0;
             return ea;
         }
 
@@ -36,23 +34,23 @@ namespace Gekko
 
     // Native address translation defined by PowerPC architecture. There are some alien moments (Hash for Page Tables), but overall its fine.
 
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type)
+    uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)
     {
         uint32_t pa;
 
-        LastWIMG = 0;
+        WIMG = 0;
 
         // First, try the block translation, if it doesn’t work, try the Page Table.
 
-        if (!BlockAddressTranslation(ea, pa, type))
+        if (!BlockAddressTranslation(ea, pa, type, WIMG))
         {
-            pa = SegmentTranslation(ea, type);
+            pa = SegmentTranslation(ea, type, WIMG);
         }
 
         return pa;
     }
 
-    bool __fastcall GekkoCore::BlockAddressTranslation(uint32_t ea, uint32_t &pa, MmuAccess type)
+    bool __fastcall GekkoCore::BlockAddressTranslation(uint32_t ea, uint32_t &pa, MmuAccess type, int& WIMG)
     {
         // Ignore BAT access rights for now (not used in embodiment system)
 
@@ -60,7 +58,7 @@ namespace Gekko
         {
             if ((regs.msr & MSR_IR) == 0)
             {
-                LastWIMG = WIMG_G;
+                WIMG = WIMG_G;
                 pa = ea;
                 return true;
             }
@@ -78,7 +76,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*ibatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
-                    LastWIMG = (*ibatl[n] >> 3) & 0xf;
+                    WIMG = (*ibatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -88,7 +86,7 @@ namespace Gekko
         {
             if ((regs.msr & MSR_DR) == 0)
             {
-                LastWIMG = WIMG_M | WIMG_G;
+                WIMG = WIMG_M | WIMG_G;
                 pa = ea;
                 return true;
             }
@@ -106,7 +104,7 @@ namespace Gekko
                 {
                     pa = BATBRPN(*dbatl[n]) | ((ea >> 17) & bl);
                     pa = (pa << 17) | (ea & 0x1ffff);
-                    LastWIMG = (*dbatl[n] >> 3) & 0xf;
+                    WIMG = (*dbatl[n] >> 3) & 0xf;
                     MmuLastResult = MmuResult::Ok;
                     return true;
                 }
@@ -118,7 +116,7 @@ namespace Gekko
         return false;
     }
 
-    uint32_t __fastcall GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type)
+    uint32_t __fastcall GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG)
     {
         int ptegUpper;
 
@@ -240,7 +238,7 @@ namespace Gekko
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
                 if (type != MmuAccess::Execute)
                 {
-                    LastWIMG = (pte[1] >> 3) & 0xf;
+                    WIMG = (pte[1] >> 3) & 0xf;
                 }
                 MmuLastResult = MmuResult::Ok;
                 return pa;
@@ -329,7 +327,7 @@ namespace Gekko
                 uint32_t pa = (pte[1] & ~0xfff) | (ea & 0xfff);
                 if (type != MmuAccess::Execute)
                 {
-                    LastWIMG = (pte[1] >> 3) & 0xf;
+                    WIMG = (pte[1] >> 3) & 0xf;
                 }
                 MmuLastResult = MmuResult::Ok;
                 return pa;

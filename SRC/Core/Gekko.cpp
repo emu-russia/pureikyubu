@@ -267,10 +267,10 @@ namespace Gekko
         return Gekko->interp->ExecuteInterpeterFallback();
     }
 
-    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type)
+    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
     {
-        //return EffectiveToPhysicalNoMmu(ea, type);
-        return EffectiveToPhysicalMmu(ea, type);
+        //return EffectiveToPhysicalNoMmu(ea, type, WIMG);
+        return EffectiveToPhysicalMmu(ea, type, WIMG);
     }
 
     void GekkoCore::AddBreakpoint(uint32_t addr)

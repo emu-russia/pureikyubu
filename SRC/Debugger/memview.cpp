@@ -10,7 +10,8 @@ static const char *hexbyte(uint32_t addr)
         
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Read);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Read, WIMG);
     }
 
     if (mi.ram)
@@ -37,7 +38,8 @@ static const char *charbyte(uint32_t addr)
     
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Read);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Read, WIMG);
     }
 
     if (mi.ram && pa != Gekko::BadAddress)
@@ -63,7 +65,8 @@ void con_update_dump_window()
     uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(con.data, Gekko::MmuAccess::Read);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(con.data, Gekko::MmuAccess::Read, WIMG);
     }
 
     con_attr(0, 3);

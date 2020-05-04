@@ -60,6 +60,17 @@
 
     "bc": {
       "help": "Clear Gekko breakpoints",
+    },
+
+    "CacheLog": {
+      "help": "Set cache operations log mode",
+      "args": 1,
+      "usage": [
+        "Syntax: CacheLog <0|1|2>",
+        "0: None (disabled)",
+        "1: Show commands (cache control instructions activity)",
+        "2: Show all operations (load/store, cast-in/cast-out, etc.)"
+      ]
     }
   }
 }
