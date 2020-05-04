@@ -160,7 +160,6 @@ namespace Gekko
         void Reset();
 
         void Tick();
-        static void TickForJitc();
         int64_t GetTicks();
         int64_t OneSecond();
         int64_t OneMillisecond() { return msec; }

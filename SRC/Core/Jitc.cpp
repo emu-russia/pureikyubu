@@ -199,6 +199,12 @@ namespace Gekko
 		InvalidateAll();
 	}
 
+	void Jitc::Tick()
+	{
+		Gekko->Tick();
+		Gekko->ops++;
+	}
+
 	void Jitc::CompileInstr(AnalyzeInfo* info, CodeSegment* seg)
 	{
 		switch (info->instr)

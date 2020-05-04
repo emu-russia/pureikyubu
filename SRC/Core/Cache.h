@@ -38,7 +38,7 @@ namespace Gekko
 
 		// You can disable cache emulation for debugging purposes.
 		// This does not apply to a locked cache.
-		bool DisableForDebugReasons = true;
+		bool DisableForDebugReasons = false;
 
 		uint8_t* LockedCache = nullptr;
 		uint32_t LockedCacheAddr = 0;

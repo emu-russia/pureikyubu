@@ -13,11 +13,11 @@ namespace Gekko
         {
             core->TestBreakpoints();
 
-            //core->interp->ExecuteOpcode();
+            core->interp->ExecuteOpcode();
 
             // For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
 
-            core->jitc->Execute();
+            //core->jitc->Execute();
         }
     }
 
@@ -118,12 +118,6 @@ namespace Gekko
                 DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
             }
         }
-    }
-
-    void GekkoCore::TickForJitc()
-    {
-        Gekko::Gekko->Tick();
-        Gekko::Gekko->ops++;
     }
 
     int64_t GekkoCore::GetTicks()

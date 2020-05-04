@@ -213,6 +213,61 @@ namespace Gekko
 		else DBReport("MSR[LE] : 0, processor runs in big-endian mode\n");
 	}
 
+	// HID0 info
+	static void describe_hid0(uint32_t val)
+	{
+		DBReport("HID0: 0x%08X\n", val);
+
+		if (val & HID0_EMCP) DBReport("HID0[EMCP] : 1, Asserting MCP causes checkstop or a machine check\n");
+		else DBReport("HID0[EMCP] : 0, Masks MCP. Asserting MCP does not generate a machine check exception or a checkstop\n");
+		if (val & HID0_DBP) DBReport("HID0[DBP]  : 1, Disable parity generation\n");
+		else DBReport("HID0[DBP]  : 0, Parity generation is enabled\n");
+		if (val & HID0_EBA) DBReport("HID0[EBA]  : 1, Allows a address parity error to cause a checkstop or a machine check\n");
+		else DBReport("HID0[EBA]  : 0, Prevents address parity checking\n");
+		if (val & HID0_EBD) DBReport("HID0[EBD]  : 1, Allows a data parity error to cause a checkstop or machine check\n");
+		else DBReport("HID0[EBD]  : 0, Parity checking is disabled\n");
+		if (val & HID0_PAR) DBReport("HID0[PAR]  : 1, Alters bus protocol slightly by preventing the processor from driving ARTRY to high\n");
+		else DBReport("HID0[PAR]  : 0, Precharge of ARTRY enabled\n");
+		if (val & HID0_DOZE) DBReport("HID0[DOZE] : 1, Doze mode enabled\n");
+		else DBReport("HID0[DOZE] : 0, Doze mode disabled\n");
+		if (val & HID0_NAP) DBReport("HID0[NAP]  : 1, Nap mode enabled\n");
+		else DBReport("HID0[NAP]  : 0, Nap mode disabled\n");
+		if (val & HID0_SLEEP) DBReport("HID0[SLEEP]: 1, Sleep mode enabled\n");
+		else DBReport("HID0[SLEEP]: 0, Sleep mode disabled\n");
+		if (val & HID0_DPM) DBReport("HID0[DPM]  : 1, Dynamic power management is enabled\n");
+		else DBReport("HID0[DPM]  : 0, Dynamic power management is disabled\n");
+		if (val & HID0_NHR) DBReport("HID0[NHR]  : 1, Hard reset has not occurred\n");
+		else DBReport("HID0[NHR]  : 0, Hard reset occurred\n");
+		if (val & HID0_ICE) DBReport("HID0[ICE]  : 1, Instruction cache is enabled\n");
+		else DBReport("HID0[ICE]  : 0, Instruction cache is disabled\n");
+		if (val & HID0_DCE) DBReport("HID0[DCE]  : 1, Data cache is enabled\n");
+		else DBReport("HID0[DCE]  : 0, Data cache is disabled\n");
+		if (val & HID0_ILOCK) DBReport("HID0[ILOCK]: 1, Instruction cache locked (frozen)\n");
+		else DBReport("HID0[ILOCK]: 0, Instruction cache not locked\n");
+		if (val & HID0_DLOCK) DBReport("HID0[DLOCK]: 1, Data cache locked (frozen)\n");
+		else DBReport("HID0[DLOCK]: 0, Data cache not locked\n");
+		if (val & HID0_ICFI) DBReport("HID0[ICFI] : 1, Instruction cache invalidating\n");
+		else DBReport("HID0[ICFI] : 0, Instruction cache is not invalidated\n");
+		if (val & HID0_DCFI) DBReport("HID0[DCFI] : 1, Data cache invalidating\n");
+		else DBReport("HID0[DCFI] : 0, Data cache is not invalidated\n");
+		if (val & HID0_SPD) DBReport("HID0[SPD]  : 1, Speculative bus accesses to nonguarded space disabled\n");
+		else DBReport("HID0[SPD]  : 0, Speculative bus accesses to nonguarded space enabled\n");
+		if (val & HID0_IFEM) DBReport("HID0[IFEM] : 1, Instruction fetches reflect the M bit from the WIM settings\n");
+		else DBReport("HID0[IFEM] : 0, Instruction fetches M bit disabled\n");
+		if (val & HID0_SGE) DBReport("HID0[SGE]  : 1, Store gathering is enabled\n");
+		else DBReport("HID0[SGE]  : 0, Store gathering is disabled \n");
+		if (val & HID0_DCFA) DBReport("HID0[DCFA] : 1, Data cache flush assist facility is enabled\n");
+		else DBReport("HID0[DCFA] : 0, Data cache flush assist facility is disabled\n");
+		if (val & HID0_BTIC) DBReport("HID0[BTIC] : 1, BTIC is enabled\n");
+		else DBReport("HID0[BTIC] : 0, BTIC is disabled\n");
+		if (val & HID0_ABE) DBReport("HID0[ABE]  : 1, Address-only operations are broadcast on the 60x bus\n");
+		else DBReport("HID0[ABE]  : 0, Address-only operations affect only local L1 and L2 caches and are not broadcast\n");
+		if (val & HID0_BHT) DBReport("HID0[BHT]  : 1, Branch history enabled\n");
+		else DBReport("HID0[BHT]  : 0, Branch history disabled\n");
+		if (val & HID0_NOOPTI) DBReport("HID0[NOOPTI]: 1, The dcbt and dcbtst instructions are no-oped globally\n");
+		else DBReport("HID0[NOOPTI]: 0, The dcbt and dcbtst instructions are enabled\n");
+	}
+
 	static Json::Value* cmd_r(std::vector<std::string>& args)
 	{
 		uint32_t(*op)(uint32_t a, uint32_t b) = NULL;
@@ -228,6 +283,7 @@ namespace Gekko
 		if (args.size() <= 3)
 		{
 			if (!_stricmp(args[1].c_str(), "msr")) describe_msr(*n);
+			else if (!_stricmp(args[1].c_str(), "hid0")) describe_hid0(*n);
 			else DBReport("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
 			return nullptr;
 		}

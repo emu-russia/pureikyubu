@@ -195,12 +195,18 @@ namespace Gekko
                 Gekko->cache.Freeze((bits & HID0_DLOCK) ? true : false);
                 if (bits & HID0_DCFI)
                 {
+                    bits &= ~HID0_DCFI;
                     Gekko->cache.Reset();
                 }
                 if (bits & HID0_ICFI)
                 {
+                    bits &= ~HID0_ICFI;
                     Gekko->jitc->Reset();
                 }
+
+                Gekko->regs.spr[spr] = bits;
+                Gekko->regs.pc += 4;
+                return;
             }
             break;
 
