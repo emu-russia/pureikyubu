@@ -1,5 +1,8 @@
 #include "../pch.h"
 
+// X64 Register usage:
+// rsi: offset Gekko::regs.gpr
+
 namespace Gekko
 {
 	// Special sections of code that are executed at the beginning and end of each translated segment.
@@ -21,6 +24,11 @@ namespace Gekko
 		seg->Write8(0x57);
 		seg->Write16(0x8348);
 		seg->Write16(0x40ec);
+
+		// mov rsi, Gekko::regs.gpr
+
+		seg->Write16(0xbe48);
+		seg->Write64((uint64_t)core->regs.gpr);
 
 	}
 
@@ -53,6 +61,13 @@ namespace Gekko
 	// PC = PC + 4
 	void Jitc::AddPc(CodeSegment* seg)
 	{
+		// mov rax, offset regs.pc
+		// add dword ptr [rax], 4
+
+		//0:  48 b8 88 77 66 55 44    movabs rax,0x1122334455667788
+		//7:  33 22 11
+		//a:  83 00 04                add    DWORD PTR [rax],0x4
+
 		seg->Write16(0xb848);
 		seg->Write64((uint64_t)&core->regs.pc);
 		seg->Write8(0x83);

@@ -13,11 +13,11 @@ namespace Gekko
         {
             core->TestBreakpoints();
 
-            core->interp->ExecuteOpcode();
+            //core->interp->ExecuteOpcode();
 
             // For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
 
-            //core->jitc->Execute();
+            core->jitc->Execute();
         }
     }
 
@@ -268,7 +268,7 @@ namespace Gekko
         interp->ExecuteOpcodeDirect(pc, instr);
     }
 
-    bool GekkoCore::ExecuteInterpeterFallback()
+    bool __fastcall GekkoCore::ExecuteInterpeterFallback()
     {
         return Gekko->interp->ExecuteInterpeterFallback();
     }

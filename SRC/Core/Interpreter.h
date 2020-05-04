@@ -15,6 +15,8 @@ namespace Gekko
 
 	class Interpreter
 	{
+		friend Jitc;
+
 		GekkoCore* core = nullptr;
 
 		static void c_B(uint32_t op);
