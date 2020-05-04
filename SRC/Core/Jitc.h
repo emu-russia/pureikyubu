@@ -59,6 +59,16 @@ namespace Gekko
 
 		void Rlwinm(AnalyzeInfo* info, CodeSegment* seg);
 
+		void PsAdd(AnalyzeInfo* info, CodeSegment* seg);
+		void PsSub(AnalyzeInfo* info, CodeSegment* seg);
+		void PsMerge00(AnalyzeInfo* info, CodeSegment* seg);
+		void PsMerge01(AnalyzeInfo* info, CodeSegment* seg);
+		void PsMerge10(AnalyzeInfo* info, CodeSegment* seg);
+		void PsMerge11(AnalyzeInfo* info, CodeSegment* seg);
+
+		void Dequantize(CodeSegment* seg, void* psReg, GEKKO_QUANT_TYPE type, uint8_t scale, bool secondReg);
+		void PSQLoad(AnalyzeInfo* info, CodeSegment* seg);
+
 		static void __fastcall ReadByte(uint32_t addr, uint32_t* reg) { Gekko->ReadByte(addr, reg); }
 		static void __fastcall WriteByte(uint32_t addr, uint32_t data) { Gekko->WriteByte(addr, data); }
 		static void __fastcall ReadHalf(uint32_t addr, uint32_t* reg) { Gekko->ReadHalf(addr, reg); }
@@ -70,6 +80,8 @@ namespace Gekko
 
 		// This segment is not involved in invalidation, so as not to disrupt the code.
 		CodeSegment* currentSegment = nullptr;
+
+		uint32_t DequantizeTemp = 0;
 
 	public:
 		Jitc(GekkoCore* _core);

@@ -214,9 +214,19 @@ namespace Gekko
 			case Instruction::bla: Branch(info, seg, true); break;
 
 			case Instruction::lbz: LoadImm(info, seg, ReadByte); break;
+			case Instruction::lhz: LoadImm(info, seg, ReadHalf); break;
 			case Instruction::lwz: LoadImm(info, seg, ReadWord); break;
 
 			case Instruction::rlwinm: Rlwinm(info, seg); break;
+
+			case Instruction::ps_add: PsAdd(info, seg); break;
+			case Instruction::ps_sub: PsSub(info, seg); break;
+			case Instruction::ps_merge00: PsMerge00(info, seg); break;
+			case Instruction::ps_merge01: PsMerge01(info, seg); break;
+			case Instruction::ps_merge10: PsMerge10(info, seg); break;
+			case Instruction::ps_merge11: PsMerge11(info, seg); break;
+
+			case Instruction::psq_l: PSQLoad(info, seg); break;
 
 			default:
 				FallbackStub(info, seg);

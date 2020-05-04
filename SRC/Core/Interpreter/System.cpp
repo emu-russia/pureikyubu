@@ -219,7 +219,6 @@ namespace Gekko
             // Locked cache DMA
 
             case (int)SPR::DMAU:
-                Gekko->regs.spr[spr] = RRS;
                 //DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
                 break;
             case (int)SPR::DMAL:
@@ -248,6 +247,25 @@ namespace Gekko
                 Gekko->regs.spr[spr] &= ~(GEKKO_DMAL_DMA_T | GEKKO_DMAL_DMA_F);
                 Gekko->regs.pc += 4;
                 return;
+            }
+            break;
+
+            // When the GQR values change, the recompiler is invalidated.
+            // This rarely happens.
+
+            case (int)SPR::GQR0:
+            case (int)SPR::GQR1:
+            case (int)SPR::GQR2:
+            case (int)SPR::GQR3:
+            case (int)SPR::GQR4:
+            case (int)SPR::GQR5:
+            case (int)SPR::GQR6:
+            case (int)SPR::GQR7:
+            {
+                if (Gekko->regs.spr[spr] != RRS)
+                {
+                    Gekko->jitc->Reset();
+                }
             }
             break;
         }
