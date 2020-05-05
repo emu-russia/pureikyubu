@@ -8,6 +8,8 @@
 // all important data is placed here
 UserWindow wnd;
 
+Debug::DspDebug* dspDebug;
+
 // ---------------------------------------------------------------------------
 // statusbar
 
@@ -739,6 +741,16 @@ loadFile:
 
                 // open/close debugger
                 case ID_DEBUG_CONSOLE:
+
+                    if (dspDebug)
+                    {
+                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
+                        delete dspDebug;
+                        dspDebug = nullptr;
+                    }
+
+                    Sleep(100);
+
                     if(!emu.doldebug)
                     {   // open
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
@@ -754,6 +766,32 @@ loadFile:
                         SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
                     }
                     SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
+                    return 0;
+
+                // Open/close DSP Debug
+                case ID_DSP_DEBUG:
+                    if (emu.doldebug)
+                    {
+                        CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
+                        DBClose();
+                        emu.doldebug = false;
+                    }
+
+                    Sleep(100);
+
+                    if (dspDebug == nullptr)
+                    {
+                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
+                        dspDebug = new Debug::DspDebug("DSP Debug", 80, 60);
+                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger opened"));
+                    }
+                    else
+                    {
+                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
+                        delete dspDebug;
+                        dspDebug = nullptr;
+                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger closed"));
+                    }
                     return 0;
 
                 // Mount Dolphin SDK as DVD
