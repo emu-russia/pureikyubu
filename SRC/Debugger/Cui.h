@@ -9,9 +9,24 @@
 
 namespace Debug
 {
-	enum class CuiColor
+	enum class CuiColor : int8_t
 	{
 		Black = 0,
+		DarkBlue,
+		Green,
+		Cyan,
+		Red,
+		Purple,
+		Brown,
+		Normal,
+		Gray,
+		Blue,
+		Lime,
+		BrightCyan,
+		BrightRed,
+		BrightPurple,
+		Yellow,
+		White,
 	};
 
 	class Cui;
@@ -20,7 +35,7 @@ namespace Debug
 	{
 		friend Cui;
 
-		bool invalidated = false;
+		bool invalidated = true;
 		bool active = false;
 		std::string wndName;
 
@@ -30,9 +45,14 @@ namespace Debug
 		// Window layout in CUI.
 		RECT wndRect;
 
+		size_t width;
+		size_t height;
+
+		void PutChar(CuiColor back, CuiColor front, int x, int y, char c);
+
 	public:
 		CuiWindow(RECT& rect, std::string name);
-		~CuiWindow();
+		virtual ~CuiWindow();
 
 		// Redraw itself if invalidated.
 		virtual void OnDraw() = 0;
@@ -44,6 +64,9 @@ namespace Debug
 		bool NeedRedraw() { return invalidated;  }
 
 		void SetFocus(bool flag) { active = flag; }
+
+		void Print(CuiColor back, CuiColor front, int x, int y, std::string text);
+		void Fill(CuiColor back, CuiColor front, char c);
 	};
 
 	class Cui
@@ -52,6 +75,14 @@ namespace Debug
 
 		HANDLE StdInput;
 		HANDLE StdOutput;
+
+		size_t conWidth;
+		size_t conHeight;
+
+		Thread* cuiThread = nullptr;
+		static void CuiThreadProc(void* Parameter);
+
+		void BlitWindow(CuiWindow* wnd);
 
 	public:
 		Cui(std::string title, size_t width, size_t height);
@@ -65,5 +96,8 @@ namespace Debug
 		// In addition, each active window also receives key event.
 
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+
+		void ShowCursor(bool show);
+		void SetCursor(COORD& pos);
 	};
 }
