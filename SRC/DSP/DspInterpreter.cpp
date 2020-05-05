@@ -1195,6 +1195,11 @@ namespace DSP
 		Flags40(SignExtend40(a.bits), SignExtend40(b.bits), SignExtend40(res.bits));
 	}
 
+	void DspInterpreter::FlagsLogic(DspLongAccumulator a)
+	{
+
+	}
+
 	void DspInterpreter::SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count)
 	{
 		core->regs.st[0].push_back(startAddr);

@@ -184,6 +184,7 @@ namespace DSP
 		bool Condition(ConditionCode cc);
 		void Flags40(int64_t a, int64_t b, int64_t res);
 		void Flags(DspLongAccumulator a, DspLongAccumulator b, DspLongAccumulator res);
+		void FlagsLogic(DspLongAccumulator a);
 		void Dispatch(AnalyzeInfo& info);
 		void SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count);
 		bool CheckLoop();

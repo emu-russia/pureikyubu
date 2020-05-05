@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Common/Thread.h"
-#include <vector>
+#include <list>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -93,9 +93,9 @@ namespace Gekko
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
 
-        std::vector<uint32_t> breakPointsExecute;
-        std::vector<uint32_t> breakPointsRead;
-        std::vector<uint32_t> breakPointsWrite;
+        std::list<uint32_t> breakPointsExecute;
+        std::list<uint32_t> breakPointsRead;
+        std::list<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
         uint32_t oneShotBreakpoint = BadAddress;
 
@@ -199,11 +199,15 @@ namespace Gekko
 #pragma region "Breakpoints"
 
         void AddBreakpoint(uint32_t addr);
+        void RemoveBreakpoint(uint32_t addr);
         void AddReadBreak(uint32_t addr);
         void AddWriteBreak(uint32_t addr);
         void ClearBreakpoints();
 
         void AddOneShotBreakpoint(uint32_t addr);
+
+        void ToggleBreakpoint(uint32_t addr);
+        bool IsBreakpoint(uint32_t addr);
 
 #pragma endregion "Breakpoints"
 

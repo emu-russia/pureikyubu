@@ -167,6 +167,7 @@
     <ClInclude Include="..\TLB.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Breakpoints.cpp" />
     <ClCompile Include="..\Cache.cpp" />
     <ClCompile Include="..\GatherBuffer.cpp" />
     <ClCompile Include="..\Gekko.cpp">
