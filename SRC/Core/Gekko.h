@@ -134,7 +134,8 @@ namespace Gekko
         bool __fastcall BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type, int& WIMG);
         uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG);
 
-        TLB tlb;
+        TLB dtlb;
+        TLB itlb;
 
         PrivilegedCause PrCause;
 

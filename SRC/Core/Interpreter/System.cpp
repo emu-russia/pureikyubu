@@ -412,7 +412,8 @@ namespace Gekko
 
     OP(TLBIE)
     {
-        Gekko->tlb.Invalidate(RRB);
+        Gekko->dtlb.Invalidate(RRB);
+        Gekko->itlb.Invalidate(RRB);
         Gekko->regs.pc += 4;
     }
 

@@ -99,7 +99,8 @@ namespace Gekko
         jitc->Reset();
         segmentsExecuted = 0;
 
-        tlb.InvalidateAll();
+        dtlb.InvalidateAll();
+        itlb.InvalidateAll();
         cache.Reset();
     }
 

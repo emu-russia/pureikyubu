@@ -6,13 +6,19 @@
 
 namespace Gekko
 {
+	typedef struct _TLBEntry
+	{
+		uint32_t addressTag;
+		int8_t wimg;
+	} TLBEntry;
+
 	class TLB
 	{
-		std::unordered_map<int, int> tlb;
+		std::unordered_map<int, TLBEntry*> tlb;
 
 	public:
-		bool Exists(uint32_t ea, uint32_t& pa);
-		void Map(uint32_t ea, uint32_t pa);
+		bool Exists(uint32_t ea, uint32_t& pa, int& WIMG);
+		void Map(uint32_t ea, uint32_t pa, int WIMG);
 
 		void Invalidate(uint32_t ea);
 		void InvalidateAll();

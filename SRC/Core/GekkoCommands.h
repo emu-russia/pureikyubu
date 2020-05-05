@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define GEKKO_CORE_JDI_JSON L"Data\\GekkoCoreJdi.json"
+#define GEKKO_CORE_JDI_JSON L"Data\\Json\\GekkoCoreJdi.json"
 
 namespace Gekko
 {

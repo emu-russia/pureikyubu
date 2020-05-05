@@ -72,18 +72,6 @@
 		"Memcard_SyncSave": false,
 		"MemcardA_Connected": false,
 		"MemcardB_Connected": false
-	},
-
-	"testing":
-	{
-		"SomeUTF8String": "Я могу есть стекло, оно мне не вредит",
-		"Japan": "私はガラスを食べることができます、それは私に害を与えません",
-		"Arabic": "يمكنني أكل الزجاج ، لا يؤذيني ",
-		"English": "I can eat glass, it doesn't hurts me",
-		"Boolean": true,
-		"Float": 3.1415,
-		"SomeArray": [ 1, 2, 3],
-		"EmptyArray": [],
-		"EmptyObject": {}
 	}
+	
 }

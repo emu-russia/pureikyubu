@@ -40,11 +40,27 @@ namespace Gekko
 
         WIMG = 0;
 
+        // Try TLB
+
+        TLB* tlb = (type == MmuAccess::Execute) ? &itlb : &dtlb;
+
+        if (tlb->Exists(ea, pa, WIMG))
+        {
+            return pa;
+        }
+
         // First, try the block translation, if it doesn’t work, try the Page Table.
 
         if (!BlockAddressTranslation(ea, pa, type, WIMG))
         {
             pa = SegmentTranslation(ea, type, WIMG);
+        }
+
+        // Put in TLB
+
+        if (MmuLastResult == MmuResult::Ok)
+        {
+            tlb->Map(ea, pa, WIMG);
         }
 
         return pa;
