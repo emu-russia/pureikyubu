@@ -100,11 +100,11 @@ namespace DSP
 		ix1,			// Indexing register 1
 		ix2,			// Indexing register 2
 		ix3,			// Indexing register 3
-		gprs,
-		r8 = gprs,
-		r9,
-		r10,
-		r11,
+		limitRegs,
+		lm0 = limitRegs,
+		lm1,
+		lm2,
+		lm3,
 		stackRegs,
 		st0 = stackRegs,	// Call stack register 
 		st1,			// Data stack register 
@@ -133,7 +133,7 @@ namespace DSP
 		uint32_t clearingPaddy;		// To use {0} on structure
 		uint16_t ar[4];		// Addressing registers
 		uint16_t ix[4];		// Indexing registers
-		uint16_t gpr[4];	// General purpose (r8-r11)
+		uint16_t lm[4];	// Limit registers
 		std::vector<DspAddress> st[4];	// Stack registers
 		DspLongAccumulator ac[2];		// 40-bit Accumulators
 		DspShortAccumulator ax[2];		// 32-bit Accumulators

@@ -262,11 +262,6 @@ namespace Gekko
         interp->ExecuteOpcodeDirect(pc, instr);
     }
 
-    bool __fastcall GekkoCore::ExecuteInterpeterFallback()
-    {
-        return Gekko->interp->ExecuteInterpeterFallback();
-    }
-
     uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
     {
         //return EffectiveToPhysicalNoMmu(ea, type, WIMG);
@@ -315,6 +310,12 @@ namespace Gekko
         if (!EnableTestBreakpoints)
             return false;
 
+        if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
+        {
+            oneShotBreakpoint = BadAddress;
+            return true;
+        }
+
         bool exists = false;
 
         breakPointsLock.Lock();
@@ -335,6 +336,12 @@ namespace Gekko
     {
         if (!EnableTestBreakpoints)
             return;
+
+        if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
+        {
+            oneShotBreakpoint = BadAddress;
+            DBHalt("One shot breakpoint\n");
+        }
 
         uint32_t addr = BadAddress;
 
@@ -401,6 +408,11 @@ namespace Gekko
         {
             DBHalt("Gekko suspended trying to write: 0x%08X\n", addr);
         }
+    }
+
+    void GekkoCore::AddOneShotBreakpoint(uint32_t addr)
+    {
+        oneShotBreakpoint = addr;
     }
 
 }

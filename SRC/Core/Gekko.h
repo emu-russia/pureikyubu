@@ -97,6 +97,7 @@ namespace Gekko
         std::vector<uint32_t> breakPointsRead;
         std::vector<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
+        uint32_t oneShotBreakpoint = BadAddress;
 
         bool TestBreakpointForJitc(uint32_t addr);
         void TestBreakpoints();
@@ -172,7 +173,6 @@ namespace Gekko
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
 
-        static bool ExecuteInterpeterFallback();
         void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
 
 #pragma region "Memory interface"
@@ -202,6 +202,8 @@ namespace Gekko
         void AddReadBreak(uint32_t addr);
         void AddWriteBreak(uint32_t addr);
         void ClearBreakpoints();
+
+        void AddOneShotBreakpoint(uint32_t addr);
 
 #pragma endregion "Breakpoints"
 

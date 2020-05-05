@@ -195,6 +195,11 @@ namespace Gekko
 		core->exception = false;
 	}
 
+	bool Jitc::ExecuteInterpeterFallback()
+	{
+		return Gekko->interp->ExecuteInterpeterFallback();
+	}
+
 	void Jitc::Reset()
 	{
 		InvalidateAll();

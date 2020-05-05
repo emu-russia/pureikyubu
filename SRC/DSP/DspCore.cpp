@@ -99,7 +99,7 @@ namespace DSP
 		{
 			regs.ar[i] = 0;
 			regs.ix[i] = 0;
-			regs.gpr[i] = 0;
+			regs.lm[i] = 0;
 		}
 
 		for (int i = 0; i < 2; i++)
@@ -304,9 +304,9 @@ namespace DSP
 
 		for (int i = 0; i < 4; i++)
 		{
-			if (regs.gpr[i] != prevState->gpr[i])
+			if (regs.lm[i] != prevState->lm[i])
 			{
-				DBReport("r%i: 0x%04X\n", 8+i, regs.gpr[i]);
+				DBReport("lm%i: 0x%04X\n", 8+i, regs.lm[i]);
 			}
 		}
 	}
@@ -343,11 +343,11 @@ namespace DSP
 			case (int)DspRegister::ix3:
 				regs.ix[reg - (int)DspRegister::indexRegs] = val;
 				break;
-			case (int)DspRegister::r8:
-			case (int)DspRegister::r9:
-			case (int)DspRegister::r10:
-			case (int)DspRegister::r11:
-				regs.gpr[reg - (int)DspRegister::gprs] = val;
+			case (int)DspRegister::lm0:
+			case (int)DspRegister::lm1:
+			case (int)DspRegister::lm2:
+			case (int)DspRegister::lm3:
+				regs.lm[reg - (int)DspRegister::limitRegs] = val;
 				break;
 			case (int)DspRegister::st0:
 			case (int)DspRegister::st1:
@@ -428,11 +428,11 @@ namespace DSP
 			case (int)DspRegister::ix2:
 			case (int)DspRegister::ix3:
 				return regs.ix[reg - (int)DspRegister::indexRegs];
-			case (int)DspRegister::r8:
-			case (int)DspRegister::r9:
-			case (int)DspRegister::r10:
-			case (int)DspRegister::r11:
-				return regs.gpr[reg - (int)DspRegister::gprs];
+			case (int)DspRegister::lm0:
+			case (int)DspRegister::lm1:
+			case (int)DspRegister::lm2:
+			case (int)DspRegister::lm3:
+				return regs.lm[reg - (int)DspRegister::limitRegs];
 			case (int)DspRegister::st0:
 			case (int)DspRegister::st1:
 			case (int)DspRegister::st2:
@@ -574,7 +574,7 @@ namespace DSP
 				return DspToCpuReadLo(true);
 
 			case (DspAddress)DspHardwareRegs::DIRQ:
-				return 0;
+				return DSPGetInterruptStatus() ? 1 : 0;
 
 			case (DspAddress)DspHardwareRegs::ACSAH:
 				return Accel.StartAddress.h;

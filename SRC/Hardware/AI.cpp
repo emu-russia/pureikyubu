@@ -381,6 +381,10 @@ void DSPAssertInt()
     }
 }
 
+bool DSPGetInterruptStatus()
+{
+    return (AIDCR & AIDCR_DSPINT) != 0;
+}
 
 // ---------------------------------------------------------------------------
 
