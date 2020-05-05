@@ -8,8 +8,7 @@ static int con_disa_line(int line, uint32_t opcode, uint32_t addr)
     int addend = 1;
 
     bgcur = (addr == con.disa_cursor) ? (8) : (0);
-    //bgbp = (con_is_code_bp(addr)) ? (4) : (0);
-    bgbp = 0;
+    bgbp = (Gekko::Gekko->IsBreakpoint(addr)) ? (4) : (0);
     bg = (addr == Gekko::Gekko->regs.pc) ? (1) : (0);
     bg = bg ^ bgcur ^ bgbp;
     fg = 7;
@@ -78,7 +77,8 @@ void con_update_disa_window()
     uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(con.disa_cursor, Gekko::MmuAccess::Execute);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(con.disa_cursor, Gekko::MmuAccess::Execute, WIMG);
     }
 
     con_attr(0, 3);
@@ -101,7 +101,8 @@ void con_update_disa_window()
 
         if (Gekko::Gekko)
         {
-            pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute);
+            int WIMG;
+            pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
             if (pa != Gekko::BadAddress)
             {
                 MIReadWord(pa, &op);
@@ -149,7 +150,8 @@ static void disa_navigate()
     uint32_t pa = Gekko::BadAddress;
     if (Gekko::Gekko)
     {
-        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute);
+        int WIMG;
+        pa = Gekko::Gekko->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
     }
     if (pa != Gekko::BadAddress)
     {

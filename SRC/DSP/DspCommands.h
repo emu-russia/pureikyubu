@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define DSP_JDI_JSON L"Data\\DspJdi.json"
+#define DSP_JDI_JSON L"Data\\Json\\DspJdi.json"
 
 namespace DSP
 {

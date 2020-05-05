@@ -10,9 +10,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
+        int WIMG;
         TestReadBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -20,7 +21,7 @@ namespace Gekko
             return;
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.ReadByte(pa, reg);
             return;
@@ -37,9 +38,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
+        int WIMG;
         TestWriteBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -56,10 +58,10 @@ namespace Gekko
             }
         }
     
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.WriteByte(pa, data);
-            if ((LastWIMG & WIMG_W) == 0)
+            if ((WIMG & WIMG_W) == 0)
                 return;
         }
 
@@ -74,9 +76,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
+        int WIMG;
         TestReadBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -84,7 +87,7 @@ namespace Gekko
             return;
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.ReadHalf(pa, reg);
             return;
@@ -107,9 +110,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
+        int WIMG;
         TestWriteBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -126,10 +130,10 @@ namespace Gekko
             }
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.WriteHalf(pa, data);
-            if ((LastWIMG & WIMG_W) == 0)
+            if ((WIMG & WIMG_W) == 0)
                 return;
         }
 
@@ -144,9 +148,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
+        int WIMG;
         TestReadBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -154,7 +159,7 @@ namespace Gekko
             return;
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.ReadWord(pa, reg);
             return;
@@ -171,9 +176,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
+        int WIMG;
         TestWriteBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -190,10 +196,10 @@ namespace Gekko
             }
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.WriteWord(pa, data);
-            if ((LastWIMG & WIMG_W) == 0)
+            if ((WIMG & WIMG_W) == 0)
                 return;
         }
 
@@ -208,9 +214,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
+        int WIMG;
         TestReadBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -218,7 +225,7 @@ namespace Gekko
             return;
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.ReadDouble(pa, reg);
             return;
@@ -237,9 +244,10 @@ namespace Gekko
 
     void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
+        int WIMG;
         TestWriteBreakpoints(addr);
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write);
+        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
         {
             regs.spr[(int)SPR::DAR] = addr;
@@ -256,10 +264,10 @@ namespace Gekko
             }
         }
 
-        if (cache.IsEnabled() && (LastWIMG & WIMG_I) == 0)
+        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
         {
             cache.WriteDouble(pa, data);
-            if ((LastWIMG & WIMG_W) == 0)
+            if ((WIMG & WIMG_W) == 0)
                 return;
         }
 

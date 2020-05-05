@@ -495,10 +495,11 @@ namespace Gekko
     // rd = MEM(ea, 4)
     OP(LWARX)
     {
+        int WIMG;
         uint32_t ea = RRB;
         if (RA) ea += RRA;
         Gekko->interp->RESERVE = true;
-        Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read);
+        Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
         Gekko->ReadWord(ea, &RRD);
         if (Gekko->exception) return;
         Gekko->regs.pc += 4;

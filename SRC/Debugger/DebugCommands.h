@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define DEBUGGER_JDI_JSON L"Data\\DebuggerJdi.json"
+#define DEBUGGER_JDI_JSON L"Data\\Json\\DebuggerJdi.json"
 
 namespace Debug
 {

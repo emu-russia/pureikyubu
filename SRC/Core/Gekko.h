@@ -3,7 +3,7 @@
 #pragma once
 
 #include "../Common/Thread.h"
-#include <vector>
+#include <list>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -93,10 +93,11 @@ namespace Gekko
         Thread* gekkoThread = nullptr;
         static void GekkoThreadProc(void* Parameter);
 
-        std::vector<uint32_t> breakPointsExecute;
-        std::vector<uint32_t> breakPointsRead;
-        std::vector<uint32_t> breakPointsWrite;
+        std::list<uint32_t> breakPointsExecute;
+        std::list<uint32_t> breakPointsRead;
+        std::list<uint32_t> breakPointsWrite;
         SpinLock breakPointsLock;
+        uint32_t oneShotBreakpoint = BadAddress;
 
         bool TestBreakpointForJitc(uint32_t addr);
         void TestBreakpoints();
@@ -115,15 +116,14 @@ namespace Gekko
         size_t      ops;                // instruction counter (only for debug!)
         size_t      segmentsExecuted;   // The number of completed recompiler segments.
         
-        uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type);
-        uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type);
+        uint32_t __fastcall EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG);
+        uint32_t __fastcall EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
 
         volatile bool decreq = false;       // decrementer exception request
         volatile bool intFlag = false;      // INT signal
         volatile bool exception = false;    // exception pending
 
         MmuResult MmuLastResult = MmuResult::Ok;
-        int LastWIMG = 0;       // The value of the WIMG bits after the last address translation.
 
         // For convenient access to BAT registers (Mmu related)
         uint32_t *dbatu[4];
@@ -131,10 +131,11 @@ namespace Gekko
         uint32_t *ibatu[4];
         uint32_t *ibatl[4];
 
-        bool __fastcall BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type);
-        uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type);
+        bool __fastcall BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type, int& WIMG);
+        uint32_t __fastcall SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG);
 
-        TLB tlb;
+        TLB dtlb;
+        TLB itlb;
 
         PrivilegedCause PrCause;
 
@@ -160,7 +161,6 @@ namespace Gekko
         void Reset();
 
         void Tick();
-        static void TickForJitc();
         int64_t GetTicks();
         int64_t OneSecond();
         int64_t OneMillisecond() { return msec; }
@@ -174,7 +174,6 @@ namespace Gekko
         size_t GetOpcodeCount() { return ops; }
         void ResetOpcodeCount() { ops = 0; }
 
-        static bool ExecuteInterpeterFallback();
         void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
 
 #pragma region "Memory interface"
@@ -191,7 +190,7 @@ namespace Gekko
         void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
 
         // Translate address by Mmu
-        uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type);
+        uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int & WIMG);
 
         static void SwapArea(uint32_t* addr, int count);
         static void SwapAreaHalf(uint16_t* addr, int count);
@@ -201,9 +200,15 @@ namespace Gekko
 #pragma region "Breakpoints"
 
         void AddBreakpoint(uint32_t addr);
+        void RemoveBreakpoint(uint32_t addr);
         void AddReadBreak(uint32_t addr);
         void AddWriteBreak(uint32_t addr);
         void ClearBreakpoints();
+
+        void AddOneShotBreakpoint(uint32_t addr);
+
+        void ToggleBreakpoint(uint32_t addr);
+        bool IsBreakpoint(uint32_t addr);
 
 #pragma endregion "Breakpoints"
 

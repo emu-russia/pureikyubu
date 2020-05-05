@@ -20,10 +20,10 @@ namespace DSP
 			case DspParameter::ix1: text = "ix1"; break;
 			case DspParameter::ix2: text = "ix2"; break;
 			case DspParameter::ix3: text = "ix3"; break;
-			case DspParameter::r08: text = "r08"; break;
-			case DspParameter::r09: text = "r09"; break;
-			case DspParameter::r0a: text = "r0a"; break;
-			case DspParameter::r0b: text = "r0b"; break;
+			case DspParameter::lm0: text = "lm0"; break;
+			case DspParameter::lm1: text = "lm1"; break;
+			case DspParameter::lm2: text = "lm2"; break;
+			case DspParameter::lm3: text = "lm3"; break;
 			case DspParameter::st0: text = "st0"; break;
 			case DspParameter::st1: text = "st1"; break;
 			case DspParameter::st2: text = "st2"; break;

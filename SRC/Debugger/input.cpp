@@ -72,15 +72,12 @@ static void con_function_key(int vkey, int ctrl)
             }
             break;
         case VK_F9:     // Toggle Breakpoint
-            //if(con_is_code_bp(con.disa_cursor))
-            //{
-            //    con_rem_code_bp(con.disa_cursor);
-            //}
-            //else con_add_code_bp(con.disa_cursor);
+            Gekko::Gekko->ToggleBreakpoint(con.disa_cursor);
             con.update |= CON_UPDATE_DISA;
             break;
         case VK_F10:    // Step Over
-            // TODO: con_step_over();
+            Gekko::Gekko->AddOneShotBreakpoint(Gekko::Gekko->regs.pc + 4);
+            Gekko::Gekko->Run();
             break;
         case VK_F11:    // Step Into
             con_step_into();

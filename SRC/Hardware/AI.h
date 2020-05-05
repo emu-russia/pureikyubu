@@ -26,7 +26,7 @@
 #define AIDCR_AIINTMSK      (1 << 4)        // AI DMA interrupt mask (RW)
 #define AIDCR_AIINT         (1 << 3)        // AI DMA interrupt status (RWC)
 #define AIDCR_HALT          (1 << 2)        // halt DSP (stop ucoding)
-#define AIDCR_DINT          (1 << 1)        // assert *DSP* interrupt
+#define AIDCR_DINT          (1 << 1)        // CPU->DSP interrupt
 #define AIDCR_RES           (1 << 0)        // reset DSP (waits for 0)
 
 // enable bit in AIDLEN register
@@ -89,4 +89,7 @@ extern  AIControl ai;
 void    AIOpen(HWConfig * config);
 void    AIClose();
 
-void    DSPAssertInt();     // Used by DspCore
+// Used by DspCore
+
+void    DSPAssertInt();
+bool    DSPGetInterruptStatus();

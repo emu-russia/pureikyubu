@@ -167,6 +167,9 @@
     <ClCompile Include="..\JitcX64\JitcPairedSingle.cpp">
       <Filter>JitcX64</Filter>
     </ClCompile>
+    <ClCompile Include="..\Breakpoints.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />

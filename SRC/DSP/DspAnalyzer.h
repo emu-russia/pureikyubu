@@ -219,10 +219,10 @@ namespace DSP
 		ix1,			///< Indexing register 1
 		ix2,			///< Indexing register 2
 		ix3,			///< Indexing register 3
-		r08,
-		r09,
-		r0a,
-		r0b,
+		lm0,
+		lm1,
+		lm2,
+		lm3,
 		st0,			///< Call stack register 
 		st1,			///< Data stack register 
 		st2,			///< Loop address stack register 

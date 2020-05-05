@@ -1786,7 +1786,7 @@ Called from IPL, CardUnlock
 86B4 00 82 04 0E    lri     ar2, #0x040E
 86B6 00 85 04 10    lri     ix1, #0x0410
 86B8 00 87 FF FE    lri     ix3, #0xFFFE
-86BA 00 88 04 0E    lri     r08, #0x040E
+86BA 00 88 04 0E    lri     lm0, #0x040E
 86BC 00 DF 04 03    lr      ac1.m, $0x0403
 86BE 79 00          decm    ac1                         
 86BF 15 7F          lsr     ac1, #0x3F
@@ -1805,7 +1805,7 @@ Called from IPL, CardUnlock
 86CF 1C 65          mrr     ar3, ix1
 86D0 02 9D 86 D4    jok     $0x86D4
 86D2 02 BF 86 E5    call    $0x86E5
-86D4 00 88 FF FF    lri     r08, #0xFFFF
+86D4 00 88 FF FF    lri     lm0, #0xFFFF
 86D6 16 C9 00 01    si      $(DSCR), #0x0001
 86D8 00 DE 04 06    lr      ac0.m, $0x0406
 86DA 2E CE          srs     $(DSMAH), ac0.m
@@ -1854,7 +1854,7 @@ Called from IPL, CardUnlock
 8705 04 28          addis   ac0.m, 40
 8706 6C 1E          mov     ac0, ac1            mv      ax1.h, ac0.m
 8707 14 08          lsl     ac0, #0x08
-8708 1C 68          mrr     ar3, r08
+8708 1C 68          mrr     ar3, lm0
 8709 34 86          andr    ac0.m, ax0.h        sln     ac0.m, ax0.l
 870A 37 86          andr    ac1.m, ax1.h        sln     ac0.m, ax0.l
 870B 4C 52          add     ac0, ac1            l       ax1.l, @ar2

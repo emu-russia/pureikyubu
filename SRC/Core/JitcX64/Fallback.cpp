@@ -13,7 +13,7 @@ namespace Gekko
 		//7:  12 00 00
 		//17: ff d0                   call   rax
 
-		uint64_t fnPtr = (uint64_t)GekkoCore::ExecuteInterpeterFallback;
+		uint64_t fnPtr = (uint64_t)Jitc::ExecuteInterpeterFallback;
 
 		seg->Write16(0xb848);
 		seg->Write64(fnPtr);

@@ -26,7 +26,7 @@ Used in the interpreter to easily get the Overflow and Carry flags. They are obt
 GekkoCore supports MMU emulation, while it is still an experimental feature that requires debugging. Subsequently, as the MMU will work more or less correctly, 
 the TLB functionality will gradually turn on.
 
-TLB is the history of MMU translations, to speed up address translation. TLB is implemented as `std :: unordered_map`.
+TLB is the history of MMU translations, to speed up address translation. TLB is implemented as `std::unordered_map`.
 
 ## Cache Support
 
@@ -82,7 +82,9 @@ From time to time, an emulated program loads new software modules (overlays). In
 
 Gekko has a handy mechanism for tracking this. The `icbi` instruction is used to discard the old recompiled code.
 
-The recompiler is also invalidated after setting or removing breakpoints.
+The recompiler is also invalidated after setting or removing breakpoints and several other cases.
+
+The current executable segment is not invalidated, as this will lead to an exception.
 
 ### Running Recompiled Code
 

@@ -13,11 +13,11 @@ namespace Gekko
         {
             core->TestBreakpoints();
 
-            //core->interp->ExecuteOpcode();
+            core->interp->ExecuteOpcode();
 
             // For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
 
-            core->jitc->Execute();
+            //core->jitc->Execute();
         }
     }
 
@@ -99,7 +99,8 @@ namespace Gekko
         jitc->Reset();
         segmentsExecuted = 0;
 
-        tlb.InvalidateAll();
+        dtlb.InvalidateAll();
+        itlb.InvalidateAll();
         cache.Reset();
     }
 
@@ -118,12 +119,6 @@ namespace Gekko
                 DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
             }
         }
-    }
-
-    void GekkoCore::TickForJitc()
-    {
-        Gekko::Gekko->Tick();
-        Gekko::Gekko->ops++;
     }
 
     int64_t GekkoCore::GetTicks()
@@ -268,145 +263,10 @@ namespace Gekko
         interp->ExecuteOpcodeDirect(pc, instr);
     }
 
-    bool __fastcall GekkoCore::ExecuteInterpeterFallback()
+    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
     {
-        return Gekko->interp->ExecuteInterpeterFallback();
-    }
-
-    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type)
-    {
-        //return EffectiveToPhysicalNoMmu(ea, type);
-        return EffectiveToPhysicalMmu(ea, type);
-    }
-
-    void GekkoCore::AddBreakpoint(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        breakPointsExecute.push_back(addr);
-        jitc->Invalidate(addr, 4);
-        breakPointsLock.Unlock();
-        EnableTestBreakpoints = true;
-    }
-
-    void GekkoCore::AddReadBreak(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        breakPointsRead.push_back(addr);
-        breakPointsLock.Unlock();
-        EnableTestReadBreakpoints = true;
-    }
-
-    void GekkoCore::AddWriteBreak(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        breakPointsWrite.push_back(addr);
-        breakPointsLock.Unlock();
-        EnableTestWriteBreakpoints = true;
-    }
-
-    void GekkoCore::ClearBreakpoints()
-    {
-        breakPointsLock.Lock();
-        breakPointsExecute.clear();
-        breakPointsRead.clear();
-        breakPointsWrite.clear();
-        breakPointsLock.Unlock();
-        EnableTestBreakpoints = false;
-        EnableTestReadBreakpoints = false;
-        EnableTestWriteBreakpoints = false;
-    }
-
-    bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
-    {
-        if (!EnableTestBreakpoints)
-            return false;
-
-        bool exists = false;
-
-        breakPointsLock.Lock();
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == addr)
-            {
-                exists = true;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
-
-        return exists;
-    }
-
-    void GekkoCore::TestBreakpoints()
-    {
-        if (!EnableTestBreakpoints)
-            return;
-
-        uint32_t addr = BadAddress;
-
-        breakPointsLock.Lock();
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == regs.pc)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
-
-        if (addr != BadAddress)
-        {
-            DBHalt("Gekko suspended at addr: 0x%08X\n", addr);
-        }
-    }
-
-    void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
-    {
-        if (!EnableTestReadBreakpoints)
-            return;
-
-        uint32_t addr = BadAddress;
-
-        breakPointsLock.Lock();
-        for (auto it = breakPointsRead.begin(); it != breakPointsRead.end(); ++it)
-        {
-            if (*it == accessAddress)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
-
-        if (addr != BadAddress)
-        {
-            DBHalt("Gekko suspended trying to read: 0x%08X\n", addr);
-        }
-    }
-
-    void GekkoCore::TestWriteBreakpoints(uint32_t accessAddress)
-    {
-        if (!EnableTestWriteBreakpoints)
-            return;
-
-        uint32_t addr = BadAddress;
-
-        breakPointsLock.Lock();
-        for (auto it = breakPointsWrite.begin(); it != breakPointsWrite.end(); ++it)
-        {
-            if (*it == accessAddress)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
-
-        if (addr != BadAddress)
-        {
-            DBHalt("Gekko suspended trying to write: 0x%08X\n", addr);
-        }
+        //return EffectiveToPhysicalNoMmu(ea, type, WIMG);
+        return EffectiveToPhysicalMmu(ea, type, WIMG);
     }
 
 }

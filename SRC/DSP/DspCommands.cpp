@@ -96,7 +96,7 @@ namespace DSP
         {
             regsChanged.ar[i] = ~regsChanged.ar[i];
             regsChanged.ix[i] = ~regsChanged.ix[i];
-            regsChanged.gpr[i] = ~regsChanged.gpr[i];
+            regsChanged.lm[i] = ~regsChanged.lm[i];
         }
 
         for (int i = 0; i < 2; i++)
