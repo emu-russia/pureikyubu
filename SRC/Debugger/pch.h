@@ -25,7 +25,8 @@
 #include "../UI/UserFile.h"
 
 #include "Debugger.h"
-
+#include "Cui.h"
 #include "console.h"
 #include "SamplingProfiler.h"
 #include "DebugCommands.h"
+#include "DspDebugger.h"

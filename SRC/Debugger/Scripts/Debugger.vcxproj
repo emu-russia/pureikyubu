@@ -22,8 +22,10 @@
     <ClCompile Include="..\cmd.cpp" />
     <ClCompile Include="..\console.cpp" />
     <ClCompile Include="..\cpuview.cpp" />
+    <ClCompile Include="..\Cui.cpp" />
     <ClCompile Include="..\DebugCommands.cpp" />
     <ClCompile Include="..\Debugger.cpp" />
+    <ClCompile Include="..\DspDebugger.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\memview.cpp" />
     <ClCompile Include="..\output.cpp" />
@@ -40,8 +42,10 @@
     <ClInclude Include="..\cmd.h" />
     <ClInclude Include="..\console.h" />
     <ClInclude Include="..\cpuview.h" />
+    <ClInclude Include="..\Cui.h" />
     <ClInclude Include="..\DebugCommands.h" />
     <ClInclude Include="..\Debugger.h" />
+    <ClInclude Include="..\DspDebugger.h" />
     <ClInclude Include="..\input.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />

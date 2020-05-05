@@ -24,7 +24,7 @@ namespace Debug
 
         file = args[1].c_str();
 
-        DBReport("Loading script: %s\n", file);
+        DBReport("Loading script: %s\n", file); 
 
         size_t size = 0;
         char* sbuf = (char*)UI::FileLoad(file, &size);
