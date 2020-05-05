@@ -46,10 +46,10 @@ All interrupt handlers except #0 are stubs.
 0016 8C 00       	clr15	                	     	
 0017 8B 00       	m0   	                	     	
 0018 00 9E FF FF 	lri  	ac0.m, #0xFFFF
-001A 1D 1E       	mrr  	r08, ac0.m
-001B 1D 3E       	mrr  	r09, ac0.m
-001C 1D 5E       	mrr  	r0a, ac0.m
-001D 1D 7E       	mrr  	r0b, ac0.m
+001A 1D 1E       	mrr  	lm0, ac0.m
+001B 1D 3E       	mrr  	lm1, ac0.m
+001C 1D 5E       	mrr  	lm2, ac0.m
+001D 1D 7E       	mrr  	lm3, ac0.m
 001E 00 92 00 FF 	lri  	bank, #0x00FF
 0020 81 00       	clr  	ac0             	     	
 0021 00 9F 10 00 	lri  	ac1.m, #0x1000
@@ -77,7 +77,7 @@ Start()			// 0010
 	clr15();
 	m0();
 
-	r8 = r9 = r10 = r11 = 0xFFFF;
+	lm0 = lm1 = lm2 = lm3 = 0xFFFF;
 	bank = 0xFF; 		// BankReg at 0xFF00 (IFX)
 
 	// Clear DRAM (8 KBytes)
@@ -547,7 +547,7 @@ Wait until Dsp Dma completed.
 	01B9 1C 1F       	mrr  	ar0, ac1.m
 01BA 02 9F 01 9F 	j    	$0x019F
 01BC 8A 00       	m2   	                	     	
-01BD 00 88 00 07 	lri  	r08, #0x0007
+01BD 00 88 00 07 	lri  	lm0, #0x0007
 01BF 11 50 01 CC 	bloopi	#0x50, $0x01CC
 	01C1 1C 61       	mrr  	ar3, ar1
 	01C2 84 C3       	clrp 	                	ldax 	ax0, @ar0
@@ -561,13 +561,13 @@ Wait until Dsp Dma completed.
 	01CA F2 00       	madd 	ax0.l, ax0.h    	     	
 	01CB FE 00       	movpz	ac0             	     	
 	01CC 1B 3E       	srri 	@ar1, ac0.m
-01CD 00 88 FF FF 	lri  	r08, #0xFFFF
+01CD 00 88 FF FF 	lri  	lm0, #0xFFFF
 01CF 8B 00       	m0   	                	     	
 01D0 02 DF       	ret  	
 
 
 
-01D1 00 88 00 03 	lri  	r08, #0x0003
+01D1 00 88 00 03 	lri  	lm0, #0x0003
 01D3 00 85 00 00 	lri  	ix1, #0x0000
 01D5 00 87 00 00 	lri  	ix3, #0x0000
 01D7 1F C2       	mrr  	ac0.m, ar2
@@ -606,7 +606,7 @@ Wait until Dsp Dma completed.
 01F9 19 7F       	lrri 	ac1.m, @ar3
 01FA 8E 00       	clr40	                	     	
 01FB 8B 00       	m0   	                	     	
-01FC 00 88 FF FF 	lri  	r08, #0xFFFF
+01FC 00 88 FF FF 	lri  	lm0, #0xFFFF
 01FE 1B 5B       	srri 	@ar2, ax1.h
 01FF 1B 59       	srri 	@ar2, ax0.h
 0200 1B 5F       	srri 	@ar2, ac1.m
