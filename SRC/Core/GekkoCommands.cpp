@@ -356,6 +356,13 @@ namespace Gekko
 		return nullptr;
 	}
 
+	static Json::Value* CacheDebugDisable(std::vector<std::string>& args)
+	{
+		bool disable = atoi(args[1].c_str()) ? true : false;
+		Gekko->cache.DebugDisable(disable);
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		Debug::Hub.AddCmd("run", cmd_run);
@@ -366,5 +373,6 @@ namespace Gekko
 		Debug::Hub.AddCmd("bw", cmd_bw);
 		Debug::Hub.AddCmd("bc", cmd_bc);
 		Debug::Hub.AddCmd("CacheLog", CacheLog);
+		Debug::Hub.AddCmd("CacheDebugDisable", CacheDebugDisable);
 	}
 }

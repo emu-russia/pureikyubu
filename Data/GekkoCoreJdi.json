@@ -71,6 +71,15 @@
         "1: Show commands (cache control instructions activity)",
         "2: Show all operations (load/store, cast-in/cast-out, etc.)"
       ]
+    },
+
+    "CacheDebugDisable": {
+      "help": "Disable cache emulation despite Gekko register settings",
+      "args": 1,
+      "usage": [
+        "Syntax: CacheDebugDisable <0|1>"
+      ]
     }
+
   }
 }

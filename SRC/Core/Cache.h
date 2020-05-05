@@ -81,5 +81,17 @@ namespace Gekko
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 
 		void SetLogLevel(CacheLogLevel level) { log = level; }
+		void DebugDisable(bool disable)
+		{
+			if (disable)
+			{
+				DBReport2(DbgChannel::CPU, "Cache disabled for debug purposes");
+			}
+			else
+			{
+				DBReport2(DbgChannel::CPU, "Cache works normally");
+			}
+			DisableForDebugReasons = disable;
+		}
 	};
 }
