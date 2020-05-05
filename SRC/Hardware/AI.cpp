@@ -60,8 +60,8 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
         PIClearInt(PI_INTERRUPT_DSP);
     }
 
-    // DSP DMA always ready
-    AIDCR &= ~AIDCR_DSPDMA;
+    // ARAM/DSP DMA always ready
+    AIDCR &= ~(AIDCR_ARDMA | AIDCR_DSPDMA);
 
     // DSP controls
     Flipper::HW->DSP->DSPSetResetBit((AIDCR >> 0) & 1);

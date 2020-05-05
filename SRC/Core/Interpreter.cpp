@@ -12,7 +12,7 @@ namespace Gekko
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
         //pa = core->EffectiveToPhysical(Gekko->regs.pc, MmuAccess::Execute);
-        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute, WIMG);
+        pa = core->EffectiveToPhysical(Gekko->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
             Gekko->Exception(Exception::ISI);
@@ -56,7 +56,7 @@ namespace Gekko
         // execute one instruction
         // (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
         //pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute);
-        pa = core->EffectiveToPhysicalNoMmu(Gekko->regs.pc, MmuAccess::Execute, WIMG);
+        pa = core->EffectiveToPhysical(Gekko->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
             Gekko->Exception(Exception::ISI);

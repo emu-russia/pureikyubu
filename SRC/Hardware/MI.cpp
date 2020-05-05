@@ -92,7 +92,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
     // embedded frame buffer
     if (pa >= EFB_BASE)
     {
-        EFBPoke16(pa & EFB_MASK, data);
+        EFBPoke8(pa & EFB_MASK, data);
         return;
     }
 

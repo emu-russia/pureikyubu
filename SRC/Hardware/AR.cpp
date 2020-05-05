@@ -72,7 +72,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         // blast data
         if (type == RAM_TO_ARAM)
         {
-            if (aaddr < DSP::DspCore::IRAM_SIZE)
+            if (aaddr < DSP::DspCore::IRAM_SIZE && (AIDCR & AIDCR_RESETMOD))
             {
                 // Transfer size multiplied by 4
                 size *= 4;

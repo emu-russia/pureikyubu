@@ -15,10 +15,10 @@
 #define AIS_SCNT            0x0C006C08      // AIS sample counter
 #define AIS_IT              0x0C006C0C      // AIS interrupt timing
 
-// AI/DSP Control Register mask (bits 10 and 11 are unknown)
-#define AIDCR_UNKNOWN_11    (1 << 11)       // Clear bit11   			  ---\      Used in OSInitAudioSystem
-#define AIDCR_UNKNOWN_10    (1 << 10)       // Wait until bit10 not clear <--/
-#define AIDCR_DSPDMA        (1 << 9)        // DSP dma in progress
+// AI/DSP Control Register mask
+#define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
+#define AIDCR_DSPDMA        (1 << 10)       // DSP DSP dma in progress
+#define AIDCR_ARDMA         (1 << 9)        // ARAM DSP dma in progress
 #define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
 #define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
 #define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
