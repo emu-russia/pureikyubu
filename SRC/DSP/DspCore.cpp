@@ -474,30 +474,6 @@ namespace DSP
 		return 0;
 	}
 
-	int64_t DspCore::PackProd()
-	{
-		int64_t hi = (int64_t)regs.prod.h << 32;
-		int64_t mid = ((int64_t)regs.prod.m1 + (int64_t)regs.prod.m2) << 16;
-		int64_t low = regs.prod.l;
-		int64_t res = hi + mid + low;
-		// Sign extend 40
-		if (res & 0x8000000000)
-		{
-			res |= 0xffffff0000000000;
-		}
-		return res;
-	}
-
-	void DspCore::UnpackProd(int64_t val)
-	{
-		DspLongAccumulator acc;
-		acc.sbits = val;
-		regs.prod.h = acc.h;
-		regs.prod.m2 = 0;
-		regs.prod.m1 = acc.m;
-		regs.prod.l = acc.l;
-	}
-
 	#pragma endregion "Register access"
 
 
@@ -1013,6 +989,24 @@ namespace DSP
 
 	#pragma region "Multiplier"
 
+	void DspCore::PackProd(DspProduct& prod)
+	{
+		int64_t hi = (int64_t)prod.h << 32;
+		int64_t mid = ((int64_t)prod.m1 + (int64_t)prod.m2) << 16;
+		int64_t low = prod.l;
+		int64_t res = hi + mid + low;
+		res &= 0xff'ffff'ffff;
+		prod.bitsPacked = res;
+	}
+
+	void DspCore::UnpackProd(DspProduct& prod)
+	{
+		prod.h = (prod.bitsPacked >> 32) & 0xff;
+		prod.m1 = (prod.bitsPacked >> 16) & 0xffff;
+		prod.m2 = 0;
+		prod.l = prod.bitsPacked & 0xffff;
+	}
+
 	DspProduct DspCore::Muls(uint16_t a, uint16_t b)
 	{
 		DspProduct prod;
@@ -1020,16 +1014,32 @@ namespace DSP
 		prod.h = 0;
 		prod.m1 = 0;
 		prod.m2 = 0;
+
+		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
+
 		return prod;
 	}
 
 	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
 	{
 		DspProduct prod;
-		prod.l = 0;
+
+		DBReport("MUL Unsigned 0x%04X * 0x%04X\n", a, b);
+
+		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
+
+		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
+		uint32_t c1 = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff);
+		uint32_t c2 = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff00);
+		uint32_t l = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff);
+
+		uint32_t m = c1 + c2 + l;
+
 		prod.h = 0;
-		prod.m1 = 0;
-		prod.m2 = 0;
+		prod.m1 = u >> 16;
+		prod.m2 = m >> 16;
+		prod.l = m & 0xffff;
+
 		return prod;
 	}
 

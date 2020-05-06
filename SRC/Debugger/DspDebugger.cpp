@@ -124,11 +124,13 @@ namespace Debug
 			(uint8_t)Flipper::HW->DSP->regs.ac[1].h,
 			Flipper::HW->DSP->regs.ac[1].m,
 			Flipper::HW->DSP->regs.ac[1].l);
-		
-		DSP::DspLongAccumulator prod;
-		prod.bits = Flipper::HW->DSP->PackProd();
+
+		DSP::DspProduct prod = Flipper::HW->DSP->regs.prod;
+		DSP::DspCore::PackProd(prod);
 		Print(CuiColor::Black, CuiColor::Normal, 48, 2, " p: %02X_%04X_%04X",
-			(uint8_t)prod.h, prod.m, prod.l);
+			(uint8_t)(prod.bitsPacked >> 32), 
+			(uint16_t)(prod.bitsPacked >> 16), 
+			(uint16_t)prod.bitsPacked);
 
 		// Status as individual bits
 

@@ -48,14 +48,14 @@ namespace DSP
 		int32_t		sbits;
 	} DspShortAccumulator;
 
-	typedef union _DspProduct
+	typedef struct _DspProduct
 	{
 		struct
 		{
 			uint16_t l;
 			uint16_t m1;
-			uint16_t m2;
 			uint16_t h;
+			uint16_t m2;
 		};
 		uint64_t bitsPacked;
 	} DspProduct;
@@ -357,8 +357,6 @@ namespace DSP
 
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
-		int64_t PackProd();
-		void UnpackProd(int64_t val);
 
 		// Memory engine
 
@@ -390,6 +388,8 @@ namespace DSP
 
 		// Multiplier
 		
+		static void PackProd(DspProduct &prod);
+		static void UnpackProd(DspProduct& prod);
 		static DspProduct Muls(uint16_t a, uint16_t b);
 		static DspProduct Mulu(uint16_t a, uint16_t b);
 
