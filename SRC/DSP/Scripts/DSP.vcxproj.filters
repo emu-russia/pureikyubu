@@ -55,7 +55,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\DspJdi.json" />
     <None Include="..\Readme.md" />
+    <None Include="..\..\..\Data\Json\DspJdi.json" />
   </ItemGroup>
 </Project>

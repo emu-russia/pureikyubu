@@ -35,8 +35,6 @@ namespace Debug
 	{
 		friend Cui;
 
-		bool invalidated = true;
-		bool active = false;
 		std::string wndName;
 
 		// This is where the contents of the window are stored. The region data is displayed by the wndRect coordinates.
@@ -45,10 +43,13 @@ namespace Debug
 		// Window layout in CUI.
 		RECT wndRect;
 
-		size_t width;
-		size_t height;
-
 		void PutChar(CuiColor back, CuiColor front, int x, int y, char c);
+
+	protected:
+		size_t width = 0;
+		size_t height = 0;
+		bool invalidated = true;
+		bool active = false;
 
 	public:
 		CuiWindow(RECT& rect, std::string name);
@@ -66,7 +67,9 @@ namespace Debug
 		void SetFocus(bool flag) { active = flag; }
 
 		void Print(CuiColor back, CuiColor front, int x, int y, std::string text);
+		void Print(CuiColor back, CuiColor front, int x, int y, const char *fmt, ...);
 		void Fill(CuiColor back, CuiColor front, char c);
+		void FillLine(CuiColor back, CuiColor front, int y, char c);
 	};
 
 	class Cui
@@ -99,5 +102,7 @@ namespace Debug
 
 		void ShowCursor(bool show);
 		void SetCursor(COORD& pos);
+
+		void InvalidateAll();
 	};
 }

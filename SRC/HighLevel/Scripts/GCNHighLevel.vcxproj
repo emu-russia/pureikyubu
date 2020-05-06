@@ -58,7 +58,7 @@
     <ClInclude Include="..\TimeFormat.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\HLEJdi.json" />
+    <None Include="..\..\..\Data\Json\HLEJdi.json" />
     <None Include="..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

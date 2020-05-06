@@ -108,7 +108,7 @@ namespace DSP
 			regs.ax[i].bits = 0;
 		}
 
-		regs.prod.bitsUnpacked = 0;
+		regs.prod.bitsPacked = 0;
 		regs.bank = 0xFF;
 		regs.sr.bits = 0;
 
@@ -251,7 +251,7 @@ namespace DSP
 			DBReport("pc: 0x%04X\n", regs.pc);
 		}
 
-		if (regs.prod.bitsUnpacked != prevState->prod.bitsUnpacked)
+		if (regs.prod.bitsPacked != prevState->prod.bitsPacked)
 		{
 			DBReport("prod: 0x%04X_%04X_%04X_%04X\n", 
 				regs.prod.h, regs.prod.m2, regs.prod.m1, regs.prod.l );
@@ -488,7 +488,7 @@ namespace DSP
 		return res;
 	}
 
-	void DspCore::PackProd(int64_t val)
+	void DspCore::UnpackProd(int64_t val)
 	{
 		DspLongAccumulator acc;
 		acc.sbits = val;
@@ -505,11 +505,11 @@ namespace DSP
 
 	uint8_t* DspCore::TranslateIMem(DspAddress addr)
 	{
-		if (addr < IRAM_SIZE)
+		if (addr < (IRAM_SIZE / 2))
 		{
 			return &iram[addr << 1];
 		}
-		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + IROM_SIZE))
+		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + (IROM_SIZE / 2)))
 		{
 			return &irom[(addr - IROM_START_ADDRESS) << 1];
 		}
@@ -521,11 +521,11 @@ namespace DSP
 
 	uint8_t* DspCore::TranslateDMem(DspAddress addr)
 	{
-		if (addr < DRAM_SIZE)
+		if (addr < (DRAM_SIZE / 2))
 		{
 			return &dram[addr << 1];
 		}
-		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + DROM_SIZE))
+		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + (DROM_SIZE / 2)))
 		{
 			return &drom[(addr - DROM_START_ADDRESS) << 1];
 		}
@@ -778,7 +778,7 @@ namespace DSP
 			return;
 		}
 
-		if (addr < DRAM_SIZE)
+		if (addr < (DRAM_SIZE / 2))
 		{
 			uint8_t* ptr = TranslateDMem(addr);
 
@@ -1010,6 +1010,30 @@ namespace DSP
 	}
 
 	#pragma endregion "IFX"
+
+	#pragma region "Multiplier"
+
+	DspProduct DspCore::Muls(uint16_t a, uint16_t b)
+	{
+		DspProduct prod;
+		prod.l = 0;
+		prod.h = 0;
+		prod.m1 = 0;
+		prod.m2 = 0;
+		return prod;
+	}
+
+	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
+	{
+		DspProduct prod;
+		prod.l = 0;
+		prod.h = 0;
+		prod.m1 = 0;
+		prod.m2 = 0;
+		return prod;
+	}
+
+	#pragma endregion "Multiplier"
 
 	void DspCore::InitSubsystem()
 	{

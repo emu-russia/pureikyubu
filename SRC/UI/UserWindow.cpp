@@ -406,6 +406,11 @@ static void OnMainWindowDestroy()
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 
+    if (dspDebug)
+    {
+        delete dspDebug;
+    }
+
     std::vector<std::string> cmd { "exit" };
     Debug::Hub.Execute(cmd);
 }

@@ -88,7 +88,7 @@ namespace DSP
         DSP::DspRegs regsChanged = Flipper::HW->DSP->regs;
 
         regsChanged.pc = ~regsChanged.pc;
-        regsChanged.prod.bitsUnpacked = ~regsChanged.prod.bitsUnpacked;
+        regsChanged.prod.bitsPacked = ~regsChanged.prod.bitsPacked;
         regsChanged.bank = ~regsChanged.bank;
         regsChanged.sr.bits = ~regsChanged.sr.bits;
 
@@ -468,7 +468,7 @@ namespace DSP
         static const char* dspRegNames[] = {
 		    "ar0", "ar1", "ar2", "ar3",
             "ix0", "ix1", "ix2", "ix3",
-            "r8", "r9", "r10", "r11",
+            "lm0", "lm1", "lm2", "lm3",
             "st0", "st1", "st2", "st3",
             "ac0h", "ac1h",
             "config", "sr",
@@ -500,6 +500,44 @@ namespace DSP
         return nullptr;
     }
 
+    // Multiplier tests
+
+    static Json::Value* dsp_muls(std::vector<std::string>& args)
+    {
+        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
+        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
+
+        DspProduct prod = DspCore::Muls(a, b);
+
+        DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
+            prod.h, prod.m1, prod.l, prod.m2);
+
+        DspLongAccumulator acc;
+        acc.bits = prod.bitsPacked;
+
+        DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
+        
+        return nullptr;
+    }
+
+    static Json::Value* dsp_mulu(std::vector<std::string>& args)
+    {
+        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
+        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
+
+        DspProduct prod = DspCore::Mulu(a, b);
+
+        DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
+            prod.h, prod.m1, prod.l, prod.m2);
+
+        DspLongAccumulator acc;
+        acc.bits = prod.bitsPacked;
+
+        DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
+
+        return nullptr;
+    }
+
     void dsp_init_handlers()
     {
         Debug::Hub.AddCmd("dspdisa", cmd_dspdisa);
@@ -524,6 +562,8 @@ namespace DSP
         Debug::Hub.AddCmd("dspmbox", cmd_dspmbox);
         Debug::Hub.AddCmd("cpudspint", cmd_cpudspint);
         Debug::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
+        Debug::Hub.AddCmd("dsp_muls", dsp_muls);
+        Debug::Hub.AddCmd("dsp_mulu", dsp_mulu);
     }
 
 }

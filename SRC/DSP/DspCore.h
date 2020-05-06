@@ -57,7 +57,7 @@ namespace DSP
 			uint16_t m2;
 			uint16_t h;
 		};
-		uint64_t bitsUnpacked;
+		uint64_t bitsPacked;
 	} DspProduct;
 
 	typedef union _DspStatus
@@ -358,7 +358,7 @@ namespace DSP
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
 		int64_t PackProd();
-		void PackProd(int64_t val);
+		void UnpackProd(int64_t val);
 
 		// Memory engine
 
@@ -387,6 +387,11 @@ namespace DSP
 		void DspToCpuWriteLo(uint16_t value);
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo(bool ReadByDsp);
+
+		// Multiplier
+		
+		static DspProduct Muls(uint16_t a, uint16_t b);
+		static DspProduct Mulu(uint16_t a, uint16_t b);
 
 		static void InitSubsystem();
 		static void ShutdownSubsystem();

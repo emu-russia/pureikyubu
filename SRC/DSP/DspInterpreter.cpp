@@ -763,7 +763,7 @@ namespace DSP
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS
 		// (treat them both as signed) and add result to product register. 
 		//Madd16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MADDC(AnalyzeInfo& info)
@@ -771,7 +771,7 @@ namespace DSP
 		// Multiply middle part of accumulator $acS.m by high part of secondary accumulator $axT.h
 		// (treat them both as signed) and add result to product register.
 		//Madd32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MADDX(AnalyzeInfo& info)
@@ -779,7 +779,7 @@ namespace DSP
 		//Multiply one part of secondary accumulator $ax0 (selected by S) by one part of secondary accumulator $ax1 (selected by T)
 		// (treat them both as signed) and add result to product register. 
 		//Madd16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MSUB(AnalyzeInfo& info)
@@ -787,7 +787,7 @@ namespace DSP
 		//Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS 
 		//(treat them both as signed) and subtract result from product register. 
 		//Msub16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MSUBC(AnalyzeInfo& info)
@@ -795,7 +795,7 @@ namespace DSP
 		//Multiply middle part of accumulator $acS.m by high part of secondary accumulator $axT.h
 		// (treat them both as signed) and subtract result from product register.
 		//Msub32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MSUBX(AnalyzeInfo& info)
@@ -803,14 +803,14 @@ namespace DSP
 		//Multiply one part of secondary accumulator $ax0 (selected by S) by one part of secondary accumulator $ax1 (selected by T) 
 		// (treat them both as signed) and subtract result from product register. 
 		//Msub16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MUL(AnalyzeInfo& info)
 	{
 		//Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS (treat them both as signed). 
 		//Mul16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULAC(AnalyzeInfo& info)
@@ -818,14 +818,14 @@ namespace DSP
 		// Add product register to accumulator register $acR.
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS(treat them both as signed).
 		//Mul16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULC(AnalyzeInfo& info)
 	{
 		//Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS (treat them both as signed).
 		//Mul32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULCAC(AnalyzeInfo& info)
@@ -833,7 +833,7 @@ namespace DSP
 		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS(treat them both as signed).
 		// Add product register before multiplication to accumulator $acR.
 		//Mul32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULCMV(AnalyzeInfo& info)
@@ -841,7 +841,7 @@ namespace DSP
 		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS(treat them both as signed).
 		// Move product register before multiplication to accumulator $acR.
 		//Mul32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULCMVZ(AnalyzeInfo& info)
@@ -849,7 +849,7 @@ namespace DSP
 		// Multiply mid part of accumulator register $acS.m by high part $axS.h of secondary accumulator $axS (treat them both as signed). 
 		// Move product register before multiplication to accumulator $acR. Set low part of accumulator $acR.l to zero. 
 		//Mul32x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULMV(AnalyzeInfo& info)
@@ -857,7 +857,7 @@ namespace DSP
 		// Move product register to accumulator register $acR. Multiply low part $axS.l of secondary accumulator Register$axS by high part $axS.h of secondary accumulator $axS
 		// (treat them both as signed). 
 		//Mul16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULMVZ(AnalyzeInfo& info)
@@ -865,14 +865,14 @@ namespace DSP
 		// Move product register to accumulator register $acRand clear low part of accumulator register $acR.l.
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS(treat them both as signed).
 		//Mul16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	void DspInterpreter::MULX(AnalyzeInfo& info)
 	{
 		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
 		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
-		core->PackProd(a * b);
+		core->UnpackProd(a * b);
 	}
 
 	void DspInterpreter::MULXAC(AnalyzeInfo& info)
@@ -880,7 +880,7 @@ namespace DSP
 		core->regs.ac[info.paramBits[2]].sbits += core->PackProd();
 		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
 		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
-		core->PackProd(a * b);
+		core->UnpackProd(a * b);
 	}
 
 	void DspInterpreter::MULXMV(AnalyzeInfo& info)
@@ -888,7 +888,7 @@ namespace DSP
 		core->regs.ac[info.paramBits[2]].sbits = core->PackProd();
 		int64_t a = SignExtend16(info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l);
 		int64_t b = SignExtend16(info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l);
-		core->PackProd(a * b);
+		core->UnpackProd(a * b);
 	}
 
 	void DspInterpreter::MULXMVZ(AnalyzeInfo& info)
@@ -897,7 +897,7 @@ namespace DSP
 		//Multiply one part $ax0 by one part $ax1 (treat them both as signed).
 		//Part is selected by S and T bits. Zero selects low part, one selects high part.
 		//Mul16x16
-		core->PackProd(0);
+		core->UnpackProd(0);
 	}
 
 	#pragma region "Multiplier Instructions"

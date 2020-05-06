@@ -173,7 +173,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />
-    <None Include="..\..\..\Data\GekkoCoreJdi.json" />
+    <None Include="..\..\..\Data\Json\GekkoCoreJdi.json" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="..\Interpreter\AsmX64.asm">

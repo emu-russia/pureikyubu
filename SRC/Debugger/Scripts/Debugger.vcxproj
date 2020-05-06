@@ -54,7 +54,7 @@
     <ClInclude Include="..\SamplingProfiler.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\DebuggerJdi.json" />
+    <None Include="..\..\..\Data\Json\DebuggerJdi.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

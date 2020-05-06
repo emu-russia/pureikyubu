@@ -168,6 +168,15 @@ namespace Debug
 		WriteConsoleOutput(StdOutput, wnd->backBuf, sz, pos, &rgn);
 	}
 
+	void Cui::InvalidateAll()
+	{
+		for (auto it = windows.begin(); it != windows.end(); ++it)
+		{
+			CuiWindow* wnd = *it;
+			wnd->Invalidate();
+		}
+	}
+
 #pragma endregion "Cui"
 
 
@@ -178,8 +187,8 @@ namespace Debug
 		wndRect = rect;
 		wndName = name;
 
-		width = (size_t)rect.right - (size_t)rect.left;
-		height = (size_t)rect.bottom - (size_t)rect.top;
+		width = (size_t)rect.right - (size_t)rect.left + 1;
+		height = (size_t)rect.bottom - (size_t)rect.top + 1;
 
 		backBuf = new CHAR_INFO[width * height];
 		assert(backBuf);
@@ -209,8 +218,21 @@ namespace Debug
 	{
 		for (auto it = text.begin(); it != text.end(); ++it)
 		{
-			PutChar(back, front, x++, y, *it);
+			PutChar(back, front, x++, y, *it >= ' ' ? *it : ' ' );
 		}
+	}
+
+	void CuiWindow::Print(CuiColor back, CuiColor front, int x, int y, const char* fmt, ...)
+	{
+		char    buf[0x1000];
+		va_list arg;
+
+		va_start(arg, fmt);
+		vsprintf_s(buf, sizeof(buf) - 1, fmt, arg);
+		va_end(arg);
+
+		std::string text = buf;
+		Print(back, front, x, y, text);
 	}
 
 	void CuiWindow::Fill(CuiColor back, CuiColor front, char c)
@@ -221,6 +243,14 @@ namespace Debug
 			{
 				PutChar(back, front, x, y, c);
 			}
+		}
+	}
+
+	void CuiWindow::FillLine(CuiColor back, CuiColor front, int y, char c)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			PutChar(back, front, x, y, c);
 		}
 	}
 
