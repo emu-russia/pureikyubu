@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include <list>
 #include <map>
 #include <string>
 #include <atomic>
@@ -48,16 +49,16 @@ namespace DSP
 		int32_t		sbits;
 	} DspShortAccumulator;
 
-	typedef union _DspProduct
+	typedef struct _DspProduct
 	{
 		struct
 		{
 			uint16_t l;
 			uint16_t m1;
-			uint16_t m2;
 			uint16_t h;
+			uint16_t m2;
 		};
-		uint64_t bitsUnpacked;
+		uint64_t bitsPacked;
 	} DspProduct;
 
 	typedef union _DspStatus
@@ -130,7 +131,6 @@ namespace DSP
 
 	typedef struct _DspRegs
 	{
-		uint32_t clearingPaddy;		// To use {0} on structure
 		uint16_t ar[4];		// Addressing registers
 		uint16_t ix[4];		// Indexing registers
 		uint16_t lm[4];	// Limit registers
@@ -225,8 +225,9 @@ namespace DSP
 
 	class DspCore
 	{
-		std::vector<DspAddress> breakpoints;		// IMEM breakpoints
+		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
+		DspAddress oneShotBreakpoint = 0xffff;
 
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
@@ -331,6 +332,7 @@ namespace DSP
 
 		void Exception(DspException id);
 		void ReturnFromException();
+		void SoftReset();
 		void HardReset();
 
 		void Run();
@@ -342,9 +344,12 @@ namespace DSP
 		// Debug methods
 
 		void AddBreakpoint(DspAddress imemAddress);
+		void RemoveBreakpoint(DspAddress imemAddress);
 		void ListBreakpoints();
 		void ClearBreakpoints();
 		bool TestBreakpoint(DspAddress imemAddress);
+		void ToggleBreakpoint(DspAddress imemAddress);
+		void AddOneShotBreakpoint(DspAddress imemAddress);
 		void AddCanary(DspAddress imemAddress, std::string text);
 		void ListCanaries();
 		void ClearCanaries();
@@ -357,8 +362,6 @@ namespace DSP
 
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
-		int64_t PackProd();
-		void PackProd(int64_t val);
 
 		// Memory engine
 
@@ -387,6 +390,13 @@ namespace DSP
 		void DspToCpuWriteLo(uint16_t value);
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo(bool ReadByDsp);
+
+		// Multiplier
+		
+		static void PackProd(DspProduct &prod);
+		static void UnpackProd(DspProduct& prod);
+		static DspProduct Muls(uint16_t a, uint16_t b);
+		static DspProduct Mulu(uint16_t a, uint16_t b);
 
 		static void InitSubsystem();
 		static void ShutdownSubsystem();

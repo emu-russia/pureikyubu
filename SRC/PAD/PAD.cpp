@@ -2,12 +2,15 @@
 #include "pch.h"
 
 PAD pad;
+HWND savedHwnd;
 
 // ---------------------------------------------------------------------------
 // called when emulation started/stopped (pad controls)
 
-bool PADOpen()
+bool PADOpen(HWND hwnd)
 {
+    savedHwnd = hwnd;
+
     pad.padToConfigure = 0;
     PADLoadConfig(NULL);
 

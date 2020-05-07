@@ -29,8 +29,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\EmuJdi.json" />
     <None Include="..\Readme.md" />
+    <None Include="..\..\..\Data\Json\EmuJdi.json" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\EmuCommands.cpp">

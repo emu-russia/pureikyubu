@@ -5,14 +5,11 @@
 		"helpGroup": "DSP Debug Commands"
 	},
 
-	"can":
-	{
-		"dspdisa":
-		{
+	"can": {
+		"dspdisa": {
 			"help": "Disassemble DSP code into text file",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
 				"disassemble dsp ucode from binary file and dump it into dspdisa.txt\n",
 				"start_addr in DSP slots;\n",
@@ -20,34 +17,29 @@
 			]
 		},
 
-		"dregs":
-		{
+		"dregs": {
 			"help": "Show DSP registers",
 			"output": "Array [] of all DSP registers contents"
 		},
 
-		"dreg":
-		{
+		"dreg": {
 			"help": "Modify DSP register",
 			"hints": "<reg> <value>",
 			"args": 2,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dreg <register> <value>\n",
 				"Register names: ar0 ar1 ar2 ar3 ix0 ix1 ix2 ix3",
 				"r8 r9 r10 r11 st0 st1 st2 st3",
 				"ac0h ac1h config sr prodl prodm1 prodh prodm2",
 				"ax0l ax0h ax1l ax1h ac0l ac1l ac0m ac1m",
-				"Example of use: dreg ar0 0x300\n",
+				"Example of use: dreg ar0 0x300\n"
 			]
 		},
 
-		"dmem":
-		{
+		"dmem": {
 			"help": "Dump DSP DMEM",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dmem <dsp_addr>, dmem .\n",
 				"Dump 32 bytes of DMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"dmem . will dump 0x800 bytes at dmem address 0\n",
@@ -56,12 +48,10 @@
 			"output": "Array [] of memory data"
 		},
 
-		"imem":
-		{
+		"imem": {
 			"help": "Dump DSP IMEM",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: imem <dsp_addr>, imem .\n",
 				"Dump 32 bytes of IMEM at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"imem . will dump 32 bytes of imem at program counter address.\n",
@@ -70,40 +60,33 @@
 			"output": "Array [] of memory data"
 		},
 
-		"drun":
-		{
+		"drun": {
 			"help": "Run DSP thread until break, halt or dstop"
 		},
 
-		"dstop":
-		{
+		"dstop": {
 			"help": "Stop DSP thread"
 		},
 
-		"dstep":
-		{
+		"dstep": {
 			"help": "Step DSP instruction(s)",
 			"hints": "[n]"
 		},
 
-		"dbrk":
-		{
+		"dbrk": {
 			"help": "Add IMEM breakpoint",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dbrk <dsp_addr>\n",
 				"Add breakpoint at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"Example of use: dbrk 0x8020\n"
 			]
 		},
 
-		"dcan":
-		{
+		"dcan": {
 			"help": "Add IMEM canary",
 			"args": 2,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dcan <dsp_addr> <message>\n",
 				"Add canary at dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"When the PC is equal to the canary address, a debug message is displayed\n",
@@ -111,78 +94,82 @@
 			]
 		},
 
-		"dlist":
-		{
+		"dlist": {
 			"help": "List IMEM breakpoints / canaries"
 		},
 
-		"dbrkclr":
-		{
+		"dbrkclr": {
 			"help": "Clear all IMEM breakpoints"
 		},
 
-		"dcanclr":
-		{
+		"dcanclr": {
 			"help": "Clear all IMEM canaries"
 		},
 
-		"dpc":
-		{
+		"dpc": {
 			"help": "Set DSP program counter",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: dpc <dsp_addr>\n",
 				"Set DSP program counter to dsp_addr. dsp_addr in halfword DSP slots.\n",
 				"Example of use: dpc 0x8000\n"
 			]
 		},
 
-		"dreset":
-		{
+		"dreset": {
 			"help": "Issue DSP reset"
 		},
 
-		"du":
-		{
+		"du": {
 			"help": "Disassemble some DSP instructions at pc / address",
 			"hints": "[addr] [count]"
 		},
 
-		"dst":
-		{
+		"dst": {
 			"help": "Dump DSP call stack"
 		},
 
-		"difx":
-		{
+		"difx": {
 			"help": "Dump DSP IFX"
 		},
 
-		"cpumbox":
-		{
+		"cpumbox": {
 			"help": "Write message to CPU Mailbox",
 			"args": 1,
-			"usage":
-			[
+			"usage": [
 				"Syntax: cpumbox <value>\n",
 				"Example of use: cpumbox 0x8001FEED\n"
 			]
 		},
 
-		"dspmbox":
-		{
+		"dspmbox": {
 			"help": "Read message from DSP Mailbox"
 		},
 
-		"cpudspint":
-		{
+		"cpudspint": {
 			"help": "Send CPU->DSP interrupt"
 		},
 
-		"dspcpuint":
-		{
+		"dspcpuint": {
 			"help": "Send DSP->CPU interrupt"
+		},
+
+		"dsp_muls": {
+			"help": "Test signed 16x16 DSP multiply",
+			"args": 2,
+			"usage": [
+				"Syntax: dsp_muls 0xaabb 0x0022",
+				"Numbers must be in 2's complement 16-bit format"
+			]
+		},
+
+		"dsp_mulu": {
+			"help": "Test unsigned 16x16 DSP multiply",
+			"args": 2,
+			"usage": [
+				"Syntax: dsp_muls 0xaabb 0x0022",
+				"Numbers must be in unsigned 16-bit format"
+			]
 		}
 
 	}

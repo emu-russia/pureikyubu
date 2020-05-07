@@ -67,7 +67,7 @@
     <ClInclude Include="..\VI.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\HWJdi.json" />
+    <None Include="..\..\..\Data\Json\HWJdi.json" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

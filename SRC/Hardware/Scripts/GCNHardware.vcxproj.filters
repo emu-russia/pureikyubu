@@ -136,6 +136,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\Data\HWJdi.json" />
+    <None Include="..\..\..\Data\Json\HWJdi.json" />
   </ItemGroup>
 </Project>

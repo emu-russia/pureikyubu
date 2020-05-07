@@ -83,10 +83,8 @@ namespace DSP
 		regs.st[0].pop_back();
 	}
 
-	void DspCore::HardReset()
+	void DspCore::SoftReset()
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::Reset");
-
 		savedGekkoTicks = Gekko::Gekko->GetTicks();
 
 		for (int i = 0; i < _countof(regs.st); i++)
@@ -108,13 +106,24 @@ namespace DSP
 			regs.ax[i].bits = 0;
 		}
 
-		regs.prod.bitsUnpacked = 0;
 		regs.bank = 0xFF;
 		regs.sr.bits = 0;
+		regs.prod.h = 0;
+		regs.prod.l = 0;
+		regs.prod.m1 = 0;
+		regs.prod.m2 = 0;
 
 		regs.pc = IROM_START_ADDRESS;		// IROM start
 
 		ResetIfx();
+	}
+
+	void DspCore::HardReset()
+	{
+		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
+		SoftReset();
+		regs.pc = IROM_START_ADDRESS;
+		Suspend();
 	}
 
 	void DspCore::Run()
@@ -122,7 +131,7 @@ namespace DSP
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
-			DBReport2(DbgChannel::DSP, "DspCore::Run");
+			DBReport2(DbgChannel::DSP, "DspCore::Run\n");
 			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 	}
@@ -131,7 +140,7 @@ namespace DSP
 	{
 		if (dspThread->IsRunning())
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::Suspend");
+			DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
 			dspThread->Suspend();
 		}
 	}
@@ -142,6 +151,26 @@ namespace DSP
 
 		if (ticks >= (savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
+			// Test breakpoints and canaries
+			if (IsRunning())
+			{
+				TestCanary(regs.pc);
+
+				if (TestBreakpoint(regs.pc))
+				{
+					DBHalt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
+					Suspend();
+					return;
+				}
+
+				if (regs.pc == oneShotBreakpoint)
+				{
+					oneShotBreakpoint = 0xffff;
+					Suspend();
+					return;
+				}
+			}
+
 			interp->ExecuteInstr();
 			savedGekkoTicks = ticks;
 		}
@@ -153,6 +182,25 @@ namespace DSP
 	{
 		breakPointsSpinLock.Lock();
 		breakpoints.push_back(imemAddress);
+		breakPointsSpinLock.Unlock();
+	}
+
+	void DspCore::RemoveBreakpoint(DspAddress imemAddress)
+	{
+		breakPointsSpinLock.Lock();
+		bool found = false;
+		for (auto it = breakpoints.begin(); it != breakpoints.end(); ++it)
+		{
+			if (*it == imemAddress)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found)
+		{
+			breakpoints.remove(imemAddress);
+		}
 		breakPointsSpinLock.Unlock();
 	}
 
@@ -189,6 +237,23 @@ namespace DSP
 		breakPointsSpinLock.Unlock();
 
 		return found;
+	}
+
+	void DspCore::ToggleBreakpoint(DspAddress imemAddress)
+	{
+		if (TestBreakpoint(imemAddress))
+		{
+			RemoveBreakpoint(imemAddress);
+		}
+		else
+		{
+			AddBreakpoint(imemAddress);
+		}
+	}
+
+	void DspCore::AddOneShotBreakpoint(DspAddress imemAddress)
+	{
+		oneShotBreakpoint = imemAddress;
 	}
 
 	void DspCore::AddCanary(DspAddress imemAddress, std::string text)
@@ -251,7 +316,7 @@ namespace DSP
 			DBReport("pc: 0x%04X\n", regs.pc);
 		}
 
-		if (regs.prod.bitsUnpacked != prevState->prod.bitsUnpacked)
+		if (regs.prod.bitsPacked != prevState->prod.bitsPacked)
 		{
 			DBReport("prod: 0x%04X_%04X_%04X_%04X\n", 
 				regs.prod.h, regs.prod.m2, regs.prod.m1, regs.prod.l );
@@ -474,30 +539,6 @@ namespace DSP
 		return 0;
 	}
 
-	int64_t DspCore::PackProd()
-	{
-		int64_t hi = (int64_t)regs.prod.h << 32;
-		int64_t mid = ((int64_t)regs.prod.m1 + (int64_t)regs.prod.m2) << 16;
-		int64_t low = regs.prod.l;
-		int64_t res = hi + mid + low;
-		// Sign extend 40
-		if (res & 0x8000000000)
-		{
-			res |= 0xffffff0000000000;
-		}
-		return res;
-	}
-
-	void DspCore::PackProd(int64_t val)
-	{
-		DspLongAccumulator acc;
-		acc.sbits = val;
-		regs.prod.h = acc.h;
-		regs.prod.m2 = 0;
-		regs.prod.m1 = acc.m;
-		regs.prod.l = acc.l;
-	}
-
 	#pragma endregion "Register access"
 
 
@@ -505,11 +546,11 @@ namespace DSP
 
 	uint8_t* DspCore::TranslateIMem(DspAddress addr)
 	{
-		if (addr < IRAM_SIZE)
+		if (addr < (IRAM_SIZE / 2))
 		{
 			return &iram[addr << 1];
 		}
-		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + IROM_SIZE))
+		else if (addr >= IROM_START_ADDRESS && addr < (IROM_START_ADDRESS + (IROM_SIZE / 2)))
 		{
 			return &irom[(addr - IROM_START_ADDRESS) << 1];
 		}
@@ -521,11 +562,11 @@ namespace DSP
 
 	uint8_t* DspCore::TranslateDMem(DspAddress addr)
 	{
-		if (addr < DRAM_SIZE)
+		if (addr < (DRAM_SIZE / 2))
 		{
 			return &dram[addr << 1];
 		}
-		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + DROM_SIZE))
+		else if (addr >= DROM_START_ADDRESS && addr < (DROM_START_ADDRESS + (DROM_SIZE / 2)))
 		{
 			return &drom[(addr - DROM_START_ADDRESS) << 1];
 		}
@@ -606,8 +647,8 @@ namespace DSP
 				return AccelReadData(false);
 
 			default:
-				DBHalt("DSP Unknown HW read 0x%04X\n", addr);
-				Suspend();
+				DBReport2(DbgChannel::DSP, "DSP Unknown HW read 0x%04X\n", addr);
+				//Suspend();
 				break;
 			}
 			return 0;
@@ -771,14 +812,14 @@ namespace DSP
 					break;
 
 				default:
-					DBHalt("DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
-					Suspend();
+					DBReport2(DbgChannel::DSP, "DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					//Suspend();
 					break;
 			}
 			return;
 		}
 
-		if (addr < DRAM_SIZE)
+		if (addr < (DRAM_SIZE / 2))
 		{
 			uint8_t* ptr = TranslateDMem(addr);
 
@@ -805,8 +846,8 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "Reset\n");
-			HardReset();
+			DBReport2(DbgChannel::DSP, "DspCore::SoftReset\n");
+			SoftReset();
 		}
 	}
 
@@ -1010,6 +1051,64 @@ namespace DSP
 	}
 
 	#pragma endregion "IFX"
+
+	#pragma region "Multiplier"
+
+	void DspCore::PackProd(DspProduct& prod)
+	{
+		int64_t hi = (int64_t)prod.h << 32;
+		int64_t mid = ((int64_t)prod.m1 + (int64_t)prod.m2) << 16;
+		int64_t low = prod.l;
+		int64_t res = hi + mid + low;
+		res &= 0xff'ffff'ffff;
+		prod.bitsPacked = res;
+	}
+
+	void DspCore::UnpackProd(DspProduct& prod)
+	{
+		prod.h = (prod.bitsPacked >> 32) & 0xff;
+		prod.m1 = (prod.bitsPacked >> 16) & 0xffff;
+		prod.m2 = 0;
+		prod.l = prod.bitsPacked & 0xffff;
+	}
+
+	DspProduct DspCore::Muls(uint16_t a, uint16_t b)
+	{
+		DspProduct prod;
+		prod.l = 0;
+		prod.h = 0;
+		prod.m1 = 0;
+		prod.m2 = 0;
+
+		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
+
+		return prod;
+	}
+
+	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
+	{
+		DspProduct prod;
+
+		DBReport("MUL Unsigned 0x%04X * 0x%04X\n", a, b);
+
+		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
+
+		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
+		uint32_t c1 = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff);
+		uint32_t c2 = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff00);
+		uint32_t l = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff);
+
+		uint32_t m = c1 + c2 + l;
+
+		prod.h = 0;
+		prod.m1 = u >> 16;
+		prod.m2 = m >> 16;
+		prod.l = m & 0xffff;
+
+		return prod;
+	}
+
+	#pragma endregion "Multiplier"
 
 	void DspCore::InitSubsystem()
 	{

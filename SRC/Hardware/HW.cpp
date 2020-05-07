@@ -54,7 +54,7 @@ namespace Flipper
         DBReport("\n");
 
         GXOpen(mi.ram, wnd.hMainWindow);
-        PADOpen();
+        PADOpen(wnd.hMainWindow);
 
         Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
