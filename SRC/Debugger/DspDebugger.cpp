@@ -76,43 +76,20 @@ namespace Debug
 			return;
 		}
 
+		// DSP Run State
+
+		if (Flipper::HW->DSP->IsRunning())
+		{
+			Print(CuiColor::Cyan, CuiColor::Lime, 73, 0, "Running");
+		}
+		else
+		{
+			Print(CuiColor::Cyan, CuiColor::Red, 70, 0, "Suspended");
+		}
+
 		// Registers with changes
 
-		Print(CuiColor::Black, CuiColor::Normal, 0, 1, "ar0: %04X", Flipper::HW->DSP->regs.ar[0]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 2, "ar1: %04X", Flipper::HW->DSP->regs.ar[1]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 3, "ar2: %04X", Flipper::HW->DSP->regs.ar[2]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 4, "ar3: %04X", Flipper::HW->DSP->regs.ar[3]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 5, "ix0: %04X", Flipper::HW->DSP->regs.ix[0]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 6, "ix1: %04X", Flipper::HW->DSP->regs.ix[1]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 7, "ix2: %04X", Flipper::HW->DSP->regs.ix[2]);
-		Print(CuiColor::Black, CuiColor::Normal, 0, 8, "ix3: %04X", Flipper::HW->DSP->regs.ix[3]);
-
-		Print(CuiColor::Black, CuiColor::Normal, 12, 1, "lm0: %04X", Flipper::HW->DSP->regs.lm[0]);
-		Print(CuiColor::Black, CuiColor::Normal, 12, 2, "lm1: %04X", Flipper::HW->DSP->regs.lm[1]);
-		Print(CuiColor::Black, CuiColor::Normal, 12, 3, "lm2: %04X", Flipper::HW->DSP->regs.lm[2]);
-		Print(CuiColor::Black, CuiColor::Normal, 12, 4, "lm3: %04X", Flipper::HW->DSP->regs.lm[3]);
-		Print(CuiColor::Black, CuiColor::Normal, 12, 5, "st0: %04X", (uint16_t)Flipper::HW->DSP->regs.st[0].back());
-		Print(CuiColor::Black, CuiColor::Normal, 12, 6, "st1: %04X", (uint16_t)Flipper::HW->DSP->regs.st[1].back());
-		Print(CuiColor::Black, CuiColor::Normal, 12, 7, "st2: %04X", (uint16_t)Flipper::HW->DSP->regs.st[2].back());
-		Print(CuiColor::Black, CuiColor::Normal, 12, 8, "st3: %04X", (uint16_t)Flipper::HW->DSP->regs.st[3].back());
-
-		Print(CuiColor::Black, CuiColor::Normal, 24, 1, "a0h: %04X", Flipper::HW->DSP->regs.ac[0].h);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 2, "a1h: %04X", Flipper::HW->DSP->regs.ac[1].h);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 3, "br : %04X", Flipper::HW->DSP->regs.bank);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 4, "sr : %04X", Flipper::HW->DSP->regs.sr.bits);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 5, "pl : %04X", Flipper::HW->DSP->regs.prod.l);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 6, "pm1: %04X", Flipper::HW->DSP->regs.prod.m1);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 7, "ph : %04X", Flipper::HW->DSP->regs.prod.h);
-		Print(CuiColor::Black, CuiColor::Normal, 24, 8, "pm2: %04X", Flipper::HW->DSP->regs.prod.m2);
-
-		Print(CuiColor::Black, CuiColor::Normal, 36, 1, "x0l: %04X", Flipper::HW->DSP->regs.ax[0].l);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 2, "x0h: %04X", Flipper::HW->DSP->regs.ax[0].h);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 3, "x1l: %04X", Flipper::HW->DSP->regs.ax[1].l);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 4, "x1h: %04X", Flipper::HW->DSP->regs.ax[1].h);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 5, "a0l: %04X", Flipper::HW->DSP->regs.ac[0].l);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 6, "a1l: %04X", Flipper::HW->DSP->regs.ac[1].l);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 7, "a0m: %04X", Flipper::HW->DSP->regs.ac[0].m);
-		Print(CuiColor::Black, CuiColor::Normal, 36, 8, "a1m: %04X", Flipper::HW->DSP->regs.ac[1].m);
+		DrawRegs();
 
 		// 40-bit regs overview
 
@@ -127,30 +104,176 @@ namespace Debug
 
 		DSP::DspProduct prod = Flipper::HW->DSP->regs.prod;
 		DSP::DspCore::PackProd(prod);
-		Print(CuiColor::Black, CuiColor::Normal, 48, 2, " p: %02X_%04X_%04X",
+		Print(CuiColor::Black, CuiColor::Normal, 48, 3, " p: %02X_%04X_%04X",
 			(uint8_t)(prod.bitsPacked >> 32), 
 			(uint16_t)(prod.bitsPacked >> 16), 
 			(uint16_t)prod.bitsPacked);
 
+		// Program Counter
+
+		Print(CuiColor::Black, CuiColor::Normal, 48, 5, "pc: %04X", Flipper::HW->DSP->regs.pc);
+
 		// Status as individual bits
 
-		Print(CuiColor::Black, CuiColor::Normal, 66, 1, " C: %i", Flipper::HW->DSP->regs.sr.c);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 2, " O: %i", Flipper::HW->DSP->regs.sr.o);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 3, " Z: %i", Flipper::HW->DSP->regs.sr.z);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 4, " S: %i", Flipper::HW->DSP->regs.sr.s);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 5, "AS: %i", Flipper::HW->DSP->regs.sr.as);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 6, "TT: %i", Flipper::HW->DSP->regs.sr.tt);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 7, "OK: %i", Flipper::HW->DSP->regs.sr.ok);
-		Print(CuiColor::Black, CuiColor::Normal, 66, 8, "OS: %i", Flipper::HW->DSP->regs.sr.os);
+		DrawStatusBits();
 
-		Print(CuiColor::Black, CuiColor::Normal, 73, 1, "08: %i", Flipper::HW->DSP->regs.sr.hwz);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 2, "09: %i", Flipper::HW->DSP->regs.sr.ie);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 3, "10: %i", Flipper::HW->DSP->regs.sr.unk10);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 4, "11: %i", Flipper::HW->DSP->regs.sr.eie);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 5, "12: %i", Flipper::HW->DSP->regs.sr.unk12);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 6, "AM: %i", Flipper::HW->DSP->regs.sr.am);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 7, "XM: %i", Flipper::HW->DSP->regs.sr.sxm);
-		Print(CuiColor::Black, CuiColor::Normal, 73, 8, "SU: %i", Flipper::HW->DSP->regs.sr.su);
+		savedRegs = Flipper::HW->DSP->regs;
+	}
+
+	void DspRegs::DrawRegs()
+	{
+		Print(CuiColor::Black, 
+			savedRegs.ar[0] != Flipper::HW->DSP->regs.ar[0] ? CuiColor::Lime : CuiColor::Normal,
+			0, 1, "ar0: %04X", Flipper::HW->DSP->regs.ar[0]);
+		Print(CuiColor::Black, 
+			savedRegs.ar[1] != Flipper::HW->DSP->regs.ar[1] ? CuiColor::Lime : CuiColor::Normal,
+			0, 2, "ar1: %04X", Flipper::HW->DSP->regs.ar[1]);
+		Print(CuiColor::Black, 
+			savedRegs.ar[2] != Flipper::HW->DSP->regs.ar[2] ? CuiColor::Lime : CuiColor::Normal,
+			0, 3, "ar2: %04X", Flipper::HW->DSP->regs.ar[2]);
+		Print(CuiColor::Black, 
+			savedRegs.ar[3] != Flipper::HW->DSP->regs.ar[3] ? CuiColor::Lime : CuiColor::Normal,
+			0, 4, "ar3: %04X", Flipper::HW->DSP->regs.ar[3]);
+		Print(CuiColor::Black, 
+			savedRegs.ix[0] != Flipper::HW->DSP->regs.ix[0] ? CuiColor::Lime : CuiColor::Normal,
+			0, 5, "ix0: %04X", Flipper::HW->DSP->regs.ix[0]);
+		Print(CuiColor::Black, 
+			savedRegs.ix[1] != Flipper::HW->DSP->regs.ix[1] ? CuiColor::Lime : CuiColor::Normal,
+			0, 6, "ix1: %04X", Flipper::HW->DSP->regs.ix[1]);
+		Print(CuiColor::Black, 
+			savedRegs.ix[2] != Flipper::HW->DSP->regs.ix[2] ? CuiColor::Lime : CuiColor::Normal,
+			0, 7, "ix2: %04X", Flipper::HW->DSP->regs.ix[2]);
+		Print(CuiColor::Black, 
+			savedRegs.ix[3] != Flipper::HW->DSP->regs.ix[3] ? CuiColor::Lime : CuiColor::Normal,
+			0, 8, "ix3: %04X", Flipper::HW->DSP->regs.ix[3]);
+
+		Print(CuiColor::Black, 
+			savedRegs.lm[0] != Flipper::HW->DSP->regs.lm[0] ? CuiColor::Lime : CuiColor::Normal,
+			12, 1, "lm0: %04X", Flipper::HW->DSP->regs.lm[0]);
+		Print(CuiColor::Black, 
+			savedRegs.lm[1] != Flipper::HW->DSP->regs.lm[1] ? CuiColor::Lime : CuiColor::Normal,
+			12, 2, "lm1: %04X", Flipper::HW->DSP->regs.lm[1]);
+		Print(CuiColor::Black, 
+			savedRegs.lm[2] != Flipper::HW->DSP->regs.lm[2] ? CuiColor::Lime : CuiColor::Normal,
+			12, 3, "lm2: %04X", Flipper::HW->DSP->regs.lm[2]);
+		Print(CuiColor::Black, 
+			savedRegs.lm[3] != Flipper::HW->DSP->regs.lm[3] ? CuiColor::Lime : CuiColor::Normal,
+			12, 4, "lm3: %04X", Flipper::HW->DSP->regs.lm[3]);
+		Print(CuiColor::Black, 
+			CuiColor::Normal,
+			12, 5, "st0: %04X", Flipper::HW->DSP->regs.st[0].size() != 0 ? (uint16_t)Flipper::HW->DSP->regs.st[0].back() : 0);
+		Print(CuiColor::Black, 
+			CuiColor::Normal,
+			12, 6, "st1: %04X", Flipper::HW->DSP->regs.st[1].size() != 0 ? (uint16_t)Flipper::HW->DSP->regs.st[1].back() : 0);
+		Print(CuiColor::Black, 
+			CuiColor::Normal,
+			12, 7, "st2: %04X", Flipper::HW->DSP->regs.st[2].size() != 0 ? (uint16_t)Flipper::HW->DSP->regs.st[2].back() : 0);
+		Print(CuiColor::Black, 
+			CuiColor::Normal,
+			12, 8, "st3: %04X", Flipper::HW->DSP->regs.st[3].size() != 0 ? (uint16_t)Flipper::HW->DSP->regs.st[3].back() : 0);
+
+		Print(CuiColor::Black, 
+			savedRegs.ac[0].h != Flipper::HW->DSP->regs.ac[0].h ? CuiColor::Lime : CuiColor::Normal,
+			24, 1, "a0h: %04X", Flipper::HW->DSP->regs.ac[0].h);
+		Print(CuiColor::Black, 
+			savedRegs.ac[1].h != Flipper::HW->DSP->regs.ac[1].h ? CuiColor::Lime : CuiColor::Normal,
+			24, 2, "a1h: %04X", Flipper::HW->DSP->regs.ac[1].h);
+		Print(CuiColor::Black, 
+			savedRegs.bank != Flipper::HW->DSP->regs.bank ? CuiColor::Lime : CuiColor::Normal,
+			24, 3, "br : %04X", Flipper::HW->DSP->regs.bank);
+		Print(CuiColor::Black, 
+			savedRegs.sr.bits != Flipper::HW->DSP->regs.sr.bits ? CuiColor::Lime : CuiColor::Normal,
+			24, 4, "sr : %04X", Flipper::HW->DSP->regs.sr.bits);
+		Print(CuiColor::Black, 
+			savedRegs.prod.l != Flipper::HW->DSP->regs.prod.l ? CuiColor::Lime : CuiColor::Normal,
+			24, 5, "pl : %04X", Flipper::HW->DSP->regs.prod.l);
+		Print(CuiColor::Black, 
+			savedRegs.prod.m1 != Flipper::HW->DSP->regs.prod.m1 ? CuiColor::Lime : CuiColor::Normal,
+			24, 6, "pm1: %04X", Flipper::HW->DSP->regs.prod.m1);
+		Print(CuiColor::Black, 
+			savedRegs.prod.h != Flipper::HW->DSP->regs.prod.h ? CuiColor::Lime : CuiColor::Normal,
+			24, 7, "ph : %04X", Flipper::HW->DSP->regs.prod.h);
+		Print(CuiColor::Black, 
+			savedRegs.prod.m2 != Flipper::HW->DSP->regs.prod.m2 ? CuiColor::Lime : CuiColor::Normal,
+			24, 8, "pm2: %04X", Flipper::HW->DSP->regs.prod.m2);
+
+		Print(CuiColor::Black, 
+			savedRegs.ax[0].l != Flipper::HW->DSP->regs.ax[0].l ? CuiColor::Lime : CuiColor::Normal,
+			36, 1, "x0l: %04X", Flipper::HW->DSP->regs.ax[0].l);
+		Print(CuiColor::Black, 
+			savedRegs.ax[0].h != Flipper::HW->DSP->regs.ax[0].h ? CuiColor::Lime : CuiColor::Normal,
+			36, 2, "x0h: %04X", Flipper::HW->DSP->regs.ax[0].h);
+		Print(CuiColor::Black, 
+			savedRegs.ax[1].l != Flipper::HW->DSP->regs.ax[1].l ? CuiColor::Lime : CuiColor::Normal,
+			36, 3, "x1l: %04X", Flipper::HW->DSP->regs.ax[1].l);
+		Print(CuiColor::Black, 
+			savedRegs.ax[1].h != Flipper::HW->DSP->regs.ax[1].h ? CuiColor::Lime : CuiColor::Normal,
+			36, 4, "x1h: %04X", Flipper::HW->DSP->regs.ax[1].h);
+		Print(CuiColor::Black, 
+			savedRegs.ac[0].l != Flipper::HW->DSP->regs.ac[0].l ? CuiColor::Lime : CuiColor::Normal,
+			36, 5, "a0l: %04X", Flipper::HW->DSP->regs.ac[0].l);
+		Print(CuiColor::Black, 
+			savedRegs.ac[1].l != Flipper::HW->DSP->regs.ac[1].l ? CuiColor::Lime : CuiColor::Normal,
+			36, 6, "a1l: %04X", Flipper::HW->DSP->regs.ac[1].l);
+		Print(CuiColor::Black, 
+			savedRegs.ac[0].m != Flipper::HW->DSP->regs.ac[0].m ? CuiColor::Lime : CuiColor::Normal,
+			36, 7, "a0m: %04X", Flipper::HW->DSP->regs.ac[0].m);
+		Print(CuiColor::Black, 
+			savedRegs.ac[1].m != Flipper::HW->DSP->regs.ac[1].m ? CuiColor::Lime : CuiColor::Normal,
+			36, 8, "a1m: %04X", Flipper::HW->DSP->regs.ac[1].m);
+	}
+
+	void DspRegs::DrawStatusBits()
+	{
+		Print(CuiColor::Black,
+			savedRegs.sr.c != Flipper::HW->DSP->regs.sr.c ? CuiColor::Lime : CuiColor::Normal,
+			66, 1, " C: %i", Flipper::HW->DSP->regs.sr.c);
+		Print(CuiColor::Black,
+			savedRegs.sr.o != Flipper::HW->DSP->regs.sr.o ? CuiColor::Lime : CuiColor::Normal,
+			66, 2, " O: %i", Flipper::HW->DSP->regs.sr.o);
+		Print(CuiColor::Black,
+			savedRegs.sr.z != Flipper::HW->DSP->regs.sr.z ? CuiColor::Lime : CuiColor::Normal,
+			66, 3, " Z: %i", Flipper::HW->DSP->regs.sr.z);
+		Print(CuiColor::Black,
+			savedRegs.sr.s != Flipper::HW->DSP->regs.sr.s ? CuiColor::Lime : CuiColor::Normal,
+			66, 4, " S: %i", Flipper::HW->DSP->regs.sr.s);
+		Print(CuiColor::Black,
+			savedRegs.sr.as != Flipper::HW->DSP->regs.sr.as ? CuiColor::Lime : CuiColor::Normal,
+			66, 5, "AS: %i", Flipper::HW->DSP->regs.sr.as);
+		Print(CuiColor::Black,
+			savedRegs.sr.tt != Flipper::HW->DSP->regs.sr.tt ? CuiColor::Lime : CuiColor::Normal,
+			66, 6, "TT: %i", Flipper::HW->DSP->regs.sr.tt);
+		Print(CuiColor::Black,
+			savedRegs.sr.ok != Flipper::HW->DSP->regs.sr.ok ? CuiColor::Lime : CuiColor::Normal,
+			66, 7, "OK: %i", Flipper::HW->DSP->regs.sr.ok);
+		Print(CuiColor::Black,
+			savedRegs.sr.os != Flipper::HW->DSP->regs.sr.os ? CuiColor::Lime : CuiColor::Normal,
+			66, 8, "OS: %i", Flipper::HW->DSP->regs.sr.os);
+
+		Print(CuiColor::Black,
+			savedRegs.sr.hwz != Flipper::HW->DSP->regs.sr.hwz ? CuiColor::Lime : CuiColor::Normal,
+			73, 1, "08: %i", Flipper::HW->DSP->regs.sr.hwz);
+		Print(CuiColor::Black,
+			savedRegs.sr.ie != Flipper::HW->DSP->regs.sr.ie ? CuiColor::Lime : CuiColor::Normal,
+			73, 2, "09: %i", Flipper::HW->DSP->regs.sr.ie);
+		Print(CuiColor::Black,
+			savedRegs.sr.unk10 != Flipper::HW->DSP->regs.sr.unk10 ? CuiColor::Lime : CuiColor::Normal,
+			73, 3, "10: %i", Flipper::HW->DSP->regs.sr.unk10);
+		Print(CuiColor::Black,
+			savedRegs.sr.eie != Flipper::HW->DSP->regs.sr.eie ? CuiColor::Lime : CuiColor::Normal,
+			73, 4, "11: %i", Flipper::HW->DSP->regs.sr.eie);
+		Print(CuiColor::Black,
+			savedRegs.sr.unk12 != Flipper::HW->DSP->regs.sr.unk12 ? CuiColor::Lime : CuiColor::Normal,
+			73, 5, "12: %i", Flipper::HW->DSP->regs.sr.unk12);
+		Print(CuiColor::Black,
+			savedRegs.sr.am != Flipper::HW->DSP->regs.sr.am ? CuiColor::Lime : CuiColor::Normal,
+			73, 6, "AM: %i", Flipper::HW->DSP->regs.sr.am);
+		Print(CuiColor::Black,
+			savedRegs.sr.sxm != Flipper::HW->DSP->regs.sr.sxm ? CuiColor::Lime : CuiColor::Normal,
+			73, 7, "XM: %i", Flipper::HW->DSP->regs.sr.sxm);
+		Print(CuiColor::Black,
+			savedRegs.sr.su != Flipper::HW->DSP->regs.sr.su ? CuiColor::Lime : CuiColor::Normal,
+			73, 8, "SU: %i", Flipper::HW->DSP->regs.sr.su);
 	}
 
 	void DspRegs::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
@@ -302,6 +425,8 @@ namespace Debug
 
 		// Do not forget that DSP addressing is done in 16-bit words.
 
+		wordsOnScreen = 0;
+
 		while (lines--)
 		{
 			DSP::AnalyzeInfo info = { 0 };
@@ -319,9 +444,20 @@ namespace Debug
 
 			std::string text = DSP::DspDisasm::Disasm(addr, info);
 
-			Print(CuiColor::Black, info.flowControl ? CuiColor::Green : CuiColor::Normal, 0, y, text);
+			CuiColor backColor = CuiColor::Black;
+
+			int bgcur = (addr == cursor) ? ((int)CuiColor::Blue) : (0);
+			int bgbp = 0;// (Gekko::Gekko->IsBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
+			int bg = (addr == Flipper::HW->DSP->regs.pc) ? ((int)CuiColor::DarkBlue) : (0);
+			bg = bg ^ bgcur ^ bgbp;
+
+			backColor = (CuiColor)bg;
+
+			FillLine(backColor, CuiColor::Normal, y, ' ');
+			Print(backColor, info.flowControl ? CuiColor::Green : CuiColor::Normal, 0, y, text);
 			
 			addr += (DSP::DspAddress)(info.sizeInBytes / sizeof(uint16_t));
+			wordsOnScreen += info.sizeInBytes / sizeof(uint16_t);
 			y++;
 		}
 	}
@@ -331,14 +467,33 @@ namespace Debug
 		switch (Vkey)
 		{
 			case VK_UP:
-				if (current > 0)
-					current--;
+				if (AddressVisible(cursor))
+				{
+					if (cursor > 0)
+						cursor--;
+				}
+				else
+				{
+					cursor = (DSP::DspAddress)(current - wordsOnScreen);
+				}
+				if (!AddressVisible(cursor))
+				{
+					if (current < (height - 1))
+						current = 0;
+					else
+						current -= (DSP::DspAddress)(height - 1);
+				}
 				break;
 
 			case VK_DOWN:
-				current++;
-				if (current >= 0x8A00)
-					current = 0x8A00;
+				if (AddressVisible(cursor))
+					cursor++;
+				else
+					cursor = current;
+				if (!AddressVisible(cursor))
+				{
+					current = cursor;
+				}
 				break;
 
 			case VK_PRIOR:
@@ -349,7 +504,7 @@ namespace Debug
 				break;
 
 			case VK_NEXT:
-				current += (DSP::DspAddress)(height - 1);
+				current += (DSP::DspAddress)(wordsOnScreen ? wordsOnScreen : height - 1);
 				if (current >= 0x8A00)
 					current = 0x8A00;
 				break;
@@ -364,6 +519,14 @@ namespace Debug
 		}
 
 		Invalidate();
+	}
+
+	bool DspImem::AddressVisible(DSP::DspAddress address)
+	{
+		if (!wordsOnScreen)
+			return false;
+
+		return (current <= address && address < (current + wordsOnScreen));
 	}
 
 #pragma endregion "DspImem"

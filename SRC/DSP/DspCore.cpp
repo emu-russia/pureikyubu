@@ -83,10 +83,8 @@ namespace DSP
 		regs.st[0].pop_back();
 	}
 
-	void DspCore::HardReset()
+	void DspCore::SoftReset()
 	{
-		DBReport2(DbgChannel::DSP, "DspCore::Reset");
-
 		savedGekkoTicks = Gekko::Gekko->GetTicks();
 
 		for (int i = 0; i < _countof(regs.st); i++)
@@ -108,13 +106,24 @@ namespace DSP
 			regs.ax[i].bits = 0;
 		}
 
-		regs.prod.bitsPacked = 0;
 		regs.bank = 0xFF;
 		regs.sr.bits = 0;
+		regs.prod.h = 0;
+		regs.prod.l = 0;
+		regs.prod.m1 = 0;
+		regs.prod.m2 = 0;
 
 		regs.pc = IROM_START_ADDRESS;		// IROM start
 
 		ResetIfx();
+	}
+
+	void DspCore::HardReset()
+	{
+		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
+		SoftReset();
+		regs.pc = IROM_START_ADDRESS;
+		Suspend();
 	}
 
 	void DspCore::Run()
@@ -122,7 +131,7 @@ namespace DSP
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
-			DBReport2(DbgChannel::DSP, "DspCore::Run");
+			DBReport2(DbgChannel::DSP, "DspCore::Run\n");
 			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 	}
@@ -131,7 +140,7 @@ namespace DSP
 	{
 		if (dspThread->IsRunning())
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::Suspend");
+			DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
 			dspThread->Suspend();
 		}
 	}
@@ -582,8 +591,8 @@ namespace DSP
 				return AccelReadData(false);
 
 			default:
-				DBHalt("DSP Unknown HW read 0x%04X\n", addr);
-				Suspend();
+				DBReport2(DbgChannel::DSP, "DSP Unknown HW read 0x%04X\n", addr);
+				//Suspend();
 				break;
 			}
 			return 0;
@@ -747,8 +756,8 @@ namespace DSP
 					break;
 
 				default:
-					DBHalt("DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
-					Suspend();
+					DBReport2(DbgChannel::DSP, "DSP Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					//Suspend();
 					break;
 			}
 			return;
@@ -781,8 +790,8 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "Reset\n");
-			HardReset();
+			DBReport2(DbgChannel::DSP, "DspCore::SoftReset\n");
+			SoftReset();
 		}
 	}
 

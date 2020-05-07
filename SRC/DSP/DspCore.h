@@ -130,7 +130,6 @@ namespace DSP
 
 	typedef struct _DspRegs
 	{
-		uint32_t clearingPaddy;		// To use {0} on structure
 		uint16_t ar[4];		// Addressing registers
 		uint16_t ix[4];		// Indexing registers
 		uint16_t lm[4];	// Limit registers
@@ -331,6 +330,7 @@ namespace DSP
 
 		void Exception(DspException id);
 		void ReturnFromException();
+		void SoftReset();
 		void HardReset();
 
 		void Run();

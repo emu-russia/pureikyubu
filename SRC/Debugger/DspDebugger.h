@@ -16,6 +16,12 @@ namespace Debug
 
 	class DspRegs : public CuiWindow
 	{
+		// Used to highlight reg changes
+		DSP::DspRegs savedRegs;
+
+		void DrawRegs();
+		void DrawStatusBits();
+
 	public:
 		DspRegs(RECT& rect, std::string name);
 
@@ -37,6 +43,10 @@ namespace Debug
 	class DspImem : public CuiWindow
 	{
 		DSP::DspAddress current = 0x8000;
+		DSP::DspAddress cursor = 0x8000;
+		size_t wordsOnScreen = 0;
+
+		bool AddressVisible(DSP::DspAddress address);
 
 	public:
 		DspImem(RECT& rect, std::string name);
