@@ -552,6 +552,25 @@ namespace Debug
 				}
 				break;
 
+			case VK_F10:
+				if (!Flipper::HW->DSP->IsRunning())
+				{
+					if (IsCall(Flipper::HW->DSP->regs.pc, targetAddress))
+					{
+						Flipper::HW->DSP->AddOneShotBreakpoint(Flipper::HW->DSP->regs.pc + 2);
+						Flipper::HW->DSP->Run();
+					}
+					else
+					{
+						Flipper::HW->DSP->Step();
+						if (!AddressVisible(Flipper::HW->DSP->regs.pc))
+						{
+							current = cursor = Flipper::HW->DSP->regs.pc;
+						}
+					}
+				}
+				break;
+
 			case VK_F11:
 				Flipper::HW->DSP->Step();
 				if (!AddressVisible(Flipper::HW->DSP->regs.pc))
@@ -591,6 +610,33 @@ namespace Debug
 		return (current <= address && address < (current + wordsOnScreen));
 	}
 
+	bool DspImem::IsCall(DSP::DspAddress address, DSP::DspAddress& targetAddress)
+	{
+		DSP::AnalyzeInfo info = { 0 };
+
+		targetAddress = 0;
+
+		uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(address);
+		if (!ptr)
+		{
+			return false;
+		}
+
+		if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+			return false;
+
+		if (info.flowControl)
+		{
+			if (info.instr == DSP::DspInstruction::CALLcc || info.instr == DSP::DspInstruction::CALLR)
+			{
+				targetAddress = info.ImmOperand.Address;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	bool DspImem::IsCallOrJump(DSP::DspAddress address, DSP::DspAddress& targetAddress)
 	{
 		DSP::AnalyzeInfo info = { 0 };
@@ -609,9 +655,7 @@ namespace Debug
 		if (info.flowControl)
 		{
 			if (info.instr == DSP::DspInstruction::Jcc ||
-				info.instr == DSP::DspInstruction::JMPR ||
-				info.instr == DSP::DspInstruction::CALLcc ||
-				info.instr == DSP::DspInstruction::CALLR)
+				info.instr == DSP::DspInstruction::CALLcc)
 			{
 				targetAddress = info.ImmOperand.Address;
 				return true;

@@ -47,6 +47,7 @@ namespace Debug
 		size_t wordsOnScreen = 0;
 
 		bool AddressVisible(DSP::DspAddress address);
+		bool IsCall(DSP::DspAddress address, DSP::DspAddress& targetAddress);
 		bool IsCallOrJump(DSP::DspAddress address, DSP::DspAddress& targetAddress);
 
 		std::vector<std::pair<DSP::DspAddress, DSP::DspAddress>> browseHist;
