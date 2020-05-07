@@ -278,6 +278,11 @@ namespace Debug
 
 	void DspRegs::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
+		if (!Debug::Hub.ExecuteFastBool("IsLoaded"))
+		{
+			return;
+		}
+
 		Invalidate();
 	}
 
@@ -351,6 +356,11 @@ namespace Debug
 	void DspDmem::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
 		size_t lines = height - 1;
+
+		if (!Debug::Hub.ExecuteFastBool("IsLoaded"))
+		{
+			return;
+		}
 
 		switch (Vkey)
 		{
@@ -447,7 +457,7 @@ namespace Debug
 			CuiColor backColor = CuiColor::Black;
 
 			int bgcur = (addr == cursor) ? ((int)CuiColor::Blue) : (0);
-			int bgbp = 0;// (Gekko::Gekko->IsBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
+			int bgbp = (Flipper::HW->DSP->TestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
 			int bg = (addr == Flipper::HW->DSP->regs.pc) ? ((int)CuiColor::DarkBlue) : (0);
 			bg = bg ^ bgcur ^ bgbp;
 
@@ -464,6 +474,13 @@ namespace Debug
 
 	void DspImem::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
+		DSP::DspAddress targetAddress = 0;
+
+		if (!Debug::Hub.ExecuteFastBool("IsLoaded"))
+		{
+			return;
+		}
+
 		switch (Vkey)
 		{
 			case VK_UP:
@@ -510,11 +527,56 @@ namespace Debug
 				break;
 
 			case VK_HOME:
-				current = 0;
+				current = cursor = Flipper::HW->DSP->regs.pc;
 				break;
 
 			case VK_END:
 				current = DSP::DspCore::IROM_START_ADDRESS;
+				break;
+
+			case VK_F5:
+				if (Flipper::HW->DSP->IsRunning())
+				{
+					Flipper::HW->DSP->Suspend();
+				}
+				else
+				{
+					Flipper::HW->DSP->Run();
+				}
+				break;
+			
+			case VK_F9:
+				if (AddressVisible(cursor))
+				{
+					Flipper::HW->DSP->ToggleBreakpoint(cursor);
+				}
+				break;
+
+			case VK_F11:
+				Flipper::HW->DSP->Step();
+				if (!AddressVisible(Flipper::HW->DSP->regs.pc))
+				{
+					current = cursor = Flipper::HW->DSP->regs.pc;
+				}
+				break;
+
+			case VK_RETURN:
+				if (IsCallOrJump(cursor, targetAddress))
+				{
+					std::pair<DSP::DspAddress, DSP::DspAddress> last(current, cursor);
+					browseHist.push_back(last);
+					current = cursor = targetAddress;
+				}
+				break;
+
+			case VK_ESCAPE:
+				if (browseHist.size() > 0)
+				{
+					std::pair<DSP::DspAddress, DSP::DspAddress> last = browseHist.back();
+					current = last.first;
+					cursor = last.second;
+					browseHist.pop_back();
+				}
 				break;
 		}
 
@@ -527,6 +589,36 @@ namespace Debug
 			return false;
 
 		return (current <= address && address < (current + wordsOnScreen));
+	}
+
+	bool DspImem::IsCallOrJump(DSP::DspAddress address, DSP::DspAddress& targetAddress)
+	{
+		DSP::AnalyzeInfo info = { 0 };
+
+		targetAddress = 0;
+
+		uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(address);
+		if (!ptr)
+		{
+			return false;
+		}
+
+		if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+			return false;
+
+		if (info.flowControl)
+		{
+			if (info.instr == DSP::DspInstruction::Jcc ||
+				info.instr == DSP::DspInstruction::JMPR ||
+				info.instr == DSP::DspInstruction::CALLcc ||
+				info.instr == DSP::DspInstruction::CALLR)
+			{
+				targetAddress = info.ImmOperand.Address;
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 #pragma endregion "DspImem"

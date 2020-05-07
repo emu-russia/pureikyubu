@@ -1239,19 +1239,6 @@ namespace DSP
 
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
-		// Test breakpoints and canaries
-		if (core->IsRunning())
-		{
-			if (core->TestBreakpoint(core->regs.pc))
-			{
-				DBHalt("DSP: IMEM breakpoint at 0x%04X\n", core->regs.pc);
-				core->Suspend();
-				return;
-			}
-
-			core->TestCanary(core->regs.pc);
-		}
-
 		// Regular instructions ("top")
 		switch (info.instr)
 		{

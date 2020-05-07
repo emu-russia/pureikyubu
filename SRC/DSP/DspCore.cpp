@@ -151,6 +151,26 @@ namespace DSP
 
 		if (ticks >= (savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
+			// Test breakpoints and canaries
+			if (IsRunning())
+			{
+				TestCanary(regs.pc);
+
+				if (TestBreakpoint(regs.pc))
+				{
+					DBHalt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
+					Suspend();
+					return;
+				}
+
+				if (regs.pc == oneShotBreakpoint)
+				{
+					oneShotBreakpoint = 0xffff;
+					Suspend();
+					return;
+				}
+			}
+
 			interp->ExecuteInstr();
 			savedGekkoTicks = ticks;
 		}
@@ -162,6 +182,25 @@ namespace DSP
 	{
 		breakPointsSpinLock.Lock();
 		breakpoints.push_back(imemAddress);
+		breakPointsSpinLock.Unlock();
+	}
+
+	void DspCore::RemoveBreakpoint(DspAddress imemAddress)
+	{
+		breakPointsSpinLock.Lock();
+		bool found = false;
+		for (auto it = breakpoints.begin(); it != breakpoints.end(); ++it)
+		{
+			if (*it == imemAddress)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found)
+		{
+			breakpoints.remove(imemAddress);
+		}
 		breakPointsSpinLock.Unlock();
 	}
 
@@ -198,6 +237,23 @@ namespace DSP
 		breakPointsSpinLock.Unlock();
 
 		return found;
+	}
+
+	void DspCore::ToggleBreakpoint(DspAddress imemAddress)
+	{
+		if (TestBreakpoint(imemAddress))
+		{
+			RemoveBreakpoint(imemAddress);
+		}
+		else
+		{
+			AddBreakpoint(imemAddress);
+		}
+	}
+
+	void DspCore::AddOneShotBreakpoint(DspAddress imemAddress)
+	{
+		oneShotBreakpoint = imemAddress;
 	}
 
 	void DspCore::AddCanary(DspAddress imemAddress, std::string text)

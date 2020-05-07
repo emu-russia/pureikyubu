@@ -3,6 +3,7 @@
 #pragma once
 
 #include <vector>
+#include <list>
 #include <map>
 #include <string>
 #include <atomic>
@@ -224,8 +225,9 @@ namespace DSP
 
 	class DspCore
 	{
-		std::vector<DspAddress> breakpoints;		// IMEM breakpoints
+		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
+		DspAddress oneShotBreakpoint = 0xffff;
 
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
@@ -342,9 +344,12 @@ namespace DSP
 		// Debug methods
 
 		void AddBreakpoint(DspAddress imemAddress);
+		void RemoveBreakpoint(DspAddress imemAddress);
 		void ListBreakpoints();
 		void ClearBreakpoints();
 		bool TestBreakpoint(DspAddress imemAddress);
+		void ToggleBreakpoint(DspAddress imemAddress);
+		void AddOneShotBreakpoint(DspAddress imemAddress);
 		void AddCanary(DspAddress imemAddress, std::string text);
 		void ListCanaries();
 		void ClearCanaries();
