@@ -467,6 +467,7 @@ namespace DSP
 				if (regs.sr.sxm)
 				{
 					regs.ac[0].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[0].l = 0;
 				}
 				break;
 			case (int)DspRegister::ac1m:
@@ -474,6 +475,7 @@ namespace DSP
 				if (regs.sr.sxm)
 				{
 					regs.ac[1].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[1].l = 0;
 				}
 				break;
 		}
@@ -481,6 +483,8 @@ namespace DSP
 
 	uint16_t DspCore::MoveFromReg(int reg)
 	{
+		uint16_t val;
+
 		switch (reg)
 		{
 			case (int)DspRegister::ar0:
@@ -532,9 +536,31 @@ namespace DSP
 			case (int)DspRegister::ac1l:
 				return regs.ac[1].l;
 			case (int)DspRegister::ac0m:
-				return regs.ac[0].m;
+				if (regs.sr.sxm)
+				{
+					int64_t a = SignExtend40(regs.ac[0].sbits);
+					if (a < SHRT_MIN) a = SHRT_MIN;
+					if (a > SHRT_MAX) a = SHRT_MAX;
+					val = (uint16_t)a;
+				}
+				else
+				{
+					val = regs.ac[0].m;
+				}
+				return val;
 			case (int)DspRegister::ac1m:
-				return regs.ac[1].m;
+				if (regs.sr.sxm)
+				{
+					int64_t a = SignExtend40(regs.ac[1].sbits);
+					if (a < SHRT_MIN) a = SHRT_MIN;
+					if (a > SHRT_MAX) a = SHRT_MAX;
+					val = (uint16_t)a;
+				}
+				else
+				{
+					val = regs.ac[1].m;
+				}
+				return val;
 		}
 		return 0;
 	}
@@ -1052,7 +1078,30 @@ namespace DSP
 
 	#pragma endregion "IFX"
 
-	#pragma region "Multiplier"
+	#pragma region "Multiplier and ALU"
+
+	int64_t DspCore::SignExtend40(int64_t a)
+	{
+		if (a & 0x80'0000'0000)
+		{
+			a |= 0xffff'ff00'0000'0000;
+		}
+		else
+		{
+			a &= 0x0000'00ff'ffff'ffff;
+		}
+		return a;
+	}
+
+	int64_t DspCore::SignExtend16(int16_t a)
+	{
+		int64_t res = a;
+		if (res & 0x8000)
+		{
+			res |= 0xffff'ffff'ffff'0000;
+		}
+		return res;
+	}
 
 	void DspCore::PackProd(DspProduct& prod)
 	{
@@ -1108,7 +1157,14 @@ namespace DSP
 		return prod;
 	}
 
-	#pragma endregion "Multiplier"
+	void DspCore::ArAdvance(int r, int16_t step)
+	{
+		uint16_t base = regs.ar[r] & ~regs.lm[r];
+		regs.ar[r] += step;
+		regs.ar[r] = base + (regs.ar[r] & regs.lm[r]);
+	}
+
+	#pragma endregion "Multiplier and ALU"
 
 	void DspCore::InitSubsystem()
 	{

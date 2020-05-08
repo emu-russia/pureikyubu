@@ -9,6 +9,10 @@ GameCube is the hardware masterpiece of Nintendo engineers and it's a pleasure t
 
 This project is revived from 2004 in 2020.
 
+Dolwin Team:
+- org (ogamespec), responsible for the rest;
+- hotquik (http://www.hotsoft.com.ve/about/), responsible for memory cards emulation, Bootrom fonts and UI.
+
 ## Building
 
 Build using Visual Studio 2019. To build, open Dolwin.sln and click Build.
@@ -34,7 +38,7 @@ The user interface will most likely be rewritten as a Managed C# application. In
 
 ## Third-party code
 
-I try not to use third-party libraries without special need.
+Try not to use third-party libraries without special need.
 
 ## Why "Dolwin"?
 

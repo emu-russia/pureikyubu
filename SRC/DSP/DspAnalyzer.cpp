@@ -1352,15 +1352,19 @@ namespace DSP
 
 	bool Analyzer::GroupPacked(AnalyzeInfo& info)
 	{
-		//?? * 		xxxx xxxx 0000 00rr		// NOP2
-		//DR * 		xxxx xxxx 0000 01rr		// DR $arR 
-		//IR * 		xxxx xxxx 0000 10rr		// IR $arR 
-		//NR * 		xxxx xxxx 0000 11rr		// NR $arR, ixR
-		//MV * 		xxxx xxxx 0001 ddss 	// MV $(0x18+D), $(0x1c+S) 
-		//S * 		xxxx xxxx 001s s0dd		// S @$rD, $(0x1c+s)  
-		//SN * 		xxxx xxxx 001s s1dd		// SN @$rD, $(0x1c+s)
-		//L * 		xxxx xxxx 01dd d0ss 	// L $(0x18+D), @$rS 
-		//LN * 		xxxx xxxx 01dd d1ss 	// LN $(0x18+D), @$rS 
+		// x is used as part of Group3. Otherwise x=0.
+
+		//?? * 		xxxx xxxx x000 00rr		// NOP2 (effectivly $arR = $arR + 0)
+		//DR * 		xxxx xxxx x000 01rr		// DR $arR 
+		//IR * 		xxxx xxxx x000 10rr		// IR $arR 
+		//NR * 		xxxx xxxx x000 11rr		// NR $arR, ixR
+		//MV * 		xxxx xxxx x001 ddss 	// MV $(0x18+D), $(0x1c+S) 
+		//S * 		xxxx xxxx x01s s0dd		// S @$rD, $(0x1c+s)  
+		//SN * 		xxxx xxxx x01s s1dd		// SN @$rD, $(0x1c+s)
+		//L * 		xxxx xxxx x1dd d0ss 	// L $(0x18+D), @$rS 
+		//LN * 		xxxx xxxx x1dd d1ss 	// LN $(0x18+D), @$rS 
+
+		// Cannot be used with Group3 (bit7 is used as part of Group3 upper instruction)
 
 		//LS * 		xxxx xxxx 10dd 000s 	// LS $(0x18+D), $acS.m 
 		//SL * 		xxxx xxxx 10dd 001s		// SL $acS.m, $(0x18+D)  
@@ -1384,6 +1388,13 @@ namespace DSP
 		info.extendedOpcodePresent = true;
 
 		info.instrExBits = info.instrBits & 0xff;
+
+		// Not all can be used with Group3 (paired logic)
+
+		if ((info.instrBits >> 12) == 3)
+		{
+			info.instrExBits &= 0x7f;
+		}
 
 		switch (info.instrExBits >> 6)
 		{
