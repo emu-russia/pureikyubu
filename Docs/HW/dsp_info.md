@@ -310,136 +310,136 @@ Cleaned version from Duddie's document. Packed Group LDAX opcodes found in Dolph
 ### Group 0
 
 ```
-NOP *       0000 0000 0000 0000 
-DAR *       0000 0000 0000 01dd         // DAR $arD 
-IAR *       0000 0000 0000 10dd         // IAR $arD  
+NOP         0000 0000 0000 0000 
+DAR         0000 0000 0000 01dd         // DAR $arD 
+IAR         0000 0000 0000 10dd         // IAR $arD  
 ???         0000 0000 0000 11xx 
-ADDARN *    0000 0000 0001 ssdd         // ADDARN $arD, $ixS  
-HALT *      0000 0000 0010 0001 
-LOOP *      0000 0000 010r rrrr 
-BLOOP *     0000 0000 011r rrrr 
-LRI *       0000 0000 100r rrrr iiii iiii iiii iiii 
-??? *       0000 0000 101x xxxx 
-LR *        0000 0000 110r rrrr mmmm mmmm mmmm mmmm 
-SR *        0000 0000 111r rrrr mmmm mmmm mmmm mmmm 
-IF cc *     0000 0010 0111 cccc 
-JMP cc *    0000 0010 1001 cccc 
-CALL cc *   0000 0010 1011 cccc 
-RET cc *    0000 0010 1101 cccc 
+ADDARN      0000 0000 0001 ssdd         // ADDARN $arD, $ixS  
+HALT        0000 0000 0010 0001 
+LOOP        0000 0000 010r rrrr 
+BLOOP       0000 0000 011r rrrr aaaa aaaa aaaa aaaa
+LRI         0000 0000 100r rrrr iiii iiii iiii iiii 
+???         0000 0000 101x xxxx 
+LR          0000 0000 110r rrrr mmmm mmmm mmmm mmmm 
+SR          0000 0000 111r rrrr mmmm mmmm mmmm mmmm 
+IF cc       0000 0010 0111 cccc 
+JMP cc      0000 0010 1001 cccc aaaa aaaa aaaa aaaa
+CALL cc     0000 0010 1011 cccc aaaa aaaa aaaa aaaa
+RET cc      0000 0010 1101 cccc 
 RTI         0000 0010 1111 1111
-ADDI *      0000 001r 0000 0000 iiii iiii iiii iiii 
-XORI *      0000 001r 0010 0000 iiii iiii iiii iiii 
-ANDI *      0000 001r 0100 0000 iiii iiii iiii iiii 
-ORI *       0000 001r 0110 0000 iiii iiii iiii iiii 
-CMPI *      0000 001r 1000 0000 iiii iiii iiii iiii 
-TCLR *      0000 001r 1010 0000 iiii iiii iiii iiii 
-TSET *      0000 001r 1100 0000 iiii iiii iiii iiii 
+ADDI        0000 001r 0000 0000 iiii iiii iiii iiii 
+XORI        0000 001r 0010 0000 iiii iiii iiii iiii 
+ANDI        0000 001r 0100 0000 iiii iiii iiii iiii 
+ORI         0000 001r 0110 0000 iiii iiii iiii iiii 
+CMPI        0000 001r 1000 0000 iiii iiii iiii iiii 
+TCLR        0000 001r 1010 0000 mmmm mmmm mmmm mmmm                 // Test all bits clear. Set ok=1 if (acR.m & m) == 0, ok=0 otherwise
+TSET        0000 001r 1100 0000 mmmm mmmm mmmm mmmm                 // Test all bits set. Set ok=1 if (acR.m & m) == m, ok=0 otherwise
 
 LSN         0000 0010 1100 1010         // LSN     ac0, ac1.m
 ASN         0000 0010 1100 1011         // ASN     ac0, ac1.m
 
-ILRR *      0000 00[1]d [0001] 00ss
-ILRRD *     0000 00[1]d [0001] 01ss
-ILRRI *     0000 00[1]d [0001] 10ss
-ILRRN *     0000 00[1]d [0001] 11ss
+ILRR        0000 00[1]d [0001] 00ss
+ILRRD       0000 00[1]d [0001] 01ss
+ILRRI       0000 00[1]d [0001] 10ss
+ILRRN       0000 00[1]d [0001] 11ss
 
-ADDIS *     0000 010d iiii iiii 
-CMPIS *     0000 011d iiii iiii 
-LRIS *      0000 1rrr iiii iiii 
+ADDIS       0000 010d iiii iiii 
+CMPIS       0000 011d iiii iiii 
+LRIS        0000 1rrr iiii iiii 
 ```
 
 ### Group 1
 
 ```
-LOOPI *     0001 [00]00 iiii iiii
+LOOPI       0001 [00]00 iiii iiii
 BLOOPI      0001 [00]01 iiii iiii aaaa aaaa aaaa aaaa 
-SBSET *     0001 [00]10 0000 0iii 
-SBCLR *     0001 [00]11 0000 0iii 
+SBSET       0001 [00]10 0000 0iii 
+SBCLR       0001 [00]11 0000 0iii 
 
 LSL         0001 [01]0r 00ii iiii
 LSR         0001 [01]0r 01ii iiii
 ASL         0001 [01]0r 10ii iiii
 ASR         0001 [01]0r 11ii iiii
-SI *        0001 [01]10 mmmm mmmm iiii iiii iiii iiii
-CALLR *     0001 [01]11 rrr1 1111 
-JMPR *      0001 [01]11 rrr0 1111 
+SI          0001 [01]10 mmmm mmmm iiii iiii iiii iiii
+CALLR       0001 [01]11 rrr1 1111 
+JMPR        0001 [01]11 rrr0 1111 
 
-LRR *       0001 [10]00 0ssd dddd 
-LRRD *      0001 [10]00 1ssd dddd 
-LRRI *      0001 [10]01 0ssd dddd 
-LRRN *      0001 [10]01 1ssd dddd 
-SRR *       0001 [10]10 0ssd dddd 
-SRRD *      0001 [10]10 1ssd dddd 
-SRRI *      0001 [10]11 0ssd dddd 
-SRRN *      0001 [10]11 1ssd dddd 
+LRR         0001 [10]00 0ssd dddd 
+LRRD        0001 [10]00 1ssd dddd 
+LRRI        0001 [10]01 0ssd dddd 
+LRRN        0001 [10]01 1ssd dddd 
+SRR         0001 [10]10 0ssd dddd 
+SRRD        0001 [10]10 1ssd dddd 
+SRRI        0001 [10]11 0ssd dddd 
+SRRN        0001 [10]11 1ssd dddd 
 
-MRR *       0001 [11]dd ddds ssss       // MRR $D, $S 
+MRR         0001 [11]dd ddds ssss       // MRR $D, $S 
 ```
 
 ### Group 2
 
 ```
-LRS *       0010 0ddd mmmm mmmm         // LRS $(0x18+D), @M 
-SRS *       0010 1sss mmmm mmmm         // SRS @M, $(0x18+S)
+LRS         0010 0ddd mmmm mmmm         // LRS $(0x18+D), @M 
+SRS         0010 1sss mmmm mmmm         // SRS @M, $(0x18+S)
 ```
 
 ### Group 3
 
 ```
-XORR *      0011 00sd xxxx xxxx         // XORR $acD.m, $axS.h 
-ANDR *      0011 01sd xxxx xxxx         // ANDR $acD.m, $axS.h 
-ORR *       0011 10sd xxxx xxxx         // ORR $acD.m, $axS.h 
-ANDC *      0011 110d xxxx xxxx         // ANDC $acD.m, $ac(1-D).m 
-ORC *       0011 111d xxxx xxxx         // ORC $acD.m, $ac(1-D).m 
+XORR        0011 00sd xxxx xxxx         // XORR $acD.m, $axS.h 
+ANDR        0011 01sd xxxx xxxx         // ANDR $acD.m, $axS.h 
+ORR         0011 10sd xxxx xxxx         // ORR $acD.m, $axS.h 
+ANDC        0011 110d xxxx xxxx         // ANDC $acD.m, $ac(1-D).m 
+ORC         0011 111d xxxx xxxx         // ORC $acD.m, $ac(1-D).m 
 ```
 
 ### Group 4
 
 ```
-ADDR *      0100 0ssd xxxx xxxx         // ADDR $acD, $(0x18+S) 
-ADDAX *     0100 10sd xxxx xxxx         // ADDAX $acD, $axS 
-ADD *       0100 110d xxxx xxxx         // ADD $acD, $ac(1-D) 
-ADDP *      0100 111d xxxx xxxx         // ADDP $acD 
+ADDR        0100 0ssd xxxx xxxx         // ADDR $acD, $(0x18+S) 
+ADDAX       0100 10sd xxxx xxxx         // ADDAX $acD, $axS 
+ADD         0100 110d xxxx xxxx         // ADD $acD, $ac(1-D) 
+ADDP        0100 111d xxxx xxxx         // ADDP $acD 
 ```
 
 ### Group 5
 
 ```
-SUBR *      0101 0ssd xxxx xxxx         // SUBR $acD, $(0x18+S) 
-SUBAX *     0101 10sd xxxx xxxx         // SUBAX $acD, $axS 
-SUB *       0101 110d xxxx xxxx         // SUB $acD, $ac(1-D) 
-SUBP *      0101 111d xxxx xxxx         // SUBP $acD 
+SUBR        0101 0ssd xxxx xxxx         // SUBR $acD, $(0x18+S) 
+SUBAX       0101 10sd xxxx xxxx         // SUBAX $acD, $axS 
+SUB         0101 110d xxxx xxxx         // SUB $acD, $ac(1-D) 
+SUBP        0101 111d xxxx xxxx         // SUBP $acD 
 ```
 
 ### Group 6
 
 ```
-MOVR *      0110 0ssd xxxx xxxx         // MOVR $acD, $(0x18+S) 
-MOVAX *     0110 10sd xxxx xxxx         // MOVAX $acD, $axS 
-MOV *       0110 110d xxxx xxxx         // MOV $acD, $ac(1-D) 
-MOVP *      0110 111d xxxx xxxx         // MOVP $acD 
+MOVR        0110 0ssd xxxx xxxx         // MOVR $acD, $(0x18+S) 
+MOVAX       0110 10sd xxxx xxxx         // MOVAX $acD, $axS 
+MOV         0110 110d xxxx xxxx         // MOV $acD, $ac(1-D) 
+MOVP        0110 111d xxxx xxxx         // MOVP $acD 
 ```
 
 ### Group 7
 
 ```
-ADDAXL *    0111 00sd xxxx xxxx         // ADDAXL $acD, $axS.l 
-INCM *      0111 010d xxxx xxxx         // INCM $acsD  (mid accum)
-INC *       0111 011d xxxx xxxx         // INC $acD 
-DECM *      0111 100d xxxx xxxx         // DECM $acsD  (mid)
-DEC *       0111 101d xxxx xxxx         // DEC $acD 
-NEG *       0111 110d xxxx xxxx         // NEG $acD 
-MOVNP *     0111 111d xxxx xxxx         // MOVNP $acD 
+ADDAXL      0111 00sd xxxx xxxx         // ADDAXL $acD, $axS.l 
+INCM        0111 010d xxxx xxxx         // INCM $acsD  (mid accum)
+INC         0111 011d xxxx xxxx         // INC $acD 
+DECM        0111 100d xxxx xxxx         // DECM $acsD  (mid)
+DEC         0111 101d xxxx xxxx         // DEC $acD 
+NEG         0111 110d xxxx xxxx         // NEG $acD 
+MOVNP       0111 111d xxxx xxxx         // MOVNP $acD 
 ```
 
 ### Group 8
 
 ```
-NX *        1000 r000 xxxx xxxx         (possibly mov r, r)
-CLR *       1000 r001 xxxx xxxx 
-CMP *       1000 0010 xxxx xxxx 
-UNUSED*     1000 0011 xxxx xxxx 
-CLRP *      1000 0100 xxxx xxxx 
+NX          1000 r000 xxxx xxxx         (possibly mov r, r)
+CLR         1000 r001 xxxx xxxx 
+CMP         1000 0010 xxxx xxxx 
+UNUSED      1000 0011 xxxx xxxx 
+CLRP        1000 0100 xxxx xxxx 
 TSTAXH      1000 011r xxxx xxxx 
 M2/M0       1000 101x xxxx xxxx 
 CLR15/SET15 1000 110x xxxx xxxx 
@@ -449,76 +449,76 @@ CLR40/SET40 1000 111x xxxx xxxx
 ### Group 9
 
 ```
-MUL *       1001 s000 xxxx xxxx         // MUL $axS.l, $axS.h 
-ASR16 *     1001 s001 xxxx xxxx         // ASR16 $acS 
-MULMVZ *    1001 s01r xxxx xxxx         // MULMVZ $axS.l, $axS.h, $acR 
-MULAC *     1001 s10r xxxx xxxx         // MULAC $axS.l, $axS.h, $acR 
-MULMV *     1001 s11r xxxx xxxx         // MULMV $axS.l, $axS.h, $acR 
+MUL         1001 s000 xxxx xxxx         // MUL $axS.l, $axS.h 
+ASR16       1001 s001 xxxx xxxx         // ASR16 $acS 
+MULMVZ      1001 s01r xxxx xxxx         // MULMVZ $axS.l, $axS.h, $acR 
+MULAC       1001 s10r xxxx xxxx         // MULAC $axS.l, $axS.h, $acR 
+MULMV       1001 s11r xxxx xxxx         // MULMV $axS.l, $axS.h, $acR 
 ```
 
 ### Group AB
 
 ```
-MULX *      101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
+MULX        101s t000 xxxx xxxx         // MULX $ax0.S, $ax1.T 
 ABS         1010 t001 xxxx xxxx         // ABS $acT
 TST         1011 t001 xxxx xxxx         // TST $acT
-MULXMVZ *   101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
-MULXAC *    101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
-MULXMV *    101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR    
+MULXMVZ     101s t01r xxxx xxxx         // MULXMVZ $ax0.S, $ax1.T, $acR 
+MULXAC      101s t10r xxxx xxxx         // MULXAC $ax0.S, $ax1.T, $acR 
+MULXMV      101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR    
 ```
 
 ### Group CD
 
 ```
-MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-CMPAR *     110r s001 xxxx xxxx         // CMPAR $acS.m, $ax1.l/h  (r=0: low, r=1: high) 
-MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
-MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
-MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
+MULC        110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
+CMPAR       110r s001 xxxx xxxx         // CMPAR $acS.m, $ax1.l/h  (r=0: low, r=1: high) 
+MULCMVZ     110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
+MULCAC      110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
+MULCMV      110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
 ```
 
 ### Group E
 
 ```
-MADDX **    1110 00st xxxx xxxx         // MADDX $(0x18+S*2), $(0x19+T*2) 
-MSUBX **    1110 01st xxxx xxxx         // MSUBX $(0x18+S*2), $(0x19+T*2) 
-MADDC **    1110 10st xxxx xxxx         // MADDC $acS.m, $axT.h 
-MSUBC **    1110 11st xxxx xxxx         // MSUBC $acS.m, $axT.h 
+MADDX       1110 00st xxxx xxxx         // MADDX $(0x18+S*2), $(0x19+T*2) 
+MSUBX       1110 01st xxxx xxxx         // MSUBX $(0x18+S*2), $(0x19+T*2) 
+MADDC       1110 10st xxxx xxxx         // MADDC $acS.m, $axT.h 
+MSUBC       1110 11st xxxx xxxx         // MSUBC $acS.m, $axT.h 
 ```
 
 ### Group F
 
 ```
-LSL16 *     1111 000d xxxx xxxx         // LSL16 $acD
-MADD *      1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
-LSR16 *     1111 010d xxxx xxxx         // LSR16 $acD
-MSUB *      1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
-ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $ax1.[l|h] 
-CLRL *      1111 110d xxxx xxxx         // CLRL $acD.l 
-MOVPZ *     1111 111d xxxx xxxx         // MOVPZ $acD 
+LSL16       1111 000d xxxx xxxx         // LSL16 $acD
+MADD        1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
+LSR16       1111 010d xxxx xxxx         // LSR16 $acD
+MSUB        1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
+ADDPAXZ     1111 10sd xxxx xxxx         // ADDPAXZ $acD, $ax1.[l|h] 
+CLRL        1111 110d xxxx xxxx         // CLRL $acD.l 
+MOVPZ       1111 111d xxxx xxxx         // MOVPZ $acD 
 ```
 
 ### Packed Group
 
 ```
-?? *        xxxx xxxx 0000 00rr     // NOP2
-DR *        xxxx xxxx 0000 01rr     // DR $arR 
-IR *        xxxx xxxx 0000 10rr     // IR $arR 
-NR *        xxxx xxxx 0000 11rr     // NR $arR, ixR
-MV *        xxxx xxxx 0001 ddss     // MV $(0x18+D), $(0x1c+S) 
-S *         xxxx xxxx 001s s0dd     // S @$D, $(0x1c+D)  
-SN *        xxxx xxxx 001s s1dd     // SN @$D, $(0x1c+D)  
-L *         xxxx xxxx 01dd d0ss     // L $(0x18+D), @$S 
-LN *        xxxx xxxx 01dd d1ss     // LN $(0x18+D), @$S 
+??          xxxx xxxx 0000 00rr     // NOP2
+DR          xxxx xxxx 0000 01rr     // DR $arR 
+IR          xxxx xxxx 0000 10rr     // IR $arR 
+NR          xxxx xxxx 0000 11rr     // NR $arR, ixR
+MV          xxxx xxxx 0001 ddss     // MV $(0x18+D), $(0x1c+S) 
+S           xxxx xxxx 001s s0dd     // S @$D, $(0x1c+D)  
+SN          xxxx xxxx 001s s1dd     // SN @$D, $(0x1c+D)  
+L           xxxx xxxx 01dd d0ss     // L $(0x18+D), @$S 
+LN          xxxx xxxx 01dd d1ss     // LN $(0x18+D), @$S 
 
-LS *        xxxx xxxx 10dd 000s     // LS $(0x18+D), $acS.m 
-SL *        xxxx xxxx 10dd 001s     // SL $acS.m, $(0x18+D)  
-LSN *       xxxx xxxx 10dd 010s     // LSN $(0x18+D), $acS.m 
-SLN *       xxxx xxxx 10dd 011s     // SLN $acS.m, $(0x18+D)
-LSM *       xxxx xxxx 10dd 100s     // LSM $(0x18+D), $acS.m 
-SLM *       xxxx xxxx 10dd 101s     // SLM $acS.m, $(0x18+D)
-LSNM *      xxxx xxxx 10dd 110s     // LSNM $(0x18+D), $acS.m 
-SLNM *      xxxx xxxx 10dd 111s     // SLNM $acS.m, $(0x18+D)
+LS          xxxx xxxx 10dd 000s     // LS $(0x18+D), $acS.m 
+SL          xxxx xxxx 10dd 001s     // SL $acS.m, $(0x18+D)  
+LSN         xxxx xxxx 10dd 010s     // LSN $(0x18+D), $acS.m 
+SLN         xxxx xxxx 10dd 011s     // SLN $acS.m, $(0x18+D)
+LSM         xxxx xxxx 10dd 100s     // LSM $(0x18+D), $acS.m 
+SLM         xxxx xxxx 10dd 101s     // SLM $acS.m, $(0x18+D)
+LSNM        xxxx xxxx 10dd 110s     // LSNM $(0x18+D), $acS.m 
+SLNM        xxxx xxxx 10dd 111s     // SLNM $acS.m, $(0x18+D)
 
 LD          xxxx xxxx 11dr 00ss     // LD $ax0.d, $ax1.r, @$arS 
 LDN         xxxx xxxx 11dr 01ss     // LDN $ax0.d, $ax1.r, @$arS

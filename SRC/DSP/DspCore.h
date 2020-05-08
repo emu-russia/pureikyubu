@@ -391,12 +391,17 @@ namespace DSP
 		uint16_t DspToCpuReadHi(bool ReadByDsp);
 		uint16_t DspToCpuReadLo(bool ReadByDsp);
 
-		// Multiplier
+		// Multiplier and ALU
 		
-		static void PackProd(DspProduct &prod);
+		static int64_t SignExtend40(int64_t);
+		static int64_t SignExtend16(int16_t);
+
+		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
 		static DspProduct Muls(uint16_t a, uint16_t b);
 		static DspProduct Mulu(uint16_t a, uint16_t b);
+
+		void ArAdvance(int r, int16_t step);
 
 		static void InitSubsystem();
 		static void ShutdownSubsystem();

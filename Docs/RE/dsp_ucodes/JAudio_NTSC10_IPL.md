@@ -422,9 +422,13 @@ Wait until Dsp Dma completed.
 	0127 62 31       	movr 	ac0, ax0.h      	s    	@ar1, ac0.m
 	0128 49 00       	addax	ac1, ax0        	     	
 0129 02 DF       	ret  	
+```
 
+## Very suspicious loop
 
+Why is ORR doing here??
 
+```
 012A 8F 00       	set40	                	     	
 012B 1C 03       	mrr  	ar0, ar3
 012C 00 DB 03 8E 	lr   	ax1.h, $0x038E
@@ -439,9 +443,10 @@ Wait until Dsp Dma completed.
 	0138 AE 30       	mulxmv	ax0.l, ax1.h, ac0	s    	@ar0, ac0.m
 0139 8E 00       	clr40	                	     	
 013A 02 DF       	ret  	
+```
 
 
-
+```
 013B 00 F9 03 61 	sr   	$0x0361, ax0.h
 013D 1F C0       	mrr  	ac0.m, ar0
 013E 02 00 FF FC 	addi 	ac0.m, #0xFFFC
@@ -546,6 +551,9 @@ Wait until Dsp Dma completed.
 	01B8 1B 3E       	srri 	@ar1, ac0.m
 	01B9 1C 1F       	mrr  	ar0, ac1.m
 01BA 02 9F 01 9F 	j    	$0x019F
+```
+
+```
 01BC 8A 00       	m2   	                	     	
 01BD 00 88 00 07 	lri  	lm0, #0x0007
 01BF 11 50 01 CC 	bloopi	#0x50, $0x01CC
@@ -564,9 +572,9 @@ Wait until Dsp Dma completed.
 01CD 00 88 FF FF 	lri  	lm0, #0xFFFF
 01CF 8B 00       	m0   	                	     	
 01D0 02 DF       	ret  	
+```
 
-
-
+```
 01D1 00 88 00 03 	lri  	lm0, #0x0003
 01D3 00 85 00 00 	lri  	ix1, #0x0000
 01D5 00 87 00 00 	lri  	ix3, #0x0000
