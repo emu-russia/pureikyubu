@@ -4,5 +4,8 @@
 
 namespace DSP
 {
-
+	uint16_t DspCore::DecodeAdpcm(uint8_t nibble)
+	{
+		return 0;
+	}
 }

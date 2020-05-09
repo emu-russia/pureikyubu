@@ -805,6 +805,7 @@ namespace DSP
 
 				case (DspAddress)DspHardwareRegs::ACFMT:
 					Accel.Fmt = value;
+					ResetAccel();
 					break;
 				case (DspAddress)DspHardwareRegs::ACPDS:
 					Accel.AdpcmPds = value;
@@ -1054,6 +1055,8 @@ namespace DSP
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
 		memset(&Accel, 0, sizeof(Accel));
+
+		ResetAccel();
 	}
 
 	// Instant DMA

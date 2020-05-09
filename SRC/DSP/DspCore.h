@@ -285,27 +285,43 @@ namespace DSP
 			uint16_t AdpcmYn1;				// y[n - 1]
 			uint16_t AdpcmYn2;				// y[n - 2]
 			uint16_t AdpcmGan;				// gain to be applied
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} StartAddress;
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} EndAddress;
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} CurrAddress;
+			bool readingSecondNibble;
+			uint8_t cachedByte;
 		} Accel;
 
 		void ResetIfx();
 		void DoDma();
 		uint16_t AccelReadData(bool raw);
 		void AccelWriteData(uint16_t data);
+		void ResetAccel();
+		uint16_t DecodeAdpcm(uint8_t nibble);
 
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 32;
