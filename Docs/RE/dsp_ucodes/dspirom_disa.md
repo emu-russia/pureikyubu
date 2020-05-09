@@ -1962,14 +1962,14 @@ Called from IPL, CardUnlock
 878C 00 DE 08 00    lr      ac0.m, $0x0800
 878E 14 78          lsr     ac0, #0x38
 878F 2E DA          srs     $(ACPDS), ac0.m
-8790 16 A0 01 BA    si      $(UnkHW_FFA0), #0x01BA
-8792 16 A1 04 B0    si      $(UnkHW_FFA1), #0x04B0
-8794 16 A2 04 4D    si      $(UnkHW_FFA2), #0x044D
-8796 16 A3 01 E7    si      $(UnkHW_FFA3), #0x01E7
-8798 16 A4 02 DA    si      $(UnkHW_FFA4), #0x02DA
-879A 16 A5 04 52    si      $(UnkHW_FFA5), #0x0452
-879C 16 A6 05 7A    si      $(UnkHW_FFA6), #0x057A
-879E 16 A7 01 BF    si      $(UnkHW_FFA7), #0x01BF
+8790 16 A0 01 BA    si      $(ADPCM_A00), #0x01BA
+8792 16 A1 04 B0    si      $(ADPCM_A10), #0x04B0
+8794 16 A2 04 4D    si      $(ADPCM_A20), #0x044D
+8796 16 A3 01 E7    si      $(ADPCM_A30), #0x01E7
+8798 16 A4 02 DA    si      $(ADPCM_A40), #0x02DA
+879A 16 A5 04 52    si      $(ADPCM_A50), #0x0452
+879C 16 A6 05 7A    si      $(ADPCM_A60), #0x057A
+879E 16 A7 01 BF    si      $(ADPCM_A70), #0x01BF
 87A0 28 DB          srs     $(ACYN1), ax0.l
 87A1 28 DC          srs     $(ACYN2), ax0.l
 87A2 00 80 FF DD    lri     ar0, #0xFFDD

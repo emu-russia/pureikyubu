@@ -113,16 +113,20 @@ namespace DSP
 		regs.prod.m1 = 0;
 		regs.prod.m2 = 0;
 
-		regs.pc = IROM_START_ADDRESS;		// IROM start
+		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
 
-		ResetIfx();
+		pendingInterrupt = false;
 	}
 
 	void DspCore::HardReset()
 	{
 		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
 		SoftReset();
+		ResetIfx();
+		// Hard Reset always from IROM start
 		regs.pc = IROM_START_ADDRESS;
+		pendingInterrupt = false;
+		pendingSoftReset = false;
 		Suspend();
 	}
 
@@ -169,6 +173,24 @@ namespace DSP
 					Suspend();
 					return;
 				}
+			}
+
+			if (pendingInterrupt)
+			{
+				pendingInterruptDelay--;
+				if (pendingInterruptDelay == 0)
+				{
+					DBReport2(DbgChannel::DSP, "Interrupt Acknowledge\n");
+					pendingInterrupt = false;
+					Exception(DspException::INT);
+				}
+			}
+
+			if (pendingSoftReset)
+			{
+				pendingSoftReset = false;
+				DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+				SoftReset();
 			}
 
 			interp->ExecuteInstr();
@@ -303,6 +325,24 @@ namespace DSP
 		{
 			DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
 			return;
+		}
+
+		if (pendingInterrupt)
+		{
+			pendingInterruptDelay--;
+			if (pendingInterruptDelay == 0)
+			{
+				DBReport2(DbgChannel::DSP, "Interrupt Acknowledge\n");
+				pendingInterrupt = false;
+				Exception(DspException::INT);
+			}
+		}
+
+		if (pendingSoftReset)
+		{
+			pendingSoftReset = false;
+			DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+			SoftReset();
 		}
 
 		interp->ExecuteInstr();
@@ -872,34 +912,38 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::SoftReset\n");
-			SoftReset();
+			DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
+			pendingSoftReset = true;
+			Run();
 		}
 	}
 
 	bool DspCore::DSPGetResetBit()
 	{
-		return false;
+		return pendingSoftReset;
 	}
 
 	void DspCore::DSPSetIntBit(bool val)
 	{
-		if (val)
+		if (val && !pendingSoftReset)
 		{
-			DBReport2(DbgChannel::DSP, "Interrupt\n");
-			Exception(DspException::INT);
+			DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			pendingInterrupt = true;
+			pendingInterruptDelay = 32;
 		}
 	}
 
 	bool DspCore::DSPGetIntBit()
 	{
-		// No meaning?
-		return false;
+		return pendingInterrupt;
 	}
 
 	void DspCore::DSPSetHaltBit(bool val)
 	{
-		val ? Suspend() : Run();
+		if (!pendingSoftReset)
+		{
+			val ? Suspend() : Run();
+		}
 	}
 
 	bool DspCore::DSPGetHaltBit()
@@ -1061,21 +1105,6 @@ namespace DSP
 #endif
 	}
 
-	// Read data by accelerator and optionally decode (raw=false)
-	uint16_t DspCore::AccelReadData(bool raw)
-	{
-
-		// If the current sample address exceeds the loop-end address, the streaming cache will reset itself to the loop-start position and assert an interrupt.
-
-		return 0;
-	}
-
-	// Write RAW data to ARAM
-	void DspCore::AccelWriteData(uint16_t data)
-	{
-
-	}
-
 	#pragma endregion "IFX"
 
 	#pragma region "Multiplier and ALU"
@@ -1103,6 +1132,10 @@ namespace DSP
 		return res;
 	}
 
+	// The current multiplication result (product) is stored as a set of "temporary" values (prod.h, prod.m1, prod.m2, prod.l).
+	// The exact algorithm of the multiplier is unknown, but you can guess that these temporary results are collected from partial 
+	// sums of multiplications between the upper and lower halves of the 16-bit operands.
+
 	void DspCore::PackProd(DspProduct& prod)
 	{
 		int64_t hi = (int64_t)prod.h << 32;
@@ -1121,7 +1154,9 @@ namespace DSP
 		prod.l = prod.bitsPacked & 0xffff;
 	}
 
-	DspProduct DspCore::Muls(uint16_t a, uint16_t b)
+	// Treat operands as signed 16-bit numbers and produce signed multiply product.
+
+	DspProduct DspCore::Muls(int16_t a, int16_t b)
 	{
 		DspProduct prod;
 		prod.l = 0;
@@ -1131,14 +1166,26 @@ namespace DSP
 
 		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
 
+		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
+		int32_t c1 = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(b & 0xff));
+		int32_t c2 = ((int32_t)(a & 0xff)) * ((int32_t)(int16_t)(b & 0xff00));
+		int32_t l = ((int32_t)(a & 0xff)) * ((int32_t)(b & 0xff));
+
+		int32_t m = c1 + c2 + l;
+
+		prod.h = ((a ^ b) & 0x8000) ? 0xff : 0;
+		prod.m1 = u >> 16;
+		prod.m2 = m >> 16;
+		prod.l = m & 0xffff;
+
 		return prod;
 	}
+
+	// Treat operands as unsigned 16-bit numbers and produce signed multiply product.
 
 	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
 	{
 		DspProduct prod;
-
-		DBReport("MUL Unsigned 0x%04X * 0x%04X\n", a, b);
 
 		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
 

@@ -507,16 +507,22 @@ namespace DSP
         uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
         uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
 
-        DspProduct prod = DspCore::Muls(a, b);
+        DBReport("MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
+
+        DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b);
 
         DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);
+
+        DspCore::PackProd(prod);
 
         DspLongAccumulator acc;
         acc.bits = prod.bitsPacked;
 
         DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
         
+        DBReport("Signed Multiply by host: 0x%llX\n", ((int64_t)(int32_t)(int16_t)a * (int64_t)(int32_t)(int16_t)b) & 0xff'ffff'ffff);
+
         return nullptr;
     }
 
@@ -525,15 +531,21 @@ namespace DSP
         uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
         uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
 
+        DBReport("MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
+
         DspProduct prod = DspCore::Mulu(a, b);
 
         DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);
 
+        DspCore::PackProd(prod);
+
         DspLongAccumulator acc;
         acc.bits = prod.bitsPacked;
 
         DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
+
+        DBReport("Unsigned Multiply by host: 0x%08X\n", (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b);
 
         return nullptr;
     }

@@ -39,6 +39,12 @@
     <ClCompile Include="..\DspPacked.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DspAccel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\DspAdpcm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DspAnalyzer.h">

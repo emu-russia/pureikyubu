@@ -93,3 +93,4 @@ void    AIClose();
 
 void    DSPAssertInt();
 bool    DSPGetInterruptStatus();
+bool    DSPGetResetModifier();

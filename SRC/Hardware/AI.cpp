@@ -386,6 +386,11 @@ bool DSPGetInterruptStatus()
     return (AIDCR & AIDCR_DSPINT) != 0;
 }
 
+bool DSPGetResetModifier()
+{
+    return (AIDCR & AIDCR_RESETMOD) != 0;
+}
+
 // ---------------------------------------------------------------------------
 
 // AI DMA and DVD Audio are played uncompetitively from different streams.
