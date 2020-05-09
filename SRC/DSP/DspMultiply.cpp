@@ -15,7 +15,7 @@ namespace DSP
 
 	void DspInterpreter::Mul(int16_t a, int16_t b)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
@@ -24,7 +24,7 @@ namespace DSP
 
 	void DspInterpreter::Madd(int16_t a, int16_t b)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
@@ -38,7 +38,7 @@ namespace DSP
 
 	void DspInterpreter::Msub(int16_t a, int16_t b)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
@@ -52,7 +52,7 @@ namespace DSP
 
 	void DspInterpreter::Mulac(int16_t a, int16_t b, int r)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
@@ -66,7 +66,7 @@ namespace DSP
 
 	void DspInterpreter::Mulmv(int16_t a, int16_t b, int r)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
@@ -80,7 +80,7 @@ namespace DSP
 
 	void DspInterpreter::Mulmvz(int16_t a, int16_t b, int r)
 	{
-		if (core->regs.sr.su)
+		if (core->regs.sr.am == 0)
 		{
 			b <<= 1;
 		}
