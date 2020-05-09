@@ -164,7 +164,7 @@ namespace DSP
 		ACEAL = 0xFFD7,		// Accelerator end address L 
 		ACCAH = 0xFFD8,		// Accelerator current address H 
 		ACCAL = 0xFFD9,		// Accelerator current address L 
-		ACDAT = 0xFFDD,		// Decoded Accelerator data (Read)
+		ACDAT = 0xFFDD,		// Decoded Accelerator data (Read)  y[n]
 		AMDM = 0xFFEF,		// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
 		ACFMT = 0xFFD1,			// sample format used
@@ -309,6 +309,7 @@ namespace DSP
 
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 32;
+		bool pendingSoftReset = false;
 
 	public:
 
@@ -401,7 +402,7 @@ namespace DSP
 
 		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
-		static DspProduct Muls(uint16_t a, uint16_t b);
+		static DspProduct Muls(int16_t a, int16_t b);
 		static DspProduct Mulu(uint16_t a, uint16_t b);
 
 		void ArAdvance(int r, int16_t step);

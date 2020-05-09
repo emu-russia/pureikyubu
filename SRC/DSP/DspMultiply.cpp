@@ -1,5 +1,12 @@
 // DSP multiply instructions
 
+// The Duddie documentation describing multiplication instructions everywhere states that operands are treated as signed 16-bit numbers.
+// But there are also mentioned about 2 control bits of the status register:
+// - Bit 15 (SU): Operands are signed (1 = unsigned)
+// - Bit 13 (AM): Product multiply result by 2 (when AM = 0) 
+
+// Did not notice that microcodes check flags after multiplication operations, so leave flags for now..
+
 #include "pch.h"
 
 namespace DSP
@@ -80,7 +87,6 @@ namespace DSP
 	{
 		// Add product register to accumulator register $acR.
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS (treat them both as signed).
-		//core->UnpackProd(0);
 		core->regs.prod.h = core->regs.prod.l = core->regs.prod.m1 = core->regs.prod.m2 = 0;
 	}
 
@@ -129,7 +135,7 @@ namespace DSP
 
 	void DspInterpreter::MULMVZ(AnalyzeInfo& info)
 	{
-		// Move product register to accumulator register $acRand clear low part of accumulator register $acR.l.
+		// Move product register to accumulator register $acR and clear low part of accumulator register $acR.l.
 		// Multiply low part $axS.l of secondary accumulator $axS by high part $axS.h of secondary accumulator $axS (treat them both as signed).
 		core->regs.prod.h = core->regs.prod.l = core->regs.prod.m1 = core->regs.prod.m2 = 0;
 	}
