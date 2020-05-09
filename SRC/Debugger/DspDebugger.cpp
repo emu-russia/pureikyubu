@@ -29,13 +29,16 @@ namespace Debug
 		rect.top = 18;
 		rect.right = 79;
 		rect.bottom = 59;
-		AddWindow(new DspImem(rect, "DspImem"));
+		imemWindow = new DspImem(rect, "DspImem");
+		AddWindow(imemWindow);
 
 		SetWindowFocus("DspImem");
 	}
 
 	void DspDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
+		DSP::DspAddress targetAddress = 0;
+
 		switch (Vkey)
 		{
 			case VK_F1:
@@ -46,6 +49,47 @@ namespace Debug
 				break;
 			case VK_F3:
 				SetWindowFocus("DspImem");
+				break;
+
+			case VK_F5:
+				// Suspend/Run both cores
+				if (Flipper::HW->DSP->IsRunning())
+				{
+					Flipper::HW->DSP->Suspend();
+					Gekko::Gekko->Suspend();
+				}
+				else
+				{
+					Flipper::HW->DSP->Run();
+					Gekko::Gekko->Run();
+				}
+				break;
+
+			case VK_F10:
+				if (!Flipper::HW->DSP->IsRunning())
+				{
+					if (imemWindow->IsCall(Flipper::HW->DSP->regs.pc, targetAddress))
+					{
+						Flipper::HW->DSP->AddOneShotBreakpoint(Flipper::HW->DSP->regs.pc + 2);
+						Flipper::HW->DSP->Run();
+					}
+					else
+					{
+						Flipper::HW->DSP->Step();
+						if (!imemWindow->AddressVisible(Flipper::HW->DSP->regs.pc))
+						{
+							imemWindow->current = imemWindow->cursor = Flipper::HW->DSP->regs.pc;
+						}
+					}
+				}
+				break;
+
+			case VK_F11:
+				Flipper::HW->DSP->Step();
+				if (!imemWindow->AddressVisible(Flipper::HW->DSP->regs.pc))
+				{
+					imemWindow->current = imemWindow->cursor = Flipper::HW->DSP->regs.pc;
+				}
 				break;
 		}
 
@@ -533,49 +577,11 @@ namespace Debug
 			case VK_END:
 				current = DSP::DspCore::IROM_START_ADDRESS;
 				break;
-
-			case VK_F5:
-				if (Flipper::HW->DSP->IsRunning())
-				{
-					Flipper::HW->DSP->Suspend();
-				}
-				else
-				{
-					Flipper::HW->DSP->Run();
-				}
-				break;
 			
 			case VK_F9:
 				if (AddressVisible(cursor))
 				{
 					Flipper::HW->DSP->ToggleBreakpoint(cursor);
-				}
-				break;
-
-			case VK_F10:
-				if (!Flipper::HW->DSP->IsRunning())
-				{
-					if (IsCall(Flipper::HW->DSP->regs.pc, targetAddress))
-					{
-						Flipper::HW->DSP->AddOneShotBreakpoint(Flipper::HW->DSP->regs.pc + 2);
-						Flipper::HW->DSP->Run();
-					}
-					else
-					{
-						Flipper::HW->DSP->Step();
-						if (!AddressVisible(Flipper::HW->DSP->regs.pc))
-						{
-							current = cursor = Flipper::HW->DSP->regs.pc;
-						}
-					}
-				}
-				break;
-
-			case VK_F11:
-				Flipper::HW->DSP->Step();
-				if (!AddressVisible(Flipper::HW->DSP->regs.pc))
-				{
-					current = cursor = Flipper::HW->DSP->regs.pc;
 				}
 				break;
 

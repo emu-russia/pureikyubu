@@ -6,8 +6,12 @@
 
 namespace Debug
 {
+	class DspImem;
+
 	class DspDebug : public Cui
 	{
+		DspImem* imemWindow = nullptr;
+
 	public:
 		DspDebug(std::string title, size_t width, size_t height);
 
@@ -42,6 +46,8 @@ namespace Debug
 
 	class DspImem : public CuiWindow
 	{
+		friend DspDebug;
+
 		DSP::DspAddress current = 0x8000;
 		DSP::DspAddress cursor = 0x8000;
 		size_t wordsOnScreen = 0;

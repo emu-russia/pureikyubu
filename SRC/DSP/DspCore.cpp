@@ -113,15 +113,17 @@ namespace DSP
 		regs.prod.m1 = 0;
 		regs.prod.m2 = 0;
 
-		regs.pc = IROM_START_ADDRESS;		// IROM start
+		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
 
-		ResetIfx();
+		pendingInterrupt = false;
 	}
 
 	void DspCore::HardReset()
 	{
 		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
 		SoftReset();
+		ResetIfx();
+		// Hard Reset always from IROM start
 		regs.pc = IROM_START_ADDRESS;
 		Suspend();
 	}
@@ -168,6 +170,17 @@ namespace DSP
 					oneShotBreakpoint = 0xffff;
 					Suspend();
 					return;
+				}
+			}
+
+			if (pendingInterrupt)
+			{
+				pendingInterruptDelay--;
+				if (pendingInterruptDelay == 0)
+				{
+					DBReport2(DbgChannel::DSP, "Interrupt Acknowledge\n");
+					pendingInterrupt = false;
+					Exception(DspException::INT);
 				}
 			}
 
@@ -303,6 +316,17 @@ namespace DSP
 		{
 			DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
 			return;
+		}
+
+		if (pendingInterrupt)
+		{
+			pendingInterruptDelay--;
+			if (pendingInterruptDelay == 0)
+			{
+				DBReport2(DbgChannel::DSP, "Interrupt Acknowledge\n");
+				pendingInterrupt = false;
+				Exception(DspException::INT);
+			}
 		}
 
 		interp->ExecuteInstr();
@@ -886,15 +910,15 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "Interrupt\n");
-			Exception(DspException::INT);
+			DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			pendingInterrupt = true;
+			pendingInterruptDelay = 32;
 		}
 	}
 
 	bool DspCore::DSPGetIntBit()
 	{
-		// No meaning?
-		return false;
+		return pendingInterrupt;
 	}
 
 	void DspCore::DSPSetHaltBit(bool val)
@@ -1059,21 +1083,6 @@ namespace DSP
 			UI::FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
-	}
-
-	// Read data by accelerator and optionally decode (raw=false)
-	uint16_t DspCore::AccelReadData(bool raw)
-	{
-
-		// If the current sample address exceeds the loop-end address, the streaming cache will reset itself to the loop-start position and assert an interrupt.
-
-		return 0;
-	}
-
-	// Write RAW data to ARAM
-	void DspCore::AccelWriteData(uint16_t data)
-	{
-
 	}
 
 	#pragma endregion "IFX"

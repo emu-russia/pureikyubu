@@ -19,6 +19,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\DspAccel.cpp" />
+    <ClCompile Include="..\DspAdpcm.cpp" />
     <ClCompile Include="..\DspAnalyzer.cpp" />
     <ClCompile Include="..\DspCommands.cpp" />
     <ClCompile Include="..\DspCore.cpp" />

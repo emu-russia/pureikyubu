@@ -301,7 +301,7 @@ void CPOpen(HWConfig * config)
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));
 
-    fifo.log = true;
+    fifo.log = false;
 
     // command processor
     MISetTrap(16, CP_SR         , read_cp_sr, NULL);

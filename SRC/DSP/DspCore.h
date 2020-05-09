@@ -307,6 +307,9 @@ namespace DSP
 		uint16_t AccelReadData(bool raw);
 		void AccelWriteData(uint16_t data);
 
+		bool pendingInterrupt = false;
+		int pendingInterruptDelay = 32;
+
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
