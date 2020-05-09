@@ -994,23 +994,28 @@ namespace DSP
 			case DspInstruction::XORI: XORI(info); break;
 			case DspInstruction::XORR: XORR(info); break;
 
+			case DspInstruction::MUL: MUL(info); break;
+			case DspInstruction::MULC: MULC(info); break;
+			case DspInstruction::MULX: MULX(info); break;
+
 			case DspInstruction::MADD: MADD(info); break;
 			case DspInstruction::MADDC: MADDC(info); break;
 			case DspInstruction::MADDX: MADDX(info); break;
+
 			case DspInstruction::MSUB: MSUB(info); break;
 			case DspInstruction::MSUBC: MSUBC(info); break;
 			case DspInstruction::MSUBX: MSUBX(info); break;
-			case DspInstruction::MUL: MUL(info); break;
+
 			case DspInstruction::MULAC: MULAC(info); break;
-			case DspInstruction::MULC: MULC(info); break;
 			case DspInstruction::MULCAC: MULCAC(info); break;
-			case DspInstruction::MULCMV: MULCMV(info); break;
-			case DspInstruction::MULCMVZ: MULCMVZ(info); break;
-			case DspInstruction::MULMV: MULMV(info); break;
-			case DspInstruction::MULMVZ: MULMVZ(info); break;
-			case DspInstruction::MULX: MULX(info); break;
 			case DspInstruction::MULXAC: MULXAC(info); break;
+
+			case DspInstruction::MULMV: MULMV(info); break;
+			case DspInstruction::MULCMV: MULCMV(info); break;
 			case DspInstruction::MULXMV: MULXMV(info); break;
+
+			case DspInstruction::MULMVZ: MULMVZ(info); break;
+			case DspInstruction::MULCMVZ: MULCMVZ(info); break;
 			case DspInstruction::MULXMVZ: MULXMVZ(info); break;
 
 			case DspInstruction::NOP:

@@ -188,6 +188,12 @@ namespace DSP
 		bool CheckLoop();
 		void LDCommon(AnalyzeInfo& info);
 		void LDAXCommon(AnalyzeInfo& info);
+		void Mul(int16_t a, int16_t b);
+		void Madd(int16_t a, int16_t b);
+		void Msub(int16_t a, int16_t b);
+		void Mulac(int16_t a, int16_t b, int r);
+		void Mulmv(int16_t a, int16_t b, int r);
+		void Mulmvz(int16_t a, int16_t b, int r);
 
 		// TODO: Cache analyzeinfo?
 
