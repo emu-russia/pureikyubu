@@ -1972,7 +1972,7 @@ Called from IPL, CardUnlock
 879E 16 A7 01 BF    si      $(ADPCM_A70), #0x01BF
 87A0 28 DB          srs     $(ACYN1), ax0.l
 87A1 28 DC          srs     $(ACYN2), ax0.l
-87A2 00 80 FF DD    lri     ar0, #0xFFDD
+87A2 00 80 FF DD    lri     ar0, #0xFFDD                            // Decoded ADPCM data
 87A4 00 81 04 09    lri     ar1, #0x0409
 87A6 00 82 04 0F    lri     ar2, #0x040F
 87A8 00 85 04 10    lri     ix1, #0x0410
@@ -2153,7 +2153,7 @@ Called from IPL, CardUnlock
 887E 16 A1 E5 41    si      $(ADPCM_A10), #0xE541
 8880 16 DE FC 82    si      $(ACGAN), #0xFC82
 8882 28 DB          srs     $(ACYN1), ax0.l
-8883 00 80 FF DD    lri     ar0, #0xFFDD
+8883 00 80 FF DD    lri     ar0, #0xFFDD                        // Decoded ADPCM data
 8885 00 81 04 09    lri     ar1, #0x0409
 8887 00 82 04 0F    lri     ar2, #0x040F
 8889 00 85 04 10    lri     ix1, #0x0410

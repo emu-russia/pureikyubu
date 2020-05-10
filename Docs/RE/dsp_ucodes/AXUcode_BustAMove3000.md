@@ -1890,7 +1890,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0738 1C BF       	mrr  	ix1, ac1.m
 0739 00 9A 01 FC 	lri  	ax1.l, #0x01FC
 073B 00 9E 0E 48 	lri  	ac0.m, #0x0E48
-073D 00 81 FF DD 	lri  	ar1, #0xFFDD  				// Accelerator data
+073D 00 81 FF DD 	lri  	ar1, #0xFFDD  				// Decoded ADPCM data
 073F 00 83 0D 80 	lri  	ar3, #0x0D80
 0741 00 64 07 52 	bloop	ix0, $0x0752
 0743 18 27       	lrr  	ix3, @ar1  					// Read sample
@@ -2057,7 +2057,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 07E9 1C BF       	mrr  	ix1, ac1.m
 07EA 00 9A 01 FC 	lri  	ax1.l, #0x01FC
 07EC 00 9E 0E 49 	lri  	ac0.m, #0x0E49
-07EE 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Accelerator data
+07EE 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Decoded ADPCM data
 07F0 00 83 0D 80 	lri  	ar3, #0x0D80
 07F2 00 64 08 03 	bloop	ix0, $0x0803
 07F4 18 27       	lrr  	ix3, @ar1
@@ -2188,7 +2188,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0875 19 5E       	lrri 	ac0.m, @ar2
 0876 2E DC       	srs  	$(ACYN2), ac0.m
 0877 00 C0 0E 42 	lr   	ar0, $0x0E42
-0879 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Accelerator data
+0879 00 81 FF DD 	lri  	ar1, #0xFFDD 						// Decoded ADPCM data
 087B 11 20 08 80 	bloopi	#0x20, $0x0880
 087D 18 24       	lrr  	ix0, @ar1
 087E 1B 04       	srri 	@ar0, ix0
@@ -2972,6 +2972,8 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 ```
 
 ## Sample Rate Converter (SRC) Table
+
+JumpTable5, Jump Table 5
 
 ```
 0D4C 06 E0 								// 4-tap
