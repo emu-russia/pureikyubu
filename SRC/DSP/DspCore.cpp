@@ -70,6 +70,11 @@ namespace DSP
 
 	void DspCore::Exception(DspException id)
 	{
+		if (logDspInterrupts)
+		{
+			DBReport2(DbgChannel::DSP, "Exception: 0x%04X\n", id);
+		}
+
 		regs.st[0].push_back(regs.pc);
 		regs.st[1].push_back((DspAddress)regs.sr.bits);
 		regs.pc = (DspAddress)id * 2;
@@ -85,6 +90,16 @@ namespace DSP
 
 	void DspCore::SoftReset()
 	{
+		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
+		DBReport2(DbgChannel::DSP, "Reset pc = 0x%04X\n", regs.pc);
+
+		pendingInterrupt = false;
+	}
+
+	void DspCore::HardReset()
+	{
+		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
+
 		savedGekkoTicks = Gekko::Gekko->GetTicks();
 
 		for (int i = 0; i < _countof(regs.st); i++)
@@ -97,11 +112,11 @@ namespace DSP
 		{
 			regs.ar[i] = 0;
 			regs.ix[i] = 0;
-			regs.lm[i] = 0;
+			regs.lm[i] = 0xFFFF;
 		}
 
 		for (int i = 0; i < 2; i++)
-		{ 
+		{
 			regs.ac[i].bits = 0;
 			regs.ax[i].bits = 0;
 		}
@@ -112,19 +127,13 @@ namespace DSP
 		regs.prod.l = 0;
 		regs.prod.m1 = 0;
 		regs.prod.m2 = 0;
-
-		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
-
-		pendingInterrupt = false;
-	}
-
-	void DspCore::HardReset()
-	{
-		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
-		SoftReset();
-		ResetIfx();
+		
 		// Hard Reset always from IROM start
 		regs.pc = IROM_START_ADDRESS;
+		DBReport2(DbgChannel::DSP, "Hard Reset pc = 0x%04X\n", regs.pc);
+
+		ResetIfx();
+
 		pendingInterrupt = false;
 		pendingSoftReset = false;
 		Suspend();
@@ -135,7 +144,10 @@ namespace DSP
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
-			DBReport2(DbgChannel::DSP, "DspCore::Run\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "DspCore::Run\n");
+			}
 			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 	}
@@ -144,7 +156,10 @@ namespace DSP
 	{
 		if (dspThread->IsRunning())
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
+			}
 			dspThread->Suspend();
 		}
 	}
@@ -164,6 +179,7 @@ namespace DSP
 				{
 					DBHalt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
 					Suspend();
+					Gekko::Gekko->Suspend();
 					return;
 				}
 
@@ -171,6 +187,7 @@ namespace DSP
 				{
 					oneShotBreakpoint = 0xffff;
 					Suspend();
+					Gekko::Gekko->Suspend();
 					return;
 				}
 			}
@@ -506,7 +523,7 @@ namespace DSP
 				regs.ac[0].m = val;
 				if (regs.sr.sxm)
 				{
-					regs.ac[0].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[0].h = (val & 0x8000) ? 0xFF : 0;
 					regs.ac[0].l = 0;
 				}
 				break;
@@ -514,7 +531,7 @@ namespace DSP
 				regs.ac[1].m = val;
 				if (regs.sr.sxm)
 				{
-					regs.ac[1].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[1].h = (val & 0x8000) ? 0xFF : 0;
 					regs.ac[1].l = 0;
 				}
 				break;
@@ -578,10 +595,8 @@ namespace DSP
 			case (int)DspRegister::ac0m:
 				if (regs.sr.sxm)
 				{
-					int64_t a = SignExtend40(regs.ac[0].sbits);
-					if (a < SHRT_MIN) a = SHRT_MIN;
-					if (a > SHRT_MAX) a = SHRT_MAX;
-					val = (uint16_t)a;
+					val = regs.ac[0].m;
+					val |= (regs.ac[0].h & 1) ? 0x8000 : 0;
 				}
 				else
 				{
@@ -591,10 +606,8 @@ namespace DSP
 			case (int)DspRegister::ac1m:
 				if (regs.sr.sxm)
 				{
-					int64_t a = SignExtend40(regs.ac[1].sbits);
-					if (a < SHRT_MIN) a = SHRT_MIN;
-					if (a > SHRT_MAX) a = SHRT_MAX;
-					val = (uint16_t)a;
+					val = regs.ac[1].m;
+					val |= (regs.ac[1].h & 1) ? 0x8000 : 0;
 				}
 				else
 				{
@@ -776,7 +789,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DIRQ:
 					if (value & 1)
 					{
-						if (log)
+						if (logDspInterrupts)
 						{
 							DBReport2(DbgChannel::DSP, "DspHardwareRegs::DIRQ\n");
 						}
@@ -913,7 +926,10 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
+			}
 			pendingSoftReset = true;
 			Run();
 		}
@@ -928,7 +944,10 @@ namespace DSP
 	{
 		if (val && !pendingSoftReset)
 		{
-			DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			}
 			pendingInterrupt = true;
 			pendingInterruptDelay = 32;
 		}
@@ -958,7 +977,7 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		if (log)
+		if (logMailbox)
 		{
 			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
 		}
@@ -967,7 +986,7 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		if (log)
+		if (logMailbox)
 		{
 			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
 		}
@@ -1007,7 +1026,7 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		if (log)
+		if (logMailbox)
 		{
 			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
 		}
@@ -1016,7 +1035,7 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		if (log)
+		if (logMailbox)
 		{
 			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
 		}
@@ -1064,8 +1083,11 @@ namespace DSP
 	{
 		uint8_t* ptr = nullptr;
 
-		//DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
-		//	DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		if (logDspDma)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
+				DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		}
 
 		if (DmaRegs.control.Imem)
 		{

@@ -46,7 +46,15 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
 
         // inform developer about aram transfers
         // and do some alignment checks
-        if(type == RAM_TO_ARAM) DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
+        if (type == RAM_TO_ARAM)
+        {
+            bool specialAramDspDma = maddr == 0x0100'0000 && ((AIDCR & AIDCR_RESETMOD) == 0);
+
+            if (!specialAramDspDma)
+            {
+                DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
+            }
+        }
         else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
 
         // main memory address is not a multiple of 32 bytes
@@ -72,7 +80,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         // blast data
         if (type == RAM_TO_ARAM)
         {
-            if (aaddr < DSP::DspCore::IRAM_SIZE && (AIDCR & AIDCR_RESETMOD))
+            if (aaddr < DSP::DspCore::IRAM_SIZE && ((AIDCR & AIDCR_RESETMOD) == 0) && maddr == 0x0100'0000)
             {
                 // Transfer size multiplied by 4
                 size *= 4;

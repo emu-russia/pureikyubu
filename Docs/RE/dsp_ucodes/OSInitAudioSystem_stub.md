@@ -21,7 +21,7 @@
 0014 8E 00       	clr40	                	     	
 0015 00 92 00 FF 	lri  	config, #0x00FF
 0017 00 80 80 00 	lri  	ar0, #0x8000
-0019 00 88 FF FF 	lri  	r08, #0xFFFF
+0019 00 88 FF FF 	lri  	lm0, #0xFFFF
 001B 00 84 10 00 	lri  	ix0, #0x1000
 
 001D 00 64 00 20 	bloop	ix0, $0x0020
@@ -29,11 +29,11 @@
 0020 00 00       	nop
 
 0021 00 80 10 00 	lri  	ar0, #0x1000
-0023 00 88 FF FF 	lri  	r08, #0xFFFF
+0023 00 88 FF FF 	lri  	lm0, #0xFFFF
 0025 00 84 08 00 	lri  	ix0, #0x0800
 
 0027 00 64 00 2A 	bloop	ix0, $0x002A
-0029 19 1E       	lrri 	ac0.m, @ar0 			// Prom DROM
+0029 19 1E       	lrri 	ac0.m, @ar0 			// Probe DROM
 002A 00 00       	nop  	
 
 002B 26 FC       	lrs  	ac0.m, $(DMBH)
@@ -59,6 +59,7 @@ void Reset () 		// 0010
 	// Probe 0x8000 reads (8 Kbytes)  IROM
 
 	ar0 = 0x8000;
+	lm0 = 0xFFFF;
 	ix0 = 0x1000;
 	while (ix0--)
 	{
@@ -68,6 +69,7 @@ void Reset () 		// 0010
 	// Probe 0x1000 reads (4 Kbytes)   DROM
 
 	ar0 = 0x1000;
+	lm0 = 0xFFFF;
 	ix0 = 0x800;
 	while (ix0--)
 	{

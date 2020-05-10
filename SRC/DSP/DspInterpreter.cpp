@@ -172,6 +172,8 @@ namespace DSP
 
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
@@ -181,6 +183,7 @@ namespace DSP
 		{
 			core->regs.pc = info.ImmOperand.Address + 1;
 		}
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::BLOOPI(AnalyzeInfo& info)
@@ -200,6 +203,11 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
+			if (core->logNonconditionalCallJmp)
+			{
+				DBReport2(DbgChannel::DSP, "0x%04X: CALL 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+			}
+
 			core->regs.st[0].push_back(core->regs.pc + 2);
 			core->regs.pc = info.ImmOperand.Address;
 		}
@@ -211,8 +219,19 @@ namespace DSP
 
 	void DspInterpreter::CALLR(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
+
+		uint16_t address = core->MoveFromReg(info.paramBits[0]);
+
+		if (core->logNonconditionalCallJmp)
+		{
+			DBReport2(DbgChannel::DSP, "0x%04X: CALLR 0x%04X\n", core->regs.pc, address);
+		}
+
 		core->regs.st[0].push_back(core->regs.pc + 1);
-		core->regs.pc = core->MoveFromReg(info.paramBits[0]);
+		core->regs.pc = address;
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::CLR(AnalyzeInfo& info)
@@ -373,6 +392,11 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
+			if (core->logNonconditionalCallJmp && info.cc == ConditionCode::Always)
+			{
+				DBReport2(DbgChannel::DSP, "0x%04X: JMP 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+			}
+
 			core->regs.pc = info.ImmOperand.Address;
 		}
 		else
@@ -383,11 +407,24 @@ namespace DSP
 
 	void DspInterpreter::JMPR(AnalyzeInfo& info)
 	{
-		core->regs.pc = core->MoveFromReg(info.paramBits[0]);
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
+
+		uint16_t address = core->MoveFromReg(info.paramBits[0]);
+
+		if (core->logNonconditionalCallJmp)
+		{
+			DBReport2(DbgChannel::DSP, "0x%04X: JMPR 0x%04X\n", core->regs.pc, address);
+		}
+
+		core->regs.pc = address;
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::LOOP(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 1, core->regs.pc + 1, core->MoveFromReg(info.paramBits[0]));
@@ -397,6 +434,7 @@ namespace DSP
 		{
 			core->regs.pc += 2;
 		}
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::LOOPI(AnalyzeInfo& info)

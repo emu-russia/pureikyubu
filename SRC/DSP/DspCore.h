@@ -225,6 +225,8 @@ namespace DSP
 
 	class DspCore
 	{
+		friend DspInterpreter;
+
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
 		DspAddress oneShotBreakpoint = 0xffff;
@@ -232,8 +234,8 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
 
-		const uint32_t GekkoTicksPerDspInstruction = 100;		// How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 500;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 10;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 
@@ -251,7 +253,6 @@ namespace DSP
 		SpinLock CpuToDspLock;
 
 		bool haltOnUnmappedMemAccess = false;
-		bool log = false;
 
 		struct
 		{
@@ -326,6 +327,14 @@ namespace DSP
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 32;
 		bool pendingSoftReset = false;
+
+		// Logging control
+		bool logMailbox = true;
+		bool logDspControlBits = true;
+		bool logDspInterrupts = true;
+		bool logNonconditionalCallJmp = true;
+		bool logDspDma = true;
+		bool logAccel = true;
 
 	public:
 
