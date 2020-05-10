@@ -330,10 +330,11 @@ namespace DSP
 
 		// Logging control
 		bool logMailbox = true;
+		bool logInsaneMailbox = false;
 		bool logDspControlBits = true;
 		bool logDspInterrupts = true;
-		bool logNonconditionalCallJmp = true;
-		bool logDspDma = true;
+		bool logNonconditionalCallJmp = false;
+		bool logDspDma = false;
 		bool logAccel = true;
 
 	public:

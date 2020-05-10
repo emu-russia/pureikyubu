@@ -39,34 +39,58 @@ AIControl ai;
 
 static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
 {
-    AIDCR = (uint16_t)data;
-
     if (ai.log)
     {
         DBReport2(DbgChannel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n", 
             data,
-            AIDCR & AIDCR_RESETMOD ? 1 : 0,
-            AIDCR & AIDCR_DSPINTMSK ? 1 : 0,
-            AIDCR & AIDCR_DSPINT ? 1 : 0,
-            AIDCR & AIDCR_ARINTMSK ? 1 : 0,
-            AIDCR & AIDCR_ARINT ? 1 : 0,
-            AIDCR & AIDCR_AIINTMSK ? 1 : 0,
-            AIDCR & AIDCR_AIINT ? 1 : 0,
-            AIDCR & AIDCR_HALT ? 1 : 0,
-            AIDCR & AIDCR_DINT ? 1 : 0,
-            AIDCR & AIDCR_RES ? 1 : 0 );
+            data & AIDCR_RESETMOD ? 1 : 0,
+            data & AIDCR_DSPINTMSK ? 1 : 0,
+            data & AIDCR_DSPINT ? 1 : 0,
+            data & AIDCR_ARINTMSK ? 1 : 0,
+            data & AIDCR_ARINT ? 1 : 0,
+            data & AIDCR_AIINTMSK ? 1 : 0,
+            data & AIDCR_AIINT ? 1 : 0,
+            data & AIDCR_HALT ? 1 : 0,
+            data & AIDCR_DINT ? 1 : 0,
+            data & AIDCR_RES ? 1 : 0 );
+    }
+
+    // set mask
+    if (data & AIDCR_DSPINTMSK)
+    {
+        AIDCR |= AIDCR_DSPINTMSK;
+    }
+    else
+    {
+        AIDCR &= ~AIDCR_DSPINTMSK;
+    }
+    if (data & AIDCR_ARINTMSK)
+    {
+        AIDCR |= AIDCR_ARINTMSK;
+    }
+    else
+    {
+        AIDCR &= ~AIDCR_ARINTMSK;
+    }
+    if (data & AIDCR_AIINTMSK)
+    {
+        AIDCR |= AIDCR_AIINTMSK;
+    }
+    else
+    {
+        AIDCR &= ~AIDCR_AIINTMSK;
     }
 
     // clear pending interrupts
-    if(AIDCR & AIDCR_DSPINT)
+    if(data & AIDCR_DSPINT)
     {
         AIDCR &= ~AIDCR_DSPINT;
     }
-    if(AIDCR & AIDCR_ARINT)
+    if(data & AIDCR_ARINT)
     {
         AIDCR &= ~AIDCR_ARINT;
     }
-    if(AIDCR & AIDCR_AIINT)
+    if(data & AIDCR_AIINT)
     {
         AIDCR &= ~AIDCR_AIINT;
     }
@@ -77,12 +101,22 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
     }
 
     // ARAM/DSP DMA always ready
-    AIDCR &= ~(AIDCR_ARDMA | AIDCR_DSPDMA);
+    data &= ~(AIDCR_ARDMA | AIDCR_DSPDMA);
+
+    // Reset modifier bit
+    if (data & AIDCR_RESETMOD)
+    {
+        AIDCR |= AIDCR_RESETMOD;
+    }
+    else
+    {
+        AIDCR &= ~AIDCR_RESETMOD;
+    }
 
     // DSP controls
-    Flipper::HW->DSP->DSPSetResetBit((AIDCR >> 0) & 1);
-    Flipper::HW->DSP->DSPSetIntBit  ((AIDCR >> 1) & 1);
-    Flipper::HW->DSP->DSPSetHaltBit ((AIDCR >> 2) & 1);
+    Flipper::HW->DSP->DSPSetResetBit((data >> 0) & 1);
+    Flipper::HW->DSP->DSPSetIntBit  ((data >> 1) & 1);
+    Flipper::HW->DSP->DSPSetHaltBit ((data >> 2) & 1);
 }
 
 static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
@@ -511,7 +545,7 @@ void AIOpen(HWConfig* config)
     ai.one_second = Gekko::Gekko->OneSecond();
     ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
-    ai.log = true;
+    ai.log = false;
     AIStopDMA();
 
     // set register traps

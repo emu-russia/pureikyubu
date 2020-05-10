@@ -26,19 +26,19 @@ namespace DSP
 				}
 				else
 				{
-					Accel.cachedByte = aram.mem[Accel.CurrAddress.addr];
+					Accel.cachedByte = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
 					val = Accel.cachedByte >> 4;
 					Accel.readingSecondNibble = true;
 				}
 				break;
 
 			case 1:
-				val = aram.mem[Accel.CurrAddress.addr];
+				val = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
 				Accel.CurrAddress.addr += 1;
 				break;
 
 			case 2:
-				val = _byteswap_ushort (*(uint16_t*)(aram.mem + Accel.CurrAddress.addr));
+				val = _byteswap_ushort (*(uint16_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff)));
 				Accel.CurrAddress.addr += 2;
 				break;
 
@@ -53,7 +53,7 @@ namespace DSP
 			val = DecodeAdpcm(val);
 		}
 
-		if (Accel.CurrAddress.addr >= (Accel.EndAddress.addr & 0x7FFF'FFFF))
+		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
 			Accel.CurrAddress.addr = Accel.StartAddress.addr;
 			DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
@@ -74,12 +74,12 @@ namespace DSP
 		switch (Accel.Fmt & 3)
 		{
 			case 1:
-				aram.mem[Accel.CurrAddress.addr] = (uint8_t)data;
+				aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff] = (uint8_t)data;
 				Accel.CurrAddress.addr += 1;
 				break;
 
 			case 2:
-				*(uint16_t*)(aram.mem + Accel.CurrAddress.addr) = _byteswap_ushort(data);
+				*(uint16_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff)) = _byteswap_ushort(data);
 				Accel.CurrAddress.addr += 2;
 				break;
 
@@ -88,7 +88,7 @@ namespace DSP
 				break;
 		}
 
-		if (Accel.CurrAddress.addr >= (Accel.EndAddress.addr & 0x7FFF'FFFF))
+		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
 			Accel.CurrAddress.addr = Accel.StartAddress.addr;
 			DBReport2(DbgChannel::DSP, "Accelerator Overflow while write\n");

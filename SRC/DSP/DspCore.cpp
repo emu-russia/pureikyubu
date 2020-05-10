@@ -971,6 +971,11 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
+		if (logInsaneMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
+		}
+
 		if (CpuToDspMailbox[0] & 0x8000)
 		{
 			if (logMailbox)
@@ -984,6 +989,11 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
+		if (logInsaneMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
+		}
+
 		CpuToDspMailbox[1] = value;
 		CpuToDspMailbox[0] |= 0x8000;
 		if (logMailbox)
@@ -1030,6 +1040,11 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
+		if (logInsaneMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
+		}
+
 		if (DspToCpuMailbox[0] & 0x8000)
 		{
 			if (logMailbox)
@@ -1043,6 +1058,11 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
+		if (logInsaneMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
+		}
+
 		DspToCpuMailbox[1] = value;
 		DspToCpuMailbox[0] |= 0x8000;
 		if (logMailbox)
