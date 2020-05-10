@@ -1,5 +1,10 @@
 # AX Mixer (Command 3)
 
+EDIT: This disassembly got screwed because Duddie has incorrect register index:
+- 0x19: ax0.h  -> Should be ax1.l
+- 0x1A: ax1.l  -> Should be ax0.h
+
+
 See complete disasm in AXUcode_BustAMove3000.
 
 ```

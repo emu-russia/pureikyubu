@@ -1159,9 +1159,9 @@ namespace DSP
 
 		if (info.madd)
 		{
-			if (!AddParam(info, (DspParameter)((int)DspParameter::ax0l + ss), ss))
+			if (!AddParam(info, ss ? DspParameter::ax0h : DspParameter::ax0l, ss))
 				return false;
-			if (!AddParam(info, (DspParameter)((int)DspParameter::ax1l + tt), tt))
+			if (!AddParam(info, tt ? DspParameter::ax1h : DspParameter::ax1l, tt))
 				return false;
 
 			if (hasR)
@@ -1177,7 +1177,7 @@ namespace DSP
 	bool Analyzer::GroupCD(AnalyzeInfo& info)
 	{
 		//MULC *      110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-		//CMPAR *	  110r s001 xxxx xxxx         // CMPAR $acS.m, $ax1.l/h  (r=0: low, r=1: high) 
+		//CMPAR *	  110r s001 xxxx xxxx         // CMPAR $acS.m, $ax[0|1].h
 		//MULCMVZ *   110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 		//MULCAC *    110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 		//MULCMV *    110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
@@ -1203,7 +1203,7 @@ namespace DSP
 
 					if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + ss), ss))
 						return false;
-					if (!AddParam(info, rr ? DspParameter::ax1h : DspParameter::ax1l, rr))
+					if (!AddParam(info, rr ? DspParameter::ax1h : DspParameter::ax0h, rr))
 						return false;
 				}
 				else
@@ -1329,7 +1329,7 @@ namespace DSP
 				info.instr = DspInstruction::ADDPAXZ;
 				if (!AddParam(info, (DspParameter)((int)DspParameter::ac0 + dd), dd))
 					return false;
-				if (!AddParam(info, ss ? DspParameter::ax1h : DspParameter::ax1l, ss))
+				if (!AddParam(info, ss ? DspParameter::ax1h : DspParameter::ax0h, ss))
 					return false;
 				break;
 			case 0b110:		// CLRL

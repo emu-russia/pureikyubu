@@ -1,5 +1,10 @@
 # Disassembled dsp_irom.bin
 
+EDIT: This disassembly got screwed because Duddie has incorrect register index:
+- 0x19: ax0.h  -> Should be ax1.l
+- 0x1A: ax1.l  -> Should be ax0.h
+
+
 ## Send sync mail (0x8071FEED).
 
 ```

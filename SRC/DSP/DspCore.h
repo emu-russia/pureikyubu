@@ -102,10 +102,10 @@ namespace DSP
 		ix2,			// Indexing register 2
 		ix3,			// Indexing register 3
 		limitRegs,
-		lm0 = limitRegs,
-		lm1,
-		lm2,
-		lm3,
+		lm0 = limitRegs, // Limit register 0 
+		lm1,			// Limit register 1
+		lm2,			// Limit register 2
+		lm3,			// Limit register 3
 		stackRegs,
 		st0 = stackRegs,	// Call stack register 
 		st1,			// Data stack register 
@@ -120,9 +120,9 @@ namespace DSP
 		prodh,			// Product register (high) 
 		prodm2,			// Product register (mid 2) 
 		ax0l,			// 32-bit Accumulator 0 (low) 
-		ax0h,			// 32-bit Accumulator 0 (high) 
 		ax1l,			// 32-bit Accumulator 1 (low) 
-		ax1h,			// 32-bit Accumulator 1 (high
+		ax0h,			// 32-bit Accumulator 0 (high) 
+		ax1h,			// 32-bit Accumulator 1 (high)
 		ac0l,			// 40-bit Accumulator 0 (low) 
 		ac1l,			// 40-bit Accumulator 1 (low) 
 		ac0m,			// 40-bit Accumulator 0 (mid)

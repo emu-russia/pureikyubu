@@ -1,6 +1,11 @@
 # Disassembled GameCube NTSC 1.0 BIOS JAudio ucode
 # DspUcode_1280.bin
 
+EDIT: This disassembly got screwed because Duddie has incorrect register index:
+- 0x19: ax0.h  -> Should be ax1.l
+- 0x1A: ax1.l  -> Should be ax0.h
+
+
 ## Overview
 
 - Command exchanges are synchronous using Mailbox polling. DSP interrupt is not used.

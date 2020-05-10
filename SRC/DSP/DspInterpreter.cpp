@@ -88,14 +88,12 @@ namespace DSP
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
-	// Fixed error in original Duddie doc: addpaxz acD.m, ax1.[l|h]
-
 	void DspInterpreter::ADDPAXZ(AnalyzeInfo& info)
 	{
 		DspLongAccumulator a, b, c;
 		core->PackProd(core->regs.prod);
 		a.sbits = core->regs.prod.bitsPacked;
-		b.shm = info.paramBits[1] ? (int32_t)(int16_t)core->regs.ax[1].h : (int32_t)(int16_t)core->regs.ax[1].l;
+		b.shm = info.paramBits[1] ? (int32_t)(int16_t)core->regs.ax[1].h : (int32_t)(int16_t)core->regs.ax[0].h;
 		b.l = 0;
 		c.shm = a.shm + b.shm;
 		c.l = 0;
@@ -290,13 +288,13 @@ namespace DSP
 		Flags(a, b, c);
 	}
 
-	// Compares accumulator $acS.m with accumulator ax1.[l|h]
+	// Compares accumulator $acS.m with accumulator ax[0|1].h
 
 	void DspInterpreter::CMPAR(AnalyzeInfo& info)
 	{
 		DspLongAccumulator a, b, c;
 		a.sbits = DspCore::SignExtend16(core->regs.ac[info.paramBits[0]].m);
-		b.sbits = info.paramBits[1] ? DspCore::SignExtend16(core->regs.ax[1].h) : DspCore::SignExtend16(core->regs.ax[1].l);
+		b.sbits = info.paramBits[1] ? DspCore::SignExtend16(core->regs.ax[1].h) : DspCore::SignExtend16(core->regs.ax[0].h);
 		b.sbits = -b.sbits;
 		c.sbits = a.sbits + b.sbits;
 		Flags(a, b, c);
