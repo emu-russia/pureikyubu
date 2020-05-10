@@ -84,7 +84,7 @@ static void SICommand(int chan, uint8_t *ptr)
 
 static void SIClearInterrupt()
 {
-    //if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
+    if ((SI_COMCSR_REG & SI_COMCSR_RDSTINT) == 0 && (SI_COMCSR_REG & SI_COMCSR_TCINT) == 0)
     {
         PIClearInt(PI_INTERRUPT_SI);
     }
@@ -383,6 +383,10 @@ static void __fastcall write_commcsr(uint32_t addr, uint32_t data)
     if(data & SI_COMCSR_RDSTINTMSK) SI_COMCSR_REG |= SI_COMCSR_RDSTINTMSK;
     else SI_COMCSR_REG &= ~SI_COMCSR_RDSTINTMSK;
 
+    // change TCINT interrupt mask
+    if (data & SI_COMCSR_TCINTMSK) SI_COMCSR_REG |= SI_COMCSR_TCINTMSK;
+    else SI_COMCSR_REG &= ~SI_COMCSR_TCINTMSK;
+
     // commands are executed immediately
     if(data & SI_COMCSR_TSTART)
     {
@@ -408,12 +412,10 @@ static void __fastcall write_commcsr(uint32_t addr, uint32_t data)
         SI_COMCSR_REG |= SI_COMCSR_TCINT;
 
         // generate cpu interrupt (if mask allows that)
-        if(data & SI_COMCSR_TCINTMSK)
+        if(SI_COMCSR_REG & SI_COMCSR_TCINTMSK)
         {
-            SI_COMCSR_REG |= SI_COMCSR_TCINTMSK;
             PIAssertInt(PI_INTERRUPT_SI);
         }
-        else SI_COMCSR_REG &= ~SI_COMCSR_TCINTMSK;
     }
 }
 
