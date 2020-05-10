@@ -1592,9 +1592,9 @@ namespace DSP
 							break;
 					}
 
-					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ax0l + dd), dd))
+					if (!AddParamEx(info, dd ? DspParameter::ax0h : DspParameter::ax0l, dd))
 						return false;
-					if (!AddParamEx(info, (DspParameter)((int)DspParameter::ax1l + rr), rr))
+					if (!AddParamEx(info, rr ? DspParameter::ax1h : DspParameter::ax1l, rr))
 						return false;
 					if (!AddParamEx(info, (DspParameter)((int)DspParameter::Indexed_ar0 + ss), ss))
 						return false;

@@ -52,11 +52,6 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0040 26 FC       	lrs  	ac0.m, $(DMBH)
 0041 02 A0 80 00 	tclr 	ac0.m, #0x8000
 0043 02 9C 00 40 	jnok 	$0x0040
-```
-
-## Wait command + DMEM command block (0xc00)
-
-```
 0045 8E 00       	clr40	                	     	
 0046 81 00       	clr  	ac0             	     	
 0047 89 00       	clr  	ac1             	     	
@@ -82,11 +77,6 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0063 2F CB       	srs  	$(DSBL), ac1.m
 0064 02 BF 06 94 	call 	$0x0694
 0066 00 80 0C 00 	lri  	ar0, #0x0C00
-```
-
-## Process Command Block
-
-```
 0068 8E 00       	clr40	                	     	
 0069 81 00       	clr  	ac0             	     	
 006A 89 70       	clr  	ac1             	l    	ac0.m, @ar0
@@ -107,9 +97,6 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 007E 16 FC BA AD 	si   	$(DMBH), #0xBAAD
 0080 2E FD       	srs  	$(DMBL), ac0.m
 0081 00 21       	halt 	
-```
-
-```
 0082 8D 00       	set15	                	     	
 0083 8F 00       	set40	                	     	
 0084 8A 00       	m2   	                	     	
@@ -729,24 +716,24 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 03B6 B8 00       	mulx 	ax0.h, ax1.h    	     	
 03B7 00 DA 0B E4 	lr   	ax0.h, $0x0BE4
 03B9 19 7B       	lrri 	ax1.h, @ar3
-03BA E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
+03BA E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
 03BB E3 5B       	maddx	ax0.h, ax1.h    	l    	ax1.h, @ar3
 03BC 00 DA 0B E4 	lr   	ax0.h, $0x0BE4
 03BE 00 84 FF FF 	lri  	ix0, #0xFFFF
-03C0 BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
-03C1 E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
-03C2 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax1.l, ax0.h, @ar0
+03C0 BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
+03C1 E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
+03C2 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax0.h, ax1.h, @ar0
 03C3 14 F2       	asr  	ac0, -14
 03C4 1B 5C       	srri 	@ar2, ac0.l
 03C5 11 1D 03 CB 	bloopi	#0x1D, $0x03CB
-03C7 BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
-03C8 E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
-03C9 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax1.l, ax0.h, @ar0
+03C7 BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
+03C8 E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
+03C9 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax0.h, ax1.h, @ar0
 03CA 14 F2       	asr  	ac0, -14
 03CB 1B 5C       	srri 	@ar2, ac0.l
-03CC BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
+03CC BE F0       	mulxmv	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
 03CD 00 FA 0B E3 	sr   	$0x0BE3, ax0.h
-03CF E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
+03CF E3 FC       	maddx	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
 03D0 00 FA 0B E4 	sr   	$0x0BE4, ax0.h
 03D2 E3 00       	maddx	ax0.h, ax1.h    	     	
 03D3 14 F2       	asr  	ac0, -14
@@ -771,15 +758,15 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 03EE 4C 00       	add  	ac0, ac1        	     	
 03EF 89 21       	clr  	ac1             	s    	@ar1, ac0.l
 03F0 11 1E 03 F7 	bloopi	#0x1E, $0x03F7
-03F2 B8 FC       	mulx 	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
-03F3 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax1.l, ax0.h, @ar0
+03F2 B8 FC       	mulx 	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
+03F3 E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax0.h, ax1.h, @ar0
 03F4 6E 6A       	movp 	ac0             	l    	ac1.l, @ar2
 03F5 14 F2       	asr  	ac0, -14
 03F6 4C 00       	add  	ac0, ac1        	     	
 03F7 89 21       	clr  	ac1             	s    	@ar1, ac0.l
 03F8 00 FC 0B E5 	sr   	$0x0BE5, ac0.l
-03FA B8 FC       	mulx 	ax0.h, ax1.h    	ldnm 	ax1.l, ax0.h, @ar0
-03FB E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax1.l, ax0.h, @ar0
+03FA B8 FC       	mulx 	ax0.h, ax1.h    	ldnm 	ax0.h, ax1.h, @ar0
+03FB E3 F0       	maddx	ax0.h, ax1.h    	ld   	ax0.h, ax1.h, @ar0
 03FC 6E 6A       	movp 	ac0             	l    	ac1.l, @ar2
 03FD 14 F2       	asr  	ac0, -14
 03FE 4C 00       	add  	ac0, ac1        	     	
@@ -1134,39 +1121,39 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 05FB 1B 3D       	srri 	@ar1, ac1.l
 05FC 00 81 0E 48 	lri  	ar1, #0x0E48
 05FE 8F 00       	set40	                	     	
-05FF 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+05FF 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0600 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0601 6A 00       	movax	ac0, ax1        	     	
 0602 48 00       	addax	ac0, ax0        	     	
 0603 11 17 06 0C 	bloopi	#0x17, $0x060C
-0605 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0605 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0606 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0607 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0608 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
-0609 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0609 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 060A 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 060B 6A 3A       	movax	ac0, ax1        	s    	@ar2, ac1.m
 060C 48 2A       	addax	ac0, ax0        	s    	@ar2, ac1.l
-060D 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+060D 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 060E 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 060F 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0610 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
 0611 1B 5F       	srri 	@ar2, ac1.m
 0612 1B 5D       	srri 	@ar2, ac1.l
-0613 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0613 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0614 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0615 6A 00       	movax	ac0, ax1        	     	
 0616 48 00       	addax	ac0, ax0        	     	
 0617 11 17 06 20 	bloopi	#0x17, $0x0620
-0619 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0619 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 061A 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 061B 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 061C 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
-061D 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+061D 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 061E 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 061F 6A 3A       	movax	ac0, ax1        	s    	@ar2, ac1.m
 0620 48 2A       	addax	ac0, ax0        	s    	@ar2, ac1.l
-0621 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0621 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0622 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0623 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0624 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
@@ -1296,6 +1283,9 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 06DC 1B 3C       	srri 	@ar1, ac0.l
 06DD 1C 04       	mrr  	ar0, ix0
 06DE 02 9F 00 68 	j    	$0x0068
+```
+
+```
 06E0 00 82 0B B8 	lri  	ar2, #0x0BB8
 06E2 19 5E       	lrri 	ac0.m, @ar2
 06E3 2E D1       	srs  	$(ACFMT), ac0.m
@@ -1444,23 +1434,26 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 077E 00 82 0D 80 	lri  	ar2, #0x0D80
 0780 19 40       	lrri 	ar0, @ar2
 0781 19 43       	lrri 	ar3, @ar2
-0782 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0782 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0783 B8 C0       	mulx 	ax0.h, ax1.h    	ld   	ax0.l, ax1.l, @ar0
 0784 11 1F 07 8C 	bloopi	#0x1F, $0x078C
-0786 A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax1.l, ax0.h, @ar0
-0787 BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
+0786 A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax0.h, ax1.h, @ar0
+0787 BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
 0788 19 40       	lrri 	ar0, @ar2
 0789 19 43       	lrri 	ar3, @ar2
-078A BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
+078A BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
 078B 4E C0       	addp 	ac0             	ld   	ax0.l, ax1.l, @ar0
 078C B8 31       	mulx 	ax0.h, ax1.h    	s    	@ar1, ac0.m
-078D A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax1.l, ax0.h, @ar0
-078E BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax1.l, ax0.h, @ar0
+078D A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax0.h, ax1.h, @ar0
+078E BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
 078F BC 00       	mulxac	ax0.h, ax1.h, ac0	     	
 0790 4E 00       	addp 	ac0             	     	
 0791 1B 3E       	srri 	@ar1, ac0.m
 0792 00 E1 0E 42 	sr   	$0x0E42, ar1
 0794 02 DF       	ret  	
+```
+
+```
 0795 00 82 0B B8 	lri  	ar2, #0x0BB8
 0797 19 5E       	lrri 	ac0.m, @ar2
 0798 2E D1       	srs  	$(ACFMT), ac0.m
@@ -2537,42 +2530,42 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0DF7 16 C9 00 00 	si   	$(DSCR), #0x0000
 0DF9 16 CB 04 E0 	si   	$(DSBL), #0x04E0
 0DFB 8F 00       	set40	                	     	
-0DFC 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0DFC 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0DFD 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0DFE 6A 00       	movax	ac0, ax1        	     	
 0DFF 48 00       	addax	ac0, ax0        	     	
 0E00 11 4F 0E 09 	bloopi	#0x4F, $0x0E09
-0E02 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E02 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E03 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E04 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0E05 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
-0E06 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E06 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E07 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E08 6A 3A       	movax	ac0, ax1        	s    	@ar2, ac1.m
 0E09 48 2A       	addax	ac0, ax0        	s    	@ar2, ac1.l
-0E0A 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E0A 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E0B 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E0C 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0E0D 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
 0E0E 1B 5F       	srri 	@ar2, ac1.m
 0E0F 1B 5D       	srri 	@ar2, ac1.l
-0E10 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E10 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E11 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E12 68 00       	movax	ac0, ax0        	     	
 0E13 7C 00       	neg  	ac0             	     	
 0E14 4A 00       	addax	ac0, ax1        	     	
 0E15 11 4F 0E 20 	bloopi	#0x4F, $0x0E20
-0E17 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E17 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E18 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E19 69 32       	movax	ac1, ax0        	s    	@ar2, ac0.m
 0E1A 7D 00       	neg  	ac1             	     	
 0E1B 4B 22       	addax	ac1, ax1        	s    	@ar2, ac0.l
-0E1C 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E1C 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E1D 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E1E 68 3A       	movax	ac0, ax0        	s    	@ar2, ac1.m
 0E1F 7C 00       	neg  	ac0             	     	
 0E20 4A 2A       	addax	ac0, ax1        	s    	@ar2, ac1.l
-0E21 80 F0       	nx   	                	ld   	ax1.l, ax0.h, @ar0
+0E21 80 F0       	nx   	                	ld   	ax0.h, ax1.h, @ar0
 0E22 80 C0       	nx   	                	ld   	ax0.l, ax1.l, @ar0
 0E23 69 32       	movax	ac1, ax0        	s    	@ar2, ac0.m
 0E24 7D 00       	neg  	ac1             	     	
@@ -2582,20 +2575,20 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0E28 1C 04       	mrr  	ar0, ix0
 0E29 02 9F 00 68 	j    	$0x0068
 0E2B 8F 00       	set40	                	     	
-0E2C 80 F1       	nx   	                	ld   	ax1.l, ax0.h, @ar1
+0E2C 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E2D 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
 0E2E 6A 00       	movax	ac0, ax1        	     	
 0E2F 48 00       	addax	ac0, ax0        	     	
 0E30 11 4F 0E 39 	bloopi	#0x4F, $0x0E39
-0E32 80 F1       	nx   	                	ld   	ax1.l, ax0.h, @ar1
+0E32 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E33 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
 0E34 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0E35 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
-0E36 80 F1       	nx   	                	ld   	ax1.l, ax0.h, @ar1
+0E36 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E37 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
 0E38 6A 3A       	movax	ac0, ax1        	s    	@ar2, ac1.m
 0E39 48 2A       	addax	ac0, ax0        	s    	@ar2, ac1.l
-0E3A 80 F1       	nx   	                	ld   	ax1.l, ax0.h, @ar1
+0E3A 80 F1       	nx   	                	ld   	ax0.h, ax1.h, @ar1
 0E3B 80 C1       	nx   	                	ld   	ax0.l, ax1.l, @ar1
 0E3C 6B 32       	movax	ac1, ax1        	s    	@ar2, ac0.m
 0E3D 49 22       	addax	ac1, ax0        	s    	@ar2, ac0.l
@@ -2847,4 +2840,5 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0F8C 02 9C 0F 89 	jnok 	$0x0F89
 0F8E 02 DF       	ret  	
 0F8F 00 00       	nop  	
+
 ```
