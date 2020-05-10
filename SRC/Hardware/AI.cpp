@@ -41,6 +41,22 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
 {
     AIDCR = (uint16_t)data;
 
+    if (ai.log)
+    {
+        DBReport2(DbgChannel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n", 
+            data,
+            AIDCR & AIDCR_RESETMOD ? 1 : 0,
+            AIDCR & AIDCR_DSPINTMSK ? 1 : 0,
+            AIDCR & AIDCR_DSPINT ? 1 : 0,
+            AIDCR & AIDCR_ARINTMSK ? 1 : 0,
+            AIDCR & AIDCR_ARINT ? 1 : 0,
+            AIDCR & AIDCR_AIINTMSK ? 1 : 0,
+            AIDCR & AIDCR_AIINT ? 1 : 0,
+            AIDCR & AIDCR_HALT ? 1 : 0,
+            AIDCR & AIDCR_DINT ? 1 : 0,
+            AIDCR & AIDCR_RES ? 1 : 0 );
+    }
+
     // clear pending interrupts
     if(AIDCR & AIDCR_DSPINT)
     {
@@ -86,9 +102,9 @@ static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
 // dma transfer complete (when AIDCNT == 0)
 void AIDINT()
 {
-    AIDCR |= AIDCR_AIINT;
     if(AIDCR & AIDCR_AIINTMSK)
     {
+        AIDCR |= AIDCR_AIINT;
         PIAssertInt(PI_INTERRUPT_DSP);
         if (ai.log)
         {
@@ -374,9 +390,9 @@ void DSPAssertInt()
         DBReport2(DbgChannel::AI, "DSPAssertInt\n");
     }
 
-    AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {
+        AIDCR |= AIDCR_DSPINT;
         PIAssertInt(PI_INTERRUPT_DSP);
     }
 }
@@ -495,7 +511,7 @@ void AIOpen(HWConfig* config)
     ai.one_second = Gekko::Gekko->OneSecond();
     ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
-    ai.log = false;
+    ai.log = true;
     AIStopDMA();
 
     // set register traps

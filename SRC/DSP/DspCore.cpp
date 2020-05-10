@@ -977,26 +977,24 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
-		}
-		CpuToDspMailboxShadow[0] = value;
+		CpuToDspMailbox[0] = value & 0x7FFF;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
+		CpuToDspMailbox[1] = value;
+		CpuToDspMailbox[0] |= 0x8000;
 		if (logMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+			DBReport2(DbgChannel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
 		}
-		CpuToDspMailbox[1] = value;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
 	}
 
 	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
 	{
 		uint16_t value = CpuToDspMailbox[0];
+
+		// TODO:
 
 		// If DSP is running and is in a waiting cycle for a message from the CPU, 
 		// we put it in the HALT state until the processor sends a message through the Mailbox.
@@ -1015,6 +1013,10 @@ namespace DSP
 		uint16_t value = CpuToDspMailbox[1];
 		if (ReadByDsp)
 		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
+			}
 			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
 		}
 		return value;
@@ -1026,21 +1028,17 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
-		}
-		DspToCpuMailboxShadow[0] = value;
+		DspToCpuMailbox[0] = value & 0x7FFF;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
+		DspToCpuMailbox[1] = value;
+		DspToCpuMailbox[0] |= 0x8000;
 		if (logMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
+			DBReport2(DbgChannel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
 		}
-		DspToCpuMailbox[1] = value;
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
 	}
 
 	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
@@ -1055,6 +1053,10 @@ namespace DSP
 		uint16_t value = DspToCpuMailbox[1];
 		if (!ReadByDsp)
 		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
+			}
 			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
 		}
 		return value;

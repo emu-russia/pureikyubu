@@ -29,9 +29,9 @@ ARControl aram;
 
 static void ARINT()
 {
-    AIDCR |= AIDCR_ARINT;
     if(AIDCR & AIDCR_ARINTMSK)
     {
+        AIDCR |= AIDCR_ARINT;
         PIAssertInt(PI_INTERRUPT_DSP);
     }
 }
@@ -48,7 +48,7 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         // and do some alignment checks
         if (type == RAM_TO_ARAM)
         {
-            bool specialAramDspDma = maddr == 0x0100'0000 && ((AIDCR & AIDCR_RESETMOD) == 0);
+            bool specialAramDspDma = maddr == 0x0100'0000 && aaddr == 0;
 
             if (!specialAramDspDma)
             {
@@ -80,13 +80,13 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
         // blast data
         if (type == RAM_TO_ARAM)
         {
-            if (aaddr < DSP::DspCore::IRAM_SIZE && ((AIDCR & AIDCR_RESETMOD) == 0) && maddr == 0x0100'0000)
+            if (maddr == 0x0100'0000 && aaddr == 0)
             {
                 // Transfer size multiplied by 4
                 size *= 4;
 
-                // IRAM is mapped as the first 8 Kbytes of ARAM
-                memcpy(&Flipper::HW->DSP->iram[aaddr], &mi.ram[maddr], size);
+                // Special ARAM DMA to IRAM
+                memcpy(Flipper::HW->DSP->iram, &mi.ram[maddr], size);
 
                 DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", size);
             }

@@ -571,7 +571,14 @@ namespace Debug
 				break;
 
 			case VK_HOME:
-				current = cursor = Flipper::HW->DSP->regs.pc;
+				if (ctrl)
+				{
+					current = cursor = 0;
+				}
+				else
+				{
+					current = cursor = Flipper::HW->DSP->regs.pc;
+				}
 				break;
 
 			case VK_END:
