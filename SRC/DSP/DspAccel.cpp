@@ -9,8 +9,8 @@ namespace DSP
 	{
 		uint16_t val = 0;
 
-		// Check bit15 of ACSAH
-		if ((Accel.EndAddress.h & 0x8000) != 0)
+		// Check bit15 of ACCAH
+		if ((Accel.CurrAddress.h & 0x8000) != 0)
 		{
 			DBHalt("DSP: Accelerator is not configured to read\n");
 		}
@@ -65,8 +65,8 @@ namespace DSP
 	// Write RAW data to ARAM
 	void DspCore::AccelWriteData(uint16_t data)
 	{
-		// Check bit15 of ACSAH
-		if ((Accel.EndAddress.h & 0x8000) == 0)
+		// Check bit15 of ACCAH
+		if ((Accel.CurrAddress.h & 0x8000) == 0)
 		{
 			DBHalt("DSP: Accelerator is not configured to write\n");
 		}

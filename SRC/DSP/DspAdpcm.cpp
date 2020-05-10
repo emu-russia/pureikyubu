@@ -6,6 +6,6 @@ namespace DSP
 {
 	uint16_t DspCore::DecodeAdpcm(uint8_t nibble)
 	{
-		return nibble << 4;
+		return nibble << 12;
 	}
 }

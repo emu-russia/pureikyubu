@@ -797,42 +797,90 @@ namespace DSP
 
 				case (DspAddress)DspHardwareRegs::ACSAH:
 					Accel.StartAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACSAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACSAL:
 					Accel.StartAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACSAL = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACEAH:
 					Accel.EndAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACEAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACEAL:
 					Accel.EndAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACEAL = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACCAH:
 					Accel.CurrAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACCAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACCAL:
 					Accel.CurrAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACCAL = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					AccelWriteData(value);
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACDAT2 = 0x%04X\n", value);
+					}
 					break;
 
 				case (DspAddress)DspHardwareRegs::ACFMT:
 					Accel.Fmt = value;
 					ResetAccel();
+					if (logAccel || logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACFMT = 0x%04X\n", value);
+					}
 					break;
+
 				case (DspAddress)DspHardwareRegs::ACPDS:
 					Accel.AdpcmPds = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACPDS = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACYN1:
 					Accel.AdpcmYn1 = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACYN1 = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACYN2:
 					Accel.AdpcmYn2 = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACYN2 = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACGAN:
 					Accel.AdpcmGan = value;
-					break;
-
-				case (DspAddress)DspHardwareRegs::ACDAT2:
-					AccelWriteData(value);
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACGAN = 0x%04X\n", value);
+					}
 					break;
 
 				case (DspAddress)DspHardwareRegs::ADPCM_A00:
@@ -946,7 +994,7 @@ namespace DSP
 				DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
 			}
 			pendingInterrupt = true;
-			pendingInterruptDelay = 32;
+			pendingInterruptDelay = 2;
 		}
 	}
 
