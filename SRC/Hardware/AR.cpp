@@ -29,9 +29,9 @@ ARControl aram;
 
 static void ARINT()
 {
+    AIDCR |= AIDCR_ARINT;
     if(AIDCR & AIDCR_ARINTMSK)
     {
-        AIDCR |= AIDCR_ARINT;
         PIAssertInt(PI_INTERRUPT_DSP);
     }
 }

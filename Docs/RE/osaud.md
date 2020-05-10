@@ -22,8 +22,10 @@ void __OSInitAudioSystem()
     AIDCR |= AIDCR_RES;
     while(AIDCR & AIDCR_RES);
 
-    // Reset any incoming DSP->CPU mailbox message
+    // Discard any outcoming CPU->DSP mailbox message
     DSP_OUTMBOXH = 0;
+
+    // Discard any incoming DSP->CPU mailbox message    
     while(((DSP_INMBOXH << 16) | DSP_INMBOXL) & 0x80000000);
 
     // send DSP initialization ucode to ARAM at offset 0
@@ -31,9 +33,9 @@ void __OSInitAudioSystem()
     AR_DMA_ARADDR = 0;
     AR_DMA_CNT = 32;        // Actually 32 * 4 bytes
 
-    // wait DMA complete
+    // wait ARAM DMA interrupt
     u16 old = AIDCR;    // keep AIDCR_ARDMA
-    while(AIDCR & AIDCR_ARDMA);
+    while((AIDCR & AIDCR_ARINT) == 0);
     AIDCR = old;        // clear DMA status
 
     // wait a little

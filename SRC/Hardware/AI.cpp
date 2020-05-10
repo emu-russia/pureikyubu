@@ -102,9 +102,9 @@ static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
 // dma transfer complete (when AIDCNT == 0)
 void AIDINT()
 {
+    AIDCR |= AIDCR_AIINT;
     if(AIDCR & AIDCR_AIINTMSK)
     {
-        AIDCR |= AIDCR_AIINT;
         PIAssertInt(PI_INTERRUPT_DSP);
         if (ai.log)
         {
@@ -390,9 +390,9 @@ void DSPAssertInt()
         DBReport2(DbgChannel::AI, "DSPAssertInt\n");
     }
 
+    AIDCR |= AIDCR_DSPINT;
     if (AIDCR & AIDCR_DSPINTMSK)
     {
-        AIDCR |= AIDCR_DSPINT;
         PIAssertInt(PI_INTERRUPT_DSP);
     }
 }

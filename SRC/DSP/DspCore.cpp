@@ -91,7 +91,7 @@ namespace DSP
 	void DspCore::SoftReset()
 	{
 		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
-		DBReport2(DbgChannel::DSP, "Reset pc = 0x%04X\n", regs.pc);
+		DBReport2(DbgChannel::DSP, "Soft Reset pc = 0x%04X\n", regs.pc);
 
 		pendingInterrupt = false;
 	}
@@ -192,7 +192,13 @@ namespace DSP
 				}
 			}
 
-			if (pendingInterrupt)
+			if (pendingSoftReset)
+			{
+				pendingSoftReset = false;
+				DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+				SoftReset();
+			}
+			else if (pendingInterrupt)
 			{
 				pendingInterruptDelay--;
 				if (pendingInterruptDelay == 0)
@@ -201,13 +207,6 @@ namespace DSP
 					pendingInterrupt = false;
 					Exception(DspException::INT);
 				}
-			}
-
-			if (pendingSoftReset)
-			{
-				pendingSoftReset = false;
-				DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
-				SoftReset();
 			}
 
 			interp->ExecuteInstr();
@@ -344,7 +343,13 @@ namespace DSP
 			return;
 		}
 
-		if (pendingInterrupt)
+		if (pendingSoftReset)
+		{
+			pendingSoftReset = false;
+			DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+			SoftReset();
+		}
+		else if (pendingInterrupt)
 		{
 			pendingInterruptDelay--;
 			if (pendingInterruptDelay == 0)
@@ -353,13 +358,6 @@ namespace DSP
 				pendingInterrupt = false;
 				Exception(DspException::INT);
 			}
-		}
-
-		if (pendingSoftReset)
-		{
-			pendingSoftReset = false;
-			DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
-			SoftReset();
 		}
 
 		interp->ExecuteInstr();
@@ -931,13 +929,12 @@ namespace DSP
 				DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
 			}
 			pendingSoftReset = true;
-			Run();
 		}
 	}
 
 	bool DspCore::DSPGetResetBit()
 	{
-		return pendingSoftReset;
+		return false;
 	}
 
 	void DspCore::DSPSetIntBit(bool val)
@@ -960,10 +957,7 @@ namespace DSP
 
 	void DspCore::DSPSetHaltBit(bool val)
 	{
-		if (!pendingSoftReset)
-		{
-			val ? Suspend() : Run();
-		}
+		val ? Suspend() : Run();
 	}
 
 	bool DspCore::DSPGetHaltBit()
@@ -977,6 +971,14 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
+		if (CpuToDspMailbox[0] & 0x8000)
+		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "CPU Message discarded.\n");
+			}
+		}
+
 		CpuToDspMailbox[0] = value & 0x7FFF;
 	}
 
@@ -1028,6 +1030,14 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
+		if (DspToCpuMailbox[0] & 0x8000)
+		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "DSP Message discarded.\n");
+			}
+		}
+
 		DspToCpuMailbox[0] = value & 0x7FFF;
 	}
 
