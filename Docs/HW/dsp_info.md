@@ -471,7 +471,7 @@ MULXMV      101s t11r xxxx xxxx         // MULXMV $ax0.S, $ax1.T, $acR
 
 ```
 MULC        110s t000 xxxx xxxx         // MULC $acS.m, $axT.h 
-CMPAR       110r s001 xxxx xxxx         // CMPAR $acS.m, $ax[0|1].h
+CMPAR       110r s001 xxxx xxxx         // CMPAR $acS.m, $axR.h
 MULCMVZ     110s t01r xxxx xxxx         // MULCMVZ $acS.m, $axT.h, $acR 
 MULCAC      110s t10r xxxx xxxx         // MULCAC $acS.m, $axT.h, $acR 
 MULCMV      110s t11r xxxx xxxx         // MULCMV $acS.m, $axT.h, $acR 
@@ -493,7 +493,7 @@ LSL16       1111 000d xxxx xxxx         // LSL16 $acD
 MADD        1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
 LSR16       1111 010d xxxx xxxx         // LSR16 $acD
 MSUB        1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
-ADDPAXZ     1111 10sd xxxx xxxx         // ADDPAXZ $acD, $ax[0|1].h 
+ADDPAXZ     1111 10sd xxxx xxxx         // ADDPAXZ $acD, $axS.h 
 CLRL        1111 110d xxxx xxxx         // CLRL $acD.l 
 MOVPZ       1111 111d xxxx xxxx         // MOVPZ $acD 
 ```

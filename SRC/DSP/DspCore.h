@@ -329,7 +329,7 @@ namespace DSP
 		bool pendingSoftReset = false;
 
 		// Logging control
-		bool logMailbox = true;
+		bool logMailbox = false;
 		bool logInsaneMailbox = false;
 		bool logDspControlBits = false;
 		bool logDspInterrupts = false;
