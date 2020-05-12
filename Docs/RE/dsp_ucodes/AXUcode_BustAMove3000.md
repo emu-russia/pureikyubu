@@ -50,6 +50,7 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0x140 | Copy from Command 7 640B Frame - Previous sample buffer Right Channel | Command 7, 0x12 |
 | 0x280 | Zero 640B Frame buffer | Command 7 |
 | 0x3C0 | Loaded VPB Update Data Block (0x80 bytes) | Command 2 |
+| 0x400 | Output mixed result L/R Samples. Sent to RAM by 0x80 chunks | Command 0xE |
 | 0xB80 | Current Voice Parameters Block (0xD0 bytes) (Command 2) | Command 2 |
 | 0xC00 | Command packet (0x180 bytes max) | Main |
 | 0xCC0 | Loaded VPB Initial Time Delay Buffer (0x40 bytes) | Command 2 |
@@ -2847,7 +2848,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CD3 05 AC 		0xb 				// Bogus
 0CD4 05 AE 		0xc 				// Bogus
 0CD5 02 43 		0xd 				// Reload command list at 0xc00, reset ar0
-0CD6 05 73 		0xe 				// OUTPUT. interlaces L/R channel, clamp to 16 bits and send to RAM. Copy out 640B + 640B bytes (2 Frames)
+0CD6 05 73 		0xe 				// OUTPUT. interlaces L/R channel, clamp to 16 bits and send to RAM. Copy out 640B + 5 * 128 bytes (2 Frames)
 0CD7 05 B2 		0xf 				// Ax Tasks
 0CD8 0D CC 		0x10 				// CMD_MIX_AUXB_LR. AUX Related Dma
 0CD9 02 0F 		0x11 				// CMD_SET_OPPOSITE_LR. Setup SURROUND. Load and process 640B Frame buffer

@@ -6,6 +6,7 @@ namespace DSP
 {
 	uint16_t DspCore::DecodeAdpcm(uint8_t nibble)
 	{
-		return nibble << 4;
+		// Just noise for now
+		return rand () & 0x3ff;
 	}
 }

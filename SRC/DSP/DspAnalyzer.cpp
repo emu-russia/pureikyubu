@@ -1287,7 +1287,7 @@ namespace DSP
 		//MADD *      1111 001d xxxx xxxx         // MADD $axD.l, $axD.h 
 		//LSR16 *     1111 010d xxxx xxxx         // LSR16 $acD
 		//MSUB *      1111 011d xxxx xxxx         // MSUB $axD.l, $axD.h 
-		//ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $ax1.[l|h] 
+		//ADDPAXZ *   1111 10sd xxxx xxxx         // ADDPAXZ $acD, $axS.h
 		//CLRL *      1111 110d xxxx xxxx         // CLRL $acD.l 
 		//MOVPZ *     1111 111d xxxx xxxx         // MOVPZ $acD 
 

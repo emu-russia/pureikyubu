@@ -170,7 +170,7 @@ Save last accelerator / decoder state to VPB
 
 
 077B 8F 00       	set40	                	     	
-077C 00 C1 0E 42 	lr   	ar1, $0x0E42 			/// 0xCE0 - ITD related?  (Load running pointer)
+077C 00 C1 0E 42 	lr   	ar1, $0x0E42 			/// 0xCE0 - Sample-rate converted Output  (Load running pointer)
 077E 00 82 0D 80 	lri  	ar2, #0x0D80
 0780 19 40       	lrri 	ar0, @ar2
 0781 19 43       	lrri 	ar3, @ar2

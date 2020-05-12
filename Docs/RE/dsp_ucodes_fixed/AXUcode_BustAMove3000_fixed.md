@@ -1050,6 +1050,11 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 056D 02 BF 06 94 	call 	$0x0694
 056F 02 BF 05 BC 	call 	$0x05BC
 0571 02 9F 00 68 	j    	$0x0068
+```
+
+## Command 0xE  - OUTPUT Copy out 640B + 640B bytes (2 Frames)
+
+```
 0573 8C 00       	clr15	                	     	
 0574 8A 00       	m2   	                	     	
 0575 81 00       	clr  	ac0             	     	
@@ -1060,6 +1065,19 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 057A 16 CD 02 80 	si   	$(DSPA), #0x0280
 057C 16 C9 00 01 	si   	$(DSCR), #0x0001
 057E 16 CB 02 80 	si   	$(DSBL), #0x0280
+
+// Interleave L/R. Source: #0x0 (Left, 160 * 4 byte per sample), #0x140 (Right, 160 * 4 byte per sample). Dest: #0x400 (320 16-bit L/R sample pairs)
+
+// In fact, there is a little freak done.
+// After each iteration of the inner loop, ar1 does not increase by 0x40, but by 0x42. Therefore, the result of the interleave operation is performed on 164 samples (+4 for the left channel
+// and +4 for the right). But it will still be transferred 160 pairs of samples (640 bytes). The solution for this is as fucking as the whole DSP architecture.
+
+// Instead of making a predecrement by 2 in the inner loop, ArtX engineers took a different path.
+// To deal with this, the VPB has a "history" of samples (last_samples), which is designed just to "stitch" this tail and the next sample buffer.
+
+// This is done because the inner loop does not wait for the end of the DSP DMA portion and is designed in such a way that the transfer of the previous piece will be completed
+// exactly at the moment of the start of the next iteration of the inner loop. BADUMS ..
+
 0580 8F 50       	set40	                	l    	ax0.h, @ar0
 0581 81 40       	clr  	ac0             	l    	ax0.l, @ar0
 0582 00 81 04 00 	lri  	ar1, #0x0400
@@ -1068,32 +1086,38 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 0588 00 99 00 80 	lri  	ax1.l, #0x0080
 058A 02 BF 06 94 	call 	$0x0694
 058C 11 05 05 A4 	bloopi	#0x05, $0x05A4
-058E 1F 61       	mrr  	ax1.h, ar1
-058F 11 20 05 96 	bloopi	#0x20, $0x0596
-0591 89 72       	clr  	ac1             	l    	ac0.m, @ar2
-0592 19 5C       	lrri 	ac0.l, @ar2
-0593 F0 7B       	lsl16	ac0             	l    	ac1.m, @ar3
-0594 19 7D       	lrri 	ac1.l, @ar3
-0595 F1 31       	lsl16	ac1             	s    	@ar1, ac0.m
-0596 81 39       	clr  	ac0             	s    	@ar1, ac1.m
-0597 89 00       	clr  	ac1             	     	
-0598 68 00       	movax	ac0, ax0        	     	
-0599 2E CE       	srs  	$(DSMAH), ac0.m
-059A 2C CF       	srs  	$(DSMAL), ac0.l
-059B 1F FB       	mrr  	ac1.m, ax1.h
-059C 2F CD       	srs  	$(DSPA), ac1.m
-059D 0F 01       	lris 	ac1.m, 1
-059E 2F C9       	srs  	$(DSCR), ac1.m
-059F 1F F9       	mrr  	ac1.m, ax1.l
-05A0 2F CB       	srs  	$(DSBL), ac1.m
-05A1 72 00       	addaxl	ac0, ax1.l     	     	
-05A2 1F 5E       	mrr  	ax0.h, ac0.m
-05A3 1F 1C       	mrr  	ax0.l, ac0.l
-05A4 81 00       	clr  	ac0             	     	
+	058E 1F 61       	mrr  	ax1.h, ar1
+	058F 11 20 05 96 	bloopi	#0x20, $0x0596
+		0591 89 72       	clr  	ac1             	l    	ac0.m, @ar2
+		0592 19 5C       	lrri 	ac0.l, @ar2
+		0593 F0 7B       	lsl16	ac0             	l    	ac1.m, @ar3
+		0594 19 7D       	lrri 	ac1.l, @ar3
+		0595 F1 31       	lsl16	ac1             	s    	@ar1, ac0.m
+		0596 81 39       	clr  	ac0             	s    	@ar1, ac1.m
+	0597 89 00       	clr  	ac1             	     	
+	0598 68 00       	movax	ac0, ax0        	     	
+	0599 2E CE       	srs  	$(DSMAH), ac0.m
+	059A 2C CF       	srs  	$(DSMAL), ac0.l
+	059B 1F FB       	mrr  	ac1.m, ax1.h
+	059C 2F CD       	srs  	$(DSPA), ac1.m
+	059D 0F 01       	lris 	ac1.m, 1
+	059E 2F C9       	srs  	$(DSCR), ac1.m
+	059F 1F F9       	mrr  	ac1.m, ax1.l
+	05A0 2F CB       	srs  	$(DSBL), ac1.m
+	05A1 72 00       	addaxl	ac0, ax1.l     	     	
+	05A2 1F 5E       	mrr  	ax0.h, ac0.m
+	05A3 1F 1C       	mrr  	ax0.l, ac0.l
+	05A4 81 00       	clr  	ac0             	     	
+
+// Wait DSP DMA
+
 05A5 26 C9       	lrs  	ac0.m, $(DSCR)
 05A6 02 A0 00 04 	tclr 	ac0.m, #0x0004
 05A8 02 9C 05 A5 	jnok 	$0x05A5
 05AA 02 9F 00 68 	j    	$0x0068
+```
+
+```
 05AC 02 9F 00 68 	j    	$0x0068
 05AE 02 9F 00 68 	j    	$0x0068
 05B0 02 9F 00 68 	j    	$0x0068

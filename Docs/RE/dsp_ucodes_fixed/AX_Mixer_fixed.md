@@ -28,7 +28,7 @@
 031B 00 DE 0E 42 	lr   	ac0.m, $0x0E42
 031D 00 FE 0E 1C 	sr   	$0x0E1C, ac0.m
 031F 00 C3 0E 15 	lr   	ar3, $0x0E15
-0321 17 7F       	callr	ar3 							// Sample Rate Converter
+0321 17 7F       	callr	ar3 							// Sample Rate Converter  (Result in #0x0CE0)
 0322 8E 00       	clr40	                	     	 
 0323 8A 00       	m2   	                	     	
 
@@ -233,6 +233,9 @@ Skipped?
 // Mixer Ctrl
 
 // This is where the mixing of the Main bus, as well as AuxA and AuxB (if enabled) takes place. Per-bus volume control is also performed along with mixing.
+
+// Input: #0xCE0 (usual)
+// Output: #0x0 (Left) / #0x140 (Right) (usual)
 
 0402 00 C3 0E 14 	lr   	ar3, $0x0E14
 0404 8A 00       	m2   	                	     	 

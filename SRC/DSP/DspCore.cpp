@@ -1186,17 +1186,11 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
-			{
-				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
-			}
+			memcpy(&mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], ptr, DmaRegs.blockSize);
 		}
 		else
 		{
-			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
-			{
-				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
-			}
+			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], DmaRegs.blockSize);
 		}
 
 		// Dump ucode
@@ -1210,7 +1204,8 @@ namespace DSP
 #endif
 
 		// Dump non-empty sample data
-		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && DmaRegs.blockSize == 0x280)
+#if 0
+		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && DmaRegs.blockSize == 0x80)
 		{
 			int zc = 0;
 
@@ -1230,6 +1225,7 @@ namespace DSP
 				fclose(f);
 			}
 		}
+#endif
 	}
 
 	#pragma endregion "IFX"
