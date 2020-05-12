@@ -32,7 +32,7 @@ namespace Flipper
 		// The frameSize size is not very large and not very small.
 		// It should not be longer than 1 PAL / NTSC video frame, but not less than 1/3 video frame.
 
-		static const size_t maxFrames = 32;
+		static const size_t maxFrames = 16;
 		static const size_t frameSize = 0x1000;				// Audio frame size
 		static const size_t ringSize = maxFrames * frameSize;
 		uint8_t* ringBuffer = nullptr;
@@ -63,6 +63,7 @@ namespace Flipper
 		~AudioRing();
 
 		void Enable(bool enable);
+		bool IsEnabled() { return enabled; }
 		void SetSampleRate(AudioSampleRate value);
 		void PushBytes(uint8_t* sampleData, size_t sampleDataSize);
 	};
@@ -82,6 +83,7 @@ namespace Flipper
 		~AudioMixer();
 
 		void Enable(AxChannel channel, bool enable);
+		bool IsEnabled(AxChannel channel);
 
 		void SetSampleRate(AxChannel channel, AudioSampleRate value);
 

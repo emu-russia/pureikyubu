@@ -268,12 +268,18 @@ static void __fastcall write_len(uint32_t addr, uint32_t data)
     if(ai.len & AID_EN)
     {
         AIStartDMA();
-        Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, true);
+        if (!Flipper::HW->Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
+        {
+            Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, true);
+        }
     }
     else
     {
         AIStopDMA();
-        Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, false);
+        if (Flipper::HW->Mixer->IsEnabled(Flipper::AxChannel::AudioDma))
+        {
+            Flipper::HW->Mixer->Enable(Flipper::AxChannel::AudioDma, false);
+        }
     }
 }
 static void __fastcall read_len(uint32_t addr, uint32_t *reg)
