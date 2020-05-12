@@ -1208,6 +1208,28 @@ namespace DSP
 			UI::FileSave(filename, ptr, DmaRegs.blockSize);
 		}
 #endif
+
+		// Dump non-empty sample data
+		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && DmaRegs.blockSize == 0x280)
+		{
+			int zc = 0;
+
+			for (int i = 0; i < DmaRegs.blockSize; i++)
+			{
+				if (ptr[i] == 0)
+					zc++;
+			}
+			
+			if (zc != DmaRegs.blockSize)
+			{
+				DBHalt("non zero sample buffer!\n");
+
+				FILE* f;
+				fopen_s(&f, "dspSampleOut.bin", "ab+");
+				fwrite(ptr, 1, DmaRegs.blockSize, f);
+				fclose(f);
+			}
+		}
 	}
 
 	#pragma endregion "IFX"

@@ -64,11 +64,12 @@ Load accelerator and adpcm decoder registers.
 071A 8E 00       	clr40	                	     	
 
 
-071B 00 D8 0E 16 	lr   	ax0.l, $0x0E16 
-071D 19 5B       	lrri 	ax1.h, @ar2 				// AXPBSRC.ratioHi
-071E 19 59       	lrri 	ax1.l, @ar2 				// AXPBSRC.ratioLo
+071B 00 D8 0E 16 	lr   	ax0.l, $0x0E16  			// 0xE16 | Coefficient Table Ptr
+
+071D 19 5B       	lrri 	ax1.h, @ar2 				// AXPBSRC.ratioHi 		sampling ratio, integer
+071E 19 59       	lrri 	ax1.l, @ar2 				// AXPBSRC.ratioLo 		sampling ratio, fraction
 071F 81 00       	clr  	ac0             	     	
-0720 19 5C       	lrri 	ac0.l, @ar2 				// AXPBSRC.currentAddressFrac
+0720 19 5C       	lrri 	ac0.l, @ar2 				// AXPBSRC.currentAddressFrac  		current fractional sample position
 
 0721 00 80 0E 48 	lri  	ar0, #0x0E48 				// Temp
 0723 19 5F       	lrri 	ac1.m, @ar2 				// AXPBSRC.last_samples[0]
@@ -134,9 +135,10 @@ Load accelerator and adpcm decoder registers.
 	075F 15 79       	lsr  	ac1, -7
 	0760 35 33       	andr 	ac1.m, ax0.h    	s    	@ar3, ac0.m
 	0761 41 00       	addr 	ac1, ax0.l      	     	
+0762 1B 7F       	srri 	@ar3, ac1.m	
 
+Save last SRC state (last_samples and currentAddressFrac)
 
-0762 1B 7F       	srri 	@ar3, ac1.m
 0763 00 04       	dar  	ar0
 0764 18 9F       	lrrd 	ac1.m, @ar0
 0765 1A DF       	srrd 	@ar2, ac1.m 			// last_samples[3]
@@ -168,7 +170,7 @@ Save last accelerator / decoder state to VPB
 
 
 077B 8F 00       	set40	                	     	
-077C 00 C1 0E 42 	lr   	ar1, $0x0E42 			/// 0xCE0 - ITD related?
+077C 00 C1 0E 42 	lr   	ar1, $0x0E42 			/// 0xCE0 - ITD related?  (Load running pointer)
 077E 00 82 0D 80 	lri  	ar2, #0x0D80
 0780 19 40       	lrri 	ar0, @ar2
 0781 19 43       	lrri 	ar3, @ar2
@@ -187,17 +189,69 @@ Save last accelerator / decoder state to VPB
 078F BC 00       	mulxac	ax0.h, ax1.h, ac0	     	
 0790 4E 00       	addp 	ac0             	     	
 0791 1B 3E       	srri 	@ar1, ac0.m
-0792 00 E1 0E 42 	sr   	$0x0E42, ar1
+0792 00 E1 0E 42 	sr   	$0x0E42, ar1 			// Save running pointer
 0794 02 DF       	ret  	
 ```
 
 ```
-0D80: 0E48 0160 0E49 00C0 0E4A 0020 0E4A 0180
-0D88: 0E4B 00E1 0E4C 0044 0E4C 01A4 0E4D 0104
-0D90: 0E4E 0064 0E4E 01C5 0E4F 0128 0E50 0088
-0D98: 0E50 01E8 0E51 0148 0E52 00A9 0E53 000C
-0DA0: 0E53 016C 0E54 00CC 0E55 002C 0E55 018D
-0DA8: 0E56 00F0 0E57 0050 0E57 01B0 0E58 0110
-0DB0: 0E59 0070 0E59 01D4 0E5A 0134 0E5B 0094
-0DB8: 0E5B 01F4 0E5C 0154 0E5D 00B8 0E5E 0018
+0D80: 0E48 1160 0E49 10C0 0E4A 1020 0E4A 1180
+0D88: 0E4B 10E1 0E4C 1044 0E4C 11A4 0E4D 1104
+0D90: 0E4E 1064 0E4E 11C5 0E4F 1128 0E50 1088
+0D98: 0E50 11E8 0E51 1148 0E52 10A9 0E53 100C
+0DA0: 0E53 116C 0E54 10CC 0E55 102C 0E55 118D
+0DA8: 0E56 10F0 0E57 1050 0E57 11B0 0E58 1110
+0DB0: 0E59 1070 0E59 11D4 0E5A 1134 0E5B 1094
+0DB8: 0E5B 11F4 0E5C 1154 0E5D 10B8 0E5E 1018
+```
+
+Filled by random adpcm data. First 4 words are last_samples[0...3]
+
+```
+0E48: 0000 0000 0000 0000 0029 0823 18BE 2784
+0E50: 0AE1 3D6C 2CD6 32AE 2952 1F90 1649 2DF1
+0E58: 1AF1 01BB 26E9 01EB 0BB3 2EA6 12DB 153C
+0E60: 3E87 390C 0F3E 0099 0124 305E 040D 8000
+0E68: 0000 8000 0000 8000 0000 8000 0000 8000
+0E70: 0000 8000 0000 8000 0000 8000 0000 8000
+```
+
+
+### 077B
+
+```c++
+
+{
+	set40();
+
+	ar1 = *(uint16_t *)0x0E42; 		// 0xCE0
+	ar2 = 0x0D80;
+
+	ar0 = *ar2++;
+	ar3 = *ar2++;
+
+	ax0h = *ar0++; ax1h = *ar3++;
+
+	prod = ax0h * ax1h;
+
+	ax0l = *ar0++; ax1l = *ar3++;
+
+}
+
+
+0783 B8 C0       	mulx 	ax0.h, ax1.h    	ld   	ax0.l, ax1.l, @ar0
+0784 11 1F 07 8C 	bloopi	#0x1F, $0x078C
+	0786 A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax0.h, ax1.h, @ar0
+	0787 BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
+	0788 19 40       	lrri 	ar0, @ar2
+	0789 19 43       	lrri 	ar3, @ar2
+	078A BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
+	078B 4E C0       	addp 	ac0             	ld   	ax0.l, ax1.l, @ar0
+	078C B8 31       	mulx 	ax0.h, ax1.h    	s    	@ar1, ac0.m
+078D A6 F0       	mulxmv	ax0.l, ax1.l, ac0	ld   	ax0.h, ax1.h, @ar0
+078E BC F0       	mulxac	ax0.h, ax1.h, ac0	ld   	ax0.h, ax1.h, @ar0
+078F BC 00       	mulxac	ax0.h, ax1.h, ac0	     	
+0790 4E 00       	addp 	ac0             	     	
+0791 1B 3E       	srri 	@ar1, ac0.m
+0792 00 E1 0E 42 	sr   	$0x0E42, ar1
+
 ```

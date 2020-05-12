@@ -48,7 +48,7 @@ namespace DSP
 	{
 		info.instr = DspInstruction::Unknown;
 
-		if ((info.instrBits & 0b0000111100000000) == 0)
+		if ((info.instrBits & 0b0000'1111'0000'0000) == 0)
 		{
 			//NOP * 	0000 0000 [000]0 0000 
 			//DAR * 	0000 0000 [000]0 01dd 
@@ -208,7 +208,7 @@ namespace DSP
 			return true;
 		}
 
-		else if ((info.instrBits & 0b0000111000000000) == 0b0000001000000000)
+		else if ((info.instrBits & 0b0000'1110'0000'0000) == 0b0000'0010'0000'0000)
 		{
 			//IF cc * 	0000 00[1]0 [0111] cccc 
 			//JMP cc * 	0000 00[1]0 [1001] cccc aaaa aaaa aaaa aaaa
@@ -355,7 +355,7 @@ namespace DSP
 			return true;
 		}
 
-		else if (info.instrBits & 0b0000100000000000)
+		else if (info.instrBits & 0b0000'1000'0000'0000)
 		{
 			//LRIS * 	0000 1ddd iiii iiii 
 
@@ -371,7 +371,7 @@ namespace DSP
 			return true;
 		}
 
-		else if (info.instrBits & 0b0000010000000000)
+		else if (info.instrBits & 0b0000'0100'0000'0000)
 		{
 			//ADDIS *	0000 01[0]d iiii iiii
 			//CMPIS *	0000 01[1]d iiii iiii
@@ -479,9 +479,9 @@ namespace DSP
 				}
 				break;
 			case 1:
-				if ((info.instrBits & 0b1000000000) != 0)
+				if ((info.instrBits & 0b10'0000'0000) != 0)
 				{
-					if ((info.instrBits & 0b100000000) != 0)
+					if ((info.instrBits & 0b1'0000'0000) != 0)
 					{
 						if ((info.instrBits & 0xf) == 0xf)
 						{
@@ -652,7 +652,7 @@ namespace DSP
 		//LRS * 	0010 0ddd mmmm mmmm 
 		//SRS * 	0010 1sss mmmm mmmm 
 
-		if ((info.instrBits & 0b100000000000) != 0)
+		if ((info.instrBits & 0b1000'0000'0000) != 0)
 		{
 			info.instr = DspInstruction::SRS;
 			int ss = (info.instrBits >> 8) & 7;
@@ -692,7 +692,7 @@ namespace DSP
 		{
 			int dd = (info.instrBits >> 8) & 1;
 
-			if (info.instrBits & 0b1000000000)
+			if (info.instrBits & 0b10'0000'0000)
 			{
 				info.instr = DspInstruction::ORC;
 			}
@@ -742,11 +742,11 @@ namespace DSP
 
 		int dd = (info.instrBits >> 8) & 1;
 
-		if ((info.instrBits & 0b100000000000) != 0)
+		if ((info.instrBits & 0b1000'0000'0000) != 0)
 		{
-			if ((info.instrBits & 0b010000000000) != 0)
+			if ((info.instrBits & 0b0100'0000'0000) != 0)
 			{
-				if ((info.instrBits & 0b001000000000) != 0)
+				if ((info.instrBits & 0b0010'0000'0000) != 0)
 				{
 					// ADDP
 					info.instr = DspInstruction::ADDP;
@@ -801,11 +801,11 @@ namespace DSP
 
 		int dd = (info.instrBits >> 8) & 1;
 
-		if ((info.instrBits & 0b100000000000) != 0)
+		if ((info.instrBits & 0b1000'0000'0000) != 0)
 		{
-			if ((info.instrBits & 0b010000000000) != 0)
+			if ((info.instrBits & 0b0100'0000'0000) != 0)
 			{
-				if ((info.instrBits & 0b001000000000) != 0)
+				if ((info.instrBits & 0b0010'0000'0000) != 0)
 				{
 					// SUBP
 					info.instr = DspInstruction::SUBP;
@@ -860,11 +860,11 @@ namespace DSP
 
 		int dd = (info.instrBits >> 8) & 1;
 
-		if ((info.instrBits & 0b100000000000) != 0)
+		if ((info.instrBits & 0b1000'0000'0000) != 0)
 		{
-			if ((info.instrBits & 0b010000000000) != 0)
+			if ((info.instrBits & 0b0100'0000'0000) != 0)
 			{
-				if ((info.instrBits & 0b001000000000) != 0)
+				if ((info.instrBits & 0b0010'0000'0000) != 0)
 				{
 					// MOVP
 					info.instr = DspInstruction::MOVP;
@@ -922,7 +922,7 @@ namespace DSP
 
 		int dd = (info.instrBits >> 8) & 1;
 
-		if ((info.instrBits & 0b110000000000) != 0)
+		if ((info.instrBits & 0b1100'0000'0000) != 0)
 		{
 			// Others
 
@@ -1055,7 +1055,7 @@ namespace DSP
 		switch ((info.instrBits >> 9) & 3)
 		{
 			case 0:
-				if ((info.instrBits & 0b100000000) != 0)
+				if ((info.instrBits & 0b1'0000'0000) != 0)
 				{
 					// ASR16
 					info.madd = false;
@@ -1119,11 +1119,11 @@ namespace DSP
 		switch ((info.instrBits >> 9) & 3)
 		{
 			case 0:
-				if ((info.instrBits & 0b100000000) != 0)
+				if ((info.instrBits & 0b1'0000'0000) != 0)
 				{
 					info.madd = false;
 
-					if ((info.instrBits & 0b1000000000000) != 0)
+					if ((info.instrBits & 0b1'0000'0000'0000) != 0)
 					{
 						// TST
 						info.instr = DspInstruction::TST;
@@ -1191,7 +1191,7 @@ namespace DSP
 		switch ((info.instrBits >> 9) & 3)
 		{
 			case 0:
-				if ((info.instrBits & 0b100000000) != 0)
+				if ((info.instrBits & 0b1'0000'0000) != 0)
 				{
 					// CMPAR
 					info.madd = false;
@@ -1255,10 +1255,10 @@ namespace DSP
 		int ss = (info.instrBits >> 9) & 1;
 		int tt = (info.instrBits >> 8) & 1;
 
-		if ((info.instrBits & 0b100000000000) != 0)
+		if ((info.instrBits & 0b1000'0000'0000) != 0)
 		{
 			// MADDC, MSUBC
-			info.instr = (info.instrBits & 0b010000000000) ?
+			info.instr = (info.instrBits & 0b0100'0000'0000) ?
 				DspInstruction::MSUBC : DspInstruction::MADDC;
 
 			if (!AddParam(info, ss ? DspParameter::ac1m : DspParameter::ac0m, ss))
@@ -1269,7 +1269,7 @@ namespace DSP
 		else
 		{
 			// MADDX, MSUBX
-			info.instr = (info.instrBits & 0b010000000000) ?
+			info.instr = (info.instrBits & 0b0100'0000'0000) ?
 				DspInstruction::MSUBX : DspInstruction::MADDX;
 
 			if (!AddParam(info, (DspParameter)(0x18 + ss * 2), 0x18 + ss * 2))

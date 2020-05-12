@@ -105,9 +105,9 @@ namespace DSP
 	{
 		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		DspLongAccumulator b;
-		b.sbits = DspCore::SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		b.sbits = DspCore::SignExtend40((int64_t)core->MoveFromReg(info.paramBits[1]) << 16);
 		core->regs.ac[info.paramBits[0]].sbits = DspCore::SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		core->regs.ac[info.paramBits[0]].sbits += DspCore::SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		core->regs.ac[info.paramBits[0]].sbits += b.sbits;
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 

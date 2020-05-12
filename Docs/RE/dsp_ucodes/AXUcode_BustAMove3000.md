@@ -46,9 +46,8 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 
 | Dmem Address | Meaning | Used |
 |---|---|---|
-| 0x000 - 0xA40 | Sample buffers |
-| 0x000 | Copy from Command 7 640B Frame | Command 0, 7 |
-| 0x140 | Copy from Command 7 640B Frame | Command 7 |
+| 0x000 | Copy from Command 7 640B Frame - Previous sample buffer Left Channel | Command 0, 7, 0x12 |
+| 0x140 | Copy from Command 7 640B Frame - Previous sample buffer Right Channel | Command 7, 0x12 |
 | 0x280 | Zero 640B Frame buffer | Command 7 |
 | 0x3C0 | Loaded VPB Update Data Block (0x80 bytes) | Command 2 |
 | 0xB80 | Current Voice Parameters Block (0xD0 bytes) (Command 2) | Command 2 |
@@ -60,14 +59,17 @@ the old one is played at that time through AI DMA. The size of one frame is 640 
 | 0xE06 | Saved local ar0 | Mixer |
 | 0xE07 | Saved global ar0 | Mixer |
 | 0xE08 | SampleBuf Pointers[9]. Initial values: { 0x0000, 0x0140, 0x0280, 0x0400, 0x0540, 0x0680, 0x07C0, 0x0900, 0x0A40 } | Command 2, Mixer |
+| 0xE14 | JumpTable2[n] |
 | 0xE15 | Sample Rate Converter type | Mixer |
-| 0xE16 | Coefficient Table type | Mixer |
+| 0xE16 | Coefficient Table Ptr | Mixer |
 | 0xE40 | Mixer related? | |
 | 0xE41 | Mixer related? | |
 | 0xE42 | Mixer related? | |
 | 0xE43 | Mixer related? | |
 | 0xE44 | Command 0x12 | Command 0x12 |
 | 0xE45 | Save local ar0 | Command 0x12 |
+| 0xE46 | JumpTable3[n] |
+| 0xE47 | JumpTable4[n] |
 | 0xE48 | Temp buffer | common |
 
 
@@ -712,7 +714,7 @@ Command_0x11() 			// 020F
 029C 1C 7E       	mrr  	ar3, ac0.m
 029D 02 13       	ilrr 	ac0.m, @ar3
 029E 00 FE 0E 16 	sr   	$0x0E16, ac0.m 				// *0xE16 = CoefTable[n]
-02A0 00 DE 0B 86 	lr   	ac0.m, $0x0B86
+02A0 00 DE 0B 86 	lr   	ac0.m, $0x0B86 				// AXPB.mixerCtrl
 02A2 00 9A 00 0F 	lri  	ax1.l, #0x000F
 02A4 00 9F 0C DC 	lri  	ac1.m, #0x0CDC  			// Jump Table 2 (Cmd2)
 02A6 34 00       	andr 	ac0.m, ax0.h    	     	
@@ -720,7 +722,7 @@ Command_0x11() 			// 020F
 02A8 1C 7E       	mrr  	ar3, ac0.m
 02A9 02 13       	ilrr 	ac0.m, @ar3
 02AA 00 FE 0E 14 	sr   	$0x0E14, ac0.m  			// *0xE14 = JumpTable2[n]
-02AC 00 DE 0B 86 	lr   	ac0.m, $0x0B86
+02AC 00 DE 0B 86 	lr   	ac0.m, $0x0B86 				// AXPB.mixerCtrl
 02AE 00 9A 00 1F 	lri  	ax1.l, #0x001F
 02B0 00 9F 0C EC 	lri  	ac1.m, #0x0CEC 				// Jump Table 3 (Cmd2)
 02B2 14 FC       	asr  	ac0, -4
@@ -729,7 +731,7 @@ Command_0x11() 			// 020F
 02B5 1C 7E       	mrr  	ar3, ac0.m
 02B6 02 13       	ilrr 	ac0.m, @ar3
 02B7 00 FE 0E 46 	sr   	$0x0E46, ac0.m 				// *0xE46 = JumpTable3[n]
-02B9 00 DE 0B 86 	lr   	ac0.m, $0x0B86
+02B9 00 DE 0B 86 	lr   	ac0.m, $0x0B86 				// AXPB.mixerCtrl
 02BB 00 9F 0D 0C 	lri  	ac1.m, #0x0D0C 				// Jump Table 4 (Cmd2)
 02BD 14 F7       	asr  	ac0, -9
 02BE 4C 00       	add  	ac0, ac1        	     	
@@ -846,7 +848,7 @@ typedef struct _AXPB
     AXPBVE          ve; 		// volume envelope  0xBB2
     {
 	    u16     currentVolume;              // .15 volume at start of frame
-	    s16     currentDelta;               // signed per sample delta delta    
+	    s16     currentDelta;               // signed per sample delta
     }
     AXPBFIR         fir;			// FIR filter info (currently unused)  0xBB4
     {
@@ -917,8 +919,10 @@ mixerCtrl:
 ```
 #define AX_PB_MIXCTRL_RAMPING   0x0008  // Ramping is active
 #define AX_PB_MIXCTRL_CONSTANT  0x0000  // Ramping is inactive
+
 #define AX_PB_MIXCTRL_SURROUND  0x0004  // Surround is active
 #define AX_PB_MIXCTRL_STEREO    0x0000  // Surround is inactive
+
 #define AX_PB_MIXCTRL_MAIN      0x0000  // Main bus active
 #define AX_PB_MIXCTRL_AUXA      0x0001  // AuxA active (additive to above)
 #define AX_PB_MIXCTRL_AUXB      0x0002  // AuxB active (additive to above)
@@ -1778,8 +1782,8 @@ Setup STEREO.
 06DE 02 9F 00 68 	j    	$0x0068
 ```
 
-- 0x0000 - Copy from Command 7 640B
-- 0x0140 - Copy from Command 7 640B
+- 0x0000 - Copy from Command 7 640B  -  Left Channel
+- 0x0140 - Copy from Command 7 640B  -  Right Channel
 - 0x0280 - Zero 640B buffer
 
 Example 0xE48:
@@ -2803,6 +2807,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CA6 02 BF 84 5D 	call 	$0x845D
 0CA8 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CAA 02 9F 0B F9 	j    	$0x0BF9
+
 0CAC 00 C0 0E 43 	lr   	ar0, $0x0E43
 0CAE 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0CB0 00 C2 0E 10 	lr   	ar2, $0x0E10
@@ -2810,6 +2815,7 @@ DSP: DspCore::Dma: Mmem: 0x00192D00, DspAddr: 0x0E58, Size: 0x0260, Ctrl: 0
 0CB4 02 BF 84 5D 	call 	$0x845D
 0CB6 00 F8 0B B1 	sr   	$0x0BB1, ax0.l
 0CB8 02 9F 0C 06 	j    	$0x0C06
+
 0CBA 00 C0 0E 43 	lr   	ar0, $0x0E43
 0CBC 00 81 0B 95 	lri  	ar1, #0x0B95 				// vAuxBS
 0CBE 00 C2 0E 10 	lr   	ar2, $0x0E10
