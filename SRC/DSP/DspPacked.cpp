@@ -124,20 +124,20 @@ namespace DSP
 	{
 		if (info.paramExBits[0])
 		{
-			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);		// S
+			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);
 		}
 		else
 		{
-			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);		// S
+			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);
 		}
 
 		if (info.paramExBits[1])
 		{
-			core->regs.ax[1].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S  ???
+			core->regs.ax[1].h = core->ReadDMem(core->regs.ar[3]);
 		}
 		else
 		{
-			core->regs.ax[1].h = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
+			core->regs.ax[1].l = core->ReadDMem(core->regs.ar[3]);
 		}
 	}
 
@@ -175,8 +175,8 @@ namespace DSP
 
 	void DspInterpreter::LDAXCommon(AnalyzeInfo& info)
 	{
-		core->regs.ax[info.paramExBits[0]].h = core->ReadDMem(core->regs.ar[info.paramExBits[1]]);		// S
-		core->regs.ax[info.paramExBits[0]].l = core->ReadDMem(core->regs.ar[3]);		// 3 - S ???
+		core->regs.ax[info.paramExBits[0]].h = core->ReadDMem(core->regs.ar[info.paramExBits[1]]);
+		core->regs.ax[info.paramExBits[0]].l = core->ReadDMem(core->regs.ar[3]);
 	}
 
 	void DspInterpreter::LDAX(AnalyzeInfo& info)

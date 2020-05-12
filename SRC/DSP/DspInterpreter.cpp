@@ -54,7 +54,7 @@ namespace DSP
 		DspLongAccumulator b;
 		b.sbits = DspCore::SignExtend16(core->regs.ax[info.paramBits[1]].l);
 		core->regs.ac[info.paramBits[0]].sbits = DspCore::SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		core->regs.ac[info.paramBits[0]].sbits += DspCore::SignExtend16(core->regs.ax[info.paramBits[1]].l);
+		core->regs.ac[info.paramBits[0]].sbits += b.sbits;
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
@@ -88,14 +88,12 @@ namespace DSP
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
-	// Fixed error in original Duddie doc: addpaxz acD.m, ax1.[l|h]
-
 	void DspInterpreter::ADDPAXZ(AnalyzeInfo& info)
 	{
 		DspLongAccumulator a, b, c;
 		core->PackProd(core->regs.prod);
 		a.sbits = core->regs.prod.bitsPacked;
-		b.shm = info.paramBits[1] ? (int32_t)(int16_t)core->regs.ax[1].h : (int32_t)(int16_t)core->regs.ax[1].l;
+		b.shm = info.paramBits[1] ? (int32_t)(int16_t)core->regs.ax[1].h : (int32_t)(int16_t)core->regs.ax[0].h;
 		b.l = 0;
 		c.shm = a.shm + b.shm;
 		c.l = 0;
@@ -107,9 +105,9 @@ namespace DSP
 	{
 		DspLongAccumulator a = core->regs.ac[info.paramBits[0]];
 		DspLongAccumulator b;
-		b.sbits = DspCore::SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		b.sbits = DspCore::SignExtend40((int64_t)core->MoveFromReg(info.paramBits[1]) << 16);
 		core->regs.ac[info.paramBits[0]].sbits = DspCore::SignExtend40(core->regs.ac[info.paramBits[0]].sbits);
-		core->regs.ac[info.paramBits[0]].sbits += DspCore::SignExtend16(core->MoveFromReg(info.paramBits[1]));
+		core->regs.ac[info.paramBits[0]].sbits += b.sbits;
 		Flags(a, b, core->regs.ac[info.paramBits[0]]);
 	}
 
@@ -172,6 +170,8 @@ namespace DSP
 
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
@@ -181,6 +181,7 @@ namespace DSP
 		{
 			core->regs.pc = info.ImmOperand.Address + 1;
 		}
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::BLOOPI(AnalyzeInfo& info)
@@ -200,6 +201,11 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
+			if (core->logNonconditionalCallJmp)
+			{
+				DBReport2(DbgChannel::DSP, "0x%04X: CALL 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+			}
+
 			core->regs.st[0].push_back(core->regs.pc + 2);
 			core->regs.pc = info.ImmOperand.Address;
 		}
@@ -211,8 +217,19 @@ namespace DSP
 
 	void DspInterpreter::CALLR(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
+
+		uint16_t address = core->MoveFromReg(info.paramBits[0]);
+
+		if (core->logNonconditionalCallJmp)
+		{
+			DBReport2(DbgChannel::DSP, "0x%04X: CALLR 0x%04X\n", core->regs.pc, address);
+		}
+
 		core->regs.st[0].push_back(core->regs.pc + 1);
-		core->regs.pc = core->MoveFromReg(info.paramBits[0]);
+		core->regs.pc = address;
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::CLR(AnalyzeInfo& info)
@@ -271,13 +288,13 @@ namespace DSP
 		Flags(a, b, c);
 	}
 
-	// Compares accumulator $acS.m with accumulator ax1.[l|h]
+	// Compares accumulator $acS.m with accumulator ax[0|1].h
 
 	void DspInterpreter::CMPAR(AnalyzeInfo& info)
 	{
 		DspLongAccumulator a, b, c;
 		a.sbits = DspCore::SignExtend16(core->regs.ac[info.paramBits[0]].m);
-		b.sbits = info.paramBits[1] ? DspCore::SignExtend16(core->regs.ax[1].h) : DspCore::SignExtend16(core->regs.ax[1].l);
+		b.sbits = info.paramBits[1] ? DspCore::SignExtend16(core->regs.ax[1].h) : DspCore::SignExtend16(core->regs.ax[0].h);
 		b.sbits = -b.sbits;
 		c.sbits = a.sbits + b.sbits;
 		Flags(a, b, c);
@@ -373,6 +390,11 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
+			if (core->logNonconditionalCallJmp && info.cc == ConditionCode::Always)
+			{
+				DBReport2(DbgChannel::DSP, "0x%04X: JMP 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+			}
+
 			core->regs.pc = info.ImmOperand.Address;
 		}
 		else
@@ -383,11 +405,24 @@ namespace DSP
 
 	void DspInterpreter::JMPR(AnalyzeInfo& info)
 	{
-		core->regs.pc = core->MoveFromReg(info.paramBits[0]);
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
+
+		uint16_t address = core->MoveFromReg(info.paramBits[0]);
+
+		if (core->logNonconditionalCallJmp)
+		{
+			DBReport2(DbgChannel::DSP, "0x%04X: JMPR 0x%04X\n", core->regs.pc, address);
+		}
+
+		core->regs.pc = address;
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::LOOP(AnalyzeInfo& info)
 	{
+		int oldSxm = core->regs.sr.sxm;
+		core->regs.sr.sxm = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 1, core->regs.pc + 1, core->MoveFromReg(info.paramBits[0]));
@@ -397,6 +432,7 @@ namespace DSP
 		{
 			core->regs.pc += 2;
 		}
+		core->regs.sr.sxm = oldSxm;
 	}
 
 	void DspInterpreter::LOOPI(AnalyzeInfo& info)

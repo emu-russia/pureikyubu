@@ -186,12 +186,9 @@ namespace Flipper
 
 			frameCounter += framesPerEmit;
 
-			//if (frameCounter >= 5)
-			//{
-			//	DumpRing();
-			//	DumpDSBuffer();
-			//	exit(0);
-			//}
+			//DumpRing();
+			//DumpDSBuffer();
+			//exit(0);
 		}
 	}
 
@@ -309,6 +306,11 @@ namespace Flipper
 	void AudioMixer::Enable(AxChannel channel, bool enable)
 	{
 		Sources[(int)channel]->Enable(enable);
+	}
+
+	bool AudioMixer::IsEnabled(AxChannel channel)
+	{
+		return Sources[(int)channel]->IsEnabled();
 	}
 
 	void AudioMixer::SetSampleRate(AxChannel channel, AudioSampleRate value)

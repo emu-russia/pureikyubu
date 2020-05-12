@@ -74,10 +74,10 @@ namespace DSP
 			unsigned ok : 1;	// 1: Bit test OK, 0: Bit test not OK
 			unsigned os : 1;	// Overflow (sticky)
 			unsigned hwz : 1;	// Hardwired to 0? 
-			unsigned ie : 1;	// Interrupt enable 
+			unsigned acie : 1;	// Accelerator/Decoder Interrupt enable 
 			unsigned unk10 : 1;
 			unsigned eie : 1;		// External interrupt enable 
-			unsigned unk12 : 1;
+			unsigned ge : 1;		// Global interrupts enabler
 			// Not actually status, but ALU control
 			unsigned am : 1;		// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
 			unsigned sxm : 1;	// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
@@ -102,10 +102,10 @@ namespace DSP
 		ix2,			// Indexing register 2
 		ix3,			// Indexing register 3
 		limitRegs,
-		lm0 = limitRegs,
-		lm1,
-		lm2,
-		lm3,
+		lm0 = limitRegs, // Limit register 0 
+		lm1,			// Limit register 1
+		lm2,			// Limit register 2
+		lm3,			// Limit register 3
 		stackRegs,
 		st0 = stackRegs,	// Call stack register 
 		st1,			// Data stack register 
@@ -120,9 +120,9 @@ namespace DSP
 		prodh,			// Product register (high) 
 		prodm2,			// Product register (mid 2) 
 		ax0l,			// 32-bit Accumulator 0 (low) 
-		ax0h,			// 32-bit Accumulator 0 (high) 
 		ax1l,			// 32-bit Accumulator 1 (low) 
-		ax1h,			// 32-bit Accumulator 1 (high
+		ax0h,			// 32-bit Accumulator 0 (high) 
+		ax1h,			// 32-bit Accumulator 1 (high)
 		ac0l,			// 40-bit Accumulator 0 (low) 
 		ac1l,			// 40-bit Accumulator 1 (low) 
 		ac0m,			// 40-bit Accumulator 0 (mid)
@@ -162,9 +162,9 @@ namespace DSP
 		ACSAL = 0xFFD5,		// Accelerator start address L 
 		ACEAH = 0xFFD6,		// Accelerator end address H 
 		ACEAL = 0xFFD7,		// Accelerator end address L 
-		ACCAH = 0xFFD8,		// Accelerator current address H 
+		ACCAH = 0xFFD8,		// Accelerator current address H  +  Acc Direction
 		ACCAL = 0xFFD9,		// Accelerator current address L 
-		ACDAT = 0xFFDD,		// Decoded Accelerator data (Read)  y[n]
+		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
 		AMDM = 0xFFEF,		// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
 		ACFMT = 0xFFD1,			// sample format used
@@ -203,10 +203,10 @@ namespace DSP
 		RESET = 0,
 		STOVF,			// Stack underflow/overflow
 		Unknown2,
-		Unknown3,
-		Unknown4,
-		ACCOV,			// Accelerator address overflow
-		Unknown6,		// Trap?
+		ACR_OVF,		// Acclerator current address = Start address (RAW Read mode)
+		ACW_OVF,		// Acclerator current address = End address (RAW Write mode)
+		ADP_OVF,		// Acclerator current address = End address (ADPCM Decoder mode)
+		Unknown6,
 		INT,			// External interrupt (from CPU)
 	};
 
@@ -225,6 +225,8 @@ namespace DSP
 
 	class DspCore
 	{
+		friend DspInterpreter;
+
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
 		DspAddress oneShotBreakpoint = 0xffff;
@@ -232,8 +234,8 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
 
-		const uint32_t GekkoTicksPerDspInstruction = 100;		// How many Gekko ticks should pass so that we can execute one DSP instruction
-		const uint32_t GekkoTicksPerDspSegment = 500;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
+		const uint32_t GekkoTicksPerDspInstruction = 10;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
 
@@ -251,7 +253,6 @@ namespace DSP
 		SpinLock CpuToDspLock;
 
 		bool haltOnUnmappedMemAccess = false;
-		bool log = false;
 
 		struct
 		{
@@ -280,36 +281,64 @@ namespace DSP
 		struct
 		{
 			uint16_t Fmt;					// Sample format
-			uint16_t AdpcmCoef[16];			
+			int16_t AdpcmCoef[16];			
 			uint16_t AdpcmPds;				// predictor / scale combination
-			uint16_t AdpcmYn1;				// y[n - 1]
-			uint16_t AdpcmYn2;				// y[n - 2]
+			int16_t AdpcmYn1;				// y[n - 1]
+			int16_t AdpcmYn2;				// y[n - 2]
 			uint16_t AdpcmGan;				// gain to be applied
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} StartAddress;
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} EndAddress;
-			struct
+			union
 			{
-				uint16_t l;
-				uint16_t h;
+				struct
+				{
+					uint16_t l;
+					uint16_t h;
+				};
+				uint32_t addr;
 			} CurrAddress;
+			bool readingSecondNibble;
+			uint8_t cachedByte;
+			bool pendingOverflow;
+			DspException overflowVector;
 		} Accel;
 
 		void ResetIfx();
 		void DoDma();
 		uint16_t AccelReadData(bool raw);
 		void AccelWriteData(uint16_t data);
+		void ResetAccel();
+		uint16_t DecodeAdpcm(uint8_t nibble);
 
 		bool pendingInterrupt = false;
-		int pendingInterruptDelay = 32;
+		int pendingInterruptDelay = 2;
 		bool pendingSoftReset = false;
+
+		// Logging control
+		bool logMailbox = false;
+		bool logInsaneMailbox = false;
+		bool logDspControlBits = false;
+		bool logDspInterrupts = false;
+		bool logNonconditionalCallJmp = false;
+		bool logDspDma = false;
+		bool logAccel = false;
+		bool logAdpcm = false;
 
 	public:
 

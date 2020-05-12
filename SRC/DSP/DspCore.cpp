@@ -70,6 +70,11 @@ namespace DSP
 
 	void DspCore::Exception(DspException id)
 	{
+		if (logDspInterrupts)
+		{
+			DBReport2(DbgChannel::DSP, "Exception: 0x%04X\n", id);
+		}
+
 		regs.st[0].push_back(regs.pc);
 		regs.st[1].push_back((DspAddress)regs.sr.bits);
 		regs.pc = (DspAddress)id * 2;
@@ -85,6 +90,16 @@ namespace DSP
 
 	void DspCore::SoftReset()
 	{
+		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
+		DBReport2(DbgChannel::DSP, "Soft Reset pc = 0x%04X\n", regs.pc);
+
+		pendingInterrupt = false;
+	}
+
+	void DspCore::HardReset()
+	{
+		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
+
 		savedGekkoTicks = Gekko::Gekko->GetTicks();
 
 		for (int i = 0; i < _countof(regs.st); i++)
@@ -97,11 +112,11 @@ namespace DSP
 		{
 			regs.ar[i] = 0;
 			regs.ix[i] = 0;
-			regs.lm[i] = 0;
+			regs.lm[i] = 0xFFFF;
 		}
 
 		for (int i = 0; i < 2; i++)
-		{ 
+		{
 			regs.ac[i].bits = 0;
 			regs.ax[i].bits = 0;
 		}
@@ -112,19 +127,13 @@ namespace DSP
 		regs.prod.l = 0;
 		regs.prod.m1 = 0;
 		regs.prod.m2 = 0;
-
-		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
-
-		pendingInterrupt = false;
-	}
-
-	void DspCore::HardReset()
-	{
-		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
-		SoftReset();
-		ResetIfx();
+		
 		// Hard Reset always from IROM start
 		regs.pc = IROM_START_ADDRESS;
+		DBReport2(DbgChannel::DSP, "Hard Reset pc = 0x%04X\n", regs.pc);
+
+		ResetIfx();
+
 		pendingInterrupt = false;
 		pendingSoftReset = false;
 		Suspend();
@@ -135,7 +144,10 @@ namespace DSP
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
-			DBReport2(DbgChannel::DSP, "DspCore::Run\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "DspCore::Run\n");
+			}
 			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 	}
@@ -144,7 +156,10 @@ namespace DSP
 	{
 		if (dspThread->IsRunning())
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "DspCore::Suspend\n");
+			}
 			dspThread->Suspend();
 		}
 	}
@@ -164,6 +179,7 @@ namespace DSP
 				{
 					DBHalt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
 					Suspend();
+					Gekko::Gekko->Suspend();
 					return;
 				}
 
@@ -171,11 +187,18 @@ namespace DSP
 				{
 					oneShotBreakpoint = 0xffff;
 					Suspend();
+					Gekko::Gekko->Suspend();
 					return;
 				}
 			}
 
-			if (pendingInterrupt)
+			if (pendingSoftReset)
+			{
+				pendingSoftReset = false;
+				DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+				SoftReset();
+			}
+			else if (pendingInterrupt)
 			{
 				pendingInterruptDelay--;
 				if (pendingInterruptDelay == 0)
@@ -185,12 +208,10 @@ namespace DSP
 					Exception(DspException::INT);
 				}
 			}
-
-			if (pendingSoftReset)
+			else if (Accel.pendingOverflow)
 			{
-				pendingSoftReset = false;
-				DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
-				SoftReset();
+				Accel.pendingOverflow = false;
+				Exception(Accel.overflowVector);
 			}
 
 			interp->ExecuteInstr();
@@ -327,7 +348,13 @@ namespace DSP
 			return;
 		}
 
-		if (pendingInterrupt)
+		if (pendingSoftReset)
+		{
+			pendingSoftReset = false;
+			DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
+			SoftReset();
+		}
+		else if (pendingInterrupt)
 		{
 			pendingInterruptDelay--;
 			if (pendingInterruptDelay == 0)
@@ -337,12 +364,10 @@ namespace DSP
 				Exception(DspException::INT);
 			}
 		}
-
-		if (pendingSoftReset)
+		else if (Accel.pendingOverflow)
 		{
-			pendingSoftReset = false;
-			DBReport2(DbgChannel::DSP, "SoftReset Acknowledge\n");
-			SoftReset();
+			Accel.pendingOverflow = false;
+			Exception(Accel.overflowVector);
 		}
 
 		interp->ExecuteInstr();
@@ -506,7 +531,7 @@ namespace DSP
 				regs.ac[0].m = val;
 				if (regs.sr.sxm)
 				{
-					regs.ac[0].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[0].h = (val & 0x8000) ? 0xFF : 0;
 					regs.ac[0].l = 0;
 				}
 				break;
@@ -514,7 +539,7 @@ namespace DSP
 				regs.ac[1].m = val;
 				if (regs.sr.sxm)
 				{
-					regs.ac[1].h = (val & 0x8000) ? 0xFFFF : 0;
+					regs.ac[1].h = (val & 0x8000) ? 0xFF : 0;
 					regs.ac[1].l = 0;
 				}
 				break;
@@ -578,10 +603,8 @@ namespace DSP
 			case (int)DspRegister::ac0m:
 				if (regs.sr.sxm)
 				{
-					int64_t a = SignExtend40(regs.ac[0].sbits);
-					if (a < SHRT_MIN) a = SHRT_MIN;
-					if (a > SHRT_MAX) a = SHRT_MAX;
-					val = (uint16_t)a;
+					val = regs.ac[0].m;
+					val |= (regs.ac[0].h & 1) ? 0x8000 : 0;
 				}
 				else
 				{
@@ -591,10 +614,8 @@ namespace DSP
 			case (int)DspRegister::ac1m:
 				if (regs.sr.sxm)
 				{
-					int64_t a = SignExtend40(regs.ac[1].sbits);
-					if (a < SHRT_MIN) a = SHRT_MIN;
-					if (a > SHRT_MAX) a = SHRT_MAX;
-					val = (uint16_t)a;
+					val = regs.ac[1].m;
+					val |= (regs.ac[1].h & 1) ? 0x8000 : 0;
 				}
 				else
 				{
@@ -776,7 +797,7 @@ namespace DSP
 				case (DspAddress)DspHardwareRegs::DIRQ:
 					if (value & 1)
 					{
-						if (log)
+						if (logDspInterrupts)
 						{
 							DBReport2(DbgChannel::DSP, "DspHardwareRegs::DIRQ\n");
 						}
@@ -786,41 +807,90 @@ namespace DSP
 
 				case (DspAddress)DspHardwareRegs::ACSAH:
 					Accel.StartAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACSAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACSAL:
 					Accel.StartAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACSAL = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACEAH:
 					Accel.EndAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACEAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACEAL:
 					Accel.EndAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACEAL = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACCAH:
 					Accel.CurrAddress.h = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACCAH = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACCAL:
 					Accel.CurrAddress.l = value;
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACCAL = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					AccelWriteData(value);
+					if (logAccel)
+					{
+						DBReport2(DbgChannel::DSP, "ACDAT2 = 0x%04X\n", value);
+					}
 					break;
 
 				case (DspAddress)DspHardwareRegs::ACFMT:
 					Accel.Fmt = value;
+					ResetAccel();
+					if (logAccel || logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACFMT = 0x%04X\n", value);
+					}
 					break;
+
 				case (DspAddress)DspHardwareRegs::ACPDS:
 					Accel.AdpcmPds = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACPDS = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACYN1:
 					Accel.AdpcmYn1 = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACYN1 = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACYN2:
 					Accel.AdpcmYn2 = value;
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACYN2 = 0x%04X\n", value);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::ACGAN:
 					Accel.AdpcmGan = value;
-					break;
-
-				case (DspAddress)DspHardwareRegs::ACDAT2:
-					AccelWriteData(value);
+					if (logAdpcm)
+					{
+						DBReport2(DbgChannel::DSP, "ACGAN = 0x%04X\n", value);
+					}
 					break;
 
 				case (DspAddress)DspHardwareRegs::ADPCM_A00:
@@ -912,24 +982,29 @@ namespace DSP
 	{
 		if (val)
 		{
-			DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "Pending SoftReset\n");
+			}
 			pendingSoftReset = true;
-			Run();
 		}
 	}
 
 	bool DspCore::DSPGetResetBit()
 	{
-		return pendingSoftReset;
+		return false;
 	}
 
 	void DspCore::DSPSetIntBit(bool val)
 	{
-		if (val && !pendingSoftReset)
+		if (val && !pendingSoftReset && regs.sr.eie && regs.sr.ge)
 		{
-			DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			if (logDspControlBits)
+			{
+				DBReport2(DbgChannel::DSP, "Pending Interrupt\n");
+			}
 			pendingInterrupt = true;
-			pendingInterruptDelay = 32;
+			pendingInterruptDelay = 2;
 		}
 	}
 
@@ -940,10 +1015,7 @@ namespace DSP
 
 	void DspCore::DSPSetHaltBit(bool val)
 	{
-		if (!pendingSoftReset)
-		{
-			val ? Suspend() : Run();
-		}
+		val ? Suspend() : Run();
 	}
 
 	bool DspCore::DSPGetHaltBit()
@@ -957,26 +1029,42 @@ namespace DSP
 
 	void DspCore::CpuToDspWriteHi(uint16_t value)
 	{
-		if (log)
+		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteHi: 0x%04X (Shadowed)\n", value);
+			DBReport2(DbgChannel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
 		}
-		CpuToDspMailboxShadow[0] = value;
+
+		if (CpuToDspMailbox[0] & 0x8000)
+		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "CPU Message discarded.\n");
+			}
+		}
+
+		CpuToDspMailbox[0] = value & 0x7FFF;
 	}
 
 	void DspCore::CpuToDspWriteLo(uint16_t value)
 	{
-		if (log)
+		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::CpuToDspWriteLo: 0x%04X\n", value);
+			DBReport2(DbgChannel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
 		}
+
 		CpuToDspMailbox[1] = value;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
+		CpuToDspMailbox[0] |= 0x8000;
+		if (logMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
+		}
 	}
 
 	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
 	{
 		uint16_t value = CpuToDspMailbox[0];
+
+		// TODO:
 
 		// If DSP is running and is in a waiting cycle for a message from the CPU, 
 		// we put it in the HALT state until the processor sends a message through the Mailbox.
@@ -995,6 +1083,10 @@ namespace DSP
 		uint16_t value = CpuToDspMailbox[1];
 		if (ReadByDsp)
 		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
+			}
 			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
 		}
 		return value;
@@ -1006,21 +1098,35 @@ namespace DSP
 
 	void DspCore::DspToCpuWriteHi(uint16_t value)
 	{
-		if (log)
+		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteHi = 0x%04X (Shadowed)\n", value);
+			DBReport2(DbgChannel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
 		}
-		DspToCpuMailboxShadow[0] = value;
+
+		if (DspToCpuMailbox[0] & 0x8000)
+		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "DSP Message discarded.\n");
+			}
+		}
+
+		DspToCpuMailbox[0] = value & 0x7FFF;
 	}
 
 	void DspCore::DspToCpuWriteLo(uint16_t value)
 	{
-		if (log)
+		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspCore::DspToCpuWriteLo = 0x%04X\n", value);
+			DBReport2(DbgChannel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
 		}
+
 		DspToCpuMailbox[1] = value;
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
+		DspToCpuMailbox[0] |= 0x8000;
+		if (logMailbox)
+		{
+			DBReport2(DbgChannel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
+		}
 	}
 
 	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
@@ -1035,6 +1141,10 @@ namespace DSP
 		uint16_t value = DspToCpuMailbox[1];
 		if (!ReadByDsp)
 		{
+			if (logMailbox)
+			{
+				DBReport2(DbgChannel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
+			}
 			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
 		}
 		return value;
@@ -1054,6 +1164,8 @@ namespace DSP
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
 		memset(&Accel, 0, sizeof(Accel));
+
+		ResetAccel();
 	}
 
 	// Instant DMA
@@ -1061,8 +1173,11 @@ namespace DSP
 	{
 		uint8_t* ptr = nullptr;
 
-		//DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
-		//	DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		if (logDspDma)
+		{
+			DBReport2(DbgChannel::DSP, "DspCore::Dma: Mmem: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
+				DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		}
 
 		if (DmaRegs.control.Imem)
 		{
@@ -1081,17 +1196,11 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
-			{
-				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
-			}
+			memcpy(&mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], ptr, DmaRegs.blockSize);
 		}
 		else
 		{
-			if (DmaRegs.mmemAddr.bits < (uint32_t)(RAMSIZE - DmaRegs.blockSize))
-			{
-				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
-			}
+			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], DmaRegs.blockSize);
 		}
 
 		// Dump ucode
@@ -1101,6 +1210,30 @@ namespace DSP
 			TCHAR filename[0x100] = { 0, };
 			_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X.bin"), DmaRegs.blockSize);
 			UI::FileSave(filename, ptr, DmaRegs.blockSize);
+		}
+#endif
+
+		// Dump non-empty sample data
+#if 0
+		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && DmaRegs.blockSize == 0x80)
+		{
+			int zc = 0;
+
+			for (int i = 0; i < DmaRegs.blockSize; i++)
+			{
+				if (ptr[i] == 0)
+					zc++;
+			}
+			
+			if (zc != DmaRegs.blockSize)
+			{
+				DBHalt("non zero sample buffer!\n");
+
+				FILE* f;
+				fopen_s(&f, "dspSampleOut.bin", "ab+");
+				fwrite(ptr, 1, DmaRegs.blockSize, f);
+				fclose(f);
+			}
 		}
 #endif
 	}
