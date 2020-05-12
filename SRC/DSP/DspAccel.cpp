@@ -31,13 +31,13 @@ namespace DSP
 				if (Accel.readingSecondNibble)
 				{
 					Accel.readingSecondNibble = false;
-					val = Accel.cachedByte & 0xf;
+					val = Accel.cachedByte >> 4;
 					Accel.CurrAddress.addr += 1;
 				}
 				else
 				{
 					Accel.cachedByte = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
-					val = Accel.cachedByte >> 4;
+					val = Accel.cachedByte & 0xf;
 					Accel.readingSecondNibble = true;
 				}
 				break;

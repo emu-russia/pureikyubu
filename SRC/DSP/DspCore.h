@@ -281,10 +281,10 @@ namespace DSP
 		struct
 		{
 			uint16_t Fmt;					// Sample format
-			uint16_t AdpcmCoef[16];			
+			int16_t AdpcmCoef[16];			
 			uint16_t AdpcmPds;				// predictor / scale combination
-			uint16_t AdpcmYn1;				// y[n - 1]
-			uint16_t AdpcmYn2;				// y[n - 2]
+			int16_t AdpcmYn1;				// y[n - 1]
+			int16_t AdpcmYn2;				// y[n - 2]
 			uint16_t AdpcmGan;				// gain to be applied
 			union
 			{
