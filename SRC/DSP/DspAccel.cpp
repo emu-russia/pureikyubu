@@ -12,7 +12,17 @@ namespace DSP
 		// Check bit15 of ACCAH
 		if ((Accel.CurrAddress.h & 0x8000) != 0)
 		{
+			// This is #UB
 			DBHalt("DSP: Accelerator is not configured to read\n");
+		}
+
+		if ((Accel.CurrAddress.addr & 0x07ff'ffff) == (Accel.StartAddress.addr & 0x07FF'FFFF))
+		{
+			if ((Accel.Fmt & 3) != 0 && regs.sr.ge && regs.sr.acie)
+			{
+				Accel.pendingOverflow = true;
+				Accel.overflowVector = DspException::ACR_OVF;
+			}
 		}
 
 		switch (Accel.Fmt & 3)
@@ -56,7 +66,16 @@ namespace DSP
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
 			Accel.CurrAddress.addr = Accel.StartAddress.addr;
-			DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
+			if (logAccel)
+			{
+				DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
+			}
+
+			if ((Accel.Fmt & 3) == 0 && regs.sr.ge && regs.sr.acie)
+			{
+				Accel.pendingOverflow = true;
+				Accel.overflowVector = DspException::ADP_OVF;
+			}
 		}
 
 		return val;
@@ -68,6 +87,7 @@ namespace DSP
 		// Check bit15 of ACCAH
 		if ((Accel.CurrAddress.h & 0x8000) == 0)
 		{
+			// This is #UB
 			DBHalt("DSP: Accelerator is not configured to write\n");
 		}
 
@@ -91,13 +111,23 @@ namespace DSP
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
 			Accel.CurrAddress.addr = Accel.StartAddress.addr;
-			DBReport2(DbgChannel::DSP, "Accelerator Overflow while write\n");
+			if (logAccel)
+			{
+				DBReport2(DbgChannel::DSP, "Accelerator Overflow while write\n");
+			}
+
+			if (regs.sr.ge && regs.sr.acie)
+			{
+				Accel.pendingOverflow = true;
+				Accel.overflowVector = DspException::ACW_OVF;
+			}
 		}
 	}
 
 	void DspCore::ResetAccel()
 	{
 		Accel.readingSecondNibble = false;
+		Accel.pendingOverflow = false;
 	}
 
 }

@@ -208,6 +208,11 @@ namespace DSP
 					Exception(DspException::INT);
 				}
 			}
+			else if (Accel.pendingOverflow)
+			{
+				Accel.pendingOverflow = false;
+				Exception(Accel.overflowVector);
+			}
 
 			interp->ExecuteInstr();
 			savedGekkoTicks = ticks;
@@ -358,6 +363,11 @@ namespace DSP
 				pendingInterrupt = false;
 				Exception(DspException::INT);
 			}
+		}
+		else if (Accel.pendingOverflow)
+		{
+			Accel.pendingOverflow = false;
+			Exception(Accel.overflowVector);
 		}
 
 		interp->ExecuteInstr();
@@ -987,7 +997,7 @@ namespace DSP
 
 	void DspCore::DSPSetIntBit(bool val)
 	{
-		if (val && !pendingSoftReset)
+		if (val && !pendingSoftReset && regs.sr.eie && regs.sr.ge)
 		{
 			if (logDspControlBits)
 			{

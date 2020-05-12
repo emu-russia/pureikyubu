@@ -305,17 +305,17 @@ namespace Debug
 			savedRegs.sr.hwz != Flipper::HW->DSP->regs.sr.hwz ? CuiColor::Lime : CuiColor::Normal,
 			73, 1, "08: %i", Flipper::HW->DSP->regs.sr.hwz);
 		Print(CuiColor::Black,
-			savedRegs.sr.ie != Flipper::HW->DSP->regs.sr.ie ? CuiColor::Lime : CuiColor::Normal,
-			73, 2, "09: %i", Flipper::HW->DSP->regs.sr.ie);
+			savedRegs.sr.acie != Flipper::HW->DSP->regs.sr.acie ? CuiColor::Lime : CuiColor::Normal,
+			73, 2, "AC: %i", Flipper::HW->DSP->regs.sr.acie);
 		Print(CuiColor::Black,
 			savedRegs.sr.unk10 != Flipper::HW->DSP->regs.sr.unk10 ? CuiColor::Lime : CuiColor::Normal,
 			73, 3, "10: %i", Flipper::HW->DSP->regs.sr.unk10);
 		Print(CuiColor::Black,
 			savedRegs.sr.eie != Flipper::HW->DSP->regs.sr.eie ? CuiColor::Lime : CuiColor::Normal,
-			73, 4, "11: %i", Flipper::HW->DSP->regs.sr.eie);
+			73, 4, "EI: %i", Flipper::HW->DSP->regs.sr.eie);
 		Print(CuiColor::Black,
-			savedRegs.sr.unk12 != Flipper::HW->DSP->regs.sr.unk12 ? CuiColor::Lime : CuiColor::Normal,
-			73, 5, "12: %i", Flipper::HW->DSP->regs.sr.unk12);
+			savedRegs.sr.ge != Flipper::HW->DSP->regs.sr.ge ? CuiColor::Lime : CuiColor::Normal,
+			73, 5, "GE: %i", Flipper::HW->DSP->regs.sr.ge);
 		Print(CuiColor::Black,
 			savedRegs.sr.am != Flipper::HW->DSP->regs.sr.am ? CuiColor::Lime : CuiColor::Normal,
 			73, 6, "AM: %i", Flipper::HW->DSP->regs.sr.am);

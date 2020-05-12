@@ -19,7 +19,7 @@ namespace DSP
 		{
 			b <<= 1;
 		}
-		core->regs.prod = DspCore::Muls(a, b);
+		core->regs.prod = core->regs.sr.su ? DspCore::Mulu(a, b) : DspCore::Muls(a, b);
 	}
 
 	void DspInterpreter::Madd(int16_t a, int16_t b)
@@ -61,7 +61,7 @@ namespace DSP
 		core->regs.ac[r].sbits += core->regs.prod.bitsPacked;
 		core->regs.ac[r].sbits &= 0xff'ffff'ffff;
 
-		core->regs.prod = DspCore::Muls(a, b);
+		core->regs.prod = core->regs.sr.su ? DspCore::Mulu(a, b) : DspCore::Muls(a, b);
 	}
 
 	void DspInterpreter::Mulmv(int16_t a, int16_t b, int r)
@@ -75,7 +75,7 @@ namespace DSP
 		core->regs.ac[r].sbits = core->regs.prod.bitsPacked;
 		core->regs.ac[r].sbits &= 0xff'ffff'ffff;
 
-		core->regs.prod = DspCore::Muls(a, b);
+		core->regs.prod = core->regs.sr.su ? DspCore::Mulu(a, b) : DspCore::Muls(a, b);
 	}
 
 	void DspInterpreter::Mulmvz(int16_t a, int16_t b, int r)
@@ -89,7 +89,7 @@ namespace DSP
 		core->regs.ac[r].sbits = core->regs.prod.bitsPacked;
 		core->regs.ac[r].sbits &= 0xff'ffff'0000;
 
-		core->regs.prod = DspCore::Muls(a, b);
+		core->regs.prod = core->regs.sr.su ? DspCore::Mulu(a, b) : DspCore::Muls(a, b);
 	}
 
 	// MUL

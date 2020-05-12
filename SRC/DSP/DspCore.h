@@ -74,10 +74,10 @@ namespace DSP
 			unsigned ok : 1;	// 1: Bit test OK, 0: Bit test not OK
 			unsigned os : 1;	// Overflow (sticky)
 			unsigned hwz : 1;	// Hardwired to 0? 
-			unsigned ie : 1;	// Interrupt enable 
+			unsigned acie : 1;	// Accelerator/Decoder Interrupt enable 
 			unsigned unk10 : 1;
 			unsigned eie : 1;		// External interrupt enable 
-			unsigned unk12 : 1;
+			unsigned ge : 1;		// Global interrupts enabler
 			// Not actually status, but ALU control
 			unsigned am : 1;		// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
 			unsigned sxm : 1;	// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
@@ -203,10 +203,10 @@ namespace DSP
 		RESET = 0,
 		STOVF,			// Stack underflow/overflow
 		Unknown2,
-		Unknown3,
-		Unknown4,
-		ACCOV,			// Accelerator address overflow
-		Unknown6,		// Trap?
+		ACR_OVF,		// Acclerator current address = Start address (RAW Read mode)
+		ACW_OVF,		// Acclerator current address = End address (RAW Write mode)
+		ADP_OVF,		// Acclerator current address = End address (ADPCM Decoder mode)
+		Unknown6,
 		INT,			// External interrupt (from CPU)
 	};
 
@@ -315,6 +315,8 @@ namespace DSP
 			} CurrAddress;
 			bool readingSecondNibble;
 			uint8_t cachedByte;
+			bool pendingOverflow;
+			DspException overflowVector;
 		} Accel;
 
 		void ResetIfx();
