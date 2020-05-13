@@ -10,35 +10,35 @@ void DvdAudioInitDecoder()
 	YnRight[0] = YnRight[1] = 0;
 }
 
-int32_t MulSomething(Nibble arg_0, int32_t arg_4, int32_t arg_8)
+int32_t MulSomething(Nibble arg_0, int32_t yn1, int32_t yn2)
 {
-    int16_t var_4 = 0;
-    int16_t var_8 = 0;
+    int16_t a1 = 0;
+    int16_t a2 = 0;
 
     switch (arg_0)
     {
         case 0:
-            var_4 = 0;
-            var_8 = 0;
+            a1 = 0;
+            a2 = 0;
             break;
         case 1:
-            var_4 = 60;
-            var_8 = 0;
+            a1 = 60;
+            a2 = 0;
             break;
         case 2:
-            var_4 = 115;
-            var_8 = -52;
+            a1 = 115;
+            a2 = -52;
             break;
         case 3:
-            var_4 = 98;
-            var_8 = -55;
+            a1 = 98;
+            a2 = -55;
             break;
     }
 
-    int32_t edx = (int32_t)var_4 * arg_4;
-    int32_t eax = (int32_t)var_8 * arg_8;
+    int32_t ps1 = (int32_t)a1 * yn1;
+    int32_t ps2 = (int32_t)a2 * yn2;
 
-    int32_t var_C = (edx + eax + 32) >> 6;
+    int32_t var_C = (ps1 + ps2 + 32) >> 6;
     return max(-0x200000, min(var_C, 0x1FFFFF) );
 }
 

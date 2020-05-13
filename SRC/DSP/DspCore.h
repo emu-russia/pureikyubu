@@ -171,7 +171,7 @@ namespace DSP
 		ACPDS = 0xFFDA,			// predictor / scale combination
 		ACYN1 = 0xFFDB,			// y[n - 1]
 		ACYN2 = 0xFFDC,			// y[n - 2]
-		ACGAN = 0xFFDE,			// gain to be applied (0 for ADPCM, 0x0800 for PCM8/16)
+		ACGAN = 0xFFDE,			// gain to be applied (PCM mode only)
 		// ADPCM coef table
 		ADPCM_A00 = 0xFFA0,
 		ADPCM_A10 = 0xFFA1,
@@ -227,6 +227,7 @@ namespace DSP
 	{
 		friend DspInterpreter;
 
+	public:
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
 		DspAddress oneShotBreakpoint = 0xffff;
@@ -281,10 +282,10 @@ namespace DSP
 		struct
 		{
 			uint16_t Fmt;					// Sample format
-			int16_t AdpcmCoef[16];			
+			uint16_t AdpcmCoef[16];			
 			uint16_t AdpcmPds;				// predictor / scale combination
-			int16_t AdpcmYn1;				// y[n - 1]
-			int16_t AdpcmYn2;				// y[n - 2]
+			uint16_t AdpcmYn1;				// y[n - 1]
+			uint16_t AdpcmYn2;				// y[n - 2]
 			uint16_t AdpcmGan;				// gain to be applied
 			union
 			{
@@ -313,8 +314,10 @@ namespace DSP
 				};
 				uint32_t addr;
 			} CurrAddress;
+			
 			bool readingSecondNibble;
 			uint8_t cachedByte;
+			size_t decoderByteCount;
 			bool pendingOverflow;
 			DspException overflowVector;
 		} Accel;
@@ -340,7 +343,7 @@ namespace DSP
 		bool logAccel = false;
 		bool logAdpcm = false;
 
-	public:
+	//	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
 

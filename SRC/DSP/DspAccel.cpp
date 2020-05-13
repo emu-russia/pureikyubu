@@ -28,16 +28,31 @@ namespace DSP
 		switch (Accel.Fmt & 3)
 		{
 			case 0:
+				if (Accel.decoderByteCount == 0)
+				{
+					// Refresh pred/scale
+					Accel.AdpcmPds = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
+					Accel.CurrAddress.addr += 1;
+					Accel.decoderByteCount++;
+					Accel.readingSecondNibble = false;
+				}
+
+				// Decode data
 				if (Accel.readingSecondNibble)
 				{
 					Accel.readingSecondNibble = false;
-					val = Accel.cachedByte >> 4;
+					val = Accel.cachedByte & 0xF;
 					Accel.CurrAddress.addr += 1;
+					Accel.decoderByteCount++;
+					if (Accel.decoderByteCount == 8)
+					{
+						Accel.decoderByteCount = 0;
+					}
 				}
 				else
 				{
 					Accel.cachedByte = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
-					val = Accel.cachedByte & 0xf;
+					val = Accel.cachedByte >> 4;
 					Accel.readingSecondNibble = true;
 				}
 				break;
@@ -60,7 +75,7 @@ namespace DSP
 		// Issue ADPCM Decoder
 		if (!raw)
 		{
-			val = DecodeAdpcm(val);
+			val = DecodeAdpcm((uint8_t)val);
 		}
 
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
@@ -128,6 +143,7 @@ namespace DSP
 	{
 		Accel.readingSecondNibble = false;
 		Accel.pendingOverflow = false;
+		Accel.decoderByteCount = 0;
 	}
 
 }
