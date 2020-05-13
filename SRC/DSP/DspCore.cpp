@@ -18,34 +18,37 @@ namespace DSP
 
 		// Load IROM
 
-		size_t iromImageSize = 0;
-		uint8_t* iromImage = (uint8_t *)UI::FileLoad(config->DspIromFilename, &iromImageSize);
-
-		if (!iromImage || iromImageSize != IROM_SIZE)
+		if (config != nullptr)
 		{
-			DBReport("Failed to load DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
-		}
-		else
-		{
-			DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
-			memcpy(irom, iromImage, IROM_SIZE);
-			free(iromImage);
-		}
+			size_t iromImageSize = 0;
+			uint8_t* iromImage = (uint8_t*)UI::FileLoad(config->DspIromFilename, &iromImageSize);
 
-		// Load DROM
+			if (!iromImage || iromImageSize != IROM_SIZE)
+			{
+				DBReport("Failed to load DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
+			}
+			else
+			{
+				DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
+				memcpy(irom, iromImage, IROM_SIZE);
+				free(iromImage);
+			}
 
-		size_t dromImageSize = 0;
-		uint8_t* dromImage = (uint8_t*)UI::FileLoad(config->DspDromFilename, &dromImageSize);
+			// Load DROM
 
-		if (!dromImage || dromImageSize != DROM_SIZE)
-		{
-			DBReport("Failed to load DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
-		}
-		else
-		{
-			DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
-			memcpy(drom, dromImage, DROM_SIZE);
-			free(dromImage);
+			size_t dromImageSize = 0;
+			uint8_t* dromImage = (uint8_t*)UI::FileLoad(config->DspDromFilename, &dromImageSize);
+
+			if (!dromImage || dromImageSize != DROM_SIZE)
+			{
+				DBReport("Failed to load DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
+			}
+			else
+			{
+				DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
+				memcpy(drom, dromImage, DROM_SIZE);
+				free(dromImage);
+			}
 		}
 
 		DBReport2(DbgChannel::DSP, "DSPCore: Ready\n");
@@ -100,7 +103,10 @@ namespace DSP
 	{
 		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
 
-		savedGekkoTicks = Gekko::Gekko->GetTicks();
+		if (Gekko::Gekko != nullptr)
+		{
+			savedGekkoTicks = Gekko::Gekko->GetTicks();
+		}
 
 		for (int i = 0; i < _countof(regs.st); i++)
 		{
