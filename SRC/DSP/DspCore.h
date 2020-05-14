@@ -317,7 +317,6 @@ namespace DSP
 			
 			bool readingSecondNibble;
 			uint8_t cachedByte;
-			size_t decoderByteCount;
 			bool pendingOverflow;
 			DspException overflowVector;
 		} Accel;

@@ -38,6 +38,15 @@ namespace DSP
 				break;
 		}
 
+		// Here you can sniff the sound from the decoder, but for verification it is desirable that a single-channel sound is produced.
+
+#if 0
+		FILE* f;
+		fopen_s(&f, "adpcmOut.bin", "ab+");
+		fwrite(&out, 1, sizeof(uint16_t), f);
+		fclose(f);
+#endif
+
 		return (uint16_t)out;
 	}
 }

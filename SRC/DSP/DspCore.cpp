@@ -80,6 +80,7 @@ namespace DSP
 
 		regs.st[0].push_back(regs.pc);
 		regs.st[1].push_back((DspAddress)regs.sr.bits);
+		regs.sr.ge = 0;
 		regs.pc = (DspAddress)id * 2;
 	}
 
@@ -1298,11 +1299,7 @@ namespace DSP
 	DspProduct DspCore::Muls(int16_t a, int16_t b)
 	{
 		DspProduct prod;
-		prod.l = 0;
-		prod.h = 0;
-		prod.m1 = 0;
-		prod.m2 = 0;
-
+#if 1
 		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
 
 		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
@@ -1316,16 +1313,20 @@ namespace DSP
 		prod.m1 = u >> 16;
 		prod.m2 = m >> 16;
 		prod.l = m & 0xffff;
+#else
+		prod.bitsPacked = (int64_t)((int32_t)a * (int32_t)b);
+		UnpackProd(prod);
+#endif
 
 		return prod;
 	}
 
-	// Treat operands as unsigned 16-bit numbers and produce signed multiply product.
+	// Treat operands as unsigned 16-bit numbers and produce unsigned multiply product.
 
 	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
 	{
 		DspProduct prod;
-
+#if 1
 		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
 
 		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
@@ -1339,7 +1340,10 @@ namespace DSP
 		prod.m1 = u >> 16;
 		prod.m2 = m >> 16;
 		prod.l = m & 0xffff;
-
+#else
+		prod.bitsPacked = (uint64_t)((uint32_t)a * (uint32_t)b);
+		UnpackProd(prod);
+#endif
 		return prod;
 	}
 
