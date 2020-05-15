@@ -610,8 +610,15 @@ namespace DSP
 			case (int)DspRegister::ac0m:
 				if (regs.sr.sxm)
 				{
-					val = regs.ac[0].m;
-					val |= (regs.ac[0].h & 1) ? 0x8000 : 0;
+					int64_t a = SignExtend40(regs.ac[0].sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.ac[0].m;
+					}
 				}
 				else
 				{
@@ -621,8 +628,15 @@ namespace DSP
 			case (int)DspRegister::ac1m:
 				if (regs.sr.sxm)
 				{
-					val = regs.ac[1].m;
-					val |= (regs.ac[1].h & 1) ? 0x8000 : 0;
+					int64_t a = SignExtend40(regs.ac[1].sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.ac[1].m;
+					}
 				}
 				else
 				{
@@ -1299,7 +1313,7 @@ namespace DSP
 	DspProduct DspCore::Muls(int16_t a, int16_t b)
 	{
 		DspProduct prod;
-#if 1
+#if 0
 		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
 
 		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
@@ -1326,7 +1340,7 @@ namespace DSP
 	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
 	{
 		DspProduct prod;
-#if 1
+#if 0
 		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
 
 		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);

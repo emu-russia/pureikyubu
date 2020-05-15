@@ -315,8 +315,6 @@ namespace DSP
 				uint32_t addr;
 			} CurrAddress;
 			
-			bool readingSecondNibble;
-			uint8_t cachedByte;
 			bool pendingOverflow;
 			DspException overflowVector;
 		} Accel;
@@ -324,9 +322,10 @@ namespace DSP
 		void ResetIfx();
 		void DoDma();
 		uint16_t AccelReadData(bool raw);
+		uint16_t AccelFetch();
 		void AccelWriteData(uint16_t data);
 		void ResetAccel();
-		uint16_t DecodeAdpcm(uint8_t nibble);
+		uint16_t DecodeAdpcm(uint16_t nibble);
 
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 2;

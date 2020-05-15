@@ -4,6 +4,66 @@
 
 namespace DSP
 {
+	uint16_t DspCore::AccelFetch()
+	{
+		uint16_t val = 0;
+		uint8_t tempByte = 0;
+
+		switch (Accel.Fmt & 3)
+		{
+			case 0:
+
+				// Refresh pred/scale
+				if ((Accel.CurrAddress.addr & 0xF) == 0 && ((Accel.Fmt >> 2) & 3) == 0)
+				{
+					Accel.AdpcmPds = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
+					Accel.CurrAddress.addr += 2;
+				}
+
+				tempByte = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
+				if ((Accel.CurrAddress.addr & 1) == 0)
+				{
+					val = tempByte >> 4;
+				}
+				else
+				{
+					val = tempByte & 0xf;
+				}
+				break;
+
+			case 1:
+				val = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff));
+				break;
+
+			case 2:
+				val = _byteswap_ushort(*(uint16_t*)(aram.mem + 2 * (Accel.CurrAddress.addr & 0x07ff'ffff)));
+				break;
+
+			default:
+				DBHalt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
+				break;
+		}
+
+		Accel.CurrAddress.addr++;
+
+		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
+		{
+			Accel.CurrAddress.addr = Accel.StartAddress.addr;
+			if (logAccel)
+			{
+				DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
+			}
+
+			if (regs.sr.ge && regs.sr.acie)
+			{
+				Accel.pendingOverflow = true;
+				Accel.overflowVector = ((Accel.Fmt >> 3) & 3) == 0 ? DspException::ADP_OVF : DspException::ACR_OVF;
+			}
+		}
+
+		return val;
+	}
+
 	// Read data by accelerator and optionally decode (raw=false)
 	uint16_t DspCore::AccelReadData(bool raw)
 	{
@@ -16,75 +76,12 @@ namespace DSP
 			DBHalt("DSP: Accelerator is not configured to read\n");
 		}
 
-		if ((Accel.CurrAddress.addr & 0x07ff'ffff) == (Accel.StartAddress.addr & 0x07FF'FFFF))
-		{
-			if ((Accel.Fmt & 3) != 0 && regs.sr.ge && regs.sr.acie)
-			{
-				Accel.pendingOverflow = true;
-				Accel.overflowVector = DspException::ACR_OVF;
-			}
-		}
-
-		switch (Accel.Fmt & 3)
-		{
-			case 0:
-				if ((Accel.CurrAddress.addr & 7) == 0)
-				{
-					// Refresh pred/scale
-					Accel.AdpcmPds = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
-					Accel.CurrAddress.addr += 1;
-					Accel.readingSecondNibble = false;
-				}
-
-				// Decode data
-				if (Accel.readingSecondNibble)
-				{
-					Accel.readingSecondNibble = false;
-					val = Accel.cachedByte & 0xF;
-					Accel.CurrAddress.addr += 1;
-				}
-				else
-				{
-					Accel.cachedByte = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
-					val = Accel.cachedByte >> 4;
-					Accel.readingSecondNibble = true;
-				}
-				break;
-
-			case 1:
-				val = aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff];
-				Accel.CurrAddress.addr += 1;
-				break;
-
-			case 2:
-				val = _byteswap_ushort (*(uint16_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff)));
-				Accel.CurrAddress.addr += 2;
-				break;
-
-			default:
-				DBHalt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
-				break;
-		}
+		val = AccelFetch();
 
 		// Issue ADPCM Decoder
 		if (!raw)
 		{
-			val = DecodeAdpcm((uint8_t)val);
-		}
-
-		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
-		{
-			Accel.CurrAddress.addr = Accel.StartAddress.addr;
-			if (logAccel)
-			{
-				DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
-			}
-
-			if ((Accel.Fmt & 3) == 0 && regs.sr.ge && regs.sr.acie)
-			{
-				Accel.pendingOverflow = true;
-				Accel.overflowVector = DspException::ADP_OVF;
-			}
+			val = DecodeAdpcm(val);
 		}
 
 		return val;
@@ -100,22 +97,10 @@ namespace DSP
 			DBHalt("DSP: Accelerator is not configured to write\n");
 		}
 
-		switch (Accel.Fmt & 3)
-		{
-			case 1:
-				aram.mem[Accel.CurrAddress.addr & 0x07ff'ffff] = (uint8_t)data;
-				Accel.CurrAddress.addr += 1;
-				break;
+		// Write mode is always 16-bit
 
-			case 2:
-				*(uint16_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff)) = _byteswap_ushort(data);
-				Accel.CurrAddress.addr += 2;
-				break;
-
-			default:
-				DBHalt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
-				break;
-		}
+		*(uint16_t*)(aram.mem + 2 * (Accel.CurrAddress.addr & 0x07ff'ffff)) = _byteswap_ushort(data);
+		Accel.CurrAddress.addr++;
 
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
@@ -135,7 +120,6 @@ namespace DSP
 
 	void DspCore::ResetAccel()
 	{
-		Accel.readingSecondNibble = false;
 		Accel.pendingOverflow = false;
 	}
 
