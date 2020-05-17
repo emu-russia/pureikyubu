@@ -31,11 +31,11 @@ namespace DSP
 			}
 			else if (an == 0 && bn == 1)
 			{
-				core->regs.prod = DspCore::Mulus(b, a, scale);
+				core->regs.prod = DspCore::Mulus(a, b, scale);
 			}
 			else if (an == 1 && bn == 0)
 			{
-				core->regs.prod = DspCore::Mulus(a, b, scale);
+				core->regs.prod = DspCore::Mulus(b, a, scale);
 			}
 			else
 			{

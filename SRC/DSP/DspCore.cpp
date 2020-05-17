@@ -1248,6 +1248,7 @@ namespace DSP
 			}
 		}
 
+		// Dump PCM samples coming from mixer
 #if 1
 		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && 
 			(0x400 >= DmaRegs.dspAddr && DmaRegs.dspAddr < 0x600) && 

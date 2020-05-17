@@ -156,15 +156,51 @@
 
 ## Mixing Routines
 
+- ar0: Input samples (0xCE0)
+- ar1: 0xB89 (&mix.vL)
+- ar2 = ar3 = 0x0, 0x40 ...
+- ix0 = ar0 (?)
+- ix1 = 0x100, 0x140 ...
+- set40 (Special processing for acX.m enabled)
+- m2 (Multiply result by 2)
+
 ```
+
+
+Part 1: Left channel mixer
+
+
 80E7 81 50       	clr  	ac0             	l    	ax0.h, @ar0
 80E8 89 49       	clr  	ac1             	l    	ax1.l, @ar1
 80E9 B0 72       	mulx 	ax0.h, ax1.l    	l    	ac0.m, @ar2
 80EA 89 62       	clr  	ac1             	l    	ac0.l, @ar2
+
+{
+	ac0 = ac1 = 0;
+	ax0h = *ar0++; 		// samples[0]
+	ax1l = *ar1++; 		// for example mix.vL = 0x7fff 				// ax1l  - Volume Left
+
+	prod = ax0h * ax1l; 		// mulx SxU
+	ac0m = SignExtend(*ar2++); 			// final_samplesL[0]
+	ac1 = 0;
+	ac0l = *ar2++; 			// final_samplesL[1]
+}
+
 80EB F0 7A       	lsl16	ac0             	l    	ac1.m, @ar2
 80EC 19 1A       	lrri 	ax0.h, @ar0
 80ED B4 6A       	mulxac	ax0.h, ax1.l, ac0	l    	ac1.l, @ar2
 80EE 91 00       	asr16	ac0             	     	
+
+{
+	ac0 <<= 16;
+	ac1m = SignExtend(*ar2++); 			// final_samplesL[2]
+	ax0h = *ar0++;  				// samples[1]
+	ac0 += prod;
+	prod = ax0h * ax1l; 		// mulxac SxU
+	ac1l = *ar2++; 			// final_samplesL[3]
+	ac0 >>= 16; 		// sign-extend
+}
+
 80EF F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 80F0 B5 23       	mulxac	ax0.h, ax1.l, ac1	s    	@ar3, ac0.l
 80F1 99 72       	asr16	ac1             	l    	ac0.m, @ar2
@@ -172,6 +208,30 @@
 80F3 F0 A1       	lsl16	ac0             	ls   	ax0.h, ac1.m
 80F4 B4 2B       	mulxac	ax0.h, ax1.l, ac0	s    	@ar3, ac1.l
 80F5 91 7A       	asr16	ac0             	l    	ac1.m, @ar2
+
+{
+	ac1 <<= 16;
+	ax0h = *ar0++; 					// samples[2]
+	*ar3++ = Saturated(ac0m);
+	ac1 += prod;
+	prod = ax0h * ax1l; 		// mulxac SxU
+	*ar3++ = ac0l;
+	ac1 >>= 16; 			// sign-extend
+	ac0m = SignExtend(*ar2++); 				// final_samplesL[4]
+
+	ac0l = *ar2++; 		// final_samplesL[5]
+	ac0 <<= 16;
+	ax0h = *ar0++; 			// samples[3]
+	*ar3++ = Saturated(ac1m);
+	ac0 += prod;
+	prod = ac0h * ax1l; 		// mulxac SxU
+	*ar3++ = ac1l;
+	ac0 >>= 16; 			// sign-extend
+	ac1m = SignExtend(*ar2++) 					// final_samplesL[6]
+}
+
+etc..
+
 80F6 19 5D       	lrri 	ac1.l, @ar2
 80F7 F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 80F8 B5 23       	mulxac	ax0.h, ax1.l, ac1	s    	@ar3, ac0.l
@@ -180,6 +240,7 @@
 80FB F0 A1       	lsl16	ac0             	ls   	ax0.h, ac1.m
 80FC B4 2B       	mulxac	ax0.h, ax1.l, ac0	s    	@ar3, ac1.l
 80FD 91 7A       	asr16	ac0             	l    	ac1.m, @ar2
+
 80FE 19 5D       	lrri 	ac1.l, @ar2
 80FF F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 8100 B5 23       	mulxac	ax0.h, ax1.l, ac1	s    	@ar3, ac0.l
@@ -188,6 +249,7 @@
 8103 F0 A1       	lsl16	ac0             	ls   	ax0.h, ac1.m
 8104 B4 2B       	mulxac	ax0.h, ax1.l, ac0	s    	@ar3, ac1.l
 8105 91 7A       	asr16	ac0             	l    	ac1.m, @ar2
+
 8106 19 5D       	lrri 	ac1.l, @ar2
 8107 F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 8108 B5 23       	mulxac	ax0.h, ax1.l, ac1	s    	@ar3, ac0.l
@@ -276,6 +338,7 @@
 815B F0 A1       	lsl16	ac0             	ls   	ax0.h, ac1.m
 815C B4 2B       	mulxac	ax0.h, ax1.l, ac0	s    	@ar3, ac1.l
 815D 91 7A       	asr16	ac0             	l    	ac1.m, @ar2
+
 815E 19 5D       	lrri 	ac1.l, @ar2
 815F F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 8160 B5 23       	mulxac	ax0.h, ax1.l, ac1	s    	@ar3, ac0.l
@@ -284,6 +347,7 @@
 8163 F0 A1       	lsl16	ac0             	ls   	ax0.h, ac1.m
 8164 B4 2B       	mulxac	ax0.h, ax1.l, ac0	s    	@ar3, ac1.l
 8165 91 7A       	asr16	ac0             	l    	ac1.m, @ar2
+
 8166 19 5D       	lrri 	ac1.l, @ar2
 8167 F1 A0       	lsl16	ac1             	ls   	ax0.h, ac0.m
 8168 1B 7C       	srri 	@ar3, ac0.l
@@ -292,6 +356,11 @@
 816B 99 09       	asr16	ac1             	ir   	ar1
 816C 1B 7F       	srri 	@ar3, ac1.m
 816D 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
+
+
+Part 2: Right channel mixer
+
+
 816E 1C 04       	mrr  	ar0, ix0
 816F 1C 45       	mrr  	ar2, ix1
 8170 1C 62       	mrr  	ar3, ar2
@@ -432,6 +501,24 @@
 81F7 81 2B       	clr  	ac0             	s    	@ar3, ac1.l
 81F8 02 DF       	ret  	
 ```
+
+```c++
+
+// Reconstructed pseudo-code (single-channel)
+sub_80E7(uint16_t volume, uint16_t *samples /* Input PCM 16-bit samples */, uint16_t *final_samples /* Output 32-bit double-precision samples. [0] - signed high part, [1] - unsigned low */ )
+{
+	for (int i=0; i<32; i++)
+	{
+		int64_t a = (int32_t)(final_samples[i][0] << 16) | final_samples[i][1];
+		a <<= 16;
+		a += (int16_t)samples[i] * volume;
+		a >>= 16;
+		final_samples[i][0] = Saturated(a);
+		final_samples[i][1] = (uint16_t)a;
+	}
+}
+```
+
 
 ```
 81F9 81 50       	clr  	ac0             	l    	ax0.h, @ar0
