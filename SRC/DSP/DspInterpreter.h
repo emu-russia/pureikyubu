@@ -189,11 +189,15 @@ namespace DSP
 		void LDCommon(AnalyzeInfo& info);
 		void LDAXCommon(AnalyzeInfo& info);
 		void Mul(int16_t a, int16_t b);
+		void Mulx(int16_t a, int16_t b, int an, int bn);
 		void Madd(int16_t a, int16_t b);
 		void Msub(int16_t a, int16_t b);
 		void Mulac(int16_t a, int16_t b, int r);
+		void Mulxac(int16_t a, int16_t b, int r, int an, int bn);
 		void Mulmv(int16_t a, int16_t b, int r);
+		void Mulxmv(int16_t a, int16_t b, int r, int an, int bn);
 		void Mulmvz(int16_t a, int16_t b, int r);
+		void Mulxmvz(int16_t a, int16_t b, int r, int an, int bn);
 
 		// TODO: Cache analyzeinfo?
 

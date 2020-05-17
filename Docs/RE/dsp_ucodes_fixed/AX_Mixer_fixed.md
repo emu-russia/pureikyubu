@@ -36,8 +36,8 @@
 
 0324 81 00       	clr  	ac0             	     	
 0325 89 00       	clr  	ac1             	     	
-0326 00 DE 0B B3 	lr   	ac0.m, $0x0BB3 				// AXPBVE.currentDelta
-0328 00 DF 0B B2 	lr   	ac1.m, $0x0BB2 			// AXPBVE.currentVolume
+0326 00 DE 0B B3 	lr   	ac0.m, $0x0BB3 				// AXPBVE.currentDelta  (signed)   Usual: 0 (no change)
+0328 00 DF 0B B2 	lr   	ac1.m, $0x0BB2 			// AXPBVE.currentVolume 		(.15 format)  Usual: 0x7FFF
 032A 1F 1F       	mrr  	ax0.l, ac1.m
 032B 4D 00       	add  	ac1, ac0        	     	
 032C 14 81       	asl  	ac0, #0x01
@@ -79,12 +79,12 @@
 0352 AC 38       	mulxac	ax0.l, ax1.h, ac0	s    	@ar0, ac1.m
 0353 00 FE 0B B2 	sr   	$0x0BB2, ac0.m 								// Writeback ramped volume
 
-// Apply volume to sample-rate-converted samples (#0x0E48 - volume envelope per 32 samples, $0x0E43 - pointer to sample rate converted samples)
+// Apply volume envelope to sample-rate-converted samples (#0x0E48 - volume envelope per 32 samples, $0x0E43 - pointer to sample rate converted samples)
 
 0355 8F 00       	set40	                	     	
 0356 00 80 0E 48 	lri  	ar0, #0x0E48 						// Volume envelope buffer for 32 samples
 0358 00 C1 0E 43 	lr   	ar1, $0x0E43 						// 0xCE0 ...
-035A 1C 61       	mrr  	ar3, ar1
+035A 1C 61       	mrr  	ar3, ar1 							// ar3 = ar1 (New values replaces old)
 035B 19 3A       	lrri 	ax0.h, @ar1
 035C 19 18       	lrri 	ax0.l, @ar0
 035D 90 59       	mul  	ax0.l, ax0.h    	l    	ax1.h, @ar1
@@ -153,6 +153,32 @@
 039C 6F 33       	movp 	ac1             	s    	@ar3, ac0.m
 039D 1B 7F       	srri 	@ar3, ac1.m
 039E 02 9F 04 02 	j    	$0x0402
+
+{
+	MulMode(false); 	// Multiply result by 2
+	Mode40(true); 		// Special processing for acX.m registers enabled
+	ar0 = Temp; 		// #0xE48  - Volume envelope buffer
+	ar1 = *(uint16_t)(0xE43); 		// Next 32 samples after SRC  (Usually initialized by #0xCE0, incremented by 32 after each SRC step)
+	ar3 = ar1;
+
+	for (int i=0; i<32; i++)
+	{
+		ax0l = *ar0++; 		
+		ax0h = *ar1++;
+		Prod = ax0l * ax0h * 2; 	// *2 comes from SR.AM bit
+		ac0 = Prod;
+		*ar3++ = Saturate(ac0m);	// Controlled by SR.XM bit
+	}
+
+	// Examples:
+	// sample[0] = 0xFFFF, prod: 0xFFFFFFFFFFFF0002, saturated: 0xFFFF
+	// sample[1] = 0x0002, prod: 0x1FFFC, saturated: 0x0001
+	// sample[2] = 0x6D1E, prod: 0x6D1D25C4, saturated: 0x6D1D
+	// sample[3] = 0xD6D4, prod: 0xFFFFFFFFD6D45258, saturated: 0xD6D4
+	// sample[4] = 0xFEF8, prod: 0xFFFFFFFFFEF80210, saturated: 0xFEF8
+	// sample[5] = 0x66A8, prod: 0x66A732B0, saturated: 0x66A7
+	// sample[6] = 0xD40E, prod: 0xFFFFFFFFD40E57E4, saturated: 0xD40E
+}
 
 Skipped?
 

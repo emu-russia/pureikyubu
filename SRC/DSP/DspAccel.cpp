@@ -1,5 +1,14 @@
 // DSP ARAM Accelerator
 
+// Accelerator addresses work in accordance with the selected mode (4-bit, 8-bit, 16-bit). 
+// That is, for example, in 4-bit mode - the start, current and end addresses point to nibble in ARAM.
+
+// On a real system, the next piece of data is cached in 3 16-bit registers ("output ports"). 
+// Here we do not repeat this mechanism, but refer directly to ARAM.
+
+// The accelerator can work both independently, simply driving data between ARAM and DSP, and in conjunction with an ADPCM decoder.
+// In the first case, one register is used (ACDAT, read-write), in the second case, another (ACDAT2, read-only).
+
 #include "pch.h"
 
 namespace DSP
@@ -20,14 +29,16 @@ namespace DSP
 					Accel.CurrAddress.addr += 2;
 				}
 
+				// TODO: Check currAddr == endAddr after Pred/Scale update.
+
 				tempByte = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
 				if ((Accel.CurrAddress.addr & 1) == 0)
 				{
-					val = tempByte >> 4;
+					val = tempByte >> 4;		// High nibble
 				}
 				else
 				{
-					val = tempByte & 0xf;
+					val = tempByte & 0xf;		// Low nibble
 				}
 				break;
 

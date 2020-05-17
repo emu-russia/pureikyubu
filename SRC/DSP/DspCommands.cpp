@@ -509,7 +509,7 @@ namespace DSP
 
         DBReport("MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
 
-        DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b);
+        DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b, false);
 
         DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);
@@ -533,7 +533,7 @@ namespace DSP
 
         DBReport("MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
 
-        DspProduct prod = DspCore::Mulu(a, b);
+        DspProduct prod = DspCore::Mulu(a, b, false);
 
         DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);

@@ -32,7 +32,7 @@ namespace DSP
 			}
 
 			case 1:
-				yn = (int64_t)(int32_t)(int16_t)(in << 8) * Accel.AdpcmGan;
+				yn = (int64_t)(int32_t)((int16_t)in << 8) * Accel.AdpcmGan;
 				break;
 
 			case 2:
@@ -53,15 +53,6 @@ namespace DSP
 				out = (yn >> 16);
 				break;
 		}
-
-		// Here you can sniff the sound from the decoder, but for verification it is desirable that a single-channel sound is produced.
-
-#if 0
-		FILE* f;
-		fopen_s(&f, "adpcmOut.bin", "ab+");
-		fwrite(&out, 1, sizeof(uint16_t), f);
-		fclose(f);
-#endif
 
 		return (uint16_t)out;
 	}

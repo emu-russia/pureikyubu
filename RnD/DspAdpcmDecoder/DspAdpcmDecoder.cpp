@@ -9,22 +9,40 @@ int main(int argc, char **argv)
 
     // Init adpcm decoder
 
-    core->Accel.AdpcmCoef[0] = 0x0136;
-    core->Accel.AdpcmCoef[1] = 0xfe78;
-    core->Accel.AdpcmCoef[2] = 0x06b2;
-    core->Accel.AdpcmCoef[3] = 0xff09;
-    core->Accel.AdpcmCoef[4] = 0x029f;
-    core->Accel.AdpcmCoef[5] = 0x038d;
-    core->Accel.AdpcmCoef[6] = 0x0a05;
-    core->Accel.AdpcmCoef[7] = 0xfd47;
-    core->Accel.AdpcmCoef[8] = 0x047d;
-    core->Accel.AdpcmCoef[9] = 0xff11;
-    core->Accel.AdpcmCoef[10] = 0x0742;
-    core->Accel.AdpcmCoef[11] = 0x0005;
-    core->Accel.AdpcmCoef[12] = 0x04ce;
-    core->Accel.AdpcmCoef[13] = 0x02b7;
-    core->Accel.AdpcmCoef[14] = 0x0c87;
-    core->Accel.AdpcmCoef[15] = 0xfb49;
+    //core->Accel.AdpcmCoef[0] = 0x0136;
+    //core->Accel.AdpcmCoef[1] = 0xfe78;
+    //core->Accel.AdpcmCoef[2] = 0x06b2;
+    //core->Accel.AdpcmCoef[3] = 0xff09;
+    //core->Accel.AdpcmCoef[4] = 0x029f;
+    //core->Accel.AdpcmCoef[5] = 0x038d;
+    //core->Accel.AdpcmCoef[6] = 0x0a05;
+    //core->Accel.AdpcmCoef[7] = 0xfd47;
+    //core->Accel.AdpcmCoef[8] = 0x047d;
+    //core->Accel.AdpcmCoef[9] = 0xff11;
+    //core->Accel.AdpcmCoef[10] = 0x0742;
+    //core->Accel.AdpcmCoef[11] = 0x0005;
+    //core->Accel.AdpcmCoef[12] = 0x04ce;
+    //core->Accel.AdpcmCoef[13] = 0x02b7;
+    //core->Accel.AdpcmCoef[14] = 0x0c87;
+    //core->Accel.AdpcmCoef[15] = 0xfb49;
+
+    core->Accel.AdpcmCoef[0] = 0x00bf;
+    core->Accel.AdpcmCoef[1] = 0xffc8;
+    core->Accel.AdpcmCoef[2] = 0x0661;
+    core->Accel.AdpcmCoef[3] = 0xff43;
+    core->Accel.AdpcmCoef[4] = 0x02b9;
+    core->Accel.AdpcmCoef[5] = 0x037d;
+    core->Accel.AdpcmCoef[6] = 0x0a35;
+    core->Accel.AdpcmCoef[7] = 0xfd14;
+
+    core->Accel.AdpcmCoef[8] = 0x03ca;
+    core->Accel.AdpcmCoef[9] = 0x000e;
+    core->Accel.AdpcmCoef[10] = 0x0732;
+    core->Accel.AdpcmCoef[11] = 0x0018;
+    core->Accel.AdpcmCoef[12] = 0x0499;
+    core->Accel.AdpcmCoef[13] = 0x02ee;
+    core->Accel.AdpcmCoef[14] = 0x0cf9;
+    core->Accel.AdpcmCoef[15] = 0xfad5;
 
     core->Accel.AdpcmGan = 0;
     core->Accel.AdpcmYn1 = 0;
