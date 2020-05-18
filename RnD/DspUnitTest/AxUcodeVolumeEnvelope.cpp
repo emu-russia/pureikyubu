@@ -1,4 +1,4 @@
-// Code for checking Volume Envelope mixer AX Ucode.
+// Code for checking AX Ucode Volume Envelope mixer.
 
 /*
 
