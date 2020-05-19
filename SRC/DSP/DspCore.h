@@ -245,13 +245,11 @@ namespace DSP
 
 		DspInterpreter* interp;
 
-		uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
-		uint16_t DspToCpuMailboxShadow[2];
-		SpinLock DspToCpuLock;
+		volatile uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
+		SpinLock DspToCpuLock[2];
 
-		uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
-		uint16_t CpuToDspMailboxShadow[2];
-		SpinLock CpuToDspLock;
+		volatile uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
+		SpinLock CpuToDspLock[2];
 
 		bool haltOnUnmappedMemAccess = false;
 

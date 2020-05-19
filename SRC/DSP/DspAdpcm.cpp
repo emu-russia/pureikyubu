@@ -18,6 +18,9 @@ namespace DSP
 				int scale = Accel.AdpcmPds & 0xf;
 				int16_t gain = 1 << scale;
 
+				if (scale > 0xc)
+					scale = 0xc;
+
 				int16_t xn = in << 11;
 				if (xn & 0x4000)
 					xn |= 0x8000;
@@ -32,7 +35,7 @@ namespace DSP
 			}
 
 			case 1:
-				yn = (int64_t)(int32_t)((int16_t)in << 8) * Accel.AdpcmGan;
+				yn = (int64_t)(int32_t)((int16_t)(in << 8)) * Accel.AdpcmGan;
 				break;
 
 			case 2:
@@ -51,6 +54,9 @@ namespace DSP
 				break;
 			case 2:
 				out = (yn >> 16);
+				break;
+			case 3:
+				DBHalt("DSP: Unsupported ADPCM output mode\n");
 				break;
 		}
 

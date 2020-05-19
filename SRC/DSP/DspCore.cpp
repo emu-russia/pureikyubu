@@ -451,10 +451,10 @@ namespace DSP
 	// Dump IFX State
 	void DspCore::DumpIfx()
 	{
-		DBReport("Cpu2Dsp Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
-			CpuToDspMailboxShadow[0], (uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
-		DBReport("Dsp2Cpu Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
-			DspToCpuMailboxShadow[0], (uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
+		DBReport("Cpu2Dsp Mailbox: Hi: 0x%04X, Lo: 0x%04X\n",
+			(uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
+		DBReport("Dsp2Cpu Mailbox: Hi: 0x%04X, Lo: 0x%04X\n",
+			(uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
 		DBReport("Dma: MmemAddr: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
 			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
 		for (int i = 0; i < 16; i++)
@@ -1054,135 +1054,6 @@ namespace DSP
 		return !dspThread->IsRunning();
 	}
 
-	// CPU->DSP Mailbox
-
-	// Write by processor only.
-
-	void DspCore::CpuToDspWriteHi(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
-		}
-
-		if (CpuToDspMailboxShadow[0] != 0)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "CPU Message discarded.\n");
-			}
-		}
-
-		CpuToDspMailboxShadow[0] = value;
-	}
-
-	void DspCore::CpuToDspWriteLo(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
-		}
-
-		CpuToDspMailbox[1] = value;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] | 0x8000;
-
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
-		}
-	}
-
-	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
-	{
-		uint16_t value = CpuToDspMailbox[0];
-
-		// TODO:
-
-		// If DSP is running and is in a waiting cycle for a message from the CPU, 
-		// we put it in the HALT state until the processor sends a message through the Mailbox.
-
-		//if ((value & 0x8000) == 0 && IsRunning() && ReadByDsp)
-		//{
-		//	DBReport2(DbgChannel::DSP, "Wait CPU Mailbox\n");
-		//	Suspend();
-		//}
-
-		return value;
-	}
-
-	uint16_t DspCore::CpuToDspReadLo(bool ReadByDsp)
-	{
-		uint16_t value = CpuToDspMailbox[1];
-		if (ReadByDsp)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
-			}
-			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
-		}
-		return value;
-	}
-
-	// DSP->CPU Mailbox
-
-	// Write by DSP only.
-
-	void DspCore::DspToCpuWriteHi(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
-		}
-
-		if (DspToCpuMailboxShadow[0] != 0)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "DSP Message discarded.\n");
-			}
-		}
-
-		DspToCpuMailboxShadow[0] = value;
-	}
-
-	void DspCore::DspToCpuWriteLo(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
-		}
-
-		DspToCpuMailbox[1] = value;
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] | 0x8000;
-
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
-		}
-	}
-
-	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
-	{
-		uint16_t value = DspToCpuMailbox[0];
-
-		return value;
-	}
-
-	uint16_t DspCore::DspToCpuReadLo(bool ReadByDsp)
-	{
-		uint16_t value = DspToCpuMailbox[1];
-		if (!ReadByDsp)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
-			}
-			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
-		}
-		return value;
-	}
-
 	#pragma endregion "Flipper interface"
 
 
@@ -1190,10 +1061,10 @@ namespace DSP
 
 	void DspCore::ResetIfx()
 	{
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
-		DspToCpuMailbox[1] = DspToCpuMailboxShadow[1] = 0;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] = 0;
-		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
+		DspToCpuMailbox[0] = 0;
+		DspToCpuMailbox[1] = 0;
+		CpuToDspMailbox[0] = 0;
+		CpuToDspMailbox[1] = 0;
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
 		memset(&Accel, 0, sizeof(Accel));
@@ -1227,13 +1098,16 @@ namespace DSP
 			return;
 		}
 
-		if (DmaRegs.control.Dsp2Mmem)
+		if (DmaRegs.mmemAddr.bits < mi.ramSize)
 		{
-			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
-		}
-		else
-		{
-			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+			if (DmaRegs.control.Dsp2Mmem)
+			{
+				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
+			}
+			else
+			{
+				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+			}
 		}
 
 		// Dump ucode
@@ -1260,7 +1134,6 @@ namespace DSP
 			fclose(f);
 		}
 #endif
-
 	}
 
 	#pragma endregion "IFX"

@@ -26,6 +26,7 @@
     <ClCompile Include="..\DspCore.cpp" />
     <ClCompile Include="..\DspDisasm.cpp" />
     <ClCompile Include="..\DspInterpreter.cpp" />
+    <ClCompile Include="..\DspMailbox.cpp" />
     <ClCompile Include="..\DspMultiply.cpp" />
     <ClCompile Include="..\DspPacked.cpp" />
     <ClCompile Include="..\pch.cpp">

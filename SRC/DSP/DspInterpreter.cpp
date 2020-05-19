@@ -918,7 +918,7 @@ namespace DSP
 	{
 		core->regs.st[0].push_back(startAddr);
 		core->regs.st[2].push_back(endAddr);
-		core->regs.st[3].push_back(count);
+		core->regs.st[3].push_back(count - 1);
 	}
 
 	bool DspInterpreter::CheckLoop()

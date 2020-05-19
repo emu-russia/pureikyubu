@@ -43,14 +43,6 @@
 
 #define AIDCR               ai.dcr
 
-// double-buffered register, to make safe 16-bit regs access
-// register assumed to be correct, only when both shadows are valid
-typedef struct AIREG
-{
-    bool    valid[2];               // shadow valid state
-    struct  { uint16_t hi, lo; } shadow; // register data
-} AIREG;
-
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -59,7 +51,8 @@ typedef struct AIControl
 {
     // AID
     std::atomic<uint16_t> dcr;  // AI/DSP control register
-    volatile AIREG       madr;           // DMA address
+    volatile uint16_t    madr_hi;        // DMA start address hi
+    volatile uint16_t    madr_lo;        // DMA start address lo
     volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
     volatile uint16_t    dcnt;           // DMA count-down
 

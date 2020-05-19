@@ -163,6 +163,7 @@
 - ix1 = 0x100, 0x140 ...
 - set40 (Special processing for acX.m enabled)
 - m2 (Multiply result by 2)
+- set15: Mixed multiply for double-precision numbers (S/U, U/S)
 
 ```
 

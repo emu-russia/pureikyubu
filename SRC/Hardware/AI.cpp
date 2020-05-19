@@ -158,6 +158,7 @@ static void AIStartDMA()
 {
     ai.dcnt = ai.len & ~AID_EN;
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
+    ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
     if (ai.log)
     {
         DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr | (1 << 31), ai.dcnt * 32);
@@ -229,32 +230,16 @@ static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
 
 static void __fastcall write_dmah(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[0] = true;
-    ai.madr.shadow.hi = (uint16_t)data;
-
-    // setup buffer
-    if(ai.madr.valid[0] && ai.madr.valid[1])
-    {
-        ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
-    }
+    ai.madr_hi = (uint16_t)data & 0x3FF;
 }
 
 static void __fastcall write_dmal(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[1] = true;
-    ai.madr.shadow.lo = (uint16_t)data;
-
-    // setup buffer
-    if(ai.madr.valid[0] && ai.madr.valid[1])
-    {
-        ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
-    }
+    ai.madr_lo = (uint16_t)data;
 }
 
-static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.hi; }
-static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.lo; }
+static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr_hi; }
+static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr_lo; }
 
 //
 // dma length / control
@@ -512,7 +497,7 @@ static void AIUpdate(void *Parameter)
                 if (ai.len & AID_EN)
                 {
                     // Restart Dma and signal AID_INT
-                    ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
+                    ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
                     ai.dcnt = ai.len & ~AID_EN;
                     AIDINT();
                 }
