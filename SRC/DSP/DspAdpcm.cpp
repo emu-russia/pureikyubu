@@ -54,6 +54,8 @@ namespace DSP
 				break;
 		}
 
+		//DBReport("0x%08X = 0x%04X\n", (Accel.CurrAddress.addr & 0x07FF'FFFF) - 1, (uint16_t)out);
+
 		return (uint16_t)out;
 	}
 }

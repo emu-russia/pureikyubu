@@ -513,7 +513,7 @@ sub_80E7(uint16_t volume, uint16_t *samples /* Input PCM 16-bit samples */, uint
 		a <<= 16;
 		a += (int16_t)samples[i] * volume * 2;
 		a >>= 16;
-		final_samples[i][0] = Saturated(a);
+		final_samples[i][0] = Saturate(a);
 		final_samples[i][1] = (uint16_t)a;
 	}
 }

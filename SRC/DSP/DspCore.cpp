@@ -1229,11 +1229,11 @@ namespace DSP
 
 		if (DmaRegs.control.Dsp2Mmem)
 		{
-			memcpy(&mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], ptr, DmaRegs.blockSize);
+			memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
 		}
 		else
 		{
-			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], DmaRegs.blockSize);
+			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
 		}
 
 		// Dump ucode
@@ -1249,7 +1249,7 @@ namespace DSP
 		}
 
 		// Dump PCM samples coming from mixer
-#if 1
+#if 0
 		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && 
 			(0x400 >= DmaRegs.dspAddr && DmaRegs.dspAddr < 0x600) && 
 			DmaRegs.blockSize == 0x80 )

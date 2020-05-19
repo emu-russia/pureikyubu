@@ -164,13 +164,13 @@ namespace DSP
 		ACEAL = 0xFFD7,		// Accelerator end address L 
 		ACCAH = 0xFFD8,		// Accelerator current address H  +  Acc Direction
 		ACCAL = 0xFFD9,		// Accelerator current address L 
-		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
 		AMDM = 0xFFEF,		// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
 		ACFMT = 0xFFD1,			// sample format used
 		ACPDS = 0xFFDA,			// predictor / scale combination
 		ACYN1 = 0xFFDB,			// y[n - 1]
 		ACYN2 = 0xFFDC,			// y[n - 2]
+		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
 		ACGAN = 0xFFDE,			// gain to be applied (PCM mode only)
 		// ADPCM coef table. Coefficient selected by Adpcm Predictor
 		ADPCM_A00 = 0xFFA0,		// Coef * Yn1[0]
