@@ -80,6 +80,7 @@ namespace DSP
 
 		regs.st[0].push_back(regs.pc);
 		regs.st[1].push_back((DspAddress)regs.sr.bits);
+		regs.sr.ge = 0;
 		regs.pc = (DspAddress)id * 2;
 	}
 
@@ -450,12 +451,16 @@ namespace DSP
 	// Dump IFX State
 	void DspCore::DumpIfx()
 	{
-		DBReport("Cpu2Dsp Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
-			CpuToDspMailboxShadow[0], (uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
-		DBReport("Dsp2Cpu Mailbox: Shadow Hi: 0x%04X, Real Hi: 0x%04X, Real Lo: 0x%04X\n",
-			DspToCpuMailboxShadow[0], (uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
+		DBReport("Cpu2Dsp Mailbox: Hi: 0x%04X, Lo: 0x%04X\n",
+			(uint16_t)CpuToDspMailbox[0], (uint16_t)CpuToDspMailbox[1]);
+		DBReport("Dsp2Cpu Mailbox: Hi: 0x%04X, Lo: 0x%04X\n",
+			(uint16_t)DspToCpuMailbox[0], (uint16_t)DspToCpuMailbox[1]);
 		DBReport("Dma: MmemAddr: 0x%08X, DspAddr: 0x%04X, Size: 0x%04X, Ctrl: %i\n",
 			DmaRegs.mmemAddr.bits, DmaRegs.dspAddr, DmaRegs.blockSize, DmaRegs.control.bits);
+		for (int i = 0; i < 16; i++)
+		{
+			DBReport("Dsp Coef[%i]: 0x%04X\n", i, Accel.AdpcmCoef[i]);
+		}
 	}
 
 	#pragma endregion "Debug"
@@ -492,10 +497,10 @@ namespace DSP
 				regs.st[reg - (int)DspRegister::stackRegs].push_back((DspAddress)val);
 				break;
 			case (int)DspRegister::ac0h:
-				regs.ac[0].h = val;
+				regs.ac[0].h = val & 0xff;
 				break;
 			case (int)DspRegister::ac1h:
-				regs.ac[1].h = val;
+				regs.ac[1].h = val & 0xff;
 				break;
 			case (int)DspRegister::bank:
 				regs.bank = val;
@@ -579,9 +584,9 @@ namespace DSP
 			case (int)DspRegister::st3:
 				return (uint16_t)regs.st[reg - (int)DspRegister::stackRegs].back();
 			case (int)DspRegister::ac0h:
-				return regs.ac[0].h;
+				return regs.ac[0].h & 0xff;
 			case (int)DspRegister::ac1h:
-				return regs.ac[1].h;
+				return regs.ac[1].h & 0xff;
 			case (int)DspRegister::bank:
 				return regs.bank;
 			case (int)DspRegister::sr:
@@ -609,8 +614,18 @@ namespace DSP
 			case (int)DspRegister::ac0m:
 				if (regs.sr.sxm)
 				{
-					val = regs.ac[0].m;
-					val |= (regs.ac[0].h & 1) ? 0x8000 : 0;
+					//int64_t a = SignExtend40(regs.ac[0].sbits) >> 16;
+					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
+
+					int64_t a = SignExtend40(regs.ac[0].sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.ac[0].m;
+					}
 				}
 				else
 				{
@@ -620,8 +635,18 @@ namespace DSP
 			case (int)DspRegister::ac1m:
 				if (regs.sr.sxm)
 				{
-					val = regs.ac[1].m;
-					val |= (regs.ac[1].h & 1) ? 0x8000 : 0;
+					//int64_t a = SignExtend40(regs.ac[1].sbits) >> 16;
+					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
+
+					int64_t a = SignExtend40(regs.ac[1].sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.ac[1].m;
+					}
 				}
 				else
 				{
@@ -1029,133 +1054,6 @@ namespace DSP
 		return !dspThread->IsRunning();
 	}
 
-	// CPU->DSP Mailbox
-
-	// Write by processor only.
-
-	void DspCore::CpuToDspWriteHi(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
-		}
-
-		if (CpuToDspMailbox[0] & 0x8000)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "CPU Message discarded.\n");
-			}
-		}
-
-		CpuToDspMailbox[0] = value & 0x7FFF;
-	}
-
-	void DspCore::CpuToDspWriteLo(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
-		}
-
-		CpuToDspMailbox[1] = value;
-		CpuToDspMailbox[0] |= 0x8000;
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
-		}
-	}
-
-	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
-	{
-		uint16_t value = CpuToDspMailbox[0];
-
-		// TODO:
-
-		// If DSP is running and is in a waiting cycle for a message from the CPU, 
-		// we put it in the HALT state until the processor sends a message through the Mailbox.
-
-		//if ((value & 0x8000) == 0 && IsRunning() && ReadByDsp)
-		//{
-		//	DBReport2(DbgChannel::DSP, "Wait CPU Mailbox\n");
-		//	Suspend();
-		//}
-
-		return value;
-	}
-
-	uint16_t DspCore::CpuToDspReadLo(bool ReadByDsp)
-	{
-		uint16_t value = CpuToDspMailbox[1];
-		if (ReadByDsp)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
-			}
-			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
-		}
-		return value;
-	}
-
-	// DSP->CPU Mailbox
-
-	// Write by DSP only.
-
-	void DspCore::DspToCpuWriteHi(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
-		}
-
-		if (DspToCpuMailbox[0] & 0x8000)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "DSP Message discarded.\n");
-			}
-		}
-
-		DspToCpuMailbox[0] = value & 0x7FFF;
-	}
-
-	void DspCore::DspToCpuWriteLo(uint16_t value)
-	{
-		if (logInsaneMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
-		}
-
-		DspToCpuMailbox[1] = value;
-		DspToCpuMailbox[0] |= 0x8000;
-		if (logMailbox)
-		{
-			DBReport2(DbgChannel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
-		}
-	}
-
-	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
-	{
-		uint16_t value = DspToCpuMailbox[0];
-
-		return value;
-	}
-
-	uint16_t DspCore::DspToCpuReadLo(bool ReadByDsp)
-	{
-		uint16_t value = DspToCpuMailbox[1];
-		if (!ReadByDsp)
-		{
-			if (logMailbox)
-			{
-				DBReport2(DbgChannel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
-			}
-			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
-		}
-		return value;
-	}
-
 	#pragma endregion "Flipper interface"
 
 
@@ -1163,10 +1061,10 @@ namespace DSP
 
 	void DspCore::ResetIfx()
 	{
-		DspToCpuMailbox[0] = DspToCpuMailboxShadow[0] = 0;
-		DspToCpuMailbox[1] = DspToCpuMailboxShadow[1] = 0;
-		CpuToDspMailbox[0] = CpuToDspMailboxShadow[0] = 0;
-		CpuToDspMailbox[1] = CpuToDspMailboxShadow[1] = 0;
+		DspToCpuMailbox[0] = 0;
+		DspToCpuMailbox[1] = 0;
+		CpuToDspMailbox[0] = 0;
+		CpuToDspMailbox[1] = 0;
 
 		memset(&DmaRegs, 0, sizeof(DmaRegs));
 		memset(&Accel, 0, sizeof(Accel));
@@ -1200,46 +1098,40 @@ namespace DSP
 			return;
 		}
 
-		if (DmaRegs.control.Dsp2Mmem)
+		if (DmaRegs.mmemAddr.bits < mi.ramSize)
 		{
-			memcpy(&mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], ptr, DmaRegs.blockSize);
-		}
-		else
-		{
-			memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits & RAMMASK], DmaRegs.blockSize);
+			if (DmaRegs.control.Dsp2Mmem)
+			{
+				memcpy(&mi.ram[DmaRegs.mmemAddr.bits], ptr, DmaRegs.blockSize);
+			}
+			else
+			{
+				memcpy(ptr, &mi.ram[DmaRegs.mmemAddr.bits], DmaRegs.blockSize);
+			}
 		}
 
 		// Dump ucode
-#if 0
-		if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
+		if (dumpUcode)
 		{
-			TCHAR filename[0x100] = { 0, };
-			_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X.bin"), DmaRegs.blockSize);
-			UI::FileSave(filename, ptr, DmaRegs.blockSize);
+			if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
+			{
+				TCHAR filename[0x100] = { 0, };
+				_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X.bin"), DmaRegs.blockSize);
+				UI::FileSave(filename, ptr, DmaRegs.blockSize);
+				DBReport2(DbgChannel::DSP, "DSP Ucode dumped to DspUcode_%04X.bin\n", DmaRegs.blockSize);
+			}
 		}
-#endif
 
-		// Dump non-empty sample data
+		// Dump PCM samples coming from mixer
 #if 0
-		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && DmaRegs.blockSize == 0x80)
+		if (!DmaRegs.control.Imem && DmaRegs.control.Dsp2Mmem && 
+			(0x400 >= DmaRegs.dspAddr && DmaRegs.dspAddr < 0x600) && 
+			DmaRegs.blockSize == 0x80 )
 		{
-			int zc = 0;
-
-			for (int i = 0; i < DmaRegs.blockSize; i++)
-			{
-				if (ptr[i] == 0)
-					zc++;
-			}
-			
-			if (zc != DmaRegs.blockSize)
-			{
-				DBHalt("non zero sample buffer!\n");
-
-				FILE* f;
-				fopen_s(&f, "dspSampleOut.bin", "ab+");
-				fwrite(ptr, 1, DmaRegs.blockSize, f);
-				fclose(f);
-			}
+			FILE* f;
+			fopen_s(&f, "pcmOut.bin", "ab+");
+			fwrite(ptr, 1, DmaRegs.blockSize, f);
+			fclose(f);
 		}
 #endif
 	}
@@ -1277,10 +1169,10 @@ namespace DSP
 
 	void DspCore::PackProd(DspProduct& prod)
 	{
-		int64_t hi = (int64_t)prod.h << 32;
-		int64_t mid = ((int64_t)prod.m1 + (int64_t)prod.m2) << 16;
-		int64_t low = prod.l;
-		int64_t res = hi + mid + low;
+		uint64_t hi = (uint64_t)prod.h << 32;
+		uint64_t mid = ((uint64_t)prod.m1 + (uint64_t)prod.m2) << 16;
+		uint64_t low = prod.l;
+		uint64_t res = hi + mid + low;
 		res &= 0xff'ffff'ffff;
 		prod.bitsPacked = res;
 	}
@@ -1295,14 +1187,10 @@ namespace DSP
 
 	// Treat operands as signed 16-bit numbers and produce signed multiply product.
 
-	DspProduct DspCore::Muls(int16_t a, int16_t b)
+	DspProduct DspCore::Muls(int16_t a, int16_t b, bool scale)
 	{
 		DspProduct prod;
-		prod.l = 0;
-		prod.h = 0;
-		prod.m1 = 0;
-		prod.m2 = 0;
-
+#if 0
 		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
 
 		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
@@ -1316,16 +1204,22 @@ namespace DSP
 		prod.m1 = u >> 16;
 		prod.m2 = m >> 16;
 		prod.l = m & 0xffff;
+#else
+		prod.bitsPacked = (int64_t)((int64_t)(int32_t)a * (int64_t)(int32_t)b);
+		if (scale)
+			prod.bitsPacked <<= 1;
+		UnpackProd(prod);
+#endif
 
 		return prod;
 	}
 
-	// Treat operands as unsigned 16-bit numbers and produce signed multiply product.
+	// Treat operands as unsigned 16-bit numbers and produce unsigned multiply product.
 
-	DspProduct DspCore::Mulu(uint16_t a, uint16_t b)
+	DspProduct DspCore::Mulu(uint16_t a, uint16_t b, bool scale)
 	{
 		DspProduct prod;
-
+#if 0
 		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
 
 		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
@@ -1339,7 +1233,24 @@ namespace DSP
 		prod.m1 = u >> 16;
 		prod.m2 = m >> 16;
 		prod.l = m & 0xffff;
+#else
+		prod.bitsPacked = (uint64_t)((uint64_t)(uint32_t)a * (uint64_t)(uint32_t)b);
+		if (scale)
+			prod.bitsPacked <<= 1;
+		UnpackProd(prod);
+#endif
+		return prod;
+	}
 
+	// Treat operand `a` as unsigned 16-bit numbers and operand `b` as signed 16-bit number and produce signed multiply product.
+
+	DspProduct DspCore::Mulus(uint16_t a, int16_t b, bool scale)
+	{
+		DspProduct prod;
+		prod.bitsPacked = (int64_t)((int64_t)(int32_t)(uint32_t)a * (int64_t)(int32_t)b);
+		if (scale)
+			prod.bitsPacked <<= 1;
+		UnpackProd(prod);
 		return prod;
 	}
 

@@ -45,6 +45,9 @@
     <ClCompile Include="..\DspAdpcm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\DspMailbox.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\DspAnalyzer.h">

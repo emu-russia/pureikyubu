@@ -164,31 +164,31 @@ namespace DSP
 		ACEAL = 0xFFD7,		// Accelerator end address L 
 		ACCAH = 0xFFD8,		// Accelerator current address H  +  Acc Direction
 		ACCAL = 0xFFD9,		// Accelerator current address L 
-		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
 		AMDM = 0xFFEF,		// ARAM DMA Request Mask
 		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
 		ACFMT = 0xFFD1,			// sample format used
 		ACPDS = 0xFFDA,			// predictor / scale combination
 		ACYN1 = 0xFFDB,			// y[n - 1]
 		ACYN2 = 0xFFDC,			// y[n - 2]
+		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
 		ACGAN = 0xFFDE,			// gain to be applied (PCM mode only)
-		// ADPCM coef table
-		ADPCM_A00 = 0xFFA0,
-		ADPCM_A10 = 0xFFA1,
-		ADPCM_A20 = 0xFFA2,
-		ADPCM_A30 = 0xFFA3,
-		ADPCM_A40 = 0xFFA4,
-		ADPCM_A50 = 0xFFA5,
-		ADPCM_A60 = 0xFFA6,
-		ADPCM_A70 = 0xFFA7,
-		ADPCM_A01 = 0xFFA8,
-		ADPCM_A11 = 0xFFA9,
-		ADPCM_A21 = 0xFFAA,
-		ADPCM_A31 = 0xFFAB,
-		ADPCM_A41 = 0xFFAC,
-		ADPCM_A51 = 0xFFAD,
-		ADPCM_A61 = 0xFFAE,
-		ADPCM_A71 = 0xFFAF,
+		// ADPCM coef table. Coefficient selected by Adpcm Predictor
+		ADPCM_A00 = 0xFFA0,		// Coef * Yn1[0]
+		ADPCM_A10 = 0xFFA1,		// Coef * Yn2[0]
+		ADPCM_A20 = 0xFFA2,		// Coef * Yn1[1]
+		ADPCM_A30 = 0xFFA3,		// Coef * Yn2[1]
+		ADPCM_A40 = 0xFFA4,		// Coef * Yn1[2]
+		ADPCM_A50 = 0xFFA5,		// Coef * Yn2[2]
+		ADPCM_A60 = 0xFFA6,		// Coef * Yn1[3]
+		ADPCM_A70 = 0xFFA7,		// Coef * Yn2[3]
+		ADPCM_A01 = 0xFFA8,		// Coef * Yn1[4]
+		ADPCM_A11 = 0xFFA9,		// Coef * Yn2[4]
+		ADPCM_A21 = 0xFFAA,		// Coef * Yn1[5]
+		ADPCM_A31 = 0xFFAB,		// Coef * Yn2[5]
+		ADPCM_A41 = 0xFFAC,		// Coef * Yn1[6]
+		ADPCM_A51 = 0xFFAD,		// Coef * Yn2[6]
+		ADPCM_A61 = 0xFFAE,		// Coef * Yn1[7]
+		ADPCM_A71 = 0xFFAF,		// Coef * Yn2[7]
 		// Unknown
 		UNKNOWN_FFB0 = 0xFFB0,
 		UNKNOWN_FFB1 = 0xFFB1,
@@ -235,7 +235,7 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
 
-		const uint32_t GekkoTicksPerDspInstruction = 10;		// How many Gekko ticks should pass so that we can execute one DSP instruction
+		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
 		uint64_t savedGekkoTicks = 0;
@@ -245,13 +245,11 @@ namespace DSP
 
 		DspInterpreter* interp;
 
-		uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
-		uint16_t DspToCpuMailboxShadow[2];
-		SpinLock DspToCpuLock;
+		volatile uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
+		SpinLock DspToCpuLock[2];
 
-		uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
-		uint16_t CpuToDspMailboxShadow[2];
-		SpinLock CpuToDspLock;
+		volatile uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
+		SpinLock CpuToDspLock[2];
 
 		bool haltOnUnmappedMemAccess = false;
 
@@ -315,9 +313,6 @@ namespace DSP
 				uint32_t addr;
 			} CurrAddress;
 			
-			bool readingSecondNibble;
-			uint8_t cachedByte;
-			size_t decoderByteCount;
 			bool pendingOverflow;
 			DspException overflowVector;
 		} Accel;
@@ -325,9 +320,10 @@ namespace DSP
 		void ResetIfx();
 		void DoDma();
 		uint16_t AccelReadData(bool raw);
+		uint16_t AccelFetch();
 		void AccelWriteData(uint16_t data);
 		void ResetAccel();
-		uint16_t DecodeAdpcm(uint8_t nibble);
+		uint16_t DecodeAdpcm(uint16_t nibble);
 
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 2;
@@ -342,8 +338,9 @@ namespace DSP
 		bool logDspDma = false;
 		bool logAccel = false;
 		bool logAdpcm = false;
+		bool dumpUcode = false;
 
-	//	public:
+	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
 
@@ -434,8 +431,9 @@ namespace DSP
 
 		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
-		static DspProduct Muls(int16_t a, int16_t b);
-		static DspProduct Mulu(uint16_t a, uint16_t b);
+		static DspProduct Muls(int16_t a, int16_t b, bool scale);
+		static DspProduct Mulu(uint16_t a, uint16_t b, bool scale);
+		static DspProduct Mulus(uint16_t a, int16_t b, bool scale);
 
 		void ArAdvance(int r, int16_t step);
 

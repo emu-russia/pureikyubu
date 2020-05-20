@@ -100,8 +100,8 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
         PIClearInt(PI_INTERRUPT_DSP);
     }
 
-    // ARAM/DSP DMA always ready
-    data &= ~(AIDCR_ARDMA | AIDCR_DSPDMA);
+    // DSP DMA always ready
+    AIDCR &= ~AIDCR_DSPDMA;
 
     // Reset modifier bit
     if (data & AIDCR_RESETMOD)
@@ -158,9 +158,10 @@ static void AIStartDMA()
 {
     ai.dcnt = ai.len & ~AID_EN;
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
+    ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr | (1 << 31), ai.dcnt * 32);
+        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr, ai.dcnt * 32);
     }
     ai.audioThread->Resume();
 }
@@ -223,38 +224,20 @@ static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
 
 //
 // dma buffer address
-// read and writes are from shadow regs
-// transfer starts only, if shadows are valid
 // 
 
 static void __fastcall write_dmah(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[0] = true;
-    ai.madr.shadow.hi = (uint16_t)data;
-
-    // setup buffer
-    if(ai.madr.valid[0] && ai.madr.valid[1])
-    {
-        ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
-    }
+    ai.madr_hi = (uint16_t)data & 0x3FF;
 }
 
 static void __fastcall write_dmal(uint32_t addr, uint32_t data)
 {
-    ai.madr.valid[1] = true;
-    ai.madr.shadow.lo = (uint16_t)data;
-
-    // setup buffer
-    if(ai.madr.valid[0] && ai.madr.valid[1])
-    {
-        ai.madr.valid[0] = ai.madr.valid[1] = false;
-        ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
-    }
+    ai.madr_lo = (uint16_t)data & ~0x1F;
 }
 
-static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.hi; }
-static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr.shadow.lo; }
+static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr_hi & 0x3FF; }
+static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr_lo & ~0x1F; }
 
 //
 // dma length / control
@@ -293,7 +276,7 @@ static void __fastcall read_len(uint32_t addr, uint32_t *reg)
 
 static void __fastcall read_dcnt(uint32_t addr, uint32_t *reg)
 {
-    *reg = ai.dcnt;
+    *reg = ai.dcnt & 0x7FFF;
 }
 
 // ---------------------------------------------------------------------------
@@ -512,7 +495,7 @@ static void AIUpdate(void *Parameter)
                 if (ai.len & AID_EN)
                 {
                     // Restart Dma and signal AID_INT
-                    ai.currentDmaAddr = (ai.madr.shadow.hi << 16) | ai.madr.shadow.lo;
+                    ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
                     ai.dcnt = ai.len & ~AID_EN;
                     AIDINT();
                 }

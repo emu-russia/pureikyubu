@@ -1068,16 +1068,6 @@ The main reversal was a bitch because Duddie had ax0.h and ax1.l mixed up.
 
 // Interleave L/R. Source: #0x0 (Left, 160 * 4 byte per sample), #0x140 (Right, 160 * 4 byte per sample). Dest: #0x400 (320 16-bit L/R sample pairs)
 
-// In fact, there is a little freak done.
-// After each iteration of the inner loop, ar1 does not increase by 0x40, but by 0x42. Therefore, the result of the interleave operation is performed on 164 samples (+4 for the left channel
-// and +4 for the right). But it will still be transferred 160 pairs of samples (640 bytes). The solution for this is as fucking as the whole DSP architecture.
-
-// Instead of making a predecrement by 2 in the inner loop, ArtX engineers took a different path.
-// To deal with this, the VPB has a "history" of samples (last_samples), which is designed just to "stitch" this tail and the next sample buffer.
-
-// This is done because the inner loop does not wait for the end of the DSP DMA portion and is designed in such a way that the transfer of the previous piece will be completed
-// exactly at the moment of the start of the next iteration of the inner loop. BADUMS ..
-
 0580 8F 50       	set40	                	l    	ax0.h, @ar0
 0581 81 40       	clr  	ac0             	l    	ax0.l, @ar0
 0582 00 81 04 00 	lri  	ar1, #0x0400

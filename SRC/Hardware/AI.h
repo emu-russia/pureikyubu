@@ -17,8 +17,8 @@
 
 // AI/DSP Control Register mask
 #define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
-#define AIDCR_DSPDMA        (1 << 10)       // DSP DSP dma in progress
-#define AIDCR_ARDMA         (1 << 9)        // ARAM DSP dma in progress
+#define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
+#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
 #define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
 #define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
 #define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
@@ -43,14 +43,6 @@
 
 #define AIDCR               ai.dcr
 
-// double-buffered register, to make safe 16-bit regs access
-// register assumed to be correct, only when both shadows are valid
-typedef struct AIREG
-{
-    bool    valid[2];               // shadow valid state
-    struct  { uint16_t hi, lo; } shadow; // register data
-} AIREG;
-
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -59,7 +51,8 @@ typedef struct AIControl
 {
     // AID
     std::atomic<uint16_t> dcr;  // AI/DSP control register
-    volatile AIREG       madr;           // DMA address
+    volatile uint16_t    madr_hi;        // DMA start address hi
+    volatile uint16_t    madr_lo;        // DMA start address lo
     volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
     volatile uint16_t    dcnt;           // DMA count-down
 

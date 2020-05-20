@@ -3,7 +3,7 @@
 #define ARAMSIZE        (16 * 1024 * 1024)  // 16 mb
 #define ARAM            aram.mem
 
-// aram dma transfer type
+// aram dma transfer type (CNT bit31)
 #define RAM_TO_ARAM     0
 #define ARAM_TO_RAM     1
 
@@ -31,9 +31,12 @@ typedef struct ARControl
 {
     uint8_t     *mem;                // aux. memory buffer (size is ARAMSIZE)
     volatile uint32_t    mmaddr, araddr;     // DMA address
-    volatile uint32_t    cnt;                // count
-    bool        cntv[2];            // count register validate state
+    volatile uint32_t    cnt;                // count + transfer type (bit31)
     uint16_t    size;               // "AR_SIZE" (0x5012) register
+    Thread* dmaThread;
+    int64_t gekkoTicks;
+    size_t gekkoTicksPerSlice;
+    bool dspRunningBeforeAramDma;
 } ARControl;
 
 void    AROpen();
