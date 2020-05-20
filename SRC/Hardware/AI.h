@@ -17,8 +17,8 @@
 
 // AI/DSP Control Register mask
 #define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
-#define AIDCR_DSPDMA        (1 << 10)       // DSP DSP dma in progress
-#define AIDCR_ARDMA         (1 << 9)        // ARAM DSP dma in progress
+#define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
+#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
 #define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
 #define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
 #define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)

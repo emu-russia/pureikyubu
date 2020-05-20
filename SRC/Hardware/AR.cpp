@@ -3,6 +3,7 @@
 
 /* ---------------------------------------------------------------------------
    useful bits from AIDCR : 
+        AIDCR_ARDMA         - ARAM dma in progress
         AIDCR_ARINTMSK      - mask (blocks PI)
         AIDCR_ARINT         - wr:clear, rd:dma int active
 
@@ -14,12 +15,11 @@
       AR_DMA_ARADDR_H = (AR_DMA_ARADDR_H & 0x03FF) | (aram_addr >> 16);
       AR_DMA_ARADDR_L = (AR_DMA_ARADDR_L & 0x001F) | (aram_addr & 0xFFFF);
 
-      AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x7FFF) | (type << 15);
+      AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x7FFF) | (type << 15);    type - 0:RAM->ARAM, 1:ARAM->RAM
       AR_DMA_CNT_H = (AR_DMA_CNT_H & 0x03FF) | (length >> 16);
       AR_DMA_CNT_L = (AR_DMA_CNT_L & 0x001F) | (length & 0xFFFF);
 
-   transfer starts, when CNT_H and CNT_L are become double-buffered (both valid)
-   (where type - 0:RAM->ARAM, 1:ARAM->RAM)
+   transfer starts, by writing into CNT_L
 
 --------------------------------------------------------------------------- */
 
@@ -36,75 +36,104 @@ static void ARINT()
     }
 }
 
-static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
+static void ARAMDmaThread(void* Parameter)
 {
-    maddr &= RAMMASK;
-
-    if(aram.cntv[0] && aram.cntv[1])
+    while (true)
     {
-        aram.cntv[0] = aram.cntv[1] = FALSE;    // invalidate
+        if (Gekko::Gekko->GetTicks() < aram.gekkoTicks)
+            continue;
+        aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
 
-        // inform developer about aram transfers
-        // and do some alignment checks
-        if (type == RAM_TO_ARAM)
-        {
-            bool specialAramDspDma = maddr == 0x0100'0000 && aaddr == 0;
-
-            if (!specialAramDspDma)
-            {
-                DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", maddr, aaddr, size);
-            }
-        }
-        else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aaddr, maddr, size);
-
-        // main memory address is not a multiple of 32 bytes
-        assert((maddr & 0x1f) == 0);
-        // DMA transfer length is not a multiple of 32 bytes!
-        assert((size & 0x1f) == 0);
-
-        // ARAM driver is trying to check for expansion
-        // by reading ARAM on high addresses
-        // we are not allowing to read expansion
-        if(aaddr >= ARAMSIZE)
-        {
-            if(type == ARAM_TO_RAM)
-            {
-                memset(&mi.ram[maddr], 0, size);
-
-                aram.cnt &= 0x80000000;     // clear dma counter
-                ARINT();                    // invoke aram TC interrupt
-            }
-            return;
-        }
+        int type = aram.cnt >> 31;
+        uint32_t cnt = aram.cnt & 0x3FF'FFE0;
 
         // blast data
         if (type == RAM_TO_ARAM)
         {
-            if (maddr == 0x0100'0000 && aaddr == 0)
-            {
-                // Transfer size multiplied by 4
-                size *= 4;
-
-                // Special ARAM DMA to IRAM
-                memcpy(Flipper::HW->DSP->iram, &mi.ram[maddr], size);
-
-                DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", size);
-            }
-            else
-            {
-                memcpy(&ARAM[aaddr], &mi.ram[maddr], size);
-            }
+            memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
         }
         else
         {
-            // Not sure if DSP IRAM is mapped this way also.. Leave it now
-
-            memcpy(&mi.ram[maddr], &ARAM[aaddr], size);
+            memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
         }
+
+        aram.araddr += 32;
+        aram.mmaddr += 32;
+        cnt -= 32;
+        aram.cnt = cnt | (type << 31);
+
+        if ((aram.cnt & ~0x8000'0000) == 0)
+        {
+            AIDCR &= ~AIDCR_ARDMA;
+            ARINT();                    // invoke aram TC interrupt
+            //if (aram.dspRunningBeforeAramDma)
+            //{
+            //    Flipper::HW->DSP->Run();
+            //}
+            aram.dmaThread->Suspend();
+        }
+    }
+}
+
+static void ARDMA()
+{
+    int type = aram.cnt >> 31;
+    int cnt = aram.cnt & 0x3FF'FFE0;
+    bool specialAramDspDma = aram.mmaddr == 0x0100'0000 && aram.araddr == 0;
+
+    // inform developer about aram transfers
+    if (type == RAM_TO_ARAM)
+    {
+        if (!specialAramDspDma)
+        {
+            DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
+        }
+    }
+    else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
+
+    // Special ARAM DMA (DSP Init)
+
+    if (specialAramDspDma)
+    {
+        // Transfer size multiplied by 4
+        cnt *= 4;
+
+        // Special ARAM DMA to IRAM
+        memcpy(Flipper::HW->DSP->iram, &mi.ram[aram.mmaddr], cnt);
+
+        DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt
+        return;
     }
+
+    // ARAM driver is trying to check for expansion
+    // by reading ARAM on high addresses
+    // we are not allowing to read expansion
+    if(aram.araddr >= ARAMSIZE)
+    {
+        if(type == ARAM_TO_RAM)
+        {
+            memset(&mi.ram[aram.mmaddr], 0, cnt);
+
+            aram.cnt &= 0x80000000;     // clear dma counter
+            ARINT();                    // invoke aram TC interrupt
+        }
+        return;
+    }
+
+    // For other cases - delegate job to thread
+
+    assert(!aram.dmaThread->IsRunning());
+    AIDCR |= AIDCR_ARDMA;
+    aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
+    aram.dspRunningBeforeAramDma = Flipper::HW->DSP->IsRunning();
+    //if (aram.dspRunningBeforeAramDma)
+    //{
+    //    Flipper::HW->DSP->Suspend();
+    //}
+    aram.dmaThread->Resume();
 }
 
 // ---------------------------------------------------------------------------
@@ -115,56 +144,51 @@ static void ARDMA(BOOL type, uint32_t maddr, uint32_t aaddr, uint32_t size)
 static void __fastcall ar_write_maddr_h(uint32_t addr, uint32_t data)
 {
     aram.mmaddr &= 0x0000ffff;
-    aram.mmaddr |= (data << 16);
+    aram.mmaddr |= ((data & 0x3ff) << 16);
 }
-static void __fastcall ar_read_maddr_h(uint32_t addr, uint32_t *reg) { *reg = aram.mmaddr >> 16; }
+static void __fastcall ar_read_maddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.mmaddr >> 16) & 0x3FF; }
 
 static void __fastcall ar_write_maddr_l(uint32_t addr, uint32_t data)
 {
     aram.mmaddr &= 0xffff0000;
-    aram.mmaddr |= (data & 0xffff);
+    aram.mmaddr |= ((data & ~0x1F) & 0xffff);
 }
-static void __fastcall ar_read_maddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.mmaddr; }
+static void __fastcall ar_read_maddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.mmaddr & ~0x1F; }
 
 // ARAM pointer
 
 static void __fastcall ar_write_araddr_h(uint32_t addr, uint32_t data)
 {
     aram.araddr &= 0x0000ffff;
-    aram.araddr |= (data << 16);
+    aram.araddr |= ((data & 0x3FF) << 16);
 }
-static void __fastcall ar_read_araddr_h(uint32_t addr, uint32_t *reg) { *reg = aram.araddr >> 16; }
+static void __fastcall ar_read_araddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.araddr >> 16) & 0x3FF; }
 
 static void __fastcall ar_write_araddr_l(uint32_t addr, uint32_t data)
 {
     aram.araddr &= 0xffff0000;
-    aram.araddr |= (data & 0xffff);
+    aram.araddr |= ((data & ~0x1F) & 0xffff);
 }
-static void __fastcall ar_read_araddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.araddr; }
+static void __fastcall ar_read_araddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.araddr & ~0x1F; }
 
 //
-// byte count register (always 0)
+// byte count register
 //
 
 static void __fastcall ar_write_cnt_h(uint32_t addr, uint32_t data)
 {
     aram.cnt &= 0x0000ffff;
-    aram.cnt |= (data << 16);
-
-    aram.cntv[0] = TRUE;
-    ARDMA(aram.cnt >> 31, aram.mmaddr, aram.araddr, aram.cnt & 0x7fffffff);
+    aram.cnt |= ((data & 0x83FF) << 16);
 }
-static void __fastcall ar_read_cnt_h(uint32_t addr, uint32_t *reg) { *reg = aram.cnt >> 16; }
+static void __fastcall ar_read_cnt_h(uint32_t addr, uint32_t *reg) { *reg = (aram.cnt >> 16) & 0x83FF; }
 
 static void __fastcall ar_write_cnt_l(uint32_t addr, uint32_t data)
 {
     aram.cnt &= 0xffff0000;
-    aram.cnt |= (data & 0xffff);
-
-    aram.cntv[1] = TRUE;
-    ARDMA(aram.cnt >> 31, aram.mmaddr, aram.araddr, aram.cnt & 0x7fffffff);
+    aram.cnt |= ((data & ~0x1F) & 0xffff);
+    ARDMA();
 }
-static void __fastcall ar_read_cnt_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.cnt; }
+static void __fastcall ar_read_cnt_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.cnt & ~0x1F; }
 
 //
 // hacks
@@ -180,19 +204,18 @@ static void __fastcall ar_hack_mode(uint32_t addr, uint32_t *reg)   { *reg = 1; 
 // ---------------------------------------------------------------------------
 // 32-bit ARAM registers
 
-static void __fastcall ar_write_maddr(uint32_t addr, uint32_t data)   { aram.mmaddr = data; }
+static void __fastcall ar_write_maddr(uint32_t addr, uint32_t data)   { aram.mmaddr = data & 0x03FF'FFE0; }
 static void __fastcall ar_read_maddr(uint32_t addr, uint32_t *reg)    { *reg = aram.mmaddr; }
 
-static void __fastcall ar_write_araddr(uint32_t addr, uint32_t data)  { aram.araddr = data; }
+static void __fastcall ar_write_araddr(uint32_t addr, uint32_t data)  { aram.araddr = data & 0x03FF'FFE0; }
 static void __fastcall ar_read_araddr(uint32_t addr, uint32_t *reg)   { *reg = aram.araddr; }
 
 static void __fastcall ar_write_cnt(uint32_t addr, uint32_t data)
 {
-    aram.cnt = data;
-    aram.cntv[0] = aram.cntv[1] = TRUE;
-    ARDMA(aram.cnt >> 31, aram.mmaddr, aram.araddr, aram.cnt & 0x7fffffff);
+    aram.cnt = data & 0x83FF'FFE0;
+    ARDMA();
 }
-static void __fastcall ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = aram.cnt; }
+static void __fastcall ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = aram.cnt & 0x83FF'FFE0; }
 
 // ---------------------------------------------------------------------------
 // init
@@ -208,11 +231,9 @@ void AROpen()
     // clear ARAM data
     memset(ARAM, 0, ARAMSIZE);
 
-    // invalidate CNT regs double-buffer
-    aram.cntv[0] = aram.cntv[1] = FALSE;
-
     // clear registers
     aram.mmaddr = aram.araddr = aram.cnt = 0;
+    aram.gekkoTicksPerSlice = 1;
 
     // set traps to aram registers
     MISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
@@ -230,14 +251,20 @@ void AROpen()
     MISetTrap(16, AR_SIZE   , ar_hack_size_r, ar_hack_size_w);
     MISetTrap(16, AR_MODE   , ar_hack_mode  , no_write);
     MISetTrap(16, AR_REFRESH, no_read       , no_write);
+
+    aram.dmaThread = new Thread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
+    assert(aram.dmaThread);
 }
 
 void ARClose()
 {
+    delete aram.dmaThread;
+    aram.dmaThread = nullptr;
+
     // destroy ARAM
     if(ARAM)
     {
         free(ARAM);
-        ARAM = NULL;
+        ARAM = nullptr;
     }
 }

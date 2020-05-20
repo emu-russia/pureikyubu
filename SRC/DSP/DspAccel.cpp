@@ -59,6 +59,7 @@ namespace DSP
 
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
+			Accel.CurrAddress.addr = Accel.StartAddress.addr;
 			if (logAccel)
 			{
 				DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
@@ -86,11 +87,6 @@ namespace DSP
 			DBHalt("DSP: Accelerator is not configured to read\n");
 		}
 
-		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
-		{
-			Accel.CurrAddress.addr = Accel.StartAddress.addr;
-		}
-
 		val = AccelFetch();
 
 		// Issue ADPCM Decoder
@@ -112,12 +108,6 @@ namespace DSP
 			DBHalt("DSP: Accelerator is not configured to write\n");
 		}
 
-		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
-		{
-			Accel.CurrAddress.addr = Accel.StartAddress.addr;
-			Accel.CurrAddress.h |= 0x8000;
-		}
-
 		// Write mode is always 16-bit
 
 		*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)) = _byteswap_ushort(data);
@@ -125,6 +115,8 @@ namespace DSP
 
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))
 		{
+			Accel.CurrAddress.addr = Accel.StartAddress.addr;
+			Accel.CurrAddress.h |= 0x8000;
 			if (logAccel)
 			{
 				DBReport2(DbgChannel::DSP, "Accelerator Overflow while write\n");
