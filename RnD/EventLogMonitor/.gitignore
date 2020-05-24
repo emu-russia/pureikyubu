@@ -1,0 +1,13 @@
+.vs
+bin
+obj
+Data
+temp
+*.opendb
+*.db
+Build
+Output
+x64
+Win32
+Data
+packages
