@@ -19,3 +19,4 @@ DolphinVideo
 
 *.vcxproj.user
 Data/EventLog.json
+EventLog.json

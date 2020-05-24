@@ -97,12 +97,6 @@ void EMUClose()
     // take care about user interface
     OnMainWindowClosed();
 
-#if 0
-    std::string text;
-    Debug::Log->ToString(text);
-    UI::FileSave("Data\\EventLog.json", (void *)text.data(), text.size());
-#endif
-
     delete Debug::Log;
     Debug::Log = nullptr;
 

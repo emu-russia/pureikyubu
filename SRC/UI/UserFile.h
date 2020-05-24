@@ -9,6 +9,7 @@ namespace UI
         Dvd,
         Map,
         Patch,
+        Json,
         Directory,
     };
 
@@ -20,7 +21,8 @@ namespace UI
     void* FileLoad(const char* filename, size_t* size = nullptr);
     bool FileSave(const TCHAR * filename, void* data, size_t size);
     bool FileSave(const char* filename, void* data, size_t size);
-    TCHAR* FileOpen(HWND hwnd, FileType type = FileType::All);        // copy away!
+    TCHAR* FileOpenDialog(HWND hwnd, FileType type = FileType::All);        // copy away!
+    TCHAR* FileSaveDialog(HWND hwnd, FileType type);                // copy away!
     TCHAR* FileShortName(const TCHAR * filename, int lvl = 3);           // copy away!
     TCHAR* FileSmartSize(size_t size);                            // copy away!
     char* FileSmartSizeA(size_t size);                            // copy away!

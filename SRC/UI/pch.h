@@ -25,6 +25,7 @@
 #include "../HighLevel/TimeFormat.h"
 #include "../Debugger/Debugger.h"
 #include "../Debugger/DspDebugger.h"
+#include "../Debugger/EventLog.h"
 #include "../Dolwin/Emulator.h"
 #include "../Dolwin/Loader.h"
 
