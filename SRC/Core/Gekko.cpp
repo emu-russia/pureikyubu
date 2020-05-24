@@ -41,11 +41,10 @@ namespace Gekko
 
     GekkoCore::~GekkoCore()
     {
-        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
-
         delete gekkoThread;
         delete interp;
         delete jitc;
+        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
     }
 
     // Reset processor

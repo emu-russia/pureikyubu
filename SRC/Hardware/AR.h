@@ -37,6 +37,7 @@ typedef struct ARControl
     int64_t gekkoTicks;
     size_t gekkoTicksPerSlice;
     bool dspRunningBeforeAramDma;
+    bool log;
 } ARControl;
 
 void    AROpen();
