@@ -231,6 +231,9 @@
 #define ID_DEVELOPMENT_MOUNTSDK         40101
 #define ID_DEVELOPMENT_DSPDEBUG         40102
 #define ID_DSP_DEBUG                    40103
+#define ID_DEVELOPMENT_EVENTLOGMONITOR  40104
+#define ID_DEVELOPMENT_SAVEEVENTLOG     40105
+#define ID_DEVELOPMENT_SAVE_EVENTLOG    40106
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -238,7 +241,7 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        156
-#define _APS_NEXT_COMMAND_VALUE         40104
+#define _APS_NEXT_COMMAND_VALUE         40107
 #define _APS_NEXT_CONTROL_VALUE         1107
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

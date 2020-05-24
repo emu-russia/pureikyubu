@@ -146,9 +146,6 @@ void con_close()
     con.active = FALSE;
 }
 
-static void dummy(const char* text, ...) {}
-static void dummy2(DbgChannel chan, const char* text, ...) {}
-
 void con_start()
 {
     uint32_t main = SYMAddress("main");
@@ -166,10 +163,6 @@ void con_start()
     }
 
     con_close();
-
-    DBHalt = dummy;
-    DBReport = dummy;
-    DBReport2 = dummy2;
 
     con.exitPending = false;
 }

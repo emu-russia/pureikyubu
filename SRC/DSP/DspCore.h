@@ -340,9 +340,6 @@ namespace DSP
 		bool logAdpcm = false;
 		bool dumpUcode = false;
 
-		uint8_t* dspSamples;
-		size_t dspSampleSize = 0;
-
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size

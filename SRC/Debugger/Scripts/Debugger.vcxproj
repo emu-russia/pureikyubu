@@ -26,6 +26,7 @@
     <ClCompile Include="..\DebugCommands.cpp" />
     <ClCompile Include="..\Debugger.cpp" />
     <ClCompile Include="..\DspDebugger.cpp" />
+    <ClCompile Include="..\EventLog.cpp" />
     <ClCompile Include="..\input.cpp" />
     <ClCompile Include="..\memview.cpp" />
     <ClCompile Include="..\output.cpp" />
@@ -46,6 +47,7 @@
     <ClInclude Include="..\DebugCommands.h" />
     <ClInclude Include="..\Debugger.h" />
     <ClInclude Include="..\DspDebugger.h" />
+    <ClInclude Include="..\EventLog.h" />
     <ClInclude Include="..\input.h" />
     <ClInclude Include="..\memview.h" />
     <ClInclude Include="..\output.h" />
@@ -55,6 +57,11 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\Json\DebuggerJdi.json" />
+    <None Include="..\..\..\Docs\EMU\EventLog.md" />
+    <None Include="..\..\..\Docs\EMU\JsonDebugInterface.md" />
+    <None Include="..\..\..\Docs\EMU\JsonDebugInterfaceRus.md" />
+    <None Include="..\..\..\Docs\EMU\SamplingProfiler.md" />
+    <None Include="..\..\..\Docs\EMU\SamplingProfilerRus.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

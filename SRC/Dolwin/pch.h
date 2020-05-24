@@ -30,6 +30,7 @@
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 #include "../Debugger/DspDebugger.h"
+#include "../Debugger/EventLog.h"
 #include "../UI/User.h"
 
 #include "Loader.h"

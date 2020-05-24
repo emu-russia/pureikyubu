@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Docs">
+      <UniqueIdentifier>{11515c78-4460-4058-b731-bfa4276804c4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\cmd.cpp">
@@ -52,6 +55,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\DspDebugger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\EventLog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,8 +101,26 @@
     <ClInclude Include="..\DspDebugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\EventLog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\Data\Json\DebuggerJdi.json" />
+    <None Include="..\..\..\Docs\EMU\EventLog.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="..\..\..\Docs\EMU\JsonDebugInterface.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="..\..\..\Docs\EMU\JsonDebugInterfaceRus.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="..\..\..\Docs\EMU\SamplingProfiler.md">
+      <Filter>Docs</Filter>
+    </None>
+    <None Include="..\..\..\Docs\EMU\SamplingProfilerRus.md">
+      <Filter>Docs</Filter>
+    </None>
   </ItemGroup>
 </Project>
