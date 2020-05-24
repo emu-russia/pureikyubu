@@ -75,6 +75,8 @@ typedef struct AIControl
 
     int64_t     one_second;     // one CPU second in timer ticks
     bool        log;            // Enable AI log
+
+    uint8_t     zeroes[32];
 } AIControl;
 
 extern  AIControl ai;

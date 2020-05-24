@@ -169,19 +169,24 @@ static void AIStartDMA()
 // Simulate AI FIFO
 static void AIFeedMixer()
 {
-    if (ai.dcnt == 0 || (ai.len & AID_EN) == 0)
-        return;
-
     int bytes = 32;
 
     BeginProfileSfx();
-    Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.currentDmaAddr & RAMMASK], bytes);
+
+    if (ai.dcnt == 0 || (ai.len & AID_EN) == 0)
+    {
+        Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, ai.zeroes, bytes);
+    }
+    else
+    {
+        Flipper::HW->Mixer->PushBytes(Flipper::AxChannel::AudioDma, &mi.ram[ai.currentDmaAddr & RAMMASK], bytes);
+        ai.currentDmaAddr += bytes;
+        ai.dcnt--;
+    }
+
     EndProfileSfx();
 
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
-
-    ai.currentDmaAddr += bytes;
-    ai.dcnt--;
 }
 
 static void AIStopDMA()

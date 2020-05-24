@@ -51,11 +51,22 @@ namespace DSP
 			}
 		}
 
+		dspSamples = new uint8_t[2 * 1024 * 1024];
+		dspSampleSize = 0;
+
 		DBReport2(DbgChannel::DSP, "DSPCore: Ready\n");
 	}
 
 	DspCore::~DspCore()
 	{
+#if 0
+		FILE* f;
+		fopen_s(&f, "pcmOut.bin", "ab+");
+		fwrite(dspSamples, 1, dspSampleSize, f);
+		fclose(f);
+#endif
+		delete[] dspSamples;
+
 		delete dspThread;
 		delete interp;
 	}
@@ -1128,10 +1139,8 @@ namespace DSP
 			(0x400 >= DmaRegs.dspAddr && DmaRegs.dspAddr < 0x600) && 
 			DmaRegs.blockSize == 0x80 )
 		{
-			FILE* f;
-			fopen_s(&f, "pcmOut.bin", "ab+");
-			fwrite(ptr, 1, DmaRegs.blockSize, f);
-			fclose(f);
+			memcpy(&dspSamples[dspSampleSize], ptr, DmaRegs.blockSize);
+			dspSampleSize += DmaRegs.blockSize;
 		}
 #endif
 	}

@@ -32,6 +32,10 @@ static void ARINT()
     AIDCR |= AIDCR_ARINT;
     if(AIDCR & AIDCR_ARINTMSK)
     {
+        if (aram.log)
+        {
+            DBReport2(DbgChannel::AR, "ARINT\n");
+        }
         PIAssertInt(PI_INTERRUPT_DSP);
     }
 }
@@ -82,14 +86,17 @@ static void ARDMA()
     bool specialAramDspDma = aram.mmaddr == 0x0100'0000 && aram.araddr == 0;
 
     // inform developer about aram transfers
-    if (type == RAM_TO_ARAM)
+    if (aram.log)
     {
-        if (!specialAramDspDma)
+        if (type == RAM_TO_ARAM)
         {
-            DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
+            if (!specialAramDspDma)
+            {
+                DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
+            }
         }
+        else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
     }
-    else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
 
     // Special ARAM DMA (DSP Init)
 
@@ -101,7 +108,10 @@ static void ARDMA()
         // Special ARAM DMA to IRAM
         memcpy(Flipper::HW->DSP->iram, &mi.ram[aram.mmaddr], cnt);
 
-        DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
+        if (aram.log)
+        {
+            DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
+        }
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt
@@ -234,6 +244,7 @@ void AROpen()
     // clear registers
     aram.mmaddr = aram.araddr = aram.cnt = 0;
     aram.gekkoTicksPerSlice = 1;
+    aram.log = false;
 
     // set traps to aram registers
     MISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
