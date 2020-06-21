@@ -141,7 +141,7 @@ static TCHAR *GetRecentEntry(int index)
 {
     char var[256];
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    return GetConfigString(var, USER_UI);
+    return GetConfigString(var, USER_UI).data();
 }
 
 void UpdateRecentMenu(HWND hwnd)
@@ -425,27 +425,35 @@ void OnMainWindowOpened()
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
     // set new title for main window
-    TCHAR newTitle[1024], gameTitle[0x200];
-    const TCHAR prefix[] = { APPNAME _T(" - Running %s") };
-    if(ldat.dvd)
+    std::wstring newTitle, gameTitle;
+    if (ldat.dvd)
     {
-        _stprintf_s (gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
-        _stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
+        gameTitle = fmt::format(L"{:s}", ldat.currentFileName);
+        newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
+
+        //_stprintf_s (gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
+        //_stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
     }
     else
     {
-        if (!_tcscmp(ldat.currentFileName, _T("Bootrom")))
+        auto currentFileName = std::wstring(ldat.currentFileName);
+        if (currentFileName == L"Bootrom")
         {
-            _stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
+            gameTitle = fmt::format(L"{:s}", ldat.currentFileName);
+            //_stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
         }
         else
         {
-            _stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s demo"), ldat.currentFileName);
+            gameTitle = fmt::format(L"{:s} demo", ldat.currentFileName);
+            //_stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s demo"), ldat.currentFileName);
         }
-        _stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
+        
+        newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
+        //_stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
     }
-    SetWindowText(wnd.hMainWindow, newTitle);
-
+    
+    SetWindowText(wnd.hMainWindow, newTitle.c_str());
+    
     // user profiler
     OpenProfiler(GetConfigBool(USER_PROFILE, USER_UI));
 }
@@ -463,7 +471,8 @@ void OnMainWindowClosed()
         wnd.hMainMenu, _T("&Options"))), 1, MF_BYPOSITION | MF_ENABLED);
 
     // set to Idle
-    SetWindowText(wnd.hMainWindow, WIN_NAME);
+    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, APPVER);
+    SetWindowText(wnd.hMainWindow, win_name.c_str());
     ResetStatusBar();
 }
 
@@ -948,10 +957,11 @@ HWND CreateMainWindow(HINSTANCE hInstance)
     ATOM classAtom = RegisterClass(&wc);
     assert(classAtom != 0);
 
+    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, APPVER);
     wnd.hMainWindow = CreateWindowEx(
         0,
         CLASS_NAME,
-        WIN_NAME,
+        win_name.c_str(),
         WIN_STYLE, 
         20, 30,
         400, 300,

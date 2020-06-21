@@ -4,6 +4,7 @@
 
 #include "../Common/Thread.h"
 #include <list>
+#include <memory>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -20,8 +21,8 @@ typedef union _FPREG
 // time-base
 typedef union _TBREG
 {
-    volatile int64_t   sval;               // for comparsion
-    volatile uint64_t  uval;               // for incrementing
+    /*volatile*/ int64_t   sval;               // for comparsion
+    /*volatile*/ uint64_t  uval;               // for incrementing
     struct
     {
         uint32_t     l;                  // for output

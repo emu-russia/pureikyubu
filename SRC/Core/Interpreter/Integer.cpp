@@ -1,5 +1,5 @@
 // Integer Instructions
-#include "../pch.h"
+#include "pch.h"
 #include "InterpreterPrivate.h"
 
 namespace Gekko
@@ -508,7 +508,7 @@ namespace Gekko
     // rd = ra / rb (unsigned)
     OP(DIVWU)
     {
-        uint32_t a = RRA, b = RRB, res = 0;
+        uint32_t a = RRA, b = RRB;
         if (b) RRD = a / b;
         Gekko->regs.pc += 4;
     }

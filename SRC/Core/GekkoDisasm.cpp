@@ -708,6 +708,7 @@ namespace Gekko
 			case Instruction::mfsrin: return "mfsrin";
 			case Instruction::tlbie: return "tlbie";
 			case Instruction::tlbsync: return "tlbsync";
+			default: return "ill";
 		}
 
 		return "";
@@ -868,6 +869,8 @@ namespace Gekko
 				break;
 			case Param::Address:
 				sprintf_s(text, sizeof(text) - 1, "0x%08X", info->Imm.Address);
+				break;
+			default:
 				break;
 		}
 

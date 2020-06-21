@@ -8,6 +8,7 @@
 #include <string.h>
 #include <tchar.h>
 #include <windows.h>
+#include <filesystem>
 
 #include "../Common/Jdi.h"
 

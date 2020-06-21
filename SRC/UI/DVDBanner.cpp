@@ -1,7 +1,7 @@
 // DVD banner helpers for file selector. 
 #include "pch.h"
 
-void * DVDLoadBanner(TCHAR *dvdFile)
+void * DVDLoadBanner(std::wstring_view dvdFile)
 {
     size_t fsize = UI::FileSize(dvdFile);
     DVDBanner2* banner = nullptr;
@@ -11,11 +11,12 @@ void * DVDLoadBanner(TCHAR *dvdFile)
     assert(banner);
 
     // load DVD banner
-    if(fsize)
+    if (fsize > 0)
     {
         if (DVD::MountFile(dvdFile))
         {
-            bnrofs = DVD::OpenFile("/" DVD_BANNER_FILENAME);
+            auto banner_name = std::string(DVD_BANNER_FILENAME);
+            bnrofs = DVD::OpenFile("/" + banner_name);
         }
     }
 

@@ -1,6 +1,6 @@
 // Paired Single Load and Store Instructions
 // used for fast type casting and matrix transfers.
-#include "../pch.h"
+#include "pch.h"
 #include "InterpreterPrivate.h"
 
 namespace Gekko

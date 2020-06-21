@@ -7,18 +7,18 @@ namespace DVD
 {
 
     // Mount current dvd 
-    bool MountFile(const TCHAR *file)
+    bool MountFile(std::wstring_view file)
     {
         // try to open file
-        FILE* f = nullptr;
-        _tfopen_s (&f, file, _T("rb"));
-        if(!f) return false;
-        fclose(f);
+        if (!std::filesystem::exists(file))
+        {
+            return false;
+        }
 
         Unmount();
 
         // select current DVD
-        bool res = GCMMountFile(file);
+        bool res = GCMMountFile(file.data());
         if (!res)
             return res;
 
@@ -152,12 +152,12 @@ namespace DVD
         return true;
     }
 
-    long OpenFile(const char *dvdfile)
+    long OpenFile(std::string_view dvdfile)
     {
         if (dvd.mountedImage || dvd.mountedSdk)
         {
             // call DVD filesystem open
-            return dvd_open(dvdfile);
+            return dvd_open(dvdfile.data());
         }
 
         // Not mounted

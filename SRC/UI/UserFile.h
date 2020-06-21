@@ -15,7 +15,7 @@ namespace UI
     // dont forget to :
 
     bool FileExists(const TCHAR* filename);
-    size_t FileSize(const TCHAR * filename);
+    size_t FileSize(std::wstring_view filename);
     void* FileLoad(const TCHAR * filename, size_t* size = nullptr);           // free!
     void* FileLoad(const char* filename, size_t* size = nullptr);
     bool FileSave(const TCHAR * filename, void* data, size_t size);

@@ -58,10 +58,10 @@ static void LoadSettings(int n)         // dialogs created
     {
         for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
         {
-            TCHAR* path = *it;
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path);
+            std::wstring path = *it;
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
         }
-
+        
         needSelUpdate = FALSE;
         settingsLoaded[1] = TRUE;
     }
@@ -95,9 +95,9 @@ static void LoadSettings(int n)         // dialogs created
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
-        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW));
-        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW));
-        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW));
+        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW).data());
+        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW).data());
+        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW).data());
 
         settingsLoaded[2] = TRUE;
     }
@@ -117,19 +117,20 @@ static void LoadSettings(int n)         // dialogs created
 static void SaveSettings()              // OK pressed
 {
     int i;
-    TCHAR buf[0x1000] = { 0, };
+    auto buf = std::wstring(0x1000, 0);
 
     // Emulator
-    if(settingsLoaded[0])
+    if (settingsLoaded[0])
     {
+
     }
 
     // GUI/Selector
-    if(settingsLoaded[1])
+    if (settingsLoaded[1])
     {
         HWND hDlg = hChildDlg[1];
 
-        TCHAR text[0x1000] = { 0, };
+        auto text = std::wstring(0x1000, 0);
         int max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
 
         // delete all dirs
@@ -137,9 +138,9 @@ static void SaveSettings()              // OK pressed
         SetConfigString(USER_PATH, (TCHAR *)_T(""), USER_UI);
 
         // add dirs again
-        for(i=0; i<max; i++)
+        for (i = 0; i < max; i++)
         {
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
             AddSelectorPath(text);
         }
 
@@ -158,17 +159,17 @@ static void SaveSettings()              // OK pressed
         int selected = (int)SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETCURSEL, 0, 0);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf);
-            uint32_t ver = _tcstoul(buf, NULL, 0);
+            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
+            uint32_t ver = _tcstoul(buf.data(), NULL, 0);
             SetConfigInt(USER_CONSOLE, ver, USER_HW);
         }
         else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
-        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_BOOTROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_DSP_DROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_DSP_IROM, buf, USER_HW);
     }
 
@@ -445,7 +446,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psh.hwndParent = hParentWnd;
     psh.hInstance = hParentInst;
     psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
-    psh.pszCaption = _T("Configure ") APPNAME;
+    psh.pszCaption = (L"Configure " + std::wstring(APPNAME)).c_str();
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
     psh.ppsp = (LPCPROPSHEETPAGE)&psp;

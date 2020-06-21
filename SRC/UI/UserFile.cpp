@@ -15,15 +15,14 @@ namespace UI
     }
 
     // Get file size
-    size_t FileSize(const TCHAR * filename)
+    size_t FileSize(std::wstring_view filename)
     {
-        FILE* f = nullptr;
-        _tfopen_s (&f, filename, _T("rb"));
-        if (f == NULL) return 0;
-        fseek(f, 0, SEEK_END);
-        size_t size = ftell(f);
-        fclose(f);
-        return size;
+        auto f = std::ifstream(filename, std::ifstream::ate | std::ifstream::binary);
+        
+        if (!f.is_open())
+            return 0;
+        else
+            return f.tellg();
     }
 
     // Load data from file
@@ -116,7 +115,7 @@ namespace UI
     }
 
     // Open file/directory dialog
-    TCHAR * FileOpen(HWND hwnd, FileType type)
+    TCHAR* FileOpen(HWND hwnd, FileType type)
     {
         static TCHAR tempBuf[0x1000] = { 0 };
         OPENFILENAME ofn;
@@ -130,16 +129,18 @@ namespace UI
         switch (type)
         {
             case FileType::All:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI).c_str());
                 break;
             case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI).c_str());
                 break;
             case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI).c_str());
                 break;
             case FileType::Patch:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_UI));
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_UI).c_str());
+                break;
+            default:
                 break;
         }
 

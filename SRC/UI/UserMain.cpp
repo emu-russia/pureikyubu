@@ -74,7 +74,8 @@ namespace UI
         _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
         va_end(arg);
 
-        MessageBox(NULL, buf, APPNAME _T(" Reports"), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
+        auto app_name = std::wstring(APPNAME);
+        MessageBox(NULL, buf, (app_name + L" Reports").data(), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
     }
 
 }
@@ -91,7 +92,8 @@ static void LockMultipleCalls()
     dolwinsem = CreateMutex(NULL, 0, APPNAME);
     if(dolwinsem == NULL)
     {
-        UI::DolwinReport(_T("We are already running ") APPNAME _T("!!"));
+        auto app_name = std::wstring(APPNAME);
+        UI::DolwinReport(L"We are already running %s!!", app_name.c_str());
         exit(0);    // return good
     }
     CloseHandle(dolwinsem);
@@ -176,6 +178,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     // should never reach this point. Dolwin always exit()'s.
-    UI::DolwinError(_T("ERROR"), APPNAME _T(" ERROR >>> SHOULD NEVER REACH HERE :)"));
+    UI::DolwinError(L"ERROR", L"%s ERROR >>> SHOULD NEVER REACH HERE :)", APPNAME);
     return 1;   // return bad
 }

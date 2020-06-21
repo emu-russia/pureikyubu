@@ -1,5 +1,5 @@
 // System Instructions
-#include "../pch.h"
+#include "pch.h"
 #include "InterpreterPrivate.h"
 
 namespace Gekko
@@ -30,7 +30,6 @@ namespace Gekko
     {
         int32_t a = RRA, b = RRB;
         int32_t to = RS;
-        bool trap = false;
 
         if (((a < b) && (to & 0x10)) ||
             ((a > b) && (to & 0x08)) ||

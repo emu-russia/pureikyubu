@@ -456,7 +456,7 @@ void MISetTrap(
 // called every time when emu restarted
 static void MIClearTraps()
 {
-    register uint32_t addr;
+    uint32_t addr;
 
     // possible errors, if greater 0xffff
     assert(HW_MAX_KNOWN < 0x10000);

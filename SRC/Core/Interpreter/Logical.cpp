@@ -1,5 +1,5 @@
 // Logical Instructions
-#include "../pch.h"
+#include "pch.h"
 #include "InterpreterPrivate.h"
 
 namespace Gekko

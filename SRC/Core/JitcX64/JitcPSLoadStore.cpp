@@ -1,5 +1,5 @@
 // Paired Single Load and Store Instructions
-#include "../pch.h"
+#include "pch.h"
 
 // Under normal conditions, GQR registers are set once and for a long time (__OSPSInit, OSInitFastCast)
 // We use this fact here and do not get the Type/Scale value in runtime, but in compile time.
@@ -43,6 +43,9 @@ namespace Gekko
 					// 0:  83 c1 04                add    ecx, 0x4
 					seg->Write8(0x83);
 					seg->Write16(0x04c1);
+					break;
+
+				default:
 					break;
 			}
 		}

@@ -10,7 +10,7 @@
 static void swap_double(void* srcPtr)
 {
     uint8_t* src = (uint8_t*)srcPtr;
-    register uint8_t t;
+    uint8_t t;
 
     for (int i = 0; i < 4; i++)
     {

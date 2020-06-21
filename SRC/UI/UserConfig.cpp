@@ -118,65 +118,65 @@ static void SaveSettings()
 
 #pragma region "Legacy Dolwin config API"
 
-TCHAR *GetConfigString(const char *var, const char *path)
+std::wstring GetConfigString(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddString(var, _T(""));
+		value = section->AddString(var.data(), L"");
 	}
 
 	assert(value->type == Json::ValueType::String);
 
 	settingsLock.Unlock();
 
-	return value->value.AsString;
+	return std::wstring(value->value.AsString);
 }
 
-void SetConfigString(const char *var, TCHAR *newVal, const char *path)
+void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value * section = settings.root.children.back()->ByName(path);
+	Json::Value * section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddString(var, newVal);
+		value = section->AddString(var.data(), newVal.data());
 	}
 
 	assert(value->type == Json::ValueType::String);
 
-	value->ReplaceString(newVal);
+	value->ReplaceString(newVal.data());
 
 	SaveSettings();
 
 	settingsLock.Unlock();
 }
 
-int GetConfigInt(const char *var, const char *path)
+int GetConfigInt(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddInt(var, 0);
+		value = section->AddInt(var.data(), 0);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -186,19 +186,19 @@ int GetConfigInt(const char *var, const char *path)
 	return (int)value->value.AsInt;
 }
 
-void SetConfigInt(const char *var, int newVal, const char *path)
+void SetConfigInt(std::string_view var, int newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddInt(var, newVal);
+		value = section->AddInt(var.data(), newVal);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -210,19 +210,19 @@ void SetConfigInt(const char *var, int newVal, const char *path)
 	settingsLock.Unlock();
 }
 
-bool GetConfigBool(const char* var, const char* path)
+bool GetConfigBool(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddBool(var, false);
+		value = section->AddBool(var.data(), false);
 	}
 
 	assert(value->type == Json::ValueType::Bool);
@@ -232,19 +232,19 @@ bool GetConfigBool(const char* var, const char* path)
 	return (int)value->value.AsBool;
 }
 
-void SetConfigBool(const char* var, bool newVal, const char* path)
+void SetConfigBool(std::string_view var, bool newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddBool(var, newVal);
+		value = section->AddBool(var.data(), newVal);
 	}
 
 	assert(value->type == Json::ValueType::Bool);
