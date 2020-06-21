@@ -26,30 +26,34 @@ namespace Debug
 
         DBReport("Loading script: %s\n", file); 
 
-        size_t size = 0;
-        char* sbuf = (char*)UI::FileLoad(file, &size);
-        if (!sbuf)
+        auto sbuf = UI::FileLoad(file);
+        if (sbuf.empty())
         {
             DBReport("Cannot open script file!\n");
             return nullptr;
         }
 
-        // remove all garbage, like tabs
-        for (i = 0; i < size; i++)
+        /* Remove all garbage, like tabs. */
+        for (i = 0; i < sbuf.size(); i++)
         {
-            if (sbuf[i] < ' ') sbuf[i] = '\n';
+            char c = sbuf[i];
+            
+            if (c < ' ')
+            {
+                c = '\n';
+            }
         }
 
         DBReport("Executing script...\n");
 
         int cnt = 1;
-        char* ptr = sbuf;
+        char* ptr = (char*)sbuf.data();
         while (*ptr)
         {
             char line[1000];
             line[i = 0] = 0;
 
-            // cut string
+            // Cut string
             while (*ptr == '\n') ptr++;
             if (!*ptr) break;
             while (*ptr != '\n') line[i++] = *ptr++;
@@ -94,7 +98,6 @@ namespace Debug
 
             con_command(commandArgs);
         }
-        free(sbuf);
 
         DBReport("\nDone execute script.\n");
         con.update |= CON_UPDATE_ALL;

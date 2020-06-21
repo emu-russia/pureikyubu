@@ -105,16 +105,15 @@ static void LockMultipleCalls()
 static void InitFileSystem(HINSTANCE hInst)
 {
     // set current working directory relative to Dolwin executable
-    GetModuleFileName(hInst, ldat.cwd, sizeof(ldat.cwd));
-    *(_tcsrchr(ldat.cwd, _T('\\')) + 1) = 0;
-    SetCurrentDirectory(ldat.cwd);
-
+    ldat.cwd = std::filesystem::current_path();
+    SetCurrentDirectory(ldat.cwd.data());
+    
     // make sure, that Dolwin has data directory.
-    CreateDirectory(_T(".\\Data"), NULL);
+    std::filesystem::create_directory(".\\Data");
 }
 
 // return file name without quotes
-char * FixCommandLine(char *lpCmdLine)
+char* FixCommandLine(char *lpCmdLine)
 {
     if(*lpCmdLine == '\"' || *lpCmdLine == '\'')
     {

@@ -215,11 +215,13 @@ namespace Flipper
 		PVOID part2 = nullptr;
 		DWORD part2Size = 0;
 
-		hr = DSBuffer->Lock(0, 0, &part1, &part1Size, &part2, &part2Size,
-			DSBLOCK_ENTIREBUFFER);
+		hr = DSBuffer->Lock(0, 0, &part1, &part1Size, &part2, &part2Size, DSBLOCK_ENTIREBUFFER);
 		assert(hr == DS_OK);
+		
+		auto part1_buff = std::vector<uint8_t>();
+		part1_buff.assign((uint8_t*)part1, (uint8_t*)part1 + part1Size);
 
-		UI::FileSave(filename, part1, part1Size);
+		UI::FileSave(filename, part1_buff);
 		DBReport2(DbgChannel::AX, "DSBuffer dumped to: %s\n", filename);
 
 		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
@@ -235,7 +237,11 @@ namespace Flipper
 		sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04i.bin", (int)frameCounter);
 
 		DBReport2(DbgChannel::AX, "frame: %i, readPtr: %i, writePtr: %i\n", frameCounter, ringReadPtr, ringWritePtr);
-		UI::FileSave(filename, ringBuffer, ringSize);
+		
+		auto ringBuff = std::vector<uint8_t>();
+		ringBuff.assign(ringBuffer, ringBuffer + ringSize);
+		
+		UI::FileSave(filename, ringBuff);
 		DBReport2(DbgChannel::AX, "Ring dumped to: %s\n", filename);
 	}
 

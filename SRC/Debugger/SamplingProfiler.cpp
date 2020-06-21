@@ -47,14 +47,15 @@ namespace Debug
 
 		json->GetSerializedTextSize(nullptr, -1, textSize);
 		
-		uint8_t* jsonText = new uint8_t[2 *textSize];
+		uint8_t* jsonText = new uint8_t[2 * textSize];
 		assert(jsonText);
 
 		json->Serialize(jsonText, 2 * textSize, textSize);
 
-		UI::FileSave(filename, jsonText, textSize);
+		auto buffer = std::vector<uint8_t>(jsonText, jsonText + textSize);
+		UI::FileSave(filename, buffer);
 
-		delete [] jsonText;
+		delete[] jsonText;
 		delete json;
 	}
 

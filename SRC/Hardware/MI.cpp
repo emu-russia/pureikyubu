@@ -496,17 +496,16 @@ void LoadBootrom(HWConfig* config)
         return;
     }
 
-    size_t bootromImageSize = 0;
-
-    mi.bootrom = (uint8_t *)UI::FileLoad(config->BootromFilename, &bootromImageSize);
-
-    if (mi.bootrom == nullptr)
+    auto bootrom = UI::FileLoad(config->BootromFilename);
+    if (bootrom.empty())
     {
         DBReport2(DbgChannel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);
         return;
     }
 
-    if (bootromImageSize != mi.bootromSize)
+    mi.bootrom = bootrom.data();
+
+    if (bootrom.size() != mi.bootromSize)
     {
         free(mi.bootrom);
         mi.bootrom = nullptr;

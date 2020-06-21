@@ -23,7 +23,9 @@
     <ClInclude Include="..\Json.h" />
     <ClInclude Include="..\pch.h" />
     <ClInclude Include="..\Spinlock.h" />
+    <ClInclude Include="..\String.h" />
     <ClInclude Include="..\Thread.h" />
+    <ClInclude Include="..\WinAPI.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Jdi.cpp" />
@@ -35,7 +37,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Spinlock.cpp" />
+    <ClCompile Include="..\String.cpp" />
     <ClCompile Include="..\Thread.cpp" />
+    <ClCompile Include="..\WinAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\Readme.md" />

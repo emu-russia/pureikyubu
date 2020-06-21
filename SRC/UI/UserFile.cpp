@@ -1,258 +1,196 @@
 // Dolwin file utilities
 #include "pch.h"
-#include <shlobj.h>
+#include "../Common/WinAPI.h" /* Windows API abstraction. */
 
 namespace UI
 {
-
-    bool FileExists(const TCHAR* filename)
-    {
-        FILE* f = nullptr;
-        _tfopen_s(&f, filename, _T("rb"));
-        if (f == NULL) return false;
-        fclose(f);
-        return true;
-    }
-
-    // Get file size
     size_t FileSize(std::wstring_view filename)
     {
-        auto f = std::ifstream(filename, std::ifstream::ate | std::ifstream::binary);
-        
-        if (!f.is_open())
-            return 0;
+        auto path = std::filesystem::absolute(filename);
+        return std::filesystem::file_size(path);
+    }
+
+    bool FileExists(std::wstring_view filename)
+    {
+        auto path = std::filesystem::absolute(filename);
+        return std::filesystem::exists(path);
+    }
+
+    /* Load data from a unicode file. */
+    std::vector<uint8_t> FileLoad(std::wstring_view filename)
+    {
+        auto file = std::ifstream(filename, std::ifstream::binary);
+        if (!file.is_open())
+        {
+            return std::vector<uint8_t>();
+        }
         else
-            return f.tellg();
-    }
-
-    // Load data from file
-    void* FileLoad(const TCHAR * filename, size_t * size)
-    {
-        FILE* f;
-        uint8_t* buffer;
-        size_t  filesize;
-
-        if (size) *size = 0;
-
-        f = nullptr;
-        _tfopen_s(&f, filename, _T("rb"));
-        if (f == NULL) return NULL;
-
-        fseek(f, 0, SEEK_END);
-        filesize = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        buffer = (uint8_t *)malloc(filesize + 1);
-        if (buffer == NULL)
         {
-            fclose(f);
-            return NULL;
+            auto itr = std::istreambuf_iterator<char>(file);
+            return std::vector<uint8_t>(itr, std::istreambuf_iterator<char>());
         }
-
-        fread(buffer, filesize, 1, f);
-        fclose(f);
-
-        buffer[filesize] = 0;
-
-        if (size) *size = filesize;
-        return buffer;
     }
 
-    // Load data from file
-    void* FileLoad(const char* filename, size_t* size)
+    /* Load data from a file. */
+    std::vector<uint8_t> FileLoad(std::string_view filename)
     {
-        FILE* f;
-        uint8_t* buffer;
-        size_t  filesize;
-
-        if (size) *size = 0;
-
-        f = nullptr;
-        fopen_s(&f, filename, "rb");
-        if (f == NULL) return NULL;
-
-        fseek(f, 0, SEEK_END);
-        filesize = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        buffer = (uint8_t*)malloc(filesize + 1);
-        if (buffer == NULL)
+        auto file = std::ifstream(filename, std::ifstream::binary);
+        if (!file.is_open())
         {
-            fclose(f);
-            return NULL;
+            return std::vector<uint8_t>();
         }
-
-        fread(buffer, filesize, 1, f);
-        fclose(f);
-
-        buffer[filesize] = 0;
-
-        if (size) *size = filesize;
-        return buffer;
+        else
+        {
+            return std::vector<uint8_t>(std::istreambuf_iterator<char>(file),
+                std::istreambuf_iterator<char>());
+        }
     }
 
-    // Save data in file
-    bool FileSave(const TCHAR * filename, void* data, size_t size)
+    /* Save data in file. */
+    bool FileSave(std::wstring_view filename, std::vector<uint8_t>& data)
     {
-        FILE* f = nullptr;
-        _tfopen_s (&f, filename, _T("wb"));
-        if (f == NULL) return FALSE;
+        auto file = std::ofstream(filename, std::ofstream::binary);
+        if (!file.is_open())
+        {
+            return false;
+        }
+        else
+        {
+            auto itr = std::ostreambuf_iterator<char>(file);
+            std::copy(data.begin(), data.end(), itr);
 
-        fwrite(data, size, 1, f);
-        fclose(f);
-        return TRUE;
+            return true;
+        }
     }
 
-    bool FileSave(const char* filename, void* data, size_t size)
+    bool FileSave(std::string_view filename, std::vector<uint8_t>& data)
     {
-        FILE* f = nullptr;
-        fopen_s(&f, filename, "wb");
-        if (f == NULL) return FALSE;
+        auto file = std::ofstream(filename, std::ofstream::binary);
+        if (!file.is_open())
+        {
+            return false;
+        }
+        else
+        {
+            auto itr = std::ostreambuf_iterator<char>(file);
+            std::copy(data.begin(), data.end(), itr);
 
-        fwrite(data, size, 1, f);
-        fclose(f);
-        return TRUE;
+            return true;
+        }
     }
 
-    // Open file/directory dialog
-    TCHAR* FileOpen(HWND hwnd, FileType type)
+    /* Open the file/directory dialog. */
+    std::wstring FileOpen(FileType type)
     {
-        static TCHAR tempBuf[0x1000] = { 0 };
-        OPENFILENAME ofn;
-        TCHAR szFileName[1024];
-        TCHAR szFileTitle[1024];
-        TCHAR lastDir[1024], prevDir[1024];
-        BOOL result;
+        static auto tempStr = std::wstring(0x1000, 0);
+        std::wstring szFileName(1024, 0), szFileTitle(1024, 0);
 
-        GetCurrentDirectory(sizeof(prevDir), prevDir);
-
+        auto prevDir = std::filesystem::current_path();
         switch (type)
         {
             case FileType::All:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI).c_str());
+            {
+                auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;
+            }
             case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI).c_str());
+            {
+                auto lastDir = GetConfigString(USER_LASTDIR_DVD, USER_UI);
                 break;
+            }
             case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI).c_str());
+            {
+                auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
+            }
             case FileType::Patch:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_UI).c_str());
+            {
+                auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
                 break;
+            }
             default:
+            {
                 break;
+            }
         }
 
-        memset(szFileName, 0, sizeof(szFileName));
-        memset(szFileTitle, 0, sizeof(szFileTitle));
-
+        bool result = false;
         if (type == FileType::Directory)
-        {
-            BROWSEINFO bi;
-            LPTSTR lpBuffer = NULL;
-            LPITEMIDLIST pidlRoot = NULL;     // PIDL for root folder 
-            LPITEMIDLIST pidlBrowse = NULL;   // PIDL selected by user
-            LPMALLOC g_pMalloc;
+        {          
+            auto title = L"Choose a directory";
+            auto folder = Win::OpenDialog(title, L"", true);
 
-            // Get the shell's allocator. 
-            if (!SUCCEEDED(SHGetMalloc(&g_pMalloc)))
-                return NULL;
-
-            // Allocate a buffer to receive browse information.
-            lpBuffer = (LPTSTR)g_pMalloc->Alloc(MAX_PATH);
-            if (lpBuffer == NULL) return NULL;
-
-            // Get the PIDL for the root folder.
-            if (!SUCCEEDED(SHGetSpecialFolderLocation(hwnd, CSIDL_DRIVES, &pidlRoot)))
+            if (!folder.empty())
             {
-                g_pMalloc->Free(lpBuffer);
-                return NULL;
+                szFileName = folder;
+                result = true;
             }
-
-            // Fill in the BROWSEINFO structure. 
-            bi.hwndOwner = hwnd;
-            bi.pidlRoot = pidlRoot;
-            bi.pszDisplayName = lpBuffer;
-            bi.lpszTitle = _T("Choose Directory");
-            bi.ulFlags = 0;
-            bi.lpfn = NULL;
-            bi.lParam = 0;
-
-            // Browse for a folder and return its PIDL. 
-            pidlBrowse = SHBrowseForFolder(&bi);
-            result = (pidlBrowse != NULL);
-            if (result)
-            {
-                SHGetPathFromIDList(pidlBrowse, lpBuffer);
-                _tcscpy_s(szFileName, _countof(szFileName) - 1, lpBuffer);
-
-                // Free the PIDL returned by SHBrowseForFolder.
-                g_pMalloc->Free(pidlBrowse);
-            }
-
-            // Clean up. 
-            if (pidlRoot) g_pMalloc->Free(pidlRoot);
-            if (lpBuffer) g_pMalloc->Free(lpBuffer);
-
-            // Release the shell's allocator. 
-            g_pMalloc->Release();
         }
         else
         {
-            ofn.lStructSize = sizeof(OPENFILENAME);
-            ofn.hwndOwner = hwnd;
+            /* Select which files to allow in the dialog. */
+            auto filter = std::wstring();
             switch (type)
             {
                 case FileType::All:
-                    ofn.lpstrFilter =
-                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
-                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
-                        _T("Binary Files (*.bin)\0*.bin\0")
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                {
+                    filter =
+                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                        L"Binary Files (*.bin)\0*.bin\0"
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
+                }
                 case FileType::Dvd:
-                    ofn.lpstrFilter =
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                {
+                    filter =
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
+                }
                 case FileType::Map:
-                    ofn.lpstrFilter =
-                        _T("Symbolic information files (*.map)\0*.map\0")
-                        _T("All Files (*.*)\0*.*\0");
+                {
+                    filter =
+                        L"Symbolic information files (*.map)\0*.map\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
+                }
                 case FileType::Patch:
-                    ofn.lpstrFilter =
-                        _T("Patch files (*.patch)\0*.patch\0")
-                        _T("All Files (*.*)\0*.*\0");
+                {
+                    filter =
+                        L"Patch files (*.patch)\0*.patch\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
+                }
+                default:
+                {
+                    break;
+                }
             }
+            
+            auto title = L"Open File";
+            auto file = Win::OpenDialog(title, filter);
 
-            ofn.lpstrCustomFilter = NULL;
-            ofn.nMaxCustFilter = 0;
-            ofn.nFilterIndex = 1;
-            ofn.lpstrFile = szFileName;
-            ofn.nMaxFile = sizeof(szFileName);
-            ofn.lpstrInitialDir = lastDir;
-            ofn.lpstrFileTitle = szFileTitle;
-            ofn.nMaxFileTitle = sizeof(szFileTitle);
-            ofn.lpstrTitle = _T("Open File\0");
-            ofn.lpstrDefExt = _T("");
-            ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
-
-            result = GetOpenFileName(&ofn);
+            if (!file.empty())
+            {
+                szFileName = file;
+                result = true;
+            }
         }
 
         if (result)
         {
-            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
+            tempStr = szFileName;
 
-            // save last directory
-            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
-            int i = (int)_tcslen(lastDir) - 1;
-            while (lastDir[i] != _T('\\')) i--;
-            lastDir[i + 1] = _T('\0');
+            /* Save last directory. */
+            auto lastDir = tempStr;
+            
+            /* Remove the file from the directory string. */
+            int i = lastDir.size() - 1;
+            while (lastDir[i] != L'\\') i--;
+
+            lastDir[i + 1] = L'\0';
             switch (type)
             {
                 case FileType::All:
@@ -267,27 +205,29 @@ namespace UI
                 case FileType::Patch:
                     SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
                     break;
+                default:
+                    break;
             }
-
-            SetCurrentDirectory(prevDir);
-            return tempBuf;
+            
+            chdir(prevDir.string().c_str());
+            return tempStr;
         }
         else
         {
-            SetCurrentDirectory(prevDir);
-            return NULL;
+            chdir(prevDir.string().c_str());
+            return std::wstring();
         }
     }
 
-    // make path to file shorter for "lvl" levels.
-    TCHAR * FileShortName(const TCHAR * filename, int lvl)
+    /* Make path to file shorter for "lvl" levels. */
+    std::wstring FileShortName(std::wstring_view filename, int lvl)
     {
         static TCHAR tempBuf[1024] = { 0 };
 
         int c = 0;
         size_t i = 0;
 
-        TCHAR * ptr = (TCHAR *)filename;
+        TCHAR* ptr = (TCHAR*)filename.data();
 
         tempBuf[0] = ptr[0];
         tempBuf[1] = ptr[1];
@@ -310,88 +250,52 @@ namespace UI
         return tempBuf;
     }
 
-    // nice value of KB, MB or GB, for output
-    TCHAR * FileSmartSize(size_t size)
+    /* Nice value of KB, MB or GB, for output. */
+    std::wstring FileSmartSize(size_t size)
     {
-        static TCHAR tempBuf[1024] = { 0 };
+        static auto tempBuf = std::wstring(1024, 0);
 
         if (size < 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi byte"), size);
+            tempBuf = fmt::format(L"%zi byte", size);
         }
         else if (size < 1024 * 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi KB"), size / 1024);
+            tempBuf = fmt::format(L"%zi KB", size / 1024);
         }
         else if (size < 1024 * 1024 * 1024)
         {
-            _stprintf_s(tempBuf, sizeof(tempBuf), _T("%zi MB"), size / 1024 / 1024);
+            tempBuf = fmt::format(L"%zi MB", size / 1024 / 1024);
         }
-        else _stprintf_s(tempBuf, sizeof(tempBuf), _T("%1.1f GB"), (float)size / 1024 / 1024 / 1024);
+        else
+        {
+            tempBuf = fmt::format(L"%1.1f GB", (float)size / 1024 / 1024 / 1024);
+        }
+        
         return tempBuf;
     }
 
-    char* FileSmartSizeA(size_t size)
+    std::string FileSmartSizeA(size_t size)
     {
-        static char tempBuf[1024] = { 0 };
+        static auto tempBuf = std::string(1024, 0);
 
         if (size < 1024)
         {
-            sprintf_s(tempBuf, sizeof(tempBuf), "%zi byte", size);
+            tempBuf = fmt::format("%zi byte", size);
         }
         else if (size < 1024 * 1024)
         {
-            sprintf_s(tempBuf, sizeof(tempBuf), "%zi KB", size / 1024);
+            tempBuf = fmt::format("%zi KB", size / 1024);
         }
         else if (size < 1024 * 1024 * 1024)
         {
-            sprintf_s(tempBuf, sizeof(tempBuf), "%zi MB", size / 1024 / 1024);
+            tempBuf = fmt::format("%zi MB", size / 1024 / 1024);
         }
-        else sprintf_s(tempBuf, sizeof(tempBuf), "%1.1f GB", (float)size / 1024 / 1024 / 1024);
+        else
+        {
+            tempBuf = fmt::format("%1.1f GB", (float)size / 1024 / 1024 / 1024);
+        }
+
         return tempBuf;
     }
-
-    void* FileLoad(std::wstring filename, size_t& size)
-    {
-        FILE* f;
-        uint8_t* buffer;
-        size_t  filesize;
-
-        size = 0;
-
-        f = nullptr;
-        _wfopen_s(&f, filename.c_str(), L"rb");
-        if (f == NULL) return NULL;
-
-        fseek(f, 0, SEEK_END);
-        filesize = ftell(f);
-        fseek(f, 0, SEEK_SET);
-
-        buffer = new uint8_t[filesize + 1];
-        if (buffer == NULL)
-        {
-            fclose(f);
-            return NULL;
-        }
-
-        fread(buffer, filesize, 1, f);
-        fclose(f);
-
-        buffer[filesize] = 0;
-
-        size = filesize;
-        return buffer;
-    }
-
-    bool FileSave(std::wstring filename, void* data, size_t size)
-    {
-        FILE* f = nullptr;
-        _wfopen_s(&f, filename.c_str(), L"wb");
-        if (f == NULL) return FALSE;
-
-        fwrite(data, size, 1, f);
-        fclose(f);
-        return TRUE;
-    }
-
 }

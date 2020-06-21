@@ -30,6 +30,12 @@
     <ClInclude Include="..\Jdi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\WinAPI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\String.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\pch.cpp">
@@ -45,6 +51,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Jdi.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\WinAPI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\String.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

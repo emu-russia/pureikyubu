@@ -7,37 +7,41 @@
 #include <string>
 #include <fmt/format.h>
 
-// file type (*.bin is not supported, and can be opened only by File->Open)
+/* File type (*.bin is not supported, and can be opened only by File->Open) */
 enum class SELECTOR_FILE
 {
-    Executable = 1,     // any GC executable (*.dol, *.elf)
-    Dvd                 // any DVD image (*.gcm, *.iso)
+    Executable = 1,     /* any GC executable (*.dol, *.elf) */
+    Dvd                 /* any DVD image (*.gcm, *.iso)     */
 };
 
-// file entry
+/* File info limits */
+constexpr int MAX_TITLE     = 0x100;
+constexpr int MAX_COMMENT   = 0x100;
+
+/* File entry */
 struct UserFile
 {
-    SELECTOR_FILE   type;       // see above (one of SELECTOR_FILE_*)
-    size_t          size;       // file size
-    std::wstring    id;         // GameID = DiskID + banner checksum
-    std::wstring    name;       // file path and name
-    std::wstring    title;      // alternate file name
-    std::wstring    comment;    // some notes
-    int             icon[2];    // banner/icon + same but highlighted
+    SELECTOR_FILE   type;       /* See above (one of SELECTOR_FILE_*)   */
+    size_t          size;       /* File size                            */
+    std::wstring    id;         /* GameID = DiskID + banner checksum    */
+    std::wstring    name;       /* File path and name                   */
+    std::wstring    title;      /* Alternate file name                  */
+    std::wstring    comment;    /* Some notes                           */
+    int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 
-// selector columns
-constexpr wchar_t SELECTOR_COLUMN_BANNER[]  = L"Icon";
-constexpr wchar_t SELECTOR_COLUMN_TITLE[]   = L"Title";
-constexpr wchar_t SELECTOR_COLUMN_SIZE[]    = L"Size";
-constexpr wchar_t SELECTOR_COLUMN_GAMEID[]  = L"Game ID";
-constexpr wchar_t SELECTOR_COLUMN_COMMENT[] = L"Comment";
+/* Selector columns */
+constexpr auto SELECTOR_COLUMN_BANNER  = L"Icon";
+constexpr auto SELECTOR_COLUMN_TITLE   = L"Title";
+constexpr auto SELECTOR_COLUMN_SIZE    = L"Size";
+constexpr auto SELECTOR_COLUMN_GAMEID  = L"Game ID";
+constexpr auto SELECTOR_COLUMN_COMMENT = L"Comment";
 
-// sort by ..
+/* Sort by ... */
 enum class SELECTOR_SORT
 {
     Unsorted = 0,
-    Default = 1,      // first by icon, then by title
+    Default = 1,      /* First by icon, then by title */
     Filename,
     Title,
     Size,
@@ -45,20 +49,20 @@ enum class SELECTOR_SORT
     Comment,
 };
 
-// selector API
-void    CreateSelector();
-void    CloseSelector();
-void    SetSelectorIconSize(bool smallIcon);
-bool    AddSelectorPath(std::wstring fullPath);            // FALSE, if path duplicated
-void    ResizeSelector(int width, int height);
-void    UpdateSelector();
-int     SelectorGetSelected();
-void    SelectorSetSelected(int item);
-void    SelectorSetSelected(std::wstring_view filename);
-void    SortSelector(SELECTOR_SORT sortBy);
-void    DrawSelectorItem(LPDRAWITEMSTRUCT item);
-void    NotifySelector(LPNMHDR pnmh);
-void    ScrollSelector(int letter);
+/* Selector API */
+void CreateSelector();
+void CloseSelector();
+void SetSelectorIconSize(bool smallIcon);
+bool AddSelectorPath(std::wstring fullPath);            // FALSE, if path duplicated
+void ResizeSelector(int width, int height);
+void UpdateSelector();
+int  SelectorGetSelected();
+void SelectorSetSelected(int item);
+void SelectorSetSelected(std::wstring_view filename);
+void SortSelector(SELECTOR_SORT sortBy);
+void DrawSelectorItem(LPDRAWITEMSTRUCT item);
+void NotifySelector(LPNMHDR pnmh);
+void ScrollSelector(int letter);
 uint16_t* SjisToUnicode(TCHAR* sjisText, size_t* size, size_t* chars);
 
 // all important data is placed here

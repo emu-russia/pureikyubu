@@ -1,6 +1,7 @@
 // EI - expansion (or extension) interface. also referred as EXI.
 // (EXI term is reserved for Dolwin HLE of EI).
 #include "pch.h"
+#include <algorithm>
 
 // IMPORTANT : all EXI transfers are completed instantly in emu (mean no DMA chain).
 
@@ -142,19 +143,15 @@ void EXIDetach(int chan)
 
 static void SRAMLoad(SRAM *s)
 {
-    uint8_t * buf;
-    size_t size;
+    /* Load data from file in temporary buffe. */
+    auto buffer = UI::FileLoad(SRAM_FILE);
+    std::memset(s, 0, sizeof(SRAM));
 
-    // load data from file in temporary buffer
-    buf = (uint8_t *)UI::FileLoad(SRAM_FILE, &size);
-    memset(s, 0, sizeof(SRAM));
-
-    // copy less or equal bytes from buffer to SRAM
-    if(buf != NULL)
+    /* Copy less or equal bytes from buffer to SRAM. */
+    if (!buffer.empty())
     {
-        if(size > sizeof(SRAM)) memcpy(s, buf, sizeof(SRAM));
-        else memcpy(s, buf, size);
-        free(buf);
+        auto load_size = (buffer.size() > sizeof(SRAM) ? sizeof(SRAM) : buffer.size());
+        std::memcpy(s, buffer.data(), load_size);
     }
     else
     {
@@ -164,7 +161,10 @@ static void SRAMLoad(SRAM *s)
 
 static void SRAMSave(SRAM *s)
 {
-    UI::FileSave(SRAM_FILE, s, sizeof(SRAM));
+    auto ptr = (uint8_t*)s;
+
+    auto buffer = std::vector<uint8_t>(ptr, ptr + sizeof(SRAM));
+    UI::FileSave(SRAM_FILE, buffer);
 }
 
 //
@@ -186,29 +186,35 @@ void RTCUpdate()
 
 static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
 {
-    uint8_t * buf;
-    size_t size;
-
-    // allocate memory for font data
-    *font = (uint8_t *)malloc(fontsize);
-    if(*font == NULL)
+    do
     {
-failed: UI::DolwinError(
-            _T("EXI Message"),
-            _T("Cannot load bootrom font: %s\n"), filename);
+        /* Allocate memory for font data. */
+        *font = (uint8_t*)malloc(fontsize);
+        if (*font == NULL)
+        {
+            break;
+        }
+
+        std::memset(*font, 0, fontsize); /* Clear */
+
+        /* Load data from file in temporary buffer. */
+        auto buffer = UI::FileLoad(filename);
+        if (!buffer.empty())
+        {
+            auto load_size = (buffer.size() > fontsize ? fontsize : buffer.size());
+            std::memcpy(*font, buffer.data(), load_size);
+        }
+        else
+        {
+            break;
+        }
+
         return;
-    }
-    memset(*font, 0, fontsize); // clear
+    } while (false);
 
-    // load data from file in temporary buffer
-    buf = (uint8_t *)UI::FileLoad(filename, &size);
-    if(buf != NULL)
-    {
-        if(size > fontsize) memcpy(*font, buf, fontsize);
-        else memcpy(*font, buf, size);
-        free(buf);
-    }
-    else goto failed;
+    /* Loading failed. */
+    UI::DolwinError(L"EXI Message", L"Cannot load bootrom font: %s\n", filename);
+    return;
 }
 
 static void FontUnload(uint8_t **font)

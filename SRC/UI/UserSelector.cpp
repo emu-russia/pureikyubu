@@ -3,6 +3,7 @@
 #include "SjisTable.h"
 #include <locale>
 #include <codecvt>
+#include <array>
 
 // all important data is placed here
 UserSelector usel;
@@ -363,8 +364,6 @@ static void CopyAnsiStringAsTcharString(TCHAR* dest, const char* src)
 // insert new file into filelist
 static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 {
-    DVDBanner2* bnr;
-
     // check file size
     if((fsize < 0x1000) || (fsize > DVD_SIZE))
     {
@@ -374,16 +373,6 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
     // check already present
     bool found = false;
     usel.filesLock.Lock();
-    /*for (auto it = usel.files.begin(); it != usel.files.end(); ++it)
-    {
-        UserFile* entry = *it;
-
-        if (!_tcsicmp(entry->name, file))
-        {
-            found = true;
-            break;
-        }
-    }*/
 
     if (!usel.files.empty())
     {
@@ -403,7 +392,7 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
     }
 
     // try to open file
-    if (!std::filesystem::exists(file))
+    if (!UI::FileExists(file))
     {
         return;
     }
@@ -420,35 +409,35 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
     // save file info
     item->type = type;
     item->size = fsize;
+
     item->name = file;
+    item->name.resize(2 * MAX_PATH + 2);
     //_tcscpy_s(item->name, _countof(item->name) - 1, file);
     
     if (type == SELECTOR_FILE::Dvd)
     {
         // load DVD banner
         std::wstring_view copy = file;
-        bnr = (DVDBanner2*)DVDLoadBanner(copy);
+        auto bnr = DVDLoadBanner(copy);
         if (!bnr)
         {
             return;
         }
 
         // get DiskID
-        //char diskIDRaw[0x10] = { 0 };
-        //TCHAR diskID[0x10] = { 0 };
-        std::wstring diskID(0x10, 0);
-
+        char diskIDRaw[0x10] = { 0 };
+        TCHAR diskID[0x10] = { 0 };
         DVD::MountFile(file);
         DVD::Seek(0);
-        DVD::Read(diskID.data(), 4);
-        /*diskID[0] = diskIDRaw[0];
+        DVD::Read(diskID, 4);
+        diskID[0] = diskIDRaw[0];
         diskID[1] = diskIDRaw[1];
         diskID[2] = diskIDRaw[2];
         diskID[3] = diskIDRaw[3];
-        diskID[4] = 0;*/
+        diskID[4] = 0;
 
         // set GameID
-        item->id = fmt::format(L"%.4s%02X", diskID, DVDBannerChecksum(bnr));
+        item->id = fmt::format(L"%.4s%02X", diskID, DVDBannerChecksum(bnr.get()));
         /*_stprintf_s ( item->id, _countof(item->id) - 1, _T("%.4s%02X"),
                  diskID, DVDBannerChecksum((void *)bnr) );*/
 
@@ -476,41 +465,19 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 
         item->icon[0] = a;
         item->icon[1] = b;
-        free(bnr);
     }
     else if(type == SELECTOR_FILE::Executable)
     {
-        // rip filename
-        TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-        
-        _tsplitpath_s(file.data(),
-            drive, _countof(drive) - 1,
-            dir, _countof(dir) - 1,
-            name, _countof(name) - 1,
-            ext, _countof(ext) - 1);
-        //strlwr(name);
+        /* Rip filename */
+        auto filename = std::filesystem::path(file).stem();
 
-        // set ID
-/*/
-        uint32_t size, checksum = -1;
-        uint8_t *buf = (uint8_t *)FileLoad(file, &size);
-        if(buf)
-        {
-            for(uint32_t i=0; i<size; i++)
-                checksum += buf[i];
-            free(buf);
-        }
-        size &= 0xff;
-        checksum &= 0xfff;
-        if(!stricmp(ext, ".elf")) sprintf(item.id, "E%02X%03X", size, checksum);
-        else if(!stricmp(ext, ".dol")) sprintf(item.id, "D%02X%03X", size, checksum);
-        else
-/*/
         item->id = L"-";
-        item->title = name;
-        //_tcscpy_s (item->id, _countof(item->id) - 1, _T("-"));
-        //_tcscpy_s (item->title, _countof(item->title) - 1, name);
+        item->title = filename;
         item->comment[0] = 0;
+
+        item->id.resize(16);
+        item->title.resize(MAX_TITLE);
+        item->comment.reserve(MAX_COMMENT);
     }
     else
     {
@@ -663,7 +630,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     if(selected)
     {
-        SetStatusText(STATUS_ENUM::Progress, file->name.c_str());
+        SetStatusText(STATUS_ENUM::Progress, file->name);
     }
 
     // fill background
@@ -702,20 +669,21 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        TCHAR text[0x1000] = { 0, };
-        UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
+        auto text = std::wstring(0x1000, 0);
+        uint32_t fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
+        
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
 
-        if(lvcw.fmt & LVCFMT_RIGHT)       fmt |= DT_RIGHT;
-        else if(lvcw.fmt & LVCFMT_CENTER) fmt |= DT_CENTER;
-        else                              fmt |= DT_LEFT;
+        if (lvcw.fmt & LVCFMT_RIGHT)       fmt |= DT_RIGHT;
+        else if (lvcw.fmt & LVCFMT_CENTER) fmt |= DT_CENTER;
+        else                               fmt |= DT_LEFT;
 
         rc.left  = rc.right;
         rc.right+= lvc.cx;
 
-        ListView_GetItemText(usel.hSelectorWindow, ID, col, text, _countof(text) - 1);
-        size_t len = _tcslen(text);
+        int s = text.length();
+        ListView_GetItemText(usel.hSelectorWindow, ID, col, text.data(), text.length() - 1);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
@@ -732,10 +700,14 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
             (col == 1 || col == 4))     // title or comment only
         {
             uint16_t *buf; size_t size, chars;
-            buf = SjisToUnicode(text, &size, &chars);
+            buf = SjisToUnicode(text.data(), &size, &chars);
             DrawTextW(DC, (wchar_t *)buf, (int)chars, &rc2, fmt);
             free(buf);
-        } else DrawText(DC, text, (int)len, &rc2, fmt);
+        } 
+        else
+        {
+            DrawText(DC, text.data(), text.length(), &rc2, fmt);
+        }
     }
 
     #undef ID
@@ -745,31 +717,28 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    TCHAR search[2 * MAX_PATH];
-    const TCHAR *mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso"), NULL };
-    TCHAR found[2 * MAX_PATH];
-    SELECTOR_FILE  type[] = { SELECTOR_FILE::Executable, SELECTOR_FILE::Executable, SELECTOR_FILE::Dvd, SELECTOR_FILE::Dvd };
-    WIN32_FIND_DATA fd = { 0 };
-    HANDLE hfff;
-    int dir = 0;
+    std::vector<std::pair<std::wstring, SELECTOR_FILE>> file_ext =
+    {
+        { L".dol", SELECTOR_FILE::Executable },
+        { L".elf", SELECTOR_FILE::Executable },
+        { L".gcm", SELECTOR_FILE::Dvd        },
+        { L".iso", SELECTOR_FILE::Dvd        }
+    };
 
-    // opened ?
-    if(!usel.opened) return;
-
-    if (usel.updateInProgress)
+    /* Opened? */
+    if (!usel.opened || usel.updateInProgress)
+    {
         return;
+    }
 
     usel.updateInProgress = true;
 
-    // destroy old filelist and path data
+    /* Destroy old filelist and path data */
     ListView_DeleteAllItems(usel.hSelectorWindow);
     usel.filesLock.Lock();
-    while (!usel.files.empty())
-    {
-        UserFile* file = usel.files.back().get();
-        usel.files.pop_back();
-        delete file;
-    }
+    
+    usel.files.clear();
+
     usel.filesLock.Unlock();
     ImageList_Remove(bannerList, -1);
 
@@ -781,49 +750,43 @@ void UpdateSelector()
     usel.filter = GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
-    while(dir < usel.paths.size())
+    for (auto& dir : usel.paths)
     {
-        int m = 0;
-        uint32_t filter = _byteswap_ulong(usel.filter);
+        auto filter = _byteswap_ulong(usel.filter);
 
-        while(mask[m])
+        /* Search the directory. */
+        for (const auto& path : std::filesystem::directory_iterator(dir))
         {
-            uint8_t allow = (uint8_t)filter;
-            filter >>= 8;
-            if(!allow) { m++; continue; }
+            if (!path.path().has_extension())
+                continue;
 
-            _stprintf_s(search, _countof(search), _T("%s%s"), usel.paths[dir].data(), mask[m]);
-
-            memset(&fd, 0, sizeof(fd));
-
-            hfff = FindFirstFile(search, &fd);
-            if(hfff != INVALID_HANDLE_VALUE)
+            auto extension = path.path().extension();
+            auto itr = std::find_if(file_ext.begin(), file_ext.end(), [&](const auto& ext)
             {
-                do
-                {
-                    if((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
-                    {
-                        _stprintf_s(found, _countof(found), _T("%s%s"), usel.paths[dir].data(), fd.cFileName);
-                        // Add file in list
-                        add_file(found, fd.nFileSizeLow, type[m]);
-                    }
-                }
-                while(FindNextFile(hfff, &fd));
+                uint8_t allow = filter & 0xff;
+                filter >>= 8;
+
+                /* Locate the file if it has a good extension */
+                /* and if it is allowed by filter. */
+                return (allow > 0) && (ext.first == extension);
+            });
+
+            /* Recover filter. */
+            filter = _byteswap_ulong(usel.filter);
+
+            /* Find found! */
+            if (itr != file_ext.end())
+            {
+                auto found = path.path().wstring();
+                add_file(found, UI::FileSize(found), itr->second);
             }
-            FindClose(hfff);
-
-            // next mask
-            m++;
-        }
-
-        // next directory
-        dir++;
+        }        
     }
 
-    // update selector window
+    /* Update selector window */
     UpdateWindow(usel.hSelectorWindow);
 
-    // re-sort (we need to save old value, to avoid swap of filelist)
+    /* Re-sort (we need to save old value, to avoid swap of filelist) */
     SELECTOR_SORT oldSort = usel.sortBy;
     usel.sortBy = SELECTOR_SORT::Unsorted;
     SortSelector(oldSort);
@@ -870,31 +833,33 @@ static void getdispinfo(LPNMHDR pnmh)
         return;
 
     UserFile    *file = usel.files[lpdi->item.lParam].get();
-    TCHAR* tcharStr = nullptr;
+    auto tcharStr = std::wstring();
 
     switch (lpdi->item.iSubItem)
     {
         case 0:
-            tcharStr = (TCHAR *)_T(" ");
+            tcharStr = L" ";
             break;
-        case 1:         // Title
-            tcharStr = file->title.data();
+        case 1:         /* Title */
+            tcharStr = file->title;
             break;
-        case 2:         // Length
+        case 2:         /* Length */
             tcharStr = UI::FileSmartSize(file->size);
             break;
-        case 3:         // ID
-            tcharStr = file->id.data();
+        case 3:         /* ID */
+            tcharStr = file->id;
             break;
-        case 4:         // Comment
-            tcharStr = file->comment.data();
+        case 4:         /* Comment */
+            tcharStr = file->comment;
+            break;
+        default:
             break;
     }
-
-    if (tcharStr)
+    
+    if (tcharStr.empty())
     {
         wchar_t* widePtr = lpdi->item.pszText;
-        TCHAR* tcharPtr = tcharStr;
+        TCHAR* tcharPtr = tcharStr.data();
 
         while (*tcharPtr)
         {

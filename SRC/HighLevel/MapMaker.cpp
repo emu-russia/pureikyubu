@@ -83,8 +83,10 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
  */
 static void MAPOpen ()
 {
-    size_t size = 0;
-    Map_buffer = (uint8_t *)UI::FileLoad(MAPDAT_FILE, &size);
+    auto buffer = UI::FileLoad(MAPDAT_FILE);
+    auto size = buffer.size();
+    
+    Map_buffer = buffer.data();
     if (Map_buffer == NULL) return;
     Map_functionsSize = *(uint32_t *)(Map_buffer);
     Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));

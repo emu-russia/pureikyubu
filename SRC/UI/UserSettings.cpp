@@ -187,14 +187,12 @@ void ResetAllSettings()
     // Danger zone
 }
 
-// make sure path have ending '\\'
-static void fix_path(TCHAR *path)
+/* Make sure path have ending '\\' */
+static void fix_path(std::wstring& path)
 {
-    size_t n = _tcslen(path);
-    if(path[n-1] != _T('\\'))
+    if (!path.ends_with(L'\\'))
     {
-        path[n]   = _T('\\');
-        path[n+1] = 0;
+        path.push_back(L'\\');
     }
 }
 
@@ -249,122 +247,147 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
     return FALSE;
 }
 
-// ---------------------------------------------------------------------------
-// UserMenu
+/* ---------------------------------------------------------------------------  */
+/* UserMenu                                                                     */
 
 static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     int i;
     int curSel, max;
-    TCHAR * path, text[1024];
+    std::wstring path, text(1024, 0);
 
     switch(message)
     {
         case WM_INITDIALOG:
             hChildDlg[1] = hDlg;
             LoadSettings(1);
-            return TRUE;
+            return true;
 
         case WM_COMMAND:
             switch(wParam)
             {
                 case IDC_FILEFILTER:
+                {
                     EditFileFilter(hDlg);
                     break;
+                }
                 case IDC_ADDPATH:
-                    if((path = UI::FileOpen(hDlg, UI::FileType::Directory)) != nullptr)
+                {
+                    if (path = UI::FileOpen(UI::FileType::Directory); !path.empty()) /* C++ 17 */
                     {
                         fix_path(path);
 
-                        // check if already present
+                        /* Check if already present. */
                         max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
-                        for(i=0; i<max; i++)
+                        for (i = 0; i < max; i++)
                         {
-                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
-                            if(!_tcsicmp(path, text)) break;
+                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
+                            if (path == text) break;
                         }
 
-                        // add new path
-                        if(i == max)
+                        /* Add new path. */
+                        if (i == max)
                         {
-                            SendDlgItemMessage( hDlg, IDC_PATHLIST, LB_ADDSTRING,
-                                                0, (LPARAM)path );
+                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
                             needSelUpdate = TRUE;
                         }
                     }
+
                     break;
+                }
                 case IDC_KILLPATH:
+                {
                     curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
                     SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
                     needSelUpdate = TRUE;
+                    
                     break;
+                }
             }
+
             break;
  
         case WM_NOTIFY:
-            if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
+        {
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
             break;
+        }
     }
+
     return FALSE;
 }
 
-// ---------------------------------------------------------------------------
-// GCN Hardware
+/* ---------------------------------------------------------------------------  */
+/* GCN Hardware                                                                 */
 
 static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR * file = nullptr;
-
+    auto file = std::wstring();
     switch(message)
     {
         case WM_INITDIALOG:
+        {
             hChildDlg[2] = hDlg;
             LoadSettings(2);
-            return TRUE;
-
+            return true;
+        }
         case WM_NOTIFY:
-            if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
+        {
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
             break;
-
+        }
         case WM_COMMAND:
+        {
             switch (wParam)
             {
                 case IDC_CHOOSE_BOOTROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, _T(""));
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
                     }
+
                     break;
+                }
                 case IDC_CHOOSE_DSPDROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, _T(""));
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
                     }
+
                     break;
+                }
                 case IDC_CHOOSE_DSPIROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
                     }
                     else
                     {
                         SetDlgItemText(hDlg, IDC_DSPIROM_FILE, _T(""));
                     }
+
                     break;
+                }
             }
+
             break;
+        }
     }
+
     return FALSE;
 }
 

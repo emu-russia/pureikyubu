@@ -101,18 +101,19 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
 {
     int i;
-    size_t size = UI::FileSize(mapname);
-
-    char* mapbuf = (char *)UI::FileLoad(mapname);
-    assert(mapbuf);
+    auto mapbuf = UI::FileLoad(mapname);
 
     // remove all garbage, like tabs
-    for(i=0; i<size; i++)
+    for(i = 0; i < mapbuf.size(); i++)
     {
-        if(mapbuf[i] < ' ') mapbuf[i] = '\n';
+        char c = mapbuf[i];
+        if (c < ' ') 
+        { 
+            c = '\n'; 
+        }
     }
 
-    char *ptr = mapbuf;
+    char *ptr = (char*)mapbuf.data();
     while(*ptr)
     {
         // some maps has really *huge* symbols
@@ -155,7 +156,6 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
         while(*name <= ' ') name++;
         SYMAddNew(addr, name);
     }
-    free(mapbuf);
 
     DBReport2(DbgChannel::HLE, "RAW format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::RAW;

@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include <sys/stat.h>
+#include "../Common/String.h"
 
 /************************** Commands ***************************************/ 
 
@@ -610,11 +611,11 @@ bool MCConnect (int cardnum) {
 
             // TODO: redirect user to memcard configure dialog ?
             UI::DolwinReport(
-                _T("Couldnt open memcard (slot %c),\n")
-                _T("location : %s\n\n")
-                _T("Check path or file attributes."),
+                L"Couldnt open memcard (slot %c),\n"
+                L"location : %s\n\n"
+                L"Check path or file attributes.",
                 slt[cardnum],
-                UI::FileShortName(memcard[cardnum].filename)
+                wstr_to_str(UI::FileShortName(memcard[cardnum].filename)).c_str()
             );
             return FALSE;
         }

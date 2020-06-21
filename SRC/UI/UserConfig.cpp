@@ -26,16 +26,14 @@ static void LoadSettings()
 		return;
 
 	// Load default settings
-
 	assert(UI::FileExists(DOLWIN_DEFAULT_SETTINGS));
 
-	size_t jsonTextSize = 0;
-	uint8_t* jsonText = (uint8_t *)UI::FileLoad(DOLWIN_DEFAULT_SETTINGS, &jsonTextSize);
-	assert(jsonText);
+	auto jsonText = UI::FileLoad(DOLWIN_DEFAULT_SETTINGS);
+	assert(!jsonText.empty());
 
 	try
 	{
-		defaultSettings.Deserialize(jsonText, jsonTextSize);
+		defaultSettings.Deserialize(jsonText.data(), jsonText.size());
 	}
 	catch (...)
 	{
@@ -43,30 +41,25 @@ static void LoadSettings()
 		return;
 	}
 
-	free(jsonText);
-
-	// Merge with current settings
-
+	/* Merge with current settings. */
 	settings.Clone(&defaultSettings);
 
 	if (UI::FileExists(DOLWIN_SETTINGS))
 	{
-		jsonText = (uint8_t*)UI::FileLoad(DOLWIN_SETTINGS, &jsonTextSize);
-		assert(jsonText);
+		jsonText = UI::FileLoad(DOLWIN_SETTINGS);
+		assert(!jsonText.empty());
 
 		Json currentSettings;
 
 		try
 		{
-			currentSettings.Deserialize(jsonText, jsonTextSize);
+			currentSettings.Deserialize(jsonText.data(), jsonText.size());
 		}
 		catch (...)
 		{
 			UI::DolwinReport(_T("Current settings cannot be deserialized. Check json syntax. Falling back to defaults."));
 			return;
 		}
-
-		free(jsonText);
 
 		settings.Merge(&currentSettings);
 	}
@@ -80,10 +73,9 @@ static void SaveSettings()
 	size_t textSize = 0;
 
 	// Calculate Json size
-
 	if (!SettingsLoaded)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings must be loaded first!"));
+		UI::DolwinError(L"Critical Error", L"Settings must be loaded first!");
 		return;
 	}
 
@@ -93,26 +85,23 @@ static void SaveSettings()
 	}
 	catch (...)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings cannot be saved!"));
+		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
 		return;
 	}
 
-	// Serialize and save current settings
-
-	uint8_t* text = new uint8_t[2 * textSize];
-	assert(text);
-
+	/* Serialize and save current settings. */
+	std::vector<uint8_t> text(2 * textSize, 0);
 	try
 	{
-		settings.Serialize(text, 2 * textSize, textSize);
+		settings.Serialize(text.data(), 2 * textSize, textSize);
 	}
 	catch (...)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings cannot be saved!"));
+		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
 		return;
 	}
 
-	UI::FileSave(DOLWIN_SETTINGS, text, textSize);
+	UI::FileSave(DOLWIN_SETTINGS, text);
 }
 
 

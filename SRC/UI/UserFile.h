@@ -1,8 +1,10 @@
-// Dolwin file utilities API
+/* Dolwin file utilities API. */
+#pragma once
+#include <vector>
+#include <string>
 
 namespace UI
 {
-
     enum class FileType
     {
         All = 1,
@@ -11,21 +13,22 @@ namespace UI
         Patch,
         Directory,
     };
-
-    // dont forget to :
-
-    bool FileExists(const TCHAR* filename);
+    
     size_t FileSize(std::wstring_view filename);
-    void* FileLoad(const TCHAR * filename, size_t* size = nullptr);           // free!
-    void* FileLoad(const char* filename, size_t* size = nullptr);
-    bool FileSave(const TCHAR * filename, void* data, size_t size);
-    bool FileSave(const char* filename, void* data, size_t size);
-    TCHAR* FileOpen(HWND hwnd, FileType type = FileType::All);        // copy away!
-    TCHAR* FileShortName(const TCHAR * filename, int lvl = 3);           // copy away!
-    TCHAR* FileSmartSize(size_t size);                            // copy away!
-    char* FileSmartSizeA(size_t size);                            // copy away!
+    bool FileExists(std::wstring_view filename);
 
-    void* FileLoad(std::wstring filename, size_t& size);           // delete []
-    bool FileSave(std::wstring filename, void* data, size_t size);
+    /* Open files with directory "filename" */
+    std::vector<uint8_t> FileLoad(std::string_view filename);
+    std::vector<uint8_t> FileLoad(std::wstring_view filename);
 
+    /* Write files to direct "filename" with data. */
+    bool FileSave(std::wstring_view filename, std::vector<uint8_t>& data);
+    bool FileSave(std::string_view filename, std::vector<uint8_t>& data);
+    
+    /* Open a file dialog. */
+    std::wstring FileOpen(FileType type = FileType::All);
+    
+    std::wstring FileShortName(std::wstring_view filename, int lvl = 3);
+    std::wstring FileSmartSize(size_t size);
+    std::string FileSmartSizeA(size_t size);
 };

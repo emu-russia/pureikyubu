@@ -1,7 +1,7 @@
-// Emulator controls
+/* Emulator controls */
 #include "pch.h"
 
-// emulator state
+/* Emulator state */
 Emulator emu;
 
 void EMUGetHwConfig(HWConfig * config)
