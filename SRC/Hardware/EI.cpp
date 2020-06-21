@@ -547,34 +547,34 @@ static void write_csr(int chan, uint32_t data)
     EXIUpdateInterrupts();
 }
 
-static void __fastcall exi0_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].csr; }
-static void __fastcall exi1_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].csr; }
-static void __fastcall exi2_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].csr; }
-static void __fastcall exi0_write_csr(uint32_t addr, uint32_t data) { write_csr(0, data); }
-static void __fastcall exi1_write_csr(uint32_t addr, uint32_t data) { write_csr(1, data); }
-static void __fastcall exi2_write_csr(uint32_t addr, uint32_t data) { write_csr(2, data); }
+static void exi0_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].csr; }
+static void exi1_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].csr; }
+static void exi2_read_csr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].csr; }
+static void exi0_write_csr(uint32_t addr, uint32_t data) { write_csr(0, data); }
+static void exi1_write_csr(uint32_t addr, uint32_t data) { write_csr(1, data); }
+static void exi2_write_csr(uint32_t addr, uint32_t data) { write_csr(2, data); }
 
 //
 // memory address for EXI DMA
 //
 
-static void __fastcall exi0_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].madr; }
-static void __fastcall exi1_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].madr; }
-static void __fastcall exi2_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].madr; }
-static void __fastcall exi0_write_madr(uint32_t addr, uint32_t data) { exi.regs[0].madr = data; }
-static void __fastcall exi1_write_madr(uint32_t addr, uint32_t data) { exi.regs[1].madr = data; }
-static void __fastcall exi2_write_madr(uint32_t addr, uint32_t data) { exi.regs[2].madr = data; }
+static void exi0_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].madr; }
+static void exi1_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].madr; }
+static void exi2_read_madr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].madr; }
+static void exi0_write_madr(uint32_t addr, uint32_t data) { exi.regs[0].madr = data; }
+static void exi1_write_madr(uint32_t addr, uint32_t data) { exi.regs[1].madr = data; }
+static void exi2_write_madr(uint32_t addr, uint32_t data) { exi.regs[2].madr = data; }
 
 //
 // data length for DMA
 //
 
-static void __fastcall exi0_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].len; }
-static void __fastcall exi1_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].len; }
-static void __fastcall exi2_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].len; }
-static void __fastcall exi0_write_len(uint32_t addr, uint32_t data) { exi.regs[0].len = data; }
-static void __fastcall exi1_write_len(uint32_t addr, uint32_t data) { exi.regs[1].len = data; }
-static void __fastcall exi2_write_len(uint32_t addr, uint32_t data) { exi.regs[2].len = data; }
+static void exi0_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].len; }
+static void exi1_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].len; }
+static void exi2_read_len(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].len; }
+static void exi0_write_len(uint32_t addr, uint32_t data) { exi.regs[0].len = data; }
+static void exi1_write_len(uint32_t addr, uint32_t data) { exi.regs[1].len = data; }
+static void exi2_write_len(uint32_t addr, uint32_t data) { exi.regs[2].len = data; }
 
 //
 // EXI control 
@@ -605,23 +605,23 @@ static void exi_write_cr(int chan, uint32_t data)
     }
 }
 
-static void __fastcall exi0_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].cr; }
-static void __fastcall exi1_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].cr; }
-static void __fastcall exi2_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].cr; }
-static void __fastcall exi0_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(0, data); }
-static void __fastcall exi1_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(1, data); }
-static void __fastcall exi2_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(2, data); }
+static void exi0_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].cr; }
+static void exi1_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].cr; }
+static void exi2_read_cr(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].cr; }
+static void exi0_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(0, data); }
+static void exi1_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(1, data); }
+static void exi2_write_cr(uint32_t addr, uint32_t data) { exi_write_cr(2, data); }
 
 //
 // EXI immediate data
 //
 
-static void __fastcall exi0_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].data; }
-static void __fastcall exi1_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].data; }
-static void __fastcall exi2_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].data; }
-static void __fastcall exi0_write_data(uint32_t addr, uint32_t data) { exi.regs[0].data = data; }
-static void __fastcall exi1_write_data(uint32_t addr, uint32_t data) { exi.regs[1].data = data; }
-static void __fastcall exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[2].data = data; }
+static void exi0_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[0].data; }
+static void exi1_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[1].data; }
+static void exi2_read_data(uint32_t addr, uint32_t *reg)  { *reg = exi.regs[2].data; }
+static void exi0_write_data(uint32_t addr, uint32_t data) { exi.regs[0].data = data; }
+static void exi1_write_data(uint32_t addr, uint32_t data) { exi.regs[1].data = data; }
+static void exi2_write_data(uint32_t addr, uint32_t data) { exi.regs[2].data = data; }
 
 // ---------------------------------------------------------------------------
 // init

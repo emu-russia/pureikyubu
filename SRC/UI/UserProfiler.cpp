@@ -22,7 +22,7 @@ static  DWORD       checkTime;
 
 // precede timer utility
 
-static void __fastcall MyReadTimeStampCounter(int64_t *ptr)
+static void MyReadTimeStampCounter(int64_t *ptr)
 {
     *ptr = __rdtsc();
 }

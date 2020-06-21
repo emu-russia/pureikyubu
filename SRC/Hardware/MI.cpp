@@ -13,12 +13,12 @@ void(__fastcall* hw_read32[0x10000])(uint32_t, uint32_t*);
 void(__fastcall* hw_write32[0x10000])(uint32_t, uint32_t);
 
 // stubs for MI registers
-static void __fastcall no_write(uint32_t addr, uint32_t data) {}
-static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
+static void no_write(uint32_t addr, uint32_t data) {}
+static void no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 MIControl mi;
 
-void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
+void MIReadByte(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -68,7 +68,7 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
     }
 }
 
-void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
+void MIWriteByte(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -104,7 +104,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
     }
 }
 
-void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
+void MIReadHalf(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -154,7 +154,7 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
     }
 }
 
-void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
+void MIWriteHalf(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -190,7 +190,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
     }
 }
 
-void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
+void MIReadWord(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -239,7 +239,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
     *reg = 0;
 }
 
-void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
+void MIWriteWord(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -280,7 +280,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 // (because all regs are generally integers)
 //
 
-void __fastcall MIReadDouble(uint32_t pa, uint64_t* reg)
+void MIReadDouble(uint32_t pa, uint64_t* reg)
 {
     if (pa >= BOOTROM_START_ADDRESS)
     {
@@ -299,7 +299,7 @@ void __fastcall MIReadDouble(uint32_t pa, uint64_t* reg)
     *reg = _byteswap_uint64(*(uint64_t*)buf);
 }
 
-void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
+void MIWriteDouble(uint32_t pa, uint64_t* data)
 {
     if (pa >= BOOTROM_START_ADDRESS)
     {
@@ -317,7 +317,7 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
     *(uint64_t*)buf = _byteswap_uint64 (*data);
 }
 
-void __fastcall MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
+void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
     if ((phys_addr + 32) > RAMSIZE)
         return;
@@ -325,7 +325,7 @@ void __fastcall MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
     memcpy(burstData, &mi.ram[phys_addr], 32);
 }
 
-void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
+void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
     if (phys_addr == GX_FIFO)
     {
@@ -343,32 +343,32 @@ void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 // default hardware R/W operations.
 // emulation is halted on unknown register access.
 
-static void __fastcall def_hw_read8(uint32_t addr, uint32_t* reg)
+static void def_hw_read8(uint32_t addr, uint32_t* reg)
 {
     DBHalt("MI: Unhandled HW access:  R8 %08X", addr);
 }
 
-static void __fastcall def_hw_write8(uint32_t addr, uint32_t data)
+static void def_hw_write8(uint32_t addr, uint32_t data)
 {
     DBHalt("MI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
 }
 
-static void __fastcall def_hw_read16(uint32_t addr, uint32_t* reg)
+static void def_hw_read16(uint32_t addr, uint32_t* reg)
 {
     DBHalt("MI: Unhandled HW access: R16 %08X", addr);
 }
 
-static void __fastcall def_hw_write16(uint32_t addr, uint32_t data)
+static void def_hw_write16(uint32_t addr, uint32_t data)
 {
     DBHalt("MI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
 }
 
-static void __fastcall def_hw_read32(uint32_t addr, uint32_t* reg)
+static void def_hw_read32(uint32_t addr, uint32_t* reg)
 {
     DBHalt("MI: Unhandled HW access: R32 %08X", addr);
 }
 
-static void __fastcall def_hw_write32(uint32_t addr, uint32_t data)
+static void def_hw_write32(uint32_t addr, uint32_t data)
 {
     DBHalt("MI: Unhandled HW access: W32 %08X = %08X", addr, data);
 }
