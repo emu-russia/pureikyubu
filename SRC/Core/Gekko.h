@@ -180,15 +180,15 @@ namespace Gekko
 #pragma region "Memory interface"
 
         // Centralized hub for access to the data bus (memory) from CPU side.
-        void ReadByte(uint32_t addr, uint32_t* reg);
-        void WriteByte(uint32_t addr, uint32_t data);
-        void ReadHalf(uint32_t addr, uint32_t* reg);
-        void ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
-        void WriteHalf(uint32_t addr, uint32_t data);
-        void ReadWord(uint32_t addr, uint32_t* reg);
-        void WriteWord(uint32_t addr, uint32_t data);
-        void ReadDouble(uint32_t addr, uint64_t* reg);
-        void WriteDouble(uint32_t addr, uint64_t* data);
+        void __fastcall ReadByte(uint32_t addr, uint32_t* reg);
+        void __fastcall WriteByte(uint32_t addr, uint32_t data);
+        void __fastcall ReadHalf(uint32_t addr, uint32_t* reg);
+        void __fastcall ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
+        void __fastcall WriteHalf(uint32_t addr, uint32_t data);
+        void __fastcall ReadWord(uint32_t addr, uint32_t* reg);
+        void __fastcall WriteWord(uint32_t addr, uint32_t data);
+        void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
+        void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
 
         // Translate address by Mmu
         uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int & WIMG);
