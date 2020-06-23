@@ -14,7 +14,7 @@ UserWindow wnd;
 Debug::DspDebug* dspDebug;
 
 /* ---------------------------------------------------------------------------  */
-/* statusbar                                                                    */
+/* Statusbar                                                                    */
 
 /* Set default values of statusbar parts */
 static void ResetStatusBar()
@@ -149,7 +149,7 @@ static void SetRecentEntry(int index, TCHAR *str)
     SetConfigString(var, str, USER_UI);
 }
 
-static TCHAR *GetRecentEntry(int index)
+static TCHAR* GetRecentEntry(int index)
 {
     char var[256];
     sprintf_s (var, sizeof(var), USER_RECENT, index);
@@ -554,391 +554,393 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         }
         
         /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-        /* window controls                                                              */
+        /* Window controls                                                              */
 
         case WM_COMMAND:
+        {
             /* Load recent file */
-            if(LOWORD(wParam) >= ID_FILE_RECENT_1 &&
-               LOWORD(wParam) <= ID_FILE_RECENT_5)
+            if (LOWORD(wParam) >= ID_FILE_RECENT_1 &&
+                LOWORD(wParam) <= ID_FILE_RECENT_5)
             {
                 LoadRecentFile(LOWORD(wParam) - ID_FILE_RECENT_1 + 1);
                 EMUClose();
                 EMUOpen();
             }
-            else switch(LOWORD(wParam))
+            else switch (LOWORD(wParam))
             {
                 /* Load DVD/executable (START) */
-                case ID_FILE_LOAD:
+            case ID_FILE_LOAD:
+            {
+                if (name = UI::FileOpen(); !name.empty())
                 {
-                    if (name = UI::FileOpen(); !name.empty())
-                    {
-                    loadFile:
-                        LoadFile(name.c_str());
-                        EMUClose();
-                        EMUOpen();
-                    }
-
-                    return 0;
-                }
-                /* Reload last opened file (RESET) */
-                case ID_FILE_RELOAD:
-                {
-                    recent = GetConfigInt(USER_RECENT_NUM, USER_UI);
-                    if (recent > 0)
-                    {
-                        LoadRecentFile(1);
-                        EMUClose();
-                        EMUOpen();
-                    }
-
-                    return 0;
-                }
-                /* Unload file (STOP) */
-                case ID_FILE_UNLOAD:
-                {
-                    EMUClose();
-
-                    return 0;
-                }
-                /* Load bootrom */
-                case ID_FILE_IPLMENU:
-                {
-                    LoadFile(L"Bootrom");
+                loadFile:
+                    LoadFile(name.c_str());
                     EMUClose();
                     EMUOpen();
-
-                    return 0;
                 }
-                /* Open/close DVD lid */
-                case ID_FILE_COVER:
+
+                return 0;
+            }
+            /* Reload last opened file (RESET) */
+            case ID_FILE_RELOAD:
+            {
+                recent = GetConfigInt(USER_RECENT_NUM, USER_UI);
+                if (recent > 0)
                 {
-                    if (DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)   /* Close lid */
+                    LoadRecentFile(1);
+                    EMUClose();
+                    EMUOpen();
+                }
+
+                return 0;
+            }
+            /* Unload file (STOP) */
+            case ID_FILE_UNLOAD:
+            {
+                EMUClose();
+
+                return 0;
+            }
+            /* Load bootrom */
+            case ID_FILE_IPLMENU:
+            {
+                LoadFile(L"Bootrom");
+                EMUClose();
+                EMUOpen();
+
+                return 0;
+            }
+            /* Open/close DVD lid */
+            case ID_FILE_COVER:
+            {
+                if (DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)   /* Close lid */
+                {
+                    DVD::DDU->CloseCover();
+                    ModifySwapControls(false);
+                }
+                else /* Open lid */
+                {
+                    DVD::DDU->OpenCover();
+                    ModifySwapControls(true);
+                }
+
+                return 0;
+            }
+            /* Set new current DVD image. */
+            case ID_FILE_CHANGEDVD:
+            {
+                if (name = UI::FileOpen(UI::FileType::Dvd); !name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
+                {
+                    /* Same */
+                    if (name == ldat.currentFile)
                     {
-                        DVD::DDU->CloseCover();
-                        ModifySwapControls(false);
+                        return 0;
                     }
-                    else /* Open lid */
+
+                    /* Bad */
+                    if (!DVD::MountFile(name))
                     {
-                        DVD::DDU->OpenCover();
-                        ModifySwapControls(true);
+                        return 0;
                     }
 
-                    return 0;
-                }
-                /* Set new current DVD image. */
-                case ID_FILE_CHANGEDVD:
-                {
-                    if (name = UI::FileOpen(UI::FileType::Dvd); !name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
-                    {
-                        /* Same */
-                        if (name == ldat.currentFile) 
-                        { 
-                            return 0; 
-                        }
-                        
-                        /* Bad */
-                        if (!DVD::MountFile(name))
-                        {
-                            return 0;
-                        }
-
-                        /* Close lid */
-                        DVD::DDU->CloseCover();
-                        ModifySwapControls(false);
-                    }
-
-                    return 0;
-                }
-                /* Exit to OS */
-                case ID_FILE_EXIT:
-                {
-                    DestroyWindow(hwnd);
-                    return 0;
-                }
-                /* Settings dialog */
-                case ID_OPTIONS_SETTINGS:
-                {
-                    OpenSettingsDialog(hwnd, GetModuleHandle(NULL));
-                    return 0;
-                }
-                /* Always on top */
-                case ID_OPTIONS_ALWAYSONTOP:
-                {
-                    wnd.ontop = wnd.ontop ? false : true;
-                    SetConfigBool(USER_ONTOP, wnd.ontop, USER_UI);
-                    
-                    auto flags = (wnd.ontop ? MF_BYCOMMAND | MF_CHECKED : MF_BYCOMMAND | MF_UNCHECKED);
-                    CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, flags);
-
-                    SetAlwaysOnTop(hwnd, wnd.ontop);
-                    return 0;
-                }
-                /* Refresh view */
-                case ID_FILE_REFRESH:
-                {
-                    UpdateSelector();
-                    return 0;
-                }
-                /* Disable the view */
-                case ID_OPTIONS_VIEW_DISABLE:
-                {
-                    if (usel.active)
-                    {
-                        CloseSelector();
-                        ResetStatusBar();
-                        ModifySelectorControls(false);
-                        usel.active = false;
-                        SetConfigBool(USER_SELECTOR, false, USER_UI);
-                    }
-                    else
-                    {
-                        ModifySelectorControls(true);
-                        usel.active = true;
-                        SetConfigBool(USER_SELECTOR, true, USER_UI);
-                        CreateSelector();
-                    }
-
-                    return 0;
-                }
-                /* Change icon size */
-                case ID_OPTIONS_VIEW_SMALLICONS:
-                {
-                    CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_UNCHECKED);
-                    CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_CHECKED);
-                    SetSelectorIconSize(TRUE);
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_LARGEICONS:
-                {
-                    CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_UNCHECKED);
-                    CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
-                    SetSelectorIconSize(FALSE);
-                    return 0;
-                }
-                /* Sort files */
-                case ID_OPTIONS_VIEW_SORTBY_1:
-                {
-                    SortSelector(SELECTOR_SORT::Default);
-                    SelectSort();
-
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_2:
-                {
-                    SortSelector(SELECTOR_SORT::Filename);
-                    SelectSort();
-                    
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_3:
-                {
-                    SortSelector(SELECTOR_SORT::Title);
-                    SelectSort();
-                    
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_4:
-                {
-                    SortSelector(SELECTOR_SORT::Size);
-                    SelectSort();
-                    
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_5:
-                {
-                    SortSelector(SELECTOR_SORT::ID);
-                    SelectSort();
-                    
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_6:
-                {
-                    SortSelector(SELECTOR_SORT::Comment);
-                    SelectSort();
-                    
-                    return 0;
-                }
-                case ID_OPTIONS_VIEW_SORTBY_7:
-                {
-                    SortSelector(SELECTOR_SORT::Unsorted);
-                    SelectSort();
-                    
-                    return 0;
+                    /* Close lid */
+                    DVD::DDU->CloseCover();
+                    ModifySwapControls(false);
                 }
 
-                /* Edit file filter */
-                case ID_OPTIONS_VIEW_FILEFILTER:
+                return 0;
+            }
+            /* Exit to OS */
+            case ID_FILE_EXIT:
+            {
+                DestroyWindow(hwnd);
+                return 0;
+            }
+            /* Settings dialog */
+            case ID_OPTIONS_SETTINGS:
+            {
+                OpenSettingsDialog(hwnd, GetModuleHandle(NULL));
+                return 0;
+            }
+            /* Always on top */
+            case ID_OPTIONS_ALWAYSONTOP:
+            {
+                wnd.ontop = wnd.ontop ? false : true;
+                SetConfigBool(USER_ONTOP, wnd.ontop, USER_UI);
+
+                auto flags = (wnd.ontop ? MF_BYCOMMAND | MF_CHECKED : MF_BYCOMMAND | MF_UNCHECKED);
+                CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, flags);
+
+                SetAlwaysOnTop(hwnd, wnd.ontop);
+                return 0;
+            }
+            /* Refresh view */
+            case ID_FILE_REFRESH:
+            {
+                UpdateSelector();
+                return 0;
+            }
+            /* Disable the view */
+            case ID_OPTIONS_VIEW_DISABLE:
+            {
+                if (usel.active)
                 {
-                    EditFileFilter(hwnd);
-                    return 0;
+                    CloseSelector();
+                    ResetStatusBar();
+                    ModifySelectorControls(false);
+                    usel.active = false;
+                    SetConfigBool(USER_SELECTOR, false, USER_UI);
+                }
+                else
+                {
+                    ModifySelectorControls(true);
+                    usel.active = true;
+                    SetConfigBool(USER_SELECTOR, true, USER_UI);
+                    CreateSelector();
                 }
 
-        /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-        /* debug controls                                                               */
+                return 0;
+            }
+            /* Change icon size */
+            case ID_OPTIONS_VIEW_SMALLICONS:
+            {
+                CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_UNCHECKED);
+                CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_CHECKED);
+                SetSelectorIconSize(TRUE);
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_LARGEICONS:
+            {
+                CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SMALLICONS, MF_BYCOMMAND | MF_UNCHECKED);
+                CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_CHECKED);
+                SetSelectorIconSize(FALSE);
+                return 0;
+            }
+            /* Sort files */
+            case ID_OPTIONS_VIEW_SORTBY_1:
+            {
+                SortSelector(SELECTOR_SORT::Default);
+                SelectSort();
 
-                // multiple instancies on/off
-                case ID_RUN_ONCE:
-                {
-                    if (GetConfigBool(USER_RUNONCE, USER_UI))
-                    {   /* Off */
-                        CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
-                        SetConfigBool(USER_RUNONCE, false, USER_UI);
-                    }
-                    else
-                    {   /* On */
-                        CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
-                        SetConfigBool(USER_RUNONCE, true, USER_UI);
-                    }
-                    
-                    return 0;
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_2:
+            {
+                SortSelector(SELECTOR_SORT::Filename);
+                SelectSort();
+
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_3:
+            {
+                SortSelector(SELECTOR_SORT::Title);
+                SelectSort();
+
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_4:
+            {
+                SortSelector(SELECTOR_SORT::Size);
+                SelectSort();
+
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_5:
+            {
+                SortSelector(SELECTOR_SORT::ID);
+                SelectSort();
+
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_6:
+            {
+                SortSelector(SELECTOR_SORT::Comment);
+                SelectSort();
+
+                return 0;
+            }
+            case ID_OPTIONS_VIEW_SORTBY_7:
+            {
+                SortSelector(SELECTOR_SORT::Unsorted);
+                SelectSort();
+
+                return 0;
+            }
+
+            /* Edit file filter */
+            case ID_OPTIONS_VIEW_FILEFILTER:
+            {
+                EditFileFilter(hwnd);
+                return 0;
+            }
+
+            /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
+            /* debug controls                                                               */
+
+                    // multiple instancies on/off
+            case ID_RUN_ONCE:
+            {
+                if (GetConfigBool(USER_RUNONCE, USER_UI))
+                {   /* Off */
+                    CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
+                    SetConfigBool(USER_RUNONCE, false, USER_UI);
                 }
-                /* Enable patches */
-                case ID_ALLOW_PATCHES:
-                {
-                    if (GetConfigBool(USER_PATCH, USER_LOADER))
-                    {   /* Off */
-                        CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
-                        ldat.enablePatch = false;
-                    }
-                    else
-                    {   /* On */
-                        CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
-                        ldat.enablePatch = true;
-                    }
-                    SetConfigBool(USER_PATCH, ldat.enablePatch, USER_LOADER);
-                    return 0;
+                else
+                {   /* On */
+                    CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
+                    SetConfigBool(USER_RUNONCE, true, USER_UI);
                 }
-                /* Load patch data */
-                case ID_LOAD_PATCH:
-                {
-                    if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
-                    {
-                        UnloadPatch();
-                        LoadPatch(name.data(), false);
-                    }
 
-                    return 0;
+                return 0;
+            }
+            /* Enable patches */
+            case ID_ALLOW_PATCHES:
+            {
+                if (GetConfigBool(USER_PATCH, USER_LOADER))
+                {   /* Off */
+                    CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
+                    ldat.enablePatch = false;
                 }
-                /* Add new patch data */
-                case ID_ADD_PATCH:
-                {
-                    if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
-                    {
-                        LoadPatch(name.data(), true);
-                    }
-                    
-                    return 0;
+                else
+                {   /* On */
+                    CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
+                    ldat.enablePatch = true;
                 }
-                // open/close debugger
-                case ID_DEBUG_CONSOLE:
+                SetConfigBool(USER_PATCH, ldat.enablePatch, USER_LOADER);
+                return 0;
+            }
+            /* Load patch data */
+            case ID_LOAD_PATCH:
+            {
+                if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
+                {
+                    UnloadPatch();
+                    LoadPatch(name.data(), false);
+                }
 
-                    if (dspDebug)
-                    {
-                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-                        delete dspDebug;
-                        dspDebug = nullptr;
-                    }
+                return 0;
+            }
+            /* Add new patch data */
+            case ID_ADD_PATCH:
+            {
+                if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
+                {
+                    LoadPatch(name.data(), true);
+                }
 
-                    Sleep(100);
+                return 0;
+            }
+            // open/close debugger
+            case ID_DEBUG_CONSOLE:
+            {
+                if (dspDebug)
+                {
+                    CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
+                    delete dspDebug;
+                    dspDebug = nullptr;
+                }
 
-                    if(!emu.doldebug)
-                    {   // open
-                        CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-                        DBOpen();
-                        emu.doldebug = true;
-                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger opened"));
-                    }
-                    else
-                    {   // close
-                        CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-                        DBClose();
-                        emu.doldebug = false;
-                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
-                    }
-                    SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
-                    return 0;
+                Sleep(100);
 
+                if (!emu.doldebug)
+                {   // open
+                    CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
+                    DBOpen();
+                    emu.doldebug = true;
+                    SetStatusText(STATUS_ENUM::Progress, _T("Debugger opened"));
+                }
+                else
+                {   // close
+                    CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
+                    DBClose();
+                    emu.doldebug = false;
+                    SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
+                }
+                SetConfigBool(USER_DOLDEBUG, emu.doldebug, USER_UI);
+                return 0;
+            }
                 // Open/close DSP Debug
-                case ID_DSP_DEBUG:
-                    if (emu.doldebug)
-                    {
-                        CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-                        DBClose();
-                        emu.doldebug = false;
-                    }
-
-                    Sleep(100);
-
-                    if (dspDebug == nullptr)
-                    {
-                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
-                        dspDebug = new Debug::DspDebug("DSP Debug", 80, 60);
-                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger opened"));
-                    }
-                    else
-                    {
-                        CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-                        delete dspDebug;
-                        dspDebug = nullptr;
-                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger closed"));
-                    }
-                    return 0;
-
-                /* Mount Dolphin SDK as DVD */
-                case ID_DEVELOPMENT_MOUNTSDK:
+            case ID_DSP_DEBUG:
+            {
+                if (emu.doldebug)
                 {
-                    auto dolphinSdkDir = UI::FileOpen(UI::FileType::Directory);
-                    if (!dolphinSdkDir.empty())
+                    CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
+                    DBClose();
+                    emu.doldebug = false;
+                }
+
+                Sleep(100);
+
+                if (dspDebug == nullptr)
+                {
+                    CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
+                    dspDebug = new Debug::DspDebug("DSP Debug", 80, 60);
+                    SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger opened"));
+                }
+                else
+                {
+                    CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
+                    delete dspDebug;
+                    dspDebug = nullptr;
+                    SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger closed"));
+                }
+                return 0;
+            }
+                /* Mount Dolphin SDK as DVD */
+            case ID_DEVELOPMENT_MOUNTSDK:
+            {
+                auto dolphinSdkDir = UI::FileOpen(UI::FileType::Directory);
+                if (!dolphinSdkDir.empty())
+                {
+                    std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };
+                    Json::Value* output = Debug::Hub.Execute(cmd1);
+
+                    if (output != nullptr)
                     {
-                        std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };
-                        Json::Value* output = Debug::Hub.Execute(cmd1);
-                        
-                        if (output != nullptr)
-                        {
-                            delete output;
-                        }
+                        delete output;
                     }
                 }
 
                 return 0;
+            }
 
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-        // options dialogs
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+            // options dialogs
 
-                case ID_OPTIONS_CONTROLLERS_PORT1:
-                    PADConfigure(0, wnd.hMainWindow);
-                    return 0;
-                case ID_OPTIONS_CONTROLLERS_PORT2:
-                    PADConfigure(1, wnd.hMainWindow);
-                    return 0;
-                case ID_OPTIONS_CONTROLLERS_PORT3:
-                    PADConfigure(2, wnd.hMainWindow);
-                    return 0;
-                case ID_OPTIONS_CONTROLLERS_PORT4:
-                    PADConfigure(3, wnd.hMainWindow);
-                    return 0;
+            case ID_OPTIONS_CONTROLLERS_PORT1:
+                PADConfigure(0, wnd.hMainWindow);
+                return 0;
+            case ID_OPTIONS_CONTROLLERS_PORT2:
+                PADConfigure(1, wnd.hMainWindow);
+                return 0;
+            case ID_OPTIONS_CONTROLLERS_PORT3:
+                PADConfigure(2, wnd.hMainWindow);
+                return 0;
+            case ID_OPTIONS_CONTROLLERS_PORT4:
+                PADConfigure(3, wnd.hMainWindow);
+                return 0;
 
                 // configure memcard in slot A
-                case ID_OPTIONS_MEMCARDS_SLOTA:
-                    MemcardConfigure(0, hwnd);
-                    return 0;
+            case ID_OPTIONS_MEMCARDS_SLOTA:
+                MemcardConfigure(0, hwnd);
+                return 0;
 
                 // configure memcard in slot B
-                case ID_OPTIONS_MEMCARDS_SLOTB:
-                    MemcardConfigure(1, hwnd);
-                    return 0;
+            case ID_OPTIONS_MEMCARDS_SLOTB:
+                MemcardConfigure(1, hwnd);
+                return 0;
 
                 // configure fonts
-                case ID_OPTIONS_BOOTROMFONT:
-                    FontConfigure(hwnd);
-                    break;
+            case ID_OPTIONS_BOOTROMFONT:
+                FontConfigure(hwnd);
+                break;
 
-                case ID_HELP_ABOUT:
-                    AboutDialog(hwnd);
-                    return 0;
+            case ID_HELP_ABOUT:
+                AboutDialog(hwnd);
+                return 0;
             }
             break;
-
+        }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
         // file drag & drop operation
 

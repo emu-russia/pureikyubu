@@ -1,5 +1,6 @@
 // Dolwin settings dialog (to configure user variables)
 #include "pch.h"
+#include <array>
 
 // all user variables (except memory cards vars) are placed in UserConfig.h
 
@@ -119,32 +120,33 @@ static void SaveSettings()              // OK pressed
     int i;
     auto buf = std::wstring(0x1000, 0);
 
-    // Emulator
+    /* Emulator. */
     if (settingsLoaded[0])
     {
 
     }
 
-    // GUI/Selector
+    /* GUI/Selector. */
     if (settingsLoaded[1])
     {
         HWND hDlg = hChildDlg[1];
-
-        auto text = std::wstring(0x1000, 0);
         int max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+        static wchar_t text_buffer[1024];
 
-        // delete all dirs
+        /* Delete all directories. */
         usel.paths.clear();
-        SetConfigString(USER_PATH, (TCHAR *)_T(""), USER_UI);
+        SetConfigString(USER_PATH, L"", USER_UI);
 
-        // add dirs again
+        /* Add directories again. */
         for (i = 0; i < max; i++)
         {
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
-            AddSelectorPath(text);
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text_buffer);
+            
+            /* Add the path. */
+            AddSelectorPath(text_buffer);
         }
 
-        // update selector layout, if PATH has changed
+        /* Update selector layout, if PATH has changed */
         if(needSelUpdate)
         {
             UpdateSelector();
@@ -464,12 +466,13 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     settingsLoaded[2] = FALSE;
 
     // property sheet
+    auto title = fmt::format(L"Configure {:s}", APPNAME);
     psh.dwSize = sizeof(PROPSHEETHEADER);
     psh.dwFlags = PSH_USEHICON | /*PSH_PROPTITLE |*/ PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
     psh.hwndParent = hParentWnd;
     psh.hInstance = hParentInst;
     psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
-    psh.pszCaption = (L"Configure " + std::wstring(APPNAME)).c_str();
+    psh.pszCaption = title.data();
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
     psh.ppsp = (LPCPROPSHEETPAGE)&psp;

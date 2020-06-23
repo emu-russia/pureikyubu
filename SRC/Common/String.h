@@ -44,13 +44,13 @@ namespace Util
         inline static std::basic_string<_Out> convert(const std::wstring& str)
         {
             static std::wstring_convert<convert_type, wchar_t> converter;
-            return converter.to_bytes(str);
+            return std::move(converter.to_bytes(str));
         }
 
-        inline static std::basic_string_view<_Out> convert(std::wstring_view str)
+        inline static std::basic_string<_Out> convert(std::wstring_view str)
         {
             static std::wstring_convert<convert_type, wchar_t> converter;
-            return converter.to_bytes(str.data());
+            return std::move(converter.to_bytes(str.data()));
         }
     };
 
@@ -60,25 +60,25 @@ namespace Util
         inline static std::basic_string<_Out> convert(const std::string& str)
         {
             static std::wstring_convert<convert_type, wchar_t> converter;
-            return converter.from_bytes(str);
+            return std::move(converter.from_bytes(str));
         }
 
-        inline static std::basic_string_view<_Out> convert(std::string_view str)
+        inline static std::basic_string<_Out> convert(std::string_view str)
         {
             static std::wstring_convert<convert_type, wchar_t> converter;
-            return converter.from_bytes(str.data());
+            return std::move(converter.from_bytes(str.data()));
         }
     };
 
     template <typename _Out, typename _In>
     constexpr inline std::basic_string<_Out> convert(const std::basic_string<_In>& str)
     {
-        return string_convert_t<_Out, _In>::convert(str);
+        return std::move(string_convert_t<_Out, _In>::convert(str));
     }
 
     template <typename _Out, typename _In>
-    constexpr inline std::basic_string_view<_Out> convert(std::basic_string_view<_In> str)
+    constexpr inline std::basic_string<_Out> convert(std::basic_string_view<_In> str)
     {
-        return string_convert_t<_Out, _In>::convert(str);
+        return std::move(string_convert_t<_Out, _In>::convert(str));
     }
 }

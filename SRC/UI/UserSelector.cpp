@@ -1,31 +1,29 @@
-// file selector
+/* File selector. */
 #include "pch.h"
 #include "SjisTable.h"
 #include "../Common/String.h"
 #include <array>
 #include <fmt/printf.h>
 
-// all important data is placed here
+/* All important data is placed here */
 UserSelector usel;
 
-// list of banners
+/* List of banners. */
 static HIMAGELIST bannerList;
 
-// ---------------------------------------------------------------------------
-// PATH management
+/* ---------------------------------------------------------------------------  */
+/* PATH management                                                              */
 
-// make sure path have ending '\\'
+/* Make sure path have ending '\\' */
 static void fix_path(std::wstring& path)
 {
-    size_t n = path.length();
-    if(path[n - 1] != L'\\')
+    if (!path.ends_with(L'\\'))
     {
-        path[n]   = L'\\';
-        path[n + 1] = 0;
+        path.push_back(L'\\');
     }
 }
 
-// remove all control symbols (below space)
+/* Remove all control symbols (below space). */
 static void fix_string(std::wstring& str)
 {
     for(auto& c : str)
@@ -34,7 +32,7 @@ static void fix_string(std::wstring& str)
     }
 }
 
-// add new path into "paths" list
+/* Add new path into "paths" list. */
 static void add_path(std::wstring& path)
 {
     // check path size
@@ -45,21 +43,22 @@ static void add_path(std::wstring& path)
         return;
     }
 
-    auto copy = path;
-    usel.paths.push_back(copy);
+    usel.paths.push_back(path);
 }
 
 // load PATH user variable and cut it on pieces into "paths" list
 static void load_path()
 {
-    std::wstring var = GetConfigString(USER_PATH, USER_UI);
+    auto var = GetConfigString(USER_PATH, USER_UI);
     int n = 0;
 
     // delete current pathlist
     usel.paths.clear();
 
     // search new paths (separated by ';') until ending '\0'
-    std::wstring path;
+    auto path = std::wstring();
+    path.reserve(var.length());
+
     for (auto& c : var)
     {
         // add new one
@@ -68,9 +67,11 @@ static void load_path()
             fix_path(path);
             add_path(path);
             path.clear();
+            n++;
         }
         else
         {
+            n++;
             path.push_back(c);
         }
     }
@@ -83,39 +84,35 @@ static void load_path()
     }
 }
 
-// called after loading of new file (see Emulator\Loader.cpp)
-bool AddSelectorPath(std::wstring fullPath)
+/* Called after loading of new file (see Emulator\Loader.cpp). */
+bool AddSelectorPath(std::wstring_view fullPath)
 {
+    auto path = std::wstring(fullPath);
+
     if (fullPath.empty())
         return false;
 
-    fix_path(fullPath);
+    fix_path(path);
 
     bool exists = false;
     if (!usel.paths.empty())
     {
-        auto itr = std::find(usel.paths.begin(), usel.paths.end(), fullPath);
-        exists = itr != usel.paths.end();
+        auto itr = std::find(usel.paths.begin(), usel.paths.end(), path);
+        exists = (itr != usel.paths.end());
     }
 
     if (!exists)
     {
-        auto temp = std::wstring();
         auto old = GetConfigString(USER_PATH, USER_UI);
         
-        if (old.empty())
+        if (!old.empty())
         {
-            temp = fmt::format(L"{:s}", fullPath);
-            //_stprintf_s(temp, _countof(temp) - 1, _T("%s"), path);
-        }
-        else
-        {
-            temp = fmt::format(L"{:s};{:s}", old, fullPath);
-            //_stprintf_s(temp, _countof(temp) - 1, _T("%s;%s"), old, path);
+            path = fmt::format(L"{:s};{:s}", old, path);
         }
 
-        SetConfigString(USER_PATH, temp, USER_UI);
-        add_path(fullPath);
+        SetConfigString(USER_PATH, path, USER_UI);
+        add_path(path);
+
         return true;
     }
     else
@@ -124,8 +121,8 @@ bool AddSelectorPath(std::wstring fullPath)
     }
 }
 
-// ---------------------------------------------------------------------------
-// add new file (extend filelist, convert banner, put it into list)
+/* ---------------------------------------------------------------------------  */
+/* Add new file (extend filelist, convert banner, put it into list)             */
 
 #define PACKRGB555(r, g, b) (uint16_t)((((r)&0xf8)<<7)|(((g)&0xf8)<<2)|(((b)&0xf8)>>3))
 #define PACKRGB565(r, g, b) (uint16_t)((((r)&0xf8)<<8)|(((g)&0xfc)<<3)|(((b)&0xf8)>>3))
@@ -409,7 +406,7 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
         TCHAR diskID[0x10] = { 0 };
         DVD::MountFile(file);
         DVD::Seek(0);
-        DVD::Read(diskID, 4);
+        DVD::Read(diskIDRaw, 4);
         diskID[0] = diskIDRaw[0];
         diskID[1] = diskIDRaw[1];
         diskID[2] = diskIDRaw[2];
@@ -691,12 +688,12 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    static std::vector<std::pair<std::wstring, SELECTOR_FILE>> file_ext =
+    static std::vector<std::pair<std::string_view, SELECTOR_FILE>> file_ext =
     {
-        { L".dol", SELECTOR_FILE::Executable },
-        { L".elf", SELECTOR_FILE::Executable },
-        { L".gcm", SELECTOR_FILE::Dvd        },
-        { L".iso", SELECTOR_FILE::Dvd        }
+        { ".dol", SELECTOR_FILE::Executable },
+        { ".elf", SELECTOR_FILE::Executable },
+        { ".gcm", SELECTOR_FILE::Dvd        },
+        { ".iso", SELECTOR_FILE::Dvd        }
     };
 
     /* Opened? */
@@ -742,7 +739,7 @@ void UpdateSelector()
 
                 /* Locate the file if it has a good extension */
                 /* and if it is allowed by filter. */
-                return (allow > 0) && (ext.first == extension);
+                return (allow) && (ext.first == extension);
             });
 
             /* Recover filter. */
@@ -758,7 +755,8 @@ void UpdateSelector()
     }
 
     /* Update selector window */
-    UpdateWindow(usel.hSelectorWindow);
+    /* ?Disabling this fixes flashing issue. */
+    //UpdateWindow(usel.hSelectorWindow);
 
     /* Re-sort (we need to save old value, to avoid swap of filelist) */
     SELECTOR_SORT oldSort = usel.sortBy;
