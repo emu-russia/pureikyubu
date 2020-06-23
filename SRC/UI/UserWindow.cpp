@@ -153,7 +153,7 @@ static TCHAR* GetRecentEntry(int index)
 {
     char var[256];
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    return GetConfigString(var, USER_UI).data();
+    return (wchar_t*)GetConfigString(var, USER_UI).data();
 }
 
 void UpdateRecentMenu(HWND hwnd)
@@ -574,6 +574,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 if (name = UI::FileOpen(); !name.empty())
                 {
                 loadFile:
+                    
                     LoadFile(name.c_str());
                     EMUClose();
                     EMUOpen();
@@ -1023,7 +1024,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 HWND CreateMainWindow(HINSTANCE hInstance)
 {
     WNDCLASS wc = { 0 };
-    const TCHAR CLASS_NAME[] = _T("GAMECUBECLASS");
+    const TCHAR CLASS_NAME[] = L"GAMECUBECLASS";
 
     assert(wnd.hMainWindow == nullptr);
 
@@ -1081,7 +1082,7 @@ void SetAlwaysOnTop(HWND hwnd, BOOL state)
 // center the child window into the parent window
 void CenterChildWindow(HWND hParent, HWND hChild)
 {
-   if(IsWindow(hParent) && IsWindow(hChild))
+   if (IsWindow(hParent) && IsWindow(hChild))
    {
         RECT rp, rc;
 

@@ -7,6 +7,7 @@
 #include "pch.h"
 #include "../Common/String.h"
 #include <fmt/format.h>
+#include <fmt/printf.h>
 /* All loader variables are placed here */
 LoaderData ldat;
 
@@ -666,7 +667,7 @@ static bool SetGameIDAndTitle(std::wstring_view filename)
     }
 
     /* Set GameID. */
-    ldat.gameID = fmt::format(L"%.4s%02X", diskIdTchar, DVDBannerChecksum(bnr));
+    ldat.gameID = fmt::sprintf(L"%.4s%02X", diskIdTchar, DVDBannerChecksum(bnr));
     return true;
 }
 

@@ -107,7 +107,7 @@ static void SaveSettings()
 
 #pragma region "Legacy Dolwin config API"
 
-std::wstring GetConfigString(std::string_view var, std::string_view path)
+std::wstring_view GetConfigString(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
@@ -126,7 +126,7 @@ std::wstring GetConfigString(std::string_view var, std::string_view path)
 
 	settingsLock.Unlock();
 
-	return std::wstring(value->value.AsString);
+	return std::wstring_view(value->value.AsString);
 }
 
 void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path)

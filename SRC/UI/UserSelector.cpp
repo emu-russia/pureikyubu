@@ -1084,12 +1084,7 @@ void CloseSelector()
     if(!usel.opened) return;
 
     // destroy filelist
-    while (!usel.files.empty())
-    {
-        UserFile* file = usel.files.back().get();
-        usel.files.pop_back();
-        delete file;
-    }
+    usel.files.clear();
 
     // destroy bannerlist
     ImageList_Remove(bannerList, -1);

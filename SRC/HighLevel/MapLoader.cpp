@@ -102,9 +102,8 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
 {
     int i;
     auto mapbuf = UI::FileLoad(mapname);
-
-    // remove all garbage, like tabs
-    for(i = 0; i < mapbuf.size(); i++)
+   
+    for (i = 0; i < mapbuf.size(); i++)
     {
         char c = mapbuf[i];
         if (c < ' ') 
@@ -114,47 +113,51 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
     }
 
     char *ptr = (char*)mapbuf.data();
-    while(*ptr)
+    
+    if (!mapbuf.empty())
     {
-        // some maps has really *huge* symbols
-        char line[0x1000];
-        line[i = 0] = 0;
-
-        // cut string
-        while(*ptr == '\n') ptr++;
-        if(!*ptr) break;
-        while(*ptr != '\n') line[i++] = *ptr++;
-        line[i++] = 0;
-
-        // remove comments
-        char *p = line;
-        while(*p)
+        while (*ptr)
         {
-            if(p[0] == '/' && p[1] == '/')
+            // some maps has really *huge* symbols
+            char line[0x1000];
+            line[i = 0] = 0;
+
+            // cut string
+            while (*ptr == '\n') ptr++;
+            if (!*ptr) break;
+            while (*ptr != '\n') line[i++] = *ptr++;
+            line[i++] = 0;
+
+            // remove comments
+            char* p = line;
+            while (*p)
             {
-                *p = 0;
-                break;
+                if (p[0] == '/' && p[1] == '/')
+                {
+                    *p = 0;
+                    break;
+                }
+                p++;
             }
-            p++;
+
+            // remove spaces at the end
+            p = &line[strlen(line) - 1];
+            while (*p <= ' ') p--;
+            if (*p) p[1] = 0;
+
+            // remove spaces at the beginning
+            p = line;
+            while (*p <= ' ' && *p) p++;
+
+            // empty string ?
+            if (!*p) continue;
+
+            // add symbol
+            char* name;
+            uint32_t addr = strtoul(p, &name, 16);
+            while (*name <= ' ') name++;
+            SYMAddNew(addr, name);
         }
-
-        // remove spaces at the end
-        p = &line[strlen(line) - 1];
-        while(*p <= ' ') p--;
-        if(*p) p[1] = 0;
-
-        // remove spaces at the beginning
-        p = line;
-        while(*p <= ' ' && *p) p++;
-
-        // empty string ?
-        if(!*p) continue;
-
-        // add symbol
-        char *name;
-        uint32_t addr = strtoul(p, &name, 16);
-        while(*name <= ' ') name++;
-        SYMAddNew(addr, name);
     }
 
     DBReport2(DbgChannel::HLE, "RAW format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());

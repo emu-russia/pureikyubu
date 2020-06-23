@@ -7,7 +7,7 @@ constexpr auto DOLWIN_DEFAULT_SETTINGS = L"Data\\DefaultSettings.json";		// Must
 constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
 
 // User variables API
-std::wstring GetConfigString(std::string_view var, std::string_view path);
+std::wstring_view GetConfigString(std::string_view var, std::string_view path);
 void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path);
 int GetConfigInt(std::string_view var, std::string_view path);
 void SetConfigInt(std::string_view var, int newVal, std::string_view path);

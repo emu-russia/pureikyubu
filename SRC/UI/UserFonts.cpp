@@ -216,8 +216,8 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 void FontConfigure(HWND hParent)
 {
-    FontSetAnsiFile(GetConfigString(USER_ANSI, USER_HW).data());
-    FontSetSjisFile(GetConfigString(USER_SJIS, USER_HW).data());
+    FontSetAnsiFile((wchar_t*)GetConfigString(USER_ANSI, USER_HW).data());
+    FontSetSjisFile((wchar_t*)GetConfigString(USER_SJIS, USER_HW).data());
 
     DialogBox(
         GetModuleHandle(NULL),

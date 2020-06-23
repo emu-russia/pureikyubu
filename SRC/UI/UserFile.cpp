@@ -7,6 +7,9 @@ namespace UI
 {
     size_t FileSize(std::wstring_view filename)
     {
+        if (!FileExists(filename))
+            return 0;
+
         auto path = std::filesystem::absolute(filename);
         return std::filesystem::file_size(path);
     }

@@ -1,13 +1,10 @@
-// Dolwin entrypoint (WinMain) and fail-safe application messages.
-// WinMain() should never return. 
 #include "pch.h"
 
-// ---------------------------------------------------------------------------
-// basic application output
+/* ---------------------------------------------------------------------------  */
+/* Basic application output                                                     */
 
 namespace UI
 {
-
     // fatal error
     void DolwinError(const TCHAR* title, const TCHAR* fmt, ...)
     {
@@ -86,7 +83,7 @@ namespace UI
 /* Check for multiple instancies. */
 static void LockMultipleCalls()
 {
-    static  HANDLE  dolwinsem;
+    static HANDLE dolwinsem;
 
     // mutex will fail if semephore already exists
     dolwinsem = CreateMutex(NULL, 0, APPNAME);
@@ -101,14 +98,13 @@ static void LockMultipleCalls()
     dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
 }
 
-// set proper current working directory, create missing directories
-static void InitFileSystem(HINSTANCE hInst)
+static void InitFileSystem()
 {
-    // set current working directory relative to Dolwin executable
+    /* Set current working directory relative to Dolwin executable */
     ldat.cwd = std::filesystem::current_path();
     SetCurrentDirectory(ldat.cwd.data());
     
-    // make sure, that Dolwin has data directory.
+    /* Make sure, that Dolwin has data directory. */
     std::filesystem::create_directory(".\\Data");
 }
 
@@ -127,23 +123,21 @@ char* FixCommandLine(char *lpCmdLine)
     return lpCmdLine;
 }
 
-// keyboard accelerators (no need to be shared)
+/* Keyboard accelerators (no need to be shared). */
 HACCEL  hAccel;
 
-// entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    // Required by HLE Subsystem
+    /* Required by HLE Subsystem */
     assert((uint64_t)hInstance <= 0x400000);
 
-    // prepare file system
-    InitFileSystem(hInstance);
+    InitFileSystem();
 
     // run Dolwin once ?
-    if(GetConfigBool(USER_RUNONCE, USER_UI))
+    if (GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
     }
@@ -155,10 +149,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     CreateMainWindow(hInstance);
 
     // Idle loop
-    for(;;)
+    MSG msg = {};
+    for (;;)
     {
-        MSG msg;
-
         while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
         {
             UpdateProfiler();
@@ -168,11 +161,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // Idle loop
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
+            /*if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
-            }
+            }*/
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
     }
 
