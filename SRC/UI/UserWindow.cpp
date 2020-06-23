@@ -963,7 +963,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         {
             // resize status bar window
             if(IsWindow(wnd.hStatusWindow))
-            { 
+            {
                 RECT rm, rs;
                 GetWindowRect(hwnd, &rm);
                 GetWindowRect(wnd.hStatusWindow, &rs); 

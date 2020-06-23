@@ -567,11 +567,11 @@ uint16_t * SjisToUnicode(TCHAR * sjisText, size_t * size, size_t * chars)
 void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 {
     // opened ?
-    if(!usel.opened) return;
+    if (!usel.opened) return;
 
-    #define     ID item->itemID
-    #define     DC item->hDC
-    UserFile*   file;       // item to draw
+#define     ID item->itemID
+#define     DC item->hDC
+    UserFile* file;       // item to draw
     bool        selected;   // 1, if item is selected
     HBRUSH      hb;         // background brush
     LV_ITEM     lvi;
@@ -581,15 +581,15 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     // get selected item
     memset(&lvi, 0, sizeof(lvi));
-    lvi.mask    = LVIF_PARAM;
-    lvi.iItem   = ID;
-    if(!ListView_GetItem(usel.hSelectorWindow, &lvi)) return;
-    lvi.state   = ListView_GetItemState(usel.hSelectorWindow, ID, - 1);
-    selected    = (lvi.state & LVIS_SELECTED) ? (TRUE) : (FALSE);
-    file        = usel.files[lvi.lParam].get();
+    lvi.mask = LVIF_PARAM;
+    lvi.iItem = ID;
+    if (!ListView_GetItem(usel.hSelectorWindow, &lvi)) return;
+    lvi.state = ListView_GetItemState(usel.hSelectorWindow, ID, -1);
+    selected = (lvi.state & LVIS_SELECTED) ? (TRUE) : (FALSE);
+    file = usel.files[lvi.lParam].get();
 
     // select background brush
-    if(selected)
+    if (selected)
     {
         hb = (HBRUSH)(COLOR_HIGHLIGHT + 1);
         SetTextColor(DC, GetSysColor(COLOR_HIGHLIGHTTEXT));
@@ -600,7 +600,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         SetTextColor(DC, GetSysColor(COLOR_WINDOWTEXT));
     }
 
-    if(selected)
+    if (selected)
     {
         SetStatusText(STATUS_ENUM::Progress, file->name);
     }
@@ -611,27 +611,27 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     // draw file icon
     ListView_GetItemRect(usel.hSelectorWindow, ID, &rc, LVIR_ICON);
-    switch(file->type)
+    switch (file->type)
     {
-        case SELECTOR_FILE::Dvd:
-            ImageList_Draw( bannerList, file->icon[selected], DC,
-                            rc.left, rc.top, ILD_NORMAL );
-            break;
+    case SELECTOR_FILE::Dvd:
+        ImageList_Draw(bannerList, file->icon[selected], DC,
+            rc.left, rc.top, ILD_NORMAL);
+        break;
 
-        case SELECTOR_FILE::Executable:
-            HICON hIcon;
-            if(usel.smallIcons)
-            {
-                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
-                DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
-            }
-            else
-            {
-                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
-                DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
-            }
-            DeleteObject(hIcon);
-            break;
+    case SELECTOR_FILE::Executable:
+        HICON hIcon;
+        if (usel.smallIcons)
+        {
+            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
+            DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
+        }
+        else
+        {
+            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
+            DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
+        }
+        DeleteObject(hIcon);
+        break;
     }
 
     // other columns
@@ -639,27 +639,27 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     memset(&lvc, 0, sizeof(lvc));
     lvc.mask = LVCF_FMT | LVCF_WIDTH;
 
-    for(int col=1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
+    for (int col = 1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        auto text = std::wstring(0x1000, 0);
-        uint32_t fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
-        
+        TCHAR text[0x1000] = { 0, };
+        UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
 
         if (lvcw.fmt & LVCFMT_RIGHT)       fmt |= DT_RIGHT;
         else if (lvcw.fmt & LVCFMT_CENTER) fmt |= DT_CENTER;
-        else                               fmt |= DT_LEFT;
+        else                              fmt |= DT_LEFT;
 
-        rc.left  = rc.right;
-        rc.right+= lvc.cx;
+        rc.left = rc.right;
+        rc.right += lvc.cx;
 
-        ListView_GetItemText(usel.hSelectorWindow, ID, col, text.data(), text.length() - 1);
+        ListView_GetItemText(usel.hSelectorWindow, ID, col, text, _countof(text) - 1);
+        size_t len = _tcslen(text);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
         rc2.left += 2;
-        rc2.right-= 2;
+        rc2.right -= 2;
 
         char DiskId[4] = { 0 };
         DiskId[0] = (char)file->id[0];
@@ -667,22 +667,19 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         DiskId[2] = (char)file->id[2];
         DiskId[3] = (char)file->id[3];
 
-        if( DVD::RegionById(DiskId) == DVD::Region::JPN &&
+        if (DVD::RegionById(DiskId) == DVD::Region::JPN &&
             (col == 1 || col == 4))     // title or comment only
         {
-            uint16_t *buf; size_t size, chars;
-            buf = SjisToUnicode(text.data(), &size, &chars);
-            DrawTextW(DC, (wchar_t *)buf, (int)chars, &rc2, fmt);
+            uint16_t* buf; size_t size, chars;
+            buf = SjisToUnicode(text, &size, &chars);
+            DrawTextW(DC, (wchar_t*)buf, (int)chars, &rc2, fmt);
             free(buf);
-        } 
-        else
-        {
-            DrawText(DC, text.data(), text.length(), &rc2, fmt);
         }
+        else DrawText(DC, text, (int)len, &rc2, fmt);
     }
 
-    #undef ID
-    #undef DC
+#undef ID
+#undef DC
 }
 
 // update filelist (reload and redraw)
@@ -755,8 +752,7 @@ void UpdateSelector()
     }
 
     /* Update selector window */
-    /* ?Disabling this fixes flashing issue. */
-    //UpdateWindow(usel.hSelectorWindow);
+    UpdateWindow(usel.hSelectorWindow);
 
     /* Re-sort (we need to save old value, to avoid swap of filelist) */
     SELECTOR_SORT oldSort = usel.sortBy;
