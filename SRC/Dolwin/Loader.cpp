@@ -634,14 +634,8 @@ static bool SetGameIDAndTitle(std::wstring_view filename)
     diskIdTchar[3] = diskID[3];
     diskIdTchar[4] = 0;
 
-    char* ansiPtr = (char*)bnr->comments[0].longTitle;
-    TCHAR* tcharPtr = ldat.currentFileName.data();
-
-    while (*ansiPtr)
-    {
-        *tcharPtr++ = (uint8_t)*ansiPtr++;
-    }
-    *tcharPtr++ = 0;
+    auto title = std::string_view((char*)bnr->comments[0].longTitle);
+    ldat.currentFileName = Util::convert<wchar_t, char>(title);
 
     /* Convert SJIS Title to Unicode */
 
@@ -653,7 +647,7 @@ static bool SetGameIDAndTitle(std::wstring_view filename)
 
         if (widePtr)
         {
-            tcharPtr = ldat.currentFileName.data();
+            auto tcharPtr = ldat.currentFileName.data();
             unicodePtr = widePtr;
 
             while (*unicodePtr)

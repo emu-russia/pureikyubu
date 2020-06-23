@@ -100,64 +100,19 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 // load Dolwin format map-file
 static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
 {
-    int i;
-    auto mapbuf = UI::FileLoad(mapname);
-   
-    for (i = 0; i < mapbuf.size(); i++)
+    /* Open the map file. */
+    auto file = std::ifstream(mapname);
+    if (!file.is_open())
     {
-        char c = mapbuf[i];
-        if (c < ' ') 
-        { 
-            c = '\n'; 
-        }
+        throw std::exception();
     }
 
-    char *ptr = (char*)mapbuf.data();
-    
-    if (!mapbuf.empty())
+    /* Read all the symbols with their addresses. */
+    auto address = 0U;
+    auto symbol = std::string();
+    while (file >> std::hex >> address >> symbol)
     {
-        while (*ptr)
-        {
-            // some maps has really *huge* symbols
-            char line[0x1000];
-            line[i = 0] = 0;
-
-            // cut string
-            while (*ptr == '\n') ptr++;
-            if (!*ptr) break;
-            while (*ptr != '\n') line[i++] = *ptr++;
-            line[i++] = 0;
-
-            // remove comments
-            char* p = line;
-            while (*p)
-            {
-                if (p[0] == '/' && p[1] == '/')
-                {
-                    *p = 0;
-                    break;
-                }
-                p++;
-            }
-
-            // remove spaces at the end
-            p = &line[strlen(line) - 1];
-            while (*p <= ' ') p--;
-            if (*p) p[1] = 0;
-
-            // remove spaces at the beginning
-            p = line;
-            while (*p <= ' ' && *p) p++;
-
-            // empty string ?
-            if (!*p) continue;
-
-            // add symbol
-            char* name;
-            uint32_t addr = strtoul(p, &name, 16);
-            while (*name <= ' ') name++;
-            SYMAddNew(addr, name);
-        }
+        SYMAddNew(address, symbol.c_str());
     }
 
     DBReport2(DbgChannel::HLE, "RAW format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());

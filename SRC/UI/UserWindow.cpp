@@ -440,24 +440,18 @@ void OnMainWindowOpened()
     std::wstring newTitle, gameTitle;
     if (ldat.dvd)
     {
-        gameTitle = fmt::format(L"{:s}", ldat.currentFileName);
+        gameTitle = ldat.currentFileName;
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
-
-        //_stprintf_s (gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
-        //_stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
     }
     else
     {
-        auto currentFileName = std::wstring(ldat.currentFileName);
-        if (currentFileName == L"Bootrom")
+        if (ldat.currentFileName == L"Bootrom")
         {
-            gameTitle = fmt::format(L"{:s}", ldat.currentFileName);
-            //_stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s"), ldat.currentFileName);
+            gameTitle = ldat.currentFileName;
         }
         else
         {
             gameTitle = fmt::format(L"{:s} demo", ldat.currentFileName);
-            //_stprintf_s(gameTitle, _countof(gameTitle) - 1, _T("%s demo"), ldat.currentFileName);
         }
         
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
