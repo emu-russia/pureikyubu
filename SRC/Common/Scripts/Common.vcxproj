@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\File.h" />
     <ClInclude Include="..\Jdi.h" />
     <ClInclude Include="..\Json.h" />
     <ClInclude Include="..\pch.h" />
@@ -37,7 +38,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\Spinlock.cpp" />
-    <ClCompile Include="..\String.cpp" />
     <ClCompile Include="..\Thread.cpp" />
     <ClCompile Include="..\WinAPI.cpp" />
   </ItemGroup>

@@ -1,9 +1,9 @@
 // file selector
 #include "pch.h"
 #include "SjisTable.h"
-#include <locale>
-#include <codecvt>
+#include "../Common/String.h"
 #include <array>
+#include <fmt/printf.h>
 
 // all important data is placed here
 UserSelector usel;
@@ -350,22 +350,11 @@ static void add_item(size_t index)
     ListView_InsertItem(usel.hSelectorWindow, &lvi); 
 }
 
-static void CopyAnsiStringAsTcharString(TCHAR* dest, const char* src)
-{
-    char* ansiPtr = (char*)src;
-    TCHAR* tcharPtr = (TCHAR*)dest;
-    while (*ansiPtr)
-    {
-        *tcharPtr++ = (uint8_t)*ansiPtr++;
-    }
-    *tcharPtr++ = 0;
-}
-
-// insert new file into filelist
+/* Insert new file into filelist. */
 static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 {
     // check file size
-    if((fsize < 0x1000) || (fsize > DVD_SIZE))
+    if ((fsize < 0x1000) || (fsize > DVD_SIZE))
     {
         return;
     }
@@ -376,12 +365,12 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 
     if (!usel.files.empty())
     {
-        auto itr = std::find_if(usel.files.begin(), usel.files.end(), [&](std::unique_ptr<UserFile>& entry) 
+        auto itr = std::find_if(usel.files.begin(), usel.files.end(), [&](auto& entry) 
         {
             return entry->name == file;
         });
 
-        found = itr != usel.files.end();
+        found = (itr != usel.files.end());
     }
 
     usel.filesLock.Unlock();
@@ -391,33 +380,24 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
         return;
     }
 
-    // try to open file
+    /* Try to open file */
     if (!UI::FileExists(file))
     {
         return;
     }
 
-    /*FILE* f = nullptr;
-    _tfopen_s (&f, file, _T("rb"));
-    if(f == NULL) return;
-    fclose(f);*/
-
     auto item = std::make_unique<UserFile>();
-    //assert(item);
-    //memset(item, 0, sizeof(UserFile));
 
-    // save file info
+    /* Save file info */
     item->type = type;
     item->size = fsize;
-
     item->name = file;
-    item->name.resize(2 * MAX_PATH + 2);
-    //_tcscpy_s(item->name, _countof(item->name) - 1, file);
     
+    item->name.resize(2 * MAX_PATH + 2);
     if (type == SELECTOR_FILE::Dvd)
     {
-        // load DVD banner
-        std::wstring_view copy = file;
+        /* Load DVD banner. */
+        auto copy = file;
         auto bnr = DVDLoadBanner(copy);
         if (!bnr)
         {
@@ -436,22 +416,17 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
         diskID[3] = diskIDRaw[3];
         diskID[4] = 0;
 
-        // set GameID
-        item->id = fmt::format(L"%.4s%02X", diskID, DVDBannerChecksum(bnr.get()));
-        /*_stprintf_s ( item->id, _countof(item->id) - 1, _T("%.4s%02X"),
-                 diskID, DVDBannerChecksum((void *)bnr) );*/
-
+        /* Set GameID. */
+        item->id = fmt::sprintf(L"%.4s%02X", diskID, DVDBannerChecksum(bnr.get()));
         DVD::Unmount();
 
-        // use banner info and remove line-feeds
-        char* longTitle = (char*)bnr->comments[0].longTitle;
-        char* comment = (char*)bnr->comments[0].comment;
+        /* Use banner info and remove line-feeds. */
+        std::string_view longTitle = (char*)bnr->comments[0].longTitle;
+        std::string_view comment = (char*)bnr->comments[0].comment;
 
-        item->title = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(longTitle); // C++ 11
-        item->comment = std::wstring_convert<std::codecvt_utf8<wchar_t>>().from_bytes(comment);
+        item->title = Util::convert<wchar_t>(longTitle); // C++ 11
+        item->comment = Util::convert<wchar_t>(comment);
 
-        //CopyAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
-        //CopyAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
         fix_string(item->title);
         fix_string(item->comment);
 
@@ -484,12 +459,12 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
         assert(0);
     }
 
-    // extend filelist
+    /* Extend filelist. */
     usel.filesLock.Lock();
     usel.files.push_back(std::move(item));
     usel.filesLock.Unlock();
 
-    // add listview item
+    /* Add listview item. */
     add_item(usel.files.size() - 1);
 }
 
@@ -682,7 +657,6 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc.left  = rc.right;
         rc.right+= lvc.cx;
 
-        int s = text.length();
         ListView_GetItemText(usel.hSelectorWindow, ID, col, text.data(), text.length() - 1);
 
         rc2 = rc;
@@ -717,7 +691,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    std::vector<std::pair<std::wstring, SELECTOR_FILE>> file_ext =
+    static std::vector<std::pair<std::wstring, SELECTOR_FILE>> file_ext =
     {
         { L".dol", SELECTOR_FILE::Executable },
         { L".elf", SELECTOR_FILE::Executable },
@@ -774,7 +748,7 @@ void UpdateSelector()
             /* Recover filter. */
             filter = _byteswap_ulong(usel.filter);
 
-            /* Find found! */
+            /* File found! */
             if (itr != file_ext.end())
             {
                 auto found = path.path().wstring();
@@ -821,18 +795,18 @@ void SelectorSetSelected(std::wstring_view filename)
     }
 }
 
-// ---------------------------------------------------------------------------
-// controls
+/* ---------------------------------------------------------------------------  */
+/* Controls                                                                     */
 
-// return item string data
+/* Return item string data. */
 static void getdispinfo(LPNMHDR pnmh)
 {
-    LV_DISPINFO *lpdi = (LV_DISPINFO *)pnmh;
+    LV_DISPINFO* lpdi = (LV_DISPINFO*)pnmh;
 
     if (lpdi->item.lParam < 0)
         return;
 
-    UserFile    *file = usel.files[lpdi->item.lParam].get();
+    auto file = usel.files[lpdi->item.lParam].get();
     auto tcharStr = std::wstring();
 
     switch (lpdi->item.iSubItem)
@@ -856,16 +830,9 @@ static void getdispinfo(LPNMHDR pnmh)
             break;
     }
     
-    if (tcharStr.empty())
+    if (!tcharStr.empty())
     {
-        wchar_t* widePtr = lpdi->item.pszText;
-        TCHAR* tcharPtr = tcharStr.data();
-
-        while (*tcharPtr)
-        {
-            *widePtr++ = *tcharPtr++;
-        }
-        *widePtr++ = 0;
+        std::wcsncpy(lpdi->item.pszText, tcharStr.data(), tcharStr.length());
     }
 }
 

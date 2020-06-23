@@ -610,12 +610,12 @@ bool MCConnect (int cardnum) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
+            auto str = Util::convert<char>(UI::FileShortName(memcard[cardnum].filename));
             UI::DolwinReport(
                 L"Couldnt open memcard (slot %c),\n"
                 L"location : %s\n\n"
                 L"Check path or file attributes.",
-                slt[cardnum],
-                wstr_to_str(UI::FileShortName(memcard[cardnum].filename)).c_str()
+                slt[cardnum], str.c_str()
             );
             return FALSE;
         }

@@ -80,10 +80,10 @@ namespace UI
 
 }
 
-// ---------------------------------------------------------------------------
-// WinMain (very first run-time initialization and main loop)
+/* ---------------------------------------------------------------------------  */
+/* WinMain (very first run-time initialization and main loop)                   */
 
-// check for multiple instancies
+/* Check for multiple instancies. */
 static void LockMultipleCalls()
 {
     static  HANDLE  dolwinsem;

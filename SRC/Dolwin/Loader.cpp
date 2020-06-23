@@ -566,7 +566,8 @@ static void AutoloadMap()
             mapname = fmt::format(L".\\Data\\{:s}.map", name);
         }
         
-        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", wstr_to_str(mapname).c_str());
+        auto str = Util::convert<char>(mapname);
+        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", str.c_str());
         MAPInit(mapname.data());
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
@@ -822,7 +823,8 @@ void ReloadFile()
 
     if(!ldat.currentFile.empty())
     {
-        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", wstr_to_str(ldat.currentFile).c_str());
+        auto str = Util::convert<char>(ldat.currentFile);
+        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", str.c_str());
         DoLoadFile(ldat.currentFile);
     }
 }

@@ -1,6 +1,7 @@
 // Dolwin file utilities
 #include "pch.h"
 #include "../Common/WinAPI.h" /* Windows API abstraction. */
+#include <fmt/printf.h>
 
 namespace UI
 {
@@ -253,23 +254,23 @@ namespace UI
     /* Nice value of KB, MB or GB, for output. */
     std::wstring FileSmartSize(size_t size)
     {
-        static auto tempBuf = std::wstring(1024, 0);
+        static auto tempBuf = std::wstring();
 
         if (size < 1024)
         {
-            tempBuf = fmt::format(L"%zi byte", size);
+            tempBuf = fmt::sprintf(L"%zi byte", size);
         }
         else if (size < 1024 * 1024)
         {
-            tempBuf = fmt::format(L"%zi KB", size / 1024);
+            tempBuf = fmt::sprintf(L"%zi KB", size / 1024);
         }
         else if (size < 1024 * 1024 * 1024)
         {
-            tempBuf = fmt::format(L"%zi MB", size / 1024 / 1024);
+            tempBuf = fmt::sprintf(L"%zi MB", size / 1024 / 1024);
         }
         else
         {
-            tempBuf = fmt::format(L"%1.1f GB", (float)size / 1024 / 1024 / 1024);
+            tempBuf = fmt::sprintf(L"%1.1f GB", (float)size / 1024 / 1024 / 1024);
         }
         
         return tempBuf;

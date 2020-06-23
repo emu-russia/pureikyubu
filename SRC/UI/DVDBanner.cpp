@@ -3,8 +3,7 @@
 
 std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring_view dvdFile)
 {
-    //size_t fsize = UI::FileSize(dvdFile);
-    size_t file_size = std::filesystem::file_size(dvdFile);
+    size_t file_size = UI::FileSize(dvdFile);
     uint32_t bnrofs = 0;
 
     // load DVD banner

@@ -890,7 +890,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     auto dolphinSdkDir = UI::FileOpen(UI::FileType::Directory);
                     if (!dolphinSdkDir.empty())
                     {
-                        std::vector<std::string> cmd1 = { "MountSDK", wstr_to_str(dolphinSdkDir) };
+                        std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };
                         Json::Value* output = Debug::Hub.Execute(cmd1);
                         
                         if (output != nullptr)
