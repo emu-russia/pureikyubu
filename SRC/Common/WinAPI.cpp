@@ -16,22 +16,23 @@ namespace Win
             NULL, CLSCTX_ALL,
             IID_IFileOpenDialog,
             (void**)&pFileOpen);
-
-        /* Get the dialog options. */
-        pFileOpen->GetOptions(&options);
-
-        pFileOpen->SetTitle(title.data());
-        pFileOpen->SetDefaultExtension(filter.data());
         
-        /* Allow the user to pick folders. */
-        if (pick_folder)
-        {
-            options |= FOS_PICKFOLDERS;
-        }
-
-        pFileOpen->SetOptions(options);
         if (SUCCEEDED(hr))
         {
+            /* Get the dialog options. */
+            pFileOpen->GetOptions(&options);
+
+            pFileOpen->SetTitle(title.data());
+            pFileOpen->SetDefaultExtension(filter.data());
+
+            /* Allow the user to pick folders. */
+            if (pick_folder)
+            {
+                options |= FOS_PICKFOLDERS;
+            }
+
+            pFileOpen->SetOptions(options);
+
             /* Show the Open dialog box. */
             hr = pFileOpen->Show(NULL);
 

@@ -455,7 +455,6 @@ void OnMainWindowOpened()
         }
         
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
-        //_stprintf_s (newTitle, _countof(newTitle) - 1, prefix, gameTitle);
     }
     
     SetWindowText(wnd.hMainWindow, newTitle.c_str());

@@ -6,13 +6,13 @@
 namespace UI
 {
     // fatal error
-    void DolwinError(const TCHAR* title, const TCHAR* fmt, ...)
+    void DolwinError(std::wstring_view title, std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
         if (emu.doldebug)
@@ -30,7 +30,7 @@ namespace UI
         }
         else
         {
-            MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+            MessageBox(NULL, buf, title.data(), MB_ICONHAND | MB_OK | MB_TOPMOST);
             std::vector<std::string> cmd{ "exit" };
             Debug::Hub.Execute(cmd);
         }
@@ -38,19 +38,19 @@ namespace UI
 
     // fatal error, if user answers no
     // return TRUE if "yes", and FALSE if "no"
-    BOOL DolwinQuestion(const TCHAR* title, const TCHAR* fmt, ...)
+    bool DolwinQuestion(std::wstring_view title, std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
         int btn = MessageBox(
             NULL,
             buf,
-            title,
+            title.data(),
             MB_RETRYCANCEL | MB_ICONHAND | MB_TOPMOST
             );
         if (btn == IDCANCEL)
@@ -62,13 +62,13 @@ namespace UI
     }
 
     // application message
-    void DolwinReport(const TCHAR* fmt, ...)
+    void DolwinReport(std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
         auto app_name = std::wstring(APPNAME);
@@ -101,10 +101,11 @@ static void LockMultipleCalls()
 static void InitFileSystem()
 {
     /* Set current working directory relative to Dolwin executable */
-    ldat.cwd = std::filesystem::current_path();
-    SetCurrentDirectory(ldat.cwd.data());
+    auto cwd = std::filesystem::current_path();
+    ldat.cwd = cwd;
     
     /* Make sure, that Dolwin has data directory. */
+    _chdir(cwd.string().c_str());
     std::filesystem::create_directory(".\\Data");
 }
 
@@ -136,7 +137,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     InitFileSystem();
 
-    // run Dolwin once ?
+    /* Allow only one instance of Dolwin to run at once? */
     if (GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
@@ -144,13 +145,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
-    // init emu and user interface (emulator will be initialized
-    // during main window creation).
+    /* Start the emulator and user interface                        */
+    /* (emulator will be initialized during main window creation).  */
     CreateMainWindow(hInstance);
 
-    // Idle loop
+    /* Main loop */
     MSG msg = {};
-    for (;;)
+    while (true)
     {
         while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
         {
@@ -158,20 +159,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             Sleep(1);
         }
 
-        // Idle loop
+        /* Idle loop */
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
-            /*if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
+            if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
             {
                 TranslateMessage(&msg);
                 DispatchMessage(&msg);
-            }*/
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
+            }
         }
     }
 
-    // should never reach this point. Dolwin always exit()'s.
+    /* Should never reach this point. Dolwin always exits. */
     UI::DolwinError(L"ERROR", L"%s ERROR >>> SHOULD NEVER REACH HERE :)", APPNAME);
-    return 1;   // return bad
+    return 1;
 }

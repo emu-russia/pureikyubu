@@ -779,7 +779,7 @@ static void DoLoadFile(std::wstring_view filename)
     // show boot time
     ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
-    statusText = fmt::format(L"Boot time %1.2f sec", ldat.boottime);
+    statusText = fmt::format(L"Boot time {:.2f} sec", ldat.boottime);
     
     SetStatusText(STATUS_ENUM::Progress, statusText);
 
