@@ -14,7 +14,7 @@ Data along with the type of event is saved in event history.
 Debug messages are output by the methods `DBReport`, `DBReport2`, and `DBHalt`. This is a historically traditional way of debugging in Dolwin.
 
 After implementing Event Log facility, debug messages displayed by the `DBReport2` method are additionally saved in the event history
-(since` DBReport2` contains the `DbgChannel` parameter).
+(since `DBReport2` contains the `DbgChannel` parameter).
 
 The usual debug messages output by the `DBReport` method, as well as the emulator debug stops (`DBHalt`), do not saved into the event history.
 
@@ -48,3 +48,7 @@ using the Event Log Monitor tool.
 	}
 }
 ```
+
+## Events Flow
+
+![EventLogFlow](EventLogFlow.png)
