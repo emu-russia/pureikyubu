@@ -69,5 +69,21 @@ namespace EventLogMonitor
             listView1.EndUpdate();
         }
 
+        private void addRandomEventsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            List<EventLogEntry> debugModel = new List<EventLogEntry>();
+
+
+        }
+
+        private void timeLapseControl1_OnTimeLapseChanged(object sender, List<EventLogEntry> timeLineEntries)
+        {
+
+        }
+
+        private void timeLapseControl1_OnTimeLapseChanged(object sender, EventArgs args)
+        {
+
+        }
     }
 }

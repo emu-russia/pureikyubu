@@ -31,15 +31,18 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openEventLogToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.addRandomEventsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openFileDialogJson = new System.Windows.Forms.OpenFileDialog();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.timeLapseControl1 = new EventLogMonitor.TimeLapseControl();
             this.splitContainer2 = new System.Windows.Forms.SplitContainer();
             this.treeView1 = new System.Windows.Forms.TreeView();
             this.listView1 = new System.Windows.Forms.ListView();
@@ -50,6 +53,7 @@
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
+            this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer2)).BeginInit();
@@ -62,10 +66,11 @@
             // 
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
+            this.debugToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(812, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(850, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -79,6 +84,40 @@
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
+            // openEventLogToolStripMenuItem
+            // 
+            this.openEventLogToolStripMenuItem.Name = "openEventLogToolStripMenuItem";
+            this.openEventLogToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.openEventLogToolStripMenuItem.Text = "Open Event Log...";
+            this.openEventLogToolStripMenuItem.Click += new System.EventHandler(this.openEventLogToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator1
+            // 
+            this.toolStripSeparator1.Name = "toolStripSeparator1";
+            this.toolStripSeparator1.Size = new System.Drawing.Size(164, 6);
+            // 
+            // exitToolStripMenuItem
+            // 
+            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(167, 22);
+            this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
+            // 
+            // debugToolStripMenuItem
+            // 
+            this.debugToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.addRandomEventsToolStripMenuItem});
+            this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(54, 20);
+            this.debugToolStripMenuItem.Text = "Debug";
+            // 
+            // addRandomEventsToolStripMenuItem
+            // 
+            this.addRandomEventsToolStripMenuItem.Name = "addRandomEventsToolStripMenuItem";
+            this.addRandomEventsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.addRandomEventsToolStripMenuItem.Text = "Add random events";
+            this.addRandomEventsToolStripMenuItem.Click += new System.EventHandler(this.addRandomEventsToolStripMenuItem_Click);
+            // 
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -90,27 +129,8 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.aboutToolStripMenuItem.Text = "About";
-            // 
-            // openEventLogToolStripMenuItem
-            // 
-            this.openEventLogToolStripMenuItem.Name = "openEventLogToolStripMenuItem";
-            this.openEventLogToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.openEventLogToolStripMenuItem.Text = "Open Event Log...";
-            this.openEventLogToolStripMenuItem.Click += new System.EventHandler(this.openEventLogToolStripMenuItem_Click);
-            // 
-            // toolStripSeparator1
-            // 
-            this.toolStripSeparator1.Name = "toolStripSeparator1";
-            this.toolStripSeparator1.Size = new System.Drawing.Size(177, 6);
-            // 
-            // exitToolStripMenuItem
-            // 
-            this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.exitToolStripMenuItem.Text = "Exit";
-            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // openFileDialogJson
             // 
@@ -121,9 +141,9 @@
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusLabel1});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 512);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 540);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(812, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(850, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -140,12 +160,46 @@
             this.splitContainer1.Name = "splitContainer1";
             this.splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 
+            // splitContainer1.Panel1
+            // 
+            this.splitContainer1.Panel1.Controls.Add(this.timeLapseControl1);
+            // 
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.splitContainer2);
-            this.splitContainer1.Size = new System.Drawing.Size(812, 488);
-            this.splitContainer1.SplitterDistance = 97;
+            this.splitContainer1.Size = new System.Drawing.Size(850, 516);
+            this.splitContainer1.SplitterDistance = 218;
             this.splitContainer1.TabIndex = 2;
+            // 
+            // timeLapseControl1
+            // 
+            this.timeLapseControl1.BackColor = System.Drawing.Color.DimGray;
+            this.timeLapseControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.timeLapseControl1.Location = new System.Drawing.Point(0, 0);
+            this.timeLapseControl1.Name = "timeLapseControl1";
+            this.timeLapseControl1.ScrollBarBackColor = System.Drawing.Color.Gray;
+            this.timeLapseControl1.ScrollBarCaretBorderColor = System.Drawing.Color.DarkCyan;
+            this.timeLapseControl1.ScrollBarCaretBorderWidth = 2;
+            this.timeLapseControl1.ScrollBarCaretColor = System.Drawing.Color.Tomato;
+            this.timeLapseControl1.ScrollBarCaretShape = EventLogMonitor.TimeLapseControl.ScrollBarShape.Rect;
+            this.timeLapseControl1.ScrollBarCaretWidthPrc = 10;
+            this.timeLapseControl1.ScrollBarDeltaCaretPrc = 10;
+            this.timeLapseControl1.ScrollBarDeltaXPrc = 1;
+            this.timeLapseControl1.ScrollBarDeltaYPrc = 16;
+            this.timeLapseControl1.ScrollBarHeightPrcs = 5;
+            this.timeLapseControl1.SegmentBorderColor = System.Drawing.Color.RoyalBlue;
+            this.timeLapseControl1.SegmentBorderWidth = 2;
+            this.timeLapseControl1.SegmentColor = System.Drawing.Color.DodgerBlue;
+            this.timeLapseControl1.SegmentDeltaSidePrc = 4;
+            this.timeLapseControl1.SegmentLineColor = System.Drawing.Color.AliceBlue;
+            this.timeLapseControl1.SegmentsPerView = 10;
+            this.timeLapseControl1.SelectedSegmentBackgroundColor = System.Drawing.Color.Gray;
+            this.timeLapseControl1.Size = new System.Drawing.Size(850, 218);
+            this.timeLapseControl1.TabIndex = 0;
+            this.timeLapseControl1.Text = "timeLapseControl1";
+            this.timeLapseControl1.TimelineHeightPrcs = 5;
+            this.timeLapseControl1.TimelineTextColor = System.Drawing.Color.AliceBlue;
+            this.timeLapseControl1.OnTimeLapseChanged += new EventLogMonitor.TimeLapseControl.TimeLapseChanged(this.timeLapseControl1_OnTimeLapseChanged);
             // 
             // splitContainer2
             // 
@@ -160,8 +214,8 @@
             // splitContainer2.Panel2
             // 
             this.splitContainer2.Panel2.Controls.Add(this.listView1);
-            this.splitContainer2.Size = new System.Drawing.Size(812, 387);
-            this.splitContainer2.SplitterDistance = 232;
+            this.splitContainer2.Size = new System.Drawing.Size(850, 294);
+            this.splitContainer2.SplitterDistance = 242;
             this.splitContainer2.TabIndex = 0;
             // 
             // treeView1
@@ -183,7 +237,7 @@
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(0, 0);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(576, 387);
+            this.listView1.Size = new System.Drawing.Size(604, 294);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -212,7 +266,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(812, 534);
+            this.ClientSize = new System.Drawing.Size(850, 562);
             this.Controls.Add(this.splitContainer1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
@@ -224,6 +278,7 @@
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            this.splitContainer1.Panel1.ResumeLayout(false);
             this.splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
@@ -256,6 +311,9 @@
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.ColumnHeader columnHeader4;
+        private TimeLapseControl timeLapseControl1;
+        private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem addRandomEventsToolStripMenuItem;
     }
 }
 

@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 
 namespace EventLogMonitor
 {
-    enum EventLogSubsystem
+    public enum EventLogSubsystem
     {
         Unknown = 0,
         CP,
@@ -28,7 +28,7 @@ namespace EventLogMonitor
         AX,
     }
 
-    enum EventLogType
+    public enum EventLogType
     {
         Unknown = 0,
         DebugReport,		// From DBReport2
@@ -40,7 +40,7 @@ namespace EventLogMonitor
         public byte[] data = null;
     }
 
-    class EventLogEntry
+    public class EventLogEntry
     {
         public UInt64 timestamp = 0;
         public EventLogSubsystem subsystem = EventLogSubsystem.Unknown;
