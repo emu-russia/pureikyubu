@@ -106,7 +106,7 @@ static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
 	Json::Value* output = new Json::Value();
 	output->type = Json::ValueType::Object;
 
-	output->AddString("loaded", ldat.currentFile);
+	output->AddString("loaded", ldat.currentFile.c_str());
 
 	return output;
 }

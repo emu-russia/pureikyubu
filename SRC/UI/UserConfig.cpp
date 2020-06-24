@@ -26,16 +26,14 @@ static void LoadSettings()
 		return;
 
 	// Load default settings
-
 	assert(UI::FileExists(DOLWIN_DEFAULT_SETTINGS));
 
-	size_t jsonTextSize = 0;
-	uint8_t* jsonText = (uint8_t *)UI::FileLoad(DOLWIN_DEFAULT_SETTINGS, &jsonTextSize);
-	assert(jsonText);
+	auto jsonText = UI::FileLoad(DOLWIN_DEFAULT_SETTINGS);
+	assert(!jsonText.empty());
 
 	try
 	{
-		defaultSettings.Deserialize(jsonText, jsonTextSize);
+		defaultSettings.Deserialize(jsonText.data(), jsonText.size());
 	}
 	catch (...)
 	{
@@ -43,30 +41,25 @@ static void LoadSettings()
 		return;
 	}
 
-	free(jsonText);
-
-	// Merge with current settings
-
+	/* Merge with current settings. */
 	settings.Clone(&defaultSettings);
 
 	if (UI::FileExists(DOLWIN_SETTINGS))
 	{
-		jsonText = (uint8_t*)UI::FileLoad(DOLWIN_SETTINGS, &jsonTextSize);
-		assert(jsonText);
+		jsonText = UI::FileLoad(DOLWIN_SETTINGS);
+		assert(!jsonText.empty());
 
 		Json currentSettings;
 
 		try
 		{
-			currentSettings.Deserialize(jsonText, jsonTextSize);
+			currentSettings.Deserialize(jsonText.data(), jsonText.size());
 		}
 		catch (...)
 		{
 			UI::DolwinReport(_T("Current settings cannot be deserialized. Check json syntax. Falling back to defaults."));
 			return;
 		}
-
-		free(jsonText);
 
 		settings.Merge(&currentSettings);
 	}
@@ -80,10 +73,9 @@ static void SaveSettings()
 	size_t textSize = 0;
 
 	// Calculate Json size
-
 	if (!SettingsLoaded)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings must be loaded first!"));
+		UI::DolwinError(L"Critical Error", L"Settings must be loaded first!");
 		return;
 	}
 
@@ -93,90 +85,87 @@ static void SaveSettings()
 	}
 	catch (...)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings cannot be saved!"));
+		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
 		return;
 	}
 
-	// Serialize and save current settings
-
-	uint8_t* text = new uint8_t[2 * textSize];
-	assert(text);
-
+	/* Serialize and save current settings. */
+	std::vector<uint8_t> text(2 * textSize, 0);
 	try
 	{
-		settings.Serialize(text, 2 * textSize, textSize);
+		settings.Serialize(text.data(), 2 * textSize, textSize);
 	}
 	catch (...)
 	{
-		UI::DolwinError(_T("Critical Error"), _T("Settings cannot be saved!"));
+		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
 		return;
 	}
 
-	UI::FileSave(DOLWIN_SETTINGS, text, textSize);
+	UI::FileSave(DOLWIN_SETTINGS, text);
 }
 
 
 #pragma region "Legacy Dolwin config API"
 
-TCHAR *GetConfigString(const char *var, const char *path)
+std::wstring_view GetConfigString(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddString(var, _T(""));
+		value = section->AddString(var.data(), L"");
 	}
 
 	assert(value->type == Json::ValueType::String);
 
 	settingsLock.Unlock();
 
-	return value->value.AsString;
+	return std::wstring_view(value->value.AsString);
 }
 
-void SetConfigString(const char *var, TCHAR *newVal, const char *path)
+void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value * section = settings.root.children.back()->ByName(path);
+	Json::Value * section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddString(var, newVal);
+		value = section->AddString(var.data(), newVal.data());
 	}
 
 	assert(value->type == Json::ValueType::String);
 
-	value->ReplaceString(newVal);
+	value->ReplaceString(newVal.data());
 
 	SaveSettings();
 
 	settingsLock.Unlock();
 }
 
-int GetConfigInt(const char *var, const char *path)
+int GetConfigInt(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddInt(var, 0);
+		value = section->AddInt(var.data(), 0);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -186,19 +175,19 @@ int GetConfigInt(const char *var, const char *path)
 	return (int)value->value.AsInt;
 }
 
-void SetConfigInt(const char *var, int newVal, const char *path)
+void SetConfigInt(std::string_view var, int newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddInt(var, newVal);
+		value = section->AddInt(var.data(), newVal);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -210,19 +199,19 @@ void SetConfigInt(const char *var, int newVal, const char *path)
 	settingsLock.Unlock();
 }
 
-bool GetConfigBool(const char* var, const char* path)
+bool GetConfigBool(std::string_view var, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddBool(var, false);
+		value = section->AddBool(var.data(), false);
 	}
 
 	assert(value->type == Json::ValueType::Bool);
@@ -232,19 +221,19 @@ bool GetConfigBool(const char* var, const char* path)
 	return (int)value->value.AsBool;
 }
 
-void SetConfigBool(const char* var, bool newVal, const char* path)
+void SetConfigBool(std::string_view var, bool newVal, std::string_view path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path);
+	Json::Value* section = settings.root.children.back()->ByName(path.data());
 	assert(section);
 
-	Json::Value* value = section->ByName(var);
+	Json::Value* value = section->ByName(var.data());
 	if (value == nullptr)
 	{
-		value = section->AddBool(var, newVal);
+		value = section->AddBool(var.data(), newVal);
 	}
 
 	assert(value->type == Json::ValueType::Bool);

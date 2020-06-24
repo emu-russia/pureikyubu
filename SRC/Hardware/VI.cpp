@@ -160,19 +160,19 @@ void VIUpdate()
 // ---------------------------------------------------------------------------
 // accessing VI registers.
 
-static void __fastcall vi_read8(uint32_t addr, uint32_t *reg)
+static void vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
     DBReport2(DbgChannel::VI, "VI READ8");
     *reg = 0;
 }
 
-static void __fastcall vi_write8(uint32_t addr, uint32_t data)
+static void vi_write8(uint32_t addr, uint32_t data)
 {
     DBReport2(DbgChannel::VI, "VI WRITE8");
 }
 
-static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
+static void vi_read16(uint32_t addr, uint32_t *reg)
 {
     switch(addr & 0x7f)
     {
@@ -208,7 +208,7 @@ static void __fastcall vi_read16(uint32_t addr, uint32_t *reg)
     *reg = 0;
 }
 
-static void __fastcall vi_write16(uint32_t addr, uint32_t data)
+static void vi_write16(uint32_t addr, uint32_t data)
 {
     switch(addr & 0x7f)
     {
@@ -283,7 +283,7 @@ static void __fastcall vi_write16(uint32_t addr, uint32_t data)
     }
 }
 
-static void __fastcall vi_read32(uint32_t addr, uint32_t *reg)
+static void vi_read32(uint32_t addr, uint32_t *reg)
 {
     switch(addr & 0x7f)
     {
@@ -307,7 +307,7 @@ static void __fastcall vi_read32(uint32_t addr, uint32_t *reg)
     *reg = 0;
 }
 
-static void __fastcall vi_write32(uint32_t addr, uint32_t data)
+static void vi_write32(uint32_t addr, uint32_t data)
 {
     switch(addr & 0x7f)
     {

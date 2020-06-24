@@ -54,16 +54,16 @@
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
-void __fastcall MIReadByte(uint32_t phys_addr, uint32_t* reg);
-void __fastcall MIWriteByte(uint32_t phys_addr, uint32_t data);
-void __fastcall MIReadHalf(uint32_t phys_addr, uint32_t* reg);
-void __fastcall MIWriteHalf(uint32_t phys_addr, uint32_t data);
-void __fastcall MIReadWord(uint32_t phys_addr, uint32_t* reg);
-void __fastcall MIWriteWord(uint32_t phys_addr, uint32_t data);
-void __fastcall MIReadDouble(uint32_t phys_addr, uint64_t* reg);
-void __fastcall MIWriteDouble(uint32_t phys_addr, uint64_t* data);
-void __fastcall MIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
-void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
+void MIReadByte(uint32_t phys_addr, uint32_t* reg);
+void MIWriteByte(uint32_t phys_addr, uint32_t data);
+void MIReadHalf(uint32_t phys_addr, uint32_t* reg);
+void MIWriteHalf(uint32_t phys_addr, uint32_t data);
+void MIReadWord(uint32_t phys_addr, uint32_t* reg);
+void MIWriteWord(uint32_t phys_addr, uint32_t data);
+void MIReadDouble(uint32_t phys_addr, uint64_t* reg);
+void MIWriteDouble(uint32_t phys_addr, uint64_t* data);
+void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
+void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 
 typedef struct _MIControl
 {

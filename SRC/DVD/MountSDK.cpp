@@ -6,6 +6,7 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 
 #include "pch.h"
 #include "../UI/UserFile.h"
+#include <fmt/format.h>
 
 namespace DVD
 {
@@ -13,11 +14,9 @@ namespace DVD
 	{
 		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
 
-		// Load dvddata structure
-
-		size_t dvdDataInfoTextSize = 0;
-		void* dvdDataInfoText = UI::FileLoad(DvdDataJson, &dvdDataInfoTextSize);
-		if (!dvdDataInfoText)
+		/* Load dvddata structure. */
+		auto dvdDataInfoText = UI::FileLoad(DvdDataJson);
+		if (dvdDataInfoText.empty())
 		{
 			DBReport("Failed to load DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
 			return;
@@ -25,19 +24,15 @@ namespace DVD
 
 		try
 		{
-			DvdDataInfo.Deserialize(dvdDataInfoText, dvdDataInfoTextSize);
+			DvdDataInfo.Deserialize(dvdDataInfoText.data(), dvdDataInfoText.size());
 		}
 		catch (...)
 		{
 			DBReport("Failed to Deserialize DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
-			free(dvdDataInfoText);
 			return;
 		}
 
-		free(dvdDataInfoText);
-
 		// Generate data blobs
-
 		if (!GenDiskId())
 		{
 			DBReport("Failed to GenDiskId\n");
@@ -234,60 +229,34 @@ namespace DVD
 
 	bool MountDolphinSdk::GenApploader()
 	{
-		TCHAR path[0x1000] = { 0, };
-
-		_stprintf_s(path, _countof(path) - 1, _T("%s%s"), directory, AppldrPath);
-
-		size_t size = 0;
-		void* ptr = UI::FileLoad(path, &size);
-		assert(ptr);
-
-		AppldrData.resize(size);
-		memcpy(AppldrData.data(), ptr, size);
-
-		free(ptr);
-
+		auto path = fmt::format(L"{:s}{:s}", directory, AppldrPath);
+		AppldrData = UI::FileLoad(path);
+		
 		return true;
 	}
 
 	bool MountDolphinSdk::GenDol()
 	{
-		size_t size = 0;
-		void* ptr = UI::FileLoad(DolPath, &size);
-		assert(ptr);
-
-		Dol.resize(size);
-		memcpy(Dol.data(), ptr, size);
-
-		free(ptr);
+		Dol = UI::FileLoad(DolPath);
 
 		return true;
 	}
 
 	bool MountDolphinSdk::GenBi2()
 	{
-		TCHAR path[0x1000] = { 0, };
-
-		_stprintf_s(path, _countof(path) - 1, _T("%s%s"), directory, Bi2Path);
-
-		size_t size = 0;
-		void* ptr = UI::FileLoad(path, &size);
-		assert(ptr);
-
-		Bi2Data.resize(size);
-		memcpy(Bi2Data.data(), ptr, size);
-
-		free(ptr);
+		auto path = fmt::format(L"{:s}{:s}", directory, Bi2Path);
+		Bi2Data = UI::FileLoad(path);
 
 		return true;
 	}
 
 	void MountDolphinSdk::AddString(std::string str)
 	{
-		for (int i = 0; i < str.size(); i++)
+		for (auto& c : str)
 		{
-			NameTableData.push_back(str[i]);
+			NameTableData.push_back(c);
 		}
+
 		NameTableData.push_back(0);
 	}
 
@@ -570,7 +539,7 @@ namespace DVD
 
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		UI::FileSave(_T("Data\\DolphinSdkFST.bin"), FstData.data(), FstData.size());
+		UI::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
 
 		return true;
 	}

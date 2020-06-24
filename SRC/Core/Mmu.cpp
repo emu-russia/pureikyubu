@@ -11,7 +11,7 @@ namespace Gekko
 
     // A simple translation, which is configured by the Dolphin OS software environment (until it starts using MMU for ARAM mapping).
 
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
+    uint32_t GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
     {
         WIMG = WIMG_I;      // Caching inhibited
 
@@ -34,7 +34,7 @@ namespace Gekko
 
     // Native address translation defined by PowerPC architecture. There are some alien moments (Hash for Page Tables), but overall its fine.
 
-    uint32_t __fastcall GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)
+    uint32_t GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)
     {
         uint32_t pa;
 
@@ -66,7 +66,7 @@ namespace Gekko
         return pa;
     }
 
-    bool __fastcall GekkoCore::BlockAddressTranslation(uint32_t ea, uint32_t &pa, MmuAccess type, int& WIMG)
+    bool GekkoCore::BlockAddressTranslation(uint32_t ea, uint32_t &pa, MmuAccess type, int& WIMG)
     {
         // Ignore BAT access rights for now (not used in embodiment system)
 
@@ -132,7 +132,7 @@ namespace Gekko
         return false;
     }
 
-    uint32_t __fastcall GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG)
+    uint32_t GekkoCore::SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG)
     {
         int ptegUpper;
 

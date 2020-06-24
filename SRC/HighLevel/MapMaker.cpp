@@ -16,6 +16,7 @@ FILE *Map;
 opMarker * Map_marks;
 int Map_marksSize, Map_marksMaxSize;
 
+std::vector<uint8_t> temp;
 uint8_t * Map_buffer;
 int Map_functionsSize;
 funcDesc * Map_functions;
@@ -83,8 +84,9 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
  */
 static void MAPOpen ()
 {
-    size_t size = 0;
-    Map_buffer = (uint8_t *)UI::FileLoad(MAPDAT_FILE, &size);
+    temp = UI::FileLoad(MAPDAT_FILE);
+    
+    Map_buffer = temp.data();
     if (Map_buffer == NULL) return;
     Map_functionsSize = *(uint32_t *)(Map_buffer);
     Map_functions = (funcDesc *)(Map_buffer + sizeof(uint32_t));
@@ -106,7 +108,6 @@ static void MAPClose ()
 {
     if (Map_buffer == NULL) return;
 
-    free(Map_buffer);
     Map_buffer = NULL;
     Map_functionsSize = 0;
     Map_functions = NULL;
@@ -221,6 +222,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
         }
         offsetStart += 4;
     }
+
 }
 
 /*

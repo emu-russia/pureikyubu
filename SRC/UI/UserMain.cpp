@@ -1,21 +1,18 @@
-// Dolwin entrypoint (WinMain) and fail-safe application messages.
-// WinMain() should never return. 
 #include "pch.h"
 
-// ---------------------------------------------------------------------------
-// basic application output
+/* ---------------------------------------------------------------------------  */
+/* Basic application output                                                     */
 
 namespace UI
 {
-
     // fatal error
-    void DolwinError(const TCHAR* title, const TCHAR* fmt, ...)
+    void DolwinError(std::wstring_view title, std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
         if (emu.doldebug)
@@ -33,7 +30,7 @@ namespace UI
         }
         else
         {
-            MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+            MessageBox(NULL, buf, title.data(), MB_ICONHAND | MB_OK | MB_TOPMOST);
             std::vector<std::string> cmd{ "exit" };
             Debug::Hub.Execute(cmd);
         }
@@ -41,19 +38,19 @@ namespace UI
 
     // fatal error, if user answers no
     // return TRUE if "yes", and FALSE if "no"
-    BOOL DolwinQuestion(const TCHAR* title, const TCHAR* fmt, ...)
+    bool DolwinQuestion(std::wstring_view title, std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
         int btn = MessageBox(
             NULL,
             buf,
-            title,
+            title.data(),
             MB_RETRYCANCEL | MB_ICONHAND | MB_TOPMOST
             );
         if (btn == IDCANCEL)
@@ -65,33 +62,35 @@ namespace UI
     }
 
     // application message
-    void DolwinReport(const TCHAR* fmt, ...)
+    void DolwinReport(std::wstring_view fmt, ...)
     {
         va_list arg;
         TCHAR buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        _vstprintf_s(buf, _countof(buf) - 1, fmt.data(), arg);
         va_end(arg);
 
-        MessageBox(NULL, buf, APPNAME _T(" Reports"), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
+        auto app_name = std::wstring(APPNAME);
+        MessageBox(NULL, buf, (app_name + L" Reports").data(), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
     }
 
 }
 
-// ---------------------------------------------------------------------------
-// WinMain (very first run-time initialization and main loop)
+/* ---------------------------------------------------------------------------  */
+/* WinMain (very first run-time initialization and main loop)                   */
 
-// check for multiple instancies
+/* Check for multiple instancies. */
 static void LockMultipleCalls()
 {
-    static  HANDLE  dolwinsem;
+    static HANDLE dolwinsem;
 
     // mutex will fail if semephore already exists
     dolwinsem = CreateMutex(NULL, 0, APPNAME);
     if(dolwinsem == NULL)
     {
-        UI::DolwinReport(_T("We are already running ") APPNAME _T("!!"));
+        auto app_name = std::wstring(APPNAME);
+        UI::DolwinReport(L"We are already running %s!!", app_name.c_str());
         exit(0);    // return good
     }
     CloseHandle(dolwinsem);
@@ -99,20 +98,19 @@ static void LockMultipleCalls()
     dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
 }
 
-// set proper current working directory, create missing directories
-static void InitFileSystem(HINSTANCE hInst)
+static void InitFileSystem()
 {
-    // set current working directory relative to Dolwin executable
-    GetModuleFileName(hInst, ldat.cwd, sizeof(ldat.cwd));
-    *(_tcsrchr(ldat.cwd, _T('\\')) + 1) = 0;
-    SetCurrentDirectory(ldat.cwd);
-
-    // make sure, that Dolwin has data directory.
-    CreateDirectory(_T(".\\Data"), NULL);
+    /* Set current working directory relative to Dolwin executable */
+    auto cwd = std::filesystem::current_path();
+    ldat.cwd = cwd;
+    
+    /* Make sure, that Dolwin has data directory. */
+    _chdir(cwd.string().c_str());
+    std::filesystem::create_directory(".\\Data");
 }
 
 // return file name without quotes
-char * FixCommandLine(char *lpCmdLine)
+char* FixCommandLine(char *lpCmdLine)
 {
     if(*lpCmdLine == '\"' || *lpCmdLine == '\'')
     {
@@ -126,45 +124,42 @@ char * FixCommandLine(char *lpCmdLine)
     return lpCmdLine;
 }
 
-// keyboard accelerators (no need to be shared)
+/* Keyboard accelerators (no need to be shared). */
 HACCEL  hAccel;
 
-// entrypoint
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    // Required by HLE Subsystem
+    /* Required by HLE Subsystem */
     assert((uint64_t)hInstance <= 0x400000);
 
-    // prepare file system
-    InitFileSystem(hInstance);
+    InitFileSystem();
 
-    // run Dolwin once ?
-    if(GetConfigBool(USER_RUNONCE, USER_UI))
+    /* Allow only one instance of Dolwin to run at once? */
+    if (GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
     }
 
     hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
-    // init emu and user interface (emulator will be initialized
-    // during main window creation).
+    /* Start the emulator and user interface                        */
+    /* (emulator will be initialized during main window creation).  */
     CreateMainWindow(hInstance);
 
-    // Idle loop
-    for(;;)
+    /* Main loop */
+    MSG msg = {};
+    while (true)
     {
-        MSG msg;
-
         while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
         {
             UpdateProfiler();
             Sleep(1);
         }
 
-        // Idle loop
+        /* Idle loop */
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
         {
             if (!TranslateAccelerator(wnd.hMainWindow, hAccel, &msg))
@@ -175,7 +170,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    // should never reach this point. Dolwin always exit()'s.
-    UI::DolwinError(_T("ERROR"), APPNAME _T(" ERROR >>> SHOULD NEVER REACH HERE :)"));
-    return 1;   // return bad
+    /* Should never reach this point. Dolwin always exits. */
+    UI::DolwinError(L"ERROR", L"%s ERROR >>> SHOULD NEVER REACH HERE :)", APPNAME);
+    return 1;
 }

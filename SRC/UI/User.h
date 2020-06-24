@@ -3,9 +3,9 @@
 #pragma once
 
 // version info
-#define APPNAME     _T("Dolwin")
-#define APPDESC     _T("Nintendo Gamecube Emulator for Windows")
-#define APPVER      _T("0.130")
+constexpr auto APPNAME = L"Dolwin";
+constexpr auto APPDESC = L"Nintendo Gamecube Emulator for Windows";
+constexpr auto APPVER  = L"0.130";
 
 #include "UserMain.h"           // application entrypoint
 #include "UserFile.h"           // various file utilities

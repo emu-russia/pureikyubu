@@ -9,6 +9,7 @@ GCMCMPR.ilk
 Data/*.mci
 Dolwin.sdf
 Dolwin.v12.suo
+SRC/Libraries/fmt/x64
 
 .vs
 x64

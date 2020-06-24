@@ -1,5 +1,6 @@
 // Dolwin settings dialog (to configure user variables)
 #include "pch.h"
+#include <array>
 
 // all user variables (except memory cards vars) are placed in UserConfig.h
 
@@ -58,10 +59,10 @@ static void LoadSettings(int n)         // dialogs created
     {
         for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
         {
-            TCHAR* path = *it;
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path);
+            std::wstring path = *it;
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
         }
-
+        
         needSelUpdate = FALSE;
         settingsLoaded[1] = TRUE;
     }
@@ -95,9 +96,9 @@ static void LoadSettings(int n)         // dialogs created
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
-        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW));
-        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW));
-        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW));
+        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW).data());
+        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW).data());
+        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW).data());
 
         settingsLoaded[2] = TRUE;
     }
@@ -117,33 +118,35 @@ static void LoadSettings(int n)         // dialogs created
 static void SaveSettings()              // OK pressed
 {
     int i;
-    TCHAR buf[0x1000] = { 0, };
+    auto buf = std::wstring(0x1000, 0);
 
-    // Emulator
-    if(settingsLoaded[0])
+    /* Emulator. */
+    if (settingsLoaded[0])
     {
+
     }
 
-    // GUI/Selector
-    if(settingsLoaded[1])
+    /* GUI/Selector. */
+    if (settingsLoaded[1])
     {
         HWND hDlg = hChildDlg[1];
-
-        TCHAR text[0x1000] = { 0, };
         int max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+        static wchar_t text_buffer[1024];
 
-        // delete all dirs
+        /* Delete all directories. */
         usel.paths.clear();
-        SetConfigString(USER_PATH, (TCHAR *)_T(""), USER_UI);
+        SetConfigString(USER_PATH, L"", USER_UI);
 
-        // add dirs again
-        for(i=0; i<max; i++)
+        /* Add directories again. */
+        for (i = 0; i < max; i++)
         {
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
-            AddSelectorPath(text);
+            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text_buffer);
+            
+            /* Add the path. */
+            AddSelectorPath(text_buffer);
         }
 
-        // update selector layout, if PATH has changed
+        /* Update selector layout, if PATH has changed */
         if(needSelUpdate)
         {
             UpdateSelector();
@@ -158,17 +161,17 @@ static void SaveSettings()              // OK pressed
         int selected = (int)SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETCURSEL, 0, 0);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf);
-            uint32_t ver = _tcstoul(buf, NULL, 0);
+            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
+            uint32_t ver = _tcstoul(buf.data(), NULL, 0);
             SetConfigInt(USER_CONSOLE, ver, USER_HW);
         }
         else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
-        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_BOOTROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_DSP_DROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf, sizeof(buf));
+        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf.data(), sizeof(buf));
         SetConfigString(USER_DSP_IROM, buf, USER_HW);
     }
 
@@ -186,14 +189,12 @@ void ResetAllSettings()
     // Danger zone
 }
 
-// make sure path have ending '\\'
-static void fix_path(TCHAR *path)
+/* Make sure path have ending '\\' */
+static void fix_path(std::wstring& path)
 {
-    size_t n = _tcslen(path);
-    if(path[n-1] != _T('\\'))
+    if (!path.ends_with(L'\\'))
     {
-        path[n]   = _T('\\');
-        path[n+1] = 0;
+        path.push_back(L'\\');
     }
 }
 
@@ -248,122 +249,147 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
     return FALSE;
 }
 
-// ---------------------------------------------------------------------------
-// UserMenu
+/* ---------------------------------------------------------------------------  */
+/* UserMenu                                                                     */
 
 static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
     int i;
     int curSel, max;
-    TCHAR * path, text[1024];
+    std::wstring path, text(1024, 0);
 
     switch(message)
     {
         case WM_INITDIALOG:
             hChildDlg[1] = hDlg;
             LoadSettings(1);
-            return TRUE;
+            return true;
 
         case WM_COMMAND:
             switch(wParam)
             {
                 case IDC_FILEFILTER:
+                {
                     EditFileFilter(hDlg);
                     break;
+                }
                 case IDC_ADDPATH:
-                    if((path = UI::FileOpen(hDlg, UI::FileType::Directory)) != nullptr)
+                {
+                    if (path = UI::FileOpen(UI::FileType::Directory); !path.empty()) /* C++ 17 */
                     {
                         fix_path(path);
 
-                        // check if already present
+                        /* Check if already present. */
                         max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
-                        for(i=0; i<max; i++)
+                        for (i = 0; i < max; i++)
                         {
-                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text);
-                            if(!_tcsicmp(path, text)) break;
+                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
+                            if (path == text) break;
                         }
 
-                        // add new path
-                        if(i == max)
+                        /* Add new path. */
+                        if (i == max)
                         {
-                            SendDlgItemMessage( hDlg, IDC_PATHLIST, LB_ADDSTRING,
-                                                0, (LPARAM)path );
+                            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
                             needSelUpdate = TRUE;
                         }
                     }
+
                     break;
+                }
                 case IDC_KILLPATH:
+                {
                     curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
                     SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
                     needSelUpdate = TRUE;
+                    
                     break;
+                }
             }
+
             break;
  
         case WM_NOTIFY:
-            if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
+        {
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
             break;
+        }
     }
+
     return FALSE;
 }
 
-// ---------------------------------------------------------------------------
-// GCN Hardware
+/* ---------------------------------------------------------------------------  */
+/* GCN Hardware                                                                 */
 
 static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR * file = nullptr;
-
+    auto file = std::wstring();
     switch(message)
     {
         case WM_INITDIALOG:
+        {
             hChildDlg[2] = hDlg;
             LoadSettings(2);
-            return TRUE;
-
+            return true;
+        }
         case WM_NOTIFY:
-            if(((NMHDR FAR *)lParam)->code == PSN_APPLY) SaveSettings();
+        {
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
             break;
-
+        }
         case WM_COMMAND:
+        {
             switch (wParam)
             {
                 case IDC_CHOOSE_BOOTROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, _T(""));
+                        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
                     }
+
                     break;
+                }
                 case IDC_CHOOSE_DSPDROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, _T(""));
+                        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
                     }
+
                     break;
+                }
                 case IDC_CHOOSE_DSPIROM:
-                    file = UI::FileOpen(wnd.hMainWindow, UI::FileType::All);
-                    if (file != nullptr)
+                {
+                    file = UI::FileOpen(UI::FileType::All);
+                    if (!file.empty())
                     {
-                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file);
+                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
                     }
                     else
                     {
                         SetDlgItemText(hDlg, IDC_DSPIROM_FILE, _T(""));
                     }
+
                     break;
+                }
             }
+
             break;
+        }
     }
+
     return FALSE;
 }
 
@@ -440,12 +466,13 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     settingsLoaded[2] = FALSE;
 
     // property sheet
+    auto title = fmt::format(L"Configure {:s}", APPNAME);
     psh.dwSize = sizeof(PROPSHEETHEADER);
     psh.dwFlags = PSH_USEHICON | /*PSH_PROPTITLE |*/ PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
     psh.hwndParent = hParentWnd;
     psh.hInstance = hParentInst;
     psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
-    psh.pszCaption = _T("Configure ") APPNAME;
+    psh.pszCaption = title.data();
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
     psh.ppsp = (LPCPROPSHEETPAGE)&psp;

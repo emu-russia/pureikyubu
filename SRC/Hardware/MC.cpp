@@ -4,6 +4,7 @@
 
 #include "pch.h"
 #include <sys/stat.h>
+#include "../Common/String.h"
 
 /************************** Commands ***************************************/ 
 
@@ -55,61 +56,61 @@ const uint32_t Memcard_BytesMask [5] = { 0x00000000, 0xFF000000, 0xFFFF0000, 0xF
 /* 0x83 0x00
  * Returns the status byte of the memcard.
  */
-static void __fastcall MCGetStatusProc (Memcard * memcard);
+static void MCGetStatusProc (Memcard * memcard);
 
 /* 0x89
  * Clear errors bits on the status byte of the memcard.
  */
-static void __fastcall MCClearStatusProc (Memcard * memcard);
+static void MCClearStatusProc (Memcard * memcard);
 
 /* 0xF2 SA2 SA1 PN BA
  * Reads a specified number of bytes from the specified pointer 
  * and writes them to the memcard, at the specified sector, page and byte address
  */
-static void __fastcall MCPageProgramProc (Memcard * memcard);
+static void MCPageProgramProc (Memcard * memcard);
 
 /* 0x52 SA2 SA1 PN BA 0x00 0x00 0x00 0x00
  * Reads a specified number of bytes from the memcard
  * at the specified sector, page and byte address,
  * and writes them to the specified pointer
  */
-static void __fastcall MCReadArrayProc (Memcard * memcard);
+static void MCReadArrayProc (Memcard * memcard);
 
 /* 0xF1 SA2 SA1
  * Erases the specified sector
  */
-static void __fastcall MCSectorEraseProc (Memcard * memcard);
+static void MCSectorEraseProc (Memcard * memcard);
 
 /* 0x00 0x00
  * Returns the Id of this EXI device ( the size of the memcards in MBits in this case )
  * Returns 0 on error
  */
-static void __fastcall MCGetEXIDeviceIdProc (Memcard * memcard);
+static void MCGetEXIDeviceIdProc (Memcard * memcard);
 
 /* 0xF4 0x00 0x00
  * Erases all the memcard data
  */
-static void __fastcall MCCardEraseProc (Memcard * memcard);
+static void MCCardEraseProc (Memcard * memcard);
 
 /* 0x81 EN
  * Enables/disables interrupts
  */
-static void __fastcall MCEnableInterruptsProc (Memcard * memcard);
+static void MCEnableInterruptsProc (Memcard * memcard);
 
 /* 0X85 0x00
  * Returns the memcard id (Manufacturer and device id).
  */
-static void __fastcall MCReadIdProc (Memcard * memcard);
+static void MCReadIdProc (Memcard * memcard);
 
 /* 0X88
  * Puts the memcard in sleep mode
  */
-static void __fastcall MCSleepProc (Memcard * memcard);
+static void MCSleepProc (Memcard * memcard);
 
 /* 0X87
  * Puts the memcard in non-sleep mode
  */
-static void __fastcall MCWakeUpProc (Memcard * memcard);
+static void MCWakeUpProc (Memcard * memcard);
 
 #define Num_Memcard_ValidCommands 11
 const MCCommand Memcard_ValidCommands[Num_Memcard_ValidCommands] = {
@@ -152,7 +153,7 @@ bool MCOpened = false;
 
 Memcard memcard[2];
 
-static uint32_t __fastcall MCCalculateOffset (uint32_t mc_address) {
+static uint32_t MCCalculateOffset (uint32_t mc_address) {
 	if (mc_address & MEMCARD_BA_EXTRABYTES)
 		DBHalt ("MC :: Extra bytes are not supported\n");
     return        (mc_address & 0x0000007F) |
@@ -160,7 +161,7 @@ static uint32_t __fastcall MCCalculateOffset (uint32_t mc_address) {
                  ((mc_address & 0x7FFF0000) >> 7);
 }
 
-static void __fastcall MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t size) {
+static void MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t size) {
     if (SyncSave == TRUE) // Bad idea!!
     {
         if (fseek(memcard->file, offset, SEEK_SET) != 0) {
@@ -176,7 +177,7 @@ static void __fastcall MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t
  * All the following procedures asume that (memcard->connected == TRUE)
  */
 /**********************************MCGetStatusProc*********************************************/
-static void __fastcall MCGetStatusProc (Memcard * memcard){
+static void MCGetStatusProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
@@ -184,7 +185,7 @@ static void __fastcall MCGetStatusProc (Memcard * memcard){
         (((uint32_t)memcard->status << 24) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCClearStatusProc*********************************************/
-static void __fastcall MCClearStatusProc (Memcard * memcard) {
+static void MCClearStatusProc (Memcard * memcard) {
 // TODO : Verify which bits are cleared
     //memcard[cardnum].status &= (~MEMCARD_STATUS_ERASEERROR | ~MEMCARD_STATUS_PROGRAMEERROR);
     memcard->status &= (~MEMCARD_STATUS_ERASEERROR |
@@ -192,7 +193,7 @@ static void __fastcall MCClearStatusProc (Memcard * memcard) {
                                 ~MEMCARD_STATUS_ARRAYTOBUFFER);
 }
 /**********************************MCPageProgramProc*********************************************/
-static void __fastcall MCPageProgramProc (Memcard * memcard){
+static void MCPageProgramProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     uint32_t offset;
@@ -228,7 +229,7 @@ static void __fastcall MCPageProgramProc (Memcard * memcard){
     exi->csr |= EXI_CSR_EXIINT;
 }
 /**********************************MCReadArrayProc*********************************************/
-static void __fastcall MCReadArrayProc (Memcard * memcard){
+static void MCReadArrayProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     uint32_t offset;
@@ -270,7 +271,7 @@ static void __fastcall MCReadArrayProc (Memcard * memcard){
     }
 }
 /**********************************MCSectorEraseProc*********************************************/
-static void __fastcall MCSectorEraseProc (Memcard * memcard){
+static void MCSectorEraseProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
     uint32_t offset;
 
@@ -293,7 +294,7 @@ static void __fastcall MCSectorEraseProc (Memcard * memcard){
     exi->csr |= EXI_CSR_EXIINT;
 }
 /**********************************MCSectorEraseProc*********************************************/
-static void __fastcall MCGetEXIDeviceIdProc (Memcard * memcard) {
+static void MCGetEXIDeviceIdProc (Memcard * memcard) {
     EXIRegs * exi = memcard->exi;
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
@@ -301,7 +302,7 @@ static void __fastcall MCGetEXIDeviceIdProc (Memcard * memcard) {
         ((uint32_t)(memcard->size >> 17) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCCardEraseProc*********************************************/
-static void __fastcall MCCardEraseProc (Memcard * memcard) {
+static void MCCardEraseProc (Memcard * memcard) {
     uint32_t offset = 0;
 
 	/* memcard->status |= MEMCARD_STATUS_BUSY; */
@@ -313,7 +314,7 @@ static void __fastcall MCCardEraseProc (Memcard * memcard) {
 	/* memcard->status &= ~MEMCARD_STATUS_BUSY; */
 }
 /**********************************MCEnableInterruptsProc*********************************************/
-static void __fastcall MCEnableInterruptsProc (Memcard * memcard){
+static void MCEnableInterruptsProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     if ( memcard->commandData & (0x01 << 24) ) 
@@ -322,7 +323,7 @@ static void __fastcall MCEnableInterruptsProc (Memcard * memcard){
         DBReport2 (DbgChannel::MC, "Disable Interrupts\n");
 }
 /**********************************MCReadIdProc*********************************************/
-static void __fastcall MCReadIdProc (Memcard * memcard){
+static void MCReadIdProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     int auxbytes = (EXI_CR_TLEN(exi->cr) + 1);
@@ -330,11 +331,11 @@ static void __fastcall MCReadIdProc (Memcard * memcard){
         (((uint32_t)memcard->ID << 16) & Memcard_BytesMask[auxbytes]);
 }
 /**********************************MCSleepProc*********************************************/
-static void __fastcall MCSleepProc (Memcard * memcard) {
+static void MCSleepProc (Memcard * memcard) {
     memcard->status |= MEMCARD_STATUS_SLEEP;
 }
 /**********************************MCWakeUpProc*********************************************/
-static void __fastcall MCWakeUpProc (Memcard * memcard) {
+static void MCWakeUpProc (Memcard * memcard) {
     memcard->status &= ~MEMCARD_STATUS_SLEEP;
 }
 
@@ -609,12 +610,12 @@ bool MCConnect (int cardnum) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
+            auto str = Util::convert<char>(UI::FileShortName(memcard[cardnum].filename));
             UI::DolwinReport(
-                _T("Couldnt open memcard (slot %c),\n")
-                _T("location : %s\n\n")
-                _T("Check path or file attributes."),
-                slt[cardnum],
-                UI::FileShortName(memcard[cardnum].filename)
+                L"Couldnt open memcard (slot %c),\n"
+                L"location : %s\n\n"
+                L"Check path or file attributes.",
+                slt[cardnum], str.c_str()
             );
             return FALSE;
         }

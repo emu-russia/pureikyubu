@@ -2,15 +2,15 @@
 
 // define fifo pipeline callbacks
 
-void __fastcall pos_idx(GX::FifoProcessor* fifo);
-void __fastcall t0_idx(GX::FifoProcessor* fifo);
-void __fastcall t1_idx(GX::FifoProcessor* fifo);
-void __fastcall t2_idx(GX::FifoProcessor* fifo);
-void __fastcall t3_idx(GX::FifoProcessor* fifo);
-void __fastcall t4_idx(GX::FifoProcessor* fifo);
-void __fastcall t5_idx(GX::FifoProcessor* fifo);
-void __fastcall t6_idx(GX::FifoProcessor* fifo);
-void __fastcall t7_idx(GX::FifoProcessor* fifo);
+void pos_idx(GX::FifoProcessor* fifo);
+void t0_idx(GX::FifoProcessor* fifo);
+void t1_idx(GX::FifoProcessor* fifo);
+void t2_idx(GX::FifoProcessor* fifo);
+void t3_idx(GX::FifoProcessor* fifo);
+void t4_idx(GX::FifoProcessor* fifo);
+void t5_idx(GX::FifoProcessor* fifo);
+void t6_idx(GX::FifoProcessor* fifo);
+void t7_idx(GX::FifoProcessor* fifo);
 
 extern void (__fastcall* posattr[4][2][5])(GX::FifoProcessor* fifo);
 extern void(__fastcall* nrmattr[4][3][5])(GX::FifoProcessor* fifo);

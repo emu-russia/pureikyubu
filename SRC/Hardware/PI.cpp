@@ -90,23 +90,23 @@ void PIClearInt(uint32_t mask)
 // ---------------------------------------------------------------------------
 // traps for interrupt regs
 
-static void __fastcall read_intsr(uint32_t addr, uint32_t *reg)
+static void read_intsr(uint32_t addr, uint32_t *reg)
 {
     *reg = pi.intsr | ((pi.rswhack & 1) << 16);
 }
 
 // writes turns them off ?
-static void __fastcall write_intsr(uint32_t addr, uint32_t data)
+static void write_intsr(uint32_t addr, uint32_t data)
 {
     PIClearInt(data);
 }
 
-static void __fastcall read_intmr(uint32_t addr, uint32_t *reg)
+static void read_intmr(uint32_t addr, uint32_t *reg)
 {
     *reg = pi.intmr;
 }
 
-static void __fastcall write_intmr(uint32_t addr, uint32_t data)
+static void write_intmr(uint32_t addr, uint32_t data)
 {
     pi.intmr = data;
 
@@ -128,7 +128,7 @@ static void __fastcall write_intmr(uint32_t addr, uint32_t data)
 // GC revision
 //
 
-static void __fastcall read_mbrev(uint32_t addr, uint32_t *reg)
+static void read_mbrev(uint32_t addr, uint32_t *reg)
 {
     uint32_t ver = pi.consoleVer;
 
@@ -147,7 +147,7 @@ static void __fastcall read_mbrev(uint32_t addr, uint32_t *reg)
 // reset register
 //
 
-static void __fastcall write_reset(uint32_t addr, uint32_t data)
+static void write_reset(uint32_t addr, uint32_t data)
 {
     // reset emulator
     if(data)
@@ -157,7 +157,7 @@ static void __fastcall write_reset(uint32_t addr, uint32_t data)
     }
 }
 
-static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
+static void read_reset(uint32_t addr, uint32_t *reg)
 {
     // on system power-on, the code is zero
     *reg = 0;
@@ -167,12 +167,12 @@ static void __fastcall read_reset(uint32_t addr, uint32_t *reg)
 // PI fifo (CPU)
 //
 
-static void __fastcall read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = pi.base & ~0x1f; }
-static void __fastcall write_pi_base(uint32_t addr, uint32_t data)  { pi.base = data & ~0x1f; }
-static void __fastcall read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = pi.top & ~0x1f; }
-static void __fastcall write_pi_top(uint32_t addr, uint32_t data)   { pi.top = data & ~0x1f; }
-static void __fastcall read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = pi.wrptr & ~0x1f; }
-static void __fastcall write_pi_wrptr(uint32_t addr, uint32_t data) { pi.wrptr = data & ~0x1f; }
+static void read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = pi.base & ~0x1f; }
+static void write_pi_base(uint32_t addr, uint32_t data)  { pi.base = data & ~0x1f; }
+static void read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = pi.top & ~0x1f; }
+static void write_pi_top(uint32_t addr, uint32_t data)   { pi.top = data & ~0x1f; }
+static void read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = pi.wrptr & ~0x1f; }
+static void write_pi_wrptr(uint32_t addr, uint32_t data) { pi.wrptr = data & ~0x1f; }
 
 // show PI fifo configuration
 void DumpPIFIFO()
