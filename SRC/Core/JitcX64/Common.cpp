@@ -1,4 +1,4 @@
-#include "pch.h"
+#include "../pch.h"
 
 // X64 Register usage:
 // rsi: offset Gekko::regs.gpr

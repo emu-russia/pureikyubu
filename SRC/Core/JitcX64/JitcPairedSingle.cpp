@@ -1,5 +1,5 @@
 // Paired Single Instructions
-#include "pch.h"
+#include "../pch.h"
 
 // HID2[PSE] verification is not performed because it is not used by programs.
 
