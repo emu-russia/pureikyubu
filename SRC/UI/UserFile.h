@@ -26,8 +26,9 @@ namespace UI
     bool FileSave(std::wstring_view filename, std::vector<uint8_t>& data);
     bool FileSave(std::string_view filename, std::vector<uint8_t>& data);
     
-    /* Open a file dialog. */
-    std::wstring FileOpen(FileType type = FileType::All);
+    /* Open/save a file dialog. */
+    std::wstring FileOpenDialog(FileType type = FileType::All);
+    std::wstring FileSaveDialog(FileType type);
     
     std::wstring FileShortName(std::wstring_view filename, int lvl = 3);
     std::wstring FileSmartSize(size_t size);

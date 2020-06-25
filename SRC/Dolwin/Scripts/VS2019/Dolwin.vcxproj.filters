@@ -39,8 +39,8 @@
     <ClCompile Include="..\..\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\EmuCommands.cpp" />
-    <ClCompile Include="..\Emulator.cpp" />
+    <ClCompile Include="..\..\EmuCommands.cpp" />
+    <ClCompile Include="..\..\Emulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\..\..\RES\Dolwin.ico">

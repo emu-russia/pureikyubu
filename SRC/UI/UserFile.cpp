@@ -82,7 +82,7 @@ namespace UI
     }
 
     /* Open the file/directory dialog. */
-    std::wstring FileOpen(FileType type)
+    std::wstring FileOpenDialog(FileType type)
     {
         static auto tempStr = std::wstring(0x1000, 0);
         std::wstring szFileName(1024, 0), szFileTitle(1024, 0);
@@ -233,115 +233,135 @@ namespace UI
     }
 
     // Save file dialog
-    TCHAR * FileSaveDialog(HWND hwnd, FileType type)
+    std::wstring FileSaveDialog(FileType type)
     {
-        static TCHAR tempBuf[0x1000] = { 0 };
-        OPENFILENAME ofn;
-        TCHAR szFileName[1024];
-        TCHAR szFileTitle[1024];
-        TCHAR lastDir[1024], prevDir[1024];
-        BOOL result;
+        static auto tempStr = std::wstring(0x1000, 0);
+        std::wstring szFileName(1024, 0), szFileTitle(1024, 0);
 
-        GetCurrentDirectory(sizeof(prevDir), prevDir);
-
+        auto prevDir = std::filesystem::current_path();
         switch (type)
         {
-            case FileType::All:
-            case FileType::Json:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
-                break;
-            case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
-                break;
-            case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
-                break;
-            case FileType::Patch:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_PATCH, USER_UI));
-                break;
+        case FileType::All:
+        {
+            auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
+            break;
+        }
+        case FileType::Dvd:
+        {
+            auto lastDir = GetConfigString(USER_LASTDIR_DVD, USER_UI);
+            break;
+        }
+        case FileType::Map:
+        {
+            auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
+            break;
+        }
+        case FileType::Patch:
+        {
+            auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
+            break;
+        }
+        case FileType::Json:
+        {
+            auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
+            break;
+        }
+        default:
+        {
+            break;
+        }
         }
 
-        memset(szFileName, 0, sizeof(szFileName));
-        memset(szFileTitle, 0, sizeof(szFileTitle));
+        bool result = false;
 
         {
-            ofn.lStructSize = sizeof(OPENFILENAME);
-            ofn.hwndOwner = hwnd;
+            /* Select which files to allow in the dialog. */
+            auto filter = std::wstring();
             switch (type)
             {
-                case FileType::All:
-                    ofn.lpstrFilter =
-                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
-                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
-                        _T("Binary Files (*.bin)\0*.bin\0")
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
-                    break;
-                case FileType::Dvd:
-                    ofn.lpstrFilter =
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
-                    break;
-                case FileType::Map:
-                    ofn.lpstrFilter =
-                        _T("Symbolic information files (*.map)\0*.map\0")
-                        _T("All Files (*.*)\0*.*\0");
-                    break;
-                case FileType::Patch:
-                    ofn.lpstrFilter =
-                        _T("Patch files (*.patch)\0*.patch\0")
-                        _T("All Files (*.*)\0*.*\0");
-                    break;
-                case FileType::Json:
-                    ofn.lpstrFilter =
-                        _T("Json files (*.json)\0*.json\0")
-                        _T("All Files (*.*)\0*.*\0");
-                    break;
+            case FileType::All:
+            {
+                filter =
+                    L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                    L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                    L"Binary Files (*.bin)\0*.bin\0"
+                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                    L"All Files (*.*)\0*.*\0";
+                break;
+            }
+            case FileType::Dvd:
+            {
+                filter =
+                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                    L"All Files (*.*)\0*.*\0";
+                break;
+            }
+            case FileType::Map:
+            {
+                filter =
+                    L"Symbolic information files (*.map)\0*.map\0"
+                    L"All Files (*.*)\0*.*\0";
+                break;
+            }
+            case FileType::Patch:
+            {
+                filter =
+                    L"Patch files (*.patch)\0*.patch\0"
+                    L"All Files (*.*)\0*.*\0";
+                break;
+            }
+            case FileType::Json:
+            {
+                filter =
+                    L"Json files (*.json)\0*.json\0"
+                    L"All Files (*.*)\0*.*\0";
+                break;
+            }
+            default:
+            {
+                break;
+            }
             }
 
-            ofn.lpstrCustomFilter = NULL;
-            ofn.nMaxCustFilter = 0;
-            ofn.nFilterIndex = 1;
-            ofn.lpstrFile = szFileName;
-            ofn.nMaxFile = sizeof(szFileName);
-            ofn.lpstrInitialDir = lastDir;
-            ofn.lpstrFileTitle = szFileTitle;
-            ofn.nMaxFileTitle = sizeof(szFileTitle);
-            ofn.lpstrTitle = _T("Save File\0");
-            ofn.lpstrDefExt = _T("");
-            ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
+            auto title = L"Open File";
+            auto file = Win::SaveDialog(title, filter);
 
-            result = GetSaveFileName(&ofn);
+            if (!file.empty())
+            {
+                szFileName = file;
+                result = true;
+            }
         }
 
         if (result)
         {
-            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
+            tempStr = szFileName;
 
-            // save last directory
-            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
-            int i = (int)_tcslen(lastDir) - 1;
-            while (lastDir[i] != _T('\\')) i--;
-            lastDir[i + 1] = _T('\0');
+            /* Save last directory. */
+            auto lastDir = tempStr;
+
+            /* Remove the file from the directory string. */
+            int i = lastDir.size() - 1;
+            while (lastDir[i] != L'\\') i--;
+
+            lastDir[i + 1] = L'\0';
             switch (type)
             {
-                case FileType::All:
-                case FileType::Json:
-                    SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
-                    break;
-                case FileType::Dvd:
-                    SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
-                    break;
-                case FileType::Map:
-                    SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
-                    break;
-                case FileType::Patch:
-                    SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
-                    break;
-                default:
-                    break;
+            case FileType::All:
+            case FileType::Json:
+                SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                break;
+            case FileType::Dvd:
+                SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                break;
+            case FileType::Map:
+                SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                break;
+            case FileType::Patch:
+                SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
+                break;
             }
-            
+
             chdir(prevDir.string().c_str());
             return tempStr;
         }

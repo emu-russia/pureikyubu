@@ -561,7 +561,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Load DVD/executable (START) */
             case ID_FILE_LOAD:
             {
-                if (name = UI::FileOpen(); !name.empty())
+                if (name = UI::FileOpenDialog(); !name.empty())
                 {
                 loadFile:
                     
@@ -620,7 +620,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             /* Set new current DVD image. */
             case ID_FILE_CHANGEDVD:
             {
-                if (name = UI::FileOpen(UI::FileType::Dvd); !name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
+                if (name = UI::FileOpenDialog(UI::FileType::Dvd); !name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
                 {
                     /* Same */
                     if (name == ldat.currentFile)
@@ -803,7 +803,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             /* Load patch data */
             case ID_LOAD_PATCH:
             {
-                if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
+                if (name = UI::FileOpenDialog(UI::FileType::Patch); !name.empty())
                 {
                     UnloadPatch();
                     LoadPatch(name.data(), false);
@@ -814,7 +814,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             /* Add new patch data */
             case ID_ADD_PATCH:
             {
-                if (name = UI::FileOpen(UI::FileType::Patch); !name.empty())
+                if (name = UI::FileOpenDialog(UI::FileType::Patch); !name.empty())
                 {
                     LoadPatch(name.data(), true);
                 }
@@ -880,7 +880,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Mount Dolphin SDK as DVD */
             case ID_DEVELOPMENT_MOUNTSDK:
             {
-                auto dolphinSdkDir = UI::FileOpen(UI::FileType::Directory);
+                auto dolphinSdkDir = UI::FileOpenDialog(UI::FileType::Directory);
                 if (!dolphinSdkDir.empty())
                 {
                     std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };
@@ -900,11 +900,12 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             {
                 if (Debug::Log != nullptr)
                 {
-                    if ((name = UI::FileSaveDialog(hwnd, UI::FileType::Json)) != nullptr)
+                    if (name = UI::FileSaveDialog(UI::FileType::Json); !name.empty())
                     {
                         std::string text;
                         Debug::Log->ToString(text);
-                        UI::FileSave(name, text);
+                        std::vector<uint8_t> buffer(text.begin(), text.end());
+                        UI::FileSave(name, buffer);
                     }
                 }
                 return 0;

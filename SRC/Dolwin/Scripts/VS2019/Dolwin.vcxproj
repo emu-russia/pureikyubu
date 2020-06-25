@@ -219,8 +219,8 @@
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\EmuCommands.cpp" />
-    <ClCompile Include="..\Emulator.cpp">
+    <ClCompile Include="..\..\EmuCommands.cpp" />
+    <ClCompile Include="..\..\Emulator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
