@@ -35,14 +35,14 @@ static INT_PTR CALLBACK AboutProc(
             SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
             CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-            auto c = "{:s} ({:s}, {:s}) {:s} {:s}";
-            auto buffer = fmt::format(L"{:s} - {:s}\n"
-                                      "Copyright 2003,2004,2020, Dolwin team\n"
-                                      "Build version ", 
-                                      APPNAME, APPDESC/*, APPVER, __DATE__, __TIME__,
-                                      version, platform*/);
+            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s}\n",
+                                      APPNAME, APPDESC,
+                                      L"Copyright 2003,2004,2020, Dolwin team",
+                                      L"Build version",
+                                      APPVER, /*__DATE__, __TIME__,*/
+                                      version, platform);
 
-            //SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
+            SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
             return true;
         }
 
