@@ -199,7 +199,7 @@ namespace DVD
 		text += "\t";
 
 		// Bytes
-		for (int i = 0; i < sizeof(info->instrBytes); i++)
+		for (size_t i = 0; i < sizeof(info->instrBytes); i++)
 		{
 			if (i < info->instrSize)
 			{
@@ -218,7 +218,7 @@ namespace DVD
 
 		// Operands
 		bool first = true;
-		for (int i = 0; i < info->numOp; i++)
+		for (size_t i = 0; i < info->numOp; i++)
 		{
 			if (!first)
 			{

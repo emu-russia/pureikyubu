@@ -10,10 +10,13 @@
 #include <time.h>
 #include <tchar.h>
 #include <codecvt>
+#include <sys/stat.h>
+#include <algorithm>
 #include <Windows.h>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/String.h"
 
 #include "Hardware.h"
 #include "HwCommands.h"

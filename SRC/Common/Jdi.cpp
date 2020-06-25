@@ -21,7 +21,7 @@ namespace Debug
 	{
 		size_t size = str.size();
 		unsigned h = 37;
-		for (int i=0; i<size; i++)
+		for (size_t i=0; i<size; i++)
 		{
 			h = (h * 54059) ^ (str[i] * 76963);
 		}

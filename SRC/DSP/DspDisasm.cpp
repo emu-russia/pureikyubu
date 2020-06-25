@@ -406,7 +406,7 @@ namespace DSP
 		text += ToHexString((uint16_t)startAddr);
 		text += " ";
 
-		for (int i = 0; i < DspCore::MaxInstructionSizeInBytes; i++)
+		for (size_t i = 0; i < DspCore::MaxInstructionSizeInBytes; i++)
 		{
 			if (i < info.sizeInBytes)
 			{
@@ -430,7 +430,7 @@ namespace DSP
 		}
 
 		bool firstParam = true;
-		for (int i = 0; i < info.numParameters; i++)
+		for (size_t i = 0; i < info.numParameters; i++)
 		{
 			if (!firstParam)
 			{
@@ -459,7 +459,7 @@ namespace DSP
 			}
 
 			bool firstExtendedParam = true;
-			for (int i=0; i<info.numParametersEx; i++)
+			for (size_t i=0; i<info.numParametersEx; i++)
 			{
 				if (!firstExtendedParam)
 				{

@@ -350,7 +350,7 @@ namespace DVD
 				_tcscat_s(filePath, _countof(filePath) - 1, _T("/dvddata"));
 				TCHAR* filePathPtr = filePath + _tcslen(filePath);
 
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 				{
 					*filePathPtr++ = (TCHAR)path[i];
 				}

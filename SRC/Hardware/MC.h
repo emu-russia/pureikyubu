@@ -57,7 +57,7 @@ typedef struct Memcard {
     int databytes;
     int dummybytes;
     uint32_t executionFlags;
-    void (__fastcall *procedure)(Memcard *);
+    void (*procedure)(Memcard *);
     int databytesread;
     int dummybytesread;
     uint32_t commandData;
@@ -69,7 +69,7 @@ typedef struct MCCommand {
     int databytes;
     int dummybytes;
     uint32_t executionFlags;
-    void (__fastcall *procedure)(Memcard *);
+    void (*procedure)(Memcard *);
     uint8_t Command;
 } MCCommand ;
 
