@@ -1,6 +1,5 @@
 // Dolwin about dialog
 #include "pch.h"
-#include <fmt/format.h>
 
 static bool opened = false;
 static HWND dlgAbout;

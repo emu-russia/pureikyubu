@@ -5,9 +5,7 @@
 /*      .bin        - binary file (loaded at BINORG offset)     */
 /*      .gcm        - game master data (GC DVD images)          */
 #include "pch.h"
-#include "../Common/String.h"
-#include <fmt/format.h>
-#include <fmt/printf.h>
+
 /* All loader variables are placed here */
 LoaderData ldat;
 

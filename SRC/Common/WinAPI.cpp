@@ -1,7 +1,4 @@
 #include "pch.h"
-#include "WinAPI.h"
-#include <windows.h>
-#include <shlobj.h>
 
 namespace Win
 {

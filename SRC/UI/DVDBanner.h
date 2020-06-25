@@ -1,7 +1,4 @@
 #pragma once
-#include <memory>
-#include <string>
-#include <cstdint>
 
 // banner filename. must reside in DVD root.
 constexpr auto DVD_BANNER_FILENAME = "opening.bnr";

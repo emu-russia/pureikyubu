@@ -1,6 +1,5 @@
 // Dolwin settings dialog (to configure user variables)
 #include "pch.h"
-#include <array>
 
 // all user variables (except memory cards vars) are placed in UserConfig.h
 

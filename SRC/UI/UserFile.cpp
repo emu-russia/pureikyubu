@@ -1,7 +1,5 @@
 // Dolwin file utilities
 #include "pch.h"
-#include "../Common/WinAPI.h" /* Windows API abstraction. */
-#include <fmt/printf.h>
 
 namespace UI
 {

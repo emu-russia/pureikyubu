@@ -5,8 +5,6 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 */
 
 #include "pch.h"
-#include "../UI/UserFile.h"
-#include <fmt/format.h>
 
 namespace DVD
 {

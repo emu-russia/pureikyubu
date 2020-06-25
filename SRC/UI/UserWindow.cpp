@@ -4,9 +4,6 @@
 /* statusbar is used to show current emulator state and performance.        */
 /* last note : DO NOT USE WINDOWS API CODE IN OTHER SUB-SYSTEMS!!           */
 #include "pch.h"
-#include <locale>
-#include <codecvt>
-#include "../Common/String.h"
 
 /* All important data is placed here */
 UserWindow wnd;
