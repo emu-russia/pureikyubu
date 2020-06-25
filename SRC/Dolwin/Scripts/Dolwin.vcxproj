@@ -68,6 +68,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)</OutDir>
     <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)</OutDir>
@@ -76,6 +77,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)</OutDir>
     <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)</OutDir>
@@ -269,6 +271,9 @@
     </ProjectReference>
     <ProjectReference Include="..\..\HighLevel\Scripts\GCNHighLevel.vcxproj">
       <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Libraries\fmt\fmt.vcxproj">
+      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\PAD\Scripts\PAD.vcxproj">
       <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>

@@ -225,7 +225,7 @@ namespace UI
             }
 
             SetCurrentDirectory(prevDir);
-            return tempBuf;
+            return tempStr;
         }
         else
         {
