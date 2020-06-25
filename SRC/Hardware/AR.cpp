@@ -151,81 +151,81 @@ static void ARDMA()
 
 // RAM pointer
 
-static void __fastcall ar_write_maddr_h(uint32_t addr, uint32_t data)
+static void ar_write_maddr_h(uint32_t addr, uint32_t data)
 {
     aram.mmaddr &= 0x0000ffff;
     aram.mmaddr |= ((data & 0x3ff) << 16);
 }
-static void __fastcall ar_read_maddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.mmaddr >> 16) & 0x3FF; }
+static void ar_read_maddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.mmaddr >> 16) & 0x3FF; }
 
-static void __fastcall ar_write_maddr_l(uint32_t addr, uint32_t data)
+static void ar_write_maddr_l(uint32_t addr, uint32_t data)
 {
     aram.mmaddr &= 0xffff0000;
     aram.mmaddr |= ((data & ~0x1F) & 0xffff);
 }
-static void __fastcall ar_read_maddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.mmaddr & ~0x1F; }
+static void ar_read_maddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.mmaddr & ~0x1F; }
 
 // ARAM pointer
 
-static void __fastcall ar_write_araddr_h(uint32_t addr, uint32_t data)
+static void ar_write_araddr_h(uint32_t addr, uint32_t data)
 {
     aram.araddr &= 0x0000ffff;
     aram.araddr |= ((data & 0x3FF) << 16);
 }
-static void __fastcall ar_read_araddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.araddr >> 16) & 0x3FF; }
+static void ar_read_araddr_h(uint32_t addr, uint32_t *reg) { *reg = (aram.araddr >> 16) & 0x3FF; }
 
-static void __fastcall ar_write_araddr_l(uint32_t addr, uint32_t data)
+static void ar_write_araddr_l(uint32_t addr, uint32_t data)
 {
     aram.araddr &= 0xffff0000;
     aram.araddr |= ((data & ~0x1F) & 0xffff);
 }
-static void __fastcall ar_read_araddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.araddr & ~0x1F; }
+static void ar_read_araddr_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.araddr & ~0x1F; }
 
 //
 // byte count register
 //
 
-static void __fastcall ar_write_cnt_h(uint32_t addr, uint32_t data)
+static void ar_write_cnt_h(uint32_t addr, uint32_t data)
 {
     aram.cnt &= 0x0000ffff;
     aram.cnt |= ((data & 0x83FF) << 16);
 }
-static void __fastcall ar_read_cnt_h(uint32_t addr, uint32_t *reg) { *reg = (aram.cnt >> 16) & 0x83FF; }
+static void ar_read_cnt_h(uint32_t addr, uint32_t *reg) { *reg = (aram.cnt >> 16) & 0x83FF; }
 
-static void __fastcall ar_write_cnt_l(uint32_t addr, uint32_t data)
+static void ar_write_cnt_l(uint32_t addr, uint32_t data)
 {
     aram.cnt &= 0xffff0000;
     aram.cnt |= ((data & ~0x1F) & 0xffff);
     ARDMA();
 }
-static void __fastcall ar_read_cnt_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.cnt & ~0x1F; }
+static void ar_read_cnt_l(uint32_t addr, uint32_t *reg) { *reg = (uint16_t)aram.cnt & ~0x1F; }
 
 //
 // hacks
 //
 
-static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
-static void __fastcall no_write(uint32_t addr, uint32_t data) {}
+static void no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
+static void no_write(uint32_t addr, uint32_t data) {}
 
-static void __fastcall ar_hack_size_r(uint32_t addr, uint32_t *reg) { *reg = aram.size; }
-static void __fastcall ar_hack_size_w(uint32_t addr, uint32_t data) { aram.size = (uint16_t)data; }
-static void __fastcall ar_hack_mode(uint32_t addr, uint32_t *reg)   { *reg = 1; }
+static void ar_hack_size_r(uint32_t addr, uint32_t *reg) { *reg = aram.size; }
+static void ar_hack_size_w(uint32_t addr, uint32_t data) { aram.size = (uint16_t)data; }
+static void ar_hack_mode(uint32_t addr, uint32_t *reg)   { *reg = 1; }
 
 // ---------------------------------------------------------------------------
 // 32-bit ARAM registers
 
-static void __fastcall ar_write_maddr(uint32_t addr, uint32_t data)   { aram.mmaddr = data & 0x03FF'FFE0; }
-static void __fastcall ar_read_maddr(uint32_t addr, uint32_t *reg)    { *reg = aram.mmaddr; }
+static void ar_write_maddr(uint32_t addr, uint32_t data)   { aram.mmaddr = data & 0x03FF'FFE0; }
+static void ar_read_maddr(uint32_t addr, uint32_t *reg)    { *reg = aram.mmaddr; }
 
-static void __fastcall ar_write_araddr(uint32_t addr, uint32_t data)  { aram.araddr = data & 0x03FF'FFE0; }
-static void __fastcall ar_read_araddr(uint32_t addr, uint32_t *reg)   { *reg = aram.araddr; }
+static void ar_write_araddr(uint32_t addr, uint32_t data)  { aram.araddr = data & 0x03FF'FFE0; }
+static void ar_read_araddr(uint32_t addr, uint32_t *reg)   { *reg = aram.araddr; }
 
-static void __fastcall ar_write_cnt(uint32_t addr, uint32_t data)
+static void ar_write_cnt(uint32_t addr, uint32_t data)
 {
     aram.cnt = data & 0x83FF'FFE0;
     ARDMA();
 }
-static void __fastcall ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = aram.cnt & 0x83FF'FFE0; }
+static void ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = aram.cnt & 0x83FF'FFE0; }
 
 // ---------------------------------------------------------------------------
 // init

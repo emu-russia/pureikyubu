@@ -230,7 +230,7 @@ static void DIDduToHostCallback(uint8_t data)
 // DI register traps
 
 // status register
-static void __fastcall write_sr(uint32_t addr, uint32_t data)
+static void write_sr(uint32_t addr, uint32_t data)
 {
     // set masks
     if(data & DI_SR_BRKINTMSK) DISR |= DI_SR_BRKINTMSK;
@@ -264,13 +264,13 @@ static void __fastcall write_sr(uint32_t addr, uint32_t data)
     }
 }
 
-static void __fastcall read_sr(uint32_t addr, uint32_t *reg)
+static void read_sr(uint32_t addr, uint32_t *reg)
 {
     *reg = (uint16_t)DISR;
 }
 
 // control register
-static void __fastcall write_cr(uint32_t addr, uint32_t data)
+static void write_cr(uint32_t addr, uint32_t data)
 {
     DICR = (uint16_t)data;
 
@@ -287,13 +287,13 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     }
 }
 
-static void __fastcall read_cr(uint32_t addr, uint32_t *reg)
+static void read_cr(uint32_t addr, uint32_t *reg)
 {
     *reg = (uint16_t)DICR;
 }
 
 // cover register
-static void __fastcall write_cvr(uint32_t addr, uint32_t data)
+static void write_cvr(uint32_t addr, uint32_t data)
 {
     // clear cover interrupt
     if(data & DI_CVR_CVRINT)
@@ -307,7 +307,7 @@ static void __fastcall write_cvr(uint32_t addr, uint32_t data)
     else DICVR &= ~DI_CVR_CVRINTMSK;
 }
 
-static void __fastcall read_cvr(uint32_t addr, uint32_t *reg)
+static void read_cvr(uint32_t addr, uint32_t *reg)
 {
     uint32_t value = DICVR & ~DI_CVR_CVR;
 
@@ -320,10 +320,10 @@ static void __fastcall read_cvr(uint32_t addr, uint32_t *reg)
 }
 
 // dma registers
-static void __fastcall read_mar(uint32_t addr, uint32_t *reg)  { *reg = DIMAR & DI_DIMAR_MASK; }
-static void __fastcall write_mar(uint32_t addr, uint32_t data) { DIMAR = data; }
-static void __fastcall read_len(uint32_t addr, uint32_t *reg)  { *reg = DILEN & ~0x1f; }
-static void __fastcall write_len(uint32_t addr, uint32_t data) { DILEN = data; }
+static void read_mar(uint32_t addr, uint32_t *reg)  { *reg = DIMAR & DI_DIMAR_MASK; }
+static void write_mar(uint32_t addr, uint32_t data) { DIMAR = data; }
+static void read_len(uint32_t addr, uint32_t *reg)  { *reg = DILEN & ~0x1f; }
+static void write_len(uint32_t addr, uint32_t data) { DILEN = data; }
 
 static void DISetCommandBuffer(int n, uint32_t value)
 {
@@ -338,19 +338,19 @@ static uint32_t DIGetCommandBuffer(int n)
 }
 
 // di buffers
-static void __fastcall read_cmdbuf0(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(0); }
-static void __fastcall write_cmdbuf0(uint32_t addr, uint32_t data) { DISetCommandBuffer(0, data); }
-static void __fastcall read_cmdbuf1(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(1); }
-static void __fastcall write_cmdbuf1(uint32_t addr, uint32_t data) { DISetCommandBuffer(1, data); }
-static void __fastcall read_cmdbuf2(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(2); }
-static void __fastcall write_cmdbuf2(uint32_t addr, uint32_t data) { DISetCommandBuffer(2, data); }
-static void __fastcall read_immbuf(uint32_t addr, uint32_t *reg)   { *reg = _byteswap_ulong(*(uint32_t *)di.immbuf); }
-static void __fastcall write_immbuf(uint32_t addr, uint32_t data)  { *(uint32_t*)di.immbuf = _byteswap_ulong(data); }
+static void read_cmdbuf0(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(0); }
+static void write_cmdbuf0(uint32_t addr, uint32_t data) { DISetCommandBuffer(0, data); }
+static void read_cmdbuf1(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(1); }
+static void write_cmdbuf1(uint32_t addr, uint32_t data) { DISetCommandBuffer(1, data); }
+static void read_cmdbuf2(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(2); }
+static void write_cmdbuf2(uint32_t addr, uint32_t data) { DISetCommandBuffer(2, data); }
+static void read_immbuf(uint32_t addr, uint32_t *reg)   { *reg = _byteswap_ulong(*(uint32_t *)di.immbuf); }
+static void write_immbuf(uint32_t addr, uint32_t data)  { *(uint32_t*)di.immbuf = _byteswap_ulong(data); }
 
 // register is read only.
 // currently, bit 0 is used for ROM scramble disable (which ROM?), bits 1-7 are reserved
 // used in EXISync->__OSGetDIConfig call, return 0 and forget.
-static void __fastcall read_cfg(uint32_t addr, uint32_t *reg) { *reg = 0; }
+static void read_cfg(uint32_t addr, uint32_t *reg) { *reg = 0; }
 
 // ---------------------------------------------------------------------------
 // init

@@ -2,6 +2,8 @@
 
 #include "pch.h"
 #include "../UI/UserFile.h"
+#include <fmt/format.h>
+#include <algorithm>
 
 namespace DSP
 {
@@ -20,34 +22,29 @@ namespace DSP
 
 		if (config != nullptr)
 		{
-			size_t iromImageSize = 0;
-			uint8_t* iromImage = (uint8_t*)UI::FileLoad(config->DspIromFilename, &iromImageSize);
+			auto iromImage = UI::FileLoad(config->DspIromFilename);
 
-			if (!iromImage || iromImageSize != IROM_SIZE)
+			if (iromImage.empty() || iromImage.size() != IROM_SIZE)
 			{
 				DBReport("Failed to load DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
 			}
 			else
 			{
 				DBReport2(DbgChannel::DSP, "Loaded DSP IROM: %s\n", Debug::Hub.TcharToString(config->DspIromFilename).c_str());
-				memcpy(irom, iromImage, IROM_SIZE);
-				free(iromImage);
+				std::memcpy(irom, iromImage.data(), IROM_SIZE);
 			}
 
-			// Load DROM
+			/* Load DROM. */
+			auto dromImage = UI::FileLoad(config->DspDromFilename);
 
-			size_t dromImageSize = 0;
-			uint8_t* dromImage = (uint8_t*)UI::FileLoad(config->DspDromFilename, &dromImageSize);
-
-			if (!dromImage || dromImageSize != DROM_SIZE)
+			if (dromImage.empty() || dromImage.size() != DROM_SIZE)
 			{
 				DBReport("Failed to load DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
 			}
 			else
 			{
 				DBReport2(DbgChannel::DSP, "Loaded DSP DROM: %s\n", Debug::Hub.TcharToString(config->DspDromFilename).c_str());
-				memcpy(drom, dromImage, DROM_SIZE);
-				free(dromImage);
+				std::memcpy(drom, dromImage.data(), DROM_SIZE);
 			}
 		}
 
@@ -1110,14 +1107,15 @@ namespace DSP
 			}
 		}
 
-		// Dump ucode
+		/* Dump ucode. */
 		if (dumpUcode)
 		{
 			if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 			{
-				TCHAR filename[0x100] = { 0, };
-				_stprintf_s(filename, _countof(filename) - 1, _T("Data\\DspUcode_%04X.bin"), DmaRegs.blockSize);
-				UI::FileSave(filename, ptr, DmaRegs.blockSize);
+				auto filename = fmt::format(L"Data\\DspUcode_{:04X}.bin", DmaRegs.blockSize);
+				auto buffer = std::vector<uint8_t>(ptr, ptr + DmaRegs.blockSize);
+				
+				UI::FileSave(filename, buffer);
 				DBReport2(DbgChannel::DSP, "DSP Ucode dumped to DspUcode_%04X.bin\n", DmaRegs.blockSize);
 			}
 		}

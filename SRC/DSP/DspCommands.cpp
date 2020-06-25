@@ -2,6 +2,8 @@
 
 #include "pch.h"
 #include "../UI/UserFile.h"
+#include <fmt/format.h>
+#include <fstream>
 
 namespace DSP
 {
@@ -9,73 +11,55 @@ namespace DSP
     // disasm dsp ucode to file
     static Json::Value* cmd_dspdisa(std::vector<std::string>& args)
     {
-        size_t start_addr = 0;      // in DSP slots (halfwords)
-
+        auto start_addr = 0LL;      // in DSP slots (halfwords)
         if (args.size() >= 3)
         {
-            start_addr = strtoul(args[2].c_str(), nullptr, 0);
+            start_addr = std::strtoul(args[2].c_str(), nullptr, 0);
         }
-
-        size_t ucodeSize = 0;
-        uint8_t* ucode = (uint8_t*)UI::FileLoad(args[1].c_str(), &ucodeSize);
-        if (!ucode)
+        
+        auto ucode = UI::FileLoad(args[1].c_str());
+        if (ucode.empty())
         {
             DBReport("Failed to load %s\n", args[1].c_str());
             return nullptr;
         }
 
-        FILE* f = nullptr;
-        fopen_s(&f, "Data\\dspdisa.txt", "wt");
-        if (!f)
+        auto file = std::ofstream("Data\\dspdisa.txt");
+        if (!file.is_open())
         {
-            free(ucode);
             DBReport("Failed to create dsp_disa.txt\n");
             return nullptr;
         }
 
-        uint8_t* ucodePtr = ucode;
-        size_t bytesLeft = ucodeSize;
+        uint8_t* ucodePtr = ucode.data();
+        size_t bytesLeft = ucode.size();
         size_t offset = 0;      // in DSP slots (halfwords)
 
-        if (f)
-        {
-            fprintf(f, "// Disassembled %s\n\n", args[1].c_str());
-        }
+        file << fmt::format("// Disassembled {:s}\n\n", args[1].c_str());
 
         while (bytesLeft != 0)
         {
             DSP::AnalyzeInfo info = { 0 };
 
-            // Analyze
-
-            bool result = DSP::Analyzer::Analyze(ucodePtr, ucodeSize - 2 * offset, info);
+            /* Analyze. */
+            bool result = DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
             if (!result)
             {
                 DBReport("DSP::Analyze failed at offset: 0x%08X\n", offset);
                 break;
             }
 
-            // Disassemble
-
+            /* Disassemble. */
             std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
 
-            if (f)
-            {
-                fprintf(f, "%s\n", text.c_str());
-            }
+            file << fmt::format("{:s}\n", text.c_str());
 
             offset += (info.sizeInBytes / sizeof(uint16_t));
             bytesLeft -= info.sizeInBytes;
             ucodePtr += info.sizeInBytes;
         }
 
-        free(ucode);
-
-        if (f)
-        {
-            fflush(f);
-            fclose(f);
-        }
+        file.close();
 
         DBReport("Done.\n");
         return nullptr;

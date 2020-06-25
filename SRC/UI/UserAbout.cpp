@@ -1,5 +1,6 @@
 // Dolwin about dialog
 #include "pch.h"
+#include <fmt/format.h>
 
 static bool opened = false;
 static HWND dlgAbout;
@@ -12,10 +13,19 @@ static INT_PTR CALLBACK AboutProc(
     LPARAM  lParam      // second message parameter
 )
 {
+#ifdef _DEBUG
+    auto version = L"Debug";
+#else
+    auto version = L"Release";
+#endif
+
+#if _M_X64
+    auto platform = L"x64";
+#else
+    auto platform = L"x86";
+#endif
+
     UNREFERENCED_PARAMETER(lParam);
-
-    TCHAR tmpbuf[256];    
-
     switch(uMsg)
     {
         // prepare swap dialog
@@ -26,31 +36,15 @@ static INT_PTR CALLBACK AboutProc(
             SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
             CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-            _stprintf_s(
-                tmpbuf,
-                _countof(tmpbuf) - 1,
-                APPNAME _T(" - ") APPDESC _T("\n")
-                _T("Copyright 2003,2004,2020, Dolwin team\n")
-                _T("Build version %s (%s, %s) ")
-#ifdef      _DEBUG
-                _T("Debug ")
-#else
-                _T("Release ")
-#endif
+            auto c = "{:s} ({:s}, {:s}) {:s} {:s}";
+            auto buffer = fmt::format(L"{:s} - {:s}\n"
+                                      "Copyright 2003,2004,2020, Dolwin team\n"
+                                      "Build version ", 
+                                      APPNAME, APPDESC/*, APPVER, __DATE__, __TIME__,
+                                      version, platform*/);
 
-#if         _M_X64
-                _T("x64")
-#else
-                _T("x86")
-#endif
-
-                ,
-                APPVER,
-                _T(__DATE__),
-                _T(__TIME__)
-            );
-            SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, tmpbuf);
-            return TRUE;
+            //SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
+            return true;
         }
 
         // close button -> kill about
@@ -61,22 +55,25 @@ static INT_PTR CALLBACK AboutProc(
             opened = false;
             break;
         }
+
         case WM_COMMAND:
         {
-            if(wParam == IDCANCEL)
+            if (wParam == IDCANCEL)
             {
                 DestroyWindow(dlgAbout);
                 dlgAbout = NULL;
                 opened = false;
                 return TRUE;
             }
-            if(wParam == IDOK)
+
+            if (wParam == IDOK)
             {
                 DestroyWindow(dlgAbout);
                 dlgAbout = NULL;
                 opened = false;
                 return TRUE;
             }
+
             break;
         }
     }

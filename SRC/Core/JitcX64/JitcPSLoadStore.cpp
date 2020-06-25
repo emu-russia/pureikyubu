@@ -44,6 +44,9 @@ namespace Gekko
 					seg->Write8(0x83);
 					seg->Write16(0x04c1);
 					break;
+
+				default:
+					break;
 			}
 		}
 

@@ -1,49 +1,50 @@
-// WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin
-// should take care about proper window style itself !!
-#define WIN_STYLE   ( WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX)
-#define WIN_NAME    APPNAME _T(" - ") APPDESC _T(" (") APPVER _T(")")
+#pragma once
+#include <string>
 
-// status bar parts enumerator
+/* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin   */
+/* should take care about proper window style itself !!                     */
+constexpr int WIN_STYLE = WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_SIZEBOX;
+
+/* Status bar parts enumerator */
 enum class STATUS_ENUM
 {
-    Progress = 1,        // current emu state
-    Fps,                 // fps counter
-    Timing,              // * Obsolete *
-    Time,                // time counter
+    Progress = 1,        /* current emu state   */
+    Fps,                 /* fps counter         */
+    Timing,              /* * Obsolete *        */
+    Time,                /* time counter        */
 };
 
-void SetStatusText(STATUS_ENUM sbPart, const TCHAR *text, bool post=false);
-TCHAR* GetStatusText(STATUS_ENUM sbPart);
+void SetStatusText(STATUS_ENUM sbPart, std::wstring_view text, bool post=false);
+std::wstring GetStatusText(STATUS_ENUM sbPart);
 
-void    StartProgress(int range, int delta);
-void    StepProgress();
-void    StopProgress();
+void StartProgress(int range, int delta);
+void StepProgress();
+void StopProgress();
 
-// recent files menu
-void    UpdateRecentMenu(HWND hwnd);
-void    AddRecentFile(TCHAR *path);
-void    LoadRecentFile(int index);
+/* Recent files menu */
+void UpdateRecentMenu(HWND hwnd);
+void AddRecentFile(std::wstring_view path);
+void LoadRecentFile(int index);
 
-// window controls API
-void    OnMainWindowOpened();
-void    OnMainWindowClosed();
-HWND    CreateMainWindow(HINSTANCE hInst);
-void    ResizeMainWindow(int width, int height);
+/* Window controls API */
+void OnMainWindowOpened();
+void OnMainWindowClosed();
+HWND CreateMainWindow(HINSTANCE hInst);
+void ResizeMainWindow(int width, int height);
 
-// utilities
-void    SetAlwaysOnTop(HWND hwnd, BOOL state);
-void    SetMenuItemText(HMENU hmenu, UINT id, const TCHAR *text);
-void    CenterChildWindow(HWND hParent, HWND hChild);
+/* Utilities */
+void SetAlwaysOnTop(HWND hwnd, BOOL state);
+void SetMenuItemText(HMENU hmenu, UINT id, std::wstring_view text);
+void CenterChildWindow(HWND hParent, HWND hChild);
 
-// all important data is placed here
-typedef struct UserWindow
+/* All important data is placed here */
+struct UserWindow
 {
-    bool    ontop;              // main window is on top ?
+    bool    ontop;              /* main window is on top ?  */
+    HWND    hMainWindow;        /* main window              */
+    HWND    hStatusWindow;      /* statusbar window         */
+    HWND    hProgress;          /* progress bar             */
+    HMENU   hMainMenu;          /* main menu                */
+};
 
-    HWND    hMainWindow;        // main window
-    HWND    hStatusWindow;      // statusbar window
-    HWND    hProgress;          // progress bar
-    HMENU   hMainMenu;          // main menu
-} UserWindow;
-
-extern  UserWindow wnd;
+extern UserWindow wnd;

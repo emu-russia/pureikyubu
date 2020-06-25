@@ -202,6 +202,9 @@ namespace Gekko
                 case MmuResult::NoExecute:
                     regs.spr[(int)Gekko::SPR::SRR1] |= 0x1000'0000;
                     break;
+                
+                default:
+                    break;
             }
         }
         else if (code == Exception::DSI)
@@ -217,8 +220,12 @@ namespace Gekko
                 case MmuResult::ProtectedRead:
                     regs.spr[(int)Gekko::SPR::DSISR] |= 0x0800'0000;
                     break;
+                
                 case MmuResult::ProtectedWrite:
                     regs.spr[(int)Gekko::SPR::DSISR] |= 0x0A00'0000;
+                    break;
+
+                default:
                     break;
             }
         }
@@ -241,6 +248,8 @@ namespace Gekko
                     break;
                 case PrivilegedCause::Trap:
                     regs.spr[(int)Gekko::SPR::SRR1] |= 0x0002'0000;
+                    break;
+                default:
                     break;
             }
         }

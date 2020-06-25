@@ -37,7 +37,7 @@ AIControl ai;
 // ---------------------------------------------------------------------------
 // AIDCR
 
-static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
+static void write_aidcr(uint32_t addr, uint32_t data)
 {
     if (ai.log)
     {
@@ -119,7 +119,7 @@ static void __fastcall write_aidcr(uint32_t addr, uint32_t data)
     Flipper::HW->DSP->DSPSetHaltBit ((data >> 2) & 1);
 }
 
-static void __fastcall read_aidcr(uint32_t addr, uint32_t *reg)
+static void read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
@@ -231,24 +231,24 @@ static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
 // dma buffer address
 // 
 
-static void __fastcall write_dmah(uint32_t addr, uint32_t data)
+static void write_dmah(uint32_t addr, uint32_t data)
 {
     ai.madr_hi = (uint16_t)data & 0x3FF;
 }
 
-static void __fastcall write_dmal(uint32_t addr, uint32_t data)
+static void write_dmal(uint32_t addr, uint32_t data)
 {
     ai.madr_lo = (uint16_t)data & ~0x1F;
 }
 
-static void __fastcall read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr_hi & 0x3FF; }
-static void __fastcall read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr_lo & ~0x1F; }
+static void read_dmah(uint32_t addr, uint32_t *reg) { *reg = ai.madr_hi & 0x3FF; }
+static void read_dmal(uint32_t addr, uint32_t *reg) { *reg = ai.madr_lo & ~0x1F; }
 
 //
 // dma length / control
 //
 
-static void __fastcall write_len(uint32_t addr, uint32_t data)
+static void write_len(uint32_t addr, uint32_t data)
 {
     ai.len = (uint16_t)data;
 
@@ -270,7 +270,7 @@ static void __fastcall write_len(uint32_t addr, uint32_t data)
         }
     }
 }
-static void __fastcall read_len(uint32_t addr, uint32_t *reg)
+static void read_len(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.len;
 }
@@ -279,7 +279,7 @@ static void __fastcall read_len(uint32_t addr, uint32_t *reg)
 // read sample block (32b) counter
 //
 
-static void __fastcall read_dcnt(uint32_t addr, uint32_t *reg)
+static void read_dcnt(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.dcnt & 0x7FFF;
 }
@@ -306,7 +306,7 @@ void AISINT()
 }
 
 // AI control register
-static void __fastcall write_cr(uint32_t addr, uint32_t data)
+static void write_cr(uint32_t addr, uint32_t data)
 {
     ai.cr = data & 0x7F;
 
@@ -365,19 +365,19 @@ static void __fastcall write_cr(uint32_t addr, uint32_t data)
     if (ai.cr & AICR_AFR) AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_48000);
     else AISetDvdAudioSampleRate(Flipper::AudioSampleRate::Rate_32000);
 }
-static void __fastcall read_cr(uint32_t addr, uint32_t *reg)
+static void read_cr(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.cr;
 }
 
 // stream samples counter
-static void __fastcall read_scnt(uint32_t addr, uint32_t *reg)
+static void read_scnt(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.scnt;
 }
 
 // interrupt trigger
-static void __fastcall write_it(uint32_t addr, uint32_t data)
+static void write_it(uint32_t addr, uint32_t data)
 {
     if (ai.log)
     {
@@ -385,14 +385,14 @@ static void __fastcall write_it(uint32_t addr, uint32_t data)
     }
     ai.it = data;
 }
-static void __fastcall read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it; }
+static void read_it(uint32_t addr, uint32_t *reg)     { *reg = ai.it; }
 
 // stream volume register
-static void __fastcall write_vr(uint32_t addr, uint32_t data)
+static void write_vr(uint32_t addr, uint32_t data)
 {
     ai.vr = (uint16_t)data;
 }
-static void __fastcall read_vr(uint32_t addr, uint32_t *reg)
+static void read_vr(uint32_t addr, uint32_t *reg)
 {
     *reg = ai.vr;
 }
@@ -400,16 +400,16 @@ static void __fastcall read_vr(uint32_t addr, uint32_t *reg)
 // ---------------------------------------------------------------------------
 // DSPCore interface (mailbox and interrupt)
 
-static void __fastcall write_out_mbox_h(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteHi((uint16_t)data); }
-static void __fastcall write_out_mbox_l(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteLo((uint16_t)data); }
-static void __fastcall read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadHi(false); }
-static void __fastcall read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadLo(false); }
+static void write_out_mbox_h(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteHi((uint16_t)data); }
+static void write_out_mbox_l(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteLo((uint16_t)data); }
+static void read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadHi(false); }
+static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadLo(false); }
 
-static void __fastcall read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadHi(false); }
-static void __fastcall read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadLo(false); }
+static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadHi(false); }
+static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadLo(false); }
 
-static void __fastcall write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
-static void __fastcall write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
+static void write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
+static void write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
 
 void DSPAssertInt()
 {

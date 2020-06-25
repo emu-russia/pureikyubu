@@ -343,8 +343,7 @@ static const char * b_ctr[16] = {
 // Place target address in operands. Helper for bcx/bx calls.
 static char *place_target(char *ptr, int comma, size_t ptrMaxSize)
 {
-    char *old;
-    uint32_t*t = (uint32_t*)&o->target;
+    char* old;
 
     if(comma) ptr += sprintf_s(ptr, ptrMaxSize, "%s", COMMA);
     old = ptr;

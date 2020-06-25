@@ -1,37 +1,38 @@
-// Supported formats are :
-//      .patch      - patching files (new)
-//      .dol        - GAMECUBE custom executable
-//      .elf        - standard executable
-//      .bin        - binary file (loaded at BINORG offset)
-//      .gcm        - game master data (GC DVD images)
+/* Supported formats are :                                      */
+/*      .patch      - patching files (new)                      */
+/*      .dol        - GAMECUBE custom executable                */
+/*      .elf        - standard executable                       */
+/*      .bin        - binary file (loaded at BINORG offset)     */
+/*      .gcm        - game master data (GC DVD images)          */
 #include "pch.h"
-
-// all loader variables are placed here
+#include "../Common/String.h"
+#include <fmt/format.h>
+#include <fmt/printf.h>
+/* All loader variables are placed here */
 LoaderData ldat;
 
-// ---------------------------------------------------------------------------
-// DOL loader
+/* ---------------------------------------------------------------------------  */
+/* DOL loader                                                                   */
 
-// return DOL body size (text + data)
+/* Return DOL body size (text + data) */
 uint32_t DOLSize(DolHeader *dol)
 {
-    int32_t i;
     uint32_t totalBytes = 0;
 
-    for(i=0; i<DOL_NUM_TEXT; i++)
+    for (int i = 0; i < DOL_NUM_TEXT; i++)
     {
-        if(dol->textOffset[i])
+        if (dol->textOffset[i])
         {
-            // aligned to 32 bytes
+            /* Aligned to 32 bytes */
             totalBytes += (dol->textSize[i] + 31) & ~31;
         }
     }
 
-    for(i=0; i<DOL_NUM_DATA; i++)
+    for (int i = 0; i < DOL_NUM_DATA; i++)
     {
-        if(dol->dataOffset[i])
+        if (dol->dataOffset[i])
         {
-            // aligned to 32 bytes
+            /* Aligned to 32 bytes */
             totalBytes += (dol->dataSize[i] + 31) & ~31;
         }
     }
@@ -39,36 +40,35 @@ uint32_t DOLSize(DolHeader *dol)
     return totalBytes;
 }
 
-// return DOL entrypoint, or 0 if cannot load
-// we dont need to translate address, because DOL loading goes
-// under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadDOL(TCHAR *dolname)
+/* Return DOL entrypoint, or 0 if cannot load                           */
+/* we dont need to translate address, because DOL loading goes          */
+/* under control of DolphinOS, so just use simple translation mask.     */
+uint32_t LoadDOL(std::wstring_view dolname)
 {
-    int i;
-    FILE        *dol;
     DolHeader   dh;
 
-    // try to open file
-    dol = nullptr;
-    _tfopen_s(&dol, dolname, _T("rb"));
-    if(!dol) return 0;
-
-    // load DOL header and swap it for loader
-    fread(&dh, 1, sizeof(DolHeader), dol);
-    Gekko::GekkoCore::SwapArea((uint32_t *)&dh, sizeof(DolHeader));
-
-    DBReport2(DbgChannel::Loader, "Loading DOL %s (%i b).\n",
-              Debug::Hub.TcharToString(dolname).c_str(), DOLSize(&dh) );
-
-    // load all text (code) sections
-    for(i=0; i<DOL_NUM_TEXT; i++)
+    /* Try to open file. */
+    auto dol = std::ifstream(dolname, std::ifstream::binary);
+    if (!dol.is_open())
     {
-        if(dh.textOffset[i])    // if offset is 0, then section is empty
-        {
-            void *addr = &mi.ram[dh.textAddress[i] & RAMMASK];
+        return 0;
+    }
 
-            fseek(dol, dh.textOffset[i], SEEK_SET);
-            fread(addr, 1, dh.textSize[i], dol);
+    /* Load DOL header and swap it for loader. */
+    dol.read((char*)&dh, sizeof(DolHeader));
+    Gekko::GekkoCore::SwapArea((uint32_t*)&dh, sizeof(DolHeader));
+
+    DBReport2(DbgChannel::Loader, "Loading DOL %s (%i b).\n", dolname.data(), DOLSize(&dh));
+
+    /* Load all text (code) sections. */
+    for(int i = 0; i < DOL_NUM_TEXT; i++)
+    {
+        if(dh.textOffset[i])    /* If offset is 0, then section is empty */
+        {
+            char* addr = (char*)&mi.ram[dh.textAddress[i] & RAMMASK];
+
+            dol.seekg(dh.textOffset[i]);
+            dol.read(addr, dh.textSize[i]);
 
             DBReport2(DbgChannel::Loader,
                 "   text section %08X->%08X, size %i b\n",
@@ -78,15 +78,15 @@ uint32_t LoadDOL(TCHAR *dolname)
         }
     }
 
-    // load all data sections
-    for(i=0; i<DOL_NUM_DATA; i++)
+    /* Load all data sections */
+    for (int i = 0; i < DOL_NUM_DATA; i++)
     {
-        if(dh.dataOffset[i])    // if offset is 0, then section is empty
+        if (dh.dataOffset[i])    /* If offset is 0, then section is empty */
         {
-            void *addr = &mi.ram[dh.dataAddress[i] & RAMMASK];
+            char* addr = (char*)&mi.ram[dh.dataAddress[i] & RAMMASK];
 
-            fseek(dol, dh.dataOffset[i], SEEK_SET);
-            fread(addr, 1, dh.dataSize[i], dol);
+            dol.seekg(dh.dataOffset[i]);
+            dol.read(addr, dh.dataSize[i]);
 
             DBReport2(DbgChannel::Loader,
                 "   data section %08X->%08X, size %i b\n", 
@@ -96,19 +96,19 @@ uint32_t LoadDOL(TCHAR *dolname)
         }
     }
 
-    HWConfig * config = new HWConfig;
+    HWConfig* config = new HWConfig;
     assert(config);
     EMUGetHwConfig(config);
     BootROM(false, false, config->consoleVer);
 
-    // Setup registers
+    /* Setup registers. */
     Gekko::Gekko->regs.gpr[1] = 0x816ffffc;
     Gekko::Gekko->regs.gpr[13] = 0x81100000;      // Fake sda1
 
     // DO NOT CLEAR BSS !
 
     DBReport2(DbgChannel::Loader, "   DOL entrypoint %08X\n\n", dh.entryPoint);
-    fclose(dol);
+    dol.close();
     return dh.entryPoint;
 }
 
@@ -253,32 +253,32 @@ static void Elf_SwapInit(int is_little)
 // return ELF entrypoint, or 0 if cannot load
 // we dont need to translate address, because DOL loading goes
 // under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadELF(TCHAR *elfname)
+uint32_t LoadELF(std::wstring_view elfname)
 {
     unsigned long elf_entrypoint;
-    FILE        *f;
     ElfEhdr     hdr;
     ElfPhdr     phdr;
-    int         i;
 
-    f = nullptr;
-    _tfopen_s(&f, elfname, _T("rb"));
-    if(!f) return 0;
-
-    // check header
-    fread(&hdr, 1, sizeof(ElfEhdr), f);
-    if(CheckELFHeader(&hdr) == 0)
+    auto file = std::ifstream(elfname, std::ifstream::binary);
+    if (!file.is_open())
     {
-        fclose(f);
         return 0;
     }
 
-    Elf_SwapInit( (hdr.e_ident[EI_DATA] == ELFDATA2LSB) ? (1) : (0) );
+    // check header
+    file.read((char*)&hdr, sizeof(ElfEhdr));
+    if(CheckELFHeader(&hdr) == 0)
+    {
+        file.close();
+        return 0;
+    }
+
+    Elf_SwapInit((hdr.e_ident[EI_DATA] == ELFDATA2LSB ? 1 : 0));
 
     // check file type (must be exec)
     if(Elf_SwapHalf(hdr.e_type) != ET_EXEC)
     {
-        fclose(f);
+        file.close();
         return 0;
     }
 
@@ -288,14 +288,13 @@ uint32_t LoadELF(TCHAR *elfname)
     // load all segments
     //
 
-    fseek(f, Elf_SwapOff(hdr.e_phoff), SEEK_SET);
-
-    for(i=0; i<Elf_SwapHalf(hdr.e_phnum); i++)
+    file.seekg(Elf_SwapOff(hdr.e_phoff));
+    for(int i = 0; i < Elf_SwapHalf(hdr.e_phnum); i++)
     {
         long old;
 
-        fread(&phdr, 1, sizeof(ElfPhdr), f);
-        old = ftell(f);
+        file.read((char*)&phdr, sizeof(ElfPhdr));
+        old = file.tellg();
 
         // load one segment
         {
@@ -311,15 +310,16 @@ uint32_t LoadELF(TCHAR *elfname)
 
                 vend = vaddr + size;
 
-                fseek(f, Elf_SwapOff(phdr.p_offset), SEEK_SET);
-                fread(&mi.ram[vaddr & RAMMASK], vend - vaddr, 1, f);
+                file.seekg(Elf_SwapOff(phdr.p_offset));
+                file.read((char*)&mi.ram[vaddr & RAMMASK], vend - vaddr);
+                //fread(&mi.ram[vaddr & RAMMASK], vend - vaddr, 1, f);
             }
         }
 
-        fseek(f, old, SEEK_SET);
+        file.seekg(old);
     }
 
-    fclose(f);
+    file.close();
     return elf_entrypoint;
 }
 
@@ -328,50 +328,50 @@ uint32_t LoadELF(TCHAR *elfname)
 
 // return BINORG offset, or 0 if cannot load.
 // use physical addressing!
-uint32_t LoadBIN(TCHAR * binname)
+uint32_t LoadBIN(std::wstring_view binname)
 {
     uint32_t org = GetConfigInt(USER_BINORG, USER_LOADER);
 
-    // binary file loading address is above RAM
-    if(org >= RAMSIZE) return 0;
-
-    // get file size
-    size_t fsize = UI::FileSize(binname);
-
-    // try to load file
-    FILE* bin = nullptr;
-    _tfopen_s(&bin, binname, _T("rb"));
-    if(bin == NULL) return 0;
-
-    // nothing to load ?
-    if(fsize == 0)
+    /* Binary file loading address is above RAM. */
+    if (org >= RAMSIZE)
     {
-        fclose(bin);
         return 0;
     }
 
-    // limit by RAMSIZE
+    /* Try to load file. */
+    auto file = std::ifstream(binname, std::ifstream::binary | std::ifstream::ate);
+    
+    /* Nothing to load? */
+    if (!file.is_open())
+    {
+        return 0;
+    }
+    
+    /* Get the size of the file. */
+    auto fsize = file.tellg();
+    file.seekg(std::ifstream::beg);
+
+    /* Limit by RAMSIZE. */
     if((org + fsize) > RAMSIZE)
     {
         fsize = RAMSIZE - org;
     }
 
-    // load
-    fread(&mi.ram[org], 1, fsize, bin);
-    fclose(bin);
+    file.read((char*)&mi.ram[org], fsize);
+    file.close();
 
     DBReport2(DbgChannel::Loader, "Loaded binary file at %08X (0x%08X)\n\n", org, fsize);
     org |= 0x80000000;
     return org;     // its me =:)
 }
 
-// ---------------------------------------------------------------------------
-// patch loader.
+/* --------------------------------------------------------------------------- */
+/* Patch loader.                                                               */
 
-// you may ignore whole patch code, since it's definitely only for me :)
+/* You may ignore whole patch code, since it's definitely only for me :) */
 
-// return 1, if patch loaded OK.
-// "add" can be used to extend current patch table.
+/* Return 1, if patch loaded OK. */
+/* "add" can be used to extend current patch table. */
 bool LoadPatch(TCHAR * patchname, bool add)
 {
     // allowed ?
@@ -388,11 +388,11 @@ bool LoadPatch(TCHAR * patchname, bool add)
     if (!UI::FileExists(patchname))
         return false;
 
-    // print notification in debugger
+    /* Print notification in debugger. */
     if(add) DBReport2(DbgChannel::Loader, "Added patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
     else DBReport2(DbgChannel::Loader, "Loaded patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
 
-    // remove current patch table (if not adding)
+    /* Remove current patch table (if not adding). */
     if(!add)
     {
         UnloadPatch();
@@ -405,7 +405,8 @@ bool LoadPatch(TCHAR * patchname, bool add)
 
         size_t oldPatchCount = ldat.patches.size();
 
-        Patch* patches = (Patch*)UI::FileLoad(patchname);
+        auto buffer = UI::FileLoad(patchname);
+        auto patches = (Patch*)buffer.data();
 
         for (int i = 0; i < patchNum; i++)
         {
@@ -420,7 +421,8 @@ bool LoadPatch(TCHAR * patchname, bool add)
     }
     else
     {
-        Patch* patches = (Patch * )UI::FileLoad(patchname);
+        auto buffer = UI::FileLoad(patchname);
+        auto patches = (Patch*)buffer.data();
 
         for (int i = 0; i < patchNum; i++)
         {
@@ -430,7 +432,6 @@ bool LoadPatch(TCHAR * patchname, bool add)
             ldat.patches.push_back(next);
         }
 
-        free(patches);
         ApplyPatches(true);
     }
 
@@ -510,32 +511,46 @@ void UnloadPatch()
     }
 }
 
-// ---------------------------------------------------------------------------
-// file loader engine
+/* ---------------------------------------------------------------------------  */
+/* File loader engine                                                           */
 
 static void AutoloadMap()
 {
     // get map file name
-    TCHAR mapname[0x1000];
+    auto mapname = std::wstring();
     TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
-    _tsplitpath_s(ldat.currentFile,
+    _tsplitpath_s(ldat.currentFile.data(),
         drive, _countof(drive) - 1,
         dir, _countof(dir) - 1,
         name, _countof(name) - 1,
         ext, _countof(ext) - 1);
 
     // Step 1: try to load map from Data directory
-    if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
-    else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
-    MAP_FORMAT format = LoadMAP(mapname);
-    if(format != MAP_FORMAT::BAD) return;
+    if (ldat.dvd)
+    {
+        mapname = fmt::format(L".\\Data\\{:s}.map", ldat.gameID);
+    }
+    else
+    {
+        mapname = fmt::format(L".\\Data\\{:s}.map", name);
+    }
+    
+    MAP_FORMAT format = LoadMAP(mapname.data());
+    if (format != MAP_FORMAT::BAD) return;
  
     // Step 2: try to load map from file directory
-    if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, ldat.gameID);
-    else _stprintf_s (mapname, _countof(mapname) - 1, _T("%s%s%s.map"), drive, dir, name);
-    format = LoadMAP(mapname);
-    if(format != MAP_FORMAT::BAD) return;
+    if (ldat.dvd)
+    {
+        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, ldat.gameID);
+    }
+    else
+    {
+        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, name);
+    }
+
+    format = LoadMAP(mapname.data());
+    if (format != MAP_FORMAT::BAD) return;
 
     // sorry, no maps for this DVD/executable
     DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
@@ -543,78 +558,96 @@ static void AutoloadMap()
     // Step 3: make new map (find symbols)
     if(GetConfigBool(USER_MAKEMAP, USER_LOADER))
     {
-        if(ldat.dvd) _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), ldat.gameID);
-        else _stprintf_s (mapname, _countof(mapname) - 1, _T(".\\Data\\%s.map"), name);
-        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", Debug::Hub.TcharToString(mapname).c_str());
-        MAPInit(mapname);
+        if (ldat.dvd)
+        {
+            mapname = fmt::format(L".\\Data\\{:s}.map", ldat.gameID);
+        }
+        else
+        {
+            mapname = fmt::format(L".\\Data\\{:s}.map", name);
+        }
+        
+        auto str = Util::convert<char>(mapname);
+        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", str.c_str());
+        MAPInit(mapname.data());
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
-        LoadMAP(mapname);
+        LoadMAP(mapname.data());
     }
 }
 
 static void AutoloadPatch()
 {
     // get patch file name
-    TCHAR patch[0x1000];
+    auto patch = std::wstring();
     TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
-    _tsplitpath_s(ldat.currentFile,
+    _tsplitpath_s(ldat.currentFile.data(),
         drive, _countof(drive) - 1,
         dir, _countof(dir) - 1,
         name, _countof(name) - 1,
         ext, _countof(ext) - 1);
 
     // Step 1: try to load patch from Data directory
-    if(ldat.dvd) _stprintf_s (patch, _countof(patch) - 1, _T(".\\Data\\%s.patch"), ldat.gameID);
-    else _stprintf_s (patch, _countof (patch) - 1, _T(".\\Data\\%s.patch"), name);
-    bool ok = LoadPatch(patch);
+    if (ldat.dvd)
+    {
+        patch = fmt::format(L".\\Data\\{:s}.patch", ldat.gameID);
+    }
+    else
+    {
+        patch = fmt::format(L".\\Data\\{:s}.patch", name);
+    }
+
+    bool ok = LoadPatch(patch.data());
     if(ok) return;
 
     // Step 2: try to load patch from file directory
-    if(ldat.dvd) _stprintf_s (patch, _countof (patch) - 1, _T("%s%s%s.patch"), drive, dir, ldat.gameID);
-    else _stprintf_s(patch, _countof (patch) - 1, _T("%s%s%s.patch"), drive, dir, name);
-    LoadPatch(patch);
+    if (ldat.dvd)
+    {
+        patch = fmt::format(L"{:s}{:s}{:s}.patch", drive, dir, ldat.gameID);
+    }
+    else
+    {
+        patch = fmt::format(L"{:s}{:s}{:s}.patch", drive, dir, name);
+    }
+
+    LoadPatch(patch.data());
 
     // sorry, no patches for this DVD/executable
 }
 
-static bool SetGameIDAndTitle(TCHAR *filename)
+static bool SetGameIDAndTitle(std::wstring_view filename)
 {
-    // load DVD banner
-    DVDBanner2 * bnr = (DVDBanner2 *)DVDLoadBanner(filename);
+    /* Load DVD banner. */
+    auto bnr_ptr = DVDLoadBanner(filename);
+    auto bnr = (DVDBannerPAL*)bnr_ptr.get();
 
-    // get DiskID
+    /* Get DiskID. */
     char diskID[8] = { 0 };
     TCHAR diskIdTchar[8] = { 0 };
     DVD::Seek(0);
     DVD::Read(diskID, 4);
+    
     diskIdTchar[0] = diskID[0];
     diskIdTchar[1] = diskID[1];
     diskIdTchar[2] = diskID[2];
     diskIdTchar[3] = diskID[3];
     diskIdTchar[4] = 0;
 
-    char* ansiPtr = (char*)bnr->comments[0].longTitle;
-    TCHAR* tcharPtr = ldat.currentFileName;
+    auto title = std::string_view((char*)bnr->comments[0].longTitle);
+    ldat.currentFileName = Util::convert<wchar_t, char>(title);
 
-    while (*ansiPtr)
-    {
-        *tcharPtr++ = (uint8_t)*ansiPtr++;
-    }
-    *tcharPtr++ = 0;
-
-    // Convert SJIS Title to Unicode
+    /* Convert SJIS Title to Unicode */
 
     if (DVD::RegionById(diskID) == DVD::Region::JPN)
     {
         size_t size, chars;
-        uint16_t* widePtr = SjisToUnicode(ldat.currentFileName, &size, &chars);
+        uint16_t* widePtr = SjisToUnicode(ldat.currentFileName.data(), &size, &chars);
         uint16_t* unicodePtr;
 
         if (widePtr)
         {
-            tcharPtr = ldat.currentFileName;
+            auto tcharPtr = ldat.currentFileName.data();
             unicodePtr = widePtr;
 
             while (*unicodePtr)
@@ -627,28 +660,24 @@ static bool SetGameIDAndTitle(TCHAR *filename)
         }
     }
 
-    // set GameID
-    _stprintf_s( ldat.gameID, sizeof(ldat.gameID), _T("%.4s%02X"),
-        diskIdTchar, DVDBannerChecksum((void *)bnr) );
-    free(bnr);
-
+    /* Set GameID. */
+    ldat.gameID = fmt::sprintf(L"%.4s%02X", diskIdTchar, DVDBannerChecksum(bnr));
     return true;
 }
 
-// load any Dolwin-supported file
-static void DoLoadFile(TCHAR *filename)
+/* Load any Dolwin-supported file */
+static void DoLoadFile(std::wstring_view filename)
 {
     uint32_t entryPoint = 0;
-    TCHAR statusText[0x1000];
     bool bootrom = false;
     ULONGLONG s_time = GetTickCount64();
 
-    // loading progress
-    _stprintf_s(statusText, _countof(statusText), _T("Loading %s"), filename);
+    /* Loading progress */
+    auto statusText = fmt::format(L"Loading {:s}", filename);
     SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // load file
-    if (!_tcsicmp(filename, _T("Bootrom")))
+    if (filename == L"Bootrom")
     {
         entryPoint = BOOTROM_START_ADDRESS + 0x100;
         ldat.gameID[0] = 0;
@@ -657,7 +686,7 @@ static void DoLoadFile(TCHAR *filename)
     }
     else
     {
-        TCHAR * extension = _tcsrchr(filename, _T('.'));
+        TCHAR * extension = _tcsrchr((wchar_t*)filename.data(), _T('.'));
         
         if (!_tcsicmp(extension, _T(".dol")))
         {
@@ -689,7 +718,7 @@ static void DoLoadFile(TCHAR *filename)
         }
     }
 
-    // file load success?
+    /* File load success? */
     if(entryPoint == 0 && !ldat.dvd)
     {
         UI::DolwinError( _T("Cannot load file!"),
@@ -700,7 +729,7 @@ static void DoLoadFile(TCHAR *filename)
     {
         TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
 
-        _tsplitpath_s(filename,
+        _tsplitpath_s(filename.data(),
             drive, _countof(drive) - 1,
             dir, _countof(dir) - 1,
             name, _countof(name) - 1,
@@ -711,7 +740,7 @@ static void DoLoadFile(TCHAR *filename)
         // Set title to loaded executables
         if (!ldat.dvd)
         {
-            _tcscpy_s(ldat.currentFileName, _countof(ldat.currentFileName) - 1, name);
+            ldat.currentFileName = name;
         }
         else
         {
@@ -750,7 +779,8 @@ static void DoLoadFile(TCHAR *filename)
     // show boot time
     ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
-    _stprintf_s (statusText, _countof(statusText), _T("Boot time %1.2f sec"), ldat.boottime);
+    statusText = fmt::format(L"Boot time {:.2f} sec", ldat.boottime);
+    
     SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
@@ -758,21 +788,22 @@ static void DoLoadFile(TCHAR *filename)
 }
 
 // set next file to load
-void LoadFile(const TCHAR *filename)
+void LoadFile(std::wstring_view filename)
 {
-    _tcscpy_s(ldat.currentFile, _countof(ldat.currentFile) - 1, filename);
+    ldat.currentFile = filename;
     SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }
 
-void LoadFile(const char* filename)
+void LoadFile(std::string_view filename)
 {
-    char* ansiPtr = (char *)filename;
-    TCHAR* tcharPtr = ldat.currentFile;
+    char* ansiPtr = (char*)filename.data();
+    TCHAR* tcharPtr = ldat.currentFile.data();
     while (*ansiPtr)
     {
         *tcharPtr++ = *ansiPtr++;
     }
     *tcharPtr++ = 0;
+    
     SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }
 
@@ -785,9 +816,10 @@ void ReloadFile()
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
     );
 
-    if(_tcslen(ldat.currentFile))
+    if(!ldat.currentFile.empty())
     {
-        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", Debug::Hub.TcharToString(ldat.currentFile).c_str());
+        auto str = Util::convert<char>(ldat.currentFile);
+        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", str.c_str());
         DoLoadFile(ldat.currentFile);
     }
 }

@@ -7,25 +7,21 @@ namespace Flipper
 	static Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
+		auto data = UI::FileLoad(args[1].c_str());
 
-		size_t dataSize = 0;
-		uint8_t* data = (uint8_t *)UI::FileLoad(args[1].c_str(), &dataSize);
-
-		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
+		if (address >= mi.ramSize || (address + data.size()) >= mi.ramSize)
 		{
-			free(data);
 			DBReport("Address out of range!\n");
 			return nullptr;
 		}
 
-		if (!data)
+		if (data.empty())
 		{
 			DBReport("Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
-		memcpy(&mi.ram[address], data, dataSize);
-		free(data);
+		std::memcpy(&mi.ram[address], data.data(), data.size());
 		return nullptr;
 	}
 
@@ -41,7 +37,11 @@ namespace Flipper
 			return nullptr;
 		}
 
-		if (!UI::FileSave(args[1].c_str(), &mi.ram[address], dataSize))
+		auto ptr = &mi.ram[address];
+		auto buffer = std::vector<uint8_t>();
+		buffer.assign(ptr, ptr + dataSize);
+
+		if (!UI::FileSave(args[1].c_str(), buffer))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}
@@ -52,25 +52,21 @@ namespace Flipper
 	static Json::Value* cmd_aramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
+		auto data = UI::FileLoad(args[1].c_str());
 
-		size_t dataSize = 0;
-		uint8_t* data = (uint8_t*)UI::FileLoad(args[1].c_str(), &dataSize);
-
-		if (address >= ARAMSIZE || (address + dataSize) >= ARAMSIZE)
+		if (address >= ARAMSIZE || (address + data.size()) >= ARAMSIZE)
 		{
-			free(data);
 			DBReport("Address out of range!\n");
 			return nullptr;
 		}
 
-		if (!data)
+		if (data.empty())
 		{
 			DBReport("Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
-		memcpy(&aram.mem[address], data, dataSize);
-		free(data);
+		std::memcpy(&aram.mem[address], data.data(), data.size());
 		return nullptr;
 	}
 
@@ -86,7 +82,11 @@ namespace Flipper
 			return nullptr;
 		}
 
-		if (!UI::FileSave(args[1].c_str(), &aram.mem[address], dataSize))
+		auto ptr = &aram.mem[address];
+		auto buffer = std::vector<uint8_t>();
+		buffer.assign(ptr, ptr + dataSize);
+
+		if (!UI::FileSave(args[1].c_str(), buffer))
 		{
 			DBReport("Failed to save: %s\n", args[1].c_str());
 		}

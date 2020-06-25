@@ -10,6 +10,9 @@
 #include <intrin.h>
 #include <time.h>
 #include <tchar.h>
+#include <fstream>
+#include <sstream>
+#include <string>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"

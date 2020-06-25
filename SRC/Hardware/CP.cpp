@@ -153,7 +153,7 @@ static void CPThread(void* Param)
 // pixel engine status register (0x100a)
 //
 
-static void __fastcall write_pe_sr(uint32_t addr, uint32_t data)
+static void write_pe_sr(uint32_t addr, uint32_t data)
 {
     // clear interrupts
     if(fifo.pe.sr & PE_SR_DONE)
@@ -173,9 +173,9 @@ static void __fastcall write_pe_sr(uint32_t addr, uint32_t data)
     if(data & PE_SR_TOKENMSK) fifo.pe.sr |= PE_SR_TOKENMSK;
     else fifo.pe.sr &= ~PE_SR_TOKENMSK;
 }
-static void __fastcall read_pe_sr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pe.sr; }
+static void read_pe_sr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pe.sr; }
 
-static void __fastcall read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo.pe.token; }
+static void read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo.pe.token; }
 
 //
 // command processor
@@ -183,12 +183,12 @@ static void __fastcall read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo
 
 // control and status registers
 
-static void __fastcall read_cp_sr(uint32_t addr, uint32_t *reg)
+static void read_cp_sr(uint32_t addr, uint32_t *reg)
 {
     *reg = fifo.cp.sr;
 }
 
-static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
+static void write_cp_cr(uint32_t addr, uint32_t data)
 {
     fifo.cp.cr = (uint16_t)data;
 
@@ -203,9 +203,9 @@ static void __fastcall write_cp_cr(uint32_t addr, uint32_t data)
         PIClearInt(PI_INTERRUPT_CP);
     }
 }
-static void __fastcall read_cp_cr(uint32_t addr, uint32_t *reg) { *reg = fifo.cp.cr; }
+static void read_cp_cr(uint32_t addr, uint32_t *reg) { *reg = fifo.cp.cr; }
 
-static void __fastcall write_cp_clr(uint32_t addr, uint32_t data)
+static void write_cp_clr(uint32_t addr, uint32_t data)
 {
     // clear watermark conditions
     if(data & CP_CLR_OVFCLR)
@@ -247,49 +247,49 @@ void DumpCPFIFO()
     DBReport("   break:0x%08X", fifo.cp.bpptr);
 }
 
-static void __fastcall read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.baseh; }
-static void __fastcall write_cp_baseh(uint32_t addr, uint32_t data)   { fifo.cp.baseh = data; }
-static void __fastcall read_cp_basel(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.basel & 0xffe0; }
-static void __fastcall write_cp_basel(uint32_t addr, uint32_t data)   { fifo.cp.basel = data & 0xffe0; }
-static void __fastcall read_cp_toph(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.toph; }
-static void __fastcall write_cp_toph(uint32_t addr, uint32_t data)    { fifo.cp.toph = data; }
-static void __fastcall read_cp_topl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.topl & 0xffe0; }
-static void __fastcall write_cp_topl(uint32_t addr, uint32_t data)    { fifo.cp.topl = data & 0xffe0; }
+static void read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.baseh; }
+static void write_cp_baseh(uint32_t addr, uint32_t data)   { fifo.cp.baseh = data; }
+static void read_cp_basel(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.basel & 0xffe0; }
+static void write_cp_basel(uint32_t addr, uint32_t data)   { fifo.cp.basel = data & 0xffe0; }
+static void read_cp_toph(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.toph; }
+static void write_cp_toph(uint32_t addr, uint32_t data)    { fifo.cp.toph = data; }
+static void read_cp_topl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.topl & 0xffe0; }
+static void write_cp_topl(uint32_t addr, uint32_t data)    { fifo.cp.topl = data & 0xffe0; }
 
-static void __fastcall read_cp_hmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himarkh; }
-static void __fastcall write_cp_hmarkh(uint32_t addr, uint32_t data)  { fifo.cp.himarkh = data; }
-static void __fastcall read_cp_hmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himarkl & 0xffe0; }
-static void __fastcall write_cp_hmarkl(uint32_t addr, uint32_t data)  { fifo.cp.himarkl = data & 0xffe0; }
-static void __fastcall read_cp_lmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomarkh; }
-static void __fastcall write_cp_lmarkh(uint32_t addr, uint32_t data)  { fifo.cp.lomarkh = data; }
-static void __fastcall read_cp_lmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomarkl & 0xffe0; }
-static void __fastcall write_cp_lmarkl(uint32_t addr, uint32_t data)  { fifo.cp.lomarkl = data & 0xffe0; }
+static void read_cp_hmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himarkh; }
+static void write_cp_hmarkh(uint32_t addr, uint32_t data)  { fifo.cp.himarkh = data; }
+static void read_cp_hmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.himarkl & 0xffe0; }
+static void write_cp_hmarkl(uint32_t addr, uint32_t data)  { fifo.cp.himarkl = data & 0xffe0; }
+static void read_cp_lmarkh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomarkh; }
+static void write_cp_lmarkh(uint32_t addr, uint32_t data)  { fifo.cp.lomarkh = data; }
+static void read_cp_lmarkl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.lomarkl & 0xffe0; }
+static void write_cp_lmarkl(uint32_t addr, uint32_t data)  { fifo.cp.lomarkl = data & 0xffe0; }
 
-static void __fastcall read_cp_cnth(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnth; }
-static void __fastcall write_cp_cnth(uint32_t addr, uint32_t data)    { fifo.cp.cnth = data; }
-static void __fastcall read_cp_cntl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cntl & 0xffe0; }
-static void __fastcall write_cp_cntl(uint32_t addr, uint32_t data)    { fifo.cp.cntl = data & 0xffe0; }
+static void read_cp_cnth(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cnth; }
+static void write_cp_cnth(uint32_t addr, uint32_t data)    { fifo.cp.cnth = data; }
+static void read_cp_cntl(uint32_t addr, uint32_t *reg)     { *reg = fifo.cp.cntl & 0xffe0; }
+static void write_cp_cntl(uint32_t addr, uint32_t data)    { fifo.cp.cntl = data & 0xffe0; }
 
-static void __fastcall read_cp_wrptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptrh; }
-static void __fastcall write_cp_wrptrh(uint32_t addr, uint32_t data)  { fifo.cp.wrptrh = data; }
-static void __fastcall read_cp_wrptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptrl & 0xffe0; }
-static void __fastcall write_cp_wrptrl(uint32_t addr, uint32_t data)  { fifo.cp.wrptrl = data & 0xffe0; }
-static void __fastcall read_cp_rdptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptrh; }
-static void __fastcall write_cp_rdptrh(uint32_t addr, uint32_t data)  { fifo.cp.rdptrh = data; }
-static void __fastcall read_cp_rdptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptrl & 0xffe0; }
-static void __fastcall write_cp_rdptrl(uint32_t addr, uint32_t data)  { fifo.cp.rdptrl = data & 0xffe0; }
+static void read_cp_wrptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptrh; }
+static void write_cp_wrptrh(uint32_t addr, uint32_t data)  { fifo.cp.wrptrh = data; }
+static void read_cp_wrptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.wrptrl & 0xffe0; }
+static void write_cp_wrptrl(uint32_t addr, uint32_t data)  { fifo.cp.wrptrl = data & 0xffe0; }
+static void read_cp_rdptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptrh; }
+static void write_cp_rdptrh(uint32_t addr, uint32_t data)  { fifo.cp.rdptrh = data; }
+static void read_cp_rdptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.rdptrl & 0xffe0; }
+static void write_cp_rdptrl(uint32_t addr, uint32_t data)  { fifo.cp.rdptrl = data & 0xffe0; }
 
-static void __fastcall read_cp_bpptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptrh; }
-static void __fastcall write_cp_bpptrh(uint32_t addr, uint32_t data)  { fifo.cp.bpptrh = data; }
-static void __fastcall read_cp_bpptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptrl & 0xffe0; }
-static void __fastcall write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptrl = data & 0xffe0; }
+static void read_cp_bpptrh(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptrh; }
+static void write_cp_bpptrh(uint32_t addr, uint32_t data)  { fifo.cp.bpptrh = data; }
+static void read_cp_bpptrl(uint32_t addr, uint32_t *reg)   { *reg = fifo.cp.bpptrl & 0xffe0; }
+static void write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptrl = data & 0xffe0; }
 
 //
 // stubs
 //
 
-static void __fastcall no_write(uint32_t addr, uint32_t data) {}
-static void __fastcall no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
+static void no_write(uint32_t addr, uint32_t data) {}
+static void no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 // ---------------------------------------------------------------------------
 // init

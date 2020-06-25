@@ -1,20 +1,23 @@
 
 #pragma once
 
-#include <assert.h>
-#include <stdint.h>
+#include <cassert>
+#include <cstdint>
 #include <direct.h>
-#include <float.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
+#include <cfloat>
+#include <cmath>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <windows.h>
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
+#include <fstream>
+#include <filesystem>
+#include <string>
 #include "../../RES/resource.h"
 
 #include "../Common/Spinlock.h"

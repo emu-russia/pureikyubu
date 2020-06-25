@@ -74,7 +74,7 @@ namespace Gekko
         MIWriteByte(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
+    void _fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -102,13 +102,13 @@ namespace Gekko
         MIReadHalf(pa, reg);
     }
 
-    void __fastcall GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
+    void _fastcall GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
     {
         ReadHalf(addr, reg);
         if (*reg & 0x8000) *reg |= 0xffff0000;
     }
 
-    void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
+    void _fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);
@@ -146,7 +146,7 @@ namespace Gekko
         MIWriteHalf(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
+    void _fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -174,7 +174,7 @@ namespace Gekko
         MIReadWord(pa, reg);
     }
 
-    void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
+    void _fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);
@@ -212,7 +212,7 @@ namespace Gekko
         MIWriteWord(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
+    void _fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -242,7 +242,7 @@ namespace Gekko
         MIReadDouble(pa, reg);
     }
 
-    void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
+    void _fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);

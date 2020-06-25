@@ -259,7 +259,7 @@ namespace Gekko
 		MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
-	void __fastcall Cache::ReadByte(uint32_t addr, uint32_t* reg)
+	void Cache::ReadByte(uint32_t addr, uint32_t* reg)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -289,7 +289,7 @@ namespace Gekko
 		}
 	}
 
-	void __fastcall Cache::WriteByte(uint32_t addr, uint32_t data)
+	void Cache::WriteByte(uint32_t addr, uint32_t data)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -320,7 +320,7 @@ namespace Gekko
 		SetDirty(addr, true);
 	}
 
-	void __fastcall Cache::ReadHalf(uint32_t addr, uint32_t* reg)
+	void Cache::ReadHalf(uint32_t addr, uint32_t* reg)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -365,7 +365,7 @@ namespace Gekko
 		}
 	}
 
-	void __fastcall Cache::WriteHalf(uint32_t addr, uint32_t data)
+	void Cache::WriteHalf(uint32_t addr, uint32_t data)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -413,7 +413,7 @@ namespace Gekko
 		SetDirty(addr, true);
 	}
 
-	void __fastcall Cache::ReadWord(uint32_t addr, uint32_t* reg)
+	void Cache::ReadWord(uint32_t addr, uint32_t* reg)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -458,7 +458,7 @@ namespace Gekko
 		}
 	}
 
-	void __fastcall Cache::WriteWord(uint32_t addr, uint32_t data)
+	void Cache::WriteWord(uint32_t addr, uint32_t data)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -506,7 +506,7 @@ namespace Gekko
 		SetDirty(addr, true);
 	}
 
-	void __fastcall Cache::ReadDouble(uint32_t addr, uint64_t* reg)
+	void Cache::ReadDouble(uint32_t addr, uint64_t* reg)
 	{
 		// Locked cache
 		if (IsLockedEnable())
@@ -551,7 +551,7 @@ namespace Gekko
 		}
 	}
 
-	void __fastcall Cache::WriteDouble(uint32_t addr, uint64_t* data)
+	void Cache::WriteDouble(uint32_t addr, uint64_t* data)
 	{
 		// Locked cache
 		if (IsLockedEnable())

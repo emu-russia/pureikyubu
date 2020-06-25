@@ -69,14 +69,14 @@ namespace Gekko
 		void Zero(uint32_t pa);
 		void ZeroLocked(uint32_t pa);
 
-		void __fastcall ReadByte(uint32_t addr, uint32_t* reg);
-		void __fastcall WriteByte(uint32_t addr, uint32_t data);
-		void __fastcall ReadHalf(uint32_t addr, uint32_t* reg);
-		void __fastcall WriteHalf(uint32_t addr, uint32_t data);
-		void __fastcall ReadWord(uint32_t addr, uint32_t* reg);
-		void __fastcall WriteWord(uint32_t addr, uint32_t data);
-		void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
-		void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
+		void ReadByte(uint32_t addr, uint32_t* reg);
+		void WriteByte(uint32_t addr, uint32_t data);
+		void ReadHalf(uint32_t addr, uint32_t* reg);
+		void WriteHalf(uint32_t addr, uint32_t data);
+		void ReadWord(uint32_t addr, uint32_t* reg);
+		void WriteWord(uint32_t addr, uint32_t data);
+		void ReadDouble(uint32_t addr, uint64_t* reg);
+		void WriteDouble(uint32_t addr, uint64_t* data);
 
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 

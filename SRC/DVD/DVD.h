@@ -12,7 +12,7 @@ namespace DVD
     void ShutdownSubsystem();
 
     // Mount current DVD image for read/seek/open file operations
-    bool MountFile(const TCHAR* file);
+    bool MountFile(std::wstring_view file);
     bool MountFile(std::string file);
 
     // Mount DolphinSDK directory
@@ -32,7 +32,7 @@ namespace DVD
     // Open file in DVD root. Return file position, or 0 if no such file.
     // Note: DVD must be mounted first!
     // example use : long banner = DVDOpenFile("/opening.bnr");
-    long OpenFile(const char* dvdfile);
+    long OpenFile(std::string_view dvdfile);
 }
 
 // other include files
