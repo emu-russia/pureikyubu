@@ -30,9 +30,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Libraries", "Libraries", "{358DB663-DD41-4D9D-B6DE-F3ED958E771F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ThridParty", "ThridParty", "{99C5096C-2C2E-46D8-A1D5-6B79AAE32303}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmt", "SRC\Libraries\fmt\fmt.vcxproj", "{768EB97B-424B-407E-B52C-B66465E9D169}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmt", "ThirdParty\fmt\fmt.vcxproj", "{768EB97B-424B-407E-B52C-B66465E9D169}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -143,7 +143,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{768EB97B-424B-407E-B52C-B66465E9D169} = {358DB663-DD41-4D9D-B6DE-F3ED958E771F}
+		{768EB97B-424B-407E-B52C-B66465E9D169} = {99C5096C-2C2E-46D8-A1D5-6B79AAE32303}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07DC6F38-FBD1-4C75-B0E6-2249E585A95D}

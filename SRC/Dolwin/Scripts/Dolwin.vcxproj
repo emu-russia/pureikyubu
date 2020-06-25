@@ -248,6 +248,9 @@
     <ResourceCompile Include="..\..\..\RES\Dolwin.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\ThirdParty\fmt\fmt.vcxproj">
+      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\Common\Scripts\Common.vcxproj">
       <Project>{8f4f6ae1-b308-4c7f-81fc-4cddd2302c95}</Project>
     </ProjectReference>
@@ -271,9 +274,6 @@
     </ProjectReference>
     <ProjectReference Include="..\..\HighLevel\Scripts\GCNHighLevel.vcxproj">
       <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Libraries\fmt\fmt.vcxproj">
-      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\PAD\Scripts\PAD.vcxproj">
       <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>

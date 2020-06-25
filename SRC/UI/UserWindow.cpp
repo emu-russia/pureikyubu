@@ -907,7 +907,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                         std::string text;
                         Debug::Log->ToString(text);
-                        UI::FileSave(name, (void*)text.data(), text.size());
+                        UI::FileSave(name, text);
                     }
                 }
                 return 0;

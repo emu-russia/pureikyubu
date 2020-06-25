@@ -224,13 +224,13 @@ namespace UI
                     break;
             }
 
-            SetCurrentDirectory(prevDir);
+            chdir(prevDir.string().c_str());
             return tempStr;
         }
         else
         {
-            SetCurrentDirectory(prevDir);
-            return NULL;
+            chdir(prevDir.string().c_str());
+            return std::wstring();
         }
     }
 

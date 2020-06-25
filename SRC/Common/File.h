@@ -101,6 +101,6 @@ namespace Util
     template <typename T>
     inline std::basic_string<T> FileSmartSize(size_t size)
     {
-
+        throw "Not implemented";
     }
 }
