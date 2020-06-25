@@ -40,6 +40,9 @@ void EMUOpen()
     if (emu.loaded)
         return;
 
+    Debug::Log = new Debug::EventLog();
+    assert(Debug::Log);
+
     // open other sub-systems
     Gekko::Gekko->Reset();
     HWConfig* hwconfig = new HWConfig;
@@ -93,6 +96,9 @@ void EMUClose()
 
     // take care about user interface
     OnMainWindowClosed();
+
+    delete Debug::Log;
+    Debug::Log = nullptr;
 
     emu.loaded = false;
 }

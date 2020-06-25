@@ -30,3 +30,4 @@
 #include "SamplingProfiler.h"
 #include "DebugCommands.h"
 #include "DspDebugger.h"
+#include "EventLog.h"

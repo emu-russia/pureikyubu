@@ -14,6 +14,7 @@
 
 #include "../Debugger/Debugger.h"
 #include "../Core/Gekko.h"
+#include "../UI/UserFile.h"
 
 #include "DVD.h"
 #include "GCM.h"            // very simple GCM reading (for .gcm files)
@@ -22,3 +23,6 @@
 #include "Mn102Analyzer.h"
 #include "Mn102Disasm.h"
 #include "DvdAdpcmDecode.h"
+
+#include "../../ThirdParty/fmt/fmt/format.h"
+

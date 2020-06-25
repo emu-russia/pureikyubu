@@ -18,7 +18,7 @@ namespace Debug
 
     static Json::Value* cmd_script(std::vector<std::string>& args)
     {
-        int i;
+        size_t i;
         const char* file;
         std::vector<std::string> commandArgs;
 

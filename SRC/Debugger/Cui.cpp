@@ -152,18 +152,18 @@ namespace Debug
 	void Cui::BlitWindow(CuiWindow* wnd)
 	{
 		COORD sz;
-		sz.X = wnd->width;
-		sz.Y = wnd->height;
+		sz.X = (SHORT)wnd->width;
+		sz.Y = (SHORT)wnd->height;
 
 		COORD pos;
 		pos.X = 0;
 		pos.Y = 0;
 
 		SMALL_RECT rgn;
-		rgn.Left = wnd->wndRect.left;
-		rgn.Top = wnd->wndRect.top;
-		rgn.Right = wnd->wndRect.right;
-		rgn.Bottom = wnd->wndRect.bottom;
+		rgn.Left = (SHORT)wnd->wndRect.left;
+		rgn.Top = (SHORT)wnd->wndRect.top;
+		rgn.Right = (SHORT)wnd->wndRect.right;
+		rgn.Bottom = (SHORT)wnd->wndRect.bottom;
 
 		WriteConsoleOutput(StdOutput, wnd->backBuf, sz, pos, &rgn);
 	}

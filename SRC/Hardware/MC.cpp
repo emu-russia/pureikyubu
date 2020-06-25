@@ -3,8 +3,6 @@
 // TODO : figure out what 0x81 code is supposed to do on a real memcard
 
 #include "pch.h"
-#include <sys/stat.h>
-#include "../Common/String.h"
 
 /************************** Commands ***************************************/ 
 

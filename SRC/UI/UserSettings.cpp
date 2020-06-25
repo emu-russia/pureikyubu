@@ -1,6 +1,5 @@
 // Dolwin settings dialog (to configure user variables)
 #include "pch.h"
-#include <array>
 
 // all user variables (except memory cards vars) are placed in UserConfig.h
 
@@ -275,7 +274,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_ADDPATH:
                 {
-                    if (path = UI::FileOpen(UI::FileType::Directory); !path.empty()) /* C++ 17 */
+                    if (path = UI::FileOpenDialog(UI::FileType::Directory); !path.empty()) /* C++ 17 */
                     {
                         fix_path(path);
 
@@ -344,7 +343,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
             {
                 case IDC_CHOOSE_BOOTROM:
                 {
-                    file = UI::FileOpen(UI::FileType::All);
+                    file = UI::FileOpenDialog(UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
@@ -358,7 +357,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_CHOOSE_DSPDROM:
                 {
-                    file = UI::FileOpen(UI::FileType::All);
+                    file = UI::FileOpenDialog(UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
@@ -372,7 +371,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_CHOOSE_DSPIROM:
                 {
-                    file = UI::FileOpen(UI::FileType::All);
+                    file = UI::FileOpenDialog(UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());

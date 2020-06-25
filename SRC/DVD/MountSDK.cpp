@@ -5,8 +5,6 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 */
 
 #include "pch.h"
-#include "../UI/UserFile.h"
-#include <fmt/format.h>
 
 namespace DVD
 {
@@ -352,7 +350,7 @@ namespace DVD
 				_tcscat_s(filePath, _countof(filePath) - 1, _T("/dvddata"));
 				TCHAR* filePathPtr = filePath + _tcslen(filePath);
 
-				for (int i = 0; i < path.size(); i++)
+				for (size_t i = 0; i < path.size(); i++)
 				{
 					*filePathPtr++ = (TCHAR)path[i];
 				}

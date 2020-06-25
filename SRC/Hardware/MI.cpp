@@ -5,12 +5,12 @@
 #include "pch.h"
 
 // hardware traps tables.
-void(__fastcall* hw_read8[0x10000])(uint32_t, uint32_t*);
-void(__fastcall* hw_write8[0x10000])(uint32_t, uint32_t);
-void(__fastcall* hw_read16[0x10000])(uint32_t, uint32_t*);
-void(__fastcall* hw_write16[0x10000])(uint32_t, uint32_t);
-void(__fastcall* hw_read32[0x10000])(uint32_t, uint32_t*);
-void(__fastcall* hw_write32[0x10000])(uint32_t, uint32_t);
+void (*hw_read8[0x10000])(uint32_t, uint32_t*);
+void (*hw_write8[0x10000])(uint32_t, uint32_t);
+void (*hw_read16[0x10000])(uint32_t, uint32_t*);
+void (*hw_write16[0x10000])(uint32_t, uint32_t);
+void (*hw_read32[0x10000])(uint32_t, uint32_t*);
+void (*hw_write32[0x10000])(uint32_t, uint32_t);
 
 // stubs for MI registers
 static void no_write(uint32_t addr, uint32_t data) {}
@@ -378,8 +378,8 @@ static void def_hw_write32(uint32_t addr, uint32_t data)
 
 static void MISetTrap8(
     uint32_t addr,
-    void(__fastcall* rdTrap)(uint32_t, uint32_t*),
-    void(__fastcall* wrTrap)(uint32_t, uint32_t))
+    void (*rdTrap)(uint32_t, uint32_t*),
+    void (*wrTrap)(uint32_t, uint32_t))
 {
     if (rdTrap == NULL) rdTrap = def_hw_read8;
     if (wrTrap == NULL) wrTrap = def_hw_write8;
@@ -390,8 +390,8 @@ static void MISetTrap8(
 
 static void MISetTrap16(
     uint32_t addr,
-    void(__fastcall* rdTrap)(uint32_t, uint32_t*),
-    void(__fastcall* wrTrap)(uint32_t, uint32_t))
+    void (*rdTrap)(uint32_t, uint32_t*),
+    void (*wrTrap)(uint32_t, uint32_t))
 {
     if (rdTrap == NULL) rdTrap = def_hw_read16;
     if (wrTrap == NULL) wrTrap = def_hw_write16;
@@ -402,8 +402,8 @@ static void MISetTrap16(
 
 static void MISetTrap32(
     uint32_t addr,
-    void(__fastcall* rdTrap)(uint32_t, uint32_t*),
-    void(__fastcall* wrTrap)(uint32_t, uint32_t))
+    void (*rdTrap)(uint32_t, uint32_t*),
+    void (*wrTrap)(uint32_t, uint32_t))
 {
     if (rdTrap == NULL) rdTrap = def_hw_read32;
     if (wrTrap == NULL) wrTrap = def_hw_write32;
@@ -416,8 +416,8 @@ static void MISetTrap32(
 void MISetTrap(
     uint32_t type,                               // 8, 16 or 32
     uint32_t addr,                               // physical trap address
-    void(__fastcall* rdTrap)(uint32_t, uint32_t*),  // register read trap
-    void(__fastcall* wrTrap)(uint32_t, uint32_t))    // register write trap
+    void (*rdTrap)(uint32_t, uint32_t*),  // register read trap
+    void (*wrTrap)(uint32_t, uint32_t))    // register write trap
 {
     // address must be in correct range
     if (!((addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN))))

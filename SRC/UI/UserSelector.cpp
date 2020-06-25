@@ -1,9 +1,5 @@
 /* File selector. */
 #include "pch.h"
-#include "SjisTable.h"
-#include "../Common/String.h"
-#include <array>
-#include <fmt/printf.h>
 
 /* All important data is placed here */
 UserSelector usel;

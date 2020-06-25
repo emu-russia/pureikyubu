@@ -961,7 +961,7 @@ void tex1_st_f32_x16(GX::FifoProcessor* fifo)
 // attr[TYPE][CNT][FMT]
 //
 
-void (__fastcall *posattr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*posattr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XY
     { NULL, NULL, NULL, NULL, NULL }    // XYZ
@@ -985,7 +985,7 @@ void (__fastcall *posattr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
+void (*nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XYZ
     { NULL, NULL, NULL, NULL, NULL },   // NBT
@@ -1015,7 +1015,7 @@ void (__fastcall *nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
 
 // ---------------------------------------------------------------------------
 
-void (__fastcall *col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
+void (*col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1039,7 +1039,7 @@ void (__fastcall *col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
 //  RGB565  RGB8  RGBX8 RGBA4 RGBA6 RGBA8
 };
 
-void (__fastcall *col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
+void (*col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1065,7 +1065,7 @@ void (__fastcall *col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
 
 // ---------------------------------------------------------------------------
 
-void (__fastcall *tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1089,7 +1089,7 @@ void (__fastcall *tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1113,7 +1113,7 @@ void (__fastcall *tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1137,7 +1137,7 @@ void (__fastcall *tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1161,7 +1161,7 @@ void (__fastcall *tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1185,7 +1185,7 @@ void (__fastcall *tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1209,7 +1209,7 @@ void (__fastcall *tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1233,7 +1233,7 @@ void (__fastcall *tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (__fastcall *tex7attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex7attr[4][2][5])(GX::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST

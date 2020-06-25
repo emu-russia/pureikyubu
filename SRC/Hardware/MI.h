@@ -82,8 +82,8 @@ extern	MIControl mi;
 void    MISetTrap(
     uint32_t type,                                       // 8, 16 or 32
     uint32_t addr,                                       // physical address of trap
-    void (__fastcall* rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
-    void (__fastcall* wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
+    void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
+    void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
 void    MIOpen(HWConfig * config);
 void	MIClose();
 

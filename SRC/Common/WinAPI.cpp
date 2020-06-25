@@ -1,7 +1,4 @@
 #include "pch.h"
-#include "WinAPI.h"
-#include <windows.h>
-#include <shlobj.h>
 
 namespace Win
 {
@@ -44,6 +41,62 @@ namespace Win
 
                 if (SUCCEEDED(hr))
                 {                    
+                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
+
+                    /* Display the file name to the user. */
+                    if (SUCCEEDED(hr))
+                    {
+                        CoTaskMemFree(pszFilePath);
+                    }
+                    pItem->Release();
+                }
+            }
+            pFileOpen->Release();
+        }
+
+        if (!pszFilePath)
+        {
+            return std::wstring();
+        }
+        else
+        {
+            return std::wstring(pszFilePath);
+        }
+    }
+
+    std::wstring SaveDialog(std::wstring_view title, std::wstring_view filter)
+    {
+        PWSTR pszFilePath = nullptr;
+        IFileOpenDialog* pFileOpen;
+        DWORD options;
+
+        /* Create the FileOpenDialog object. */
+        auto hr = CoCreateInstance(CLSID_FileSaveDialog,
+            NULL, CLSCTX_ALL,
+            IID_IFileSaveDialog,
+            (void**)&pFileOpen);
+
+        if (SUCCEEDED(hr))
+        {
+            /* Get the dialog options. */
+            pFileOpen->GetOptions(&options);
+
+            pFileOpen->SetTitle(title.data());
+            pFileOpen->SetDefaultExtension(filter.data());
+
+            pFileOpen->SetOptions(options);
+
+            /* Show the Open dialog box. */
+            hr = pFileOpen->Show(NULL);
+
+            /* Get the file name from the dialog box. */
+            if (SUCCEEDED(hr))
+            {
+                IShellItem* pItem;
+                hr = pFileOpen->GetResult(&pItem);
+
+                if (SUCCEEDED(hr))
+                {
                     hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &pszFilePath);
 
                     /* Display the file name to the user. */

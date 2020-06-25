@@ -1,7 +1,6 @@
 // EI - expansion (or extension) interface. also referred as EXI.
 // (EXI term is reserved for Dolwin HLE of EI).
 #include "pch.h"
-#include <algorithm>
 
 // IMPORTANT : all EXI transfers are completed instantly in emu (mean no DMA chain).
 

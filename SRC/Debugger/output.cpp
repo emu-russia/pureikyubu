@@ -196,7 +196,7 @@ static char * string_to_HTML_string(char *txt, char *html, size_t htmlSize)
     const char * logcurcol = logcol[(int)ConColor::NORM];
     ptr += sprintf_s (ptr, htmlSize - (ptr - html), "%s", logcurcol);
 
-    for(int n=0; n<len;)
+    for(size_t n=0; n<len;)
     {
         char c = txt[n];
         if(c == 1)

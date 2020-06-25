@@ -1,12 +1,33 @@
 // Dolwin debugger interface;
 #include "pch.h"
 
+// Standard handlers when the debugger is closed.
+
+static void dummy(const char* text, ...)
+{
+
+}
+
+static void JustEventLog(DbgChannel chan, const char* text, ...)
+{
+    if (Debug::Log != nullptr)
+    {
+        char    buf[0x1000];
+        va_list arg;
+
+        va_start(arg, text);
+        int size = vsprintf_s(buf, sizeof(buf) - 1, text, arg);
+        va_end(arg);
+
+        std::vector<uint8_t> data(buf, buf + size);
+        Debug::Log->Add(chan, Debug::EventType::DebugReport, data);
+    }
+}
+
 // message output
-static void dummy(const char *text, ...) {}
-static void dummy2(DbgChannel chan, const char* text, ...) {}
 void (*DBHalt)(const char *text, ...)   = dummy;
 void (*DBReport)(const char* text, ...) = dummy;
-void (*DBReport2)(DbgChannel chan, const char *text, ...) = dummy2;
+void (*DBReport2)(DbgChannel chan, const char *text, ...) = JustEventLog;
 
 static HANDLE consoleThreadHandle = INVALID_HANDLE_VALUE;
 static DWORD consoleThreadId;
@@ -114,10 +135,16 @@ static void db_report2(DbgChannel chan, const char* text, ...)
     }
 
     va_start(arg, text);
-    vsprintf_s(buf, sizeof(buf) - 1, text, arg);
+    int size = vsprintf_s(buf, sizeof(buf) - 1, text, arg);
     va_end(arg);
 
     con_print(col, "%s%s", prefix, buf);
+
+    if (Debug::Log != nullptr)
+    {
+        std::vector<uint8_t> data(buf, buf + size);
+        Debug::Log->Add(chan, Debug::EventType::DebugReport, data);
+    }
 }
 
 static void db_report(const char* text, ...)
@@ -143,6 +170,10 @@ static DWORD WINAPI DBThreadProc(LPVOID lpParameter)
     con_refresh(1);
     
     con_start();
+
+    DBHalt = dummy;
+    DBReport = dummy;
+    DBReport2 = JustEventLog;
 
     return 0;
 }

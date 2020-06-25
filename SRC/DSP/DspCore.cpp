@@ -1,9 +1,6 @@
 // Low-level DSP core
 
 #include "pch.h"
-#include "../UI/UserFile.h"
-#include <fmt/format.h>
-#include <algorithm>
 
 namespace DSP
 {
@@ -48,22 +45,11 @@ namespace DSP
 			}
 		}
 
-		dspSamples = new uint8_t[2 * 1024 * 1024];
-		dspSampleSize = 0;
-
 		DBReport2(DbgChannel::DSP, "DSPCore: Ready\n");
 	}
 
 	DspCore::~DspCore()
 	{
-#if 0
-		FILE* f;
-		fopen_s(&f, "pcmOut.bin", "ab+");
-		fwrite(dspSamples, 1, dspSampleSize, f);
-		fclose(f);
-#endif
-		delete[] dspSamples;
-
 		delete dspThread;
 		delete interp;
 	}

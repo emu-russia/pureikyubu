@@ -5,7 +5,7 @@
 // local data
 //
 
-static  void (__fastcall *pipeline[VTX_MAX_ATTR][8])(GX::FifoProcessor* fifo); // fifo attr callbacks
+static  void (*pipeline[VTX_MAX_ATTR][8])(GX::FifoProcessor* fifo); // fifo attr callbacks
 
 float   fracDenom[8][VTX_MAX_ATTR];             // fraction denominant
 
@@ -591,7 +591,7 @@ void FifoReconfigure(
 // collect data
 static void FifoWalk(unsigned vatnum, GX::FifoProcessor * fifo)
 {
-    void (__fastcall *stageCB)(GX::FifoProcessor * fifo);
+    void (*stageCB)(GX::FifoProcessor * fifo);
 
     // overrided by 'mtxidx' attributes
     xfRegs.posidx = xfRegs.matidxA.pos;

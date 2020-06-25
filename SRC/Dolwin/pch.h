@@ -4,7 +4,7 @@
 // compiler and SDK include files.
 
 #include <assert.h>
-#include <stdint.h>
+#include <cstdint>
 #include <direct.h>
 #include <float.h>
 #include <math.h>
@@ -19,6 +19,8 @@
 #include <tchar.h>
 #include <filesystem>
 #include <fstream>
+#include <string>
+#include <codecvt>
 #include "../../RES/resource.h"
 
 // ---------------------------------------------------------------------------
@@ -26,13 +28,18 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/String.h"
 #include "../Core/Gekko.h"
 #include "../Core/Interpreter.h"
 #include "../HighLevel/HighLevel.h"
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 #include "../Debugger/DspDebugger.h"
+#include "../Debugger/EventLog.h"
 #include "../UI/User.h"
 
 #include "Loader.h"
 #include "Emulator.h"
+
+#include "../../ThirdParty/fmt/fmt/format.h"
+#include "../../ThirdParty/fmt/fmt/printf.h"
