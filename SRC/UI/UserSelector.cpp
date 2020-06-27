@@ -414,8 +414,8 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
         DVD::Unmount();
 
         /* Use banner info and remove line-feeds. */
-        std::string_view longTitle = (char*)bnr->comments[0].longTitle;
-        std::string_view comment = (char*)bnr->comments[0].comment;
+        Util::ustring longTitle = bnr->comments[0].longTitle;
+        Util::ustring comment = bnr->comments[0].comment;
 
         item->title = Util::convert<wchar_t>(longTitle); // C++ 11
         item->comment = Util::convert<wchar_t>(comment);
