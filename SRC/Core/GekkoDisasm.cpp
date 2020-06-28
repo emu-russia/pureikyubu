@@ -708,7 +708,7 @@ namespace Gekko
 			case Instruction::mfsrin: return "mfsrin";
 			case Instruction::tlbie: return "tlbie";
 			case Instruction::tlbsync: return "tlbsync";
-			default: return "ill";
+			default: return "";
 		}
 
 		return "";

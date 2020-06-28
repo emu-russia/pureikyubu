@@ -18,7 +18,7 @@ namespace DSP
 
 	#pragma pack (push, 1)
 
-	typedef union _DspLongAccumulator
+	union DspLongAccumulator
 	{
 		struct
 		{
@@ -36,9 +36,9 @@ namespace DSP
 		};
 		uint64_t	bits;
 		int64_t		sbits;
-	} DspLongAccumulator;
+	};
 
-	typedef union _DspShortAccumulator
+	union DspShortAccumulator
 	{
 		struct
 		{
@@ -47,9 +47,9 @@ namespace DSP
 		};
 		uint32_t	bits;
 		int32_t		sbits;
-	} DspShortAccumulator;
+	};
 
-	typedef struct _DspProduct
+	struct DspProduct
 	{
 		struct
 		{
@@ -59,9 +59,9 @@ namespace DSP
 			uint16_t m2;
 		};
 		uint64_t bitsPacked;
-	} DspProduct;
+	};
 
-	typedef union _DspStatus
+	union DspStatus
 	{
 		struct
 		{
@@ -86,7 +86,7 @@ namespace DSP
 
 		uint16_t bits;
 
-	} DspStatus;
+	};
 
 	#pragma pack (pop)
 
@@ -129,7 +129,7 @@ namespace DSP
 		ac1m,			// 40-bit Accumulator 1 (mid)
 	};
 
-	typedef struct _DspRegs
+	struct DspRegs
 	{
 		uint16_t ar[4];		// Addressing registers
 		uint16_t ix[4];		// Indexing registers
@@ -142,7 +142,7 @@ namespace DSP
 		uint16_t bank;		// bank (lrs/srs)
 		DspStatus sr;		// status
 		DspAddress pc;		// Program counter
-	} DspRegs;
+	};
 
 	enum class DspHardwareRegs
 	{

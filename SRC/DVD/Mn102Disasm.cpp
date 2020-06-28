@@ -225,7 +225,7 @@ namespace DVD
 				text += ", ";
 				first = false;
 			}
-			text += OperandToText(pc, info, i);
+			text += OperandToText(pc, info, (int)i);
 		}
 
 		return text;

@@ -33,7 +33,7 @@
 // hardware API
 
 // PI state (registers and other data)
-typedef struct PIControl
+struct PIControl
 {
     volatile uint32_t    intsr;          // interrupt cause
     volatile uint32_t    intmr;          // interrupt mask
@@ -44,7 +44,7 @@ typedef struct PIControl
     volatile uint32_t    base;
     volatile uint32_t    top;
     volatile uint32_t    wrptr;          // also WRAP bit
-} PIControl;
+};
 
 extern  PIControl pi;
 

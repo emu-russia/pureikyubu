@@ -417,7 +417,7 @@ namespace Gekko
 		Address,
 	};
 
-	typedef struct _AnalyzeInfo
+	struct AnalyzeInfo
 	{
 		uint32_t	instrBits;
 		Instruction instr;
@@ -437,7 +437,7 @@ namespace Gekko
 
 		bool flow;
 
-	} AnalyzeInfo;
+	};
 
 	class Analyzer
 	{

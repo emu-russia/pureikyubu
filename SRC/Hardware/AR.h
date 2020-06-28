@@ -27,7 +27,7 @@
 // hardware API
 
 // ARAM state (registers and other data)
-typedef struct ARControl
+struct ARControl
 {
     uint8_t     *mem;                // aux. memory buffer (size is ARAMSIZE)
     volatile uint32_t    mmaddr, araddr;     // DMA address
@@ -38,7 +38,7 @@ typedef struct ARControl
     size_t gekkoTicksPerSlice;
     bool dspRunningBeforeAramDma;
     bool log;
-} ARControl;
+};
 
 void    AROpen();
 void    ARClose();

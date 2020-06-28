@@ -81,7 +81,7 @@
 // hardware API
 
 // SI state (registers and other data)
-typedef struct SIControl
+struct SIControl
 {
     volatile uint32_t            out[4], shdw[4];// out + shadows
     volatile uint32_t            poll;           // poll control
@@ -95,7 +95,7 @@ typedef struct SIControl
                                         // filled when SI is inited, by checking PADSetRumble
     bool                log;            // do debugger log output
     int64_t             pollingTime;    // Saved Gekko TBR for polling
-} SIControl;
+};
 
 extern  SIControl si;
 

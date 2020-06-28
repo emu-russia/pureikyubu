@@ -32,12 +32,12 @@ private:
 
 	// Serialize context
 
-	typedef struct _SerializeContext
+	struct SerializeContext
 	{
 		uint8_t** ptr;
 		size_t* actualSize;
 		size_t maxSize;
-	} SerializeContext;
+	};
 
 	// Base procedure for generating the text.
 	static void EmitChar(SerializeContext* ctx, uint8_t val, bool sizeOnly);
@@ -58,12 +58,12 @@ private:
 
 	// Deserialize 
 
-	typedef struct _DeserializeContext
+	struct DeserializeContext
 	{
 		uint8_t* ptr;
 		size_t offset;
 		size_t maxSize;
-	} DeserializeContext;
+	};
 
 	static bool IsWhiteSpace(uint8_t value);
 	static bool IsControl(uint8_t value);

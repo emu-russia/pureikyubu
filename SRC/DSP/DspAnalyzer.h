@@ -301,7 +301,7 @@ namespace DSP
 		Always = 0b1111,	/// Always
 	};
 
-	typedef struct _AnalyzeInfo
+	struct AnalyzeInfo
 	{
 		uint32_t clearingPaddy;		///< To use {0} on structure
 
@@ -350,7 +350,7 @@ namespace DSP
 
 		ConditionCode cc;		///< Some instructions has condition code
 
-	} AnalyzeInfo;
+	};
 
 	class Analyzer
 	{

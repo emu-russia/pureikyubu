@@ -51,7 +51,7 @@
 #pragma pack(push, 8)
 
 // CP registers
-typedef struct CPRegs
+struct CPRegs
 {
     uint16_t     sr;         // status
     uint16_t     cr;         // control
@@ -127,14 +127,14 @@ typedef struct CPRegs
         };
         volatile uint32_t     bpptr;
     };
-} CPRegs;
+};
 
 // PE registers
-typedef struct PERegs
+struct PERegs
 {
     uint16_t     sr;         // status register
     uint16_t     token;      // last token
-} PERegs;
+};
 
 #pragma pack(pop)
 
@@ -142,7 +142,7 @@ typedef struct PERegs
 // hardware API
 
 // CP, PE and PI fifo state (registers and other data)
-typedef struct FifoControl
+struct FifoControl
 {
     CPRegs      cp;     // command processor registers
     PERegs      pe;     // pixel engine registers
@@ -151,7 +151,7 @@ typedef struct FifoControl
     Thread*     thread;     // CP FIFO thread
     size_t      tickPerFifo;
     int64_t     updateTbrValue;
-} FifoControl;
+};
 
 extern  FifoControl fifo;
 

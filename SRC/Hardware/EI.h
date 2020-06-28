@@ -43,17 +43,17 @@
 #define EXI_CR_TSTART       (1 << 0)        // start transfer
 
 // EXI registers block
-typedef struct EXIRegs
+struct EXIRegs
 {
     volatile uint32_t         csr;            // communication register 
     volatile uint32_t         madr;           // memory address (32 byte aligned)
     volatile uint32_t         len;            // size (32 bytes aligned)
     volatile uint32_t         cr;             // control register
     volatile uint32_t         data;           // immediate data register
-} EXIRegs;
+};
 
 // SRAM structure layout. see YAGCD for details.
-typedef struct SRAM
+struct SRAM
 {
     uint16_t     checkSum;
     uint16_t     checkSumInv;
@@ -65,7 +65,7 @@ typedef struct SRAM
     uint8_t      language;
     uint8_t      flags;
     uint8_t      dummy[44];          // reserved for future        
-} SRAM;
+};
 
 // bootrom encoded font sizes
 #define ANSI_SIZE   0x3000
@@ -78,7 +78,7 @@ typedef struct SRAM
 // hardware API
 
 // EXI state (registers and other data)
-typedef struct EIControl
+struct EIControl
 {
     // hardware state
     EXIRegs     regs[3];        // exi registers
@@ -99,7 +99,7 @@ typedef struct EIControl
 
     bool        log;            // allow log EXI activities
     bool        osReport;       // allow UART debugger output (log not affecting this)
-} EIControl;
+};
 
 extern  EIControl exi;
 
