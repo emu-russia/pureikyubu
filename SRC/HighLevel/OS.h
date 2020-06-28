@@ -29,7 +29,7 @@
 #pragma pack(push, 1)
 
 // CPU context
-typedef struct _OSContext
+struct OSContext
 {
     // GPRs
     uint32_t     gpr[32];
@@ -64,23 +64,23 @@ typedef struct _OSContext
         uint64_t    psrAsUint[32];
     };
 
-} OSContext;
+};
 
-typedef struct _OSThreadLink
+struct OSThreadLink
 {
     uint32_t    next;
     uint32_t    prev;
-} OSThreadLink;
+};
 
-typedef struct _OSThreadQueue
+struct OSThreadQueue
 {
     uint32_t    head;
     uint32_t    tail;
-} OSThreadQueue;
+};
 
 typedef OSThreadQueue OSMutexQueue;
 
-typedef struct _OSThread
+struct OSThread
 {
     OSContext   context;
 
@@ -100,7 +100,7 @@ typedef struct _OSThread
 
     uint32_t    stackBase;
     uint32_t    stackEnd;
-} OSThread;
+};
 
 #pragma pack(pop)
 

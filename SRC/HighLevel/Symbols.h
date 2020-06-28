@@ -3,18 +3,18 @@
 #include <map>
 
 // symbolic entry
-typedef struct SYM
+struct SYM
 {
     uint32_t eaddr;             // effective address
     char*   savedName;          // symbolic description
     void    (*routine)();       // associated high-level call
-} SYM;
+};
 
 // all important variables are here
-typedef struct SYMControl
+struct SYMControl
 {
     std::map<uint32_t, SYM*> symmap;
-} SYMControl;
+};
 
 extern  SYMControl sym;
 

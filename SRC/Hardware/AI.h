@@ -47,7 +47,7 @@
 // hardware API
 
 // AI state (registers and other data)
-typedef struct AIControl
+struct AIControl
 {
     // AID
     std::atomic<uint16_t> dcr;  // AI/DSP control register
@@ -77,7 +77,7 @@ typedef struct AIControl
     bool        log;            // Enable AI log
 
     uint8_t     zeroes[32];
-} AIControl;
+};
 
 extern  AIControl ai;
 

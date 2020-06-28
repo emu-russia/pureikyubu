@@ -46,7 +46,7 @@ typedef enum FOCUSWND { WREGS = 0, WDATA, WDISA, WCONSOLE } FOCUSWND;
 typedef enum REGWNDMODE { REGMOD_GPR = 0, REGMOD_FPR, REGMOD_PSR, REGMOD_MMU, REGMOD_MAX } REGWNDMODE;
 
 // console windows
-typedef struct WINDControl
+struct WINDControl
 {
     bool                full;                   // "fullscreen" mode
     FOCUSWND            focus;                  // wregs, wdata, wdisa, wconsole
@@ -69,9 +69,9 @@ typedef struct WINDControl
     int                 disa_nav_last;          // last address
     bool                ldst;                   // used for load/store helper
     uint32_t            ldst_disp;
-} WINDControl;
+};
 
-typedef struct ROLLControl
+struct ROLLControl
 {
     char    data[CON_LINES][CON_LINELEN];       // scrolling lines    
     int     rollpos;                            // Where to read (len = wind.roll_h-1)
@@ -86,7 +86,7 @@ typedef struct ROLLControl
     char    tokens[CON_TOKENCNT][CON_LINELEN];  // tokens parsed from editline[]
     int     tokencount;                         // parsed tokens count
     bool    autoscroll;                         // if TRUE, then viewpos = rollpos-1
-} ROLLControl;
+};
 
 extern  WINDControl wind;
 extern  ROLLControl roll;

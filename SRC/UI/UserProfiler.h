@@ -1,3 +1,6 @@
+// TODO: The proposal to throw out this functionality, because it is mixed with the HW components.
+// Modern development environments (Visual Studio) contain more advanced profiling tools.
+
 // controls
 void    OpenProfiler(bool enable);
 void    UpdateProfiler();

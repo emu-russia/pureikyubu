@@ -75,7 +75,7 @@
 // hardware API
 
 // VI state (registers and other data)
-typedef struct VIControl
+struct VIControl
 {
     volatile uint16_t    disp_cr;    // display configuration register
     volatile uint32_t    tfbl;       // video buffer (top field)
@@ -100,7 +100,7 @@ typedef struct VIControl
     int64_t     one_second;     // one CPU second in timer ticks
 
     int         videoEncoderFuse;
-} VIControl;
+};
 
 extern  VIControl vi;
 

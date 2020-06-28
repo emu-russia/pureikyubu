@@ -43,7 +43,7 @@
 // hardware API
 
 // DI state (registers and other data)
-typedef struct DIControl
+struct DIControl
 {
     volatile uint32_t        sr, cvr, cr;    // DI registers
     volatile uint32_t        mar, len;
@@ -56,7 +56,7 @@ typedef struct DIControl
     int             hostToDduByteCounter;
 
     bool            log;
-} DIControl;
+};
 
 extern  DIControl di;
 

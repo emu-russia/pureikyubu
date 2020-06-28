@@ -13,11 +13,11 @@ typedef void (*ThreadProc)(void* param);
 
 class Thread
 {
-	typedef struct _WrappedContext
+	struct WrappedContext
 	{
 		ThreadProc proc;
 		void* context;
-	} WrappedContext;
+	};
 
 	WrappedContext ctx = { 0 };
 

@@ -12,14 +12,14 @@
 #include "Cache.h"
 
 // floating point register
-typedef union _FPREG
+union FPREG
 {
     double         dbl;
     uint64_t       uval;
-} FPREG;
+};
 
 // time-base
-typedef union _TBREG
+union TBREG
 {
     volatile int64_t   sval;               // for comparsion
     volatile uint64_t  uval;               // for incrementing
@@ -28,9 +28,9 @@ typedef union _TBREG
         uint32_t     l;                  // for output
         uint32_t     u;
     } Part;
-} TBREG;
+};
 
-typedef struct _GekkoRegs
+struct GekkoRegs
 {
     uint32_t    gpr[32];            // general purpose regs
     FPREG       fpr[32], ps1[32];   // floating point regs (fpr=ps0 for paired singles)
@@ -41,7 +41,7 @@ typedef struct _GekkoRegs
     uint32_t    fpscr;              // FP status/control reg (rounding only for now)
     uint32_t    pc;                 // program counter
     TBREG       tb;                 // time-base counter (timer)
-} GekkoRegs;
+};
 
 namespace Gekko
 {

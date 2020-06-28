@@ -25,11 +25,11 @@ void    con_step_into();
 #pragma pack(push, 8)
 
 // NOP command history
-typedef struct NOPHistory
+struct NOPHistory
 {
     uint32_t     ea;                 // effective address of NOP instruction
     uint32_t     oldValue;           // old value for "denop" command
-} NOPHistory;
+};
 
 // all console important variables are here
 class CONControl
