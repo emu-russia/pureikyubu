@@ -140,23 +140,29 @@ namespace DSP
 	{
 		// Multiply $axS.l by high part $axS.h (treat them both as signed).
 
+		_TB(DspInterpreter::MUL);
 		Mul(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MULC(AnalyzeInfo& info)
 	{
 		// Multiply mid part of accumulator register $acS.m by $axT.h (treat them both as signed).
 
+		_TB(DspInterpreter::MULC);
 		Mul(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MULX(AnalyzeInfo& info)
 	{
 		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). Part is selected by S and T bits. Zero selects low part, one selects high part.
 		
+		_TB(DspInterpreter::MULX);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Mulx(a, b, info.paramBits[0], info.paramBits[1]);
+		_TE();
 	}
 
 	// MADD
@@ -166,7 +172,9 @@ namespace DSP
 		// Multiply $axS.l by $axS.h (treat them both as signed)
 		// and add result to product register. 
 
+		_TB(DspInterpreter::MADD);
 		Madd(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MADDC(AnalyzeInfo& info)
@@ -174,7 +182,9 @@ namespace DSP
 		// Multiply middle part of accumulator $acS.m by $axT.h (treat them both as signed)
 		// and add result to product register.
 
+		_TB(DspInterpreter::MADDC);
 		Madd(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MADDX(AnalyzeInfo& info)
@@ -182,9 +192,11 @@ namespace DSP
 		// Multiply one part of $ax0 (selected by S) by one part of $ax1 (selected by T) (treat them both as signed)
 		// and add result to product register. 
 
+		_TB(DspInterpreter::MADDX);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Madd(a, b);
+		_TE();
 	}
 
 	// MSUB
@@ -194,7 +206,9 @@ namespace DSP
 		// Multiply $axS.l by $axS.h (treat them both as signed)
 		// and subtract result from product register. 
 
+		_TB(DspInterpreter::MSUB);
 		Msub(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MSUBC(AnalyzeInfo& info)
@@ -202,7 +216,9 @@ namespace DSP
 		// Multiply middle part of accumulator $acS.m by $axT.h (treat them both as signed) 
 		// and subtract result from product register.
 
+		_TB(DspInterpreter::MSUBC);
 		Msub(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h);
+		_TE();
 	}
 
 	void DspInterpreter::MSUBX(AnalyzeInfo& info)
@@ -210,9 +226,11 @@ namespace DSP
 		// Multiply one part of $ax0 (selected by S) by one part of $ax1 (selected by T) (treat them both as signed) 
 		// and subtract result from product register. 
 
+		_TB(DspInterpreter::MSUBX);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Msub(a, b);
+		_TE();
 	}
 
 	// AC
@@ -222,7 +240,9 @@ namespace DSP
 		// Add product register to accumulator register $acR.
 		// Multiply $axS.l by $axS.h (treat them both as signed).
 
+		_TB(DspInterpreter::MULAC);
 		Mulac(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULCAC(AnalyzeInfo& info)
@@ -230,7 +250,9 @@ namespace DSP
 		// Add product register before multiplication to accumulator $acR.
 		// Multiply mid part of accumulator register $acS.m by $axT.h (treat them both as signed).
 
+		_TB(DspInterpreter::MULCAC);
 		Mulac(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULXAC(AnalyzeInfo& info)
@@ -238,9 +260,11 @@ namespace DSP
 		// Add product register to accumulator register $acR. 
 		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). Part is selected by S and T bits. Zero selects low part, one selects high part. 
 
+		_TB(DspInterpreter::MULXAC);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Mulxac(a, b, info.paramBits[2], info.paramBits[0], info.paramBits[1]);
+		_TE();
 	}
 
 	// MV
@@ -250,7 +274,9 @@ namespace DSP
 		// Move product register to accumulator register $acR.
 		// Multiply $axS.l by $axS.h (treat them both as signed). 
 
+		_TB(DspInterpreter::MULMV);
 		Mulmv(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULCMV(AnalyzeInfo& info)
@@ -258,7 +284,9 @@ namespace DSP
 		// Move product register before multiplication to accumulator $acR.
 		// Multiply mid part of accumulator register $acS.m by $axT.h (treat them both as signed).
 
+		_TB(DspInterpreter::MULCMV);
 		Mulmv(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULXMV(AnalyzeInfo& info)
@@ -266,9 +294,11 @@ namespace DSP
 		// Move product register to accumulator register $acR.
 		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). Part is selected by Sand T bits. Zero selects low part, one selects high part.
 
+		_TB(DspInterpreter::MULXMV);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Mulxmv(a, b, info.paramBits[2], info.paramBits[0], info.paramBits[1]);
+		_TE();
 	}
 
 	// MVZ
@@ -278,7 +308,9 @@ namespace DSP
 		// Move product register to accumulator register $acR and clear low part of accumulator register $acR.l.
 		// Multiply $axS.l by $axS.h (treat them both as signed).
 
+		_TB(DspInterpreter::MULMVZ);
 		Mulmvz(core->regs.ax[info.paramBits[0]].l, core->regs.ax[info.paramBits[0]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULCMVZ(AnalyzeInfo& info)
@@ -286,7 +318,9 @@ namespace DSP
 		// Move product register before multiplication to accumulator $acR. Set low part of accumulator $acR.l to zero. 
 		// Multiply mid part of accumulator register $acS.m by $axT.h (treat them both as signed). 
 
+		_TB(DspInterpreter::MULCMVZ);
 		Mulmvz(core->regs.ac[info.paramBits[0]].m, core->regs.ax[info.paramBits[1]].h, info.paramBits[2]);
+		_TE();
 	}
 
 	void DspInterpreter::MULXMVZ(AnalyzeInfo& info)
@@ -294,9 +328,11 @@ namespace DSP
 		// Move product register to accumulator register $acR and clear low part of accumulator register $acR.l. 
 		// Multiply one part $ax0 by one part $ax1 (treat them both as signed). Part is selected by S and T bits. Zero selects low part, one selects high part.
 
+		_TB(DspInterpreter::MULXMVZ);
 		int16_t a = info.paramBits[0] ? core->regs.ax[0].h : core->regs.ax[0].l;
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Mulxmvz(a, b, info.paramBits[2], info.paramBits[0], info.paramBits[1]);
+		_TE();
 	}
 
 #pragma region "Multiplier Instructions"

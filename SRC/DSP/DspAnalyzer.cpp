@@ -1652,12 +1652,16 @@ namespace DSP
 		// Get opcode and determine its group
 
 		if (instrMaxSize < sizeof(uint16_t))
+		{
 			return false;
+		}
 
 		info.instrBits = _byteswap_ushort(*(uint16_t*)instrPtr);
 
 		if (!AddBytes(instrPtr, sizeof(uint16_t), info))
+		{
 			return false;
+		}
 
 		instrPtr += sizeof(info.instrBits);
 		instrMaxSize -= sizeof(info.instrBits);

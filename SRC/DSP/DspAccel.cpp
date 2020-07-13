@@ -15,6 +15,7 @@ namespace DSP
 {
 	uint16_t DspCore::AccelFetch()
 	{
+		_TB(DspCore::AccelFetch);
 		uint16_t val = 0;
 		uint8_t tempByte = 0;
 
@@ -72,12 +73,14 @@ namespace DSP
 			}
 		}
 
+		_TE();
 		return val;
 	}
 
 	// Read data by accelerator and optionally decode (raw=false)
 	uint16_t DspCore::AccelReadData(bool raw)
 	{
+		_TB(DspCore::AccelReadData);
 		uint16_t val = 0;
 
 		// Check bit15 of ACCAH
@@ -95,12 +98,15 @@ namespace DSP
 			val = DecodeAdpcm(val);
 		}
 
+		_TE();
 		return val;
 	}
 
 	// Write RAW data to ARAM
 	void DspCore::AccelWriteData(uint16_t data)
 	{
+		_TB(DspCore::AccelWriteData);
+
 		// Check bit15 of ACCAH
 		if ((Accel.CurrAddress.h & 0x8000) == 0)
 		{
@@ -128,11 +134,15 @@ namespace DSP
 				Accel.overflowVector = DspException::ACW_OVF;
 			}
 		}
+
+		_TE();
 	}
 
 	void DspCore::ResetAccel()
 	{
+		_TB(DspCore::ResetAccel);
 		Accel.pendingOverflow = false;
+		_TE();
 	}
 
 }
