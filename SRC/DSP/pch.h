@@ -24,7 +24,7 @@
 
 #include "../../ThirdParty/fmt/fmt/format.h"
 
-#if 1
+#if 0
 #define _TLIB_STRINGIFY1(s) _TLIB_STRINGIFY2(s)
 #define _TLIB_STRINGIFY2(s) #s
 #define _TB(s) if (Debug::Log) { Debug::Log->TraceBegin(DbgChannel::DSP, _TLIB_STRINGIFY2(s)); }
