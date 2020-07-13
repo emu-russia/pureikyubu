@@ -9,7 +9,7 @@ namespace Debug
 	EventLog::EventLog()
 	{
 		traceEvents = eventHistory.root.AddArray(nullptr);
-		assert(rootObj);
+		assert(traceEvents);
 	}
 
 	EventLog::~EventLog()
@@ -17,7 +17,7 @@ namespace Debug
 		// The memory will be cleared along with json root (eventHistory).
 	}
 
-	void EventLog::TraceBegin(DbgChannel chan, std::string s)
+	void EventLog::TraceBegin(DbgChannel chan, char * s)
 	{
 		eventLock.Lock();
 
@@ -36,7 +36,7 @@ namespace Debug
 		Json::Value* ph = entry->AddAnsiString("ph", "B");
 		assert(ph);
 
-		Json::Value* name = entry->AddAnsiString("name", s.c_str());
+		Json::Value* name = entry->AddAnsiString("name", s);
 		assert(name);
 
 		eventLock.Unlock();
@@ -64,7 +64,7 @@ namespace Debug
 		eventLock.Unlock();
 	}
 
-	void EventLog::TraceEvent(DbgChannel chan, std::string text)
+	void EventLog::TraceEvent(DbgChannel chan, char * text)
 	{
 		eventLock.Lock();
 
@@ -83,7 +83,7 @@ namespace Debug
 		Json::Value* ph = entry->AddAnsiString("ph", "I");
 		assert(ph);
 
-		Json::Value* name = entry->AddAnsiString("name", text.c_str());
+		Json::Value* name = entry->AddAnsiString("name", text);
 		assert(name);
 
 		eventLock.Unlock();

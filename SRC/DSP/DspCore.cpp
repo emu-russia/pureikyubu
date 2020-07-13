@@ -67,7 +67,6 @@ namespace DSP
 
 	void DspCore::Exception(DspException id)
 	{
-		_TB(DspCore::Exception);
 		if (logDspInterrupts)
 		{
 			DBReport2(DbgChannel::DSP, "Exception: 0x%04X\n", id);
@@ -77,17 +76,14 @@ namespace DSP
 		regs.st[1].push_back((DspAddress)regs.sr.bits);
 		regs.sr.ge = 0;
 		regs.pc = (DspAddress)id * 2;
-		_TE();
 	}
 
 	void DspCore::ReturnFromException()
 	{
-		_TB(DspCore::ReturnFromException);
 		regs.sr.bits = (uint16_t)regs.st[1].back();
 		regs.st[1].pop_back();
 		regs.pc = regs.st[0].back();
 		regs.st[0].pop_back();
-		_TE();
 	}
 
 	void DspCore::SoftReset()
@@ -179,7 +175,6 @@ namespace DSP
 
 	void DspCore::Update()
 	{
-		_TB(DspCore::Update);
 		uint64_t ticks = Gekko::Gekko->GetTicks();
 
 		if (ticks >= (savedGekkoTicks + GekkoTicksPerDspInstruction))
@@ -194,7 +189,6 @@ namespace DSP
 					DBHalt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
 					Suspend();
 					Gekko::Gekko->Suspend();
-					_TE();
 					return;
 				}
 
@@ -203,7 +197,6 @@ namespace DSP
 					oneShotBreakpoint = 0xffff;
 					Suspend();
 					Gekko::Gekko->Suspend();
-					_TE();
 					return;
 				}
 			}
@@ -233,7 +226,6 @@ namespace DSP
 			interp->ExecuteInstr();
 			savedGekkoTicks = ticks;
 		}
-		_TE();
 	}
 
 	#pragma region "Debug"
@@ -359,8 +351,6 @@ namespace DSP
 	// Execute single instruction (by interpreter)
 	void DspCore::Step()
 	{
-		_TB(DspCore::Step);
-
 		if (IsRunning())
 		{
 			DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
@@ -391,7 +381,6 @@ namespace DSP
 		}
 
 		interp->ExecuteInstr();
-		_TE();
 	}
 
 	// Print only registers different from previous ones
@@ -484,7 +473,6 @@ namespace DSP
 
 	void DspCore::MoveToReg(int reg, uint16_t val)
 	{
-		_TB(DspCore::MoveToReg);
 		switch (reg)
 		{
 			case (int)DspRegister::ar0:
@@ -570,12 +558,10 @@ namespace DSP
 				}
 				break;
 		}
-		_TE();
 	}
 
 	uint16_t DspCore::MoveFromReg(int reg)
 	{
-		_TB(DspCore::MoveFromReg);
 		uint16_t val = 0;
 
 		switch (reg)
@@ -689,7 +675,6 @@ namespace DSP
 				}
 				break;
 		}
-		_TE();
 		return val;
 	}
 
@@ -1047,7 +1032,6 @@ namespace DSP
 
 	void DspCore::DSPSetResetBit(bool val)
 	{
-		_TB(DspCore::DSPSetResetBit);
 		if (val)
 		{
 			if (logDspControlBits)
@@ -1056,7 +1040,6 @@ namespace DSP
 			}
 			pendingSoftReset = true;
 		}
-		_TE();
 	}
 
 	bool DspCore::DSPGetResetBit()
@@ -1066,7 +1049,6 @@ namespace DSP
 
 	void DspCore::DSPSetIntBit(bool val)
 	{
-		_TB(DspCore::DSPSetIntBit);
 		if (val && !pendingSoftReset && regs.sr.eie && regs.sr.ge)
 		{
 			if (logDspControlBits)
@@ -1076,7 +1058,6 @@ namespace DSP
 			pendingInterrupt = true;
 			pendingInterruptDelay = 2;
 		}
-		_TE();
 	}
 
 	bool DspCore::DSPGetIntBit()
@@ -1086,9 +1067,7 @@ namespace DSP
 
 	void DspCore::DSPSetHaltBit(bool val)
 	{
-		_TB(DspCore::DSPSetHaltBit);
 		val ? Suspend() : Run();
-		_TE();
 	}
 
 	bool DspCore::DSPGetHaltBit()
@@ -1103,7 +1082,6 @@ namespace DSP
 
 	void DspCore::ResetIfx()
 	{
-		_TB(DspCore::ResetIfx);
 		DspToCpuMailbox[0] = 0;
 		DspToCpuMailbox[1] = 0;
 		CpuToDspMailbox[0] = 0;
@@ -1113,7 +1091,6 @@ namespace DSP
 		memset(&Accel, 0, sizeof(Accel));
 
 		ResetAccel();
-		_TE();
 	}
 
 	// Instant DMA

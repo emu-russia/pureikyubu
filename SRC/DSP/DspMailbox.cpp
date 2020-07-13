@@ -54,7 +54,6 @@ namespace DSP
 
 	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
 	{
-		_TB(DspCore::CpuToDspReadHi);
 		CpuToDspLock[0].Lock();
 		uint16_t value = CpuToDspMailbox[0];
 		CpuToDspLock[0].Unlock();
@@ -70,13 +69,11 @@ namespace DSP
 		//	Suspend();
 		//}
 
-		_TE();
 		return value;
 	}
 
 	uint16_t DspCore::CpuToDspReadLo(bool ReadByDsp)
 	{
-		_TB(DspCore::CpuToDspReadLo);
 		CpuToDspLock[1].Lock();
 		uint16_t value = CpuToDspMailbox[1];
 		if (ReadByDsp)
@@ -88,7 +85,6 @@ namespace DSP
 			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
 		}
 		CpuToDspLock[1].Unlock();
-		_TE();
 		return value;
 	}
 
@@ -143,18 +139,15 @@ namespace DSP
 
 	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
 	{
-		_TB(DspCore::DspToCpuReadHi);
 		DspToCpuLock[0].Lock();
 		uint16_t value = DspToCpuMailbox[0];
 		DspToCpuLock[0].Unlock();
 
-		_TE();
 		return value;
 	}
 
 	uint16_t DspCore::DspToCpuReadLo(bool ReadByDsp)
 	{
-		_TB(DspCore::DspToCpuReadLo);
 		DspToCpuLock[1].Lock();
 		uint16_t value = DspToCpuMailbox[1];
 		if (!ReadByDsp)
@@ -166,7 +159,6 @@ namespace DSP
 			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
 		}
 		DspToCpuLock[1].Unlock();
-		_TE();
 		return value;
 	}
 }

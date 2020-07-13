@@ -19,8 +19,7 @@ static void JustEventLog(DbgChannel chan, const char* text, ...)
         int size = vsprintf_s(buf, sizeof(buf) - 1, text, arg);
         va_end(arg);
 
-        std::string text(buf, buf + size);
-        Debug::Log->TraceEvent(chan, text);
+        Debug::Log->TraceEvent(chan, buf);
     }
 }
 
@@ -142,8 +141,7 @@ static void db_report2(DbgChannel chan, const char* text, ...)
 
     if (Debug::Log != nullptr)
     {
-        std::string text(buf, buf + size);
-        Debug::Log->TraceEvent(chan, text);
+        Debug::Log->TraceEvent(chan, buf);
     }
 }
 

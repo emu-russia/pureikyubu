@@ -6,7 +6,6 @@ namespace DSP
 {
 	uint16_t DspCore::DecodeAdpcm(uint16_t in)
 	{
-		_TB(DspCore::DecodeAdpcm);
 		int64_t yn = 0;
 		int64_t out = 0;
 		int outputMode = (Accel.Fmt >> 4) & 3;
@@ -63,7 +62,6 @@ namespace DSP
 
 		//DBReport("0x%08X = 0x%04X\n", (Accel.CurrAddress.addr & 0x07FF'FFFF) - 1, (uint16_t)out);
 
-		_TE();
 		return (uint16_t)out;
 	}
 }
