@@ -88,14 +88,17 @@ namespace DSP
 
 	void DspCore::SoftReset()
 	{
+		_TB(DspCore::SoftReset);
 		regs.pc = DSPGetResetModifier() ? IROM_START_ADDRESS : 0;		// IROM start / 0
 		DBReport2(DbgChannel::DSP, "Soft Reset pc = 0x%04X\n", regs.pc);
 
 		pendingInterrupt = false;
+		_TE();
 	}
 
 	void DspCore::HardReset()
 	{
+		_TB(DspCore::HardReset);
 		DBReport2(DbgChannel::DSP, "DspCore::HardReset\n");
 
 		if (Gekko::Gekko != nullptr)
@@ -138,10 +141,12 @@ namespace DSP
 		pendingInterrupt = false;
 		pendingSoftReset = false;
 		Suspend();
+		_TE();
 	}
 
 	void DspCore::Run()
 	{
+		_TB(DspCore::Run);
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
@@ -151,10 +156,12 @@ namespace DSP
 			}
 			savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
+		_TE();
 	}
 
 	void DspCore::Suspend()
 	{
+		_TB(DspCore::Suspend);
 		if (dspThread->IsRunning())
 		{
 			if (logDspControlBits)
@@ -163,6 +170,7 @@ namespace DSP
 			}
 			dspThread->Suspend();
 		}
+		_TE();
 	}
 
 	void DspCore::Update()
@@ -346,6 +354,7 @@ namespace DSP
 		if (IsRunning())
 		{
 			DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+			_TE();
 			return;
 		}
 
@@ -553,7 +562,7 @@ namespace DSP
 
 	uint16_t DspCore::MoveFromReg(int reg)
 	{
-		uint16_t val;
+		uint16_t val = 0;
 
 		switch (reg)
 		{
@@ -561,50 +570,68 @@ namespace DSP
 			case (int)DspRegister::ar1:
 			case (int)DspRegister::ar2:
 			case (int)DspRegister::ar3:
-				return regs.ar[reg];
+				val = regs.ar[reg];
+				break;
 			case (int)DspRegister::ix0:
 			case (int)DspRegister::ix1:
 			case (int)DspRegister::ix2:
 			case (int)DspRegister::ix3:
-				return regs.ix[reg - (int)DspRegister::indexRegs];
+				val = regs.ix[reg - (int)DspRegister::indexRegs];
+				break;
 			case (int)DspRegister::lm0:
 			case (int)DspRegister::lm1:
 			case (int)DspRegister::lm2:
 			case (int)DspRegister::lm3:
-				return regs.lm[reg - (int)DspRegister::limitRegs];
+				val = regs.lm[reg - (int)DspRegister::limitRegs];
+				break;
 			case (int)DspRegister::st0:
 			case (int)DspRegister::st1:
 			case (int)DspRegister::st2:
 			case (int)DspRegister::st3:
-				return (uint16_t)regs.st[reg - (int)DspRegister::stackRegs].back();
+				val = (uint16_t)regs.st[reg - (int)DspRegister::stackRegs].back();
+				break;
 			case (int)DspRegister::ac0h:
-				return regs.ac[0].h & 0xff;
+				val = regs.ac[0].h & 0xff;
+				break;
 			case (int)DspRegister::ac1h:
-				return regs.ac[1].h & 0xff;
+				val = regs.ac[1].h & 0xff;
+				break;
 			case (int)DspRegister::bank:
-				return regs.bank;
+				val = regs.bank;
+				break;
 			case (int)DspRegister::sr:
-				return regs.sr.bits;
+				val = regs.sr.bits;
+				break;
 			case (int)DspRegister::prodl:
-				return regs.prod.l;
+				val = regs.prod.l;
+				break;
 			case (int)DspRegister::prodm1:
-				return regs.prod.m1;
+				val = regs.prod.m1;
+				break;
 			case (int)DspRegister::prodh:
-				return regs.prod.h;
+				val = regs.prod.h;
+				break;
 			case (int)DspRegister::prodm2:
-				return regs.prod.m2;
+				val = regs.prod.m2;
+				break;
 			case (int)DspRegister::ax0l:
-				return regs.ax[0].l;
+				val = regs.ax[0].l;
+				break;
 			case (int)DspRegister::ax0h:
-				return regs.ax[0].h;
+				val = regs.ax[0].h;
+				break;
 			case (int)DspRegister::ax1l:
-				return regs.ax[1].l;
+				val = regs.ax[1].l;
+				break;
 			case (int)DspRegister::ax1h:
-				return regs.ax[1].h;
+				val = regs.ax[1].h;
+				break;
 			case (int)DspRegister::ac0l:
-				return regs.ac[0].l;
+				val = regs.ac[0].l;
+				break;
 			case (int)DspRegister::ac1l:
-				return regs.ac[1].l;
+				val = regs.ac[1].l;
+				break;
 			case (int)DspRegister::ac0m:
 				if (regs.sr.sxm)
 				{
@@ -625,7 +652,7 @@ namespace DSP
 				{
 					val = regs.ac[0].m;
 				}
-				return val;
+				break;
 			case (int)DspRegister::ac1m:
 				if (regs.sr.sxm)
 				{
@@ -646,9 +673,9 @@ namespace DSP
 				{
 					val = regs.ac[1].m;
 				}
-				return val;
+				break;
 		}
-		return 0;
+		return val;
 	}
 
 	#pragma endregion "Register access"
@@ -1069,6 +1096,7 @@ namespace DSP
 	// Instant DMA
 	void DspCore::DoDma()
 	{
+		_TB(DspCore::DoDma);
 		uint8_t* ptr = nullptr;
 
 		if (logDspDma)
@@ -1089,6 +1117,7 @@ namespace DSP
 		if (ptr == nullptr)
 		{
 			DBHalt("DspCore::DoDma: invalid dsp address: 0x%04X\n", DmaRegs.dspAddr);
+			_TE();
 			return;
 		}
 
@@ -1127,6 +1156,8 @@ namespace DSP
 			dspSampleSize += DmaRegs.blockSize;
 		}
 #endif
+
+		_TE();
 	}
 
 	#pragma endregion "IFX"

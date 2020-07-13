@@ -8,11 +8,8 @@ namespace Debug
 
 	EventLog::EventLog()
 	{
-		rootObj = eventHistory.root.AddObject(nullptr);
-		assert(rootObj);
-
-		subsystems = rootObj->AddObject("subsystems");
-		assert(subsystems);
+		traceEvents = eventHistory.root.AddArray(nullptr);
+		assert(traceEvents);
 	}
 
 	EventLog::~EventLog()
@@ -20,129 +17,74 @@ namespace Debug
 		// The memory will be cleared along with json root (eventHistory).
 	}
 
-	Json::Value* EventLog::GetSubsystem(DbgChannel chan)
+	void EventLog::TraceBegin(DbgChannel chan, char * s)
 	{
-		Json::Value* out = nullptr;
-
-		switch (chan)
-		{
-            case DbgChannel::CP:
-				out = subsystems->ByName("CP");
-				if (!out)
-					out = subsystems->AddObject("CP");
-                break;
-            case DbgChannel::PE:
-				out = subsystems->ByName("PE");
-				if (!out)
-					out = subsystems->AddObject("PE");
-                break;
-            case DbgChannel::VI:
-				out = subsystems->ByName("VI");
-				if (!out)
-					out = subsystems->AddObject("VI");
-                break;
-            case DbgChannel::GP:
-				out = subsystems->ByName("GP");
-				if (!out)
-					out = subsystems->AddObject("GP");
-                break;
-            case DbgChannel::PI:
-				out = subsystems->ByName("PI");
-				if (!out)
-					out = subsystems->AddObject("PI");
-                break;
-            case DbgChannel::CPU:
-				out = subsystems->ByName("CPU");
-				if (!out)
-					out = subsystems->AddObject("CPU");
-                break;
-            case DbgChannel::MI:
-				out = subsystems->ByName("MI");
-				if (!out)
-					out = subsystems->AddObject("MI");
-                break;
-            case DbgChannel::DSP:
-				out = subsystems->ByName("DSP");
-				if (!out)
-					out = subsystems->AddObject("DSP");
-                break;
-            case DbgChannel::DI:
-				out = subsystems->ByName("DI");
-				if (!out)
-					out = subsystems->AddObject("DI");
-                break;
-            case DbgChannel::AR:
-				out = subsystems->ByName("AR");
-				if (!out)
-					out = subsystems->AddObject("AR");
-                break;
-            case DbgChannel::AI:
-				out = subsystems->ByName("AI");
-				if (!out)
-					out = subsystems->AddObject("AI");
-                break;
-            case DbgChannel::AIS:
-				out = subsystems->ByName("AIStream");
-				if (!out)
-					out = subsystems->AddObject("AIStream");
-                break;
-            case DbgChannel::SI:
-				out = subsystems->ByName("SI");
-				if (!out)
-					out = subsystems->AddObject("SI");
-                break;
-            case DbgChannel::EXI:
-				out = subsystems->ByName("EXI");
-				if (!out)
-					out = subsystems->AddObject("EXI");
-                break;
-            case DbgChannel::MC:
-				out = subsystems->ByName("MemCards");
-				if (!out)
-					out = subsystems->AddObject("MemCards");
-                break;
-            case DbgChannel::DVD:
-				out = subsystems->ByName("DVD");
-				if (!out)
-					out = subsystems->AddObject("DVD");
-                break;
-            case DbgChannel::AX:
-				out = subsystems->ByName("AudioDAC");
-				if (!out)
-					out = subsystems->AddObject("AudioDAC");
-                break;
-		}
-
-		return out;
-	}
-
-	void EventLog::Add(DbgChannel chan, EventType type, std::vector<uint8_t>& arbitraryData)
-	{
-		char entryName[0x100] = { 0, };
-
 		eventLock.Lock();
 
-		Json::Value* subsystem = GetSubsystem(chan);
-		if (!subsystem)
-		{
-			eventLock.Unlock();
-			return;
-		}
-
-		sprintf_s(entryName, sizeof(entryName) - 1, "%lld", Gekko::Gekko->GetTicks());
-
-		Json::Value * entry = subsystem->AddObject(entryName);
+		Json::Value* entry = traceEvents->AddObject(nullptr);
 		assert(entry);
 
-		Json::Value* typeVal = entry->AddInt("type", (int)type);
-		assert(typeVal);
-		Json::Value* data = entry->AddArray("data");
-		assert(data);
+		Json::Value* pid = entry->AddInt("pid", 1);
+		assert(pid);
 
-		for (size_t i = 0; i < arbitraryData.size(); i++)
-		{
-			data->AddInt(nullptr, arbitraryData.data()[i]);
-		}
+		Json::Value* tid = entry->AddInt("pid", (int)chan);
+		assert(tid);
+
+		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		assert(ts);
+
+		Json::Value* ph = entry->AddAnsiString("ph", "B");
+		assert(ph);
+
+		Json::Value* name = entry->AddAnsiString("name", s);
+		assert(name);
+
+		eventLock.Unlock();
+	}
+
+	void EventLog::TraceEnd(DbgChannel chan)
+	{
+		eventLock.Lock();
+
+		Json::Value* entry = traceEvents->AddObject(nullptr);
+		assert(entry);
+
+		Json::Value* pid = entry->AddInt("pid", 1);
+		assert(pid);
+
+		Json::Value* tid = entry->AddInt("pid", (int)chan);
+		assert(tid);
+
+		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		assert(ts);
+
+		Json::Value* ph = entry->AddAnsiString("ph", "E");
+		assert(ph);
+
+		eventLock.Unlock();
+	}
+
+	void EventLog::TraceEvent(DbgChannel chan, char * text)
+	{
+		eventLock.Lock();
+
+		Json::Value* entry = traceEvents->AddObject(nullptr);
+		assert(entry);
+
+		Json::Value* pid = entry->AddInt("pid", 1);
+		assert(pid);
+
+		Json::Value* tid = entry->AddInt("pid", (int)chan);
+		assert(tid);
+
+		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		assert(ts);
+
+		Json::Value* ph = entry->AddAnsiString("ph", "I");
+		assert(ph);
+
+		Json::Value* name = entry->AddAnsiString("name", text);
+		assert(name);
 
 		eventLock.Unlock();
 	}
