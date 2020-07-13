@@ -43,7 +43,7 @@
 #define MCDmaWrite      (1 << 3)
 
 /* structure of a memcard buffer */
-typedef struct Memcard {
+struct Memcard {
     TCHAR filename[0x1000]; // filename where the memcard data is stores 
     FILE * file;        // pointer to that file
     uint32_t size;           // size of the memcard in bytes
@@ -63,15 +63,15 @@ typedef struct Memcard {
     uint32_t commandData;
     bool ready;
     EXIRegs * exi;
-} Memcard;
+};
 
-typedef struct MCCommand {
+struct MCCommand {
     int databytes;
     int dummybytes;
     uint32_t executionFlags;
     void (*procedure)(Memcard *);
     uint8_t Command;
-} MCCommand ;
+};
 
 #define Memcard_BlockSize       8192
 #define Memcard_BlockSize_log2  13 // just to make shifts instead of mult. or div.

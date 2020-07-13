@@ -30,14 +30,14 @@ namespace DVD
 	typedef void (*DduToHostCallback)(uint8_t data);
 	typedef void (*DduStreamCallback)(uint16_t l, uint16_t r);
 
-	typedef struct _DduStats
+	struct DduStats
 	{
 		int64_t bytesRead;
 		int64_t bytesWrite;
 		int dduToHostTransferCount;
 		int hostToDduTransferCount;
 		int64_t sampleCounter;
-	} DduStats;
+	};
 
 	enum class DduThreadState
 	{

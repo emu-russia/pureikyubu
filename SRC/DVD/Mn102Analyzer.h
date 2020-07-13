@@ -139,7 +139,7 @@ namespace DVD
 		NS = 0xf,
 	};
 
-	typedef struct _MnInstrInfo
+	struct MnInstrInfo
 	{
 		size_t instrSize;			// In bytes
 		uint8_t instrBytes[5];		// Saved instruction bytes
@@ -161,7 +161,7 @@ namespace DVD
 
 		MnCond	cc;				// Condition code for branches
 
-	} MnInstrInfo;
+	};
 
 	class MnAnalyze
 	{

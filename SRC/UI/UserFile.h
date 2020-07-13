@@ -3,6 +3,11 @@
 #include <vector>
 #include <string>
 
+// TODO: File operations have become more platform independent, but there are still some leftovers for the UI (OpenDialog, SaveDialog) that remain here. 
+// Move platform-independent methods (e.g. FileLoad) in Common/Files finally.
+
+// When the emulator starts to run more games, the current UI will simply be thrown out, as this is a piece of code from the past.
+
 namespace UI
 {
     enum class FileType

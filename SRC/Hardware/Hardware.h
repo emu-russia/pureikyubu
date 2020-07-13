@@ -6,13 +6,13 @@
 
 #include <Windows.h>
 
-typedef struct _HWConfig
+struct HWConfig
 {
     // MI
     size_t      ramsize;
 
     // VI
-	HWND	    hwndMain;
+	HWND	    hwndMain;           // TODO: Redesign the video system so that all rendering is done only in memory (algorithmically) and get rid of the platform (Windows)
     bool        vi_log;
     bool        vi_xfb;
     int         videoEncoderFuse;       // 1 - PAL, 0 - NTSC
@@ -38,7 +38,7 @@ typedef struct _HWConfig
     TCHAR       DspDromFilename[0x1000];
     TCHAR       DspIromFilename[0x1000];
 
-} HWConfig;
+};
 
 // external interfaces (previously plugins)
 #include "GX.h"

@@ -3,7 +3,7 @@
 
 #pragma once
 
-typedef struct PADState
+struct PADState
 {
     unsigned short  button;         // combination of PAD_BUTTON*
     signed char     stickX;         // -127...127
@@ -12,7 +12,7 @@ typedef struct PADState
     signed char     substickY;
     unsigned char   triggerLeft;    // 0...255
     unsigned char   triggerRight;
-} PADState;
+};
 
 // controller buttons
 #define PAD_BUTTON_LEFT         (0x0001)

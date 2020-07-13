@@ -4,11 +4,11 @@ void    os_ret1();
 void    os_trap();
 
 // HLE state variables
-typedef struct HLEControl
+struct HLEControl
 {
     // current loaded map file
     TCHAR       mapfile[0x1000];
-} HLEControl;
+};
 
 extern  HLEControl hle;
 

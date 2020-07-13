@@ -65,7 +65,7 @@ void MIWriteDouble(uint32_t phys_addr, uint64_t* data);
 void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
 void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 
-typedef struct _MIControl
+struct MIControl
 {
 	uint8_t* ram;
 	size_t ramSize;
@@ -75,7 +75,7 @@ typedef struct _MIControl
 
     bool    BootromPresent;     ///< loaded and descrambled valid bootrom
 
-} MIControl;
+};
 
 extern	MIControl mi;
 

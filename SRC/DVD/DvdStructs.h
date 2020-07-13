@@ -12,7 +12,7 @@
 
 #define DVD_DISKID_MAGIC 0xC2339F3D
 
-typedef struct _DiskID
+struct DiskID
 {
     char gameName[4];
     char company[2];
@@ -22,7 +22,7 @@ typedef struct _DiskID
     uint8_t streamingBufSize;
     uint8_t padding[18];
     uint32_t magicNumber;       // DVD_DISKID_MAGIC
-} DiskID;
+};
 
 //
 // general DVD tables (BB2, BI2)
@@ -35,7 +35,7 @@ typedef struct _DiskID
 #define DVD_BI2_OFFSET      0x0440  // BI2
 #define DVD_APPLDR_OFFSET   0x2440  // apploader
 
-typedef struct _DVDBB2
+struct DVDBB2
 {
     uint32_t     bootFilePosition;          // Where DOL executable is 
     uint32_t     FSTPosition;
@@ -44,7 +44,7 @@ typedef struct _DVDBB2
     uint32_t     userPosition;          // FST location in memory. A strange architectural solution, one could do OSAlloc.
     uint32_t     userLength;            // FST size in memory
     uint8_t      padding[8];
-} DVDBB2;
+};
 
 // BI2 is omitted here..
 
@@ -60,7 +60,7 @@ typedef struct _DVDBB2
 #pragma warning (push)
 #pragma warning (disable: 4201)
 
-typedef struct _DVDFileEntry
+struct DVDFileEntry
 {
     uint8_t      isDir;                  // 1, if directory
     uint8_t      nameOffsetHi;      // Relative to Name Table start
@@ -78,7 +78,7 @@ typedef struct _DVDFileEntry
             uint32_t     nextOffset;     // next directory FST index
         };
     };
-} DVDFileEntry;
+};
 
 // Additional information: FSTNotes.md
 

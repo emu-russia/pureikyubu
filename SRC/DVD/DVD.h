@@ -41,7 +41,7 @@ namespace DVD
 #include "Region.h"
 
 // all important data is placed here
-typedef struct
+struct DVDControl
 {
     bool mountedImage;
     TCHAR gcm_filename[0x1000];
@@ -49,7 +49,7 @@ typedef struct
     int   seekval;        // current DVD position
 
     DVD::MountDolphinSdk* mountedSdk;
-} DVDControl;
+};
 
 extern DVDControl dvd;             // share with other modules
 

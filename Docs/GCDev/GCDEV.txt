@@ -1,0 +1,24 @@
+# Как компилировать программы для GAMECUBE.
+
+1. Установить GAMECUBE_SDK_DEC_12_2001 (sdk-drivers/GCN_SDK_12-Dec-01/Gamecube SDK/setup.exe)
+Примерный путь установки - С:/MyFolder/DolphinSDK1.0.
+Вообщем все что нужно в DolphinSDK это папка HW2/lib с библиотеками Dolphin OS и папка include с заголовками.
+
+2. Установить Metrowerks CodeWarrior.
+CodeWarrior - это компилятор с IDE который использует либы и хедеры Dolphin SDK.
+
+3. Создать новый проект : File -> New -> GAMECUBE DDH Stationery HW2 (как то так, различается в разных версиях, главное чтобы DDH и HW2).
+Project Stationery : C.
+
+4. В папке GameOptix проекта удалить библиотеку amcExi2.a и добавить в папку С Sources файл AMCSTUB.c который заменяет ненужную amcExi2.a.
+
+5. В свойствах проекта (Alt+F7) зайти в раздел Target/ Source Trees и добавить путь:
+Name: DolphinRoot
+Type: AbsolutePath
+Choose: Путь куда установлен Dolphin SDK, например С:/MyFolder/DolphinSDK1.0.
+Нажать Add. OK
+То же самое сделать для Release-версии.
+
+Всё, теперь можно компилировать проект кнопкой F7.
+
+Нужно учесть что CodeWarrior компилирует ELF файлы, и для конвертирования ELF в DOL нужно использовать утилиту из Dolphin SDK - makedol.
