@@ -17,4 +17,4 @@ It is definitely not recommended to study the current code, it is here just so t
 
 DolwinVideo reimplementation is planned for version 0.14, but the architecture has already been developed. We will use the native Windows API - D3D.
 
-![DolwinGraphicsFlow](/Docs/EMU/DolwinGraphicsFlow.png)
+![DolwinGraphicsFlow](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/DolwinGraphicsFlow.png)

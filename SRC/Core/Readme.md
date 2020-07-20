@@ -2,7 +2,7 @@
 
 The main component that emulates the GameCube Gekko processor. GekkoCore components are shown in the diagram:
 
-![GekkoCore](/Docs/EMU/GekkoCore.png)
+![GekkoCore](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/GekkoCore.png)
 
 ## A few key features
 
