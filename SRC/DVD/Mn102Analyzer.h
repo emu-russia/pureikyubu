@@ -139,6 +139,13 @@ namespace DVD
 		NS = 0xf,
 	};
 
+	union MnInstrImmed
+	{
+		uint8_t		Uint8;
+		uint16_t	Uint16;
+		uint32_t	Uint24;
+	};
+
 	struct MnInstrInfo
 	{
 		size_t instrSize;			// In bytes
@@ -150,12 +157,7 @@ namespace DVD
 		MnOperand op[2];
 		int opBits[2];			// If one of the operands is in the form (Di, An), then Di and An saved as one
 
-		union
-		{
-			uint8_t		Uint8;
-			uint16_t	Uint16;
-			uint32_t	Uint24;
-		} imm;
+		MnInstrImmed imm;
 
 		bool	flow;				// Kind of branch (can break instruction flow)
 

@@ -221,6 +221,74 @@ namespace DSP
 		Adpcm = 0x0000,			// ADPCM encoded (both standard & extended)
 	};
 
+	// DSP DMA registers
+
+	struct DspDmaRegs
+	{
+		union
+		{
+			struct
+			{
+				uint16_t	l;
+				uint16_t	h;
+			};
+			uint32_t	bits;
+		} mmemAddr;
+		DspAddress  dspAddr;
+		uint16_t	blockSize;
+		union
+		{
+			struct
+			{
+				unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
+				unsigned Imem : 1;			// 0: DMEM, 1: IMEM
+			};
+			uint16_t	bits;
+		} control;
+	};
+
+	// DSP accelerator state
+
+	struct DspAccel
+	{
+		uint16_t Fmt;					// Sample format
+		uint16_t AdpcmCoef[16];
+		uint16_t AdpcmPds;				// predictor / scale combination
+		uint16_t AdpcmYn1;				// y[n - 1]
+		uint16_t AdpcmYn2;				// y[n - 2]
+		uint16_t AdpcmGan;				// gain to be applied
+		union
+		{
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			};
+			uint32_t addr;
+		} StartAddress;
+		union
+		{
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			};
+			uint32_t addr;
+		} EndAddress;
+		union
+		{
+			struct
+			{
+				uint16_t l;
+				uint16_t h;
+			};
+			uint32_t addr;
+		} CurrAddress;
+
+		bool pendingOverflow;
+		DspException overflowVector;
+	};
+
 	class DspInterpreter;
 
 	class DspCore
@@ -253,69 +321,9 @@ namespace DSP
 
 		bool haltOnUnmappedMemAccess = false;
 
-		struct
-		{
-			union
-			{
-				struct
-				{
-					uint16_t	l;
-					uint16_t	h;
-				};
-				uint32_t	bits;
-			} mmemAddr;
-			DspAddress  dspAddr;
-			uint16_t	blockSize;
-			union
-			{
-				struct
-				{
-					unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
-					unsigned Imem : 1;			// 0: DMEM, 1: IMEM
-				};
-				uint16_t	bits;
-			} control;
-		} DmaRegs;
+		DspDmaRegs DmaRegs;
 
-		struct
-		{
-			uint16_t Fmt;					// Sample format
-			uint16_t AdpcmCoef[16];			
-			uint16_t AdpcmPds;				// predictor / scale combination
-			uint16_t AdpcmYn1;				// y[n - 1]
-			uint16_t AdpcmYn2;				// y[n - 2]
-			uint16_t AdpcmGan;				// gain to be applied
-			union
-			{
-				struct
-				{
-					uint16_t l;
-					uint16_t h;
-				};
-				uint32_t addr;
-			} StartAddress;
-			union
-			{
-				struct
-				{
-					uint16_t l;
-					uint16_t h;
-				};
-				uint32_t addr;
-			} EndAddress;
-			union
-			{
-				struct
-				{
-					uint16_t l;
-					uint16_t h;
-				};
-				uint32_t addr;
-			} CurrAddress;
-			
-			bool pendingOverflow;
-			DspException overflowVector;
-		} Accel;
+		DspAccel Accel;
 
 		void ResetIfx();
 		void DoDma();
