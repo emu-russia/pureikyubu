@@ -1,6 +1,6 @@
 # Nintendo GameCube Emulator not only for Windows
 
-![PNG](/Docs/ScreenShots/Ikaruga_0130.png)
+![PNG](/Images/Ikaruga_0130.png)
 
 Dolwin is work-in-progress emulator of Nintendo GameCube console.
 
