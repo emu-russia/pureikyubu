@@ -1,4 +1,4 @@
-# Nintendo GameCube Emulator for Windows
+# Nintendo GameCube Emulator not only for Windows
 
 ![PNG](/Docs/ScreenShots/Ikaruga_0130.png)
 
@@ -44,6 +44,16 @@ Try not to use third-party libraries without special need.
 
 Dolwin was originally stands for "Nintendo *Dol*phin Emulator for *Win*dows" (Dolphin is GameCube codename).
 Later "Dolphin" was changed to "GameCube", so that there is no confusion with another emulator - Dolphin-emu.
+
+## Situation with rebranding
+
+I didn't want to leave Windows aside, but the public is interested in the possibility of launching and porting Dolwin in other OSes.
+
+Therefore, a small rebranding was made, now Dolwin stands for "Nintendo GameCube Emulator not only for Windows". Lol.
+
+As soon as the opportunity arises, all Win32 dependencies will be cleaned up and the portable code will be encapsulated as much as possible.
+
+Essentially the emulator is purely algorithmic code, with the exception of the user interface and audio/video/controllers interactions. Therefore, I don't see any problems here.
 
 ## Greets
 
