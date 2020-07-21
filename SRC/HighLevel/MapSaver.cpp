@@ -3,6 +3,8 @@
 // and try to append symbols into alredy present MAP.
 #include "pch.h"
 
+using namespace Debug;
+
 #define DEFAULT_MAP _T("Data\\default.map")
 //#define HEX "0x"
 #define HEX
@@ -45,7 +47,7 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
         fprintf(mapFile, "%08x %s\n", address, symbol);        
     }
 
-    DBReport2(DbgChannel::HLE, "New map entry: %08X %s\n", address, symbol);
+    Report(Channel::HLE, "New map entry: %08X %s\n", address, symbol);
     itemsUpdated ++;
     fclose (mapFile);
 }
@@ -63,13 +65,13 @@ static void SaveMAP2(const TCHAR *mapname)
     {
         if(hle.mapfile[0] == 0)
         {
-            DBReport2(DbgChannel::Error, "No map file loaded! Symbols will be saved to default map\n");
+            Report(Channel::Error, "No map file loaded! Symbols will be saved to default map\n");
             mapname = DEFAULT_MAP;
         }
         else mapname = hle.mapfile;
     }
 
-    DBReport2(DbgChannel::HLE, "Saving/updating map: %s ...\n\n", mapname);
+    Report(Channel::HLE, "Saving/updating map: %s ...\n\n", mapname);
 
     // load MAP symbols
     SYMSetWorkspace(mapSet);
@@ -80,7 +82,7 @@ static void SaveMAP2(const TCHAR *mapname)
     mapName = (char *)mapname;
     appendStarted = itemsUpdated = 0;
     SYMCompareWorkspaces(thisSet, mapSet, AppendMAPBySymbol);
-    if ( itemsUpdated == 0 ) DBReport2 (DbgChannel::HLE, "Nothing to update\n");
+    if ( itemsUpdated == 0 ) Report (Channel::HLE, "Nothing to update\n");
 
     // restore old workspace
     SYMKill();

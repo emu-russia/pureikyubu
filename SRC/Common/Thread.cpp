@@ -1,5 +1,7 @@
 #include "pch.h"
 
+using namespace Debug;
+
 DWORD WINAPI Thread::RingleaderThreadProc(LPVOID lpParameter)
 {
 	WrappedContext* wrappedCtx = (WrappedContext*)lpParameter;
@@ -24,7 +26,7 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 	assert(threadHandle != INVALID_HANDLE_VALUE);
 #endif
 
-	DBReport("Thread: %s\n", threadName);
+	Report(Channel::Norm, "Thread: %s\n", threadName);
 }
 
 Thread::~Thread()
@@ -36,7 +38,7 @@ Thread::~Thread()
 	WaitForSingleObject(threadHandle, 1000);
 #endif
 
-	DBReport("~Thread: %s\n", threadName);
+	Report(Channel::Norm, "~Thread: %s\n", threadName);
 }
 
 void Thread::Resume()
@@ -49,7 +51,7 @@ void Thread::Resume()
 #endif
 		running = true;
 		resumeCounter++;
-		//DBReport("%s Resume\n", threadName);
+		//Report(Channel::Norm, "%s Resume\n", threadName);
 	}
 	resumeLock.Unlock();
 }
@@ -60,7 +62,7 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
-		//DBReport("%s Suspend\n", threadName);
+		//Report(Channel::Norm, "%s Suspend\n", threadName);
 #ifdef _WINDOWS
 		SuspendThread(threadHandle);
 #endif

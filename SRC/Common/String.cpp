@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "String.h"
 
 std::wstring str_to_wstr(const std::string& str)
 {

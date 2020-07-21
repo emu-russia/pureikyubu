@@ -4,6 +4,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
 #define SWAP        _byteswap_ulong
@@ -28,10 +30,10 @@ static void print_mtx(MatrixPtr ptr)
     MatrixFPtr m = (MatrixFPtr)ptr;
 
     Gekko::GekkoCore::SwapArea((uint32_t *)ptr, 3*4*4);
-    UI::DolwinReport(
-        _T("%f %f %f %f\n")
-        _T("%f %f %f %f\n")
-        _T("%f %f %f %f\n"),
+    Report(Channel::Norm,
+        "%f %f %f %f\n"
+        "%f %f %f %f\n"
+        "%f %f %f %f\n",
 
         MTX(m)[0][0], MTX(m)[0][1], MTX(m)[0][2], MTX(m)[0][3],
         MTX(m)[1][0], MTX(m)[1][1], MTX(m)[1][2], MTX(m)[1][3],
@@ -48,7 +50,7 @@ void MTXOpen()
     BOOL flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
     if(flag == FALSE) return;
 
-    DBReport2( DbgChannel::HLE, "Geometry library install\n");
+    Report( Channel::HLE, "Geometry library install\n");
 
     HLESetCall("C_MTXIdentity",             C_MTXIdentity);
     HLESetCall("PSMTXIdentity",             C_MTXIdentity);
@@ -60,7 +62,7 @@ void MTXOpen()
     HLESetCall("C_MTXTranspose",            C_MTXTranspose);
     HLESetCall("PSMTXTranspose",            C_MTXTranspose);
 
-    DBReport("\n");
+    Report(Channel::Norm, "\n");
 }
 
 /* ---------------------------------------------------------------------------

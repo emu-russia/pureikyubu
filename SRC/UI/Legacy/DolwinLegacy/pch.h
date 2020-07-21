@@ -26,7 +26,7 @@
 #include <codecvt>
 #include <memory>
 #include <locale>
-#include "../../RES/resource.h"
+#include "RES/resource.h"
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"
@@ -42,8 +42,8 @@
 #include "../Dolwin/Emulator.h"
 #include "../Dolwin/Loader.h"
 
-#include "../../ThirdParty/fmt/fmt/format.h"
-#include "../../ThirdParty/fmt/fmt/printf.h"
+#include "../../../../ThirdParty/fmt/fmt/format.h"
+#include "../../../../ThirdParty/fmt/fmt/printf.h"
 
 #include "User.h"
 

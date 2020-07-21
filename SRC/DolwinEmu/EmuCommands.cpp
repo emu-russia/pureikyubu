@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 {
 	FILE* f;
@@ -9,7 +11,7 @@ static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 	fopen_s(&f, args[1].c_str(), "rb");
 	if (!f)
 	{
-		Debug::Report(Debug::Channel::Error, "Failed to open: %s\n", args[1].c_str());
+		Report(Channel::Error, "Failed to open: %s\n", args[1].c_str());
 		return nullptr;
 	}
 

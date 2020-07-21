@@ -35,11 +35,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Data\Json\DebuggerJdi.json" />
-    <None Include="..\..\..\..\Docs\EMU\EventLog.md" />
-    <None Include="..\..\..\..\Docs\EMU\JsonDebugInterface.md" />
-    <None Include="..\..\..\..\Docs\EMU\JsonDebugInterfaceRus.md" />
-    <None Include="..\..\..\..\Docs\EMU\SamplingProfiler.md" />
-    <None Include="..\..\..\..\Docs\EMU\SamplingProfilerRus.md" />
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

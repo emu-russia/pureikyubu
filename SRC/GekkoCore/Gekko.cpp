@@ -29,7 +29,7 @@ namespace Gekko
         jitc = new Jitc(this);
         assert(jitc);
 
-        Debug::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
+        JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
         gekkoThread = new Thread(GekkoThreadProc, true, this, "GekkoCore");
         assert(gekkoThread);
@@ -44,7 +44,7 @@ namespace Gekko
         delete gekkoThread;
         delete interp;
         delete jitc;
-        Debug::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
+        JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
     }
 
     // Reset processor
@@ -115,7 +115,7 @@ namespace Gekko
             if (regs.msr & MSR_EE)
             {
                 decreq = 1;
-                DBReport2(DbgChannel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
+                Debug::Report(Debug::Channel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
             }
         }
     }
@@ -176,7 +176,7 @@ namespace Gekko
 
         if (exception)
         {
-            DBHalt("CPU Double Fault!\n");
+            Debug::Halt("CPU Double Fault!\n");
         }
 
         // save regs

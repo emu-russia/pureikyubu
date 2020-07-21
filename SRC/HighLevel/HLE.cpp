@@ -1,14 +1,16 @@
 // high level initialization code
 #include "pch.h"
 
+using namespace Debug;
+
 HLEControl hle;
 
 // ---------------------------------------------------------------------------
 
-void os_ignore() { DBReport2(DbgChannel::HLE, "High level ignore (pc: %08X, %s)\n", Gekko::Gekko->regs.pc, SYMName(Gekko::Gekko->regs.pc)); }
+void os_ignore() { Report(Channel::HLE, "High level ignore (pc: %08X, %s)\n", Gekko::Gekko->regs.pc, SYMName(Gekko::Gekko->regs.pc)); }
 void os_ret0()   { Gekko::Gekko->regs.gpr[3] = NULL; }
 void os_ret1()   { Gekko::Gekko->regs.gpr[3] = 1; }
-void os_trap()   { Gekko::Gekko->regs.pc = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] - 4; DBHalt("High level trap (pc: %08X)!\n", Gekko::Gekko->regs.pc); }
+void os_trap()   { Gekko::Gekko->regs.pc = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] - 4; Halt("High level trap (pc: %08X)!\n", Gekko::Gekko->regs.pc); }
 
 // HLE Ignore (you know what are you doing!)
 static const char *osignore[] = {
@@ -99,17 +101,17 @@ void HLESetCall(const char * name, void (*call)())
 
 void HLEInit()
 {
-    Debug::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
+    JDI::Hub.AddNode(HLE_JDI_JSON, HLE::JdiReflector);
 }
 
 void HLEShutdown()
 {
-    Debug::Hub.RemoveNode(HLE_JDI_JSON);
+    JDI::Hub.RemoveNode(HLE_JDI_JSON);
 }
 
 void HLEOpen()
 {
-    DBReport2(DbgChannel::Info,
+    Report(Channel::Info,
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
         "Highlevel Initialization.\n"
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"

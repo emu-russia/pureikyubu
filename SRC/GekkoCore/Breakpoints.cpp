@@ -7,6 +7,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
     void GekkoCore::AddBreakpoint(uint32_t addr)
@@ -23,7 +25,7 @@ namespace Gekko
         }
         if (!exists)
         {
-            DBReport2(DbgChannel::CPU, "Breakpoint added: 0x%08X\n", addr);
+            Report(Channel::CPU, "Breakpoint added: 0x%08X\n", addr);
             breakPointsExecute.push_back(addr);
             jitc->Invalidate(addr, 4);
             EnableTestBreakpoints = true;
@@ -45,7 +47,7 @@ namespace Gekko
         }
         if (exists)
         {
-            DBReport2(DbgChannel::CPU, "Breakpoint removed: 0x%08X\n", addr);
+            Report(Channel::CPU, "Breakpoint removed: 0x%08X\n", addr);
             breakPointsExecute.remove(addr);
             jitc->Invalidate(addr, 4);
         }
@@ -119,7 +121,7 @@ namespace Gekko
         if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
         {
             oneShotBreakpoint = BadAddress;
-            DBHalt("One shot breakpoint\n");
+            Halt("One shot breakpoint\n");
         }
 
         uint32_t addr = BadAddress;
@@ -137,7 +139,7 @@ namespace Gekko
 
         if (addr != BadAddress)
         {
-            DBHalt("Gekko suspended at addr: 0x%08X\n", addr);
+            Halt("Gekko suspended at addr: 0x%08X\n", addr);
         }
     }
 
@@ -161,7 +163,7 @@ namespace Gekko
 
         if (addr != BadAddress)
         {
-            DBHalt("Gekko suspended trying to read: 0x%08X\n", addr);
+            Halt("Gekko suspended trying to read: 0x%08X\n", addr);
         }
     }
 
@@ -185,7 +187,7 @@ namespace Gekko
 
         if (addr != BadAddress)
         {
-            DBHalt("Gekko suspended trying to write: 0x%08X\n", addr);
+            Halt("Gekko suspended trying to write: 0x%08X\n", addr);
         }
     }
 

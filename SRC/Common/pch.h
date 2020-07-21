@@ -10,4 +10,7 @@
 #include "Thread.h"
 #include "Json.h"
 #include "Jdi.h"
+#include "String.h"
 #include "WinAPI.h"
+
+#include "../Debugger/Report.h"

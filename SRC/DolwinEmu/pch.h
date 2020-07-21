@@ -33,7 +33,6 @@
 #include "../HighLevel/HighLevel.h"
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
-#include "../Debugger/EventLog.h"
 
 #include "Loader.h"
 #include "Emulator.h"

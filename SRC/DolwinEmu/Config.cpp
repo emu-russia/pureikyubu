@@ -26,7 +26,10 @@ static void LoadSettings()
 		return;
 
 	// Load default settings
-	assert(UI::FileExists(DOLWIN_DEFAULT_SETTINGS));
+	if (!UI::FileExists(DOLWIN_DEFAULT_SETTINGS))
+	{
+		throw "Default settings missing!";
+	}
 
 	auto jsonText = UI::FileLoad(DOLWIN_DEFAULT_SETTINGS);
 	assert(!jsonText.empty());

@@ -1,6 +1,8 @@
 // high level Dolphin OS (experimental)
 #include "pch.h"
 
+using namespace Debug;
+
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
 #define SWAP        _byteswap_ulong
@@ -251,8 +253,8 @@ void OSFillFPUContext(void)
 
 void __OSContextInit(void)
 {
-    DBReport2(DbgChannel::HLE, "HLE OS context driver installed.\n");
-    DBReport2(DbgChannel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
+    Report(Channel::HLE, "HLE OS context driver installed.\n");
+    Report(Channel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
 
     __OSDefaultThread = NULL;
     Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);

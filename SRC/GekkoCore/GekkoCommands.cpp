@@ -1,6 +1,8 @@
 // Processor debug commands. Available only after emulation has been started.
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
 	// Run processor until break or stop
@@ -175,97 +177,97 @@ namespace Gekko
 		};
 		int f, fe[2];
 
-		DBReport("MSR: 0x%08X\n", msr_val);
+		Report(Channel::Norm, "MSR: 0x%08X\n", msr_val);
 
-		if (msr_val & MSR_POW) DBReport("MSR[POW]: 1, power management enabled\n");
-		else DBReport("MSR[POW]: 0, power management disabled\n");
-		if (msr_val & MSR_ILE) DBReport("MSR[ILE]: 1\n");
-		else DBReport("MSR[ILE]: 0\n");
-		if (msr_val & MSR_EE) DBReport("MSR[EE] : 1, external interrupts and decrementer exception are enabled\n");
-		else DBReport("MSR[EE] : 0, external interrupts and decrementer exception are disabled\n");
-		if (msr_val & MSR_PR) DBReport("MSR[PR] : 1, processor execute in user mode (UISA)\n");
-		else DBReport("MSR[PR] : 0, processor execute in supervisor mode (OEA)\n");
-		if (msr_val & MSR_FP) DBReport("MSR[FP] : 1, floating-point is available\n");
-		else DBReport("MSR[FP] : 0, floating-point unavailable\n");
-		if (msr_val & MSR_ME) DBReport("MSR[ME] : 1, machine check exceptions are enabled\n");
-		else DBReport("MSR[ME] : 0, machine check exceptions are disabled\n");
+		if (msr_val & MSR_POW) Report(Channel::Norm, "MSR[POW]: 1, power management enabled\n");
+		else Report(Channel::Norm, "MSR[POW]: 0, power management disabled\n");
+		if (msr_val & MSR_ILE) Report(Channel::Norm, "MSR[ILE]: 1\n");
+		else Report(Channel::Norm, "MSR[ILE]: 0\n");
+		if (msr_val & MSR_EE) Report(Channel::Norm, "MSR[EE] : 1, external interrupts and decrementer exception are enabled\n");
+		else Report(Channel::Norm, "MSR[EE] : 0, external interrupts and decrementer exception are disabled\n");
+		if (msr_val & MSR_PR) Report(Channel::Norm, "MSR[PR] : 1, processor execute in user mode (UISA)\n");
+		else Report(Channel::Norm, "MSR[PR] : 0, processor execute in supervisor mode (OEA)\n");
+		if (msr_val & MSR_FP) Report(Channel::Norm, "MSR[FP] : 1, floating-point is available\n");
+		else Report(Channel::Norm, "MSR[FP] : 0, floating-point unavailable\n");
+		if (msr_val & MSR_ME) Report(Channel::Norm, "MSR[ME] : 1, machine check exceptions are enabled\n");
+		else Report(Channel::Norm, "MSR[ME] : 0, machine check exceptions are disabled\n");
 
 		fe[0] = msr_val & MSR_FE0 ? 1 : 0;
 		fe[1] = msr_val & MSR_FE1 ? 1 : 0;
 		f = (fe[0] << 1) | (fe[1]);
-		DBReport("MSR[FE] : %i, floating-point %s\n", f, fpmod[f]);
+		Report(Channel::Norm, "MSR[FE] : %i, floating-point %s\n", f, fpmod[f]);
 
-		if (msr_val & MSR_SE) DBReport("MSR[SE] : 1, single-step tracing is enabled\n");
-		else DBReport("MSR[SE] : 0, single-step tracing is disabled\n");
-		if (msr_val & MSR_BE) DBReport("MSR[BE] : 1, branch tracing is enabled\n");
-		else DBReport("MSR[BE] : 0, branch tracing is disabled\n");
-		if (msr_val & MSR_IP) DBReport("MSR[IP] : 1, exception prefix to physical address is 0xFFFn_nnnn\n");
-		else DBReport("MSR[IP] : 0, exception prefix to physical address is 0x000n_nnnn\n");
-		if (msr_val & MSR_IR) DBReport("MSR[IR] : 1, instruction address translation is enabled\n");
-		else DBReport("MSR[IR] : 0, instruction address translation is disabled\n");
-		if (msr_val & MSR_DR) DBReport("MSR[DR] : 1, data address translation is enabled\n");
-		else DBReport("MSR[DR] : 0, data address translation is disabled\n");
-		if (msr_val & MSR_PM) DBReport("MSR[PM] : 1, performance monitoring is enabled for this thread\n");
-		else DBReport("MSR[PM] : 0, performance monitoring is disabled for this thread\n");
-		if (msr_val & MSR_RI) DBReport("MSR[RI] : 1\n");
-		else DBReport("MSR[RI] : 0\n");
-		if (msr_val & MSR_LE) DBReport("MSR[LE] : 1, processor runs in little-endian mode\n");
-		else DBReport("MSR[LE] : 0, processor runs in big-endian mode\n");
+		if (msr_val & MSR_SE) Report(Channel::Norm, "MSR[SE] : 1, single-step tracing is enabled\n");
+		else Report(Channel::Norm, "MSR[SE] : 0, single-step tracing is disabled\n");
+		if (msr_val & MSR_BE) Report(Channel::Norm, "MSR[BE] : 1, branch tracing is enabled\n");
+		else Report(Channel::Norm, "MSR[BE] : 0, branch tracing is disabled\n");
+		if (msr_val & MSR_IP) Report(Channel::Norm, "MSR[IP] : 1, exception prefix to physical address is 0xFFFn_nnnn\n");
+		else Report(Channel::Norm, "MSR[IP] : 0, exception prefix to physical address is 0x000n_nnnn\n");
+		if (msr_val & MSR_IR) Report(Channel::Norm, "MSR[IR] : 1, instruction address translation is enabled\n");
+		else Report(Channel::Norm, "MSR[IR] : 0, instruction address translation is disabled\n");
+		if (msr_val & MSR_DR) Report(Channel::Norm, "MSR[DR] : 1, data address translation is enabled\n");
+		else Report(Channel::Norm, "MSR[DR] : 0, data address translation is disabled\n");
+		if (msr_val & MSR_PM) Report(Channel::Norm, "MSR[PM] : 1, performance monitoring is enabled for this thread\n");
+		else Report(Channel::Norm, "MSR[PM] : 0, performance monitoring is disabled for this thread\n");
+		if (msr_val & MSR_RI) Report(Channel::Norm, "MSR[RI] : 1\n");
+		else Report(Channel::Norm, "MSR[RI] : 0\n");
+		if (msr_val & MSR_LE) Report(Channel::Norm, "MSR[LE] : 1, processor runs in little-endian mode\n");
+		else Report(Channel::Norm, "MSR[LE] : 0, processor runs in big-endian mode\n");
 	}
 
 	// HID0 info
 	static void describe_hid0(uint32_t val)
 	{
-		DBReport("HID0: 0x%08X\n", val);
+		Report(Channel::Norm, "HID0: 0x%08X\n", val);
 
-		if (val & HID0_EMCP) DBReport("HID0[EMCP] : 1, Asserting MCP causes checkstop or a machine check\n");
-		else DBReport("HID0[EMCP] : 0, Masks MCP. Asserting MCP does not generate a machine check exception or a checkstop\n");
-		if (val & HID0_DBP) DBReport("HID0[DBP]  : 1, Disable parity generation\n");
-		else DBReport("HID0[DBP]  : 0, Parity generation is enabled\n");
-		if (val & HID0_EBA) DBReport("HID0[EBA]  : 1, Allows a address parity error to cause a checkstop or a machine check\n");
-		else DBReport("HID0[EBA]  : 0, Prevents address parity checking\n");
-		if (val & HID0_EBD) DBReport("HID0[EBD]  : 1, Allows a data parity error to cause a checkstop or machine check\n");
-		else DBReport("HID0[EBD]  : 0, Parity checking is disabled\n");
-		if (val & HID0_PAR) DBReport("HID0[PAR]  : 1, Alters bus protocol slightly by preventing the processor from driving ARTRY to high\n");
-		else DBReport("HID0[PAR]  : 0, Precharge of ARTRY enabled\n");
-		if (val & HID0_DOZE) DBReport("HID0[DOZE] : 1, Doze mode enabled\n");
-		else DBReport("HID0[DOZE] : 0, Doze mode disabled\n");
-		if (val & HID0_NAP) DBReport("HID0[NAP]  : 1, Nap mode enabled\n");
-		else DBReport("HID0[NAP]  : 0, Nap mode disabled\n");
-		if (val & HID0_SLEEP) DBReport("HID0[SLEEP]: 1, Sleep mode enabled\n");
-		else DBReport("HID0[SLEEP]: 0, Sleep mode disabled\n");
-		if (val & HID0_DPM) DBReport("HID0[DPM]  : 1, Dynamic power management is enabled\n");
-		else DBReport("HID0[DPM]  : 0, Dynamic power management is disabled\n");
-		if (val & HID0_NHR) DBReport("HID0[NHR]  : 1, Hard reset has not occurred\n");
-		else DBReport("HID0[NHR]  : 0, Hard reset occurred\n");
-		if (val & HID0_ICE) DBReport("HID0[ICE]  : 1, Instruction cache is enabled\n");
-		else DBReport("HID0[ICE]  : 0, Instruction cache is disabled\n");
-		if (val & HID0_DCE) DBReport("HID0[DCE]  : 1, Data cache is enabled\n");
-		else DBReport("HID0[DCE]  : 0, Data cache is disabled\n");
-		if (val & HID0_ILOCK) DBReport("HID0[ILOCK]: 1, Instruction cache locked (frozen)\n");
-		else DBReport("HID0[ILOCK]: 0, Instruction cache not locked\n");
-		if (val & HID0_DLOCK) DBReport("HID0[DLOCK]: 1, Data cache locked (frozen)\n");
-		else DBReport("HID0[DLOCK]: 0, Data cache not locked\n");
-		if (val & HID0_ICFI) DBReport("HID0[ICFI] : 1, Instruction cache invalidating\n");
-		else DBReport("HID0[ICFI] : 0, Instruction cache is not invalidated\n");
-		if (val & HID0_DCFI) DBReport("HID0[DCFI] : 1, Data cache invalidating\n");
-		else DBReport("HID0[DCFI] : 0, Data cache is not invalidated\n");
-		if (val & HID0_SPD) DBReport("HID0[SPD]  : 1, Speculative bus accesses to nonguarded space disabled\n");
-		else DBReport("HID0[SPD]  : 0, Speculative bus accesses to nonguarded space enabled\n");
-		if (val & HID0_IFEM) DBReport("HID0[IFEM] : 1, Instruction fetches reflect the M bit from the WIM settings\n");
-		else DBReport("HID0[IFEM] : 0, Instruction fetches M bit disabled\n");
-		if (val & HID0_SGE) DBReport("HID0[SGE]  : 1, Store gathering is enabled\n");
-		else DBReport("HID0[SGE]  : 0, Store gathering is disabled \n");
-		if (val & HID0_DCFA) DBReport("HID0[DCFA] : 1, Data cache flush assist facility is enabled\n");
-		else DBReport("HID0[DCFA] : 0, Data cache flush assist facility is disabled\n");
-		if (val & HID0_BTIC) DBReport("HID0[BTIC] : 1, BTIC is enabled\n");
-		else DBReport("HID0[BTIC] : 0, BTIC is disabled\n");
-		if (val & HID0_ABE) DBReport("HID0[ABE]  : 1, Address-only operations are broadcast on the 60x bus\n");
-		else DBReport("HID0[ABE]  : 0, Address-only operations affect only local L1 and L2 caches and are not broadcast\n");
-		if (val & HID0_BHT) DBReport("HID0[BHT]  : 1, Branch history enabled\n");
-		else DBReport("HID0[BHT]  : 0, Branch history disabled\n");
-		if (val & HID0_NOOPTI) DBReport("HID0[NOOPTI]: 1, The dcbt and dcbtst instructions are no-oped globally\n");
-		else DBReport("HID0[NOOPTI]: 0, The dcbt and dcbtst instructions are enabled\n");
+		if (val & HID0_EMCP) Report(Channel::Norm, "HID0[EMCP] : 1, Asserting MCP causes checkstop or a machine check\n");
+		else Report(Channel::Norm, "HID0[EMCP] : 0, Masks MCP. Asserting MCP does not generate a machine check exception or a checkstop\n");
+		if (val & HID0_DBP) Report(Channel::Norm, "HID0[DBP]  : 1, Disable parity generation\n");
+		else Report(Channel::Norm, "HID0[DBP]  : 0, Parity generation is enabled\n");
+		if (val & HID0_EBA) Report(Channel::Norm, "HID0[EBA]  : 1, Allows a address parity error to cause a checkstop or a machine check\n");
+		else Report(Channel::Norm, "HID0[EBA]  : 0, Prevents address parity checking\n");
+		if (val & HID0_EBD) Report(Channel::Norm, "HID0[EBD]  : 1, Allows a data parity error to cause a checkstop or machine check\n");
+		else Report(Channel::Norm, "HID0[EBD]  : 0, Parity checking is disabled\n");
+		if (val & HID0_PAR) Report(Channel::Norm, "HID0[PAR]  : 1, Alters bus protocol slightly by preventing the processor from driving ARTRY to high\n");
+		else Report(Channel::Norm, "HID0[PAR]  : 0, Precharge of ARTRY enabled\n");
+		if (val & HID0_DOZE) Report(Channel::Norm, "HID0[DOZE] : 1, Doze mode enabled\n");
+		else Report(Channel::Norm, "HID0[DOZE] : 0, Doze mode disabled\n");
+		if (val & HID0_NAP) Report(Channel::Norm, "HID0[NAP]  : 1, Nap mode enabled\n");
+		else Report(Channel::Norm, "HID0[NAP]  : 0, Nap mode disabled\n");
+		if (val & HID0_SLEEP) Report(Channel::Norm, "HID0[SLEEP]: 1, Sleep mode enabled\n");
+		else Report(Channel::Norm, "HID0[SLEEP]: 0, Sleep mode disabled\n");
+		if (val & HID0_DPM) Report(Channel::Norm, "HID0[DPM]  : 1, Dynamic power management is enabled\n");
+		else Report(Channel::Norm, "HID0[DPM]  : 0, Dynamic power management is disabled\n");
+		if (val & HID0_NHR) Report(Channel::Norm, "HID0[NHR]  : 1, Hard reset has not occurred\n");
+		else Report(Channel::Norm, "HID0[NHR]  : 0, Hard reset occurred\n");
+		if (val & HID0_ICE) Report(Channel::Norm, "HID0[ICE]  : 1, Instruction cache is enabled\n");
+		else Report(Channel::Norm, "HID0[ICE]  : 0, Instruction cache is disabled\n");
+		if (val & HID0_DCE) Report(Channel::Norm, "HID0[DCE]  : 1, Data cache is enabled\n");
+		else Report(Channel::Norm, "HID0[DCE]  : 0, Data cache is disabled\n");
+		if (val & HID0_ILOCK) Report(Channel::Norm, "HID0[ILOCK]: 1, Instruction cache locked (frozen)\n");
+		else Report(Channel::Norm, "HID0[ILOCK]: 0, Instruction cache not locked\n");
+		if (val & HID0_DLOCK) Report(Channel::Norm, "HID0[DLOCK]: 1, Data cache locked (frozen)\n");
+		else Report(Channel::Norm, "HID0[DLOCK]: 0, Data cache not locked\n");
+		if (val & HID0_ICFI) Report(Channel::Norm, "HID0[ICFI] : 1, Instruction cache invalidating\n");
+		else Report(Channel::Norm, "HID0[ICFI] : 0, Instruction cache is not invalidated\n");
+		if (val & HID0_DCFI) Report(Channel::Norm, "HID0[DCFI] : 1, Data cache invalidating\n");
+		else Report(Channel::Norm, "HID0[DCFI] : 0, Data cache is not invalidated\n");
+		if (val & HID0_SPD) Report(Channel::Norm, "HID0[SPD]  : 1, Speculative bus accesses to nonguarded space disabled\n");
+		else Report(Channel::Norm, "HID0[SPD]  : 0, Speculative bus accesses to nonguarded space enabled\n");
+		if (val & HID0_IFEM) Report(Channel::Norm, "HID0[IFEM] : 1, Instruction fetches reflect the M bit from the WIM settings\n");
+		else Report(Channel::Norm, "HID0[IFEM] : 0, Instruction fetches M bit disabled\n");
+		if (val & HID0_SGE) Report(Channel::Norm, "HID0[SGE]  : 1, Store gathering is enabled\n");
+		else Report(Channel::Norm, "HID0[SGE]  : 0, Store gathering is disabled \n");
+		if (val & HID0_DCFA) Report(Channel::Norm, "HID0[DCFA] : 1, Data cache flush assist facility is enabled\n");
+		else Report(Channel::Norm, "HID0[DCFA] : 0, Data cache flush assist facility is disabled\n");
+		if (val & HID0_BTIC) Report(Channel::Norm, "HID0[BTIC] : 1, BTIC is enabled\n");
+		else Report(Channel::Norm, "HID0[BTIC] : 0, BTIC is disabled\n");
+		if (val & HID0_ABE) Report(Channel::Norm, "HID0[ABE]  : 1, Address-only operations are broadcast on the 60x bus\n");
+		else Report(Channel::Norm, "HID0[ABE]  : 0, Address-only operations affect only local L1 and L2 caches and are not broadcast\n");
+		if (val & HID0_BHT) Report(Channel::Norm, "HID0[BHT]  : 1, Branch history enabled\n");
+		else Report(Channel::Norm, "HID0[BHT]  : 0, Branch history disabled\n");
+		if (val & HID0_NOOPTI) Report(Channel::Norm, "HID0[NOOPTI]: 1, The dcbt and dcbtst instructions are no-oped globally\n");
+		else Report(Channel::Norm, "HID0[NOOPTI]: 0, The dcbt and dcbtst instructions are enabled\n");
 	}
 
 	static Json::Value* cmd_r(std::vector<std::string>& args)
@@ -275,7 +277,7 @@ namespace Gekko
 		uint32_t* n = getreg(args[1].c_str());
 		if (n == NULL)
 		{
-			DBReport("unknown register : %s\n", args[1].c_str());
+			Report(Channel::Norm, "unknown register : %s\n", args[1].c_str());
 			return nullptr;
 		}
 
@@ -284,7 +286,7 @@ namespace Gekko
 		{
 			if (!_stricmp(args[1].c_str(), "msr")) describe_msr(*n);
 			else if (!_stricmp(args[1].c_str(), "hid0")) describe_hid0(*n);
-			else DBReport("%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
+			else Report(Channel::Norm, "%s = %i (0x%X)\n", args[1].c_str(), *n, *n);
 			return nullptr;
 		}
 
@@ -301,7 +303,7 @@ namespace Gekko
 		else if (!strcmp(args[2].c_str(), ">>")) op = op_shr;
 		if (op == NULL)
 		{
-			DBReport("Unknown operation: %s\n", args[2].c_str());
+			Report(Channel::Norm, "Unknown operation: %s\n", args[2].c_str());
 			return nullptr;
 		}
 
@@ -310,12 +312,12 @@ namespace Gekko
 		if (m == NULL)
 		{
 			int i = strtoul(args[3].c_str(), NULL, 0);
-			DBReport("%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
+			Report(Channel::Norm, "%s %s %i (0x%X)\n", args[1].c_str(), args[2].c_str(), i, i);
 			*n = op(*n, i);
 		}
 		else
 		{
-			DBReport("%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
+			Report(Channel::Norm, "%s %s %s\n", args[1].c_str(), args[2].c_str(), args[3].c_str());
 			*n = op(*n, *m);
 		}
 
@@ -365,14 +367,14 @@ namespace Gekko
 
 	void gekko_init_handlers()
 	{
-		Debug::Hub.AddCmd("run", cmd_run);
-		Debug::Hub.AddCmd("stop", cmd_stop);
-		Debug::Hub.AddCmd("r", cmd_r);
-		Debug::Hub.AddCmd("b", cmd_b);
-		Debug::Hub.AddCmd("br", cmd_br);
-		Debug::Hub.AddCmd("bw", cmd_bw);
-		Debug::Hub.AddCmd("bc", cmd_bc);
-		Debug::Hub.AddCmd("CacheLog", CacheLog);
-		Debug::Hub.AddCmd("CacheDebugDisable", CacheDebugDisable);
+		JDI::Hub.AddCmd("run", cmd_run);
+		JDI::Hub.AddCmd("stop", cmd_stop);
+		JDI::Hub.AddCmd("r", cmd_r);
+		JDI::Hub.AddCmd("b", cmd_b);
+		JDI::Hub.AddCmd("br", cmd_br);
+		JDI::Hub.AddCmd("bw", cmd_bw);
+		JDI::Hub.AddCmd("bc", cmd_bc);
+		JDI::Hub.AddCmd("CacheLog", CacheLog);
+		JDI::Hub.AddCmd("CacheDebugDisable", CacheDebugDisable);
 	}
 }

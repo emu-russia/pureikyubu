@@ -38,6 +38,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\..\Spinlock.cpp" />
+    <ClCompile Include="..\..\String.cpp" />
     <ClCompile Include="..\..\Thread.cpp" />
     <ClCompile Include="..\..\WinAPI.cpp" />
   </ItemGroup>

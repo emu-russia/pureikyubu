@@ -1,5 +1,7 @@
 #include "pch.h"
 
+using namespace Debug;
+
 namespace JDI
 {
 	JdiHub Hub;      // Singletone.
@@ -160,7 +162,7 @@ namespace JDI
 				helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : (TCHAR *)_T("Jdi with missing helpGroup");
 			}
 
-			DBReport2( DbgChannel::Header, "## %s\n", TcharToString(helpGroupHead).c_str());
+			Report(Channel::Header, "## %s\n", TcharToString(helpGroupHead).c_str());
 
 			// Enumerate can commands help texts
 
@@ -215,10 +217,10 @@ namespace JDI
 				}
 				nameWithHint[i++] = '\0';
 
-				DBReport("    %s - %s\n", nameWithHint, TcharToString(helpText).c_str());
+				Report(Channel::Norm, "    %s - %s\n", nameWithHint, TcharToString(helpText).c_str());
 			}
 
-			DBReport("\n");
+			Report(Channel::Norm, "\n");
 		}
 	}
 
@@ -284,7 +286,7 @@ namespace JDI
 
 			if (line->type == Json::ValueType::String)
 			{
-				DBReport("%s", TcharToString(line->value.AsString).c_str());
+				Report(Channel::Norm, "%s", TcharToString(line->value.AsString).c_str());
 			}
 		}
 	}
@@ -381,7 +383,7 @@ namespace JDI
 		switch (value->type)
 		{
 			case Json::ValueType::Object:
-				DBReport("%sObject %s: ", indent,
+				Report(Channel::Norm, "%sObject %s: ", indent,
 					value->name ? value->name : "");
 				for (auto it = value->children.begin(); it != value->children.end(); ++it)
 				{
@@ -390,7 +392,7 @@ namespace JDI
 				}
 				break;
 			case Json::ValueType::Array:
-				DBReport("%sArray %s: ", indent,
+				Report(Channel::Norm, "%sArray %s: ", indent,
 					value->name ? value->name : "");
 				for (auto it = value->children.begin(); it != value->children.end(); ++it)
 				{
@@ -400,26 +402,26 @@ namespace JDI
 				break;
 
 			case Json::ValueType::Bool:
-				DBReport("%s%s: Bool %s", indent, 
+				Report(Channel::Norm, "%s%s: Bool %s", indent,
 					value->name ? value->name : "",
 					value->value.AsBool ? "True" : "False");
 				break;
 			case Json::ValueType::Null:
-				DBReport("%s%s: Null", indent,
+				Report(Channel::Norm, "%s%s: Null", indent,
 					value->name ? value->name : "");
 				break;
 
 			case Json::ValueType::Int:
-				DBReport("%s%s: Int: %I64u", indent,
+				Report(Channel::Norm, "%s%s: Int: %I64u", indent,
 					value->name ? value->name : "", value->value.AsInt);
 				break;
 			case Json::ValueType::Float:
-				DBReport("%s%s: Float: %.4f", indent,
+				Report(Channel::Norm, "%s%s: Float: %.4f", indent,
 					value->name ? value->name : "", value->value.AsFloat);
 				break;
 
 			case Json::ValueType::String:
-				DBReport("%s%s: String: %s", indent,
+				Report(Channel::Norm, "%s%s: String: %s", indent,
 					value->name ? value->name : "", JDI::Hub.TcharToString(value->value.AsString).c_str());
 				break;
 		}
