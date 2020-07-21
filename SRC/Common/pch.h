@@ -3,14 +3,15 @@
 #include <string>
 #include <locale>
 #include <codecvt>
+#include <fstream>
+#ifdef _WINDOWS
 #include <windows.h>
-#include <shlobj.h>
+#endif
 
 #include "Spinlock.h"
 #include "Thread.h"
 #include "Json.h"
 #include "Jdi.h"
 #include "String.h"
-#include "WinAPI.h"
 
 #include "../Debugger/Report.h"

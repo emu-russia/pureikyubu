@@ -22,7 +22,7 @@ int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
 
-#define MAPDAT_FILE   _T(".\\Data\\makemap.dat")
+#define MAPDAT_FILE   ".\\Data\\makemap.dat"
 #define MAP_MAXFUNCNAME 100
 
 /*
@@ -84,7 +84,7 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
  */
 static void MAPOpen ()
 {
-    temp = UI::FileLoad(MAPDAT_FILE);
+    temp = Util::FileLoad((std::string)MAPDAT_FILE);
     
     Map_buffer = temp.data();
     if (Map_buffer == NULL) return;
@@ -143,9 +143,6 @@ void MAPInit(const TCHAR * mapname)
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
     Map_marks = (opMarker *)malloc(Map_marksMaxSize * sizeof(opMarker));
-
-    SetStatusText(STATUS_ENUM::Progress, _T("Please, wait until emulator making new MAP"));
-    Sleep(1000);
 }
 
 /*
@@ -276,8 +273,6 @@ void MAPFinish()
                         *wideNamePtr++ = *namePtr++;
                     }
                     *wideNamePtr++ = 0;
-
-                    SetStatusText(STATUS_ENUM::Progress, wideNamePtr);
                 }
 
                 namelen = strlen(name);

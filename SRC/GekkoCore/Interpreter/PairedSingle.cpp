@@ -2,6 +2,8 @@
 #include "../pch.h"
 #include "InterpreterPrivate.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
     OP(PS_ADD)
@@ -17,7 +19,7 @@ namespace Gekko
 
     OP(PS_ADDD)
     {
-        DBHalt("PS_ADDD\n");
+        Halt("PS_ADDD\n");
     }
 
     OP(PS_SUB)
@@ -33,7 +35,7 @@ namespace Gekko
 
     OP(PS_SUBD)
     {
-        DBHalt("PS_SUBD\n");
+        Halt("PS_SUBD\n");
     }
 
     OP(PS_MUL)
@@ -49,7 +51,7 @@ namespace Gekko
 
     OP(PS_MULD)
     {
-        DBHalt("PS_MULD\n");
+        Halt("PS_MULD\n");
     }
 
     OP(PS_DIV)
@@ -65,7 +67,7 @@ namespace Gekko
 
     OP(PS_DIVD)
     {
-        DBHalt("PS_DIVD\n");
+        Halt("PS_DIVD\n");
     }
 
     OP(PS_RES)
@@ -81,7 +83,7 @@ namespace Gekko
 
     OP(PS_RESD)
     {
-        DBHalt("PS_RESD\n");
+        Halt("PS_RESD\n");
     }
 
     OP(PS_RSQRTE)
@@ -97,7 +99,7 @@ namespace Gekko
 
     OP(PS_RSQRTED)
     {
-        DBHalt("PS_RSQRTED\n");
+        Halt("PS_RSQRTED\n");
     }
 
     OP(PS_SEL)
@@ -113,7 +115,7 @@ namespace Gekko
 
     OP(PS_SELD)
     {
-        DBHalt("PS_SELD\n");
+        Halt("PS_SELD\n");
     }
 
     OP(PS_MULS0)
@@ -131,7 +133,7 @@ namespace Gekko
 
     OP(PS_MULS0D)
     {
-        DBHalt("PS_MULS0D\n");
+        Halt("PS_MULS0D\n");
     }
 
     OP(PS_MULS1)
@@ -149,7 +151,7 @@ namespace Gekko
 
     OP(PS_MULS1D)
     {
-        DBHalt("PS_MULS1D\n");
+        Halt("PS_MULS1D\n");
     }
 
     OP(PS_SUM0)
@@ -167,7 +169,7 @@ namespace Gekko
 
     OP(PS_SUM0D)
     {
-        DBHalt("PS_SUM0D\n");
+        Halt("PS_SUM0D\n");
     }
 
     OP(PS_SUM1)
@@ -185,7 +187,7 @@ namespace Gekko
 
     OP(PS_SUM1D)
     {
-        DBHalt("PS_SUM1D\n");
+        Halt("PS_SUM1D\n");
     }
 
     OP(PS_MADD)
@@ -207,7 +209,7 @@ namespace Gekko
 
     OP(PS_MADDD)
     {
-        DBHalt("PS_MADDD\n");
+        Halt("PS_MADDD\n");
     }
 
     OP(PS_MSUB)
@@ -229,7 +231,7 @@ namespace Gekko
 
     OP(PS_MSUBD)
     {
-        DBHalt("PS_MSUBD\n");
+        Halt("PS_MSUBD\n");
     }
 
     OP(PS_NMADD)
@@ -251,7 +253,7 @@ namespace Gekko
 
     OP(PS_NMADDD)
     {
-        DBHalt("PS_NMADDD\n");
+        Halt("PS_NMADDD\n");
     }
 
     OP(PS_NMSUB)
@@ -273,7 +275,7 @@ namespace Gekko
 
     OP(PS_NMSUBD)
     {
-        DBHalt("PS_NMSUBD\n");
+        Halt("PS_NMSUBD\n");
     }
 
     OP(PS_MADDS0)
@@ -291,7 +293,7 @@ namespace Gekko
 
     OP(PS_MADDS0D)
     {
-        DBHalt("PS_MADDS0D\n");
+        Halt("PS_MADDS0D\n");
     }
 
     OP(PS_MADDS1)
@@ -309,7 +311,7 @@ namespace Gekko
 
     OP(PS_MADDS1D)
     {
-        DBHalt("PS_MADDS1D\n");
+        Halt("PS_MADDS1D\n");
     }
 
     OP(PS_CMPU0)
@@ -417,7 +419,7 @@ namespace Gekko
 
     OP(PS_MRD)
     {
-        DBHalt("PS_MRD\n");
+        Halt("PS_MRD\n");
     }
 
     OP(PS_NEG)
@@ -433,27 +435,27 @@ namespace Gekko
 
     OP(PS_NEGD)
     {
-        DBHalt("PS_NEGD\n");
+        Halt("PS_NEGD\n");
     }
 
     OP(PS_ABS)
     {
-        DBHalt("PS_ABS\n");
+        Halt("PS_ABS\n");
     }
 
     OP(PS_ABSD)
     {
-        DBHalt("PS_ABSD\n");
+        Halt("PS_ABSD\n");
     }
 
     OP(PS_NABS)
     {
-        DBHalt("PS_NABS\n");
+        Halt("PS_NABS\n");
     }
 
     OP(PS_NABSD)
     {
-        DBHalt("PS_NABSD\n");
+        Halt("PS_NABSD\n");
     }
 
     OP(PS_MERGE00)
@@ -471,7 +473,7 @@ namespace Gekko
 
     OP(PS_MERGE00D)
     {
-        DBHalt("PS_MERGE00D\n");
+        Halt("PS_MERGE00D\n");
     }
 
     OP(PS_MERGE01)
@@ -489,7 +491,7 @@ namespace Gekko
 
     OP(PS_MERGE01D)
     {
-        DBHalt("PS_MERGE01D\n");
+        Halt("PS_MERGE01D\n");
     }
 
     OP(PS_MERGE10)
@@ -507,7 +509,7 @@ namespace Gekko
 
     OP(PS_MERGE10D)
     {
-        DBHalt("PS_MERGE10D\n");
+        Halt("PS_MERGE10D\n");
     }
 
     OP(PS_MERGE11)
@@ -525,7 +527,7 @@ namespace Gekko
 
     OP(PS_MERGE11D)
     {
-        DBHalt("PS_MERGE11D\n");
+        Halt("PS_MERGE11D\n");
     }
 
 }

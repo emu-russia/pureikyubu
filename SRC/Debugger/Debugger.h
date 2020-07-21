@@ -2,7 +2,7 @@
 
 #pragma once
 
+#include "Report.h"
 #include "DebugCommands.h"
 #include "EventLog.h"
-#include "Report.h"
 #include "SamplingProfiler.h"

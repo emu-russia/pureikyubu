@@ -2,6 +2,8 @@
 #include "../pch.h"
 #include "InterpreterPrivate.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
     // opcode tables
@@ -17,7 +19,7 @@ namespace Gekko
     // not implemented opcode
     OP(NI)
     {
-        DBHalt("** CPU ERROR **\n"
+        Halt("** CPU ERROR **\n"
             "unimplemented opcode : %08X <%08X> (%i, %i)\n",
             Gekko->regs.pc, op, op >> 26, op & 0x7ff);
 
@@ -40,7 +42,7 @@ namespace Gekko
 
         if (op == 0)
         {
-            DBHalt(
+            Halt(
                 "Something goes wrong in interpreter, \n"
                 "program is trying to execute NULL opcode.\n\n"
                 "pc:%08X", Gekko->regs.pc);

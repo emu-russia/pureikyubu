@@ -172,7 +172,7 @@ namespace Gekko
 				break;
 
 			default:
-				DBHalt("Jitc::Dequantize: Unknown type %i", type);
+				Debug::Halt("Jitc::Dequantize: Unknown type %i", type);
 				break;
 		}
 

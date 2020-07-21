@@ -2,6 +2,8 @@
 #include "../pch.h"
 #include "InterpreterPrivate.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
     OP(TWI)
@@ -151,7 +153,7 @@ namespace Gekko
             bool msr_ir = (Gekko->regs.msr & MSR_IR) ? true : false;
             bool msr_dr = (Gekko->regs.msr & MSR_DR) ? true : false;
 
-            DBReport2(DbgChannel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
+            Report(Channel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
                 bat[spr - 528], RRS, msr_ir, msr_dr, Gekko->regs.pc);
         }
         else switch (spr)
@@ -167,18 +169,18 @@ namespace Gekko
                 bool msr_ir = (Gekko->regs.msr & MSR_IR) ? true : false;
                 bool msr_dr = (Gekko->regs.msr & MSR_DR) ? true : false;
 
-                DBReport2(DbgChannel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+                Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
                     RRS, msr_ir, msr_dr, Gekko->regs.pc);
             }
             break;
 
             case (int)SPR::TBL:
                 Gekko->regs.tb.Part.l = RRS;
-                DBReport2(DbgChannel::CPU, "Set TBL: 0x%08X\n", Gekko->regs.tb.Part.l);
+                Report(Channel::CPU, "Set TBL: 0x%08X\n", Gekko->regs.tb.Part.l);
                 break;
             case (int)SPR::TBU:
                 Gekko->regs.tb.Part.u = RRS;
-                DBReport2(DbgChannel::CPU, "Set TBU: 0x%08X\n", Gekko->regs.tb.Part.u);
+                Report(Channel::CPU, "Set TBU: 0x%08X\n", Gekko->regs.tb.Part.u);
                 break;
 
             // write gathering buffer
@@ -199,14 +201,14 @@ namespace Gekko
                     // On a real system, after a global cache invalidation, the data still remains in the L2 cache.
                     // We cannot afford global invalidation, as the L2 cache is not supported.
 
-                    DBReport2(DbgChannel::CPU, "Data Cache Flash Invalidate\n");
+                    Report(Channel::CPU, "Data Cache Flash Invalidate\n");
                 }
                 if (bits & HID0_ICFI)
                 {
                     bits &= ~HID0_ICFI;
                     Gekko->jitc->Reset();
 
-                    DBReport2(DbgChannel::CPU, "Instruction Cache Flash Invalidate\n");
+                    Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
                 }
 
                 Gekko->regs.spr[spr] = bits;

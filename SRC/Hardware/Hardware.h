@@ -53,7 +53,6 @@ struct HWConfig
 // GC hardware set (in register addressing order, see MI.h)
 #include "EFB.h"
 #include "AI.h"
-#include "GDI.h"
 #include "CP.h"
 #include "VI.h"
 #include "PI.h"

@@ -27,7 +27,6 @@ namespace Debug
 		savedGekkoTbr = Gekko::Gekko->GetTicks();
 
 		json = new Json();
-		assert(json);
 
 		rootObj = json->root.AddObject(nullptr);
 		assert(rootObj);
@@ -36,7 +35,6 @@ namespace Debug
 		assert(sampleData);
 
 		thread = new Thread(ThreadProc, false, this, "SamplingProfiler");
-		assert(thread);
 	}
 
 	SamplingProfiler::~SamplingProfiler()

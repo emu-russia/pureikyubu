@@ -95,13 +95,13 @@ namespace Gekko
     // rd = ~ra + rb + 1, XER
     OP(SUBFO)
     {
-        DBHalt("SUBFO\n");
+        Debug::Halt("SUBFO\n");
     }
 
     // rd = ~ra + rb + 1, CR0, XER
     OP(SUBFOD)
     {
-        DBHalt("SUBFOD\n");
+        Debug::Halt("SUBFOD\n");
     }
 
     // rd = ra + SIMM, XER

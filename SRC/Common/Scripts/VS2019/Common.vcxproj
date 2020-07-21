@@ -26,9 +26,9 @@
     <ClInclude Include="..\..\Spinlock.h" />
     <ClInclude Include="..\..\String.h" />
     <ClInclude Include="..\..\Thread.h" />
-    <ClInclude Include="..\..\WinAPI.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\File.cpp" />
     <ClCompile Include="..\..\Jdi.cpp" />
     <ClCompile Include="..\..\Json.cpp" />
     <ClCompile Include="..\..\pch.cpp">
@@ -40,7 +40,6 @@
     <ClCompile Include="..\..\Spinlock.cpp" />
     <ClCompile Include="..\..\String.cpp" />
     <ClCompile Include="..\..\Thread.cpp" />
-    <ClCompile Include="..\..\WinAPI.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />

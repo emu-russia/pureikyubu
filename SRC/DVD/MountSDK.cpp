@@ -18,7 +18,7 @@ namespace DVD
 		auto dvdDataInfoText = UI::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
-			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", JDI::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
 			return;
 		}
 
@@ -28,7 +28,7 @@ namespace DVD
 		}
 		catch (...)
 		{
-			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", JDI::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
 			return;
 		}
 
@@ -230,14 +230,14 @@ namespace DVD
 	bool MountDolphinSdk::GenApploader()
 	{
 		auto path = fmt::format(L"{:s}{:s}", directory, AppldrPath);
-		AppldrData = UI::FileLoad(path);
+		AppldrData = Util::FileLoad(path);
 		
 		return true;
 	}
 
 	bool MountDolphinSdk::GenDol()
 	{
-		Dol = UI::FileLoad(DolPath);
+		Dol = Util::FileLoad(DolPath);
 
 		return true;
 	}
@@ -245,7 +245,7 @@ namespace DVD
 	bool MountDolphinSdk::GenBi2()
 	{
 		auto path = fmt::format(L"{:s}{:s}", directory, Bi2Path);
-		Bi2Data = UI::FileLoad(path);
+		Bi2Data = Util::FileLoad(path);
 
 		return true;
 	}
@@ -367,7 +367,7 @@ namespace DVD
 
 				fileOffsets->AddInt(nullptr, userFilesStart + userFilesOffset);
 
-				size_t fileSize = UI::FileSize(filePath);
+				size_t fileSize = Util::FileSize(filePath);
 
 				Json::Value* fileSizes = entry->parent->parent->ByName("fileSizes");
 				if (fileSizes == nullptr)
@@ -539,7 +539,7 @@ namespace DVD
 
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		UI::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
+		Util::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
 
 		return true;
 	}

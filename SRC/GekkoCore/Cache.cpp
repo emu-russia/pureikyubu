@@ -635,4 +635,17 @@ namespace Gekko
 		}
 	}
 
+	void Cache::DebugDisable(bool disable)
+	{
+		if (disable)
+		{
+			Report(Channel::CPU, "Cache disabled for debug purposes");
+		}
+		else
+		{
+			Report(Channel::CPU, "Cache works normally");
+		}
+		DisableForDebugReasons = disable;
+	}
+
 }

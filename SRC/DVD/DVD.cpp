@@ -1,6 +1,5 @@
 // DVD API for emulator
 #include "pch.h"
-#include "../UI/UserFile.h"
 
 DVDControl dvd;
 
@@ -11,7 +10,7 @@ namespace DVD
     bool MountFile(std::wstring_view file)
     {
         // try to open file
-        if (!UI::FileExists(file))
+        if (!Util::FileExists(file))
         {
             return false;
         }

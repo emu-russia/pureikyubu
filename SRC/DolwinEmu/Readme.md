@@ -1,4 +1,4 @@
-# Dolwin
+# DolwinEmu
 
 This component is used to control host emulation (GameCube).
 

@@ -10,7 +10,9 @@
 #include <windows.h>
 #include <filesystem>
 
+#include "../Common/Thread.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
 
 #include "../Debugger/Debugger.h"
 #include "../GekkoCore/Gekko.h"

@@ -1,18 +1,7 @@
 #pragma once
-#include <string>
-#include <vector>
 
 namespace Util
 {
-    enum class FileType
-    {
-        All = 1,
-        Dvd,
-        Map,
-        Patch,
-        Directory,
-    };
-    
     /* Get the size of a file. */
     template <typename T>
     inline size_t FileSize(std::basic_string_view<T> filename)
@@ -29,24 +18,11 @@ namespace Util
         return std::filesystem::exists(path);
     }
 
-    /* Open files with directory "filename" */
-    template <typename _Out, typename T>
-    inline std::vector<_Out> FileLoad(std::basic_string_view<T> filename)
-    {
-        auto file = std::ifstream(filename, std::ifstream::binary);
-        if (!file.is_open())
-        {
-            return std::vector<_Out>();
-        }
-        else
-        {
-            auto itr = std::istreambuf_iterator<_Out>(file);
-            auto buffer = std::vector<uint8_t>(itr, std::istreambuf_iterator<_Out>());
+    /* Load data from a unicode file. */
+    std::vector<uint8_t> FileLoad(std::wstring & filename);
 
-            file.close();
-            return std::move(buffer);
-        }
-    }
+    /* Load data from a file. */
+    std::vector<uint8_t> FileLoad(std::string & filename);
 
     /* Write files to direct "filename" with data. */
     template <typename _Out, typename T>
