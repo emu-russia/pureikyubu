@@ -256,7 +256,7 @@
     <ProjectReference Include="..\..\..\Common\Scripts\VS2019\Common.vcxproj">
       <Project>{8f4f6ae1-b308-4c7f-81fc-4cddd2302c95}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\Core\Scripts\VS2019\GekkoCore.vcxproj">
+    <ProjectReference Include="..\..\..\GekkoCore\Scripts\VS2019\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\Debugger\Scripts\VS2019\Debugger.vcxproj">

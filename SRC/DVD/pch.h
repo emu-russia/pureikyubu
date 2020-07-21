@@ -13,7 +13,7 @@
 #include "../Common/Jdi.h"
 
 #include "../Debugger/Debugger.h"
-#include "../Core/Gekko.h"
+#include "../GekkoCore/Gekko.h"
 #include "../UI/UserFile.h"
 
 #include "DVD.h"

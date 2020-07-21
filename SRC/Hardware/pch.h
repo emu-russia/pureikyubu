@@ -23,7 +23,7 @@
 
 #include "../Debugger/Debugger.h"
 
-#include "../Core/Gekko.h"
+#include "../GekkoCore/Gekko.h"
 
 #include "../UI/UserMain.h"
 #include "../UI/UserFile.h"

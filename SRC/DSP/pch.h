@@ -10,7 +10,7 @@
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 
-#include "../Core/Gekko.h"				// For TimeBase
+#include "../GekkoCore/Gekko.h"				// For TimeBase
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 #include "../Debugger/EventLog.h"

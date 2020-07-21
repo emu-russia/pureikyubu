@@ -33,7 +33,7 @@
 #include "../Common/Jdi.h"
 #include "../Common/WinAPI.h" /* Windows API abstraction. */
 #include "../Common/String.h"
-#include "../Core/Gekko.h"
+#include "../GekkoCore/Gekko.h"
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/TimeFormat.h"
 #include "../Debugger/Debugger.h"

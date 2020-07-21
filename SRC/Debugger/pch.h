@@ -14,9 +14,9 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
 
-#include "../Core/Gekko.h"
-#include "../Core/GekkoDisasm.h"
-#include "../Core/GekkoDisasmOld.h"			// PHASED OUT
+#include "../GekkoCore/Gekko.h"
+#include "../GekkoCore/GekkoDisasm.h"
+#include "../GekkoCore/GekkoDisasmOld.h"			// PHASED OUT
 
 #include "../Hardware/Hardware.h"
 #include "../HighLevel/HighLevel.h"

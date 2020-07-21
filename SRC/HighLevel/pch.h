@@ -17,7 +17,7 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
 
-#include "../Core/Gekko.h"
+#include "../GekkoCore/Gekko.h"
 
 #include "HighLevel.h"
 
