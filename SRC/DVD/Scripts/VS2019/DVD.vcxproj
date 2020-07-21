@@ -23,7 +23,7 @@
     <ClCompile Include="..\..\DduCore.cpp" />
     <ClCompile Include="..\..\DVD.cpp" />
     <ClCompile Include="..\..\DvdAdpcmDecode.cpp" />
-    <ClCompile Include="..\..\filesystem.cpp" />
+    <ClCompile Include="..\..\FileSystem.cpp" />
     <ClCompile Include="..\..\GCM.cpp" />
     <ClCompile Include="..\..\Mn102Analyzer.cpp" />
     <ClCompile Include="..\..\Mn102Disasm.cpp" />
@@ -42,7 +42,7 @@
     <ClInclude Include="..\..\DVD.h" />
     <ClInclude Include="..\..\DvdAdpcmDecode.h" />
     <ClInclude Include="..\..\DvdStructs.h" />
-    <ClInclude Include="..\..\filesystem.h" />
+    <ClInclude Include="..\..\FileSystem.h" />
     <ClInclude Include="..\..\GCM.h" />
     <ClInclude Include="..\..\Mn102Analyzer.h" />
     <ClInclude Include="..\..\Mn102Disasm.h" />

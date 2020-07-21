@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DSP
 {
 
@@ -17,14 +19,14 @@ namespace DSP
         auto ucode = UI::FileLoad(args[1].c_str());
         if (ucode.empty())
         {
-            DBReport("Failed to load %s\n", args[1].c_str());
+            Report(Channel::Norm, "Failed to load %s\n", args[1].c_str());
             return nullptr;
         }
 
         auto file = std::ofstream("Data\\dspdisa.txt");
         if (!file.is_open())
         {
-            DBReport("Failed to create dsp_disa.txt\n");
+            Report(Channel::Norm, "Failed to create dsp_disa.txt\n");
             return nullptr;
         }
 
@@ -42,7 +44,7 @@ namespace DSP
             bool result = DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
             if (!result)
             {
-                DBReport("DSP::Analyze failed at offset: 0x%08X\n", offset);
+                Report(Channel::Norm, "DSP::Analyze failed at offset: 0x%08X\n", offset);
                 break;
             }
 
@@ -58,7 +60,7 @@ namespace DSP
 
         file.close();
 
-        DBReport("Done.\n");
+        Report(Channel::Norm, "Done.\n");
         return nullptr;
     }
 
@@ -106,18 +108,18 @@ namespace DSP
             dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
         }
 
-        DBReport("DMEM Dump %i bytes\n", bytes);
+        Report(Channel::Norm, "DMEM Dump %i bytes\n", bytes);
 
         while (bytes != 0)
         {
             uint8_t* ptr = Flipper::HW->DSP->TranslateDMem(dsp_addr);
             if (ptr == nullptr)
             {
-                DBReport2(DbgChannel::DSP, "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
+                Report(Channel::DSP, "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
                 break;
             }
 
-            DBReport("%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            Report(Channel::Norm, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
                 dsp_addr,
                 ptr[0], ptr[1], ptr[2], ptr[3],
                 ptr[4], ptr[5], ptr[6], ptr[7],
@@ -145,18 +147,18 @@ namespace DSP
             dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
         }
 
-        DBReport("IMEM Dump %i bytes\n", bytes);
+        Report(Channel::Norm, "IMEM Dump %i bytes\n", bytes);
 
         while (bytes != 0)
         {
             uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(dsp_addr);
             if (ptr == nullptr)
             {
-                DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
+                Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
                 break;
             }
 
-            DBReport("%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+            Report(Channel::Norm, "%04X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
                 dsp_addr,
                 ptr[0], ptr[1], ptr[2], ptr[3],
                 ptr[4], ptr[5], ptr[6], ptr[7],
@@ -188,7 +190,7 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
@@ -210,7 +212,7 @@ namespace DSP
             uint8_t* imemPtr = Flipper::HW->DSP->TranslateIMem(pcAddr);
             if (imemPtr == nullptr)
             {
-                DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
+                Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
                 return nullptr;
             }
 
@@ -218,13 +220,13 @@ namespace DSP
 
             if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
             {
-                DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
+                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
                 return nullptr;
             }
 
             std::string code = DSP::DspDisasm::Disasm(pcAddr, info);
 
-            DBReport("%s\n", code.c_str());
+            Report(Channel::Norm, "%s\n", code.c_str());
 
             Flipper::HW->DSP->Step();
 
@@ -241,7 +243,7 @@ namespace DSP
 
         Flipper::HW->DSP->AddBreakpoint(dsp_addr);
 
-        DBReport("DSP breakpoint added: 0x%04X\n", dsp_addr);
+        Report(Channel::Norm, "DSP breakpoint added: 0x%04X\n", dsp_addr);
         return nullptr;
     }
 
@@ -252,18 +254,18 @@ namespace DSP
 
         Flipper::HW->DSP->AddCanary(dsp_addr, args[2]);
 
-        DBReport("DSP canary added: 0x%04X\n", dsp_addr);
+        Report(Channel::Norm, "DSP canary added: 0x%04X\n", dsp_addr);
         return nullptr;
     }
 
     // List IMEM breakpoints and canaries
     static Json::Value* cmd_dlist(std::vector<std::string>& args)
     {
-        DBReport("DSP breakpoints:\n");
+        Report(Channel::Norm, "DSP breakpoints:\n");
 
         Flipper::HW->DSP->ListBreakpoints();
 
-        DBReport("DSP canaries:\n");
+        Report(Channel::Norm, "DSP canaries:\n");
 
         Flipper::HW->DSP->ListCanaries();
         return nullptr;
@@ -274,7 +276,7 @@ namespace DSP
     {
         Flipper::HW->DSP->ClearBreakpoints();
 
-        DBReport("DSP breakpoints cleared.\n");
+        Report(Channel::Norm, "DSP breakpoints cleared.\n");
         return nullptr;
     }
 
@@ -283,7 +285,7 @@ namespace DSP
     {
         Flipper::HW->DSP->ClearCanaries();
 
-        DBReport("DSP canaries cleared.\n");
+        Report(Channel::Norm, "DSP canaries cleared.\n");
         return nullptr;
     }
 
@@ -292,7 +294,7 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
@@ -312,7 +314,7 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
@@ -342,7 +344,7 @@ namespace DSP
             uint8_t* imemPtr = Flipper::HW->DSP->TranslateIMem(addr);
             if (imemPtr == nullptr)
             {
-                DBReport2(DbgChannel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
+                Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
                 break;
             }
 
@@ -350,13 +352,13 @@ namespace DSP
 
             if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
             {
-                DBReport2(DbgChannel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
+                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
                 return nullptr;
             }
 
             std::string code = DSP::DspDisasm::Disasm(addr, info);
 
-            DBReport("%s\n", code.c_str());
+            Report(Channel::Norm, "%s\n", code.c_str());
 
             addr += (DSP::DspAddress)(info.sizeInBytes >> 1);
         }
@@ -368,15 +370,15 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
-        DBReport("DSP Call Stack:\n");
+        Report(Channel::Norm, "DSP Call Stack:\n");
 
         for (auto it = Flipper::HW->DSP->regs.st[0].begin(); it != Flipper::HW->DSP->regs.st[0].end(); ++it)
         {
-            DBReport("0x%04X\n", *it);
+            Report(Channel::Norm, "0x%04X\n", *it);
         }
         return nullptr;
     }
@@ -386,11 +388,11 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
-        DBReport("DSP IFX Dump:\n");
+        Report(Channel::Norm, "DSP IFX Dump:\n");
 
         Flipper::HW->DSP->DumpIfx();
         return nullptr;
@@ -415,11 +417,11 @@ namespace DSP
         value |= Flipper::HW->DSP->DspToCpuReadHi(true) << 16;
         if ((value & 0x80000000) == 0)
         {
-            DBReport("No DSP message.\n");
+            Report(Channel::Norm, "No DSP message.\n");
             return nullptr;
         }
         value |= Flipper::HW->DSP->DspToCpuReadLo(true);
-        DBReport("DSP Message: 0x%08X\n", value);
+        Report(Channel::Norm, "DSP Message: 0x%08X\n", value);
         return nullptr;
     }
 
@@ -442,7 +444,7 @@ namespace DSP
     {
         if (Flipper::HW->DSP->IsRunning())
         {
-            DBReport2(DbgChannel::DSP, "It is impossible while running DSP thread.\n");
+            Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
@@ -473,7 +475,7 @@ namespace DSP
 
         if (regIndex < 0)
         {
-            DBReport("Invalid register name: %s\n", args[1].c_str());
+            Report(Channel::Norm, "Invalid register name: %s\n", args[1].c_str());
             return nullptr;
         }
 
@@ -488,11 +490,11 @@ namespace DSP
         uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
         uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
 
-        DBReport("MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
+        Report(Channel::Norm, "MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
 
         DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b, false);
 
-        DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
+        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);
 
         DspCore::PackProd(prod);
@@ -500,9 +502,9 @@ namespace DSP
         DspLongAccumulator acc;
         acc.bits = prod.bitsPacked;
 
-        DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
+        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
         
-        DBReport("Signed Multiply by host: 0x%llX\n", ((int64_t)(int32_t)(int16_t)a * (int64_t)(int32_t)(int16_t)b) & 0xff'ffff'ffff);
+        Report(Channel::Norm, "Signed Multiply by host: 0x%llX\n", ((int64_t)(int32_t)(int16_t)a * (int64_t)(int32_t)(int16_t)b) & 0xff'ffff'ffff);
 
         return nullptr;
     }
@@ -512,11 +514,11 @@ namespace DSP
         uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
         uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
 
-        DBReport("MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
+        Report(Channel::Norm, "MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
 
         DspProduct prod = DspCore::Mulu(a, b, false);
 
-        DBReport("prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
+        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
             prod.h, prod.m1, prod.l, prod.m2);
 
         DspCore::PackProd(prod);
@@ -524,39 +526,39 @@ namespace DSP
         DspLongAccumulator acc;
         acc.bits = prod.bitsPacked;
 
-        DBReport("prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
+        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
 
-        DBReport("Unsigned Multiply by host: 0x%08X\n", (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b);
+        Report(Channel::Norm, "Unsigned Multiply by host: 0x%08X\n", (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b);
 
         return nullptr;
     }
 
     void dsp_init_handlers()
     {
-        Debug::Hub.AddCmd("dspdisa", cmd_dspdisa);
-        Debug::Hub.AddCmd("dregs", cmd_dregs);
-        Debug::Hub.AddCmd("dreg", cmd_dreg);
-        Debug::Hub.AddCmd("dmem", cmd_dmem);
-        Debug::Hub.AddCmd("imem", cmd_imem);
-        Debug::Hub.AddCmd("drun", cmd_drun);
-        Debug::Hub.AddCmd("dstop", cmd_dstop);
-        Debug::Hub.AddCmd("dstep", cmd_dstep);
-        Debug::Hub.AddCmd("dbrk", cmd_dbrk);
-        Debug::Hub.AddCmd("dcan", cmd_dcan);
-        Debug::Hub.AddCmd("dlist", cmd_dlist);
-        Debug::Hub.AddCmd("dbrkclr", cmd_dbrkclr);
-        Debug::Hub.AddCmd("dcanclr", cmd_dcanclr);
-        Debug::Hub.AddCmd("dpc", cmd_dpc);
-        Debug::Hub.AddCmd("dreset", cmd_dreset);
-        Debug::Hub.AddCmd("du", cmd_du);
-        Debug::Hub.AddCmd("dst", cmd_dst);
-        Debug::Hub.AddCmd("difx", cmd_difx);
-        Debug::Hub.AddCmd("cpumbox", cmd_cpumbox);
-        Debug::Hub.AddCmd("dspmbox", cmd_dspmbox);
-        Debug::Hub.AddCmd("cpudspint", cmd_cpudspint);
-        Debug::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
-        Debug::Hub.AddCmd("dsp_muls", dsp_muls);
-        Debug::Hub.AddCmd("dsp_mulu", dsp_mulu);
+        JDI::Hub.AddCmd("dspdisa", cmd_dspdisa);
+        JDI::Hub.AddCmd("dregs", cmd_dregs);
+        JDI::Hub.AddCmd("dreg", cmd_dreg);
+        JDI::Hub.AddCmd("dmem", cmd_dmem);
+        JDI::Hub.AddCmd("imem", cmd_imem);
+        JDI::Hub.AddCmd("drun", cmd_drun);
+        JDI::Hub.AddCmd("dstop", cmd_dstop);
+        JDI::Hub.AddCmd("dstep", cmd_dstep);
+        JDI::Hub.AddCmd("dbrk", cmd_dbrk);
+        JDI::Hub.AddCmd("dcan", cmd_dcan);
+        JDI::Hub.AddCmd("dlist", cmd_dlist);
+        JDI::Hub.AddCmd("dbrkclr", cmd_dbrkclr);
+        JDI::Hub.AddCmd("dcanclr", cmd_dcanclr);
+        JDI::Hub.AddCmd("dpc", cmd_dpc);
+        JDI::Hub.AddCmd("dreset", cmd_dreset);
+        JDI::Hub.AddCmd("du", cmd_du);
+        JDI::Hub.AddCmd("dst", cmd_dst);
+        JDI::Hub.AddCmd("difx", cmd_difx);
+        JDI::Hub.AddCmd("cpumbox", cmd_cpumbox);
+        JDI::Hub.AddCmd("dspmbox", cmd_dspmbox);
+        JDI::Hub.AddCmd("cpudspint", cmd_cpudspint);
+        JDI::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
+        JDI::Hub.AddCmd("dsp_muls", dsp_muls);
+        JDI::Hub.AddCmd("dsp_mulu", dsp_mulu);
     }
 
 }

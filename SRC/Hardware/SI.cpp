@@ -548,7 +548,7 @@ void SIPoll()
 
 void SIOpen()
 {
-    DBReport2(DbgChannel::SI, "Serial interface driver\n");
+    Debug::Report(Debug::Channel::SI, "Serial interface driver\n");
 
     // clear all registers
     memset(&si, 0, sizeof(SIControl));

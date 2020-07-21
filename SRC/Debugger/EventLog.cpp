@@ -17,7 +17,7 @@ namespace Debug
 		// The memory will be cleared along with json root (eventHistory).
 	}
 
-	void EventLog::TraceBegin(DbgChannel chan, char * s)
+	void EventLog::TraceBegin(Channel chan, char * s)
 	{
 		eventLock.Lock();
 
@@ -42,7 +42,7 @@ namespace Debug
 		eventLock.Unlock();
 	}
 
-	void EventLog::TraceEnd(DbgChannel chan)
+	void EventLog::TraceEnd(Channel chan)
 	{
 		eventLock.Lock();
 
@@ -64,7 +64,7 @@ namespace Debug
 		eventLock.Unlock();
 	}
 
-	void EventLog::TraceEvent(DbgChannel chan, char * text)
+	void EventLog::TraceEvent(Channel chan, char * text)
 	{
 		eventLock.Lock();
 

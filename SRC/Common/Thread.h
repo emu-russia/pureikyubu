@@ -7,7 +7,6 @@
 #endif
 
 #include "Spinlock.h"
-#include "../Debugger/Debugger.h"
 
 typedef void (*ThreadProc)(void* param);
 

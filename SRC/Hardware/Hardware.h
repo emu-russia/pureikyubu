@@ -61,6 +61,6 @@ struct HWConfig
 #include "AR.h"
 #include "DI.h"
 #include "SI.h"
-#include "EI.h"
+#include "EXI.h"
 #include "MC.h"
 #include "IPLDescrambler.h"

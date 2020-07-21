@@ -19,12 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Config.h" />
     <ClInclude Include="..\..\EmuCommands.h" />
     <ClInclude Include="..\..\Emulator.h" />
     <ClInclude Include="..\..\Loader.h" />
     <ClInclude Include="..\..\pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Config.cpp" />
     <ClCompile Include="..\..\EmuCommands.cpp" />
     <ClCompile Include="..\..\Emulator.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>

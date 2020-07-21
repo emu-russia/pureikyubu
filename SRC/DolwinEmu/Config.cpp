@@ -105,7 +105,7 @@ static void SaveSettings()
 }
 
 
-#pragma region "Legacy Dolwin config API"
+#pragma region "Dolwin config API"
 
 std::wstring_view GetConfigString(std::string_view var, std::string_view path)
 {
@@ -245,4 +245,4 @@ void SetConfigBool(std::string_view var, bool newVal, std::string_view path)
 	settingsLock.Unlock();
 }
 
-#pragma endregion "Legacy Dolwin config API"
+#pragma endregion "Dolwin config API"

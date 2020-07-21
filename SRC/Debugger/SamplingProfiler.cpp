@@ -53,7 +53,7 @@ namespace Debug
 		json->Serialize(jsonText, 2 * textSize, textSize);
 
 		auto buffer = std::vector<uint8_t>(jsonText, jsonText + textSize);
-		UI::FileSave(filename, buffer);
+		Util::FileSave(filename, buffer);
 
 		delete[] jsonText;
 		delete json;

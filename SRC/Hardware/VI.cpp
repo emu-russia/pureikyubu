@@ -46,6 +46,8 @@
 
 --------------------------------------------------------------------------- */
 
+using namespace Debug;
+
 // VI state (registers and other data)
 VIControl vi;
 
@@ -74,7 +76,6 @@ void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
     if(!yuvbuf || !rgbbuf) return;
 
     // simple blitting, without effects
-    BeginProfileGfx();
     while(count--)
     {
         int y1 = *yuvbuf++,
@@ -87,7 +88,6 @@ void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
     }
     
     GDIRefresh();
-    EndProfileGfx();
 }
 
 // ---------------------------------------------------------------------------
@@ -142,7 +142,7 @@ void VIUpdate()
             currentBeamPos = 1;
 
             // patch memory every frame
-            Debug::Hub.ExecuteFast("dop");
+            JDI::Hub.ExecuteFast("dop");
 
             // draw XFB
             if (vi.xfb)
@@ -163,13 +163,13 @@ void VIUpdate()
 static void vi_read8(uint32_t addr, uint32_t *reg)
 {
     // TODO
-    DBReport2(DbgChannel::VI, "VI READ8");
+    Report(Channel::VI, "VI READ8");
     *reg = 0;
 }
 
 static void vi_write8(uint32_t addr, uint32_t data)
 {
-    DBReport2(DbgChannel::VI, "VI WRITE8");
+    Report(Channel::VI, "VI WRITE8");
 }
 
 static void vi_read16(uint32_t addr, uint32_t *reg)
@@ -221,7 +221,7 @@ static void vi_write16(uint32_t addr, uint32_t data)
             vi.tfbl |= data << 16;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             }
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
@@ -232,7 +232,7 @@ static void vi_write16(uint32_t addr, uint32_t data)
             vi.tfbl |= (uint16_t)data;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
             }
             vi.tfbl &= 0xffffff;
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
@@ -244,7 +244,7 @@ static void vi_write16(uint32_t addr, uint32_t data)
             vi.bfbl &= 0xffffff;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
             }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
@@ -255,7 +255,7 @@ static void vi_write16(uint32_t addr, uint32_t data)
             vi.bfbl &= 0xffffff;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
             }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
@@ -319,7 +319,7 @@ static void vi_write32(uint32_t addr, uint32_t data)
             vi.tfbl = data & 0xffffff;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
             }
             if(vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
             else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
@@ -328,7 +328,7 @@ static void vi_write32(uint32_t addr, uint32_t data)
             vi.bfbl = data & 0xffffff;
             if (vi.log)
             {
-                DBReport2(DbgChannel::VI, "BFBL set to %08X\n", vi.bfbl);
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
             }
             //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
             //else vi.xfbbuf = &RAM[vi.bfbl];
@@ -352,10 +352,10 @@ void VIStats()
     uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
     uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
 
-    DBReport( "    VI interrupt : [%i x x x]\n", vi.int0 >> 31);
-    DBReport( "    VI int mask  : [%i x x x]\n", (vi.int0 >> 28) & 1);
-    DBReport( "    VI int pos   : %i == %i, x == x, x == x, x == x (line)\n", currentBeamPos, triggerBeamPos);
-    DBReport( "    VI XFB       : T%08X B%08X (phys), enabled: %i\n", vi.tfbl, vi.bfbl, vi.xfb);
+    Report(Channel::Norm, "    VI interrupt : [%i x x x]\n", vi.int0 >> 31);
+    Report(Channel::Norm, "    VI int mask  : [%i x x x]\n", (vi.int0 >> 28) & 1);
+    Report(Channel::Norm, "    VI int pos   : %i == %i, x == x, x == x, x == x (line)\n", currentBeamPos, triggerBeamPos);
+    Report(Channel::Norm, "    VI XFB       : T%08X B%08X (phys), enabled: %i\n", vi.tfbl, vi.bfbl, vi.xfb);
 }
 
 // ---------------------------------------------------------------------------
@@ -363,7 +363,7 @@ void VIStats()
 
 void VIOpen(HWConfig * config)
 {
-    DBReport2(DbgChannel::VI, "Video-out hardware interface\n");
+    Report(Channel::VI, "Video-out hardware interface\n");
 
     // clear VI regs
     memset(&vi, 0, sizeof(VIControl));

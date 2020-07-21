@@ -1,5 +1,7 @@
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DVD
 {
 	DduCore * DDU;
@@ -57,7 +59,7 @@ namespace DVD
 
 		if (logCommands)
 		{
-			DBReport2(DbgChannel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+			Report(Channel::DVD, "Command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 				commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
 				commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
 				commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
@@ -70,7 +72,7 @@ namespace DVD
 				state = DduThreadState::ReadBogusData;
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "DVD Inquiry.\n");
+					Report(Channel::DVD, "DVD Inquiry.\n");
 				}
 				break;
 
@@ -102,7 +104,7 @@ namespace DVD
 
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "DVD Read: 0x%08X, %i bytes\n", seekVal, transactionSize);
+					Report(Channel::DVD, "DVD Read: 0x%08X, %i bytes\n", seekVal, transactionSize);
 				}
 				break;
 
@@ -118,7 +120,7 @@ namespace DVD
 
 					if (log)
 					{
-						DBReport2(DbgChannel::DVD, "Seek: 0x%08X (ignored)\n", seekTemp << 2);
+						Report(Channel::DVD, "Seek: 0x%08X (ignored)\n", seekTemp << 2);
 					}
 				}
 				break;
@@ -128,7 +130,7 @@ namespace DVD
 				state = DduThreadState::ReadBogusData;
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "Request Error\n");
+					Report(Channel::DVD, "Request Error\n");
 				}
 				break;
 
@@ -164,7 +166,7 @@ namespace DVD
 
 						if (log)
 						{
-							DBReport2(DbgChannel::DVD, "DVD Streaming setup: stream start 0x%08X, counter: %i\n",
+							Report(Channel::DVD, "DVD Streaming setup: stream start 0x%08X, counter: %i\n",
 								streamSeekVal, streamCount);
 						}
 					}
@@ -174,7 +176,7 @@ namespace DVD
 
 						if (log)
 						{
-							DBReport2(DbgChannel::DVD, "DVD Bogus Streaming setup (ignored)\n");
+							Report(Channel::DVD, "DVD Bogus Streaming setup (ignored)\n");
 						}
 					}
 
@@ -206,7 +208,7 @@ namespace DVD
 						break;
 					default:
 						state = DduThreadState::GetStreamBogus;
-						DBReport2(DbgChannel::DVD, "Unknown GetStreamStatus: %i\n", commandBuffer[1]);
+						Report(Channel::DVD, "Unknown GetStreamStatus: %i\n", commandBuffer[1]);
 						break;
 				}
 				break;
@@ -216,7 +218,7 @@ namespace DVD
 				state = DduThreadState::ReadBogusData;
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "Stop motor.\n");
+					Report(Channel::DVD, "Stop motor.\n");
 				}
 				break;
 
@@ -227,7 +229,7 @@ namespace DVD
 
 				if (log)
 				{
-					DBReport2(DbgChannel::DVD, "SetAudioBuffer: Trig: %i, Enable: %i, Size: %i\n", 
+					Report(Channel::DVD, "SetAudioBuffer: Trig: %i, Enable: %i, Size: %i\n", 
 						commandBuffer[0] & 3, commandBuffer[2] & 0x80 ? 1 : 0, commandBuffer[3] & 0xf);
 				}
 				break;
@@ -235,7 +237,7 @@ namespace DVD
 			default:
 				state = DduThreadState::ReadBogusData;
 
-				DBReport2(DbgChannel::DVD, "Unknown DDU command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
+				Report(Channel::DVD, "Unknown DDU command: %02X%02X%02X%02X %02X%02X%02X%02X %02X%02X%02X%02X\n",
 					commandBuffer[0], commandBuffer[1], commandBuffer[2], commandBuffer[3],
 					commandBuffer[4], commandBuffer[5], commandBuffer[6], commandBuffer[7],
 					commandBuffer[8], commandBuffer[9], commandBuffer[10], commandBuffer[11]);
@@ -459,7 +461,7 @@ namespace DVD
 
 					if (core->log)
 					{
-						DBReport2(DbgChannel::DVD, "DVD streaming stopped by counter value reach zero\n");
+						Report(Channel::DVD, "DVD streaming stopped by counter value reach zero\n");
 					}
 				}
 			}
@@ -508,7 +510,7 @@ namespace DVD
 	void DduCore::Break()
 	{
 		// Abort data transfer
-		DBReport2(DbgChannel::DVD, "DDU Break");
+		Report(Channel::DVD, "DDU Break");
 		ddBusBusy = false;
 	}
 
@@ -518,7 +520,7 @@ namespace DVD
 			return;
 
 		coverStatus = CoverStatus::Open;
-		DBReport2(DbgChannel::DVD, "Cover opened\n");
+		Report(Channel::DVD, "Cover opened\n");
 
 		// Notify host hardware
 		if (openCoverCallback)
@@ -533,7 +535,7 @@ namespace DVD
 			return;
 
 		coverStatus = CoverStatus::Close;
-		DBReport2(DbgChannel::DVD, "Cover closed\n");
+		Report(Channel::DVD, "Cover closed\n");
 
 		// Notify host hardware
 		if (closeCoverCallback)
@@ -544,7 +546,7 @@ namespace DVD
 
 	void DduCore::DeviceError(uint32_t reason)
 	{
-		DBReport2(DbgChannel::DVD, "DDU DeviceError: %08X\n", reason);
+		Report(Channel::DVD, "DDU DeviceError: %08X\n", reason);
 		// Will deassert DIERR after the next command is received from the host
 		errorState = true;
 		errorCode = reason;
@@ -559,7 +561,7 @@ namespace DVD
 	{
 		if (logTransfers)
 		{
-			DBReport2(DbgChannel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
+			Report(Channel::DVD, "StartTransfer: %s\n", direction == DduBusDirection::DduToHost ? "Ddu->Host" : "Host->Ddu");
 		}
 
 		ddBusBusy = true;
@@ -574,7 +576,7 @@ namespace DVD
 	{
 		if (logTransfers)
 		{
-			DBReport2(DbgChannel::DVD, "TransferComplete");
+			Report(Channel::DVD, "TransferComplete");
 		}
 
 		ddBusBusy = false;

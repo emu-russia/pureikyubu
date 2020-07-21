@@ -10,7 +10,7 @@
 #include "Spinlock.h"
 #include "Json.h"
 
-namespace Debug
+namespace JDI
 {
 	typedef Json::Value* (*CmdDelegate)(std::vector<std::string>& args);
 	typedef void (*JdiReflector)();

@@ -1,6 +1,6 @@
 #include "pch.h"
 
-namespace Debug
+namespace JDI
 {
 	JdiHub Hub;      // Singletone.
 
@@ -420,7 +420,7 @@ namespace Debug
 
 			case Json::ValueType::String:
 				DBReport("%s%s: String: %s", indent,
-					value->name ? value->name : "", Debug::Hub.TcharToString(value->value.AsString).c_str());
+					value->name ? value->name : "", JDI::Hub.TcharToString(value->value.AsString).c_str());
 				break;
 		}
 	}

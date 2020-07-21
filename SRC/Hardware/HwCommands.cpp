@@ -1,6 +1,8 @@
 // Various commands for debugging hardware (Flipper). Available only after emulation has been started.
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Flipper
 {
 	// Load binary file to main memory
@@ -11,13 +13,13 @@ namespace Flipper
 
 		if (address >= mi.ramSize || (address + data.size()) >= mi.ramSize)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
 		if (data.empty())
 		{
-			DBReport("Failed to load: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
@@ -33,7 +35,7 @@ namespace Flipper
 
 		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
@@ -43,7 +45,7 @@ namespace Flipper
 
 		if (!UI::FileSave(args[1].c_str(), buffer))
 		{
-			DBReport("Failed to save: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}
 		return nullptr;
 	}
@@ -56,13 +58,13 @@ namespace Flipper
 
 		if (address >= ARAMSIZE || (address + data.size()) >= ARAMSIZE)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
 		if (data.empty())
 		{
-			DBReport("Failed to load: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
@@ -78,7 +80,7 @@ namespace Flipper
 
 		if (address >= ARAMSIZE || (address + dataSize) >= ARAMSIZE)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
@@ -88,7 +90,7 @@ namespace Flipper
 
 		if (!UI::FileSave(args[1].c_str(), buffer))
 		{
-			DBReport("Failed to save: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}
 		return nullptr;
 	}
@@ -103,10 +105,10 @@ namespace Flipper
 
 	void hw_init_handlers()
 	{
-		Debug::Hub.AddCmd("ramload", cmd_ramload);
-		Debug::Hub.AddCmd("ramsave", cmd_ramsave);
-		Debug::Hub.AddCmd("aramload", cmd_aramload);
-		Debug::Hub.AddCmd("aramsave", cmd_aramsave);
-		Debug::Hub.AddCmd("DumpFifo", DumpFifo);
+		JDI::Hub.AddCmd("ramload", cmd_ramload);
+		JDI::Hub.AddCmd("ramsave", cmd_ramsave);
+		JDI::Hub.AddCmd("aramload", cmd_aramload);
+		JDI::Hub.AddCmd("aramsave", cmd_aramsave);
+		JDI::Hub.AddCmd("DumpFifo", DumpFifo);
 	}
 };
