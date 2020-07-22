@@ -1,10 +1,22 @@
-// PadNull.cpp : Defines the functions for the static library.
-//
+// PadNull
 
 #include "pch.h"
-#include "framework.h"
 
-// TODO: This is an example of a library function
-void fnPadNull()
+bool PADOpen()
 {
+	return true;
+}
+
+void PADClose()
+{
+}
+
+long PADReadButtons(long padnum, PADState* state)
+{
+	return 0;
+}
+
+long PADSetRumble(long padnum, long cmd)
+{
+	return 0;
 }
