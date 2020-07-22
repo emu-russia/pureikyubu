@@ -1,9 +1,9 @@
 // DVD banner helpers for file selector. 
 #include "pch.h"
 
-std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring_view dvdFile)
+std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring & dvdFile)
 {
-    size_t file_size = UI::FileSize(dvdFile);
+    size_t file_size = Util::FileSize(dvdFile);
     uint32_t bnrofs = 0;
 
     // load DVD banner

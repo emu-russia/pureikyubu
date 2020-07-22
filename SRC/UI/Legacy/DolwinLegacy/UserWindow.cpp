@@ -49,7 +49,7 @@ static void CreateStatusBar()
 }
 
 /* Change text in specified statusbar part */
-void SetStatusText(STATUS_ENUM sbPart, std::wstring_view text, bool post)
+void SetStatusText(STATUS_ENUM sbPart, std::wstring & text, bool post)
 {
     if (wnd.hStatusWindow == NULL)
     {
@@ -118,7 +118,7 @@ void StopProgress()
 #define MAX_RECENT  5   // if you want to increase, you must also add new ID_FILE_RECENT_*
 
 /* Returns -1 if not found */
-static int GetMenuItemIndex(HMENU hMenu, std::wstring_view item)
+static int GetMenuItemIndex(HMENU hMenu, std::wstring & item)
 {
     int  index = 0;
     auto buffer = std::wstring(MAX_PATH, 0);
@@ -1103,7 +1103,7 @@ void CenterChildWindow(HWND hParent, HWND hChild)
     }
 }
 
-void SetMenuItemText(HMENU hmenu, UINT id, std::wstring_view text)
+void SetMenuItemText(HMENU hmenu, UINT id, std::wstring & text)
 {
     MENUITEMINFO info = { 0 };
        

@@ -1,6 +1,8 @@
 // all gfx state registers here
 #include "pch.h"
 
+using namespace Debug;
+
 static      FILE *gplog;
 
 GXDrawDoneCallback GxDrawDone;
@@ -30,7 +32,7 @@ void loadCPReg(size_t index, uint32_t value)
 
     if (GpRegsLog)
     {
-        DBReport2(DbgChannel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
+        Report(Channel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
     }
 
     switch(index)
@@ -474,7 +476,7 @@ void loadBPReg(size_t index, uint32_t value)
 
     if (GpRegsLog)
     {
-        DBReport2(DbgChannel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
+        Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
     }
 
     switch(index)

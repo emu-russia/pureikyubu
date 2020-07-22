@@ -9,7 +9,6 @@ constexpr auto APPVER  = L"0.130";
 
 #include "UserMain.h"           // application entrypoint
 #include "UserFile.h"           // various file utilities
-#include "UserConfig.h"         // Dolwin configuration
 #include "UserSelector.h"       // file selector
 #include "UserWindow.h"         // main window controls
 #include "UserProfiler.h"       // emu profiler

@@ -1,5 +1,7 @@
 #include "pch.h"
 
+using namespace Debug;
+
 extern int VtxSize[8];
 
 namespace GX
@@ -42,7 +44,7 @@ namespace GX
 			writePtr = 32 - part1Size;
 			memcpy(fifo, dataPtr + part1Size, writePtr);
 
-			DBReport2(DbgChannel::GP, "FifoProcessor: fifo wrapped\n");
+			Report(Channel::GP, "FifoProcessor: fifo wrapped\n");
 		}
 	}
 
@@ -240,7 +242,7 @@ namespace GX
 
 			default:
 			{
-				DBHalt("GX: Unsupported opcode: 0x%02X\n", cmd);
+				Halt("GX: Unsupported opcode: 0x%02X\n", cmd);
 				break;
 			}
 		}

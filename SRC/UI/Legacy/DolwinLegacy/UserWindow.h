@@ -1,5 +1,4 @@
 #pragma once
-#include <string>
 
 /* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin   */
 /* should take care about proper window style itself !!                     */
@@ -14,7 +13,7 @@ enum class STATUS_ENUM
     Time,                /* time counter        */
 };
 
-void SetStatusText(STATUS_ENUM sbPart, std::wstring_view text, bool post=false);
+void SetStatusText(STATUS_ENUM sbPart, std::wstring & text, bool post=false);
 std::wstring GetStatusText(STATUS_ENUM sbPart);
 
 void StartProgress(int range, int delta);
@@ -23,7 +22,7 @@ void StopProgress();
 
 /* Recent files menu */
 void UpdateRecentMenu(HWND hwnd);
-void AddRecentFile(std::wstring_view path);
+void AddRecentFile(std::wstring & path);
 void LoadRecentFile(int index);
 
 /* Window controls API */
@@ -34,7 +33,7 @@ void ResizeMainWindow(int width, int height);
 
 /* Utilities */
 void SetAlwaysOnTop(HWND hwnd, BOOL state);
-void SetMenuItemText(HMENU hmenu, UINT id, std::wstring_view text);
+void SetMenuItemText(HMENU hmenu, UINT id, std::wstring & text);
 void CenterChildWindow(HWND hParent, HWND hChild);
 
 /* All important data is placed here */

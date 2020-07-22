@@ -16,6 +16,69 @@ namespace Debug
         return true;
     }
 
+    static void Tokenize(char* line, std::vector<std::string>& args)
+    {
+        #define endl    ( line[p] == 0 )
+        #define space   ( line[p] == 0x20 )
+        #define quot    ( line[p] == '\'' )
+        #define dquot   ( line[p] == '\"' )
+
+        int p, start, end;
+        p = start = end = 0;
+
+        args.clear();
+
+        // while not end line
+        while (!endl)
+        {
+            // skip space first, if any
+            while (space) p++;
+            if (!endl && (quot || dquot))
+            {   // quotation, need special case
+                p++;
+                start = p;
+                while (1)
+                {
+                    if (endl)
+                    {
+                        throw "Open quotation";
+                        return;
+                    }
+
+                    if (quot || dquot)
+                    {
+                        end = p;
+                        p++;
+                        break;
+                    }
+                    else p++;
+                }
+
+                args.push_back(std::string(line + start, end - start));
+            }
+            else if (!endl)
+            {
+                start = p;
+                while (1)
+                {
+                    if (endl || space || quot || dquot)
+                    {
+                        end = p;
+                        break;
+                    }
+
+                    p++;
+                }
+
+                args.push_back(std::string(line + start, end - start));
+            }
+        }
+        #undef space
+        #undef quot
+        #undef dquot
+        #undef endl
+    }
+
     static Json::Value* cmd_script(std::vector<std::string>& args)
     {
         size_t i;
@@ -26,7 +89,7 @@ namespace Debug
 
         Report(Channel::Norm, "Loading script: %s\n", file); 
 
-        auto sbuf = UI::FileLoad(file);
+        auto sbuf = Util::FileLoad((std::string)file);
         if (sbuf.empty())
         {
             Report(Channel::Norm, "Cannot open script file!\n");
@@ -86,21 +149,15 @@ namespace Debug
             // execute line
             if (testempty(line)) continue;
             Report(Channel::Norm, "%i: %s", cnt++, line);
-            con_tokenizing(line);
-            line[0] = 0;
-            con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
-
+            
             commandArgs.clear();
-            for (int i = 0; i < roll.tokencount; i++)
-            {
-                commandArgs.push_back(roll.tokens[i]);
-            }
+            Tokenize(line, commandArgs);
+            line[0] = 0;
 
-            con_command(commandArgs);
+            JDI::Hub.Execute(commandArgs);
         }
 
         Report(Channel::Norm, "\nDone execute script.\n");
-        con.update |= CON_UPDATE_ALL;
         return nullptr;
     }
 
@@ -154,9 +211,9 @@ namespace Debug
 
     void Reflector()
     {
-        Debug::Hub.AddCmd("script", cmd_script);
-        Debug::Hub.AddCmd("echo", cmd_echo);
-        Debug::Hub.AddCmd("StartProfiler", StartProfiler);
-        Debug::Hub.AddCmd("StopProfiler", StopProfiler);
+        JDI::Hub.AddCmd("script", cmd_script);
+        JDI::Hub.AddCmd("echo", cmd_echo);
+        JDI::Hub.AddCmd("StartProfiler", StartProfiler);
+        JDI::Hub.AddCmd("StopProfiler", StopProfiler);
     }
 }

@@ -46,5 +46,5 @@ struct DVDBannerPAL : public DVDBannerBase
 };
 
 /* DVD Banner API. */
-std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring_view dvdFile);
+std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring & dvdFile);
 uint8_t DVDBannerChecksum(DVDBannerBase* banner);

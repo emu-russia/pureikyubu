@@ -30,20 +30,6 @@ namespace JDI
 		return h % 86969;
 	}
 
-	// The debugging console can only display text encoded in Ansi
-	std::string JdiHub::TcharToString(TCHAR* text)
-	{
-		char ansiText[0x100] = { 0, };
-		char* ansiPtr = ansiText;
-		TCHAR* tcharPtr = text;
-		while (*tcharPtr)
-		{
-			*ansiPtr++ = (char)*tcharPtr++;
-		}
-		*ansiPtr++ = 0;
-		return std::string(ansiText);
-	}
-
 	// Reflection of the command delegate by its text name
 	void JdiHub::AddCmd(std::string name, CmdDelegate command)
 	{
@@ -162,7 +148,7 @@ namespace JDI
 				helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : (TCHAR *)_T("Jdi with missing helpGroup");
 			}
 
-			Report(Channel::Header, "## %s\n", TcharToString(helpGroupHead).c_str());
+			Report(Channel::Header, "## %s\n", Util::TcharToString(helpGroupHead).c_str());
 
 			// Enumerate can commands help texts
 
@@ -207,7 +193,7 @@ namespace JDI
 
 				strcpy_s(nameWithHint, sizeof(nameWithHint) - 1, next->name);
 				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, " ");
-				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, TcharToString(hintsText).c_str());
+				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, Util::TcharToString(hintsText).c_str());
 
 				size_t nameWithHintSize = strlen(nameWithHint);
 				size_t i = nameWithHintSize;
@@ -217,7 +203,7 @@ namespace JDI
 				}
 				nameWithHint[i++] = '\0';
 
-				Report(Channel::Norm, "    %s - %s\n", nameWithHint, TcharToString(helpText).c_str());
+				Report(Channel::Norm, "    %s - %s\n", nameWithHint, Util::TcharToString(helpText).c_str());
 			}
 
 			Report(Channel::Norm, "\n");
@@ -286,7 +272,7 @@ namespace JDI
 
 			if (line->type == Json::ValueType::String)
 			{
-				Report(Channel::Norm, "%s", TcharToString(line->value.AsString).c_str());
+				Report(Channel::Norm, "%s", Util::TcharToString(line->value.AsString).c_str());
 			}
 		}
 	}
@@ -422,7 +408,7 @@ namespace JDI
 
 			case Json::ValueType::String:
 				Report(Channel::Norm, "%s%s: String: %s", indent,
-					value->name ? value->name : "", JDI::Hub.TcharToString(value->value.AsString).c_str());
+					value->name ? value->name : "", Util::TcharToString(value->value.AsString).c_str());
 				break;
 		}
 	}

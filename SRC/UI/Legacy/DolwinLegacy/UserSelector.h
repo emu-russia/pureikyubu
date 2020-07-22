@@ -46,12 +46,12 @@ enum class SELECTOR_SORT
 void CreateSelector();
 void CloseSelector();
 void SetSelectorIconSize(bool smallIcon);
-bool AddSelectorPath(std::wstring_view fullPath);            // FALSE, if path duplicated
+bool AddSelectorPath(std::wstring & fullPath);            // FALSE, if path duplicated
 void ResizeSelector(int width, int height);
 void UpdateSelector();
 int  SelectorGetSelected();
 void SelectorSetSelected(int item);
-void SelectorSetSelected(std::wstring_view filename);
+void SelectorSetSelected(std::wstring & filename);
 void SortSelector(SELECTOR_SORT sortBy);
 void DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void NotifySelector(LPNMHDR pnmh);

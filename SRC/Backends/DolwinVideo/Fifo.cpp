@@ -1,6 +1,8 @@
 // fifo parser engine
 #include "pch.h"
 
+using namespace Debug;
+
 //
 // local data
 //
@@ -561,7 +563,7 @@ void FifoReconfigure(
 
         default:
         {
-            DBHalt(
+            Halt(
                 "Fifo reconfigure failure! "
                 "Unhandled vertex attribute %s.",
                 AttrToString(attr).c_str()
@@ -613,7 +615,7 @@ static void FifoWalk(unsigned vatnum, GX::FifoProcessor * fifo)
 
 static void GxBadFifo(uint8_t command)
 {
-    DBHalt(
+    Halt(
         "Unimplemented command : 0x%02X\n"
         "VCD configuration :\n"
         "pmidx:%i\n"
@@ -689,7 +691,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
             uint8_t* fifoPtr = &RAM[physAddress];
             size_t size = fifo->Read32() & ~0x1f;
 
-            DBReport2(DbgChannel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
+            Report(Channel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
 
             GX::FifoProcessor* callDlFifo = new GX::FifoProcessor(fifoPtr, size);
 
@@ -773,7 +775,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
             start = fifo->Read16();
             len = (start >> 12) + 1;
             start &= 0xfff;
-            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
+            Report(Channel::GP, "OP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
             break;
         }
 
@@ -791,7 +793,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
             start = fifo->Read16();
             len = (start >> 12) + 1;
             start &= 0xfff;
-            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
+            Report(Channel::GP, "OP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
             break;
         }
 
@@ -809,7 +811,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
             start = fifo->Read16();
             len = (start >> 12) + 1;
             start &= 0xfff;
-            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
+            Report(Channel::GP, "OP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
             break;
         }
 
@@ -827,7 +829,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
             start = fifo->Read16();
             len = (start >> 12) + 1;
             start &= 0xfff;
-            DBReport2(DbgChannel::GP, "OP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
+            Report(Channel::GP, "OP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
             break;
         }
 

@@ -30,7 +30,7 @@ namespace DSP
 			else
 			{
 				Report(Channel::DSP, "Loaded DSP IROM: %s\n", JDI::Hub.TcharToString(config->DspIromFilename).c_str());
-				std::memcpy(irom, iromImage.data(), IROM_SIZE);
+				memcpy(irom, iromImage.data(), IROM_SIZE);
 			}
 
 			/* Load DROM. */
@@ -43,7 +43,7 @@ namespace DSP
 			else
 			{
 				Report(Channel::DSP, "Loaded DSP DROM: %s\n", JDI::Hub.TcharToString(config->DspDromFilename).c_str());
-				std::memcpy(drom, dromImage.data(), DROM_SIZE);
+				memcpy(drom, dromImage.data(), DROM_SIZE);
 			}
 		}
 

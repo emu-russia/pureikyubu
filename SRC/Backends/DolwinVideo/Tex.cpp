@@ -154,7 +154,7 @@ static void GetTlutCol(Color *c, unsigned id, unsigned entry)
 
         default:
         {
-            DBHalt("GX: Unknown TLUT format: %i", fmt);
+            Debug::Halt("GX: Unknown TLUT format: %i", fmt);
         }
     }
 }

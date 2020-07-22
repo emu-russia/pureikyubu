@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 
+#include "../Common/Thread.h"
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"

@@ -21,6 +21,10 @@
 
 #include <string>
 
+#include "../../Common/Json.h"
+#include "../../Common/Spinlock.h"
+#include "../../Common/Thread.h"
+
 // other project includes
 #include "Config.h"
 #include "Plug.h"
@@ -37,4 +41,4 @@
 #include "Tev.h"
 #include "GPRegs.h"
 
-#include "../Debugger/Debugger.h"
+#include "../../Debugger/Debugger.h"

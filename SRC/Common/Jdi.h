@@ -34,8 +34,6 @@ namespace JDI
 		JdiHub();
 		~JdiHub();
 
-		std::string TcharToString(TCHAR* text);
-
 		void AddCmd(std::string name, CmdDelegate command);
 
 		void AddNode(std::wstring filename, JdiReflector reflector);
