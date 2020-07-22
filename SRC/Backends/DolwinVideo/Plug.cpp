@@ -7,7 +7,7 @@ HWND hwndMain;
 
 static bool gxOpened = false;
 
-long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
+long GXOpen(HWConfig* config, uint8_t * ramPtr)
 {
     if (gxOpened)
         return 1;
@@ -15,11 +15,11 @@ long GXOpen(uint8_t * ramPtr, HWND _hwndMain)
     BOOL res;
 
     hPlugin = GetModuleHandle(NULL);
-    hwndMain = _hwndMain;
+    hwndMain = config->hwndMain;
 
     RAM = ramPtr;
 
-    res = GL_LazyOpenSubsystem(_hwndMain);
+    res = GL_LazyOpenSubsystem(hwndMain);
     assert(res);
 
     // vertex programs extension

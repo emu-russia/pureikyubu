@@ -23,10 +23,10 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\GDI.h">
+    <ClInclude Include="..\..\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\pch.h">
+    <ClInclude Include="..\..\VideoOut.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

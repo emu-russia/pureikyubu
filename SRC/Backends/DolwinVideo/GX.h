@@ -2,13 +2,11 @@
 
 #pragma once
 
-#include <Windows.h>
-
 // return values are always 1 for good, and 0 for bad.
 
 // GXOpen() should be called before emulation started, to initialize graphics backend.
 // GXClose() is called, when emulation is stopped, to shutdown graphics backend.
-long GXOpen(uint8_t* ramPtr, HWND hwndMain);
+long GXOpen(HWConfig * config, uint8_t* ramPtr);
 void GXClose();
 
 // add new data to graphics fifo. draw next primitive, if there are enough data.

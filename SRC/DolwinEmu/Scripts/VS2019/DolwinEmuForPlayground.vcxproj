@@ -49,9 +49,6 @@
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\ThirdParty\fmt\Scripts\VS2019\fmt.vcxproj">
-      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\Backends\AudioNull\Scripts\VS2019\AudioNull.vcxproj">
       <Project>{37d58fb6-e50b-43e1-9a31-873741284f22}</Project>
     </ProjectReference>
@@ -79,7 +76,7 @@
     <ProjectReference Include="..\..\..\GekkoCore\Scripts\VS2019\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\Hardware\Scripts\VS2019\GCNHardware.vcxproj">
+    <ProjectReference Include="..\..\..\Hardware\Scripts\VS2019\GCNHardwareForPlayground.vcxproj">
       <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
     </ProjectReference>
     <ProjectReference Include="..\..\..\HighLevel\Scripts\VS2019\GCNHighLevel.vcxproj">

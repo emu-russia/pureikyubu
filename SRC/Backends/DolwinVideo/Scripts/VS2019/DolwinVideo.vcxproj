@@ -159,6 +159,7 @@
     <ClInclude Include="..\..\GL.H" />
     <ClInclude Include="..\..\Gpl.h" />
     <ClInclude Include="..\..\GPRegs.h" />
+    <ClInclude Include="..\..\GX.h" />
     <ClInclude Include="..\..\Light.h" />
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\Perf.h" />

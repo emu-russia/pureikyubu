@@ -29,7 +29,3 @@
 #include "../HighLevel/TimeFormat.h"
 
 #include "FIFO.h"
-
-// Backends
-
-#include "../Backends/AudioDirectSound/AX.h"

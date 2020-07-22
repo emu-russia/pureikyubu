@@ -3,6 +3,7 @@
 
 using namespace Debug;
 
+static HWND     savedHwnd;
 static HDC      hdcMainWnd, hdcWndComp;
 static HBITMAP  hbmDIBSection;
 static HGDIOBJ  oldSelected;
@@ -11,7 +12,7 @@ static BOOL     gdi_init;
 static int      gdi_width, gdi_height;
 static int      bm_width, bm_height;
 
-bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
+bool VideoOutOpen(HWConfig* config, int width, int height, RGB **gfxbuf)
 {
     HDC         hdc;
     BITMAPINFO* bmi;
@@ -21,10 +22,12 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     Report(Channel::VI, "Windows DIB for video interface\n");
 
+    savedHwnd = config->hwndMain;
+
     bmi = (BITMAPINFO *)calloc(sizeof(BITMAPINFO) + 16*4, 1);
     if(bmi == NULL) return FALSE;
 
-    hdcMainWnd = hdc = GetDC(hwnd);
+    hdcMainWnd = hdc = GetDC(savedHwnd);
 
     memset(bmi, 0, sizeof(BITMAPINFO));
     bmi->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -36,7 +39,7 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     hbmDIBSection = CreateDIBSection(NULL, bmi, DIB_RGB_COLORS, (void **)&DIBase, NULL, 0);
     if(hbmDIBSection == NULL) return FALSE;
-    *gfxbuf = (RGBQUAD *)DIBase;
+    *gfxbuf = (RGB*)DIBase;
 
     hdcWndComp = CreateCompatibleDC(hdc);
     if(hdcWndComp == NULL) return FALSE;
@@ -44,13 +47,13 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     free(bmi);
 
-    GDIResize(width, height);
+    VideoOutResize(width, height);
     gdi_init = TRUE;
 
     return TRUE;
 }
 
-void GDIClose(HWND hwnd)
+void VideoOutClose()
 {
     if(gdi_init == FALSE) return;
 
@@ -69,14 +72,14 @@ void GDIClose(HWND hwnd)
 
     if(hdcMainWnd)
     {
-        ReleaseDC(hwnd, hdcMainWnd);
+        ReleaseDC(savedHwnd, hdcMainWnd);
         hdcMainWnd = NULL;
     }
 
     gdi_init = FALSE;
 }
 
-void GDIRefresh()
+void VideoOutRefresh()
 {
     if(gdi_init)
     {
@@ -91,7 +94,7 @@ void GDIRefresh()
     }
 }
 
-void GDIResize(int width, int height)
+void VideoOutResize(int width, int height)
 {
     gdi_width  = width;
     gdi_height = height;

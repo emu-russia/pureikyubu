@@ -42,3 +42,6 @@
 #include "GPRegs.h"
 
 #include "../../Debugger/Debugger.h"
+
+#include "../../Hardware/Hardware.h"
+#include "GX.h"

@@ -40,10 +40,23 @@ struct HWConfig
 
 };
 
-// Backends
-#include "GX.h"
+#pragma region "Backends"
+
+#ifdef _WINDOWS
+#include "../Backends/DolwinVideo/GX.h"
 #include "../Backends/PadSimpleWin32/PAD.h"
-#include "../Backends/VideoGdi/GDI.h"
+#include "../Backends/VideoGdi/VideoOut.h"
+#include "../Backends/AudioDirectSound/AX.h"
+#endif
+
+#ifdef _PLAYGROUND
+#include "../Backends/GraphicsNull/GX.h"
+#include "../Backends/PadNull/PAD.h"
+#include "../Backends/VideoNull/VideoOut.h"
+#include "../Backends/AudioNull/AX.h"
+#endif
+
+#pragma endregion "Backends"
 
 #include "../DVD/DVD.h"
 #include "../DSP/DspCore.h"

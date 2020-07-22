@@ -28,7 +28,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\GDI.h" />
+    <ClInclude Include="..\..\VideoOut.h" />
     <ClInclude Include="..\..\pch.h" />
   </ItemGroup>
   <ItemGroup>

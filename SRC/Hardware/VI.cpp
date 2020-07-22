@@ -68,7 +68,7 @@ static inline int bound(int x)
 }
 
 // copy XFB to screen
-void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
+void YUVBlit(uint8_t *yuvbuf, RGB *dib)
 {
     uint32_t *rgbbuf = (uint32_t *)dib;
     int count = 320 * 480;
@@ -87,7 +87,7 @@ void YUVBlit(uint8_t *yuvbuf, RGBQUAD *dib)
         *rgbbuf++ = yuv2bs(y2, u, v) | yuv2gs(y2, u, v) | yuv2rs(y2, u, v);
     }
     
-    GDIRefresh();
+    VideoOutRefresh();
 }
 
 // ---------------------------------------------------------------------------
@@ -365,7 +365,6 @@ void VIOpen(HWConfig * config)
     // clear VI regs
     memset(&vi, 0, sizeof(VIControl));
 
-    vi.hwndMain = config->hwndMain;
     vi.one_second = Gekko::Gekko->OneSecond();
 
     // read VI settings
@@ -383,10 +382,10 @@ void VIOpen(HWConfig * config)
     // open GDI (if need)
     if(vi.xfb)
     {
-        bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
+        bool res = VideoOutOpen(config, 640, 480, &vi.gfxbuf);
         if(!res)
         {
-            Report(Channel::VI, "VI cant startup GDI!");
+            Report(Channel::VI, "VI cant startup VideoOut backend!");
             vi.xfb = false;
         }
     }
@@ -405,7 +404,7 @@ void VIClose()
     // XFB can be enabled during emulation,
     // so we must be sure, that GDI is closed
     // even if XFB wasn't enabled, before start
-    GDIClose(vi.hwndMain);
+    VideoOutClose();
 }
 
 void VISetEncoderFuse(int value)

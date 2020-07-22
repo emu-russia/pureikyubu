@@ -53,7 +53,7 @@ namespace Flipper
 
         Report(Channel::Norm, "\n");
 
-        GXOpen(mi.ram, config->hwndMain);
+        GXOpen(config, mi.ram);
         PADOpen();
 
         JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);

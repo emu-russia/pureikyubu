@@ -1,10 +1,20 @@
-// GraphicsNull.cpp : Defines the functions for the static library.
-//
+// GraphicsNull
 
 #include "pch.h"
-#include "framework.h"
 
-// TODO: This is an example of a library function
-void fnGraphicsNull()
+long GXOpen(HWConfig* config, uint8_t* ramPtr)
+{
+	return 1;
+}
+
+void GXClose()
+{
+}
+
+void GXWriteFifo(uint8_t dataPtr[32])
+{
+}
+
+void GXSetDrawCallbacks(GXDrawDoneCallback drawDoneCb, GXDrawTokenCallback drawTokenCb)
 {
 }

@@ -91,12 +91,11 @@ struct VIControl
 
     bool        xfb;        // enable video frame buffer (GDI)
     uint8_t*    xfbbuf;     // translated TFBL pointer
-    RGBQUAD*    gfxbuf;     // DIB
+    RGB*        gfxbuf;     // DIB
 
     bool        log;        // do debugger log output
     size_t      frames;     // frames rendered by VI/GX
 
-    HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks
 
     int         videoEncoderFuse;
