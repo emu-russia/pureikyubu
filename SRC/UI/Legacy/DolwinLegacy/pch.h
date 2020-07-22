@@ -12,6 +12,7 @@
 #include <cstring>
 #include <ctime>
 #include <windows.h>
+#include <shlobj.h>
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
@@ -27,8 +28,6 @@
 #include <memory>
 #include <locale>
 #include "RES/resource.h"
-
-#include <Windows.h>
 
 #include "../../../Common/File.h"
 

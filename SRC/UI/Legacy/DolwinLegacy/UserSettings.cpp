@@ -95,9 +95,9 @@ static void LoadSettings(int n)         // dialogs created
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
-        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW).data());
-        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW).data());
-        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW).data());
+        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, GetConfigString(USER_BOOTROM, USER_HW));
+        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, GetConfigString(USER_DSP_DROM, USER_HW));
+        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, GetConfigString(USER_DSP_IROM, USER_HW));
 
         settingsLoaded[2] = TRUE;
     }
@@ -107,8 +107,6 @@ static void LoadSettings(int n)         // dialogs created
     {
         CheckDlgButton(hDlg, IDC_MTXHLE, BST_UNCHECKED);
         CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_UNCHECKED);
-        BOOL flag = GetConfigBool(USER_HLE_MTX, USER_HLE);
-        if(flag) CheckDlgButton(hDlg, IDC_MTXHLE, BST_CHECKED);
 
         settingsLoaded[3] = TRUE;
     }
@@ -122,7 +120,9 @@ static void SaveSettings()              // OK pressed
     /* Emulator. */
     if (settingsLoaded[0])
     {
+        HWND hDlg = hChildDlg[0];
 
+        // Nothing
     }
 
     /* GUI/Selector. */
@@ -134,7 +134,7 @@ static void SaveSettings()              // OK pressed
 
         /* Delete all directories. */
         usel.paths.clear();
-        SetConfigString(USER_PATH, L"", USER_UI);
+        SetConfigString(USER_PATH, _T(""), USER_UI);
 
         /* Add directories again. */
         for (i = 0; i < max; i++)
@@ -142,7 +142,8 @@ static void SaveSettings()              // OK pressed
             SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text_buffer);
             
             /* Add the path. */
-            AddSelectorPath(text_buffer);
+            std::wstring wstr = text_buffer;
+            AddSelectorPath(wstr);
         }
 
         /* Update selector layout, if PATH has changed */
@@ -178,8 +179,8 @@ static void SaveSettings()              // OK pressed
     if(settingsLoaded[3])
     {
         HWND hDlg = hChildDlg[3];
-        BOOL flag = IsDlgButtonChecked(hDlg, IDC_MTXHLE);
-        SetConfigBool(USER_HLE_MTX, flag, USER_HLE);
+
+        // Nothing
     }
 }
 
@@ -274,7 +275,8 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_ADDPATH:
                 {
-                    if (path = UI::FileOpenDialog(UI::FileType::Directory); !path.empty()) /* C++ 17 */
+                    path = UI::FileOpenDialog(UI::FileType::Directory);
+                    if (!path.empty())
                     {
                         fix_path(path);
 

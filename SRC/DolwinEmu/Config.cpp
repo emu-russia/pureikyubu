@@ -99,7 +99,7 @@ TCHAR* GetConfigString(const char* var, const char* path)
 	return value->value.AsString;
 }
 
-void SetConfigString(const char* var, TCHAR* newVal, const char* path)
+void SetConfigString(const char* var, const TCHAR* newVal, const char* path)
 {
 	settingsLock.Lock();
 

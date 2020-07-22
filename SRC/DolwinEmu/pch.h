@@ -35,6 +35,7 @@
 #include "../Debugger/Debugger.h"
 
 #include "Config.h"
+#include "ExecutableFormat.h"
 #include "Loader.h"
 #include "Emulator.h"
 

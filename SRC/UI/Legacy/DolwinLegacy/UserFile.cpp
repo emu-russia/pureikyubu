@@ -3,118 +3,162 @@
 
 namespace UI
 {
-    /* Open the file/directory dialog. */
-    std::wstring FileOpenDialog(FileType type)
+    bool FileExists(const TCHAR* filename)
     {
-        static auto tempStr = std::wstring(0x1000, 0);
-        std::wstring szFileName(1024, 0), szFileTitle(1024, 0);
+        FILE* f = nullptr;
+        _tfopen_s(&f, filename, _T("rb"));
+        if (f == NULL) return false;
+        fclose(f);
+        return true;
+    }
 
-        auto prevDir = std::filesystem::current_path();
+    // Get file size
+    size_t FileSize(const TCHAR* filename)
+    {
+        FILE* f = nullptr;
+        _tfopen_s(&f, filename, _T("rb"));
+        if (f == NULL) return 0;
+        fseek(f, 0, SEEK_END);
+        size_t size = ftell(f);
+        fclose(f);
+        return size;
+    }
+
+    // Open file/directory dialog
+    TCHAR* FileOpenDialog(HWND hwnd, FileType type)
+    {
+        static TCHAR tempBuf[0x1000] = { 0 };
+        OPENFILENAME ofn;
+        TCHAR szFileName[1024];
+        TCHAR szFileTitle[1024];
+        TCHAR lastDir[1024], prevDir[1024];
+        BOOL result;
+
+        GetCurrentDirectory(sizeof(prevDir), prevDir);
+
         switch (type)
         {
             case FileType::All:
-            {
-                auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
-                break;
-            }
-            case FileType::Dvd:
-            {
-                auto lastDir = GetConfigString(USER_LASTDIR_DVD, USER_UI);
-                break;
-            }
-            case FileType::Map:
-            {
-                auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
-                break;
-            }
             case FileType::Json:
-            {
-                auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
-                break;                
-            }
-            default:
-            {
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
                 break;
-            }
+            case FileType::Dvd:
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
+                break;
+            case FileType::Map:
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
+                break;
         }
 
-        bool result = false;
-        if (type == FileType::Directory)
-        {          
-            auto title = L"Choose a directory";
-            auto folder = Win::OpenDialog(title, L"", true);
+        memset(szFileName, 0, sizeof(szFileName));
+        memset(szFileTitle, 0, sizeof(szFileTitle));
 
-            if (!folder.empty())
+        if (type == FileType::Directory)
+        {
+            BROWSEINFO bi;
+            LPTSTR lpBuffer = NULL;
+            LPITEMIDLIST pidlRoot = NULL;     // PIDL for root folder 
+            LPITEMIDLIST pidlBrowse = NULL;   // PIDL selected by user
+            LPMALLOC g_pMalloc;
+
+            // Get the shell's allocator. 
+            if (!SUCCEEDED(SHGetMalloc(&g_pMalloc)))
+                return NULL;
+
+            // Allocate a buffer to receive browse information.
+            lpBuffer = (LPTSTR)g_pMalloc->Alloc(MAX_PATH);
+            if (lpBuffer == NULL) return NULL;
+
+            // Get the PIDL for the root folder.
+            if (!SUCCEEDED(SHGetSpecialFolderLocation(hwnd, CSIDL_DRIVES, &pidlRoot)))
             {
-                szFileName = folder;
-                result = true;
+                g_pMalloc->Free(lpBuffer);
+                return NULL;
             }
+
+            // Fill in the BROWSEINFO structure. 
+            bi.hwndOwner = hwnd;
+            bi.pidlRoot = pidlRoot;
+            bi.pszDisplayName = lpBuffer;
+            bi.lpszTitle = _T("Choose Directory");
+            bi.ulFlags = 0;
+            bi.lpfn = NULL;
+            bi.lParam = 0;
+
+            // Browse for a folder and return its PIDL. 
+            pidlBrowse = SHBrowseForFolder(&bi);
+            result = (pidlBrowse != NULL);
+            if (result)
+            {
+                SHGetPathFromIDList(pidlBrowse, lpBuffer);
+                _tcscpy_s(szFileName, _countof(szFileName) - 1, lpBuffer);
+
+                // Free the PIDL returned by SHBrowseForFolder.
+                g_pMalloc->Free(pidlBrowse);
+            }
+
+            // Clean up. 
+            if (pidlRoot) g_pMalloc->Free(pidlRoot);
+            if (lpBuffer) g_pMalloc->Free(lpBuffer);
+
+            // Release the shell's allocator. 
+            g_pMalloc->Release();
         }
         else
         {
-            /* Select which files to allow in the dialog. */
-            auto filter = std::wstring();
+            ofn.lStructSize = sizeof(OPENFILENAME);
+            ofn.hwndOwner = hwnd;
             switch (type)
             {
                 case FileType::All:
-                {
-                    filter =
-                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
-                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-                        L"Binary Files (*.bin)\0*.bin\0"
-                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                        L"All Files (*.*)\0*.*\0";
+                    ofn.lpstrFilter =
+                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
+                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
+                        _T("Binary Files (*.bin)\0*.bin\0")
+                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                        _T("All Files (*.*)\0*.*\0");
                     break;
-                }
                 case FileType::Dvd:
-                {
-                    filter =
-                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                        L"All Files (*.*)\0*.*\0";
+                    ofn.lpstrFilter =
+                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                        _T("All Files (*.*)\0*.*\0");
                     break;
-                }
                 case FileType::Map:
-                {
-                    filter =
-                        L"Symbolic information files (*.map)\0*.map\0"
-                        L"All Files (*.*)\0*.*\0";
+                    ofn.lpstrFilter =
+                        _T("Symbolic information files (*.map)\0*.map\0")
+                        _T("All Files (*.*)\0*.*\0");
                     break;
-                }
                 case FileType::Json:
-                {
-                    filter =
-                        L"Json files (*.json)\0*.json\0"
-                        L"All Files (*.*)\0*.*\0";
-                    break;                
-                }
-                default:
-                {
+                    ofn.lpstrFilter =
+                        _T("Json files (*.json)\0*.json\0")
+                        _T("All Files (*.*)\0*.*\0");
                     break;
-                }
             }
-            
-            auto title = L"Open File";
-            auto file = Win::OpenDialog(title, filter);
 
-            if (!file.empty())
-            {
-                szFileName = file;
-                result = true;
-            }
+            ofn.lpstrCustomFilter = NULL;
+            ofn.nMaxCustFilter = 0;
+            ofn.nFilterIndex = 1;
+            ofn.lpstrFile = szFileName;
+            ofn.nMaxFile = sizeof(szFileName);
+            ofn.lpstrInitialDir = lastDir;
+            ofn.lpstrFileTitle = szFileTitle;
+            ofn.nMaxFileTitle = sizeof(szFileTitle);
+            ofn.lpstrTitle = _T("Open File\0");
+            ofn.lpstrDefExt = _T("");
+            ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+
+            result = GetOpenFileName(&ofn);
         }
 
         if (result)
         {
-            tempStr = szFileName;
+            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
-            /* Save last directory. */
-            auto lastDir = tempStr;
-            
-            /* Remove the file from the directory string. */
-            int i = lastDir.size() - 1;
-            while (lastDir[i] != L'\\') i--;
-
-            lastDir[i + 1] = L'\0';
+            // save last directory
+            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
+            int i = (int)_tcslen(lastDir) - 1;
+            while (lastDir[i] != _T('\\')) i--;
+            lastDir[i + 1] = _T('\0');
             switch (type)
             {
                 case FileType::All:
@@ -129,117 +173,99 @@ namespace UI
                     break;
             }
 
-            chdir(prevDir.string().c_str());
-            return tempStr;
+            SetCurrentDirectory(prevDir);
+            return tempBuf;
         }
         else
         {
-            chdir(prevDir.string().c_str());
-            return std::wstring();
+            SetCurrentDirectory(prevDir);
+            return NULL;
         }
     }
 
     // Save file dialog
-    std::wstring FileSaveDialog(FileType type)
+    TCHAR* FileSaveDialog(HWND hwnd, FileType type)
     {
-        static auto tempStr = std::wstring(0x1000, 0);
-        std::wstring szFileName(1024, 0), szFileTitle(1024, 0);
+        static TCHAR tempBuf[0x1000] = { 0 };
+        OPENFILENAME ofn;
+        TCHAR szFileName[1024];
+        TCHAR szFileTitle[1024];
+        TCHAR lastDir[1024], prevDir[1024];
+        BOOL result;
 
-        auto prevDir = std::filesystem::current_path();
+        GetCurrentDirectory(sizeof(prevDir), prevDir);
+
         switch (type)
         {
-        case FileType::All:
-        {
-            auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
-            break;
-        }
-        case FileType::Dvd:
-        {
-            auto lastDir = GetConfigString(USER_LASTDIR_DVD, USER_UI);
-            break;
-        }
-        case FileType::Map:
-        {
-            auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
-            break;
-        }
-        case FileType::Json:
-        {
-            auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
-            break;
-        }
-        default:
-        {
-            break;
-        }
+            case FileType::All:
+            case FileType::Json:
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
+                break;
+            case FileType::Dvd:
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
+                break;
+            case FileType::Map:
+                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
+                break;
         }
 
-        bool result = false;
+        memset(szFileName, 0, sizeof(szFileName));
+        memset(szFileTitle, 0, sizeof(szFileTitle));
 
         {
-            /* Select which files to allow in the dialog. */
-            auto filter = std::wstring();
+            ofn.lStructSize = sizeof(OPENFILENAME);
+            ofn.hwndOwner = hwnd;
             switch (type)
             {
             case FileType::All:
-            {
-                filter =
-                    L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
-                    L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-                    L"Binary Files (*.bin)\0*.bin\0"
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
+                ofn.lpstrFilter =
+                    _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
+                    _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
+                    _T("Binary Files (*.bin)\0*.bin\0")
+                    _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                    _T("All Files (*.*)\0*.*\0");
                 break;
-            }
             case FileType::Dvd:
-            {
-                filter =
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
+                ofn.lpstrFilter =
+                    _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                    _T("All Files (*.*)\0*.*\0");
                 break;
-            }
             case FileType::Map:
-            {
-                filter =
-                    L"Symbolic information files (*.map)\0*.map\0"
-                    L"All Files (*.*)\0*.*\0";
+                ofn.lpstrFilter =
+                    _T("Symbolic information files (*.map)\0*.map\0")
+                    _T("All Files (*.*)\0*.*\0");
                 break;
-            }
             case FileType::Json:
-            {
-                filter =
-                    L"Json files (*.json)\0*.json\0"
-                    L"All Files (*.*)\0*.*\0";
+                ofn.lpstrFilter =
+                    _T("Json files (*.json)\0*.json\0")
+                    _T("All Files (*.*)\0*.*\0");
                 break;
             }
-            default:
-            {
-                break;
-            }
-            }
 
-            auto title = L"Open File";
-            auto file = Win::SaveDialog(title, filter);
+            ofn.lpstrCustomFilter = NULL;
+            ofn.nMaxCustFilter = 0;
+            ofn.nFilterIndex = 1;
+            ofn.lpstrFile = szFileName;
+            ofn.nMaxFile = sizeof(szFileName);
+            ofn.lpstrInitialDir = lastDir;
+            ofn.lpstrFileTitle = szFileTitle;
+            ofn.nMaxFileTitle = sizeof(szFileTitle);
+            ofn.lpstrTitle = _T("Save File\0");
+            ofn.lpstrDefExt = _T("");
+            ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
 
-            if (!file.empty())
-            {
-                szFileName = file;
-                result = true;
-            }
+            result = GetSaveFileName(&ofn);
         }
 
         if (result)
         {
-            tempStr = szFileName;
+            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
-            /* Save last directory. */
-            auto lastDir = tempStr;
-
-            /* Remove the file from the directory string. */
-            int i = lastDir.size() - 1;
-            while (lastDir[i] != L'\\') i--;
-
-            lastDir[i + 1] = L'\0';
+            // save last directory
+            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
+            int i = (int)_tcslen(lastDir) - 1;
+            while (lastDir[i] != _T('\\')) i--;
+            lastDir[i + 1] = _T('\0');
             switch (type)
             {
                 case FileType::All:
@@ -254,14 +280,45 @@ namespace UI
                     break;
             }
 
-            chdir(prevDir.string().c_str());
-            return tempStr;
+            SetCurrentDirectory(prevDir);
+            return tempBuf;
         }
         else
         {
-            chdir(prevDir.string().c_str());
-            return std::wstring();
+            SetCurrentDirectory(prevDir);
+            return NULL;
         }
+    }
+
+    // make path to file shorter for "lvl" levels.
+    TCHAR* FileShortName(const TCHAR* filename, int lvl)
+    {
+        static TCHAR tempBuf[1024] = { 0 };
+
+        int c = 0;
+        size_t i = 0;
+
+        TCHAR* ptr = (TCHAR*)filename;
+
+        tempBuf[0] = ptr[0];
+        tempBuf[1] = ptr[1];
+        tempBuf[2] = ptr[2];
+
+        ptr += 3;
+
+        for (i = _tcslen(ptr) - 1; i; i--)
+        {
+            if (ptr[i] == _T('\\')) c++;
+            if (c == lvl) break;
+        }
+
+        if (c == lvl)
+        {
+            _stprintf_s(&tempBuf[3], _countof(tempBuf) - 3, _T("...%s"), &ptr[i]);
+        }
+        else return ptr - 3;
+
+        return tempBuf;
     }
 
     /* Make path to file shorter for "lvl" levels. */

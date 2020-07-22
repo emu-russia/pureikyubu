@@ -16,9 +16,7 @@ Dolwin supports the following file formats:
 - DOL
 - ELF
 - BIN (not sure if this works and generally there are probably no demos left in .bin format)
-- GCM/ISO: unencrypted GameCube disc images. Altered dumps from scenic groups are also supported.
-
-Dolwin does not in any way support game piracy. Although who cares, after all, games are not for sale, according to Wikipedia, GameCube support was discontinued in 2007.
+- GCM/ISO: unencrypted GameCube disc images
 
 ## HWConfig
 
@@ -27,6 +25,6 @@ into the HWConfig structure.
 
 ## Jdi
 
-Jey-Dai interface allows you to control host emulation, load and unload executable files (DOL, ELF) or DVD images, apply patches and so on.
+Jey-Dai interface allows you to control host emulation, load and unload executable files (DOL, ELF) or DVD images and so on.
 
 A list of commands can be found in EmuJdi.json

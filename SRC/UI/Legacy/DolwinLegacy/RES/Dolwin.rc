@@ -165,8 +165,7 @@ IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
 STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "Highlevel geometry library (MTX) (Default: disabled)",IDC_MTXHLE,
-                    "Button",BS_AUTOCHECKBOX,12,12,186,10
+    LTEXT           "Nothing to configure.",IDC_STATIC,12,12,199,14,SS_CENTERIMAGE
 END
 
 IDD_DIALOG_PAD DIALOGEX 0, 0, 360, 255
