@@ -1,134 +1,107 @@
 // Dolwin debugger interface;
 #include "pch.h"
 
-// Standard handlers when the debugger is closed.
-
-static void dummy(const char* text, ...)
-{
-
-}
-
-static void JustEventLog(DbgChannel chan, const char* text, ...)
-{
-    if (Debug::Log != nullptr)
-    {
-        char    buf[0x1000];
-        va_list arg;
-
-        va_start(arg, text);
-        int size = vsprintf_s(buf, sizeof(buf) - 1, text, arg);
-        va_end(arg);
-
-        Debug::Log->TraceEvent(chan, buf);
-    }
-}
-
-// message output
-void (*DBHalt)(const char *text, ...)   = dummy;
-void (*DBReport)(const char* text, ...) = dummy;
-void (*DBReport2)(DbgChannel chan, const char *text, ...) = JustEventLog;
-
 static HANDLE consoleThreadHandle = INVALID_HANDLE_VALUE;
 static DWORD consoleThreadId;
 
-static void db_report2(DbgChannel chan, const char* text, ...)
+static void db_report2(Debug::Channel chan, const char* text, ...)
 {
     ConColor col = ConColor::NORM;
     char    buf[0x1000];
     va_list arg;
     const char* prefix = "";
 
-    if (chan == DbgChannel::Void)
+    if (chan == Debug::Channel::Void)
         return;
 
     switch (chan)
     {
-        case DbgChannel::Norm:
+        case Debug::Channel::Norm:
             col = ConColor::NORM;
             break;
-        case DbgChannel::Info:
+        case Debug::Channel::Info:
             col = ConColor::GREEN;
             break;
-        case DbgChannel::Error:
+        case Debug::Channel::Error:
             col = ConColor::BRED;
             break;
-        case DbgChannel::Header:
+        case Debug::Channel::Header:
             col = ConColor::CYAN;
             break;
 
-        case DbgChannel::CP:
+        case Debug::Channel::CP:
             prefix = "CP : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::PE:
+        case Debug::Channel::PE:
             prefix = "PE : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::VI:
+        case Debug::Channel::VI:
             prefix = "VI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::GP:
+        case Debug::Channel::GP:
             prefix = "GP : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::PI:
+        case Debug::Channel::PI:
             prefix = "PI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::CPU:
+        case Debug::Channel::CPU:
             prefix = "CPU: ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::MI:
+        case Debug::Channel::MI:
             prefix = "MI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::DSP:
+        case Debug::Channel::DSP:
             prefix = "DSP: ";
             col = ConColor::BPUR;
             break;
-        case DbgChannel::DI:
+        case Debug::Channel::DI:
             prefix = "DI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::AR:
+        case Debug::Channel::AR:
             prefix = "AR : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::AI:
+        case Debug::Channel::AI:
             prefix = "AI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::AIS:
+        case Debug::Channel::AIS:
             prefix = "AIS: ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::SI:
+        case Debug::Channel::SI:
             prefix = "SI : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::EXI:
+        case Debug::Channel::EXI:
             prefix = "EXI: ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::MC:
+        case Debug::Channel::MC:
             prefix = "MC : ";
             col = ConColor::CYAN;
             break;
-        case DbgChannel::DVD:
+        case Debug::Channel::DVD:
             prefix = "DVD: ";
             col = ConColor::BGREEN;
             break;
-        case DbgChannel::AX:
+        case Debug::Channel::AX:
             prefix = "AX: ";
             col = ConColor::BGREEN;
             break;
 
-        case DbgChannel::Loader:
+        case Debug::Channel::Loader:
             col = ConColor::YEL;
             break;
-        case DbgChannel::HLE:
+        case Debug::Channel::HLE:
             col = ConColor::GREEN;
             break;
     }
@@ -138,11 +111,6 @@ static void db_report2(DbgChannel chan, const char* text, ...)
     va_end(arg);
 
     con_print(col, "%s%s", prefix, buf);
-
-    if (Debug::Log != nullptr)
-    {
-        Debug::Log->TraceEvent(chan, buf);
-    }
 }
 
 static void db_report(const char* text, ...)
@@ -154,24 +122,17 @@ static void db_report(const char* text, ...)
     vsprintf_s(buf, sizeof(buf) - 1, text, arg);
     va_end(arg);
 
-    db_report2(DbgChannel::Norm, buf);
+    db_report2(Debug::Channel::Norm, buf);
 }
 
 static DWORD WINAPI DBThreadProc(LPVOID lpParameter)
 {
-    DBHalt = con_error;
-    DBReport = db_report;
-    DBReport2 = db_report2;
     con_open();
 
     con.update |= CON_UPDATE_ALL;
     con_refresh(1);
     
     con_start();
-
-    DBHalt = dummy;
-    DBReport = dummy;
-    DBReport2 = JustEventLog;
 
     return 0;
 }
@@ -183,7 +144,7 @@ void DBOpen()
     consoleThreadHandle = CreateThread(NULL, 0, DBThreadProc, &con, 0, &consoleThreadId);
     assert(consoleThreadHandle != INVALID_HANDLE_VALUE);
 
-    Debug::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
+    JDI::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
 }
 
 // Close debugger window
@@ -191,5 +152,5 @@ void DBClose()
 {
     con.exitPending = true;
 
-    Debug::Hub.RemoveNode(DEBUGGER_JDI_JSON);
+    JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);
 }

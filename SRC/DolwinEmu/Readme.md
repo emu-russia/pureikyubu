@@ -20,15 +20,6 @@ Dolwin supports the following file formats:
 
 Dolwin does not in any way support game piracy. Although who cares, after all, games are not for sale, according to Wikipedia, GameCube support was discontinued in 2007.
 
-## Patches
-
-Contains implementation of simple patches.
-
-The latest development progress in emulation allow you not to resort to the help of patches.
-But if for some reason they need to be used, this functionality has remained unchanged since version 0.10.
-
-Perhaps it will be slightly redesigned in terms of cleaning the code, but in general this functionality will remain unchanged.
-
 ## HWConfig
 
 To avoid using the UI to get configuration from the HW component, all Flipper hardware emulation settings are aggregated

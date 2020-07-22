@@ -81,7 +81,7 @@ static void load_path()
 }
 
 /* Called after loading of new file (see Emulator\Loader.cpp). */
-bool AddSelectorPath(std::wstring_view fullPath)
+bool AddSelectorPath(std::wstring& fullPath)
 {
     auto path = std::wstring(fullPath);
 
@@ -344,7 +344,7 @@ static void add_item(size_t index)
 }
 
 /* Insert new file into filelist. */
-static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
+static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
 {
     // check file size
     if ((fsize < 0x1000) || (fsize > DVD_SIZE))
@@ -354,7 +354,6 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 
     // check already present
     bool found = false;
-    usel.filesLock.Lock();
 
     if (!usel.files.empty())
     {
@@ -365,8 +364,6 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
 
         found = (itr != usel.files.end());
     }
-
-    usel.filesLock.Unlock();
 
     if (found)
     {
@@ -453,9 +450,7 @@ static void add_file(std::wstring_view file, int fsize, SELECTOR_FILE type)
     }
 
     /* Extend filelist. */
-    usel.filesLock.Lock();
     usel.files.push_back(std::move(item));
-    usel.filesLock.Unlock();
 
     /* Add listview item. */
     add_item(usel.files.size() - 1);
@@ -681,7 +676,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 // update filelist (reload and redraw)
 void UpdateSelector()
 {
-    static std::vector<std::pair<std::string_view, SELECTOR_FILE>> file_ext =
+    static std::vector<std::pair<std::string, SELECTOR_FILE>> file_ext =
     {
         { ".dol", SELECTOR_FILE::Executable },
         { ".elf", SELECTOR_FILE::Executable },
@@ -699,11 +694,9 @@ void UpdateSelector()
 
     /* Destroy old filelist and path data */
     ListView_DeleteAllItems(usel.hSelectorWindow);
-    usel.filesLock.Lock();
     
     usel.files.clear();
 
-    usel.filesLock.Unlock();
     ImageList_Remove(bannerList, -1);
 
     // build search path list (even if selector closed)

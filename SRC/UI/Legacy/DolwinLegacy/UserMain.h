@@ -4,7 +4,7 @@
 namespace UI
 {
 	// basic message output
-	void DolwinError(std::wstring_view title, std::wstring_view fmt, ...);
-	bool DolwinQuestion(std::wstring_view title, std::wstring_view fmt, ...);
-	void DolwinReport(std::wstring_view fmt, ...);
+	void DolwinError(const TCHAR* title, const TCHAR* fmt, ...);
+	bool DolwinQuestion(const TCHAR* title, const TCHAR* fmt, ...);
+	void DolwinReport(const TCHAR* fmt, ...);
 }

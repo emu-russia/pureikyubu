@@ -1,4 +1,4 @@
-// Used(?) to convert archaic Japanese SJIS encoding to Unicode
+// Used to convert archaic Japanese SJIS encoding to Unicode
 
 static uint16_t SjisTable[0x10000] = {
 0x0000, 0x0001, 0x0002, 0x0003, 0x0004, 0x0005, 0x0006, 0x0007,

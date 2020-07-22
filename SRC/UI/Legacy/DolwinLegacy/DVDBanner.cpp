@@ -1,55 +1,58 @@
 // DVD banner helpers for file selector. 
 #include "pch.h"
 
-std::unique_ptr<DVDBannerPAL> DVDLoadBanner(std::wstring & dvdFile)
+void* DVDLoadBanner(TCHAR* dvdFile)
 {
-    size_t file_size = Util::FileSize(dvdFile);
+    size_t fsize = UI::FileSize(dvdFile);
+    DVDBanner2* banner = nullptr;
     uint32_t bnrofs = 0;
 
+    banner = (DVDBanner2*)malloc(sizeof(DVDBanner2));
+    assert(banner);
+
     // load DVD banner
-    auto banner = std::make_unique<DVDBannerPAL>();
-    if (file_size > 0)
+    if (fsize)
     {
         if (DVD::MountFile(dvdFile))
         {
-            auto banner_name = fmt::format("/{:s}", DVD_BANNER_FILENAME);
-            bnrofs = DVD::OpenFile(banner_name);
+            bnrofs = DVD::OpenFile("/" DVD_BANNER_FILENAME);
         }
     }
 
     if (bnrofs)
     {
         DVD::Seek(bnrofs);
-        DVD::Read((uint8_t*)banner.get(), sizeof(DVDBannerPAL));
+        DVD::Read((uint8_t*)banner, sizeof(DVDBanner2));
     }
     else
     {
-        banner.reset(nullptr);
+        free(banner);
+        banner = nullptr;
     }
 
-    return std::move(banner);
+    return banner;
 }
 
-uint8_t DVDBannerChecksum(DVDBannerBase* banner)
+uint8_t DVDBannerChecksum(void* banner)
 {
-    DVDBannerNTSC*  bnr  = (DVDBannerNTSC*)banner;
-    DVDBannerPAL*   bnr2 = (DVDBannerPAL*)banner;
-    uint8_t*        buf;
-    uint32_t        sum  = 0;
+    DVDBanner* bnr = (DVDBanner*)banner;
+    DVDBanner2* bnr2 = (DVDBanner2*)banner;
+    uint8_t* buf;
+    uint32_t         sum = 0;
 
-    /* Select banner type. */
-    if(_byteswap_ulong(bnr->id) == DVD_BANNER_ID) /* NTSC / JP. */
+    // select banner type
+    if (_byteswap_ulong(bnr->id) == DVD_BANNER_ID)   // US/JAP
     {
         buf = (uint8_t*)bnr;
-        for(int i = 0; i < sizeof(DVDBannerNTSC); i++)
+        for (int i = 0; i < sizeof(DVDBanner); i++)
         {
             sum += buf[i];
         }
     }
-    else /* PAL */
+    else                                    // EUR
     {
         buf = (uint8_t*)bnr2;
-        for(int i = 0; i < sizeof(DVDBannerPAL); i++)
+        for (int i = 0; i < sizeof(DVDBanner2); i++)
         {
             sum += buf[i];
         }

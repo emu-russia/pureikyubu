@@ -75,67 +75,67 @@ static void SaveSettings()
 }
 
 
-#pragma region "Dolwin config API"
+#pragma region "Config API"
 
-std::wstring GetConfigString(std::string& var, std::string& path)
+TCHAR* GetConfigString(const char* var, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path.data());
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddString(var.data(), L"");
+		value = section->AddString(var, L"");
 	}
 
 	assert(value->type == Json::ValueType::String);
 
 	settingsLock.Unlock();
 
-	return std::wstring(value->value.AsString);
+	return value->value.AsString;
 }
 
-void SetConfigString(std::string& var, std::wstring& newVal, std::string& path)
+void SetConfigString(const char* var, TCHAR* newVal, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value * section = settings.root.children.back()->ByName(path.data());
+	Json::Value * section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddString(var.data(), newVal.data());
+		value = section->AddString(var, newVal);
 	}
 
 	assert(value->type == Json::ValueType::String);
 
-	value->ReplaceString(newVal.data());
+	value->ReplaceString(newVal);
 
 	SaveSettings();
 
 	settingsLock.Unlock();
 }
 
-int GetConfigInt(std::string& var, std::string& path)
+int GetConfigInt(const char* var, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path.data());
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddInt(var.data(), 0);
+		value = section->AddInt(var, 0);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -145,19 +145,19 @@ int GetConfigInt(std::string& var, std::string& path)
 	return (int)value->value.AsInt;
 }
 
-void SetConfigInt(std::string& var, int newVal, std::string& path)
+void SetConfigInt(const char* var, int newVal, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path.data());
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddInt(var.data(), newVal);
+		value = section->AddInt(var, newVal);
 	}
 
 	assert(value->type == Json::ValueType::Int);
@@ -169,19 +169,19 @@ void SetConfigInt(std::string& var, int newVal, std::string& path)
 	settingsLock.Unlock();
 }
 
-bool GetConfigBool(std::string& var, std::string& path)
+bool GetConfigBool(const char* var, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path.data());
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddBool(var.data(), false);
+		value = section->AddBool(var, false);
 	}
 
 	assert(value->type == Json::ValueType::Bool);
@@ -191,19 +191,19 @@ bool GetConfigBool(std::string& var, std::string& path)
 	return (int)value->value.AsBool;
 }
 
-void SetConfigBool(std::string& var, bool newVal, std::string& path)
+void SetConfigBool(const char* var, bool newVal, const char* path)
 {
 	settingsLock.Lock();
 
 	LoadSettings();
 
-	Json::Value* section = settings.root.children.back()->ByName(path.data());
+	Json::Value* section = settings.root.children.back()->ByName(path);
 	assert(section);
 
-	Json::Value* value = section->ByName(var.data());
+	Json::Value* value = section->ByName(var);
 	if (value == nullptr)
 	{
-		value = section->AddBool(var.data(), newVal);
+		value = section->AddBool(var, newVal);
 	}
 
 	assert(value->type == Json::ValueType::Bool);
@@ -215,4 +215,4 @@ void SetConfigBool(std::string& var, bool newVal, std::string& path)
 	settingsLock.Unlock();
 }
 
-#pragma endregion "Dolwin config API"
+#pragma endregion "Config API"

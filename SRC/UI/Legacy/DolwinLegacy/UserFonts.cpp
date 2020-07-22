@@ -9,6 +9,8 @@ static int      AnsiSelected, SjisSelected;     // current selected in combo
 static TCHAR    FontAnsiFile[MAX_PATH];         // copy of user variable
 static TCHAR    FontSjisFile[MAX_PATH];         // copy of user variables
 
+#define ANSI_FONT_SIZE   0x3000
+
 // ---------------------------------------------------------------------------
 
 static void FontSetAnsiFile(TCHAR *filename)
@@ -35,7 +37,7 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
 
     // check font type
     size_t size = UI::FileSize(file);
-    BOOL is_ansi = (size <= ANSI_SIZE);
+    BOOL is_ansi = (size <= ANSI_FONT_SIZE);
 
     if(is_ansi)
     {   // Ansi type
@@ -216,8 +218,8 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 void FontConfigure(HWND hParent)
 {
-    FontSetAnsiFile((wchar_t*)GetConfigString(USER_ANSI, USER_HW).data());
-    FontSetSjisFile((wchar_t*)GetConfigString(USER_SJIS, USER_HW).data());
+    FontSetAnsiFile(GetConfigString(USER_ANSI, USER_HW));
+    FontSetSjisFile(GetConfigString(USER_SJIS, USER_HW));
 
     DialogBox(
         GetModuleHandle(NULL),

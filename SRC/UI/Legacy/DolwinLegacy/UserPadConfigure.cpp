@@ -1,6 +1,14 @@
 // PAD plugin configure and about dialogs
 #include "pch.h"
 
+typedef struct
+{
+    int         padToConfigure;
+    PADCONF     config[4];
+} PAD;
+
+PAD pad;
+
 static const TCHAR *vkeys[256] = { // default keyboard virtual codes description (? - not used)
  _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"),  _T("Bkspace"), _T("Tab"), _T("?"), _T("?"), _T("?"), _T("Enter"), _T("?"), _T("?"), // 00-0F
  _T("Shift"), _T("Control"), _T("Alt"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), // 10-1F

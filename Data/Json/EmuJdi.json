@@ -74,14 +74,6 @@
       "help": "unload current file"
     },
 
-    "plist": {
-      "help": "list all patch data"
-    },
-
-    "dop": {
-      "help": "apply patches"
-    },
-
     "reset": {
       "help": "Reset emulation"
     },

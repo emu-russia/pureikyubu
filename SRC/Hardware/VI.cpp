@@ -141,9 +141,6 @@ void VIUpdate()
         {
             currentBeamPos = 1;
 
-            // patch memory every frame
-            JDI::Hub.ExecuteFast("dop");
-
             // draw XFB
             if (vi.xfb)
             {

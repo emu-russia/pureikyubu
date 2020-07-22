@@ -447,16 +447,10 @@ BEGIN
         MENUITEM "&Add Symbols...",             ID_ADD_MAP, GRAYED
         MENUITEM "&Save Symbols...",            ID_SAVE_MAP, GRAYED
         MENUITEM SEPARATOR
-        MENUITEM "Allow &Patches",              ID_ALLOW_PATCHES, CHECKED
-        MENUITEM "Load Patch...",               ID_LOAD_PATCH
-        MENUITEM "Add Patch...",                ID_ADD_PATCH
-        MENUITEM SEPARATOR
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
         MENUITEM "DSP Debug",                   ID_DSP_DEBUG
         MENUITEM SEPARATOR
         MENUITEM "Mount DolphinSDK as DVD...",  ID_DEVELOPMENT_MOUNTSDK
-        MENUITEM SEPARATOR
-        MENUITEM "Save Event Log...",           ID_DEVELOPMENT_SAVE_EVENTLOG
     END
     POPUP "&Options"
     BEGIN

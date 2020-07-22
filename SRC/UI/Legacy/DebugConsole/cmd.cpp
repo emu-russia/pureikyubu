@@ -50,11 +50,7 @@ Json::Value* cmd_help(std::vector<std::string>& args)
     DBReport( "    reset                - reset emulator\n");
     DBReport("\n");
 
-    Debug::Hub.Help();
-
-    //DBReport( "    pload                - load patch file (unload previous)\n");
-    //DBReport( "    padd                 - add patch file (do not unload previous)\n");
-    //DBReport( "    patch                - insert memory patch\n");
+    JDI::Hub.Help();
 
     DBReport2(DbgChannel::Header, "## Misc commands\n");
     DBReport( "    reboot               - reload last file\n");

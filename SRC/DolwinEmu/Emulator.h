@@ -2,12 +2,14 @@
 
 #pragma once
 
+#define EMU_VERSION _T("0.131")
+
 void    EMUGetHwConfig(HWConfig* config);
 
 // emulator controls API
 void    EMUCtor();
 void    EMUDtor();
-void    EMUOpen();          // [START]
+void    EMUOpen(bool run);  // [START]
 void    EMUClose();         // [STOP]
 void    EMUReset();         // Reset
 
@@ -15,7 +17,6 @@ void    EMUReset();         // Reset
 typedef struct Emulator
 {
     bool    loaded;         // file loaded
-    bool    doldebug;       // debugger active
 } Emulator;
 
 extern  Emulator emu;

@@ -127,47 +127,11 @@ uint32_t LoadELF(std::wstring& elfname);
 uint32_t LoadBIN(std::wstring& binname);
 
 /* ---------------------------------------------------------------------------  */
-/* patch file definitions (*.patch is new one, not old *.ppf)                   */
-/* you may ignore whole patch code, since it's definitely only for org :)       */
-
-/* patch file is an array of following structures.                              */
-/* number of patches in *.patch file = FileSize(file) / sizeof(Patch)           */
-
-/* size of patch data (simply we use unswapped 'dataSize' value) */
-#define PATCH_SIZE_8    0x0100
-#define PATCH_SIZE_16   0x0200
-#define PATCH_SIZE_32   0x0400
-#define PATCH_SIZE_64   0x0800
-
-/* Data in patch is in big-endian PPC format. */
-#pragma pack(push, 1)
-struct Patch
-{
-    uint32_t effectiveAddress;    // CPU effective address to apply patch there
-    uint16_t freeze;              // apply patch after every VI frame, if 1
-    uint16_t dataSize;            // size of data to write at address (in bytes)
-    uint64_t data;                // patch data (size : 1, 2, 4 or 8 bytes)
-                                  // data bytes are started right from this offset,
-                                  // not matter what size of data is applied.
-                                  // unused bytes of data can be used as small comment
-
-    // example patch : put 'blr' opcode at 0x8000B494 (for FreeLoader OSInitAudioSystem).
-    // 00000: 80 00 B4 94 00 00 00 04 4E 80 00 20 00 00 00 00
-    //        |address  |freeze|size |blr opcode |dummy data|
-};
-#pragma pack(pop)
-
-bool LoadPatch(TCHAR * patchname, bool add=false);
-void ApplyPatches(bool load=0, int32_t a=0, int32_t b=-1);
-void UnloadPatch();
-
-/* ---------------------------------------------------------------------------  */
 /* Loader                                                                       */
 
 /* Loader API */
 void LoadFile(std::wstring& filename);
 void LoadFile(std::string& filename);
-void ReloadFile();
 
 /* All loader variables are placed here */
 struct LoaderData
@@ -178,9 +142,7 @@ struct LoaderData
     std::wstring        currentFile;        // next file to be loaded or re-loaded
     std::wstring        currentFileName;    // name of loaded file (without extension)
     float               boottime;           // in seconds
-    bool                enablePatch;        // true: allow patches
     bool                dvd;
-    std::vector<Patch*> patches;            // patches 
 };
 
 extern LoaderData ldat;

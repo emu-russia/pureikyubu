@@ -1,5 +1,4 @@
 /* Supported formats are :                                      */
-/*      .patch      - patching files (new)                      */
 /*      .dol        - GAMECUBE custom executable                */
 /*      .elf        - standard executable                       */
 /*      .bin        - binary file (loaded at BINORG offset)     */
@@ -360,155 +359,9 @@ uint32_t LoadBIN(std::wstring& binname)
     file.read((char*)&mi.ram[org], fsize);
     file.close();
 
-    DBReport2(DbgChannel::Loader, "Loaded binary file at %08X (0x%08X)\n\n", org, fsize);
+    Report(Channel::Loader, "Loaded binary file at %08X (0x%08X)\n\n", org, fsize);
     org |= 0x80000000;
     return org;     // its me =:)
-}
-
-/* --------------------------------------------------------------------------- */
-/* Patch loader.                                                               */
-
-/* You may ignore whole patch code, since it's definitely only for me :) */
-
-/* Return 1, if patch loaded OK. */
-/* "add" can be used to extend current patch table. */
-bool LoadPatch(TCHAR * patchname, bool add)
-{
-    // allowed ?
-    // since "enable" flag is loaded only here, it is not important
-    // to load it in standalone patch Init routine. simply if there are
-    // no patch files loaded, there is nothing to apply.
-    ldat.enablePatch = GetConfigBool(USER_PATCH, USER_LOADER);
-    if(!ldat.enablePatch) return true;
-
-    // count patchnum
-    size_t patchNum = UI::FileSize(patchname) / sizeof(Patch);
-
-    // try to open file
-    if (!Util::FileExists(patchname))
-        return false;
-
-    /* Print notification in debugger. */
-    if(add) Report(Channel::Loader, "Added patch: %s\n", Util::TcharToString(patchname).c_str());
-    else Report(Channel::Loader, "Loaded patch: %s\n", Util::TcharToString(patchname).c_str());
-
-    /* Remove current patch table (if not adding). */
-    if(!add)
-    {
-        UnloadPatch();
-    }
-
-    // extend (or allocate new) patch table, and copy data
-    if(add)
-    {
-        if(patchNum == 0) return true;  // nothing to add
-
-        size_t oldPatchCount = ldat.patches.size();
-
-        auto buffer = Util::FileLoad(patchname);
-        auto patches = (Patch*)buffer.data();
-
-        for (int i = 0; i < patchNum; i++)
-        {
-            Patch* next = new Patch;
-            *next = patches[i];
-
-            ldat.patches.push_back(next);
-        }
-
-        free(patches);
-        ApplyPatches(true, (int32_t)oldPatchCount);
-    }
-    else
-    {
-        auto buffer = Util::FileLoad(patchname);
-        auto patches = (Patch*)buffer.data();
-
-        for (int i = 0; i < patchNum; i++)
-        {
-            Patch* next = new Patch;
-            *next = patches[i];
-
-            ldat.patches.push_back(next);
-        }
-
-        ApplyPatches(true);
-    }
-
-    return true;
-}
-
-// called after patch loading and/or every VI frame
-// [a...b] - range of patches in table to apply in (including a and b)
-void ApplyPatches(bool load, int32_t a, int32_t b)
-{
-    // allowed ?
-    if(!ldat.enablePatch) return;
-
-    // b = MAX ?
-    if(b==-1) b = (int32_t)ldat.patches.size() - 1;
-    
-    for(int32_t i=a; i<=b; i++)     // i = [a; b]
-    {
-        Patch * p = ldat.patches[i];
-        if(p->freeze || load)
-        {
-            uint32_t ea = _byteswap_ulong(p->effectiveAddress);
-            uint32_t pa = (uint32_t)-1;
-            if (Gekko::Gekko)
-            {
-                int WIMG;
-                pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
-            }
-            if(pa == Gekko::BadAddress) continue;
-
-            uint8_t * ptr = (uint8_t *)&mi.ram[pa], * data = (uint8_t *)(&(p->data));
-            switch(p->dataSize)
-            {
-                case PATCH_SIZE_8:
-                    ptr[0] = data[0];
-                    Report(Channel::Loader, "patch: (u8)[%08X] = %02X\n", ea,
-                           ptr[0] );
-                    break;
-                case PATCH_SIZE_16:
-                    ptr[0] = data[0];
-                    ptr[1] = data[1];
-                    Report(Channel::Loader, "patch: (u16)[%08X] = %02X%02X\n", ea,
-                           ptr[0], ptr[1] );
-                    break;
-                case PATCH_SIZE_32:
-                    ptr[0] = data[0];
-                    ptr[1] = data[1];
-                    ptr[2] = data[2];
-                    ptr[3] = data[3];
-                    Report(Channel::Loader, "patch: (u32)[%08X] = %02X%02X%02X%02X\n", ea,
-                           ptr[0], ptr[1], ptr[2], ptr[3] );
-                    break;
-                case PATCH_SIZE_64:
-                    ptr[0] = data[0];
-                    ptr[1] = data[1];
-                    ptr[2] = data[2];
-                    ptr[3] = data[3];
-                    ptr[4] = data[4];
-                    ptr[5] = data[5];
-                    ptr[6] = data[6];
-                    ptr[7] = data[7];
-                    Report(Channel::Loader, "patch: (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
-                           ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
-                    break;
-            }
-        }
-    }
-}
-
-void UnloadPatch()
-{
-    while (!ldat.patches.empty())
-    {
-        Patch* patch = ldat.patches.back();
-        ldat.patches.pop_back();
-        delete patch;
-    }
 }
 
 /* ---------------------------------------------------------------------------  */
@@ -573,46 +426,6 @@ static void AutoloadMap()
         MAPFinish();
         LoadMAP(mapname.data());
     }
-}
-
-static void AutoloadPatch()
-{
-    // get patch file name
-    auto patch = std::wstring();
-    TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
-
-    _tsplitpath_s(ldat.currentFile.data(),
-        drive, _countof(drive) - 1,
-        dir, _countof(dir) - 1,
-        name, _countof(name) - 1,
-        ext, _countof(ext) - 1);
-
-    // Step 1: try to load patch from Data directory
-    if (ldat.dvd)
-    {
-        patch = fmt::format(L".\\Data\\{:s}.patch", ldat.gameID);
-    }
-    else
-    {
-        patch = fmt::format(L".\\Data\\{:s}.patch", name);
-    }
-
-    bool ok = LoadPatch(patch);
-    if(ok) return;
-
-    // Step 2: try to load patch from file directory
-    if (ldat.dvd)
-    {
-        patch = fmt::format(L"{:s}{:s}{:s}.patch", drive, dir, ldat.gameID);
-    }
-    else
-    {
-        patch = fmt::format(L"{:s}{:s}{:s}.patch", drive, dir, name);
-    }
-
-    LoadPatch(patch);
-
-    // sorry, no patches for this DVD/executable
 }
 
 static bool SetGameIDAndTitle(std::wstring& filename)
@@ -771,10 +584,6 @@ static void DoLoadFile(std::wstring& filename)
         AutoloadMap();
     }
 
-    // autoload patch file. called after BootROM, to allow patch of OS lomem.
-    UnloadPatch();
-    AutoloadPatch();
-
     // show boot time
     ULONGLONG e_time = GetTickCount64();
     ldat.boottime = (float)(e_time - s_time) / 1000.0f;
@@ -804,21 +613,4 @@ void LoadFile(std::string& filename)
     *tcharPtr++ = 0;
     
     SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
-}
-
-// reload last file
-void ReloadFile()
-{
-    Report(Channel::Info,
-        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
-        "GC File Loader.\n"
-        "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
-    );
-
-    if(!ldat.currentFile.empty())
-    {
-        auto str = Util::convert<char>(ldat.currentFile);
-        Report(Channel::Loader, "Loading file: \"%s\"\n\n", str.c_str());
-        DoLoadFile(ldat.currentFile);
-    }
 }

@@ -349,18 +349,9 @@ void MemcardConfigure(int num, HWND hParent) {
     if ((num != 0) && (num != 1)) return ;
     um_num = num;
 
-    openedBefore = MCOpened;
-    if (!openedBefore)
-    {
-        HWConfig confg = { 0 };
-        EMUGetHwConfig(&confg);
-        MCOpen(&confg); // This Dialog needs that the memcard are connected if they are supposed to be
-    }
     DialogBox(
         GetModuleHandle(NULL),
         MAKEINTRESOURCE(IDD_MEMCARD_SETTINGS),
         hParent,
         MemcardSettingsProc);
-    if (!openedBefore)
-        MCClose ();
 }

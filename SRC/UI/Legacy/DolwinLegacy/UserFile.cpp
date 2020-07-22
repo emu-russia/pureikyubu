@@ -3,84 +3,6 @@
 
 namespace UI
 {
-    size_t FileSize(std::wstring_view filename)
-    {
-        if (!FileExists(filename))
-            return 0;
-
-        auto path = std::filesystem::absolute(filename);
-        return std::filesystem::file_size(path);
-    }
-
-    bool FileExists(std::wstring_view filename)
-    {
-        auto path = std::filesystem::absolute(filename);
-        return std::filesystem::exists(path);
-    }
-
-    /* Load data from a unicode file. */
-    std::vector<uint8_t> FileLoad(std::wstring_view filename)
-    {
-        auto file = std::ifstream(filename, std::ifstream::binary);
-        if (!file.is_open())
-        {
-            return std::vector<uint8_t>();
-        }
-        else
-        {
-            auto itr = std::istreambuf_iterator<char>(file);
-            return std::vector<uint8_t>(itr, std::istreambuf_iterator<char>());
-        }
-    }
-
-    /* Load data from a file. */
-    std::vector<uint8_t> FileLoad(std::string_view filename)
-    {
-        auto file = std::ifstream(filename, std::ifstream::binary);
-        if (!file.is_open())
-        {
-            return std::vector<uint8_t>();
-        }
-        else
-        {
-            return std::vector<uint8_t>(std::istreambuf_iterator<char>(file),
-                std::istreambuf_iterator<char>());
-        }
-    }
-
-    /* Save data in file. */
-    bool FileSave(std::wstring_view filename, std::vector<uint8_t>& data)
-    {
-        auto file = std::ofstream(filename, std::ofstream::binary);
-        if (!file.is_open())
-        {
-            return false;
-        }
-        else
-        {
-            auto itr = std::ostreambuf_iterator<char>(file);
-            std::copy(data.begin(), data.end(), itr);
-
-            return true;
-        }
-    }
-
-    bool FileSave(std::string_view filename, std::vector<uint8_t>& data)
-    {
-        auto file = std::ofstream(filename, std::ofstream::binary);
-        if (!file.is_open())
-        {
-            return false;
-        }
-        else
-        {
-            auto itr = std::ostreambuf_iterator<char>(file);
-            std::copy(data.begin(), data.end(), itr);
-
-            return true;
-        }
-    }
-
     /* Open the file/directory dialog. */
     std::wstring FileOpenDialog(FileType type)
     {
@@ -105,14 +27,9 @@ namespace UI
                 auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
             }
-            case FileType::Patch:
-            {
-                auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
-                break;
-            }
             case FileType::Json:
             {
-                auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
+                auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;                
             }
             default:
@@ -163,13 +80,6 @@ namespace UI
                         L"All Files (*.*)\0*.*\0";
                     break;
                 }
-                case FileType::Patch:
-                {
-                    filter =
-                        L"Patch files (*.patch)\0*.patch\0"
-                        L"All Files (*.*)\0*.*\0";
-                    break;
-                }
                 case FileType::Json:
                 {
                     filter =
@@ -217,9 +127,6 @@ namespace UI
                 case FileType::Map:
                     SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
-                case FileType::Patch:
-                    SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
-                    break;
             }
 
             chdir(prevDir.string().c_str());
@@ -256,14 +163,9 @@ namespace UI
             auto lastDir = GetConfigString(USER_LASTDIR_MAP, USER_UI);
             break;
         }
-        case FileType::Patch:
-        {
-            auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
-            break;
-        }
         case FileType::Json:
         {
-            auto lastDir = GetConfigString(USER_LASTDIR_PATCH, USER_UI);
+            auto lastDir = GetConfigString(USER_LASTDIR_ALL, USER_UI);
             break;
         }
         default:
@@ -300,13 +202,6 @@ namespace UI
             {
                 filter =
                     L"Symbolic information files (*.map)\0*.map\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            }
-            case FileType::Patch:
-            {
-                filter =
-                    L"Patch files (*.patch)\0*.patch\0"
                     L"All Files (*.*)\0*.*\0";
                 break;
             }
@@ -347,19 +242,16 @@ namespace UI
             lastDir[i + 1] = L'\0';
             switch (type)
             {
-            case FileType::All:
-            case FileType::Json:
-                SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
-                break;
-            case FileType::Dvd:
-                SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
-                break;
-            case FileType::Map:
-                SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
-                break;
-            case FileType::Patch:
-                SetConfigString(USER_LASTDIR_PATCH, lastDir, USER_UI);
-                break;
+                case FileType::All:
+                case FileType::Json:
+                    SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    break;
+                case FileType::Dvd:
+                    SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    break;
+                case FileType::Map:
+                    SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    break;
             }
 
             chdir(prevDir.string().c_str());
@@ -373,7 +265,7 @@ namespace UI
     }
 
     /* Make path to file shorter for "lvl" levels. */
-    std::wstring FileShortName(std::wstring_view filename, int lvl)
+    std::wstring FileShortName(std::wstring& filename, int lvl)
     {
         static TCHAR tempBuf[1024] = { 0 };
 

@@ -784,43 +784,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
                 return 0;
             }
-            /* Enable patches */
-            case ID_ALLOW_PATCHES:
-            {
-                if (GetConfigBool(USER_PATCH, USER_LOADER))
-                {   /* Off */
-                    CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
-                    ldat.enablePatch = false;
-                }
-                else
-                {   /* On */
-                    CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
-                    ldat.enablePatch = true;
-                }
-                SetConfigBool(USER_PATCH, ldat.enablePatch, USER_LOADER);
-                return 0;
-            }
-            /* Load patch data */
-            case ID_LOAD_PATCH:
-            {
-                if (name = UI::FileOpenDialog(UI::FileType::Patch); !name.empty())
-                {
-                    UnloadPatch();
-                    LoadPatch(name.data(), false);
-                }
-
-                return 0;
-            }
-            /* Add new patch data */
-            case ID_ADD_PATCH:
-            {
-                if (name = UI::FileOpenDialog(UI::FileType::Patch); !name.empty())
-                {
-                    LoadPatch(name.data(), true);
-                }
-
-                return 0;
-            }
             // open/close debugger
             case ID_DEBUG_CONSOLE:
             {

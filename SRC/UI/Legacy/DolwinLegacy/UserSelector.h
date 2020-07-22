@@ -80,7 +80,6 @@ public:
 
     // list of found files
     std::vector<std::unique_ptr<UserFile>> files;
-    SpinLock filesLock;
 
     std::atomic<bool> updateInProgress;
 

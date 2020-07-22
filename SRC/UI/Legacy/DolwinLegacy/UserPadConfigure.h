@@ -1,4 +1,6 @@
 
+#pragma once
+
 enum
 {
     VKEY_FOR_UP = 0,
@@ -35,4 +37,4 @@ typedef struct
     int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
 } PADCONF;
 
-void PADLoadConfig(HWND hwndDlg);
+void PADConfigure(long padnum, HWND hwndParent);
