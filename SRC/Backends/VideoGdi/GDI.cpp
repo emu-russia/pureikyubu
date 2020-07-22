@@ -1,6 +1,8 @@
 // Windows GDI for VI module, to support homedev.
 #include "pch.h"
 
+using namespace Debug;
+
 static HDC      hdcMainWnd, hdcWndComp;
 static HBITMAP  hbmDIBSection;
 static HGDIOBJ  oldSelected;
@@ -17,7 +19,7 @@ bool GDIOpen(HWND hwnd, int width, int height, RGBQUAD **gfxbuf)
 
     if(gdi_init == TRUE) return TRUE;
 
-    DBReport2(DbgChannel::VI, "Windows DIB for video interface\n");
+    Report(Channel::VI, "Windows DIB for video interface\n");
 
     bmi = (BITMAPINFO *)calloc(sizeof(BITMAPINFO) + 16*4, 1);
     if(bmi == NULL) return FALSE;

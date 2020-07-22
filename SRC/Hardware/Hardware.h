@@ -40,17 +40,14 @@ struct HWConfig
 
 };
 
-// external interfaces (previously plugins)
+// Backends
 #include "GX.h"
-#include "PAD.h"
+#include "../Backends/PadSimpleWin32/PAD.h"
+#include "../Backends/VideoGdi/GDI.h"
+
 #include "../DVD/DVD.h"
-
 #include "../DSP/DspCore.h"
-
-// hardware controls
 #include "HW.h"
-
-// GC hardware set (in register addressing order, see MI.h)
 #include "EFB.h"
 #include "AI.h"
 #include "CP.h"

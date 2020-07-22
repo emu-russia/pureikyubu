@@ -75,8 +75,8 @@ static void SICommand(int chan, uint8_t *ptr)
 
         default:
         {
-            UI::DolwinReport(
-                _T("Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n"),
+            Debug::Halt(
+                "Unknown SI command. chan:%i, cmd:%02X, out:%i, in:%i\n",
                 chan, cmd, SI_COMCSR_OUTLEN(SI_COMCSR_REG), SI_COMCSR_INLEN(SI_COMCSR_REG) );
         }
     }

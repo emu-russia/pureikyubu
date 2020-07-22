@@ -16,6 +16,7 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
 #include "../Common/String.h"
 
 #include "Hardware.h"
@@ -27,5 +28,8 @@
 
 #include "../HighLevel/TimeFormat.h"
 
-#include "AX.h"
 #include "FIFO.h"
+
+// Backends
+
+#include "../Backends/AudioDirectSound/AX.h"

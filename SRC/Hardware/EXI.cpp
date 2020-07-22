@@ -144,7 +144,7 @@ void EXIDetach(int chan)
 static void SRAMLoad(SRAM *s)
 {
     /* Load data from file in temporary buffe. */
-    auto buffer = UI::FileLoad(SRAM_FILE);
+    auto buffer = Util::FileLoad(SRAM_FILE);
     std::memset(s, 0, sizeof(SRAM));
 
     /* Copy less or equal bytes from buffer to SRAM. */
@@ -164,7 +164,7 @@ static void SRAMSave(SRAM *s)
     auto ptr = (uint8_t*)s;
 
     auto buffer = std::vector<uint8_t>(ptr, ptr + sizeof(SRAM));
-    UI::FileSave(SRAM_FILE, buffer);
+    Util::FileSave(SRAM_FILE, buffer);
 }
 
 //
@@ -198,7 +198,7 @@ static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
         std::memset(*font, 0, fontsize); /* Clear */
 
         /* Load data from file in temporary buffer. */
-        auto buffer = UI::FileLoad(filename);
+        auto buffer = Util::FileLoad(filename);
         if (!buffer.empty())
         {
             auto load_size = (buffer.size() > fontsize ? fontsize : buffer.size());
@@ -213,8 +213,7 @@ static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
     } while (false);
 
     /* Loading failed. */
-    UI::DolwinError(L"EXI Message", L"Cannot load bootrom font: %s\n", filename);
-    return;
+    Halt("EXI: Cannot load bootrom font: %s\n", filename);
 }
 
 static void FontUnload(uint8_t **font)
@@ -396,7 +395,10 @@ void MXTransfer()
                     exi.regs[0].data = 0x03000000;
                     return;
                 }
-                else UI::DolwinQuestion(_T("EXI Module"), _T("Unknown MX chip read immediate from %08X"), ofs);
+                else
+                {
+                    Halt("EXI: Unknown MX chip read immediate from %08X", ofs);
+                }
             }
             return;
         }

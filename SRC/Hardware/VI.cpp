@@ -386,7 +386,7 @@ void VIOpen(HWConfig * config)
         bool res = GDIOpen(vi.hwndMain, 640, 480, &vi.gfxbuf);
         if(!res)
         {
-            UI::DolwinReport(_T("VI cant startup GDI"));
+            Report(Channel::VI, "VI cant startup GDI!");
             vi.xfb = false;
         }
     }

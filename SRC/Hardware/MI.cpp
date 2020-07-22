@@ -424,10 +424,9 @@ void MISetTrap(
     // address must be in correct range
     if (!((addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN))))
     {
-        UI::DolwinError(
-            _T("Hardware sub-system error"),
-            _T("Trap address is out of GAMECUBE registers range.\n")
-            _T("address : %08X\n"), addr
+        Halt(
+            "MI: Trap address is out of GAMECUBE registers range.\n"
+            "address : %08X\n", addr
         );
     }
 
@@ -446,11 +445,7 @@ void MISetTrap(
 
             // should never happen
         default:
-            UI::DolwinError(
-                _T("Hardware sub-system error"),
-                _T("Unknown trap type : %u (%08X)"),
-                type, addr
-            );
+            throw "Unknown trap type";
     }
 }
 
@@ -498,7 +493,7 @@ void LoadBootrom(HWConfig* config)
         return;
     }
 
-    auto bootrom = UI::FileLoad(config->BootromFilename);
+    auto bootrom = Util::FileLoad(config->BootromFilename);
     if (bootrom.empty())
     {
         Report(Channel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);

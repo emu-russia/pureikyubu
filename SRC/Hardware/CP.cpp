@@ -15,7 +15,6 @@ static void DONE_INT()
     fifo.done_num++; vi.frames++;
     if(fifo.done_num == 1)
     {
-        SetStatusText(STATUS_ENUM::Progress, _T("First GX access"), true);
         vi.xfb = 0;     // disable VI output
     }
     if (fifo.log)

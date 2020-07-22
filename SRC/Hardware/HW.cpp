@@ -38,7 +38,6 @@ namespace Flipper
         );
 
         Mixer = new AudioMixer(config);
-        assert(Mixer);
 
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
@@ -51,17 +50,15 @@ namespace Flipper
         PIOpen(config); // interrupts, console regs
 
         DSP = new DSP::DspCore(config);
-        assert(DSP);
 
         Report(Channel::Norm, "\n");
 
-        GXOpen(mi.ram, wnd.hMainWindow);
-        PADOpen(wnd.hMainWindow);
+        GXOpen(mi.ram, config->hwndMain);
+        PADOpen();
 
         JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
         hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
-        assert(hwUpdateThread);
     }
 
     Flipper::~Flipper()

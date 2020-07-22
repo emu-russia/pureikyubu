@@ -9,7 +9,7 @@ namespace Flipper
 	static Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
-		auto data = UI::FileLoad(args[1].c_str());
+		auto data = Util::FileLoad(args[1]);
 
 		if (address >= mi.ramSize || (address + data.size()) >= mi.ramSize)
 		{
@@ -43,7 +43,7 @@ namespace Flipper
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 
-		if (!UI::FileSave(args[1].c_str(), buffer))
+		if (!Util::FileSave(args[1], buffer))
 		{
 			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}
@@ -54,7 +54,7 @@ namespace Flipper
 	static Json::Value* cmd_aramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
-		auto data = UI::FileLoad(args[1].c_str());
+		auto data = Util::FileLoad(args[1]);
 
 		if (address >= ARAMSIZE || (address + data.size()) >= ARAMSIZE)
 		{
@@ -88,7 +88,7 @@ namespace Flipper
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 
-		if (!UI::FileSave(args[1].c_str(), buffer))
+		if (!Util::FileSave(args[1], buffer))
 		{
 			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}

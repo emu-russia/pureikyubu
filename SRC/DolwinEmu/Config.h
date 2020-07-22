@@ -5,15 +5,9 @@
 constexpr auto DOLWIN_DEFAULT_SETTINGS = L"Data\\DefaultSettings.json";		// Must exist
 constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
 
-// User variables API
-TCHAR* GetConfigString(const char* var, const char* path);
-void SetConfigString(const char* var, TCHAR* newVal, const char* path);
-int GetConfigInt(const char* var, const char* path);
-void SetConfigInt(const char* var, int newVal, const char* path);
-bool GetConfigBool(const char* var, const char* path);
-void SetConfigBool(const char* var, bool newVal, const char* path);
-
 // Sections
+#define USER_UI "ui"
+#define USER_PADS "controllers"
 #define USER_LOADER		"loader"
 #define USER_CORE		"core"
 #define USER_HW			"hardware"
@@ -39,3 +33,11 @@ void SetConfigBool(const char* var, bool newVal, const char* path);
 // TODO: Add more
 #define USER_EXI_LOG "EXI_LOG"			// 1: log EXI activities
 #define USER_VI_LOG "VI_LOG"			// do debugger log output
+
+// User variables API
+TCHAR* GetConfigString(const char* var, const char* path);
+void SetConfigString(const char* var, TCHAR* newVal, const char* path);
+int GetConfigInt(const char* var, const char* path);
+void SetConfigInt(const char* var, int newVal, const char* path);
+bool GetConfigBool(const char* var, const char* path);
+void SetConfigBool(const char* var, bool newVal, const char* path);

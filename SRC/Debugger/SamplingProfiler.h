@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "../Common/Thread.h"
+
 namespace Debug
 {
 

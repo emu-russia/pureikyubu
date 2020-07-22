@@ -95,9 +95,6 @@
     <ClInclude Include="..\..\MI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\PAD.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>

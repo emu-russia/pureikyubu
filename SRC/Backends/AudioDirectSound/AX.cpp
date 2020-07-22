@@ -1,6 +1,8 @@
 // Audio mixer (DirectSound)
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Flipper
 {
 	AudioRing::AudioRing(AudioMixer* parentInst)
@@ -9,7 +11,6 @@ namespace Flipper
 		mixer = parentInst;
 
 		ringBuffer = new uint8_t[ringSize + 0x10];
-		assert(ringBuffer);
 		memset(ringBuffer, 0, ringSize);
 
 		ringWritePtr = 0;
@@ -208,7 +209,7 @@ namespace Flipper
 		hr = DSBuffer->GetCurrentPosition(&readCursor, &writeCursor);
 		assert(hr == DS_OK);
 
-		DBReport2(DbgChannel::AX, "frame: %i, readCursor: %i, writeCursor: %i\n", frameCounter, readCursor, writeCursor);
+		Report(Channel::AX, "frame: %i, readCursor: %i, writeCursor: %i\n", frameCounter, readCursor, writeCursor);
 
 		PVOID part1 = nullptr;
 		DWORD part1Size = 0;
@@ -221,8 +222,9 @@ namespace Flipper
 		auto part1_buff = std::vector<uint8_t>();
 		part1_buff.assign((uint8_t*)part1, (uint8_t*)part1 + part1Size);
 
-		UI::FileSave(filename, part1_buff);
-		DBReport2(DbgChannel::AX, "DSBuffer dumped to: %s\n", filename);
+		std::string filenameStr = filename;
+		Util::FileSave(filenameStr, part1_buff);
+		Report(Channel::AX, "DSBuffer dumped to: %s\n", filename);
 
 		hr = DSBuffer->Unlock(part1, part1Size, part2, part2Size);
 		assert(hr == DS_OK);
@@ -236,13 +238,14 @@ namespace Flipper
 		char filename[0x100] = { 0, };
 		sprintf_s(filename, sizeof(filename), "Data\\AXRing_%04i.bin", (int)frameCounter);
 
-		DBReport2(DbgChannel::AX, "frame: %i, readPtr: %i, writePtr: %i\n", frameCounter, ringReadPtr, ringWritePtr);
+		Report(Channel::AX, "frame: %i, readPtr: %i, writePtr: %i\n", frameCounter, ringReadPtr, ringWritePtr);
 		
 		auto ringBuff = std::vector<uint8_t>();
 		ringBuff.assign(ringBuffer, ringBuffer + ringSize);
 		
-		UI::FileSave(filename, ringBuff);
-		DBReport2(DbgChannel::AX, "Ring dumped to: %s\n", filename);
+		std::string filenameStr = filename;
+		Util::FileSave(filenameStr, ringBuff);
+		Report(Channel::AX, "Ring dumped to: %s\n", filename);
 	}
 
 	AudioMixer::AudioMixer(HWConfig *config)

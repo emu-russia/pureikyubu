@@ -56,7 +56,6 @@
     <ClInclude Include="..\..\IPLDescrambler.h" />
     <ClInclude Include="..\..\MC.h" />
     <ClInclude Include="..\..\MI.h" />
-    <ClInclude Include="..\..\PAD.h" />
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\PI.h" />
     <ClInclude Include="..\..\SI.h" />

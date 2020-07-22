@@ -423,7 +423,7 @@ void MCTransfer () {
         }
         break;
     default:
-        UI::DolwinError(_T("Memcard Error"), _T("Unknown memcard transfer type"));
+        Halt ("MC: Unknown memcard transfer type");
     }
 }
 
@@ -462,7 +462,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
+        Halt ("MC: Wrong card id for creating file.");
         return FALSE;
     }
 
@@ -470,14 +470,14 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     _tfopen_s(&newfile, path, _T("wb")) ;
 
 	if (newfile == NULL) {
-        UI::DolwinReport(_T("Error while trying to create memcard file."));
+        Halt( "MC: Error while trying to create memcard file.");
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            UI::DolwinReport(_T("Error while trying to write memcard file."));
+            Halt("MC: Error while trying to write memcard file.");
 
 			fclose (newfile);
             return FALSE;
@@ -602,7 +602,7 @@ bool MCConnect (int cardnum) {
     case MEMCARD_SLOTB:
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
 
-        size_t memcardSize = UI::FileSize(memcard[cardnum].filename);
+        size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
         _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
@@ -610,12 +610,12 @@ bool MCConnect (int cardnum) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
-            auto str = Util::convert<char>(UI::FileShortName(memcard[cardnum].filename));
-            UI::DolwinReport(
-                L"Couldnt open memcard (slot %c),\n"
-                L"location : %s\n\n"
-                L"Check path or file attributes.",
-                slt[cardnum], str.c_str()
+            Report(
+                Channel::MC,
+                "Couldnt open memcard (slot %c),\n"
+                "location : %s\n\n"
+                "Check path or file attributes.",
+                slt[cardnum], Util::TcharToString(memcard[cardnum].filename).c_str()
             );
             return FALSE;
         }

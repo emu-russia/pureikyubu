@@ -1,29 +1,92 @@
 // PAD API for emulator
 #include "pch.h"
 
-PAD pad;
-HWND savedHwnd;
+static PAD pad;
+
+void PADLoadConfig()
+{
+    char parm[256] = { 0 };
+
+    // Plugged or not
+    sprintf_s(parm, sizeof(parm), "PluggedIn""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].plugged = GetConfigBool(parm, USER_PADS);
+
+    //
+    // Buttons 8|
+    //
+
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_UP""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_DOWN""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_LEFT""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_RIGHT""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = GetConfigInt(parm, USER_PADS);
+
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP50""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP100""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN50""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN100""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT50""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT100""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT50""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT100""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = GetConfigInt(parm, USER_PADS);
+
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXUP""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXDOWN""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXLEFT""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXRIGHT""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = GetConfigInt(parm, USER_PADS);
+
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERL""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERR""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERZ""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = GetConfigInt(parm, USER_PADS);
+
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_A""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_B""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_X""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_Y""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = GetConfigInt(parm, USER_PADS);
+    sprintf_s(parm, sizeof(parm), "VKEY_FOR_START""_%i", pad.padToConfigure);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = GetConfigInt(parm, USER_PADS);
+}
 
 // ---------------------------------------------------------------------------
 // called when emulation started/stopped (pad controls)
 
-bool PADOpen(HWND hwnd)
+bool PADOpen()
 {
-    savedHwnd = hwnd;
-
     pad.padToConfigure = 0;
-    PADLoadConfig(NULL);
+    PADLoadConfig();
 
     pad.padToConfigure = 1;
-    PADLoadConfig(NULL);
+    PADLoadConfig();
 
     pad.padToConfigure = 2;
-    PADLoadConfig(NULL);
+    PADLoadConfig();
 
     pad.padToConfigure = 3;
-    PADLoadConfig(NULL);
+    PADLoadConfig();
 
-    return TRUE;    // ok
+    return true;    // ok
 }
 
 void PADClose()
@@ -146,5 +209,5 @@ long PADReadButtons(long padnum, PADState *state)
 // see one of PAD_MOTOR* for allowed commands.
 long PADSetRumble(long padnum, long cmd)
 {
-    return FALSE;
+    return false;
 }

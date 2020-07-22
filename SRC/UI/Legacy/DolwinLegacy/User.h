@@ -19,3 +19,4 @@
 #include "UserPadConfigure.h"
 #include "UserAbout.h"          // about dialog
 #include "DVDBanner.h"			// banner utilities for selector
+#include "UserDebugStubs.h"

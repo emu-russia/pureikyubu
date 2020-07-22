@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "../Common/Spinlock.h"
+
 namespace Debug
 {
 	class EventLog

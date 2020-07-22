@@ -156,6 +156,7 @@
     <ClCompile Include="..\..\pch.cpp" />
     <ClCompile Include="..\..\UserAbout.cpp" />
     <ClCompile Include="..\..\UserConfig.cpp" />
+    <ClCompile Include="..\..\UserDebugStubs.cpp" />
     <ClCompile Include="..\..\UserFile.cpp" />
     <ClCompile Include="..\..\UserFonts.cpp" />
     <ClCompile Include="..\..\UserJdiClient.cpp" />
@@ -174,6 +175,7 @@
     <ClInclude Include="..\..\User.h" />
     <ClInclude Include="..\..\UserAbout.h" />
     <ClInclude Include="..\..\UserConfig.h" />
+    <ClInclude Include="..\..\UserDebugStubs.h" />
     <ClInclude Include="..\..\UserFile.h" />
     <ClInclude Include="..\..\UserFonts.h" />
     <ClInclude Include="..\..\UserJdiClient.h" />
