@@ -4,7 +4,7 @@
 
 // Config from Ui
 
-#include <Windows.h>
+#include <tchar.h>
 
 struct HWConfig
 {
@@ -12,7 +12,7 @@ struct HWConfig
     size_t      ramsize;
 
     // VI
-	HWND	    hwndMain;           // TODO: Redesign the video system so that all rendering is done only in memory (algorithmically) and get rid of the platform (Windows)
+	void *	    renderTarget;
     bool        vi_log;
     bool        vi_xfb;
     int         videoEncoderFuse;       // 1 - PAL, 0 - NTSC

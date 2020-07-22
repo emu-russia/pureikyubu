@@ -5,7 +5,6 @@ DVDControl dvd;
 
 namespace DVD
 {
-
     // Mount current dvd 
     bool MountFile(TCHAR * file)
     {
@@ -43,6 +42,19 @@ namespace DVD
         while (*ansiPtr)
         {
             *tcharPtr++ = *ansiPtr++;
+        }
+        *tcharPtr++ = 0;
+        return MountFile(path);
+    }
+
+    bool MountFile(std::wstring& file)
+    {
+        TCHAR path[0x1000] = { 0, };
+        TCHAR* tcharPtr = path;
+        wchar_t* widePtr = (wchar_t*)file.c_str();
+        while (*widePtr)
+        {
+            *tcharPtr++ = *widePtr++;
         }
         *tcharPtr++ = 0;
         return MountFile(path);

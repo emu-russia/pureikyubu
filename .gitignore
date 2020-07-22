@@ -1,14 +1,15 @@
 Output
 Debug
 Release
-Dolwin.exe
-Dolwin.ilk
+*.exe
+*.ilk
 Dolwin.opensdf
-GCMCMPR.exe
-GCMCMPR.ilk
 Data/*.mci
 Dolwin.sdf
 Dolwin.v12.suo
+*.dll
+*.exp
+*.lib
 
 .vs
 x64

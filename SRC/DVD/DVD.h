@@ -14,6 +14,7 @@ namespace DVD
     // Mount current DVD image for read/seek/open file operations
     bool MountFile(TCHAR* file);
     bool MountFile(std::string& file);
+    bool MountFile(std::wstring& file);
 
     // Mount DolphinSDK directory
     bool MountSdk(const TCHAR* path);
@@ -36,7 +37,7 @@ namespace DVD
 }
 
 // other include files
-#include "filesystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
+#include "FileSystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
 #include "MountSDK.h"
 #include "Region.h"
 

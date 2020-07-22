@@ -98,22 +98,7 @@ static Json::Value* cmd_exit(std::vector<std::string>& args)
 	exit(0);
 }
 
-static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
-{
-	UNREFERENCED_PARAMETER(args);
-
-	if (!emu.loaded)
-		return nullptr;
-
-	Json::Value* output = new Json::Value();
-	output->type = Json::ValueType::Object;
-
-	output->AddString("loaded", ldat.currentFile.c_str());
-
-	return output;
-}
-
-static Json::Value* cmd_boot(std::vector<std::string>& args)
+static Json::Value* cmd_load(std::vector<std::string>& args)
 {
 	char filepath[0x1000] = { 0, };
 
@@ -128,9 +113,10 @@ static Json::Value* cmd_boot(std::vector<std::string>& args)
 	}
 	else fclose(f);
 
-	LoadFile(filepath);
+	std::string str = filepath;
+	std::wstring wstr = Util::StringToWstring(str);
 	EMUClose();
-	EMUOpen(true);
+	EMUOpen(wstr);
 
 	return nullptr;
 }
@@ -164,6 +150,21 @@ static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
 	return output;
 }
 
+static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
+{
+	UNREFERENCED_PARAMETER(args);
+
+	if (!emu.loaded)
+		return nullptr;
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Object;
+
+	output->AddString("loaded", emu.lastLoaded.c_str());
+
+	return output;
+}
+
 // Get emulator version
 static Json::Value* GetVersionInternal(std::vector<std::string>& args)
 {
@@ -184,10 +185,10 @@ void EmuReflector()
 	JDI::Hub.AddCmd("quit", cmd_exit);
 	JDI::Hub.AddCmd("x", cmd_exit);
 	JDI::Hub.AddCmd("q", cmd_exit);
-	JDI::Hub.AddCmd("GetLoaded", GetLoadedInternal);
-	JDI::Hub.AddCmd("boot", cmd_boot);
+	JDI::Hub.AddCmd("load", cmd_load);
 	JDI::Hub.AddCmd("unload", cmd_unload);
 	JDI::Hub.AddCmd("reset", cmd_reset);
 	JDI::Hub.AddCmd("IsLoaded", IsLoadedInternal);
+	JDI::Hub.AddCmd("GetLoaded", GetLoadedInternal);
 	JDI::Hub.AddCmd("GetVersion", GetVersionInternal);
 }

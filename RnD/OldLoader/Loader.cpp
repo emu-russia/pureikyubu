@@ -7,6 +7,9 @@
 
 using namespace Debug;
 
+/* All loader variables are placed here */
+LoaderData ldat;
+
 /* ---------------------------------------------------------------------------  */
 /* DOL loader                                                                   */
 
@@ -364,22 +367,22 @@ uint32_t LoadBIN(std::wstring& binname)
 /* ---------------------------------------------------------------------------  */
 /* File loader engine                                                           */
 
-static void AutoloadMap(std::wstring & filename, bool dvd, std::wstring & diskId)
+static void AutoloadMap()
 {
     // get map file name
     auto mapname = std::wstring();
     TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
-    _tsplitpath_s(filename.data(),
+    _tsplitpath_s(ldat.currentFile.data(),
         drive, _countof(drive) - 1,
         dir, _countof(dir) - 1,
         name, _countof(name) - 1,
         ext, _countof(ext) - 1);
 
     // Step 1: try to load map from Data directory
-    if (dvd)
+    if (ldat.dvd)
     {
-        mapname = fmt::format(L".\\Data\\{:s}.map", diskId);
+        mapname = fmt::format(L".\\Data\\{:s}.map", ldat.gameID);
     }
     else
     {
@@ -390,9 +393,9 @@ static void AutoloadMap(std::wstring & filename, bool dvd, std::wstring & diskId
     if (format != MAP_FORMAT::BAD) return;
  
     // Step 2: try to load map from file directory
-    if (dvd)
+    if (ldat.dvd)
     {
-        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, diskId);
+        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, ldat.gameID);
     }
     else
     {
@@ -408,9 +411,9 @@ static void AutoloadMap(std::wstring & filename, bool dvd, std::wstring & diskId
     // Step 3: make new map (find symbols)
     if(GetConfigBool(USER_MAKEMAP, USER_LOADER))
     {
-        if (dvd)
+        if (ldat.dvd)
         {
-            mapname = fmt::format(L".\\Data\\{:s}.map", diskId);
+            mapname = fmt::format(L".\\Data\\{:s}.map", ldat.gameID);
         }
         else
         {
@@ -425,37 +428,72 @@ static void AutoloadMap(std::wstring & filename, bool dvd, std::wstring & diskId
     }
 }
 
-/* Get DiskID. */
-void GetDiskId(std::wstring& diskId)
+static bool SetGameIDAndTitle(std::wstring& filename)
 {
+    /* Load DVD banner. */
+    auto bnr_ptr = DVDLoadBanner(filename);
+    auto bnr = (DVDBannerPAL*)bnr_ptr.get();
+
+    /* Get DiskID. */
     char diskID[8] = { 0 };
     TCHAR diskIdTchar[8] = { 0 };
     DVD::Seek(0);
     DVD::Read(diskID, 4);
-
+    
     diskIdTchar[0] = diskID[0];
     diskIdTchar[1] = diskID[1];
     diskIdTchar[2] = diskID[2];
     diskIdTchar[3] = diskID[3];
     diskIdTchar[4] = 0;
 
-    diskId = fmt::sprintf(L"%.4s", diskIdTchar);
+    auto title = std::string_view((char*)bnr->comments[0].longTitle);
+    ldat.currentFileName = Util::convert<wchar_t, char>(title);
+
+    /* Convert SJIS Title to Unicode */
+
+    if (DVD::RegionById(diskID) == DVD::Region::JPN)
+    {
+        size_t size, chars;
+        uint16_t* widePtr = SjisToUnicode(ldat.currentFileName.data(), &size, &chars);
+        uint16_t* unicodePtr;
+
+        if (widePtr)
+        {
+            auto tcharPtr = ldat.currentFileName.data();
+            unicodePtr = widePtr;
+
+            while (*unicodePtr)
+            {
+                *tcharPtr++ = *unicodePtr++;
+            }
+            *tcharPtr++ = 0;
+
+            free(widePtr);
+        }
+    }
+
+    /* Set GameID. */
+    ldat.gameID = fmt::sprintf(L"%.4s%02X", diskIdTchar, DVDBannerChecksum(bnr));
+    return true;
 }
 
 /* Load any Dolwin-supported file */
-void LoadFile(std::wstring& filename)
+static void DoLoadFile(std::wstring& filename)
 {
     uint32_t entryPoint = 0;
     bool bootrom = false;
-    bool dvd = false;
-    std::wstring diskId;
     ULONGLONG s_time = GetTickCount64();
+
+    /* Loading progress */
+    auto statusText = fmt::format(L"Loading {:s}", filename);
+    SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // load file
     if (filename == L"Bootrom")
     {
         entryPoint = BOOTROM_START_ADDRESS + 0x100;
-        dvd = false;
+        ldat.gameID[0] = 0;
+        ldat.dvd = false;
         bootrom = true;
     }
     else
@@ -465,34 +503,70 @@ void LoadFile(std::wstring& filename)
         if (!_tcsicmp(extension, _T(".dol")))
         {
             entryPoint = LoadDOL(filename);
-            dvd = false;
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
         }
         else if (!_tcsicmp(extension, _T(".elf")))
         {
             entryPoint = LoadELF(filename);
-            dvd = false;
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
         }
         else if (!_tcsicmp(extension, _T(".bin")))
         {
             entryPoint = LoadBIN(filename);
-            dvd = false;
+            ldat.gameID[0] = 0;
+            ldat.dvd = false;
         }
         else if (!_tcsicmp(extension, _T(".iso")))
         {
             DVD::MountFile(filename);
-            GetDiskId(diskId);
+            ldat.dvd = SetGameIDAndTitle(filename);
         }
         else if (!_tcsicmp(extension, _T(".gcm")))
         {
             DVD::MountFile(filename);
-            GetDiskId(diskId);
+            ldat.dvd = SetGameIDAndTitle(filename);
         }
     }
 
     /* File load success? */
-    if(entryPoint == 0 && !dvd)
+    if(entryPoint == 0 && !ldat.dvd)
     {
-        throw "Cannot load file!";
+        UI::DolwinError( _T("Cannot load file!"),
+                      _T("\'%s\'\n"),
+                      filename);
+    }
+    else
+    {
+        TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+
+        _tsplitpath_s(filename.data(),
+            drive, _countof(drive) - 1,
+            dir, _countof(dir) - 1,
+            name, _countof(name) - 1,
+            ext, _countof(ext) - 1);
+
+        _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
+        
+        // Set title to loaded executables
+        if (!ldat.dvd)
+        {
+            ldat.currentFileName = name;
+        }
+        else
+        {
+            // Title set before (SetGameIDAndTitle)
+        }
+
+        if (!bootrom)
+        {
+            // add new recent entry
+            AddRecentFile(filename);
+
+            // add new path to selector
+            AddSelectorPath(fullPath);      // all checks are there
+        }
     }
 
     // simulate bootrom
@@ -500,33 +574,43 @@ void LoadFile(std::wstring& filename)
     {
         HWConfig* config = new HWConfig;
         EMUGetHwConfig(config);
-        BootROM(dvd, false, config->consoleVer);
+        BootROM(ldat.dvd, false, config->consoleVer);
         Sleep(10);
     }
 
     // autoload map file
     if (!bootrom)
     {
-        AutoloadMap(filename, dvd, diskId);
+        AutoloadMap();
     }
+
+    // show boot time
+    ULONGLONG e_time = GetTickCount64();
+    ldat.boottime = (float)(e_time - s_time) / 1000.0f;
+    statusText = fmt::format(L"Boot time {:.2f} sec", ldat.boottime);
+    
+    SetStatusText(STATUS_ENUM::Progress, statusText);
 
     // set entrypoint (for DVD, PC will set in apploader)
-    if (!dvd)
+    if(!ldat.dvd) Gekko::Gekko->regs.pc = entryPoint;
+}
+
+// set next file to load
+void LoadFile(std::wstring& filename)
+{
+    ldat.currentFile = filename;
+    SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
+}
+
+void LoadFile(std::string& filename)
+{
+    char* ansiPtr = (char*)filename.data();
+    TCHAR* tcharPtr = ldat.currentFile.data();
+    while (*ansiPtr)
     {
-        Gekko::Gekko->regs.pc = entryPoint;
+        *tcharPtr++ = *ansiPtr++;
     }
-
-    // There is Fuse on the motherboard, which determines the video encoder mode. 
-    // Some games test it in VIConfigure and try to set the mode according to Fuse. But the program code does not allow this (example - Zelda PAL Version)
-    // https://www.ifixit.com/Guide/Nintendo+GameCube+Regional+Modification+Selector+Switch/35482
-    if (dvd)
-    {
-        char id[4] = { 0 };
-
-        DVD::Seek(0);
-        DVD::Read(id, 4);
-
-        DVD::Region region = DVD::RegionById(id);
-        VISetEncoderFuse(DVD::IsNtsc(region) ? 0 : 1);
-    }
+    *tcharPtr++ = 0;
+    
+    SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }

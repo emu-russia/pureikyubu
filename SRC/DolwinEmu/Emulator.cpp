@@ -6,8 +6,17 @@ Emulator emu;
 
 void EMUGetHwConfig(HWConfig * config)
 {
+    Json::Value* renderTarget = JDI::Hub.ExecuteFast("GetRenderTarget");
+
+    if (renderTarget == nullptr)
+    {
+        throw "GetRenderTarget failed!";
+    }
+
+    config->renderTarget = (void *)renderTarget->value.AsInt;
+    delete renderTarget;
+
     config->ramsize = RAMSIZE;
-    config->hwndMain = wnd.hMainWindow;
 
     config->vi_log = GetConfigBool(USER_VI_LOG, USER_HW);
     config->vi_xfb = GetConfigBool(USER_VI_XFB, USER_HW);
@@ -35,13 +44,12 @@ void EMUGetHwConfig(HWConfig * config)
 }
 
 // this function calls every time, after user loading new file
-void EMUOpen(bool run)
+void EMUOpen(std::wstring& filename)
 {
     if (emu.loaded)
         return;
 
     Debug::Log = new Debug::EventLog();
-    assert(Debug::Log);
 
     // open other sub-systems
     Gekko::Gekko->Reset();
@@ -49,36 +57,13 @@ void EMUOpen(bool run)
     memset(hwconfig, 0, sizeof(HWConfig));
     EMUGetHwConfig(hwconfig);
     Flipper::HW = new Flipper::Flipper(hwconfig);
-    assert(Flipper::HW);
     delete hwconfig;
 
-    ReloadFile();   // PC will be set here
+    LoadFile(filename);   // PC will be set here
     HLEOpen();
 
-    // There is Fuse on the motherboard, which determines the video encoder mode. 
-    // Some games test it in VIConfigure and try to set the mode according to Fuse. But the program code does not allow this (example - Zelda PAL Version)
-    // https://www.ifixit.com/Guide/Nintendo+GameCube+Regional+Modification+Selector+Switch/35482
-    if (ldat.dvd)
-    {
-        char id[4] = { 0 };
-
-        id[0] = (char)ldat.gameID[0];
-        id[1] = (char)ldat.gameID[1];
-        id[2] = (char)ldat.gameID[2];
-        id[3] = (char)ldat.gameID[3];
-
-        DVD::Region region = DVD::RegionById(id);
-        VISetEncoderFuse(DVD::IsNtsc(region) ? 0 : 1);
-    }
-
-    OnMainWindowOpened();
-
     emu.loaded = true;
-
-    if (run)
-    {
-        Gekko::Gekko->Run();
-    }
+    emu.lastLoaded = filename;
 }
 
 // this function calls every time, after user stops emulation
@@ -94,13 +79,11 @@ void EMUClose()
     delete Flipper::HW;
     Flipper::HW = nullptr;
 
-    // take care about user interface
-    OnMainWindowClosed();
-
     delete Debug::Log;
     Debug::Log = nullptr;
 
     emu.loaded = false;
+    emu.lastLoaded = L"";
 }
 
 // reset emulator
@@ -108,13 +91,16 @@ void EMUReset()
 {
     bool runningBefore = Gekko::Gekko->IsRunning();
     EMUClose();
-    EMUOpen(runningBefore);
+    EMUOpen(emu.lastLoaded);
+    if (runningBefore)
+    {
+        EMURun();
+    }
 }
 
 void EMUCtor()
 {
     Gekko::Gekko = new Gekko::GekkoCore;
-    assert(Gekko::Gekko);
     JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
@@ -129,4 +115,32 @@ void EMUDtor()
     delete Gekko::Gekko;
     Gekko::Gekko = nullptr;
     HLEShutdown();
+}
+
+/// <summary>
+/// Run Gekko
+/// </summary>
+void EMURun()
+{
+    if (!emu.loaded)
+        return;
+
+    if (!Gekko::Gekko->IsRunning())
+    {
+        Gekko::Gekko->Run();
+    }
+}
+
+/// <summary>
+/// Stop Gekko
+/// </summary>
+void EMUStop()
+{
+    if (!emu.loaded)
+        return;
+
+    if (Gekko::Gekko->IsRunning())
+    {
+        Gekko::Gekko->Suspend();
+    }
 }

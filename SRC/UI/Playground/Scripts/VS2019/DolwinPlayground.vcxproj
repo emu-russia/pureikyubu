@@ -24,6 +24,11 @@
   <ItemGroup>
     <None Include="..\..\Readme.md" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\DolwinEmu\Scripts\VS2019\DolwinEmuForPlayground.vcxproj">
+      <Project>{6be86dce-ec88-4113-9e7b-22b6ef50fdfc}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -78,22 +83,22 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <OutDir>$(SolutionDir)</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">

@@ -306,7 +306,7 @@ namespace JDI
 	}
 
 	// Quickly execute a command without parameters.
-	Json::Value* JdiHub::ExecuteFast(char* command)
+	Json::Value* JdiHub::ExecuteFast(const char* command)
 	{
 		reflexMapLock.Lock();
 		auto it = reflexMap.find(command);
