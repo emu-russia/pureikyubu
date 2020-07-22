@@ -858,22 +858,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 return 0;
             }
 
-            // Save EventLog
-            case ID_DEVELOPMENT_SAVE_EVENTLOG:
-            {
-                if (Debug::Log != nullptr)
-                {
-                    if (name = UI::FileSaveDialog(UI::FileType::Json); !name.empty())
-                    {
-                        std::string text;
-                        Debug::Log->ToString(text);
-                        std::vector<uint8_t> buffer(text.begin(), text.end());
-                        UI::FileSave(name, buffer);
-                    }
-                }
-                return 0;
-            }
-
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
             // options dialogs
 
