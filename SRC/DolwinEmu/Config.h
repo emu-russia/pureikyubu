@@ -1,18 +1,17 @@
 // Json-based config
 
 #pragma once
-#include <string>
 
 constexpr auto DOLWIN_DEFAULT_SETTINGS = L"Data\\DefaultSettings.json";		// Must exist
 constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
 
 // User variables API
-std::wstring_view GetConfigString(std::string_view var, std::string_view path);
-void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path);
-int GetConfigInt(std::string_view var, std::string_view path);
-void SetConfigInt(std::string_view var, int newVal, std::string_view path);
-bool GetConfigBool(std::string_view var, std::string_view path);
-void SetConfigBool(std::string_view var, bool newVal, std::string_view path);
+std::wstring GetConfigString(std::string& var, std::string& path);
+void SetConfigString(std::string& var, std::wstring& newVal, std::string& path);
+int GetConfigInt(std::string& var, std::string& path);
+void SetConfigInt(std::string& var, int newVal, std::string& path);
+bool GetConfigBool(std::string& var, std::string& path);
+void SetConfigBool(std::string& var, bool newVal, std::string& path);
 
 // Sections
 constexpr auto USER_UI			= "ui";

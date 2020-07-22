@@ -22,7 +22,7 @@ namespace Util
         return FileSize(wstr);
     }
 
-    size_t FileSize(TCHAR* filename)
+    size_t FileSize(const TCHAR* filename)
     {
         std::wstring wstr = TcharToWstring(filename);
         return FileSize(wstr);
@@ -44,7 +44,7 @@ namespace Util
         return FileExists(wstr);
     }
 
-    bool FileExists(TCHAR* filename)
+    bool FileExists(const TCHAR* filename)
     {
         std::wstring wstr = TcharToWstring(filename);
         return FileExists(wstr);
@@ -76,7 +76,7 @@ namespace Util
         return FileLoad(wstr);
     }
 
-    std::vector<uint8_t> FileLoad(TCHAR* filename)
+    std::vector<uint8_t> FileLoad(const TCHAR* filename)
     {
         std::wstring wstr = TcharToWstring(filename);
         return FileLoad(wstr);
@@ -101,7 +101,7 @@ namespace Util
         return FileSave(wstr, data);
     }
 
-    bool FileSave(TCHAR* filename, std::vector<uint8_t>& data)
+    bool FileSave(const TCHAR* filename, std::vector<uint8_t>& data)
     {
         std::wstring wstr = TcharToWstring(filename);
         return FileSave(wstr, data);

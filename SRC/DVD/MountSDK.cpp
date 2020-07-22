@@ -15,10 +15,10 @@ namespace DVD
 		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
 
 		/* Load dvddata structure. */
-		auto dvdDataInfoText = UI::FileLoad(DvdDataJson);
+		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
-			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", JDI::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR *)DvdDataJson).c_str());
 			return;
 		}
 
@@ -28,7 +28,7 @@ namespace DVD
 		}
 		catch (...)
 		{
-			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", JDI::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR*)DvdDataJson).c_str());
 			return;
 		}
 
@@ -93,7 +93,7 @@ namespace DVD
 
 	void MountDolphinSdk::MapFile(TCHAR* path, uint32_t offset)
 	{
-		size_t size = UI::FileSize(path);
+		size_t size = Util::FileSize(path);
 		std::tuple<TCHAR*, uint32_t, size_t> entry(path, offset, size);
 		fileMapping.push_back(entry);
 	}
@@ -309,7 +309,7 @@ namespace DVD
 
 			if (!skipMeta)
 			{
-				std::string path = JDI::Hub.TcharToString(entry->value.AsString);
+				std::string path = Util::TcharToString(entry->value.AsString);
 
 				size_t nameOffset = NameTableData.size();
 				AddString(path);

@@ -9,6 +9,8 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
+#include "../Common/String.h"
 
 #include "../GekkoCore/Gekko.h"				// For TimeBase
 #include "../Hardware/Hardware.h"

@@ -7,7 +7,7 @@ namespace DVD
 {
 
     // Mount current dvd 
-    bool MountFile(std::wstring_view file)
+    bool MountFile(TCHAR * file)
     {
         // try to open file
         if (!Util::FileExists(file))
@@ -18,7 +18,7 @@ namespace DVD
         Unmount();
 
         // select current DVD
-        bool res = GCMMountFile(file.data());
+        bool res = GCMMountFile(file);
         if (!res)
             return res;
 
@@ -35,7 +35,7 @@ namespace DVD
         return true;
     }
 
-    bool MountFile(std::string file)
+    bool MountFile(std::string& file)
     {
         TCHAR path[0x1000] = { 0, };
         TCHAR* tcharPtr = path;
@@ -152,7 +152,7 @@ namespace DVD
         return true;
     }
 
-    long OpenFile(std::string_view dvdfile)
+    long OpenFile(std::string& dvdfile)
     {
         if (dvd.mountedImage || dvd.mountedSdk)
         {

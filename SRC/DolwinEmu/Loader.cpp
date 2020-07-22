@@ -6,6 +6,8 @@
 /*      .gcm        - game master data (GC DVD images)          */
 #include "pch.h"
 
+using namespace Debug;
+
 /* All loader variables are placed here */
 LoaderData ldat;
 
@@ -41,7 +43,7 @@ uint32_t DOLSize(DolHeader *dol)
 /* Return DOL entrypoint, or 0 if cannot load                           */
 /* we dont need to translate address, because DOL loading goes          */
 /* under control of DolphinOS, so just use simple translation mask.     */
-uint32_t LoadDOL(std::wstring_view dolname)
+uint32_t LoadDOL(std::wstring& dolname)
 {
     DolHeader   dh;
 
@@ -56,7 +58,7 @@ uint32_t LoadDOL(std::wstring_view dolname)
     dol.read((char*)&dh, sizeof(DolHeader));
     Gekko::GekkoCore::SwapArea((uint32_t*)&dh, sizeof(DolHeader));
 
-    DBReport2(DbgChannel::Loader, "Loading DOL %s (%i b).\n", dolname.data(), DOLSize(&dh));
+    Report(Channel::Loader, "Loading DOL %s (%i b).\n", dolname.data(), DOLSize(&dh));
 
     /* Load all text (code) sections. */
     for(int i = 0; i < DOL_NUM_TEXT; i++)
@@ -68,7 +70,7 @@ uint32_t LoadDOL(std::wstring_view dolname)
             dol.seekg(dh.textOffset[i]);
             dol.read(addr, dh.textSize[i]);
 
-            DBReport2(DbgChannel::Loader,
+            Report(Channel::Loader,
                 "   text section %08X->%08X, size %i b\n",
                 dh.textOffset[i],
                 dh.textAddress[i], dh.textSize[i]
@@ -86,7 +88,7 @@ uint32_t LoadDOL(std::wstring_view dolname)
             dol.seekg(dh.dataOffset[i]);
             dol.read(addr, dh.dataSize[i]);
 
-            DBReport2(DbgChannel::Loader,
+            Report(Channel::Loader,
                 "   data section %08X->%08X, size %i b\n", 
                 dh.dataOffset[i],
                 dh.dataAddress[i], dh.dataSize[i]
@@ -105,7 +107,7 @@ uint32_t LoadDOL(std::wstring_view dolname)
 
     // DO NOT CLEAR BSS !
 
-    DBReport2(DbgChannel::Loader, "   DOL entrypoint %08X\n\n", dh.entryPoint);
+    Report(Channel::Loader, "   DOL entrypoint %08X\n\n", dh.entryPoint);
     dol.close();
     return dh.entryPoint;
 }
@@ -119,8 +121,8 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
     // swap DOL header
     Gekko::GekkoCore::SwapArea((uint32_t *)dol, sizeof(DolHeader));
 
-    DBReport2(DbgChannel::Loader, "Loading DOL from %08X (%i b).\n",
-              ofs, DOLSize(dol) );
+    Report(Channel::Loader, "Loading DOL from %08X (%i b).\n",
+           ofs, DOLSize(dol) );
 
     // load all text (code) sections
     for(i=0; i<DOL_NUM_TEXT; i++)
@@ -130,7 +132,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
             uint8_t*addr = &mi.ram[dol->textAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->textOffset[i]), dol->textSize[i]);
 
-            DBReport2(DbgChannel::Loader,
+            Report(Channel::Loader,
                 "   text section %08X->%08X, size %i b\n",
                 ofs + dol->textOffset[i],
                 dol->textAddress[i], dol->textSize[i]
@@ -146,7 +148,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
             uint8_t *addr = &mi.ram[dol->dataAddress[i] & RAMMASK];
             memcpy(addr, ADDPTR(dol, dol->dataOffset[i]), dol->dataSize[i]);
 
-            DBReport2(DbgChannel::Loader,
+            Report(Channel::Loader,
                 "   data section %08X->%08X, size %i b\n", 
                 ofs + dol->dataOffset[i],
                 dol->dataAddress[i], dol->dataSize[i]
@@ -156,7 +158,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 
     // DO NOT CLEAR BSS !
 
-    DBReport2(DbgChannel::Loader, "   DOL entrypoint %08X\n\n", dol->entryPoint);
+    Report(Channel::Loader, "   DOL entrypoint %08X\n\n", dol->entryPoint);
 
     return dol->entryPoint;
 }
@@ -251,7 +253,7 @@ static void Elf_SwapInit(int is_little)
 // return ELF entrypoint, or 0 if cannot load
 // we dont need to translate address, because DOL loading goes
 // under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadELF(std::wstring_view elfname)
+uint32_t LoadELF(std::wstring& elfname)
 {
     unsigned long elf_entrypoint;
     ElfEhdr     hdr;
@@ -326,7 +328,7 @@ uint32_t LoadELF(std::wstring_view elfname)
 
 // return BINORG offset, or 0 if cannot load.
 // use physical addressing!
-uint32_t LoadBIN(std::wstring_view binname)
+uint32_t LoadBIN(std::wstring& binname)
 {
     uint32_t org = GetConfigInt(USER_BINORG, USER_LOADER);
 
@@ -383,12 +385,12 @@ bool LoadPatch(TCHAR * patchname, bool add)
     size_t patchNum = UI::FileSize(patchname) / sizeof(Patch);
 
     // try to open file
-    if (!UI::FileExists(patchname))
+    if (!Util::FileExists(patchname))
         return false;
 
     /* Print notification in debugger. */
-    if(add) DBReport2(DbgChannel::Loader, "Added patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
-    else DBReport2(DbgChannel::Loader, "Loaded patch: %s\n", Debug::Hub.TcharToString(patchname).c_str());
+    if(add) Report(Channel::Loader, "Added patch: %s\n", Util::TcharToString(patchname).c_str());
+    else Report(Channel::Loader, "Loaded patch: %s\n", Util::TcharToString(patchname).c_str());
 
     /* Remove current patch table (if not adding). */
     if(!add)
@@ -403,7 +405,7 @@ bool LoadPatch(TCHAR * patchname, bool add)
 
         size_t oldPatchCount = ldat.patches.size();
 
-        auto buffer = UI::FileLoad(patchname);
+        auto buffer = Util::FileLoad(patchname);
         auto patches = (Patch*)buffer.data();
 
         for (int i = 0; i < patchNum; i++)
@@ -419,7 +421,7 @@ bool LoadPatch(TCHAR * patchname, bool add)
     }
     else
     {
-        auto buffer = UI::FileLoad(patchname);
+        auto buffer = Util::FileLoad(patchname);
         auto patches = (Patch*)buffer.data();
 
         for (int i = 0; i < patchNum; i++)
@@ -465,22 +467,22 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
             {
                 case PATCH_SIZE_8:
                     ptr[0] = data[0];
-                    DBReport2(DbgChannel::Loader, "patch: (u8)[%08X] = %02X\n", ea,
-                              ptr[0] );
+                    Report(Channel::Loader, "patch: (u8)[%08X] = %02X\n", ea,
+                           ptr[0] );
                     break;
                 case PATCH_SIZE_16:
                     ptr[0] = data[0];
                     ptr[1] = data[1];
-                    DBReport2(DbgChannel::Loader, "patch: (u16)[%08X] = %02X%02X\n", ea,
-                              ptr[0], ptr[1] );
+                    Report(Channel::Loader, "patch: (u16)[%08X] = %02X%02X\n", ea,
+                           ptr[0], ptr[1] );
                     break;
                 case PATCH_SIZE_32:
                     ptr[0] = data[0];
                     ptr[1] = data[1];
                     ptr[2] = data[2];
                     ptr[3] = data[3];
-                    DBReport2(DbgChannel::Loader, "patch: (u32)[%08X] = %02X%02X%02X%02X\n", ea,
-                              ptr[0], ptr[1], ptr[2], ptr[3] );
+                    Report(Channel::Loader, "patch: (u32)[%08X] = %02X%02X%02X%02X\n", ea,
+                           ptr[0], ptr[1], ptr[2], ptr[3] );
                     break;
                 case PATCH_SIZE_64:
                     ptr[0] = data[0];
@@ -491,8 +493,8 @@ void ApplyPatches(bool load, int32_t a, int32_t b)
                     ptr[5] = data[5];
                     ptr[6] = data[6];
                     ptr[7] = data[7];
-                    DBReport2(DbgChannel::Loader, "patch: (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
-                              ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
+                    Report(Channel::Loader, "patch: (u64)[%08X] = %02X%02X%02X%02X%02X%02X%02X%02X\n", ea,
+                           ptr[0], ptr[1], ptr[2], ptr[3], ptr[4], ptr[5], ptr[6], ptr[7] );
                     break;
             }
         }
@@ -551,7 +553,7 @@ static void AutoloadMap()
     if (format != MAP_FORMAT::BAD) return;
 
     // sorry, no maps for this DVD/executable
-    DBReport2(DbgChannel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
+    Report(Channel::Loader, "WARNING: MAP file doesnt exist, HLE could be impossible\n\n");
 
     // Step 3: make new map (find symbols)
     if(GetConfigBool(USER_MAKEMAP, USER_LOADER))
@@ -565,8 +567,7 @@ static void AutoloadMap()
             mapname = fmt::format(L".\\Data\\{:s}.map", name);
         }
         
-        auto str = Util::convert<char>(mapname);
-        DBReport2(DbgChannel::Loader, "Making new MAP file: %s\n\n", str.c_str());
+        Report(Channel::Loader, "Making new MAP file: %s\n\n", Util::WstringToString(mapname).c_str());
         MAPInit(mapname.data());
         MAPAddRange(0x80000000, 0x80000000 | RAMSIZE);  // user can wait for once :O)
         MAPFinish();
@@ -596,7 +597,7 @@ static void AutoloadPatch()
         patch = fmt::format(L".\\Data\\{:s}.patch", name);
     }
 
-    bool ok = LoadPatch(patch.data());
+    bool ok = LoadPatch(patch);
     if(ok) return;
 
     // Step 2: try to load patch from file directory
@@ -609,12 +610,12 @@ static void AutoloadPatch()
         patch = fmt::format(L"{:s}{:s}{:s}.patch", drive, dir, name);
     }
 
-    LoadPatch(patch.data());
+    LoadPatch(patch);
 
     // sorry, no patches for this DVD/executable
 }
 
-static bool SetGameIDAndTitle(std::wstring_view filename)
+static bool SetGameIDAndTitle(std::wstring& filename)
 {
     /* Load DVD banner. */
     auto bnr_ptr = DVDLoadBanner(filename);
@@ -664,7 +665,7 @@ static bool SetGameIDAndTitle(std::wstring_view filename)
 }
 
 /* Load any Dolwin-supported file */
-static void DoLoadFile(std::wstring_view filename)
+static void DoLoadFile(std::wstring& filename)
 {
     uint32_t entryPoint = 0;
     bool bootrom = false;
@@ -786,13 +787,13 @@ static void DoLoadFile(std::wstring_view filename)
 }
 
 // set next file to load
-void LoadFile(std::wstring_view filename)
+void LoadFile(std::wstring& filename)
 {
     ldat.currentFile = filename;
     SetConfigString(USER_LASTFILE, ldat.currentFile, USER_UI);
 }
 
-void LoadFile(std::string_view filename)
+void LoadFile(std::string& filename)
 {
     char* ansiPtr = (char*)filename.data();
     TCHAR* tcharPtr = ldat.currentFile.data();
@@ -808,7 +809,7 @@ void LoadFile(std::string_view filename)
 // reload last file
 void ReloadFile()
 {
-    DBReport2(DbgChannel::Info,
+    Report(Channel::Info,
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
         "GC File Loader.\n"
         "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
@@ -817,7 +818,7 @@ void ReloadFile()
     if(!ldat.currentFile.empty())
     {
         auto str = Util::convert<char>(ldat.currentFile);
-        DBReport2(DbgChannel::Loader, "Loading file: \"%s\"\n\n", str.c_str());
+        Report(Channel::Loader, "Loading file: \"%s\"\n\n", str.c_str());
         DoLoadFile(ldat.currentFile);
     }
 }

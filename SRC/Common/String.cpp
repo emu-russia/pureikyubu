@@ -24,11 +24,11 @@ namespace Util
 		return wstr;
 	}
 
-	std::string TcharToString(TCHAR* tstr)
+	std::string TcharToString(const TCHAR* tstr)
 	{
 		char ansiText[0x200] = { 0, };
 		char* ansiPtr = ansiText;
-		TCHAR* tcharPtr = tstr;
+		TCHAR* tcharPtr = (TCHAR *)tstr;
 		while (*tcharPtr)
 		{
 			*ansiPtr++ = (char)*tcharPtr++;
@@ -37,11 +37,11 @@ namespace Util
 		return std::string(ansiText);
 	}
 
-	std::wstring TcharToWstring(TCHAR* tstr)
+	std::wstring TcharToWstring(const TCHAR* tstr)
 	{
 		wchar_t wideText[0x200] = { 0, };
 		wchar_t* widePtr = wideText;
-		TCHAR* tcharPtr = tstr;
+		TCHAR* tcharPtr = (TCHAR*)tstr;
 		while (*tcharPtr)
 		{
 			*widePtr++ = (wchar_t)*tcharPtr++;

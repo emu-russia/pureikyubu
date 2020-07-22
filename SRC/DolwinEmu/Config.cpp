@@ -26,43 +26,27 @@ static void LoadSettings()
 		return;
 
 	// Load default settings
-	if (!UI::FileExists(DOLWIN_DEFAULT_SETTINGS))
+	if (!Util::FileExists(DOLWIN_DEFAULT_SETTINGS))
 	{
 		throw "Default settings missing!";
 	}
 
-	auto jsonText = UI::FileLoad(DOLWIN_DEFAULT_SETTINGS);
+	auto jsonText = Util::FileLoad(DOLWIN_DEFAULT_SETTINGS);
 	assert(!jsonText.empty());
 
-	try
-	{
-		defaultSettings.Deserialize(jsonText.data(), jsonText.size());
-	}
-	catch (...)
-	{
-		UI::DolwinError(_T("Critical Error"), _T("Default settings cannot be loaded!"));
-		return;
-	}
+	defaultSettings.Deserialize(jsonText.data(), jsonText.size());
 
 	/* Merge with current settings. */
 	settings.Clone(&defaultSettings);
 
-	if (UI::FileExists(DOLWIN_SETTINGS))
+	if (Util::FileExists(DOLWIN_SETTINGS))
 	{
-		jsonText = UI::FileLoad(DOLWIN_SETTINGS);
+		jsonText = Util::FileLoad(DOLWIN_SETTINGS);
 		assert(!jsonText.empty());
 
 		Json currentSettings;
 
-		try
-		{
-			currentSettings.Deserialize(jsonText.data(), jsonText.size());
-		}
-		catch (...)
-		{
-			UI::DolwinReport(_T("Current settings cannot be deserialized. Check json syntax. Falling back to defaults."));
-			return;
-		}
+		currentSettings.Deserialize(jsonText.data(), jsonText.size());
 
 		settings.Merge(&currentSettings);
 	}
@@ -78,39 +62,22 @@ static void SaveSettings()
 	// Calculate Json size
 	if (!SettingsLoaded)
 	{
-		UI::DolwinError(L"Critical Error", L"Settings must be loaded first!");
 		return;
 	}
 
-	try
-	{
-		settings.GetSerializedTextSize(bogus, -1, textSize);
-	}
-	catch (...)
-	{
-		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
-		return;
-	}
+	settings.GetSerializedTextSize(bogus, -1, textSize);
 
 	/* Serialize and save current settings. */
 	std::vector<uint8_t> text(2 * textSize, 0);
-	try
-	{
-		settings.Serialize(text.data(), 2 * textSize, textSize);
-	}
-	catch (...)
-	{
-		UI::DolwinError(L"Critical Error", L"Settings cannot be saved!");
-		return;
-	}
+	settings.Serialize(text.data(), 2 * textSize, textSize);
 
-	UI::FileSave(DOLWIN_SETTINGS, text);
+	Util::FileSave(DOLWIN_SETTINGS, text);
 }
 
 
 #pragma region "Dolwin config API"
 
-std::wstring_view GetConfigString(std::string_view var, std::string_view path)
+std::wstring GetConfigString(std::string& var, std::string& path)
 {
 	settingsLock.Lock();
 
@@ -129,10 +96,10 @@ std::wstring_view GetConfigString(std::string_view var, std::string_view path)
 
 	settingsLock.Unlock();
 
-	return std::wstring_view(value->value.AsString);
+	return std::wstring(value->value.AsString);
 }
 
-void SetConfigString(std::string_view var, std::wstring_view newVal, std::string_view path)
+void SetConfigString(std::string& var, std::wstring& newVal, std::string& path)
 {
 	settingsLock.Lock();
 
@@ -156,7 +123,7 @@ void SetConfigString(std::string_view var, std::wstring_view newVal, std::string
 	settingsLock.Unlock();
 }
 
-int GetConfigInt(std::string_view var, std::string_view path)
+int GetConfigInt(std::string& var, std::string& path)
 {
 	settingsLock.Lock();
 
@@ -178,7 +145,7 @@ int GetConfigInt(std::string_view var, std::string_view path)
 	return (int)value->value.AsInt;
 }
 
-void SetConfigInt(std::string_view var, int newVal, std::string_view path)
+void SetConfigInt(std::string& var, int newVal, std::string& path)
 {
 	settingsLock.Lock();
 
@@ -202,7 +169,7 @@ void SetConfigInt(std::string_view var, int newVal, std::string_view path)
 	settingsLock.Unlock();
 }
 
-bool GetConfigBool(std::string_view var, std::string_view path)
+bool GetConfigBool(std::string& var, std::string& path)
 {
 	settingsLock.Lock();
 
@@ -224,7 +191,7 @@ bool GetConfigBool(std::string_view var, std::string_view path)
 	return (int)value->value.AsBool;
 }
 
-void SetConfigBool(std::string_view var, bool newVal, std::string_view path)
+void SetConfigBool(std::string& var, bool newVal, std::string& path)
 {
 	settingsLock.Lock();
 

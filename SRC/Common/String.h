@@ -8,7 +8,7 @@ namespace Util
 
 	std::wstring StringToWstring(std::string& str);
 
-	std::string TcharToString(TCHAR* tstr);
+	std::string TcharToString(const TCHAR* tstr);
 
-	std::wstring TcharToWstring(TCHAR* tstr);
+	std::wstring TcharToWstring(const TCHAR* tstr);
 }

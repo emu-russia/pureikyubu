@@ -54,7 +54,7 @@ static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
 
     fclose(map);
 
-    Report(Channel::HLE, "CodeWarrior format map loaded: %s\n\n", JDI::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "CodeWarrior format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::CW;
 }
 
@@ -95,7 +95,7 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 
     fclose(map);
 
-    Report(Channel::HLE, "GCC format map loaded: %s\n\n", JDI::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "GCC format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::GCC;
 }
 
@@ -117,7 +117,7 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
         SYMAddNew(address, symbol.c_str());
     }
 
-    Report(Channel::HLE, "RAW format map loaded: %s\n\n", JDI::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "RAW format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::RAW;
 }
 
@@ -140,7 +140,7 @@ MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
     _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
-        Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", JDI::Hub.TcharToString((TCHAR*)mapname).c_str());
+        Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::TcharToString((TCHAR*)mapname).c_str());
         hle.mapfile[0] = 0;
         return MAP_FORMAT::BAD;
     }

@@ -17,7 +17,6 @@
 #include <commctrl.h>
 #include <intrin.h>
 #include <tchar.h>
-#include <filesystem>
 #include <fstream>
 #include <string>
 #include <codecvt>
@@ -27,6 +26,7 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
 #include "../Common/String.h"
 #include "../GekkoCore/Gekko.h"
 #include "../GekkoCore/Interpreter.h"
@@ -34,6 +34,7 @@
 #include "../Hardware/Hardware.h"
 #include "../Debugger/Debugger.h"
 
+#include "Config.h"
 #include "Loader.h"
 #include "Emulator.h"
 

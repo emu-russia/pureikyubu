@@ -25,7 +25,7 @@ struct DolHeader
 };
 
 uint32_t DOLSize(DolHeader *dol);
-uint32_t LoadDOL(std::wstring_view dolname);
+uint32_t LoadDOL(std::wstring& dolname);
 uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs);
 
 /* ---------------------------------------------------------------------------  */
@@ -119,12 +119,12 @@ enum ELF_IDENT
 #define PF_MASKOS   0x00ff0000
 #define PF_MASKPROC 0xff000000
 
-uint32_t LoadELF(std::wstring_view elfname);
+uint32_t LoadELF(std::wstring& elfname);
 
 /* ---------------------------------------------------------------------------  */
 /* load binary file                                                             */
 
-uint32_t LoadBIN(std::wstring_view binname);
+uint32_t LoadBIN(std::wstring& binname);
 
 /* ---------------------------------------------------------------------------  */
 /* patch file definitions (*.patch is new one, not old *.ppf)                   */
@@ -165,8 +165,8 @@ void UnloadPatch();
 /* Loader                                                                       */
 
 /* Loader API */
-void LoadFile(std::wstring_view filename);
-void LoadFile(std::string_view filename);
+void LoadFile(std::wstring& filename);
+void LoadFile(std::string& filename);
 void ReloadFile();
 
 /* All loader variables are placed here */

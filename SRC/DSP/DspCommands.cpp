@@ -16,7 +16,7 @@ namespace DSP
             start_addr = std::strtoul(args[2].c_str(), nullptr, 0);
         }
         
-        auto ucode = UI::FileLoad(args[1].c_str());
+        auto ucode = Util::FileLoad(args[1]);
         if (ucode.empty())
         {
             Report(Channel::Norm, "Failed to load %s\n", args[1].c_str());

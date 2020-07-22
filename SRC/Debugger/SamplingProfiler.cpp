@@ -21,7 +21,7 @@ namespace Debug
 
 	SamplingProfiler::SamplingProfiler(const char* jsonFileName, int periodMs)
 	{
-		strcpy_s(filename, sizeof(filename) - 1, jsonFileName);
+		filename = jsonFileName;
 
 		pollingInterval = periodMs * Gekko::Gekko->OneMillisecond();
 		savedGekkoTbr = Gekko::Gekko->GetTicks();

@@ -21,28 +21,28 @@ namespace DSP
 
 		if (config != nullptr)
 		{
-			auto iromImage = UI::FileLoad(config->DspIromFilename);
+			auto iromImage = Util::FileLoad(config->DspIromFilename);
 
 			if (iromImage.empty() || iromImage.size() != IROM_SIZE)
 			{
-				Report(Channel::Norm, "Failed to load DSP IROM: %s\n", JDI::Hub.TcharToString(config->DspIromFilename).c_str());
+				Report(Channel::Norm, "Failed to load DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
 			}
 			else
 			{
-				Report(Channel::DSP, "Loaded DSP IROM: %s\n", JDI::Hub.TcharToString(config->DspIromFilename).c_str());
+				Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
 				memcpy(irom, iromImage.data(), IROM_SIZE);
 			}
 
 			/* Load DROM. */
-			auto dromImage = UI::FileLoad(config->DspDromFilename);
+			auto dromImage = Util::FileLoad(config->DspDromFilename);
 
 			if (dromImage.empty() || dromImage.size() != DROM_SIZE)
 			{
-				Report(Channel::Norm, "Failed to load DSP DROM: %s\n", JDI::Hub.TcharToString(config->DspDromFilename).c_str());
+				Report(Channel::Norm, "Failed to load DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
 			}
 			else
 			{
-				Report(Channel::DSP, "Loaded DSP DROM: %s\n", JDI::Hub.TcharToString(config->DspDromFilename).c_str());
+				Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
 				memcpy(drom, dromImage.data(), DROM_SIZE);
 			}
 		}
@@ -1143,7 +1143,7 @@ namespace DSP
 				auto filename = fmt::format(L"Data\\DspUcode_{:04X}.bin", DmaRegs.blockSize);
 				auto buffer = std::vector<uint8_t>(ptr, ptr + DmaRegs.blockSize);
 				
-				UI::FileSave(filename, buffer);
+				Util::FileSave(filename, buffer);
 				Report(Channel::DSP, "DSP Ucode dumped to DspUcode_%04X.bin\n", DmaRegs.blockSize);
 			}
 		}
