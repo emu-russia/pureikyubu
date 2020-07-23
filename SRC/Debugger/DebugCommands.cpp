@@ -209,11 +209,42 @@ namespace Debug
         return nullptr;
     }
 
+    static Json::Value* GetChannelName(std::vector<std::string>& args)
+    {
+        Channel chan = (Channel)atoi(args[1].c_str());
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        output->AddString(nullptr, Util::StringToWstring(Msgs.DebugChannelToString(chan)).c_str() );
+
+        return output;
+    }
+
+    static Json::Value* QueryDebugMessages(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        std::list<std::pair<Channel, std::string>> queue;
+        Msgs.QueryDebugMessages(queue);
+
+        for (auto it = queue.begin(); it != queue.end(); ++it)
+        {
+            output->AddInt(nullptr, (int)it->first);
+            output->AddString(nullptr, Util::StringToWstring(it->second).c_str());
+        }
+
+        return output;
+    }
+
     void Reflector()
     {
         JDI::Hub.AddCmd("script", cmd_script);
         JDI::Hub.AddCmd("echo", cmd_echo);
         JDI::Hub.AddCmd("StartProfiler", StartProfiler);
         JDI::Hub.AddCmd("StopProfiler", StopProfiler);
+        JDI::Hub.AddCmd("GetChannelName", GetChannelName);
+        JDI::Hub.AddCmd("qd", QueryDebugMessages);
     }
 }

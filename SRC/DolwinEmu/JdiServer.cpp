@@ -88,7 +88,10 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 #undef dquot
 #undef endl
 
-Json::Value* CallJdi(const char* request)
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+Json::Value* __cdecl CallJdi(const char* request)
 {
     std::vector<std::string> args;
 

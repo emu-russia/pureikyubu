@@ -5,6 +5,11 @@
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport)
 #endif
+Json::Value * __cdecl CallJdi(const char* request);
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
 bool __cdecl CallJdiNoReturn(const char* request);
 
 #ifdef _WINDOWS

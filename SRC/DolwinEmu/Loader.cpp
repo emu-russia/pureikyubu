@@ -481,11 +481,13 @@ void LoadFile(std::wstring& filename)
         {
             DVD::MountFile(filename);
             GetDiskId(diskId);
+            dvd = true;
         }
         else if (!_tcsicmp(extension, _T(".gcm")))
         {
             DVD::MountFile(filename);
             GetDiskId(diskId);
+            dvd = true;
         }
     }
 

@@ -12,6 +12,7 @@
 
 #include "../../Common/Json.h"
 #include "../../Common/Thread.h"
+#include "../../Common/String.h"
 
 #include "UserJdiClient.h"
 #include "UiCommands.h"

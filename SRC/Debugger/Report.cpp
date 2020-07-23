@@ -115,7 +115,7 @@ namespace Debug
 				ReportEntry* entry = reportQueue.back();
 				reportQueue.pop_back();
 
-				queue.push_back(std::pair<Channel, std::string>(entry->savedChan, entry->text));
+				queue.push_front(std::pair<Channel, std::string>(entry->savedChan, entry->text));
 
 				delete entry;
 			}

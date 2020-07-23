@@ -547,7 +547,7 @@ void LoadBootrom(HWConfig* config)
     // Show version
 
     Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
-    Report(Channel::Norm, "%s", (char*)mi.bootrom);
+    Report(Channel::Norm, "%s\n", (char*)mi.bootrom);
 }
 
 void MIOpen(HWConfig * config)

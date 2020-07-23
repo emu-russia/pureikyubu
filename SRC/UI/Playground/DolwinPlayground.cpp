@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 
 	// Load file and run
 
-	printf("Press any key to stop emulation...\n");
+	printf("Press any key to stop emulation...\n\n");
 
 	UI::Jdi.LoadFile(argv[1]);
 	UI::Jdi.Run();
@@ -36,6 +36,6 @@ int main(int argc, char **argv)
 	UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
 	DebugStop();
 
-	printf("Thank you for flying DolwinPlayground airlines!\n");
+	printf("\nThank you for flying DolwinPlayground airlines!\n");
 	return 0;
 }
