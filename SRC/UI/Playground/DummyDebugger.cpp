@@ -29,7 +29,7 @@ void DebugThreadProc(void* param)
 			queue.clear();
 		}
 
-		Sleep(10);
+		Sleep(100);
 	}
 }
 
