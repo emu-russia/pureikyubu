@@ -1,4 +1,4 @@
-// Access Dolwin configuration via JDI
+// Dolwin configuration variables
 
 #pragma once
 
@@ -37,11 +37,3 @@
 #define USER_BOOTROM	"BOOTROM"		// Bootrom
 #define USER_DSP_DROM	"DSP_DROM"      // DSP DROM
 #define USER_DSP_IROM	"DSP_IROM"		// DSP IROM
-
-
-TCHAR* GetConfigString(const char* var, const char* path);
-void SetConfigString(const char* var, const TCHAR* newVal, const char* path);
-int GetConfigInt(const char* var, const char* path);
-void SetConfigInt(const char* var, int newVal, const char* path);
-bool GetConfigBool(const char* var, const char* path);
-void SetConfigBool(const char* var, bool newVal, const char* path);

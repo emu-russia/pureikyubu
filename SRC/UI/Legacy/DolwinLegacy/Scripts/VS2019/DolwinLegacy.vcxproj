@@ -150,12 +150,14 @@
     <ProjectReference Include="..\..\..\..\..\..\ThirdParty\fmt\Scripts\VS2019\fmt.vcxproj">
       <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\..\..\DolwinEmu\Scripts\VS2019\DolwinEmu.vcxproj">
+      <Project>{6be86dce-ec88-4113-9e7b-22b6ef50fdfc}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\DVDBanner.cpp" />
     <ClCompile Include="..\..\pch.cpp" />
     <ClCompile Include="..\..\UserAbout.cpp" />
-    <ClCompile Include="..\..\UserConfig.cpp" />
     <ClCompile Include="..\..\UserDebugStubs.cpp" />
     <ClCompile Include="..\..\UserFile.cpp" />
     <ClCompile Include="..\..\UserFonts.cpp" />

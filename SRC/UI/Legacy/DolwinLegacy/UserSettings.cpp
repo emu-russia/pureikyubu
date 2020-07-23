@@ -275,7 +275,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_ADDPATH:
                 {
-                    path = UI::FileOpenDialog(UI::FileType::Directory);
+                    path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
                     if (!path.empty())
                     {
                         fix_path(path);
@@ -345,7 +345,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
             {
                 case IDC_CHOOSE_BOOTROM:
                 {
-                    file = UI::FileOpenDialog(UI::FileType::All);
+                    file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
@@ -359,7 +359,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_CHOOSE_DSPDROM:
                 {
-                    file = UI::FileOpenDialog(UI::FileType::All);
+                    file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
@@ -373,7 +373,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 }
                 case IDC_CHOOSE_DSPIROM:
                 {
-                    file = UI::FileOpenDialog(UI::FileType::All);
+                    file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
                     if (!file.empty())
                     {
                         SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());

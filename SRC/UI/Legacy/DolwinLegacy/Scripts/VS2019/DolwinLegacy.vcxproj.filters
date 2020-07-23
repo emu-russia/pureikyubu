@@ -51,9 +51,6 @@
     <ClCompile Include="..\..\UserJdiClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\UserConfig.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\UserDebugStubs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

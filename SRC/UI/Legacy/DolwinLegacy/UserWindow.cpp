@@ -200,7 +200,7 @@ void UpdateRecentMenu(HWND hwnd)
     DrawMenuBar(hwnd);
 }
 
-void AddRecentFile(std::wstring_view path)
+void AddRecentFile(std::wstring& path)
 {
     int RecentNum = GetConfigInt(USER_RECENT_NUM, USER_UI);
 
@@ -339,20 +339,11 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainWindow = hwnd;
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
-    // emulator
-    EMUCtor();
-
     // run once ?
     if(GetConfigBool(USER_RUNONCE, USER_UI))
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
     else
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
-
-    // allow patches ?
-    if(GetConfigBool(USER_PATCH, USER_LOADER))
-        CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_CHECKED);
-    else
-        CheckMenuItem(wnd.hMainMenu, ID_ALLOW_PATCHES, MF_BYCOMMAND | MF_UNCHECKED);
 
     // debugger enabled ?
     emu.doldebug = GetConfigBool(USER_DOLDEBUG, USER_UI);
@@ -455,9 +446,6 @@ void OnMainWindowOpened()
     }
     
     SetWindowText(wnd.hMainWindow, newTitle.c_str());
-    
-    // user profiler
-    OpenProfiler(GetConfigBool(USER_PROFILE, USER_UI));
 }
 
 // emulation stop in progress
@@ -561,7 +549,8 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Load DVD/executable (START) */
             case ID_FILE_LOAD:
             {
-                if (name = UI::FileOpenDialog(); !name.empty())
+                name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+                if (!name.empty())
                 {
                 loadFile:
                     
@@ -620,7 +609,8 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
             /* Set new current DVD image. */
             case ID_FILE_CHANGEDVD:
             {
-                if (name = UI::FileOpenDialog(UI::FileType::Dvd); !name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
+                name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Dvd);
+                if (!name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
                 {
                     /* Same */
                     if (name == ldat.currentFile)
@@ -843,7 +833,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Mount Dolphin SDK as DVD */
             case ID_DEVELOPMENT_MOUNTSDK:
             {
-                auto dolphinSdkDir = UI::FileOpenDialog(UI::FileType::Directory);
+                auto dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
                 if (!dolphinSdkDir.empty())
                 {
                     std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };

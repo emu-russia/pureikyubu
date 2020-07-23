@@ -20,7 +20,7 @@ Dolwin supports the following file formats:
 
 ## HWConfig
 
-To avoid using the UI to get configuration from the HW component, all Flipper hardware emulation settings are aggregated
+To avoid using configuration from the HW component, all Flipper hardware emulation settings are aggregated
 into the HWConfig structure.
 
 ## Jdi
