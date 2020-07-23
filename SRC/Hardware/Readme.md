@@ -1,6 +1,6 @@
 # GCN Hardware
 
-This component emulates everything inside the ASIC Flipper, *except* the graphics system (GX).
+This component emulates everything inside the ASIC Flipper, *except* the graphics system (GX) and DSP.
 
 A short tour into the Flipper stuff, without shocking details:
 - AI: Audio DMA
@@ -27,4 +27,4 @@ Therefore, emulator developers ignore the XFB output and display in the emulator
 
 ## GCNHardwareForPlayground
 
-A special build version that defines Null backends in `Hardware.h` for use in DolwinPlayground.
+A special build version that defines Null backends for use in DolwinPlayground.

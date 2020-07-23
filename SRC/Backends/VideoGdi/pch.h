@@ -5,6 +5,6 @@
 #include <Windows.h>
 
 #include "../../Debugger/Report.h"
-#include "../../Hardware/Hardware.h"
+#include "../../Hardware/HWConfig.h"
 
 #include "VideoOut.h"

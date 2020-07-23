@@ -49,9 +49,9 @@
     <ClInclude Include="..\..\EFB.h" />
     <ClInclude Include="..\..\EXI.h" />
     <ClInclude Include="..\..\FIFO.h" />
-    <ClInclude Include="..\..\Hardware.h" />
     <ClInclude Include="..\..\HW.h" />
     <ClInclude Include="..\..\HwCommands.h" />
+    <ClInclude Include="..\..\HWConfig.h" />
     <ClInclude Include="..\..\IPLDescrambler.h" />
     <ClInclude Include="..\..\MC.h" />
     <ClInclude Include="..\..\MI.h" />
