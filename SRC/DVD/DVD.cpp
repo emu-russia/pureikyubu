@@ -1,17 +1,15 @@
 // DVD API for emulator
 #include "pch.h"
-#include "../UI/UserFile.h"
 
 DVDControl dvd;
 
 namespace DVD
 {
-
     // Mount current dvd 
-    bool MountFile(std::wstring_view file)
+    bool MountFile(TCHAR * file)
     {
         // try to open file
-        if (!UI::FileExists(file))
+        if (!Util::FileExists(file))
         {
             return false;
         }
@@ -19,7 +17,7 @@ namespace DVD
         Unmount();
 
         // select current DVD
-        bool res = GCMMountFile(file.data());
+        bool res = GCMMountFile(file);
         if (!res)
             return res;
 
@@ -36,7 +34,7 @@ namespace DVD
         return true;
     }
 
-    bool MountFile(std::string file)
+    bool MountFile(std::string& file)
     {
         TCHAR path[0x1000] = { 0, };
         TCHAR* tcharPtr = path;
@@ -44,6 +42,19 @@ namespace DVD
         while (*ansiPtr)
         {
             *tcharPtr++ = *ansiPtr++;
+        }
+        *tcharPtr++ = 0;
+        return MountFile(path);
+    }
+
+    bool MountFile(std::wstring& file)
+    {
+        TCHAR path[0x1000] = { 0, };
+        TCHAR* tcharPtr = path;
+        wchar_t* widePtr = (wchar_t*)file.c_str();
+        while (*widePtr)
+        {
+            *tcharPtr++ = *widePtr++;
         }
         *tcharPtr++ = 0;
         return MountFile(path);
@@ -153,7 +164,7 @@ namespace DVD
         return true;
     }
 
-    long OpenFile(std::string_view dvdfile)
+    long OpenFile(std::string& dvdfile)
     {
         if (dvd.mountedImage || dvd.mountedSdk)
         {
@@ -169,7 +180,7 @@ namespace DVD
 
     void InitSubsystem()
     {
-        Debug::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
+        JDI::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
 
         DDU = new DduCore;
         assert(DDU);
@@ -178,7 +189,7 @@ namespace DVD
     void ShutdownSubsystem()
     {
         Unmount();
-        Debug::Hub.RemoveNode(DDU_JDI_JSON);
+        JDI::Hub.RemoveNode(DDU_JDI_JSON);
         delete DDU;
     }
 

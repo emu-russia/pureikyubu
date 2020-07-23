@@ -1,3 +1,6 @@
+
+#pragma once
+
 void    os_ignore();
 void    os_ret0();
 void    os_ret1();

@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "../Common/Thread.h"
-
 namespace DVD
 {
 	enum class CoverStatus

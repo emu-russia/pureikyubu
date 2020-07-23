@@ -16,18 +16,20 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
+#include "../Common/String.h"
+#include "../Common/Thread.h"
 
-#include "../Core/Gekko.h"
+#include "../GekkoCore/Gekko.h"
 
 #include "HighLevel.h"
 
-#include "../Hardware/Hardware.h"
+#include "../Hardware/HWConfig.h"
+#include "../DVD/DVD.h"
+#include "../Hardware/EXI.h"
+#include "../Hardware/MI.h"
 
 #include "../Debugger/Debugger.h"
-
-#include "../UI/UserMain.h"
-#include "../UI/UserFile.h"
-#include "../UI/UserWindow.h"
 
 #include "HleCommands.h"
 #include "TimeFormat.h"

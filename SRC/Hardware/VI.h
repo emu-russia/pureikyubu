@@ -74,6 +74,18 @@
 // ---------------------------------------------------------------------------
 // hardware API
 
+#pragma pack(push, 1)
+
+struct RGB
+{
+    uint8_t Blue;
+    uint8_t Green;
+    uint8_t Red;
+    uint8_t Reserved;
+};
+
+#pragma pack(pop)
+
 // VI state (registers and other data)
 struct VIControl
 {
@@ -91,12 +103,11 @@ struct VIControl
 
     bool        xfb;        // enable video frame buffer (GDI)
     uint8_t*    xfbbuf;     // translated TFBL pointer
-    RGBQUAD*    gfxbuf;     // DIB
+    RGB*        gfxbuf;     // DIB
 
     bool        log;        // do debugger log output
     size_t      frames;     // frames rendered by VI/GX
 
-    HWND        hwndMain;
     int64_t     one_second;     // one CPU second in timer ticks
 
     int         videoEncoderFuse;

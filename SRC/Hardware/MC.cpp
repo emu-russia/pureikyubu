@@ -4,6 +4,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 /************************** Commands ***************************************/ 
 
 /*
@@ -153,7 +155,7 @@ Memcard memcard[2];
 
 static uint32_t MCCalculateOffset (uint32_t mc_address) {
 	if (mc_address & MEMCARD_BA_EXTRABYTES)
-		DBHalt ("MC :: Extra bytes are not supported\n");
+		Halt ("MC :: Extra bytes are not supported\n");
     return        (mc_address & 0x0000007F) |
                  ((mc_address & 0x00000300) >> 1) |
                  ((mc_address & 0x7FFF0000) >> 7);
@@ -163,11 +165,11 @@ static void MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t size) {
     if (SyncSave == TRUE) // Bad idea!!
     {
         if (fseek(memcard->file, offset, SEEK_SET) != 0) {
-            DBHalt("MC :: Error at seeking the memcard file.\n");
+            Halt("MC :: Error at seeking the memcard file.\n");
 			return;
 		}
         if (fwrite(&memcard->data[offset], size, 1, memcard->file) != 1) {
-            DBHalt("MC :: Error at writing the memcard file.\n");
+            Halt("MC :: Error at writing the memcard file.\n");
 		}
     }
 }
@@ -204,7 +206,7 @@ static void MCPageProgramProc (Memcard * memcard){
         size = exi->len;
     }
     else {
-        DBHalt("MC : Unhandled Imm Page Program.\n");
+        Halt("MC : Unhandled Imm Page Program.\n");
 		return;
     }
 
@@ -212,7 +214,7 @@ static void MCPageProgramProc (Memcard * memcard){
     offset = MCCalculateOffset(auxdata);
 
 	if (offset >=  memcard->size + size) {
-        DBHalt("MC :: PageProgram offset is out of range\n");
+        Halt("MC :: PageProgram offset is out of range\n");
 		return;
 	}
 
@@ -249,7 +251,7 @@ static void MCReadArrayProc (Memcard * memcard){
     offset = MCCalculateOffset(auxdata);
 
     if (offset >=  memcard->size + size) {
-        DBHalt("MC :: ReadArray offset is out of range\n");
+        Halt("MC :: ReadArray offset is out of range\n");
         return;
     }
 
@@ -277,7 +279,7 @@ static void MCSectorEraseProc (Memcard * memcard){
     offset = MCCalculateOffset(memcard->commandData);
 
     if (offset >=  memcard->size) {
-        DBHalt("MC :: Erase sector is out of range\n");
+        Halt("MC :: Erase sector is out of range\n");
         return;
     }
 
@@ -316,9 +318,9 @@ static void MCEnableInterruptsProc (Memcard * memcard){
     EXIRegs * exi = memcard->exi;
 
     if ( memcard->commandData & (0x01 << 24) ) 
-        DBReport2 (DbgChannel::MC, "Enable Interrupts\n");
+        Report (Channel::MC, "Enable Interrupts\n");
     else
-        DBReport2 (DbgChannel::MC, "Disable Interrupts\n");
+        Report (Channel::MC, "Disable Interrupts\n");
 }
 /**********************************MCReadIdProc*********************************************/
 static void MCReadIdProc (Memcard * memcard){
@@ -387,11 +389,11 @@ void MCTransfer () {
                         }
 
                     if (i >= Num_Memcard_ValidCommands) {
-                        DBHalt("MC :: Unrecognized Memcard Command %02x\n", auxmc->Command);
+                        Halt("MC :: Unrecognized Memcard Command %02x\n", auxmc->Command);
                         auxmc->Command = MEMCARD_COMMAND_UNDEFINED;
                     }
                     else {
-                        DBReport2 (DbgChannel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
+                        Report (Channel::MC, "Recognized Memcard Command %02x\n", auxmc->Command);
                     }
                 }
                 else if (auxmc->databytesread < auxmc->databytes) {
@@ -402,7 +404,7 @@ void MCTransfer () {
                     auxmc->dummybytesread++;
                 }
                 else 
-                    DBHalt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
+                    Halt("MC :: Extra bytes at transfer , data : %02x\n", (uint8_t)(auxdata >> 24));
                 auxdata = auxdata << 8;
                 auxbytes--;
             }
@@ -421,7 +423,7 @@ void MCTransfer () {
         }
         break;
     default:
-        UI::DolwinError(_T("Memcard Error"), _T("Unknown memcard transfer type"));
+        Halt ("MC: Unknown memcard transfer type");
     }
 }
 
@@ -460,7 +462,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
+        Halt ("MC: Wrong card id for creating file.");
         return FALSE;
     }
 
@@ -468,14 +470,14 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     _tfopen_s(&newfile, path, _T("wb")) ;
 
 	if (newfile == NULL) {
-        UI::DolwinReport(_T("Error while trying to create memcard file."));
+        Halt( "MC: Error while trying to create memcard file.");
 		return FALSE;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            UI::DolwinReport(_T("Error while trying to write memcard file."));
+            Halt("MC: Error while trying to write memcard file.");
 
 			fclose (newfile);
             return FALSE;
@@ -510,7 +512,7 @@ void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
  */ 
 void MCOpen (HWConfig * config)
 {
-    DBReport2 (DbgChannel::MC, "Memory cards\n");
+    Report (Channel::MC, "Memory cards\n");
 
     MCOpened = TRUE;
     memset(memcard, 0 , 2 * sizeof (Memcard));
@@ -600,7 +602,7 @@ bool MCConnect (int cardnum) {
     case MEMCARD_SLOTB:
         if (memcard[cardnum].connected /*== TRUE*/) MCDisconnect(cardnum) ;
 
-        size_t memcardSize = UI::FileSize(memcard[cardnum].filename);
+        size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
         _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
@@ -608,12 +610,12 @@ bool MCConnect (int cardnum) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
-            auto str = Util::convert<char>(UI::FileShortName(memcard[cardnum].filename));
-            UI::DolwinReport(
-                L"Couldnt open memcard (slot %c),\n"
-                L"location : %s\n\n"
-                L"Check path or file attributes.",
-                slt[cardnum], str.c_str()
+            Report(
+                Channel::MC,
+                "Couldnt open memcard (slot %c),\n"
+                "location : %s\n\n"
+                "Check path or file attributes.",
+                slt[cardnum], Util::TcharToString(memcard[cardnum].filename).c_str()
             );
             return FALSE;
         }

@@ -2,13 +2,6 @@
 
 #pragma once
 
-#include <vector>
-#include <list>
-#include <map>
-#include <string>
-#include <atomic>
-#include "../Common/Thread.h"
-
 namespace DSP
 {
 	typedef uint32_t DspAddress;		// in halfwords slots 

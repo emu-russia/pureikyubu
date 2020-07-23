@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DVD
 {
 	static void SwapArea(void* _addr, int count)
@@ -24,27 +26,27 @@ namespace DVD
 
 		if (dvd.mountedImage)
 		{
-			DBReport("Mounted as disk image: %s\n", Debug::Hub.TcharToString(dvd.gcm_filename).c_str());
-			DBReport("GCM Size: 0x%08X bytes\n", dvd.gcm_size);
-			DBReport("Current seek position: 0x%08X\n", GetSeek());
+			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::TcharToString(dvd.gcm_filename).c_str());
+			Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
+			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.gcm_filename);
 			output->AddInt(nullptr, GetSeek());
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			DBReport("Mounted as SDK directory: %s\n", Debug::Hub.TcharToString(dvd.mountedSdk->GetDirectory()).c_str());
-			DBReport("Current seek position: 0x%08X\n", GetSeek());
+			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::TcharToString(dvd.mountedSdk->GetDirectory()).c_str());
+			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
 			output->AddInt(nullptr, GetSeek());
 		}
 		else
 		{
-			DBReport("Disk Unmounted\n");
+			Report(Channel::Norm, "Disk Unmounted\n");
 		}
 
-		DBReport("Lid status: %s\n", (DDU->GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
+		Report(Channel::Norm, "Lid status: %s\n", (DDU->GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
 
 		output->AddBool(nullptr, DDU->GetCoverStatus() == CoverStatus::Open ? true : false);
 
@@ -60,11 +62,11 @@ namespace DVD
 
 		if (result)
 		{
-			DBReport2(DbgChannel::DVD, "Mounted disk image: %s\n", args[1].c_str());
+			Report(Channel::DVD, "Mounted disk image: %s\n", args[1].c_str());
 		}
 		else
 		{
-			DBReport2(DbgChannel::Error, "Failed to mount disk image: %s\n", args[1].c_str());
+			Report(Channel::Error, "Failed to mount disk image: %s\n", args[1].c_str());
 		}
 
 		Json::Value* output = new Json::Value();
@@ -91,13 +93,13 @@ namespace DVD
 	// Show some stats
 	static Json::Value* DvdStats(std::vector<std::string>& args)
 	{
-		DBReport("DvdStats:\n");
+		Report(Channel::Norm, "DvdStats:\n");
 
-		DBReport("BytesRead: %I64u\n", DDU->stats.bytesRead);
-		DBReport("BytesWrite: %I64u\n", DDU->stats.bytesWrite);
-		DBReport("Host->DDU transfers: %i\n", DDU->stats.hostToDduTransferCount);
-		DBReport("DDU->Host transfers: %i\n", DDU->stats.dduToHostTransferCount);
-		DBReport("SampleCounter: %I64u\n", DDU->stats.sampleCounter);
+		Report(Channel::Norm, "BytesRead: %I64u\n", DDU->stats.bytesRead);
+		Report(Channel::Norm, "BytesWrite: %I64u\n", DDU->stats.bytesWrite);
+		Report(Channel::Norm, "Host->DDU transfers: %i\n", DDU->stats.hostToDduTransferCount);
+		Report(Channel::Norm, "DDU->Host transfers: %i\n", DDU->stats.dduToHostTransferCount);
+		Report(Channel::Norm, "SampleCounter: %I64u\n", DDU->stats.sampleCounter);
 
 		return nullptr;
 	}
@@ -117,11 +119,11 @@ namespace DVD
 
 		if (result)
 		{
-			DBReport2(DbgChannel::DVD, "Mounted SDK: %s\n", args[1].c_str());
+			Report(Channel::DVD, "Mounted SDK: %s\n", args[1].c_str());
 		}
 		else
 		{
-			DBReport2(DbgChannel::Error, "Failed to mount SDK: %s\n", args[1].c_str());
+			Report(Channel::Error, "Failed to mount SDK: %s\n", args[1].c_str());
 		}
 
 		Json::Value* output = new Json::Value();
@@ -135,7 +137,7 @@ namespace DVD
 	static Json::Value* UnmountDvd(std::vector<std::string>& args)
 	{
 		Unmount();
-		DBReport2( DbgChannel::DVD, "Unmounted\n");
+		Report( Channel::DVD, "Unmounted\n");
 		return nullptr;
 	}
 
@@ -154,13 +156,13 @@ namespace DVD
 
 		if (size > 1024 * 1024)
 		{
-			DBReport2(DbgChannel::Error, "Too big\n");
+			Report(Channel::Error, "Too big\n");
 			return nullptr;
 		}
 
 		if (!IsMounted())
 		{
-			DBReport2(DbgChannel::DVD, "Not mounted!\n");
+			Report(Channel::DVD, "Not mounted!\n");
 			return nullptr;
 		}
 
@@ -188,7 +190,7 @@ namespace DVD
 			breakCounter++;
 			if (breakCounter >= 16)
 			{
-				DBReport("0x%08X %s %s\n", seekPos, hexDump, asciiDump);
+				Report(Channel::Norm, "0x%08X %s %s\n", seekPos, hexDump, asciiDump);
 				breakCounter = 0;
 				ptr = hexDump;
 				ptr2 = asciiDump;
@@ -208,7 +210,7 @@ namespace DVD
 
 		delete[] buf;
 
-		DBReport2(DbgChannel::DVD, "Read %zi bytes\n", size);
+		Report(Channel::DVD, "Read %zi bytes\n", size);
 
 		return output;
 	}
@@ -216,15 +218,15 @@ namespace DVD
 	// Open file on DVD filesystem
 	static Json::Value* DvdOpenFile(std::vector<std::string>& args)
 	{
-		long position = OpenFile(args[1].c_str());
+		long position = OpenFile(args[1]);
 
 		if (position)
 		{
-			DBReport("File:%s, position: 0x%08X\n", args[1].c_str(), position);
+			Report(Channel::Norm, "File:%s, position: 0x%08X\n", args[1].c_str(), position);
 		}
 		else
 		{
-			DBReport("Cannot locate file position:%s\n", args[1].c_str());
+			Report(Channel::Norm, "Cannot locate file position:%s\n", args[1].c_str());
 		}
 
 		Json::Value* output = new Json::Value();
@@ -239,7 +241,7 @@ namespace DVD
 	{
 		if (!IsMounted())
 		{
-			DBReport2(DbgChannel::DVD, "Not mounted!\n");
+			Report(Channel::DVD, "Not mounted!\n");
 			return nullptr;
 		}
 
@@ -257,12 +259,12 @@ namespace DVD
 
 		SwapArea(&bb2, sizeof(bb2));
 
-		DBReport("DVDBB2::bootFilePosition: 0x%08X\n", bb2.bootFilePosition);
-		DBReport("DVDBB2::FSTPosition: 0x%08X\n", bb2.FSTPosition);
-		DBReport("DVDBB2::FSTLength: 0x%08X\n", bb2.FSTLength);
-		DBReport("DVDBB2::FSTMaxLength: 0x%08X\n", bb2.FSTMaxLength);
-		DBReport("DVDBB2::userPosition: 0x%08X\n", bb2.userPosition);
-		DBReport("DVDBB2::userLength: 0x%08X\n", bb2.userLength);
+		Report(Channel::Norm, "DVDBB2::bootFilePosition: 0x%08X\n", bb2.bootFilePosition);
+		Report(Channel::Norm, "DVDBB2::FSTPosition: 0x%08X\n", bb2.FSTPosition);
+		Report(Channel::Norm, "DVDBB2::FSTLength: 0x%08X\n", bb2.FSTLength);
+		Report(Channel::Norm, "DVDBB2::FSTMaxLength: 0x%08X\n", bb2.FSTMaxLength);
+		Report(Channel::Norm, "DVDBB2::userPosition: 0x%08X\n", bb2.userPosition);
+		Report(Channel::Norm, "DVDBB2::userLength: 0x%08X\n", bb2.userLength);
 
 		return output;
 	}
@@ -279,7 +281,7 @@ namespace DVD
 
 			if (dumpMode)
 			{
-				DBReport("Dir[%i]: name: 0x%X, parent: %i, next: %i\n",
+				Report(Channel::Norm, "Dir[%i]: name: 0x%X, parent: %i, next: %i\n",
 					entry - fst,
 					((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
 					entry->parentOffset, entry->nextOffset);
@@ -309,7 +311,7 @@ namespace DVD
 
 			if (dumpMode)
 			{
-				DBReport("File[%i]: name: 0x%X, offset: 0x%X, len: 0x%X\n",
+				Report(Channel::Norm, "File[%i]: name: 0x%X, offset: 0x%X, len: 0x%X\n",
 					entry - fst,
 					((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo,
 					entry->fileOffset, entry->fileLength);
@@ -346,16 +348,16 @@ namespace DVD
 			{
 				uint32_t offset = (uint32_t)atoi(entry->name);
 				
-				DBReport("%s%s\n", indent, depth != 0 ? stringsMap[offset].c_str() : "/");
+				Report(Channel::Norm, "%s%s\n", indent, depth != 0 ? stringsMap[offset].c_str() : "/");
 			}
 			else
 			{
-				DBReport("%s/\n", indent);
+				Report(Channel::Norm, "%s/\n", indent);
 			}
 		}
 		else if (entry->type == Json::ValueType::Int)
 		{
-			DBReport("%s%s\n", indent, stringsMap[(uint32_t)entry->value.AsInt].c_str());
+			Report(Channel::Norm, "%s%s\n", indent, stringsMap[(uint32_t)entry->value.AsInt].c_str());
 		}
 
 		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
@@ -370,7 +372,7 @@ namespace DVD
 	{
 		if (!IsMounted())
 		{
-			DBReport2(DbgChannel::DVD, "Not mounted!\n");
+			Report(Channel::DVD, "Not mounted!\n");
 			return nullptr;
 		}
 
@@ -430,7 +432,7 @@ namespace DVD
 			{
 				if (dumpMode)
 				{
-					DBReport("name[0x%X]: %s\n", savedOffset, name);
+					Report(Channel::Norm, "name[0x%X]: %s\n", savedOffset, name);
 				}
 				stringsMap[(uint32_t)savedOffset] = name;
 				namePtr = name;
@@ -460,20 +462,20 @@ namespace DVD
 
 	void DvdCommandsReflector()
 	{
-		Debug::Hub.AddCmd("DvdInfo", DvdInfo);
-		Debug::Hub.AddCmd("MountIso", MountIso);
-		Debug::Hub.AddCmd("OpenLid", OpenLid);
-		Debug::Hub.AddCmd("CloseLid", CloseLid);
-		Debug::Hub.AddCmd("DvdStats", DvdStats);
-		Debug::Hub.AddCmd("DvdResetStats", DvdResetStats);
-		Debug::Hub.AddCmd("MountSDK", MountSDK);
-		Debug::Hub.AddCmd("UnmountDvd", UnmountDvd);
-		Debug::Hub.AddCmd("DvdSeek", DvdSeek);
-		Debug::Hub.AddCmd("DvdRead", DvdRead);
-		Debug::Hub.AddCmd("DvdOpenFile", DvdOpenFile);
-		Debug::Hub.AddCmd("DumpBb2", DumpBb2);
-		Debug::Hub.AddCmd("DumpFst", DumpFst);
-		Debug::Hub.AddCmd("MnDisa", MnDisa);
+		JDI::Hub.AddCmd("DvdInfo", DvdInfo);
+		JDI::Hub.AddCmd("MountIso", MountIso);
+		JDI::Hub.AddCmd("OpenLid", OpenLid);
+		JDI::Hub.AddCmd("CloseLid", CloseLid);
+		JDI::Hub.AddCmd("DvdStats", DvdStats);
+		JDI::Hub.AddCmd("DvdResetStats", DvdResetStats);
+		JDI::Hub.AddCmd("MountSDK", MountSDK);
+		JDI::Hub.AddCmd("UnmountDvd", UnmountDvd);
+		JDI::Hub.AddCmd("DvdSeek", DvdSeek);
+		JDI::Hub.AddCmd("DvdRead", DvdRead);
+		JDI::Hub.AddCmd("DvdOpenFile", DvdOpenFile);
+		JDI::Hub.AddCmd("DumpBb2", DumpBb2);
+		JDI::Hub.AddCmd("DumpFst", DumpFst);
+		JDI::Hub.AddCmd("MnDisa", MnDisa);
 	}
 
 }

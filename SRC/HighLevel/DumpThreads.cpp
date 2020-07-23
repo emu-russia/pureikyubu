@@ -5,6 +5,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace HLE
 {
 
@@ -17,7 +19,7 @@ namespace HLE
 		uint32_t threadPa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
 		if (threadPa == Gekko::BadAddress)
 		{
-			DBReport("Invalid thread effective address: 0x%08X\n", ea);
+			Report(Channel::Norm, "Invalid thread effective address: 0x%08X\n", ea);
 			return false;
 		}
 
@@ -25,7 +27,7 @@ namespace HLE
 
 		if (ptr == nullptr)
 		{
-			DBReport("Invalid thread physical address: 0x%08X\n", threadPa);
+			Report(Channel::Norm, "Invalid thread physical address: 0x%08X\n", threadPa);
 			return false;
 		}
 
@@ -53,9 +55,9 @@ namespace HLE
 
 	static void DumpOsThread(size_t count, OSThread* thread, uint32_t threadEa)
 	{
-		DBReport("Thread %zi, context: 0x%08X:\n", count, threadEa);
-		DBReport("state: 0x%04X, attr: 0x%04X\n", thread->state, thread->attr);
-		DBReport("suspend: %i, priority: 0x%08X, base: 0x%08X, val: 0x%08X\n", (int)thread->suspend, thread->priority, thread->base, thread->val);
+		Report(Channel::Norm, "Thread %zi, context: 0x%08X:\n", count, threadEa);
+		Report(Channel::Norm, "state: 0x%04X, attr: 0x%04X\n", thread->state, thread->attr);
+		Report(Channel::Norm, "suspend: %i, priority: 0x%08X, base: 0x%08X, val: 0x%08X\n", (int)thread->suspend, thread->priority, thread->base, thread->val);
 	}
 
 	Json::Value* DumpDolphinOsThreads(bool displayOnScreen)
@@ -71,7 +73,7 @@ namespace HLE
 		{
 			if (displayOnScreen)
 			{
-				DBReport("Invalid active threads link effective address: 0x%08X\n", linkActiveEffectiveAddr);
+				Report(Channel::Norm, "Invalid active threads link effective address: 0x%08X\n", linkActiveEffectiveAddr);
 			}
 			return nullptr;
 		}
@@ -82,7 +84,7 @@ namespace HLE
 		{
 			if (displayOnScreen)
 			{
-				DBReport("Invalid active threads link physical address: 0x%08X\n", linkActivePa);
+				Report(Channel::Norm, "Invalid active threads link physical address: 0x%08X\n", linkActivePa);
 			}
 			return nullptr;
 		}
@@ -99,7 +101,7 @@ namespace HLE
 
 		if (displayOnScreen)
 		{
-			DBReport("Dumping active DolphinOS threads:\n\n");
+			Report(Channel::Norm, "Dumping active DolphinOS threads:\n\n");
 		}
 
 		size_t activeThreadsCount = 0;
@@ -124,13 +126,13 @@ namespace HLE
 
 			if (displayOnScreen)
 			{
-				DBReport("\n");
+				Report(Channel::Norm, "\n");
 			}
 		}
 
 		if (displayOnScreen)
 		{
-			DBReport("Active threads: %zi. Use DumpContext command to dump thread context.\n", activeThreadsCount);
+			Report(Channel::Norm, "Active threads: %zi. Use DumpContext command to dump thread context.\n", activeThreadsCount);
 		}
 
 		return output;
@@ -148,7 +150,7 @@ namespace HLE
 		{
 			if (displayOnScreen)
 			{
-				DBReport("Invalid context effective address: 0x%08X\n", effectiveAddr);
+				Report(Channel::Norm, "Invalid context effective address: 0x%08X\n", effectiveAddr);
 			}
 			return nullptr;
 		}
@@ -159,7 +161,7 @@ namespace HLE
 		{
 			if (displayOnScreen)
 			{
-				DBReport("Invalid context physical address: 0x%08X\n", physAddr);
+				Report(Channel::Norm, "Invalid context physical address: 0x%08X\n", physAddr);
 			}
 			return nullptr;
 		}
@@ -199,36 +201,36 @@ namespace HLE
 		{
 			for (int i = 0; i < 32; i++)
 			{
-				DBReport("gpr[%i] = 0x%08X\n", i, context.gpr[i]);
+				Report(Channel::Norm, "gpr[%i] = 0x%08X\n", i, context.gpr[i]);
 			}
 
 			for (int i = 0; i < 32; i++)
 			{
-				DBReport("fpr[%i] = %f (0x%llx)\n", i, context.fpr[i], context.fprAsUint[i]);
+				Report(Channel::Norm, "fpr[%i] = %f (0x%llx)\n", i, context.fpr[i], context.fprAsUint[i]);
 			}
 
 			for (int i = 0; i < 32; i++)
 			{
-				DBReport("psr[%i] = %f (0x%llx)\n", i, context.psr[i], context.psrAsUint[i]);
+				Report(Channel::Norm, "psr[%i] = %f (0x%llx)\n", i, context.psr[i], context.psrAsUint[i]);
 			}
 
 			for (int i = 0; i < 8; i++)
 			{
-				DBReport("gqr[%i] = 0x%08X\n", i, context.gqr[i]);
+				Report(Channel::Norm, "gqr[%i] = 0x%08X\n", i, context.gqr[i]);
 			}
 
-			DBReport("cr = 0x%08X\n", context.cr);
-			DBReport("lr = 0x%08X\n", context.lr);
-			DBReport("ctr = 0x%08X\n", context.ctr);
-			DBReport("xer = 0x%08X\n", context.xer);
+			Report(Channel::Norm, "cr = 0x%08X\n", context.cr);
+			Report(Channel::Norm, "lr = 0x%08X\n", context.lr);
+			Report(Channel::Norm, "ctr = 0x%08X\n", context.ctr);
+			Report(Channel::Norm, "xer = 0x%08X\n", context.xer);
 
-			DBReport("fpscr = 0x%08X\n", context.fpscr);
+			Report(Channel::Norm, "fpscr = 0x%08X\n", context.fpscr);
 
-			DBReport("srr[0] = 0x%08X\n", context.srr[0]);
-			DBReport("srr[1] = 0x%08X\n", context.srr[1]);
+			Report(Channel::Norm, "srr[0] = 0x%08X\n", context.srr[0]);
+			Report(Channel::Norm, "srr[1] = 0x%08X\n", context.srr[1]);
 
-			DBReport("mode = 0x%02X\n", (uint8_t)context.mode);
-			DBReport("state = 0x%02X\n", (uint8_t)context.state);
+			Report(Channel::Norm, "mode = 0x%02X\n", (uint8_t)context.mode);
+			Report(Channel::Norm, "state = 0x%02X\n", (uint8_t)context.state);
 		}
 
 		// Serialize

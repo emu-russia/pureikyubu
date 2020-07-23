@@ -16,6 +16,69 @@ namespace Debug
         return true;
     }
 
+    static void Tokenize(char* line, std::vector<std::string>& args)
+    {
+        #define endl    ( line[p] == 0 )
+        #define space   ( line[p] == 0x20 )
+        #define quot    ( line[p] == '\'' )
+        #define dquot   ( line[p] == '\"' )
+
+        int p, start, end;
+        p = start = end = 0;
+
+        args.clear();
+
+        // while not end line
+        while (!endl)
+        {
+            // skip space first, if any
+            while (space) p++;
+            if (!endl && (quot || dquot))
+            {   // quotation, need special case
+                p++;
+                start = p;
+                while (1)
+                {
+                    if (endl)
+                    {
+                        throw "Open quotation";
+                        return;
+                    }
+
+                    if (quot || dquot)
+                    {
+                        end = p;
+                        p++;
+                        break;
+                    }
+                    else p++;
+                }
+
+                args.push_back(std::string(line + start, end - start));
+            }
+            else if (!endl)
+            {
+                start = p;
+                while (1)
+                {
+                    if (endl || space || quot || dquot)
+                    {
+                        end = p;
+                        break;
+                    }
+
+                    p++;
+                }
+
+                args.push_back(std::string(line + start, end - start));
+            }
+        }
+        #undef space
+        #undef quot
+        #undef dquot
+        #undef endl
+    }
+
     static Json::Value* cmd_script(std::vector<std::string>& args)
     {
         size_t i;
@@ -24,12 +87,12 @@ namespace Debug
 
         file = args[1].c_str();
 
-        DBReport("Loading script: %s\n", file); 
+        Report(Channel::Norm, "Loading script: %s\n", file); 
 
-        auto sbuf = UI::FileLoad(file);
+        auto sbuf = Util::FileLoad((std::string)file);
         if (sbuf.empty())
         {
-            DBReport("Cannot open script file!\n");
+            Report(Channel::Norm, "Cannot open script file!\n");
             return nullptr;
         }
 
@@ -44,7 +107,7 @@ namespace Debug
             }
         }
 
-        DBReport("Executing script...\n");
+        Report(Channel::Norm, "Executing script...\n");
 
         int cnt = 1;
         char* ptr = (char*)sbuf.data();
@@ -85,29 +148,23 @@ namespace Debug
 
             // execute line
             if (testempty(line)) continue;
-            DBReport("%i: %s", cnt++, line);
-            con_tokenizing(line);
-            line[0] = 0;
-            con_update(CON_UPDATE_EDIT | CON_UPDATE_MSGS);
-
+            Report(Channel::Norm, "%i: %s", cnt++, line);
+            
             commandArgs.clear();
-            for (int i = 0; i < roll.tokencount; i++)
-            {
-                commandArgs.push_back(roll.tokens[i]);
-            }
+            Tokenize(line, commandArgs);
+            line[0] = 0;
 
-            con_command(commandArgs);
+            JDI::Hub.Execute(commandArgs);
         }
 
-        DBReport("\nDone execute script.\n");
-        con.update |= CON_UPDATE_ALL;
+        Report(Channel::Norm, "\nDone execute script.\n");
         return nullptr;
     }
 
     // Echo
     static Json::Value* cmd_echo(std::vector<std::string>& args)
     {
-        DBReport("%s\n", args[1].c_str());
+        Report(Channel::Norm, "%s\n", args[1].c_str());
         return nullptr;
     }
 
@@ -117,7 +174,7 @@ namespace Debug
     {
         if (profiler)
         {
-            DBReport("Already started.\n");
+            Report(Channel::Norm, "Already started.\n");
             return nullptr;
         }
 
@@ -131,7 +188,7 @@ namespace Debug
         profiler = new SamplingProfiler(args[1].c_str(), period);
         assert(profiler);
 
-        DBReport("Profiler started.\n");
+        Report(Channel::Norm, "Profiler started.\n");
 
         return nullptr;
     }
@@ -140,23 +197,54 @@ namespace Debug
     {
         if (profiler == nullptr)
         {
-            DBReport("Not started.\n");
+            Report(Channel::Norm, "Not started.\n");
             return nullptr;
         }
 
         delete profiler;
         profiler = nullptr;
 
-        DBReport("Profiler stopped.\n");
+        Report(Channel::Norm, "Profiler stopped.\n");
 
         return nullptr;
     }
 
-	void Reflector()
-	{
-        Debug::Hub.AddCmd("script", cmd_script);
-        Debug::Hub.AddCmd("echo", cmd_echo);
-        Debug::Hub.AddCmd("StartProfiler", StartProfiler);
-        Debug::Hub.AddCmd("StopProfiler", StopProfiler);
-	}
+    static Json::Value* GetChannelName(std::vector<std::string>& args)
+    {
+        Channel chan = (Channel)atoi(args[1].c_str());
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        output->AddString(nullptr, Util::StringToWstring(Msgs.DebugChannelToString(chan)).c_str() );
+
+        return output;
+    }
+
+    static Json::Value* QueryDebugMessages(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        std::list<std::pair<Channel, std::string>> queue;
+        Msgs.QueryDebugMessages(queue);
+
+        for (auto it = queue.begin(); it != queue.end(); ++it)
+        {
+            output->AddInt(nullptr, (int)it->first);
+            output->AddString(nullptr, Util::StringToWstring(it->second).c_str());
+        }
+
+        return output;
+    }
+
+    void Reflector()
+    {
+        JDI::Hub.AddCmd("script", cmd_script);
+        JDI::Hub.AddCmd("echo", cmd_echo);
+        JDI::Hub.AddCmd("StartProfiler", StartProfiler);
+        JDI::Hub.AddCmd("StopProfiler", StopProfiler);
+        JDI::Hub.AddCmd("GetChannelName", GetChannelName);
+        JDI::Hub.AddCmd("qd", QueryDebugMessages);
+    }
 }

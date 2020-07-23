@@ -1,6 +1,8 @@
 // BS and BS2 (IPL) simulation.
 #include "pch.h"
 
+using namespace Debug;
+
 // The simulation of BS and BS2 is performed with the cache turned off virtually.
 
 static uint32_t default_syscall[] = {    // default exception handler
@@ -64,7 +66,7 @@ static void BootApploader()
     // something weird, like : appLoaderFunc1 (see Zelda dump - it 
     // has some compilation garbage parts from bootrom, hehe).
 
-    DBReport2( DbgChannel::HLE, "booting apploader..\n");
+    Report( Channel::HLE, "booting apploader..\n");
 
     // set OSReport dummy
     Gekko::Gekko->WriteWord(0x81300000, 0x4e800020 /* blr opcode */);
@@ -99,8 +101,8 @@ static void BootApploader()
     Gekko::Gekko->ReadWord(0x81300008, &_main);
     Gekko::Gekko->ReadWord(0x8130000c, &_epilog);
 
-    DBReport2(DbgChannel::HLE, "apploader interface : init : %08X main : %08X close : %08X\n",
-              _prolog, _main, _epilog );
+    Report( Channel::HLE, "apploader interface : init : %08X main : %08X close : %08X\n",
+            _prolog, _main, _epilog );
 
     // execute apploader prolog
     Gekko::Gekko->regs.gpr[3] = 0x81300000;            // OSReport callback as parameter
@@ -135,8 +137,8 @@ static void BootApploader()
             DVD::Seek(offs);
             DVD::Read(&mi.ram[addr & RAMMASK], size);
 
-            DBReport2(DbgChannel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
-                      offs, size, addr );
+            Report( Channel::HLE, "apploader read : offs : %08X size : %08X addr : %08X\n",
+                    offs, size, addr );
         }
 
     } while(Gekko::Gekko->regs.gpr[3] != 0);
@@ -150,7 +152,7 @@ static void BootApploader()
     }
 
     Gekko::Gekko->regs.pc = Gekko::Gekko->regs.gpr[3];
-    DBReport("\n");
+    Report(Channel::Norm, "\n");
 }
 
 // RTC -> TBR
@@ -164,11 +166,11 @@ static void __SyncTime(bool rtc)
 
     RTCUpdate();
 
-    DBReport2(DbgChannel::HLE, "updating timer value..\n");
+    Report(Channel::HLE, "updating timer value..\n");
 
     int32_t counterBias = (int32_t)_byteswap_ulong(exi.sram.counterBias);
     int32_t rtcValue = exi.rtcVal + counterBias;
-    DBReport2(DbgChannel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
+    Report(Channel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
 
     int64_t newTime = (int64_t)rtcValue * CPU_TIMER_CLOCK;
     int64_t systemTime;
@@ -176,7 +178,7 @@ static void __SyncTime(bool rtc)
     systemTime += newTime - Gekko::Gekko->regs.tb.sval;
     Gekko::Gekko->WriteDouble(0x800030d8, (uint64_t *)&systemTime);
     Gekko::Gekko->regs.tb.sval = newTime;
-    DBReport2(DbgChannel::HLE, "new timer: 0x%llx\n\n", Gekko::Gekko->GetTicks());
+    Report(Channel::HLE, "new timer: 0x%llx\n\n", Gekko::Gekko->GetTicks());
 }
 
 void BootROM(bool dvd, bool rtc, uint32_t consoleVer)

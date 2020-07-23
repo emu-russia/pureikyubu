@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DSP
 {
 	uint16_t DspCore::DecodeAdpcm(uint16_t in)
@@ -56,7 +58,7 @@ namespace DSP
 				out = (yn >> 16);
 				break;
 			case 3:
-				DBHalt("DSP: Unsupported ADPCM output mode\n");
+				Halt("DSP: Unsupported ADPCM output mode\n");
 				break;
 		}
 

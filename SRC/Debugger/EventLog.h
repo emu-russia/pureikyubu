@@ -4,9 +4,7 @@
 
 #pragma once
 
-#include "../Common/Json.h"
 #include "../Common/Spinlock.h"
-#include "Debugger.h"
 
 namespace Debug
 {
@@ -21,11 +19,11 @@ namespace Debug
 		EventLog();
 		~EventLog();
 
-		void TraceBegin(DbgChannel chan, char * s);
+		void TraceBegin(Channel chan, char * s);
 
-		void TraceEnd(DbgChannel chan);
+		void TraceEnd(Channel chan);
 
-		void TraceEvent(DbgChannel chan, char * text);
+		void TraceEvent(Channel chan, char * text);
 
 		/// @brief Get event history as serialized Json text. Then you can save the text to a file or transfer it to the utility to display the history.
 		void ToString(std::string & jsonText);

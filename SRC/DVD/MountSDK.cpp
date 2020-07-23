@@ -6,6 +6,8 @@ All the necessary data (BI2, Appldr, some DOL executable, we take from the SDK).
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DVD
 {
 	MountDolphinSdk::MountDolphinSdk(const TCHAR * DolphinSDKPath)
@@ -13,10 +15,10 @@ namespace DVD
 		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
 
 		/* Load dvddata structure. */
-		auto dvdDataInfoText = UI::FileLoad(DvdDataJson);
+		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
-			DBReport("Failed to load DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR *)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR *)DvdDataJson).c_str());
 			return;
 		}
 
@@ -26,39 +28,39 @@ namespace DVD
 		}
 		catch (...)
 		{
-			DBReport("Failed to Deserialize DolphinSDK dvddata json: %s\n", Debug::Hub.TcharToString((TCHAR*)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR*)DvdDataJson).c_str());
 			return;
 		}
 
 		// Generate data blobs
 		if (!GenDiskId())
 		{
-			DBReport("Failed to GenDiskId\n");
+			Report(Channel::Norm, "Failed to GenDiskId\n");
 			return;
 		}
 		if (!GenApploader())
 		{
-			DBReport("Failed to GenApploader\n");
+			Report(Channel::Norm, "Failed to GenApploader\n");
 			return;
 		}
 		if (!GenBi2())
 		{
-			DBReport("Failed to GenBi2\n");
+			Report(Channel::Norm, "Failed to GenBi2\n");
 			return;
 		}
 		if (!GenFst())
 		{
-			DBReport("Failed to GenFst\n");
+			Report(Channel::Norm, "Failed to GenFst\n");
 			return;
 		}
 		if (!GenDol())
 		{
-			DBReport("Failed to GenDol\n");
+			Report(Channel::Norm, "Failed to GenDol\n");
 			return;
 		}
 		if (!GenBb2())
 		{
-			DBReport("Failed to GenBb2\n");
+			Report(Channel::Norm, "Failed to GenBb2\n");
 			return;
 		}
 
@@ -66,16 +68,16 @@ namespace DVD
 
 		if (!GenMap())
 		{
-			DBReport("Failed to GenMap\n");
+			Report(Channel::Norm, "Failed to GenMap\n");
 			return;
 		}
 		if (!GenFileMap())
 		{
-			DBReport("Failed to GenFileMap\n");
+			Report(Channel::Norm, "Failed to GenFileMap\n");
 			return;
 		}
 
-		DBReport2(DbgChannel::DVD, "DolphinSDK mounted!\n");
+		Report(Channel::DVD, "DolphinSDK mounted!\n");
 		mounted = true;
 	}
 
@@ -91,7 +93,7 @@ namespace DVD
 
 	void MountDolphinSdk::MapFile(TCHAR* path, uint32_t offset)
 	{
-		size_t size = UI::FileSize(path);
+		size_t size = Util::FileSize(path);
 		std::tuple<TCHAR*, uint32_t, size_t> entry(path, offset, size);
 		fileMapping.push_back(entry);
 	}
@@ -228,14 +230,14 @@ namespace DVD
 	bool MountDolphinSdk::GenApploader()
 	{
 		auto path = fmt::format(L"{:s}{:s}", directory, AppldrPath);
-		AppldrData = UI::FileLoad(path);
+		AppldrData = Util::FileLoad(path);
 		
 		return true;
 	}
 
 	bool MountDolphinSdk::GenDol()
 	{
-		Dol = UI::FileLoad(DolPath);
+		Dol = Util::FileLoad(DolPath);
 
 		return true;
 	}
@@ -243,7 +245,7 @@ namespace DVD
 	bool MountDolphinSdk::GenBi2()
 	{
 		auto path = fmt::format(L"{:s}{:s}", directory, Bi2Path);
-		Bi2Data = UI::FileLoad(path);
+		Bi2Data = Util::FileLoad(path);
 
 		return true;
 	}
@@ -307,7 +309,7 @@ namespace DVD
 
 			if (!skipMeta)
 			{
-				std::string path = Debug::Hub.TcharToString(entry->value.AsString);
+				std::string path = Util::TcharToString(entry->value.AsString);
 
 				size_t nameOffset = NameTableData.size();
 				AddString(path);
@@ -365,7 +367,7 @@ namespace DVD
 
 				fileOffsets->AddInt(nullptr, userFilesStart + userFilesOffset);
 
-				size_t fileSize = UI::FileSize(filePath);
+				size_t fileSize = Util::FileSize(filePath);
 
 				Json::Value* fileSizes = entry->parent->parent->ByName("fileSizes");
 				if (fileSizes == nullptr)
@@ -519,11 +521,11 @@ namespace DVD
 		}
 		catch (...)
 		{
-			DBReport("ParseDvdDataEntryForFst failed!\n");
+			Report(Channel::Norm, "ParseDvdDataEntryForFst failed!\n");
 			return false;
 		}
 
-		Debug::Hub.Dump(DvdDataInfo.root.children.back());
+		JDI::Hub.Dump(DvdDataInfo.root.children.back());
 
 		try
 		{
@@ -531,13 +533,13 @@ namespace DVD
 		}
 		catch (...)
 		{
-			DBReport("WalkAndGenerateFst failed!\n");
+			Report(Channel::Norm, "WalkAndGenerateFst failed!\n");
 			return false;
 		}
 
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		UI::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
+		Util::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
 
 		return true;
 	}
@@ -624,7 +626,7 @@ namespace DVD
 		}
 		catch (...)
 		{
-			DBReport("WalkAndMapFiles failed!\n");
+			Report(Channel::Norm, "WalkAndMapFiles failed!\n");
 			return false;
 		}
 

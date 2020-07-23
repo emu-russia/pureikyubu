@@ -1,6 +1,8 @@
 // symbolic information API.
 #include "pch.h"
 
+using namespace Debug;
+
 // IMPORTANT : EXE loading base must be 0x00400000, for correct HLE.
 // MSVC : Project/Settings/Link/Output/Base Address
 // CW : Edit/** Win32 x86 Settings/Linker/x86 COFF/Base address
@@ -117,7 +119,10 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
 
     // check address
     // High-level call is too high in memory.
-    assert(((uint64_t)routine & ~0x03ffffff) == 0);
+    if (((uint64_t)routine & ~0x03ffffff) != 0)
+    {
+        throw "High-level call is too high in memory!";
+    }
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)
@@ -148,7 +153,7 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
                 );
             }
         }
-        DBReport2(DbgChannel::HLE, "patched API call: %08X %s\n", symbol->eaddr, symName);
+        Report(Channel::HLE, "patched API call: %08X %s\n", symbol->eaddr, symName);
     }
 }
 
@@ -210,17 +215,17 @@ void SYMKill()
 void SYMList(const char *str)
 {
     size_t len = strlen(str), cnt = 0;
-    DBReport("<address> symbol\n\n");
+    Report(Channel::Norm, "<address> symbol\n\n");
 
     for (auto it = work->symmap.begin(); it != work->symmap.end(); ++it)
     {
         SYM* symbol = it->second;
         if (((*str == '*') || !_strnicmp(str, symbol->savedName, len)))
         {
-            DBReport("<%08X> %s\n", symbol->eaddr, symbol->savedName);
+            Report(Channel::Norm, "<%08X> %s\n", symbol->eaddr, symbol->savedName);
             cnt++;
         }
     }
 
-    DBReport("%i match\n\n", cnt);
+    Report(Channel::Norm, "%i match\n\n", cnt);
 }

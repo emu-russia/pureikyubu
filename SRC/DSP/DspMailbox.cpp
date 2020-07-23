@@ -2,6 +2,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DSP
 {
 	// CPU->DSP Mailbox
@@ -15,14 +17,14 @@ namespace DSP
 
 		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
+			Report(Channel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
 		}
 
 		if (CpuToDspMailbox[0] & 0x8000)
 		{
 			if (logMailbox)
 			{
-				DBReport2(DbgChannel::DSP, "CPU Message discarded.\n");
+				Report(Channel::DSP, "CPU Message discarded.\n");
 			}
 		}
 
@@ -38,7 +40,7 @@ namespace DSP
 
 		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
+			Report(Channel::DSP, "CpuToDspWriteLo: 0x%04X\n", value);
 		}
 
 		CpuToDspMailbox[1] = value;
@@ -46,7 +48,7 @@ namespace DSP
 
 		if (logMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
+			Report(Channel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
 		}
 		CpuToDspLock[1].Unlock();
 		_TE();
@@ -80,7 +82,7 @@ namespace DSP
 		{
 			if (logMailbox)
 			{
-				DBReport2(DbgChannel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
+				Report(Channel::DSP, "DSP Read Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
 			}
 			CpuToDspMailbox[0] &= ~0x8000;				// When DSP read
 		}
@@ -99,14 +101,14 @@ namespace DSP
 
 		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
+			Report(Channel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
 		}
 
 		if (DspToCpuMailbox[0] & 0x8000)
 		{
 			if (logMailbox)
 			{
-				DBReport2(DbgChannel::DSP, "DSP Message discarded.\n");
+				Report(Channel::DSP, "DSP Message discarded.\n");
 			}
 		}
 
@@ -122,7 +124,7 @@ namespace DSP
 
 		if (logInsaneMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
+			Report(Channel::DSP, "DspToCpuWriteLo: 0x%04X\n", value);
 		}
 
 		DspToCpuMailbox[1] = value;
@@ -130,7 +132,7 @@ namespace DSP
 
 		if (logMailbox)
 		{
-			DBReport2(DbgChannel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
+			Report(Channel::DSP, "DSP Write Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
 		}
 
 		DspToCpuLock[1].Unlock();
@@ -154,7 +156,7 @@ namespace DSP
 		{
 			if (logMailbox)
 			{
-				DBReport2(DbgChannel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
+				Report(Channel::DSP, "CPU Read Message: 0x%04X_%04X\n", DspToCpuMailbox[0], DspToCpuMailbox[1]);
 			}
 			DspToCpuMailbox[0] &= ~0x8000;					// When CPU read
 		}
