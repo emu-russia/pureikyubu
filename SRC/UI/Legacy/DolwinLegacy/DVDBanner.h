@@ -45,5 +45,4 @@ struct DVDBanner2
 };
 
 // banner API
-void* DVDLoadBanner(TCHAR* dvdFile);           // free() required!
-uint8_t DVDBannerChecksum(void* banner);
+std::vector<uint8_t> DVDLoadBanner(const TCHAR* dvdFile);

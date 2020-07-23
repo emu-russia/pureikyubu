@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\DVDBanner.cpp" />
     <ClCompile Include="..\..\pch.cpp" />
+    <ClCompile Include="..\..\StringUtils.cpp" />
     <ClCompile Include="..\..\UserAbout.cpp" />
     <ClCompile Include="..\..\UserDebugStubs.cpp" />
     <ClCompile Include="..\..\UserFile.cpp" />
@@ -174,7 +175,7 @@
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\RES\resource.h" />
     <ClInclude Include="..\..\SjisTable.h" />
-    <ClInclude Include="..\..\User.h" />
+    <ClInclude Include="..\..\StringUtils.h" />
     <ClInclude Include="..\..\UserAbout.h" />
     <ClInclude Include="..\..\UserConfig.h" />
     <ClInclude Include="..\..\UserDebugStubs.h" />

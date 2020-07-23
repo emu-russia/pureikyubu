@@ -34,64 +34,64 @@ void PADLoadConfig(HWND hwndDlg)
 
     // Plugged or not
     sprintf_s(parm, sizeof(parm), "PluggedIn""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].plugged = GetConfigBool(parm, USER_PADS);
+    pad.config[pad.padToConfigure].plugged = UI::Jdi.GetConfigBool(parm, USER_PADS);
 
     //
     // Buttons 8|
     //
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_UP""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_DOWN""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_LEFT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_RIGHT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = UI::Jdi.GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT50""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT100""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = UI::Jdi.GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXUP""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXDOWN""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXLEFT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXRIGHT""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = UI::Jdi.GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERL""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERR""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERZ""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = UI::Jdi.GetConfigInt(parm, USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_A""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_B""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_X""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_Y""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = UI::Jdi.GetConfigInt(parm, USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_START""_%i", pad.padToConfigure);
-    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = GetConfigInt(parm, USER_PADS);
+    pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = UI::Jdi.GetConfigInt(parm, USER_PADS);
 
     //
     // Enable buttons
@@ -283,65 +283,65 @@ void PADSaveConfig(HWND hwndDlg)
 
     // Plugged or not
     sprintf_s(parm, sizeof(parm), "PluggedIn""_%i", pad.padToConfigure);
-    if(pad.config[pad.padToConfigure].plugged) SetConfigBool(parm, true, USER_PADS);
-    else SetConfigBool(parm, false, USER_PADS);
+    if(pad.config[pad.padToConfigure].plugged) UI::Jdi.SetConfigBool(parm, true, USER_PADS);
+    else UI::Jdi.SetConfigBool(parm, false, USER_PADS);
 
     //
     // Buttons
     //
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_UP""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_DOWN""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_LEFT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_RIGHT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XUP100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XDOWN100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XLEFT100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT50""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_XRIGHT100""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXUP""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXDOWN""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXLEFT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_CXRIGHT""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERL""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERR""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_TRIGGERZ""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ], USER_PADS);
 
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_A""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_B""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_X""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_Y""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y], USER_PADS);
     sprintf_s(parm, sizeof(parm), "VKEY_FOR_START""_%i", pad.padToConfigure);
-    SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START], USER_PADS);
+    UI::Jdi.SetConfigInt(parm, pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START], USER_PADS);
 }
 
 // reset all butons and unplug pad

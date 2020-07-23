@@ -1,7 +1,5 @@
 #include "pch.h"
 
-bool GekkoDebuggerOpened = false;
-
 /* ---------------------------------------------------------------------------  */
 /* Basic application output                                                     */
 
@@ -28,13 +26,15 @@ namespace UI
             }
             *ansiPtr++ = 0;
 
-            DBHalt(ansiPtr);
+            char cmd[0x1000];
+            sprintf_s(cmd, sizeof(cmd), "echo %s", ansiText);
+            UI::Jdi.ExecuteCommand(cmd);
+            UI::Jdi.ExecuteCommand("stop");
         }
         else
         {
             MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
-            std::vector<std::string> cmd{ "exit" };
-            JDI::Hub.Execute(cmd);
+            UI::Jdi.ExecuteCommand("exit");
         }
     }
 
@@ -143,7 +143,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     InitFileSystem(hInstance);
 
     /* Allow only one instance of Dolwin to run at once? */
-    if (GetConfigBool(USER_RUNONCE, USER_UI))
+    if (UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
     }

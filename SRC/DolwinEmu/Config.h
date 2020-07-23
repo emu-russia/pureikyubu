@@ -34,6 +34,13 @@ constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
 #define USER_EXI_LOG "EXI_LOG"			// 1: log EXI activities
 #define USER_VI_LOG "VI_LOG"			// do debugger log output
 
+// MC: Names of the keys used to store to configuration
+#define MemcardA_Connected_Key "MemcardA_Connected"
+#define MemcardB_Connected_Key "MemcardB_Connected"
+#define MemcardA_Filename_Key "MemcardA_Filename"
+#define MemcardB_Filename_Key "MemcardB_Filename"
+#define Memcard_SyncSave_Key "Memcard_SyncSave"
+
 // User variables API
 TCHAR* GetConfigString(const char* var, const char* path);
 void SetConfigString(const char* var, const TCHAR* newVal, const char* path);

@@ -39,7 +39,7 @@ static INT_PTR CALLBACK AboutProc(
                                       APPNAME, APPDESC,
                                       L"Copyright 2003,2004,2020, Dolwin team",
                                       L"Build version",
-                                      APPVER, /*__DATE__, __TIME__,*/
+                                      Util::StringToWstring(UI::Jdi.GetVersion()), /*__DATE__, __TIME__,*/
                                       version, platform);
 
             SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());

@@ -2,7 +2,7 @@
 
 namespace Util
 {
-    size_t FileSize(std::wstring& filename)
+    size_t FileSize(const std::wstring& filename)
     {
         FILE* f;
         _wfopen_s(&f, filename.c_str(), L"rb");
@@ -16,7 +16,7 @@ namespace Util
         return size;
     }
 
-    size_t FileSize(std::string& filename)
+    size_t FileSize(const std::string& filename)
     {
         std::wstring wstr = StringToWstring(filename);
         return FileSize(wstr);
@@ -28,7 +28,7 @@ namespace Util
         return FileSize(wstr);
     }
 
-    bool FileExists(std::wstring& filename)
+    bool FileExists(const std::wstring& filename)
     {
         FILE* f;
         _wfopen_s(&f, filename.c_str(), L"rb");
@@ -38,7 +38,7 @@ namespace Util
         return true;
     }
 
-    bool FileExists(std::string& filename)
+    bool FileExists(const std::string& filename)
     {
         std::wstring wstr = StringToWstring(filename);
         return FileExists(wstr);
@@ -50,7 +50,7 @@ namespace Util
         return FileExists(wstr);
     }
 
-    std::vector<uint8_t> FileLoad(std::wstring& filename)
+    std::vector<uint8_t> FileLoad(const std::wstring& filename)
     {
         if (!FileExists(filename))
         {
@@ -70,7 +70,7 @@ namespace Util
         return std::vector<uint8_t>(data, data + size);
     }
 
-    std::vector<uint8_t> FileLoad(std::string& filename)
+    std::vector<uint8_t> FileLoad(const std::string& filename)
     {
         std::wstring wstr = StringToWstring(filename);
         return FileLoad(wstr);
@@ -82,7 +82,7 @@ namespace Util
         return FileLoad(wstr);
     }
 
-    bool FileSave(std::wstring& filename, std::vector<uint8_t>& data)
+    bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data)
     {
         FILE* f;
         _wfopen_s(&f, filename.c_str(), L"wb");
@@ -95,7 +95,7 @@ namespace Util
         return true;
     }
 
-    bool FileSave(std::string& filename, std::vector<uint8_t>& data)
+    bool FileSave(const std::string& filename, std::vector<uint8_t>& data)
     {
         std::wstring wstr = StringToWstring(filename);
         return FileSave(wstr, data);

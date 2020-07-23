@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 namespace Util
 {
 	std::string WstringToString(const std::wstring& wstr);

@@ -298,21 +298,10 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_CONNECTED) == BST_CHECKED ) {
                     /* memcard is supposed to be connected */
 
-                    if (um_filechanged == TRUE) /* file was changed */
-                        MCUseFile(um_num, buf, true);
-                    else if (Memcard_Connected[um_num] == FALSE || memcard[um_num].connected == FALSE )
-                            if (MCConnect (um_num) == FALSE)
-                                MessageBox(wnd.hMainWindow, _T("Error while trying to connect the memcards."), _T("Memcard Error"), 0) ;
-
                     Memcard_Connected[um_num] = true;
                 }
                 else {
                     /* memcard is supposed to be disconnected */
-
-                    if (um_filechanged == TRUE) /* file was changed */
-                        MCUseFile(um_num, buf, false);
-                    else if (Memcard_Connected[um_num] || memcard[um_num].connected )
-                                MCDisconnect(um_num);
 
                     Memcard_Connected[um_num] = false;
                 }
@@ -321,15 +310,15 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
                 if (um_num == 0)
                 {
-                    SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                    SetConfigString(MemcardA_Filename_Key, memcard[0].filename, USER_MEMCARDS);
+                    UI::Jdi.SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, memcard[0].filename, USER_MEMCARDS);
                 }
                 else
                 {
-                    SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                    SetConfigString(MemcardB_Filename_Key, memcard[1].filename, USER_MEMCARDS);
+                    UI::Jdi.SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, memcard[1].filename, USER_MEMCARDS);
                 }
-                SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
+                UI::Jdi.SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 
                 EndDialog(hwndDlg, 0);
                 return TRUE;

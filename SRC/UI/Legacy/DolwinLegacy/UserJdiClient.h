@@ -15,17 +15,17 @@ namespace UI
 		// Generic
 
 		std::string GetVersion();
-		void ExecuteCommand(std::string& cmdline);
+		void ExecuteCommand(const std::string& cmdline);
 
 		// Methods for controlling an optical drive
 
-		void DvdMount(std::string& path);
+		bool DvdMount(const std::string& path);
 		void DvdUnmount();
 
 		void DvdSeek(int offset);
 		void DvdRead(std::vector<uint8_t>& data);
 
-		uint32_t DvdOpenFile(std::string& filename);
+		uint32_t DvdOpenFile(const std::string& filename);
 
 		bool DvdCoverOpened();
 		void DvdOpenCover();
@@ -33,19 +33,22 @@ namespace UI
 
 		// Configuration access
 
-		std::string GetConfigString(std::string& var, std::string& path);
-		void SetConfigString(std::string& var, std::string& newVal, std::string& path);
-		int GetConfigInt(std::string& var, std::string& path);
-		void SetConfigInt(std::string& var, int newVal, std::string& path);
-		bool GetConfigBool(std::string& var, std::string& path);
-		void SetConfigBool(std::string& var, bool newVal, std::string& path);
+		std::string GetConfigString(const std::string& var, const std::string& path);
+		void SetConfigString(const std::string& var, const std::string& newVal, const std::string& path);
+		int GetConfigInt(const std::string& var, const std::string& path);
+		void SetConfigInt(const std::string& var, int newVal, const std::string& path);
+		bool GetConfigBool(const std::string& var, const std::string& path);
+		void SetConfigBool(const std::string& var, bool newVal, const std::string& path);
 
 		// Emulator controls
 
-		void LoadFile(std::string& filename);
+		void LoadFile(const std::string& filename);
 		void Unload();
 		void Run();
 		void Stop();
+		void Reset();
 
 	};
+
+	extern JdiClient Jdi;
 }

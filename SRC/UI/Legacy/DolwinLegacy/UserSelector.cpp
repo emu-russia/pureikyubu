@@ -7,6 +7,9 @@ UserSelector usel;
 /* List of banners. */
 static HIMAGELIST bannerList;
 
+// size of DVD image
+#define DVD_SIZE            0x57058000  // 1.4 GB
+
 /* ---------------------------------------------------------------------------  */
 /* PATH management                                                              */
 
@@ -45,7 +48,7 @@ static void add_path(std::wstring& path)
 // load PATH user variable and cut it on pieces into "paths" list
 static void load_path()
 {
-    auto var = GetConfigString(USER_PATH, USER_UI);
+    auto var = Util::StringToWstring(UI::Jdi.GetConfigString(USER_PATH, USER_UI));
     int n = 0;
 
     // delete current pathlist
@@ -99,14 +102,14 @@ bool AddSelectorPath(std::wstring& fullPath)
 
     if (!exists)
     {
-        auto old = GetConfigString(USER_PATH, USER_UI);
+        auto old = Util::StringToWstring(UI::Jdi.GetConfigString(USER_PATH, USER_UI));
         
         if (!old.empty())
         {
             path = fmt::format(L"{:s};{:s}", old, path);
         }
 
-        SetConfigString(USER_PATH, path, USER_UI);
+        UI::Jdi.SetConfigString(USER_PATH, Util::WstringToString(path), USER_UI);
         add_path(path);
 
         return true;
@@ -371,7 +374,7 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
     }
 
     /* Try to open file */
-    if (!UI::FileExists(file))
+    if (!UI::FileExists(file.c_str()))
     {
         return;
     }
@@ -387,19 +390,19 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
     if (type == SELECTOR_FILE::Dvd)
     {
         /* Load DVD banner. */
-        auto copy = file;
-        auto bnr = DVDLoadBanner(copy);
-        if (!bnr)
+        std::vector<uint8_t> banner = DVDLoadBanner(file.c_str());
+        if (banner.empty())
         {
             return;
         }
 
         // get DiskID
-        char diskIDRaw[0x10] = { 0 };
+        std::vector<uint8_t> diskIDRaw;
+        diskIDRaw.resize(4);
         TCHAR diskID[0x10] = { 0 };
-        DVD::MountFile(file);
-        DVD::Seek(0);
-        DVD::Read(diskIDRaw, 4);
+        UI::Jdi.DvdMount( Util::WstringToString(file) );
+        UI::Jdi.DvdSeek(0);
+        UI::Jdi.DvdRead(diskIDRaw);
         diskID[0] = diskIDRaw[0];
         diskID[1] = diskIDRaw[1];
         diskID[2] = diskIDRaw[2];
@@ -407,8 +410,8 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
         diskID[4] = 0;
 
         /* Set GameID. */
-        item->id = fmt::sprintf(L"%.4s%02X", diskID, DVDBannerChecksum(bnr.get()));
-        DVD::Unmount();
+        item->id = fmt::sprintf(L"%.4s", diskID);
+        UI::Jdi.DvdUnmount();
 
         /* Use banner info and remove line-feeds. */
         Util::ustring longTitle = bnr->comments[0].longTitle;
@@ -704,7 +707,7 @@ void UpdateSelector()
     //list_path();
 
     // load file filter
-    usel.filter = GetConfigInt(USER_FILTER, USER_UI);
+    usel.filter = UI::Jdi.GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
     for (auto& dir : usel.paths)
@@ -766,7 +769,7 @@ void SelectorSetSelected(int item)
 }
 
 // if file not present, keep selection unchanged
-void SelectorSetSelected(std::wstring_view filename)
+void SelectorSetSelected(const std::wstring& filename)
 {
     for (int i = 0; i < usel.files.size(); i++)
     {
@@ -858,7 +861,7 @@ static void doubleclick()
     if (usel.files.size() == 0 || item < 0)
         return;
 
-    TCHAR* filename = usel.files[item]->name.data();
+    TCHAR* filename = (TCHAR *)usel.files[item]->name.data();
 
     // load file
     LoadFile(filename);
@@ -986,7 +989,7 @@ void SortSelector(SELECTOR_SORT sortBy)
         }
 
         usel.sortBy = sortBy;
-        SetConfigInt(USER_SORTVIEW, (int)usel.sortBy, USER_UI);
+        UI::Jdi.SetConfigInt(USER_SORTVIEW, (int)usel.sortBy, USER_UI);
     }
     else
     {
@@ -1044,7 +1047,7 @@ void CreateSelector()
     SetFocus(usel.hSelectorWindow);
 
     // retrieve icon size
-    bool iconSize = GetConfigBool(USER_SMALLICONS, USER_UI);
+    bool iconSize = UI::Jdi.GetConfigBool(USER_SMALLICONS, USER_UI);
 
     // set "opened" flag (for following calls)
     usel.opened = TRUE;
@@ -1054,10 +1057,10 @@ void CreateSelector()
 
     // sort files
     usel.sortBy = SELECTOR_SORT::Unsorted;
-    SortSelector((SELECTOR_SORT)GetConfigInt(USER_SORTVIEW, USER_UI));
+    SortSelector((SELECTOR_SORT)UI::Jdi.GetConfigInt(USER_SORTVIEW, USER_UI));
 
     // scroll to last loaded file
-    SelectorSetSelected(GetConfigString(USER_LASTFILE, USER_UI));
+    SelectorSetSelected( Util::StringToWstring(UI::Jdi.GetConfigString(USER_LASTFILE, USER_UI)) );
 }
 
 void CloseSelector()
@@ -1093,7 +1096,7 @@ void SetSelectorIconSize(bool smallIcon)
     if(!usel.opened) return;
 
     usel.smallIcons = smallIcon;
-    SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
+    UI::Jdi.SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
 
     // destroy bannerlist
     if(bannerList)

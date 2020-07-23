@@ -1,6 +1,13 @@
 
 #pragma once
 
+// version info
+#define APPNAME _T("Dolwin")
+#define APPDESC _T("Nintendo Gamecube Emulator for Windows")
+
+// Will be derived from JDI
+//#define APPVER  _T("0.131")
+
 namespace UI
 {
 	// basic message output

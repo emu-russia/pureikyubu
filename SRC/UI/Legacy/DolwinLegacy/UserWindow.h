@@ -13,7 +13,7 @@ enum class STATUS_ENUM
     Time,                /* time counter        */
 };
 
-void SetStatusText(STATUS_ENUM sbPart, std::wstring & text, bool post=false);
+void SetStatusText(STATUS_ENUM sbPart, const std::wstring & text, bool post=false);
 std::wstring GetStatusText(STATUS_ENUM sbPart);
 
 void StartProgress(int range, int delta);
@@ -22,7 +22,7 @@ void StopProgress();
 
 /* Recent files menu */
 void UpdateRecentMenu(HWND hwnd);
-void AddRecentFile(std::wstring & path);
+void AddRecentFile(const std::wstring & path);
 void LoadRecentFile(int index);
 
 /* Window controls API */
@@ -33,7 +33,7 @@ void ResizeMainWindow(int width, int height);
 
 /* Utilities */
 void SetAlwaysOnTop(HWND hwnd, BOOL state);
-void SetMenuItemText(HMENU hmenu, UINT id, std::wstring & text);
+void SetMenuItemText(HMENU hmenu, UINT id, const std::wstring & text);
 void CenterChildWindow(HWND hParent, HWND hChild);
 
 /* All important data is placed here */
@@ -47,3 +47,5 @@ struct UserWindow
 };
 
 extern UserWindow wnd;
+
+extern bool GekkoDebuggerOpened;

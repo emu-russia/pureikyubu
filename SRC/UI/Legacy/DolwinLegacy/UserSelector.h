@@ -51,7 +51,7 @@ void ResizeSelector(int width, int height);
 void UpdateSelector();
 int  SelectorGetSelected();
 void SelectorSetSelected(int item);
-void SelectorSetSelected(std::wstring & filename);
+void SelectorSetSelected(const std::wstring & filename);
 void SortSelector(SELECTOR_SORT sortBy);
 void DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void NotifySelector(LPNMHDR pnmh);

@@ -29,13 +29,6 @@
 #define MEMCARD_SLOTA         0
 #define MEMCARD_SLOTB         1
 
-/* Names of the keys used to store to configuration */
-#define MemcardA_Connected_Key "MemcardA_Connected"
-#define MemcardB_Connected_Key "MemcardB_Connected"
-#define MemcardA_Filename_Key "MemcardA_Filename"
-#define MemcardB_Filename_Key "MemcardB_Filename"
-#define Memcard_SyncSave_Key "Memcard_SyncSave"
-
 /* Execution flags for commands */
 #define MCImmRead       (1 << 0)
 #define MCImmWrite      (1 << 1)
