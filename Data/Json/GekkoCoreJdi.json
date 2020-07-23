@@ -59,7 +59,7 @@
     },
 
     "bc": {
-      "help": "Clear Gekko breakpoints",
+      "help": "Clear Gekko breakpoints"
     },
 
     "CacheLog": {

@@ -155,6 +155,7 @@
 		},
 
 		"dsp_muls": {
+			"internal": true,
 			"help": "Test signed 16x16 DSP multiply",
 			"args": 2,
 			"usage": [
@@ -164,6 +165,7 @@
 		},
 
 		"dsp_mulu": {
+			"internal": true,
 			"help": "Test unsigned 16x16 DSP multiply",
 			"args": 2,
 			"usage": [
