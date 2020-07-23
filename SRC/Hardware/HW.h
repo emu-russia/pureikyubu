@@ -1,8 +1,6 @@
 
 #pragma once
 
-#include "../Common/Thread.h"
-
 // hardware registers base (physical address)
 #define HW_BASE         0x0C000000
 

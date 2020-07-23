@@ -10,6 +10,10 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	// Add UI methods
+
+	UI::Jdi.JdiAddNode(UI_JDI_JSON, UIReflector);
+
 	// Say hello
 
 	printf("Dolwin Playground, emulator version %s\n", UI::Jdi.GetVersion().c_str());
@@ -26,6 +30,7 @@ int main(int argc, char **argv)
 	// Unload
 
 	UI::Jdi.Unload();
+	UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
 
 	printf("Thank you for flying DolwinPlayground airlines!\n");
 	return 0;

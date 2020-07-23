@@ -231,3 +231,27 @@ bool __cdecl CallJdiReturnBool(const char* request, bool* valueOut)
 
     return true;
 }
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiAddNode(const char* filename, JDI::JdiReflector reflector)
+{
+    JDI::Hub.AddNode(Util::StringToWstring(filename), reflector);
+}
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiRemoveNode(const char* filename)
+{
+    JDI::Hub.RemoveNode(Util::StringToWstring(filename));
+}
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiAddCmd(const char* name, JDI::CmdDelegate command)
+{
+    JDI::Hub.AddCmd(name, command);
+}

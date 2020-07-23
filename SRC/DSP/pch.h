@@ -5,15 +5,19 @@
 #include <intrin.h>
 #include <fstream>
 #include <algorithm>
+#include <atomic>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
+#include "../Common/Thread.h"
+
+#include "../Hardware/HWConfig.h"
 
 #include "../GekkoCore/Gekko.h"				// For TimeBase
-#include "../Hardware/Hardware.h"
+
 #include "../Debugger/Debugger.h"
 #include "../Debugger/EventLog.h"
 
@@ -22,6 +26,11 @@
 #include "DspInterpreter.h"
 #include "DspDisasm.h"
 #include "DspCommands.h"
+
+#include "../Hardware/AI.h"
+#include "../Hardware/AR.h"
+#include "../Hardware/HW.h"
+#include "../Hardware/MI.h"
 
 #include "../../ThirdParty/fmt/fmt/format.h"
 

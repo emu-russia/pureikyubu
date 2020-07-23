@@ -24,15 +24,28 @@
     <ClCompile Include="..\..\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Json.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\UiCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />
+    <None Include="..\..\..\..\..\Data\Json\UIJdi.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\UserJdiClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\pch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Json.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\UiCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

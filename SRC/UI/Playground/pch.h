@@ -10,4 +10,6 @@
 #include <Windows.h>
 #endif
 
+#include "Json.h"
 #include "UserJdiClient.h"
+#include "UiCommands.h"

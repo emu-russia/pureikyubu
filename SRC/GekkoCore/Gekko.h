@@ -2,9 +2,6 @@
 
 #pragma once
 
-#include "../Common/Thread.h"
-#include <list>
-#include <memory>
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"

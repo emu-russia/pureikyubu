@@ -2,6 +2,7 @@
 
 #include <cstdint>
 
-#include "../../Hardware/Hardware.h"
+#include "../../Hardware/HWConfig.h"
+#include "../../Hardware/VI.h"
 
 #include "VideoOut.h"

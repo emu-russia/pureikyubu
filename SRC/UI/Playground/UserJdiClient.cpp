@@ -19,6 +19,10 @@ namespace UI
 		CallJdiReturnInt = (CALL_JDI_RETURN_INT) GetProcAddress(dll, "CallJdiReturnInt");
 		CallJdiReturnString = (CALL_JDI_RETURN_STRING) GetProcAddress(dll, "CallJdiReturnString");
 		CallJdiReturnBool = (CALL_JDI_RETURN_BOOL) GetProcAddress(dll, "CallJdiReturnBool");
+
+		JdiAddNode = (JDI_ADD_NODE)GetProcAddress(dll, "JdiAddNode");
+		JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
+		JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
 #endif
 	}
 
@@ -143,7 +147,15 @@ namespace UI
 
 	void JdiClient::LoadFile(const std::string& filename)
 	{
+		char cmd[0x1000] = { 0 };
 
+		sprintf_s(cmd, sizeof(cmd), "load \"%s\"", filename.c_str());
+
+		bool res = CallJdiNoReturn(cmd);
+		if (!res)
+		{
+			throw "load failed!";
+		}
 	}
 
 	void JdiClient::Unload()

@@ -2,6 +2,6 @@
 
 #include <cstdint>
 
-#include "../../Hardware/Hardware.h"
+#include "../../Hardware/HWConfig.h"
 
 #include "AX.h"

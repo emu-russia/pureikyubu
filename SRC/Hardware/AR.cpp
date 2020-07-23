@@ -264,7 +264,6 @@ void AROpen()
     MISetTrap(16, AR_REFRESH, no_read       , no_write);
 
     aram.dmaThread = new Thread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
-    assert(aram.dmaThread);
 }
 
 void ARClose()

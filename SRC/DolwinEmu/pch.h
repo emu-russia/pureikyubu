@@ -28,10 +28,17 @@
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
+#include "../Common/Thread.h"
+
 #include "../GekkoCore/Gekko.h"
 #include "../GekkoCore/Interpreter.h"
 #include "../HighLevel/HighLevel.h"
-#include "../Hardware/Hardware.h"
+#include "../Hardware/HWConfig.h"
+#include "../DSP/DspCore.h"
+#include "../DVD/DVD.h"
+#include "../Hardware/HW.h"
+#include "../Hardware/MI.h"
+#include "../Hardware/VI.h"
 #include "../Debugger/Debugger.h"
 
 #include "Config.h"

@@ -10,12 +10,10 @@ namespace DSP
 	DspCore::DspCore(HWConfig* config)
 	{
 		dspThread = new Thread(DspThreadProc, true, this, "DspCore");
-		assert(dspThread);
 
 		HardReset();
 
 		interp = new DspInterpreter(this);
-		assert(interp);
 
 		// Load IROM
 

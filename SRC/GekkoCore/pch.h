@@ -10,6 +10,7 @@
 
 #include "../Common/Spinlock.h"
 #include "../Common/Jdi.h"
+#include "../Common/Thread.h"
 
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
@@ -21,5 +22,6 @@
 #include "TLB.h"
 #include "Cache.h"
 
-#include "../Hardware/Hardware.h"
+#include "../Hardware/HWConfig.h"
+#include "../Hardware/MI.h"
 #include "../Debugger/Debugger.h"

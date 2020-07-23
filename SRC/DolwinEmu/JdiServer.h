@@ -21,3 +21,18 @@ bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t val
 extern "C" __declspec(dllexport)
 #endif
 bool __cdecl CallJdiReturnBool(const char* request, bool* valueOut);
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiAddNode(const char* filename, JDI::JdiReflector reflector);
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiRemoveNode(const char* filename);
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void __cdecl JdiAddCmd(const char* name, JDI::CmdDelegate command);
