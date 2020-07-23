@@ -20,7 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\DolwinPlayground.cpp" />
-    <ClCompile Include="..\..\Json.cpp" />
+    <ClCompile Include="..\..\DummyDebugger.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -35,12 +35,15 @@
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Common\Scripts\VS2019\Common.vcxproj">
+      <Project>{8f4f6ae1-b308-4c7f-81fc-4cddd2302c95}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\..\DolwinEmu\Scripts\VS2019\DolwinEmuForPlayground.vcxproj">
       <Project>{6be86dce-ec88-4113-9e7b-22b6ef50fdfc}</Project>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Json.h" />
+    <ClInclude Include="..\..\DummyDebugger.h" />
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\UiCommands.h" />
     <ClInclude Include="..\..\UserJdiClient.h" />

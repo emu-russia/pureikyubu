@@ -25,8 +25,6 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 	threadHandle = CreateThread(NULL, StackSize, RingleaderThreadProc, &ctx, suspended ? CREATE_SUSPENDED : 0, &threadId);
 	assert(threadHandle != INVALID_HANDLE_VALUE);
 #endif
-
-	Report(Channel::Norm, "Thread: %s\n", threadName);
 }
 
 Thread::~Thread()
@@ -37,8 +35,6 @@ Thread::~Thread()
 	TerminateThread(threadHandle, 0);
 	WaitForSingleObject(threadHandle, 1000);
 #endif
-
-	Report(Channel::Norm, "~Thread: %s\n", threadName);
 }
 
 void Thread::Resume()
@@ -51,7 +47,6 @@ void Thread::Resume()
 #endif
 		running = true;
 		resumeCounter++;
-		//Report(Channel::Norm, "%s Resume\n", threadName);
 	}
 	resumeLock.Unlock();
 }
@@ -62,7 +57,6 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
-		//Report(Channel::Norm, "%s Suspend\n", threadName);
 #ifdef _WINDOWS
 		SuspendThread(threadHandle);
 #endif

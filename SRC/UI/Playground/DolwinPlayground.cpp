@@ -24,6 +24,9 @@ int main(int argc, char **argv)
 
 	UI::Jdi.LoadFile(argv[1]);
 	UI::Jdi.Run();
+	DebugStart();
+
+	// Wait key press..
 
 	_getch();
 
@@ -31,6 +34,7 @@ int main(int argc, char **argv)
 
 	UI::Jdi.Unload();
 	UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
+	DebugStop();
 
 	printf("Thank you for flying DolwinPlayground airlines!\n");
 	return 0;

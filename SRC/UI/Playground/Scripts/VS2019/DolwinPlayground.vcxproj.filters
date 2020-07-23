@@ -24,10 +24,10 @@
     <ClCompile Include="..\..\pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Json.cpp">
+    <ClCompile Include="..\..\UiCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\UiCommands.cpp">
+    <ClCompile Include="..\..\DummyDebugger.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -42,10 +42,10 @@
     <ClInclude Include="..\..\pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Json.h">
+    <ClInclude Include="..\..\UiCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\UiCommands.h">
+    <ClInclude Include="..\..\DummyDebugger.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -10,6 +10,9 @@
 #include <Windows.h>
 #endif
 
-#include "Json.h"
+#include "../../Common/Json.h"
+#include "../../Common/Thread.h"
+
 #include "UserJdiClient.h"
 #include "UiCommands.h"
+#include "DummyDebugger.h"
