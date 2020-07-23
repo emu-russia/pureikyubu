@@ -3,7 +3,7 @@
 
 std::vector<uint8_t> DVDLoadBanner(const TCHAR* dvdFile)
 {
-    size_t fsize = UI::FileSize(dvdFile);
+    size_t fsize = Util::FileSize(dvdFile);
     uint32_t bnrofs = 0;
 
     std::vector<uint8_t> banner;

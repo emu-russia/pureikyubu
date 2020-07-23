@@ -137,7 +137,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     /* Required by HLE Subsystem */
     if ((uint64_t)hInstance > 0x400000)
     {
-        throw "Required by HLE Subsystem";
+        UI::DolwinError( _T("Error"), _T("Image base must be below or equal 0x400`000. Required by HLE Subsystem for artifical CPU `CallVM` opcode."));
+        return -1;
     }
 
     InitFileSystem(hInstance);
@@ -175,5 +176,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     /* Should never reach this point. Dolwin always exits. */
-    throw "SHOULD NEVER REACH HERE";
+    UI::DolwinError ( _T("Error"), _T("SHOULD NEVER REACH HERE"));
+    return -2;
 }

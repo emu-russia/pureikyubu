@@ -16,7 +16,7 @@ static HIMAGELIST bannerList;
 /* Make sure path have ending '\\' */
 static void fix_path(std::wstring& path)
 {
-    if (!path.ends_with(L'\\'))
+    if (path.back() != L'\\')
     {
         path.push_back(L'\\');
     }
@@ -374,7 +374,7 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
     }
 
     /* Try to open file */
-    if (!UI::FileExists(file.c_str()))
+    if (!Util::FileExists(file.c_str()))
     {
         return;
     }
@@ -414,11 +414,12 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
         UI::Jdi.DvdUnmount();
 
         /* Use banner info and remove line-feeds. */
-        Util::ustring longTitle = bnr->comments[0].longTitle;
-        Util::ustring comment = bnr->comments[0].comment;
+        DVDBanner2* bnr = (DVDBanner2*)banner.data();
+        std::string longTitle = (char *)bnr->comments[0].longTitle;
+        std::string comment = (char*)bnr->comments[0].comment;
 
-        item->title = Util::convert<wchar_t>(longTitle); // C++ 11
-        item->comment = Util::convert<wchar_t>(comment);
+        item->title = Util::StringToWstring(longTitle);
+        item->comment = Util::StringToWstring(comment);
 
         fix_string(item->title);
         fix_string(item->comment);
@@ -661,6 +662,9 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         DiskId[2] = (char)file->id[2];
         DiskId[3] = (char)file->id[3];
 
+        // TODO: Refactoring
+
+#if 0
         if (DVD::RegionById(DiskId) == DVD::Region::JPN &&
             (col == 1 || col == 4))     // title or comment only
         {
@@ -669,7 +673,11 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
             DrawTextW(DC, (wchar_t*)buf, (int)chars, &rc2, fmt);
             free(buf);
         }
-        else DrawText(DC, text, (int)len, &rc2, fmt);
+        else
+#endif
+        {
+            DrawText(DC, text, (int)len, &rc2, fmt);
+        }
     }
 
 #undef ID
@@ -738,7 +746,7 @@ void UpdateSelector()
             if (itr != file_ext.end())
             {
                 auto found = path.path().wstring();
-                add_file(found, UI::FileSize(found), itr->second);
+                add_file(found, Util::FileSize(found), itr->second);
             }
         }        
     }
@@ -864,7 +872,7 @@ static void doubleclick()
     TCHAR* filename = (TCHAR *)usel.files[item]->name.data();
 
     // load file
-    LoadFile(filename);
+    UI::Jdi.LoadFile(Util::TcharToString(filename));
     AddRecentFile(filename);
     PostMessage(wnd.hMainWindow, WM_COMMAND, (WPARAM)ID_FILE_RELOAD, (LPARAM)0);
 }

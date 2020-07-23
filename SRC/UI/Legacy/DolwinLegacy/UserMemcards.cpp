@@ -3,6 +3,99 @@
 int um_num;
 BOOL um_filechanged;
 
+TCHAR Memcard_filename[2][0x1000];
+bool SyncSave;
+bool Memcard_Connected[2];
+
+/* Memcard ids by number of blocks */
+#define MEMCARD_ID_64       (0x0004)
+#define MEMCARD_ID_128      (0x0008)
+#define MEMCARD_ID_256      (0x0010)
+#define MEMCARD_ID_512      (0x0020)
+#define MEMCARD_ID_1024     (0x0040)
+#define MEMCARD_ID_2048     (0x0080)
+
+/* Memcard ids by number of usable blocks */
+#define MEMCARD_ID_59       MEMCARD_ID_64
+#define MEMCARD_ID_123      MEMCARD_ID_128
+#define MEMCARD_ID_251      MEMCARD_ID_256
+#define MEMCARD_ID_507      MEMCARD_ID_512
+#define MEMCARD_ID_1019     MEMCARD_ID_1024 
+#define MEMCARD_ID_2043     MEMCARD_ID_2048
+
+#define MEMCARD_ERASEBYTE 0x00
+//#define MEMCARD_ERASEBYTE 0xFF
+
+#define Num_Memcard_ValidSizes 6
+
+const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
+    0x00080000, //524288 bytes , // Memory Card 59
+    0x00100000, //1048576 bytes , // Memory Card 123
+    0x00200000, //2097152 bytes , // Memory Card 251
+    0x00400000, //4194304 bytes , // Memory Card 507
+    0x00800000, //8388608 bytes , // Memory Card 1019
+    0x01000000  //16777216 bytes , // Memory Card 2043
+};
+
+#define Memcard_BlockSize       8192
+#define Memcard_BlockSize_log2  13 // just to make shifts instead of mult. or div.
+#define Memcard_SectorSize      512
+#define Memcard_SectorSize_log2 9 // just to make shifts instead of mult. or div.
+#define Memcard_PageSize        128
+#define Memcard_PageSize_log2   7 // just to make shifts instead of mult. or div.
+
+/*
+ * Creates a new memcard file
+ * memcard_id should be one of the following:
+ * MEMCARD_ID_64       (0x0004)
+ * MEMCARD_ID_128      (0x0008)
+ * MEMCARD_ID_256      (0x0010)
+ * MEMCARD_ID_512      (0x0020)
+ * MEMCARD_ID_1024     (0x0040)
+ * MEMCARD_ID_2048     (0x0080)
+ */
+bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
+    FILE * newfile;
+    uint32_t b, blocks;
+    uint8_t newfile_buffer[Memcard_BlockSize];
+
+    switch (memcard_id) {
+    case MEMCARD_ID_64:
+    case MEMCARD_ID_128:
+    case MEMCARD_ID_256:
+    case MEMCARD_ID_512:
+    case MEMCARD_ID_1024:
+    case MEMCARD_ID_2048:
+        /* 17 = Mbits to byte conversion */
+        blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
+        break;
+    default:
+        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
+        return false;
+    }
+
+    newfile = nullptr;
+    _tfopen_s(&newfile, path, _T("wb")) ;
+
+	if (newfile == NULL) {
+        UI::DolwinError ( _T("Memcard Error"), _T("Error while trying to create memcard file."));
+		return false;
+	}
+
+    memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
+    for (b = 0; b < blocks; b++) {
+        if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
+            UI::DolwinError( _T("Memcard Error"), _T("Error while trying to write memcard file."));
+
+			fclose (newfile);
+            return false;
+        }
+    }
+
+    fclose (newfile);
+    return true;
+}
+
 static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
 {
     TCHAR prevc[MAX_PATH];
@@ -178,15 +271,10 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
                                 IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_FALSE );
 
-            if (emu.loaded) {
-                EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE), FALSE);
-                EnableWindow(GetDlgItem(hwndDlg, IDC_MEMCARD_SYNCSAVE_TRUE), FALSE);
-            }
-
             if (Memcard_Connected[um_num])
                 CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
 
-            _tcscpy(buf, memcard[um_num].filename);
+            _tcscpy(buf, Memcard_filename[um_num]);
             filename = _tcsrchr(buf, _T('\\'));
             if (filename == NULL) {
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
@@ -198,10 +286,11 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
 
-            if (memcard[um_num].connected) {
-                _stprintf_s (buf, _countof(buf) - 1, _T("Size: %d usable blocks (%d Kb)"),
-                    (int)(memcard[um_num].size / Memcard_BlockSize - 5), (int)(memcard[um_num].size / 1024));
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+            if (Memcard_Connected[um_num]) {
+                // TODO: Refactoring
+                //_stprintf_s (buf, _countof(buf) - 1, _T("Size: %d usable blocks (%d Kb)"),
+                //    (int)(memcard[um_num].size / Memcard_BlockSize - 5), (int)(memcard[um_num].size / 1024));
+                //SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
@@ -276,8 +365,8 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
-                    if (Fnsize+1 + Pathsize+1 >= sizeof (memcard[um_num].filename)) {
-                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %zi characters."), sizeof (memcard[um_num].filename) );
+                    if (Fnsize+1 + Pathsize+1 >= sizeof (Memcard_filename[um_num])) {
+                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %zi characters."), sizeof (Memcard_filename[um_num]) );
                         MessageBox(hwndDlg, buf, _T("Invalid filename"), 0);
                         return TRUE;
                     }
@@ -289,12 +378,11 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     _tcscat_s(buf, _countof(buf) - 1, buf2);
                 }
 
-                if (!emu.loaded) {
-                    if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED  )
-                        SyncSave = false;
-                    else
-                        SyncSave = true;
-                }
+                if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED  )
+                    SyncSave = false;
+                else
+                    SyncSave = true;
+
                 if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_CONNECTED) == BST_CHECKED ) {
                     /* memcard is supposed to be connected */
 
@@ -311,12 +399,12 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 if (um_num == 0)
                 {
                     UI::Jdi.SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, memcard[0].filename, USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, Util::TcharToString(Memcard_filename[0]), USER_MEMCARDS);
                 }
                 else
                 {
                     UI::Jdi.SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, memcard[1].filename, USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, Util::TcharToString(Memcard_filename[1]), USER_MEMCARDS);
                 }
                 UI::Jdi.SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 

@@ -126,7 +126,7 @@ static int GetMenuItemIndex(HMENU hMenu, const std::wstring & item)
     
     while(index < GetMenuItemCount(hMenu))
     {
-        if(GetMenuString(hMenu, index, buffer.data(), buffer.size() - 1, MF_BYPOSITION))
+        if(GetMenuString(hMenu, index, (LPWSTR)buffer.data(), buffer.size() - 1, MF_BYPOSITION))
         {
             if (item == buffer)
             {
@@ -140,18 +140,18 @@ static int GetMenuItemIndex(HMENU hMenu, const std::wstring & item)
     return -1;
 }
 
-static void SetRecentEntry(int index, TCHAR *str)
+static void SetRecentEntry(int index, const TCHAR *str)
 {
     char var[256] = { 0, };
     sprintf_s (var, sizeof(var), USER_RECENT, index);
     UI::Jdi.SetConfigString(var, Util::TcharToString(str), USER_UI);
 }
 
-static TCHAR* GetRecentEntry(int index)
+static std::wstring GetRecentEntry(int index)
 {
     char var[256];
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    return (wchar_t*)GetConfigString(var, USER_UI).data();
+    return Util::StringToWstring(UI::Jdi.GetConfigString(var, USER_UI));
 }
 
 void UpdateRecentMenu(HWND hwnd)
@@ -215,7 +215,7 @@ void AddRecentFile(const std::wstring& path)
             auto old = fmt::format(L"{:s}", GetRecentEntry(n));
             for(n = n + 1; n <= RecentNum; n++)
             {
-                SetRecentEntry(n-1, GetRecentEntry(n));
+                SetRecentEntry(n-1, GetRecentEntry(n).c_str());
             }
 
             SetRecentEntry(RecentNum, old.data());
@@ -231,7 +231,7 @@ void AddRecentFile(const std::wstring& path)
         // move list up
         for(int n = 1; n < MAX_RECENT; n++)
         {
-            SetRecentEntry(n, GetRecentEntry(n + 1));
+            SetRecentEntry(n, GetRecentEntry(n + 1).c_str());
         }
         RecentNum = 5;
     }
@@ -247,8 +247,8 @@ void AddRecentFile(const std::wstring& path)
 void LoadRecentFile(int index)
 {
     int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
-    TCHAR *path = GetRecentEntry((RecentNum+1) - index);
-    LoadFile(path);
+    std::wstring path = GetRecentEntry((RecentNum+1) - index);
+    UI::Jdi.LoadFile(Util::WstringToString(path));
 }
 
 // ---------------------------------------------------------------------------
@@ -426,20 +426,20 @@ void OnMainWindowOpened()
 
     // set new title for main window
     std::wstring newTitle, gameTitle;
-    if (ldat.dvd)
+    if (false)
     {
-        gameTitle = ldat.currentFileName;
+        gameTitle = wnd.currentFileName;
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
     }
     else
     {
-        if (ldat.currentFileName == L"Bootrom")
+        if (wnd.currentFileName == L"Bootrom")
         {
-            gameTitle = ldat.currentFileName;
+            gameTitle = wnd.currentFileName;
         }
         else
         {
-            gameTitle = fmt::format(L"{:s} demo", ldat.currentFileName);
+            gameTitle = fmt::format(L"{:s} demo", wnd.currentFileName);
         }
         
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
@@ -452,7 +452,7 @@ void OnMainWindowOpened()
 void OnMainWindowClosed()
 {
     // restore current working directory
-    SetCurrentDirectory(ldat.cwd.c_str());
+    SetCurrentDirectory(wnd.cwd.c_str());
 
     // enable selector
     CreateSelector();
@@ -541,8 +541,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 LOWORD(wParam) <= ID_FILE_RECENT_5)
             {
                 LoadRecentFile(LOWORD(wParam) - ID_FILE_RECENT_1 + 1);
-                EMUClose();
-                EMUOpen();
             }
             else switch (LOWORD(wParam))
             {
@@ -554,9 +552,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                     loadFile:
                     
-                        LoadFile(name.c_str());
-                        EMUClose();
-                        EMUOpen();
+                        UI::Jdi.LoadFile(Util::WstringToString(name));
                     }
 
                     return 0;
@@ -564,12 +560,10 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Reload last opened file (RESET) */
                 case ID_FILE_RELOAD:
                 {
-                    recent = GetConfigInt(USER_RECENT_NUM, USER_UI);
+                    recent = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
                     if (recent > 0)
                     {
                         LoadRecentFile(1);
-                        EMUClose();
-                        EMUOpen();
                     }
 
                     return 0;
@@ -577,30 +571,27 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Unload file (STOP) */
                 case ID_FILE_UNLOAD:
                 {
-                    EMUClose();
+                    UI::Jdi.Unload();
 
                     return 0;
                 }
                 /* Load bootrom */
                 case ID_FILE_IPLMENU:
                 {
-                    LoadFile(L"Bootrom");
-                    EMUClose();
-                    EMUOpen();
-
+                    UI::Jdi.LoadFile("Bootrom");
                     return 0;
                 }
                 /* Open/close DVD lid */
                 case ID_FILE_COVER:
                 {
-                    if (DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)   /* Close lid */
+                    if ( UI::Jdi.DvdCoverOpened() )   /* Close lid */
                     {
-                        DVD::DDU->CloseCover();
+                        UI::Jdi.DvdCloseCover();
                         ModifySwapControls(false);
                     }
                     else /* Open lid */
                     {
-                        DVD::DDU->OpenCover();
+                        UI::Jdi.DvdOpenCover();
                         ModifySwapControls(true);
                     }
 
@@ -610,22 +601,16 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_CHANGEDVD:
                 {
                     name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Dvd);
-                    if (!name.empty() && DVD::DDU->GetCoverStatus() == DVD::CoverStatus::Open)
+                    if (!name.empty() && UI::Jdi.DvdCoverOpened() )
                     {
-                        /* Same */
-                        if (name == ldat.currentFile)
-                        {
-                            return 0;
-                        }
-
                         /* Bad */
-                        if (!DVD::MountFile(name))
+                        if (! UI::Jdi.DvdMount ( Util::WstringToString(name)) )
                         {
                             return 0;
                         }
 
                         /* Close lid */
-                        DVD::DDU->CloseCover();
+                        UI::Jdi.DvdCloseCover();
                         ModifySwapControls(false);
                     }
 
@@ -833,16 +818,12 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Mount Dolphin SDK as DVD */
                 case ID_DEVELOPMENT_MOUNTSDK:
                 {
-                    auto dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
+                    std::wstring dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
                     if (!dolphinSdkDir.empty())
                     {
-                        std::vector<std::string> cmd1 = { "MountSDK", Util::convert<char>(dolphinSdkDir) };
-                        Json::Value* output = Debug::Hub.Execute(cmd1);
-
-                        if (output != nullptr)
-                        {
-                            delete output;
-                        }
+                        char cmd[0x200];
+                        sprintf_s(cmd, sizeof(cmd), "MoundSDK \"%s\"", Util::WstringToString(dolphinSdkDir).c_str());
+                        UI::Jdi.ExecuteCommand(cmd);
                     }
 
                     return 0;
