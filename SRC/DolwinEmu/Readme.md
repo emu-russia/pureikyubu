@@ -28,3 +28,7 @@ into the HWConfig structure.
 Jey-Dai interface allows you to control host emulation, load and unload executable files (DOL, ELF) or DVD images and so on.
 
 A list of commands can be found in EmuJdi.json
+
+## DolwinEmuForPlayground
+
+A special build version that links with Null backends for use in DolwinPlayground.

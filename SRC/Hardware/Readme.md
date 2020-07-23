@@ -24,3 +24,7 @@ GameCube uses a slightly alien image rendering engine:
 All this is wildly unoptimized in terms of emulation and is a lot of pain.
 
 Therefore, emulator developers ignore the XFB output and display in the emulator what the GPU draws. With rare exceptions, this works in most games, but it does not work in Homebrew and the games of some perverse developers.
+
+## GCNHardwareForPlayground
+
+A special build version that defines Null backends in `Hardware.h` for use in DolwinPlayground.
