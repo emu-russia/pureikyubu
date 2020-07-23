@@ -134,13 +134,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    /* Required by HLE Subsystem */
-    if ((uint64_t)hInstance > 0x400000)
-    {
-        UI::DolwinError( _T("Error"), _T("Image base must be below or equal 0x400`000. Required by HLE Subsystem for artifical CPU `CallVM` opcode."));
-        return -1;
-    }
-
     InitFileSystem(hInstance);
 
     /* Allow only one instance of Dolwin to run at once? */
