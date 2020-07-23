@@ -26,6 +26,8 @@ class Thread
 	int suspendCounter = 0;
 
 	char threadName[0x100] = { 0 };
+	
+	// Take care about this place. If it will differ between your projects you get wrecked!
 
 #if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
 	HANDLE threadHandle = INVALID_HANDLE_VALUE;
@@ -33,6 +35,7 @@ class Thread
 	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
 	static const size_t StackSize = 0;
 #endif
+
 public:
 
 	// Create thread
