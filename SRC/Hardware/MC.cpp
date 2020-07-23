@@ -162,7 +162,7 @@ static uint32_t MCCalculateOffset (uint32_t mc_address) {
 }
 
 static void MCSyncSave (Memcard * memcard, uint32_t offset , uint32_t size) {
-    if (SyncSave == TRUE) // Bad idea!!
+    if (SyncSave == true) // Bad idea!!
     {
         if (fseek(memcard->file, offset, SEEK_SET) != 0) {
             Halt("MC :: Error at seeking the memcard file.\n");
@@ -354,7 +354,7 @@ void MCTransfer () {
         auxmc = &memcard[MEMCARD_SLOTB];
     else return;
 
-    if (auxmc->connected == FALSE) return;
+    if (auxmc->connected == false) return;
 
     auxexi = auxmc->exi;
     auxdma = auxexi->cr & EXI_CR_DMA;
@@ -384,7 +384,7 @@ void MCTransfer () {
                             auxmc->databytesread = 0;
                             auxmc->dummybytesread = 0;
                             auxmc->commandData = 0x00000000;
-                            auxmc->ready = FALSE;
+                            auxmc->ready = false;
                             break;
                         }
 
@@ -412,7 +412,7 @@ void MCTransfer () {
             if (auxmc->Command != MEMCARD_COMMAND_UNDEFINED &&
                 auxmc->databytesread == auxmc->databytes &&
                 auxmc->dummybytesread == auxmc->dummybytes)
-                auxmc->ready = TRUE;
+                auxmc->ready = true;
         }
 
         if (auxmc->ready) {
@@ -463,7 +463,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
         break;
     default:
         Halt ("MC: Wrong card id for creating file.");
-        return FALSE;
+        return false;
     }
 
     newfile = nullptr;
@@ -471,7 +471,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
 
 	if (newfile == NULL) {
         Halt( "MC: Error while trying to create memcard file.");
-		return FALSE;
+		return false;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
@@ -480,12 +480,12 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
             Halt("MC: Error while trying to write memcard file.");
 
 			fclose (newfile);
-            return FALSE;
+            return false;
         }
     }
 
     fclose (newfile);
-    return TRUE;
+    return true;
 }
 
 /*
@@ -497,7 +497,7 @@ void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
 
     // Invalid memcard number
     assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
-    if (memcard[cardnum].connected == TRUE) MCDisconnect(cardnum);
+    if (memcard[cardnum].connected == true) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
     _tcscpy_s(memcard[cardnum].filename, _countof(memcard[cardnum].filename) - 1, path);
@@ -514,12 +514,12 @@ void MCOpen (HWConfig * config)
 {
     Report (Channel::MC, "Memory cards\n");
 
-    MCOpened = TRUE;
+    MCOpened = true;
     memset(memcard, 0 , 2 * sizeof (Memcard));
     memcard[MEMCARD_SLOTA].Command = MEMCARD_COMMAND_UNDEFINED;
     memcard[MEMCARD_SLOTB].Command = MEMCARD_COMMAND_UNDEFINED;
-    memcard[MEMCARD_SLOTA].ready = TRUE;
-    memcard[MEMCARD_SLOTB].ready = TRUE;
+    memcard[MEMCARD_SLOTA].ready = true;
+    memcard[MEMCARD_SLOTB].ready = true;
     memcard[MEMCARD_SLOTA].exi = &exi.regs[MEMCARD_SLOTA];
     memcard[MEMCARD_SLOTB].exi = &exi.regs[MEMCARD_SLOTB];
 
@@ -538,17 +538,17 @@ void MCOpen (HWConfig * config)
 
         fileptr = nullptr;
         _tfopen_s(&fileptr, filename, _T("rb"));
-        if (fileptr == NULL) {
+        if (fileptr == nullptr) {
             /* if default memcard doesn't exist, create it */
-            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
-                MCUseFile(MEMCARD_SLOTA, filename, FALSE);
-                Memcard_Connected[MEMCARD_SLOTA] = TRUE;
+            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == true) {
+                MCUseFile(MEMCARD_SLOTA, filename, false);
+                Memcard_Connected[MEMCARD_SLOTA] = true;
             }
         }
         else {
             fclose(fileptr);
-            MCUseFile(MEMCARD_SLOTA, filename, FALSE);
-            Memcard_Connected[MEMCARD_SLOTA] = TRUE;
+            MCUseFile(MEMCARD_SLOTA, filename, false);
+            Memcard_Connected[MEMCARD_SLOTA] = true;
         }
     }
     if (memcard[MEMCARD_SLOTB].filename[0] == 0) {
@@ -559,17 +559,17 @@ void MCOpen (HWConfig * config)
 
         fileptr = nullptr;
         _tfopen_s (&fileptr, filename, _T("rb"));
-        if (fileptr == NULL) {
+        if (fileptr == nullptr) {
             /* if default memcard doesn't exist, create it */
-            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == TRUE) {
-                MCUseFile(MEMCARD_SLOTB, filename, FALSE);
-                Memcard_Connected[MEMCARD_SLOTB] = TRUE;
+            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == true) {
+                MCUseFile(MEMCARD_SLOTB, filename, false);
+                Memcard_Connected[MEMCARD_SLOTB] = true;
             }
         }
         else {
             fclose(fileptr);
-            MCUseFile(MEMCARD_SLOTB, filename, FALSE);
-            Memcard_Connected[MEMCARD_SLOTB] = TRUE;
+            MCUseFile(MEMCARD_SLOTB, filename, false);
+            Memcard_Connected[MEMCARD_SLOTB] = true;
         }
     }
 
@@ -606,7 +606,7 @@ bool MCConnect (int cardnum) {
 
         memcard[cardnum].file = nullptr;
         _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
-        if (memcard[cardnum].file == NULL) {
+        if (memcard[cardnum].file == nullptr) {
             static char slt[2] = { 'A', 'B' };
 
             // TODO: redirect user to memcard configure dialog ?
@@ -617,7 +617,7 @@ bool MCConnect (int cardnum) {
                 "Check path or file attributes.",
                 slt[cardnum], Util::TcharToString(memcard[cardnum].filename).c_str()
             );
-            return FALSE;
+            return false;
         }
 
         for (i = 0 ; i < Num_Memcard_ValidSizes && Memcard_ValidSizes[i] != (uint32_t)memcardSize; i++);
@@ -626,50 +626,50 @@ bool MCConnect (int cardnum) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
             MessageBox (NULL, _T("memcard file doesnt have a valid size"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
-            memcard[cardnum].file = NULL;
-            return FALSE;
+            memcard[cardnum].file = nullptr;
+            return false;
         }
 
         memcard[cardnum].size = (uint32_t)memcardSize;
         memcard[cardnum].data = (uint8_t *)malloc(memcard[cardnum].size);
 
-        if (memcard[cardnum].data == NULL) {
+        if (memcard[cardnum].data == nullptr) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-            MessageBox (NULL, _T("couldnt allocate enough memory for memcard"), _T("Memcard Error"), 0);
+            MessageBox (nullptr, _T("couldnt allocate enough memory for memcard"), _T("Memcard Error"), 0);
             fclose(memcard[cardnum].file);
-            memcard[cardnum].file = NULL;
-            return FALSE;
+            memcard[cardnum].file = nullptr;
+            return false;
         }
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
 //          DBReport(YEL "error at locating file cursor\n");
-            MessageBox (NULL , _T("error at locating file cursor"), _T("Memcard Error"), 0);
+            MessageBox (nullptr, _T("error at locating file cursor"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
-            memcard[cardnum].data = NULL;
+            memcard[cardnum].data = nullptr;
             fclose(memcard[cardnum].file);
-            memcard[cardnum].file = NULL;
-            return FALSE;
+            memcard[cardnum].file = nullptr;
+            return false;
         }
 
         if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
 //          DBReport(YEL "error at reading the memcard file\n");
-            MessageBox (NULL, _T("error at reading the memcard file"), _T("Memcard Error"), 0);
+            MessageBox (nullptr, _T("error at reading the memcard file"), _T("Memcard Error"), 0);
             free (memcard[cardnum].data);
-            memcard[cardnum].data = NULL;
+            memcard[cardnum].data = nullptr;
             fclose(memcard[cardnum].file);
-            memcard[cardnum].file = NULL;
-            return FALSE;
+            memcard[cardnum].file = nullptr;
+            return false;
         }
 
         /* if nothing fails... */
         memcard[cardnum].ID = ((uint16_t)0xC2) << 8 | (uint16_t)0x42; // Datel's code just for now
         memcard[cardnum].status = MEMCARD_STATUS_READY;
-        memcard[cardnum].connected = TRUE;
+        memcard[cardnum].connected = true;
         EXIAttach(cardnum);        // connect device
 
-        return TRUE;
+        return true;
     }
-    return FALSE;
+    return false;
 }
 
 /* 
@@ -689,14 +689,14 @@ bool MCDisconnect (int cardnum) {
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0)
         {
-            ret = FALSE;
+            ret = false;
         }
         else
         {
             /* write to the file */
             if (fwrite(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1)
             {
-                ret = FALSE;
+                ret = false;
             }
 
         }
@@ -707,10 +707,10 @@ bool MCDisconnect (int cardnum) {
 
         memcard[cardnum].ID = 0;
         memcard[cardnum].size = 0;
-        memcard[cardnum].file = NULL;
-        memcard[cardnum].data = NULL;
+        memcard[cardnum].file = nullptr;
+        memcard[cardnum].data = nullptr;
         memcard[cardnum].status = 0;
-        memcard[cardnum].connected = FALSE;
+        memcard[cardnum].connected = false;
         EXIDetach(cardnum);        // disconnect device
 
         break;

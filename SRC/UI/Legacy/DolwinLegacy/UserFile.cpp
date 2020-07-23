@@ -1,29 +1,8 @@
-// Dolwin file utilities
+// UI file utilities
 #include "pch.h"
 
 namespace UI
 {
-    bool FileExists(const TCHAR* filename)
-    {
-        FILE* f = nullptr;
-        _tfopen_s(&f, filename, _T("rb"));
-        if (f == NULL) return false;
-        fclose(f);
-        return true;
-    }
-
-    // Get file size
-    size_t FileSize(const TCHAR* filename)
-    {
-        FILE* f = nullptr;
-        _tfopen_s(&f, filename, _T("rb"));
-        if (f == NULL) return 0;
-        fseek(f, 0, SEEK_END);
-        size_t size = ftell(f);
-        fclose(f);
-        return size;
-    }
-
     // Open file/directory dialog
     TCHAR* FileOpenDialog(HWND hwnd, FileType type)
     {
@@ -31,7 +10,8 @@ namespace UI
         OPENFILENAME ofn;
         TCHAR szFileName[1024];
         TCHAR szFileTitle[1024];
-        TCHAR lastDir[1024], prevDir[1024];
+        TCHAR prevDir[1024];
+        std::string lastDir;
         BOOL result;
 
         GetCurrentDirectory(sizeof(prevDir), prevDir);
@@ -40,13 +20,13 @@ namespace UI
         {
             case FileType::All:
             case FileType::Json:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;
             case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_DVD, USER_UI);
                 break;
             case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
         }
 
@@ -140,7 +120,7 @@ namespace UI
             ofn.nFilterIndex = 1;
             ofn.lpstrFile = szFileName;
             ofn.nMaxFile = sizeof(szFileName);
-            ofn.lpstrInitialDir = lastDir;
+            ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
             ofn.lpstrFileTitle = szFileTitle;
             ofn.nMaxFileTitle = sizeof(szFileTitle);
             ofn.lpstrTitle = _T("Open File\0");
@@ -155,21 +135,25 @@ namespace UI
             _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
             // save last directory
-            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
-            int i = (int)_tcslen(lastDir) - 1;
-            while (lastDir[i] != _T('\\')) i--;
-            lastDir[i + 1] = _T('\0');
+
+            lastDir = Util::TcharToString(tempBuf);
+
+            while (lastDir.back() != '\\')
+            {
+                lastDir.pop_back();
+            }
+
             switch (type)
             {
                 case FileType::All:
                 case FileType::Json:
-                    SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
                     break;
                 case FileType::Dvd:
-                    SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
                     break;
                 case FileType::Map:
-                    SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
             }
 
@@ -190,7 +174,8 @@ namespace UI
         OPENFILENAME ofn;
         TCHAR szFileName[1024];
         TCHAR szFileTitle[1024];
-        TCHAR lastDir[1024], prevDir[1024];
+        TCHAR prevDir[1024];
+        std::string lastDir;
         BOOL result;
 
         GetCurrentDirectory(sizeof(prevDir), prevDir);
@@ -199,13 +184,13 @@ namespace UI
         {
             case FileType::All:
             case FileType::Json:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_ALL, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;
             case FileType::Dvd:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_DVD, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_DVD, USER_UI);
                 break;
             case FileType::Map:
-                _tcscpy_s(lastDir, _countof(lastDir) - 1, GetConfigString(USER_LASTDIR_MAP, USER_UI));
+                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
         }
 
@@ -217,29 +202,29 @@ namespace UI
             ofn.hwndOwner = hwnd;
             switch (type)
             {
-            case FileType::All:
-                ofn.lpstrFilter =
-                    _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
-                    _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
-                    _T("Binary Files (*.bin)\0*.bin\0")
-                    _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                    _T("All Files (*.*)\0*.*\0");
-                break;
-            case FileType::Dvd:
-                ofn.lpstrFilter =
-                    _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                    _T("All Files (*.*)\0*.*\0");
-                break;
-            case FileType::Map:
-                ofn.lpstrFilter =
-                    _T("Symbolic information files (*.map)\0*.map\0")
-                    _T("All Files (*.*)\0*.*\0");
-                break;
-            case FileType::Json:
-                ofn.lpstrFilter =
-                    _T("Json files (*.json)\0*.json\0")
-                    _T("All Files (*.*)\0*.*\0");
-                break;
+                case FileType::All:
+                    ofn.lpstrFilter =
+                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
+                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
+                        _T("Binary Files (*.bin)\0*.bin\0")
+                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                        _T("All Files (*.*)\0*.*\0");
+                    break;
+                case FileType::Dvd:
+                    ofn.lpstrFilter =
+                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
+                        _T("All Files (*.*)\0*.*\0");
+                    break;
+                case FileType::Map:
+                    ofn.lpstrFilter =
+                        _T("Symbolic information files (*.map)\0*.map\0")
+                        _T("All Files (*.*)\0*.*\0");
+                    break;
+                case FileType::Json:
+                    ofn.lpstrFilter =
+                        _T("Json files (*.json)\0*.json\0")
+                        _T("All Files (*.*)\0*.*\0");
+                    break;
             }
 
             ofn.lpstrCustomFilter = NULL;
@@ -247,7 +232,7 @@ namespace UI
             ofn.nFilterIndex = 1;
             ofn.lpstrFile = szFileName;
             ofn.nMaxFile = sizeof(szFileName);
-            ofn.lpstrInitialDir = lastDir;
+            ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
             ofn.lpstrFileTitle = szFileTitle;
             ofn.nMaxFileTitle = sizeof(szFileTitle);
             ofn.lpstrTitle = _T("Save File\0");
@@ -262,21 +247,25 @@ namespace UI
             _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
             // save last directory
-            _tcscpy_s(lastDir, _countof(lastDir) - 1, tempBuf);
-            int i = (int)_tcslen(lastDir) - 1;
-            while (lastDir[i] != _T('\\')) i--;
-            lastDir[i + 1] = _T('\0');
+
+            lastDir = Util::TcharToString(tempBuf);
+
+            while (lastDir.back() != '\\')
+            {
+                lastDir.pop_back();
+            }
+
             switch (type)
             {
                 case FileType::All:
                 case FileType::Json:
-                    SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
                     break;
                 case FileType::Dvd:
-                    SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
                     break;
                 case FileType::Map:
-                    SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    UI::Jdi.SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
             }
 
@@ -322,7 +311,7 @@ namespace UI
     }
 
     /* Make path to file shorter for "lvl" levels. */
-    std::wstring FileShortName(std::wstring& filename, int lvl)
+    std::wstring FileShortName(const std::wstring& filename, int lvl)
     {
         static TCHAR tempBuf[1024] = { 0 };
 

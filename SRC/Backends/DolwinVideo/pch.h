@@ -43,5 +43,5 @@
 
 #include "../../Debugger/Debugger.h"
 
-#include "../../Hardware/Hardware.h"
+#include "../../Hardware/HWConfig.h"
 #include "GX.h"

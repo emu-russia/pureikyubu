@@ -163,16 +163,16 @@ static void SaveSettings()              // OK pressed
         {
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
             uint32_t ver = _tcstoul(buf.data(), NULL, 0);
-            SetConfigInt(USER_CONSOLE, ver, USER_HW);
+            UI::Jdi.SetConfigInt(USER_CONSOLE, ver, USER_HW);
         }
-        else SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
+        else UI::Jdi.SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
-        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, buf.data(), sizeof(buf));
-        UI::Jdi.SetConfigString(USER_BOOTROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, buf.data(), sizeof(buf));
-        UI::Jdi.SetConfigString(USER_DSP_DROM, buf, USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, buf.data(), sizeof(buf));
-        UI::Jdi.SetConfigString(USER_DSP_IROM, buf, USER_HW);
+        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, (LPWSTR)buf.data(), buf.size());
+        UI::Jdi.SetConfigString(USER_BOOTROM, Util::WstringToString(buf), USER_HW);
+        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, (LPWSTR)buf.data(), buf.size());
+        UI::Jdi.SetConfigString(USER_DSP_DROM, Util::WstringToString(buf), USER_HW);
+        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, (LPWSTR)buf.data(), buf.size());
+        UI::Jdi.SetConfigString(USER_DSP_IROM, Util::WstringToString(buf), USER_HW);
     }
 
     // GCN High Level
@@ -192,7 +192,7 @@ void ResetAllSettings()
 /* Make sure path have ending '\\' */
 static void fix_path(std::wstring& path)
 {
-    if (!path.ends_with(L'\\'))
+    if (path.back() != L'\\')
     {
         path.push_back(L'\\');
     }

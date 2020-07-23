@@ -36,7 +36,7 @@ static void AddFont(HWND hwndDlg, TCHAR *file)
         ext, _countof(ext) - 1 );
 
     // check font type
-    size_t size = UI::FileSize(file);
+    size_t size = Util::FileSize(file);
     BOOL is_ansi = (size <= ANSI_FONT_SIZE);
 
     if(is_ansi)

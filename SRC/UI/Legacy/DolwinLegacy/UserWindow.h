@@ -39,11 +39,14 @@ void CenterChildWindow(HWND hParent, HWND hChild);
 /* All important data is placed here */
 struct UserWindow
 {
-    bool    ontop;              /* main window is on top ?  */
-    HWND    hMainWindow;        /* main window              */
-    HWND    hStatusWindow;      /* statusbar window         */
-    HWND    hProgress;          /* progress bar             */
-    HMENU   hMainMenu;          /* main menu                */
+    bool    ontop;                  // main window is on top ?
+    HWND    hMainWindow;            // main window
+    HWND    hStatusWindow;          // statusbar window
+    HWND    hProgress;              // progress bar
+    HMENU   hMainMenu;              // main menu
+    std::wstring  currentFileName;  // name of loaded file (without extension)
+    bool          dvd;              // true: loaded file is DVD image
+    std::wstring  cwd;              // current working directory
 };
 
 extern UserWindow wnd;

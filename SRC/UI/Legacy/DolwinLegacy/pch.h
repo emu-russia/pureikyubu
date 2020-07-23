@@ -31,7 +31,10 @@
 #include "../../../../ThirdParty/fmt/fmt/format.h"
 #include "../../../../ThirdParty/fmt/fmt/printf.h"
 
-#include "StringUtils.h"
+#include "../../../Common/String.h"
+#include "../../../Common/File.h"
+#include "../../../Common/Json.h"
+
 #include "UserMain.h"           // application entrypoint
 #include "UserJdiClient.h"
 #include "UserConfig.h"
