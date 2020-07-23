@@ -27,7 +27,7 @@ class Thread
 
 	char threadName[0x100] = { 0 };
 
-#ifdef _WINDOWS
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
 	HANDLE threadHandle = INVALID_HANDLE_VALUE;
 	DWORD threadId = 0;
 	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);

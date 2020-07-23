@@ -47,7 +47,7 @@
 #include "../Backends/AudioDirectSound/AX.h"
 #endif
 
-#ifdef _PLAYGROUND
+#ifdef _PLAYGROUND_WINDOWS
 #include "../Backends/GraphicsNull/GX.h"
 #include "../Backends/PadNull/PAD.h"
 #include "../Backends/VideoNull/VideoOut.h"

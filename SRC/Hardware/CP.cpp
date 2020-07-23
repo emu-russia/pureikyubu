@@ -349,10 +349,13 @@ void CPOpen(HWConfig * config)
     fifo.updateTbrValue = Gekko::Gekko->GetTicks() + fifo.tickPerFifo;
 
     fifo.thread = new Thread(CPThread, false, nullptr, "CPThread");
-    assert(fifo.thread);
 }
 
 void CPClose()
 {
-    delete fifo.thread;
+    if (fifo.thread)
+    {
+        delete fifo.thread;
+        fifo.thread = nullptr;
+    }
 }

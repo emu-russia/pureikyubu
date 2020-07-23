@@ -235,8 +235,7 @@ void AROpen()
     Report(Channel::AR, "Aux. memory (ARAM) driver\n");
 
     // reallocate ARAM
-    ARAM = (uint8_t *)malloc(ARAMSIZE);
-    assert(ARAM);
+    ARAM = new uint8_t[ARAMSIZE];
 
     // clear ARAM data
     memset(ARAM, 0, ARAMSIZE);
@@ -274,7 +273,7 @@ void ARClose()
     // destroy ARAM
     if(ARAM)
     {
-        free(ARAM);
+        delete [] ARAM;
         ARAM = nullptr;
     }
 }

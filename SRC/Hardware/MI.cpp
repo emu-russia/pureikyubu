@@ -500,14 +500,16 @@ void LoadBootrom(HWConfig* config)
         return;
     }
 
-    mi.bootrom = bootrom.data();
+    mi.bootrom = new uint8_t[mi.bootromSize];
 
     if (bootrom.size() != mi.bootromSize)
     {
-        free(mi.bootrom);
+        delete [] mi.bootrom;
         mi.bootrom = nullptr;
         return;
     }
+
+    memcpy(mi.bootrom, bootrom.data(), bootrom.size());
 
     // Determine size of encrypted data (find first empty cache burst line)
 
@@ -532,7 +534,7 @@ void LoadBootrom(HWConfig* config)
     {
         // Empty cacheline not found, something wrong with the image
 
-        free(mi.bootrom);
+        delete[] mi.bootrom;
         mi.bootrom = nullptr;
         return;
     }
@@ -560,8 +562,7 @@ void MIOpen(HWConfig * config)
     MIClearTraps();
 
     mi.ramSize = config->ramsize;
-    mi.ram = (uint8_t *)malloc(mi.ramSize);
-    assert(mi.ram);
+    mi.ram = new uint8_t[mi.ramSize];
 
     memset(mi.ram, 0, mi.ramSize);
 
@@ -577,13 +578,13 @@ void MIClose()
 {
     if (mi.ram)
     {
-        free(mi.ram);
+        delete [] mi.ram;
         mi.ram = nullptr;
     }
 
     if (mi.bootrom)
     {
-        free(mi.bootrom);
+        delete[] mi.bootrom;
         mi.bootrom = nullptr;
     }
 

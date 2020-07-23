@@ -119,7 +119,10 @@ void SYMSetHighlevel(const char *symName, void (*routine)())
 
     // check address
     // High-level call is too high in memory.
-    assert(((uint64_t)routine & ~0x03ffffff) == 0);
+    if (((uint64_t)routine & ~0x03ffffff) != 0)
+    {
+        throw "High-level call is too high in memory!";
+    }
 
     // leave, if symbol is not found. add otherwise.
     if(symbol)
