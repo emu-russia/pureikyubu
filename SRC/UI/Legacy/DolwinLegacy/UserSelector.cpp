@@ -347,7 +347,7 @@ static void add_item(size_t index)
 }
 
 /* Insert new file into filelist. */
-static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
+static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 {
     // check file size
     if ((fsize < 0x1000) || (fsize > DVD_SIZE))
@@ -438,10 +438,16 @@ static void add_file(std::wstring& file, int fsize, SELECTOR_FILE type)
     else if(type == SELECTOR_FILE::Executable)
     {
         /* Rip filename */
-        auto filename = std::filesystem::path(file).stem();
+        TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+
+        _tsplitpath_s(file.c_str(),
+            drive, _countof(drive) - 1,
+            dir, _countof(dir) - 1,
+            name, _countof(name) - 1,
+            ext, _countof(ext) - 1);
 
         item->id = L"-";
-        item->title = filename;
+        item->title = name;
         item->comment[0] = 0;
 
         item->id.resize(16);
@@ -695,6 +701,13 @@ void UpdateSelector()
         { ".iso", SELECTOR_FILE::Dvd        }
     };
 
+    TCHAR search[2 * MAX_PATH];
+    const TCHAR* mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso"), NULL };
+    SELECTOR_FILE type[] = { SELECTOR_FILE::Executable, SELECTOR_FILE::Executable, SELECTOR_FILE::Dvd, SELECTOR_FILE::Dvd };
+    WIN32_FIND_DATA fd = { 0 };
+    HANDLE hfff;
+    TCHAR found[2 * MAX_PATH];
+
     /* Opened? */
     if (!usel.opened || usel.updateInProgress)
     {
@@ -718,37 +731,43 @@ void UpdateSelector()
     usel.filter = UI::Jdi.GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
-    for (auto& dir : usel.paths)
+    int dir = 0;
+    while (dir < usel.paths.size())
     {
-        auto filter = _byteswap_ulong(usel.filter);
+        int m = 0;
+        uint32_t filter = _byteswap_ulong(usel.filter);
 
-        /* Search the directory. */
-        for (const auto& path : std::filesystem::directory_iterator(dir))
+        while (mask[m])
         {
-            if (!path.path().has_extension())
-                continue;
+            uint8_t allow = (uint8_t)filter;
+            filter >>= 8;
+            if (!allow) { m++; continue; }
 
-            auto extension = path.path().extension();
-            auto itr = std::find_if(file_ext.begin(), file_ext.end(), [&](const auto& ext)
+            _stprintf_s(search, _countof(search), _T("%s%s"), usel.paths[dir].c_str(), mask[m]);
+
+            memset(&fd, 0, sizeof(fd));
+
+            hfff = FindFirstFile(search, &fd);
+            if (hfff != INVALID_HANDLE_VALUE)
             {
-                uint8_t allow = filter & 0xff;
-                filter >>= 8;
-
-                /* Locate the file if it has a good extension */
-                /* and if it is allowed by filter. */
-                return (allow) && (ext.first == extension);
-            });
-
-            /* Recover filter. */
-            filter = _byteswap_ulong(usel.filter);
-
-            /* File found! */
-            if (itr != file_ext.end())
-            {
-                auto found = path.path().wstring();
-                add_file(found, Util::FileSize(found), itr->second);
+                do
+                {
+                    if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
+                    {
+                        _stprintf_s(found, _countof(found), _T("%s%s"), usel.paths[dir].c_str(), fd.cFileName);
+                        // Add file in list
+                        add_file(found, fd.nFileSizeLow, type[m]);
+                    }
+                } while (FindNextFile(hfff, &fd));
             }
-        }        
+            FindClose(hfff);
+
+            // next mask
+            m++;
+        }
+
+        // next directory
+        dir++;
     }
 
     /* Update selector window */
@@ -826,7 +845,7 @@ static void getdispinfo(LPNMHDR pnmh)
     
     if (!tcharStr.empty())
     {
-        std::wcsncpy(lpdi->item.pszText, tcharStr.data(), tcharStr.length());
+        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, tcharStr.data(), tcharStr.length());
     }
 }
 

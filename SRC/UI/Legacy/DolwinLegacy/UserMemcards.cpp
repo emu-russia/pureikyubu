@@ -274,7 +274,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             if (Memcard_Connected[um_num])
                 CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
 
-            _tcscpy(buf, Memcard_filename[um_num]);
+            _tcscpy_s(buf, sizeof(buf), Memcard_filename[um_num]);
             filename = _tcsrchr(buf, _T('\\'));
             if (filename == NULL) {
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
