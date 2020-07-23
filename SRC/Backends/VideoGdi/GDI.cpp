@@ -22,7 +22,7 @@ bool VideoOutOpen(HWConfig* config, int width, int height, RGB **gfxbuf)
 
     Report(Channel::VI, "Windows DIB for video interface\n");
 
-    savedHwnd = config->hwndMain;
+    savedHwnd = (HWND)config->renderTarget;
 
     bmi = (BITMAPINFO *)calloc(sizeof(BITMAPINFO) + 16*4, 1);
     if(bmi == NULL) return FALSE;

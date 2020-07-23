@@ -15,7 +15,7 @@ long GXOpen(HWConfig* config, uint8_t * ramPtr)
     BOOL res;
 
     hPlugin = GetModuleHandle(NULL);
-    hwndMain = config->hwndMain;
+    hwndMain = (HWND)config->renderTarget;
 
     RAM = ramPtr;
 

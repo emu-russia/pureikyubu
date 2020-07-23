@@ -5,7 +5,9 @@
 // version info
 #define APPNAME _T("Dolwin")
 #define APPDESC _T("Nintendo Gamecube Emulator for Windows")
-#define APPVER  _T("0.131")
+
+// Will be derived from JDI
+//#define APPVER  _T("0.131")
 
 #include "UserMain.h"           // application entrypoint
 #include "UserJdiClient.h"

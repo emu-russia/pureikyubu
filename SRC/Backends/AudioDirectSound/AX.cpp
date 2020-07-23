@@ -254,7 +254,7 @@ namespace Flipper
 		assert(hr == DS_OK);
 		assert(lpds);
 
-		hr = lpds->SetCooperativeLevel(config->hwndMain, DSSCL_PRIORITY);
+		hr = lpds->SetCooperativeLevel((HWND)config->renderTarget, DSSCL_PRIORITY);
 		assert(hr == DS_OK);
 
 		// Create primary buffer
