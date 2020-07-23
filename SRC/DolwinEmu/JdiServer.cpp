@@ -1,7 +1,8 @@
-// Local JDI Host, as DLL.
+// Local JDI Host
 
 #include "pch.h"
 
+#ifdef _WINDOWS
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -21,13 +22,14 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
+#endif // _WINDOWS
 
 #define endl    ( line[p] == 0 )
 #define space   ( line[p] == 0x20 )
 #define quot    ( line[p] == '\'' )
 #define dquot   ( line[p] == '\"' )
 
-static void Tokenize(char* line, std::vector<std::string>& args)
+static void Tokenize(const char* line, std::vector<std::string>& args)
 {
     int p, start, end;
     p = start = end = 0;
@@ -86,35 +88,146 @@ static void Tokenize(char* line, std::vector<std::string>& args)
 #undef dquot
 #undef endl
 
-extern "C" __declspec(dllexport) char* CallJdi(char* request)
+Json::Value* CallJdi(const char* request)
 {
-    Json json;
     std::vector<std::string> args;
 
     Tokenize(request, args);
 
-    Json::Value* output = JDI::Hub.Execute(args);
-    if (output == nullptr)
+    return JDI::Hub.Execute(args);
+}
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport) 
+#endif
+bool __cdecl CallJdiNoReturn(const char* request)
+{
+    CallJdi(request);
+    return true;
+}
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport) 
+#endif
+bool __cdecl CallJdiReturnInt(const char* request, int* valueOut)
+{
+    if (!valueOut)
     {
-        char* text = (char*)::CoTaskMemAlloc(3);
-        assert(text);
-        text[0] = '{';
-        text[1] = '}';
-        text[2] = 0;
-        return text;
+        return false;
     }
 
-    Json::Value* rootObj = json.root.AddObject(nullptr);
-    rootObj->AddValue("reply", output);
+    Json::Value* value = CallJdi(request);
+    if (!value)
+    {
+        return false;
+    }
+    if (value->type != Json::ValueType::Int)
+    {
+        delete value;
+        return false;
+    }
 
-    size_t jsonTextSize = 0;
-    json.GetSerializedTextSize(nullptr, -1, jsonTextSize);
+    *valueOut = value->value.AsInt;
+    delete value;
 
-    char* jsonText = (char*)::CoTaskMemAlloc(jsonTextSize + 1);
-    assert(jsonText);
-    memset(jsonText, 0, jsonTextSize + 1);
+    return true;
+}
 
-    json.Serialize(jsonText, jsonTextSize, jsonTextSize);
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport) 
+#endif
+bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
+{
+    if (!valueOut)
+    {
+        return false;
+    }
 
-    return jsonText;
+    Json::Value* value = CallJdi(request);
+    if (!value)
+    {
+        return false;
+    }
+
+    // String are returned in form of: [ "string" ]
+
+    if (value->type != Json::ValueType::Array)
+    {
+        delete value;
+        return false;
+    }
+
+    if (value->children.size() < 1)
+    {
+        delete value;
+        return false;
+    }
+
+    Json::Value* child = value->children.front();
+
+    if (child->type != Json::ValueType::String )
+    {
+        delete value;
+        return false;
+    }
+
+    // Check string size
+
+    size_t sizeInChars = _tcslen(child->value.AsString);
+    size_t sizeInBytes = sizeInChars * sizeof(TCHAR);
+    if (sizeInBytes >= valueSize)
+    {
+        delete value;
+        return false;
+    }
+    
+    // Copy out
+
+    TCHAR* tstrPtr = child->value.AsString;
+    char* valuePtr = valueOut;
+
+    for (size_t i = 0; i < sizeInChars; i++)
+    {
+        *valuePtr++ = (char)*tstrPtr++;
+    }
+    *valuePtr++ = 0;
+
+    delete value;
+
+    return true;
+}
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport) 
+#endif
+bool __cdecl CallJdiReturnBool(const char* request, bool* valueOut)
+{
+    if (!valueOut)
+    {
+        return false;
+    }
+
+    Json::Value* value = CallJdi(request);
+    if (!value)
+    {
+        return false;
+    }
+    if ( ! (value->type == Json::ValueType::Int || value->type == Json::ValueType::Bool) )
+    {
+        delete value;
+        return false;
+    }
+
+    if (value->type == Json::ValueType::Bool)
+    {
+        *valueOut = value->value.AsBool;
+    }
+    else
+    {
+        *valueOut = value->value.AsInt != 0;
+    }
+
+    delete value;
+
+    return true;
 }

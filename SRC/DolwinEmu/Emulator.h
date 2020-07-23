@@ -25,3 +25,4 @@ typedef struct Emulator
 extern  Emulator emu;
 
 #include "EmuCommands.h"
+#include "JdiServer.h"
