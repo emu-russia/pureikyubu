@@ -10,6 +10,8 @@ Dolwin.v12.suo
 *.dll
 *.exp
 *.lib
+*.iobj
+*.ipdb
 
 .vs
 x64
