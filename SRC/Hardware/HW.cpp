@@ -2,6 +2,8 @@
 // IMPORTANT: whole HW should use physical CPU addressing, not effective!
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Flipper
 {
     Flipper* HW;
@@ -29,14 +31,13 @@ namespace Flipper
 
     Flipper::Flipper(HWConfig* config)
     {
-        DBReport2(DbgChannel::Info,
+        Report(Channel::Info,
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n"
             "Hardware Initialization.\n"
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
         Mixer = new AudioMixer(config);
-        assert(Mixer);
 
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
@@ -49,24 +50,22 @@ namespace Flipper
         PIOpen(config); // interrupts, console regs
 
         DSP = new DSP::DspCore(config);
-        assert(DSP);
 
-        DBReport("\n");
+        Report(Channel::Norm, "\n");
 
-        GXOpen(mi.ram, wnd.hMainWindow);
-        PADOpen(wnd.hMainWindow);
+        GXOpen(config, mi.ram);
+        PADOpen();
 
-        Debug::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
+        JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
         hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
-        assert(hwUpdateThread);
     }
 
     Flipper::~Flipper()
     {
         delete hwUpdateThread;
 
-        Debug::Hub.RemoveNode(HW_JDI_JSON);
+        JDI::Hub.RemoveNode(HW_JDI_JSON);
 
         delete DSP;
 

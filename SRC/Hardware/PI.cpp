@@ -1,6 +1,8 @@
 // PI - processor interface (interrupts and console control regs, FIFO)
 #include "pch.h"
 
+using namespace Debug;
+
 // PI state (registers and other data)
 PIControl pi;
 
@@ -40,7 +42,7 @@ static void printOut(uint32_t mask, const char *fix)
         if(mask & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%sINT ", intdesc(m));
     }
     *p = 0;
-    DBReport2(DbgChannel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, Gekko::Gekko->regs.pc, Gekko::Gekko->GetTicks());
+    Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, Gekko::Gekko->regs.pc, Gekko::Gekko->GetTicks());
 }
 
 // assert interrupt
@@ -120,7 +122,7 @@ static void write_intmr(uint32_t addr, uint32_t data)
         }
         *p = 0;
 
-        DBReport2(DbgChannel::PI, "unmasked : %s\n", buf);
+        Report(Channel::PI, "unmasked : %s\n", buf);
     }
 }
 
@@ -177,11 +179,11 @@ static void write_pi_wrptr(uint32_t addr, uint32_t data) { pi.wrptr = data & ~0x
 // show PI fifo configuration
 void DumpPIFIFO()
 {
-    DBReport("PI fifo configuration");
-    DBReport("   base :0x%08X", pi.base);
-    DBReport("   top  :0x%08X", pi.top);
-    DBReport("   wrptr:0x%08X", pi.wrptr);
-    DBReport("   wrap :%i", (pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
+    Report(Channel::Norm, "PI fifo configuration");
+    Report(Channel::Norm, "   base :0x%08X", pi.base);
+    Report(Channel::Norm, "   top  :0x%08X", pi.top);
+    Report(Channel::Norm, "   wrptr:0x%08X", pi.wrptr);
+    Report(Channel::Norm, "   wrap :%i", (pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +191,7 @@ void DumpPIFIFO()
 
 void PIOpen(HWConfig* config)
 {
-    DBReport2(DbgChannel::PI, "Processor interface (interrupts)\n");
+    Report(Channel::PI, "Processor interface (interrupts)\n");
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;

@@ -3,12 +3,14 @@
 
 #pragma once
 
+#include "../Common/Thread.h"
+
 namespace Debug
 {
 
 	class SamplingProfiler
 	{
-		char filename[0x1000] = { 0, };
+		std::string filename;
 
 		Thread* thread = nullptr;
 		static void ThreadProc(void* Parameter);

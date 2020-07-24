@@ -1,6 +1,8 @@
 // GameCube DSP interpreter
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DSP
 {
 	DspInterpreter::DspInterpreter(DspCore* parent)
@@ -218,7 +220,7 @@ namespace DSP
 		{
 			if (core->logNonconditionalCallJmp)
 			{
-				DBReport2(DbgChannel::DSP, "0x%04X: CALL 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+				Report(Channel::DSP, "0x%04X: CALL 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
 			}
 
 			core->regs.st[0].push_back(core->regs.pc + 2);
@@ -239,7 +241,7 @@ namespace DSP
 
 		if (core->logNonconditionalCallJmp)
 		{
-			DBReport2(DbgChannel::DSP, "0x%04X: CALLR 0x%04X\n", core->regs.pc, address);
+			Report(Channel::DSP, "0x%04X: CALLR 0x%04X\n", core->regs.pc, address);
 		}
 
 		core->regs.st[0].push_back(core->regs.pc + 1);
@@ -411,7 +413,7 @@ namespace DSP
 		{
 			if (core->logNonconditionalCallJmp && info.cc == ConditionCode::Always)
 			{
-				DBReport2(DbgChannel::DSP, "0x%04X: JMP 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
+				Report(Channel::DSP, "0x%04X: JMP 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
 			}
 
 			core->regs.pc = info.ImmOperand.Address;
@@ -431,7 +433,7 @@ namespace DSP
 
 		if (core->logNonconditionalCallJmp)
 		{
-			DBReport2(DbgChannel::DSP, "0x%04X: JMPR 0x%04X\n", core->regs.pc, address);
+			Report(Channel::DSP, "0x%04X: JMPR 0x%04X\n", core->regs.pc, address);
 		}
 
 		core->regs.pc = address;
@@ -1098,7 +1100,7 @@ namespace DSP
 				break;
 
 			default:
-				DBHalt("DSP Unknown instruction at 0x%04X\n", core->regs.pc);
+				Halt("DSP Unknown instruction at 0x%04X\n", core->regs.pc);
 				core->Suspend();
 				return;
 		}
@@ -1139,7 +1141,7 @@ namespace DSP
 				case DspInstructionEx::NOP2: break;
 
 				default:
-					DBHalt("DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
+					Halt("DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
 					core->Suspend();
 					return;
 			}
@@ -1162,14 +1164,14 @@ namespace DSP
 		uint8_t* imemPtr = core->TranslateIMem(imemAddr);
 		if (imemPtr == nullptr)
 		{
-			DBHalt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
+			Halt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
 			core->Suspend();
 			return;
 		}
 
 		if (!Analyzer::Analyze(imemPtr, DspCore::MaxInstructionSizeInBytes, info))
 		{
-			DBHalt("DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
+			Halt("DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
 			core->Suspend();
 			return;
 		}

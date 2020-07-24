@@ -41,10 +41,6 @@ The interpreter is not involved in instruction decoding. It receives ready-made 
 
 This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
 
-### Various Notes from known Macronix datasheets
-
-- TRAP-- Always call to hex 000C address
-
 ## Mailbox Sync
 
 Specifics of Mailbox registers (registers consist of two halves) impose some features on their emulation.

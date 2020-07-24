@@ -2,6 +2,8 @@
 // Dolwin custom ("RAW"), CodeWarrior and GCC-like.
 #include "pch.h"
 
+using namespace Debug;
+
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
 static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
@@ -52,7 +54,7 @@ static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "CodeWarrior format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "CodeWarrior format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::CW;
 }
 
@@ -93,7 +95,7 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 
     fclose(map);
 
-    DBReport2(DbgChannel::HLE, "GCC format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "GCC format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::GCC;
 }
 
@@ -115,7 +117,7 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
         SYMAddNew(address, symbol.c_str());
     }
 
-    DBReport2(DbgChannel::HLE, "RAW format map loaded: %s\n\n", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "RAW format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
     return MAP_FORMAT::RAW;
 }
 
@@ -138,7 +140,7 @@ MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
     _tfopen_s(&f, mapname, _T("r"));
     if(!f)
     {
-        DBReport2(DbgChannel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Debug::Hub.TcharToString((TCHAR*)mapname).c_str());
+        Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::TcharToString((TCHAR*)mapname).c_str());
         hle.mapfile[0] = 0;
         return MAP_FORMAT::BAD;
     }

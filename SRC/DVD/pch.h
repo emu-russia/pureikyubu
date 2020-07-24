@@ -8,13 +8,14 @@
 #include <string.h>
 #include <tchar.h>
 #include <windows.h>
-#include <filesystem>
 
+#include "../Common/Thread.h"
 #include "../Common/Jdi.h"
+#include "../Common/File.h"
+#include "../Common/String.h"
 
 #include "../Debugger/Debugger.h"
-#include "../Core/Gekko.h"
-#include "../UI/UserFile.h"
+#include "../GekkoCore/Gekko.h"
 
 #include "DVD.h"
 #include "GCM.h"            // very simple GCM reading (for .gcm files)
@@ -25,4 +26,3 @@
 #include "DvdAdpcmDecode.h"
 
 #include "../../ThirdParty/fmt/fmt/format.h"
-

@@ -1,18 +1,53 @@
 #include "pch.h"
-#include "String.h"
 
-std::wstring str_to_wstr(const std::string& str)
+namespace Util
 {
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
+	std::string WstringToString(const std::wstring& wstr)
+	{
+		std::string str;
+		str.reserve(wstr.size());
+		for (auto it = wstr.begin(); it != wstr.end(); ++it)
+		{
+			str.push_back((char)*it);
+		}
+		return str;
+	}
 
-    return converterX.from_bytes(str);
-}
+	std::wstring StringToWstring(const std::string& str)
+	{
+		std::wstring wstr;
+		wstr.reserve(str.size());
+		for (auto it = str.begin(); it != str.end(); ++it)
+		{
+			wstr.push_back((wchar_t)*it);
+		}
+		return wstr;
+	}
 
-std::string wstr_to_str(const std::wstring& wstr)
-{
-    using convert_typeX = std::codecvt_utf8<wchar_t>;
-    std::wstring_convert<convert_typeX, wchar_t> converterX;
+	std::string TcharToString(const TCHAR* tstr)
+	{
+		char ansiText[0x200] = { 0, };
+		char* ansiPtr = ansiText;
+		TCHAR* tcharPtr = (TCHAR *)tstr;
+		while (*tcharPtr)
+		{
+			*ansiPtr++ = (char)*tcharPtr++;
+		}
+		*ansiPtr++ = 0;
+		return std::string(ansiText);
+	}
 
-    return converterX.to_bytes(wstr);
+	std::wstring TcharToWstring(const TCHAR* tstr)
+	{
+		wchar_t wideText[0x200] = { 0, };
+		wchar_t* widePtr = wideText;
+		TCHAR* tcharPtr = (TCHAR*)tstr;
+		while (*tcharPtr)
+		{
+			*widePtr++ = (wchar_t)*tcharPtr++;
+		}
+		*widePtr++ = 0;
+		return std::wstring(wideText);
+	}
+
 }

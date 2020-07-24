@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <string>
-
 // DVD interface
 
 namespace DVD
@@ -12,8 +10,9 @@ namespace DVD
     void ShutdownSubsystem();
 
     // Mount current DVD image for read/seek/open file operations
-    bool MountFile(std::wstring_view file);
-    bool MountFile(std::string file);
+    bool MountFile(TCHAR* file);
+    bool MountFile(std::string& file);
+    bool MountFile(std::wstring& file);
 
     // Mount DolphinSDK directory
     bool MountSdk(const TCHAR* path);
@@ -32,11 +31,11 @@ namespace DVD
     // Open file in DVD root. Return file position, or 0 if no such file.
     // Note: DVD must be mounted first!
     // example use : long banner = DVDOpenFile("/opening.bnr");
-    long OpenFile(std::string_view dvdfile);
+    long OpenFile(std::string& dvdfile);
 }
 
 // other include files
-#include "filesystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
+#include "FileSystem.h"     // DVD file system, based on hotquik's code from Dolwin 0.09
 #include "MountSDK.h"
 #include "Region.h"
 

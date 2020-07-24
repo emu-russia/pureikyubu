@@ -11,6 +11,8 @@
 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace DSP
 {
 	uint16_t DspCore::AccelFetch()
@@ -51,7 +53,7 @@ namespace DSP
 				break;
 
 			default:
-				DBHalt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
+				Halt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
 				break;
 		}
 
@@ -62,7 +64,7 @@ namespace DSP
 			Accel.CurrAddress.addr = Accel.StartAddress.addr;
 			if (logAccel)
 			{
-				DBReport2(DbgChannel::DSP, "Accelerator Overflow while read\n");
+				Report(Channel::DSP, "Accelerator Overflow while read\n");
 			}
 
 			if (regs.sr.ge && regs.sr.acie)
@@ -84,7 +86,7 @@ namespace DSP
 		if ((Accel.CurrAddress.h & 0x8000) != 0)
 		{
 			// This is #UB
-			DBHalt("DSP: Accelerator is not configured to read\n");
+			Halt("DSP: Accelerator is not configured to read\n");
 		}
 
 		val = AccelFetch();
@@ -105,7 +107,7 @@ namespace DSP
 		if ((Accel.CurrAddress.h & 0x8000) == 0)
 		{
 			// This is #UB
-			DBHalt("DSP: Accelerator is not configured to write\n");
+			Halt("DSP: Accelerator is not configured to write\n");
 		}
 
 		// Write mode is always 16-bit
@@ -119,7 +121,7 @@ namespace DSP
 			Accel.CurrAddress.h |= 0x8000;
 			if (logAccel)
 			{
-				DBReport2(DbgChannel::DSP, "Accelerator Overflow while write\n");
+				Report(Channel::DSP, "Accelerator Overflow while write\n");
 			}
 
 			if (regs.sr.ge && regs.sr.acie)

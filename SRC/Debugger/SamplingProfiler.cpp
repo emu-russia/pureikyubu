@@ -21,13 +21,12 @@ namespace Debug
 
 	SamplingProfiler::SamplingProfiler(const char* jsonFileName, int periodMs)
 	{
-		strcpy_s(filename, sizeof(filename) - 1, jsonFileName);
+		filename = jsonFileName;
 
 		pollingInterval = periodMs * Gekko::Gekko->OneMillisecond();
 		savedGekkoTbr = Gekko::Gekko->GetTicks();
 
 		json = new Json();
-		assert(json);
 
 		rootObj = json->root.AddObject(nullptr);
 		assert(rootObj);
@@ -36,7 +35,6 @@ namespace Debug
 		assert(sampleData);
 
 		thread = new Thread(ThreadProc, false, this, "SamplingProfiler");
-		assert(thread);
 	}
 
 	SamplingProfiler::~SamplingProfiler()
@@ -53,7 +51,7 @@ namespace Debug
 		json->Serialize(jsonText, 2 * textSize, textSize);
 
 		auto buffer = std::vector<uint8_t>(jsonText, jsonText + textSize);
-		UI::FileSave(filename, buffer);
+		Util::FileSave(filename, buffer);
 
 		delete[] jsonText;
 		delete json;

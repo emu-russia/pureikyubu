@@ -1,6 +1,8 @@
 // CP - command processor, PE - pixel engine.
 #include "pch.h"
 
+using namespace Debug;
+
 FifoControl fifo;
 
 // ---------------------------------------------------------------------------
@@ -13,12 +15,11 @@ static void DONE_INT()
     fifo.done_num++; vi.frames++;
     if(fifo.done_num == 1)
     {
-        SetStatusText(STATUS_ENUM::Progress, _T("First GX access"), true);
         vi.xfb = 0;     // disable VI output
     }
     if (fifo.log)
     {
-        DBReport2(DbgChannel::PE, "PE_DONE (frame:%u)", fifo.done_num);
+        Report(Channel::PE, "PE_DONE (frame:%u)", fifo.done_num);
     }
 
     if(fifo.pe.sr & PE_SR_DONEMSK)
@@ -33,7 +34,7 @@ static void TOKEN_INT()
     vi.frames++;
     if (fifo.log)
     {
-        DBReport2(DbgChannel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
+        Report(Channel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
     }
     vi.xfb = 0;     // disable VI output
 
@@ -50,7 +51,7 @@ static void CP_BREAK()
     {
         fifo.cp.sr |= CP_SR_BPINT;
         PIAssertInt(PI_INTERRUPT_CP);
-        DBReport2(DbgChannel::CP, "BREAK");
+        Report(Channel::CP, "BREAK");
     }
 }
 
@@ -60,7 +61,7 @@ static void CP_OVF()
     {
         fifo.cp.sr |= CP_SR_OVF;
         PIAssertInt(PI_INTERRUPT_CP);
-        DBReport2(DbgChannel::CP, "OVF");
+        Report(Channel::CP, "OVF");
     }
 }
 
@@ -70,7 +71,7 @@ static void CP_UVF()
     {
         fifo.cp.sr |= CP_SR_UVF;
         PIAssertInt(PI_INTERRUPT_CP);
-        DBReport2(DbgChannel::CP, "UVF");
+        Report(Channel::CP, "UVF");
     }
 }
 
@@ -128,9 +129,7 @@ static void CPThread(void* Param)
             fifo.cp.sr &= ~CP_SR_RD_IDLE;
 
             fifo.cp.sr &= ~CP_SR_CMD_IDLE;
-            BeginProfileGfx();
             GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK]);
-            EndProfileGfx();
             fifo.cp.sr |= CP_SR_CMD_IDLE;
 
             fifo.cp.rdptr += 32;
@@ -234,17 +233,17 @@ void DumpCPFIFO()
     char lw = (fifo.cp.cr & CP_CR_UVFEN)? ('U') : ('u');    // low-wmark
     char hw = (fifo.cp.cr & CP_CR_OVFEN)? ('O') : ('o');    // high-wmark
 
-    DBReport("CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
-    DBReport("control :0x%08X", fifo.cp.cr);
-    DBReport(" status :0x%08X", fifo.cp.sr);
-    DBReport("   base :0x%08X", fifo.cp.base);
-    DBReport("   top  :0x%08X", fifo.cp.top);
-    DBReport("   low  :0x%08X", fifo.cp.lomark);
-    DBReport("   high :0x%08X", fifo.cp.himark);
-    DBReport("   cnt  :0x%08X", fifo.cp.cnt);
-    DBReport("   wrptr:0x%08X", fifo.cp.wrptr);
-    DBReport("   rdptr:0x%08X", fifo.cp.rdptr);
-    DBReport("   break:0x%08X", fifo.cp.bpptr);
+    Report(Channel::Norm, "CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
+    Report(Channel::Norm, "control :0x%08X", fifo.cp.cr);
+    Report(Channel::Norm, " status :0x%08X", fifo.cp.sr);
+    Report(Channel::Norm, "   base :0x%08X", fifo.cp.base);
+    Report(Channel::Norm, "   top  :0x%08X", fifo.cp.top);
+    Report(Channel::Norm, "   low  :0x%08X", fifo.cp.lomark);
+    Report(Channel::Norm, "   high :0x%08X", fifo.cp.himark);
+    Report(Channel::Norm, "   cnt  :0x%08X", fifo.cp.cnt);
+    Report(Channel::Norm, "   wrptr:0x%08X", fifo.cp.wrptr);
+    Report(Channel::Norm, "   rdptr:0x%08X", fifo.cp.rdptr);
+    Report(Channel::Norm, "   break:0x%08X", fifo.cp.bpptr);
 }
 
 static void read_cp_baseh(uint32_t addr, uint32_t *reg)    { *reg = fifo.cp.baseh; }
@@ -296,7 +295,7 @@ static void no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
 void CPOpen(HWConfig * config)
 {
-    DBReport2(DbgChannel::CP, "Command processor (for GX)\n");
+    Report(Channel::CP, "Command processor (for GX)\n");
 
     // clear registers
     memset(&fifo, 0, sizeof(FifoControl));
@@ -350,10 +349,13 @@ void CPOpen(HWConfig * config)
     fifo.updateTbrValue = Gekko::Gekko->GetTicks() + fifo.tickPerFifo;
 
     fifo.thread = new Thread(CPThread, false, nullptr, "CPThread");
-    assert(fifo.thread);
 }
 
 void CPClose()
 {
-    delete fifo.thread;
+    if (fifo.thread)
+    {
+        delete fifo.thread;
+        fifo.thread = nullptr;
+    }
 }

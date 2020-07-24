@@ -19,49 +19,28 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\cmd.cpp" />
-    <ClCompile Include="..\..\console.cpp" />
-    <ClCompile Include="..\..\cpuview.cpp" />
-    <ClCompile Include="..\..\Cui.cpp" />
     <ClCompile Include="..\..\DebugCommands.cpp" />
-    <ClCompile Include="..\..\Debugger.cpp" />
-    <ClCompile Include="..\..\DspDebugger.cpp" />
     <ClCompile Include="..\..\EventLog.cpp" />
-    <ClCompile Include="..\..\input.cpp" />
-    <ClCompile Include="..\..\memview.cpp" />
-    <ClCompile Include="..\..\output.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\regs.cpp" />
+    <ClCompile Include="..\..\Report.cpp" />
     <ClCompile Include="..\..\SamplingProfiler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\cmd.h" />
-    <ClInclude Include="..\..\console.h" />
-    <ClInclude Include="..\..\cpuview.h" />
-    <ClInclude Include="..\..\Cui.h" />
     <ClInclude Include="..\..\DebugCommands.h" />
     <ClInclude Include="..\..\Debugger.h" />
-    <ClInclude Include="..\..\DspDebugger.h" />
     <ClInclude Include="..\..\EventLog.h" />
-    <ClInclude Include="..\..\input.h" />
-    <ClInclude Include="..\..\memview.h" />
-    <ClInclude Include="..\..\output.h" />
     <ClInclude Include="..\..\pch.h" />
-    <ClInclude Include="..\..\regs.h" />
+    <ClInclude Include="..\..\Report.h" />
     <ClInclude Include="..\..\SamplingProfiler.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Data\Json\DebuggerJdi.json" />
-    <None Include="..\..\..\..\Docs\EMU\EventLog.md" />
-    <None Include="..\..\..\..\Docs\EMU\JsonDebugInterface.md" />
-    <None Include="..\..\..\..\Docs\EMU\JsonDebugInterfaceRus.md" />
-    <None Include="..\..\..\..\Docs\EMU\SamplingProfiler.md" />
-    <None Include="..\..\..\..\Docs\EMU\SamplingProfilerRus.md" />
+    <None Include="..\..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -141,12 +120,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib />
     <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -155,12 +135,13 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Lib />
     <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -169,7 +150,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -188,7 +169,7 @@
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

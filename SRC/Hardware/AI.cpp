@@ -31,6 +31,8 @@
     AI FIFO DMA may be controlled through AISetDSPSampleRate().
 /*/
 
+using namespace Debug;
+
 // AI state (registers and other data)
 AIControl ai;
 
@@ -41,7 +43,7 @@ static void write_aidcr(uint32_t addr, uint32_t data)
 {
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n", 
+        Report(Channel::AI, "AIDCR: 0x%04X (RESETMOD:%i, DSPINTMSK:%i, DSPINT:%i, ARINTMSK:%i, ARINT:%i, AIINTMSK:%i, AIINT:%i, HALT:%i, DINT:%i, RES:%i\n", 
             data,
             data & AIDCR_RESETMOD ? 1 : 0,
             data & AIDCR_DSPINTMSK ? 1 : 0,
@@ -142,7 +144,7 @@ void AIDINT()
         PIAssertInt(PI_INTERRUPT_DSP);
         if (ai.log)
         {
-            DBReport2(DbgChannel::AI, "AIDINT");
+            Report(Channel::AI, "AIDINT");
         }
     }
 }
@@ -161,7 +163,7 @@ static void AIStartDMA()
     ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr, ai.dcnt * 32);
+        Report(Channel::AI, "DMA started: %08X, %i bytes\n", ai.currentDmaAddr, ai.dcnt * 32);
     }
     ai.audioThread->Resume();
 }
@@ -170,8 +172,6 @@ static void AIStartDMA()
 static void AIFeedMixer()
 {
     int bytes = 32;
-
-    BeginProfileSfx();
 
     if (ai.dcnt == 0 || (ai.len & AID_EN) == 0)
     {
@@ -184,8 +184,6 @@ static void AIFeedMixer()
         ai.dcnt--;
     }
 
-    EndProfileSfx();
-
     ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
 }
 
@@ -195,7 +193,7 @@ static void AIStopDMA()
     ai.dcnt = 0;
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA stopped\n");
+        Report(Channel::AI, "DMA stopped\n");
     }
 }
 
@@ -204,7 +202,7 @@ static void AISetDMASampleRate(Flipper::AudioSampleRate rate)
     Flipper::HW->Mixer->SetSampleRate(Flipper::AxChannel::AudioDma, rate);
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DMA sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
+        Report(Channel::AI, "DMA sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
     }
 }
 
@@ -223,7 +221,7 @@ static void AISetDvdAudioSampleRate(Flipper::AudioSampleRate rate)
 
     if (ai.log)
     {
-        DBReport2(DbgChannel::AIS, "DVD Audio sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
+        Report(Channel::AIS, "DVD Audio sample rate: %i\n", rate == Flipper::AudioSampleRate::Rate_32000 ? 32000 : 48000);
     }
 }
 
@@ -299,7 +297,7 @@ void AISINT()
             PIAssertInt(PI_INTERRUPT_AI);
             if (ai.log)
             {
-                DBReport2(DbgChannel::AIS, "AISINT\n");
+                Report(Channel::AIS, "AISINT\n");
             }
         }
     }
@@ -322,7 +320,7 @@ static void write_cr(uint32_t addr, uint32_t data)
     {
         if (ai.log)
         {
-            DBReport2(DbgChannel::AIS, "start streaming clock\n");
+            Report(Channel::AIS, "start streaming clock\n");
         }
         DVD::DDU->EnableAudioStreamClock(true);
         Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, true);
@@ -332,7 +330,7 @@ static void write_cr(uint32_t addr, uint32_t data)
     {
         if (ai.log)
         {
-            DBReport2(DbgChannel::AIS, "stop streaming clock\n");
+            Report(Channel::AIS, "stop streaming clock\n");
         }
         DVD::DDU->EnableAudioStreamClock(false);
         Flipper::HW->Mixer->Enable(Flipper::AxChannel::DvdAudio, false);
@@ -343,7 +341,7 @@ static void write_cr(uint32_t addr, uint32_t data)
     {
         if (ai.log)
         {
-            DBReport2(DbgChannel::AIS, "reset sample counter\n");
+            Report(Channel::AIS, "reset sample counter\n");
         }
         ai.scnt = 0;
         ai.cr &= ~AICR_SCRESET;
@@ -381,7 +379,7 @@ static void write_it(uint32_t addr, uint32_t data)
 {
     if (ai.log)
     {
-        DBReport2(DbgChannel::AIS, "set trigger to : 0x%08X\n", data);
+        Report(Channel::AIS, "set trigger to : 0x%08X\n", data);
     }
     ai.it = data;
 }
@@ -408,14 +406,14 @@ static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->
 static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadHi(false); }
 static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadLo(false); }
 
-static void write_in_mbox_h(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
-static void write_in_mbox_l(uint32_t addr, uint32_t data) { DBHalt("Processor is not allowed to write DSP Mailbox!"); }
+static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }
+static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }
 
 void DSPAssertInt()
 {
     if (ai.log)
     {
-        DBReport2(DbgChannel::AI, "DSPAssertInt\n");
+        Report(Channel::AI, "DSPAssertInt\n");
     }
 
     AIDCR |= AIDCR_DSPINT;
@@ -526,7 +524,7 @@ static void AIUpdate(void *Parameter)
 
 void AIOpen(HWConfig* config)
 {
-    DBReport2(DbgChannel::AI, "Audio interface (DMA, DVD Streaming and DSP)\n");
+    Report(Channel::AI, "Audio interface (DMA, DVD Streaming and DSP)\n");
 
     // clear regs
     memset(&ai, 0, sizeof(AIControl));

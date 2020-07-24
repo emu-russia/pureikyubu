@@ -23,9 +23,9 @@
 
 --------------------------------------------------------------------------- */
 
-ARControl aram;
+using namespace Debug;
 
-// ---------------------------------------------------------------------------
+ARControl aram;
 
 static void ARINT()
 {
@@ -34,7 +34,7 @@ static void ARINT()
     {
         if (aram.log)
         {
-            DBReport2(DbgChannel::AR, "ARINT\n");
+            Report(Channel::AR, "ARINT\n");
         }
         PIAssertInt(PI_INTERRUPT_DSP);
     }
@@ -92,10 +92,10 @@ static void ARDMA()
         {
             if (!specialAramDspDma)
             {
-                DBReport2(DbgChannel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
+                Report(Channel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
             }
         }
-        else DBReport2(DbgChannel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
+        else Report(Channel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
     }
 
     // Special ARAM DMA (DSP Init)
@@ -110,7 +110,7 @@ static void ARDMA()
 
         if (aram.log)
         {
-            DBReport2(DbgChannel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
+            Report(Channel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
         }
 
         aram.cnt &= 0x80000000;     // clear dma counter
@@ -232,11 +232,10 @@ static void ar_read_cnt(uint32_t addr, uint32_t *reg)      { *reg = aram.cnt & 0
 
 void AROpen()
 {
-    DBReport2(DbgChannel::AR, "Aux. memory (ARAM) driver\n");
+    Report(Channel::AR, "Aux. memory (ARAM) driver\n");
 
     // reallocate ARAM
-    ARAM = (uint8_t *)malloc(ARAMSIZE);
-    assert(ARAM);
+    ARAM = new uint8_t[ARAMSIZE];
 
     // clear ARAM data
     memset(ARAM, 0, ARAMSIZE);
@@ -264,7 +263,6 @@ void AROpen()
     MISetTrap(16, AR_REFRESH, no_read       , no_write);
 
     aram.dmaThread = new Thread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
-    assert(aram.dmaThread);
 }
 
 void ARClose()
@@ -275,7 +273,7 @@ void ARClose()
     // destroy ARAM
     if(ARAM)
     {
-        free(ARAM);
+        delete [] ARAM;
         ARAM = nullptr;
     }
 }

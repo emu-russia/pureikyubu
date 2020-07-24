@@ -1,23 +1,25 @@
 // Various commands for debugging hardware (Flipper). Available only after emulation has been started.
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Flipper
 {
 	// Load binary file to main memory
 	static Json::Value* cmd_ramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0) & RAMMASK;
-		auto data = UI::FileLoad(args[1].c_str());
+		auto data = Util::FileLoad(args[1]);
 
 		if (address >= mi.ramSize || (address + data.size()) >= mi.ramSize)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
 		if (data.empty())
 		{
-			DBReport("Failed to load: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
@@ -33,7 +35,7 @@ namespace Flipper
 
 		if (address >= mi.ramSize || (address + dataSize) >= mi.ramSize)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
@@ -41,9 +43,9 @@ namespace Flipper
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 
-		if (!UI::FileSave(args[1].c_str(), buffer))
+		if (!Util::FileSave(args[1], buffer))
 		{
-			DBReport("Failed to save: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}
 		return nullptr;
 	}
@@ -52,17 +54,17 @@ namespace Flipper
 	static Json::Value* cmd_aramload(std::vector<std::string>& args)
 	{
 		uint32_t address = (uint32_t)strtoul(args[2].c_str(), nullptr, 0);
-		auto data = UI::FileLoad(args[1].c_str());
+		auto data = Util::FileLoad(args[1]);
 
 		if (address >= ARAMSIZE || (address + data.size()) >= ARAMSIZE)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
 		if (data.empty())
 		{
-			DBReport("Failed to load: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to load: %s\n", args[1].c_str());
 			return nullptr;
 		}
 
@@ -78,7 +80,7 @@ namespace Flipper
 
 		if (address >= ARAMSIZE || (address + dataSize) >= ARAMSIZE)
 		{
-			DBReport("Address out of range!\n");
+			Report(Channel::Norm, "Address out of range!\n");
 			return nullptr;
 		}
 
@@ -86,9 +88,9 @@ namespace Flipper
 		auto buffer = std::vector<uint8_t>();
 		buffer.assign(ptr, ptr + dataSize);
 
-		if (!UI::FileSave(args[1].c_str(), buffer))
+		if (!Util::FileSave(args[1], buffer))
 		{
-			DBReport("Failed to save: %s\n", args[1].c_str());
+			Report(Channel::Norm, "Failed to save: %s\n", args[1].c_str());
 		}
 		return nullptr;
 	}
@@ -103,10 +105,10 @@ namespace Flipper
 
 	void hw_init_handlers()
 	{
-		Debug::Hub.AddCmd("ramload", cmd_ramload);
-		Debug::Hub.AddCmd("ramsave", cmd_ramsave);
-		Debug::Hub.AddCmd("aramload", cmd_aramload);
-		Debug::Hub.AddCmd("aramsave", cmd_aramsave);
-		Debug::Hub.AddCmd("DumpFifo", DumpFifo);
+		JDI::Hub.AddCmd("ramload", cmd_ramload);
+		JDI::Hub.AddCmd("ramsave", cmd_ramsave);
+		JDI::Hub.AddCmd("aramload", cmd_aramload);
+		JDI::Hub.AddCmd("aramsave", cmd_aramsave);
+		JDI::Hub.AddCmd("DumpFifo", DumpFifo);
 	}
 };

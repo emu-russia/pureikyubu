@@ -4,6 +4,8 @@
 // MI is implemented only for HW2 consoles! it is not back-compatible.
 #include "pch.h"
 
+using namespace Debug;
+
 // hardware traps tables.
 void (*hw_read8[0x10000])(uint32_t, uint32_t*);
 void (*hw_write8[0x10000])(uint32_t, uint32_t);
@@ -345,32 +347,32 @@ void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 static void def_hw_read8(uint32_t addr, uint32_t* reg)
 {
-    DBHalt("MI: Unhandled HW access:  R8 %08X", addr);
+    Halt("MI: Unhandled HW access:  R8 %08X", addr);
 }
 
 static void def_hw_write8(uint32_t addr, uint32_t data)
 {
-    DBHalt("MI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
+    Halt("MI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
 }
 
 static void def_hw_read16(uint32_t addr, uint32_t* reg)
 {
-    DBHalt("MI: Unhandled HW access: R16 %08X", addr);
+    Halt("MI: Unhandled HW access: R16 %08X", addr);
 }
 
 static void def_hw_write16(uint32_t addr, uint32_t data)
 {
-    DBHalt("MI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
+    Halt("MI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
 }
 
 static void def_hw_read32(uint32_t addr, uint32_t* reg)
 {
-    DBHalt("MI: Unhandled HW access: R32 %08X", addr);
+    Halt("MI: Unhandled HW access: R32 %08X", addr);
 }
 
 static void def_hw_write32(uint32_t addr, uint32_t data)
 {
-    DBHalt("MI: Unhandled HW access: W32 %08X = %08X", addr, data);
+    Halt("MI: Unhandled HW access: W32 %08X = %08X", addr, data);
 }
 
 // ---------------------------------------------------------------------------
@@ -422,10 +424,9 @@ void MISetTrap(
     // address must be in correct range
     if (!((addr >= HW_BASE) && (addr < (HW_BASE + HW_MAX_KNOWN))))
     {
-        UI::DolwinError(
-            _T("Hardware sub-system error"),
-            _T("Trap address is out of GAMECUBE registers range.\n")
-            _T("address : %08X\n"), addr
+        Halt(
+            "MI: Trap address is out of GAMECUBE registers range.\n"
+            "address : %08X\n", addr
         );
     }
 
@@ -444,11 +445,7 @@ void MISetTrap(
 
             // should never happen
         default:
-            UI::DolwinError(
-                _T("Hardware sub-system error"),
-                _T("Unknown trap type : %u (%08X)"),
-                type, addr
-            );
+            throw "Unknown trap type";
     }
 }
 
@@ -492,25 +489,27 @@ void LoadBootrom(HWConfig* config)
 
     if (_tcslen(config->BootromFilename) == 0)
     {
-        DBReport2(DbgChannel::MI, "Bootrom not loaded (not specified)\n");
+        Report(Channel::MI, "Bootrom not loaded (not specified)\n");
         return;
     }
 
-    auto bootrom = UI::FileLoad(config->BootromFilename);
+    auto bootrom = Util::FileLoad(config->BootromFilename);
     if (bootrom.empty())
     {
-        DBReport2(DbgChannel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);
+        Report(Channel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);
         return;
     }
 
-    mi.bootrom = bootrom.data();
+    mi.bootrom = new uint8_t[mi.bootromSize];
 
     if (bootrom.size() != mi.bootromSize)
     {
-        free(mi.bootrom);
+        delete [] mi.bootrom;
         mi.bootrom = nullptr;
         return;
     }
+
+    memcpy(mi.bootrom, bootrom.data(), bootrom.size());
 
     // Determine size of encrypted data (find first empty cache burst line)
 
@@ -535,7 +534,7 @@ void LoadBootrom(HWConfig* config)
     {
         // Empty cacheline not found, something wrong with the image
 
-        free(mi.bootrom);
+        delete[] mi.bootrom;
         mi.bootrom = nullptr;
         return;
     }
@@ -547,13 +546,13 @@ void LoadBootrom(HWConfig* config)
 
     // Show version
 
-    DBReport2(DbgChannel::MI, "Loaded and descrambled valid Bootrom\n");
-    DBReport("%s", (char*)mi.bootrom);
+    Report(Channel::MI, "Loaded and descrambled valid Bootrom\n");
+    Report(Channel::Norm, "%s\n", (char*)mi.bootrom);
 }
 
 void MIOpen(HWConfig * config)
 {
-    DBReport2(DbgChannel::MI, "Flipper memory interface\n");
+    Report(Channel::MI, "Flipper memory interface\n");
 
     // now any access will generate unhandled warning,
     // if emulator try to read or write register,
@@ -563,8 +562,7 @@ void MIOpen(HWConfig * config)
     MIClearTraps();
 
     mi.ramSize = config->ramsize;
-    mi.ram = (uint8_t *)malloc(mi.ramSize);
-    assert(mi.ram);
+    mi.ram = new uint8_t[mi.ramSize];
 
     memset(mi.ram, 0, mi.ramSize);
 
@@ -580,13 +578,13 @@ void MIClose()
 {
     if (mi.ram)
     {
-        free(mi.ram);
+        delete [] mi.ram;
         mi.ram = nullptr;
     }
 
     if (mi.bootrom)
     {
-        free(mi.bootrom);
+        delete[] mi.bootrom;
         mi.bootrom = nullptr;
     }
 

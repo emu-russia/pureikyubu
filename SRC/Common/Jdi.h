@@ -10,7 +10,7 @@
 #include "Spinlock.h"
 #include "Json.h"
 
-namespace Debug
+namespace JDI
 {
 	typedef Json::Value* (*CmdDelegate)(std::vector<std::string>& args);
 	typedef void (*JdiReflector)();
@@ -34,8 +34,6 @@ namespace Debug
 		JdiHub();
 		~JdiHub();
 
-		std::string TcharToString(TCHAR* text);
-
 		void AddCmd(std::string name, CmdDelegate command);
 
 		void AddNode(std::wstring filename, JdiReflector reflector);
@@ -43,7 +41,7 @@ namespace Debug
 
 		void Help();
 		Json::Value* Execute(std::vector<std::string>& args);
-		Json::Value* ExecuteFast(char* command);
+		Json::Value* ExecuteFast(const char* command);
 		bool ExecuteFastBool(char* command);
 		uint32_t ExecuteFastUInt32(char* command);
 		bool CommandExists(std::vector<std::string>& args);

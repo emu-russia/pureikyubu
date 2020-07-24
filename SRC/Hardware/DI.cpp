@@ -45,8 +45,6 @@ static void DIErrorCallback()
     }
 
     DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
-
-    EndProfileDVD();
 }
 
 // ---------------------------------------------------------------------------
@@ -65,8 +63,6 @@ static void DIBreak()
     }
 
     DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
-
-    EndProfileDVD();
 }
 
 // DDU transfer complete interrupt
@@ -81,8 +77,6 @@ static void DITransferComplete()
     }
 
     DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
-
-    EndProfileDVD();
 }
 
 static uint8_t DIHostToDduCallbackCommand()
@@ -282,8 +276,6 @@ static void write_cr(uint32_t addr, uint32_t data)
         di.hostToDduByteCounter = 0;
         DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
         DVD::DDU->StartTransfer(DVD::DduBusDirection::HostToDdu);
-
-        BeginProfileDVD();
     }
 }
 
@@ -357,7 +349,7 @@ static void read_cfg(uint32_t addr, uint32_t *reg) { *reg = 0; }
 
 void DIOpen()
 {
-    DBReport2(DbgChannel::DI, "DVD interface hardware\n");
+    Debug::Report(Debug::Channel::DI, "DVD interface hardware\n");
 
     // Current DVD is set by Loader, or when disk is swapped by UI.
 
@@ -396,6 +388,4 @@ void DIClose()
 
     di.dduToHostByteCounter = 0;
     di.hostToDduByteCounter = 32;
-
-    EndProfileDVD();
 }

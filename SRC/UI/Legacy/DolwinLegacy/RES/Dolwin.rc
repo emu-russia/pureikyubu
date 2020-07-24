@@ -1,0 +1,559 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include <windows.h>
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Russian (Russia) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
+LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
+#pragma code_page(1251)
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include <windows.h>\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Russian (Russia) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_FILE_FILTER DIALOGEX 20, 30, 255, 126
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dolwin File Filter"
+FONT 8, "MS Sans Serif", 0, 0, 0x0
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,196,104,50,16
+    GROUPBOX        "Executables",IDC_STATIC,5,5,245,45
+    GROUPBOX        "DVD Images",IDC_STATIC,5,54,245,45
+    LTEXT           "String :",IDC_STATIC,10,104,25,15,SS_CENTERIMAGE
+    EDITTEXT        IDC_FILE_FILTER,36,106,155,12,ES_AUTOHSCROLL | ES_READONLY
+    CONTROL         "Dolphin/GAMECUBE executable file, custom Nintendo format",IDC_DOL_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,15,225,15
+    CONTROL         "Embedded Link File, standard executable files",IDC_ELF_FILTER,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,30,225,15
+    CONTROL         "GameCube DVD Images (GCM)",IDC_GCM_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,64,225,15
+    CONTROL         "GameCube DVD Images (ISO)",IDC_GMP_FILTER,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,80,225,15
+END
+
+IDD_FONT_SETTINGS DIALOG 0, 0, 224, 130
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Bootrom Font"
+FONT 8, "MS Sans Serif"
+BEGIN
+    PUSHBUTTON      "Cancel",IDCANCEL,177,108,40,15
+    GROUPBOX        "Select Bootrom Ansi Font",IDC_STATIC,7,5,210,41
+    COMBOBOX        IDC_FONT_ANSICOMBO,16,20,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    PUSHBUTTON      "OK",IDOK,134,108,35,15
+    GROUPBOX        "Select Bootrom Sjis Font",IDC_STATIC,7,57,210,41
+    COMBOBOX        IDC_FONT_SJISCOMBO,17,73,190,40,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_MEMCARD_SETTINGS DIALOGEX 0, 0, 250, 182
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Memcard Settings"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,139,161,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,193,161,50,14
+    CONTROL         "Save to disk when disconnecting the memcard",IDC_MEMCARD_SYNCSAVE_FALSE,
+                    "Button",BS_AUTORADIOBUTTON,7,7,236,14
+    CONTROL         "Save to disk when writting to the memcard",IDC_MEMCARD_SYNCSAVE_TRUE,
+                    "Button",BS_AUTORADIOBUTTON,7,23,236,16
+    CONTROL         "Memcard is connected",IDC_MEMCARD_CONNECTED,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,58,220,11
+    LTEXT           "Filename:",IDC_STATIC,13,78,35,10
+    LTEXT           "Location:",IDC_STATIC,13,99,35,10
+    GROUPBOX        "Settings",IDC_STATIC,7,43,236,113
+    PUSHBUTTON      "Choose file...",IDC_MEMCARD_CHOOSEFILE,175,132,59,16
+    PUSHBUTTON      "Create New...",IDC_MEMCARD_NEW,112,133,59,16
+    LTEXT           "",IDC_MEMCARD_SIZEDESC,57,114,178,12
+    EDITTEXT        IDC_MEMCARD_PATH,55,95,180,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    EDITTEXT        IDC_MEMCARD_FILE,55,75,180,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+END
+
+IDD_MEMCARD_CHOOSESIZE DIALOG 0, 0, 141, 46
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Choose Memcard Size"
+FONT 8, "MS Sans Serif"
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,28,25,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,84,25,50,14
+    COMBOBOX        IDC_MEMCARD_SIZES,7,7,127,16,CBS_DROPDOWN | CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
+IDD_SETTINGS_EMU DIALOGEX 0, 0, 230, 256
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Nothing to configure.",IDC_STATIC,12,12,199,14,SS_CENTERIMAGE
+    PUSHBUTTON      "Reset ALL\nsettings",IDC_WINDALL,150,216,48,24,BS_MULTILINE | NOT WS_TABSTOP
+    CONTROL         "",IDC_ENSURE_WINDALL,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,204,216,12,10
+END
+
+IDD_SETTINGS_GUI DIALOGEX 0, 0, 230, 254
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    PUSHBUTTON      "Remove",IDC_KILLPATH,155,126,50,14,NOT WS_TABSTOP
+    PUSHBUTTON      "Add...",IDC_ADDPATH,102,126,50,14
+    GROUPBOX        "Directories",IDC_STATIC,12,12,204,138
+    LISTBOX         IDC_PATHLIST,18,24,192,96,LBS_NOINTEGRALHEIGHT | WS_VSCROLL
+    PUSHBUTTON      "Filter...",IDC_FILEFILTER,24,126,50,14,NOT WS_TABSTOP
+END
+
+IDD_SETTINGS_HW DIALOGEX 0, 0, 230, 256
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Console Version:",IDC_STATIC,12,12,60,12,SS_CENTERIMAGE
+    COMBOBOX        IDC_CONSOLE_VER,72,12,144,90,CBS_DROPDOWNLIST | CBS_SORT | WS_VSCROLL
+    LTEXT           "Note : Use the latest production board for most cases. Use the latest Devkit HW for debug purposes (to see OS reports in debugger).",IDC_STATIC,12,30,204,30
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_BOOTROM,168,78,48,14
+    EDITTEXT        IDC_BOOTROM_FILE,12,78,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "Bootrom file:",IDC_STATIC,12,66,96,10
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_DSPDROM,168,114,48,14
+    EDITTEXT        IDC_DSPDROM_FILE,12,114,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "DSP DROM file:",IDC_STATIC,12,102,96,10
+    PUSHBUTTON      "Choose...",IDC_CHOOSE_DSPIROM,168,150,48,14
+    EDITTEXT        IDC_DSPIROM_FILE,12,150,150,14,ES_MULTILINE | ES_AUTOHSCROLL | ES_NOHIDESEL | ES_READONLY | NOT WS_BORDER,WS_EX_CLIENTEDGE
+    LTEXT           "DSP IROM file:",IDC_STATIC,12,138,96,10
+END
+
+IDD_SETTINGS_HLE DIALOGEX 0, 0, 230, 256
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    LTEXT           "Nothing to configure.",IDC_STATIC,12,12,199,14,SS_CENTERIMAGE
+END
+
+IDD_DIALOG_PAD DIALOGEX 0, 0, 360, 255
+STYLE DS_SETFONT | DS_MODALFRAME | DS_SETFOREGROUND | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Configure Controller"
+FONT 7, "Small Fonts", 0, 0, 0x1
+BEGIN
+    CONTROL         IDB_BITMAP3,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,187,110,42,31
+    CONTROL         IDB_BITMAP2,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,215,45,80,62,WS_EX_TRANSPARENT
+    CONTROL         IDB_BITMAP1,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,130,153,39,36
+    PUSHBUTTON      "...",IDC_BUTTON_X,311,46,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_START,191,142,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_Y,311,61,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_A,311,76,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_B,311,91,35,15,NOT WS_TABSTOP
+    CTEXT           "X",IDC_STATIC,298,51,10,8
+    CTEXT           "Y",IDC_STATIC,298,65,10,8
+    CTEXT           "A",IDC_STATIC,298,80,10,8
+    CTEXT           "B",IDC_STATIC,298,95,10,8
+    CONTROL         IDB_BITMAP6,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,15,106,49,31
+    CONTROL         IDB_BITMAP7,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,15,158,49,31
+    PUSHBUTTON      "...",IDC_BUTTON_RIGHT,172,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_DOWN,133,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_LEFT,94,163,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_UP,133,137,35,15,NOT WS_TABSTOP
+    CONTROL         IDB_BITMAP4,IDC_STATIC,"Static",SS_BITMAP | SS_REALSIZEIMAGE,70,49,61,54
+    CONTROL         IDB_BITMAP5,IDC_STATIC,"Static",SS_BITMAP | SS_CENTERIMAGE | SS_REALSIZEIMAGE,248,151,44,38
+    PUSHBUTTON      "...",IDC_BUTTON_XDOWN50,94,106,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XDOWN100,94,121,35,15,NOT WS_TABSTOP
+    CTEXT           "50%",IDC_STATIC,74,110,15,8
+    CTEXT           "100%",IDC_STATIC,74,122,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_XRIGHT50,134,62,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XRIGHT100,134,76,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XUP100,94,15,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XUP50,94,31,35,15,NOT WS_TABSTOP
+    CTEXT           "100%",IDC_STATIC,74,20,15,8
+    CTEXT           "50%",IDC_STATIC,74,33,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_XLEFT50,30,62,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_XLEFT100,30,76,35,15,NOT WS_TABSTOP
+    CTEXT           "50%",IDC_STATIC,10,65,15,8
+    CTEXT           "100%",IDC_STATIC,12,79,15,8
+    CTEXT           "50%",IDC_STATIC,172,65,15,8
+    CTEXT           "100%",IDC_STATIC,172,78,15,8
+    PUSHBUTTON      "...",IDC_BUTTON_CXUP,253,135,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXLEFT,210,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXDOWN,253,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_CXRIGHT,294,162,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERR,22,191,35,15,NOT WS_TABSTOP
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERL,22,138,35,15,NOT WS_TABSTOP
+    GROUPBOX        "Define buttons",IDC_STATIC,5,5,350,223
+    CONTROL         "Plugged in",IDC_CHECK_PLUG,"Button",BS_AUTOCHECKBOX,15,20,50,10
+    PUSHBUTTON      "Cancel",IDC_PAD_CONFIG_CANCEL,318,234,36,17
+    PUSHBUTTON      "Clear",IDC_PAD_CONFIG_CLEAR,6,234,36,17
+    PUSHBUTTON      "...",IDC_BUTTON_TRIGGERZ,22,206,35,15,NOT WS_TABSTOP
+    CTEXT           "R",IDC_STATIC,61,196,10,8
+    CTEXT           "Z",IDC_STATIC,61,210,10,8
+    PUSHBUTTON      "OK",IDC_PAD_CONFIG_OK,276,234,36,17
+    PUSHBUTTON      "Default",IDC_PAD_CONFIG_DEFAULT,48,234,36,17
+END
+
+IDD_ABOUT DIALOGEX 20, 20, 257, 63
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "About Dolwin"
+FONT 8, "MS Sans Serif", 0, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,198,43,50,15
+    ICON            IDI_DOLWIN_ICON,IDC_STATIC,11,8,21,20
+    LTEXT           "Dolwin - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2020, Dolwin team\nBuild version 0.11 (21:23:32 5 Mar 2020)",IDC_ABOUT_RELEASE,48,5,186,25
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_FILE_FILTER, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 248
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 119
+    END
+
+    IDD_FONT_SETTINGS, DIALOG
+    BEGIN
+    END
+
+    IDD_MEMCARD_SETTINGS, DIALOG
+    BEGIN
+    END
+
+    IDD_MEMCARD_CHOOSESIZE, DIALOG
+    BEGIN
+    END
+
+    IDD_SETTINGS_EMU, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 249
+    END
+
+    IDD_SETTINGS_GUI, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 247
+    END
+
+    IDD_SETTINGS_HW, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 249
+    END
+
+    IDD_SETTINGS_HLE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 249
+    END
+
+    IDD_DIALOG_PAD, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 101
+    END
+
+    IDD_ABOUT, DIALOG
+    BEGIN
+        RIGHTMARGIN, 248
+        BOTTOMMARGIN, 58
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_DOLWIN_ICON         ICON                    "Dolwin.ico"
+
+IDI_GCN_ICON            ICON                    "GCN.ico"
+
+IDI_GCN_SMALL_ICON      ICON                    "GCN_sm.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "padArrows.bmp"
+
+IDB_BITMAP2             BITMAP                  "padButtons.bmp"
+
+IDB_BITMAP3             BITMAP                  "padStart.bmp"
+
+IDB_BITMAP4             BITMAP                  "padStick.bmp"
+
+IDB_BITMAP5             BITMAP                  "padSubStick.bmp"
+
+IDB_BITMAP6             BITMAP                  "padTriggerL.bmp"
+
+IDB_BITMAP7             BITMAP                  "padTriggerR.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,1,0,0
+ PRODUCTVERSION 0,1,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904b0"
+        BEGIN
+            VALUE "Comments", "There is no knowledge, that is not power."
+            VALUE "CompanyName", "© 2003-2020 Dolwin Team."
+            VALUE "FileDescription", "Dolwin - Nintendo GameCube Emulator"
+            VALUE "FileVersion", "0, 1, 0, 0"
+            VALUE "InternalName", "Dolwin"
+            VALUE "LegalCopyright", "© 2003-2020 Dolwin Team."
+            VALUE "OriginalFilename", "Dolwin.exe"
+            VALUE "ProductName", "Dolwin"
+            VALUE "ProductVersion", "0, 0, 1, 2"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR ACCELERATORS
+BEGIN
+    "D",            ID_DEBUG_CONSOLE,       VIRTKEY, CONTROL, NOINVERT
+    "O",            ID_FILE_LOAD,           VIRTKEY, CONTROL, NOINVERT
+    VK_F5,          ID_FILE_REFRESH,        VIRTKEY, NOINVERT
+    "R",            ID_FILE_RELOAD,         VIRTKEY, CONTROL, NOINVERT
+    "C",            ID_FILE_UNLOAD,         VIRTKEY, CONTROL, NOINVERT
+    "G",            ID_OPTIONS_GRAPHICS,    VIRTKEY, CONTROL, NOINVERT
+    "S",            ID_OPTIONS_SOUND,       VIRTKEY, CONTROL, NOINVERT
+    "I",            ID_OPTIONS_INPUT,       VIRTKEY, CONTROL, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MAIN_MENU MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Open...\tCtrl+O",            ID_FILE_LOAD
+        POPUP "&Reopen\tCtrl+R"
+        BEGIN
+            MENUITEM "&1",                          ID_FILE_RECENT_1
+            MENUITEM "&2",                          ID_FILE_RECENT_2
+            MENUITEM "&3",                          ID_FILE_RECENT_3
+            MENUITEM "&4",                          ID_FILE_RECENT_4
+            MENUITEM "&5",                          ID_FILE_RECENT_5
+        END
+        MENUITEM "&Close\tCtrl+C",              ID_FILE_UNLOAD
+        MENUITEM SEPARATOR
+        MENUITEM "Run &Bootrom",                ID_FILE_IPLMENU
+        POPUP "S&wap Disk    "
+        BEGIN
+            MENUITEM "Open Cover",                  ID_FILE_COVER
+            MENUITEM "Change DVD...",               ID_FILE_CHANGEDVD
+        END
+        MENUITEM SEPARATOR
+        MENUITEM "&Refresh View\tF5",           ID_FILE_REFRESH
+        MENUITEM SEPARATOR
+        MENUITEM "E&xit\tAlt+F4",               ID_FILE_EXIT
+    END
+    POPUP "&Development"
+    BEGIN
+        MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
+        MENUITEM SEPARATOR
+        MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
+        MENUITEM "&Load Symbols...",            ID_LOAD_MAP, GRAYED
+        MENUITEM "&Add Symbols...",             ID_ADD_MAP, GRAYED
+        MENUITEM "&Save Symbols...",            ID_SAVE_MAP, GRAYED
+        MENUITEM SEPARATOR
+        MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
+        MENUITEM "DSP Debug",                   ID_DSP_DEBUG
+        MENUITEM SEPARATOR
+        MENUITEM "Mount DolphinSDK as DVD...",  ID_DEVELOPMENT_MOUNTSDK
+    END
+    POPUP "&Options"
+    BEGIN
+        MENUITEM "&Settings...",                ID_OPTIONS_SETTINGS
+        POPUP "&View"
+        BEGIN
+            MENUITEM "&Disable Selector",           ID_OPTIONS_VIEW_DISABLE
+            MENUITEM SEPARATOR
+            MENUITEM "&Small Icons",                ID_OPTIONS_VIEW_SMALLICONS
+            MENUITEM "&Large Icons",                ID_OPTIONS_VIEW_LARGEICONS, CHECKED
+            MENUITEM SEPARATOR
+            POPUP "Sort by..."
+            BEGIN
+                MENUITEM "&1  Default",                 ID_OPTIONS_VIEW_SORTBY_1, CHECKED
+                MENUITEM "&2  File Name",               ID_OPTIONS_VIEW_SORTBY_2
+                MENUITEM "&3  Title",                   ID_OPTIONS_VIEW_SORTBY_3
+                MENUITEM "&4  Size",                    ID_OPTIONS_VIEW_SORTBY_4
+                MENUITEM "&5  Game ID",                 ID_OPTIONS_VIEW_SORTBY_5
+                MENUITEM "&6  Comment",                 ID_OPTIONS_VIEW_SORTBY_6
+                MENUITEM "&7  Keep Unsorted",           ID_OPTIONS_VIEW_SORTBY_7
+            END
+            MENUITEM "File &Filter...",             ID_OPTIONS_VIEW_FILEFILTER
+        END
+        MENUITEM "Always On &Top",              ID_OPTIONS_ALWAYSONTOP, CHECKED
+        MENUITEM SEPARATOR
+        POPUP "&Controllers"
+        BEGIN
+            MENUITEM "Port &1",                     ID_OPTIONS_CONTROLLERS_PORT1
+            MENUITEM "Port &2",                     ID_OPTIONS_CONTROLLERS_PORT2
+            MENUITEM "Port &3",                     ID_OPTIONS_CONTROLLERS_PORT3
+            MENUITEM "Port &4",                     ID_OPTIONS_CONTROLLERS_PORT4
+        END
+        POPUP "&Memcards"
+        BEGIN
+            MENUITEM "Slot &A",                     ID_OPTIONS_MEMCARDS_SLOTA
+            MENUITEM "Slot &B",                     ID_OPTIONS_MEMCARDS_SLOTB
+        END
+        MENUITEM "Bootrom &Font...",            ID_OPTIONS_BOOTROMFONT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "A&bout Dolwin...",            ID_HELP_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_SETTINGS_HLE AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_DIALOG_PAD AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_FILE_FILTER AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_EMU AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_SETTINGS_HW AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_ABOUT AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// String Table
+//
+
+STRINGTABLE
+BEGIN
+    ID_DEVELOPMENT_LOGOUTPUT_GXFIFO "435345"
+END
+
+#endif    // English (United States) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

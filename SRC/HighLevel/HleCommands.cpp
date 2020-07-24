@@ -1,12 +1,14 @@
 // HLE JDI. Some commands available only after emulation has been started.
 #include "pch.h"
 
+using namespace Debug;
+
 namespace HLE
 {
     // Ask the emulator whether it is loaded or not.
     static bool IsLoaded()
     {
-        Json::Value* loaded = Debug::Hub.ExecuteFast("IsLoaded");
+        Json::Value* loaded = JDI::Hub.ExecuteFast("IsLoaded");
         if (!loaded)
             return false;
 
@@ -27,10 +29,10 @@ namespace HLE
         uint32_t address = address = strtoul(args[1].c_str(), NULL, 0);
         if (address != 0)
         {
-            DBReport2(DbgChannel::HLE, "New symbol: %08X %s\n", address, args[2].c_str());
+            Report(Channel::HLE, "New symbol: %08X %s\n", address, args[2].c_str());
             SYMAddNew(address, args[2].c_str());
         }
-        else DBReport2(DbgChannel::HLE, "Wrong address!\n");
+        else Report(Channel::HLE, "Wrong address!\n");
 
         return nullptr;
     }
@@ -166,17 +168,17 @@ namespace HLE
 
 	void JdiReflector()
 	{
-        Debug::Hub.AddCmd("syms", cmd_syms);
-        Debug::Hub.AddCmd("name", cmd_name);
-        Debug::Hub.AddCmd("savemap", cmd_savemap);
-        Debug::Hub.AddCmd("DumpThreads", DumpThreads);
-        Debug::Hub.AddCmd("DumpContext", DumpContext);
-        Debug::Hub.AddCmd("UnloadMap", UnloadMap);
-        Debug::Hub.AddCmd("LoadMap", LoadMap);
-        Debug::Hub.AddCmd("AddMap", AddMap);
-        Debug::Hub.AddCmd("AddressByName", AddressByName);
-        Debug::Hub.AddCmd("NameByAddress", NameByAddress);
-        Debug::Hub.AddCmd("OSTime", OSTimeInternal);
-        Debug::Hub.AddCmd("GetNearestName", GetNearestNameInternal);
+        JDI::Hub.AddCmd("syms", cmd_syms);
+        JDI::Hub.AddCmd("name", cmd_name);
+        JDI::Hub.AddCmd("savemap", cmd_savemap);
+        JDI::Hub.AddCmd("DumpThreads", DumpThreads);
+        JDI::Hub.AddCmd("DumpContext", DumpContext);
+        JDI::Hub.AddCmd("UnloadMap", UnloadMap);
+        JDI::Hub.AddCmd("LoadMap", LoadMap);
+        JDI::Hub.AddCmd("AddMap", AddMap);
+        JDI::Hub.AddCmd("AddressByName", AddressByName);
+        JDI::Hub.AddCmd("NameByAddress", NameByAddress);
+        JDI::Hub.AddCmd("OSTime", OSTimeInternal);
+        JDI::Hub.AddCmd("GetNearestName", GetNearestNameInternal);
 	}
 }

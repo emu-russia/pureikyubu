@@ -1,7 +1,7 @@
 {
   "info": {
-    "description": "Debugger Controls. In Sense, control the appearance of the debugger and other auxiliary commands.",
-    "helpGroup": "Debugger Controls"
+    "description": "DolwinEmu core Debug Interface.",
+    "helpGroup": "Debugger Interface"
   },
 
   "can": {
@@ -23,7 +23,7 @@
       "hints": "<text>",
       "usage": [
         "Syntax: echo <text>\n",
-        "Examples of use: echo \"Hello, world!\"\n"
+        "Example: echo \"Hello, world!\"\n"
       ]
     },
 
@@ -40,6 +40,27 @@
 
     "StopProfiler": {
       "help": "Stop Gekko profiling"
+    },
+
+    "GetChannelName": {
+      "internal": true,
+      "help": "Get the human-readable name of a debug channel",
+      "args": 1,
+      "hints": "<channel>",
+      "usage": [
+        "Syntax: GetChannelName <channel>\n",
+        "Example: GetChannelName 5\n"
+      ],
+      "output": "Array of single string: [ \"ChannelName\" ]"
+    },
+
+    "qd": {
+      "internal": true,
+      "help": "Get history of debug messages. Clear queue in progress.",
+      "usage": [
+        "Syntax: qd\n"
+      ],
+      "output": "Array of Pair<Debug::Channel, string>: [ 4, \"Message1\", 7, \"Message2\" ] or empty Array []"
     }
 
   }
