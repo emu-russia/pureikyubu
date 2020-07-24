@@ -249,6 +249,8 @@ void LoadRecentFile(int index)
     int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
     UI::Jdi.LoadFile(Util::WstringToString(path));
+    OnMainWindowOpened();
+    UI::Jdi.Run();
 }
 
 // ---------------------------------------------------------------------------
@@ -558,6 +560,8 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     loadFile:
                     
                         UI::Jdi.LoadFile(Util::WstringToString(name));
+                        OnMainWindowOpened();
+                        UI::Jdi.Run();
                     }
 
                     return 0;
@@ -576,7 +580,9 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Unload file (STOP) */
                 case ID_FILE_UNLOAD:
                 {
+                    UI::Jdi.Stop();
                     UI::Jdi.Unload();
+                    OnMainWindowClosed();
 
                     return 0;
                 }
@@ -584,6 +590,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_IPLMENU:
                 {
                     UI::Jdi.LoadFile("Bootrom");
+                    OnMainWindowOpened();
                     return 0;
                 }
                 /* Open/close DVD lid */
@@ -820,7 +827,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     }
                     return 0;
                 }
-                /* Mount Dolphin SDK as DVD */
+                // Mount Dolphin SDK as DVD
                 case ID_DEVELOPMENT_MOUNTSDK:
                 {
                     std::wstring dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
@@ -850,17 +857,17 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     PADConfigure(3, wnd.hMainWindow);
                     return 0;
 
-                    // configure memcard in slot A
+                // configure memcard in slot A
                 case ID_OPTIONS_MEMCARDS_SLOTA:
                     MemcardConfigure(0, hwnd);
                     return 0;
 
-                    // configure memcard in slot B
+                // configure memcard in slot B
                 case ID_OPTIONS_MEMCARDS_SLOTB:
                     MemcardConfigure(1, hwnd);
                     return 0;
 
-                    // configure fonts
+                // configure fonts
                 case ID_OPTIONS_BOOTROMFONT:
                     FontConfigure(hwnd);
                     break;
