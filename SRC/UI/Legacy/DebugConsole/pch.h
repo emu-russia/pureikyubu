@@ -6,14 +6,10 @@
 
 #include "../../../Common/Json.h"
 #include "../../../Common/Jdi.h"
-
-#include "../../../GekkoCore/Gekko.h"
-
-#include "../../../Debugger/Debugger.h"
+#include "../../../Common/Thread.h"
 
 #include "Cui.h"
 
 #include "console.h"
 #include "GekkoDebugger.h"
-
 #include "DspDebugger.h"

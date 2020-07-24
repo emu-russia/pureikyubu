@@ -1,4 +1,4 @@
-// Legacy cmd.cpp will gradually be replaced by this module.
+// Debug commands
 
 #include "pch.h"
 

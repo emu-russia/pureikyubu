@@ -23,7 +23,7 @@
       "hints": "<text>",
       "usage": [
         "Syntax: echo <text>\n",
-        "Examples of use: echo \"Hello, world!\"\n"
+        "Example: echo \"Hello, world!\"\n"
       ]
     },
 
