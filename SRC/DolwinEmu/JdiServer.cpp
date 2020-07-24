@@ -140,7 +140,7 @@ bool __cdecl CallJdiReturnInt(const char* request, int* valueOut)
         return false;
     }
 
-    *valueOut = value->value.AsInt;
+    *valueOut = (int)value->value.AsInt;
     delete value;
 
     return true;
