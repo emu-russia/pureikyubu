@@ -51,19 +51,42 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
     {
         // skip space first, if any
         while (space) p++;
-        if (!endl && (quot || dquot))
-        {   // quotation, need special case
+        if (!endl && quot)
+        {   // single quotation, need special case
             p++;
             start = p;
             while (1)
             {
                 if (endl)
                 {
-                    throw "Open quotation";
+                    throw "Open single quotation";
                     return;
                 }
 
-                if (quot || dquot)
+                if (quot)
+                {
+                    end = p;
+                    p++;
+                    break;
+                }
+                else p++;
+            }
+
+            args.push_back(std::string(line + start, end - start));
+        }
+        else if (!endl && dquot)
+        {   // double quotation, need special case
+            p++;
+            start = p;
+            while (1)
+            {
+                if (endl)
+                {
+                    throw "Open double quotation";
+                    return;
+                }
+
+                if (dquot)
                 {
                     end = p;
                     p++;
