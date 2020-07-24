@@ -9,10 +9,10 @@ namespace UI
 	JdiClient::JdiClient()
 	{
 #ifdef _WINDOWS
-		dll = LoadLibraryA("DolwinEmuForPlayground.dll");
+		dll = LoadLibraryA("DolwinEmu.dll");
 		if (dll == nullptr)
 		{
-			throw "Load DolwinEmuForPlayground failed!";
+			throw "Load DolwinEmu failed!";
 		}
 
 		CallJdi = (CALL_JDI) GetProcAddress(dll, "CallJdi");
@@ -84,22 +84,52 @@ namespace UI
 
 	void JdiClient::DvdSeek(int offset)
 	{
-
+		CallJdi(("DvdSeek " + std::to_string(offset)).c_str());
 	}
 
 	void JdiClient::DvdRead(std::vector<uint8_t>& data)
 	{
+		Json::Value* dataJson = CallJdi(("DvdRead " + std::to_string(data.size())).c_str());
 
+		int i = 0;
+
+		for (auto it = dataJson->children.begin(); it != dataJson->children.end(); ++it)
+		{
+			data[i++] = (*it)->value.AsUint8;
+		}
+
+		delete dataJson;
 	}
 
 	uint32_t JdiClient::DvdOpenFile(const std::string& filename)
 	{
-		return 0;
+		Json::Value* offsetJson = CallJdi(("DvdOpenFile \"" + filename + "\"").c_str());
+
+		uint32_t offsetValue = (uint32_t)offsetJson->value.AsInt;
+
+		delete offsetJson;
+
+		return offsetValue;
 	}
 
 	bool JdiClient::DvdCoverOpened()
 	{
-		return false;
+		Json::Value* dvdInfo = CallJdi("DvdInfo");
+
+		bool lidStatusOpened = false;
+
+		for (auto it = dvdInfo->children.begin(); it != dvdInfo->children.end(); ++it)
+		{
+			if ((*it)->type == Json::ValueType::Bool)
+			{
+				lidStatusOpened = (*it)->value.AsBool;
+				break;
+			}
+		}
+
+		delete dvdInfo;
+
+		return lidStatusOpened;
 	}
 
 	void JdiClient::DvdOpenCover()
@@ -116,32 +146,41 @@ namespace UI
 
 	std::string JdiClient::GetConfigString(const std::string& var, const std::string& path)
 	{
-		return std::string();
+		Json::Value* value = CallJdi(("GetConfigString " + path + " " + var).c_str());
+		std::string res = Util::TcharToString(value->children.front()->value.AsString);
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigString(const std::string& var, const std::string& newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigString " + path + " " + var + " \"" + newVal + "\"").c_str());
 	}
 
 	int JdiClient::GetConfigInt(const std::string& var, const std::string& path)
 	{
-		return 0;
+		Json::Value* value = CallJdi(("GetConfigInt " + path + " " + var).c_str());
+		int res = (int)value->children.front()->value.AsInt;
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigInt(const std::string& var, int newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigInt " + path + " " + var + " " + std::to_string(newVal)).c_str());
 	}
 
 	bool JdiClient::GetConfigBool(const std::string& var, const std::string& path)
 	{
-		return false;
+		Json::Value* value = CallJdi(("GetConfigBool " + path + " " + var).c_str());
+		bool res = value->children.front()->value.AsBool;
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigBool(const std::string& var, bool newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigBool " + path + " " + var + " " + (newVal ? "true" : "false")).c_str());
 	}
 
 	// Emulator controls

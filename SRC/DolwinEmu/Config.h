@@ -6,7 +6,6 @@ constexpr auto DOLWIN_DEFAULT_SETTINGS = L"Data\\DefaultSettings.json";		// Must
 constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
 
 // Sections
-#define USER_UI "ui"
 #define USER_PADS "controllers"
 #define USER_LOADER		"loader"
 #define USER_CORE		"core"

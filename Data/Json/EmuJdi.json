@@ -91,6 +91,67 @@
       "internal": true,
       "help": "Get emulator version",
       "output": "Array: [String]"
+    },
+
+    "GetConfig": {
+      "help": "Dump config"
+    },
+
+    "GetConfigString": {
+      "internal": true,
+      "help": "Get configuration String parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigString <section> <param>"
+      ],
+      "output": "Array: [String]"
+    },
+
+    "SetConfigString": {
+      "internal": true,
+      "help": "Set configuration String parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigString <section> <param> <value>"
+      ]
+    },
+
+    "GetConfigInt": {
+      "internal": true,
+      "help": "Get configuration Int parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigInt <section> <param>"
+      ],
+      "output": "Array: [Int]"
+    },
+
+    "SetConfigInt": {
+      "internal": true,
+      "help": "Set configuration Int parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigInt <section> <param> <value>"
+      ]
+    },
+
+    "GetConfigBool": {
+      "internal": true,
+      "help": "Get configuration Bool parameter",
+      "args": 2,
+      "usage": [
+        "Use: GetConfigBool <section> <param>"
+      ],
+      "output": "Array: [Bool]"
+    },
+
+    "SetConfigBool": {
+      "internal": true,
+      "help": "Set configuration Bool parameter",
+      "args": 3,
+      "usage": [
+        "Use: SetConfigBool <section> <param> <value>"
+      ]
     }
 
   }

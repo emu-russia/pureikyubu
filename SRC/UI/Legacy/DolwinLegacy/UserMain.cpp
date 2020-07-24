@@ -17,17 +17,8 @@ namespace UI
 
         if (GekkoDebuggerOpened)
         {
-            char ansiText[0x1000] = { 0, }, * ansiPtr = ansiText;
-
-            TCHAR* tcharPtr = buf;
-            while (*tcharPtr)
-            {
-                *ansiPtr++ = (char)*tcharPtr++;
-            }
-            *ansiPtr++ = 0;
-
             char cmd[0x1000];
-            sprintf_s(cmd, sizeof(cmd), "echo %s", ansiText);
+            sprintf_s(cmd, sizeof(cmd), "echo %s", Util::TcharToString(buf).c_str());
             UI::Jdi.ExecuteCommand(cmd);
             UI::Jdi.ExecuteCommand("stop");
         }
@@ -36,31 +27,6 @@ namespace UI
             MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
             UI::Jdi.ExecuteCommand("exit");
         }
-    }
-
-    // fatal error, if user answers no
-    // return true if "yes", and false if "no"
-    bool DolwinQuestion(const TCHAR* title, const TCHAR* fmt, ...)
-    {
-        va_list arg;
-        TCHAR buf[0x1000];
-
-        va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
-        va_end(arg);
-
-        int btn = MessageBox(
-            NULL,
-            buf,
-            title,
-            MB_RETRYCANCEL | MB_ICONHAND | MB_TOPMOST
-            );
-        if (btn == IDCANCEL)
-        {
-            SendMessage(wnd.hMainWindow, WM_COMMAND, ID_FILE_UNLOAD, 0);
-            return FALSE;
-        }
-        else return TRUE;
     }
 
     // application message

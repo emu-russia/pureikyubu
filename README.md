@@ -1,4 +1,4 @@
-# Nintendo GameCube Emulator not only for Windows
+# Nintendo GameCube Emulator
 
 ![PNG](https://github.com/ogamespec/dolwin-docs/blob/master/ScreenShots/Ikaruga_0130.png)
 
@@ -9,32 +9,9 @@ GameCube is the hardware masterpiece of Nintendo engineers and it's a pleasure t
 
 This project is revived from 2004 in 2020.
 
-Dolwin Team:
-- org (ogamespec), responsible for the rest;
-- hotquik (http://www.hotsoft.com.ve/about/), responsible for memory cards emulation, Bootrom fonts and UI.
+## Building Windows version
 
-## Building
-
-Build using Visual Studio 2019. To build, open Dolwin.sln and click Build.
-
-The executable will be at the root (Dolwin.exe).
-
-## Solution structure
-
-All solution projects are independent components (or try to be like that).
-
-Currently, work is underway to encapsulate components in their namespaces, but the legacy code from version 0.10 does not make it so simple.
-
-Currently, the following namespaces are quietly formed:
-
-- Debug: for debugging functionality
-- Gekko: for the core of the Gekko CPU
-- Flipper: for various internal Flipper hardware modules (AI, VI, EXI, etc.)
-- DSP: for GameCube DSP
-- DVD: for a disk drive unit (DDU)
-- GX: for the Flipper GPU
-
-The user interface will most likely be rewritten as a Managed C# application. In the meantime, it's just like a piece of code from version 0.10.
+Build using Visual Studio 2019. To build, open Dolwin_VS2019.sln and click Build.
 
 ## Third-party code
 
@@ -47,7 +24,7 @@ Later "Dolphin" was changed to "GameCube", so that there is no confusion with an
 
 ## Situation with rebranding
 
-I didn't want to leave Windows aside, but the public is interested in the possibility of launching and porting Dolwin in other OSes.
+Public is interested in the possibility of launching and porting Dolwin in other OSes.
 
 Therefore, a small rebranding was made, now Dolwin stands for "Nintendo GameCube Emulator not only for Windows". Lol.
 
@@ -78,6 +55,10 @@ Dolwin Beta-team: Chrono, darkreign, Jeil, Knuckles, MasterPhW and Posty.
 Thanks to Martin for web-hosting on Emulation64.com
 
 ## Contacts
+
+Dolwin 0.10 Team:
+- hotquik (http://www.hotsoft.com.ve/about/), responsible for memory cards emulation, Bootrom fonts and UI.
+- org (ogamespec), responsible for the rest;
 
 - Official Discord channel: https://discord.gg/Ehz8PYA
 - Skype: ogamespec

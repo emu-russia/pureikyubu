@@ -1,4 +1,4 @@
-// Emu debug commands
+// Emu commands
 
 #include "pch.h"
 
@@ -81,14 +81,14 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 }
 
 // Sleep specified number of milliseconds
-static Json::Value* cmd_sleep(std::vector<std::string>& args)
+static Json::Value* CmdSleep(std::vector<std::string>& args)
 {
 	Sleep(atoi(args[1].c_str()));
 	return nullptr;
 }
 
 // Exit
-static Json::Value* cmd_exit(std::vector<std::string>& args)
+static Json::Value* CmdExit(std::vector<std::string>& args)
 {
 	UNREFERENCED_PARAMETER(args);
 
@@ -98,7 +98,7 @@ static Json::Value* cmd_exit(std::vector<std::string>& args)
 	exit(0);
 }
 
-static Json::Value* cmd_load(std::vector<std::string>& args)
+static Json::Value* CmdLoad(std::vector<std::string>& args)
 {
 	char filepath[0x1000] = { 0, };
 
@@ -121,7 +121,7 @@ static Json::Value* cmd_load(std::vector<std::string>& args)
 	return nullptr;
 }
 
-static Json::Value* cmd_unload(std::vector<std::string>& args)
+static Json::Value* CmdUnload(std::vector<std::string>& args)
 {
 	UNREFERENCED_PARAMETER(args);
 
@@ -133,14 +133,14 @@ static Json::Value* cmd_unload(std::vector<std::string>& args)
 	return nullptr;
 }
 
-static Json::Value* cmd_reset(std::vector<std::string>& args)
+static Json::Value* CmdReset(std::vector<std::string>& args)
 {
 	EMUReset();
 	return nullptr;
 }
 
 // Return true if emulation state is `Loaded`
-static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
+static Json::Value* CmdIsLoadedInternal(std::vector<std::string>& args)
 {
 	Json::Value* output = new Json::Value();
 	output->type = Json::ValueType::Bool;
@@ -150,7 +150,7 @@ static Json::Value* IsLoadedInternal(std::vector<std::string>& args)
 	return output;
 }
 
-static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
+static Json::Value* CmdGetLoadedInternal(std::vector<std::string>& args)
 {
 	UNREFERENCED_PARAMETER(args);
 
@@ -166,7 +166,7 @@ static Json::Value* GetLoadedInternal(std::vector<std::string>& args)
 }
 
 // Get emulator version
-static Json::Value* GetVersionInternal(std::vector<std::string>& args)
+static Json::Value* CmdGetVersionInternal(std::vector<std::string>& args)
 {
 	Json::Value* output = new Json::Value();
 	output->type = Json::ValueType::Array;
@@ -176,19 +176,100 @@ static Json::Value* GetVersionInternal(std::vector<std::string>& args)
 	return output;
 }
 
+static Json::Value* CmdGetConfig(std::vector<std::string>& args)
+{
+	Report(Channel::Norm, "%s = %s\n", USER_ANSI, Util::TcharToString(GetConfigString(USER_ANSI, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_SJIS, Util::TcharToString(GetConfigString(USER_SJIS, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = 0x%08X\n", USER_CONSOLE, GetConfigInt(USER_CONSOLE, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_OS_REPORT, GetConfigBool(USER_OS_REPORT, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_PI_RSWHACK, GetConfigBool(USER_PI_RSWHACK, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_VI_XFB, GetConfigBool(USER_VI_XFB, USER_HW));
+
+	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::TcharToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::TcharToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_IROM, Util::TcharToString(GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
+
+	Report(Channel::Norm, "%s = %i\n", USER_EXI_LOG, GetConfigBool(USER_EXI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_VI_LOG, GetConfigBool(USER_VI_LOG, USER_HW));
+
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigString(std::vector<std::string>& args)
+{
+	TCHAR* param = GetConfigString(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddString(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigString(std::vector<std::string>& args)
+{
+	SetConfigString(args[2].c_str(), Util::StringToWstring(args[3]).c_str(), args[1].c_str());
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigInt(std::vector<std::string>& args)
+{
+	int param = GetConfigInt(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddInt(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigInt(std::vector<std::string>& args)
+{
+	SetConfigInt(args[2].c_str(), atoi(args[3].c_str()), args[1].c_str());
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigBool(std::vector<std::string>& args)
+{
+	bool param = GetConfigBool(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddBool(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigBool(std::vector<std::string>& args)
+{
+	SetConfigBool(args[2].c_str(), args[3] == "true" ? true : false, args[1].c_str());
+	return nullptr;
+}
+
 void EmuReflector()
 {
 	JDI::Hub.AddCmd("FileLoad", EmuFileLoad);
 	JDI::Hub.AddCmd("FileSave", EmuFileSave);
-	JDI::Hub.AddCmd("sleep", cmd_sleep);
-	JDI::Hub.AddCmd("exit", cmd_exit);
-	JDI::Hub.AddCmd("quit", cmd_exit);
-	JDI::Hub.AddCmd("x", cmd_exit);
-	JDI::Hub.AddCmd("q", cmd_exit);
-	JDI::Hub.AddCmd("load", cmd_load);
-	JDI::Hub.AddCmd("unload", cmd_unload);
-	JDI::Hub.AddCmd("reset", cmd_reset);
-	JDI::Hub.AddCmd("IsLoaded", IsLoadedInternal);
-	JDI::Hub.AddCmd("GetLoaded", GetLoadedInternal);
-	JDI::Hub.AddCmd("GetVersion", GetVersionInternal);
+	JDI::Hub.AddCmd("sleep", CmdSleep);
+	JDI::Hub.AddCmd("exit", CmdExit);
+	JDI::Hub.AddCmd("quit", CmdExit);
+	JDI::Hub.AddCmd("x", CmdExit);
+	JDI::Hub.AddCmd("q", CmdExit);
+	JDI::Hub.AddCmd("load", CmdLoad);
+	JDI::Hub.AddCmd("unload", CmdUnload);
+	JDI::Hub.AddCmd("reset", CmdReset);
+	JDI::Hub.AddCmd("IsLoaded", CmdIsLoadedInternal);
+	JDI::Hub.AddCmd("GetLoaded", CmdGetLoadedInternal);
+	JDI::Hub.AddCmd("GetVersion", CmdGetVersionInternal);
+
+	JDI::Hub.AddCmd("GetConfig", CmdGetConfig);
+	JDI::Hub.AddCmd("GetConfigString", CmdGetConfigString);
+	JDI::Hub.AddCmd("SetConfigString", CmdSetConfigString);
+	JDI::Hub.AddCmd("GetConfigInt", CmdGetConfigInt);
+	JDI::Hub.AddCmd("SetConfigInt", CmdSetConfigInt);
+	JDI::Hub.AddCmd("GetConfigBool", CmdGetConfigBool);
+	JDI::Hub.AddCmd("SetConfigBool", CmdSetConfigBool);
 }

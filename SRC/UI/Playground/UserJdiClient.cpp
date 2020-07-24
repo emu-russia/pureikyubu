@@ -116,32 +116,41 @@ namespace UI
 
 	std::string JdiClient::GetConfigString(const std::string& var, const std::string& path)
 	{
-		return std::string();
+		Json::Value* value = CallJdi(("GetConfigString " + path + " " + var).c_str());
+		std::string res = Util::TcharToString(value->children.front()->value.AsString);
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigString(const std::string& var, const std::string& newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigString " + path + " " + var + " \"" + newVal + "\"").c_str());
 	}
 
 	int JdiClient::GetConfigInt(const std::string& var, const std::string& path)
 	{
-		return 0;
+		Json::Value* value = CallJdi(("GetConfigInt " + path + " " + var).c_str());
+		int res = (int)value->children.front()->value.AsInt;
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigInt(const std::string& var, int newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigInt " + path + " " + var + " " + std::to_string(newVal)).c_str());
 	}
 
 	bool JdiClient::GetConfigBool(const std::string& var, const std::string& path)
 	{
-		return false;
+		Json::Value* value = CallJdi(("GetConfigBool " + path + " " + var).c_str());
+		bool res = value->children.front()->value.AsBool;
+		delete value;
+		return res;
 	}
 
 	void JdiClient::SetConfigBool(const std::string& var, bool newVal, const std::string& path)
 	{
-
+		CallJdi(("SetConfigBool " + path + " " + var + " " + (newVal ? "true" : "false")).c_str());
 	}
 
 	// Emulator controls
