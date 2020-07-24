@@ -32,7 +32,10 @@ static void LoadSettings()
 	}
 
 	auto jsonText = Util::FileLoad(DOLWIN_DEFAULT_SETTINGS);
-	assert(!jsonText.empty());
+	if (jsonText.empty())
+	{
+		throw "Default settings missing!";
+	}
 
 	defaultSettings.Deserialize(jsonText.data(), jsonText.size());
 

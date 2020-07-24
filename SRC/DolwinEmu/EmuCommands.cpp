@@ -176,6 +176,79 @@ static Json::Value* GetVersionInternal(std::vector<std::string>& args)
 	return output;
 }
 
+static Json::Value* CmdGetConfig(std::vector<std::string>& args)
+{
+	Report(Channel::Norm, "%s = %s\n", USER_ANSI, Util::TcharToString(GetConfigString(USER_ANSI, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_SJIS, Util::TcharToString(GetConfigString(USER_SJIS, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = 0x%08X\n", USER_CONSOLE, GetConfigInt(USER_CONSOLE, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_OS_REPORT, GetConfigBool(USER_OS_REPORT, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_PI_RSWHACK, GetConfigBool(USER_PI_RSWHACK, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_VI_XFB, GetConfigBool(USER_VI_XFB, USER_HW));
+
+	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::TcharToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::TcharToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_IROM, Util::TcharToString(GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
+
+	Report(Channel::Norm, "%s = %i\n", USER_EXI_LOG, GetConfigBool(USER_EXI_LOG, USER_HW));
+	Report(Channel::Norm, "%s = %i\n", USER_VI_LOG, GetConfigBool(USER_VI_LOG, USER_HW));
+
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigString(std::vector<std::string>& args)
+{
+	TCHAR* param = GetConfigString(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddString(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigString(std::vector<std::string>& args)
+{
+	SetConfigString(args[2].c_str(), Util::StringToWstring(args[3]).c_str(), args[1].c_str());
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigInt(std::vector<std::string>& args)
+{
+	int param = GetConfigInt(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddInt(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigInt(std::vector<std::string>& args)
+{
+	SetConfigInt(args[2].c_str(), atoi(args[3].c_str()), args[1].c_str());
+	return nullptr;
+}
+
+static Json::Value* CmdGetConfigBool(std::vector<std::string>& args)
+{
+	bool param = GetConfigBool(args[2].c_str(), args[1].c_str());
+
+	Json::Value* output = new Json::Value();
+	output->type = Json::ValueType::Array;
+
+	output->AddBool(nullptr, param);
+
+	return output;
+}
+
+static Json::Value* CmdSetConfigBool(std::vector<std::string>& args)
+{
+	SetConfigBool(args[2].c_str(), args[3] == "true" ? true : false, args[1].c_str());
+	return nullptr;
+}
+
 void EmuReflector()
 {
 	JDI::Hub.AddCmd("FileLoad", EmuFileLoad);
@@ -191,4 +264,12 @@ void EmuReflector()
 	JDI::Hub.AddCmd("IsLoaded", IsLoadedInternal);
 	JDI::Hub.AddCmd("GetLoaded", GetLoadedInternal);
 	JDI::Hub.AddCmd("GetVersion", GetVersionInternal);
+
+	JDI::Hub.AddCmd("GetConfig", CmdGetConfig);
+	JDI::Hub.AddCmd("GetConfigString", CmdGetConfigString);
+	JDI::Hub.AddCmd("SetConfigString", CmdSetConfigString);
+	JDI::Hub.AddCmd("GetConfigInt", CmdGetConfigInt);
+	JDI::Hub.AddCmd("SetConfigInt", CmdSetConfigInt);
+	JDI::Hub.AddCmd("GetConfigBool", CmdGetConfigBool);
+	JDI::Hub.AddCmd("SetConfigBool", CmdSetConfigBool);
 }
