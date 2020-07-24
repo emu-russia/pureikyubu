@@ -397,6 +397,9 @@ static void OnMainWindowCreate(HWND hwnd)
     // enable drop operation
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
+    // Add UI methods
+    UI::Jdi.JdiAddNode(UI_JDI_JSON, UIReflector);
+
     // simulate close operation, like we just stopped emu
     OnMainWindowClosed();
 }
@@ -404,6 +407,8 @@ static void OnMainWindowCreate(HWND hwnd)
 // called once, when Dolwin exits to OS
 static void OnMainWindowDestroy()
 {
+    UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
+
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
 

@@ -35,12 +35,17 @@ static INT_PTR CALLBACK AboutProc(
             SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
             CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s}\n",
-                                      APPNAME, APPDESC,
-                                      L"Copyright 2003,2004,2020, Dolwin team",
-                                      L"Build version",
-                                      Util::StringToWstring(UI::Jdi.GetVersion()), /*__DATE__, __TIME__,*/
-                                      version, platform);
+            std::string dateStamp = __DATE__;
+            std::string timeStamp = __TIME__;
+
+            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} ({:s} {:s})\n",
+                    APPNAME, APPDESC,
+                    L"Copyright 2003,2004,2020, Dolwin team",
+                    L"Build version",
+                    Util::StringToWstring(UI::Jdi.GetVersion()),
+                    version, platform,
+                    Util::StringToWstring(dateStamp),
+                    Util::StringToWstring(timeStamp) );
 
             SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
             return true;

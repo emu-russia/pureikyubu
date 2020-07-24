@@ -49,3 +49,4 @@
 #include "DVDBanner.h"			// banner utilities for selector
 #include "UserDebugStubs.h"
 #include "SjisTable.h"
+#include "UserCommands.h"

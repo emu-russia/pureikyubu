@@ -173,6 +173,7 @@
     <ClCompile Include="..\..\DVDBanner.cpp" />
     <ClCompile Include="..\..\pch.cpp" />
     <ClCompile Include="..\..\UserAbout.cpp" />
+    <ClCompile Include="..\..\UserCommands.cpp" />
     <ClCompile Include="..\..\UserDebugStubs.cpp" />
     <ClCompile Include="..\..\UserFile.cpp" />
     <ClCompile Include="..\..\UserFonts.cpp" />
@@ -190,6 +191,7 @@
     <ClInclude Include="..\..\RES\resource.h" />
     <ClInclude Include="..\..\SjisTable.h" />
     <ClInclude Include="..\..\UserAbout.h" />
+    <ClInclude Include="..\..\UserCommands.h" />
     <ClInclude Include="..\..\UserConfig.h" />
     <ClInclude Include="..\..\UserDebugStubs.h" />
     <ClInclude Include="..\..\UserFile.h" />
