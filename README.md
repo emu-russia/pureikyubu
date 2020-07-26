@@ -58,10 +58,10 @@ Thanks to Martin for web-hosting on Emulation64.com
 
 ## Contacts
 
-Dolwin 0.10 Team:
-- hotquik (http://www.hotsoft.com.ve/about/), responsible for memory cards emulation, Bootrom fonts and UI.
-- org (ogamespec), responsible for the rest;
-
 - Official Discord channel: https://discord.gg/Ehz8PYA
 - Skype: ogamespec
 - Email: ogamespec@gmail.com
+
+Dolwin 0.10 Team:
+- hotquik (http://www.hotsoft.com.ve/about/), responsible for memory cards emulation, Bootrom fonts and UI.
+- org (ogamespec), responsible for the rest;
