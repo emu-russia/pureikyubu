@@ -51,9 +51,6 @@
     <ClCompile Include="..\..\UserJdiClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\UserDebugStubs.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\UserCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -102,9 +99,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\UserConfig.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\UserDebugStubs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\UserCommands.h">

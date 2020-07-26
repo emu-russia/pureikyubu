@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "Cui.h"
+
 namespace Debug
 {
 	class DspImem;
@@ -19,7 +21,7 @@ namespace Debug
 	class DspRegs : public CuiWindow
 	{
 		// Used to highlight reg changes
-		//DSP::DspRegs savedRegs;
+		DSP::DspRegs savedRegs;
 
 		void DrawRegs();
 		void DrawStatusBits();
@@ -33,7 +35,7 @@ namespace Debug
 
 	class DspDmem : public CuiWindow
 	{
-		uint32_t current = 0;
+		DSP::DspAddress current = 0;
 
 	public:
 		DspDmem(RECT& rect, std::string name);
@@ -46,15 +48,15 @@ namespace Debug
 	{
 		friend DspDebug;
 
-		uint32_t current = 0x8000;
-		uint32_t cursor = 0x8000;
+		DSP::DspAddress current = 0x8000;
+		DSP::DspAddress cursor = 0x8000;
 		size_t wordsOnScreen = 0;
 
-		bool AddressVisible(uint32_t address);
-		bool IsCall(uint32_t address, uint32_t& targetAddress);
-		bool IsCallOrJump(uint32_t address, uint32_t& targetAddress);
+		bool AddressVisible(DSP::DspAddress address);
+		bool IsCall(DSP::DspAddress address, DSP::DspAddress& targetAddress);
+		bool IsCallOrJump(DSP::DspAddress address, DSP::DspAddress& targetAddress);
 
-		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
+		std::vector<std::pair<DSP::DspAddress, DSP::DspAddress>> browseHist;
 
 	public:
 		DspImem(RECT& rect, std::string name);

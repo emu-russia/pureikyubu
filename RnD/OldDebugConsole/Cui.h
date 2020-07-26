@@ -2,11 +2,10 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
 #include <list>
 #include <Windows.h>
-#include "../../../Common/Thread.h"
+#include "../Common/Thread.h"
 
 namespace Debug
 {
