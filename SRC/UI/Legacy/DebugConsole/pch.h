@@ -12,7 +12,5 @@
 #include "../../../Common/String.h"
 #include "../../../Common/File.h"
 
-#include "Cui.h"
 #include "DebugJdiClient.h"
-#include "GekkoDebugger.h"
-#include "DspDebugger.h"
+#include "DebugConsole.h"

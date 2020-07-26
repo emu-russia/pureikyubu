@@ -1,5 +1,7 @@
 // Universal code for interacting with the Win32 console.
 
+// Well, if you manage to port this code to other OS, then you can use the debug console there too.
+
 #pragma once
 
 #include <cstdint>
