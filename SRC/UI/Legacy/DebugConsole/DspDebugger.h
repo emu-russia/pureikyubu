@@ -8,10 +8,13 @@ namespace Debug
 
 	class DspDebug : public Cui
 	{
+		static const size_t width = 80;
+		static const size_t height = 60;
+
 		DspImem* imemWindow = nullptr;
 
 	public:
-		DspDebug(std::string title, size_t width, size_t height);
+		DspDebug();
 
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
 	};

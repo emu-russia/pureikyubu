@@ -4,8 +4,8 @@
 
 namespace Debug
 {
-	DspDebug::DspDebug(std::string title, size_t width, size_t height):
-		Cui(title, width, height)
+	DspDebug::DspDebug():
+		Cui("DSP Debug", width, height)
 	{
 	}
 

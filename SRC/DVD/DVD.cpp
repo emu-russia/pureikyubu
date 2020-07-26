@@ -65,7 +65,7 @@ namespace DVD
         Unmount();
 
         dvd.mountedSdk = new MountDolphinSdk(path);
-        assert(dvd.mountedSdk);
+
         if (!dvd.mountedSdk->Mounted())
         {
             delete dvd.mountedSdk;
@@ -183,7 +183,6 @@ namespace DVD
         JDI::Hub.AddNode(DDU_JDI_JSON, DvdCommandsReflector);
 
         DDU = new DduCore;
-        assert(DDU);
     }
 
     void ShutdownSubsystem()

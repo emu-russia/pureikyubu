@@ -110,6 +110,11 @@ namespace Debug
 		delete value;
 	}
 
+	void JdiClient::Report(const std::string& text)
+	{
+
+	}
+
 	// Gekko
 
 	// DSP

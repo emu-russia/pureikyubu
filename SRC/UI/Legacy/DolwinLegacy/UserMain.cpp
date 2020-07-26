@@ -15,17 +15,10 @@ namespace UI
         _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
         va_end(arg);
 
-        if (GekkoDebuggerOpened)
+        MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
+        if (IsWindow(wnd.hMainWindow))
         {
-            char cmd[0x1000];
-            sprintf_s(cmd, sizeof(cmd), "echo %s", Util::TcharToString(buf).c_str());
-            UI::Jdi.ExecuteCommand(cmd);
-            UI::Jdi.ExecuteCommand("stop");
-        }
-        else
-        {
-            MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
-            UI::Jdi.ExecuteCommand("exit");
+            SendMessage(wnd.hMainWindow, WM_CLOSE, 0, 0);
         }
     }
 

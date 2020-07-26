@@ -18,6 +18,7 @@ void    EMUStop();          // Stop Gekko
 // all important data is placed here
 typedef struct Emulator
 {
+    bool    init;
     bool    loaded;         // file loaded
     std::wstring lastLoaded;
 } Emulator;

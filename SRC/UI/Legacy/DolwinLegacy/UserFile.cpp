@@ -4,7 +4,7 @@
 namespace UI
 {
     // Open file/directory dialog
-    TCHAR* FileOpenDialog(HWND hwnd, FileType type)
+    const TCHAR* FileOpenDialog(HWND hwnd, FileType type)
     {
         static TCHAR tempBuf[0x1000] = { 0 };
         OPENFILENAME ofn;
@@ -163,12 +163,12 @@ namespace UI
         else
         {
             SetCurrentDirectory(prevDir);
-            return NULL;
+            return _T("");
         }
     }
 
     // Save file dialog
-    TCHAR* FileSaveDialog(HWND hwnd, FileType type)
+    const TCHAR* FileSaveDialog(HWND hwnd, FileType type)
     {
         static TCHAR tempBuf[0x1000] = { 0 };
         OPENFILENAME ofn;
@@ -275,7 +275,7 @@ namespace UI
         else
         {
             SetCurrentDirectory(prevDir);
-            return NULL;
+            return _T("");
         }
     }
 

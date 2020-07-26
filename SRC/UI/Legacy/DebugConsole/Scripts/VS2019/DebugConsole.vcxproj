@@ -159,14 +159,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\Cmdline.h" />
     <ClInclude Include="..\..\Cui.h" />
     <ClInclude Include="..\..\DebugConsole.h" />
     <ClInclude Include="..\..\DebugJdiClient.h" />
     <ClInclude Include="..\..\DspDebugger.h" />
     <ClInclude Include="..\..\GekkoDebugger.h" />
     <ClInclude Include="..\..\pch.h" />
+    <ClInclude Include="..\..\ReportView.h" />
+    <ClInclude Include="..\..\StatusLine.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Cmdline.cpp" />
     <ClCompile Include="..\..\Cui.cpp" />
     <ClCompile Include="..\..\DebugJdiClient.cpp" />
     <ClCompile Include="..\..\DebugStubs.cpp" />
@@ -176,18 +180,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="..\..\GekkoDebugger.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\..\GekkoDebugger.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\ReportView.cpp" />
+    <ClCompile Include="..\..\StatusLine.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />
