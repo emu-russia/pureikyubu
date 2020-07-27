@@ -5,7 +5,7 @@
 Dolwin is work-in-progress emulator of Nintendo GameCube console.
 
 The goal of the emulator is to research the hardware features of GameCube and reverse engineer technologies used to develop games for this platform.
-GameCube is the hardware masterpiece of Nintendo engineers and it's a pleasure to explore this device and discover something new for yourself.
+GameCube is the hardware masterpiece of Nintendo/ArtX engineers and it's a pleasure to explore this device and discover something new for yourself.
 
 This project is revived from 2004 in 2020.
 
