@@ -8,7 +8,7 @@ namespace Debug
 	class GekkoDebug : public Cui
 	{
 		static const size_t width = 120;
-		static const size_t height = 100;
+		static const size_t height = 80;
 
 	public:
 		GekkoDebug();

@@ -76,6 +76,7 @@ namespace Debug
 		return std::string(str);
 	}
 
+	// Oldest messages first
 	void JdiClient::QueryDebugMessages(std::list<std::pair<int, std::string>>& queue)
 	{
 		Json::Value* value = CallJdi("qd");

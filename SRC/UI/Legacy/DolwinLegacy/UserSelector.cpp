@@ -891,7 +891,6 @@ static void doubleclick()
     TCHAR* filename = (TCHAR *)usel.files[item]->name.data();
 
     // load file
-    UI::Jdi.LoadFile(Util::TcharToString(filename));
     AddRecentFile(filename);
     PostMessage(wnd.hMainWindow, WM_COMMAND, (WPARAM)ID_FILE_RELOAD, (LPARAM)0);
 }

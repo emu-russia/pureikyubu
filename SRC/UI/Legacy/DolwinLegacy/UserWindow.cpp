@@ -113,8 +113,7 @@ void StopProgress()
     }
 }
 
-/* ---------------------------------------------------------------------------  */
-/* Recent files list (moved from UserLoader - it was bad place there)           */
+#pragma region "Recent files list"
 
 #define MAX_RECENT  5   // if you want to increase, you must also add new ID_FILE_RECENT_*
 
@@ -254,9 +253,10 @@ void LoadRecentFile(int index)
     UI::Jdi.Run();
 }
 
+#pragma endregion "Recent files list"
+
 // ---------------------------------------------------------------------------
-// window actions, on emu start/stop (skip "static" functions, see OnMainWindow*)
-// tip : this is nice place for your windows-related init code
+// window actions, on emu start/stop
 
 // select sort method (Options->View->Sort by)
 static void SelectSort()
@@ -354,9 +354,8 @@ static void OnMainWindowCreate(HWND hwnd)
     }
 
     // debugger enabled ?
-    bool GekkoDebuggerOpened = UI::Jdi.GetConfigBool(USER_DOLDEBUG, USER_UI);
     CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-    if(gekkoDebug != nullptr)
+    if (UI::Jdi.GetConfigBool(USER_DOLDEBUG, USER_UI))
     {
         gekkoDebug = new Debug::GekkoDebug();
         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
@@ -593,6 +592,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_UNLOAD:
                 {
                     UI::Jdi.Stop();
+                    Sleep(100);
                     UI::Jdi.Unload();
                     OnMainWindowClosed();
 
