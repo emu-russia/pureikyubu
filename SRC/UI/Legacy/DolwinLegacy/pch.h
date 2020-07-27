@@ -35,6 +35,8 @@
 #include "../../../Common/File.h"
 #include "../../../Common/Json.h"
 
+#include "../DebugConsole/DebugConsole.h"
+
 #include "UserMain.h"           // application entrypoint
 #include "UserJdiClient.h"
 #include "UserConfig.h"
@@ -47,6 +49,5 @@
 #include "UserPadConfigure.h"
 #include "UserAbout.h"          // about dialog
 #include "DVDBanner.h"			// banner utilities for selector
-#include "UserDebugStubs.h"
 #include "SjisTable.h"
 #include "UserCommands.h"

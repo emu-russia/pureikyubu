@@ -6,6 +6,8 @@ Emulator emu;
 
 void EMUGetHwConfig(HWConfig * config)
 {
+    memset(config, 0, sizeof(HWConfig));
+
     Json::Value* renderTarget = JDI::Hub.ExecuteFast("GetRenderTarget");
 
     if (renderTarget == nullptr)
@@ -47,19 +49,20 @@ void EMUGetHwConfig(HWConfig * config)
 void EMUOpen(std::wstring& filename)
 {
     if (emu.loaded)
+    {
         return;
+    }
 
     Debug::Log = new Debug::EventLog();
 
     // open other sub-systems
     Gekko::Gekko->Reset();
     HWConfig* hwconfig = new HWConfig;
-    memset(hwconfig, 0, sizeof(HWConfig));
     EMUGetHwConfig(hwconfig);
     Flipper::HW = new Flipper::Flipper(hwconfig);
     delete hwconfig;
 
-    LoadFile(filename);   // PC will be set here
+    LoadFile(filename);   // Gekko PC will be set here
     HLEOpen();
 
     emu.loaded = true;
@@ -70,7 +73,9 @@ void EMUOpen(std::wstring& filename)
 void EMUClose()
 {
     if (!emu.loaded)
+    {
         return;
+    }
 
     HLEClose();
 
@@ -100,16 +105,25 @@ void EMUReset()
 
 void EMUCtor()
 {
+    if (emu.init)
+    {
+        return;
+    }
     JDI::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
     Gekko::Gekko = new Gekko::GekkoCore;
     JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
     HLEInit();
+    emu.init = true;
 }
 
 void EMUDtor()
 {
+    if (!emu.init)
+    {
+        return;
+    }
     JDI::Hub.RemoveNode(EMU_JDI_JSON);
     DSP::DspCore::ShutdownSubsystem();
     DVD::ShutdownSubsystem();
@@ -117,6 +131,7 @@ void EMUDtor()
     Gekko::Gekko = nullptr;
     HLEShutdown();
     JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);
+    emu.init = false;
 }
 
 /// <summary>
@@ -125,7 +140,9 @@ void EMUDtor()
 void EMURun()
 {
     if (!emu.loaded)
+    {
         return;
+    }
 
     if (!Gekko::Gekko->IsRunning())
     {
@@ -139,7 +156,9 @@ void EMURun()
 void EMUStop()
 {
     if (!emu.loaded)
+    {
         return;
+    }
 
     if (Gekko::Gekko->IsRunning())
     {

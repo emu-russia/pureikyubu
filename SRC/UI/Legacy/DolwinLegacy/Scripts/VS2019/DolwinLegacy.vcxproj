@@ -168,13 +168,15 @@
     <ProjectReference Include="..\..\..\..\..\DolwinEmu\Scripts\VS2019\DolwinEmu.vcxproj">
       <Project>{6be86dce-ec88-4113-9e7b-22b6ef50fdfc}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\DebugConsole\Scripts\VS2019\DebugConsole.vcxproj">
+      <Project>{70896a0f-fa85-4017-8bf6-944b6581cb8f}</Project>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\DVDBanner.cpp" />
     <ClCompile Include="..\..\pch.cpp" />
     <ClCompile Include="..\..\UserAbout.cpp" />
     <ClCompile Include="..\..\UserCommands.cpp" />
-    <ClCompile Include="..\..\UserDebugStubs.cpp" />
     <ClCompile Include="..\..\UserFile.cpp" />
     <ClCompile Include="..\..\UserFonts.cpp" />
     <ClCompile Include="..\..\UserJdiClient.cpp" />
@@ -193,7 +195,6 @@
     <ClInclude Include="..\..\UserAbout.h" />
     <ClInclude Include="..\..\UserCommands.h" />
     <ClInclude Include="..\..\UserConfig.h" />
-    <ClInclude Include="..\..\UserDebugStubs.h" />
     <ClInclude Include="..\..\UserFile.h" />
     <ClInclude Include="..\..\UserFonts.h" />
     <ClInclude Include="..\..\UserJdiClient.h" />

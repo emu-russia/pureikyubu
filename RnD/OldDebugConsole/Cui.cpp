@@ -41,6 +41,7 @@ namespace Debug
 		SetConsoleTitleA(title.c_str());
 
 		cuiThread = new Thread(CuiThreadProc, false, this, "CuiThread");
+		assert(cuiThread);
 	}
 
 	Cui::~Cui()
@@ -55,9 +56,6 @@ namespace Debug
 		}
 
 		FreeConsole();
-
-		// Required for Win32 internals to stabilize after closing Cui
-		Sleep(100);
 	}
 
 	void Cui::CuiThreadProc(void* Parameter)
@@ -193,6 +191,7 @@ namespace Debug
 		height = (size_t)rect.bottom - (size_t)rect.top + 1;
 
 		backBuf = new CHAR_INFO[width * height];
+		assert(backBuf);
 
 		memset(backBuf, 0, width * height * sizeof(CHAR_INFO));
 	}

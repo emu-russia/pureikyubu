@@ -55,7 +55,6 @@ namespace JDI
 		fseek(f, 0, SEEK_SET);
 
 		uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
-		assert(jsonText);
 
 		size_t read = fread(jsonText, 1, jsonTextSize, f);
 		assert(read == jsonTextSize);

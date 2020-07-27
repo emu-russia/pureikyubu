@@ -1,6 +1,8 @@
 // Visual DSP Debugger
 
 #include "pch.h"
+#include "../../../DSP/DspAnalyzer.h"
+#include "../../../DSP/DspDisasm.h"
 
 namespace Debug
 {

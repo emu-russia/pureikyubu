@@ -9,7 +9,7 @@
 UserWindow wnd;
 
 Debug::DspDebug* dspDebug;
-bool GekkoDebuggerOpened = false;
+Debug::GekkoDebug* gekkoDebug;
 
 /* ---------------------------------------------------------------------------  */
 /* Statusbar                                                                    */
@@ -113,8 +113,7 @@ void StopProgress()
     }
 }
 
-/* ---------------------------------------------------------------------------  */
-/* Recent files list (moved from UserLoader - it was bad place there)           */
+#pragma region "Recent files list"
 
 #define MAX_RECENT  5   // if you want to increase, you must also add new ID_FILE_RECENT_*
 
@@ -248,14 +247,16 @@ void LoadRecentFile(int index)
 {
     int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
+    UI::Jdi.Unload();
     UI::Jdi.LoadFile(Util::WstringToString(path));
     OnMainWindowOpened();
     UI::Jdi.Run();
 }
 
+#pragma endregion "Recent files list"
+
 // ---------------------------------------------------------------------------
-// window actions, on emu start/stop (skip "static" functions, see OnMainWindow*)
-// tip : this is nice place for your windows-related init code
+// window actions, on emu start/stop
 
 // select sort method (Options->View->Sort by)
 static void SelectSort()
@@ -343,17 +344,20 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
     // run once ?
-    if(UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
+    if (UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
+    {
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
+    }
     else
+    {
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
+    }
 
     // debugger enabled ?
-    GekkoDebuggerOpened = UI::Jdi.GetConfigBool(USER_DOLDEBUG, USER_UI);
     CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-    if(GekkoDebuggerOpened)
+    if (UI::Jdi.GetConfigBool(USER_DOLDEBUG, USER_UI))
     {
-        DBOpen();            
+        gekkoDebug = new Debug::GekkoDebug();
         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
     }
 
@@ -409,10 +413,17 @@ static void OnMainWindowCreate(HWND hwnd)
 // called once, when Dolwin exits to OS
 static void OnMainWindowDestroy()
 {
+    UI::Jdi.Unload();
+
     UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
 
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
+
+    if (gekkoDebug)
+    {
+        delete gekkoDebug;
+    }
 
     if (dspDebug)
     {
@@ -581,6 +592,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_UNLOAD:
                 {
                     UI::Jdi.Stop();
+                    Sleep(100);
                     UI::Jdi.Unload();
                     OnMainWindowClosed();
 
@@ -771,7 +783,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
                     return 0;
                 }
-                // open/close debugger
+                // Open/close system-wide debugger
                 case ID_DEBUG_CONSOLE:
                 {
                     if (dspDebug)
@@ -781,41 +793,37 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                         dspDebug = nullptr;
                     }
 
-                    Sleep(100);
-
-                    if (!GekkoDebuggerOpened)
+                    if (gekkoDebug == nullptr)
                     {   // open
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-                        DBOpen();
-                        GekkoDebuggerOpened = true;
+                        gekkoDebug = new Debug::GekkoDebug();
+                        UI::Jdi.SetConfigBool(USER_DOLDEBUG, true, USER_UI);
                         SetStatusText(STATUS_ENUM::Progress, _T("Debugger opened"));
                     }
                     else
                     {   // close
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-                        DBClose();
-                        GekkoDebuggerOpened = false;
+                        delete gekkoDebug;
+                        gekkoDebug = nullptr;
+                        UI::Jdi.SetConfigBool(USER_DOLDEBUG, false, USER_UI);
                         SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
                     }
-                    UI::Jdi.SetConfigBool(USER_DOLDEBUG, GekkoDebuggerOpened, USER_UI);
                     return 0;
                 }
                 // Open/close DSP Debug
                 case ID_DSP_DEBUG:
                 {
-                    if (GekkoDebuggerOpened)
+                    if (gekkoDebug)
                     {
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-                        DBClose();
-                        GekkoDebuggerOpened = false;
+                        delete gekkoDebug;
+                        gekkoDebug = nullptr;
                     }
-
-                    Sleep(100);
 
                     if (dspDebug == nullptr)
                     {
                         CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
-                        dspDebug = new Debug::DspDebug("DSP Debug", 80, 60);
+                        dspDebug = new Debug::DspDebug();
                         SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger opened"));
                     }
                     else

@@ -532,7 +532,6 @@ void AIOpen(HWConfig* config)
     DVD::DDU->SetStreamCallback(AIStreamCallback);
 
     ai.audioThread = new Thread(AIUpdate, true, nullptr, "AI");
-    assert(ai.audioThread);
 
     ai.one_second = Gekko::Gekko->OneSecond();
     ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;

@@ -100,7 +100,7 @@ namespace Debug
 	}
 
 	/// <summary>
-	/// Get history of debug messages. Clear queue in progress.
+	/// Get history of debug messages (oldest first). Clear queue in progress.
 	/// </summary>
 	/// <param name="queue"></param>
 	void ReportHub::QueryDebugMessages(std::list<std::pair<Channel, std::string>>& queue)

@@ -50,5 +50,3 @@ struct UserWindow
 };
 
 extern UserWindow wnd;
-
-extern bool GekkoDebuggerOpened;
