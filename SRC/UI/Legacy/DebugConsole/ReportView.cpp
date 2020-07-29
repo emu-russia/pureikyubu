@@ -169,37 +169,37 @@ namespace Debug
 			return CuiColor::Normal;
 		}
 
-        if (name == "Info")
-        {
-            return CuiColor::Green;
-        }
-        else if (name == "Error")
-        {
-            return CuiColor::BrightRed;
-        }
-        else if (name == "Header")
-        {
-            return CuiColor::Cyan;
-        }
+		if (name == "Info")
+		{
+			return CuiColor::Green;
+		}
+		else if (name == "Error")
+		{
+			return CuiColor::BrightRed;
+		}
+		else if (name == "Header")
+		{
+			return CuiColor::Cyan;
+		}
 
-        else if (name == "Loader")
-        {
-            return CuiColor::Yellow;
-        }
+		else if (name == "Loader")
+		{
+			return CuiColor::Yellow;
+		}
 
-        else if (name == "HLE")
-        {
-            return CuiColor::Green;
-        }
+		else if (name == "HLE")
+		{
+			return CuiColor::Green;
+		}
 
-        else if (name == "DVD")
-        {
-            return CuiColor::Lime;
-        }
-        else if (name == "AX")
-        {
-            return CuiColor::Lime;
-        }
+		else if (name == "DVD")
+		{
+			return CuiColor::Lime;
+		}
+		else if (name == "AX")
+		{
+			return CuiColor::Lime;
+		}
 
 		return CuiColor::Cyan;
 	}
