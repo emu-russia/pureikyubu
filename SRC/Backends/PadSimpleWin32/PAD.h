@@ -37,25 +37,18 @@ typedef struct
     int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
 } PADCONF;
 
-// all important data is placed here
-typedef struct
-{
-    int         padToConfigure;
-    PADCONF     config[4];
-} PAD;
-
 // PAD (input) interface
 // (padnum = 0...3)
 
 struct PADState
 {
-    unsigned short  button;         // combination of PAD_BUTTON*
-    signed char     stickX;         // -127...127
-    signed char     stickY;
-    signed char     substickX;      // -127...127
-    signed char     substickY;
-    unsigned char   triggerLeft;    // 0...255
-    unsigned char   triggerRight;
+    uint16_t    button;         // combination of PAD_BUTTON*
+    int8_t      stickX;         // -127...127
+    int8_t      stickY;
+    int8_t      substickX;      // -127...127
+    int8_t      substickY;
+    uint8_t     triggerLeft;    // 0...255
+    uint8_t     triggerRight;
 };
 
 // controller buttons

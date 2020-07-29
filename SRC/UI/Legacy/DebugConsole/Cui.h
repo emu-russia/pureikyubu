@@ -96,7 +96,7 @@ namespace Debug
 
 		void AddWindow(CuiWindow* wnd);
 
-		void SetWindowFocus(std::string name);
+		void SetWindowFocus(const std::string& name);
 
 		// A global CUI key event handler (for example, to switch focus between windows). 
 		// In addition, each active window also receives key event.

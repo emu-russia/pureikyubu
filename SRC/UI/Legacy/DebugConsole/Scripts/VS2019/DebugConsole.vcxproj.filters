@@ -42,6 +42,15 @@
     <ClInclude Include="..\..\StatusLine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\GekkoDisasm.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\GekkoRegs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\MemoryView.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Cui.cpp">
@@ -69,6 +78,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\StatusLine.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GekkoDisasm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GekkoRegs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\MemoryView.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

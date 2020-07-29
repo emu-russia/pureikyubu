@@ -123,7 +123,7 @@ namespace Debug
 		windows.push_back(wnd);
 	}
 
-	void Cui::SetWindowFocus(std::string name)
+	void Cui::SetWindowFocus(const std::string& name)
 	{
 		for (auto it = windows.begin(); it != windows.end(); ++it)
 		{
