@@ -18,9 +18,14 @@ namespace Debug
 
 	void MemoryView::OnDraw()
 	{
-		Fill(CuiColor::Black, CuiColor::Cyan, 'm');
-
 		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
+		std::string head = IsActive() ? "[*] F2" : "[ ] F2";
+		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
+
+		char hint[0x100] = { 0, };
+		sprintf_s(hint, sizeof(hint), " phys:0x%08X stack:0x%08X sda1:0x%08X sda2:0x%08X", 0, 0, 0, 0);
+
+		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, hint);
 	}
 
 	void MemoryView::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)

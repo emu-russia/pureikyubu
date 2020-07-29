@@ -68,7 +68,8 @@ namespace Debug
 		void Invalidate() { invalidated = true; }
 		bool NeedRedraw() { return invalidated;  }
 
-		void SetFocus(bool flag) { active = flag; }
+		void SetFocus(bool flag) { active = flag; Invalidate(); }
+		bool IsActive() { return active; }
 
 		void Print(CuiColor back, CuiColor front, int x, int y, std::string text);
 		void Print(CuiColor back, CuiColor front, int x, int y, const char *fmt, ...);

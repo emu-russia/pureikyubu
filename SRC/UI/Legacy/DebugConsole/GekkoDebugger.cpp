@@ -84,6 +84,61 @@ namespace Debug
 		{
 			SetWindowFocus("Cmdline");
 		}
+
+		switch (Vkey)
+		{
+			case VK_F1:
+				SetWindowFocus("GekkoRegs");
+				break;
+
+			case VK_F2:
+				SetWindowFocus("MemoryView");
+				break;
+
+			case VK_F3:
+				SetWindowFocus("GekkoDisasm");
+				break;
+
+			case VK_F4:
+				SetWindowFocus("ReportWindow");
+				break;
+
+			case VK_F5:
+				// Continue/break Gekko execution
+				break;
+
+			case VK_F9:
+				// Toggle Breakpoint
+				break;
+
+			case VK_F10:
+				// Step Over
+				break;
+
+			case VK_F11:
+				// Step Into
+				break;
+
+			case VK_F12:
+				// Skip instruction
+				break;
+
+			case VK_ESCAPE:
+				if (msgs->IsActive())
+				{
+					SetWindowFocus("Cmdline");
+				}
+				break;
+
+			case VK_PRIOR:
+				if (cmdline->IsActive())
+				{
+					SetWindowFocus("ReportWindow");
+				}
+				break;
+		}
+
+		InvalidateAll();
 	}
 
 }

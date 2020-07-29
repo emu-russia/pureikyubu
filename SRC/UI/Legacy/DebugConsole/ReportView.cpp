@@ -93,6 +93,9 @@ namespace Debug
 		// Show window title with hints
 
 		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
+		std::string head = IsActive() ? "[*] F4" : "[ ] F4";
+		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
+		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, "console output");
 
 		// Show messages starting with messagePtr backwards
 
@@ -101,9 +104,11 @@ namespace Debug
 			return;
 		}
 
-		int i = (int)history.size() - 1;
+		int i = (int)history.size() - messagePtr - 1;
 
-		for (size_t y = height - 1; y != 0; y--)
+		size_t y = height - 1;
+
+		for (y ; y != 0; y--)
 		{
 			FillLine(CuiColor::Black, CuiColor::Normal, (int)y, ' ');
 			Print(CuiColor::Black, history[i].first, 0, (int)y, history[i].second);
@@ -114,11 +119,47 @@ namespace Debug
 				break;
 			}
 		}
+
+		for (y; y != 0; y--)
+		{
+			FillLine(CuiColor::Black, CuiColor::Normal, (int)y, ' ');
+		}
 	}
 
 	void ReportWindow::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
 		// Up, Down, Home, End, PageUp, PageDown
+
+		switch (Vkey)
+		{
+			case VK_UP:
+				messagePtr++;
+				break;
+
+			case VK_DOWN:
+				messagePtr--;
+				break;
+
+			case VK_PRIOR:	// Page Up
+				messagePtr += (int)height;
+				break;
+
+			case VK_NEXT:	// Page Down
+				messagePtr -= (int)height;
+				break;
+
+			case VK_HOME:
+				messagePtr = (int)history.size() - 2;
+				break;
+
+			case VK_END:
+				messagePtr = 0;
+				break;
+		}
+
+		messagePtr = max(0, min(messagePtr, (int)history.size() - 2));
+
+		Invalidate();
 	}
 
 	CuiColor ReportWindow::ChannelNameToColor(const std::string& name)
