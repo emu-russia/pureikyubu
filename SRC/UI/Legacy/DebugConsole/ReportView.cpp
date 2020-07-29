@@ -141,11 +141,11 @@ namespace Debug
 				break;
 
 			case VK_PRIOR:	// Page Up
-				messagePtr += (int)height;
+				messagePtr += (int)(height - 1);
 				break;
 
 			case VK_NEXT:	// Page Down
-				messagePtr -= (int)height;
+				messagePtr -= (int)(height - 1);
 				break;
 
 			case VK_HOME:

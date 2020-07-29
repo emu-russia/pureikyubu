@@ -80,27 +80,33 @@ namespace Debug
 
 	void GekkoDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
-		if (Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256))
+		if ((Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
 		{
 			SetWindowFocus("Cmdline");
+			InvalidateAll();
+			return;
 		}
 
 		switch (Vkey)
 		{
 			case VK_F1:
 				SetWindowFocus("GekkoRegs");
+				InvalidateAll();
 				break;
 
 			case VK_F2:
 				SetWindowFocus("MemoryView");
+				InvalidateAll();
 				break;
 
 			case VK_F3:
 				SetWindowFocus("GekkoDisasm");
+				InvalidateAll();
 				break;
 
 			case VK_F4:
 				SetWindowFocus("ReportWindow");
+				InvalidateAll();
 				break;
 
 			case VK_F5:
@@ -127,6 +133,7 @@ namespace Debug
 				if (msgs->IsActive())
 				{
 					SetWindowFocus("Cmdline");
+					InvalidateAll();
 				}
 				break;
 
@@ -134,11 +141,10 @@ namespace Debug
 				if (cmdline->IsActive())
 				{
 					SetWindowFocus("ReportWindow");
+					InvalidateAll();
 				}
 				break;
 		}
-
-		InvalidateAll();
 	}
 
 }
