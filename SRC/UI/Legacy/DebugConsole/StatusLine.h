@@ -15,7 +15,7 @@ namespace Debug
 		DebugMode _mode = DebugMode::Ready;
 
 	public:
-		StatusWindow(RECT& rect, std::string name);
+		StatusWindow(RECT& rect, std::string name, Cui* parent);
 		~StatusWindow();
 
 		virtual void OnDraw();

@@ -22,6 +22,13 @@ The Win32 Console API does not allow you to create more than one console per pro
 
 Debug UIs can be opened via the Development menu.
 
+## Cui
+
+All Win32 code for interacting with the Console API is integrated into Cui.cpp.
+I'm not sure that someone would want to port the console debugger somewhere other than Windows (the Console API is very specific), but for convenience I brought all the code there.
+
+All other modules are based on Cui, as custom CuiWindows.
+
 ## Interacting with emulator components
 
 Communication with the Gekko and DSP cores is done through the Debug JDI Client.

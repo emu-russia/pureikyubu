@@ -5,8 +5,8 @@
 namespace Debug
 {
 
-	MemoryView::MemoryView(RECT& rect, std::string name)
-		: CuiWindow (rect, name)
+	MemoryView::MemoryView(RECT& rect, std::string name, Cui* parent)
+		: CuiWindow (rect, name, parent)
 	{
 
 	}
@@ -19,6 +19,8 @@ namespace Debug
 	void MemoryView::OnDraw()
 	{
 		Fill(CuiColor::Black, CuiColor::Cyan, 'm');
+
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
 	}
 
 	void MemoryView::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)

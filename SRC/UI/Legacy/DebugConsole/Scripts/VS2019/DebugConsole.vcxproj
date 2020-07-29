@@ -164,6 +164,9 @@
     <ClInclude Include="..\..\DebugConsole.h" />
     <ClInclude Include="..\..\DebugJdiClient.h" />
     <ClInclude Include="..\..\DspDebugger.h" />
+    <ClInclude Include="..\..\DspDmem.h" />
+    <ClInclude Include="..\..\DspImem.h" />
+    <ClInclude Include="..\..\DspRegs.h" />
     <ClInclude Include="..\..\GekkoDebugger.h" />
     <ClInclude Include="..\..\GekkoDisasm.h" />
     <ClInclude Include="..\..\GekkoRegs.h" />
@@ -183,6 +186,9 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\..\DspDmem.cpp" />
+    <ClCompile Include="..\..\DspImem.cpp" />
+    <ClCompile Include="..\..\DspRegs.cpp" />
     <ClCompile Include="..\..\GekkoDebugger.cpp" />
     <ClCompile Include="..\..\GekkoDisasm.cpp" />
     <ClCompile Include="..\..\GekkoRegs.cpp" />

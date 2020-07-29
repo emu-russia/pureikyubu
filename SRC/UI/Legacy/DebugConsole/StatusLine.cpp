@@ -4,8 +4,8 @@
 
 namespace Debug
 {
-	StatusWindow::StatusWindow(RECT& rect, std::string name)
-		: CuiWindow (rect, name)
+	StatusWindow::StatusWindow(RECT& rect, std::string name, Cui* parent)
+		: CuiWindow (rect, name, parent)
 	{
 	}
 

@@ -164,7 +164,14 @@ namespace Debug
     // Echo
     static Json::Value* cmd_echo(std::vector<std::string>& args)
     {
-        Report(Channel::Norm, "%s\n", args[1].c_str());
+        std::string text = "";
+
+        for (size_t i = 1; i < args.size(); i++)
+        {
+            text += args[i] + " ";
+        }
+
+        Report(Channel::Norm, "%s\n", text.c_str());
         return nullptr;
     }
 
@@ -186,7 +193,6 @@ namespace Debug
         }
 
         profiler = new SamplingProfiler(args[1].c_str(), period);
-        assert(profiler);
 
         Report(Channel::Norm, "Profiler started.\n");
 

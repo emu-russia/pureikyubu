@@ -113,7 +113,7 @@ namespace Debug
 
 	void JdiClient::Report(const std::string& text)
 	{
-
+		ExecuteCommand("echo " + text);
 	}
 
 	// Gekko

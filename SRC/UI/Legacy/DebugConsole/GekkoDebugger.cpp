@@ -16,7 +16,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = regsHeight - 1;
 
-		regs = new GekkoRegs(rect, "GekkoRegs");
+		regs = new GekkoRegs(rect, "GekkoRegs", this);
 
 		AddWindow(regs);
 
@@ -27,7 +27,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = regsHeight + memViewHeight - 1;
 
-		memview = new MemoryView(rect, "MemoryView");
+		memview = new MemoryView(rect, "MemoryView", this);
 
 		AddWindow(memview);
 
@@ -38,7 +38,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = regsHeight + memViewHeight + disaHeight - 1;
 
-		disasm = new GekkoDisasm(rect, "GekkoDisasm");
+		disasm = new GekkoDisasm(rect, "GekkoDisasm", this);
 
 		AddWindow(disasm);
 
@@ -49,7 +49,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = height - 3;
 
-		msgs = new ReportWindow(rect, "ReportWindow");
+		msgs = new ReportWindow(rect, "ReportWindow", this);
 
 		AddWindow(msgs);
 
@@ -60,7 +60,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = height - 2;
 
-		cmdline = new CmdlineWindow(rect, "Cmdline");
+		cmdline = new CmdlineWindow(rect, "Cmdline", this);
 
 		AddWindow(cmdline);
 
@@ -71,7 +71,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = height - 1;
 
-		status = new StatusWindow(rect, "Status");
+		status = new StatusWindow(rect, "Status", this);
 
 		AddWindow(status);
 
@@ -80,7 +80,10 @@ namespace Debug
 
 	void GekkoDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
-
+		if (Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256))
+		{
+			SetWindowFocus("Cmdline");
+		}
 	}
 
 }
