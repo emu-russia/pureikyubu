@@ -12,7 +12,7 @@ namespace Debug
 
 		static void ThreadProc(void* param);
 
-		size_t messagePtr = 0;
+		int messagePtr = 0;
 
 		CuiColor ChannelNameToColor(const std::string& name);
 		std::list<std::string> SplitMessages(std::string str);
