@@ -244,6 +244,12 @@ namespace Debug
         return output;
     }
 
+    static Json::Value* ShowHelp(std::vector<std::string>& args)
+    {
+        JDI::Hub.Help();
+        return nullptr;
+    }
+
     void Reflector()
     {
         JDI::Hub.AddCmd("script", cmd_script);
@@ -252,5 +258,6 @@ namespace Debug
         JDI::Hub.AddCmd("StopProfiler", StopProfiler);
         JDI::Hub.AddCmd("GetChannelName", GetChannelName);
         JDI::Hub.AddCmd("qd", QueryDebugMessages);
+        JDI::Hub.AddCmd("help", ShowHelp);
     }
 }

@@ -61,6 +61,11 @@
         "Syntax: qd\n"
       ],
       "output": "Array of Pair<Debug::Channel, string>: [ 4, \"Message1\", 7, \"Message2\" ] or empty Array []"
+    },
+
+    "help": {
+      "internal": true,
+      "help": "Show help :-)"
     }
 
   }
