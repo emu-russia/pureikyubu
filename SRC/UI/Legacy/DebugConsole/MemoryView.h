@@ -7,7 +7,7 @@ namespace Debug
 	class MemoryView : public CuiWindow
 	{
 	public:
-		MemoryView(RECT& rect, std::string name);
+		MemoryView(RECT& rect, std::string name, Cui* parent);
 		~MemoryView();
 
 		virtual void OnDraw();

@@ -146,8 +146,13 @@ namespace Debug
 		SetConsoleCursorInfo(StdOutput, &info);
 	}
 
-	void Cui::SetCursor(COORD& pos)
+	void Cui::SetCursor(int x, int y)
 	{
+		COORD pos;
+
+		pos.X = x;
+		pos.Y = y;
+
 		SetConsoleCursorPosition(StdOutput, pos);
 	}
 
@@ -184,10 +189,11 @@ namespace Debug
 
 #pragma region "CuiWindow"
 
-	CuiWindow::CuiWindow(RECT& rect, std::string name)
+	CuiWindow::CuiWindow(RECT& rect, std::string name, Cui* parent)
 	{
 		wndRect = rect;
 		wndName = name;
+		cui = parent;
 
 		width = (size_t)rect.right - (size_t)rect.left + 1;
 		height = (size_t)rect.bottom - (size_t)rect.top + 1;
@@ -253,6 +259,11 @@ namespace Debug
 		{
 			PutChar(back, front, x, y, c);
 		}
+	}
+
+	void CuiWindow::SetCursor(int x, int y)
+	{
+		cui->SetCursor(wndRect.left + x, wndRect.top + y);
 	}
 
 #pragma endregion "CuiWindow"

@@ -15,9 +15,10 @@ namespace Debug
 		size_t messagePtr = 0;
 
 		CuiColor ChannelNameToColor(const std::string& name);
+		std::list<std::string> SplitMessages(std::string str);
 
 	public:
-		ReportWindow(RECT& rect, std::string name);
+		ReportWindow(RECT& rect, std::string name, Cui* parent);
 		~ReportWindow();
 
 		virtual void OnDraw();

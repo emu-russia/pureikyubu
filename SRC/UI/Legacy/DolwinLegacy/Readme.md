@@ -24,6 +24,6 @@ In short, the current controller settings are strongly tied to the PadSimpleWin3
 
 There is now a miniature hell of using strings.
 
-Historically, Dolwin only supported Ansi (`std::string`). During the code refresh process, all lines were translated to TCHAR. Who does not know - this is such a mutant that depends on the `_UNICODE` macro: if the macro is defined, all TCHARs are Unicode strings, otherwise Ansi.
+Historically, Dolwin only supported Ansi (`std::string`). During the code refresh process, all strings were translated to TCHAR. Who does not know - this is such a mutant that depends on the `_UNICODE` macro: if the macro is defined, all TCHARs are Unicode strings, otherwise Ansi.
 
 After switching to cross-platform, it is obvious to completely switch to Unicode (`std::wstring`). But this will be done only by preliminary refactoring (separation of the UI from the emulator core).

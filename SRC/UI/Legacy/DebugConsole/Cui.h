@@ -53,9 +53,10 @@ namespace Debug
 		size_t height = 0;
 		bool invalidated = true;
 		bool active = false;
+		Cui* cui = nullptr;
 
 	public:
-		CuiWindow(RECT& rect, std::string name);
+		CuiWindow(RECT& rect, std::string name, Cui *parent);
 		virtual ~CuiWindow();
 
 		// Redraw itself if invalidated.
@@ -73,6 +74,8 @@ namespace Debug
 		void Print(CuiColor back, CuiColor front, int x, int y, const char *fmt, ...);
 		void Fill(CuiColor back, CuiColor front, char c);
 		void FillLine(CuiColor back, CuiColor front, int y, char c);
+
+		void SetCursor(int x, int y);
 	};
 
 	class Cui
@@ -104,7 +107,7 @@ namespace Debug
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
 
 		void ShowCursor(bool show);
-		void SetCursor(COORD& pos);
+		void SetCursor(int x, int y);
 
 		void InvalidateAll();
 	};

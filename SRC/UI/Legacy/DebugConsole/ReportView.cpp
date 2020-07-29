@@ -7,8 +7,8 @@ namespace Debug
 	// Make it global so that the message history is saved for the entire lifetime of the application.
 	static std::vector<std::pair<CuiColor, std::string>> history;
 
-	ReportWindow::ReportWindow(RECT& rect, std::string name)
-		: CuiWindow (rect, name)
+	ReportWindow::ReportWindow(RECT& rect, std::string name, Cui* parent)
+		: CuiWindow (rect, name, parent)
 	{
 		thread = new Thread(ThreadProc, false, this, "ReportWindow");
 	}
@@ -43,16 +43,40 @@ namespace Debug
 				{
 					std::string channelName = Jdi.DebugChannelToString(it->first);
 
-					std::string text = "";
+					std::list<std::string> strs = wnd->SplitMessages(it->second);
 
-					if (channelName.size() != 0)
+					for (auto it2 = strs.begin(); it2 != strs.end(); ++it2)
 					{
-						text += channelName + ": ";
+						if (it2->size() == 0)
+						{
+							continue;
+						}
+
+						std::string text = "";
+
+						CuiColor textColor = CuiColor::Normal;
+
+						if (channelName.size() != 0)
+						{
+							textColor = wnd->ChannelNameToColor(channelName);
+
+							if (!(channelName == "Info" || channelName == "Header"))
+							{
+								text += channelName + ": ";
+							}
+						}
+						else
+						{
+							// Command history
+							if ((*it2)[0] == ':')
+							{
+								textColor = CuiColor::Cyan;
+							}
+						}
+
+						text += *it2;
+						history.push_back(std::pair<CuiColor, std::string>(textColor, text));
 					}
-
-					text += it->second;
-
-					history.push_back(std::pair<CuiColor, std::string>(wnd->ChannelNameToColor(channelName), text));
 				}
 
 				queue.clear();
@@ -67,6 +91,8 @@ namespace Debug
 	void ReportWindow::OnDraw()
 	{
 		// Show window title with hints
+
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
 
 		// Show messages starting with messagePtr backwards
 
@@ -135,6 +161,24 @@ namespace Debug
         }
 
 		return CuiColor::Cyan;
+	}
+
+	std::list<std::string> ReportWindow::SplitMessages(std::string str)
+	{
+		std::list<std::string> strs;
+
+		std::string delimiter = "\n";
+
+		size_t pos = 0;
+		std::string token;
+		while ((pos = str.find(delimiter)) != std::string::npos)
+		{
+			token = str.substr(0, pos);
+			strs.push_back(token);
+			str.erase(0, pos + delimiter.length());
+		}
+
+		return strs;
 	}
 
 }

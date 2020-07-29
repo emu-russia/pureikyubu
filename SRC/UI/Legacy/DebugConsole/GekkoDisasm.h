@@ -7,7 +7,7 @@ namespace Debug
 	class GekkoDisasm : public CuiWindow
 	{
 	public:
-		GekkoDisasm(RECT& rect, std::string name);
+		GekkoDisasm(RECT& rect, std::string name, Cui* parent);
 		~GekkoDisasm();
 
 		virtual void OnDraw();
