@@ -13,13 +13,3 @@ namespace Debug
 	{
 	}
 }
-
-void DBOpen()
-{
-
-}
-
-void DBClose()
-{
-
-}

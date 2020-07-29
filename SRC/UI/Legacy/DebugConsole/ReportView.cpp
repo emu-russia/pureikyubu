@@ -1,9 +1,11 @@
-// Displaying message history
+// Displaying message history. It can be used both by the system debugger and as part of the DSP Debugger.
 
 #include "pch.h"
 
 namespace Debug
 {
+	// Make it global so that the message history is saved for the entire lifetime of the application.
+	static std::vector<std::pair<CuiColor, std::string>> history;
 
 	ReportWindow::ReportWindow(RECT& rect, std::string name)
 		: CuiWindow (rect, name)
@@ -24,9 +26,9 @@ namespace Debug
 		{
 			// When the story gets too big - clean up.
 
-			if (wnd->history.size() >= wnd->maxMessages)
+			if (history.size() >= wnd->maxMessages)
 			{
-				wnd->history.clear();
+				history.clear();
 			}
 
 			// Append history
@@ -41,14 +43,16 @@ namespace Debug
 				{
 					std::string channelName = Jdi.DebugChannelToString(it->first);
 
-					//if (channelName.size() != 0)
-					//{
-					//	printf("%s: ", channelName.c_str());
-					//}
+					std::string text = "";
 
-					//printf("%s", it->second.c_str());
+					if (channelName.size() != 0)
+					{
+						text += channelName + ": ";
+					}
 
-					wnd->history.push_back(std::pair<CuiColor, std::string>(wnd->ChannelNameToColor(channelName), it->second));
+					text += it->second;
+
+					history.push_back(std::pair<CuiColor, std::string>(wnd->ChannelNameToColor(channelName), text));
 				}
 
 				queue.clear();
@@ -71,12 +75,12 @@ namespace Debug
 			return;
 		}
 
-		int i = history.size() - 1;
+		int i = (int)history.size() - 1;
 
-		for (int y = height - 1; y != 0; y--)
+		for (size_t y = height - 1; y != 0; y--)
 		{
-			FillLine(CuiColor::Black, CuiColor::Normal, y, ' ');
-			Print(CuiColor::Black, history[i].first, 0, y, history[i].second);
+			FillLine(CuiColor::Black, CuiColor::Normal, (int)y, ' ');
+			Print(CuiColor::Black, history[i].first, 0, (int)y, history[i].second);
 
 			i--;
 			if (i < 0)

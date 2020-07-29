@@ -50,11 +50,15 @@ namespace Debug
 		std::string GetVersion();
 		void ExecuteCommand(const std::string& cmdline);
 
-		// Debug interface
+		// Generic debug
 
 		std::string DebugChannelToString(int chan);
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		void Report(const std::string& text);
+
+		// Gekko
+
+		// DSP
 
 	};
 

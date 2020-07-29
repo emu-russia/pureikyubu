@@ -3,12 +3,12 @@
 
 namespace Debug
 {
-	
-	class CmdlineWindow : public CuiWindow
+
+	class MemoryView : public CuiWindow
 	{
 	public:
-		CmdlineWindow(RECT& rect, std::string name);
-		~CmdlineWindow();
+		MemoryView(RECT& rect, std::string name);
+		~MemoryView();
 
 		virtual void OnDraw();
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);

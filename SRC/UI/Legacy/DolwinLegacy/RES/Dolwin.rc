@@ -442,9 +442,6 @@ BEGIN
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
         MENUITEM SEPARATOR
         MENUITEM "&Find Symbols",               ID_CREATE_MAP, CHECKED, GRAYED
-        MENUITEM "&Load Symbols...",            ID_LOAD_MAP, GRAYED
-        MENUITEM "&Add Symbols...",             ID_ADD_MAP, GRAYED
-        MENUITEM "&Save Symbols...",            ID_SAVE_MAP, GRAYED
         MENUITEM SEPARATOR
         MENUITEM "&Debug Console\tCtrl+D",      ID_DEBUG_CONSOLE, CHECKED
         MENUITEM "DSP Debug",                   ID_DSP_DEBUG

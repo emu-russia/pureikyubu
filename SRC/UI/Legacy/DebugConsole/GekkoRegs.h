@@ -3,12 +3,12 @@
 
 namespace Debug
 {
-	
-	class CmdlineWindow : public CuiWindow
+
+	class GekkoRegs : public CuiWindow
 	{
 	public:
-		CmdlineWindow(RECT& rect, std::string name);
-		~CmdlineWindow();
+		GekkoRegs(RECT& rect, std::string name);
+		~GekkoRegs();
 
 		virtual void OnDraw();
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);

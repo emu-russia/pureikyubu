@@ -12,7 +12,6 @@ namespace Debug
 
 		static void ThreadProc(void* param);
 
-		std::vector<std::pair<CuiColor, std::string>> history;
 		size_t messagePtr = 0;
 
 		CuiColor ChannelNameToColor(const std::string& name);
