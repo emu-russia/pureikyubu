@@ -468,6 +468,14 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
         dvd = true;
     }
 
+    TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+
+    _tsplitpath_s(currentFileName,
+        drive, _countof(drive) - 1,
+        dir, _countof(dir) - 1,
+        name, _countof(name) - 1,
+        ext, _countof(ext) - 1);
+
     // set new title for main window
 
     if (dvd)
@@ -520,6 +528,18 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
             }
         }
 
+        // Update recent files list and add selector path
+
+        TCHAR fullPath[MAX_PATH];
+
+        _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
+
+        // add new recent entry
+        AddRecentFile(currentFileName);
+
+        // add new path to selector
+        AddSelectorPath(fullPath);      // all checks are there
+
         gameTitle = longTitle;
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
     }
@@ -531,14 +551,6 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
         }
         else
         {
-            TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-
-            _tsplitpath_s(currentFileName,
-                drive, _countof(drive) - 1,
-                dir, _countof(dir) - 1,
-                name, _countof(name) - 1,
-                ext, _countof(ext) - 1);
-
             gameTitle = fmt::format(L"{:s} demo", name);
         }
         

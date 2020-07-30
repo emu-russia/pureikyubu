@@ -46,7 +46,7 @@ enum class SELECTOR_SORT
 void CreateSelector();
 void CloseSelector();
 void SetSelectorIconSize(bool smallIcon);
-bool AddSelectorPath(std::wstring & fullPath);            // FALSE, if path duplicated
+bool AddSelectorPath(const std::wstring & fullPath);            // FALSE, if path duplicated
 void ResizeSelector(int width, int height);
 void UpdateSelector();
 int  SelectorGetSelected();

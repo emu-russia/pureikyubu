@@ -87,7 +87,7 @@ static void load_path()
 }
 
 /* Called after loading of new file (see Emulator\Loader.cpp). */
-bool AddSelectorPath(std::wstring& fullPath)
+bool AddSelectorPath(const std::wstring& fullPath)
 {
     auto path = std::wstring(fullPath);
 
