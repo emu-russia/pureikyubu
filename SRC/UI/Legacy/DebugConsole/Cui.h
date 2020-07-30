@@ -72,7 +72,9 @@ namespace Debug
 		bool IsActive() { return active; }
 
 		void Print(CuiColor back, CuiColor front, int x, int y, std::string text);
+		void Print(CuiColor front, int x, int y, std::string text);
 		void Print(CuiColor back, CuiColor front, int x, int y, const char *fmt, ...);
+		void Print(CuiColor front, int x, int y, const char* fmt, ...);
 		void Fill(CuiColor back, CuiColor front, char c);
 		void FillLine(CuiColor back, CuiColor front, int y, char c);
 

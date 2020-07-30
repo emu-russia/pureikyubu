@@ -58,6 +58,18 @@ namespace Debug
 
 		// Gekko
 
+		uint32_t GetGpr(size_t n);
+		uint64_t GetPs0(size_t n);
+		uint64_t GetPs1(size_t n);
+		uint32_t GetPc();
+		uint32_t GetMsr();
+		uint32_t GetCr();
+		uint32_t GetFpscr();
+		uint32_t GetSpr(size_t n);
+		uint32_t GetSr(size_t n);
+		uint32_t GetTbu();
+		uint32_t GetTbl();
+
 		// DSP
 
 	};

@@ -118,6 +118,61 @@ namespace Debug
 
 	// Gekko
 
+	uint32_t JdiClient::GetGpr(size_t n)
+	{
+		return 0;
+	}
+
+	uint64_t JdiClient::GetPs0(size_t n)
+	{
+		return 0;
+	}
+
+	uint64_t JdiClient::GetPs1(size_t n)
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetPc()
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetMsr()
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetCr()
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetFpscr()
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetSpr(size_t n)
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetSr(size_t n)
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetTbu()
+	{
+		return 0;
+	}
+
+	uint32_t JdiClient::GetTbl()
+	{
+		return 0;
+	}
+
 	// DSP
 
 }

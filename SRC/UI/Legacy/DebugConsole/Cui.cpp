@@ -229,6 +229,14 @@ namespace Debug
 		}
 	}
 
+	void CuiWindow::Print(CuiColor front, int x, int y, std::string text)
+	{
+		for (auto it = text.begin(); it != text.end(); ++it)
+		{
+			PutChar(CuiColor::Black, front, x++, y, *it >= ' ' ? *it : ' ');
+		}
+	}
+
 	void CuiWindow::Print(CuiColor back, CuiColor front, int x, int y, const char* fmt, ...)
 	{
 		char    buf[0x1000];
@@ -240,6 +248,19 @@ namespace Debug
 
 		std::string text = buf;
 		Print(back, front, x, y, text);
+	}
+
+	void CuiWindow::Print(CuiColor front, int x, int y, const char* fmt, ...)
+	{
+		char    buf[0x1000];
+		va_list arg;
+
+		va_start(arg, fmt);
+		vsprintf_s(buf, sizeof(buf) - 1, fmt, arg);
+		va_end(arg);
+
+		std::string text = buf;
+		Print(CuiColor::Black, front, x, y, text);
 	}
 
 	void CuiWindow::Fill(CuiColor back, CuiColor front, char c)
