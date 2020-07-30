@@ -116,6 +116,16 @@ namespace Debug
 		ExecuteCommand("echo " + text);
 	}
 
+	bool IsLoaded()
+	{
+		return false;
+	}
+
+	bool IsRunning()
+	{
+		return false;
+	}
+
 	// Gekko
 
 	uint32_t JdiClient::GetGpr(size_t n)
@@ -174,5 +184,25 @@ namespace Debug
 	}
 
 	// DSP
+
+	uint16_t JdiClient::DspGetReg(size_t n)
+	{
+		return 0;
+	}
+
+	uint16_t JdiClient::DspGetPsr()
+	{
+		return 0;
+	}
+
+	uint16_t JdiClient::DspGetPc()
+	{
+		return 0;
+	}
+
+	uint64_t JdiClient::DspPackProd()
+	{
+		return 0;
+	}
 
 }

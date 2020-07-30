@@ -55,6 +55,8 @@ namespace Debug
 		std::string DebugChannelToString(int chan);
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		void Report(const std::string& text);
+		bool IsLoaded();
+		bool IsRunning();
 
 		// Gekko
 
@@ -71,6 +73,11 @@ namespace Debug
 		uint32_t GetTbl();
 
 		// DSP
+
+		uint16_t DspGetReg(size_t n);
+		uint16_t DspGetPsr();
+		uint16_t DspGetPc();
+		uint64_t DspPackProd();
 
 	};
 
