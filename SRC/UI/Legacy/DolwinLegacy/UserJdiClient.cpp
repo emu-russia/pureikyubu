@@ -166,7 +166,9 @@ namespace UI
 
 	void JdiClient::SetConfigString(const std::string& var, const std::string& newVal, const std::string& path)
 	{
-		CallJdi(("SetConfigString " + path + " " + var + " \"" + newVal + "\"").c_str());
+		char cmd[0x200] = { 0, };
+		sprintf_s(cmd, sizeof(cmd), "SetConfigString %s %s \"%s\"", path.c_str(), var.c_str(), newVal.c_str());
+		CallJdi(cmd);
 	}
 
 	int JdiClient::GetConfigInt(const std::string& var, const std::string& path)
