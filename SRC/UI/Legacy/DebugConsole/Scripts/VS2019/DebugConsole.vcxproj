@@ -179,13 +179,7 @@
     <ClCompile Include="..\..\Cmdline.cpp" />
     <ClCompile Include="..\..\Cui.cpp" />
     <ClCompile Include="..\..\DebugJdiClient.cpp" />
-    <ClCompile Include="..\..\DebugStubs.cpp" />
-    <ClCompile Include="..\..\DspDebugger.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\..\DspDebugger.cpp" />
     <ClCompile Include="..\..\DspDmem.cpp" />
     <ClCompile Include="..\..\DspImem.cpp" />
     <ClCompile Include="..\..\DspRegs.cpp" />

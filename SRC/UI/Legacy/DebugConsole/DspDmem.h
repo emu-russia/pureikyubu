@@ -7,6 +7,8 @@ namespace Debug
 
 	class DspDmem : public CuiWindow
 	{
+		static const uint32_t DROM_START_ADDRESS = 0x1000;
+
 		uint32_t current = 0;
 
 	public:

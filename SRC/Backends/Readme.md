@@ -14,6 +14,14 @@ There are also dummy backends for maximum code portability.
 
 They are used in DolwinPlayground so that developers can test memory leaks and bugs on key emulator components without being distracted by possible leaks and bugs in their UI / Backend implementations.
 
+## RenderTarget
+
+Backends use the RenderTarget entity, which is passed from the UI with the `GetRenderTarget` command.
+
+This is a kind of descriptor that is created by the UI and is required to output sound/graphics. For example, for Windows, this is the HWND of the main application window. For other platforms, RenderTarget may have a different meaning.
+
+In general, RenderTarget is of type `void *` (a pointer to some kind of context or handle).
+
 ## Where's UI?
 
 The user interface is placed above the emulator and its backends.

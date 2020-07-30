@@ -172,6 +172,90 @@
 				"Syntax: dsp_muls 0xaabb 0x0022",
 				"Numbers must be in unsigned 16-bit format"
 			]
+		},
+
+		"DspIsRunning": {
+			"internal": true,
+			"output": "Bool"
+		},
+
+		"DspRun": {
+			"internal": true
+		},
+
+		"DspSuspend": {
+			"internal": true
+		},
+
+		"DspStep": {
+			"internal": true
+		},
+
+		"DspGetReg": {
+			"internal": true,
+			"args": 1,
+			"output": "UInt16"
+		},
+
+		"DspGetPsr": {
+			"internal": true,
+			"output": "UInt16"
+		},
+
+		"DspGetPc": {
+			"internal": true,
+			"output": "UInt16"
+		},
+
+		"DspPackProd": {
+			"internal": true,
+			"output": "UInt64 (crazy packed multiply product)"
+		},
+
+		"DspTranslateDMem": {
+			"internal": true,
+			"args": 1,
+			"output": "UInt64 (pointer). nullptr if cannot be translated."
+		},
+
+		"DspTranslateIMem": {
+			"internal": true,
+			"args": 1,
+			"output": "UInt64 (pointer). nullptr if cannot be translated."
+		},
+
+		"DspTestBreakpoint": {
+			"internal": true,
+			"args": 1,
+			"output": "Bool"
+		},
+
+		"DspToggleBreakpoint": {
+			"internal": true,
+			"args": 1
+		},
+
+		"DspAddOneShotBreakpoint": {
+			"internal": true,
+			"args": 1
+		},
+
+		"DspIsCall": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool, UInt32 targetAddress]"
+		},
+
+		"DspIsCallOrJump": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool, UInt32 targetAddress]"
+		},
+
+		"DspDisasm": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool flowControl, Int instrSizeWords, String]. Empty string (\"\") mean disasm error"
 		}
 
 	}

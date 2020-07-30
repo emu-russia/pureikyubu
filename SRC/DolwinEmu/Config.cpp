@@ -39,7 +39,7 @@ static void LoadSettings()
 
 	defaultSettings.Deserialize(jsonText.data(), jsonText.size());
 
-	/* Merge with current settings. */
+	// Merge with current settings.
 	settings.Clone(&defaultSettings);
 
 	if (Util::FileExists(DOLWIN_SETTINGS))
@@ -70,7 +70,7 @@ static void SaveSettings()
 
 	settings.GetSerializedTextSize(bogus, -1, textSize);
 
-	/* Serialize and save current settings. */
+	// Serialize and save current settings.
 	std::vector<uint8_t> text(2 * textSize, 0);
 	settings.Serialize(text.data(), 2 * textSize, textSize);
 

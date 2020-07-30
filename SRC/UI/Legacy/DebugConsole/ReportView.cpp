@@ -11,6 +11,11 @@ namespace Debug
 		: CuiWindow (rect, name, parent)
 	{
 		thread = new Thread(ThreadProc, false, this, "ReportWindow");
+
+		if (history.empty())
+		{
+			Jdi.Report("Debugger is running. Type help for quick reference.\n");
+		}
 	}
 
 	ReportWindow::~ReportWindow()
@@ -92,10 +97,14 @@ namespace Debug
 	{
 		// Show window title with hints
 
-		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
-		std::string head = IsActive() ? "[*] F4" : "[ ] F4";
-		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
-		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, "console output");
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
+		std::string head = "[ ] F4";
+		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, head);
+		if (IsActive())
+		{
+			Print(CuiColor::Cyan, CuiColor::White, 2, 0, "*");
+		}
+		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, "debug output");
 
 		// Show messages starting with messagePtr backwards
 
@@ -141,11 +150,11 @@ namespace Debug
 				break;
 
 			case VK_PRIOR:	// Page Up
-				messagePtr += (int)height;
+				messagePtr += (int)(height - 1);
 				break;
 
 			case VK_NEXT:	// Page Down
-				messagePtr -= (int)height;
+				messagePtr -= (int)(height - 1);
 				break;
 
 			case VK_HOME:
@@ -169,37 +178,37 @@ namespace Debug
 			return CuiColor::Normal;
 		}
 
-        if (name == "Info")
-        {
-            return CuiColor::Green;
-        }
-        else if (name == "Error")
-        {
-            return CuiColor::BrightRed;
-        }
-        else if (name == "Header")
-        {
-            return CuiColor::Cyan;
-        }
+		if (name == "Info")
+		{
+			return CuiColor::Green;
+		}
+		else if (name == "Error")
+		{
+			return CuiColor::BrightRed;
+		}
+		else if (name == "Header")
+		{
+			return CuiColor::Cyan;
+		}
 
-        else if (name == "Loader")
-        {
-            return CuiColor::Yellow;
-        }
+		else if (name == "Loader")
+		{
+			return CuiColor::Yellow;
+		}
 
-        else if (name == "HLE")
-        {
-            return CuiColor::Green;
-        }
+		else if (name == "HLE")
+		{
+			return CuiColor::Green;
+		}
 
-        else if (name == "DVD")
-        {
-            return CuiColor::Lime;
-        }
-        else if (name == "AX")
-        {
-            return CuiColor::Lime;
-        }
+		else if (name == "DVD")
+		{
+			return CuiColor::Lime;
+		}
+		else if (name == "AX")
+		{
+			return CuiColor::Lime;
+		}
 
 		return CuiColor::Cyan;
 	}

@@ -22,7 +22,6 @@ namespace Gekko
 		return nullptr;
 	}
 
-	// ---------------------------------------------------------------------------
 	// r
 
 	// Get pointer to Gekko register.
@@ -351,18 +350,360 @@ namespace Gekko
 		return nullptr;
 	}
 
-	static Json::Value* CacheLog(std::vector<std::string>& args)
+	static Json::Value* CmdCacheLog(std::vector<std::string>& args)
 	{
 		CacheLogLevel level = (CacheLogLevel)atoi(args[1].c_str());
 		Gekko->cache.SetLogLevel(level);
 		return nullptr;
 	}
 
-	static Json::Value* CacheDebugDisable(std::vector<std::string>& args)
+	static Json::Value* CmdCacheDebugDisable(std::vector<std::string>& args)
 	{
 		bool disable = atoi(args[1].c_str()) ? true : false;
 		Gekko->cache.DebugDisable(disable);
 		return nullptr;
+	}
+
+	static Json::Value* CmdIsRunning(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Bool;
+
+		output->value.AsBool = Gekko->IsRunning();
+
+		return output;
+	}
+
+	static Json::Value* CmdGekkoRun(std::vector<std::string>& args)
+	{
+		Gekko->Run();
+		return nullptr;
+	}
+
+	static Json::Value* CmdGekkoSuspend(std::vector<std::string>& args)
+	{
+		Gekko->Suspend();
+		return nullptr;
+	}
+
+	static Json::Value* CmdGekkoStep(std::vector<std::string>& args)
+	{
+		if (!Gekko->IsRunning())
+		{
+			Gekko->Step();
+		}
+		return nullptr;
+	}
+
+	static Json::Value* CmdGekkoSkipInstruction(std::vector<std::string>& args)
+	{
+		if (!Gekko->IsRunning())
+		{
+			Report(Channel::CPU, "Skipped instruction at: 0x%08X!\n", Gekko->regs.pc);
+			Gekko->regs.pc += 4;
+		}
+		return nullptr;
+	}
+
+	static Json::Value* CmdGetGpr(std::vector<std::string>& args)
+	{
+		int n = atoi(args[1].c_str());
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = Gekko->regs.gpr[n];
+
+		return output;
+	}
+
+	static Json::Value* CmdGetPs0(std::vector<std::string>& args)
+	{
+		int n = atoi(args[1].c_str());
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.fpr[n].uval;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetPs1(std::vector<std::string>& args)
+	{
+		int n = atoi(args[1].c_str());
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.ps1[n].uval;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetPc(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.pc;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetMsr(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.msr;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetCr(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.cr;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetFpscr(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = Gekko->regs.fpscr;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetSpr(std::vector<std::string>& args)
+	{
+		int n = atoi(args[1].c_str());
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = Gekko->regs.spr[n];
+
+		return output;
+	}
+
+	static Json::Value* CmdGetSr(std::vector<std::string>& args)
+	{
+		int n = atoi(args[1].c_str());
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = Gekko->regs.sr[n];
+
+		return output;
+	}
+
+	static Json::Value* CmdGetTbu(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = Gekko->regs.tb.Part.u;
+
+		return output;
+	}
+
+	static Json::Value* CmdGetTbl(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = Gekko->regs.tb.Part.l;
+
+		return output;
+	}
+
+	static Json::Value* CmdTranslateDMmu(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = pa < RAMSIZE ? (uint64_t)&mi.ram[pa] : 0;
+
+		return output;
+	}
+
+	static Json::Value* CmdTranslateIMmu(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsInt = pa < RAMSIZE ? (uint64_t)&mi.ram[pa] : 0;
+
+		return output;
+	}
+
+	static Json::Value* CmdVirtualToPhysicalDMmu(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = pa;
+
+		return output;
+	}
+
+	static Json::Value* CmdVirtualToPhysicalIMmu(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = pa;
+
+		return output;
+	}
+
+	static Json::Value* CmdGekkoTestBreakpoint(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Bool;
+
+		output->value.AsBool = Gekko->IsBreakpoint(addr);
+
+		return output;
+	}
+
+	static Json::Value* CmdGekkoToggleBreakpoint(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		Gekko->ToggleBreakpoint(addr);
+
+		return nullptr;
+	}
+
+	static Json::Value* CmdGekkoAddOneShotBreakpoint(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		Gekko->AddOneShotBreakpoint(addr);
+
+		return nullptr;
+	}
+
+	static Json::Value* CmdGekkoDisasm(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		}
+
+		std::string text = "";
+
+		if (pa < RAMSIZE)
+		{
+			AnalyzeInfo info = { 0 };
+
+			uint8_t* ptr = &mi.ram[pa];
+			uint32_t instr = _byteswap_ulong(*(uint32_t*)ptr);
+
+			Gekko::Analyzer::Analyze(addr, instr, &info);
+
+			text = Gekko::GekkoDisasm::Disasm(addr, &info, false, false);
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddAnsiString(nullptr, text.c_str());
+
+		return output;
+	}
+
+	static Json::Value* CmdGekkoIsBranch(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+
+		uint32_t pa = Gekko::BadAddress;
+
+		if (emu.loaded)
+		{
+			int WIMG;
+			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		}
+
+		bool flowControl = false;
+		uint32_t targetAddress = 0;
+
+		if (pa < RAMSIZE)
+		{
+			AnalyzeInfo info = { 0 };
+
+			uint8_t* ptr = &mi.ram[pa];
+			uint32_t instr = _byteswap_ulong(*(uint32_t*)ptr);
+
+			Gekko::Analyzer::Analyze(addr, instr, &info);
+
+			flowControl = info.flow;
+			targetAddress = info.Imm.Address;
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddBool(nullptr, flowControl);
+		output->AddUInt32(nullptr, targetAddress);
+
+		return output;
 	}
 
 	void gekko_init_handlers()
@@ -374,7 +715,37 @@ namespace Gekko
 		JDI::Hub.AddCmd("br", cmd_br);
 		JDI::Hub.AddCmd("bw", cmd_bw);
 		JDI::Hub.AddCmd("bc", cmd_bc);
-		JDI::Hub.AddCmd("CacheLog", CacheLog);
-		JDI::Hub.AddCmd("CacheDebugDisable", CacheDebugDisable);
+		JDI::Hub.AddCmd("CacheLog", CmdCacheLog);
+		JDI::Hub.AddCmd("CacheDebugDisable", CmdCacheDebugDisable);
+
+		JDI::Hub.AddCmd("IsRunning", CmdIsRunning);
+		JDI::Hub.AddCmd("GekkoRun", CmdGekkoRun);
+		JDI::Hub.AddCmd("GekkoSuspend", CmdGekkoSuspend);
+		JDI::Hub.AddCmd("GekkoStep", CmdGekkoStep);
+		JDI::Hub.AddCmd("GekkoSkipInstruction", CmdGekkoSkipInstruction);
+
+		JDI::Hub.AddCmd("GetGpr", CmdGetGpr);
+		JDI::Hub.AddCmd("GetPs0", CmdGetPs0);
+		JDI::Hub.AddCmd("GetPs1", CmdGetPs1);
+		JDI::Hub.AddCmd("GetPc", CmdGetPc);
+		JDI::Hub.AddCmd("GetMsr", CmdGetMsr);
+		JDI::Hub.AddCmd("GetCr", CmdGetCr);
+		JDI::Hub.AddCmd("GetFpscr", CmdGetFpscr);
+		JDI::Hub.AddCmd("GetSpr", CmdGetSpr);
+		JDI::Hub.AddCmd("GetSr", CmdGetSr);
+		JDI::Hub.AddCmd("GetTbu", CmdGetTbu);
+		JDI::Hub.AddCmd("GetTbl", CmdGetTbl);
+
+		JDI::Hub.AddCmd("TranslateDMmu", CmdTranslateDMmu);
+		JDI::Hub.AddCmd("TranslateIMmu", CmdTranslateIMmu);
+		JDI::Hub.AddCmd("VirtualToPhysicalDMmu", CmdVirtualToPhysicalDMmu);
+		JDI::Hub.AddCmd("VirtualToPhysicalIMmu", CmdVirtualToPhysicalIMmu);
+
+		JDI::Hub.AddCmd("GekkoTestBreakpoint", CmdGekkoTestBreakpoint);
+		JDI::Hub.AddCmd("GekkoToggleBreakpoint", CmdGekkoToggleBreakpoint);
+		JDI::Hub.AddCmd("GekkoAddOneShotBreakpoint", CmdGekkoAddOneShotBreakpoint);
+
+		JDI::Hub.AddCmd("GekkoDisasm", CmdGekkoDisasm);
+		JDI::Hub.AddCmd("GekkoIsBranch", CmdGekkoIsBranch);
 	}
 }

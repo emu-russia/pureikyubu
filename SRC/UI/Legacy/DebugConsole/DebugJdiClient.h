@@ -55,10 +55,66 @@ namespace Debug
 		std::string DebugChannelToString(int chan);
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		void Report(const std::string& text);
+		bool IsLoaded();
+		bool IsCommandExists(const std::string& cmdline);
 
 		// Gekko
 
+		bool IsRunning();
+		void GekkoRun();
+		void GekkoSuspend();
+		void GekkoStep();
+		void GekkoSkipInstruction();
+
+		uint32_t GetGpr(size_t n);
+		uint64_t GetPs0(size_t n);
+		uint64_t GetPs1(size_t n);
+		uint32_t GetPc();
+		uint32_t GetMsr();
+		uint32_t GetCr();
+		uint32_t GetFpscr();
+		uint32_t GetSpr(size_t n);
+		uint32_t GetSr(size_t n);
+		uint32_t GetTbu();
+		uint32_t GetTbl();
+
+		void* TranslateDMmu(uint32_t address);
+		void* TranslateIMmu(uint32_t address);
+		uint32_t VirtualToPhysicalDMmu(uint32_t address);
+		uint32_t VirtualToPhysicalIMmu(uint32_t address);
+
+		bool GekkoTestBreakpoint(uint32_t address);
+		void GekkoToggleBreakpoint(uint32_t address);
+		void GekkoAddOneShotBreakpoint(uint32_t address);
+
+		std::string GekkoDisasm(uint32_t address);
+		bool GekkoIsBranch(uint32_t address, uint32_t& targetAddress);
+
+		uint32_t AddressByName(const std::string& name);
+		std::string NameByAddress(uint32_t address);
+
 		// DSP
+
+		bool DspIsRunning();
+		void DspRun();
+		void DspSuspend();
+		void DspStep();
+
+		uint16_t DspGetReg(size_t n);
+		uint16_t DspGetPsr();
+		uint16_t DspGetPc();
+		uint64_t DspPackProd();
+
+		void* DspTranslateDMem(uint32_t address);
+		void* DspTranslateIMem(uint32_t address);
+
+		bool DspTestBreakpoint(uint32_t address);
+		void DspToggleBreakpoint(uint32_t address);
+		void DspAddOneShotBreakpoint(uint32_t address);
+
+		std::string DspDisasm(uint32_t address, size_t& instrSizeWords, bool& flowControl);
+		bool DspIsCall(uint32_t address, uint32_t& targetAddress);
+		bool DspIsCallOrJump(uint32_t address, uint32_t& targetAddress);
 
 	};
 

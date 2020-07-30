@@ -105,10 +105,16 @@ namespace HLE
 
     static Json::Value* AddressByName(std::vector<std::string>& args)
     {
-        uint32_t address = SYMAddress(args[1].c_str());
-
-        if (address == 0)
-            return nullptr;
+        uint32_t address;
+        
+        if (IsLoaded())
+        {
+            address = SYMAddress(args[1].c_str());
+        }
+        else
+        {
+            address = 0;
+        }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
@@ -121,10 +127,17 @@ namespace HLE
 
     static Json::Value* NameByAddress(std::vector<std::string>& args)
     {
-        char* name = SYMName(strtoul(args[1].c_str(), nullptr, 0));
+        char* name = nullptr;
+        
+        if (IsLoaded())
+        {
+            name = SYMName(strtoul(args[1].c_str(), nullptr, 0));
+        }
 
-        if (!name)
-            return nullptr;
+        if (name == nullptr)
+        {
+            name = "";
+        }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;

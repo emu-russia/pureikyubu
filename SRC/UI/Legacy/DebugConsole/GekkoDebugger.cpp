@@ -75,58 +75,100 @@ namespace Debug
 
 		AddWindow(status);
 
-		SetWindowFocus("ReportWindow");
+		SetWindowFocus("Cmdline");
 	}
 
 	void GekkoDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
 	{
-		if (Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256))
+		if ((Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
 		{
 			SetWindowFocus("Cmdline");
+			status->SetMode(DebugMode::Ready);
+			InvalidateAll();
+			return;
 		}
 
 		switch (Vkey)
 		{
 			case VK_F1:
 				SetWindowFocus("GekkoRegs");
+				InvalidateAll();
 				break;
 
 			case VK_F2:
 				SetWindowFocus("MemoryView");
+				InvalidateAll();
 				break;
 
 			case VK_F3:
 				SetWindowFocus("GekkoDisasm");
+				InvalidateAll();
 				break;
 
 			case VK_F4:
 				SetWindowFocus("ReportWindow");
+				status->SetMode(DebugMode::Scrolling);
+				InvalidateAll();
 				break;
 
 			case VK_F5:
 				// Continue/break Gekko execution
+				if (Jdi.IsLoaded())
+				{
+					if (Jdi.IsRunning())
+					{
+						Jdi.GekkoSuspend();
+						disasm->SetCursor(Jdi.GetPc());
+					}
+					else
+					{
+						Jdi.GekkoRun();
+					}
+					InvalidateAll();
+				}
 				break;
 
 			case VK_F9:
 				// Toggle Breakpoint
+				Jdi.GekkoToggleBreakpoint(disasm->GetCursor());
+				disasm->Invalidate();
 				break;
 
 			case VK_F10:
 				// Step Over
+				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				{
+					Jdi.GekkoAddOneShotBreakpoint(Jdi.GetPc() + 4);
+					Jdi.GekkoRun();
+					InvalidateAll();
+				}
 				break;
 
 			case VK_F11:
 				// Step Into
+				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				{
+					Jdi.GekkoStep();
+					disasm->SetCursor(Jdi.GetPc() + 4);
+					InvalidateAll();
+				}
 				break;
 
 			case VK_F12:
 				// Skip instruction
+				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				{
+					Jdi.GekkoSkipInstruction();
+					InvalidateAll();
+				}
 				break;
 
 			case VK_ESCAPE:
 				if (msgs->IsActive())
 				{
 					SetWindowFocus("Cmdline");
+					status->SetMode(DebugMode::Ready);
+					InvalidateAll();
 				}
 				break;
 
@@ -134,11 +176,29 @@ namespace Debug
 				if (cmdline->IsActive())
 				{
 					SetWindowFocus("ReportWindow");
+					status->SetMode(DebugMode::Scrolling);
+					InvalidateAll();
 				}
 				break;
 		}
+	}
 
-		InvalidateAll();
+	/// <summary>
+	/// Set current address to view memory. Used by "d" command.
+	/// </summary>
+	/// <param name="virtualAddress"></param>
+	void GekkoDebug::SetMemoryCursor(uint32_t virtualAddress)
+	{
+		memview->SetCursor(virtualAddress);
+	}
+
+	/// <summary>
+	/// Set the current address to view the disassembled Gekko code. Used by "u" command.
+	/// </summary>
+	/// <param name="virtualAddress"></param>
+	void GekkoDebug::SetDisasmCursor(uint32_t virtualAddress)
+	{
+		disasm->SetCursor(virtualAddress);
 	}
 
 }

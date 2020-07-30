@@ -877,7 +877,7 @@ namespace Gekko
 		return text;
 	}
 
-	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info)
+	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info, bool showAddress, bool showInstr)
 	{
 		std::string text = "";
 		// Some simplified instructions hide part of the operands.
@@ -885,11 +885,17 @@ namespace Gekko
 
 		// Address
 
-		text += HexToStr(pc) + "  ";
+		if (showAddress)
+		{
+			text += HexToStr(pc) + "  ";
+		}
 
 		// Code bytes
 
-		text += HexToStr(info->instrBits) + "  ";
+		if (showInstr)
+		{
+			text += HexToStr(info->instrBits) + "  ";
+		}
 
 		// Instruction name
 

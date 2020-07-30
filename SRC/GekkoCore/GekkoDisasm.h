@@ -22,7 +22,7 @@ namespace Gekko
 
 	public:
 
-		static std::string Disasm(uint32_t pc, AnalyzeInfo * info);
+		static std::string Disasm(uint32_t pc, AnalyzeInfo * info, bool showAddress, bool showInstr);
 
 	};
 }

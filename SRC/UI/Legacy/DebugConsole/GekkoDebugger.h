@@ -32,6 +32,10 @@ namespace Debug
 		GekkoDebug();
 
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+
+		void SetMemoryCursor(uint32_t virtualAddress);
+		void SetDisasmCursor(uint32_t virtualAddress);
+
 	};
 
 }
