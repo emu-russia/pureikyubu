@@ -8,7 +8,7 @@ namespace Debug
 	GekkoDisasm::GekkoDisasm(RECT& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
-		uint32_t main = Jdi.SYMAddress("main");
+		uint32_t main = Jdi.AddressByName("main");
 		if (main)
 		{
 			SetCursor(main);
@@ -171,18 +171,18 @@ namespace Debug
 		bgpc = (addr == Jdi.GetPc()) ? (CuiColor::DarkBlue) : (CuiColor::Black);
 		bg = (CuiColor)((int)bgpc ^ (int)bgcur ^ (int)bgbp);
 
-		FillLine(CuiColor::Black, CuiColor::Normal, line, ' ');
+		FillLine(bg, CuiColor::Normal, line, ' ');
 
 		// Symbolic information at address
 
-		symbol = Jdi.SYMName(addr);
+		symbol = Jdi.NameByAddress(addr);
 		if (!symbol.empty())
 		{
 			Print(bg, CuiColor::Green, 0, line, "%s", symbol.c_str());
 			line++;
 			addend++;
 
-			FillLine(CuiColor::Black, CuiColor::Normal, line, ' ');
+			FillLine(bg, CuiColor::Normal, line, ' ');
 		}
 
 		// Translate address
@@ -227,7 +227,7 @@ namespace Debug
 
 			Print(bg, CuiColor::Cyan, 20 + (int)text.size(), line, "%s", dir);
 
-			symbol = Jdi.SYMName(targetAddress);
+			symbol = Jdi.NameByAddress(targetAddress);
 			if (!symbol.empty())
 			{
 				Print(bg, CuiColor::Brown, 47, line, "; %s", symbol.c_str());

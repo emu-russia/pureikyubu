@@ -93,7 +93,7 @@
         "Syntax: AddressByName <name>",
         "Example: AddressByName OSInit"
       ],
-      "output": "UInt32 / nullptr (not found)"
+      "output": "UInt32 / 0 (not found)"
     },
 
     "NameByAddress": {
@@ -103,7 +103,7 @@
         "Syntax: NameByAddress <address>",
         "Example: NameByAddress 0x80031000"
       ],
-      "output": "Array: [String] / nullptr (not found)"
+      "output": "Array: [String] / [empty string] (not found)"
     },
 
     "OSTime": {

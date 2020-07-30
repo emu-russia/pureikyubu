@@ -658,7 +658,7 @@ namespace Gekko
 
 			Gekko::Analyzer::Analyze(addr, instr, &info);
 
-			text = Gekko::GekkoDisasm::Disasm(addr, &info);
+			text = Gekko::GekkoDisasm::Disasm(addr, &info, false, false);
 		}
 
 		Json::Value* output = new Json::Value();

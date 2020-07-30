@@ -90,8 +90,8 @@ namespace Debug
 		std::string GekkoDisasm(uint32_t address);
 		bool GekkoIsBranch(uint32_t address, uint32_t& targetAddress);
 
-		uint32_t SYMAddress(const std::string& name);
-		std::string SYMName(uint32_t address);
+		uint32_t AddressByName(const std::string& name);
+		std::string NameByAddress(uint32_t address);
 
 		// DSP
 
