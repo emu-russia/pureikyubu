@@ -26,8 +26,12 @@ namespace Debug
 		Fill(CuiColor::Black, CuiColor::Normal, ' ');
 
 		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
-		std::string head = IsActive() ? "[*] F1" : "[ ] F1";
-		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
+		std::string head = "[ ] F1";
+		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, head);
+		if (IsActive())
+		{
+			Print(CuiColor::Cyan, CuiColor::White, 2, 0, "*");
+		}
 
 		std::string modeText;
 
@@ -39,7 +43,7 @@ namespace Debug
 			case GekkoRegmode::MMU: modeText = "MMU"; break;
 		}
 
-		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, modeText);
+		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, modeText);
 
 		switch (mode)
 		{

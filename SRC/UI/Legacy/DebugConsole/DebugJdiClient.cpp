@@ -236,6 +236,11 @@ namespace Debug
 		return nullptr;
 	}
 
+	uint32_t JdiClient::VirtualToPhysicalDMmu(uint32_t address)
+	{
+		return (uint32_t)-1;
+	}
+
 	bool JdiClient::GekkoTestBreakpoint(uint32_t address)
 	{
 		return false;
@@ -251,14 +256,24 @@ namespace Debug
 
 	}
 
-	std::string GekkoDisasm(uint32_t address)
+	std::string JdiClient::GekkoDisasm(uint32_t address)
 	{
 		return "";
 	}
 
-	bool GekkoIsBranch(uint32_t address, uint32_t& targetAddress)
+	bool JdiClient::GekkoIsBranch(uint32_t address, uint32_t& targetAddress)
 	{
 		return false;
+	}
+
+	uint32_t JdiClient::SYMAddress(const std::string& name)
+	{
+		return 0;
+	}
+
+	std::string JdiClient::SYMName(uint32_t address)
+	{
+		return "";
 	}
 
 	// DSP

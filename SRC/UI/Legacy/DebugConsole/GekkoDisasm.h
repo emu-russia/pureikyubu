@@ -9,6 +9,8 @@ namespace Debug
 		uint32_t address = 0;
 		uint32_t cursor = 0;
 
+		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
+
 	public:
 		GekkoDisasm(RECT& rect, std::string name, Cui* parent);
 		~GekkoDisasm();

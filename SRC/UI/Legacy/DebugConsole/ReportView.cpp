@@ -93,9 +93,13 @@ namespace Debug
 		// Show window title with hints
 
 		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
-		std::string head = IsActive() ? "[*] F4" : "[ ] F4";
-		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
-		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, "debug output");
+		std::string head = "[ ] F4";
+		Print(CuiColor::Cyan, CuiColor::Black, 1, 0, head);
+		if (IsActive())
+		{
+			Print(CuiColor::Cyan, CuiColor::White, 2, 0, "*");
+		}
+		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, "debug output");
 
 		// Show messages starting with messagePtr backwards
 

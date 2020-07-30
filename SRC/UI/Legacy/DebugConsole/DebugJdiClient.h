@@ -80,6 +80,7 @@ namespace Debug
 
 		void* TranslateDMmu(uint32_t address);
 		void* TranslateIMmu(uint32_t address);
+		uint32_t VirtualToPhysicalDMmu(uint32_t address);
 
 		bool GekkoTestBreakpoint(uint32_t address);
 		void GekkoToggleBreakpoint(uint32_t address);
@@ -87,6 +88,9 @@ namespace Debug
 
 		std::string GekkoDisasm(uint32_t address);
 		bool GekkoIsBranch(uint32_t address, uint32_t& targetAddress);
+
+		uint32_t SYMAddress(const std::string& name);
+		std::string SYMName(uint32_t address);
 
 		// DSP
 
