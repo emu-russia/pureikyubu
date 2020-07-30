@@ -456,7 +456,6 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
             name, _countof(name) - 1,
             ext, _countof(ext) - 1);
 
-        item->id.resize(16);
         item->id = L"-";
         _tcscpy_s(item->title, _countof(item->title) - 1, name);
         item->comment[0] = 0;
@@ -668,6 +667,12 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         FillRect(DC, &rc2, hb);
         rc2.left += 2;
         rc2.right -= 2;
+
+        if (file->type == SELECTOR_FILE::Executable)
+        {
+            DrawText(DC, text, (int)len, &rc2, fmt);
+            continue;
+        }
 
         char DiskId[4] = { 0 };
         DiskId[0] = (char)file->id[0];

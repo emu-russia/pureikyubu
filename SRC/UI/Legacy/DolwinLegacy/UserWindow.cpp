@@ -249,7 +249,7 @@ void LoadRecentFile(int index)
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
     UI::Jdi.Unload();
     UI::Jdi.LoadFile(Util::WstringToString(path));
-    OnMainWindowOpened();
+    OnMainWindowOpened(path.c_str());
     UI::Jdi.Run();
 }
 
@@ -434,7 +434,7 @@ static void OnMainWindowDestroy()
 }
 
 // emulation has started - do proper actions
-void OnMainWindowOpened()
+void OnMainWindowOpened(const TCHAR* currentFileName)
 {
     // disable selector
     CloseSelector();
@@ -442,22 +442,104 @@ void OnMainWindowOpened()
     EnableMenuItem( GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
-    // set new title for main window
     std::wstring newTitle, gameTitle;
-    if (false)
+    bool dvd = false;
+
+    TCHAR* extension = _tcsrchr((wchar_t*)currentFileName, _T('.'));
+
+    if (!_tcsicmp(extension, _T(".dol")))
     {
-        gameTitle = wnd.currentFileName;
+        dvd = false;
+    }
+    else if (!_tcsicmp(extension, _T(".elf")))
+    {
+        dvd = false;
+    }
+    else if (!_tcsicmp(extension, _T(".bin")))
+    {
+        dvd = false;
+    }
+    else if (!_tcsicmp(extension, _T(".iso")))
+    {
+        dvd = true;
+    }
+    else if (!_tcsicmp(extension, _T(".gcm")))
+    {
+        dvd = true;
+    }
+
+    // set new title for main window
+
+    if (dvd)
+    {
+        UI::Jdi.DvdMount(Util::TcharToString(currentFileName));
+
+        // get DiskID
+        std::vector<uint8_t> diskID;
+        diskID.resize(4);
+        UI::Jdi.DvdSeek(0);
+        UI::Jdi.DvdRead(diskID);
+
+        // Get title from banner
+
+        std::vector<uint8_t> bnrRaw = DVDLoadBanner(currentFileName);
+
+        DVDBanner2* bnr = (DVDBanner2*)bnrRaw.data();
+
+        TCHAR longTitle[0x200];
+
+        char* ansiPtr = (char*)bnr->comments[0].longTitle;
+        TCHAR* tcharPtr = longTitle;
+
+        while (*ansiPtr)
+        {
+            *tcharPtr++ = (uint8_t)*ansiPtr++;
+        }
+        *tcharPtr++ = 0;
+
+        // Convert SJIS Title to Unicode
+
+        if ( UI::Jdi.DvdRegionById((char *)diskID.data()) == "JPN")
+        {
+            size_t size, chars;
+            uint16_t* widePtr = SjisToUnicode(longTitle, &size, &chars);
+            uint16_t* unicodePtr;
+
+            if (widePtr)
+            {
+                tcharPtr = longTitle;
+                unicodePtr = widePtr;
+
+                while (*unicodePtr)
+                {
+                    *tcharPtr++ = *unicodePtr++;
+                }
+                *tcharPtr++ = 0;
+
+                free(widePtr);
+            }
+        }
+
+        gameTitle = longTitle;
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
     }
     else
     {
-        if (wnd.currentFileName == L"Bootrom")
+        if (!_tcscmp(currentFileName, _T("Bootrom")))
         {
-            gameTitle = wnd.currentFileName;
+            gameTitle = currentFileName;
         }
         else
         {
-            gameTitle = fmt::format(L"{:s} demo", wnd.currentFileName);
+            TCHAR fullPath[MAX_PATH], drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+
+            _tsplitpath_s(currentFileName,
+                drive, _countof(drive) - 1,
+                dir, _countof(dir) - 1,
+                name, _countof(name) - 1,
+                ext, _countof(ext) - 1);
+
+            gameTitle = fmt::format(L"{:s} demo", name);
         }
         
         newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
@@ -571,7 +653,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     loadFile:
                     
                         UI::Jdi.LoadFile(Util::WstringToString(name));
-                        OnMainWindowOpened();
+                        OnMainWindowOpened(name.c_str());
                         UI::Jdi.Run();
                     }
 
@@ -602,7 +684,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_IPLMENU:
                 {
                     UI::Jdi.LoadFile("Bootrom");
-                    OnMainWindowOpened();
+                    OnMainWindowOpened(_T("Bootrom"));
                     return 0;
                 }
                 /* Open/close DVD lid */
