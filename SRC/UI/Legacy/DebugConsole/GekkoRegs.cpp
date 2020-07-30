@@ -130,35 +130,35 @@ namespace Debug
 		// Values
 
 		Print(CuiColor::Normal, 32, 1, "%08X", Jdi.GetCr());
-		Print(CuiColor::Normal, 32, 2, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::XER));
-		Print(CuiColor::Normal, 32, 4, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::CTR));
-		Print(CuiColor::Normal, 32, 5, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::DEC));
+		Print(CuiColor::Normal, 32, 2, "%08X", Jdi.GetSpr(Gekko_SPR_XER));
+		Print(CuiColor::Normal, 32, 4, "%08X", Jdi.GetSpr(Gekko_SPR_CTR));
+		Print(CuiColor::Normal, 32, 5, "%08X", Jdi.GetSpr(Gekko_SPR_DEC));
 		Print(CuiColor::Normal, 32, 8, "%08X", Jdi.GetPc());
-		Print(CuiColor::Normal, 32, 9, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::LR));
+		Print(CuiColor::Normal, 32, 9, "%08X", Jdi.GetSpr(Gekko_SPR_LR));
 		Print(CuiColor::Normal, 32, 14, "%08X:%08X", Jdi.GetTbu(), Jdi.GetTbl());
 
 		uint32_t msr = Jdi.GetMsr();
-		uint32_t hid2 = Jdi.GetSpr((size_t)Gekko::SPR::HID2);
+		uint32_t hid2 = Jdi.GetSpr(Gekko_SPR_HID2);
 
 		Print(CuiColor::Normal, 48, 1, "%08X", msr);
 		Print(CuiColor::Normal, 48, 2, "%08X", Jdi.GetFpscr());
-		Print(CuiColor::Normal, 48, 4, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::HID0));
-		Print(CuiColor::Normal, 48, 5, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::HID1));
+		Print(CuiColor::Normal, 48, 4, "%08X", Jdi.GetSpr(Gekko_SPR_HID0));
+		Print(CuiColor::Normal, 48, 5, "%08X", Jdi.GetSpr(Gekko_SPR_HID1));
 		Print(CuiColor::Normal, 48, 6, "%08X", hid2);
-		Print(CuiColor::Normal, 48, 8, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::WPAR));
-		Print(CuiColor::Normal, 48, 9, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::DMAU));
-		Print(CuiColor::Normal, 48, 10, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::DMAL));
+		Print(CuiColor::Normal, 48, 8, "%08X", Jdi.GetSpr(Gekko_SPR_WPAR));
+		Print(CuiColor::Normal, 48, 9, "%08X", Jdi.GetSpr(Gekko_SPR_DMAU));
+		Print(CuiColor::Normal, 48, 10, "%08X", Jdi.GetSpr(Gekko_SPR_DMAL));
 
-		Print(CuiColor::Normal, 64, 1, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::DSISR));
-		Print(CuiColor::Normal, 64, 2, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::DAR));
-		Print(CuiColor::Normal, 64, 4, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SRR0));
-		Print(CuiColor::Normal, 64, 5, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SRR1));
-		Print(CuiColor::Normal, 64, 8, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SPRG0));
-		Print(CuiColor::Normal, 64, 9, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SPRG1));
-		Print(CuiColor::Normal, 64, 10, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SPRG2));
-		Print(CuiColor::Normal, 64, 11, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SPRG3));
-		Print(CuiColor::Normal, 64, 13, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::EAR));
-		Print(CuiColor::Normal, 64, 14, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::PVR));
+		Print(CuiColor::Normal, 64, 1, "%08X", Jdi.GetSpr(Gekko_SPR_DSISR));
+		Print(CuiColor::Normal, 64, 2, "%08X", Jdi.GetSpr(Gekko_SPR_DAR));
+		Print(CuiColor::Normal, 64, 4, "%08X", Jdi.GetSpr(Gekko_SPR_SRR0));
+		Print(CuiColor::Normal, 64, 5, "%08X", Jdi.GetSpr(Gekko_SPR_SRR1));
+		Print(CuiColor::Normal, 64, 8, "%08X", Jdi.GetSpr(Gekko_SPR_SPRG0));
+		Print(CuiColor::Normal, 64, 9, "%08X", Jdi.GetSpr(Gekko_SPR_SPRG1));
+		Print(CuiColor::Normal, 64, 10, "%08X", Jdi.GetSpr(Gekko_SPR_SPRG2));
+		Print(CuiColor::Normal, 64, 11, "%08X", Jdi.GetSpr(Gekko_SPR_SPRG3));
+		Print(CuiColor::Normal, 64, 13, "%08X", Jdi.GetSpr(Gekko_SPR_EAR));
+		Print(CuiColor::Normal, 64, 14, "%08X", Jdi.GetSpr(Gekko_SPR_PVR));
 
 		// Some cpu flags.
 
@@ -203,13 +203,13 @@ namespace Debug
 
 		for (y = 1; y <= 8; y++)
 		{
-			uint32_t gqr = Jdi.GetSpr((size_t)Gekko::SPR::GQRs + y - 1);
+			uint32_t gqr = Jdi.GetSpr(Gekko_SPR_GQRs + y - 1);
 
 			Print(CuiColor::Cyan, 64, y, "gqr%i ", y - 1);
 			Print(CuiColor::Normal, 69, y, "%08X", gqr);
 		}
 
-		uint32_t hid2 = Jdi.GetSpr((size_t)Gekko::SPR::HID2);
+		uint32_t hid2 = Jdi.GetSpr(Gekko_SPR_HID2);
 
 		Print(CuiColor::Cyan, 64, 10, "PSE   ");
 		Print(CuiColor::Cyan, 64, 11, "LSQ   ");
@@ -239,34 +239,34 @@ namespace Debug
 
 		// Values
 
-		Print(CuiColor::Normal, 6, 11, "%08X", Jdi.GetSpr((size_t)Gekko::SPR::SDR1));
+		Print(CuiColor::Normal, 6, 11, "%08X", Jdi.GetSpr(Gekko_SPR_SDR1));
 
 		uint32_t msr = Jdi.GetMsr();
 
 		Print(CuiColor::Normal, 6, 13, "%i", (msr & MSR_IR) ? 1 : 0);
 		Print(CuiColor::Normal, 6, 14, "%i", (msr & MSR_DR) ? 1 : 0);
 
-		Print(CuiColor::Normal, 6, 1, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::DBAT0U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT0L));
-		Print(CuiColor::Normal, 6, 2, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::DBAT1U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT1L));
-		Print(CuiColor::Normal, 6, 3, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::DBAT2U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT2L));
-		Print(CuiColor::Normal, 6, 4, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::DBAT3U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT3L));
+		Print(CuiColor::Normal, 6, 1, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_DBAT0U), Jdi.GetSpr(Gekko_SPR_DBAT0L));
+		Print(CuiColor::Normal, 6, 2, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_DBAT1U), Jdi.GetSpr(Gekko_SPR_DBAT1L));
+		Print(CuiColor::Normal, 6, 3, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_DBAT2U), Jdi.GetSpr(Gekko_SPR_DBAT2L));
+		Print(CuiColor::Normal, 6, 4, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_DBAT3U), Jdi.GetSpr(Gekko_SPR_DBAT3L));
 
-		Print(CuiColor::Normal, 6, 6, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::IBAT0U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT0L));
-		Print(CuiColor::Normal, 6, 7, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::IBAT1U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT1L));
-		Print(CuiColor::Normal, 6, 8, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::IBAT2U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT2L));
-		Print(CuiColor::Normal, 6, 9, "%08X:%08X", Jdi.GetSpr((size_t)Gekko::SPR::IBAT3U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT3L));
+		Print(CuiColor::Normal, 6, 6, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_IBAT0U), Jdi.GetSpr(Gekko_SPR_IBAT0L));
+		Print(CuiColor::Normal, 6, 7, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_IBAT1U), Jdi.GetSpr(Gekko_SPR_IBAT1L));
+		Print(CuiColor::Normal, 6, 8, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_IBAT2U), Jdi.GetSpr(Gekko_SPR_IBAT2L));
+		Print(CuiColor::Normal, 6, 9, "%08X:%08X", Jdi.GetSpr(Gekko_SPR_IBAT3U), Jdi.GetSpr(Gekko_SPR_IBAT3L));
 
 		// BATs detailed
 
-		describe_bat_reg(24, 1, Jdi.GetSpr((size_t)Gekko::SPR::DBAT0U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT0L), false);
-		describe_bat_reg(24, 2, Jdi.GetSpr((size_t)Gekko::SPR::DBAT1U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT1L), false);
-		describe_bat_reg(24, 3, Jdi.GetSpr((size_t)Gekko::SPR::DBAT2U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT2L), false);
-		describe_bat_reg(24, 4, Jdi.GetSpr((size_t)Gekko::SPR::DBAT3U), Jdi.GetSpr((size_t)Gekko::SPR::DBAT3L), false);
+		describe_bat_reg(24, 1, Jdi.GetSpr(Gekko_SPR_DBAT0U), Jdi.GetSpr(Gekko_SPR_DBAT0L), false);
+		describe_bat_reg(24, 2, Jdi.GetSpr(Gekko_SPR_DBAT1U), Jdi.GetSpr(Gekko_SPR_DBAT1L), false);
+		describe_bat_reg(24, 3, Jdi.GetSpr(Gekko_SPR_DBAT2U), Jdi.GetSpr(Gekko_SPR_DBAT2L), false);
+		describe_bat_reg(24, 4, Jdi.GetSpr(Gekko_SPR_DBAT3U), Jdi.GetSpr(Gekko_SPR_DBAT3L), false);
 
-		describe_bat_reg(24, 6, Jdi.GetSpr((size_t)Gekko::SPR::IBAT0U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT0L), true);
-		describe_bat_reg(24, 7, Jdi.GetSpr((size_t)Gekko::SPR::IBAT1U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT1L), true);
-		describe_bat_reg(24, 8, Jdi.GetSpr((size_t)Gekko::SPR::IBAT2U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT2L), true);
-		describe_bat_reg(24, 9, Jdi.GetSpr((size_t)Gekko::SPR::IBAT3U), Jdi.GetSpr((size_t)Gekko::SPR::IBAT3L), true);
+		describe_bat_reg(24, 6, Jdi.GetSpr(Gekko_SPR_IBAT0U), Jdi.GetSpr(Gekko_SPR_IBAT0L), true);
+		describe_bat_reg(24, 7, Jdi.GetSpr(Gekko_SPR_IBAT1U), Jdi.GetSpr(Gekko_SPR_IBAT1L), true);
+		describe_bat_reg(24, 8, Jdi.GetSpr(Gekko_SPR_IBAT2U), Jdi.GetSpr(Gekko_SPR_IBAT2L), true);
+		describe_bat_reg(24, 9, Jdi.GetSpr(Gekko_SPR_IBAT3U), Jdi.GetSpr(Gekko_SPR_IBAT3L), true);
 
 		// Segment regs
 

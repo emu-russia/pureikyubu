@@ -161,25 +161,15 @@ namespace Debug
 
 	int GekkoDisasm::DisasmLine(int line, uint32_t addr)
 	{
-		int bgpc, bgcur, bgbp;
+		CuiColor bgpc, bgcur, bgbp;
 		CuiColor bg;
 		std::string symbol;
 		int addend = 1;
 
-		uint32_t* ptr = (uint32_t *)Jdi.TranslateIMmu(addr);
-		if (!ptr)
-		{
-			// no memory
-			Print(CuiColor::Normal, 0, line, "%08X  ", addr);
-			Print(CuiColor::Cyan, 10, line, "%08X  ", 0);
-			Print(CuiColor::Normal, 20, line, "???");
-			return 1;
-		}
-
-		bgcur = (addr == cursor) ? ((int)CuiColor::Gray) : (0);
-		bgbp = (Jdi.GekkoTestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
-		bgpc = (addr == Jdi.GetPc()) ? ((int)CuiColor::DarkBlue) : (0);
-		bg = (CuiColor)(bgpc ^ bgcur ^ bgbp);
+		bgcur = (addr == cursor) ? (CuiColor::Gray) : (CuiColor::Black);
+		bgbp = (Jdi.GekkoTestBreakpoint(addr)) ? (CuiColor::Red) : (CuiColor::Black);
+		bgpc = (addr == Jdi.GetPc()) ? (CuiColor::DarkBlue) : (CuiColor::Black);
+		bg = (CuiColor)((int)bgpc ^ (int)bgcur ^ (int)bgbp);
 
 		FillLine(CuiColor::Black, CuiColor::Normal, line, ' ');
 
@@ -195,12 +185,24 @@ namespace Debug
 			FillLine(CuiColor::Black, CuiColor::Normal, line, ' ');
 		}
 
-		// Show address and opcode
+		// Translate address
 
-		uint32_t opcode = *ptr;
+		uint32_t* ptr = (uint32_t*)Jdi.TranslateIMmu(addr);
+		if (!ptr)
+		{
+			// No memory
+			Print(bg, CuiColor::Normal, 0, line, "%08X  ", addr);
+			Print(bg, CuiColor::Cyan, 10, line, "%08X  ", 0);
+			Print(bg, CuiColor::Normal, 20, line, "???");
+			return 1;
+		}
+
+		// Print address and opcode
+
+		uint32_t opcode = _byteswap_ulong (*ptr);
 
 		Print(bg, CuiColor::Normal, 0, line, "%08X  ", addr);
-		Print(bg, CuiColor::Cyan, 10, line, "%08X  ", _byteswap_ulong(opcode));
+		Print(bg, CuiColor::Cyan, 10, line, "%08X  ", opcode);
 
 		// Disasm
 
@@ -209,11 +211,11 @@ namespace Debug
 		bool flow = false;
 		uint32_t targetAddress = 0;
 
-		flow = Jdi.GekkoIsBranch(addr, targetAddress);
-
 		Print(bg, CuiColor::Normal, 20, line, "%s", text.c_str());
 
 		// Branch hints
+
+		flow = Jdi.GekkoIsBranch(addr, targetAddress);
 
 		if (flow && targetAddress != 0)
 		{
@@ -234,13 +236,16 @@ namespace Debug
 
 		// Rlwinm-like mask hint
 
-		if (text[0] == 'r' && text[1] == 'l')
+		if (text.size() > 2)
 		{
-			int mb = ((opcode >> 6) & 0x1f);
-			int me = ((opcode >> 1) & 0x1f);
-			uint32_t mask = ((uint32_t)-1 >> mb) ^ ((me >= 31) ? 0 : ((uint32_t)-1) >> (me + 1));
+			if (text[0] == 'r' && text[1] == 'l')
+			{
+				int mb = ((opcode >> 6) & 0x1f);
+				int me = ((opcode >> 1) & 0x1f);
+				uint32_t mask = ((uint32_t)-1 >> mb) ^ ((me >= 31) ? 0 : ((uint32_t)-1) >> (me + 1));
 
-			Print(bg, CuiColor::Normal, 60, line, "mask:0x%08X", mask);
+				Print(bg, CuiColor::Normal, 60, line, "mask:0x%08X", mask);
+			}
 		}
 
 		return addend;

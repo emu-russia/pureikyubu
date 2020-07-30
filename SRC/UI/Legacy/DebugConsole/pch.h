@@ -12,7 +12,5 @@
 #include "../../../Common/String.h"
 #include "../../../Common/File.h"
 
-#include "../../../GekkoCore/GekkoDefs.h"
-
 #include "DebugJdiClient.h"
 #include "DebugConsole.h"
