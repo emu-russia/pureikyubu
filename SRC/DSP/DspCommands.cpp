@@ -533,6 +533,141 @@ namespace DSP
         return nullptr;
     }
 
+    static Json::Value* CmdDspIsRunning(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Bool;
+
+        output->value.AsBool = Flipper::HW->DSP->IsRunning();
+
+        return output;
+    }
+
+    static Json::Value* CmdDspRun(std::vector<std::string>& args)
+    {
+        Flipper::HW->DSP->Run();
+        return nullptr;
+    }
+
+    static Json::Value* CmdDspSuspend(std::vector<std::string>& args)
+    {
+        Flipper::HW->DSP->Suspend();
+        return nullptr;
+    }
+
+    static Json::Value* CmdDspStep(std::vector<std::string>& args)
+    {
+        if (!Flipper::HW->DSP->IsRunning())
+        {
+            Flipper::HW->DSP->Step();
+        }
+        
+        return nullptr;
+    }
+
+    static Json::Value* CmdDspGetReg(std::vector<std::string>& args)
+    {
+        int reg = atoi(args[1].c_str());
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsUint16 = Flipper::HW->DSP->MoveFromReg(reg);
+
+        return output;
+    }
+
+    static Json::Value* CmdDspGetPsr(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsUint16 = Flipper::HW->DSP->regs.sr.bits;
+
+        return output;
+    }
+
+    static Json::Value* CmdDspGetPc(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsUint16 = Flipper::HW->DSP->regs.pc;
+
+        return output;
+    }
+
+    static Json::Value* CmdDspPackProd(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        DspProduct prod;
+        Flipper::HW->DSP->PackProd(prod);
+
+        output->value.AsInt = prod.bitsPacked;
+
+        return output;
+    }
+
+    static Json::Value* CmdDspTranslateDMem(std::vector<std::string>& args)
+    {
+        DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
+
+        uint8_t* ptr = Flipper::HW->DSP->TranslateDMem(addr);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsInt = (uint64_t)ptr;
+
+        return output;
+    }
+
+    static Json::Value* CmdDspTranslateIMem(std::vector<std::string>& args)
+    {
+        DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
+
+        uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(addr);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+
+        output->value.AsInt = (uint64_t)ptr;
+
+        return output;
+    }
+
+    static Json::Value* CmdDspTestBreakpoint(std::vector<std::string>& args)
+    {
+        DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Bool;
+
+        output->value.AsBool = Flipper::HW->DSP->TestBreakpoint(addr);
+
+        return output;
+    }
+
+    static Json::Value* CmdDspToggleBreakpoint(std::vector<std::string>& args)
+    {
+        DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
+
+        Flipper::HW->DSP->ToggleBreakpoint(addr);
+
+        return nullptr;
+    }
+
+    static Json::Value* CmdDspAddOneShotBreakpoint(std::vector<std::string>& args)
+    {
+        DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
+
+        Flipper::HW->DSP->AddOneShotBreakpoint(addr);
+
+        return nullptr;
+    }
+
     static bool IsCall(uint32_t address, uint32_t& targetAddress)
     {
         DSP::AnalyzeInfo info = { 0 };
@@ -560,7 +695,7 @@ namespace DSP
         return false;
     }
 
-    static Json::Value* DspIsCall(std::vector<std::string>& args)
+    static Json::Value* CmdDspIsCall(std::vector<std::string>& args)
     {
         DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
 
@@ -605,7 +740,7 @@ namespace DSP
         return false;
     }
 
-    static Json::Value* DspIsCallOrJump(std::vector<std::string>& args)
+    static Json::Value* CmdDspIsCallOrJump(std::vector<std::string>& args)
     {
         DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
 
@@ -622,7 +757,7 @@ namespace DSP
         return output;
     }
 
-    static Json::Value* DspDisasmInternal(std::vector<std::string>& args)
+    static Json::Value* CmdDspDisasm(std::vector<std::string>& args)
     {
         DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
 
@@ -679,9 +814,27 @@ namespace DSP
         JDI::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
         JDI::Hub.AddCmd("dsp_muls", dsp_muls);
         JDI::Hub.AddCmd("dsp_mulu", dsp_mulu);
-        JDI::Hub.AddCmd("DspIsCall", DspIsCall);
-        JDI::Hub.AddCmd("DspIsCallOrJump", DspIsCallOrJump);
-        JDI::Hub.AddCmd("DspDisasm", DspDisasmInternal);
+        
+        JDI::Hub.AddCmd("DspIsRunning", CmdDspIsRunning);
+        JDI::Hub.AddCmd("DspRun", CmdDspRun);
+        JDI::Hub.AddCmd("DspSuspend", CmdDspSuspend);
+        JDI::Hub.AddCmd("DspStep", CmdDspStep);
+
+        JDI::Hub.AddCmd("DspGetReg", CmdDspGetReg);
+        JDI::Hub.AddCmd("DspGetPsr", CmdDspGetPsr);
+        JDI::Hub.AddCmd("DspGetPc", CmdDspGetPc);
+        JDI::Hub.AddCmd("DspPackProd", CmdDspPackProd);
+
+        JDI::Hub.AddCmd("DspTranslateDMem", CmdDspTranslateDMem);
+        JDI::Hub.AddCmd("DspTranslateIMem", CmdDspTranslateIMem);
+
+        JDI::Hub.AddCmd("DspTestBreakpoint", CmdDspTestBreakpoint);
+        JDI::Hub.AddCmd("DspToggleBreakpoint", CmdDspToggleBreakpoint);
+        JDI::Hub.AddCmd("DspAddOneShotBreakpoint", CmdDspAddOneShotBreakpoint);
+
+        JDI::Hub.AddCmd("DspIsCall", CmdDspIsCall);
+        JDI::Hub.AddCmd("DspIsCallOrJump", CmdDspIsCallOrJump);
+        JDI::Hub.AddCmd("DspDisasm", CmdDspDisasm);
     }
 
 }

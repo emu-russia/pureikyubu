@@ -1,6 +1,6 @@
 {
   "info": {
-    "description": "Processor debug commands. Available only after emulation has been started.",
+    "description": "Processor debug commands. Some available only after emulation has been started.",
     "helpGroup": "Gekko Debug Commands"
   },
 
@@ -79,6 +79,139 @@
       "usage": [
         "Syntax: CacheDebugDisable <0|1>"
       ]
+    },
+
+    "IsRunning": {
+      "internal": true,
+      "output": "Bool"
+    },
+
+    "GekkoRun": {
+      "internal": true
+    },
+
+    "GekkoSuspend": {
+      "internal": true
+    },
+
+    "GekkoStep": {
+      "internal": true
+    },
+
+    "GekkoSkipInstruction": {
+      "internal": true
+    },
+
+    "GetGpr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetPs0": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (raw PS0/FPR value)"
+    },
+
+    "GetPs1": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (raw PS1 value)"
+    },
+
+    "GetPc": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetMsr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetCr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetFpscr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetSpr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetSr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetTbu": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetTbl": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "TranslateDMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (pointer). nullptr if cannot be translated."
+    },
+
+    "TranslateIMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (pointer). nullptr if cannot be translated."
+    },
+
+    "VirtualToPhysicalDMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32 (physical address). -1 if cannot be translated."
+    },
+
+    "VirtualToPhysicalIMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32 (physical address). -1 if cannot be translated."
+    },
+
+    "GekkoTestBreakpoint": {
+      "internal": true,
+      "args": 1,
+      "output": "Bool"
+    },
+
+    "GekkoToggleBreakpoint": {
+      "internal": true,
+      "args": 1
+    },
+
+    "GekkoAddOneShotBreakpoint": {
+      "internal": true,
+      "args": 1
+    },
+
+    "GekkoDisasm": {
+      "internal": true,
+      "args": 1,
+      "output": "Array: [String] (disassembled instruction with parameters)"
+    },
+
+    "GekkoIsBranch": {
+      "internal": true,
+      "args": 1,
+      "output": "Array: [Bool, UInt32 targetAddress]"
     }
 
   }
