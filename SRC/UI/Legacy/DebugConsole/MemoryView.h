@@ -12,6 +12,8 @@ namespace Debug
 
 		virtual void OnDraw();
 		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+
+		void SetCursor(uint32_t address);
 	};
 
 }

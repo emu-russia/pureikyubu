@@ -118,7 +118,15 @@ namespace Debug
 
 	bool JdiClient::IsLoaded()
 	{
-		return false;
+		bool loaded = false;
+
+		bool res = CallJdiReturnBool("IsLoaded", &loaded);
+		if (!res)
+		{
+			throw "IsLoaded failed!";
+		}
+
+		return loaded;
 	}
 
 	bool JdiClient::IsCommandExists(const std::string& cmdline)
@@ -141,6 +149,26 @@ namespace Debug
 	bool JdiClient::IsRunning()
 	{
 		return false;
+	}
+
+	void JdiClient::GekkoRun()
+	{
+
+	}
+
+	void JdiClient::GekkoSuspend()
+	{
+
+	}
+
+	void JdiClient::GekkoStep()
+	{
+
+	}
+
+	void JdiClient::GekkoSkipInstruction()
+	{
+
 	}
 
 	uint32_t JdiClient::GetGpr(size_t n)
@@ -198,11 +226,61 @@ namespace Debug
 		return 0;
 	}
 
+	void* JdiClient::TranslateDMmu(uint32_t address)
+	{
+		return nullptr;
+	}
+
+	void* JdiClient::TranslateIMmu(uint32_t address)
+	{
+		return nullptr;
+	}
+
+	bool JdiClient::GekkoTestBreakpoint(uint32_t address)
+	{
+		return false;
+	}
+
+	void JdiClient::GekkoToggleBreakpoint(uint32_t address)
+	{
+
+	}
+
+	void JdiClient::GekkoAddOneShotBreakpoint(uint32_t address)
+	{
+
+	}
+
+	std::string GekkoDisasm(uint32_t address)
+	{
+		return "";
+	}
+
+	bool GekkoIsBranch(uint32_t address, uint32_t& targetAddress)
+	{
+		return false;
+	}
+
 	// DSP
 
 	bool JdiClient::DspIsRunning()
 	{
 		return false;
+	}
+
+	void JdiClient::DspRun()
+	{
+
+	}
+
+	void JdiClient::DspSuspend()
+	{
+
+	}
+
+	void JdiClient::DspStep()
+	{
+
 	}
 
 	uint16_t JdiClient::DspGetReg(size_t n)
@@ -223,6 +301,46 @@ namespace Debug
 	uint64_t JdiClient::DspPackProd()
 	{
 		return 0;
+	}
+
+	void* JdiClient::DspTranslateDMem(uint32_t address)
+	{
+		return nullptr;
+	}
+
+	void* JdiClient::DspTranslateIMem(uint32_t address)
+	{
+		return nullptr;
+	}
+
+	bool JdiClient::DspTestBreakpoint(uint32_t address)
+	{
+		return false;
+	}
+
+	void JdiClient::DspToggleBreakpoint(uint32_t address)
+	{
+
+	}
+
+	void JdiClient::DspAddOneShotBreakpoint(uint32_t address)
+	{
+
+	}
+
+	std::string JdiClient::DspDisasm(uint32_t address, size_t& instrSizeWords, bool& flowControl)
+	{
+		return "";
+	}
+
+	bool JdiClient::DspIsCall(uint32_t address, uint32_t& targetAddress)
+	{
+		return false;
+	}
+
+	bool JdiClient::DspIsCallOrJump(uint32_t address, uint32_t& targetAddress)
+	{
+		return false;
 	}
 
 }

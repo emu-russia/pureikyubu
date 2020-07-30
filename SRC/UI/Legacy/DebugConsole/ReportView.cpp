@@ -92,10 +92,10 @@ namespace Debug
 	{
 		// Show window title with hints
 
-		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
 		std::string head = IsActive() ? "[*] F4" : "[ ] F4";
 		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
-		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, "console output");
+		Print(CuiColor::Cyan, CuiColor::Normal, (int)(head.size() + 3), 0, "debug output");
 
 		// Show messages starting with messagePtr backwards
 

@@ -25,7 +25,7 @@ namespace Debug
 	{
 		Fill(CuiColor::Black, CuiColor::Normal, ' ');
 
-		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
 		std::string head = IsActive() ? "[*] F1" : "[ ] F1";
 		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
 

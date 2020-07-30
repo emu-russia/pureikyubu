@@ -172,6 +172,24 @@
 				"Syntax: dsp_muls 0xaabb 0x0022",
 				"Numbers must be in unsigned 16-bit format"
 			]
+		},
+
+		"DspIsCall": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool, UInt32 targetAddress]"
+		},
+
+		"DspIsCallOrJump": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool, UInt32 targetAddress]"
+		},
+
+		"DspDisasm": {
+			"internal": true,
+			"args": 1,
+			"output": "Array: [Bool flowControl, Int instrSizeWords, String]. Empty string (\"\") mean disasm error"
 		}
 
 	}

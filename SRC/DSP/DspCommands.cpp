@@ -533,6 +533,126 @@ namespace DSP
         return nullptr;
     }
 
+    static bool IsCall(uint32_t address, uint32_t& targetAddress)
+    {
+        DSP::AnalyzeInfo info = { 0 };
+
+        targetAddress = 0;
+
+        uint8_t* ptr = (uint8_t*)Flipper::HW->DSP->TranslateIMem(address);
+        if (!ptr)
+        {
+            return false;
+        }
+
+        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+            return false;
+
+        if (info.flowControl)
+        {
+            if (info.instr == DSP::DspInstruction::CALLcc || info.instr == DSP::DspInstruction::CALLR)
+            {
+                targetAddress = info.ImmOperand.Address;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static Json::Value* DspIsCall(std::vector<std::string>& args)
+    {
+        DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        uint32_t targetAddress = 0;
+
+        bool res = IsCall(address, targetAddress);
+
+        output->AddBool(nullptr, res);
+        output->AddUInt32(nullptr, targetAddress);
+
+        return output;
+    }
+
+    static bool IsCallOrJump(uint32_t address, uint32_t& targetAddress)
+    {
+        DSP::AnalyzeInfo info = { 0 };
+
+        targetAddress = 0;
+
+        uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(address);
+        if (!ptr)
+        {
+            return false;
+        }
+
+        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+            return false;
+
+        if (info.flowControl)
+        {
+            if (info.instr == DSP::DspInstruction::Jcc ||
+                info.instr == DSP::DspInstruction::CALLcc)
+            {
+                targetAddress = info.ImmOperand.Address;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static Json::Value* DspIsCallOrJump(std::vector<std::string>& args)
+    {
+        DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        uint32_t targetAddress = 0;
+
+        bool res = IsCallOrJump(address, targetAddress);
+
+        output->AddBool(nullptr, res);
+        output->AddUInt32(nullptr, targetAddress);
+
+        return output;
+    }
+
+    static Json::Value* DspDisasmInternal(std::vector<std::string>& args)
+    {
+        DSP::DspAddress address = strtoul(args[1].c_str(), nullptr, 0);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        // Disassemble
+
+        DSP::AnalyzeInfo info = { 0 };
+
+        std::string text = "";
+
+        uint8_t* ptr = (uint8_t*)Flipper::HW->DSP->TranslateIMem(address);
+        if (ptr)
+        {
+            if (DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
+            {
+                text = DSP::DspDisasm::Disasm(address, info);
+            }
+        }
+
+        // Return as text
+
+        output->AddBool(nullptr, info.flowControl);
+        output->AddInt(nullptr, (int)info.sizeInBytes / sizeof(uint16_t));
+        output->AddAnsiString(nullptr, text.c_str());
+
+        return output;
+    }
+
     void dsp_init_handlers()
     {
         JDI::Hub.AddCmd("dspdisa", cmd_dspdisa);
@@ -559,6 +679,9 @@ namespace DSP
         JDI::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
         JDI::Hub.AddCmd("dsp_muls", dsp_muls);
         JDI::Hub.AddCmd("dsp_mulu", dsp_mulu);
+        JDI::Hub.AddCmd("DspIsCall", DspIsCall);
+        JDI::Hub.AddCmd("DspIsCallOrJump", DspIsCallOrJump);
+        JDI::Hub.AddCmd("DspDisasm", DspDisasmInternal);
     }
 
 }

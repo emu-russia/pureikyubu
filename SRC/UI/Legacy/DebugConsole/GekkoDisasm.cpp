@@ -18,7 +18,7 @@ namespace Debug
 
 	void GekkoDisasm::OnDraw()
 	{
-		FillLine(CuiColor::Cyan, CuiColor::White, 0, '-');
+		FillLine(CuiColor::Cyan, CuiColor::White, 0, ' ');
 		std::string head = IsActive() ? "[*] F3" : "[ ] F3";
 		Print(CuiColor::Cyan, CuiColor::Normal, 1, 0, head);
 
@@ -29,6 +29,16 @@ namespace Debug
 	}
 
 	void GekkoDisasm::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	{
+
+	}
+
+	uint32_t GekkoDisasm::GetCursor()
+	{
+		return cursor;
+	}
+
+	void GekkoDisasm::SetCursor(uint32_t address)
 	{
 
 	}
