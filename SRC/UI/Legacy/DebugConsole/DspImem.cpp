@@ -80,89 +80,89 @@ namespace Debug
 
 		switch (Vkey)
 		{
-		case VK_UP:
-			if (AddressVisible(cursor))
-			{
-				if (cursor > 0)
-					cursor--;
-			}
-			else
-			{
-				cursor = (uint32_t)(current - wordsOnScreen);
-			}
-			if (!AddressVisible(cursor))
-			{
+			case VK_UP:
+				if (AddressVisible(cursor))
+				{
+					if (cursor > 0)
+						cursor--;
+				}
+				else
+				{
+					cursor = (uint32_t)(current - wordsOnScreen);
+				}
+				if (!AddressVisible(cursor))
+				{
+					if (current < (height - 1))
+						current = 0;
+					else
+						current -= (uint32_t)(height - 1);
+				}
+				break;
+
+			case VK_DOWN:
+				if (AddressVisible(cursor))
+					cursor++;
+				else
+					cursor = current;
+				if (!AddressVisible(cursor))
+				{
+					current = cursor;
+				}
+				break;
+
+			case VK_PRIOR:
 				if (current < (height - 1))
 					current = 0;
 				else
 					current -= (uint32_t)(height - 1);
-			}
-			break;
+				break;
 
-		case VK_DOWN:
-			if (AddressVisible(cursor))
-				cursor++;
-			else
-				cursor = current;
-			if (!AddressVisible(cursor))
-			{
-				current = cursor;
-			}
-			break;
+			case VK_NEXT:
+				current += (uint32_t)(wordsOnScreen ? wordsOnScreen : height - 1);
+				if (current >= 0x8A00)
+					current = 0x8A00;
+				break;
 
-		case VK_PRIOR:
-			if (current < (height - 1))
-				current = 0;
-			else
-				current -= (uint32_t)(height - 1);
-			break;
+			case VK_HOME:
+				if (ctrl)
+				{
+					current = cursor = 0;
+				}
+				else
+				{
+					current = cursor = Jdi.DspGetPc();
+				}
+				break;
 
-		case VK_NEXT:
-			current += (uint32_t)(wordsOnScreen ? wordsOnScreen : height - 1);
-			if (current >= 0x8A00)
-				current = 0x8A00;
-			break;
+			case VK_END:
+				current = IROM_START_ADDRESS;
+				break;
 
-		case VK_HOME:
-			if (ctrl)
-			{
-				current = cursor = 0;
-			}
-			else
-			{
-				current = cursor = Jdi.DspGetPc();
-			}
-			break;
+			case VK_F9:
+				if (AddressVisible(cursor))
+				{
+					Jdi.DspToggleBreakpoint(cursor);
+				}
+				break;
 
-		case VK_END:
-			current = IROM_START_ADDRESS;
-			break;
+			case VK_RETURN:
+				if (Jdi.DspIsCallOrJump(cursor, targetAddress))
+				{
+					std::pair<uint32_t, uint32_t> last(current, cursor);
+					browseHist.push_back(last);
+					current = cursor = targetAddress;
+				}
+				break;
 
-		case VK_F9:
-			if (AddressVisible(cursor))
-			{
-				Jdi.DspToggleBreakpoint(cursor);
-			}
-			break;
-
-		case VK_RETURN:
-			if (Jdi.DspIsCallOrJump(cursor, targetAddress))
-			{
-				std::pair<uint32_t, uint32_t> last(current, cursor);
-				browseHist.push_back(last);
-				current = cursor = targetAddress;
-			}
-			break;
-
-		case VK_ESCAPE:
-			if (browseHist.size() > 0)
-			{
-				std::pair<uint32_t, uint32_t> last = browseHist.back();
-				current = last.first;
-				cursor = last.second;
-				browseHist.pop_back();
-			}
-			break;
+			case VK_ESCAPE:
+				if (browseHist.size() > 0)
+				{
+					std::pair<uint32_t, uint32_t> last = browseHist.back();
+					current = last.first;
+					cursor = last.second;
+					browseHist.pop_back();
+				}
+				break;
 		}
 
 		Invalidate();

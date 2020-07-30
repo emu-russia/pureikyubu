@@ -78,37 +78,37 @@ namespace Debug
 
 		switch (Vkey)
 		{
-		case VK_UP:
-			if (current >= 8)
-				current -= 8;
-			break;
+			case VK_UP:
+				if (current >= 8)
+					current -= 8;
+				break;
 
-		case VK_DOWN:
-			current += 8;
-			if (current > 0x3000)
-				current = 0x3000;
-			break;
+			case VK_DOWN:
+				current += 8;
+				if (current > 0x3000)
+					current = 0x3000;
+				break;
 
-		case VK_PRIOR:
-			if (current < lines * 8)
+			case VK_PRIOR:
+				if (current < lines * 8)
+					current = 0;
+				else
+					current -= (uint32_t)(lines * 8);
+				break;
+
+			case VK_NEXT:
+				current += (uint32_t)(lines * 8);
+				if (current > 0x3000)
+					current = 0x3000;
+				break;
+
+			case VK_HOME:
 				current = 0;
-			else
-				current -= (uint32_t)(lines * 8);
-			break;
+				break;
 
-		case VK_NEXT:
-			current += (uint32_t)(lines * 8);
-			if (current > 0x3000)
-				current = 0x3000;
-			break;
-
-		case VK_HOME:
-			current = 0;
-			break;
-
-		case VK_END:
-			current = DROM_START_ADDRESS;
-			break;
+			case VK_END:
+				current = DROM_START_ADDRESS;
+				break;
 		}
 
 		Invalidate();

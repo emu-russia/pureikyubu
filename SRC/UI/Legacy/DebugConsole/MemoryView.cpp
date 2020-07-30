@@ -8,12 +8,10 @@ namespace Debug
 	MemoryView::MemoryView(RECT& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
-
 	}
 
 	MemoryView::~MemoryView()
 	{
-
 	}
 
 	void MemoryView::OnDraw()
