@@ -84,22 +84,52 @@ namespace UI
 
 	void JdiClient::DvdSeek(int offset)
 	{
-
+		CallJdi(("DvdSeek " + std::to_string(offset)).c_str());
 	}
 
 	void JdiClient::DvdRead(std::vector<uint8_t>& data)
 	{
+		Json::Value* dataJson = CallJdi(("DvdRead " + std::to_string(data.size())).c_str());
 
+		int i = 0;
+
+		for (auto it = dataJson->children.begin(); it != dataJson->children.end(); ++it)
+		{
+			data[i++] = (*it)->value.AsUint8;
+		}
+
+		delete dataJson;
 	}
 
 	uint32_t JdiClient::DvdOpenFile(const std::string& filename)
 	{
-		return 0;
+		Json::Value* offsetJson = CallJdi(("DvdOpenFile \"" + filename + "\"").c_str());
+
+		uint32_t offsetValue = (uint32_t)offsetJson->value.AsInt;
+
+		delete offsetJson;
+
+		return offsetValue;
 	}
 
 	bool JdiClient::DvdCoverOpened()
 	{
-		return false;
+		Json::Value* dvdInfo = CallJdi("DvdInfo");
+
+		bool lidStatusOpened = false;
+
+		for (auto it = dvdInfo->children.begin(); it != dvdInfo->children.end(); ++it)
+		{
+			if ((*it)->type == Json::ValueType::Bool)
+			{
+				lidStatusOpened = (*it)->value.AsBool;
+				break;
+			}
+		}
+
+		delete dvdInfo;
+
+		return lidStatusOpened;
 	}
 
 	void JdiClient::DvdOpenCover()

@@ -142,6 +142,18 @@ namespace UI
 		ExecuteCommand("CloseLid");
 	}
 
+	std::string JdiClient::DvdRegionById(char* DiskId)
+	{
+		char regionName[0x20] = { 0, };
+
+		char cmd[0x20];
+		sprintf_s(cmd, sizeof(cmd), "DvdRegionById %c%c%c%c", DiskId[0], DiskId[1], DiskId[2], DiskId[3]);
+
+		CallJdiReturnString(cmd, regionName, sizeof(regionName) - 1);
+
+		return regionName;
+	}
+
 	// Configuration access
 
 	std::string JdiClient::GetConfigString(const std::string& var, const std::string& path)

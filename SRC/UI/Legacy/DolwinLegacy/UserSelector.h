@@ -18,8 +18,8 @@ struct UserFile
     size_t          size;       /* File size                            */
     std::wstring    id;         /* GameID = DiskID + banner checksum    */
     std::wstring    name;       /* File path and name                   */
-    std::wstring    title;      /* Alternate file name                  */
-    std::wstring    comment;    /* Some notes                           */
+    TCHAR   title[MAX_TITLE];       // alternate file name
+    TCHAR   comment[MAX_COMMENT];   // some notes
     int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 

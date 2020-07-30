@@ -111,6 +111,12 @@
 				"Disassembles specified firmware dump in disa.txt",
 				"Example: MnDisa gc-dvd-20010608.bin"
 			]
+		},
+
+		"DvdRegionById": {
+			"internal": true,
+			"args": 1,
+			"output": "Array [String regionName=Unknown|EUR|NOE|FRA|ESP|ITA|FAH|HOL|AUS|JPN|USA|KOR]"
 		}
 
 	}

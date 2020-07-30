@@ -842,7 +842,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     if (!dolphinSdkDir.empty())
                     {
                         char cmd[0x200];
-                        sprintf_s(cmd, sizeof(cmd), "MoundSDK \"%s\"", Util::WstringToString(dolphinSdkDir).c_str());
+                        sprintf_s(cmd, sizeof(cmd), "MountSDK \"%s\"", Util::WstringToString(dolphinSdkDir).c_str());
                         UI::Jdi.ExecuteCommand(cmd);
                     }
 

@@ -43,17 +43,17 @@ namespace UI
 
             // Get the shell's allocator. 
             if (!SUCCEEDED(SHGetMalloc(&g_pMalloc)))
-                return NULL;
+                return _T("");
 
             // Allocate a buffer to receive browse information.
             lpBuffer = (LPTSTR)g_pMalloc->Alloc(MAX_PATH);
-            if (lpBuffer == NULL) return NULL;
+            if (lpBuffer == NULL) return _T("");
 
             // Get the PIDL for the root folder.
             if (!SUCCEEDED(SHGetSpecialFolderLocation(hwnd, CSIDL_DRIVES, &pidlRoot)))
             {
                 g_pMalloc->Free(lpBuffer);
-                return NULL;
+                return _T("");
             }
 
             // Fill in the BROWSEINFO structure. 

@@ -460,6 +460,35 @@ namespace DVD
 		return nullptr;
 	}
 
+	static Json::Value* DvdRegionById(std::vector<std::string>& args)
+	{
+		Region region = RegionById(args[1].c_str());
+
+		std::string name = "Unknown";
+
+		switch (region)
+		{
+			case Region::EUR: name = "EUR"; break;
+			case Region::NOE: name = "NOE"; break;
+			case Region::FRA: name = "FRA"; break;
+			case Region::ESP: name = "ESP"; break;
+			case Region::ITA: name = "ITA"; break;
+			case Region::FAH: name = "FAH"; break;
+			case Region::HOL: name = "HOL"; break;
+			case Region::AUS: name = "AUS"; break;
+			case Region::JPN: name = "JPN"; break;
+			case Region::USA: name = "USA"; break;
+			case Region::KOR: name = "KOR"; break;
+		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddAnsiString(nullptr, name.c_str());
+
+		return output;
+	}
+
 	void DvdCommandsReflector()
 	{
 		JDI::Hub.AddCmd("DvdInfo", DvdInfo);
@@ -476,6 +505,7 @@ namespace DVD
 		JDI::Hub.AddCmd("DumpBb2", DumpBb2);
 		JDI::Hub.AddCmd("DumpFst", DumpFst);
 		JDI::Hub.AddCmd("MnDisa", MnDisa);
+		JDI::Hub.AddCmd("DvdRegionById", DvdRegionById);
 	}
 
 }
