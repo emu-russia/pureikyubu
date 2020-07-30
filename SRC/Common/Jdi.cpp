@@ -338,17 +338,12 @@ namespace JDI
 	}
 
 	// Check whether the command is implemented using JDI. Used for compatibility with the old cmd.cpp implementation in the debugger.
-	bool JdiHub::CommandExists(std::vector<std::string>& args)
+	bool JdiHub::CommandExists(const std::string& cmd)
 	{
 		bool exists = false;
 
-		if (args.size() == 0)
-			return false;
-
-		reflexMapLock.Lock();
-		auto it = reflexMap.find(args[0]);
+		auto it = reflexMap.find(cmd);
 		exists = it != reflexMap.end();
-		reflexMapLock.Unlock();
 
 		return exists;
 	}

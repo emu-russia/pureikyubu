@@ -56,6 +56,7 @@ namespace Debug
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		void Report(const std::string& text);
 		bool IsLoaded();
+		bool IsCommandExists(const std::string& cmdline);
 
 		// Gekko
 

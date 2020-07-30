@@ -66,6 +66,13 @@
     "help": {
       "internal": true,
       "help": "Show help :-)"
+    },
+
+    "IsCommandExists": {
+      "internal": true,
+      "args": 1,
+      "help": "Check whenever command exists",
+      "output": "Bool"
     }
 
   }

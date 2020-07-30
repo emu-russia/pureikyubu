@@ -209,7 +209,15 @@ namespace Debug
 		historyPos = (int)history.size();
 
 		Jdi.Report(": " + text);
-		Jdi.ExecuteCommand(text);
+
+		if (Jdi.IsCommandExists(text))
+		{
+			Jdi.ExecuteCommand(text);
+		}
+		else
+		{
+			Jdi.Report("Unknown command, try \'help\'");
+		}
 
 		ClearCmdline();
 		Invalidate();

@@ -121,6 +121,21 @@ namespace Debug
 		return false;
 	}
 
+	bool JdiClient::IsCommandExists(const std::string& cmdline)
+	{
+		bool exists = false;
+
+		std::string cmd = "IsCommandExists " + cmdline;
+
+		bool res = CallJdiReturnBool(cmd.c_str(), &exists);
+		if (!res)
+		{
+			throw "IsCommandExists failed!";
+		}
+
+		return exists;
+	}
+
 	// Gekko
 
 	bool JdiClient::IsRunning()

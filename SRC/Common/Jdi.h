@@ -44,7 +44,7 @@ namespace JDI
 		Json::Value* ExecuteFast(const char* command);
 		bool ExecuteFastBool(char* command);
 		uint32_t ExecuteFastUInt32(char* command);
-		bool CommandExists(std::vector<std::string>& args);
+		bool CommandExists(const std::string& cmd);
 
 		void Dump(Json::Value * value, int depth=0);
 	};

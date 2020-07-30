@@ -250,6 +250,14 @@ namespace Debug
         return nullptr;
     }
 
+    static Json::Value* IsCommandExists(std::vector<std::string>& args)
+    {
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Bool;
+        output->value.AsBool = JDI::Hub.CommandExists(args[1]);
+        return output;
+    }
+
     void Reflector()
     {
         JDI::Hub.AddCmd("script", cmd_script);
@@ -259,5 +267,6 @@ namespace Debug
         JDI::Hub.AddCmd("GetChannelName", GetChannelName);
         JDI::Hub.AddCmd("qd", QueryDebugMessages);
         JDI::Hub.AddCmd("help", ShowHelp);
+        JDI::Hub.AddCmd("IsCommandExists", IsCommandExists);
     }
 }
