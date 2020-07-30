@@ -66,6 +66,8 @@ namespace UI
 		void DvdOpenCover();
 		void DvdCloseCover();
 
+		std::string DvdRegionById(char* DiskId);
+
 		// Configuration access
 
 		std::string GetConfigString(const std::string& var, const std::string& path);

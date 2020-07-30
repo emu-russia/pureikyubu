@@ -4,7 +4,7 @@
 namespace DVD
 {
 	// Get region by DiskID (not a very reliable method)
-	Region RegionById(char* DiskId)
+	Region RegionById(const char* DiskId)
 	{
 		switch (DiskId[3])
 		{

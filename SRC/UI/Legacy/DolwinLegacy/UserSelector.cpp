@@ -1,4 +1,7 @@
 /* File selector. */
+
+// Refactoring this code is bad idea :)
+
 #include "pch.h"
 
 /* All important data is placed here */
@@ -23,11 +26,11 @@ static void fix_path(std::wstring& path)
 }
 
 /* Remove all control symbols (below space). */
-static void fix_string(std::wstring& str)
+static void fix_string(TCHAR* str)
 {
-    for(auto& c : str)
+    for (int i = 0; i < _tcslen(str); i++)
     {
-        c = (c < L' ' ? L' ' : c);
+        if (str[i] < _T(' ')) str[i] = _T(' ');
     }
 }
 
@@ -38,7 +41,7 @@ static void add_path(std::wstring& path)
     size_t len = path.length() + 1;
     if (len >= MAX_PATH)
     {
-        UI::DolwinReport(L"Too long path string : %s", path.c_str());
+        UI::DolwinReport(L"Too long path string: %s", path.c_str());
         return;
     }
 
@@ -84,7 +87,7 @@ static void load_path()
 }
 
 /* Called after loading of new file (see Emulator\Loader.cpp). */
-bool AddSelectorPath(std::wstring& fullPath)
+bool AddSelectorPath(const std::wstring& fullPath)
 {
     auto path = std::wstring(fullPath);
 
@@ -346,6 +349,17 @@ static void add_item(size_t index)
     ListView_InsertItem(usel.hSelectorWindow, &lvi); 
 }
 
+static void CopyAnsiStringAsTcharString(TCHAR* dest, const char* src)
+{
+    char* ansiPtr = (char*)src;
+    TCHAR* tcharPtr = (TCHAR*)dest;
+    while (*ansiPtr)
+    {
+        *tcharPtr++ = (uint8_t)*ansiPtr++;
+    }
+    *tcharPtr++ = 0;
+}
+
 /* Insert new file into filelist. */
 static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 {
@@ -415,19 +429,15 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 
         /* Use banner info and remove line-feeds. */
         DVDBanner2* bnr = (DVDBanner2*)banner.data();
-        std::string longTitle = (char *)bnr->comments[0].longTitle;
-        std::string comment = (char*)bnr->comments[0].comment;
-
-        item->title = Util::StringToWstring(longTitle);
-        item->comment = Util::StringToWstring(comment);
-
+        CopyAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
+        CopyAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
         fix_string(item->title);
         fix_string(item->comment);
 
         // convert banner to RGB and add into bannerlist
         int a, b;
         bool res = add_banner(bnr->image, &a, &b);
-        if (res == FALSE)
+        if (res == false)
         {
             return;    // we cant :(
         }
@@ -447,12 +457,8 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
             ext, _countof(ext) - 1);
 
         item->id = L"-";
-        item->title = name;
+        _tcscpy_s(item->title, _countof(item->title) - 1, name);
         item->comment[0] = 0;
-
-        item->id.resize(16);
-        item->title.resize(MAX_TITLE);
-        item->comment.reserve(MAX_COMMENT);
     }
     else
     {
@@ -614,25 +620,25 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     ListView_GetItemRect(usel.hSelectorWindow, ID, &rc, LVIR_ICON);
     switch (file->type)
     {
-    case SELECTOR_FILE::Dvd:
-        ImageList_Draw(bannerList, file->icon[selected], DC,
-            rc.left, rc.top, ILD_NORMAL);
-        break;
+        case SELECTOR_FILE::Dvd:
+            ImageList_Draw(bannerList, file->icon[selected], DC,
+                rc.left, rc.top, ILD_NORMAL);
+            break;
 
-    case SELECTOR_FILE::Executable:
-        HICON hIcon;
-        if (usel.smallIcons)
-        {
-            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
-            DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
-        }
-        else
-        {
-            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
-            DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
-        }
-        DeleteObject(hIcon);
-        break;
+        case SELECTOR_FILE::Executable:
+            HICON hIcon;
+            if (usel.smallIcons)
+            {
+                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
+                DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
+            }
+            else
+            {
+                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
+                DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
+            }
+            DeleteObject(hIcon);
+            break;
     }
 
     // other columns
@@ -662,16 +668,21 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc2.left += 2;
         rc2.right -= 2;
 
+        if (file->type == SELECTOR_FILE::Executable)
+        {
+            DrawText(DC, text, (int)len, &rc2, fmt);
+            continue;
+        }
+
         char DiskId[4] = { 0 };
         DiskId[0] = (char)file->id[0];
         DiskId[1] = (char)file->id[1];
         DiskId[2] = (char)file->id[2];
         DiskId[3] = (char)file->id[3];
 
-        // TODO: Refactoring
+        std::string regionName = UI::Jdi.DvdRegionById(DiskId);
 
-#if 0
-        if (DVD::RegionById(DiskId) == DVD::Region::JPN &&
+        if (regionName == "JPN" &&
             (col == 1 || col == 4))     // title or comment only
         {
             uint16_t* buf; size_t size, chars;
@@ -680,7 +691,6 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
             free(buf);
         }
         else
-#endif
         {
             DrawText(DC, text, (int)len, &rc2, fmt);
         }
@@ -888,11 +898,12 @@ static void doubleclick()
     if (usel.files.size() == 0 || item < 0)
         return;
 
-    TCHAR* filename = (TCHAR *)usel.files[item]->name.data();
+    std::wstring path(usel.files[item]->name);
 
-    // load file
-    AddRecentFile(filename);
-    PostMessage(wnd.hMainWindow, WM_COMMAND, (WPARAM)ID_FILE_RELOAD, (LPARAM)0);
+    UI::Jdi.Unload();
+    UI::Jdi.LoadFile(Util::WstringToString(path));
+    OnMainWindowOpened(path.c_str());
+    UI::Jdi.Run();
 }
 
 void NotifySelector(LPNMHDR pnmh)
@@ -945,7 +956,7 @@ static int sort_by_filename(const void *cmp1, const void *cmp2)
 static int sort_by_title(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcsicmp(f1->title.data(), f2->title.data());
+    return _tcsicmp(f1->title, f2->title);
 }
 
 static int sort_by_size(const void *cmp1, const void *cmp2)
@@ -963,7 +974,7 @@ static int sort_by_gameid(const void *cmp1, const void *cmp2)
 static int sort_by_comment(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcsicmp(f1->comment.data(), f2->comment.data());
+    return _tcsicmp(f1->comment, f2->comment);
 }
 
 // count DVD files in list

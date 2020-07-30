@@ -26,7 +26,7 @@ void AddRecentFile(const std::wstring & path);
 void LoadRecentFile(int index);
 
 /* Window controls API */
-void OnMainWindowOpened();
+void OnMainWindowOpened(const TCHAR* currentFileName);
 void OnMainWindowClosed();
 HWND CreateMainWindow(HINSTANCE hInst);
 void ResizeMainWindow(int width, int height);
@@ -44,8 +44,6 @@ struct UserWindow
     HWND    hStatusWindow;          // statusbar window
     HWND    hProgress;              // progress bar
     HMENU   hMainMenu;              // main menu
-    std::wstring  currentFileName;  // name of loaded file (without extension)
-    bool          dvd;              // true: loaded file is DVD image
     std::wstring  cwd;              // current working directory
 };
 

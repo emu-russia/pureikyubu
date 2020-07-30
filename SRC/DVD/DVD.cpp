@@ -6,7 +6,7 @@ DVDControl dvd;
 namespace DVD
 {
     // Mount current dvd 
-    bool MountFile(TCHAR * file)
+    bool MountFile(const TCHAR * file)
     {
         // try to open file
         if (!Util::FileExists(file))
@@ -34,7 +34,7 @@ namespace DVD
         return true;
     }
 
-    bool MountFile(std::string& file)
+    bool MountFile(const std::string& file)
     {
         TCHAR path[0x1000] = { 0, };
         TCHAR* tcharPtr = path;
@@ -47,7 +47,7 @@ namespace DVD
         return MountFile(path);
     }
 
-    bool MountFile(std::wstring& file)
+    bool MountFile(const std::wstring& file)
     {
         TCHAR path[0x1000] = { 0, };
         TCHAR* tcharPtr = path;

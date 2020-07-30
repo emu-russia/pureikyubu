@@ -18,8 +18,8 @@ struct UserFile
     size_t          size;       /* File size                            */
     std::wstring    id;         /* GameID = DiskID + banner checksum    */
     std::wstring    name;       /* File path and name                   */
-    std::wstring    title;      /* Alternate file name                  */
-    std::wstring    comment;    /* Some notes                           */
+    TCHAR   title[MAX_TITLE];       // alternate file name
+    TCHAR   comment[MAX_COMMENT];   // some notes
     int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 
@@ -46,7 +46,7 @@ enum class SELECTOR_SORT
 void CreateSelector();
 void CloseSelector();
 void SetSelectorIconSize(bool smallIcon);
-bool AddSelectorPath(std::wstring & fullPath);            // FALSE, if path duplicated
+bool AddSelectorPath(const std::wstring & fullPath);            // FALSE, if path duplicated
 void ResizeSelector(int width, int height);
 void UpdateSelector();
 int  SelectorGetSelected();

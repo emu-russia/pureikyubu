@@ -10,9 +10,9 @@ namespace DVD
     void ShutdownSubsystem();
 
     // Mount current DVD image for read/seek/open file operations
-    bool MountFile(TCHAR* file);
-    bool MountFile(std::string& file);
-    bool MountFile(std::wstring& file);
+    bool MountFile(const TCHAR* file);
+    bool MountFile(const std::string& file);
+    bool MountFile(const std::wstring& file);
 
     // Mount DolphinSDK directory
     bool MountSdk(const TCHAR* path);

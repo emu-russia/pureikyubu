@@ -32,7 +32,7 @@ namespace DVD
 		KOR,			// Korea: GTEW
 	};
 
-	Region RegionById(char* DiskId);
+	Region RegionById(const char* DiskId);
 
 	bool IsNtsc(Region region);
 }
