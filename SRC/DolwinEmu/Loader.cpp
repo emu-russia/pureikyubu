@@ -39,7 +39,7 @@ uint32_t DOLSize(DolHeader *dol)
 /* Return DOL entrypoint, or 0 if cannot load                           */
 /* we dont need to translate address, because DOL loading goes          */
 /* under control of DolphinOS, so just use simple translation mask.     */
-uint32_t LoadDOL(std::wstring& dolname)
+uint32_t LoadDOL(const std::wstring& dolname)
 {
     DolHeader   dh;
 
@@ -249,7 +249,7 @@ static void Elf_SwapInit(int is_little)
 // return ELF entrypoint, or 0 if cannot load
 // we dont need to translate address, because DOL loading goes
 // under control of DolphinOS, so just use simple translation mask.
-uint32_t LoadELF(std::wstring& elfname)
+uint32_t LoadELF(const std::wstring& elfname)
 {
     unsigned long elf_entrypoint;
     ElfEhdr     hdr;
@@ -324,7 +324,7 @@ uint32_t LoadELF(std::wstring& elfname)
 
 // return BINORG offset, or 0 if cannot load.
 // use physical addressing!
-uint32_t LoadBIN(std::wstring& binname)
+uint32_t LoadBIN(const std::wstring& binname)
 {
     uint32_t org = GetConfigInt(USER_BINORG, USER_LOADER);
 
@@ -364,7 +364,7 @@ uint32_t LoadBIN(std::wstring& binname)
 /* ---------------------------------------------------------------------------  */
 /* File loader engine                                                           */
 
-static void AutoloadMap(std::wstring & filename, bool dvd, std::wstring & diskId)
+static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & diskId)
 {
     // get map file name
     auto mapname = std::wstring();
@@ -443,7 +443,7 @@ void GetDiskId(std::wstring& diskId)
 }
 
 /* Load any Dolwin-supported file */
-void LoadFile(std::wstring& filename)
+void LoadFile(const std::wstring& filename)
 {
     uint32_t entryPoint = 0;
     bool bootrom = false;
@@ -460,7 +460,7 @@ void LoadFile(std::wstring& filename)
     }
     else
     {
-        TCHAR * extension = _tcsrchr((wchar_t*)filename.data(), _T('.'));
+        TCHAR * extension = _tcsrchr((wchar_t*)filename.c_str(), _T('.'));
         
         if (!_tcsicmp(extension, _T(".dol")))
         {
@@ -503,6 +503,7 @@ void LoadFile(std::wstring& filename)
         HWConfig* config = new HWConfig;
         EMUGetHwConfig(config);
         BootROM(dvd, false, config->consoleVer);
+        delete config;
         Sleep(10);
     }
 

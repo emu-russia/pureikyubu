@@ -120,22 +120,17 @@ void StopProgress()
 /* Returns -1 if not found */
 static int GetMenuItemIndex(HMENU hMenu, const std::wstring & item)
 {
-    int  index = 0;
-    auto buffer = std::wstring(MAX_PATH, 0);
-    
-    while(index < GetMenuItemCount(hMenu))
-    {
-        if(GetMenuString(hMenu, index, (LPWSTR)buffer.data(), buffer.size() - 1, MF_BYPOSITION))
-        {
-            if (item == buffer)
-            {
-                return index;
-            }
-        }
+    int index = 0;
+    TCHAR buf[MAX_PATH];
 
+    while (index < GetMenuItemCount(hMenu))
+    {
+        if (GetMenuString(hMenu, index, buf, sizeof(buf) - 1, MF_BYPOSITION))
+        {
+            if (!_tcscmp(item.c_str(), buf)) return index;
+        }
         index++;
     }
-
     return -1;
 }
 
@@ -202,22 +197,23 @@ void UpdateRecentMenu(HWND hwnd)
 
 void AddRecentFile(const std::wstring& path)
 {
+    int n;
     int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
 
     // check if item already present in list
-    for(int n = 1; n <= RecentNum; n++)
+    for (n = 1; n <= RecentNum; n++)
     {
-        if(path == GetRecentEntry(n))
+        if (!_tcsicmp(path.c_str(), GetRecentEntry(n).c_str()))
         {
             // place old recent to the top
             // and move upper recents down
-            auto old = fmt::format(L"{:s}", GetRecentEntry(n));
-            for(n = n + 1; n <= RecentNum; n++)
+            TCHAR old[MAX_PATH] = { 0, };
+            _stprintf_s(old, _countof(old) - 1, _T("%s"), GetRecentEntry(n).c_str());
+            for (n = n + 1; n <= RecentNum; n++)
             {
-                SetRecentEntry(n-1, GetRecentEntry(n).c_str());
+                SetRecentEntry(n - 1, GetRecentEntry(n).c_str());
             }
-
-            SetRecentEntry(RecentNum, old.data());
+            SetRecentEntry(RecentNum, old);
             UpdateRecentMenu(wnd.hMainWindow);
             return;
         }
@@ -225,20 +221,19 @@ void AddRecentFile(const std::wstring& path)
 
     // increase amount of recent files
     RecentNum++;
-    if(RecentNum > MAX_RECENT)
+    if (RecentNum > MAX_RECENT)
     {
         // move list up
-        for(int n = 1; n < MAX_RECENT; n++)
+        for (n = 1; n < MAX_RECENT; n++)
         {
             SetRecentEntry(n, GetRecentEntry(n + 1).c_str());
         }
         RecentNum = 5;
     }
-
     UI::Jdi.SetConfigInt(USER_RECENT_NUM, RecentNum, USER_UI);
 
     // add new entry
-    SetRecentEntry(RecentNum, (wchar_t*)path.data());
+    SetRecentEntry(RecentNum, path.c_str());
     UpdateRecentMenu(wnd.hMainWindow);
 }
 
@@ -443,38 +438,41 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
                     wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
 
     std::wstring newTitle, gameTitle;
+    TCHAR drive[_MAX_DRIVE + 1] = { 0, }, dir[_MAX_DIR] = { 0, }, name[_MAX_PATH] = { 0, }, ext[_MAX_EXT] = { 0, };
     bool dvd = false;
+    bool bootrom = !_tcscmp(currentFileName, _T("Bootrom"));
 
-    TCHAR* extension = _tcsrchr((wchar_t*)currentFileName, _T('.'));
+    if (!bootrom)
+    {
+        TCHAR* extension = _tcsrchr((wchar_t*)currentFileName, _T('.'));
 
-    if (!_tcsicmp(extension, _T(".dol")))
-    {
-        dvd = false;
-    }
-    else if (!_tcsicmp(extension, _T(".elf")))
-    {
-        dvd = false;
-    }
-    else if (!_tcsicmp(extension, _T(".bin")))
-    {
-        dvd = false;
-    }
-    else if (!_tcsicmp(extension, _T(".iso")))
-    {
-        dvd = true;
-    }
-    else if (!_tcsicmp(extension, _T(".gcm")))
-    {
-        dvd = true;
-    }
+        if (!_tcsicmp(extension, _T(".dol")))
+        {
+            dvd = false;
+        }
+        else if (!_tcsicmp(extension, _T(".elf")))
+        {
+            dvd = false;
+        }
+        else if (!_tcsicmp(extension, _T(".bin")))
+        {
+            dvd = false;
+        }
+        else if (!_tcsicmp(extension, _T(".iso")))
+        {
+            dvd = true;
+        }
+        else if (!_tcsicmp(extension, _T(".gcm")))
+        {
+            dvd = true;
+        }
 
-    TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
-
-    _tsplitpath_s(currentFileName,
-        drive, _countof(drive) - 1,
-        dir, _countof(dir) - 1,
-        name, _countof(name) - 1,
-        ext, _countof(ext) - 1);
+        _tsplitpath_s(currentFileName,
+            drive, _countof(drive) - 1,
+            dir, _countof(dir) - 1,
+            name, _countof(name) - 1,
+            ext, _countof(ext) - 1);
+    }
 
     // set new title for main window
 
@@ -535,7 +533,7 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
         _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
 
         // add new recent entry
-        AddRecentFile(currentFileName);
+        //AddRecentFile(currentFileName);
 
         // add new path to selector
         AddSelectorPath(fullPath);      // all checks are there
@@ -545,7 +543,7 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
     }
     else
     {
-        if (!_tcscmp(currentFileName, _T("Bootrom")))
+        if (bootrom)
         {
             gameTitle = currentFileName;
         }
@@ -697,6 +695,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 {
                     UI::Jdi.LoadFile("Bootrom");
                     OnMainWindowOpened(_T("Bootrom"));
+                    UI::Jdi.Run();
                     return 0;
                 }
                 /* Open/close DVD lid */

@@ -530,49 +530,6 @@ void MCOpen (HWConfig * config)
     _tcscpy_s(memcard[MEMCARD_SLOTB].filename, _countof(memcard[MEMCARD_SLOTB].filename) - 1, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
-    if (memcard[MEMCARD_SLOTA].filename[0] == 0) {
-        /* there is no info in the registry. use a default memcard */
-
-        const TCHAR * filename = _T(".\\Data\\MemCardA.mci");
-        FILE * fileptr;
-
-        fileptr = nullptr;
-        _tfopen_s(&fileptr, filename, _T("rb"));
-        if (fileptr == nullptr) {
-            /* if default memcard doesn't exist, create it */
-            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == true) {
-                MCUseFile(MEMCARD_SLOTA, filename, false);
-                Memcard_Connected[MEMCARD_SLOTA] = true;
-            }
-        }
-        else {
-            fclose(fileptr);
-            MCUseFile(MEMCARD_SLOTA, filename, false);
-            Memcard_Connected[MEMCARD_SLOTA] = true;
-        }
-    }
-    if (memcard[MEMCARD_SLOTB].filename[0] == 0) {
-        /* there is no info in the registry. use a default memcard */
-
-        const TCHAR * filename = _T(".\\Data\\MemCardB.mci");
-        FILE * fileptr;
-
-        fileptr = nullptr;
-        _tfopen_s (&fileptr, filename, _T("rb"));
-        if (fileptr == nullptr) {
-            /* if default memcard doesn't exist, create it */
-            if (MCCreateMemcardFile(filename, MEMCARD_ID_64) == true) {
-                MCUseFile(MEMCARD_SLOTB, filename, false);
-                Memcard_Connected[MEMCARD_SLOTB] = true;
-            }
-        }
-        else {
-            fclose(fileptr);
-            MCUseFile(MEMCARD_SLOTB, filename, false);
-            Memcard_Connected[MEMCARD_SLOTB] = true;
-        }
-    }
-
     MCConnect();
 }
 

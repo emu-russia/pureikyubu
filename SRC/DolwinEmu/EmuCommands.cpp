@@ -100,23 +100,17 @@ static Json::Value* CmdExit(std::vector<std::string>& args)
 
 static Json::Value* CmdLoad(std::vector<std::string>& args)
 {
-	char filepath[0x1000] = { 0, };
-
-	strncpy_s(filepath, sizeof(filepath), args[1].c_str(), 255);
-
-	FILE* f = nullptr;
-	fopen_s(&f, filepath, "rb");
-	if (!f)
+	if (args[1] != "Bootrom")
 	{
-		Report(Channel::Norm, "file not exist! filepath=%s\n", filepath);
-		return nullptr;
+		if (!Util::FileExists(args[1]))
+		{
+			Report(Channel::Norm, "file not exist! filepath=%s\n", args[1].c_str());
+			return nullptr;
+		}
 	}
-	else fclose(f);
 
-	std::string str = filepath;
-	std::wstring wstr = Util::StringToWstring(str);
 	EMUClose();
-	EMUOpen(wstr);
+	EMUOpen(Util::StringToWstring(args[1]));
 
 	return nullptr;
 }

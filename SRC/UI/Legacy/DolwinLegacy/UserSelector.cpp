@@ -898,11 +898,12 @@ static void doubleclick()
     if (usel.files.size() == 0 || item < 0)
         return;
 
-    TCHAR* filename = (TCHAR *)usel.files[item]->name.data();
+    std::wstring path(usel.files[item]->name);
 
-    // load file
-    AddRecentFile(filename);
-    PostMessage(wnd.hMainWindow, WM_COMMAND, (WPARAM)ID_FILE_RELOAD, (LPARAM)0);
+    UI::Jdi.Unload();
+    UI::Jdi.LoadFile(Util::WstringToString(path));
+    OnMainWindowOpened(path.c_str());
+    UI::Jdi.Run();
 }
 
 void NotifySelector(LPNMHDR pnmh)

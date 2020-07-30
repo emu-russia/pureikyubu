@@ -9,7 +9,7 @@ void    EMUGetHwConfig(HWConfig* config);
 // emulator controls API
 void    EMUCtor();
 void    EMUDtor();
-void    EMUOpen(std::wstring& filename);    // Power up system
+void    EMUOpen(const std::wstring& filename);    // Power up system
 void    EMUClose();         // Power down system
 void    EMUReset();         // Reset
 void    EMURun();           // Run Gekko
