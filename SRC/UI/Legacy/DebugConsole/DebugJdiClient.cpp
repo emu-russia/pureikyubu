@@ -116,17 +116,17 @@ namespace Debug
 		ExecuteCommand("echo " + text);
 	}
 
-	bool IsLoaded()
-	{
-		return false;
-	}
-
-	bool IsRunning()
+	bool JdiClient::IsLoaded()
 	{
 		return false;
 	}
 
 	// Gekko
+
+	bool JdiClient::IsRunning()
+	{
+		return false;
+	}
 
 	uint32_t JdiClient::GetGpr(size_t n)
 	{
@@ -184,6 +184,11 @@ namespace Debug
 	}
 
 	// DSP
+
+	bool JdiClient::DspIsRunning()
+	{
+		return false;
+	}
 
 	uint16_t JdiClient::DspGetReg(size_t n)
 	{

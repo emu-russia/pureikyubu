@@ -56,9 +56,10 @@ namespace Debug
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 		void Report(const std::string& text);
 		bool IsLoaded();
-		bool IsRunning();
 
 		// Gekko
+
+		bool IsRunning();
 
 		uint32_t GetGpr(size_t n);
 		uint64_t GetPs0(size_t n);
@@ -73,6 +74,8 @@ namespace Debug
 		uint32_t GetTbl();
 
 		// DSP
+
+		bool DspIsRunning();
 
 		uint16_t DspGetReg(size_t n);
 		uint16_t DspGetPsr();

@@ -44,7 +44,7 @@ namespace Debug
 
 		// DSP Run State
 
-		if (Jdi.IsRunning())
+		if (Jdi.DspIsRunning())
 		{
 			Print(CuiColor::Cyan, CuiColor::Lime, 73, 0, "Running");
 		}
