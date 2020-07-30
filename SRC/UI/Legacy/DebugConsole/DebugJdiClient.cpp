@@ -492,62 +492,201 @@ namespace Debug
 
 	uint16_t JdiClient::DspGetReg(size_t n)
 	{
-		return 0;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspGetReg %zi", n);
+
+		Json::Value* output = CallJdi(cmd);
+
+		uint16_t value = output->value.AsUint16;
+
+		delete output;
+
+		return value;
 	}
 
 	uint16_t JdiClient::DspGetPsr()
 	{
-		return 0;
+		Json::Value* output = CallJdi("DspGetPsr");
+
+		uint16_t value = output->value.AsUint16;
+
+		delete output;
+
+		return value;
 	}
 
 	uint16_t JdiClient::DspGetPc()
 	{
-		return 0;
+		Json::Value* output = CallJdi("DspGetPsr");
+
+		uint16_t value = output->value.AsUint16;
+
+		delete output;
+
+		return value;
 	}
 
 	uint64_t JdiClient::DspPackProd()
 	{
-		return 0;
+		Json::Value* output = CallJdi("DspPackProd");
+
+		uint64_t value = output->value.AsInt;
+
+		delete output;
+
+		return value;
 	}
 
 	void* JdiClient::DspTranslateDMem(uint32_t address)
 	{
-		return nullptr;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspTranslateDMem 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		void* ptr = (void*)output->value.AsInt;
+
+		delete output;
+
+		return ptr;
 	}
 
 	void* JdiClient::DspTranslateIMem(uint32_t address)
 	{
-		return nullptr;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspTranslateIMem 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		void* ptr = (void*)output->value.AsInt;
+
+		delete output;
+
+		return ptr;
 	}
 
 	bool JdiClient::DspTestBreakpoint(uint32_t address)
 	{
-		return false;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspTestBreakpoint 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		bool value = output->value.AsBool;
+
+		delete output;
+
+		return value;
 	}
 
 	void JdiClient::DspToggleBreakpoint(uint32_t address)
 	{
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspToggleBreakpoint 0x%04X", (uint16_t)address);
 
+		Json::Value* output = CallJdi(cmd);
+		delete output;
 	}
 
 	void JdiClient::DspAddOneShotBreakpoint(uint32_t address)
 	{
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspAddOneShotBreakpoint 0x%04X", (uint16_t)address);
 
+		Json::Value* output = CallJdi(cmd);
+		delete output;
 	}
 
 	std::string JdiClient::DspDisasm(uint32_t address, size_t& instrSizeWords, bool& flowControl)
 	{
-		return "";
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspDisasm 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		std::string text = "";
+
+		for (auto it = output->children.begin(); it != output->children.end(); ++it)
+		{
+			Json::Value* child = *it;
+
+			if (child->type == Json::ValueType::Bool)
+			{
+				flowControl = child->value.AsBool;
+			}
+
+			if (child->type == Json::ValueType::Int)
+			{
+				instrSizeWords = child->value.AsInt;
+			}
+
+			if (child->type == Json::ValueType::String)
+			{
+				text = Util::TcharToString(child->value.AsString);
+			}
+		}
+
+		delete output;
+
+		return text;
 	}
 
 	bool JdiClient::DspIsCall(uint32_t address, uint32_t& targetAddress)
 	{
-		return false;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspIsCall 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		bool flag = false;
+
+		for (auto it = output->children.begin(); it != output->children.end(); ++it)
+		{
+			Json::Value* child = *it;
+
+			if (child->type == Json::ValueType::Bool)
+			{
+				flag = child->value.AsBool;
+			}
+
+			if (child->type == Json::ValueType::Int)
+			{
+				targetAddress = child->value.AsUint16;
+			}
+		}
+
+		delete output;
+
+		return flag;
 	}
 
 	bool JdiClient::DspIsCallOrJump(uint32_t address, uint32_t& targetAddress)
 	{
-		return false;
+		char cmd[0x40];
+		sprintf_s(cmd, sizeof(cmd), "DspIsCallOrJump 0x%04X", (uint16_t)address);
+
+		Json::Value* output = CallJdi(cmd);
+
+		bool flag = false;
+
+		for (auto it = output->children.begin(); it != output->children.end(); ++it)
+		{
+			Json::Value* child = *it;
+
+			if (child->type == Json::ValueType::Bool)
+			{
+				flag = child->value.AsBool;
+			}
+
+			if (child->type == Json::ValueType::Int)
+			{
+				targetAddress = child->value.AsUint16;
+			}
+		}
+
+		delete output;
+
+		return flag;
 	}
 
 }
