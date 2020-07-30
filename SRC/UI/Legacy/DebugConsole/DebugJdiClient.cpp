@@ -241,6 +241,11 @@ namespace Debug
 		return (uint32_t)-1;
 	}
 
+	uint32_t JdiClient::VirtualToPhysicalIMmu(uint32_t address)
+	{
+		return (uint32_t)-1;
+	}
+
 	bool JdiClient::GekkoTestBreakpoint(uint32_t address)
 	{
 		return false;

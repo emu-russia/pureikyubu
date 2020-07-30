@@ -81,6 +81,7 @@ namespace Debug
 		void* TranslateDMmu(uint32_t address);
 		void* TranslateIMmu(uint32_t address);
 		uint32_t VirtualToPhysicalDMmu(uint32_t address);
+		uint32_t VirtualToPhysicalIMmu(uint32_t address);
 
 		bool GekkoTestBreakpoint(uint32_t address);
 		void GekkoToggleBreakpoint(uint32_t address);

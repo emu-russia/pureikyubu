@@ -83,6 +83,7 @@ namespace Debug
 	void MemoryView::SetCursor(uint32_t address)
 	{
 		cursor = address;
+		Invalidate();
 	}
 
 	std::string MemoryView::hexbyte(uint32_t addr)

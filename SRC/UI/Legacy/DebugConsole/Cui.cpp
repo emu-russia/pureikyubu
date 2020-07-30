@@ -54,6 +54,8 @@ namespace Debug
 			delete wnd;
 		}
 
+		// Don't touch console handles, they can be used by Visual Studio or by other parasites.
+
 		FreeConsole();
 
 		// Required for Win32 internals to stabilize after closing Cui

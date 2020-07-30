@@ -11,6 +11,11 @@ namespace Debug
 		: CuiWindow (rect, name, parent)
 	{
 		thread = new Thread(ThreadProc, false, this, "ReportWindow");
+
+		if (history.empty())
+		{
+			Jdi.Report("Debugger is running. Type help for quick reference.\n");
+		}
 	}
 
 	ReportWindow::~ReportWindow()

@@ -76,8 +76,6 @@ namespace Debug
 		AddWindow(status);
 
 		SetWindowFocus("Cmdline");
-
-		Jdi.Report("Debugger is running. Type help for quick reference.\n");
 	}
 
 	void GekkoDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
