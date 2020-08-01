@@ -151,6 +151,7 @@ namespace DSP
 
 	struct DspInterruptControl
 	{
+		bool pendingSomething;
 		int pendingDelay[(size_t)DspInterrupt::Max];
 		bool pending[(size_t)DspInterrupt::Max];
 	};

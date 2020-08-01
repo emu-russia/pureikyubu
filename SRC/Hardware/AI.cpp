@@ -116,18 +116,18 @@ static void write_aidcr(uint32_t addr, uint32_t data)
     }
 
     // DSP controls
-    Flipper::HW->DSP->SetResetBit((data >> 0) & 1);
-    Flipper::HW->DSP->SetIntBit  ((data >> 1) & 1);
-    Flipper::HW->DSP->SetHaltBit ((data >> 2) & 1);
+    Flipper::DSP->SetResetBit((data >> 0) & 1);
+    Flipper::DSP->SetIntBit  ((data >> 1) & 1);
+    Flipper::DSP->SetHaltBit ((data >> 2) & 1);
 }
 
 static void read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
-    AIDCR |= Flipper::HW->DSP->GetResetBit() << 0;
-    AIDCR |= Flipper::HW->DSP->GetIntBit()   << 1;
-    AIDCR |= Flipper::HW->DSP->GetHaltBit()  << 2;
+    AIDCR |= Flipper::DSP->GetResetBit() << 0;
+    AIDCR |= Flipper::DSP->GetIntBit()   << 1;
+    AIDCR |= Flipper::DSP->GetHaltBit()  << 2;
 
     *reg = AIDCR;
 }
@@ -398,13 +398,13 @@ static void read_vr(uint32_t addr, uint32_t *reg)
 // ---------------------------------------------------------------------------
 // DSPCore interface (mailbox and interrupt)
 
-static void write_out_mbox_h(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteHi((uint16_t)data); }
-static void write_out_mbox_l(uint32_t addr, uint32_t data) { Flipper::HW->DSP->CpuToDspWriteLo((uint16_t)data); }
-static void read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadHi(false); }
-static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->CpuToDspReadLo(false); }
+static void write_out_mbox_h(uint32_t addr, uint32_t data) { Flipper::DSP->CpuToDspWriteHi((uint16_t)data); }
+static void write_out_mbox_l(uint32_t addr, uint32_t data) { Flipper::DSP->CpuToDspWriteLo((uint16_t)data); }
+static void read_out_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->CpuToDspReadHi(false); }
+static void read_out_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->CpuToDspReadLo(false); }
 
-static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadHi(false); }
-static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::HW->DSP->DspToCpuReadLo(false); }
+static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->DspToCpuReadHi(false); }
+static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = Flipper::DSP->DspToCpuReadLo(false); }
 
 static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }
 static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }

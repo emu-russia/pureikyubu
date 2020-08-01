@@ -127,8 +127,11 @@ namespace DSP
 
 		DspCore* core = nullptr;
 
-		Dsp16(HWConfig* config);
+		Dsp16();
 		~Dsp16();
+
+		bool LoadIrom(std::vector<uint8_t>& iromImage);
+		bool LoadDrom(std::vector<uint8_t>& dromImage);
 
 		void Run();
 		bool IsRunning() { return dspThread->IsRunning(); }

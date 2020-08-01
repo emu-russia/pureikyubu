@@ -6,44 +6,11 @@ using namespace Debug;
 namespace DSP
 {
 
-	Dsp16::Dsp16(HWConfig* config)
+	Dsp16::Dsp16()
 	{
 		dspThread = new Thread(DspThreadProc, true, this, "DspCore");
 
 		core = new DspCore(this);
-
-		if (config != nullptr)
-		{
-			// Load IROM.
-
-			auto iromImage = Util::FileLoad(config->DspIromFilename);
-
-			if (iromImage.empty() || iromImage.size() != IROM_SIZE)
-			{
-				Report(Channel::Norm, "Failed to load DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
-			}
-			else
-			{
-				Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
-				memcpy(irom, iromImage.data(), IROM_SIZE);
-			}
-
-			// Load DROM.
-
-			auto dromImage = Util::FileLoad(config->DspDromFilename);
-
-			if (dromImage.empty() || dromImage.size() != DROM_SIZE)
-			{
-				Report(Channel::Norm, "Failed to load DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
-			}
-			else
-			{
-				Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
-				memcpy(drom, dromImage.data(), DROM_SIZE);
-			}
-		}
-
-		Report(Channel::DSP, "Ready\n");
 
 		JDI::Hub.AddNode(DSP_JDI_JSON, dsp_init_handlers);
 	}
@@ -54,6 +21,34 @@ namespace DSP
 		delete core;
 
 		JDI::Hub.RemoveNode(DSP_JDI_JSON);
+	}
+
+	bool Dsp16::LoadIrom(std::vector<uint8_t>& iromImage)
+	{
+		if (iromImage.empty() || iromImage.size() != IROM_SIZE)
+		{
+			return false;
+		}
+		else
+		{
+			memcpy(irom, iromImage.data(), IROM_SIZE);
+		}
+
+		return true;
+	}
+
+	bool Dsp16::LoadDrom(std::vector<uint8_t>& dromImage)
+	{
+		if (dromImage.empty() || dromImage.size() != DROM_SIZE)
+		{
+			return false;
+		}
+		else
+		{
+			memcpy(drom, dromImage.data(), DROM_SIZE);
+		}
+
+		return true;
 	}
 
 	void Dsp16::DspThreadProc(void* Parameter)

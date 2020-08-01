@@ -7,6 +7,7 @@ using namespace Debug;
 namespace Flipper
 {
     Flipper* HW;
+    DSP::Dsp16* DSP;      // instance of dsp core
 
     // This thread acts as the HWUpdate of Dolwin 0.10.
     // Previously, an HWUpdate call occurred after each Gekko instruction (or so).
@@ -49,7 +50,33 @@ namespace Flipper
         SIOpen();       // GC controllers
         PIOpen(config); // interrupts, console regs
 
-        DSP = new DSP::Dsp16(config);
+        DSP->core->HardReset();
+
+        // Load IROM.
+
+        auto iromImage = Util::FileLoad(config->DspIromFilename);
+
+        if (DSP->LoadIrom(iromImage))
+        {
+            Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
+        }
+        else
+        {
+            Report(Channel::Norm, "Failed to load DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
+        }
+
+        // Load DROM.
+
+        auto dromImage = Util::FileLoad(config->DspDromFilename);
+
+        if (DSP->LoadDrom(dromImage))
+        {
+            Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
+        }
+        else
+        {
+            Report(Channel::Norm, "Failed to load DSP DROM\n", Util::TcharToString(config->DspDromFilename).c_str());
+        }
 
         Report(Channel::Norm, "\n");
 
@@ -67,7 +94,7 @@ namespace Flipper
 
         JDI::Hub.RemoveNode(HW_JDI_JSON);
 
-        delete DSP;
+        DSP->Suspend();
 
         CPClose();
         AIClose();

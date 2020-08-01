@@ -21,7 +21,14 @@ namespace DSP
 
 	void DspCore::CheckInterrupts()
 	{
-		for (size_t i = 0; i < (size_t)DspInterrupt::Max; i++)
+		if (!intr.pendingSomething)
+		{
+			return;
+		}
+
+		size_t i = 0;
+
+		for ( i ; i < (size_t)DspInterrupt::Max; i++)
 		{
 			if (intr.pending[i])
 			{
@@ -53,6 +60,11 @@ namespace DSP
 					intr.pendingDelay[i]--;
 				}
 			}
+		}
+
+		if (i == (size_t)DspInterrupt::Max)
+		{
+			intr.pendingSomething = false;
 		}
 	}
 
@@ -104,7 +116,7 @@ namespace DSP
 
 		// Pending delay
 
-		size_t pendingDelay = 0;
+		int pendingDelay = 0;
 
 		switch (id)
 		{
@@ -130,6 +142,7 @@ namespace DSP
 		}
 
 		intr.pendingDelay[(size_t)id] = pendingDelay;
+		intr.pendingSomething = true;
 	}
 
 	bool DspCore::IsInterruptPending(DspInterrupt id)
@@ -187,6 +200,8 @@ namespace DSP
 			intr.pending[i] = false;
 			intr.pendingDelay[i] = 0;
 		}
+
+		intr.pendingSomething = false;
 
 		// Hard Reset always from IROM start
 		regs.pc = dsp->IROM_START_ADDRESS;
@@ -631,7 +646,7 @@ namespace DSP
 					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
 
 					int64_t a = SignExtend40(regs.ac[1].sbits);
-					if (a != (int32_t)a)
+					if (a != (int32_t)a )
 					{
 						val = a > 0 ? 0x7fff : 0x8000;
 					}

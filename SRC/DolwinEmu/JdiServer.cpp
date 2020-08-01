@@ -12,16 +12,17 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     {
         case DLL_PROCESS_ATTACH:
 
-            // TODO: Check ImageBase.
+            // Check ImageBase (required by HLE Subsystem)
 
-            /* Required by HLE Subsystem */
-            //if ((uint64_t)hInstance > 0x400000)
-            //{
-            //    UI::DolwinError(_T("Error"), _T("Image base must be below or equal 0x400`000. Required by HLE Subsystem for artifical CPU `CallVM` opcode."));
-            //    return -1;
-            //}
+            if ((uint64_t)hModule > 0x400000)
+            {
+                MessageBoxA(NULL, "Image base must be below or equal 0x400'000. Required by HLE Subsystem for artifical CPU `CallVM` opcode.", "Error", MB_OK | MB_ICONEXCLAMATION);
+                return FALSE;
+            }
 
             EMUCtor();
+            Debug::Report(Debug::Channel::Loader, "Module base: 0x%x\n", hModule);
+
             break;
         case DLL_PROCESS_DETACH:
             EMUDtor();
