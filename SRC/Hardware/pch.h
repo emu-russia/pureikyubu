@@ -24,7 +24,7 @@
 #include "HWConfig.h"
 
 #include "../DVD/DVD.h"
-#include "../DSP/DspCore.h"
+#include "../DSP/DSP.h"
 #include "HW.h"
 #include "EFB.h"
 #include "AI.h"

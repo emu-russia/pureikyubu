@@ -116,18 +116,18 @@ static void write_aidcr(uint32_t addr, uint32_t data)
     }
 
     // DSP controls
-    Flipper::HW->DSP->DSPSetResetBit((data >> 0) & 1);
-    Flipper::HW->DSP->DSPSetIntBit  ((data >> 1) & 1);
-    Flipper::HW->DSP->DSPSetHaltBit ((data >> 2) & 1);
+    Flipper::HW->DSP->SetResetBit((data >> 0) & 1);
+    Flipper::HW->DSP->SetIntBit  ((data >> 1) & 1);
+    Flipper::HW->DSP->SetHaltBit ((data >> 2) & 1);
 }
 
 static void read_aidcr(uint32_t addr, uint32_t *reg)
 {
     // DSP controls
     AIDCR &= ~7;
-    AIDCR |= Flipper::HW->DSP->DSPGetResetBit() << 0;
-    AIDCR |= Flipper::HW->DSP->DSPGetIntBit()   << 1;
-    AIDCR |= Flipper::HW->DSP->DSPGetHaltBit()  << 2;
+    AIDCR |= Flipper::HW->DSP->GetResetBit() << 0;
+    AIDCR |= Flipper::HW->DSP->GetIntBit()   << 1;
+    AIDCR |= Flipper::HW->DSP->GetHaltBit()  << 2;
 
     *reg = AIDCR;
 }

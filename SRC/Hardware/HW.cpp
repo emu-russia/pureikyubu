@@ -49,7 +49,7 @@ namespace Flipper
         SIOpen();       // GC controllers
         PIOpen(config); // interrupts, console regs
 
-        DSP = new DSP::DspCore(config);
+        DSP = new DSP::Dsp16(config);
 
         Report(Channel::Norm, "\n");
 

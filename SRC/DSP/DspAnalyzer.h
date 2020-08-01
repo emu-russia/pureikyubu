@@ -229,8 +229,8 @@ namespace DSP
 		st3,			///< Loop counter register 
 		ac0h,			///< 40-bit Accumulator 0 (high) 
 		ac1h,			///< 40-bit Accumulator 1 (high) 
-		bank,			///< Bank register 
-		sr,				///< Status register 
+		dpp,			///< Used as high 8-bits of address for some load/store instructions
+		psr,			///< Processor Status register 
 		prodl,			///< Product register (low) 
 		prodm1,			///< Product register (mid 1) 
 		prodh,			///< Product register (high) 
@@ -284,20 +284,20 @@ namespace DSP
 	enum class ConditionCode
 	{
 		GE = 0b0000,		/// Greater than or equal 
-		L = 0b0001,			/// Less than 
-		G = 0b0010,			/// Greater than 
+		LT = 0b0001,		/// Less than 
+		GT = 0b0010,		/// Greater than 
 		LE = 0b0011,		/// Less than or equal 
-		NE = 0b0100,		/// Not equal 
-		EQ = 0b0101,		/// Equal 
+		NZ = 0b0100,		/// Not equal 
+		Z = 0b0101,			/// Equal 
 		NC = 0b0110,		/// Not carry 
 		C = 0b0111,			/// Carry 
-		BelowS32 = 0b1000,	/// Below s32 
-		AboveS32 = 0b1001,	/// Above s32 
-		UnknownA = 0b1010,	/// TODO (?)
-		UnknownB = 0b1011,	/// TODO (?)
-		NOK = 0b1100,		/// Bit Test Not OK
-		OK = 0b1101,		/// Bit Test OK
-		O = 0b1110,			/// Overﬂow
+		NE = 0b1000,		/// Below s32 
+		E = 0b1001,			/// Above s32 
+		NM = 0b1010,		/// Normalized
+		M = 0b1011,			/// Unnormalized
+		NT = 0b1100,		/// Bit Test Not OK
+		T = 0b1101,			/// Bit Test OK
+		V = 0b1110,			/// Overflow
 		Always = 0b1111,	/// Always
 	};
 

@@ -50,6 +50,9 @@
 // 0x0fffffff, because GC architecture is limited by 256 mb of RAM
 #define RAMMASK     0x0fffffff
 
+// hardware registers base (physical address)
+#define HW_BASE         0x0C000000
+
 // max known GC HW address is 0x0C008004 (fifo), so 0x8010 will be enough.
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
