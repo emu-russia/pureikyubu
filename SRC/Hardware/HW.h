@@ -15,7 +15,6 @@ namespace Flipper
 		static const size_t ticksToHwUpdate = 100;
 
 	public:
-		DSP::Dsp16* DSP = nullptr;      // instance of dsp core
 		AudioMixer* Mixer = nullptr;
 
 		Flipper(HWConfig* config);
@@ -25,4 +24,5 @@ namespace Flipper
 	};
 
 	extern Flipper* HW;
+	extern DSP::Dsp16* DSP;
 }

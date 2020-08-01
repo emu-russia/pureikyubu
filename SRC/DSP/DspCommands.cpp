@@ -68,7 +68,7 @@ namespace DSP
     static Json::Value* cmd_dregs(std::vector<std::string>& args)
     {
         // A special trick to display all registers (we intentionally make them dirty by inverting bits)
-        DSP::DspRegs regsChanged = Flipper::HW->DSP->core->regs;
+        DSP::DspRegs regsChanged = Flipper::DSP->core->regs;
 
         regsChanged.pc = ~regsChanged.pc;
         regsChanged.prod.bitsPacked = ~regsChanged.prod.bitsPacked;
@@ -88,7 +88,7 @@ namespace DSP
             regsChanged.ax[i].bits = ~regsChanged.ax[i].bits;
         }
 
-        Flipper::HW->DSP->core->DumpRegs(&regsChanged);
+        Flipper::DSP->core->DumpRegs(&regsChanged);
         return nullptr;
     }
 
@@ -112,7 +112,7 @@ namespace DSP
 
         while (bytes != 0)
         {
-            uint8_t* ptr = Flipper::HW->DSP->TranslateDMem(dsp_addr);
+            uint8_t* ptr = Flipper::DSP->TranslateDMem(dsp_addr);
             if (ptr == nullptr)
             {
                 Report(Channel::DSP, "TranslateDMem failed on dsp addr: 0x%04X\n", dsp_addr);
@@ -140,7 +140,7 @@ namespace DSP
 
         if (args[1].c_str()[0] == '.')
         {
-            dsp_addr = Flipper::HW->DSP->core->regs.pc;
+            dsp_addr = Flipper::DSP->core->regs.pc;
         }
         else
         {
@@ -151,7 +151,7 @@ namespace DSP
 
         while (bytes != 0)
         {
-            uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(dsp_addr);
+            uint8_t* ptr = Flipper::DSP->TranslateIMem(dsp_addr);
             if (ptr == nullptr)
             {
                 Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", dsp_addr);
@@ -174,21 +174,21 @@ namespace DSP
     // Run DSP thread until break, halt or dstop
     static Json::Value* cmd_drun(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->Run();
+        Flipper::DSP->Run();
         return nullptr;
     }
 
     // Stop DSP thread
     static Json::Value* cmd_dstop(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->Suspend();
+        Flipper::DSP->Suspend();
         return nullptr;
     }
 
     // Step DSP instruction
     static Json::Value* cmd_dstep(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
@@ -203,13 +203,13 @@ namespace DSP
 
         while (n--)
         {
-            DSP::DspRegs prevRegs = Flipper::HW->DSP->core->regs;
+            DSP::DspRegs prevRegs = Flipper::DSP->core->regs;
 
             // Show instruction to be executed
 
-            DSP::DspAddress pcAddr = Flipper::HW->DSP->core->regs.pc;
+            DSP::DspAddress pcAddr = Flipper::DSP->core->regs.pc;
 
-            uint8_t* imemPtr = Flipper::HW->DSP->TranslateIMem(pcAddr);
+            uint8_t* imemPtr = Flipper::DSP->TranslateIMem(pcAddr);
             if (imemPtr == nullptr)
             {
                 Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", pcAddr);
@@ -228,10 +228,10 @@ namespace DSP
 
             Report(Channel::Norm, "%s\n", code.c_str());
 
-            Flipper::HW->DSP->core->Step();
+            Flipper::DSP->core->Step();
 
             // Dump modified regs
-            Flipper::HW->DSP->core->DumpRegs(&prevRegs);
+            Flipper::DSP->core->DumpRegs(&prevRegs);
         }
         return nullptr;
     }
@@ -241,7 +241,7 @@ namespace DSP
     {
         DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
 
-        Flipper::HW->DSP->core->AddBreakpoint(dsp_addr);
+        Flipper::DSP->core->AddBreakpoint(dsp_addr);
 
         Report(Channel::Norm, "DSP breakpoint added: 0x%04X\n", dsp_addr);
         return nullptr;
@@ -252,7 +252,7 @@ namespace DSP
     {
         DSP::DspAddress dsp_addr = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
 
-        Flipper::HW->DSP->core->AddCanary(dsp_addr, args[2]);
+        Flipper::DSP->core->AddCanary(dsp_addr, args[2]);
 
         Report(Channel::Norm, "DSP canary added: 0x%04X\n", dsp_addr);
         return nullptr;
@@ -263,18 +263,18 @@ namespace DSP
     {
         Report(Channel::Norm, "DSP breakpoints:\n");
 
-        Flipper::HW->DSP->core->ListBreakpoints();
+        Flipper::DSP->core->ListBreakpoints();
 
         Report(Channel::Norm, "DSP canaries:\n");
 
-        Flipper::HW->DSP->core->ListCanaries();
+        Flipper::DSP->core->ListCanaries();
         return nullptr;
     }
 
     // Clear all IMEM breakpoints
     static Json::Value* cmd_dbrkclr(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->core->ClearBreakpoints();
+        Flipper::DSP->core->ClearBreakpoints();
 
         Report(Channel::Norm, "DSP breakpoints cleared.\n");
         return nullptr;
@@ -283,7 +283,7 @@ namespace DSP
     // Clear all IMEM canaries
     static Json::Value* cmd_dcanclr(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->core->ClearCanaries();
+        Flipper::DSP->core->ClearCanaries();
 
         Report(Channel::Norm, "DSP canaries cleared.\n");
         return nullptr;
@@ -292,27 +292,27 @@ namespace DSP
     // Set DSP program counter
     static Json::Value* cmd_dpc(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
         }
 
-        Flipper::HW->DSP->core->regs.pc = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
+        Flipper::DSP->core->regs.pc = (DSP::DspAddress)strtoul(args[1].c_str(), nullptr, 0);
         return nullptr;
     }
 
     // Issue DSP reset
     static Json::Value* cmd_dreset(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->core->HardReset();
+        Flipper::DSP->core->HardReset();
         return nullptr;
     }
 
     // Disassemble some DSP instructions at program counter
     static Json::Value* cmd_du(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
@@ -323,7 +323,7 @@ namespace DSP
 
         if (args.size() < 2)
         {
-            addr = Flipper::HW->DSP->core->regs.pc;
+            addr = Flipper::DSP->core->regs.pc;
         }
         else
         {
@@ -341,7 +341,7 @@ namespace DSP
 
         while (instrCount--)
         {
-            uint8_t* imemPtr = Flipper::HW->DSP->TranslateIMem(addr);
+            uint8_t* imemPtr = Flipper::DSP->TranslateIMem(addr);
             if (imemPtr == nullptr)
             {
                 Report(Channel::DSP, "TranslateIMem failed on dsp addr: 0x%04X\n", addr);
@@ -368,7 +368,7 @@ namespace DSP
     // Dump DSP call stack
     static Json::Value* cmd_dst(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
@@ -376,7 +376,7 @@ namespace DSP
 
         Report(Channel::Norm, "DSP Call Stack:\n");
 
-        for (auto it = Flipper::HW->DSP->core->regs.st[0].begin(); it != Flipper::HW->DSP->core->regs.st[0].end(); ++it)
+        for (auto it = Flipper::DSP->core->regs.st[0].begin(); it != Flipper::DSP->core->regs.st[0].end(); ++it)
         {
             Report(Channel::Norm, "0x%04X\n", *it);
         }
@@ -386,7 +386,7 @@ namespace DSP
     // Dump DSP IFX
     static Json::Value* cmd_difx(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
@@ -394,7 +394,7 @@ namespace DSP
 
         Report(Channel::Norm, "DSP IFX Dump:\n");
 
-        Flipper::HW->DSP->DumpIfx();
+        Flipper::DSP->DumpIfx();
         return nullptr;
     }
 
@@ -403,8 +403,8 @@ namespace DSP
     {
         uint32_t value = strtoul(args[1].c_str(), nullptr, 0);
         
-        Flipper::HW->DSP->CpuToDspWriteHi(value >> 16);
-        Flipper::HW->DSP->CpuToDspWriteLo((uint16_t)value);
+        Flipper::DSP->CpuToDspWriteHi(value >> 16);
+        Flipper::DSP->CpuToDspWriteLo((uint16_t)value);
         return nullptr;
     }
 
@@ -414,13 +414,13 @@ namespace DSP
         uint32_t value = 0;
 
         // Simulate reading by DSP
-        value |= Flipper::HW->DSP->DspToCpuReadHi(true) << 16;
+        value |= Flipper::DSP->DspToCpuReadHi(true) << 16;
         if ((value & 0x80000000) == 0)
         {
             Report(Channel::Norm, "No DSP message.\n");
             return nullptr;
         }
-        value |= Flipper::HW->DSP->DspToCpuReadLo(true);
+        value |= Flipper::DSP->DspToCpuReadLo(true);
         Report(Channel::Norm, "DSP Message: 0x%08X\n", value);
         return nullptr;
     }
@@ -428,7 +428,7 @@ namespace DSP
     // Send CPU->DSP interrupt
     static Json::Value* cmd_cpudspint(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->SetIntBit(true);
+        Flipper::DSP->SetIntBit(true);
         return nullptr;
     }
 
@@ -442,7 +442,7 @@ namespace DSP
     // Modify DSP register
     static Json::Value* cmd_dreg(std::vector<std::string>& args)
     {
-        if (Flipper::HW->DSP->IsRunning())
+        if (Flipper::DSP->IsRunning())
         {
             Report(Channel::DSP, "It is impossible while running DSP thread.\n");
             return nullptr;
@@ -479,7 +479,7 @@ namespace DSP
             return nullptr;
         }
 
-        Flipper::HW->DSP->core->MoveToReg(regIndex, value);
+        Flipper::DSP->core->MoveToReg(regIndex, value);
         return nullptr;
     }
 
@@ -538,28 +538,28 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Bool;
 
-        output->value.AsBool = Flipper::HW->DSP->IsRunning();
+        output->value.AsBool = Flipper::DSP->IsRunning();
 
         return output;
     }
 
     static Json::Value* CmdDspRun(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->Run();
+        Flipper::DSP->Run();
         return nullptr;
     }
 
     static Json::Value* CmdDspSuspend(std::vector<std::string>& args)
     {
-        Flipper::HW->DSP->Suspend();
+        Flipper::DSP->Suspend();
         return nullptr;
     }
 
     static Json::Value* CmdDspStep(std::vector<std::string>& args)
     {
-        if (!Flipper::HW->DSP->IsRunning())
+        if (!Flipper::DSP->IsRunning())
         {
-            Flipper::HW->DSP->core->Step();
+            Flipper::DSP->core->Step();
         }
         
         return nullptr;
@@ -572,7 +572,7 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
 
-        output->value.AsUint16 = Flipper::HW->DSP->core->MoveFromReg(reg);
+        output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
 
         return output;
     }
@@ -582,7 +582,7 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
 
-        output->value.AsUint16 = Flipper::HW->DSP->core->regs.psr.bits;
+        output->value.AsUint16 = Flipper::DSP->core->regs.psr.bits;
 
         return output;
     }
@@ -592,7 +592,7 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
 
-        output->value.AsUint16 = Flipper::HW->DSP->core->regs.pc;
+        output->value.AsUint16 = Flipper::DSP->core->regs.pc;
 
         return output;
     }
@@ -603,7 +603,7 @@ namespace DSP
         output->type = Json::ValueType::Int;
 
         DspProduct prod;
-        Flipper::HW->DSP->core->PackProd(prod);
+        Flipper::DSP->core->PackProd(prod);
 
         output->value.AsInt = prod.bitsPacked;
 
@@ -614,7 +614,7 @@ namespace DSP
     {
         DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-        uint8_t* ptr = Flipper::HW->DSP->TranslateDMem(addr);
+        uint8_t* ptr = Flipper::DSP->TranslateDMem(addr);
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
@@ -628,7 +628,7 @@ namespace DSP
     {
         DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-        uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(addr);
+        uint8_t* ptr = Flipper::DSP->TranslateIMem(addr);
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
@@ -645,7 +645,7 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Bool;
 
-        output->value.AsBool = Flipper::HW->DSP->core->TestBreakpoint(addr);
+        output->value.AsBool = Flipper::DSP->core->TestBreakpoint(addr);
 
         return output;
     }
@@ -654,7 +654,7 @@ namespace DSP
     {
         DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-        Flipper::HW->DSP->core->ToggleBreakpoint(addr);
+        Flipper::DSP->core->ToggleBreakpoint(addr);
 
         return nullptr;
     }
@@ -663,7 +663,7 @@ namespace DSP
     {
         DspAddress addr = strtoul(args[1].c_str(), nullptr, 0);
 
-        Flipper::HW->DSP->core->AddOneShotBreakpoint(addr);
+        Flipper::DSP->core->AddOneShotBreakpoint(addr);
 
         return nullptr;
     }
@@ -674,7 +674,7 @@ namespace DSP
 
         targetAddress = 0;
 
-        uint8_t* ptr = (uint8_t*)Flipper::HW->DSP->TranslateIMem(address);
+        uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
         if (!ptr)
         {
             return false;
@@ -718,7 +718,7 @@ namespace DSP
 
         targetAddress = 0;
 
-        uint8_t* ptr = Flipper::HW->DSP->TranslateIMem(address);
+        uint8_t* ptr = Flipper::DSP->TranslateIMem(address);
         if (!ptr)
         {
             return false;
@@ -770,7 +770,7 @@ namespace DSP
 
         std::string text = "";
 
-        uint8_t* ptr = (uint8_t*)Flipper::HW->DSP->TranslateIMem(address);
+        uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
         if (ptr)
         {
             if (DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))

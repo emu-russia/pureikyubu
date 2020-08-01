@@ -104,7 +104,7 @@ namespace DSP
 
 		// Pending delay
 
-		size_t pendingDelay = 0;
+		int pendingDelay = 0;
 
 		switch (id)
 		{

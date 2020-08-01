@@ -107,7 +107,7 @@ static void ARDMA()
 
         // Special ARAM DMA to IRAM
 
-        Flipper::HW->DSP->SpecialAramImemDma(&mi.ram[aram.mmaddr], cnt);
+        Flipper::DSP->SpecialAramImemDma(&mi.ram[aram.mmaddr], cnt);
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt
@@ -134,7 +134,7 @@ static void ARDMA()
     assert(!aram.dmaThread->IsRunning());
     AIDCR |= AIDCR_ARDMA;
     aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
-    aram.dspRunningBeforeAramDma = Flipper::HW->DSP->IsRunning();
+    aram.dspRunningBeforeAramDma = Flipper::DSP->IsRunning();
     //if (aram.dspRunningBeforeAramDma)
     //{
     //    Flipper::HW->DSP->Suspend();
