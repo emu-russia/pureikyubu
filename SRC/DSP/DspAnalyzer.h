@@ -1,5 +1,5 @@
-/// DSP analyzer.
-/// Can be used by disassembler as well as by interpreter/jitc.
+// DSP analyzer.
+// Can be used by disassembler as well as by interpreter/jitc.
 
 #pragma once
 

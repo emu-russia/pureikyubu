@@ -8,7 +8,7 @@ How does the DSP core work.
 
 The Run method executes the Update method until it is stopped by the Suspend method or it encounters a breakpoint.
 
-Suspend method stops DSP thread execution indifinitely (same as HALT instruction).
+Suspend method stops DSP thread execution indifinitely.
 
 The Step debugging method is used to unconditionally execute next DSP instruction (by interpreter).
 
@@ -24,9 +24,9 @@ That is, in fact, this is a universal decoder.
 
 I decided to divide all the DSP instructions into groups (by higher 4 bits). Decoder implemented as simple if-else.
 
-Hybrid (packaged) instructions are stored into two different groups in **AnalyseInfo** struct.
+Parallel instructions are stored into two different groups in `AnalyseInfo` struct.
 
-The simplest example of **AnalyzeInfo** consumption can be found in the disassembler.
+The simplest example of `AnalyzeInfo` consumption can be found in the disassembler.
 
 The DSP instruction format is so tightly packed and has a lot of entropy, so I could make a mistake in decoding somewhere. All this then has to appear.
 
@@ -37,7 +37,7 @@ of the microcodes and IROM and bring the emulation to an adequate state.
 
 ### Interpreter architecture
 
-The interpreter is not involved in instruction decoding. It receives ready-made information from the analyzer (**AnalyzeInfo** struct).
+The interpreter is not involved in instruction decoding. It receives ready-made information from the analyzer (`AnalyzeInfo` struct).
 
 This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
 

@@ -1,4 +1,4 @@
-/// DSP disassembler.
+// DSP disassembler.
 
 #pragma once
 

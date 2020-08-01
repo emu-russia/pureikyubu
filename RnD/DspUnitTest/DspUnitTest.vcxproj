@@ -168,6 +168,14 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Readme.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\SRC\DSP\Scripts\VS2019\DSP.vcxproj">
+      <Project>{0336d67c-249d-4c48-bd80-8e05ce711a58}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
