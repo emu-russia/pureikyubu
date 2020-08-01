@@ -175,11 +175,6 @@ namespace DSP
 
 		DspInterpreter* interp = nullptr;
 
-		bool pendingInterrupt = false;
-		int pendingInterruptDelay = 2;
-		bool pendingSoftReset = false;
-		bool pendingOverflow = false;
-
 		Dsp16* dsp = nullptr;
 
 		DspInterruptControl intr = { 0 };
@@ -198,7 +193,6 @@ namespace DSP
 		void AssertInterrupt(DspInterrupt id);
 		bool IsInterruptPending(DspInterrupt id);
 		void ReturnFromInterrupt();
-		void SoftReset();
 		void HardReset();
 
 		void Update();

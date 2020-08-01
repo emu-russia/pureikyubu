@@ -482,7 +482,7 @@ namespace DSP
 
 	bool Dsp16::GetResetBit()
 	{
-		return core->IsInterruptPending(DspInterrupt::Reset);
+		return false;
 	}
 
 	void Dsp16::SetIntBit(bool val)

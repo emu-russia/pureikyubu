@@ -25,9 +25,12 @@ namespace DSP
 		{
 			if (intr.pending[i])
 			{
-				if (intr.pendingDelay <= 0)
+				if (intr.pendingDelay[i] <= 0)
 				{
-					Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", (DspAddress)i * 2);
+					if (dsp->logDspInterrupts)
+					{
+						Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", (DspAddress)i * 2);
+					}
 
 					regs.st[0].push_back(regs.pc);
 					regs.st[1].push_back((DspAddress)regs.psr.bits);
@@ -142,17 +145,8 @@ namespace DSP
 		regs.st[0].pop_back();
 	}
 
-	void DspCore::SoftReset()
-	{
-		regs.pc = DSPGetResetModifier() ? dsp->IROM_START_ADDRESS : 0;		// IROM start / 0
-		Report(Channel::DSP, "Soft Reset pc = 0x%04X\n", regs.pc);
-
-		pendingInterrupt = false;
-	}
-
 	void DspCore::HardReset()
 	{
-		_TB(DspCore::HardReset);
 		Report(Channel::DSP, "DspCore::HardReset\n");
 
 		if (Gekko::Gekko != nullptr)
@@ -200,10 +194,7 @@ namespace DSP
 
 		dsp->ResetIfx();
 
-		pendingInterrupt = false;
-		pendingSoftReset = false;
 		dsp->Suspend();
-		_TE();
 	}
 
 	void DspCore::Update()
