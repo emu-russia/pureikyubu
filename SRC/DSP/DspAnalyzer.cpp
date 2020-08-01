@@ -656,7 +656,7 @@ namespace DSP
 		{
 			info.instr = DspInstruction::SRS;
 			int ss = (info.instrBits >> 8) & 7;
-			DspAddress addr = (DspAddress)(0xFF00 | (info.instrBits & 0xff));		// By default bank reg = 0xFF
+			DspAddress addr = (DspAddress)(0xFF00 | (info.instrBits & 0xff));		// By default dpp reg = 0xFF
 
 			if (!AddImmOperand(info, DspParameter::Address, addr))
 				return false;
@@ -667,7 +667,7 @@ namespace DSP
 		{
 			info.instr = DspInstruction::LRS;
 			int dd = (info.instrBits >> 8) & 7;
-			DspAddress addr = (DspAddress)(0xFF00 | (info.instrBits & 0xff));		// By default bank reg = 0xFF
+			DspAddress addr = (DspAddress)(0xFF00 | (info.instrBits & 0xff));		// By default dpp reg = 0xFF
 
 			if (!AddParam(info, (DspParameter)(0x18 + dd), 0x18 + dd))
 				return false;

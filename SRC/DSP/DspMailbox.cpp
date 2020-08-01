@@ -10,9 +10,9 @@ namespace DSP
 
 	// Write by processor only.
 
-	void DspCore::CpuToDspWriteHi(uint16_t value)
+	void Dsp16::CpuToDspWriteHi(uint16_t value)
 	{
-		_TB(DspCore::CpuToDspWriteHi);
+		_TB(Dsp16::CpuToDspWriteHi);
 		CpuToDspLock[0].Lock();
 
 		if (logInsaneMailbox)
@@ -33,9 +33,9 @@ namespace DSP
 		_TE();
 	}
 
-	void DspCore::CpuToDspWriteLo(uint16_t value)
+	void Dsp16::CpuToDspWriteLo(uint16_t value)
 	{
-		_TB(DspCore::CpuToDspWriteLo);
+		_TB(Dsp16::CpuToDspWriteLo);
 		CpuToDspLock[1].Lock();
 
 		if (logInsaneMailbox)
@@ -54,7 +54,7 @@ namespace DSP
 		_TE();
 	}
 
-	uint16_t DspCore::CpuToDspReadHi(bool ReadByDsp)
+	uint16_t Dsp16::CpuToDspReadHi(bool ReadByDsp)
 	{
 		CpuToDspLock[0].Lock();
 		uint16_t value = CpuToDspMailbox[0];
@@ -74,7 +74,7 @@ namespace DSP
 		return value;
 	}
 
-	uint16_t DspCore::CpuToDspReadLo(bool ReadByDsp)
+	uint16_t Dsp16::CpuToDspReadLo(bool ReadByDsp)
 	{
 		CpuToDspLock[1].Lock();
 		uint16_t value = CpuToDspMailbox[1];
@@ -94,9 +94,9 @@ namespace DSP
 
 	// Write by DSP only.
 
-	void DspCore::DspToCpuWriteHi(uint16_t value)
+	void Dsp16::DspToCpuWriteHi(uint16_t value)
 	{
-		_TB(DspCore::DspToCpuWriteHi);
+		_TB(Dsp16::DspToCpuWriteHi);
 		DspToCpuLock[0].Lock();
 
 		if (logInsaneMailbox)
@@ -117,9 +117,9 @@ namespace DSP
 		_TE();
 	}
 
-	void DspCore::DspToCpuWriteLo(uint16_t value)
+	void Dsp16::DspToCpuWriteLo(uint16_t value)
 	{
-		_TB(DspCore::DspToCpuWriteLo);
+		_TB(Dsp16::DspToCpuWriteLo);
 		DspToCpuLock[1].Lock();
 
 		if (logInsaneMailbox)
@@ -139,7 +139,7 @@ namespace DSP
 		_TE();
 	}
 
-	uint16_t DspCore::DspToCpuReadHi(bool ReadByDsp)
+	uint16_t Dsp16::DspToCpuReadHi(bool ReadByDsp)
 	{
 		DspToCpuLock[0].Lock();
 		uint16_t value = DspToCpuMailbox[0];
@@ -148,7 +148,7 @@ namespace DSP
 		return value;
 	}
 
-	uint16_t DspCore::DspToCpuReadLo(bool ReadByDsp)
+	uint16_t Dsp16::DspToCpuReadLo(bool ReadByDsp)
 	{
 		DspToCpuLock[1].Lock();
 		uint16_t value = DspToCpuMailbox[1];

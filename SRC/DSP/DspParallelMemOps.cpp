@@ -1,10 +1,9 @@
-// DSP packed load/store which-can-burn-your-ass instructions
+// DSP parallel load/store/move instructions
 
 #include "pch.h"
 
 namespace DSP
 {
-#pragma region "Bottom Instructions"
 
 	void DspInterpreter::DR(AnalyzeInfo& info)
 	{
@@ -28,88 +27,88 @@ namespace DSP
 
 	void DspInterpreter::S(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
 		core->ArAdvance(info.paramExBits[0], +1);
 	}
 
 	void DspInterpreter::SN(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramExBits[0]], core->MoveFromReg(info.paramExBits[1]));
 		core->ArAdvance(info.paramExBits[0], core->regs.ix[info.paramExBits[0]]);
 	}
 
 	void DspInterpreter::L(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[info.paramExBits[1]]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramExBits[1]]));
 		core->ArAdvance(info.paramExBits[1], +1);
 	}
 
 	void DspInterpreter::LN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[info.paramExBits[1]]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramExBits[1]]));
 		core->ArAdvance(info.paramExBits[1], core->regs.ix[info.paramExBits[1]]);
 	}
 
 	void DspInterpreter::LS(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[0]));
+		core->dsp->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
 		core->ArAdvance(0, +1);
 		core->ArAdvance(3, +1);
 	}
 
 	void DspInterpreter::SL(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
-		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->dsp->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
+		core->MoveToReg(info.paramExBits[1], core->dsp->ReadDMem(core->regs.ar[3]));
 		core->ArAdvance(0, +1);
 		core->ArAdvance(3, +1);
 	}
 
 	void DspInterpreter::LSN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[0]));
+		core->dsp->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
 		core->ArAdvance(0, core->regs.ix[0]);
 		core->ArAdvance(3, +1);
 	}
 
 	void DspInterpreter::SLN(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
-		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->dsp->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
+		core->MoveToReg(info.paramExBits[1], core->dsp->ReadDMem(core->regs.ar[3]));
 		core->ArAdvance(0, core->regs.ix[0]);
 		core->ArAdvance(3, +1);
 	}
 
 	void DspInterpreter::LSM(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[0]));
+		core->dsp->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
 		core->ArAdvance(0, +1);
 		core->ArAdvance(3, core->regs.ix[3]);
 	}
 
 	void DspInterpreter::SLM(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
-		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->dsp->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
+		core->MoveToReg(info.paramExBits[1], core->dsp->ReadDMem(core->regs.ar[3]));
 		core->ArAdvance(0, +1);
 		core->ArAdvance(3, core->regs.ix[3]);
 	}
 
 	void DspInterpreter::LSNM(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramExBits[0], core->ReadDMem(core->regs.ar[0]));
-		core->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
+		core->MoveToReg(info.paramExBits[0], core->dsp->ReadDMem(core->regs.ar[0]));
+		core->dsp->WriteDMem(core->regs.ar[3], core->MoveFromReg((int)info.paramsEx[1]));
 		core->ArAdvance(0, core->regs.ix[0]);
 		core->ArAdvance(3, core->regs.ix[3]);
 	}
 
 	void DspInterpreter::SLNM(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
-		core->MoveToReg(info.paramExBits[1], core->ReadDMem(core->regs.ar[3]));
+		core->dsp->WriteDMem(core->regs.ar[0], core->MoveFromReg((int)info.paramsEx[0]));
+		core->MoveToReg(info.paramExBits[1], core->dsp->ReadDMem(core->regs.ar[3]));
 		core->ArAdvance(0, core->regs.ix[0]);
 		core->ArAdvance(3, core->regs.ix[3]);
 	}
@@ -124,20 +123,20 @@ namespace DSP
 	{
 		if (info.paramExBits[0])
 		{
-			core->regs.ax[0].h = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);
+			core->regs.ax[0].h = core->dsp->ReadDMem(core->regs.ar[info.paramExBits[2]]);
 		}
 		else
 		{
-			core->regs.ax[0].l = core->ReadDMem(core->regs.ar[info.paramExBits[2]]);
+			core->regs.ax[0].l = core->dsp->ReadDMem(core->regs.ar[info.paramExBits[2]]);
 		}
 
 		if (info.paramExBits[1])
 		{
-			core->regs.ax[1].h = core->ReadDMem(core->regs.ar[3]);
+			core->regs.ax[1].h = core->dsp->ReadDMem(core->regs.ar[3]);
 		}
 		else
 		{
-			core->regs.ax[1].l = core->ReadDMem(core->regs.ar[3]);
+			core->regs.ax[1].l = core->dsp->ReadDMem(core->regs.ar[3]);
 		}
 	}
 
@@ -175,8 +174,8 @@ namespace DSP
 
 	void DspInterpreter::LDAXCommon(AnalyzeInfo& info)
 	{
-		core->regs.ax[info.paramExBits[0]].h = core->ReadDMem(core->regs.ar[info.paramExBits[1]]);
-		core->regs.ax[info.paramExBits[0]].l = core->ReadDMem(core->regs.ar[3]);
+		core->regs.ax[info.paramExBits[0]].h = core->dsp->ReadDMem(core->regs.ar[info.paramExBits[1]]);
+		core->regs.ax[info.paramExBits[0]].l = core->dsp->ReadDMem(core->regs.ar[3]);
 	}
 
 	void DspInterpreter::LDAX(AnalyzeInfo& info)
@@ -207,5 +206,4 @@ namespace DSP
 		core->ArAdvance(3, core->regs.ix[3]);
 	}
 
-#pragma endregion "Bottom Instructions"
 }

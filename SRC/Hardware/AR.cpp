@@ -106,12 +106,8 @@ static void ARDMA()
         cnt *= 4;
 
         // Special ARAM DMA to IRAM
-        memcpy(Flipper::HW->DSP->iram, &mi.ram[aram.mmaddr], cnt);
 
-        if (aram.log)
-        {
-            Report(Channel::DSP, "MMEM -> IRAM transfer %d bytes.\n", cnt);
-        }
+        Flipper::HW->DSP->SpecialAramImemDma(&mi.ram[aram.mmaddr], cnt);
 
         aram.cnt &= 0x80000000;     // clear dma counter
         ARINT();                    // invoke aram TC interrupt

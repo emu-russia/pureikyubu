@@ -121,7 +121,6 @@ void EMUCtor()
     JDI::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
     Gekko::Gekko = new Gekko::GekkoCore;
     JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
-    DSP::DspCore::InitSubsystem();
     DVD::InitSubsystem();
     HLEInit();
     emu.init = true;
@@ -134,7 +133,6 @@ void EMUDtor()
         return;
     }
     JDI::Hub.RemoveNode(EMU_JDI_JSON);
-    DSP::DspCore::ShutdownSubsystem();
     DVD::ShutdownSubsystem();
     delete Gekko::Gekko;
     Gekko::Gekko = nullptr;

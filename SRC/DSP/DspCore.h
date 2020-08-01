@@ -1,11 +1,9 @@
-﻿// Low-level DSP core
+﻿// Macronix DSP core
 
 #pragma once
 
 namespace DSP
 {
-	typedef uint32_t DspAddress;		// in halfwords slots 
-
 	#pragma warning (push)
 	#pragma warning (disable: 4201)
 
@@ -31,7 +29,7 @@ namespace DSP
 		int64_t		sbits;
 	};
 
-	union DspShortAccumulator
+	union DspShortOperand
 	{
 		struct
 		{
@@ -58,27 +56,26 @@ namespace DSP
 	{
 		struct
 		{
-			unsigned c : 1;			// Carry
-			unsigned o : 1;			// Overﬂow 
-			unsigned z : 1;			// Arithmetic zero 
-			unsigned s : 1;		// Sign
-			unsigned as : 1;	// Above s32 
-			unsigned tt : 1;	// Top two bits are equal 
-			unsigned ok : 1;	// 1: Bit test OK, 0: Bit test not OK
-			unsigned os : 1;	// Overflow (sticky)
-			unsigned hwz : 1;	// Hardwired to 0? 
-			unsigned acie : 1;	// Accelerator/Decoder Interrupt enable 
-			unsigned unk10 : 1;
-			unsigned eie : 1;		// External interrupt enable 
-			unsigned ge : 1;		// Global interrupts enabler
+			unsigned c : 1;		// Carry
+			unsigned v : 1;		// Overflow 
+			unsigned z : 1;		// Zero
+			unsigned n : 1;		// Negative
+			unsigned e : 1;		// Extension (above s32)
+			unsigned u : 1;		// Unnormalization
+			unsigned tb : 1;	// Test bit (btstl/btsth instructions)
+			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the CLRB instruction.
+			unsigned te0 : 1;	// Interrupt enable 0
+			unsigned te1 : 1;	// Interrupt enable 1
+			unsigned te2 : 1;	// Interrupt enable 2
+			unsigned te3 : 1;	// Interrupt enable 3
+			unsigned et : 1;	// Global interrupt enable
 			// Not actually status, but ALU control
-			unsigned am : 1;		// Product multiply result by 2 (when AM = 0)  (0 = M2, 1 = M0)
-			unsigned sxm : 1;	// Sign extension mode for loading in Middle regs (0 = clr40, 1 = set40) 
-			unsigned su : 1;	// Operands are signed (1 = unsigned)
+			unsigned im : 1;	// Integer/fraction mode. 0: fraction mode, 1: integer mode. In fraction mode, the output of the multiplier is shifted left 1 bit to remove the sign.
+			unsigned xl : 1;	// Extension limit mode. Affects the loading and saving of a/b operands.
+			unsigned dp : 1;	// Double precision mode. Affects mixed multiply (xxxMPY) instructions. When DP = 1, some of the operands of these instructions are signed and some are unsigned.
 		};
 
 		uint16_t bits;
-
 	};
 
 	#pragma pack (pop)
@@ -106,8 +103,8 @@ namespace DSP
 		st3,			// Loop counter register 
 		ac0h,			// 40-bit Accumulator 0 (high) 
 		ac1h,			// 40-bit Accumulator 1 (high) 
-		bank,			// Bank register (LRS/SRS)
-		sr,				// Status register 
+		dpp,			// Used as high 8-bits of address for some load/store instructions
+		psr,			// Processor Status register 
 		prodl,			// Product register (low) 
 		prodm1,			// Product register (mid 1) 
 		prodh,			// Product register (high) 
@@ -129,159 +126,36 @@ namespace DSP
 		uint16_t lm[4];	// Limit registers
 		std::vector<DspAddress> st[4];	// Stack registers
 		DspLongAccumulator ac[2];		// 40-bit Accumulators
-		DspShortAccumulator ax[2];		// 32-bit Accumulators
+		DspShortOperand ax[2];		// 32-bit operands
 		DspProduct prod;		// Product register
-		// https://github.com/dolphin-emu/dolphin/wiki/Zelda-Microcode#unknown-registers
-		uint16_t bank;		// bank (lrs/srs)
-		DspStatus sr;		// status
+		uint16_t dpp;		// Used as high 8-bits of address for some load/store instructions
+		DspStatus psr;		// Processor status
 		DspAddress pc;		// Program counter
 	};
 
-	enum class DspHardwareRegs
+	// DSP interrupts
+
+	enum class DspInterrupt
 	{
-		CMBH = 0xFFFE,		// CPU->DSP Mailbox H 
-		CMBL = 0xFFFF,		// CPU->DSP Mailbox L 
-		DMBH = 0xFFFC,		// DSP->CPU Mailbox H 
-		DMBL = 0xFFFD,		// DSP->CPU Mailbox L 
+		Reset = 0,	// Soft reset
+		Error,		// Stack underflow/overflow
+		Trap,		// Trap instruction
+		Acrs,		// Accelerator read start (TE1)
+		Acwe,		// Accelerator write end (TE1)
+		Dcre,		// Decoder read end (TE1)
+		AiDma,		// Not used (TE2)
+		CpuInt,		// External interrupt (from CPU) (TE3)
 
-		DSMAH = 0xFFCE,		// Memory address H 
-		DSMAL = 0xFFCF,		// Memory address L 
-		DSPA = 0xFFCD,		// DSP memory address 
-		DSCR = 0xFFC9,		// DMA control 
-		DSBL = 0xFFCB,		// Block size 
-
-		ACDAT2 = 0xFFD3,	// RAW accelerator data (R/W)
-		ACSAH = 0xFFD4,		// Accelerator start address H 
-		ACSAL = 0xFFD5,		// Accelerator start address L 
-		ACEAH = 0xFFD6,		// Accelerator end address H 
-		ACEAL = 0xFFD7,		// Accelerator end address L 
-		ACCAH = 0xFFD8,		// Accelerator current address H  +  Acc Direction
-		ACCAL = 0xFFD9,		// Accelerator current address L 
-		AMDM = 0xFFEF,		// ARAM DMA Request Mask
-		// From https://github.com/devkitPro/gamecube-tools/blob/master/gdopcode/disassemble.cpp
-		ACFMT = 0xFFD1,			// sample format used
-		ACPDS = 0xFFDA,			// predictor / scale combination
-		ACYN1 = 0xFFDB,			// y[n - 1]
-		ACYN2 = 0xFFDC,			// y[n - 2]
-		ACDAT = 0xFFDD,		// Decoded Adpcm data (Read)  y[n]  (Read only)
-		ACGAN = 0xFFDE,			// gain to be applied (PCM mode only)
-		// ADPCM coef table. Coefficient selected by Adpcm Predictor
-		ADPCM_A00 = 0xFFA0,		// Coef * Yn1[0]
-		ADPCM_A10 = 0xFFA1,		// Coef * Yn2[0]
-		ADPCM_A20 = 0xFFA2,		// Coef * Yn1[1]
-		ADPCM_A30 = 0xFFA3,		// Coef * Yn2[1]
-		ADPCM_A40 = 0xFFA4,		// Coef * Yn1[2]
-		ADPCM_A50 = 0xFFA5,		// Coef * Yn2[2]
-		ADPCM_A60 = 0xFFA6,		// Coef * Yn1[3]
-		ADPCM_A70 = 0xFFA7,		// Coef * Yn2[3]
-		ADPCM_A01 = 0xFFA8,		// Coef * Yn1[4]
-		ADPCM_A11 = 0xFFA9,		// Coef * Yn2[4]
-		ADPCM_A21 = 0xFFAA,		// Coef * Yn1[5]
-		ADPCM_A31 = 0xFFAB,		// Coef * Yn2[5]
-		ADPCM_A41 = 0xFFAC,		// Coef * Yn1[6]
-		ADPCM_A51 = 0xFFAD,		// Coef * Yn2[6]
-		ADPCM_A61 = 0xFFAE,		// Coef * Yn1[7]
-		ADPCM_A71 = 0xFFAF,		// Coef * Yn2[7]
-		// Unknown
-		UNKNOWN_FFB0 = 0xFFB0,
-		UNKNOWN_FFB1 = 0xFFB1,
-
-		DIRQ = 0xFFFB,		// IRQ request
+		Max,
 	};
 
-	// Known DSP exceptions
-
-	enum class DspException
+	struct DspInterruptControl
 	{
-		RESET = 0,
-		STOVF,			// Stack underflow/overflow
-		Unknown2,
-		ACR_OVF,		// Acclerator current address = Start address (RAW Read mode)
-		ACW_OVF,		// Acclerator current address = End address (RAW Write mode)
-		ADP_OVF,		// Acclerator current address = End address (ADPCM Decoder mode)
-		Unknown6,
-		INT,			// External interrupt (from CPU)
+		int pendingDelay[(size_t)DspInterrupt::Max];
+		bool pending[(size_t)DspInterrupt::Max];
 	};
 
-	// Accelerator sample format
-
-	enum class AccelFormat
-	{
-		RawByte = 0x0005,		// Seen in IROM
-		RawUInt16 = 0x0006,		// 
-		Pcm16 = 0x000A,			// Signed 16 bit PCM mono
-		Pcm8 = 0x0019,			// Signed 8 bit PCM mono
-		Adpcm = 0x0000,			// ADPCM encoded (both standard & extended)
-	};
-
-	// DSP DMA registers
-
-	struct DspDmaRegs
-	{
-		union
-		{
-			struct
-			{
-				uint16_t	l;
-				uint16_t	h;
-			};
-			uint32_t	bits;
-		} mmemAddr;
-		DspAddress  dspAddr;
-		uint16_t	blockSize;
-		union
-		{
-			struct
-			{
-				unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
-				unsigned Imem : 1;			// 0: DMEM, 1: IMEM
-			};
-			uint16_t	bits;
-		} control;
-	};
-
-	// DSP accelerator state
-
-	struct DspAccel
-	{
-		uint16_t Fmt;					// Sample format
-		uint16_t AdpcmCoef[16];
-		uint16_t AdpcmPds;				// predictor / scale combination
-		uint16_t AdpcmYn1;				// y[n - 1]
-		uint16_t AdpcmYn2;				// y[n - 2]
-		uint16_t AdpcmGan;				// gain to be applied
-		union
-		{
-			struct
-			{
-				uint16_t l;
-				uint16_t h;
-			};
-			uint32_t addr;
-		} StartAddress;
-		union
-		{
-			struct
-			{
-				uint16_t l;
-				uint16_t h;
-			};
-			uint32_t addr;
-		} EndAddress;
-		union
-		{
-			struct
-			{
-				uint16_t l;
-				uint16_t h;
-			};
-			uint32_t addr;
-		} CurrAddress;
-
-		bool pendingOverflow;
-		DspException overflowVector;
-	};
-
+	class Dsp16;
 	class DspInterpreter;
 
 	class DspCore
@@ -299,79 +173,33 @@ namespace DSP
 		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
-		uint64_t savedGekkoTicks = 0;
-
-		Thread* dspThread = nullptr;
-		static void DspThreadProc(void* Parameter);
-
-		DspInterpreter* interp;
-
-		volatile uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
-		SpinLock DspToCpuLock[2];
-
-		volatile uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
-		SpinLock CpuToDspLock[2];
-
-		bool haltOnUnmappedMemAccess = false;
-
-		DspDmaRegs DmaRegs;
-
-		DspAccel Accel;
-
-		void ResetIfx();
-		void DoDma();
-		uint16_t AccelReadData(bool raw);
-		uint16_t AccelFetch();
-		void AccelWriteData(uint16_t data);
-		void ResetAccel();
-		uint16_t DecodeAdpcm(uint16_t nibble);
+		DspInterpreter* interp = nullptr;
 
 		bool pendingInterrupt = false;
 		int pendingInterruptDelay = 2;
 		bool pendingSoftReset = false;
+		bool pendingOverflow = false;
 
-		// Logging control
-		bool logMailbox = false;
-		bool logInsaneMailbox = false;
-		bool logDspControlBits = false;
-		bool logDspInterrupts = false;
-		bool logNonconditionalCallJmp = false;
-		bool logDspDma = false;
-		bool logAccel = false;
-		bool logAdpcm = false;
-		bool dumpUcode = false;
+		Dsp16* dsp = nullptr;
+
+		DspInterruptControl intr = { 0 };
+
+		void CheckInterrupts();
 
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
 
-		static const size_t IRAM_SIZE = (8 * 1024);
-		static const size_t IROM_SIZE = (8 * 1024);
-		static const size_t DRAM_SIZE = (8 * 1024);
-		static const size_t DROM_SIZE = (4 * 1024);
-
-		static const size_t IROM_START_ADDRESS = 0x8000;
-		static const size_t DROM_START_ADDRESS = 0x1000;
-		static const size_t IFX_START_ADDRESS = 0xFF00;		// Internal dsp "hardware"
-
 		DspRegs regs;
 
-		uint8_t iram[IRAM_SIZE] = { 0 };
-		uint8_t irom[IROM_SIZE] = { 0 };
-		uint8_t dram[DRAM_SIZE] = { 0 };
-		uint8_t drom[DROM_SIZE] = { 0 };
-
-		DspCore(HWConfig* config);
+		DspCore(Dsp16 *parent);
 		~DspCore();
 
-		void Exception(DspException id);
-		void ReturnFromException();
+		void AssertInterrupt(DspInterrupt id);
+		bool IsInterruptPending(DspInterrupt id);
+		void ReturnFromInterrupt();
 		void SoftReset();
 		void HardReset();
-
-		void Run();
-		bool IsRunning() { return dspThread->IsRunning(); }
-		void Suspend();
 
 		void Update();
 
@@ -390,42 +218,13 @@ namespace DSP
 		bool TestCanary(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
-		void DumpIfx();
 
 		// Register access
 
 		void MoveToReg(int reg, uint16_t val);
 		uint16_t MoveFromReg(int reg);
 
-		// Memory engine
-
-		uint8_t* TranslateIMem(DspAddress addr);
-		uint8_t* TranslateDMem(DspAddress addr);
-		uint16_t ReadIMem(DspAddress addr);
-		uint16_t ReadDMem(DspAddress addr);
-		void WriteDMem(DspAddress addr, uint16_t value);
-
-		// Flipper interface
-
-		void DSPSetResetBit(bool val);
-		bool DSPGetResetBit();
-		void DSPSetIntBit(bool val);
-		bool DSPGetIntBit();
-		void DSPSetHaltBit(bool val);
-		bool DSPGetHaltBit();
-
-		// CPU->DSP Mailbox
-		void CpuToDspWriteHi(uint16_t value);
-		void CpuToDspWriteLo(uint16_t value);
-		uint16_t CpuToDspReadHi(bool ReadByDsp);
-		uint16_t CpuToDspReadLo(bool ReadByDsp);
-		// DSP->CPU Mailbox
-		void DspToCpuWriteHi(uint16_t value);
-		void DspToCpuWriteLo(uint16_t value);
-		uint16_t DspToCpuReadHi(bool ReadByDsp);
-		uint16_t DspToCpuReadLo(bool ReadByDsp);
-
-		// Multiplier and ALU
+		// Multiplier and ALU utils
 		
 		static int64_t SignExtend40(int64_t);
 		static int64_t SignExtend16(int16_t);
@@ -437,9 +236,6 @@ namespace DSP
 		static DspProduct Mulus(uint16_t a, int16_t b, bool scale);
 
 		void ArAdvance(int r, int16_t step);
-
-		static void InitSubsystem();
-		static void ShutdownSubsystem();
 	};
 
 	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union

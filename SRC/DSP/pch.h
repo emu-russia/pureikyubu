@@ -21,9 +21,7 @@
 #include "../Debugger/Debugger.h"
 #include "../Debugger/EventLog.h"
 
-#include "DspCore.h"
-#include "DspAnalyzer.h"
-#include "DspInterpreter.h"
+#include "DSP.h"
 #include "DspDisasm.h"
 #include "DspCommands.h"
 

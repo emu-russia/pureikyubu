@@ -133,12 +133,12 @@ namespace DSP
 
 	void DspInterpreter::TCLR(AnalyzeInfo& info)
 	{
-		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == 0;
+		core->regs.psr.tb = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == 0;
 	}
 
 	void DspInterpreter::TSET(AnalyzeInfo& info)
 	{
-		core->regs.sr.ok = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
+		core->regs.psr.tb = (core->regs.ac[info.paramBits[0]].m & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
 	}
 
 	void DspInterpreter::ANDI(AnalyzeInfo& info)
@@ -187,8 +187,8 @@ namespace DSP
 
 	void DspInterpreter::BLOOP(AnalyzeInfo& info)
 	{
-		int oldSxm = core->regs.sr.sxm;
-		core->regs.sr.sxm = 0;
+		int oldXl = core->regs.psr.xl;
+		core->regs.psr.xl = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 2, info.ImmOperand.Address, core->MoveFromReg(info.paramBits[0]));
@@ -198,7 +198,7 @@ namespace DSP
 		{
 			core->regs.pc = info.ImmOperand.Address + 1;
 		}
-		core->regs.sr.sxm = oldSxm;
+		core->regs.psr.xl = oldXl;
 	}
 
 	void DspInterpreter::BLOOPI(AnalyzeInfo& info)
@@ -218,7 +218,7 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
-			if (core->logNonconditionalCallJmp)
+			if (core->dsp->logNonconditionalCallJmp)
 			{
 				Report(Channel::DSP, "0x%04X: CALL 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
 			}
@@ -234,19 +234,19 @@ namespace DSP
 
 	void DspInterpreter::CALLR(AnalyzeInfo& info)
 	{
-		int oldSxm = core->regs.sr.sxm;
-		core->regs.sr.sxm = 0;
+		int oldXl = core->regs.psr.xl;
+		core->regs.psr.xl = 0;
 
 		uint16_t address = core->MoveFromReg(info.paramBits[0]);
 
-		if (core->logNonconditionalCallJmp)
+		if (core->dsp->logNonconditionalCallJmp)
 		{
 			Report(Channel::DSP, "0x%04X: CALLR 0x%04X\n", core->regs.pc, address);
 		}
 
 		core->regs.st[0].push_back(core->regs.pc + 1);
 		core->regs.pc = address;
-		core->regs.sr.sxm = oldSxm;
+		core->regs.psr.xl = oldXl;
 	}
 
 	void DspInterpreter::CLR(AnalyzeInfo& info)
@@ -340,7 +340,7 @@ namespace DSP
 
 	void DspInterpreter::HALT(AnalyzeInfo& info)
 	{
-		core->Suspend();
+		core->dsp->Suspend();
 	}
 
 	void DspInterpreter::IAR(AnalyzeInfo& info)
@@ -380,14 +380,14 @@ namespace DSP
 	{
 		core->MoveToReg(
 			(int)DspRegister::ac0m + info.paramBits[0],
-			core->ReadIMem(core->regs.ar[info.paramBits[1]]));
+			core->dsp->ReadIMem(core->regs.ar[info.paramBits[1]]));
 	}
 
 	void DspInterpreter::ILRRD(AnalyzeInfo& info)
 	{
 		core->MoveToReg(
 			(int)DspRegister::ac0m + info.paramBits[0],
-			core->ReadIMem(core->regs.ar[info.paramBits[1]]));
+			core->dsp->ReadIMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]--;
 	}
 
@@ -395,7 +395,7 @@ namespace DSP
 	{
 		core->MoveToReg(
 			(int)DspRegister::ac0m + info.paramBits[0],
-			core->ReadIMem(core->regs.ar[info.paramBits[1]]));
+			core->dsp->ReadIMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]++;
 	}
 
@@ -403,7 +403,7 @@ namespace DSP
 	{
 		core->MoveToReg(
 			(int)DspRegister::ac0m + info.paramBits[0],
-			core->ReadIMem(core->regs.ar[info.paramBits[1]]));
+			core->dsp->ReadIMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
 	}
 
@@ -411,7 +411,7 @@ namespace DSP
 	{
 		if (Condition(info.cc))
 		{
-			if (core->logNonconditionalCallJmp && info.cc == ConditionCode::Always)
+			if (core->dsp->logNonconditionalCallJmp && info.cc == ConditionCode::Always)
 			{
 				Report(Channel::DSP, "0x%04X: JMP 0x%04X\n", core->regs.pc, info.ImmOperand.Address);
 			}
@@ -426,24 +426,24 @@ namespace DSP
 
 	void DspInterpreter::JMPR(AnalyzeInfo& info)
 	{
-		int oldSxm = core->regs.sr.sxm;
-		core->regs.sr.sxm = 0;
+		int oldXl = core->regs.psr.xl;
+		core->regs.psr.xl = 0;
 
 		uint16_t address = core->MoveFromReg(info.paramBits[0]);
 
-		if (core->logNonconditionalCallJmp)
+		if (core->dsp->logNonconditionalCallJmp)
 		{
 			Report(Channel::DSP, "0x%04X: JMPR 0x%04X\n", core->regs.pc, address);
 		}
 
 		core->regs.pc = address;
-		core->regs.sr.sxm = oldSxm;
+		core->regs.psr.xl = oldXl;
 	}
 
 	void DspInterpreter::LOOP(AnalyzeInfo& info)
 	{
-		int oldSxm = core->regs.sr.sxm;
-		core->regs.sr.sxm = 0;
+		int oldSxm = core->regs.psr.xl;
+		core->regs.psr.xl = 0;
 		if (core->MoveFromReg(info.paramBits[0]) != 0)
 		{
 			SetLoop(core->regs.pc + 1, core->regs.pc + 1, core->MoveFromReg(info.paramBits[0]));
@@ -453,7 +453,7 @@ namespace DSP
 		{
 			core->regs.pc += 2;
 		}
-		core->regs.sr.sxm = oldSxm;
+		core->regs.psr.xl = oldSxm;
 	}
 
 	void DspInterpreter::LOOPI(AnalyzeInfo& info)
@@ -471,7 +471,7 @@ namespace DSP
 
 	void DspInterpreter::LR(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(info.ImmOperand.UnsignedShort));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(info.ImmOperand.UnsignedShort));
 	}
 
 	void DspInterpreter::LRI(AnalyzeInfo& info)
@@ -486,31 +486,31 @@ namespace DSP
 
 	void DspInterpreter::LRR(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramBits[1]]));
 	}
 
 	void DspInterpreter::LRRD(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]--;
 	}
 
 	void DspInterpreter::LRRI(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]]++;
 	}
 
 	void DspInterpreter::LRRN(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(core->regs.ar[info.paramBits[1]]));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(core->regs.ar[info.paramBits[1]]));
 		core->regs.ar[info.paramBits[1]] += core->regs.ix[info.paramBits[1]];
 	}
 
 	void DspInterpreter::LRS(AnalyzeInfo& info)
 	{
-		core->MoveToReg(info.paramBits[0], core->ReadDMem(
-			(core->regs.bank << 8) | (uint8_t)info.ImmOperand.Address));
+		core->MoveToReg(info.paramBits[0], core->dsp->ReadDMem(
+			(core->regs.dpp << 8) | (uint8_t)info.ImmOperand.Address));
 	}
 
 	void DspInterpreter::LSL(AnalyzeInfo& info)
@@ -551,32 +551,32 @@ namespace DSP
 
 	void DspInterpreter::M2(AnalyzeInfo& info)
 	{
-		core->regs.sr.am = 0;
+		core->regs.psr.im = 0;
 	}
 
 	void DspInterpreter::M0(AnalyzeInfo& info)
 	{
-		core->regs.sr.am = 1;
+		core->regs.psr.im = 1;
 	}
 
 	void DspInterpreter::CLR15(AnalyzeInfo& info)
 	{
-		core->regs.sr.su = 0;
+		core->regs.psr.dp = 0;
 	}
 
 	void DspInterpreter::SET15(AnalyzeInfo& info)
 	{
-		core->regs.sr.su = 1;
+		core->regs.psr.dp = 1;
 	}
 
 	void DspInterpreter::CLR40(AnalyzeInfo& info)
 	{
-		core->regs.sr.sxm = 0;
+		core->regs.psr.xl = 0;
 	}
 
 	void DspInterpreter::SET40(AnalyzeInfo& info)
 	{
-		core->regs.sr.sxm = 1;
+		core->regs.psr.xl = 1;
 	}
 
 	void DspInterpreter::MOV(AnalyzeInfo& info)
@@ -709,55 +709,55 @@ namespace DSP
 
 	void DspInterpreter::RTI(AnalyzeInfo& info)
 	{
-		core->ReturnFromException();
+		core->ReturnFromInterrupt();
 	}
 
 	void DspInterpreter::SBSET(AnalyzeInfo& info)
 	{
-		core->regs.sr.bits |= (1 << info.ImmOperand.Byte);
+		core->regs.psr.bits |= (1 << info.ImmOperand.Byte);
 	}
 
 	void DspInterpreter::SBCLR(AnalyzeInfo& info)
 	{
-		core->regs.sr.bits &= ~(1 << info.ImmOperand.Byte);
+		core->regs.psr.bits &= ~(1 << info.ImmOperand.Byte);
 	}
 
 	void DspInterpreter::SI(AnalyzeInfo& info)
 	{
-		core->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
+		core->dsp->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
 	}
 
 	void DspInterpreter::SR(AnalyzeInfo& info)
 	{
-		core->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
+		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg(info.paramBits[1]));
 	}
 
 	void DspInterpreter::SRR(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
 	}
 
 	void DspInterpreter::SRRD(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
 		core->regs.ar[info.paramBits[0]]--;
 	}
 
 	void DspInterpreter::SRRI(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
 		core->regs.ar[info.paramBits[0]]++;
 	}
 
 	void DspInterpreter::SRRN(AnalyzeInfo& info)
 	{
-		core->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
+		core->dsp->WriteDMem(core->regs.ar[info.paramBits[0]], core->MoveFromReg(info.paramBits[1]));
 		core->regs.ar[info.paramBits[0]] += core->regs.ix[info.paramBits[0]];
 	}
 
 	void DspInterpreter::SRS(AnalyzeInfo& info)
 	{
-		core->WriteDMem( (core->regs.bank << 8) | (uint8_t)info.ImmOperand.Address,
+		core->dsp->WriteDMem( (core->regs.dpp << 8) | (uint8_t)info.ImmOperand.Address,
 			core->MoveFromReg(info.paramBits[1]));
 	}
 
@@ -850,21 +850,21 @@ namespace DSP
 	{
 		switch (cc)
 		{
-			case ConditionCode::GE: return core->regs.sr.s == core->regs.sr.o;
-			case ConditionCode::L: return core->regs.sr.s != core->regs.sr.o;
-			case ConditionCode::G: return (core->regs.sr.s == core->regs.sr.o) && (core->regs.sr.z == 0);
-			case ConditionCode::LE: return (core->regs.sr.s != core->regs.sr.o) && (core->regs.sr.z != 0);
-			case ConditionCode::NE: return core->regs.sr.z == 0;
-			case ConditionCode::EQ: return core->regs.sr.z != 0;
-			case ConditionCode::NC: return core->regs.sr.c == 0;
-			case ConditionCode::C: return core->regs.sr.c != 0;
-			case ConditionCode::BelowS32: return core->regs.sr.as == 0;
-			case ConditionCode::AboveS32: return core->regs.sr.as != 0;
-			case ConditionCode::UnknownA: return false;		// TODO
-			case ConditionCode::UnknownB: return false;		// TODO
-			case ConditionCode::NOK: return core->regs.sr.ok == 0;
-			case ConditionCode::OK: return core->regs.sr.ok != 0;
-			case ConditionCode::O: return core->regs.sr.o != 0;
+			case ConditionCode::GE: return (core->regs.psr.n ^ core->regs.psr.v) == 0;
+			case ConditionCode::LT: return (core->regs.psr.n ^ core->regs.psr.v) != 0;
+			case ConditionCode::GT: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) == 0;
+			case ConditionCode::LE: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) != 0;
+			case ConditionCode::NZ: return core->regs.psr.z == 0;
+			case ConditionCode::Z: return core->regs.psr.z != 0;
+			case ConditionCode::NC: return core->regs.psr.c == 0;
+			case ConditionCode::C: return core->regs.psr.c != 0;
+			case ConditionCode::NE: return core->regs.psr.e == 0;
+			case ConditionCode::E: return core->regs.psr.e != 0;
+			case ConditionCode::NM: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) == 0;
+			case ConditionCode::M: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) != 0;
+			case ConditionCode::NT: return core->regs.psr.tb == 0;
+			case ConditionCode::T: return core->regs.psr.tb != 0;
+			case ConditionCode::V: return core->regs.psr.v != 0;
 			case ConditionCode::Always: return true;
 		}
 
@@ -898,12 +898,12 @@ namespace DSP
 			ovf = aMsb != msb;
 		}
 
-		core->regs.sr.c = carry;
-		core->regs.sr.o = ovf;
-		core->regs.sr.z = zero;
-		core->regs.sr.s = msb;
-		core->regs.sr.tt = msb == afterMsb;
-		core->regs.sr.as = aboveS32;
+		core->regs.psr.c = carry;
+		core->regs.psr.v = ovf;
+		core->regs.psr.z = zero;
+		core->regs.psr.n = msb;
+		core->regs.psr.e = aboveS32;
+		core->regs.psr.u = msb == afterMsb;
 	}
 
 	void DspInterpreter::Flags(DspLongAccumulator a, DspLongAccumulator b, DspLongAccumulator res)
@@ -1101,7 +1101,7 @@ namespace DSP
 
 			default:
 				Halt("DSP Unknown instruction at 0x%04X\n", core->regs.pc);
-				core->Suspend();
+				core->dsp->Suspend();
 				return;
 		}
 
@@ -1142,7 +1142,7 @@ namespace DSP
 
 				default:
 					Halt("DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
-					core->Suspend();
+					core->dsp->Suspend();
 					return;
 			}
 		}
@@ -1161,18 +1161,18 @@ namespace DSP
 
 		DspAddress imemAddr = core->regs.pc;
 
-		uint8_t* imemPtr = core->TranslateIMem(imemAddr);
+		uint8_t* imemPtr = core->dsp->TranslateIMem(imemAddr);
 		if (imemPtr == nullptr)
 		{
 			Halt("DSP TranslateIMem failed on dsp addr: 0x%04X\n", imemAddr);
-			core->Suspend();
+			core->dsp->Suspend();
 			return;
 		}
 
 		if (!Analyzer::Analyze(imemPtr, DspCore::MaxInstructionSizeInBytes, info))
 		{
 			Halt("DSP Analyzer failed on dsp addr: 0x%04X\n", imemAddr);
-			core->Suspend();
+			core->dsp->Suspend();
 			return;
 		}
 

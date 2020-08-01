@@ -1,9 +1,6 @@
 
 #pragma once
 
-// hardware registers base (physical address)
-#define HW_BASE         0x0C000000
-
 namespace Flipper
 {
 	class AudioMixer;
@@ -18,7 +15,7 @@ namespace Flipper
 		static const size_t ticksToHwUpdate = 100;
 
 	public:
-		DSP::DspCore* DSP;      // instance of dsp core
+		DSP::Dsp16* DSP = nullptr;      // instance of dsp core
 		AudioMixer* Mixer = nullptr;
 
 		Flipper(HWConfig* config);

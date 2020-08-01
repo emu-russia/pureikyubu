@@ -30,8 +30,8 @@ namespace DSP
 			case DspParameter::st3: text = "st3"; break;
 			case DspParameter::ac0h: text = "ac0.h"; break;
 			case DspParameter::ac1h: text = "ac1.h"; break;
-			case DspParameter::bank: text = "bank"; break;
-			case DspParameter::sr: text = "sr"; break;
+			case DspParameter::dpp: text = "dpp"; break;
+			case DspParameter::psr: text = "psr"; break;
 			case DspParameter::prodl: text = "prod.l"; break;
 			case DspParameter::prodm1: text = "prod.m1"; break;
 			case DspParameter::prodh: text = "prod.h"; break;
@@ -377,20 +377,20 @@ namespace DSP
 		switch (cc)
 		{
 			case ConditionCode::GE: text = "ge"; break;
-			case ConditionCode::L: text = "l"; break;
-			case ConditionCode::G: text = "g"; break;
+			case ConditionCode::LT: text = "lt"; break;
+			case ConditionCode::GT: text = "gt"; break;
 			case ConditionCode::LE: text = "le"; break;
-			case ConditionCode::NE: text = "ne"; break;
-			case ConditionCode::EQ: text = "eq"; break;
+			case ConditionCode::NZ: text = "nz"; break;
+			case ConditionCode::Z: text = "z"; break;
 			case ConditionCode::NC: text = "nc"; break;
 			case ConditionCode::C: text = "c"; break;
-			case ConditionCode::BelowS32: text = "bs32"; break;
-			case ConditionCode::AboveS32: text = "as32"; break;
-			case ConditionCode::UnknownA: text = "unkA"; break;
-			case ConditionCode::UnknownB: text = "unkB"; break;
-			case ConditionCode::NOK: text = "nok"; break;
-			case ConditionCode::OK: text = "ok"; break;
-			case ConditionCode::O: text = "o"; break;
+			case ConditionCode::NE: text = "ne"; break;
+			case ConditionCode::E: text = "e"; break;
+			case ConditionCode::NM: text = "nm"; break;
+			case ConditionCode::M: text = "m"; break;
+			case ConditionCode::NT: text = "nt"; break;
+			case ConditionCode::T: text = "t"; break;
+			case ConditionCode::V: text = "v"; break;
 			case ConditionCode::Always: text = ""; break;
 		}
 

@@ -11,19 +11,17 @@
 
 namespace DSP
 {
-#pragma region "Multiplier Instructions"
-
 	void DspInterpreter::Mul(int16_t a, int16_t b)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 		core->regs.prod = DspCore::Muls(a, b, scale);
 	}
 
 	void DspInterpreter::Mulx(int16_t a, int16_t b, int an, int bn)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 
-		if (core->regs.sr.su)
+		if (core->regs.psr.dp)
 		{
 			if (an == 0 && bn == 0)
 			{
@@ -50,7 +48,7 @@ namespace DSP
 
 	void DspInterpreter::Madd(int16_t a, int16_t b)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 		DspProduct temp = DspCore::Muls(a, b, scale);
 		
 		DspCore::PackProd(core->regs.prod);
@@ -62,7 +60,7 @@ namespace DSP
 
 	void DspInterpreter::Msub(int16_t a, int16_t b)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 		DspProduct temp = DspCore::Muls(a, b, scale);
 
 		DspCore::PackProd(core->regs.prod);
@@ -74,7 +72,7 @@ namespace DSP
 
 	void DspInterpreter::Mulac(int16_t a, int16_t b, int r)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 
 		DspCore::PackProd(core->regs.prod);
 		int64_t ac = DspCore::SignExtend40(core->regs.ac[r].sbits);
@@ -96,7 +94,7 @@ namespace DSP
 
 	void DspInterpreter::Mulmv(int16_t a, int16_t b, int r)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 
 		DspCore::PackProd(core->regs.prod);
 		core->regs.ac[r].sbits = core->regs.prod.bitsPacked;
@@ -116,7 +114,7 @@ namespace DSP
 
 	void DspInterpreter::Mulmvz(int16_t a, int16_t b, int r)
 	{
-		bool scale = core->regs.sr.am == 0;
+		bool scale = core->regs.psr.im == 0;
 
 		DspCore::PackProd(core->regs.prod);
 		core->regs.ac[r].sbits = core->regs.prod.bitsPacked;
@@ -298,6 +296,4 @@ namespace DSP
 		int16_t b = info.paramBits[1] ? core->regs.ax[1].h : core->regs.ax[1].l;
 		Mulxmvz(a, b, info.paramBits[2], info.paramBits[0], info.paramBits[1]);
 	}
-
-#pragma region "Multiplier Instructions"
 }

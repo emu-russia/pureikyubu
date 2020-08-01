@@ -15,7 +15,7 @@ using namespace Debug;
 
 namespace DSP
 {
-	uint16_t DspCore::AccelFetch()
+	uint16_t Dsp16::AccelFetch()
 	{
 		uint16_t val = 0;
 		uint8_t tempByte = 0;
@@ -67,18 +67,14 @@ namespace DSP
 				Report(Channel::DSP, "Accelerator Overflow while read\n");
 			}
 
-			if (regs.sr.ge && regs.sr.acie)
-			{
-				Accel.pendingOverflow = true;
-				Accel.overflowVector = ((Accel.Fmt >> 3) & 3) == 0 ? DspException::ADP_OVF : DspException::ACR_OVF;
-			}
+			core->AssertInterrupt(((Accel.Fmt >> 3) & 3) == 0 ? DspInterrupt::Dcre : DspInterrupt::Acrs);
 		}
 
 		return val;
 	}
 
 	// Read data by accelerator and optionally decode (raw=false)
-	uint16_t DspCore::AccelReadData(bool raw)
+	uint16_t Dsp16::AccelReadData(bool raw)
 	{
 		uint16_t val = 0;
 
@@ -101,7 +97,7 @@ namespace DSP
 	}
 
 	// Write RAW data to ARAM
-	void DspCore::AccelWriteData(uint16_t data)
+	void Dsp16::AccelWriteData(uint16_t data)
 	{
 		// Check bit15 of ACCAH
 		if ((Accel.CurrAddress.h & 0x8000) == 0)
@@ -124,17 +120,8 @@ namespace DSP
 				Report(Channel::DSP, "Accelerator Overflow while write\n");
 			}
 
-			if (regs.sr.ge && regs.sr.acie)
-			{
-				Accel.pendingOverflow = true;
-				Accel.overflowVector = DspException::ACW_OVF;
-			}
+			core->AssertInterrupt(DspInterrupt::Acwe);
 		}
-	}
-
-	void DspCore::ResetAccel()
-	{
-		Accel.pendingOverflow = false;
 	}
 
 }

@@ -1,4 +1,4 @@
-// DSP ADPCM Decoder
+// DSP PCM/ADPCM Decoder
 
 #include "pch.h"
 
@@ -6,7 +6,7 @@ using namespace Debug;
 
 namespace DSP
 {
-	uint16_t DspCore::DecodeAdpcm(uint16_t in)
+	uint16_t Dsp16::DecodeAdpcm(uint16_t in)
 	{
 		int64_t yn = 0;
 		int64_t out = 0;
@@ -58,11 +58,11 @@ namespace DSP
 				out = (yn >> 16);
 				break;
 			case 3:
-				Halt("DSP: Unsupported ADPCM output mode\n");
+				Halt("DSP: Unsupported Decoder output mode\n");
 				break;
 		}
 
-		//DBReport("0x%08X = 0x%04X\n", (Accel.CurrAddress.addr & 0x07FF'FFFF) - 1, (uint16_t)out);
+		//Report(Channel::DSP, "0x%08X = 0x%04X\n", (Accel.CurrAddress.addr & 0x07FF'FFFF) - 1, (uint16_t)out);
 
 		return (uint16_t)out;
 	}
