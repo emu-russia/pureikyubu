@@ -422,7 +422,6 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
  * Calls the memcard settings dialog
  */ 
 void MemcardConfigure(int num, HWND hParent) {
-    bool openedBefore;
     if ((num != 0) && (num != 1)) return ;
     um_num = num;
 

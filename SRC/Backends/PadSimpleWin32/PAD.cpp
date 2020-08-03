@@ -104,13 +104,13 @@ static void pad_reset_chan(PADState *state)
 }
 
 // collect keyboard buttons in PADState
-long PADReadButtons(long padnum, PADState *state)
+bool PADReadButtons(long padnum, PADState *state)
 {
     uint16_t button = 0;
 
     pad_reset_chan(state);
 
-    if(!pad[padnum].plugged) return 0;
+    if(!pad[padnum].plugged) return false;
 
     if(padnum < 4)
     {
@@ -195,12 +195,12 @@ long PADReadButtons(long padnum, PADState *state)
 
     state->button = button;
 
-    return 1;
+    return true;
 }
 
 // controller motor. 0 returned, if rumble is not supported by PAD.
 // see one of PAD_MOTOR* for allowed commands.
-long PADSetRumble(long padnum, long cmd)
+bool PADSetRumble(long padnum, long cmd)
 {
     return false;
 }

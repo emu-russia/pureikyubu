@@ -160,6 +160,31 @@ public:
 			this->parent = _parent;
 		}
 
+		~Value()
+		{
+			while (!children.empty())
+			{
+				Value *child = children.back();
+				children.pop_back();
+				delete child;
+			}
+
+			if (type == ValueType::String)
+			{
+				if (value.AsString)
+				{
+					delete[] value.AsString;
+					value.AsString = nullptr;
+				}
+			}
+
+			if (name != nullptr)
+			{
+				delete[] name;
+				name = nullptr;
+			}
+		}
+
 		void Serialize(SerializeContext* ctx, int depth, bool sizeOnly);
 		void Deserialize(DeserializeContext* ctx, TCHAR* keyName);
 

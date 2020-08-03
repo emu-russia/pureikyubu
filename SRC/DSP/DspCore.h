@@ -64,12 +64,11 @@ namespace DSP
 			unsigned u : 1;		// Unnormalization
 			unsigned tb : 1;	// Test bit (btstl/btsth instructions)
 			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the CLRB instruction.
-			unsigned te0 : 1;	// Interrupt enable 0
-			unsigned te1 : 1;	// Interrupt enable 1
-			unsigned te2 : 1;	// Interrupt enable 2
-			unsigned te3 : 1;	// Interrupt enable 3
+			unsigned te0 : 1;	// Interrupt enable 0 (Not used)
+			unsigned te1 : 1;	// Interrupt enable 1 (Acrs, Acwe, Dcre)
+			unsigned te2 : 1;	// Interrupt enable 2 (AiDma, not used by ucodes)
+			unsigned te3 : 1;	// Interrupt enable 3 (CpuInt)
 			unsigned et : 1;	// Global interrupt enable
-			// Not actually status, but ALU control
 			unsigned im : 1;	// Integer/fraction mode. 0: fraction mode, 1: integer mode. In fraction mode, the output of the multiplier is shifted left 1 bit to remove the sign.
 			unsigned xl : 1;	// Extension limit mode. Affects the loading and saving of a/b operands.
 			unsigned dp : 1;	// Double precision mode. Affects mixed multiply (xxxMPY) instructions. When DP = 1, some of the operands of these instructions are signed and some are unsigned.

@@ -102,8 +102,8 @@ namespace Debug
 				char ascii = record.Event.KeyEvent.uChar.AsciiChar;
 				int vcode = record.Event.KeyEvent.wVirtualKeyCode;
 				int ctrl = record.Event.KeyEvent.dwControlKeyState;
-				bool shiftPressed = ctrl & SHIFT_PRESSED;
-				bool ctrlPressed = ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED);
+				bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
+				bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
 
 				cui->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
 
