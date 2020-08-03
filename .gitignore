@@ -32,3 +32,4 @@ memory_leak_report.txt
 
 *.VC.db
 *.VC.opendb
+*.ipch

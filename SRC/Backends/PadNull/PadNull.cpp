@@ -11,12 +11,12 @@ void PADClose()
 {
 }
 
-long PADReadButtons(long padnum, PADState* state)
+bool PADReadButtons(long padnum, PADState* state)
 {
-	return 0;
+	return false;
 }
 
-long PADSetRumble(long padnum, long cmd)
+bool PADSetRumble(long padnum, long cmd)
 {
-	return 0;
+	return false;
 }

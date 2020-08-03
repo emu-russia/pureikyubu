@@ -90,12 +90,15 @@ void EMUClose()
     HLEClose();
 
     Gekko::Gekko->Suspend();
+	Gekko::Gekko->Reset();
 
     delete Flipper::HW;
     Flipper::HW = nullptr;
 
     delete Debug::Log;
     Debug::Log = nullptr;
+
+	DVD::Unmount();
 
     emu.loaded = false;
 }

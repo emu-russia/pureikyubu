@@ -17,16 +17,12 @@ namespace Gekko
 	Cache::Cache()
 	{
 		cacheData = new uint8_t[cacheSize];
-		assert(cacheData);
 
 		modifiedBlocks = new bool[cacheSize >> 5];
-		assert(modifiedBlocks);
 
 		invalidBlocks = new bool[cacheSize >> 5];
-		assert(invalidBlocks);
 
 		LockedCache = new uint8_t[16 * 1024];
-		assert(LockedCache);
 
 		Reset();
 	}
@@ -36,6 +32,7 @@ namespace Gekko
 		delete[] cacheData;
 		delete[] modifiedBlocks;
 		delete[] invalidBlocks;
+		delete[] LockedCache;
 	}
 
 	void Cache::Reset()

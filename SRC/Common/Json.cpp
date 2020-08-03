@@ -15,12 +15,14 @@ void Json::DestroyValue(Value* value)
 		if (value->value.AsString)
 		{
 			delete[] value->value.AsString;
+			value->value.AsString = nullptr;
 		}
 	}
 
 	if (value->name != nullptr)
 	{
 		delete[] value->name;
+		value->name = nullptr;
 	}
 }
 

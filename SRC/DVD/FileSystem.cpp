@@ -128,6 +128,16 @@ bool dvd_fs_init()
     return true;
 }
 
+void dvd_fs_shutdown()
+{
+	if (FstStart)
+	{
+		free(FstStart);
+		FstStart = NULL;
+		fstSize = 0;
+	}
+}
+
 // Based on reversing of original method.
 // <0: Bad path
 static int DVDConvertPathToEntrynum(const char* _path)

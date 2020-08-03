@@ -67,7 +67,11 @@ namespace Util
         fread(data, 1, size, f);
         fclose(f);
 
-        return std::vector<uint8_t>(data, data + size);
+		std::vector<uint8_t> output(data, data + size);
+
+		delete[] data;
+
+        return output;
     }
 
     std::vector<uint8_t> FileLoad(const std::string& filename)

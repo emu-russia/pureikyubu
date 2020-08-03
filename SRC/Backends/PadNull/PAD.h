@@ -39,9 +39,9 @@ struct PADState
 bool PADOpen();
 void PADClose();
 
-// read controller buttons state. returns 1, if ok, and 0, if PAD not connected
-long PADReadButtons(long padnum, PADState* state);
+// read controller buttons state. returns true, if ok, false, if PAD not connected
+bool PADReadButtons(long padnum, PADState* state);
 
 // controller motor. 0 returned, if rumble is not supported by PAD.
 // see one of PAD_MOTOR* for allowed commands.
-long PADSetRumble(long padnum, long cmd);
+bool PADSetRumble(long padnum, long cmd);

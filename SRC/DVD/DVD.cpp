@@ -109,6 +109,8 @@ namespace DVD
             delete dvd.mountedSdk;
             dvd.mountedSdk = nullptr;
         }
+
+		dvd_fs_shutdown();
     }
 
     bool IsMounted()
