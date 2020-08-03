@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -19,25 +19,18 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Config.h" />
-    <ClInclude Include="..\..\EmuCommands.h" />
-    <ClInclude Include="..\..\Emulator.h" />
-    <ClInclude Include="..\..\ExecutableFormat.h" />
-    <ClInclude Include="..\..\JdiServer.h" />
-    <ClInclude Include="..\..\Loader.h" />
-    <ClInclude Include="..\..\pch.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\..\Config.cpp" />
-    <ClCompile Include="..\..\EmuCommands.cpp" />
-    <ClCompile Include="..\..\Emulator.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Use</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="..\..\JdiServer.cpp" />
-    <ClCompile Include="..\..\Loader.cpp" />
+    <ClCompile Include="..\..\DSP.cpp" />
+    <ClCompile Include="..\..\DspAccel.cpp" />
+    <ClCompile Include="..\..\DspAdpcm.cpp" />
+    <ClCompile Include="..\..\DspAnalyzer.cpp" />
+    <ClCompile Include="..\..\DspCommands.cpp" />
+    <ClCompile Include="..\..\DspCore.cpp" />
+    <ClCompile Include="..\..\DspDisasm.cpp" />
+    <ClCompile Include="..\..\DspDma.cpp" />
+    <ClCompile Include="..\..\DspInterpreter.cpp" />
+    <ClCompile Include="..\..\DspMailbox.cpp" />
+    <ClCompile Include="..\..\DspMultiply.cpp" />
+    <ClCompile Include="..\..\DspParallelMemOps.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -46,78 +39,51 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Data\Json\EmuJdi.json" />
-    <None Include="..\..\Readme.md" />
+    <ClInclude Include="..\..\DSP.h" />
+    <ClInclude Include="..\..\DspAccel.h" />
+    <ClInclude Include="..\..\DspAdpcm.h" />
+    <ClInclude Include="..\..\DspAnalyzer.h" />
+    <ClInclude Include="..\..\DspCommands.h" />
+    <ClInclude Include="..\..\DspCore.h" />
+    <ClInclude Include="..\..\DspDisasm.h" />
+    <ClInclude Include="..\..\DspDma.h" />
+    <ClInclude Include="..\..\DspInterpreter.h" />
+    <ClInclude Include="..\..\pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\ThirdParty\fmt\Scripts\VS2019\fmt.vcxproj">
-      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Backends\AudioNull\Scripts\VS2019\AudioNull.vcxproj">
-      <Project>{37d58fb6-e50b-43e1-9a31-873741284f22}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Backends\GraphicsNull\Scripts\VS2019\GraphicsNull.vcxproj">
-      <Project>{263f3c73-83e6-4aa5-8810-9d8e6c1a45ef}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Backends\PadNull\Scripts\VS2019\PadNull.vcxproj">
-      <Project>{cfaabe07-9e8e-4343-a226-22d3692a94ec}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Backends\VideoNull\Scripts\VS2019\VideoNull.vcxproj">
-      <Project>{17ba92cc-00ae-4488-96a6-4d73a8f1c38c}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Common\Scripts\VS2019\Common.vcxproj">
-      <Project>{8f4f6ae1-b308-4c7f-81fc-4cddd2302c95}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Debugger\Scripts\VS2019\Debugger.vcxproj">
-      <Project>{7fc22f72-a07b-404a-bce4-7a950ea3c44b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\DSP\Scripts\VS2019\DSP.vcxproj">
-      <Project>{0336d67c-249d-4c48-bd80-8e05ce711a58}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\DVD\Scripts\VS2019\DVD.vcxproj">
-      <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\GekkoCore\Scripts\VS2019\GekkoCore.vcxproj">
-      <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\Hardware\Scripts\VS2019\GCNHardwareForPlayground.vcxproj">
-      <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\..\HighLevel\Scripts\VS2019\GCNHighLevel.vcxproj">
-      <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
-    </ProjectReference>
+    <None Include="..\..\..\..\Data\Json\DspJdi.json" />
+    <None Include="..\..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{6BE86DCE-EC88-4113-9E7B-22B6EF50FDFC}</ProjectGuid>
+    <ProjectGuid>{0336D67C-249D-4C48-BD80-8E05CE711A58}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>DolwinEmu</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <RootNamespace>DSP</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -141,116 +107,94 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(SolutionDir)SRC\Libraries\fmt;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)RnD/VisualLeakDetector/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <BaseAddress>0x400000</BaseAddress>
-      <AdditionalLibraryDirectories>$(SolutionDir)RnD/VisualLeakDetector/lib/Win64</AdditionalLibraryDirectories>
     </Link>
-    <Lib>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-    </Lib>
+    <Lib />
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)RnD/VisualLeakDetector/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)RnD/VisualLeakDetector/lib/Win32</AdditionalLibraryDirectories>
     </Link>
-    <Lib>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
-    </Lib>
+    <Lib />
+    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)RnD/VisualLeakDetector/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <BaseAddress>0x400000</BaseAddress>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <AdditionalLibraryDirectories>$(SolutionDir)RnD/VisualLeakDetector/lib/Win32</AdditionalLibraryDirectories>
     </Link>
+    <Lib />
     <Lib>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <FunctionLevelLinking>true</FunctionLevelLinking>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <AdditionalIncludeDirectories>$(SolutionDir)RnD/VisualLeakDetector/include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <BaseAddress>0x400000</BaseAddress>
-      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-      <AdditionalLibraryDirectories>$(SolutionDir)RnD/VisualLeakDetector/lib/Win64</AdditionalLibraryDirectories>
     </Link>
+    <Lib />
     <Lib>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
     </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

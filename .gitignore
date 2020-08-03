@@ -26,3 +26,9 @@ EventLog.json
 
 htmldoc
 html
+Microsoft.DTfW.DHL.manifest
+vld.ini
+memory_leak_report.txt
+
+*.VC.db
+*.VC.opendb
