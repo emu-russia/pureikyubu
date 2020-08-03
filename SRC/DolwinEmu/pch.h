@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vld.h>
+//#include <vld.h>
 
 // ---------------------------------------------------------------------------
 // compiler and SDK include files.
