@@ -12,7 +12,11 @@ A short tour into the Flipper stuff, without shocking details:
 - SI: Serial Interface (goes to GameCube controllers connectors)
 - VI: Video output
 
-There is also an emulation of memory cards (MC).
+Somehow also emulation of memory cards (Memcards) got here. For now, let it stay here, then we'll move it somewhere, if the emulation of more accessories and peripherals appears.
+
+## Real revisions of Flipper
+
+It is documented (in the Dolphin SDK) that there were at least 2 versions of Flipper hardware - `HW1` (an early debug version) and `HW2` (contained in the latest Devkits and Retail consoles).
 
 ## A small note on VI
 
