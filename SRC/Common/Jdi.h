@@ -2,14 +2,6 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-#include <list>
-#include <string>
-
-#include "Spinlock.h"
-#include "Json.h"
-
 namespace JDI
 {
 	typedef Json::Value* (*CmdDelegate)(std::vector<std::string>& args);

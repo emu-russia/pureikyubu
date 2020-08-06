@@ -4,9 +4,9 @@
 #include <vector>
 #include <string>
 #include <cstdio>
-#include <conio.h>
 
 #ifdef _WINDOWS
+#include <conio.h>
 #include <Windows.h>
 #endif
 

@@ -2,8 +2,12 @@
 
 #include <string>
 #include <vector>
+#include <list>
+#include <map>
 #include <algorithm>
+#include <cassert>
 
+#include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"

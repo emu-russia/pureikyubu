@@ -1,15 +1,15 @@
 #pragma once
 
-// compiler and Windows API includes
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <tchar.h>
-#include <windows.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 
+#include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
+#include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
@@ -18,7 +18,7 @@
 #include "../GekkoCore/Gekko.h"
 
 #include "DVD.h"
-#include "GCM.h"            // very simple GCM reading (for .gcm files)
+#include "GCM.h"
 #include "DduCommands.h"
 
 #include "Mn102Analyzer.h"

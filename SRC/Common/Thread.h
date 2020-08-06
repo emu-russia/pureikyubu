@@ -2,11 +2,9 @@
 
 #pragma once
 
-#ifdef _WINDOWS
-#include <Windows.h>
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#include <windows.h>
 #endif
-
-#include "Spinlock.h"
 
 typedef void (*ThreadProc)(void* param);
 

@@ -125,11 +125,11 @@ namespace JDI
 
 			// Print help group header
 
-			TCHAR* helpGroupHead = nullptr;
+			const wchar_t* helpGroupHead = nullptr;
 			Json::Value* info = rootObj->ByName("info");
 			if (info == nullptr)
 			{
-				helpGroupHead = (TCHAR *)_T("Jdi with missing info");
+				helpGroupHead = L"Jdi with missing info";
 			}
 			else
 			{
@@ -138,16 +138,16 @@ namespace JDI
 				{
 					helpGroupHead = helpGroup->type == Json::ValueType::String ?
 						helpGroup->value.AsString : 
-						(TCHAR*)_T("Jdi with invalid helpGroup");
+						L"Jdi with invalid helpGroup";
 				}
 				else
 				{
-					helpGroupHead = (TCHAR*)_T("Jdi with missing helpGroup");
+					helpGroupHead = L"Jdi with missing helpGroup";
 				}
-				helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : (TCHAR *)_T("Jdi with missing helpGroup");
+				helpGroupHead = helpGroup != nullptr ? helpGroup->value.AsString : L"Jdi with missing helpGroup";
 			}
 
-			Report(Channel::Header, "## %s\n", Util::TcharToString(helpGroupHead).c_str());
+			Report(Channel::Header, "## %s\n", Util::WstringToString(helpGroupHead).c_str());
 
 			// Enumerate can commands help texts
 
@@ -160,8 +160,8 @@ namespace JDI
 				char nameWithHint[0x100] = { 0, };
 
 				Json::Value* next = *cmd;
-				TCHAR* helpText = (TCHAR *)_T("");
-				TCHAR* hintsText = (TCHAR*)_T("");
+				const wchar_t* helpText = L"";
+				const wchar_t* hintsText = L"";
 
 				// Skip internal commands
 
@@ -192,7 +192,7 @@ namespace JDI
 
 				strcpy_s(nameWithHint, sizeof(nameWithHint) - 1, next->name);
 				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, " ");
-				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, Util::TcharToString(hintsText).c_str());
+				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, Util::WstringToString(hintsText).c_str());
 
 				size_t nameWithHintSize = strlen(nameWithHint);
 				size_t i = nameWithHintSize;
@@ -202,7 +202,7 @@ namespace JDI
 				}
 				nameWithHint[i++] = '\0';
 
-				Report(Channel::Norm, "    %s - %s\n", nameWithHint, Util::TcharToString(helpText).c_str());
+				Report(Channel::Norm, "    %s - %s\n", nameWithHint, Util::WstringToString(helpText).c_str());
 			}
 
 			Report(Channel::Norm, "\n");
@@ -271,7 +271,7 @@ namespace JDI
 
 			if (line->type == Json::ValueType::String)
 			{
-				Report(Channel::Norm, "%s", Util::TcharToString(line->value.AsString).c_str());
+				Report(Channel::Norm, "%s", Util::WstringToString(line->value.AsString).c_str());
 			}
 		}
 	}
@@ -402,7 +402,7 @@ namespace JDI
 
 			case Json::ValueType::String:
 				Report(Channel::Norm, "%s%s: String: %s", indent,
-					value->name ? value->name : "", Util::TcharToString(value->value.AsString).c_str());
+					value->name ? value->name : "", Util::WstringToString(value->value.AsString).c_str());
 				break;
 		}
 	}

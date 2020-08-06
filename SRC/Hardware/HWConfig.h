@@ -2,8 +2,6 @@
 
 // Config
 
-#include <tchar.h>
-
 struct HWConfig
 {
     // MI
@@ -22,18 +20,18 @@ struct HWConfig
     // EI
     bool        exi_log;
     bool        exi_osReport;
-    TCHAR       ansiFilename[0x1000];
-    TCHAR       sjisFilename[0x1000];
+    wchar_t     ansiFilename[0x1000];
+    wchar_t     sjisFilename[0x1000];
 
     // MC
     bool        MemcardA_Connected;
     bool        MemcardB_Connected;
-    TCHAR       MemcardA_Filename[0x1000];
-    TCHAR       MemcardB_Filename[0x1000];
+    wchar_t     MemcardA_Filename[0x1000];
+    wchar_t     MemcardB_Filename[0x1000];
     bool        Memcard_SyncSave;
 
-    TCHAR       BootromFilename[0x1000];
-    TCHAR       DspDromFilename[0x1000];
-    TCHAR       DspIromFilename[0x1000];
+    wchar_t     BootromFilename[0x1000];
+    wchar_t     DspDromFilename[0x1000];
+    wchar_t     DspIromFilename[0x1000];
 
 };

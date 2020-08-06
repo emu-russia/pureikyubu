@@ -23,31 +23,4 @@ namespace Util
 		}
 		return wstr;
 	}
-
-	std::string TcharToString(const TCHAR* tstr)
-	{
-		char ansiText[0x200] = { 0, };
-		char* ansiPtr = ansiText;
-		TCHAR* tcharPtr = (TCHAR *)tstr;
-		while (*tcharPtr)
-		{
-			*ansiPtr++ = (char)*tcharPtr++;
-		}
-		*ansiPtr++ = 0;
-		return std::string(ansiText);
-	}
-
-	std::wstring TcharToWstring(const TCHAR* tstr)
-	{
-		wchar_t wideText[0x200] = { 0, };
-		wchar_t* widePtr = wideText;
-		TCHAR* tcharPtr = (TCHAR*)tstr;
-		while (*tcharPtr)
-		{
-			*widePtr++ = (wchar_t)*tcharPtr++;
-		}
-		*widePtr++ = 0;
-		return std::wstring(wideText);
-	}
-
 }

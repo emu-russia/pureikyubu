@@ -10,15 +10,15 @@ using namespace Debug;
 
 namespace DVD
 {
-	MountDolphinSdk::MountDolphinSdk(const TCHAR * DolphinSDKPath)
+	MountDolphinSdk::MountDolphinSdk(const wchar_t * DolphinSDKPath)
 	{
-		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
+		wcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
 
-		/* Load dvddata structure. */
+		// Load dvddata structure.
 		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
-			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR *)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
 			return;
 		}
 
@@ -28,7 +28,7 @@ namespace DVD
 		}
 		catch (...)
 		{
-			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR*)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
 			return;
 		}
 
@@ -91,10 +91,10 @@ namespace DVD
 		mapping.push_back(entry);
 	}
 
-	void MountDolphinSdk::MapFile(TCHAR* path, uint32_t offset)
+	void MountDolphinSdk::MapFile(wchar_t* path, uint32_t offset)
 	{
 		size_t size = Util::FileSize(path);
-		std::tuple<TCHAR*, uint32_t, size_t> entry(path, offset, size);
+		std::tuple<wchar_t*, uint32_t, size_t> entry(path, offset, size);
 		fileMapping.push_back(entry);
 	}
 
@@ -121,7 +121,7 @@ namespace DVD
 	{
 		for (auto it = fileMapping.begin(); it != fileMapping.end(); ++it)
 		{
-			TCHAR* file = std::get<0>(*it);
+			wchar_t* file = std::get<0>(*it);
 			uint32_t startingOffset = std::get<1>(*it);
 			size_t size = std::get<2>(*it);
 
@@ -130,7 +130,7 @@ namespace DVD
 				maxSize = min(requestedSize, (startingOffset + size) - offset);
 
 				FILE* f;
-				_tfopen_s(&f, file, _T("rb"));
+				_wfopen_s(&f, file, L"rb");
 				assert(f);
 
 				fseek(f, offset - startingOffset, SEEK_SET);
@@ -309,7 +309,7 @@ namespace DVD
 
 			if (!skipMeta)
 			{
-				std::string path = Util::TcharToString(entry->value.AsString);
+				std::string path = Util::WstringToString(entry->value.AsString);
 
 				size_t nameOffset = NameTableData.size();
 				AddString(path);
@@ -346,15 +346,15 @@ namespace DVD
 
 				//DBReport("Processing file: %s\n", path.c_str());
 
-				TCHAR filePath[0x1000] = { 0, };
+				wchar_t filePath[0x1000] = { 0, };
 
-				_tcscat_s(filePath, _countof(filePath) - 1, directory);
-				_tcscat_s(filePath, _countof(filePath) - 1, _T("/dvddata"));
-				TCHAR* filePathPtr = filePath + _tcslen(filePath);
+				wcscat_s(filePath, _countof(filePath) - 1, directory);
+				wcscat_s(filePath, _countof(filePath) - 1, L"/dvddata");
+				wchar_t* filePathPtr = filePath + wcslen(filePath);
 
 				for (size_t i = 0; i < path.size(); i++)
 				{
-					*filePathPtr++ = (TCHAR)path[i];
+					*filePathPtr++ = (wchar_t)path[i];
 				}
 				*filePathPtr++ = 0;
 

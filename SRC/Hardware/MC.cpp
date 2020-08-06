@@ -572,7 +572,7 @@ bool MCConnect (int cardnum) {
                 "Couldnt open memcard (slot %c),\n"
                 "location : %s\n\n"
                 "Check path or file attributes.",
-                slt[cardnum], Util::TcharToString(memcard[cardnum].filename).c_str()
+                slt[cardnum], Util::WstringToString(memcard[cardnum].filename).c_str()
             );
             return false;
         }

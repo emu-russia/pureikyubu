@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <intrin.h>
-#include <fstream>
-#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
 #include <atomic>
 
 #include "../Common/Spinlock.h"

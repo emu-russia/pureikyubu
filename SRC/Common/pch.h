@@ -1,12 +1,10 @@
 #pragma once
 
+#include <vector>
+#include <list>
+#include <map>
 #include <string>
-#include <locale>
-#include <codecvt>
-#include <fstream>
-#ifdef _WINDOWS
-#include <windows.h>
-#endif
+#include <cassert>
 
 #include "Spinlock.h"
 #include "Thread.h"

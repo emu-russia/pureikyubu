@@ -5,11 +5,6 @@
 
 #pragma once
 
-#include <tchar.h>
-#include <list>
-#include <string>
-#include <cassert>
-
 class Json
 {
 	// Foolproof
@@ -25,8 +20,8 @@ private:
 	// Recursive destruction of value and all its descendants
 	void DestroyValue(Value* value);
 
-	static TCHAR* CloneStr(const TCHAR* str);
-	static TCHAR* CloneAnsiStr(const char* str);
+	static wchar_t* CloneStr(const wchar_t* str);
+	static wchar_t* CloneAnsiStr(const char* str);
 
 	#pragma region "Serialization Related"
 
@@ -44,9 +39,9 @@ private:
 
 	static void EmitText(SerializeContext* ctx, const char* text, bool sizeOnly);
 
-	// Simple TCHAR to UTF-8 Converter + Escaping
+	// Simple wchar_t to UTF-8 Converter + Escaping
 	static void EmitCodePoint(SerializeContext* ctx, int cp, bool sizeOnly);
-	static void EmitTcharString(SerializeContext* ctx, TCHAR* str, bool sizeOnly);
+	static void EmitTcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly);
 
 	// Indentation
 
@@ -97,7 +92,7 @@ private:
 			uint64_t AsInt;
 			float AsFloat;
 			bool AsBool;
-			TCHAR* AsString = nullptr;
+			wchar_t* AsString = nullptr;
 		} value;
 	};
 
@@ -131,7 +126,7 @@ public:
 	class Value
 	{
 		char* CloneName(const char* otherName);
-		char* CloneTcharName(const TCHAR* otherName);
+		char* CloneTcharName(const wchar_t* otherName);
 		void DeserializeObject(DeserializeContext* ctx);
 		void DeserializeArray(DeserializeContext* ctx);
 
@@ -148,7 +143,7 @@ public:
 			uint8_t AsUint8;
 			uint16_t AsUint16;
 			uint32_t AsUint32;
-			TCHAR* AsString = nullptr;	// Only the String value type requires the release of the stored value.
+			wchar_t* AsString = nullptr;	// Only the String value type requires the release of the stored value.
 			bool AsBool;
 		} value;
 		std::list<Value*> children;
@@ -186,7 +181,7 @@ public:
 		}
 
 		void Serialize(SerializeContext* ctx, int depth, bool sizeOnly);
-		void Deserialize(DeserializeContext* ctx, TCHAR* keyName);
+		void Deserialize(DeserializeContext* ctx, wchar_t* keyName);
 
 		// Dynamic modification
 
@@ -197,9 +192,9 @@ public:
 		Value* AddFloat(const char* keyName, float _value);
 		Value* AddNull(const char* keyName);
 		Value* AddBool(const char* keyName, bool _value);
-		Value* AddString(const char* keyName, const TCHAR* str);
+		Value* AddString(const char* keyName, const wchar_t* str);
 		Value* AddAnsiString(const char* keyName, const char* str);
-		Value* ReplaceString(const TCHAR* str);
+		Value* ReplaceString(const wchar_t* str);
 		Value* AddObject(const char* keyName);
 		Value* AddArray(const char* keyName);
 		Value* AddValue(const char* keyName, Value* value);

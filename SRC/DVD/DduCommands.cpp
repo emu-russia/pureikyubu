@@ -26,7 +26,7 @@ namespace DVD
 
 		if (dvd.mountedImage)
 		{
-			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::TcharToString(dvd.gcm_filename).c_str());
+			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::WstringToString(dvd.gcm_filename).c_str());
 			Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
 			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
@@ -35,7 +35,7 @@ namespace DVD
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::TcharToString(dvd.mountedSdk->GetDirectory()).c_str());
+			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::WstringToString(dvd.mountedSdk->GetDirectory()).c_str());
 			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());

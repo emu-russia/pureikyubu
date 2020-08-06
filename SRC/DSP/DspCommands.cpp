@@ -23,24 +23,17 @@ namespace DSP
             return nullptr;
         }
 
-        auto file = std::ofstream("Data\\dspdisa.txt");
-        if (!file.is_open())
-        {
-            Report(Channel::Norm, "Failed to create dsp_disa.txt\n");
-            return nullptr;
-        }
-
         uint8_t* ucodePtr = ucode.data();
         size_t bytesLeft = ucode.size();
         size_t offset = 0;      // in DSP slots (halfwords)
 
-        file << fmt::format("// Disassembled {:s}\n\n", args[1].c_str());
+        auto text = fmt::format("// Disassembled {:s}\n\n", args[1].c_str());
 
         while (bytesLeft != 0)
         {
             DSP::AnalyzeInfo info = { 0 };
 
-            /* Analyze. */
+            // Analyze
             bool result = DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
             if (!result)
             {
@@ -48,17 +41,23 @@ namespace DSP
                 break;
             }
 
-            /* Disassemble. */
+            // Disassemble
             std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
 
-            file << fmt::format("{:s}\n", text.c_str());
+            auto line = fmt::format("{:s}\n", text.c_str());
+            text += line;
 
             offset += (info.sizeInBytes / sizeof(uint16_t));
             bytesLeft -= info.sizeInBytes;
             ucodePtr += info.sizeInBytes;
         }
 
-        file.close();
+        std::vector<uint8_t> textData(text.begin(), text.end());
+        if (!Util::FileSave(L"Data\\dspdisa.txt", textData))
+        {
+            Report(Channel::Norm, "Failed to save dsp_disa.txt\n");
+            return nullptr;
+        }
 
         Report(Channel::Norm, "Done.\n");
         return nullptr;
