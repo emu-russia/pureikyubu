@@ -1,5 +1,7 @@
 #include "pch.h"
 
+#ifdef _WINDOWS
+
 void SpinLock::Lock()
 {
     while (_InterlockedCompareExchange(&_lock,
@@ -15,3 +17,5 @@ void SpinLock::Unlock()
 {
     _InterlockedExchange(&_lock, 0);
 }
+
+#endif

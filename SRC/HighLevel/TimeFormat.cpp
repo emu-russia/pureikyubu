@@ -5,7 +5,7 @@ namespace HLE
 
     // Convert GC time to human-usable time string;
     // example output : "30 Jun 2004 3:06:14:127"
-    void OSTimeFormat(TCHAR gcTime[256], uint64_t tbr, bool noDate)
+    void OSTimeFormat(wchar_t gcTime[256], uint64_t tbr, bool noDate)
     {
         // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
         // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
@@ -26,19 +26,19 @@ namespace HLE
         FileTimeToSystemTime(&fileTime, &sysTime);
 
         // format string
-        static const TCHAR* mnstr[12] =
-        { _T("Jan"), _T("Feb"), _T("Mar"), _T("Apr"),
-          _T("May"), _T("Jun"), _T("Jul"), _T("Aug"),
-          _T("Sep"), _T("Oct"), _T("Nov"), _T("Dec")
+        static const wchar_t* mnstr[12] =
+        { L"Jan", L"Feb", L"Mar", L"Apr",
+          L"May", L"Jun", L"Jul", L"Aug",
+          L"Sep", L"Oct", L"Nov", L"Dec"
         };
         if (noDate)
         {
-            _stprintf_s(gcTime, 255, _T("%02i:%02i:%02i:%03i"),
+            swprintf_s(gcTime, 255, L"%02i:%02i:%02i:%03i",
                 sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
         }
         else
         {
-            _stprintf_s(gcTime, 255, _T("%i %s %i %02i:%02i:%02i:%03i"),
+            wprintf_s(gcTime, 255, L"%i %s %i %02i:%02i:%02i:%03i",
                 sysTime.wDay, mnstr[sysTime.wMonth - 1], sysTime.wYear,
                 sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
         }

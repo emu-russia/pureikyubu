@@ -6,7 +6,7 @@ using namespace Debug;
 
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
-static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
+static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024], token1[256];
@@ -17,7 +17,7 @@ static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
     int     flags;
     char    procName[512];
 
-    _tfopen_s(&map, mapname, _T("r"));
+    _wfopen_s(&map, mapname, L"r");
     if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
@@ -54,12 +54,12 @@ static MAP_FORMAT LoadMapCW(const TCHAR *mapname)
 
     fclose(map);
 
-    Report(Channel::HLE, "CodeWarrior format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "CodeWarrior format map loaded: %s\n\n", Util::WstringToString(mapname).c_str());
     return MAP_FORMAT::CW;
 }
 
 // load GCC-generated map file
-static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
+static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 {
     BOOL    started = FALSE;
     char    buf[1024];
@@ -70,7 +70,7 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
     char    par1[512];
     char    par2[512];
 
-    _tfopen_s(&map, mapname, _T("r"));
+    _wfopen_s(&map, mapname, L"r");
     if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
@@ -95,12 +95,12 @@ static MAP_FORMAT LoadMapGCC(const TCHAR *mapname)
 
     fclose(map);
 
-    Report(Channel::HLE, "GCC format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "GCC format map loaded: %s\n\n", Util::WstringToString(mapname).c_str());
     return MAP_FORMAT::GCC;
 }
 
 // load Dolwin format map-file
-static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
+static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 {
     /* Open the map file. */
     auto file = std::ifstream(mapname);
@@ -117,12 +117,12 @@ static MAP_FORMAT LoadMapRAW(const TCHAR *mapname)
         SYMAddNew(address, symbol.c_str());
     }
 
-    Report(Channel::HLE, "RAW format map loaded: %s\n\n", Util::TcharToString((TCHAR*)mapname).c_str());
+    Report(Channel::HLE, "RAW format map loaded: %s\n\n", Util::WstringToString(mapname).c_str());
     return MAP_FORMAT::RAW;
 }
 
 // wrapper for all map formats.
-MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
+MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
 {
     FILE *f;
     char sign[256];
@@ -134,13 +134,13 @@ MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
     }
 
     // copy name for MAP saver (with SaveMAP "this" parameter)
-    _tcscpy(hle.mapfile, mapname);
+    wcscpy(hle.mapfile, mapname);
 
     // try to open
-    _tfopen_s(&f, mapname, _T("r"));
+    _wfopen_s(&f, mapname, L"r");
     if(!f)
     {
-        Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::TcharToString((TCHAR*)mapname).c_str());
+        Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::WstringToString(mapname).c_str());
         hle.mapfile[0] = 0;
         return MAP_FORMAT::BAD;
     }
@@ -163,15 +163,15 @@ MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add)
 
 MAP_FORMAT LoadMAP(const char* mapname, bool add)
 {
-    TCHAR tcharStr[0x1000] = { 0, };
-    TCHAR* tcharPtr = tcharStr;
+    wchar_t wcharStr[0x1000] = { 0, };
+    wchar_t* wcharPtr = wcharStr;
     char* charPtr = (char*)mapname;
 
     while (*charPtr)
     {
-        *tcharPtr++ = *charPtr++;
+        *wcharPtr++ = *charPtr++;
     }
-    *tcharPtr++ = 0;
+    *wcharPtr++ = 0;
 
-    return LoadMAP(tcharStr, add);
+    return LoadMAP(wcharStr, add);
 }

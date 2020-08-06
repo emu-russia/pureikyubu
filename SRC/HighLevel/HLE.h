@@ -10,7 +10,7 @@ void    os_trap();
 struct HLEControl
 {
     // current loaded map file
-    TCHAR       mapfile[0x1000];
+    wchar_t       mapfile[0x1000];
 };
 
 extern  HLEControl hle;

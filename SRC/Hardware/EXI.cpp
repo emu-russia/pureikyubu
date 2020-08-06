@@ -184,7 +184,7 @@ void RTCUpdate()
 // load ANSI and SJIS fonts
 //
 
-static void FontLoad(uint8_t **font, uint32_t fontsize, TCHAR *filename)
+static void FontLoad(uint8_t **font, uint32_t fontsize, wchar_t *filename)
 {
     do
     {

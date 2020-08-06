@@ -135,10 +135,10 @@ static char * MAPFind (uint32_t checksum)
 /*
  * Starts the creation of a new map
  */
-void MAPInit(const TCHAR * mapname)
+void MAPInit(const wchar_t * mapname)
 {
     MAPOpen ();
-    Map = _tfopen(mapname, _T("w"));
+    Map = _wfopen(mapname, L"w");
 
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
@@ -264,9 +264,9 @@ void MAPFinish()
 
                 // show status
                 {
-                    TCHAR wideName[0x100] = { 0, };
+                    wchar_t wideName[0x100] = { 0, };
 
-                    TCHAR* wideNamePtr = wideName;
+                    wchar_t* wideNamePtr = wideName;
                     char* namePtr = name;
                     while (*namePtr)
                     {

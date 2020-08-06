@@ -58,11 +58,11 @@ namespace Flipper
 
         if (DSP->LoadIrom(iromImage))
         {
-            Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
+            Report(Channel::DSP, "Loaded DSP IROM: %s\n", Util::WstringToString(config->DspIromFilename).c_str());
         }
         else
         {
-            Report(Channel::Norm, "Failed to load DSP IROM: %s\n", Util::TcharToString(config->DspIromFilename).c_str());
+            Report(Channel::Norm, "Failed to load DSP IROM: %s\n", Util::WstringToString(config->DspIromFilename).c_str());
         }
 
         // Load DROM.
@@ -71,11 +71,11 @@ namespace Flipper
 
         if (DSP->LoadDrom(dromImage))
         {
-            Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::TcharToString(config->DspDromFilename).c_str());
+            Report(Channel::DSP, "Loaded DSP DROM: %s\n", Util::WstringToString(config->DspDromFilename).c_str());
         }
         else
         {
-            Report(Channel::Norm, "Failed to load DSP DROM\n", Util::TcharToString(config->DspDromFilename).c_str());
+            Report(Channel::Norm, "Failed to load DSP DROM\n", Util::WstringToString(config->DspDromFilename).c_str());
         }
 
         Report(Channel::Norm, "\n");

@@ -66,8 +66,8 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 			}
 			else if (child->type == Json::ValueType::String)
 			{
-				size_t size = _tcslen(child->value.AsString);
-				fwrite(child->value.AsString, sizeof(TCHAR), size, f);
+				size_t size = wcslen(child->value.AsString);
+				fwrite(child->value.AsString, sizeof(wchar_t), size, f);
 			}
 
 			// Skip other types for now
@@ -172,16 +172,16 @@ static Json::Value* CmdGetVersionInternal(std::vector<std::string>& args)
 
 static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 {
-	Report(Channel::Norm, "%s = %s\n", USER_ANSI, Util::TcharToString(GetConfigString(USER_ANSI, USER_HW)).c_str());
-	Report(Channel::Norm, "%s = %s\n", USER_SJIS, Util::TcharToString(GetConfigString(USER_SJIS, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_ANSI, Util::WstringToString(GetConfigString(USER_ANSI, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_SJIS, Util::WstringToString(GetConfigString(USER_SJIS, USER_HW)).c_str());
 	Report(Channel::Norm, "%s = 0x%08X\n", USER_CONSOLE, GetConfigInt(USER_CONSOLE, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_OS_REPORT, GetConfigBool(USER_OS_REPORT, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_PI_RSWHACK, GetConfigBool(USER_PI_RSWHACK, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_VI_XFB, GetConfigBool(USER_VI_XFB, USER_HW));
 
-	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::TcharToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
-	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::TcharToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
-	Report(Channel::Norm, "%s = %s\n", USER_DSP_IROM, Util::TcharToString(GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::WstringToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_DROM, Util::WstringToString(GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
+	Report(Channel::Norm, "%s = %s\n", USER_DSP_IROM, Util::WstringToString(GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
 
 	Report(Channel::Norm, "%s = %i\n", USER_EXI_LOG, GetConfigBool(USER_EXI_LOG, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_VI_LOG, GetConfigBool(USER_VI_LOG, USER_HW));
@@ -191,7 +191,7 @@ static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 
 static Json::Value* CmdGetConfigString(std::vector<std::string>& args)
 {
-	TCHAR* param = GetConfigString(args[2].c_str(), args[1].c_str());
+	wchar_t* param = GetConfigString(args[2].c_str(), args[1].c_str());
 
 	Json::Value* output = new Json::Value();
 	output->type = Json::ValueType::Array;

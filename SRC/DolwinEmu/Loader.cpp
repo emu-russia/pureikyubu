@@ -368,9 +368,9 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 {
     // get map file name
     auto mapname = std::wstring();
-    TCHAR drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
+    wchar_t drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
 
-    _tsplitpath_s(filename.data(),
+    _wsplitpath_s(filename.data(),
         drive, _countof(drive) - 1,
         dir, _countof(dir) - 1,
         name, _countof(name) - 1,
@@ -429,17 +429,17 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 void GetDiskId(std::wstring& diskId)
 {
     char diskID[8] = { 0 };
-    TCHAR diskIdTchar[8] = { 0 };
+    wchar_t diskIdWchar[8] = { 0 };
     DVD::Seek(0);
     DVD::Read(diskID, 4);
 
-    diskIdTchar[0] = diskID[0];
-    diskIdTchar[1] = diskID[1];
-    diskIdTchar[2] = diskID[2];
-    diskIdTchar[3] = diskID[3];
-    diskIdTchar[4] = 0;
+    diskIdWchar[0] = diskID[0];
+    diskIdWchar[1] = diskID[1];
+    diskIdWchar[2] = diskID[2];
+    diskIdWchar[3] = diskID[3];
+    diskIdWchar[4] = 0;
 
-    diskId = fmt::sprintf(L"%.4s", diskIdTchar);
+    diskId = fmt::sprintf(L"%.4s", diskIdWchar);
 }
 
 /* Load any Dolwin-supported file */
@@ -460,30 +460,30 @@ void LoadFile(const std::wstring& filename)
     }
     else
     {
-        TCHAR * extension = _tcsrchr((wchar_t*)filename.c_str(), _T('.'));
+        wchar_t* extension = wcsrchr((wchar_t*)filename.c_str(), L'.');
         
-        if (!_tcsicmp(extension, _T(".dol")))
+        if (!_wcsicmp(extension, L".dol"))
         {
             entryPoint = LoadDOL(filename);
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".elf")))
+        else if (!_wcsicmp(extension, L".elf"))
         {
             entryPoint = LoadELF(filename);
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".bin")))
+        else if (!_wcsicmp(extension, L".bin"))
         {
             entryPoint = LoadBIN(filename);
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".iso")))
+        else if (!_wcsicmp(extension, L".iso"))
         {
             DVD::MountFile(filename);
             GetDiskId(diskId);
             dvd = true;
         }
-        else if (!_tcsicmp(extension, _T(".gcm")))
+        else if (!_wcsicmp(extension, L".gcm"))
         {
             DVD::MountFile(filename);
             GetDiskId(diskId);

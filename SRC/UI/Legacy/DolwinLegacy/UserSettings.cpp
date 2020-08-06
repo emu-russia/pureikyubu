@@ -9,26 +9,26 @@ static HINSTANCE    hParentInst;
 static BOOL         settingsLoaded[4];
 static BOOL         needSelUpdate;
 
-static const TCHAR * tabs[] = 
+static const wchar_t* tabs[] =
 {
-    _T("Emulator"),
-    _T("GUI/Selector"),
-    _T("GCN Hardware"),
-    _T("GCN HLE")
+    L"Emulator",
+    L"GUI/Selector",
+    L"GCN Hardware",
+    L"GCN HLE"
 };
 
 static struct ConsoleVersion
 {
     uint32_t ver;
-    const TCHAR*   info;
+    const wchar_t*   info;
 } consoleVersion[] = {
-    { 0x00000001, _T("0x00000001: Retail 1") },
-    { 0x00000002, _T("0x00000002: HW2 production board") },
-    { 0x00000003, _T("0x00000003: The latest production board") },
-    { 0x10000004, _T("0x10000004: 1st Devkit HW") },
-    { 0x10000005, _T("0x10000005: 2nd Devkit HW") },
-    { 0x10000006, _T("0x10000006: The latest Devkit HW") },
-    { 0xffffffff, _T("0x%08X: User defined") }
+    { 0x00000001, L"0x00000001: Retail 1" },
+    { 0x00000002, L"0x00000002: HW2 production board" },
+    { 0x00000003, L"0x00000003: The latest production board" },
+    { 0x10000004, L"0x10000004: 1st Devkit HW" },
+    { 0x10000005, L"0x10000005: 2nd Devkit HW" },
+    { 0x10000006, L"0x10000006: The latest Devkit HW" },
+    { 0xffffffff, L"0x%08X: User defined" }
 };
 
 static char * int2str(int i)
@@ -89,8 +89,8 @@ static void LoadSettings(int n)         // dialogs created
         } while(consoleVersion[++i].ver != 0xffffffff);
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
-            TCHAR buf[100];
-            _stprintf_s(buf, _countof(buf) - 1, consoleVersion[selected].info, ver);
+            wchar_t buf[100];
+            swprintf_s(buf, _countof(buf) - 1, consoleVersion[selected].info, ver);
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)buf);
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
@@ -162,16 +162,16 @@ static void SaveSettings()              // OK pressed
         if(selected == sizeof(consoleVersion)/8 - 1)
         {
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
-            uint32_t ver = _tcstoul(buf.data(), NULL, 0);
+            uint32_t ver = wcstoul(buf.data(), NULL, 0);
             UI::Jdi.SetConfigInt(USER_CONSOLE, ver, USER_HW);
         }
         else UI::Jdi.SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
-        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, (LPWSTR)buf.data(), buf.size());
+        GetDlgItemText(hDlg, IDC_BOOTROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
         UI::Jdi.SetConfigString(USER_BOOTROM, Util::WstringToString(buf), USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, (LPWSTR)buf.data(), buf.size());
+        GetDlgItemText(hDlg, IDC_DSPDROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
         UI::Jdi.SetConfigString(USER_DSP_DROM, Util::WstringToString(buf), USER_HW);
-        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, (LPWSTR)buf.data(), buf.size());
+        GetDlgItemText(hDlg, IDC_DSPIROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
         UI::Jdi.SetConfigString(USER_DSP_IROM, Util::WstringToString(buf), USER_HW);
     }
 
@@ -224,8 +224,8 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                 {
                     ResetAllSettings();
                     UI::DolwinReport(
-                        _T("All Settings have been deleted.\n")
-                        _T("Default values will be restored after first run.")
+                        L"All Settings have been deleted.\n"
+                        L"Default values will be restored after first run."
                     );
                     for(int i=0; i<4; i++) LoadSettings(i);
                 }
@@ -380,7 +380,7 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
                     }
                     else
                     {
-                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, _T(""));
+                        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, L"");
                     }
 
                     break;
@@ -495,14 +495,14 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 
 static void filter_string(HWND hDlg, uint32_t filter)
 {
-    TCHAR buf[64] = { 0 }, * ptr = buf;
-    const TCHAR * mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso") };
+    wchar_t buf[64] = { 0 }, * ptr = buf;
+    const wchar_t* mask[] = { L"*.dol", L"*.elf", L"*.gcm", L"*.iso" };
 
     filter = _byteswap_ulong(filter);
 
     for(int i=0; i<4; i++)
     {
-        if(filter & 0xff) ptr += _stprintf_s(ptr, _countof(buf) - (ptr - buf), _T("%s;"), mask[i]);
+        if(filter & 0xff) ptr += swprintf_s(ptr, _countof(buf) - (ptr - buf), L"%s;", mask[i]);
         filter >>= 8;
     }
 

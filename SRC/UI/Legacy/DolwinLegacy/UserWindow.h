@@ -26,7 +26,7 @@ void AddRecentFile(const std::wstring & path);
 void LoadRecentFile(int index);
 
 /* Window controls API */
-void OnMainWindowOpened(const TCHAR* currentFileName);
+void OnMainWindowOpened(const wchar_t* currentFileName);
 void OnMainWindowClosed();
 HWND CreateMainWindow(HINSTANCE hInst);
 void ResizeMainWindow(int width, int height);

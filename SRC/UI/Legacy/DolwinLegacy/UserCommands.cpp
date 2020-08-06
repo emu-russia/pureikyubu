@@ -14,7 +14,7 @@ Json::Value* CmdUIError(std::vector<std::string>& args)
 		text += args[i] + " ";
 	}
 
-	UI::DolwinError(_T("Error"), _T("%s"), Util::StringToWstring(text).c_str());
+	UI::DolwinError(L"Error", L"%s", Util::StringToWstring(text).c_str());
 
 	return nullptr;
 }
@@ -33,7 +33,7 @@ Json::Value* CmdUIReport(std::vector<std::string>& args)
 		text += args[i] + " ";
 	}
 
-	UI::DolwinReport(_T("%s"), Util::StringToWstring(text).c_str());
+	UI::DolwinReport(L"%s", Util::StringToWstring(text).c_str());
 
 	return nullptr;
 }

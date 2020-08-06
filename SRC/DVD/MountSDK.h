@@ -1,28 +1,21 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-#include <list>
-#include <tchar.h>
-
-#include "../Common/Json.h"
-
 namespace DVD
 {
 	class MountDolphinSdk
 	{
 		bool mounted = false;
 		uint32_t currentSeek = 0;
-		TCHAR directory[0x1000] = { 0 };
+		wchar_t directory[0x1000] = { 0 };
 
 		Json DvdDataInfo;
-		const TCHAR* DvdDataJson = _T("Data\\Json\\DolphinSdkDvdData.json");
+		const wchar_t* DvdDataJson = L"Data\\Json\\DolphinSdkDvdData.json";
 
-		const TCHAR* AppldrPath = _T("/HW2/boot/apploader.img");
-		const TCHAR* Bi2Path = _T("/X86/bin/bi2.bin");
-		const TCHAR* FilesRoot = _T("/dvddata");
-		const TCHAR* DolPath = _T("pong.dol");			// SDK contains demos only in ELF format :/
+		const wchar_t* AppldrPath = L"/HW2/boot/apploader.img";
+		const wchar_t* Bi2Path = L"/X86/bin/bi2.bin";
+		const wchar_t* FilesRoot = L"/dvddata";
+		const wchar_t* DolPath = L"pong.dol";			// SDK contains demos only in ELF format :/
 
 		std::vector<uint8_t> DiskId;
 		std::vector<uint8_t> GameName;
@@ -49,12 +42,12 @@ namespace DVD
 		bool GenFst();
 
 		std::list<std::tuple<std::vector<uint8_t> &, uint32_t, size_t>> mapping;
-		std::list<std::tuple<TCHAR *, uint32_t, size_t>> fileMapping;
+		std::list<std::tuple<wchar_t*, uint32_t, size_t>> fileMapping;
 		bool GenMap();
 		void WalkAndMapFiles(Json::Value* entry);
 		bool GenFileMap();
 		void MapVector(std::vector<uint8_t>& v, uint32_t offset);
-		void MapFile(TCHAR *path, uint32_t offset);
+		void MapFile(wchar_t*path, uint32_t offset);
 		uint8_t* TranslateMemory(uint32_t offset, size_t requestedSize, size_t& maxSize);
 		FILE* TranslateFile(uint32_t offset, size_t requestedSize, size_t& maxSize);
 
@@ -71,7 +64,7 @@ namespace DVD
 		void SwapArea(void* _addr, int sizeInBytes);
 
 	public:
-		MountDolphinSdk(const TCHAR* DolphinSDKPath);
+		MountDolphinSdk(const wchar_t* DolphinSDKPath);
 		~MountDolphinSdk();
 
 		bool Mounted() { return mounted; }
@@ -80,6 +73,6 @@ namespace DVD
 		bool Read(void* buffer, size_t length);
 
 		int GetSeek() { return currentSeek; }
-		TCHAR* GetDirectory() { return directory; }
+		wchar_t* GetDirectory() { return directory; }
 	};
 }

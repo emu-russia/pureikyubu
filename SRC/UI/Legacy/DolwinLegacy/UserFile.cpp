@@ -4,13 +4,13 @@
 namespace UI
 {
     // Open file/directory dialog
-    const TCHAR* FileOpenDialog(HWND hwnd, FileType type)
+    const wchar_t* FileOpenDialog(HWND hwnd, FileType type)
     {
-        static TCHAR tempBuf[0x1000] = { 0 };
+        static wchar_t tempBuf[0x1000] = { 0 };
         OPENFILENAME ofn;
-        TCHAR szFileName[1024];
-        TCHAR szFileTitle[1024];
-        TCHAR prevDir[1024];
+        wchar_t szFileName[1024];
+        wchar_t szFileTitle[1024];
+        wchar_t prevDir[1024];
         std::string lastDir;
         BOOL result;
 
@@ -43,24 +43,24 @@ namespace UI
 
             // Get the shell's allocator. 
             if (!SUCCEEDED(SHGetMalloc(&g_pMalloc)))
-                return _T("");
+                return L"";
 
             // Allocate a buffer to receive browse information.
             lpBuffer = (LPTSTR)g_pMalloc->Alloc(MAX_PATH);
-            if (lpBuffer == NULL) return _T("");
+            if (lpBuffer == NULL) return L"";
 
             // Get the PIDL for the root folder.
             if (!SUCCEEDED(SHGetSpecialFolderLocation(hwnd, CSIDL_DRIVES, &pidlRoot)))
             {
                 g_pMalloc->Free(lpBuffer);
-                return _T("");
+                return L"";
             }
 
             // Fill in the BROWSEINFO structure. 
             bi.hwndOwner = hwnd;
             bi.pidlRoot = pidlRoot;
             bi.pszDisplayName = lpBuffer;
-            bi.lpszTitle = _T("Choose Directory");
+            bi.lpszTitle = L"Choose Directory";
             bi.ulFlags = 0;
             bi.lpfn = NULL;
             bi.lParam = 0;
@@ -71,7 +71,7 @@ namespace UI
             if (result)
             {
                 SHGetPathFromIDList(pidlBrowse, lpBuffer);
-                _tcscpy_s(szFileName, _countof(szFileName) - 1, lpBuffer);
+                wcscpy_s(szFileName, _countof(szFileName) - 1, lpBuffer);
 
                 // Free the PIDL returned by SHBrowseForFolder.
                 g_pMalloc->Free(pidlBrowse);
@@ -92,26 +92,26 @@ namespace UI
             {
                 case FileType::All:
                     ofn.lpstrFilter =
-                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
-                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
-                        _T("Binary Files (*.bin)\0*.bin\0")
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                        L"Binary Files (*.bin)\0*.bin\0"
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Dvd:
                     ofn.lpstrFilter =
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Map:
                     ofn.lpstrFilter =
-                        _T("Symbolic information files (*.map)\0*.map\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"Symbolic information files (*.map)\0*.map\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Json:
                     ofn.lpstrFilter =
-                        _T("Json files (*.json)\0*.json\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"Json files (*.json)\0*.json\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
             }
 
@@ -123,8 +123,8 @@ namespace UI
             ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
             ofn.lpstrFileTitle = szFileTitle;
             ofn.nMaxFileTitle = sizeof(szFileTitle);
-            ofn.lpstrTitle = _T("Open File\0");
-            ofn.lpstrDefExt = _T("");
+            ofn.lpstrTitle = L"Open File\0";
+            ofn.lpstrDefExt = L"";
             ofn.Flags = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
 
             result = GetOpenFileName(&ofn);
@@ -132,11 +132,11 @@ namespace UI
 
         if (result)
         {
-            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
+            wcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
             // save last directory
 
-            lastDir = Util::TcharToString(tempBuf);
+            lastDir = Util::WstringToString(tempBuf);
 
             while (lastDir.back() != '\\')
             {
@@ -163,18 +163,18 @@ namespace UI
         else
         {
             SetCurrentDirectory(prevDir);
-            return _T("");
+            return L"";
         }
     }
 
     // Save file dialog
-    const TCHAR* FileSaveDialog(HWND hwnd, FileType type)
+    const wchar_t* FileSaveDialog(HWND hwnd, FileType type)
     {
-        static TCHAR tempBuf[0x1000] = { 0 };
+        static wchar_t tempBuf[0x1000] = { 0 };
         OPENFILENAME ofn;
-        TCHAR szFileName[1024];
-        TCHAR szFileTitle[1024];
-        TCHAR prevDir[1024];
+        wchar_t szFileName[1024];
+        wchar_t szFileTitle[1024];
+        wchar_t prevDir[1024];
         std::string lastDir;
         BOOL result;
 
@@ -204,26 +204,26 @@ namespace UI
             {
                 case FileType::All:
                     ofn.lpstrFilter =
-                        _T("All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0")
-                        _T("GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0")
-                        _T("Binary Files (*.bin)\0*.bin\0")
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                        L"Binary Files (*.bin)\0*.bin\0"
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Dvd:
                     ofn.lpstrFilter =
-                        _T("GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Map:
                     ofn.lpstrFilter =
-                        _T("Symbolic information files (*.map)\0*.map\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"Symbolic information files (*.map)\0*.map\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
                 case FileType::Json:
                     ofn.lpstrFilter =
-                        _T("Json files (*.json)\0*.json\0")
-                        _T("All Files (*.*)\0*.*\0");
+                        L"Json files (*.json)\0*.json\0"
+                        L"All Files (*.*)\0*.*\0";
                     break;
             }
 
@@ -235,8 +235,8 @@ namespace UI
             ofn.lpstrInitialDir = Util::StringToWstring(lastDir).c_str();
             ofn.lpstrFileTitle = szFileTitle;
             ofn.nMaxFileTitle = sizeof(szFileTitle);
-            ofn.lpstrTitle = _T("Save File\0");
-            ofn.lpstrDefExt = _T("");
+            ofn.lpstrTitle = L"Save File\0";
+            ofn.lpstrDefExt = L"";
             ofn.Flags = OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
 
             result = GetSaveFileName(&ofn);
@@ -244,11 +244,11 @@ namespace UI
 
         if (result)
         {
-            _tcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
+            wcscpy_s(tempBuf, _countof(tempBuf) - 1, szFileName);
 
             // save last directory
 
-            lastDir = Util::TcharToString(tempBuf);
+            lastDir = Util::WstringToString(tempBuf);
 
             while (lastDir.back() != '\\')
             {
@@ -275,19 +275,19 @@ namespace UI
         else
         {
             SetCurrentDirectory(prevDir);
-            return _T("");
+            return L"";
         }
     }
 
     // make path to file shorter for "lvl" levels.
-    TCHAR* FileShortName(const TCHAR* filename, int lvl)
+    wchar_t* FileShortName(const wchar_t* filename, int lvl)
     {
-        static TCHAR tempBuf[1024] = { 0 };
+        static wchar_t tempBuf[1024] = { 0 };
 
         int c = 0;
         size_t i = 0;
 
-        TCHAR* ptr = (TCHAR*)filename;
+        wchar_t* ptr = (wchar_t*)filename;
 
         tempBuf[0] = ptr[0];
         tempBuf[1] = ptr[1];
@@ -295,15 +295,15 @@ namespace UI
 
         ptr += 3;
 
-        for (i = _tcslen(ptr) - 1; i; i--)
+        for (i = wcslen(ptr) - 1; i; i--)
         {
-            if (ptr[i] == _T('\\')) c++;
+            if (ptr[i] == L'\\') c++;
             if (c == lvl) break;
         }
 
         if (c == lvl)
         {
-            _stprintf_s(&tempBuf[3], _countof(tempBuf) - 3, _T("...%s"), &ptr[i]);
+            swprintf_s(&tempBuf[3], _countof(tempBuf) - 3, L"...%s", &ptr[i]);
         }
         else return ptr - 3;
 
@@ -313,12 +313,12 @@ namespace UI
     /* Make path to file shorter for "lvl" levels. */
     std::wstring FileShortName(const std::wstring& filename, int lvl)
     {
-        static TCHAR tempBuf[1024] = { 0 };
+        static wchar_t tempBuf[1024] = { 0 };
 
         int c = 0;
         size_t i = 0;
 
-        TCHAR* ptr = (TCHAR*)filename.data();
+        wchar_t* ptr = (wchar_t*)filename.data();
 
         tempBuf[0] = ptr[0];
         tempBuf[1] = ptr[1];
@@ -326,15 +326,15 @@ namespace UI
 
         ptr += 3;
 
-        for (i = _tcslen(ptr) - 1; i; i--)
+        for (i = wcslen(ptr) - 1; i; i--)
         {
-            if (ptr[i] == _T('\\')) c++;
+            if (ptr[i] == L'\\') c++;
             if (c == lvl) break;
         }
 
         if (c == lvl)
         {
-            _stprintf_s(&tempBuf[3], _countof(tempBuf) - 3, _T("...%s"), &ptr[i]);
+            swprintf_s(&tempBuf[3], _countof(tempBuf) - 3, L"...%s", &ptr[i]);
         }
         else return ptr - 3;
 

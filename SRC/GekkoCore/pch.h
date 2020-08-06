@@ -1,16 +1,16 @@
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <intrin.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 
 #include "../Common/Spinlock.h"
-#include "../Common/Jdi.h"
 #include "../Common/Thread.h"
+#include "../Common/Json.h"
+#include "../Common/Jdi.h"
 
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
