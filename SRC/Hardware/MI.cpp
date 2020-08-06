@@ -487,7 +487,7 @@ void LoadBootrom(HWConfig* config)
 
     // Load bootrom image
 
-    if (_tcslen(config->BootromFilename) == 0)
+    if (wcslen(config->BootromFilename) == 0)
     {
         Report(Channel::MI, "Bootrom not loaded (not specified)\n");
         return;

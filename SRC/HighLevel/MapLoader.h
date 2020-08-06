@@ -8,5 +8,5 @@ enum class MAP_FORMAT : int
     GCC,             // GCC
 };
 
-MAP_FORMAT LoadMAP(const TCHAR *mapname, bool add=false);
+MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add=false);
 MAP_FORMAT LoadMAP(const char* mapname, bool add = false);

@@ -5,6 +5,7 @@
 #include <map>
 #include <string>
 #include <cassert>
+#include <atomic>
 
 #include "Spinlock.h"
 #include "Thread.h"

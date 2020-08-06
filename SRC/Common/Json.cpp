@@ -38,13 +38,13 @@ wchar_t* Json::CloneAnsiStr(const char* str)
 {
 	size_t len = strlen(str);
 	wchar_t* clone = new wchar_t[len + 1];
-	wchar_t* tcharPtr = clone;
+	wchar_t* wcharPtr = clone;
 	char* charPtr = (char*)str;
 	while (*charPtr)
 	{
-		*tcharPtr++ = *charPtr++;
+		*wcharPtr++ = *charPtr++;
 	}
-	*tcharPtr++ = 0;
+	*wcharPtr++ = 0;
 	return clone;
 }
 
@@ -88,7 +88,7 @@ void Json::EmitCodePoint(SerializeContext* ctx, int cp, bool sizeOnly)
 	}
 }
 
-void Json::EmitTcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly)
+void Json::EmitWcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly)
 {
 	wchar_t* ptr = str;
 	while (*ptr)
@@ -488,7 +488,7 @@ char* Json::Value::CloneName(const char* otherName)
 	return clone;
 }
 
-char* Json::Value::CloneTcharName(const wchar_t* otherName)
+char* Json::Value::CloneWcharName(const wchar_t* otherName)
 {
 	if (otherName == nullptr)		// Name can be null
 		return nullptr;
@@ -679,15 +679,15 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 			break;
 		case ValueType::Int:
 			swprintf_s(temp, _countof(temp) - 1, L"%I64u", value.AsInt);
-			EmitTcharString(ctx, temp, sizeOnly);
+			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::Float:
 			swprintf_s(temp, _countof(temp) - 1, L"%.4f", value.AsFloat);
-			EmitTcharString(ctx, temp, sizeOnly);
+			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::String:
 			Json::EmitChar(ctx, '\"', sizeOnly);
-			EmitTcharString(ctx, value.AsString, sizeOnly);
+			EmitWcharString(ctx, value.AsString, sizeOnly);
 			Json::EmitChar(ctx, '\"', sizeOnly);
 			break;
 		default:
@@ -699,7 +699,7 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 {
 	Token token, key;
 
-	this->name = CloneTcharName(keyName);
+	this->name = CloneWcharName(keyName);
 
 	Json::GetToken(token, ctx);
 

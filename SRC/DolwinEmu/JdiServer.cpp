@@ -210,8 +210,8 @@ bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t val
 
     // Check string size
 
-    size_t sizeInChars = _tcslen(child->value.AsString);
-    size_t sizeInBytes = sizeInChars * sizeof(TCHAR);
+    size_t sizeInChars = wcslen(child->value.AsString);
+    size_t sizeInBytes = sizeInChars * sizeof(wchar_t);
     if (sizeInBytes >= valueSize)
     {
         delete value;
@@ -220,7 +220,7 @@ bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t val
     
     // Copy out
 
-    TCHAR* tstrPtr = child->value.AsString;
+    wchar_t* tstrPtr = child->value.AsString;
     char* valuePtr = valueOut;
 
     for (size_t i = 0; i < sizeInChars; i++)

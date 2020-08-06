@@ -148,7 +148,7 @@ namespace HLE
 
     static Json::Value* OSTimeInternal(std::vector<std::string>& args)
     {
-        TCHAR timeStr[0x100] = { 0, };
+        wchar_t timeStr[0x100] = { 0, };
 
         OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
 

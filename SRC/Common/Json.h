@@ -41,7 +41,7 @@ private:
 
 	// Simple wchar_t to UTF-8 Converter + Escaping
 	static void EmitCodePoint(SerializeContext* ctx, int cp, bool sizeOnly);
-	static void EmitTcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly);
+	static void EmitWcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly);
 
 	// Indentation
 
@@ -126,7 +126,7 @@ public:
 	class Value
 	{
 		char* CloneName(const char* otherName);
-		char* CloneTcharName(const wchar_t* otherName);
+		char* CloneWcharName(const wchar_t* otherName);
 		void DeserializeObject(DeserializeContext* ctx);
 		void DeserializeArray(DeserializeContext* ctx);
 

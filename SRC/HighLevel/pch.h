@@ -6,6 +6,7 @@
 #include <list>
 #include <map>
 #include <cassert>
+#include <fstream>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
