@@ -1,7 +1,12 @@
 
+#pragma once
+
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 
 #include "../../Common/Spinlock.h"
 #include "../../Common/Json.h"

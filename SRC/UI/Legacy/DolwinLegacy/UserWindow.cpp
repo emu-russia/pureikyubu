@@ -121,24 +121,24 @@ void StopProgress()
 static int GetMenuItemIndex(HMENU hMenu, const std::wstring & item)
 {
     int index = 0;
-    TCHAR buf[MAX_PATH];
+    wchar_t buf[MAX_PATH];
 
     while (index < GetMenuItemCount(hMenu))
     {
         if (GetMenuString(hMenu, index, buf, sizeof(buf) - 1, MF_BYPOSITION))
         {
-            if (!_tcscmp(item.c_str(), buf)) return index;
+            if (!wcscmp(item.c_str(), buf)) return index;
         }
         index++;
     }
     return -1;
 }
 
-static void SetRecentEntry(int index, const TCHAR *str)
+static void SetRecentEntry(int index, const wchar_t* str)
 {
     char var[256] = { 0, };
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    UI::Jdi.SetConfigString(var, Util::TcharToString(str), USER_UI);
+    UI::Jdi.SetConfigString(var, Util::WstringToString(str), USER_UI);
 }
 
 static std::wstring GetRecentEntry(int index)
@@ -159,12 +159,12 @@ void UpdateRecentMenu(HWND hwnd)
     hMainMenu = GetMenu(hwnd);
     if(hMainMenu == NULL) return;
 
-    idx = GetMenuItemIndex(hMainMenu, _T("&File"));             // take care about it
+    idx = GetMenuItemIndex(hMainMenu, L"&File");             // take care about it
     if(idx < 0) return;
     hFileMenu = GetSubMenu(hMainMenu, idx);
     if(hFileMenu == NULL) return;
 
-    idx = GetMenuItemIndex(hFileMenu, _T("&Reopen\tCtrl+R"));   // take care about it
+    idx = GetMenuItemIndex(hFileMenu, L"&Reopen\tCtrl+R");   // take care about it
     if(idx < 0) return;
     hReloadMenu = GetSubMenu(hFileMenu, idx);
     if(hReloadMenu == NULL) return;
@@ -178,7 +178,7 @@ void UpdateRecentMenu(HWND hwnd)
     // if no recent, add empty
     if(UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI) == 0)
     {
-        AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, _T("None"));
+        AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, L"None");
     }
     else
     {
@@ -203,12 +203,12 @@ void AddRecentFile(const std::wstring& path)
     // check if item already present in list
     for (n = 1; n <= RecentNum; n++)
     {
-        if (!_tcsicmp(path.c_str(), GetRecentEntry(n).c_str()))
+        if (!_wcsicmp(path.c_str(), GetRecentEntry(n).c_str()))
         {
             // place old recent to the top
             // and move upper recents down
-            TCHAR old[MAX_PATH] = { 0, };
-            _stprintf_s(old, _countof(old) - 1, _T("%s"), GetRecentEntry(n).c_str());
+            wchar_t old[MAX_PATH] = { 0, };
+            swprintf_s(old, _countof(old) - 1, L"%s", GetRecentEntry(n).c_str());
             for (n = n + 1; n <= RecentNum; n++)
             {
                 SetRecentEntry(n - 1, GetRecentEntry(n).c_str());
@@ -294,12 +294,12 @@ void ModifySwapControls(bool stateOpened)
 {
     if(stateOpened)       // opened
     {
-        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, _T("&Close Cover"));
+        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, L"&Close Cover");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_ENABLED);
     }
     else            // closed
     {
-        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, _T("&Open Cover"));
+        SetMenuItemText(wnd.hMainMenu, ID_FILE_COVER, L"&Open Cover");
         EnableMenuItem(wnd.hMainMenu, ID_FILE_CHANGEDVD, MF_BYCOMMAND | MF_GRAYED);
     }
 }
@@ -429,45 +429,45 @@ static void OnMainWindowDestroy()
 }
 
 // emulation has started - do proper actions
-void OnMainWindowOpened(const TCHAR* currentFileName)
+void OnMainWindowOpened(const wchar_t* currentFileName)
 {
     // disable selector
     CloseSelector();
     ModifySelectorControls(false);
     EnableMenuItem( GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
-                    wnd.hMainMenu, _T("&Options")) ), 1, MF_BYPOSITION | MF_GRAYED );
+                    wnd.hMainMenu, L"&Options") ), 1, MF_BYPOSITION | MF_GRAYED );
 
     std::wstring newTitle, gameTitle;
-    TCHAR drive[_MAX_DRIVE + 1] = { 0, }, dir[_MAX_DIR] = { 0, }, name[_MAX_PATH] = { 0, }, ext[_MAX_EXT] = { 0, };
+    wchar_t drive[_MAX_DRIVE + 1] = { 0, }, dir[_MAX_DIR] = { 0, }, name[_MAX_PATH] = { 0, }, ext[_MAX_EXT] = { 0, };
     bool dvd = false;
-    bool bootrom = !_tcscmp(currentFileName, _T("Bootrom"));
+    bool bootrom = !wcscmp(currentFileName, L"Bootrom");
 
     if (!bootrom)
     {
-        TCHAR* extension = _tcsrchr((wchar_t*)currentFileName, _T('.'));
+        wchar_t* extension = wcsrchr((wchar_t*)currentFileName, L'.');
 
-        if (!_tcsicmp(extension, _T(".dol")))
+        if (!_wcsicmp(extension, L".dol"))
         {
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".elf")))
+        else if (!_wcsicmp(extension, L".elf"))
         {
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".bin")))
+        else if (!_wcsicmp(extension, L".bin"))
         {
             dvd = false;
         }
-        else if (!_tcsicmp(extension, _T(".iso")))
+        else if (!_wcsicmp(extension, L".iso"))
         {
             dvd = true;
         }
-        else if (!_tcsicmp(extension, _T(".gcm")))
+        else if (!_wcsicmp(extension, L".gcm"))
         {
             dvd = true;
         }
 
-        _tsplitpath_s(currentFileName,
+        _wsplitpath_s(currentFileName,
             drive, _countof(drive) - 1,
             dir, _countof(dir) - 1,
             name, _countof(name) - 1,
@@ -478,7 +478,7 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
 
     if (dvd)
     {
-        UI::Jdi.DvdMount(Util::TcharToString(currentFileName));
+        UI::Jdi.DvdMount(Util::WstringToString(currentFileName));
 
         // get DiskID
         std::vector<uint8_t> diskID;
@@ -492,16 +492,16 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
 
         DVDBanner2* bnr = (DVDBanner2*)bnrRaw.data();
 
-        TCHAR longTitle[0x200];
+        wchar_t longTitle[0x200];
 
         char* ansiPtr = (char*)bnr->comments[0].longTitle;
-        TCHAR* tcharPtr = longTitle;
+        wchar_t* wcharPtr = longTitle;
 
         while (*ansiPtr)
         {
-            *tcharPtr++ = (uint8_t)*ansiPtr++;
+            *wcharPtr++ = (uint8_t)*ansiPtr++;
         }
-        *tcharPtr++ = 0;
+        *wcharPtr++ = 0;
 
         // Convert SJIS Title to Unicode
 
@@ -513,14 +513,14 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
 
             if (widePtr)
             {
-                tcharPtr = longTitle;
+                wcharPtr = longTitle;
                 unicodePtr = widePtr;
 
                 while (*unicodePtr)
                 {
-                    *tcharPtr++ = *unicodePtr++;
+                    *wcharPtr++ = *unicodePtr++;
                 }
-                *tcharPtr++ = 0;
+                *wcharPtr++ = 0;
 
                 free(widePtr);
             }
@@ -528,9 +528,9 @@ void OnMainWindowOpened(const TCHAR* currentFileName)
 
         // Update recent files list and add selector path
 
-        TCHAR fullPath[MAX_PATH];
+        wchar_t fullPath[MAX_PATH];
 
-        _stprintf_s(fullPath, _countof(fullPath) - 1, _T("%s%s"), drive, dir);
+        swprintf_s(fullPath, _countof(fullPath) - 1, L"%s%s", drive, dir);
 
         // add new recent entry
         //AddRecentFile(currentFileName);
@@ -568,7 +568,7 @@ void OnMainWindowClosed()
     CreateSelector();
     ModifySelectorControls(usel.active);
     EnableMenuItem(GetSubMenu(wnd.hMainMenu, GetMenuItemIndex(     // View
-        wnd.hMainMenu, _T("&Options"))), 1, MF_BYPOSITION | MF_ENABLED);
+        wnd.hMainMenu, L"&Options")), 1, MF_BYPOSITION | MF_ENABLED);
 
     // set to Idle
     auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi.GetVersion()));
@@ -694,7 +694,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_IPLMENU:
                 {
                     UI::Jdi.LoadFile("Bootrom");
-                    OnMainWindowOpened(_T("Bootrom"));
+                    OnMainWindowOpened(L"Bootrom");
                     UI::Jdi.Run();
                     return 0;
                 }
@@ -891,7 +891,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
                         gekkoDebug = new Debug::GekkoDebug();
                         UI::Jdi.SetConfigBool(USER_DOLDEBUG, true, USER_UI);
-                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger opened"));
+                        SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
                     }
                     else
                     {   // close
@@ -899,7 +899,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                         delete gekkoDebug;
                         gekkoDebug = nullptr;
                         UI::Jdi.SetConfigBool(USER_DOLDEBUG, false, USER_UI);
-                        SetStatusText(STATUS_ENUM::Progress, _T("Debugger closed"));
+                        SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
                     }
                     return 0;
                 }
@@ -917,14 +917,14 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                         CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
                         dspDebug = new Debug::DspDebug();
-                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger opened"));
+                        SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger opened");
                     }
                     else
                     {
                         CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
                         delete dspDebug;
                         dspDebug = nullptr;
-                        SetStatusText(STATUS_ENUM::Progress, _T("DSP Debugger closed"));
+                        SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger closed");
                     }
                     return 0;
                 }
@@ -985,16 +985,16 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 
         case WM_DROPFILES:
         {
-            TCHAR fileName[MAX_PATH] = { 0 };
+            wchar_t fileName[MAX_PATH] = { 0 };
             DragQueryFile((HDROP)wParam, 0, fileName, sizeof(fileName));
             DragFinish((HDROP)wParam);
 
             // extension filter
-            if(_tcsicmp(_T(".dol"), _tcsrchr(fileName, _T('.'))) &&
-               _tcsicmp(_T(".elf"), _tcsrchr(fileName, _T('.'))) &&
-               _tcsicmp(_T(".bin"), _tcsrchr(fileName, _T('.'))) &&
-               _tcsicmp(_T(".iso"), _tcsrchr(fileName, _T('.'))) &&
-               _tcsicmp(_T(".gcm"), _tcsrchr(fileName, _T('.'))) ) break;
+            if(_wcsicmp(L".dol", wcsrchr(fileName, L'.')) &&
+               _wcsicmp(L".elf", wcsrchr(fileName, L'.')) &&
+               _wcsicmp(L".bin", wcsrchr(fileName, L'.')) &&
+               _wcsicmp(L".iso", wcsrchr(fileName, L'.')) &&
+               _wcsicmp(L".gcm", wcsrchr(fileName, L'.')) ) break;
 
             name = fileName;
             goto loadFile;
@@ -1062,7 +1062,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 HWND CreateMainWindow(HINSTANCE hInstance)
 {
     WNDCLASS wc = { 0 };
-    const TCHAR CLASS_NAME[] = L"GAMECUBECLASS";
+    const wchar_t CLASS_NAME[] = L"GAMECUBECLASS";
 
     assert(wnd.hMainWindow == nullptr);
 

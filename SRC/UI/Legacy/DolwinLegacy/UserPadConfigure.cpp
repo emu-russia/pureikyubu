@@ -9,21 +9,21 @@ typedef struct
 
 PAD pad;
 
-static const TCHAR *vkeys[256] = { // default keyboard virtual codes description (? - not used)
- _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"),  _T("Bkspace"), _T("Tab"), _T("?"), _T("?"), _T("?"), _T("Enter"), _T("?"), _T("?"), // 00-0F
- _T("Shift"), _T("Control"), _T("Alt"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), // 10-1F
- _T("Space"),_T("PgUp"),_T("PgDown"),_T("End"),_T("Home"),_T("Left"),_T("Up"),_T("Right"), _T("Down"), _T("?"),_T("?"),_T("?"),_T("?"),_T("Ins"),_T("Del"),_T("?"), // 20-2F
- _T("0"), _T("1"), _T("2"), _T("3"), _T("4"), _T("5"), _T("6"), _T("7"),  _T("8"), _T("9"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), // 30-3F
- _T(""), _T("A"), _T("B"), _T("C"), _T("D"), _T("E"), _T("F"), _T("G"), _T("H"),  _T("I"), _T("J"), _T("K"), _T("L"), _T("M"), _T("N"), _T("O"), // 40-4F
- _T("P"), _T("Q"), _T("R"), _T("S"), _T("T"), _T("U"), _T("V"), _T("W"),  _T("X"), _T("Y"), _T("Z"), _T("?"), _T("?"), _T("?"), _T("?"), _T("?"), // 50-5F
-  _T("Num 0"), _T("Num 1"), _T("Num 2"), _T("Num 3"), _T("Num 4"), _T("Num 5"), _T("Num 6"), _T("Num 7"),
- _T("Num 8"), _T("Num 9"), _T("Mult"), _T("Plus"), _T("Bkslash"), _T("Minus"), _T("Decimal"), _T("Slash"), // 60-6F
- _T("F1"), _T("F2"), _T("F3"), _T("F4"), _T("F5"), _T("F6"), _T("F7"), _T("F8"), _T("F9"), _T("F10"), _T("F11"), _T("F12"), _T("?"), _T("?"), _T("?"), _T("?"), // 70-7F
+static const wchar_t *vkeys[256] = { // default keyboard virtual codes description (? - not used)
+ L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"Bkspace", L"Tab", L"?", L"?", L"?", L"Enter", L"?", L"?", // 00-0F
+ L"Shift", L"Control", L"Alt", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", L"?", // 10-1F
+ L"Space", L"PgUp", L"PgDown", L"End", L"Home", L"Left", L"Up", L"Right", L"Down", L"?", L"?", L"?", L"?", L"Ins", L"Del", L"?", // 20-2F
+ L"0", L"1", L"2", L"3", L"4", L"5", L"6", L"7", L"8", L"9", L"?", L"?", L"?", L"?", L"?", L"?", // 30-3F
+ L"", L"A", L"B", L"C", L"D", L"E", L"F", L"G", L"H",  L"I", L"J", L"K", L"L", L"M", L"N", L"O", // 40-4F
+ L"P", L"Q", L"R", L"S", L"T", L"U", L"V", L"W", L"X", L"Y", L"Z", L"?", L"?", L"?", L"?", L"?", // 50-5F
+ L"Num 0", L"Num 1", L"Num 2", L"Num 3", L"Num 4", L"Num 5", L"Num 6", L"Num 7",
+ L"Num 8", L"Num 9", L"Mult", L"Plus", L"Bkslash", L"Minus", L"Decimal", L"Slash", // 60-6F
+ L"F1", L"F2", L"F3", L"F4", L"F5", L"F6", L"F7", L"F8", L"F9", L"F10", L"F11", L"F12", L"?", L"?", L"?", L"?", // 70-7F
 };
 
-static const TCHAR *GetVKDesc(int vkey)
+static const wchar_t* GetVKDesc(int vkey)
 {
-    if(vkey >= 0x80) return _T("?");
+    if(vkey >= 0x80) return L"?";
     else return vkeys[vkey];
 }
 
@@ -136,99 +136,99 @@ void PADLoadConfig(HWND hwndDlg)
     if(hwndDlg)
     {
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_UP, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_A, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_A, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_A, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_B, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_B, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_B, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_X, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_X, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_X, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_Y, GetVKDesc(vkey));
 
         vkey = pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START];
-        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_START, _T("..."));
+        if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_START, L"...");
         else SetDlgItemText(hwndDlg, IDC_BUTTON_START, GetVKDesc(vkey));
     }
 
@@ -422,13 +422,13 @@ int GetVKey()
 
 INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR buf[256];
+    wchar_t buf[256];
     int vkey;
 
     switch(uMsg)
     {
         case WM_INITDIALOG:
-            _stprintf_s (buf, _countof(buf) - 1, _T("Configure Controller %i"), pad.padToConfigure + 1);
+            swprintf_s (buf, _countof(buf) - 1, L"Configure Controller %i", pad.padToConfigure + 1);
             SetWindowText(hwndDlg, buf);
             if(pad.padToConfigure != 0)
             {
@@ -445,194 +445,194 @@ INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
             switch(LOWORD(wParam))
             {
                 case IDC_BUTTON_UP:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_UP, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_UP, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_UP, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_UP, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_DOWN:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_DOWN, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_LEFT:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_LEFT, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_RIGHT:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_RIGHT, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XUP50:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP50, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XUP100:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XUP100, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XDOWN50:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN50, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XDOWN100:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XDOWN100, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XLEFT50:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT50, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XLEFT100:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XLEFT100, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XRIGHT50:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT50, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_XRIGHT100:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_XRIGHT100, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_CXUP:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_CXUP, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_CXDOWN:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_CXDOWN, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_CXLEFT:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_CXLEFT, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_CXRIGHT:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_CXRIGHT, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_TRIGGERL:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERL, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_TRIGGERR:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERR, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_TRIGGERZ:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_TRIGGERZ, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_A:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_A, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_A, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_A, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_A, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_A, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_B:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_B, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_B, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_B, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_B, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_B, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_X:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_X, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_X, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_X, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_X, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_X, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_Y:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_Y, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_Y, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_Y, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_Y, GetVKDesc(vkey));
                     return FALSE;
 
                 case IDC_BUTTON_START:
-                    SetDlgItemText(hwndDlg, IDC_BUTTON_START, _T("?"));
+                    SetDlgItemText(hwndDlg, IDC_BUTTON_START, L"?");
                     vkey = GetVKey();
                     pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = vkey;
-                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_START, _T("..."));
+                    if(vkey == 0) SetDlgItemText(hwndDlg, IDC_BUTTON_START, L"...");
                     else SetDlgItemText(hwndDlg, IDC_BUTTON_START, GetVKDesc(vkey));
                     return FALSE;
 

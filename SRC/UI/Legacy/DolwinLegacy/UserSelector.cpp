@@ -26,11 +26,11 @@ static void fix_path(std::wstring& path)
 }
 
 /* Remove all control symbols (below space). */
-static void fix_string(TCHAR* str)
+static void fix_string(wchar_t* str)
 {
-    for (int i = 0; i < _tcslen(str); i++)
+    for (int i = 0; i < wcslen(str); i++)
     {
-        if (str[i] < _T(' ')) str[i] = _T(' ');
+        if (str[i] < L' ') str[i] = L' ';
     }
 }
 
@@ -136,7 +136,7 @@ static bool add_banner(uint8_t *banner, int *bA, int *bB)
 {
     int width = (usel.smallIcons) ? (DVD_BANNER_WIDTH >> 1) : (DVD_BANNER_WIDTH);
     int height = (usel.smallIcons) ? (DVD_BANNER_HEIGHT >> 1) : (DVD_BANNER_HEIGHT);
-    HDC hdc = CreateDC(_T("DISPLAY"), NULL, NULL, NULL);
+    HDC hdc = CreateDC(L"DISPLAY", NULL, NULL, NULL);
     int bitdepth = GetDeviceCaps(hdc, BITSPIXEL);
     int bpp = bitdepth / 8;
     int bcount = width * height * bpp;
@@ -349,15 +349,15 @@ static void add_item(size_t index)
     ListView_InsertItem(usel.hSelectorWindow, &lvi); 
 }
 
-static void CopyAnsiStringAsTcharString(TCHAR* dest, const char* src)
+static void CopyAnsiStringAsWcharString(wchar_t* dest, const char* src)
 {
     char* ansiPtr = (char*)src;
-    TCHAR* tcharPtr = (TCHAR*)dest;
+    wchar_t* wcharPtr = (wchar_t*)dest;
     while (*ansiPtr)
     {
-        *tcharPtr++ = (uint8_t)*ansiPtr++;
+        *wcharPtr++ = (uint8_t)*ansiPtr++;
     }
-    *tcharPtr++ = 0;
+    *wcharPtr++ = 0;
 }
 
 /* Insert new file into filelist. */
@@ -413,7 +413,7 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
         // get DiskID
         std::vector<uint8_t> diskIDRaw;
         diskIDRaw.resize(4);
-        TCHAR diskID[0x10] = { 0 };
+        wchar_t diskID[0x10] = { 0 };
         UI::Jdi.DvdMount( Util::WstringToString(file) );
         UI::Jdi.DvdSeek(0);
         UI::Jdi.DvdRead(diskIDRaw);
@@ -429,8 +429,8 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 
         /* Use banner info and remove line-feeds. */
         DVDBanner2* bnr = (DVDBanner2*)banner.data();
-        CopyAnsiStringAsTcharString(item->title, (char*)bnr->comments[0].longTitle);
-        CopyAnsiStringAsTcharString(item->comment, (char*)bnr->comments[0].comment);
+        CopyAnsiStringAsWcharString(item->title, (char*)bnr->comments[0].longTitle);
+        CopyAnsiStringAsWcharString(item->comment, (char*)bnr->comments[0].comment);
         fix_string(item->title);
         fix_string(item->comment);
 
@@ -448,16 +448,16 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
     else if(type == SELECTOR_FILE::Executable)
     {
         /* Rip filename */
-        TCHAR drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
+        wchar_t drive[_MAX_DRIVE + 1], dir[_MAX_DIR], name[_MAX_PATH], ext[_MAX_EXT];
 
-        _tsplitpath_s(file.c_str(),
+        _wsplitpath_s(file.c_str(),
             drive, _countof(drive) - 1,
             dir, _countof(dir) - 1,
             name, _countof(name) - 1,
             ext, _countof(ext) - 1);
 
         item->id = L"-";
-        _tcscpy_s(item->title, _countof(item->title) - 1, name);
+        wcscpy_s(item->title, _countof(item->title) - 1, name);
         item->comment[0] = 0;
     }
     else
@@ -499,17 +499,17 @@ static void reset_columns()
         ListView_InsertColumn(usel.hSelectorWindow, id, &lvcol);    \
     }
 
-    ADDCOL(LEFT  , (usel.smallIcons) ? (57) : (105), (TCHAR*)SELECTOR_COLUMN_BANNER, 0);
-    ADDCOL(LEFT  , 200, (TCHAR *)SELECTOR_COLUMN_TITLE, 1);
-    ADDCOL(CENTER, 60 , (TCHAR*)SELECTOR_COLUMN_SIZE, 2);
-    ADDCOL(CENTER, 60 , (TCHAR*)SELECTOR_COLUMN_GAMEID, 3);
+    ADDCOL(LEFT  , (usel.smallIcons) ? (57) : (105), (wchar_t*)SELECTOR_COLUMN_BANNER, 0);
+    ADDCOL(LEFT  , 200, (wchar_t*)SELECTOR_COLUMN_TITLE, 1);
+    ADDCOL(CENTER, 60 , (wchar_t*)SELECTOR_COLUMN_SIZE, 2);
+    ADDCOL(CENTER, 60 , (wchar_t*)SELECTOR_COLUMN_GAMEID, 3);
 
     // last one is tricky
     int commentWidth = usel.width - 
                        (((usel.smallIcons) ? (57) : (105))+200+60+60) - 
                        GetSystemMetrics(SM_CXVSCROLL) - 4;
     if(commentWidth < 190) commentWidth = 190;
-    ADDCOL(LEFT  , commentWidth, (TCHAR*)SELECTOR_COLUMN_COMMENT, 4);
+    ADDCOL(LEFT  , commentWidth, (wchar_t*)SELECTOR_COLUMN_COMMENT, 4);
 }
 
 void ResizeSelector(int width, int height)
@@ -536,12 +536,12 @@ void ResizeSelector(int width, int height)
     }
 }
 
-uint16_t * SjisToUnicode(TCHAR * sjisText, size_t * size, size_t * chars)
+uint16_t * SjisToUnicode(wchar_t* sjisText, size_t * size, size_t * chars)
 {
     uint16_t * unicodeText , *ptrU , uchar, schar;
-    TCHAR *ptrS;
+    wchar_t* ptrS;
 
-    *size = (_tcslen(sjisText) + 1) * sizeof(wchar_t);
+    *size = (wcslen(sjisText) + 1) * sizeof(wchar_t);
     unicodeText = (uint16_t *)malloc(*size);
     assert(unicodeText);
     memset(unicodeText, 0, *size);
@@ -648,7 +648,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
 
     for (int col = 1; ListView_GetColumn(usel.hSelectorWindow, col, &lvc); col++)
     {
-        TCHAR text[0x1000] = { 0, };
+        wchar_t text[0x1000] = { 0, };
         UINT fmt = DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER;
         lvcw.mask = LVCF_FMT;
         ListView_GetColumn(usel.hSelectorWindow, col, &lvcw);
@@ -661,7 +661,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         rc.right += lvc.cx;
 
         ListView_GetItemText(usel.hSelectorWindow, ID, col, text, _countof(text) - 1);
-        size_t len = _tcslen(text);
+        size_t len = wcslen(text);
 
         rc2 = rc;
         FillRect(DC, &rc2, hb);
@@ -711,12 +711,12 @@ void UpdateSelector()
         { ".iso", SELECTOR_FILE::Dvd        }
     };
 
-    TCHAR search[2 * MAX_PATH];
-    const TCHAR* mask[] = { _T("*.dol"), _T("*.elf"), _T("*.gcm"), _T("*.iso"), NULL };
+    wchar_t search[2 * MAX_PATH];
+    const wchar_t* mask[] = { L"*.dol", L"*.elf", L"*.gcm", L"*.iso", NULL };
     SELECTOR_FILE type[] = { SELECTOR_FILE::Executable, SELECTOR_FILE::Executable, SELECTOR_FILE::Dvd, SELECTOR_FILE::Dvd };
     WIN32_FIND_DATA fd = { 0 };
     HANDLE hfff;
-    TCHAR found[2 * MAX_PATH];
+    wchar_t found[2 * MAX_PATH];
 
     /* Opened? */
     if (!usel.opened || usel.updateInProgress)
@@ -753,7 +753,7 @@ void UpdateSelector()
             filter >>= 8;
             if (!allow) { m++; continue; }
 
-            _stprintf_s(search, _countof(search), _T("%s%s"), usel.paths[dir].c_str(), mask[m]);
+            swprintf_s(search, _countof(search), L"%s%s", usel.paths[dir].c_str(), mask[m]);
 
             memset(&fd, 0, sizeof(fd));
 
@@ -764,7 +764,7 @@ void UpdateSelector()
                 {
                     if ((fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0)
                     {
-                        _stprintf_s(found, _countof(found), _T("%s%s"), usel.paths[dir].c_str(), fd.cFileName);
+                        swprintf_s(found, _countof(found), L"%s%s", usel.paths[dir].c_str(), fd.cFileName);
                         // Add file in list
                         add_file(found, fd.nFileSizeLow, type[m]);
                     }
@@ -830,32 +830,32 @@ static void getdispinfo(LPNMHDR pnmh)
         return;
 
     auto file = usel.files[lpdi->item.lParam].get();
-    auto tcharStr = std::wstring();
+    auto wcharStr = std::wstring();
 
     switch (lpdi->item.iSubItem)
     {
         case 0:
-            tcharStr = L" ";
+            wcharStr = L" ";
             break;
         case 1:         /* Title */
-            tcharStr = file->title;
+            wcharStr = file->title;
             break;
         case 2:         /* Length */
-            tcharStr = UI::FileSmartSize(file->size);
+            wcharStr = UI::FileSmartSize(file->size);
             break;
         case 3:         /* ID */
-            tcharStr = file->id;
+            wcharStr = file->id;
             break;
         case 4:         /* Comment */
-            tcharStr = file->comment;
+            wcharStr = file->comment;
             break;
         default:
             break;
     }
     
-    if (!tcharStr.empty())
+    if (!wcharStr.empty())
     {
-        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, tcharStr.data(), tcharStr.length());
+        wcsncpy_s(lpdi->item.pszText, lpdi->item.cchTextMax, wcharStr.data(), wcharStr.length());
     }
 }
 
@@ -882,7 +882,7 @@ static void mouseclick(int rmb)
 
     if(item == -1)          // empty field
     {
-        SetStatusText(STATUS_ENUM::Progress, _T("Idle"));
+        SetStatusText(STATUS_ENUM::Progress, L"Idle");
     }
     else                    // file selected
     {
@@ -950,13 +950,13 @@ static int sort_by_type(const void *cmp1, const void *cmp2)
 static int sort_by_filename(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcsicmp(f1->name.data(), f2->name.data());
+    return _wcsicmp(f1->name.data(), f2->name.data());
 }
 
 static int sort_by_title(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcsicmp(f1->title, f2->title);
+    return _wcsicmp(f1->title, f2->title);
 }
 
 static int sort_by_size(const void *cmp1, const void *cmp2)
@@ -968,13 +968,13 @@ static int sort_by_size(const void *cmp1, const void *cmp2)
 static int sort_by_gameid(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcscmp(f1->id.data(), f2->id.data());
+    return wcscmp(f1->id.data(), f2->id.data());
 }
 
 static int sort_by_comment(const void *cmp1, const void *cmp2)
 {
     UserFile *f1 = (UserFile *)cmp1, *f2 = (UserFile *)cmp2;
-    return _tcsicmp(f1->comment, f2->comment);
+    return _wcsicmp(f1->comment, f2->comment);
 }
 
 // count DVD files in list

@@ -1,7 +1,10 @@
 
-#include <stdint.h>
-#include <string.h>
-#include <stdio.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 
 #include <Windows.h>			// for GetAsyncKeyState
 

@@ -1,36 +1,22 @@
 
 #pragma once
 
-#include <cassert>
 #include <cstdint>
-#include <direct.h>
-#include <cfloat>
-#include <cmath>
-#include <cstdarg>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <ctime>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
+#include <atomic>
+#include <memory>
+
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
-#include <intrin.h>
-#include <tchar.h>
-#include <fstream>
-#include <string>
-#include <list>
-#include <string>
-#include <atomic>
-#include <vector>
-#include <array>
-#include <codecvt>
-#include <memory>
-#include <locale>
 #include "RES/resource.h"
 
-#include "../../../../ThirdParty/fmt/fmt/format.h"
-#include "../../../../ThirdParty/fmt/fmt/printf.h"
-
+#include "../../../Common/Spinlock.h"
+#include "../../../Common/Thread.h"
 #include "../../../Common/String.h"
 #include "../../../Common/File.h"
 #include "../../../Common/Json.h"
@@ -51,3 +37,6 @@
 #include "DVDBanner.h"			// banner utilities for selector
 #include "SjisTable.h"
 #include "UserCommands.h"
+
+#include "../../../../ThirdParty/fmt/fmt/format.h"
+#include "../../../../ThirdParty/fmt/fmt/printf.h"

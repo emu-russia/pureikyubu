@@ -13,8 +13,8 @@ namespace UI
     };
     
     /* Open/save a file dialog. */
-    const TCHAR* FileOpenDialog(HWND hwnd, FileType type);
-    const TCHAR* FileSaveDialog(HWND hwnd, FileType type);
+    const wchar_t* FileOpenDialog(HWND hwnd, FileType type);
+    const wchar_t* FileSaveDialog(HWND hwnd, FileType type);
     
     std::wstring FileShortName(const std::wstring& filename, int lvl = 3);
     std::wstring FileSmartSize(size_t size);
