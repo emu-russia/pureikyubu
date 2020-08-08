@@ -37,7 +37,7 @@ bool GCMMountFile(const wchar_t*file)
     // reset position
     dvd.seekval = 0;
 
-    wcscpy_s(dvd.gcm_filename, _countof(dvd.gcm_filename) - 1, file);
+    wcscpy(dvd.gcm_filename, file);
     dvd.mountedImage = true;
 
     return true;

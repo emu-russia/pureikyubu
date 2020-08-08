@@ -2,6 +2,9 @@
 
 #include "pch.h"
 
+#define my_max(a,b) (((a) > (b)) ? (a) : (b))
+#define my_min(a,b) (((a) < (b)) ? (a) : (b))
+
 namespace Debug
 {
     static bool testempty(char* str)
@@ -189,7 +192,7 @@ namespace Debug
         if (args.size() > 2)
         {
             period = atoi(args[2].c_str());
-            period = min(2, max(period, 50));
+            period = my_min(2, my_max(period, 50));
         }
 
         profiler = new SamplingProfiler(args[1].c_str(), period);

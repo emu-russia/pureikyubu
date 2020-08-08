@@ -301,6 +301,8 @@ namespace DSP
 		Always = 0b1111,	/// Always
 	};
 
+	#define DspAnalyzeNumParam 3
+
 	struct AnalyzeInfo
 	{
 		uint32_t clearingPaddy;		///< To use {0} on structure
@@ -318,11 +320,11 @@ namespace DSP
 		size_t numParameters;		///< Number of instruction parameters (0-3)
 		size_t numParametersEx;		///< Number of extended instruction parameters (1-2)
 
-		DspParameter params[3];		///< Processed parameters (ready to output)
-		uint16_t paramBits[3];		///< Raw unprocessed parameter bits (order MSB->LSB)
+		DspParameter params[DspAnalyzeNumParam];		///< Processed parameters (ready to output)
+		uint16_t paramBits[DspAnalyzeNumParam];		///< Raw unprocessed parameter bits (order MSB->LSB)
 
-		DspParameter paramsEx[3];		///< Processed extended opcode parameters (ready to output)
-		uint16_t paramExBits[3];		///< Raw unprocessed extended opcode parameter bits (order MSB->LSB)
+		DspParameter paramsEx[DspAnalyzeNumParam];		///< Processed extended opcode parameters (ready to output)
+		uint16_t paramExBits[DspAnalyzeNumParam];		///< Raw unprocessed extended opcode parameter bits (order MSB->LSB)
 
 		bool flowControl;		///< Branch, jump or another flow control instruction
 		bool logic;				///< Or, And and similar simple logic operation (non-arithmetic)

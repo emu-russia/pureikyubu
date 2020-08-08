@@ -49,7 +49,7 @@ namespace DSP
 				break;
 
 			case 2:
-				val = _byteswap_ushort(*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)));
+				val = _BYTESWAP_UINT16(*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)));
 				break;
 
 			default:
@@ -108,7 +108,7 @@ namespace DSP
 
 		// Write mode is always 16-bit
 
-		*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)) = _byteswap_ushort(data);
+		*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)) = _BYTESWAP_UINT16(data);
 		Accel.CurrAddress.addr++;
 
 		if ((Accel.CurrAddress.addr & 0x07ff'ffff) >= (Accel.EndAddress.addr & 0x07FF'FFFF))

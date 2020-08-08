@@ -9,26 +9,22 @@ namespace DVD
 	DduCore::DduCore()
 	{
 		dduThread = new Thread(DduThreadProc, true, this, "DvdData");
-		assert(dduThread);
 		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this, "DvdAudio");
-		assert(dvdAudioThread);
 
 		dataCache = new uint8_t[dataCacheSize];
-		assert(dataCache);
 		memset(dataCache, 0, dataCacheSize);
 		streamingCache = new uint8_t[streamCacheSize];
-		assert(streamingCache);
 		memset(streamingCache, 0, streamCacheSize);
 
 		Reset();
 
 		if (adpcmStreamDump)
 		{
-			fopen_s(&adpcmStreamFile, "Data\\DvdAdpcm.bin", "wb");
+			adpcmStreamFile = fopen("Data\\DvdAdpcm.bin", "wb");
 		}
 		if (decodedStreamDump)
 		{
-			fopen_s(&decodedStreamFile, "Data\\DvdDecodedPcm.bin", "wb");
+			decodedStreamFile = fopen("Data\\DvdDecodedPcm.bin", "wb");
 		}
 	}
 
@@ -304,7 +300,7 @@ namespace DVD
 							if (core->dataCachePtr >= dataCacheSize)
 							{
 								Seek(core->seekVal);
-								size_t bytes = min(dataCacheSize, core->transactionSize);
+								size_t bytes = my_min(dataCacheSize, core->transactionSize);
 								bool readResult = Read(core->dataCache, bytes);
 								core->seekVal += (uint32_t)bytes;
 								core->transactionSize -= bytes;

@@ -125,7 +125,11 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport)
 #endif
-Json::Value* __cdecl CallJdi(const char* request)
+Json::Value* 
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdi(const char* request)
 {
     std::vector<std::string> args;
 
@@ -137,7 +141,11 @@ Json::Value* __cdecl CallJdi(const char* request)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport) 
 #endif
-bool __cdecl CallJdiNoReturn(const char* request)
+bool 
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiNoReturn(const char* request)
 {
     CallJdi(request);
     return true;
@@ -146,7 +154,11 @@ bool __cdecl CallJdiNoReturn(const char* request)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport) 
 #endif
-bool __cdecl CallJdiReturnInt(const char* request, int* valueOut)
+bool 
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiReturnInt(const char* request, int* valueOut)
 {
     if (!valueOut)
     {
@@ -173,7 +185,11 @@ bool __cdecl CallJdiReturnInt(const char* request, int* valueOut)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport) 
 #endif
-bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
+bool 
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
 {
     if (!valueOut)
     {
@@ -237,7 +253,11 @@ bool __cdecl CallJdiReturnString(const char* request, char* valueOut, size_t val
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport) 
 #endif
-bool __cdecl CallJdiReturnBool(const char* request, bool* valueOut)
+bool 
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiReturnBool(const char* request, bool* valueOut)
 {
     if (!valueOut)
     {
@@ -272,7 +292,11 @@ bool __cdecl CallJdiReturnBool(const char* request, bool* valueOut)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport)
 #endif
-void __cdecl JdiAddNode(const char* filename, JDI::JdiReflector reflector)
+void 
+#ifdef _WINDOWS
+__cdecl
+#endif
+JdiAddNode(const char* filename, JDI::JdiReflector reflector)
 {
     JDI::Hub.AddNode(Util::StringToWstring(filename), reflector);
 }
@@ -280,7 +304,11 @@ void __cdecl JdiAddNode(const char* filename, JDI::JdiReflector reflector)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport)
 #endif
-void __cdecl JdiRemoveNode(const char* filename)
+void 
+#ifdef _WINDOWS
+__cdecl 
+#endif
+JdiRemoveNode(const char* filename)
 {
     JDI::Hub.RemoveNode(Util::StringToWstring(filename));
 }
@@ -288,7 +316,11 @@ void __cdecl JdiRemoveNode(const char* filename)
 #ifdef _WINDOWS
 extern "C" __declspec(dllexport)
 #endif
-void __cdecl JdiAddCmd(const char* name, JDI::CmdDelegate command)
+void 
+#ifdef _WINDOWS
+__cdecl
+#endif
+JdiAddCmd(const char* name, JDI::CmdDelegate command)
 {
     JDI::Hub.AddCmd(name, command);
 }

@@ -93,7 +93,6 @@ uint32_t LoadDOL(const std::wstring& dolname)
     }
 
     HWConfig* config = new HWConfig;
-    assert(config);
     EMUGetHwConfig(config);
     BootROM(false, false, config->consoleVer);
 

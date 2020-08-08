@@ -1,4 +1,5 @@
 add_library (Common
+	../ByteSwap.cpp
 	../File.cpp
 	../Jdi.cpp
 	../Json.cpp

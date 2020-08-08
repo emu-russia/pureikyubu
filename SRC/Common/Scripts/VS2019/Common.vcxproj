@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\ByteSwap.h" />
     <ClInclude Include="..\..\File.h" />
     <ClInclude Include="..\..\Jdi.h" />
     <ClInclude Include="..\..\Json.h" />
@@ -28,6 +29,7 @@
     <ClInclude Include="..\..\Thread.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\ByteSwap.cpp" />
     <ClCompile Include="..\..\File.cpp" />
     <ClCompile Include="..\..\Jdi.cpp" />
     <ClCompile Include="..\..\Json.cpp" />

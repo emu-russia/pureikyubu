@@ -28,7 +28,13 @@ int main(int argc, char **argv)
 
 	// Wait key press..
 
+#ifdef _WINDOWS
 	_getch();
+#endif
+
+#ifdef _LINUX
+	getc(stdin);
+#endif
 
 	// Unload
 
