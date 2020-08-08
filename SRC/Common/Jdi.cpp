@@ -43,23 +43,12 @@ namespace JDI
 	{
 		Json* json = new Json();
 
-		size_t jsonTextSize = 0;
+		size_t jsonTextSize = Util::FileSize(filename);
 
-		// Load Json
-		FILE* f = nullptr;
-		_wfopen_s(&f, filename.c_str(), L"rb");
-		assert(f);
-
-		fseek(f, 0, SEEK_END);
-		jsonTextSize = ftell(f);
-		fseek(f, 0, SEEK_SET);
+		auto data = Util::FileLoad(filename);
 
 		uint8_t* jsonText = new uint8_t[jsonTextSize + 1];      // +Safety zero trailer
-
-		size_t read = fread(jsonText, 1, jsonTextSize, f);
-		assert(read == jsonTextSize);
-		fclose(f);
-
+		memcpy(jsonText, data.data(), data.size());
 		jsonText[jsonTextSize] = 0;         // Safety zero trailer
 
 		// Parse
@@ -157,7 +146,7 @@ namespace JDI
 
 			for (auto cmd = can->children.begin(); cmd != can->children.end(); ++cmd)
 			{
-				char nameWithHint[0x100] = { 0, };
+				std::string nameWithHint;
 
 				Json::Value* next = *cmd;
 				const wchar_t* helpText = L"";
@@ -190,19 +179,11 @@ namespace JDI
 					}
 				}
 
-				strcpy_s(nameWithHint, sizeof(nameWithHint) - 1, next->name);
-				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, " ");
-				strcat_s(nameWithHint, sizeof(nameWithHint) - 1, Util::WstringToString(hintsText).c_str());
+				nameWithHint = next->name;
+				nameWithHint += " ";
+				nameWithHint += Util::WstringToString(hintsText);
 
-				size_t nameWithHintSize = strlen(nameWithHint);
-				size_t i = nameWithHintSize;
-				while (i < 20)
-				{
-					nameWithHint[i++] = ' ';
-				}
-				nameWithHint[i++] = '\0';
-
-				Report(Channel::Norm, "    %s - %s\n", nameWithHint, Util::WstringToString(helpText).c_str());
+				Report(Channel::Norm, "    %-20s - %s\n", nameWithHint.c_str(), Util::WstringToString(helpText).c_str());
 			}
 
 			Report(Channel::Norm, "\n");

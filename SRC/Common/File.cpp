@@ -5,7 +5,11 @@ namespace Util
     size_t FileSize(const std::wstring& filename)
     {
         FILE* f;
+#ifdef _LINUX
+        f = fopen(Util::WstringToString(filename).c_str(), "rb");
+#else
         _wfopen_s(&f, filename.c_str(), L"rb");
+#endif
         if (!f)
             return 0;
 
@@ -31,7 +35,11 @@ namespace Util
     bool FileExists(const std::wstring& filename)
     {
         FILE* f;
+#ifdef _LINUX
+        f = fopen(Util::WstringToString(filename).c_str(), "rb");
+#else
         _wfopen_s(&f, filename.c_str(), L"rb");
+#endif
         if (!f)
             return false;
         fclose(f);
@@ -62,7 +70,11 @@ namespace Util
         uint8_t* data = new uint8_t[size];
 
         FILE* f; 
+#ifdef _LINUX
+        f = fopen(Util::WstringToString(filename).c_str(), "rb");
+#else
         _wfopen_s(&f, filename.c_str(), L"rb");
+#endif
 
         fread(data, 1, size, f);
         fclose(f);
@@ -89,7 +101,11 @@ namespace Util
     bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data)
     {
         FILE* f;
+#ifdef _LINUX
+        f = fopen(Util::WstringToString(filename).c_str(), "rb");
+#else
         _wfopen_s(&f, filename.c_str(), L"wb");
+#endif
         if (!f)
             return false;
 
