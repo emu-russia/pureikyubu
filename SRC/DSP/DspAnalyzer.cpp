@@ -34,7 +34,7 @@ namespace DSP
 			if (!AddParam(info, (DspParameter)((int)DspParameter::ac0m + dd), dd))
 				return false;
 
-			uint16_t imm = _byteswap_ushort(*(uint16_t*)instrPtr);
+			uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 			if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 				return false;
 			if (!AddImmOperand(info, DspParameter::UnsignedShort, imm))
@@ -138,7 +138,7 @@ namespace DSP
 					if (!AddParam(info, (DspParameter)r, r))
 						return false;
 
-					uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
@@ -156,7 +156,7 @@ namespace DSP
 					if (!AddParam(info, (DspParameter)r, r))
 						return false;
 
-					uint16_t imm = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::UnsignedShort, imm))
@@ -174,7 +174,7 @@ namespace DSP
 					if (!AddParam(info, (DspParameter)r, r))
 						return false;
 
-					uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
@@ -187,7 +187,7 @@ namespace DSP
 					if (instrMaxSize < sizeof(uint16_t))
 						return false;
 
-					uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
@@ -260,7 +260,7 @@ namespace DSP
 					info.cc = (ConditionCode)(info.instrBits & 0xf);
 					info.flowControl = true;
 
-					uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
@@ -277,7 +277,7 @@ namespace DSP
 					info.cc = (ConditionCode)(info.instrBits & 0xf);
 					info.flowControl = true;
 
-					uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+					uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 					if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 						return false;
 					if (!AddImmOperand(info, DspParameter::Address, (DspAddress)addr))
@@ -447,7 +447,7 @@ namespace DSP
 						info.instr = DspInstruction::BLOOPI;
 						info.flowControl = true;
 
-						uint16_t addr = _byteswap_ushort(*(uint16_t*)instrPtr);
+						uint16_t addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 						if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 							return false;
 						if (!AddImmOperand(info, DspParameter::Byte, (uint8_t)(info.instrBits & 0xff)))
@@ -510,7 +510,7 @@ namespace DSP
 						info.instr = DspInstruction::SI;
 
 						DspAddress mm = (DspAddress)(uint16_t)(int16_t)(int8_t)(uint8_t)(info.instrBits & 0xff);
-						uint16_t imm = _byteswap_ushort(*(uint16_t*)instrPtr);
+						uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 						if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 							return false;
 						if (!AddImmOperand(info, DspParameter::Address, mm))
@@ -1608,7 +1608,7 @@ namespace DSP
 
 	bool Analyzer::AddParam(AnalyzeInfo& info, DspParameter param, uint16_t paramBits)
 	{
-		if (info.numParameters >= _countof(info.params))
+		if (info.numParameters >= DspAnalyzeNumParam)
 			return false;
 
 		info.params[info.numParameters] = param;
@@ -1621,7 +1621,7 @@ namespace DSP
 
 	bool Analyzer::AddParamEx(AnalyzeInfo& info, DspParameter param, uint16_t paramBits)
 	{
-		if (info.numParametersEx >= _countof(info.paramsEx))
+		if (info.numParametersEx >= DspAnalyzeNumParam)
 			return false;
 
 		info.paramsEx[info.numParametersEx] = param;
@@ -1656,7 +1656,7 @@ namespace DSP
 			return false;
 		}
 
-		info.instrBits = _byteswap_ushort(*(uint16_t*)instrPtr);
+		info.instrBits = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 
 		if (!AddBytes(instrPtr, sizeof(uint16_t), info))
 		{

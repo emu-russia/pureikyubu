@@ -3,15 +3,24 @@ project (DolwinPlayground)
 
 add_definitions (-D_LINUX)
 
-add_subdirectory (SRC/Common/Scripts)
+# ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
+add_compile_options(-Wno-attributes)
 
 # Backends
-
+add_subdirectory (SRC/Backends/AudioNull/Scripts)
 add_subdirectory (SRC/Backends/VideoNull/Scripts)
+add_subdirectory (SRC/Backends/GraphicsNull/Scripts)
+add_subdirectory (SRC/Backends/PadNull/Scripts)
 
-# Hardware
-
+# DolwinEmu Core
+add_subdirectory (SRC/Common/Scripts)
+add_subdirectory (SRC/Debugger/Scripts)
+add_subdirectory (SRC/DolwinEmu/Scripts)
 add_subdirectory (SRC/DSP/Scripts)
+add_subdirectory (SRC/DVD/Scripts)
+add_subdirectory (SRC/GekkoCore/Scripts)
+add_subdirectory (SRC/Hardware/Scripts)
+add_subdirectory (SRC/HighLevel/Scripts)
 
-
+# UI
 add_subdirectory (SRC/UI/Playground/Scripts)

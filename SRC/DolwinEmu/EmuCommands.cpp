@@ -8,7 +8,7 @@ static Json::Value* EmuFileLoad(std::vector<std::string>& args)
 {
 	FILE* f;
 
-	fopen_s(&f, args[1].c_str(), "rb");
+	f = fopen(args[1].c_str(), "rb");
 	if (!f)
 	{
 		Report(Channel::Error, "Failed to open: %s\n", args[1].c_str());
@@ -49,7 +49,7 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 
 		FILE* f;
 
-		fopen_s(&f, args[1].c_str(), "wb");
+		f = fopen(args[1].c_str(), "wb");
 		if (!f)
 		{
 			Report(Channel::Error, "Failed to create file: %s\n", args[1].c_str());
@@ -83,15 +83,20 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 // Sleep specified number of milliseconds
 static Json::Value* CmdSleep(std::vector<std::string>& args)
 {
+#ifdef _WINDOWS
 	Sleep(atoi(args[1].c_str()));
+#endif
+
+#ifdef _LINUX
+	usleep(atoi(args[1].c_str()));
+#endif
+
 	return nullptr;
 }
 
 // Exit
 static Json::Value* CmdExit(std::vector<std::string>& args)
 {
-	UNREFERENCED_PARAMETER(args);
-
 	Report(Channel::Norm, ": exiting...\n");
 	EMUClose();
 	EMUDtor();
@@ -117,8 +122,6 @@ static Json::Value* CmdLoad(std::vector<std::string>& args)
 
 static Json::Value* CmdUnload(std::vector<std::string>& args)
 {
-	UNREFERENCED_PARAMETER(args);
-
 	if (emu.loaded)
 	{
 		EMUClose();
@@ -146,8 +149,6 @@ static Json::Value* CmdIsLoadedInternal(std::vector<std::string>& args)
 
 static Json::Value* CmdGetLoadedInternal(std::vector<std::string>& args)
 {
-	UNREFERENCED_PARAMETER(args);
-
 	if (!emu.loaded)
 		return nullptr;
 

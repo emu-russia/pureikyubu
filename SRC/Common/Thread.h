@@ -23,7 +23,7 @@ class Thread
 	int resumeCounter = 0;
 	int suspendCounter = 0;
 
-	char threadName[0x100] = { 0 };
+	std::string threadName;
 	
 	// Take care about this place. If it will differ between your projects you get wrecked!
 

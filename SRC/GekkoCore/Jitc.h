@@ -69,16 +69,16 @@ namespace Gekko
 		void Dequantize(CodeSegment* seg, void* psReg, GEKKO_QUANT_TYPE type, uint8_t scale, bool secondReg);
 		void PSQLoad(AnalyzeInfo* info, CodeSegment* seg);
 
-		// These methods require __fastacall, as they are called from recompiled code.
+		// These methods require fastcall, as they are called from recompiled code.
 
-		static void __fastcall ReadByte(uint32_t addr, uint32_t* reg) { Gekko->ReadByte(addr, reg); }
-		static void __fastcall WriteByte(uint32_t addr, uint32_t data) { Gekko->WriteByte(addr, data); }
-		static void __fastcall ReadHalf(uint32_t addr, uint32_t* reg) { Gekko->ReadHalf(addr, reg); }
-		static void __fastcall WriteHalf(uint32_t addr, uint32_t data) { Gekko->WriteHalf(addr, data); }
-		static void __fastcall ReadWord(uint32_t addr, uint32_t* reg) { Gekko->ReadWord(addr, reg); }
-		static void __fastcall WriteWord(uint32_t addr, uint32_t data) { Gekko->WriteWord(addr, data); }
-		static void __fastcall ReadDouble(uint32_t addr, uint64_t* reg) { Gekko->ReadDouble(addr, reg); }
-		static void __fastcall WriteDouble(uint32_t addr, uint64_t* data) { Gekko->WriteDouble(addr, data); }
+		static void __FASTCALL ReadByte(uint32_t addr, uint32_t* reg) { Gekko->ReadByte(addr, reg); }
+		static void __FASTCALL WriteByte(uint32_t addr, uint32_t data) { Gekko->WriteByte(addr, data); }
+		static void __FASTCALL ReadHalf(uint32_t addr, uint32_t* reg) { Gekko->ReadHalf(addr, reg); }
+		static void __FASTCALL WriteHalf(uint32_t addr, uint32_t data) { Gekko->WriteHalf(addr, data); }
+		static void __FASTCALL ReadWord(uint32_t addr, uint32_t* reg) { Gekko->ReadWord(addr, reg); }
+		static void __FASTCALL WriteWord(uint32_t addr, uint32_t data) { Gekko->WriteWord(addr, data); }
+		static void __FASTCALL ReadDouble(uint32_t addr, uint64_t* reg) { Gekko->ReadDouble(addr, reg); }
+		static void __FASTCALL WriteDouble(uint32_t addr, uint64_t* data) { Gekko->WriteDouble(addr, data); }
 
 		static bool ExecuteInterpeterFallback();
 		static void Tick();

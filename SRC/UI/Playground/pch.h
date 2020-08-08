@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <cstdio>
+#include <atomic>
 
 #ifdef _WINDOWS
 #include <conio.h>

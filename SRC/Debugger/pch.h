@@ -6,6 +6,12 @@
 #include <map>
 #include <algorithm>
 #include <cassert>
+#include <atomic>
+#include <cstdarg>
+
+#ifdef _LINUX
+#include <string.h>
+#endif
 
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"

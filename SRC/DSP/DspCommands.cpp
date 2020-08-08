@@ -458,12 +458,13 @@ namespace DSP
             "ax0l", "ax0h", "ax1l", "ax1h",
             "ac0l", "ac1l", "ac0m", "ac1m"
         };
+        size_t dspRegNamesNum = sizeof(dspRegNames) / sizeof(dspRegNames[0]);
 
         uint16_t value = (uint16_t)strtoul(args[2].c_str(), nullptr, 0);
 
         int regIndex = -1;
 
-        for (int i = 0; i < _countof(dspRegNames); i++)
+        for (int i = 0; i < dspRegNamesNum; i++)
         {
             if (!_stricmp(args[1].c_str(), dspRegNames[i]))
             {

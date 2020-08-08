@@ -2,9 +2,6 @@
 
 //#include <vld.h>
 
-// ---------------------------------------------------------------------------
-// compiler and SDK include files.
-
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -12,9 +9,12 @@
 #include <map>
 #include <cassert>
 #include <fstream>
+#include <atomic>
+#include <string.h>
 
-// ---------------------------------------------------------------------------
-// Dolwin includes
+#ifdef _LINUX
+#include <unistd.h>		// usleep
+#endif
 
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"

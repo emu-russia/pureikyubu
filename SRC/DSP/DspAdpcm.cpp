@@ -4,6 +4,9 @@
 
 using namespace Debug;
 
+#define my_max(a,b) (((a) > (b)) ? (a) : (b))
+#define my_min(a,b) (((a) < (b)) ? (a) : (b))
+
 namespace DSP
 {
 	uint16_t Dsp16::DecodeAdpcm(uint16_t in)
@@ -49,7 +52,7 @@ namespace DSP
 		{
 			case 0:
 				out = yn >> 11;
-				out = max(-0x8000, min(out, 0x7FFF));
+				out = my_max(-0x8000, my_min(out, 0x7FFF));
 				break;
 			case 1:
 				out = yn & 0xffff;

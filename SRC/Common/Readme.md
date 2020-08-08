@@ -8,3 +8,4 @@ This section contains common API that have almost atomic significance for all pr
 - Jdi: Json Debug Interface. More information can be found in [JsonDebugInteface.md](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/JsonDebugInterface.md)
 - File: File utilities
 - String: String utilities
+- ByteSwap: Portable byte-swap API

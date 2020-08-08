@@ -10,7 +10,7 @@ namespace Debug
 		char buf[0x1000] = { 0, };
 
 		va_start(arg, text);
-		vsprintf_s(buf, sizeof(buf) - 1, text, arg);
+		vsprintf (buf, text, arg);
 		va_end(arg);
 
 		Msgs.AddReport(Channel::Error, true, buf);
@@ -27,7 +27,7 @@ namespace Debug
 		char buf[0x1000] = { 0, };
 
 		va_start(arg, text);
-		vsprintf_s (buf, sizeof(buf) - 1, text, arg);
+		vsprintf (buf, text, arg);
 		va_end(arg);
 
 		Msgs.AddReport(chan, false, buf);

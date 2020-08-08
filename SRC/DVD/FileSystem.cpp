@@ -16,7 +16,7 @@ static void SwapArea(uint32_t* addr, int count)
 
     while (addr != until)
     {
-        *addr = _byteswap_ulong(*addr);
+        *addr = _BYTESWAP_UINT32(*addr);
         addr++;
     }
 }
@@ -27,9 +27,9 @@ static char *fst_prepare(DVDFileEntry *root)
 {
     char* nameTablePtr = nullptr;
 
-    root->nameOffsetLo = _byteswap_ushort(root->nameOffsetLo);
-    root->fileOffset   = _byteswap_ulong(root->fileOffset);
-    root->fileLength   = _byteswap_ulong(root->fileLength);
+    root->nameOffsetLo = _BYTESWAP_UINT16(root->nameOffsetLo);
+    root->fileOffset   = _BYTESWAP_UINT32(root->fileOffset);
+    root->fileLength   = _BYTESWAP_UINT32(root->fileLength);
 
     // Check root: must have no parent, has zero nameOfset and non-zero nextOffset.
     if (! ( root->isDir && 
@@ -47,9 +47,9 @@ static char *fst_prepare(DVDFileEntry *root)
     {
         DVDFileEntry* entry = &root[i];
 
-        entry->nameOffsetLo = _byteswap_ushort(entry->nameOffsetLo);
-        entry->fileOffset = _byteswap_ulong(entry->fileOffset);
-        entry->fileLength = _byteswap_ulong(entry->fileLength);
+        entry->nameOffsetLo = _BYTESWAP_UINT16(entry->nameOffsetLo);
+        entry->fileOffset = _BYTESWAP_UINT32(entry->fileOffset);
+        entry->fileLength = _BYTESWAP_UINT32(entry->fileLength);
     }
 
     return nameTablePtr;
