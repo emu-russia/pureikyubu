@@ -8,7 +8,7 @@ namespace Gekko
     // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
     // (as well as those who they pretend, for example HLE or Debugger).
 
-    void __fastcall GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
+    void __FASTCALL GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -36,7 +36,7 @@ namespace Gekko
         MIReadByte(pa, reg);
     }
 
-    void __fastcall GekkoCore::WriteByte(uint32_t addr, uint32_t data)
+    void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);
@@ -74,7 +74,7 @@ namespace Gekko
         MIWriteByte(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
+    void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -102,13 +102,13 @@ namespace Gekko
         MIReadHalf(pa, reg);
     }
 
-    void __fastcall GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
+    void __FASTCALL GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
     {
         ReadHalf(addr, reg);
         if (*reg & 0x8000) *reg |= 0xffff0000;
     }
 
-    void __fastcall GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
+    void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);
@@ -146,7 +146,7 @@ namespace Gekko
         MIWriteHalf(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
+    void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -174,7 +174,7 @@ namespace Gekko
         MIReadWord(pa, reg);
     }
 
-    void __fastcall GekkoCore::WriteWord(uint32_t addr, uint32_t data)
+    void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);
@@ -212,7 +212,7 @@ namespace Gekko
         MIWriteWord(pa, data);
     }
 
-    void __fastcall GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
+    void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
         int WIMG;
         TestReadBreakpoints(addr);
@@ -242,7 +242,7 @@ namespace Gekko
         MIReadDouble(pa, reg);
     }
 
-    void __fastcall GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
+    void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
         int WIMG;
         TestWriteBreakpoints(addr);

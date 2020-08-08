@@ -30,7 +30,7 @@ wchar_t* Json::CloneStr(const wchar_t* str)
 {
 	size_t len = wcslen(str);
 	wchar_t* clone = new wchar_t[len + 1];
-	wcscpy_s(clone, len + 1, str);
+	wcscpy(clone, str);
 	return clone;
 }
 
@@ -484,7 +484,7 @@ char* Json::Value::CloneName(const char* otherName)
 
 	size_t len = strlen(otherName);
 	char* clone = new char[len + 1];
-	strcpy_s(clone, len + 1, otherName);
+	strcpy(clone, otherName);
 	return clone;
 }
 
@@ -678,11 +678,11 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 			Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
 			break;
 		case ValueType::Int:
-			swprintf_s(temp, _countof(temp) - 1, L"%I64u", value.AsInt);
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%I64u", value.AsInt);
 			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::Float:
-			swprintf_s(temp, _countof(temp) - 1, L"%.4f", value.AsFloat);
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%.4f", value.AsFloat);
 			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::String:

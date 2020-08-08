@@ -4,5 +4,5 @@ add_library (Common
 	../Json.cpp
 	../Spinlock.cpp
 	../String.cpp
-	../Thread.cpp
+	../ThreadLinux.cpp
 )

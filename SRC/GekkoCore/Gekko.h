@@ -2,6 +2,12 @@
 
 #pragma once
 
+#ifdef _LINUX
+#define __FASTCALL __attribute__((fastcall))
+#else
+#define __FASTCALL __fastcall
+#endif
+
 #include "GekkoDefs.h"
 #include "GekkoAnalyzer.h"
 #include "GatherBuffer.h"
@@ -177,15 +183,17 @@ namespace Gekko
 #pragma region "Memory interface"
 
         // Centralized hub for access to the data bus (memory) from CPU side.
-        void __fastcall ReadByte(uint32_t addr, uint32_t* reg);
-        void __fastcall WriteByte(uint32_t addr, uint32_t data);
-        void __fastcall ReadHalf(uint32_t addr, uint32_t* reg);
-        void __fastcall ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
-        void __fastcall WriteHalf(uint32_t addr, uint32_t data);
-        void __fastcall ReadWord(uint32_t addr, uint32_t* reg);
-        void __fastcall WriteWord(uint32_t addr, uint32_t data);
-        void __fastcall ReadDouble(uint32_t addr, uint64_t* reg);
-        void __fastcall WriteDouble(uint32_t addr, uint64_t* data);
+        // These methods require fastcall, as they are called from recompiled code.
+
+        void __FASTCALL ReadByte(uint32_t addr, uint32_t* reg);
+        void __FASTCALL WriteByte(uint32_t addr, uint32_t data);
+        void __FASTCALL ReadHalf(uint32_t addr, uint32_t* reg);
+        void __FASTCALL ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
+        void __FASTCALL WriteHalf(uint32_t addr, uint32_t data);
+        void __FASTCALL ReadWord(uint32_t addr, uint32_t* reg);
+        void __FASTCALL WriteWord(uint32_t addr, uint32_t data);
+        void __FASTCALL ReadDouble(uint32_t addr, uint64_t* reg);
+        void __FASTCALL WriteDouble(uint32_t addr, uint64_t* data);
 
         // Translate address by Mmu
         uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int & WIMG);
