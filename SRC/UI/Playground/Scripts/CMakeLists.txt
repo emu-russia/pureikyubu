@@ -20,4 +20,4 @@ target_link_libraries (DolwinPlayground LINK_PUBLIC Hardware)
 target_link_libraries (DolwinPlayground LINK_PUBLIC HighLevel)
 
 find_package (Threads)
-target_link_libraries (ThreadDemo ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries (DolwinPlayground ${CMAKE_THREAD_LIBS_INIT})

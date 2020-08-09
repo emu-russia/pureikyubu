@@ -58,5 +58,5 @@ void Thread::Suspend()
 
 void Thread::Sleep(size_t milliseconds)
 {
-	::Sleep(milliseconds);
+	::Sleep((DWORD)milliseconds);
 }
