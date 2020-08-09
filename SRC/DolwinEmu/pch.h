@@ -12,10 +12,6 @@
 #include <atomic>
 #include <string.h>
 
-#ifdef _LINUX
-#include <unistd.h>		// usleep
-#endif
-
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
 #include "../Common/Json.h"

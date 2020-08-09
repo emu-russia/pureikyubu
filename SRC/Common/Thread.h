@@ -34,6 +34,11 @@ class Thread
 	static const size_t StackSize = 0;
 #endif
 
+#if defined(_LINUX)
+	pthread_t threadId = 0;
+	static void* RingleaderThreadProc(void* args);
+#endif
+
 public:
 
 	// Create thread
@@ -45,4 +50,6 @@ public:
 	void Resume();
 	void Suspend();
 	bool IsRunning() { return running; }
+
+	static void Sleep(size_t milliseconds);
 };
