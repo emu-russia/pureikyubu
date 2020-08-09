@@ -145,7 +145,8 @@ namespace HLE
     {
         wchar_t timeStr[0x100] = { 0, };
 
-        OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
+        // TODO:
+        //OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;

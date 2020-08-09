@@ -37,3 +37,7 @@
 
 #include "../../ThirdParty/fmt/fmt/format.h"
 #include "../../ThirdParty/fmt/fmt/printf.h"
+
+#ifdef _LINUX
+#define _wcsicmp wcscasecmp
+#endif

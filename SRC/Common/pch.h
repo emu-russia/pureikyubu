@@ -13,6 +13,7 @@
 #include <unistd.h>		// usleep
 #include <pthread.h>
 #include <signal.h>
+#include <libgen.h>		// dirname / basename
 #define _stricmp strcasecmp
 #endif
 

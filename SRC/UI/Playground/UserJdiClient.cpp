@@ -25,10 +25,19 @@ namespace UI
 		JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
 		JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
 #endif
+
+#ifdef _LINUX
+		EMUCtor();
+#endif
+
 	}
 
 	JdiClient::~JdiClient()
 	{
+#ifdef _LINUX
+		EMUDtor();
+#endif
+
 #ifdef _WINDOWS
 		FreeLibrary(dll);
 #endif

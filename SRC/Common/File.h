@@ -27,4 +27,10 @@ namespace Util
     bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data);
     bool FileSave(const wchar_t* filename, std::vector<uint8_t>& data);
 
+    void SplitPath(const char* _Path,
+        char* _Drive,
+        char* _Dir,
+        char* _Filename,
+        char* _Ext);
+
 }
