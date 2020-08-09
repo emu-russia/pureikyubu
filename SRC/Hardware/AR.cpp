@@ -42,40 +42,37 @@ static void ARINT()
 
 static void ARAMDmaThread(void* Parameter)
 {
-    while (true)
+    if (Gekko::Gekko->GetTicks() < aram.gekkoTicks)
+        return;
+    aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
+
+    int type = aram.cnt >> 31;
+    uint32_t cnt = aram.cnt & 0x3FF'FFE0;
+
+    // blast data
+    if (type == RAM_TO_ARAM)
     {
-        if (Gekko::Gekko->GetTicks() < aram.gekkoTicks)
-            continue;
-        aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
+        memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
+    }
+    else
+    {
+        memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
+    }
 
-        int type = aram.cnt >> 31;
-        uint32_t cnt = aram.cnt & 0x3FF'FFE0;
+    aram.araddr += 32;
+    aram.mmaddr += 32;
+    cnt -= 32;
+    aram.cnt = cnt | (type << 31);
 
-        // blast data
-        if (type == RAM_TO_ARAM)
-        {
-            memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
-        }
-        else
-        {
-            memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
-        }
-
-        aram.araddr += 32;
-        aram.mmaddr += 32;
-        cnt -= 32;
-        aram.cnt = cnt | (type << 31);
-
-        if ((aram.cnt & ~0x8000'0000) == 0)
-        {
-            AIDCR &= ~AIDCR_ARDMA;
-            ARINT();                    // invoke aram TC interrupt
-            //if (aram.dspRunningBeforeAramDma)
-            //{
-            //    Flipper::HW->DSP->Run();
-            //}
-            aram.dmaThread->Suspend();
-        }
+    if ((aram.cnt & ~0x8000'0000) == 0)
+    {
+        AIDCR &= ~AIDCR_ARDMA;
+        ARINT();                    // invoke aram TC interrupt
+        //if (aram.dspRunningBeforeAramDma)
+        //{
+        //    Flipper::HW->DSP->Run();
+        //}
+        aram.dmaThread->Suspend();
     }
 }
 

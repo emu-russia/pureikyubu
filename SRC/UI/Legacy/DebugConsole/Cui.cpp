@@ -69,52 +69,49 @@ namespace Debug
 
 		Cui* cui = (Cui*)Parameter;
 
-		while (true)
-		{
-			Sleep(10);
+		Thread::Sleep(10);
 
-			// Update
+		// Update
+
+		for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
+		{
+			CuiWindow* wnd = *it;
+
+			if (wnd->invalidated)
+			{
+				wnd->OnDraw();
+				cui->BlitWindow(wnd);
+				wnd->invalidated = false;
+			}
+		}
+
+		// Pass key event
+
+		PeekConsoleInput(cui->StdInput, &record, 1, &count);
+		if (!count)
+			return;
+
+		ReadConsoleInput(cui->StdInput, &record, 1, &count);
+		if (!count)
+			return;
+
+		if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
+		{
+			char ascii = record.Event.KeyEvent.uChar.AsciiChar;
+			int vcode = record.Event.KeyEvent.wVirtualKeyCode;
+			int ctrl = record.Event.KeyEvent.dwControlKeyState;
+			bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
+			bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
+
+			cui->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
 
 			for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
 			{
 				CuiWindow* wnd = *it;
 
-				if (wnd->invalidated)
+				if (wnd->active)
 				{
-					wnd->OnDraw();
-					cui->BlitWindow(wnd);
-					wnd->invalidated = false;
-				}
-			}
-
-			// Pass key event
-
-			PeekConsoleInput(cui->StdInput, &record, 1, &count);
-			if (!count)
-				continue;
-
-			ReadConsoleInput(cui->StdInput, &record, 1, &count);
-			if (!count)
-				continue;
-
-			if (record.EventType == KEY_EVENT && record.Event.KeyEvent.bKeyDown)
-			{
-				char ascii = record.Event.KeyEvent.uChar.AsciiChar;
-				int vcode = record.Event.KeyEvent.wVirtualKeyCode;
-				int ctrl = record.Event.KeyEvent.dwControlKeyState;
-				bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
-				bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
-
-				cui->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
-
-				for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
-				{
-					CuiWindow* wnd = *it;
-
-					if (wnd->active)
-					{
-						wnd->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
-					}
+					wnd->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
 				}
 			}
 		}

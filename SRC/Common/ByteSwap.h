@@ -1,7 +1,7 @@
 
 #pragma once
 
-#if defined(_WINDOWS) || defined(_WINDOWS_PLAYGROUND)
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
 
 #include <intrin.h>
 

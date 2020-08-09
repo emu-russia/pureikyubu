@@ -1,15 +1,43 @@
 #include "pch.h"
 
+// Thanks for the example implementation.
+// https://stackoverflow.com/questions/9397068/how-to-pause-a-pthread-any-time-i-want
+
+// Whoever removed suspend / resume from pthread is not a good person.
+
 void* Thread::RingleaderThreadProc(void* args)
 {
-	WrappedContext* wrappedCtx = (WrappedContext*)args;
+	Thread* thread = (Thread*)args;
 
-	if (wrappedCtx->proc)
+	while (!thread->terminated)
 	{
-		wrappedCtx->proc(wrappedCtx->context);
+		pthread_mutex_lock(&thread->mutex);
+
+		switch (thread->command)
+		{
+			// command to pause thread..
+			case 0:
+				pthread_cond_wait(&thread->cond_var, &thread->mutex);
+				break;
+
+			// command to run..
+			case 1:
+				if (thread->ctx.proc)
+				{
+					thread->ctx.proc(thread->ctx.context);
+				}
+				break;
+		}
+
+		pthread_mutex_unlock(&thread->mutex);
+
+		// it's important to give main thread few time after unlock 'this'
+		pthread_yield();
 	}
 
-	return nullptr;
+	thread->terminated = false;
+
+	pthread_exit(nullptr);
 }
 
 Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char* name)
@@ -20,14 +48,36 @@ Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char*
 	ctx.context = context;
 	ctx.proc = threadProc;
 
-	int status = pthread_create(&threadId, NULL, Thread::RingleaderThreadProc, &ctx);
+	pthread_mutex_init(&mutex, nullptr);
+	pthread_cond_init(&cond_var, nullptr);
+
+	// create thread in suspended state..
+	command = running ? 1 : 0;
+
+	int status = pthread_create(&threadId, nullptr, Thread::RingleaderThreadProc, this);
 	assert(status == 0);
 }
 
 Thread::~Thread()
 {
-	Suspend();
-	//pthread_terminate(threadId);
+	terminated = true;
+
+	// Run if suspended
+	if (!running)
+	{
+		Resume();
+	}
+
+	// Wait terminated
+	while (terminated)
+	{
+		Thread::Sleep(1);
+	}
+
+	pthread_join(threadId, nullptr);
+
+	pthread_cond_destroy(&cond_var);
+	pthread_mutex_destroy(&mutex);
 }
 
 void Thread::Resume()
@@ -35,7 +85,11 @@ void Thread::Resume()
 	resumeLock.Lock();
 	if (!running)
 	{
-		//pthread_kill(threadId, SIGCONT);
+		pthread_mutex_lock(&mutex);
+		command = 1;
+		pthread_cond_signal(&cond_var);
+		pthread_mutex_unlock(&mutex);
+
 		running = true;
 		resumeCounter++;
 	}
@@ -48,7 +102,11 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
-		//pthread_kill(threadId, SIGSTOP);
+
+		pthread_mutex_lock(&mutex);
+		command = 0;
+		// in pause command we dont need to signal cond_var because we not in wait state now..
+		pthread_mutex_unlock(&mutex);
 	}
 }
 

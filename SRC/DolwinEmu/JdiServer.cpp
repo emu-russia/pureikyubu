@@ -17,7 +17,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
             if ((uint64_t)hModule > 0x400000)
             {
                 MessageBoxA(NULL, "Image base must be below or equal 0x400'000. Required by HLE Subsystem for artifical CPU `CallVM` opcode.", "Error", MB_OK | MB_ICONEXCLAMATION);
-                return FALSE;
+
+                // Ignore error for now..
+                //return FALSE;
             }
 
             EMUCtor();

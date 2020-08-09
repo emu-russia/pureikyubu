@@ -489,34 +489,31 @@ static void AIStreamCallback(uint16_t l, uint16_t r)
 // Update audio DMA thread
 static void AIUpdate(void *Parameter)
 {
-    while (true)
+    if ((uint64_t)Gekko::Gekko->GetTicks() >= ai.dmaTime)
     {
-        if ((uint64_t)Gekko::Gekko->GetTicks() >= ai.dmaTime)
+        if (ai.dcnt == 0)
         {
-            if (ai.dcnt == 0)
+            if (ai.len & AID_EN)
             {
-                if (ai.len & AID_EN)
-                {
-                    // Restart Dma and signal AID_INT
-                    ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
-                    ai.dcnt = ai.len & ~AID_EN;
-                    AIDINT();
-                }
-                else
-                {
-                    ai.audioThread->Suspend();
-                }
+                // Restart Dma and signal AID_INT
+                ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
+                ai.dcnt = ai.len & ~AID_EN;
+                AIDINT();
             }
             else
             {
-                if (ai.len & AID_EN)
-                {
-                    AIFeedMixer();
-                }
-                else
-                {
-                    ai.audioThread->Suspend();
-                }
+                ai.audioThread->Suspend();
+            }
+        }
+        else
+        {
+            if (ai.len & AID_EN)
+            {
+                AIFeedMixer();
+            }
+            else
+            {
+                ai.audioThread->Suspend();
             }
         }
     }

@@ -17,17 +17,14 @@ namespace Flipper
     {
         Flipper* flipper = (Flipper*)Parameter;
 
-        while (true)
+        int64_t ticks = Gekko::Gekko->GetTicks();
+        if (ticks < flipper->hwUpdateTbrValue)
         {
-            int64_t ticks = Gekko::Gekko->GetTicks();
-            if (ticks < flipper->hwUpdateTbrValue)
-            {
-                continue;
-            }
-            flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
-
-            flipper->Update();
+            return;
         }
+        flipper->hwUpdateTbrValue = ticks + Flipper::ticksToHwUpdate;
+
+        flipper->Update();
     }
 
     Flipper::Flipper(HWConfig* config)

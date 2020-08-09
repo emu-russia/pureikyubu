@@ -6,7 +6,10 @@ DWORD WINAPI Thread::RingleaderThreadProc(LPVOID lpParameter)
 
 	if (wrappedCtx->proc)
 	{
-		wrappedCtx->proc(wrappedCtx->context);
+		while (true)
+		{
+			wrappedCtx->proc(wrappedCtx->context);
+		}
 	}
 
 	return 0;
