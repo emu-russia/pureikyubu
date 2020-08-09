@@ -5,7 +5,7 @@ using namespace Debug;
 
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
-#define SWAP        _byteswap_ulong
+#define SWAP        _BYTESWAP_UINT32
 
 // internal OS vars
 static  uint32_t     __OSPhysicalContext;    // OS_PHYSICAL_CONTEXT
