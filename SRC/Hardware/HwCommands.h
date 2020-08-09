@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define HW_JDI_JSON L"Data\\Json\\HWJdi.json"
+#define HW_JDI_JSON L"./Data/Json/HWJdi.json"
 
 namespace Flipper
 {
