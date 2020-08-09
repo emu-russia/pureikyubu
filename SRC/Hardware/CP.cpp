@@ -88,60 +88,57 @@ static void CPDrawTokenCallback(uint16_t tokenValue)
 
 static void CPThread(void* Param)
 {
-    while (true)
+    int64_t ticks = Gekko::Gekko->GetTicks();
+    if (ticks < fifo.updateTbrValue)
     {
-        int64_t ticks = Gekko::Gekko->GetTicks();
-        if (ticks < fifo.updateTbrValue)
-        {
-            continue;
-        }
-        fifo.updateTbrValue = ticks + fifo.tickPerFifo;
+        return;
+    }
+    fifo.updateTbrValue = ticks + fifo.tickPerFifo;
 
-        // Calculate count
-        if (fifo.cp.wrptr >= fifo.cp.rdptr)
-        {
-            fifo.cp.cnt = fifo.cp.wrptr - fifo.cp.rdptr;
-        }
-        else
-        {
-            fifo.cp.cnt = (fifo.cp.top - fifo.cp.rdptr) + (fifo.cp.wrptr - fifo.cp.base);
-        }
+    // Calculate count
+    if (fifo.cp.wrptr >= fifo.cp.rdptr)
+    {
+        fifo.cp.cnt = fifo.cp.wrptr - fifo.cp.rdptr;
+    }
+    else
+    {
+        fifo.cp.cnt = (fifo.cp.top - fifo.cp.rdptr) + (fifo.cp.wrptr - fifo.cp.base);
+    }
 
-        // Watermarks logic. Active only in linked-mode.
-        if (fifo.cp.cnt > fifo.cp.himark && (fifo.cp.cr & CP_CR_WPINC))
-        {
-            CP_OVF();
-        }
-        if (fifo.cp.cnt < fifo.cp.lomark && (fifo.cp.cr & CP_CR_WPINC))
-        {
-            CP_UVF();
-        }
+    // Watermarks logic. Active only in linked-mode.
+    if (fifo.cp.cnt > fifo.cp.himark && (fifo.cp.cr & CP_CR_WPINC))
+    {
+        CP_OVF();
+    }
+    if (fifo.cp.cnt < fifo.cp.lomark && (fifo.cp.cr & CP_CR_WPINC))
+    {
+        CP_UVF();
+    }
 
-        // Breakpoint
-        if ((fifo.cp.rdptr & ~0x1f) == (fifo.cp.bpptr & ~0x1f) && (fifo.cp.cr & CP_CR_BPEN))
-        {
-            CP_BREAK();
-        }
+    // Breakpoint
+    if ((fifo.cp.rdptr & ~0x1f) == (fifo.cp.bpptr & ~0x1f) && (fifo.cp.cr & CP_CR_BPEN))
+    {
+        CP_BREAK();
+    }
 
-        // Advance read pointer.
-        if (fifo.cp.cnt != 0 && fifo.cp.cr & CP_CR_RDEN && (fifo.cp.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
-        {
-            fifo.cp.sr &= ~CP_SR_RD_IDLE;
+    // Advance read pointer.
+    if (fifo.cp.cnt != 0 && fifo.cp.cr & CP_CR_RDEN && (fifo.cp.sr & (CP_SR_OVF | CP_SR_UVF | CP_SR_BPINT)) == 0)
+    {
+        fifo.cp.sr &= ~CP_SR_RD_IDLE;
 
-            fifo.cp.sr &= ~CP_SR_CMD_IDLE;
-            GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK]);
-            fifo.cp.sr |= CP_SR_CMD_IDLE;
+        fifo.cp.sr &= ~CP_SR_CMD_IDLE;
+        GXWriteFifo(&mi.ram[fifo.cp.rdptr & RAMMASK]);
+        fifo.cp.sr |= CP_SR_CMD_IDLE;
 
-            fifo.cp.rdptr += 32;
-            if (fifo.cp.rdptr == fifo.cp.top)
-            {
-                fifo.cp.rdptr = fifo.cp.base;
-            }
-        }
-        else
+        fifo.cp.rdptr += 32;
+        if (fifo.cp.rdptr == fifo.cp.top)
         {
-            fifo.cp.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
+            fifo.cp.rdptr = fifo.cp.base;
         }
+    }
+    else
+    {
+        fifo.cp.sr |= (CP_SR_RD_IDLE | CP_SR_CMD_IDLE);
     }
 }
 

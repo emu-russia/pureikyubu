@@ -55,11 +55,8 @@ namespace DSP
 	{
 		Dsp16* dsp = (Dsp16*)Parameter;
 
-		while (true)
-		{
-			// Do DSP actions
-			dsp->core->Update();
-		}
+		// Do DSP actions
+		dsp->core->Update();
 	}
 
 	void Dsp16::Run()

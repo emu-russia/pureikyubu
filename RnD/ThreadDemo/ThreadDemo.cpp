@@ -7,30 +7,24 @@ SpinLock Girl;
 
 void ThreadBoy1(void* param)
 {
-	while (true)
-	{
-		Girl.Lock();
+	Girl.Lock();
 
-		printf("Boy1 owning Girl.\n");
+	printf("Boy1 owning Girl.\n");
 
-		Thread::Sleep(100);
+	Thread::Sleep(100);
 
-		Girl.Unlock();
-	}
+	Girl.Unlock();
 }
 
 void ThreadBoy2(void* param)
 {
-	while (true)
-	{
-		Girl.Lock();
+	Girl.Lock();
 
-		printf("Boy2 owning Girl.\n");
+	printf("Boy2 owning Girl.\n");
 
-		Thread::Sleep(100);
+	Thread::Sleep(100);
 
-		Girl.Unlock();
-	}
+	Girl.Unlock();
 }
 
 int main()

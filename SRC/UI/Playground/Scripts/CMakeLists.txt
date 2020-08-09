@@ -18,3 +18,6 @@ target_link_libraries (DolwinPlayground LINK_PUBLIC DVD)
 target_link_libraries (DolwinPlayground LINK_PUBLIC GekkoCore)
 target_link_libraries (DolwinPlayground LINK_PUBLIC Hardware)
 target_link_libraries (DolwinPlayground LINK_PUBLIC HighLevel)
+
+find_package (Threads)
+target_link_libraries (ThreadDemo ${CMAKE_THREAD_LIBS_INIT})

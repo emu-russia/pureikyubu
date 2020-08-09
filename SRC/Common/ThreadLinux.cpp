@@ -6,7 +6,10 @@ void* Thread::RingleaderThreadProc(void* args)
 
 	if (wrappedCtx->proc)
 	{
-		wrappedCtx->proc(wrappedCtx->context);
+		while (true)
+		{
+			wrappedCtx->proc(wrappedCtx->context);
+		}
 	}
 
 	return nullptr;

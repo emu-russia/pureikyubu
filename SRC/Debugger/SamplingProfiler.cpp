@@ -6,16 +6,13 @@ namespace Debug
 	{
 		SamplingProfiler* profiler = (SamplingProfiler *)Parameter;
 
-		while (true)
+		uint64_t ticks = Gekko::Gekko->GetTicks();
+		if (ticks >= (profiler->savedGekkoTbr + profiler->pollingInterval))
 		{
-			uint64_t ticks = Gekko::Gekko->GetTicks();
-			if (ticks >= (profiler->savedGekkoTbr + profiler->pollingInterval))
-			{
-				profiler->savedGekkoTbr = ticks;
+			profiler->savedGekkoTbr = ticks;
 
-				profiler->sampleData->AddUInt64(nullptr, ticks);
-				profiler->sampleData->AddUInt32(nullptr, Gekko::Gekko->regs.pc);
-			}
+			profiler->sampleData->AddUInt64(nullptr, ticks);
+			profiler->sampleData->AddUInt32(nullptr, Gekko::Gekko->regs.pc);
 		}
 	}
 
