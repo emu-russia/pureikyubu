@@ -18,6 +18,14 @@
 #include "../../Common/Json.h"
 #include "../../Common/String.h"
 
+#ifdef _LINUX
+#include "../../Common/Json.h"
+#include "../../Common/Jdi.h"
+#include "../../Hardware/HWConfig.h"
+#include "../../DolwinEmu/Emulator.h"
+#include "../../DolwinEmu/JdiServer.h"
+#endif
+
 #include "UserJdiClient.h"
 #include "UiCommands.h"
 #include "DummyDebugger.h"

@@ -9,6 +9,8 @@
 #include <fstream>
 #include <atomic>
 #include <string.h>
+#include <math.h>
+#include <limits.h>
 
 #include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"
@@ -32,3 +34,8 @@
 #include "HleCommands.h"
 #include "TimeFormat.h"
 #include "DumpThreads.h"
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
+#define _strnicmp strncasecmp
+#endif

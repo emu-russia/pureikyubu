@@ -6,7 +6,9 @@ namespace JDI
 {
 	JdiHub Hub;      // Singletone.
 
-	JdiHub::JdiHub() {}
+	JdiHub::JdiHub()
+	{
+	}
 
 	// Delete all JDI nodes
 	JdiHub::~JdiHub()
@@ -300,7 +302,7 @@ namespace JDI
 		return it->second(noArgs);
 	}
 
-	bool JdiHub::ExecuteFastBool(char* command)
+	bool JdiHub::ExecuteFastBool(const char* command)
 	{
 		Json::Value* output = ExecuteFast(command);
 		assert(output);
@@ -309,7 +311,7 @@ namespace JDI
 		return value;
 	}
 
-	uint32_t JdiHub::ExecuteFastUInt32(char* command)
+	uint32_t JdiHub::ExecuteFastUInt32(const char* command)
 	{
 		Json::Value* output = ExecuteFast(command);
 		assert(output);

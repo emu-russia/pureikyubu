@@ -25,10 +25,19 @@ namespace UI
 		JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
 		JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
 #endif
+
+#ifdef _LINUX
+		EMUCtor();
+#endif
+
 	}
 
 	JdiClient::~JdiClient()
 	{
+#ifdef _LINUX
+		EMUDtor();
+#endif
+
 #ifdef _WINDOWS
 		FreeLibrary(dll);
 #endif
@@ -64,7 +73,7 @@ namespace UI
 	{
 		char cmd[0x1000] = { 0 };
 
-		sprintf_s(cmd, sizeof(cmd), "MountIso \"%s\"", path.c_str());
+		sprintf(cmd, "MountIso \"%s\"", path.c_str());
 
 		bool mountResult = false;
 
@@ -155,7 +164,7 @@ namespace UI
 	void JdiClient::SetConfigString(const std::string& var, const std::string& newVal, const std::string& path)
 	{
 		char cmd[0x200] = { 0, };
-		sprintf_s(cmd, sizeof(cmd), "SetConfigString %s %s \"%s\"", path.c_str(), var.c_str(), newVal.c_str());
+		sprintf(cmd, "SetConfigString %s %s \"%s\"", path.c_str(), var.c_str(), newVal.c_str());
 		CallJdi(cmd);
 	}
 
@@ -191,7 +200,7 @@ namespace UI
 	{
 		char cmd[0x1000] = { 0 };
 
-		sprintf_s(cmd, sizeof(cmd), "load \"%s\"", filename.c_str());
+		sprintf(cmd, "load \"%s\"", filename.c_str());
 
 		bool res = CallJdiNoReturn(cmd);
 		if (!res)
@@ -225,7 +234,7 @@ namespace UI
 		char str[0x100] = { 0 };
 		char cmd[0x30] = { 0, };
 
-		sprintf_s(cmd, sizeof(cmd), "GetChannelName %i", chan);
+		sprintf(cmd, "GetChannelName %i", chan);
 
 		bool res = CallJdiReturnString(cmd, str, sizeof(str) - 1);
 		if (!res)

@@ -44,7 +44,7 @@ uint32_t LoadDOL(const std::wstring& dolname)
     DolHeader   dh;
 
     /* Try to open file. */
-    auto dol = std::ifstream(dolname, std::ifstream::binary);
+    auto dol = std::ifstream( Util::WstringToString(dolname).c_str(), std::ifstream::binary);
     if (!dol.is_open())
     {
         return 0;
@@ -254,7 +254,7 @@ uint32_t LoadELF(const std::wstring& elfname)
     ElfEhdr     hdr;
     ElfPhdr     phdr;
 
-    auto file = std::ifstream(elfname, std::ifstream::binary);
+    auto file = std::ifstream(Util::WstringToString(elfname).c_str(), std::ifstream::binary);
     if (!file.is_open())
     {
         return 0;
@@ -334,7 +334,7 @@ uint32_t LoadBIN(const std::wstring& binname)
     }
 
     /* Try to load file. */
-    auto file = std::ifstream(binname, std::ifstream::binary | std::ifstream::ate);
+    auto file = std::ifstream(Util::WstringToString(binname).c_str(), std::ifstream::binary | std::ifstream::ate);
     
     /* Nothing to load? */
     if (!file.is_open())
@@ -367,13 +367,13 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
 {
     // get map file name
     auto mapname = std::wstring();
-    wchar_t drive[MAX_PATH], dir[MAX_PATH], name[_MAX_PATH], ext[_MAX_EXT];
+    char drive[0x100], dir[0x1000], name[0x100], ext[0x100];
 
-    _wsplitpath_s(filename.data(),
-        drive, _countof(drive) - 1,
-        dir, _countof(dir) - 1,
-        name, _countof(name) - 1,
-        ext, _countof(ext) - 1);
+    Util::SplitPath(Util::WstringToString(filename).c_str(),
+        drive, 
+        dir, 
+        name,
+        ext);
 
     // Step 1: try to load map from Data directory
     if (dvd)
@@ -382,7 +382,7 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
     }
     else
     {
-        mapname = fmt::format(L".\\Data\\{:s}.map", name);
+        mapname = fmt::format(L".\\Data\\{:s}.map", Util::StringToWstring(name));
     }
     
     MAP_FORMAT format = LoadMAP(mapname.data());
@@ -391,11 +391,11 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
     // Step 2: try to load map from file directory
     if (dvd)
     {
-        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, diskId);
+        mapname = fmt::format(L"{:s}{:s}{:s}.map", Util::StringToWstring(drive), Util::StringToWstring(dir), diskId);
     }
     else
     {
-        mapname = fmt::format(L"{:s}{:s}{:s}.map", drive, dir, name);
+        mapname = fmt::format(L"{:s}{:s}{:s}.map", Util::StringToWstring(drive), Util::StringToWstring(dir), Util::StringToWstring(name));
     }
 
     format = LoadMAP(mapname.data());
@@ -413,7 +413,7 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
         }
         else
         {
-            mapname = fmt::format(L".\\Data\\{:s}.map", name);
+            mapname = fmt::format(L".\\Data\\{:s}.map", Util::StringToWstring(name));
         }
         
         Report(Channel::Loader, "Making new MAP file: %s\n\n", Util::WstringToString(mapname).c_str());
@@ -448,7 +448,6 @@ void LoadFile(const std::wstring& filename)
     bool bootrom = false;
     bool dvd = false;
     std::wstring diskId;
-    ULONGLONG s_time = GetTickCount64();
 
     // load file
     if (filename == L"Bootrom")
@@ -503,7 +502,7 @@ void LoadFile(const std::wstring& filename)
         EMUGetHwConfig(config);
         BootROM(dvd, false, config->consoleVer);
         delete config;
-        Sleep(10);
+        Thread::Sleep(10);
     }
 
     // autoload map file

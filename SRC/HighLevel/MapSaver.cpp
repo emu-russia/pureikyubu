@@ -12,7 +12,7 @@ using namespace Debug;
 static MAP_FORMAT mapFormat;
 static char *mapName;
 static FILE* mapFile = NULL;
-static BOOL appendStarted;
+static bool appendStarted;
 static int itemsUpdated;
 
 static void AppendMAPBySymbol(uint32_t address, char *symbol)
@@ -97,7 +97,7 @@ void SaveMAP(const char* mapname)
         return;
     }
 
-    wchar_t wcharStr[MAX_PATH] = { 0, };
+    wchar_t wcharStr[0x1000] = { 0, };
     char* ansiPtr = (char*)mapname;
     wchar_t* wcharPtr = wcharStr;
     while (*ansiPtr)

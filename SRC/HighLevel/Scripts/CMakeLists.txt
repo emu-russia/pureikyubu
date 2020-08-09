@@ -10,5 +10,4 @@ add_library (HighLevel
 	../OS.cpp
 	../Stdc.cpp
 	../Symbols.cpp
-	../TimeFormat.cpp
 )

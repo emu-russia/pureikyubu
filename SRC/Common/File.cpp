@@ -127,4 +127,70 @@ namespace Util
         return FileSave(wstr, data);
     }
 
+    void SplitPath(const char* _Path,
+        char* _Drive,
+        char* _Dir,
+        char* _Filename,
+        char* _Ext)
+    {
+
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+        _splitpath(_Path, _Drive, _Dir, _Filename, _Ext);
+#endif
+
+#if defined (_LINUX)
+
+        _Drive[0] = 0;
+
+        char filename[0x1000] = { 0, };
+
+        char* base = basename((char *)_Path);
+
+        if (base)
+        {
+            strcpy(_Filename, base);
+            strcpy(_Ext, base);
+
+            char* fnamePtr = strchr(_Filename, '.');
+            if (fnamePtr)
+            {
+                *fnamePtr = 0;
+            }
+            else
+            {
+                _Filename[0] = 0;
+            }
+
+            char * extPtr = strrchr(_Ext, '.');
+            if (extPtr)
+            {
+                *extPtr = 0;
+            }
+            else
+            {
+                _Ext[0] = 0;
+            }
+        }
+        else
+        {
+            _Filename[0] = 0;
+            _Ext[0] = 0;
+        }
+
+        char* dir = dirname((char*)_Path);
+
+        if (dir)
+        {
+            strcpy(_Dir, dir);
+        }
+        else
+        {
+            _Dir[0] = 0;
+        }
+
+
+#endif
+
+    }
+
 }

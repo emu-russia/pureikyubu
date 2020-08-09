@@ -1,5 +1,7 @@
 add_library (GekkoCore
 
+	../Interpreter/NoAsm.cpp
+
 	../Interpreter/Branch.cpp
 	../Interpreter/Compare.cpp
 	../Interpreter/Condition.cpp
@@ -38,3 +40,5 @@ add_library (GekkoCore
 	../TLB.cpp
 
 )
+
+target_link_libraries (GekkoCore LINK_PUBLIC Hardware)

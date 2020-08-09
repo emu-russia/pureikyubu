@@ -28,7 +28,6 @@
 #include "../Hardware/HWConfig.h"
 #include "../Hardware/MI.h"
 #include "../Debugger/Debugger.h"
-#include "../DolwinEmu/Emulator.h"
 
 #ifdef _LINUX
 #define _stricmp strcasecmp

@@ -103,7 +103,7 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 {
     /* Open the map file. */
-    auto file = std::ifstream(mapname);
+    auto file = std::ifstream( Util::WstringToString(mapname).c_str());
     if (!file.is_open())
     {
         throw std::exception();

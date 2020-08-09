@@ -4,3 +4,5 @@ add_library (Debugger
 	../Report.cpp
 	../SamplingProfiler.cpp
 )
+
+target_link_libraries (Debugger LINK_PUBLIC GekkoCore)
