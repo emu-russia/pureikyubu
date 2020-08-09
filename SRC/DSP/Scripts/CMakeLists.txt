@@ -1,4 +1,4 @@
-add_library (DSP
+add_library (DSP SHARED 
 	../DSP.cpp
 	../DspAccel.cpp
 	../DspAdpcm.cpp

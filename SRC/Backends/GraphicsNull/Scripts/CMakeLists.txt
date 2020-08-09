@@ -1,1 +1,3 @@
-add_library (GraphicsNull ../GraphicsNull.cpp)
+add_library (GraphicsNull SHARED 
+	../GraphicsNull.cpp
+)

@@ -1,1 +1,3 @@
-add_library (AudioNull ../AudioNull.cpp)
+add_library (AudioNull SHARED 
+	../AudioNull.cpp
+)

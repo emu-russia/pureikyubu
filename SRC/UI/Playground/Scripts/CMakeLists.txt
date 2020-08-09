@@ -5,10 +5,10 @@ add_executable (DolwinPlayground
 	../UserJdiClient.cpp
 )
 
-target_link_libraries (DolwinPlayground LINK_PUBLIC VideoNull)
-target_link_libraries (DolwinPlayground LINK_PUBLIC GraphicsNull)
-target_link_libraries (DolwinPlayground LINK_PUBLIC AudioNull)
-target_link_libraries (DolwinPlayground LINK_PUBLIC PadNull)
+# target_link_libraries (DolwinPlayground LINK_PUBLIC VideoNull)
+# target_link_libraries (DolwinPlayground LINK_PUBLIC GraphicsNull)
+# target_link_libraries (DolwinPlayground LINK_PUBLIC AudioNull)
+# target_link_libraries (DolwinPlayground LINK_PUBLIC PadNull)
 
 target_link_libraries (DolwinPlayground LINK_PUBLIC Common)
 target_link_libraries (DolwinPlayground LINK_PUBLIC Debugger)
