@@ -22,6 +22,8 @@ Build using Visual Studio 2015/2019. To build, open DolwinPlayground_VS2015.sln/
 ### Generic Linux (Ubuntu) version
 
 ```
+cd ~
+git clone https://github.com/ogamespec/dolwin.git 
 cd dolwin
 cmake ./
 cmake --build ./
