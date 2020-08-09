@@ -134,15 +134,10 @@ namespace HLE
             name = SYMName(strtoul(args[1].c_str(), nullptr, 0));
         }
 
-        if (name == nullptr)
-        {
-            name = "";
-        }
-
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;
 
-        output->AddAnsiString(nullptr, name);
+        output->AddAnsiString(nullptr, name ? name : "");
         return output;
     }
 

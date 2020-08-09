@@ -47,8 +47,8 @@ static void print_mtx(MatrixPtr ptr)
 
 void MTXOpen()
 {
-    BOOL flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
-    if(flag == FALSE) return;
+    bool flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
+    if(flag == false) return;
 
     Report( Channel::HLE, "Geometry library install\n");
 

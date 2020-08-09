@@ -19,5 +19,7 @@ target_link_libraries (DolwinPlayground LINK_PUBLIC GekkoCore)
 target_link_libraries (DolwinPlayground LINK_PUBLIC Hardware)
 target_link_libraries (DolwinPlayground LINK_PUBLIC HighLevel)
 
+target_link_libraries (DolwinPlayground LINK_PUBLIC fmt)
+
 find_package (Threads)
 target_link_libraries (DolwinPlayground ${CMAKE_THREAD_LIBS_INIT})

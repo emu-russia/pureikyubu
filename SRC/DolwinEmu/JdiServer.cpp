@@ -141,7 +141,7 @@ CallJdi(const char* request)
 }
 
 #ifdef _WINDOWS
-extern "C" __declspec(dllexport) 
+extern "C" __declspec(dllexport)
 #endif
 bool 
 #ifdef _WINDOWS
@@ -154,7 +154,7 @@ CallJdiNoReturn(const char* request)
 }
 
 #ifdef _WINDOWS
-extern "C" __declspec(dllexport) 
+extern "C" __declspec(dllexport)
 #endif
 bool 
 #ifdef _WINDOWS
@@ -185,7 +185,7 @@ CallJdiReturnInt(const char* request, int* valueOut)
 }
 
 #ifdef _WINDOWS
-extern "C" __declspec(dllexport) 
+extern "C" __declspec(dllexport)
 #endif
 bool 
 #ifdef _WINDOWS
@@ -253,7 +253,7 @@ CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
 }
 
 #ifdef _WINDOWS
-extern "C" __declspec(dllexport) 
+extern "C" __declspec(dllexport)
 #endif
 bool 
 #ifdef _WINDOWS

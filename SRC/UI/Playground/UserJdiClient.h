@@ -4,13 +4,13 @@
 
 #pragma once
 
+#ifdef _WINDOWS
 namespace JDI
 {
 	typedef Json::Value* (*CmdDelegate)(std::vector<std::string>& args);
 	typedef void (*JdiReflector)();
 }
 
-#ifdef _WINDOWS
 typedef Json::Value* (__cdecl *CALL_JDI)(const char* request);
 typedef bool (__cdecl* CALL_JDI_NO_RETURN)(const char* request);
 typedef bool (__cdecl* CALL_JDI_RETURN_INT)(const char* request, int* valueOut);
@@ -42,6 +42,23 @@ namespace UI
 		JDI_ADD_NODE JdiAddNode = nullptr;
 		JDI_REMOVE_NODE JdiRemoveNode = nullptr;
 		JDI_ADD_CMD JdiAddCmd = nullptr;
+#endif
+
+#ifdef _LINUX
+		void JdiAddNode(const char* filename, JDI::JdiReflector reflector)
+		{
+			::JdiAddNode(filename, reflector);
+		}
+
+		void JdiRemoveNode(const char* filename)
+		{
+			::JdiRemoveNode(filename);
+		}
+
+		void JdiAddCmd(const char* name, JDI::CmdDelegate command)
+		{
+			::JdiAddCmd(name, command);
+		}
 #endif
 
 		JdiClient();

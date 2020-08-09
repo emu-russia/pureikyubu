@@ -24,3 +24,6 @@ add_subdirectory (SRC/HighLevel/Scripts)
 
 # UI
 add_subdirectory (SRC/UI/Playground/Scripts)
+
+# ThirdParty
+add_subdirectory (ThirdParty/fmt/Scripts)

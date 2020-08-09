@@ -8,7 +8,7 @@ HLEControl hle;
 // ---------------------------------------------------------------------------
 
 void os_ignore() { Report(Channel::HLE, "High level ignore (pc: %08X, %s)\n", Gekko::Gekko->regs.pc, SYMName(Gekko::Gekko->regs.pc)); }
-void os_ret0()   { Gekko::Gekko->regs.gpr[3] = NULL; }
+void os_ret0()   { Gekko::Gekko->regs.gpr[3] = 0; }
 void os_ret1()   { Gekko::Gekko->regs.gpr[3] = 1; }
 void os_trap()   { Gekko::Gekko->regs.pc = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] - 4; Halt("High level trap (pc: %08X)!\n", Gekko::Gekko->regs.pc); }
 

@@ -3,7 +3,7 @@
 
 typedef struct opMarker {
     uint32_t offset;
-    BOOL blr;
+    bool blr;
 } opMarker;
 
 typedef struct funcDesc {
@@ -138,7 +138,7 @@ static char * MAPFind (uint32_t checksum)
 void MAPInit(const wchar_t * mapname)
 {
     MAPOpen ();
-    Map = _wfopen(mapname, L"w");
+    Map = fopen( Util::WstringToString(mapname).c_str(), "w");
 
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
@@ -147,8 +147,8 @@ void MAPInit(const wchar_t * mapname)
 
 /*
  * Adds a mark to the opcode at the specified offset.
- * if blr is FALSE, the mark is considerated an entrypoint to a function
- * if blr is not FALSE, the mark is considerated an exitpoint from the function
+ * if blr is false, the mark is considerated an entrypoint to a function
+ * if blr is not false, the mark is considerated an exitpoint from the function
  * Use carefully!!!
  */
 void MAPAddMark (uint32_t offset, bool blr)
@@ -189,7 +189,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
     if (!Map) return ;
     if (!Map_marks) return ;
 
-    MAPAddMark (offsetStart, FALSE);
+    MAPAddMark (offsetStart, false);
     while(offsetStart < offsetEnd) {
 
         opcode = _BYTESWAP_UINT32(*((uint32_t *)&mi.ram[offsetStart & RAMMASK]));
@@ -203,7 +203,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
                 target = opcode & 0x03fffffc;
                 if(target & 0x02000000) target |= 0xfc000000;
                 if ((opcode & 3) == 1) target += offsetStart;
-                MAPAddMark (target, FALSE);
+                MAPAddMark(target, false);
                 break;
             }
             break;
@@ -213,7 +213,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
             case 32:
             case 33:
             case 100:
-                MAPAddMark (offsetStart, TRUE);
+                MAPAddMark (offsetStart, true);
             }
             break;
         }
@@ -240,12 +240,12 @@ void MAPFinish()
     while (i < Map_marksSize - 1) {
         // find start of function
         while (Map_marks[i].blr && i < Map_marksSize) i++; 
-        while (i < Map_marksSize - 1 && Map_marks[i+1].blr == FALSE) i++;
+        while (i < Map_marksSize - 1 && Map_marks[i+1].blr == false) i++;
         // find end of function
         for ( k = i + 1; k < Map_marksSize - 1 && Map_marks[k+1].blr; k++);
         
         if (i < Map_marksSize && k < Map_marksSize &&
-            Map_marks[i].blr == FALSE && Map_marks[k].blr) {
+            Map_marks[i].blr == false && Map_marks[k].blr) {
 
             // look if the function is HLE
             Checksum = MAPFuncChecksum (Map_marks[i].offset , Map_marks[k].offset);
