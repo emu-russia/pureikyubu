@@ -25,6 +25,7 @@ void DebugThreadProc(void* param)
 		}
 
 		queue.clear();
+		fflush(stdout);
 	}
 
 	Thread::Sleep(100);

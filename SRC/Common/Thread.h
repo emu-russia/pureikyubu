@@ -37,6 +37,10 @@ class Thread
 #if defined(_LINUX)
 	pthread_t threadId = 0;
 	static void* RingleaderThreadProc(void* args);
+	pthread_mutex_t mutex;
+	pthread_cond_t cond_var;
+	int command;
+	bool terminated = false;
 #endif
 
 public:
