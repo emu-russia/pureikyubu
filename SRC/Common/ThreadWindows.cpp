@@ -52,3 +52,8 @@ void Thread::Suspend()
 		SuspendThread(threadHandle);
 	}
 }
+
+void Thread::Sleep(size_t milliseconds)
+{
+	::Sleep(milliseconds);
+}

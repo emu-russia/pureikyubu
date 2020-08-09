@@ -83,14 +83,7 @@ static Json::Value* EmuFileSave(std::vector<std::string>& args)
 // Sleep specified number of milliseconds
 static Json::Value* CmdSleep(std::vector<std::string>& args)
 {
-#ifdef _WINDOWS
-	Sleep(atoi(args[1].c_str()));
-#endif
-
-#ifdef _LINUX
-	usleep(atoi(args[1].c_str()));
-#endif
-
+	Thread::Sleep(atoi(args[1].c_str()));
 	return nullptr;
 }
 

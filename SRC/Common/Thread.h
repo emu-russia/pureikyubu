@@ -45,4 +45,6 @@ public:
 	void Resume();
 	void Suspend();
 	bool IsRunning() { return running; }
+
+	static void Sleep(size_t milliseconds);
 };

@@ -10,6 +10,7 @@
 #ifdef _LINUX
 #include <memory.h>
 #include <string.h>
+#include <unistd.h>		// usleep
 #define _stricmp strcasecmp
 #endif
 
