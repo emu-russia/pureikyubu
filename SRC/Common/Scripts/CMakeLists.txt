@@ -7,3 +7,5 @@ add_library (Common
 	../String.cpp
 	../ThreadLinux.cpp
 )
+
+target_link_libraries (Common LINK_PUBLIC Debugger)

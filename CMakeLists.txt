@@ -6,6 +6,9 @@ add_definitions (-D_LINUX)
 # ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
 add_compile_options(-Wno-attributes)
 
+# ThirdParty
+add_subdirectory (ThirdParty/fmt/Scripts)
+
 # Backends
 add_subdirectory (SRC/Backends/AudioNull/Scripts)
 add_subdirectory (SRC/Backends/VideoNull/Scripts)
@@ -24,6 +27,3 @@ add_subdirectory (SRC/HighLevel/Scripts)
 
 # UI
 add_subdirectory (SRC/UI/Playground/Scripts)
-
-# ThirdParty
-add_subdirectory (ThirdParty/fmt/Scripts)

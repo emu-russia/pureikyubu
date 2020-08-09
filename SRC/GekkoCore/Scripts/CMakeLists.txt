@@ -40,3 +40,5 @@ add_library (GekkoCore
 	../TLB.cpp
 
 )
+
+target_link_libraries (GekkoCore LINK_PUBLIC Hardware)

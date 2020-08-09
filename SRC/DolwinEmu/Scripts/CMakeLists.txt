@@ -4,3 +4,5 @@ add_library (DolwinEmu
 	../Emulator.cpp
 	../JdiServer.cpp
 )
+
+target_link_libraries (DolwinEmu LINK_PUBLIC Common)

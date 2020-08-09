@@ -531,7 +531,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
@@ -551,7 +551,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
@@ -571,7 +571,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
@@ -591,7 +591,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
@@ -641,7 +641,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
@@ -675,7 +675,7 @@ namespace Gekko
 
 		uint32_t pa = Gekko::BadAddress;
 
-		if (emu.loaded)
+		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
 			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
