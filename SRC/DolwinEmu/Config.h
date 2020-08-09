@@ -2,8 +2,8 @@
 
 #pragma once
 
-constexpr auto DOLWIN_DEFAULT_SETTINGS = L"Data\\DefaultSettings.json";		// Must exist
-constexpr auto DOLWIN_SETTINGS = L"Data\\Settings.json";
+constexpr auto DOLWIN_DEFAULT_SETTINGS = L"./Data/DefaultSettings.json";		// Must exist
+constexpr auto DOLWIN_SETTINGS = L"./Data/Settings.json";
 
 // Sections
 #define USER_PADS "controllers"

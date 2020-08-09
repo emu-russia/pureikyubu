@@ -378,11 +378,11 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
     // Step 1: try to load map from Data directory
     if (dvd)
     {
-        mapname = fmt::format(L".\\Data\\{:s}.map", diskId);
+        mapname = fmt::format(L"./Data/{:s}.map", diskId);
     }
     else
     {
-        mapname = fmt::format(L".\\Data\\{:s}.map", Util::StringToWstring(name));
+        mapname = fmt::format(L"./Data/{:s}.map", Util::StringToWstring(name));
     }
     
     MAP_FORMAT format = LoadMAP(mapname.data());
@@ -409,11 +409,11 @@ static void AutoloadMap(const std::wstring & filename, bool dvd, std::wstring & 
     {
         if (dvd)
         {
-            mapname = fmt::format(L".\\Data\\{:s}.map", diskId);
+            mapname = fmt::format(L"./Data/{:s}.map", diskId);
         }
         else
         {
-            mapname = fmt::format(L".\\Data\\{:s}.map", Util::StringToWstring(name));
+            mapname = fmt::format(L"./Data/{:s}.map", Util::StringToWstring(name));
         }
         
         Report(Channel::Loader, "Making new MAP file: %s\n\n", Util::WstringToString(mapname).c_str());

@@ -22,7 +22,7 @@ int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
 
-#define MAPDAT_FILE   ".\\Data\\makemap.dat"
+#define MAPDAT_FILE   "./Data/makemap.dat"
 #define MAP_MAXFUNCNAME 100
 
 /*

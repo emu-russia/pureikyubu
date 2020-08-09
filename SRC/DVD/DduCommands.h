@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define DDU_JDI_JSON L"Data\\Json\\DduJdi.json"
+#define DDU_JDI_JSON L"./Data/Json/DduJdi.json"
 
 namespace DVD
 {

@@ -53,7 +53,7 @@ namespace DSP
         }
 
         std::vector<uint8_t> textData(text.begin(), text.end());
-        if (!Util::FileSave(L"Data\\dspdisa.txt", textData))
+        if (!Util::FileSave(L"./Data/dspdisa.txt", textData))
         {
             Report(Channel::Norm, "Failed to save dsp_disa.txt\n");
             return nullptr;

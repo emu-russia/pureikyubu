@@ -2,6 +2,6 @@
 
 #pragma once
 
-#define UI_JDI_JSON "Data\\Json\\UIJdi.json"
+#define UI_JDI_JSON "./Data/Json/UIJdi.json"
 
 void UIReflector();
