@@ -34,6 +34,11 @@ class Thread
 	static const size_t StackSize = 0;
 #endif
 
+#if defined(_LINUX)
+	pthread_t threadId = 0;
+	static void* RingleaderThreadProc(void* args);
+#endif
+
 public:
 
 	// Create thread

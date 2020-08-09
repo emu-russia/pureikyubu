@@ -1,22 +1,33 @@
 #include "pch.h"
 
+void* Thread::RingleaderThreadProc(void* args)
+{
+	WrappedContext* wrappedCtx = (WrappedContext*)args;
+
+	if (wrappedCtx->proc)
+	{
+		wrappedCtx->proc(wrappedCtx->context);
+	}
+
+	return nullptr;
+}
+
 Thread::Thread(ThreadProc threadProc, bool suspended, void* context, const char* name)
 {
 	running = !suspended;
 	threadName = name;
 
-	//ctx.context = context;
-	//ctx.proc = threadProc;
-	//threadHandle = CreateThread(NULL, StackSize, RingleaderThreadProc, &ctx, suspended ? CREATE_SUSPENDED : 0, &threadId);
-	//assert(threadHandle != INVALID_HANDLE_VALUE);
+	ctx.context = context;
+	ctx.proc = threadProc;
+
+	int status = pthread_create(&threadId, NULL, Thread::RingleaderThreadProc, &ctx);
+	assert(status == 0);
 }
 
 Thread::~Thread()
 {
 	Suspend();
-
-	//TerminateThread(threadHandle, 0);
-	//WaitForSingleObject(threadHandle, 1000);
+	//pthread_terminate(threadId);
 }
 
 void Thread::Resume()
@@ -24,7 +35,7 @@ void Thread::Resume()
 	resumeLock.Lock();
 	if (!running)
 	{
-		//ResumeThread(threadHandle);
+		//pthread_kill(threadId, SIGCONT);
 		running = true;
 		resumeCounter++;
 	}
@@ -37,11 +48,11 @@ void Thread::Suspend()
 	{
 		running = false;
 		suspendCounter++;
-		//SuspendThread(threadHandle);
+		//pthread_kill(threadId, SIGSTOP);
 	}
 }
 
 void Thread::Sleep(size_t milliseconds)
 {
-	usleep(milliseconds);
+	usleep(milliseconds * 1000);
 }

@@ -3,3 +3,15 @@ Release
 x64
 Win32
 .vs
+
+# Cmake
+
+CMakeFiles
+Makefile
+*.cmake
+CMakeCache.txt
+*.a
+
+Common
+
+ThreadDemo

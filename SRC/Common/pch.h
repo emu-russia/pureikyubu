@@ -11,6 +11,8 @@
 #include <memory.h>
 #include <string.h>
 #include <unistd.h>		// usleep
+#include <pthread.h>
+#include <signal.h>
 #define _stricmp strcasecmp
 #endif
 
