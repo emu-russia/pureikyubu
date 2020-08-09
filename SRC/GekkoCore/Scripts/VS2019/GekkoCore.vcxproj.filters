@@ -164,6 +164,9 @@
     <ClCompile Include="..\..\Breakpoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Interpreter\NoAsm.cpp">
+      <Filter>Interpreter</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />
