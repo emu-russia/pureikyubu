@@ -12,7 +12,7 @@ namespace DVD
 {
 	MountDolphinSdk::MountDolphinSdk(const wchar_t * DolphinSDKPath)
 	{
-		wcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
+		wcscpy(directory, DolphinSDKPath);
 
 		// Load dvddata structure.
 		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
@@ -109,7 +109,7 @@ namespace DVD
 
 			if (startingOffset <= offset && offset < (startingOffset + size))
 			{
-				maxSize = min(requestedSize, (startingOffset + size) - offset);
+				maxSize = my_min(requestedSize, (startingOffset + size) - offset);
 				return ptr + (offset - startingOffset);
 			}
 		}
@@ -127,10 +127,10 @@ namespace DVD
 
 			if (startingOffset <= offset && offset < (startingOffset + size))
 			{
-				maxSize = min(requestedSize, (startingOffset + size) - offset);
+				maxSize = my_min(requestedSize, (startingOffset + size) - offset);
 
 				FILE* f;
-				_wfopen_s(&f, file, L"rb");
+				f = fopen( Util::WstringToString(file).c_str(), "rb");
 				assert(f);
 
 				fseek(f, offset - startingOffset, SEEK_SET);
@@ -218,11 +218,11 @@ namespace DVD
 		id->company[0] = '0';
 		id->company[1] = '1';
 
-		id->magicNumber = _byteswap_ulong(DVD_DISKID_MAGIC);
+		id->magicNumber = _BYTESWAP_UINT32(DVD_DISKID_MAGIC);
 
 		GameName.resize(0x400);
 		memset(GameName.data(), 0, GameName.size());
-		strcpy_s((char *)GameName.data(), 0x100, "GameCube SDK");
+		strcpy((char *)GameName.data(), "GameCube SDK");
 
 		return true;
 	}
@@ -348,8 +348,8 @@ namespace DVD
 
 				wchar_t filePath[0x1000] = { 0, };
 
-				wcscat_s(filePath, _countof(filePath) - 1, directory);
-				wcscat_s(filePath, _countof(filePath) - 1, L"/dvddata");
+				wcscat(filePath, directory);
+				wcscat(filePath, L"/dvddata");
 				wchar_t* filePathPtr = filePath + wcslen(filePath);
 
 				for (size_t i = 0; i < path.size(); i++)
@@ -439,14 +439,14 @@ namespace DVD
 			if (nameOffset)
 			{
 				fstEntry.nameOffsetHi = (uint8_t)(nameOffset->value.AsInt >> 16);
-				fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset->value.AsInt);
+				fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset->value.AsInt);
 			}
 
 			if (entry->parent)
 			{
 				Json::Value* parentId = entry->parent->ByName("entryId");
 				if (parentId)
-					fstEntry.parentOffset = _byteswap_ulong((uint32_t)parentId->value.AsInt);
+					fstEntry.parentOffset = _BYTESWAP_UINT32((uint32_t)parentId->value.AsInt);
 			}
 
 			Json::Value* entryId = entry->ByName("entryId");
@@ -456,7 +456,7 @@ namespace DVD
 			{
 				Json::Value* last = entry->ByName("last");
 
-				fstEntry.nextOffset = _byteswap_ulong((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
+				fstEntry.nextOffset = _BYTESWAP_UINT32((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
 			}
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
@@ -487,10 +487,10 @@ namespace DVD
 						uint32_t fileSize = (uint32_t)(*fileSizesIt)->value.AsInt;
 
 						fstEntry.nameOffsetHi = (uint8_t)(nameOffset >> 16);
-						fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset);
+						fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset);
 
-						fstEntry.fileOffset = _byteswap_ulong(fileOffset);
-						fstEntry.fileLength = _byteswap_ulong(fileSize);
+						fstEntry.fileOffset = _BYTESWAP_UINT32(fileOffset);
+						fstEntry.fileLength = _BYTESWAP_UINT32(fileSize);
 
 						FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 
@@ -640,7 +640,7 @@ namespace DVD
 
 		while (addr != until)
 		{
-			*addr = _byteswap_ulong(*addr);
+			*addr = _BYTESWAP_UINT32(*addr);
 			addr++;
 		}
 	}

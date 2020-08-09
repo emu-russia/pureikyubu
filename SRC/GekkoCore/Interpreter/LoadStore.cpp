@@ -330,7 +330,7 @@ namespace Gekko
         if (RA) Gekko->ReadHalf(RRA + RRB, &val);
         else Gekko->ReadHalf(RRB, &val);
         if (Gekko->exception) return;
-        RRD = _byteswap_ushort((uint16_t)val);
+        RRD = _BYTESWAP_UINT16((uint16_t)val);
         Gekko->regs.pc += 4;
     }
 
@@ -342,7 +342,7 @@ namespace Gekko
         if (RA) Gekko->ReadWord(RRA + RRB, &val);
         else Gekko->ReadWord(RRB, &val);
         if (Gekko->exception) return;
-        RRD = _byteswap_ulong(val);
+        RRD = _BYTESWAP_UINT32(val);
         Gekko->regs.pc += 4;
     }
 
@@ -350,8 +350,8 @@ namespace Gekko
     // MEM(ea, 2) = rs[24-31] || rs[16-23]
     OP(STHBRX)
     {
-        if (RA) Gekko->WriteHalf(RRA + RRB, _byteswap_ushort((uint16_t)RRS));
-        else Gekko->WriteHalf(RRB, _byteswap_ushort((uint16_t)RRS));
+        if (RA) Gekko->WriteHalf(RRA + RRB, _BYTESWAP_UINT16((uint16_t)RRS));
+        else Gekko->WriteHalf(RRB, _BYTESWAP_UINT16((uint16_t)RRS));
         if (Gekko->exception) return;
         Gekko->regs.pc += 4;
     }
@@ -360,8 +360,8 @@ namespace Gekko
     // MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
     OP(STWBRX)
     {
-        if (RA) Gekko->WriteWord(RRA + RRB, _byteswap_ulong(RRS));
-        else Gekko->WriteWord(RRB, _byteswap_ulong(RRS));
+        if (RA) Gekko->WriteWord(RRA + RRB, _BYTESWAP_UINT32(RRS));
+        else Gekko->WriteWord(RRB, _BYTESWAP_UINT32(RRS));
         if (Gekko->exception) return;
         Gekko->regs.pc += 4;
     }

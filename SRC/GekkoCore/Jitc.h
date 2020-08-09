@@ -43,8 +43,8 @@ namespace Gekko
 		void AddPc(CodeSegment* seg);
 		void CallTick(CodeSegment* seg);
 
-		typedef void(__fastcall* LoadDelegate)(uint32_t addr, uint32_t* reg);
-		typedef void(__fastcall* StoreDelegate)(uint32_t addr, uint32_t* reg);
+		typedef void(__FASTCALL* LoadDelegate)(uint32_t addr, uint32_t* reg);
+		typedef void(__FASTCALL* StoreDelegate)(uint32_t addr, uint32_t* reg);
 
 		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
 

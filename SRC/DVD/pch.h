@@ -32,3 +32,7 @@
 
 #define my_max(a,b) (((a) > (b)) ? (a) : (b))
 #define my_min(a,b) (((a) < (b)) ? (a) : (b))
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
+#endif

@@ -7,21 +7,21 @@ namespace DVD
 	std::string MnDisasm::HexToStr(uint8_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%02X", value);
+		sprintf(buf, "%02X", value);
 		return std::string(buf);
 	}
 
 	std::string MnDisasm::HexToStr(uint16_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%04X", value);
+		sprintf(buf, "%04X", value);
 		return std::string(buf);
 	}
 
 	std::string MnDisasm::HexToStr(uint32_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%06X", value & 0xffffff);
+		sprintf(buf, "%06X", value & 0xffffff);
 		return std::string(buf);
 	}
 

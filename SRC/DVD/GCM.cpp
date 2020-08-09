@@ -18,7 +18,7 @@ bool GCMMountFile(const wchar_t*file)
     }
 
     // open GCM file
-    _wfopen_s(&gcm_file, file, L"rb");
+    gcm_file = fopen(Util::WstringToString(file).c_str(), "rb");
     if(!gcm_file) return false;
 
     // get file size
@@ -58,7 +58,7 @@ bool GCMRead(uint8_t*buf, size_t length)
         return true;
     }
 
-    _wfopen_s (&gcm_file, dvd.gcm_filename, L"rb");
+    gcm_file = fopen ( Util::WstringToString(dvd.gcm_filename).c_str(), "rb");
 
     if(gcm_file)
     {

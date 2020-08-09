@@ -7,7 +7,10 @@
 #include <map>
 #include <cassert>
 #include <fstream>
+#include <atomic>
+#include <string.h>
 
+#include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
 #include "../Common/Json.h"

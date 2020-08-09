@@ -654,7 +654,7 @@ namespace Gekko
 			AnalyzeInfo info = { 0 };
 
 			uint8_t* ptr = &mi.ram[pa];
-			uint32_t instr = _byteswap_ulong(*(uint32_t*)ptr);
+			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
 			Gekko::Analyzer::Analyze(addr, instr, &info);
 
@@ -689,7 +689,7 @@ namespace Gekko
 			AnalyzeInfo info = { 0 };
 
 			uint8_t* ptr = &mi.ram[pa];
-			uint32_t instr = _byteswap_ulong(*(uint32_t*)ptr);
+			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
 			Gekko::Analyzer::Analyze(addr, instr, &info);
 

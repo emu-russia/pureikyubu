@@ -75,8 +75,14 @@ namespace Gekko
 
 		segments[segment->addr >> 2] = segment;
 
+#ifdef _WINDOWS
 		DWORD notNeeded;
 		VirtualProtect(segment->code.data(), segment->code.size(), PAGE_EXECUTE_READWRITE, &notNeeded);
+#endif
+
+#ifdef _LINUX
+		// TODO
+#endif
 
 		return segment;
 	}

@@ -320,13 +320,13 @@ static void write_len(uint32_t addr, uint32_t data) { DILEN = data; }
 static void DISetCommandBuffer(int n, uint32_t value)
 {
     volatile uint8_t* ptr = &di.cmdbuf[n * 4];
-    *(uint32_t*)ptr = _byteswap_ulong(value);
+    *(uint32_t*)ptr = _BYTESWAP_UINT32(value);
 }
 
 static uint32_t DIGetCommandBuffer(int n)
 {
     volatile uint8_t* ptr = &di.cmdbuf[n * 4];
-    return _byteswap_ulong(*(uint32_t*)ptr);
+    return _BYTESWAP_UINT32(*(uint32_t*)ptr);
 }
 
 // di buffers
@@ -336,8 +336,8 @@ static void read_cmdbuf1(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuf
 static void write_cmdbuf1(uint32_t addr, uint32_t data) { DISetCommandBuffer(1, data); }
 static void read_cmdbuf2(uint32_t addr, uint32_t *reg)  { *reg = DIGetCommandBuffer(2); }
 static void write_cmdbuf2(uint32_t addr, uint32_t data) { DISetCommandBuffer(2, data); }
-static void read_immbuf(uint32_t addr, uint32_t *reg)   { *reg = _byteswap_ulong(*(uint32_t *)di.immbuf); }
-static void write_immbuf(uint32_t addr, uint32_t data)  { *(uint32_t*)di.immbuf = _byteswap_ulong(data); }
+static void read_immbuf(uint32_t addr, uint32_t *reg)   { *reg = _BYTESWAP_UINT32(*(uint32_t *)di.immbuf); }
+static void write_immbuf(uint32_t addr, uint32_t data)  { *(uint32_t*)di.immbuf = _BYTESWAP_UINT32(data); }
 
 // register is read only.
 // currently, bit 0 is used for ROM scramble disable (which ROM?), bits 1-7 are reserved

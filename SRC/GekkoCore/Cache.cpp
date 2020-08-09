@@ -327,7 +327,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* ptr = &LockedCache[addr & 0x3fff];
-				*reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
+				*reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
 				return;
 			}
 		}
@@ -356,7 +356,7 @@ namespace Gekko
 			}
 		}
 
-		*reg = _byteswap_ushort(*(uint16_t *)&cacheData[addr]);
+		*reg = _BYTESWAP_UINT16(*(uint16_t *)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -372,7 +372,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* ptr = &LockedCache[addr & 0x3fff];
-				*(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
+				*(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
 				return;
 			}
 		}
@@ -402,7 +402,7 @@ namespace Gekko
 			SetDirty(nextCacheLineAddr, true);
 		}
 
-		*(uint16_t*)&cacheData[addr] = _byteswap_ushort((uint16_t)data);
+		*(uint16_t*)&cacheData[addr] = _BYTESWAP_UINT16((uint16_t)data);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -420,7 +420,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* ptr = &LockedCache[addr & 0x3fff];
-				*reg = _byteswap_ulong(*(uint32_t*)ptr);
+				*reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 				return;
 			}
 		}
@@ -449,7 +449,7 @@ namespace Gekko
 			}
 		}
 
-		*reg = _byteswap_ulong(*(uint32_t*)&cacheData[addr]);
+		*reg = _BYTESWAP_UINT32(*(uint32_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -465,7 +465,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* ptr = &LockedCache[addr & 0x3fff];
-				*(uint32_t*)ptr = _byteswap_ulong(data);
+				*(uint32_t*)ptr = _BYTESWAP_UINT32(data);
 				return;
 			}
 		}
@@ -495,7 +495,7 @@ namespace Gekko
 			SetDirty(nextCacheLineAddr, true);
 		}
 
-		*(uint32_t*)&cacheData[addr] = _byteswap_ulong(data);
+		*(uint32_t*)&cacheData[addr] = _BYTESWAP_UINT32(data);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -513,7 +513,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* buf = &LockedCache[addr & 0x3fff];
-				*reg = _byteswap_uint64(*(uint64_t*)buf);
+				*reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
 				return;
 			}
 		}
@@ -542,7 +542,7 @@ namespace Gekko
 			}
 		}
 
-		*reg = _byteswap_uint64(*(uint64_t*)&cacheData[addr]);
+		*reg = _BYTESWAP_UINT64(*(uint64_t*)&cacheData[addr]);
 
 		if (log >= CacheLogLevel::MemOps)
 		{
@@ -558,7 +558,7 @@ namespace Gekko
 			if ((addr & ~0x3fff) == LockedCacheAddr)
 			{
 				uint8_t* buf = &LockedCache[addr & 0x3fff];
-				*(uint64_t*)buf = _byteswap_uint64(*data);
+				*(uint64_t*)buf = _BYTESWAP_UINT64(*data);
 				return;
 			}
 		}
@@ -588,7 +588,7 @@ namespace Gekko
 			SetDirty(nextCacheLineAddr, true);
 		}
 
-		*(uint64_t*)&cacheData[addr] = _byteswap_uint64(*data);
+		*(uint64_t*)&cacheData[addr] = _BYTESWAP_UINT64(*data);
 
 		if (log >= CacheLogLevel::MemOps)
 		{

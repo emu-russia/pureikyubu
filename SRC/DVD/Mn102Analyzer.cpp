@@ -369,7 +369,7 @@ namespace DVD
 
 	bool MnAnalyze::AddOp(MnInstrInfo* info, MnOperand op, int bits)
 	{
-		if (info->numOp >= _countof(info->op))
+		if (info->numOp >= MnInstrInfoOperands)
 			return false;
 
 		info->op[info->numOp] = op;
