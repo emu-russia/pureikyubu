@@ -23,7 +23,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		std::memcpy(&mi.ram[address], data.data(), data.size());
+		memcpy(&mi.ram[address], data.data(), data.size());
 		return nullptr;
 	}
 
@@ -68,7 +68,7 @@ namespace Flipper
 			return nullptr;
 		}
 
-		std::memcpy(&aram.mem[address], data.data(), data.size());
+		memcpy(&aram.mem[address], data.data(), data.size());
 		return nullptr;
 	}
 

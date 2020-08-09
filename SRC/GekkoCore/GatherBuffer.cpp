@@ -37,7 +37,7 @@ namespace Gekko
 
 			for (int i = 0; i < size; i++)
 			{
-				sprintf_s(byteText, sizeof(byteText) - 1, "%02X ", data[i]);
+				sprintf(byteText, "%02X ", data[i]);
 				text += byteText;
 			}
 
@@ -103,21 +103,21 @@ namespace Gekko
 	void GatherBuffer::Write16(uint16_t value)
 	{
 		uint8_t data[2];
-		*(uint16_t *)data = _byteswap_ushort(value);
+		*(uint16_t *)data = _BYTESWAP_UINT16(value);
 		WriteBytes(data, 2);
 	}
 
 	void GatherBuffer::Write32(uint32_t value)
 	{
 		uint8_t data[4];
-		*(uint32_t*)data = _byteswap_ulong(value);
+		*(uint32_t*)data = _BYTESWAP_UINT32(value);
 		WriteBytes(data, 4);
 	}
 
 	void GatherBuffer::Write64(uint64_t value)
 	{
 		uint8_t data[8];
-		*(uint64_t*)data = _byteswap_uint64(value);
+		*(uint64_t*)data = _BYTESWAP_UINT64(value);
 		WriteBytes(data, 8);
 	}
 

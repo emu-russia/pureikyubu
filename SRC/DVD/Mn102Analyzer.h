@@ -146,6 +146,8 @@ namespace DVD
 		uint32_t	Uint24;
 	};
 
+	#define MnInstrInfoOperands 2
+
 	struct MnInstrInfo
 	{
 		size_t instrSize;			// In bytes
@@ -154,8 +156,8 @@ namespace DVD
 		MnInstruction instr;
 
 		size_t numOp;
-		MnOperand op[2];
-		int opBits[2];			// If one of the operands is in the form (Di, An), then Di and An saved as one
+		MnOperand op[MnInstrInfoOperands];
+		int opBits[MnInstrInfoOperands];			// If one of the operands is in the form (Di, An), then Di and An saved as one
 
 		MnInstrImmed imm;
 

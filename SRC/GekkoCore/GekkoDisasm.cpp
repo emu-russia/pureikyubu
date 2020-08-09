@@ -45,7 +45,7 @@ namespace Gekko
 		{
 			if(bo & 16)         // Branch always                            // BO[0]
 			{
-				sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s", r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1]);
+				sprintf (mnem, "b%s%s", r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1]);
 				skipOperand[0] = true;
 				skipOperand[1] = true;
 				simple = true;
@@ -56,7 +56,7 @@ namespace Gekko
 				const char *cond = b_cond[((bo & 8) >> 1) | (bi & 3)];
 				if(cond != NULL)                                            // BO[1]
 				{
-					sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s%s%c", cond, r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
+					sprintf (mnem, "b%s%s%s%c", cond, r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
 					skipOperand[0] = true;
 					if (bi >= 4)
 					{
@@ -76,7 +76,7 @@ namespace Gekko
 		{
 			if(b_ctr[bo >> 1])
 			{
-				sprintf_s (mnem, sizeof(mnem) - 1, "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
+				sprintf (mnem, "b%s%s%s%c", b_ctr[bo >> 1], r, b_opt[Disp ? info->instrBits & 3 : info->instrBits & 1], y);
 				skipOperand[0] = true;
 				if (bo & 16)
 				{
@@ -108,14 +108,14 @@ namespace Gekko
 
 		if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
 		{
-			sprintf_s(simplified, sizeof(simplified) - 1, "tw%si", t_cond[info->paramBits[0]]);
+			sprintf (simplified, "tw%si", t_cond[info->paramBits[0]]);
 			skipOperand[0] = true;
 			simple = true;
 			return simplified;
 		}
 		else if (info->instr == Instruction::twi && t_cond[info->paramBits[0]])
 		{
-			sprintf_s(simplified, sizeof(simplified) - 1, "tw%s", t_cond[info->paramBits[0]]);
+			sprintf (simplified, "tw%s", t_cond[info->paramBits[0]]);
 			skipOperand[0] = true;
 			simple = true;
 			return simplified;
@@ -337,21 +337,21 @@ namespace Gekko
 	std::string GekkoDisasm::HexToStr(uint8_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%02X", value);
+		sprintf (buf, "%02X", value);
 		return std::string(buf);
 	}
 
 	std::string GekkoDisasm::HexToStr(uint16_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%04X", value);
+		sprintf (buf, "%04X", value);
 		return std::string(buf);
 	}
 
 	std::string GekkoDisasm::HexToStr(uint32_t value)
 	{
 		char buf[0x10] = { 0, };
-		sprintf_s(buf, sizeof(buf) - 1, "%08X", value);
+		sprintf (buf, "%08X", value);
 		return std::string(buf);
 	}
 
@@ -794,7 +794,7 @@ namespace Gekko
 		}
 
 		char def[0x10] = { 0, };
-		sprintf_s(def, sizeof(def) - 1, "%u", spr);
+		sprintf (def, "%u", spr);
 		return def;
 	}
 
@@ -808,7 +808,7 @@ namespace Gekko
 		}
 
 		char def[8] = { 0, };
-		sprintf_s(def, sizeof(def) - 1, "%u", tbr);
+		sprintf (def, "%u", tbr);
 		return def;
 	}
 
@@ -816,12 +816,12 @@ namespace Gekko
 	std::string GekkoDisasm::Imm(int val, bool forceHex, bool useSign)
 	{
 		char out[16];
-		if (((val >= -256) && (val <= 256)) && !forceHex) sprintf_s(out, sizeof(out) - 1, "%i", val);
+		if (((val >= -256) && (val <= 256)) && !forceHex) sprintf (out, "%i", val);
 		else
 		{
 			uint16_t hexval = (uint16_t)val;
-			if ((hexval & 0x8000) && useSign) sprintf_s(out, sizeof(out) - 1, "-0x%04X", ((~hexval) & 0xffff) + 1);
-			else sprintf_s(out, sizeof(out) - 1, "0x%04X", hexval);
+			if ((hexval & 0x8000) && useSign) sprintf (out, "-0x%04X", ((~hexval) & 0xffff) + 1);
+			else sprintf (out, "0x%04X", hexval);
 		}
 		return out;
 	}
@@ -833,42 +833,42 @@ namespace Gekko
 		switch (param)
 		{
 			case Param::Reg:
-				sprintf_s(text, sizeof(text) - 1, "r%i", paramBits);
+				sprintf (text, "r%i", paramBits);
 				break;
 			case Param::FReg:
-				sprintf_s(text, sizeof(text) - 1, "fr%i", paramBits);
+				sprintf (text, "fr%i", paramBits);
 				break;
 			case Param::Simm:
 				return Imm((int)(int32_t)info->Imm.Signed, false, true);
 			case Param::Uimm:
 				return Imm(info->Imm.Unsigned, true, false);
 			case Param::Crf:
-				sprintf_s(text, sizeof(text) - 1, "cr%i", paramBits);
+				sprintf (text, "cr%i", paramBits);
 				break;
 			case Param::RegOffset:
-				sprintf_s(text, sizeof(text) - 1, "%s (r%i)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
+				sprintf (text, "%s (r%i)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
 				break;
 			case Param::Num:
-				sprintf_s(text, sizeof(text) - 1, "%i", paramBits);
+				sprintf (text, "%i", paramBits);
 				break;
 			case Param::Spr:
 				return SprName(paramBits);
 			case Param::Sr:
-				sprintf_s(text, sizeof(text) - 1, "%i", paramBits);
+				sprintf (text, "%i", paramBits);
 				break;
 			case Param::Tbr:
 				return TbrName(paramBits);
 			case Param::Crb:
-				sprintf_s(text, sizeof(text) - 1, "cr%i", paramBits);
+				sprintf (text, "cr%i", paramBits);
 				break;
 			case Param::CRM:
-				sprintf_s(text, sizeof(text) - 1, "0x%02X", paramBits);
+				sprintf (text, "0x%02X", paramBits);
 				break;
 			case Param::FM:
-				sprintf_s(text, sizeof(text) - 1, "0x%02X", paramBits);
+				sprintf (text, "0x%02X", paramBits);
 				break;
 			case Param::Address:
-				sprintf_s(text, sizeof(text) - 1, "0x%08X", info->Imm.Address);
+				sprintf (text, "0x%08X", info->Imm.Address);
 				break;
 			default:
 				break;
@@ -904,13 +904,13 @@ namespace Gekko
 		if (simple)
 		{
 			char instrName[0x20];
-			sprintf_s(instrName, sizeof(instrName) - 1, "%-10s ", instrText.c_str());
+			sprintf (instrName, "%-10s ", instrText.c_str());
 			text += instrName;
 		}
 		else
 		{
 			char instrName[0x20];
-			sprintf_s(instrName, sizeof(instrName) - 1, "%-10s ", InstrToString(info).c_str());
+			sprintf (instrName, "%-10s ", InstrToString(info).c_str());
 			text += instrName;
 		}
 

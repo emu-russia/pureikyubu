@@ -462,8 +462,8 @@ static void AIStreamCallback(uint16_t l, uint16_t r)
     // Adjust volume and swap endianess
     int leftVolume = (uint8_t)ai.vr;
     int rightVolume = (uint8_t)(ai.vr >> 8);
-    l = _byteswap_ushort(l);
-    r = _byteswap_ushort(r);
+    l = _BYTESWAP_UINT16(l);
+    r = _BYTESWAP_UINT16(r);
     //l = AdjustVolume(l, leftVolume);
     //r = AdjustVolume(r, rightVolume);
 

@@ -138,7 +138,7 @@ namespace Gekko
 
         while (addr != until)
         {
-            *addr = _byteswap_ulong(*addr);
+            *addr = _BYTESWAP_UINT32(*addr);
             addr++;
         }
     }
@@ -150,7 +150,7 @@ namespace Gekko
 
         while (addr != until)
         {
-            *addr = _byteswap_ushort(*addr);
+            *addr = _BYTESWAP_UINT16(*addr);
             addr++;
         }
     }

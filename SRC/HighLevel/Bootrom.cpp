@@ -28,10 +28,10 @@ static void ReadFST()
     // FST memory address is calculated, by adjusting bb[4] with "DOL LIMIT";
     // DOL limit is fixed to 4 mb, for most apploaders (in release date range
     // from AnimalCrossing to Zelda: Wind Waker).
-    fstOffs = _byteswap_ulong(bb2[1]);
-    fstSize = ROUND32(_byteswap_ulong(bb2[2]));
-    fstMaxSize = ROUND32(_byteswap_ulong(bb2[3]));
-    fstAddr = _byteswap_ulong(bb2[4]);      // Ignore this
+    fstOffs = _BYTESWAP_UINT32(bb2[1]);
+    fstSize = ROUND32(_BYTESWAP_UINT32(bb2[2]));
+    fstMaxSize = ROUND32(_BYTESWAP_UINT32(bb2[3]));
+    fstAddr = _BYTESWAP_UINT32(bb2[4]);      // Ignore this
 
     uint32_t ArenaHi = 0;
     Gekko::Gekko->ReadWord(0x80000034, &ArenaHi);
@@ -168,7 +168,7 @@ static void __SyncTime(bool rtc)
 
     Report(Channel::HLE, "updating timer value..\n");
 
-    int32_t counterBias = (int32_t)_byteswap_ulong(exi.sram.counterBias);
+    int32_t counterBias = (int32_t)_BYTESWAP_UINT32(exi.sram.counterBias);
     int32_t rtcValue = exi.rtcVal + counterBias;
     Report(Channel::HLE, "counter bias: %i, real-time clock: %i\n", counterBias, exi.rtcVal);
 

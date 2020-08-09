@@ -8,7 +8,7 @@ using namespace Debug;
 // thanks Dolphin team for idea
 static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 {
-    BOOL    started = FALSE;
+    bool    started = false;
     char    buf[1024], token1[256];
     FILE    *map;
     
@@ -17,7 +17,7 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
     int     flags;
     char    procName[512];
 
-    _wfopen_s(&map, mapname, L"r");
+    map = fopen ( Util::WstringToString(mapname).c_str(), "r");
     if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
@@ -26,8 +26,8 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
         sscanf(buf, "%s", token1);
 
         // check section type (we need only code sections)
-        if(!strcmp(buf, ".init section layout\n")) { started = TRUE; continue; }
-        if(!strcmp(buf, ".text section layout\n")) { started = TRUE; continue; }
+        if(!strcmp(buf, ".init section layout\n")) { started = true; continue; }
+        if(!strcmp(buf, ".text section layout\n")) { started = true; continue; }
         if(!strcmp(buf, ".data section layout\n")) break;
 
         // check first token
@@ -38,7 +38,7 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
         IFIS(UNUSED);
 
         if(token1[strlen(token1) - 1] == ']') continue;
-        if(started == FALSE) continue;
+        if(started == false) continue;
 
         // parse symbols
         if(sscanf(buf, "%08x %08x %08x %i %s", 
@@ -61,7 +61,7 @@ static MAP_FORMAT LoadMapCW(const wchar_t *mapname)
 // load GCC-generated map file
 static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
 {
-    BOOL    started = FALSE;
+    bool    started = false;
     char    buf[1024];
     FILE    *map;
     
@@ -70,7 +70,7 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
     char    par1[512];
     char    par2[512];
 
-    _wfopen_s(&map, mapname, L"r");
+    map = fopen ( Util::WstringToString(mapname).c_str(), "r");
     if(!map) return MAP_FORMAT::BAD;
 
     while(!feof(map))
@@ -80,9 +80,9 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
         // parse symbols
         if(sscanf(buf, "%s %s", par1, par2) != 2) continue;
 
-        if(strcmp(par1, ".init") == 0) { started = TRUE; continue; }
-        if(strcmp(par1, ".text") == 0) { started = TRUE; continue; }
-        if(par1[0] == '.')  { started = FALSE; continue; }
+        if(strcmp(par1, ".init") == 0) { started = true; continue; }
+        if(strcmp(par1, ".text") == 0) { started = true; continue; }
+        if(par1[0] == '.')  { started = false; continue; }
 
         if(started)
         {
@@ -137,7 +137,7 @@ MAP_FORMAT LoadMAP(const wchar_t *mapname, bool add)
     wcscpy(hle.mapfile, mapname);
 
     // try to open
-    _wfopen_s(&f, mapname, L"r");
+    f = fopen ( Util::WstringToString(mapname).c_str(), "r");
     if(!f)
     {
         Report(Channel::HLE, "Cannot %s MAP: %s\n", (add) ? "add" : "load", Util::WstringToString(mapname).c_str());

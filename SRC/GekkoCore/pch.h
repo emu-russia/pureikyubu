@@ -6,7 +6,11 @@
 #include <list>
 #include <map>
 #include <cassert>
+#include <atomic>
+#include <math.h>
+#include <string.h>
 
+#include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
 #include "../Common/Json.h"
@@ -25,3 +29,7 @@
 #include "../Hardware/MI.h"
 #include "../Debugger/Debugger.h"
 #include "../DolwinEmu/Emulator.h"
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
+#endif

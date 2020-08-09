@@ -145,13 +145,13 @@ static void SRAMLoad(SRAM *s)
 {
     /* Load data from file in temporary buffe. */
     auto buffer = Util::FileLoad(SRAM_FILE);
-    std::memset(s, 0, sizeof(SRAM));
+    memset(s, 0, sizeof(SRAM));
 
     /* Copy less or equal bytes from buffer to SRAM. */
     if (!buffer.empty())
     {
         auto load_size = (buffer.size() > sizeof(SRAM) ? sizeof(SRAM) : buffer.size());
-        std::memcpy(s, buffer.data(), load_size);
+        memcpy(s, buffer.data(), load_size);
     }
     else
     {
@@ -195,14 +195,14 @@ static void FontLoad(uint8_t **font, uint32_t fontsize, wchar_t *filename)
             break;
         }
 
-        std::memset(*font, 0, fontsize); /* Clear */
+        memset(*font, 0, fontsize); /* Clear */
 
         /* Load data from file in temporary buffer. */
         auto buffer = Util::FileLoad(filename);
         if (!buffer.empty())
         {
             auto load_size = (buffer.size() > fontsize ? fontsize : buffer.size());
-            std::memcpy(*font, buffer.data(), load_size);
+            memcpy(*font, buffer.data(), load_size);
         }
         else
         {
@@ -256,7 +256,7 @@ void UnknownTransfer()
 void MXTransfer()
 {
     uint32_t ofs;
-    BOOL dma = (exi.regs[0].cr & EXI_CR_DMA) ? (1) : (0);
+    bool dma = (exi.regs[0].cr & EXI_CR_DMA) ? (true) : (false);
 
     // read or write ?
     switch(EXI_CR_RW(exi.regs[0].cr))
@@ -414,14 +414,14 @@ void MXTransfer()
             {
                 if(exi.firstImm)
                 {
-                    exi.firstImm = FALSE;
+                    exi.firstImm = false;
                     exi.mxaddr = exi.regs[0].data;
                     if(exi.mxaddr < 0x20000000) exi.mxaddr >>= 6;
                 }
                 else
                 {
                     uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
-                    uint32_t data = _byteswap_ulong(exi.regs[0].data);
+                    uint32_t data = _BYTESWAP_UINT32(exi.regs[0].data);
 
                     ofs = exi.mxaddr & 0x7fffffff;
                     if((ofs >= 0x20000100) && (ofs <= 0x20001000))
@@ -486,7 +486,7 @@ void ADTransfer()
         {
             if(exi.firstImm)
             {
-                exi.firstImm = FALSE;
+                exi.firstImm = false;
                 exi.ad16_cmd = exi.regs[2].data;
             }
             else
@@ -522,7 +522,7 @@ void ADTransfer()
 static void exi_select(int chan)
 {
     // set flag
-    exi.firstImm = TRUE;
+    exi.firstImm = true;
 
     if(exi.regs[chan].csr & EXI_CSR_CS0B)
     {
