@@ -1,4 +1,4 @@
-add_library (DVD
+add_library (DVD SHARED 
 	../DduCommands.cpp
 	../DduCore.cpp
 	../DVD.cpp

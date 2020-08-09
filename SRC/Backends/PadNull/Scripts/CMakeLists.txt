@@ -1,1 +1,3 @@
-add_library (PadNull ../PadNull.cpp)
+add_library (PadNull SHARED 
+	../PadNull.cpp
+)

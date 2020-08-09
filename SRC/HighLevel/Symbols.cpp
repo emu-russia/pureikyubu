@@ -114,6 +114,11 @@ char* SYMGetNearestName(uint32_t address, size_t& offset)
 // (if CPU reaches label, it jumps to HLE call)
 void SYMSetHighlevel(const char *symName, void (*routine)())
 {
+    // TODO: Disabled for Linux
+#if _LINUX
+    return;
+#endif
+
     // try to find specified symbol
     SYM *symbol = symfind(symName);
 

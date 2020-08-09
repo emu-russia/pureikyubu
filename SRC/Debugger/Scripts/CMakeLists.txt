@@ -1,8 +1,6 @@
-add_library (Debugger
+add_library (Debugger SHARED 
 	../DebugCommands.cpp
 	../EventLog.cpp
 	../Report.cpp
 	../SamplingProfiler.cpp
 )
-
-target_link_libraries (Debugger LINK_PUBLIC GekkoCore)

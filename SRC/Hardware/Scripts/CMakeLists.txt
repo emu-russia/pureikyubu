@@ -1,4 +1,4 @@
-add_library (Hardware
+add_library (Hardware SHARED 
 	../AI.cpp
 	../AR.cpp
 	../CP.cpp

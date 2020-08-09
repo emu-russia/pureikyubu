@@ -1,4 +1,4 @@
-add_library (HighLevel
+add_library (HighLevel SHARED 
 	../Bootrom.cpp
 	../DumpThreads.cpp
 	../HLE.cpp

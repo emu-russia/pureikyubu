@@ -1,1 +1,3 @@
-add_library (VideoNull ../VideoNull.cpp)
+add_library (VideoNull SHARED 
+	../VideoNull.cpp
+)

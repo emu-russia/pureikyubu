@@ -1,4 +1,4 @@
-add_library (Common
+add_library (Common SHARED 
 	../ByteSwap.cpp
 	../File.cpp
 	../Jdi.cpp
@@ -7,5 +7,3 @@ add_library (Common
 	../String.cpp
 	../ThreadLinux.cpp
 )
-
-target_link_libraries (Common LINK_PUBLIC Debugger)

@@ -1,7 +1,10 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (DolwinPlayground)
 
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Ttext-segment=400000")
+
 add_definitions (-D_LINUX)
+add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 
 # ../GekkoCore/Gekko.h:196:66: warning: `fastcall` attribute ignored [-Wattributes]
 add_compile_options(-Wno-attributes)

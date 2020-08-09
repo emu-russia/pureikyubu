@@ -1,4 +1,4 @@
-add_library (GekkoCore
+add_library (GekkoCore SHARED 
 
 	../Interpreter/NoAsm.cpp
 
@@ -40,5 +40,3 @@ add_library (GekkoCore
 	../TLB.cpp
 
 )
-
-target_link_libraries (GekkoCore LINK_PUBLIC Hardware)

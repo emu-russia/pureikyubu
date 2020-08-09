@@ -1,4 +1,4 @@
-add_library (fmt 
+add_library (fmt SHARED 
 	../format.cc
 	../os.cc
 )
