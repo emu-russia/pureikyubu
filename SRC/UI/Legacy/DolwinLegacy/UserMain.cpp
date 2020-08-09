@@ -6,13 +6,13 @@
 namespace UI
 {
     // fatal error
-    void DolwinError(const TCHAR* title, const TCHAR* fmt, ...)
+    void DolwinError(const wchar_t* title, const wchar_t* fmt, ...)
     {
         va_list arg;
-        TCHAR buf[0x1000];
+        wchar_t buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        vswprintf_s(buf, _countof(buf) - 1, fmt, arg);
         va_end(arg);
 
         MessageBox(NULL, buf, title, MB_ICONHAND | MB_OK | MB_TOPMOST);
@@ -23,16 +23,16 @@ namespace UI
     }
 
     // application message
-    void DolwinReport(const TCHAR* fmt, ...)
+    void DolwinReport(const wchar_t* fmt, ...)
     {
         va_list arg;
-        TCHAR buf[0x1000];
+        wchar_t buf[0x1000];
 
         va_start(arg, fmt);
-        _vstprintf_s(buf, _countof(buf) - 1, fmt, arg);
+        vswprintf_s(buf, _countof(buf) - 1, fmt, arg);
         va_end(arg);
 
-        MessageBox(NULL, buf, APPNAME _T(" Reports"), MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
+        MessageBox(NULL, buf, APPNAME L" Reports", MB_ICONINFORMATION | MB_OK | MB_TOPMOST);
     }
 }
 
@@ -49,7 +49,7 @@ static void LockMultipleCalls()
     if(dolwinsem == NULL)
     {
         auto app_name = std::wstring(APPNAME);
-        UI::DolwinReport(_T("We are already running %s!!"), app_name);
+        UI::DolwinReport(L"We are already running %s!!", app_name);
         exit(0);    // return good
     }
     CloseHandle(dolwinsem);
@@ -59,15 +59,15 @@ static void LockMultipleCalls()
 
 static void InitFileSystem(HINSTANCE hInst)
 {
-    TCHAR cwd[0x1000];
+    wchar_t cwd[0x1000];
 
     /* Set current working directory relative to Dolwin executable */
     GetModuleFileName(hInst, cwd, sizeof(cwd));
-    *(_tcsrchr(cwd, _T('\\')) + 1) = 0;
+    *(wcsrchr(cwd, L'\\') + 1) = 0;
     SetCurrentDirectory(cwd);
     
     /* Make sure, that Dolwin has data directory. */
-    CreateDirectory(_T(".\\Data"), NULL);
+    CreateDirectory(L".\\Data", NULL);
 }
 
 // return file name without quotes
@@ -108,7 +108,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     CreateMainWindow(hInstance);
 
     /* Main loop */
-    MSG msg = {};
+    MSG msg = { 0 };
     while (true)
     {
         while (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) == 0)
@@ -128,6 +128,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     /* Should never reach this point. Dolwin always exits. */
-    UI::DolwinError ( _T("Error"), _T("SHOULD NEVER REACH HERE"));
+    UI::DolwinError ( L"Error", L"SHOULD NEVER REACH HERE" );
     return -2;
 }

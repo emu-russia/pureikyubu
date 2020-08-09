@@ -5,7 +5,7 @@
 
 // ---------------------------------------------------------------------------
 
-bool GCMMountFile(const TCHAR *file)
+bool GCMMountFile(const wchar_t*file)
 {
     FILE* gcm_file;
 
@@ -18,7 +18,7 @@ bool GCMMountFile(const TCHAR *file)
     }
 
     // open GCM file
-    _tfopen_s(&gcm_file, file, _T("rb"));
+    gcm_file = fopen(Util::WstringToString(file).c_str(), "rb");
     if(!gcm_file) return false;
 
     // get file size
@@ -37,7 +37,7 @@ bool GCMMountFile(const TCHAR *file)
     // reset position
     dvd.seekval = 0;
 
-    _tcscpy_s(dvd.gcm_filename, _countof(dvd.gcm_filename) - 1, file);
+    wcscpy(dvd.gcm_filename, file);
     dvd.mountedImage = true;
 
     return true;
@@ -58,7 +58,7 @@ bool GCMRead(uint8_t*buf, size_t length)
         return true;
     }
 
-    _tfopen_s (&gcm_file, dvd.gcm_filename, _T("rb"));
+    gcm_file = fopen ( Util::WstringToString(dvd.gcm_filename).c_str(), "rb");
 
     if(gcm_file)
     {

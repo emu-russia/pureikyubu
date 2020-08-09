@@ -6,20 +6,15 @@
 #define NO_VIEWPORT
 #define TEXMODE     GL_MODULATE
 
-// system includes
-#include <stdint.h>
-#include <direct.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <time.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 #include <windows.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
-#include <intrin.h>
-#include <assert.h>
-
-#include <string>
 
 #include "../../Common/Json.h"
 #include "../../Common/Spinlock.h"

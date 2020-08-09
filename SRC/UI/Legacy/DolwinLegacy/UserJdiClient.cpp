@@ -159,7 +159,7 @@ namespace UI
 	std::string JdiClient::GetConfigString(const std::string& var, const std::string& path)
 	{
 		Json::Value* value = CallJdi(("GetConfigString " + path + " " + var).c_str());
-		std::string res = Util::TcharToString(value->children.front()->value.AsString);
+		std::string res = Util::WstringToString(value->children.front()->value.AsString);
 		delete value;
 		return res;
 	}

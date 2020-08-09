@@ -9,26 +9,22 @@ namespace DVD
 	DduCore::DduCore()
 	{
 		dduThread = new Thread(DduThreadProc, true, this, "DvdData");
-		assert(dduThread);
 		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this, "DvdAudio");
-		assert(dvdAudioThread);
 
 		dataCache = new uint8_t[dataCacheSize];
-		assert(dataCache);
 		memset(dataCache, 0, dataCacheSize);
 		streamingCache = new uint8_t[streamCacheSize];
-		assert(streamingCache);
 		memset(streamingCache, 0, streamCacheSize);
 
 		Reset();
 
 		if (adpcmStreamDump)
 		{
-			fopen_s(&adpcmStreamFile, "Data\\DvdAdpcm.bin", "wb");
+			adpcmStreamFile = fopen("Data\\DvdAdpcm.bin", "wb");
 		}
 		if (decodedStreamDump)
 		{
-			fopen_s(&decodedStreamFile, "Data\\DvdDecodedPcm.bin", "wb");
+			decodedStreamFile = fopen("Data\\DvdDecodedPcm.bin", "wb");
 		}
 	}
 
@@ -251,110 +247,107 @@ namespace DVD
 	{
 		DduCore* core = (DduCore*)Parameter;
 
-		while (true)
+		// Wait Gekko ticks
+		if (!core->transferRateNoLimit)
 		{
-			// Wait Gekko ticks
-			if (!core->transferRateNoLimit)
+			int64_t ticks = Gekko::Gekko->GetTicks();
+			if (ticks >= core->savedGekkoTicks)
 			{
-				int64_t ticks = Gekko::Gekko->GetTicks();
-				if (ticks >= core->savedGekkoTicks)
+				core->savedGekkoTicks = ticks + core->dduTicksPerByte;
+			}
+			else
+			{
+				return;
+			}
+		}
+
+		// Until break or transfer completed
+		while (core->ddBusBusy)
+		{
+			if (core->busDir == DduBusDirection::HostToDdu)
+			{
+				switch (core->state)
 				{
-					core->savedGekkoTicks = ticks + core->dduTicksPerByte;
-				}
-				else
-				{
-					continue;
+					case DduThreadState::WriteCommand:
+						if (core->commandPtr < sizeof(core->commandBuffer))
+						{
+							core->commandBuffer[core->commandPtr] = core->hostToDduCallback();
+							core->stats.bytesWrite++;
+							core->commandPtr++;
+						}
+
+						if (core->commandPtr >= sizeof(core->commandBuffer))
+						{
+							core->ExecuteCommand();
+						}
+						break;
+
+					// Hidden debug commands are not supported yet
+
+					default:
+						core->DeviceError(0);
+						break;
 				}
 			}
-
-			// Until break or transfer completed
-			while (core->ddBusBusy)
+			else
 			{
-				if (core->busDir == DduBusDirection::HostToDdu)
+				switch (core->state)
 				{
-					switch (core->state)
-					{
-						case DduThreadState::WriteCommand:
-							if (core->commandPtr < sizeof(core->commandBuffer))
-							{
-								core->commandBuffer[core->commandPtr] = core->hostToDduCallback();
-								core->stats.bytesWrite++;
-								core->commandPtr++;
-							}
+					case DduThreadState::ReadDvdData:
+						// Read-ahead new DVD data
+						if (core->dataCachePtr >= dataCacheSize)
+						{
+							Seek(core->seekVal);
+							size_t bytes = my_min(dataCacheSize, core->transactionSize);
+							bool readResult = Read(core->dataCache, bytes);
+							core->seekVal += (uint32_t)bytes;
+							core->transactionSize -= bytes;
 
-							if (core->commandPtr >= sizeof(core->commandBuffer))
-							{
-								core->ExecuteCommand();
-							}
-							break;
-
-						// Hidden debug commands are not supported yet
-
-						default:
-							core->DeviceError(0);
-							break;
-					}
-				}
-				else
-				{
-					switch (core->state)
-					{
-						case DduThreadState::ReadDvdData:
-							// Read-ahead new DVD data
-							if (core->dataCachePtr >= dataCacheSize)
-							{
-								Seek(core->seekVal);
-								size_t bytes = min(dataCacheSize, core->transactionSize);
-								bool readResult = Read(core->dataCache, bytes);
-								core->seekVal += (uint32_t)bytes;
-								core->transactionSize -= bytes;
-
-								if (core->seekVal >= DVD_SIZE || !readResult)
-								{
-									core->DeviceError(0);
-								}
-
-								core->dataCachePtr = 0;
-							}
-
-							core->dduToHostCallback(core->dataCache[core->dataCachePtr]);
-							core->stats.bytesRead++;
-							core->dataCachePtr++;
-							break;
-
-						case DduThreadState::ReadBogusData:
-							core->dduToHostCallback(0);
-							core->stats.bytesRead++;
-							break;
-
-						case DduThreadState::GetStreamEnable:
-						case DduThreadState::GetStreamOffset:
-						case DduThreadState::GetStreamBogus:
-							if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
-							{
-								core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr]);
-								core->stats.bytesRead++;
-								core->immediateBufferPtr++;
-							}
-							else
+							if (core->seekVal >= DVD_SIZE || !readResult)
 							{
 								core->DeviceError(0);
 							}
-							break;
 
-						case DduThreadState::Idle:
-							break;
+							core->dataCachePtr = 0;
+						}
 
-						default:
+						core->dduToHostCallback(core->dataCache[core->dataCachePtr]);
+						core->stats.bytesRead++;
+						core->dataCachePtr++;
+						break;
+
+					case DduThreadState::ReadBogusData:
+						core->dduToHostCallback(0);
+						core->stats.bytesRead++;
+						break;
+
+					case DduThreadState::GetStreamEnable:
+					case DduThreadState::GetStreamOffset:
+					case DduThreadState::GetStreamBogus:
+						if (core->immediateBufferPtr < sizeof(core->immediateBuffer))
+						{
+							core->dduToHostCallback(core->immediateBuffer[core->immediateBufferPtr]);
+							core->stats.bytesRead++;
+							core->immediateBufferPtr++;
+						}
+						else
+						{
 							core->DeviceError(0);
-							break;
-					}
+						}
+						break;
+
+					case DduThreadState::Idle:
+						break;
+
+					default:
+						core->DeviceError(0);
+						break;
 				}
 			}
-
-			// Sleep until next transfer
-			core->dduThread->Suspend();
 		}
+
+		// Sleep until next transfer
+		core->dduThread->Suspend();
 	}
 
 	// Enabling AISCLK forces the DDU to issue samples out even if there are none (zeros goes to output).

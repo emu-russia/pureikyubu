@@ -35,18 +35,18 @@ namespace HLE
 
 		*thread = *(OSThread*)ptr;
 
-		thread->state = _byteswap_ushort(thread->state);
-		thread->attr = _byteswap_ushort(thread->attr);
-		thread->suspend = _byteswap_ulong(thread->suspend);
-		thread->priority = _byteswap_ulong(thread->priority);
-		thread->base = _byteswap_ulong(thread->base);
-		thread->val = _byteswap_ulong(thread->val);
+		thread->state = _BYTESWAP_UINT16(thread->state);
+		thread->attr = _BYTESWAP_UINT16(thread->attr);
+		thread->suspend = _BYTESWAP_UINT32(thread->suspend);
+		thread->priority = _BYTESWAP_UINT32(thread->priority);
+		thread->base = _BYTESWAP_UINT32(thread->base);
+		thread->val = _BYTESWAP_UINT32(thread->val);
 
-		thread->linkActive.next = _byteswap_ulong(thread->linkActive.next);
-		thread->linkActive.prev = _byteswap_ulong(thread->linkActive.prev);
+		thread->linkActive.next = _BYTESWAP_UINT32(thread->linkActive.next);
+		thread->linkActive.prev = _BYTESWAP_UINT32(thread->linkActive.prev);
 
-		thread->stackBase = _byteswap_ulong(thread->stackBase);
-		thread->stackEnd = _byteswap_ulong(thread->stackEnd);
+		thread->stackBase = _BYTESWAP_UINT32(thread->stackBase);
+		thread->stackEnd = _BYTESWAP_UINT32(thread->stackEnd);
 
 		// No need for other properties
 
@@ -91,8 +91,8 @@ namespace HLE
 
 		OSThreadLink linkActive = *(OSThreadLink*)ptr;
 
-		linkActive.next = _byteswap_ulong(linkActive.next);
-		linkActive.prev = _byteswap_ulong(linkActive.prev);
+		linkActive.next = _BYTESWAP_UINT32(linkActive.next);
+		linkActive.prev = _BYTESWAP_UINT32(linkActive.prev);
 
 		// Walk active threads
 
@@ -172,28 +172,28 @@ namespace HLE
 
 		for (int i = 0; i < 32; i++)
 		{
-			context.gpr[i] = _byteswap_ulong(context.gpr[i]);
-			context.fprAsUint[i] = _byteswap_uint64(context.fprAsUint[i]);
-			context.psrAsUint[i] = _byteswap_uint64(context.psrAsUint[i]);
+			context.gpr[i] = _BYTESWAP_UINT32(context.gpr[i]);
+			context.fprAsUint[i] = _BYTESWAP_UINT64(context.fprAsUint[i]);
+			context.psrAsUint[i] = _BYTESWAP_UINT64(context.psrAsUint[i]);
 		}
 
 		for (int i = 0; i < 8; i++)
 		{
-			context.gqr[i] = _byteswap_ulong(context.gqr[i]);
+			context.gqr[i] = _BYTESWAP_UINT32(context.gqr[i]);
 		}
 
-		context.cr = _byteswap_ulong(context.cr);
-		context.lr = _byteswap_ulong(context.lr);
-		context.ctr = _byteswap_ulong(context.ctr);
-		context.xer = _byteswap_ulong(context.xer);
+		context.cr = _BYTESWAP_UINT32(context.cr);
+		context.lr = _BYTESWAP_UINT32(context.lr);
+		context.ctr = _BYTESWAP_UINT32(context.ctr);
+		context.xer = _BYTESWAP_UINT32(context.xer);
 
-		context.fpscr = _byteswap_ulong(context.fpscr);
+		context.fpscr = _BYTESWAP_UINT32(context.fpscr);
 
-		context.srr[0] = _byteswap_ulong(context.srr[0]);
-		context.srr[1] = _byteswap_ulong(context.srr[1]);
+		context.srr[0] = _BYTESWAP_UINT32(context.srr[0]);
+		context.srr[1] = _BYTESWAP_UINT32(context.srr[1]);
 
-		context.mode = _byteswap_ushort(context.mode);
-		context.state = _byteswap_ushort(context.state);
+		context.mode = _BYTESWAP_UINT16(context.mode);
+		context.state = _BYTESWAP_UINT16(context.state);
 
 		// Dump contents
 

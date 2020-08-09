@@ -26,25 +26,25 @@ void Json::DestroyValue(Value* value)
 	}
 }
 
-TCHAR* Json::CloneStr(const TCHAR* str)
+wchar_t* Json::CloneStr(const wchar_t* str)
 {
-	size_t len = _tcslen(str);
-	TCHAR* clone = new TCHAR[len + 1];
-	_tcscpy_s(clone, len + 1, str);
+	size_t len = wcslen(str);
+	wchar_t* clone = new wchar_t[len + 1];
+	wcscpy(clone, str);
 	return clone;
 }
 
-TCHAR* Json::CloneAnsiStr(const char* str)
+wchar_t* Json::CloneAnsiStr(const char* str)
 {
 	size_t len = strlen(str);
-	TCHAR* clone = new TCHAR[len + 1];
-	TCHAR* tcharPtr = clone;
+	wchar_t* clone = new wchar_t[len + 1];
+	wchar_t* wcharPtr = clone;
 	char* charPtr = (char*)str;
 	while (*charPtr)
 	{
-		*tcharPtr++ = *charPtr++;
+		*wcharPtr++ = *charPtr++;
 	}
-	*tcharPtr++ = 0;
+	*wcharPtr++ = 0;
 	return clone;
 }
 
@@ -88,9 +88,9 @@ void Json::EmitCodePoint(SerializeContext* ctx, int cp, bool sizeOnly)
 	}
 }
 
-void Json::EmitTcharString(SerializeContext* ctx, TCHAR* str, bool sizeOnly)
+void Json::EmitWcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly)
 {
-	TCHAR* ptr = str;
+	wchar_t* ptr = str;
 	while (*ptr)
 	{
 		int cp = (int)*ptr;
@@ -265,7 +265,7 @@ int Json::FetchCodepoint(DeserializeContext* ctx)
 
 bool Json::GetString(DeserializeContext* ctx, Token& token)
 {
-	TCHAR str[MaxStringSize] = { 0, };
+	wchar_t str[MaxStringSize] = { 0, };
 	size_t strSize = 0;
 
 	if (ctx->ptr[0] != '\"')
@@ -310,7 +310,7 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 			}
 		}
 
-		str[strSize++] = (TCHAR)cp;
+		str[strSize++] = (wchar_t)cp;
 	}
 
 	return false;
@@ -484,16 +484,16 @@ char* Json::Value::CloneName(const char* otherName)
 
 	size_t len = strlen(otherName);
 	char* clone = new char[len + 1];
-	strcpy_s(clone, len + 1, otherName);
+	strcpy(clone, otherName);
 	return clone;
 }
 
-char* Json::Value::CloneTcharName(const TCHAR* otherName)
+char* Json::Value::CloneWcharName(const wchar_t* otherName)
 {
 	if (otherName == nullptr)		// Name can be null
 		return nullptr;
 
-	size_t len = _tcslen(otherName);
+	size_t len = wcslen(otherName);
 	char* clone = new char[len + 1];
 
 	for (size_t i = 0; i < len; i++)
@@ -622,7 +622,7 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 {
-	TCHAR temp[0x100] = { 0, };
+	wchar_t temp[0x100] = { 0, };
 
 	assert(depth < MaxDepth);
 
@@ -678,16 +678,16 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 			Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
 			break;
 		case ValueType::Int:
-			_stprintf_s(temp, _countof(temp) - 1, _T("%I64u"), value.AsInt);
-			EmitTcharString(ctx, temp, sizeOnly);
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%I64u", value.AsInt);
+			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::Float:
-			_stprintf_s(temp, _countof(temp) - 1, _T("%.4f"), value.AsFloat);
-			EmitTcharString(ctx, temp, sizeOnly);
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%.4f", value.AsFloat);
+			EmitWcharString(ctx, temp, sizeOnly);
 			break;
 		case ValueType::String:
 			Json::EmitChar(ctx, '\"', sizeOnly);
-			EmitTcharString(ctx, value.AsString, sizeOnly);
+			EmitWcharString(ctx, value.AsString, sizeOnly);
 			Json::EmitChar(ctx, '\"', sizeOnly);
 			break;
 		default:
@@ -695,11 +695,11 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 	}
 }
 
-void Json::Value::Deserialize(DeserializeContext* ctx, TCHAR* keyName)
+void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 {
 	Token token, key;
 
-	this->name = CloneTcharName(keyName);
+	this->name = CloneWcharName(keyName);
 
 	Json::GetToken(token, ctx);
 
@@ -819,7 +819,7 @@ Json::Value* Json::Value::AddBool(const char* keyName, bool _value)
 	return child;
 }
 
-Json::Value* Json::Value::AddString(const char* keyName, const TCHAR* str)
+Json::Value* Json::Value::AddString(const char* keyName, const wchar_t* str)
 {
 	Value* child = new Value(this);
 	child->type = ValueType::String;
@@ -839,7 +839,7 @@ Json::Value* Json::Value::AddAnsiString(const char* keyName, const char* str)
 	return child;
 }
 
-Json::Value* Json::Value::ReplaceString(const TCHAR* str)
+Json::Value* Json::Value::ReplaceString(const wchar_t* str)
 {
 	assert(type == ValueType::String);
 	if (value.AsString)

@@ -1,15 +1,18 @@
 #pragma once
 
-// compiler and Windows API includes
-#include <stdint.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
+#include <atomic>
 #include <string.h>
-#include <tchar.h>
-#include <windows.h>
 
+#include "../Common/ByteSwap.h"
+#include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
+#include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
@@ -18,7 +21,7 @@
 #include "../GekkoCore/Gekko.h"
 
 #include "DVD.h"
-#include "GCM.h"            // very simple GCM reading (for .gcm files)
+#include "GCM.h"
 #include "DduCommands.h"
 
 #include "Mn102Analyzer.h"
@@ -26,3 +29,10 @@
 #include "DvdAdpcmDecode.h"
 
 #include "../../ThirdParty/fmt/fmt/format.h"
+
+#define my_max(a,b) (((a) > (b)) ? (a) : (b))
+#define my_min(a,b) (((a) < (b)) ? (a) : (b))
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
+#endif

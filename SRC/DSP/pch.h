@@ -1,10 +1,11 @@
 
 #pragma once
 
-#include <stdint.h>
-#include <intrin.h>
-#include <fstream>
-#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
 #include <atomic>
 
 #include "../Common/Spinlock.h"
@@ -13,6 +14,7 @@
 #include "../Common/File.h"
 #include "../Common/String.h"
 #include "../Common/Thread.h"
+#include "../Common/ByteSwap.h"
 
 #include "../Hardware/HWConfig.h"
 
@@ -40,4 +42,8 @@
 #else
 #define _TB(s)
 #define _TE()
+#endif
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
 #endif

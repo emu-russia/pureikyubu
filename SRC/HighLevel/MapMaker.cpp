@@ -3,7 +3,7 @@
 
 typedef struct opMarker {
     uint32_t offset;
-    BOOL blr;
+    bool blr;
 } opMarker;
 
 typedef struct funcDesc {
@@ -22,7 +22,7 @@ int Map_functionsSize;
 funcDesc * Map_functions;
 char * Map_functionsNamesTable;
 
-#define MAPDAT_FILE   ".\\Data\\makemap.dat"
+#define MAPDAT_FILE   "./Data/makemap.dat"
 #define MAP_MAXFUNCNAME 100
 
 /*
@@ -43,7 +43,7 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
     uint32_t opcode, auxop, op, op2, op3;
 
     for (offset = offsetStart; offset <= offsetEnd; offset+=4) {
-        opcode = _byteswap_ulong(*((uint32_t *)&mi.ram[offset & RAMMASK]));
+        opcode = _BYTESWAP_UINT32(*((uint32_t *)&mi.ram[offset & RAMMASK]));
         op = opcode & 0xFC000000; 
         op2 = 0;
         op3 = 0;
@@ -135,10 +135,10 @@ static char * MAPFind (uint32_t checksum)
 /*
  * Starts the creation of a new map
  */
-void MAPInit(const TCHAR * mapname)
+void MAPInit(const wchar_t * mapname)
 {
     MAPOpen ();
-    Map = _tfopen(mapname, _T("w"));
+    Map = fopen( Util::WstringToString(mapname).c_str(), "w");
 
     Map_marksMaxSize = 500;
     Map_marksSize = 0;
@@ -147,8 +147,8 @@ void MAPInit(const TCHAR * mapname)
 
 /*
  * Adds a mark to the opcode at the specified offset.
- * if blr is FALSE, the mark is considerated an entrypoint to a function
- * if blr is not FALSE, the mark is considerated an exitpoint from the function
+ * if blr is false, the mark is considerated an entrypoint to a function
+ * if blr is not false, the mark is considerated an exitpoint from the function
  * Use carefully!!!
  */
 void MAPAddMark (uint32_t offset, bool blr)
@@ -189,10 +189,10 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
     if (!Map) return ;
     if (!Map_marks) return ;
 
-    MAPAddMark (offsetStart, FALSE);
+    MAPAddMark (offsetStart, false);
     while(offsetStart < offsetEnd) {
 
-        opcode = _byteswap_ulong(*((uint32_t *)&mi.ram[offsetStart & RAMMASK]));
+        opcode = _BYTESWAP_UINT32(*((uint32_t *)&mi.ram[offsetStart & RAMMASK]));
         op = opcode >> 26, op2 = 0;
 
         switch (op) {
@@ -203,7 +203,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
                 target = opcode & 0x03fffffc;
                 if(target & 0x02000000) target |= 0xfc000000;
                 if ((opcode & 3) == 1) target += offsetStart;
-                MAPAddMark (target, FALSE);
+                MAPAddMark(target, false);
                 break;
             }
             break;
@@ -213,7 +213,7 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
             case 32:
             case 33:
             case 100:
-                MAPAddMark (offsetStart, TRUE);
+                MAPAddMark (offsetStart, true);
             }
             break;
         }
@@ -240,12 +240,12 @@ void MAPFinish()
     while (i < Map_marksSize - 1) {
         // find start of function
         while (Map_marks[i].blr && i < Map_marksSize) i++; 
-        while (i < Map_marksSize - 1 && Map_marks[i+1].blr == FALSE) i++;
+        while (i < Map_marksSize - 1 && Map_marks[i+1].blr == false) i++;
         // find end of function
         for ( k = i + 1; k < Map_marksSize - 1 && Map_marks[k+1].blr; k++);
         
         if (i < Map_marksSize && k < Map_marksSize &&
-            Map_marks[i].blr == FALSE && Map_marks[k].blr) {
+            Map_marks[i].blr == false && Map_marks[k].blr) {
 
             // look if the function is HLE
             Checksum = MAPFuncChecksum (Map_marks[i].offset , Map_marks[k].offset);
@@ -264,9 +264,9 @@ void MAPFinish()
 
                 // show status
                 {
-                    TCHAR wideName[0x100] = { 0, };
+                    wchar_t wideName[0x100] = { 0, };
 
-                    TCHAR* wideNamePtr = wideName;
+                    wchar_t* wideNamePtr = wideName;
                     char* namePtr = name;
                     while (*namePtr)
                     {

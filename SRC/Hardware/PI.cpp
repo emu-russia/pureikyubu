@@ -36,13 +36,16 @@ static const char *intdesc(uint32_t mask)
 
 static void printOut(uint32_t mask, const char *fix)
 {
-    char buf[256], *p = buf;
+    std::string buf;
     for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
     {
-        if(mask & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%sINT ", intdesc(m));
+        if (mask & m)
+        {
+            buf += intdesc(m);
+            buf += "INT ";
+        }
     }
-    *p = 0;
-    Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf, fix, Gekko::Gekko->regs.pc, Gekko::Gekko->GetTicks());
+    Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf.c_str(), fix, Gekko::Gekko->regs.pc, Gekko::Gekko->GetTicks());
 }
 
 // assert interrupt
@@ -115,14 +118,17 @@ static void write_intmr(uint32_t addr, uint32_t data)
     // print out list of masked interrupts
     if(pi.intmr && pi.log)
     {
-        char buf[256], *p = buf;
+        std::string buf;
         for(uint32_t m=1; m<=PI_INTERRUPT_HSP; m<<=1)
         {
-            if(pi.intmr & m) p += sprintf_s(p, sizeof(buf) - (p-buf), "%s ", intdesc(m));
+            if (pi.intmr & m)
+            {
+                buf += intdesc(m);
+                buf += " ";
+            }
         }
-        *p = 0;
 
-        Report(Channel::PI, "unmasked : %s\n", buf);
+        Report(Channel::PI, "unmasked : %s\n", buf.c_str());
     }
 }
 

@@ -2,8 +2,12 @@
 #pragma once
 
 #include <cstdint>
-#include <list>
 #include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
+
 #include <Windows.h>
 
 #include "../../Common/Spinlock.h"

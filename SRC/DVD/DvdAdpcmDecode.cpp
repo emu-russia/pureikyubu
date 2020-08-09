@@ -39,7 +39,7 @@ int32_t MulSomething(Nibble arg_0, int32_t yn1, int32_t yn2)
     int32_t ps2 = (int32_t)a2 * yn2;
 
     int32_t var_C = (ps1 + ps2 + 32) >> 6;
-    return max(-0x200000, min(var_C, 0x1FFFFF) );
+    return my_max(-0x200000, my_min(var_C, 0x1FFFFF) );
 }
 
 int16_t Shifts1(Nibble arg_0, Nibble arg_4)
@@ -57,7 +57,7 @@ int32_t Shifts2(int16_t arg_0, int32_t arg_4)
 uint16_t Clamp(int32_t arg_0)
 {
     int32_t var_8 = arg_0 >> 6;
-    return (uint16_t)max(-0x8000, min(var_8, 0x7FFF));
+    return (uint16_t)my_max(-0x8000, my_min(var_8, 0x7FFF));
 }
 
 uint16_t DecodeSample(Nibble arg_0, uint8_t arg_4, int Yn[2])
@@ -84,7 +84,7 @@ void DvdAudioDecode(uint8_t adpcmBuffer[32], uint16_t pcmBuffer[2 * 28])
 
     if (!(adpcmBuffer[0] == adpcmBuffer[2] && adpcmBuffer[1] == adpcmBuffer[3]))
     {
-        memset(pcmBuffer, 0, sizeof(pcmBuffer));
+        memset(pcmBuffer, 0, 2 * 28 * sizeof(uint16_t));
         return;
     }
 

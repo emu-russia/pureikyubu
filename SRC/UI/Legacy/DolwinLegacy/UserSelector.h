@@ -18,8 +18,8 @@ struct UserFile
     size_t          size;       /* File size                            */
     std::wstring    id;         /* GameID = DiskID + banner checksum    */
     std::wstring    name;       /* File path and name                   */
-    TCHAR   title[MAX_TITLE];       // alternate file name
-    TCHAR   comment[MAX_COMMENT];   // some notes
+    wchar_t   title[MAX_TITLE];       // alternate file name
+    wchar_t   comment[MAX_COMMENT];   // some notes
     int             icon[2];    /* Banner/icon + same but highlighted   */
 };
 
@@ -56,7 +56,7 @@ void SortSelector(SELECTOR_SORT sortBy);
 void DrawSelectorItem(LPDRAWITEMSTRUCT item);
 void NotifySelector(LPNMHDR pnmh);
 void ScrollSelector(int letter);
-uint16_t* SjisToUnicode(TCHAR* sjisText, size_t* size, size_t* chars);
+uint16_t* SjisToUnicode(wchar_t* sjisText, size_t* size, size_t* chars);
 
 // all important data is placed here
 class UserSelector

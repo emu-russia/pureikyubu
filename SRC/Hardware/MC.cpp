@@ -267,7 +267,7 @@ static void MCReadArrayProc (Memcard * memcard){
     if (exi->cr & EXI_CR_DMA) {
     }
     else {
-        exi->data = _byteswap_ulong( exi->data ) << (auxbytes - 4);
+        exi->data = _BYTESWAP_UINT32( exi->data ) << (auxbytes - 4);
     }
 }
 /**********************************MCSectorEraseProc*********************************************/
@@ -446,7 +446,7 @@ bool    MCIsConnected(int cardnum) {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(const wchar_t *path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -467,7 +467,7 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     }
 
     newfile = nullptr;
-    _tfopen_s(&newfile, path, _T("wb")) ;
+    newfile = fopen ( Util::WstringToString(path).c_str(), "wb") ;
 
 	if (newfile == NULL) {
         Halt( "MC: Error while trying to create memcard file.");
@@ -493,14 +493,14 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, const TCHAR *path, bool connect) {
+void    MCUseFile(int cardnum, const wchar_t *path, bool connect) {
 
     // Invalid memcard number
     assert((cardnum == MEMCARD_SLOTA) || (cardnum == MEMCARD_SLOTB));
     if (memcard[cardnum].connected == true) MCDisconnect(cardnum);
 
     memset(memcard[cardnum].filename, 0, sizeof (memcard[cardnum].filename));
-    _tcscpy_s(memcard[cardnum].filename, _countof(memcard[cardnum].filename) - 1, path);
+    wcscpy (memcard[cardnum].filename, path);
 
     if (connect == true) MCConnect(cardnum);
 }
@@ -526,8 +526,8 @@ void MCOpen (HWConfig * config)
     /* load settings */
     Memcard_Connected[MEMCARD_SLOTA] = config->MemcardA_Connected;
     Memcard_Connected[MEMCARD_SLOTB] = config->MemcardB_Connected;
-    _tcscpy_s(memcard[MEMCARD_SLOTA].filename, _countof(memcard[MEMCARD_SLOTA].filename) - 1, config->MemcardA_Filename);
-    _tcscpy_s(memcard[MEMCARD_SLOTB].filename, _countof(memcard[MEMCARD_SLOTB].filename) - 1, config->MemcardB_Filename);
+    wcscpy(memcard[MEMCARD_SLOTA].filename, config->MemcardA_Filename);
+    wcscpy(memcard[MEMCARD_SLOTB].filename, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
 
     MCConnect();
@@ -562,7 +562,7 @@ bool MCConnect (int cardnum) {
         size_t memcardSize = Util::FileSize(memcard[cardnum].filename);
 
         memcard[cardnum].file = nullptr;
-        _tfopen_s (&memcard[cardnum].file, memcard[cardnum].filename, _T("r+b"));
+        memcard[cardnum].file = fopen ( Util::WstringToString(memcard[cardnum].filename).c_str(), "r+b");
         if (memcard[cardnum].file == nullptr) {
             static char slt[2] = { 'A', 'B' };
 
@@ -572,7 +572,7 @@ bool MCConnect (int cardnum) {
                 "Couldnt open memcard (slot %c),\n"
                 "location : %s\n\n"
                 "Check path or file attributes.",
-                slt[cardnum], Util::TcharToString(memcard[cardnum].filename).c_str()
+                slt[cardnum], Util::WstringToString(memcard[cardnum].filename).c_str()
             );
             return false;
         }
@@ -581,7 +581,7 @@ bool MCConnect (int cardnum) {
 
         if (i >= Num_Memcard_ValidSizes) {
 //          DBReport(YEL "memcard file doesnt have a valid size\n");
-            MessageBox (NULL, _T("memcard file doesnt have a valid size"), _T("Memcard Error"), 0);
+            Halt ( "Memcard Error: memcard file doesnt have a valid size\n" );
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = nullptr;
             return false;
@@ -592,7 +592,7 @@ bool MCConnect (int cardnum) {
 
         if (memcard[cardnum].data == nullptr) {
 //          DBReport(YEL "couldnt allocate enough memory for memcard\n");
-            MessageBox (nullptr, _T("couldnt allocate enough memory for memcard"), _T("Memcard Error"), 0);
+            Halt ( "Memcard Error: couldnt allocate enough memory for memcard\n" );
             fclose(memcard[cardnum].file);
             memcard[cardnum].file = nullptr;
             return false;
@@ -600,7 +600,7 @@ bool MCConnect (int cardnum) {
 
         if (fseek(memcard[cardnum].file, 0, SEEK_SET) != 0) {
 //          DBReport(YEL "error at locating file cursor\n");
-            MessageBox (nullptr, _T("error at locating file cursor"), _T("Memcard Error"), 0);
+            Halt ( "Memcard Error: error at locating file cursor\n" );
             free (memcard[cardnum].data);
             memcard[cardnum].data = nullptr;
             fclose(memcard[cardnum].file);
@@ -610,7 +610,7 @@ bool MCConnect (int cardnum) {
 
         if (fread(memcard[cardnum].data, memcard[cardnum].size, 1, memcard[cardnum].file) != 1) {
 //          DBReport(YEL "error at reading the memcard file\n");
-            MessageBox (nullptr, _T("error at reading the memcard file"), _T("Memcard Error"), 0);
+            Halt ( "Memcard Error: error at reading the memcard file\n" );
             free (memcard[cardnum].data);
             memcard[cardnum].data = nullptr;
             fclose(memcard[cardnum].file);

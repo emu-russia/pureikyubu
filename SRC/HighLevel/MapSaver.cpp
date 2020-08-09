@@ -5,14 +5,14 @@
 
 using namespace Debug;
 
-#define DEFAULT_MAP _T("Data\\default.map")
+#define DEFAULT_MAP L"Data\\default.map"
 //#define HEX "0x"
 #define HEX
 
 static MAP_FORMAT mapFormat;
 static char *mapName;
 static FILE* mapFile = NULL;
-static BOOL appendStarted;
+static bool appendStarted;
 static int itemsUpdated;
 
 static void AppendMAPBySymbol(uint32_t address, char *symbol)
@@ -56,7 +56,7 @@ static void AppendMAPBySymbol(uint32_t address, char *symbol)
 // there can be two cases of this call : save map into specified file and update current map
 // if there is not map loaded, all new symbols will go in default.map
 // saved map is appended (mean no file overwrite, and add new symbols to the end)
-static void SaveMAP2(const TCHAR *mapname)
+static void SaveMAP2(const wchar_t *mapname)
 {
     static SYMControl temp;     // STATIC !
     SYMControl *thisSet = &sym, *mapSet = &temp;
@@ -93,17 +93,17 @@ void SaveMAP(const char* mapname)
 {
     if (!mapname)
     {
-        SaveMAP2((TCHAR *)nullptr);
+        SaveMAP2(nullptr);
         return;
     }
 
-    TCHAR tcharStr[MAX_PATH] = { 0, };
+    wchar_t wcharStr[0x1000] = { 0, };
     char* ansiPtr = (char*)mapname;
-    TCHAR* tcharPtr = tcharStr;
+    wchar_t* wcharPtr = wcharStr;
     while (*ansiPtr)
     {
-        *tcharPtr++ = *ansiPtr++;
+        *wcharPtr++ = *ansiPtr++;
     }
-    *tcharPtr++ = 0;
-    SaveMAP2(tcharStr);
+    *wcharPtr++ = 0;
+    SaveMAP2(wcharStr);
 }

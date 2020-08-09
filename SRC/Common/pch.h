@@ -1,11 +1,20 @@
 #pragma once
 
+#include <vector>
+#include <list>
+#include <map>
 #include <string>
-#include <locale>
-#include <codecvt>
-#include <fstream>
-#ifdef _WINDOWS
-#include <windows.h>
+#include <cassert>
+#include <atomic>
+
+#ifdef _LINUX
+#include <memory.h>
+#include <string.h>
+#include <unistd.h>		// usleep
+#include <pthread.h>
+#include <signal.h>
+#include <libgen.h>		// dirname / basename
+#define _stricmp strcasecmp
 #endif
 
 #include "Spinlock.h"
@@ -13,5 +22,6 @@
 #include "Json.h"
 #include "Jdi.h"
 #include "String.h"
+#include "File.h"
 
 #include "../Debugger/Report.h"

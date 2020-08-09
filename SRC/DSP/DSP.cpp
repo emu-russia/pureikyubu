@@ -55,11 +55,8 @@ namespace DSP
 	{
 		Dsp16* dsp = (Dsp16*)Parameter;
 
-		while (true)
-		{
-			// Do DSP actions
-			dsp->core->Update();
-		}
+		// Do DSP actions
+		dsp->core->Update();
 	}
 
 	void Dsp16::Run()
@@ -157,7 +154,7 @@ namespace DSP
 
 		if (ptr)
 		{
-			return _byteswap_ushort(*(uint16_t*)ptr);
+			return _BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 
 		return 0;
@@ -233,7 +230,7 @@ namespace DSP
 
 		if (ptr)
 		{
-			return _byteswap_ushort(*(uint16_t*)ptr);
+			return _BYTESWAP_UINT16(*(uint16_t*)ptr);
 		}
 		else
 		{
@@ -450,7 +447,7 @@ namespace DSP
 
 			if (ptr)
 			{
-				*(uint16_t*)ptr = _byteswap_ushort(value);
+				*(uint16_t*)ptr = _BYTESWAP_UINT16(value);
 				return;
 			}
 		}

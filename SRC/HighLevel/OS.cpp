@@ -5,7 +5,7 @@ using namespace Debug;
 
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
-#define SWAP        _byteswap_ulong
+#define SWAP        _BYTESWAP_UINT32
 
 // internal OS vars
 static  uint32_t     __OSPhysicalContext;    // OS_PHYSICAL_CONTEXT
@@ -160,7 +160,7 @@ void OSClearContext(void)
 
     if(PARAM(0) == __OSDefaultThread/*context*/) 
     {
-        __OSDefaultThread = NULL;
+        __OSDefaultThread = 0;
         Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
     }
 }
@@ -256,7 +256,7 @@ void __OSContextInit(void)
     Report(Channel::HLE, "HLE OS context driver installed.\n");
     Report(Channel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
 
-    __OSDefaultThread = NULL;
+    __OSDefaultThread = 0;
     Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
     Gekko::Gekko->regs.msr |= (MSR_FP | MSR_RI);
 }

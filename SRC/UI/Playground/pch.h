@@ -2,17 +2,29 @@
 #pragma once
 
 #include <vector>
+#include <list>
+#include <map>
 #include <string>
 #include <cstdio>
-#include <conio.h>
+#include <atomic>
 
 #ifdef _WINDOWS
+#include <conio.h>
 #include <Windows.h>
 #endif
 
-#include "../../Common/Json.h"
+#include "../../Common/Spinlock.h"
 #include "../../Common/Thread.h"
+#include "../../Common/Json.h"
 #include "../../Common/String.h"
+
+#ifdef _LINUX
+#include "../../Common/Json.h"
+#include "../../Common/Jdi.h"
+#include "../../Hardware/HWConfig.h"
+#include "../../DolwinEmu/Emulator.h"
+#include "../../DolwinEmu/JdiServer.h"
+#endif
 
 #include "UserJdiClient.h"
 #include "UiCommands.h"

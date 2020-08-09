@@ -45,4 +45,4 @@ struct DVDBanner2
 };
 
 // banner API
-std::vector<uint8_t> DVDLoadBanner(const TCHAR* dvdFile);
+std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile);

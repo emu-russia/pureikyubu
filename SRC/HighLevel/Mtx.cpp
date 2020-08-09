@@ -8,7 +8,7 @@ using namespace Debug;
 
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
-#define SWAP        _byteswap_ulong
+#define SWAP        _BYTESWAP_UINT32
 
 // pre-swapped 1.0f and 0.0f
 #define ONE         0x803f
@@ -47,8 +47,8 @@ static void print_mtx(MatrixPtr ptr)
 
 void MTXOpen()
 {
-    BOOL flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
-    if(flag == FALSE) return;
+    bool flag = false;//GetConfigInt(USER_HLE_MTX, USER_HLE_MTX_DEFAULT);
+    if(flag == false) return;
 
     Report( Channel::HLE, "Geometry library install\n");
 

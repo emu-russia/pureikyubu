@@ -37,7 +37,7 @@
 
 /* structure of a memcard buffer */
 struct Memcard {
-    TCHAR filename[0x1000]; // filename where the memcard data is stores 
+    wchar_t filename[0x1000]; // filename where the memcard data is stores 
     FILE * file;        // pointer to that file
     uint32_t size;           // size of the memcard in bytes
     uint8_t * data;          // pointer to the memcard raw data (stored in little endian order)
@@ -112,14 +112,14 @@ bool    MCIsConnected(int cardnum);
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id);
+bool    MCCreateMemcardFile(const wchar_t *path, uint16_t memcard_id);
 
 /*
  * Sets the memcard to use the specified file. If the memcard is connected, 
  * it will be first disconnected (to ensure that changes are saved)
  * if param connect is TRUE, then the memcard will be connected to the new file
  */ 
-void    MCUseFile(int cardnum, const TCHAR *path, bool connect);
+void    MCUseFile(int cardnum, const wchar_t *path, bool connect);
 
 /* 
  * Starts the memcard system and loads the saved settings.

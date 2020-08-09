@@ -1,22 +1,18 @@
 #pragma once
 
-#include <assert.h>
-#include <math.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <intrin.h>
-#include <time.h>
-#include <tchar.h>
-#include <codecvt>
-#include <sys/stat.h>
-#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
 #include <atomic>
-#include <Windows.h>
+#include <string.h>
 
-#include "../Common/Thread.h"
+#include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"
+#include "../Common/Thread.h"
+#include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
@@ -48,6 +44,15 @@
 #endif
 
 #ifdef _PLAYGROUND_WINDOWS
+#include "../Backends/GraphicsNull/GX.h"
+#include "../Backends/PadNull/PAD.h"
+#include "../Backends/VideoNull/VideoOut.h"
+#include "../Backends/AudioNull/AX.h"
+#endif
+
+// For now Null backends for Linux builds
+
+#ifdef _LINUX
 #include "../Backends/GraphicsNull/GX.h"
 #include "../Backends/PadNull/PAD.h"
 #include "../Backends/VideoNull/VideoOut.h"

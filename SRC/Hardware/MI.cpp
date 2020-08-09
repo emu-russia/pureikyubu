@@ -121,7 +121,7 @@ void MIReadHalf(uint32_t pa, uint32_t* reg)
         if (mi.BootromPresent)
         {
             ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-            *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
+            *reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
         }
         else
         {
@@ -148,7 +148,7 @@ void MIReadHalf(uint32_t pa, uint32_t* reg)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
+        *reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
     }
     else
     {
@@ -188,7 +188,7 @@ void MIWriteHalf(uint32_t pa, uint32_t data)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *(uint16_t*)ptr = _byteswap_ushort((uint16_t)data);
+        *(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
     }
 }
 
@@ -206,7 +206,7 @@ void MIReadWord(uint32_t pa, uint32_t* reg)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *reg = _byteswap_ulong(*(uint32_t*)ptr);
+        *reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
         return;
     }
 
@@ -215,7 +215,7 @@ void MIReadWord(uint32_t pa, uint32_t* reg)
         if (mi.BootromPresent)
         {
             ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
-            *reg = _byteswap_ulong(*(uint32_t*)ptr);
+            *reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
         }
         else
         {
@@ -273,7 +273,7 @@ void MIWriteWord(uint32_t pa, uint32_t data)
     if (pa < mi.ramSize)
     {
         ptr = &mi.ram[pa];
-        *(uint32_t*)ptr = _byteswap_ulong(data);
+        *(uint32_t*)ptr = _BYTESWAP_UINT32(data);
     }
 }
 
@@ -298,7 +298,7 @@ void MIReadDouble(uint32_t pa, uint64_t* reg)
     uint8_t* buf = &mi.ram[pa];
 
     // bus load doubleword
-    *reg = _byteswap_uint64(*(uint64_t*)buf);
+    *reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
 }
 
 void MIWriteDouble(uint32_t pa, uint64_t* data)
@@ -316,7 +316,7 @@ void MIWriteDouble(uint32_t pa, uint64_t* data)
     uint8_t* buf = &mi.ram[pa];
 
     // bus store doubleword
-    *(uint64_t*)buf = _byteswap_uint64 (*data);
+    *(uint64_t*)buf = _BYTESWAP_UINT64 (*data);
 }
 
 void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
@@ -487,7 +487,7 @@ void LoadBootrom(HWConfig* config)
 
     // Load bootrom image
 
-    if (_tcslen(config->BootromFilename) == 0)
+    if (wcslen(config->BootromFilename) == 0)
     {
         Report(Channel::MI, "Bootrom not loaded (not specified)\n");
         return;

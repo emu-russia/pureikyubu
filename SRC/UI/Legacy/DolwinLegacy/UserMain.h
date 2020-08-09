@@ -2,12 +2,12 @@
 #pragma once
 
 // version info
-#define APPNAME _T("Dolwin")
-#define APPDESC _T("Nintendo Gamecube Emulator")
+#define APPNAME L"Dolwin"
+#define APPDESC L"Nintendo Gamecube Emulator"
 
 namespace UI
 {
 	// basic message output
-	void DolwinError(const TCHAR* title, const TCHAR* fmt, ...);
-	void DolwinReport(const TCHAR* fmt, ...);
+	void DolwinError(const wchar_t* title, const wchar_t* fmt, ...);
+	void DolwinReport(const wchar_t* fmt, ...);
 }

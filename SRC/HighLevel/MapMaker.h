@@ -3,7 +3,7 @@
 /*
  * Starts the creation of a new map
  */
-void MAPInit(const TCHAR * mapname);
+void MAPInit(const wchar_t * mapname);
 
 /*
  * Adds a mark to the opcode at the specified offset.

@@ -6,31 +6,29 @@ Thread* debugger;
 
 void DebugThreadProc(void* param)
 {
-	while (true)
+	std::list<std::pair<int, std::string>> queue;
+
+	UI::Jdi.QueryDebugMessages(queue);
+
+	if (!queue.empty())
 	{
-		std::list<std::pair<int, std::string>> queue;
-
-		UI::Jdi.QueryDebugMessages(queue);
-
-		if (!queue.empty())
+		for (auto it = queue.begin(); it != queue.end(); ++it)
 		{
-			for (auto it = queue.begin(); it != queue.end(); ++it)
+			std::string channelName = UI::Jdi.DebugChannelToString(it->first);
+
+			if (channelName.size() != 0)
 			{
-				std::string channelName = UI::Jdi.DebugChannelToString(it->first);
-
-				if (channelName.size() != 0)
-				{
-					printf("%s: ", channelName.c_str());
-				}
-
-				printf("%s", it->second.c_str());
+				printf("%s: ", channelName.c_str());
 			}
 
-			queue.clear();
+			printf("%s", it->second.c_str());
 		}
 
-		Sleep(100);
+		queue.clear();
+		fflush(stdout);
 	}
+
+	Thread::Sleep(100);
 }
 
 void DebugStart()

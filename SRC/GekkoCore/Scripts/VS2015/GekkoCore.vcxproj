@@ -169,7 +169,6 @@
     <ClInclude Include="..\..\GekkoCommands.h" />
     <ClInclude Include="..\..\GekkoDefs.h" />
     <ClInclude Include="..\..\GekkoDisasm.h" />
-    <ClInclude Include="..\..\GekkoDisasmOld.h" />
     <ClInclude Include="..\..\Interpreter.h" />
     <ClInclude Include="..\..\Interpreter\InterpreterPrivate.h" />
     <ClInclude Include="..\..\Jitc.h" />
@@ -189,7 +188,6 @@
     <ClCompile Include="..\..\GekkoAnalyzer.cpp" />
     <ClCompile Include="..\..\GekkoCommands.cpp" />
     <ClCompile Include="..\..\GekkoDisasm.cpp" />
-    <ClCompile Include="..\..\GekkoDisasmOld.cpp" />
     <ClCompile Include="..\..\Interpreter.cpp" />
     <ClCompile Include="..\..\Interpreter\Branch.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
@@ -234,6 +232,12 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\..\Interpreter\Logical.cpp">
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">../pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ClCompile Include="..\..\Interpreter\NoAsm.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">../pch.h</PrecompiledHeaderFile>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">../pch.h</PrecompiledHeaderFile>
@@ -342,6 +346,8 @@
     <MASM Include="..\..\Interpreter\AsmX64.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </MASM>
     <MASM Include="..\..\Interpreter\AsmX86.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>

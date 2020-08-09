@@ -10,15 +10,15 @@ using namespace Debug;
 
 namespace DVD
 {
-	MountDolphinSdk::MountDolphinSdk(const TCHAR * DolphinSDKPath)
+	MountDolphinSdk::MountDolphinSdk(const wchar_t * DolphinSDKPath)
 	{
-		_tcscpy_s(directory, _countof(directory) - 1, DolphinSDKPath);
+		wcscpy(directory, DolphinSDKPath);
 
-		/* Load dvddata structure. */
+		// Load dvddata structure.
 		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
-			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR *)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to load DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
 			return;
 		}
 
@@ -28,7 +28,7 @@ namespace DVD
 		}
 		catch (...)
 		{
-			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::TcharToString((TCHAR*)DvdDataJson).c_str());
+			Report(Channel::Norm, "Failed to Deserialize DolphinSDK dvddata json: %s\n", Util::WstringToString(DvdDataJson).c_str());
 			return;
 		}
 
@@ -91,10 +91,10 @@ namespace DVD
 		mapping.push_back(entry);
 	}
 
-	void MountDolphinSdk::MapFile(TCHAR* path, uint32_t offset)
+	void MountDolphinSdk::MapFile(wchar_t* path, uint32_t offset)
 	{
 		size_t size = Util::FileSize(path);
-		std::tuple<TCHAR*, uint32_t, size_t> entry(path, offset, size);
+		std::tuple<wchar_t*, uint32_t, size_t> entry(path, offset, size);
 		fileMapping.push_back(entry);
 	}
 
@@ -109,7 +109,7 @@ namespace DVD
 
 			if (startingOffset <= offset && offset < (startingOffset + size))
 			{
-				maxSize = min(requestedSize, (startingOffset + size) - offset);
+				maxSize = my_min(requestedSize, (startingOffset + size) - offset);
 				return ptr + (offset - startingOffset);
 			}
 		}
@@ -121,16 +121,16 @@ namespace DVD
 	{
 		for (auto it = fileMapping.begin(); it != fileMapping.end(); ++it)
 		{
-			TCHAR* file = std::get<0>(*it);
+			wchar_t* file = std::get<0>(*it);
 			uint32_t startingOffset = std::get<1>(*it);
 			size_t size = std::get<2>(*it);
 
 			if (startingOffset <= offset && offset < (startingOffset + size))
 			{
-				maxSize = min(requestedSize, (startingOffset + size) - offset);
+				maxSize = my_min(requestedSize, (startingOffset + size) - offset);
 
 				FILE* f;
-				_tfopen_s(&f, file, _T("rb"));
+				f = fopen( Util::WstringToString(file).c_str(), "rb");
 				assert(f);
 
 				fseek(f, offset - startingOffset, SEEK_SET);
@@ -218,11 +218,11 @@ namespace DVD
 		id->company[0] = '0';
 		id->company[1] = '1';
 
-		id->magicNumber = _byteswap_ulong(DVD_DISKID_MAGIC);
+		id->magicNumber = _BYTESWAP_UINT32(DVD_DISKID_MAGIC);
 
 		GameName.resize(0x400);
 		memset(GameName.data(), 0, GameName.size());
-		strcpy_s((char *)GameName.data(), 0x100, "GameCube SDK");
+		strcpy((char *)GameName.data(), "GameCube SDK");
 
 		return true;
 	}
@@ -309,7 +309,7 @@ namespace DVD
 
 			if (!skipMeta)
 			{
-				std::string path = Util::TcharToString(entry->value.AsString);
+				std::string path = Util::WstringToString(entry->value.AsString);
 
 				size_t nameOffset = NameTableData.size();
 				AddString(path);
@@ -346,15 +346,15 @@ namespace DVD
 
 				//DBReport("Processing file: %s\n", path.c_str());
 
-				TCHAR filePath[0x1000] = { 0, };
+				wchar_t filePath[0x1000] = { 0, };
 
-				_tcscat_s(filePath, _countof(filePath) - 1, directory);
-				_tcscat_s(filePath, _countof(filePath) - 1, _T("/dvddata"));
-				TCHAR* filePathPtr = filePath + _tcslen(filePath);
+				wcscat(filePath, directory);
+				wcscat(filePath, L"/dvddata");
+				wchar_t* filePathPtr = filePath + wcslen(filePath);
 
 				for (size_t i = 0; i < path.size(); i++)
 				{
-					*filePathPtr++ = (TCHAR)path[i];
+					*filePathPtr++ = (wchar_t)path[i];
 				}
 				*filePathPtr++ = 0;
 
@@ -439,14 +439,14 @@ namespace DVD
 			if (nameOffset)
 			{
 				fstEntry.nameOffsetHi = (uint8_t)(nameOffset->value.AsInt >> 16);
-				fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset->value.AsInt);
+				fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset->value.AsInt);
 			}
 
 			if (entry->parent)
 			{
 				Json::Value* parentId = entry->parent->ByName("entryId");
 				if (parentId)
-					fstEntry.parentOffset = _byteswap_ulong((uint32_t)parentId->value.AsInt);
+					fstEntry.parentOffset = _BYTESWAP_UINT32((uint32_t)parentId->value.AsInt);
 			}
 
 			Json::Value* entryId = entry->ByName("entryId");
@@ -456,7 +456,7 @@ namespace DVD
 			{
 				Json::Value* last = entry->ByName("last");
 
-				fstEntry.nextOffset = _byteswap_ulong((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
+				fstEntry.nextOffset = _BYTESWAP_UINT32((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
 			}
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
@@ -487,10 +487,10 @@ namespace DVD
 						uint32_t fileSize = (uint32_t)(*fileSizesIt)->value.AsInt;
 
 						fstEntry.nameOffsetHi = (uint8_t)(nameOffset >> 16);
-						fstEntry.nameOffsetLo = _byteswap_ushort((uint16_t)nameOffset);
+						fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset);
 
-						fstEntry.fileOffset = _byteswap_ulong(fileOffset);
-						fstEntry.fileLength = _byteswap_ulong(fileSize);
+						fstEntry.fileOffset = _BYTESWAP_UINT32(fileOffset);
+						fstEntry.fileLength = _BYTESWAP_UINT32(fileSize);
 
 						FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 
@@ -640,7 +640,7 @@ namespace DVD
 
 		while (addr != until)
 		{
-			*addr = _byteswap_ulong(*addr);
+			*addr = _BYTESWAP_UINT32(*addr);
 			addr++;
 		}
 	}

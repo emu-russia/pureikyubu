@@ -3,7 +3,7 @@
 
 #define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
 #define RET_VAL     Gekko::Gekko->regs.gpr[3]
-#define SWAP        _byteswap_ulong
+#define SWAP        _BYTESWAP_UINT32
 #define FPRD(n)     Gekko::Gekko->regs.fpr[n].dbl
 
 // fast longlong swap, invented by org

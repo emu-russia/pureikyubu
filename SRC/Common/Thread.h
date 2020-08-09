@@ -2,11 +2,9 @@
 
 #pragma once
 
-#ifdef _WINDOWS
-#include <Windows.h>
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#include <windows.h>
 #endif
-
-#include "Spinlock.h"
 
 typedef void (*ThreadProc)(void* param);
 
@@ -25,7 +23,7 @@ class Thread
 	int resumeCounter = 0;
 	int suspendCounter = 0;
 
-	char threadName[0x100] = { 0 };
+	std::string threadName;
 	
 	// Take care about this place. If it will differ between your projects you get wrecked!
 
@@ -34,6 +32,15 @@ class Thread
 	DWORD threadId = 0;
 	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
 	static const size_t StackSize = 0;
+#endif
+
+#if defined(_LINUX)
+	pthread_t threadId = 0;
+	static void* RingleaderThreadProc(void* args);
+	pthread_mutex_t mutex;
+	pthread_cond_t cond_var;
+	int command;
+	bool terminated = false;
 #endif
 
 public:
@@ -47,4 +54,6 @@ public:
 	void Resume();
 	void Suspend();
 	bool IsRunning() { return running; }
+
+	static void Sleep(size_t milliseconds);
 };

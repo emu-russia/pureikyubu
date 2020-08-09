@@ -2,14 +2,6 @@
 
 #pragma once
 
-#include <map>
-#include <vector>
-#include <list>
-#include <string>
-
-#include "Spinlock.h"
-#include "Json.h"
-
 namespace JDI
 {
 	typedef Json::Value* (*CmdDelegate)(std::vector<std::string>& args);
@@ -42,8 +34,8 @@ namespace JDI
 		void Help();
 		Json::Value* Execute(std::vector<std::string>& args);
 		Json::Value* ExecuteFast(const char* command);
-		bool ExecuteFastBool(char* command);
-		uint32_t ExecuteFastUInt32(char* command);
+		bool ExecuteFastBool(const char* command);
+		uint32_t ExecuteFastUInt32(const char* command);
 		bool CommandExists(const std::string& cmd);
 
 		void Dump(Json::Value * value, int depth=0);

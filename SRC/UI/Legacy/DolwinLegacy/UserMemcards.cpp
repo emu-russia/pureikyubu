@@ -3,7 +3,7 @@
 int um_num;
 BOOL um_filechanged;
 
-TCHAR Memcard_filename[2][0x1000];
+wchar_t Memcard_filename[2][0x1000];
 bool SyncSave;
 bool Memcard_Connected[2];
 
@@ -54,7 +54,7 @@ const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
  * MEMCARD_ID_1024     (0x0040)
  * MEMCARD_ID_2048     (0x0080)
  */
-bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
+bool    MCCreateMemcardFile(const wchar_t*path, uint16_t memcard_id) {
     FILE * newfile;
     uint32_t b, blocks;
     uint8_t newfile_buffer[Memcard_BlockSize];
@@ -70,22 +70,22 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
         blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2); 
         break;
     default:
-        UI::DolwinError (_T("Memcard Error"), _T("Wrong card id for creating file."));
+        UI::DolwinError (L"Memcard Error", L"Wrong card id for creating file.");
         return false;
     }
 
     newfile = nullptr;
-    _tfopen_s(&newfile, path, _T("wb")) ;
+    _wfopen_s(&newfile, path, L"wb");
 
 	if (newfile == NULL) {
-        UI::DolwinError ( _T("Memcard Error"), _T("Error while trying to create memcard file."));
+        UI::DolwinError ( L"Memcard Error", L"Error while trying to create memcard file.");
 		return false;
 	}
 
     memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
     for (b = 0; b < blocks; b++) {
         if (fwrite (newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            UI::DolwinError( _T("Memcard Error"), _T("Error while trying to write memcard file."));
+            UI::DolwinError( L"Memcard Error", L"Error while trying to write memcard file.");
 
 			fclose (newfile);
             return false;
@@ -96,13 +96,13 @@ bool    MCCreateMemcardFile(const TCHAR *path, uint16_t memcard_id) {
     return true;
 }
 
-static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
+static wchar_t* NewMemcardFileProc(HWND hwnd, wchar_t* lastDir)
 {
-    TCHAR prevc[MAX_PATH];
+    wchar_t prevc[MAX_PATH];
     OPENFILENAME ofn;
-    TCHAR szFileName[120];
-    TCHAR szFileTitle[120];
-    static TCHAR LoadedFile[MAX_PATH];
+    wchar_t szFileName[120];
+    wchar_t szFileTitle[120];
+    static wchar_t LoadedFile[MAX_PATH];
 
     GetCurrentDirectory(sizeof(prevc), prevc);
 
@@ -112,8 +112,8 @@ static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
     ofn.lStructSize         = sizeof(OPENFILENAME);
     ofn.hwndOwner           = hwnd;
     ofn.lpstrFilter         = 
-        _T("GameCube Memcard Files (*.mci)\0*.mci\0")
-        _T("All Files (*.*)\0*.*\0");
+        L"GameCube Memcard Files (*.mci)\0*.mci\0"
+        L"All Files (*.*)\0*.*\0";
     ofn.lpstrCustomFilter   = NULL;
     ofn.nMaxCustFilter      = 0;
     ofn.nFilterIndex        = 1;
@@ -122,8 +122,8 @@ static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
     ofn.lpstrInitialDir     = lastDir;
     ofn.lpstrFileTitle      = szFileTitle;
     ofn.nMaxFileTitle       = 120;
-    ofn.lpstrTitle          = _T("Create Memcard File\0");
-    ofn.lpstrDefExt         = _T("");
+    ofn.lpstrTitle          = L"Create Memcard File\0";
+    ofn.lpstrDefExt         = L"";
     ofn.Flags               = OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_PATHMUSTEXIST;
          
     if(GetSaveFileName(&ofn))
@@ -147,13 +147,13 @@ static TCHAR *NewMemcardFileProc(HWND hwnd, TCHAR * lastDir)
     }
 }
 
-static TCHAR *ChooseMemcardFileProc(HWND hwnd, TCHAR * lastDir)
+static wchar_t* ChooseMemcardFileProc(HWND hwnd, wchar_t* lastDir)
 {
-    TCHAR prevc[MAX_PATH];
+    wchar_t prevc[MAX_PATH];
     OPENFILENAME ofn;
-    TCHAR szFileName[120];
-    TCHAR szFileTitle[120];
-    static TCHAR LoadedFile[MAX_PATH];
+    wchar_t szFileName[120];
+    wchar_t szFileTitle[120];
+    static wchar_t LoadedFile[MAX_PATH];
 
     GetCurrentDirectory(sizeof(prevc), prevc);
 
@@ -163,8 +163,8 @@ static TCHAR *ChooseMemcardFileProc(HWND hwnd, TCHAR * lastDir)
     ofn.lStructSize         = sizeof(OPENFILENAME);
     ofn.hwndOwner           = hwnd;
     ofn.lpstrFilter         = 
-        _T("GameCube Memcard Files (*.mci)\0*.mci\0")
-        _T("All Files (*.*)\0*.*\0");
+        L"GameCube Memcard Files (*.mci)\0*.mci\0"
+        L"All Files (*.*)\0*.*\0";
     ofn.lpstrCustomFilter   = NULL;
     ofn.nMaxCustFilter      = 0;
     ofn.nFilterIndex        = 1;
@@ -173,8 +173,8 @@ static TCHAR *ChooseMemcardFileProc(HWND hwnd, TCHAR * lastDir)
     ofn.lpstrInitialDir     = lastDir;
     ofn.lpstrFileTitle      = szFileTitle;
     ofn.nMaxFileTitle       = 120;
-    ofn.lpstrTitle          = _T("Open Memcard File\0");
-    ofn.lpstrDefExt         = _T("");
+    ofn.lpstrTitle          = L"Open Memcard File\0";
+    ofn.lpstrDefExt         = L"";
     ofn.Flags               = OFN_HIDEREADONLY | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
          
     if(GetOpenFileName(&ofn))
@@ -206,7 +206,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
     UNREFERENCED_PARAMETER(lParam);
 
     int index;
-    TCHAR buf[256] = { 0 };
+    wchar_t buf[256] = { 0 };
 
     switch(uMsg)
     {
@@ -218,7 +218,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
                 int blocks, kb;
                 blocks = Memcard_ValidSizes[index] / Memcard_BlockSize;
                 kb = Memcard_ValidSizes[index] / 1024;
-                _stprintf_s (buf, _countof(buf) - 1, _T("%d blocks  (%d Kb)"), blocks, kb);
+                swprintf_s (buf, _countof(buf) - 1, L"%d blocks  (%d Kb)", blocks, kb);
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_INSERTSTRING, (WPARAM)index, (LPARAM)buf);
             }
             SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_SETCURSEL, (WPARAM)0,  (LPARAM)0);
@@ -250,7 +250,7 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
  */
 static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    TCHAR buf[MAX_PATH] = { 0 }, buf2[MAX_PATH] = { 0 }, * filename;
+    wchar_t buf[MAX_PATH] = { 0 }, buf2[MAX_PATH] = { 0 }, * filename;
     size_t newsize;
 
     switch(uMsg)
@@ -260,9 +260,9 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             SendMessage(hwndDlg, WM_SETICON,(WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)) );
 
             if (um_num == 0)
-                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)_T("Memcard A Settings"));
+                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard A Settings");
             else if (um_num == 1)
-                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)_T("Memcard B Settings"));
+                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard B Settings");
 
             if (SyncSave)
                 CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
@@ -274,13 +274,13 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             if (Memcard_Connected[um_num])
                 CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
 
-            _tcscpy_s(buf, sizeof(buf), Memcard_filename[um_num]);
-            filename = _tcsrchr(buf, _T('\\'));
+            wcscpy_s(buf, sizeof(buf), Memcard_filename[um_num]);
+            filename = wcsrchr(buf, L'\\');
             if (filename == NULL) {
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
-                *filename = _T('\0');
+                *filename = L'\0';
                 filename++;
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
@@ -293,7 +293,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 //SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
             }
             else {
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
             }
 
             um_filechanged = FALSE;
@@ -314,12 +314,12 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = NewMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
-                _tcscpy_s(buf, _countof(buf) - 1, filename );
+                wcscpy_s(buf, _countof(buf) - 1, filename );
 
                 /* create the file */
                 if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE ;
 
-                filename = _tcsrchr(buf, _T('\\'));
+                filename = wcsrchr(buf, L'\\');
                 if (filename == NULL) {
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
@@ -330,7 +330,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
 
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
 
                 um_filechanged = TRUE;
                 return TRUE;
@@ -339,9 +339,9 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)256, (LPARAM)(LPCTSTR)buf);
                 filename = ChooseMemcardFileProc(hwndDlg, buf);
                 if (filename == NULL) return TRUE;
-                _tcscpy_s (buf, _countof(buf) - 1, filename );
+                wcscpy_s (buf, _countof(buf) - 1, filename );
 
-                filename = _tcsrchr(buf, _T('\\'));
+                filename = wcsrchr(buf, L'\\');
                 if (filename == NULL) {
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
@@ -351,7 +351,7 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)filename);
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT,  (WPARAM)0, (LPARAM)(LPCTSTR)buf);
                 }
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)_T("Not connected"));
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT,  (WPARAM)0, (LPARAM)L"Not connected");
 
                 um_filechanged = TRUE;
                 return TRUE;
@@ -366,16 +366,16 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                     Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH,  (WPARAM)0, (LPARAM)0);
 
                     if (Fnsize+1 + Pathsize+1 >= sizeof (Memcard_filename[um_num])) {
-                        _stprintf_s (buf, _countof(buf) - 1, _T("File full path must be less than %zi characters."), sizeof (Memcard_filename[um_num]) );
-                        MessageBox(hwndDlg, buf, _T("Invalid filename"), 0);
+                        swprintf_s (buf, _countof(buf) - 1, L"File full path must be less than %zi characters.", sizeof (Memcard_filename[um_num]) );
+                        MessageBox(hwndDlg, buf, L"Invalid filename", 0);
                         return TRUE;
                     }
 
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT,  (WPARAM)(Pathsize+1), (LPARAM)(LPCTSTR)buf);
                     SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT,  (WPARAM)(Fnsize+1), (LPARAM)(LPCTSTR)buf2);
 
-                    _tcscat_s(buf, _countof(buf) - 1, _T("\\"));
-                    _tcscat_s(buf, _countof(buf) - 1, buf2);
+                    wcscat_s(buf, _countof(buf) - 1, L"\\");
+                    wcscat_s(buf, _countof(buf) - 1, buf2);
                 }
 
                 if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED  )
@@ -399,12 +399,12 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 if (um_num == 0)
                 {
                     UI::Jdi.SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, Util::TcharToString(Memcard_filename[0]), USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
                 }
                 else
                 {
                     UI::Jdi.SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, Util::TcharToString(Memcard_filename[1]), USER_MEMCARDS);
+                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
                 }
                 UI::Jdi.SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 

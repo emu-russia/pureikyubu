@@ -33,3 +33,14 @@ memory_leak_report.txt
 *.VC.db
 *.VC.opendb
 *.ipch
+
+# Cmake
+
+CMakeFiles
+Makefile
+*.cmake
+CMakeCache.txt
+*.a
+*.so
+
+DolwinPlayground

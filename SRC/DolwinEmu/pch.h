@@ -2,35 +2,22 @@
 
 //#include <vld.h>
 
-// ---------------------------------------------------------------------------
-// compiler and SDK include files.
-
-#include <assert.h>
 #include <cstdint>
-#include <direct.h>
-#include <float.h>
-#include <math.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <windows.h>
-#include <commctrl.h>
-#include <intrin.h>
-#include <tchar.h>
-#include <fstream>
 #include <string>
-#include <codecvt>
-
-// ---------------------------------------------------------------------------
-// Dolwin includes
+#include <vector>
+#include <list>
+#include <map>
+#include <cassert>
+#include <fstream>
+#include <atomic>
+#include <string.h>
 
 #include "../Common/Spinlock.h"
+#include "../Common/Thread.h"
+#include "../Common/Json.h"
 #include "../Common/Jdi.h"
 #include "../Common/File.h"
 #include "../Common/String.h"
-#include "../Common/Thread.h"
 
 #include "../GekkoCore/Gekko.h"
 #include "../GekkoCore/Interpreter.h"
@@ -50,3 +37,7 @@
 
 #include "../../ThirdParty/fmt/fmt/format.h"
 #include "../../ThirdParty/fmt/fmt/printf.h"
+
+#ifdef _LINUX
+#define _wcsicmp wcscasecmp
+#endif

@@ -105,7 +105,7 @@ namespace Debug
 				throw "QueryDebugMessages invalid format of array key-values!";
 			}
 
-			queue.push_back(std::pair<int, std::string>((int)channel->value.AsInt, Util::TcharToString(message->value.AsString)));
+			queue.push_back(std::pair<int, std::string>((int)channel->value.AsInt, Util::WstringToString(message->value.AsString)));
 		}
 
 		delete value;
@@ -622,7 +622,7 @@ namespace Debug
 
 			if (child->type == Json::ValueType::String)
 			{
-				text = Util::TcharToString(child->value.AsString);
+				text = Util::WstringToString(child->value.AsString);
 			}
 		}
 

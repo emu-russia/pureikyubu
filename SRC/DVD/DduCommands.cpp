@@ -13,7 +13,7 @@ namespace DVD
 
 		while (addr != until)
 		{
-			*addr = _byteswap_ulong(*addr);
+			*addr = _BYTESWAP_UINT32(*addr);
 			addr++;
 		}
 	}
@@ -26,7 +26,7 @@ namespace DVD
 
 		if (dvd.mountedImage)
 		{
-			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::TcharToString(dvd.gcm_filename).c_str());
+			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::WstringToString(dvd.gcm_filename).c_str());
 			Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
 			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
@@ -35,7 +35,7 @@ namespace DVD
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::TcharToString(dvd.mountedSdk->GetDirectory()).c_str());
+			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::WstringToString(dvd.mountedSdk->GetDirectory()).c_str());
 			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
@@ -181,11 +181,11 @@ namespace DVD
 		char* ptr = hexDump;
 		char* ptr2 = asciiDump;
 
-		size_t bytes = min(32, size);
+		size_t bytes = my_min(32, size);
 		for (size_t i=0, breakCounter=0; i< bytes; i++)
 		{
-			ptr += sprintf_s(ptr, sizeof(hexDump) - (ptr - hexDump), "%02X ", buf[i]);
-			ptr2 += sprintf_s(ptr2, sizeof(asciiDump) - (ptr2 - asciiDump), "%c", (32 <= buf[i] && buf[i] < 128) ? buf[i] : '.');
+			ptr += sprintf(ptr, "%02X ", buf[i]);
+			ptr2 += sprintf(ptr2, "%c", (32 <= buf[i] && buf[i] < 128) ? buf[i] : '.');
 
 			breakCounter++;
 			if (breakCounter >= 16)
@@ -271,9 +271,9 @@ namespace DVD
 
 	static DVDFileEntry* DumpFstDir(DVDFileEntry* fst, DVDFileEntry* entry, Json::Value * parent, int dumpMode)
 	{
-		entry->nameOffsetLo = _byteswap_ushort(entry->nameOffsetLo);
-		entry->fileOffset = _byteswap_ulong(entry->fileOffset);
-		entry->fileLength = _byteswap_ulong(entry->fileLength);
+		entry->nameOffsetLo = _BYTESWAP_UINT16(entry->nameOffsetLo);
+		entry->fileOffset = _BYTESWAP_UINT32(entry->fileOffset);
+		entry->fileLength = _BYTESWAP_UINT32(entry->fileLength);
 
 		if (entry->isDir)
 		{
@@ -289,7 +289,7 @@ namespace DVD
 
 			char dirNameAsInt[0x100] = { 0, };
 
-			sprintf_s(dirNameAsInt, sizeof(dirNameAsInt) - 1, "%i", ((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo);
+			sprintf(dirNameAsInt, "%i", ((uint32_t)entry->nameOffsetHi << 16) | entry->nameOffsetLo);
 			Json::Value* dir = parent->AddObject(dirNameAsInt);
 
 			DVDFileEntry* until = &fst[entry->nextOffset];

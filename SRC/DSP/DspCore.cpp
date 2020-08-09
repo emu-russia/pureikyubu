@@ -167,7 +167,7 @@ namespace DSP
 			dsp->savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 
-		for (int i = 0; i < _countof(regs.st); i++)
+		for (int i = 0; i < 4; i++)
 		{
 			regs.st[i].clear();
 			regs.st[i].reserve(32);		// Should be enough
