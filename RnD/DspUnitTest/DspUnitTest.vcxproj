@@ -157,6 +157,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AxUcodeVolumeEnvelope.cpp" />
+    <ClCompile Include="CircularAddressing.cpp" />
     <ClCompile Include="IromMixer80E7.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
