@@ -785,11 +785,43 @@ namespace DSP
 
 	// Circular addressing logic
 
+	uint16_t DspCore::CircularAddress(uint16_t r, uint16_t l, int16_t m)
+	{
+		if (m == 0 || l == 0)
+		{
+			return r;
+		}
+
+		if (l == 0xffff)
+		{
+			return (uint16_t)((int16_t)r + m);
+		}
+		else
+		{
+			int16_t abs_m = m > 0 ? m : -m;
+			int16_t mm = abs_m % (l + 1);
+			uint16_t base = (r / (l + 1)) * (l + 1);
+			uint16_t next = 0;
+			uint32_t sum = 0;
+
+			if (m > 0)
+			{
+				sum = (uint32_t)((uint32_t)r + mm);
+			}
+			else
+			{
+				sum = (uint32_t)((uint32_t)r + l + 1 - mm);
+			}
+
+			next = base + (uint16_t)(sum % (l + 1));
+
+			return next;
+		}
+	}
+
 	void DspCore::ArAdvance(int r, int16_t step)
 	{
-		uint16_t base = regs.ar[r] & ~regs.lm[r];
-		regs.ar[r] += step;
-		regs.ar[r] = base + (regs.ar[r] & regs.lm[r]);
+		regs.ar[r] = CircularAddress(regs.ar[r], regs.lm[r], step);
 	}
 
 	#pragma endregion "Multiplier and ALU"

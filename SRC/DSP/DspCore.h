@@ -180,6 +180,7 @@ namespace DSP
 		DspInterruptControl intr = { 0 };
 
 		void CheckInterrupts();
+		uint16_t CircularAddress(uint16_t r, uint16_t l, int16_t m);
 
 	public:
 
