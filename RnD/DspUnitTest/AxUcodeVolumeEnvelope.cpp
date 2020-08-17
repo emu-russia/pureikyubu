@@ -99,9 +99,6 @@
 */
 
 #include "pch.h"
-#include "CppUnitTest.h"
-#include <intrin.h>
-#include <algorithm>
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
