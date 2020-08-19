@@ -1,4 +1,4 @@
-// Command line. All commands go to JDI.
+// Command line. All commands go to Jdi->
 // It can be used both by the system debugger and as part of the DSP Debugger.
 
 #include "pch.h"
@@ -208,15 +208,15 @@ namespace Debug
 		}
 		historyPos = (int)history.size();
 
-		Jdi.Report(": " + text);
+		Jdi->Report(": " + text);
 
-		if (Jdi.IsCommandExists(text))
+		if (Jdi->IsCommandExists(text))
 		{
-			Jdi.ExecuteCommand(text);
+			Jdi->ExecuteCommand(text);
 		}
 		else
 		{
-			Jdi.Report("Unknown command, try \'help\'");
+			Jdi->Report("Unknown command, try \'help\'");
 		}
 
 		ClearCmdline();

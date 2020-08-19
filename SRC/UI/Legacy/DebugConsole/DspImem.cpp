@@ -22,7 +22,7 @@ namespace Debug
 
 		// If GameCube is not powered on
 
-		if (!Jdi.IsLoaded())
+		if (!Jdi->IsLoaded())
 		{
 			return;
 		}
@@ -42,7 +42,7 @@ namespace Debug
 			size_t instrSizeInWords = 0;
 			bool flowControl = false;
 
-			std::string text = Jdi.DspDisasm(addr, instrSizeInWords, flowControl);
+			std::string text = Jdi->DspDisasm(addr, instrSizeInWords, flowControl);
 
 			if (text.empty())
 			{
@@ -54,8 +54,8 @@ namespace Debug
 			CuiColor backColor = CuiColor::Black;
 
 			int bgcur = (addr == cursor) ? ((int)CuiColor::Blue) : (0);
-			int bgbp = (Jdi.DspTestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
-			int bg = (addr == Jdi.DspGetPc()) ? ((int)CuiColor::DarkBlue) : (0);
+			int bgbp = (Jdi->DspTestBreakpoint(addr)) ? ((int)CuiColor::Red) : (0);
+			int bg = (addr == Jdi->DspGetPc()) ? ((int)CuiColor::DarkBlue) : (0);
 			bg = bg ^ bgcur ^ bgbp;
 
 			backColor = (CuiColor)bg;
@@ -73,7 +73,7 @@ namespace Debug
 	{
 		uint32_t targetAddress = 0;
 
-		if (!Jdi.IsLoaded())
+		if (!Jdi->IsLoaded())
 		{
 			return;
 		}
@@ -130,7 +130,7 @@ namespace Debug
 				}
 				else
 				{
-					current = cursor = Jdi.DspGetPc();
+					current = cursor = Jdi->DspGetPc();
 				}
 				break;
 
@@ -141,12 +141,12 @@ namespace Debug
 			case VK_F9:
 				if (AddressVisible(cursor))
 				{
-					Jdi.DspToggleBreakpoint(cursor);
+					Jdi->DspToggleBreakpoint(cursor);
 				}
 				break;
 
 			case VK_RETURN:
-				if (Jdi.DspIsCallOrJump(cursor, targetAddress))
+				if (Jdi->DspIsCallOrJump(cursor, targetAddress))
 				{
 					std::pair<uint32_t, uint32_t> last(current, cursor);
 					browseHist.push_back(last);

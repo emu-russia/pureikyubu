@@ -4,7 +4,7 @@
 
 namespace UI
 {
-	JdiClient Jdi;		// Singletone.
+	JdiClient * Jdi;
 
 	JdiClient::JdiClient()
 	{
@@ -12,7 +12,7 @@ namespace UI
 		dll = LoadLibraryA("DolwinEmu.dll");
 		if (dll == nullptr)
 		{
-			throw "Load DolwinEmu failed!";
+			UI::DolwinError(L"Error", L"Failed to load DolwinEmu.dll. This component contains the emulator core and is required for correct operation.");
 		}
 
 		CallJdi = (CALL_JDI) GetProcAddress(dll, "CallJdi");

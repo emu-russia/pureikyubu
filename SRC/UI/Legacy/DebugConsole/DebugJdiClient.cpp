@@ -4,7 +4,7 @@
 
 namespace Debug
 {
-	JdiClient Jdi;		// Singletone.
+	JdiClient * Jdi;
 
 	JdiClient::JdiClient()
 	{

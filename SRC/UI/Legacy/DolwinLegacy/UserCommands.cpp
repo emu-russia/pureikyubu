@@ -50,7 +50,7 @@ Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 
 void UIReflector()
 {
-	UI::Jdi.JdiAddCmd("UIError", CmdUIError);
-	UI::Jdi.JdiAddCmd("UIReport", CmdUIReport);
-	UI::Jdi.JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+	UI::Jdi->JdiAddCmd("UIError", CmdUIError);
+	UI::Jdi->JdiAddCmd("UIReport", CmdUIReport);
+	UI::Jdi->JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
 }

@@ -138,14 +138,14 @@ static void SetRecentEntry(int index, const wchar_t* str)
 {
     char var[256] = { 0, };
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    UI::Jdi.SetConfigString(var, Util::WstringToString(str), USER_UI);
+    UI::Jdi->SetConfigString(var, Util::WstringToString(str), USER_UI);
 }
 
 static std::wstring GetRecentEntry(int index)
 {
     char var[256];
     sprintf_s (var, sizeof(var), USER_RECENT, index);
-    return Util::StringToWstring(UI::Jdi.GetConfigString(var, USER_UI));
+    return Util::StringToWstring(UI::Jdi->GetConfigString(var, USER_UI));
 }
 
 void UpdateRecentMenu(HWND hwnd)
@@ -176,14 +176,14 @@ void UpdateRecentMenu(HWND hwnd)
     }
 
     // if no recent, add empty
-    if(UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI) == 0)
+    if(UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI) == 0)
     {
         AppendMenu(hReloadMenu, MF_GRAYED | MF_STRING, ID_FILE_RECENT_1, L"None");
     }
     else
     {
         auto buffer = std::wstring();
-        int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
+        int RecentNum = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
 
         for(int i = 0, n = RecentNum; i < RecentNum; i++, n--)
         {
@@ -198,7 +198,7 @@ void UpdateRecentMenu(HWND hwnd)
 void AddRecentFile(const std::wstring& path)
 {
     int n;
-    int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
+    int RecentNum = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
 
     // check if item already present in list
     for (n = 1; n <= RecentNum; n++)
@@ -230,7 +230,7 @@ void AddRecentFile(const std::wstring& path)
         }
         RecentNum = 5;
     }
-    UI::Jdi.SetConfigInt(USER_RECENT_NUM, RecentNum, USER_UI);
+    UI::Jdi->SetConfigInt(USER_RECENT_NUM, RecentNum, USER_UI);
 
     // add new entry
     SetRecentEntry(RecentNum, path.c_str());
@@ -240,12 +240,12 @@ void AddRecentFile(const std::wstring& path)
 // index = 1..max
 void LoadRecentFile(int index)
 {
-    int RecentNum = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
+    int RecentNum = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
-    UI::Jdi.Unload();
-    UI::Jdi.LoadFile(Util::WstringToString(path));
+    UI::Jdi->Unload();
+    UI::Jdi->LoadFile(Util::WstringToString(path));
     OnMainWindowOpened(path.c_str());
-    UI::Jdi.Run();
+    UI::Jdi->Run();
 }
 
 #pragma endregion "Recent files list"
@@ -264,7 +264,7 @@ static void SelectSort()
     CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SORTBY_6, MF_BYCOMMAND | MF_UNCHECKED);
     CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SORTBY_7, MF_BYCOMMAND | MF_UNCHECKED);
     
-    switch((SELECTOR_SORT)UI::Jdi.GetConfigInt(USER_SORTVIEW, USER_UI))
+    switch((SELECTOR_SORT)UI::Jdi->GetConfigInt(USER_SORTVIEW, USER_UI))
     {
         case SELECTOR_SORT::Default:
             CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_SORTBY_1, MF_BYCOMMAND | MF_CHECKED);
@@ -339,7 +339,7 @@ static void OnMainWindowCreate(HWND hwnd)
     wnd.hMainMenu = GetMenu(wnd.hMainWindow);
 
     // run once ?
-    if (UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
+    if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
     {
         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
     }
@@ -350,7 +350,7 @@ static void OnMainWindowCreate(HWND hwnd)
 
     // debugger enabled ?
     CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-    if (UI::Jdi.GetConfigBool(USER_DOLDEBUG, USER_UI))
+    if (UI::Jdi->GetConfigBool(USER_DOLDEBUG, USER_UI))
     {
         gekkoDebug = new Debug::GekkoDebug();
         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
@@ -360,7 +360,7 @@ static void OnMainWindowCreate(HWND hwnd)
     InitCommonControls();
 
     // always on top (not in debug)
-    wnd.ontop = UI::Jdi.GetConfigBool(USER_ONTOP, USER_UI);
+    wnd.ontop = UI::Jdi->GetConfigBool(USER_ONTOP, USER_UI);
     if(wnd.ontop) CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_CHECKED);
     else CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, MF_UNCHECKED);
     SetAlwaysOnTop(wnd.hMainWindow, wnd.ontop);
@@ -376,11 +376,11 @@ static void OnMainWindowCreate(HWND hwnd)
     ResizeMainWindow(640, 480-32);  // 32 pixels overscan
 
     // selector disabled ?
-    usel.active = UI::Jdi.GetConfigBool(USER_SELECTOR, USER_UI);
+    usel.active = UI::Jdi->GetConfigBool(USER_SELECTOR, USER_UI);
     ModifySelectorControls(usel.active);
 
     // icon size
-    bool smallSize = UI::Jdi.GetConfigBool(USER_SMALLICONS, USER_UI);
+    bool smallSize = UI::Jdi->GetConfigBool(USER_SMALLICONS, USER_UI);
     if(smallSize)
     {
         CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_VIEW_LARGEICONS, MF_BYCOMMAND | MF_UNCHECKED);
@@ -399,7 +399,7 @@ static void OnMainWindowCreate(HWND hwnd)
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
     // Add UI methods
-    UI::Jdi.JdiAddNode(UI_JDI_JSON, UIReflector);
+    UI::Jdi->JdiAddNode(UI_JDI_JSON, UIReflector);
 
     // simulate close operation, like we just stopped emu
     OnMainWindowClosed();
@@ -408,9 +408,9 @@ static void OnMainWindowCreate(HWND hwnd)
 // called once, when Dolwin exits to OS
 static void OnMainWindowDestroy()
 {
-    UI::Jdi.Unload();
+    UI::Jdi->Unload();
 
-    UI::Jdi.JdiRemoveNode(UI_JDI_JSON);
+    UI::Jdi->JdiRemoveNode(UI_JDI_JSON);
 
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
@@ -425,7 +425,7 @@ static void OnMainWindowDestroy()
         delete dspDebug;
     }
 
-    UI::Jdi.ExecuteCommand("exit");
+    UI::Jdi->ExecuteCommand("exit");
 }
 
 // emulation has started - do proper actions
@@ -478,13 +478,13 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
     if (dvd)
     {
-        UI::Jdi.DvdMount(Util::WstringToString(currentFileName));
+        UI::Jdi->DvdMount(Util::WstringToString(currentFileName));
 
         // get DiskID
         std::vector<uint8_t> diskID;
         diskID.resize(4);
-        UI::Jdi.DvdSeek(0);
-        UI::Jdi.DvdRead(diskID);
+        UI::Jdi->DvdSeek(0);
+        UI::Jdi->DvdRead(diskID);
 
         // Get title from banner
 
@@ -505,7 +505,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 
         // Convert SJIS Title to Unicode
 
-        if ( UI::Jdi.DvdRegionById((char *)diskID.data()) == "JPN")
+        if ( UI::Jdi->DvdRegionById((char *)diskID.data()) == "JPN")
         {
             size_t size, chars;
             uint16_t* widePtr = SjisToUnicode(longTitle, &size, &chars);
@@ -571,7 +571,7 @@ void OnMainWindowClosed()
         wnd.hMainMenu, L"&Options")), 1, MF_BYPOSITION | MF_ENABLED);
 
     // set to Idle
-    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi.GetVersion()));
+    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
     SetWindowText(wnd.hMainWindow, win_name.c_str());
     ResetStatusBar();
 }
@@ -662,9 +662,9 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                     loadFile:
                     
-                        UI::Jdi.LoadFile(Util::WstringToString(name));
+                        UI::Jdi->LoadFile(Util::WstringToString(name));
                         OnMainWindowOpened(name.c_str());
-                        UI::Jdi.Run();
+                        UI::Jdi->Run();
                     }
 
                     return 0;
@@ -672,7 +672,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Reload last opened file (RESET) */
                 case ID_FILE_RELOAD:
                 {
-                    recent = UI::Jdi.GetConfigInt(USER_RECENT_NUM, USER_UI);
+                    recent = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
                     if (recent > 0)
                     {
                         LoadRecentFile(1);
@@ -683,9 +683,9 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Unload file (STOP) */
                 case ID_FILE_UNLOAD:
                 {
-                    UI::Jdi.Stop();
+                    UI::Jdi->Stop();
                     Sleep(100);
-                    UI::Jdi.Unload();
+                    UI::Jdi->Unload();
                     OnMainWindowClosed();
 
                     return 0;
@@ -693,22 +693,22 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 /* Load bootrom */
                 case ID_FILE_IPLMENU:
                 {
-                    UI::Jdi.LoadFile("Bootrom");
+                    UI::Jdi->LoadFile("Bootrom");
                     OnMainWindowOpened(L"Bootrom");
-                    UI::Jdi.Run();
+                    UI::Jdi->Run();
                     return 0;
                 }
                 /* Open/close DVD lid */
                 case ID_FILE_COVER:
                 {
-                    if ( UI::Jdi.DvdCoverOpened() )   /* Close lid */
+                    if ( UI::Jdi->DvdCoverOpened() )   /* Close lid */
                     {
-                        UI::Jdi.DvdCloseCover();
+                        UI::Jdi->DvdCloseCover();
                         ModifySwapControls(false);
                     }
                     else /* Open lid */
                     {
-                        UI::Jdi.DvdOpenCover();
+                        UI::Jdi->DvdOpenCover();
                         ModifySwapControls(true);
                     }
 
@@ -718,16 +718,16 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_FILE_CHANGEDVD:
                 {
                     name = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Dvd);
-                    if (!name.empty() && UI::Jdi.DvdCoverOpened() )
+                    if (!name.empty() && UI::Jdi->DvdCoverOpened() )
                     {
                         /* Bad */
-                        if (! UI::Jdi.DvdMount ( Util::WstringToString(name)) )
+                        if (! UI::Jdi->DvdMount ( Util::WstringToString(name)) )
                         {
                             return 0;
                         }
 
                         /* Close lid */
-                        UI::Jdi.DvdCloseCover();
+                        UI::Jdi->DvdCloseCover();
                         ModifySwapControls(false);
                     }
 
@@ -749,7 +749,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 case ID_OPTIONS_ALWAYSONTOP:
                 {
                     wnd.ontop = wnd.ontop ? false : true;
-                    UI::Jdi.SetConfigBool(USER_ONTOP, wnd.ontop, USER_UI);
+                    UI::Jdi->SetConfigBool(USER_ONTOP, wnd.ontop, USER_UI);
 
                     auto flags = (wnd.ontop ? MF_BYCOMMAND | MF_CHECKED : MF_BYCOMMAND | MF_UNCHECKED);
                     CheckMenuItem(wnd.hMainMenu, ID_OPTIONS_ALWAYSONTOP, flags);
@@ -772,13 +772,13 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                         ResetStatusBar();
                         ModifySelectorControls(false);
                         usel.active = false;
-                        UI::Jdi.SetConfigBool(USER_SELECTOR, false, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_SELECTOR, false, USER_UI);
                     }
                     else
                     {
                         ModifySelectorControls(true);
                         usel.active = true;
-                        UI::Jdi.SetConfigBool(USER_SELECTOR, true, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_SELECTOR, true, USER_UI);
                         CreateSelector();
                     }
 
@@ -863,15 +863,15 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 // multiple instancies on/off
                 case ID_RUN_ONCE:
                 {
-                    if (UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
+                    if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
                     {   /* Off */
                         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_UNCHECKED);
-                        UI::Jdi.SetConfigBool(USER_RUNONCE, false, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_RUNONCE, false, USER_UI);
                     }
                     else
                     {   /* On */
                         CheckMenuItem(wnd.hMainMenu, ID_RUN_ONCE, MF_BYCOMMAND | MF_CHECKED);
-                        UI::Jdi.SetConfigBool(USER_RUNONCE, true, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_RUNONCE, true, USER_UI);
                     }
 
                     return 0;
@@ -890,7 +890,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {   // open
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
                         gekkoDebug = new Debug::GekkoDebug();
-                        UI::Jdi.SetConfigBool(USER_DOLDEBUG, true, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_DOLDEBUG, true, USER_UI);
                         SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
                     }
                     else
@@ -898,7 +898,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                         CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
                         delete gekkoDebug;
                         gekkoDebug = nullptr;
-                        UI::Jdi.SetConfigBool(USER_DOLDEBUG, false, USER_UI);
+                        UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
                         SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
                     }
                     return 0;
@@ -936,7 +936,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                         char cmd[0x200];
                         sprintf_s(cmd, sizeof(cmd), "MountSDK \"%s\"", Util::WstringToString(dolphinSdkDir).c_str());
-                        UI::Jdi.ExecuteCommand(cmd);
+                        UI::Jdi->ExecuteCommand(cmd);
                     }
 
                     return 0;
@@ -1079,7 +1079,7 @@ HWND CreateMainWindow(HINSTANCE hInstance)
     ATOM classAtom = RegisterClass(&wc);
     assert(classAtom != 0);
 
-    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi.GetVersion()));
+    auto win_name = fmt::format(L"{:s} - {:s} ({:s})", APPNAME, APPDESC, Util::StringToWstring(UI::Jdi->GetVersion()));
     wnd.hMainWindow = CreateWindowEx(
         0,
         CLASS_NAME,

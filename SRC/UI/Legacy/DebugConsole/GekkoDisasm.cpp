@@ -8,14 +8,14 @@ namespace Debug
 	GekkoDisasm::GekkoDisasm(RECT& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
-		uint32_t main = Jdi.AddressByName("main");
+		uint32_t main = Jdi->AddressByName("main");
 		if (main)
 		{
 			SetCursor(main);
 		}
 		else
 		{
-			SetCursor(Jdi.GetPc());
+			SetCursor(Jdi->GetPc());
 		}
 	}
 
@@ -35,7 +35,7 @@ namespace Debug
 
 		char hint[0x100] = { 0, };
 		sprintf_s(hint, sizeof(hint), " cursor:0x%08X phys:0x%08X pc:0x%08X", 
-			cursor, Jdi.VirtualToPhysicalIMmu(cursor), Jdi.GetPc());
+			cursor, Jdi->VirtualToPhysicalIMmu(cursor), Jdi->GetPc());
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 
@@ -118,7 +118,7 @@ namespace Debug
 				break;
 
 			case VK_RETURN:
-				if (Jdi.GekkoIsBranch(cursor, targetAddress))
+				if (Jdi->GekkoIsBranch(cursor, targetAddress))
 				{
 					std::pair<uint32_t, uint32_t> last(address, cursor);
 					browseHist.push_back(last);
@@ -167,15 +167,15 @@ namespace Debug
 		int addend = 1;
 
 		bgcur = (addr == cursor) ? (CuiColor::Gray) : (CuiColor::Black);
-		bgbp = (Jdi.GekkoTestBreakpoint(addr)) ? (CuiColor::Red) : (CuiColor::Black);
-		bgpc = (addr == Jdi.GetPc()) ? (CuiColor::DarkBlue) : (CuiColor::Black);
+		bgbp = (Jdi->GekkoTestBreakpoint(addr)) ? (CuiColor::Red) : (CuiColor::Black);
+		bgpc = (addr == Jdi->GetPc()) ? (CuiColor::DarkBlue) : (CuiColor::Black);
 		bg = (CuiColor)((int)bgpc ^ (int)bgcur ^ (int)bgbp);
 
 		FillLine(bg, CuiColor::Normal, line, ' ');
 
 		// Symbolic information at address
 
-		symbol = Jdi.NameByAddress(addr);
+		symbol = Jdi->NameByAddress(addr);
 		if (!symbol.empty())
 		{
 			Print(bg, CuiColor::Green, 0, line, "%s", symbol.c_str());
@@ -187,7 +187,7 @@ namespace Debug
 
 		// Translate address
 
-		uint32_t* ptr = (uint32_t*)Jdi.TranslateIMmu(addr);
+		uint32_t* ptr = (uint32_t*)Jdi->TranslateIMmu(addr);
 		if (!ptr)
 		{
 			// No memory
@@ -206,7 +206,7 @@ namespace Debug
 
 		// Disasm
 
-		std::string text = Jdi.GekkoDisasm(addr);
+		std::string text = Jdi->GekkoDisasm(addr);
 
 		bool flow = false;
 		uint32_t targetAddress = 0;
@@ -215,7 +215,7 @@ namespace Debug
 
 		// Branch hints
 
-		flow = Jdi.GekkoIsBranch(addr, targetAddress);
+		flow = Jdi->GekkoIsBranch(addr, targetAddress);
 
 		if (flow && targetAddress != 0)
 		{
@@ -227,7 +227,7 @@ namespace Debug
 
 			Print(bg, CuiColor::Cyan, 20 + (int)text.size(), line, "%s", dir);
 
-			symbol = Jdi.NameByAddress(targetAddress);
+			symbol = Jdi->NameByAddress(targetAddress);
 			if (!symbol.empty())
 			{
 				Print(bg, CuiColor::Brown, 47, line, "; %s", symbol.c_str());

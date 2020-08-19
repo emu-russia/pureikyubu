@@ -16,13 +16,13 @@ static wchar_t    FontSjisFile[MAX_PATH];         // copy of user variables
 static void FontSetAnsiFile(const TCHAR *filename)
 {
     wcscpy_s(FontAnsiFile, _countof(FontAnsiFile) - 1, filename);
-    UI::Jdi.SetConfigString(USER_ANSI, Util::WstringToString(FontAnsiFile), USER_HW);
+    UI::Jdi->SetConfigString(USER_ANSI, Util::WstringToString(FontAnsiFile), USER_HW);
 }
 
 static void FontSetSjisFile(const TCHAR *filename)
 {
     wcscpy_s (FontSjisFile, _countof(FontSjisFile) - 1, filename);
-    UI::Jdi.SetConfigString(USER_SJIS, Util::WstringToString(FontSjisFile), USER_HW);
+    UI::Jdi->SetConfigString(USER_SJIS, Util::WstringToString(FontSjisFile), USER_HW);
 }
 
 static void AddFont(HWND hwndDlg, TCHAR *file)
@@ -218,8 +218,8 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
 
 void FontConfigure(HWND hParent)
 {
-    FontSetAnsiFile( Util::StringToWstring(UI::Jdi.GetConfigString(USER_ANSI, USER_HW)).c_str() );
-    FontSetSjisFile( Util::StringToWstring(UI::Jdi.GetConfigString(USER_SJIS, USER_HW)).c_str() );
+    FontSetAnsiFile( Util::StringToWstring(UI::Jdi->GetConfigString(USER_ANSI, USER_HW)).c_str() );
+    FontSetSjisFile( Util::StringToWstring(UI::Jdi->GetConfigString(USER_SJIS, USER_HW)).c_str() );
 
     DialogBox(
         GetModuleHandle(NULL),

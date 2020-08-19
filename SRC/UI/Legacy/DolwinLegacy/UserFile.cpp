@@ -20,13 +20,13 @@ namespace UI
         {
             case FileType::All:
             case FileType::Json:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_ALL, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;
             case FileType::Dvd:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_DVD, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
                 break;
             case FileType::Map:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_MAP, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
         }
 
@@ -147,13 +147,13 @@ namespace UI
             {
                 case FileType::All:
                 case FileType::Json:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
                     break;
                 case FileType::Dvd:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
                     break;
                 case FileType::Map:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
             }
 
@@ -184,13 +184,13 @@ namespace UI
         {
             case FileType::All:
             case FileType::Json:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_ALL, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
                 break;
             case FileType::Dvd:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_DVD, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
                 break;
             case FileType::Map:
-                lastDir = UI::Jdi.GetConfigString(USER_LASTDIR_MAP, USER_UI);
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
                 break;
         }
 
@@ -259,13 +259,13 @@ namespace UI
             {
                 case FileType::All:
                 case FileType::Json:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
                     break;
                 case FileType::Dvd:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
                     break;
                 case FileType::Map:
-                    UI::Jdi.SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
                     break;
             }
 

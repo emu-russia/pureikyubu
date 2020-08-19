@@ -69,7 +69,7 @@ static void LoadSettings(int n)         // dialogs created
     // GCN Hardware
     if(n == 2)
     {
-        uint32_t ver = UI::Jdi.GetConfigInt(USER_CONSOLE, USER_HW);
+        uint32_t ver = UI::Jdi->GetConfigInt(USER_CONSOLE, USER_HW);
         int i=0, selected = sizeof(consoleVersion) / 8 - 1;
         while(consoleVersion[i].ver != 0xffffffff)
         {
@@ -95,9 +95,9 @@ static void LoadSettings(int n)         // dialogs created
         }
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_SETCURSEL, selected, 0);
 
-        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, Util::StringToWstring(UI::Jdi.GetConfigString(USER_BOOTROM, USER_HW)).c_str());
-        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, Util::StringToWstring(UI::Jdi.GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
-        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, Util::StringToWstring(UI::Jdi.GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
+        SetDlgItemText(hDlg, IDC_BOOTROM_FILE, Util::StringToWstring(UI::Jdi->GetConfigString(USER_BOOTROM, USER_HW)).c_str());
+        SetDlgItemText(hDlg, IDC_DSPDROM_FILE, Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
+        SetDlgItemText(hDlg, IDC_DSPIROM_FILE, Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
 
         settingsLoaded[2] = TRUE;
     }
@@ -134,7 +134,7 @@ static void SaveSettings()              // OK pressed
 
         /* Delete all directories. */
         usel.paths.clear();
-        UI::Jdi.SetConfigString(USER_PATH, "", USER_UI);
+        UI::Jdi->SetConfigString(USER_PATH, "", USER_UI);
 
         /* Add directories again. */
         for (i = 0; i < max; i++)
@@ -163,16 +163,16 @@ static void SaveSettings()              // OK pressed
         {
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
             uint32_t ver = wcstoul(buf.data(), NULL, 0);
-            UI::Jdi.SetConfigInt(USER_CONSOLE, ver, USER_HW);
+            UI::Jdi->SetConfigInt(USER_CONSOLE, ver, USER_HW);
         }
-        else UI::Jdi.SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
+        else UI::Jdi->SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
         GetDlgItemText(hDlg, IDC_BOOTROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
-        UI::Jdi.SetConfigString(USER_BOOTROM, Util::WstringToString(buf), USER_HW);
+        UI::Jdi->SetConfigString(USER_BOOTROM, Util::WstringToString(buf), USER_HW);
         GetDlgItemText(hDlg, IDC_DSPDROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
-        UI::Jdi.SetConfigString(USER_DSP_DROM, Util::WstringToString(buf), USER_HW);
+        UI::Jdi->SetConfigString(USER_DSP_DROM, Util::WstringToString(buf), USER_HW);
         GetDlgItemText(hDlg, IDC_DSPIROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
-        UI::Jdi.SetConfigString(USER_DSP_IROM, Util::WstringToString(buf), USER_HW);
+        UI::Jdi->SetConfigString(USER_DSP_IROM, Util::WstringToString(buf), USER_HW);
     }
 
     // GCN High Level
@@ -545,7 +545,7 @@ static INT_PTR CALLBACK FileFilterProc(
             SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
 
             // fill by default info
-            usel.filter = UI::Jdi.GetConfigInt(USER_FILTER, USER_UI);
+            usel.filter = UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
             filter_string(hwndDlg, usel.filter);
             check_filter(hwndDlg, usel.filter);
             return TRUE;
@@ -566,9 +566,9 @@ static INT_PTR CALLBACK FileFilterProc(
                 EndDialog(hwndDlg, 0);
 
                 // save information and update selector (if filter was changed)
-                if((uint32_t)UI::Jdi.GetConfigInt(USER_FILTER, USER_UI) != usel.filter)
+                if((uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI) != usel.filter)
                 {
-                    UI::Jdi.SetConfigInt(USER_FILTER, usel.filter, USER_UI);
+                    UI::Jdi->SetConfigInt(USER_FILTER, usel.filter, USER_UI);
                     UpdateSelector();
                 }
                 return TRUE;

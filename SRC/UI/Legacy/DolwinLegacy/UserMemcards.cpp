@@ -398,15 +398,15 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
                 if (um_num == 0)
                 {
-                    UI::Jdi.SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
+                    UI::Jdi->SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
                 }
                 else
                 {
-                    UI::Jdi.SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
+                    UI::Jdi->SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
                 }
-                UI::Jdi.SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
+                UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 
                 EndDialog(hwndDlg, 0);
                 return TRUE;

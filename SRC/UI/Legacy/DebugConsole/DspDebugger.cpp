@@ -7,6 +7,13 @@ namespace Debug
 	DspDebug::DspDebug() :
 		Cui("DSP Debug", width, height)
 	{
+		// Create an interface for communicating with the emulator core, if it has not been created yet.
+
+		if (!Jdi)
+		{
+			Jdi = new JdiClient;
+		}
+
 		ShowCursor(false);
 
 		RECT rect;
@@ -51,33 +58,33 @@ namespace Debug
 
 			case VK_F5:
 				// Suspend/Run both cores
-				if (Jdi.DspIsRunning())
+				if (Jdi->DspIsRunning())
 				{
-					Jdi.DspSuspend();
-					Jdi.GekkoSuspend();
+					Jdi->DspSuspend();
+					Jdi->GekkoSuspend();
 				}
 				else
 				{
-					Jdi.DspRun();
-					Jdi.GekkoRun();
+					Jdi->DspRun();
+					Jdi->GekkoRun();
 				}
 				break;
 
 			case VK_F10:
 				// Step Over
-				if (!Jdi.DspIsRunning())
+				if (!Jdi->DspIsRunning())
 				{
-					if (Jdi.DspIsCall(Jdi.DspGetPc(), targetAddress))
+					if (Jdi->DspIsCall(Jdi->DspGetPc(), targetAddress))
 					{
-						Jdi.DspAddOneShotBreakpoint(Jdi.DspGetPc() + 2);
-						Jdi.DspRun();
+						Jdi->DspAddOneShotBreakpoint(Jdi->DspGetPc() + 2);
+						Jdi->DspRun();
 					}
 					else
 					{
-						Jdi.DspStep();
-						if (!imemWindow->AddressVisible(Jdi.DspGetPc()))
+						Jdi->DspStep();
+						if (!imemWindow->AddressVisible(Jdi->DspGetPc()))
 						{
-							imemWindow->current = imemWindow->cursor = Jdi.DspGetPc();
+							imemWindow->current = imemWindow->cursor = Jdi->DspGetPc();
 						}
 					}
 				}
@@ -85,10 +92,10 @@ namespace Debug
 
 			case VK_F11:
 				// Step Into
-				Jdi.DspStep();
-				if (!imemWindow->AddressVisible(Jdi.DspGetPc()))
+				Jdi->DspStep();
+				if (!imemWindow->AddressVisible(Jdi->DspGetPc()))
 				{
-					imemWindow->current = imemWindow->cursor = Jdi.DspGetPc();
+					imemWindow->current = imemWindow->cursor = Jdi->DspGetPc();
 				}
 				break;
 		}
