@@ -8,13 +8,13 @@
 	{
 		"DOLDEBUG": false,
 		"FILTER": 4294967295,
-		"LASTDIR_ALL": ".\\",
-		"LASTDIR_DVD": ".\\",
-		"LASTDIR_MAP": ".\\Data",
-		"LASTDIR_PATCH": ".\\Data",
+		"LASTDIR_ALL": "./",
+		"LASTDIR_DVD": "./",
+		"LASTDIR_MAP": "./Data",
+		"LASTDIR_PATCH": "./Data",
 		"LASTFILE": "",
 		"ONTOP": false,
-		"PATH": ".\\",
+		"PATH": "./",
 		"PROFILE": true,
 		"RECENT0": "",
 		"RECENT1": "",
@@ -41,8 +41,8 @@
 
 	"hardware":
 	{
-		"ANSI": "Data\\AnsiFont.szp",
-		"SJIS": "Data\\SjisFont.szp",
+		"ANSI": "Data/AnsiFont.szp",
+		"SJIS": "Data/SjisFont.szp",
 		"CONSOLE": 3,
 		"EXI_LOG": true,
 		"OS_REPORT": true,
