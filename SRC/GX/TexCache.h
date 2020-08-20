@@ -1,0 +1,3 @@
+// Texture cache
+
+#pragma once
