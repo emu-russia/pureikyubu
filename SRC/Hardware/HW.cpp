@@ -7,7 +7,8 @@ using namespace Debug;
 namespace Flipper
 {
     Flipper* HW;
-    DSP::Dsp16* DSP;      // instance of dsp core
+    DSP::Dsp16* DSP;      // Instance of dsp core
+    GX::GXCore* Gx;         // Instance of GX processor
 
     // This thread acts as the HWUpdate of Dolwin 0.10.
     // Previously, an HWUpdate call occurred after each Gekko instruction (or so).
@@ -48,6 +49,8 @@ namespace Flipper
         PIOpen(config); // interrupts, console regs
 
         DSP->core->HardReset();
+
+        Gx->Reset();
 
         // Load IROM.
 

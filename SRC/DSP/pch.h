@@ -27,6 +27,7 @@
 #include "DspDisasm.h"
 #include "DspCommands.h"
 
+#include "../GX/GXCore.h"
 #include "../Hardware/AI.h"
 #include "../Hardware/AR.h"
 #include "../Hardware/HW.h"

@@ -1,49 +1,13 @@
 // CP - command processor, PE - pixel engine.
 #include "pch.h"
 
+// TODO: This module will eventually move completely to GX. All that remains is to set the hooks to access the CP and PE registers.
+
 using namespace Debug;
 
 FifoControl fifo;
 
-// ---------------------------------------------------------------------------
-// fifo
-
-// TODO: Make a GP update when copying the frame buffer by Pixel Engine.
-
-static void DONE_INT()
-{
-    fifo.done_num++; vi.frames++;
-    if(fifo.done_num == 1)
-    {
-        vi.xfb = 0;     // disable VI output
-    }
-    if (fifo.log)
-    {
-        Report(Channel::PE, "PE_DONE (frame:%u)", fifo.done_num);
-    }
-
-    if(fifo.pe.sr & PE_SR_DONEMSK)
-    {
-        fifo.pe.sr |= PE_SR_DONE;
-        PIAssertInt(PI_INTERRUPT_PE_FINISH);
-    }
-}
-
-static void TOKEN_INT()
-{
-    vi.frames++;
-    if (fifo.log)
-    {
-        Report(Channel::PE, "PE_TOKEN (%04X)", fifo.pe.token);
-    }
-    vi.xfb = 0;     // disable VI output
-
-    if(fifo.pe.sr & PE_SR_TOKENMSK)
-    {
-        fifo.pe.sr |= PE_SR_TOKEN;
-        PIAssertInt(PI_INTERRUPT_PE_TOKEN);
-    }
-}
+#pragma region "Fifo processing"
 
 static void CP_BREAK()
 {
@@ -77,13 +41,32 @@ static void CP_UVF()
 
 static void CPDrawDoneCallback()
 {
-    DONE_INT();
+    fifo.done_num++;
+    vi.frames++;
+    if (fifo.done_num == 1)
+    {
+        vi.xfb = 0;     // disable VI output
+    }
+
+    if (fifo.log)
+    {
+        Report(Channel::PE, "PE_DONE (frame:%u)", fifo.done_num);
+    }
+
+    Flipper::Gx->CPDrawDoneCallback();
 }
 
 static void CPDrawTokenCallback(uint16_t tokenValue)
 {
-    fifo.pe.token = tokenValue;
-    TOKEN_INT();
+    vi.frames++;
+    vi.xfb = 0;     // disable VI output
+
+    if (fifo.log)
+    {
+        Report(Channel::PE, "PE_TOKEN (0x%04X)", tokenValue);
+    }
+
+    Flipper::Gx->CPDrawTokenCallback(tokenValue);
 }
 
 static void CPThread(void* Param)
@@ -142,36 +125,10 @@ static void CPThread(void* Param)
     }
 }
 
-// ---------------------------------------------------------------------------
-// registers
+#pragma endregion "Fifo processing"
 
-//
-// pixel engine status register (0x100a)
-//
 
-static void write_pe_sr(uint32_t addr, uint32_t data)
-{
-    // clear interrupts
-    if(fifo.pe.sr & PE_SR_DONE)
-    {
-        fifo.pe.sr &= ~PE_SR_DONE;
-        PIClearInt(PI_INTERRUPT_PE_FINISH);
-    }
-    if(fifo.pe.sr & PE_SR_TOKEN)
-    {
-        fifo.pe.sr &= ~PE_SR_TOKEN;
-        PIClearInt(PI_INTERRUPT_PE_TOKEN);
-    }
-
-    // set mask bits
-    if(data & PE_SR_DONEMSK) fifo.pe.sr |= PE_SR_DONEMSK;
-    else fifo.pe.sr &= ~PE_SR_DONEMSK;
-    if(data & PE_SR_TOKENMSK) fifo.pe.sr |= PE_SR_TOKENMSK;
-    else fifo.pe.sr &= ~PE_SR_TOKENMSK;
-}
-static void read_pe_sr(uint32_t addr, uint32_t *reg)  { *reg = fifo.pe.sr; }
-
-static void read_pe_token(uint32_t addr, uint32_t *reg) { *reg = fifo.pe.token; }
+#pragma region "registers"
 
 //
 // command processor
@@ -287,6 +244,20 @@ static void write_cp_bpptrl(uint32_t addr, uint32_t data)  { fifo.cp.bpptrl = da
 static void no_write(uint32_t addr, uint32_t data) {}
 static void no_read(uint32_t addr, uint32_t *reg)  { *reg = 0; }
 
+// Pixel Engine regs handlers
+
+static void PERegRead(uint32_t addr, uint32_t* reg)
+{
+    *reg = Flipper::Gx->PeReadReg(  (GX::PEMappedRegister)((addr & 0xFF) >> 1) );
+}
+
+static void PERegWrite(uint32_t addr, uint32_t data)
+{
+    Flipper::Gx->PeWriteReg((GX::PEMappedRegister)((addr & 0xFF) >> 1), data);
+}
+
+#pragma endregion "registers"
+
 // ---------------------------------------------------------------------------
 // init
 
@@ -331,14 +302,14 @@ void CPOpen(HWConfig * config)
     MISetTrap(16, 0x0c00'004c, no_read, nullptr);
     MISetTrap(16, 0x0c00'004e, no_read, nullptr);
 
-    // pixel engine
-    MISetTrap(16, PE_ZCR       , no_read, no_write);
-    MISetTrap(16, PE_ACR       , no_read, no_write);
-    MISetTrap(16, PE_ALPHA_DST , no_read, no_write);
-    MISetTrap(16, PE_ALPHA_MODE, no_read, no_write);
-    MISetTrap(16, PE_ALPHA_READ, no_read, no_write);
-    MISetTrap(16, PE_SR        , read_pe_sr, write_pe_sr);
-    MISetTrap(16, PE_TOKEN     , read_pe_token, NULL);
+    // Pixel engine
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_ZMODE_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_CMODE0_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_CMODE1_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_AMODE0_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_POKE_AMODE1_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_SR_ID), PERegRead, PERegWrite);
+    MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_PE, GX::PEMappedRegister::PE_TOKEN_ID), PERegRead, PERegWrite);
 
     GXSetDrawCallbacks(CPDrawDoneCallback, CPDrawTokenCallback);
 

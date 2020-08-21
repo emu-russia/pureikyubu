@@ -51,13 +51,6 @@ void MIReadByte(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPeek8(pa & EFB_MASK, reg);
-        return;
-    }
-
     // bus load byte
     if (pa < mi.ramSize)
     {
@@ -88,13 +81,6 @@ void MIWriteByte(uint32_t pa, uint32_t data)
     if (pa >= HW_BASE)
     {
         hw_write8[pa & 0xffff](pa, (uint8_t)data);
-        return;
-    }
-
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPoke8(pa & EFB_MASK, data);
         return;
     }
 
@@ -137,13 +123,6 @@ void MIReadHalf(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPeek16(pa & EFB_MASK, reg);
-        return;
-    }
-
     // bus load halfword
     if (pa < mi.ramSize)
     {
@@ -174,13 +153,6 @@ void MIWriteHalf(uint32_t pa, uint32_t data)
     if (pa >= HW_BASE)
     {
         hw_write16[pa & 0xfffe](pa, data);
-        return;
-    }
-
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPoke16(pa & EFB_MASK, data);
         return;
     }
 
@@ -232,9 +204,9 @@ void MIReadWord(uint32_t pa, uint32_t* reg)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
     {
-        EFBPeek32(pa & EFB_MASK, reg);
+        *reg = Flipper::Gx->EfbPeek(pa);
         return;
     }
 
@@ -263,9 +235,9 @@ void MIWriteWord(uint32_t pa, uint32_t data)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
     {
-        EFBPoke32(pa & EFB_MASK, data);
+        Flipper::Gx->EfbPoke(pa, data);
         return;
     }
 

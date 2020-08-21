@@ -5,9 +5,16 @@
 namespace GX
 {
 
+	// PE registers mapped to CPU
+	struct PERegs
+	{
+		uint16_t     sr;         // status register
+		uint16_t     token;      // last token
+	};
+
 	struct State
 	{
-		int bogus;
+		PERegs pe;
 	};
 
 }

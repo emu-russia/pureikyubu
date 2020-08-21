@@ -3,7 +3,6 @@ add_library (Hardware SHARED
 	../AR.cpp
 	../CP.cpp
 	../DI.cpp
-	../EFB.cpp
 	../EXI.cpp
 	../FIFO.cpp
 	../HW.cpp

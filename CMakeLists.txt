@@ -25,6 +25,7 @@ add_subdirectory (SRC/DolwinEmu/Scripts)
 add_subdirectory (SRC/DSP/Scripts)
 add_subdirectory (SRC/DVD/Scripts)
 add_subdirectory (SRC/GekkoCore/Scripts)
+add_subdirectory (SRC/GX/Scripts)
 add_subdirectory (SRC/Hardware/Scripts)
 add_subdirectory (SRC/HighLevel/Scripts)
 

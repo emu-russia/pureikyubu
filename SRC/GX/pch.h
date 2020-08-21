@@ -8,6 +8,7 @@
 #include <map>
 #include <cassert>
 #include <atomic>
+#include <string.h>
 
 #include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"
@@ -15,13 +16,13 @@
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 
-#include "GXDefs.h"
+#include "../Debugger/Debugger.h"
+
+#include "../Hardware/HWConfig.h"
+#include "../Hardware/PI.h"
+
 #include "CPRegs.h"
 #include "XFRegs.h"
 #include "BPRegs.h"
-#include "GXState.h"
-#include "TexCache.h"
-#include "TexConv.h"
-#include "GXBackend.h"
 #include "GXCore.h"
 #include "GXCommands.h"
