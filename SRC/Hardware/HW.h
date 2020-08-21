@@ -25,4 +25,5 @@ namespace Flipper
 
 	extern Flipper* HW;
 	extern DSP::Dsp16* DSP;
+	extern GX::GXCore* Gx;
 }

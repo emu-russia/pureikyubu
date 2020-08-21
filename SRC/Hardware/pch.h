@@ -21,8 +21,8 @@
 
 #include "../DVD/DVD.h"
 #include "../DSP/DSP.h"
+#include "../GX/GXCore.h"
 #include "HW.h"
-#include "EFB.h"
 #include "AI.h"
 #include "CP.h"
 #include "VI.h"

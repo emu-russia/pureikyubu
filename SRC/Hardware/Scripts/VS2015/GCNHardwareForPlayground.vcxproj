@@ -23,7 +23,6 @@
     <ClCompile Include="..\..\AR.cpp" />
     <ClCompile Include="..\..\CP.cpp" />
     <ClCompile Include="..\..\DI.cpp" />
-    <ClCompile Include="..\..\EFB.cpp" />
     <ClCompile Include="..\..\EXI.cpp" />
     <ClCompile Include="..\..\FIFO.cpp" />
     <ClCompile Include="..\..\HW.cpp" />
@@ -46,7 +45,6 @@
     <ClInclude Include="..\..\AR.h" />
     <ClInclude Include="..\..\CP.h" />
     <ClInclude Include="..\..\DI.h" />
-    <ClInclude Include="..\..\EFB.h" />
     <ClInclude Include="..\..\EXI.h" />
     <ClInclude Include="..\..\FIFO.h" />
     <ClInclude Include="..\..\HW.h" />

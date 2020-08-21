@@ -14,15 +14,6 @@
 #define CP_RDPTR        0x0C000038      // GP FIFO read pointer
 #define CP_BPPTR        0x0C00003C      // GP FIFO read address break point
 
-// PE registers. CPU accessing PE regs by 16-bit reads and writes
-#define PE_ZCR          0x0C001000      // z configuration
-#define PE_ACR          0x0C001002      // alpha/blender configuration
-#define PE_ALPHA_DST    0x0C001004      // destination alpha
-#define PE_ALPHA_MODE   0x0C001006      // alpha mode
-#define PE_ALPHA_READ   0x0C001008      // alpha read mode?
-#define PE_SR           0x0C00100A      // status register
-#define PE_TOKEN        0x0C00100E      // last token value
-
 // CP status register mask layout
 #define CP_SR_OVF       (1 << 0)        // FIFO overflow (fifo_count > FIFO_HICNT)
 #define CP_SR_UVF       (1 << 1)        // FIFO underflow (fifo_count < FIFO_LOCNT)
@@ -41,12 +32,6 @@
 // CP clear register mask layout
 #define CP_CLR_OVFCLR   (1 << 0)        // clear FIFO overflow interrupt
 #define CP_CLR_UVFCLR   (1 << 1)        // clear FIFO underflow interrupt
-
-// PE status register
-#define PE_SR_DONE      (1 << 0)
-#define PE_SR_TOKEN     (1 << 1)
-#define PE_SR_DONEMSK   (1 << 2)
-#define PE_SR_TOKENMSK  (1 << 3)
 
 #pragma pack(push, 8)
 
@@ -129,13 +114,6 @@ struct CPRegs
     };
 };
 
-// PE registers
-struct PERegs
-{
-    uint16_t     sr;         // status register
-    uint16_t     token;      // last token
-};
-
 #pragma pack(pop)
 
 // ---------------------------------------------------------------------------
@@ -145,7 +123,6 @@ struct PERegs
 struct FifoControl
 {
     CPRegs      cp;     // command processor registers
-    PERegs      pe;     // pixel engine registers
     size_t      done_num;   // number of drawdone (PE_FINISH) events
     bool        log;
     Thread*     thread;     // CP FIFO thread

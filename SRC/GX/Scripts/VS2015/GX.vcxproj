@@ -19,80 +19,70 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\AI.cpp" />
-    <ClCompile Include="..\..\AR.cpp" />
-    <ClCompile Include="..\..\CP.cpp" />
-    <ClCompile Include="..\..\DI.cpp" />
-    <ClCompile Include="..\..\EXI.cpp" />
-    <ClCompile Include="..\..\FIFO.cpp" />
-    <ClCompile Include="..\..\HW.cpp" />
-    <ClCompile Include="..\..\HwCommands.cpp" />
-    <ClCompile Include="..\..\IPLDescrambler.cpp" />
-    <ClCompile Include="..\..\MC.cpp" />
-    <ClCompile Include="..\..\MI.cpp" />
+    <ClCompile Include="..\..\CommandProcessor.cpp" />
+    <ClCompile Include="..\..\CPRegs.cpp" />
+    <ClCompile Include="..\..\PixelEngine.cpp" />
+    <ClCompile Include="..\..\GXCommands.cpp" />
+    <ClCompile Include="..\..\GXCore.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\PI.cpp" />
-    <ClCompile Include="..\..\SI.cpp" />
-    <ClCompile Include="..\..\VI.cpp" />
+    <ClCompile Include="..\..\BPRegs.cpp" />
+    <ClCompile Include="..\..\TexCache.cpp" />
+    <ClCompile Include="..\..\TexConv.cpp" />
+    <ClCompile Include="..\..\XFRegs.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\AI.h" />
-    <ClInclude Include="..\..\AR.h" />
-    <ClInclude Include="..\..\CP.h" />
-    <ClInclude Include="..\..\DI.h" />
-    <ClInclude Include="..\..\EXI.h" />
-    <ClInclude Include="..\..\FIFO.h" />
-    <ClInclude Include="..\..\HW.h" />
-    <ClInclude Include="..\..\HwCommands.h" />
-    <ClInclude Include="..\..\HWConfig.h" />
-    <ClInclude Include="..\..\IPLDescrambler.h" />
-    <ClInclude Include="..\..\MC.h" />
-    <ClInclude Include="..\..\MI.h" />
+    <ClInclude Include="..\..\BPRegs.h" />
+    <ClInclude Include="..\..\CPRegs.h" />
+    <ClInclude Include="..\..\GXBackend.h" />
+    <ClInclude Include="..\..\GXCommands.h" />
+    <ClInclude Include="..\..\GXCore.h" />
+    <ClInclude Include="..\..\GXDefs.h" />
+    <ClInclude Include="..\..\GXState.h" />
     <ClInclude Include="..\..\pch.h" />
-    <ClInclude Include="..\..\PI.h" />
-    <ClInclude Include="..\..\SI.h" />
-    <ClInclude Include="..\..\VI.h" />
+    <ClInclude Include="..\..\TexCache.h" />
+    <ClInclude Include="..\..\TexConv.h" />
+    <ClInclude Include="..\..\XFRegs.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\..\..\Data\Json\HWJdi.json" />
+    <None Include="..\..\..\..\Data\Json\GXJdi.json" />
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{C43F1C9F-177B-46A8-BE31-08189D25AD43}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>GCNHardware</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectGuid>{1386fc99-a29c-410c-b3d1-2a7e233f57d4}</ProjectGuid>
+    <RootNamespace>GX</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -114,87 +104,93 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
+    <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
-    <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-    <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
-    <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\Output\</OutDir>
     <IntDir>$(SolutionDir)Output\$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;_CRT_SECURE_NO_WARNINGS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-    </Link>
-    <Lib />
-  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib />
-    <Lib>
-      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
-    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;_CRT_SECURE_NO_WARNINGS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>
+      </SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <Lib />
-    <Lib>
-      <LinkTimeCodeGeneration>false</LinkTimeCodeGeneration>
-    </Lib>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

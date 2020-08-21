@@ -1,6 +1,26 @@
-// PI registers (all registers are 32-bit, 99% sure)
+// Flipper Processor Interface (to Gekko)
+
+// TODO: While exploring the Flipper architecture, I misunderstood the purpose of the PI and MEM (MI) components. 
+// In fact, PI is used to access Flipper's memory and registers from the Gekko side. MEM is used by various Flipper subsystems to access main memory (1T-SRAM). 
+// Now all memory access handlers are in the MI.cpp module, but in theory they should be in PI.cpp. Let's leave it as it is for now.
 
 #pragma once
+
+// Address spaces
+#define PI_MEMSPACE_MAINMEM     0x0000'0000         // 1T-SRAM main memory
+#define PI_MEMSPACE_EFB         0x0800'0000         // GX eFB base address
+#define PI_REGSPACE_PE          0x0C00'1000         // GX Pixel Engine regs mapped to physical memory
+#define PI_REGSPACE_GX_FIFO     0x0C00'8000         // GX streaming fifo
+
+#define PI_REG8_TO_SPACE(space, id)     (space | ((uint32_t)(id)))
+#define PI_REG16_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 1))
+#define PI_REG32_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 2))
+
+// Efb Z-plane select
+#define PI_EFB_ZPLANE       0x0040'0000 
+
+// Mask EFB address
+#define PI_EFB_ADDRESS_MASK 0xFF80'0000
 
 #define PI_INTSR            0x0C003000      // master interrupt reg
 #define PI_INTMR            0x0C003004      // master interrupt mask
