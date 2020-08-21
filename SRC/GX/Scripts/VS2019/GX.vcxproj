@@ -20,8 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\CommandProcessor.cpp" />
-    <ClCompile Include="..\..\CPLoadRegs.cpp" />
-    <ClCompile Include="..\..\EFBAccess.cpp" />
+    <ClCompile Include="..\..\CPRegs.cpp" />
+    <ClCompile Include="..\..\PixelEngine.cpp" />
     <ClCompile Include="..\..\GXCommands.cpp" />
     <ClCompile Include="..\..\GXCore.cpp" />
     <ClCompile Include="..\..\pch.cpp">
@@ -30,12 +30,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\SULoadRegs.cpp" />
+    <ClCompile Include="..\..\BPRegs.cpp" />
     <ClCompile Include="..\..\TexCache.cpp" />
     <ClCompile Include="..\..\TexConv.cpp" />
-    <ClCompile Include="..\..\XFLoadRegs.cpp" />
+    <ClCompile Include="..\..\XFRegs.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\BPRegs.h" />
+    <ClInclude Include="..\..\CPRegs.h" />
     <ClInclude Include="..\..\GXBackend.h" />
     <ClInclude Include="..\..\GXCommands.h" />
     <ClInclude Include="..\..\GXCore.h" />
@@ -44,6 +46,7 @@
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\TexCache.h" />
     <ClInclude Include="..\..\TexConv.h" />
+    <ClInclude Include="..\..\XFRegs.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Data\Json\GXJdi.json" />

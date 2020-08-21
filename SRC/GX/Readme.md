@@ -1,6 +1,6 @@
 # GX
 
-This component emulates the platform-independent part of the GAMECUBE (GX) graphics core.
+This component emulates the platform-independent part of the GAMECUBE graphics system (GX).
 
 The tasks of this component include:
 - Command FIFO handling

@@ -21,6 +21,7 @@
 #define PE_ALPHA_MODE   0x0C001006      // alpha mode
 #define PE_ALPHA_READ   0x0C001008      // alpha read mode?
 #define PE_SR           0x0C00100A      // status register
+#define PE_UNK1         0x0C00100C      // ?
 #define PE_TOKEN        0x0C00100E      // last token value
 
 // CP status register mask layout

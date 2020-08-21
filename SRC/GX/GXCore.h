@@ -21,6 +21,11 @@ namespace GX
 
 		void Reset();
 
+#pragma region "Interface to Flipper"
+
+#pragma endregion "Interface to Flipper"
+
+
 	};
 
 }

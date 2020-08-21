@@ -278,8 +278,7 @@ void MIWriteWord(uint32_t pa, uint32_t data)
 }
 
 //
-// fortunately longlongs are never used in GC hardware access
-// (because all regs are generally integers)
+// longlongs are never used in GC hardware access
 //
 
 void MIReadDouble(uint32_t pa, uint64_t* reg)

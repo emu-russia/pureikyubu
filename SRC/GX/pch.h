@@ -16,6 +16,9 @@
 #include "../Common/Jdi.h"
 
 #include "GXDefs.h"
+#include "CPRegs.h"
+#include "XFRegs.h"
+#include "BPRegs.h"
 #include "GXState.h"
 #include "TexCache.h"
 #include "TexConv.h"
