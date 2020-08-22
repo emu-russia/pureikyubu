@@ -1,67 +1,55 @@
 // All GX architectural definitions (register names, bit names, etc.)
 
+// More GX info: https://github.com/ogamespec/dolwin-docs/blob/master/HW/GraphicsSystem/GX.md
+
 // TODO: Partially the definitions were dragged from DolwinVideo, need to rename properly and rearrange to enum class instead of #defines.
 
 #pragma once
 
 namespace GX
 {
-	// CP Commands
+	// CP Commands. Format of commands transmitted via FIFO and display lists (DL)
 
-	#define CP_CMD_NOP              0x00
-	#define CP_CMD_INV              0x48
-	#define CP_CMD_CALL_DL          0x40
-	#define CP_CMD_LOAD_BPREG       0x60
-	#define CP_CMD_LOAD_CPREG       0x08
-	#define CP_CMD_LOAD_XFREG       0x10
-	#define CP_CMD_LOAD_INDXA       0x20
-	#define CP_CMD_LOAD_INDXB       0x28
-	#define CP_CMD_LOAD_INDXC       0x30
-	#define CP_CMD_LOAD_INDXD       0x38
-	#define CP_CMD_DRAW_QUAD        0x80
-	#define CP_CMD_DRAW_TRIANGLE    0x90
-	#define CP_CMD_DRAW_STRIP       0x98
-	#define CP_CMD_DRAW_FAN         0xA0
-	#define CP_CMD_DRAW_LINE        0xA8
-	#define CP_CMD_DRAW_LINESTRIP   0xB0
-	#define CP_CMD_DRAW_POINT       0xB8
+	enum class CPCommand
+	{
+		CP_CMD_NOP = 0x00,					// 00000000
+		CP_CMD_VCACHE_INVD = 0x48,			// 01001xxx
+		CP_CMD_CALL_DL = 0x40,				// 01000xxx
+		CP_CMD_LOAD_BPREG = 0x60,			// 0110,SUattr(3:0), Address[7:0], 24 bits data
+		CP_CMD_LOAD_CPREG = 0x08,			// 00001xxx, Address[7:0], 32 bits data
+		CP_CMD_LOAD_XFREG = 0x10,			// 00010xxx
+		CP_CMD_LOAD_INDXA = 0x20,			// 00100xxx
+		CP_CMD_LOAD_INDXB = 0x28,			// 00101xxx
+		CP_CMD_LOAD_INDXC = 0x30,			// 00110xxx
+		CP_CMD_LOAD_INDXD = 0x38,			// 00111xxx
+		CP_CMD_DRAW_QUAD = 0x80,			// 10000,vat(2:0)
+		CP_CMD_DRAW_TRIANGLE = 0x90,		// 10010,vat(2:0)
+		CP_CMD_DRAW_STRIP = 0x98,			// 10011,vat(2:0)
+		CP_CMD_DRAW_FAN = 0xA0,				// 10100,vat(2:0)
+		CP_CMD_DRAW_LINE = 0xA8,			// 10101,vat(2:0)
+		CP_CMD_DRAW_LINESTRIP = 0xB0,		// 10110,vat(2:0)
+		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
+	};
 
-	// CP Registers (from CPU side)
+	// CP Registers (from CPU side). 16-bit access
 
-	// CP Registers (from GX side)
+	// CP Registers (from GX side). These registers are available only for writing, with the CP_LoadRegs command
 
-	#define CP_MATIDX_A                     0x30    // Pos / Texture Matrix Index 0-3
-	#define CP_MATIDX_B                     0x40    // Texture Matrix Index 4-7
-	#define CP_VCD_LO                       0x50    // Vertex Descriptor (VCD) low 
-	#define CP_VCD_HI                       0x60    // Vertex Descriptor (VCD) high
-	#define CP_VAT0_A                       0x70    // Vertex Attribute Table (VAT) group A
-	#define CP_VAT1_A                       0x71
-	#define CP_VAT2_A                       0x72
-	#define CP_VAT3_A                       0x73
-	#define CP_VAT4_A                       0x74
-	#define CP_VAT5_A                       0x75
-	#define CP_VAT6_A                       0x76
-	#define CP_VAT7_A                       0x77
-	#define CP_VAT0_B                       0x80    // Vertex Attribute Table (VAT) group B
-	#define CP_VAT1_B                       0x81
-	#define CP_VAT2_B                       0x82
-	#define CP_VAT3_B                       0x83
-	#define CP_VAT4_B                       0x84
-	#define CP_VAT5_B                       0x85
-	#define CP_VAT6_B                       0x86
-	#define CP_VAT7_B                       0x87
-	#define CP_VAT0_C                       0x90    // Vertex Attribute Table (VAT) group C
-	#define CP_VAT1_C                       0x91
-	#define CP_VAT2_C                       0x92
-	#define CP_VAT3_C                       0x93
-	#define CP_VAT4_C                       0x94
-	#define CP_VAT5_C                       0x95
-	#define CP_VAT6_C                       0x96
-	#define CP_VAT7_C                       0x97
-	#define CP_ARRAY_BASE                   0xA0
-	#define CP_ARRAY_STRIDE                 0xB0
-	#define CP_NUMCOL                       0xB2    // number of colors attributes
-	#define CP_NUMTEX                       0xB4    // number of texcoord attributes
+	enum class CPRegister
+	{
+		CP_VC_STAT_RESET_ID = 0x00,
+		CP_STAT_ENABLE_ID = 0x10,
+		CP_STAT_SEL_ID = 0x20,
+		CP_MATINDEX_A_ID = 0x30,			// MatrixIndexA 0011xxxx 
+		CP_MATINDEX_B_ID = 0x40,			// MatrixIndexB 0100xxxx 
+		CP_VCD_LO_ID = 0x50,				// VCD_Lo 0101xxxx
+		CP_VCD_HI_ID = 0x60,				// VCD_Hi 0110xxxx
+		CP_VAT_A_ID = 0x70,					// VAT_group0 0111x,vat[2:0]
+		CP_VAT_B_ID = 0x80,					// VAT_group1 1000x,vat[2:0]
+		CP_VAT_C_ID = 0x90,					// VAT_group2 1001x,vat[2:0]
+		CP_ARRAY_BASE_ID = 0xa0,			// ArrayBase 1001,array[3:0]
+		CP_ARRAY_STRIDE_ID = 0xb0,			// ArrayStride 1011,array[3:0]
+	};
 
 	// XF Registers
 
@@ -248,9 +236,9 @@ namespace GX
 
 	// Vertex attributes
 
-	enum class VTX_ATTR
+	enum class VertexAttr
 	{
-		VTX_POSMATIDX = 0,      // Position Matrix Index
+		VTX_POSMATIDX = 0,      // Position/Normal Matrix Index
 		VTX_TEX0MTXIDX,         // Texture Coordinate 0 Matrix Index
 		VTX_TEX1MTXIDX,         // Texture Coordinate 1 Matrix Index
 		VTX_TEX2MTXIDX,         // Texture Coordinate 2 Matrix Index
@@ -274,23 +262,19 @@ namespace GX
 		VTX_MAX_ATTR
 	};
 
-	// Attribute types
+	// Attribute types (from VCD register)
 
-	enum
+	enum class AttrType
 	{
 		VCD_NONE = 0,           // attribute stage disabled
 		VCD_DIRECT,             // direct data
-		VCD_INDX8,              // 8-bit indexed data
-		VCD_INDX16              // 16-bit indexed data (rare)
+		VCD_INDEX8,				// 8-bit indexed data
+		VCD_INDEX16             // 16-bit indexed data (rare)
 	};
-
-	// Texture generator types
-
-	// Texgen Source
 
 	// Vertex Components Count (from VAT register)
 
-	enum
+	enum class VatCount
 	{
 		VCNT_POS_XY = 0,
 		VCNT_POS_XYZ = 1,
@@ -305,14 +289,16 @@ namespace GX
 
 	// Vertex Component Format (from VAT register)
 
-	enum
+	enum class VatFormat
 	{
+		// For Components (coords)
 		VFMT_U8 = 0,
 		VFMT_S8 = 1,
 		VFMT_U16 = 2,
 		VFMT_S16 = 3,
 		VFMT_F32 = 4,
 
+		// For Colors
 		VFMT_RGB565 = 0,
 		VFMT_RGB8 = 1,
 		VFMT_RGBX8 = 2,
@@ -320,6 +306,10 @@ namespace GX
 		VFMT_RGBA6 = 4,
 		VFMT_RGBA8 = 5
 	};
+
+	// Texture generator types
+
+	// Texgen Source
 
 	// Lighting diffuse function
 
@@ -399,7 +389,7 @@ namespace GX
 
 	// Alpha read mode
 
-	// PE Registers (from CPU side)
+	// PE Registers (from CPU side). 16-bit access.
 
 	enum class PEMappedRegister
 	{

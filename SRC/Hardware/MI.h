@@ -1,39 +1,4 @@
-// Flipper memory controller
-
-// GC physical memory map.
-/*/
-    00000000  24MB  Main Memory (RAM)
-    08000000   2MB  Embedded Framebuffer (EFB)
-    0C000000        Command Processor (CP)
-    0C001000        Pixel Engine (PE)
-    0C002000        Video Interface (VI)
-    0C003000        Processor Interface (PI)
-    0C004000        Memory Interface (MI)
-    0C005000        DSP and DMA Audio Interface (AID)
-    0C006000        DVD Interface (DI)
-    0C006400        Serial Interface (SI)
-    0C006800        External Interface (EXI)
-    0C006C00        Audio Streaming Interface (AIS)
-    0C008000        GX FIFO
-    FFF00000   2MB  Boot ROM
-
-    EFB - this is not straight "direct" access. reads and writes
-    are passing through some Flipper logic, so its just simulation of
-    direct access.
-
-    Hardware Registers (HW) are located above 0x0C000000. Dolwin
-    memory engine is using hardware traps, which are handling all
-    registers operations. traps are abstracting HW from Emulator,
-    so basically any Hardware will work with Dolwin, with minimal
-    modifications of Emulator core.
-
-    Boot ROM is available only during CPU reset. after reset,
-    execution will begin from 0xFFF00100 reset vector, with
-    enabled bootrom EXI reading logic. small program, called
-    "BS" (Bootstrap?) will run and load IPL menu up to
-    0x81300000 address (already effective!). then IPL menu (or "BS2")
-    will run, with disabled EXI scrambler.
-/*/
+// Flipper main memory (1T-SRAM) controller
 
 #pragma once
 

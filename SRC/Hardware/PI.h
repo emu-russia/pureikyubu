@@ -1,4 +1,4 @@
-// Flipper Processor Interface (to Gekko)
+// Flipper Processor Interface (for Gekko)
 
 // TODO: While exploring the Flipper architecture, I misunderstood the purpose of the PI and MEM (MI) components. 
 // In fact, PI is used to access Flipper's memory and registers from the Gekko side. MEM is used by various Flipper subsystems to access main memory (1T-SRAM). 
@@ -9,8 +9,18 @@
 // Address spaces
 #define PI_MEMSPACE_MAINMEM     0x0000'0000         // 1T-SRAM main memory
 #define PI_MEMSPACE_EFB         0x0800'0000         // GX eFB base address
+#define PI_REGSPACE_CP          0x0C00'0000
 #define PI_REGSPACE_PE          0x0C00'1000         // GX Pixel Engine regs mapped to physical memory
+#define PI_REGSPACE_VI          0x0C00'2000
+#define PI_REGSPACE_PI          0x0C00'3000
+#define PI_REGSPACE_MEM         0x0C00'4000
+#define PI_REGSPACE_DSP         0x0C00'5000
+#define PI_REGSPACE_DI          0x0C00'6000
+#define PI_REGSPACE_SI          0x0C00'6400
+#define PI_REGSPACE_EXI         0x0C00'6800
+#define PI_REGSPACE_AIS         0x0C00'6C00
 #define PI_REGSPACE_GX_FIFO     0x0C00'8000         // GX streaming fifo
+#define PI_MEMSPACE_BOOTROM     0xFFF0'0000
 
 #define PI_REG8_TO_SPACE(space, id)     (space | ((uint32_t)(id)))
 #define PI_REG16_TO_SPACE(space, id)    (space | ((uint32_t)(id) << 1))
