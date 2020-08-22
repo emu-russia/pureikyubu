@@ -34,11 +34,17 @@
 
 #define PI_INTSR            0x0C003000      // master interrupt reg
 #define PI_INTMR            0x0C003004      // master interrupt mask
-#define PI_BASE             0x0C00300C      // PI fifo base
-#define PI_TOP              0x0C003010      // PI fifo top
-#define PI_WRPTR            0x0C003014      // PI fifo write pointer
-#define PI_RST_CODE         0x0C003024      // reset code (mentioned in patents as "PI General Reset Register")
-#define PI_MB_REV           0x0C00302C      // console revision
+#define PI_BASE             0x0C00300C      // PI CP fifo base
+#define PI_TOP              0x0C003010      // PI CP fifo top
+#define PI_WRPTR            0x0C003014      // PI CP fifo write pointer
+#define PI_CPABT            0x0C003018      // Abort PI CP FIFO?
+#define PI_PIESR            0x0C00301C
+#define PI_PIEAR            0x0C003020
+#define PI_CONFIG           0x0C003024      // PI CFG + reset bits
+#define PI_DURAR            0x0C003028
+#define PI_CHIPID           0x0C00302C      // Flipper ID (console revision)
+#define PI_STRGTH           0x0C003030
+#define PI_CPUDBB           0x0C003034
 
 // PI interrupt regs mask
 #define PI_INTERRUPT_HSP        0x2000      // high-speed port
@@ -58,6 +64,11 @@
 
 // PI write pointer wrap bit
 #define PI_WRPTR_WRAP   0x0400'0000
+
+// PI CONFIG Reset control bits
+#define PI_CONFIG_SYSRSTB 0x00000001
+#define PI_CONFIG_MEMRSTB 0x00000002
+#define PI_CONFIG_DIRSTB 0x00000004
 
 // ---------------------------------------------------------------------------
 // hardware API
