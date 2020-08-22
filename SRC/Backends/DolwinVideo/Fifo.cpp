@@ -17,11 +17,9 @@ int     VtxSize[8];
 
 unsigned usevat;                                // current VAT
 
-static  FILE    *filog;                                 // fifo log
-
-uint8_t  gxcmd;              // next fifo command to execute
-
 GX::FifoProcessor GxFifo;
+
+BOOL        frame_done = 1;
 
 // ---------------------------------------------------------------------------
 
@@ -134,68 +132,24 @@ void FifoReconfigure(
             // calculate denominant (used to speed-up fixed-to-fp convertion)
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_POS] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "pos, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                     vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
         case VTX_NRM:
         {
             pipeline[VTX_NRM][vat] = nrmattr[vcd][cnt][fmt];
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "nrm, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
-                                     vat,    vcd,    cnt,    fmt
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
         case VTX_COLOR0:
         {
             pipeline[VTX_COLOR0][vat] = col0attr[vcd][cnt][fmt];
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "col0, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
-                                      vat,    vcd,    cnt,    fmt
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
         case VTX_COLOR1:
         {
             pipeline[VTX_COLOR1][vat] = col1attr[vcd][cnt][fmt];
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "col1, vat:%i, vcd:%i, cnt:%i, fmt:%i\n",
-                                      vat,    vcd,    cnt,    fmt
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -206,17 +160,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD0] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex0, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -227,17 +170,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD1] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex1, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -248,17 +180,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD2] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex2, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -269,17 +190,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD3] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex3, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -290,17 +200,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD4] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex4, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -311,17 +210,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD5] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex5, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -332,17 +220,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD6] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex6, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -353,17 +230,6 @@ void FifoReconfigure(
             // calculate denominant
             float denom = (float)pow(2.0, (double)frac);
             fracDenom[vat][VTX_TEXCOORD7] = denom;
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "tex7, vat:%i, vcd:%i, cnt:%i, fmt:%i, shft:%i\n",
-                                      vat,    vcd,    cnt,    fmt,    frac
-                );
-                fflush(filog);
-            }
-#endif
         }
         break;
 
@@ -377,16 +243,6 @@ void FifoReconfigure(
                     pipeline[attr][vatnum] = NULL;
                 }
             }
-
-            // create fifo log file
-#if  FIFOLOG
-            if(filog)
-            {
-                fclose(filog);
-                filog = NULL;
-            }
-            filog = fopen("fifolog.txt", "w");
-#endif
         }
         return;
 
@@ -397,15 +253,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_POSMATIDX][vatnum] = pos_idx;
                 else pipeline[VTX_POSMATIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set posidx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -416,15 +263,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX0MTXIDX][vatnum] = t0_idx;
                 else pipeline[VTX_TEX0MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -435,15 +273,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX1MTXIDX][vatnum] = t1_idx;
                 else pipeline[VTX_TEX1MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -454,15 +283,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX2MTXIDX][vatnum] = t2_idx;
                 else pipeline[VTX_TEX2MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -473,15 +293,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX3MTXIDX][vatnum] = t3_idx;
                 else pipeline[VTX_TEX3MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -492,15 +303,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX4MTXIDX][vatnum] = t4_idx;
                 else pipeline[VTX_TEX4MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -511,15 +313,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX5MTXIDX][vatnum] = t5_idx;
                 else pipeline[VTX_TEX5MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -530,15 +323,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX6MTXIDX][vatnum] = t6_idx;
                 else pipeline[VTX_TEX6MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 
@@ -549,15 +333,6 @@ void FifoReconfigure(
                 if(vcd > 0) pipeline[VTX_TEX7MTXIDX][vatnum] = t7_idx;
                 else pipeline[VTX_TEX7MTXIDX][vatnum] = NULL;
             }
-
-            // log output
-#if  FIFOLOG
-            if(vcd > 0)
-            {
-                fprintf(filog, "set tx0idx\n");
-                fflush(filog);
-            }
-#endif
         }
         return;
 

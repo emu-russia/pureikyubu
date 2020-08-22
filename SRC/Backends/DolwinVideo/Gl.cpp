@@ -25,6 +25,8 @@ static uint32_t  frames, tris, pts, lines;
 static HWND savedHwnd;
 static bool opened = false;
 
+Vertex      tri[3];             // triangle to be rendered
+
 // ---------------------------------------------------------------------------
 
 static int GL_SetPixelFormat(HDC hdc)
@@ -110,9 +112,6 @@ BOOL GL_OpenSubsystem()
     // clear performance counters
     frames = tris = pts = lines = 0;
 
-    // prepare on-screen font texture
-    PerfInit();
-
     opened = true;
 
     return TRUE;
@@ -182,29 +181,6 @@ void GL_EndFrame()
         ExitProcess(0);
     }
 /*/
-
-#if SHOWPERF
-    if(GetAsyncKeyState(VK_TAB) & 0x80000000) showPerf = TRUE;
-
-    if(showPerf)
-    {
-        PerfPrintf(
-            0, 16,
-            "frame:%u\n"
-            "tris:%u\n"
-            "pts:%u\n"
-            "lines:%u\n"
-            "\n"
-            "cp:%u\nbp:%u\nxf:%u\n\n"
-            "colors:%i\n"
-            "texgens:%i\n"
-            "tevnum:%i\n",
-            frames, tris, pts, lines,
-            cpLoads, bpLoads, xfLoads,
-            xfRegs.numcol, xfRegs.numtex, bpRegs.genmode.ntev + 1
-        );
-    }
-#endif
 
     // do snapshot
     if(make_shot)
@@ -511,4 +487,17 @@ void GL_MakeSnapshot(char *path)
 void GL_SaveBitmap(uint8_t *buf)
 {
     GL_DoSnapshot(TRUE, NULL, buf, 160, 120);
+}
+
+// rendering complete, swap buffers, sync to vretrace
+void GPFrameDone()
+{
+    GL_EndFrame();
+    frame_done = 1;
+}
+
+// make screenshot
+void GPMakeSnapshot(char* path)
+{
+    GL_MakeSnapshot(path);
 }

@@ -47,7 +47,5 @@ void GXClose()
 
     TexFree();
 
-    PerfClose();
-
     gxOpened = false;
 }
