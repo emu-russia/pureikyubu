@@ -242,7 +242,7 @@ namespace GX
 
 			default:
 			{
-				Halt("GX: Unsupported opcode: 0x%02X\n", cmd);
+				Report(Channel::GP, "GX: Unsupported opcode: 0x%02X\n", cmd);
 				break;
 			}
 		}

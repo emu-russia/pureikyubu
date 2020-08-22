@@ -300,7 +300,7 @@ void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-    if (phys_addr == GX_FIFO)
+    if (phys_addr == PI_REGSPACE_GX_FIFO)
     {
         GXFifoWriteBurst(burstData);
         return;

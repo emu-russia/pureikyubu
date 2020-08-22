@@ -133,10 +133,10 @@ static void write_intmr(uint32_t addr, uint32_t data)
 }
 
 //
-// GC revision
+// Flipper revision
 //
 
-static void read_mbrev(uint32_t addr, uint32_t *reg)
+static void read_FlipperID(uint32_t addr, uint32_t *reg)
 {
     uint32_t ver = pi.consoleVer;
 
@@ -152,20 +152,37 @@ static void read_mbrev(uint32_t addr, uint32_t *reg)
 }
 
 //
-// reset register
+// CONFIG register
 //
 
-static void write_reset(uint32_t addr, uint32_t data)
+static void write_config(uint32_t addr, uint32_t data)
 {
-    // reset emulator
     if(data)
     {
+        // It is not yet clear what may or may not be affected by the support for system reset, for now we will leave only debug messages.
+
+        if (data & PI_CONFIG_SYSRSTB)
+        {
+            Report(Channel::PI, "System Reset requested.\n");
+        }
+
+        if (data & PI_CONFIG_MEMRSTB)
+        {
+            Report(Channel::PI, "MEM Reset requested.\n");
+        }
+
+        if (data & PI_CONFIG_DIRSTB)
+        {
+            Report(Channel::PI, "DVD Reset requested.\n");
+        }
+
+        // reset emulator
         //EMUClose();
         //EMUOpen();
     }
 }
 
-static void read_reset(uint32_t addr, uint32_t *reg)
+static void read_config(uint32_t addr, uint32_t *reg)
 {
     // on system power-on, the code is zero
     *reg = 0;
@@ -197,7 +214,7 @@ void DumpPIFIFO()
 
 void PIOpen(HWConfig* config)
 {
-    Report(Channel::PI, "Processor interface (interrupts)\n");
+    Report(Channel::PI, "Processor interface\n");
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
@@ -209,9 +226,9 @@ void PIOpen(HWConfig* config)
     // set interrupt registers hooks
     MISetTrap(32, PI_INTSR   , read_intsr, write_intsr);
     MISetTrap(32, PI_INTMR   , read_intmr, write_intmr);
-    MISetTrap(32, PI_MB_REV  , read_mbrev, NULL);
-    MISetTrap( 8, PI_RST_CODE, read_reset, write_reset);
-    MISetTrap(32, PI_RST_CODE, read_reset, write_reset);
+    MISetTrap(32, PI_CHIPID  , read_FlipperID, NULL);
+    MISetTrap( 8, PI_CONFIG  , read_config, write_config);
+    MISetTrap(32, PI_CONFIG  , read_config, write_config);
 
     // processor interface (CPU fifo)
     MISetTrap(32, PI_BASE , read_pi_base , write_pi_base);
