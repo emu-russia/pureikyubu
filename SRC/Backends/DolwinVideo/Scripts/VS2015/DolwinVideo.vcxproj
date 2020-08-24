@@ -155,7 +155,7 @@
     <ClInclude Include="..\..\Config.h" />
     <ClInclude Include="..\..\Fifo.h" />
     <ClInclude Include="..\..\FifoProcessor.h" />
-    <ClInclude Include="..\..\GL.H" />
+    <ClInclude Include="..\..\GL.h" />
     <ClInclude Include="..\..\Gpl.h" />
     <ClInclude Include="..\..\GPRegs.h" />
     <ClInclude Include="..\..\GX.h" />
@@ -167,12 +167,12 @@
     <ClInclude Include="..\..\Tev.h" />
     <ClInclude Include="..\..\Tex.h" />
     <ClInclude Include="..\..\Texgen.h" />
-    <ClInclude Include="..\..\XF.H" />
+    <ClInclude Include="..\..\XF.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Fifo.cpp" />
     <ClCompile Include="..\..\FifoProcessor.cpp" />
-    <ClCompile Include="..\..\Gl.cpp" />
+    <ClCompile Include="..\..\GL.cpp" />
     <ClCompile Include="..\..\Gpl.cpp" />
     <ClCompile Include="..\..\GPRegs.cpp" />
     <ClCompile Include="..\..\Light.cpp" />
@@ -188,7 +188,7 @@
     <ClCompile Include="..\..\Tev.cpp" />
     <ClCompile Include="..\..\Tex.cpp" />
     <ClCompile Include="..\..\Texgen.cpp" />
-    <ClCompile Include="..\..\XF.CPP" />
+    <ClCompile Include="..\..\XF.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />

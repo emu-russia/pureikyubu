@@ -18,9 +18,6 @@
     <ClInclude Include="..\..\Fifo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\GL.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\GPRegs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -36,21 +33,21 @@
     <ClInclude Include="..\..\Tex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\XF.H">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\FifoProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\GX.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\GL.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\XF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Fifo.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Gl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\GPRegs.cpp">
@@ -68,10 +65,13 @@
     <ClCompile Include="..\..\Tex.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\XF.CPP">
+    <ClCompile Include="..\..\FifoProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\FifoProcessor.cpp">
+    <ClCompile Include="..\..\GL.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\XF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
