@@ -38,7 +38,7 @@ namespace Flipper
 
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
-        CPOpen(config); // fifo
+        CP_PEOpen();    // Command Processor & PixelEngin
         AIOpen(config); // audio (AID and AIS)
         AROpen();       // aux. memory (ARAM)
         EIOpen(config); // expansion interface (EXI)
@@ -47,8 +47,6 @@ namespace Flipper
         PIOpen(config); // interrupts, console regs
 
         DSP->core->HardReset();
-
-        Gx->Reset();
 
         // Load IROM.
 
@@ -78,6 +76,7 @@ namespace Flipper
 
         Report(Channel::Norm, "\n");
 
+        Gx->Open();
         GXOpen(config, mi.ram);
         PADOpen();
 
@@ -94,7 +93,7 @@ namespace Flipper
 
         DSP->Suspend();
 
-        CPClose();
+        CP_PEClose();
         AIClose();
         ARClose();      // release ARAM
         EIClose();      // take care about closing of memcards and BBA
@@ -104,6 +103,7 @@ namespace Flipper
 
         PADClose();
         GXClose();
+        Gx->Close();
     }
 
     void Flipper::Update()

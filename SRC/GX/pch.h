@@ -16,10 +16,16 @@
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 
-#include "../Debugger/Debugger.h"
-
-#include "../Hardware/HWConfig.h"
-#include "../Hardware/PI.h"
-
 #include "GXCore.h"
 #include "GXCommands.h"
+
+#include "../Debugger/Debugger.h"
+
+#include "../GekkoCore/Gekko.h"
+
+#include "../DSP/DSP.h"
+
+#include "../Hardware/HWConfig.h"
+#include "../Hardware/HW.h"
+#include "../Hardware/MI.h"
+#include "../Hardware/PI.h"

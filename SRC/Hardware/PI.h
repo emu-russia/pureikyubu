@@ -62,9 +62,6 @@
 #define PI_INTERRUPT_RSW        0x0002      // reset "switch"
 #define PI_INTERRUPT_ERROR      0x0001      // GP verify failed
 
-// PI write pointer wrap bit
-#define PI_WRPTR_WRAP   0x0400'0000
-
 // PI CONFIG Reset control bits
 #define PI_CONFIG_SYSRSTB 0x00000001
 #define PI_CONFIG_MEMRSTB 0x00000002
@@ -81,10 +78,6 @@ struct PIControl
     bool        rswhack;        // reset "switch" hack
     bool        log;            // log interrupts
     uint32_t    consoleVer;     // console version
-    // PI FIFO
-    volatile uint32_t    base;
-    volatile uint32_t    top;
-    volatile uint32_t    wrptr;          // also WRAP bit
 };
 
 extern  PIControl pi;
@@ -92,6 +85,3 @@ extern  PIControl pi;
 void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)
 void PIOpen(HWConfig * config);
-void DumpPIFIFO();
-
-void GXFifoWriteBurst(uint8_t data[32]);

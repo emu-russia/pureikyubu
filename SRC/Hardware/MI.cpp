@@ -4,6 +4,10 @@
 // MI is implemented only for HW2 consoles! it is not back-compatible.
 #include "pch.h"
 
+// TODO: While exploring the Flipper architecture, I misunderstood the purpose of the PI and MEM (MI) components. 
+// In fact, PI is used to access Flipper's memory and registers from the Gekko side. MEM is used by various Flipper subsystems to access main memory (1T-SRAM). 
+// Now all memory access handlers are in the MI.cpp module, but in theory they should be in PI.cpp. Let's leave it as it is for now.
+
 using namespace Debug;
 
 // hardware traps tables.
@@ -302,7 +306,7 @@ void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
     if (phys_addr == PI_REGSPACE_GX_FIFO)
     {
-        GXFifoWriteBurst(burstData);
+        Flipper::Gx->FifoWriteBurst(burstData);
         return;
     }
 
