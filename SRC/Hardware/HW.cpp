@@ -36,8 +36,6 @@ namespace Flipper
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
-        Mixer = new AudioMixer(config);
-
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
         CPOpen(config); // fifo
@@ -105,7 +103,6 @@ namespace Flipper
         MIClose();
 
         PADClose();
-        delete Mixer;
         GXClose();
     }
 

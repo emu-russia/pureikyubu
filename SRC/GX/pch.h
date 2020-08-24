@@ -21,8 +21,5 @@
 #include "../Hardware/HWConfig.h"
 #include "../Hardware/PI.h"
 
-#include "CPRegs.h"
-#include "XFRegs.h"
-#include "BPRegs.h"
 #include "GXCore.h"
 #include "GXCommands.h"

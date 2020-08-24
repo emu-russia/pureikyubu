@@ -187,7 +187,7 @@ namespace DSP
 				return DspToCpuReadLo(true);
 
 			case (DspAddress)DspHardwareRegs::DIRQ:
-				return DSPGetInterruptStatus() ? 1 : 0;
+				return Flipper::DSPGetInterruptStatus() ? 1 : 0;
 
 			case (DspAddress)DspHardwareRegs::ACSAH:
 				return Accel.StartAddress.h;
@@ -289,7 +289,7 @@ namespace DSP
 						{
 							Report(Channel::DSP, "DspHardwareRegs::DIRQ\n");
 						}
-						DSPAssertInt();
+						Flipper::DSPAssertInt();
 					}
 					break;
 
