@@ -3,8 +3,6 @@
 
 using namespace Debug;
 
-static      FILE *gplog;
-
 GXDrawDoneCallback GxDrawDone;
 GXDrawTokenCallback GxDrawToken;
 
@@ -437,11 +435,7 @@ void loadCPReg(size_t index, uint32_t value)
 
         default:
         {
-#ifdef  GPLOG
-            fprintf(gplog, "unknown CP load, index: %02X, data: %08X\n", index, value);
-            fflush(gplog);
-#endif
-//            GFXError("unknown CP load, index : %02X", index);
+            Report(Channel::GP, "Unknown CP load, index: 0x%02X", index);
         }
     }
 }
@@ -873,11 +867,7 @@ void loadBPReg(size_t index, uint32_t value)
 
         default:
         {
-#ifdef  GPLOG
-            fprintf(gplog, "unknown BP load, index: %02X, data: %08X\n", index, value);
-            fflush(gplog);
-#endif
-//            GFXError("unknown BP load, index : %02X", index);
+            Report(Channel::GP, "Unknown BP load, index: 0x%02X", index);
         }
     }
 }
@@ -903,17 +893,6 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
         {
             *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = fifo->ReadFloat();
         }
-
-#ifdef  GPLOG
-        fprintf(gplog, "load position matrix, start index: %04X\n", startIdx);
-            
-        for(unsigned n=0; n<amount; n++)
-        {
-            fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-        }
-
-        fflush(gplog);
-#endif
     }
     // load normal matrix
     else if((startIdx >= 0x0400) && (startIdx < 0x0500))
@@ -930,17 +909,6 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
         {
             *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = fifo->ReadFloat();
         }
-
-#ifdef  GPLOG
-        fprintf(gplog, "load post-transform matrix, start index: %04X\n", startIdx);
-            
-        for(unsigned n=0; n<amount; n++)
-        {
-            fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-        }
-
-        fflush(gplog);
-#endif
     }
     else switch(startIdx)
     {
@@ -1327,22 +1295,12 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
 
         default:
         {
+            Report(Channel::GP, "Unknown XF load, start index: 0x%04X, count: %i\n", startIdx, amount);
+
             while (amount--)
             {
                 fifo->Read32();
             }
-
-#ifdef  GPLOG
-            fprintf(gplog, "unknown XF load, start index: %04X\n", startIdx);
-            
-            for(unsigned n=0; n<amount; n++)
-            {
-                fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-            }
-
-            fflush(gplog);
-#endif
-//            GFXError("unknown XF load, start index : %04X", startIdx);
         }
     }
 }
