@@ -12,9 +12,9 @@ namespace GX
 		GXBackend(GXCore* parent);
 		virtual ~GXBackend();
 
-		virtual void PassCPLoadReg() = 0;
-		virtual void PassBPLoadReg() = 0;
-		virtual void PassXFLoadReg() = 0;
+		virtual void PassCPLoadReg(CPRegister id) = 0;
+		virtual void PassBPLoadReg(BPRegister id) = 0;
+		virtual void PassXFLoadReg(int startId, int count) = 0;
 
 		virtual void DrawBegin(Primitive prim) = 0;
 		virtual void DrawEnd() = 0;

@@ -205,7 +205,7 @@ namespace GX
 		VCD_NONE = 0,           // attribute stage disabled
 		VCD_DIRECT,             // direct data
 		VCD_INDEX8,				// 8-bit indexed data
-		VCD_INDEX16             // 16-bit indexed data (rare)
+		VCD_INDEX16             // 16-bit indexed data
 	};
 
 	// Vertex Components Count (from VAT register)
