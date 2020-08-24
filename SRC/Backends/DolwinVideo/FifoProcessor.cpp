@@ -9,7 +9,6 @@ namespace GX
 	FifoProcessor::FifoProcessor()
 	{
 		fifo = new uint8_t[fifoSize];
-		assert(fifo);
 		memset(fifo, 0, fifoSize);
 		allocated = true;
 	}

@@ -1,20 +1,15 @@
 # DolwinVideo
 
-Flipper GX emulation here.
+Very limited GPU emulation. Basic OpenGL is used as a backend.
 
-Current implementation is a mess. Will be rewritten after I speed-up core.
+What's supported:
+- FIFO parser (not all vertex formats are supported, but only basic ones. For example, the parser is not able to parse more than 3 texture coordinates). In addition, the parsing method is some kind of strange, based on tables. This code will move into the GX component.
+- Software implementation of transform unit (XF). Also very inaccurate - lighting is partially supported. The transformation of texture coordinates is not completed yet.
+- All texture formats are supported, but TLUT versions may be buggy
 
-It is definitely not recommended to study the current code, it is here just so that the games show at least something. It hurts me when I look at it.
-
-## Notes
-
-```
-[15:38:00] <org> О, я придумал гениальное решение для эмуляции GPU куба
-[15:38:22] <org> Буду собирать состояние GPU в Json, а на базе Json генерировать вертексный и пиксельный шейдеры
-```
-
-## DolwinVideo Architecture
-
-DolwinVideo reimplementation is planned for version 0.14, but the architecture has already been developed. We will use the native Windows API - D3D.
-
-![DolwinGraphicsFlow](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/DolwinGraphicsFlow.png)
+What's not supported:
+- The main drawback is the lack of TEV support. Because of this, complex scenes with effects are drawn with bugs or not drawn at all.
+- Emulation of Advanced GX features such as Bump-mapping, indirect texturing, Z-textures not supported
+- No normal texture caching
+- Interaction with OpenGL is spontaneous (calls are made from different places in the code in an uncontrolled way)
+- There is no emulation of direct access to the EFB

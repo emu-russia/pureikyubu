@@ -22,6 +22,10 @@
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
+// TODO: While exploring the Flipper architecture, I misunderstood the purpose of the PI and MEM (MI) components. 
+// In fact, PI is used to access Flipper's memory and registers from the Gekko side. MEM is used by various Flipper subsystems to access main memory (1T-SRAM). 
+// Now all memory access handlers are in the MI.cpp module, but in theory they should be in PI.cpp. Let's leave it as it is for now.
+
 void MIReadByte(uint32_t phys_addr, uint32_t* reg);
 void MIWriteByte(uint32_t phys_addr, uint32_t data);
 void MIReadHalf(uint32_t phys_addr, uint32_t* reg);

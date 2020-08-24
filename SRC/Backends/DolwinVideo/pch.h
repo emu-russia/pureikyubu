@@ -21,7 +21,6 @@
 #include "../../Common/Thread.h"
 
 // other project includes
-#include "Plug.h"
 #include "GL.h"
 #include "FifoProcessor.h"
 #include "Stages.h"
@@ -34,3 +33,6 @@
 
 #include "../../Hardware/HWConfig.h"
 #include "GX.h"
+
+extern  HINSTANCE   hPlugin;
+extern  HWND        hwndMain;

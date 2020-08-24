@@ -8,6 +8,10 @@
 
     "GXDump": {
       "help": "Show the current state of all GX registers."
+    },
+
+    "DumpFifo": {
+      "help": "Dump PI/CP FIFO configuration"
     }
 
   }

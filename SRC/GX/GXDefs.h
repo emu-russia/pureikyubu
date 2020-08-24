@@ -29,6 +29,19 @@ namespace GX
 		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
 	};
 
+	// Gx Primitive
+
+	enum class Primitive
+	{
+		Quads,
+		Triangles,
+		TriangleStrip,
+		TriangleFan,
+		Lines,
+		LineStrip,
+		Points,
+	};
+
 	// PE Registers (from CPU side). 16-bit access.
 
 	enum class PEMappedRegister
@@ -48,6 +61,25 @@ namespace GX
 	#define PE_SR_TOKEN     (1 << 1)
 	#define PE_SR_DONEMSK   (1 << 2)
 	#define PE_SR_TOKENMSK  (1 << 3)
+
+	// PI->CP FIFO registers
+	enum class PI_CPMappedRegister
+	{
+		PI_CPBAS_ID = 3,
+		PI_CPTOP_ID = 4,
+		PI_CPWRT_ID = 5,
+		PI_CPABT_ID = 6,
+	};
+
+	// PI CP write pointer wrap bit
+	#define PI_CPWRT_WRAP   0x0400'0000
+
+	// PE registers mapped to CPU
+	struct PERegs
+	{
+		uint16_t     sr;         // status register
+		uint16_t     token;      // last token
+	};
 
 }
 
