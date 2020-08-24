@@ -127,12 +127,220 @@ namespace GX
 
 	uint16_t GXCore::CpReadReg(CPMappedRegister id)
 	{
+		switch (id)
+		{
+			case CPMappedRegister::CP_STATUS_ID:
+				return state.cpregs.sr;
+			case CPMappedRegister::CP_ENABLE_ID:
+				return state.cpregs.cr;
+			case CPMappedRegister::CP_CLR_ID:
+				return 0;
+			case CPMappedRegister::CP_MEMPERF_SEL_ID:
+				return 0;
+			case CPMappedRegister::CP_STM_LOW_ID:
+				return 0;
+			case CPMappedRegister::CP_FIFO_BASEL_ID:
+				return state.cpregs.basel & 0xffe0;
+			case CPMappedRegister::CP_FIFO_BASEH_ID:
+				return state.cpregs.baseh;
+			case CPMappedRegister::CP_FIFO_TOPL_ID:
+				return state.cpregs.topl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_TOPH_ID:
+				return state.cpregs.toph;
+			case CPMappedRegister::CP_FIFO_HICNTL_ID:
+				return state.cpregs.himarkl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_HICNTH_ID:
+				return state.cpregs.himarkh;
+			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
+				return state.cpregs.lomarkl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
+				return state.cpregs.lomarkh;
+			case CPMappedRegister::CP_FIFO_COUNTL_ID:
+				return state.cpregs.cntl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_COUNTH_ID:
+				return state.cpregs.cnth;
+			case CPMappedRegister::CP_FIFO_WPTRL_ID:
+				return state.cpregs.wrptrl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_WPTRH_ID:
+				return state.cpregs.wrptrh;
+			case CPMappedRegister::CP_FIFO_RPTRL_ID:
+				return state.cpregs.rdptrl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_RPTRH_ID:
+				return state.cpregs.rdptrh;
+			case CPMappedRegister::CP_FIFO_BRKL_ID:
+				return state.cpregs.bpptrl & 0xffe0;
+			case CPMappedRegister::CP_FIFO_BRKH_ID:
+				return state.cpregs.bpptrh;
+			case CPMappedRegister::CP_COUNTER0L_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER0H_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER1L_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER1H_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER2L_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER2H_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER3L_ID:
+				return 0;
+			case CPMappedRegister::CP_COUNTER3H_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_CHKCNTL_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_CHKCNTH_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_MISSL_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_MISSH_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_STALLL_ID:
+				return 0;
+			case CPMappedRegister::CP_VC_STALLH_ID:
+				return 0;
+			case CPMappedRegister::CP_FRCLK_CNTL_ID:
+				return 0;
+			case CPMappedRegister::CP_FRCLK_CNTH_ID:
+				return 0;
+			case CPMappedRegister::CP_XF_ADDR_ID:
+				return 0;
+			case CPMappedRegister::CP_XF_DATAL_ID:
+				return 0;
+			case CPMappedRegister::CP_XF_DATAH_ID:
+				return 0;
+		}
+
 		return 0;
 	}
 
 	void GXCore::CpWriteReg(CPMappedRegister id, uint16_t value)
 	{
+		switch (id)
+		{
+			case CPMappedRegister::CP_STATUS_ID:
+				break;
+			case CPMappedRegister::CP_ENABLE_ID:
+				state.cpregs.cr = (uint16_t)value;
 
+				// clear breakpoint
+				if ((value & CP_CR_BPINTEN) == 0)
+				{
+					state.cpregs.sr &= ~CP_SR_BPINT;
+				}
+
+				if ((state.cpregs.sr & CP_SR_BPINT) == 0 && (state.cpregs.sr & CP_SR_OVF) == 0 && (state.cpregs.sr & CP_SR_UVF) == 0)
+				{
+					PIClearInt(PI_INTERRUPT_CP);
+				}
+				break;
+			case CPMappedRegister::CP_CLR_ID:
+				// clear watermark conditions
+				if (value & CP_CLR_OVFCLR)
+				{
+					state.cpregs.sr &= ~CP_SR_OVF;
+				}
+				if (value & CP_CLR_UVFCLR)
+				{
+					state.cpregs.sr &= ~CP_SR_UVF;
+				}
+
+				if ((state.cpregs.sr & CP_SR_BPINT) == 0 && (state.cpregs.sr & CP_SR_OVF) == 0 && (state.cpregs.sr & CP_SR_UVF) == 0)
+				{
+					PIClearInt(PI_INTERRUPT_CP);
+				}
+				break;
+			case CPMappedRegister::CP_MEMPERF_SEL_ID:
+				break;
+			case CPMappedRegister::CP_STM_LOW_ID:
+				break;
+			case CPMappedRegister::CP_FIFO_BASEL_ID:
+				state.cpregs.basel = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_BASEH_ID:
+				state.cpregs.baseh = value;
+				break;
+			case CPMappedRegister::CP_FIFO_TOPL_ID:
+				state.cpregs.topl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_TOPH_ID:
+				state.cpregs.toph = value;
+				break;
+			case CPMappedRegister::CP_FIFO_HICNTL_ID:
+				state.cpregs.himarkl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_HICNTH_ID:
+				state.cpregs.himarkh = value;
+				break;
+			case CPMappedRegister::CP_FIFO_LOCNTL_ID:
+				state.cpregs.lomarkl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_LOCNTH_ID:
+				state.cpregs.lomarkh = value;
+				break;
+			case CPMappedRegister::CP_FIFO_COUNTL_ID:
+				state.cpregs.cntl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_COUNTH_ID:
+				state.cpregs.cnth = value;
+				break;
+			case CPMappedRegister::CP_FIFO_WPTRL_ID:
+				state.cpregs.wrptrl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_WPTRH_ID:
+				state.cpregs.wrptrh = value;
+				break;
+			case CPMappedRegister::CP_FIFO_RPTRL_ID:
+				state.cpregs.rdptrl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_RPTRH_ID:
+				state.cpregs.rdptrh = value;
+				break;
+			case CPMappedRegister::CP_FIFO_BRKL_ID:
+				state.cpregs.bpptrl = value & 0xffe0;
+				break;
+			case CPMappedRegister::CP_FIFO_BRKH_ID:
+				state.cpregs.bpptrh = value;
+				break;
+			case CPMappedRegister::CP_COUNTER0L_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER0H_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER1L_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER1H_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER2L_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER2H_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER3L_ID:
+				break;
+			case CPMappedRegister::CP_COUNTER3H_ID:
+				break;
+			case CPMappedRegister::CP_VC_CHKCNTL_ID:
+				break;
+			case CPMappedRegister::CP_VC_CHKCNTH_ID:
+				break;
+			case CPMappedRegister::CP_VC_MISSL_ID:
+				break;
+			case CPMappedRegister::CP_VC_MISSH_ID:
+				break;
+			case CPMappedRegister::CP_VC_STALLL_ID:
+				break;
+			case CPMappedRegister::CP_VC_STALLH_ID:
+				break;
+			case CPMappedRegister::CP_FRCLK_CNTL_ID:
+				break;
+			case CPMappedRegister::CP_FRCLK_CNTH_ID:
+				break;
+			case CPMappedRegister::CP_XF_ADDR_ID:
+				break;
+			case CPMappedRegister::CP_XF_DATAL_ID:
+				break;
+			case CPMappedRegister::CP_XF_DATAH_ID:
+				break;
+		}
 	}
 
 	uint32_t GXCore::PiCpReadReg(PI_CPMappedRegister id)
@@ -238,7 +446,9 @@ namespace GX
 
 	void GXCore::ProcessFifo(uint8_t data[32])
 	{
-		// GXWriteFifo(data);
+		// TODO: Refactoring hacks
+		void GXWriteFifo(uint8_t dataPtr[32]);
+		GXWriteFifo(data);
 	}
 
 }

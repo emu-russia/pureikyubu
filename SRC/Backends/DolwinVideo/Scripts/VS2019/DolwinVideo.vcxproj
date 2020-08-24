@@ -159,7 +159,6 @@
     <ClInclude Include="..\..\GPRegs.h" />
     <ClInclude Include="..\..\GX.h" />
     <ClInclude Include="..\..\pch.h" />
-    <ClInclude Include="..\..\Plug.h" />
     <ClInclude Include="..\..\Stages.h" />
     <ClInclude Include="..\..\Tex.h" />
     <ClInclude Include="..\..\XF.h" />
@@ -175,7 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\Plug.cpp" />
+    <ClCompile Include="..\..\GX.cpp" />
     <ClCompile Include="..\..\Stages.cpp" />
     <ClCompile Include="..\..\Tex.cpp" />
     <ClCompile Include="..\..\XF.cpp" />

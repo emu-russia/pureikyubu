@@ -29,6 +29,19 @@ namespace GX
 		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
 	};
 
+	// Gx Primitive
+
+	enum class Primitive
+	{
+		Quads,
+		Triangles,
+		TriangleStrip,
+		TriangleFan,
+		Lines,
+		LineStrip,
+		Points,
+	};
+
 	// PE Registers (from CPU side). 16-bit access.
 
 	enum class PEMappedRegister
