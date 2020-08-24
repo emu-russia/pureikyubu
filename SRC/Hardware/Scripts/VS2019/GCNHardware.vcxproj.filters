@@ -21,9 +21,6 @@
     <ClCompile Include="..\..\AR.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\CP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\DI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -54,10 +51,10 @@
     <ClCompile Include="..\..\HwCommands.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\FIFO.cpp">
+    <ClCompile Include="..\..\EXI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\EXI.cpp">
+    <ClCompile Include="..\..\CP_PE.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -66,9 +63,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\AR.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\CP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\DI.h">
@@ -101,13 +95,13 @@
     <ClInclude Include="..\..\HwCommands.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\FIFO.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\EXI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\HWConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\CP_PE.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

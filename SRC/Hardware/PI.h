@@ -89,7 +89,9 @@ struct PIControl
 
 extern  PIControl pi;
 
-void    PIAssertInt(uint32_t mask);  // set interrupt(s)
-void    PIClearInt(uint32_t mask);   // clear interrupt(s)
-void    PIOpen(HWConfig * config);
-void    DumpPIFIFO();
+void PIAssertInt(uint32_t mask);  // set interrupt(s)
+void PIClearInt(uint32_t mask);   // clear interrupt(s)
+void PIOpen(HWConfig * config);
+void DumpPIFIFO();
+
+void GXFifoWriteBurst(uint8_t data[32]);

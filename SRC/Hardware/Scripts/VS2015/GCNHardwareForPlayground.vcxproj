@@ -21,10 +21,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\AI.cpp" />
     <ClCompile Include="..\..\AR.cpp" />
-    <ClCompile Include="..\..\CP.cpp" />
+    <ClCompile Include="..\..\CP_PE.cpp" />
     <ClCompile Include="..\..\DI.cpp" />
     <ClCompile Include="..\..\EXI.cpp" />
-    <ClCompile Include="..\..\FIFO.cpp" />
     <ClCompile Include="..\..\HW.cpp" />
     <ClCompile Include="..\..\HwCommands.cpp" />
     <ClCompile Include="..\..\IPLDescrambler.cpp" />
@@ -43,10 +42,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\AI.h" />
     <ClInclude Include="..\..\AR.h" />
-    <ClInclude Include="..\..\CP.h" />
+    <ClInclude Include="..\..\CP_PE.h" />
     <ClInclude Include="..\..\DI.h" />
     <ClInclude Include="..\..\EXI.h" />
-    <ClInclude Include="..\..\FIFO.h" />
     <ClInclude Include="..\..\HW.h" />
     <ClInclude Include="..\..\HwCommands.h" />
     <ClInclude Include="..\..\HWConfig.h" />
