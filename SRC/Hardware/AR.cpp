@@ -29,8 +29,8 @@ ARControl aram;
 
 static void ARINT()
 {
-    AIDCR |= AIDCR_ARINT;
-    if(AIDCR & AIDCR_ARINTMSK)
+    Flipper::ai.dcr |= AIDCR_ARINT;
+    if(Flipper::ai.dcr & AIDCR_ARINTMSK)
     {
         if (aram.log)
         {
@@ -66,7 +66,7 @@ static void ARAMDmaThread(void* Parameter)
 
     if ((aram.cnt & ~0x8000'0000) == 0)
     {
-        AIDCR &= ~AIDCR_ARDMA;
+        Flipper::ai.dcr &= ~AIDCR_ARDMA;
         ARINT();                    // invoke aram TC interrupt
         //if (aram.dspRunningBeforeAramDma)
         //{
@@ -129,7 +129,7 @@ static void ARDMA()
     // For other cases - delegate job to thread
 
     assert(!aram.dmaThread->IsRunning());
-    AIDCR |= AIDCR_ARDMA;
+    Flipper::ai.dcr |= AIDCR_ARDMA;
     aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
     aram.dspRunningBeforeAramDma = Flipper::DSP->IsRunning();
     //if (aram.dspRunningBeforeAramDma)
