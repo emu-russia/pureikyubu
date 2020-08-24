@@ -21,6 +21,5 @@
 #include "../Hardware/HWConfig.h"
 #include "../Hardware/PI.h"
 
-#include "GXDefs.h"
 #include "GXCore.h"
 #include "GXCommands.h"
