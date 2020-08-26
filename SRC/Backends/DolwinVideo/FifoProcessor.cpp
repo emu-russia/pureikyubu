@@ -4,7 +4,7 @@ using namespace Debug;
 
 extern int VtxSize[8];
 
-namespace GX
+namespace GX_FromFuture
 {
 	FifoProcessor::FifoProcessor()
 	{

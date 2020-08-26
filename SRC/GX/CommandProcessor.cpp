@@ -81,7 +81,15 @@ namespace GX
 			gx->state.cpregs.sr &= ~CP_SR_RD_IDLE;
 
 			gx->state.cpregs.sr &= ~CP_SR_CMD_IDLE;
-			gx->fifo->WriteBytes(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+			// TODO: Refactoring hacks
+
+			void GXWriteFifo(uint8_t dataPtr[32]);
+			GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+			//gx->fifo->WriteBytes(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+
 			gx->state.cpregs.sr |= CP_SR_CMD_IDLE;
 
 			gx->state.cpregs.rdptr += 32;

@@ -6,6 +6,9 @@
 // local data
 //
 
+extern HINSTANCE   hPlugin;
+extern HWND hwndMain;
+
 static HGLRC hglrc;
 static HDC hdcgl;
 

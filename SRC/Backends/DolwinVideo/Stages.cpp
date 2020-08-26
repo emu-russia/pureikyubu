@@ -9,48 +9,48 @@ extern unsigned usevat;                                // current VAT
 
 // Matrix index
 
-void pos_idx(GX::FifoProcessor* fifo)
+void pos_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.posidx = fifo->Read8();
     //GFXError("fifo posidx : %i", xfRegs.posidx);
 }
 
-void t0_idx(GX::FifoProcessor* fifo)
+void t0_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[0] = fifo->Read8();
 }
 
-void t1_idx(GX::FifoProcessor* fifo)
+void t1_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[1] = fifo->Read8();
 }
 
-void t2_idx(GX::FifoProcessor* fifo)
+void t2_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[2] = fifo->Read8();
 }
 
-void t3_idx(GX::FifoProcessor* fifo)
+void t3_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[3] = fifo->Read8();
 }
 
-void t4_idx(GX::FifoProcessor* fifo)
+void t4_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[4] = fifo->Read8();
 }
 
-void t5_idx(GX::FifoProcessor* fifo)
+void t5_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[5] = fifo->Read8();
 }
 
-void t6_idx(GX::FifoProcessor* fifo)
+void t6_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[6] = fifo->Read8();
 }
 
-void t7_idx(GX::FifoProcessor* fifo)
+void t7_idx(GX_FromFuture::FifoProcessor* fifo)
 {
     xfRegs.texidx[7] = fifo->Read8();
 }
@@ -59,7 +59,7 @@ void t7_idx(GX::FifoProcessor* fifo)
 
 // Position
 
-void pos_xy_u8_d(GX::FifoProcessor* fifo)
+void pos_xy_u8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t u[3];
     u[0] = fifo->Read8();
@@ -71,7 +71,7 @@ void pos_xy_u8_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_s8_d(GX::FifoProcessor* fifo)
+void pos_xy_s8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     int8_t u[3];
     u[0] = fifo->Read8();
@@ -83,7 +83,7 @@ void pos_xy_s8_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_u16_d(GX::FifoProcessor* fifo)
+void pos_xy_u16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
@@ -96,7 +96,7 @@ void pos_xy_u16_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_s16_d(GX::FifoProcessor* fifo)
+void pos_xy_s16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[2];
@@ -109,7 +109,7 @@ void pos_xy_s16_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_f32_d(GX::FifoProcessor* fifo)
+void pos_xy_f32_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
@@ -123,7 +123,7 @@ void pos_xy_f32_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xyz_u8_d(GX::FifoProcessor* fifo)
+void pos_xyz_u8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t u[3];
     u[0] = fifo->Read8();
@@ -136,7 +136,7 @@ void pos_xyz_u8_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_s8_d(GX::FifoProcessor* fifo)
+void pos_xyz_s8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     int8_t u[3];
     u[0] = fifo->Read8();
@@ -149,7 +149,7 @@ void pos_xyz_s8_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_u16_d(GX::FifoProcessor* fifo)
+void pos_xyz_u16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t  u[3];
@@ -163,7 +163,7 @@ void pos_xyz_u16_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_s16_d(GX::FifoProcessor* fifo)
+void pos_xyz_s16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[3];
@@ -177,7 +177,7 @@ void pos_xyz_s16_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_f32_d(GX::FifoProcessor* fifo)
+void pos_xyz_f32_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
@@ -192,7 +192,7 @@ void pos_xyz_f32_d(GX::FifoProcessor* fifo)
     vtx->pos[2] = v[2];
 }
 
-void pos_xy_u8_x8(GX::FifoProcessor* fifo)
+void pos_xy_u8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_POS];
     unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(uint8_t)) * (fifo->Read8());
@@ -208,7 +208,7 @@ void pos_xy_u8_x8(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_s8_x8(GX::FifoProcessor* fifo)
+void pos_xy_s8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_POS];
     unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int8_t)) * (fifo->Read8());
@@ -224,7 +224,7 @@ void pos_xy_s8_x8(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xy_s16_x8(GX::FifoProcessor* fifo)
+void pos_xy_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
     unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (fifo->Read8());
@@ -240,7 +240,7 @@ void pos_xy_s16_x8(GX::FifoProcessor* fifo)
     vtx->pos[2] = 1.0f;
 }
 
-void pos_xyz_s16_x8(GX::FifoProcessor* fifo)
+void pos_xyz_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
     unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(int16_t)) * (fifo->Read8());
@@ -257,7 +257,7 @@ void pos_xyz_s16_x8(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_f32_x8(GX::FifoProcessor* fifo)
+void pos_xyz_f32_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_POS];
     unsigned n = (cpRegs.arstride[VTX_POS] / sizeof(float)) * (fifo->Read8());
@@ -275,7 +275,7 @@ void pos_xyz_f32_x8(GX::FifoProcessor* fifo)
     vtx->pos[2] = fu[2];
 }
 
-void pos_xyz_s16_x16(GX::FifoProcessor* fifo)
+void pos_xyz_s16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_POS];
     unsigned n = fifo->Read16();
@@ -293,7 +293,7 @@ void pos_xyz_s16_x16(GX::FifoProcessor* fifo)
     vtx->pos[2] = ((float)u[2]) / fracDenom[usevat][VTX_POS];
 }
 
-void pos_xyz_f32_x16(GX::FifoProcessor* fifo)
+void pos_xyz_f32_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_POS];
     unsigned n = fifo->Read16();
@@ -316,7 +316,7 @@ void pos_xyz_f32_x16(GX::FifoProcessor* fifo)
 
 // Normal data
 
-void nrm_xyz_u8_d(GX::FifoProcessor* fifo)
+void nrm_xyz_u8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t u[3];
     u[0] = fifo->Read8();
@@ -329,7 +329,7 @@ void nrm_xyz_u8_d(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_s8_d(GX::FifoProcessor* fifo)
+void nrm_xyz_s8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     int8_t u[3];
     u[0] = fifo->Read8();
@@ -342,7 +342,7 @@ void nrm_xyz_s8_d(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_u16_d(GX::FifoProcessor* fifo)
+void nrm_xyz_u16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[3];
@@ -356,7 +356,7 @@ void nrm_xyz_u16_d(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_s16_d(GX::FifoProcessor* fifo)
+void nrm_xyz_s16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     int16_t u[3];
@@ -370,7 +370,7 @@ void nrm_xyz_s16_d(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_f32_d(GX::FifoProcessor* fifo)
+void nrm_xyz_f32_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
@@ -387,7 +387,7 @@ void nrm_xyz_f32_d(GX::FifoProcessor* fifo)
 
 // normal only
 // TODO : make ortho for nbt
-void nrm_nbt_f32_d(GX::FifoProcessor* fifo)
+void nrm_nbt_f32_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[3];
@@ -402,7 +402,7 @@ void nrm_nbt_f32_d(GX::FifoProcessor* fifo)
     vtx->nrm[2] = v[2];
 }
 
-void nrm_xyz_u8_x8(GX::FifoProcessor* fifo)
+void nrm_xyz_u8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (fifo->Read8());
@@ -419,7 +419,7 @@ void nrm_xyz_u8_x8(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_s8_x8(GX::FifoProcessor* fifo)
+void nrm_xyz_s8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(uint8_t)) * (fifo->Read8());
@@ -436,7 +436,7 @@ void nrm_xyz_s8_x8(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2])/* / fracDenom[usevat][VTX_NRM]*/;
 }
 
-void nrm_xyz_s16_x8(GX::FifoProcessor* fifo)
+void nrm_xyz_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (fifo->Read8());
@@ -453,7 +453,7 @@ void nrm_xyz_s16_x8(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2]);
 }
 
-void nrm_xyz_f32_x8(GX::FifoProcessor* fifo)
+void nrm_xyz_f32_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(float)) * (fifo->Read8());
@@ -471,7 +471,7 @@ void nrm_xyz_f32_x8(GX::FifoProcessor* fifo)
     vtx->nrm[2] = fu[2];
 }
 
-void nrm_nbt_s16_x8(GX::FifoProcessor* fifo)
+void nrm_nbt_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = (cpRegs.arstride[VTX_NRM] / sizeof(int16_t)) * (fifo->Read8());
@@ -488,7 +488,7 @@ void nrm_nbt_s16_x8(GX::FifoProcessor* fifo)
     vtx->nrm[2] = ((float)u[2]);
 }
 
-void nrm_xyz_s16_x16(GX::FifoProcessor* fifo)
+void nrm_xyz_s16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = fifo->Read16();
@@ -506,7 +506,7 @@ void nrm_xyz_s16_x16(GX::FifoProcessor* fifo)
     vtx->nrm[2] = (float)u[2];
 }
 
-void nrm_xyz_f32_x16(GX::FifoProcessor* fifo)
+void nrm_xyz_f32_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_NRM];
     unsigned n = fifo->Read16();
@@ -529,7 +529,7 @@ void nrm_xyz_f32_x16(GX::FifoProcessor* fifo)
 
 // Color 0
 
-void clr0_rgb_rgb565_d(GX::FifoProcessor* fifo)
+void clr0_rgb_rgb565_d(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t p = fifo->Read16();
 
@@ -543,7 +543,7 @@ void clr0_rgb_rgb565_d(GX::FifoProcessor* fifo)
     vtx->col[0].A = 255;
 }
 
-void clr0_rgb_rgb8_d(GX::FifoProcessor* fifo)
+void clr0_rgb_rgb8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     vtx->col[0].R = fifo->Read8();
     vtx->col[0].G = fifo->Read8();
@@ -551,7 +551,7 @@ void clr0_rgb_rgb8_d(GX::FifoProcessor* fifo)
     vtx->col[0].A = 255;
 }
 
-void clr0_rgba_rgba4_d(GX::FifoProcessor* fifo)
+void clr0_rgba_rgba4_d(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t p = fifo->Read16();
 
@@ -566,7 +566,7 @@ void clr0_rgba_rgba4_d(GX::FifoProcessor* fifo)
     vtx->col[0].A = (a << 4) | a;
 }
 
-void clr0_rgba_rgba8_d(GX::FifoProcessor* fifo)
+void clr0_rgba_rgba8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     vtx->col[0].R = fifo->Read8();
     vtx->col[0].G = fifo->Read8();
@@ -574,7 +574,7 @@ void clr0_rgba_rgba8_d(GX::FifoProcessor* fifo)
     vtx->col[0].A = fifo->Read8();
 }
 
-void clr0_rgb_rgba8_x8(GX::FifoProcessor* fifo)
+void clr0_rgb_rgba8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
     unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (fifo->Read8());
@@ -585,7 +585,7 @@ void clr0_rgb_rgba8_x8(GX::FifoProcessor* fifo)
     vtx->col[0].A = 255;
 }
 
-void clr0_rgba_rgba8_x8(GX::FifoProcessor* fifo)
+void clr0_rgba_rgba8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t *ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
     unsigned n = (cpRegs.arstride[VTX_COLOR0] / sizeof(uint8_t)) * (fifo->Read8());
@@ -596,7 +596,7 @@ void clr0_rgba_rgba8_x8(GX::FifoProcessor* fifo)
     vtx->col[0].A = ptr8[n + 3];
 }
 
-void clr0_rgb_rgb8_x16(GX::FifoProcessor* fifo)
+void clr0_rgb_rgb8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
     unsigned n = fifo->Read16();
@@ -608,7 +608,7 @@ void clr0_rgb_rgb8_x16(GX::FifoProcessor* fifo)
     vtx->col[0].A = 255;
 }
 
-void clr0_rgba_rgba8_x16(GX::FifoProcessor* fifo)
+void clr0_rgba_rgba8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR0];
     unsigned n = fifo->Read16();
@@ -624,7 +624,7 @@ void clr0_rgba_rgba8_x16(GX::FifoProcessor* fifo)
 
 // Color 1
 
-void clr1_rgba_rgba8_x8(GX::FifoProcessor* fifo)
+void clr1_rgba_rgba8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_COLOR1];
     unsigned n = (cpRegs.arstride[VTX_COLOR1] / sizeof(uint8_t)) * (fifo->Read8());
@@ -639,7 +639,7 @@ void clr1_rgba_rgba8_x8(GX::FifoProcessor* fifo)
 
 // Texture coord 0
 
-void tex0_st_u8_d(GX::FifoProcessor* fifo)
+void tex0_st_u8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint8_t u[2];
@@ -651,7 +651,7 @@ void tex0_st_u8_d(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_s8_d(GX::FifoProcessor* fifo)
+void tex0_st_s8_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     int8_t u[2];
@@ -663,7 +663,7 @@ void tex0_st_s8_d(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_u16_d(GX::FifoProcessor* fifo)
+void tex0_st_u16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
@@ -675,7 +675,7 @@ void tex0_st_u16_d(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_s16_d(GX::FifoProcessor* fifo)
+void tex0_st_s16_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // swap position data
     uint16_t u[2];
@@ -691,7 +691,7 @@ void tex0_st_s16_d(GX::FifoProcessor* fifo)
     //GFXError("s:%f, t:%f", vtx->tcoord[0][0], vtx->tcoord[0][1]);
 }
 
-void tex0_st_f32_d(GX::FifoProcessor* fifo)
+void tex0_st_f32_d(GX_FromFuture::FifoProcessor* fifo)
 {
     // we need to swap "floats", so "u" is used as temporary buffer
     uint32_t u[2];
@@ -704,7 +704,7 @@ void tex0_st_f32_d(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = v[1];
 }
 
-void tex0_st_s8_x8(GX::FifoProcessor* fifo)
+void tex0_st_s8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int8_t)) * (fifo->Read8());
@@ -719,7 +719,7 @@ void tex0_st_s8_x8(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_u16_x8(GX::FifoProcessor* fifo)
+void tex0_st_u16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(uint16_t)) * (fifo->Read8());
@@ -734,7 +734,7 @@ void tex0_st_u16_x8(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_s16_x8(GX::FifoProcessor* fifo)
+void tex0_st_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(int16_t)) * (fifo->Read8());
@@ -749,7 +749,7 @@ void tex0_st_s16_x8(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_f32_x8(GX::FifoProcessor* fifo)
+void tex0_st_f32_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = (cpRegs.arstride[VTX_TEXCOORD0] / sizeof(float)) * (fifo->Read8());
@@ -765,7 +765,7 @@ void tex0_st_f32_x8(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = fu[1];
 }
 
-void tex0_s_u8_x16(GX::FifoProcessor* fifo)
+void tex0_s_u8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint8_t* ptr8 = (uint8_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = fifo->Read16();
@@ -779,7 +779,7 @@ void tex0_s_u8_x16(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = 1.0f;
 }
 
-void tex0_st_u16_x16(GX::FifoProcessor* fifo)
+void tex0_st_u16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = fifo->Read16();
@@ -795,7 +795,7 @@ void tex0_st_u16_x16(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_s16_x16(GX::FifoProcessor* fifo)
+void tex0_st_s16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint16_t *ptr16 = (uint16_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = fifo->Read16();
@@ -811,7 +811,7 @@ void tex0_st_s16_x16(GX::FifoProcessor* fifo)
     vtx->tcoord[0][1] = ((float)u[1]) / fracDenom[usevat][VTX_TEXCOORD0];
 }
 
-void tex0_st_f32_x16(GX::FifoProcessor* fifo)
+void tex0_st_f32_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     uint32_t *ptr32 = (uint32_t *)cpRegs.arbase[VTX_TEXCOORD0];
     unsigned n = fifo->Read16();
@@ -831,102 +831,102 @@ void tex0_st_f32_x16(GX::FifoProcessor* fifo)
 
 // Texture coord 1
 
-void tex1_s_u8_x8(GX::FifoProcessor* fifo)
+void tex1_s_u8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_s_s8_x8(GX::FifoProcessor* fifo)
+void tex1_s_s8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_s_u16_x8(GX::FifoProcessor* fifo)
+void tex1_s_u16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_s_s16_x8(GX::FifoProcessor* fifo)
+void tex1_s_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_s_f32_x8(GX::FifoProcessor* fifo)
+void tex1_s_f32_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_st_u8_x8(GX::FifoProcessor* fifo)
+void tex1_st_u8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_st_s8_x8(GX::FifoProcessor* fifo)
+void tex1_st_s8_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_st_u16_x8(GX::FifoProcessor* fifo)
+void tex1_st_u16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_st_s16_x8(GX::FifoProcessor* fifo)
+void tex1_st_s16_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_st_f32_x8(GX::FifoProcessor* fifo)
+void tex1_st_f32_x8(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read8();
 }
 
-void tex1_s_u8_x16(GX::FifoProcessor* fifo)
+void tex1_s_u8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_s_s8_x16(GX::FifoProcessor* fifo)
+void tex1_s_s8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_s_u16_x16(GX::FifoProcessor* fifo)
+void tex1_s_u16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_s_s16_x16(GX::FifoProcessor* fifo)
+void tex1_s_s16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_s_f32_x16(GX::FifoProcessor* fifo)
+void tex1_s_f32_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_st_u8_x16(GX::FifoProcessor* fifo)
+void tex1_st_u8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_st_s8_x16(GX::FifoProcessor* fifo)
+void tex1_st_s8_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_st_u16_x16(GX::FifoProcessor* fifo)
+void tex1_st_u16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_st_s16_x16(GX::FifoProcessor* fifo)
+void tex1_st_s16_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
 
-void tex1_st_f32_x16(GX::FifoProcessor* fifo)
+void tex1_st_f32_x16(GX_FromFuture::FifoProcessor* fifo)
 {
     fifo->Read16();
 }
@@ -961,7 +961,7 @@ void tex1_st_f32_x16(GX::FifoProcessor* fifo)
 // attr[TYPE][CNT][FMT]
 //
 
-void (*posattr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*posattr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XY
     { NULL, NULL, NULL, NULL, NULL }    // XYZ
@@ -985,7 +985,7 @@ void (*posattr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
+void (*nrmattr[4][3][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // XYZ
     { NULL, NULL, NULL, NULL, NULL },   // NBT
@@ -1015,7 +1015,7 @@ void (*nrmattr[4][3][5])(GX::FifoProcessor* fifo) = {
 
 // ---------------------------------------------------------------------------
 
-void (*col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
+void (*col0attr[4][2][6])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1039,7 +1039,7 @@ void (*col0attr[4][2][6])(GX::FifoProcessor* fifo) = {
 //  RGB565  RGB8  RGBX8 RGBA4 RGBA6 RGBA8
 };
 
-void (*col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
+void (*col1attr[4][2][6])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL, NULL },     // RGB
     { NULL, NULL, NULL, NULL, NULL, NULL }      // RGBA
@@ -1065,7 +1065,7 @@ void (*col1attr[4][2][6])(GX::FifoProcessor* fifo) = {
 
 // ---------------------------------------------------------------------------
 
-void (*tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex0attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1089,7 +1089,7 @@ void (*tex0attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex1attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1113,7 +1113,7 @@ void (*tex1attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex2attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1137,7 +1137,7 @@ void (*tex2attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex3attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1161,7 +1161,7 @@ void (*tex3attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex4attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1185,7 +1185,7 @@ void (*tex4attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex5attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1209,7 +1209,7 @@ void (*tex5attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex6attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST
@@ -1233,7 +1233,7 @@ void (*tex6attr[4][2][5])(GX::FifoProcessor* fifo) = {
     // U8    S8   U16   S16   F32
 };
 
-void (*tex7attr[4][2][5])(GX::FifoProcessor* fifo) = {
+void (*tex7attr[4][2][5])(GX_FromFuture::FifoProcessor* fifo) = {
     {   // none
     { NULL, NULL, NULL, NULL, NULL },   // S
     { NULL, NULL, NULL, NULL, NULL }    // ST

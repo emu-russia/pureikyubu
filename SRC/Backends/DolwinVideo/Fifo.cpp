@@ -7,7 +7,7 @@ using namespace Debug;
 // local data
 //
 
-static  void (*pipeline[VTX_MAX_ATTR][8])(GX::FifoProcessor* fifo); // fifo attr callbacks
+static  void (*pipeline[VTX_MAX_ATTR][8])(GX_FromFuture::FifoProcessor* fifo); // fifo attr callbacks
 
 float   fracDenom[8][VTX_MAX_ATTR];             // fraction denominant
 
@@ -17,7 +17,7 @@ int     VtxSize[8];
 
 unsigned usevat;                                // current VAT
 
-GX::FifoProcessor GxFifo;
+GX_FromFuture::FifoProcessor GxFifo;
 
 BOOL        frame_done = 1;
 
@@ -366,9 +366,9 @@ void FifoReconfigure(
 // ---------------------------------------------------------------------------
 
 // collect data
-static void FifoWalk(unsigned vatnum, GX::FifoProcessor * fifo)
+static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
 {
-    void (*stageCB)(GX::FifoProcessor * fifo);
+    void (*stageCB)(GX_FromFuture::FifoProcessor * fifo);
 
     // overrided by 'mtxidx' attributes
     xfRegs.posidx = xfRegs.matidxA.pos;
@@ -423,7 +423,7 @@ static void GxBadFifo(uint8_t command)
     );
 }
 
-static void GxCommand(GX::FifoProcessor * fifo)
+static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
 {
     if(frame_done)
     {
@@ -468,7 +468,7 @@ static void GxCommand(GX::FifoProcessor * fifo)
 
             Report(Channel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
 
-            GX::FifoProcessor* callDlFifo = new GX::FifoProcessor(fifoPtr, size);
+            GX_FromFuture::FifoProcessor* callDlFifo = new GX_FromFuture::FifoProcessor(fifoPtr, size);
 
             while (callDlFifo->EnoughToExecute())
             {

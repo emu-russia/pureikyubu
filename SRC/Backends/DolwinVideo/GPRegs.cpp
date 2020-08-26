@@ -874,7 +874,7 @@ void loadBPReg(size_t index, uint32_t value)
 
 // index range = 0000..FFFF
 // reg size = 32 bit
-void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
+void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fifo)
 {
     xfLoads += (uint32_t)amount;
 

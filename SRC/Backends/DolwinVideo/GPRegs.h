@@ -785,6 +785,33 @@ typedef union
     uint32_t     matidx;
 } MATIDX_B;
 
+// Array name for ArrayBase and ArrayStride
+
+enum class ArrayId
+{
+    Pos = 0,
+    Nrm,
+    Color0,
+    Color1,
+    Tex0Coord,
+    Tex1Coord,
+    Tex2Coord,
+    Tex3Coord,
+    Tex4Coord,
+    Tex5Coord,
+    Tex6Coord,
+    Tex7Coord,
+
+    // Used by XF_IndexLoadRegA/B/C/D commands
+
+    IndexRegA,
+    IndexRegB,
+    IndexRegC,
+    IndexRegD,
+
+    Max,
+};
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // register memory space description
@@ -799,8 +826,8 @@ typedef struct
     VAT_A       vatA[8];                // 0x70...0x77
     VAT_B       vatB[8];                // 0x80...0x87
     VAT_C       vatC[8];                // 0x90...0x97
-    uint8_t          *arbase[VTX_MAX_ATTR];  // 0xA0...0xAB
-    uint32_t         arstride[VTX_MAX_ATTR]; // 0xB0...0xBB
+    uint8_t          *arbase[(size_t)ArrayId::Max];  // 0xA0...0xAB
+    uint32_t         arstride[(size_t)ArrayId::Max]; // 0xB0...0xBB
 } CPMemory;
 
 typedef struct
@@ -861,6 +888,6 @@ extern  uint8_t   *RAM;
 // registers loading (using fifo writes)
 void    loadCPReg(size_t index, uint32_t value);
 void    loadBPReg(size_t index, uint32_t value);
-void    loadXFRegs(size_t startIndex, size_t amount, GX::FifoProcessor* fifo);
+void    loadXFRegs(size_t startIndex, size_t amount, GX_FromFuture::FifoProcessor* fifo);
 
 extern  uint32_t cpLoads, bpLoads, xfLoads;

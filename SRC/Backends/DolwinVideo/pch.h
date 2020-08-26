@@ -24,6 +24,12 @@
 
 #include "../../Hardware/HWConfig.h"
 
+#include "GL.h"
+#include "GX.h"
+#include "FifoProcessor.h"
+#include "GPRegs.h"
+#include "Fifo.h"
+#include "Stages.h"
 #include "Tex.h"
 #include "XF.h"
 #include "Backend.h"
