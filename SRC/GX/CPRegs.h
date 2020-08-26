@@ -386,6 +386,33 @@ namespace GX
 		uint32_t bits;
 	};
 
+	// Array name for ArrayBase and ArrayStride
+
+	enum class ArrayId
+	{
+		Pos = 0,
+		Nrm,
+		Color0,
+		Color1,
+		Tex0Coord,
+		Tex1Coord,
+		Tex2Coord,
+		Tex3Coord,
+		Tex4Coord,
+		Tex5Coord,
+		Tex6Coord,
+		Tex7Coord,
+
+		// Used by XF_IndexLoadRegA/B/C/D commands
+
+		IndexRegA,
+		IndexRegB,
+		IndexRegC,
+		IndexRegD,
+
+		Max,
+	};
+
 	struct CPState
 	{
 		MatrixIndexA matIndexA;			// 0011xxxx
@@ -395,8 +422,8 @@ namespace GX
 		VAT_group0 vatA[8];			// 0111x,vat[2:0]
 		VAT_group1 vatB[8];			// 1000x,vat[2:0]
 		VAT_group2 vatC[8];			// 1001x,vat[2:0]	
-		ArrayBase arrayBase[16];		// 1010,array[3:0]
-		ArrayStride arrayStride[16];	// 1011,array[3:0]
+		ArrayBase arrayBase[(size_t)ArrayId::Max];		// 1010,array[3:0]
+		ArrayStride arrayStride[(size_t)ArrayId::Max];	// 1011,array[3:0]
 	};
 
 	#pragma pack(pop)
