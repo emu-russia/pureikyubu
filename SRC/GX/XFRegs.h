@@ -126,17 +126,7 @@ namespace GX
 		XF_DUALGEN7_ID = 0x1057,
 	};
 
-	// Texture generator types
-
-	// Texgen Source
-
-	// Lighting diffuse function
-
-	// Lighting attenuation function
-
-	// Lighting spotlight function
-
-	// Lighting distance attenuation function
+	#pragma pack(push, 1)
 
 	union ClipDisable
 	{
@@ -162,8 +152,6 @@ namespace GX
 
 	// Light parameters
 
-	#pragma pack(push, 1)
-
 	union Color
 	{
 		struct
@@ -183,6 +171,98 @@ namespace GX
 		float dhx[3];	// Post-processed x,y,z light dir, or 1/2 angle x,y,z
 	};
 
+	union ColorAlphaControl
+	{
+		struct
+		{
+			unsigned	MatSrc : 1;         // Material source. 0: use register, 1: Use CP supplied Vertex color/alpha
+			unsigned    LightFunc : 1;      // LightFunc. 0: Use 1.0, 1: Use Illum0
+			bool		Light0 : 1;         // 1: use light
+			bool		Light1 : 1;         // 1: use light
+			bool		Light2 : 1;         // 1: use light
+			bool		Light3 : 1;         // 1: use light
+			unsigned    AmbSrc : 1;         // Ambient source. 0: use register, 1: Use CP supplied Vertex color/alpha
+			unsigned    DiffuseAtten : 2;   // DiffuseAtten function. 0: Use 1.0, 1: N.L signed, 2: N.L clamped to [0,1.0]
+			unsigned    Atten : 1;          // AttenEnable function. 0: Select 1.0, 1: Select Attenuation fraction
+			unsigned    AttenSelect : 1;    // AttenSelect function. 0: Select specular (N.H) attenuation, 1: Select diffuse spotlight (L.Ldir) attenuation
+			bool		Light4 : 1;         // 1: use light
+			bool		Light5 : 1;         // 1: use light
+			bool		Light6 : 1;         // 1: use light
+			bool		Light7 : 1;         // 1: use light
+		};
+		uint32_t bits;
+	};
+
+	union MatrixIndex0
+	{
+		struct
+		{
+			int		PosNrmMatIdx : 6;		// Geometry matrix index
+			int		Tex0MatIdx : 6;			// Tex0 matrix index
+			int		Tex1MatIdx : 6;			// Tex1 matrix index
+			int		Tex2MatIdx : 6;			// Tex2 matrix index
+			int		Tex3MatIdx : 6;			// Tex3 matrix index
+		};
+		uint32_t bits;
+	};
+
+	union MatrixIndex1
+	{
+		struct
+		{
+			int		Tex4MatIdx : 6;			// Tex4 matrix index
+			int		Tex5MatIdx : 6;			// Tex5 matrix index
+			int		Tex6MatIdx : 6;			// Tex6 matrix index
+			int		Tex7MatIdx : 6;			// Tex7 matrix index
+		};
+		uint32_t bits;
+	};
+
+	// Texgen inrow enum
+	enum class TexGenInrow
+	{
+		XF_TEXGEN_INROW_POSMTX = 0,
+		XF_TEXGEN_INROW_NORMAL,
+		XF_TEXGEN_INROW_COLORS,
+		XF_TEXGEN_INROW_BINORMAL_T,
+		XF_TEXGEN_INROW_BINORMAL_B,
+		XF_TEXGEN_INROW_TEX0,
+		XF_TEXGEN_INROW_TEX1,
+		XF_TEXGEN_INROW_TEX2,
+		XF_TEXGEN_INROW_TEX3,
+		XF_TEXGEN_INROW_TEX4,
+		XF_TEXGEN_INROW_TEX5,
+		XF_TEXGEN_INROW_TEX6,
+		XF_TEXGEN_INROW_TEX7
+	};
+
+	union TexGenParam
+	{
+		struct
+		{
+			unsigned    Reserved : 1;
+			unsigned    projection : 1;		// texture projection 0: (s,t): texmul is 2x4 1: (s,t,q): texmul is 3x4
+			unsigned    in_form : 1;		// input form (format of source input data for regular textures) 0: (A, B, 1.0, 1.0) (used for regular texture source) 1: (A, B, C, 1.0) (used for geometry or normal source)
+			unsigned	Reserved2 : 1;
+			unsigned    type : 3;			// texgen type 0: Regular transformation (transform incoming data), 1: texgen bump mapping, 2: Color texgen: (s,t)=(r,g:b) (g and b are concatenated), color0, 3: Color texgen: (s,t)=(r,g:b) (g and b are concatenated), color 1
+			TexGenInrow	src_row : 5;		// regular texture source row
+			unsigned    bump_src : 3;		// bump mapping source texture: n: use regular transformed tex(n) for bump mapping source
+			unsigned    bump_light : 3;		// Bump mapping source light: n: use light #n for bump map direction source (10 to 17)
+		};
+		uint32_t bits;
+	};
+
+	union DualGenParam
+	{
+		struct
+		{
+			unsigned    dualidx : 6;    // Indicates which is the base row of the dual transform matrix for regular texture coordinate
+			unsigned    unused : 2;
+			unsigned    norm : 1;       // specifies if texture coordinate should be normalized before send transform
+		};
+		uint32_t bits;
+	};
+
 	struct XFState
 	{
 		// Matrix memory
@@ -199,7 +279,18 @@ namespace GX
 		uint32_t numColors;			// 0x1009. Specifies the number of colors to output: 0: No xform colors active, 1: Xform supplies 1 color (host supplied or computed), 2: Xform supplies 2 colors (host supplied or computed)
 		Color ambient[2];		// 0x100a, 0x100b. 32b: RGBA (8b/comp) Ambient color0/1 specifications
 		Color material[2];		// 0x100c, 0x100d. 32b: RGBA (8b/comp) global color0/1 material specifications
+		ColorAlphaControl colorControl[2];		// 0x100e, 0x100f
+		ColorAlphaControl alphaControl[2];		// 0x1010, 0x1011
 		uint32_t dualTexTran;		// 0x1012, B[0]: When set(1), enables dual transform for all texture coordinates. When reset (0), disables dual texture transform feature [rev B]
+		MatrixIndex0 matIdxA;		// 0x1018
+		MatrixIndex1 matIdxB;		// 0x1019
+		float viewportScale[3];				// 0x101a-0x101c. Viewport scale X,Y,Z
+		float viewportOffset[3];			// 0x101d-0x101f. Viewport offset X,Y,Z
+		float projectionParam[6];	// 0x1020-0x1025
+		bool projectOrtho;		// 0x1026. If set selects orthographic otherwise non-orthographic
+		uint32_t numTex;			// 0x103f. Number of active textures
+		TexGenParam tex[8];			// 0x1040-0x1047
+		DualGenParam dualTex[8];		// 0x1050-0x1057
 	};
 
 	#pragma pack(pop)

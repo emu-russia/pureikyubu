@@ -10,11 +10,15 @@ namespace GX
 		JDI::Hub.AddNode(GX_JDI_JSON, gx_init_handlers);
 
 		memset(&state, 0, sizeof(state));
+
+		fifo = new FifoProcessor(this);
 	}
 
 	GXCore::~GXCore()
 	{
 		JDI::Hub.RemoveNode(GX_JDI_JSON);
+
+		delete fifo;
 	}
 
 	void GXCore::Open()
@@ -23,6 +27,8 @@ namespace GX
 
 		state.tickPerFifo = 100;
 		state.updateTbrValue = Gekko::Gekko->GetTicks() + state.tickPerFifo;
+
+		fifo->Reset();
 
 		state.cp_thread = new Thread(CPThread, false, this, "CPThread");
 	}

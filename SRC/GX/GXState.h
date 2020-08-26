@@ -24,8 +24,8 @@ namespace GX
 
 		// Stats
 		size_t cpLoads;
-		size_t bpLoads;
 		size_t xfLoads;
+		size_t bpLoads;
 	};
 
 }

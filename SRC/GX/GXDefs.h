@@ -8,7 +8,7 @@ namespace GX
 {
 	// CP Commands. Format of commands transmitted via FIFO and display lists (DL)
 
-	enum class CPCommand
+	enum CPCommand : uint8_t
 	{
 		CP_CMD_NOP = 0x00,					// 00000000
 		CP_CMD_VCACHE_INVD = 0x48,			// 01001xxx

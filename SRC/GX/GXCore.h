@@ -31,7 +31,8 @@ namespace GX
 		void CP_UVF();
 
 		static void CPThread(void* Param);
-		void ProcessFifo(uint8_t data[32]);
+
+		FifoProcessor * fifo;		// Internal CP FIFO
 
 	public:
 		GXCore();
