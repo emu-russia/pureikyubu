@@ -1,6 +1,6 @@
 # DolwinEmu
 
-This component is used to control guest emulation (GameCube).
+This component is used to control host emulation (GameCube).
 
 You can assume that the "Loaded" state is equivalent to the fact that the GameCube is on (powered), 
 and the "Running" state is equivalent to the main Gekko clock is running.
@@ -25,7 +25,7 @@ into the HWConfig structure.
 
 ## Jdi
 
-Jey-Dai interface allows you to control guest emulation, load and unload executable files (DOL, ELF) or DVD images and so on.
+Jey-Dai interface allows you to control host emulation, load and unload executable files (DOL, ELF) or DVD images and so on.
 
 A list of commands can be found in EmuJdi.json
 

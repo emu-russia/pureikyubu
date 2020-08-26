@@ -1,3 +1,4 @@
+// Command Processor registers definitions
 
 #pragma once
 
@@ -72,7 +73,7 @@ namespace GX
 	#pragma pack(push, 8)
 
 	// CPU CP registers
-	struct CPRegs
+	struct CPHostRegs
 	{
 		uint16_t     sr;         // status
 		uint16_t     cr;         // control
@@ -212,35 +213,187 @@ namespace GX
 
 	enum class VatCount
 	{
-		VCNT_POS_XY = 0,
-		VCNT_POS_XYZ = 1,
-		VCNT_NRM_XYZ = 0,
-		VCNT_NRM_NBT = 1,    // index is NBT
-		VCNT_NRM_NBT3 = 2,    // index is one from N/B/T
-		VCNT_CLR_RGB = 0,
-		VCNT_CLR_RGBA = 1,
-		VCNT_TEX_S = 0,
-		VCNT_TEX_ST = 1
+		VCNT_POS_XY = 0,		// two (x,y)
+		VCNT_POS_XYZ = 1,		// three (x,y,z)
+		VCNT_NRM_XYZ = 0,		// three normals
+		VCNT_NRM_NBT = 1,		// nine normals
+		VCNT_CLR_RGB = 0,		// three (r,g,b)
+		VCNT_CLR_RGBA = 1,		// four (r,g,b,a)
+		VCNT_TEX_S = 0,			// one (s)
+		VCNT_TEX_ST = 1			// two (s,t)
 	};
 
 	// Vertex Component Format (from VAT register)
 
 	enum class VatFormat
 	{
-		// For Components (coords)
-		VFMT_U8 = 0,
-		VFMT_S8 = 1,
-		VFMT_U16 = 2,
-		VFMT_S16 = 3,
-		VFMT_F32 = 4,
+		// For Components (normal, coords)
+		VFMT_U8 = 0,			// ubyte
+		VFMT_S8 = 1,			// byte
+		VFMT_U16 = 2,			// ushort
+		VFMT_S16 = 3,			// short
+		VFMT_F32 = 4,			// float
 
 		// For Colors
-		VFMT_RGB565 = 0,
-		VFMT_RGB8 = 1,
-		VFMT_RGBX8 = 2,
-		VFMT_RGBA4 = 3,
-		VFMT_RGBA6 = 4,
-		VFMT_RGBA8 = 5
+		VFMT_RGB565 = 0,		// 16 bit 565 (three comp)
+		VFMT_RGB8 = 1,			// 24 bit 888 (three comp)
+		VFMT_RGBX8 = 2,			// 32 bit 888x (three comp)
+		VFMT_RGBA4 = 3,			// 16 bit 4444 (four comp)
+		VFMT_RGBA6 = 4,			// 24 bit 6666 (four comp)
+		VFMT_RGBA8 = 5			// 32 bit 8888 (four comp)
+	};
+
+	union MatrixIndexA
+	{
+		struct
+		{
+			int PosNrmIndex : 6;
+			int Tex0Index : 6;
+			int Tex1Index : 6;
+			int Tex2Index : 6;
+			int Tex3Index : 6;
+		};
+		uint32_t bits;
+	};
+
+	union MatrixIndexB
+	{
+		struct
+		{
+			int Tex4Index : 6;
+			int Tex5Index : 6;
+			int Tex6Index : 6;
+			int Tex7Index : 6;
+		};
+		uint32_t bits;
+	};
+
+	union VCD_Lo
+	{
+		struct
+		{
+			bool PosNrmMatIdx : 1;
+			bool Tex0MatIdx : 1;
+			bool Tex1MatIdx : 1;
+			bool Tex2MatIdx : 1;
+			bool Tex3MatIdx : 1;
+			bool Tex4MatIdx : 1;
+			bool Tex5MatIdx : 1;
+			bool Tex6MatIdx : 1;
+			bool Tex7MatIdx : 1;
+			AttrType Position : 2;
+			AttrType Normal : 2;
+			AttrType Color0 : 2;
+			AttrType Color1 : 2;
+		};
+		uint32_t bits;
+	};
+
+	union VCD_Hi
+	{
+		struct
+		{
+			AttrType Tex0Coord : 2;
+			AttrType Tex1Coord : 2;
+			AttrType Tex2Coord : 2;
+			AttrType Tex3Coord : 2;
+			AttrType Tex4Coord : 2;
+			AttrType Tex5Coord : 2;
+			AttrType Tex6Coord : 2;
+			AttrType Tex7Coord : 2;
+		};
+		uint32_t bits;
+	};
+
+	union VAT_group0
+	{
+		struct
+		{
+			VatCount	poscnt : 1;
+			VatFormat	posfmt : 3;
+			size_t		posshft : 5;			// Location of decimal point from LSB. This shift applies to all u/short components and to u/byte components where ByteDequant is asserted
+			VatCount    nrmcnt : 1;
+			VatFormat	nrmfmt : 3;				// Normal location of decimal point predefined as follow: Byte: 6, Short: 14
+			VatCount    col0cnt : 1;
+			VatFormat	col0fmt : 3;
+			VatCount    col1cnt : 1;
+			VatFormat	col1fmt : 3;
+			VatCount    tex0cnt : 1;
+			VatFormat	tex0fmt : 3;
+			size_t	    tex0shft : 5;
+			bool		bytedeq : 1;			// Shift applies for u/byte and u/short components of position and texture attributes.
+			bool		nrmidx3 : 1;			// When nine normals selected in indirect mode, input will be treated as three staggered indices (one per triple biased by component size), into normal table.
+		};
+		uint32_t bits;
+	};
+
+	union VAT_group1
+	{
+		struct
+		{
+			VatCount    tex1cnt : 1;
+			VatFormat	tex1fmt : 3;
+			size_t	    tex1shft : 5;
+			VatCount    tex2cnt : 1;
+			VatFormat	tex2fmt : 3;
+			size_t	    tex2shft : 5;
+			VatCount    tex3cnt : 1;
+			VatFormat	tex3fmt : 3;
+			size_t	    tex3shft : 5;
+			VatCount    tex4cnt : 1;
+			VatFormat	tex4fmt : 3;
+			bool		vcache : 1;
+		};
+		uint32_t bits;
+	};
+
+	union VAT_group2
+	{
+		struct
+		{
+			size_t		tex4shft : 5;
+			VatCount    tex5cnt : 1;
+			VatFormat	tex5fmt : 3;
+			size_t	    tex5shft : 5;
+			VatCount    tex6cnt : 1;
+			VatFormat	tex6fmt : 3;
+			size_t	    tex6shft : 5;
+			VatCount    tex7cnt : 1;
+			VatFormat	tex7fmt : 3;
+			size_t		tex7shft : 5;
+		};
+		uint32_t bits;
+	};
+
+	union ArrayBase
+	{
+		struct
+		{
+			uint32_t Base : 26;
+		};
+		uint32_t bits;
+	};
+
+	union ArrayStride
+	{
+		struct
+		{
+			int Stride : 8;
+		};
+		uint32_t bits;
+	};
+
+	struct CPState
+	{
+		MatrixIndexA matIndexA;
+		MatrixIndexB matIndexB;
+		VCD_Lo vcdLo;
+		VCD_Hi vcdHi;
+		VAT_group0 vatA[8];
+		VAT_group1 vatB[8];
+		VAT_group2 vatC[8];
+		ArrayBase arrayBase[16];
+		ArrayStride arrayStride[16];
 	};
 
 }

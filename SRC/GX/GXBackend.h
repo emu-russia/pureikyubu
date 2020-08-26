@@ -18,6 +18,8 @@ namespace GX
 
 		virtual void DrawBegin(Primitive prim) = 0;
 		virtual void DrawEnd() = 0;
+
+		virtual void ProcessVertex(Vertex& v) = 0;
 	};
 
 }

@@ -27,7 +27,7 @@ static const char *intdesc(uint32_t mask)
         case PI_INTERRUPT_SI        : return "SI";
         case PI_INTERRUPT_DI        : return "DI";
         case PI_INTERRUPT_RSW       : return "RSW";
-        case PI_INTERRUPT_ERROR     : return "ERROR";
+        case PI_INTERRUPT_PI        : return "PI_ERROR";
     }
     
     // default

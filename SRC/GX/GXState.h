@@ -8,7 +8,8 @@ namespace GX
 	struct State
 	{
 		PERegs peregs;
-		CPRegs cpregs;		// Mapped command processor registers
+		CPHostRegs cpregs;		// Mapped command processor registers
+		CPState cp;
 
 		// PI FIFO
 		volatile uint32_t    pi_cp_base;

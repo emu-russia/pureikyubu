@@ -29,7 +29,7 @@ namespace GX
 		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
 	};
 
-	// Gx Primitive
+	// Gx Primitive (for backend)
 
 	enum class Primitive
 	{
@@ -40,6 +40,13 @@ namespace GX
 		Lines,
 		LineStrip,
 		Points,
+	};
+
+	// Processed vertex (for backend)
+
+	struct Vertex
+	{
+		int bogus;
 	};
 
 	// PE Registers (from CPU side). 16-bit access.
