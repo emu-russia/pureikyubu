@@ -171,7 +171,8 @@ namespace GX
 		CP_ARRAY_STRIDE_ID = 0xb0,			// ArrayStride 1011,array[3:0]
 	};
 
-	// Vertex attributes
+	// Vertex attributes.
+	// Specifies the sequence of attributes in the raw vertex data. Which of the attributes are present is selected by the VCD settings.
 
 	enum class VertexAttr
 	{
@@ -242,6 +243,8 @@ namespace GX
 		VFMT_RGBA6 = 4,			// 24 bit 6666 (four comp)
 		VFMT_RGBA8 = 5			// 32 bit 8888 (four comp)
 	};
+
+	#pragma pack(push, 1)
 
 	union MatrixIndexA
 	{
@@ -385,15 +388,17 @@ namespace GX
 
 	struct CPState
 	{
-		MatrixIndexA matIndexA;
-		MatrixIndexB matIndexB;
-		VCD_Lo vcdLo;
-		VCD_Hi vcdHi;
-		VAT_group0 vatA[8];
-		VAT_group1 vatB[8];
-		VAT_group2 vatC[8];
-		ArrayBase arrayBase[16];
-		ArrayStride arrayStride[16];
+		MatrixIndexA matIndexA;			// 0011xxxx
+		MatrixIndexB matIndexB;				// 0100xxxx
+		VCD_Lo vcdLo;				// 0101xxxx
+		VCD_Hi vcdHi;				// 0110xxxx
+		VAT_group0 vatA[8];			// 0111x,vat[2:0]
+		VAT_group1 vatB[8];			// 1000x,vat[2:0]
+		VAT_group2 vatC[8];			// 1001x,vat[2:0]	
+		ArrayBase arrayBase[16];		// 1010,array[3:0]
+		ArrayStride arrayStride[16];	// 1011,array[3:0]
 	};
+
+	#pragma pack(pop)
 
 }

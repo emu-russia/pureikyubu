@@ -6,11 +6,11 @@ namespace GX
 {
 	class GXCore;		// Forward reference to parent class
 
-	class GXBackend
+	class Backend
 	{
 	public:
-		GXBackend(GXCore* parent);
-		virtual ~GXBackend();
+		Backend(GXCore* parent);
+		virtual ~Backend();
 
 		virtual void PassCPLoadReg(CPRegister id) = 0;
 		virtual void PassBPLoadReg(BPRegister id) = 0;

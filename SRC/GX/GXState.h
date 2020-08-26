@@ -10,6 +10,7 @@ namespace GX
 		PERegs peregs;
 		CPHostRegs cpregs;		// Mapped command processor registers
 		CPState cp;
+		XFState xf;
 
 		// PI FIFO
 		volatile uint32_t    pi_cp_base;
@@ -20,6 +21,11 @@ namespace GX
 		Thread* cp_thread;     // CP FIFO thread
 		size_t	tickPerFifo;
 		int64_t	updateTbrValue;
+
+		// Stats
+		size_t cpLoads;
+		size_t bpLoads;
+		size_t xfLoads;
 	};
 
 }

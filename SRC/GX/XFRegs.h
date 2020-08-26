@@ -1,3 +1,4 @@
+// Transform Unit registers definitions
 
 #pragma once
 
@@ -136,5 +137,71 @@ namespace GX
 	// Lighting spotlight function
 
 	// Lighting distance attenuation function
+
+	union ClipDisable
+	{
+		struct
+		{
+			bool disableDetection : 1;			// When set, disables clipping detection
+			bool disableTrivialReject : 1;		// When set, disables trivial rejection
+			bool disablePolyAccel : 1;			// When set, disables cpoly clipping acceleration
+		};
+		uint32_t bits;
+	};
+
+	union InVertexSpec
+	{
+		struct
+		{
+			int color0Usage : 2;		// 0: No host supplied color information 1: Host supplied color0 2: Host supplied color0 and color1
+			int normalUsage : 2;		// 0: No host supplied normal 1: Host supplied normal 2: Host supplied normal and binormals
+			int texCoords : 4;		// 0: No host supplied textures 1: 1 host supplied texture pair (S0, T0) 2-8: 2-8 host supplied texturepairs; 9-15: Reserved
+		};
+		uint32_t bits;
+	};
+
+	// Light parameters
+
+	#pragma pack(push, 1)
+
+	union Color
+	{
+		struct
+		{
+			uint8_t     a, b, g, r;
+		};
+		uint32_t rgba;
+	};
+
+	struct Light
+	{
+		uint32_t Reserved[3];
+		Color rgba;		// RGBA (8b/comp)
+		float a[3];		// Post-processed cos atten
+		float k[3];		// Post-processed dist atten
+		float lpx[3];	// Post-processed x,y,z light pos, or inf ldir x,y,z
+		float dhx[3];	// Post-processed x,y,z light dir, or 1/2 angle x,y,z
+	};
+
+	struct XFState
+	{
+		// Matrix memory
+
+		float mvTexMtx[(size_t)XFRegister::XF_MATRIX_MEMORY_SIZE];				// 0x0000-0x00ff (IndexA)
+		float nrmMtx[(size_t)XFRegister::XF_NORMAL_MATRIX_MEMORY_SIZE];			// 0x0400-0x045f  (IndexB)
+		float dualTexMtx[(size_t)XFRegister::XF_DUALTEX_MATRIX_MEMORY_SIZE];		// 0x0500-0x05ff  (IndexC)
+		Light light[8];			// 0x0600-0x067f  (IndexD)
+
+		// Other registers
+
+		ClipDisable clipDisable;		// 0x1005
+		InVertexSpec vtxSpec;			// 0x1008
+		uint32_t numColors;			// 0x1009. Specifies the number of colors to output: 0: No xform colors active, 1: Xform supplies 1 color (host supplied or computed), 2: Xform supplies 2 colors (host supplied or computed)
+		Color ambient[2];		// 0x100a, 0x100b. 32b: RGBA (8b/comp) Ambient color0/1 specifications
+		Color material[2];		// 0x100c, 0x100d. 32b: RGBA (8b/comp) global color0/1 material specifications
+		uint32_t dualTexTran;		// 0x1012, B[0]: When set(1), enables dual transform for all texture coordinates. When reset (0), disables dual texture transform feature [rev B]
+	};
+
+	#pragma pack(pop)
 
 }

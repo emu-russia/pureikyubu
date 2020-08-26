@@ -33,6 +33,7 @@
 
 #include "../../Hardware/HWConfig.h"
 #include "GX.h"
+#include "Backend.h"
 
 extern  HINSTANCE   hPlugin;
 extern  HWND        hwndMain;
