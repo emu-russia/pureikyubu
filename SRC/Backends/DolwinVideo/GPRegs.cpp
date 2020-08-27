@@ -71,8 +71,7 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_A:
         case CP_VAT7_A:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatA[vatnum].vata = value;
+            cpRegs.vatA[index & 7].vata = value;
             FifoReconfigure();
         }
         return;
@@ -86,8 +85,7 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_B:
         case CP_VAT7_B:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatB[vatnum].vatb = value;
+            cpRegs.vatB[index & 7].vatb = value;
             FifoReconfigure();
         }
         return;
@@ -101,8 +99,7 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_C:
         case CP_VAT7_C:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatC[vatnum].vatc = value;
+            cpRegs.vatC[index & 7].vatc = value;
             FifoReconfigure();
         }
         return;

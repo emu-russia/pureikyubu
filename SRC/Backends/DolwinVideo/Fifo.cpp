@@ -60,7 +60,7 @@ static int gx_vtxsize(unsigned v)
     static int cntn[] = { 3, 9 };
     static int cntt[] = { 1, 2 };
     static int fmtsz[] = { 1, 1, 2, 2, 4 };
-    static int cfmtsz[] = { 2, 3, 1, 2, 4, 4 };
+    static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
     if (cpRegs.vcdLo.pmidx)  vtxsize++;
     if (cpRegs.vcdLo.t0midx) vtxsize++;
@@ -72,32 +72,171 @@ static int gx_vtxsize(unsigned v)
     if (cpRegs.vcdLo.t6midx) vtxsize++;
     if (cpRegs.vcdLo.t7midx) vtxsize++;
 
-    if (cpRegs.vcdLo.pos & 2) vtxsize += cpRegs.vcdLo.pos - 1;
-    if (cpRegs.vcdLo.nrm & 2) vtxsize += cpRegs.vcdLo.nrm - 1;
-    if (cpRegs.vcdLo.col0 & 2) vtxsize += cpRegs.vcdLo.col0 - 1;
-    if (cpRegs.vcdLo.col1 & 2) vtxsize += cpRegs.vcdLo.col1 - 1;
-    if (cpRegs.vcdHi.tex0 & 2) vtxsize += cpRegs.vcdHi.tex0 - 1;
-    if (cpRegs.vcdHi.tex1 & 2) vtxsize += cpRegs.vcdHi.tex1 - 1;
-    if (cpRegs.vcdHi.tex2 & 2) vtxsize += cpRegs.vcdHi.tex2 - 1;
-    if (cpRegs.vcdHi.tex3 & 2) vtxsize += cpRegs.vcdHi.tex3 - 1;
-    if (cpRegs.vcdHi.tex4 & 2) vtxsize += cpRegs.vcdHi.tex4 - 1;
-    if (cpRegs.vcdHi.tex5 & 2) vtxsize += cpRegs.vcdHi.tex5 - 1;
-    if (cpRegs.vcdHi.tex6 & 2) vtxsize += cpRegs.vcdHi.tex6 - 1;
-    if (cpRegs.vcdHi.tex7 & 2) vtxsize += cpRegs.vcdHi.tex7 - 1;
+    // Position
 
-    if (cpRegs.vcdLo.pos == 1) vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
-    if (cpRegs.vcdLo.nrm == 1) vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
-    if (cpRegs.vcdHi.tex0 == 1) vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
-    if (cpRegs.vcdHi.tex1 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
-    if (cpRegs.vcdHi.tex2 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
-    if (cpRegs.vcdHi.tex3 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
-    if (cpRegs.vcdHi.tex4 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
-    if (cpRegs.vcdHi.tex5 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
-    if (cpRegs.vcdHi.tex6 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
-    if (cpRegs.vcdHi.tex7 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+    switch (cpRegs.vcdLo.pos)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
 
-    if (cpRegs.vcdLo.col0 == 1) vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
-    if (cpRegs.vcdLo.col1 == 1) vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
+    // Normal
+
+    switch (cpRegs.vcdLo.nrm)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
+            break;
+        case VCD_INDX8:
+            if (cpRegs.vatA[v].nrmidx3) vtxsize += 3;
+            else vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            if (cpRegs.vatA[v].nrmidx3) vtxsize += 2 * 3;
+            else vtxsize += 2;
+            break;
+    }
+
+    // Colors
+
+    switch (cpRegs.vcdLo.col0)
+    {
+        case VCD_DIRECT:
+            vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdLo.col1)
+    {
+        case VCD_DIRECT:
+            vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    // TexCoords
+
+    switch (cpRegs.vcdHi.tex0)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex1)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex2)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex3)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex4)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex5)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex6)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
+
+    switch (cpRegs.vcdHi.tex7)
+    {
+        case VCD_DIRECT:
+            vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+            break;
+        case VCD_INDX8:
+            vtxsize += 1;
+            break;
+        case VCD_INDX16:
+            vtxsize += 2;
+            break;
+    }
 
     return vtxsize;
 }
@@ -115,7 +254,7 @@ void FifoReconfigure()
 void * GetArrayPtr(ArrayId arrayId, int idx)
 {
     uint32_t address = cpRegs.arbase[(size_t)arrayId] + (uint32_t)idx * cpRegs.arstride[(size_t)arrayId];
-    return &RAM[address];
+    return &RAM[address & 0x03ff'ffff];
 }
 
 void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFuture::FifoProcessor* fifo, ArrayId arrayId)
@@ -305,29 +444,6 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
     switch (fmt)
     {
-        case VFMT_U8:
-            if (type == VCD_DIRECT)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    Comp.u8[i] = fifo->Read8();
-                }
-            }
-            else
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    void* ptr = *ptrptr[i / 3];
-                    Comp.u8[i] = ((uint8_t*)ptr)[i];
-                }
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                comp[i] = (float)(Comp.u8[i] >> shft);
-            }
-            break;
-
         case VFMT_S8:
             if (type == VCD_DIRECT)
             {
@@ -348,29 +464,6 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
             for (int i = 0; i < count; i++)
             {
                 comp[i] = (float)(Comp.s8[i] >> shft);
-            }
-            break;
-
-        case VFMT_U16:
-            if (type == VCD_DIRECT)
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    Comp.u16[i] = fifo->Read16();
-                }
-            }
-            else
-            {
-                for (int i = 0; i < count; i++)
-                {
-                    void* ptr = *ptrptr[i / 3];
-                    Comp.u16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
-                }
-            }
-
-            for (int i = 0; i < count; i++)
-            {
-                comp[i] = (float)(Comp.u16[i] >> shft);
             }
             break;
 
@@ -655,7 +748,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
         cpRegs.vcdLo.pos,
         cpRegs.vatA[vatnum].posfmt,
-        cpRegs.vatA[vatnum].posshft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatA[vatnum].posshft : 0,
         fifo,
         ArrayId::Pos);
 
@@ -702,7 +795,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex0,
         cpRegs.vatA[vatnum].tex0fmt,
-        cpRegs.vatA[vatnum].tex0shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatA[vatnum].tex0shft : 0,
         fifo,
         ArrayId::Tex0Coord);
 
@@ -712,7 +805,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex1,
         cpRegs.vatB[vatnum].tex1fmt,
-        cpRegs.vatB[vatnum].tex1shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex1shft : 0,
         fifo,
         ArrayId::Tex1Coord);
 
@@ -722,7 +815,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex2,
         cpRegs.vatB[vatnum].tex2fmt,
-        cpRegs.vatB[vatnum].tex2shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex2shft : 0,
         fifo,
         ArrayId::Tex2Coord);
 
@@ -732,7 +825,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex3,
         cpRegs.vatB[vatnum].tex3fmt,
-        cpRegs.vatB[vatnum].tex3shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex3shft : 0,
         fifo,
         ArrayId::Tex3Coord);
 
@@ -742,7 +835,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex4,
         cpRegs.vatB[vatnum].tex4fmt,
-        cpRegs.vatC[vatnum].tex4shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex4shft : 0,
         fifo,
         ArrayId::Tex4Coord);
 
@@ -752,7 +845,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex5,
         cpRegs.vatC[vatnum].tex5fmt,
-        cpRegs.vatC[vatnum].tex5shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex5shft : 0,
         fifo,
         ArrayId::Tex5Coord);
 
@@ -762,7 +855,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex6,
         cpRegs.vatC[vatnum].tex6fmt,
-        cpRegs.vatC[vatnum].tex6shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex6shft : 0,
         fifo,
         ArrayId::Tex6Coord);
 
@@ -772,7 +865,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
         cpRegs.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex7,
         cpRegs.vatC[vatnum].tex7fmt,
-        cpRegs.vatC[vatnum].tex7shft,
+        cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex7shft : 0,
         fifo,
         ArrayId::Tex7Coord);
 }
