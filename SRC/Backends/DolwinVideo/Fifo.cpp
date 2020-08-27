@@ -17,6 +17,8 @@ GX_FromFuture::FifoProcessor GxFifo;
 
 bool frame_done = true;
 
+bool logDrawCommands = false;
+
 // ---------------------------------------------------------------------------
 
 // stage callbacks
@@ -975,7 +977,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             uint8_t* fifoPtr = &RAM[physAddress];
             size_t size = fifo->Read32() & ~0x1f;
 
-            Report(Channel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
+            }
 
             GX_FromFuture::FifoProcessor* callDlFifo = new GX_FromFuture::FifoProcessor(fifoPtr, size);
 
@@ -1134,7 +1139,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                 1---2       tri1: 0-1-2
                 |  /|       tri2: 0-2-3
@@ -1171,7 +1179,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                 1---2       tri: 0-1-2
                 |  /
@@ -1208,7 +1219,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                     1---3---5   tri1: 0-1-2
                    /|  /|  /    tri2: 1-2-3
@@ -1260,7 +1274,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                 1---2---3   tri1: 0-1-2
                 |  /  _/    tri2: 0-2-3
@@ -1311,7 +1328,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                     1   3   5
                    /   /   / 
@@ -1348,7 +1368,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                     1   3   5
                    /|  /|  / 
@@ -1395,7 +1418,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            Report(Channel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            if (logDrawCommands)
+            {
+                Report(Channel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+            }
                                                         /*/
                 0---0       tri: 0-0-0 (1x1x1 tri)
                 |  /
