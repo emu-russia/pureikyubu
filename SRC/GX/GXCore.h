@@ -4,6 +4,7 @@
 
 #include "GXDefs.h"
 #include "GXState.h"
+#include "CommandProcessor.h"
 #include "TexCache.h"
 #include "TexConv.h"
 #include "GXBackend.h"
@@ -13,8 +14,8 @@ namespace GX
 
 	class GXCore
 	{
-		friend GXBackend;
-		GXBackend* backend = nullptr;
+		friend Backend;
+		Backend* backend = nullptr;
 
 		TextureConverter texconv;
 		TextureCache texcache;
@@ -30,7 +31,8 @@ namespace GX
 		void CP_UVF();
 
 		static void CPThread(void* Param);
-		void ProcessFifo(uint8_t data[32]);
+
+		FifoProcessor * fifo;		// Internal CP FIFO
 
 	public:
 		GXCore();

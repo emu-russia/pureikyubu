@@ -65,7 +65,6 @@ enum
     VCNT_POS_XYZ    = 1,
     VCNT_NRM_XYZ    = 0,
     VCNT_NRM_NBT    = 1,    // index is NBT
-    VCNT_NRM_NBT3   = 2,    // index is one from N/B/T
     VCNT_CLR_RGB    = 0,
     VCNT_CLR_RGBA   = 1,
     VCNT_TEX_S      = 0,
@@ -348,6 +347,7 @@ enum
 
 // Color channel registers.
 
+#define XF_INVTXSPEC                    0x1008
 #define XF_NUMCOLS                      0x1009  // Selects the number of output colors
 #define XF_AMBIENT0                     0x100A  // RGBA (8b/comp) ambient color 0
 #define XF_AMBIENT1                     0x100B  // RGBA (8b/comp) ambient color 1
@@ -785,6 +785,44 @@ typedef union
     uint32_t     matidx;
 } MATIDX_B;
 
+// Array name for ArrayBase and ArrayStride
+
+enum class ArrayId
+{
+    Pos = 0,
+    Nrm,
+    Color0,
+    Color1,
+    Tex0Coord,
+    Tex1Coord,
+    Tex2Coord,
+    Tex3Coord,
+    Tex4Coord,
+    Tex5Coord,
+    Tex6Coord,
+    Tex7Coord,
+
+    // Used by XF_IndexLoadRegA/B/C/D commands
+
+    IndexRegA,
+    IndexRegB,
+    IndexRegC,
+    IndexRegD,
+
+    Max,
+};
+
+union InVertexSpec
+{
+    struct
+    {
+        int color0Usage : 2;		// 0: No host supplied color information 1: Host supplied color0 2: Host supplied color0 and color1
+        int normalUsage : 2;		// 0: No host supplied normal 1: Host supplied normal 2: Host supplied normal and binormals
+        int texCoords : 4;		// 0: No host supplied textures 1: 1 host supplied texture pair (S0, T0) 2-8: 2-8 host supplied texturepairs; 9-15: Reserved
+    };
+    uint32_t bits;
+};
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // register memory space description
@@ -799,8 +837,8 @@ typedef struct
     VAT_A       vatA[8];                // 0x70...0x77
     VAT_B       vatB[8];                // 0x80...0x87
     VAT_C       vatC[8];                // 0x90...0x97
-    uint8_t          *arbase[VTX_MAX_ATTR];  // 0xA0...0xAB
-    uint32_t         arstride[VTX_MAX_ATTR]; // 0xB0...0xBB
+    uint32_t         arbase[(size_t)ArrayId::Max];  // 0xA0...0xAB
+    uint32_t         arstride[(size_t)ArrayId::Max]; // 0xB0...0xBB
 } CPMemory;
 
 typedef struct
@@ -830,6 +868,7 @@ typedef struct
     float       postmtx[32][3];         // 0x0500...0x05FF
     unsigned    posidx, texidx[8];      // pos index, tex index
     LightObj    light[8];               // 0x0600...0x07FF
+    InVertexSpec vtxSpec;               // 0x1008
     uint32_t         numcol;                 // 0x1009
     Color       ambient[2];             // 0x100A, 0x100B
     Color       material[2];            // 0x100C, 0x100D
@@ -861,6 +900,6 @@ extern  uint8_t   *RAM;
 // registers loading (using fifo writes)
 void    loadCPReg(size_t index, uint32_t value);
 void    loadBPReg(size_t index, uint32_t value);
-void    loadXFRegs(size_t startIndex, size_t amount, GX::FifoProcessor* fifo);
+void    loadXFRegs(size_t startIndex, size_t amount, GX_FromFuture::FifoProcessor* fifo);
 
 extern  uint32_t cpLoads, bpLoads, xfLoads;

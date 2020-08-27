@@ -6,6 +6,9 @@
 // local data
 //
 
+extern HINSTANCE   hPlugin;
+extern HWND hwndMain;
+
 static HGLRC hglrc;
 static HDC hdcgl;
 
@@ -493,7 +496,7 @@ void GL_SaveBitmap(uint8_t *buf)
 void GPFrameDone()
 {
     GL_EndFrame();
-    frame_done = 1;
+    frame_done = true;
 }
 
 // make screenshot

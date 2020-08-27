@@ -6,6 +6,8 @@ using namespace Debug;
 
 namespace GX
 {
+	#pragma region "Dealing with registers"
+
 	void GXCore::CP_BREAK()
 	{
 		if (state.cpregs.cr & CP_CR_BPINTEN && (state.cpregs.sr & CP_SR_BPINT) == 0)
@@ -79,7 +81,15 @@ namespace GX
 			gx->state.cpregs.sr &= ~CP_SR_RD_IDLE;
 
 			gx->state.cpregs.sr &= ~CP_SR_CMD_IDLE;
-			gx->ProcessFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+			// TODO: Refactoring hacks
+
+			void GXWriteFifo(uint8_t dataPtr[32]);
+			GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+			//gx->fifo->WriteBytes(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+
+
 			gx->state.cpregs.sr |= CP_SR_CMD_IDLE;
 
 			gx->state.cpregs.rdptr += 32;
@@ -432,8 +442,8 @@ namespace GX
 		char hw = (state.cpregs.cr & CP_CR_OVFEN) ? ('O') : ('o');    // high-wmark
 
 		Report(Channel::Norm, "CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
-		Report(Channel::Norm, "control :0x%08X", state.cpregs.cr);
-		Report(Channel::Norm, " enable :0x%08X", state.cpregs.sr);
+		Report(Channel::Norm, " status :0x%08X", state.cpregs.sr);
+		Report(Channel::Norm, " enable :0x%08X", state.cpregs.cr);
 		Report(Channel::Norm, "   base :0x%08X", state.cpregs.base);
 		Report(Channel::Norm, "   top  :0x%08X", state.cpregs.top);
 		Report(Channel::Norm, "   low  :0x%08X", state.cpregs.lomark);
@@ -444,11 +454,329 @@ namespace GX
 		Report(Channel::Norm, "   break:0x%08X", state.cpregs.bpptr);
 	}
 
-	void GXCore::ProcessFifo(uint8_t data[32])
+	#pragma endregion "Dealing with registers"
+
+
+	#pragma region "FIFO Processing"
+
+	FifoProcessor::FifoProcessor(GXCore* gx)
 	{
-		// TODO: Refactoring hacks
-		void GXWriteFifo(uint8_t dataPtr[32]);
-		GXWriteFifo(data);
+		gxcore = gx;
+		fifo = new uint8_t[fifoSize];
+		memset(fifo, 0, fifoSize);
+		allocated = true;
 	}
+
+	FifoProcessor::FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size)
+	{
+		gxcore = gx;
+		fifo = fifoPtr;
+		fifoSize = size + 1;
+		writePtr = fifoSize - 1;
+		allocated = false;
+	}
+
+	FifoProcessor::~FifoProcessor()
+	{
+		if (allocated)
+		{
+			delete[] fifo;
+		}
+	}
+
+	void FifoProcessor::Reset()
+	{
+		readPtr = writePtr = 0;
+	}
+
+	void FifoProcessor::WriteBytes(uint8_t dataPtr[32])
+	{
+		lock.Lock();
+
+		if ((writePtr + 32) < fifoSize)
+		{
+			memcpy(&fifo[writePtr], dataPtr, 32);
+			writePtr += 32;
+		}
+		else
+		{
+			size_t part1Size = fifoSize - writePtr;
+			memcpy(&fifo[writePtr], dataPtr, part1Size);
+			writePtr = 32 - part1Size;
+			memcpy(fifo, dataPtr + part1Size, writePtr);
+
+			Report(Channel::GP, "FifoProcessor: fifo wrapped\n");
+		}
+
+		lock.Unlock();
+
+		while (EnoughToExecute())
+		{
+			ExecuteCommand();
+		}
+	}
+
+	size_t FifoProcessor::GetSize()
+	{
+		if (writePtr >= readPtr)
+		{
+			return writePtr - readPtr;
+		}
+		else
+		{
+			return (fifoSize - readPtr) + writePtr;
+		}
+	}
+
+	bool FifoProcessor::EnoughToExecute()
+	{
+		if (GetSize() < 1)
+			return false;
+
+		CPCommand cmd = (CPCommand)Peek8(0);
+
+		switch(cmd)
+		{
+			case CPCommand::CP_CMD_NOP:
+				return true;
+
+			case CPCommand::CP_CMD_VCACHE_INVD | 0:
+			case CPCommand::CP_CMD_VCACHE_INVD | 1:
+			case CPCommand::CP_CMD_VCACHE_INVD | 2:
+			case CPCommand::CP_CMD_VCACHE_INVD | 3:
+			case CPCommand::CP_CMD_VCACHE_INVD | 4:
+			case CPCommand::CP_CMD_VCACHE_INVD | 5:
+			case CPCommand::CP_CMD_VCACHE_INVD | 6:
+			case CPCommand::CP_CMD_VCACHE_INVD | 7:
+				return true;
+
+			case CPCommand::CP_CMD_CALL_DL | 0:
+			case CPCommand::CP_CMD_CALL_DL | 1:
+			case CPCommand::CP_CMD_CALL_DL | 2:
+			case CPCommand::CP_CMD_CALL_DL | 3:
+			case CPCommand::CP_CMD_CALL_DL | 4:
+			case CPCommand::CP_CMD_CALL_DL | 5:
+			case CPCommand::CP_CMD_CALL_DL | 6:
+			case CPCommand::CP_CMD_CALL_DL | 7:
+				return GetSize() >= 9;
+
+			case CPCommand::CP_CMD_LOAD_BPREG | 0:
+			case CPCommand::CP_CMD_LOAD_BPREG | 1:
+			case CPCommand::CP_CMD_LOAD_BPREG | 2:
+			case CPCommand::CP_CMD_LOAD_BPREG | 3:
+			case CPCommand::CP_CMD_LOAD_BPREG | 4:
+			case CPCommand::CP_CMD_LOAD_BPREG | 5:
+			case CPCommand::CP_CMD_LOAD_BPREG | 6:
+			case CPCommand::CP_CMD_LOAD_BPREG | 7:
+			case CPCommand::CP_CMD_LOAD_BPREG | 8:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xa:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xb:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xc:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xd:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xe:
+			case CPCommand::CP_CMD_LOAD_BPREG | 0xf:
+				return GetSize() >= 5;
+
+			case CPCommand::CP_CMD_LOAD_CPREG | 0:
+			case CPCommand::CP_CMD_LOAD_CPREG | 1:
+			case CPCommand::CP_CMD_LOAD_CPREG | 2:
+			case CPCommand::CP_CMD_LOAD_CPREG | 3:
+			case CPCommand::CP_CMD_LOAD_CPREG | 4:
+			case CPCommand::CP_CMD_LOAD_CPREG | 5:
+			case CPCommand::CP_CMD_LOAD_CPREG | 6:
+			case CPCommand::CP_CMD_LOAD_CPREG | 7:
+				return GetSize() >= 6;
+			
+			case CPCommand::CP_CMD_LOAD_XFREG | 0:
+			case CPCommand::CP_CMD_LOAD_XFREG | 1:
+			case CPCommand::CP_CMD_LOAD_XFREG | 2:
+			case CPCommand::CP_CMD_LOAD_XFREG | 3:
+			case CPCommand::CP_CMD_LOAD_XFREG | 4:
+			case CPCommand::CP_CMD_LOAD_XFREG | 5:
+			case CPCommand::CP_CMD_LOAD_XFREG | 6:
+			case CPCommand::CP_CMD_LOAD_XFREG | 7:
+			{
+				if (GetSize() < 5)
+					return false;
+
+				uint16_t len = Peek16(1) + 1;
+				return GetSize() >= (len * 4 + 5);
+			}
+
+			case CPCommand::CP_CMD_LOAD_INDXA | 0:
+			case CPCommand::CP_CMD_LOAD_INDXA | 1:
+			case CPCommand::CP_CMD_LOAD_INDXA | 2:
+			case CPCommand::CP_CMD_LOAD_INDXA | 3:
+			case CPCommand::CP_CMD_LOAD_INDXA | 4:
+			case CPCommand::CP_CMD_LOAD_INDXA | 5:
+			case CPCommand::CP_CMD_LOAD_INDXA | 6:
+			case CPCommand::CP_CMD_LOAD_INDXA | 7:
+				return GetSize() >= 5;
+
+			case CPCommand::CP_CMD_LOAD_INDXB | 0:
+			case CPCommand::CP_CMD_LOAD_INDXB | 1:
+			case CPCommand::CP_CMD_LOAD_INDXB | 2:
+			case CPCommand::CP_CMD_LOAD_INDXB | 3:
+			case CPCommand::CP_CMD_LOAD_INDXB | 4:
+			case CPCommand::CP_CMD_LOAD_INDXB | 5:
+			case CPCommand::CP_CMD_LOAD_INDXB | 6:
+			case CPCommand::CP_CMD_LOAD_INDXB | 7:
+				return GetSize() >= 5;
+
+			case CPCommand::CP_CMD_LOAD_INDXC | 0:
+			case CPCommand::CP_CMD_LOAD_INDXC | 1:
+			case CPCommand::CP_CMD_LOAD_INDXC | 2:
+			case CPCommand::CP_CMD_LOAD_INDXC | 3:
+			case CPCommand::CP_CMD_LOAD_INDXC | 4:
+			case CPCommand::CP_CMD_LOAD_INDXC | 5:
+			case CPCommand::CP_CMD_LOAD_INDXC | 6:
+			case CPCommand::CP_CMD_LOAD_INDXC | 7:
+				return GetSize() >= 5;
+
+			case CPCommand::CP_CMD_LOAD_INDXD | 0:
+			case CPCommand::CP_CMD_LOAD_INDXD | 1:
+			case CPCommand::CP_CMD_LOAD_INDXD | 2:
+			case CPCommand::CP_CMD_LOAD_INDXD | 3:
+			case CPCommand::CP_CMD_LOAD_INDXD | 4:
+			case CPCommand::CP_CMD_LOAD_INDXD | 5:
+			case CPCommand::CP_CMD_LOAD_INDXD | 6:
+			case CPCommand::CP_CMD_LOAD_INDXD | 7:
+				return GetSize() >= 5;
+
+			case CPCommand::CP_CMD_DRAW_QUAD | 0:
+			case CPCommand::CP_CMD_DRAW_QUAD | 1:
+			case CPCommand::CP_CMD_DRAW_QUAD | 2:
+			case CPCommand::CP_CMD_DRAW_QUAD | 3:
+			case CPCommand::CP_CMD_DRAW_QUAD | 4:
+			case CPCommand::CP_CMD_DRAW_QUAD | 5:
+			case CPCommand::CP_CMD_DRAW_QUAD | 6:
+			case CPCommand::CP_CMD_DRAW_QUAD | 7:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 0:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 1:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 2:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 3:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 4:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 5:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 6:
+			case CPCommand::CP_CMD_DRAW_TRIANGLE | 7:
+			case CPCommand::CP_CMD_DRAW_STRIP | 0:
+			case CPCommand::CP_CMD_DRAW_STRIP | 1:
+			case CPCommand::CP_CMD_DRAW_STRIP | 2:
+			case CPCommand::CP_CMD_DRAW_STRIP | 3:
+			case CPCommand::CP_CMD_DRAW_STRIP | 4:
+			case CPCommand::CP_CMD_DRAW_STRIP | 5:
+			case CPCommand::CP_CMD_DRAW_STRIP | 6:
+			case CPCommand::CP_CMD_DRAW_STRIP | 7:
+			case CPCommand::CP_CMD_DRAW_FAN | 0:
+			case CPCommand::CP_CMD_DRAW_FAN | 1:
+			case CPCommand::CP_CMD_DRAW_FAN | 2:
+			case CPCommand::CP_CMD_DRAW_FAN | 3:
+			case CPCommand::CP_CMD_DRAW_FAN | 4:
+			case CPCommand::CP_CMD_DRAW_FAN | 5:
+			case CPCommand::CP_CMD_DRAW_FAN | 6:
+			case CPCommand::CP_CMD_DRAW_FAN | 7:
+			case CPCommand::CP_CMD_DRAW_LINE | 0:
+			case CPCommand::CP_CMD_DRAW_LINE | 1:
+			case CPCommand::CP_CMD_DRAW_LINE | 2:
+			case CPCommand::CP_CMD_DRAW_LINE | 3:
+			case CPCommand::CP_CMD_DRAW_LINE | 4:
+			case CPCommand::CP_CMD_DRAW_LINE | 5:
+			case CPCommand::CP_CMD_DRAW_LINE | 6:
+			case CPCommand::CP_CMD_DRAW_LINE | 7:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 0:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 1:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 2:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 3:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 4:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 5:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 6:
+			case CPCommand::CP_CMD_DRAW_LINESTRIP | 7:
+			case CPCommand::CP_CMD_DRAW_POINT | 0:
+			case CPCommand::CP_CMD_DRAW_POINT | 1:
+			case CPCommand::CP_CMD_DRAW_POINT | 2:
+			case CPCommand::CP_CMD_DRAW_POINT | 3:
+			case CPCommand::CP_CMD_DRAW_POINT | 4:
+			case CPCommand::CP_CMD_DRAW_POINT | 5:
+			case CPCommand::CP_CMD_DRAW_POINT | 6:
+			case CPCommand::CP_CMD_DRAW_POINT | 7:
+			{
+				if (GetSize() < 3)
+					return false;
+
+				int vtxnum = Peek16(1);
+				return GetSize() >= (vtxnum * vertexSize[cmd & 7] + 3);
+			}
+
+			default:
+			{
+				Report(Channel::GP, "GX: Unsupported opcode: 0x%02X\n", cmd);
+				break;
+			}
+		}
+
+		return false;
+	}
+
+	uint8_t FifoProcessor::Read8()
+	{
+		assert(GetSize() >= 1);
+
+		lock.Lock();
+		uint8_t value = fifo[readPtr++];
+		if (readPtr >= fifoSize)
+		{
+			readPtr = 0;
+		}
+		lock.Unlock();
+		return value;
+	}
+
+	uint16_t FifoProcessor::Read16()
+	{
+		assert(GetSize() >= 2);
+		return ((uint16_t)Read8() << 8) | Read8();
+	}
+
+	uint32_t FifoProcessor::Read32()
+	{
+		assert(GetSize() >= 4);
+		return ((uint32_t)Read8() << 24) | ((uint32_t)Read8() << 16) | ((uint32_t)Read8() << 8) | Read8();
+	}
+
+	float FifoProcessor::ReadFloat()
+	{
+		assert(GetSize() >= 4);
+		uint32_t value = Read32();
+		return *(float*)&value;
+	}
+
+	uint8_t FifoProcessor::Peek8(size_t offset)
+	{
+		lock.Lock();
+		size_t ptr = readPtr + offset;
+		if (ptr >= fifoSize)
+		{
+			ptr -= fifoSize;
+		}
+		lock.Unlock();
+		return fifo[ptr];
+	}
+
+	uint8_t FifoProcessor::Peek16(size_t offset)
+	{
+		return ((uint16_t)Peek8(offset) << 8) | Peek8(offset + 1);
+	}
+
+	void FifoProcessor::RecalcVertexSize()
+	{
+
+	}
+
+	void FifoProcessor::ExecuteCommand()
+	{
+
+	}
+
+	#pragma endregion "FIFO Processing"
 
 }

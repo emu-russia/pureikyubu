@@ -8,7 +8,7 @@ namespace GX
 {
 	// CP Commands. Format of commands transmitted via FIFO and display lists (DL)
 
-	enum class CPCommand
+	enum CPCommand : uint8_t
 	{
 		CP_CMD_NOP = 0x00,					// 00000000
 		CP_CMD_VCACHE_INVD = 0x48,			// 01001xxx
@@ -29,7 +29,7 @@ namespace GX
 		CP_CMD_DRAW_POINT = 0xB8,			// 10111,vat(2:0)
 	};
 
-	// Gx Primitive
+	// Primitive (for backend)
 
 	enum class Primitive
 	{
@@ -42,25 +42,12 @@ namespace GX
 		Points,
 	};
 
-	// PE Registers (from CPU side). 16-bit access.
+	// Processed vertex (for backend)
 
-	enum class PEMappedRegister
+	struct Vertex
 	{
-		PE_POKE_ZMODE_ID = 0,		// Cpu2Efb Z mode
-		PE_POKE_CMODE0_ID,			// Cpu2Efb Color mode 0
-		PE_POKE_CMODE1_ID,			// Cpu2Efb Color mode 1
-		PE_POKE_AMODE0_ID,			// Cpu2Efb Alpha mode 0
-		PE_POKE_AMODE1_ID,			// Cpu2Efb Alpha mode 1
-		PE_SR_ID,					// Status register
-		PE_UNK6_ID,
-		PE_TOKEN_ID,				// Last token value
+		int bogus;
 	};
-
-	// PE status register
-	#define PE_SR_DONE      (1 << 0)
-	#define PE_SR_TOKEN     (1 << 1)
-	#define PE_SR_DONEMSK   (1 << 2)
-	#define PE_SR_TOKENMSK  (1 << 3)
 
 	// PI->CP FIFO registers
 	enum class PI_CPMappedRegister
@@ -74,15 +61,9 @@ namespace GX
 	// PI CP write pointer wrap bit
 	#define PI_CPWRT_WRAP   0x0400'0000
 
-	// PE registers mapped to CPU
-	struct PERegs
-	{
-		uint16_t     sr;         // status register
-		uint16_t     token;      // last token
-	};
-
 }
 
+#include "PixelEngine.h"
 #include "CPRegs.h"
 #include "XFRegs.h"
 #include "BPRegs.h"

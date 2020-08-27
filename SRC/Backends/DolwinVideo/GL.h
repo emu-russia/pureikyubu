@@ -12,7 +12,7 @@ typedef union _Color
 typedef struct _Vertex
 {
     float       pos[3];         // x, y, z
-    float       nrm[3];         // x, y, z, normalized to [0, 1]
+    float       nrm[9];         // x, y, z, normalized to [0, 1]
     Color       col[2];         // 2 color / alpha (RGBA)
     float       tcoord[8][4];   // s, t for eight tex units, last two for texgen
 } Vertex;
@@ -81,4 +81,4 @@ void GL_MakeSnapshot(char* path);
 void GL_SaveBitmap(uint8_t* buf);
 
 void    GPFrameDone();
-extern  BOOL      frame_done;
+extern  bool frame_done;

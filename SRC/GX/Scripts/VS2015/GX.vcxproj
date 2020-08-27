@@ -37,6 +37,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\BPRegs.h" />
+    <ClInclude Include="..\..\CommandProcessor.h" />
     <ClInclude Include="..\..\CPRegs.h" />
     <ClInclude Include="..\..\GXBackend.h" />
     <ClInclude Include="..\..\GXCommands.h" />
@@ -44,6 +45,7 @@
     <ClInclude Include="..\..\GXDefs.h" />
     <ClInclude Include="..\..\GXState.h" />
     <ClInclude Include="..\..\pch.h" />
+    <ClInclude Include="..\..\PixelEngine.h" />
     <ClInclude Include="..\..\TexCache.h" />
     <ClInclude Include="..\..\TexConv.h" />
     <ClInclude Include="..\..\XFRegs.h" />

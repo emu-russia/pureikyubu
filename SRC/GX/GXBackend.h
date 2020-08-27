@@ -6,18 +6,20 @@ namespace GX
 {
 	class GXCore;		// Forward reference to parent class
 
-	class GXBackend
+	class Backend
 	{
 	public:
-		GXBackend(GXCore* parent);
-		virtual ~GXBackend();
+		Backend(GXCore* parent);
+		virtual ~Backend();
 
-		virtual void PassCPLoadReg() = 0;
-		virtual void PassBPLoadReg() = 0;
-		virtual void PassXFLoadReg() = 0;
+		virtual void PassCPLoadReg(CPRegister id) = 0;
+		virtual void PassBPLoadReg(BPRegister id) = 0;
+		virtual void PassXFLoadReg(int startId, int count) = 0;
 
 		virtual void DrawBegin(Primitive prim) = 0;
 		virtual void DrawEnd() = 0;
+
+		virtual void ProcessVertex(Vertex& v) = 0;
 	};
 
 }

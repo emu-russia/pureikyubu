@@ -1,4 +1,5 @@
 // CP - command processor, PE - pixel engine.
+// This module contains stubs for accessing the CP and PE registers, which are now located in the common GX component.
 #include "pch.h"
 
 using namespace Debug;
@@ -51,7 +52,6 @@ static void PERegWrite(uint32_t addr, uint32_t data)
     Flipper::Gx->PeWriteReg((GX::PEMappedRegister)((addr & 0xFF) >> 1), data);
 }
 
-// ---------------------------------------------------------------------------
 // init
 
 void CP_PEOpen()

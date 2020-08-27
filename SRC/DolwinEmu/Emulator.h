@@ -2,7 +2,7 @@
 
 #pragma once
 
-#define EMU_VERSION L"0.132"
+#define EMU_VERSION L"0.14"
 
 void    EMUGetHwConfig(HWConfig* config);
 

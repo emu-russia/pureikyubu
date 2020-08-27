@@ -1085,7 +1085,7 @@ HWND CreateMainWindow(HINSTANCE hInstance)
         CLASS_NAME,
         win_name.c_str(),
         WIN_STYLE, 
-        20, 30,
+        CW_USEDEFAULT, CW_USEDEFAULT,
         400, 300,
         NULL, NULL,
         hInstance, NULL);

@@ -27,7 +27,7 @@ static const char *intdesc(uint32_t mask)
         case PI_INTERRUPT_SI        : return "SI";
         case PI_INTERRUPT_DI        : return "DI";
         case PI_INTERRUPT_RSW       : return "RSW";
-        case PI_INTERRUPT_ERROR     : return "ERROR";
+        case PI_INTERRUPT_PI        : return "PI_ERROR";
     }
     
     // default
@@ -224,7 +224,7 @@ void PIOpen(HWConfig* config)
     MISetTrap(32, PI_CONFIG  , read_config, write_config);
 
     // Processor interface CP fifo.
-    // Some of the CP FIFO registers are mapped to PI registers for the reason that writes to the FIFO Stream Pointer are made by the Gekko Burst transactions.
+    // Some of the CP FIFO registers are mapped to PI registers for the reason that writes to the FIFO Stream Pointer are made by the Gekko Burst transactions and are serviced by PI.
     MISetTrap(32, PI_BASE , PI_CPRegRead, PI_CPRegWrite);
     MISetTrap(32, PI_TOP  , PI_CPRegRead, PI_CPRegWrite);
     MISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
