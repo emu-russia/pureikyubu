@@ -594,13 +594,10 @@ void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fi
 {
     xfLoads += (uint32_t)amount;
 
-#if 0
-    GFXError("unknown XF load, start index: %04X, n : %i\n", startIdx, amount);
-    for(unsigned n=0; n<amount; n++)
+    if (GpRegsLog)
     {
-        GFXError("  %-2i: %08X\n", n, regData[n]);
+        Report (Channel::GP, "XF load, start index: %04X, n : %i\n", startIdx, amount);
     }
-#endif
 
     // load geometry matrix
     if((startIdx >= 0x0000) && (startIdx < 0x0400))

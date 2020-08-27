@@ -42,8 +42,6 @@ namespace GX_FromFuture
 			memcpy(&fifo[writePtr], dataPtr, part1Size);
 			writePtr = 32 - part1Size;
 			memcpy(fifo, dataPtr + part1Size, writePtr);
-
-			Report(Channel::GP, "FifoProcessor: fifo wrapped\n");
 		}
 	}
 

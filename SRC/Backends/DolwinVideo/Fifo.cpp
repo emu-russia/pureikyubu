@@ -56,47 +56,48 @@ static std::string AttrToString(VTX_ATTR attr)
 static int gx_vtxsize(unsigned v)
 {
     int vtxsize = 0;
-    static int cntp[]   = { 2, 3 };
-    static int cntn[]   = { 3, 9 };
-    static int cntt[]   = { 1, 2 };
-    static int fmtsz[]  = { 1, 1, 2, 2, 4 };
+    static int cntp[] = { 2, 3 };
+    static int cntn[] = { 3, 9 };
+    static int cntt[] = { 1, 2 };
+    static int fmtsz[] = { 1, 1, 2, 2, 4 };
     static int cfmtsz[] = { 2, 3, 1, 2, 4, 4 };
 
-    if(cpRegs.vcdLo.pmidx)  vtxsize++;
-    if(cpRegs.vcdLo.t0midx) vtxsize++;
-    if(cpRegs.vcdLo.t1midx) vtxsize++;
-    if(cpRegs.vcdLo.t2midx) vtxsize++;
-    if(cpRegs.vcdLo.t3midx) vtxsize++;
-    if(cpRegs.vcdLo.t4midx) vtxsize++;
-    if(cpRegs.vcdLo.t5midx) vtxsize++;
-    if(cpRegs.vcdLo.t6midx) vtxsize++;
-    if(cpRegs.vcdLo.t7midx) vtxsize++;
+    if (cpRegs.vcdLo.pmidx)  vtxsize++;
+    if (cpRegs.vcdLo.t0midx) vtxsize++;
+    if (cpRegs.vcdLo.t1midx) vtxsize++;
+    if (cpRegs.vcdLo.t2midx) vtxsize++;
+    if (cpRegs.vcdLo.t3midx) vtxsize++;
+    if (cpRegs.vcdLo.t4midx) vtxsize++;
+    if (cpRegs.vcdLo.t5midx) vtxsize++;
+    if (cpRegs.vcdLo.t6midx) vtxsize++;
+    if (cpRegs.vcdLo.t7midx) vtxsize++;
 
-    if(cpRegs.vcdLo.pos == VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
-    else vtxsize += cpRegs.vcdLo.pos - 1;
-    if(cpRegs.vcdLo.nrm == VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
-    else vtxsize += cpRegs.vcdLo.nrm - 1;
-    if(cpRegs.vcdHi.tex0== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
-    else vtxsize += cpRegs.vcdHi.tex0 - 1;
-    if(cpRegs.vcdHi.tex1== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
-    else vtxsize += cpRegs.vcdHi.tex1 - 1;
-    if(cpRegs.vcdHi.tex2== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
-    else vtxsize += cpRegs.vcdHi.tex2 - 1;
-    if(cpRegs.vcdHi.tex3== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
-    else vtxsize += cpRegs.vcdHi.tex3 - 1;
-    if(cpRegs.vcdHi.tex4== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
-    else vtxsize += cpRegs.vcdHi.tex4 - 1;
-    if(cpRegs.vcdHi.tex5== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
-    else vtxsize += cpRegs.vcdHi.tex5 - 1;
-    if(cpRegs.vcdHi.tex6== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
-    else vtxsize += cpRegs.vcdHi.tex6 - 1;
-    if(cpRegs.vcdHi.tex7== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
-    else vtxsize += cpRegs.vcdHi.tex7 - 1;
+    if (cpRegs.vcdLo.pos & 2) vtxsize += cpRegs.vcdLo.pos - 1;
+    if (cpRegs.vcdLo.nrm & 2) vtxsize += cpRegs.vcdLo.nrm - 1;
+    if (cpRegs.vcdLo.col0 & 2) vtxsize += cpRegs.vcdLo.col0 - 1;
+    if (cpRegs.vcdLo.col1 & 2) vtxsize += cpRegs.vcdLo.col1 - 1;
+    if (cpRegs.vcdHi.tex0 & 2) vtxsize += cpRegs.vcdHi.tex0 - 1;
+    if (cpRegs.vcdHi.tex1 & 2) vtxsize += cpRegs.vcdHi.tex1 - 1;
+    if (cpRegs.vcdHi.tex2 & 2) vtxsize += cpRegs.vcdHi.tex2 - 1;
+    if (cpRegs.vcdHi.tex3 & 2) vtxsize += cpRegs.vcdHi.tex3 - 1;
+    if (cpRegs.vcdHi.tex4 & 2) vtxsize += cpRegs.vcdHi.tex4 - 1;
+    if (cpRegs.vcdHi.tex5 & 2) vtxsize += cpRegs.vcdHi.tex5 - 1;
+    if (cpRegs.vcdHi.tex6 & 2) vtxsize += cpRegs.vcdHi.tex6 - 1;
+    if (cpRegs.vcdHi.tex7 & 2) vtxsize += cpRegs.vcdHi.tex7 - 1;
 
-    if(cpRegs.vcdLo.col0==1) vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
-    else vtxsize += cpRegs.vcdLo.col0 - 1;
-    if(cpRegs.vcdLo.col1==1) vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
-    else vtxsize += cpRegs.vcdLo.col1 - 1;
+    if (cpRegs.vcdLo.pos == 1) vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
+    if (cpRegs.vcdLo.nrm == 1) vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
+    if (cpRegs.vcdHi.tex0 == 1) vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
+    if (cpRegs.vcdHi.tex1 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
+    if (cpRegs.vcdHi.tex2 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
+    if (cpRegs.vcdHi.tex3 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
+    if (cpRegs.vcdHi.tex4 == 1) vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
+    if (cpRegs.vcdHi.tex5 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
+    if (cpRegs.vcdHi.tex6 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
+    if (cpRegs.vcdHi.tex7 == 1) vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+
+    if (cpRegs.vcdLo.col0 == 1) vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
+    if (cpRegs.vcdLo.col1 == 1) vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
 
     return vtxsize;
 }
@@ -698,7 +699,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[0][0] = vtx->tcoord[0][1] = 1.0f;
 
     FetchComp(vtx->tcoord[0],
-        cpRegs.vatA[vatnum].tex0fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex0,
         cpRegs.vatA[vatnum].tex0fmt,
         cpRegs.vatA[vatnum].tex0shft,
@@ -708,7 +709,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[1][0] = vtx->tcoord[1][1] = 1.0f;
 
     FetchComp(vtx->tcoord[1],
-        cpRegs.vatB[vatnum].tex1fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex1,
         cpRegs.vatB[vatnum].tex1fmt,
         cpRegs.vatB[vatnum].tex1shft,
@@ -718,7 +719,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[2][0] = vtx->tcoord[2][1] = 1.0f;
 
     FetchComp(vtx->tcoord[2],
-        cpRegs.vatB[vatnum].tex2fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex2,
         cpRegs.vatB[vatnum].tex2fmt,
         cpRegs.vatB[vatnum].tex2shft,
@@ -728,7 +729,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[3][0] = vtx->tcoord[3][1] = 1.0f;
 
     FetchComp(vtx->tcoord[3],
-        cpRegs.vatB[vatnum].tex3fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex3,
         cpRegs.vatB[vatnum].tex3fmt,
         cpRegs.vatB[vatnum].tex3shft,
@@ -738,7 +739,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[4][0] = vtx->tcoord[4][1] = 1.0f;
 
     FetchComp(vtx->tcoord[4],
-        cpRegs.vatB[vatnum].tex4fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex4,
         cpRegs.vatB[vatnum].tex4fmt,
         cpRegs.vatC[vatnum].tex4shft,
@@ -748,7 +749,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[5][0] = vtx->tcoord[5][1] = 1.0f;
 
     FetchComp(vtx->tcoord[5],
-        cpRegs.vatC[vatnum].tex5fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex5,
         cpRegs.vatC[vatnum].tex5fmt,
         cpRegs.vatC[vatnum].tex5shft,
@@ -758,7 +759,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[6][0] = vtx->tcoord[6][1] = 1.0f;
 
     FetchComp(vtx->tcoord[6],
-        cpRegs.vatC[vatnum].tex6fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex6,
         cpRegs.vatC[vatnum].tex6fmt,
         cpRegs.vatC[vatnum].tex6shft,
@@ -768,7 +769,7 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     vtx->tcoord[7][0] = vtx->tcoord[7][1] = 1.0f;
 
     FetchComp(vtx->tcoord[7],
-        cpRegs.vatC[vatnum].tex7fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
         cpRegs.vcdHi.tex7,
         cpRegs.vatC[vatnum].tex7fmt,
         cpRegs.vatC[vatnum].tex7shft,
