@@ -540,7 +540,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = pa < RAMSIZE ? (uint64_t)&mi.ram[pa] : 0;
+		output->value.AsInt = (uint64_t)MITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}

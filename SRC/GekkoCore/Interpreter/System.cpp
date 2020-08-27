@@ -115,7 +115,19 @@ namespace Gekko
             return;
         }
 
+        uint32_t oldMsr = Gekko->regs.msr;
         Gekko->regs.msr = RRS;
+
+        if ((oldMsr & MSR_IR) != (Gekko->regs.msr & MSR_IR))
+        {
+            Gekko->itlb.InvalidateAll();
+        }
+
+        if ((oldMsr & MSR_DR) != (Gekko->regs.msr & MSR_DR))
+        {
+            Gekko->dtlb.InvalidateAll();
+        }
+
         Gekko->regs.pc += 4;
     }
 
@@ -171,6 +183,9 @@ namespace Gekko
 
                 Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
                     RRS, msr_ir, msr_dr, Gekko->regs.pc);
+
+                Gekko->dtlb.InvalidateAll();
+                Gekko->itlb.InvalidateAll();
             }
             break;
 
@@ -281,6 +296,28 @@ namespace Gekko
                 }
             }
             break;
+
+            case (int)SPR::IBAT0U:
+            case (int)SPR::IBAT0L:
+            case (int)SPR::IBAT1U:
+            case (int)SPR::IBAT1L:
+            case (int)SPR::IBAT2U:
+            case (int)SPR::IBAT2L:
+            case (int)SPR::IBAT3U:
+            case (int)SPR::IBAT3L:
+                Gekko->itlb.InvalidateAll();
+                break;
+
+            case (int)SPR::DBAT0U:
+            case (int)SPR::DBAT0L:
+            case (int)SPR::DBAT1U:
+            case (int)SPR::DBAT1L:
+            case (int)SPR::DBAT2U:
+            case (int)SPR::DBAT2L:
+            case (int)SPR::DBAT3U:
+            case (int)SPR::DBAT3L:
+                Gekko->dtlb.InvalidateAll();
+                break;
         }
 
         // default
