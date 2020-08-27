@@ -8,14 +8,13 @@
 	{
 		"DOLDEBUG": false,
 		"FILTER": 4294967295,
-		"LASTDIR_ALL": ".\\",
-		"LASTDIR_DVD": ".\\",
-		"LASTDIR_MAP": ".\\Data",
-		"LASTDIR_PATCH": ".\\Data",
+		"LASTDIR_ALL": "./",
+		"LASTDIR_DVD": "./",
+		"LASTDIR_MAP": "./Data",
+		"LASTDIR_PATCH": "./Data",
 		"LASTFILE": "",
 		"ONTOP": false,
-		"PATH": ".\\",
-		"PROFILE": true,
+		"PATH": "./",
 		"RECENT0": "",
 		"RECENT1": "",
 		"RECENT2": "",
@@ -24,34 +23,29 @@
 		"RECENTNUM": 0,
 		"RUNONCE": true,
 		"SELECTOR": true,
-		"SMALLICONS": false,
+		"SMALLICONS": true,
 		"SORTVIEW": 1
 	},
 
 	"loader":
 	{
 		"BINORG": 12544,
-		"MAKEMAP": true,
-		"PATCH": true
-	},
-
-	"core":
-	{
+		"MAKEMAP": true
 	},
 
 	"hardware":
 	{
-		"ANSI": "Data\\AnsiFont.szp",
-		"SJIS": "Data\\SjisFont.szp",
+		"ANSI": "Data/AnsiFont.szp",
+		"SJIS": "Data/SjisFont.szp",
 		"CONSOLE": 3,
 		"EXI_LOG": true,
 		"OS_REPORT": true,
 		"RSWHACK": true,
 		"VI_LOG": false,
 		"VI_XFB": true,
-		"BOOTROM": "",
-		"DSP_DROM": "",
-		"DSP_IROM": "",
+		"BOOTROM": "Data/gc-ntsc-10.bin",
+		"DSP_DROM": "Data/dsp_drom.bin",
+		"DSP_IROM": "Data/dsp_irom.bin",
 	},
 
 	"hle":

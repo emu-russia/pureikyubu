@@ -74,5 +74,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />
+    <None Include="..\..\..\..\..\Data\Json\DolwinVideoJdi.json" />
   </ItemGroup>
 </Project>

@@ -214,6 +214,7 @@
     <ClInclude Include="..\..\UserWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\..\..\Data\Json\UIJdi.json" />
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <ItemGroup>

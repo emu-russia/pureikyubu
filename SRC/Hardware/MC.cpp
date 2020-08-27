@@ -251,7 +251,7 @@ static void MCReadArrayProc (Memcard * memcard){
     offset = MCCalculateOffset(auxdata);
 
     if (offset >=  memcard->size + size) {
-        Halt("MC :: ReadArray offset is out of range\n");
+        Report(Channel::MC, "ReadArray offset is out of range\n");
         return;
     }
 
@@ -529,6 +529,16 @@ void MCOpen (HWConfig * config)
     wcscpy(memcard[MEMCARD_SLOTA].filename, config->MemcardA_Filename);
     wcscpy(memcard[MEMCARD_SLOTB].filename, config->MemcardB_Filename);
     SyncSave = config->Memcard_SyncSave;
+
+    if (!Util::FileExists(memcard[MEMCARD_SLOTA].filename))
+    {
+        Memcard_Connected[MEMCARD_SLOTA] = false;
+    }
+
+    if (!Util::FileExists(memcard[MEMCARD_SLOTB].filename))
+    {
+        Memcard_Connected[MEMCARD_SLOTB] = false;
+    }
 
     MCConnect();
 }
