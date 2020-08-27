@@ -180,6 +180,7 @@
     <ClCompile Include="..\..\XF.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\..\..\..\..\Data\Json\DolwinVideoJdi.json" />
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

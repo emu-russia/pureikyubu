@@ -251,7 +251,7 @@ void FifoReconfigure()
 
 // ---------------------------------------------------------------------------
 
-void * GetArrayPtr(ArrayId arrayId, int idx)
+void * GetArrayPtr(ArrayId arrayId, int idx, int compSize)
 {
     uint32_t address = cpRegs.arbase[(size_t)arrayId] + (uint32_t)idx * cpRegs.arstride[(size_t)arrayId];
     return &RAM[address & 0x03ff'ffff];
@@ -260,6 +260,7 @@ void * GetArrayPtr(ArrayId arrayId, int idx)
 void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFuture::FifoProcessor* fifo, ArrayId arrayId)
 {
     void* ptr;
+    static int fmtsz[] = { 1, 1, 2, 2, 4 };
 
     union
     {
@@ -275,10 +276,10 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
         case VCD_NONE:      // Skip attribute
             return;
         case VCD_INDX8:
-            ptr = GetArrayPtr(arrayId, fifo->Read8());
+            ptr = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
             break;
         case VCD_INDX16:
-            ptr = GetArrayPtr(arrayId, fifo->Read16());
+            ptr = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
             break;
         default:
             ptr = nullptr;
@@ -305,7 +306,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.u8[i] >> shft);
+                comp[i] = (float)(Comp.u8[i]) / pow(2.0, shft);
             }
             break;
 
@@ -327,7 +328,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s8[i] >> shft);
+                comp[i] = (float)(Comp.s8[i]) / pow(2.0, shft);
             }
             break;
 
@@ -349,7 +350,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.u16[i] >> shft);
+                comp[i] = (float)(Comp.u16[i]) / pow(2.0, shft);
             }
             break;
 
@@ -371,7 +372,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s16[i] >> shft);
+                comp[i] = (float)(Comp.s16[i]) / pow(2.0, shft);
             }
             break;
 
@@ -410,6 +411,7 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
     void* ptr3;
 
     void** ptrptr[3] = { &ptr1, &ptr2, &ptr3 };
+    static int fmtsz[] = { 1, 1, 2, 2, 4 };
 
     union
     {
@@ -425,19 +427,19 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
         case VCD_NONE:      // Skip attribute
             return;
         case VCD_INDX8:
-            ptr1 = GetArrayPtr(arrayId, fifo->Read8());
+            ptr1 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
             if (count == 9 && nrmidx3)
             {
-                ptr2 = GetArrayPtr(arrayId, fifo->Read8());
-                ptr3 = GetArrayPtr(arrayId, fifo->Read8());
+                ptr2 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
+                ptr3 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
             }
             break;
         case VCD_INDX16:
-            ptr1 = GetArrayPtr(arrayId, fifo->Read16());
+            ptr1 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
             if (count == 9 && nrmidx3)
             {
-                ptr2 = GetArrayPtr(arrayId, fifo->Read16());
-                ptr3 = GetArrayPtr(arrayId, fifo->Read16());
+                ptr2 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
+                ptr3 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
             }
             break;
     }
@@ -456,14 +458,22 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
             {
                 for (int i = 0; i < count; i++)
                 {
-                    void* ptr = *ptrptr[i / 3];
+                    void* ptr;
+                    if (count == 9 && nrmidx3)
+                    {
+                        ptr = *ptrptr[i / 3];
+                    }
+                    else
+                    {
+                        ptr = ptr1;
+                    }
                     Comp.s8[i] = ((uint8_t*)ptr)[i];
                 }
             }
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s8[i] >> shft);
+                comp[i] = (float)(Comp.s8[i]) / pow(2.0, shft);
             }
             break;
 
@@ -479,14 +489,22 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
             {
                 for (int i = 0; i < count; i++)
                 {
-                    void* ptr = *ptrptr[i / 3];
+                    void* ptr;
+                    if (count == 9 && nrmidx3)
+                    {
+                        ptr = *ptrptr[i / 3];
+                    }
+                    else
+                    {
+                        ptr = ptr1;
+                    }
                     Comp.s16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
                 }
             }
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s16[i] >> shft);
+                comp[i] = (float)(Comp.s16[i]) / pow(2.0, shft);
             }
             break;
 
@@ -502,7 +520,15 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
             {
                 for (int i = 0; i < count; i++)
                 {
-                    void* ptr = *ptrptr[i / 3];
+                    void* ptr;
+                    if (count == 9 && nrmidx3)
+                    {
+                        ptr = *ptrptr[i / 3];
+                    }
+                    else
+                    {
+                        ptr = ptr1;
+                    }
                     Comp.u32[i] = _byteswap_ulong(((uint32_t*)ptr)[i]);
                 }
             }
@@ -523,6 +549,7 @@ Color FetchColor(int type, int fmt, GX_FromFuture::FifoProcessor* fifo, ArrayId 
 {
     void* ptr;
     Color col;
+    static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
     col.R = 0;
     col.G = 0;
@@ -539,10 +566,10 @@ Color FetchColor(int type, int fmt, GX_FromFuture::FifoProcessor* fifo, ArrayId 
         case VCD_NONE:      // Skip attribute
             return col;
         case VCD_INDX8:
-            ptr = GetArrayPtr(arrayId, fifo->Read8());
+            ptr = GetArrayPtr(arrayId, fifo->Read8(), cfmtsz[fmt]);
             break;
         case VCD_INDX16:
-            ptr = GetArrayPtr(arrayId, fifo->Read16());
+            ptr = GetArrayPtr(arrayId, fifo->Read16(), cfmtsz[fmt]);
             break;
         default:
             ptr = nullptr;
@@ -1107,7 +1134,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                 1---2       tri1: 0-1-2
                 |  /|       tri2: 0-2-3
@@ -1144,7 +1171,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                 1---2       tri: 0-1-2
                 |  /
@@ -1181,7 +1208,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                     1---3---5   tri1: 0-1-2
                    /|  /|  /    tri2: 1-2-3
@@ -1233,7 +1260,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                 1---2---3   tri1: 0-1-2
                 |  /  _/    tri2: 0-2-3
@@ -1284,7 +1311,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                     1   3   5
                    /   /   / 
@@ -1321,7 +1348,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                     1   3   5
                    /|  /|  / 
@@ -1368,7 +1395,7 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             unsigned vatnum = cmd & 7;
             unsigned vtxnum = fifo->Read16();
             usevat = vatnum;
-            //DBReport2(DbgChannel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i\n", vtxnum);
+            Report(Channel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
                                                         /*/
                 0---0       tri: 0-0-0 (1x1x1 tri)
                 |  /
