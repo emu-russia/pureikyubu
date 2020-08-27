@@ -149,7 +149,7 @@ namespace Debug
 				if (Jdi.IsLoaded() && !Jdi.IsRunning())
 				{
 					Jdi.GekkoStep();
-					disasm->SetCursor(Jdi.GetPc() + 4);
+					disasm->SetCursor(Jdi.GetPc());
 					InvalidateAll();
 				}
 				break;

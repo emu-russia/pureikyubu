@@ -59,7 +59,7 @@ namespace Debug
 		switch (Vkey)
 		{
 			case VK_HOME:
-				SetCursor(cursor);
+				SetCursor(Jdi.GetPc());
 				break;
 
 			case VK_END:

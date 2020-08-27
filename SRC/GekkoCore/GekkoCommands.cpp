@@ -560,7 +560,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = pa < RAMSIZE ? (uint64_t)&mi.ram[pa] : 0;
+		output->value.AsInt = (uint64_t)MITranslatePhysicalAddress(pa, sizeof(uint32_t));
 
 		return output;
 	}
@@ -649,11 +649,12 @@ namespace Gekko
 
 		std::string text = "";
 
-		if (pa < RAMSIZE)
+		uint8_t* ptr = MITranslatePhysicalAddress(pa, sizeof(uint32_t));
+
+		if (ptr != nullptr)
 		{
 			AnalyzeInfo info = { 0 };
 
-			uint8_t* ptr = &mi.ram[pa];
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
 			Gekko::Analyzer::Analyze(addr, instr, &info);

@@ -575,6 +575,11 @@ uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
     {
         return &mi.ram[physAddr];
     }
+
+    if (physAddr >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        return &mi.bootrom[physAddr - BOOTROM_START_ADDRESS];
+    }
     
     return nullptr;
 }

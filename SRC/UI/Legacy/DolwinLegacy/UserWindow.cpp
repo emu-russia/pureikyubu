@@ -244,6 +244,10 @@ void LoadRecentFile(int index)
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
     UI::Jdi.Unload();
     UI::Jdi.LoadFile(Util::WstringToString(path));
+    if (gekkoDebug)
+    {
+        gekkoDebug->InvalidateAll();
+    }
     OnMainWindowOpened(path.c_str());
     UI::Jdi.Run();
 }
@@ -663,6 +667,10 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     loadFile:
                     
                         UI::Jdi.LoadFile(Util::WstringToString(name));
+                        if (gekkoDebug)
+                        {
+                            gekkoDebug->InvalidateAll();
+                        }
                         OnMainWindowOpened(name.c_str());
                         UI::Jdi.Run();
                     }
@@ -695,7 +703,14 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 {
                     UI::Jdi.LoadFile("Bootrom");
                     OnMainWindowOpened(L"Bootrom");
-                    UI::Jdi.Run();
+                    if (gekkoDebug == nullptr)
+                    {
+                        UI::Jdi.Run();
+                    }
+                    else
+                    {
+                        gekkoDebug->SetDisasmCursor(0xfff0'0100);
+                    }
                     return 0;
                 }
                 /* Open/close DVD lid */
