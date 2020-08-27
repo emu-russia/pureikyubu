@@ -7,10 +7,6 @@ using namespace Debug;
 // local data
 //
 
-static  void (*pipeline[VTX_MAX_ATTR][8])(GX_FromFuture::FifoProcessor* fifo); // fifo attr callbacks
-
-float   fracDenom[8][VTX_MAX_ATTR];             // fraction denominant
-
 Vertex  *vtx;                                   // current vertex to 
                                                         // collect data
 int     VtxSize[8];
@@ -19,7 +15,7 @@ unsigned usevat;                                // current VAT
 
 GX_FromFuture::FifoProcessor GxFifo;
 
-BOOL        frame_done = 1;
+bool frame_done = true;
 
 // ---------------------------------------------------------------------------
 
@@ -75,301 +71,523 @@ static int gx_vtxsize(unsigned v)
     if(cpRegs.vcdLo.t5midx) vtxsize++;
     if(cpRegs.vcdLo.t6midx) vtxsize++;
     if(cpRegs.vcdLo.t7midx) vtxsize++;
-    
-    if(cpRegs.vcdLo.pos & 2) vtxsize += cpRegs.vcdLo.pos - 1;
-    if(cpRegs.vcdLo.nrm & 2) vtxsize += cpRegs.vcdLo.nrm - 1;
-    if(cpRegs.vcdLo.col0& 2) vtxsize += cpRegs.vcdLo.col0- 1;
-    if(cpRegs.vcdLo.col1& 2) vtxsize += cpRegs.vcdLo.col1- 1;
-    if(cpRegs.vcdHi.tex0& 2) vtxsize += cpRegs.vcdHi.tex0- 1;
-    if(cpRegs.vcdHi.tex1& 2) vtxsize += cpRegs.vcdHi.tex1- 1;
-    if(cpRegs.vcdHi.tex2& 2) vtxsize += cpRegs.vcdHi.tex2- 1;
-    if(cpRegs.vcdHi.tex3& 2) vtxsize += cpRegs.vcdHi.tex3- 1;
-    if(cpRegs.vcdHi.tex4& 2) vtxsize += cpRegs.vcdHi.tex4- 1;
-    if(cpRegs.vcdHi.tex5& 2) vtxsize += cpRegs.vcdHi.tex5- 1;
-    if(cpRegs.vcdHi.tex6& 2) vtxsize += cpRegs.vcdHi.tex6- 1;
-    if(cpRegs.vcdHi.tex7& 2) vtxsize += cpRegs.vcdHi.tex7- 1;
 
-    if(cpRegs.vcdLo.pos ==1) vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
-    if(cpRegs.vcdLo.nrm ==1) vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
-    if(cpRegs.vcdHi.tex0==1) vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
-    if(cpRegs.vcdHi.tex1==1) vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
-    if(cpRegs.vcdHi.tex2==1) vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
-    if(cpRegs.vcdHi.tex3==1) vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
-    if(cpRegs.vcdHi.tex4==1) vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
-    if(cpRegs.vcdHi.tex5==1) vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
-    if(cpRegs.vcdHi.tex6==1) vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
-    if(cpRegs.vcdHi.tex7==1) vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+    if(cpRegs.vcdLo.pos == VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
+    else vtxsize += cpRegs.vcdLo.pos - 1;
+    if(cpRegs.vcdLo.nrm == VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
+    else vtxsize += cpRegs.vcdLo.nrm - 1;
+    if(cpRegs.vcdHi.tex0== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
+    else vtxsize += cpRegs.vcdHi.tex0 - 1;
+    if(cpRegs.vcdHi.tex1== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
+    else vtxsize += cpRegs.vcdHi.tex1 - 1;
+    if(cpRegs.vcdHi.tex2== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
+    else vtxsize += cpRegs.vcdHi.tex2 - 1;
+    if(cpRegs.vcdHi.tex3== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
+    else vtxsize += cpRegs.vcdHi.tex3 - 1;
+    if(cpRegs.vcdHi.tex4== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
+    else vtxsize += cpRegs.vcdHi.tex4 - 1;
+    if(cpRegs.vcdHi.tex5== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
+    else vtxsize += cpRegs.vcdHi.tex5 - 1;
+    if(cpRegs.vcdHi.tex6== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
+    else vtxsize += cpRegs.vcdHi.tex6 - 1;
+    if(cpRegs.vcdHi.tex7== VCD_DIRECT) vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+    else vtxsize += cpRegs.vcdHi.tex7 - 1;
 
     if(cpRegs.vcdLo.col0==1) vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
+    else vtxsize += cpRegs.vcdLo.col0 - 1;
     if(cpRegs.vcdLo.col1==1) vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
+    else vtxsize += cpRegs.vcdLo.col1 - 1;
 
     return vtxsize;
 }
 
-//
-// parser reconfiguration routine
-// see also Stages.h for details
-//
-
-void FifoReconfigure(
-    VTX_ATTR    attr,       // stage attribute
-    unsigned    vat,        // vat number
-    unsigned    vcd,        // attribute description
-    unsigned    cnt,        // attribute "cnt"
-    unsigned    fmt,        // attribute "fmt"
-    unsigned    frac)       // fraction
+void FifoReconfigure()
 {
-    switch(attr)
+    for (unsigned v = 0; v < 8; v++)
     {
-        case VTX_POS:
-        {
-            // not allowed! pos should be always present
-            //ASSERT(vcd == VCD_NONE);
-            
-            // set callback
-            pipeline[VTX_POS][vat] = posattr[vcd][cnt][fmt];
-
-            // calculate denominant (used to speed-up fixed-to-fp convertion)
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_POS] = denom;
-        }
-        break;
-
-        case VTX_NRM:
-        {
-            pipeline[VTX_NRM][vat] = nrmattr[vcd][cnt][fmt];
-        }
-        break;
-
-        case VTX_COLOR0:
-        {
-            pipeline[VTX_COLOR0][vat] = col0attr[vcd][cnt][fmt];
-        }
-        break;
-
-        case VTX_COLOR1:
-        {
-            pipeline[VTX_COLOR1][vat] = col1attr[vcd][cnt][fmt];
-        }
-        break;
-
-        case VTX_TEXCOORD0:
-        {
-            pipeline[VTX_TEXCOORD0][vat] = tex0attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD0] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD1:
-        {
-            pipeline[VTX_TEXCOORD1][vat] = tex1attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD1] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD2:
-        {
-            pipeline[VTX_TEXCOORD2][vat] = tex2attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD2] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD3:
-        {
-            pipeline[VTX_TEXCOORD3][vat] = tex3attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD3] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD4:
-        {
-            pipeline[VTX_TEXCOORD4][vat] = tex4attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD4] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD5:
-        {
-            pipeline[VTX_TEXCOORD5][vat] = tex5attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD5] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD6:
-        {
-            pipeline[VTX_TEXCOORD6][vat] = tex6attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD6] = denom;
-        }
-        break;
-
-        case VTX_TEXCOORD7:
-        {
-            pipeline[VTX_TEXCOORD7][vat] = tex7attr[vcd][cnt][fmt];
-
-            // calculate denominant
-            float denom = (float)pow(2.0, (double)frac);
-            fracDenom[vat][VTX_TEXCOORD7] = denom;
-        }
-        break;
-
-        // reset pipeline 
-        case VTX_MAX_ATTR:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                for(unsigned attr=0; attr<VTX_MAX_ATTR; attr++)
-                {
-                    pipeline[attr][vatnum] = NULL;
-                }
-            }
-        }
-        return;
-
-        case VTX_POSMATIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_POSMATIDX][vatnum] = pos_idx;
-                else pipeline[VTX_POSMATIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX0MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX0MTXIDX][vatnum] = t0_idx;
-                else pipeline[VTX_TEX0MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX1MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX1MTXIDX][vatnum] = t1_idx;
-                else pipeline[VTX_TEX1MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX2MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX2MTXIDX][vatnum] = t2_idx;
-                else pipeline[VTX_TEX2MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX3MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX3MTXIDX][vatnum] = t3_idx;
-                else pipeline[VTX_TEX3MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX4MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX4MTXIDX][vatnum] = t4_idx;
-                else pipeline[VTX_TEX4MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX5MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX5MTXIDX][vatnum] = t5_idx;
-                else pipeline[VTX_TEX5MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX6MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX6MTXIDX][vatnum] = t6_idx;
-                else pipeline[VTX_TEX6MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        case VTX_TEX7MTXIDX:
-        {
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                if(vcd > 0) pipeline[VTX_TEX7MTXIDX][vatnum] = t7_idx;
-                else pipeline[VTX_TEX7MTXIDX][vatnum] = NULL;
-            }
-        }
-        return;
-
-        default:
-        {
-            Halt(
-                "Fifo reconfigure failure! "
-                "Unhandled vertex attribute %s.",
-                AttrToString(attr).c_str()
-            );
-        }
-        return;
+        VtxSize[v] = gx_vtxsize(v);
     }
-
-/*/
-    // check for un-implemented stages
-    if((pipeline[attr][vat] == NULL) && (vcd > 0))
-    {
-        GFXError(
-            "Undefined vertex stage for %s\n"
-            "vcd: %i, cnt: %i, fmt: %i, shft: %i",
-            getAttrDesc(attr),
-            vcd, cnt, fmt, frac
-        );
-    }
-/*/
-
-    for(unsigned v=0; v<8; v++) VtxSize[v] = gx_vtxsize(v);
 }
 
 // ---------------------------------------------------------------------------
 
-// collect data
+void * GetArrayPtr(ArrayId arrayId, int idx)
+{
+    uint32_t address = cpRegs.arbase[(size_t)arrayId] + (uint32_t)idx * cpRegs.arstride[(size_t)arrayId];
+    return &RAM[address];
+}
+
+void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFuture::FifoProcessor* fifo, ArrayId arrayId)
+{
+    void* ptr;
+
+    union
+    {
+        uint8_t u8[3];
+        uint16_t u16[3];
+        int8_t s8[3];
+        int16_t s16[3];
+        uint32_t u32[3];
+    } Comp;
+
+    switch (type)
+    {
+        case VCD_NONE:      // Skip attribute
+            return;
+        case VCD_INDX8:
+            ptr = GetArrayPtr(arrayId, fifo->Read8());
+            break;
+        case VCD_INDX16:
+            ptr = GetArrayPtr(arrayId, fifo->Read16());
+            break;
+        default:
+            ptr = nullptr;
+            break;
+    }
+
+    switch (fmt)
+    {
+        case VFMT_U8:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u8[i] = fifo->Read8();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u8[i] = ((uint8_t*)ptr)[i];
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.u8[i] >> shft);
+            }
+            break;
+
+        case VFMT_S8:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s8[i] = fifo->Read8();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s8[i] = ((uint8_t*)ptr)[i];
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.s8[i] >> shft);
+            }
+            break;
+
+        case VFMT_U16:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u16[i] = fifo->Read16();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.u16[i] >> shft);
+            }
+            break;
+
+        case VFMT_S16:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s16[i] = fifo->Read16();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.s16[i] >> shft);
+            }
+            break;
+
+        case VFMT_F32:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u32[i] = fifo->Read32();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u32[i] = _byteswap_ulong(((uint32_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = *(float*)&Comp.u32[i];
+            }
+            break;
+
+        default:
+            Halt("FetchComp: Invalid combination of VAT settings\n");
+            break;
+    }
+}
+
+void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFuture::FifoProcessor* fifo, ArrayId arrayId, bool nrmidx3)
+{
+    void* ptr1;
+    void* ptr2;
+    void* ptr3;
+
+    void** ptrptr[3] = { &ptr1, &ptr2, &ptr3 };
+
+    union
+    {
+        uint8_t u8[9];
+        uint16_t u16[9];
+        int8_t s8[9];
+        int16_t s16[9];
+        uint32_t u32[9];
+    } Comp;
+
+    switch (type)
+    {
+        case VCD_NONE:      // Skip attribute
+            return;
+        case VCD_INDX8:
+            ptr1 = GetArrayPtr(arrayId, fifo->Read8());
+            if (count == 9 && nrmidx3)
+            {
+                ptr2 = GetArrayPtr(arrayId, fifo->Read8());
+                ptr3 = GetArrayPtr(arrayId, fifo->Read8());
+            }
+            break;
+        case VCD_INDX16:
+            ptr1 = GetArrayPtr(arrayId, fifo->Read16());
+            if (count == 9 && nrmidx3)
+            {
+                ptr2 = GetArrayPtr(arrayId, fifo->Read16());
+                ptr3 = GetArrayPtr(arrayId, fifo->Read16());
+            }
+            break;
+    }
+
+    switch (fmt)
+    {
+        case VFMT_U8:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u8[i] = fifo->Read8();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    void* ptr = *ptrptr[i / 3];
+                    Comp.u8[i] = ((uint8_t*)ptr)[i];
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.u8[i] >> shft);
+            }
+            break;
+
+        case VFMT_S8:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s8[i] = fifo->Read8();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    void* ptr = *ptrptr[i / 3];
+                    Comp.s8[i] = ((uint8_t*)ptr)[i];
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.s8[i] >> shft);
+            }
+            break;
+
+        case VFMT_U16:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u16[i] = fifo->Read16();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    void* ptr = *ptrptr[i / 3];
+                    Comp.u16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.u16[i] >> shft);
+            }
+            break;
+
+        case VFMT_S16:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.s16[i] = fifo->Read16();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    void* ptr = *ptrptr[i / 3];
+                    Comp.s16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = (float)(Comp.s16[i] >> shft);
+            }
+            break;
+
+        case VFMT_F32:
+            if (type == VCD_DIRECT)
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    Comp.u32[i] = fifo->Read32();
+                }
+            }
+            else
+            {
+                for (int i = 0; i < count; i++)
+                {
+                    void* ptr = *ptrptr[i / 3];
+                    Comp.u32[i] = _byteswap_ulong(((uint32_t*)ptr)[i]);
+                }
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                comp[i] = *(float*)&Comp.u32[i];
+            }
+            break;
+
+        default:
+            Halt("FetchComp: Invalid combination of VAT settings (normals)\n");
+            break;
+    }
+}
+
+Color FetchColor(int type, int fmt, GX_FromFuture::FifoProcessor* fifo, ArrayId arrayId)
+{
+    void* ptr;
+    Color col;
+
+    col.R = 0;
+    col.G = 0;
+    col.B = 0;
+    col.A = 255;
+
+    uint16_t p16;
+    uint32_t p32;
+
+    uint8_t r, g, b, a;
+
+    switch (type)
+    {
+        case VCD_NONE:      // Skip attribute
+            return col;
+        case VCD_INDX8:
+            ptr = GetArrayPtr(arrayId, fifo->Read8());
+            break;
+        case VCD_INDX16:
+            ptr = GetArrayPtr(arrayId, fifo->Read16());
+            break;
+        default:
+            ptr = nullptr;
+            break;
+    }
+
+    switch (fmt)
+    {
+        case VFMT_RGB565:
+
+            if (type == VCD_DIRECT)
+            {
+                p16 = fifo->Read16();
+            }
+            else
+            {
+                p16 = _byteswap_ushort(((uint16_t*)ptr)[0]);
+            }
+
+            r = p16 >> 11;
+            g = (p16 >> 5) & 0x3f;
+            b = p16 & 0x1f;
+
+            col.R = (r << 3) | (r >> 2);
+            col.G = (g << 2) | (g >> 4);
+            col.B = (b << 3) | (b >> 2);
+            col.A = 255;
+
+            break;
+
+        case VFMT_RGB8:
+            if (type == VCD_DIRECT)
+            {
+                col.R = fifo->Read8();
+                col.G = fifo->Read8();
+                col.B = fifo->Read8();
+            }
+            else
+            {
+                col.R = ((uint8_t*)ptr)[0];
+                col.G = ((uint8_t*)ptr)[1];
+                col.B = ((uint8_t*)ptr)[2];
+            }
+            col.A = 255;
+            break;
+
+        case VFMT_RGBX8:
+            if (type == VCD_DIRECT)
+            {
+                col.R = fifo->Read8();
+                col.G = fifo->Read8();
+                col.B = fifo->Read8();
+                fifo->Read8();
+            }
+            else
+            {
+                col.R = ((uint8_t*)ptr)[0];
+                col.G = ((uint8_t*)ptr)[1];
+                col.B = ((uint8_t*)ptr)[2];
+            }
+            col.A = 255;
+            break;
+
+        case VFMT_RGBA4:
+
+            if (type == VCD_DIRECT)
+            {
+                p16 = fifo->Read16();
+            }
+            else
+            {
+                p16 = _byteswap_ushort(((uint16_t*)ptr)[0]);
+            }
+
+            r = (p16 >> 12) & 0xf;
+            g = (p16 >> 8) & 0xf;
+            b = (p16 >> 4) & 0xf;
+            a = (p16 >> 0) & 0xf;
+
+            col.R = (r << 4) | r;
+            col.G = (g << 4) | g;
+            col.B = (b << 4) | b;
+            col.A = (a << 4) | a;
+
+            break;
+
+        case VFMT_RGBA6:
+
+            if (type == VCD_DIRECT)
+            {
+                p32 = ((uint32_t)fifo->Read8() << 16) | ((uint32_t)fifo->Read8() << 8) | fifo->Read8();
+            }
+            else
+            {
+                p32 = ((uint32_t)((uint8_t*)ptr)[0] << 16) | ((uint32_t)((uint8_t*)ptr)[1] << 8) | ((uint8_t*)ptr)[2];
+            }
+
+            r = (p32 >> 18) & 0x3f;
+            g = (p32 >> 12) & 0x3f;
+            b = (p32 >> 6) & 0x3f;
+            a = (p32 >> 0) & 0x3f;
+
+            col.R = (r << 6) | r;
+            col.G = (g << 6) | g;
+            col.B = (b << 6) | b;
+            col.A = (a << 6) | a;
+
+            break;
+
+        case VFMT_RGBA8:
+
+            if (type == VCD_DIRECT)
+            {
+                col.R = fifo->Read8();
+                col.G = fifo->Read8();
+                col.B = fifo->Read8();
+                col.A = fifo->Read8();
+            }
+            else
+            {
+                col.R = ((uint8_t*)ptr)[0];
+                col.G = ((uint8_t*)ptr)[1];
+                col.B = ((uint8_t*)ptr)[2];
+                col.A = ((uint8_t*)ptr)[3];
+            }
+
+            break;
+
+        default:
+            Halt("FetchComp: Invalid combination of VAT settings (color)\n");
+            break;
+    }
+
+    return col;
+}
+
+// collect vertex data
 static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
 {
-    void (*stageCB)(GX_FromFuture::FifoProcessor * fifo);
-
     // overrided by 'mtxidx' attributes
     xfRegs.posidx = xfRegs.matidxA.pos;
     xfRegs.texidx[0] = xfRegs.matidxA.tex0;
@@ -381,11 +599,181 @@ static void FifoWalk(unsigned vatnum, GX_FromFuture::FifoProcessor * fifo)
     xfRegs.texidx[6] = xfRegs.matidxB.tex6;
     xfRegs.texidx[7] = xfRegs.matidxB.tex7;
 
-    for(unsigned stage=0; stage<VTX_MAX_ATTR; stage++)
+    // Matrix Index
+
+    if (cpRegs.vcdLo.pmidx)
     {
-        stageCB = pipeline[stage][vatnum];
-        if(stageCB) stageCB(fifo);
+        xfRegs.posidx = fifo->Read8();
     }
+
+    if (cpRegs.vcdLo.t0midx)
+    {
+        xfRegs.texidx[0] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t1midx)
+    {
+        xfRegs.texidx[1] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t2midx)
+    {
+        xfRegs.texidx[2] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t3midx)
+    {
+        xfRegs.texidx[3] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t4midx)
+    {
+        xfRegs.texidx[4] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t5midx)
+    {
+        xfRegs.texidx[5] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t6midx)
+    {
+        xfRegs.texidx[6] = fifo->Read8();
+    }
+
+    if (cpRegs.vcdLo.t7midx)
+    {
+        xfRegs.texidx[7] = fifo->Read8();
+    }
+
+    // Position
+
+    vtx->pos[0] = vtx->pos[1] = vtx->pos[2] = 1.0f;
+
+    FetchComp(vtx->pos,
+        cpRegs.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
+        cpRegs.vcdLo.pos,
+        cpRegs.vatA[vatnum].posfmt,
+        cpRegs.vatA[vatnum].posshft,
+        fifo,
+        ArrayId::Pos);
+
+    // Normal
+
+    vtx->nrm[0] = vtx->nrm[1] = vtx->nrm[2] = 1.0f;
+    vtx->nrm[3] = vtx->nrm[4] = vtx->nrm[5] = 1.0f;
+    vtx->nrm[6] = vtx->nrm[7] = vtx->nrm[8] = 1.0f;
+
+    int nrmshft = 0;
+
+    switch (cpRegs.vatA[vatnum].nrmfmt)
+    {
+        case VFMT_S8:
+            nrmshft = 6;
+            break;
+        case VFMT_S16:
+            nrmshft = 14;
+            break;
+    }
+
+    FetchNorm(vtx->nrm,
+        cpRegs.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
+        cpRegs.vcdLo.nrm,
+        cpRegs.vatA[vatnum].nrmfmt,
+        nrmshft,
+        fifo,
+        ArrayId::Nrm,
+        cpRegs.vatA[vatnum].nrmidx3 ? true : false);
+
+    // Color0 
+
+    vtx->col[0] = FetchColor(cpRegs.vcdLo.col0, cpRegs.vatA[vatnum].col0fmt, fifo, ArrayId::Color0);
+
+    // Color1
+
+    vtx->col[1] = FetchColor(cpRegs.vcdLo.col1, cpRegs.vatA[vatnum].col1fmt, fifo, ArrayId::Color1);
+
+    // TexNCoord
+
+    vtx->tcoord[0][0] = vtx->tcoord[0][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[0],
+        cpRegs.vatA[vatnum].tex0fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex0,
+        cpRegs.vatA[vatnum].tex0fmt,
+        cpRegs.vatA[vatnum].tex0shft,
+        fifo,
+        ArrayId::Tex0Coord);
+
+    vtx->tcoord[1][0] = vtx->tcoord[1][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[1],
+        cpRegs.vatB[vatnum].tex1fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex1,
+        cpRegs.vatB[vatnum].tex1fmt,
+        cpRegs.vatB[vatnum].tex1shft,
+        fifo,
+        ArrayId::Tex1Coord);
+
+    vtx->tcoord[2][0] = vtx->tcoord[2][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[2],
+        cpRegs.vatB[vatnum].tex2fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex2,
+        cpRegs.vatB[vatnum].tex2fmt,
+        cpRegs.vatB[vatnum].tex2shft,
+        fifo,
+        ArrayId::Tex2Coord);
+
+    vtx->tcoord[3][0] = vtx->tcoord[3][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[3],
+        cpRegs.vatB[vatnum].tex3fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex3,
+        cpRegs.vatB[vatnum].tex3fmt,
+        cpRegs.vatB[vatnum].tex3shft,
+        fifo,
+        ArrayId::Tex3Coord);
+
+    vtx->tcoord[4][0] = vtx->tcoord[4][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[4],
+        cpRegs.vatB[vatnum].tex4fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex4,
+        cpRegs.vatB[vatnum].tex4fmt,
+        cpRegs.vatC[vatnum].tex4shft,
+        fifo,
+        ArrayId::Tex4Coord);
+
+    vtx->tcoord[5][0] = vtx->tcoord[5][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[5],
+        cpRegs.vatC[vatnum].tex5fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex5,
+        cpRegs.vatC[vatnum].tex5fmt,
+        cpRegs.vatC[vatnum].tex5shft,
+        fifo,
+        ArrayId::Tex5Coord);
+
+    vtx->tcoord[6][0] = vtx->tcoord[6][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[6],
+        cpRegs.vatC[vatnum].tex6fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex6,
+        cpRegs.vatC[vatnum].tex6fmt,
+        cpRegs.vatC[vatnum].tex6shft,
+        fifo,
+        ArrayId::Tex6Coord);
+
+    vtx->tcoord[7][0] = vtx->tcoord[7][1] = 1.0f;
+
+    FetchComp(vtx->tcoord[7],
+        cpRegs.vatC[vatnum].tex7fmt == VCNT_TEX_ST ? 2 : 1,
+        cpRegs.vcdHi.tex7,
+        cpRegs.vatC[vatnum].tex7fmt,
+        cpRegs.vatC[vatnum].tex7shft,
+        fifo,
+        ArrayId::Tex7Coord);
 }
 
 static void GxBadFifo(uint8_t command)

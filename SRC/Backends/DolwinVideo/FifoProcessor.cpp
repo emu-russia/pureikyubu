@@ -127,7 +127,7 @@ namespace GX_FromFuture
 			case OP_CMD_LOAD_XFREG | 6:
 			case OP_CMD_LOAD_XFREG | 7:
 			{
-				if (GetSize() < 3)
+				if (GetSize() < 5)
 					return false;
 
 				uint16_t len = Peek16(1) + 1;

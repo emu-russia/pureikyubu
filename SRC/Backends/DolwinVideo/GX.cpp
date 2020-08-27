@@ -27,8 +27,7 @@ long GXOpen(HWConfig* config, uint8_t * ramPtr)
     //ReloadVertexShaders();
 
     // reset pipeline
-    FifoReconfigure(VTX_MAX_ATTR, 0, 0, 0, 0, 0);
-    frame_done=1;
+    frame_done = true;
 
     // flush texture cache
     TexInit();
