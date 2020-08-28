@@ -242,8 +242,8 @@ void LoadRecentFile(int index)
 {
     int RecentNum = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
-    UI::Jdi.Unload();
-    UI::Jdi.LoadFile(Util::WstringToString(path));
+    UI::Jdi->Unload();
+    UI::Jdi->LoadFile(Util::WstringToString(path));
     if (gekkoDebug)
     {
         gekkoDebug->InvalidateAll();
@@ -666,7 +666,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                     loadFile:
                     
-                        UI::Jdi.LoadFile(Util::WstringToString(name));
+                        UI::Jdi->LoadFile(Util::WstringToString(name));
                         if (gekkoDebug)
                         {
                             gekkoDebug->InvalidateAll();
@@ -705,7 +705,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     OnMainWindowOpened(L"Bootrom");
                     if (gekkoDebug == nullptr)
                     {
-                        UI::Jdi.Run();
+                        UI::Jdi->Run();
                     }
                     else
                     {

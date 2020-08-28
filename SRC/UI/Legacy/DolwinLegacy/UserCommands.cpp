@@ -68,9 +68,9 @@ Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
 
 void UIReflector()
 {
-	UI::Jdi.JdiAddCmd("UIError", CmdUIError);
-	UI::Jdi.JdiAddCmd("UIReport", CmdUIReport);
-	UI::Jdi.JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
-	UI::Jdi.JdiAddCmd("d", CmdShowMemory);
-	UI::Jdi.JdiAddCmd("u", CmdShowDisassembly);
+	UI::Jdi->JdiAddCmd("UIError", CmdUIError);
+	UI::Jdi->JdiAddCmd("UIReport", CmdUIReport);
+	UI::Jdi->JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+	UI::Jdi->JdiAddCmd("d", CmdShowMemory);
+	UI::Jdi->JdiAddCmd("u", CmdShowDisassembly);
 }

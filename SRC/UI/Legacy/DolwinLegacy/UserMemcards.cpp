@@ -265,17 +265,17 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
             else if (um_num == 1)
                 SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard B Settings");
 
-            SyncSave = UI::Jdi.GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
+            SyncSave = UI::Jdi->GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
 
             if (um_num == 0)
             {
-                Memcard_Connected[um_num] = UI::Jdi.GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
-                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi.GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS)).c_str());
+                Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
+                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS)).c_str());
             }
             else if (um_num == 1)
             {
-                Memcard_Connected[um_num] = UI::Jdi.GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
-                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi.GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS)).c_str());
+                Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
+                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS)).c_str());
             }
 
             if (SyncSave)
@@ -434,14 +434,14 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
                 if (um_num == 0)
                 {
                     wcscpy_s(Memcard_filename[0], _countof(Memcard_filename[0]), buf);
-                    UI::Jdi.SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
+                    UI::Jdi->SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
                 }
                 else
                 {
                     wcscpy_s(Memcard_filename[1], _countof(Memcard_filename[1]), buf);
-                    UI::Jdi.SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                    UI::Jdi.SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
+                    UI::Jdi->SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
                 }
                 UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 

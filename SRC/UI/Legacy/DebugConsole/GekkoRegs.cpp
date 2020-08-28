@@ -38,9 +38,9 @@ namespace Debug
 		std::string coreStatus;
 
 		coreStatus += "Gekko: ";
-		coreStatus += Jdi.IsRunning() ? "Run " : "Halt";
+		coreStatus += Jdi->IsRunning() ? "Run " : "Halt";
 		coreStatus += " DSP: ";
-		coreStatus += Jdi.DspIsRunning() ? "Run " : "Halt";
+		coreStatus += Jdi->DspIsRunning() ? "Run " : "Halt";
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(width - coreStatus.size() - 2), 0, coreStatus);
 
