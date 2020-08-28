@@ -51,7 +51,7 @@ static void add_path(std::wstring& path)
 // load PATH user variable and cut it on pieces into "paths" list
 static void load_path()
 {
-    auto var = Util::StringToWstring(UI::Jdi.GetConfigString(USER_PATH, USER_UI));
+    auto var = Util::StringToWstring(UI::Jdi->GetConfigString(USER_PATH, USER_UI));
     int n = 0;
 
     // delete current pathlist
@@ -105,14 +105,14 @@ bool AddSelectorPath(const std::wstring& fullPath)
 
     if (!exists)
     {
-        auto old = Util::StringToWstring(UI::Jdi.GetConfigString(USER_PATH, USER_UI));
+        auto old = Util::StringToWstring(UI::Jdi->GetConfigString(USER_PATH, USER_UI));
         
         if (!old.empty())
         {
             path = fmt::format(L"{:s};{:s}", old, path);
         }
 
-        UI::Jdi.SetConfigString(USER_PATH, Util::WstringToString(path), USER_UI);
+        UI::Jdi->SetConfigString(USER_PATH, Util::WstringToString(path), USER_UI);
         add_path(path);
 
         return true;
@@ -414,9 +414,9 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
         std::vector<uint8_t> diskIDRaw;
         diskIDRaw.resize(4);
         wchar_t diskID[0x10] = { 0 };
-        UI::Jdi.DvdMount( Util::WstringToString(file) );
-        UI::Jdi.DvdSeek(0);
-        UI::Jdi.DvdRead(diskIDRaw);
+        UI::Jdi->DvdMount( Util::WstringToString(file) );
+        UI::Jdi->DvdSeek(0);
+        UI::Jdi->DvdRead(diskIDRaw);
         diskID[0] = diskIDRaw[0];
         diskID[1] = diskIDRaw[1];
         diskID[2] = diskIDRaw[2];
@@ -425,7 +425,7 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 
         /* Set GameID. */
         item->id = fmt::sprintf(L"%.4s", diskID);
-        UI::Jdi.DvdUnmount();
+        UI::Jdi->DvdUnmount();
 
         /* Use banner info and remove line-feeds. */
         DVDBanner2* bnr = (DVDBanner2*)banner.data();
@@ -680,7 +680,7 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
         DiskId[2] = (char)file->id[2];
         DiskId[3] = (char)file->id[3];
 
-        std::string regionName = UI::Jdi.DvdRegionById(DiskId);
+        std::string regionName = UI::Jdi->DvdRegionById(DiskId);
 
         if (regionName == "JPN" &&
             (col == 1 || col == 4))     // title or comment only
@@ -738,7 +738,7 @@ void UpdateSelector()
     //list_path();
 
     // load file filter
-    usel.filter = UI::Jdi.GetConfigInt(USER_FILTER, USER_UI);
+    usel.filter = UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
     int dir = 0;
@@ -907,7 +907,7 @@ static void doubleclick()
         gekkoDebug->InvalidateAll();
     }
     OnMainWindowOpened(path.c_str());
-    UI::Jdi.Run();
+    UI::Jdi->Run();
 }
 
 void NotifySelector(LPNMHDR pnmh)
@@ -1030,7 +1030,7 @@ void SortSelector(SELECTOR_SORT sortBy)
         }
 
         usel.sortBy = sortBy;
-        UI::Jdi.SetConfigInt(USER_SORTVIEW, (int)usel.sortBy, USER_UI);
+        UI::Jdi->SetConfigInt(USER_SORTVIEW, (int)usel.sortBy, USER_UI);
     }
     else
     {
@@ -1088,7 +1088,7 @@ void CreateSelector()
     SetFocus(usel.hSelectorWindow);
 
     // retrieve icon size
-    bool iconSize = UI::Jdi.GetConfigBool(USER_SMALLICONS, USER_UI);
+    bool iconSize = UI::Jdi->GetConfigBool(USER_SMALLICONS, USER_UI);
 
     // set "opened" flag (for following calls)
     usel.opened = TRUE;
@@ -1098,10 +1098,10 @@ void CreateSelector()
 
     // sort files
     usel.sortBy = SELECTOR_SORT::Unsorted;
-    SortSelector((SELECTOR_SORT)UI::Jdi.GetConfigInt(USER_SORTVIEW, USER_UI));
+    SortSelector((SELECTOR_SORT)UI::Jdi->GetConfigInt(USER_SORTVIEW, USER_UI));
 
     // scroll to last loaded file
-    SelectorSetSelected( Util::StringToWstring(UI::Jdi.GetConfigString(USER_LASTFILE, USER_UI)) );
+    SelectorSetSelected( Util::StringToWstring(UI::Jdi->GetConfigString(USER_LASTFILE, USER_UI)) );
 }
 
 void CloseSelector()
@@ -1137,7 +1137,7 @@ void SetSelectorIconSize(bool smallIcon)
     if(!usel.opened) return;
 
     usel.smallIcons = smallIcon;
-    UI::Jdi.SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
+    UI::Jdi->SetConfigBool(USER_SMALLICONS, usel.smallIcons, USER_UI);
 
     // destroy bannerlist
     if(bannerList)

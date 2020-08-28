@@ -22,7 +22,7 @@ namespace Debug
 
 		// If GameCube is not powered on
 
-		if (!Jdi.IsLoaded())
+		if (!Jdi->IsLoaded())
 		{
 			return;
 		}
@@ -37,7 +37,7 @@ namespace Debug
 		{
 			char text[0x100];
 
-			uint16_t* ptr = (uint16_t*) Jdi.DspTranslateDMem(addr);
+			uint16_t* ptr = (uint16_t*) Jdi->DspTranslateDMem(addr);
 			if (!ptr)
 			{
 				addr += 8;
@@ -71,7 +71,7 @@ namespace Debug
 	{
 		size_t lines = height - 1;
 
-		if (!Jdi.IsLoaded())
+		if (!Jdi->IsLoaded())
 		{
 			return;
 		}

@@ -42,7 +42,7 @@ static INT_PTR CALLBACK AboutProc(
                     APPNAME, APPDESC,
                     L"Copyright 2003,2004,2020, Dolwin team",
                     L"Build version",
-                    Util::StringToWstring(UI::Jdi.GetVersion()),
+                    Util::StringToWstring(UI::Jdi->GetVersion()),
                     version, platform,
                     Util::StringToWstring(dateStamp),
                     Util::StringToWstring(timeStamp) );

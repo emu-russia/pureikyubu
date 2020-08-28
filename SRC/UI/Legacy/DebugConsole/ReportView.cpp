@@ -14,7 +14,7 @@ namespace Debug
 
 		if (history.empty())
 		{
-			Jdi.Report("Debugger is running. Type help for quick reference.\n");
+			Jdi->Report("Debugger is running. Type help for quick reference.\n");
 		}
 	}
 
@@ -38,13 +38,13 @@ namespace Debug
 
 		std::list<std::pair<int, std::string>> queue;
 
-		Jdi.QueryDebugMessages(queue);
+		Jdi->QueryDebugMessages(queue);
 
 		if (!queue.empty())
 		{
 			for (auto it = queue.begin(); it != queue.end(); ++it)
 			{
-				std::string channelName = Jdi.DebugChannelToString(it->first);
+				std::string channelName = Jdi->DebugChannelToString(it->first);
 
 				std::list<std::string> strs = wnd->SplitMessages(it->second);
 

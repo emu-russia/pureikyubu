@@ -12,16 +12,16 @@ std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile)
     // load DVD banner
     if (fsize)
     {
-        if (UI::Jdi.DvdMount( Util::WstringToString(dvdFile)))
+        if (UI::Jdi->DvdMount( Util::WstringToString(dvdFile)))
         {
-            bnrofs = UI::Jdi.DvdOpenFile("/" DVD_BANNER_FILENAME);
+            bnrofs = UI::Jdi->DvdOpenFile("/" DVD_BANNER_FILENAME);
         }
     }
 
     if (bnrofs)
     {
-        UI::Jdi.DvdSeek (bnrofs);
-        UI::Jdi.DvdRead(banner);
+        UI::Jdi->DvdSeek (bnrofs);
+        UI::Jdi->DvdRead(banner);
     }
     else
     {

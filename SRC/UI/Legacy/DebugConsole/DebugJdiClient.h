@@ -118,5 +118,5 @@ namespace Debug
 
 	};
 
-	extern JdiClient Jdi;
+	extern JdiClient * Jdi;
 }

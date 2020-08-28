@@ -87,5 +87,5 @@ namespace UI
 
 	};
 
-	extern JdiClient Jdi;
+	extern JdiClient * Jdi;
 }

@@ -1,7 +1,6 @@
 #include "pch.h"
 
-/* ---------------------------------------------------------------------------  */
-/* Basic application output                                                     */
+// Basic application output
 
 namespace UI
 {
@@ -20,6 +19,10 @@ namespace UI
         {
             SendMessage(wnd.hMainWindow, WM_CLOSE, 0, 0);
         }
+        else
+        {
+            exit(-1);
+        }
     }
 
     // application message
@@ -36,10 +39,9 @@ namespace UI
     }
 }
 
-/* ---------------------------------------------------------------------------  */
-/* WinMain (very first run-time initialization and main loop)                   */
+// WinMain (very first run-time initialization and main loop)
 
-/* Check for multiple instancies. */
+// Check for multiple instancies.
 static void LockMultipleCalls()
 {
     static HANDLE dolwinsem;
@@ -57,17 +59,32 @@ static void LockMultipleCalls()
     dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
 }
 
+static bool IsDirectoryExists(LPCWSTR szPath)
+{
+    DWORD dwAttrib = GetFileAttributesW(szPath);
+
+    return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
+        (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
+}
+
 static void InitFileSystem(HINSTANCE hInst)
 {
     wchar_t cwd[0x1000];
 
-    /* Set current working directory relative to Dolwin executable */
+    // Set current working directory relative to Dolwin executable
     GetModuleFileName(hInst, cwd, sizeof(cwd));
     *(wcsrchr(cwd, L'\\') + 1) = 0;
     SetCurrentDirectory(cwd);
     
-    /* Make sure, that Dolwin has data directory. */
-    CreateDirectory(L".\\Data", NULL);
+    // Check for default settings.
+
+    if (!Util::FileExists(L"./Data/DefaultSettings.json"))
+    {
+        UI::DolwinError(L"Error",
+            L"No default settings found.\n\n"
+            L"If you are a developer and run Dolwin from Visual Studio, make sure your working directory (DolwinLegacy Properties -> Debugging -> Working Directory) is set to $(SolutionDir).\n\n"
+            L"If you are a user, make sure that the main executable file Dolwin.exe is located in the directory with the `Data` folder. The `Data` folder contains all important data for the emulator to work.");
+    }
 }
 
 // return file name without quotes
@@ -95,19 +112,23 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     InitFileSystem(hInstance);
 
-    /* Allow only one instance of Dolwin to run at once? */
-    if (UI::Jdi.GetConfigBool(USER_RUNONCE, USER_UI))
+    // Create an interface for communicating with the emulator core
+
+    UI::Jdi = new UI::JdiClient;
+
+    // Allow only one instance of Dolwin to run at once?
+    if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
     }
 
     hAccel = LoadAccelerators(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_ACCELERATOR));
 
-    /* Start the emulator and user interface                        */
-    /* (emulator will be initialized during main window creation).  */
+    // Start the emulator and user interface
+    // (emulator will be initialized during main window creation).
     CreateMainWindow(hInstance);
 
-    /* Main loop */
+    // Main loop
     MSG msg = { 0 };
     while (true)
     {
@@ -127,7 +148,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    /* Should never reach this point. Dolwin always exits. */
+    // Should never reach this point. Dolwin always exits.
     UI::DolwinError ( L"Error", L"SHOULD NEVER REACH HERE" );
     return -2;
 }

@@ -26,7 +26,7 @@ namespace Debug
 
 		char hint[0x100] = { 0, };
 		sprintf_s(hint, sizeof(hint), " phys:0x%08X stack:0x%08X sda1:0x%08X sda2:0x%08X", 
-			Jdi.VirtualToPhysicalDMmu(cursor), Jdi.GetGpr(1), Jdi.GetGpr(13), Jdi.GetGpr(2));
+			Jdi->VirtualToPhysicalDMmu(cursor), Jdi->GetGpr(1), Jdi->GetGpr(13), Jdi->GetGpr(2));
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
 
@@ -88,7 +88,7 @@ namespace Debug
 
 	std::string MemoryView::hexbyte(uint32_t addr)
 	{
-		uint8_t* ptr = (uint8_t *)Jdi.TranslateDMmu(addr);
+		uint8_t* ptr = (uint8_t *)Jdi->TranslateDMmu(addr);
 
 		if (ptr)
 		{
@@ -104,7 +104,7 @@ namespace Debug
 
 	char MemoryView::charbyte(uint32_t addr)
 	{
-		char* ptr = (char*)Jdi.TranslateDMmu(addr);
+		char* ptr = (char*)Jdi->TranslateDMmu(addr);
 
 		if (ptr)
 		{

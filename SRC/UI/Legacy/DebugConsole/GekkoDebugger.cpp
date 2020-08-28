@@ -9,6 +9,13 @@ namespace Debug
 	{
 		RECT rect;
 
+		// Create an interface for communicating with the emulator core, if it has not been created yet.
+
+		if (!Jdi)
+		{
+			Jdi = new JdiClient;
+		}
+
 		// Gekko registers
 
 		rect.left = 0;
@@ -113,16 +120,16 @@ namespace Debug
 
 			case VK_F5:
 				// Continue/break Gekko execution
-				if (Jdi.IsLoaded())
+				if (Jdi->IsLoaded())
 				{
-					if (Jdi.IsRunning())
+					if (Jdi->IsRunning())
 					{
-						Jdi.GekkoSuspend();
-						disasm->SetCursor(Jdi.GetPc());
+						Jdi->GekkoSuspend();
+						disasm->SetCursor(Jdi->GetPc());
 					}
 					else
 					{
-						Jdi.GekkoRun();
+						Jdi->GekkoRun();
 					}
 					InvalidateAll();
 				}
@@ -130,23 +137,23 @@ namespace Debug
 
 			case VK_F9:
 				// Toggle Breakpoint
-				Jdi.GekkoToggleBreakpoint(disasm->GetCursor());
+				Jdi->GekkoToggleBreakpoint(disasm->GetCursor());
 				disasm->Invalidate();
 				break;
 
 			case VK_F10:
 				// Step Over
-				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
-					Jdi.GekkoAddOneShotBreakpoint(Jdi.GetPc() + 4);
-					Jdi.GekkoRun();
+					Jdi->GekkoAddOneShotBreakpoint(Jdi->GetPc() + 4);
+					Jdi->GekkoRun();
 					InvalidateAll();
 				}
 				break;
 
 			case VK_F11:
 				// Step Into
-				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
 					Jdi.GekkoStep();
 					disasm->SetCursor(Jdi.GetPc());
@@ -156,9 +163,9 @@ namespace Debug
 
 			case VK_F12:
 				// Skip instruction
-				if (Jdi.IsLoaded() && !Jdi.IsRunning())
+				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
-					Jdi.GekkoSkipInstruction();
+					Jdi->GekkoSkipInstruction();
 					InvalidateAll();
 				}
 				break;

@@ -37,14 +37,14 @@ namespace Debug
 
 		// If GameCube is not powered on
 
-		if (!Jdi.IsLoaded())
+		if (!Jdi->IsLoaded())
 		{
 			return;
 		}
 
 		// DSP Run State
 
-		if (Jdi.DspIsRunning())
+		if (Jdi->DspIsRunning())
 		{
 			Print(CuiColor::Cyan, CuiColor::Lime, 73, 0, "Running");
 		}
@@ -60,22 +60,22 @@ namespace Debug
 		// 40-bit regs overview
 
 		Print(CuiColor::Black, CuiColor::Normal, 48, 1, "a: %02X_%04X_%04X",
-			(uint8_t)Jdi.DspGetReg((size_t)DspReg::a2),
-			Jdi.DspGetReg((size_t)DspReg::a1),
-			Jdi.DspGetReg((size_t)DspReg::a0));
+			(uint8_t)Jdi->DspGetReg((size_t)DspReg::a2),
+			Jdi->DspGetReg((size_t)DspReg::a1),
+			Jdi->DspGetReg((size_t)DspReg::a0));
 		Print(CuiColor::Black, CuiColor::Normal, 48, 2, "b: %02X_%04X_%04X",
-			(uint8_t)Jdi.DspGetReg((size_t)DspReg::b2),
-			Jdi.DspGetReg((size_t)DspReg::b1),
-			Jdi.DspGetReg((size_t)DspReg::b0));
+			(uint8_t)Jdi->DspGetReg((size_t)DspReg::b2),
+			Jdi->DspGetReg((size_t)DspReg::b1),
+			Jdi->DspGetReg((size_t)DspReg::b0));
 
 		Print(CuiColor::Black, CuiColor::Normal, 48, 3, "x: %04X_%04X",
-			Jdi.DspGetReg((size_t)DspReg::x1),
-			Jdi.DspGetReg((size_t)DspReg::x0));
+			Jdi->DspGetReg((size_t)DspReg::x1),
+			Jdi->DspGetReg((size_t)DspReg::x0));
 		Print(CuiColor::Black, CuiColor::Normal, 48, 4, "y: %04X_%04X",
-			Jdi.DspGetReg((size_t)DspReg::y1),
-			Jdi.DspGetReg((size_t)DspReg::y0));
+			Jdi->DspGetReg((size_t)DspReg::y1),
+			Jdi->DspGetReg((size_t)DspReg::y0));
 
-		uint64_t bitsPacked = Jdi.DspPackProd();
+		uint64_t bitsPacked = Jdi->DspPackProd();
 		Print(CuiColor::Black, CuiColor::Normal, 48, 5, "p: %02X_%04X_%04X",
 			(uint8_t)(bitsPacked >> 32),
 			(uint16_t)(bitsPacked >> 16),
@@ -83,7 +83,7 @@ namespace Debug
 
 		// Program Counter
 
-		Print(CuiColor::Black, CuiColor::Normal, 48, 7, "pc: %04X", Jdi.DspGetPc());
+		Print(CuiColor::Black, CuiColor::Normal, 48, 7, "pc: %04X", Jdi->DspGetPc());
 
 		// Status as individual bits
 
@@ -130,7 +130,7 @@ namespace Debug
 
 	void DspRegs::PrintReg(int x, int y, DspReg n)
 	{
-		uint16_t value = Jdi.DspGetReg((size_t)n);
+		uint16_t value = Jdi->DspGetReg((size_t)n);
 		bool same = savedRegs[(size_t)n] == value;
 
 		Print( !same ? CuiColor::Lime : CuiColor::Normal,
@@ -140,7 +140,7 @@ namespace Debug
 	void DspRegs::PrintPsrBit(int x, int y, int n)
 	{
 		uint16_t mask = (1 << n);
-		uint16_t psr = Jdi.DspGetPsr();
+		uint16_t psr = Jdi->DspGetPsr();
 		bool same = (savedPsr & mask) == (psr & mask);
 
 		Print( !same ? CuiColor::Lime : CuiColor::Normal,
@@ -156,9 +156,9 @@ namespace Debug
 	{
 		for (size_t i = 0; i < 32; i++)
 		{
-			savedRegs[i] = Jdi.DspGetReg(i);
+			savedRegs[i] = Jdi->DspGetReg(i);
 		}
-		savedPsr = Jdi.DspGetPsr();
+		savedPsr = Jdi->DspGetPsr();
 	}
 
 }
