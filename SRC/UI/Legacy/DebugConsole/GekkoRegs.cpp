@@ -33,6 +33,17 @@ namespace Debug
 			Print(CuiColor::Cyan, CuiColor::White, 2, 0, "*");
 		}
 
+		// Show status of Gekko and DSP
+
+		std::string coreStatus;
+
+		coreStatus += "Gekko: ";
+		coreStatus += Jdi.IsRunning() ? "Run " : "Halt";
+		coreStatus += " DSP: ";
+		coreStatus += Jdi.DspIsRunning() ? "Run " : "Halt";
+
+		Print(CuiColor::Cyan, CuiColor::Black, (int)(width - coreStatus.size() - 2), 0, coreStatus);
+
 		std::string modeText;
 
 		switch (mode)

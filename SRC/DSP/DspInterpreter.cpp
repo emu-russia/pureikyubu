@@ -1100,7 +1100,7 @@ namespace DSP
 				break;
 
 			default:
-				Halt("DSP Unknown instruction at 0x%04X\n", core->regs.pc);
+				Report(Channel::DSP, "DSP Unknown instruction at 0x%04X\n", core->regs.pc);
 				core->dsp->Suspend();
 				return;
 		}
@@ -1141,7 +1141,7 @@ namespace DSP
 				case DspInstructionEx::NOP2: break;
 
 				default:
-					Halt("DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
+					Report(Channel::DSP, "DSP Unknown packed instruction at 0x%04X\n", core->regs.pc);
 					core->dsp->Suspend();
 					return;
 			}

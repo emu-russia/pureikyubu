@@ -63,6 +63,11 @@ namespace Debug
 					{
 						textColor = wnd->ChannelNameToColor(channelName);
 
+						if (channelName == "Error")
+						{
+							channelName = "Break";
+						}
+
 						if (!(channelName == "Info" || channelName == "Header"))
 						{
 							text += channelName + ": ";

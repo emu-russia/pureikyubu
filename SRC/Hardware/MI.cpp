@@ -4,6 +4,10 @@
 // MI is implemented only for HW2 consoles! it is not back-compatible.
 #include "pch.h"
 
+// TODO: While exploring the Flipper architecture, I misunderstood the purpose of the PI and MEM (MI) components. 
+// In fact, PI is used to access Flipper's memory and registers from the Gekko side. MEM is used by various Flipper subsystems to access main memory (1T-SRAM). 
+// Now all memory access handlers are in the MI.cpp module, but in theory they should be in PI.cpp. Let's leave it as it is for now.
+
 using namespace Debug;
 
 // hardware traps tables.
@@ -51,13 +55,6 @@ void MIReadByte(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPeek8(pa & EFB_MASK, reg);
-        return;
-    }
-
     // bus load byte
     if (pa < mi.ramSize)
     {
@@ -88,13 +85,6 @@ void MIWriteByte(uint32_t pa, uint32_t data)
     if (pa >= HW_BASE)
     {
         hw_write8[pa & 0xffff](pa, (uint8_t)data);
-        return;
-    }
-
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPoke8(pa & EFB_MASK, data);
         return;
     }
 
@@ -137,13 +127,6 @@ void MIReadHalf(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPeek16(pa & EFB_MASK, reg);
-        return;
-    }
-
     // bus load halfword
     if (pa < mi.ramSize)
     {
@@ -174,13 +157,6 @@ void MIWriteHalf(uint32_t pa, uint32_t data)
     if (pa >= HW_BASE)
     {
         hw_write16[pa & 0xfffe](pa, data);
-        return;
-    }
-
-    // embedded frame buffer
-    if (pa >= EFB_BASE)
-    {
-        EFBPoke16(pa & EFB_MASK, data);
         return;
     }
 
@@ -232,9 +208,9 @@ void MIReadWord(uint32_t pa, uint32_t* reg)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
     {
-        EFBPeek32(pa & EFB_MASK, reg);
+        *reg = Flipper::Gx->EfbPeek(pa);
         return;
     }
 
@@ -263,9 +239,9 @@ void MIWriteWord(uint32_t pa, uint32_t data)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
     {
-        EFBPoke32(pa & EFB_MASK, data);
+        Flipper::Gx->EfbPoke(pa, data);
         return;
     }
 
@@ -278,8 +254,7 @@ void MIWriteWord(uint32_t pa, uint32_t data)
 }
 
 //
-// fortunately longlongs are never used in GC hardware access
-// (because all regs are generally integers)
+// longlongs are never used in GC hardware access
 //
 
 void MIReadDouble(uint32_t pa, uint64_t* reg)
@@ -329,9 +304,9 @@ void MIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 void MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-    if (phys_addr == GX_FIFO)
+    if (phys_addr == PI_REGSPACE_GX_FIFO)
     {
-        GXFifoWriteBurst(burstData);
+        Flipper::Gx->FifoWriteBurst(burstData);
         return;
     }
 
@@ -599,6 +574,11 @@ uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
     if (physAddr < (RAMSIZE - bytes))
     {
         return &mi.ram[physAddr];
+    }
+
+    if (physAddr >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        return &mi.bootrom[physAddr - BOOTROM_START_ADDRESS];
     }
     
     return nullptr;

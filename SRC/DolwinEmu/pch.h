@@ -24,6 +24,7 @@
 #include "../HighLevel/HighLevel.h"
 #include "../Hardware/HWConfig.h"
 #include "../DSP/DSP.h"
+#include "../GX/GXCore.h"
 #include "../DVD/DVD.h"
 #include "../Hardware/HW.h"
 #include "../Hardware/MI.h"

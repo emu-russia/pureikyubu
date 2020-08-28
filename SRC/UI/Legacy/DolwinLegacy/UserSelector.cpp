@@ -900,8 +900,12 @@ static void doubleclick()
 
     std::wstring path(usel.files[item]->name);
 
-    UI::Jdi->Unload();
-    UI::Jdi->LoadFile(Util::WstringToString(path));
+    UI::Jdi.Unload();
+    UI::Jdi.LoadFile(Util::WstringToString(path));
+    if (gekkoDebug)
+    {
+        gekkoDebug->InvalidateAll();
+    }
     OnMainWindowOpened(path.c_str());
     UI::Jdi->Run();
 }

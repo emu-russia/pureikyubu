@@ -17,6 +17,7 @@
 #define AR_DMA_ARADDR_L     0x0C005026
 #define AR_DMA_CNT_H        0x0C005028
 #define AR_DMA_CNT_L        0x0C00502A
+
 #define AR_DMA_MMADDR       0x0C005020      // 32 bit regs
 #define AR_DMA_ARADDR       0x0C005024
 #define AR_DMA_CNT          0x0C005028

@@ -45,7 +45,7 @@ namespace DSP
 
 					if (i == (size_t)DspInterrupt::Reset)
 					{
-						regs.pc = DSPGetResetModifier() ? dsp->IROM_START_ADDRESS : 0;		// IROM start / 0
+						regs.pc = Flipper::DSPGetResetModifier() ? dsp->IROM_START_ADDRESS : 0;		// IROM start / 0
 					}
 					else
 					{

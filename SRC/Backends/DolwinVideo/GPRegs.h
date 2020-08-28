@@ -46,8 +46,6 @@ extern GXDrawTokenCallback GxDrawToken;
 #define CP_VAT7_C                       0x97
 #define CP_ARRAY_BASE                   0xA0
 #define CP_ARRAY_STRIDE                 0xB0
-#define CP_NUMCOL                       0xB2    // number of colors attributes
-#define CP_NUMTEX                       0xB4    // number of texcoord attributes
 
 // vertex attribute types (from VCD register)
 enum
@@ -65,7 +63,6 @@ enum
     VCNT_POS_XYZ    = 1,
     VCNT_NRM_XYZ    = 0,
     VCNT_NRM_NBT    = 1,    // index is NBT
-    VCNT_NRM_NBT3   = 2,    // index is one from N/B/T
     VCNT_CLR_RGB    = 0,
     VCNT_CLR_RGBA   = 1,
     VCNT_TEX_S      = 0,
@@ -218,136 +215,19 @@ enum
 #define XF_LIGHT0_DHY                   0x060E  // light dir y, or 1/2 angle y
 #define XF_LIGHT0_DHZ                   0x060F  // light dir z, or 1/2 angle z
 
-// LIGHT 1 DATA
-#define XF_LIGHT1                       0x0610  // reserved
-#define XF_0x0611                       0x0611  // reserved
-#define XF_0x0612                       0x0612  // reserved
-#define XF_LIGHT1_RGBA                  0x0613  // RGBA (8b/comp)
-#define XF_LIGHT1_A0                    0x0614  // cos atten a0
-#define XF_LIGHT1_A1                    0x0615  // cos atten a1
-#define XF_LIGHT1_A2                    0x0616  // cos atten a2
-#define XF_LIGHT1_K0                    0x0617  // dist atten k0
-#define XF_LIGHT1_K1                    0x0618  // dist atten k1
-#define XF_LIGHT1_K2                    0x0619  // dist atten k2
-#define XF_LIGHT1_LPX                   0x061A  // x light pos, or inf 1dir x
-#define XF_LIGHT1_LPY                   0x061B  // y light pos, or inf 1dir y
-#define XF_LIGHT1_LPZ                   0x061C  // z light pos, or inf 1dir z
-#define XF_LIGHT1_DHX                   0x061D  // light dir x, or 1/2 angle x
-#define XF_LIGHT1_DHY                   0x061E  // light dir y, or 1/2 angle y
-#define XF_LIGHT1_DHZ                   0x061F  // light dir z, or 1/2 angle z
-
-// LIGHT 2 DATA
-#define XF_LIGHT2                       0x0620  // reserved
-#define XF_0x0621                       0x0621  // reserved
-#define XF_0x0622                       0x0622  // reserved
-#define XF_LIGHT2_RGBA                  0x0623  // RGBA (8b/comp)
-#define XF_LIGHT2_A0                    0x0624  // cos atten a0
-#define XF_LIGHT2_A1                    0x0625  // cos atten a1
-#define XF_LIGHT2_A2                    0x0626  // cos atten a2
-#define XF_LIGHT2_K0                    0x0627  // dist atten k0
-#define XF_LIGHT2_K1                    0x0628  // dist atten k1
-#define XF_LIGHT2_K2                    0x0629  // dist atten k2
-#define XF_LIGHT2_LPX                   0x062A  // x light pos, or inf 1dir x
-#define XF_LIGHT2_LPY                   0x062B  // y light pos, or inf 1dir y
-#define XF_LIGHT2_LPZ                   0x062C  // z light pos, or inf 1dir z
-#define XF_LIGHT2_DHX                   0x062D  // light dir x, or 1/2 angle x
-#define XF_LIGHT2_DHY                   0x062E  // light dir y, or 1/2 angle y
-#define XF_LIGHT2_DHZ                   0x062F  // light dir z, or 1/2 angle z
-
-// LIGHT 3 DATA
-#define XF_LIGHT3                       0x0630  // reserved
-#define XF_0x0631                       0x0631  // reserved
-#define XF_0x0632                       0x0632  // reserved
-#define XF_LIGHT3_RGBA                  0x0633  // RGBA (8b/comp)
-#define XF_LIGHT3_A0                    0x0634  // cos atten a0
-#define XF_LIGHT3_A1                    0x0635  // cos atten a1
-#define XF_LIGHT3_A2                    0x0636  // cos atten a2
-#define XF_LIGHT3_K0                    0x0637  // dist atten k0
-#define XF_LIGHT3_K1                    0x0638  // dist atten k1
-#define XF_LIGHT3_K2                    0x0639  // dist atten k2
-#define XF_LIGHT3_LPX                   0x063A  // x light pos, or inf 1dir x
-#define XF_LIGHT3_LPY                   0x063B  // y light pos, or inf 1dir y
-#define XF_LIGHT3_LPZ                   0x063C  // z light pos, or inf 1dir z
-#define XF_LIGHT3_DHX                   0x063D  // light dir x, or 1/2 angle x
-#define XF_LIGHT3_DHY                   0x063E  // light dir y, or 1/2 angle y
-#define XF_LIGHT3_DHZ                   0x063F  // light dir z, or 1/2 angle z
-
-// LIGHT 4 DATA
-#define XF_LIGHT4                       0x0640  // reserved
-#define XF_0x0641                       0x0641  // reserved
-#define XF_0x0642                       0x0642  // reserved
-#define XF_LIGHT4_RGBA                  0x0643  // RGBA (8b/comp)
-#define XF_LIGHT4_A0                    0x0644  // cos atten a0
-#define XF_LIGHT4_A1                    0x0645  // cos atten a1
-#define XF_LIGHT4_A2                    0x0646  // cos atten a2
-#define XF_LIGHT4_K0                    0x0647  // dist atten k0
-#define XF_LIGHT4_K1                    0x0648  // dist atten k1
-#define XF_LIGHT4_K2                    0x0649  // dist atten k2
-#define XF_LIGHT4_LPX                   0x064A  // x light pos, or inf 1dir x
-#define XF_LIGHT4_LPY                   0x064B  // y light pos, or inf 1dir y
-#define XF_LIGHT4_LPZ                   0x064C  // z light pos, or inf 1dir z
-#define XF_LIGHT4_DHX                   0x064D  // light dir x, or 1/2 angle x
-#define XF_LIGHT4_DHY                   0x064E  // light dir y, or 1/2 angle y
-#define XF_LIGHT4_DHZ                   0x064F  // light dir z, or 1/2 angle z
-
-// LIGHT 5 DATA
-#define XF_LIGHT5                       0x0650  // reserved
-#define XF_0x0651                       0x0651  // reserved
-#define XF_0x0652                       0x0652  // reserved
-#define XF_LIGHT5_RGBA                  0x0653  // RGBA (8b/comp)
-#define XF_LIGHT5_A0                    0x0654  // cos atten a0
-#define XF_LIGHT5_A1                    0x0655  // cos atten a1
-#define XF_LIGHT5_A2                    0x0656  // cos atten a2
-#define XF_LIGHT5_K0                    0x0657  // dist atten k0
-#define XF_LIGHT5_K1                    0x0658  // dist atten k1
-#define XF_LIGHT5_K2                    0x0659  // dist atten k2
-#define XF_LIGHT5_LPX                   0x065A  // x light pos, or inf 1dir x
-#define XF_LIGHT5_LPY                   0x065B  // y light pos, or inf 1dir y
-#define XF_LIGHT5_LPZ                   0x065C  // z light pos, or inf 1dir z
-#define XF_LIGHT5_DHX                   0x065D  // light dir x, or 1/2 angle x
-#define XF_LIGHT5_DHY                   0x065E  // light dir y, or 1/2 angle y
-#define XF_LIGHT5_DHZ                   0x065F  // light dir z, or 1/2 angle z
-
-// LIGHT 6 DATA
-#define XF_LIGHT6                       0x0660  // reserved
-#define XF_0x0661                       0x0661  // reserved
-#define XF_0x0662                       0x0662  // reserved
-#define XF_LIGHT6_RGBA                  0x0663  // RGBA (8b/comp)
-#define XF_LIGHT6_A0                    0x0664  // cos atten a0
-#define XF_LIGHT6_A1                    0x0665  // cos atten a1
-#define XF_LIGHT6_A2                    0x0666  // cos atten a2
-#define XF_LIGHT6_K0                    0x0667  // dist atten k0
-#define XF_LIGHT6_K1                    0x0668  // dist atten k1
-#define XF_LIGHT6_K2                    0x0669  // dist atten k2
-#define XF_LIGHT6_LPX                   0x066A  // x light pos, or inf 1dir x
-#define XF_LIGHT6_LPY                   0x066B  // y light pos, or inf 1dir y
-#define XF_LIGHT6_LPZ                   0x066C  // z light pos, or inf 1dir z
-#define XF_LIGHT6_DHX                   0x066D  // light dir x, or 1/2 angle x
-#define XF_LIGHT6_DHY                   0x066E  // light dir y, or 1/2 angle y
-#define XF_LIGHT6_DHZ                   0x066F  // light dir z, or 1/2 angle z
-
-// LIGHT 7 DATA
-#define XF_LIGHT7                       0x0670  // reserved
-#define XF_0x0671                       0x0671  // reserved
-#define XF_0x0672                       0x0672  // reserved
-#define XF_LIGHT7_RGBA                  0x0673  // RGBA (8b/comp)
-#define XF_LIGHT7_A0                    0x0674  // cos atten a0
-#define XF_LIGHT7_A1                    0x0675  // cos atten a1
-#define XF_LIGHT7_A2                    0x0676  // cos atten a2
-#define XF_LIGHT7_K0                    0x0677  // dist atten k0
-#define XF_LIGHT7_K1                    0x0678  // dist atten k1
-#define XF_LIGHT7_K2                    0x0679  // dist atten k2
-#define XF_LIGHT7_LPX                   0x067A  // x light pos, or inf 1dir x
-#define XF_LIGHT7_LPY                   0x067B  // y light pos, or inf 1dir y
-#define XF_LIGHT7_LPZ                   0x067C  // z light pos, or inf 1dir z
-#define XF_LIGHT7_DHX                   0x067D  // light dir x, or 1/2 angle x
-#define XF_LIGHT7_DHY                   0x067E  // light dir y, or 1/2 angle y
-#define XF_LIGHT7_DHZ                   0x067F  // light dir z, or 1/2 angle z
+#define XF_LIGHT1                       0x0610
+#define XF_LIGHT2                       0x0620
+#define XF_LIGHT3                       0x0630
+#define XF_LIGHT4                       0x0640
+#define XF_LIGHT5                       0x0650
+#define XF_LIGHT6                       0x0660
+#define XF_LIGHT7                       0x0670
 
 // XF 0x0680...0x07FF reserved
 
 // Color channel registers.
 
+#define XF_INVTXSPEC                    0x1008
 #define XF_NUMCOLS                      0x1009  // Selects the number of output colors
 #define XF_AMBIENT0                     0x100A  // RGBA (8b/comp) ambient color 0
 #define XF_AMBIENT1                     0x100B  // RGBA (8b/comp) ambient color 1
@@ -785,6 +665,44 @@ typedef union
     uint32_t     matidx;
 } MATIDX_B;
 
+// Array name for ArrayBase and ArrayStride
+
+enum class ArrayId
+{
+    Pos = 0,
+    Nrm,
+    Color0,
+    Color1,
+    Tex0Coord,
+    Tex1Coord,
+    Tex2Coord,
+    Tex3Coord,
+    Tex4Coord,
+    Tex5Coord,
+    Tex6Coord,
+    Tex7Coord,
+
+    // Used by XF_IndexLoadRegA/B/C/D commands
+
+    IndexRegA,
+    IndexRegB,
+    IndexRegC,
+    IndexRegD,
+
+    Max,
+};
+
+union InVertexSpec
+{
+    struct
+    {
+        int color0Usage : 2;		// 0: No host supplied color information 1: Host supplied color0 2: Host supplied color0 and color1
+        int normalUsage : 2;		// 0: No host supplied normal 1: Host supplied normal 2: Host supplied normal and binormals
+        int texCoords : 4;		// 0: No host supplied textures 1: 1 host supplied texture pair (S0, T0) 2-8: 2-8 host supplied texturepairs; 9-15: Reserved
+    };
+    uint32_t bits;
+};
+
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // register memory space description
@@ -799,8 +717,8 @@ typedef struct
     VAT_A       vatA[8];                // 0x70...0x77
     VAT_B       vatB[8];                // 0x80...0x87
     VAT_C       vatC[8];                // 0x90...0x97
-    uint8_t          *arbase[VTX_MAX_ATTR];  // 0xA0...0xAB
-    uint32_t         arstride[VTX_MAX_ATTR]; // 0xB0...0xBB
+    uint32_t         arbase[(size_t)ArrayId::Max];  // 0xA0...0xAB
+    uint32_t         arstride[(size_t)ArrayId::Max]; // 0xB0...0xBB
 } CPMemory;
 
 typedef struct
@@ -830,6 +748,7 @@ typedef struct
     float       postmtx[32][3];         // 0x0500...0x05FF
     unsigned    posidx, texidx[8];      // pos index, tex index
     LightObj    light[8];               // 0x0600...0x07FF
+    InVertexSpec vtxSpec;               // 0x1008
     uint32_t         numcol;                 // 0x1009
     Color       ambient[2];             // 0x100A, 0x100B
     Color       material[2];            // 0x100C, 0x100D
@@ -861,6 +780,6 @@ extern  uint8_t   *RAM;
 // registers loading (using fifo writes)
 void    loadCPReg(size_t index, uint32_t value);
 void    loadBPReg(size_t index, uint32_t value);
-void    loadXFRegs(size_t startIndex, size_t amount, GX::FifoProcessor* fifo);
+void    loadXFRegs(size_t startIndex, size_t amount, GX_FromFuture::FifoProcessor* fifo);
 
 extern  uint32_t cpLoads, bpLoads, xfLoads;

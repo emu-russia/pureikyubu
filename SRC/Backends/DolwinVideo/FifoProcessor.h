@@ -1,7 +1,7 @@
 
 #pragma once
 
-namespace GX
+namespace GX_FromFuture
 {
 	class FifoProcessor
 	{

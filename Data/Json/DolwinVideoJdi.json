@@ -1,0 +1,14 @@
+{
+  "info": {
+    "description": "DolwinVideo Commands",
+    "helpGroup": "DolwinVideo Debug Commands"
+  },
+
+  "can": {
+
+    "DumpVat": {
+      "help": "Dump CommandProcessor VCD/VAT settings"
+    }
+
+  }
+}

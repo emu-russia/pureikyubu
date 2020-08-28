@@ -1,6 +1,8 @@
 #pragma once
 
-// AI registers (AID regs are 16-bit, AIS regs are 32-bit)
+// DSP registers
+
+// 16-bit access
 #define DSP_OUTMBOXH        0x0C005000      // CPU->DSP mailbox
 #define DSP_OUTMBOXL        0x0C005002
 #define DSP_INMBOXH         0x0C005004      // DSP->CPU mailbox
@@ -10,10 +12,18 @@
 #define AID_MADRL           0x0C005032      // DMA start address (Low)
 #define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
 #define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
+
+// AI Streaming registers
+
+// 32-bit access
 #define AIS_CR              0x0C006C00      // AIS control register 
 #define AIS_VR              0x0C006C04      // AIS volume register
 #define AIS_SCNT            0x0C006C08      // AIS sample counter
 #define AIS_IT              0x0C006C0C      // AIS interrupt timing
+#define AIS_UNUSED_4        0x0C006C10
+#define AIS_UNUSED_5        0x0C006C14
+#define AIS_UNUSED_6        0x0C006C18
+#define AIS_UNUSED_7        0x0C006C1C
 
 // AI/DSP Control Register mask
 #define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
@@ -46,46 +56,53 @@
 // ---------------------------------------------------------------------------
 // hardware API
 
-// AI state (registers and other data)
-struct AIControl
+namespace Flipper
 {
-    // AID
-    std::atomic<uint16_t> dcr;  // AI/DSP control register
-    volatile uint16_t    madr_hi;        // DMA start address hi
-    volatile uint16_t    madr_lo;        // DMA start address lo
-    volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
-    volatile uint16_t    dcnt;           // DMA count-down
+    class AudioMixer;
 
-    // AIS
-    volatile uint32_t    cr;             // AIS control reg
-    volatile uint32_t    vr;             // AIS volume
-    volatile uint32_t    scnt;           // sample counter
-    volatile uint32_t    it;             // sample counter trigger
+    // AI state (registers and other data)
+    struct AIControl
+    {
+        // AID
+        std::atomic<uint16_t> dcr;  // AI/DSP control register
+        volatile uint16_t    madr_hi;        // DMA start address hi
+        volatile uint16_t    madr_lo;        // DMA start address lo
+        volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
+        volatile uint16_t    dcnt;           // DMA count-down
 
-    // helpers
-    uint32_t    currentDmaAddr; // current DMA address
-    int32_t     dmaRate;        // copy of DFR value (32000/48000)
-    uint64_t    dmaTime;        // audio DMA update time 
+        // AIS
+        volatile uint32_t    cr;             // AIS control reg
+        volatile uint32_t    vr;             // AIS volume
+        volatile uint32_t    scnt;           // sample counter
+        volatile uint32_t    it;             // sample counter trigger
 
-    Thread*     audioThread;    // The main AI thread that receives samples from AI DMA FIFO and DVD Audio (which accumulate in AIS FIFO).
-                                // When FIFOs overflow - AudioThread Feed Mixer.
+        // helpers
+        uint32_t    currentDmaAddr; // current DMA address
+        int32_t     dmaRate;        // copy of DFR value (32000/48000)
+        uint64_t    dmaTime;        // audio DMA update time 
 
-    uint8_t     streamFifo[32];
-    size_t      streamFifoPtr;
+        Thread* audioThread;    // The main AI thread that receives samples from AI DMA FIFO and DVD Audio (which accumulate in AIS FIFO).
+                                    // When FIFOs overflow - AudioThread Feed Mixer.
 
-    int64_t     one_second;     // one CPU second in timer ticks
-    bool        log;            // Enable AI log
+        uint8_t     streamFifo[32];
+        size_t      streamFifoPtr;
 
-    uint8_t     zeroes[32];
-};
+        int64_t     one_second;     // one CPU second in timer ticks
+        bool        log;            // Enable AI log
 
-extern  AIControl ai;
+        uint8_t     zeroes[32];
 
-void    AIOpen(HWConfig * config);
-void    AIClose();
+        AudioMixer* Mixer = nullptr;
+    };
 
-// Used by DspCore
+    extern  AIControl ai;
 
-void    DSPAssertInt();
-bool    DSPGetInterruptStatus();
-bool    DSPGetResetModifier();
+    void    AIOpen(HWConfig* config);
+    void    AIClose();
+
+    // Used by DspCore
+
+    void    DSPAssertInt();
+    bool    DSPGetInterruptStatus();
+    bool    DSPGetResetModifier();
+}

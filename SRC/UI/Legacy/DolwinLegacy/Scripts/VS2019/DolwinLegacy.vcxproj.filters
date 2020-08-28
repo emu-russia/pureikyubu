@@ -107,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />
+    <None Include="..\..\..\..\..\..\Data\Json\UIJdi.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\RES\Dolwin.ico">

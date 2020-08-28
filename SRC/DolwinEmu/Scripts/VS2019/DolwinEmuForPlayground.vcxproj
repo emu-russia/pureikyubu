@@ -80,6 +80,9 @@
     <ProjectReference Include="..\..\..\GekkoCore\Scripts\VS2019\GekkoCore.vcxproj">
       <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\..\..\GX\Scripts\VS2019\GX.vcxproj">
+      <Project>{1386fc99-a29c-410c-b3d1-2a7e233f57d4}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\Hardware\Scripts\VS2019\GCNHardwareForPlayground.vcxproj">
       <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
     </ProjectReference>

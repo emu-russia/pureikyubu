@@ -21,10 +21,10 @@
 
 #include "../DVD/DVD.h"
 #include "../DSP/DSP.h"
+#include "../GX/GXCore.h"
 #include "HW.h"
-#include "EFB.h"
 #include "AI.h"
-#include "CP.h"
+#include "CP_PE.h"
 #include "VI.h"
 #include "PI.h"
 #include "MI.h"
@@ -70,5 +70,3 @@
 #include "../GekkoCore/Gekko.h"
 
 #include "../HighLevel/TimeFormat.h"
-
-#include "FIFO.h"

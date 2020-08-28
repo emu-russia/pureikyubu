@@ -155,8 +155,8 @@ namespace Debug
 				// Step Into
 				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
-					Jdi->GekkoStep();
-					disasm->SetCursor(Jdi->GetPc() + 4);
+					Jdi.GekkoStep();
+					disasm->SetCursor(Jdi.GetPc());
 					InvalidateAll();
 				}
 				break;

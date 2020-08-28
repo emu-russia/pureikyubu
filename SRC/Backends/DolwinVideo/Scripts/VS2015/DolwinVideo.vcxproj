@@ -152,43 +152,31 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Config.h" />
+    <ClInclude Include="..\..\Backend.h" />
     <ClInclude Include="..\..\Fifo.h" />
     <ClInclude Include="..\..\FifoProcessor.h" />
-    <ClInclude Include="..\..\GL.H" />
-    <ClInclude Include="..\..\Gpl.h" />
+    <ClInclude Include="..\..\GL.h" />
     <ClInclude Include="..\..\GPRegs.h" />
     <ClInclude Include="..\..\GX.h" />
-    <ClInclude Include="..\..\Light.h" />
     <ClInclude Include="..\..\pch.h" />
-    <ClInclude Include="..\..\Perf.h" />
-    <ClInclude Include="..\..\Plug.h" />
-    <ClInclude Include="..\..\Stages.h" />
-    <ClInclude Include="..\..\Tev.h" />
     <ClInclude Include="..\..\Tex.h" />
-    <ClInclude Include="..\..\Texgen.h" />
-    <ClInclude Include="..\..\XF.H" />
+    <ClInclude Include="..\..\XF.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\Backend.cpp" />
     <ClCompile Include="..\..\Fifo.cpp" />
     <ClCompile Include="..\..\FifoProcessor.cpp" />
-    <ClCompile Include="..\..\Gl.cpp" />
-    <ClCompile Include="..\..\Gpl.cpp" />
+    <ClCompile Include="..\..\GL.cpp" />
     <ClCompile Include="..\..\GPRegs.cpp" />
-    <ClCompile Include="..\..\Light.cpp" />
+    <ClCompile Include="..\..\GX.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\Perf.cpp" />
-    <ClCompile Include="..\..\Plug.cpp" />
-    <ClCompile Include="..\..\Stages.cpp" />
-    <ClCompile Include="..\..\Tev.cpp" />
     <ClCompile Include="..\..\Tex.cpp" />
-    <ClCompile Include="..\..\Texgen.cpp" />
-    <ClCompile Include="..\..\XF.CPP" />
+    <ClCompile Include="..\..\XF.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />

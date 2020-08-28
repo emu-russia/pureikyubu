@@ -1,11 +1,9 @@
 add_library (Hardware SHARED 
 	../AI.cpp
 	../AR.cpp
-	../CP.cpp
+	../CP_PE.cpp
 	../DI.cpp
-	../EFB.cpp
 	../EXI.cpp
-	../FIFO.cpp
 	../HW.cpp
 	../HwCommands.cpp
 	../IPLDescrambler.cpp

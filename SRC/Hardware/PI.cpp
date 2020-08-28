@@ -27,7 +27,7 @@ static const char *intdesc(uint32_t mask)
         case PI_INTERRUPT_SI        : return "SI";
         case PI_INTERRUPT_DI        : return "DI";
         case PI_INTERRUPT_RSW       : return "RSW";
-        case PI_INTERRUPT_ERROR     : return "ERROR";
+        case PI_INTERRUPT_PI        : return "PI_ERROR";
     }
     
     // default
@@ -133,10 +133,10 @@ static void write_intmr(uint32_t addr, uint32_t data)
 }
 
 //
-// GC revision
+// Flipper revision
 //
 
-static void read_mbrev(uint32_t addr, uint32_t *reg)
+static void read_FlipperID(uint32_t addr, uint32_t *reg)
 {
     uint32_t ver = pi.consoleVer;
 
@@ -152,20 +152,37 @@ static void read_mbrev(uint32_t addr, uint32_t *reg)
 }
 
 //
-// reset register
+// CONFIG register
 //
 
-static void write_reset(uint32_t addr, uint32_t data)
+static void write_config(uint32_t addr, uint32_t data)
 {
-    // reset emulator
     if(data)
     {
+        // It is not yet clear what may or may not be affected by the support for system reset, for now we will leave only debug messages.
+
+        if (data & PI_CONFIG_SYSRSTB)
+        {
+            Report(Channel::PI, "System Reset requested.\n");
+        }
+
+        if (data & PI_CONFIG_MEMRSTB)
+        {
+            Report(Channel::PI, "MEM Reset requested.\n");
+        }
+
+        if (data & PI_CONFIG_DIRSTB)
+        {
+            Report(Channel::PI, "DVD Reset requested.\n");
+        }
+
+        // reset emulator
         //EMUClose();
         //EMUOpen();
     }
 }
 
-static void read_reset(uint32_t addr, uint32_t *reg)
+static void read_config(uint32_t addr, uint32_t *reg)
 {
     // on system power-on, the code is zero
     *reg = 0;
@@ -175,21 +192,14 @@ static void read_reset(uint32_t addr, uint32_t *reg)
 // PI fifo (CPU)
 //
 
-static void read_pi_base(uint32_t addr, uint32_t *reg)   { *reg = pi.base & ~0x1f; }
-static void write_pi_base(uint32_t addr, uint32_t data)  { pi.base = data & ~0x1f; }
-static void read_pi_top(uint32_t addr, uint32_t *reg)    { *reg = pi.top & ~0x1f; }
-static void write_pi_top(uint32_t addr, uint32_t data)   { pi.top = data & ~0x1f; }
-static void read_pi_wrptr(uint32_t addr, uint32_t *reg)  { *reg = pi.wrptr & ~0x1f; }
-static void write_pi_wrptr(uint32_t addr, uint32_t data) { pi.wrptr = data & ~0x1f; }
-
-// show PI fifo configuration
-void DumpPIFIFO()
+static void PI_CPRegRead(uint32_t addr, uint32_t* reg)
 {
-    Report(Channel::Norm, "PI fifo configuration");
-    Report(Channel::Norm, "   base :0x%08X", pi.base);
-    Report(Channel::Norm, "   top  :0x%08X", pi.top);
-    Report(Channel::Norm, "   wrptr:0x%08X", pi.wrptr);
-    Report(Channel::Norm, "   wrap :%i", (pi.wrptr & PI_WRPTR_WRAP) ? (1) : (0));
+    *reg = Flipper::Gx->PiCpReadReg((GX::PI_CPMappedRegister)((addr & 0xFF) >> 2));
+}
+
+static void PI_CPRegWrite(uint32_t addr, uint32_t data)
+{
+    Flipper::Gx->PiCpWriteReg((GX::PI_CPMappedRegister)((addr & 0xFF) >> 2), data);
 }
 
 // ---------------------------------------------------------------------------
@@ -197,7 +207,7 @@ void DumpPIFIFO()
 
 void PIOpen(HWConfig* config)
 {
-    Report(Channel::PI, "Processor interface (interrupts)\n");
+    Report(Channel::PI, "Processor interface\n");
 
     pi.rswhack = config->rswhack;
     pi.consoleVer = config->consoleVer;
@@ -209,12 +219,13 @@ void PIOpen(HWConfig* config)
     // set interrupt registers hooks
     MISetTrap(32, PI_INTSR   , read_intsr, write_intsr);
     MISetTrap(32, PI_INTMR   , read_intmr, write_intmr);
-    MISetTrap(32, PI_MB_REV  , read_mbrev, NULL);
-    MISetTrap( 8, PI_RST_CODE, read_reset, write_reset);
-    MISetTrap(32, PI_RST_CODE, read_reset, write_reset);
+    MISetTrap(32, PI_CHIPID  , read_FlipperID, nullptr);
+    MISetTrap( 8, PI_CONFIG  , read_config, write_config);
+    MISetTrap(32, PI_CONFIG  , read_config, write_config);
 
-    // processor interface (CPU fifo)
-    MISetTrap(32, PI_BASE , read_pi_base , write_pi_base);
-    MISetTrap(32, PI_TOP  , read_pi_top  , write_pi_top);
-    MISetTrap(32, PI_WRPTR, read_pi_wrptr, write_pi_wrptr);
+    // Processor interface CP fifo.
+    // Some of the CP FIFO registers are mapped to PI registers for the reason that writes to the FIFO Stream Pointer are made by the Gekko Burst transactions and are serviced by PI.
+    MISetTrap(32, PI_BASE , PI_CPRegRead, PI_CPRegWrite);
+    MISetTrap(32, PI_TOP  , PI_CPRegRead, PI_CPRegWrite);
+    MISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
 }

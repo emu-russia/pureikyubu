@@ -7,7 +7,8 @@ using namespace Debug;
 namespace Flipper
 {
     Flipper* HW;
-    DSP::Dsp16* DSP;      // instance of dsp core
+    DSP::Dsp16* DSP;      // Instance of dsp core
+    GX::GXCore* Gx;         // Instance of GX processor
 
     // This thread acts as the HWUpdate of Dolwin 0.10.
     // Previously, an HWUpdate call occurred after each Gekko instruction (or so).
@@ -35,11 +36,9 @@ namespace Flipper
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
-        Mixer = new AudioMixer(config);
-
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
-        CPOpen(config); // fifo
+        CP_PEOpen();    // Command Processor & PixelEngin
         AIOpen(config); // audio (AID and AIS)
         AROpen();       // aux. memory (ARAM)
         EIOpen(config); // expansion interface (EXI)
@@ -77,6 +76,7 @@ namespace Flipper
 
         Report(Channel::Norm, "\n");
 
+        Gx->Open();
         GXOpen(config, mi.ram);
         PADOpen();
 
@@ -93,7 +93,7 @@ namespace Flipper
 
         DSP->Suspend();
 
-        CPClose();
+        CP_PEClose();
         AIClose();
         ARClose();      // release ARAM
         EIClose();      // take care about closing of memcards and BBA
@@ -102,8 +102,8 @@ namespace Flipper
         MIClose();
 
         PADClose();
-        delete Mixer;
         GXClose();
+        Gx->Close();
     }
 
     void Flipper::Update()

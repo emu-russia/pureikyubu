@@ -4,12 +4,11 @@ using namespace Debug;
 
 extern int VtxSize[8];
 
-namespace GX
+namespace GX_FromFuture
 {
 	FifoProcessor::FifoProcessor()
 	{
 		fifo = new uint8_t[fifoSize];
-		assert(fifo);
 		memset(fifo, 0, fifoSize);
 		allocated = true;
 	}
@@ -43,8 +42,6 @@ namespace GX
 			memcpy(&fifo[writePtr], dataPtr, part1Size);
 			writePtr = 32 - part1Size;
 			memcpy(fifo, dataPtr + part1Size, writePtr);
-
-			Report(Channel::GP, "FifoProcessor: fifo wrapped\n");
 		}
 	}
 
@@ -128,7 +125,7 @@ namespace GX
 			case OP_CMD_LOAD_XFREG | 6:
 			case OP_CMD_LOAD_XFREG | 7:
 			{
-				if (GetSize() < 3)
+				if (GetSize() < 5)
 					return false;
 
 				uint16_t len = Peek16(1) + 1;
@@ -242,7 +239,7 @@ namespace GX
 
 			default:
 			{
-				Halt("GX: Unsupported opcode: 0x%02X\n", cmd);
+				Report(Channel::GP, "GX: Unsupported opcode: 0x%02X\n", cmd);
 				break;
 			}
 		}

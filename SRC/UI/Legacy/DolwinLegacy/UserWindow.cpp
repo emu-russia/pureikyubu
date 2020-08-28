@@ -242,8 +242,12 @@ void LoadRecentFile(int index)
 {
     int RecentNum = UI::Jdi->GetConfigInt(USER_RECENT_NUM, USER_UI);
     std::wstring path = GetRecentEntry((RecentNum+1) - index);
-    UI::Jdi->Unload();
-    UI::Jdi->LoadFile(Util::WstringToString(path));
+    UI::Jdi.Unload();
+    UI::Jdi.LoadFile(Util::WstringToString(path));
+    if (gekkoDebug)
+    {
+        gekkoDebug->InvalidateAll();
+    }
     OnMainWindowOpened(path.c_str());
     UI::Jdi->Run();
 }
@@ -662,7 +666,11 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     {
                     loadFile:
                     
-                        UI::Jdi->LoadFile(Util::WstringToString(name));
+                        UI::Jdi.LoadFile(Util::WstringToString(name));
+                        if (gekkoDebug)
+                        {
+                            gekkoDebug->InvalidateAll();
+                        }
                         OnMainWindowOpened(name.c_str());
                         UI::Jdi->Run();
                     }
@@ -695,7 +703,14 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                 {
                     UI::Jdi->LoadFile("Bootrom");
                     OnMainWindowOpened(L"Bootrom");
-                    UI::Jdi->Run();
+                    if (gekkoDebug == nullptr)
+                    {
+                        UI::Jdi.Run();
+                    }
+                    else
+                    {
+                        gekkoDebug->SetDisasmCursor(0xfff0'0100);
+                    }
                     return 0;
                 }
                 /* Open/close DVD lid */
@@ -1085,7 +1100,7 @@ HWND CreateMainWindow(HINSTANCE hInstance)
         CLASS_NAME,
         win_name.c_str(),
         WIN_STYLE, 
-        20, 30,
+        CW_USEDEFAULT, CW_USEDEFAULT,
         400, 300,
         NULL, NULL,
         hInstance, NULL);

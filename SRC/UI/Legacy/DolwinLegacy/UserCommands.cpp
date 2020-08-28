@@ -48,9 +48,29 @@ Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 	return value;
 }
 
+Json::Value* CmdShowMemory(std::vector<std::string>& args)
+{
+	if (gekkoDebug)
+	{
+		gekkoDebug->SetMemoryCursor(strtoul(args[1].c_str(), nullptr, 0));
+	}
+	return nullptr;
+}
+
+Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
+{
+	if (gekkoDebug)
+	{
+		gekkoDebug->SetDisasmCursor(strtoul(args[1].c_str(), nullptr, 0));
+	}
+	return nullptr;
+}
+
 void UIReflector()
 {
-	UI::Jdi->JdiAddCmd("UIError", CmdUIError);
-	UI::Jdi->JdiAddCmd("UIReport", CmdUIReport);
-	UI::Jdi->JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+	UI::Jdi.JdiAddCmd("UIError", CmdUIError);
+	UI::Jdi.JdiAddCmd("UIReport", CmdUIReport);
+	UI::Jdi.JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+	UI::Jdi.JdiAddCmd("d", CmdShowMemory);
+	UI::Jdi.JdiAddCmd("u", CmdShowDisassembly);
 }

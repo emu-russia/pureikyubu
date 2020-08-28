@@ -1,0 +1,18 @@
+{
+  "info": {
+    "description": "GAMECUBE GPU (GX) Commands",
+    "helpGroup": "GX Debug Commands"
+  },
+
+  "can": {
+
+    "GXDump": {
+      "help": "Show the current state of all GX registers."
+    },
+
+    "DumpFifo": {
+      "help": "Dump PI/CP FIFO configuration"
+    }
+
+  }
+}

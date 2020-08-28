@@ -3,8 +3,6 @@
 
 using namespace Debug;
 
-static      FILE *gplog;
-
 GXDrawDoneCallback GxDrawDone;
 GXDrawTokenCallback GxDrawToken;
 
@@ -53,191 +51,14 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VCD_LO:
         {
             cpRegs.vcdLo.vcdlo = value;
-
-            // update pipeline, using all VATs
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                FifoReconfigure(
-                    VTX_POSMATIDX,
-                    vatnum,
-                    cpRegs.vcdLo.pmidx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX0MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t0midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX1MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t1midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX2MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t2midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX3MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t3midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX4MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t4midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX5MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t5midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX6MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t6midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_TEX7MTXIDX,
-                    vatnum,
-                    cpRegs.vcdLo.t7midx,
-                    0, 0, 0
-                );
-
-                FifoReconfigure(
-                    VTX_POS,
-                    vatnum,
-                    cpRegs.vcdLo.pos,
-                    cpRegs.vatA[vatnum].poscnt,
-                    cpRegs.vatA[vatnum].posfmt,
-                    cpRegs.vatA[vatnum].posshft
-                );
-
-                FifoReconfigure(
-                    VTX_NRM,
-                    vatnum,
-                    cpRegs.vcdLo.nrm,
-                    cpRegs.vatA[vatnum].nrmcnt,
-                    cpRegs.vatA[vatnum].nrmfmt,
-                    0
-                );
-
-                FifoReconfigure(
-                    VTX_COLOR0,
-                    vatnum,
-                    cpRegs.vcdLo.col0,
-                    cpRegs.vatA[vatnum].col0cnt,
-                    cpRegs.vatA[vatnum].col0fmt,
-                    0
-                );
-
-                FifoReconfigure(
-                    VTX_COLOR1,
-                    vatnum,
-                    cpRegs.vcdLo.col1,
-                    cpRegs.vatA[vatnum].col1cnt,
-                    cpRegs.vatA[vatnum].col1fmt,
-                    0
-                );
-            }
+            FifoReconfigure();
         }
         return;
 
         case CP_VCD_HI:
         {
             cpRegs.vcdHi.vcdhi = value;
-
-            // update pipeline, using all VATs
-            for(unsigned vatnum=0; vatnum<8; vatnum++)
-            {
-                FifoReconfigure(
-                    VTX_TEXCOORD0,
-                    vatnum,
-                    cpRegs.vcdHi.tex0,
-                    cpRegs.vatA[vatnum].tex0cnt,
-                    cpRegs.vatA[vatnum].tex0fmt,
-                    cpRegs.vatA[vatnum].tex0shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD1,
-                    vatnum,
-                    cpRegs.vcdHi.tex1,
-                    cpRegs.vatB[vatnum].tex1cnt,
-                    cpRegs.vatB[vatnum].tex1fmt,
-                    cpRegs.vatB[vatnum].tex1shft
-                );
-            
-                FifoReconfigure(
-                    VTX_TEXCOORD2,
-                    vatnum,
-                    cpRegs.vcdHi.tex2,
-                    cpRegs.vatB[vatnum].tex2cnt,
-                    cpRegs.vatB[vatnum].tex2fmt,
-                    cpRegs.vatB[vatnum].tex2shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD3,
-                    vatnum,
-                    cpRegs.vcdHi.tex3,
-                    cpRegs.vatB[vatnum].tex3cnt,
-                    cpRegs.vatB[vatnum].tex3fmt,
-                    cpRegs.vatB[vatnum].tex3shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD4,
-                    vatnum,
-                    cpRegs.vcdHi.tex4,
-                    cpRegs.vatB[vatnum].tex4cnt,
-                    cpRegs.vatB[vatnum].tex4fmt,
-                    cpRegs.vatC[vatnum].tex4shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD5,
-                    vatnum,
-                    cpRegs.vcdHi.tex5,
-                    cpRegs.vatC[vatnum].tex5cnt,
-                    cpRegs.vatC[vatnum].tex5fmt,
-                    cpRegs.vatC[vatnum].tex5shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD6,
-                    vatnum,
-                    cpRegs.vcdHi.tex6,
-                    cpRegs.vatC[vatnum].tex6cnt,
-                    cpRegs.vatC[vatnum].tex6fmt,
-                    cpRegs.vatC[vatnum].tex6shft
-                );
-
-                FifoReconfigure(
-                    VTX_TEXCOORD7,
-                    vatnum,
-                    cpRegs.vcdHi.tex7,
-                    cpRegs.vatC[vatnum].tex7cnt,
-                    cpRegs.vatC[vatnum].tex7fmt,
-                    cpRegs.vatC[vatnum].tex7shft
-                );
-            }
+            FifoReconfigure();
         }
         return;
 
@@ -250,53 +71,8 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_A:
         case CP_VAT7_A:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatA[vatnum].vata = value;
-
-            FifoReconfigure(
-                VTX_POS,
-                vatnum,
-                cpRegs.vcdLo.pos,
-                cpRegs.vatA[vatnum].poscnt,
-                cpRegs.vatA[vatnum].posfmt,
-                cpRegs.vatA[vatnum].posshft
-            );
-
-            FifoReconfigure(
-                VTX_NRM,
-                vatnum,
-                cpRegs.vcdLo.nrm,
-                cpRegs.vatA[vatnum].nrmcnt,
-                cpRegs.vatA[vatnum].nrmfmt,
-                0
-            );
-
-            FifoReconfigure(
-                VTX_COLOR0,
-                vatnum,
-                cpRegs.vcdLo.col0,
-                cpRegs.vatA[vatnum].col0cnt,
-                cpRegs.vatA[vatnum].col0fmt,
-                0
-            );
-
-            FifoReconfigure(
-                VTX_COLOR1,
-                vatnum,
-                cpRegs.vcdLo.col1,
-                cpRegs.vatA[vatnum].col1cnt,
-                cpRegs.vatA[vatnum].col1fmt,
-                0
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD0,
-                vatnum,
-                cpRegs.vcdHi.tex0,
-                cpRegs.vatA[vatnum].tex0cnt,
-                cpRegs.vatA[vatnum].tex0fmt,
-                cpRegs.vatA[vatnum].tex0shft
-            );
+            cpRegs.vatA[index & 7].vata = value;
+            FifoReconfigure();
         }
         return;
 
@@ -309,44 +85,8 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_B:
         case CP_VAT7_B:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatB[vatnum].vatb = value;
-
-            FifoReconfigure(
-                VTX_TEXCOORD1,
-                vatnum,
-                cpRegs.vcdHi.tex1,
-                cpRegs.vatB[vatnum].tex1cnt,
-                cpRegs.vatB[vatnum].tex1fmt,
-                cpRegs.vatB[vatnum].tex1shft
-            );
-            
-            FifoReconfigure(
-                VTX_TEXCOORD2,
-                vatnum,
-                cpRegs.vcdHi.tex2,
-                cpRegs.vatB[vatnum].tex2cnt,
-                cpRegs.vatB[vatnum].tex2fmt,
-                cpRegs.vatB[vatnum].tex2shft
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD3,
-                vatnum,
-                cpRegs.vcdHi.tex3,
-                cpRegs.vatB[vatnum].tex3cnt,
-                cpRegs.vatB[vatnum].tex3fmt,
-                cpRegs.vatB[vatnum].tex3shft
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD4,
-                vatnum,
-                cpRegs.vcdHi.tex4,
-                cpRegs.vatB[vatnum].tex4cnt,
-                cpRegs.vatB[vatnum].tex4fmt,
-                cpRegs.vatC[vatnum].tex4shft
-            );
+            cpRegs.vatB[index & 7].vatb = value;
+            FifoReconfigure();
         }
         return;
 
@@ -359,89 +99,56 @@ void loadCPReg(size_t index, uint32_t value)
         case CP_VAT6_C:
         case CP_VAT7_C:
         {
-            unsigned vatnum = index & 7;
-            cpRegs.vatC[vatnum].vatc = value;
-
-            FifoReconfigure(
-                VTX_TEXCOORD4,
-                vatnum,
-                cpRegs.vcdHi.tex4,
-                cpRegs.vatB[vatnum].tex4cnt,
-                cpRegs.vatB[vatnum].tex4fmt,
-                cpRegs.vatC[vatnum].tex4shft
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD5,
-                vatnum,
-                cpRegs.vcdHi.tex5,
-                cpRegs.vatC[vatnum].tex5cnt,
-                cpRegs.vatC[vatnum].tex5fmt,
-                cpRegs.vatC[vatnum].tex5shft
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD6,
-                vatnum,
-                cpRegs.vcdHi.tex6,
-                cpRegs.vatC[vatnum].tex6cnt,
-                cpRegs.vatC[vatnum].tex6fmt,
-                cpRegs.vatC[vatnum].tex6shft
-            );
-
-            FifoReconfigure(
-                VTX_TEXCOORD7,
-                vatnum,
-                cpRegs.vcdHi.tex7,
-                cpRegs.vatC[vatnum].tex7cnt,
-                cpRegs.vatC[vatnum].tex7fmt,
-                cpRegs.vatC[vatnum].tex7shft
-            );
+            cpRegs.vatC[index & 7].vatc = value;
+            FifoReconfigure();
         }
         return;
 
-        case CP_ARRAY_BASE | (VTX_POS - VTX_POS):           // 0xA0
-        case CP_ARRAY_BASE | (VTX_NRM - VTX_POS):           // 0xA1
-        case CP_ARRAY_BASE | (VTX_COLOR0 - VTX_POS):        // 0xA2
-        case CP_ARRAY_BASE | (VTX_COLOR1 - VTX_POS):        // 0xA3
-        case CP_ARRAY_BASE | (VTX_TEXCOORD0 - VTX_POS):     // 0xA4
-        case CP_ARRAY_BASE | (VTX_TEXCOORD1 - VTX_POS):     // 0xA5
-        case CP_ARRAY_BASE | (VTX_TEXCOORD2 - VTX_POS):     // 0xA6
-        case CP_ARRAY_BASE | (VTX_TEXCOORD3 - VTX_POS):     // 0xA7
-        case CP_ARRAY_BASE | (VTX_TEXCOORD4 - VTX_POS):     // 0xA8
-        case CP_ARRAY_BASE | (VTX_TEXCOORD5 - VTX_POS):     // 0xA9
-        case CP_ARRAY_BASE | (VTX_TEXCOORD6 - VTX_POS):     // 0xAA
-        case CP_ARRAY_BASE | (VTX_TEXCOORD7 - VTX_POS):     // 0xAB
+        case CP_ARRAY_BASE | 0:
+        case CP_ARRAY_BASE | 1:
+        case CP_ARRAY_BASE | 2:
+        case CP_ARRAY_BASE | 3:
+        case CP_ARRAY_BASE | 4:
+        case CP_ARRAY_BASE | 5:
+        case CP_ARRAY_BASE | 6:
+        case CP_ARRAY_BASE | 7:
+        case CP_ARRAY_BASE | 8:
+        case CP_ARRAY_BASE | 9:
+        case CP_ARRAY_BASE | 0xa:
+        case CP_ARRAY_BASE | 0xb:
+        case CP_ARRAY_BASE | 0xc:
+        case CP_ARRAY_BASE | 0xd:
+        case CP_ARRAY_BASE | 0xe:
+        case CP_ARRAY_BASE | 0xf:
         {
-            // array base is already translated
-            cpRegs.arbase[VTX_POS + (index & 0xf)] = (uint8_t *)&RAM[value & RAMMASK];
+            cpRegs.arbase[index & 0xf] = value;
         }
         return;
 
-        case CP_ARRAY_STRIDE | (VTX_POS - VTX_POS):         // 0xB0
-        case CP_ARRAY_STRIDE | (VTX_NRM - VTX_POS):         // 0xB1
-        case CP_ARRAY_STRIDE | (VTX_COLOR0 - VTX_POS):      // 0xB2
-        case CP_ARRAY_STRIDE | (VTX_COLOR1 - VTX_POS):      // 0xB3
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD0 - VTX_POS):   // 0xB4
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD1 - VTX_POS):   // 0xB5
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD2 - VTX_POS):   // 0xB6
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD3 - VTX_POS):   // 0xB7
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD4 - VTX_POS):   // 0xB8
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD5 - VTX_POS):   // 0xB9
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD6 - VTX_POS):   // 0xBA
-        case CP_ARRAY_STRIDE | (VTX_TEXCOORD7 - VTX_POS):   // 0xBB
+        case CP_ARRAY_STRIDE | 0:
+        case CP_ARRAY_STRIDE | 1:
+        case CP_ARRAY_STRIDE | 2:
+        case CP_ARRAY_STRIDE | 3:
+        case CP_ARRAY_STRIDE | 4:
+        case CP_ARRAY_STRIDE | 5:
+        case CP_ARRAY_STRIDE | 6:
+        case CP_ARRAY_STRIDE | 7:
+        case CP_ARRAY_STRIDE | 8:
+        case CP_ARRAY_STRIDE | 9:
+        case CP_ARRAY_STRIDE | 0xa:
+        case CP_ARRAY_STRIDE | 0xb:
+        case CP_ARRAY_STRIDE | 0xc:
+        case CP_ARRAY_STRIDE | 0xd:
+        case CP_ARRAY_STRIDE | 0xe:
+        case CP_ARRAY_STRIDE | 0xf:
         {
-            cpRegs.arstride[VTX_POS + (index & 0xf)] = value;
+            cpRegs.arstride[index & 0xf] = value & 0xFF;
         }
         return;
 
         default:
         {
-#ifdef  GPLOG
-            fprintf(gplog, "unknown CP load, index: %02X, data: %08X\n", index, value);
-            fflush(gplog);
-#endif
-//            GFXError("unknown CP load, index : %02X", index);
+            Report(Channel::GP, "Unknown CP load, index: 0x%02X", index);
         }
     }
 }
@@ -873,28 +580,21 @@ void loadBPReg(size_t index, uint32_t value)
 
         default:
         {
-#ifdef  GPLOG
-            fprintf(gplog, "unknown BP load, index: %02X, data: %08X\n", index, value);
-            fflush(gplog);
-#endif
-//            GFXError("unknown BP load, index : %02X", index);
+            Report(Channel::GP, "Unknown BP load, index: 0x%02X", index);
         }
     }
 }
 
 // index range = 0000..FFFF
 // reg size = 32 bit
-void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
+void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fifo)
 {
     xfLoads += (uint32_t)amount;
 
-#if 0
-    GFXError("unknown XF load, start index: %04X, n : %i\n", startIdx, amount);
-    for(unsigned n=0; n<amount; n++)
+    if (GpRegsLog)
     {
-        GFXError("  %-2i: %08X\n", n, regData[n]);
+        Report (Channel::GP, "XF load, start index: %04X, n : %i\n", startIdx, amount);
     }
-#endif
 
     // load geometry matrix
     if((startIdx >= 0x0000) && (startIdx < 0x0400))
@@ -903,17 +603,6 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
         {
             *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = fifo->ReadFloat();
         }
-
-#ifdef  GPLOG
-        fprintf(gplog, "load position matrix, start index: %04X\n", startIdx);
-            
-        for(unsigned n=0; n<amount; n++)
-        {
-            fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-        }
-
-        fflush(gplog);
-#endif
     }
     // load normal matrix
     else if((startIdx >= 0x0400) && (startIdx < 0x0500))
@@ -930,17 +619,6 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
         {
             *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = fifo->ReadFloat();
         }
-
-#ifdef  GPLOG
-        fprintf(gplog, "load post-transform matrix, start index: %04X\n", startIdx);
-            
-        for(unsigned n=0; n<amount; n++)
-        {
-            fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-        }
-
-        fflush(gplog);
-#endif
     }
     else switch(startIdx)
     {
@@ -1101,6 +779,12 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
             xfRegs.light[lnum].dir[0] = fifo->ReadFloat();
             xfRegs.light[lnum].dir[1] = fifo->ReadFloat();
             xfRegs.light[lnum].dir[2] = fifo->ReadFloat();
+        }
+        return;
+
+        case XF_INVTXSPEC:
+        {
+            xfRegs.vtxSpec.bits = fifo->Read32();
         }
         return;
 
@@ -1327,22 +1011,12 @@ void loadXFRegs(size_t startIdx, size_t amount, GX::FifoProcessor* fifo)
 
         default:
         {
+            Report(Channel::GP, "Unknown XF load, start index: 0x%04X, count: %i\n", startIdx, amount);
+
             while (amount--)
             {
                 fifo->Read32();
             }
-
-#ifdef  GPLOG
-            fprintf(gplog, "unknown XF load, start index: %04X\n", startIdx);
-            
-            for(unsigned n=0; n<amount; n++)
-            {
-                fprintf(gplog, "  %-2i: %08X\n", n, regData[n]);
-            }
-
-            fflush(gplog);
-#endif
-//            GFXError("unknown XF load, start index : %04X", startIdx);
         }
     }
 }

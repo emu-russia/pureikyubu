@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.29806.167
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DVD", "SRC\DVD\Scripts\VS2015\DVD.vcxproj", "{A995D286-033C-4EED-B171-6CE61D28C88F}"
 EndProject
@@ -42,6 +42,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DolwinLegacy", "SRC\UI\Legacy\DolwinLegacy\Scripts\VS2015\DolwinLegacy.vcxproj", "{EB6E10CA-A008-45A8-A88B-4B4EFC128011}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Debugger", "SRC\Debugger\Scripts\VS2015\Debugger.vcxproj", "{7FC22F72-A07B-404A-BCE4-7A950EA3C44B}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GX", "SRC\GX\Scripts\VS2015\GX.vcxproj", "{1386FC99-A29C-410C-B3D1-2A7E233F57D4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -171,6 +173,14 @@ Global
 		{7FC22F72-A07B-404A-BCE4-7A950EA3C44B}.Release|Win32.Build.0 = Release|Win32
 		{7FC22F72-A07B-404A-BCE4-7A950EA3C44B}.Release|x64.ActiveCfg = Release|x64
 		{7FC22F72-A07B-404A-BCE4-7A950EA3C44B}.Release|x64.Build.0 = Release|x64
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Debug|Win32.ActiveCfg = Debug|Win32
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Debug|Win32.Build.0 = Debug|Win32
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Debug|x64.ActiveCfg = Debug|x64
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Debug|x64.Build.0 = Debug|x64
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Release|Win32.ActiveCfg = Release|Win32
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Release|Win32.Build.0 = Release|Win32
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Release|x64.ActiveCfg = Release|x64
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -191,6 +201,7 @@ Global
 		{70896A0F-FA85-4017-8BF6-944B6581CB8F} = {16D2FF76-8016-41A5-9EDE-5C33BE4BA32D}
 		{EB6E10CA-A008-45A8-A88B-4B4EFC128011} = {16D2FF76-8016-41A5-9EDE-5C33BE4BA32D}
 		{7FC22F72-A07B-404A-BCE4-7A950EA3C44B} = {9A1AF1AF-D74F-467B-8BB6-878555324A2E}
+		{1386FC99-A29C-410C-B3D1-2A7E233F57D4} = {9A1AF1AF-D74F-467B-8BB6-878555324A2E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {07DC6F38-FBD1-4C75-B0E6-2249E585A95D}

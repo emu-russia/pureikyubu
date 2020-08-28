@@ -55,10 +55,4 @@ extern  uint32_t     lastFifoSize;
 
 // for gpregs module
 // called after any changes of VCD / VAT
-void FifoReconfigure(
-    VTX_ATTR    attr,       // stage attribute
-    unsigned    vat,        // vat number
-    unsigned    vcd,        // attribute description
-    unsigned    cnt,        // attribute "cnt"
-    unsigned    fmt,        // attribute "fmt"
-    unsigned    frac);
+void FifoReconfigure();
