@@ -192,6 +192,18 @@ namespace DSP
 		psr_xl,		// Extension limit mode
 		psr_dp,		// Double precision mode
 
+		// Modifier
+
+		mod_none,	// 0
+		mod_dec,	// -1
+		mod_inc,	// +1
+		mod_plus_m,		// +m
+		mod_minus_m,		// -m
+		mod_plus_m0,	// +m0
+		mod_plus_m1,	// +m1
+		mod_plus_m2,	// +m2
+		mod_plus_m3,	// +m3
+
 		// Immediates
 
 		Byte,
@@ -251,8 +263,8 @@ namespace DSP
 		uint8_t bytes[0x10];	// Saved instruction bytes, including immediate operands
 		size_t sizeInBytes;		// Total size of instruction, including immediate/address operands (in bytes)
 
-		size_t numParameters;		// Number of instruction parameters (0-3)
-		size_t numParametersEx;		// Number of parallel mem instruction parameters (1-2)
+		size_t numParameters;		// Number of instruction parameters
+		size_t numParametersEx;		// Number of parallel mem instruction parameters
 
 		DspParameter params[DspAnalyzeNumParam];		// Processed parameters (ready to output)
 		DspParameter paramsEx[DspAnalyzeNumParam];		// Processed parallel mem opcode parameters (ready to output)
@@ -289,78 +301,70 @@ namespace DSP
 
 		static void ResetInfo(AnalyzeInfo& info);
 
-		static bool Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
-		static bool Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
-		static bool Group2(AnalyzeInfo& info);
-		static bool Group3(AnalyzeInfo& info);
-		static bool Group4(AnalyzeInfo& info);
-		static bool Group5(AnalyzeInfo& info);
-		static bool Group6(AnalyzeInfo& info);
-		static bool Group7(AnalyzeInfo& info);
-		static bool Group8(AnalyzeInfo& info);
-		static bool Group9(AnalyzeInfo& info);
-		static bool GroupA(AnalyzeInfo& info);
-		static bool GroupB(AnalyzeInfo& info);
-		static bool GroupC(AnalyzeInfo& info);
-		static bool GroupD(AnalyzeInfo& info);
-		static bool GroupE(AnalyzeInfo& info);
-		static bool GroupF(AnalyzeInfo& info);
+		static void Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static void Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static void Group2(AnalyzeInfo& info);
+		static void Group3(AnalyzeInfo& info);
+		static void Group4(AnalyzeInfo& info);
+		static void Group5(AnalyzeInfo& info);
+		static void Group6(AnalyzeInfo& info);
+		static void Group7(AnalyzeInfo& info);
+		static void Group8(AnalyzeInfo& info);
+		static void Group9(AnalyzeInfo& info);
+		static void GroupA(AnalyzeInfo& info);
+		static void GroupB(AnalyzeInfo& info);
+		static void GroupC(AnalyzeInfo& info);
+		static void GroupD(AnalyzeInfo& info);
+		static void GroupE(AnalyzeInfo& info);
+		static void GroupF(AnalyzeInfo& info);
 
 		template<typename T>
-		static bool AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);
-		static bool AddParam(AnalyzeInfo& info, DspParameter param);
-		static bool AddParamEx(AnalyzeInfo& info, DspParameter param);
+		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, T imm);
+		static void AddParam(AnalyzeInfo& info, DspParameter param);
+		static void AddParamEx(AnalyzeInfo& info, DspParameter param);
 
 		// Allowed only in headers..
 
-		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm)
+		static void inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm)
 		{
-			if (!AddParam(info, param))
-				return false;
+			AddParam(info, param);
 			if (param == DspParameter::Byte)
 				info.ImmOperand.Byte = imm;
 			else if (param == DspParameter::Byte2)
 				info.ImmOperand2.Byte = imm;
-			return true;
 		}
 
-		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm)
+		static void inline AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm)
 		{
-			if (!AddParam(info, param))
-				return false;
+			AddParam(info, param);
 			if (param == DspParameter::SignedByte)
 				info.ImmOperand.SignedByte = imm;
 			else if (param == DspParameter::SignedByte2)
 				info.ImmOperand2.SignedByte = imm;
-			return true;
 		}
 
-		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm)
+		static void inline AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm)
 		{
-			if (!AddParam(info, param))
-				return false;
+			AddParam(info, param);
 			if (param == DspParameter::UnsignedShort)
 				info.ImmOperand.UnsignedShort = imm;
 			else if (param == DspParameter::UnsignedShort2)
 				info.ImmOperand2.UnsignedShort = imm;
-			return true;
 		}
 
-		static bool inline AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm)
+		static void inline AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm)
 		{
-			if (!AddParam(info, param))
-				return false;
+			AddParam(info, param);
 			if (param == DspParameter::Address)
 				info.ImmOperand.Address = imm;
 			else if (param == DspParameter::Address2)
 				info.ImmOperand2.Address = imm;
-			return true;
 		}
 
-		static bool AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);
+		static void AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);
 
 	public:
 
-		static bool Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static void Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
 	};
 }

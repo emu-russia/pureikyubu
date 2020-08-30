@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <atomic>
+#include <cassert>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"

@@ -34,12 +34,7 @@ namespace DSP
             DSP::AnalyzeInfo info = { 0 };
 
             // Analyze
-            bool result = DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
-            if (!result)
-            {
-                Report(Channel::Norm, "DSP::Analyze failed at offset: 0x%08X\n", offset);
-                break;
-            }
+            DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
 
             // Disassemble
             std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
@@ -217,11 +212,7 @@ namespace DSP
 
             DSP::AnalyzeInfo info = { 0 };
 
-            if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
-                return nullptr;
-            }
+            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(pcAddr, info);
 
@@ -349,11 +340,7 @@ namespace DSP
 
             DSP::AnalyzeInfo info = { 0 };
 
-            if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
-                return nullptr;
-            }
+            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(addr, info);
 
@@ -680,8 +667,7 @@ namespace DSP
             return false;
         }
 
-        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            return false;
+        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
@@ -724,8 +710,7 @@ namespace DSP
             return false;
         }
 
-        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            return false;
+        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
@@ -773,10 +758,7 @@ namespace DSP
         uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
         if (ptr)
         {
-            if (DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                text = DSP::DspDisasm::Disasm(address, info);
-            }
+            DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
         }
 
         // Return as text
