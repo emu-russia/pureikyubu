@@ -685,7 +685,7 @@ namespace DSP
 
         if (info.flowControl)
         {
-            if (info.instr == DSP::DspInstruction::CALLcc || info.instr == DSP::DspInstruction::CALLR)
+            if (info.instr == DSP::DspRegularInstruction::call)
             {
                 targetAddress = info.ImmOperand.Address;
                 return true;
@@ -729,8 +729,8 @@ namespace DSP
 
         if (info.flowControl)
         {
-            if (info.instr == DSP::DspInstruction::Jcc ||
-                info.instr == DSP::DspInstruction::CALLcc)
+            if (info.instr == DSP::DspRegularInstruction::jmp ||
+                info.instr == DSP::DspRegularInstruction::call )
             {
                 targetAddress = info.ImmOperand.Address;
                 return true;

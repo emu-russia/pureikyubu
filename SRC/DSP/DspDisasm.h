@@ -11,8 +11,8 @@ namespace DSP
 		template<typename T>
 		static std::string ToHexString(T data) { return ""; }
 		static std::string ParameterToString(DspParameter index, AnalyzeInfo& info);
-		static std::string InstrToString(DspInstruction, ConditionCode);
-		static std::string InstrExToString(DspInstructionEx);
+		//static std::string InstrToString(DspInstruction, ConditionCode);
+		//static std::string InstrExToString(DspInstructionEx);
 
 		template<typename Dummy>
 		static inline std::string ToHexString(uint16_t address)
