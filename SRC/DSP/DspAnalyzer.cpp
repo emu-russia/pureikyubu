@@ -838,21 +838,159 @@ namespace DSP
 		//|lsf d,s      |0011 110d 1xxx xxxx|
 		//|or d,s       |0011 111d 0xxx xxxx|
 		//|asf d,s      |0011 111d 1xxx xxxx|
+
+		bool msb = (instrBits & 0x80) ? true : false;
+
+		switch ((instrBits >> 9) & 7)
+		{
+			case 0:		// xor
+			{
+				info.parallelInstr = DspParallelInstruction::_xor;
+				if (!msb)
+				{
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				else
+				{
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
+				}
+				break;
+			}
+			case 1:		// not + xor
+			{
+				if (!msb)
+				{
+					// xor
+					info.parallelInstr = DspParallelInstruction::_xor;
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				else
+				{
+					// not
+					info.parallelInstr = DspParallelInstruction::_not;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+				}
+				break;
+			}
+			case 2:		// and, lsf
+			case 3:
+			{
+				if (!msb)
+				{
+					// and
+					info.parallelInstr = DspParallelInstruction::_and;
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				else
+				{
+					// lsf
+					info.parallelInstr = DspParallelInstruction::lsf;
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				break;
+			}
+			case 4:		// or, asf
+			case 5:
+			{
+				if (!msb)
+				{
+					// or
+					info.parallelInstr = DspParallelInstruction::_or;
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				else
+				{
+					// asf
+					info.parallelInstr = DspParallelInstruction::asf;
+					int s = (instrBits >> 9) & 1;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+					AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				break;
+			}
+			case 6:		// and, lsf
+			{
+				if (!msb)
+				{
+					// and
+					info.parallelInstr = DspParallelInstruction::_and;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
+				}
+				else
+				{
+					// lsf
+					info.parallelInstr = DspParallelInstruction::lsf;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+					AddParam(info, d == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				break;
+			}
+			case 7:		// or, asf
+			{
+				if (!msb)
+				{
+					// or
+					info.parallelInstr = DspParallelInstruction::_or;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
+					AddParam(info, d == 0 ? DspParameter::b1 : DspParameter::a1);
+				}
+				else
+				{
+					// asf
+					info.parallelInstr = DspParallelInstruction::asf;
+					int d = (instrBits >> 8) & 1;
+					AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+					AddParam(info, d == 0 ? DspParameter::x1 : DspParameter::y1);
+				}
+				break;
+			}
+		}
+
+		GroupMemOps3(info, instrBits);
 	}
 
 	void Analyzer::Group4(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|add d,s      |0100 sssd xxxx xxxx|
+
+		GroupMemOps4_7(info, instrBits);
 	}
 
 	void Analyzer::Group5(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|sub d,s      |0101 sssd xxxx xxxx|
+
+		GroupMemOps4_7(info, instrBits);
 	}
 
 	void Analyzer::Group6(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|amv d,s      |0110 sssd xxxx xxxx|
+
+		GroupMemOps4_7(info, instrBits);
 	}
 
 	void Analyzer::Group7(AnalyzeInfo& info, uint16_t instrBits)
@@ -862,6 +1000,8 @@ namespace DSP
 		//|dec d        |0111 10dd xxxx xxxx|
 		//|neg d        |0111 110d xxxx xxxx|
 		//|neg d,p      |0111 111d xxxx xxxx|
+
+		GroupMemOps4_7(info, instrBits);
 	}
 
 	void Analyzer::Group8(AnalyzeInfo& info, uint16_t instrBits)
@@ -879,26 +1019,36 @@ namespace DSP
 		//|set dp       |1000 1101 xxxx xxxx|
 		//|clr xl       |1000 1110 xxxx xxxx|
 		//|set xl       |1000 1111 xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::Group9(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|asr16 d      |1001 d001 xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupA(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|abs d        |1010 d001 xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupB(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|tst s        |1011 s001 xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupCD(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|cmp d,s      |110s d001 xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupE(AnalyzeInfo& info, uint16_t instrBits)
@@ -907,6 +1057,8 @@ namespace DSP
 		//|mac s1,s2    |1110 10ss xxxx xxxx|
 		//|macn s1,s2   |1110 01ss xxxx xxxx|
 		//|macn s1,s2   |1110 11ss xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupF(AnalyzeInfo& info, uint16_t instrBits)
@@ -918,6 +1070,8 @@ namespace DSP
 		//|addp d,s     |1111 10sd xxxx xxxx|
 		//|rnd d        |1111 110d xxxx xxxx|
 		//|rndp d       |1111 111d xxxx xxxx|
+
+		GroupMemOps8_F(info, instrBits);
 	}
 
 	void Analyzer::GroupMpy(AnalyzeInfo& info, uint16_t instrBits)
@@ -928,7 +1082,7 @@ namespace DSP
 		//|mvmpy d,s1,s2|1sss s11d xxxx xxxx|
 	}
 
-	void Analyzer::GroupMemOps7(AnalyzeInfo& info, uint16_t instrBits)
+	void Analyzer::GroupMemOps3(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|mr rn,mn               |0011 xxxx x000 mmrr|
 		//|mv d,s                 |0011 xxxx x001 ddss|
@@ -936,21 +1090,25 @@ namespace DSP
 		//|ld d,rn,mn             |0011 xxxx x1dd dmrr|
 	}
 
-	void Analyzer::GroupMemOps8(AnalyzeInfo& info, uint16_t instrBits)
+	void Analyzer::GroupMemOps4_7(AnalyzeInfo& info, uint16_t instrBits)
 	{
 		//|mr rn,mn               |01xx xxxx 0000 mmrr|
-		//|mr rn,mn               |1xxx xxxx 0000 mmrr|
 		//|mv d,s                 |01xx xxxx 0001 ddss|
-		//|mv d,s                 |1xxx xxxx 0001 ddss|
 		//|st rn,mn,s             |01xx xxxx 001s smrr|
-		//|st rn,mn,s             |1xxx xxxx 001s smrr|
 		//|ld d,rn,mn             |01xx xxxx 01dd dmrr|
-		//|ld d,rn,mn             |1xxx xxxx 01dd dmrr|
 		//|ls d,r,m r,m,s         |01xx xxxx 10dd mn0s|
 		//|ls2 d,r,m r,m,s        |01xx xxxx 10dd mn1s|
+		//|ldd d1,rn,mn d2,r3,m3  |01xx xxxx 11dd mnrr|
+	}
+
+	void Analyzer::GroupMemOps8_F(AnalyzeInfo& info, uint16_t instrBits)
+	{
+		//|mr rn,mn               |1xxx xxxx 0000 mmrr|
+		//|mv d,s                 |1xxx xxxx 0001 ddss|
+		//|st rn,mn,s             |1xxx xxxx 001s smrr|
+		//|ld d,rn,mn             |1xxx xxxx 01dd dmrr|
 		//|ls d,r,m r,m,s         |1xxx xxxx 10dd mn0s|
 		//|ls2 d,r,m r,m,s        |1xxx xxxx 10dd mn1s|
-		//|ldd d1,rn,mn d2,r3,m3  |01xx xxxx 11dd mnrr|
 		//|ldd d1,rn,mn d2,r3,m3  |1xxx xxxx 11dd mnrr|
 		//|ldd2 d1,rn,mn d2,r3,m3 |1xxx xxxx 11rd mn11|
 	}

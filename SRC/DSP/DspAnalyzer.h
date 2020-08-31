@@ -322,8 +322,9 @@ namespace DSP
 		static void GroupE(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupF(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupMpy(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps7(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps8(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps3(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps4_7(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps8_F(AnalyzeInfo& info, uint16_t instrBits);
 
 		static void AddParam(AnalyzeInfo& info, DspParameter param);
 		static void AddParamEx(AnalyzeInfo& info, DspParameter param);
