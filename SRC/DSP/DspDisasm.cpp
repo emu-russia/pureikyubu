@@ -6,7 +6,125 @@ namespace DSP
 
 	std::string DspDisasm::ParameterToString(DspParameter index, AnalyzeInfo& info)
 	{
+		std::string text;
 
+		switch (index)
+		{
+			// Registers
+
+			case DspParameter::r0: text = "r0"; break;
+			case DspParameter::r1: text = "r1"; break;
+			case DspParameter::r2: text = "r2"; break;
+			case DspParameter::r3: text = "r3"; break;
+			case DspParameter::m0: text = "m0"; break;
+			case DspParameter::m1: text = "m1"; break;
+			case DspParameter::m2: text = "m2"; break;
+			case DspParameter::m3: text = "m3"; break;
+			case DspParameter::l0: text = "l0"; break;
+			case DspParameter::l1: text = "l1"; break;
+			case DspParameter::l2: text = "l2"; break;
+			case DspParameter::l3: text = "l3"; break;
+			case DspParameter::pcs: text = "pcs"; break;
+			case DspParameter::pss: text = "pss"; break;
+			case DspParameter::eas: text = "eas"; break;
+			case DspParameter::lcs: text = "lcs"; break;
+			case DspParameter::a2: text = "a2"; break;
+			case DspParameter::b2: text = "b2"; break;
+			case DspParameter::dpp: text = "dpp"; break;
+			case DspParameter::psr: text = "psr"; break;
+			case DspParameter::ps0: text = "ps0"; break;
+			case DspParameter::ps1: text = "ps1"; break;
+			case DspParameter::ps2: text = "ps2"; break;
+			case DspParameter::pc1: text = "pc1"; break;
+			case DspParameter::x0: text = "x0"; break;
+			case DspParameter::y0: text = "y0"; break;
+			case DspParameter::x1: text = "x1"; break;
+			case DspParameter::y1: text = "y1"; break;
+			case DspParameter::a0: text = "a0"; break;
+			case DspParameter::b0: text = "b0"; break;
+			case DspParameter::a1: text = "a1"; break;
+			case DspParameter::b1: text = "b1"; break;
+
+			case DspParameter::a: text = "a"; break;
+			case DspParameter::b: text = "b"; break;
+
+			case DspParameter::x: text = "x"; break;
+			case DspParameter::y: text = "y"; break;
+			
+			case DspParameter::prod: text = "p"; break;
+
+			case DspParameter::Indexed_r0: text = "(r0)"; break;
+			case DspParameter::Indexed_r1: text = "(r1)"; break;
+			case DspParameter::Indexed_r2: text = "(r2)"; break;
+			case DspParameter::Indexed_r3: text = "(r3)"; break;
+
+			// PSR bits
+
+			case DspParameter::psr_c: text = "c"; break;
+			case DspParameter::psr_v: text = "v"; break;
+			case DspParameter::psr_z: text = "z"; break;
+			case DspParameter::psr_n: text = "n"; break;
+			case DspParameter::psr_e: text = "e"; break;
+			case DspParameter::psr_u: text = "u"; break;
+			case DspParameter::psr_tb: text = "tb"; break;
+			case DspParameter::psr_sv: text = "sv"; break;
+			case DspParameter::psr_te0: text = "te0"; break;
+			case DspParameter::psr_te1: text = "te1"; break;
+			case DspParameter::psr_te2: text = "te2"; break;
+			case DspParameter::psr_te3: text = "te3"; break;
+			case DspParameter::psr_et: text = "et"; break;
+			case DspParameter::psr_im: text = "im"; break;
+			case DspParameter::psr_xl: text = "xl"; break;
+			case DspParameter::psr_dp: text = "dp"; break;
+
+			// Modifier
+
+			case DspParameter::mod_none: text = "0"; break;
+			case DspParameter::mod_dec: text = "-1"; break;
+			case DspParameter::mod_inc: text = "+1"; break;
+			case DspParameter::mod_minus_m: text = "-m"; break;
+			case DspParameter::mod_plus_m0: text = "+m0"; break;
+			case DspParameter::mod_plus_m1: text = "+m1"; break;
+			case DspParameter::mod_plus_m2: text = "+m2"; break;
+			case DspParameter::mod_plus_m3: text = "+m3"; break;
+			case DspParameter::mod_plus_m: text = "+m"; break;
+
+			// Immediates
+
+			case DspParameter::Byte:
+				text = "#0x" + ToHexString(info.ImmOperand.Byte);
+				break;
+			case DspParameter::Byte2:
+				text = "#0x" + ToHexString(info.ImmOperand2.Byte);
+				break;
+			case DspParameter::SignedByte:
+				text = std::to_string((int)(int16_t)info.ImmOperand.SignedByte);
+				break;
+			case DspParameter::SignedByte2:
+				text = std::to_string((int)(int16_t)info.ImmOperand2.SignedByte);
+				break;
+			case DspParameter::UnsignedShort:
+				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
+				break;
+			case DspParameter::UnsignedShort2:
+				text = "#0x" + ToHexString((uint16_t)info.ImmOperand2.UnsignedShort);
+				break;
+			case DspParameter::Address:
+				if (IsHardwareReg(info.ImmOperand.Address))
+				{
+					text = HardwareRegName(info.ImmOperand.Address);
+				}
+				else
+				{
+					text = "$0x" + ToHexString((uint16_t)info.ImmOperand.Address);
+				}
+				break;
+			case DspParameter::Address2:
+				text = "$0x" + ToHexString((uint16_t)info.ImmOperand2.Address);
+				break;
+		}
+
+		return text;
 	}
 
 	std::string DspDisasm::InstrToString(DspRegularInstruction instr, ConditionCode cc)
@@ -66,17 +184,77 @@ namespace DSP
 			text += " ";
 		}
 
-		return text;		
+		return text;
 	}
 
 	std::string DspDisasm::ParrallelInstrToString(DspParallelInstruction instr)
 	{
+		std::string text;
 
+		switch (instr)
+		{
+			case DspParallelInstruction::add: text = "add"; break;
+			case DspParallelInstruction::addl: text = "addl"; break;
+			case DspParallelInstruction::sub: text = "sub"; break;
+			case DspParallelInstruction::amv: text = "amv"; break;
+			case DspParallelInstruction::cmp: text = "cmp"; break;
+			case DspParallelInstruction::inc: text = "inc"; break;
+			case DspParallelInstruction::dec: text = "dec"; break;
+			case DspParallelInstruction::abs: text = "abs"; break;
+			case DspParallelInstruction::neg: text = "neg"; break;
+			case DspParallelInstruction::clr: text = "clr"; break;
+			case DspParallelInstruction::rnd: text = "rnd"; break;
+			case DspParallelInstruction::rndp: text = "rndp"; break;
+			case DspParallelInstruction::tst: text = "tst"; break;
+			case DspParallelInstruction::lsl16: text = "lsl16"; break;
+			case DspParallelInstruction::lsr16: text = "lsr16"; break;
+			case DspParallelInstruction::asr16: text = "asr16"; break;
+			case DspParallelInstruction::addp: text = "addp"; break;
+			// Dont show nop2's
+			case DspParallelInstruction::nop: break;
+			case DspParallelInstruction::set: text = "set"; break;
+			case DspParallelInstruction::mpy: text = "mpy"; break;
+			case DspParallelInstruction::mac: text = "mac"; break;
+			case DspParallelInstruction::macn: text = "macn"; break;
+			case DspParallelInstruction::mvmpy: text = "mvmpy"; break;
+			case DspParallelInstruction::rnmpy: text = "rnmpy"; break;
+			case DspParallelInstruction::admpy: text = "admpy"; break;
+			case DspParallelInstruction::_not: text = "not"; break;
+			case DspParallelInstruction::_xor: text = "xor"; break;
+			case DspParallelInstruction::_and: text = "and"; break;
+			case DspParallelInstruction::_or: text = "or"; break;
+			case DspParallelInstruction::lsf: text = "lsf"; break;
+			case DspParallelInstruction::asf: text = "asf"; break;
+		}
+
+		while (text.size() < 5)
+		{
+			text += " ";
+		}
+
+		return text;
 	}
 
-	std::string DspDisasm::ParrallelMemInstrToString(DspParallelMemInstruction inst)
+	std::string DspDisasm::ParrallelMemInstrToString(DspParallelMemInstruction instr)
 	{
+		std::string text;
 
+		switch (instr)
+		{
+			case DspParallelMemInstruction::ldd: text = "ldd"; break;
+			case DspParallelMemInstruction::ls: text = "ls"; break;
+			case DspParallelMemInstruction::ld: text = "ld"; break;
+			case DspParallelMemInstruction::st: text = "st"; break;
+			case DspParallelMemInstruction::mv: text = "mv"; break;
+			case DspParallelMemInstruction::mr: text = "mr"; break;
+		}
+
+		while (text.size() < 5)
+		{
+			text += " ";
+		}
+
+		return text;
 	}
 
 	bool DspDisasm::IsHardwareReg(DspAddress address)
