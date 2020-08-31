@@ -103,6 +103,12 @@ namespace DSP
 			case DspParameter::SignedByte2:
 				text = std::to_string((int)(int16_t)info.ImmOperand2.SignedByte);
 				break;
+			case DspParameter::SignedShort:
+				text = std::to_string((int)info.ImmOperand.SignedShort);
+				break;
+			case DspParameter::SignedShort2:
+				text = std::to_string((int)info.ImmOperand2.SignedShort);
+				break;
 			case DspParameter::UnsignedShort:
 				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
 				break;

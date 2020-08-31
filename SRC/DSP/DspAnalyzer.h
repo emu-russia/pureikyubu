@@ -210,11 +210,13 @@ namespace DSP
 		Byte,
 		SignedByte,
 		UnsignedShort,
+		SignedShort,
 		Address,
 
 		Byte2,
 		SignedByte2,
 		UnsignedShort2,
+		SignedShort2,
 		Address2,
 
 		Max,
@@ -279,6 +281,7 @@ namespace DSP
 			uint8_t		Byte;
 			int8_t		SignedByte;
 			uint16_t	UnsignedShort;
+			int16_t		SignedShort;
 			DspAddress	Address;		///< For bloop, call etc.
 		} ImmOperand;
 
@@ -289,6 +292,7 @@ namespace DSP
 			uint8_t		Byte;
 			int8_t		SignedByte;		///< For SI
 			uint16_t	UnsignedShort;
+			int16_t		SignedShort;
 			DspAddress	Address;		///< For BLOOPI
 		} ImmOperand2;
 
@@ -314,10 +318,12 @@ namespace DSP
 		static void Group9(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupA(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupB(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupC(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupD(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupCD(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupE(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupF(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMpy(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps7(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps8(AnalyzeInfo& info, uint16_t instrBits);
 
 		static void AddParam(AnalyzeInfo& info, DspParameter param);
 		static void AddParamEx(AnalyzeInfo& info, DspParameter param);
@@ -325,6 +331,7 @@ namespace DSP
 		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm);
 		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm);
 		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm);
+		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm);
 		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm);
 
 		static void AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);

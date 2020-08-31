@@ -1,5 +1,7 @@
 ﻿// Macronix DSP core
 
+// More info: https://github.com/ogamespec/dolwin-docs/blob/master/HW/AudioSystem/DSPCore.md
+
 #pragma once
 
 namespace DSP
