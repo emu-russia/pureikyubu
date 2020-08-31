@@ -43,9 +43,7 @@ namespace DSP
 		lsf,		// Logic shift directed by sign
 		asf,		// Arithmetic shift directed by sign
 		ld,			// Load from DMEM
-		lda,		// Load from DMEM by accumulator
 		st,			// Store to DMEM
-		sta,		// Store to DMEM by accumulator
 		ldsa,		// Load from DMEM by short address
 		stsa,		// Store to DMEM by short address
 		ldla,		// Load from DMEM by long address
@@ -77,6 +75,7 @@ namespace DSP
 		neg,		// Negate
 		clr,		// Clear accumulator/product/psr_bit
 		rnd,		// Round accumulator/product
+		rndp,		// Round product
 		tst,		// Test 
 		lsl16,		// Logical shift left 16
 		lsr16,		// Logical shift right 16
