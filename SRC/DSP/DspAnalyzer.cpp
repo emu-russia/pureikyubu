@@ -1020,6 +1020,74 @@ namespace DSP
 		//|clr xl       |1000 1110 xxxx xxxx|
 		//|set xl       |1000 1111 xxxx xxxx|
 
+		switch ((instrBits >> 8) & 0xf)
+		{
+			case 0:		// nop
+				info.parallelInstr = DspParallelInstruction::nop;
+				break;
+			case 1:		// clr d
+			case 9:
+			{
+				int d = (instrBits >> 11) & 1;
+				info.parallelInstr = DspParallelInstruction::clr;
+				AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+				break;
+			}
+			case 2:		// cmp a,b
+				info.parallelInstr = DspParallelInstruction::cmp;
+				AddParam(info, DspParameter::a);
+				AddParam(info, DspParameter::b);
+				break;
+			case 3:		// mpy x1,x1
+				info.parallelInstr = DspParallelInstruction::mpy;
+				AddParam(info, DspParameter::x1);
+				AddParam(info, DspParameter::x1);
+				break;
+			case 4:		// clr p
+				info.parallelInstr = DspParallelInstruction::clr;
+				AddParam(info, DspParameter::prod);
+				break;
+			case 5:		// tst p
+				info.parallelInstr = DspParallelInstruction::tst;
+				AddParam(info, DspParameter::prod);
+				break;
+			case 6:		// tst s (Form 2)
+			case 7:
+			{
+				int s = (instrBits >> 8) & 1;
+				info.parallelInstr = DspParallelInstruction::tst;
+				AddParam(info, s == 0 ? DspParameter::x1 : DspParameter::y1);
+				break;
+			}
+			case 8:
+				// Reserved
+				break;
+			case 0xa:	// clr im
+				info.parallelInstr = DspParallelInstruction::clr;
+				AddParam(info, DspParameter::psr_im);
+				break;
+			case 0xb:	// set im
+				info.parallelInstr = DspParallelInstruction::set;
+				AddParam(info, DspParameter::psr_im);
+				break;
+			case 0xc:	// clr dp
+				info.parallelInstr = DspParallelInstruction::clr;
+				AddParam(info, DspParameter::psr_dp);
+				break;
+			case 0xd:	// set dp
+				info.parallelInstr = DspParallelInstruction::set;
+				AddParam(info, DspParameter::psr_dp);
+				break;
+			case 0xe:	// clr xl
+				info.parallelInstr = DspParallelInstruction::clr;
+				AddParam(info, DspParameter::psr_xl);
+				break;
+			case 0xf:	// set xl
+				info.parallelInstr = DspParallelInstruction::set;
+				AddParam(info, DspParameter::psr_xl);
+				break;
+		}
+
 		GroupMemOps8_F(info, instrBits);
 	}
 
@@ -1138,17 +1206,22 @@ namespace DSP
 
 		if ((instrBits & 0x8000) != 0)
 		{
-			switch ((instrBits >> 8) & 7)
+			int s = (instrBits >> 11) & 0xf;
+
+			if (s >= 2 && s <= 0xb)
 			{
-				case 0:
-				case 2:
-				case 3:
-				case 4:
-				case 5:
-				case 6:
-				case 7:
-					GroupMpy(info, instrBits);
-					return;
+				switch ((instrBits >> 8) & 7)
+				{
+					case 0:
+					case 2:
+					case 3:
+					case 4:
+					case 5:
+					case 6:
+					case 7:
+						GroupMpy(info, instrBits);
+						return;
+				}
 			}
 		}
 
