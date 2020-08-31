@@ -27,7 +27,7 @@ namespace DSP
         size_t bytesLeft = ucode.size();
         size_t offset = 0;      // in DSP slots (halfwords)
 
-        auto text = fmt::format("// Disassembled {:s}\n\n", args[1].c_str());
+        std::string text = "// Disassembled " + args[1] + "\n\n";
 
         while (bytesLeft != 0)
         {
@@ -37,10 +37,7 @@ namespace DSP
             DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
 
             // Disassemble
-            std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
-
-            auto line = fmt::format("{:s}\n", text.c_str());
-            text += line;
+            text += DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info) + "\n";
 
             offset += (info.sizeInBytes / sizeof(uint16_t));
             bytesLeft -= info.sizeInBytes;
@@ -48,7 +45,7 @@ namespace DSP
         }
 
         std::vector<uint8_t> textData(text.begin(), text.end());
-        if (!Util::FileSave(L"./Data/dspdisa.txt", textData))
+        if (!Util::FileSave(L"Data/dspdisa.txt", textData))
         {
             Report(Channel::Norm, "Failed to save dsp_disa.txt\n");
             return nullptr;

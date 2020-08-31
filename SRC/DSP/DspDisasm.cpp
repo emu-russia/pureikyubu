@@ -377,29 +377,32 @@ namespace DSP
 
 		// Regular instruction
 
-		if (info.instr != DspRegularInstruction::Unknown)
+		if (!info.parallel)
 		{
-			text += "\t" + DspDisasm::InstrToString(info.instr, info.cc) + "\t";
-		}
-		else
-		{
-			text += "\t??? ";
-		}
-
-		firstParam = true;
-		for (size_t i = 0; i < info.numParameters; i++)
-		{
-			if (!firstParam)
+			if (info.instr != DspRegularInstruction::Unknown)
 			{
-				text += ", ";
+				text += "\t" + DspDisasm::InstrToString(info.instr, info.cc) + "\t";
 			}
-			text += ParameterToString(info.params[i], info);
-			firstParam = false;
+			else
+			{
+				text += "\t??? ";
+			}
+
+			firstParam = true;
+			for (size_t i = 0; i < info.numParameters; i++)
+			{
+				if (!firstParam)
+				{
+					text += ", ";
+				}
+				text += ParameterToString(info.params[i], info);
+				firstParam = false;
+			}
 		}
 
 		// Parallel instruction pair (same line)
 
-		if (info.parallel)
+		else
 		{
 			// Top
 

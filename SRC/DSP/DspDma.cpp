@@ -51,11 +51,11 @@ namespace DSP
 		{
 			if (DmaRegs.control.Imem && !DmaRegs.control.Dsp2Mmem)
 			{
-				auto filename = fmt::format(L"Data\\DspUcode_{:04X}.bin", DmaRegs.blockSize);
+				std::string filename = "Data/DspUcode_" + std::to_string(DmaRegs.blockSize) + ".bin";
 				auto buffer = std::vector<uint8_t>(ptr, ptr + DmaRegs.blockSize);
 				
 				Util::FileSave(filename, buffer);
-				Report(Channel::DSP, "Ucode dumped to DspUcode_%04X.bin\n", DmaRegs.blockSize);
+				Report(Channel::DSP, "Ucode dumped to %s\n", filename.c_str());
 			}
 		}
 

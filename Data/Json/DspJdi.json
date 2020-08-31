@@ -13,7 +13,7 @@
 				"Syntax: dspdisa <dsp_ucode.bin> [start_addr]\n",
 				"disassemble dsp ucode from binary file and dump it into dspdisa.txt\n",
 				"start_addr in DSP slots;\n",
-				"Example of use: dspdisa Data\\dsp_irom.bin 0x8000\n"
+				"Example of use: dspdisa Data/dsp_irom.bin 0x8000\n"
 			]
 		},
 

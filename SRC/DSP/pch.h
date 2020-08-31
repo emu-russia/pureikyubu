@@ -34,8 +34,6 @@
 #include "../Hardware/HW.h"
 #include "../Hardware/MI.h"
 
-#include "../../ThirdParty/fmt/fmt/format.h"
-
 #if 0
 #define _TLIB_STRINGIFY1(s) _TLIB_STRINGIFY2(s)
 #define _TLIB_STRINGIFY2(s) #s

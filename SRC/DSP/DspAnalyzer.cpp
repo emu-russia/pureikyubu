@@ -8,6 +8,7 @@ namespace DSP
 		info.sizeInBytes = 0;
 
 		info.parallel = false;
+		info.parallelMemInstr = DspParallelMemInstruction::Unknown;
 		info.instr = DspRegularInstruction::Unknown;
 
 		info.numParameters = 0;
@@ -639,24 +640,189 @@ namespace DSP
 
 	void Analyzer::Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits)
 	{
+		static DspParameter addressreg[] = {
+			DspParameter::r0,
+			DspParameter::r1,
+			DspParameter::r2,
+			DspParameter::r3,
+		};
+
+		static DspParameter modifier[] = {
+			DspParameter::mod_none,
+			DspParameter::mod_dec,
+			DspParameter::mod_inc,
+			DspParameter::mod_plus_m,
+		};
+
 		//|rep rc      |0001 0000 cccc cccc|
 		//|loop lc,ea  |0001 0001 cccc cccc aaaa aaaa aaaa aaaa|
-		//|clrb b      |0001 0010 0000 0bbb|
-		//|setb b      |0001 0011 0000 0bbb|
+		//|clr b       |0001 0010 0000 0bbb|
+		//|set b       |0001 0011 0000 0bbb|
 		//|lsfi d,si   |0001 010d 0iii iiii|
 		//|asfi d,si   |0001 010d 1iii iiii|
 		//|stli sa,li  |0001 0110 aaaa aaaa iiii iiii iiii iiii|
-		//|jmpr(cc) rn |0001 0111 0rr0 cccc|
-		//|callr(cc) rn|0001 0111 0rr1 cccc|
+		//|jmp(cc) rn  |0001 0111 0rr0 cccc|
+		//|call(cc) rn |0001 0111 0rr1 cccc|
 		//|ld d,r,m    |0001 100m mrrd dddd|
 		//|st r,m,s    |0001 101m mrrs ssss|
 		//|mv d,s      |0001 11dd ddds ssss|
+
+		switch ((instrBits >> 8) & 0xf)
+		{
+			case 0:		// rep
+			{
+				info.instr = DspRegularInstruction::rep;
+				info.flowControl = true;
+				AddImmOperand(info, DspParameter::Byte, (uint8_t)instrBits);
+				break;
+			}
+			case 1:		// loop
+			{
+				info.instr = DspRegularInstruction::rep;
+				info.flowControl = true;
+				AddImmOperand(info, DspParameter::Byte, (uint8_t)instrBits);
+				DspAddress addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
+				AddBytes(instrPtr, sizeof(uint16_t), info);
+				AddImmOperand(info, DspParameter::Address2, addr);
+				break;
+			}
+			case 2:		// clr
+			{
+				int b = instrBits & 7;
+				if (b != 7)
+				{
+					info.instr = DspRegularInstruction::clr;
+					AddParam(info, (DspParameter)((int)DspParameter::psr_tb + b));
+				}
+				break;
+			}
+			case 3:		// set
+			{
+				int b = instrBits & 7;
+				if (b != 7)
+				{
+					info.instr = DspRegularInstruction::set;
+					AddParam(info, (DspParameter)((int)DspParameter::psr_tb + b));
+				}
+				break;
+			}
+			case 4:		// lsfi, asfi
+			case 5:
+			{
+				int d = (instrBits & 0x100) ? 1 : 0;
+
+				int8_t si = instrBits & 0x7f;
+				if (si & 0x40)
+				{
+					si |= 0x80;
+				}
+
+				info.instr = (instrBits & 0x80) == 0 ? DspRegularInstruction::lsfi : DspRegularInstruction::asfi;
+				AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+				AddImmOperand(info, DspParameter::SignedByte, si);
+				break;
+			}
+			case 6:		// stli
+			{
+				info.instr = DspRegularInstruction::stli;
+				DspAddress addr = 0xff00 | (instrBits & 0xff);
+				AddImmOperand(info, DspParameter::Address, addr);
+				uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
+				AddBytes(instrPtr, sizeof(uint16_t), info);
+				AddImmOperand(info, DspParameter::UnsignedShort2, imm);
+				break;
+			}
+			case 7:		// jmp, call
+			{
+				info.instr = (instrBits & 0x10) == 0 ? DspRegularInstruction::jmp : DspRegularInstruction::call;
+				info.flowControl = true;
+				info.cc = (ConditionCode)(instrBits & 0xf);
+				int r = (instrBits >> 5) & 3;
+				AddParam(info, addressreg[r]);
+				break;
+			}
+			case 8:		// ld
+			case 9:
+			{
+				info.instr = DspRegularInstruction::ld;
+				int d = instrBits & 0x1f;
+				AddParam(info, (DspParameter)((int)DspParameter::regs + d));
+				int r = (instrBits >> 5) & 3;
+				AddParam(info, addressreg[r]);
+				int m = (instrBits >> 7) & 3;
+				AddParam(info, modifier[m]);
+				break;
+			}
+			case 0xa:	// st
+			case 0xb:
+			{
+				info.instr = DspRegularInstruction::st;
+				int r = (instrBits >> 5) & 3;
+				AddParam(info, addressreg[r]);
+				int m = (instrBits >> 7) & 3;
+				AddParam(info, modifier[m]);
+				int s = instrBits & 0x1f;
+				AddParam(info, (DspParameter)((int)DspParameter::regs + s));
+				break;
+			}
+			case 0xc:	// mv
+			case 0xd:
+			case 0xe:
+			case 0xf:
+			{
+				info.instr = DspRegularInstruction::mv;
+				int d = (instrBits >> 5) & 0x1f;
+				AddParam(info, (DspParameter)((int)DspParameter::regs + d));
+				int s = instrBits & 0x1f;
+				AddParam(info, (DspParameter)((int)DspParameter::regs + s));
+				break;
+			}
+		}
 	}
 
 	void Analyzer::Group2(AnalyzeInfo& info, uint16_t instrBits)
 	{
+		static DspParameter ldsa_reg[] = {
+			DspParameter::x0,
+			DspParameter::y0,
+			DspParameter::x1,
+			DspParameter::y1,
+			DspParameter::a0,
+			DspParameter::b0,
+			DspParameter::a1,
+			DspParameter::b1,
+		};
+
+		static DspParameter stsa_reg[] = {
+			DspParameter::a2,
+			DspParameter::b2,
+			DspParameter::Unknown,
+			DspParameter::Unknown,
+			DspParameter::a0,
+			DspParameter::b0,
+			DspParameter::a1,
+			DspParameter::b1,
+		};
+
 		//|ldsa d,sa   |0010 0ddd aaaa aaaa|
 		//|stsa sa,s   |0010 1sss aaaa aaaa|
+
+		if ((instrBits & 0x800) == 0)
+		{
+			// ldsa
+			info.instr = DspRegularInstruction::ldsa;
+			int d = (instrBits >> 8) & 7;
+			AddParam(info, ldsa_reg[d]);
+			AddImmOperand(info, DspParameter::Address, (DspAddress)(uint8_t)instrBits);
+		}
+		else
+		{
+			// stsa
+			info.instr = DspRegularInstruction::ldsa;
+			AddImmOperand(info, DspParameter::Address, (DspAddress)(uint8_t)instrBits);
+			int s = (instrBits >> 8) & 7;
+			AddParam(info, stsa_reg[s]);
+		}
 	}
 
 	void Analyzer::Group3(AnalyzeInfo& info, uint16_t instrBits)

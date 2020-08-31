@@ -282,7 +282,7 @@ namespace DSP
 			int8_t		SignedByte;
 			uint16_t	UnsignedShort;
 			int16_t		SignedShort;
-			DspAddress	Address;		///< For bloop, call etc.
+			DspAddress	Address;		// For loop, call etc.
 		} ImmOperand;
 
 		// Second immediate/address operand (required by small amount of instructions)
@@ -290,10 +290,10 @@ namespace DSP
 		union
 		{
 			uint8_t		Byte;
-			int8_t		SignedByte;		///< For SI
+			int8_t		SignedByte;
 			uint16_t	UnsignedShort;
 			int16_t		SignedShort;
-			DspAddress	Address;		///< For BLOOPI
+			DspAddress	Address;		// For loop
 		} ImmOperand2;
 
 		ConditionCode cc;		// Some instructions has condition code
