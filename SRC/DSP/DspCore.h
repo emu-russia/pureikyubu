@@ -65,7 +65,7 @@ namespace DSP
 			unsigned e : 1;		// Extension (above s32)
 			unsigned u : 1;		// Unnormalization
 			unsigned tb : 1;	// Test bit (btstl/btsth instructions)
-			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the CLRB instruction.
+			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the `clr sv` instruction.
 			unsigned te0 : 1;	// Interrupt enable 0 (Not used)
 			unsigned te1 : 1;	// Interrupt enable 1 (Acrs, Acwe, Dcre)
 			unsigned te2 : 1;	// Interrupt enable 2 (AiDma, not used by ucodes)
@@ -80,6 +80,22 @@ namespace DSP
 	};
 
 	#pragma pack (pop)
+
+	class DspStack
+	{
+		uint16_t* stack;
+		int ptr = 0;
+		int depth;
+
+	public:
+		DspStack(size_t _depth);
+		~DspStack();
+
+		bool push(uint16_t val);
+		bool pop(uint16_t& val);
+		uint16_t top();
+		bool empty();
+	};
 
 	enum class DspRegister
 	{

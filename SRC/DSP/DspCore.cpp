@@ -664,6 +664,45 @@ namespace DSP
 		return val;
 	}
 
+	DspStack::DspStack(size_t _depth)
+	{
+		depth = _depth;
+		stack = new uint16_t[depth];
+	}
+
+	DspStack::~DspStack()
+	{
+		delete[] stack;
+	}
+
+	bool DspStack::push(uint16_t val)
+	{
+		if (ptr >= depth)
+			return false;	// Overflow
+
+		stack[ptr++] = val;
+		return true;
+	}
+
+	bool DspStack::pop(uint16_t &val)
+	{
+		if (ptr == 0)
+			return false;	// Underflow
+
+		val = stack[--ptr];
+		return true;
+	}
+
+	uint16_t DspStack::top()
+	{
+		return stack[ptr - 1];
+	}
+
+	bool DspStack::empty()
+	{
+		return ptr == 0;
+	}
+
 	#pragma endregion "Register access"
 
 

@@ -8,196 +8,97 @@ namespace DSP
 	{
 		DspCore* core;
 
-		// Instructions
+		// Regular instructions (single-word)
 
-		void ABS(AnalyzeInfo& info);
+		void jmp(AnalyzeInfo& info);
+		void call(AnalyzeInfo& info);
+		void rets(AnalyzeInfo& info);
+		void reti(AnalyzeInfo& info);
+		void trap(AnalyzeInfo& info);
+		void wait(AnalyzeInfo& info);
+		void exec(AnalyzeInfo& info);
+		void loop(AnalyzeInfo& info);
+		void rep(AnalyzeInfo& info);
+		void pld(AnalyzeInfo& info);
+		void mr(AnalyzeInfo& info);
+		void adsi(AnalyzeInfo& info);
+		void adli(AnalyzeInfo& info);
+		void cmpsi(AnalyzeInfo& info);
+		void cmpli(AnalyzeInfo& info);
+		void lsfi(AnalyzeInfo& info);
+		void asfi(AnalyzeInfo& info);
+		void xorli(AnalyzeInfo& info);
+		void anli(AnalyzeInfo& info);
+		void orli(AnalyzeInfo& info);
+		void norm(AnalyzeInfo& info);
+		void div(AnalyzeInfo& info);
+		void addc(AnalyzeInfo& info);
+		void subc(AnalyzeInfo& info);
+		void negc(AnalyzeInfo& info);
+		void _max(AnalyzeInfo& info);
+		void lsf(AnalyzeInfo& info);
+		void asf(AnalyzeInfo& info);
+		void ld(AnalyzeInfo& info);
+		void st(AnalyzeInfo& info);
+		void ldsa(AnalyzeInfo& info);
+		void stsa(AnalyzeInfo& info);
+		void ldla(AnalyzeInfo& info);
+		void stla(AnalyzeInfo& info);
+		void mv(AnalyzeInfo& info);
+		void mvsi(AnalyzeInfo& info);
+		void mvli(AnalyzeInfo& info);
+		void stli(AnalyzeInfo& info);
+		void clr(AnalyzeInfo& info);
+		void set(AnalyzeInfo& info);
+		void btstl(AnalyzeInfo& info);
+		void btsth(AnalyzeInfo& info);
 
-		void ADD(AnalyzeInfo& info);
-		void ADDARN(AnalyzeInfo& info);
-		void ADDAX(AnalyzeInfo& info);
-		void ADDAXL(AnalyzeInfo& info);
-		void ADDI(AnalyzeInfo& info);
-		void ADDIS(AnalyzeInfo& info);
-		void ADDP(AnalyzeInfo& info);
-		void ADDPAXZ(AnalyzeInfo& info);
-		void ADDR(AnalyzeInfo& info);
+		// Parallel instructions that occupy the upper part (in the lower part there is a parallel Load / Store / Move instruction)
 
-		void ANDC(AnalyzeInfo& info);
-		void TCLR(AnalyzeInfo& info);
-		void TSET(AnalyzeInfo& info);
-		void ANDI(AnalyzeInfo& info);
-		void ANDR(AnalyzeInfo& info);
+		void p_add(AnalyzeInfo& info);
+		void p_addl(AnalyzeInfo& info);
+		void p_sub(AnalyzeInfo& info);
+		void p_amv(AnalyzeInfo& info);
+		void p_cmp(AnalyzeInfo& info);
+		void p_inc(AnalyzeInfo& info);
+		void p_dec(AnalyzeInfo& info);
+		void p_abs(AnalyzeInfo& info);
+		void p_neg(AnalyzeInfo& info);
+		void p_clr(AnalyzeInfo& info);
+		void p_rnd(AnalyzeInfo& info);
+		void p_rndp(AnalyzeInfo& info);
+		void p_tst(AnalyzeInfo& info);
+		void p_lsl16(AnalyzeInfo& info);
+		void p_lsr16(AnalyzeInfo& info);
+		void p_asr16(AnalyzeInfo& info);
+		void p_addp(AnalyzeInfo& info);
+		void p_set(AnalyzeInfo& info);
+		void p_mpy(AnalyzeInfo& info);
+		void p_mac(AnalyzeInfo& info);
+		void p_macn(AnalyzeInfo& info);
+		void p_mvmpy(AnalyzeInfo& info);
+		void p_rnmpy(AnalyzeInfo& info);
+		void p_admpy(AnalyzeInfo& info);
+		void p_not(AnalyzeInfo& info);
+		void p_xor(AnalyzeInfo& info);
+		void p_and(AnalyzeInfo& info);
+		void p_or(AnalyzeInfo& info);
+		void p_lsf(AnalyzeInfo& info);
+		void p_asf(AnalyzeInfo& info);
 
-		void ASL(AnalyzeInfo& info);
-		void ASR(AnalyzeInfo& info);
-		void ASR16(AnalyzeInfo& info);
+		// Parallel mem opcodes (low part)
 
-		void BLOOP(AnalyzeInfo& info);
-		void BLOOPI(AnalyzeInfo& info);
-		void CALLcc(AnalyzeInfo& info);
-		void CALLR(AnalyzeInfo& info);
-
-		void CLR(AnalyzeInfo& info);
-		void CLRL(AnalyzeInfo& info);
-		void CLRP(AnalyzeInfo& info);
-
-		void CMP(AnalyzeInfo& info);
-		void CMPI(AnalyzeInfo& info);
-		void CMPIS(AnalyzeInfo& info);
-		void CMPAR(AnalyzeInfo& info);
-
-		void DAR(AnalyzeInfo& info);
-		void DEC(AnalyzeInfo& info);
-		void DECM(AnalyzeInfo& info);
-
-		void HALT(AnalyzeInfo& info);
-
-		void IAR(AnalyzeInfo& info);
-		void INC(AnalyzeInfo& info);
-		void INCM(AnalyzeInfo& info);
-
-		void IFcc(AnalyzeInfo& info);
-
-		void ILRR(AnalyzeInfo& info);
-		void ILRRD(AnalyzeInfo& info);
-		void ILRRI(AnalyzeInfo& info);
-		void ILRRN(AnalyzeInfo& info);
-
-		void Jcc(AnalyzeInfo& info);
-		void JMPR(AnalyzeInfo& info);
-		void LOOP(AnalyzeInfo& info);
-		void LOOPI(AnalyzeInfo& info);
-
-		void LR(AnalyzeInfo& info);
-		void LRI(AnalyzeInfo& info);
-		void LRIS(AnalyzeInfo& info);
-		void LRR(AnalyzeInfo& info);
-		void LRRD(AnalyzeInfo& info);
-		void LRRI(AnalyzeInfo& info);
-		void LRRN(AnalyzeInfo& info);
-		void LRS(AnalyzeInfo& info);
-
-		void LSL(AnalyzeInfo& info);
-		void LSL16(AnalyzeInfo& info);
-		void LSR(AnalyzeInfo& info);
-		void LSR16(AnalyzeInfo& info);
-
-		void M2(AnalyzeInfo& info);
-		void M0(AnalyzeInfo& info);
-		void CLR15(AnalyzeInfo& info);
-		void SET15(AnalyzeInfo& info);
-		void CLR40(AnalyzeInfo& info);
-		void SET40(AnalyzeInfo& info);
-
-		void MOV(AnalyzeInfo& info);
-		void MOVAX(AnalyzeInfo& info);
-		void MOVNP(AnalyzeInfo& info);
-		void MOVP(AnalyzeInfo& info);
-		void MOVPZ(AnalyzeInfo& info);
-		void MOVR(AnalyzeInfo& info);
-		void MRR(AnalyzeInfo& info);
-
-		void MADD(AnalyzeInfo& info);
-		void MADDC(AnalyzeInfo& info);
-		void MADDX(AnalyzeInfo& info);
-		void MSUB(AnalyzeInfo& info);
-		void MSUBC(AnalyzeInfo& info);
-		void MSUBX(AnalyzeInfo& info);
-		void MUL(AnalyzeInfo& info);
-		void MULAC(AnalyzeInfo& info);
-		void MULC(AnalyzeInfo& info);
-		void MULCAC(AnalyzeInfo& info);
-		void MULCMV(AnalyzeInfo& info);
-		void MULCMVZ(AnalyzeInfo& info);
-		void MULMV(AnalyzeInfo& info);
-		void MULMVZ(AnalyzeInfo& info);
-		void MULX(AnalyzeInfo& info);
-		void MULXAC(AnalyzeInfo& info);
-		void MULXMV(AnalyzeInfo& info);
-		void MULXMVZ(AnalyzeInfo& info);
-
-		void NEG(AnalyzeInfo& info);
-
-		void ORC(AnalyzeInfo& info);
-		void ORI(AnalyzeInfo& info);
-		void ORR(AnalyzeInfo& info);
-
-		void RETcc(AnalyzeInfo& info);
-		void RTI(AnalyzeInfo& info);
-
-		void SBSET(AnalyzeInfo& info);
-		void SBCLR(AnalyzeInfo& info);
-
-		void SI(AnalyzeInfo& info);
-		void SR(AnalyzeInfo& info);
-		void SRR(AnalyzeInfo& info);
-		void SRRD(AnalyzeInfo& info);
-		void SRRI(AnalyzeInfo& info);
-		void SRRN(AnalyzeInfo& info);
-		void SRS(AnalyzeInfo& info);
-
-		void SUB(AnalyzeInfo& info);
-		void SUBAX(AnalyzeInfo& info);
-		void SUBP(AnalyzeInfo& info);
-		void SUBR(AnalyzeInfo& info);
-
-		void TST(AnalyzeInfo& info);
-		void TSTAXH(AnalyzeInfo& info);
-
-		void XORI(AnalyzeInfo& info);
-		void XORR(AnalyzeInfo& info);
-
-		// Packed instructions
-
-		void DR(AnalyzeInfo& info);
-		void IR(AnalyzeInfo& info);
-		void NR(AnalyzeInfo& info);
-		void MV(AnalyzeInfo& info);
-		void S(AnalyzeInfo& info);
-		void SN(AnalyzeInfo& info);
-		void L(AnalyzeInfo& info);
-		void LN(AnalyzeInfo& info);
-
-		void LS(AnalyzeInfo& info);
-		void SL(AnalyzeInfo& info);
-		void LSN(AnalyzeInfo& info);
-		void SLN(AnalyzeInfo& info);
-		void LSM(AnalyzeInfo& info);
-		void SLM(AnalyzeInfo& info);
-		void LSNM(AnalyzeInfo& info);
-		void SLNM(AnalyzeInfo& info);
-
-		void LD(AnalyzeInfo& info);
-		void LDN(AnalyzeInfo& info);
-		void LDM(AnalyzeInfo& info);
-		void LDNM(AnalyzeInfo& info);
-
-		void LDAX(AnalyzeInfo& info);
-		void LDAXN(AnalyzeInfo& info);
-		void LDAXM(AnalyzeInfo& info);
-		void LDAXNM(AnalyzeInfo& info);
+		void p_ldd(AnalyzeInfo& info);
+		void p_ls(AnalyzeInfo& info);
+		void p_ld(AnalyzeInfo& info);
+		void p_st(AnalyzeInfo& info);
+		void p_mv(AnalyzeInfo& info);
+		void p_mr(AnalyzeInfo& info);
 
 		// Helpers
 
-		bool Condition(ConditionCode cc);
-		void Flags40(int64_t a, int64_t b, int64_t res);
-		void Flags(DspLongAccumulator a, DspLongAccumulator b, DspLongAccumulator res);
-		void FlagsLogic(DspLongAccumulator a);
+		bool ConditionTrue(ConditionCode cc);
 		void Dispatch(AnalyzeInfo& info);
-		void SetLoop(DspAddress startAddr, DspAddress endAddr, uint16_t count);
-		bool CheckLoop();
-		void LDCommon(AnalyzeInfo& info);
-		void LDAXCommon(AnalyzeInfo& info);
-		void Mul(int16_t a, int16_t b);
-		void Mulx(int16_t a, int16_t b, int an, int bn);
-		void Madd(int16_t a, int16_t b);
-		void Msub(int16_t a, int16_t b);
-		void Mulac(int16_t a, int16_t b, int r);
-		void Mulxac(int16_t a, int16_t b, int r, int an, int bn);
-		void Mulmv(int16_t a, int16_t b, int r);
-		void Mulxmv(int16_t a, int16_t b, int r, int an, int bn);
-		void Mulmvz(int16_t a, int16_t b, int r);
-		void Mulxmvz(int16_t a, int16_t b, int r, int an, int bn);
 
 		// TODO: Cache analyzeinfo?
 
