@@ -247,6 +247,7 @@ namespace DSP
 
 		switch (instr)
 		{
+			case DspParallelMemInstruction::nop: break;
 			case DspParallelMemInstruction::ldd: text = "ldd"; break;
 			case DspParallelMemInstruction::ls: text = "ls"; break;
 			case DspParallelMemInstruction::ld: text = "ld"; break;

@@ -108,7 +108,8 @@ namespace DSP
 		ld,
 		st,
 		mv,
-		mr
+		mr,
+		nop,		// mr r0, 0
 	};
 
 	enum class DspParameter
@@ -310,21 +311,16 @@ namespace DSP
 		static void Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits);
 		static void Group2(AnalyzeInfo& info, uint16_t instrBits);
 		static void Group3(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group4(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group5(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group6(AnalyzeInfo& info, uint16_t instrBits);
+		static void Group4_6(AnalyzeInfo& info, uint16_t instrBits);
 		static void Group7(AnalyzeInfo& info, uint16_t instrBits);
 		static void Group8(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group9(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupA(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupB(AnalyzeInfo& info, uint16_t instrBits);
+		static void Group9_B(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupCD(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupE(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupF(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupMpy(AnalyzeInfo& info, uint16_t instrBits);
 		static void GroupMemOps3(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps4_7(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps8_F(AnalyzeInfo& info, uint16_t instrBits);
+		static void GroupMemOps4_F(AnalyzeInfo& info, uint16_t instrBits);
 
 		static void AddParam(AnalyzeInfo& info, DspParameter param);
 		static void AddParamEx(AnalyzeInfo& info, DspParameter param);
