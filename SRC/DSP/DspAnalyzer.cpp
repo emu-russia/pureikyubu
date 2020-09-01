@@ -113,6 +113,13 @@ namespace DSP
 			DspParameter::mod_plus_m,
 		};
 
+		static DspParameter modifier_n[] = {
+			DspParameter::mod_plus_m0,
+			DspParameter::mod_plus_m1,
+			DspParameter::mod_plus_m2,
+			DspParameter::mod_plus_m3,
+		};
+
 		switch ((instrBits >> 8) & 0xf)
 		{
 			//|nop         |0000 0000 0[00]0 0000|
@@ -307,7 +314,7 @@ namespace DSP
 						int r = instrBits & 3;
 						AddParam(info, addressreg[r]);
 						int m = (instrBits >> 2) & 3;
-						AddParam(info, modifier[m]);
+						AddParam(info, modifier[m] == DspParameter::mod_plus_m ? modifier_n[r] : modifier[m]);
 						break;
 					}
 					case 2:		// xorli + div, max
@@ -654,6 +661,13 @@ namespace DSP
 			DspParameter::mod_plus_m,
 		};
 
+		static DspParameter modifier_n[] = {
+			DspParameter::mod_plus_m0,
+			DspParameter::mod_plus_m1,
+			DspParameter::mod_plus_m2,
+			DspParameter::mod_plus_m3,
+		};
+
 		//|rep rc      |0001 0000 cccc cccc|
 		//|loop lc,ea  |0001 0001 cccc cccc aaaa aaaa aaaa aaaa|
 		//|clr b       |0001 0010 0000 0bbb|
@@ -750,7 +764,7 @@ namespace DSP
 				int r = (instrBits >> 5) & 3;
 				AddParam(info, addressreg[r]);
 				int m = (instrBits >> 7) & 3;
-				AddParam(info, modifier[m]);
+				AddParam(info, modifier[m] == DspParameter::mod_plus_m ? modifier_n[r] : modifier[m]);
 				break;
 			}
 			case 0xa:	// st
@@ -760,7 +774,7 @@ namespace DSP
 				int r = (instrBits >> 5) & 3;
 				AddParam(info, addressreg[r]);
 				int m = (instrBits >> 7) & 3;
-				AddParam(info, modifier[m]);
+				AddParam(info, modifier[m] == DspParameter::mod_plus_m ? modifier_n[r] : modifier[m]);
 				int s = instrBits & 0x1f;
 				AddParam(info, (DspParameter)((int)DspParameter::regs + s));
 				break;

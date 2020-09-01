@@ -166,14 +166,6 @@ namespace DSP
 
 		prod,
 
-		// Indexed by register
-
-		Indexed_regs,
-		Indexed_r0 = Indexed_regs,	// @ Addressing register 0 
-		Indexed_r1,			// @ Addressing register 1 
-		Indexed_r2,			// @ Addressing register 2 
-		Indexed_r3,			// @ Addressing register 3 
-
 		// PSR bits
 
 		psr_c,		// Carry

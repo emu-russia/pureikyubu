@@ -53,11 +53,6 @@ namespace DSP
 			
 			case DspParameter::prod: text = "p"; break;
 
-			case DspParameter::Indexed_r0: text = "(r0)"; break;
-			case DspParameter::Indexed_r1: text = "(r1)"; break;
-			case DspParameter::Indexed_r2: text = "(r2)"; break;
-			case DspParameter::Indexed_r3: text = "(r3)"; break;
-
 			// PSR bits
 
 			case DspParameter::psr_c: text = "c"; break;
@@ -149,8 +144,7 @@ namespace DSP
 			case DspRegularInstruction::loop: text = "loop"; break;
 			case DspRegularInstruction::rep: text = "rep"; break;
 			case DspRegularInstruction::pld: text = "pld"; break;
-			// Dont show nop's
-			case DspRegularInstruction::nop: break;
+			case DspRegularInstruction::nop: text = "nop"; break;
 			case DspRegularInstruction::mr: text = "mr"; break;
 			case DspRegularInstruction::adsi: text = "adsi"; break;
 			case DspRegularInstruction::adli: text = "adli"; break;
