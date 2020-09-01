@@ -778,6 +778,7 @@ namespace DSP
         if (ptr)
         {
             DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+            text = DSP::DspDisasm::Disasm(address, info);
         }
 
         // Return as text

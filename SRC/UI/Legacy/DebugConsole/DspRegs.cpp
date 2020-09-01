@@ -15,8 +15,8 @@ namespace Debug
 	};
 
 	static const char* PsrBitNames[] = {
-		"C", "V", "Z", "N", "E", "U", "TB", "SV",
-		"TE0", "TE1", "TE2", "TE3", "ET", "IM", "XL", "DP",
+		"c", "v", "z", "n", "e", "u", "tb", "sv",
+		"te0", "te1", "te2", "te3", "et", "im", "xl", "dp",
 	};
 
 	DspRegs::DspRegs(RECT& rect, std::string name, Cui* parent) :
