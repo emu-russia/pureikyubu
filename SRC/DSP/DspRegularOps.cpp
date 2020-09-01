@@ -92,7 +92,14 @@ namespace DSP
 
 	void DspInterpreter::reti(AnalyzeInfo& info)
 	{
-		core->ReturnFromInterrupt();
+		if (ConditionTrue(info.cc))
+		{
+			core->ReturnFromInterrupt();
+		}
+		else
+		{
+			core->regs.pc++;
+		}
 	}
 
 	void DspInterpreter::trap(AnalyzeInfo& info)
@@ -102,7 +109,8 @@ namespace DSP
 
 	void DspInterpreter::wait(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::wait\n");
+		// In a real DSP, Clk is disabled and only the interrupt generation circuitry remains active. 
+		// In the emulator, due to the fact that the instruction is flowControl, pc changes will not occur and the emulated DSP will "hang" on the execution of the `wait` instruction until an interrupt occurs.
 	}
 
 	void DspInterpreter::exec(AnalyzeInfo& info)
@@ -119,12 +127,69 @@ namespace DSP
 
 	void DspInterpreter::loop(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::loop\n");
+		int lc;
+		DspAddress end_addr;
+
+		if (info.params[0] == DspParameter::Byte)
+		{
+			lc = info.ImmOperand.Byte;
+			end_addr = info.ImmOperand2.Address;
+		}
+		else
+		{
+			lc = core->MoveFromReg((int)info.params[0]);
+			end_addr = info.ImmOperand.Address;
+		}
+
+		if (lc != 0)
+		{
+			if (!core->regs.pcs->push(core->regs.pc + 2))
+			{
+				core->AssertInterrupt(DspInterrupt::Error);
+				return;
+			}
+			if (!core->regs.lcs->push(lc))
+			{
+				core->AssertInterrupt(DspInterrupt::Error);
+				return;
+			}
+			if (!core->regs.eas->push(end_addr))
+			{
+				core->AssertInterrupt(DspInterrupt::Error);
+				return;
+			}
+			core->regs.pc += 2;
+		}
+		else
+		{
+			// If the parameter lc = 0, then accordingly no loop occurs, pc = end_address + 1 (the block is skipped)
+
+			core->regs.pc = end_addr + 1;
+		}
 	}
 
 	void DspInterpreter::rep(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::rep\n");
+		int rc;
+
+		if (info.params[0] == DspParameter::Byte)
+		{
+			rc = info.ImmOperand.Byte;
+		}
+		else
+		{
+			rc = core->MoveFromReg((int)info.params[0]);
+		}
+
+		if (rc != 0)
+		{
+			core->repeatCount = rc;
+			core->regs.pc++;
+		}
+		else
+		{
+			core->regs.pc += 2;		// Skip next 1-cycle instruction
+		}
 	}
 
 	void DspInterpreter::pld(AnalyzeInfo& info)

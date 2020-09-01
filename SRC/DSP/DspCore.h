@@ -164,7 +164,6 @@ namespace DSP
 	{
 		friend DspInterpreter;
 
-	public:
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
 		DspAddress oneShotBreakpoint = 0xffff;
@@ -183,6 +182,8 @@ namespace DSP
 
 		void CheckInterrupts();
 		uint16_t CircularAddress(uint16_t r, uint16_t l, int16_t m);
+
+		int repeatCount = 0;		// Internal register for the `rep` instruction.
 
 	public:
 

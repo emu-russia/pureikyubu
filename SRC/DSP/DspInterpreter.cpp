@@ -150,7 +150,51 @@ namespace DSP
 
 		if (!flowControl)
 		{
-			core->regs.pc += (DspAddress)(info.sizeInBytes >> 1);
+			// Checking the logic of the `rep` instruction.
+			// If the value of the repeat register is not equal to 0, then instead of the usual PC increment, it is not performed.
+
+			if (core->repeatCount)
+			{
+				core->repeatCount--;
+			}
+
+			if (core->repeatCount == 0)
+			{
+				// Checking the current pc for loop is done only if the eas/lcs stack is not empty
+
+				if (core->regs.pc == core->regs.eas->top() && !core->regs.lcs->empty())
+				{
+					// If pc is equal to eas then lcs = lcs - 1. 
+						
+					uint16_t lc;
+					core->regs.lcs->pop(lc);
+					core->regs.lcs->push(lc - 1);
+
+					// If after that lcs is not equal to zero, then pc = pcs. Otherwise pop pcs/eas/lcs and pc = pc + 1 (exit the loop)
+
+					if (core->regs.lcs->top() != 0)
+					{
+						core->regs.pc = core->regs.pcs->top();
+					}
+					else
+					{
+						uint16_t dummy;
+						core->regs.pcs->pop(dummy);
+						core->regs.eas->pop(dummy);
+						core->regs.lcs->pop(dummy);
+
+						// The DSP behaves strangely when the last loop instruction is a branch instruction. 
+						// The exact work of the DSP in this case is on the verge of unpredictable behavior, so we will not bother and complicate the code. 
+						// All the same, microcode developers are adequate people and will never deal with placing branch instructions at the end of a loop.
+
+						core->regs.pc += 1;
+					}
+				}
+				else
+				{
+					core->regs.pc += (DspAddress)(info.sizeInBytes >> 1);
+				}
+			}
 		}
 	}
 

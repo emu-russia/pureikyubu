@@ -127,7 +127,7 @@ namespace DSP
 			//|trap        |0000 0000 0[01]0 0000|
 			//|wait        |0000 0000 0[01]0 0001|
 			//|repr reg    |0000 0000 0[10]r rrrr|
-			//|loopr reg,ea|0000 0000 0[11]r rrrr aaaa aaaa aaaa aaaa|
+			//|loop reg,ea |0000 0000 0[11]r rrrr aaaa aaaa aaaa aaaa|
 			//|mvli d,li   |0000 0000 1[00]d dddd iiii iiii iiii iiii|
 			//|ldla d,la   |0000 0000 1[10]d dddd aaaa aaaa aaaa aaaa|
 			//|stla la,s   |0000 0000 1[11]s ssss aaaa aaaa aaaa aaaa|
@@ -159,7 +159,7 @@ namespace DSP
 							info.flowControl = true;
 							break;
 						}
-						case 2:		// repr
+						case 2:		// rep r
 						{
 							info.instr = DspRegularInstruction::rep;
 							info.flowControl = true;
@@ -167,7 +167,7 @@ namespace DSP
 							AddParam(info, (DspParameter)((int)DspParameter::regs + r));
 							break;
 						}
-						case 3:		// loopr
+						case 3:		// loop r
 						{
 							info.instr = DspRegularInstruction::loop;
 							info.flowControl = true;
@@ -300,6 +300,7 @@ namespace DSP
 							}
 							case 0xd:	// negc
 							{
+								info.instr = DspRegularInstruction::negc;
 								int d = (instrBits & 0x100) ? 1 : 0;
 								AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 								break;
@@ -411,7 +412,7 @@ namespace DSP
 						{
 							case 0:		// orli
 							{
-								info.instr = DspRegularInstruction::anli;
+								info.instr = DspRegularInstruction::orli;
 								int d = (instrBits & 0x100) ? 1 : 0;
 								AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
 								uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
@@ -692,7 +693,7 @@ namespace DSP
 			}
 			case 1:		// loop
 			{
-				info.instr = DspRegularInstruction::rep;
+				info.instr = DspRegularInstruction::loop;
 				info.flowControl = true;
 				AddImmOperand(info, DspParameter::Byte, (uint8_t)instrBits);
 				DspAddress addr = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
@@ -832,7 +833,7 @@ namespace DSP
 		else
 		{
 			// stsa
-			info.instr = DspRegularInstruction::ldsa;
+			info.instr = DspRegularInstruction::stsa;
 			AddImmOperand(info, DspParameter::Address, (DspAddress)(uint8_t)instrBits);
 			int s = (instrBits >> 8) & 7;
 			AddParam(info, stsa_reg[s]);

@@ -52,8 +52,14 @@ namespace DSP
 						Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", (DspAddress)i * 2);
 					}
 
-					regs.pcs->push(regs.pc);
-					regs.pss->push(regs.psr.bits);
+					if (!regs.pcs->push(regs.pc))
+					{
+						Halt("CheckInterrupts: pcs overflow\n");
+					}
+					if (!regs.pss->push(regs.psr.bits))
+					{
+						Halt("CheckInterrupts: pss overflow\n");
+					}
 					regs.psr.et = 0;
 
 					if (i == (size_t)DspInterrupt::Reset)
@@ -166,9 +172,17 @@ namespace DSP
 
 	void DspCore::ReturnFromInterrupt()
 	{
-		regs.pss->pop(regs.psr.bits);
+		if (!regs.pss->pop(regs.psr.bits))
+		{
+			AssertInterrupt(DspInterrupt::Error);
+			return;
+		}
 		uint16_t pc;
-		regs.pcs->pop(pc);
+		if (!regs.pcs->pop(pc))
+		{
+			AssertInterrupt(DspInterrupt::Error);
+			return;
+		}
 		regs.pc = pc;
 	}
 
@@ -180,6 +194,8 @@ namespace DSP
 		{
 			dsp->savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
+
+		repeatCount = 0;
 
 		regs.pcs->clear();
 		regs.pss->clear();
