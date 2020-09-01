@@ -35,6 +35,9 @@ namespace DSP
 
 	uint16_t DspStack::top()
 	{
+		if (ptr == 0)
+			return 0xffff;
+
 		return stack[ptr - 1];
 	}
 

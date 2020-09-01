@@ -11,7 +11,6 @@ namespace DSP
 	{
 		dsp = parent;
 		interp = new DspInterpreter(this);
-		HardReset();
 
 		// We will not emulate the Dsp feature - the combined stack pointer for eas and lcs.
 
@@ -19,6 +18,8 @@ namespace DSP
 		regs.pss = new DspStack(4);
 		regs.eas = new DspStack(4);
 		regs.lcs = new DspStack(4);
+
+		HardReset();
 	}
 
 	DspCore::~DspCore()
@@ -96,7 +97,8 @@ namespace DSP
 			case DspInterrupt::Acrs:
 			case DspInterrupt::Acwe:
 			case DspInterrupt::Dcre:
-				if ((regs.psr.te1 & regs.psr.et) == 0)
+				// ACRS, ACWE and DCRE interrupts are generated regardless of whether the ET bit is set or cleared (controlled only by the TE1 bit)
+				if (regs.psr.te1 == 0)
 				{
 					return;
 				}
