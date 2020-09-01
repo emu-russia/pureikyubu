@@ -12,11 +12,23 @@ namespace DSP
 		dsp = parent;
 		interp = new DspInterpreter(this);
 		HardReset();
+
+		// We will not emulate the Dsp feature - the combined stack pointer for eas and lcs.
+
+		regs.pcs = new DspStack(8);
+		regs.pss = new DspStack(4);
+		regs.eas = new DspStack(4);
+		regs.lcs = new DspStack(4);
 	}
 
 	DspCore::~DspCore()
 	{
 		delete interp;
+
+		delete regs.pcs;
+		delete regs.pss;
+		delete regs.eas;
+		delete regs.lcs;
 	}
 
 	void DspCore::CheckInterrupts()
@@ -39,8 +51,8 @@ namespace DSP
 						Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", (DspAddress)i * 2);
 					}
 
-					regs.st[0].push_back(regs.pc);
-					regs.st[1].push_back((DspAddress)regs.psr.bits);
+					regs.pcs->push(regs.pc);
+					regs.pss->push(regs.psr.bits);
 					regs.psr.et = 0;
 
 					if (i == (size_t)DspInterrupt::Reset)
@@ -152,10 +164,10 @@ namespace DSP
 
 	void DspCore::ReturnFromInterrupt()
 	{
-		regs.psr.bits = (uint16_t)regs.st[1].back();
-		regs.st[1].pop_back();
-		regs.pc = regs.st[0].back();
-		regs.st[0].pop_back();
+		regs.pss->pop(regs.psr.bits);
+		uint16_t pc;
+		regs.pcs->pop(pc);
+		regs.pc = pc;
 	}
 
 	void DspCore::HardReset()
@@ -167,24 +179,22 @@ namespace DSP
 			dsp->savedGekkoTicks = Gekko::Gekko->GetTicks();
 		}
 
-		for (int i = 0; i < 4; i++)
-		{
-			regs.st[i].clear();
-			regs.st[i].reserve(32);		// Should be enough
-		}
+		regs.pcs->clear();
+		regs.pss->clear();
+		regs.eas->clear();
+		regs.lcs->clear();
 
 		for (int i = 0; i < 4; i++)
 		{
-			regs.ar[i] = 0;
-			regs.ix[i] = 0;
-			regs.lm[i] = 0xFFFF;
+			regs.r[i] = 0;
+			regs.m[i] = 0;
+			regs.l[i] = 0xFFFF;
 		}
 
-		for (int i = 0; i < 2; i++)
-		{
-			regs.ac[i].bits = 0;
-			regs.ax[i].bits = 0;
-		}
+		regs.a.bits = 0;
+		regs.b.bits = 0;
+		regs.x.bits = 0;
+		regs.y.bits = 0;
 
 		regs.dpp = 0xFF;
 		regs.psr.bits = 0;
@@ -409,45 +419,51 @@ namespace DSP
 			Report(Channel::Norm, "psr: 0x%04X\n", regs.psr);
 		}
 
-		for (int i = 0; i < 2; i++)
+		if (regs.a.bits != prevState->a.bits)
 		{
-			if (regs.ac[i].bits != prevState->ac[i].bits)
-			{
-				Report(Channel::Norm, "ac%i: 0x%04X_%04X_%04X\n", i,
-					regs.ac[i].h, regs.ac[i].m, regs.ac[i].l);
-			}
+			Report(Channel::Norm, "a: 0x%04X_%04X_%04X\n",
+				regs.a.h, regs.a.m, regs.a.l);
 		}
 
-		for (int i = 0; i < 2; i++)
+		if (regs.b.bits != prevState->b.bits)
 		{
-			if (regs.ax[i].bits != prevState->ax[i].bits)
+			Report(Channel::Norm, "b: 0x%04X_%04X_%04X\n",
+				regs.b.h, regs.b.m, regs.b.l);
+		}
+
+		if (regs.x.bits != prevState->x.bits)
+		{
+			Report(Channel::Norm, "x: 0x%04X_%04X\n",
+				regs.x.h, regs.x.l);
+		}
+
+		if (regs.y.bits != prevState->y.bits)
+		{
+			Report(Channel::Norm, "y: 0x%04X_%04X\n",
+				regs.y.h, regs.y.l);
+		}
+
+		for (int i = 0; i < 4; i++)
+		{
+			if (regs.r[i] != prevState->r[i])
 			{
-				Report(Channel::Norm, "ax%i: 0x%04X_%04X\n", i,
-					regs.ax[i].h, regs.ax[i].l);
+				Report(Channel::Norm, "r%i: 0x%04X\n", i, regs.r[i]);
 			}
 		}
 
 		for (int i = 0; i < 4; i++)
 		{
-			if (regs.ar[i] != prevState->ar[i])
+			if (regs.m[i] != prevState->m[i])
 			{
-				Report(Channel::Norm, "ar%i: 0x%04X\n", i, regs.ar[i]);
+				Report(Channel::Norm, "m%i: 0x%04X\n", i, regs.m[i]);
 			}
 		}
 
 		for (int i = 0; i < 4; i++)
 		{
-			if (regs.ix[i] != prevState->ix[i])
+			if (regs.l[i] != prevState->l[i])
 			{
-				Report(Channel::Norm, "ix%i: 0x%04X\n", i, regs.ix[i]);
-			}
-		}
-
-		for (int i = 0; i < 4; i++)
-		{
-			if (regs.lm[i] != prevState->lm[i])
-			{
-				Report(Channel::Norm, "lm%i: 0x%04X\n", 8+i, regs.lm[i]);
+				Report(Channel::Norm, "l%i: 0x%04X\n", 8+i, regs.l[i]);
 			}
 		}
 	}
@@ -461,35 +477,53 @@ namespace DSP
 	{
 		switch (reg)
 		{
-			case (int)DspRegister::ar0:
-			case (int)DspRegister::ar1:
-			case (int)DspRegister::ar2:
-			case (int)DspRegister::ar3:
-				regs.ar[reg] = val;
+			case (int)DspRegister::r0:
+			case (int)DspRegister::r1:
+			case (int)DspRegister::r2:
+			case (int)DspRegister::r3:
+				regs.r[reg] = val;
 				break;
-			case (int)DspRegister::ix0:
-			case (int)DspRegister::ix1:
-			case (int)DspRegister::ix2:
-			case (int)DspRegister::ix3:
-				regs.ix[reg - (int)DspRegister::indexRegs] = val;
+			case (int)DspRegister::m0:
+			case (int)DspRegister::m1:
+			case (int)DspRegister::m2:
+			case (int)DspRegister::m3:
+				regs.m[reg - (int)DspRegister::m0] = val;
 				break;
-			case (int)DspRegister::lm0:
-			case (int)DspRegister::lm1:
-			case (int)DspRegister::lm2:
-			case (int)DspRegister::lm3:
-				regs.lm[reg - (int)DspRegister::limitRegs] = val;
+			case (int)DspRegister::l0:
+			case (int)DspRegister::l1:
+			case (int)DspRegister::l2:
+			case (int)DspRegister::l3:
+				regs.l[reg - (int)DspRegister::l0] = val;
 				break;
-			case (int)DspRegister::st0:
-			case (int)DspRegister::st1:
-			case (int)DspRegister::st2:
-			case (int)DspRegister::st3:
-				regs.st[reg - (int)DspRegister::stackRegs].push_back((DspAddress)val);
+			case (int)DspRegister::pcs:
+				if (!regs.pcs->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
 				break;
-			case (int)DspRegister::ac0h:
-				regs.ac[0].h = val & 0xff;
+			case (int)DspRegister::pss:
+				if (!regs.pss->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
 				break;
-			case (int)DspRegister::ac1h:
-				regs.ac[1].h = val & 0xff;
+			case (int)DspRegister::eas:
+				if (!regs.eas->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::lcs:
+				if (!regs.lcs->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::a2:
+				regs.a.h = val & 0xff;
+				break;
+			case (int)DspRegister::b2:
+				regs.b.h = val & 0xff;
 				break;
 			case (int)DspRegister::dpp:
 				regs.dpp = val & 0xFF;
@@ -497,50 +531,50 @@ namespace DSP
 			case (int)DspRegister::psr:
 				regs.psr.bits = val;
 				break;
-			case (int)DspRegister::prodl:
+			case (int)DspRegister::ps0:
 				regs.prod.l = val;
 				break;
-			case (int)DspRegister::prodm1:
+			case (int)DspRegister::ps1:
 				regs.prod.m1 = val;
 				break;
-			case (int)DspRegister::prodh:
+			case (int)DspRegister::ps2:
 				regs.prod.h = val;
 				break;
-			case (int)DspRegister::prodm2:
+			case (int)DspRegister::pc1:
 				regs.prod.m2 = val;
 				break;
-			case (int)DspRegister::ax0l:
-				regs.ax[0].l = val;
+			case (int)DspRegister::x0:
+				regs.x.l = val;
 				break;
-			case (int)DspRegister::ax0h:
-				regs.ax[0].h = val;
+			case (int)DspRegister::y0:
+				regs.y.h = val;
 				break;
-			case (int)DspRegister::ax1l:
-				regs.ax[1].l = val;
+			case (int)DspRegister::x1:
+				regs.x.l = val;
 				break;
-			case (int)DspRegister::ax1h:
-				regs.ax[1].h = val;
+			case (int)DspRegister::y1:
+				regs.y.h = val;
 				break;
-			case (int)DspRegister::ac0l:
-				regs.ac[0].l = val;
+			case (int)DspRegister::a0:
+				regs.a.l = val;
 				break;
-			case (int)DspRegister::ac1l:
-				regs.ac[1].l = val;
+			case (int)DspRegister::b0:
+				regs.b.l = val;
 				break;
-			case (int)DspRegister::ac0m:
-				regs.ac[0].m = val;
+			case (int)DspRegister::a1:
+				regs.a.m = val;
 				if (regs.psr.xl)
 				{
-					regs.ac[0].h = (val & 0x8000) ? 0xFF : 0;
-					regs.ac[0].l = 0;
+					regs.a.h = (val & 0x8000) ? 0xFF : 0;
+					regs.a.l = 0;
 				}
 				break;
-			case (int)DspRegister::ac1m:
-				regs.ac[1].m = val;
+			case (int)DspRegister::b1:
+				regs.b.m = val;
 				if (regs.psr.xl)
 				{
-					regs.ac[1].h = (val & 0x8000) ? 0xFF : 0;
-					regs.ac[1].l = 0;
+					regs.b.h = (val & 0x8000) ? 0xFF : 0;
+					regs.b.l = 0;
 				}
 				break;
 		}
@@ -552,35 +586,53 @@ namespace DSP
 
 		switch (reg)
 		{
-			case (int)DspRegister::ar0:
-			case (int)DspRegister::ar1:
-			case (int)DspRegister::ar2:
-			case (int)DspRegister::ar3:
-				val = regs.ar[reg];
+			case (int)DspRegister::r0:
+			case (int)DspRegister::r1:
+			case (int)DspRegister::r2:
+			case (int)DspRegister::r3:
+				val = regs.r[reg];
 				break;
-			case (int)DspRegister::ix0:
-			case (int)DspRegister::ix1:
-			case (int)DspRegister::ix2:
-			case (int)DspRegister::ix3:
-				val = regs.ix[reg - (int)DspRegister::indexRegs];
+			case (int)DspRegister::m0:
+			case (int)DspRegister::m1:
+			case (int)DspRegister::m2:
+			case (int)DspRegister::m3:
+				val = regs.m[reg - (int)DspRegister::m0];
 				break;
-			case (int)DspRegister::lm0:
-			case (int)DspRegister::lm1:
-			case (int)DspRegister::lm2:
-			case (int)DspRegister::lm3:
-				val = regs.lm[reg - (int)DspRegister::limitRegs];
+			case (int)DspRegister::l0:
+			case (int)DspRegister::l1:
+			case (int)DspRegister::l2:
+			case (int)DspRegister::l3:
+				val = regs.l[reg - (int)DspRegister::l0];
 				break;
-			case (int)DspRegister::st0:
-			case (int)DspRegister::st1:
-			case (int)DspRegister::st2:
-			case (int)DspRegister::st3:
-				val = (uint16_t)regs.st[reg - (int)DspRegister::stackRegs].back();
+			case (int)DspRegister::pcs:
+				if (!regs.pcs->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
 				break;
-			case (int)DspRegister::ac0h:
-				val = regs.ac[0].h & 0xff;
+			case (int)DspRegister::pss:
+				if (!regs.pss->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
 				break;
-			case (int)DspRegister::ac1h:
-				val = regs.ac[1].h & 0xff;
+			case (int)DspRegister::eas:
+				if (!regs.eas->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::lcs:
+				if (!regs.lcs->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::a2:
+				val = regs.a.h & 0xff;
+				break;
+			case (int)DspRegister::b2:
+				val = regs.b.h & 0xff;
 				break;
 			case (int)DspRegister::dpp:
 				val = regs.dpp;
@@ -588,119 +640,80 @@ namespace DSP
 			case (int)DspRegister::psr:
 				val = regs.psr.bits;
 				break;
-			case (int)DspRegister::prodl:
+			case (int)DspRegister::ps0:
 				val = regs.prod.l;
 				break;
-			case (int)DspRegister::prodm1:
+			case (int)DspRegister::ps1:
 				val = regs.prod.m1;
 				break;
-			case (int)DspRegister::prodh:
+			case (int)DspRegister::ps2:
 				val = regs.prod.h;
 				break;
-			case (int)DspRegister::prodm2:
+			case (int)DspRegister::pc1:
 				val = regs.prod.m2;
 				break;
-			case (int)DspRegister::ax0l:
-				val = regs.ax[0].l;
+			case (int)DspRegister::x0:
+				val = regs.x.l;
 				break;
-			case (int)DspRegister::ax0h:
-				val = regs.ax[0].h;
+			case (int)DspRegister::y0:
+				val = regs.y.h;
 				break;
-			case (int)DspRegister::ax1l:
-				val = regs.ax[1].l;
+			case (int)DspRegister::x1:
+				val = regs.x.l;
 				break;
-			case (int)DspRegister::ax1h:
-				val = regs.ax[1].h;
+			case (int)DspRegister::y1:
+				val = regs.y.h;
 				break;
-			case (int)DspRegister::ac0l:
-				val = regs.ac[0].l;
+			case (int)DspRegister::a0:
+				val = regs.a.l;
 				break;
-			case (int)DspRegister::ac1l:
-				val = regs.ac[1].l;
+			case (int)DspRegister::b0:
+				val = regs.b.l;
 				break;
-			case (int)DspRegister::ac0m:
+			case (int)DspRegister::a1:
 				if (regs.psr.xl)
 				{
 					//int64_t a = SignExtend40(regs.ac[0].sbits) >> 16;
 					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
 
-					int64_t a = SignExtend40(regs.ac[0].sbits);
+					int64_t a = SignExtend40(regs.a.sbits);
 					if (a != (int32_t)a)
 					{
 						val = a > 0 ? 0x7fff : 0x8000;
 					}
 					else
 					{
-						val = regs.ac[0].m;
+						val = regs.a.m;
 					}
 				}
 				else
 				{
-					val = regs.ac[0].m;
+					val = regs.a.m;
 				}
 				break;
-			case (int)DspRegister::ac1m:
+			case (int)DspRegister::b1:
 				if (regs.psr.xl)
 				{
 					//int64_t a = SignExtend40(regs.ac[1].sbits) >> 16;
 					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
 
-					int64_t a = SignExtend40(regs.ac[1].sbits);
+					int64_t a = SignExtend40(regs.b.sbits);
 					if (a != (int32_t)a )
 					{
 						val = a > 0 ? 0x7fff : 0x8000;
 					}
 					else
 					{
-						val = regs.ac[1].m;
+						val = regs.b.m;
 					}
 				}
 				else
 				{
-					val = regs.ac[1].m;
+					val = regs.b.m;
 				}
 				break;
 		}
 		return val;
-	}
-
-	DspStack::DspStack(size_t _depth)
-	{
-		depth = _depth;
-		stack = new uint16_t[depth];
-	}
-
-	DspStack::~DspStack()
-	{
-		delete[] stack;
-	}
-
-	bool DspStack::push(uint16_t val)
-	{
-		if (ptr >= depth)
-			return false;	// Overflow
-
-		stack[ptr++] = val;
-		return true;
-	}
-
-	bool DspStack::pop(uint16_t &val)
-	{
-		if (ptr == 0)
-			return false;	// Underflow
-
-		val = stack[--ptr];
-		return true;
-	}
-
-	uint16_t DspStack::top()
-	{
-		return stack[ptr - 1];
-	}
-
-	bool DspStack::empty()
-	{
-		return ptr == 0;
 	}
 
 	#pragma endregion "Register access"
@@ -860,7 +873,7 @@ namespace DSP
 
 	void DspCore::ArAdvance(int r, int16_t step)
 	{
-		regs.ar[r] = CircularAddress(regs.ar[r], regs.lm[r], step);
+		regs.r[r] = CircularAddress(regs.r[r], regs.l[r], step);
 	}
 
 	#pragma endregion "Multiplier and ALU"

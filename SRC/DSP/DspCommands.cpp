@@ -68,16 +68,15 @@ namespace DSP
 
         for (int i = 0; i < 4; i++)
         {
-            regsChanged.ar[i] = ~regsChanged.ar[i];
-            regsChanged.ix[i] = ~regsChanged.ix[i];
-            regsChanged.lm[i] = ~regsChanged.lm[i];
+            regsChanged.r[i] = ~regsChanged.r[i];
+            regsChanged.m[i] = ~regsChanged.m[i];
+            regsChanged.l[i] = ~regsChanged.l[i];
         }
 
-        for (int i = 0; i < 2; i++)
-        {
-            regsChanged.ac[i].bits = ~regsChanged.ac[i].bits;
-            regsChanged.ax[i].bits = ~regsChanged.ax[i].bits;
-        }
+        regsChanged.a.bits = ~regsChanged.a.bits;
+        regsChanged.b.bits = ~regsChanged.b.bits;
+        regsChanged.x.bits = ~regsChanged.x.bits;
+        regsChanged.y.bits = ~regsChanged.y.bits;
 
         Flipper::DSP->core->DumpRegs(&regsChanged);
         return nullptr;
@@ -359,9 +358,9 @@ namespace DSP
 
         Report(Channel::Norm, "DSP Call Stack:\n");
 
-        for (auto it = Flipper::DSP->core->regs.st[0].begin(); it != Flipper::DSP->core->regs.st[0].end(); ++it)
+        for (int i=0; i< Flipper::DSP->core->regs.pcs->size(); i++)
         {
-            Report(Channel::Norm, "0x%04X\n", *it);
+            Report(Channel::Norm, "0x%04X\n", Flipper::DSP->core->regs.pcs->at(i));
         }
         return nullptr;
     }
@@ -556,7 +555,30 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
 
-        output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
+        // Special handling for stack registers is required to prevent pop happening.
+
+        switch ((DspRegister)reg)
+        {
+            case DspRegister::pcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pcs->top();
+                break;
+
+            case DspRegister::pss:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pss->top();
+                break;
+
+            case DspRegister::eas:
+                output->value.AsUint16 = Flipper::DSP->core->regs.eas->top();
+                break;
+
+            case DspRegister::lcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.lcs->top();
+                break;
+
+            default:
+                output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
+                break;
+        }
 
         return output;
     }

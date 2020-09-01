@@ -60,6 +60,9 @@
     <ClCompile Include="..\..\DspAnalyzer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\DspStack.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\DspAnalyzer.h">
@@ -90,6 +93,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\DspDma.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\DspStack.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

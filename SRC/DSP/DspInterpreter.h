@@ -102,6 +102,8 @@ namespace DSP
 
 		// TODO: Cache analyzeinfo?
 
+		bool flowControl = false;
+
 	public:
 		DspInterpreter(DspCore * parent);
 		~DspInterpreter();

@@ -4,6 +4,7 @@ add_library (DSP SHARED
 	../DspAdpcm.cpp
 	../DspAnalyzer.cpp
 	../DspCommands.cpp
+	../DspStack.cpp
 	../DspCore.cpp
 	../DspDisasm.cpp
 	../DspDma.cpp

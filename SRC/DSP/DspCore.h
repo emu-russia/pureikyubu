@@ -81,70 +81,54 @@ namespace DSP
 
 	#pragma pack (pop)
 
-	class DspStack
-	{
-		uint16_t* stack;
-		int ptr = 0;
-		int depth;
-
-	public:
-		DspStack(size_t _depth);
-		~DspStack();
-
-		bool push(uint16_t val);
-		bool pop(uint16_t& val);
-		uint16_t top();
-		bool empty();
-	};
-
 	enum class DspRegister
 	{
-		ar0 = 0,		// Addressing register 0 
-		ar1,			// Addressing register 1 
-		ar2,			// Addressing register 2 
-		ar3,			// Addressing register 3 
-		indexRegs,
-		ix0 = indexRegs,	// Indexing register 0 
-		ix1,			// Indexing register 1
-		ix2,			// Indexing register 2
-		ix3,			// Indexing register 3
-		limitRegs,
-		lm0 = limitRegs, // Limit register 0 
-		lm1,			// Limit register 1
-		lm2,			// Limit register 2
-		lm3,			// Limit register 3
-		stackRegs,
-		st0 = stackRegs,	// Call stack register 
-		st1,			// Data stack register 
-		st2,			// Loop address stack register 
-		st3,			// Loop counter register 
-		ac0h,			// 40-bit Accumulator 0 (high) 
-		ac1h,			// 40-bit Accumulator 1 (high) 
-		dpp,			// Used as high 8-bits of address for some load/store instructions
-		psr,			// Processor Status register 
-		prodl,			// Product register (low) 
-		prodm1,			// Product register (mid 1) 
-		prodh,			// Product register (high) 
-		prodm2,			// Product register (mid 2) 
-		ax0l,			// 32-bit Accumulator 0 (low) 
-		ax1l,			// 32-bit Accumulator 1 (low) 
-		ax0h,			// 32-bit Accumulator 0 (high) 
-		ax1h,			// 32-bit Accumulator 1 (high)
-		ac0l,			// 40-bit Accumulator 0 (low) 
-		ac1l,			// 40-bit Accumulator 1 (low) 
-		ac0m,			// 40-bit Accumulator 0 (mid)
-		ac1m,			// 40-bit Accumulator 1 (mid)
+		r0,		// Address register 0 (circular addressing)
+		r1,		// Address register 1 (circular addressing)
+		r2,		// Address register 2 (circular addressing)
+		r3,		// Address register 3 (circular addressing)
+		m0,		// Modifier value 0 (circular addressing)
+		m1,		// Modifier value 1 (circular addressing)
+		m2,		// Modifier value 2 (circular addressing)
+		m3,		// Modifier value 3 (circular addressing)
+		l0,		// Buffer length 0 (circular addressing)
+		l1,		// Buffer length 1 (circular addressing)
+		l2,		// Buffer length 2 (circular addressing)
+		l3,		// Buffer length 3 (circular addressing)
+		pcs,	// Program counter stack
+		pss,	// Program status stack
+		eas,	// End address stack
+		lcs,	// Loop count stack
+		a2,		// 40 - bit accumulator `a` high 8 bits
+		b2,		// 40 - bit accumulator `b` high 8 bits
+		dpp,	// Used as high 8 - bits of address for some load / store instructions
+		psr,	// Program status register
+		ps0,	// Product partial sum low part
+		ps1,	// Product partial sum middle part
+		ps2,	// Product partial sum high part(8 bits)
+		pc1,	// Product partial carry 1 middle part
+		x0,		// ALU / Multiplier input operand `x` low part
+		y0,		// ALU / Multiplier input operand `y` low part
+		x1,		// ALU / Multiplier input operand `x` high part
+		y1,		// ALU / Multiplier input operand `y` high part
+		a0,		// 40 - bit accumulator `a` low 16 bits
+		b0,		// 40 - bit accumulator `b` low 16 bits
+		a1,		// 40 - bit accumulator `a` middle 16 bits / Whole `a` accumulator
+		b1,		// 40 - bit accumulator `b` middle 16 bits / Whole `b` accumulator
 	};
 
 	struct DspRegs
 	{
-		uint16_t ar[4];		// Addressing registers
-		uint16_t ix[4];		// Indexing registers
-		uint16_t lm[4];	// Limit registers
-		std::vector<DspAddress> st[4];	// Stack registers
-		DspLongAccumulator ac[2];		// 40-bit Accumulators
-		DspShortOperand ax[2];		// 32-bit operands
-		DspProduct prod;		// Product register
+		uint16_t r[4];		// Addressing registers
+		uint16_t m[4];		// Modifier value registers
+		uint16_t l[4];		// Buffer length registers
+		DspStack *pcs;		// Program counter stack
+		DspStack *pss;		// Program status stack
+		DspStack *eas;		// End address stack
+		DspStack *lcs;		// Loop count stack
+		DspLongAccumulator a, b;	// 40-bit Accumulators
+		DspShortOperand x, y;		// 32-bit operands
+		DspProduct prod;			// Product register
 		uint16_t dpp;		// Used as high 8-bits of address for some load/store instructions
 		DspStatus psr;		// Processor status
 		DspAddress pc;		// Program counter
