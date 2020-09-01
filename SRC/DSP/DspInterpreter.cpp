@@ -14,6 +14,31 @@ namespace DSP
 	{
 	}
 
+	bool DspInterpreter::ConditionTrue(ConditionCode cc)
+	{
+		switch (cc)
+		{
+			case ConditionCode::ge: return (core->regs.psr.n ^ core->regs.psr.v) == 0;
+			case ConditionCode::lt: return (core->regs.psr.n ^ core->regs.psr.v) != 0;
+			case ConditionCode::gt: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) == 0;
+			case ConditionCode::le: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) != 0;
+			case ConditionCode::nz: return core->regs.psr.z == 0;
+			case ConditionCode::z: return core->regs.psr.z != 0;
+			case ConditionCode::nc: return core->regs.psr.c == 0;
+			case ConditionCode::c: return core->regs.psr.c != 0;
+			case ConditionCode::ne: return core->regs.psr.e == 0;
+			case ConditionCode::e: return core->regs.psr.e != 0;
+			case ConditionCode::nm: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) == 0;
+			case ConditionCode::m: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) != 0;
+			case ConditionCode::nt: return core->regs.psr.tb == 0;
+			case ConditionCode::t: return core->regs.psr.tb != 0;
+			case ConditionCode::v: return core->regs.psr.v != 0;
+			case ConditionCode::always: return true;
+		}
+
+		return false;
+	}
+
 	void DspInterpreter::Dispatch(AnalyzeInfo& info)
 	{
 		// A non-flowControl instruction can change the interpreter's internal flag (for example, when trying to access the stack registers with overflow and generating an Error interrupt).

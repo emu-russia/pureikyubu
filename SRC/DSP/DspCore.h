@@ -46,10 +46,10 @@ namespace DSP
 	{
 		struct
 		{
-			uint16_t l;
-			uint16_t m1;
-			uint16_t h;
-			uint16_t m2;
+			uint16_t l;			// ps0
+			uint16_t m1;		// ps1
+			uint16_t h;			// ps2
+			uint16_t m2;		// pc1
 		};
 		uint64_t bitsPacked;
 	};
@@ -105,7 +105,7 @@ namespace DSP
 		psr,	// Program status register
 		ps0,	// Product partial sum low part
 		ps1,	// Product partial sum middle part
-		ps2,	// Product partial sum high part(8 bits)
+		ps2,	// Product partial sum high part (8 bits)
 		pc1,	// Product partial carry 1 middle part
 		x0,		// ALU / Multiplier input operand `x` low part
 		y0,		// ALU / Multiplier input operand `y` low part
