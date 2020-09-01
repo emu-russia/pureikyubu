@@ -116,7 +116,8 @@ namespace DSP
 	{
 		Unknown = -1,
 
-		// Registers
+		// Registers.
+		// The index of these parameters must be preset to 0 (explicit).
 
 		regs,
 		r0 = regs,	// Address register 0 (circular addressing)
