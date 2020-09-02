@@ -337,11 +337,11 @@ namespace DSP
 
 		if (s & 0x8000)
 		{
-			r = (uint64_t)d << (~s + 1);
+			r = (uint64_t)d >> (~s + 1);
 		}
 		else
 		{
-			r = (uint64_t)d >> s;
+			r = (uint64_t)d << s;
 		}
 
 		switch (info.params[0])
@@ -377,11 +377,11 @@ namespace DSP
 
 		if (s & 0x8000)
 		{
-			r = d << (~s + 1);
+			r = d >> (~s + 1);
 		}
 		else
 		{
-			r = d >> s;		// Arithmetic
+			r = d << s;		// Arithmetic
 		}
 
 		switch (info.params[0])
@@ -657,7 +657,7 @@ namespace DSP
 	void DspInterpreter::lsf(AnalyzeInfo& info)
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -686,13 +686,13 @@ namespace DSP
 				break;
 		}
 
-		if (s & 0x8000)
+		if (-s < 0)
 		{
-			r = (uint64_t)d << (~s + 1);
+			r = (uint64_t)d >> s;
 		}
 		else
 		{
-			r = (uint64_t)d >> s;
+			r = (uint64_t)d << (~s + 1);
 		}
 
 		switch (info.params[0])
@@ -711,7 +711,7 @@ namespace DSP
 	void DspInterpreter::asf(AnalyzeInfo& info)
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -740,13 +740,13 @@ namespace DSP
 				break;
 		}
 
-		if (s & 0x8000)
+		if (-s < 0)
 		{
-			r = d << (~s + 1);
+			r = d >> s;		// Arithmetic
 		}
 		else
 		{
-			r = d >> s;		// Arithmetic
+			r = d << (~s + 1);
 		}
 
 		switch (info.params[0])

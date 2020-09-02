@@ -33,9 +33,22 @@ namespace Debug
 		rect.left = 0;
 		rect.top = 18;
 		rect.right = 79;
-		rect.bottom = 59;
+		rect.bottom = 49;
 		imemWindow = new DspImem(rect, "DspImem", this);
 		AddWindow(imemWindow);
+
+		rect.left = 0;
+		rect.top = 50;
+		rect.right = 79;
+		rect.bottom = height - 2;
+		AddWindow(new ReportWindow(rect, "ReportWindow", this));
+
+		rect.left = 0;
+		rect.top = height - 1;
+		rect.right = 79;
+		rect.bottom = height - 1;
+		cmdline = new CmdlineWindow(rect, "Cmdline", this);
+		AddWindow(cmdline);
 
 		SetWindowFocus("DspImem");
 	}
@@ -44,16 +57,30 @@ namespace Debug
 	{
 		uint32_t targetAddress = 0;
 
+		if ((Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
+		{
+			SetWindowFocus("Cmdline");
+			InvalidateAll();
+			return;
+		}
+
 		switch (Vkey)
 		{
 			case VK_F1:
 				SetWindowFocus("DspRegs");
+				InvalidateAll();
 				break;
 			case VK_F2:
 				SetWindowFocus("DspDmem");
+				InvalidateAll();
 				break;
 			case VK_F3:
 				SetWindowFocus("DspImem");
+				InvalidateAll();
+				break;
+			case VK_F4:
+				SetWindowFocus("ReportWindow");
+				InvalidateAll();
 				break;
 
 			case VK_F5:

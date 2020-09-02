@@ -869,7 +869,7 @@ namespace DSP
 	void DspInterpreter::p_lsf(AnalyzeInfo& info)
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -898,7 +898,7 @@ namespace DSP
 				break;
 		}
 
-		if (s & 0x8000)
+		if (s < 0)
 		{
 			r = (uint64_t)d << (~s + 1);
 		}
@@ -923,7 +923,7 @@ namespace DSP
 	void DspInterpreter::p_asf(AnalyzeInfo& info)
 	{
 		int64_t d = 0;
-		uint16_t s = 0;
+		int16_t s = 0;
 		int64_t r = 0;
 
 		switch (info.params[0])
@@ -952,7 +952,7 @@ namespace DSP
 				break;
 		}
 
-		if (s & 0x8000)
+		if (s < 0)
 		{
 			r = d << (~s + 1);
 		}
