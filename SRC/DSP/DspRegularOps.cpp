@@ -201,52 +201,293 @@ namespace DSP
 
 	void DspInterpreter::mr(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::mr\n");
+		int r = (int)info.params[0];
+		AdvanceAddress(r, info.params[1]);
 	}
 
 	void DspInterpreter::adsi(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::adsi\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		s = DspCore::SignExtend16((int16_t)info.ImmOperand.SignedByte) << 16;
+
+		r = d + s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::adli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::adli\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		s = DspCore::SignExtend16(info.ImmOperand.UnsignedShort) << 16;
+
+		r = d + s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::cmpsi(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::cmpsi\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		s = DspCore::SignExtend16((int16_t)info.ImmOperand.SignedByte) << 16;
+
+		r = d - s;
+
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::cmpli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::cmpli\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		s = DspCore::SignExtend16(info.ImmOperand.UnsignedShort) << 16;
+
+		r = d - s;
+
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::lsfi(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::lsfi\n");
+		int64_t d = 0;
+		uint16_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
+				break;
+			case DspParameter::b:
+				d = core->regs.b.bits & 0x0000'00ff'ffff'ffff;
+				break;
+		}
+
+		s = (int16_t)info.ImmOperand.SignedByte;
+
+		if (s & 0x8000)
+		{
+			r = (uint64_t)d << (~s + 1);
+		}
+		else
+		{
+			r = (uint64_t)d >> s;
+		}
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::asfi(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::asfi\n");
+		int64_t d = 0;
+		uint16_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		s = (int16_t)info.ImmOperand.SignedByte;
+
+		if (s & 0x8000)
+		{
+			r = d << (~s + 1);
+		}
+		else
+		{
+			r = d >> s;		// Arithmetic
+		}
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::xorli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::xorli\n");
+		uint16_t d = 0;
+		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				d = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				d = core->regs.b.m;
+				break;
+		}
+
+		r = d ^ s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				core->regs.a.m = r;
+				break;
+			case DspParameter::b1:
+				core->regs.b.m = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::anli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::anli\n");
+		uint16_t d = 0;
+		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				d = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				d = core->regs.b.m;
+				break;
+		}
+
+		r = d & s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				core->regs.a.m = r;
+				break;
+			case DspParameter::b1:
+				core->regs.b.m = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::orli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::orli\n");
+		uint16_t d = 0;
+		uint16_t s = info.ImmOperand.UnsignedShort;
+		uint16_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				d = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				d = core->regs.b.m;
+				break;
+		}
+
+		r = d | s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				core->regs.a.m = r;
+				break;
+			case DspParameter::b1:
+				core->regs.b.m = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::norm(AnalyzeInfo& info)
@@ -261,32 +502,264 @@ namespace DSP
 
 	void DspInterpreter::addc(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::addc\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x:
+				s = DspCore::SignExtend32(core->regs.x.bits);
+				break;
+			case DspParameter::y:
+				s = DspCore::SignExtend32(core->regs.y.bits);
+				break;
+		}
+
+		r = d + s + core->regs.psr.c;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::subc(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::subc\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x:
+				s = DspCore::SignExtend32(core->regs.x.bits);
+				break;
+			case DspParameter::y:
+				s = DspCore::SignExtend32(core->regs.y.bits);
+				break;
+		}
+
+		r = d + (int64_t)(~s) + core->regs.psr.c;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::negc(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::negc\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				s = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				s = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		r = d + (int64_t)(~s) + core->regs.psr.c;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::_max(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::max\n");
+		int64_t d = 0;
+		int64_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x0:
+				s = DspCore::SignExtend16(core->regs.x.l) << 16;
+				break;
+			case DspParameter::y0:
+				s = DspCore::SignExtend16(core->regs.y.l) << 16;
+				break;
+			case DspParameter::x1:
+				s = DspCore::SignExtend16(core->regs.x.h) << 16;
+				break;
+			case DspParameter::y1:
+				s = DspCore::SignExtend16(core->regs.y.h) << 16;
+				break;
+		}
+
+		// abs
+		if (d < 0) d = -d;
+		if (s < 0) s = -s;
+
+		r = d - s;
+
+		core->ModifyFlags(d, s, r, CFlagRules::C5, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::lsf(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::lsf\n");
+		int64_t d = 0;
+		uint16_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = core->regs.a.bits & 0x0000'00ff'ffff'ffff;
+				break;
+			case DspParameter::b:
+				d = core->regs.b.bits & 0x0000'00ff'ffff'ffff;
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x1:
+				s = core->regs.x.h;
+				break;
+			case DspParameter::y1:
+				s = core->regs.y.h;
+				break;
+			case DspParameter::a1:
+				s = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				s = core->regs.b.m;
+				break;
+		}
+
+		if (s & 0x8000)
+		{
+			r = (uint64_t)d << (~s + 1);
+		}
+		else
+		{
+			r = (uint64_t)d >> s;
+		}
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::asf(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::asf\n");
+		int64_t d = 0;
+		uint16_t s = 0;
+		int64_t r = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				d = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				d = DspCore::SignExtend40(core->regs.b.bits);
+				break;
+		}
+
+		switch (info.params[1])
+		{
+			case DspParameter::x1:
+				s = core->regs.x.h;
+				break;
+			case DspParameter::y1:
+				s = core->regs.y.h;
+				break;
+			case DspParameter::a1:
+				s = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				s = core->regs.b.m;
+				break;
+		}
+
+		if (s & 0x8000)
+		{
+			r = d << (~s + 1);
+		}
+		else
+		{
+			r = d >> s;		// Arithmetic
+		}
+
+		switch (info.params[0])
+		{
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
+		}
+
+		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
 	void DspInterpreter::ld(AnalyzeInfo& info)
