@@ -97,6 +97,7 @@ namespace DSP
 
 		// Helpers
 
+		void AdvanceAddress(int r, DspParameter param);
 		bool ConditionTrue(ConditionCode cc);
 		void Dispatch(AnalyzeInfo& info);
 

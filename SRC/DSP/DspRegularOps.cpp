@@ -195,32 +195,8 @@ namespace DSP
 	void DspInterpreter::pld(AnalyzeInfo& info)
 	{
 		int r = (int)info.params[1];
-
 		core->MoveToReg((int)info.params[0], core->dsp->ReadIMem(core->regs.r[r]) );
-
-		switch (info.params[2])
-		{
-			case DspParameter::mod_none:
-				break;
-			case DspParameter::mod_dec:
-				core->ArAdvance(r, -1);
-				break;
-			case DspParameter::mod_inc:
-				core->ArAdvance(r, +1);
-				break;
-			case DspParameter::mod_plus_m0:
-				core->ArAdvance(r, core->regs.m[0]);
-				break;
-			case DspParameter::mod_plus_m1:
-				core->ArAdvance(r, core->regs.m[1]);
-				break;
-			case DspParameter::mod_plus_m2:
-				core->ArAdvance(r, core->regs.m[2]);
-				break;
-			case DspParameter::mod_plus_m3:
-				core->ArAdvance(r, core->regs.m[3]);
-				break;
-		}
+		AdvanceAddress(r, info.params[2]);
 	}
 
 	void DspInterpreter::mr(AnalyzeInfo& info)
@@ -316,32 +292,8 @@ namespace DSP
 	void DspInterpreter::ld(AnalyzeInfo& info)
 	{
 		int r = (int)info.params[1];
-
 		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(core->regs.r[r]) );
-
-		switch (info.params[2])
-		{
-			case DspParameter::mod_none:
-				break;
-			case DspParameter::mod_dec:
-				core->ArAdvance(r, -1);
-				break;
-			case DspParameter::mod_inc:
-				core->ArAdvance(r, +1);
-				break;
-			case DspParameter::mod_plus_m0:
-				core->ArAdvance(r, core->regs.m[0]);
-				break;
-			case DspParameter::mod_plus_m1:
-				core->ArAdvance(r, core->regs.m[1]);
-				break;
-			case DspParameter::mod_plus_m2:
-				core->ArAdvance(r, core->regs.m[2]);
-				break;
-			case DspParameter::mod_plus_m3:
-				core->ArAdvance(r, core->regs.m[3]);
-				break;
-		}
+		AdvanceAddress(r, info.params[2]);
 	}
 
 	void DspInterpreter::st(AnalyzeInfo& info)
@@ -372,12 +324,12 @@ namespace DSP
 
 	void DspInterpreter::mv(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::mv\n");
+		core->MoveToReg((int)info.params[0], core->MoveFromReg((int)info.params[1]));
 	}
 
 	void DspInterpreter::mvsi(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::mvsi\n");
+		core->MoveToReg((int)info.params[0], (int16_t)info.ImmOperand.SignedByte);
 	}
 
 	void DspInterpreter::mvli(AnalyzeInfo& info)

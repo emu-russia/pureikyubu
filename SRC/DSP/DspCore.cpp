@@ -544,7 +544,7 @@ namespace DSP
 				regs.b.h = val & 0xff;
 				break;
 			case (int)DspRegister::dpp:
-				regs.dpp = val & 0xFF;
+				regs.dpp = val & 0xff;
 				break;
 			case (int)DspRegister::psr:
 				regs.psr.bits = val;
@@ -556,7 +556,7 @@ namespace DSP
 				regs.prod.m1 = val;
 				break;
 			case (int)DspRegister::ps2:
-				regs.prod.h = val;
+				regs.prod.h = val & 0xff;
 				break;
 			case (int)DspRegister::pc1:
 				regs.prod.m2 = val;
@@ -653,7 +653,7 @@ namespace DSP
 				val = regs.b.h & 0xff;
 				break;
 			case (int)DspRegister::dpp:
-				val = regs.dpp;
+				val = regs.dpp & 0xff;
 				break;
 			case (int)DspRegister::psr:
 				val = regs.psr.bits;
@@ -665,7 +665,7 @@ namespace DSP
 				val = regs.prod.m1;
 				break;
 			case (int)DspRegister::ps2:
-				val = regs.prod.h;
+				val = regs.prod.h & 0xff;
 				break;
 			case (int)DspRegister::pc1:
 				val = regs.prod.m2;
@@ -735,165 +735,5 @@ namespace DSP
 	}
 
 	#pragma endregion "Register access"
-
-
-	#pragma region "Multiplier and ALU"
-
-	int64_t DspCore::SignExtend40(int64_t a)
-	{
-		if (a & 0x80'0000'0000)
-		{
-			a |= 0xffff'ff00'0000'0000;
-		}
-		else
-		{
-			a &= 0x0000'00ff'ffff'ffff;
-		}
-		return a;
-	}
-
-	int64_t DspCore::SignExtend16(int16_t a)
-	{
-		int64_t res = a;
-		if (res & 0x8000)
-		{
-			res |= 0xffff'ffff'ffff'0000;
-		}
-		return res;
-	}
-
-	// The current multiplication result (product) is stored as a set of "temporary" values (prod.h, prod.m1, prod.m2, prod.l).
-	// The exact algorithm of the multiplier is unknown, but you can guess that these temporary results are collected from partial 
-	// sums of multiplications between the upper and lower halves of the 16-bit operands.
-
-	void DspCore::PackProd(DspProduct& prod)
-	{
-		uint64_t hi = (uint64_t)prod.h << 32;
-		uint64_t mid = ((uint64_t)prod.m1 + (uint64_t)prod.m2) << 16;
-		uint64_t low = prod.l;
-		uint64_t res = hi + mid + low;
-		res &= 0xff'ffff'ffff;
-		prod.bitsPacked = res;
-	}
-
-	void DspCore::UnpackProd(DspProduct& prod)
-	{
-		prod.h = (prod.bitsPacked >> 32) & 0xff;
-		prod.m1 = (prod.bitsPacked >> 16) & 0xffff;
-		prod.m2 = 0;
-		prod.l = prod.bitsPacked & 0xffff;
-	}
-
-	// Treat operands as signed 16-bit numbers and produce signed multiply product.
-
-	DspProduct DspCore::Muls(int16_t a, int16_t b, bool scale)
-	{
-		DspProduct prod;
-#if 0
-		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
-
-		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
-		int32_t c1 = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(b & 0xff));
-		int32_t c2 = ((int32_t)(a & 0xff)) * ((int32_t)(int16_t)(b & 0xff00));
-		int32_t l = ((int32_t)(a & 0xff)) * ((int32_t)(b & 0xff));
-
-		int32_t m = c1 + c2 + l;
-
-		prod.h = ((a ^ b) & 0x8000) ? 0xff : 0;
-		prod.m1 = u >> 16;
-		prod.m2 = m >> 16;
-		prod.l = m & 0xffff;
-#else
-		prod.bitsPacked = (int64_t)((int64_t)(int32_t)a * (int64_t)(int32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-#endif
-
-		return prod;
-	}
-
-	// Treat operands as unsigned 16-bit numbers and produce unsigned multiply product.
-
-	DspProduct DspCore::Mulu(uint16_t a, uint16_t b, bool scale)
-	{
-		DspProduct prod;
-#if 0
-		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
-
-		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
-		uint32_t c1 = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff);
-		uint32_t c2 = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff00);
-		uint32_t l = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff);
-
-		uint32_t m = c1 + c2 + l;
-
-		prod.h = 0;
-		prod.m1 = u >> 16;
-		prod.m2 = m >> 16;
-		prod.l = m & 0xffff;
-#else
-		prod.bitsPacked = (uint64_t)((uint64_t)(uint32_t)a * (uint64_t)(uint32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-#endif
-		return prod;
-	}
-
-	// Treat operand `a` as unsigned 16-bit numbers and operand `b` as signed 16-bit number and produce signed multiply product.
-
-	DspProduct DspCore::Mulus(uint16_t a, int16_t b, bool scale)
-	{
-		DspProduct prod;
-		prod.bitsPacked = (int64_t)((int64_t)(int32_t)(uint32_t)a * (int64_t)(int32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-		return prod;
-	}
-
-	// Circular addressing logic
-
-	uint16_t DspCore::CircularAddress(uint16_t r, uint16_t l, int16_t m)
-	{
-		if (m == 0 || l == 0)
-		{
-			return r;
-		}
-
-		if (l == 0xffff)
-		{
-			return (uint16_t)((int16_t)r + m);
-		}
-		else
-		{
-			int16_t abs_m = m > 0 ? m : -m;
-			int16_t mm = abs_m % (l + 1);
-			uint16_t base = (r / (l + 1)) * (l + 1);
-			uint16_t next = 0;
-			uint32_t sum = 0;
-
-			if (m > 0)
-			{
-				sum = (uint32_t)((uint32_t)r + mm);
-			}
-			else
-			{
-				sum = (uint32_t)((uint32_t)r + l + 1 - mm);
-			}
-
-			next = base + (uint16_t)(sum % (l + 1));
-
-			return next;
-		}
-	}
-
-	void DspCore::ArAdvance(int r, int16_t step)
-	{
-		regs.r[r] = CircularAddress(regs.r[r], regs.l[r], step);
-	}
-
-	#pragma endregion "Multiplier and ALU"
 
 }

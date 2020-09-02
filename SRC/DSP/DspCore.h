@@ -224,8 +224,9 @@ namespace DSP
 
 		// Multiplier and ALU utils
 		
-		static int64_t SignExtend40(int64_t);
 		static int64_t SignExtend16(int16_t);
+		static int64_t SignExtend32(int32_t);
+		static int64_t SignExtend40(int64_t);
 
 		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
@@ -234,6 +235,8 @@ namespace DSP
 		static DspProduct Mulus(uint16_t a, int16_t b, bool scale);
 
 		void ArAdvance(int r, int16_t step);
+
+		void ModifyFlags(uint64_t d, uint64_t s, uint64_t r, CFlagRules, VFlagRules, ZFlagRules, NFlagRules, EFlagRules, UFlagRules);
 	};
 
 	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union

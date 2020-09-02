@@ -14,6 +14,39 @@ namespace DSP
 	{
 	}
 
+	void DspInterpreter::AdvanceAddress(int r, DspParameter param)
+	{
+		switch (param)
+		{
+			case DspParameter::mod_none:
+				break;
+			case DspParameter::mod_dec:
+				core->ArAdvance(r, -1);
+				break;
+			case DspParameter::mod_inc:
+				core->ArAdvance(r, +1);
+				break;
+			case DspParameter::mod_plus_m0:
+				core->ArAdvance(r, core->regs.m[0]);
+				break;
+			case DspParameter::mod_plus_m1:
+				core->ArAdvance(r, core->regs.m[1]);
+				break;
+			case DspParameter::mod_plus_m2:
+				core->ArAdvance(r, core->regs.m[2]);
+				break;
+			case DspParameter::mod_plus_m3:
+				core->ArAdvance(r, core->regs.m[3]);
+				break;
+			case DspParameter::mod_minus_m:
+				core->ArAdvance(r, -core->regs.m[r]);
+				break;
+			case DspParameter::mod_plus_m:
+				core->ArAdvance(r, core->regs.m[r]);
+				break;
+		}
+	}
+
 	bool DspInterpreter::ConditionTrue(ConditionCode cc)
 	{
 		switch (cc)
