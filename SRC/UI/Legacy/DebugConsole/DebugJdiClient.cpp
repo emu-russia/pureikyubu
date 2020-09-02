@@ -517,7 +517,7 @@ namespace Debug
 
 	uint16_t JdiClient::DspGetPc()
 	{
-		Json::Value* output = CallJdi("DspGetPsr");
+		Json::Value* output = CallJdi("DspGetPc");
 
 		uint16_t value = output->value.AsUint16;
 

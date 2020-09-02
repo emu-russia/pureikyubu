@@ -430,15 +430,15 @@ namespace DSP
 
 		switch (info.params[0])
 		{
-		case DspParameter::a1:
-			val = core->regs.a.m;
-			break;
-		case DspParameter::b1:
-			val = core->regs.b.m;
-			break;
+			case DspParameter::a1:
+				val = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				val = core->regs.b.m;
+				break;
 
-		default:
-			Halt("DspInterpreter::btstl: Invalid parameter\n");
+			default:
+				Halt("DspInterpreter::btstl: Invalid parameter\n");
 		}
 
 		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == 0;
