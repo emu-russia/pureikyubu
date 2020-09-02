@@ -47,9 +47,9 @@ namespace DSP
 		struct
 		{
 			uint16_t l;			// ps0
-			uint16_t m1;		// ps1
+			uint16_t m1;		// ps1  (Duddie m1)
 			uint16_t h;			// ps2
-			uint16_t m2;		// pc1
+			uint16_t m2;		// pc1	(Duddie m2)
 		};
 		uint64_t bitsPacked;
 	};
@@ -230,13 +230,12 @@ namespace DSP
 
 		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
-		static DspProduct Muls(int16_t a, int16_t b, bool scale);
-		static DspProduct Mulu(uint16_t a, uint16_t b, bool scale);
-		static DspProduct Mulus(uint16_t a, int16_t b, bool scale);
 
 		void ArAdvance(int r, int16_t step);
 
 		void ModifyFlags(uint64_t d, uint64_t s, uint64_t r, CFlagRules, VFlagRules, ZFlagRules, NFlagRules, EFlagRules, UFlagRules);
+
+		static int64_t RndFactor(int64_t d);
 	};
 
 	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union

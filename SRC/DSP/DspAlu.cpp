@@ -38,7 +38,7 @@ namespace DSP
 		return a;
 	}
 
-	// The current multiplication result (product) is stored as a set of "temporary" values (prod.h, prod.m1, prod.m2, prod.l).
+	// The current multiplication result (product) is stored as a set of "temporary" values (ps2, ps1, pc1, ps0).
 	// The exact algorithm of the multiplier is unknown, but you can guess that these temporary results are collected from partial 
 	// sums of multiplications between the upper and lower halves of the 16-bit operands.
 
@@ -58,75 +58,6 @@ namespace DSP
 		prod.m1 = (prod.bitsPacked >> 16) & 0xffff;
 		prod.m2 = 0;
 		prod.l = prod.bitsPacked & 0xffff;
-	}
-
-	// Treat operands as signed 16-bit numbers and produce signed multiply product.
-
-	DspProduct DspCore::Muls(int16_t a, int16_t b, bool scale)
-	{
-		DspProduct prod;
-#if 0
-		// P = A x B= (AH-AL) x (BH-BL) = AH x BH+AH x BL + AL x BH+ AL x BL 
-
-		int32_t u = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(int16_t)(b & 0xff00));
-		int32_t c1 = ((int32_t)(int16_t)(a & 0xff00)) * ((int32_t)(b & 0xff));
-		int32_t c2 = ((int32_t)(a & 0xff)) * ((int32_t)(int16_t)(b & 0xff00));
-		int32_t l = ((int32_t)(a & 0xff)) * ((int32_t)(b & 0xff));
-
-		int32_t m = c1 + c2 + l;
-
-		prod.h = ((a ^ b) & 0x8000) ? 0xff : 0;
-		prod.m1 = u >> 16;
-		prod.m2 = m >> 16;
-		prod.l = m & 0xffff;
-#else
-		prod.bitsPacked = (int64_t)((int64_t)(int32_t)a * (int64_t)(int32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-#endif
-
-		return prod;
-	}
-
-	// Treat operands as unsigned 16-bit numbers and produce unsigned multiply product.
-
-	DspProduct DspCore::Mulu(uint16_t a, uint16_t b, bool scale)
-	{
-		DspProduct prod;
-#if 0
-		// P = A x B = (AH-AL) x (BH-BL) = AHxBH + AHxBL + ALxBH + ALxBL
-
-		uint32_t u = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff00);
-		uint32_t c1 = ((uint32_t)a & 0xff00) * ((uint32_t)b & 0xff);
-		uint32_t c2 = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff00);
-		uint32_t l = ((uint32_t)a & 0xff) * ((uint32_t)b & 0xff);
-
-		uint32_t m = c1 + c2 + l;
-
-		prod.h = 0;
-		prod.m1 = u >> 16;
-		prod.m2 = m >> 16;
-		prod.l = m & 0xffff;
-#else
-		prod.bitsPacked = (uint64_t)((uint64_t)(uint32_t)a * (uint64_t)(uint32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-#endif
-		return prod;
-	}
-
-	// Treat operand `a` as unsigned 16-bit numbers and operand `b` as signed 16-bit number and produce signed multiply product.
-
-	DspProduct DspCore::Mulus(uint16_t a, int16_t b, bool scale)
-	{
-		DspProduct prod;
-		prod.bitsPacked = (int64_t)((int64_t)(int32_t)(uint32_t)a * (int64_t)(int32_t)b);
-		if (scale)
-			prod.bitsPacked <<= 1;
-		UnpackProd(prod);
-		return prod;
 	}
 
 	// Circular addressing logic
@@ -294,6 +225,35 @@ namespace DSP
 				regs.psr.u = ~(bit(r, 31) ^ bit(r, 30));
 				break;
 		}
+	}
+
+	int64_t DspCore::RndFactor(int64_t d)
+	{
+		int64_t s;
+
+		uint16_t d0 = d & 0xffff;
+
+		if (d0 < 0x8000)
+		{
+			s = 0x00'0000'0000;
+		}
+		else if (d0 > 0x8000)
+		{
+			s = 0x00'0001'0000;
+		}
+		else 	// == 0x8000
+		{
+			if ((d & 0x10000) == 0) 		// lsb of d1
+			{
+				s = 0x00'0000'0000;
+			}
+			else
+			{
+				s = 0x00'0001'0000;
+			}
+		}
+
+		return s;
 	}
 
 }

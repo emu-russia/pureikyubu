@@ -49,12 +49,9 @@ namespace DSP
 				s = DspCore::SignExtend40(core->regs.b.bits);
 				break;
 			case DspParameter::prod:
-			{
-				DspProduct prod;
-				core->PackProd(prod);
-				s = DspCore::SignExtend40(prod.bitsPacked);
+				core->PackProd(core->regs.prod);
+				s = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 				break;
-			}
 		}
 
 		r = d + s;
@@ -156,12 +153,9 @@ namespace DSP
 				s = DspCore::SignExtend40(core->regs.b.bits);
 				break;
 			case DspParameter::prod:
-			{
-				DspProduct prod;
-				core->PackProd(prod);
-				s = DspCore::SignExtend40(prod.bitsPacked);
+				core->PackProd(core->regs.prod);
+				s = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 				break;
-			}
 		}
 
 		r = d - s;
@@ -212,12 +206,9 @@ namespace DSP
 				s = DspCore::SignExtend40(core->regs.b.bits);
 				break;
 			case DspParameter::prod:
-			{
-				DspProduct prod;
-				core->PackProd(prod);
-				s = DspCore::SignExtend40(prod.bitsPacked);
+				core->PackProd(core->regs.prod);
+				s = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 				break;
-			}
 		}
 
 		r = d + s;
@@ -415,12 +406,9 @@ namespace DSP
 			switch (info.params[1])
 			{
 				case DspParameter::prod:
-				{
-					DspProduct prod;
-					core->PackProd(prod);
-					s = DspCore::SignExtend40(prod.bitsPacked);
+					core->PackProd(core->regs.prod);
+					s = DspCore::SignExtend40(core->regs.prod.bitsPacked);
 					break;
-				}
 			}
 		}
 		else
@@ -487,27 +475,7 @@ namespace DSP
 				break;
 		}
 
-		uint16_t d0 = d & 0xffff;
-
-		if (d0 < 0x8000)
-		{
-			s = 0x00'0000'0000;
-		}
-		else if (d0 > 0x8000)
-		{
-			s = 0x00'0001'0000;
-		}
-		else 	// == 0x8000
-		{
-			if ((d & 0x10000) == 0) 		// lsb of d1
-			{
-				s = 0x00'0000'0000;
-			}
-			else
-			{
-				s = 0x00'0001'0000;
-			}
-		}
+		s = DspCore::RndFactor(d);
 
 		r = d + s;
 		r &= ~0xffff;
@@ -531,31 +499,9 @@ namespace DSP
 		int64_t s = 0;
 		int64_t r = 0;
 
-		DspProduct prod;
-		core->PackProd(prod);
-		d = DspCore::SignExtend40(prod.bitsPacked);
-
-		uint16_t d0 = d & 0xffff;
-
-		if (d0 < 0x8000)
-		{
-			s = 0x00'0000'0000;
-		}
-		else if (d0 > 0x8000)
-		{
-			s = 0x00'0001'0000;
-		}
-		else 	// == 0x8000
-		{
-			if ((d & 0x10000) == 0) 		// lsb of d1
-			{
-				s = 0x00'0000'0000;
-			}
-			else
-			{
-				s = 0x00'0001'0000;
-			}
-		}
+		core->PackProd(core->regs.prod);
+		d = DspCore::SignExtend40(core->regs.prod.bitsPacked);
+		s = DspCore::RndFactor(d);
 
 		r = d + s;
 		r &= ~0xffff;
@@ -599,10 +545,9 @@ namespace DSP
 				break;
 			case DspParameter::prod:
 			{
-				DspProduct prod;
-				core->PackProd(prod);
-				d = ((uint64_t)prod.h << 32) | ((uint64_t)prod.m1 << 16) | prod.l;
-				s = ((uint64_t)prod.m2 << 16);
+				core->PackProd(core->regs.prod);
+				d = ((uint64_t)core->regs.prod.h << 32) | ((uint64_t)core->regs.prod.m1 << 16) | core->regs.prod.l;
+				s = ((uint64_t)core->regs.prod.m2 << 16);
 				break;
 			}
 		}
@@ -721,9 +666,8 @@ namespace DSP
 				break;
 		}
 
-		DspProduct prod;
-		core->PackProd(prod);
-		s = DspCore::SignExtend32((uint32_t)prod.bitsPacked);
+		core->PackProd(core->regs.prod);
+		s = DspCore::SignExtend32((uint32_t)core->regs.prod.bitsPacked);
 
 		r = d + s;
 

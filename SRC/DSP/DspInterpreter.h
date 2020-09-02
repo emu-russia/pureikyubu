@@ -97,6 +97,7 @@ namespace DSP
 
 		// Helpers
 
+		void FetchMpyParams(DspParameter s1p, DspParameter s2p, int64_t& s1, int64_t& s2, bool checkDp);
 		void AdvanceAddress(int r, DspParameter param);
 		bool ConditionTrue(ConditionCode cc);
 		void Dispatch(AnalyzeInfo& info);

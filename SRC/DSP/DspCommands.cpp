@@ -466,56 +466,6 @@ namespace DSP
         return nullptr;
     }
 
-    // Multiplier tests
-
-    static Json::Value* dsp_muls(std::vector<std::string>& args)
-    {
-        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
-        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
-
-        Report(Channel::Norm, "MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
-
-        DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b, false);
-
-        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
-            prod.h, prod.m1, prod.l, prod.m2);
-
-        DspCore::PackProd(prod);
-
-        DspLongAccumulator acc;
-        acc.bits = prod.bitsPacked;
-
-        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
-        
-        Report(Channel::Norm, "Signed Multiply by host: 0x%llX\n", ((int64_t)(int32_t)(int16_t)a * (int64_t)(int32_t)(int16_t)b) & 0xff'ffff'ffff);
-
-        return nullptr;
-    }
-
-    static Json::Value* dsp_mulu(std::vector<std::string>& args)
-    {
-        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
-        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
-
-        Report(Channel::Norm, "MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
-
-        DspProduct prod = DspCore::Mulu(a, b, false);
-
-        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
-            prod.h, prod.m1, prod.l, prod.m2);
-
-        DspCore::PackProd(prod);
-
-        DspLongAccumulator acc;
-        acc.bits = prod.bitsPacked;
-
-        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
-
-        Report(Channel::Norm, "Unsigned Multiply by host: 0x%08X\n", (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b);
-
-        return nullptr;
-    }
-
     static Json::Value* CmdDspIsRunning(std::vector<std::string>& args)
     {
         Json::Value* output = new Json::Value();
@@ -814,8 +764,6 @@ namespace DSP
         JDI::Hub.AddCmd("dspmbox", cmd_dspmbox);
         JDI::Hub.AddCmd("cpudspint", cmd_cpudspint);
         JDI::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
-        JDI::Hub.AddCmd("dsp_muls", dsp_muls);
-        JDI::Hub.AddCmd("dsp_mulu", dsp_mulu);
         
         JDI::Hub.AddCmd("DspIsRunning", CmdDspIsRunning);
         JDI::Hub.AddCmd("DspRun", CmdDspRun);

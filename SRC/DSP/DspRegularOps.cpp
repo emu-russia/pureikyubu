@@ -298,7 +298,9 @@ namespace DSP
 
 	void DspInterpreter::st(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::st\n");
+		int r = (int)info.params[0];
+		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.params[2]) );
+		AdvanceAddress(r, info.params[1]);
 	}
 
 	void DspInterpreter::ldsa(AnalyzeInfo& info)
@@ -309,17 +311,34 @@ namespace DSP
 
 	void DspInterpreter::stsa(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::stsa\n");
+		uint16_t s;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a2:
+				s = core->regs.a.h & 0xff;
+				if (s & 0x80) s |= 0xff00;
+				break;
+			case DspParameter::b2:
+				s = core->regs.b.h & 0xff;
+				if (s & 0x80) s |= 0xff00;
+				break;
+			default:
+				s = core->MoveFromReg((int)info.params[0]);
+				break;
+		}
+
+		core->dsp->WriteDMem((DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address)), s);
 	}
 
 	void DspInterpreter::ldla(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::ldla\n");
+		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(info.ImmOperand.Address) );
 	}
 
 	void DspInterpreter::stla(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::stla\n");
+		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg((int)info.params[0]) );
 	}
 
 	void DspInterpreter::mv(AnalyzeInfo& info)

@@ -14,6 +14,66 @@ namespace DSP
 	{
 	}
 
+	void DspInterpreter::FetchMpyParams(DspParameter s1p, DspParameter s2p, int64_t& s1, int64_t& s2, bool checkDp)
+	{
+		switch (s1p)
+		{
+			case DspParameter::x0:
+				s1 = core->regs.x.l;
+				break;
+			case DspParameter::x1:
+				s1 = core->regs.x.h;
+				break;
+			case DspParameter::y1:
+				s1 = core->regs.y.h;
+				break;
+			case DspParameter::a1:
+				s1 = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				s1 = core->regs.b.m;
+				break;
+		}
+
+		switch (s2p)
+		{
+			case DspParameter::x0:
+				s2 = core->regs.x.l;
+				break;
+			case DspParameter::x1:
+				s2 = core->regs.x.h;
+				break;
+			case DspParameter::y0:
+				s2 = core->regs.y.l;
+				break;
+			case DspParameter::y1:
+				s2 = core->regs.y.h;
+				break;
+		}
+
+		if (core->regs.psr.dp && checkDp)
+		{
+			if (s1p == DspParameter::x0 && s2p == DspParameter::y1)
+			{
+				s2 = DspCore::SignExtend16((uint16_t)s2);
+			}
+			else if (s1p == DspParameter::x1 && s2p == DspParameter::y0)
+			{
+				s1 = DspCore::SignExtend16((uint16_t)s1);
+			}
+			else if (s1p == DspParameter::x1 && s2p == DspParameter::y1)
+			{
+				s1 = DspCore::SignExtend16((uint16_t)s1);
+				s2 = DspCore::SignExtend16((uint16_t)s2);
+			}
+		}
+
+		if (core->regs.psr.im == 0)
+		{
+			s2 *= 2;
+		}
+	}
+
 	void DspInterpreter::AdvanceAddress(int r, DspParameter param)
 	{
 		switch (param)
