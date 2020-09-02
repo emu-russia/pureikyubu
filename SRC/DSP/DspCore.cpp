@@ -96,6 +96,7 @@ namespace DSP
 			case DspInterrupt::Reset:
 				break;
 			case DspInterrupt::Error:
+				Halt("DspCore::AssertInterrupt - `Error` counted as non-recoverable\n");
 				break;
 			case DspInterrupt::Trap:
 				break;
@@ -394,6 +395,68 @@ namespace DSP
 
 		canariesSpinLock.Unlock();
 		return false;
+	}
+
+	void DspCore::AddWatch(DspAddress dmemAddress)
+	{
+		watchesSpinLock.Lock();
+		watches.push_back(dmemAddress);
+		watchesSpinLock.Unlock();
+	}
+
+	void DspCore::RemoveWatch(DspAddress dmemAddress)
+	{
+		watchesSpinLock.Lock();
+		bool found = false;
+		for (auto it = watches.begin(); it != watches.end(); ++it)
+		{
+			if (*it == dmemAddress)
+			{
+				found = true;
+				break;
+			}
+		}
+		if (found)
+		{
+			watches.remove(dmemAddress);
+		}
+		watchesSpinLock.Unlock();
+	}
+
+	void DspCore::RemoveAllWatches()
+	{
+		watchesSpinLock.Lock();
+		watches.clear();
+		watchesSpinLock.Unlock();
+	}
+
+	void DspCore::ListWatches(std::list<DspAddress>& watchesOut)
+	{
+		watchesOut.clear();
+		watchesSpinLock.Lock();
+		for (auto it = watches.begin(); it != watches.end(); ++it)
+		{
+			watchesOut.push_back(*it);
+		}
+		watchesSpinLock.Unlock();
+	}
+
+	bool DspCore::TestWatch(DspAddress dmemAddress)
+	{
+		bool found = false;
+
+		watchesSpinLock.Lock();
+		for (auto it = watches.begin(); it != watches.end(); ++it)
+		{
+			if (*it == dmemAddress)
+			{
+				found = true;
+				break;
+			}
+		}
+		watchesSpinLock.Unlock();
+
+		return found;
 	}
 
 	// Execute single instruction (by interpreter)

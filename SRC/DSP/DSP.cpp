@@ -162,65 +162,70 @@ namespace DSP
 
 	uint16_t Dsp16::ReadDMem(DspAddress addr)
 	{
+		if (core->TestWatch(addr))
+		{
+			Report(Channel::DSP, "ReadDMem 0x%04X, pc: 0x%04X\n", addr, core->regs.pc);
+		}
+
 		if (addr >= IFX_START_ADDRESS)
 		{
 			switch (addr)
 			{
-			case (DspAddress)DspHardwareRegs::DSMAH:
-				return DmaRegs.mmemAddr.h;
-			case (DspAddress)DspHardwareRegs::DSMAL:
-				return DmaRegs.mmemAddr.l;
-			case (DspAddress)DspHardwareRegs::DSPA:
-				return DmaRegs.dspAddr;
-			case (DspAddress)DspHardwareRegs::DSCR:
-				return DmaRegs.control.bits;
-			case (DspAddress)DspHardwareRegs::DSBL:
-				return DmaRegs.blockSize;
+				case (DspAddress)DspHardwareRegs::DSMAH:
+					return DmaRegs.mmemAddr.h;
+				case (DspAddress)DspHardwareRegs::DSMAL:
+					return DmaRegs.mmemAddr.l;
+				case (DspAddress)DspHardwareRegs::DSPA:
+					return DmaRegs.dspAddr;
+				case (DspAddress)DspHardwareRegs::DSCR:
+					return DmaRegs.control.bits;
+				case (DspAddress)DspHardwareRegs::DSBL:
+					return DmaRegs.blockSize;
 
-			case (DspAddress)DspHardwareRegs::CMBH:
-				return CpuToDspReadHi(true);
-			case (DspAddress)DspHardwareRegs::CMBL:
-				return CpuToDspReadLo(true);
-			case (DspAddress)DspHardwareRegs::DMBH:
-				return DspToCpuReadHi(true);
-			case (DspAddress)DspHardwareRegs::DMBL:
-				return DspToCpuReadLo(true);
+				case (DspAddress)DspHardwareRegs::CMBH:
+					return CpuToDspReadHi(true);
+				case (DspAddress)DspHardwareRegs::CMBL:
+					return CpuToDspReadLo(true);
+				case (DspAddress)DspHardwareRegs::DMBH:
+					return DspToCpuReadHi(true);
+				case (DspAddress)DspHardwareRegs::DMBL:
+					return DspToCpuReadLo(true);
 
-			case (DspAddress)DspHardwareRegs::DIRQ:
-				return Flipper::DSPGetInterruptStatus() ? 1 : 0;
+				case (DspAddress)DspHardwareRegs::DIRQ:
+					return Flipper::DSPGetInterruptStatus() ? 1 : 0;
 
-			case (DspAddress)DspHardwareRegs::ACSAH:
-				return Accel.StartAddress.h;
-			case (DspAddress)DspHardwareRegs::ACSAL:
-				return Accel.StartAddress.l;
-			case (DspAddress)DspHardwareRegs::ACEAH:
-				return Accel.EndAddress.h;
-			case (DspAddress)DspHardwareRegs::ACEAL:
-				return Accel.EndAddress.l;
-			case (DspAddress)DspHardwareRegs::ACCAH:
-				return Accel.CurrAddress.h;
-			case (DspAddress)DspHardwareRegs::ACCAL:
-				return Accel.CurrAddress.l;
+				case (DspAddress)DspHardwareRegs::ACSAH:
+					return Accel.StartAddress.h;
+				case (DspAddress)DspHardwareRegs::ACSAL:
+					return Accel.StartAddress.l;
+				case (DspAddress)DspHardwareRegs::ACEAH:
+					return Accel.EndAddress.h;
+				case (DspAddress)DspHardwareRegs::ACEAL:
+					return Accel.EndAddress.l;
+				case (DspAddress)DspHardwareRegs::ACCAH:
+					return Accel.CurrAddress.h;
+				case (DspAddress)DspHardwareRegs::ACCAL:
+					return Accel.CurrAddress.l;
 
-			case (DspAddress)DspHardwareRegs::ACFMT:
-				return Accel.Fmt;
-			case (DspAddress)DspHardwareRegs::ACPDS:
-				return Accel.AdpcmPds;
-			case (DspAddress)DspHardwareRegs::ACYN1:
-				return Accel.AdpcmYn1;
-			case (DspAddress)DspHardwareRegs::ACYN2:
-				return Accel.AdpcmYn2;
-			case (DspAddress)DspHardwareRegs::ACGAN:
-				return Accel.AdpcmGan;
+				case (DspAddress)DspHardwareRegs::ACFMT:
+					return Accel.Fmt;
+				case (DspAddress)DspHardwareRegs::ACPDS:
+					return Accel.AdpcmPds;
+				case (DspAddress)DspHardwareRegs::ACYN1:
+					return Accel.AdpcmYn1;
+				case (DspAddress)DspHardwareRegs::ACYN2:
+					return Accel.AdpcmYn2;
+				case (DspAddress)DspHardwareRegs::ACGAN:
+					return Accel.AdpcmGan;
 
-			case (DspAddress)DspHardwareRegs::ACDAT2:
-				return AccelReadData(true);
-			case (DspAddress)DspHardwareRegs::ACDAT:
-				return AccelReadData(false);
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					return AccelReadData(true);
+				case (DspAddress)DspHardwareRegs::ACDAT:
+					return AccelReadData(false);
 
-			default:
-				Report(Channel::DSP, "Unknown HW read 0x%04X\n", addr);
-				break;
+				default:
+					Report(Channel::DSP, "Unknown HW read 0x%04X\n", addr);
+					break;
 			}
 
 			return 0;
@@ -246,6 +251,11 @@ namespace DSP
 
 	void Dsp16::WriteDMem(DspAddress addr, uint16_t value)
 	{
+		if (core->TestWatch(addr))
+		{
+			Report(Channel::DSP, "WriteDMem 0x%04X = 0x%04X, pc: 0x%04X\n", addr, value, core->regs.pc);
+		}
+
 		if (addr >= IFX_START_ADDRESS)
 		{
 			switch (addr)

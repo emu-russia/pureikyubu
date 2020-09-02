@@ -171,6 +171,9 @@ namespace DSP
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
 
+		std::list<DspAddress> watches;		// DMEM watches
+		SpinLock watchesSpinLock;
+
 		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
 
@@ -216,6 +219,11 @@ namespace DSP
 		bool TestCanary(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
+		void AddWatch(DspAddress dmemAddress);
+		void RemoveWatch(DspAddress dmemAddress);
+		void RemoveAllWatches();
+		void ListWatches(std::list<DspAddress>& watches);
+		bool TestWatch(DspAddress dmemAddress);
 
 		// Register access
 

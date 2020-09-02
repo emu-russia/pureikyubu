@@ -236,6 +236,38 @@
 			"internal": true,
 			"args": 1,
 			"output": "Array: [Bool flowControl, Int instrSizeWords, String]. Empty string (\"\") mean disasm error"
+		},
+
+		"DspWatch": {
+			"help": "Adds DSP DMEM address for tracking",
+			"args": 1,
+			"hint": "<addr>",
+			"usage": [
+				"Syntax: DspUnwatch <dsp_addr>\n",
+				"Adds DSP DMEM address for tracking\n",
+				"Example of use: DspUnwatch 0x0BE5\n"
+			]
+		},
+
+		"DspUnwatch": {
+			"help": "Removes DSP DMEM address tracking",
+			"args": 1,
+			"hint": "<addr>",
+			"usage": [
+				"Syntax: DspUnwatch <dsp_addr>\n",
+				"Removes DSP DMEM address tracking\n",
+				"Example of use: DspUnwatch 0x0BE5\n"
+			]
+		},
+
+		"DspUnwatchAll": {
+			"help": "Remove all DSP DMEM tracking addresses"
+		},
+
+		"DspWatchList": {
+			"help": "List DSP DMEM addresses for tracking",
+			"hint": "[hide]",
+			"output": "Array: [address1, address2, ...]"
 		}
 
 	}

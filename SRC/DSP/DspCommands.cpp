@@ -740,6 +740,59 @@ namespace DSP
         return output;
     }
 
+    // Adds DSP DMEM address for tracking
+    static Json::Value* CmdDspWatch(std::vector<std::string>& args)
+    {
+        DspAddress dmemAddress = strtoul(args[1].c_str(), nullptr, 0);
+        Flipper::DSP->core->AddWatch(dmemAddress);
+        Report(Channel::Norm, "Added DSP watch: 0x%04X\n", dmemAddress);
+        return nullptr;
+    }
+
+    // Removes DSP DMEM address tracking
+    static Json::Value* CmdDspUnwatch(std::vector<std::string>& args)
+    {
+        DspAddress dmemAddress = strtoul(args[1].c_str(), nullptr, 0);
+        Flipper::DSP->core->RemoveWatch(dmemAddress);
+        Report(Channel::Norm, "Removed DSP watch: 0x%04X\n", dmemAddress);
+        return nullptr;
+    }
+
+    // Remove all DSP DMEM tracking addresses
+    static Json::Value* CmdDspUnwatchAll(std::vector<std::string>& args)
+    {
+        Flipper::DSP->core->RemoveAllWatches();
+        Report(Channel::Norm, "Removed all DSP watches\n");
+        return nullptr;
+    }
+
+    // List DSP DMEM addresses for tracking
+    static Json::Value* CmdDspWatchList(std::vector<std::string>& args)
+    {
+        std::list<DspAddress> watches;
+
+        Flipper::DSP->core->ListWatches(watches);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        if (watches.size() != 0)
+        {
+            Report(Channel::Norm, "DSP DMEM watch list:\n");
+            for (auto it = watches.begin(); it != watches.end(); ++it)
+            {
+                Report(Channel::Norm, "0x%04X\n", *it);
+                output->AddUInt16(nullptr, *it);
+            }
+        }
+        else
+        {
+            Report(Channel::Norm, "DSP DMEM watch list is empty\n");
+        }
+
+        return output;
+    }
+
     void dsp_init_handlers()
     {
         JDI::Hub.AddCmd("dspdisa", cmd_dspdisa);
@@ -785,6 +838,11 @@ namespace DSP
         JDI::Hub.AddCmd("DspIsCall", CmdDspIsCall);
         JDI::Hub.AddCmd("DspIsCallOrJump", CmdDspIsCallOrJump);
         JDI::Hub.AddCmd("DspDisasm", CmdDspDisasm);
+
+        JDI::Hub.AddCmd("DspWatch", CmdDspWatch);
+        JDI::Hub.AddCmd("DspUnwatch", CmdDspUnwatch);
+        JDI::Hub.AddCmd("DspUnwatchAll", CmdDspUnwatchAll);
+        JDI::Hub.AddCmd("DspWatchList", CmdDspWatchList);
     }
 
 }
