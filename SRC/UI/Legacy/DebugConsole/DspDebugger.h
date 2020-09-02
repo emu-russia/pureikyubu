@@ -5,6 +5,8 @@
 #include "DspRegs.h"
 #include "DspDmem.h"
 #include "DspImem.h"
+#include "ReportView.h"
+#include "Cmdline.h"
 
 namespace Debug
 {
@@ -14,6 +16,7 @@ namespace Debug
 		static const size_t height = 60;
 
 		DspImem* imemWindow = nullptr;
+		CmdlineWindow* cmdline = nullptr;
 
 	public:
 		DspDebug();

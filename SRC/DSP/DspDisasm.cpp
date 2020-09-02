@@ -1,10 +1,10 @@
-﻿// DSP disassembler
-
+// DSP disassembler
 #include "pch.h"
 
 namespace DSP
 {
-	std::string DspDisasm::ParameterToString(DspParameter index, AnalyzeInfo & info)
+
+	std::string DspDisasm::ParameterToString(DspParameter index, AnalyzeInfo& info)
 	{
 		std::string text;
 
@@ -12,53 +12,77 @@ namespace DSP
 		{
 			// Registers
 
-			case DspParameter::ar0: text = "ar0"; break;
-			case DspParameter::ar1: text = "ar1"; break;
-			case DspParameter::ar2: text = "ar2"; break;
-			case DspParameter::ar3: text = "ar3"; break;
-			case DspParameter::ix0: text = "ix0"; break;
-			case DspParameter::ix1: text = "ix1"; break;
-			case DspParameter::ix2: text = "ix2"; break;
-			case DspParameter::ix3: text = "ix3"; break;
-			case DspParameter::lm0: text = "lm0"; break;
-			case DspParameter::lm1: text = "lm1"; break;
-			case DspParameter::lm2: text = "lm2"; break;
-			case DspParameter::lm3: text = "lm3"; break;
-			case DspParameter::st0: text = "st0"; break;
-			case DspParameter::st1: text = "st1"; break;
-			case DspParameter::st2: text = "st2"; break;
-			case DspParameter::st3: text = "st3"; break;
-			case DspParameter::ac0h: text = "ac0.h"; break;
-			case DspParameter::ac1h: text = "ac1.h"; break;
+			case DspParameter::r0: text = "r0"; break;
+			case DspParameter::r1: text = "r1"; break;
+			case DspParameter::r2: text = "r2"; break;
+			case DspParameter::r3: text = "r3"; break;
+			case DspParameter::m0: text = "m0"; break;
+			case DspParameter::m1: text = "m1"; break;
+			case DspParameter::m2: text = "m2"; break;
+			case DspParameter::m3: text = "m3"; break;
+			case DspParameter::l0: text = "l0"; break;
+			case DspParameter::l1: text = "l1"; break;
+			case DspParameter::l2: text = "l2"; break;
+			case DspParameter::l3: text = "l3"; break;
+			case DspParameter::pcs: text = "pcs"; break;
+			case DspParameter::pss: text = "pss"; break;
+			case DspParameter::eas: text = "eas"; break;
+			case DspParameter::lcs: text = "lcs"; break;
+			case DspParameter::a2: text = "a2"; break;
+			case DspParameter::b2: text = "b2"; break;
 			case DspParameter::dpp: text = "dpp"; break;
 			case DspParameter::psr: text = "psr"; break;
-			case DspParameter::prodl: text = "prod.l"; break;
-			case DspParameter::prodm1: text = "prod.m1"; break;
-			case DspParameter::prodh: text = "prod.h"; break;
-			case DspParameter::prodm2: text = "prod.m2"; break;
-			case DspParameter::ax0l: text = "ax0.l"; break;
-			case DspParameter::ax0h: text = "ax0.h"; break;
-			case DspParameter::ax1l: text = "ax1.l"; break;
-			case DspParameter::ax1h: text = "ax1.h"; break;
-			case DspParameter::ac0l: text = "ac0.l"; break;
-			case DspParameter::ac1l: text = "ac1.l"; break;
-			case DspParameter::ac0m: text = "ac0.m"; break;
-			case DspParameter::ac1m: text = "ac1.m"; break;
+			case DspParameter::ps0: text = "ps0"; break;
+			case DspParameter::ps1: text = "ps1"; break;
+			case DspParameter::ps2: text = "ps2"; break;
+			case DspParameter::pc1: text = "pc1"; break;
+			case DspParameter::x0: text = "x0"; break;
+			case DspParameter::y0: text = "y0"; break;
+			case DspParameter::x1: text = "x1"; break;
+			case DspParameter::y1: text = "y1"; break;
+			case DspParameter::a0: text = "a0"; break;
+			case DspParameter::b0: text = "b0"; break;
+			case DspParameter::a1: text = "a1"; break;
+			case DspParameter::b1: text = "b1"; break;
 
-			case DspParameter::ac0: text = "ac0"; break;
-			case DspParameter::ac1: text = "ac1"; break;
+			case DspParameter::a: text = "a"; break;
+			case DspParameter::b: text = "b"; break;
 
-			case DspParameter::ax0: text = "ax0"; break;
-			case DspParameter::ax1: text = "ax1"; break;
+			case DspParameter::x: text = "x"; break;
+			case DspParameter::y: text = "y"; break;
+			
+			case DspParameter::prod: text = "p"; break;
 
-			case DspParameter::Indexed_ar0: text = "@ar0"; break;
-			case DspParameter::Indexed_ar1: text = "@ar1"; break;
-			case DspParameter::Indexed_ar2: text = "@ar2"; break;
-			case DspParameter::Indexed_ar3: text = "@ar3"; break;
-			case DspParameter::Indexed_ix0: text = "@ix0"; break;
-			case DspParameter::Indexed_ix1: text = "@ix1"; break;
-			case DspParameter::Indexed_ix2: text = "@ix2"; break;
-			case DspParameter::Indexed_ix3: text = "@ix3"; break;
+			// PSR bits
+
+			case DspParameter::psr_c: text = "c"; break;
+			case DspParameter::psr_v: text = "v"; break;
+			case DspParameter::psr_z: text = "z"; break;
+			case DspParameter::psr_n: text = "n"; break;
+			case DspParameter::psr_e: text = "e"; break;
+			case DspParameter::psr_u: text = "u"; break;
+			case DspParameter::psr_tb: text = "tb"; break;
+			case DspParameter::psr_sv: text = "sv"; break;
+			case DspParameter::psr_te0: text = "te0"; break;
+			case DspParameter::psr_te1: text = "te1"; break;
+			case DspParameter::psr_te2: text = "te2"; break;
+			case DspParameter::psr_te3: text = "te3"; break;
+			case DspParameter::psr_et: text = "et"; break;
+			case DspParameter::psr_im: text = "im"; break;
+			case DspParameter::psr_xl: text = "xl"; break;
+			case DspParameter::psr_dp: text = "dp"; break;
+
+			// Modifier
+
+			case DspParameter::mod_none: text = "0"; break;
+			case DspParameter::mod_dec: text = "-1"; break;
+			case DspParameter::mod_inc: text = "+1"; break;
+			case DspParameter::mod_minus_m: text = "-m"; break;
+			case DspParameter::mod_plus_m0: text = "+m0"; break;
+			case DspParameter::mod_plus_m1: text = "+m1"; break;
+			case DspParameter::mod_plus_m2: text = "+m2"; break;
+			case DspParameter::mod_plus_m3: text = "+m3"; break;
+			case DspParameter::mod_plus_m: text = "+m"; break;
 
 			// Immediates
 
@@ -73,6 +97,12 @@ namespace DSP
 				break;
 			case DspParameter::SignedByte2:
 				text = std::to_string((int)(int16_t)info.ImmOperand2.SignedByte);
+				break;
+			case DspParameter::SignedShort:
+				text = std::to_string((int)info.ImmOperand.SignedShort);
+				break;
+			case DspParameter::SignedShort2:
+				text = std::to_string((int)info.ImmOperand2.SignedShort);
 				break;
 			case DspParameter::UnsignedShort:
 				text = "#0x" + ToHexString((uint16_t)info.ImmOperand.UnsignedShort);
@@ -98,160 +128,55 @@ namespace DSP
 		return text;
 	}
 
-	std::string DspDisasm::InstrToString(DspInstruction instr, ConditionCode cc)
+	std::string DspDisasm::InstrToString(DspRegularInstruction instr, ConditionCode cc)
 	{
 		std::string text;
 
 		switch (instr)
 		{
-			case DspInstruction::ABS: text = "abs"; break;
-
-			case DspInstruction::ADD: text = "add"; break;
-			case DspInstruction::ADDARN: text = "addarn"; break;
-			case DspInstruction::ADDAX: text = "addax"; break;
-			case DspInstruction::ADDAXL: text = "addaxl"; break;
-			case DspInstruction::ADDI: text = "addi"; break;
-			case DspInstruction::ADDIS: text = "addis"; break;
-			case DspInstruction::ADDP: text = "addp"; break;
-			case DspInstruction::ADDPAXZ: text = "addpaxz"; break;
-			case DspInstruction::ADDR: text = "addr"; break;
-
-			case DspInstruction::ANDC: text = "andc"; break;
-			case DspInstruction::TCLR: text = "tclr"; break;
-			case DspInstruction::TSET: text = "tset"; break;
-			case DspInstruction::ANDI: text = "andi"; break;
-			case DspInstruction::ANDR: text = "andr"; break;
-
-			case DspInstruction::ASL: text = "asl"; break;
-			case DspInstruction::ASR: text = "asr"; break;
-			case DspInstruction::ASR16: text = "asr16"; break;
-
-			case DspInstruction::BLOOP: text = "bloop"; break;
-			case DspInstruction::BLOOPI: text = "bloopi"; break;
-			case DspInstruction::CALLcc: text = "call" + CondCodeToString(cc); break;
-			case DspInstruction::CALLR: text = "callr"; break;
-
-			case DspInstruction::CLR: text = "clr"; break;
-			case DspInstruction::CLRL: text = "clrl"; break;
-			case DspInstruction::CLRP: text = "clrp"; break;
-
-			case DspInstruction::CMP: text = "cmp"; break;
-			case DspInstruction::CMPI: text = "cmpi"; break;
-			case DspInstruction::CMPIS: text = "cmpis"; break;
-			case DspInstruction::CMPAR: text = "cmpar"; break;
-
-			case DspInstruction::DAR: text = "dar"; break;
-			case DspInstruction::DEC: text = "dec"; break;
-			case DspInstruction::DECM: text = "decm"; break;
-
-			case DspInstruction::HALT: text = "halt"; break;
-
-			case DspInstruction::IAR: text = "iar"; break;
-
-			case DspInstruction::IFcc: text = "if" + CondCodeToString(cc); break;
-
-			case DspInstruction::ILRR: text = "ilrr"; break;
-			case DspInstruction::ILRRD: text = "ilrrd"; break;
-			case DspInstruction::ILRRI: text = "ilrri"; break;
-			case DspInstruction::ILRRN: text = "ilrrn"; break;
-
-			case DspInstruction::INC: text = "inc"; break;
-			case DspInstruction::INCM: text = "incm"; break;
-
-			case DspInstruction::Jcc: text = "j" + CondCodeToString(cc); break;
-			case DspInstruction::JMPR: text = "jmpr"; break;
-			case DspInstruction::LOOP: text = "loop"; break;
-			case DspInstruction::LOOPI: text = "loopi"; break;
-
-			case DspInstruction::LR: text = "lr"; break;
-			case DspInstruction::LRI: text = "lri"; break;
-			case DspInstruction::LRIS: text = "lris"; break;
-			case DspInstruction::LRR: text = "lrr"; break;
-			case DspInstruction::LRRD: text = "lrrd"; break;
-			case DspInstruction::LRRI: text = "lrri"; break;
-			case DspInstruction::LRRN: text = "lrrn"; break;
-			case DspInstruction::LRS: text = "lrs"; break;
-
-			case DspInstruction::LSL: text = "lsl"; break;
-			case DspInstruction::LSL16: text = "lsl16"; break;
-			case DspInstruction::LSR: text = "lsr"; break;
-			case DspInstruction::LSR16: text = "lsr16"; break;
-
-			case DspInstruction::M2: text = "m2"; break;
-			case DspInstruction::M0: text = "m0"; break;
-			case DspInstruction::CLR15: text = "clr15"; break;
-			case DspInstruction::SET15: text = "set15"; break;
-			case DspInstruction::CLR40: text = "clr40"; break;
-			case DspInstruction::SET40: text = "set40"; break;
-
-			case DspInstruction::MADD: text = "madd"; break;
-			case DspInstruction::MADDC: text = "maddc"; break;
-			case DspInstruction::MADDX: text = "maddx"; break;
-
-			case DspInstruction::MOV: text = "mov"; break;
-			case DspInstruction::MOVAX: text = "movax"; break;
-			case DspInstruction::MOVNP: text = "movnp"; break;
-			case DspInstruction::MOVP: text = "movp"; break;
-			case DspInstruction::MOVPZ: text = "movpz"; break;
-			case DspInstruction::MOVR: text = "movr"; break;
-			case DspInstruction::MRR: text = "mrr"; break;
-
-			case DspInstruction::MSUB: text = "msub"; break;
-			case DspInstruction::MSUBC: text = "msubc"; break;
-			case DspInstruction::MSUBX: text = "msubx"; break;
-
-			case DspInstruction::MUL: text = "mul"; break;
-			case DspInstruction::MULAC: text = "mulac"; break;
-			case DspInstruction::MULC: text = "mulc"; break;
-
-			case DspInstruction::MULCAC: text = "mulcac"; break;
-			case DspInstruction::MULCMV: text = "mulcmv"; break;
-			case DspInstruction::MULCMVZ: text = "mulcmvz"; break;
-			case DspInstruction::MULMV: text = "mulmv"; break;
-			case DspInstruction::MULMVZ: text = "mulmvz"; break;
-
-			case DspInstruction::MULX: text = "mulx"; break;
-
-			case DspInstruction::MULXAC: text = "mulxac"; break;
-			case DspInstruction::MULXMV: text = "mulxmv"; break;
-			case DspInstruction::MULXMVZ: text = "mulxmvz"; break;
-
-			case DspInstruction::NEG: text = "neg"; break;
-
-			case DspInstruction::NOP: text = "nop"; break;
-			case DspInstruction::NX: text = "nx"; break;
-
-			case DspInstruction::ORC: text = "orc"; break;
-			case DspInstruction::ORI: text = "ori"; break;
-			case DspInstruction::ORR: text = "orr"; break;
-
-			case DspInstruction::RETcc: text = "ret" + CondCodeToString(cc); break;
-			case DspInstruction::RTI: text = "rti"; break;
-
-			case DspInstruction::SBSET: text = "sbset"; break;
-			case DspInstruction::SBCLR: text = "sbclr"; break;
-
-			case DspInstruction::SI: text = "si"; break;
-			case DspInstruction::SR: text = "sr"; break;
-			case DspInstruction::SRR: text = "srr"; break;
-			case DspInstruction::SRRD: text = "srrd"; break;
-			case DspInstruction::SRRI: text = "srri"; break;
-			case DspInstruction::SRRN: text = "srrn"; break;
-			case DspInstruction::SRS: text = "srs"; break;
-
-			case DspInstruction::SUB: text = "sub"; break;
-			case DspInstruction::SUBAX: text = "subax"; break;
-			case DspInstruction::SUBP: text = "subp"; break;
-			case DspInstruction::SUBR: text = "subr"; break;
-
-			case DspInstruction::TST: text = "tst"; break;
-			case DspInstruction::TSTAXH: text = "tstaxh"; break;
-
-			case DspInstruction::XORI: text = "xori"; break;
-			case DspInstruction::XORR: text = "xorr"; break;
-
-			case DspInstruction::LSN: text = "lsn"; break;
-			case DspInstruction::ASN: text = "asn"; break;
+			case DspRegularInstruction::jmp: text = "jmp" + CondCodeToString(cc); break;
+			case DspRegularInstruction::call: text = "call" + CondCodeToString(cc); break;
+			case DspRegularInstruction::rets: text = "rets" + CondCodeToString(cc); break;
+			case DspRegularInstruction::reti: text = "reti" + CondCodeToString(cc); break;
+			case DspRegularInstruction::trap: text = "trap"; break;
+			case DspRegularInstruction::wait: text = "wait"; break;
+			case DspRegularInstruction::exec: text = "exec" + CondCodeToString(cc); break;
+			case DspRegularInstruction::loop: text = "loop"; break;
+			case DspRegularInstruction::rep: text = "rep"; break;
+			case DspRegularInstruction::pld: text = "pld"; break;
+			case DspRegularInstruction::nop: text = "nop"; break;
+			case DspRegularInstruction::mr: text = "mr"; break;
+			case DspRegularInstruction::adsi: text = "adsi"; break;
+			case DspRegularInstruction::adli: text = "adli"; break;
+			case DspRegularInstruction::cmpsi: text = "cmpsi"; break;
+			case DspRegularInstruction::cmpli: text = "cmpli"; break;
+			case DspRegularInstruction::lsfi: text = "lsfi"; break;
+			case DspRegularInstruction::asfi: text = "asfi"; break;
+			case DspRegularInstruction::xorli: text = "xorli"; break;
+			case DspRegularInstruction::anli: text = "anli"; break;
+			case DspRegularInstruction::orli: text = "orli"; break;
+			case DspRegularInstruction::norm: text = "norm"; break;
+			case DspRegularInstruction::div: text = "div"; break;
+			case DspRegularInstruction::addc: text = "addc"; break;
+			case DspRegularInstruction::subc: text = "subc"; break;
+			case DspRegularInstruction::negc: text = "negc"; break;
+			case DspRegularInstruction::max: text = "max"; break;
+			case DspRegularInstruction::lsf: text = "lsf"; break;
+			case DspRegularInstruction::asf: text = "asf"; break;
+			case DspRegularInstruction::ld: text = "ld"; break;
+			case DspRegularInstruction::st: text = "st"; break;
+			case DspRegularInstruction::ldsa: text = "ldsa"; break;
+			case DspRegularInstruction::stsa: text = "stsa"; break;
+			case DspRegularInstruction::ldla: text = "ldla"; break;
+			case DspRegularInstruction::stla: text = "stla"; break;
+			case DspRegularInstruction::mv: text = "mv"; break;
+			case DspRegularInstruction::mvsi: text = "mvsi"; break;
+			case DspRegularInstruction::mvli: text = "mvli"; break;
+			case DspRegularInstruction::stli: text = "stli"; break;
+			case DspRegularInstruction::clr: text = "clr"; break;
+			case DspRegularInstruction::set: text = "set"; break;
+			case DspRegularInstruction::btstl: text = "btstl"; break;
+			case DspRegularInstruction::btsth: text = "btsth"; break;
 		}
 
 		while (text.size() < 5)
@@ -262,41 +187,67 @@ namespace DSP
 		return text;
 	}
 
-	std::string DspDisasm::InstrExToString(DspInstructionEx instrEx)
+	std::string DspDisasm::ParrallelInstrToString(DspParallelInstruction instr)
 	{
 		std::string text;
 
-		switch (instrEx)
+		switch (instr)
 		{
+			case DspParallelInstruction::add: text = "add"; break;
+			case DspParallelInstruction::addl: text = "addl"; break;
+			case DspParallelInstruction::sub: text = "sub"; break;
+			case DspParallelInstruction::amv: text = "amv"; break;
+			case DspParallelInstruction::cmp: text = "cmp"; break;
+			case DspParallelInstruction::inc: text = "inc"; break;
+			case DspParallelInstruction::dec: text = "dec"; break;
+			case DspParallelInstruction::abs: text = "abs"; break;
+			case DspParallelInstruction::neg: text = "neg"; break;
+			case DspParallelInstruction::clr: text = "clr"; break;
+			case DspParallelInstruction::rnd: text = "rnd"; break;
+			case DspParallelInstruction::rndp: text = "rndp"; break;
+			case DspParallelInstruction::tst: text = "tst"; break;
+			case DspParallelInstruction::lsl16: text = "lsl16"; break;
+			case DspParallelInstruction::lsr16: text = "lsr16"; break;
+			case DspParallelInstruction::asr16: text = "asr16"; break;
+			case DspParallelInstruction::addp: text = "addp"; break;
 			// Dont show nop2's
-			//case DspInstructionEx::NOP2: text = "nop2"; break;
-			case DspInstructionEx::DR: text = "dr"; break;
-			case DspInstructionEx::IR: text = "ir"; break;
-			case DspInstructionEx::NR: text = "nr"; break;
-			case DspInstructionEx::MV: text = "mv"; break;
-			case DspInstructionEx::S: text = "s"; break;
-			case DspInstructionEx::SN: text = "sn"; break;
-			case DspInstructionEx::L: text = "l"; break;
-			case DspInstructionEx::LN: text = "ln"; break;
+			case DspParallelInstruction::nop: break;
+			case DspParallelInstruction::set: text = "set"; break;
+			case DspParallelInstruction::mpy: text = "mpy"; break;
+			case DspParallelInstruction::mac: text = "mac"; break;
+			case DspParallelInstruction::macn: text = "macn"; break;
+			case DspParallelInstruction::mvmpy: text = "mvmpy"; break;
+			case DspParallelInstruction::rnmpy: text = "rnmpy"; break;
+			case DspParallelInstruction::admpy: text = "admpy"; break;
+			case DspParallelInstruction::_not: text = "not"; break;
+			case DspParallelInstruction::_xor: text = "xor"; break;
+			case DspParallelInstruction::_and: text = "and"; break;
+			case DspParallelInstruction::_or: text = "or"; break;
+			case DspParallelInstruction::lsf: text = "lsf"; break;
+			case DspParallelInstruction::asf: text = "asf"; break;
+		}
 
-			case DspInstructionEx::LS: text = "ls"; break;
-			case DspInstructionEx::SL: text = "sl"; break;
-			case DspInstructionEx::LSN: text = "lsn"; break;
-			case DspInstructionEx::SLN: text = "sln"; break;
-			case DspInstructionEx::LSM: text = "lsm"; break;
-			case DspInstructionEx::SLM: text = "slm"; break;
-			case DspInstructionEx::LSNM: text = "lsnm"; break;
-			case DspInstructionEx::SLNM: text = "slnm"; break;
+		while (text.size() < 5)
+		{
+			text += " ";
+		}
 
-			case DspInstructionEx::LD: text = "ld"; break;
-			case DspInstructionEx::LDN: text = "ldn"; break;
-			case DspInstructionEx::LDM: text = "ldm"; break;
-			case DspInstructionEx::LDNM: text = "ldnm"; break;
+		return text;
+	}
 
-			case DspInstructionEx::LDAX: text = "ldax"; break;
-			case DspInstructionEx::LDAXN: text = "ldaxn"; break;
-			case DspInstructionEx::LDAXM: text = "ldaxm"; break;
-			case DspInstructionEx::LDAXNM: text = "ldaxnm"; break;
+	std::string DspDisasm::ParrallelMemInstrToString(DspParallelMemInstruction instr)
+	{
+		std::string text;
+
+		switch (instr)
+		{
+			case DspParallelMemInstruction::nop: break;
+			case DspParallelMemInstruction::ldd: text = "ldd"; break;
+			case DspParallelMemInstruction::ls: text = "ls"; break;
+			case DspParallelMemInstruction::ld: text = "ld"; break;
+			case DspParallelMemInstruction::st: text = "st"; break;
+			case DspParallelMemInstruction::mv: text = "mv"; break;
+			case DspParallelMemInstruction::mr: text = "mr"; break;
 		}
 
 		while (text.size() < 5)
@@ -376,22 +327,22 @@ namespace DSP
 
 		switch (cc)
 		{
-			case ConditionCode::GE: text = "ge"; break;
-			case ConditionCode::LT: text = "lt"; break;
-			case ConditionCode::GT: text = "gt"; break;
-			case ConditionCode::LE: text = "le"; break;
-			case ConditionCode::NZ: text = "nz"; break;
-			case ConditionCode::Z: text = "z"; break;
-			case ConditionCode::NC: text = "nc"; break;
-			case ConditionCode::C: text = "c"; break;
-			case ConditionCode::NE: text = "ne"; break;
-			case ConditionCode::E: text = "e"; break;
-			case ConditionCode::NM: text = "nm"; break;
-			case ConditionCode::M: text = "m"; break;
-			case ConditionCode::NT: text = "nt"; break;
-			case ConditionCode::T: text = "t"; break;
-			case ConditionCode::V: text = "v"; break;
-			case ConditionCode::Always: text = ""; break;
+			case ConditionCode::ge: text = "ge"; break;
+			case ConditionCode::lt: text = "lt"; break;
+			case ConditionCode::gt: text = "gt"; break;
+			case ConditionCode::le: text = "le"; break;
+			case ConditionCode::nz: text = "nz"; break;
+			case ConditionCode::z: text = "z"; break;
+			case ConditionCode::nc: text = "nc"; break;
+			case ConditionCode::c: text = "c"; break;
+			case ConditionCode::ne: text = "ne"; break;
+			case ConditionCode::e: text = "e"; break;
+			case ConditionCode::nm: text = "nm"; break;
+			case ConditionCode::m: text = "m"; break;
+			case ConditionCode::nt: text = "nt"; break;
+			case ConditionCode::t: text = "t"; break;
+			case ConditionCode::v: text = "v"; break;
+			case ConditionCode::always: text = ""; break;
 		}
 
 		return text;
@@ -399,6 +350,7 @@ namespace DSP
 
 	std::string DspDisasm::Disasm(DspAddress startAddr, AnalyzeInfo& info)
 	{
+		bool firstParam;
 		std::string text = "";
 
 		// Address and code bytes
@@ -420,53 +372,80 @@ namespace DSP
 
 		// Regular instruction
 
-		if (info.instr != DspInstruction::Unknown)
+		if (!info.parallel)
 		{
-			text += "\t" + DspDisasm::InstrToString(info.instr, info.cc) + "\t";
+			if (info.instr != DspRegularInstruction::Unknown)
+			{
+				text += "\t" + DspDisasm::InstrToString(info.instr, info.cc) + "\t";
+			}
+			else
+			{
+				text += "\t??? ";
+			}
+
+			firstParam = true;
+			for (size_t i = 0; i < info.numParameters; i++)
+			{
+				if (!firstParam)
+				{
+					text += ", ";
+				}
+				text += ParameterToString(info.params[i], info);
+				firstParam = false;
+			}
 		}
+
+		// Parallel instruction pair (same line)
+
 		else
 		{
-			text += "\t??? " + ToHexString(info.instrBits);
-		}
+			// Top
 
-		bool firstParam = true;
-		for (size_t i = 0; i < info.numParameters; i++)
-		{
-			if (!firstParam)
+			if (info.parallelInstr != DspParallelInstruction::Unknown)
 			{
-				text += ", ";
+				text += "\t" + DspDisasm::ParrallelInstrToString(info.parallelInstr) + "\t";
 			}
-			text += ParameterToString(info.params[i], info);
-			firstParam = false;
-		}
+			else
+			{
+				text += "\t??? ";
+			}
 
-		// Packed instruction pair (same line)
+			firstParam = true;
+			for (size_t i = 0; i < info.numParameters; i++)
+			{
+				if (!firstParam)
+				{
+					text += ", ";
+				}
+				text += ParameterToString(info.params[i], info);
+				firstParam = false;
+			}
 
-		if (info.extendedOpcodePresent)
-		{
+			// Bottom
+
 			while (text.size() < 40)
 			{
 				text += " ";
 			}
 
-			if (info.instrEx != DspInstructionEx::Unknown)
+			if (info.parallelMemInstr != DspParallelMemInstruction::Unknown)
 			{
-				text += "\t" + InstrExToString(info.instrEx) + "\t";
+				text += "\t" + ParrallelMemInstrToString(info.parallelMemInstr) + "\t";
 			}
 			else
 			{
-				text += "??? ext " + ToHexString(info.instrExBits);
+				text += "???";
 			}
 
-			bool firstExtendedParam = true;
-			for (size_t i=0; i<info.numParametersEx; i++)
+			firstParam = true;
+			for (size_t i = 0; i < info.numParametersEx; i++)
 			{
-				if (!firstExtendedParam)
+				if (!firstParam)
 				{
 					text += ", ";
 				}
 				text += ParameterToString(info.paramsEx[i], info);
-				firstExtendedParam = false;
+				firstParam = false;
 			}
 		}
 

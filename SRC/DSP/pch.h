@@ -7,6 +7,7 @@
 #include <list>
 #include <map>
 #include <atomic>
+#include <cassert>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"
@@ -32,8 +33,6 @@
 #include "../Hardware/AR.h"
 #include "../Hardware/HW.h"
 #include "../Hardware/MI.h"
-
-#include "../../ThirdParty/fmt/fmt/format.h"
 
 #if 0
 #define _TLIB_STRINGIFY1(s) _TLIB_STRINGIFY2(s)

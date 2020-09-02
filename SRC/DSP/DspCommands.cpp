@@ -27,25 +27,17 @@ namespace DSP
         size_t bytesLeft = ucode.size();
         size_t offset = 0;      // in DSP slots (halfwords)
 
-        auto text = fmt::format("// Disassembled {:s}\n\n", args[1].c_str());
+        std::string text = "// Disassembled " + args[1] + "\n\n";
 
         while (bytesLeft != 0)
         {
             DSP::AnalyzeInfo info = { 0 };
 
             // Analyze
-            bool result = DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
-            if (!result)
-            {
-                Report(Channel::Norm, "DSP::Analyze failed at offset: 0x%08X\n", offset);
-                break;
-            }
+            DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
 
             // Disassemble
-            std::string text = DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info);
-
-            auto line = fmt::format("{:s}\n", text.c_str());
-            text += line;
+            text += DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info) + "\n";
 
             offset += (info.sizeInBytes / sizeof(uint16_t));
             bytesLeft -= info.sizeInBytes;
@@ -53,7 +45,7 @@ namespace DSP
         }
 
         std::vector<uint8_t> textData(text.begin(), text.end());
-        if (!Util::FileSave(L"./Data/dspdisa.txt", textData))
+        if (!Util::FileSave(L"Data/dspdisa.txt", textData))
         {
             Report(Channel::Norm, "Failed to save dsp_disa.txt\n");
             return nullptr;
@@ -76,16 +68,15 @@ namespace DSP
 
         for (int i = 0; i < 4; i++)
         {
-            regsChanged.ar[i] = ~regsChanged.ar[i];
-            regsChanged.ix[i] = ~regsChanged.ix[i];
-            regsChanged.lm[i] = ~regsChanged.lm[i];
+            regsChanged.r[i] = ~regsChanged.r[i];
+            regsChanged.m[i] = ~regsChanged.m[i];
+            regsChanged.l[i] = ~regsChanged.l[i];
         }
 
-        for (int i = 0; i < 2; i++)
-        {
-            regsChanged.ac[i].bits = ~regsChanged.ac[i].bits;
-            regsChanged.ax[i].bits = ~regsChanged.ax[i].bits;
-        }
+        regsChanged.a.bits = ~regsChanged.a.bits;
+        regsChanged.b.bits = ~regsChanged.b.bits;
+        regsChanged.x.bits = ~regsChanged.x.bits;
+        regsChanged.y.bits = ~regsChanged.y.bits;
 
         Flipper::DSP->core->DumpRegs(&regsChanged);
         return nullptr;
@@ -217,11 +208,7 @@ namespace DSP
 
             DSP::AnalyzeInfo info = { 0 };
 
-            if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", pcAddr);
-                return nullptr;
-            }
+            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(pcAddr, info);
 
@@ -349,11 +336,7 @@ namespace DSP
 
             DSP::AnalyzeInfo info = { 0 };
 
-            if (!DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                Report(Channel::DSP, "DSP Analyzer failed on dsp addr: 0x%04X\n", addr);
-                return nullptr;
-            }
+            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(addr, info);
 
@@ -375,9 +358,9 @@ namespace DSP
 
         Report(Channel::Norm, "DSP Call Stack:\n");
 
-        for (auto it = Flipper::DSP->core->regs.st[0].begin(); it != Flipper::DSP->core->regs.st[0].end(); ++it)
+        for (int i=0; i< Flipper::DSP->core->regs.pcs->size(); i++)
         {
-            Report(Channel::Norm, "0x%04X\n", *it);
+            Report(Channel::Norm, "0x%04X\n", Flipper::DSP->core->regs.pcs->at(i));
         }
         return nullptr;
     }
@@ -483,56 +466,6 @@ namespace DSP
         return nullptr;
     }
 
-    // Multiplier tests
-
-    static Json::Value* dsp_muls(std::vector<std::string>& args)
-    {
-        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
-        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
-
-        Report(Channel::Norm, "MUL signed 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
-
-        DspProduct prod = DspCore::Muls((int16_t)a, (int16_t)b, false);
-
-        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
-            prod.h, prod.m1, prod.l, prod.m2);
-
-        DspCore::PackProd(prod);
-
-        DspLongAccumulator acc;
-        acc.bits = prod.bitsPacked;
-
-        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
-        
-        Report(Channel::Norm, "Signed Multiply by host: 0x%llX\n", ((int64_t)(int32_t)(int16_t)a * (int64_t)(int32_t)(int16_t)b) & 0xff'ffff'ffff);
-
-        return nullptr;
-    }
-
-    static Json::Value* dsp_mulu(std::vector<std::string>& args)
-    {
-        uint32_t a = strtoul(args[1].c_str(), nullptr, 0) & 0xffff;
-        uint32_t b = strtoul(args[2].c_str(), nullptr, 0) & 0xffff;
-
-        Report(Channel::Norm, "MUL Unsigned 0x%04X * 0x%04X\n", (uint16_t)a, (uint16_t)b);
-
-        DspProduct prod = DspCore::Mulu(a, b, false);
-
-        Report(Channel::Norm, "prod: h:%04X, m1:%04X, l:%04X, m2:%04X\n",
-            prod.h, prod.m1, prod.l, prod.m2);
-
-        DspCore::PackProd(prod);
-
-        DspLongAccumulator acc;
-        acc.bits = prod.bitsPacked;
-
-        Report(Channel::Norm, "prod packed: %02X_%04X_%04X\n", acc.h, acc.m, acc.l);
-
-        Report(Channel::Norm, "Unsigned Multiply by host: 0x%08X\n", (uint32_t)(uint16_t)a * (uint32_t)(uint16_t)b);
-
-        return nullptr;
-    }
-
     static Json::Value* CmdDspIsRunning(std::vector<std::string>& args)
     {
         Json::Value* output = new Json::Value();
@@ -572,7 +505,30 @@ namespace DSP
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Int;
 
-        output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
+        // Special handling for stack registers is required to prevent pop happening.
+
+        switch ((DspRegister)reg)
+        {
+            case DspRegister::pcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pcs->top();
+                break;
+
+            case DspRegister::pss:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pss->top();
+                break;
+
+            case DspRegister::eas:
+                output->value.AsUint16 = Flipper::DSP->core->regs.eas->top();
+                break;
+
+            case DspRegister::lcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.lcs->top();
+                break;
+
+            default:
+                output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
+                break;
+        }
 
         return output;
     }
@@ -680,12 +636,11 @@ namespace DSP
             return false;
         }
 
-        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            return false;
+        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
-            if (info.instr == DSP::DspInstruction::CALLcc || info.instr == DSP::DspInstruction::CALLR)
+            if (info.instr == DSP::DspRegularInstruction::call)
             {
                 targetAddress = info.ImmOperand.Address;
                 return true;
@@ -724,13 +679,12 @@ namespace DSP
             return false;
         }
 
-        if (!DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            return false;
+        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
-            if (info.instr == DSP::DspInstruction::Jcc ||
-                info.instr == DSP::DspInstruction::CALLcc)
+            if (info.instr == DSP::DspRegularInstruction::jmp ||
+                info.instr == DSP::DspRegularInstruction::call )
             {
                 targetAddress = info.ImmOperand.Address;
                 return true;
@@ -773,10 +727,8 @@ namespace DSP
         uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
         if (ptr)
         {
-            if (DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info))
-            {
-                text = DSP::DspDisasm::Disasm(address, info);
-            }
+            DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+            text = DSP::DspDisasm::Disasm(address, info);
         }
 
         // Return as text
@@ -784,6 +736,59 @@ namespace DSP
         output->AddBool(nullptr, info.flowControl);
         output->AddInt(nullptr, (int)info.sizeInBytes / sizeof(uint16_t));
         output->AddAnsiString(nullptr, text.c_str());
+
+        return output;
+    }
+
+    // Adds DSP DMEM address for tracking
+    static Json::Value* CmdDspWatch(std::vector<std::string>& args)
+    {
+        DspAddress dmemAddress = strtoul(args[1].c_str(), nullptr, 0);
+        Flipper::DSP->core->AddWatch(dmemAddress);
+        Report(Channel::Norm, "Added DSP watch: 0x%04X\n", dmemAddress);
+        return nullptr;
+    }
+
+    // Removes DSP DMEM address tracking
+    static Json::Value* CmdDspUnwatch(std::vector<std::string>& args)
+    {
+        DspAddress dmemAddress = strtoul(args[1].c_str(), nullptr, 0);
+        Flipper::DSP->core->RemoveWatch(dmemAddress);
+        Report(Channel::Norm, "Removed DSP watch: 0x%04X\n", dmemAddress);
+        return nullptr;
+    }
+
+    // Remove all DSP DMEM tracking addresses
+    static Json::Value* CmdDspUnwatchAll(std::vector<std::string>& args)
+    {
+        Flipper::DSP->core->RemoveAllWatches();
+        Report(Channel::Norm, "Removed all DSP watches\n");
+        return nullptr;
+    }
+
+    // List DSP DMEM addresses for tracking
+    static Json::Value* CmdDspWatchList(std::vector<std::string>& args)
+    {
+        std::list<DspAddress> watches;
+
+        Flipper::DSP->core->ListWatches(watches);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        if (watches.size() != 0)
+        {
+            Report(Channel::Norm, "DSP DMEM watch list:\n");
+            for (auto it = watches.begin(); it != watches.end(); ++it)
+            {
+                Report(Channel::Norm, "0x%04X\n", *it);
+                output->AddUInt16(nullptr, *it);
+            }
+        }
+        else
+        {
+            Report(Channel::Norm, "DSP DMEM watch list is empty\n");
+        }
 
         return output;
     }
@@ -812,8 +817,6 @@ namespace DSP
         JDI::Hub.AddCmd("dspmbox", cmd_dspmbox);
         JDI::Hub.AddCmd("cpudspint", cmd_cpudspint);
         JDI::Hub.AddCmd("dspcpuint", cmd_dspcpuint);
-        JDI::Hub.AddCmd("dsp_muls", dsp_muls);
-        JDI::Hub.AddCmd("dsp_mulu", dsp_mulu);
         
         JDI::Hub.AddCmd("DspIsRunning", CmdDspIsRunning);
         JDI::Hub.AddCmd("DspRun", CmdDspRun);
@@ -835,6 +838,11 @@ namespace DSP
         JDI::Hub.AddCmd("DspIsCall", CmdDspIsCall);
         JDI::Hub.AddCmd("DspIsCallOrJump", CmdDspIsCallOrJump);
         JDI::Hub.AddCmd("DspDisasm", CmdDspDisasm);
+
+        JDI::Hub.AddCmd("DspWatch", CmdDspWatch);
+        JDI::Hub.AddCmd("DspUnwatch", CmdDspUnwatch);
+        JDI::Hub.AddCmd("DspUnwatchAll", CmdDspUnwatchAll);
+        JDI::Hub.AddCmd("DspWatchList", CmdDspWatchList);
     }
 
 }

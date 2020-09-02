@@ -11,6 +11,8 @@ namespace DSP
 #include "DspDma.h"
 #include "DspAccel.h"
 #include "DspAdpcm.h"
+#include "DspStack.h"
+#include "DspAlu.h"
 #include "DspCore.h"
 #include "DspAnalyzer.h"
 #include "DspInterpreter.h"

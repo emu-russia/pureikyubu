@@ -1,5 +1,7 @@
 ﻿// Macronix DSP core
 
+// More info: https://github.com/ogamespec/dolwin-docs/blob/master/HW/AudioSystem/DSPCore.md
+
 #pragma once
 
 namespace DSP
@@ -44,10 +46,10 @@ namespace DSP
 	{
 		struct
 		{
-			uint16_t l;
-			uint16_t m1;
-			uint16_t h;
-			uint16_t m2;
+			uint16_t l;			// ps0
+			uint16_t m1;		// ps1  (Duddie m1)
+			uint16_t h;			// ps2
+			uint16_t m2;		// pc1	(Duddie m2)
 		};
 		uint64_t bitsPacked;
 	};
@@ -63,7 +65,7 @@ namespace DSP
 			unsigned e : 1;		// Extension (above s32)
 			unsigned u : 1;		// Unnormalization
 			unsigned tb : 1;	// Test bit (btstl/btsth instructions)
-			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the CLRB instruction.
+			unsigned sv : 1;	// Sticky overflow. Set together with the V overflow bit, can only be cleared by the `clr sv` instruction.
 			unsigned te0 : 1;	// Interrupt enable 0 (Not used)
 			unsigned te1 : 1;	// Interrupt enable 1 (Acrs, Acwe, Dcre)
 			unsigned te2 : 1;	// Interrupt enable 2 (AiDma, not used by ucodes)
@@ -81,52 +83,52 @@ namespace DSP
 
 	enum class DspRegister
 	{
-		ar0 = 0,		// Addressing register 0 
-		ar1,			// Addressing register 1 
-		ar2,			// Addressing register 2 
-		ar3,			// Addressing register 3 
-		indexRegs,
-		ix0 = indexRegs,	// Indexing register 0 
-		ix1,			// Indexing register 1
-		ix2,			// Indexing register 2
-		ix3,			// Indexing register 3
-		limitRegs,
-		lm0 = limitRegs, // Limit register 0 
-		lm1,			// Limit register 1
-		lm2,			// Limit register 2
-		lm3,			// Limit register 3
-		stackRegs,
-		st0 = stackRegs,	// Call stack register 
-		st1,			// Data stack register 
-		st2,			// Loop address stack register 
-		st3,			// Loop counter register 
-		ac0h,			// 40-bit Accumulator 0 (high) 
-		ac1h,			// 40-bit Accumulator 1 (high) 
-		dpp,			// Used as high 8-bits of address for some load/store instructions
-		psr,			// Processor Status register 
-		prodl,			// Product register (low) 
-		prodm1,			// Product register (mid 1) 
-		prodh,			// Product register (high) 
-		prodm2,			// Product register (mid 2) 
-		ax0l,			// 32-bit Accumulator 0 (low) 
-		ax1l,			// 32-bit Accumulator 1 (low) 
-		ax0h,			// 32-bit Accumulator 0 (high) 
-		ax1h,			// 32-bit Accumulator 1 (high)
-		ac0l,			// 40-bit Accumulator 0 (low) 
-		ac1l,			// 40-bit Accumulator 1 (low) 
-		ac0m,			// 40-bit Accumulator 0 (mid)
-		ac1m,			// 40-bit Accumulator 1 (mid)
+		r0,		// Address register 0 (circular addressing)
+		r1,		// Address register 1 (circular addressing)
+		r2,		// Address register 2 (circular addressing)
+		r3,		// Address register 3 (circular addressing)
+		m0,		// Modifier value 0 (circular addressing)
+		m1,		// Modifier value 1 (circular addressing)
+		m2,		// Modifier value 2 (circular addressing)
+		m3,		// Modifier value 3 (circular addressing)
+		l0,		// Buffer length 0 (circular addressing)
+		l1,		// Buffer length 1 (circular addressing)
+		l2,		// Buffer length 2 (circular addressing)
+		l3,		// Buffer length 3 (circular addressing)
+		pcs,	// Program counter stack
+		pss,	// Program status stack
+		eas,	// End address stack
+		lcs,	// Loop count stack
+		a2,		// 40 - bit accumulator `a` high 8 bits
+		b2,		// 40 - bit accumulator `b` high 8 bits
+		dpp,	// Used as high 8 - bits of address for some load / store instructions
+		psr,	// Program status register
+		ps0,	// Product partial sum low part
+		ps1,	// Product partial sum middle part
+		ps2,	// Product partial sum high part (8 bits)
+		pc1,	// Product partial carry 1 middle part
+		x0,		// ALU / Multiplier input operand `x` low part
+		y0,		// ALU / Multiplier input operand `y` low part
+		x1,		// ALU / Multiplier input operand `x` high part
+		y1,		// ALU / Multiplier input operand `y` high part
+		a0,		// 40 - bit accumulator `a` low 16 bits
+		b0,		// 40 - bit accumulator `b` low 16 bits
+		a1,		// 40 - bit accumulator `a` middle 16 bits / Whole `a` accumulator
+		b1,		// 40 - bit accumulator `b` middle 16 bits / Whole `b` accumulator
 	};
 
 	struct DspRegs
 	{
-		uint16_t ar[4];		// Addressing registers
-		uint16_t ix[4];		// Indexing registers
-		uint16_t lm[4];	// Limit registers
-		std::vector<DspAddress> st[4];	// Stack registers
-		DspLongAccumulator ac[2];		// 40-bit Accumulators
-		DspShortOperand ax[2];		// 32-bit operands
-		DspProduct prod;		// Product register
+		uint16_t r[4];		// Addressing registers
+		uint16_t m[4];		// Modifier value registers
+		uint16_t l[4];		// Buffer length registers
+		DspStack *pcs;		// Program counter stack
+		DspStack *pss;		// Program status stack
+		DspStack *eas;		// End address stack
+		DspStack *lcs;		// Loop count stack
+		DspLongAccumulator a, b;	// 40-bit Accumulators
+		DspShortOperand x, y;		// 32-bit operands
+		DspProduct prod;			// Product register
 		uint16_t dpp;		// Used as high 8-bits of address for some load/store instructions
 		DspStatus psr;		// Processor status
 		DspAddress pc;		// Program counter
@@ -162,13 +164,15 @@ namespace DSP
 	{
 		friend DspInterpreter;
 
-	public:
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
 		DspAddress oneShotBreakpoint = 0xffff;
 
 		std::map<DspAddress, std::string> canaries;		// When the PC is equal to the canary address, a debug message is displayed
 		SpinLock canariesSpinLock;
+
+		std::list<DspAddress> watches;		// DMEM watches
+		SpinLock watchesSpinLock;
 
 		const uint32_t GekkoTicksPerDspInstruction = 5;		// How many Gekko ticks should pass so that we can execute one DSP instruction
 		const uint32_t GekkoTicksPerDspSegment = 100;		// How many Gekko ticks should pass so that we can execute one DSP segment (in case of Jitc)
@@ -181,6 +185,8 @@ namespace DSP
 
 		void CheckInterrupts();
 		uint16_t CircularAddress(uint16_t r, uint16_t l, int16_t m);
+
+		int repeatCount = 0;		// Internal register for the `rep` instruction.
 
 	public:
 
@@ -213,6 +219,11 @@ namespace DSP
 		bool TestCanary(DspAddress imemAddress);
 		void Step();
 		void DumpRegs(DspRegs *prevState);
+		void AddWatch(DspAddress dmemAddress);
+		void RemoveWatch(DspAddress dmemAddress);
+		void RemoveAllWatches();
+		void ListWatches(std::list<DspAddress>& watches);
+		bool TestWatch(DspAddress dmemAddress);
 
 		// Register access
 
@@ -221,16 +232,18 @@ namespace DSP
 
 		// Multiplier and ALU utils
 		
-		static int64_t SignExtend40(int64_t);
 		static int64_t SignExtend16(int16_t);
+		static int64_t SignExtend32(int32_t);
+		static int64_t SignExtend40(int64_t);
 
 		static void PackProd(DspProduct& prod);
 		static void UnpackProd(DspProduct& prod);
-		static DspProduct Muls(int16_t a, int16_t b, bool scale);
-		static DspProduct Mulu(uint16_t a, uint16_t b, bool scale);
-		static DspProduct Mulus(uint16_t a, int16_t b, bool scale);
 
 		void ArAdvance(int r, int16_t step);
+
+		void ModifyFlags(uint64_t d, uint64_t s, uint64_t r, CFlagRules, VFlagRules, ZFlagRules, NFlagRules, EFlagRules, UFlagRules);
+
+		static int64_t RndFactor(int64_t d);
 	};
 
 	#pragma warning (pop)		// warning C4201: nonstandard extension used: nameless struct/union

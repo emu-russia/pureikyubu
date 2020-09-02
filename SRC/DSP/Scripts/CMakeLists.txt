@@ -4,11 +4,15 @@ add_library (DSP SHARED
 	../DspAdpcm.cpp
 	../DspAnalyzer.cpp
 	../DspCommands.cpp
+	../DspStack.cpp
+	../DspAlu.cpp
 	../DspCore.cpp
 	../DspDisasm.cpp
 	../DspDma.cpp
 	../DspInterpreter.cpp
 	../DspMailbox.cpp
-	../DspMultiply.cpp
+	../DspMultiplyOps.cpp
 	../DspParallelMemOps.cpp
+	../DspParallelOps.cpp
+	../DspRegularOps.cpp
 )
