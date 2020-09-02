@@ -252,18 +252,38 @@ namespace DSP
 			{
 				case (DspAddress)DspHardwareRegs::DSMAH:
 					DmaRegs.mmemAddr.h = value & 0x03ff;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSMAH: 0x%04X\n", DmaRegs.mmemAddr.h);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::DSMAL:
 					DmaRegs.mmemAddr.l = value & ~3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSMAL: 0x%04X\n", DmaRegs.mmemAddr.l);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::DSPA:
 					DmaRegs.dspAddr = value & ~1;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSPA: 0x%04X\n", DmaRegs.dspAddr);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::DSCR:
 					DmaRegs.control.bits = value & 3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSCR: 0x%04X\n", DmaRegs.control.bits);
+					}
 					break;
 				case (DspAddress)DspHardwareRegs::DSBL:
 					DmaRegs.blockSize = value & ~3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSBL: 0x%04X\n", DmaRegs.blockSize);
+					}
 					DoDma();
 					break;
 

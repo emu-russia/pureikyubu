@@ -47,11 +47,6 @@ namespace DSP
 			{
 				if (intr.pendingDelay[i] <= 0)
 				{
-					if (dsp->logDspInterrupts)
-					{
-						Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", (DspAddress)i * 2);
-					}
-
 					if (!regs.pcs->push(regs.pc))
 					{
 						Halt("CheckInterrupts: pcs overflow\n");
@@ -69,6 +64,11 @@ namespace DSP
 					else
 					{
 						regs.pc = (DspAddress)i * 2;
+					}
+
+					if (dsp->logDspInterrupts)
+					{
+						Report(Channel::DSP, "Interrupt Acknowledge: 0x%04X\n", regs.pc);
 					}
 
 					intr.pending[i] = false;
@@ -565,10 +565,10 @@ namespace DSP
 				regs.x.l = val;
 				break;
 			case (int)DspRegister::y0:
-				regs.y.h = val;
+				regs.y.l = val;
 				break;
 			case (int)DspRegister::x1:
-				regs.x.l = val;
+				regs.x.h = val;
 				break;
 			case (int)DspRegister::y1:
 				regs.y.h = val;
@@ -674,10 +674,10 @@ namespace DSP
 				val = regs.x.l;
 				break;
 			case (int)DspRegister::y0:
-				val = regs.y.h;
+				val = regs.y.l;
 				break;
 			case (int)DspRegister::x1:
-				val = regs.x.l;
+				val = regs.x.h;
 				break;
 			case (int)DspRegister::y1:
 				val = regs.y.h;

@@ -786,7 +786,7 @@ namespace DSP
 	{
 		uint16_t s;
 
-		switch (info.params[0])
+		switch (info.params[1])
 		{
 			case DspParameter::a2:
 				s = core->regs.a.h & 0xff;
@@ -797,7 +797,7 @@ namespace DSP
 				if (s & 0x80) s |= 0xff00;
 				break;
 			default:
-				s = core->MoveFromReg((int)info.params[0]);
+				s = core->MoveFromReg((int)info.params[1]);
 				break;
 		}
 
@@ -811,7 +811,7 @@ namespace DSP
 
 	void DspInterpreter::stla(AnalyzeInfo& info)
 	{
-		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg((int)info.params[0]) );
+		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg((int)info.params[1]) );
 	}
 
 	void DspInterpreter::mv(AnalyzeInfo& info)
