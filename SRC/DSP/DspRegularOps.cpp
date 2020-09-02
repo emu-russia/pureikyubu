@@ -194,7 +194,33 @@ namespace DSP
 
 	void DspInterpreter::pld(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::pld\n");
+		int r = (int)info.params[1];
+
+		core->MoveToReg((int)info.params[0], core->dsp->ReadIMem(core->regs.r[r]) );
+
+		switch (info.params[2])
+		{
+			case DspParameter::mod_none:
+				break;
+			case DspParameter::mod_dec:
+				core->ArAdvance(r, -1);
+				break;
+			case DspParameter::mod_inc:
+				core->ArAdvance(r, +1);
+				break;
+			case DspParameter::mod_plus_m0:
+				core->ArAdvance(r, core->regs.m[0]);
+				break;
+			case DspParameter::mod_plus_m1:
+				core->ArAdvance(r, core->regs.m[1]);
+				break;
+			case DspParameter::mod_plus_m2:
+				core->ArAdvance(r, core->regs.m[2]);
+				break;
+			case DspParameter::mod_plus_m3:
+				core->ArAdvance(r, core->regs.m[3]);
+				break;
+		}
 	}
 
 	void DspInterpreter::mr(AnalyzeInfo& info)
@@ -289,7 +315,33 @@ namespace DSP
 
 	void DspInterpreter::ld(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::ld\n");
+		int r = (int)info.params[1];
+
+		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(core->regs.r[r]) );
+
+		switch (info.params[2])
+		{
+			case DspParameter::mod_none:
+				break;
+			case DspParameter::mod_dec:
+				core->ArAdvance(r, -1);
+				break;
+			case DspParameter::mod_inc:
+				core->ArAdvance(r, +1);
+				break;
+			case DspParameter::mod_plus_m0:
+				core->ArAdvance(r, core->regs.m[0]);
+				break;
+			case DspParameter::mod_plus_m1:
+				core->ArAdvance(r, core->regs.m[1]);
+				break;
+			case DspParameter::mod_plus_m2:
+				core->ArAdvance(r, core->regs.m[2]);
+				break;
+			case DspParameter::mod_plus_m3:
+				core->ArAdvance(r, core->regs.m[3]);
+				break;
+		}
 	}
 
 	void DspInterpreter::st(AnalyzeInfo& info)
@@ -299,7 +351,8 @@ namespace DSP
 
 	void DspInterpreter::ldsa(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::ldsa\n");
+		core->MoveToReg((int)info.params[0], 
+			core->dsp->ReadDMem( (DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address))) );
 	}
 
 	void DspInterpreter::stsa(AnalyzeInfo& info)
@@ -334,7 +387,7 @@ namespace DSP
 
 	void DspInterpreter::stli(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::stli\n");
+		core->dsp->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
 	}
 
 	void DspInterpreter::clr(AnalyzeInfo& info)
@@ -373,12 +426,42 @@ namespace DSP
 
 	void DspInterpreter::btstl(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::btstl\n");
+		uint16_t val = 0;
+
+		switch (info.params[0])
+		{
+		case DspParameter::a1:
+			val = core->regs.a.m;
+			break;
+		case DspParameter::b1:
+			val = core->regs.b.m;
+			break;
+
+		default:
+			Halt("DspInterpreter::btstl: Invalid parameter\n");
+		}
+
+		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == 0;
 	}
 	
 	void DspInterpreter::btsth(AnalyzeInfo& info)
 	{
-		Halt("DspInterpreter::btsth\n");
+		uint16_t val = 0;
+
+		switch (info.params[0])
+		{
+			case DspParameter::a1:
+				val = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				val = core->regs.b.m;
+				break;
+
+			default:
+				Halt("DspInterpreter::btsth: Invalid parameter\n");
+		}
+
+		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == info.ImmOperand.UnsignedShort;
 	}
 
 }

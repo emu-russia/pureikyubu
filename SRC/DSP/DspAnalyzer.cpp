@@ -516,7 +516,7 @@ namespace DSP
 							{
 								info.instr = DspRegularInstruction::btstl;
 								int d = (instrBits & 0x100) ? 1 : 0;
-								AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+								AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
 								uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 								AddBytes(instrPtr, sizeof(uint16_t), info);
 								AddImmOperand(info, DspParameter::UnsignedShort, imm);
@@ -559,7 +559,7 @@ namespace DSP
 							{
 								info.instr = DspRegularInstruction::btsth;
 								int d = (instrBits & 0x100) ? 1 : 0;
-								AddParam(info, d == 0 ? DspParameter::a : DspParameter::b);
+								AddParam(info, d == 0 ? DspParameter::a1 : DspParameter::b1);
 								uint16_t imm = _BYTESWAP_UINT16(*(uint16_t*)instrPtr);
 								AddBytes(instrPtr, sizeof(uint16_t), info);
 								AddImmOperand(info, DspParameter::UnsignedShort, imm);
