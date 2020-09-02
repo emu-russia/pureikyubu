@@ -595,6 +595,9 @@ namespace DSP
 					regs.b.l = 0;
 				}
 				break;
+			default:
+				Halt("DspCore::MoveToReg: invalid register index: %i\n", reg);
+				break;
 		}
 	}
 
@@ -729,6 +732,9 @@ namespace DSP
 				{
 					val = regs.b.m;
 				}
+				break;
+			default:
+				Halt("DspCore::MoveFromReg: invalid register index: %i\n", reg);
 				break;
 		}
 		return val;
