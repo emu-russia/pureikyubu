@@ -21,5 +21,12 @@
 #include "../Common/String.h"
 
 #include "../GekkoCore/Gekko.h"
+#include "../HighLevel/HighLevel.h"
+#include "../Hardware/HWConfig.h"
+#include "../DSP/DSP.h"
+#include "../GX/GXCore.h"
+#include "../DVD/DVD.h"
+#include "../Hardware/HW.h"
+#include "../Hardware/PI.h"
 
 #include "Debugger.h"

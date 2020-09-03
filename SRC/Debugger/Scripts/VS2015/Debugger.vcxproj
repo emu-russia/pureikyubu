@@ -27,6 +27,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="..\..\Perf.cpp" />
     <ClCompile Include="..\..\Report.cpp" />
     <ClCompile Include="..\..\SamplingProfiler.cpp" />
   </ItemGroup>
@@ -35,6 +36,7 @@
     <ClInclude Include="..\..\Debugger.h" />
     <ClInclude Include="..\..\EventLog.h" />
     <ClInclude Include="..\..\pch.h" />
+    <ClInclude Include="..\..\Perf.h" />
     <ClInclude Include="..\..\Report.h" />
     <ClInclude Include="..\..\SamplingProfiler.h" />
   </ItemGroup>

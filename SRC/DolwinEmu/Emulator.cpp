@@ -75,6 +75,8 @@ void EMUOpen(const std::wstring& filename)
     LoadFile(filename);   // Gekko PC will be set here
     HLEOpen();
 
+    Debug::g_PerfCounters->ResetAllCounters();
+
     emu.loaded = true;
     emu.lastLoaded = filename;
 }
@@ -128,6 +130,7 @@ void EMUCtor()
     JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
     DVD::InitSubsystem();
     HLEInit();
+    Debug::g_PerfCounters = new Debug::PerfCounters();
     emu.init = true;
 }
 
@@ -147,6 +150,7 @@ void EMUDtor()
     Flipper::Gx = nullptr;
     HLEShutdown();
     JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);
+    delete Debug::g_PerfCounters;
     emu.init = false;
 }
 

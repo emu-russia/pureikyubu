@@ -191,6 +191,7 @@
     <ClCompile Include="..\..\UserMain.cpp" />
     <ClCompile Include="..\..\UserMemcards.cpp" />
     <ClCompile Include="..\..\UserPadConfigure.cpp" />
+    <ClCompile Include="..\..\UserPerfMetrics.cpp" />
     <ClCompile Include="..\..\UserSelector.cpp" />
     <ClCompile Include="..\..\UserSettings.cpp" />
     <ClCompile Include="..\..\UserWindow.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="..\..\UserMain.h" />
     <ClInclude Include="..\..\UserMemcards.h" />
     <ClInclude Include="..\..\UserPadConfigure.h" />
+    <ClInclude Include="..\..\UserPerfMetrics.h" />
     <ClInclude Include="..\..\UserSelector.h" />
     <ClInclude Include="..\..\UserSettings.h" />
     <ClInclude Include="..\..\UserWindow.h" />

@@ -188,6 +188,8 @@ namespace DSP
 
 		int repeatCount = 0;		// Internal register for the `rep` instruction.
 
+		int64_t instructionCounter = 0;
+
 	public:
 
 		static const size_t MaxInstructionSizeInBytes = 4;		// max instruction size
@@ -224,6 +226,8 @@ namespace DSP
 		void RemoveAllWatches();
 		void ListWatches(std::list<DspAddress>& watches);
 		bool TestWatch(DspAddress dmemAddress);
+		int64_t GetInstructionCounter();
+		void ResetInstructionCounter();
 
 		// Register access
 

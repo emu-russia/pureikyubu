@@ -6,3 +6,4 @@
 #include "DebugCommands.h"
 #include "EventLog.h"
 #include "SamplingProfiler.h"
+#include "Perf.h"

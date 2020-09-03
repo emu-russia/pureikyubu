@@ -141,12 +141,25 @@ namespace HLE
         return output;
     }
 
+    static Json::Value* OSDateTimeInternal(std::vector<std::string>& args)
+    {
+        wchar_t timeStr[0x100] = { 0, };
+
+        OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), false);
+
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Array;
+
+        output->AddString(nullptr, timeStr);
+
+        return output;
+    }
+
     static Json::Value* OSTimeInternal(std::vector<std::string>& args)
     {
         wchar_t timeStr[0x100] = { 0, };
 
-        // TODO:
-        //OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
+        OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), true);
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;
@@ -187,6 +200,7 @@ namespace HLE
         JDI::Hub.AddCmd("AddMap", AddMap);
         JDI::Hub.AddCmd("AddressByName", AddressByName);
         JDI::Hub.AddCmd("NameByAddress", NameByAddress);
+        JDI::Hub.AddCmd("OSDateTime", OSDateTimeInternal);
         JDI::Hub.AddCmd("OSTime", OSTimeInternal);
         JDI::Hub.AddCmd("GetNearestName", GetNearestNameInternal);
 	}

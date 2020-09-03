@@ -73,6 +73,19 @@
       "args": 1,
       "help": "Check whenever command exists",
       "output": "Bool"
+    },
+
+    "GetPerformanceCounter": {
+      "internal": true,
+      "args": 1,
+      "help": "Get the value of the performance counter",
+      "output": "UInt64"
+    },
+
+    "ResetPerformanceCounter": {
+      "internal": true,
+      "args": 1,
+      "help": "Reset the value of the performance counter"
     }
 
   }

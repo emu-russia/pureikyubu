@@ -175,9 +175,6 @@ namespace Gekko
         void ClearInterrupt();
         void Exception(Gekko::Exception code);
 
-        size_t GetOpcodeCount() { return ops; }
-        void ResetOpcodeCount() { ops = 0; }
-
         void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
 
 #pragma region "Memory interface"
@@ -203,7 +200,7 @@ namespace Gekko
 
 #pragma endregion "Memory interface"
 
-#pragma region "Breakpoints"
+#pragma region "Debug"
 
         void AddBreakpoint(uint32_t addr);
         void RemoveBreakpoint(uint32_t addr);
@@ -216,7 +213,10 @@ namespace Gekko
         void ToggleBreakpoint(uint32_t addr);
         bool IsBreakpoint(uint32_t addr);
 
-#pragma endregion "Breakpoints"
+        int64_t GetInstructionCounter() { return ops; }
+        void ResetInstructionCounter() { ops = 0; }
+
+#pragma endregion "Debug"
 
     };
 

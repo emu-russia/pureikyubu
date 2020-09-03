@@ -4,7 +4,7 @@
 
 namespace UI
 {
-	JdiClient * Jdi;
+	JdiClient* Jdi;
 
 	JdiClient::JdiClient()
 	{
@@ -15,11 +15,11 @@ namespace UI
 			UI::DolwinError(L"Error", L"Failed to load DolwinEmu.dll. This component contains the emulator core and is required for correct operation.");
 		}
 
-		CallJdi = (CALL_JDI) GetProcAddress(dll, "CallJdi");
-		CallJdiNoReturn = (CALL_JDI_NO_RETURN) GetProcAddress(dll, "CallJdiNoReturn");
-		CallJdiReturnInt = (CALL_JDI_RETURN_INT) GetProcAddress(dll, "CallJdiReturnInt");
-		CallJdiReturnString = (CALL_JDI_RETURN_STRING) GetProcAddress(dll, "CallJdiReturnString");
-		CallJdiReturnBool = (CALL_JDI_RETURN_BOOL) GetProcAddress(dll, "CallJdiReturnBool");
+		CallJdi = (CALL_JDI)GetProcAddress(dll, "CallJdi");
+		CallJdiNoReturn = (CALL_JDI_NO_RETURN)GetProcAddress(dll, "CallJdiNoReturn");
+		CallJdiReturnInt = (CALL_JDI_RETURN_INT)GetProcAddress(dll, "CallJdiReturnInt");
+		CallJdiReturnString = (CALL_JDI_RETURN_STRING)GetProcAddress(dll, "CallJdiReturnString");
+		CallJdiReturnBool = (CALL_JDI_RETURN_BOOL)GetProcAddress(dll, "CallJdiReturnBool");
 
 		JdiAddNode = (JDI_ADD_NODE)GetProcAddress(dll, "JdiAddNode");
 		JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
@@ -230,6 +230,30 @@ namespace UI
 	void JdiClient::Reset()
 	{
 		ExecuteCommand("reset");
+	}
+
+	// Performance Counters, SystemTime
+
+	int64_t JdiClient::GetPerformanceCounter(int counter)
+	{
+		Json::Value* value = CallJdi(("GetPerformanceCounter " + std::to_string(counter)).c_str());
+		int64_t res = value->value.AsInt;
+		delete value;
+		return res;
+	}
+
+	void JdiClient::ResetPerformanceCounter(int counter)
+	{
+		ExecuteCommand(("ResetPerformanceCounter " + std::to_string(counter)).c_str());
+	}
+
+	std::string JdiClient::GetSystemTime()
+	{
+		uint64_t tbr = 0;
+		Json::Value* value = CallJdi("OSDateTime");
+		std::string res = Util::WstringToString(value->children.front()->value.AsString);
+		delete value;
+		return res;
 	}
 
 }

@@ -7,10 +7,10 @@ constexpr int WIN_STYLE = WS_OVERLAPPED | WS_SYSMENU | WS_CLIPCHILDREN | WS_CLIP
 /* Status bar parts enumerator */
 enum class STATUS_ENUM
 {
-    Progress = 1,        /* current emu state   */
-    Fps,                 /* fps counter         */
-    Timing,              /* * Obsolete *        */
-    Time,                /* time counter        */
+    Progress = 1,       // Current emu state / Gekko/DSP performance counters
+    VIs,                // VI / second
+    PEs,                // PE DrawDone / second
+    SystemTime,         // OS System Time
 };
 
 void SetStatusText(STATUS_ENUM sbPart, const std::wstring & text, bool post=false);

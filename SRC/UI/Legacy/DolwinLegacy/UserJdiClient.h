@@ -85,6 +85,12 @@ namespace UI
 		void Stop();
 		void Reset();
 
+		// Performance Counters, SystemTime
+
+		int64_t GetPerformanceCounter(int counter);
+		void ResetPerformanceCounter(int counter);
+		std::string GetSystemTime();
+
 	};
 
 	extern JdiClient * Jdi;

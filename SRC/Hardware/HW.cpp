@@ -100,6 +100,7 @@ namespace Flipper
         VIClose();      // close GDI (if opened)
         DIClose();      // release streaming buffer
         MIClose();
+        PIClose();
 
         PADClose();
         GXClose();

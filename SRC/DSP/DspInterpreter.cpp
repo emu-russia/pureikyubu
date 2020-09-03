@@ -187,6 +187,8 @@ namespace DSP
 				case DspRegularInstruction::btstl: btstl(info); break;
 				case DspRegularInstruction::btsth: btsth(info); break;
 			}
+
+			core->instructionCounter++;
 		}
 		else
 		{
@@ -237,6 +239,8 @@ namespace DSP
 				case DspParallelMemInstruction::nop:
 					break;
 			}
+
+			core->instructionCounter += 2;
 		}
 
 		// If there were no control transfers, increase pc by the instruction size
