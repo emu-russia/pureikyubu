@@ -212,6 +212,16 @@
       "internal": true,
       "args": 1,
       "output": "Array: [Bool, UInt32 targetAddress]"
+    },
+
+    "nop": {
+      "help": "Insert `nop` at virtual address",
+      "hint": "<vaddr>",
+      "args": 1,
+      "usage": [
+        "Syntax: nop <virtual_address>",
+        "Example: nop 0x80003100"
+      ]
     }
 
   }

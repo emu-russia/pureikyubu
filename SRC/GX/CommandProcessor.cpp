@@ -4,6 +4,8 @@
 
 using namespace Debug;
 
+void GXWriteFifo(uint8_t dataPtr[32]);
+
 namespace GX
 {
 	#pragma region "Dealing with registers"
@@ -84,8 +86,7 @@ namespace GX
 
 			// TODO: Refactoring hacks
 
-			void GXWriteFifo(uint8_t dataPtr[32]);
-			GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
+			::GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
 
 			//gx->fifo->WriteBytes(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
 

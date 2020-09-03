@@ -8,6 +8,7 @@
 #include <map>
 #include <atomic>
 #include <cassert>
+#include <cstring>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"

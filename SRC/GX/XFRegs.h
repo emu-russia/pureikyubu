@@ -219,7 +219,7 @@ namespace GX
 	};
 
 	// Texgen inrow enum
-	enum class TexGenInrow
+	enum TexGenInrow : uint8_t
 	{
 		XF_TEXGEN_INROW_POSMTX = 0,
 		XF_TEXGEN_INROW_NORMAL,

@@ -202,7 +202,7 @@ namespace GX
 
 	// Attribute types (from VCD register)
 
-	enum class AttrType
+	enum AttrType : uint8_t
 	{
 		VCD_NONE = 0,           // attribute stage disabled
 		VCD_DIRECT,             // direct data
@@ -212,21 +212,33 @@ namespace GX
 
 	// Vertex Components Count (from VAT register)
 
-	enum class VatCount
+	enum VatPosCount : uint8_t
 	{
 		VCNT_POS_XY = 0,		// two (x,y)
 		VCNT_POS_XYZ = 1,		// three (x,y,z)
+	};
+
+	enum VatNormCount : uint8_t
+	{
 		VCNT_NRM_XYZ = 0,		// three normals
 		VCNT_NRM_NBT = 1,		// nine normals
+	};
+
+	enum VatColorCount : uint8_t
+	{
 		VCNT_CLR_RGB = 0,		// three (r,g,b)
 		VCNT_CLR_RGBA = 1,		// four (r,g,b,a)
+	};
+
+	enum VatTexCoordCount : uint8_t
+	{
 		VCNT_TEX_S = 0,			// one (s)
 		VCNT_TEX_ST = 1			// two (s,t)
 	};
 
 	// Vertex Component Format (from VAT register)
 
-	enum class VatFormat
+	enum VatCompFormat : uint8_t
 	{
 		// For Components (normal, coords)
 		VFMT_U8 = 0,			// ubyte
@@ -234,8 +246,12 @@ namespace GX
 		VFMT_U16 = 2,			// ushort
 		VFMT_S16 = 3,			// short
 		VFMT_F32 = 4,			// float
+	};
 
-		// For Colors
+	// Vertex Color Format (from VAT register)
+
+	enum VatColorFormat : uint8_t
+	{
 		VFMT_RGB565 = 0,		// 16 bit 565 (three comp)
 		VFMT_RGB8 = 1,			// 24 bit 888 (three comp)
 		VFMT_RGBX8 = 2,			// 32 bit 888x (three comp)
@@ -270,6 +286,9 @@ namespace GX
 		};
 		uint32_t bits;
 	};
+
+	// /mnt/c/Work/dolwin/SRC/Hardware/../GX/CPRegs.h:304:22: warning: ‘GX::VCD_Lo::<unnamed struct>::Normal’ is too small to hold all values of ‘enum GX::AttrType’
+	// False positive??
 
 	union VCD_Lo
 	{
@@ -312,17 +331,17 @@ namespace GX
 	{
 		struct
 		{
-			VatCount	poscnt : 1;
-			VatFormat	posfmt : 3;
+			VatPosCount	poscnt : 1;
+			VatCompFormat	posfmt : 3;
 			size_t		posshft : 5;			// Location of decimal point from LSB. This shift applies to all u/short components and to u/byte components where ByteDequant is asserted
-			VatCount    nrmcnt : 1;
-			VatFormat	nrmfmt : 3;				// Normal location of decimal point predefined as follow: Byte: 6, Short: 14
-			VatCount    col0cnt : 1;
-			VatFormat	col0fmt : 3;
-			VatCount    col1cnt : 1;
-			VatFormat	col1fmt : 3;
-			VatCount    tex0cnt : 1;
-			VatFormat	tex0fmt : 3;
+			VatNormCount    nrmcnt : 1;
+			VatCompFormat	nrmfmt : 3;				// Normal location of decimal point predefined as follow: Byte: 6, Short: 14
+			VatColorCount    col0cnt : 1;
+			VatColorFormat	col0fmt : 3;
+			VatColorCount    col1cnt : 1;
+			VatColorFormat	col1fmt : 3;
+			VatTexCoordCount    tex0cnt : 1;
+			VatCompFormat	tex0fmt : 3;
 			size_t	    tex0shft : 5;
 			bool		bytedeq : 1;			// Shift applies for u/byte and u/short components of position and texture attributes.
 			bool		nrmidx3 : 1;			// When nine normals selected in indirect mode, input will be treated as three staggered indices (one per triple biased by component size), into normal table.
@@ -334,17 +353,17 @@ namespace GX
 	{
 		struct
 		{
-			VatCount    tex1cnt : 1;
-			VatFormat	tex1fmt : 3;
+			VatTexCoordCount    tex1cnt : 1;
+			VatCompFormat	tex1fmt : 3;
 			size_t	    tex1shft : 5;
-			VatCount    tex2cnt : 1;
-			VatFormat	tex2fmt : 3;
+			VatTexCoordCount    tex2cnt : 1;
+			VatCompFormat	tex2fmt : 3;
 			size_t	    tex2shft : 5;
-			VatCount    tex3cnt : 1;
-			VatFormat	tex3fmt : 3;
+			VatTexCoordCount    tex3cnt : 1;
+			VatCompFormat	tex3fmt : 3;
 			size_t	    tex3shft : 5;
-			VatCount    tex4cnt : 1;
-			VatFormat	tex4fmt : 3;
+			VatTexCoordCount    tex4cnt : 1;
+			VatCompFormat	tex4fmt : 3;
 			bool		vcache : 1;
 		};
 		uint32_t bits;
@@ -355,14 +374,14 @@ namespace GX
 		struct
 		{
 			size_t		tex4shft : 5;
-			VatCount    tex5cnt : 1;
-			VatFormat	tex5fmt : 3;
+			VatTexCoordCount    tex5cnt : 1;
+			VatCompFormat	tex5fmt : 3;
 			size_t	    tex5shft : 5;
-			VatCount    tex6cnt : 1;
-			VatFormat	tex6fmt : 3;
+			VatTexCoordCount    tex6cnt : 1;
+			VatCompFormat	tex6fmt : 3;
 			size_t	    tex6shft : 5;
-			VatCount    tex7cnt : 1;
-			VatFormat	tex7fmt : 3;
+			VatTexCoordCount    tex7cnt : 1;
+			VatCompFormat	tex7fmt : 3;
 			size_t		tex7shft : 5;
 		};
 		uint32_t bits;

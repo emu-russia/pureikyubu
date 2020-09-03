@@ -22,6 +22,7 @@
     <ClCompile Include="..\..\DSP.cpp" />
     <ClCompile Include="..\..\DspAccel.cpp" />
     <ClCompile Include="..\..\DspAdpcm.cpp" />
+    <ClCompile Include="..\..\DspAlu.cpp" />
     <ClCompile Include="..\..\DspAnalyzer.cpp" />
     <ClCompile Include="..\..\DspCommands.cpp" />
     <ClCompile Include="..\..\DspCore.cpp" />
@@ -29,8 +30,11 @@
     <ClCompile Include="..\..\DspDma.cpp" />
     <ClCompile Include="..\..\DspInterpreter.cpp" />
     <ClCompile Include="..\..\DspMailbox.cpp" />
-    <ClCompile Include="..\..\DspMultiply.cpp" />
+    <ClCompile Include="..\..\DspMultiplyOps.cpp" />
     <ClCompile Include="..\..\DspParallelMemOps.cpp" />
+    <ClCompile Include="..\..\DspParallelOps.cpp" />
+    <ClCompile Include="..\..\DspRegularOps.cpp" />
+    <ClCompile Include="..\..\DspStack.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -42,12 +46,14 @@
     <ClInclude Include="..\..\DSP.h" />
     <ClInclude Include="..\..\DspAccel.h" />
     <ClInclude Include="..\..\DspAdpcm.h" />
+    <ClInclude Include="..\..\DspAlu.h" />
     <ClInclude Include="..\..\DspAnalyzer.h" />
     <ClInclude Include="..\..\DspCommands.h" />
     <ClInclude Include="..\..\DspCore.h" />
     <ClInclude Include="..\..\DspDisasm.h" />
     <ClInclude Include="..\..\DspDma.h" />
     <ClInclude Include="..\..\DspInterpreter.h" />
+    <ClInclude Include="..\..\DspStack.h" />
     <ClInclude Include="..\..\pch.h" />
   </ItemGroup>
   <ItemGroup>
@@ -133,7 +139,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -148,7 +154,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
@@ -163,7 +169,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
@@ -182,7 +188,7 @@
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_WINDOWS;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>

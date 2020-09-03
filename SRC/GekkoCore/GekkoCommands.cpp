@@ -707,6 +707,30 @@ namespace Gekko
 		return output;
 	}
 
+	static Json::Value* CmdNop(std::vector<std::string>& args)
+	{
+		if (!JDI::Hub.ExecuteFastBool("IsLoaded"))
+		{
+			return nullptr;
+		}
+
+		uint32_t ea = strtoul(args[1].c_str(), nullptr, 0);
+		uint32_t pa = Gekko::BadAddress;
+		if (Gekko::Gekko)
+		{
+			int WIMG;
+			pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
+		}
+		if (pa == Gekko::BadAddress)
+		{
+			return nullptr;
+		}
+
+		MIWriteWord(pa, 0x6000'0000);
+
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", cmd_run);
@@ -748,5 +772,7 @@ namespace Gekko
 
 		JDI::Hub.AddCmd("GekkoDisasm", CmdGekkoDisasm);
 		JDI::Hub.AddCmd("GekkoIsBranch", CmdGekkoIsBranch);
+
+		JDI::Hub.AddCmd("nop", CmdNop);
 	}
 }
