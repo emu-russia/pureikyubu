@@ -17,10 +17,10 @@ Debug::GekkoDebug* gekkoDebug;
 /* Set default values of statusbar parts */
 static void ResetStatusBar()
 {
-    SetStatusText(STATUS_ENUM::Progress, L"Idle");
-    SetStatusText(STATUS_ENUM::Fps,      L"");
-    SetStatusText(STATUS_ENUM::Timing,   L"");
-    SetStatusText(STATUS_ENUM::Time,     L"");
+    SetStatusText(STATUS_ENUM::Progress,    L"Idle");
+    SetStatusText(STATUS_ENUM::VIs,         L"");
+    SetStatusText(STATUS_ENUM::PEs,         L"");
+    SetStatusText(STATUS_ENUM::SystemTime,  L"");
 }
 
 /* Create status bar window */
@@ -72,7 +72,7 @@ std::wstring GetStatusText(STATUS_ENUM sbPart)
 {
     static auto sbText = std::wstring(256, 0);
 
-    if (wnd.hStatusWindow == NULL) return NULL;
+    if (wnd.hStatusWindow == NULL) return L"";
 
     SendMessage(wnd.hStatusWindow, SB_GETTEXT, (WPARAM)(sbPart), (LPARAM)sbText.data());
     return sbText;
@@ -560,11 +560,15 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
     }
     
     SetWindowText(wnd.hMainWindow, newTitle.c_str());
+
+    UI::g_perfMetrics = new UI::PerfMetrics();
 }
 
 // emulation stop in progress
 void OnMainWindowClosed()
 {
+    delete UI::g_perfMetrics;
+
     // restore current working directory
     SetCurrentDirectory(wnd.cwd.c_str());
 

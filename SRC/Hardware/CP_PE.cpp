@@ -6,13 +6,12 @@ using namespace Debug;
 
 // TODO: Refactoring hacks
 
-size_t done_num;   // number of drawdone (PE_FINISH) events
+size_t pe_done_num;   // number of drawdone (PE_FINISH) events
 
 static void CPDrawDoneCallback()
 {
-    done_num++;
-    vi.frames++;
-    if (done_num == 1)
+    pe_done_num++;
+    if (pe_done_num == 1)
     {
         vi.xfb = 0;     // disable VI output
     }
@@ -22,7 +21,6 @@ static void CPDrawDoneCallback()
 
 static void CPDrawTokenCallback(uint16_t tokenValue)
 {
-    vi.frames++;
     vi.xfb = 0;     // disable VI output
 
     Flipper::Gx->CPDrawTokenCallback(tokenValue);

@@ -67,6 +67,26 @@
 #define PI_CONFIG_MEMRSTB 0x00000002
 #define PI_CONFIG_DIRSTB 0x00000004
 
+enum class PIInterruptSource
+{
+    PI,
+    RSW,
+    DI,
+    SI,
+    EXI,
+    AI,
+    DSP,
+    MEM,
+    VI,
+    PE_TOKEN,
+    PE_FINISH,
+    CP,
+    DEBUG,
+    HSP,
+
+    Max,
+};
+
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -78,6 +98,7 @@ struct PIControl
     bool        rswhack;        // reset "switch" hack
     bool        log;            // log interrupts
     uint32_t    consoleVer;     // console version
+    int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters
 };
 
 extern  PIControl pi;
@@ -85,3 +106,4 @@ extern  PIControl pi;
 void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)
 void PIOpen(HWConfig * config);
+void PIClose();

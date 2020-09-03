@@ -106,12 +106,20 @@
       "output": "Array: [String] / [empty string] (not found)"
     },
 
+    "OSDateTime": {
+      "internal": true,
+      "help": "Convert Gekko ticks to human-readable time (including date)",
+      "usage": [
+        "Syntax: OSDateTime"
+      ],
+      "output": "Array: [String]"
+    },
+
     "OSTime": {
       "internal": true,
-      "help": "Convert Geeko ticks to human-readable time",
-      "args": 1,
+      "help": "Convert Gekko ticks to human-readable time (no date)",
       "usage": [
-        "Syntax: OSTime <GekkoTbrValue>"
+        "Syntax: OSTime"
       ],
       "output": "Array: [String]"
     },

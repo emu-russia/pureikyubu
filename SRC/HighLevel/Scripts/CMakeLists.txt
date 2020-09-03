@@ -10,4 +10,5 @@ add_library (HighLevel SHARED
 	../OS.cpp
 	../Stdc.cpp
 	../Symbols.cpp
+	../TimeFormat.cpp
 )

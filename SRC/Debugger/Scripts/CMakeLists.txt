@@ -3,4 +3,5 @@ add_library (Debugger SHARED
 	../EventLog.cpp
 	../Report.cpp
 	../SamplingProfiler.cpp
+	../Perf.cpp
 )

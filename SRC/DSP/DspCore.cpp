@@ -464,6 +464,16 @@ namespace DSP
 		return found;
 	}
 
+	int64_t DspCore::GetInstructionCounter()
+	{
+		return instructionCounter;
+	}
+
+	void DspCore::ResetInstructionCounter()
+	{
+		instructionCounter = 0;
+	}
+
 	// Execute single instruction (by interpreter)
 	void DspCore::Step()
 	{

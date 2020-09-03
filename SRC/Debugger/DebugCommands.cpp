@@ -261,6 +261,24 @@ namespace Debug
         return output;
     }
 
+    // Get the value of the debug counter
+    static Json::Value* CmdGetPerformanceCounter(std::vector<std::string>& args)
+    {
+        PerfCounter counter = (PerfCounter)strtoul(args[1].c_str(), nullptr, 0);
+        Json::Value* output = new Json::Value();
+        output->type = Json::ValueType::Int;
+        output->value.AsInt = g_PerfCounters->GetCounter(counter);
+        return output;
+    }
+
+    // Reset the value of the debug counter
+    static Json::Value* CmdResetPerformanceCounter(std::vector<std::string>& args)
+    {
+        PerfCounter counter = (PerfCounter)strtoul(args[1].c_str(), nullptr, 0);
+        g_PerfCounters->ResetCounter(counter);
+        return nullptr;
+    }
+
     void Reflector()
     {
         JDI::Hub.AddCmd("script", cmd_script);
@@ -271,5 +289,7 @@ namespace Debug
         JDI::Hub.AddCmd("qd", QueryDebugMessages);
         JDI::Hub.AddCmd("help", ShowHelp);
         JDI::Hub.AddCmd("IsCommandExists", IsCommandExists);
+        JDI::Hub.AddCmd("GetPerformanceCounter", CmdGetPerformanceCounter);
+        JDI::Hub.AddCmd("ResetPerformanceCounter", CmdResetPerformanceCounter);
     }
 }

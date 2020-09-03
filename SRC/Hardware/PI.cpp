@@ -60,6 +60,13 @@ void PIAssertInt(uint32_t mask)
         }
     }
 
+#ifdef _LINUX
+    PIInterruptSource intSource = (PIInterruptSource)(31 - __builtin_clz(mask));
+#else
+    PIInterruptSource intSource = (PIInterruptSource)(31 - __lzcnt(mask));
+#endif
+    pi.intCounters[(size_t)intSource]++;
+
     if (pi.intsr & pi.intmr)
     {
         Gekko::Gekko->AssertInterrupt();
@@ -228,4 +235,14 @@ void PIOpen(HWConfig* config)
     MISetTrap(32, PI_BASE , PI_CPRegRead, PI_CPRegWrite);
     MISetTrap(32, PI_TOP  , PI_CPRegRead, PI_CPRegWrite);
     MISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
+
+    // Reset interrupt counters
+    for (size_t i = 0; i < (size_t)PIInterruptSource::Max; i++)
+    {
+        pi.intCounters[i] = 0;
+    }
+}
+
+void PIClose()
+{
 }

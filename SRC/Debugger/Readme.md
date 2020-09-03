@@ -5,6 +5,7 @@ This component deals with the usual debugging tasks that all developers want to 
 - Collecting debug messages
 - Tracing
 - Code profiling
+- Performance counters
 
 This component no longer has anything to do with the debug console. The debug console code has been moved to the category of user interfaces and moved to the UI\\Legacy folder.
 

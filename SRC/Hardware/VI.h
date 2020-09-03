@@ -106,7 +106,7 @@ struct VIControl
     RGB*        gfxbuf;     // DIB
 
     bool        log;        // do debugger log output
-    size_t      frames;     // frames rendered by VI/GX
+    size_t      frames;     // frames rendered by VI
 
     int64_t     one_second;     // one CPU second in timer ticks
 

@@ -37,6 +37,7 @@
 #include "DVDBanner.h"			// banner utilities for selector
 #include "SjisTable.h"
 #include "UserCommands.h"
+#include "UserPerfMetrics.h"
 
 #include "../../../../ThirdParty/fmt/fmt/format.h"
 #include "../../../../ThirdParty/fmt/fmt/printf.h"

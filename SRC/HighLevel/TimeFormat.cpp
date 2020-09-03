@@ -15,6 +15,7 @@ namespace HLE
         //      2: assume X - 1/10000000 sec, Y - 1/40500000 sec,
         //         FILETIME = (GCTIME * Y) / X
 
+#ifndef _LINUX
         // coversion GCTIME -> FILETIME
         #define MAGIK 0x0713AD7857941000
         double x = 1.0 / 10000000.0, y = 1.0 / 40500000.0;
@@ -26,11 +27,12 @@ namespace HLE
         FileTimeToSystemTime(&fileTime, &sysTime);
 
         // format string
-        static const wchar_t* mnstr[12] =
-        { L"Jan", L"Feb", L"Mar", L"Apr",
-          L"May", L"Jun", L"Jul", L"Aug",
-          L"Sep", L"Oct", L"Nov", L"Dec"
+        static const wchar_t* mnstr[12] = {
+            L"Jan", L"Feb", L"Mar", L"Apr",
+            L"May", L"Jun", L"Jul", L"Aug",
+            L"Sep", L"Oct", L"Nov", L"Dec"
         };
+
         if (noDate)
         {
             swprintf_s(gcTime, 255, L"%02i:%02i:%02i:%03i",
@@ -38,10 +40,11 @@ namespace HLE
         }
         else
         {
-            wprintf_s(gcTime, 255, L"%i %s %i %02i:%02i:%02i:%03i",
+            swprintf_s(gcTime, 255, L"%i %s %i %02i:%02i:%02i:%03i",
                 sysTime.wDay, mnstr[sysTime.wMonth - 1], sysTime.wYear,
                 sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
         }
+#endif
     }
 
 }
