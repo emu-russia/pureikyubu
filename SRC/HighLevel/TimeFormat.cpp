@@ -4,47 +4,64 @@ namespace HLE
 {
 
     // Convert GC time to human-usable time string;
-    // example output : "30 Jun 2004 3:06:14:127"
+    // Example output: "30 Jun 2004 3:06:14:127"
     void OSTimeFormat(wchar_t gcTime[256], uint64_t tbr, bool noDate)
     {
-        // FILETIME - number of 1/10000000 intervals, since Jan 1 1601
-        // GC time  - number of 1/40500000 sec intervals, since Jan 1 2000
-        // To convert GCTIME -> FILETIME :
-        //      1: adjust GCTIME by number of 1/10000000 intervals
-        //         between Jan 1 1601 and Jan 1 2000.
-        //      2: assume X - 1/10000000 sec, Y - 1/40500000 sec,
-        //         FILETIME = (GCTIME * Y) / X
-
-#ifndef _LINUX
-        // coversion GCTIME -> FILETIME
-        #define MAGIK 0x0713AD7857941000
-        double x = 1.0 / 10000000.0, y = 1.0 / 40500000.0;
-        tbr += MAGIK;
-        uint64_t ft = (uint64_t)(((double)(int64_t)tbr * y) / x);
-        FILETIME fileTime; SYSTEMTIME sysTime;
-        fileTime.dwHighDateTime = (uint32_t)(ft >> 32);
-        fileTime.dwLowDateTime = (uint32_t)(ft & 0x00000000ffffffff);
-        FileTimeToSystemTime(&fileTime, &sysTime);
-
-        // format string
         static const wchar_t* mnstr[12] = {
             L"Jan", L"Feb", L"Mar", L"Apr",
             L"May", L"Jun", L"Jul", L"Aug",
             L"Sep", L"Oct", L"Nov", L"Dec"
         };
 
+        static const int dayMon[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        static const int dayMonLeap[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+        #define IsLeapYear(y)  ((y % 1000) == 0 || (y % 4) == 0)
+
+        int64_t ticksPerMs = Gekko::Gekko->OneMillisecond();
+        int64_t ms = tbr / ticksPerMs;
+        int64_t msPerDay = 24 * 60 * 60 * 1000;
+        int64_t days = ms / msPerDay;
+        int64_t msDay = ms - days * msPerDay;
+
+        // Hour, Minute, Second
+
+        int h = (int)(msDay / (60 * 60 * 1000));
+        msDay -= h * (60 * 60 * 1000);
+        int m = (int)(msDay / (60 * 1000));
+        msDay -= m * (60 * 1000);
+        int s = (int)(msDay / 1000);
+        msDay -= s * 1000;
+
+        int year = 2000;
+        int mon = 0;
+
+        // Year, Month, Day
+
+        while (days >= (IsLeapYear(year) ? 366 : 365))
+        {
+            days -= IsLeapYear(year) ? 366 : 365;
+            year++;
+        }
+
+        while (days >= (IsLeapYear(year) ? dayMonLeap[mon] : dayMon[mon]))
+        {
+            days -= IsLeapYear(year) ? dayMonLeap[mon] : dayMon[mon];
+            mon++;
+        }
+
+        int day = (int)(days + 1);
+
         if (noDate)
         {
             swprintf_s(gcTime, 255, L"%02i:%02i:%02i:%03i",
-                sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
+                h, m, s, (int)msDay);
         }
         else
         {
             swprintf_s(gcTime, 255, L"%i %s %i %02i:%02i:%02i:%03i",
-                sysTime.wDay, mnstr[sysTime.wMonth - 1], sysTime.wYear,
-                sysTime.wHour, sysTime.wMinute, sysTime.wSecond, sysTime.wMilliseconds);
+                day, mnstr[mon], year,
+                h, m, s, (int)msDay);
         }
-#endif
     }
 
 }
