@@ -5,7 +5,7 @@ namespace Debug
 {
 
 	// Machine State Flags
-	#define MSR_BIT(n)			(1 << (31-n))
+	#define MSR_BIT(n)			(1 << (31-(n)))
 	#define MSR_RESERVED        0xFFFA0088
 	#define MSR_POW             (MSR_BIT(13))               // Power management enable
 	#define MSR_ILE             (MSR_BIT(15))               // Exception little-endian mode

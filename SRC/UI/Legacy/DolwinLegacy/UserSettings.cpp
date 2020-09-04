@@ -159,13 +159,7 @@ static void SaveSettings()              // OK pressed
     {
         HWND hDlg = hChildDlg[2];
         int selected = (int)SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETCURSEL, 0, 0);
-        if(selected == sizeof(consoleVersion)/8 - 1)
-        {
-            SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETLBTEXT, selected, (LPARAM)buf.data());
-            uint32_t ver = wcstoul(buf.data(), NULL, 0);
-            UI::Jdi->SetConfigInt(USER_CONSOLE, ver, USER_HW);
-        }
-        else UI::Jdi->SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
+        UI::Jdi->SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
         GetDlgItemText(hDlg, IDC_BOOTROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
         UI::Jdi->SetConfigString(USER_BOOTROM, Util::WstringToString(buf), USER_HW);
