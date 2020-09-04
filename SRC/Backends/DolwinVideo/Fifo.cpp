@@ -21,6 +21,8 @@ bool frame_done = true;
 
 bool logDrawCommands = false;
 
+bool disableDraw = false;
+
 // ---------------------------------------------------------------------------
 
 // stage callbacks
@@ -1160,8 +1162,11 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                     vtx = &quad[n];
                     FifoWalk(vatnum, fifo);
                 }
-                GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
-                GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
+                if (!disableDraw)
+                {
+                    GL_RenderTriangle(&quad[0], &quad[1], &quad[2]);
+                    GL_RenderTriangle(&quad[0], &quad[2], &quad[3]);
+                }
                 vtxnum -= 4;
             }
             break;
@@ -1200,7 +1205,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                     vtx = &tri[n];
                     FifoWalk(vatnum, fifo);
                 }
-                GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
+                if (!disableDraw)
+                {
+                    GL_RenderTriangle(&tri[0], &tri[1], &tri[2]);
+                }
                 vtxnum -= 3;
             }
             break;
@@ -1247,11 +1255,14 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                 FifoWalk(vatnum, fifo);
                 if(c > 2) c = 0;
 
-                GL_RenderTriangle(
-                    &tri[order[0]],
-                    &tri[order[1]], 
-                    &tri[order[2]]
-                );
+                if (!disableDraw)
+                {
+                    GL_RenderTriangle(
+                        &tri[order[0]],
+                        &tri[order[1]],
+                        &tri[order[2]]
+                    );
+                }
 
                 tmp      = order[0];
                 order[0] = order[1];
@@ -1302,11 +1313,14 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                 FifoWalk(vatnum, fifo);
                 c = (c == 2) ? (c = 1) : (c = 2);
 
-                GL_RenderTriangle(
-                    &tri[0],
-                    &tri[order[0]],
-                    &tri[order[1]]
-                );
+                if (!disableDraw)
+                {
+                    GL_RenderTriangle(
+                        &tri[0],
+                        &tri[order[0]],
+                        &tri[order[1]]
+                    );
+                }
 
                 // order[0] <-> order[1]
                 tmp      = order[0];
@@ -1349,7 +1363,11 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                 FifoWalk(vatnum, fifo);
                 vtx = &v[1];
                 FifoWalk(vatnum, fifo);
-                GL_RenderLine(&v[0], &v[1]);
+
+                if (!disableDraw)
+                {
+                    GL_RenderLine(&v[0], &v[1]);
+                }
                 vtxnum -= 2;
             }
             break;
@@ -1394,10 +1412,13 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
                 FifoWalk(vatnum, fifo);
                 if(c > 1) c = 0;
 
-                GL_RenderLine(
-                    &v[order[0]],
-                    &v[order[1]]
-                );
+                if (!disableDraw)
+                {
+                    GL_RenderLine(
+                        &v[order[0]],
+                        &v[order[1]]
+                    );
+                }
 
                 tmp      = order[0];
                 order[0] = order[1];
@@ -1436,7 +1457,10 @@ static void GxCommand(GX_FromFuture::FifoProcessor * fifo)
             {
                 vtx = &p;
                 FifoWalk(vatnum, fifo);
-                GL_RenderPoint(vtx);
+                if (!disableDraw)
+                {
+                    GL_RenderPoint(vtx);
+                }
             }
             break;
         }

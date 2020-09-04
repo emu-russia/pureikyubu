@@ -115,9 +115,6 @@ namespace Gekko
 
     void GekkoCore::TestBreakpoints()
     {
-        if (!EnableTestBreakpoints)
-            return;
-
         if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
         {
             oneShotBreakpoint = BadAddress;
@@ -145,9 +142,6 @@ namespace Gekko
 
     void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
     {
-        if (!EnableTestReadBreakpoints)
-            return;
-
         uint32_t addr = BadAddress;
 
         breakPointsLock.Lock();
@@ -169,9 +163,6 @@ namespace Gekko
 
     void GekkoCore::TestWriteBreakpoints(uint32_t accessAddress)
     {
-        if (!EnableTestWriteBreakpoints)
-            return;
-
         uint32_t addr = BadAddress;
 
         breakPointsLock.Lock();
@@ -194,6 +185,7 @@ namespace Gekko
     void GekkoCore::AddOneShotBreakpoint(uint32_t addr)
     {
         oneShotBreakpoint = addr;
+        EnableTestBreakpoints = true;
     }
 
     void GekkoCore::ToggleBreakpoint(uint32_t addr)

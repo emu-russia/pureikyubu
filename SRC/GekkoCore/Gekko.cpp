@@ -9,7 +9,10 @@ namespace Gekko
     {
         GekkoCore* core = (GekkoCore*)Parameter;
 
-        core->TestBreakpoints();
+        if (core->EnableTestBreakpoints)
+        {
+            core->TestBreakpoints();
+        }
 
         core->interp->ExecuteOpcode();
 
@@ -21,15 +24,12 @@ namespace Gekko
     GekkoCore::GekkoCore()
     {
         interp = new Interpreter(this);
-        assert(interp);
 
         jitc = new Jitc(this);
-        assert(jitc);
 
         JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
         gekkoThread = new Thread(GekkoThreadProc, true, this, "GekkoCore");
-        assert(gekkoThread);
 
         Reset();
 

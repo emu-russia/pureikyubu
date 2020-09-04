@@ -326,3 +326,31 @@ JdiAddCmd(const char* name, JDI::CmdDelegate command)
 {
     JDI::Hub.AddCmd(name, command);
 }
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiReturnJson(const char* request, char * reply, size_t replySize)
+{
+    std::vector<std::string> args;
+
+    Tokenize(request, args);
+
+    Json::Value *value = JDI::Hub.Execute(args);
+
+    Json json;
+
+    Json::Value * rootObj = json.root.AddObject(nullptr);
+    value->SetName("result");
+    rootObj->children.push_back(value);
+    value->parent = rootObj;
+
+    size_t actualSize = 0;
+    json.Serialize(reply, replySize, actualSize);
+
+    reply[actualSize] = 0;
+}

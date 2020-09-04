@@ -26,7 +26,7 @@ namespace HLE
 
     static Json::Value* cmd_name(std::vector<std::string>& args)
     {
-        uint32_t address = address = strtoul(args[1].c_str(), NULL, 0);
+        uint32_t address = strtoul(args[1].c_str(), NULL, 0);
         if (address != 0)
         {
             Report(Channel::HLE, "New symbol: %08X %s\n", address, args[2].c_str());
@@ -145,7 +145,14 @@ namespace HLE
     {
         wchar_t timeStr[0x100] = { 0, };
 
-        OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), false);
+        if (args.size() > 1)
+        {
+            OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), false);
+        }
+        else
+        {
+            OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), false);
+        }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;
@@ -159,7 +166,14 @@ namespace HLE
     {
         wchar_t timeStr[0x100] = { 0, };
 
-        OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), true);
+        if (args.size() > 1)
+        {
+            OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
+        }
+        else
+        {
+            OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), true);
+        }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;

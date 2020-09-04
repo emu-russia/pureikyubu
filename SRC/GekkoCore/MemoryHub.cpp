@@ -11,7 +11,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
-        TestReadBreakpoints(addr);
+        if (EnableTestReadBreakpoints)
+        {
+            TestReadBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
@@ -39,7 +42,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
     {
         int WIMG;
-        TestWriteBreakpoints(addr);
+        if (EnableTestWriteBreakpoints)
+        {
+            TestWriteBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
@@ -77,7 +83,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
-        TestReadBreakpoints(addr);
+        if (EnableTestReadBreakpoints)
+        {
+            TestReadBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
@@ -111,7 +120,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
     {
         int WIMG;
-        TestWriteBreakpoints(addr);
+        if (EnableTestWriteBreakpoints)
+        {
+            TestWriteBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
@@ -149,7 +161,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
     {
         int WIMG;
-        TestReadBreakpoints(addr);
+        if (EnableTestReadBreakpoints)
+        {
+            TestReadBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
@@ -177,7 +192,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
     {
         int WIMG;
-        TestWriteBreakpoints(addr);
+        if (EnableTestWriteBreakpoints)
+        {
+            TestWriteBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)
@@ -215,7 +233,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
     {
         int WIMG;
-        TestReadBreakpoints(addr);
+        if (EnableTestReadBreakpoints)
+        {
+            TestReadBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
         if (pa == BadAddress)
@@ -245,7 +266,10 @@ namespace Gekko
     void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
     {
         int WIMG;
-        TestWriteBreakpoints(addr);
+        if (EnableTestWriteBreakpoints)
+        {
+            TestWriteBreakpoints(addr);
+        }
 
         uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
         if (pa == BadAddress)

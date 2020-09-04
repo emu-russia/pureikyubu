@@ -144,7 +144,7 @@ namespace Gekko
 		else if (!_stricmp(name, "dmal")) return &Gekko->regs.spr[(int)Gekko::SPR::DMAL];
 		else if (!_stricmp(name, "thrm1")) return &Gekko->regs.spr[1020];
 		else if (!_stricmp(name, "thrm2")) return &Gekko->regs.spr[1021];
-		else if (!_stricmp(name, "thrm2")) return &Gekko->regs.spr[1022];
+		else if (!_stricmp(name, "thrm3")) return &Gekko->regs.spr[1022];
 		else if (!_stricmp(name, "ictc")) return &Gekko->regs.spr[1019];
 
 		else if (!_stricmp(name, "pc")) return &Gekko->regs.pc;   // Wow !

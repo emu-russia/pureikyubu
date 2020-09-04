@@ -109,8 +109,9 @@
     "OSDateTime": {
       "internal": true,
       "help": "Convert Gekko ticks to human-readable time (including date)",
+      "hint": "[value]",
       "usage": [
-        "Syntax: OSDateTime"
+        "Syntax: OSDateTime [value]"
       ],
       "output": "Array: [String]"
     },
@@ -118,8 +119,9 @@
     "OSTime": {
       "internal": true,
       "help": "Convert Gekko ticks to human-readable time (no date)",
+      "hint": "[value]",
       "usage": [
-        "Syntax: OSTime"
+        "Syntax: OSTime [value]"
       ],
       "output": "Array: [String]"
     },

@@ -44,3 +44,5 @@ CMakeCache.txt
 *.so
 
 DolwinPlayground
+
+/*.json

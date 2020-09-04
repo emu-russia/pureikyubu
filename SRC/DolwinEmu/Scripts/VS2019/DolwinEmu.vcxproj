@@ -23,6 +23,7 @@
     <ClInclude Include="..\..\EmuCommands.h" />
     <ClInclude Include="..\..\Emulator.h" />
     <ClInclude Include="..\..\ExecutableFormat.h" />
+    <ClInclude Include="..\..\JdiServer.h" />
     <ClInclude Include="..\..\Loader.h" />
     <ClInclude Include="..\..\pch.h" />
   </ItemGroup>

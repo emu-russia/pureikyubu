@@ -83,7 +83,7 @@ namespace UI
 
 	int32_t PerfMetrics::GetVICounter()
 	{
-		return Jdi->GetPerformanceCounter(2);
+		return (int32_t)Jdi->GetPerformanceCounter(2);
 	}
 
 	void PerfMetrics::ResetVICounter()
@@ -93,7 +93,7 @@ namespace UI
 
 	int32_t PerfMetrics::GetPECounter()
 	{
-		return Jdi->GetPerformanceCounter(3);
+		return (int32_t)Jdi->GetPerformanceCounter(3);
 	}
 
 	void PerfMetrics::ResetPECounter()

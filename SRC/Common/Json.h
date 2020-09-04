@@ -92,8 +92,12 @@ private:
 			uint64_t AsInt;
 			float AsFloat;
 			bool AsBool;
-			wchar_t* AsString = nullptr;
+			wchar_t* AsString;
 		} value;
+		Token()
+		{
+			value.AsString = nullptr;
+		}
 	};
 
 	static bool GetLiteral(DeserializeContext* ctx, Token& token);
@@ -211,6 +215,15 @@ public:
 
 		Value* ByName(const char* byName);
 		Value* ByType(const ValueType byType);
+
+		void SetName(const char* newName)
+		{
+			if (name != nullptr)
+			{
+				delete[] name;
+			}
+			name = CloneName(newName);
+		}
 	};
 
 	// Deserialized root

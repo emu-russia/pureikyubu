@@ -73,3 +73,12 @@ void
 __cdecl
 #endif
 JdiAddCmd(const char* name, JDI::CmdDelegate command);
+
+#ifdef _WINDOWS
+extern "C" __declspec(dllexport)
+#endif
+void
+#ifdef _WINDOWS
+__cdecl
+#endif
+CallJdiReturnJson(const char* request, char* reply, size_t replySize);
