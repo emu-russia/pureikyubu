@@ -1,3 +1,5 @@
+// PHASED OUT: Will move to the shared GX component.
+
 #include "pch.h"
 
 using namespace Debug;

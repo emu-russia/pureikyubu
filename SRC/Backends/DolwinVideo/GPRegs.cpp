@@ -1,3 +1,5 @@
+// PHASED OUT: Will move to the shared GX component.
+
 // all gfx state registers here
 #include "pch.h"
 

@@ -1,3 +1,5 @@
+// PHASED OUT: Will move to the shared GX component.
+
 // fifo parser engine
 #include "pch.h"
 

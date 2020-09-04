@@ -54,4 +54,4 @@ The current implementation is limited by the MN102 instruction analyzer and the 
 
 ## DDU JDI
 
-The debugging interface specification provided by this component can be found in Data\\DduJdi.json.
+The debugging interface specification provided by this component can be found in Data\\Json\\DduJdi.json.

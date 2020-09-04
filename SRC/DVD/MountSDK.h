@@ -10,7 +10,7 @@ namespace DVD
 		wchar_t directory[0x1000] = { 0 };
 
 		Json DvdDataInfo;
-		const wchar_t* DvdDataJson = L"Data\\Json\\DolphinSdkDvdData.json";
+		const wchar_t* DvdDataJson = L"./Data/Json/DolphinSdkDvdData.json";
 
 		const wchar_t* AppldrPath = L"/HW2/boot/apploader.img";
 		const wchar_t* Bi2Path = L"/X86/bin/bi2.bin";

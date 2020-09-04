@@ -1,3 +1,5 @@
+// PHASED OUT: Will move to the shared GX component.
+
 // texture manager
 #include "pch.h"
 

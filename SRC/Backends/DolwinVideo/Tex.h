@@ -1,3 +1,5 @@
+// PHASED OUT: Will move to the shared GX component.
+
 #pragma once
 
 // texture entry
