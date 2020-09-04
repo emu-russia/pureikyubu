@@ -437,7 +437,7 @@ void GL_DoSnapshot(BOOL sel, FILE *f, uint8_t *dst, int width, int height)
     {
         for(s=0,d1=0; s<width; s++,d1+=ds)
         {
-            uint8_t  prev[3];
+            uint8_t  prev[3] = { 0 };
             uint8_t  rgb[3];     // RGB triplet
             ptr = &buf[3 * (scr_w * (int)d0 + (int)d1)];
             {

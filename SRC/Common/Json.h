@@ -143,15 +143,21 @@ public:
 			uint8_t AsUint8;
 			uint16_t AsUint16;
 			uint32_t AsUint32;
-			wchar_t* AsString = nullptr;	// Only the String value type requires the release of the stored value.
+			wchar_t* AsString;
 			bool AsBool;
 		} value;
 		std::list<Value*> children;
 
-		Value() { }
+		Value()
+		{
+			// Only the String value type requires the release of the stored value.
+			value.AsString = nullptr;
+		}
 
 		Value(Value* _parent)
 		{
+			// Only the String value type requires the release of the stored value.
+			value.AsString = nullptr;
 			this->parent = _parent;
 		}
 

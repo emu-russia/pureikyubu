@@ -153,7 +153,7 @@ void UpdateRecentMenu(HWND hwnd)
     HMENU   hMainMenu;
     HMENU   hFileMenu;
     HMENU   hReloadMenu;
-    UINT    idx;
+    int     idx;
 
     // search for required menu sub-item
     hMainMenu = GetMenu(hwnd);

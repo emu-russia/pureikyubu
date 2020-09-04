@@ -714,10 +714,14 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 
 		case TokenType::String:
 			type = ValueType::String;
-			value.AsString = CloneStr(token.value.AsString);
 			if (token.value.AsString != nullptr)
 			{
+				value.AsString = CloneStr(token.value.AsString);
 				delete[] token.value.AsString;
+			}
+			else
+			{
+				value.AsString = nullptr;
 			}
 			break;
 		case TokenType::Int:

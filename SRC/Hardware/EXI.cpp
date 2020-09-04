@@ -360,8 +360,8 @@ void MXTransfer()
                     {
                         case 0:         // byte
                             rofs[0] =
-                            rofs[2] = 
-                            rofs[3] = 0;
+                            rofs[1] = 
+                            rofs[2] = 0;
                             rofs[3] = sofs[0];
                             exi.mxaddr += 1 << 6;
                             break;
