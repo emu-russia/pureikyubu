@@ -70,7 +70,7 @@ static void LoadSettings(int n)         // dialogs created
     if(n == 2)
     {
         uint32_t ver = UI::Jdi->GetConfigInt(USER_CONSOLE, USER_HW);
-        int i=0, selected = sizeof(consoleVersion) / 8 - 1;
+        int i=0, selected = -1;
         while(consoleVersion[i].ver != 0xffffffff)
         {
             if(consoleVersion[i].ver == ver)
@@ -80,14 +80,14 @@ static void LoadSettings(int n)         // dialogs created
             }
             i++;
         }
-        if(consoleVersion[i].ver == 0xffffffff) selected = sizeof(consoleVersion)/8 - 1;
+        if(consoleVersion[i].ver == 0xffffffff) selected = -1;
         i=0;
         SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_RESETCONTENT, 0, 0);
         do
         {
             SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_INSERTSTRING, -1, (LPARAM)consoleVersion[i].info);
         } while(consoleVersion[++i].ver != 0xffffffff);
-        if(selected == sizeof(consoleVersion)/8 - 1)
+        if(selected == -1)
         {
             wchar_t buf[100];
             swprintf_s(buf, _countof(buf) - 1, consoleVersion[selected].info, ver);
