@@ -8,6 +8,11 @@ namespace Gekko
 {
     OP(PS_ADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_add]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) + PS0(RB);
@@ -24,6 +29,11 @@ namespace Gekko
 
     OP(PS_SUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_sub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) - PS0(RB);
@@ -40,6 +50,11 @@ namespace Gekko
 
     OP(PS_MUL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_mul]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) * PS0(RC);
@@ -56,6 +71,11 @@ namespace Gekko
 
     OP(PS_DIV)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_div]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = PS0(RA) / PS0(RB);
@@ -72,6 +92,11 @@ namespace Gekko
 
     OP(PS_RES)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_res]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = 1.0f / PS0(RB);
@@ -88,6 +113,11 @@ namespace Gekko
 
     OP(PS_RSQRTE)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_rsqrte]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = 1.0f / sqrt(PS0(RB));
@@ -104,6 +134,11 @@ namespace Gekko
 
     OP(PS_SEL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_sel]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = (PS0(RA) >= 0.0) ? (PS0(RC)) : (PS0(RB));
@@ -120,6 +155,11 @@ namespace Gekko
 
     OP(PS_MULS0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_muls0]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double m0 = PS0(RA) * PS0(RC);
@@ -138,6 +178,11 @@ namespace Gekko
 
     OP(PS_MULS1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_muls1]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double m0 = PS0(RA) * PS1(RC);
@@ -156,6 +201,11 @@ namespace Gekko
 
     OP(PS_SUM0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_sum0]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = PS0(RA) + PS1(RB);
@@ -174,6 +224,11 @@ namespace Gekko
 
     OP(PS_SUM1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_sum1]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = PS0(RC);
@@ -192,6 +247,11 @@ namespace Gekko
 
     OP(PS_MADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_madd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -214,6 +274,11 @@ namespace Gekko
 
     OP(PS_MSUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_msub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -236,6 +301,11 @@ namespace Gekko
 
     OP(PS_NMADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_nmadd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -258,6 +328,11 @@ namespace Gekko
 
     OP(PS_NMSUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_nmsub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -280,6 +355,11 @@ namespace Gekko
 
     OP(PS_MADDS0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_madds0]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = (PS0(RA) * PS0(RC)) + PS0(RB);
@@ -298,6 +378,11 @@ namespace Gekko
 
     OP(PS_MADDS1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_madds1]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double s0 = (PS0(RA) * PS1(RC)) + PS0(RB);
@@ -316,6 +401,11 @@ namespace Gekko
 
     OP(PS_CMPU0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_cmpu0]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
@@ -339,6 +429,11 @@ namespace Gekko
 
     OP(PS_CMPU1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_cmpu1]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
@@ -362,6 +457,11 @@ namespace Gekko
 
     OP(PS_CMPO0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_cmpo0]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
@@ -385,6 +485,11 @@ namespace Gekko
 
     OP(PS_CMPO1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_cmpo1]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int n = CRFD;
@@ -408,6 +513,11 @@ namespace Gekko
 
     OP(PS_MR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_mr]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double p0 = PS0(RB), p1 = PS1(RB);
@@ -424,6 +534,11 @@ namespace Gekko
 
     OP(PS_NEG)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_neg]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             PS0(RD) = -PS0(RB);
@@ -460,6 +575,11 @@ namespace Gekko
 
     OP(PS_MERGE00)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_merge00]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -478,6 +598,11 @@ namespace Gekko
 
     OP(PS_MERGE01)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_merge01]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS0(RA);
@@ -496,6 +621,11 @@ namespace Gekko
 
     OP(PS_MERGE10)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_merge10]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS1(RA);
@@ -514,6 +644,11 @@ namespace Gekko
 
     OP(PS_MERGE11)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ps_merge11]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             double a = PS1(RA);

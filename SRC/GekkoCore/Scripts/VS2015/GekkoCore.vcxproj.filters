@@ -167,6 +167,9 @@
     <ClCompile Include="..\..\Interpreter\NoAsm.cpp">
       <Filter>Interpreter</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\OpcodeStats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Readme.md" />

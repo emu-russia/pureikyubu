@@ -38,6 +38,7 @@ namespace Gekko
 
     GekkoCore::~GekkoCore()
     {
+        StopOpcodeStatsThread();
         delete gekkoThread;
         delete interp;
         delete jitc;

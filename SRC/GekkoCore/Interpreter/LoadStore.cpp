@@ -12,6 +12,11 @@ namespace Gekko
     // rd = 0x000000 || MEM(ea, 1)
     OP(LBZ)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lbz]++;
+        }
+
         if (RA) Gekko->ReadByte(RRA + SIMM, &RRD);
         else Gekko->ReadByte(SIMM, &RRD);
         if (Gekko->exception) return;
@@ -22,6 +27,11 @@ namespace Gekko
     // rd = 0x000000 || MEM(ea, 1)
     OP(LBZX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzx]++;
+        }
+
         if (RA) Gekko->ReadByte(RRA + RRB, &RRD);
         else Gekko->ReadByte(RRB, &RRD);
         if (Gekko->exception) return;
@@ -33,6 +43,11 @@ namespace Gekko
     // ra = ea
     OP(LBZU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->ReadByte(ea, &RRD);
         if (Gekko->exception) return;
@@ -45,6 +60,11 @@ namespace Gekko
     // ra = ea
     OP(LBZUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->ReadByte(ea, &RRD);
         if (Gekko->exception) return;
@@ -56,6 +76,11 @@ namespace Gekko
     // rd = 0x0000 || MEM(ea, 2)
     OP(LHZ)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhz]++;
+        }
+
         if (RA) Gekko->ReadHalf(RRA + SIMM, &RRD);
         else Gekko->ReadHalf(SIMM, &RRD);
         if (Gekko->exception) return;
@@ -66,6 +91,11 @@ namespace Gekko
     // rd = 0x0000 || MEM(ea, 2)
     OP(LHZX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzx]++;
+        }
+
         if (RA) Gekko->ReadHalf(RRA + RRB, &RRD);
         else Gekko->ReadHalf(RRB, &RRD);
         if (Gekko->exception) return;
@@ -77,6 +107,11 @@ namespace Gekko
     // ra = ea
     OP(LHZU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->ReadHalf(ea, &RRD);
         if (Gekko->exception) return;
@@ -89,6 +124,11 @@ namespace Gekko
     // ra = ea
     OP(LHZUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->ReadHalf(ea, &RRD);
         if (Gekko->exception) return;
@@ -100,6 +140,11 @@ namespace Gekko
     // rd = (signed)MEM(ea, 2)
     OP(LHA)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lha]++;
+        }
+
         if (RA) Gekko->ReadHalfS(RRA + SIMM, &RRD);
         else Gekko->ReadHalfS(SIMM, &RRD);
         if (Gekko->exception) return;
@@ -110,6 +155,11 @@ namespace Gekko
     // rd = (signed)MEM(ea, 2)
     OP(LHAX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhax]++;
+        }
+
         if (RA) Gekko->ReadHalfS(RRA + RRB, &RRD);
         else Gekko->ReadHalfS(RRB, &RRD);
         if (Gekko->exception) return;
@@ -121,6 +171,11 @@ namespace Gekko
     // ra = ea
     OP(LHAU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhau]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->ReadHalfS(ea, &RRD);
         if (Gekko->exception) return;
@@ -133,6 +188,11 @@ namespace Gekko
     // ra = ea
     OP(LHAUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhaux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->ReadHalfS(ea, &RRD);
         if (Gekko->exception) return;
@@ -144,6 +204,11 @@ namespace Gekko
     // rd = MEM(ea, 4)
     OP(LWZ)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwz]++;
+        }
+
         if (RA) Gekko->ReadWord(RRA + SIMM, &RRD);
         else Gekko->ReadWord(SIMM, &RRD);
         if (Gekko->exception) return;
@@ -154,6 +219,11 @@ namespace Gekko
     // rd = MEM(ea, 4)
     OP(LWZX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzx]++;
+        }
+
         if (RA) Gekko->ReadWord(RRA + RRB, &RRD);
         else Gekko->ReadWord(RRB, &RRD);
         if (Gekko->exception) return;
@@ -165,6 +235,11 @@ namespace Gekko
     // ra = ea
     OP(LWZU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->ReadWord(ea, &RRD);
         if (Gekko->exception) return;
@@ -177,6 +252,11 @@ namespace Gekko
     // ra = ea
     OP(LWZUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->ReadWord(ea, &RRD);
         if (Gekko->exception) return;
@@ -191,6 +271,11 @@ namespace Gekko
     // MEM(ea, 1) = rs[24-31]
     OP(STB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stb]++;
+        }
+
         if (RA) Gekko->WriteByte(RRA + SIMM, RRS);
         else Gekko->WriteByte(SIMM, RRS);
         if (Gekko->exception) return;
@@ -201,6 +286,11 @@ namespace Gekko
     // MEM(ea, 1) = rs[24-31]
     OP(STBX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stbx]++;
+        }
+
         if (RA) Gekko->WriteByte(RRA + RRB, RRS);
         else Gekko->WriteByte(RRB, RRS);
         if (Gekko->exception) return;
@@ -212,6 +302,11 @@ namespace Gekko
     // ra = ea
     OP(STBU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stbu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->WriteByte(ea, RRS);
         if (Gekko->exception) return;
@@ -224,6 +319,11 @@ namespace Gekko
     // ra = ea
     OP(STBUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stbux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->WriteByte(ea, RRS);
         if (Gekko->exception) return;
@@ -235,6 +335,11 @@ namespace Gekko
     // MEM(ea, 2) = rs[16-31]
     OP(STH)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sth]++;
+        }
+
         if (RA) Gekko->WriteHalf(RRA + SIMM, RRS);
         else Gekko->WriteHalf(SIMM, RRS);
         if (Gekko->exception) return;
@@ -245,6 +350,11 @@ namespace Gekko
     // MEM(ea, 2) = rs[16-31]
     OP(STHX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sthx]++;
+        }
+
         if (RA) Gekko->WriteHalf(RRA + RRB, RRS);
         else Gekko->WriteHalf(RRB, RRS);
         if (Gekko->exception) return;
@@ -256,6 +366,11 @@ namespace Gekko
     // ra = ea
     OP(STHU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sthu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->WriteHalf(ea, RRS);
         if (Gekko->exception) return;
@@ -268,6 +383,11 @@ namespace Gekko
     // ra = ea
     OP(STHUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sthux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->WriteHalf(ea, RRS);
         if (Gekko->exception) return;
@@ -279,6 +399,11 @@ namespace Gekko
     // MEM(ea, 4) = rs
     OP(STW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stw]++;
+        }
+
         if (RA) Gekko->WriteWord(RRA + SIMM, RRS);
         else Gekko->WriteWord(SIMM, RRS);
         if (Gekko->exception) return;
@@ -289,6 +414,11 @@ namespace Gekko
     // MEM(ea, 4) = rs
     OP(STWX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stwx]++;
+        }
+
         if (RA) Gekko->WriteWord(RRA + RRB, RRS);
         else Gekko->WriteWord(RRB, RRS);
         if (Gekko->exception) return;
@@ -300,6 +430,11 @@ namespace Gekko
     // ra = ea
     OP(STWU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stwu]++;
+        }
+
         uint32_t ea = RRA + SIMM;
         Gekko->WriteWord(ea, RRS);
         if (Gekko->exception) return;
@@ -312,6 +447,11 @@ namespace Gekko
     // ra = ea
     OP(STWUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stwux]++;
+        }
+
         uint32_t ea = RRA + RRB;
         Gekko->WriteWord(ea, RRS);
         if (Gekko->exception) return;
@@ -326,6 +466,11 @@ namespace Gekko
     // rd = 0x0000 || MEM(ea+1, 1) || MEM(EA, 1)
     OP(LHBRX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lhbrx]++;
+        }
+
         uint32_t val;
         if (RA) Gekko->ReadHalf(RRA + RRB, &val);
         else Gekko->ReadHalf(RRB, &val);
@@ -338,6 +483,11 @@ namespace Gekko
     // rd = MEM(ea+3, 1) || MEM(ea+2, 1) || MEM(ea+1, 1) || MEM(ea, 1)
     OP(LWBRX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwbrx]++;
+        }
+
         uint32_t val;
         if (RA) Gekko->ReadWord(RRA + RRB, &val);
         else Gekko->ReadWord(RRB, &val);
@@ -350,6 +500,11 @@ namespace Gekko
     // MEM(ea, 2) = rs[24-31] || rs[16-23]
     OP(STHBRX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sthbrx]++;
+        }
+
         if (RA) Gekko->WriteHalf(RRA + RRB, _BYTESWAP_UINT16((uint16_t)RRS));
         else Gekko->WriteHalf(RRB, _BYTESWAP_UINT16((uint16_t)RRS));
         if (Gekko->exception) return;
@@ -360,6 +515,11 @@ namespace Gekko
     // MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
     OP(STWBRX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stwbrx]++;
+        }
+
         if (RA) Gekko->WriteWord(RRA + RRB, _BYTESWAP_UINT32(RRS));
         else Gekko->WriteWord(RRB, _BYTESWAP_UINT32(RRS));
         if (Gekko->exception) return;
@@ -374,6 +534,11 @@ namespace Gekko
     //      ea = ea + 4
     OP(LMW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lmw]++;
+        }
+
         uint32_t ea;
         if (RA) ea = RRA + SIMM;
         else ea = SIMM;
@@ -394,6 +559,11 @@ namespace Gekko
     //      ea = ea + 4
     OP(STMW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stmw]++;
+        }
+
         uint32_t ea;
         if (RA) ea = RRA + SIMM;
         else ea = SIMM;
@@ -421,6 +591,11 @@ namespace Gekko
     //      n = n -1
     OP(LSWI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lswi]++;
+        }
+
         int32_t rd = RD, n = (RB) ? (RB) : 32, i = 4;
         uint32_t ea = (RA) ? (RRA) : 0;
         uint32_t r = 0, val;
@@ -466,6 +641,11 @@ namespace Gekko
     //      n = n -1
     OP(STSWI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stswi]++;
+        }
+
         int32_t rs = RS, n = (RB) ? (RB) : 32, i = 0;
         uint32_t ea = (RA) ? (RRA) : 0;
         uint32_t r = 0;
@@ -495,6 +675,11 @@ namespace Gekko
     // rd = MEM(ea, 4)
     OP(LWARX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lwarx]++;
+        }
+
         int WIMG;
         uint32_t ea = RRB;
         if (RA) ea += RRA;
@@ -515,6 +700,11 @@ namespace Gekko
     //          CR0 = 0b00 || 0b0 || XER[SO]
     OP(STWCXD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stwcx_d]++;
+        }
+
         uint32_t ea = RRB;
         if (RA) ea += RRA;
 

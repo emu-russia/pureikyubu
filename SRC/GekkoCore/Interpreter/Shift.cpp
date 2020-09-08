@@ -14,6 +14,11 @@ namespace Gekko
     // (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
     OP(SLW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::slw]++;
+        }
+
         uint32_t n = RRB;
 
         if (n & 0x20) RRA = 0;
@@ -31,6 +36,11 @@ namespace Gekko
     // CR0
     OP(SLWD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::slw_d]++;
+        }
+
         uint32_t n = RRB;
         uint32_t res;
 
@@ -51,6 +61,11 @@ namespace Gekko
     // (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
     OP(SRW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::srw]++;
+        }
+
         uint32_t n = RRB;
 
         if (n & 0x20) RRA = 0;
@@ -68,6 +83,11 @@ namespace Gekko
     // CR0
     OP(SRWD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::srw_d]++;
+        }
+
         uint32_t n = RRB;
         uint32_t res;
 
@@ -87,6 +107,11 @@ namespace Gekko
     // XER[CA] = sign(0) & ((r & ~m) != 0)
     OP(SRAWI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::srawi]++;
+        }
+
         uint32_t n = SH;
         int32_t res;
         int32_t src = RRS;
@@ -115,6 +140,11 @@ namespace Gekko
     // CR0
     OP(SRAWID)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::srawi_d]++;
+        }
+
         uint32_t n = SH;
         int32_t res;
         int32_t src = RRS;
@@ -145,6 +175,11 @@ namespace Gekko
     // XER[CA] = S & (r & ~m[0-31] != 0)
     OP(SRAW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw]++;
+        }
+
         uint32_t n = RRB;
         int32_t res;
         int32_t src = RRS;
@@ -189,6 +224,11 @@ namespace Gekko
     // CR0
     OP(SRAWD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw_d]++;
+        }
+
         uint32_t n = RRB;
         int32_t res;
         int32_t src = RRS;

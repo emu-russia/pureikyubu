@@ -15,6 +15,11 @@ namespace Gekko
     // CR[4*crf..4*crf+3] = c || XER[SO]
     OP(CMPI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::cmpi]++;
+        }
+
         int32_t a = RRA, b = SIMM;
         int crfd = CRFD;
         if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
@@ -34,6 +39,11 @@ namespace Gekko
     // CR[4*crf..4*crf+3] = c || XER[SO]
     OP(CMP)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::cmp]++;
+        }
+
         int32_t a = RRA, b = RRB;
         int crfd = CRFD;
         if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
@@ -53,6 +63,11 @@ namespace Gekko
     // CR[4*crf..4*crf+3] = c || XER[SO]
     OP(CMPLI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::cmpli]++;
+        }
+
         uint32_t a = RRA, b = UIMM;
         int crfd = CRFD;
         if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
@@ -72,6 +87,11 @@ namespace Gekko
     // CR[4*crf..4*crf+3] = c || XER[SO]
     OP(CMPL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::cmpl]++;
+        }
+
         uint32_t a = RRA;
         uint32_t b = RRB;
         int crfd = CRFD;

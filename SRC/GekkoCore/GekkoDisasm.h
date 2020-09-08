@@ -2,12 +2,12 @@
 
 #pragma once
 
-#include <string>
-
 namespace Gekko
 {
 	class GekkoDisasm
 	{
+		friend GekkoCore;
+
 		static std::string HexToStr(uint8_t value);
 		static std::string HexToStr(uint16_t value);
 		static std::string HexToStr(uint32_t value);

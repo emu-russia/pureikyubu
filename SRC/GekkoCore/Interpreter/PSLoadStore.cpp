@@ -72,6 +72,11 @@ namespace Gekko
 
     OP(PSQ_L)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_l]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
         {
@@ -126,6 +131,11 @@ namespace Gekko
 
     OP(PSQ_LU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lu]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
             RA == 0)
@@ -182,6 +192,11 @@ namespace Gekko
 
     OP(PSQ_LUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lux]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
             RA == 0)
@@ -238,6 +253,11 @@ namespace Gekko
 
     OP(PSQ_LX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lx]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
         {
@@ -295,6 +315,11 @@ namespace Gekko
 
     OP(PSQ_ST)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_st]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
         {
@@ -341,6 +366,11 @@ namespace Gekko
 
     OP(PSQ_STU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stu]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
              RA == 0)
@@ -389,6 +419,11 @@ namespace Gekko
 
     OP(PSQ_STUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stux]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
             RA == 0)
@@ -437,6 +472,11 @@ namespace Gekko
 
     OP(PSQ_STX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stx]++;
+        }
+
         if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
             (Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
         {
