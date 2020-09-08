@@ -8,6 +8,11 @@ namespace Gekko
 {
     OP(TWI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::twi]++;
+        }
+
         int32_t a = RRA, b = SIMM;
         int32_t to = RS;
 
@@ -30,6 +35,11 @@ namespace Gekko
 
     OP(TW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::tw]++;
+        }
+
         int32_t a = RRA, b = RRB;
         int32_t to = RS;
 
@@ -53,6 +63,11 @@ namespace Gekko
     // syscall
     OP(SC)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sc]++;
+        }
+
         // pseudo-branch (to resume from next instruction after 'rfi')
         Gekko->regs.pc += 4;
         Gekko->Exception(Gekko::Exception::SYSCALL);
@@ -61,6 +76,11 @@ namespace Gekko
     // return from exception
     OP(RFI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::rfi]++;
+        }
+
         Gekko->regs.msr &= ~(0x87C0FF73 | 0x00040000);
         Gekko->regs.msr |= Gekko->regs.spr[(int)SPR::SRR1] & 0x87C0FF73;
         Gekko->regs.pc = Gekko->regs.spr[(int)SPR::SRR0] & ~3;
@@ -73,6 +93,11 @@ namespace Gekko
     // CR = (rs & mask) | (CR & ~mask)
     OP(MTCRF)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtcrf]++;
+        }
+
         uint32_t m, crm = CRM, a, d = RRS;
 
         for (int i = 0; i < 8; i++)
@@ -91,6 +116,11 @@ namespace Gekko
     // XER[0..3] = 0b0000
     OP(MCRXR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mcrxr]++;
+        }
+
         uint32_t mask = 0xf0000000 >> (4 * CRFD);
         Gekko->regs.cr &= ~mask;
         Gekko->regs.cr |= (Gekko->regs.spr[(int)SPR::XER] & 0xf0000000) >> (4 * CRFD);
@@ -101,6 +131,11 @@ namespace Gekko
     // rd = cr
     OP(MFCR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mfcr]++;
+        }
+
         RRD = Gekko->regs.cr;
         Gekko->regs.pc += 4;
     }
@@ -108,6 +143,11 @@ namespace Gekko
     // msr = rs
     OP(MTMSR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtmsr]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -134,6 +174,11 @@ namespace Gekko
     // rd = msr
     OP(MFMSR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mfmsr]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -151,6 +196,11 @@ namespace Gekko
     // spr = rs
     OP(MTSPR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtspr]++;
+        }
+
         int spr = (RB << 5) | RA;
 
         if (spr >= 528 && spr <= 543)
@@ -328,6 +378,11 @@ namespace Gekko
     // rd = spr
     OP(MFSPR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mfspr]++;
+        }
+
         int spr = (RB << 5) | RA;
         uint32_t value;
 
@@ -354,6 +409,11 @@ namespace Gekko
     // rd = tbr
     OP(MFTB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mftb]++;
+        }
+
         int tbr = (RB << 5) | RA;
 
         if (tbr == 268)
@@ -371,6 +431,11 @@ namespace Gekko
     // sr[a] = rs
     OP(MTSR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtsr]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -385,6 +450,11 @@ namespace Gekko
     // sr[rb] = rs
     OP(MTSRIN)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtsrin]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -399,6 +469,11 @@ namespace Gekko
     // rd = sr[a]
     OP(MFSR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mfsr]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -413,6 +488,11 @@ namespace Gekko
     // rd = sr[rb]
     OP(MFSRIN)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mfsrin]++;
+        }
+
         if (Gekko->regs.msr & MSR_PR)
         {
             Gekko->PrCause = PrivilegedCause::Privileged;
@@ -429,27 +509,52 @@ namespace Gekko
 
     OP(EIEIO)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::eieio]++;
+        }
+
         Gekko->regs.pc += 4;
     }
 
     OP(SYNC)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::sync]++;
+        }
+
         Gekko->regs.pc += 4;
     }
 
     // instruction synchronize. Dolwin interpreter is not super-scalar. :)
     OP(ISYNC)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::isync]++;
+        }
+
         Gekko->regs.pc += 4;
     }
 
     OP(TLBSYNC)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::tlbsync]++;
+        }
+
         Gekko->regs.pc += 4;
     }
 
     OP(TLBIE)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::tlbie]++;
+        }
+
         Gekko->dtlb.Invalidate(RRB);
         Gekko->itlb.Invalidate(RRB);
         Gekko->regs.pc += 4;
@@ -460,6 +565,11 @@ namespace Gekko
 
     OP(DCBT)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbt]++;
+        }
+
         int WIMG;
 
         if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
@@ -477,6 +587,11 @@ namespace Gekko
 
     OP(DCBTST)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbtst]++;
+        }
+
         int WIMG;
 
         if (Gekko->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
@@ -496,6 +611,11 @@ namespace Gekko
 
     OP(DCBZ)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbz]++;
+        }
+
         int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
@@ -519,6 +639,11 @@ namespace Gekko
 
     OP(DCBZ_L)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbz_l]++;
+        }
+
         int WIMG;
 
         if (!Gekko->cache.IsLockedEnable())
@@ -546,6 +671,11 @@ namespace Gekko
 
     OP(DCBST)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbst]++;
+        }
+
         int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
@@ -565,6 +695,11 @@ namespace Gekko
 
     OP(DCBF)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbf]++;
+        }
+
         int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
@@ -584,6 +719,11 @@ namespace Gekko
 
     OP(DCBI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::dcbi]++;
+        }
+
         int WIMG;
         uint32_t ea = RA ? RRA + RRB : RRB;
 
@@ -612,6 +752,11 @@ namespace Gekko
 
     OP(ICBI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::icbi]++;
+        }
+
         uint32_t address = RA ? RRA + RRB : RRB;
         address &= ~0x1f;
 

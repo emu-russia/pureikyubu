@@ -731,6 +731,43 @@ namespace Gekko
 		return nullptr;
 	}
 
+	// Enables or disables the maintenance of opcode usage statistics
+	static Json::Value* CmdEnableOpcodeStats(std::vector<std::string>& args)
+	{
+		bool enable = strtoul(args[1].c_str(), nullptr, 0) != 0 ? true : false;
+		Gekko::Gekko->EnableOpcodeStats(enable);
+		return nullptr;
+	}
+
+	// Displays the most commonly used Gekko opcodes
+	static Json::Value* CmdPrintOpcodeStats(std::vector<std::string>& args)
+	{
+		size_t maxCount = strtoul(args[1].c_str(), nullptr, 0);
+		Gekko::Gekko->PrintOpcodeStats(maxCount);
+		return nullptr;
+	}
+
+	// Clears statistics of opcode usage
+	static Json::Value* CmdResetOpcodeStats(std::vector<std::string>& args)
+	{
+		Gekko::Gekko->ResetOpcodeStats();
+		return nullptr;
+	}
+
+	// Runs a low priority thread that prints opcode statistics once a second
+	static Json::Value* CmdRunOpcodeStats(std::vector<std::string>& args)
+	{
+		Gekko::Gekko->RunOpcodeStatsThread();
+		return nullptr;
+	}
+
+	// Stop the thread that outputs the opcode statistics
+	static Json::Value* CmdStopOpcodeStats(std::vector<std::string>& args)
+	{
+		Gekko::Gekko->StopOpcodeStatsThread();
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", cmd_run);
@@ -774,5 +811,11 @@ namespace Gekko
 		JDI::Hub.AddCmd("GekkoIsBranch", CmdGekkoIsBranch);
 
 		JDI::Hub.AddCmd("nop", CmdNop);
+
+		JDI::Hub.AddCmd("EnableOpcodeStats", CmdEnableOpcodeStats);
+		JDI::Hub.AddCmd("PrintOpcodeStats", CmdPrintOpcodeStats);
+		JDI::Hub.AddCmd("ResetOpcodeStats", CmdResetOpcodeStats);
+		JDI::Hub.AddCmd("RunOpcodeStats", CmdRunOpcodeStats);
+		JDI::Hub.AddCmd("StopOpcodeStats", CmdStopOpcodeStats);
 	}
 }

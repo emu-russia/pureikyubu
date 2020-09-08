@@ -26,6 +26,11 @@ namespace Gekko
     // PC = PC + EXTS(LI || 0b00)
     OP(B)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::b]++;
+        }
+
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
         Gekko->regs.pc = Gekko->regs.pc + target;
@@ -34,6 +39,11 @@ namespace Gekko
     // PC = EXTS(LI || 0b00)
     OP(BA)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::ba]++;
+        }
+
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
         Gekko->regs.pc = target;
@@ -42,6 +52,11 @@ namespace Gekko
     // LR = PC + 4, PC = PC + EXTS(LI || 0b00)
     OP(BL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bl]++;
+        }
+
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
         Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
@@ -51,6 +66,11 @@ namespace Gekko
     // LR = PC + 4, PC = EXTS(LI || 0b00)
     OP(BLA)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bla]++;
+        }
+
         uint32_t target = op & 0x03fffffc;
         if (target & 0x02000000) target |= 0xfc000000;
         Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
@@ -101,6 +121,11 @@ namespace Gekko
     //          else PC = PC + EXTS(BD || 0b00)
     OP(BCX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bc]++;
+        }
+
         if (bc(op))
         {
             if (op & 1) Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4; // LK
@@ -124,6 +149,11 @@ namespace Gekko
     //      PC = LR[0-29] || 0b00
     OP(BCLR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bclr]++;
+        }
+
         if (bc(op))
         {
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
@@ -144,6 +174,11 @@ namespace Gekko
     //      LR = NLR
     OP(BCLRL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bclrl]++;
+        }
+
         if (bc(op))
         {
             uint32_t lr = Gekko->regs.pc + 4;
@@ -181,6 +216,11 @@ namespace Gekko
     //              PC = CTR || 0b00
     OP(BCCTR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bcctr]++;
+        }
+
         if (bctr(op))
         {
             Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
@@ -199,6 +239,11 @@ namespace Gekko
     //              PC = CTR || 0b00
     OP(BCCTRL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bcctrl]++;
+        }
+
         if (bctr(op))
         {
             Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;

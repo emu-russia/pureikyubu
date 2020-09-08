@@ -10,6 +10,11 @@ namespace Gekko
 
     OP(FADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fadd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) + FPRD(RB);
@@ -20,6 +25,11 @@ namespace Gekko
 
     OP(FADDD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fadd_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) + FPRD(RB);
@@ -31,6 +41,11 @@ namespace Gekko
 
     OP(FADDS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fadds]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
@@ -42,6 +57,11 @@ namespace Gekko
 
     OP(FADDSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fadds_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
@@ -54,6 +74,11 @@ namespace Gekko
 
     OP(FSUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) - FPRD(RB);
@@ -64,6 +89,11 @@ namespace Gekko
 
     OP(FSUBD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsub_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) - FPRD(RB);
@@ -75,6 +105,11 @@ namespace Gekko
 
     OP(FSUBS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsubs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
@@ -86,6 +121,11 @@ namespace Gekko
 
     OP(FSUBSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsubs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
@@ -98,6 +138,11 @@ namespace Gekko
 
     OP(FMUL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmul]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC);
@@ -108,6 +153,11 @@ namespace Gekko
 
     OP(FMULD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmul_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC);
@@ -119,6 +169,11 @@ namespace Gekko
 
     OP(FMULS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmuls]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
@@ -130,6 +185,11 @@ namespace Gekko
 
     OP(FMULSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmuls_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
@@ -142,6 +202,11 @@ namespace Gekko
 
     OP(FDIV)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fdiv]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) / FPRD(RB);
@@ -152,6 +217,11 @@ namespace Gekko
 
     OP(FDIVD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fdiv_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) / FPRD(RB);
@@ -163,6 +233,11 @@ namespace Gekko
 
     OP(FDIVS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fdivs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
@@ -174,6 +249,11 @@ namespace Gekko
 
     OP(FDIVSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fdivs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
@@ -186,6 +266,11 @@ namespace Gekko
 
     OP(FRES)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fres]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = 1.0 / FPRD(RB);
@@ -197,6 +282,11 @@ namespace Gekko
 
     OP(FRESD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fres_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = 1.0 / FPRD(RB);
@@ -209,6 +299,11 @@ namespace Gekko
 
     OP(FRSQRTE)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::frsqrte]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = 1.0 / sqrt(FPRD(RB));
@@ -219,6 +314,11 @@ namespace Gekko
 
     OP(FRSQRTED)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::frsqrte_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = 1.0 / sqrt(FPRD(RB));
@@ -230,6 +330,11 @@ namespace Gekko
 
     OP(FSEL)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsel]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
@@ -240,6 +345,11 @@ namespace Gekko
 
     OP(FSELD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fsel_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
@@ -251,6 +361,11 @@ namespace Gekko
 
     OP(FMADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
@@ -261,6 +376,11 @@ namespace Gekko
 
     OP(FMADDD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadd_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
@@ -272,6 +392,11 @@ namespace Gekko
 
     OP(FMADDS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadds]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
@@ -283,6 +408,11 @@ namespace Gekko
 
     OP(FMADDSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadds_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
@@ -295,6 +425,11 @@ namespace Gekko
 
     OP(FMSUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
@@ -305,6 +440,11 @@ namespace Gekko
 
     OP(FMSUBD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsub_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
@@ -316,6 +456,11 @@ namespace Gekko
 
     OP(FMSUBS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsubs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
@@ -327,6 +472,11 @@ namespace Gekko
 
     OP(FMSUBSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsubs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
@@ -339,6 +489,11 @@ namespace Gekko
 
     OP(FNMADD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
@@ -349,6 +504,11 @@ namespace Gekko
 
     OP(FNMADDD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadd_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
@@ -360,6 +520,11 @@ namespace Gekko
 
     OP(FNMADDS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadds]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
@@ -371,6 +536,11 @@ namespace Gekko
 
     OP(FNMADDSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadds_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
@@ -383,6 +553,11 @@ namespace Gekko
 
     OP(FNMSUB)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsub]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
@@ -393,6 +568,11 @@ namespace Gekko
 
     OP(FNMSUBD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsub_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
@@ -404,6 +584,11 @@ namespace Gekko
 
     OP(FNMSUBS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsubs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
@@ -415,6 +600,11 @@ namespace Gekko
 
     OP(FNMSUBSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsubs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
@@ -427,6 +617,11 @@ namespace Gekko
 
     OP(FRSP)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::frsp]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE)
@@ -442,6 +637,11 @@ namespace Gekko
 
     OP(FRSPD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::frsp_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE)
@@ -458,6 +658,11 @@ namespace Gekko
 
     OP(FCTIW)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiw]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
@@ -468,6 +673,11 @@ namespace Gekko
 
     OP(FCTIWD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiw_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
@@ -479,6 +689,11 @@ namespace Gekko
 
     OP(FCTIWZ)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiwz]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
@@ -489,6 +704,11 @@ namespace Gekko
 
     OP(FCTIWZD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiwz_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
@@ -500,6 +720,11 @@ namespace Gekko
 
     OP(FNEG)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fneg]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
@@ -510,6 +735,11 @@ namespace Gekko
 
     OP(FNEGD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fneg_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
@@ -521,6 +751,11 @@ namespace Gekko
 
     OP(FABS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fabs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
@@ -531,6 +766,11 @@ namespace Gekko
 
     OP(FABSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fabs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
@@ -542,6 +782,11 @@ namespace Gekko
 
     OP(FNABS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnabs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) | 0x8000000000000000;
@@ -552,6 +797,11 @@ namespace Gekko
 
     OP(FNABSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fnabs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB) | 0x8000000000000000;
@@ -566,6 +816,11 @@ namespace Gekko
 
     OP(FCMPU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fcmpu]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int32_t n = CRFD;
@@ -591,6 +846,11 @@ namespace Gekko
 
     OP(FCMPO)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fcmpo]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             int32_t n = CRFD;
@@ -620,6 +880,11 @@ namespace Gekko
     // fd[32-63] = FPSCR
     OP(MFFS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mffs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
@@ -631,6 +896,11 @@ namespace Gekko
     // fd[32-63] = FPSCR, CR1
     OP(MFFSD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mffs_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
@@ -643,6 +913,11 @@ namespace Gekko
     // CR[crfD] = FPSCR[crfS]
     OP(MCRFS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mcrfs]++;
+        }
+
         uint32_t fp = (Gekko->regs.fpscr >> (28 - RA)) & 0xf;
         Gekko->regs.cr &= ~(0xf0000000 >> RD);
         Gekko->regs.cr |= fp << (28 - RD);
@@ -653,6 +928,11 @@ namespace Gekko
     // FPSCR = (fb & mask) | (FPSCR & ~mask)
     OP(MTFSF)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsf]++;
+        }
+
         uint32_t m = 0, fm = FM;
 
         for (int i = 7; i >= 0; i--)
@@ -672,6 +952,11 @@ namespace Gekko
     // FPSCR = (fb & mask) | (FPSCR & ~mask)
     OP(MTFSFD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsf_d]++;
+        }
+
         uint32_t m = 0, fm = FM;
 
         for (int i = 7; i >= 0; i--)
@@ -691,6 +976,11 @@ namespace Gekko
     // FPSCR(crbD) = 0 (clear bit)
     OP(MTFSB0)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb0]++;
+        }
+
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr &= ~m;
         Gekko->regs.pc += 4;
@@ -699,6 +989,11 @@ namespace Gekko
     // FPSCR(crbD) = 0 (clear bit), CR1
     OP(MTFSB0D)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb0_d]++;
+        }
+
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr &= ~m;
         COMPUTE_CR1();
@@ -708,6 +1003,11 @@ namespace Gekko
     // FPSCR(crbD) = 1 (set bit)
     OP(MTFSB1)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb1]++;
+        }
+
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
         Gekko->regs.pc += 4;
@@ -716,6 +1016,11 @@ namespace Gekko
     // FPSCR(crbD) = 1 (set bit), CR1
     OP(MTFSB1D)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb1_d]++;
+        }
+
         uint32_t m = 1 << (31 - CRBD);
         Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
         COMPUTE_CR1();
@@ -725,6 +1030,11 @@ namespace Gekko
     // fd = fb
     OP(FMR)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmr]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB);
@@ -735,6 +1045,11 @@ namespace Gekko
 
     OP(FMRD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::fmr_d]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             FPRU(RD) = FPRU(RB);

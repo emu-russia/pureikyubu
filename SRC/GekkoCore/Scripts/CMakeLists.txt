@@ -38,5 +38,6 @@ add_library (GekkoCore SHARED
 	../MemoryHub.cpp
 	../Mmu.cpp
 	../TLB.cpp
+	../OpcodeStats.cpp
 
 )

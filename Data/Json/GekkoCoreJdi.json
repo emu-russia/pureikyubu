@@ -222,7 +222,36 @@
         "Syntax: nop <virtual_address>",
         "Example: nop 0x80003100"
       ]
+    },
+
+    "EnableOpcodeStats": {
+      "help": "Enables or disables the maintenance of opcode usage statistics",
+      "args": 1,
+      "usage": [
+        "Syntax: EnableOpcodeStats <0|1>"
+      ]
+    },
+
+    "PrintOpcodeStats": {
+      "help": "Displays the most commonly used Gekko opcodes",
+      "args": 1,
+      "usage": [
+        "Syntax: PrintOpcodeStats <maxCount>"
+      ]
+    },
+
+    "ResetOpcodeStats": {
+      "help": "Clears statistics of opcode usage"
+    },
+
+    "RunOpcodeStats": {
+      "help": "Runs a low priority thread that prints opcode statistics once a second"
+    },
+
+    "StopOpcodeStats": {
+      "help": "Stop the thread that outputs the opcode statistics"
     }
 
   }
+
 }

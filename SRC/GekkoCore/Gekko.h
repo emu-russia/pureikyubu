@@ -143,6 +143,12 @@ namespace Gekko
 
         PrivilegedCause PrCause;
 
+        // Opcode stats
+        int opcodeStats[(size_t)Instruction::Max] = { 0 };
+        bool opcodeStatsEnabled = false;
+        Thread* opcodeStatsThread = nullptr;
+        static void OpcodeStatsThreadProc(void* Parameter);
+
     public:
 
         GatherBuffer gatherBuffer;
@@ -215,6 +221,13 @@ namespace Gekko
 
         int64_t GetInstructionCounter() { return ops; }
         void ResetInstructionCounter() { ops = 0; }
+
+        bool IsOpcodeStatsEnabled();
+        void EnableOpcodeStats(bool enable);
+        void PrintOpcodeStats(size_t maxCount);
+        void ResetOpcodeStats();
+        void RunOpcodeStatsThread();
+        void StopOpcodeStatsThread();
 
 #pragma endregion "Debug"
 

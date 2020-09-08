@@ -396,6 +396,7 @@ namespace Gekko
 		tlbie,
 		tlbsync,
 
+		Max,
 	};
 
 	enum class Param : int

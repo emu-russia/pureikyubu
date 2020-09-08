@@ -12,6 +12,11 @@ namespace Gekko
     // CR0 (if .)
     OP(RLWINM)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::rlwinm]++;
+        }
+
         uint32_t m = Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(SH, RRS);
         uint32_t res = r & m;
@@ -26,6 +31,11 @@ namespace Gekko
     // ra = r & m
     OP(RLWNM)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::rlwnm]++;
+        }
+
         uint32_t m = Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(RRB & 0x1f, RRS);
         uint32_t res = r & m;
@@ -41,6 +51,11 @@ namespace Gekko
     // CR0 (if .)
     OP(RLWIMI)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::rlwimi]++;
+        }
+
         uint32_t m = Gekko->interp->rotmask[MB][ME];
         uint32_t r = Rotl32(SH, RRS);
         uint32_t res = (r & m) | (RRA & ~m);

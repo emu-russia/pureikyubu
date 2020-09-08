@@ -14,6 +14,11 @@ namespace Gekko
     //           fd(ps1) = SINGLE(MEM(ea, 4))
     OP(LFS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float res;
@@ -37,6 +42,11 @@ namespace Gekko
     //           fd(ps1) = SINGLE(MEM(ea, 4))
     OP(LFSX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfsx]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float res;
@@ -61,6 +71,11 @@ namespace Gekko
     // ra = ea
     OP(LFSU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfsu]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + SIMM;
@@ -87,6 +102,11 @@ namespace Gekko
     // ra = ea
     OP(LFSUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfsux]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + RRB;
@@ -109,6 +129,11 @@ namespace Gekko
     // fd = MEM(ea, 8)
     OP(LFD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (RA) Gekko->ReadDouble(RRA + SIMM, &FPRU(RD));
@@ -123,6 +148,11 @@ namespace Gekko
     // fd = MEM(ea, 8)
     OP(LFDX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfdx]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (RA) Gekko->ReadDouble(RRA + RRB, &FPRU(RD));
@@ -138,6 +168,11 @@ namespace Gekko
     // ra = ea
     OP(LFDU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfdu]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + SIMM;
@@ -154,6 +189,11 @@ namespace Gekko
     // ra = ea
     OP(LFDUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::lfdux]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + RRB;
@@ -172,6 +212,11 @@ namespace Gekko
     // MEM(ea, 4) = SINGLE(fs)
     OP(STFS)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfs]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float data;
@@ -191,6 +236,11 @@ namespace Gekko
     // MEM(ea, 4) = SINGLE(fs)
     OP(STFSX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfsx]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float num;
@@ -212,6 +262,11 @@ namespace Gekko
     // ra = ea
     OP(STFSU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfsu]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float data;
@@ -233,6 +288,11 @@ namespace Gekko
     // ra = ea
     OP(STFSUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfsux]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             float num;
@@ -254,6 +314,11 @@ namespace Gekko
     // MEM(ea, 8) = fs
     OP(STFD)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfd]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (RA) Gekko->WriteDouble(RRA + SIMM, &FPRU(RS));
@@ -268,6 +333,11 @@ namespace Gekko
     // MEM(ea, 8) = fs
     OP(STFDX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfdx]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             if (RA) Gekko->WriteDouble(RRA + RRB, &FPRU(RS));
@@ -283,6 +353,11 @@ namespace Gekko
     // ra = ea
     OP(STFDU)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfdu]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + SIMM;
@@ -299,6 +374,11 @@ namespace Gekko
     // ra = ea
     OP(STFDUX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfdux]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t ea = RRA + RRB;
@@ -317,6 +397,11 @@ namespace Gekko
     // MEM(ea, 4) = fs[32-63]
     OP(STFIWX)
     {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::stfiwx]++;
+        }
+
         if (Gekko->regs.msr & MSR_FP)
         {
             uint32_t val = (uint32_t)(FPRU(RS) & 0x00000000ffffffff);
