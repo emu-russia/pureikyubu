@@ -20,7 +20,7 @@ namespace Debug
 	{
 		filename = jsonFileName;
 
-		pollingInterval = periodMs * Gekko::Gekko->OneMillisecond();
+		pollingInterval = periodMs * (Gekko::Gekko->OneSecond() / 1000);
 		savedGekkoTbr = Gekko::Gekko->GetTicks();
 
 		json = new Json();

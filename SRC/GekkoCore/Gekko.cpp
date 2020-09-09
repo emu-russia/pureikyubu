@@ -5,9 +5,16 @@ namespace Gekko
 {
     GekkoCore* Gekko;
 
+    // The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
     void GekkoCore::GekkoThreadProc(void* Parameter)
     {
         GekkoCore* core = (GekkoCore*)Parameter;
+
+        if (core->suspended)
+        {
+            Sleep(50);
+            return;
+        }
 
         if (core->EnableTestBreakpoints)
         {
@@ -29,11 +36,9 @@ namespace Gekko
 
         JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
 
-        gekkoThread = new Thread(GekkoThreadProc, true, this, "GekkoCore");
+        gekkoThread = new Thread(GekkoThreadProc, false, this, "GekkoCore");
 
         Reset();
-
-        msec = OneSecond() / 1000;
     }
 
     GekkoCore::~GekkoCore()
@@ -48,8 +53,6 @@ namespace Gekko
     // Reset processor
     void GekkoCore::Reset()
     {
-        gekkoThread->Suspend();
-
         one_second = CPU_TIMER_CLOCK;
         intFlag = false;
         ops = 0;
@@ -126,7 +129,7 @@ namespace Gekko
     // 1 second of emulated CPU time.
     int64_t GekkoCore::OneSecond()
     {
-        return CPU_TIMER_CLOCK;
+        return one_second;
     }
 
     // Swap longs (no need in assembly, used by tools)

@@ -57,3 +57,5 @@ extern  uint32_t     lastFifoSize;
 // for gpregs module
 // called after any changes of VCD / VAT
 void FifoReconfigure();
+
+extern GX_FromFuture::FifoProcessor GxFifo;

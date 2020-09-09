@@ -115,7 +115,6 @@ namespace Gekko
         Interpreter* interp;
         Jitc* jitc;
 
-        uint64_t    msec;
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
         size_t      segmentsExecuted;   // The number of completed recompiler segments.
@@ -149,6 +148,10 @@ namespace Gekko
         Thread* opcodeStatsThread = nullptr;
         static void OpcodeStatsThreadProc(void* Parameter);
 
+        // Used to safely stop the main GekkoCore thread. In suspended state, the thread goes into a low-priority loop waiting for the start of emulation.
+        // You can't just do Thread->Suspend(), because the thread can stop at an important part of the emulation and after restarting the emulation it will go into the #UB-state.
+        volatile bool suspended = true;
+
     public:
 
         GatherBuffer gatherBuffer;
@@ -164,16 +167,15 @@ namespace Gekko
         GekkoCore();
         ~GekkoCore();
 
-        void Run() { gekkoThread->Resume(); }
-        bool IsRunning() { return gekkoThread->IsRunning(); }
-        void Suspend() { gekkoThread->Suspend(); }
+        void Run() { suspended = false; }
+        bool IsRunning() { return !suspended; }
+        void Suspend() { suspended = true; }
 
         void Reset();
 
         void Tick();
         int64_t GetTicks();
         int64_t OneSecond();
-        int64_t OneMillisecond() { return msec; }
 
         void Step();
 
