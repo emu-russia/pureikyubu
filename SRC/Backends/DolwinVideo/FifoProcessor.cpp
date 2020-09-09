@@ -294,4 +294,9 @@ namespace GX_FromFuture
 	{
 		return ((uint16_t)Peek8(offset) << 8) | Peek8(offset + 1);
 	}
+
+	void FifoProcessor::Reset()
+	{
+		readPtr = writePtr = 0;
+	}
 }

@@ -13,7 +13,7 @@ static void CPDrawDoneCallback()
     pe_done_num++;
     if (pe_done_num == 1)
     {
-        vi.xfb = 0;     // disable VI output
+        vi.xfb = false;     // disable VI output
     }
 
     Flipper::Gx->CPDrawDoneCallback();
@@ -21,7 +21,7 @@ static void CPDrawDoneCallback()
 
 static void CPDrawTokenCallback(uint16_t tokenValue)
 {
-    vi.xfb = 0;     // disable VI output
+    vi.xfb = false;     // disable VI output
 
     Flipper::Gx->CPDrawTokenCallback(tokenValue);
 }
@@ -55,6 +55,8 @@ static void PERegWrite(uint32_t addr, uint32_t data)
 void CP_PEOpen()
 {
     Report(Channel::CP, "Command processor and Pixel Engine (for GX)\n");
+
+    pe_done_num = 0;
 
     // Command Processor
     MISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_STATUS_ID), CPRegRead, CPRegWrite);

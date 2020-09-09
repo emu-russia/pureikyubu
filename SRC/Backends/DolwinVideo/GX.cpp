@@ -100,9 +100,11 @@ long GXOpen(HWConfig* config, uint8_t * ramPtr)
     // flush texture cache
     TexInit();
 
-    gxOpened = true;
-
     JDI::Hub.AddNode(DOLWIN_VIDEO_JDI_JSON, DolwinVideoReflector);
+
+    GxFifo.Reset();
+
+    gxOpened = true;
 
     return true;
 }

@@ -17,7 +17,7 @@ namespace HLE
         static const int dayMonLeap[] = { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
         #define IsLeapYear(y)  ((y % 1000) == 0 || (y % 4) == 0)
 
-        int64_t ticksPerMs = Gekko::Gekko->OneMillisecond();
+        int64_t ticksPerMs = Gekko::Gekko->OneSecond() / 1000;
         int64_t ms = tbr / ticksPerMs;
         int64_t msPerDay = 24 * 60 * 60 * 1000;
         int64_t days = ms / msPerDay;

@@ -30,5 +30,7 @@ namespace GX_FromFuture
 
 		uint8_t Peek8(size_t offset);
 		uint8_t Peek16(size_t offset);
+
+		void Reset();
 	};
 }
