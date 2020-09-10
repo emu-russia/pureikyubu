@@ -12,7 +12,7 @@ namespace Gekko
 
         if (core->suspended)
         {
-            Sleep(50);
+            Thread::Sleep(50);
             return;
         }
 

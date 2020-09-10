@@ -143,42 +143,42 @@ namespace HLE
 
     static Json::Value* OSDateTimeInternal(std::vector<std::string>& args)
     {
-        wchar_t timeStr[0x100] = { 0, };
+        std::string timeStr;
 
         if (args.size() > 1)
         {
-            OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), false);
+            timeStr = OSTimeFormat(strtoull(args[1].c_str(), nullptr, 0), false);
         }
         else
         {
-            OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), false);
+            timeStr = OSTimeFormat(Gekko::Gekko->GetTicks(), false);
         }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;
 
-        output->AddString(nullptr, timeStr);
+        output->AddAnsiString(nullptr, timeStr.c_str());
 
         return output;
     }
 
     static Json::Value* OSTimeInternal(std::vector<std::string>& args)
     {
-        wchar_t timeStr[0x100] = { 0, };
+        std::string timeStr;
 
         if (args.size() > 1)
         {
-            OSTimeFormat(timeStr, strtoull(args[1].c_str(), nullptr, 0), true);
+            timeStr = OSTimeFormat(strtoull(args[1].c_str(), nullptr, 0), true);
         }
         else
         {
-            OSTimeFormat(timeStr, Gekko::Gekko->GetTicks(), true);
+            timeStr = OSTimeFormat(Gekko::Gekko->GetTicks(), true);
         }
 
         Json::Value* output = new Json::Value();
         output->type = Json::ValueType::Array;
 
-        output->AddString(nullptr, timeStr);
+        output->AddAnsiString(nullptr, timeStr.c_str());
 
         return output;
     }

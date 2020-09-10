@@ -5,12 +5,14 @@ namespace HLE
 
     // Convert GC time to human-usable time string;
     // Example output: "30 Jun 2004 3:06:14:127"
-    void OSTimeFormat(wchar_t gcTime[256], uint64_t tbr, bool noDate)
+    std::string OSTimeFormat(uint64_t tbr, bool noDate)
     {
-        static const wchar_t* mnstr[12] = {
-            L"Jan", L"Feb", L"Mar", L"Apr",
-            L"May", L"Jun", L"Jul", L"Aug",
-            L"Sep", L"Oct", L"Nov", L"Dec"
+        char timeStr[0x100];
+
+        static const char* mnstr[12] = {
+            "Jan", "Feb", "Mar", "Apr",
+            "May", "Jun", "Jul", "Aug",
+            "Sep", "Oct", "Nov", "Dec"
         };
 
         static const int dayMon[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -53,15 +55,17 @@ namespace HLE
 
         if (noDate)
         {
-            swprintf_s(gcTime, 255, L"%02i:%02i:%02i:%03i",
+            sprintf(timeStr, "%02i:%02i:%02i:%03i",
                 h, m, s, (int)msDay);
         }
         else
         {
-            swprintf_s(gcTime, 255, L"%i %s %i %02i:%02i:%02i:%03i",
+            sprintf(timeStr, "%i %s %i %02i:%02i:%02i:%03i",
                 day, mnstr[mon], year,
                 h, m, s, (int)msDay);
         }
+
+        return timeStr;
     }
 
 }
