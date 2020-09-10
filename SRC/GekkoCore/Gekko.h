@@ -152,6 +152,9 @@ namespace Gekko
         // You can't just do Thread->Suspend(), because the thread can stop at an important part of the emulation and after restarting the emulation it will go into the #UB-state.
         volatile bool suspended = true;
 
+        // Request to clear instruction counter
+        volatile bool resetInstructionCounter = false;
+
     public:
 
         GatherBuffer gatherBuffer;
@@ -222,7 +225,7 @@ namespace Gekko
         bool IsBreakpoint(uint32_t addr);
 
         int64_t GetInstructionCounter() { return ops; }
-        void ResetInstructionCounter() { ops = 0; }
+        void ResetInstructionCounter() { resetInstructionCounter = true; }
 
         bool IsOpcodeStatsEnabled();
         void EnableOpcodeStats(bool enable);

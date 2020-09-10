@@ -33,4 +33,12 @@ namespace Util
         char* _Filename,
         char* _Ext);
 
+    // Get a list of files and directories, relative to the root directory
+
+    void BuildFileTree(std::wstring rootDir, std::list<std::wstring>& names);
+
+    // Check if the entity is a directory or a file.
+
+    bool IsDirectory(std::wstring path);
+
 }

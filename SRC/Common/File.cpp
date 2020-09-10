@@ -193,4 +193,135 @@ namespace Util
 
     }
 
+    /// <summary>
+    /// Get a list of files and directories, relative to the root directory.
+    /// WARNING! This method is recursive. You must understand what you are doing.
+    /// </summary>
+    /// <param name="rootDir">Directory relative to which the tree will be built</param>
+    /// <param name="names">List of files and directories. The path includes the root directory. 
+    /// If the root directory is a full path, then the path in this list to the directory/file will also be full. Otherwise, the paths are relative (but include the root directory).</param>
+    void BuildFileTree(std::wstring rootDir, std::list<std::wstring>& names)
+    {
+
+        if (rootDir.back() == L'/')
+        {
+            rootDir.pop_back();
+        }
+
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+
+        std::wstring search_path = rootDir + L"/*.*";
+        WIN32_FIND_DATAW fd = { 0 };
+        HANDLE hFind = ::FindFirstFileW(search_path.c_str(), &fd);
+        if (hFind != INVALID_HANDLE_VALUE)
+        {
+            do
+            {
+                std::wstring name = fd.cFileName;
+
+                if (name == L"." || name == L"..")
+                    continue;
+
+                std::wstring fullPath = rootDir + L"/" + name;
+
+                names.push_back(fullPath);
+
+                if (Util::IsDirectory(fullPath))
+                {
+                    BuildFileTree(fullPath, names);
+                }
+
+            } while (::FindNextFileW(hFind, &fd));
+
+            ::FindClose(hFind);
+        }
+
+#endif
+
+#if defined (_LINUX)
+
+        DIR* dir;
+        struct dirent* ent;
+        if ((dir = opendir(Util::WstringToString(rootDir).c_str())) != NULL)
+        {
+            while ((ent = readdir(dir)) != NULL)
+            {
+                std::wstring name = Util::StringToWstring(ent->d_name);
+
+                if (name == L"." || name == L"..")
+                    continue;
+
+                std::wstring fullPath = rootDir + L"/" + name;
+
+                names.push_back(fullPath);
+
+                if (Util::IsDirectory(fullPath))
+                {
+                    BuildFileTree(fullPath, names);
+                }
+            }
+            closedir(dir);
+        }
+
+#endif
+
+
+    }
+
+    /// <summary>
+    /// Check if the entity is a directory or a file.
+    /// </summary>
+    /// <param name="fullPath">Path to directory or file (can be relative).</param>
+    /// <returns>true: The specified entity is a directory.</returns>
+    bool IsDirectory(std::wstring path)
+    {
+
+#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+
+        DWORD attr = ::GetFileAttributesW(path.c_str());
+
+        return (attr & FILE_ATTRIBUTE_DIRECTORY) != 0;
+
+#endif
+
+#if defined (_LINUX)
+
+        // Year 2020. Linux still doesn't really know how to work with wchar_t
+
+        struct stat attr;
+
+        stat( Util::WstringToString(path).c_str(), &attr);
+
+        return (attr.st_mode & S_IFDIR) != 0;
+
+#endif
+
+        return false;
+    }
+
+
+
+#if 0
+    
+    void BuildTreeDemo()
+    {
+        std::list<std::wstring> names;
+        Util::BuildFileTree(L"c:/Work/DolphinSDK_Dvddata", names);
+        for (auto it = names.begin(); it != names.end(); ++it)
+        {
+            std::wstring name = *it;
+
+            if (Util::IsDirectory(name))
+            {
+                Debug::Report(Debug::Channel::Norm, "Dir: %s\n", Util::WstringToString(name).c_str());
+            }
+            else
+            {
+                Debug::Report(Debug::Channel::Norm, "File: %s\n", Util::WstringToString(name).c_str());
+            }
+        }
+    }
+
+#endif
+
 }

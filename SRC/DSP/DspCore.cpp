@@ -471,7 +471,7 @@ namespace DSP
 
 	void DspCore::ResetInstructionCounter()
 	{
-		instructionCounter = 0;
+		resetInstructionCounter = true;
 	}
 
 	// Execute single instruction (by interpreter)

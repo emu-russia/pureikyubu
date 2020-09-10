@@ -243,6 +243,12 @@ namespace DSP
 			core->instructionCounter += 2;
 		}
 
+		if (core->resetInstructionCounter)
+		{
+			core->resetInstructionCounter = false;
+			core->instructionCounter = 0;
+		}
+
 		// If there were no control transfers, increase pc by the instruction size
 
 		if (!flowControl)
