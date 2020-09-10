@@ -29,6 +29,11 @@ namespace Gekko
         }
         c_1[op >> 26](op);
         core->ops++;
+        if (core->resetInstructionCounter)
+        {
+            core->resetInstructionCounter = false;
+            core->ops = 0;
+        }
         // DSI, ALIGN, PROGRAM, FPUNA, SC
         if (core->exception)
         {

@@ -6,6 +6,7 @@ Thread* debugger;
 
 void DebugThreadProc(void* param)
 {
+	static size_t mipsIterCounter = 1;
 	std::list<std::pair<int, std::string>> queue;
 
 	UI::Jdi.QueryDebugMessages(queue);
@@ -29,6 +30,15 @@ void DebugThreadProc(void* param)
 	}
 
 	Thread::Sleep(100);
+
+	// Output Gekko mips every second
+
+	mipsIterCounter++;
+	if (mipsIterCounter == 10)
+	{
+		mipsIterCounter = 1;
+		printf("Gekko mips: %f\n", (float)UI::Jdi.GetResetGekkoMipsCounter() / 1000000.f );
+	}
 }
 
 void DebugStart()

@@ -189,6 +189,7 @@ namespace DSP
 		int repeatCount = 0;		// Internal register for the `rep` instruction.
 
 		int64_t instructionCounter = 0;
+		bool resetInstructionCounter = false;
 
 	public:
 

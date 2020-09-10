@@ -105,6 +105,8 @@ namespace UI
 		std::string DebugChannelToString(int chan);
 		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
 
+		int64_t GetResetGekkoMipsCounter();
+
 	};
 
 	extern JdiClient Jdi;

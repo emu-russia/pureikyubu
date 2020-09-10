@@ -14,6 +14,9 @@
 #include <pthread.h>
 #include <signal.h>
 #include <libgen.h>		// dirname / basename
+#include <sys/types.h>
+#include <sys/stat.h>	// _wstat (IsDirectory)
+#include <dirent.h>		// BuildFileTree
 #define _stricmp strcasecmp
 #endif
 

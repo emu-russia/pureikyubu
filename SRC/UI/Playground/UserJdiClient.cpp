@@ -279,4 +279,12 @@ namespace UI
 		delete value;
 	}
 
+	int64_t JdiClient::GetResetGekkoMipsCounter()
+	{
+		int gekkoMips;
+		CallJdiReturnInt("GetPerformanceCounter 0", &gekkoMips);
+		CallJdiNoReturn("ResetPerformanceCounter 0");
+		return gekkoMips;
+	}
+
 }
