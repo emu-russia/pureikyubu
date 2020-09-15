@@ -271,7 +271,7 @@ namespace Util
     /// <summary>
     /// Check if the entity is a directory or a file.
     /// </summary>
-    /// <param name="fullPath">Path to directory or file (can be relative).</param>
+    /// <param name="path">Path to directory or file (can be relative).</param>
     /// <returns>true: The specified entity is a directory.</returns>
     bool IsDirectory(std::wstring path)
     {

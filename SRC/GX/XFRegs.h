@@ -132,23 +132,27 @@ namespace GX
 	{
 		struct
 		{
-			bool disableDetection : 1;			// When set, disables clipping detection
-			bool disableTrivialReject : 1;		// When set, disables trivial rejection
-			bool disablePolyAccel : 1;			// When set, disables cpoly clipping acceleration
+			unsigned disableDetection : 1;			// When set, disables clipping detection
+			unsigned disableTrivialReject : 1;		// When set, disables trivial rejection
+			unsigned disablePolyAccel : 1;			// When set, disables cpoly clipping acceleration
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(ClipDisable) == sizeof(uint32_t), "ClipDisable invalid definition!");
 
 	union InVertexSpec
 	{
 		struct
 		{
-			int color0Usage : 2;		// 0: No host supplied color information 1: Host supplied color0 2: Host supplied color0 and color1
-			int normalUsage : 2;		// 0: No host supplied normal 1: Host supplied normal 2: Host supplied normal and binormals
-			int texCoords : 4;		// 0: No host supplied textures 1: 1 host supplied texture pair (S0, T0) 2-8: 2-8 host supplied texturepairs; 9-15: Reserved
+			unsigned color0Usage : 2;		// 0: No host supplied color information 1: Host supplied color0 2: Host supplied color0 and color1
+			unsigned normalUsage : 2;		// 0: No host supplied normal 1: Host supplied normal 2: Host supplied normal and binormals
+			unsigned texCoords : 4;		// 0: No host supplied textures 1: 1 host supplied texture pair (S0, T0) 2-8: 2-8 host supplied texturepairs; 9-15: Reserved
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(InVertexSpec) == sizeof(uint32_t), "InVertexSpec invalid definition!");
 
 	// Light parameters
 
@@ -171,55 +175,63 @@ namespace GX
 		float dhx[3];	// Post-processed x,y,z light dir, or 1/2 angle x,y,z
 	};
 
+	static_assert (sizeof(Light) == 0x10 * sizeof(uint32_t), "Light invalid definition!");
+
 	union ColorAlphaControl
 	{
 		struct
 		{
 			unsigned	MatSrc : 1;         // Material source. 0: use register, 1: Use CP supplied Vertex color/alpha
 			unsigned    LightFunc : 1;      // LightFunc. 0: Use 1.0, 1: Use Illum0
-			bool		Light0 : 1;         // 1: use light
-			bool		Light1 : 1;         // 1: use light
-			bool		Light2 : 1;         // 1: use light
-			bool		Light3 : 1;         // 1: use light
+			unsigned 	Light0 : 1;         // 1: use light
+			unsigned 	Light1 : 1;         // 1: use light
+			unsigned 	Light2 : 1;         // 1: use light
+			unsigned 	Light3 : 1;         // 1: use light
 			unsigned    AmbSrc : 1;         // Ambient source. 0: use register, 1: Use CP supplied Vertex color/alpha
 			unsigned    DiffuseAtten : 2;   // DiffuseAtten function. 0: Use 1.0, 1: N.L signed, 2: N.L clamped to [0,1.0]
 			unsigned    Atten : 1;          // AttenEnable function. 0: Select 1.0, 1: Select Attenuation fraction
 			unsigned    AttenSelect : 1;    // AttenSelect function. 0: Select specular (N.H) attenuation, 1: Select diffuse spotlight (L.Ldir) attenuation
-			bool		Light4 : 1;         // 1: use light
-			bool		Light5 : 1;         // 1: use light
-			bool		Light6 : 1;         // 1: use light
-			bool		Light7 : 1;         // 1: use light
+			unsigned 	Light4 : 1;         // 1: use light
+			unsigned 	Light5 : 1;         // 1: use light
+			unsigned 	Light6 : 1;         // 1: use light
+			unsigned 	Light7 : 1;         // 1: use light
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(ColorAlphaControl) == sizeof(uint32_t), "ColorAlphaControl invalid definition!");
 
 	union MatrixIndex0
 	{
 		struct
 		{
-			int		PosNrmMatIdx : 6;		// Geometry matrix index
-			int		Tex0MatIdx : 6;			// Tex0 matrix index
-			int		Tex1MatIdx : 6;			// Tex1 matrix index
-			int		Tex2MatIdx : 6;			// Tex2 matrix index
-			int		Tex3MatIdx : 6;			// Tex3 matrix index
+			unsigned 		PosNrmMatIdx : 6;		// Geometry matrix index
+			unsigned 		Tex0MatIdx : 6;			// Tex0 matrix index
+			unsigned 		Tex1MatIdx : 6;			// Tex1 matrix index
+			unsigned 		Tex2MatIdx : 6;			// Tex2 matrix index
+			unsigned 		Tex3MatIdx : 6;			// Tex3 matrix index
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(MatrixIndex0) == sizeof(uint32_t), "MatrixIndex0 invalid definition!");
 
 	union MatrixIndex1
 	{
 		struct
 		{
-			int		Tex4MatIdx : 6;			// Tex4 matrix index
-			int		Tex5MatIdx : 6;			// Tex5 matrix index
-			int		Tex6MatIdx : 6;			// Tex6 matrix index
-			int		Tex7MatIdx : 6;			// Tex7 matrix index
+			unsigned 		Tex4MatIdx : 6;			// Tex4 matrix index
+			unsigned 		Tex5MatIdx : 6;			// Tex5 matrix index
+			unsigned 		Tex6MatIdx : 6;			// Tex6 matrix index
+			unsigned 		Tex7MatIdx : 6;			// Tex7 matrix index
 		};
 		uint32_t bits;
 	};
 
+	static_assert (sizeof(MatrixIndex1) == sizeof(uint32_t), "MatrixIndex1 invalid definition!");
+
 	// Texgen inrow enum
-	enum TexGenInrow : uint8_t
+	enum TexGenInrow : unsigned
 	{
 		XF_TEXGEN_INROW_POSMTX = 0,
 		XF_TEXGEN_INROW_NORMAL,
@@ -245,12 +257,14 @@ namespace GX
 			unsigned    in_form : 1;		// input form (format of source input data for regular textures) 0: (A, B, 1.0, 1.0) (used for regular texture source) 1: (A, B, C, 1.0) (used for geometry or normal source)
 			unsigned	Reserved2 : 1;
 			unsigned    type : 3;			// texgen type 0: Regular transformation (transform incoming data), 1: texgen bump mapping, 2: Color texgen: (s,t)=(r,g:b) (g and b are concatenated), color0, 3: Color texgen: (s,t)=(r,g:b) (g and b are concatenated), color 1
-			TexGenInrow	src_row : 5;		// regular texture source row
+			unsigned	src_row : 5;		// regular texture source row (TexGenInrow)
 			unsigned    bump_src : 3;		// bump mapping source texture: n: use regular transformed tex(n) for bump mapping source
 			unsigned    bump_light : 3;		// Bump mapping source light: n: use light #n for bump map direction source (10 to 17)
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(TexGenParam) == sizeof(uint32_t), "TexGenParam invalid definition!");
 
 	union DualGenParam
 	{
@@ -262,6 +276,8 @@ namespace GX
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(DualGenParam) == sizeof(uint32_t), "DualGenParam invalid definition!");
 
 	struct XFState
 	{

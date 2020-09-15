@@ -202,7 +202,7 @@ namespace GX
 
 	// Attribute types (from VCD register)
 
-	enum AttrType : uint8_t
+	enum AttrType : unsigned
 	{
 		VCD_NONE = 0,           // attribute stage disabled
 		VCD_DIRECT,             // direct data
@@ -212,25 +212,25 @@ namespace GX
 
 	// Vertex Components Count (from VAT register)
 
-	enum VatPosCount : uint8_t
+	enum VatPosCount : unsigned
 	{
 		VCNT_POS_XY = 0,		// two (x,y)
 		VCNT_POS_XYZ = 1,		// three (x,y,z)
 	};
 
-	enum VatNormCount : uint8_t
+	enum VatNormCount : unsigned
 	{
 		VCNT_NRM_XYZ = 0,		// three normals
 		VCNT_NRM_NBT = 1,		// nine normals
 	};
 
-	enum VatColorCount : uint8_t
+	enum VatColorCount : unsigned
 	{
 		VCNT_CLR_RGB = 0,		// three (r,g,b)
 		VCNT_CLR_RGBA = 1,		// four (r,g,b,a)
 	};
 
-	enum VatTexCoordCount : uint8_t
+	enum VatTexCoordCount : unsigned
 	{
 		VCNT_TEX_S = 0,			// one (s)
 		VCNT_TEX_ST = 1			// two (s,t)
@@ -238,7 +238,7 @@ namespace GX
 
 	// Vertex Component Format (from VAT register)
 
-	enum VatCompFormat : uint8_t
+	enum VatCompFormat : unsigned
 	{
 		// For Components (normal, coords)
 		VFMT_U8 = 0,			// ubyte
@@ -250,7 +250,7 @@ namespace GX
 
 	// Vertex Color Format (from VAT register)
 
-	enum VatColorFormat : uint8_t
+	enum VatColorFormat : unsigned
 	{
 		VFMT_RGB565 = 0,		// 16 bit 565 (three comp)
 		VFMT_RGB8 = 1,			// 24 bit 888 (three comp)
@@ -266,144 +266,159 @@ namespace GX
 	{
 		struct
 		{
-			int PosNrmIndex : 6;
-			int Tex0Index : 6;
-			int Tex1Index : 6;
-			int Tex2Index : 6;
-			int Tex3Index : 6;
+			unsigned PosNrmIndex : 6;
+			unsigned Tex0Index : 6;
+			unsigned Tex1Index : 6;
+			unsigned Tex2Index : 6;
+			unsigned Tex3Index : 6;
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(MatrixIndexA) == sizeof(uint32_t), "MatrixIndexA invalid definition!");
 
 	union MatrixIndexB
 	{
 		struct
 		{
-			int Tex4Index : 6;
-			int Tex5Index : 6;
-			int Tex6Index : 6;
-			int Tex7Index : 6;
+			unsigned Tex4Index : 6;
+			unsigned Tex5Index : 6;
+			unsigned Tex6Index : 6;
+			unsigned Tex7Index : 6;
 		};
 		uint32_t bits;
 	};
 
-	// /mnt/c/Work/dolwin/SRC/Hardware/../GX/CPRegs.h:304:22: warning: ‘GX::VCD_Lo::<unnamed struct>::Normal’ is too small to hold all values of ‘enum GX::AttrType’
-	// False positive??
+	static_assert (sizeof(MatrixIndexB) == sizeof(uint32_t), "MatrixIndexB invalid definition!");
 
 	union VCD_Lo
 	{
 		struct
 		{
-			bool PosNrmMatIdx : 1;
-			bool Tex0MatIdx : 1;
-			bool Tex1MatIdx : 1;
-			bool Tex2MatIdx : 1;
-			bool Tex3MatIdx : 1;
-			bool Tex4MatIdx : 1;
-			bool Tex5MatIdx : 1;
-			bool Tex6MatIdx : 1;
-			bool Tex7MatIdx : 1;
-			AttrType Position : 2;
-			AttrType Normal : 2;
-			AttrType Color0 : 2;
-			AttrType Color1 : 2;
+			unsigned PosNrmMatIdx : 1;
+			unsigned Tex0MatIdx : 1;
+			unsigned Tex1MatIdx : 1;
+			unsigned Tex2MatIdx : 1;
+			unsigned Tex3MatIdx : 1;
+			unsigned Tex4MatIdx : 1;
+			unsigned Tex5MatIdx : 1;
+			unsigned Tex6MatIdx : 1;
+			unsigned Tex7MatIdx : 1;
+			unsigned Position : 2;		// AttrType
+			unsigned Normal : 2;		// AttrType
+			unsigned Color0 : 2;		// AttrType
+			unsigned Color1 : 2;		// AttrType
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(VCD_Lo) == sizeof(uint32_t), "VCD_Lo invalid definition!");
 
 	union VCD_Hi
 	{
 		struct
 		{
-			AttrType Tex0Coord : 2;
-			AttrType Tex1Coord : 2;
-			AttrType Tex2Coord : 2;
-			AttrType Tex3Coord : 2;
-			AttrType Tex4Coord : 2;
-			AttrType Tex5Coord : 2;
-			AttrType Tex6Coord : 2;
-			AttrType Tex7Coord : 2;
+			unsigned Tex0Coord : 2;		// AttrType
+			unsigned Tex1Coord : 2;		// AttrType
+			unsigned Tex2Coord : 2;		// AttrType
+			unsigned Tex3Coord : 2;		// AttrType
+			unsigned Tex4Coord : 2;		// AttrType
+			unsigned Tex5Coord : 2;		// AttrType
+			unsigned Tex6Coord : 2;		// AttrType
+			unsigned Tex7Coord : 2;		// AttrType
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(VCD_Hi) == sizeof(uint32_t), "VCD_Hi invalid definition!");
 
 	union VAT_group0
 	{
 		struct
 		{
-			VatPosCount	poscnt : 1;
-			VatCompFormat	posfmt : 3;
-			size_t		posshft : 5;			// Location of decimal point from LSB. This shift applies to all u/short components and to u/byte components where ByteDequant is asserted
-			VatNormCount    nrmcnt : 1;
-			VatCompFormat	nrmfmt : 3;				// Normal location of decimal point predefined as follow: Byte: 6, Short: 14
-			VatColorCount    col0cnt : 1;
-			VatColorFormat	col0fmt : 3;
-			VatColorCount    col1cnt : 1;
-			VatColorFormat	col1fmt : 3;
-			VatTexCoordCount    tex0cnt : 1;
-			VatCompFormat	tex0fmt : 3;
-			size_t	    tex0shft : 5;
-			bool		bytedeq : 1;			// Shift applies for u/byte and u/short components of position and texture attributes.
-			bool		nrmidx3 : 1;			// When nine normals selected in indirect mode, input will be treated as three staggered indices (one per triple biased by component size), into normal table.
+			unsigned	poscnt : 1;
+			unsigned	posfmt : 3;
+			unsigned	posshft : 5;			// Location of decimal point from LSB. This shift applies to all u/short components and to u/byte components where ByteDequant is asserted
+			unsigned    nrmcnt : 1;
+			unsigned	nrmfmt : 3;				// Normal location of decimal point predefined as follow: Byte: 6, Short: 14
+			unsigned    col0cnt : 1;
+			unsigned	col0fmt : 3;
+			unsigned    col1cnt : 1;
+			unsigned	col1fmt : 3;
+			unsigned    tex0cnt : 1;
+			unsigned	tex0fmt : 3;
+			unsigned 	tex0shft : 5;
+			unsigned	bytedeq : 1;			// Shift applies for u/byte and u/short components of position and texture attributes.
+			unsigned 	nrmidx3 : 1;			// When nine normals selected in indirect mode, input will be treated as three staggered indices (one per triple biased by component size), into normal table.
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(VAT_group0) == sizeof(uint32_t), "VAT_group0 invalid definition!");
 
 	union VAT_group1
 	{
 		struct
 		{
-			VatTexCoordCount    tex1cnt : 1;
-			VatCompFormat	tex1fmt : 3;
-			size_t	    tex1shft : 5;
-			VatTexCoordCount    tex2cnt : 1;
-			VatCompFormat	tex2fmt : 3;
-			size_t	    tex2shft : 5;
-			VatTexCoordCount    tex3cnt : 1;
-			VatCompFormat	tex3fmt : 3;
-			size_t	    tex3shft : 5;
-			VatTexCoordCount    tex4cnt : 1;
-			VatCompFormat	tex4fmt : 3;
-			bool		vcache : 1;
+			unsigned    tex1cnt : 1;
+			unsigned	tex1fmt : 3;
+			unsigned 	tex1shft : 5;
+			unsigned    tex2cnt : 1;
+			unsigned	tex2fmt : 3;
+			unsigned 	tex2shft : 5;
+			unsigned    tex3cnt : 1;
+			unsigned	tex3fmt : 3;
+			unsigned 	tex3shft : 5;
+			unsigned    tex4cnt : 1;
+			unsigned	tex4fmt : 3;
+			unsigned 	vcache : 1;
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(VAT_group1) == sizeof(uint32_t), "VAT_group1 invalid definition!");
 
 	union VAT_group2
 	{
 		struct
 		{
-			size_t		tex4shft : 5;
-			VatTexCoordCount    tex5cnt : 1;
-			VatCompFormat	tex5fmt : 3;
-			size_t	    tex5shft : 5;
-			VatTexCoordCount    tex6cnt : 1;
-			VatCompFormat	tex6fmt : 3;
-			size_t	    tex6shft : 5;
-			VatTexCoordCount    tex7cnt : 1;
-			VatCompFormat	tex7fmt : 3;
-			size_t		tex7shft : 5;
+			unsigned 	tex4shft : 5;
+			unsigned    tex5cnt : 1;
+			unsigned	tex5fmt : 3;
+			unsigned	tex5shft : 5;
+			unsigned    tex6cnt : 1;
+			unsigned	tex6fmt : 3;
+			unsigned	tex6shft : 5;
+			unsigned    tex7cnt : 1;
+			unsigned	tex7fmt : 3;
+			unsigned 	tex7shft : 5;
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(VAT_group2) == sizeof(uint32_t), "VAT_group2 invalid definition!");
 
 	union ArrayBase
 	{
 		struct
 		{
-			uint32_t Base : 26;
+			unsigned  Base : 26;
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(ArrayBase) == sizeof(uint32_t), "ArrayBase invalid definition!");
 
 	union ArrayStride
 	{
 		struct
 		{
-			int Stride : 8;
+			unsigned  Stride : 8;
 		};
 		uint32_t bits;
 	};
+
+	static_assert (sizeof(ArrayStride) == sizeof(uint32_t), "ArrayStride invalid definition!");
 
 	// Array name for ArrayBase and ArrayStride
 
