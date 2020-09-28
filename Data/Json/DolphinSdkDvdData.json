@@ -41,6 +41,12 @@
 			"gm16adpcm.wt": {},
 			"gm16pcm.pcm": {},
 			"gm16pcm.wt": {}
+		},
+		"tests":
+		{
+			"heli_60.pcm8": {},
+			"sine_64.pcm16": {},
+			"siren.adpcm": {}
 		}
 	},
 
