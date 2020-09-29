@@ -15,6 +15,7 @@ namespace DVD
 		wcscpy(directory, DolphinSDKPath);
 
 		// Load dvddata structure.
+		// TODO: Generate Json dynamically
 		auto dvdDataInfoText = Util::FileLoad(DvdDataJson);
 		if (dvdDataInfoText.empty())
 		{
@@ -170,6 +171,8 @@ namespace DVD
 
 		size_t maxLength = 0;
 		
+		// First, try to enter the mapped binary blob, if it doesn't work, try the mapped file.
+
 		uint8_t* ptr = TranslateMemory(currentSeek, length, maxLength);
 		if (ptr != nullptr)
 		{
@@ -193,6 +196,8 @@ namespace DVD
 			}
 			else
 			{
+				// None of the options came up - return zeros.
+
 				memset(buffer, 0, length);
 				result = false;
 			}
@@ -203,6 +208,9 @@ namespace DVD
 	}
 
 	#pragma region "Data Generators"
+
+	// In addition to the actual files, the DVD image also contains a number of important binary data: DiskID, Apploader image, main program (DOL), BootInfo2 and BootBlock2 structures and FST.
+	// Generating almost all blobs is straightforward, with the exception of the FST, which will have to tinker with.
 
 	bool MountDolphinSdk::GenDiskId()
 	{
@@ -235,6 +243,10 @@ namespace DVD
 		return true;
 	}
 
+	/// <summary>
+	/// Unfortunately, all demos in the SDK are in ELF format. Therefore, we will use PONG.DOL as the main program, which is included in each Dolwin release and is a full resident of the project :p
+	/// </summary>
+	/// <returns></returns>
 	bool MountDolphinSdk::GenDol()
 	{
 		Dol = Util::FileLoad(DolPath);
@@ -250,6 +262,10 @@ namespace DVD
 		return true;
 	}
 
+	/// <summary>
+	/// Add a string with the name of the entry (directory or file name) to the NameTable.
+	/// </summary>
+	/// <param name="str"></param>
 	void MountDolphinSdk::AddString(std::string str)
 	{
 		for (auto& c : str)
@@ -260,19 +276,36 @@ namespace DVD
 		NameTableData.push_back(0);
 	}
 
+	/// <summary>
+	/// Process original Json with dvddata directory structure. The Json structure is designed to accommodate the weird FST feature when a directory is in the middle of files.
+	/// For a more detailed description of this oddity, see `dolwin-docs\RE\DVD\FSTNotes.md`.
+	/// The method is recursive tree descent.
+	/// In the process, meta information is added to the original Json structure, which is used by the `WalkAndGenerateFst` method to create the final binary FST blob.
+	/// </summary>
+	/// <param name="entry"></param>
 	void MountDolphinSdk::ParseDvdDataEntryForFst(Json::Value* entry)
 	{
-		if (entry->type == Json::ValueType::Object)
+		Json::Value* parent = nullptr;
+
+		if (entry->type != Json::ValueType::Object)
+		{
+			return;
+		}
+
+		if (entry->children.size() != 0)
 		{
 			// Directory
 
 			// Save directory name offset
+
 			size_t nameOffset = NameTableData.size();
 			if (entry->name)
 			{
+				// Root has no name
 				AddString(entry->name);
 			}
 			entry->AddInt("nameOffset", (int)nameOffset);
+			entry->AddBool("dir", true);
 
 			// Save current FST index for directory
 
@@ -280,154 +313,114 @@ namespace DVD
 			entryCounter++;
 
 			// Reset totalChildren counter
+
 			entry->AddInt("totalChildren", 0);
-
-			// Update parent totalChildren counters
-			Json::Value * parent = entry->parent;
-			while (parent)
-			{
-				Json::Value* totalChildren = parent->ByName("totalChildren");
-
-				if (totalChildren) totalChildren->value.AsInt++;
-
-				parent = parent->parent;		// :p
-			}
 		}
-		else if (entry->type == Json::ValueType::String)
+		else
 		{
-			bool skipMeta = false;
+			// File.
+			// Differs from a directory in that it has no descendants
 
-			if (entry->parent->name && entry->parent->type == Json::ValueType::Array)
+			assert(entry->name);
+			std::string path = entry->name;
+
+			size_t nameOffset = NameTableData.size();
+			AddString(path);
+
+			parent = entry->parent;
+
+			// Save file name offset
+
+			entry->AddInt("nameOffset", (int)nameOffset);
+
+			// Generate full path to file
+
+			do
 			{
-				if (!_stricmp(entry->parent->name, "filePaths"))
+				if (parent->ByName("dir"))
 				{
-					skipMeta = true;
+					path = (parent->name ? parent->name + std::string("/") : "/") + path;
 				}
-			}
+				parent = parent->parent;
 
-			// File
+			} while (parent != nullptr);
 
-			if (!skipMeta)
+			assert(path.size() < DVD_MAXPATH);
+
+			wchar_t filePath[0x1000] = { 0, };
+
+			wcscat(filePath, directory);
+			wcscat(filePath, FilesRoot);
+			wchar_t* filePathPtr = filePath + wcslen(filePath);
+
+			for (size_t i = 0; i < path.size(); i++)
 			{
-				std::string path = Util::WstringToString(entry->value.AsString);
-
-				size_t nameOffset = NameTableData.size();
-				AddString(path);
-
-				Json::Value* parent = entry->parent;
-
-				// Save file name offset
-				Json::Value* nameOffsets = entry->parent->parent->ByName("nameOffsets");
-				if (nameOffsets == nullptr)
-				{
-					nameOffsets = entry->parent->parent->AddArray("nameOffsets");
-				}
-				assert(nameOffsets);
-
-				nameOffsets->AddInt(nullptr, (int)nameOffset);
-
-				do
-				{
-					if (parent)
-					{
-						if (parent->type == Json::ValueType::Object)
-						{
-							path = (parent->name ? parent->name + std::string("/") : "/") + path;
-						}
-
-						parent = parent->parent;
-					}
-
-				} while (parent != nullptr);
-
-				assert(path.size() < DVD_MAXPATH);
-
-				// Save file offset and size
-
-				//DBReport("Processing file: %s\n", path.c_str());
-
-				wchar_t filePath[0x1000] = { 0, };
-
-				wcscat(filePath, directory);
-				wcscat(filePath, L"/dvddata");
-				wchar_t* filePathPtr = filePath + wcslen(filePath);
-
-				for (size_t i = 0; i < path.size(); i++)
-				{
-					*filePathPtr++ = (wchar_t)path[i];
-				}
-				*filePathPtr++ = 0;
-
-				Json::Value* fileOffsets = entry->parent->parent->ByName("fileOffsets");
-				if (fileOffsets == nullptr)
-				{
-					fileOffsets = entry->parent->parent->AddArray("fileOffsets");
-				}
-				assert(fileOffsets);
-
-				fileOffsets->AddInt(nullptr, userFilesStart + userFilesOffset);
-
-				size_t fileSize = Util::FileSize(filePath);
-
-				Json::Value* fileSizes = entry->parent->parent->ByName("fileSizes");
-				if (fileSizes == nullptr)
-				{
-					fileSizes = entry->parent->parent->AddArray("fileSizes");
-				}
-				assert(fileSizes);
-
-				fileSizes->AddInt(nullptr, (int)fileSize);
-
-				userFilesOffset += RoundUp32((uint32_t)fileSize);
-
-				Json::Value* filePaths = entry->parent->parent->ByName("filePaths");
-				if (filePaths == nullptr)
-				{
-					filePaths = entry->parent->parent->AddArray("filePaths");
-				}
-				assert(filePaths);
-
-				filePaths->AddString(nullptr, filePath);
-				
-				// Adjust counters
-				entryCounter++;
-
-				// Update parent sibling counters
-				parent = entry->parent;
-				while (parent)
-				{
-					Json::Value* totalChildren = parent->ByName("totalChildren");
-
-					if (totalChildren) totalChildren->value.AsInt++;
-
-					parent = parent->parent;		// :p
-				}
+				*filePathPtr++ = (wchar_t)path[i];
 			}
+			*filePathPtr++ = 0;
+
+			//Report(Channel::Norm, "Processing file: %s\n", path.c_str());
+
+			// Save file offset
+
+			entry->AddInt("fileOffset", userFilesStart + userFilesOffset);
+
+			// Save file size
+
+			size_t fileSize = Util::FileSize(filePath);
+			entry->AddInt("fileSize", (int)fileSize);
+
+			userFilesOffset += RoundUp32((uint32_t)fileSize);
+
+			// Save file path
+
+			entry->AddString("filePath", filePath);
+
+			// Adjust entry counter
+
+			entry->AddInt("entryId", entryCounter);
+			entryCounter++;
 		}
 
-		Json::Value* lastObject = nullptr;
+		// Update parent sibling counters
 
-		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		parent = entry->parent;
+		while (parent)
 		{
-			Json::Value * child = *it;
-			ParseDvdDataEntryForFst(child);
-			if (child->type == Json::ValueType::Object)
-			{
-				lastObject = child;
-			}
+			Json::Value* totalChildren = parent->ByName("totalChildren");
+
+			if (totalChildren) totalChildren->value.AsInt++;
+
+			parent = parent->parent;		// :p
 		}
 
-		if (lastObject)
+		// Recursively process descendants
+
+		if (entry->ByName("dir") != nullptr)
 		{
-			lastObject->AddBool("last", true);
+			for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+			{
+				ParseDvdDataEntryForFst(*it);
+			}
 		}
 	}
 
+	/// <summary>
+	/// Based on the Json structure with the data of the dvddata directory tree, in which meta-information is added, the final FST binary blob is built.
+	/// </summary>
+	/// <param name="entry"></param>
 	void MountDolphinSdk::WalkAndGenerateFst(Json::Value* entry)
 	{
 		DVDFileEntry fstEntry = { 0 };
 
-		if (entry->type == Json::ValueType::Object)
+		if (entry->type != Json::ValueType::Object)
+		{
+			return;
+		}
+
+		Json::Value* isDir = entry->ByName("dir");
+
+		if (isDir)
 		{
 			// Directory
 
@@ -446,7 +439,9 @@ namespace DVD
 			{
 				Json::Value* parentId = entry->parent->ByName("entryId");
 				if (parentId)
+				{
 					fstEntry.parentOffset = _BYTESWAP_UINT32((uint32_t)parentId->value.AsInt);
+				}
 			}
 
 			Json::Value* entryId = entry->ByName("entryId");
@@ -454,65 +449,50 @@ namespace DVD
 
 			if (entryId && totalChildren)
 			{
-				Json::Value* last = entry->ByName("last");
-
 				fstEntry.nextOffset = _BYTESWAP_UINT32((uint32_t)(entryId->value.AsInt + totalChildren->value.AsInt) + 1);
 			}
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
-		}
-		else if (entry->type == Json::ValueType::Array)
-		{
-			// Files
 
-			if (!_stricmp(entry->name, "files"))
+			Report(Channel::Norm, "%d: directory: %s. nextOffset: %d\n", 
+				entryId->value.AsInt, entry->name, _BYTESWAP_UINT32(fstEntry.nextOffset) );
+
+			for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 			{
-				Json::Value* nameOffsets = entry->parent->ByName("nameOffsets");
-				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
-				Json::Value* fileSizes = entry->parent->ByName("fileSizes");
-				assert(nameOffsets && fileOffsets && fileSizes);
-
-				if (nameOffsets && fileOffsets && fileSizes)
-				{
-					auto nameOffsetsIt = nameOffsets->children.begin();
-					auto fileOffsetsIt = fileOffsets->children.begin();
-					auto fileSizesIt = fileSizes->children.begin();
-
-					while (nameOffsetsIt != nameOffsets->children.end())
-					{
-						fstEntry.isDir = 0;
-
-						uint32_t nameOffset = (uint32_t)(*nameOffsetsIt)->value.AsInt;
-						uint32_t fileOffset = (uint32_t)(*fileOffsetsIt)->value.AsInt;
-						uint32_t fileSize = (uint32_t)(*fileSizesIt)->value.AsInt;
-
-						fstEntry.nameOffsetHi = (uint8_t)(nameOffset >> 16);
-						fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset);
-
-						fstEntry.fileOffset = _BYTESWAP_UINT32(fileOffset);
-						fstEntry.fileLength = _BYTESWAP_UINT32(fileSize);
-
-						FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
-
-						nameOffsetsIt++;
-						fileOffsetsIt++;
-						fileSizesIt++;
-					}
-				}
+				WalkAndGenerateFst(*it);
 			}
-
-			return;
 		}
-
-		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		else
 		{
-			WalkAndGenerateFst(*it);
+			// File
+
+			Json::Value* entryId = entry->ByName("entryId");
+			Json::Value* nameOffsetValue = entry->ByName("nameOffset");
+			Json::Value* fileOffsetValue = entry->ByName("fileOffset");
+			Json::Value* fileSizeValue = entry->ByName("fileSize");
+			assert(nameOffsetValue && fileOffsetValue && fileSizeValue);
+
+			fstEntry.isDir = 0;
+
+			uint32_t nameOffset = (uint32_t)(nameOffsetValue->value.AsInt);
+			uint32_t fileOffset = (uint32_t)(fileOffsetValue->value.AsInt);
+			uint32_t fileSize = (uint32_t)(fileSizeValue->value.AsInt);
+
+			fstEntry.nameOffsetHi = (uint8_t)(nameOffset >> 16);
+			fstEntry.nameOffsetLo = _BYTESWAP_UINT16((uint16_t)nameOffset);
+
+			fstEntry.fileOffset = _BYTESWAP_UINT32(fileOffset);
+			fstEntry.fileLength = _BYTESWAP_UINT32(fileSize);
+
+			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
+
+			Report(Channel::Norm, "%d: file: %s\n", entryId->value.AsInt, entry->name);
 		}
 	}
 
 	// The basic idea behind generating FST is to walk by DvdDataJson.
-	// When traversing a structure a specific userData is attached to each node.
-	// After generation, this userData is collected in a common collection (FST).
+	// When traversing a structure a specific meta-information is attached to each node.
+	// After generation, this meta-information is collected in a final collection (FST).
 	bool MountDolphinSdk::GenFst()
 	{
 		try
@@ -537,9 +517,11 @@ namespace DVD
 			return false;
 		}
 
+		// Add Name Table to the end
+
 		FstData.insert(FstData.end(), NameTableData.begin(), NameTableData.end());
 
-		Util::FileSave(L"Data\\DolphinSdkFST.bin", FstData);
+		Util::FileSave(L"Data/DolphinSdkFST.bin", FstData);
 
 		return true;
 	}
@@ -582,37 +564,27 @@ namespace DVD
 
 	void MountDolphinSdk::WalkAndMapFiles(Json::Value* entry)
 	{
-		if (entry->type == Json::ValueType::Array)
+		if (entry->type != Json::ValueType::Object)
 		{
-			// Files
-
-			if (!_stricmp(entry->name, "files"))
-			{
-				Json::Value* filePaths = entry->parent->ByName("filePaths");
-				Json::Value* fileOffsets = entry->parent->ByName("fileOffsets");
-				assert(filePaths && fileOffsets);
-
-				if (filePaths && fileOffsets)
-				{
-					auto filePathsIt = filePaths->children.begin();
-					auto fileOffsetsIt = fileOffsets->children.begin();
-
-					while (filePathsIt != filePaths->children.end())
-					{
-						MapFile((*filePathsIt)->value.AsString, (uint32_t)(*fileOffsetsIt)->value.AsInt);
-
-						filePathsIt++;
-						fileOffsetsIt++;
-					}
-				}
-			}
-
 			return;
 		}
 
-		for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+		Json::Value* isDir = entry->ByName("dir");
+
+		if (!isDir)
 		{
-			WalkAndMapFiles(*it);
+			Json::Value* filePath = entry->ByName("filePath");
+			Json::Value* fileOffset = entry->ByName("fileOffset");
+			assert(filePath && fileOffset);
+
+			MapFile(filePath->value.AsString, (uint32_t)(fileOffset->value.AsInt));
+		}
+		else
+		{
+			for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
+			{
+				WalkAndMapFiles(*it);
+			}
 		}
 	}
 

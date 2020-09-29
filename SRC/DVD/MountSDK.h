@@ -41,8 +41,8 @@ namespace DVD
 		void WalkAndGenerateFst(Json::Value* entry);
 		bool GenFst();
 
-		std::list<std::tuple<std::vector<uint8_t> &, uint32_t, size_t>> mapping;
-		std::list<std::tuple<wchar_t*, uint32_t, size_t>> fileMapping;
+		std::list<std::tuple<std::vector<uint8_t> &, uint32_t, size_t>> mapping;		// A collection for mapping generated DVD structures (eg FST) binary blobs to the virtual DVD address space.
+		std::list<std::tuple<wchar_t*, uint32_t, size_t>> fileMapping;		// Collection of mapping real files from dvddata to virtual DVD address space. The files themselves are not loaded into memory.
 		bool GenMap();
 		void WalkAndMapFiles(Json::Value* entry);
 		bool GenFileMap();
