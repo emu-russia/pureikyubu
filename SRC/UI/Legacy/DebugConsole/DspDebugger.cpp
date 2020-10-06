@@ -14,8 +14,6 @@ namespace Debug
 			Jdi = new JdiClient;
 		}
 
-		ShowCursor(false);
-
 		RECT rect;
 
 		rect.left = 0;
