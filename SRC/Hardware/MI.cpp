@@ -471,7 +471,7 @@ void LoadBootrom(HWConfig* config)
     auto bootrom = Util::FileLoad(config->BootromFilename);
     if (bootrom.empty())
     {
-        Report(Channel::MI, "Cannot load Bootrom: %s\n", config->BootromFilename);
+        Report(Channel::MI, "Cannot load Bootrom: %s\n", Util::WstringToString(config->BootromFilename).c_str());
         return;
     }
 
