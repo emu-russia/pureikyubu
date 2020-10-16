@@ -12,11 +12,13 @@ void EMUGetHwConfig(HWConfig * config)
 
     if (renderTarget == nullptr)
     {
-        throw "GetRenderTarget failed!";
+        config->renderTarget = nullptr;
     }
-
-    config->renderTarget = (void *)renderTarget->value.AsInt;
-    delete renderTarget;
+    else
+    {
+        config->renderTarget = (void*)renderTarget->value.AsInt;
+        delete renderTarget;
+    }
 
     config->ramsize = RAMSIZE;
 

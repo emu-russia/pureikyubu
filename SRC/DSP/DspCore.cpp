@@ -559,7 +559,7 @@ namespace DSP
 		{
 			if (regs.l[i] != prevState->l[i])
 			{
-				Report(Channel::Norm, "l%i: 0x%04X\n", 8+i, regs.l[i]);
+				Report(Channel::Norm, "l%i: 0x%04X\n", i, regs.l[i]);
 			}
 		}
 	}
