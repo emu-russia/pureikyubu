@@ -153,6 +153,12 @@ namespace DVD
 	static Json::Value* DvdRead(std::vector<std::string>& args)
 	{
 		size_t size = strtoul(args[1].c_str(), nullptr, 0);
+		
+		bool silent = false;
+		if (args.size() >= 3)
+		{
+			silent = strtoul(args[2].c_str(), nullptr, 0) != 0;
+		}
 
 		if (size > 1024 * 1024)
 		{
@@ -169,32 +175,34 @@ namespace DVD
 		// Allocate buffer
 
 		uint8_t* buf = new uint8_t[size];
-		assert(buf);
 
 		int seekPos = GetSeek();
 		Read(buf, size);
 
 		// Print first 32 Bytes
 
-		char hexDump[0x200] = { 0, };
-		char asciiDump[0x200] = { 0, };
-		char* ptr = hexDump;
-		char* ptr2 = asciiDump;
-
-		size_t bytes = my_min(32, size);
-		for (size_t i=0, breakCounter=0; i< bytes; i++)
+		if (!silent)
 		{
-			ptr += sprintf(ptr, "%02X ", buf[i]);
-			ptr2 += sprintf(ptr2, "%c", (32 <= buf[i] && buf[i] < 128) ? buf[i] : '.');
+			char hexDump[0x200] = { 0, };
+			char asciiDump[0x200] = { 0, };
+			char* ptr = hexDump;
+			char* ptr2 = asciiDump;
 
-			breakCounter++;
-			if (breakCounter >= 16)
+			size_t bytes = my_min(32, size);
+			for (size_t i = 0, breakCounter = 0; i < bytes; i++)
 			{
-				Report(Channel::Norm, "0x%08X %s %s\n", seekPos, hexDump, asciiDump);
-				breakCounter = 0;
-				ptr = hexDump;
-				ptr2 = asciiDump;
-				seekPos += 16;
+				ptr += sprintf(ptr, "%02X ", buf[i]);
+				ptr2 += sprintf(ptr2, "%c", (32 <= buf[i] && buf[i] < 128) ? buf[i] : '.');
+
+				breakCounter++;
+				if (breakCounter >= 16)
+				{
+					Report(Channel::Norm, "0x%08X %s %s\n", seekPos, hexDump, asciiDump);
+					breakCounter = 0;
+					ptr = hexDump;
+					ptr2 = asciiDump;
+					seekPos += 16;
+				}
 			}
 		}
 
@@ -210,7 +218,10 @@ namespace DVD
 
 		delete[] buf;
 
-		Report(Channel::DVD, "Read %zi bytes\n", size);
+		if (!silent)
+		{
+			Report(Channel::DVD, "Read %zi bytes\n", size);
+		}
 
 		return output;
 	}

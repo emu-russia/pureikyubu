@@ -67,13 +67,14 @@
 
 		"DvdRead": {
 			"help": "Read DVD data",
-			"hints": "<len>",
+			"hints": "<len> [silent]",
 			"args": 1,
 			"usage": [
-				"Syntax: DvdRead <length>\n",
+				"Syntax: DvdRead <length> [silent]\n",
 				"First 32 Bytes will be dumped on screen. Length must not greater 1 MByte.\n",
+				"If silent == 1, then the command works in silent mode (nothing is output to the log)\n",
 				"Examples of use: DvdRead 32\n",
-				"                 DvdRead 0x1000\n"
+				"                 DvdRead 0x1000 1\n"
 			],
 			"output": "Array [] of bytes"
 		},

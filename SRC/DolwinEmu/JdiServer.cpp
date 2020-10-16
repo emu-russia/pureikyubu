@@ -350,7 +350,17 @@ CallJdiReturnJson(const char* request, char * reply, size_t replySize)
     value->parent = rootObj;
 
     size_t actualSize = 0;
-    json.Serialize(reply, replySize, actualSize);
+    json.GetSerializedTextSize(reply, -1, actualSize);
 
+    if (actualSize >= (replySize - 1))
+    {
+        Debug::Report(Debug::Channel::Error, "Not enough space to serialize result! (actualSize: %i)\n", actualSize);
+        reply[0] = '{';
+        reply[1] = '}';
+        reply[2] = 0;
+        return;
+    }
+
+    json.Serialize(reply, actualSize + 1, actualSize);
     reply[actualSize] = 0;
 }

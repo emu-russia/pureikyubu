@@ -5,6 +5,7 @@ namespace DVD
 {
 	class MountDolphinSdk
 	{
+		const bool logMount = false;
 		bool mounted = false;
 		uint32_t currentSeek = 0;
 		wchar_t directory[0x1000] = { 0 };
