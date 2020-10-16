@@ -454,8 +454,11 @@ namespace DVD
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 
-			Report(Channel::Norm, "%d: directory: %s. nextOffset: %d\n", 
-				entryId->value.AsInt, entry->name, _BYTESWAP_UINT32(fstEntry.nextOffset) );
+			if (logMount)
+			{
+				Report(Channel::Norm, "%d: directory: %s. nextOffset: %d\n",
+					entryId->value.AsInt, entry->name, _BYTESWAP_UINT32(fstEntry.nextOffset));
+			}
 
 			for (auto it = entry->children.begin(); it != entry->children.end(); ++it)
 			{
@@ -486,7 +489,10 @@ namespace DVD
 
 			FstData.insert(FstData.end(), (uint8_t*)&fstEntry, (uint8_t*)&fstEntry + sizeof(fstEntry));
 
-			Report(Channel::Norm, "%d: file: %s\n", entryId->value.AsInt, entry->name);
+			if (logMount)
+			{
+				Report(Channel::Norm, "%d: file: %s\n", entryId->value.AsInt, entry->name);
+			}
 		}
 	}
 
@@ -505,7 +511,10 @@ namespace DVD
 			return false;
 		}
 
-		JDI::Hub.Dump(DvdDataInfo.root.children.back());
+		if (logMount)
+		{
+			JDI::Hub.Dump(DvdDataInfo.root.children.back());
+		}
 
 		try
 		{
