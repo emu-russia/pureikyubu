@@ -403,12 +403,22 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
     item->name.resize(2 * MAX_PATH + 2);
     if (type == SELECTOR_FILE::Dvd)
     {
+        // To get information from the disk, you have to remount it. 
+        // If the user, for example, mounted DolphinSDK, it is necessary to restore the previous state of the mount so that he does not get upset.
+
+        bool mounted = false;
+        std::string path;
+        bool mountedAsIso = false;
+
         /* Load DVD banner. */
         std::vector<uint8_t> banner = DVDLoadBanner(file.c_str());
         if (banner.empty())
         {
             return;
         }
+
+        // Keep previous mount state
+        mounted = UI::Jdi->DvdIsMounted(path, mountedAsIso);
 
         // get DiskID
         std::vector<uint8_t> diskIDRaw;
@@ -425,7 +435,23 @@ static void add_file(const std::wstring& file, int fsize, SELECTOR_FILE type)
 
         /* Set GameID. */
         item->id = fmt::sprintf(L"%.4s", diskID);
-        UI::Jdi->DvdUnmount();
+
+        // Restore previous mount state
+        if (mounted)
+        {
+            if (mountedAsIso)
+            {
+                UI::Jdi->DvdMount(path);
+            }
+            else
+            {
+                UI::Jdi->DvdMountSDK(path);
+            }
+        }
+        else
+        {
+            UI::Jdi->DvdUnmount();
+        }
 
         /* Use banner info and remove line-feeds. */
         DVDBanner2* bnr = (DVDBanner2*)banner.data();

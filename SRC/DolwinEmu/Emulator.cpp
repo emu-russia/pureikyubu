@@ -102,8 +102,6 @@ void EMUClose()
     delete Debug::Log;
     Debug::Log = nullptr;
 
-	DVD::Unmount();
-
     emu.loaded = false;
 }
 
@@ -143,6 +141,7 @@ void EMUDtor()
         return;
     }
     JDI::Hub.RemoveNode(EMU_JDI_JSON);
+    DVD::Unmount();
     DVD::ShutdownSubsystem();
     delete Gekko::Gekko;
     Gekko::Gekko = nullptr;

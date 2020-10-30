@@ -953,9 +953,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
                     std::wstring dolphinSdkDir = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
                     if (!dolphinSdkDir.empty())
                     {
-                        char cmd[0x200];
-                        sprintf_s(cmd, sizeof(cmd), "MountSDK \"%s\"", Util::WstringToString(dolphinSdkDir).c_str());
-                        UI::Jdi->ExecuteCommand(cmd);
+                        UI::Jdi->DvdMountSDK(Util::WstringToString(dolphinSdkDir));
                     }
 
                     return 0;
