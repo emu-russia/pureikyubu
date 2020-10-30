@@ -55,6 +55,7 @@ namespace UI
 		// Methods for controlling an optical drive
 
 		bool DvdMount(const std::string& path);
+		bool DvdMountSDK(const std::string& path);
 		void DvdUnmount();
 
 		void DvdSeek(int offset);
@@ -67,6 +68,8 @@ namespace UI
 		void DvdCloseCover();
 
 		std::string DvdRegionById(char* DiskId);
+
+		bool DvdIsMounted(std::string& path, bool& mountedIso);
 
 		// Configuration access
 

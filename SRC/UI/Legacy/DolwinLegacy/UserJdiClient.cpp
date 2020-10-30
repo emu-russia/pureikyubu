@@ -77,6 +77,23 @@ namespace UI
 		return mountResult;
 	}
 
+	bool JdiClient::DvdMountSDK(const std::string& path)
+	{
+		char cmd[0x1000] = { 0 };
+
+		sprintf_s(cmd, sizeof(cmd), "MountSDK \"%s\"", path.c_str());
+
+		bool mountResult = false;
+
+		bool res = CallJdiReturnBool(cmd, &mountResult);
+		if (!res)
+		{
+			throw "MountIso failed!";
+		}
+
+		return mountResult;
+	}
+
 	void JdiClient::DvdUnmount()
 	{
 		ExecuteCommand("UnmountDvd");
@@ -114,7 +131,7 @@ namespace UI
 
 	bool JdiClient::DvdCoverOpened()
 	{
-		Json::Value* dvdInfo = CallJdi("DvdInfo");
+		Json::Value* dvdInfo = CallJdi("DvdInfo 1");	// silent mode
 
 		bool lidStatusOpened = false;
 
@@ -152,6 +169,36 @@ namespace UI
 		CallJdiReturnString(cmd, regionName, sizeof(regionName) - 1);
 
 		return regionName;
+	}
+
+	/// <summary>
+	/// Get DVD mount status. The DvdInfo command is used
+	/// </summary>
+	/// <param name="path">The path to the image when mounting a file or the path to the folder when mounting as a DolphinSDK virtual disk.</param>
+	/// <param name="mountedIso">Mount method (ISO / virtual disk as folder)</param>
+	/// <returns>Disk mounted or not</returns>
+	bool JdiClient::DvdIsMounted(std::string& path, bool& mountedIso)
+	{
+		Json::Value* value = CallJdi("DvdInfo");
+
+		for (auto it = value->children.begin(); it != value->children.end(); ++it)
+		{
+			Json::Value* entry = *it;
+
+			switch (entry->type)
+			{
+				case Json::ValueType::String:
+					path = Util::WstringToString(entry->value.AsString);
+					break;
+			}
+		}
+
+		bool mounted = !path.empty();
+		mountedIso = Util::FileExists(path);
+
+		delete value;
+
+		return mounted;
 	}
 
 	// Configuration access
