@@ -24,29 +24,46 @@ namespace DVD
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
 
+		bool silent = args.size() > 1;
+
 		if (dvd.mountedImage)
 		{
-			Report(Channel::Norm, "Mounted as disk image: %s\n", Util::WstringToString(dvd.gcm_filename).c_str());
-			Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
-			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
+			if (!silent)
+			{
+				Report(Channel::Norm, "Mounted as disk image: %s\n", Util::WstringToString(dvd.gcm_filename).c_str());
+				Report(Channel::Norm, "GCM Size: 0x%08X bytes\n", dvd.gcm_size);
+				Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
+			}
 
 			output->AddString(nullptr, dvd.gcm_filename);
 			output->AddInt(nullptr, GetSeek());
 		}
 		else if (dvd.mountedSdk != nullptr)
 		{
-			Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::WstringToString(dvd.mountedSdk->GetDirectory()).c_str());
-			Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
+			if (!silent)
+			{
+				Report(Channel::Norm, "Mounted as SDK directory: %s\n", Util::WstringToString(dvd.mountedSdk->GetDirectory()).c_str());
+				Report(Channel::Norm, "Current seek position: 0x%08X\n", GetSeek());
+			}
 
 			output->AddString(nullptr, dvd.mountedSdk->GetDirectory());
 			output->AddInt(nullptr, GetSeek());
 		}
 		else
 		{
-			Report(Channel::Norm, "Disk Unmounted\n");
+			if (!silent)
+			{
+				Report(Channel::Norm, "Disk Unmounted\n");
+			}
+
+			output->AddString(nullptr, L"");
+			output->AddInt(nullptr, 0);
 		}
 
-		Report(Channel::Norm, "Lid status: %s\n", (DDU->GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
+		if (!silent)
+		{
+			Report(Channel::Norm, "Lid status: %s\n", (DDU->GetCoverStatus() == CoverStatus::Open) ? "Open" : "Closed");
+		}
 
 		output->AddBool(nullptr, DDU->GetCoverStatus() == CoverStatus::Open ? true : false);
 

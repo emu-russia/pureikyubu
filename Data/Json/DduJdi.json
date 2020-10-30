@@ -8,7 +8,8 @@
 	"can": {
 		"DvdInfo": {
 			"help": "Get DDU Status Information",
-			"output": "Array [String File/Dir, Int Seek, Bool LidStatus (true: Open, false: Close)]"
+			"hints": "[silent]",
+			"output": "Array [String File/Dir or \"\" if not mounted, Int Seek, Bool LidStatus (true: Open, false: Close)]"
 		},
 
 		"MountIso": {
