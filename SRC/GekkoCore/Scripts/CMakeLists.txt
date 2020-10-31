@@ -33,6 +33,7 @@ add_library (GekkoCore SHARED
 	../GekkoAnalyzer.cpp
 	../GekkoCommands.cpp
 	../GekkoDisasm.cpp
+	../GekkoAssembler.cpp
 	../Interpreter.cpp
 	../Jitc.cpp
 	../MemoryHub.cpp
