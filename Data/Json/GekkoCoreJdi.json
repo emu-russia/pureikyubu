@@ -250,6 +250,30 @@
 
     "StopOpcodeStats": {
       "help": "Stop the thread that outputs the opcode statistics"
+    },
+
+    "GekkoAnalyze": {
+      "internal": true,
+      "help": "Parse Gekko instruction",
+      "hints": "<pc> <opcode>",
+      "args": 2,
+      "output": "Array: [Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 newPc, Bool flow]"
+    },
+
+    "GekkoInstrToString": {
+      "internal": true,
+      "help": "Return the name of the Gekko instruction (Gekko::Instruction)",
+      "hints": "<instr>",
+      "args": 1,
+      "output": "Array: [String]"
+    },
+
+    "GekkoInstrParamToString": {
+      "internal": true,
+      "help": "Return the parameter name of a Gekko instruction (Gekko::Param)",
+      "hints": "<param> <paramBits> <immedValue>",
+      "args": 3,
+      "output": "Array: [String paramName, String paramDecoded]"
     }
 
   }

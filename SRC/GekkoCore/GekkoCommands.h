@@ -1,4 +1,4 @@
-// Processor debug commands. Available only after emulation has been started.
+// Processor debug commands.
 
 #pragma once
 

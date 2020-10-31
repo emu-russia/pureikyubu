@@ -1,4 +1,4 @@
-// Processor debug commands. Available only after emulation has been started.
+// Processor debug commands.
 #include "pch.h"
 
 using namespace Debug;
@@ -768,6 +768,113 @@ namespace Gekko
 		return nullptr;
 	}
 
+	// Parse Gekko instruction
+	static Json::Value* CmdGekkoAnalyze(std::vector<std::string>& args)
+	{
+		uint32_t pc = strtoul(args[1].c_str(), nullptr, 0);
+		uint32_t opcode = strtoul(args[2].c_str(), nullptr, 0);
+
+		Gekko::AnalyzeInfo info = { 0 };
+
+		Gekko::Analyzer::Analyze(pc, opcode, &info);
+
+		// Array: [Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 newPc, Bool flow]
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddInt(nullptr, (int)info.instr);
+		output->AddInt(nullptr, info.numParam);
+
+		uint32_t imm = 0;
+
+		for (int i = 0; i < _countof(Gekko::AnalyzeInfo::param); i++)
+		{
+			if (i >= info.numParam)
+			{
+				output->AddInt(nullptr, (int)Gekko::Param::Unknown);
+				output->AddInt(nullptr, 0);
+				continue;
+			}
+
+			// Immediate parameter values are stored in a separate field.
+
+			switch (info.param[i])
+			{
+				case Gekko::Param::Simm:
+					imm = (uint32_t)(int32_t)info.Imm.Signed;
+					break;
+				case Gekko::Param::Uimm:
+					imm = (uint32_t)info.Imm.Unsigned;
+					break;
+				case Gekko::Param::Address:
+					imm = info.Imm.Address;
+					break;
+			}
+
+			output->AddInt(nullptr, (int)info.param[i]);
+			output->AddInt(nullptr, (int)info.paramBits[i]);		// Doesn't make sense for Immediate parameters, but remains for conformity.
+		}
+
+		output->AddUInt32(nullptr, imm);			// If the Immediate parameter is missing, it is 0
+		output->AddUInt32(nullptr, info.pc);
+		output->AddBool(nullptr, info.flow);
+
+		return output;
+	}
+
+	// Return the name of the Gekko instruction (Gekko::Instruction)
+	static Json::Value* CmdGekkoInstrToString(std::vector<std::string>& args)
+	{
+		Gekko::AnalyzeInfo info = { 0 };
+		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
+
+		std::string instrName = Gekko::GekkoDisasm::InstrToString(&info);
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddAnsiString(nullptr, instrName.c_str());
+
+		return output;
+	}
+
+	// Return the parameter name of a Gekko instruction (Gekko::Param)
+	static Json::Value* CmdGekkoInstrParamToString(std::vector<std::string>& args)
+	{
+		Gekko::AnalyzeInfo info = { 0 };
+
+		info.param[0] = (Gekko::Param)strtoul(args[1].c_str(), nullptr, 0);
+		info.paramBits[0] = strtoul(args[2].c_str(), nullptr, 0);
+		uint32_t imm = strtoul(args[3].c_str(), nullptr, 0);
+
+		// Immediate parameter values are stored in a separate field.
+
+		switch (info.param[0])
+		{
+			case Gekko::Param::Simm:
+				info.Imm.Signed = imm;
+				break;
+			case Gekko::Param::Uimm:
+				info.Imm.Unsigned = imm;
+				break;
+			case Gekko::Param::Address:
+				info.Imm.Address = imm;
+				break;
+		}
+
+		std::string paramName = Gekko::GekkoDisasm::ParamName(info.param[0]);
+		std::string paramText = Gekko::GekkoDisasm::ParamToString(info.param[0], info.paramBits[0], &info);
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddAnsiString(nullptr, paramName.c_str());
+		output->AddAnsiString(nullptr, paramText.c_str());
+
+		return output;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", cmd_run);
@@ -817,5 +924,9 @@ namespace Gekko
 		JDI::Hub.AddCmd("ResetOpcodeStats", CmdResetOpcodeStats);
 		JDI::Hub.AddCmd("RunOpcodeStats", CmdRunOpcodeStats);
 		JDI::Hub.AddCmd("StopOpcodeStats", CmdStopOpcodeStats);
+
+		JDI::Hub.AddCmd("GekkoAnalyze", CmdGekkoAnalyze);
+		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);
+		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
 	}
 }
