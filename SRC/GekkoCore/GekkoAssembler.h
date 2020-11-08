@@ -34,6 +34,7 @@ namespace Gekko
 		static void SetBit(uint32_t& res, size_t ppc_bit);
 
 		static void Form_XO(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+		static void Form_D(size_t primary, AnalyzeInfo& info);
 
 	public:
 

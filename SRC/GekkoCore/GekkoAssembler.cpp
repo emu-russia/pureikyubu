@@ -69,9 +69,27 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_D(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Simm);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, info.Imm.Signed);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
+		// Just go through all the instructions from the GUM (google: "IBM Gekko User's Manual pdf")
 
 		switch (info.instr)
 		{
@@ -79,6 +97,21 @@ namespace Gekko
 			case Instruction::add_d:	Form_XO(31, 266, false, true, info); break;
 			case Instruction::addo:		Form_XO(31, 266, true, false, info); break;
 			case Instruction::addo_d:	Form_XO(31, 266, true, true, info); break;
+
+			case Instruction::addc:		Form_XO(31, 10, false, false, info); break;
+			case Instruction::addc_d:	Form_XO(31, 10, false, true, info); break;
+			case Instruction::addco:	Form_XO(31, 10, true, false, info); break;
+			case Instruction::addco_d:	Form_XO(31, 10, true, true, info); break;
+
+			case Instruction::adde:		Form_XO(31, 138, false, false, info); break;
+			case Instruction::adde_d:	Form_XO(31, 138, false, true, info); break;
+			case Instruction::addeo:	Form_XO(31, 138, true, false, info); break;
+			case Instruction::addeo_d:	Form_XO(31, 138, true, true, info); break;
+
+			case Instruction::addi:		Form_D(14, info); break;
+			case Instruction::addic:	Form_D(12, info); break;
+			case Instruction::addic_d:	Form_D(13, info); break;
+			case Instruction::addis:	Form_D(15, info); break;
 		}
 	}
 }
