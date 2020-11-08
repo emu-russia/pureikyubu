@@ -1,6 +1,8 @@
 // DSP analyzer.
 // Can be used by disassembler as well as by interpreter/jitc.
 
+// TODO: replace the imperative approach of the analyzer with the use of neural networks
+
 #pragma once
 
 namespace DSP

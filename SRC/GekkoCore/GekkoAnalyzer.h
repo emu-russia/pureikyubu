@@ -1,5 +1,7 @@
 // Gekko ISA analyzer.
 
+// TODO: replace the imperative approach of the analyzer with the use of neural networks
+
 // https://github.com/ogamespec/dolwin-python/blob/main/Scripts/GekkoAnalyzerUnitTests.py
 
 #pragma once
@@ -7,6 +9,11 @@
 namespace Gekko
 {
 
+	/// <summary>
+	/// Gekko Instruction Type.
+	/// The `_d` prefix is used for instructions with a dot at the end (bravo who came up with that).
+	/// Also some instructions (and, or, xor) with underscores in their names, since these are keywords.
+	/// </summary>
 	enum class Instruction : int
 	{
 		Unknown = -1,
@@ -401,6 +408,9 @@ namespace Gekko
 		Max,
 	};
 
+	/// <summary>
+	/// Instruction parameter type
+	/// </summary>
 	enum class Param : int
 	{
 		Unknown = -1,
@@ -422,8 +432,10 @@ namespace Gekko
 
 	struct AnalyzeInfo
 	{
-		uint32_t	instrBits;
-		Instruction instr;
+		uint32_t	instrBits;				// Binary instruction representation (all PowerPC/Gekko instructions are 32 bit)
+		Instruction instr;				// Instruction type (see above)
+
+		// Variable number of instruction parameters
 
 		size_t numParam;
 		Param param[5];
@@ -438,9 +450,9 @@ namespace Gekko
 			uint32_t Address;
 		} Imm;
 
-		uint32_t pc;		// Current pc
+		uint32_t pc;		// Current instruction pc (CIA in manual. For some unknown reason, the authors of PowerPC shy away from using the `program counter` word)
 
-		bool flow;
+		bool flow;		// Instruction can change the direction of code flow
 
 	};
 

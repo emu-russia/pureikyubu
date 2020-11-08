@@ -33,7 +33,23 @@ namespace Gekko
 		/// <param name="ppc_bit">Bit number to be set</param>
 		static void SetBit(uint32_t& res, size_t ppc_bit);
 
+		/// <summary>
+		/// rD, rA, rB version of `XO` instruction form. The value of the assembled instruction is placed in the `instrBits` property.
+		/// Example: addo. rD,rA,rB
+		/// </summary>
+		/// <param name="primary">Primary opcode value</param>
+		/// <param name="extended">Extended opcode value</param>
+		/// <param name="oe">OE bit</param>
+		/// <param name="rc">Rc bit</param>
+		/// <param name="info">Instruction information with parameters</param>
 		static void Form_XO(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+
+		/// <summary>
+		/// SIMM version of `D` instruction form. The value of the assembled instruction is placed in the `instrBits` property.
+		/// Example: addic. rD,rA,SIMM
+		/// </summary>
+		/// <param name="primary">Primary opcode value</param>
+		/// <param name="info">Instruction information with parameters</param>
 		static void Form_D(size_t primary, AnalyzeInfo& info);
 
 	public:
