@@ -922,7 +922,15 @@ namespace Gekko
 
 		// Assemble
 
-		Gekko::GekkoAssembler::Assemble(&info);
+		try
+		{
+			Gekko::GekkoAssembler::Assemble(info);
+		}
+		catch (...)
+		{
+			Debug::Report(Channel::CPU, "GekkoAssemble failed!");
+			info.instrBits = 0;
+		}
 
 		// Output result
 
