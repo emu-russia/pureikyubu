@@ -877,6 +877,45 @@ namespace Gekko
 		return text;
 	}
 
+	std::string GekkoDisasm::ParamName(Param param)
+	{
+		// Oh great Cthulhu, give me the ability to use Type.ToString() in c++
+
+		switch (param)
+		{
+			case Param::Reg:
+				return "Reg";
+			case Param::FReg:
+				return "FReg";
+			case Param::Simm:
+				return "Simm";
+			case Param::Uimm:
+				return "Uimm";
+			case Param::Crf:
+				return "Crf";
+			case Param::RegOffset:
+				return "RegOffset";
+			case Param::Num:
+				return "Num";
+			case Param::Spr:
+				return "Spr";
+			case Param::Sr:
+				return "Sr";
+			case Param::Tbr:
+				return "Tbr";
+			case Param::Crb:
+				return "Crb";
+			case Param::CRM:
+				return "CRM";
+			case Param::FM:
+				return "FM";
+			case Param::Address:
+				return "Address";
+			default:
+				return "Unknown";
+		}
+	}
+
 	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info, bool showAddress, bool showInstr)
 	{
 		std::string text = "";
