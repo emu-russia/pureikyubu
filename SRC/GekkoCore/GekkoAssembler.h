@@ -1,4 +1,7 @@
 // Gekko Assembler.
+// Used to support UVNA complementarity.
+
+// https://github.com/ogamespec/dolwin-python/blob/master/Scripts/GekkoAssemblerUnitTests.py
 
 #pragma once
 
@@ -12,10 +15,9 @@ namespace Gekko
 		/// <summary>
 		/// Build a Gekko instruction based on the current pc value and information from the `AnalyzeInfo` structure.
 		/// </summary>
-		/// <param name="pc">Current pc value</param>
 		/// <param name="info">Instruction information</param>
-		/// <returns>Gekko instruction (32 bit)</returns>
-		static uint32_t Assemble(uint32_t pc, AnalyzeInfo* info);
+		/// <returns>info->instrBits: Gekko instruction (32 bit)</returns>
+		static void Assemble(AnalyzeInfo* info);
 
 	};
 }

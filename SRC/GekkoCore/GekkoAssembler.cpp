@@ -2,8 +2,8 @@
 
 namespace Gekko
 {
-	uint32_t GekkoAssembler::Assemble(uint32_t pc, AnalyzeInfo* info)
+	void GekkoAssembler::Assemble(AnalyzeInfo* info)
 	{
-		return 0;
+
 	}
 }

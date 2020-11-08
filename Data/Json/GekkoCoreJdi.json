@@ -274,6 +274,14 @@
       "hints": "<param> <paramBits> <immedValue>",
       "args": 3,
       "output": "Array: [String paramName, String paramDecoded]"
+    },
+
+    "GekkoAssemble": {
+      "internal": true,
+      "help": "Assemble Gekko instruction based on analyzer information",
+      "hints": "Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 Pc",
+      "args": 14,
+      "output": "UInt32 (assembled instruction)"
     }
 
   }

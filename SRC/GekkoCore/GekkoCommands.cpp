@@ -875,6 +875,65 @@ namespace Gekko
 		return output;
 	}
 
+	// Assemble Gekko instruction based on analyzer information
+	static Json::Value* CmdGekkoAssemble(std::vector<std::string>& args)
+	{
+		// Get parameters and construct AnalyzeInfo
+
+		AnalyzeInfo info = { 0 };
+
+		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
+	
+		info.numParam = strtoul(args[2].c_str(), nullptr, 0);
+
+		for (size_t i = 0; i < info.numParam; i++)
+		{
+			Param param = (Param)strtoul(args[3 + 2 * i].c_str(), nullptr, 0);
+			uint32_t paramBits = strtoul(args[3 + 2 * i + 1].c_str(), nullptr, 0);
+
+			switch (param)
+			{
+				case Param::Simm:
+					info.param[i] = param;
+					info.paramBits[i] = 0;
+					info.Imm.Signed = (int16_t)strtoul(args[13].c_str(), nullptr, 0);
+					break;
+
+				case Param::Uimm:
+					info.param[i] = param;
+					info.paramBits[i] = 0;
+					info.Imm.Unsigned = (uint16_t)strtoul(args[13].c_str(), nullptr, 0);
+					break;
+
+				case Param::Address:
+					info.param[i] = param;
+					info.paramBits[i] = 0;
+					info.Imm.Address = strtoul(args[13].c_str(), nullptr, 0);
+					break;
+
+				default:
+					info.param[i] = param;
+					info.paramBits[i] = paramBits;
+					break;
+			}
+		}
+
+		info.pc = strtoul(args[14].c_str(), nullptr, 0);
+
+		// Assemble
+
+		Gekko::GekkoAssembler::Assemble(&info);
+
+		// Output result
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Int;
+
+		output->value.AsUint32 = info.instrBits;
+
+		return output;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", cmd_run);
@@ -928,5 +987,7 @@ namespace Gekko
 		JDI::Hub.AddCmd("GekkoAnalyze", CmdGekkoAnalyze);
 		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);
 		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
+
+		JDI::Hub.AddCmd("GekkoAssemble", CmdGekkoAssemble);
 	}
 }
