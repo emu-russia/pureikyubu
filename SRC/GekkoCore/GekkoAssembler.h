@@ -33,8 +33,11 @@ namespace Gekko
 		/// <param name="ppc_bit">Bit number to be set</param>
 		static void SetBit(uint32_t& res, size_t ppc_bit);
 
+		// It makes no sense to use the original names of the instruction forms, because there is a lot of confusion there.
+		// Instead, the forms are named according to the composition of the parameters.
+
 		/// <summary>
-		/// rD, rA, rB version of `XO` instruction form. The value of the assembled instruction is placed in the `instrBits` property.
+		/// rD, rA, rB version of `XO` instruction form.
 		/// Example: addo. rD,rA,rB
 		/// </summary>
 		/// <param name="primary">Primary opcode value</param>
@@ -42,15 +45,33 @@ namespace Gekko
 		/// <param name="oe">OE bit</param>
 		/// <param name="rc">Rc bit</param>
 		/// <param name="info">Instruction information with parameters</param>
-		static void Form_XO(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+		/// <returns>info.instrBits: assembled Gekko instruction (32 bit)</returns>
+		static void Form_DAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
 
 		/// <summary>
-		/// SIMM version of `D` instruction form. The value of the assembled instruction is placed in the `instrBits` property.
+		/// Shorter XO version.
+		/// Example: addme rD,rA
+		/// </summary>
+		static void Form_DA(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+
+		/// <summary>
+		/// Example: and. rA,rS,rB
+		/// </summary>
+		static void Form_ASB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+
+		/// <summary>
+		/// SIMM version of `D` instruction form.
 		/// Example: addic. rD,rA,SIMM
 		/// </summary>
 		/// <param name="primary">Primary opcode value</param>
 		/// <param name="info">Instruction information with parameters</param>
-		static void Form_D(size_t primary, AnalyzeInfo& info);
+		/// <returns>info.instrBits: assembled Gekko instruction (32 bit)</returns>
+		static void Form_DASimm(size_t primary, AnalyzeInfo& info);
+
+		/// <summary>
+		/// Example: andi. rA,rS,UIMM
+		/// </summary>
+		static void Form_ASUimm(size_t primary, AnalyzeInfo& info);
 
 	public:
 
