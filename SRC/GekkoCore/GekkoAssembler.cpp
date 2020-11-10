@@ -19,7 +19,7 @@ namespace Gekko
 			throw "Bit out of range";
 		}
 
-		if (ppc_bit_to <= ppc_bit_from)
+		if (ppc_bit_to < ppc_bit_from)
 		{
 			throw "Wrong bit order";
 		}
@@ -36,7 +36,7 @@ namespace Gekko
 
 		uint32_t mask = ((uint32_t)-1 >> ppc_bit_from) ^ ((ppc_bit_to >= 31) ? 0 : ((uint32_t)-1) >> (ppc_bit_to + 1));
 
-		res = (res & ~mask) | (val << (31 - ppc_bit_from));
+		res = (res & ~mask) | (val << (31 - ppc_bit_to));
 	}
 
 	void GekkoAssembler::SetBit(uint32_t& res, size_t ppc_bit)
@@ -120,7 +120,7 @@ namespace Gekko
 
 		PackBits(res, 6, 10, info.paramBits[0]);
 		PackBits(res, 11, 15, info.paramBits[1]);
-		PackBits(res, 16, 31, info.Imm.Signed);
+		PackBits(res, 16, 31, (uint16_t)info.Imm.Signed);
 
 		info.instrBits = res;
 	}
@@ -138,6 +138,67 @@ namespace Gekko
 		PackBits(res, 6, 10, info.paramBits[1]);	// Reversed order
 		PackBits(res, 11, 15, info.paramBits[0]);
 		PackBits(res, 16, 31, info.Imm.Unsigned);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_BranchLong(size_t primary, bool aa, bool lk, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Address);
+
+		// Calculate LI
+
+		if ((info.pc & 3) != 0)
+		{
+			throw "Invalid pc alignment";
+		}
+
+		if ((info.Imm.Address & 3) != 0)
+		{
+			throw "Invalid target address alignment";
+		}
+
+		int li = 0;
+
+		if (aa)
+		{
+			if ((info.Imm.Address & 0xFE00'0000) == 0xFE00'0000)
+			{
+				// This option is obtained when (LI || 0b00) msb is 1 (mask 0x2000'0000).
+				// In this case, the target address will be sign-expanded and equal to (0xFC00'0000 | (LI || 0b00)).
+
+				li = info.Imm.Address & ~0xFC00'0000;
+			}
+			else if ((info.Imm.Address & 0xFE00'0000) == 0)
+			{
+				// This option is obtained when (LI || 0b00) msb is zero.
+
+				li = info.Imm.Address & ~0xFC00'0000;
+			}
+			else
+			{
+				throw "Invalid absolute target address";
+			}
+		}
+		else
+		{
+			li = info.Imm.Address - info.pc;
+			int dist = li < 0 ? -li : li;		// abs
+
+			if (dist >= 0x02000000)
+			{
+				throw "Branch out of range";
+			}
+		}
+
+		PackBits(res, 6, 31, li & ~0xFC00'0003);
+
+		aa ? SetBit(res, 30) : 0;
+		lk ? SetBit(res, 31) : 0;
 
 		info.instrBits = res;
 	}
@@ -179,6 +240,10 @@ namespace Gekko
 			case Instruction::andc_d:		Form_ASB(31, 60, true, info); break;
 			case Instruction::andi_d:		Form_ASUimm(28, info); break;
 			case Instruction::andis_d:		Form_ASUimm(29, info); break;
+			case Instruction::b:			Form_BranchLong(18, false, false, info); break;
+			case Instruction::ba:			Form_BranchLong(18, true, false, info); break;
+			case Instruction::bl:			Form_BranchLong(18, false, true, info); break;
+			case Instruction::bla:			Form_BranchLong(18, true, true, info); break;
 		}
 	}
 }

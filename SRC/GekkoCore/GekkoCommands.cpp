@@ -635,6 +635,7 @@ namespace Gekko
 		return nullptr;
 	}
 
+	// Disassemble instruction at Gekko virtual memory address
 	static Json::Value* CmdGekkoDisasm(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
@@ -661,6 +662,27 @@ namespace Gekko
 
 			text = Gekko::GekkoDisasm::Disasm(addr, &info, false, false);
 		}
+
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Array;
+
+		output->AddAnsiString(nullptr, text.c_str());
+
+		return output;
+	}
+
+	// Disassemble the instruction without accessing memory (all necessary information is passed through parameters)
+	static Json::Value* CmdGekkoDisasmNoMemAccess(std::vector<std::string>& args)
+	{
+		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
+		uint32_t instr = strtoul(args[2].c_str(), nullptr, 0);
+		bool showAddress = strtoul(args[3].c_str(), nullptr, 0) != 0;
+		bool showBytes = strtoul(args[4].c_str(), nullptr, 0) != 0;
+
+		AnalyzeInfo info = { 0 };
+		Gekko::Analyzer::Analyze(addr, instr, &info);
+
+		std::string text = Gekko::GekkoDisasm::Disasm(addr, &info, showAddress, showBytes);
 
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Array;
@@ -982,6 +1004,7 @@ namespace Gekko
 		JDI::Hub.AddCmd("GekkoAddOneShotBreakpoint", CmdGekkoAddOneShotBreakpoint);
 
 		JDI::Hub.AddCmd("GekkoDisasm", CmdGekkoDisasm);
+		JDI::Hub.AddCmd("GekkoDisasmNoMemAccess", CmdGekkoDisasmNoMemAccess);
 		JDI::Hub.AddCmd("GekkoIsBranch", CmdGekkoIsBranch);
 
 		JDI::Hub.AddCmd("nop", CmdNop);

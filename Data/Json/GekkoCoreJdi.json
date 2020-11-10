@@ -204,7 +204,17 @@
 
     "GekkoDisasm": {
       "internal": true,
+      "help": "Disassemble instruction at Gekko virtual memory address",
+      "hints": "<vaddr>",
       "args": 1,
+      "output": "Array: [String] (disassembled instruction with parameters)"
+    },
+
+    "GekkoDisasmNoMemAccess": {
+      "internal": true,
+      "help": "Disassemble the instruction without accessing memory (all necessary information is passed through parameters)",
+      "args": 4,
+      "hints": "<pc> <opcode> <showAddress> <showBytes>",
       "output": "Array: [String] (disassembled instruction with parameters)"
     },
 

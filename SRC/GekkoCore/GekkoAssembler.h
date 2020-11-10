@@ -73,6 +73,12 @@ namespace Gekko
 		/// </summary>
 		static void Form_ASUimm(size_t primary, AnalyzeInfo& info);
 
+		/// <summary>
+		/// Long branch.
+		/// Example: bl target_addr
+		/// </summary>
+		static void Form_BranchLong(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>
