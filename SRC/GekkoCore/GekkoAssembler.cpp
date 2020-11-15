@@ -162,10 +162,13 @@ namespace Gekko
 			throw "Invalid target address alignment";
 		}
 
-		int li = 0;
+		int32_t li = 0;
 
 		if (aa)
 		{
+			// Absolute addressing covers the following address ranges: [0, 0x1FF'FFFC], [0xfe00'0000, 0xFFFF'FFFC]
+			// The first range is available when msb LI is zero, the second range is available when msb LI is 1.
+
 			if ((info.Imm.Address & 0xFE00'0000) == 0xFE00'0000)
 			{
 				// This option is obtained when (LI || 0b00) msb is 1 (mask 0x2000'0000).
@@ -187,9 +190,7 @@ namespace Gekko
 		else
 		{
 			li = info.Imm.Address - info.pc;
-			int dist = li < 0 ? -li : li;		// abs
-
-			if (dist >= 0x02000000)
+			if (li >= 0x02000000 || li < -0x02000000)
 			{
 				throw "Branch out of range";
 			}
