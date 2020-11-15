@@ -85,6 +85,12 @@ namespace Gekko
 		/// </summary>
 		static void Form_BranchShort(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
 
+		/// <summary>
+		/// Branch CTR/LR BO, BI
+		/// Example: bcctr 4, 10
+		/// </summary>
+		static void Form_BOBI(size_t primary, size_t extended, bool lk, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>

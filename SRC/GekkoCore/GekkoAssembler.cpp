@@ -271,6 +271,24 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_BOBI(size_t primary, size_t extended, bool lk, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Num);		// BO
+		CheckParam(info, 1, Param::Num);		// BI
+
+		PackBits(res, 6, 10, info.paramBits[0]);		// BO
+		PackBits(res, 11, 15, info.paramBits[1]);		// BI
+
+		lk ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
@@ -316,6 +334,10 @@ namespace Gekko
 			case Instruction::bca:			Form_BranchShort(16, true, false, info); break;
 			case Instruction::bcl:			Form_BranchShort(16, false, true, info); break;
 			case Instruction::bcla:			Form_BranchShort(16, true, true, info); break;
+			case Instruction::bcctr:		Form_BOBI(19, 528, false, info); break;
+			case Instruction::bcctrl:		Form_BOBI(19, 528, true, info); break;
+			case Instruction::bclr:			Form_BOBI(19, 16, false, info); break;
+			case Instruction::bclrl:		Form_BOBI(19, 16, true, info); break;
 		}
 	}
 }
