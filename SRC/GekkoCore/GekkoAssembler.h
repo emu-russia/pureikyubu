@@ -79,6 +79,12 @@ namespace Gekko
 		/// </summary>
 		static void Form_BranchLong(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
 
+		/// <summary>
+		/// Branch conditional by offset.
+		/// Example: bc 12,0,target_addr
+		/// </summary>
+		static void Form_BranchShort(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>

@@ -166,13 +166,13 @@ namespace Gekko
 
 		if (aa)
 		{
-			// Absolute addressing covers the following address ranges: [0, 0x1FF'FFFC], [0xfe00'0000, 0xFFFF'FFFC]
+			// Absolute addressing covers the following address ranges: [0, 0x1FF'FFFC], [0xfe00'0000, 0xFFFF'FFFC]  (canonical address space)
 			// The first range is available when msb LI is zero, the second range is available when msb LI is 1.
 
 			if ((info.Imm.Address & 0xFE00'0000) == 0xFE00'0000)
 			{
 				// This option is obtained when (LI || 0b00) msb is 1 (mask 0x2000'0000).
-				// In this case, the target address will be sign-expanded and equal to (0xFC00'0000 | (LI || 0b00)).
+				// In this case, the target address will be sign-extended and equal to (0xFC00'0000 | (LI || 0b00)).
 
 				li = info.Imm.Address & ~0xFC00'0000;
 			}
@@ -197,6 +197,73 @@ namespace Gekko
 		}
 
 		PackBits(res, 6, 31, li & ~0xFC00'0003);
+
+		aa ? SetBit(res, 30) : 0;
+		lk ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_BranchShort(size_t primary, bool aa, bool lk, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Num);		// BO
+		CheckParam(info, 1, Param::Num);		// BI
+		CheckParam(info, 2, Param::Address);
+
+		// Calculate BD
+
+		if ((info.pc & 3) != 0)
+		{
+			throw "Invalid pc alignment";
+		}
+
+		if ((info.Imm.Address & 3) != 0)
+		{
+			throw "Invalid target address alignment";
+		}
+
+		int32_t bd = 0;
+
+		if (aa)
+		{
+			// Absolute addressing covers the following address ranges: [0, 0x7FFC], [0xffff'8000, 0xFFFF'FFFC]  (canonical address space)
+			// The first range is available when msb BD is zero, the second range is available when msb BD is 1.
+
+			if ((info.Imm.Address & 0xFFFF'8000) == 0xFFFF'8000)
+			{
+				// This option is obtained when (BD || 0b00) msb is 1 (mask 0x8000).
+				// In this case, the target address will be sign-extended and equal to (0xFFFF'0000 | (BD || 0b00)).
+
+				bd = info.Imm.Address & 0xFFFF;
+			}
+			else if ((info.Imm.Address & 0xFFFF'8000) == 0)
+			{
+				// This option is obtained when (BD || 0b00) msb is zero.
+
+				bd = info.Imm.Address & 0xFFFF;
+			}
+			else
+			{
+				throw "Invalid absolute target address";
+			}
+		}
+		else
+		{
+			bd = info.Imm.Address - info.pc;
+			if (bd >= 0x8000 || bd < -0x8000)
+			{
+				throw "Branch out of range";
+			}
+		}
+
+		PackBits(res, 6, 10, info.paramBits[0]);		// BO
+		PackBits(res, 11, 15, info.paramBits[1]);		// BI
+
+		PackBits(res, 16, 31, bd & 0xFFFC);
 
 		aa ? SetBit(res, 30) : 0;
 		lk ? SetBit(res, 31) : 0;
@@ -245,6 +312,10 @@ namespace Gekko
 			case Instruction::ba:			Form_BranchLong(18, true, false, info); break;
 			case Instruction::bl:			Form_BranchLong(18, false, true, info); break;
 			case Instruction::bla:			Form_BranchLong(18, true, true, info); break;
+			case Instruction::bc:			Form_BranchShort(16, false, false, info); break;
+			case Instruction::bca:			Form_BranchShort(16, true, false, info); break;
+			case Instruction::bcl:			Form_BranchShort(16, false, true, info); break;
+			case Instruction::bcla:			Form_BranchShort(16, true, true, info); break;
 		}
 	}
 }
