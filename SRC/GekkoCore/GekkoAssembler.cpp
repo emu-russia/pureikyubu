@@ -289,6 +289,58 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_CrfDAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_CrfDASimm(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Simm);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, info.Imm.Signed & 0xffff);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_CrfDAUimm(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Uimm);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, info.Imm.Unsigned);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
@@ -338,6 +390,10 @@ namespace Gekko
 			case Instruction::bcctrl:		Form_BOBI(19, 528, true, info); break;
 			case Instruction::bclr:			Form_BOBI(19, 16, false, info); break;
 			case Instruction::bclrl:		Form_BOBI(19, 16, true, info); break;
+			case Instruction::cmp:			Form_CrfDAB(31, 0, info); break;
+			case Instruction::cmpi:			Form_CrfDASimm(11, info); break;
+			case Instruction::cmpl:			Form_CrfDAB(31, 32, info); break;
+			case Instruction::cmpli:		Form_CrfDAUimm(10, info); break;
 		}
 	}
 }

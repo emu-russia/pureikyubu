@@ -91,6 +91,12 @@ namespace Gekko
 		/// </summary>
 		static void Form_BOBI(size_t primary, size_t extended, bool lk, AnalyzeInfo& info);
 
+		// Further on the same principle
+
+		static void Form_CrfDAB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_CrfDASimm(size_t primary, AnalyzeInfo& info);
+		static void Form_CrfDAUimm(size_t primary, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>
