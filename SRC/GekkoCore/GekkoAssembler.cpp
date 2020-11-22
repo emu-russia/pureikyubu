@@ -377,6 +377,50 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_AB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 11, 15, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_SAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
@@ -440,6 +484,30 @@ namespace Gekko
 			case Instruction::cror:			Form_CrbDAB(19, 449, info); break;
 			case Instruction::crorc:		Form_CrbDAB(19, 417, info); break;
 			case Instruction::crxor:		Form_CrbDAB(19, 193, info); break;
+			case Instruction::dcbf:			Form_AB(31, 86, info); break;
+			case Instruction::dcbi:			Form_AB(31, 470, info); break;
+			case Instruction::dcbst:		Form_AB(31, 54, info); break;
+			case Instruction::dcbt:			Form_AB(31, 278, info); break;
+			case Instruction::dcbtst:		Form_AB(31, 246, info); break;
+			case Instruction::dcbz:			Form_AB(31, 1014, info); break;
+			case Instruction::dcbz_l:		Form_AB(4, 1014, info); break;
+			case Instruction::divw:			Form_DAB(31, 491, false, false, info); break;
+			case Instruction::divw_d:		Form_DAB(31, 491, false, true, info); break;
+			case Instruction::divwo:		Form_DAB(31, 491, true, false, info); break;
+			case Instruction::divwo_d:		Form_DAB(31, 491, true, true, info); break;
+			case Instruction::divwu:		Form_DAB(31, 459, false, false, info); break;
+			case Instruction::divwu_d:		Form_DAB(31, 459, false, true, info); break;
+			case Instruction::divwuo:		Form_DAB(31, 459, true, false, info); break;
+			case Instruction::divwuo_d:		Form_DAB(31, 459, true, true, info); break;
+			case Instruction::eciwx:		Form_DAB(31, 310, false, false, info); break;
+			case Instruction::ecowx:		Form_SAB(31, 438, info); break;
+			case Instruction::eieio:		Form_Extended(31, 854, info); break;
+			case Instruction::eqv:			Form_ASB(31, 284, false, info); break;		// Typo in GUM (B operand)
+			case Instruction::eqv_d:		Form_ASB(31, 284, true, info); break;
+			case Instruction::extsb:		Form_AS(31, 954, false, info); break;
+			case Instruction::extsb_d:		Form_AS(31, 954, true, info); break;
+			case Instruction::extsh:		Form_AS(31, 922, false, info); break;
+			case Instruction::extsh_d:		Form_AS(31, 922, true, info); break;
 		}
 	}
 }
