@@ -535,7 +535,7 @@ namespace Gekko
 		uint32_t res = 0;
 
 		PackBits(res, 0, 5, primary);
-		PackBits(res, 26, 30, extended);
+		PackBits(res, 21, 30, extended);			// The C field is used as part of the extended opcode. 
 
 		CheckParam(info, 0, Param::FReg);
 		CheckParam(info, 1, Param::FReg);
@@ -960,6 +960,15 @@ namespace Gekko
 			case Instruction::stfsx:		Form_FrSRegAB(31, 663, info); break;
 
 			// Floating-Point Move Instructions
+
+			case Instruction::fabs:			Form_FrDB(63, 264, false, info); break;
+			case Instruction::fabs_d:		Form_FrDB(63, 264, true, info); break;
+			case Instruction::fmr:			Form_FrDB(63, 72, false, info); break;
+			case Instruction::fmr_d:		Form_FrDB(63, 72, true, info); break;
+			case Instruction::fnabs:		Form_FrDB(63, 136, false, info); break;
+			case Instruction::fnabs_d:		Form_FrDB(63, 136, true, info); break;
+			case Instruction::fneg:			Form_FrDB(63, 40, false, info); break;
+			case Instruction::fneg_d:		Form_FrDB(63, 40, true, info); break;
 
 			// Branch Instructions
 
