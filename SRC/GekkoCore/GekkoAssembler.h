@@ -128,6 +128,11 @@ namespace Gekko
 		static void Form_FrDRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_FrSRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
 
+		// Trap Instructions
+
+		static void Form_Trap(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_TrapImm(size_t primary, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>

@@ -676,6 +676,41 @@ namespace Gekko
 		Form_FrDRegAB(primary, extended, info);
 	}
 
+	void GekkoAssembler::Form_Trap(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Num);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_TrapImm(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Num);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Simm);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, (uint16_t)info.Imm.Signed);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
@@ -999,7 +1034,13 @@ namespace Gekko
 
 			// System Linkage Instructions
 
+			case Instruction::rfi:			Form_Extended(19, 50, info); break;
+			case Instruction::sc:			Form_Extended(17, 1, info); break;
+
 			// Trap Instructions
+
+			case Instruction::tw:			Form_Trap(31, 4, info); break;
+			case Instruction::twi:			Form_TrapImm(3, info); break;
 
 			// Processor Control Instructions
 
