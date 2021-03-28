@@ -424,6 +424,52 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_AS_SHMBME(size_t primary, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Num);		// SH
+		CheckParam(info, 3, Param::Num);		// MB
+		CheckParam(info, 4, Param::Num);		// ME
+
+		PackBits(res, 6, 10, info.paramBits[1]);		// Reversed order
+		PackBits(res, 11, 15, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+		PackBits(res, 21, 25, info.paramBits[3]);
+		PackBits(res, 26, 30, info.paramBits[4]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_ASB_MBME(size_t primary, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+		CheckParam(info, 3, Param::Num);		// MB
+		CheckParam(info, 4, Param::Num);		// ME
+
+		PackBits(res, 6, 10, info.paramBits[1]);		// Reversed order
+		PackBits(res, 11, 15, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+		PackBits(res, 21, 25, info.paramBits[3]);
+		PackBits(res, 26, 30, info.paramBits[4]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
@@ -539,6 +585,13 @@ namespace Gekko
 			case Instruction::xoris:		Form_ASUimm(27, info); break;
 
 			// Integer Rotate Instructions
+
+			case Instruction::rlwimi:		Form_AS_SHMBME(20, false, info); break;
+			case Instruction::rlwimi_d:		Form_AS_SHMBME(20, true, info); break;
+			case Instruction::rlwinm:		Form_AS_SHMBME(21, false, info); break;
+			case Instruction::rlwinm_d:		Form_AS_SHMBME(21, true, info); break;
+			case Instruction::rlwnm:		Form_ASB_MBME(23, false, info); break;
+			case Instruction::rlwnm_d:		Form_ASB_MBME(23, true, info); break;
 
 			// Integer Shift Instructions
 

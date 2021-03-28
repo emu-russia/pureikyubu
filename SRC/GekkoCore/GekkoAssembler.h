@@ -102,6 +102,8 @@ namespace Gekko
 		static void Form_AB(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
 		static void Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_AS_SHMBME(size_t primary, bool rc, AnalyzeInfo& info);
+		static void Form_ASB_MBME(size_t primary, bool rc, AnalyzeInfo& info);
 
 	public:
 
