@@ -731,7 +731,31 @@ namespace Gekko
 
 			// Floating-Point Multiply-Add Instructions
 
+			case Instruction::fmadd:		Form_FrDACB(63, 29, false, info); break;
+			case Instruction::fmadd_d:		Form_FrDACB(63, 29, true, info); break;
+			case Instruction::fmadds:		Form_FrDACB(59, 29, false, info); break;
+			case Instruction::fmadds_d:		Form_FrDACB(59, 29, true, info); break;
+			case Instruction::fmsub:		Form_FrDACB(63, 28, false, info); break;
+			case Instruction::fmsub_d:		Form_FrDACB(63, 28, true, info); break;
+			case Instruction::fmsubs:		Form_FrDACB(59, 28, false, info); break;
+			case Instruction::fmsubs_d:		Form_FrDACB(59, 28, true, info); break;
+			case Instruction::fnmadd:		Form_FrDACB(63, 31, false, info); break;
+			case Instruction::fnmadd_d:		Form_FrDACB(63, 31, true, info); break;
+			case Instruction::fnmadds:		Form_FrDACB(59, 31, false, info); break;
+			case Instruction::fnmadds_d:	Form_FrDACB(59, 31, true, info); break;
+			case Instruction::fnmsub:		Form_FrDACB(63, 30, false, info); break;
+			case Instruction::fnmsub_d:		Form_FrDACB(63, 30, true, info); break;
+			case Instruction::fnmsubs:		Form_FrDACB(59, 30, false, info); break;
+			case Instruction::fnmsubs_d:	Form_FrDACB(59, 30, true, info); break;
+
 			// Floating-Point Rounding and Conversion Instructions
+
+			case Instruction::fctiw:		Form_FrDB(63, 14, false, info); break;
+			case Instruction::fctiw_d:		Form_FrDB(63, 14, true, info); break;
+			case Instruction::fctiwz:		Form_FrDB(63, 15, false, info); break;
+			case Instruction::fctiwz_d:		Form_FrDB(63, 15, true, info); break;
+			case Instruction::frsp:			Form_FrDB(63, 12, false, info); break;
+			case Instruction::frsp_d:		Form_FrDB(63, 12, true, info); break;
 
 			// Floating-Point Compare Instructions
 
