@@ -102,9 +102,19 @@ namespace Gekko
 		static void Form_AB(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
 		static void Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info);
+		
+		// Rotate/shift
+
 		static void Form_AS_SHMBME(size_t primary, bool rc, AnalyzeInfo& info);
 		static void Form_ASB_MBME(size_t primary, bool rc, AnalyzeInfo& info);
 		static void Form_AS_SH(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+
+		// Floating-Point
+
+		static void Form_FrDAB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_FrDAC(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_FrDB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_FrDACB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
 
 	public:
 

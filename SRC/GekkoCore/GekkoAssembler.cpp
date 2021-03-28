@@ -490,6 +490,86 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_FrDAB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::FReg);
+		CheckParam(info, 2, Param::FReg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_FrDAC(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::FReg);
+		CheckParam(info, 2, Param::FReg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 21, 25, info.paramBits[2]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_FrDB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::FReg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_FrDACB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::FReg);
+		CheckParam(info, 2, Param::FReg);
+		CheckParam(info, 3, Param::FReg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 21, 25, info.paramBits[2]);
+		PackBits(res, 16, 20, info.paramBits[3]);
+
+		rc ? SetBit(res, 31) : 0;
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
@@ -625,6 +705,29 @@ namespace Gekko
 			case Instruction::srw_d:		Form_ASB(31, 536, true, info); break;
 
 			// Floating-Point Arithmetic Instructions
+
+			case Instruction::fadd:			Form_FrDAB(63, 21, false, info); break;
+			case Instruction::fadd_d:		Form_FrDAB(63, 21, true, info); break;
+			case Instruction::fadds:		Form_FrDAB(59, 21, false, info); break;
+			case Instruction::fadds_d:		Form_FrDAB(59, 21, true, info); break;
+			case Instruction::fdiv:			Form_FrDAB(63, 18, false, info); break;
+			case Instruction::fdiv_d:		Form_FrDAB(63, 18, true, info); break;
+			case Instruction::fdivs:		Form_FrDAB(59, 18, false, info); break;
+			case Instruction::fdivs_d:		Form_FrDAB(59, 18, true, info); break;
+			case Instruction::fmul:			Form_FrDAC(63, 25, false, info); break;
+			case Instruction::fmul_d:		Form_FrDAC(63, 25, true, info); break;
+			case Instruction::fmuls:		Form_FrDAC(59, 25, false, info); break;
+			case Instruction::fmuls_d:		Form_FrDAC(59, 25, true, info); break;
+			case Instruction::fres:			Form_FrDB(59, 24, false, info); break;
+			case Instruction::fres_d:		Form_FrDB(59, 24, true, info); break;
+			case Instruction::frsqrte:		Form_FrDB(63, 26, false, info); break;
+			case Instruction::frsqrte_d:	Form_FrDB(63, 26, true, info); break;
+			case Instruction::fsub:			Form_FrDAB(63, 20, false, info); break;
+			case Instruction::fsub_d:		Form_FrDAB(63, 20, true, info); break;
+			case Instruction::fsubs:		Form_FrDAB(59, 20, false, info); break;
+			case Instruction::fsubs_d:		Form_FrDAB(59, 20, true, info); break;
+			case Instruction::fsel:			Form_FrDACB(63, 23, false, info); break;
+			case Instruction::fsel_d:		Form_FrDACB(63, 23, true, info); break;
 
 			// Floating-Point Multiply-Add Instructions
 
