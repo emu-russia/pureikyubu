@@ -63,8 +63,8 @@ namespace Gekko
 		PackBits(res, 11, 15, info.paramBits[1]);
 		PackBits(res, 16, 20, info.paramBits[2]);
 
-		oe ? SetBit(res, 21) : 0;
-		rc ? SetBit(res, 31) : 0;
+		if (oe) SetBit(res, 21);
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -82,8 +82,8 @@ namespace Gekko
 		PackBits(res, 6, 10, info.paramBits[0]);
 		PackBits(res, 11, 15, info.paramBits[1]);
 
-		oe ? SetBit(res, 21) : 0;
-		rc ? SetBit(res, 31) : 0;
+		if (oe) SetBit(res, 21);
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -103,7 +103,7 @@ namespace Gekko
 		PackBits(res, 11, 15, info.paramBits[0]);
 		PackBits(res, 16, 20, info.paramBits[2]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -198,8 +198,8 @@ namespace Gekko
 
 		PackBits(res, 6, 31, li & ~0xFC00'0003);
 
-		aa ? SetBit(res, 30) : 0;
-		lk ? SetBit(res, 31) : 0;
+		if (aa) SetBit(res, 30);
+		if (lk) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -265,8 +265,8 @@ namespace Gekko
 
 		PackBits(res, 16, 31, bd & 0xFFFC);
 
-		aa ? SetBit(res, 30) : 0;
-		lk ? SetBit(res, 31) : 0;
+		if (aa) SetBit(res, 30);
+		if (lk) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -284,7 +284,7 @@ namespace Gekko
 		PackBits(res, 6, 10, info.paramBits[0]);		// BO
 		PackBits(res, 11, 15, info.paramBits[1]);		// BI
 
-		lk ? SetBit(res, 31) : 0;
+		if (lk) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -370,7 +370,7 @@ namespace Gekko
 		PackBits(res, 6, 10, info.paramBits[1]);	// Reversed order of parameters
 		PackBits(res, 11, 15, info.paramBits[0]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -442,7 +442,7 @@ namespace Gekko
 		PackBits(res, 21, 25, info.paramBits[3]);
 		PackBits(res, 26, 30, info.paramBits[4]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -465,7 +465,7 @@ namespace Gekko
 		PackBits(res, 21, 25, info.paramBits[3]);
 		PackBits(res, 26, 30, info.paramBits[4]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -485,7 +485,7 @@ namespace Gekko
 		PackBits(res, 11, 15, info.paramBits[0]);
 		PackBits(res, 16, 20, info.paramBits[2]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -505,7 +505,7 @@ namespace Gekko
 		PackBits(res, 11, 15, info.paramBits[1]);
 		PackBits(res, 16, 20, info.paramBits[2]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -525,7 +525,7 @@ namespace Gekko
 		PackBits(res, 11, 15, info.paramBits[1]);
 		PackBits(res, 21, 25, info.paramBits[2]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -543,7 +543,7 @@ namespace Gekko
 		PackBits(res, 6, 10, info.paramBits[0]);
 		PackBits(res, 16, 20, info.paramBits[1]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -565,7 +565,25 @@ namespace Gekko
 		PackBits(res, 21, 25, info.paramBits[2]);
 		PackBits(res, 16, 20, info.paramBits[3]);
 
-		rc ? SetBit(res, 31) : 0;
+		if (rc) SetBit(res, 31);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_CrfDFrAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::FReg);
+		CheckParam(info, 2, Param::FReg);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
 
 		info.instrBits = res;
 	}
@@ -758,6 +776,9 @@ namespace Gekko
 			case Instruction::frsp_d:		Form_FrDB(63, 12, true, info); break;
 
 			// Floating-Point Compare Instructions
+
+			case Instruction::fcmpo:		Form_CrfDFrAB(63, 32, info); break;
+			case Instruction::fcmpu:		Form_CrfDFrAB(63, 0, info); break;
 
 			// Floating-Point Status and Control Register Instructions
 

@@ -810,7 +810,7 @@ namespace Gekko
 
 		uint32_t imm = 0;
 
-		for (int i = 0; i < _countof(Gekko::AnalyzeInfo::param); i++)
+		for (int i = 0; i < 5; i++)
 		{
 			if (i >= info.numParam)
 			{
