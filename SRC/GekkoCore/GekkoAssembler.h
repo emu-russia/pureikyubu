@@ -94,12 +94,13 @@ namespace Gekko
 		// Further on the same principle
 
 		static void Form_CrfDAB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_CrfDCrfS(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_CrfDASimm(size_t primary, AnalyzeInfo& info);
 		static void Form_CrfDAUimm(size_t primary, AnalyzeInfo& info);
 		static void Form_AS(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
 		static void Form_CrbDAB(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_AB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_SAB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
 		static void Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info);
 
 	public:

@@ -307,6 +307,22 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_CrfDCrfS(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::Crf);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 11, 13, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Form_CrfDASimm(size_t primary, AnalyzeInfo& info)
 	{
 		uint32_t res = 0;
@@ -393,22 +409,9 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_SAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info)
 	{
-		uint32_t res = 0;
-
-		PackBits(res, 0, 5, primary);
-		PackBits(res, 21, 30, extended);
-
-		CheckParam(info, 0, Param::Reg);
-		CheckParam(info, 1, Param::Reg);
-		CheckParam(info, 2, Param::Reg);
-
-		PackBits(res, 6, 10, info.paramBits[0]);
-		PackBits(res, 11, 15, info.paramBits[1]);
-		PackBits(res, 16, 20, info.paramBits[2]);
-
-		info.instrBits = res;
+		Form_DAB(primary, extended, oe, rc, info);
 	}
 
 	void GekkoAssembler::Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info)
@@ -562,7 +565,10 @@ namespace Gekko
 			// Memory Synchronization Instructions
 
 			case Instruction::eieio:		Form_Extended(31, 854, info); break;
-			// ...
+			case Instruction::isync:		Form_Extended(19, 150, info); break;
+			case Instruction::lwarx:		Form_DAB(31, 20, false, false, info); break;
+			case Instruction::stwcx_d:		Form_SAB(31, 150, false, true, info); break;
+			case Instruction::sync:			Form_Extended(31, 598, info); break;
 
 			// Floating-Point Load Instructions
 
@@ -595,7 +601,7 @@ namespace Gekko
 			case Instruction::cror:			Form_CrbDAB(19, 449, info); break;
 			case Instruction::crorc:		Form_CrbDAB(19, 417, info); break;
 			case Instruction::crxor:		Form_CrbDAB(19, 193, info); break;
-			// mcrf ...
+			case Instruction::mcrf:			Form_CrfDCrfS(19, 0, info); break;
 
 			// System Linkage Instructions
 
@@ -612,7 +618,7 @@ namespace Gekko
 			case Instruction::dcbtst:		Form_AB(31, 246, info); break;
 			case Instruction::dcbz:			Form_AB(31, 1014, info); break;
 			case Instruction::dcbz_l:		Form_AB(4, 1014, info); break;
-			// icbi ...
+			case Instruction::icbi:			Form_AB(31, 982, info); break;
 
 			// Segment Register Manipulation Instructions
 
@@ -621,7 +627,7 @@ namespace Gekko
 			// External Control Instructions
 
 			case Instruction::eciwx:		Form_DAB(31, 310, false, false, info); break;
-			case Instruction::ecowx:		Form_SAB(31, 438, info); break;
+			case Instruction::ecowx:		Form_SAB(31, 438, false, false, info); break;
 
 			// Paired-Single Load and Store Instructions
 
