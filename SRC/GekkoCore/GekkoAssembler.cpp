@@ -462,7 +462,40 @@ namespace Gekko
 			case Instruction::divwu_d:		Form_DAB(31, 459, false, true, info); break;
 			case Instruction::divwuo:		Form_DAB(31, 459, true, false, info); break;
 			case Instruction::divwuo_d:		Form_DAB(31, 459, true, true, info); break;
-			// ...
+			case Instruction::mulhw:		Form_DAB(31, 75, false, false, info); break;
+			case Instruction::mulhw_d:		Form_DAB(31, 75, false, true, info); break;
+			case Instruction::mulhwu:		Form_DAB(31, 11, false, false, info); break;
+			case Instruction::mulhwu_d:		Form_DAB(31, 11, false, true, info); break;
+			case Instruction::mulli:		Form_DASimm(7, info); break;
+			case Instruction::mullw:		Form_DAB(31, 235, false, false, info); break;
+			case Instruction::mullw_d:		Form_DAB(31, 235, false, true, info); break;
+			case Instruction::mullwo:		Form_DAB(31, 235, true, false, info); break;
+			case Instruction::mullwo_d:		Form_DAB(31, 235, true, true, info); break;
+			case Instruction::neg:			Form_DA(31, 104, false, false, info); break;
+			case Instruction::neg_d:		Form_DA(31, 104, false, true, info); break;
+			case Instruction::nego:			Form_DA(31, 104, true, false, info); break;
+			case Instruction::nego_d:		Form_DA(31, 104, true, true, info); break;
+			case Instruction::subf:			Form_DAB(31, 40, false, false, info); break;
+			case Instruction::subf_d:		Form_DAB(31, 40, false, true, info); break;
+			case Instruction::subfo:		Form_DAB(31, 40, true, false, info); break;
+			case Instruction::subfo_d:		Form_DAB(31, 40, true, true, info); break;
+			case Instruction::subfc:		Form_DAB(31, 8, false, false, info); break;
+			case Instruction::subfc_d:		Form_DAB(31, 8, false, true, info); break;
+			case Instruction::subfco:		Form_DAB(31, 8, true, false, info); break;
+			case Instruction::subfco_d:		Form_DAB(31, 8, true, true, info); break;
+			case Instruction::subfe:		Form_DAB(31, 136, false, false, info); break;
+			case Instruction::subfe_d:		Form_DAB(31, 136, false, true, info); break;
+			case Instruction::subfeo:		Form_DAB(31, 136, true, false, info); break;
+			case Instruction::subfeo_d:		Form_DAB(31, 136, true, true, info); break;
+			case Instruction::subfic:		Form_DASimm(8, info); break;
+			case Instruction::subfme:		Form_DA(31, 232, false, false, info); break;
+			case Instruction::subfme_d:		Form_DA(31, 232, false, true, info); break;
+			case Instruction::subfmeo:		Form_DA(31, 232, true, false, info); break;
+			case Instruction::subfmeo_d:	Form_DA(31, 232, true, true, info); break;
+			case Instruction::subfze:		Form_DA(31, 200, false, false, info); break;
+			case Instruction::subfze_d:		Form_DA(31, 200, false, true, info); break;
+			case Instruction::subfzeo:		Form_DA(31, 200, true, false, info); break;
+			case Instruction::subfzeo_d:	Form_DA(31, 200, true, true, info); break;
 
 			// Integer Compare Instructions
 
@@ -487,7 +520,20 @@ namespace Gekko
 			case Instruction::extsb_d:		Form_AS(31, 954, true, info); break;
 			case Instruction::extsh:		Form_AS(31, 922, false, info); break;
 			case Instruction::extsh_d:		Form_AS(31, 922, true, info); break;
-			// ...
+			case Instruction::nand:			Form_ASB(31, 476, false, info); break;
+			case Instruction::nand_d:		Form_ASB(31, 476, true, info); break;
+			case Instruction::nor:			Form_ASB(31, 124, false, info); break;
+			case Instruction::nor_d:		Form_ASB(31, 124, true, info); break;
+			case Instruction::_or:			Form_ASB(31, 444, false, info); break;
+			case Instruction::or_d:			Form_ASB(31, 444, true, info); break;
+			case Instruction::orc:			Form_ASB(31, 412, false, info); break;
+			case Instruction::orc_d:		Form_ASB(31, 412, true, info); break;
+			case Instruction::ori:			Form_ASUimm(24, info); break;
+			case Instruction::oris:			Form_ASUimm(25, info); break;
+			case Instruction::_xor:			Form_ASB(31, 316, false, info); break;
+			case Instruction::xor_d:		Form_ASB(31, 316, true, info); break;
+			case Instruction::xori:			Form_ASUimm(26, info); break;
+			case Instruction::xoris:		Form_ASUimm(27, info); break;
 
 			// Integer Rotate Instructions
 
