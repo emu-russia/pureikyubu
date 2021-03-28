@@ -123,6 +123,10 @@ namespace Gekko
 		static void Form_SA_Offset(size_t primary, AnalyzeInfo& info);
 		static void Form_DA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_SA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_FrDA_Offset(size_t primary, AnalyzeInfo& info);
+		static void Form_FrSA_Offset(size_t primary, AnalyzeInfo& info);
+		static void Form_FrDRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_FrSRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
 
 	public:
 

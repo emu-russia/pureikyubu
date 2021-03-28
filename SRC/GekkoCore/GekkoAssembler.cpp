@@ -632,6 +632,50 @@ namespace Gekko
 		Form_DA_NB(primary, extended, info);
 	}
 
+	void GekkoAssembler::Form_FrDA_Offset(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::RegOffset);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, info.Imm.Unsigned);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_FrSA_Offset(size_t primary, AnalyzeInfo& info)
+	{
+		Form_FrDA_Offset(primary, info);
+	}
+
+	void GekkoAssembler::Form_FrDRegAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_FrSRegAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		Form_FrDRegAB(primary, extended, info);
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
@@ -894,7 +938,26 @@ namespace Gekko
 
 			// Floating-Point Load Instructions
 
+			case Instruction::lfd:			Form_FrDA_Offset(50, info); break;
+			case Instruction::lfdu:			Form_FrDA_Offset(51, info); break;
+			case Instruction::lfdux:		Form_FrDRegAB(31, 631, info); break;
+			case Instruction::lfdx:			Form_FrDRegAB(31, 599, info); break;
+			case Instruction::lfs:			Form_FrDA_Offset(48, info); break;
+			case Instruction::lfsu:			Form_FrDA_Offset(49, info); break;
+			case Instruction::lfsux:		Form_FrDRegAB(31, 567, info); break;
+			case Instruction::lfsx:			Form_FrDRegAB(31, 535, info); break;
+
 			// Floating-Point Store Instructions
+
+			case Instruction::stfd:			Form_FrSA_Offset(54, info); break;
+			case Instruction::stfdu:		Form_FrSA_Offset(55, info); break;
+			case Instruction::stfdux:		Form_FrSRegAB(31, 759, info); break;
+			case Instruction::stfdx:		Form_FrSRegAB(31, 727, info); break;
+			case Instruction::stfiwx:		Form_FrSRegAB(31, 983, info); break;
+			case Instruction::stfs:			Form_FrSA_Offset(52, info); break;
+			case Instruction::stfsu:		Form_FrSA_Offset(53, info); break;
+			case Instruction::stfsux:		Form_FrSRegAB(31, 695, info); break;
+			case Instruction::stfsx:		Form_FrSRegAB(31, 663, info); break;
 
 			// Floating-Point Move Instructions
 
