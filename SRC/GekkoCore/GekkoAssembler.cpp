@@ -428,6 +428,8 @@ namespace Gekko
 
 		switch (info.instr)
 		{
+			// Integer Arithmetic Instructions
+
 			case Instruction::add:			Form_DAB(31, 266, false, false, info); break;
 			case Instruction::add_d:		Form_DAB(31, 266, false, true, info); break;
 			case Instruction::addo:			Form_DAB(31, 266, true, false, info); break;
@@ -452,12 +454,78 @@ namespace Gekko
 			case Instruction::addze_d:		Form_DA(31, 202, false, true, info); break;
 			case Instruction::addzeo:		Form_DA(31, 202, true, false, info); break;
 			case Instruction::addzeo_d:		Form_DA(31, 202, true, true, info); break;
+			case Instruction::divw:			Form_DAB(31, 491, false, false, info); break;
+			case Instruction::divw_d:		Form_DAB(31, 491, false, true, info); break;
+			case Instruction::divwo:		Form_DAB(31, 491, true, false, info); break;
+			case Instruction::divwo_d:		Form_DAB(31, 491, true, true, info); break;
+			case Instruction::divwu:		Form_DAB(31, 459, false, false, info); break;
+			case Instruction::divwu_d:		Form_DAB(31, 459, false, true, info); break;
+			case Instruction::divwuo:		Form_DAB(31, 459, true, false, info); break;
+			case Instruction::divwuo_d:		Form_DAB(31, 459, true, true, info); break;
+			// ...
+
+			// Integer Compare Instructions
+
+			case Instruction::cmp:			Form_CrfDAB(31, 0, info); break;
+			case Instruction::cmpi:			Form_CrfDASimm(11, info); break;
+			case Instruction::cmpl:			Form_CrfDAB(31, 32, info); break;
+			case Instruction::cmpli:		Form_CrfDAUimm(10, info); break;
+
+			// Integer Logical Instructions
+
 			case Instruction::_and:			Form_ASB(31, 28, false, info); break;
 			case Instruction::and_d:		Form_ASB(31, 28, true, info); break;
 			case Instruction::andc:			Form_ASB(31, 60, false, info); break;
 			case Instruction::andc_d:		Form_ASB(31, 60, true, info); break;
 			case Instruction::andi_d:		Form_ASUimm(28, info); break;
 			case Instruction::andis_d:		Form_ASUimm(29, info); break;
+			case Instruction::cntlzw:		Form_AS(31, 26, false, info); break;
+			case Instruction::cntlzw_d:		Form_AS(31, 26, true, info); break;
+			case Instruction::eqv:			Form_ASB(31, 284, false, info); break;		// Typo in GUM (B operand)
+			case Instruction::eqv_d:		Form_ASB(31, 284, true, info); break;
+			case Instruction::extsb:		Form_AS(31, 954, false, info); break;
+			case Instruction::extsb_d:		Form_AS(31, 954, true, info); break;
+			case Instruction::extsh:		Form_AS(31, 922, false, info); break;
+			case Instruction::extsh_d:		Form_AS(31, 922, true, info); break;
+			// ...
+
+			// Integer Rotate Instructions
+
+			// Integer Shift Instructions
+
+			// Floating-Point Arithmetic Instructions
+
+			// Floating-Point Multiply-Add Instructions
+
+			// Floating-Point Rounding and Conversion Instructions
+
+			// Floating-Point Compare Instructions
+
+			// Floating-Point Status and Control Register Instructions
+
+			// Integer Load Instructions
+
+			// Integer Store Instructions
+
+			// Integer Load and Store with Byte Reverse Instructions
+
+			// Integer Load and Store Multiple Instructions
+
+			// Integer Load and Store String Instructions
+
+			// Memory Synchronization Instructions
+
+			case Instruction::eieio:		Form_Extended(31, 854, info); break;
+			// ...
+
+			// Floating-Point Load Instructions
+
+			// Floating-Point Store Instructions
+
+			// Floating-Point Move Instructions
+
+			// Branch Instructions
+
 			case Instruction::b:			Form_BranchLong(18, false, false, info); break;
 			case Instruction::ba:			Form_BranchLong(18, true, false, info); break;
 			case Instruction::bl:			Form_BranchLong(18, false, true, info); break;
@@ -470,12 +538,9 @@ namespace Gekko
 			case Instruction::bcctrl:		Form_BOBI(19, 528, true, info); break;
 			case Instruction::bclr:			Form_BOBI(19, 16, false, info); break;
 			case Instruction::bclrl:		Form_BOBI(19, 16, true, info); break;
-			case Instruction::cmp:			Form_CrfDAB(31, 0, info); break;
-			case Instruction::cmpi:			Form_CrfDASimm(11, info); break;
-			case Instruction::cmpl:			Form_CrfDAB(31, 32, info); break;
-			case Instruction::cmpli:		Form_CrfDAUimm(10, info); break;
-			case Instruction::cntlzw:		Form_AS(31, 26, false, info); break;
-			case Instruction::cntlzw_d:		Form_AS(31, 26, true, info); break;
+
+			// Condition Register Logical Instructions
+
 			case Instruction::crand:		Form_CrbDAB(19, 257, info); break;
 			case Instruction::crandc:		Form_CrbDAB(19, 129, info); break;
 			case Instruction::creqv:		Form_CrbDAB(19, 289, info); break;
@@ -484,6 +549,16 @@ namespace Gekko
 			case Instruction::cror:			Form_CrbDAB(19, 449, info); break;
 			case Instruction::crorc:		Form_CrbDAB(19, 417, info); break;
 			case Instruction::crxor:		Form_CrbDAB(19, 193, info); break;
+			// mcrf ...
+
+			// System Linkage Instructions
+
+			// Trap Instructions
+
+			// Processor Control Instructions
+
+			// Cache Management Instructions
+
 			case Instruction::dcbf:			Form_AB(31, 86, info); break;
 			case Instruction::dcbi:			Form_AB(31, 470, info); break;
 			case Instruction::dcbst:		Form_AB(31, 54, info); break;
@@ -491,23 +566,23 @@ namespace Gekko
 			case Instruction::dcbtst:		Form_AB(31, 246, info); break;
 			case Instruction::dcbz:			Form_AB(31, 1014, info); break;
 			case Instruction::dcbz_l:		Form_AB(4, 1014, info); break;
-			case Instruction::divw:			Form_DAB(31, 491, false, false, info); break;
-			case Instruction::divw_d:		Form_DAB(31, 491, false, true, info); break;
-			case Instruction::divwo:		Form_DAB(31, 491, true, false, info); break;
-			case Instruction::divwo_d:		Form_DAB(31, 491, true, true, info); break;
-			case Instruction::divwu:		Form_DAB(31, 459, false, false, info); break;
-			case Instruction::divwu_d:		Form_DAB(31, 459, false, true, info); break;
-			case Instruction::divwuo:		Form_DAB(31, 459, true, false, info); break;
-			case Instruction::divwuo_d:		Form_DAB(31, 459, true, true, info); break;
+			// icbi ...
+
+			// Segment Register Manipulation Instructions
+
+			// Lookaside Buffer Management Instructions
+
+			// External Control Instructions
+
 			case Instruction::eciwx:		Form_DAB(31, 310, false, false, info); break;
 			case Instruction::ecowx:		Form_SAB(31, 438, info); break;
-			case Instruction::eieio:		Form_Extended(31, 854, info); break;
-			case Instruction::eqv:			Form_ASB(31, 284, false, info); break;		// Typo in GUM (B operand)
-			case Instruction::eqv_d:		Form_ASB(31, 284, true, info); break;
-			case Instruction::extsb:		Form_AS(31, 954, false, info); break;
-			case Instruction::extsb_d:		Form_AS(31, 954, true, info); break;
-			case Instruction::extsh:		Form_AS(31, 922, false, info); break;
-			case Instruction::extsh_d:		Form_AS(31, 922, true, info); break;
+
+			// Paired-Single Load and Store Instructions
+
+			// Paired-Single Floating Point Arithmetic Instructions
+
+			// Miscellaneous Paired-Single Instructions
+
 		}
 	}
 }

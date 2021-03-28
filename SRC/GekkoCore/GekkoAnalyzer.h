@@ -11,7 +11,7 @@ namespace Gekko
 
 	/// <summary>
 	/// Gekko Instruction Type.
-	/// The `_d` prefix is used for instructions with a dot at the end (bravo who came up with that).
+	/// The `_d` prefix is used for instructions with a dot at the end (`bravo` who came up with that).
 	/// Also some instructions (and, or, xor) with underscores in their names, since these are keywords.
 	/// </summary>
 	enum class Instruction : int
