@@ -835,6 +835,88 @@ namespace Gekko
 
 #pragma endregion "Processor Control Instructions"
 
+#pragma region "Segment Register Manipulation Instructions"
+
+	void GekkoAssembler::Form_Mfsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Sr);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 12, 15, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mfsrin(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Sr);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 12, 15, info.paramBits[0]);
+		PackBits(res, 6, 10, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtsrin(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+#pragma endregion "Segment Register Manipulation Instructions"
+
+	void GekkoAssembler::Form_Tlbie(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+
+		PackBits(res, 16, 20, info.paramBits[0]);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
@@ -1190,7 +1272,15 @@ namespace Gekko
 
 			// Segment Register Manipulation Instructions
 
+			case Instruction::mfsr:			Form_Mfsr(31, 595, info); break;
+			case Instruction::mfsrin:		Form_Mfsrin(31, 659, info); break;
+			case Instruction::mtsr:			Form_Mtsr(31, 210, info); break;
+			case Instruction::mtsrin:		Form_Mtsrin(31, 242, info); break;
+
 			// Lookaside Buffer Management Instructions
+
+			case Instruction::tlbie:		Form_Tlbie(31, 306, info); break;
+			case Instruction::tlbsync:		Form_Extended(31, 566, info); break;
 
 			// External Control Instructions
 

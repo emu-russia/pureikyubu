@@ -144,6 +144,17 @@ namespace Gekko
 		static void Form_Mtmsr(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_Mtspr(size_t primary, size_t extended, AnalyzeInfo& info);
 
+		// Segment Register Manipulation Instructions
+
+		static void Form_Mfsr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mfsrin(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mtsr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mtsrin(size_t primary, size_t extended, AnalyzeInfo& info);
+
+		// Lookaside Buffer Management Instructions
+
+		static void Form_Tlbie(size_t primary, size_t extended, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>
