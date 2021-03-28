@@ -588,8 +588,56 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_DA_Offset(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::RegOffset);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 31, info.Imm.Unsigned);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_SA_Offset(size_t primary, AnalyzeInfo& info)
+	{
+		Form_DA_Offset(primary, info);
+	}
+
+	void GekkoAssembler::Form_DA_NB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Num);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_SA_NB(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		Form_DA_NB(primary, extended, info);
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
+		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
+		// Therefore, you have to mask msb for the extended opcode value, and set the OE field to true.
+		constexpr auto MaskedOeBit = 0b01'1111'1111;
+
 		// The format of Gekko (PowerPC) instructions is a bit similar to MIPS, only about 350 instructions.
 		// Just go through all the instructions from the GUM (google: "IBM Gekko User's Manual pdf")
 
@@ -781,16 +829,60 @@ namespace Gekko
 			case Instruction::fcmpu:		Form_CrfDFrAB(63, 0, info); break;
 
 			// Floating-Point Status and Control Register Instructions
+			// ...
 
 			// Integer Load Instructions
 
+			case Instruction::lbz:			Form_DA_Offset(34, info); break;
+			case Instruction::lbzu:			Form_DA_Offset(35, info); break;
+			case Instruction::lbzux:		Form_DAB(31, 119, false, false, info); break;
+			case Instruction::lbzx:			Form_DAB(31, 87, false, false, info); break;
+			case Instruction::lha:			Form_DA_Offset(42, info); break;
+			case Instruction::lhau:			Form_DA_Offset(43, info); break;
+			case Instruction::lhaux:		Form_DAB(31, 375, false, false, info); break;
+			case Instruction::lhax:			Form_DAB(31, 343, false, false, info); break;
+			case Instruction::lhz:			Form_DA_Offset(40, info); break;
+			case Instruction::lhzu:			Form_DA_Offset(41, info); break;
+			case Instruction::lhzux:		Form_DAB(31, 311, false, false, info); break;
+			case Instruction::lhzx:			Form_DAB(31, 279, false, false, info); break;
+			case Instruction::lwz:			Form_DA_Offset(32, info); break;
+			case Instruction::lwzu:			Form_DA_Offset(33, info); break;
+			case Instruction::lwzux:		Form_DAB(31, 66, false, false, info); break;
+			case Instruction::lwzx:			Form_DAB(31, 23, false, false, info); break;
+
 			// Integer Store Instructions
+
+			case Instruction::stb:			Form_SA_Offset(38, info); break;
+			case Instruction::stbu:			Form_SA_Offset(39, info); break;
+			case Instruction::stbux:		Form_SAB(31, 247, false, false, info); break;
+			case Instruction::stbx:			Form_SAB(31, 215, false, false, info); break;
+			case Instruction::sth:			Form_SA_Offset(44, info); break;
+			case Instruction::sthu:			Form_SA_Offset(45, info); break;
+			case Instruction::sthux:		Form_SAB(31, 439, false, false, info); break;
+			case Instruction::sthx:			Form_SAB(31, 407, false, false, info); break;
+			case Instruction::stw:			Form_SA_Offset(36, info); break;
+			case Instruction::stwu:			Form_SA_Offset(37, info); break;
+			case Instruction::stwux:		Form_SAB(31, 183, false, false, info); break;
+			case Instruction::stwx:			Form_SAB(31, 151, false, false, info); break;
 
 			// Integer Load and Store with Byte Reverse Instructions
 
+			case Instruction::lhbrx:		Form_DAB(31, 790 & MaskedOeBit, true, false, info); break;
+			case Instruction::lwbrx:		Form_DAB(31, 534 & MaskedOeBit, true, false, info); break;
+			case Instruction::sthbrx:		Form_SAB(31, 918 & MaskedOeBit, true, false, info); break;
+			case Instruction::stwbrx:		Form_SAB(31, 662 & MaskedOeBit, true, false, info); break;
+
 			// Integer Load and Store Multiple Instructions
 
+			case Instruction::lmw:			Form_DA_Offset(46, info); break;
+			case Instruction::stmw:			Form_SA_Offset(47, info); break;
+
 			// Integer Load and Store String Instructions
+
+			case Instruction::lswi:			Form_DA_NB(31, 597, info); break;
+			case Instruction::lswx:			Form_DAB(31, 533 & MaskedOeBit, true, false, info); break;
+			case Instruction::stswi:		Form_SA_NB(31, 725, info); break;
+			case Instruction::stswx:		Form_SAB(31, 661 & MaskedOeBit, true, false, info); break;
 
 			// Memory Synchronization Instructions
 

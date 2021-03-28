@@ -117,6 +117,13 @@ namespace Gekko
 		static void Form_FrDACB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
 		static void Form_CrfDFrAB(size_t primary, size_t extended, AnalyzeInfo& info);
 
+		// Load and Store
+
+		static void Form_DA_Offset(size_t primary, AnalyzeInfo& info);
+		static void Form_SA_Offset(size_t primary, AnalyzeInfo& info);
+		static void Form_DA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_SA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>
