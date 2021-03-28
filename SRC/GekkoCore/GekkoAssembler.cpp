@@ -711,6 +711,130 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+#pragma region "Processor Control Instructions"
+
+	void GekkoAssembler::Form_Mcrxr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Crf);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mfcr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mfmsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mfspr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Spr);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mftb(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+		CheckParam(info, 1, Param::Tbr);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 20, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtcrf(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::CRM);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 12, 19, info.paramBits[0]);
+		PackBits(res, 6, 10, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtmsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Reg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtspr(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 21, 30, extended);
+
+		CheckParam(info, 0, Param::Spr);
+		CheckParam(info, 1, Param::Reg);
+
+		PackBits(res, 11, 20, info.paramBits[0]);
+		PackBits(res, 6, 10, info.paramBits[1]);
+
+		info.instrBits = res;
+	}
+
+#pragma endregion "Processor Control Instructions"
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
@@ -1043,6 +1167,15 @@ namespace Gekko
 			case Instruction::twi:			Form_TrapImm(3, info); break;
 
 			// Processor Control Instructions
+
+			case Instruction::mcrxr:		Form_Mcrxr(31, 512, info); break;
+			case Instruction::mfcr:			Form_Mfcr(31, 19, info); break;
+			case Instruction::mfmsr:		Form_Mfmsr(31, 83, info); break;
+			case Instruction::mfspr:		Form_Mfspr(31, 339, info); break;
+			case Instruction::mftb:			Form_Mftb(31, 371, info); break;
+			case Instruction::mtcrf:		Form_Mtcrf(31, 144, info); break;
+			case Instruction::mtmsr:		Form_Mtmsr(31, 146, info); break;
+			case Instruction::mtspr:		Form_Mtspr(31, 467, info); break;
 
 			// Cache Management Instructions
 

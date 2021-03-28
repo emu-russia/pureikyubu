@@ -133,6 +133,17 @@ namespace Gekko
 		static void Form_Trap(size_t primary, size_t extended, AnalyzeInfo& info);
 		static void Form_TrapImm(size_t primary, AnalyzeInfo& info);
 
+		// Processor Control Instructions.
+
+		static void Form_Mcrxr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mfcr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mfmsr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mfspr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mftb(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mtcrf(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mtmsr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mtspr(size_t primary, size_t extended, AnalyzeInfo& info);
+
 	public:
 
 		/// <summary>
