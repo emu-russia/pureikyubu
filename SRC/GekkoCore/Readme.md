@@ -38,9 +38,9 @@ with it using any instructions).
 
 ## Interpreter Architecture
 
-The interpreter inherited from version 0.10, therefore, despite the scheme at the beginning, it does not use Analyzer. Perhaps this will change when I get my hands to it.
+The interpreter has been rewritten to use a generic decoder.
 
-For now it is a classic interpreter in every sense. We take the opcode, decode and execute.
+Each instruction handler already receives ready-made decoded information (`AnalyzeInfo`) and does not perform decoding. 
 
 To speed up the operation of some instructions (Paired-Single Load Store and Rotate), pre-prepared tables are used.
 

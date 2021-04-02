@@ -19,32 +19,39 @@ namespace Gekko
 
 		GekkoCore* core = nullptr;
 
-		static void c_B(uint32_t op);
-		static void c_BA(uint32_t op);
-		static void c_BL(uint32_t op);
-		static void c_BLA(uint32_t op);
+		// Instruction handlers are gradually being replaced by a new interpreter implementation  (#190)
 
-		static void c_BX(uint32_t op);
-		static void c_BCX(uint32_t op);
-		static void c_BCLR(uint32_t op);
-		static void c_BCLRL(uint32_t op);
-		static void c_BCCTR(uint32_t op);
-		static void c_BCCTRL(uint32_t op);
+		bool BcTest(AnalyzeInfo& info);
+		bool BctrTest(AnalyzeInfo& info);
+		void b(AnalyzeInfo& info);
+		void ba(AnalyzeInfo& info);
+		void bl(AnalyzeInfo& info);
+		void bla(AnalyzeInfo& info);
+		void bc(AnalyzeInfo& info);
+		void bca(AnalyzeInfo& info);
+		void bcl(AnalyzeInfo& info);
+		void bcla(AnalyzeInfo& info);
+		void bcctr(AnalyzeInfo& info);
+		void bcctrl(AnalyzeInfo& info);
+		void bclr(AnalyzeInfo& info);
+		void bclrl(AnalyzeInfo& info);
 
-		static void c_CMPI(uint32_t op);
-		static void c_CMP(uint32_t op);
-		static void c_CMPLI(uint32_t op);
-		static void c_CMPL(uint32_t op);
+		template <typename T>
+		inline void CmpCommon(int crfd, T a, T b);
+		void cmpi(AnalyzeInfo& info);
+		void cmp(AnalyzeInfo& info);
+		void cmpli(AnalyzeInfo& info);
+		void cmpl(AnalyzeInfo& info);
 
-		static void c_CRAND(uint32_t op);
-		static void c_CROR(uint32_t op);
-		static void c_CRXOR(uint32_t op);
-		static void c_CRNAND(uint32_t op);
-		static void c_CRNOR(uint32_t op);
-		static void c_CREQV(uint32_t op);
-		static void c_CRANDC(uint32_t op);
-		static void c_CRORC(uint32_t op);
-		static void c_MCRF(uint32_t op);
+		void crand(AnalyzeInfo& info);
+		void crandc(AnalyzeInfo& info);
+		void creqv(AnalyzeInfo& info);
+		void crnand(AnalyzeInfo& info);
+		void crnor(AnalyzeInfo& info);
+		void cror(AnalyzeInfo& info);
+		void crorc(AnalyzeInfo& info);
+		void crxor(AnalyzeInfo& info);
+		void mcrf(AnalyzeInfo& info);
 
 		static void c_FADD(uint32_t op);
 		static void c_FADDD(uint32_t op);
@@ -251,60 +258,61 @@ namespace Gekko
 		static void c_CNTLZW(uint32_t op);
 		static void c_CNTLZWD(uint32_t op);
 
-		static void c_PS_ADD(uint32_t op);
-		static void c_PS_ADDD(uint32_t op);
-		static void c_PS_SUB(uint32_t op);
-		static void c_PS_SUBD(uint32_t op);
-		static void c_PS_MUL(uint32_t op);
-		static void c_PS_MULD(uint32_t op);
-		static void c_PS_DIV(uint32_t op);
-		static void c_PS_DIVD(uint32_t op);
-		static void c_PS_RES(uint32_t op);
-		static void c_PS_RESD(uint32_t op);
-		static void c_PS_RSQRTE(uint32_t op);
-		static void c_PS_RSQRTED(uint32_t op);
-		static void c_PS_SEL(uint32_t op);
-		static void c_PS_SELD(uint32_t op);
-		static void c_PS_MULS0(uint32_t op);
-		static void c_PS_MULS0D(uint32_t op);
-		static void c_PS_MULS1(uint32_t op);
-		static void c_PS_MULS1D(uint32_t op);
-		static void c_PS_SUM0(uint32_t op);
-		static void c_PS_SUM0D(uint32_t op);
-		static void c_PS_SUM1(uint32_t op);
-		static void c_PS_SUM1D(uint32_t op);
-		static void c_PS_MADD(uint32_t op);
-		static void c_PS_MADDD(uint32_t op);
-		static void c_PS_MSUB(uint32_t op);
-		static void c_PS_MSUBD(uint32_t op);
-		static void c_PS_NMADD(uint32_t op);
-		static void c_PS_NMADDD(uint32_t op);
-		static void c_PS_NMSUB(uint32_t op);
-		static void c_PS_NMSUBD(uint32_t op);
-		static void c_PS_MADDS0(uint32_t op);
-		static void c_PS_MADDS0D(uint32_t op);
-		static void c_PS_MADDS1(uint32_t op);
-		static void c_PS_MADDS1D(uint32_t op);
-		static void c_PS_CMPU0(uint32_t op);
-		static void c_PS_CMPU1(uint32_t op);
-		static void c_PS_CMPO0(uint32_t op);
-		static void c_PS_CMPO1(uint32_t op);
-		static void c_PS_MR(uint32_t op);
-		static void c_PS_MRD(uint32_t op);
-		static void c_PS_NEG(uint32_t op);
-		static void c_PS_NEGD(uint32_t op);
-		static void c_PS_ABS(uint32_t op);
-		static void c_PS_ABSD(uint32_t op);
-		static void c_PS_NABS(uint32_t op);
-		static void c_PS_NABSD(uint32_t op);
-		static void c_PS_MERGE00(uint32_t op);
-		static void c_PS_MERGE00D(uint32_t op);
-		static void c_PS_MERGE01(uint32_t op);
-		static void c_PS_MERGE01D(uint32_t op);
-		static void c_PS_MERGE10(uint32_t op);
-		static void c_PS_MERGE10D(uint32_t op);
-		static void c_PS_MERGE11(uint32_t op);
-		static void c_PS_MERGE11D(uint32_t op);
+		void ps_div(AnalyzeInfo& info);
+		void ps_div_d(AnalyzeInfo& info);
+		void ps_sub(AnalyzeInfo& info);
+		void ps_sub_d(AnalyzeInfo& info);
+		void ps_add(AnalyzeInfo& info);
+		void ps_add_d(AnalyzeInfo& info);
+		void ps_sel(AnalyzeInfo& info);
+		void ps_sel_d(AnalyzeInfo& info);
+		void ps_res(AnalyzeInfo& info);
+		void ps_res_d(AnalyzeInfo& info);
+		void ps_mul(AnalyzeInfo& info);
+		void ps_mul_d(AnalyzeInfo& info);
+		void ps_rsqrte(AnalyzeInfo& info);
+		void ps_rsqrte_d(AnalyzeInfo& info);
+		void ps_msub(AnalyzeInfo& info);
+		void ps_msub_d(AnalyzeInfo& info);
+		void ps_madd(AnalyzeInfo& info);
+		void ps_madd_d(AnalyzeInfo& info);
+		void ps_nmsub(AnalyzeInfo& info);
+		void ps_nmsub_d(AnalyzeInfo& info);
+		void ps_nmadd(AnalyzeInfo& info);
+		void ps_nmadd_d(AnalyzeInfo& info);
+		void ps_neg(AnalyzeInfo& info);
+		void ps_neg_d(AnalyzeInfo& info);
+		void ps_mr(AnalyzeInfo& info);
+		void ps_mr_d(AnalyzeInfo& info);
+		void ps_nabs(AnalyzeInfo& info);
+		void ps_nabs_d(AnalyzeInfo& info);
+		void ps_abs(AnalyzeInfo& info);
+		void ps_abs_d(AnalyzeInfo& info);
+
+		void ps_sum0(AnalyzeInfo& info);
+		void ps_sum0_d(AnalyzeInfo& info);
+		void ps_sum1(AnalyzeInfo& info);
+		void ps_sum1_d(AnalyzeInfo& info);
+		void ps_muls0(AnalyzeInfo& info);
+		void ps_muls0_d(AnalyzeInfo& info);
+		void ps_muls1(AnalyzeInfo& info);
+		void ps_muls1_d(AnalyzeInfo& info);
+		void ps_madds0(AnalyzeInfo& info);
+		void ps_madds0_d(AnalyzeInfo& info);
+		void ps_madds1(AnalyzeInfo& info);
+		void ps_madds1_d(AnalyzeInfo& info);
+		void ps_cmpu0(AnalyzeInfo& info);
+		void ps_cmpo0(AnalyzeInfo& info);
+		void ps_cmpu1(AnalyzeInfo& info);
+		void ps_cmpo1(AnalyzeInfo& info);
+		void ps_merge00(AnalyzeInfo& info);
+		void ps_merge00_d(AnalyzeInfo& info);
+		void ps_merge01(AnalyzeInfo& info);
+		void ps_merge01_d(AnalyzeInfo& info);
+		void ps_merge10(AnalyzeInfo& info);
+		void ps_merge10_d(AnalyzeInfo& info);
+		void ps_merge11(AnalyzeInfo& info);
+		void ps_merge11_d(AnalyzeInfo& info);
 
 		static void c_PSQ_L(uint32_t op);
 		static void c_PSQ_LX(uint32_t op);
@@ -315,18 +323,21 @@ namespace Gekko
 		static void c_PSQ_STU(uint32_t op);
 		static void c_PSQ_STUX(uint32_t op);
 
-		static void c_RLWINM(uint32_t op);
-		static void c_RLWNM(uint32_t op);
-		static void c_RLWIMI(uint32_t op);
+		void rlwimi(AnalyzeInfo& info);
+		void rlwimi_d(AnalyzeInfo& info);
+		void rlwinm(AnalyzeInfo& info);
+		void rlwinm_d(AnalyzeInfo& info);
+		void rlwnm(AnalyzeInfo& info);
+		void rlwnm_d(AnalyzeInfo& info);
 
-		static void c_SLW(uint32_t op);
-		static void c_SLWD(uint32_t op);
-		static void c_SRW(uint32_t op);
-		static void c_SRWD(uint32_t op);
-		static void c_SRAWI(uint32_t op);
-		static void c_SRAWID(uint32_t op);
-		static void c_SRAW(uint32_t op);
-		static void c_SRAWD(uint32_t op);
+		void slw(AnalyzeInfo& info);
+		void slw_d(AnalyzeInfo& info);
+		void sraw(AnalyzeInfo& info);
+		void sraw_d(AnalyzeInfo& info);
+		void srawi(AnalyzeInfo& info);
+		void srawi_d(AnalyzeInfo& info);
+		void srw(AnalyzeInfo& info);
+		void srw_d(AnalyzeInfo& info);
 
 		static void c_TWI(uint32_t op);
 		static void c_TW(uint32_t op);
@@ -379,7 +390,9 @@ namespace Gekko
 		static float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
 		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
-		static void BranchCheck();
+		void BranchCheck();
+
+		void Dispatch(AnalyzeInfo& info, uint32_t instr /* eventually will be removed, used for fallback. */ );
 
 	public:
 		Interpreter(GekkoCore* _core)

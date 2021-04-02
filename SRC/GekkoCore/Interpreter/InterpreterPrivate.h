@@ -16,15 +16,6 @@
     Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xf0ff'ffff) | ((Gekko::Gekko->regs.fpscr & 0xf000'0000) >> 4);    \
 }
 
-#define SET_CR_LT(n)    (Gekko::Gekko->regs.cr |=  (1 << (3 + 4 * (7 - n))))
-#define SET_CR_GT(n)    (Gekko::Gekko->regs.cr |=  (1 << (2 + 4 * (7 - n))))
-#define SET_CR_EQ(n)    (Gekko::Gekko->regs.cr |=  (1 << (1 + 4 * (7 - n))))
-#define SET_CR_SO(n)    (Gekko::Gekko->regs.cr |=  (1 << (    4 * (7 - n))))
-#define RESET_CR_LT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (3 + 4 * (7 - n))))
-#define RESET_CR_GT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (2 + 4 * (7 - n))))
-#define RESET_CR_EQ(n)  (Gekko::Gekko->regs.cr &= ~(1 << (1 + 4 * (7 - n))))
-#define RESET_CR_SO(n)  (Gekko::Gekko->regs.cr &= ~(1 << (    4 * (7 - n))))
-
 #define SET_CR0_LT      (Gekko::Gekko->regs.cr |=  (1 << 31))
 #define SET_CR0_GT      (Gekko::Gekko->regs.cr |=  (1 << 30))
 #define SET_CR0_EQ      (Gekko::Gekko->regs.cr |=  (1 << 29))
@@ -74,11 +65,6 @@ extern "C" uint32_t __FASTCALL Rotl32(int sa, uint32_t data);
 #define CRBD        ((op >> 21) & 0x1f)
 #define CRBA        ((op >> 16) & 0x1f)
 #define CRBB        ((op >> 11) & 0x1f)
-#define BO(n)       ((bo >> (4-n)) & 1)
-#define BI          RA
-#define SH          RB
-#define MB          ((op >> 6) & 0x1f)
-#define ME          ((op >> 1) & 0x1f)
 #define CRM         ((op >> 12) & 0xff)
 #define FM          ((op >> 17) & 0xff)
 
