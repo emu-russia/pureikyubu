@@ -319,9 +319,12 @@ namespace Gekko
 		static void c_PSQ_STU(uint32_t op);
 		static void c_PSQ_STUX(uint32_t op);
 
-		static void c_RLWINM(uint32_t op);
-		static void c_RLWNM(uint32_t op);
-		static void c_RLWIMI(uint32_t op);
+		void rlwimi(AnalyzeInfo& info);
+		void rlwimi_d(AnalyzeInfo& info);
+		void rlwinm(AnalyzeInfo& info);
+		void rlwinm_d(AnalyzeInfo& info);
+		void rlwnm(AnalyzeInfo& info);
+		void rlwnm_d(AnalyzeInfo& info);
 
 		static void c_SLW(uint32_t op);
 		static void c_SLWD(uint32_t op);

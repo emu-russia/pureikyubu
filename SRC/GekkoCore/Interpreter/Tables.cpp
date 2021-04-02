@@ -133,10 +133,7 @@ namespace Gekko
         c_1[17] = c_SC;
         c_1[18] = c_BX;
         c_1[19] = c_OP19;
-        c_1[20] = c_RLWIMI;
-        c_1[21] = c_RLWINM;
         c_1[22] = c_NI;
-        c_1[23] = c_RLWNM;
 
         c_1[24] = c_ORI;
         c_1[25] = c_ORIS;

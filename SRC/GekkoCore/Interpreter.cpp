@@ -108,6 +108,13 @@ namespace Gekko
             case Instruction::cmpli: cmpli(info); break;
             case Instruction::cmpl: cmpl(info); break;
 
+            case Instruction::rlwimi: rlwimi(info); break;
+            case Instruction::rlwimi_d: rlwimi_d(info); break;
+            case Instruction::rlwinm: rlwinm(info); break;
+            case Instruction::rlwinm_d: rlwinm_d(info); break;
+            case Instruction::rlwnm: rlwnm(info); break;
+            case Instruction::rlwnm_d: rlwnm_d(info); break;
+
             // At the time of developing a new interpreter, a fallback to the old implementation will be made in this place.
 
             default:
