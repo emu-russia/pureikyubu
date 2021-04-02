@@ -189,8 +189,8 @@ namespace Gekko
 
             uint32_t pte[2];
 
-            MIReadWord(primaryPteAddr, &pte[0]);
-            MIReadWord(primaryPteAddr + 4, &pte[1]);
+            PIReadWord(primaryPteAddr, &pte[0]);
+            PIReadWord(primaryPteAddr + 4, &pte[1]);
 
             // Check Hash Bit
 
@@ -231,7 +231,7 @@ namespace Gekko
                 {
                     pte[1] |= 0x80;     // Changed
                 }
-                MIWriteWord(primaryPteAddr + 4, pte[1]);
+                PIWriteWord(primaryPteAddr + 4, pte[1]);
 
                 if (protectViolation)
                 {
@@ -263,7 +263,7 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                MIWriteWord(primaryPteAddr + 4, pte[1]);
+                PIWriteWord(primaryPteAddr + 4, pte[1]);
             }
 
             primaryPteAddr += 8;
@@ -277,8 +277,8 @@ namespace Gekko
 
             uint32_t pte[2];
 
-            MIReadWord(secondaryPteAddr, &pte[0]);
-            MIReadWord(secondaryPteAddr + 4, &pte[1]);
+            PIReadWord(secondaryPteAddr, &pte[0]);
+            PIReadWord(secondaryPteAddr + 4, &pte[1]);
 
             // Check Hash Bit
 
@@ -320,7 +320,7 @@ namespace Gekko
                 {
                     pte[1] |= 0x80;
                 }
-                MIWriteWord(secondaryPteAddr + 4, pte[1]);
+                PIWriteWord(secondaryPteAddr + 4, pte[1]);
 
                 if (protectViolation)
                 {
@@ -352,7 +352,7 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                MIWriteWord(secondaryPteAddr + 4, pte[1]);
+                PIWriteWord(secondaryPteAddr + 4, pte[1]);
             }
 
             secondaryPteAddr += 8;

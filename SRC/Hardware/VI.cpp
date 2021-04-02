@@ -393,9 +393,9 @@ void VIOpen(HWConfig * config)
     // set traps to VI registers
     for(uint32_t ofs=0; ofs<0x80; ofs++)
     {
-        MISetTrap(8, 0x0C002000 + ofs, vi_read8, vi_write8);
-        if((ofs % 2) == 0) MISetTrap(16, 0x0C002000 + ofs, vi_read16, vi_write16);
-        if((ofs % 4) == 0) MISetTrap(32, 0x0C002000 + ofs, vi_read32, vi_write32);
+        PISetTrap(8, 0x0C002000 + ofs, vi_read8, vi_write8);
+        if((ofs % 2) == 0) PISetTrap(16, 0x0C002000 + ofs, vi_read16, vi_write16);
+        if((ofs % 4) == 0) PISetTrap(32, 0x0C002000 + ofs, vi_read32, vi_write32);
     }
 }
 

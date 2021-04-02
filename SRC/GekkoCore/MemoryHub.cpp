@@ -36,7 +36,7 @@ namespace Gekko
             return;
         }
 
-        MIReadByte(pa, reg);
+        PIReadByte(pa, reg);
     }
 
     void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
@@ -77,7 +77,7 @@ namespace Gekko
             return;
         }
 
-        MIWriteByte(pa, data);
+        PIWriteByte(pa, data);
     }
 
     void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
@@ -108,7 +108,7 @@ namespace Gekko
             return;
         }
 
-        MIReadHalf(pa, reg);
+        PIReadHalf(pa, reg);
     }
 
     void __FASTCALL GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
@@ -155,7 +155,7 @@ namespace Gekko
             return;
         }
 
-        MIWriteHalf(pa, data);
+        PIWriteHalf(pa, data);
     }
 
     void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
@@ -186,7 +186,7 @@ namespace Gekko
             return;
         }
 
-        MIReadWord(pa, reg);
+        PIReadWord(pa, reg);
     }
 
     void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
@@ -227,7 +227,7 @@ namespace Gekko
             return;
         }
 
-        MIWriteWord(pa, data);
+        PIWriteWord(pa, data);
     }
 
     void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
@@ -258,9 +258,9 @@ namespace Gekko
             return;
         }
 
-        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+        // It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-        MIReadDouble(pa, reg);
+        PIReadDouble(pa, reg);
     }
 
     void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
@@ -301,9 +301,9 @@ namespace Gekko
             return;
         }
 
-        // It is suspected that this type of single-beat transaction is not supported by Flipper MI.
+        // It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-        MIWriteDouble(pa, data);
+        PIWriteDouble(pa, data);
     }
 
 }

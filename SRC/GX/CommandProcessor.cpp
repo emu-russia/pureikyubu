@@ -399,7 +399,7 @@ namespace GX
 
 		state.pi_cp_wrptr &= ~PI_CPWRT_WRAP;
 
-		MIWriteBurst(state.pi_cp_wrptr & RAMMASK, data);
+		PIWriteBurst(state.pi_cp_wrptr & RAMMASK, data);
 		state.pi_cp_wrptr += 32;
 
 		if (state.pi_cp_wrptr == state.pi_cp_top)

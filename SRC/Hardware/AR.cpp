@@ -239,21 +239,21 @@ void AROpen()
     aram.log = false;
 
     // set traps to aram registers
-    MISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
-    MISetTrap(16, AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
-    MISetTrap(16, AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
-    MISetTrap(16, AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
-    MISetTrap(16, AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
-    MISetTrap(16, AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
+    PISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);
+    PISetTrap(16, AR_DMA_MMADDR_L, ar_read_maddr_l, ar_write_maddr_l);
+    PISetTrap(16, AR_DMA_ARADDR_H, ar_read_araddr_h, ar_write_araddr_h);
+    PISetTrap(16, AR_DMA_ARADDR_L, ar_read_araddr_l, ar_write_araddr_l);
+    PISetTrap(16, AR_DMA_CNT_H, ar_read_cnt_h, ar_write_cnt_h);
+    PISetTrap(16, AR_DMA_CNT_L, ar_read_cnt_l, ar_write_cnt_l);
 
-    MISetTrap(32, AR_DMA_MMADDR, ar_read_maddr, ar_write_maddr);
-    MISetTrap(32, AR_DMA_ARADDR, ar_read_araddr, ar_write_araddr);
-    MISetTrap(32, AR_DMA_CNT, ar_read_cnt, ar_write_cnt);
+    PISetTrap(32, AR_DMA_MMADDR, ar_read_maddr, ar_write_maddr);
+    PISetTrap(32, AR_DMA_ARADDR, ar_read_araddr, ar_write_araddr);
+    PISetTrap(32, AR_DMA_CNT, ar_read_cnt, ar_write_cnt);
 
     // hacks
-    MISetTrap(16, AR_SIZE   , ar_hack_size_r, ar_hack_size_w);
-    MISetTrap(16, AR_MODE   , ar_hack_mode  , no_write);
-    MISetTrap(16, AR_REFRESH, no_read       , no_write);
+    PISetTrap(16, AR_SIZE   , ar_hack_size_r, ar_hack_size_w);
+    PISetTrap(16, AR_MODE   , ar_hack_mode  , no_write);
+    PISetTrap(16, AR_REFRESH, no_read       , no_write);
 
     aram.dmaThread = new Thread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
 }

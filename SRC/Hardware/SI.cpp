@@ -573,28 +573,28 @@ void SIOpen()
         si.rumble[i] = PADSetRumble(i, PAD_MOTOR_STOP);
 
     // joypads in/out command buffer
-    MISetTrap(32, SI_CHAN0_OUTBUF, si_rd_out0, si_wr_out0);
-    MISetTrap(32, SI_CHAN0_INBUFH, si_inh0, NULL);
-    MISetTrap(32, SI_CHAN0_INBUFL, si_inl0, NULL);
-    MISetTrap(32, SI_CHAN1_OUTBUF, si_rd_out1, si_wr_out1);
-    MISetTrap(32, SI_CHAN1_INBUFH, si_inh1, NULL);
-    MISetTrap(32, SI_CHAN1_INBUFL, si_inl1, NULL);
-    MISetTrap(32, SI_CHAN2_OUTBUF, si_rd_out2, si_wr_out2);
-    MISetTrap(32, SI_CHAN2_INBUFH, si_inh2, NULL);
-    MISetTrap(32, SI_CHAN2_INBUFL, si_inl2, NULL);
-    MISetTrap(32, SI_CHAN3_OUTBUF, si_rd_out3, si_wr_out3);
-    MISetTrap(32, SI_CHAN3_INBUFH, si_inh3, NULL);
-    MISetTrap(32, SI_CHAN3_INBUFL, si_inl3, NULL);
+    PISetTrap(32, SI_CHAN0_OUTBUF, si_rd_out0, si_wr_out0);
+    PISetTrap(32, SI_CHAN0_INBUFH, si_inh0, NULL);
+    PISetTrap(32, SI_CHAN0_INBUFL, si_inl0, NULL);
+    PISetTrap(32, SI_CHAN1_OUTBUF, si_rd_out1, si_wr_out1);
+    PISetTrap(32, SI_CHAN1_INBUFH, si_inh1, NULL);
+    PISetTrap(32, SI_CHAN1_INBUFL, si_inl1, NULL);
+    PISetTrap(32, SI_CHAN2_OUTBUF, si_rd_out2, si_wr_out2);
+    PISetTrap(32, SI_CHAN2_INBUFH, si_inh2, NULL);
+    PISetTrap(32, SI_CHAN2_INBUFL, si_inl2, NULL);
+    PISetTrap(32, SI_CHAN3_OUTBUF, si_rd_out3, si_wr_out3);
+    PISetTrap(32, SI_CHAN3_INBUFH, si_inh3, NULL);
+    PISetTrap(32, SI_CHAN3_INBUFL, si_inl3, NULL);
     
     // si control registers
-    MISetTrap(32, SI_POLL  , read_poll   , write_poll);
-    MISetTrap(32, SI_COMCSR, read_commcsr, write_commcsr);
-    MISetTrap(32, SI_SR    , read_sisr   , write_sisr);
-    MISetTrap(32, SI_EXILK , read_exilk  , write_exilk);
+    PISetTrap(32, SI_POLL  , read_poll   , write_poll);
+    PISetTrap(32, SI_COMCSR, read_commcsr, write_commcsr);
+    PISetTrap(32, SI_SR    , read_sisr   , write_sisr);
+    PISetTrap(32, SI_EXILK , read_exilk  , write_exilk);
 
     // serial communcation buffer
     for(unsigned ofs=0; ofs<128; ofs+=4)
     {
-        MISetTrap(32, SI_COMBUF | ofs, read_sicom, write_sicom);
+        PISetTrap(32, SI_COMBUF | ofs, read_sicom, write_sicom);
     }
 }

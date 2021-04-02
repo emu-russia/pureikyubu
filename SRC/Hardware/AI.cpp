@@ -540,22 +540,22 @@ namespace Flipper
         AIStopDMA();
 
         // set register traps
-        MISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
+        PISetTrap(16, AI_DCR, read_aidcr, write_aidcr);
 
-        MISetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
-        MISetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
-        MISetTrap(16, DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
-        MISetTrap(16, DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
+        PISetTrap(16, DSP_OUTMBOXH, read_out_mbox_h, write_out_mbox_h);
+        PISetTrap(16, DSP_OUTMBOXL, read_out_mbox_l, write_out_mbox_l);
+        PISetTrap(16, DSP_INMBOXH, read_in_mbox_h, write_in_mbox_h);
+        PISetTrap(16, DSP_INMBOXL, read_in_mbox_l, write_in_mbox_l);
 
-        MISetTrap(16, AID_MADRH, read_dmah, write_dmah);
-        MISetTrap(16, AID_MADRL, read_dmal, write_dmal);
-        MISetTrap(16, AID_LEN, read_len, write_len);
-        MISetTrap(16, AID_CNT, read_dcnt, nullptr);
+        PISetTrap(16, AID_MADRH, read_dmah, write_dmah);
+        PISetTrap(16, AID_MADRL, read_dmal, write_dmal);
+        PISetTrap(16, AID_LEN, read_len, write_len);
+        PISetTrap(16, AID_CNT, read_dcnt, nullptr);
 
-        MISetTrap(32, AIS_CR, read_cr, write_cr);
-        MISetTrap(32, AIS_VR, read_vr, write_vr);
-        MISetTrap(32, AIS_SCNT, read_scnt, nullptr);
-        MISetTrap(32, AIS_IT, read_it, write_it);
+        PISetTrap(32, AIS_CR, read_cr, write_cr);
+        PISetTrap(32, AIS_VR, read_vr, write_vr);
+        PISetTrap(32, AIS_SCNT, read_scnt, nullptr);
+        PISetTrap(32, AIS_IT, read_it, write_it);
 
         ai.Mixer = new AudioMixer(config);
     }

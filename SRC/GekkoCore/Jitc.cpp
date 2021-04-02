@@ -58,7 +58,7 @@ namespace Gekko
 				break;
 			}
 
-			MIReadWord(physicalAddress, &instr);
+			PIReadWord(physicalAddress, &instr);
 
 			Analyzer::AnalyzeFast(addr, instr, &info);
 
