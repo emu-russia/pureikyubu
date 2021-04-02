@@ -208,8 +208,6 @@ namespace Gekko
         c_31[38] = c_MFCR;
         c_31[40] = c_LWARX;
         c_31[46] = c_LWZX;
-        c_31[48] = c_SLW;
-        c_31[49] = c_SLWD;
         c_31[52] = c_CNTLZW;
         c_31[53] = c_CNTLZWD;
         c_31[56] = c_AND;
@@ -287,8 +285,6 @@ namespace Gekko
         c_31[1045] = c_ADDCOD;
         c_31[1068] = c_LWBRX;
         c_31[1070] = c_LFSX;
-        c_31[1072] = c_SRW;
-        c_31[1073] = c_SRWD;
         c_31[1132] = c_TLBSYNC;
         c_31[1134] = c_LFSUX;
         c_31[1190] = c_MFSR;
@@ -306,10 +302,6 @@ namespace Gekko
         c_31[1556] = c_ADDO;
         c_31[1557] = c_ADDOD;
         c_31[1580] = c_LHBRX;
-        c_31[1584] = c_SRAW;
-        c_31[1585] = c_SRAWD;
-        c_31[1648] = c_SRAWI;
-        c_31[1649] = c_SRAWID;
         c_31[1708] = c_EIEIO;
         c_31[1836] = c_STHBRX;
         c_31[1844] = c_EXTSH;

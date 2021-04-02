@@ -20,10 +20,9 @@ namespace Gekko
     //          then c = 0b010
     //          else c = 0b001
     // CR[4*crf..4*crf+3] = c || XER[SO]
-    template <typename T1, typename T2>
-    inline void Interpreter::CmpCommon(AnalyzeInfo& info, T1 a, T2 b)
+    template <typename T>
+    inline void Interpreter::CmpCommon(int crfd, T a, T b)
     {
-        int crfd = info.paramBits[0];
 		// TODO: Optimize
         if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
@@ -43,7 +42,7 @@ namespace Gekko
 
         int32_t a = core->regs.gpr[info.paramBits[1]];
         int32_t b = (int32_t)info.Imm.Signed;
-        CmpCommon<int32_t, int32_t>(info, a, b);
+        CmpCommon<int32_t>(info.paramBits[0], a, b);
     }
 
     // a = ra (signed)
@@ -57,7 +56,7 @@ namespace Gekko
 
         int32_t a = core->regs.gpr[info.paramBits[1]];
         int32_t b = core->regs.gpr[info.paramBits[2]];
-        CmpCommon<int32_t, int32_t>(info, a, b);
+        CmpCommon<int32_t>(info.paramBits[0], a, b);
     }
 
     // a = ra (unsigned)
@@ -71,7 +70,7 @@ namespace Gekko
 
         uint32_t a = core->regs.gpr[info.paramBits[1]];
         uint32_t b = info.Imm.Unsigned;
-        CmpCommon<uint32_t, uint32_t>(info, a, b);
+        CmpCommon<uint32_t>(info.paramBits[0], a, b);
     }
 
     // a = ra (unsigned)
@@ -85,7 +84,7 @@ namespace Gekko
 
         uint32_t a = core->regs.gpr[info.paramBits[1]];
         uint32_t b = core->regs.gpr[info.paramBits[2]];
-        CmpCommon<uint32_t, uint32_t>(info, a, b);
+        CmpCommon<uint32_t>(info.paramBits[0], a, b);
     }
 
 }

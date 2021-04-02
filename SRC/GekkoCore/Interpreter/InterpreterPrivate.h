@@ -67,9 +67,6 @@ extern "C" uint32_t __FASTCALL Rotl32(int sa, uint32_t data);
 #define CRBB        ((op >> 11) & 0x1f)
 #define BO(n)       ((bo >> (4-n)) & 1)
 #define BI          RA
-#define SH          RB
-#define MB          ((op >> 6) & 0x1f)
-#define ME          ((op >> 1) & 0x1f)
 #define CRM         ((op >> 12) & 0xff)
 #define FM          ((op >> 17) & 0xff)
 

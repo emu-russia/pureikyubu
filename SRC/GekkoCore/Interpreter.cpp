@@ -115,6 +115,15 @@ namespace Gekko
             case Instruction::rlwnm: rlwnm(info); break;
             case Instruction::rlwnm_d: rlwnm_d(info); break;
 
+            case Instruction::slw: slw(info); break;
+            case Instruction::slw_d: slw_d(info); break;
+            case Instruction::sraw: sraw(info); break;
+            case Instruction::sraw_d: sraw_d(info); break;
+            case Instruction::srawi: srawi(info); break;
+            case Instruction::srawi_d: srawi_d(info); break;
+            case Instruction::srw: srw(info); break;
+            case Instruction::srw_d: srw_d(info); break;
+
             // At the time of developing a new interpreter, a fallback to the old implementation will be made in this place.
 
             default:

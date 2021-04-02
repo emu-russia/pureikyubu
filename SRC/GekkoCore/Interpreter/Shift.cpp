@@ -12,157 +12,28 @@ namespace Gekko
     // else m = (32)0
     // ra = r & m
     // (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
-    OP(SLW)
+    void Interpreter::slw(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::slw]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::slw]++;
         }
 
-        uint32_t n = RRB;
+        uint32_t n = core->regs.gpr[info.paramBits[2]];
 
-        if (n & 0x20) RRA = 0;
-        else RRA = RRS << (n & 0x1f);
-        Gekko->regs.pc += 4;
-    }
-
-    // n = rb[27-31]
-    // r = ROTL(rs, n)
-    // if rb[26] = 0
-    // then m = MASK(0, 31-n)
-    // else m = (32)0
-    // ra = r & m
-    // (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
-    // CR0
-    OP(SLWD)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::slw_d]++;
-        }
-
-        uint32_t n = RRB;
         uint32_t res;
 
         if (n & 0x20) res = 0;
-        else res = RRS << (n & 0x1f);
+        else res = core->regs.gpr[info.paramBits[1]] << (n & 0x1f);
 
-        RRA = res;
-        COMPUTE_CR0(res);
-        Gekko->regs.pc += 4;
+        core->regs.gpr[info.paramBits[0]] = res;
+        core->regs.pc += 4;
     }
 
-    // n = rb[27-31]
-    // r = ROTL(rs, 32-n)
-    // if rb[26] = 0
-    // then m = MASK(n, 31)
-    // else m = (32)0
-    // ra = r & m
-    // (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
-    OP(SRW)
+    void Interpreter::slw_d(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::srw]++;
-        }
-
-        uint32_t n = RRB;
-
-        if (n & 0x20) RRA = 0;
-        else RRA = RRS >> (n & 0x1f);
-        Gekko->regs.pc += 4;
-    }
-
-    // n = rb[27-31]
-    // r = ROTL(rs, 32-n)
-    // if rb[26] = 0
-    // then m = MASK(n, 31)
-    // else m = (32)0
-    // ra = r & m
-    // (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
-    // CR0
-    OP(SRWD)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::srw_d]++;
-        }
-
-        uint32_t n = RRB;
-        uint32_t res;
-
-        if (n & 0x20) res = 0;
-        else res = RRS >> (n & 0x1f);
-
-        RRA = res;
-        COMPUTE_CR0(res);
-        Gekko->regs.pc += 4;
-    }
-
-    // n = SH
-    // r = ROTL(rs, 32 - n)
-    // m = MASK(n, 31)
-    // sign = rs[0]
-    // ra = r & m | (32)sign & ~m
-    // XER[CA] = sign(0) & ((r & ~m) != 0)
-    OP(SRAWI)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::srawi]++;
-        }
-
-        uint32_t n = SH;
-        int32_t res;
-        int32_t src = RRS;
-
-        if (n == 0)
-        {
-            res = src;
-            RESET_XER_CA;
-        }
-        else
-        {
-            res = src >> n;
-            if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
-        }
-
-        RRA = res;
-        Gekko->regs.pc += 4;
-    }
-
-    // n = SH
-    // r = ROTL(rs, 32 - n)
-    // m = MASK(n, 31)
-    // sign = rs[0]
-    // ra = r & m | (32)sign & ~m
-    // XER[CA] = sign(0) & ((r & ~m) != 0)
-    // CR0
-    OP(SRAWID)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::srawi_d]++;
-        }
-
-        uint32_t n = SH;
-        int32_t res;
-        int32_t src = RRS;
-
-        if (n == 0)
-        {
-            res = src;
-            RESET_XER_CA;
-        }
-        else
-        {
-            res = src >> n;
-            if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
-        }
-
-        RRA = res;
-        COMPUTE_CR0(res);
-        Gekko->regs.pc += 4;
+        slw(info);
+        COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
     }
 
     // n = rb[27-31]
@@ -173,16 +44,16 @@ namespace Gekko
     // S = rs(0)
     // ra = r & m | (32)S & ~m
     // XER[CA] = S & (r & ~m[0-31] != 0)
-    OP(SRAW)
+    void Interpreter::sraw(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::sraw]++;
         }
 
-        uint32_t n = RRB;
+        uint32_t n = core->regs.gpr[info.paramBits[2]];
         int32_t res;
-        int32_t src = RRS;
+        int32_t src = core->regs.gpr[info.paramBits[1]];
 
         if (n == 0)
         {
@@ -209,8 +80,53 @@ namespace Gekko
             if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
         }
 
-        RRA = res;
+        core->regs.gpr[info.paramBits[0]] = res;
+        core->regs.pc += 4;
+    }
+
+    void Interpreter::sraw_d(AnalyzeInfo& info)
+    {
+        sraw(info);
+        COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
         Gekko->regs.pc += 4;
+    }
+
+    // n = SH
+    // r = ROTL(rs, 32 - n)
+    // m = MASK(n, 31)
+    // sign = rs[0]
+    // ra = r & m | (32)sign & ~m
+    // XER[CA] = sign(0) & ((r & ~m) != 0)
+    void Interpreter::srawi(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::srawi]++;
+        }
+
+        uint32_t n = info.paramBits[2];
+        int32_t res;
+        int32_t src = core->regs.gpr[info.paramBits[1]];
+
+        if (n == 0)
+        {
+            res = src;
+            RESET_XER_CA;
+        }
+        else
+        {
+            res = src >> n;
+            if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
+        }
+
+        core->regs.gpr[info.paramBits[0]] = res;
+        core->regs.pc += 4;
+    }
+
+    void Interpreter::srawi_d(AnalyzeInfo& info)
+    {
+        srawi(info);
+        COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
     }
 
     // n = rb[27-31]
@@ -218,49 +134,30 @@ namespace Gekko
     // if rb[26] = 0
     // then m = MASK(n, 31)
     // else m = (32)0
-    // S = rs(0)
-    // ra = r & m | (32)S & ~m
-    // XER[CA] = S & (r & ~m[0-31] != 0)
-    // CR0
-    OP(SRAWD)
+    // ra = r & m
+    // (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
+    void Interpreter::srw(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw_d]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::srw]++;
         }
 
-        uint32_t n = RRB;
-        int32_t res;
-        int32_t src = RRS;
+        uint32_t n = core->regs.gpr[info.paramBits[2]];
 
-        if (n == 0)
-        {
-            res = src;
-            RESET_XER_CA;
-        }
-        else if (n & 0x20)
-        {
-            if (src < 0)
-            {
-                res = 0xffffffff;
-                if (src & 0x7fffffff) SET_XER_CA; else RESET_XER_CA;
-            }
-            else
-            {
-                res = 0;
-                RESET_XER_CA;
-            }
-        }
-        else
-        {
-            n = n & 0x1f;
-            res = (int32_t)src >> n;
-            if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
-        }
+        uint32_t res;
 
-        RRA = res;
-        COMPUTE_CR0(res);
-        Gekko->regs.pc += 4;
+        if (n & 0x20) res = 0;
+        else res = core->regs.gpr[info.paramBits[1]] >> (n & 0x1f);
+
+        core->regs.gpr[info.paramBits[0]] = res;
+        core->regs.pc += 4;
+    }
+
+    void Interpreter::srw_d(AnalyzeInfo& info)
+    {
+        srw(info);
+        COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
     }
 
 }

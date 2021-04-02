@@ -33,8 +33,8 @@ namespace Gekko
 		static void c_BCCTR(uint32_t op);
 		static void c_BCCTRL(uint32_t op);
 
-		template <typename T1, typename T2>
-		inline void CmpCommon(AnalyzeInfo& info, T1 a, T2 b);
+		template <typename T>
+		inline void CmpCommon(int crfd, T a, T b);
 		void cmpi(AnalyzeInfo& info);
 		void cmp(AnalyzeInfo& info);
 		void cmpli(AnalyzeInfo& info);
@@ -326,14 +326,14 @@ namespace Gekko
 		void rlwnm(AnalyzeInfo& info);
 		void rlwnm_d(AnalyzeInfo& info);
 
-		static void c_SLW(uint32_t op);
-		static void c_SLWD(uint32_t op);
-		static void c_SRW(uint32_t op);
-		static void c_SRWD(uint32_t op);
-		static void c_SRAWI(uint32_t op);
-		static void c_SRAWID(uint32_t op);
-		static void c_SRAW(uint32_t op);
-		static void c_SRAWD(uint32_t op);
+		void slw(AnalyzeInfo& info);
+		void slw_d(AnalyzeInfo& info);
+		void sraw(AnalyzeInfo& info);
+		void sraw_d(AnalyzeInfo& info);
+		void srawi(AnalyzeInfo& info);
+		void srawi_d(AnalyzeInfo& info);
+		void srw(AnalyzeInfo& info);
+		void srw_d(AnalyzeInfo& info);
 
 		static void c_TWI(uint32_t op);
 		static void c_TW(uint32_t op);
