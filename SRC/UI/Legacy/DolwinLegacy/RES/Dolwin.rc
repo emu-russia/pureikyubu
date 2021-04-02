@@ -371,14 +371,14 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "Comments", "There is no knowledge, that is not power."
-            VALUE "CompanyName", "© 2003-2020 Dolwin Team."
+            VALUE "CompanyName", "© 2003-2021 Dolwin Team."
             VALUE "FileDescription", "Dolwin - Nintendo GameCube Emulator"
             VALUE "FileVersion", "0, 1, 0, 0"
             VALUE "InternalName", "Dolwin"
-            VALUE "LegalCopyright", "© 2003-2020 Dolwin Team."
+            VALUE "LegalCopyright", "© 2003-2021 Dolwin Team."
             VALUE "OriginalFilename", "Dolwin.exe"
             VALUE "ProductName", "Dolwin"
-            VALUE "ProductVersion", "0, 1, 4, 0"
+            VALUE "ProductVersion", "0, 1, 6, 0"
         END
     END
     BLOCK "VarFileInfo"
