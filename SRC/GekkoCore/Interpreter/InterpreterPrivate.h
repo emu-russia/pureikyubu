@@ -16,15 +16,6 @@
     Gekko::Gekko->regs.cr = (Gekko::Gekko->regs.cr & 0xf0ff'ffff) | ((Gekko::Gekko->regs.fpscr & 0xf000'0000) >> 4);    \
 }
 
-#define SET_CR_LT(n)    (Gekko::Gekko->regs.cr |=  (1 << (3 + 4 * (7 - n))))
-#define SET_CR_GT(n)    (Gekko::Gekko->regs.cr |=  (1 << (2 + 4 * (7 - n))))
-#define SET_CR_EQ(n)    (Gekko::Gekko->regs.cr |=  (1 << (1 + 4 * (7 - n))))
-#define SET_CR_SO(n)    (Gekko::Gekko->regs.cr |=  (1 << (    4 * (7 - n))))
-#define RESET_CR_LT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (3 + 4 * (7 - n))))
-#define RESET_CR_GT(n)  (Gekko::Gekko->regs.cr &= ~(1 << (2 + 4 * (7 - n))))
-#define RESET_CR_EQ(n)  (Gekko::Gekko->regs.cr &= ~(1 << (1 + 4 * (7 - n))))
-#define RESET_CR_SO(n)  (Gekko::Gekko->regs.cr &= ~(1 << (    4 * (7 - n))))
-
 #define SET_CR0_LT      (Gekko::Gekko->regs.cr |=  (1 << 31))
 #define SET_CR0_GT      (Gekko::Gekko->regs.cr |=  (1 << 30))
 #define SET_CR0_EQ      (Gekko::Gekko->regs.cr |=  (1 << 29))

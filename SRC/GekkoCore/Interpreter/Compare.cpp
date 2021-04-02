@@ -5,6 +5,15 @@
 namespace Gekko
 {
 
+	#define SET_CR_LT(n)    (core->regs.cr |=  (1 << (3 + 4 * (7 - n))))
+	#define SET_CR_GT(n)    (core->regs.cr |=  (1 << (2 + 4 * (7 - n))))
+	#define SET_CR_EQ(n)    (core->regs.cr |=  (1 << (1 + 4 * (7 - n))))
+	#define SET_CR_SO(n)    (core->regs.cr |=  (1 << (    4 * (7 - n))))
+	#define RESET_CR_LT(n)  (core->regs.cr &= ~(1 << (3 + 4 * (7 - n))))
+	#define RESET_CR_GT(n)  (core->regs.cr &= ~(1 << (2 + 4 * (7 - n))))
+	#define RESET_CR_EQ(n)  (core->regs.cr &= ~(1 << (1 + 4 * (7 - n))))
+	#define RESET_CR_SO(n)  (core->regs.cr &= ~(1 << (    4 * (7 - n))))
+
     // if a < b
     //      then c = 0b100
     //      else if a > b
@@ -15,6 +24,7 @@ namespace Gekko
     inline void Interpreter::CmpCommon(AnalyzeInfo& info, T1 a, T2 b)
     {
         int crfd = info.paramBits[0];
+		// TODO: Optimize
         if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);
         if (a > b) SET_CR_GT(crfd); else RESET_CR_GT(crfd);
         if (a == b) SET_CR_EQ(crfd); else RESET_CR_EQ(crfd);
