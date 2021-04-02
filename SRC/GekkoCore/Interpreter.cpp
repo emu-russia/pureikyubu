@@ -121,6 +121,14 @@ namespace Gekko
                 c_1[instr >> 26](instr);
                 break;
         }
+
+        // TODO: Move here opcode usage statistics when all handlers have been redone. 
+
+        //if (Gekko->opcodeStatsEnabled)
+        //{
+        //    Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw_d]++;
+        //}
+
     }
 
     uint32_t Interpreter::GetRotMask(int mb, int me)
