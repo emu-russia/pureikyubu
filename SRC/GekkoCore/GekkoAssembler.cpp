@@ -1421,6 +1421,37 @@ namespace Gekko
 
 			// Paired-Single Floating Point Arithmetic Instructions
 
+			case Instruction::ps_div:		Form_FrDAB(4, 18, false, info); break;
+			case Instruction::ps_div_d:		Form_FrDAB(4, 18, true, info); break;
+			case Instruction::ps_sub:		Form_FrDAB(4, 20, false, info); break;
+			case Instruction::ps_sub_d:		Form_FrDAB(4, 20, true, info); break;
+			case Instruction::ps_add:		Form_FrDAB(4, 21, false, info); break;
+			case Instruction::ps_add_d:		Form_FrDAB(4, 21, true, info); break;
+			case Instruction::ps_sel:		Form_FrDACB(4, 23, false, info); break;
+			case Instruction::ps_sel_d:		Form_FrDACB(4, 23, true, info); break;
+			case Instruction::ps_res:		Form_FrDB(4, 24, false, info); break;
+			case Instruction::ps_res_d:		Form_FrDB(4, 24, true, info); break;
+			case Instruction::ps_mul:		Form_FrDAC(4, 25, false, info); break;
+			case Instruction::ps_mul_d:		Form_FrDAC(4, 25, true, info); break;
+			case Instruction::ps_rsqrte:	Form_FrDB(4, 26, false, info); break;
+			case Instruction::ps_rsqrte_d:	Form_FrDB(4, 26, true, info); break;
+			case Instruction::ps_msub:		Form_FrDACB(4, 28, false, info); break;
+			case Instruction::ps_msub_d:	Form_FrDACB(4, 28, true, info); break;
+			case Instruction::ps_madd:		Form_FrDACB(4, 29, false, info); break;
+			case Instruction::ps_madd_d:	Form_FrDACB(4, 29, true, info); break;
+			case Instruction::ps_nmsub:		Form_FrDACB(4, 30, false, info); break;
+			case Instruction::ps_nmsub_d:	Form_FrDACB(4, 30, true, info); break;
+			case Instruction::ps_nmadd:		Form_FrDACB(4, 31, false, info); break;
+			case Instruction::ps_nmadd_d:	Form_FrDACB(4, 31, true, info); break;
+			case Instruction::ps_neg:		Form_FrDB(4, 40, false, info); break;
+			case Instruction::ps_neg_d:		Form_FrDB(4, 40, true, info); break;
+			case Instruction::ps_mr:		Form_FrDB(4, 72, false, info); break;
+			case Instruction::ps_mr_d:		Form_FrDB(4, 72, true, info); break;
+			case Instruction::ps_nabs:		Form_FrDB(4, 136, false, info); break;
+			case Instruction::ps_nabs_d:	Form_FrDB(4, 136, true, info); break;
+			case Instruction::ps_abs:		Form_FrDB(4, 264, false, info); break;
+			case Instruction::ps_abs_d:		Form_FrDB(4, 264, true, info); break;
+
 			// Miscellaneous Paired-Single Instructions
 
 		}
