@@ -106,12 +106,6 @@ namespace Gekko
             c_4[i] = c_NI;
         }
 
-        // Branch
-        bx[0] = c_B;
-        bx[1] = c_BL;
-        bx[2] = c_BA;
-        bx[3] = c_BLA;
-
         // Main opcode table
         c_1[0] = c_HL;
         c_1[1] = c_NI;
@@ -129,9 +123,7 @@ namespace Gekko
         c_1[14] = c_ADDI;
         c_1[15] = c_ADDIS;
 
-        c_1[16] = c_BCX;
         c_1[17] = c_SC;
-        c_1[18] = c_BX;
         c_1[19] = c_OP19;
         c_1[22] = c_NI;
 
@@ -181,12 +173,8 @@ namespace Gekko
         c_1[63] = c_OP63;
 
         // "19" extension
-        c_19[32] = c_BCLR;
-        c_19[33] = c_BCLRL;
         c_19[100] = c_RFI;
         c_19[300] = c_ISYNC;
-        c_19[1056] = c_BCCTR;
-        c_19[1057] = c_BCCTRL;
 
         // "31" extension
         c_31[8] = c_TW;

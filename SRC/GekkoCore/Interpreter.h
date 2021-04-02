@@ -21,17 +21,20 @@ namespace Gekko
 
 		// Instruction handlers are gradually being replaced by a new interpreter implementation  (#190)
 
-		static void c_B(uint32_t op);
-		static void c_BA(uint32_t op);
-		static void c_BL(uint32_t op);
-		static void c_BLA(uint32_t op);
-
-		static void c_BX(uint32_t op);
-		static void c_BCX(uint32_t op);
-		static void c_BCLR(uint32_t op);
-		static void c_BCLRL(uint32_t op);
-		static void c_BCCTR(uint32_t op);
-		static void c_BCCTRL(uint32_t op);
+		bool BcTest(AnalyzeInfo& info);
+		bool BctrTest(AnalyzeInfo& info);
+		void b(AnalyzeInfo& info);
+		void ba(AnalyzeInfo& info);
+		void bl(AnalyzeInfo& info);
+		void bla(AnalyzeInfo& info);
+		void bc(AnalyzeInfo& info);
+		void bca(AnalyzeInfo& info);
+		void bcl(AnalyzeInfo& info);
+		void bcla(AnalyzeInfo& info);
+		void bcctr(AnalyzeInfo& info);
+		void bcctrl(AnalyzeInfo& info);
+		void bclr(AnalyzeInfo& info);
+		void bclrl(AnalyzeInfo& info);
 
 		template <typename T>
 		inline void CmpCommon(int crfd, T a, T b);
@@ -386,7 +389,7 @@ namespace Gekko
 		static float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
 		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
-		static void BranchCheck();
+		void BranchCheck();
 
 		void Dispatch(AnalyzeInfo& info, uint32_t instr /* eventually will be removed, used for fallback. */ );
 

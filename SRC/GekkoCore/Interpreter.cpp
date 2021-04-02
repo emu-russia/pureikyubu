@@ -103,6 +103,19 @@ namespace Gekko
     {
         switch (info.instr)
         {
+            case Instruction::b: b(info); break;
+            case Instruction::ba: ba(info); break;
+            case Instruction::bl: bl(info); break;
+            case Instruction::bla: bla(info); break;
+            case Instruction::bc: bc(info); break;
+            case Instruction::bca: bca(info); break;
+            case Instruction::bcl: bcl(info); break;
+            case Instruction::bcla: bcla(info); break;
+            case Instruction::bcctr: bcctr(info); break;
+            case Instruction::bcctrl: bcctrl(info); break;
+            case Instruction::bclr: bclr(info); break;
+            case Instruction::bclrl: bclrl(info); break;
+
             case Instruction::cmpi: cmpi(info); break;
             case Instruction::cmp: cmp(info); break;
             case Instruction::cmpli: cmpli(info); break;

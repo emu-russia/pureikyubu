@@ -5,109 +5,101 @@
 namespace Gekko
 {
 
+    // info.Imm.Address is always pre-calculated, there is no need to perform operations on the `pc`, just write a new address there. 
+
+    #define BO(n)       ((bo >> (4-n)) & 1)
+
     void Interpreter::BranchCheck()
     {
-        if (Gekko->intFlag && (Gekko->regs.msr & MSR_EE))
+        if (core->intFlag && (core->regs.msr & MSR_EE))
         {
-            Gekko->Exception(Gekko::Exception::INTERRUPT);
-            Gekko->exception = false;
+            core->Exception(Gekko::Exception::INTERRUPT);
+            core->exception = false;
             return;
         }
 
         // modify CPU counters (possible CPU_EXCEPTION_DECREMENTER)
-        Gekko->Tick();
-        if (Gekko->decreq && (Gekko->regs.msr & MSR_EE))
+        core->Tick();
+        if (core->decreq && (core->regs.msr & MSR_EE))
         {
-            Gekko->decreq = false;
-            Gekko->Exception(Gekko::Exception::DECREMENTER);
+            core->decreq = false;
+            core->Exception(Gekko::Exception::DECREMENTER);
         }
     }
 
     // PC = PC + EXTS(LI || 0b00)
-    OP(B)
+    void Interpreter::b(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::b]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::b]++;
         }
 
-        uint32_t target = op & 0x03fffffc;
-        if (target & 0x02000000) target |= 0xfc000000;
-        Gekko->regs.pc = Gekko->regs.pc + target;
-    }
-
-    // PC = EXTS(LI || 0b00)
-    OP(BA)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::ba]++;
-        }
-
-        uint32_t target = op & 0x03fffffc;
-        if (target & 0x02000000) target |= 0xfc000000;
-        Gekko->regs.pc = target;
-    }
-
-    // LR = PC + 4, PC = PC + EXTS(LI || 0b00)
-    OP(BL)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bl]++;
-        }
-
-        uint32_t target = op & 0x03fffffc;
-        if (target & 0x02000000) target |= 0xfc000000;
-        Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
-        Gekko->regs.pc = Gekko->regs.pc + target;
-    }
-
-    // LR = PC + 4, PC = EXTS(LI || 0b00)
-    OP(BLA)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bla]++;
-        }
-
-        uint32_t target = op & 0x03fffffc;
-        if (target & 0x02000000) target |= 0xfc000000;
-        Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
-        Gekko->regs.pc = target;
-    }
-
-    OP(BX)
-    {
-        bx[op & 3](op);
+        core->regs.pc = info.Imm.Address;
         BranchCheck();
     }
 
-    // ---------------------------------------------------------------------------
+    // PC = EXTS(LI || 0b00)
+    void Interpreter::ba(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::ba]++;
+        }
+
+        core->regs.pc = info.Imm.Address;
+        BranchCheck();
+    }
+
+    // LR = PC + 4, PC = PC + EXTS(LI || 0b00)
+    void Interpreter::bl(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::bl]++;
+        }
+
+        core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
+        core->regs.pc = info.Imm.Address;
+        BranchCheck();
+    }
+
+    // LR = PC + 4, PC = EXTS(LI || 0b00)
+    void Interpreter::bla(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::bla]++;
+        }
+
+        core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
+        core->regs.pc = info.Imm.Address;
+        BranchCheck();
+    }
 
     // calculation of conditional branch
-    static bool bc(uint32_t op)
+    bool Interpreter::BcTest(AnalyzeInfo& info)
     {
         bool ctr_ok, cond_ok;
-        int bo = RD, bi = BI;
+        int bo = info.paramBits[0], bi = info.paramBits[1];
 
         if (BO(2) == 0)
         {
-            Gekko->regs.spr[(int)SPR::CTR]--;
+            core->regs.spr[(int)SPR::CTR]--;
 
-            if (BO(3)) ctr_ok = (Gekko->regs.spr[(int)Gekko::SPR::CTR] == 0);
-            else ctr_ok = (Gekko->regs.spr[(int)Gekko::SPR::CTR] != 0);
+            if (BO(3)) ctr_ok = (core->regs.spr[(int)Gekko::SPR::CTR] == 0);
+            else ctr_ok = (core->regs.spr[(int)Gekko::SPR::CTR] != 0);
         }
         else ctr_ok = true;
 
         if (BO(0) == 0)
         {
-            if (BO(1)) cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) != 0;
-            else cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) == 0;
+            if (BO(1)) cond_ok = ((core->regs.cr << bi) & 0x80000000) != 0;
+            else cond_ok = ((core->regs.cr << bi) & 0x80000000) == 0;
         }
         else cond_ok = true;
 
-        return (ctr_ok & cond_ok);
+        return (ctr_ok && cond_ok);
     }
 
     // if ~BO2 then CTR = CTR - 1
@@ -119,21 +111,53 @@ namespace Gekko
     //      if AA = 1
     //          then PC = EXTS(BD || 0b00)
     //          else PC = PC + EXTS(BD || 0b00)
-    OP(BCX)
+    void Interpreter::bc(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bc]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::bc]++;
         }
 
-        if (bc(op))
+        if (BcTest(info))
         {
-            if (op & 1) Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4; // LK
+            core->regs.pc = info.Imm.Address;
+            BranchCheck();
+        }
+        else
+        {
+            core->regs.pc += 4;
+        }
+    }
 
-            uint32_t target = op & 0xfffc;
-            if (target & 0x8000) target |= 0xffff0000;
-            if (op & 2) Gekko->regs.pc = target; // AA
-            else Gekko->regs.pc += target;
+    void Interpreter::bca(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::bca]++;
+        }
+
+        if (BcTest(info))
+        {
+            core->regs.pc = info.Imm.Address;
+            BranchCheck();
+        }
+        else
+        {
+            core->regs.pc += 4;
+        }
+    }
+
+    void Interpreter::bcl(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::bcl]++;
+        }
+
+        if (BcTest(info))
+        {
+            Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
+            core->regs.pc = info.Imm.Address;
             BranchCheck();
         }
         else
@@ -142,21 +166,17 @@ namespace Gekko
         }
     }
 
-    // if ~BO2 then CTR = CTR - 1
-    // ctr_ok  = BO2 | ((CTR != 0) ^ BO3)
-    // cond_ok = BO0 | (CR[BI] EQV BO1)
-    // if ctr_ok & cond_ok then
-    //      PC = LR[0-29] || 0b00
-    OP(BCLR)
+    void Interpreter::bcla(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bclr]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::bcla]++;
         }
 
-        if (bc(op))
+        if (BcTest(info))
         {
-            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
+            Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
+            core->regs.pc = info.Imm.Address;
             BranchCheck();
         }
         else
@@ -164,46 +184,17 @@ namespace Gekko
             Gekko->regs.pc += 4;
         }
     }
-
-    // if ~BO2 then CTR = CTR - 1
-    // ctr_ok  = BO2 | ((CTR != 0) ^ BO3)
-    // cond_ok = BO0 | (CR[BI] EQV BO1)
-    // if ctr_ok & cond_ok then
-    //      NLR = PC + 4
-    //      PC = LR[0-29] || 0b00
-    //      LR = NLR
-    OP(BCLRL)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bclrl]++;
-        }
-
-        if (bc(op))
-        {
-            uint32_t lr = Gekko->regs.pc + 4;
-            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::LR] & ~3;
-            Gekko->regs.spr[(int)SPR::LR] = lr;
-            BranchCheck();
-        }
-        else
-        {
-            Gekko->regs.pc += 4;
-        }
-    }
-
-    // ---------------------------------------------------------------------------
 
     // calculation of conditional to count register branch
-    static bool bctr(uint32_t op)
+    bool Interpreter::BctrTest(AnalyzeInfo& info)
     {
         bool cond_ok;
-        int bo = RD, bi = BI;
+        int bo = info.paramBits[0], bi = info.paramBits[1];
 
         if (BO(0) == 0)
         {
-            if (BO(1)) cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) != 0;
-            else cond_ok = ((Gekko->regs.cr << bi) & 0x80000000) == 0;
+            if (BO(1)) cond_ok = ((core->regs.cr << bi) & 0x80000000) != 0;
+            else cond_ok = ((core->regs.cr << bi) & 0x80000000) == 0;
         }
         else cond_ok = true;
 
@@ -214,21 +205,21 @@ namespace Gekko
     // if cond_ok
     //      then
     //              PC = CTR || 0b00
-    OP(BCCTR)
+    void Interpreter::bcctr(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bcctr]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::bcctr]++;
         }
 
-        if (bctr(op))
+        if (BctrTest(info))
         {
-            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
+            core->regs.pc = core->regs.spr[(int)SPR::CTR] & ~3;
             BranchCheck();
         }
         else
         {
-            Gekko->regs.pc += 4;
+            core->regs.pc += 4;
         }
     }
 
@@ -237,22 +228,72 @@ namespace Gekko
     //      then
     //              LR = PC + 4
     //              PC = CTR || 0b00
-    OP(BCCTRL)
+    void Interpreter::bcctrl(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::bcctrl]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::bcctrl]++;
         }
 
-        if (bctr(op))
+        if (BctrTest(info))
         {
-            Gekko->regs.spr[(int)SPR::LR] = Gekko->regs.pc + 4;
-            Gekko->regs.pc = Gekko->regs.spr[(int)SPR::CTR] & ~3;
+            core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
+            core->regs.pc = core->regs.spr[(int)SPR::CTR] & ~3;
             BranchCheck();
         }
         else
         {
             Gekko->regs.pc += 4;
+        }
+    }
+
+    // if ~BO2 then CTR = CTR - 1
+    // ctr_ok  = BO2 | ((CTR != 0) ^ BO3)
+    // cond_ok = BO0 | (CR[BI] EQV BO1)
+    // if ctr_ok & cond_ok then
+    //      PC = LR[0-29] || 0b00
+    void Interpreter::bclr(AnalyzeInfo& info)
+    {
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)Gekko::Instruction::bclr]++;
+        }
+
+        if (BcTest(info))
+        {
+            core->regs.pc = core->regs.spr[(int)SPR::LR] & ~3;
+            BranchCheck();
+        }
+        else
+        {
+            core->regs.pc += 4;
+        }
+    }
+
+    // if ~BO2 then CTR = CTR - 1
+    // ctr_ok  = BO2 | ((CTR != 0) ^ BO3)
+    // cond_ok = BO0 | (CR[BI] EQV BO1)
+    // if ctr_ok & cond_ok then
+    //      NLR = PC + 4
+    //      PC = LR[0-29] || 0b00
+    //      LR = NLR
+    void Interpreter::bclrl(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::bclrl]++;
+        }
+
+        if (BcTest(info))
+        {
+            uint32_t lr = core->regs.pc + 4;
+            core->regs.pc = core->regs.spr[(int)SPR::LR] & ~3;
+            core->regs.spr[(int)SPR::LR] = lr;
+            BranchCheck();
+        }
+        else
+        {
+            core->regs.pc += 4;
         }
     }
 }
