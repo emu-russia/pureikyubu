@@ -40,7 +40,7 @@ static INT_PTR CALLBACK AboutProc(
 
             auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} ({:s} {:s})\n",
                     APPNAME, APPDESC,
-                    L"Copyright 2003,2004,2020, Dolwin team",
+                    L"Copyright 2003,2004,2020,2021 Dolwin team",
                     L"Build version",
                     Util::StringToWstring(UI::Jdi->GetVersion()),
                     version, platform,
