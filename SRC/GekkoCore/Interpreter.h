@@ -40,15 +40,15 @@ namespace Gekko
 		void cmpli(AnalyzeInfo& info);
 		void cmpl(AnalyzeInfo& info);
 
-		static void c_CRAND(uint32_t op);
-		static void c_CROR(uint32_t op);
-		static void c_CRXOR(uint32_t op);
-		static void c_CRNAND(uint32_t op);
-		static void c_CRNOR(uint32_t op);
-		static void c_CREQV(uint32_t op);
-		static void c_CRANDC(uint32_t op);
-		static void c_CRORC(uint32_t op);
-		static void c_MCRF(uint32_t op);
+		void crand(AnalyzeInfo& info);
+		void crandc(AnalyzeInfo& info);
+		void creqv(AnalyzeInfo& info);
+		void crnand(AnalyzeInfo& info);
+		void crnor(AnalyzeInfo& info);
+		void cror(AnalyzeInfo& info);
+		void crorc(AnalyzeInfo& info);
+		void crxor(AnalyzeInfo& info);
+		void mcrf(AnalyzeInfo& info);
 
 		static void c_FADD(uint32_t op);
 		static void c_FADDD(uint32_t op);

@@ -108,6 +108,16 @@ namespace Gekko
             case Instruction::cmpli: cmpli(info); break;
             case Instruction::cmpl: cmpl(info); break;
 
+            case Instruction::crand: crand(info); break;
+            case Instruction::crandc: crandc(info); break;
+            case Instruction::creqv: creqv(info); break;
+            case Instruction::crnand: crnand(info); break;
+            case Instruction::crnor: crnor(info); break;
+            case Instruction::cror: cror(info); break;
+            case Instruction::crorc: crorc(info); break;
+            case Instruction::crxor: crxor(info); break;
+            case Instruction::mcrf: mcrf(info); break;
+
             case Instruction::rlwimi: rlwimi(info); break;
             case Instruction::rlwimi_d: rlwimi_d(info); break;
             case Instruction::rlwinm: rlwinm(info); break;

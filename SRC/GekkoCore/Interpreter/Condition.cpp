@@ -6,160 +6,160 @@ namespace Gekko
 {
 
     // CR[crbd] = CR[crba] & CR[crbb]
-    OP(CRAND)
+    void Interpreter::crand(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crand]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::crand]++;
         }
 
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+        
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a & b) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
-    }
-
-    // CR[crbd] = CR[crba] | CR[crbb]
-    OP(CROR)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::cror]++;
-        }
-
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
-        uint32_t d = (a | b) << (31 - crbd);     // <- crop is here
-        uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
-    }
-
-    // CR[crbd] = CR[crba] ^ CR[crbb]
-    OP(CRXOR)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crxor]++;
-        }
-
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
-        uint32_t d = (a ^ b) << (31 - crbd);     // <- crop is here
-        uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
-    }
-
-    // CR[crbd] = !(CR[crba] & CR[crbb])
-    OP(CRNAND)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crnand]++;
-        }
-
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
-        uint32_t d = (!(a & b)) << (31 - crbd);     // <- crop is here
-        uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
-    }
-
-    // CR[crbd] = !(CR[crba] | CR[crbb])
-    OP(CRNOR)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crnor]++;
-        }
-
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
-        uint32_t d = (!(a | b)) << (31 - crbd);     // <- crop is here
-        uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
-    }
-
-    // CR[crbd] = CR[crba] EQV CR[crbb]
-    OP(CREQV)
-    {
-        if (Gekko->opcodeStatsEnabled)
-        {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::creqv]++;
-        }
-
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
-
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
-        uint32_t d = (!(a ^ b)) << (31 - crbd);     // <- crop is here
-        uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] & ~CR[crbb]
-    OP(CRANDC)
+    void Interpreter::crandc(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crandc]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::crandc]++;
         }
 
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a & (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
+    }
+
+    // CR[crbd] = CR[crba] EQV CR[crbb]
+    void Interpreter::creqv(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::creqv]++;
+        }
+
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
+        uint32_t d = (!(a ^ b)) << (31 - crbd);     // <- crop is here
+        uint32_t m = ~(1 << (31 - crbd));
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
+    }
+
+    // CR[crbd] = !(CR[crba] & CR[crbb])
+    void Interpreter::crnand(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::crnand]++;
+        }
+
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
+        uint32_t d = (!(a & b)) << (31 - crbd);     // <- crop is here
+        uint32_t m = ~(1 << (31 - crbd));
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
+    }
+
+    // CR[crbd] = !(CR[crba] | CR[crbb])
+    void Interpreter::crnor(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::crnor]++;
+        }
+
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
+        uint32_t d = (!(a | b)) << (31 - crbd);     // <- crop is here
+        uint32_t m = ~(1 << (31 - crbd));
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
+    }
+
+    // CR[crbd] = CR[crba] | CR[crbb]
+    void Interpreter::cror(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::cror]++;
+        }
+
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
+        uint32_t d = (a | b) << (31 - crbd);     // <- crop is here
+        uint32_t m = ~(1 << (31 - crbd));
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
     }
 
     // CR[crbd] = CR[crba] | ~CR[crbb]
-    OP(CRORC)
+    void Interpreter::crorc(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::crorc]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::crorc]++;
         }
 
-        uint32_t crbd = CRBD, crba = CRBA, crbb = CRBB;
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
-        uint32_t a = (Gekko->regs.cr >> (31 - crba)) & 1;
-        uint32_t b = (Gekko->regs.cr >> (31 - crbb)) & 1;
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
         uint32_t d = (a | (~b)) << (31 - crbd);     // <- crop is here
         uint32_t m = ~(1 << (31 - crbd));
-        Gekko->regs.cr = (Gekko->regs.cr & m) | d;
-        Gekko->regs.pc += 4;
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
+    }
+
+    // CR[crbd] = CR[crba] ^ CR[crbb]
+    void Interpreter::crxor(AnalyzeInfo& info)
+    {
+        if (core->opcodeStatsEnabled)
+        {
+            core->opcodeStats[(size_t)Gekko::Instruction::crxor]++;
+        }
+
+        uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
+
+        uint32_t a = (core->regs.cr >> (31 - crba)) & 1;
+        uint32_t b = (core->regs.cr >> (31 - crbb)) & 1;
+        uint32_t d = (a ^ b) << (31 - crbd);     // <- crop is here
+        uint32_t m = ~(1 << (31 - crbd));
+        core->regs.cr = (core->regs.cr & m) | d;
+        core->regs.pc += 4;
     }
 
     // CR[4*crfd .. 4*crfd + 3] = CR[4*crfs .. 4*crfs + 3]
-    OP(MCRF)
+    void Interpreter::mcrf(AnalyzeInfo& info)
     {
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)Gekko::Instruction::mcrf]++;
+            core->opcodeStats[(size_t)Gekko::Instruction::mcrf]++;
         }
 
-        int32_t crfd = 4 * (7 - CRFD), crfs = 4 * (7 - CRFS);
-        Gekko->regs.cr = (Gekko->regs.cr & (~(0xf << crfd))) | (((Gekko->regs.cr >> crfs) & 0xf) << crfd);
-        Gekko->regs.pc += 4;
+        int32_t crfd = 4 * (7 - info.paramBits[0]), crfs = 4 * (7 - info.paramBits[1]);
+        core->regs.cr = (core->regs.cr & (~(0xf << crfd))) | (((core->regs.cr >> crfs) & 0xf) << crfd);
+        core->regs.pc += 4;
     }
 
 }

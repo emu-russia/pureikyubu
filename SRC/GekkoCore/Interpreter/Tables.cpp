@@ -181,19 +181,10 @@ namespace Gekko
         c_1[63] = c_OP63;
 
         // "19" extension
-        c_19[0] = c_MCRF;
         c_19[32] = c_BCLR;
         c_19[33] = c_BCLRL;
-        c_19[66] = c_CRNOR;
         c_19[100] = c_RFI;
-        c_19[258] = c_CRANDC;
         c_19[300] = c_ISYNC;
-        c_19[386] = c_CRXOR;
-        c_19[450] = c_CRNAND;
-        c_19[514] = c_CRAND;
-        c_19[578] = c_CREQV;
-        c_19[834] = c_CRORC;
-        c_19[898] = c_CROR;
         c_19[1056] = c_BCCTR;
         c_19[1057] = c_BCCTRL;
 
