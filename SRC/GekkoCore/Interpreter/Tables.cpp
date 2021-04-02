@@ -124,8 +124,6 @@ namespace Gekko
 
         c_1[8] = c_SUBFIC;
         c_1[9] = c_NI;
-        c_1[10] = c_CMPLI;
-        c_1[11] = c_CMPI;
         c_1[12] = c_ADDIC;
         c_1[13] = c_ADDICD;
         c_1[14] = c_ADDI;
@@ -203,7 +201,6 @@ namespace Gekko
         c_19[1057] = c_BCCTRL;
 
         // "31" extension
-        c_31[0] = c_CMP;
         c_31[8] = c_TW;
         c_31[16] = c_SUBFC;
         c_31[17] = c_SUBFCD;
@@ -220,7 +217,6 @@ namespace Gekko
         c_31[53] = c_CNTLZWD;
         c_31[56] = c_AND;
         c_31[57] = c_ANDD;
-        c_31[64] = c_CMPL;
         c_31[80] = c_SUBF;
         c_31[81] = c_SUBFD;
         c_31[108] = c_DCBST;

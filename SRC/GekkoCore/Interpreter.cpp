@@ -103,9 +103,9 @@ namespace Gekko
     {
         switch (info.instr)
         {
-            //case Instruction::cmpi: cmpi(info); break;
-            //case Instruction::cmp: cmp(info); break;
-            //case Instruction::cmpli: cmpli(info); break;
+            case Instruction::cmpi: cmpi(info); break;
+            case Instruction::cmp: cmp(info); break;
+            case Instruction::cmpli: cmpli(info); break;
             case Instruction::cmpl: cmpl(info); break;
 
             // At the time of developing a new interpreter, a fallback to the old implementation will be made in this place.

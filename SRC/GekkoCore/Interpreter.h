@@ -19,6 +19,8 @@ namespace Gekko
 
 		GekkoCore* core = nullptr;
 
+		// Instruction handlers are gradually being replaced by a new interpreter implementation  (#190)
+
 		static void c_B(uint32_t op);
 		static void c_BA(uint32_t op);
 		static void c_BL(uint32_t op);
@@ -31,13 +33,8 @@ namespace Gekko
 		static void c_BCCTR(uint32_t op);
 		static void c_BCCTRL(uint32_t op);
 
-		static void c_CMPI(uint32_t op);
-		static void c_CMP(uint32_t op);
-		static void c_CMPLI(uint32_t op);
-		static void c_CMPL(uint32_t op);
-
-		// New implementation (#190)
-
+		template <typename T1, typename T2>
+		inline void CmpCommon(AnalyzeInfo& info, T1 a, T2 b);
 		void cmpi(AnalyzeInfo& info);
 		void cmp(AnalyzeInfo& info);
 		void cmpli(AnalyzeInfo& info);
