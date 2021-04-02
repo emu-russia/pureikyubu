@@ -1454,6 +1454,30 @@ namespace Gekko
 
 			// Miscellaneous Paired-Single Instructions
 
+			case Instruction::ps_sum0:		Form_FrDACB(4, 10, false, info); break;
+			case Instruction::ps_sum0_d:	Form_FrDACB(4, 10, true, info); break;
+			case Instruction::ps_sum1:		Form_FrDACB(4, 11, false, info); break;
+			case Instruction::ps_sum1_d:	Form_FrDACB(4, 11, true, info); break;
+			case Instruction::ps_muls0:		Form_FrDAC(4, 12, false, info); break;
+			case Instruction::ps_muls0_d:	Form_FrDAC(4, 12, true, info); break;
+			case Instruction::ps_muls1:		Form_FrDAC(4, 13, false, info); break;
+			case Instruction::ps_muls1_d:	Form_FrDAC(4, 13, true, info); break;
+			case Instruction::ps_madds0:	Form_FrDACB(4, 14, false, info); break;
+			case Instruction::ps_madds0_d:	Form_FrDACB(4, 14, true, info); break;
+			case Instruction::ps_madds1:	Form_FrDACB(4, 15, false, info); break;
+			case Instruction::ps_madds1_d:	Form_FrDACB(4, 15, true, info); break;
+			case Instruction::ps_cmpu0:		Form_CrfDFrAB(4, 0, info); break;
+			case Instruction::ps_cmpo0:		Form_CrfDFrAB(4, 32, info); break;
+			case Instruction::ps_cmpu1:		Form_CrfDFrAB(4, 64, info); break;
+			case Instruction::ps_cmpo1:		Form_CrfDFrAB(4, 96, info); break;
+			case Instruction::ps_merge00:	Form_FrDAB(4, 528, false, info); break;
+			case Instruction::ps_merge00_d:	Form_FrDAB(4, 528, true, info); break;
+			case Instruction::ps_merge01:	Form_FrDAB(4, 560, false, info); break;
+			case Instruction::ps_merge01_d:	Form_FrDAB(4, 560, true, info); break;
+			case Instruction::ps_merge10:	Form_FrDAB(4, 592, false, info); break;
+			case Instruction::ps_merge10_d:	Form_FrDAB(4, 592, true, info); break;
+			case Instruction::ps_merge11:	Form_FrDAB(4, 624, false, info); break;
+			case Instruction::ps_merge11_d:	Form_FrDAB(4, 624, true, info); break;
 		}
 	}
 }
