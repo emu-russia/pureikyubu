@@ -20,7 +20,7 @@ Debug UI contains 2 instances:
 
 The Win32 Console API does not allow you to create more than one console per process, so you can only use one instance at a time.
 
-Debug UIs can be opened via the Development menu.
+Debug UIs can be opened via the `Debug` menu.
 
 ## Cui
 
