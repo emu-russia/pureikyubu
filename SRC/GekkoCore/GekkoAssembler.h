@@ -159,6 +159,12 @@ namespace Gekko
 
 		static void Form_Tlbie(size_t primary, size_t extended, AnalyzeInfo& info);
 
+		// Paired Single
+
+		static void Form_PsqLoadStoreIndexed(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_PsqLoadStore(size_t primary, AnalyzeInfo& info);
+
+
 	public:
 
 		/// <summary>

@@ -985,6 +985,48 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_PsqLoadStoreIndexed(size_t primary, size_t extended, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 25, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::Reg);
+		CheckParam(info, 2, Param::Reg);
+		CheckParam(info, 3, Param::Num);
+		CheckParam(info, 4, Param::Num);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 20, info.paramBits[2]);
+		PackBits(res, 21, 21, info.paramBits[3]);
+		PackBits(res, 22, 24, info.paramBits[4]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_PsqLoadStore(size_t primary, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+
+		CheckParam(info, 0, Param::FReg);
+		CheckParam(info, 1, Param::RegOffset);
+		CheckParam(info, 2, Param::Num);
+		CheckParam(info, 3, Param::Num);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+		PackBits(res, 11, 15, info.paramBits[1]);
+		PackBits(res, 16, 16, info.paramBits[2]);
+		PackBits(res, 17, 19, info.paramBits[3]);
+		PackBits(res, 20, 31, info.Imm.Signed & 0xfff);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Assemble(AnalyzeInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
@@ -1367,6 +1409,15 @@ namespace Gekko
 			case Instruction::ecowx:		Form_SAB(31, 438, false, false, info); break;
 
 			// Paired-Single Load and Store Instructions
+
+			case Instruction::psq_lx:		Form_PsqLoadStoreIndexed(4, 6, info); break;
+			case Instruction::psq_stx:		Form_PsqLoadStoreIndexed(4, 7, info); break;
+			case Instruction::psq_lux:		Form_PsqLoadStoreIndexed(4, 38, info); break;
+			case Instruction::psq_stux:		Form_PsqLoadStoreIndexed(4, 39, info); break;
+			case Instruction::psq_l:		Form_PsqLoadStore(56, info); break;
+			case Instruction::psq_lu:		Form_PsqLoadStore(57, info); break;
+			case Instruction::psq_st:		Form_PsqLoadStore(60, info); break;
+			case Instruction::psq_stu:		Form_PsqLoadStore(61, info); break;
 
 			// Paired-Single Floating Point Arithmetic Instructions
 
