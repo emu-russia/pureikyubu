@@ -286,7 +286,7 @@ uint32_t LoadELF(const std::wstring& elfname)
     file.seekg(Elf_SwapOff(hdr.e_phoff));
     for(int i = 0; i < Elf_SwapHalf(hdr.e_phnum); i++)
     {
-        long old;
+        std::streampos old;
 
         file.read((char*)&phdr, sizeof(ElfPhdr));
         old = file.tellg();
@@ -307,7 +307,6 @@ uint32_t LoadELF(const std::wstring& elfname)
 
                 file.seekg(Elf_SwapOff(phdr.p_offset));
                 file.read((char*)&mi.ram[vaddr & RAMMASK], vend - vaddr);
-                //fread(&mi.ram[vaddr & RAMMASK], vend - vaddr, 1, f);
             }
         }
 

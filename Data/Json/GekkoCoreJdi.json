@@ -204,7 +204,17 @@
 
     "GekkoDisasm": {
       "internal": true,
+      "help": "Disassemble instruction at Gekko virtual memory address",
+      "hints": "<vaddr>",
       "args": 1,
+      "output": "Array: [String] (disassembled instruction with parameters)"
+    },
+
+    "GekkoDisasmNoMemAccess": {
+      "internal": true,
+      "help": "Disassemble the instruction without accessing memory (all necessary information is passed through parameters)",
+      "args": 4,
+      "hints": "<pc> <opcode> <showAddress> <showBytes>",
       "output": "Array: [String] (disassembled instruction with parameters)"
     },
 
@@ -274,6 +284,14 @@
       "hints": "<param> <paramBits> <immedValue>",
       "args": 3,
       "output": "Array: [String paramName, String paramDecoded]"
+    },
+
+    "GekkoAssemble": {
+      "internal": true,
+      "help": "Assemble Gekko instruction based on analyzer information",
+      "hints": "Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 Pc",
+      "args": 14,
+      "output": "UInt32 (assembled instruction)"
     }
 
   }

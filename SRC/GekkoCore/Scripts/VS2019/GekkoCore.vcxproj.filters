@@ -57,6 +57,9 @@
     <ClInclude Include="..\..\Interpreter\InterpreterPrivate.h">
       <Filter>Interpreter</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\GekkoAssembler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Gekko.cpp">
@@ -168,6 +171,9 @@
       <Filter>Interpreter</Filter>
     </ClCompile>
     <ClCompile Include="..\..\OpcodeStats.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\GekkoAssembler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

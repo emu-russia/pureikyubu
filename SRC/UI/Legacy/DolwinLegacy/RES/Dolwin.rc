@@ -437,7 +437,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "E&xit\tAlt+F4",               ID_FILE_EXIT
     END
-    POPUP "&Development"
+    POPUP "&Debug"
     BEGIN
         MENUITEM "&Run Once",                   ID_RUN_ONCE, CHECKED
         MENUITEM SEPARATOR

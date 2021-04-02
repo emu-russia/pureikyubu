@@ -166,6 +166,7 @@
     <ClInclude Include="..\..\GatherBuffer.h" />
     <ClInclude Include="..\..\Gekko.h" />
     <ClInclude Include="..\..\GekkoAnalyzer.h" />
+    <ClInclude Include="..\..\GekkoAssembler.h" />
     <ClInclude Include="..\..\GekkoCommands.h" />
     <ClInclude Include="..\..\GekkoDefs.h" />
     <ClInclude Include="..\..\GekkoDisasm.h" />
@@ -186,6 +187,7 @@
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <ClCompile Include="..\..\GekkoAnalyzer.cpp" />
+    <ClCompile Include="..\..\GekkoAssembler.cpp" />
     <ClCompile Include="..\..\GekkoCommands.cpp" />
     <ClCompile Include="..\..\GekkoDisasm.cpp" />
     <ClCompile Include="..\..\Interpreter.cpp" />

@@ -6,11 +6,11 @@
 
 namespace Gekko
 {
-	typedef struct _TLBEntry
+	struct TLBEntry
 	{
 		uint32_t addressTag;
 		int8_t wimg;
-	} TLBEntry;
+	};
 
 	class TLB
 	{

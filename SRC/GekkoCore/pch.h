@@ -21,6 +21,7 @@
 #include "Interpreter.h"
 #include "GekkoCommands.h"
 #include "GekkoDisasm.h"
+#include "GekkoAssembler.h"
 #include "Jitc.h"
 #include "TLB.h"
 #include "Cache.h"
