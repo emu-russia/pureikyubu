@@ -127,7 +127,7 @@ static uint8_t DIHostToDduCallbackData()
             if (DILEN)
             {
                 uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-                MIReadBurst(dimar, di.dmaFifo);
+                PIReadBurst(dimar, di.dmaFifo);
                 DIMAR += 32;
                 DILEN -= 32;
             }
@@ -189,7 +189,7 @@ static void DIDduToHostCallback(uint8_t data)
             if (DILEN)
             {
                 uint32_t dimar = DIMAR & DI_DIMAR_MASK;
-                MIWriteBurst(dimar, di.dmaFifo);
+                PIWriteBurst(dimar, di.dmaFifo);
                 DIMAR += 32;
                 DILEN -= 32;
             }
@@ -365,16 +365,16 @@ void DIOpen()
     DVD::DDU->SetTransferCallbacks(DIHostToDduCallbackCommand, DIDduToHostCallback);
 
     // set 32-bit register traps
-    MISetTrap(32, DI_SR     , read_sr      , write_sr);
-    MISetTrap(32, DI_CVR    , read_cvr     , write_cvr);
-    MISetTrap(32, DI_CMDBUF0, read_cmdbuf0 , write_cmdbuf0);
-    MISetTrap(32, DI_CMDBUF1, read_cmdbuf1 , write_cmdbuf1);
-    MISetTrap(32, DI_CMDBUF2, read_cmdbuf2 , write_cmdbuf2);
-    MISetTrap(32, DI_MAR    , read_mar     , write_mar);
-    MISetTrap(32, DI_LEN    , read_len     , write_len);
-    MISetTrap(32, DI_CR     , read_cr      , write_cr);
-    MISetTrap(32, DI_IMMBUF , read_immbuf  , write_immbuf);
-    MISetTrap(32, DI_CFG    , read_cfg     , NULL);
+    PISetTrap(32, DI_SR     , read_sr      , write_sr);
+    PISetTrap(32, DI_CVR    , read_cvr     , write_cvr);
+    PISetTrap(32, DI_CMDBUF0, read_cmdbuf0 , write_cmdbuf0);
+    PISetTrap(32, DI_CMDBUF1, read_cmdbuf1 , write_cmdbuf1);
+    PISetTrap(32, DI_CMDBUF2, read_cmdbuf2 , write_cmdbuf2);
+    PISetTrap(32, DI_MAR    , read_mar     , write_mar);
+    PISetTrap(32, DI_LEN    , read_len     , write_len);
+    PISetTrap(32, DI_CR     , read_cr      , write_cr);
+    PISetTrap(32, DI_IMMBUF , read_immbuf  , write_immbuf);
+    PISetTrap(32, DI_CFG    , read_cfg     , NULL);
 }
 
 void DIClose()

@@ -87,6 +87,24 @@ enum class PIInterruptSource
     Max,
 };
 
+// hardware registers base (physical address)
+#define HW_BASE         0x0C000000
+
+// max known GC HW address is 0x0C008004 (fifo), so 0x8010 will be enough.
+// note : it must not be greater 0xffff, unless you need to change code.
+#define HW_MAX_KNOWN    0x8010
+
+void PIReadByte(uint32_t phys_addr, uint32_t* reg);
+void PIWriteByte(uint32_t phys_addr, uint32_t data);
+void PIReadHalf(uint32_t phys_addr, uint32_t* reg);
+void PIWriteHalf(uint32_t phys_addr, uint32_t data);
+void PIReadWord(uint32_t phys_addr, uint32_t* reg);
+void PIWriteWord(uint32_t phys_addr, uint32_t data);
+void PIReadDouble(uint32_t phys_addr, uint64_t* reg);
+void PIWriteDouble(uint32_t phys_addr, uint64_t* data);
+void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
+void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
+
 // ---------------------------------------------------------------------------
 // hardware API
 
@@ -107,3 +125,9 @@ void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)
 void PIOpen(HWConfig * config);
 void PIClose();
+
+void PISetTrap(
+    uint32_t type,                                       // 8, 16 or 32
+    uint32_t addr,                                       // physical address of trap
+    void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
+    void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap

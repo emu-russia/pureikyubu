@@ -36,6 +36,7 @@ namespace Flipper
             "-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-\n\n"
         );
 
+        PIOpen(config); // interrupts, console regs
         MIOpen(config); // memory protection and 1T-SRAM interface
         VIOpen(config); // video (TV)
         CP_PEOpen();    // Command Processor & PixelEngin
@@ -44,7 +45,6 @@ namespace Flipper
         EIOpen(config); // expansion interface (EXI)
         DIOpen();       // disk
         SIOpen();       // GC controllers
-        PIOpen(config); // interrupts, console regs
 
         DSP->core->HardReset();
 

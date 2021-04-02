@@ -748,7 +748,7 @@ namespace Gekko
 			return nullptr;
 		}
 
-		MIWriteWord(pa, 0x6000'0000);
+		PIWriteWord(pa, 0x6000'0000);
 
 		return nullptr;
 	}

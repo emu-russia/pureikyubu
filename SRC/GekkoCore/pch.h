@@ -28,6 +28,7 @@
 
 #include "../Hardware/HWConfig.h"
 #include "../Hardware/MI.h"
+#include "../Hardware/PI.h"
 #include "../Debugger/Debugger.h"
 
 #ifdef _LINUX

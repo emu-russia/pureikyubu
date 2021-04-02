@@ -240,7 +240,7 @@ namespace Gekko
 			Report(Channel::CPU, "Cache::CastIn: 0x%08X\n", pa & ~0x1f);
 		}
 
-		MIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::CastOut(uint32_t pa)
@@ -255,7 +255,7 @@ namespace Gekko
 			Report(Channel::CPU, "Cache::CastOut: 0x%08X\n", pa & ~0x1f);
 		}
 
-		MIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::ReadByte(uint32_t addr, uint32_t* reg)
@@ -610,7 +610,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				MIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}
@@ -625,7 +625,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				MIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}

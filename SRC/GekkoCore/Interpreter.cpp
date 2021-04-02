@@ -18,7 +18,7 @@ namespace Gekko
         }
         else
         {
-            MIReadWord(pa, &instr);
+            PIReadWord(pa, &instr);
         }
         // ISI
         if (core->exception)
@@ -74,7 +74,7 @@ namespace Gekko
         }
         else
         {
-            MIReadWord(pa, &instr);
+            PIReadWord(pa, &instr);
         }
         if (core->exception) goto JumpPC;  // ISI
         
