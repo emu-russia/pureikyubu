@@ -359,37 +359,10 @@ namespace Gekko
         c_63[1423] = c_MTFSFD;
 
         // "4" extension
-        c_4[0] = c_PS_CMPU0;
         for (i = 0; i < 16; i++) c_4[(i << 7) | 12] = c_PSQ_LX;
         for (i = 0; i < 16; i++) c_4[(i << 7) | 14] = c_PSQ_STX;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 20] = c_PS_SUM0;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 22] = c_PS_SUM1;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 24] = c_PS_MULS0;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 26] = c_PS_MULS1;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 28] = c_PS_MADDS0;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 30] = c_PS_MADDS1;
-        c_4[36] = c_PS_DIV;
-        c_4[40] = c_PS_SUB;
-        c_4[42] = c_PS_ADD;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 46] = c_PS_SEL;
-        c_4[48] = c_PS_RES;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 50] = c_PS_MUL;
-        c_4[52] = c_PS_RSQRTE;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 56] = c_PS_MSUB;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 58] = c_PS_MADD;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 60] = c_PS_NMSUB;
-        for (i = 0; i < 32; i++) c_4[(i << 6) | 62] = c_PS_NMADD;
-        c_4[64] = c_PS_CMPO0;
         for (i = 0; i < 16; i++) c_4[(i << 7) | 76] = c_PSQ_LUX;
         for (i = 0; i < 16; i++) c_4[(i << 7) | 78] = c_PSQ_STUX;
-        c_4[80] = c_PS_NEG;
-        c_4[144] = c_PS_MR;
-        c_4[128] = c_PS_CMPU1;
-        c_4[192] = c_PS_CMPO1;
-        c_4[1056] = c_PS_MERGE00;
-        c_4[1120] = c_PS_MERGE01;
-        c_4[1184] = c_PS_MERGE10;
-        c_4[1248] = c_PS_MERGE11;
         c_4[2028] = c_DCBZ_L;
     }
 
