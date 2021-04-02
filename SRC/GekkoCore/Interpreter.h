@@ -36,6 +36,13 @@ namespace Gekko
 		static void c_CMPLI(uint32_t op);
 		static void c_CMPL(uint32_t op);
 
+		// New implementation (#190)
+
+		void cmpi(AnalyzeInfo& info);
+		void cmp(AnalyzeInfo& info);
+		void cmpli(AnalyzeInfo& info);
+		void cmpl(AnalyzeInfo& info);
+
 		static void c_CRAND(uint32_t op);
 		static void c_CROR(uint32_t op);
 		static void c_CRXOR(uint32_t op);
@@ -380,6 +387,8 @@ namespace Gekko
 		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
 		static void BranchCheck();
+
+		void Dispatch(AnalyzeInfo& info, uint32_t instr /* eventually will be removed, used for fallback. */ );
 
 	public:
 		Interpreter(GekkoCore* _core)
