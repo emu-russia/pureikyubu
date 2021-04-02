@@ -570,6 +570,22 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
+	void GekkoAssembler::Form_FrD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FReg);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+
+		if (rc) SetBit(res, 31);
+
+		info.instrBits = res;
+	}
+
 	void GekkoAssembler::Form_CrfDFrAB(size_t primary, size_t extended, AnalyzeInfo& info)
 	{
 		uint32_t res = 0;
@@ -584,6 +600,58 @@ namespace Gekko
 		PackBits(res, 6, 8, info.paramBits[0]);
 		PackBits(res, 11, 15, info.paramBits[1]);
 		PackBits(res, 16, 20, info.paramBits[2]);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_CrbD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::Crb);
+
+		PackBits(res, 6, 10, info.paramBits[0]);
+
+		if (rc) SetBit(res, 31);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtfsf(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::FM);
+		CheckParam(info, 1, Param::FReg);
+
+		PackBits(res, 7, 14, info.paramBits[0]);
+		PackBits(res, 16, 20, info.paramBits[1]);
+
+		if (rc) SetBit(res, 31);
+
+		info.instrBits = res;
+	}
+
+	void GekkoAssembler::Form_Mtfsfi(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	{
+		uint32_t res = 0;
+
+		PackBits(res, 0, 5, primary);
+		PackBits(res, 26, 30, extended);
+
+		CheckParam(info, 0, Param::Crf);
+		CheckParam(info, 1, Param::Num);
+
+		PackBits(res, 6, 8, info.paramBits[0]);
+		PackBits(res, 16, 19, info.paramBits[1]);
+
+		if (rc) SetBit(res, 31);
 
 		info.instrBits = res;
 	}
@@ -1114,7 +1182,18 @@ namespace Gekko
 			case Instruction::fcmpu:		Form_CrfDFrAB(63, 0, info); break;
 
 			// Floating-Point Status and Control Register Instructions
-			// ...
+			
+			case Instruction::mcrfs:		Form_CrfDCrfS(63, 64, info); break;
+			case Instruction::mffs:			Form_FrD(63, 583, false, info); break;
+			case Instruction::mffs_d:		Form_FrD(63, 583, true, info); break;
+			case Instruction::mtfsb0:		Form_CrbD(63, 70, false, info); break;
+			case Instruction::mtfsb0_d:		Form_CrbD(63, 70, true, info); break;
+			case Instruction::mtfsb1:		Form_CrbD(63, 38, false, info); break;
+			case Instruction::mtfsb1_d:		Form_CrbD(63, 38, true, info); break;
+			case Instruction::mtfsf:		Form_Mtfsf(63, 711, false, info); break;
+			case Instruction::mtfsf_d:		Form_Mtfsf(63, 711, true, info); break;
+			case Instruction::mtfsfi:		Form_Mtfsfi(63, 134, false, info); break;
+			case Instruction::mtfsfi_d:		Form_Mtfsfi(63, 134, true, info); break;
 
 			// Integer Load Instructions
 
