@@ -1124,7 +1124,7 @@ namespace Gekko
 			case Instruction::andis_d:		Form_ASUimm(29, info); break;
 			case Instruction::cntlzw:		Form_AS(31, 26, false, info); break;
 			case Instruction::cntlzw_d:		Form_AS(31, 26, true, info); break;
-			case Instruction::eqv:			Form_ASB(31, 284, false, info); break;		// Typo in GUM (B operand)
+			case Instruction::eqv:			Form_ASB(31, 284, false, info); break;
 			case Instruction::eqv_d:		Form_ASB(31, 284, true, info); break;
 			case Instruction::extsb:		Form_AS(31, 954, false, info); break;
 			case Instruction::extsb_d:		Form_AS(31, 954, true, info); break;
@@ -1478,6 +1478,9 @@ namespace Gekko
 			case Instruction::ps_merge10_d:	Form_FrDAB(4, 592, true, info); break;
 			case Instruction::ps_merge11:	Form_FrDAB(4, 624, false, info); break;
 			case Instruction::ps_merge11_d:	Form_FrDAB(4, 624, true, info); break;
+
+			default:
+				throw "Unhandled instruction";
 		}
 	}
 }

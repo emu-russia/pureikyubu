@@ -5,305 +5,305 @@
 namespace Gekko
 {
 
-    // Centralized hub which attracts all memory access requests from the interpreter or recompiler 
-    // (as well as those who they pretend, for example HLE or Debugger).
+	// Centralized hub which attracts all memory access requests from the interpreter or recompiler 
+	// (as well as those who they pretend, for example HLE or Debugger).
 
-    void __FASTCALL GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
-    {
-        int WIMG;
-        if (EnableTestReadBreakpoints)
-        {
-            TestReadBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
+	{
+		int WIMG;
+		if (EnableTestReadBreakpoints)
+		{
+			TestReadBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.ReadByte(pa, reg);
-            return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.ReadByte(pa, reg);
+			return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.ReadByte(pa, reg);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.ReadByte(pa, reg);
+			return;
+		}
 
-        PIReadByte(pa, reg);
-    }
+		PIReadByte(pa, reg);
+	}
 
-    void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
-    {
-        int WIMG;
-        if (EnableTestWriteBreakpoints)
-        {
-            TestWriteBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
+	{
+		int WIMG;
+		if (EnableTestWriteBreakpoints)
+		{
+			TestWriteBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
-    
-        if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
-        {
-            if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
-            {
-                Gekko::Gekko->gatherBuffer.Write8((uint8_t)data);
-                return;
-            }
-        }
-    
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.WriteByte(pa, data);
-            if ((WIMG & WIMG_W) == 0)
-                return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
+	
+		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			{
+				Gekko::Gekko->gatherBuffer.Write8((uint8_t)data);
+				return;
+			}
+		}
+	
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.WriteByte(pa, data);
+			if ((WIMG & WIMG_W) == 0)
+				return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.WriteByte(pa, data);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.WriteByte(pa, data);
+			return;
+		}
 
-        PIWriteByte(pa, data);
-    }
+		PIWriteByte(pa, data);
+	}
 
-    void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
-    {
-        int WIMG;
-        if (EnableTestReadBreakpoints)
-        {
-            TestReadBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
+	{
+		int WIMG;
+		if (EnableTestReadBreakpoints)
+		{
+			TestReadBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.ReadHalf(pa, reg);
-            return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.ReadHalf(pa, reg);
+			return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.ReadHalf(pa, reg);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.ReadHalf(pa, reg);
+			return;
+		}
 
-        PIReadHalf(pa, reg);
-    }
+		PIReadHalf(pa, reg);
+	}
 
-    void __FASTCALL GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
-    {
-        ReadHalf(addr, reg);
-        if (*reg & 0x8000) *reg |= 0xffff0000;
-    }
+	void __FASTCALL GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
+	{
+		ReadHalf(addr, reg);
+		if (*reg & 0x8000) *reg |= 0xffff0000;
+	}
 
-    void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
-    {
-        int WIMG;
-        if (EnableTestWriteBreakpoints)
-        {
-            TestWriteBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
+	{
+		int WIMG;
+		if (EnableTestWriteBreakpoints)
+		{
+			TestWriteBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
-        {
-            if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
-            {
-                Gekko::Gekko->gatherBuffer.Write16((uint16_t)data);
-                return;
-            }
-        }
+		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			{
+				Gekko::Gekko->gatherBuffer.Write16((uint16_t)data);
+				return;
+			}
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.WriteHalf(pa, data);
-            if ((WIMG & WIMG_W) == 0)
-                return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.WriteHalf(pa, data);
+			if ((WIMG & WIMG_W) == 0)
+				return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.WriteHalf(pa, data);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.WriteHalf(pa, data);
+			return;
+		}
 
-        PIWriteHalf(pa, data);
-    }
+		PIWriteHalf(pa, data);
+	}
 
-    void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
-    {
-        int WIMG;
-        if (EnableTestReadBreakpoints)
-        {
-            TestReadBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
+	{
+		int WIMG;
+		if (EnableTestReadBreakpoints)
+		{
+			TestReadBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.ReadWord(pa, reg);
-            return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.ReadWord(pa, reg);
+			return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.ReadWord(pa, reg);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.ReadWord(pa, reg);
+			return;
+		}
 
-        PIReadWord(pa, reg);
-    }
+		PIReadWord(pa, reg);
+	}
 
-    void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
-    {
-        int WIMG;
-        if (EnableTestWriteBreakpoints)
-        {
-            TestWriteBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
+	{
+		int WIMG;
+		if (EnableTestWriteBreakpoints)
+		{
+			TestWriteBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
-        {
-            if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
-            {
-                Gekko::Gekko->gatherBuffer.Write32(data);
-                return;
-            }
-        }
+		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			{
+				Gekko::Gekko->gatherBuffer.Write32(data);
+				return;
+			}
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.WriteWord(pa, data);
-            if ((WIMG & WIMG_W) == 0)
-                return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.WriteWord(pa, data);
+			if ((WIMG & WIMG_W) == 0)
+				return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.WriteWord(pa, data);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.WriteWord(pa, data);
+			return;
+		}
 
-        PIWriteWord(pa, data);
-    }
+		PIWriteWord(pa, data);
+	}
 
-    void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
-    {
-        int WIMG;
-        if (EnableTestReadBreakpoints)
-        {
-            TestReadBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
+	{
+		int WIMG;
+		if (EnableTestReadBreakpoints)
+		{
+			TestReadBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.ReadDouble(pa, reg);
-            return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.ReadDouble(pa, reg);
+			return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.ReadDouble(pa, reg);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.ReadDouble(pa, reg);
+			return;
+		}
 
-        // It is suspected that this type of single-beat transaction is not supported by Flipper PI.
+		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-        PIReadDouble(pa, reg);
-    }
+		PIReadDouble(pa, reg);
+	}
 
-    void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
-    {
-        int WIMG;
-        if (EnableTestWriteBreakpoints)
-        {
-            TestWriteBreakpoints(addr);
-        }
+	void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
+	{
+		int WIMG;
+		if (EnableTestWriteBreakpoints)
+		{
+			TestWriteBreakpoints(addr);
+		}
 
-        uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
-        if (pa == BadAddress)
-        {
-            regs.spr[(int)SPR::DAR] = addr;
-            Exception(Exception::DSI);
-            return;
-        }
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Write, WIMG);
+		if (pa == BadAddress)
+		{
+			regs.spr[(int)SPR::DAR] = addr;
+			Exception(Exception::DSI);
+			return;
+		}
 
-        if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
-        {
-            if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
-            {
-                Gekko::Gekko->gatherBuffer.Write64(*data);
-                return;
-            }
-        }
+		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			{
+				Gekko::Gekko->gatherBuffer.Write64(*data);
+				return;
+			}
+		}
 
-        if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
-        {
-            cache.WriteDouble(pa, data);
-            if ((WIMG & WIMG_W) == 0)
-                return;
-        }
+		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			cache.WriteDouble(pa, data);
+			if ((WIMG & WIMG_W) == 0)
+				return;
+		}
 
-        if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
-        {
-            cache.WriteDouble(pa, data);
-            return;
-        }
+		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		{
+			cache.WriteDouble(pa, data);
+			return;
+		}
 
-        // It is suspected that this type of single-beat transaction is not supported by Flipper PI.
+		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-        PIWriteDouble(pa, data);
-    }
+		PIWriteDouble(pa, data);
+	}
 
 }

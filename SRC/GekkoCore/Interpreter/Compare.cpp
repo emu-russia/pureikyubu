@@ -35,11 +35,6 @@ namespace Gekko
 	// b = SIMM
 	void Interpreter::cmpi(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::cmpi]++;
-		}
-
 		int32_t a = core->regs.gpr[info.paramBits[1]];
 		int32_t b = (int32_t)info.Imm.Signed;
 		CmpCommon<int32_t>(info.paramBits[0], a, b);
@@ -49,11 +44,6 @@ namespace Gekko
 	// b = rb (signed)
 	void Interpreter::cmp(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::cmp]++;
-		}
-
 		int32_t a = core->regs.gpr[info.paramBits[1]];
 		int32_t b = core->regs.gpr[info.paramBits[2]];
 		CmpCommon<int32_t>(info.paramBits[0], a, b);
@@ -63,11 +53,6 @@ namespace Gekko
 	// b = 0x0000 || UIMM
 	void Interpreter::cmpli(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::cmpli]++;
-		}
-
 		uint32_t a = core->regs.gpr[info.paramBits[1]];
 		uint32_t b = info.Imm.Unsigned;
 		CmpCommon<uint32_t>(info.paramBits[0], a, b);
@@ -77,11 +62,6 @@ namespace Gekko
 	// b = rb (unsigned)
 	void Interpreter::cmpl(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::cmpl]++;
-		}
-
 		uint32_t a = core->regs.gpr[info.paramBits[1]];
 		uint32_t b = core->regs.gpr[info.paramBits[2]];
 		CmpCommon<uint32_t>(info.paramBits[0], a, b);
