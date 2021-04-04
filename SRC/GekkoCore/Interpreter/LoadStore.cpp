@@ -5,525 +5,356 @@
 namespace Gekko
 {
 
-	// ---------------------------------------------------------------------------
-	// loads
-
 	// ea = (ra | 0) + SIMM
 	// rd = 0x000000 || MEM(ea, 1)
-	OP(LBZ)
+	void Interpreter::lbz(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lbz]++;
-		}
-
-		if (RA) Gekko->ReadByte(RRA + SIMM, &RRD);
-		else Gekko->ReadByte(SIMM, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// rd = 0x000000 || MEM(ea, 1)
-	OP(LBZX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzx]++;
-		}
-
-		if (RA) Gekko->ReadByte(RRA + RRB, &RRD);
-		else Gekko->ReadByte(RRB, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadByte(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadByte((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// rd = 0x000000 || MEM(ea, 1)
 	// ra = ea
-	OP(LBZU)
+	void Interpreter::lbzu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->ReadByte(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->ReadByte(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// rd = 0x000000 || MEM(ea, 1)
 	// ra = ea
-	OP(LBZUX)
+	void Interpreter::lbzux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lbzux]++;
-		}
-
-		uint32_t ea = RRA + RRB;
-		Gekko->ReadByte(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + SIMM
-	// rd = 0x0000 || MEM(ea, 2)
-	OP(LHZ)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhz]++;
-		}
-
-		if (RA) Gekko->ReadHalf(RRA + SIMM, &RRD);
-		else Gekko->ReadHalf(SIMM, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->ReadByte(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + rb
-	// rd = 0x0000 || MEM(ea, 2)
-	OP(LHZX)
+	// rd = 0x000000 || MEM(ea, 1)
+	void Interpreter::lbzx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzx]++;
-		}
-
-		if (RA) Gekko->ReadHalf(RRA + RRB, &RRD);
-		else Gekko->ReadHalf(RRB, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = ra + SIMM
-	// rd = 0x0000 || MEM(ea, 2)
-	// ra = ea
-	OP(LHZU)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->ReadHalf(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = ra + rb
-	// rd = 0x0000 || MEM(ea, 2)
-	// ra = ea
-	OP(LHZUX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhzux]++;
-		}
-
-		uint32_t ea = RRA + RRB;
-		Gekko->ReadHalf(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadByte(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadByte(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
 	// rd = (signed)MEM(ea, 2)
-	OP(LHA)
+	void Interpreter::lha(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lha]++;
-		}
-
-		if (RA) Gekko->ReadHalfS(RRA + SIMM, &RRD);
-		else Gekko->ReadHalfS(SIMM, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// rd = (signed)MEM(ea, 2)
-	OP(LHAX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhax]++;
-		}
-
-		if (RA) Gekko->ReadHalfS(RRA + RRB, &RRD);
-		else Gekko->ReadHalfS(RRB, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalfS((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// rd = (signed)MEM(ea, 2)
 	// ra = ea
-	OP(LHAU)
+	void Interpreter::lhau(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhau]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->ReadHalfS(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// rd = (signed)MEM(ea, 2)
 	// ra = ea
-	OP(LHAUX)
+	void Interpreter::lhaux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhaux]++;
-		}
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
+	}
 
-		uint32_t ea = RRA + RRB;
-		Gekko->ReadHalfS(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+	// ea = (ra | 0) + rb
+	// rd = (signed)MEM(ea, 2)
+	void Interpreter::lhax(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalfS(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
+	}
+
+	// ea = (ra | 0) + SIMM
+	// rd = 0x0000 || MEM(ea, 2)
+	void Interpreter::lhz(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
+	}
+
+	// ea = ra + SIMM
+	// rd = 0x0000 || MEM(ea, 2)
+	// ra = ea
+	void Interpreter::lhzu(AnalyzeInfo& info)
+	{
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
+	}
+
+	// ea = ra + rb
+	// rd = 0x0000 || MEM(ea, 2)
+	// ra = ea
+	void Interpreter::lhzux(AnalyzeInfo& info)
+	{
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
+	}
+
+	// ea = (ra | 0) + rb
+	// rd = 0x0000 || MEM(ea, 2)
+	void Interpreter::lhzx(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
 	// rd = MEM(ea, 4)
-	OP(LWZ)
+	void Interpreter::lwz(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwz]++;
-		}
-
-		if (RA) Gekko->ReadWord(RRA + SIMM, &RRD);
-		else Gekko->ReadWord(SIMM, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// rd = MEM(ea, 4)
-	OP(LWZX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzx]++;
-		}
-
-		if (RA) Gekko->ReadWord(RRA + RRB, &RRD);
-		else Gekko->ReadWord(RRB, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadWord((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// rd = MEM(ea, 4)
 	// ra = ea
-	OP(LWZU)
+	void Interpreter::lwzu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->ReadWord(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->ReadWord(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// rd = MEM(ea, 4)
 	// ra = ea
-	OP(LWZUX)
+	void Interpreter::lwzux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwzux]++;
-		}
-
-		uint32_t ea = RRA + RRB;
-		Gekko->ReadWord(ea, &RRD);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
-	}
-
-	// ---------------------------------------------------------------------------
-	// stores
-
-	// ea = (ra | 0) + SIMM
-	// MEM(ea, 1) = rs[24-31]
-	OP(STB)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stb]++;
-		}
-
-		if (RA) Gekko->WriteByte(RRA + SIMM, RRS);
-		else Gekko->WriteByte(SIMM, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->ReadWord(ea, &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + rb
-	// MEM(ea, 1) = rs[24-31]
-	OP(STBX)
+	// rd = MEM(ea, 4)
+	void Interpreter::lwzx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stbx]++;
-		}
+		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadWord(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
+	}
 
-		if (RA) Gekko->WriteByte(RRA + RRB, RRS);
-		else Gekko->WriteByte(RRB, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+	// ea = (ra | 0) + SIMM
+	// MEM(ea, 1) = rs[24-31]
+	void Interpreter::stb(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->WriteByte(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		else core->WriteByte((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// MEM(ea, 1) = rs[24-31]
 	// ra = ea
-	OP(STBU)
+	void Interpreter::stbu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stbu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->WriteByte(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->WriteByte(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// MEM(ea, 1) = rs[24-31]
 	// ra = ea
-	OP(STBUX)
+	void Interpreter::stbux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stbux]++;
-		}
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->WriteByte(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
+	}
 
-		uint32_t ea = RRA + RRB;
-		Gekko->WriteByte(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+	// ea = (ra | 0) + rb
+	// MEM(ea, 1) = rs[24-31]
+	void Interpreter::stbx(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->WriteByte(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		else core->WriteByte(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 2) = rs[16-31]
-	OP(STH)
+	void Interpreter::sth(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::sth]++;
-		}
-
-		if (RA) Gekko->WriteHalf(RRA + SIMM, RRS);
-		else Gekko->WriteHalf(SIMM, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// MEM(ea, 2) = rs[16-31]
-	OP(STHX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::sthx]++;
-		}
-
-		if (RA) Gekko->WriteHalf(RRA + RRB, RRS);
-		else Gekko->WriteHalf(RRB, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		else core->WriteHalf((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// MEM(ea, 2) = rs[16-31]
 	// ra = ea
-	OP(STHU)
+	void Interpreter::sthu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::sthu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->WriteHalf(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->WriteHalf(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// MEM(ea, 2) = rs[16-31]
 	// ra = ea
-	OP(STHUX)
+	void Interpreter::sthux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::sthux]++;
-		}
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->WriteHalf(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
+	}
 
-		uint32_t ea = RRA + RRB;
-		Gekko->WriteHalf(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+	// ea = (ra | 0) + rb
+	// MEM(ea, 2) = rs[16-31]
+	void Interpreter::sthx(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		else core->WriteHalf(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 4) = rs
-	OP(STW)
+	void Interpreter::stw(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stw]++;
-		}
-
-		if (RA) Gekko->WriteWord(RRA + SIMM, RRS);
-		else Gekko->WriteWord(SIMM, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// MEM(ea, 4) = rs
-	OP(STWX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwx]++;
-		}
-
-		if (RA) Gekko->WriteWord(RRA + RRB, RRS);
-		else Gekko->WriteWord(RRB, RRS);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		else core->WriteWord((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + SIMM
 	// MEM(ea, 4) = rs
 	// ra = ea
-	OP(STWU)
+	void Interpreter::stwu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwu]++;
-		}
-
-		uint32_t ea = RRA + SIMM;
-		Gekko->WriteWord(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
 	// ea = ra + rb
 	// MEM(ea, 4) = rs
 	// ra = ea
-	OP(STWUX)
+	void Interpreter::stwux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwux]++;
-		}
-
-		uint32_t ea = RRA + RRB;
-		Gekko->WriteWord(ea, RRS);
-		if (Gekko->exception) return;
-		RRA = ea;
-		Gekko->regs.pc += 4;
+		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[1]] = ea;
+		core->regs.pc += 4;
 	}
 
-	// ---------------------------------------------------------------------------
-	// special
+	// ea = (ra | 0) + rb
+	// MEM(ea, 4) = rs
+	void Interpreter::stwx(AnalyzeInfo& info)
+	{
+		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		else core->WriteWord(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
+		if (core->exception) return;
+		core->regs.pc += 4;
+	}
 
 	// ea = (ra | 0) + rb
 	// rd = 0x0000 || MEM(ea+1, 1) || MEM(EA, 1)
-	OP(LHBRX)
+	void Interpreter::lhbrx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lhbrx]++;
-		}
-
 		uint32_t val;
-		if (RA) Gekko->ReadHalf(RRA + RRB, &val);
-		else Gekko->ReadHalf(RRB, &val);
-		if (Gekko->exception) return;
-		RRD = _BYTESWAP_UINT16((uint16_t)val);
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
+		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &val);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[0]] = _BYTESWAP_UINT16((uint16_t)val);
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + rb
 	// rd = MEM(ea+3, 1) || MEM(ea+2, 1) || MEM(ea+1, 1) || MEM(ea, 1)
-	OP(LWBRX)
+	void Interpreter::lwbrx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwbrx]++;
-		}
-
 		uint32_t val;
-		if (RA) Gekko->ReadWord(RRA + RRB, &val);
-		else Gekko->ReadWord(RRB, &val);
-		if (Gekko->exception) return;
-		RRD = _BYTESWAP_UINT32(val);
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
+		else core->ReadWord(core->regs.gpr[info.paramBits[2]], &val);
+		if (core->exception) return;
+		core->regs.gpr[info.paramBits[0]] = _BYTESWAP_UINT32(val);
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 2) = rs[24-31] || rs[16-23]
-	OP(STHBRX)
+	void Interpreter::sthbrx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::sthbrx]++;
-		}
-
-		if (RA) Gekko->WriteHalf(RRA + RRB, _BYTESWAP_UINT16((uint16_t)RRS));
-		else Gekko->WriteHalf(RRB, _BYTESWAP_UINT16((uint16_t)RRS));
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT16((uint16_t)core->regs.gpr[info.paramBits[0]]));
+		else core->WriteHalf(core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT16((uint16_t)core->regs.gpr[info.paramBits[0]]));
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
-	OP(STWBRX)
+	void Interpreter::stwbrx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwbrx]++;
-		}
-
-		if (RA) Gekko->WriteWord(RRA + RRB, _BYTESWAP_UINT32(RRS));
-		else Gekko->WriteWord(RRB, _BYTESWAP_UINT32(RRS));
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
+		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT32(core->regs.gpr[info.paramBits[0]]));
+		else core->WriteWord(core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT32(core->regs.gpr[info.paramBits[0]]));
+		if (core->exception) return;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
@@ -532,23 +363,18 @@ namespace Gekko
 	//      GPR(r) = MEM(ea, 4)
 	//      r = r + 1
 	//      ea = ea + 4
-	OP(LMW)
+	void Interpreter::lmw(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lmw]++;
-		}
-
 		uint32_t ea;
-		if (RA) ea = RRA + SIMM;
-		else ea = SIMM;
+		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		else ea = (int32_t)info.Imm.Signed;
 
-		for (int r = RD; r < 32; r++, ea += 4)
+		for (int r = info.paramBits[0]; r < 32; r++, ea += 4)
 		{
-			Gekko->ReadWord(ea, &Gekko->regs.gpr[r]);
-			if (Gekko->exception) return;
+			core->ReadWord(ea, &core->regs.gpr[r]);
+			if (core->exception) return;
 		}
-		Gekko->regs.pc += 4;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0) + SIMM
@@ -557,23 +383,18 @@ namespace Gekko
 	//      MEM(ea, 4) = GPR(r)
 	//      r = r + 1
 	//      ea = ea + 4
-	OP(STMW)
+	void Interpreter::stmw(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stmw]++;
-		}
-
 		uint32_t ea;
-		if (RA) ea = RRA + SIMM;
-		else ea = SIMM;
+		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
+		else ea = (int32_t)info.Imm.Signed;
 
-		for (int r = RS; r < 32; r++, ea += 4)
+		for (int r = info.paramBits[0]; r < 32; r++, ea += 4)
 		{
-			Gekko->WriteWord(ea, Gekko->regs.gpr[r]);
-			if (Gekko->exception) return;
+			core->WriteWord(ea, core->regs.gpr[r]);
+			if (core->exception) return;
 		}
-		Gekko->regs.pc += 4;
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0)
@@ -589,15 +410,10 @@ namespace Gekko
 	//      if i = 32 then i = 0
 	//      ea = ea + 1
 	//      n = n -1
-	OP(LSWI)
+	void Interpreter::lswi(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lswi]++;
-		}
-
-		int32_t rd = RD, n = (RB) ? (RB) : 32, i = 4;
-		uint32_t ea = (RA) ? (RRA) : 0;
+		int32_t rd = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 4;
+		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
 		uint32_t r = 0, val;
 
 		while (n > 0)
@@ -605,13 +421,13 @@ namespace Gekko
 			if (i == 0)
 			{
 				i = 4;
-				Gekko->regs.gpr[rd] = r;
+				core->regs.gpr[rd] = r;
 				rd++;
 				rd %= 32;
 				r = 0;
 			}
-			Gekko->ReadByte(ea, &val);
-			if (Gekko->exception) return;
+			core->ReadByte(ea, &val);
+			if (core->exception) return;
 			r <<= 8;
 			r |= (uint8_t)val;
 			ea++;
@@ -624,8 +440,13 @@ namespace Gekko
 			r <<= 8;
 			i--;
 		}
-		Gekko->regs.gpr[rd] = r;
-		Gekko->regs.pc += 4;
+		core->regs.gpr[rd] = r;
+		core->regs.pc += 4;
+	}
+
+	void Interpreter::lswx(AnalyzeInfo& info)
+	{
+		Debug::Halt("lswx\n");
 	}
 
 	// ea = (ra | 0)
@@ -639,87 +460,34 @@ namespace Gekko
 	//      if i = 32 then i = 0;
 	//      ea = ea + 1
 	//      n = n -1
-	OP(STSWI)
+	void Interpreter::stswi(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stswi]++;
-		}
-
-		int32_t rs = RS, n = (RB) ? (RB) : 32, i = 0;
-		uint32_t ea = (RA) ? (RRA) : 0;
+		int32_t rs = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 0;
+		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
 		uint32_t r = 0;
 
 		while (n > 0)
 		{
 			if (i == 0)
 			{
-				r = Gekko->regs.gpr[rs];
+				r = core->regs.gpr[rs];
 				rs++;
 				rs %= 32;
 				i = 4;
 			}
-			Gekko->WriteByte(ea, r >> 24);
-			if (Gekko->exception) return;
+			core->WriteByte(ea, r >> 24);
+			if (core->exception) return;
 			r <<= 8;
 			ea++;
 			i--;
 			n--;
 		}
-		Gekko->regs.pc += 4;
+		core->regs.pc += 4;
 	}
 
-	// ea = (ra | 0) + rb
-	// RESERVE = 1
-	// RESERVE_ADDR = physical(ea)
-	// rd = MEM(ea, 4)
-	OP(LWARX)
+	void Interpreter::stswx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwarx]++;
-		}
-
-		int WIMG;
-		uint32_t ea = RRB;
-		if (RA) ea += RRA;
-		Gekko->interp->RESERVE = true;
-		Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
-		Gekko->ReadWord(ea, &RRD);
-		if (Gekko->exception) return;
-		Gekko->regs.pc += 4;
-	}
-
-	// ea = (ra | 0) + rb
-	// if RESERVE
-	//      then
-	//          MEM(ea, 4) = rs
-	//          CR0 = 0b00 || 0b1 || XER[SO]
-	//          RESERVE = 0
-	//      else
-	//          CR0 = 0b00 || 0b0 || XER[SO]
-	OP(STWCXD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwcx_d]++;
-		}
-
-		uint32_t ea = RRB;
-		if (RA) ea += RRA;
-
-		Gekko->regs.cr &= 0x0fffffff;
-
-		if (Gekko->interp->RESERVE)
-		{
-			Gekko->WriteWord(ea, RRS);
-			if (Gekko->exception) return;
-			SET_CR0_EQ;
-			Gekko->interp->RESERVE = false;
-		}
-
-		if (IS_XER_SO) SET_CR0_SO;
-		Gekko->regs.pc += 4;
+		Debug::Halt("stswx\n");
 	}
 
 }

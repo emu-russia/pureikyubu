@@ -764,4 +764,57 @@ namespace Gekko
 		Gekko->regs.pc += 4;
 	}
 
+	// ea = (ra | 0) + rb
+	// RESERVE = 1
+	// RESERVE_ADDR = physical(ea)
+	// rd = MEM(ea, 4)
+	OP(LWARX)
+	{
+		if (Gekko->opcodeStatsEnabled)
+		{
+			Gekko->opcodeStats[(size_t)Gekko::Instruction::lwarx]++;
+		}
+
+		int WIMG;
+		uint32_t ea = RRB;
+		if (RA) ea += RRA;
+		Gekko->interp->RESERVE = true;
+		Gekko->interp->RESERVE_ADDR = Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
+		Gekko->ReadWord(ea, &RRD);
+		if (Gekko->exception) return;
+		Gekko->regs.pc += 4;
+	}
+
+	// ea = (ra | 0) + rb
+	// if RESERVE
+	//      then
+	//          MEM(ea, 4) = rs
+	//          CR0 = 0b00 || 0b1 || XER[SO]
+	//          RESERVE = 0
+	//      else
+	//          CR0 = 0b00 || 0b0 || XER[SO]
+	OP(STWCXD)
+	{
+		if (Gekko->opcodeStatsEnabled)
+		{
+			Gekko->opcodeStats[(size_t)Gekko::Instruction::stwcx_d]++;
+		}
+
+		uint32_t ea = RRB;
+		if (RA) ea += RRA;
+
+		Gekko->regs.cr &= 0x0fffffff;
+
+		if (Gekko->interp->RESERVE)
+		{
+			Gekko->WriteWord(ea, RRS);
+			if (Gekko->exception) return;
+			SET_CR0_EQ;
+			Gekko->interp->RESERVE = false;
+		}
+
+		if (IS_XER_SO) SET_CR0_SO;
+		Gekko->regs.pc += 4;
+	}
+
 }

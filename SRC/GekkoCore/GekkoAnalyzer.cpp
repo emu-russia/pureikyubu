@@ -483,7 +483,7 @@ namespace Gekko
 			case 662 * 2: info->instr = Instruction::stwbrx; Dab(instr, info); break;
 			case (150 * 2) | RcBit: info->instr = Instruction::stwcx_d; Dab(instr, info); break;
 			case 183 * 2: info->instr = Instruction::stwux; Dab(instr, info); break;
-			case 151 * 2: info->instr = Instruction::stwux; Dab(instr, info); break;
+			case 151 * 2: info->instr = Instruction::stwx; Dab(instr, info); break;
 
 			case 40 * 2: info->instr = Instruction::subf; Dab(instr, info); break;
 			case (40 * 2) | RcBit: info->instr = Instruction::subf_d; Dab(instr, info); break;
@@ -680,7 +680,7 @@ namespace Gekko
 			case 662 * 2: info->instr = Instruction::stwbrx; DabFast(instr, info); break;
 			case (150 * 2) | RcBit: info->instr = Instruction::stwcx_d; DabFast(instr, info); break;
 			case 183 * 2: info->instr = Instruction::stwux; DabFast(instr, info); break;
-			case 151 * 2: info->instr = Instruction::stwux; DabFast(instr, info); break;
+			case 151 * 2: info->instr = Instruction::stwx; DabFast(instr, info); break;
 
 			case 40 * 2: info->instr = Instruction::subf; DabFast(instr, info); break;
 			case (40 * 2) | RcBit: info->instr = Instruction::subf_d; DabFast(instr, info); break;
@@ -1433,7 +1433,7 @@ namespace Gekko
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
-		info->Imm.Unsigned = DIS_UIMM;
+		info->Imm.Signed = DIS_SIMM;
 	}
 
 	void Analyzer::FrdaOffset(uint32_t instr, AnalyzeInfo* info)
@@ -1448,7 +1448,7 @@ namespace Gekko
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
-		info->Imm.Unsigned = DIS_UIMM;
+		info->Imm.Signed = DIS_SIMM;
 	}
 
 	void Analyzer::DaNb(uint32_t instr, AnalyzeInfo* info)
