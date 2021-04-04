@@ -19,8 +19,6 @@ namespace Gekko
 
 		GekkoCore* core = nullptr;
 
-		bool BcTest(AnalyzeInfo& info);
-		bool BctrTest(AnalyzeInfo& info);
 		void b(AnalyzeInfo& info);
 		void ba(AnalyzeInfo& info);
 		void bl(AnalyzeInfo& info);
@@ -34,8 +32,6 @@ namespace Gekko
 		void bclr(AnalyzeInfo& info);
 		void bclrl(AnalyzeInfo& info);
 
-		template <typename T>
-		inline void CmpCommon(int crfd, T a, T b);
 		void cmpi(AnalyzeInfo& info);
 		void cmp(AnalyzeInfo& info);
 		void cmpli(AnalyzeInfo& info);
@@ -136,58 +132,72 @@ namespace Gekko
 		void stfsux(AnalyzeInfo& info);
 		void stfsx(AnalyzeInfo& info);
 
-		static void c_ADDI(uint32_t op);
-		static void c_ADDIS(uint32_t op);
-		static void c_ADD(uint32_t op);
-		static void c_ADDD(uint32_t op);
-		static void c_ADDO(uint32_t op);
-		static void c_ADDOD(uint32_t op);
-		static void c_SUBF(uint32_t op);
-		static void c_SUBFD(uint32_t op);
-		static void c_SUBFO(uint32_t op);
-		static void c_SUBFOD(uint32_t op);
-		static void c_ADDIC(uint32_t op);
-		static void c_ADDICD(uint32_t op);
-		static void c_SUBFIC(uint32_t op);
-		static void c_ADDC(uint32_t op);
-		static void c_ADDCD(uint32_t op);
-		static void c_ADDCO(uint32_t op);
-		static void c_ADDCOD(uint32_t op);
-		static void c_SUBFC(uint32_t op);
-		static void c_SUBFCD(uint32_t op);
-		static void c_ADDE(uint32_t op);
-		static void c_ADDED(uint32_t op);
-		static void c_SUBFE(uint32_t op);
-		static void c_SUBFED(uint32_t op);
-		static void c_ADDME(uint32_t op);
-		static void c_ADDMED(uint32_t op);
-		static void c_ADDMEO(uint32_t op);
-		static void c_ADDMEOD(uint32_t op);
-		static void c_SUBFME(uint32_t op);
-		static void c_SUBFMED(uint32_t op);
-		static void c_SUBFMEO(uint32_t op);
-		static void c_SUBFMEOD(uint32_t op);
-		static void c_ADDZE(uint32_t op);
-		static void c_ADDZED(uint32_t op);
-		static void c_ADDZEO(uint32_t op);
-		static void c_ADDZEOD(uint32_t op);
-		static void c_SUBFZE(uint32_t op);
-		static void c_SUBFZED(uint32_t op);
-		static void c_SUBFZEO(uint32_t op);
-		static void c_SUBFZEOD(uint32_t op);
-		static void c_NEG(uint32_t op);
-		static void c_NEGD(uint32_t op);
-		static void c_MULLI(uint32_t op);
-		static void c_MULLW(uint32_t op);
-		static void c_MULLWD(uint32_t op);
-		static void c_MULHW(uint32_t op);
-		static void c_MULHWD(uint32_t op);
-		static void c_MULHWU(uint32_t op);
-		static void c_MULHWUD(uint32_t op);
-		static void c_DIVW(uint32_t op);
-		static void c_DIVWD(uint32_t op);
-		static void c_DIVWU(uint32_t op);
-		static void c_DIVWUD(uint32_t op);
+		void add(AnalyzeInfo& info);
+		void add_d(AnalyzeInfo& info);
+		void addo(AnalyzeInfo& info);
+		void addo_d(AnalyzeInfo& info);
+		void addc(AnalyzeInfo& info);
+		void addc_d(AnalyzeInfo& info);
+		void addco(AnalyzeInfo& info);
+		void addco_d(AnalyzeInfo& info);
+		void adde(AnalyzeInfo& info);
+		void adde_d(AnalyzeInfo& info);
+		void addeo(AnalyzeInfo& info);
+		void addeo_d(AnalyzeInfo& info);
+		void addi(AnalyzeInfo& info);
+		void addic(AnalyzeInfo& info);
+		void addic_d(AnalyzeInfo& info);
+		void addis(AnalyzeInfo& info);
+		void addme(AnalyzeInfo& info);
+		void addme_d(AnalyzeInfo& info);
+		void addmeo(AnalyzeInfo& info);
+		void addmeo_d(AnalyzeInfo& info);
+		void addze(AnalyzeInfo& info);
+		void addze_d(AnalyzeInfo& info);
+		void addzeo(AnalyzeInfo& info);
+		void addzeo_d(AnalyzeInfo& info);
+		void divw(AnalyzeInfo& info);
+		void divw_d(AnalyzeInfo& info);
+		void divwo(AnalyzeInfo& info);
+		void divwo_d(AnalyzeInfo& info);
+		void divwu(AnalyzeInfo& info);
+		void divwu_d(AnalyzeInfo& info);
+		void divwuo(AnalyzeInfo& info);
+		void divwuo_d(AnalyzeInfo& info);
+		void mulhw(AnalyzeInfo& info);
+		void mulhw_d(AnalyzeInfo& info);
+		void mulhwu(AnalyzeInfo& info);
+		void mulhwu_d(AnalyzeInfo& info);
+		void mulli(AnalyzeInfo& info);
+		void mullw(AnalyzeInfo& info);
+		void mullw_d(AnalyzeInfo& info);
+		void mullwo(AnalyzeInfo& info);
+		void mullwo_d(AnalyzeInfo& info);
+		void neg(AnalyzeInfo& info);
+		void neg_d(AnalyzeInfo& info);
+		void nego(AnalyzeInfo& info);
+		void nego_d(AnalyzeInfo& info);
+		void subf(AnalyzeInfo& info);
+		void subf_d(AnalyzeInfo& info);
+		void subfo(AnalyzeInfo& info);
+		void subfo_d(AnalyzeInfo& info);
+		void subfc(AnalyzeInfo& info);
+		void subfc_d(AnalyzeInfo& info);
+		void subfco(AnalyzeInfo& info);
+		void subfco_d(AnalyzeInfo& info);
+		void subfe(AnalyzeInfo& info);
+		void subfe_d(AnalyzeInfo& info);
+		void subfeo(AnalyzeInfo& info);
+		void subfeo_d(AnalyzeInfo& info);
+		void subfic(AnalyzeInfo& info);
+		void subfme(AnalyzeInfo& info);
+		void subfme_d(AnalyzeInfo& info);
+		void subfmeo(AnalyzeInfo& info);
+		void subfmeo_d(AnalyzeInfo& info);
+		void subfze(AnalyzeInfo& info);
+		void subfze_d(AnalyzeInfo& info);
+		void subfzeo(AnalyzeInfo& info);
+		void subfzeo_d(AnalyzeInfo& info);
 
 		void lbz(AnalyzeInfo& info);
 		void lbzu(AnalyzeInfo& info);
@@ -392,6 +402,16 @@ namespace Gekko
 		uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
 		void BranchCheck();
+		bool BcTest(AnalyzeInfo& info);
+		bool BctrTest(AnalyzeInfo& info);
+
+		template <typename T>
+		inline void CmpCommon(int crfd, T a, T b);
+
+		void ADDXER(uint32_t a, AnalyzeInfo& info);
+		void ADDXERD(uint32_t a, AnalyzeInfo& info);
+		void ADDXER2(uint32_t a, uint32_t b, AnalyzeInfo& info);
+		void ADDXER2D(uint32_t a, uint32_t b, AnalyzeInfo& info);
 
 		void Dispatch(AnalyzeInfo& info, uint32_t instr /* eventually will be removed, used for fallback. */ );
 
