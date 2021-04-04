@@ -1,18 +1,9 @@
+// Interpreter core API
 
 #pragma once
 
 namespace Gekko
 {
-	// interpreter core API
-
-	extern void (*bx[4])(uint32_t);
-	extern void (*c_1[64])(uint32_t);
-	extern void (*c_19[2048])(uint32_t);
-	extern void (*c_31[2048])(uint32_t);
-	extern void (*c_59[64])(uint32_t);
-	extern void (*c_63[2048])(uint32_t);
-	extern void (*c_4[2048])(uint32_t);
-
 	class Interpreter
 	{
 		friend Jitc;
@@ -348,46 +339,41 @@ namespace Gekko
 		void srw(AnalyzeInfo& info);
 		void srw_d(AnalyzeInfo& info);
 
-		static void c_TWI(uint32_t op);
-		static void c_TW(uint32_t op);
-		static void c_SC(uint32_t op);
-		static void c_RFI(uint32_t op);
-		static void c_MTCRF(uint32_t op);
-		static void c_MCRXR(uint32_t op);
-		static void c_MFCR(uint32_t op);
-		static void c_MTMSR(uint32_t op);
-		static void c_MFMSR(uint32_t op);
-		static void c_MTSPR(uint32_t op);
-		static void c_MFSPR(uint32_t op);
-		static void c_MFTB(uint32_t op);
-		static void c_MTSR(uint32_t op);
-		static void c_MTSRIN(uint32_t op);
-		static void c_MFSR(uint32_t op);
-		static void c_MFSRIN(uint32_t op);
-		static void c_EIEIO(uint32_t op);
-		static void c_SYNC(uint32_t op);
-		static void c_ISYNC(uint32_t op);
-		static void c_TLBSYNC(uint32_t op);
-		static void c_TLBIE(uint32_t op);
-		static void c_DCBT(uint32_t op);
-		static void c_DCBTST(uint32_t op);
-		static void c_DCBZ(uint32_t op);
-		static void c_DCBZ_L(uint32_t op);
-		static void c_DCBST(uint32_t op);
-		static void c_DCBF(uint32_t op);
-		static void c_DCBI(uint32_t op);
-		static void c_ICBI(uint32_t op);
-		static void c_LWARX(uint32_t op);
-		static void c_STWCXD(uint32_t op);
+		void eieio(AnalyzeInfo& info);
+		void isync(AnalyzeInfo& info);
+		void lwarx(AnalyzeInfo& info);
+		void stwcx_d(AnalyzeInfo& info);
+		void sync(AnalyzeInfo& info);
+		void rfi(AnalyzeInfo& info);
+		void sc(AnalyzeInfo& info);
+		void tw(AnalyzeInfo& info);
+		void twi(AnalyzeInfo& info);
+		void mcrxr(AnalyzeInfo& info);
+		void mfcr(AnalyzeInfo& info);
+		void mfmsr(AnalyzeInfo& info);
+		void mfspr(AnalyzeInfo& info);
+		void mftb(AnalyzeInfo& info);
+		void mtcrf(AnalyzeInfo& info);
+		void mtmsr(AnalyzeInfo& info);
+		void mtspr(AnalyzeInfo& info);
+		void dcbf(AnalyzeInfo& info);
+		void dcbi(AnalyzeInfo& info);
+		void dcbst(AnalyzeInfo& info);
+		void dcbt(AnalyzeInfo& info);
+		void dcbtst(AnalyzeInfo& info);
+		void dcbz(AnalyzeInfo& info);
+		void dcbz_l(AnalyzeInfo& info);
+		void icbi(AnalyzeInfo& info);
+		void mfsr(AnalyzeInfo& info);
+		void mfsrin(AnalyzeInfo& info);
+		void mtsr(AnalyzeInfo& info);
+		void mtsrin(AnalyzeInfo& info);
+		void tlbie(AnalyzeInfo& info);
+		void tlbsync(AnalyzeInfo& info);
+		void eciwx(AnalyzeInfo& info);
+		void ecowx(AnalyzeInfo& info);
 
-		static void c_NI(uint32_t op);
-		static void c_HL(uint32_t op);
-
-		static void c_OP19(uint32_t op);
-		static void c_OP31(uint32_t op);
-		static void c_OP59(uint32_t op);
-		static void c_OP63(uint32_t op);
-		static void c_OP4(uint32_t op);
+		void callvm(AnalyzeInfo& info);
 
 		// setup extension tables 
 		void InitTables();

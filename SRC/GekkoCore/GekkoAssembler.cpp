@@ -1478,6 +1478,9 @@ namespace Gekko
 			case Instruction::ps_merge10_d:	Form_FrDAB(4, 592, true, info); break;
 			case Instruction::ps_merge11:	Form_FrDAB(4, 624, false, info); break;
 			case Instruction::ps_merge11_d:	Form_FrDAB(4, 624, true, info); break;
+
+			default:
+				throw "Unhandled instruction";
 		}
 	}
 }

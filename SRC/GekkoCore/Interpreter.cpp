@@ -432,10 +432,48 @@ namespace Gekko
             case Instruction::srw: srw(info); break;
             case Instruction::srw_d: srw_d(info); break;
 
-            // At the time of developing a new interpreter, a fallback to the old implementation will be made in this place.
+            case Instruction::eieio: eieio(info); break;
+            case Instruction::isync: isync(info); break;
+            case Instruction::lwarx: lwarx(info); break;
+            case Instruction::stwcx_d: stwcx_d(info); break;
+            case Instruction::sync: sync(info); break;
+            case Instruction::rfi: rfi(info); break;
+            case Instruction::sc: sc(info); break;
+            case Instruction::tw: tw(info); break;
+            case Instruction::twi: twi(info); break;
+            case Instruction::mcrxr: mcrxr(info); break;
+            case Instruction::mfcr: mfcr(info); break;
+            case Instruction::mfmsr: mfmsr(info); break;
+            case Instruction::mfspr: mfspr(info); break;
+            case Instruction::mftb: mftb(info); break;
+            case Instruction::mtcrf: mtcrf(info); break;
+            case Instruction::mtmsr: mtmsr(info); break;
+            case Instruction::mtspr: mtspr(info); break;
+            case Instruction::dcbf: dcbf(info); break;
+            case Instruction::dcbi: dcbi(info); break;
+            case Instruction::dcbst: dcbst(info); break;
+            case Instruction::dcbt: dcbt(info); break;
+            case Instruction::dcbtst: dcbtst(info); break;
+            case Instruction::dcbz: dcbz(info); break;
+            case Instruction::dcbz_l: dcbz_l(info); break;
+            case Instruction::icbi: icbi(info); break;
+            case Instruction::mfsr: mfsr(info); break;
+            case Instruction::mfsrin: mfsrin(info); break;
+            case Instruction::mtsr: mtsr(info); break;
+            case Instruction::mtsrin: mtsrin(info); break;
+            case Instruction::tlbie: tlbie(info); break;
+            case Instruction::tlbsync: tlbsync(info); break;
+            case Instruction::eciwx: eciwx(info); break;
+            case Instruction::ecowx: ecowx(info); break;
+
+            // TODO: CallVM opcode.
 
             default:
-                c_1[instr >> 26](instr);
+                Debug::Halt("** CPU ERROR **\n"
+                    "unimplemented opcode : %08X <%08X>\n", core->regs.pc, instr);
+
+                Gekko->PrCause = PrivilegedCause::IllegalInstruction;
+                Gekko->Exception(Exception::PROGRAM);
                 return;
         }
 
@@ -448,6 +486,26 @@ namespace Gekko
     uint32_t Interpreter::GetRotMask(int mb, int me)
     {
         return rotmask[mb][me];
+    }
+
+    // high level call
+    void Interpreter::callvm(AnalyzeInfo& info)
+    {
+        // Dolwin module base should be specified as 0x400000 in project properties
+        //void (*pcall)() = (void (*)())((void*)(uint64_t)op);
+
+        //if (op == 0)
+        //{
+        //	Halt(
+        //		"Something goes wrong in interpreter, \n"
+        //		"program is trying to execute NULL opcode.\n\n"
+        //		"pc:%08X", Gekko->regs.pc);
+        //	return;
+        //}
+
+        //pcall();
+
+        Debug::Halt("callvm: Temporary not implemented!\n");
     }
 
 }
