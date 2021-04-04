@@ -198,6 +198,24 @@ namespace Gekko
             case Instruction::mtfsfi: mtfsfi(info); break;
             case Instruction::mtfsfi_d: mtfsfi_d(info); break;
 
+            case Instruction::lfd: lfd(info); break;
+            case Instruction::lfdu: lfdu(info); break;
+            case Instruction::lfdux: lfdux(info); break;
+            case Instruction::lfdx: lfdx(info); break;
+            case Instruction::lfs: lfs(info); break;
+            case Instruction::lfsu: lfsu(info); break;
+            case Instruction::lfsux: lfsux(info); break;
+            case Instruction::lfsx: lfsx(info); break;
+            case Instruction::stfd: stfd(info); break;
+            case Instruction::stfdu: stfdu(info); break;
+            case Instruction::stfdux: stfdux(info); break;
+            case Instruction::stfdx: stfdx(info); break;
+            case Instruction::stfiwx: stfiwx(info); break;
+            case Instruction::stfs: stfs(info); break;
+            case Instruction::stfsu: stfsu(info); break;
+            case Instruction::stfsux: stfsux(info); break;
+            case Instruction::stfsx: stfsx(info); break;
+
             case Instruction::ps_div: ps_div(info); break;
             case Instruction::ps_div_d: ps_div_d(info); break;
             case Instruction::ps_sub: ps_sub(info); break;

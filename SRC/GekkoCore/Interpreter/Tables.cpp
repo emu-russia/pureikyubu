@@ -154,15 +154,6 @@ namespace Gekko
 		c_1[46] = c_LMW;
 		c_1[47] = c_STMW;
 
-		c_1[48] = c_LFS;
-		c_1[49] = c_LFSU;
-		c_1[50] = c_LFD;
-		c_1[51] = c_LFDU;
-		c_1[52] = c_STFS;
-		c_1[53] = c_STFSU;
-		c_1[54] = c_STFD;
-		c_1[55] = c_STFDU;
-
 		c_1[58] = c_NI;
 		c_1[59] = c_OP59;
 		c_1[62] = c_NI;
@@ -259,21 +250,13 @@ namespace Gekko
 		c_31[1044] = c_ADDCO;
 		c_31[1045] = c_ADDCOD;
 		c_31[1068] = c_LWBRX;
-		c_31[1070] = c_LFSX;
 		c_31[1132] = c_TLBSYNC;
-		c_31[1134] = c_LFSUX;
 		c_31[1190] = c_MFSR;
 		c_31[1194] = c_LSWI;
 		c_31[1196] = c_SYNC;
-		c_31[1198] = c_LFDX;
-		c_31[1262] = c_LFDUX;
 		c_31[1318] = c_MFSRIN;
 		c_31[1324] = c_STWBRX;
-		c_31[1326] = c_STFSX;
-		c_31[1390] = c_STFSUX;
 		c_31[1450] = c_STSWI;
-		c_31[1454] = c_STFDX;
-		c_31[1518] = c_STFDUX;
 		c_31[1556] = c_ADDO;
 		c_31[1557] = c_ADDOD;
 		c_31[1580] = c_LHBRX;
@@ -284,7 +267,6 @@ namespace Gekko
 		c_31[1908] = c_EXTSB;
 		c_31[1909] = c_EXTSBD;
 		c_31[1964] = c_ICBI;
-		c_31[1966] = c_STFIWX;
 		c_31[2028] = c_DCBZ;
 
 		// "4" extension
