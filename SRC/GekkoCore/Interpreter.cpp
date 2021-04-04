@@ -322,6 +322,35 @@ namespace Gekko
             case Instruction::stswi: stswi(info); break;
             case Instruction::stswx: stswx(info); break;
 
+            case Instruction::_and: _and(info); break;
+            case Instruction::and_d: and_d(info); break;
+            case Instruction::andc: andc(info); break;
+            case Instruction::andc_d: andc_d(info); break;
+            case Instruction::andi_d: andi_d(info); break;
+            case Instruction::andis_d: andis_d(info); break;
+            case Instruction::cntlzw: cntlzw(info); break;
+            case Instruction::cntlzw_d: cntlzw_d(info); break;
+            case Instruction::eqv: eqv(info); break;
+            case Instruction::eqv_d: eqv_d(info); break;
+            case Instruction::extsb: extsb(info); break;
+            case Instruction::extsb_d: extsb_d(info); break;
+            case Instruction::extsh: extsh(info); break;
+            case Instruction::extsh_d: extsh_d(info); break;
+            case Instruction::nand: nand(info); break;
+            case Instruction::nand_d: nand_d(info); break;
+            case Instruction::nor: nor(info); break;
+            case Instruction::nor_d: nor_d(info); break;
+            case Instruction::_or: _or(info); break;
+            case Instruction::or_d: or_d(info); break;
+            case Instruction::orc: orc(info); break;
+            case Instruction::orc_d: orc_d(info); break;
+            case Instruction::ori: ori(info); break;
+            case Instruction::oris: oris(info); break;
+            case Instruction::_xor: _xor(info); break;
+            case Instruction::xor_d: xor_d(info); break;
+            case Instruction::xori: xori(info); break;
+            case Instruction::xoris: xoris(info); break;
+
             case Instruction::ps_div: ps_div(info); break;
             case Instruction::ps_div_d: ps_div_d(info); break;
             case Instruction::ps_sub: ps_sub(info); break;

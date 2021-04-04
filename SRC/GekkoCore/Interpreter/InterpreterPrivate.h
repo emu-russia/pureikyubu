@@ -59,14 +59,9 @@ extern "C" uint32_t __FASTCALL Rotl32(int sa, uint32_t data);
 #define RB          ((op >> 11) & 0x1f)
 #define RC          ((op >>  6) & 0x1f)
 #define SIMM        ((int32_t)(int16_t)(uint16_t)op)
-#define UIMM        (op & 0xffff)
 #define CRFD        ((op >> 23) & 7)
 #define CRFS        ((op >> 18) & 7)
-#define CRBD        ((op >> 21) & 0x1f)
-#define CRBA        ((op >> 16) & 0x1f)
-#define CRBB        ((op >> 11) & 0x1f)
 #define CRM         ((op >> 12) & 0xff)
-#define FM          ((op >> 17) & 0xff)
 
 // fast R*-field register addressing
 #define RRD         Gekko::Gekko->regs.gpr[RD]

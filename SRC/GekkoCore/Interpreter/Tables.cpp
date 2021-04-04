@@ -121,12 +121,6 @@ namespace Gekko
 		c_1[19] = c_OP19;
 		c_1[22] = c_NI;
 
-		c_1[24] = c_ORI;
-		c_1[25] = c_ORIS;
-		c_1[26] = c_XORI; 
-		c_1[27] = c_XORIS;
-		c_1[28] = c_ANDID;
-		c_1[29] = c_ANDISD;
 		c_1[30] = c_NI;
 		c_1[31] = c_OP31;
 
@@ -143,17 +137,9 @@ namespace Gekko
 		c_31[8] = c_TW;
 		c_31[38] = c_MFCR;
 		c_31[40] = c_LWARX;
-		c_31[52] = c_CNTLZW;
-		c_31[53] = c_CNTLZWD;
-		c_31[56] = c_AND;
-		c_31[57] = c_ANDD;
 		c_31[108] = c_DCBST;
-		c_31[120] = c_ANDC;
-		c_31[121] = c_ANDCD;
 		c_31[166] = c_MFMSR;
 		c_31[172] = c_DCBF;
-		c_31[248] = c_NOR;
-		c_31[249] = c_NORD;
 		c_31[288] = c_MTCRF;
 		c_31[292] = c_MTMSR;
 		c_31[301] = c_STWCXD;
@@ -161,31 +147,17 @@ namespace Gekko
 		c_31[484] = c_MTSRIN;
 		c_31[492] = c_DCBTST;
 		c_31[556] = c_DCBT;
-		c_31[568] = c_EQV;
-		c_31[569] = c_EQVD;
 		c_31[612] = c_TLBIE;
-		c_31[632] = c_XOR;
-		c_31[633] = c_XORD;
 		c_31[678] = c_MFSPR;
 		c_31[742] = c_MFTB;
-		c_31[824] = c_ORC;
-		c_31[825] = c_ORCD;
-		c_31[888] = c_OR;
-		c_31[889] = c_ORD;
 		c_31[934] = c_MTSPR;
 		c_31[940] = c_DCBI;
-		c_31[952] = c_NAND;
-		c_31[953] = c_NANDD;
 		c_31[1024] = c_MCRXR;
 		c_31[1132] = c_TLBSYNC;
 		c_31[1190] = c_MFSR;
 		c_31[1196] = c_SYNC;
 		c_31[1318] = c_MFSRIN;
 		c_31[1708] = c_EIEIO;
-		c_31[1844] = c_EXTSH;
-		c_31[1845] = c_EXTSHD;
-		c_31[1908] = c_EXTSB;
-		c_31[1909] = c_EXTSBD;
 		c_31[1964] = c_ICBI;
 		c_31[2028] = c_DCBZ;
 
