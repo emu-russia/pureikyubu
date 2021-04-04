@@ -30,11 +30,6 @@ namespace Gekko
 	// PC = PC + EXTS(LI || 0b00)
 	void Interpreter::b(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::b]++;
-		}
-
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
@@ -42,11 +37,6 @@ namespace Gekko
 	// PC = EXTS(LI || 0b00)
 	void Interpreter::ba(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ba]++;
-		}
-
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
@@ -54,11 +44,6 @@ namespace Gekko
 	// LR = PC + 4, PC = PC + EXTS(LI || 0b00)
 	void Interpreter::bl(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bl]++;
-		}
-
 		core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
@@ -67,11 +52,6 @@ namespace Gekko
 	// LR = PC + 4, PC = EXTS(LI || 0b00)
 	void Interpreter::bla(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bla]++;
-		}
-
 		core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
@@ -113,11 +93,6 @@ namespace Gekko
 	//          else PC = PC + EXTS(BD || 0b00)
 	void Interpreter::bc(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bc]++;
-		}
-
 		if (BcTest(info))
 		{
 			core->regs.pc = info.Imm.Address;
@@ -131,11 +106,6 @@ namespace Gekko
 
 	void Interpreter::bca(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bca]++;
-		}
-
 		if (BcTest(info))
 		{
 			core->regs.pc = info.Imm.Address;
@@ -149,11 +119,6 @@ namespace Gekko
 
 	void Interpreter::bcl(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bcl]++;
-		}
-
 		if (BcTest(info))
 		{
 			Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
@@ -168,11 +133,6 @@ namespace Gekko
 
 	void Interpreter::bcla(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bcla]++;
-		}
-
 		if (BcTest(info))
 		{
 			Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
@@ -207,11 +167,6 @@ namespace Gekko
 	//              PC = CTR || 0b00
 	void Interpreter::bcctr(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bcctr]++;
-		}
-
 		if (BctrTest(info))
 		{
 			core->regs.pc = core->regs.spr[(int)SPR::CTR] & ~3;
@@ -230,11 +185,6 @@ namespace Gekko
 	//              PC = CTR || 0b00
 	void Interpreter::bcctrl(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bcctrl]++;
-		}
-
 		if (BctrTest(info))
 		{
 			core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
@@ -254,11 +204,6 @@ namespace Gekko
 	//      PC = LR[0-29] || 0b00
 	void Interpreter::bclr(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::bclr]++;
-		}
-
 		if (BcTest(info))
 		{
 			core->regs.pc = core->regs.spr[(int)SPR::LR] & ~3;
@@ -279,11 +224,6 @@ namespace Gekko
 	//      LR = NLR
 	void Interpreter::bclrl(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::bclrl]++;
-		}
-
 		if (BcTest(info))
 		{
 			uint32_t lr = core->regs.pc + 4;

@@ -5,13 +5,10 @@
 
 namespace Gekko
 {
-	#define GEKKO_PSW   (op & 0x8000)
-	#define GEKKO_PSI   ((op >> 12) & 7)
-
-	#define LD_SCALE(n) ((Gekko->regs.spr[(int)SPR::GQRs + n] >> 24) & 0x3f)
-	#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((Gekko->regs.spr[(int)SPR::GQRs + n] >> 16) & 7)
-	#define ST_SCALE(n) ((Gekko->regs.spr[(int)SPR::GQRs + n] >>  8) & 0x3f)
-	#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((Gekko->regs.spr[(int)SPR::GQRs + n]      ) & 7)
+	#define LD_SCALE(n) ((core->regs.spr[(int)SPR::GQRs + n] >> 24) & 0x3f)
+	#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[(int)SPR::GQRs + n] >> 16) & 7)
+	#define ST_SCALE(n) ((core->regs.spr[(int)SPR::GQRs + n] >>  8) & 0x3f)
+	#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[(int)SPR::GQRs + n]      ) & 7)
 
 	// INT -> float (F = I * 2 ** -S)
 	float Interpreter::dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale)
@@ -32,7 +29,7 @@ namespace Gekko
 			default: flt = *((float*)&data); break;
 		}
 
-		return flt * Gekko->interp->ldScale[scale];
+		return flt * core->interp->ldScale[scale];
 	}
 
 	// float -> INT (I = ROUND(F * 2 ** S))
@@ -40,7 +37,7 @@ namespace Gekko
 	{
 		uint32_t uval;
 
-		data *= Gekko->interp->stScale[scale];
+		data *= core->interp->stScale[scale];
 
 		switch (type)
 		{
@@ -67,458 +64,412 @@ namespace Gekko
 		return uval;
 	}
 
-	// ---------------------------------------------------------------------------
-	// loads
-
-	OP(PSQ_L)
+	void Interpreter::psq_lx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_l]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
 			return;
 		}
 
-		if (Gekko->regs.msr & MSR_FP)
+		if (core->regs.msr & MSR_FP)
 		{
-			uint32_t EA = op & 0xfff, data0, data1;
-			int32_t d = RD;
-			uint8_t scale = (uint8_t)LD_SCALE(GEKKO_PSI);
-			GEKKO_QUANT_TYPE type = LD_TYPE(GEKKO_PSI);
-
-			if (EA & 0x800) EA |= 0xfffff000;
-			if (RA) EA += RRA;
-
-			if (GEKKO_PSW)
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
-
-				if (Gekko->exception) return;
-
-				PS0(d) = (double)dequantize(data0, type, scale);
-				PS1(d) = 1.0f;
-			}
-			else
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
-
-				if (Gekko->exception) return;
-
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
-				else Gekko->ReadWord(EA + 4, &data1);
-
-				if (Gekko->exception) return;
-
-				PS0(d) = (double)dequantize(data0, type, scale);
-				PS1(d) = (double)dequantize(data1, type, scale);
-			}
-
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(PSQ_LU)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lu]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
-			RA == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
-			return;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			uint32_t EA = op & 0xfff, data0, data1;
-			int32_t d = RD;
-			uint8_t scale = (uint8_t)LD_SCALE(GEKKO_PSI);
-			GEKKO_QUANT_TYPE type = LD_TYPE(GEKKO_PSI);
-
-			if (EA & 0x800) EA |= 0xfffff000;
-			EA += RRA;
-
-			if (GEKKO_PSW)
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
-
-				if (Gekko->exception) return;
-
-				PS0(d) = (double)dequantize(data0, type, scale);
-				PS1(d) = 1.0f;
-			}
-			else
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
-
-				if (Gekko->exception) return;
-
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
-				else Gekko->ReadWord(EA + 4, &data1);
-
-				if (Gekko->exception) return;
-
-				PS0(d) = (double)dequantize(data0, type, scale);
-				PS1(d) = (double)dequantize(data1, type, scale);
-			}
-
-			RRA = EA;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(PSQ_LUX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lux]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
-			RA == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
-			return;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			int i = (op >> 7) & 7;
-			uint32_t EA = RRB, data0, data1;
-			int32_t d = RD;
+			int i = info.paramBits[4];
+			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
+			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
 
-			EA += RRA;
+			if (info.paramBits[1]) EA += core->regs.gpr[info.paramBits[1]];
 
-			if (op & 0x400 /* W */)
+			if (info.paramBits[3] /* W */)
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
 				PS0(d) = (double)dequantize(data0, type, scale);
 				PS1(d) = 1.0f;
 			}
 			else
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
-				else Gekko->ReadWord(EA + 4, &data1);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA + 1, &data1);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA + 2, &data1);
+				else core->ReadWord(EA + 4, &data1);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
 				PS0(d) = (double)dequantize(data0, type, scale);
 				PS1(d) = (double)dequantize(data1, type, scale);
 			}
 
-			RRA = EA;
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(PSQ_LX)
+	void Interpreter::psq_stx(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_lx]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
 			return;
 		}
 
-		if (Gekko->regs.msr & MSR_FP)
+		if (core->regs.msr & MSR_FP)
 		{
-			int i = (op >> 7) & 7;
-			uint32_t EA = RRB, data0, data1;
-			int32_t d = RD;
+			int i = info.paramBits[4];
+			uint32_t EA = core->regs.gpr[info.paramBits[2]];
+			int32_t d = info.paramBits[0];
+			uint8_t scale = (uint8_t)ST_SCALE(i);
+			GEKKO_QUANT_TYPE type = ST_TYPE(i);
+
+			if (info.paramBits[1]) EA += core->regs.gpr[info.paramBits[1]];
+
+			if (info.paramBits[3] /* W */)
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+			}
+			else
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+
+				if (core->exception) return;
+
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+				else core->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+			}
+
+			if (core->exception) return;
+
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::psq_lux(AnalyzeInfo& info)
+	{
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+			info.paramBits[1] == 0)
+		{
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
+			return;
+		}
+
+		if (core->regs.msr & MSR_FP)
+		{
+			int i = info.paramBits[4];
+			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
+			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
 			GEKKO_QUANT_TYPE type = LD_TYPE(i);
 
-			if (RA) EA += RRA;
+			EA += core->regs.gpr[info.paramBits[1]];
 
-			if (op & 0x400 /* W */)
+			if (info.paramBits[3] /* W */)
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
 				PS0(d) = (double)dequantize(data0, type, scale);
 				PS1(d) = 1.0f;
 			}
 			else
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA, &data0);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA, &data0);
-				else Gekko->ReadWord(EA, &data0);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->ReadByte(EA + 1, &data1);
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->ReadHalf(EA + 2, &data1);
-				else Gekko->ReadWord(EA + 4, &data1);
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA + 1, &data1);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA + 2, &data1);
+				else core->ReadWord(EA + 4, &data1);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
 				PS0(d) = (double)dequantize(data0, type, scale);
 				PS1(d) = (double)dequantize(data1, type, scale);
 			}
 
-			Gekko->regs.pc += 4;
+			core->regs.gpr[info.paramBits[1]] = EA;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	// ---------------------------------------------------------------------------
-	// stores
-
-	OP(PSQ_ST)
+	void Interpreter::psq_stux(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+			info.paramBits[1] == 0)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_st]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
 			return;
 		}
 
-		if (Gekko->regs.msr & MSR_FP)
+		if (core->regs.msr & MSR_FP)
 		{
-			uint32_t EA = op & 0xfff;
-			int32_t d = RS;
-			uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
-			GEKKO_QUANT_TYPE type = ST_TYPE(GEKKO_PSI);
-
-			if (EA & 0x800) EA |= 0xfffff000;
-			if (RA) EA += RRA;
-
-			if (GEKKO_PSW)
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
-			}
-			else
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
-
-				if (Gekko->exception) return;
-
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-				else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
-			}
-
-			if (Gekko->exception) return;
-
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(PSQ_STU)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stu]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
-			 RA == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
-			return;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			uint32_t EA = op & 0xfff;
-			int32_t d = RS;
-			uint8_t scale = (uint8_t)ST_SCALE(GEKKO_PSI);
-			GEKKO_QUANT_TYPE type = ST_TYPE(GEKKO_PSI);
-
-			if (EA & 0x800) EA |= 0xfffff000;
-			EA += RRA;
-
-			if (GEKKO_PSW)
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
-			}
-			else
-			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
-
-				if (Gekko->exception) return;
-
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-				else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
-			}
-
-			if (Gekko->exception) return;
-
-			RRA = EA;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(PSQ_STUX)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stux]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
-			RA == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
-			return;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			int i = (op >> 7) & 7;
-			uint32_t EA = RRB;
-			int32_t d = RS;
+			int i = info.paramBits[4];
+			uint32_t EA = core->regs.gpr[info.paramBits[2]];
+			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(i);
 			GEKKO_QUANT_TYPE type = ST_TYPE(i);
 
-			EA += RRA;
+			EA += core->regs.gpr[info.paramBits[1]];
 
-			if (op & 0x400)
+			if (info.paramBits[3] /* W */)
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
 			}
 			else
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-				else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+				else core->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
 			}
 
-			if (Gekko->exception) return;
+			if (core->exception) return;
 
-			RRA = EA;
-			Gekko->regs.pc += 4;
+			core->regs.gpr[info.paramBits[1]] = EA;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(PSQ_STX)
+	void Interpreter::psq_l(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::psq_stx]++;
-		}
-
-		if ((Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(Gekko->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
-		{
-			Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-			Gekko->Exception(Exception::PROGRAM);
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
 			return;
 		}
 
-		if (Gekko->regs.msr & MSR_FP)
+		if (core->regs.msr & MSR_FP)
 		{
-			int i = (op >> 7) & 7;
-			uint32_t EA = RRB;
-			int32_t d = RS;
-			uint8_t scale = (uint8_t)ST_SCALE(i);
-			GEKKO_QUANT_TYPE type = ST_TYPE(i);
+			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
+			int32_t d = info.paramBits[0];
+			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
+			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);
 
-			if (RA) EA += RRA;
+			if (EA & 0x800) EA |= 0xfffff000;
+			if (info.paramBits[1]) EA += core->regs.gpr[info.paramBits[1]];
 
-			if (op & 0x400)
+			if (info.paramBits[2])
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
+
+				if (core->exception) return;
+
+				PS0(d) = (double)dequantize(data0, type, scale);
+				PS1(d) = 1.0f;
 			}
 			else
 			{
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA, quantize((float)PS0(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA, quantize((float)PS0(d), type, scale));
-				else Gekko->WriteWord(EA, quantize((float)PS0(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
 
-				if (Gekko->exception) return;
+				if (core->exception) return;
 
-				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) Gekko->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
-				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) Gekko->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
-				else Gekko->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA + 1, &data1);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA + 2, &data1);
+				else core->ReadWord(EA + 4, &data1);
+
+				if (core->exception) return;
+
+				PS0(d) = (double)dequantize(data0, type, scale);
+				PS1(d) = (double)dequantize(data1, type, scale);
 			}
 
-			if (Gekko->exception) return;
-
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::psq_lu(AnalyzeInfo& info)
+	{
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
+			info.paramBits[1] == 0)
+		{
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
+			return;
+		}
+
+		if (core->regs.msr & MSR_FP)
+		{
+			uint32_t EA = info.Imm.Signed & 0xfff, data0, data1;
+			int32_t d = info.paramBits[0];
+			uint8_t scale = (uint8_t)LD_SCALE(info.paramBits[3]);
+			GEKKO_QUANT_TYPE type = LD_TYPE(info.paramBits[3]);
+
+			if (EA & 0x800) EA |= 0xfffff000;
+			EA += core->regs.gpr[info.paramBits[1]];
+
+			if (info.paramBits[2])
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
+
+				if (core->exception) return;
+
+				PS0(d) = (double)dequantize(data0, type, scale);
+				PS1(d) = 1.0f;
+			}
+			else
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA, &data0);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA, &data0);
+				else core->ReadWord(EA, &data0);
+
+				if (core->exception) return;
+
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->ReadByte(EA + 1, &data1);
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->ReadHalf(EA + 2, &data1);
+				else core->ReadWord(EA + 4, &data1);
+
+				if (core->exception) return;
+
+				PS0(d) = (double)dequantize(data0, type, scale);
+				PS1(d) = (double)dequantize(data1, type, scale);
+			}
+
+			core->regs.gpr[info.paramBits[1]] = EA;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::psq_st(AnalyzeInfo& info)
+	{
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
+		{
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
+			return;
+		}
+
+		if (core->regs.msr & MSR_FP)
+		{
+			uint32_t EA = info.Imm.Signed & 0xfff;
+			int32_t d = info.paramBits[0];
+			uint8_t scale = (uint8_t)ST_SCALE(info.paramBits[3]);
+			GEKKO_QUANT_TYPE type = ST_TYPE(info.paramBits[3]);
+
+			if (EA & 0x800) EA |= 0xfffff000;
+			if (info.paramBits[1]) EA += core->regs.gpr[info.paramBits[1]];
+
+			if (info.paramBits[2])
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+			}
+			else
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+
+				if (core->exception) return;
+
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+				else core->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+			}
+
+			if (core->exception) return;
+
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::psq_stu(AnalyzeInfo& info)
+	{
+		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+			info.paramBits[1] == 0)
+		{
+			core->PrCause = PrivilegedCause::IllegalInstruction;
+			core->Exception(Exception::PROGRAM);
+			return;
+		}
+
+		if (core->regs.msr & MSR_FP)
+		{
+			uint32_t EA = info.Imm.Signed & 0xfff;
+			int32_t d = info.paramBits[0];
+			uint8_t scale = (uint8_t)ST_SCALE(info.paramBits[3]);
+			GEKKO_QUANT_TYPE type = ST_TYPE(info.paramBits[3]);
+
+			if (EA & 0x800) EA |= 0xfffff000;
+			EA += core->regs.gpr[info.paramBits[1]];
+
+			if (info.paramBits[2])
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+			}
+			else
+			{
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA, quantize((float)PS0(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA, quantize((float)PS0(d), type, scale));
+				else core->WriteWord(EA, quantize((float)PS0(d), type, scale));
+
+				if (core->exception) return;
+
+				if ((type == GEKKO_QUANT_TYPE::U8) || (type == GEKKO_QUANT_TYPE::S8)) core->WriteByte(EA + 1, quantize((float)PS1(d), type, scale));
+				else if ((type == GEKKO_QUANT_TYPE::U16) || (type == GEKKO_QUANT_TYPE::S16)) core->WriteHalf(EA + 2, quantize((float)PS1(d), type, scale));
+				else core->WriteWord(EA + 4, quantize((float)PS1(d), type, scale));
+			}
+
+			if (core->exception) return;
+
+			core->regs.gpr[info.paramBits[1]] = EA;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
 }

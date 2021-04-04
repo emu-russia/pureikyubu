@@ -163,12 +163,8 @@ namespace Gekko
 		c_1[54] = c_STFD;
 		c_1[55] = c_STFDU;
 
-		c_1[56] = c_PSQ_L;
-		c_1[57] = c_PSQ_LU;
 		c_1[58] = c_NI;
 		c_1[59] = c_OP59;
-		c_1[60] = c_PSQ_ST;
-		c_1[61] = c_PSQ_STU;
 		c_1[62] = c_NI;
 		c_1[63] = c_OP63;
 
@@ -359,10 +355,6 @@ namespace Gekko
 		c_63[1423] = c_MTFSFD;
 
 		// "4" extension
-		for (i = 0; i < 16; i++) c_4[(i << 7) | 12] = c_PSQ_LX;
-		for (i = 0; i < 16; i++) c_4[(i << 7) | 14] = c_PSQ_STX;
-		for (i = 0; i < 16; i++) c_4[(i << 7) | 76] = c_PSQ_LUX;
-		for (i = 0; i < 16; i++) c_4[(i << 7) | 78] = c_PSQ_STUX;
 		c_4[2028] = c_DCBZ_L;
 	}
 

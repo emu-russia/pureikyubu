@@ -19,8 +19,6 @@ namespace Gekko
 
 		GekkoCore* core = nullptr;
 
-		// Instruction handlers are gradually being replaced by a new interpreter implementation  (#190)
-
 		bool BcTest(AnalyzeInfo& info);
 		bool BctrTest(AnalyzeInfo& info);
 		void b(AnalyzeInfo& info);
@@ -314,14 +312,14 @@ namespace Gekko
 		void ps_merge11(AnalyzeInfo& info);
 		void ps_merge11_d(AnalyzeInfo& info);
 
-		static void c_PSQ_L(uint32_t op);
-		static void c_PSQ_LX(uint32_t op);
-		static void c_PSQ_LU(uint32_t op);
-		static void c_PSQ_LUX(uint32_t op);
-		static void c_PSQ_ST(uint32_t op);
-		static void c_PSQ_STX(uint32_t op);
-		static void c_PSQ_STU(uint32_t op);
-		static void c_PSQ_STUX(uint32_t op);
+		void psq_lx(AnalyzeInfo& info);
+		void psq_stx(AnalyzeInfo& info);
+		void psq_lux(AnalyzeInfo& info);
+		void psq_stux(AnalyzeInfo& info);
+		void psq_l(AnalyzeInfo& info);
+		void psq_lu(AnalyzeInfo& info);
+		void psq_st(AnalyzeInfo& info);
+		void psq_stu(AnalyzeInfo& info);
 
 		void rlwimi(AnalyzeInfo& info);
 		void rlwimi_d(AnalyzeInfo& info);
@@ -387,8 +385,8 @@ namespace Gekko
 		float       ldScale[64];        // for paired-single loads
 		float       stScale[64];        // for paired-single stores
 
-		static float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
-		static uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
+		float dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale);
+		uint32_t quantize(float data, GEKKO_QUANT_TYPE type, uint8_t scale);
 
 		void BranchCheck();
 

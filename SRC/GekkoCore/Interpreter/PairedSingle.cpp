@@ -11,11 +11,6 @@ namespace Gekko
 
 	void Interpreter::ps_div(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_div]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = PS0(info.paramBits[1]) / PS0(info.paramBits[2]);
@@ -32,11 +27,6 @@ namespace Gekko
 
 	void Interpreter::ps_sub(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_sub]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = PS0(info.paramBits[1]) - PS0(info.paramBits[2]);
@@ -53,11 +43,6 @@ namespace Gekko
 
 	void Interpreter::ps_add(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_add]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = PS0(info.paramBits[1]) + PS0(info.paramBits[2]);
@@ -74,11 +59,6 @@ namespace Gekko
 
 	void Interpreter::ps_sel(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_sel]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = (PS0(info.paramBits[1]) >= 0.0) ? (PS0(info.paramBits[2])) : (PS0(info.paramBits[3]));
@@ -95,11 +75,6 @@ namespace Gekko
 
 	void Interpreter::ps_res(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_res]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = 1.0f / PS0(info.paramBits[1]);
@@ -116,11 +91,6 @@ namespace Gekko
 
 	void Interpreter::ps_mul(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_mul]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = PS0(info.paramBits[1]) * PS0(info.paramBits[2]);
@@ -137,11 +107,6 @@ namespace Gekko
 
 	void Interpreter::ps_rsqrte(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_rsqrte]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = 1.0f / sqrt(PS0(info.paramBits[1]));
@@ -158,11 +123,6 @@ namespace Gekko
 
 	void Interpreter::ps_msub(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_msub]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -185,11 +145,6 @@ namespace Gekko
 
 	void Interpreter::ps_madd(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_madd]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -212,11 +167,6 @@ namespace Gekko
 
 	void Interpreter::ps_nmsub(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_nmsub]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -239,11 +189,6 @@ namespace Gekko
 
 	void Interpreter::ps_nmadd(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_nmadd]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -266,11 +211,6 @@ namespace Gekko
 
 	void Interpreter::ps_neg(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_neg]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			PS0(info.paramBits[0]) = -PS0(info.paramBits[1]);
@@ -287,11 +227,6 @@ namespace Gekko
 
 	void Interpreter::ps_mr(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_mr]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double p0 = PS0(info.paramBits[1]), p1 = PS1(info.paramBits[1]);
@@ -330,11 +265,6 @@ namespace Gekko
 
 	void Interpreter::ps_sum0(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_sum0]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double s0 = PS0(info.paramBits[1]) + PS1(info.paramBits[3]);
@@ -353,11 +283,6 @@ namespace Gekko
 
 	void Interpreter::ps_sum1(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_sum1]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double s0 = PS0(info.paramBits[2]);
@@ -376,11 +301,6 @@ namespace Gekko
 
 	void Interpreter::ps_muls0(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_muls0]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double m0 = PS0(info.paramBits[1]) * PS0(info.paramBits[2]);
@@ -399,11 +319,6 @@ namespace Gekko
 
 	void Interpreter::ps_muls1(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_muls1]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double m0 = PS0(info.paramBits[1]) * PS1(info.paramBits[2]);
@@ -422,11 +337,6 @@ namespace Gekko
 
 	void Interpreter::ps_madds0(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_madds0]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double s0 = (PS0(info.paramBits[1]) * PS0(info.paramBits[2])) + PS0(info.paramBits[3]);
@@ -445,11 +355,6 @@ namespace Gekko
 
 	void Interpreter::ps_madds1(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_madds1]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double s0 = (PS0(info.paramBits[1]) * PS1(info.paramBits[2])) + PS0(info.paramBits[3]);
@@ -468,11 +373,6 @@ namespace Gekko
 
 	void Interpreter::ps_cmpu0(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_cmpu0]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			int n = info.paramBits[0];
@@ -496,11 +396,6 @@ namespace Gekko
 
 	void Interpreter::ps_cmpo0(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_cmpo0]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			int n = info.paramBits[0];
@@ -524,11 +419,6 @@ namespace Gekko
 
 	void Interpreter::ps_cmpu1(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_cmpu1]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			int n = info.paramBits[0];
@@ -552,11 +442,6 @@ namespace Gekko
 
 	void Interpreter::ps_cmpo1(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_cmpo1]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			int n = info.paramBits[0];
@@ -580,11 +465,6 @@ namespace Gekko
 
 	void Interpreter::ps_merge00(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_merge00]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -603,11 +483,6 @@ namespace Gekko
 
 	void Interpreter::ps_merge01(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_merge01]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS0(info.paramBits[1]);
@@ -626,11 +501,6 @@ namespace Gekko
 
 	void Interpreter::ps_merge10(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_merge10]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS1(info.paramBits[1]);
@@ -649,11 +519,6 @@ namespace Gekko
 
 	void Interpreter::ps_merge11(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::ps_merge11]++;
-		}
-
 		if (core->regs.msr & MSR_FP)
 		{
 			double a = PS1(info.paramBits[1]);

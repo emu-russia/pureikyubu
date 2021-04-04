@@ -12,11 +12,6 @@ namespace Gekko
 	// CR0 (if .)
 	void Interpreter::rlwimi(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::rlwimi]++;
-		}
-
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], core->regs.gpr[info.paramBits[1]]);
 		uint32_t res = (r & m) | (core->regs.gpr[info.paramBits[0]] & ~m);
@@ -37,11 +32,6 @@ namespace Gekko
 	// CR0 (if .)
 	void Interpreter::rlwinm(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::rlwinm]++;
-		}
-
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], core->regs.gpr[info.paramBits[1]]);
 		uint32_t res = r & m;
@@ -61,11 +51,6 @@ namespace Gekko
 	// ra = r & m
 	void Interpreter::rlwnm(AnalyzeInfo& info)
 	{
-		if (core->opcodeStatsEnabled)
-		{
-			core->opcodeStats[(size_t)Gekko::Instruction::rlwnm]++;
-		}
-
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(core->regs.gpr[info.paramBits[2]] & 0x1f, core->regs.gpr[info.paramBits[1]]);
 		uint32_t res = r & m;

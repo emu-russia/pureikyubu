@@ -187,6 +187,15 @@ namespace Gekko
             case Instruction::ps_merge11: ps_merge11(info); break;
             case Instruction::ps_merge11_d: ps_merge11_d(info); break;
 
+            case Instruction::psq_lx: psq_lx(info); break;
+            case Instruction::psq_stx: psq_stx(info); break;
+            case Instruction::psq_lux: psq_lux(info); break;
+            case Instruction::psq_stux: psq_stux(info); break;
+            case Instruction::psq_l: psq_l(info); break;
+            case Instruction::psq_lu: psq_lu(info); break;
+            case Instruction::psq_st: psq_st(info); break;
+            case Instruction::psq_stu: psq_stu(info); break;
+
             case Instruction::rlwimi: rlwimi(info); break;
             case Instruction::rlwimi_d: rlwimi_d(info); break;
             case Instruction::rlwinm: rlwinm(info); break;
@@ -207,16 +216,13 @@ namespace Gekko
 
             default:
                 c_1[instr >> 26](instr);
-                break;
+                return;
         }
 
-        // TODO: Move here opcode usage statistics when all handlers have been redone. 
-
-        //if (Gekko->opcodeStatsEnabled)
-        //{
-        //    Gekko->opcodeStats[(size_t)Gekko::Instruction::sraw_d]++;
-        //}
-
+        if (Gekko->opcodeStatsEnabled)
+        {
+            Gekko->opcodeStats[(size_t)info.instr]++;
+        }
     }
 
     uint32_t Interpreter::GetRotMask(int mb, int me)
