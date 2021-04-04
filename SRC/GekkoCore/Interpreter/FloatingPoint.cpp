@@ -5,827 +5,503 @@
 namespace Gekko
 {
 
-	// ---------------------------------------------------------------------------
-	// arithmetic
-
-	OP(FADD)
+	void Interpreter::fadd(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fadd]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) + FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FADDD)
+	void Interpreter::fadd_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fadd_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) + FPRD(RB);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FADDS)
+	void Interpreter::fadds(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fadds]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FADDSD)
+	void Interpreter::fadds_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fadds_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) + FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSUB)
+	void Interpreter::fdiv(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsub]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) - FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSUBD)
+	void Interpreter::fdiv_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsub_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) - FPRD(RB);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSUBS)
+	void Interpreter::fdivs(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsubs]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSUBSD)
+	void Interpreter::fdivs_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsubs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) - FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMUL)
+	void Interpreter::fmul(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmul]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMULD)
+	void Interpreter::fmul_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmul_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMULS)
+	void Interpreter::fmuls(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmuls]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMULSD)
+	void Interpreter::fmuls_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmuls_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FDIV)
+	void Interpreter::fres(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fdiv]++;
+			FPRD(info.paramBits[0]) = 1.0 / FPRD(info.paramBits[1]);
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) / FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FDIVD)
+	void Interpreter::fres_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fdiv_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) / FPRD(RB);
+			FPRD(info.paramBits[0]) = 1.0 / FPRD(info.paramBits[1]);
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FDIVS)
+	void Interpreter::frsqrte(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fdivs]++;
+			FPRD(info.paramBits[0]) = 1.0 / sqrt(FPRD(info.paramBits[1]));
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FDIVSD)
+	void Interpreter::frsqrte_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fdivs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) / FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = 1.0 / sqrt(FPRD(info.paramBits[1]));
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRES)
+	void Interpreter::fsub(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fres]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = 1.0 / FPRD(RB);
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRESD)
+	void Interpreter::fsub_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fres_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = 1.0 / FPRD(RB);
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRSQRTE)
+	void Interpreter::fsubs(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::frsqrte]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = 1.0 / sqrt(FPRD(RB));
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRSQRTED)
+	void Interpreter::fsubs_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::frsqrte_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = 1.0 / sqrt(FPRD(RB));
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSEL)
+	void Interpreter::fsel(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsel]++;
+			FPRD(info.paramBits[0]) = (FPRD(info.paramBits[1]) >= 0.0) ? (FPRD(info.paramBits[2])) : (FPRD(info.paramBits[3]));
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FSELD)
+	void Interpreter::fsel_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fsel_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (FPRD(RA) >= 0.0) ? (FPRD(RC)) : (FPRD(RB));
+			FPRD(info.paramBits[0]) = (FPRD(info.paramBits[1]) >= 0.0) ? (FPRD(info.paramBits[2])) : (FPRD(info.paramBits[3]));
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMADD)
+	void Interpreter::fmadd(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadd]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMADDD)
+	void Interpreter::fmadd_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadd_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC) + FPRD(RB);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMADDS)
+	void Interpreter::fmadds(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadds]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMADDSD)
+	void Interpreter::fmadds_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmadds_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) + FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMSUB)
+	void Interpreter::fmsub(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsub]++;
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMSUBD)
+	void Interpreter::fmsub_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsub_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = FPRD(RA) * FPRD(RC) - FPRD(RB);
+			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMSUBS)
+	void Interpreter::fmsubs(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsubs]++;
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMSUBSD)
+	void Interpreter::fmsubs_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmsubs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(FPRD(RA) * FPRD(RC) - FPRD(RB));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMADD)
+	void Interpreter::fnmadd(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadd]++;
+			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMADDD)
+	void Interpreter::fnmadd_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadd_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = -(FPRD(RA) * FPRD(RC) + FPRD(RB));
+			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMADDS)
+	void Interpreter::fnmadds(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadds]++;
+			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3])));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMADDSD)
+	void Interpreter::fnmadds_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmadds_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) + FPRD(RB)));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3])));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMSUB)
+	void Interpreter::fnmsub(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsub]++;
+			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMSUBD)
+	void Interpreter::fnmsub_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsub_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = -(FPRD(RA) * FPRD(RC) - FPRD(RB));
+			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMSUBS)
+	void Interpreter::fnmsubs(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsubs]++;
+			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3])));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FNMSUBSD)
+	void Interpreter::fnmsubs_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnmsubs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRD(RD) = (float)(-(FPRD(RA) * FPRD(RC) - FPRD(RB)));
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(RD) = PS0(RD);
+			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3])));
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRSP)
+	void Interpreter::fctiw(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::frsp]++;
+			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
+			core->regs.pc += 4;
 		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
 
-		if (Gekko->regs.msr & MSR_FP)
+	void Interpreter::fctiw_d(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
 		{
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE)
+			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fctiwz(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fctiwz_d(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::frsp(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE)
 			{
-				PS0(RD) = (float)FPRD(RB);
-				PS1(RD) = PS0(RD);
+				PS0(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
+				PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			}
-			else FPRD(RD) = (float)FPRD(RB);
-			Gekko->regs.pc += 4;
+			else FPRD(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FRSPD)
+	void Interpreter::frsp_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::frsp_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			if (Gekko->regs.spr[(int)SPR::HID2] & HID2_PSE)
+			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE)
 			{
-				PS0(RD) = (float)FPRD(RB);
-				PS1(RD) = PS0(RD);
+				PS0(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
+				PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			}
-			else FPRD(RD) = (float)FPRD(RB);
+			else FPRD(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FCTIW)
+	void Interpreter::fcmpo(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiw]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FCTIWD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiw_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FCTIWZ)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiwz]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FCTIWZD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fctiwz_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)(uint32_t)(int32_t)FPRD(RB);
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FNEG)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fneg]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FNEGD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fneg_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) ^ 0x8000000000000000;
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FABS)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fabs]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FABSD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fabs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) & ~0x8000000000000000;
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FNABS)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnabs]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) | 0x8000000000000000;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	OP(FNABSD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fnabs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB) | 0x8000000000000000;
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	// ---------------------------------------------------------------------------
-	// compare
-
-	OP(FCMPU)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fcmpu]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			int32_t n = CRFD;
-			double a = FPRD(RA), b = FPRD(RB);
-			uint64_t da = FPRU(RA), db = FPRU(RB);
+			int32_t n = info.paramBits[0];
+			double a = FPRD(info.paramBits[1]), b = FPRD(info.paramBits[2]);
+			uint64_t da = FPRU(info.paramBits[1]), db = FPRU(info.paramBits[2]);
 			uint32_t c;
 
 			if (IS_NAN(da) || IS_NAN(db)) c = 1;
@@ -833,29 +509,24 @@ namespace Gekko
 			else if (a > b) c = 4;
 			else c = 2;
 
-			Gekko->regs.fpscr = (Gekko->regs.fpscr & 0xffff0fff) | (c << 12);
-			Gekko->regs.cr = (Gekko->regs.cr & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
+			core->regs.fpscr = (core->regs.fpscr & 0xffff0fff) | (c << 12);
+			core->regs.cr = (core->regs.cr & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
 			if (IS_SNAN(da) || IS_SNAN(db))
 			{
-				Gekko->regs.fpscr = Gekko->regs.fpscr | 0x01000000;
+				core->regs.fpscr = core->regs.fpscr | 0x01000000;
 			}
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FCMPO)
+	void Interpreter::fcmpu(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fcmpo]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			int32_t n = CRFD;
-			double a = FPRD(RA), b = FPRD(RB);
-			uint64_t da = FPRU(RA), db = FPRU(RB);
+			int32_t n = info.paramBits[0];
+			double a = FPRD(info.paramBits[1]), b = FPRD(info.paramBits[2]);
+			uint64_t da = FPRU(info.paramBits[1]), db = FPRU(info.paramBits[2]);
 			uint32_t c;
 
 			if (IS_NAN(da) || IS_NAN(db)) c = 1;
@@ -863,200 +534,215 @@ namespace Gekko
 			else if (a > b) c = 4;
 			else c = 2;
 
-			Gekko->regs.fpscr = (Gekko->regs.fpscr & 0xffff0fff) | (c << 12);
-			Gekko->regs.cr = (Gekko->regs.cr & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
+			core->regs.fpscr = (core->regs.fpscr & 0xffff0fff) | (c << 12);
+			core->regs.cr = (core->regs.cr & (~(0xf << ((7 - n) * 4)))) | (c << ((7 - n) * 4));
 			if (IS_SNAN(da) || IS_SNAN(db))
 			{
-				Gekko->regs.fpscr = Gekko->regs.fpscr | 0x01000000;
+				core->regs.fpscr = core->regs.fpscr | 0x01000000;
 			}
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	// ---------------------------------------------------------------------------
-	// move
-
-	// fd[32-63] = FPSCR
-	OP(MFFS)
+	void Interpreter::fabs(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mffs]++;
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) & ~0x8000000000000000;
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	// fd[32-63] = FPSCR, CR1
-	OP(MFFSD)
+	void Interpreter::fabs_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mffs_d]++;
-		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = (uint64_t)Gekko->regs.fpscr;
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) & ~0x8000000000000000;
 			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
-	}
-
-	// CR[crfD] = FPSCR[crfS]
-	OP(MCRFS)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mcrfs]++;
-		}
-
-		uint32_t fp = (Gekko->regs.fpscr >> (28 - RA)) & 0xf;
-		Gekko->regs.cr &= ~(0xf0000000 >> RD);
-		Gekko->regs.cr |= fp << (28 - RD);
-		Gekko->regs.pc += 4;
-	}
-
-	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
-	// FPSCR = (fb & mask) | (FPSCR & ~mask)
-	OP(MTFSF)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsf]++;
-		}
-
-		uint32_t m = 0, fm = FM;
-
-		for (int i = 7; i >= 0; i--)
-		{
-			if ((fm >> i) & 1)
-			{
-				m |= 0xf;
-			}
-			m <<= 4;
-		}
-
-		Gekko->regs.fpscr = ((uint32_t)FPRU(RB) & m) | (Gekko->regs.fpscr & ~m);
-		Gekko->regs.pc += 4;
-	}
-
-	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
-	// FPSCR = (fb & mask) | (FPSCR & ~mask)
-	OP(MTFSFD)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsf_d]++;
-		}
-
-		uint32_t m = 0, fm = FM;
-
-		for (int i = 7; i >= 0; i--)
-		{
-			if ((fm >> i) & 1)
-			{
-				m |= 0xf;
-			}
-			m <<= 4;
-		}
-
-		Gekko->regs.fpscr = ((uint32_t)FPRU(RB) & m) | (Gekko->regs.fpscr & ~m);
-		COMPUTE_CR1();
-		Gekko->regs.pc += 4;
-	}
-
-	// FPSCR(crbD) = 0 (clear bit)
-	OP(MTFSB0)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb0]++;
-		}
-
-		uint32_t m = 1 << (31 - CRBD);
-		Gekko->regs.fpscr &= ~m;
-		Gekko->regs.pc += 4;
-	}
-
-	// FPSCR(crbD) = 0 (clear bit), CR1
-	OP(MTFSB0D)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb0_d]++;
-		}
-
-		uint32_t m = 1 << (31 - CRBD);
-		Gekko->regs.fpscr &= ~m;
-		COMPUTE_CR1();
-		Gekko->regs.pc += 4;
-	}
-
-	// FPSCR(crbD) = 1 (set bit)
-	OP(MTFSB1)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb1]++;
-		}
-
-		uint32_t m = 1 << (31 - CRBD);
-		Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
-		Gekko->regs.pc += 4;
-	}
-
-	// FPSCR(crbD) = 1 (set bit), CR1
-	OP(MTFSB1D)
-	{
-		if (Gekko->opcodeStatsEnabled)
-		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::mtfsb1_d]++;
-		}
-
-		uint32_t m = 1 << (31 - CRBD);
-		Gekko->regs.fpscr = (Gekko->regs.fpscr & ~m) | m;
-		COMPUTE_CR1();
-		Gekko->regs.pc += 4;
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
 	// fd = fb
-	OP(FMR)
+	void Interpreter::fmr(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmr]++;
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]);
+			core->regs.pc += 4;
 		}
-
-		if (Gekko->regs.msr & MSR_FP)
-		{
-			FPRU(RD) = FPRU(RB);
-			Gekko->regs.pc += 4;
-		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	OP(FMRD)
+	void Interpreter::fmr_d(AnalyzeInfo& info)
 	{
-		if (Gekko->opcodeStatsEnabled)
+		if (core->regs.msr & MSR_FP)
 		{
-			Gekko->opcodeStats[(size_t)Gekko::Instruction::fmr_d]++;
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]);
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fnabs(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) | 0x8000000000000000;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fnabs_d(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) | 0x8000000000000000;
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fneg(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) ^ 0x8000000000000000;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	void Interpreter::fneg_d(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) ^ 0x8000000000000000;
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	// CR[crfD] = FPSCR[crfS]
+	void Interpreter::mcrfs(AnalyzeInfo& info)
+	{
+		uint32_t fp = (core->regs.fpscr >> (28 - info.paramBits[1])) & 0xf;
+		core->regs.cr &= ~(0xf0000000 >> info.paramBits[0]);
+		core->regs.cr |= fp << (28 - info.paramBits[0]);
+		core->regs.pc += 4;
+	}
+
+	// fd[32-63] = FPSCR
+	void Interpreter::mffs(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = (uint64_t)core->regs.fpscr;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	// fd[32-63] = FPSCR, CR1
+	void Interpreter::mffs_d(AnalyzeInfo& info)
+	{
+		if (core->regs.msr & MSR_FP)
+		{
+			FPRU(info.paramBits[0]) = (uint64_t)core->regs.fpscr;
+			COMPUTE_CR1();
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
+	}
+
+	// FPSCR(crbD) = 0 (clear bit)
+	void Interpreter::mtfsb0(AnalyzeInfo& info)
+	{
+		uint32_t m = 1 << (31 - info.paramBits[0]);
+		core->regs.fpscr &= ~m;
+		core->regs.pc += 4;
+	}
+
+	// FPSCR(crbD) = 0 (clear bit), CR1
+	void Interpreter::mtfsb0_d(AnalyzeInfo& info)
+	{
+		uint32_t m = 1 << (31 - info.paramBits[0]);
+		core->regs.fpscr &= ~m;
+		COMPUTE_CR1();
+		core->regs.pc += 4;
+	}
+
+	// FPSCR(crbD) = 1 (set bit)
+	void Interpreter::mtfsb1(AnalyzeInfo& info)
+	{
+		uint32_t m = 1 << (31 - info.paramBits[0]);
+		core->regs.fpscr = (core->regs.fpscr & ~m) | m;
+		core->regs.pc += 4;
+	}
+
+	// FPSCR(crbD) = 1 (set bit), CR1
+	void Interpreter::mtfsb1_d(AnalyzeInfo& info)
+	{
+		uint32_t m = 1 << (31 - info.paramBits[0]);
+		core->regs.fpscr = (core->regs.fpscr & ~m) | m;
+		COMPUTE_CR1();
+		core->regs.pc += 4;
+	}
+
+	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
+	// FPSCR = (fb & mask) | (FPSCR & ~mask)
+	void Interpreter::mtfsf(AnalyzeInfo& info)
+	{
+		uint32_t m = 0, fm = info.paramBits[0];
+
+		for (int i = 7; i >= 0; i--)
+		{
+			if ((fm >> i) & 1)
+			{
+				m |= 0xf;
+			}
+			m <<= 4;
 		}
 
-		if (Gekko->regs.msr & MSR_FP)
+		core->regs.fpscr = ((uint32_t)FPRU(info.paramBits[1]) & m) | (core->regs.fpscr & ~m);
+		core->regs.pc += 4;
+	}
+
+	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
+	// FPSCR = (fb & mask) | (FPSCR & ~mask)
+	void Interpreter::mtfsf_d(AnalyzeInfo& info)
+	{
+		uint32_t m = 0, fm = info.paramBits[0];
+
+		for (int i = 7; i >= 0; i--)
 		{
-			FPRU(RD) = FPRU(RB);
-			COMPUTE_CR1();
-			Gekko->regs.pc += 4;
+			if ((fm >> i) & 1)
+			{
+				m |= 0xf;
+			}
+			m <<= 4;
 		}
-		else Gekko->Exception(Gekko::Exception::FPUNAVAIL);
+
+		core->regs.fpscr = ((uint32_t)FPRU(info.paramBits[1]) & m) | (core->regs.fpscr & ~m);
+		COMPUTE_CR1();
+		core->regs.pc += 4;
+	}
+
+	void Interpreter::mtfsfi(AnalyzeInfo& info)
+	{
+		Debug::Halt("mtfsfi\n");
+	}
+
+	void Interpreter::mtfsfi_d(AnalyzeInfo& info)
+	{
+		Debug::Halt("mtfsfi.\n");
 	}
 
 }
