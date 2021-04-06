@@ -2,7 +2,5 @@
 
 #pragma once
 
-namespace IntelCore
-{
-
-}
+#include "IntelAnalyzer.h"
+#include "IntelAssembler.h"
