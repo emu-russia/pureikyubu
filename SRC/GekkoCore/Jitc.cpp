@@ -199,6 +199,12 @@ namespace Gekko
 		}
 
 		core->exception = false;
+
+		if (core->resetInstructionCounter)
+		{
+			core->resetInstructionCounter = false;
+			core->ops = 0;
+		}
 	}
 
 	bool Jitc::ExecuteInterpeterFallback()

@@ -85,6 +85,12 @@ namespace Gekko
         Dispatch(info, instr);
         core->ops++;
 
+        if (core->resetInstructionCounter)
+        {
+            core->resetInstructionCounter = false;
+            core->ops = 0;
+        }
+
         if (core->exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
 
         core->Tick();
