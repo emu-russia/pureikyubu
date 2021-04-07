@@ -88,6 +88,7 @@ namespace Gekko
         friend Interpreter;
         friend Jitc;
         friend CodeSegment;
+        friend GatherBuffer;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
@@ -155,9 +156,9 @@ namespace Gekko
         // Request to clear instruction counter
         volatile bool resetInstructionCounter = false;
 
-    public:
+        GatherBuffer* gatherBuffer;
 
-        GatherBuffer gatherBuffer;
+    public:
 
         // The instruction cache is not emulated because it is accessed only in one direction (Read).
         // Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.

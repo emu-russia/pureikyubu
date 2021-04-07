@@ -30,6 +30,8 @@ namespace Gekko
 
     GekkoCore::GekkoCore()
     {
+        gatherBuffer = new GatherBuffer(this);
+
         interp = new Interpreter(this);
 
         jitc = new Jitc(this);
@@ -47,6 +49,7 @@ namespace Gekko
         delete gekkoThread;
         delete interp;
         delete jitc;
+        delete gatherBuffer;
         JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
     }
 
@@ -94,7 +97,7 @@ namespace Gekko
         regs.spr[(int)SPR::DEC] = 0;
         regs.spr[(int)SPR::CTR] = 0;
 
-        gatherBuffer.Reset();
+        gatherBuffer->Reset();
 
         jitc->Reset();
         segmentsExecuted = 0;
