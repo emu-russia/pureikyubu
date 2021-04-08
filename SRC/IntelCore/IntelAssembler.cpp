@@ -763,8 +763,6 @@ namespace IntelCore
 		return info;
 	}
 
-	/// --------------
-
 	template <> AnalyzeInfo& IntelAssembler::cpuid<16>()
 	{
 		AnalyzeInfo info;
