@@ -91,6 +91,32 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& pushf();
 		template <size_t n> static AnalyzeInfo& pushfd();
 		template <size_t n> static AnalyzeInfo& pushfq();
+		template <size_t n> static AnalyzeInfo& cmpsb(Prefix pre=Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& cmpsw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& cmpsd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& cmpsq(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& lodsb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& lodsw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& lodsd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& lodsq(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& movsb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& movsw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& movsd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& movsq(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& scasb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& scasw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& scasd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& scasq(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& stosb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& stosw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& stosd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& stosq(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& insb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& insw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& insd(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& outsb(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& outsw(Prefix pre = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& outsd(Prefix pre = Prefix::NoPrefix);
 
 	};
 

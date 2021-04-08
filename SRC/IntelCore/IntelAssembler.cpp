@@ -136,6 +136,33 @@ namespace IntelCore
 			case Instruction::pushf: OneByte(info, 0x9c); break;
 			case Instruction::pushfd: TwoByte(info, 0x66, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
+
+			case Instruction::cmpsb: OneByte(info, 0xa6); break;
+			case Instruction::cmpsw: OneByte(info, 0xa7); break;
+			case Instruction::cmpsd: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsq: Invalid(); break;
+			case Instruction::lodsb: OneByte(info, 0xac); break;
+			case Instruction::lodsw: OneByte(info, 0xad); break;
+			case Instruction::lodsd: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsq: Invalid(); break;
+			case Instruction::movsb: OneByte(info, 0xa4); break;
+			case Instruction::movsw: OneByte(info, 0xa5); break;
+			case Instruction::movsd: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsq: Invalid(); break;
+			case Instruction::scasb: OneByte(info, 0xae); break;
+			case Instruction::scasw: OneByte(info, 0xaf); break;
+			case Instruction::scasd: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasq: Invalid(); break;
+			case Instruction::stosb: OneByte(info, 0xaa); break;
+			case Instruction::stosw: OneByte(info, 0xab); break;
+			case Instruction::stosd: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosq: Invalid(); break;
+			case Instruction::insb: OneByte(info, 0x6c); break;
+			case Instruction::insw: OneByte(info, 0x6d); break;
+			case Instruction::insd: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::outsb: OneByte(info, 0x6e); break;
+			case Instruction::outsw: OneByte(info, 0x6f); break;
+			case Instruction::outsd: TwoByte(info, 0x66, 0x6f); break;
 		}
 	}
 
@@ -207,6 +234,33 @@ namespace IntelCore
 			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
 			case Instruction::pushfd: OneByte(info, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
+
+			case Instruction::cmpsb: OneByte(info, 0xa6); break;
+			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsd: OneByte(info, 0xa7); break;
+			case Instruction::cmpsq: Invalid(); break;
+			case Instruction::lodsb: OneByte(info, 0xac); break;
+			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsd: OneByte(info, 0xad); break;
+			case Instruction::lodsq: Invalid(); break;
+			case Instruction::movsb: OneByte(info, 0xa4); break;
+			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsd: OneByte(info, 0xa5); break;
+			case Instruction::movsq: Invalid(); break;
+			case Instruction::scasb: OneByte(info, 0xae); break;
+			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasd: OneByte(info, 0xaf); break;
+			case Instruction::scasq: Invalid(); break;
+			case Instruction::stosb: OneByte(info, 0xaa); break;
+			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosd: OneByte(info, 0xab); break;
+			case Instruction::stosq: Invalid(); break;
+			case Instruction::insb: OneByte(info, 0x6c); break;
+			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insd: OneByte(info, 0x6d); break;
+			case Instruction::outsb: OneByte(info, 0x6e); break;
+			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsd: OneByte(info, 0x6f); break;
 		}
 	}
 
@@ -278,6 +332,33 @@ namespace IntelCore
 			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
 			case Instruction::pushfd: Invalid(); break;
 			case Instruction::pushfq: OneByte(info, 0x9c); break;
+
+			case Instruction::cmpsb: OneByte(info, 0xa6); break;
+			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsd: TwoByte(info, 0x67, 0xa7); break;
+			case Instruction::cmpsq: TwoByte(info, 0x48, 0xa7); break;
+			case Instruction::lodsb: OneByte(info, 0xac); break;
+			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsd: TwoByte(info, 0x67, 0xad); break;
+			case Instruction::lodsq: TwoByte(info, 0x48, 0xad); break;
+			case Instruction::movsb: OneByte(info, 0xa4); break;
+			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsd: TwoByte(info, 0x67, 0xa5); break;
+			case Instruction::movsq: TwoByte(info, 0x48, 0xa5); break;
+			case Instruction::scasb: OneByte(info, 0xae); break;
+			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasd: TwoByte(info, 0x67, 0xaf); break;
+			case Instruction::scasq: TwoByte(info, 0x48, 0xaf); break;
+			case Instruction::stosb: OneByte(info, 0xaa); break;
+			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosd: TwoByte(info, 0x67, 0xab); break;
+			case Instruction::stosq: TwoByte(info, 0x48, 0xab); break;
+			case Instruction::insb: OneByte(info, 0x6c); break;
+			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insd: TwoByte(info, 0x67, 0x6d); break;
+			case Instruction::outsb: OneByte(info, 0x6e); break;
+			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsd: TwoByte(info, 0x67, 0x6f); break;
 		}
 	}
 
@@ -1761,6 +1842,1020 @@ namespace IntelCore
 	{
 		AnalyzeInfo info;
 		info.instr = Instruction::pushfq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsq<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsq<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmpsq<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::cmpsq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsq<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsq<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lodsq<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::lodsq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsq<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsq<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::movsq<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::movsq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasq<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasq<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::scasq<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::scasq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosq<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosq<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stosq<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::stosq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::insd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::insd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsb<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsb<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsb<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsw<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsw;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsw<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsw;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsw<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsw;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsd<16>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsd<32>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::outsd<64>(Prefix pre)
+	{
+		AnalyzeInfo info;
+		if (pre != Prefix::NoPrefix)
+		{
+			info.prefixes[0] = pre;
+			info.numPrefixes = 1;
+		}
+		info.instr = Instruction::outsd;
 		Assemble64(info);
 		return info;
 	}

@@ -64,9 +64,10 @@ namespace IntelCore
 		popad,
 		cwd,
 		cdq,
+		cqo,
 		cbw,
 		cwde,
-		cqo,
+		cdqe,
 		movsx,
 		movsxd,
 		movzx,
@@ -198,17 +199,24 @@ namespace IntelCore
 		leave,
 		movsb,
 		movsw,
+		movsd,
+		movsq,
 		cmpsb,
 		cmpsw,
+		cmpsd,
+		cmpsq,
 		scasb,
 		scasw,
 		scasd,
+		scasq,
 		lodsb,
 		lodsw,
 		lodsd,
+		lodsq,
 		stosb,
 		stosw,
 		stosd,
+		stosq,
 		//rep,					// Treated as a prefix 
 		//repe,					// Treated as a prefix 
 		//repz = repe,			// Treated as a prefix 
@@ -306,20 +314,15 @@ namespace IntelCore
 		rdgsbase,
 		wrfsbase,
 		wrgsbase,
-
-		// 64-Bit Mode Instructions
-
-		cdqe,
-		cmpsq,
-		cmpxchg16b,
-		lodsq,
-		movsq,
-		movzx_64,
-		stosq,
 		swapgs,
 		syscall,
 		sysret,
 		sysretq,
+
+		// 64-Bit Mode Instructions
+
+		cmpxchg16b,
+		movzx_64,
 
 		// BMI1, BMI2
 
@@ -561,7 +564,7 @@ namespace IntelCore
 		movhpd,
 		movlpd,
 		movmskpd,
-		movsd,
+		movsd_sse,
 		addpd,
 		addsd,
 		subpd,
@@ -581,7 +584,7 @@ namespace IntelCore
 		orpd,
 		xorpd,
 		cmppd,
-		cmpsd,
+		cmpsd_sse,
 		comisd,
 		ucomisd,
 		shufpd,
