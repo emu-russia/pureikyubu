@@ -29,6 +29,13 @@ namespace IntelCore
 		OneByte(info, b2);
 	}
 
+	void IntelAssembler::TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3)
+	{
+		OneByte(info, b1);
+		OneByte(info, b2);
+		OneByte(info, b3);
+	}
+
 	void IntelAssembler::OneByteImm8(AnalyzeInfo& info, uint8_t n)
 	{
 		if (info.numParams != 1)
@@ -85,6 +92,36 @@ namespace IntelCore
 			case Instruction::stc: OneByte(info, 0xf9); break;
 			case Instruction::std: OneByte(info, 0xfd); break;
 			case Instruction::sti: OneByte(info, 0xfb); break;
+
+			case Instruction::cpuid: TwoByte(info, 0x0f, 0xa2); break;
+			case Instruction::daa: OneByte(info, 0x27); break;
+			case Instruction::das: OneByte(info, 0x2f); break;
+			case Instruction::hlt: OneByte(info, 0xf4); break;
+			case Instruction::int3: OneByte(info, 0xcc); break;
+			case Instruction::into: OneByte(info, 0xce); break;
+			case Instruction::int1: OneByte(info, 0xf1); break;
+			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
+			case Instruction::iret: OneByte(info, 0xcf); break;
+			case Instruction::iretd: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iretq: Invalid(); break;
+			case Instruction::lahf: OneByte(info, 0x9f); break;
+			case Instruction::sahf: OneByte(info, 0x9e); break;
+			case Instruction::leave: OneByte(info, 0xc9); break;
+			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
+			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
+			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
+			case Instruction::rdtscp: TriByte(info, 0x0f, 0x01, 0xf9); break;
+			case Instruction::rsm: TwoByte(info, 0x0f, 0xaa); break;
+			case Instruction::swapgs: Invalid(); break;
+			case Instruction::syscall: Invalid(); break;
+			case Instruction::sysret: Invalid(); break;
+			case Instruction::sysretq: Invalid(); break;
+			case Instruction::ud2: TwoByte(info, 0x0f, 0x0b); break;
+			case Instruction::wait: OneByte(info, 0x9b); break;
+			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
+			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
+			case Instruction::xlatb: OneByte(info, 0xd7); break;
 		}
 	}
 
@@ -112,6 +149,36 @@ namespace IntelCore
 			case Instruction::stc: OneByte(info, 0xf9); break;
 			case Instruction::std: OneByte(info, 0xfd); break;
 			case Instruction::sti: OneByte(info, 0xfb); break;
+
+			case Instruction::cpuid: TwoByte(info, 0x0f, 0xa2); break;
+			case Instruction::daa: OneByte(info, 0x27); break;
+			case Instruction::das: OneByte(info, 0x2f); break;
+			case Instruction::hlt: OneByte(info, 0xf4); break;
+			case Instruction::int3: OneByte(info, 0xcc); break;
+			case Instruction::into: OneByte(info, 0xce); break;
+			case Instruction::int1: OneByte(info, 0xf1); break;
+			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
+			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iretd: OneByte(info, 0xcf); break;
+			case Instruction::iretq: Invalid(); break;
+			case Instruction::lahf: OneByte(info, 0x9f); break;
+			case Instruction::sahf: OneByte(info, 0x9e); break;
+			case Instruction::leave: OneByte(info, 0xc9); break;
+			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
+			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
+			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
+			case Instruction::rdtscp: TriByte(info, 0x0f, 0x01, 0xf9); break;
+			case Instruction::rsm: TwoByte(info, 0x0f, 0xaa); break;
+			case Instruction::swapgs: Invalid(); break;
+			case Instruction::syscall: Invalid(); break;
+			case Instruction::sysret: Invalid(); break;
+			case Instruction::sysretq: Invalid(); break;
+			case Instruction::ud2: TwoByte(info, 0x0f, 0x0b); break;
+			case Instruction::wait: OneByte(info, 0x9b); break;
+			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
+			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
+			case Instruction::xlatb: OneByte(info, 0xd7); break;
 		}
 	}
 
@@ -139,6 +206,36 @@ namespace IntelCore
 			case Instruction::stc: OneByte(info, 0xf9); break;
 			case Instruction::std: OneByte(info, 0xfd); break;
 			case Instruction::sti: OneByte(info, 0xfb); break;
+
+			case Instruction::cpuid: TwoByte(info, 0x0f, 0xa2); break;
+			case Instruction::daa: Invalid(); break;
+			case Instruction::das: Invalid(); break;
+			case Instruction::hlt: OneByte(info, 0xf4); break;
+			case Instruction::int3: OneByte(info, 0xcc); break;
+			case Instruction::into: OneByte(info, 0xce); break;
+			case Instruction::int1: OneByte(info, 0xf1); break;
+			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
+			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iretd: OneByte(info, 0xcf); break;
+			case Instruction::iretq: TwoByte(info, 0x48, 0xcf); break;
+			case Instruction::lahf: Invalid(); break;
+			case Instruction::sahf: Invalid(); break;
+			case Instruction::leave: OneByte(info, 0xc9); break;
+			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
+			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
+			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
+			case Instruction::rdtscp: TriByte(info, 0x0f, 0x01, 0xf9); break;
+			case Instruction::rsm: TwoByte(info, 0x0f, 0xaa); break;
+			case Instruction::swapgs: TriByte(info, 0x0f, 0x01, 0xf8); break;
+			case Instruction::syscall: TwoByte(info, 0x0f, 0x05); break;
+			case Instruction::sysret: TwoByte(info, 0x0f, 0x07); break;
+			case Instruction::sysretq: TriByte(info, 0x48, 0x0f, 0x07); break;
+			case Instruction::ud2: TwoByte(info, 0x0f, 0x0b); break;
+			case Instruction::wait: OneByte(info, 0x9b); break;
+			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
+			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
+			case Instruction::xlatb: TwoByte(info, 0x48, 0xd7); break;
 		}
 	}
 
@@ -662,6 +759,728 @@ namespace IntelCore
 	{
 		AnalyzeInfo info;
 		info.instr = Instruction::sti;
+		Assemble64(info);
+		return info;
+	}
+
+	/// --------------
+
+	template <> AnalyzeInfo& IntelAssembler::cpuid<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cpuid;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cpuid<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cpuid;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cpuid<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cpuid;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::daa<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::daa;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::daa<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::daa;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::daa<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::daa;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::das<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::das;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::das<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::das;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::das<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::das;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::hlt<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::hlt;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::hlt<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::hlt;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::hlt<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::hlt;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int3<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int3;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int3<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int3;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int3<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int3;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::into<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::into;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::into<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::into;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::into<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::into;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int1<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int1;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int1<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int1;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::int1<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::int1;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::invd<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::invd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::invd<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::invd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::invd<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::invd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iret<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iret;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iret<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iret;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iret<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iret;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretd<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretd<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretd<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretq<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretq<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::iretq<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::iretq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lahf<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::lahf;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lahf<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::lahf;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::lahf<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::lahf;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sahf<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sahf;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sahf<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sahf;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sahf<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sahf;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::leave<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::leave;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::leave<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::leave;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::leave<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::leave;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::nop<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::nop;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::nop<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::nop;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::nop<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::nop;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdmsr<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdmsr;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdmsr<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdmsr;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdmsr<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdmsr;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdpmc<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdpmc;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdpmc<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdpmc;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdpmc<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdpmc;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtsc<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtsc;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtsc<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtsc;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtsc<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtsc;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtscp<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtscp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtscp<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtscp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rdtscp<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rdtscp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rsm<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rsm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rsm<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rsm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::rsm<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::rsm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::swapgs<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::swapgs;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::swapgs<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::swapgs;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::swapgs<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::swapgs;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::syscall<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::syscall;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::syscall<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::syscall;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::syscall<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::syscall;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysret<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysret;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysret<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysret;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysret<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysret;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysretq<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysretq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysretq<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysretq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sysretq<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sysretq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::ud2<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::ud2;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::ud2<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::ud2;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::ud2<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::ud2;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wait<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wait<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wait<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::fwait<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::fwait<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::fwait<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wait;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wbinvd<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wbinvd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wbinvd<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wbinvd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wbinvd<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wbinvd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wrmsr<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wrmsr;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wrmsr<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wrmsr;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::wrmsr<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::wrmsr;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::xlatb<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::xlatb;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::xlatb<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::xlatb;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::xlatb<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::xlatb;
 		Assemble64(info);
 		return info;
 	}

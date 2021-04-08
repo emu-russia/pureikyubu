@@ -187,9 +187,12 @@ namespace IntelCore
 		ret,				// in same segment
 		retfar,				// in other segment
 		iret,
+		iretd,
+		iretq,
 		_int,
 		int3,
 		into,
+		int1,
 		bound,
 		enter,
 		leave,
@@ -239,7 +242,9 @@ namespace IntelCore
 		lss,
 		lea,
 		nop,
-		ud,
+		ud0,
+		ud1,
+		ud2,
 		xlat,
 		xlatb = xlat,
 		cpuid,
@@ -312,6 +317,7 @@ namespace IntelCore
 		swapgs,
 		syscall,
 		sysret,
+		sysretq,
 
 		// BMI1, BMI2
 
@@ -1054,9 +1060,9 @@ namespace IntelCore
 	enum class Prefix : int
 	{
 		NoPrefix = 0,
-		AddressSize,
+		AddressSize,	// 0x67
 		Lock,
-		OperandSize,
+		OperandSize,    // 0x66
 		SegCs,
 		SegDs,
 		SegEs,

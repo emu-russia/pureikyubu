@@ -13,6 +13,7 @@ namespace IntelCore
 		static void Invalid();
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
 		static void TwoByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2);
+		static void TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3);
 		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
 		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
 
@@ -50,6 +51,36 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& stc();
 		template <size_t n> static AnalyzeInfo& std();
 		template <size_t n> static AnalyzeInfo& sti();
+		template <size_t n> static AnalyzeInfo& cpuid();
+		template <size_t n> static AnalyzeInfo& daa();
+		template <size_t n> static AnalyzeInfo& das();
+		template <size_t n> static AnalyzeInfo& hlt();
+		template <size_t n> static AnalyzeInfo& int3();
+		template <size_t n> static AnalyzeInfo& into();
+		template <size_t n> static AnalyzeInfo& int1();
+		template <size_t n> static AnalyzeInfo& invd();
+		template <size_t n> static AnalyzeInfo& iret();
+		template <size_t n> static AnalyzeInfo& iretd();
+		template <size_t n> static AnalyzeInfo& iretq();
+		template <size_t n> static AnalyzeInfo& lahf();
+		template <size_t n> static AnalyzeInfo& sahf();
+		template <size_t n> static AnalyzeInfo& leave();
+		template <size_t n> static AnalyzeInfo& nop();
+		template <size_t n> static AnalyzeInfo& rdmsr();
+		template <size_t n> static AnalyzeInfo& rdpmc();
+		template <size_t n> static AnalyzeInfo& rdtsc();
+		template <size_t n> static AnalyzeInfo& rdtscp();
+		template <size_t n> static AnalyzeInfo& rsm();
+		template <size_t n> static AnalyzeInfo& swapgs();
+		template <size_t n> static AnalyzeInfo& syscall();
+		template <size_t n> static AnalyzeInfo& sysret();
+		template <size_t n> static AnalyzeInfo& sysretq();
+		template <size_t n> static AnalyzeInfo& ud2();
+		template <size_t n> static AnalyzeInfo& wait();
+		template <size_t n> static AnalyzeInfo& fwait();
+		template <size_t n> static AnalyzeInfo& wbinvd();
+		template <size_t n> static AnalyzeInfo& wrmsr();
+		template <size_t n> static AnalyzeInfo& xlatb();
 
 	};
 
