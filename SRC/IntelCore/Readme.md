@@ -13,7 +13,7 @@ Such a name was chosen with a reserve that the rest of UVNA will be implemented 
 
 I will add a description of the format of the instructions here so that every time not climb into the 5000-page manual.
 
-Intel architecture actually hides three architectures:
+Intel architecture actually hides three architectures (`modes`):
 - DOS-era architecture (16-bit)
 - Protected mode architecture that was fully introduced in the 386 processor (32-bit)
 - Long Mode architecture originally developed by AMD engineers but later adopted by Intel (64-bit)
