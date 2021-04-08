@@ -18,6 +18,7 @@ namespace IntelCore
 		// General-Purpose Instructions
 
 		mov,
+		mov_sr,				// Move to/from Segment Registers
 		cmove,
 		cmovz = cmove,
 		cmovne,
@@ -54,7 +55,9 @@ namespace IntelCore
 		cmpxchg,
 		cmpxchg8b,
 		push,
+		push_sr,			// Push Segment Register onto the Stack
 		pop,
+		pop_sr,				// Pop a Segment Register from the Stack
 		pusha,
 		pushad,
 		popa,
@@ -180,6 +183,7 @@ namespace IntelCore
 		ret,
 		iret,
 		_int,
+		int3,
 		into,
 		bound,
 		enter,
@@ -982,7 +986,7 @@ namespace IntelCore
 		str,
 		lidt,
 		sidt,
-		mov_cr,
+		mov_cr,				// Move to/from Control Registers
 		lmsw,
 		smsw,
 		clts,
@@ -991,12 +995,12 @@ namespace IntelCore
 		lsl,
 		verr,
 		verw,
-		mov_dr,
+		mov_dr,				// MOV – Move to/from Debug Registers
 		invd,
 		wbinvd,
 		invlpg,
 		invpcid,
-		lock,
+		//lock,				// Treated as a prefix 
 		hlt,
 		rsm,
 		rdmsr,
@@ -1034,9 +1038,93 @@ namespace IntelCore
 
 	};
 
-	struct AnalyzeInfo16
+	/// <summary>
+	/// Used to set the instruction prefixes.
+	/// </summary>
+	enum class Prefix : int
 	{
+		NoPrefix = 0,
+		AddressSize,
+		Lock,
+		OperandSize,
+		SegCs,
+		SegDs,
+		SegEs,
+		SegFs,
+		SegGs,
+		SegSs,
+	};
 
+	/// <summary>
+	/// Category of instructions for additional analysis. 
+	/// Of greatest interest are the instructions in the FlowControl category, which affect the construction of a call graph (for example). 
+	/// </summary>
+	enum class Category : int
+	{
+		NothingSpecial = 0,		// Nothing special
+		FlowControl,			// The instruction can change the flow of execution (jmp, call, ret, etc.) 
+		Fpu,					// x87 FPU Instruction
+		Mmx,					// MMX Instruction
+		Sse,					// SSE (any) Instruction
+		Avx,					// AVX (any) Instruction
+	};
+
+	/// <summary>
+	/// One of the parameters 
+	/// </summary>
+	enum class Param : int
+	{
+		Unknown = -1,
+
+	};
+
+	constexpr auto ParamsMax = 8;
+
+	// The maximum size of all prefixes. (bytes)
+	constexpr auto PrefixMaxSize = 16;
+
+	// Maximum instruction size excluding prefixes. (bytes)
+	constexpr auto InstrMaxSize = 16;
+
+	struct AnalyzeInfo
+	{
+		Category category;		// It is set by the analyzer, for other cases it is not necessary to set it. 
+
+		// When analyzing the flow of instructions, prefixes are separated from instruction,
+		// so the total size of the code batch will be equal to the size of all prefixes + the size of the instruction itself. 
+
+		Prefix prefixes[PrefixMaxSize];
+		size_t numPrefixes;
+		uint8_t prefixBytes[PrefixMaxSize];
+		size_t prefixSize;
+
+		Instruction instr;
+		uint8_t instrBytes[InstrMaxSize];
+		size_t instrSize;
+
+		Param params[ParamsMax];
+		size_t numParams;
+
+		union Disp
+		{
+			uint8_t disp8;
+			uint16_t disp16;
+			uint32_t disp32;
+			uint64_t disp64;
+		};
+
+		union Imm
+		{
+			uint8_t uimm8;
+			uint16_t uimm16;
+			uint32_t uimm32;
+			uint64_t uimm64;
+
+			int8_t simm8;
+			int16_t simm16;
+			int32_t simm32;
+			int64_t simm64;
+		};
 	};
 
 }

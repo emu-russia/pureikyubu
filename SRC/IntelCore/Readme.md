@@ -30,3 +30,15 @@ Then there are extensions, mainly related to speeding up the calculation of floa
 - AVX-512
 
 These instruction format extensions can also be viewed as layers and implemented incrementally.
+
+## General-Purpose and System Instructions
+
+|Instruction format category |List of instructions |
+|---|---|
+|Instructions using ModRM |ADC, ADD, AND, ARPL, BOUND, BSF, BSR, BT, BTC, BTR, BTS, CALL (in same segment), CALL (in other segment), CMP, CMPXCHG, DEC, DIV, IDIV, IMUL, INC, INVLPG, INVPCID, JMP (to same segment), JMP (to other segment), LAR, LDS, LEA, LES, LFS, LGDT, LGS, LIDT, LLDT, LDTR, LDTR, LMSW, LSL, LSS, LTR, MOV, MOVBE, MOVSX, MOVZX, MUL, NOP (Multi-byte), NOT, OR, POP, PUSH, RCL, RCR, ROL, ROR, SAL, SAR, SBB, SETcc, SGDT, SHL, SHLD, SHR, SHRD, SIDT, SLDT, SMSW, STR, SUB, TEST, VERR, VERW, XADD, XCHG, XOR|
+|Simple encoding instructions|BSWAP, IN, INT n, Jcc, JCXZ/JECXZ, LOOP, LOOPZ/LOOPE, LOOPNZ/LOOPNE, MOV (Control Registers), MOV (Debug Registers), OUT, POP (Segment Register), PUSH (Segment Register), RET (to same segment), RET (to other segment)|
+|One or more byte instructions|AAA, AAD, AAM, AAS, CBW, CDQ, CLC, CLD, CLI, CLTS, CMC, CMPS/CMPSB/CMPSW/CMPSD, CPUID, CWD, CWDE, DAA, DAS, HLT, INS, INT 3, INTO, INVD, IRET/IRETD, LAHF, LEAVE, LODS/LODSB/LODSW/LODSD, MOVS/MOVSB/MOVSW/MOVSD, NOP, OUTS, POPA/POPAD, POPF/POPFD, PUSHA/PUSHAD, PUSHF/PUSHFD, RDMSR, RDPMC, RDTSC, RDTSCP, REP INS, REP LODS, REP MOVS, REP OUTS, REP STOS, REPE CMPS, REPE SCAS, REPNE CMPS, REPNE SCAS, RSM, SAHF, SCAS/SCASB/SCASW/SCASD, STC, STD, STI, STOS/STOSB/STOSW/STOSD, UD0, UD1, UD2, WAIT, WBINVD, WRMSR, XLAT/XLATB|
+
+## The situation with prefixes
+
+The `prefixes` property in the `AnalyzeInfo` structure is used to set the prefixes.
