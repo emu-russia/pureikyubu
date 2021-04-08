@@ -33,7 +33,7 @@ namespace Gekko
 		seg->Write64((uint64_t)core->regs.gpr);
 
 		// DEBUG: Example of using a code generator 
-		//IntelCore::AnalyzeInfo info = IntelAssembler::adc<64>(...);
+		//seg->Write(IntelAssembler::adc<64>());
 
 	}
 

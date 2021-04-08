@@ -21,6 +21,7 @@ namespace Gekko
 		void Write16(uint16_t data);
 		void Write32(uint32_t data);
 		void Write64(uint64_t data);
+		void Write(IntelCore::AnalyzeInfo& info);
 	};
 
 	class Jitc

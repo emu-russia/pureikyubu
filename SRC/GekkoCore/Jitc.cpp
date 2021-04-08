@@ -120,6 +120,19 @@ namespace Gekko
 		Write32((uint32_t)(data >> 32));
 	}
 
+	void CodeSegment::Write(IntelCore::AnalyzeInfo& info)
+	{
+		for (size_t i = 0; i < info.prefixSize; i++)
+		{
+			code.push_back(info.prefixBytes[i]);
+		}
+
+		for (size_t i = 0; i < info.instrSize; i++)
+		{
+			code.push_back(info.instrBytes[i]);
+		}
+	}
+
 	void Jitc::InvalidateAll()
 	{
 		for (auto it = segments.begin(); it != segments.end(); ++it)

@@ -16,6 +16,8 @@
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 
+#include "../IntelCore/IntelCore.h"
+
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"
@@ -30,7 +32,6 @@
 #include "../Hardware/MI.h"
 #include "../Hardware/PI.h"
 #include "../Debugger/Debugger.h"
-#include "../IntelCore/IntelCore.h"
 
 #ifdef _LINUX
 #define _stricmp strcasecmp
