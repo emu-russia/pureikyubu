@@ -70,6 +70,9 @@ namespace IntelCore
 
 	void IntelAssembler::Assemble16(AnalyzeInfo& info)
 	{
+		info.prefixSize = 0;
+		info.instrSize = 0;
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -127,6 +130,9 @@ namespace IntelCore
 
 	void IntelAssembler::Assemble32(AnalyzeInfo& info)
 	{
+		info.prefixSize = 0;
+		info.instrSize = 0;
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -184,6 +190,9 @@ namespace IntelCore
 
 	void IntelAssembler::Assemble64(AnalyzeInfo& info)
 	{
+		info.prefixSize = 0;
+		info.instrSize = 0;
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: Invalid(); break;
