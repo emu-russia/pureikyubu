@@ -59,7 +59,7 @@ namespace Gekko
 		{
 			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
 			{
-				Gekko::Gekko->gatherBuffer.Write8((uint8_t)data);
+				gatherBuffer->Write8((uint8_t)data);
 				return;
 			}
 		}
@@ -137,7 +137,7 @@ namespace Gekko
 		{
 			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
 			{
-				Gekko::Gekko->gatherBuffer.Write16((uint16_t)data);
+				gatherBuffer->Write16((uint16_t)data);
 				return;
 			}
 		}
@@ -209,7 +209,7 @@ namespace Gekko
 		{
 			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
 			{
-				Gekko::Gekko->gatherBuffer.Write32(data);
+				gatherBuffer->Write32(data);
 				return;
 			}
 		}
@@ -283,7 +283,7 @@ namespace Gekko
 		{
 			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
 			{
-				Gekko::Gekko->gatherBuffer.Write64(*data);
+				gatherBuffer->Write64(*data);
 				return;
 			}
 		}

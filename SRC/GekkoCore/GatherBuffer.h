@@ -4,6 +4,8 @@
 
 namespace Gekko
 {
+	class GekkoCore;
+
 	class GatherBuffer
 	{
 		uint8_t fifo[32 * 4] = { 0 };
@@ -15,7 +17,11 @@ namespace Gekko
 
 		bool log = false;
 
+		GekkoCore* core;
+
 	public:
+
+		GatherBuffer(GekkoCore* parent) : core(parent) {}
 
 		void Reset();
 

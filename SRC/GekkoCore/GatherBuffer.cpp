@@ -91,7 +91,7 @@ namespace Gekko
 				Report(Channel::CPU, "Burst gather buffer. Bytes left: %zi\n", GatherSize());
 			}
 
-			PIWriteBurst(Gekko->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
+			PIWriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
 		}
 	}
 

@@ -16,6 +16,8 @@
 #include "../Common/Json.h"
 #include "../Common/Jdi.h"
 
+#include "../IntelCore/IntelCore.h"
+
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"

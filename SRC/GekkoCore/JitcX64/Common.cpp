@@ -3,6 +3,8 @@
 // X64 Register usage:
 // rsi: offset Gekko::regs.gpr
 
+using namespace IntelCore;
+
 namespace Gekko
 {
 	// Special sections of code that are executed at the beginning and end of each translated segment.
@@ -29,6 +31,9 @@ namespace Gekko
 
 		seg->Write16(0xbe48);
 		seg->Write64((uint64_t)core->regs.gpr);
+
+		// DEBUG: Example of using a code generator 
+		//seg->Write(IntelAssembler::adc<64>());
 
 	}
 

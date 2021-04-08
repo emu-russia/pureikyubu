@@ -170,7 +170,7 @@ namespace Gekko
 		switch (spr)
 		{
 			case (int)SPR::WPAR:
-				value = (core->regs.spr[spr] & ~0x1f) | (core->gatherBuffer.NotEmpty() ? 1 : 0);
+				value = (core->regs.spr[spr] & ~0x1f) | (core->gatherBuffer->NotEmpty() ? 1 : 0);
 				break;
 
 			case (int)SPR::HID1:
@@ -301,7 +301,7 @@ namespace Gekko
 			// write gathering buffer
 			case (int)SPR::WPAR:
 				// A mtspr to WPAR invalidates the data.
-				core->gatherBuffer.Reset();
+				core->gatherBuffer->Reset();
 				break;
 
 			case (int)SPR::HID0:
