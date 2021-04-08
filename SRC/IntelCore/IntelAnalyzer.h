@@ -67,6 +67,7 @@ namespace IntelCore
 		cbw,
 		cwde,
 		movsx,
+		movsxd,
 		movzx,
 		adcx,
 		adox,
@@ -141,7 +142,8 @@ namespace IntelCore
 		test,
 		crc32,
 		popcnt,
-		jmp,
+		jmp,				// in same segment
+		jmpfar,				// in other segment
 		je,
 		jz = je,
 		jne,
@@ -179,8 +181,10 @@ namespace IntelCore
 		loope = loopz,
 		loopnz, 
 		loopne = loopnz,
-		call,
-		ret,
+		call,				// in same segment
+		callfar,			// in other segment
+		ret,				// in same segment
+		retfar,				// in other segment
 		iret,
 		_int,
 		int3,
@@ -201,11 +205,11 @@ namespace IntelCore
 		stosb,
 		stosw,
 		stosd,
-		rep,
-		repe,
-		repz = repe,
-		repne,
-		repnz = repne,
+		//rep,					// Treated as a prefix 
+		//repe,					// Treated as a prefix 
+		//repz = repe,			// Treated as a prefix 
+		//repne,				// Treated as a prefix 
+		//repnz = repne,		// Treated as a prefix 
 		in,
 		out,
 		insb,
@@ -245,6 +249,71 @@ namespace IntelCore
 		clflushopt,
 		rdrand,
 		rdseed,
+
+		// System Instructions
+
+		clac,
+		stac,
+		lgdt,
+		sgdt,
+		lldt,
+		sldt,
+		ltr,
+		str,
+		lidt,
+		sidt,
+		mov_cr,				// Move to/from Control Registers
+		lmsw,
+		smsw,
+		clts,
+		arpl,
+		lar,
+		lsl,
+		verr,
+		verw,
+		mov_dr,				// MOV – Move to/from Debug Registers
+		invd,
+		wbinvd,
+		invlpg,
+		invpcid,
+		//lock,				// Treated as a prefix 
+		hlt,
+		rsm,
+		rdmsr,
+		wrmsr,
+		rdpmc,
+		rdtsc,
+		rdtscp,
+		sysenter,
+		sysexit,
+		xsave,
+		xsavec,
+		xsaveopt,
+		xsaves,
+		xrstor,
+		xrstors,
+		xgetbv,
+		xsetbv,
+		rdfsbase,
+		rdgsbase,
+		wrfsbase,
+		wrgsbase,
+
+		// 64-Bit Mode Instructions
+
+		cdqe,
+		cmpsq,
+		cmpxchg16b,
+		lodsq,
+		movsq,
+		movzx_64,
+		stosq,
+		swapgs,
+		syscall,
+		sysret,
+
+		// BMI1, BMI2
+
 		andn,
 		bextr,
 		blsi,
@@ -408,6 +477,8 @@ namespace IntelCore
 		psraw,
 		psrad,
 		emms,
+
+		// TODO: The definitions of SSE/AVX instructions now look a little chaotic, when it comes to them they will be put in order.
 
 		// SSE (™?) Instructions
 
@@ -974,68 +1045,6 @@ namespace IntelCore
 		vscatterpf1qpd,
 		vscatterpf1qps,
 
-		// System Instructions
-
-		clac,
-		stac,
-		lgdt,
-		sgdt,
-		lldt,
-		sldt,
-		ltr,
-		str,
-		lidt,
-		sidt,
-		mov_cr,				// Move to/from Control Registers
-		lmsw,
-		smsw,
-		clts,
-		arpl,
-		lar,
-		lsl,
-		verr,
-		verw,
-		mov_dr,				// MOV – Move to/from Debug Registers
-		invd,
-		wbinvd,
-		invlpg,
-		invpcid,
-		//lock,				// Treated as a prefix 
-		hlt,
-		rsm,
-		rdmsr,
-		wrmsr,
-		rdpmc,
-		rdtsc,
-		rdtscp,
-		sysenter,
-		sysexit,
-		xsave,
-		xsavec,
-		xsaveopt,
-		xsaves,
-		xrstor,
-		xrstors,
-		xgetbv,
-		xsetbv,
-		rdfsbase,
-		rdgsbase,
-		wrfsbase,
-		wrgsbase,
-
-		// 64-Bit Mode Instructions
-
-		cdqe,
-		cmpsq,
-		cmpxchg16b,
-		lodsq,
-		movsq,
-		movzx_64,
-		stosq,
-		swapgs,
-		syscall,
-		sysret,
-
 	};
 
 	/// <summary>
@@ -1053,6 +1062,11 @@ namespace IntelCore
 		SegFs,
 		SegGs,
 		SegSs,
+		Rep,
+		Repe,
+		Repz = Repe,
+		Repne,
+		Repnz = Repne,
 	};
 
 	/// <summary>
