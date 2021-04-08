@@ -1090,6 +1090,8 @@ namespace IntelCore
 	{
 		Unknown = -1,
 
+		imm8,
+
 	};
 
 	/// <summary>
@@ -1130,15 +1132,15 @@ namespace IntelCore
 		Param params[ParamsMax];
 		size_t numParams;
 
-		union Disp
+		union
 		{
 			uint8_t disp8;
 			uint16_t disp16;
 			uint32_t disp32;
 			uint64_t disp64;
-		};
+		} Disp;
 
-		union Imm
+		union
 		{
 			uint8_t uimm8;
 			uint16_t uimm16;
@@ -1149,7 +1151,7 @@ namespace IntelCore
 			int16_t simm16;
 			int32_t simm32;
 			int64_t simm64;
-		};
+		} Imm;
 	};
 
 }

@@ -12,6 +12,8 @@ namespace IntelCore
 
 		static void Invalid();
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
+		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
+		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
 
 	public:
 
@@ -26,6 +28,8 @@ namespace IntelCore
 		// To select a mode, specify 16, 32 or 64 in brackets when calling a method, for example `adc<32> (...)`
 
 		template <size_t n> static AnalyzeInfo& aaa();
+		template <size_t n> static AnalyzeInfo& aad();
+		template <size_t n> static AnalyzeInfo& aad(uint8_t v);
 		template <size_t n> static AnalyzeInfo& adc();
 
 	};

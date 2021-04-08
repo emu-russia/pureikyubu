@@ -16,11 +16,28 @@ namespace IntelCore
 	{
 		if (info.instrSize >= InstrMaxSize)
 		{
-			throw "IntelAssembler::OneByte overflow!";
+			throw "Code stream overflow";
 		}
 
 		info.instrBytes[info.instrSize] = n;
 		info.instrSize++;
+	}
+
+	void IntelAssembler::OneByteImm8(AnalyzeInfo& info, uint8_t n)
+	{
+		OneByte(info, n);
+		OneByte(info, info.Imm.uimm8);
+	}
+
+	void IntelAssembler::AddImmParam(AnalyzeInfo& info, uint8_t n)
+	{
+		if (info.numParams >= ParamsMax)
+		{
+			throw "Parameter overflow";
+		}
+
+		info.params[info.numParams] = Param::imm8;
+		info.Imm.uimm8 = n;
 	}
 
 #pragma endregion "Private"
@@ -32,6 +49,7 @@ namespace IntelCore
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
+			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 		}
 	}
 
@@ -40,6 +58,7 @@ namespace IntelCore
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
+			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 		}
 	}
 
@@ -48,6 +67,7 @@ namespace IntelCore
 		switch (info.instr)
 		{
 			case Instruction::aaa: Invalid(); break;
+			case Instruction::aad: Invalid(); break;
 		}
 	}
 
@@ -102,6 +122,60 @@ namespace IntelCore
 	{
 		AnalyzeInfo info;
 		info.instr = Instruction::aaa;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, 10);
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<16>(uint8_t v)
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, v);
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, 10);
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<32>(uint8_t v)
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, v);
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, 10);
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::aad<64>(uint8_t v)
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::aad;
+		AddImmParam(info, v);
 		Assemble64(info);
 		return info;
 	}
