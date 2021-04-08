@@ -28,6 +28,8 @@ namespace IntelCore
 		// Quick helpers.
 		// To select a mode, specify 16, 32 or 64 in brackets when calling a method, for example `adc<32> (...)`
 
+		template <size_t n> static AnalyzeInfo& adc();
+
 		template <size_t n> static AnalyzeInfo& aaa();
 		template <size_t n> static AnalyzeInfo& aad();
 		template <size_t n> static AnalyzeInfo& aad(uint8_t v);
@@ -40,8 +42,14 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& cwd();
 		template <size_t n> static AnalyzeInfo& cdq();
 		template <size_t n> static AnalyzeInfo& cqo();
-
-		template <size_t n> static AnalyzeInfo& adc();
+		template <size_t n> static AnalyzeInfo& clc();
+		template <size_t n> static AnalyzeInfo& cld();
+		template <size_t n> static AnalyzeInfo& cli();
+		template <size_t n> static AnalyzeInfo& clts();
+		template <size_t n> static AnalyzeInfo& cmc();
+		template <size_t n> static AnalyzeInfo& stc();
+		template <size_t n> static AnalyzeInfo& std();
+		template <size_t n> static AnalyzeInfo& sti();
 
 	};
 

@@ -73,10 +73,18 @@ namespace IntelCore
 			case Instruction::cbw: OneByte(info, 0x98); break;
 			case Instruction::cwde: TwoByte(info, 0x66, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
-
 			case Instruction::cwd: OneByte(info, 0x99); break;
 			case Instruction::cdq: TwoByte(info, 0x66, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
+
+			case Instruction::clc: OneByte(info, 0xf8); break;
+			case Instruction::cld: OneByte(info, 0xfc); break;
+			case Instruction::cli: OneByte(info, 0xfa); break;
+			case Instruction::clts: TwoByte(info, 0x0f, 0x06); break;
+			case Instruction::cmc: OneByte(info, 0xf5); break;
+			case Instruction::stc: OneByte(info, 0xf9); break;
+			case Instruction::std: OneByte(info, 0xfd); break;
+			case Instruction::sti: OneByte(info, 0xfb); break;
 		}
 	}
 
@@ -92,10 +100,18 @@ namespace IntelCore
 			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
-
 			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
+
+			case Instruction::clc: OneByte(info, 0xf8); break;
+			case Instruction::cld: OneByte(info, 0xfc); break;
+			case Instruction::cli: OneByte(info, 0xfa); break;
+			case Instruction::clts: TwoByte(info, 0x0f, 0x06); break;
+			case Instruction::cmc: OneByte(info, 0xf5); break;
+			case Instruction::stc: OneByte(info, 0xf9); break;
+			case Instruction::std: OneByte(info, 0xfd); break;
+			case Instruction::sti: OneByte(info, 0xfb); break;
 		}
 	}
 
@@ -111,10 +127,18 @@ namespace IntelCore
 			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: TwoByte(info, 0x48, 0x98); break;
-
 			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: TwoByte(info, 0x48, 0x99); break;
+
+			case Instruction::clc: OneByte(info, 0xf8); break;
+			case Instruction::cld: OneByte(info, 0xfc); break;
+			case Instruction::cli: OneByte(info, 0xfa); break;
+			case Instruction::clts: TwoByte(info, 0x0f, 0x06); break;
+			case Instruction::cmc: OneByte(info, 0xf5); break;
+			case Instruction::stc: OneByte(info, 0xf9); break;
+			case Instruction::std: OneByte(info, 0xfd); break;
+			case Instruction::sti: OneByte(info, 0xfb); break;
 		}
 	}
 
@@ -445,6 +469,199 @@ namespace IntelCore
 	{
 		AnalyzeInfo info;
 		info.instr = Instruction::cqo;
+		Assemble64(info);
+		return info;
+	}
+
+
+	template <> AnalyzeInfo& IntelAssembler::clc<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clc;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::clc<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clc;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::clc<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clc;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cld<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cld;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cld<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cld;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cld<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cld;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cli<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cli;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cli<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cli;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cli<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cli;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::clts<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clts;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::clts<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clts;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::clts<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::clts;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmc<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cmc;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmc<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cmc;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::cmc<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::cmc;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stc<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::stc;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stc<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::stc;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::stc<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::stc;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::std<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::std;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::std<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::std;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::std<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::std;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sti<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sti;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sti<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sti;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::sti<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::sti;
 		Assemble64(info);
 		return info;
 	}
