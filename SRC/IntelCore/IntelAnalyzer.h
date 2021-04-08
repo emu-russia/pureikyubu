@@ -1092,14 +1092,25 @@ namespace IntelCore
 
 	};
 
+	/// <summary>
+	/// The maximum number of parameters for the instruction. In the manual, there are 4 max parameters in the tables, but we will be reinsured. 
+	/// </summary>
 	constexpr auto ParamsMax = 8;
 
-	// The maximum size of all prefixes. (bytes)
+	/// <summary>
+	/// The maximum size of all prefixes. (bytes)
+	/// </summary>
 	constexpr auto PrefixMaxSize = 16;
 
-	// Maximum instruction size excluding prefixes. (bytes)
+	/// <summary>
+	/// Maximum instruction size excluding prefixes. (bytes)
+	/// </summary>
 	constexpr auto InstrMaxSize = 16;
 
+	/// <summary>
+	/// The structure contains all information about the instruction, including possible prefixes and a parameter list.
+	/// This is a deliberate abstraction from the very alien definition of ModRM. All possible combinations of parameters are specified by the Param enumeration.
+	/// </summary>
 	struct AnalyzeInfo
 	{
 		Category category;		// It is set by the analyzer, for other cases it is not necessary to set it. 
