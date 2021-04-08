@@ -125,6 +125,17 @@ namespace IntelCore
 			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
 			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
+
+			case Instruction::popa: OneByte(info, 0x61); break;
+			case Instruction::popad: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popf: OneByte(info, 0x9d); break;
+			case Instruction::popfd: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popfq: Invalid(); break;
+			case Instruction::pusha: OneByte(info, 0x60); break;
+			case Instruction::pushad: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pushf: OneByte(info, 0x9c); break;
+			case Instruction::pushfd: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushfq: Invalid(); break;
 		}
 	}
 
@@ -185,6 +196,17 @@ namespace IntelCore
 			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
 			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
+
+			case Instruction::popa: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popad: OneByte(info, 0x61); break;
+			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popfd: OneByte(info, 0x9d); break;
+			case Instruction::popfq: Invalid(); break;
+			case Instruction::pusha: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pushad: OneByte(info, 0x60); break;
+			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushfd: OneByte(info, 0x9c); break;
+			case Instruction::pushfq: Invalid(); break;
 		}
 	}
 
@@ -245,6 +267,17 @@ namespace IntelCore
 			case Instruction::wbinvd: TwoByte(info, 0x0f, 0x09); break;
 			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
 			case Instruction::xlatb: TwoByte(info, 0x48, 0xd7); break;
+
+			case Instruction::popa: Invalid(); break;
+			case Instruction::popad: Invalid(); break;
+			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popfd: Invalid(); break;
+			case Instruction::popfq: OneByte(info, 0x9d); break;
+			case Instruction::pusha: Invalid(); break;
+			case Instruction::pushad: Invalid(); break;
+			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushfd: Invalid(); break;
+			case Instruction::pushfq: OneByte(info, 0x9c); break;
 		}
 	}
 
@@ -1488,6 +1521,246 @@ namespace IntelCore
 	{
 		AnalyzeInfo info;
 		info.instr = Instruction::xlatb;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popa<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popa;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popa<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popa;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popa<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popa;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popad<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popad;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popad<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popad;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popad<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popad;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popf<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popf;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popf<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popf;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popf<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popf;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfd<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfd<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfd<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfq<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfq<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::popfq<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::popfq;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pusha<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pusha;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pusha<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pusha;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pusha<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pusha;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushad<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushad;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushad<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushad;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushad<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushad;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushf<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushf;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushf<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushf;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushf<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushf;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfd<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfd;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfd<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfd;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfd<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfd;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfq<16>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfq;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfq<32>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfq;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo& IntelAssembler::pushfq<64>()
+	{
+		AnalyzeInfo info;
+		info.instr = Instruction::pushfq;
 		Assemble64(info);
 		return info;
 	}

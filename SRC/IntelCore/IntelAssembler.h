@@ -81,6 +81,16 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& wbinvd();
 		template <size_t n> static AnalyzeInfo& wrmsr();
 		template <size_t n> static AnalyzeInfo& xlatb();
+		template <size_t n> static AnalyzeInfo& popa();
+		template <size_t n> static AnalyzeInfo& popad();
+		template <size_t n> static AnalyzeInfo& popf();
+		template <size_t n> static AnalyzeInfo& popfd();
+		template <size_t n> static AnalyzeInfo& popfq();
+		template <size_t n> static AnalyzeInfo& pusha();
+		template <size_t n> static AnalyzeInfo& pushad();
+		template <size_t n> static AnalyzeInfo& pushf();
+		template <size_t n> static AnalyzeInfo& pushfd();
+		template <size_t n> static AnalyzeInfo& pushfq();
 
 	};
 
