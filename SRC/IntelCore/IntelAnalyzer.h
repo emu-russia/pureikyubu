@@ -66,6 +66,7 @@ namespace IntelCore
 		cdq,
 		cbw,
 		cwde,
+		cqo,
 		movsx,
 		movsxd,
 		movzx,

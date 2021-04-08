@@ -12,6 +12,7 @@ namespace IntelCore
 
 		static void Invalid();
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
+		static void TwoByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2);
 		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
 		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
 
@@ -30,6 +31,16 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& aaa();
 		template <size_t n> static AnalyzeInfo& aad();
 		template <size_t n> static AnalyzeInfo& aad(uint8_t v);
+		template <size_t n> static AnalyzeInfo& aam();
+		template <size_t n> static AnalyzeInfo& aam(uint8_t v);
+		template <size_t n> static AnalyzeInfo& aas();
+		template <size_t n> static AnalyzeInfo& cbw();
+		template <size_t n> static AnalyzeInfo& cwde();
+		template <size_t n> static AnalyzeInfo& cdqe();
+		template <size_t n> static AnalyzeInfo& cwd();
+		template <size_t n> static AnalyzeInfo& cdq();
+		template <size_t n> static AnalyzeInfo& cqo();
+
 		template <size_t n> static AnalyzeInfo& adc();
 
 	};
