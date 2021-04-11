@@ -3,6 +3,51 @@
 
 namespace Gekko
 {
+    Interpreter::Interpreter(GekkoCore* _core)
+    {
+        core = _core;
+
+        // build rotate mask table
+        for (int mb = 0; mb < 32; mb++)
+        {
+            for (int me = 0; me < 32; me++)
+            {
+                uint32_t mask = ((uint32_t)-1 >> mb) ^ ((me >= 31) ? 0 : ((uint32_t)-1) >> (me + 1));
+                rotmask[mb][me] = (mb > me) ? (~mask) : (mask);
+            }
+        }
+
+        // build paired-single load scale
+        for (uint8_t scale = 0; scale < 64; scale++)
+        {
+            int factor;
+            if (scale & 0x20)    // -32 ... -1
+            {
+                factor = -32 + (scale & 0x1f);
+            }
+            else                // 0 ... 31
+            {
+                factor = 0 + (scale & 0x1f);
+            }
+            ldScale[scale] = powf(2, -1.0f * (float)factor);
+        }
+
+        // build paired-single store scale
+        for (uint8_t scale = 0; scale < 64; scale++)
+        {
+            int factor;
+            if (scale & 0x20)    // -32 ... -1
+            {
+                factor = -32 + (scale & 0x1f);
+            }
+            else                // 0 ... 31
+            {
+                factor = 0 + (scale & 0x1f);
+            }
+            stScale[scale] = powf(2, +1.0f * (float)factor);
+        }
+    }
+
     // parse and execute single opcode
     void Interpreter::ExecuteOpcode()
     {
@@ -31,7 +76,7 @@ namespace Gekko
 
         AnalyzeInfo info;
         Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
-        Dispatch(info, instr);
+        Dispatch(info);
         core->ops++;
 
         if (core->resetInstructionCounter)
@@ -57,7 +102,7 @@ namespace Gekko
         core->regs.pc = pc;
         AnalyzeInfo info;
         Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
-        Dispatch(info, instr);
+        Dispatch(info);
     }
 
     bool Interpreter::ExecuteInterpeterFallback()
@@ -82,7 +127,7 @@ namespace Gekko
 
         AnalyzeInfo info;
         Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
-        Dispatch(info, instr);
+        Dispatch(info);
         core->ops++;
 
         if (core->resetInstructionCounter)
@@ -105,7 +150,7 @@ namespace Gekko
         return false;
     }
 
-    void Interpreter::Dispatch(AnalyzeInfo& info, uint32_t instr)
+    void Interpreter::Dispatch(AnalyzeInfo& info)
     {
         switch (info.instr)
         {
@@ -476,7 +521,7 @@ namespace Gekko
 
             default:
                 Debug::Halt("** CPU ERROR **\n"
-                    "unimplemented opcode : %08X <%08X>\n", core->regs.pc, instr);
+                    "unimplemented opcode : %08X\n", core->regs.pc);
 
                 Gekko->PrCause = PrivilegedCause::IllegalInstruction;
                 Gekko->Exception(Exception::PROGRAM);

@@ -140,9 +140,6 @@
     <ClCompile Include="..\..\Interpreter\System.cpp">
       <Filter>Interpreter</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Interpreter\Tables.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\JitcX64\JitcInteger.cpp">
       <Filter>JitcX64</Filter>
     </ClCompile>
