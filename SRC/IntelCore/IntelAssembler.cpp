@@ -64,6 +64,190 @@ namespace IntelCore
 		info.numParams++;
 	}
 
+	void IntelAssembler::AddPrefix(AnalyzeInfo& info, Prefix pre)
+	{
+		if (info.numPrefixes >= PrefixMaxSize)
+		{
+			throw "Prefix overflow";
+		}
+
+		info.prefixes[info.numPrefixes] = pre;
+		info.numPrefixes++;
+	}
+
+	void IntelAssembler::AddPrefixByte(AnalyzeInfo& info, uint8_t pre)
+	{
+		if (info.prefixSize >= PrefixMaxSize)
+		{
+			throw "PrefixBytes overflow";
+		}
+
+		info.prefixBytes[info.prefixSize] = pre;
+		info.prefixSize++;
+	}
+
+	bool IntelAssembler::IsImm(Param p)
+	{
+		return Param::ImmStart <= p && p <= Param::ImmEnd;
+	}
+
+	bool IntelAssembler::IsReg(Param p)
+	{
+		return Param::RegStart <= p && p <= Param::RegEnd;
+	}
+
+	bool IntelAssembler::IsMem(Param p)
+	{
+		return Param::MemStart <= p && p <= Param::MemEnd;
+	}
+
+	bool IntelAssembler::IsMemDisp8(Param p)
+	{
+		switch (p)
+		{
+			case Param::m_bx_si_disp8: case Param::m_bx_di_disp8: case Param::m_bp_si_disp8: case Param::m_bp_di_disp8: case Param::m_si_disp8: case Param::m_di_disp8: case Param::m_bp_disp8: case Param::m_bx_disp8:
+			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_disp32_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
+			case Param::sib_eax_eax_disp8: case Param::sib_eax_ecx_disp8: case Param::sib_eax_edx_disp8: case Param::sib_eax_ebx_disp8: case Param::sib_eax_esp_disp8: case Param::sib_eax_ebp_disp8: case Param::sib_eax_esi_disp8: case Param::sib_eax_edi_disp8:
+			case Param::sib_ecx_eax_disp8: case Param::sib_ecx_ecx_disp8: case Param::sib_ecx_edx_disp8: case Param::sib_ecx_ebx_disp8: case Param::sib_ecx_esp_disp8: case Param::sib_ecx_ebp_disp8: case Param::sib_ecx_esi_disp8: case Param::sib_ecx_edi_disp8:
+			case Param::sib_edx_eax_disp8: case Param::sib_edx_ecx_disp8: case Param::sib_edx_edx_disp8: case Param::sib_edx_ebx_disp8: case Param::sib_edx_esp_disp8: case Param::sib_edx_ebp_disp8: case Param::sib_edx_esi_disp8: case Param::sib_edx_edi_disp8:
+			case Param::sib_ebx_eax_disp8: case Param::sib_ebx_ecx_disp8: case Param::sib_ebx_edx_disp8: case Param::sib_ebx_ebx_disp8: case Param::sib_ebx_esp_disp8: case Param::sib_ebx_ebp_disp8: case Param::sib_ebx_esi_disp8: case Param::sib_ebx_edi_disp8:
+			case Param::sib_none_eax_disp8: case Param::sib_none_ecx_disp8: case Param::sib_none_edx_disp8: case Param::sib_none_ebx_disp8: case Param::sib_none_esp_disp8: case Param::sib_none_ebp_disp8: case Param::sib_none_esi_disp8: case Param::sib_none_edi_disp8:
+			case Param::sib_ebp_eax_disp8: case Param::sib_ebp_ecx_disp8: case Param::sib_ebp_edx_disp8: case Param::sib_ebp_ebx_disp8: case Param::sib_ebp_esp_disp8: case Param::sib_ebp_ebp_disp8: case Param::sib_ebp_esi_disp8: case Param::sib_ebp_edi_disp8:
+			case Param::sib_esi_eax_disp8: case Param::sib_esi_ecx_disp8: case Param::sib_esi_edx_disp8: case Param::sib_esi_ebx_disp8: case Param::sib_esi_esp_disp8: case Param::sib_esi_ebp_disp8: case Param::sib_esi_esi_disp8: case Param::sib_esi_edi_disp8:
+			case Param::sib_edi_eax_disp8: case Param::sib_edi_ecx_disp8: case Param::sib_edi_edx_disp8: case Param::sib_edi_ebx_disp8: case Param::sib_edi_esp_disp8: case Param::sib_edi_ebp_disp8: case Param::sib_edi_esi_disp8: case Param::sib_edi_edi_disp8:
+			case Param::sib_eax_2_eax_disp8: case Param::sib_eax_2_ecx_disp8: case Param::sib_eax_2_edx_disp8: case Param::sib_eax_2_ebx_disp8: case Param::sib_eax_2_esp_disp8: case Param::sib_eax_2_ebp_disp8: case Param::sib_eax_2_esi_disp8: case Param::sib_eax_2_edi_disp8:
+			case Param::sib_ecx_2_eax_disp8: case Param::sib_ecx_2_ecx_disp8: case Param::sib_ecx_2_edx_disp8: case Param::sib_ecx_2_ebx_disp8: case Param::sib_ecx_2_esp_disp8: case Param::sib_ecx_2_ebp_disp8: case Param::sib_ecx_2_esi_disp8: case Param::sib_ecx_2_edi_disp8:
+			case Param::sib_edx_2_eax_disp8: case Param::sib_edx_2_ecx_disp8: case Param::sib_edx_2_edx_disp8: case Param::sib_edx_2_ebx_disp8: case Param::sib_edx_2_esp_disp8: case Param::sib_edx_2_ebp_disp8: case Param::sib_edx_2_esi_disp8: case Param::sib_edx_2_edi_disp8:
+			case Param::sib_ebx_2_eax_disp8: case Param::sib_ebx_2_ecx_disp8: case Param::sib_ebx_2_edx_disp8: case Param::sib_ebx_2_ebx_disp8: case Param::sib_ebx_2_esp_disp8: case Param::sib_ebx_2_ebp_disp8: case Param::sib_ebx_2_esi_disp8: case Param::sib_ebx_2_edi_disp8:
+			case Param::sib_ebp_2_eax_disp8: case Param::sib_ebp_2_ecx_disp8: case Param::sib_ebp_2_edx_disp8: case Param::sib_ebp_2_ebx_disp8: case Param::sib_ebp_2_esp_disp8: case Param::sib_ebp_2_ebp_disp8: case Param::sib_ebp_2_esi_disp8: case Param::sib_ebp_2_edi_disp8:
+			case Param::sib_esi_2_eax_disp8: case Param::sib_esi_2_ecx_disp8: case Param::sib_esi_2_edx_disp8: case Param::sib_esi_2_ebx_disp8: case Param::sib_esi_2_esp_disp8: case Param::sib_esi_2_ebp_disp8: case Param::sib_esi_2_esi_disp8: case Param::sib_esi_2_edi_disp8:
+			case Param::sib_edi_2_eax_disp8: case Param::sib_edi_2_ecx_disp8: case Param::sib_edi_2_edx_disp8: case Param::sib_edi_2_ebx_disp8: case Param::sib_edi_2_esp_disp8: case Param::sib_edi_2_ebp_disp8: case Param::sib_edi_2_esi_disp8: case Param::sib_edi_2_edi_disp8:
+			case Param::sib_eax_4_eax_disp8: case Param::sib_eax_4_ecx_disp8: case Param::sib_eax_4_edx_disp8: case Param::sib_eax_4_ebx_disp8: case Param::sib_eax_4_esp_disp8: case Param::sib_eax_4_ebp_disp8: case Param::sib_eax_4_esi_disp8: case Param::sib_eax_4_edi_disp8:
+			case Param::sib_ecx_4_eax_disp8: case Param::sib_ecx_4_ecx_disp8: case Param::sib_ecx_4_edx_disp8: case Param::sib_ecx_4_ebx_disp8: case Param::sib_ecx_4_esp_disp8: case Param::sib_ecx_4_ebp_disp8: case Param::sib_ecx_4_esi_disp8: case Param::sib_ecx_4_edi_disp8:
+			case Param::sib_edx_4_eax_disp8: case Param::sib_edx_4_ecx_disp8: case Param::sib_edx_4_edx_disp8: case Param::sib_edx_4_ebx_disp8: case Param::sib_edx_4_esp_disp8: case Param::sib_edx_4_ebp_disp8: case Param::sib_edx_4_esi_disp8: case Param::sib_edx_4_edi_disp8:
+			case Param::sib_ebx_4_eax_disp8: case Param::sib_ebx_4_ecx_disp8: case Param::sib_ebx_4_edx_disp8: case Param::sib_ebx_4_ebx_disp8: case Param::sib_ebx_4_esp_disp8: case Param::sib_ebx_4_ebp_disp8: case Param::sib_ebx_4_esi_disp8: case Param::sib_ebx_4_edi_disp8:
+			case Param::sib_ebp_4_eax_disp8: case Param::sib_ebp_4_ecx_disp8: case Param::sib_ebp_4_edx_disp8: case Param::sib_ebp_4_ebx_disp8: case Param::sib_ebp_4_esp_disp8: case Param::sib_ebp_4_ebp_disp8: case Param::sib_ebp_4_esi_disp8: case Param::sib_ebp_4_edi_disp8:
+			case Param::sib_esi_4_eax_disp8: case Param::sib_esi_4_ecx_disp8: case Param::sib_esi_4_edx_disp8: case Param::sib_esi_4_ebx_disp8: case Param::sib_esi_4_esp_disp8: case Param::sib_esi_4_ebp_disp8: case Param::sib_esi_4_esi_disp8: case Param::sib_esi_4_edi_disp8:
+			case Param::sib_edi_4_eax_disp8: case Param::sib_edi_4_ecx_disp8: case Param::sib_edi_4_edx_disp8: case Param::sib_edi_4_ebx_disp8: case Param::sib_edi_4_esp_disp8: case Param::sib_edi_4_ebp_disp8: case Param::sib_edi_4_esi_disp8: case Param::sib_edi_4_edi_disp8:
+			case Param::sib_eax_8_eax_disp8: case Param::sib_eax_8_ecx_disp8: case Param::sib_eax_8_edx_disp8: case Param::sib_eax_8_ebx_disp8: case Param::sib_eax_8_esp_disp8: case Param::sib_eax_8_ebp_disp8: case Param::sib_eax_8_esi_disp8: case Param::sib_eax_8_edi_disp8:
+			case Param::sib_ecx_8_eax_disp8: case Param::sib_ecx_8_ecx_disp8: case Param::sib_ecx_8_edx_disp8: case Param::sib_ecx_8_ebx_disp8: case Param::sib_ecx_8_esp_disp8: case Param::sib_ecx_8_ebp_disp8: case Param::sib_ecx_8_esi_disp8: case Param::sib_ecx_8_edi_disp8:
+			case Param::sib_edx_8_eax_disp8: case Param::sib_edx_8_ecx_disp8: case Param::sib_edx_8_edx_disp8: case Param::sib_edx_8_ebx_disp8: case Param::sib_edx_8_esp_disp8: case Param::sib_edx_8_ebp_disp8: case Param::sib_edx_8_esi_disp8: case Param::sib_edx_8_edi_disp8:
+			case Param::sib_ebx_8_eax_disp8: case Param::sib_ebx_8_ecx_disp8: case Param::sib_ebx_8_edx_disp8: case Param::sib_ebx_8_ebx_disp8: case Param::sib_ebx_8_esp_disp8: case Param::sib_ebx_8_ebp_disp8: case Param::sib_ebx_8_esi_disp8: case Param::sib_ebx_8_edi_disp8:
+			case Param::sib_ebp_8_eax_disp8: case Param::sib_ebp_8_ecx_disp8: case Param::sib_ebp_8_edx_disp8: case Param::sib_ebp_8_ebx_disp8: case Param::sib_ebp_8_esp_disp8: case Param::sib_ebp_8_ebp_disp8: case Param::sib_ebp_8_esi_disp8: case Param::sib_ebp_8_edi_disp8:
+			case Param::sib_esi_8_eax_disp8: case Param::sib_esi_8_ecx_disp8: case Param::sib_esi_8_edx_disp8: case Param::sib_esi_8_ebx_disp8: case Param::sib_esi_8_esp_disp8: case Param::sib_esi_8_ebp_disp8: case Param::sib_esi_8_esi_disp8: case Param::sib_esi_8_edi_disp8:
+			case Param::sib_edi_8_eax_disp8: case Param::sib_edi_8_ecx_disp8: case Param::sib_edi_8_edx_disp8: case Param::sib_edi_8_ebx_disp8: case Param::sib_edi_8_esp_disp8: case Param::sib_edi_8_ebp_disp8: case Param::sib_edi_8_esi_disp8: case Param::sib_edi_8_edi_disp8:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsMemDisp16(Param p)
+	{
+		switch (p)
+		{
+			case Param::m_disp16:
+			case Param::m_bx_si_disp16: case Param::m_bx_di_disp16: case Param::m_bp_si_disp16: case Param::m_bp_di_disp16: case Param::m_si_disp16: case Param::m_di_disp16: case Param::m_bp_disp16: case Param::m_bx_disp16:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsMemDisp32(Param p)
+	{
+		switch (p)
+		{
+			case Param::m_disp32: case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_disp32_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
+			case Param::sib_eax_disp32: case Param::sib_ecx_disp32: case Param::sib_edx_disp32: case Param::sib_ebx_disp32: case Param::sib_none_disp32: case Param::sib_ebp_disp32: case Param::sib_esi_disp32: case Param::sib_edi_disp32:
+			case Param::sib_eax_2_disp32: case Param::sib_ecx_2_disp32: case Param::sib_edx_2_disp32: case Param::sib_ebx_2_disp32: case Param::sib_ebp_2_disp32: case Param::sib_esi_2_disp32: case Param::sib_edi_2_disp32:
+			case Param::sib_eax_4_disp32: case Param::sib_ecx_4_disp32: case Param::sib_edx_4_disp32: case Param::sib_ebx_4_disp32: case Param::sib_ebp_4_disp32: case Param::sib_esi_4_disp32: case Param::sib_edi_4_disp32:
+			case Param::sib_eax_8_disp32: case Param::sib_ecx_8_disp32: case Param::sib_edx_8_disp32: case Param::sib_ebx_8_disp32: case Param::sib_ebp_8_disp32: case Param::sib_esi_8_disp32: case Param::sib_edi_8_disp32:
+			case Param::sib_eax_eax_disp32: case Param::sib_eax_ecx_disp32: case Param::sib_eax_edx_disp32: case Param::sib_eax_ebx_disp32: case Param::sib_eax_esp_disp32: case Param::sib_eax_ebp_disp32: case Param::sib_eax_esi_disp32: case Param::sib_eax_edi_disp32:
+			case Param::sib_ecx_eax_disp32: case Param::sib_ecx_ecx_disp32: case Param::sib_ecx_edx_disp32: case Param::sib_ecx_ebx_disp32: case Param::sib_ecx_esp_disp32: case Param::sib_ecx_ebp_disp32: case Param::sib_ecx_esi_disp32: case Param::sib_ecx_edi_disp32:
+			case Param::sib_edx_eax_disp32: case Param::sib_edx_ecx_disp32: case Param::sib_edx_edx_disp32: case Param::sib_edx_ebx_disp32: case Param::sib_edx_esp_disp32: case Param::sib_edx_ebp_disp32: case Param::sib_edx_esi_disp32: case Param::sib_edx_edi_disp32:
+			case Param::sib_ebx_eax_disp32: case Param::sib_ebx_ecx_disp32: case Param::sib_ebx_edx_disp32: case Param::sib_ebx_ebx_disp32: case Param::sib_ebx_esp_disp32: case Param::sib_ebx_ebp_disp32: case Param::sib_ebx_esi_disp32: case Param::sib_ebx_edi_disp32:
+			case Param::sib_none_eax_disp32: case Param::sib_none_ecx_disp32: case Param::sib_none_edx_disp32: case Param::sib_none_ebx_disp32: case Param::sib_none_esp_disp32: case Param::sib_none_ebp_disp32: case Param::sib_none_esi_disp32: case Param::sib_none_edi_disp32:
+			case Param::sib_ebp_eax_disp32: case Param::sib_ebp_ecx_disp32: case Param::sib_ebp_edx_disp32: case Param::sib_ebp_ebx_disp32: case Param::sib_ebp_esp_disp32: case Param::sib_ebp_ebp_disp32: case Param::sib_ebp_esi_disp32: case Param::sib_ebp_edi_disp32:
+			case Param::sib_esi_eax_disp32: case Param::sib_esi_ecx_disp32: case Param::sib_esi_edx_disp32: case Param::sib_esi_ebx_disp32: case Param::sib_esi_esp_disp32: case Param::sib_esi_ebp_disp32: case Param::sib_esi_esi_disp32: case Param::sib_esi_edi_disp32:
+			case Param::sib_edi_eax_disp32: case Param::sib_edi_ecx_disp32: case Param::sib_edi_edx_disp32: case Param::sib_edi_ebx_disp32: case Param::sib_edi_esp_disp32: case Param::sib_edi_ebp_disp32: case Param::sib_edi_esi_disp32: case Param::sib_edi_edi_disp32:
+			case Param::sib_eax_2_eax_disp32: case Param::sib_eax_2_ecx_disp32: case Param::sib_eax_2_edx_disp32: case Param::sib_eax_2_ebx_disp32: case Param::sib_eax_2_esp_disp32: case Param::sib_eax_2_ebp_disp32: case Param::sib_eax_2_esi_disp32: case Param::sib_eax_2_edi_disp32:
+			case Param::sib_ecx_2_eax_disp32: case Param::sib_ecx_2_ecx_disp32: case Param::sib_ecx_2_edx_disp32: case Param::sib_ecx_2_ebx_disp32: case Param::sib_ecx_2_esp_disp32: case Param::sib_ecx_2_ebp_disp32: case Param::sib_ecx_2_esi_disp32: case Param::sib_ecx_2_edi_disp32:
+			case Param::sib_edx_2_eax_disp32: case Param::sib_edx_2_ecx_disp32: case Param::sib_edx_2_edx_disp32: case Param::sib_edx_2_ebx_disp32: case Param::sib_edx_2_esp_disp32: case Param::sib_edx_2_ebp_disp32: case Param::sib_edx_2_esi_disp32: case Param::sib_edx_2_edi_disp32:
+			case Param::sib_ebx_2_eax_disp32: case Param::sib_ebx_2_ecx_disp32: case Param::sib_ebx_2_edx_disp32: case Param::sib_ebx_2_ebx_disp32: case Param::sib_ebx_2_esp_disp32: case Param::sib_ebx_2_ebp_disp32: case Param::sib_ebx_2_esi_disp32: case Param::sib_ebx_2_edi_disp32:
+			case Param::sib_ebp_2_eax_disp32: case Param::sib_ebp_2_ecx_disp32: case Param::sib_ebp_2_edx_disp32: case Param::sib_ebp_2_ebx_disp32: case Param::sib_ebp_2_esp_disp32: case Param::sib_ebp_2_ebp_disp32: case Param::sib_ebp_2_esi_disp32: case Param::sib_ebp_2_edi_disp32:
+			case Param::sib_esi_2_eax_disp32: case Param::sib_esi_2_ecx_disp32: case Param::sib_esi_2_edx_disp32: case Param::sib_esi_2_ebx_disp32: case Param::sib_esi_2_esp_disp32: case Param::sib_esi_2_ebp_disp32: case Param::sib_esi_2_esi_disp32: case Param::sib_esi_2_edi_disp32:
+			case Param::sib_edi_2_eax_disp32: case Param::sib_edi_2_ecx_disp32: case Param::sib_edi_2_edx_disp32: case Param::sib_edi_2_ebx_disp32: case Param::sib_edi_2_esp_disp32: case Param::sib_edi_2_ebp_disp32: case Param::sib_edi_2_esi_disp32: case Param::sib_edi_2_edi_disp32:
+			case Param::sib_eax_4_eax_disp32: case Param::sib_eax_4_ecx_disp32: case Param::sib_eax_4_edx_disp32: case Param::sib_eax_4_ebx_disp32: case Param::sib_eax_4_esp_disp32: case Param::sib_eax_4_ebp_disp32: case Param::sib_eax_4_esi_disp32: case Param::sib_eax_4_edi_disp32:
+			case Param::sib_ecx_4_eax_disp32: case Param::sib_ecx_4_ecx_disp32: case Param::sib_ecx_4_edx_disp32: case Param::sib_ecx_4_ebx_disp32: case Param::sib_ecx_4_esp_disp32: case Param::sib_ecx_4_ebp_disp32: case Param::sib_ecx_4_esi_disp32: case Param::sib_ecx_4_edi_disp32:
+			case Param::sib_edx_4_eax_disp32: case Param::sib_edx_4_ecx_disp32: case Param::sib_edx_4_edx_disp32: case Param::sib_edx_4_ebx_disp32: case Param::sib_edx_4_esp_disp32: case Param::sib_edx_4_ebp_disp32: case Param::sib_edx_4_esi_disp32: case Param::sib_edx_4_edi_disp32:
+			case Param::sib_ebx_4_eax_disp32: case Param::sib_ebx_4_ecx_disp32: case Param::sib_ebx_4_edx_disp32: case Param::sib_ebx_4_ebx_disp32: case Param::sib_ebx_4_esp_disp32: case Param::sib_ebx_4_ebp_disp32: case Param::sib_ebx_4_esi_disp32: case Param::sib_ebx_4_edi_disp32:
+			case Param::sib_ebp_4_eax_disp32: case Param::sib_ebp_4_ecx_disp32: case Param::sib_ebp_4_edx_disp32: case Param::sib_ebp_4_ebx_disp32: case Param::sib_ebp_4_esp_disp32: case Param::sib_ebp_4_ebp_disp32: case Param::sib_ebp_4_esi_disp32: case Param::sib_ebp_4_edi_disp32:
+			case Param::sib_esi_4_eax_disp32: case Param::sib_esi_4_ecx_disp32: case Param::sib_esi_4_edx_disp32: case Param::sib_esi_4_ebx_disp32: case Param::sib_esi_4_esp_disp32: case Param::sib_esi_4_ebp_disp32: case Param::sib_esi_4_esi_disp32: case Param::sib_esi_4_edi_disp32:
+			case Param::sib_edi_4_eax_disp32: case Param::sib_edi_4_ecx_disp32: case Param::sib_edi_4_edx_disp32: case Param::sib_edi_4_ebx_disp32: case Param::sib_edi_4_esp_disp32: case Param::sib_edi_4_ebp_disp32: case Param::sib_edi_4_esi_disp32: case Param::sib_edi_4_edi_disp32:
+			case Param::sib_eax_8_eax_disp32: case Param::sib_eax_8_ecx_disp32: case Param::sib_eax_8_edx_disp32: case Param::sib_eax_8_ebx_disp32: case Param::sib_eax_8_esp_disp32: case Param::sib_eax_8_ebp_disp32: case Param::sib_eax_8_esi_disp32: case Param::sib_eax_8_edi_disp32:
+			case Param::sib_ecx_8_eax_disp32: case Param::sib_ecx_8_ecx_disp32: case Param::sib_ecx_8_edx_disp32: case Param::sib_ecx_8_ebx_disp32: case Param::sib_ecx_8_esp_disp32: case Param::sib_ecx_8_ebp_disp32: case Param::sib_ecx_8_esi_disp32: case Param::sib_ecx_8_edi_disp32:
+			case Param::sib_edx_8_eax_disp32: case Param::sib_edx_8_ecx_disp32: case Param::sib_edx_8_edx_disp32: case Param::sib_edx_8_ebx_disp32: case Param::sib_edx_8_esp_disp32: case Param::sib_edx_8_ebp_disp32: case Param::sib_edx_8_esi_disp32: case Param::sib_edx_8_edi_disp32:
+			case Param::sib_ebx_8_eax_disp32: case Param::sib_ebx_8_ecx_disp32: case Param::sib_ebx_8_edx_disp32: case Param::sib_ebx_8_ebx_disp32: case Param::sib_ebx_8_esp_disp32: case Param::sib_ebx_8_ebp_disp32: case Param::sib_ebx_8_esi_disp32: case Param::sib_ebx_8_edi_disp32:
+			case Param::sib_ebp_8_eax_disp32: case Param::sib_ebp_8_ecx_disp32: case Param::sib_ebp_8_edx_disp32: case Param::sib_ebp_8_ebx_disp32: case Param::sib_ebp_8_esp_disp32: case Param::sib_ebp_8_ebp_disp32: case Param::sib_ebp_8_esi_disp32: case Param::sib_ebp_8_edi_disp32:
+			case Param::sib_esi_8_eax_disp32: case Param::sib_esi_8_ecx_disp32: case Param::sib_esi_8_edx_disp32: case Param::sib_esi_8_ebx_disp32: case Param::sib_esi_8_esp_disp32: case Param::sib_esi_8_ebp_disp32: case Param::sib_esi_8_esi_disp32: case Param::sib_esi_8_edi_disp32:
+			case Param::sib_edi_8_eax_disp32: case Param::sib_edi_8_ecx_disp32: case Param::sib_edi_8_edx_disp32: case Param::sib_edi_8_ebx_disp32: case Param::sib_edi_8_esp_disp32: case Param::sib_edi_8_ebp_disp32: case Param::sib_edi_8_esi_disp32: case Param::sib_edi_8_edi_disp32:
+				return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// Used to compile a prefix list into raw form (bytes).
+	/// </summary>
+	bool IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
+	{
+		for (int i = 0; i < info.numPrefixes; i++)
+		{
+			uint8_t prefixByte = 0;
+
+			switch (info.prefixes[i])
+			{
+				case Prefix::AddressSize: prefixByte = 0x67; break;
+				case Prefix::Lock: prefixByte = 0xf0; break;
+				case Prefix::OperandSize: prefixByte = 0x66; break;
+				case Prefix::SegCs: prefixByte = 0x2e; break;
+				case Prefix::SegDs: prefixByte = 0x3e; break;
+				case Prefix::SegEs: prefixByte = 0x26; break;
+				case Prefix::SegFs: prefixByte = 0x64; break;
+				case Prefix::SegGs: prefixByte = 0x65; break;
+				case Prefix::SegSs: prefixByte = 0x36; break;
+				case Prefix::Rep: prefixByte = 0xf3; break;
+				case Prefix::Repe: prefixByte = 0xf3; break;
+				case Prefix::Repne: prefixByte = 0xf2; break;
+
+				default:
+					throw "Invalid prefix";
+			}
+
+			AddPrefixByte(info, prefixByte);
+		}
+	}
+
+	/// <summary>
+	/// Compiles an immediate form of a statement. Prefixes are placed automatically. 
+	/// </summary>
+	void IntelAssembler::ImmedForm(AnalyzeInfo& info, size_t mode)
+	{
+
+	}
+
+	/// <summary>
+	/// Compile the ModRegRM/SIB bytes depending on the mode (16, 32, 64).
+	/// Automatically adds required address/operand size prefixes and REX prefix (64-bit mode).
+	/// The order of the parameters (`reg,rm` or `rm,reg`) is determined automatically.
+	/// </summary>
+	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t mode)
+	{
+
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
@@ -73,18 +257,23 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: OneByte(info, 0x37); break;
 			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 			case Instruction::aam: OneByteImm8(info, 0xd4); break;
 			case Instruction::aas: OneByte(info, 0x3f); break;
 
 			case Instruction::cbw: OneByte(info, 0x98); break;
-			case Instruction::cwde: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cwde: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
 			case Instruction::cwd: OneByte(info, 0x99); break;
-			case Instruction::cdq: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cdq: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
 
 			case Instruction::clc: OneByte(info, 0xf8); break;
@@ -105,7 +294,7 @@ namespace IntelCore
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
 			case Instruction::iret: OneByte(info, 0xcf); break;
-			case Instruction::iretd: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iretd: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretq: Invalid(); break;
 			case Instruction::lahf: OneByte(info, 0x9f); break;
 			case Instruction::sahf: OneByte(info, 0x9e); break;
@@ -127,42 +316,42 @@ namespace IntelCore
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
 
 			case Instruction::popa: OneByte(info, 0x61); break;
-			case Instruction::popad: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popad: AddPrefixByte(info, 0x66); OneByte(info, 0x61); break;
 			case Instruction::popf: OneByte(info, 0x9d); break;
-			case Instruction::popfd: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popfd: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfq: Invalid(); break;
 			case Instruction::pusha: OneByte(info, 0x60); break;
-			case Instruction::pushad: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pushad: AddPrefixByte(info, 0x66); OneByte(info, 0x60); break;
 			case Instruction::pushf: OneByte(info, 0x9c); break;
-			case Instruction::pushfd: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushfd: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
 			case Instruction::cmpsw: OneByte(info, 0xa7); break;
-			case Instruction::cmpsd: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsd: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: Invalid(); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
 			case Instruction::lodsw: OneByte(info, 0xad); break;
-			case Instruction::lodsd: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsd: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
 			case Instruction::lodsq: Invalid(); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
 			case Instruction::movsw: OneByte(info, 0xa5); break;
-			case Instruction::movsd: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsd: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
 			case Instruction::movsq: Invalid(); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
 			case Instruction::scasw: OneByte(info, 0xaf); break;
-			case Instruction::scasd: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasd: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
 			case Instruction::scasq: Invalid(); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
 			case Instruction::stosw: OneByte(info, 0xab); break;
-			case Instruction::stosd: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosd: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
 			case Instruction::stosq: Invalid(); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
 			case Instruction::insw: OneByte(info, 0x6d); break;
-			case Instruction::insd: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insd: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
 			case Instruction::outsw: OneByte(info, 0x6f); break;
-			case Instruction::outsd: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsd: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 		}
 	}
 
@@ -171,17 +360,22 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: OneByte(info, 0x37); break;
 			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 			case Instruction::aam: OneByteImm8(info, 0xd4); break;
 			case Instruction::aas: OneByte(info, 0x3f); break;
 
-			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cbw: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
-			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cwd: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
 
@@ -202,7 +396,7 @@ namespace IntelCore
 			case Instruction::into: OneByte(info, 0xce); break;
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
-			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iret: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretd: OneByte(info, 0xcf); break;
 			case Instruction::iretq: Invalid(); break;
 			case Instruction::lahf: OneByte(info, 0x9f); break;
@@ -224,42 +418,42 @@ namespace IntelCore
 			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
 
-			case Instruction::popa: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popa: AddPrefixByte(info, 0x66); OneByte(info, 0x61); break;
 			case Instruction::popad: OneByte(info, 0x61); break;
-			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popf: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfd: OneByte(info, 0x9d); break;
 			case Instruction::popfq: Invalid(); break;
-			case Instruction::pusha: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pusha: AddPrefixByte(info, 0x66); OneByte(info, 0x60); break;
 			case Instruction::pushad: OneByte(info, 0x60); break;
-			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushf: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfd: OneByte(info, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
-			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
 			case Instruction::cmpsd: OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: Invalid(); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
-			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsw: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
 			case Instruction::lodsd: OneByte(info, 0xad); break;
 			case Instruction::lodsq: Invalid(); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
-			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
 			case Instruction::movsd: OneByte(info, 0xa5); break;
 			case Instruction::movsq: Invalid(); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
-			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasw: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
 			case Instruction::scasd: OneByte(info, 0xaf); break;
 			case Instruction::scasq: Invalid(); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
-			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosw: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
 			case Instruction::stosd: OneByte(info, 0xab); break;
 			case Instruction::stosq: Invalid(); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
-			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insw: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
 			case Instruction::insd: OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
-			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 			case Instruction::outsd: OneByte(info, 0x6f); break;
 		}
 	}
@@ -269,17 +463,22 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: Invalid(); break;
 			case Instruction::aad: Invalid(); break;
 			case Instruction::aam: Invalid(); break;
 			case Instruction::aas: Invalid(); break;
 
-			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cbw: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: TwoByte(info, 0x48, 0x98); break;
-			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cwd: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: TwoByte(info, 0x48, 0x99); break;
 
@@ -300,7 +499,7 @@ namespace IntelCore
 			case Instruction::into: OneByte(info, 0xce); break;
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
-			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iret: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretd: OneByte(info, 0xcf); break;
 			case Instruction::iretq: TwoByte(info, 0x48, 0xcf); break;
 			case Instruction::lahf: Invalid(); break;
@@ -324,41 +523,41 @@ namespace IntelCore
 
 			case Instruction::popa: Invalid(); break;
 			case Instruction::popad: Invalid(); break;
-			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popf: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfd: Invalid(); break;
 			case Instruction::popfq: OneByte(info, 0x9d); break;
 			case Instruction::pusha: Invalid(); break;
 			case Instruction::pushad: Invalid(); break;
-			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushf: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfd: Invalid(); break;
 			case Instruction::pushfq: OneByte(info, 0x9c); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
-			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
-			case Instruction::cmpsd: TwoByte(info, 0x67, 0xa7); break;
+			case Instruction::cmpsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
+			case Instruction::cmpsd: AddPrefixByte(info, 0x67); OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: TwoByte(info, 0x48, 0xa7); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
-			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
-			case Instruction::lodsd: TwoByte(info, 0x67, 0xad); break;
+			case Instruction::lodsw: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
+			case Instruction::lodsd: AddPrefixByte(info, 0x67); OneByte(info, 0xad); break;
 			case Instruction::lodsq: TwoByte(info, 0x48, 0xad); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
-			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
-			case Instruction::movsd: TwoByte(info, 0x67, 0xa5); break;
+			case Instruction::movsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
+			case Instruction::movsd: AddPrefixByte(info, 0x67); OneByte(info, 0xa5); break;
 			case Instruction::movsq: TwoByte(info, 0x48, 0xa5); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
-			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
-			case Instruction::scasd: TwoByte(info, 0x67, 0xaf); break;
+			case Instruction::scasw: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
+			case Instruction::scasd: AddPrefixByte(info, 0x67); OneByte(info, 0xaf); break;
 			case Instruction::scasq: TwoByte(info, 0x48, 0xaf); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
-			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
-			case Instruction::stosd: TwoByte(info, 0x67, 0xab); break;
+			case Instruction::stosw: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
+			case Instruction::stosd: AddPrefixByte(info, 0x67); OneByte(info, 0xab); break;
 			case Instruction::stosq: TwoByte(info, 0x48, 0xab); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
-			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
-			case Instruction::insd: TwoByte(info, 0x67, 0x6d); break;
+			case Instruction::insw: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
+			case Instruction::insd: AddPrefixByte(info, 0x67); OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
-			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
-			case Instruction::outsd: TwoByte(info, 0x67, 0x6f); break;
+			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
+			case Instruction::outsd: AddPrefixByte(info, 0x67); OneByte(info, 0x6f); break;
 		}
 	}
 
@@ -368,23 +567,41 @@ namespace IntelCore
 
 	// Instructions using ModRM / with an immediate operand
 
-	template <> AnalyzeInfo& IntelAssembler::adc<16>()
+	template <> AnalyzeInfo& IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<32>()
+	template <> AnalyzeInfo& IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<64>()
+	template <> AnalyzeInfo& IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}
@@ -1849,11 +2066,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble16(info);
 		return info;
@@ -1862,11 +2075,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble32(info);
 		return info;
@@ -1875,11 +2084,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble64(info);
 		return info;
@@ -1888,11 +2093,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble16(info);
 		return info;
@@ -1901,11 +2102,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble32(info);
 		return info;
@@ -1914,11 +2111,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble64(info);
 		return info;
@@ -1927,11 +2120,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble16(info);
 		return info;
@@ -1940,11 +2129,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble32(info);
 		return info;
@@ -1953,11 +2138,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble64(info);
 		return info;
@@ -1966,11 +2147,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsq<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble16(info);
 		return info;
@@ -1979,11 +2156,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsq<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble32(info);
 		return info;
@@ -1992,11 +2165,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::cmpsq<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble64(info);
 		return info;
@@ -2005,11 +2174,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble16(info);
 		return info;
@@ -2018,11 +2183,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble32(info);
 		return info;
@@ -2031,11 +2192,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble64(info);
 		return info;
@@ -2044,11 +2201,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble16(info);
 		return info;
@@ -2057,11 +2210,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble32(info);
 		return info;
@@ -2070,11 +2219,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble64(info);
 		return info;
@@ -2083,11 +2228,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble16(info);
 		return info;
@@ -2096,11 +2237,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble32(info);
 		return info;
@@ -2109,11 +2246,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble64(info);
 		return info;
@@ -2122,11 +2255,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsq<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble16(info);
 		return info;
@@ -2135,11 +2264,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsq<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble32(info);
 		return info;
@@ -2148,11 +2273,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::lodsq<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble64(info);
 		return info;
@@ -2161,11 +2282,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble16(info);
 		return info;
@@ -2174,11 +2291,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble32(info);
 		return info;
@@ -2187,11 +2300,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble64(info);
 		return info;
@@ -2200,11 +2309,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble16(info);
 		return info;
@@ -2213,11 +2318,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble32(info);
 		return info;
@@ -2226,11 +2327,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble64(info);
 		return info;
@@ -2239,11 +2336,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble16(info);
 		return info;
@@ -2252,11 +2345,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble32(info);
 		return info;
@@ -2265,11 +2354,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble64(info);
 		return info;
@@ -2278,11 +2363,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsq<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble16(info);
 		return info;
@@ -2291,11 +2372,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsq<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble32(info);
 		return info;
@@ -2304,11 +2381,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::movsq<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble64(info);
 		return info;
@@ -2317,11 +2390,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble16(info);
 		return info;
@@ -2330,11 +2399,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble32(info);
 		return info;
@@ -2343,11 +2408,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble64(info);
 		return info;
@@ -2356,11 +2417,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble16(info);
 		return info;
@@ -2369,11 +2426,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble32(info);
 		return info;
@@ -2382,11 +2435,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble64(info);
 		return info;
@@ -2395,11 +2444,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble16(info);
 		return info;
@@ -2408,11 +2453,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble32(info);
 		return info;
@@ -2421,11 +2462,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble64(info);
 		return info;
@@ -2434,11 +2471,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasq<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble16(info);
 		return info;
@@ -2447,11 +2480,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasq<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble32(info);
 		return info;
@@ -2460,11 +2489,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::scasq<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble64(info);
 		return info;
@@ -2473,11 +2498,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble16(info);
 		return info;
@@ -2486,11 +2507,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble32(info);
 		return info;
@@ -2499,11 +2516,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble64(info);
 		return info;
@@ -2512,11 +2525,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble16(info);
 		return info;
@@ -2525,11 +2534,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble32(info);
 		return info;
@@ -2538,11 +2543,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble64(info);
 		return info;
@@ -2551,11 +2552,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble16(info);
 		return info;
@@ -2564,11 +2561,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble32(info);
 		return info;
@@ -2577,11 +2570,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble64(info);
 		return info;
@@ -2590,11 +2579,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosq<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble16(info);
 		return info;
@@ -2603,11 +2588,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosq<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble32(info);
 		return info;
@@ -2616,11 +2597,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::stosq<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble64(info);
 		return info;
@@ -2629,11 +2606,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble16(info);
 		return info;
@@ -2642,11 +2615,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble32(info);
 		return info;
@@ -2655,11 +2624,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble64(info);
 		return info;
@@ -2668,11 +2633,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble16(info);
 		return info;
@@ -2681,11 +2642,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble32(info);
 		return info;
@@ -2694,11 +2651,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble64(info);
 		return info;
@@ -2707,11 +2660,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble16(info);
 		return info;
@@ -2720,11 +2669,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble32(info);
 		return info;
@@ -2733,11 +2678,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::insd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble64(info);
 		return info;
@@ -2746,11 +2687,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsb<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble16(info);
 		return info;
@@ -2759,11 +2696,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsb<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble32(info);
 		return info;
@@ -2772,11 +2705,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsb<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble64(info);
 		return info;
@@ -2785,11 +2714,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsw<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble16(info);
 		return info;
@@ -2798,11 +2723,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsw<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble32(info);
 		return info;
@@ -2811,11 +2732,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsw<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble64(info);
 		return info;
@@ -2824,11 +2741,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsd<16>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble16(info);
 		return info;
@@ -2837,11 +2750,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsd<32>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble32(info);
 		return info;
@@ -2850,11 +2759,7 @@ namespace IntelCore
 	template <> AnalyzeInfo& IntelAssembler::outsd<64>(Prefix pre)
 	{
 		AnalyzeInfo info;
-		if (pre != Prefix::NoPrefix)
-		{
-			info.prefixes[0] = pre;
-			info.numPrefixes = 1;
-		}
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble64(info);
 		return info;

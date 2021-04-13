@@ -375,12 +375,9 @@ namespace Gekko
 
 		void callvm(AnalyzeInfo& info);
 
-		// setup extension tables 
-		void InitTables();
-
 		uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-		bool        RESERVE;            // for lwarx/stwcx.   
-		uint32_t    RESERVE_ADDR;       // for lwarx/stwcx.
+		bool        RESERVE = false;    // for lwarx/stwcx.   
+		uint32_t    RESERVE_ADDR = 0;	// for lwarx/stwcx.
 		float       ldScale[64];        // for paired-single loads
 		float       stScale[64];        // for paired-single stores
 
@@ -399,19 +396,11 @@ namespace Gekko
 		void ADDXER2(uint32_t a, uint32_t b, AnalyzeInfo& info);
 		void ADDXER2D(uint32_t a, uint32_t b, AnalyzeInfo& info);
 
-		void Dispatch(AnalyzeInfo& info, uint32_t instr /* eventually will be removed, used for fallback. */ );
+		void Dispatch(AnalyzeInfo& info);
 
 	public:
-		Interpreter(GekkoCore* _core)
-		{
-			core = _core;
-
-			// setup interpreter tables
-			InitTables();
-		}
-		~Interpreter()
-		{
-		}
+		Interpreter(GekkoCore* _core);
+		~Interpreter() {}
 
 		void ExecuteOpcode();
 		void ExecuteOpcodeDirect(uint32_t pc, uint32_t instr);
