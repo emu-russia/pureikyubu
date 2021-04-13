@@ -1102,7 +1102,144 @@ namespace IntelCore
 	{
 		Unknown = -1,
 
-		imm8,
+		// Special constants to quickly define the category of a parameter. Do not use. 
+
+		ImmediateStart = 0,
+		RegStart = 0x200,
+		MemStart = 0x400,
+
+		// immediate
+
+		imm8 = ImmediateStart,
+		imm16,
+		imm32,
+		ImmediateEnd = 0x100,
+
+		// reg
+
+		al = RegStart, cl, dl, bl, ah, ch, dh, bh,
+		ax, cx, dx, bx, sp, bp, si, di,
+		eax, ecx, edx, ebx, esp, ebp, esi, edi,
+		RegEnd = 0x300,
+
+		// 16-bit mem
+		// If you need memory addressing like [BP + DI] and so on. similar, look here.
+
+		m_bx_si = MemStart, m_bx_di, m_bp_si, m_bp_di, m_si, m_di, m_disp16 /* disp16 instead bp */, m_bx,
+		m_bx_si_disp8, m_bx_di_disp8, m_bp_si_disp8, m_bp_di_disp8, m_si_disp8, m_di_disp8, m_bp_disp8, m_bx_disp8,
+		m_bx_si_disp16, m_bx_di_disp16, m_bp_si_disp16, m_bp_di_disp16, m_si_disp16, m_di_disp16, m_bp_disp16, m_bx_disp16,
+
+		// 32-bit mem
+		// If you need simple 32-bit addressing like [ESI], see here. 
+
+		m_eax, m_ecx, m_edx, m_ebx, /*see sib_, */ m_disp32, m_esi, m_edi,
+		m_eax_disp8, m_ecx_disp8, m_edx_disp8, m_ebx_disp8, /*see sib_x_disp8, */ m_disp32_disp8, m_esi_disp8, m_edi_disp8,
+		m_eax_disp32, m_ecx_disp32, m_edx_disp32, m_ebx_disp32, /*see sib_x_disp32, */ m_disp32_disp32, m_esi_disp32, m_edi_disp32,
+
+		// If you need 32-bit addressing using the ScaleIndexBase mechanism like [EAX * 2 + ECX], see here. 
+
+		sib_eax_eax, sib_eax_ecx, sib_eax_edx, sib_eax_ebx, sib_eax_esp, sib_eax_disp32 /* disp32 instead ebp */, sib_eax_esi, sib_eax_edi,
+		sib_ecx_eax, sib_ecx_ecx, sib_ecx_edx, sib_ecx_ebx, sib_ecx_esp, sib_ecx_disp32 /* disp32 instead ebp */, sib_ecx_esi, sib_ecx_edi,
+		sib_edx_eax, sib_edx_ecx, sib_edx_edx, sib_edx_ebx, sib_edx_esp, sib_edx_disp32 /* disp32 instead ebp */, sib_edx_esi, sib_edx_edi,
+		sib_ebx_eax, sib_ebx_ecx, sib_ebx_edx, sib_ebx_ebx, sib_ebx_esp, sib_ebx_disp32 /* disp32 instead ebp */, sib_ebx_esi, sib_ebx_edi,
+		sib_none_eax, sib_none_ecx, sib_none_edx, sib_none_ebx, sib_none_esp, sib_none_disp32 /* disp32 instead ebp */, sib_none_esi, sib_none_edi,
+		sib_ebp_eax, sib_ebp_ecx, sib_ebp_edx, sib_ebp_ebx, sib_ebp_esp, sib_ebp_disp32 /* disp32 instead ebp */, sib_ebp_esi, sib_ebp_edi,
+		sib_esi_eax, sib_esi_ecx, sib_esi_edx, sib_esi_ebx, sib_esi_esp, sib_esi_disp32 /* disp32 instead ebp */, sib_esi_esi, sib_esi_edi,
+		sib_edi_eax, sib_edi_ecx, sib_edi_edx, sib_edi_ebx, sib_edi_esp, sib_edi_disp32 /* disp32 instead ebp */, sib_edi_esi, sib_edi_edi,
+
+		sib_eax_2_eax, sib_eax_2_ecx, sib_eax_2_edx, sib_eax_2_ebx, sib_eax_2_esp, sib_eax_2_disp32 /* disp32 instead ebp */, sib_eax_2_esi, sib_eax_2_edi,
+		sib_ecx_2_eax, sib_ecx_2_ecx, sib_ecx_2_edx, sib_ecx_2_ebx, sib_ecx_2_esp, sib_ecx_2_disp32 /* disp32 instead ebp */, sib_ecx_2_esi, sib_ecx_2_edi,
+		sib_edx_2_eax, sib_edx_2_ecx, sib_edx_2_edx, sib_edx_2_ebx, sib_edx_2_esp, sib_edx_2_disp32 /* disp32 instead ebp */, sib_edx_2_esi, sib_edx_2_edi,
+		sib_ebx_2_eax, sib_ebx_2_ecx, sib_ebx_2_edx, sib_ebx_2_ebx, sib_ebx_2_esp, sib_ebx_2_disp32 /* disp32 instead ebp */, sib_ebx_2_esi, sib_ebx_2_edi,
+		sib_ebp_2_eax, sib_ebp_2_ecx, sib_ebp_2_edx, sib_ebp_2_ebx, sib_ebp_2_esp, sib_ebp_2_disp32 /* disp32 instead ebp */, sib_ebp_2_esi, sib_ebp_2_edi,
+		sib_esi_2_eax, sib_esi_2_ecx, sib_esi_2_edx, sib_esi_2_ebx, sib_esi_2_esp, sib_esi_2_disp32 /* disp32 instead ebp */, sib_esi_2_esi, sib_esi_2_edi,
+		sib_edi_2_eax, sib_edi_2_ecx, sib_edi_2_edx, sib_edi_2_ebx, sib_edi_2_esp, sib_edi_2_disp32 /* disp32 instead ebp */, sib_edi_2_esi, sib_edi_2_edi,
+
+		sib_eax_4_eax, sib_eax_4_ecx, sib_eax_4_edx, sib_eax_4_ebx, sib_eax_4_esp, sib_eax_4_disp32 /* disp32 instead ebp */, sib_eax_4_esi, sib_eax_4_edi,
+		sib_ecx_4_eax, sib_ecx_4_ecx, sib_ecx_4_edx, sib_ecx_4_ebx, sib_ecx_4_esp, sib_ecx_4_disp32 /* disp32 instead ebp */, sib_ecx_4_esi, sib_ecx_4_edi,
+		sib_edx_4_eax, sib_edx_4_ecx, sib_edx_4_edx, sib_edx_4_ebx, sib_edx_4_esp, sib_edx_4_disp32 /* disp32 instead ebp */, sib_edx_4_esi, sib_edx_4_edi,
+		sib_ebx_4_eax, sib_ebx_4_ecx, sib_ebx_4_edx, sib_ebx_4_ebx, sib_ebx_4_esp, sib_ebx_4_disp32 /* disp32 instead ebp */, sib_ebx_4_esi, sib_ebx_4_edi,
+		sib_ebp_4_eax, sib_ebp_4_ecx, sib_ebp_4_edx, sib_ebp_4_ebx, sib_ebp_4_esp, sib_ebp_4_disp32 /* disp32 instead ebp */, sib_ebp_4_esi, sib_ebp_4_edi,
+		sib_esi_4_eax, sib_esi_4_ecx, sib_esi_4_edx, sib_esi_4_ebx, sib_esi_4_esp, sib_esi_4_disp32 /* disp32 instead ebp */, sib_esi_4_esi, sib_esi_4_edi,
+		sib_edi_4_eax, sib_edi_4_ecx, sib_edi_4_edx, sib_edi_4_ebx, sib_edi_4_esp, sib_edi_4_disp32 /* disp32 instead ebp */, sib_edi_4_esi, sib_edi_4_edi,
+
+		sib_eax_8_eax, sib_eax_8_ecx, sib_eax_8_edx, sib_eax_8_ebx, sib_eax_8_esp, sib_eax_8_disp32 /* disp32 instead ebp */, sib_eax_8_esi, sib_eax_8_edi,
+		sib_ecx_8_eax, sib_ecx_8_ecx, sib_ecx_8_edx, sib_ecx_8_ebx, sib_ecx_8_esp, sib_ecx_8_disp32 /* disp32 instead ebp */, sib_ecx_8_esi, sib_ecx_8_edi,
+		sib_edx_8_eax, sib_edx_8_ecx, sib_edx_8_edx, sib_edx_8_ebx, sib_edx_8_esp, sib_edx_8_disp32 /* disp32 instead ebp */, sib_edx_8_esi, sib_edx_8_edi,
+		sib_ebx_8_eax, sib_ebx_8_ecx, sib_ebx_8_edx, sib_ebx_8_ebx, sib_ebx_8_esp, sib_ebx_8_disp32 /* disp32 instead ebp */, sib_ebx_8_esi, sib_ebx_8_edi,
+		sib_ebp_8_eax, sib_ebp_8_ecx, sib_ebp_8_edx, sib_ebp_8_ebx, sib_ebp_8_esp, sib_ebp_8_disp32 /* disp32 instead ebp */, sib_ebp_8_esi, sib_ebp_8_edi,
+		sib_esi_8_eax, sib_esi_8_ecx, sib_esi_8_edx, sib_esi_8_ebx, sib_esi_8_esp, sib_esi_8_disp32 /* disp32 instead ebp */, sib_esi_8_esi, sib_esi_8_edi,
+		sib_edi_8_eax, sib_edi_8_ecx, sib_edi_8_edx, sib_edi_8_ebx, sib_edi_8_esp, sib_edi_8_disp32 /* disp32 instead ebp */, sib_edi_8_esi, sib_edi_8_edi,
+
+		sib_eax_eax_disp8, sib_eax_ecx_disp8, sib_eax_edx_disp8, sib_eax_ebx_disp8, sib_eax_esp_disp8, sib_eax_ebp_disp8, sib_eax_esi_disp8, sib_eax_edi_disp8,
+		sib_ecx_eax_disp8, sib_ecx_ecx_disp8, sib_ecx_edx_disp8, sib_ecx_ebx_disp8, sib_ecx_esp_disp8, sib_ecx_ebp_disp8, sib_ecx_esi_disp8, sib_ecx_edi_disp8,
+		sib_edx_eax_disp8, sib_edx_ecx_disp8, sib_edx_edx_disp8, sib_edx_ebx_disp8, sib_edx_esp_disp8, sib_edx_ebp_disp8, sib_edx_esi_disp8, sib_edx_edi_disp8,
+		sib_ebx_eax_disp8, sib_ebx_ecx_disp8, sib_ebx_edx_disp8, sib_ebx_ebx_disp8, sib_ebx_esp_disp8, sib_ebx_ebp_disp8, sib_ebx_esi_disp8, sib_ebx_edi_disp8,
+		sib_none_eax_disp8, sib_none_ecx_disp8, sib_none_edx_disp8, sib_none_ebx_disp8, sib_none_esp_disp8, sib_none_ebp_disp8, sib_none_esi_disp8, sib_none_edi_disp8,
+		sib_ebp_eax_disp8, sib_ebp_ecx_disp8, sib_ebp_edx_disp8, sib_ebp_ebx_disp8, sib_ebp_esp_disp8, sib_ebp_ebp_disp8, sib_ebp_esi_disp8, sib_ebp_edi_disp8,
+		sib_esi_eax_disp8, sib_esi_ecx_disp8, sib_esi_edx_disp8, sib_esi_ebx_disp8, sib_esi_esp_disp8, sib_esi_ebp_disp8, sib_esi_esi_disp8, sib_esi_edi_disp8,
+		sib_edi_eax_disp8, sib_edi_ecx_disp8, sib_edi_edx_disp8, sib_edi_ebx_disp8, sib_edi_esp_disp8, sib_edi_ebp_disp8, sib_edi_esi_disp8, sib_edi_edi_disp8,
+
+		sib_eax_2_eax_disp8, sib_eax_2_ecx_disp8, sib_eax_2_edx_disp8, sib_eax_2_ebx_disp8, sib_eax_2_esp_disp8, sib_eax_2_ebp_disp8, sib_eax_2_esi_disp8, sib_eax_2_edi_disp8,
+		sib_ecx_2_eax_disp8, sib_ecx_2_ecx_disp8, sib_ecx_2_edx_disp8, sib_ecx_2_ebx_disp8, sib_ecx_2_esp_disp8, sib_ecx_2_ebp_disp8, sib_ecx_2_esi_disp8, sib_ecx_2_edi_disp8,
+		sib_edx_2_eax_disp8, sib_edx_2_ecx_disp8, sib_edx_2_edx_disp8, sib_edx_2_ebx_disp8, sib_edx_2_esp_disp8, sib_edx_2_ebp_disp8, sib_edx_2_esi_disp8, sib_edx_2_edi_disp8,
+		sib_ebx_2_eax_disp8, sib_ebx_2_ecx_disp8, sib_ebx_2_edx_disp8, sib_ebx_2_ebx_disp8, sib_ebx_2_esp_disp8, sib_ebx_2_ebp_disp8, sib_ebx_2_esi_disp8, sib_ebx_2_edi_disp8,
+		sib_ebp_2_eax_disp8, sib_ebp_2_ecx_disp8, sib_ebp_2_edx_disp8, sib_ebp_2_ebx_disp8, sib_ebp_2_esp_disp8, sib_ebp_2_ebp_disp8, sib_ebp_2_esi_disp8, sib_ebp_2_edi_disp8,
+		sib_esi_2_eax_disp8, sib_esi_2_ecx_disp8, sib_esi_2_edx_disp8, sib_esi_2_ebx_disp8, sib_esi_2_esp_disp8, sib_esi_2_ebp_disp8, sib_esi_2_esi_disp8, sib_esi_2_edi_disp8,
+		sib_edi_2_eax_disp8, sib_edi_2_ecx_disp8, sib_edi_2_edx_disp8, sib_edi_2_ebx_disp8, sib_edi_2_esp_disp8, sib_edi_2_ebp_disp8, sib_edi_2_esi_disp8, sib_edi_2_edi_disp8,
+
+		sib_eax_4_eax_disp8, sib_eax_4_ecx_disp8, sib_eax_4_edx_disp8, sib_eax_4_ebx_disp8, sib_eax_4_esp_disp8, sib_eax_4_ebp_disp8, sib_eax_4_esi_disp8, sib_eax_4_edi_disp8,
+		sib_ecx_4_eax_disp8, sib_ecx_4_ecx_disp8, sib_ecx_4_edx_disp8, sib_ecx_4_ebx_disp8, sib_ecx_4_esp_disp8, sib_ecx_4_ebp_disp8, sib_ecx_4_esi_disp8, sib_ecx_4_edi_disp8,
+		sib_edx_4_eax_disp8, sib_edx_4_ecx_disp8, sib_edx_4_edx_disp8, sib_edx_4_ebx_disp8, sib_edx_4_esp_disp8, sib_edx_4_ebp_disp8, sib_edx_4_esi_disp8, sib_edx_4_edi_disp8,
+		sib_ebx_4_eax_disp8, sib_ebx_4_ecx_disp8, sib_ebx_4_edx_disp8, sib_ebx_4_ebx_disp8, sib_ebx_4_esp_disp8, sib_ebx_4_ebp_disp8, sib_ebx_4_esi_disp8, sib_ebx_4_edi_disp8,
+		sib_ebp_4_eax_disp8, sib_ebp_4_ecx_disp8, sib_ebp_4_edx_disp8, sib_ebp_4_ebx_disp8, sib_ebp_4_esp_disp8, sib_ebp_4_ebp_disp8, sib_ebp_4_esi_disp8, sib_ebp_4_edi_disp8,
+		sib_esi_4_eax_disp8, sib_esi_4_ecx_disp8, sib_esi_4_edx_disp8, sib_esi_4_ebx_disp8, sib_esi_4_esp_disp8, sib_esi_4_ebp_disp8, sib_esi_4_esi_disp8, sib_esi_4_edi_disp8,
+		sib_edi_4_eax_disp8, sib_edi_4_ecx_disp8, sib_edi_4_edx_disp8, sib_edi_4_ebx_disp8, sib_edi_4_esp_disp8, sib_edi_4_ebp_disp8, sib_edi_4_esi_disp8, sib_edi_4_edi_disp8,
+
+		sib_eax_8_eax_disp8, sib_eax_8_ecx_disp8, sib_eax_8_edx_disp8, sib_eax_8_ebx_disp8, sib_eax_8_esp_disp8, sib_eax_8_ebp_disp8, sib_eax_8_esi_disp8, sib_eax_8_edi_disp8,
+		sib_ecx_8_eax_disp8, sib_ecx_8_ecx_disp8, sib_ecx_8_edx_disp8, sib_ecx_8_ebx_disp8, sib_ecx_8_esp_disp8, sib_ecx_8_ebp_disp8, sib_ecx_8_esi_disp8, sib_ecx_8_edi_disp8,
+		sib_edx_8_eax_disp8, sib_edx_8_ecx_disp8, sib_edx_8_edx_disp8, sib_edx_8_ebx_disp8, sib_edx_8_esp_disp8, sib_edx_8_ebp_disp8, sib_edx_8_esi_disp8, sib_edx_8_edi_disp8,
+		sib_ebx_8_eax_disp8, sib_ebx_8_ecx_disp8, sib_ebx_8_edx_disp8, sib_ebx_8_ebx_disp8, sib_ebx_8_esp_disp8, sib_ebx_8_ebp_disp8, sib_ebx_8_esi_disp8, sib_ebx_8_edi_disp8,
+		sib_ebp_8_eax_disp8, sib_ebp_8_ecx_disp8, sib_ebp_8_edx_disp8, sib_ebp_8_ebx_disp8, sib_ebp_8_esp_disp8, sib_ebp_8_ebp_disp8, sib_ebp_8_esi_disp8, sib_ebp_8_edi_disp8,
+		sib_esi_8_eax_disp8, sib_esi_8_ecx_disp8, sib_esi_8_edx_disp8, sib_esi_8_ebx_disp8, sib_esi_8_esp_disp8, sib_esi_8_ebp_disp8, sib_esi_8_esi_disp8, sib_esi_8_edi_disp8,
+		sib_edi_8_eax_disp8, sib_edi_8_ecx_disp8, sib_edi_8_edx_disp8, sib_edi_8_ebx_disp8, sib_edi_8_esp_disp8, sib_edi_8_ebp_disp8, sib_edi_8_esi_disp8, sib_edi_8_edi_disp8,
+
+		sib_eax_eax_disp32, sib_eax_ecx_disp32, sib_eax_edx_disp32, sib_eax_ebx_disp32, sib_eax_esp_disp32, sib_eax_ebp_disp32, sib_eax_esi_disp32, sib_eax_edi_disp32,
+		sib_ecx_eax_disp32, sib_ecx_ecx_disp32, sib_ecx_edx_disp32, sib_ecx_ebx_disp32, sib_ecx_esp_disp32, sib_ecx_ebp_disp32, sib_ecx_esi_disp32, sib_ecx_edi_disp32,
+		sib_edx_eax_disp32, sib_edx_ecx_disp32, sib_edx_edx_disp32, sib_edx_ebx_disp32, sib_edx_esp_disp32, sib_edx_ebp_disp32, sib_edx_esi_disp32, sib_edx_edi_disp32,
+		sib_ebx_eax_disp32, sib_ebx_ecx_disp32, sib_ebx_edx_disp32, sib_ebx_ebx_disp32, sib_ebx_esp_disp32, sib_ebx_ebp_disp32, sib_ebx_esi_disp32, sib_ebx_edi_disp32,
+		sib_none_eax_disp32, sib_none_ecx_disp32, sib_none_edx_disp32, sib_none_ebx_disp32, sib_none_esp_disp32, sib_none_ebp_disp32, sib_none_esi_disp32, sib_none_edi_disp32,
+		sib_ebp_eax_disp32, sib_ebp_ecx_disp32, sib_ebp_edx_disp32, sib_ebp_ebx_disp32, sib_ebp_esp_disp32, sib_ebp_ebp_disp32, sib_ebp_esi_disp32, sib_ebp_edi_disp32,
+		sib_esi_eax_disp32, sib_esi_ecx_disp32, sib_esi_edx_disp32, sib_esi_ebx_disp32, sib_esi_esp_disp32, sib_esi_ebp_disp32, sib_esi_esi_disp32, sib_esi_edi_disp32,
+		sib_edi_eax_disp32, sib_edi_ecx_disp32, sib_edi_edx_disp32, sib_edi_ebx_disp32, sib_edi_esp_disp32, sib_edi_ebp_disp32, sib_edi_esi_disp32, sib_edi_edi_disp32,
+
+		sib_eax_2_eax_disp32, sib_eax_2_ecx_disp32, sib_eax_2_edx_disp32, sib_eax_2_ebx_disp32, sib_eax_2_esp_disp32, sib_eax_2_ebp_disp32, sib_eax_2_esi_disp32, sib_eax_2_edi_disp32,
+		sib_ecx_2_eax_disp32, sib_ecx_2_ecx_disp32, sib_ecx_2_edx_disp32, sib_ecx_2_ebx_disp32, sib_ecx_2_esp_disp32, sib_ecx_2_ebp_disp32, sib_ecx_2_esi_disp32, sib_ecx_2_edi_disp32,
+		sib_edx_2_eax_disp32, sib_edx_2_ecx_disp32, sib_edx_2_edx_disp32, sib_edx_2_ebx_disp32, sib_edx_2_esp_disp32, sib_edx_2_ebp_disp32, sib_edx_2_esi_disp32, sib_edx_2_edi_disp32,
+		sib_ebx_2_eax_disp32, sib_ebx_2_ecx_disp32, sib_ebx_2_edx_disp32, sib_ebx_2_ebx_disp32, sib_ebx_2_esp_disp32, sib_ebx_2_ebp_disp32, sib_ebx_2_esi_disp32, sib_ebx_2_edi_disp32,
+		sib_ebp_2_eax_disp32, sib_ebp_2_ecx_disp32, sib_ebp_2_edx_disp32, sib_ebp_2_ebx_disp32, sib_ebp_2_esp_disp32, sib_ebp_2_ebp_disp32, sib_ebp_2_esi_disp32, sib_ebp_2_edi_disp32,
+		sib_esi_2_eax_disp32, sib_esi_2_ecx_disp32, sib_esi_2_edx_disp32, sib_esi_2_ebx_disp32, sib_esi_2_esp_disp32, sib_esi_2_ebp_disp32, sib_esi_2_esi_disp32, sib_esi_2_edi_disp32,
+		sib_edi_2_eax_disp32, sib_edi_2_ecx_disp32, sib_edi_2_edx_disp32, sib_edi_2_ebx_disp32, sib_edi_2_esp_disp32, sib_edi_2_ebp_disp32, sib_edi_2_esi_disp32, sib_edi_2_edi_disp32,
+
+		sib_eax_4_eax_disp32, sib_eax_4_ecx_disp32, sib_eax_4_edx_disp32, sib_eax_4_ebx_disp32, sib_eax_4_esp_disp32, sib_eax_4_ebp_disp32, sib_eax_4_esi_disp32, sib_eax_4_edi_disp32,
+		sib_ecx_4_eax_disp32, sib_ecx_4_ecx_disp32, sib_ecx_4_edx_disp32, sib_ecx_4_ebx_disp32, sib_ecx_4_esp_disp32, sib_ecx_4_ebp_disp32, sib_ecx_4_esi_disp32, sib_ecx_4_edi_disp32,
+		sib_edx_4_eax_disp32, sib_edx_4_ecx_disp32, sib_edx_4_edx_disp32, sib_edx_4_ebx_disp32, sib_edx_4_esp_disp32, sib_edx_4_ebp_disp32, sib_edx_4_esi_disp32, sib_edx_4_edi_disp32,
+		sib_ebx_4_eax_disp32, sib_ebx_4_ecx_disp32, sib_ebx_4_edx_disp32, sib_ebx_4_ebx_disp32, sib_ebx_4_esp_disp32, sib_ebx_4_ebp_disp32, sib_ebx_4_esi_disp32, sib_ebx_4_edi_disp32,
+		sib_ebp_4_eax_disp32, sib_ebp_4_ecx_disp32, sib_ebp_4_edx_disp32, sib_ebp_4_ebx_disp32, sib_ebp_4_esp_disp32, sib_ebp_4_ebp_disp32, sib_ebp_4_esi_disp32, sib_ebp_4_edi_disp32,
+		sib_esi_4_eax_disp32, sib_esi_4_ecx_disp32, sib_esi_4_edx_disp32, sib_esi_4_ebx_disp32, sib_esi_4_esp_disp32, sib_esi_4_ebp_disp32, sib_esi_4_esi_disp32, sib_esi_4_edi_disp32,
+		sib_edi_4_eax_disp32, sib_edi_4_ecx_disp32, sib_edi_4_edx_disp32, sib_edi_4_ebx_disp32, sib_edi_4_esp_disp32, sib_edi_4_ebp_disp32, sib_edi_4_esi_disp32, sib_edi_4_edi_disp32,
+
+		sib_eax_8_eax_disp32, sib_eax_8_ecx_disp32, sib_eax_8_edx_disp32, sib_eax_8_ebx_disp32, sib_eax_8_esp_disp32, sib_eax_8_ebp_disp32, sib_eax_8_esi_disp32, sib_eax_8_edi_disp32,
+		sib_ecx_8_eax_disp32, sib_ecx_8_ecx_disp32, sib_ecx_8_edx_disp32, sib_ecx_8_ebx_disp32, sib_ecx_8_esp_disp32, sib_ecx_8_ebp_disp32, sib_ecx_8_esi_disp32, sib_ecx_8_edi_disp32,
+		sib_edx_8_eax_disp32, sib_edx_8_ecx_disp32, sib_edx_8_edx_disp32, sib_edx_8_ebx_disp32, sib_edx_8_esp_disp32, sib_edx_8_ebp_disp32, sib_edx_8_esi_disp32, sib_edx_8_edi_disp32,
+		sib_ebx_8_eax_disp32, sib_ebx_8_ecx_disp32, sib_ebx_8_edx_disp32, sib_ebx_8_ebx_disp32, sib_ebx_8_esp_disp32, sib_ebx_8_ebp_disp32, sib_ebx_8_esi_disp32, sib_ebx_8_edi_disp32,
+		sib_ebp_8_eax_disp32, sib_ebp_8_ecx_disp32, sib_ebp_8_edx_disp32, sib_ebp_8_ebx_disp32, sib_ebp_8_esp_disp32, sib_ebp_8_ebp_disp32, sib_ebp_8_esi_disp32, sib_ebp_8_edi_disp32,
+		sib_esi_8_eax_disp32, sib_esi_8_ecx_disp32, sib_esi_8_edx_disp32, sib_esi_8_ebx_disp32, sib_esi_8_esp_disp32, sib_esi_8_ebp_disp32, sib_esi_8_esi_disp32, sib_esi_8_edi_disp32,
+		sib_edi_8_eax_disp32, sib_edi_8_ecx_disp32, sib_edi_8_edx_disp32, sib_edi_8_ebx_disp32, sib_edi_8_esp_disp32, sib_edi_8_ebp_disp32, sib_edi_8_esi_disp32, sib_edi_8_edi_disp32,
+
+		// TODO: Long Mode.
+
+		MemEnd = 0x1000,
 
 	};
 

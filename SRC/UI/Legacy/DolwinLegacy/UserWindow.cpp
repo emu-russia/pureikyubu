@@ -543,7 +543,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
         AddSelectorPath(fullPath);      // all checks are there
 
         gameTitle = longTitle;
-        newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
+        newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
     }
     else
     {
@@ -556,7 +556,7 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
             gameTitle = fmt::format(L"{:s} demo", name);
         }
         
-        newTitle = fmt::format(L"{:s} Running {:s}", APPNAME, gameTitle);
+        newTitle = fmt::format(L"{:s} - Running {:s}", APPNAME, gameTitle);
     }
     
     SetWindowText(wnd.hMainWindow, newTitle.c_str());

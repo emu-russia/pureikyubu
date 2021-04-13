@@ -64,6 +64,60 @@ namespace IntelCore
 		info.numParams++;
 	}
 
+	void IntelAssembler::AddPrefix(AnalyzeInfo& info, Prefix pre)
+	{
+		if (info.numPrefixes >= PrefixMaxSize)
+		{
+			throw "Prefix overflow";
+		}
+
+		info.prefixes[info.numPrefixes] = pre;
+		info.numPrefixes++;
+	}
+
+	void IntelAssembler::AddPrefixByte(AnalyzeInfo& info, uint8_t pre)
+	{
+		if (info.prefixSize >= PrefixMaxSize)
+		{
+			throw "PrefixBytes overflow";
+		}
+
+		info.prefixBytes[info.prefixSize] = pre;
+		info.prefixSize++;
+	}
+
+	/// <summary>
+	/// Used to compile a prefix list into raw form (bytes).
+	/// </summary>
+	bool IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
+	{
+		for (int i = 0; i < info.numPrefixes; i++)
+		{
+			uint8_t prefixByte = 0;
+
+			switch (info.prefixes[i])
+			{
+				case Prefix::AddressSize: prefixByte = 0x67; break;
+				case Prefix::Lock: prefixByte = 0xf0; break;
+				case Prefix::OperandSize: prefixByte = 0x66; break;
+				case Prefix::SegCs: prefixByte = 0x2e; break;
+				case Prefix::SegDs: prefixByte = 0x3e; break;
+				case Prefix::SegEs: prefixByte = 0x26; break;
+				case Prefix::SegFs: prefixByte = 0x64; break;
+				case Prefix::SegGs: prefixByte = 0x65; break;
+				case Prefix::SegSs: prefixByte = 0x36; break;
+				case Prefix::Rep: prefixByte = 0xf3; break;
+				case Prefix::Repe: prefixByte = 0xf3; break;
+				case Prefix::Repne: prefixByte = 0xf2; break;
+
+				default:
+					throw "Invalid prefix";
+			}
+
+			AddPrefixByte(info, prefixByte);
+		}
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
@@ -73,6 +127,8 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -81,10 +137,10 @@ namespace IntelCore
 			case Instruction::aas: OneByte(info, 0x3f); break;
 
 			case Instruction::cbw: OneByte(info, 0x98); break;
-			case Instruction::cwde: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cwde: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
 			case Instruction::cwd: OneByte(info, 0x99); break;
-			case Instruction::cdq: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cdq: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
 
 			case Instruction::clc: OneByte(info, 0xf8); break;
@@ -105,7 +161,7 @@ namespace IntelCore
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
 			case Instruction::iret: OneByte(info, 0xcf); break;
-			case Instruction::iretd: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iretd: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretq: Invalid(); break;
 			case Instruction::lahf: OneByte(info, 0x9f); break;
 			case Instruction::sahf: OneByte(info, 0x9e); break;
@@ -127,42 +183,42 @@ namespace IntelCore
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
 
 			case Instruction::popa: OneByte(info, 0x61); break;
-			case Instruction::popad: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popad: AddPrefixByte(info, 0x66); OneByte(info, 0x61); break;
 			case Instruction::popf: OneByte(info, 0x9d); break;
-			case Instruction::popfd: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popfd: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfq: Invalid(); break;
 			case Instruction::pusha: OneByte(info, 0x60); break;
-			case Instruction::pushad: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pushad: AddPrefixByte(info, 0x66); OneByte(info, 0x60); break;
 			case Instruction::pushf: OneByte(info, 0x9c); break;
-			case Instruction::pushfd: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushfd: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
 			case Instruction::cmpsw: OneByte(info, 0xa7); break;
-			case Instruction::cmpsd: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsd: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: Invalid(); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
 			case Instruction::lodsw: OneByte(info, 0xad); break;
-			case Instruction::lodsd: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsd: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
 			case Instruction::lodsq: Invalid(); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
 			case Instruction::movsw: OneByte(info, 0xa5); break;
-			case Instruction::movsd: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsd: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
 			case Instruction::movsq: Invalid(); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
 			case Instruction::scasw: OneByte(info, 0xaf); break;
-			case Instruction::scasd: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasd: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
 			case Instruction::scasq: Invalid(); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
 			case Instruction::stosw: OneByte(info, 0xab); break;
-			case Instruction::stosd: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosd: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
 			case Instruction::stosq: Invalid(); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
 			case Instruction::insw: OneByte(info, 0x6d); break;
-			case Instruction::insd: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insd: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
 			case Instruction::outsw: OneByte(info, 0x6f); break;
-			case Instruction::outsd: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsd: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 		}
 	}
 
@@ -171,6 +227,8 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -178,10 +236,10 @@ namespace IntelCore
 			case Instruction::aam: OneByteImm8(info, 0xd4); break;
 			case Instruction::aas: OneByte(info, 0x3f); break;
 
-			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cbw: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: Invalid(); break;
-			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cwd: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: Invalid(); break;
 
@@ -202,7 +260,7 @@ namespace IntelCore
 			case Instruction::into: OneByte(info, 0xce); break;
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
-			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iret: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretd: OneByte(info, 0xcf); break;
 			case Instruction::iretq: Invalid(); break;
 			case Instruction::lahf: OneByte(info, 0x9f); break;
@@ -224,42 +282,42 @@ namespace IntelCore
 			case Instruction::wrmsr: TwoByte(info, 0x0f, 0x30); break;
 			case Instruction::xlatb: OneByte(info, 0xd7); break;
 
-			case Instruction::popa: TwoByte(info, 0x66, 0x61); break;
+			case Instruction::popa: AddPrefixByte(info, 0x66); OneByte(info, 0x61); break;
 			case Instruction::popad: OneByte(info, 0x61); break;
-			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popf: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfd: OneByte(info, 0x9d); break;
 			case Instruction::popfq: Invalid(); break;
-			case Instruction::pusha: TwoByte(info, 0x66, 0x60); break;
+			case Instruction::pusha: AddPrefixByte(info, 0x66); OneByte(info, 0x60); break;
 			case Instruction::pushad: OneByte(info, 0x60); break;
-			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushf: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfd: OneByte(info, 0x9c); break;
 			case Instruction::pushfq: Invalid(); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
-			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
+			case Instruction::cmpsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
 			case Instruction::cmpsd: OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: Invalid(); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
-			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
+			case Instruction::lodsw: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
 			case Instruction::lodsd: OneByte(info, 0xad); break;
 			case Instruction::lodsq: Invalid(); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
-			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
+			case Instruction::movsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
 			case Instruction::movsd: OneByte(info, 0xa5); break;
 			case Instruction::movsq: Invalid(); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
-			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
+			case Instruction::scasw: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
 			case Instruction::scasd: OneByte(info, 0xaf); break;
 			case Instruction::scasq: Invalid(); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
-			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
+			case Instruction::stosw: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
 			case Instruction::stosd: OneByte(info, 0xab); break;
 			case Instruction::stosq: Invalid(); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
-			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
+			case Instruction::insw: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
 			case Instruction::insd: OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
-			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
+			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 			case Instruction::outsd: OneByte(info, 0x6f); break;
 		}
 	}
@@ -269,6 +327,8 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		AssemblePrefixes(info);
+
 		switch (info.instr)
 		{
 			case Instruction::aaa: Invalid(); break;
@@ -276,10 +336,10 @@ namespace IntelCore
 			case Instruction::aam: Invalid(); break;
 			case Instruction::aas: Invalid(); break;
 
-			case Instruction::cbw: TwoByte(info, 0x66, 0x98); break;
+			case Instruction::cbw: AddPrefixByte(info, 0x66); OneByte(info, 0x98); break;
 			case Instruction::cwde: OneByte(info, 0x98); break;
 			case Instruction::cdqe: TwoByte(info, 0x48, 0x98); break;
-			case Instruction::cwd: TwoByte(info, 0x66, 0x99); break;
+			case Instruction::cwd: AddPrefixByte(info, 0x66); OneByte(info, 0x99); break;
 			case Instruction::cdq: OneByte(info, 0x99); break;
 			case Instruction::cqo: TwoByte(info, 0x48, 0x99); break;
 
@@ -300,7 +360,7 @@ namespace IntelCore
 			case Instruction::into: OneByte(info, 0xce); break;
 			case Instruction::int1: OneByte(info, 0xf1); break;
 			case Instruction::invd: TwoByte(info, 0x0f, 0x08); break;
-			case Instruction::iret: TwoByte(info, 0x66, 0xcf); break;
+			case Instruction::iret: AddPrefixByte(info, 0x66); OneByte(info, 0xcf); break;
 			case Instruction::iretd: OneByte(info, 0xcf); break;
 			case Instruction::iretq: TwoByte(info, 0x48, 0xcf); break;
 			case Instruction::lahf: Invalid(); break;
@@ -324,41 +384,41 @@ namespace IntelCore
 
 			case Instruction::popa: Invalid(); break;
 			case Instruction::popad: Invalid(); break;
-			case Instruction::popf: TwoByte(info, 0x66, 0x9d); break;
+			case Instruction::popf: AddPrefixByte(info, 0x66); OneByte(info, 0x9d); break;
 			case Instruction::popfd: Invalid(); break;
 			case Instruction::popfq: OneByte(info, 0x9d); break;
 			case Instruction::pusha: Invalid(); break;
 			case Instruction::pushad: Invalid(); break;
-			case Instruction::pushf: TwoByte(info, 0x66, 0x9c); break;
+			case Instruction::pushf: AddPrefixByte(info, 0x66); OneByte(info, 0x9c); break;
 			case Instruction::pushfd: Invalid(); break;
 			case Instruction::pushfq: OneByte(info, 0x9c); break;
 
 			case Instruction::cmpsb: OneByte(info, 0xa6); break;
-			case Instruction::cmpsw: TwoByte(info, 0x66, 0xa7); break;
-			case Instruction::cmpsd: TwoByte(info, 0x67, 0xa7); break;
+			case Instruction::cmpsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa7); break;
+			case Instruction::cmpsd: AddPrefixByte(info, 0x67); OneByte(info, 0xa7); break;
 			case Instruction::cmpsq: TwoByte(info, 0x48, 0xa7); break;
 			case Instruction::lodsb: OneByte(info, 0xac); break;
-			case Instruction::lodsw: TwoByte(info, 0x66, 0xad); break;
-			case Instruction::lodsd: TwoByte(info, 0x67, 0xad); break;
+			case Instruction::lodsw: AddPrefixByte(info, 0x66); OneByte(info, 0xad); break;
+			case Instruction::lodsd: AddPrefixByte(info, 0x67); OneByte(info, 0xad); break;
 			case Instruction::lodsq: TwoByte(info, 0x48, 0xad); break;
 			case Instruction::movsb: OneByte(info, 0xa4); break;
-			case Instruction::movsw: TwoByte(info, 0x66, 0xa5); break;
-			case Instruction::movsd: TwoByte(info, 0x67, 0xa5); break;
+			case Instruction::movsw: AddPrefixByte(info, 0x66); OneByte(info, 0xa5); break;
+			case Instruction::movsd: AddPrefixByte(info, 0x67); OneByte(info, 0xa5); break;
 			case Instruction::movsq: TwoByte(info, 0x48, 0xa5); break;
 			case Instruction::scasb: OneByte(info, 0xae); break;
-			case Instruction::scasw: TwoByte(info, 0x66, 0xaf); break;
-			case Instruction::scasd: TwoByte(info, 0x67, 0xaf); break;
+			case Instruction::scasw: AddPrefixByte(info, 0x66); OneByte(info, 0xaf); break;
+			case Instruction::scasd: AddPrefixByte(info, 0x67); OneByte(info, 0xaf); break;
 			case Instruction::scasq: TwoByte(info, 0x48, 0xaf); break;
 			case Instruction::stosb: OneByte(info, 0xaa); break;
-			case Instruction::stosw: TwoByte(info, 0x66, 0xab); break;
-			case Instruction::stosd: TwoByte(info, 0x67, 0xab); break;
+			case Instruction::stosw: AddPrefixByte(info, 0x66); OneByte(info, 0xab); break;
+			case Instruction::stosd: AddPrefixByte(info, 0x67); OneByte(info, 0xab); break;
 			case Instruction::stosq: TwoByte(info, 0x48, 0xab); break;
 			case Instruction::insb: OneByte(info, 0x6c); break;
-			case Instruction::insw: TwoByte(info, 0x66, 0x6d); break;
-			case Instruction::insd: TwoByte(info, 0x67, 0x6d); break;
+			case Instruction::insw: AddPrefixByte(info, 0x66); OneByte(info, 0x6d); break;
+			case Instruction::insd: AddPrefixByte(info, 0x67); OneByte(info, 0x6d); break;
 			case Instruction::outsb: OneByte(info, 0x6e); break;
-			case Instruction::outsw: TwoByte(info, 0x66, 0x6f); break;
-			case Instruction::outsd: TwoByte(info, 0x67, 0x6f); break;
+			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
+			case Instruction::outsd: AddPrefixByte(info, 0x67); OneByte(info, 0x6f); break;
 		}
 	}
 
@@ -368,23 +428,44 @@ namespace IntelCore
 
 	// Instructions using ModRM / with an immediate operand
 
-	template <> AnalyzeInfo& IntelAssembler::adc<16>()
+	template <> AnalyzeInfo& IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
+		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<32>()
+	template <> AnalyzeInfo& IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
+		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<64>()
+	template <> AnalyzeInfo& IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
 		AnalyzeInfo info;
+		info.instr = Instruction::adc;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
+		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}

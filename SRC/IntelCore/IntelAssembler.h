@@ -16,6 +16,19 @@ namespace IntelCore
 		static void TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3);
 		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
 		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
+		static void AddPrefix(AnalyzeInfo& info, Prefix pre);
+		static void AddPrefixByte(AnalyzeInfo& info, uint8_t pre);
+
+		// Methods for determining the category of the parameter. 
+
+		static bool IsImm(Param p);
+		static bool IsReg(Param p);
+		static bool IsMem(Param p);
+		static bool IsMemDisp8(Param p);
+		static bool IsMemDisp16(Param p);
+		static bool IsMemDisp32(Param p);
+
+		static bool AssemblePrefixes(AnalyzeInfo& info);
 
 	public:
 
@@ -29,7 +42,7 @@ namespace IntelCore
 		// Quick helpers.
 		// To select a mode, specify 16, 32 or 64 in brackets when calling a method, for example `adc<32> (...)`
 
-		template <size_t n> static AnalyzeInfo& adc();
+		template <size_t n> static AnalyzeInfo& adc(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo& aaa();
 		template <size_t n> static AnalyzeInfo& aad();
@@ -91,7 +104,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo& pushf();
 		template <size_t n> static AnalyzeInfo& pushfd();
 		template <size_t n> static AnalyzeInfo& pushfq();
-		template <size_t n> static AnalyzeInfo& cmpsb(Prefix pre=Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo& cmpsb(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo& cmpsw(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo& cmpsd(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo& cmpsq(Prefix pre = Prefix::NoPrefix);
