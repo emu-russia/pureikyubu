@@ -261,6 +261,9 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: OneByte(info, 0x37); break;
 			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 			case Instruction::aam: OneByteImm8(info, 0xd4); break;
@@ -361,6 +364,9 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: OneByte(info, 0x37); break;
 			case Instruction::aad: OneByteImm8(info, 0xd5); break;
 			case Instruction::aam: OneByteImm8(info, 0xd4); break;
@@ -461,6 +467,9 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+
+			// One or more byte instructions
+
 			case Instruction::aaa: Invalid(); break;
 			case Instruction::aad: Invalid(); break;
 			case Instruction::aam: Invalid(); break;

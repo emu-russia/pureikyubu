@@ -30,6 +30,7 @@ namespace IntelCore
 
 		static bool AssemblePrefixes(AnalyzeInfo& info);
 
+		static void ImmedForm(AnalyzeInfo& info, size_t mode);
 		static void ModRegRm(AnalyzeInfo& info, size_t mode);
 
 	public:

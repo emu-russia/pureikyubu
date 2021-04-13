@@ -47,7 +47,7 @@ The `prefixes` property in the `AnalyzeInfo` structure is used to set the prefix
 
 Intel has historically used a very sophisticated addressing scheme, which is defined by a combination of ModRM and SIB byte fields (starting at 32-bit). Long Mode also adds the REX prefix, which further complicates the scheme.
 
-This component abstracts this whole kitchen by simply specifying the type of the parameter directly. For example the instruction:
+This component abstracts whole kitchen by simply specifying the type of the parameter directly. For example the instruction:
 
 ```
 adc [EAX * 2 + ECX + 0x11], EBX
