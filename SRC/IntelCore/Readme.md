@@ -42,3 +42,23 @@ These instruction format extensions can also be viewed as layers and implemented
 ## The situation with prefixes
 
 The `prefixes` property in the `AnalyzeInfo` structure is used to set the prefixes.
+
+## ModRM / SIB
+
+Intel has historically used a very sophisticated addressing scheme, which is defined by a combination of ModRM and SIB byte fields (starting at 32-bit). Long Mode also adds the REX prefix, which further complicates the scheme.
+
+This component abstracts this whole kitchen by simply specifying the type of the parameter directly. For example the instruction:
+
+```
+adc [EAX * 2 + ECX + 0x11], EBX
+```
+
+is represented in the `AnalyzeInfo` structure with the following parameters:
+
+- `Param::sib_eax_2_ecx_disp8`
+- `Param::ebx`
+- And additionally displacement is stored in the `Disp` property.
+
+Thus, `Param` fully defines all possible combinations that can be specified using the ModRM/SIB/REX fields.
+
+When compiling an instruction, the assembler takes into account the order of the parameters and compiles the corresponding opcodes and ModRM/SIB/REX bytes and the necessary prefixes (for example, if the specified instruction is compiled in 16-bit mode, the corresponding prefix will be added). 

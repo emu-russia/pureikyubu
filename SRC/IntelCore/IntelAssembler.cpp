@@ -230,6 +230,24 @@ namespace IntelCore
 		}
 	}
 
+	/// <summary>
+	/// Compiles an immediate form of a statement. Prefixes are placed automatically. 
+	/// </summary>
+	void IntelAssembler::ImmedForm(AnalyzeInfo& info, size_t mode)
+	{
+
+	}
+
+	/// <summary>
+	/// Compile the ModRegRM/SIB bytes depending on the mode (16, 32, 64).
+	/// Automatically adds required address/operand size prefixes and REX prefix (64-bit mode).
+	/// The order of the parameters (`reg,rm` or `rm,reg`) is determined automatically.
+	/// </summary>
+	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t mode)
+	{
+
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
@@ -546,8 +564,7 @@ namespace IntelCore
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
-		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
-		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm32 = imm;
 		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
 		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
@@ -560,8 +577,7 @@ namespace IntelCore
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
-		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
-		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm32 = imm;
 		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
 		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
@@ -574,8 +590,7 @@ namespace IntelCore
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
-		if (to == Param::imm8 || to == Param::imm16 || to == Param::imm32) info.Imm.simm32 = imm;
-		if (from == Param::imm8 || from == Param::imm16 || from == Param::imm32) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm32 = imm;
 		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
 		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
