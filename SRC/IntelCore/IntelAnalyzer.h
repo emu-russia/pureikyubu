@@ -1104,16 +1104,16 @@ namespace IntelCore
 
 		// Special constants to quickly define the category of a parameter. Do not use. 
 
-		ImmediateStart = 0,
+		ImmStart = 0,
 		RegStart = 0x200,
 		MemStart = 0x400,
 
 		// immediate
 
-		imm8 = ImmediateStart,
+		imm8 = ImmStart,
 		imm16,
 		imm32,
-		ImmediateEnd = 0x100,
+		ImmEnd = 0x100,
 
 		// reg
 
