@@ -16,6 +16,13 @@ Key components are shown in the diagram:
 
 ![Dolwin_Architecture](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/DolwinArchitecture.png?raw=true)
 
+## Getting Started
+
+To get started, you can build the Doxygen documentation (Doxyfile is in the root of the project).
+To become familiar with the basic components of the emulator is enough to study the Doxygen documentation, there you can find all the basic information on the emulator internals.
+
+If you have additional questions, you can ask them on the Discord server on the #dolwin-dev channel.
+
 ## Trends
 
 - Emulator development has become more Agile. Basic milestones can be viewed on Github (https://github.com/ogamespec/dolwin/milestones)
