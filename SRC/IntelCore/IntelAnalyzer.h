@@ -1567,23 +1567,46 @@ namespace IntelCore
 	/// </summary>
 	struct AnalyzeInfo
 	{
-		Category category;		// It is set by the analyzer, for other cases it is not necessary to set it. 
+		/// <summary>
+		/// It is set by the analyzer, for other cases it is not necessary to set it. 
+		/// </summary>
+		Category category;
 
 		// When analyzing the flow of instructions, prefixes are separated from instruction,
 		// so the total size of the code batch will be equal to the size of all prefixes + the size of the instruction itself. 
 
+		/// <summary>
+		/// An input prefix list that is used by the assembler to form the output byte array and other purposes. 
+		/// </summary>
 		Prefix prefixes[PrefixMaxSize];
 		size_t numPrefixes;
+
+		/// <summary>
+		/// Raw array of bytes (encoded prefixes).
+		/// </summary>
 		uint8_t prefixBytes[PrefixMaxSize];
 		size_t prefixSize;
 
+		/// <summary>
+		/// The instruction to which the given structure corresponds. 
+		/// </summary>
 		Instruction instr;
+
+		/// <summary>
+		/// Instruction encoded bytes. The assembler generates instruction bytes based on the parameters and the instruction type. The size is determined by the `instrSize` property. 
+		/// </summary>
 		uint8_t instrBytes[InstrMaxSize];
 		size_t instrSize;
 
+		/// <summary>
+		/// List of instruction parameters. The number of parameters is determined by the `numParams` property. 
+		/// </summary>
 		Param params[ParamsMax];
 		size_t numParams;
 
+		/// <summary>
+		/// Some instructions contain an offset (displacement) as part of one of the parameters. The offset can be one of disp8, disp16, or disp32. 
+		/// </summary>
 		union
 		{
 			uint8_t disp8;
@@ -1592,6 +1615,9 @@ namespace IntelCore
 			uint64_t disp64;
 		} Disp;
 
+		/// <summary>
+		/// The instruction can contain an immediate parameter.
+		/// </summary>
 		union
 		{
 			uint8_t uimm8;

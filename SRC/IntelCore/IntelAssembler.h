@@ -47,8 +47,19 @@ namespace IntelCore
 		// Base methods.
 		// Determine for which mode the code must be compiled. The `AnalyzeInfo` field values are considered according to the selected mode.
 
+		/// <summary>
+		/// Generate an instruction using the AnalyzeInfo information. Use 16-bit architecture. 
+		/// </summary>
 		static void Assemble16(AnalyzeInfo& info);
+
+		/// <summary>
+		/// Generate an instruction using the AnalyzeInfo information. Use 32-bit architecture. 
+		/// </summary>
 		static void Assemble32(AnalyzeInfo& info);
+
+		/// <summary>
+		/// Generate an instruction using the AnalyzeInfo information. Use 64-bit architecture. 
+		/// </summary>
 		static void Assemble64(AnalyzeInfo& info);
 
 		// Quick helpers.
