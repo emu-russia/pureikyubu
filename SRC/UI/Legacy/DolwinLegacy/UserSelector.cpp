@@ -28,7 +28,7 @@ static void fix_path(std::wstring& path)
 /* Remove all control symbols (below space). */
 static void fix_string(wchar_t* str)
 {
-    for (int i = 0; i < wcslen(str); i++)
+    for (size_t i = 0; i < wcslen(str); i++)
     {
         if (str[i] < L' ') str[i] = L' ';
     }
@@ -767,7 +767,7 @@ void UpdateSelector()
     usel.filter = UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
 
     // search all directories
-    int dir = 0;
+    size_t dir = 0;
     while (dir < usel.paths.size())
     {
         int m = 0;
@@ -834,7 +834,7 @@ void SelectorSetSelected(int item)
 // if file not present, keep selection unchanged
 void SelectorSetSelected(const std::wstring& filename)
 {
-    for (int i = 0; i < usel.files.size(); i++)
+    for (size_t i = 0; i < usel.files.size(); i++)
     {
         if(filename == usel.files[i]->name)
         {
@@ -956,7 +956,7 @@ void NotifySelector(LPNMHDR pnmh)
 void ScrollSelector(int letter)
 {
     letter = tolower(letter);
-    for(int n=0; n<usel.files.size(); n++)
+    for(size_t n=0; n<usel.files.size(); n++)
     {
         UserFile *file = usel.files[n].get();
         int c = tolower(file->title[0]);
@@ -1011,7 +1011,7 @@ static int sort_by_comment(const void *cmp1, const void *cmp2)
 static int get_dvd_files()
 {
     int sum = 0;
-    for(int i=0; i<usel.files.size(); i++)
+    for(size_t i=0; i<usel.files.size(); i++)
     {
         UserFile *file = usel.files[i].get();
         if(file->type == SELECTOR_FILE::Dvd) sum++;
@@ -1071,7 +1071,7 @@ void SortSelector(SELECTOR_SORT sortBy)
 
     // rebuild filelist
     ListView_DeleteAllItems(usel.hSelectorWindow);
-    for(int i=0; i<usel.files.size(); i++) add_item(i);
+    for(size_t i=0; i<usel.files.size(); i++) add_item(i);
 }
 
 // ---------------------------------------------------------------------------

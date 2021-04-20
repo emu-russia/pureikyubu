@@ -601,7 +601,7 @@ void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fi
     // load geometry matrix
     if((startIdx >= 0x0000) && (startIdx < 0x0400))
     {
-        for (int i = 0; i < amount; i++)
+        for (size_t i = 0; i < amount; i++)
         {
             *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = fifo->ReadFloat();
         }
@@ -609,7 +609,7 @@ void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fi
     // load normal matrix
     else if((startIdx >= 0x0400) && (startIdx < 0x0500))
     {
-        for (int i = 0; i < amount; i++)
+        for (size_t i = 0; i < amount; i++)
         {
             *(float*)(((uint8_t*)xfRegs.nrmmtx + 4 * (startIdx - 0x400)) + 4 * i) = fifo->ReadFloat();
         }
@@ -617,7 +617,7 @@ void loadXFRegs(size_t startIdx, size_t amount, GX_FromFuture::FifoProcessor* fi
     // load post-trans matrix
     else if((startIdx >= 0x0500) && (startIdx < 0x0600))
     {
-        for (int i = 0; i < amount; i++)
+        for (size_t i = 0; i < amount; i++)
         {
             *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = fifo->ReadFloat();
         }

@@ -408,7 +408,7 @@ namespace IntelCore
 	/// </summary>
 	bool IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
 	{
-		for (int i = 0; i < info.numPrefixes; i++)
+		for (size_t i = 0; i < info.numPrefixes; i++)
 		{
 			uint8_t prefixByte = 0;
 

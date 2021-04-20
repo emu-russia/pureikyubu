@@ -617,7 +617,7 @@ namespace Debug
 
 			if (child->type == Json::ValueType::Int)
 			{
-				instrSizeWords = child->value.AsInt;
+				instrSizeWords = (size_t)child->value.AsInt;
 			}
 
 			if (child->type == Json::ValueType::String)
