@@ -14,7 +14,7 @@ Both X86 and X64 targets are supported.
 
 Key components are shown in the diagram:
 
-![Dolwin_Architecture](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/DolwinArchitecture.png)
+![Dolwin_Architecture](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/DolwinArchitecture.png?raw=true)
 
 ## Trends
 

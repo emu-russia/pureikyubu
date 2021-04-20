@@ -2,7 +2,7 @@
 
 This component emulates everything inside the ASIC Flipper, *except* the graphics system (GX) and DSP.
 
-![Flipper_Block_Diagram](https://github.com/ogamespec/dolwin-docs/blob/master/HW/Flipper_ASIC_Block_Diagram.png)
+![Flipper_Block_Diagram](https://github.com/ogamespec/dolwin-docs/blob/master/HW/Flipper_ASIC_Block_Diagram.png?raw=true)
 
 A short tour into the Flipper stuff, without shocking details:
 - AI: Audio DMA
