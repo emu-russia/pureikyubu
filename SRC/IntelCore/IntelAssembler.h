@@ -24,14 +24,23 @@ namespace IntelCore
 		static bool IsImm(Param p);
 		static bool IsReg(Param p);
 		static bool IsMem(Param p);
+		static bool IsSib(Param p);
 		static bool IsMemDisp8(Param p);
 		static bool IsMemDisp16(Param p);
 		static bool IsMemDisp32(Param p);
 
 		static bool AssemblePrefixes(AnalyzeInfo& info);
 
-		static void ImmedForm(AnalyzeInfo& info, size_t mode);
-		static void ModRegRm(AnalyzeInfo& info, size_t mode);
+		// These methods decompose the parameter into its constituent parts, which are included in the ModRM/SIB byte fields.
+
+		static void GetReg(Param p, size_t& reg);
+		static void GetMod(Param p, size_t& mod);
+		static void GetRm(Param p, size_t& rm);
+		static void GetSS(Param p, size_t& scale);
+		static void GetIndex(Param p, size_t& index);
+		static void GetBase(Param p, size_t& base);
+
+		static void ModRegRm(AnalyzeInfo& info);
 
 	public:
 

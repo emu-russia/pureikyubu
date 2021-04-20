@@ -101,12 +101,17 @@ namespace IntelCore
 		return Param::MemStart <= p && p <= Param::MemEnd;
 	}
 
+	bool IntelAssembler::IsSib(Param p)
+	{
+		return Param::SibStart <= p && p <= Param::SibEnd;
+	}
+
 	bool IntelAssembler::IsMemDisp8(Param p)
 	{
 		switch (p)
 		{
 			case Param::m_bx_si_disp8: case Param::m_bx_di_disp8: case Param::m_bp_si_disp8: case Param::m_bp_di_disp8: case Param::m_si_disp8: case Param::m_di_disp8: case Param::m_bp_disp8: case Param::m_bx_disp8:
-			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_disp32_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
+			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_ebp_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
 			case Param::sib_eax_eax_disp8: case Param::sib_eax_ecx_disp8: case Param::sib_eax_edx_disp8: case Param::sib_eax_ebx_disp8: case Param::sib_eax_esp_disp8: case Param::sib_eax_ebp_disp8: case Param::sib_eax_esi_disp8: case Param::sib_eax_edi_disp8:
 			case Param::sib_ecx_eax_disp8: case Param::sib_ecx_ecx_disp8: case Param::sib_ecx_edx_disp8: case Param::sib_ecx_ebx_disp8: case Param::sib_ecx_esp_disp8: case Param::sib_ecx_ebp_disp8: case Param::sib_ecx_esi_disp8: case Param::sib_ecx_edi_disp8:
 			case Param::sib_edx_eax_disp8: case Param::sib_edx_ecx_disp8: case Param::sib_edx_edx_disp8: case Param::sib_edx_ebx_disp8: case Param::sib_edx_esp_disp8: case Param::sib_edx_ebp_disp8: case Param::sib_edx_esi_disp8: case Param::sib_edx_edi_disp8:
@@ -158,7 +163,8 @@ namespace IntelCore
 	{
 		switch (p)
 		{
-			case Param::m_disp32: case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_disp32_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
+			case Param::m_disp32: case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_ebp_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
+			case Param::m_rip_disp32:
 			case Param::sib_eax_disp32: case Param::sib_ecx_disp32: case Param::sib_edx_disp32: case Param::sib_ebx_disp32: case Param::sib_none_disp32: case Param::sib_ebp_disp32: case Param::sib_esi_disp32: case Param::sib_edi_disp32:
 			case Param::sib_eax_2_disp32: case Param::sib_ecx_2_disp32: case Param::sib_edx_2_disp32: case Param::sib_ebx_2_disp32: case Param::sib_ebp_2_disp32: case Param::sib_esi_2_disp32: case Param::sib_edi_2_disp32:
 			case Param::sib_eax_4_disp32: case Param::sib_ecx_4_disp32: case Param::sib_edx_4_disp32: case Param::sib_ebx_4_disp32: case Param::sib_ebp_4_disp32: case Param::sib_esi_4_disp32: case Param::sib_edi_4_disp32:
@@ -219,7 +225,6 @@ namespace IntelCore
 				case Prefix::SegGs: prefixByte = 0x65; break;
 				case Prefix::SegSs: prefixByte = 0x36; break;
 				case Prefix::Rep: prefixByte = 0xf3; break;
-				case Prefix::Repe: prefixByte = 0xf3; break;
 				case Prefix::Repne: prefixByte = 0xf2; break;
 
 				default:
@@ -230,21 +235,113 @@ namespace IntelCore
 		}
 	}
 
-	/// <summary>
-	/// Compiles an immediate form of a statement. Prefixes are placed automatically. 
-	/// </summary>
-	void IntelAssembler::ImmedForm(AnalyzeInfo& info, size_t mode)
+	void IntelAssembler::GetReg(Param p, size_t& reg)
+	{
+		switch (p)
+		{
+			case Param::al: case Param::ax: case Param::eax: reg = 0; break;
+			case Param::cl: case Param::cx: case Param::ecx: reg = 1; break;
+			case Param::dl: case Param::dx: case Param::edx: reg = 2; break;
+			case Param::bl: case Param::bx: case Param::ebx: reg = 3; break;
+			case Param::ah: case Param::sp: case Param::esp: reg = 4; break;
+			case Param::ch: case Param::bp: case Param::ebp: reg = 5; break;
+			case Param::dh: case Param::si: case Param::esi: reg = 6; break;
+			case Param::bh: case Param::di: case Param::edi: reg = 7; break;
+			default:
+				throw "Invalid parameter";
+		}
+	}
+
+	void IntelAssembler::GetMod(Param p, size_t& mod)
 	{
 
 	}
 
-	/// <summary>
-	/// Compile the ModRegRM/SIB bytes depending on the mode (16, 32, 64).
-	/// Automatically adds required address/operand size prefixes and REX prefix (64-bit mode).
-	/// The order of the parameters (`reg,rm` or `rm,reg`) is determined automatically.
-	/// </summary>
-	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t mode)
+	void IntelAssembler::GetRm(Param p, size_t& rm)
 	{
+
+	}
+
+	void IntelAssembler::GetSS(Param p, size_t& scale)
+	{
+
+	}
+
+	void IntelAssembler::GetIndex(Param p, size_t& index)
+	{
+
+	}
+
+	void IntelAssembler::GetBase(Param p, size_t& base)
+	{
+
+	}
+
+	void IntelAssembler::ModRegRm(AnalyzeInfo& info)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t rmParam = 0;
+
+		if (IsImm(info.params[1]))
+		{
+			if (IsReg(info.params[0]) || IsMem(info.params[0]))
+			{
+				GetMod(info.params[0], mod);
+				reg = 0;		// The `reg` field contains an additional opcode in this case. 
+				GetRm(info.params[0], rm);
+				rmParam = 0;
+			}
+			else
+			{
+				throw "Invalid parameter";
+			}
+		}
+		else
+		{
+			if (IsReg(info.params[0]))
+			{
+				if (IsReg(info.params[1]) || IsMem(info.params[1]))
+				{
+					GetMod(info.params[1], mod);
+					GetReg(info.params[0], reg);
+					GetRm(info.params[1], rm);
+					rmParam = 1;
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+			}
+			else if (IsMem(info.params[0]))
+			{
+				if (IsReg(info.params[1]))
+				{
+					GetMod(info.params[0], mod);
+					GetReg(info.params[1], reg);
+					GetRm(info.params[0], rm);
+					rmParam = 0;
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+			}
+			else
+			{
+				throw "Invalid parameter";
+			}
+		}
+
+		// Check that the r/m parameter is a parameter using the SIB mechanism. 
+
+		if (IsSib(info.params[rmParam]))
+		{
+			size_t scale = 0, index = 0, base = 0;
+
+			GetSS(info.params[rmParam], scale);
+			GetIndex(info.params[rmParam], index);
+			GetBase(info.params[rmParam], base);
+		}
 
 	}
 
@@ -261,6 +358,25 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+			// Instructions using ModRM / with an immediate operand
+
+			case Instruction::adc:
+				if (info.numParams != 2)
+				{
+					throw "Invalid parameters";
+				}
+
+				if (IsImm(info.params[1]))
+				{
+
+				}
+				else
+				{
+
+				}
+
+				break;
+
 
 			// One or more byte instructions
 
