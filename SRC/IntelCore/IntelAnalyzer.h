@@ -1135,13 +1135,13 @@ namespace IntelCore
 		// 32-bit mem
 		// If you need simple 32-bit addressing like [ESI], see here. 
 
-		m_eax, m_ecx, m_edx, m_ebx, /*see sib_, */ m_disp32, m_esi, m_edi,
+		m_eax, m_ecx, m_edx, m_ebx, /*see sib_, */ m_disp32 /* disp32 instead ebp */, m_esi, m_edi,
 		m_eax_disp8, m_ecx_disp8, m_edx_disp8, m_ebx_disp8, /*see sib_x_disp8, */ m_ebp_disp8, m_esi_disp8, m_edi_disp8,
 		m_eax_disp32, m_ecx_disp32, m_edx_disp32, m_ebx_disp32, /*see sib_x_disp32, */ m_ebp_disp32, m_esi_disp32, m_edi_disp32,
 
 		// 64-bit mem
 
-		m_rax, m_rcx, m_rdx, m_rbx, /*see sib_, */ m_rip_disp32 /* RIP-relative addressing (Instead m_disp32. Use sib_none_disp32 if you need disp32 addressing) */ , m_rsi, m_rdi,
+		m_rax, m_rcx, m_rdx, m_rbx, /*see sib_, */ m_rip_disp32 /* RIP-relative addressing (Instead m_disp32. Use sib_none_disp32 if you need disp32 addressing) */, m_rsi, m_rdi,
 		m_rax_disp8, m_rcx_disp8, m_rdx_disp8, m_rbx_disp8, /*see sib_x_disp8, */ m_rbp_disp8, m_rsi_disp8, m_rdi_disp8,
 		m_rax_disp32, m_rcx_disp32, m_rdx_disp32, m_rbx_disp32, /*see sib_x_disp32, */ m_rbp_disp32, m_rsi_disp32, m_rdi_disp32,
 
