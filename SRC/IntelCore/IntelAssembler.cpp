@@ -398,6 +398,11 @@ namespace IntelCore
 		return false;
 	}
 
+	bool IntelAssembler::IsMemDisp(Param p)
+	{
+		return IsMemDisp8(p) || IsMemDisp16(p) || IsMemDisp32(p);
+	}
+
 	/// <summary>
 	/// Used to compile a prefix list into raw form (bytes).
 	/// </summary>
@@ -884,8 +889,8 @@ namespace IntelCore
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
@@ -897,8 +902,8 @@ namespace IntelCore
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
@@ -910,8 +915,8 @@ namespace IntelCore
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp8(to) || IsMemDisp16(to) || IsMemDisp32(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp8(from) || IsMemDisp16(from) || IsMemDisp32(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}

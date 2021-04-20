@@ -28,6 +28,7 @@ namespace IntelCore
 		static bool IsMemDisp8(Param p);
 		static bool IsMemDisp16(Param p);
 		static bool IsMemDisp32(Param p);
+		static bool IsMemDisp(Param p);
 
 		static bool AssemblePrefixes(AnalyzeInfo& info);
 
