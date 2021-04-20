@@ -9,7 +9,7 @@ Json::Value* CmdUIError(std::vector<std::string>& args)
 		return nullptr;
 	}
 
-	for (int i = 1; i < args.size(); i++)
+	for (size_t i = 1; i < args.size(); i++)
 	{
 		text += args[i] + " ";
 	}
@@ -28,7 +28,7 @@ Json::Value* CmdUIReport(std::vector<std::string>& args)
 		return nullptr;
 	}
 
-	for (int i = 1; i < args.size(); i++)
+	for (size_t i = 1; i < args.size(); i++)
 	{
 		text += args[i] + " ";
 	}

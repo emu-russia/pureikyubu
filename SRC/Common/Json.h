@@ -226,8 +226,9 @@ public:
 		}
 	};
 
-	// Deserialized root
-
+	/// <summary>
+	/// Deserialized root.
+	/// </summary>
 	Value root;
 
 	// Api

@@ -44,7 +44,7 @@ namespace Debug
 		uint32_t addr = address & ~3;
 		disa_sub_h = 0;
 
-		for (int line = 1; line < height; line++, addr += 4)
+		for (size_t line = 1; line < height; line++, addr += 4)
 		{
 			int n = DisasmLine(line, addr);
 			if (n > 1) disa_sub_h += n - 1;

@@ -117,6 +117,9 @@ namespace DSP
 		b1,		// 40 - bit accumulator `b` middle 16 bits / Whole `b` accumulator
 	};
 
+	/// <summary>
+	/// DSPcore registers.
+	/// </summary>
 	struct DspRegs
 	{
 		uint16_t r[4];		// Addressing registers
@@ -134,8 +137,9 @@ namespace DSP
 		DspAddress pc;		// Program counter
 	};
 
-	// DSP interrupts
-
+	/// <summary>
+	/// DSP interrupts.
+	/// </summary>
 	enum class DspInterrupt
 	{
 		Reset = 0,	// Soft reset
@@ -160,6 +164,9 @@ namespace DSP
 	class Dsp16;
 	class DspInterpreter;
 
+	/// <summary>
+	/// Macronix DSP core.
+	/// </summary>
 	class DspCore
 	{
 		friend DspInterpreter;

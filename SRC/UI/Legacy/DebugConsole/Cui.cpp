@@ -264,9 +264,9 @@ namespace Debug
 
 	void CuiWindow::Fill(CuiColor back, CuiColor front, char c)
 	{
-		for (int y = 0; y < height; y++)
+		for (size_t y = 0; y < height; y++)
 		{
-			for (int x = 0; x < width; x++)
+			for (size_t x = 0; x < width; x++)
 			{
 				PutChar(back, front, x, y, c);
 			}
@@ -275,7 +275,7 @@ namespace Debug
 
 	void CuiWindow::FillLine(CuiColor back, CuiColor front, int y, char c)
 	{
-		for (int x = 0; x < width; x++)
+		for (size_t x = 0; x < width; x++)
 		{
 			PutChar(back, front, x, y, c);
 		}
