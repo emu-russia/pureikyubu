@@ -55,6 +55,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PadNull", "SRC\Backends\Pad
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "IntelCore", "SRC\IntelCore\Scripts\VS2019\IntelCore.vcxproj", "{01481D7E-EE3A-453B-8A98-1CB98DF87B5F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{B697AB17-73A7-4B70-9608-64A4637333CC}"
+	ProjectSection(SolutionItems) = preProject
+		Dolwin_Quick_Start.md = Dolwin_Quick_Start.md
+		Doxyfile = Doxyfile
+		README.md = README.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

@@ -72,6 +72,9 @@ namespace DSP
 		DIRQ = 0xFFFB,		// IRQ request
 	};
 
+	/// <summary>
+	/// GAMECUBE DSP Interface.
+	/// </summary>
 	class Dsp16
 	{
 		friend DspCore;

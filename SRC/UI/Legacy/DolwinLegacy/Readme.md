@@ -16,7 +16,7 @@ The emulator settings dialog is used only for modifying Settings.json.
 
 This dialog is used to configure the PadSimpleWin32 backend.
 
-When there is normal support for USB controllers, it will probably be redesigned.
+When there is actual support for USB controllers, it will probably be redesigned.
 
 In short, the current controller settings are strongly tied to the PadSimpleWin32 backend, which is not very good, but for now it is as it is.
 
