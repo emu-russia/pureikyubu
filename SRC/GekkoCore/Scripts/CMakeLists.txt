@@ -15,7 +15,6 @@ add_library (GekkoCore SHARED
 	../Interpreter/Rotate.cpp
 	../Interpreter/Shift.cpp
 	../Interpreter/System.cpp
-	../Interpreter/Tables.cpp
 
 	../JitcX64/Common.cpp
 	../JitcX64/Fallback.cpp

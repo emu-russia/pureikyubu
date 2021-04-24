@@ -492,7 +492,7 @@ namespace IntelCore
 
 		// TODO: The definitions of SSE/AVX instructions now look a little chaotic, when it comes to them they will be put in order.
 
-		// SSE (™?) Instructions
+		// SSE Instructions
 
 		movaps,
 		movups,
@@ -1567,6 +1567,8 @@ namespace IntelCore
 	/// </summary>
 	struct AnalyzeInfo
 	{
+		size_t clearingPaddy;
+
 		/// <summary>
 		/// It is set by the analyzer, for other cases it is not necessary to set it. 
 		/// </summary>

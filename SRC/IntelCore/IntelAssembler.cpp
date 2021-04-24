@@ -406,7 +406,7 @@ namespace IntelCore
 	/// <summary>
 	/// Used to compile a prefix list into raw form (bytes).
 	/// </summary>
-	bool IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
+	void IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
 	{
 		for (size_t i = 0; i < info.numPrefixes; i++)
 		{
@@ -882,9 +882,9 @@ namespace IntelCore
 
 	// Instructions using ModRM / with an immediate operand
 
-	template <> AnalyzeInfo& IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> AnalyzeInfo IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
@@ -895,9 +895,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> AnalyzeInfo IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
@@ -908,9 +908,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> AnalyzeInfo IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
@@ -925,2154 +925,2154 @@ namespace IntelCore
 
 	// One or more byte instructions
 
-	template <> AnalyzeInfo& IntelAssembler::aaa<16>()
+	template <> AnalyzeInfo IntelAssembler::aaa<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aaa<32>()
+	template <> AnalyzeInfo IntelAssembler::aaa<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aaa<64>()
+	template <> AnalyzeInfo IntelAssembler::aaa<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<16>()
+	template <> AnalyzeInfo IntelAssembler::aad<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<16>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aad<16>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<32>()
+	template <> AnalyzeInfo IntelAssembler::aad<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<32>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aad<32>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<64>()
+	template <> AnalyzeInfo IntelAssembler::aad<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aad<64>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aad<64>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<16>()
+	template <> AnalyzeInfo IntelAssembler::aam<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<16>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aam<16>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<32>()
+	template <> AnalyzeInfo IntelAssembler::aam<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<32>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aam<32>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<64>()
+	template <> AnalyzeInfo IntelAssembler::aam<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aam<64>(uint8_t v)
+	template <> AnalyzeInfo IntelAssembler::aam<64>(uint8_t v)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aas<16>()
+	template <> AnalyzeInfo IntelAssembler::aas<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aas<32>()
+	template <> AnalyzeInfo IntelAssembler::aas<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::aas<64>()
+	template <> AnalyzeInfo IntelAssembler::aas<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cbw<16>()
+	template <> AnalyzeInfo IntelAssembler::cbw<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cbw<32>()
+	template <> AnalyzeInfo IntelAssembler::cbw<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cbw<64>()
+	template <> AnalyzeInfo IntelAssembler::cbw<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwde<16>()
+	template <> AnalyzeInfo IntelAssembler::cwde<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwde<32>()
+	template <> AnalyzeInfo IntelAssembler::cwde<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwde<64>()
+	template <> AnalyzeInfo IntelAssembler::cwde<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdqe<16>()
+	template <> AnalyzeInfo IntelAssembler::cdqe<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdqe<32>()
+	template <> AnalyzeInfo IntelAssembler::cdqe<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdqe<64>()
+	template <> AnalyzeInfo IntelAssembler::cdqe<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwd<16>()
+	template <> AnalyzeInfo IntelAssembler::cwd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwd<32>()
+	template <> AnalyzeInfo IntelAssembler::cwd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cwd<64>()
+	template <> AnalyzeInfo IntelAssembler::cwd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdq<16>()
+	template <> AnalyzeInfo IntelAssembler::cdq<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdq<32>()
+	template <> AnalyzeInfo IntelAssembler::cdq<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cdq<64>()
+	template <> AnalyzeInfo IntelAssembler::cdq<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cqo<16>()
+	template <> AnalyzeInfo IntelAssembler::cqo<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cqo<32>()
+	template <> AnalyzeInfo IntelAssembler::cqo<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cqo<64>()
+	template <> AnalyzeInfo IntelAssembler::cqo<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clc<16>()
+	template <> AnalyzeInfo IntelAssembler::clc<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clc<32>()
+	template <> AnalyzeInfo IntelAssembler::clc<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clc<64>()
+	template <> AnalyzeInfo IntelAssembler::clc<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cld<16>()
+	template <> AnalyzeInfo IntelAssembler::cld<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cld<32>()
+	template <> AnalyzeInfo IntelAssembler::cld<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cld<64>()
+	template <> AnalyzeInfo IntelAssembler::cld<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cli<16>()
+	template <> AnalyzeInfo IntelAssembler::cli<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cli<32>()
+	template <> AnalyzeInfo IntelAssembler::cli<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cli<64>()
+	template <> AnalyzeInfo IntelAssembler::cli<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clts<16>()
+	template <> AnalyzeInfo IntelAssembler::clts<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clts<32>()
+	template <> AnalyzeInfo IntelAssembler::clts<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::clts<64>()
+	template <> AnalyzeInfo IntelAssembler::clts<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmc<16>()
+	template <> AnalyzeInfo IntelAssembler::cmc<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmc<32>()
+	template <> AnalyzeInfo IntelAssembler::cmc<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmc<64>()
+	template <> AnalyzeInfo IntelAssembler::cmc<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stc<16>()
+	template <> AnalyzeInfo IntelAssembler::stc<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stc<32>()
+	template <> AnalyzeInfo IntelAssembler::stc<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stc<64>()
+	template <> AnalyzeInfo IntelAssembler::stc<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::std<16>()
+	template <> AnalyzeInfo IntelAssembler::std<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::std<32>()
+	template <> AnalyzeInfo IntelAssembler::std<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::std<64>()
+	template <> AnalyzeInfo IntelAssembler::std<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sti<16>()
+	template <> AnalyzeInfo IntelAssembler::sti<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sti<32>()
+	template <> AnalyzeInfo IntelAssembler::sti<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sti<64>()
+	template <> AnalyzeInfo IntelAssembler::sti<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cpuid<16>()
+	template <> AnalyzeInfo IntelAssembler::cpuid<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cpuid<32>()
+	template <> AnalyzeInfo IntelAssembler::cpuid<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cpuid<64>()
+	template <> AnalyzeInfo IntelAssembler::cpuid<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::daa<16>()
+	template <> AnalyzeInfo IntelAssembler::daa<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::daa<32>()
+	template <> AnalyzeInfo IntelAssembler::daa<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::daa<64>()
+	template <> AnalyzeInfo IntelAssembler::daa<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::das<16>()
+	template <> AnalyzeInfo IntelAssembler::das<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::das<32>()
+	template <> AnalyzeInfo IntelAssembler::das<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::das<64>()
+	template <> AnalyzeInfo IntelAssembler::das<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::hlt<16>()
+	template <> AnalyzeInfo IntelAssembler::hlt<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::hlt<32>()
+	template <> AnalyzeInfo IntelAssembler::hlt<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::hlt<64>()
+	template <> AnalyzeInfo IntelAssembler::hlt<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int3<16>()
+	template <> AnalyzeInfo IntelAssembler::int3<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int3<32>()
+	template <> AnalyzeInfo IntelAssembler::int3<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int3<64>()
+	template <> AnalyzeInfo IntelAssembler::int3<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::into<16>()
+	template <> AnalyzeInfo IntelAssembler::into<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::into<32>()
+	template <> AnalyzeInfo IntelAssembler::into<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::into<64>()
+	template <> AnalyzeInfo IntelAssembler::into<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int1<16>()
+	template <> AnalyzeInfo IntelAssembler::int1<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int1<32>()
+	template <> AnalyzeInfo IntelAssembler::int1<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::int1<64>()
+	template <> AnalyzeInfo IntelAssembler::int1<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::invd<16>()
+	template <> AnalyzeInfo IntelAssembler::invd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::invd<32>()
+	template <> AnalyzeInfo IntelAssembler::invd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::invd<64>()
+	template <> AnalyzeInfo IntelAssembler::invd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iret<16>()
+	template <> AnalyzeInfo IntelAssembler::iret<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iret<32>()
+	template <> AnalyzeInfo IntelAssembler::iret<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iret<64>()
+	template <> AnalyzeInfo IntelAssembler::iret<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretd<16>()
+	template <> AnalyzeInfo IntelAssembler::iretd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretd<32>()
+	template <> AnalyzeInfo IntelAssembler::iretd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretd<64>()
+	template <> AnalyzeInfo IntelAssembler::iretd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretq<16>()
+	template <> AnalyzeInfo IntelAssembler::iretq<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretq<32>()
+	template <> AnalyzeInfo IntelAssembler::iretq<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::iretq<64>()
+	template <> AnalyzeInfo IntelAssembler::iretq<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lahf<16>()
+	template <> AnalyzeInfo IntelAssembler::lahf<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lahf<32>()
+	template <> AnalyzeInfo IntelAssembler::lahf<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lahf<64>()
+	template <> AnalyzeInfo IntelAssembler::lahf<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sahf<16>()
+	template <> AnalyzeInfo IntelAssembler::sahf<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sahf<32>()
+	template <> AnalyzeInfo IntelAssembler::sahf<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sahf<64>()
+	template <> AnalyzeInfo IntelAssembler::sahf<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::leave<16>()
+	template <> AnalyzeInfo IntelAssembler::leave<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::leave<32>()
+	template <> AnalyzeInfo IntelAssembler::leave<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::leave<64>()
+	template <> AnalyzeInfo IntelAssembler::leave<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::nop<16>()
+	template <> AnalyzeInfo IntelAssembler::nop<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::nop<32>()
+	template <> AnalyzeInfo IntelAssembler::nop<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::nop<64>()
+	template <> AnalyzeInfo IntelAssembler::nop<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdmsr<16>()
+	template <> AnalyzeInfo IntelAssembler::rdmsr<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdmsr<32>()
+	template <> AnalyzeInfo IntelAssembler::rdmsr<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdmsr<64>()
+	template <> AnalyzeInfo IntelAssembler::rdmsr<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdpmc<16>()
+	template <> AnalyzeInfo IntelAssembler::rdpmc<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdpmc<32>()
+	template <> AnalyzeInfo IntelAssembler::rdpmc<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdpmc<64>()
+	template <> AnalyzeInfo IntelAssembler::rdpmc<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtsc<16>()
+	template <> AnalyzeInfo IntelAssembler::rdtsc<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtsc<32>()
+	template <> AnalyzeInfo IntelAssembler::rdtsc<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtsc<64>()
+	template <> AnalyzeInfo IntelAssembler::rdtsc<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtscp<16>()
+	template <> AnalyzeInfo IntelAssembler::rdtscp<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtscp<32>()
+	template <> AnalyzeInfo IntelAssembler::rdtscp<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rdtscp<64>()
+	template <> AnalyzeInfo IntelAssembler::rdtscp<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rsm<16>()
+	template <> AnalyzeInfo IntelAssembler::rsm<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rsm<32>()
+	template <> AnalyzeInfo IntelAssembler::rsm<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::rsm<64>()
+	template <> AnalyzeInfo IntelAssembler::rsm<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::swapgs<16>()
+	template <> AnalyzeInfo IntelAssembler::swapgs<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::swapgs<32>()
+	template <> AnalyzeInfo IntelAssembler::swapgs<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::swapgs<64>()
+	template <> AnalyzeInfo IntelAssembler::swapgs<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::syscall<16>()
+	template <> AnalyzeInfo IntelAssembler::syscall<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::syscall<32>()
+	template <> AnalyzeInfo IntelAssembler::syscall<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::syscall<64>()
+	template <> AnalyzeInfo IntelAssembler::syscall<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysret<16>()
+	template <> AnalyzeInfo IntelAssembler::sysret<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysret<32>()
+	template <> AnalyzeInfo IntelAssembler::sysret<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysret<64>()
+	template <> AnalyzeInfo IntelAssembler::sysret<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysretq<16>()
+	template <> AnalyzeInfo IntelAssembler::sysretq<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysretq<32>()
+	template <> AnalyzeInfo IntelAssembler::sysretq<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::sysretq<64>()
+	template <> AnalyzeInfo IntelAssembler::sysretq<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::ud2<16>()
+	template <> AnalyzeInfo IntelAssembler::ud2<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::ud2<32>()
+	template <> AnalyzeInfo IntelAssembler::ud2<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::ud2<64>()
+	template <> AnalyzeInfo IntelAssembler::ud2<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wait<16>()
+	template <> AnalyzeInfo IntelAssembler::wait<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wait<32>()
+	template <> AnalyzeInfo IntelAssembler::wait<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wait<64>()
+	template <> AnalyzeInfo IntelAssembler::wait<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::fwait<16>()
+	template <> AnalyzeInfo IntelAssembler::fwait<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::fwait<32>()
+	template <> AnalyzeInfo IntelAssembler::fwait<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::fwait<64>()
+	template <> AnalyzeInfo IntelAssembler::fwait<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wbinvd<16>()
+	template <> AnalyzeInfo IntelAssembler::wbinvd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wbinvd<32>()
+	template <> AnalyzeInfo IntelAssembler::wbinvd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wbinvd<64>()
+	template <> AnalyzeInfo IntelAssembler::wbinvd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wrmsr<16>()
+	template <> AnalyzeInfo IntelAssembler::wrmsr<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wrmsr<32>()
+	template <> AnalyzeInfo IntelAssembler::wrmsr<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::wrmsr<64>()
+	template <> AnalyzeInfo IntelAssembler::wrmsr<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::xlatb<16>()
+	template <> AnalyzeInfo IntelAssembler::xlatb<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::xlatb<32>()
+	template <> AnalyzeInfo IntelAssembler::xlatb<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::xlatb<64>()
+	template <> AnalyzeInfo IntelAssembler::xlatb<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popa<16>()
+	template <> AnalyzeInfo IntelAssembler::popa<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popa<32>()
+	template <> AnalyzeInfo IntelAssembler::popa<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popa<64>()
+	template <> AnalyzeInfo IntelAssembler::popa<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popad<16>()
+	template <> AnalyzeInfo IntelAssembler::popad<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popad<32>()
+	template <> AnalyzeInfo IntelAssembler::popad<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popad<64>()
+	template <> AnalyzeInfo IntelAssembler::popad<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popf<16>()
+	template <> AnalyzeInfo IntelAssembler::popf<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popf<32>()
+	template <> AnalyzeInfo IntelAssembler::popf<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popf<64>()
+	template <> AnalyzeInfo IntelAssembler::popf<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfd<16>()
+	template <> AnalyzeInfo IntelAssembler::popfd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfd<32>()
+	template <> AnalyzeInfo IntelAssembler::popfd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfd<64>()
+	template <> AnalyzeInfo IntelAssembler::popfd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfq<16>()
+	template <> AnalyzeInfo IntelAssembler::popfq<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfq<32>()
+	template <> AnalyzeInfo IntelAssembler::popfq<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::popfq<64>()
+	template <> AnalyzeInfo IntelAssembler::popfq<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pusha<16>()
+	template <> AnalyzeInfo IntelAssembler::pusha<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pusha<32>()
+	template <> AnalyzeInfo IntelAssembler::pusha<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pusha<64>()
+	template <> AnalyzeInfo IntelAssembler::pusha<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushad<16>()
+	template <> AnalyzeInfo IntelAssembler::pushad<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushad<32>()
+	template <> AnalyzeInfo IntelAssembler::pushad<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushad<64>()
+	template <> AnalyzeInfo IntelAssembler::pushad<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushf<16>()
+	template <> AnalyzeInfo IntelAssembler::pushf<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushf<32>()
+	template <> AnalyzeInfo IntelAssembler::pushf<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushf<64>()
+	template <> AnalyzeInfo IntelAssembler::pushf<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfd<16>()
+	template <> AnalyzeInfo IntelAssembler::pushfd<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfd<32>()
+	template <> AnalyzeInfo IntelAssembler::pushfd<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfd<64>()
+	template <> AnalyzeInfo IntelAssembler::pushfd<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfq<16>()
+	template <> AnalyzeInfo IntelAssembler::pushfq<16>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfq<32>()
+	template <> AnalyzeInfo IntelAssembler::pushfq<32>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::pushfq<64>()
+	template <> AnalyzeInfo IntelAssembler::pushfq<64>()
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsq<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsq<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::cmpsq<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::cmpsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsq<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsq<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::lodsq<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::lodsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsq<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsq<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::movsq<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::movsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasq<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasq<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasq<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasq<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::scasq<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::scasq<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosq<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosq<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosq<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosq<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::stosq<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::stosq<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::insd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::insd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsb<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsb<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsb<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsw<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsw<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsw<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsd<16>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsd<32>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo& IntelAssembler::outsd<64>(Prefix pre)
+	template <> AnalyzeInfo IntelAssembler::outsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info;
+		AnalyzeInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble64(info);
