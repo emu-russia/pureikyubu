@@ -447,7 +447,7 @@ namespace DSP
 
         int regIndex = -1;
 
-        for (int i = 0; i < dspRegNamesNum; i++)
+        for (size_t i = 0; i < dspRegNamesNum; i++)
         {
             if (!_stricmp(args[1].c_str(), dspRegNames[i]))
             {

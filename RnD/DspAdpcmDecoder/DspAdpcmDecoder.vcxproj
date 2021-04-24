@@ -87,7 +87,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -102,7 +102,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -119,7 +119,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -138,7 +138,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_WINDOWS;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DebugStubs.cpp" />
     <ClCompile Include="DspAdpcmDecoder.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -166,38 +167,11 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\SRC\Common\Scripts\Common.vcxproj">
+    <ProjectReference Include="..\..\SRC\Common\Scripts\VS2019\Common.vcxproj">
       <Project>{8f4f6ae1-b308-4c7f-81fc-4cddd2302c95}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\SRC\Core\Scripts\GekkoCore.vcxproj">
-      <Project>{289c41ef-117b-478c-a3f6-84906e88209e}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\Debugger\Scripts\Debugger.vcxproj">
-      <Project>{7fc22f72-a07b-404a-bce4-7a950ea3c44b}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\DolwinVideo\Scripts\DolwinVideo.vcxproj">
-      <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\Dolwin\Scripts\DolwinEmu.vcxproj">
-      <Project>{6be86dce-ec88-4113-9e7b-22b6ef50fdfc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\DSP\Scripts\DSP.vcxproj">
+    <ProjectReference Include="..\..\SRC\DSP\Scripts\VS2019\DSP.vcxproj">
       <Project>{0336d67c-249d-4c48-bd80-8e05ce711a58}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\DVD\Scripts\DVD.vcxproj">
-      <Project>{a995d286-033c-4eed-b171-6ce61d28c88f}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\Hardware\Scripts\GCNHardware.vcxproj">
-      <Project>{c43f1c9f-177b-46a8-be31-08189d25ad43}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\HighLevel\Scripts\GCNHighLevel.vcxproj">
-      <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\PAD\Scripts\PAD.vcxproj">
-      <Project>{5ee55a55-7211-48ac-ac5f-c36fb97c85a2}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\..\SRC\UI\Scripts\UI.vcxproj">
-      <Project>{31b0b5f5-2a81-4e71-8d3a-50aa859ae991}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -4,27 +4,10 @@ int main(int argc, char **argv)
 {
     // Deploy Dsp Core
 
-    DSP::DspCore* core = new DSP::DspCore(nullptr);
+    DSP::Dsp16* core = new DSP::Dsp16();
     assert(core);
 
     // Init adpcm decoder
-
-    //core->Accel.AdpcmCoef[0] = 0x0136;
-    //core->Accel.AdpcmCoef[1] = 0xfe78;
-    //core->Accel.AdpcmCoef[2] = 0x06b2;
-    //core->Accel.AdpcmCoef[3] = 0xff09;
-    //core->Accel.AdpcmCoef[4] = 0x029f;
-    //core->Accel.AdpcmCoef[5] = 0x038d;
-    //core->Accel.AdpcmCoef[6] = 0x0a05;
-    //core->Accel.AdpcmCoef[7] = 0xfd47;
-    //core->Accel.AdpcmCoef[8] = 0x047d;
-    //core->Accel.AdpcmCoef[9] = 0xff11;
-    //core->Accel.AdpcmCoef[10] = 0x0742;
-    //core->Accel.AdpcmCoef[11] = 0x0005;
-    //core->Accel.AdpcmCoef[12] = 0x04ce;
-    //core->Accel.AdpcmCoef[13] = 0x02b7;
-    //core->Accel.AdpcmCoef[14] = 0x0c87;
-    //core->Accel.AdpcmCoef[15] = 0xfb49;
 
     core->Accel.AdpcmCoef[0] = 0x00bf;
     core->Accel.AdpcmCoef[1] = 0xffc8;
@@ -50,10 +33,7 @@ int main(int argc, char **argv)
 
     // Load Adpcm buffer
 
-    size_t adpcmDataSize = 0;
-
-    uint8_t* adpcmData = (uint8_t *)UI::FileLoad(argv[1], &adpcmDataSize);
-    assert(adpcmData);
+    std::vector<uint8_t> adpcmData = Util::FileLoad(argv[1]);
 
     // Create output file
 
@@ -64,8 +44,10 @@ int main(int argc, char **argv)
 
     // Decode
 
-    uint8_t* ptr = adpcmData;
+    uint8_t* ptr = adpcmData.data();
     size_t byteCounter = 0;
+
+    size_t adpcmDataSize = adpcmData.size();
 
     while (adpcmDataSize != 0)
     {
@@ -95,6 +77,5 @@ int main(int argc, char **argv)
     }
 
     fclose(out);
-    free(adpcmData);
     delete core;
 }
