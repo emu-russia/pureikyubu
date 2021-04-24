@@ -1,10 +1,11 @@
-// Flipper MI Stubs
+// Flipper Stubs
 
 #include "pch.h"
 
+PIControl pi;
 MIControl mi;
 
-void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
+void PIReadByte(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -14,11 +15,11 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         if (mi.BootromPresent)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            ptr = &mi.bootrom[pa - PI_MEMSPACE_BOOTROM];
             *reg = (uint32_t)*ptr;
         }
         else
@@ -35,7 +36,7 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -52,7 +53,7 @@ void __fastcall MIReadByte(uint32_t pa, uint32_t* reg)
     }
 }
 
-void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
+void PIWriteByte(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -61,7 +62,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         return;
     }
@@ -73,7 +74,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -86,7 +87,7 @@ void __fastcall MIWriteByte(uint32_t pa, uint32_t data)
     }
 }
 
-void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
+void PIReadHalf(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -96,11 +97,11 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         if (mi.BootromPresent)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            ptr = &mi.bootrom[pa - PI_MEMSPACE_BOOTROM];
             *reg = (uint32_t)_byteswap_ushort(*(uint16_t*)ptr);
         }
         else
@@ -117,7 +118,7 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -134,7 +135,7 @@ void __fastcall MIReadHalf(uint32_t pa, uint32_t* reg)
     }
 }
 
-void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
+void PIWriteHalf(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -143,7 +144,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         return;
     }
@@ -155,7 +156,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -168,7 +169,7 @@ void __fastcall MIWriteHalf(uint32_t pa, uint32_t data)
     }
 }
 
-void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
+void PIReadWord(uint32_t pa, uint32_t* reg)
 {
     uint8_t* ptr;
 
@@ -186,11 +187,11 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         if (mi.BootromPresent)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            ptr = &mi.bootrom[pa - PI_MEMSPACE_BOOTROM];
             *reg = _byteswap_ulong(*(uint32_t*)ptr);
         }
         else
@@ -207,7 +208,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -215,7 +216,7 @@ void __fastcall MIReadWord(uint32_t pa, uint32_t* reg)
     *reg = 0;
 }
 
-void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
+void PIWriteWord(uint32_t pa, uint32_t data)
 {
     uint8_t* ptr;
 
@@ -224,7 +225,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
         return;
     }
 
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         return;
     }
@@ -236,7 +237,7 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
     }
 
     // embedded frame buffer
-    if (pa >= EFB_BASE)
+    if (pa >= PI_MEMSPACE_EFB)
     {
         return;
     }
@@ -254,9 +255,9 @@ void __fastcall MIWriteWord(uint32_t pa, uint32_t data)
 // (because all regs are generally integers)
 //
 
-void __fastcall MIReadDouble(uint32_t pa, uint64_t* reg)
+void PIReadDouble(uint32_t pa, uint64_t* reg)
 {
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         assert(true);
     }
@@ -273,9 +274,9 @@ void __fastcall MIReadDouble(uint32_t pa, uint64_t* reg)
     *reg = _byteswap_uint64(*(uint64_t*)buf);
 }
 
-void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
+void PIWriteDouble(uint32_t pa, uint64_t* data)
 {
-    if (pa >= BOOTROM_START_ADDRESS)
+    if (pa >= PI_MEMSPACE_BOOTROM)
     {
         return;
     }
@@ -291,16 +292,41 @@ void __fastcall MIWriteDouble(uint32_t pa, uint64_t* data)
     *(uint64_t*)buf = _byteswap_uint64(*data);
 }
 
-void __fastcall MIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
+void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
+{
+    if ((phys_addr + 32) > RAMSIZE)
+        return;
+
+    memcpy(burstData, &mi.ram[phys_addr], 32);
+}
+
+void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
     // Hack for now
     for (int i = 0; i < 8; i++)
     {
-        MIWriteWord(phys_addr + 4 * i, _byteswap_ulong(*(uint32_t*)(&burstData[4 * i])));
+        PIWriteWord(phys_addr + 4 * i, _byteswap_ulong(*(uint32_t*)(&burstData[4 * i])));
     }
 }
 
-// ---------------------------------------------------------------------------
+uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
+{
+    if (!mi.ram || bytes == 0)
+        return nullptr;
+
+    if (physAddr < (RAMSIZE - bytes))
+    {
+        return &mi.ram[physAddr];
+    }
+
+    if (physAddr >= BOOTROM_START_ADDRESS && mi.BootromPresent)
+    {
+        return &mi.bootrom[physAddr - BOOTROM_START_ADDRESS];
+    }
+
+    return nullptr;
+}
+
 
 void MIOpen(HWConfig* config)
 {

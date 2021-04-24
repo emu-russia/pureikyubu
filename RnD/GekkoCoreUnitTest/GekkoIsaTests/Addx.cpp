@@ -35,7 +35,7 @@ namespace GekkoCoreUnitTest
 
 			Gekko::AnalyzeInfo info = { 0 };
 			Gekko::Analyzer::Analyze(pc, bf.GetBits32(), &info);
-			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info);
+			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info, true, true);
 
 			Logger::WriteMessage(text.c_str());
 
@@ -71,7 +71,7 @@ namespace GekkoCoreUnitTest
 
 			Gekko::AnalyzeInfo info = { 0 };
 			Gekko::Analyzer::Analyze(pc, bf.GetBits32(), &info);
-			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info);
+			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info, true, true);
 
 			Logger::WriteMessage(text.c_str());
 
@@ -178,7 +178,7 @@ namespace GekkoCoreUnitTest
 
 			Gekko::AnalyzeInfo info = { 0 };
 			Gekko::Analyzer::Analyze(pc, bf.GetBits32(), &info);
-			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info);
+			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info, true, true);
 
 			Logger::WriteMessage(text.c_str());
 
@@ -229,7 +229,7 @@ namespace GekkoCoreUnitTest
 
 			Gekko::AnalyzeInfo info = { 0 };
 			Gekko::Analyzer::Analyze(pc, bf.GetBits32(), &info);
-			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info);
+			std::string text = Gekko::GekkoDisasm::Disasm(pc, &info, true, true);
 
 			Logger::WriteMessage(text.c_str());
 

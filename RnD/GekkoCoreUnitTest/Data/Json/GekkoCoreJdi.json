@@ -1,0 +1,299 @@
+{
+  "info": {
+    "description": "Processor debug commands. Some available only after emulation has been started.",
+    "helpGroup": "Gekko Debug Commands"
+  },
+
+  "can": {
+
+    "run": {
+      "help": "Run processor until break or stop"
+    },
+
+    "stop": {
+      "help": "Stop processor execution"
+    },
+
+    "r": {
+      "help": "show / change CPU register",
+      "args": 1,
+      "usage": [
+        "Syntax: r <reg> OR r <reg> <op> <val> OR r <reg> <op> <reg>\n",
+        "sp, sd1, sd2 semantics are supported for reg name.\n",
+        "Value can be decimal, or hex with '0x' prefix.\n",
+        "Possible operations are: = + - * / | & ^ << >>\n",
+        "Examples of use: r sp\n",
+        "                 r r3 = 12\n",
+        "                 r r7 | 0x8020\n",
+        "                 r msr\n",
+        "                 r hid2 | 2\n",
+        "                 r r7 = sd1\n"
+      ]
+    },
+
+    "b": {
+      "help": "Add Gekko breakpoint",
+      "args": 1,
+      "usage": [
+        "Syntax: b <addr>",
+        "Example: b 0x8003100"
+      ]
+    },
+
+    "br": {
+      "help": "Add Gekko read memory watch",
+      "args": 1,
+      "usage": [
+        "Syntax: br <addr>",
+        "Example: br 0x8000000"
+      ]
+    },
+
+    "bw": {
+      "help": "Add Gekko write memory watch",
+      "args": 1,
+      "usage": [
+        "Syntax: bw <addr>",
+        "Example: bw 0x8000000"
+      ]
+    },
+
+    "bc": {
+      "help": "Clear Gekko breakpoints"
+    },
+
+    "CacheLog": {
+      "help": "Set cache operations log mode",
+      "args": 1,
+      "usage": [
+        "Syntax: CacheLog <0|1|2>",
+        "0: None (disabled)",
+        "1: Show commands (cache control instructions activity)",
+        "2: Show all operations (load/store, cast-in/cast-out, etc.)"
+      ]
+    },
+
+    "CacheDebugDisable": {
+      "help": "Disable cache emulation despite Gekko register settings",
+      "args": 1,
+      "usage": [
+        "Syntax: CacheDebugDisable <0|1>"
+      ]
+    },
+
+    "IsRunning": {
+      "internal": true,
+      "output": "Bool"
+    },
+
+    "GekkoRun": {
+      "internal": true
+    },
+
+    "GekkoSuspend": {
+      "internal": true
+    },
+
+    "GekkoStep": {
+      "internal": true
+    },
+
+    "GekkoSkipInstruction": {
+      "internal": true
+    },
+
+    "GetGpr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetPs0": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (raw PS0/FPR value)"
+    },
+
+    "GetPs1": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (raw PS1 value)"
+    },
+
+    "GetPc": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetMsr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetCr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetFpscr": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetSpr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetSr": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32"
+    },
+
+    "GetTbu": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "GetTbl": {
+      "internal": true,
+      "output": "UInt32"
+    },
+
+    "TranslateDMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (pointer). nullptr if cannot be translated."
+    },
+
+    "TranslateIMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt64 (pointer). nullptr if cannot be translated."
+    },
+
+    "VirtualToPhysicalDMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32 (physical address). -1 if cannot be translated."
+    },
+
+    "VirtualToPhysicalIMmu": {
+      "internal": true,
+      "args": 1,
+      "output": "UInt32 (physical address). -1 if cannot be translated."
+    },
+
+    "GekkoTestBreakpoint": {
+      "internal": true,
+      "args": 1,
+      "output": "Bool"
+    },
+
+    "GekkoToggleBreakpoint": {
+      "internal": true,
+      "args": 1
+    },
+
+    "GekkoAddOneShotBreakpoint": {
+      "internal": true,
+      "args": 1
+    },
+
+    "GekkoDisasm": {
+      "internal": true,
+      "help": "Disassemble instruction at Gekko virtual memory address",
+      "hints": "<vaddr>",
+      "args": 1,
+      "output": "Array: [String] (disassembled instruction with parameters)"
+    },
+
+    "GekkoDisasmNoMemAccess": {
+      "internal": true,
+      "help": "Disassemble the instruction without accessing memory (all necessary information is passed through parameters)",
+      "args": 4,
+      "hints": "<pc> <opcode> <showAddress> <showBytes>",
+      "output": "Array: [String] (disassembled instruction with parameters)"
+    },
+
+    "GekkoIsBranch": {
+      "internal": true,
+      "args": 1,
+      "output": "Array: [Bool, UInt32 targetAddress]"
+    },
+
+    "nop": {
+      "help": "Insert `nop` at virtual address",
+      "hint": "<vaddr>",
+      "args": 1,
+      "usage": [
+        "Syntax: nop <virtual_address>",
+        "Example: nop 0x80003100"
+      ]
+    },
+
+    "EnableOpcodeStats": {
+      "help": "Enables or disables the maintenance of opcode usage statistics",
+      "args": 1,
+      "usage": [
+        "Syntax: EnableOpcodeStats <0|1>"
+      ]
+    },
+
+    "PrintOpcodeStats": {
+      "help": "Displays the most commonly used Gekko opcodes",
+      "args": 1,
+      "usage": [
+        "Syntax: PrintOpcodeStats <maxCount>"
+      ]
+    },
+
+    "ResetOpcodeStats": {
+      "help": "Clears statistics of opcode usage"
+    },
+
+    "RunOpcodeStats": {
+      "help": "Runs a low priority thread that prints opcode statistics once a second"
+    },
+
+    "StopOpcodeStats": {
+      "help": "Stop the thread that outputs the opcode statistics"
+    },
+
+    "GekkoAnalyze": {
+      "internal": true,
+      "help": "Parse Gekko instruction",
+      "hints": "<pc> <opcode>",
+      "args": 2,
+      "output": "Array: [Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 newPc, Bool flow]"
+    },
+
+    "GekkoInstrToString": {
+      "internal": true,
+      "help": "Return the name of the Gekko instruction (Gekko::Instruction)",
+      "hints": "<instr>",
+      "args": 1,
+      "output": "Array: [String]"
+    },
+
+    "GekkoInstrParamToString": {
+      "internal": true,
+      "help": "Return the parameter name of a Gekko instruction (Gekko::Param)",
+      "hints": "<param> <paramBits> <immedValue>",
+      "args": 3,
+      "output": "Array: [String paramName, String paramDecoded]"
+    },
+
+    "GekkoAssemble": {
+      "internal": true,
+      "help": "Assemble Gekko instruction based on analyzer information",
+      "hints": "Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 Pc",
+      "args": 14,
+      "output": "UInt32 (assembled instruction)"
+    }
+
+  }
+
+}

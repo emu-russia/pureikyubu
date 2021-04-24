@@ -27,7 +27,7 @@
     <ClCompile Include="DebugStubs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MiStubs.cpp">
+    <ClCompile Include="FlipperStubs.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BogusFlipper.cpp">
@@ -47,7 +47,7 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MiStubs.h">
+    <ClInclude Include="FlipperStubs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GekkoIsaTests\BitFactory.h">
