@@ -1128,28 +1128,34 @@ namespace IntelCore
 		// If you need memory addressing like [BP + DI] and so on. similar, look here.
 
 		MemStart,		// Special constant to quickly define the category of a parameter. Do not use. 
+		Mem16Start,		// Special constant to quickly define the category of a parameter. Do not use. 
 		m_bx_si, m_bx_di, m_bp_si, m_bp_di, m_si, m_di, m_disp16 /* disp16 instead bp */, m_bx,
 		m_bx_si_disp8, m_bx_di_disp8, m_bp_si_disp8, m_bp_di_disp8, m_si_disp8, m_di_disp8, m_bp_disp8, m_bx_disp8,
 		m_bx_si_disp16, m_bx_di_disp16, m_bp_si_disp16, m_bp_di_disp16, m_si_disp16, m_di_disp16, m_bp_disp16, m_bx_disp16,
+		Mem16End,		// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// 32-bit mem
 		// If you need simple 32-bit addressing like [ESI], see here. 
 
+		Mem32Start,		// Special constant to quickly define the category of a parameter. Do not use. 
 		m_eax, m_ecx, m_edx, m_ebx, /*see sib_, */ m_disp32 /* disp32 instead ebp */, m_esi, m_edi,
 		m_eax_disp8, m_ecx_disp8, m_edx_disp8, m_ebx_disp8, /*see sib_x_disp8, */ m_ebp_disp8, m_esi_disp8, m_edi_disp8,
 		m_eax_disp32, m_ecx_disp32, m_edx_disp32, m_ebx_disp32, /*see sib_x_disp32, */ m_ebp_disp32, m_esi_disp32, m_edi_disp32,
+		Mem32End,		// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// 64-bit mem
 
+		Mem64Start,		// Special constant to quickly define the category of a parameter. Do not use. 
 		m_rax, m_rcx, m_rdx, m_rbx, /*see sib_, */ m_rip_disp32 /* RIP-relative addressing (Instead m_disp32. Use sib_none_disp32 if you need disp32 addressing) */, m_rsi, m_rdi,
 		m_rax_disp8, m_rcx_disp8, m_rdx_disp8, m_rbx_disp8, /*see sib_x_disp8, */ m_rbp_disp8, m_rsi_disp8, m_rdi_disp8,
 		m_rax_disp32, m_rcx_disp32, m_rdx_disp32, m_rbx_disp32, /*see sib_x_disp32, */ m_rbp_disp32, m_rsi_disp32, m_rdi_disp32,
-
 		m_eip_disp32,
+		Mem64End,		// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// If you need 32-bit addressing using the ScaleIndexBase mechanism like [EAX * 2 + ECX], see here. 
 
 		SibStart,		// Special constant to quickly define the category of a parameter. Do not use. 
+		MemSib32Start,	// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_eax_eax, sib_eax_ecx, sib_eax_edx, sib_eax_ebx, sib_eax_esp, sib_eax_disp32 /* disp32 instead ebp */, sib_eax_esi, sib_eax_edi, sib_eax_r8d, sib_eax_r9d, sib_eax_r10d, sib_eax_r11d, sib_eax_r12d, sib_eax_r13d, sib_eax_r14d, sib_eax_r15d,
 		sib_ecx_eax, sib_ecx_ecx, sib_ecx_edx, sib_ecx_ebx, sib_ecx_esp, sib_ecx_disp32 /* disp32 instead ebp */, sib_ecx_esi, sib_ecx_edi, sib_ecx_r8d, sib_ecx_r9d, sib_ecx_r10d, sib_ecx_r11d, sib_ecx_r12d, sib_ecx_r13d, sib_ecx_r14d, sib_ecx_r15d,
 		sib_edx_eax, sib_edx_ecx, sib_edx_edx, sib_edx_ebx, sib_edx_esp, sib_edx_disp32 /* disp32 instead ebp */, sib_edx_esi, sib_edx_edi, sib_edx_r8d, sib_edx_r9d, sib_edx_r10d, sib_edx_r11d, sib_edx_r12d, sib_edx_r13d, sib_edx_r14d, sib_edx_r15d,
@@ -1215,6 +1221,7 @@ namespace IntelCore
 		sib_r14d_8_eax, sib_r14d_8_ecx, sib_r14d_8_edx, sib_r14d_8_ebx, sib_r14d_8_esp, sib_r14d_8_disp32 /* disp32 instead ebp */, sib_r14d_8_esi, sib_r14d_8_edi, sib_r14d_8_r8d, sib_r14d_8_r9d, sib_r14d_8_r10d, sib_r14d_8_r11d, sib_r14d_8_r12d, sib_r14d_8_r13d, sib_r14d_8_r14d, sib_r14d_8_r15d,
 		sib_r15d_8_eax, sib_r15d_8_ecx, sib_r15d_8_edx, sib_r15d_8_ebx, sib_r15d_8_esp, sib_r15d_8_disp32 /* disp32 instead ebp */, sib_r15d_8_esi, sib_r15d_8_edi, sib_r15d_8_r8d, sib_r15d_8_r9d, sib_r15d_8_r10d, sib_r15d_8_r11d, sib_r15d_8_r12d, sib_r15d_8_r13d, sib_r15d_8_r14d, sib_r15d_8_r15d,
 
+		MemSib32Disp8Start,		// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_eax_eax_disp8, sib_eax_ecx_disp8, sib_eax_edx_disp8, sib_eax_ebx_disp8, sib_eax_esp_disp8, sib_eax_ebp_disp8, sib_eax_esi_disp8, sib_eax_edi_disp8, sib_eax_r8d_disp8, sib_eax_r9d_disp8, sib_eax_r10d_disp8, sib_eax_r11d_disp8, sib_eax_r12d_disp8, sib_eax_r13d_disp8, sib_eax_r14d_disp8, sib_eax_r15d_disp8,
 		sib_ecx_eax_disp8, sib_ecx_ecx_disp8, sib_ecx_edx_disp8, sib_ecx_ebx_disp8, sib_ecx_esp_disp8, sib_ecx_ebp_disp8, sib_ecx_esi_disp8, sib_ecx_edi_disp8, sib_ecx_r8d_disp8, sib_ecx_r9d_disp8, sib_ecx_r10d_disp8, sib_ecx_r11d_disp8, sib_ecx_r12d_disp8, sib_ecx_r13d_disp8, sib_ecx_r14d_disp8, sib_ecx_r15d_disp8,
 		sib_edx_eax_disp8, sib_edx_ecx_disp8, sib_edx_edx_disp8, sib_edx_ebx_disp8, sib_edx_esp_disp8, sib_edx_ebp_disp8, sib_edx_esi_disp8, sib_edx_edi_disp8, sib_edx_r8d_disp8, sib_edx_r9d_disp8, sib_edx_r10d_disp8, sib_edx_r11d_disp8, sib_edx_r12d_disp8, sib_edx_r13d_disp8, sib_edx_r14d_disp8, sib_edx_r15d_disp8,
@@ -1279,7 +1286,9 @@ namespace IntelCore
 		sib_r13d_8_eax_disp8, sib_r13d_8_ecx_disp8, sib_r13d_8_edx_disp8, sib_r13d_8_ebx_disp8, sib_r13d_8_esp_disp8, sib_r13d_8_ebp_disp8, sib_r13d_8_esi_disp8, sib_r13d_8_edi_disp8, sib_r13d_8_r8d_disp8, sib_r13d_8_r9d_disp8, sib_r13d_8_r10d_disp8, sib_r13d_8_r11d_disp8, sib_r13d_8_r12d_disp8, sib_r13d_8_r13d_disp8, sib_r13d_8_r14d_disp8, sib_r13d_8_r15d_disp8,
 		sib_r14d_8_eax_disp8, sib_r14d_8_ecx_disp8, sib_r14d_8_edx_disp8, sib_r14d_8_ebx_disp8, sib_r14d_8_esp_disp8, sib_r14d_8_ebp_disp8, sib_r14d_8_esi_disp8, sib_r14d_8_edi_disp8, sib_r14d_8_r8d_disp8, sib_r14d_8_r9d_disp8, sib_r14d_8_r10d_disp8, sib_r14d_8_r11d_disp8, sib_r14d_8_r12d_disp8, sib_r14d_8_r13d_disp8, sib_r14d_8_r14d_disp8, sib_r14d_8_r15d_disp8,
 		sib_r15d_8_eax_disp8, sib_r15d_8_ecx_disp8, sib_r15d_8_edx_disp8, sib_r15d_8_ebx_disp8, sib_r15d_8_esp_disp8, sib_r15d_8_ebp_disp8, sib_r15d_8_esi_disp8, sib_r15d_8_edi_disp8, sib_r15d_8_r8d_disp8, sib_r15d_8_r9d_disp8, sib_r15d_8_r10d_disp8, sib_r15d_8_r11d_disp8, sib_r15d_8_r12d_disp8, sib_r15d_8_r13d_disp8, sib_r15d_8_r14d_disp8, sib_r15d_8_r15d_disp8,
+		MemSib32Disp8End,	// Special constant to quickly define the category of a parameter. Do not use. 
 
+		MemSib32Disp32Start,	// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_eax_eax_disp32, sib_eax_ecx_disp32, sib_eax_edx_disp32, sib_eax_ebx_disp32, sib_eax_esp_disp32, sib_eax_ebp_disp32, sib_eax_esi_disp32, sib_eax_edi_disp32, sib_eax_r8d_disp32, sib_eax_r9d_disp32, sib_eax_r10d_disp32, sib_eax_r11d_disp32, sib_eax_r12d_disp32, sib_eax_r13d_disp32, sib_eax_r14d_disp32, sib_eax_r15d_disp32,
 		sib_ecx_eax_disp32, sib_ecx_ecx_disp32, sib_ecx_edx_disp32, sib_ecx_ebx_disp32, sib_ecx_esp_disp32, sib_ecx_ebp_disp32, sib_ecx_esi_disp32, sib_ecx_edi_disp32, sib_ecx_r8d_disp32, sib_ecx_r9d_disp32, sib_ecx_r10d_disp32, sib_ecx_r11d_disp32, sib_ecx_r12d_disp32, sib_ecx_r13d_disp32, sib_ecx_r14d_disp32, sib_ecx_r15d_disp32,
 		sib_edx_eax_disp32, sib_edx_ecx_disp32, sib_edx_edx_disp32, sib_edx_ebx_disp32, sib_edx_esp_disp32, sib_edx_ebp_disp32, sib_edx_esi_disp32, sib_edx_edi_disp32, sib_edx_r8d_disp32, sib_edx_r9d_disp32, sib_edx_r10d_disp32, sib_edx_r11d_disp32, sib_edx_r12d_disp32, sib_edx_r13d_disp32, sib_edx_r14d_disp32, sib_edx_r15d_disp32,
@@ -1344,9 +1353,12 @@ namespace IntelCore
 		sib_r13d_8_eax_disp32, sib_r13d_8_ecx_disp32, sib_r13d_8_edx_disp32, sib_r13d_8_ebx_disp32, sib_r13d_8_esp_disp32, sib_r13d_8_ebp_disp32, sib_r13d_8_esi_disp32, sib_r13d_8_edi_disp32, sib_r13d_8_r8d_disp32, sib_r13d_8_r9d_disp32, sib_r13d_8_r10d_disp32, sib_r13d_8_r11d_disp32, sib_r13d_8_r12d_disp32, sib_r13d_8_r13d_disp32, sib_r13d_8_r14d_disp32, sib_r13d_8_r15d_disp32,
 		sib_r14d_8_eax_disp32, sib_r14d_8_ecx_disp32, sib_r14d_8_edx_disp32, sib_r14d_8_ebx_disp32, sib_r14d_8_esp_disp32, sib_r14d_8_ebp_disp32, sib_r14d_8_esi_disp32, sib_r14d_8_edi_disp32, sib_r14d_8_r8d_disp32, sib_r14d_8_r9d_disp32, sib_r14d_8_r10d_disp32, sib_r14d_8_r11d_disp32, sib_r14d_8_r12d_disp32, sib_r14d_8_r13d_disp32, sib_r14d_8_r14d_disp32, sib_r14d_8_r15d_disp32,
 		sib_r15d_8_eax_disp32, sib_r15d_8_ecx_disp32, sib_r15d_8_edx_disp32, sib_r15d_8_ebx_disp32, sib_r15d_8_esp_disp32, sib_r15d_8_ebp_disp32, sib_r15d_8_esi_disp32, sib_r15d_8_edi_disp32, sib_r15d_8_r8d_disp32, sib_r15d_8_r9d_disp32, sib_r15d_8_r10d_disp32, sib_r15d_8_r11d_disp32, sib_r15d_8_r12d_disp32, sib_r15d_8_r13d_disp32, sib_r15d_8_r14d_disp32, sib_r15d_8_r15d_disp32,
+		MemSib32Disp32End,	// Special constant to quickly define the category of a parameter. Do not use. 
+		MemSib32End,	// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// Long Mode with SIB
 
+		MemSib64Start,	// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_rax_rax, sib_rax_rcx, sib_rax_rdx, sib_rax_rbx, sib_rax_rsp, sib_rax_disp32 /* disp32 instead rbp */, sib_rax_rsi, sib_rax_rdi, sib_rax_r8, sib_rax_r9, sib_rax_r10, sib_rax_r11, sib_rax_r12, sib_rax_r13, sib_rax_r14, sib_rax_r15, 
 		sib_rcx_rax, sib_rcx_rcx, sib_rcx_rdx, sib_rcx_rbx, sib_rcx_rsp, sib_rcx_disp32 /* disp32 instead rbp */, sib_rcx_rsi, sib_rcx_rdi, sib_rcx_r8, sib_rcx_r9, sib_rcx_r10, sib_rcx_r11, sib_rcx_r12, sib_rcx_r13, sib_rcx_r14, sib_rcx_r15, 
 		sib_rdx_rax, sib_rdx_rcx, sib_rdx_rdx, sib_rdx_rbx, sib_rdx_rsp, sib_rdx_disp32 /* disp32 instead rbp */, sib_rdx_rsi, sib_rdx_rdi, sib_rdx_r8, sib_rdx_r9, sib_rdx_r10, sib_rdx_r11, sib_rdx_r12, sib_rdx_r13, sib_rdx_r14, sib_rdx_r15, 
@@ -1412,6 +1424,7 @@ namespace IntelCore
 		sib_r14_8_rax, sib_r14_8_rcx, sib_r14_8_rdx, sib_r14_8_rbx, sib_r14_8_rsp, sib_r14_8_disp32 /* disp32 instead rbp */, sib_r14_8_rsi, sib_r14_8_rdi, sib_r14_8_r8, sib_r14_8_r9, sib_r14_8_r10, sib_r14_8_r11, sib_r14_8_r12, sib_r14_8_r13, sib_r14_8_r14, sib_r14_8_r15,
 		sib_r15_8_rax, sib_r15_8_rcx, sib_r15_8_rdx, sib_r15_8_rbx, sib_r15_8_rsp, sib_r15_8_disp32 /* disp32 instead rbp */, sib_r15_8_rsi, sib_r15_8_rdi, sib_r15_8_r8, sib_r15_8_r9, sib_r15_8_r10, sib_r15_8_r11, sib_r15_8_r12, sib_r15_8_r13, sib_r15_8_r14, sib_r15_8_r15,
 
+		MemSib64Disp8Start,		// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_rax_rax_disp8, sib_rax_rcx_disp8, sib_rax_rdx_disp8, sib_rax_rbx_disp8, sib_rax_rsp_disp8, sib_rax_rbp_disp8, sib_rax_rsi_disp8, sib_rax_rdi_disp8, sib_rax_r8_disp8, sib_rax_r9_disp8, sib_rax_r10_disp8, sib_rax_r11_disp8, sib_rax_r12_disp8, sib_rax_r13_disp8, sib_rax_r14_disp8, sib_rax_r15_disp8, 
 		sib_rcx_rax_disp8, sib_rcx_rcx_disp8, sib_rcx_rdx_disp8, sib_rcx_rbx_disp8, sib_rcx_rsp_disp8, sib_rcx_rbp_disp8, sib_rcx_rsi_disp8, sib_rcx_rdi_disp8, sib_rcx_r8_disp8, sib_rcx_r9_disp8, sib_rcx_r10_disp8, sib_rcx_r11_disp8, sib_rcx_r12_disp8, sib_rcx_r13_disp8, sib_rcx_r14_disp8, sib_rcx_r15_disp8, 
 		sib_rdx_rax_disp8, sib_rdx_rcx_disp8, sib_rdx_rdx_disp8, sib_rdx_rbx_disp8, sib_rdx_rsp_disp8, sib_rdx_rbp_disp8, sib_rdx_rsi_disp8, sib_rdx_rdi_disp8, sib_rdx_r8_disp8, sib_rdx_r9_disp8, sib_rdx_r10_disp8, sib_rdx_r11_disp8, sib_rdx_r12_disp8, sib_rdx_r13_disp8, sib_rdx_r14_disp8, sib_rdx_r15_disp8, 
@@ -1475,7 +1488,9 @@ namespace IntelCore
 		sib_r13_8_rax_disp8, sib_r13_8_rcx_disp8, sib_r13_8_rdx_disp8, sib_r13_8_rbx_disp8, sib_r13_8_rsp_disp8, sib_r13_8_rbp_disp8, sib_r13_8_rsi_disp8, sib_r13_8_rdi_disp8, sib_r13_8_r8_disp8, sib_r13_8_r9_disp8, sib_r13_8_r10_disp8, sib_r13_8_r11_disp8, sib_r13_8_r12_disp8, sib_r13_8_r13_disp8, sib_r13_8_r14_disp8, sib_r13_8_r15_disp8,
 		sib_r14_8_rax_disp8, sib_r14_8_rcx_disp8, sib_r14_8_rdx_disp8, sib_r14_8_rbx_disp8, sib_r14_8_rsp_disp8, sib_r14_8_rbp_disp8, sib_r14_8_rsi_disp8, sib_r14_8_rdi_disp8, sib_r14_8_r8_disp8, sib_r14_8_r9_disp8, sib_r14_8_r10_disp8, sib_r14_8_r11_disp8, sib_r14_8_r12_disp8, sib_r14_8_r13_disp8, sib_r14_8_r14_disp8, sib_r14_8_r15_disp8,
 		sib_r15_8_rax_disp8, sib_r15_8_rcx_disp8, sib_r15_8_rdx_disp8, sib_r15_8_rbx_disp8, sib_r15_8_rsp_disp8, sib_r15_8_rbp_disp8, sib_r15_8_rsi_disp8, sib_r15_8_rdi_disp8, sib_r15_8_r8_disp8, sib_r15_8_r9_disp8, sib_r15_8_r10_disp8, sib_r15_8_r11_disp8, sib_r15_8_r12_disp8, sib_r15_8_r13_disp8, sib_r15_8_r14_disp8, sib_r15_8_r15_disp8,
+		MemSib64Disp8End,	// Special constant to quickly define the category of a parameter. Do not use. 
 
+		MemSib64Disp32Start,	// Special constant to quickly define the category of a parameter. Do not use. 
 		sib_rax_rax_disp32, sib_rax_rcx_disp32, sib_rax_rdx_disp32, sib_rax_rbx_disp32, sib_rax_rsp_disp32, sib_rax_rbp_disp32, sib_rax_rsi_disp32, sib_rax_rdi_disp32, sib_rax_r8_disp32, sib_rax_r9_disp32, sib_rax_r10_disp32, sib_rax_r11_disp32, sib_rax_r12_disp32, sib_rax_r13_disp32, sib_rax_r14_disp32, sib_rax_r15_disp32, 
 		sib_rcx_rax_disp32, sib_rcx_rcx_disp32, sib_rcx_rdx_disp32, sib_rcx_rbx_disp32, sib_rcx_rsp_disp32, sib_rcx_rbp_disp32, sib_rcx_rsi_disp32, sib_rcx_rdi_disp32, sib_rcx_r8_disp32, sib_rcx_r9_disp32, sib_rcx_r10_disp32, sib_rcx_r11_disp32, sib_rcx_r12_disp32, sib_rcx_r13_disp32, sib_rcx_r14_disp32, sib_rcx_r15_disp32, 
 		sib_rdx_rax_disp32, sib_rdx_rcx_disp32, sib_rdx_rdx_disp32, sib_rdx_rbx_disp32, sib_rdx_rsp_disp32, sib_rdx_rbp_disp32, sib_rdx_rsi_disp32, sib_rdx_rdi_disp32, sib_rdx_r8_disp32, sib_rdx_r9_disp32, sib_rdx_r10_disp32, sib_rdx_r11_disp32, sib_rdx_r12_disp32, sib_rdx_r13_disp32, sib_rdx_r14_disp32, sib_rdx_r15_disp32, 
@@ -1539,6 +1554,8 @@ namespace IntelCore
 		sib_r13_8_rax_disp32, sib_r13_8_rcx_disp32, sib_r13_8_rdx_disp32, sib_r13_8_rbx_disp32, sib_r13_8_rsp_disp32, sib_r13_8_rbp_disp32, sib_r13_8_rsi_disp32, sib_r13_8_rdi_disp32, sib_r13_8_r8_disp32, sib_r13_8_r9_disp32, sib_r13_8_r10_disp32, sib_r13_8_r11_disp32, sib_r13_8_r12_disp32, sib_r13_8_r13_disp32, sib_r13_8_r14_disp32, sib_r13_8_r15_disp32,
 		sib_r14_8_rax_disp32, sib_r14_8_rcx_disp32, sib_r14_8_rdx_disp32, sib_r14_8_rbx_disp32, sib_r14_8_rsp_disp32, sib_r14_8_rbp_disp32, sib_r14_8_rsi_disp32, sib_r14_8_rdi_disp32, sib_r14_8_r8_disp32, sib_r14_8_r9_disp32, sib_r14_8_r10_disp32, sib_r14_8_r11_disp32, sib_r14_8_r12_disp32, sib_r14_8_r13_disp32, sib_r14_8_r14_disp32, sib_r14_8_r15_disp32,
 		sib_r15_8_rax_disp32, sib_r15_8_rcx_disp32, sib_r15_8_rdx_disp32, sib_r15_8_rbx_disp32, sib_r15_8_rsp_disp32, sib_r15_8_rbp_disp32, sib_r15_8_rsi_disp32, sib_r15_8_rdi_disp32, sib_r15_8_r8_disp32, sib_r15_8_r9_disp32, sib_r15_8_r10_disp32, sib_r15_8_r11_disp32, sib_r15_8_r12_disp32, sib_r15_8_r13_disp32, sib_r15_8_r14_disp32, sib_r15_8_r15_disp32,
+		MemSib64Disp32End,	// Special constant to quickly define the category of a parameter. Do not use. 
+		MemSib64End,	// Special constant to quickly define the category of a parameter. Do not use. 
 
 		SibEnd,				// Special constant to quickly define the category of a parameter. Do not use. 
 

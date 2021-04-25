@@ -14,6 +14,8 @@ namespace IntelCore
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
 		static void TwoByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2);
 		static void TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3);
+		static void AddUshort(AnalyzeInfo& info, uint16_t n);
+		static void AddUlong(AnalyzeInfo& info, uint32_t n);
 		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
 		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
 		static void AddPrefix(AnalyzeInfo& info, Prefix pre);
@@ -41,7 +43,7 @@ namespace IntelCore
 		static void GetIndex(Param p, size_t& index);
 		static void GetBase(Param p, size_t& base);
 
-		static void ModRegRm(AnalyzeInfo& info);
+		static void ModRegRm(AnalyzeInfo& info, size_t bits, uint8_t ops[]);
 
 	public:
 

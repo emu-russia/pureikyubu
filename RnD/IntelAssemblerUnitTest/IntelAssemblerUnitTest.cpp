@@ -27,7 +27,13 @@ namespace IntelAssemblerUnitTest
 		}
 
 	public:
-		
+
+		TEST_METHOD(adc)
+		{
+			uint8_t adcBytes1[] = { 0x14, 0xaa };
+			Check(IntelAssembler::adc<16>(Param::al, Param::imm8, 0, 0xaa), adcBytes1, sizeof(adcBytes1));
+		}
+
 		TEST_METHOD(nop)
 		{
 			uint8_t nopBytes[] = { 0x90 };
