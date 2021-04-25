@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <list>
 
 #include "../../SRC/Common/Json.h"
 
@@ -59,7 +60,7 @@ void SerializeDemo()
 
     Json::Value * inner = outer->AddObject("Inner");
 
-    inner->AddString("Str", _T("Hello!\nThis is lineeed\nTab\t\t\tXXX\n Энд немного русского языка"));
+    inner->AddString("Str", L"Hello!\nThis is lineeed\nTab\t\t\tXXX\n Энд немного русского языка");
     inner->AddNull("Void");
 
     // Serialize and print

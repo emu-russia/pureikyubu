@@ -10,7 +10,7 @@ namespace GekkoCoreUnitTest
 	{
 	public:
 		
-		TEST_METHOD(TestMethod1)
+		TEST_METHOD(GekkoCoreInstance)
 		{
 			Gekko::GekkoCore* core = new Gekko::GekkoCore();
 
@@ -42,44 +42,7 @@ namespace GekkoCoreUnitTest
 			DumpGekkoAnalyzeInfo(&info);
 		}
 
-		TEST_METHOD(TestOldDisasm)
-		{
-			FILE* f = nullptr;
-
-			fopen_s(&f, "Data\\test.bin", "rb");
-			assert(f);
-
-			fseek(f, 0, SEEK_END);
-			size_t size = ftell(f);
-			fseek(f, 0, SEEK_SET);
-
-			uint8_t* testCode = new uint8_t[size];
-
-			fread(testCode, 1, size, f);
-			fclose(f);
-
-			fopen_s(&f, "test.txt", "wt");
-			assert(f);
-
-			uint32_t pc = 0x80000000;
-			size_t instrCount = size / 4;
-			uint32_t* instrPtr = (uint32_t*)testCode;
-
-			while (instrCount--)
-			{
-				uint32_t instr = *instrPtr++;
-
-				char * disasmText = PPCDisasmSimple((uint64_t)pc, instr);
-				fprintf(f, "%s\n", disasmText);
-
-				pc += 4;
-			}
-
-			delete[] testCode;
-			fclose(f);
-		}
-
-		TEST_METHOD(TestNewDisasm)
+		TEST_METHOD(TestDisasm)
 		{
 			FILE* f = nullptr;
 
@@ -109,7 +72,7 @@ namespace GekkoCoreUnitTest
 				Gekko::AnalyzeInfo info = { 0 };
 
 				Gekko::Analyzer::Analyze(pc, instr, &info);
-				std::string disasmText = Gekko::GekkoDisasm::Disasm(pc, &info);
+				std::string disasmText = Gekko::GekkoDisasm::Disasm(pc, &info, true, true);
 
 				fprintf(f, "%s\n", disasmText.c_str());
 
