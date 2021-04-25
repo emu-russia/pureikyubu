@@ -483,100 +483,100 @@ namespace IntelCore
 	{
 		if (Param::MemSib32Scale1Start < p && p < Param::MemSib32Scale1End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale1Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale1Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale2Start < p && p < Param::MemSib32Scale2End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale2Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale2Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale4Start < p && p < Param::MemSib32Scale4End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale4Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale4Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale8Start < p && p < Param::MemSib32Scale8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale8Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale1Disp8Start < p && p < Param::MemSib32Scale1Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale1Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale1Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale2Disp8Start < p && p < Param::MemSib32Scale2Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale2Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale2Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale4Disp8Start < p && p < Param::MemSib32Scale4Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale4Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale4Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale8Disp8Start < p && p < Param::MemSib32Scale8Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale8Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale8Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale1Disp32Start < p && p < Param::MemSib32Scale1Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale1Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale1Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale2Disp32Start < p && p < Param::MemSib32Scale2Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale2Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale2Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale4Disp32Start < p && p < Param::MemSib32Scale4Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale4Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale4Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib32Scale8Disp32Start < p && p < Param::MemSib32Scale8Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib32Scale8Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib32Scale8Disp32Start + 1)) / 16;
 		}
 
 		else if (Param::MemSib64Scale1Start < p && p < Param::MemSib64Scale1End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale1Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale1Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale2Start < p && p < Param::MemSib64Scale2End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale2Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale2Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale4Start < p && p < Param::MemSib64Scale4End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale4Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale4Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale8Start < p && p < Param::MemSib64Scale8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale8Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale1Disp8Start < p && p < Param::MemSib64Scale1Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale1Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale1Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale2Disp8Start < p && p < Param::MemSib64Scale2Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale2Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale2Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale4Disp8Start < p && p < Param::MemSib64Scale4Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale4Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale4Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale8Disp8Start < p && p < Param::MemSib64Scale8Disp8End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale8Disp8Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale8Disp8Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale1Disp32Start < p && p < Param::MemSib64Scale1Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale1Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale1Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale2Disp32Start < p && p < Param::MemSib64Scale2Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale2Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale2Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale4Disp32Start < p && p < Param::MemSib64Scale4Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale4Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale4Disp32Start + 1)) / 16;
 		}
 		else if (Param::MemSib64Scale8Disp32Start < p && p < Param::MemSib64Scale8Disp32End)
 		{
-			index = (((size_t)p - (size_t)Param::MemSib64Scale8Disp32Start) + 1) / 16;
+			index = ((size_t)p - ((size_t)Param::MemSib64Scale8Disp32Start + 1)) / 16;
 		}
 
 		else
@@ -589,100 +589,100 @@ namespace IntelCore
 	{
 		if (Param::MemSib32Scale1Start < p && p < Param::MemSib32Scale1End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale1Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale1Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale2Start < p && p < Param::MemSib32Scale2End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale2Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale2Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale4Start < p && p < Param::MemSib32Scale4End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale4Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale4Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale8Start < p && p < Param::MemSib32Scale8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale8Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale1Disp8Start < p && p < Param::MemSib32Scale1Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale1Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale1Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale2Disp8Start < p && p < Param::MemSib32Scale2Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale2Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale2Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale4Disp8Start < p && p < Param::MemSib32Scale4Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale4Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale4Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale8Disp8Start < p && p < Param::MemSib32Scale8Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale8Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale8Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale1Disp32Start < p && p < Param::MemSib32Scale1Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale1Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale1Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale2Disp32Start < p && p < Param::MemSib32Scale2Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale2Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale2Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale4Disp32Start < p && p < Param::MemSib32Scale4Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale4Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale4Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib32Scale8Disp32Start < p && p < Param::MemSib32Scale8Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib32Scale8Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib32Scale8Disp32Start + 1)) % 16;
 		}
 
 		else if (Param::MemSib64Scale1Start < p && p < Param::MemSib64Scale1End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale1Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale1Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale2Start < p && p < Param::MemSib64Scale2End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale2Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale2Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale4Start < p && p < Param::MemSib64Scale4End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale4Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale4Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale8Start < p && p < Param::MemSib64Scale8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale8Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale1Disp8Start < p && p < Param::MemSib64Scale1Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale1Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale1Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale2Disp8Start < p && p < Param::MemSib64Scale2Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale2Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale2Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale4Disp8Start < p && p < Param::MemSib64Scale4Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale4Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale4Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale8Disp8Start < p && p < Param::MemSib64Scale8Disp8End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale8Disp8Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale8Disp8Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale1Disp32Start < p && p < Param::MemSib64Scale1Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale1Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale1Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale2Disp32Start < p && p < Param::MemSib64Scale2Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale2Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale2Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale4Disp32Start < p && p < Param::MemSib64Scale4Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale4Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale4Disp32Start + 1)) % 16;
 		}
 		else if (Param::MemSib64Scale8Disp32Start < p && p < Param::MemSib64Scale8Disp32End)
 		{
-			base = (((size_t)p - (size_t)Param::MemSib64Scale8Disp32Start) + 1) % 16;
+			base = ((size_t)p - ((size_t)Param::MemSib64Scale8Disp32Start + 1)) % 16;
 		}
 
 		else
