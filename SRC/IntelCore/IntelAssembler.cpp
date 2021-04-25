@@ -241,7 +241,46 @@ namespace IntelCore
 
 	void IntelAssembler::GetSS(Param p, size_t& scale)
 	{
-
+		if ( (Param::MemSib32Scale1Start <= p && p <= Param::MemSib32Scale1End) || 
+			(Param::MemSib32Scale1Disp8Start <= p && p <= Param::MemSib32Scale1Disp8End) ||
+			(Param::MemSib32Scale1Disp32Start <= p && p <= Param::MemSib32Scale1Disp32End) ||
+			(Param::MemSib64Scale1Start <= p && p <= Param::MemSib64Scale1End) ||
+			(Param::MemSib64Scale1Disp8Start <= p && p <= Param::MemSib64Scale1Disp8End) ||
+			(Param::MemSib64Scale1Disp32Start <= p && p <= Param::MemSib64Scale1Disp32End) )
+		{
+			scale = 0;
+		}
+		else if ((Param::MemSib32Scale2Start <= p && p <= Param::MemSib32Scale2End) ||
+			(Param::MemSib32Scale2Disp8Start <= p && p <= Param::MemSib32Scale2Disp8End) ||
+			(Param::MemSib32Scale2Disp32Start <= p && p <= Param::MemSib32Scale2Disp32End) ||
+			(Param::MemSib64Scale2Start <= p && p <= Param::MemSib64Scale2End) ||
+			(Param::MemSib64Scale2Disp8Start <= p && p <= Param::MemSib64Scale2Disp8End) ||
+			(Param::MemSib64Scale2Disp32Start <= p && p <= Param::MemSib64Scale2Disp32End))
+		{
+			scale = 1;
+		}
+		else if ((Param::MemSib32Scale4Start <= p && p <= Param::MemSib32Scale4End) ||
+			(Param::MemSib32Scale4Disp8Start <= p && p <= Param::MemSib32Scale4Disp8End) ||
+			(Param::MemSib32Scale4Disp32Start <= p && p <= Param::MemSib32Scale4Disp32End) ||
+			(Param::MemSib64Scale4Start <= p && p <= Param::MemSib64Scale4End) ||
+			(Param::MemSib64Scale4Disp8Start <= p && p <= Param::MemSib64Scale4Disp8End) ||
+			(Param::MemSib64Scale4Disp32Start <= p && p <= Param::MemSib64Scale4Disp32End))
+		{
+			scale = 2;
+		}
+		else if ((Param::MemSib32Scale8Start <= p && p <= Param::MemSib32Scale8End) ||
+			(Param::MemSib32Scale8Disp8Start <= p && p <= Param::MemSib32Scale8Disp8End) ||
+			(Param::MemSib32Scale8Disp32Start <= p && p <= Param::MemSib32Scale8Disp32End) ||
+			(Param::MemSib64Scale8Start <= p && p <= Param::MemSib64Scale8End) ||
+			(Param::MemSib64Scale8Disp8Start <= p && p <= Param::MemSib64Scale8Disp8End) ||
+			(Param::MemSib64Scale8Disp32Start <= p && p <= Param::MemSib64Scale8Disp32End))
+		{
+			scale = 3;
+		}
+		else
+		{
+			throw "Invalid parameter";
+		}
 	}
 
 	void IntelAssembler::GetIndex(Param p, size_t& index)
@@ -356,9 +395,11 @@ namespace IntelCore
 			// Instructions using ModRM / with an immediate operand
 
 			case Instruction::adc:
-				uint8_t adcops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 16, adcops);
+			{
+				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
+				ModRegRm(info, 16, ops);
 				break;
+			}
 
 			// One or more byte instructions
 
@@ -462,6 +503,14 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+			// Instructions using ModRM / with an immediate operand
+
+			case Instruction::adc:
+			{
+				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
+				ModRegRm(info, 32, ops);
+				break;
+			}
 
 			// One or more byte instructions
 
@@ -565,6 +614,14 @@ namespace IntelCore
 
 		switch (info.instr)
 		{
+			// Instructions using ModRM / with an immediate operand
+
+			case Instruction::adc:
+			{
+				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
+				ModRegRm(info, 64, ops);
+				break;
+			}
 
 			// One or more byte instructions
 
