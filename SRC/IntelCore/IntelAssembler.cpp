@@ -99,6 +99,90 @@ namespace IntelCore
 		info.prefixBytes[info.prefixSize] = pre;
 		info.prefixSize++;
 	}
+	
+	bool IntelAssembler::IsSpecial(Param p)
+	{
+		switch (p)
+		{
+			case Param::ImmStart:
+			case Param::ImmEnd:
+			case Param::RegStart:
+			case Param::RegEnd:
+			case Param::MemStart:
+			case Param::Mem16Start:
+			case Param::Mem16End:
+			case Param::Mem32Start:
+			case Param::Mem32End:
+			case Param::Mem64Start:
+			case Param::Mem64End:
+			case Param::SibStart:
+			case Param::MemSib32Start:
+			case Param::MemSib32Scale1Start:
+			case Param::MemSib32Scale1End:
+			case Param::MemSib32Scale2Start:
+			case Param::MemSib32Scale2End:
+			case Param::MemSib32Scale4Start:
+			case Param::MemSib32Scale4End:
+			case Param::MemSib32Scale8Start:
+			case Param::MemSib32Scale8End:
+			case Param::MemSib32Disp8Start:
+			case Param::MemSib32Scale1Disp8Start:
+			case Param::MemSib32Scale1Disp8End:
+			case Param::MemSib32Scale2Disp8Start:
+			case Param::MemSib32Scale2Disp8End:
+			case Param::MemSib32Scale4Disp8Start:
+			case Param::MemSib32Scale4Disp8End:
+			case Param::MemSib32Scale8Disp8Start:
+			case Param::MemSib32Scale8Disp8End:
+			case Param::MemSib32Disp8End:
+			case Param::MemSib32Disp32Start:
+			case Param::MemSib32Scale1Disp32Start:
+			case Param::MemSib32Scale1Disp32End:
+			case Param::MemSib32Scale2Disp32Start:
+			case Param::MemSib32Scale2Disp32End:
+			case Param::MemSib32Scale4Disp32Start:
+			case Param::MemSib32Scale4Disp32End:
+			case Param::MemSib32Scale8Disp32Start:
+			case Param::MemSib32Scale8Disp32End:
+			case Param::MemSib32Disp32End:
+			case Param::MemSib32End:
+			case Param::MemSib64Start:
+			case Param::MemSib64Scale1Start:
+			case Param::MemSib64Scale1End:
+			case Param::MemSib64Scale2Start:
+			case Param::MemSib64Scale2End:
+			case Param::MemSib64Scale4Start:
+			case Param::MemSib64Scale4End:
+			case Param::MemSib64Scale8Start:
+			case Param::MemSib64Scale8End:
+			case Param::MemSib64Disp8Start:
+			case Param::MemSib64Scale1Disp8Start:
+			case Param::MemSib64Scale1Disp8End:
+			case Param::MemSib64Scale2Disp8Start:
+			case Param::MemSib64Scale2Disp8End:
+			case Param::MemSib64Scale4Disp8Start:
+			case Param::MemSib64Scale4Disp8End:
+			case Param::MemSib64Scale8Disp8Start:
+			case Param::MemSib64Scale8Disp8End:
+			case Param::MemSib64Disp8End:
+			case Param::MemSib64Disp32Start:
+			case Param::MemSib64Scale1Disp32Start:
+			case Param::MemSib64Scale1Disp32End:
+			case Param::MemSib64Scale2Disp32Start:
+			case Param::MemSib64Scale2Disp32End:
+			case Param::MemSib64Scale4Disp32Start:
+			case Param::MemSib64Scale4Disp32End:
+			case Param::MemSib64Scale8Disp32Start:
+			case Param::MemSib64Scale8Disp32End:
+			case Param::MemSib64Disp32End:
+			case Param::MemSib64End:
+			case Param::SibEnd:
+			case Param::MemEnd:
+				return true;
+		}
+
+		return false;
+	}
 
 	bool IntelAssembler::IsImm(Param p)
 	{
@@ -276,20 +360,20 @@ namespace IntelCore
 
 		switch (p)
 		{
-			case Param::m_eax: case Param::m_ecx: case Param::m_edx: case Param::m_ebx: case Param::m_disp32: case Param::m_esi: case Param::m_edi:
 			case Param::m_bx_si: case Param::m_bx_di: case Param::m_bp_si: case Param::m_bp_di: case Param::m_si: case Param::m_di: case Param::m_disp16: case Param::m_bx:
+			case Param::m_eax: case Param::m_ecx: case Param::m_edx: case Param::m_ebx: case Param::m_disp32: case Param::m_esi: case Param::m_edi:
 			case Param::m_rax: case Param::m_rcx: case Param::m_rdx: case Param::m_rbx: case Param::m_rip_disp32: case Param::m_eip_disp32: case Param::m_rsi: case Param::m_rdi:
 				mod = 0;
 				break;
 
-			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_ebp_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
 			case Param::m_bx_si_disp8: case Param::m_bx_di_disp8: case Param::m_bp_si_disp8: case Param::m_bp_di_disp8: case Param::m_si_disp8: case Param::m_di_disp8: case Param::m_bp_disp8: case Param::m_bx_disp8:
+			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_ebp_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
 			case Param::m_rax_disp8: case Param::m_rcx_disp8: case Param::m_rdx_disp8: case Param::m_rbx_disp8: case Param::m_rbp_disp8: case Param::m_rsi_disp8: case Param::m_rdi_disp8:
 				mod = 1;
 				break;
 
-			case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_ebp_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
 			case Param::m_bx_si_disp16: case Param::m_bx_di_disp16: case Param::m_bp_si_disp16: case Param::m_bp_di_disp16: case Param::m_si_disp16: case Param::m_di_disp16: case Param::m_bp_disp16: case Param::m_bx_disp16:
+			case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_ebp_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
 			case Param::m_rax_disp32: case Param::m_rcx_disp32: case Param::m_rdx_disp32: case Param::m_rbx_disp32: case Param::m_rbp_disp32: case Param::m_rsi_disp32: case Param::m_rdi_disp32:
 				mod = 2;
 				break;
@@ -301,7 +385,54 @@ namespace IntelCore
 
 	void IntelAssembler::GetRm(Param p, size_t& rm)
 	{
+		if (IsReg(p))
+		{
+			GetReg(p, rm);
+			return;
+		}
+		else if (IsSib(p))
+		{
+			rm = 4;
+			return;
+		}
 
+		switch (p)
+		{
+			case Param::m_bx_si: case Param::m_bx_si_disp8: case Param::m_bx_si_disp16: case Param::m_eax: case Param::m_eax_disp8: case Param::m_eax_disp32: case Param::m_rax: case Param::m_rax_disp8: case Param::m_rax_disp32:
+				rm = 0;
+				break;
+				
+			case Param::m_bx_di: case Param::m_bx_di_disp8: case Param::m_bx_di_disp16: case Param::m_ecx: case Param::m_ecx_disp8: case Param::m_ecx_disp32: case Param::m_rcx: case Param::m_rcx_disp8: case Param::m_rcx_disp32:
+				rm = 1;
+				break;
+
+			case Param::m_bp_si: case Param::m_bp_si_disp8: case Param::m_bp_si_disp16: case Param::m_edx: case Param::m_edx_disp8: case Param::m_edx_disp32: case Param::m_rdx: case Param::m_rdx_disp8: case Param::m_rdx_disp32:
+				rm = 2;
+				break;
+
+			case Param::m_bp_di: case Param::m_bp_di_disp8: case Param::m_bp_di_disp16: case Param::m_ebx: case Param::m_ebx_disp8: case Param::m_ebx_disp32: case Param::m_rbx: case Param::m_rbx_disp8: case Param::m_rbx_disp32:
+				rm = 3;
+				break;
+
+			case Param::m_si: case Param::m_si_disp8: case Param::m_si_disp16:
+				rm = 4;
+				break;
+
+			case Param::m_di: case Param::m_di_disp8: case Param::m_di_disp16: case Param::m_disp32: case Param::m_ebp_disp8: case Param::m_ebp_disp32: case Param::m_rip_disp32: case Param::m_eip_disp32: case Param::m_rbp_disp8: case Param::m_rbp_disp32:
+				rm = 5;
+				break;
+
+			case Param::m_disp16: case Param::m_bp_disp8: case Param::m_bp_disp16: case Param::m_esi: case Param::m_esi_disp8: case Param::m_esi_disp32: case Param::m_rsi: case Param::m_rsi_disp8: case Param::m_rsi_disp32:
+				rm = 6;
+				break;
+
+			case Param::m_bx: case Param::m_bx_disp8: case Param::m_bx_disp16: case Param::m_edi: case Param::m_edi_disp8: case Param::m_edi_disp32: case Param::m_rdi: case Param::m_rdi_disp8: case Param::m_rdi_disp32:
+				rm = 7;
+				break;
+
+			default:
+				throw "Invalid parameter";
+		}
 	}
 
 	void IntelAssembler::GetSS(Param p, size_t& scale)
@@ -350,12 +481,214 @@ namespace IntelCore
 
 	void IntelAssembler::GetIndex(Param p, size_t& index)
 	{
+		if (Param::MemSib32Scale1Start < p && p < Param::MemSib32Scale1End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale1Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale2Start < p && p < Param::MemSib32Scale2End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale2Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale4Start < p && p < Param::MemSib32Scale4End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale4Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale8Start < p && p < Param::MemSib32Scale8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale8Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale1Disp8Start < p && p < Param::MemSib32Scale1Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale1Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale2Disp8Start < p && p < Param::MemSib32Scale2Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale2Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale4Disp8Start < p && p < Param::MemSib32Scale4Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale4Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale8Disp8Start < p && p < Param::MemSib32Scale8Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale8Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale1Disp32Start < p && p < Param::MemSib32Scale1Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale1Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale2Disp32Start < p && p < Param::MemSib32Scale2Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale2Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale4Disp32Start < p && p < Param::MemSib32Scale4Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale4Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib32Scale8Disp32Start < p && p < Param::MemSib32Scale8Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib32Scale8Disp32Start) + 1) / 16;
+		}
 
+		else if (Param::MemSib64Scale1Start < p && p < Param::MemSib64Scale1End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale1Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale2Start < p && p < Param::MemSib64Scale2End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale2Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale4Start < p && p < Param::MemSib64Scale4End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale4Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale8Start < p && p < Param::MemSib64Scale8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale8Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale1Disp8Start < p && p < Param::MemSib64Scale1Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale1Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale2Disp8Start < p && p < Param::MemSib64Scale2Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale2Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale4Disp8Start < p && p < Param::MemSib64Scale4Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale4Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale8Disp8Start < p && p < Param::MemSib64Scale8Disp8End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale8Disp8Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale1Disp32Start < p && p < Param::MemSib64Scale1Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale1Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale2Disp32Start < p && p < Param::MemSib64Scale2Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale2Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale4Disp32Start < p && p < Param::MemSib64Scale4Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale4Disp32Start) + 1) / 16;
+		}
+		else if (Param::MemSib64Scale8Disp32Start < p && p < Param::MemSib64Scale8Disp32End)
+		{
+			index = (((size_t)p - (size_t)Param::MemSib64Scale8Disp32Start) + 1) / 16;
+		}
+
+		else
+		{
+			throw "Invalid parameters";
+		}
 	}
 
 	void IntelAssembler::GetBase(Param p, size_t& base)
 	{
+		if (Param::MemSib32Scale1Start < p && p < Param::MemSib32Scale1End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale1Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale2Start < p && p < Param::MemSib32Scale2End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale2Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale4Start < p && p < Param::MemSib32Scale4End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale4Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale8Start < p && p < Param::MemSib32Scale8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale8Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale1Disp8Start < p && p < Param::MemSib32Scale1Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale1Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale2Disp8Start < p && p < Param::MemSib32Scale2Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale2Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale4Disp8Start < p && p < Param::MemSib32Scale4Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale4Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale8Disp8Start < p && p < Param::MemSib32Scale8Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale8Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale1Disp32Start < p && p < Param::MemSib32Scale1Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale1Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale2Disp32Start < p && p < Param::MemSib32Scale2Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale2Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale4Disp32Start < p && p < Param::MemSib32Scale4Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale4Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib32Scale8Disp32Start < p && p < Param::MemSib32Scale8Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib32Scale8Disp32Start) + 1) % 16;
+		}
 
+		else if (Param::MemSib64Scale1Start < p && p < Param::MemSib64Scale1End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale1Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale2Start < p && p < Param::MemSib64Scale2End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale2Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale4Start < p && p < Param::MemSib64Scale4End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale4Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale8Start < p && p < Param::MemSib64Scale8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale8Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale1Disp8Start < p && p < Param::MemSib64Scale1Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale1Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale2Disp8Start < p && p < Param::MemSib64Scale2Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale2Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale4Disp8Start < p && p < Param::MemSib64Scale4Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale4Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale8Disp8Start < p && p < Param::MemSib64Scale8Disp8End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale8Disp8Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale1Disp32Start < p && p < Param::MemSib64Scale1Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale1Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale2Disp32Start < p && p < Param::MemSib64Scale2Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale2Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale4Disp32Start < p && p < Param::MemSib64Scale4Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale4Disp32Start) + 1) % 16;
+		}
+		else if (Param::MemSib64Scale8Disp32Start < p && p < Param::MemSib64Scale8Disp32End)
+		{
+			base = (((size_t)p - (size_t)Param::MemSib64Scale8Disp32Start) + 1) % 16;
+		}
+
+		else
+		{
+			throw "Invalid parameters";
+		}
 	}
 
 	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t bits, uint8_t ops[])
@@ -452,6 +785,14 @@ namespace IntelCore
 	{
 		info.prefixSize = 0;
 		info.instrSize = 0;
+
+		for (size_t i = 0; i < info.numParams; i++)
+		{
+			if (IsSpecial(info.params[i]))
+			{
+				throw "Invalid parameter";
+			}
+		}
 
 		AssemblePrefixes(info);
 
@@ -564,6 +905,14 @@ namespace IntelCore
 		info.prefixSize = 0;
 		info.instrSize = 0;
 
+		for (size_t i = 0; i < info.numParams; i++)
+		{
+			if (IsSpecial(info.params[i]))
+			{
+				throw "Invalid parameter";
+			}
+		}
+
 		AssemblePrefixes(info);
 
 		switch (info.instr)
@@ -674,6 +1023,14 @@ namespace IntelCore
 	{
 		info.prefixSize = 0;
 		info.instrSize = 0;
+
+		for (size_t i = 0; i < info.numParams; i++)
+		{
+			if (IsSpecial(info.params[i]))
+			{
+				throw "Invalid parameter";
+			}
+		}
 
 		AssemblePrefixes(info);
 

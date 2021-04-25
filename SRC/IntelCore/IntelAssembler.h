@@ -5,10 +5,16 @@
 
 #pragma once
 
+namespace IntelAssemblerUnitTest
+{
+	class IntelAssemblerUnitTest;
+}
+
 namespace IntelCore
 {
 	class IntelAssembler
 	{
+		friend IntelAssemblerUnitTest::IntelAssemblerUnitTest;
 
 		static void Invalid();
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
@@ -23,6 +29,7 @@ namespace IntelCore
 
 		// Methods for determining the category of the parameter. 
 
+		static bool IsSpecial(Param p);
 		static bool IsImm(Param p);
 		static bool IsReg(Param p);
 		static bool IsMem(Param p);
