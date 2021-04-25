@@ -231,7 +231,72 @@ namespace IntelCore
 
 	void IntelAssembler::GetMod(Param p, size_t& mod)
 	{
+		if (IsReg(p))
+		{
+			mod = 3;
+			return;
+		}
 
+		if ((Param::MemSib32Scale1Start <= p && p <= Param::MemSib32Scale1End) ||
+			(Param::MemSib64Scale1Start <= p && p <= Param::MemSib64Scale1End) ||
+			(Param::MemSib32Scale2Start <= p && p <= Param::MemSib32Scale2End) ||
+			(Param::MemSib64Scale2Start <= p && p <= Param::MemSib64Scale2End) ||
+			(Param::MemSib32Scale4Start <= p && p <= Param::MemSib32Scale4End) ||
+			(Param::MemSib64Scale4Start <= p && p <= Param::MemSib64Scale4End) ||
+			(Param::MemSib32Scale8Start <= p && p <= Param::MemSib32Scale8End) ||
+			(Param::MemSib64Scale8Start <= p && p <= Param::MemSib64Scale8End) )
+		{
+			mod = 0;
+			return;
+		}
+		else if ((Param::MemSib32Scale1Disp8Start <= p && p <= Param::MemSib32Scale1Disp8End) ||
+			(Param::MemSib64Scale1Disp8Start <= p && p <= Param::MemSib64Scale1Disp8End) ||
+			(Param::MemSib32Scale2Disp8Start <= p && p <= Param::MemSib32Scale2Disp8End) ||
+			(Param::MemSib64Scale2Disp8Start <= p && p <= Param::MemSib64Scale2Disp8End) ||
+			(Param::MemSib32Scale4Disp8Start <= p && p <= Param::MemSib32Scale4Disp8End) ||
+			(Param::MemSib64Scale4Disp8Start <= p && p <= Param::MemSib64Scale4Disp8End) ||
+			(Param::MemSib32Scale8Disp8Start <= p && p <= Param::MemSib32Scale8Disp8End) ||
+			(Param::MemSib64Scale8Disp8Start <= p && p <= Param::MemSib64Scale8Disp8End))
+		{
+			mod = 1;
+			return;
+		}
+		else if ((Param::MemSib32Scale1Disp32Start <= p && p <= Param::MemSib32Scale1Disp32End) ||
+			(Param::MemSib64Scale1Disp32Start <= p && p <= Param::MemSib64Scale1Disp32End) ||
+			(Param::MemSib32Scale2Disp32Start <= p && p <= Param::MemSib32Scale2Disp32End) ||
+			(Param::MemSib64Scale2Disp32Start <= p && p <= Param::MemSib64Scale2Disp32End) ||
+			(Param::MemSib32Scale4Disp32Start <= p && p <= Param::MemSib32Scale4Disp32End) ||
+			(Param::MemSib64Scale4Disp32Start <= p && p <= Param::MemSib64Scale4Disp32End) ||
+			(Param::MemSib32Scale8Disp32Start <= p && p <= Param::MemSib32Scale8Disp32End) ||
+			(Param::MemSib64Scale8Disp32Start <= p && p <= Param::MemSib64Scale8Disp32End))
+		{
+			mod = 2;
+			return;
+		}
+
+		switch (p)
+		{
+			case Param::m_eax: case Param::m_ecx: case Param::m_edx: case Param::m_ebx: case Param::m_disp32: case Param::m_esi: case Param::m_edi:
+			case Param::m_bx_si: case Param::m_bx_di: case Param::m_bp_si: case Param::m_bp_di: case Param::m_si: case Param::m_di: case Param::m_disp16: case Param::m_bx:
+			case Param::m_rax: case Param::m_rcx: case Param::m_rdx: case Param::m_rbx: case Param::m_rip_disp32: case Param::m_eip_disp32: case Param::m_rsi: case Param::m_rdi:
+				mod = 0;
+				break;
+
+			case Param::m_eax_disp8: case Param::m_ecx_disp8: case Param::m_edx_disp8: case Param::m_ebx_disp8: case Param::m_ebp_disp8: case Param::m_esi_disp8: case Param::m_edi_disp8:
+			case Param::m_bx_si_disp8: case Param::m_bx_di_disp8: case Param::m_bp_si_disp8: case Param::m_bp_di_disp8: case Param::m_si_disp8: case Param::m_di_disp8: case Param::m_bp_disp8: case Param::m_bx_disp8:
+			case Param::m_rax_disp8: case Param::m_rcx_disp8: case Param::m_rdx_disp8: case Param::m_rbx_disp8: case Param::m_rbp_disp8: case Param::m_rsi_disp8: case Param::m_rdi_disp8:
+				mod = 1;
+				break;
+
+			case Param::m_eax_disp32: case Param::m_ecx_disp32: case Param::m_edx_disp32: case Param::m_ebx_disp32: case Param::m_ebp_disp32: case Param::m_esi_disp32: case Param::m_edi_disp32:
+			case Param::m_bx_si_disp16: case Param::m_bx_di_disp16: case Param::m_bp_si_disp16: case Param::m_bp_di_disp16: case Param::m_si_disp16: case Param::m_di_disp16: case Param::m_bp_disp16: case Param::m_bx_disp16:
+			case Param::m_rax_disp32: case Param::m_rcx_disp32: case Param::m_rdx_disp32: case Param::m_rbx_disp32: case Param::m_rbp_disp32: case Param::m_rsi_disp32: case Param::m_rdi_disp32:
+				mod = 2;
+				break;
+
+			default:
+				throw "Invalid parameter";
+		}
 	}
 
 	void IntelAssembler::GetRm(Param p, size_t& rm)
