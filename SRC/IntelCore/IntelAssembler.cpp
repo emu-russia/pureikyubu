@@ -887,6 +887,23 @@ namespace IntelCore
 				break;
 		}
 
+		switch (info.params[rmParam])
+		{
+			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+				if (bits == 64)
+				{
+					Invalid();
+				}
+				break;
+
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+				if (bits != 64)
+				{
+					Invalid();
+				}
+				break;
+		}
+
 		GetReg(info.params[regParam], reg);
 		GetMod(info.params[rmParam], mod);
 		GetRm(info.params[rmParam], rm);
@@ -938,6 +955,10 @@ namespace IntelCore
 
 			case 64:
 				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (info.params[rmParam] == Param::m_eip_disp32)
 				{
 					AddPrefixByte(info, 0x67);
 				}
