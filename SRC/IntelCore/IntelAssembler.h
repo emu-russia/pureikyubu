@@ -68,6 +68,9 @@ namespace IntelCore
 		static bool IsReg32(Param p);
 		static bool IsReg64(Param p);
 		static bool IsMem(Param p);
+		static bool IsMem16(Param p);
+		static bool IsMem32(Param p);
+		static bool IsMem64(Param p);
 		static bool IsSib(Param p);
 		static bool IsMemDisp8(Param p);
 		static bool IsMemDisp16(Param p);

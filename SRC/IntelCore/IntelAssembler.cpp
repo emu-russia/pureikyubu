@@ -248,6 +248,21 @@ namespace IntelCore
 		return Param::MemStart <= p && p <= Param::MemEnd;
 	}
 
+	bool IntelAssembler::IsMem16(Param p)
+	{
+		return Param::Mem16Start <= p && p <= Param::Mem16End;
+	}
+
+	bool IntelAssembler::IsMem32(Param p)
+	{
+		return (Param::Mem32Start <= p && p <= Param::Mem32End) || (Param::MemSib32Start <= p && p <= Param::MemSib32End);
+	}
+
+	bool IntelAssembler::IsMem64(Param p)
+	{
+		return (Param::Mem64Start <= p && p <= Param::Mem64End) || (Param::MemSib64Start <= p && p <= Param::MemSib64End);
+	}
+
 	bool IntelAssembler::IsSib(Param p)
 	{
 		return Param::SibStart <= p && p <= Param::SibEnd;
@@ -897,7 +912,41 @@ namespace IntelCore
 			AddPrefixByte(info, 0x66);
 		}
 
-		// TODO: 0x67
+		switch (bits)
+		{
+			case 16:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 32:
+				if (IsMem16(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 64:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem16(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+		}
 
 		bool rexRequired = reg > 8 || rm > 8 || index > 8 || base > 8;
 
@@ -908,10 +957,11 @@ namespace IntelCore
 
 		if (rexRequired)
 		{
+			int REX_W = IsReg16(info.params[regParam]) ? 0 : 1;
 			int REX_R = reg > 8 ? 1 : 0;
 			int REX_X = sibRequired ? ((index > 8) ? 1 : 0) : 0;
 			int REX_B = sibRequired ? ((base > 8) ? 1 : 0) : ((rm > 8) ? 1 : 0);
-			OneByte(info, 0x48 | (REX_R << 2) | (REX_X << 1) | REX_B);
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
 		}
 
 		OneByte(info, IsReg8(info.params[regParam]) ? opcode8 : opcode16_64 );
