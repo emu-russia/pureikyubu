@@ -880,6 +880,34 @@ namespace IntelCore
 			throw "Invalid parameter";
 		}
 
+		if ((IsReg8(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg8(info.params[regParam]) && IsReg32(info.params[rmParam])) ||
+			(IsReg8(info.params[regParam]) && IsReg64(info.params[rmParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg16(info.params[regParam]) && IsReg8(info.params[rmParam])) || 
+			(IsReg16(info.params[regParam]) && IsReg32(info.params[rmParam])) || 
+			(IsReg16(info.params[regParam]) && IsReg64(info.params[rmParam])) )
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg32(info.params[regParam]) && IsReg8(info.params[rmParam])) ||
+			(IsReg32(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg32(info.params[regParam]) && IsReg64(info.params[rmParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg64(info.params[regParam]) && IsReg8(info.params[rmParam])) ||
+			(IsReg64(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg64(info.params[regParam]) && IsReg32(info.params[rmParam])))
+		{
+			throw "Invalid parameter";
+		}
+
 		switch (info.params[regParam])
 		{
 			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
