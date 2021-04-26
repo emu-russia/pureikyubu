@@ -51,4 +51,4 @@ All documentation is now stored in a separate repository: https://github.com/oga
 
 ## RnD
 
-For experimental and outdated code, an RnD folder was created.
+For experimental and outdated code, https://github.com/ogamespec/dolwin-rnd repository was created.

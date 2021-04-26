@@ -300,14 +300,29 @@ namespace IntelCore
 	{
 		switch (p)
 		{
-			case Param::al: case Param::ax: case Param::eax: reg = 0; break;
-			case Param::cl: case Param::cx: case Param::ecx: reg = 1; break;
-			case Param::dl: case Param::dx: case Param::edx: reg = 2; break;
-			case Param::bl: case Param::bx: case Param::ebx: reg = 3; break;
-			case Param::ah: case Param::sp: case Param::esp: reg = 4; break;
-			case Param::ch: case Param::bp: case Param::ebp: reg = 5; break;
-			case Param::dh: case Param::si: case Param::esi: reg = 6; break;
-			case Param::bh: case Param::di: case Param::edi: reg = 7; break;
+			case Param::al: case Param::ax: case Param::eax: case Param::rax: reg = 0; break;
+			case Param::cl: case Param::cx: case Param::ecx: case Param::rcx: reg = 1; break;
+			case Param::dl: case Param::dx: case Param::edx: case Param::rdx: reg = 2; break;
+			case Param::bl: case Param::bx: case Param::ebx: case Param::rbx: reg = 3; break;
+			case Param::ah: case Param::sp: case Param::esp: case Param::rsp: reg = 4; break;
+			case Param::ch: case Param::bp: case Param::ebp: case Param::rbp: reg = 5; break;
+			case Param::dh: case Param::si: case Param::esi: case Param::rsi: reg = 6; break;
+			case Param::bh: case Param::di: case Param::edi: case Param::rdi: reg = 7; break;
+
+			case Param::spl: reg = 4; break;
+			case Param::bpl: reg = 5; break;
+			case Param::sil: reg = 6; break;
+			case Param::dil: reg = 7; break;
+
+			case Param::r8b: case Param::r8w: case Param::r8d: case Param::r8: reg = 8; break;
+			case Param::r9b: case Param::r9w: case Param::r9d: case Param::r9: reg = 9; break;
+			case Param::r10b: case Param::r10w: case Param::r10d: case Param::r10: reg = 10; break;
+			case Param::r11b: case Param::r11w: case Param::r11d: case Param::r11: reg = 11; break;
+			case Param::r12b: case Param::r12w: case Param::r12d: case Param::r12: reg = 12; break;
+			case Param::r13b: case Param::r13w: case Param::r13d: case Param::r13: reg = 13; break;
+			case Param::r14b: case Param::r14w: case Param::r14d: case Param::r14: reg = 14; break;
+			case Param::r15b: case Param::r15w: case Param::r15d: case Param::r15: reg = 15; break;
+
 			default:
 				throw "Invalid parameter";
 		}
