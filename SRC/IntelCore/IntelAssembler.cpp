@@ -194,6 +194,55 @@ namespace IntelCore
 		return Param::RegStart <= p && p <= Param::RegEnd;
 	}
 
+	bool IntelAssembler::IsReg8(Param p)
+	{
+		switch (p)
+		{
+			case Param::al: case Param::cl: case Param::dl: case Param::bl: case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+			case Param::r8b: case Param::r9b: case Param::r10b: case Param::r11b: case Param::r12b: case Param::r13b: case Param::r14b: case Param::r15b:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg16(Param p)
+	{
+		switch (p)
+		{
+			case Param::ax: case Param::cx: case Param::dx: case Param::bx: case Param::sp: case Param::bp: case Param::si: case Param::di:
+			case Param::r8w: case Param::r9w: case Param::r10w: case Param::r11w: case Param::r12w: case Param::r13w: case Param::r14w: case Param::r15w:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg32(Param p)
+	{
+		switch (p)
+		{
+			case Param::eax: case Param::ecx: case Param::edx: case Param::ebx: case Param::esp: case Param::ebp: case Param::esi: case Param::edi:
+			case Param::r8d: case Param::r9d: case Param::r10d: case Param::r11d: case Param::r12d: case Param::r13d: case Param::r14d: case Param::r15d:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg64(Param p)
+	{
+		switch (p)
+		{
+			case Param::rax: case Param::rcx: case Param::rdx: case Param::rbx: case Param::rsp: case Param::rbp: case Param::rsi: case Param::rdi:
+			case Param::r8: case Param::r9: case Param::r10: case Param::r11: case Param::r12: case Param::r13: case Param::r14: case Param::r15:
+				return true;
+		}
+
+		return false;
+	}
+
 	bool IntelAssembler::IsMem(Param p)
 	{
 		return Param::MemStart <= p && p <= Param::MemEnd;
@@ -716,7 +765,6 @@ namespace IntelCore
 	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
-		size_t rmParam = 0;
 		size_t scale = 0, index = 0, base = 0;
 		bool sib = false;
 
@@ -783,7 +831,8 @@ namespace IntelCore
 		{
 			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsReg(info.params[1]))
 			{
-
+				HandleModRegRm(info, bits, 1, 0, feature.Form_MR_Opcode8, feature.Form_MR_Opcode16_64);
+				return;
 			}
 		}
 
@@ -791,11 +840,94 @@ namespace IntelCore
 		{
 			if (IsReg(info.params[0]) && IsMem(info.params[1]))
 			{
-
+				HandleModRegRm(info, bits, 0, 1, feature.Form_RM_Opcode8, feature.Form_RM_Opcode16_64);
+				return;
 			}
 		}
 
 		throw "Invalid instruction form";
+	}
+
+	void IntelAssembler::HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t scale = 0, index = 0, base = 0;
+
+		// Extract and check required information from parameters 
+
+		switch (info.params[regParam])
+		{
+			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+				if (bits == 64)
+				{
+					Invalid();
+				}
+				break;
+
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+				if (bits != 64)
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		GetReg(info.params[regParam], reg);
+		GetMod(info.params[rmParam], mod);
+		GetRm(info.params[rmParam], rm);
+
+		bool sibRequired = IsSib(info.params[rmParam]);
+
+		if (sibRequired)
+		{
+			GetSS(info.params[rmParam], scale);
+			GetIndex(info.params[rmParam], index);
+			GetBase(info.params[rmParam], base);
+		}
+
+		// Compile the resulting instruction, mode prefixes and possible displacement
+
+		if (IsReg32(info.params[regParam]) && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (IsReg16(info.params[regParam]) && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		// TODO: 0x67
+
+		bool rexRequired = reg > 8 || rm > 8 || index > 8 || base > 8;
+
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_R = reg > 8 ? 1 : 0;
+			int REX_X = sibRequired ? ((index > 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base > 8) ? 1 : 0) : ((rm > 8) ? 1 : 0);
+			OneByte(info, 0x48 | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, IsReg8(info.params[regParam]) ? opcode8 : opcode16_64 );
+
+		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
+		OneByte(info, modRmByte);
+
+		if (sibRequired)
+		{
+			uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			OneByte(info, sibByte);
+		}
+
+		if (IsMemDisp8(info.params[rmParam])) OneByte(info, info.Disp.disp8);
+		else if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
+		else if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
 	}
 
 #pragma endregion "Private"

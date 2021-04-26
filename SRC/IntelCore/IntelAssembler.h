@@ -63,6 +63,10 @@ namespace IntelCore
 		static bool IsSpecial(Param p);
 		static bool IsImm(Param p);
 		static bool IsReg(Param p);
+		static bool IsReg8(Param p);
+		static bool IsReg16(Param p);
+		static bool IsReg32(Param p);
+		static bool IsReg64(Param p);
 		static bool IsMem(Param p);
 		static bool IsSib(Param p);
 		static bool IsMemDisp8(Param p);
@@ -82,6 +86,7 @@ namespace IntelCore
 		static void GetBase(Param p, size_t& base);
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
+		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64);
 
 	public:
 
