@@ -779,10 +779,6 @@ namespace IntelCore
 	/// <param name="feature">Instruction features</param>
 	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
 	{
-		size_t mod = 0, reg = 0, rm = 0;
-		size_t scale = 0, index = 0, base = 0;
-		bool sib = false;
-
 		if (info.numParams != 2)
 		{
 			throw "Invalid parameters";
@@ -794,45 +790,56 @@ namespace IntelCore
 		{
 			if (IsReg(info.params[0]) && IsImm(info.params[1]))
 			{
-				if (info.params[1] == Param::simm8)
-				{
-					throw "Invalid parameter";
-				}
-
 				switch (info.params[0])
 				{
 					case Param::al:
-						OneByte(info, feature.Form_I_Opcode8);
-						OneByte(info, info.Imm.uimm8);
-						return;
+						if (info.params[1] == Param::imm8)
+						{
+							OneByte(info, feature.Form_I_Opcode8);
+							OneByte(info, info.Imm.uimm8);
+							return;
+						}
+						break;
 					case Param::ax:
-						if (bits != 16)
+						if (info.params[1] == Param::imm16)
 						{
-							AddPrefixByte(info, 0x66);
+							if (bits != 16)
+							{
+								AddPrefixByte(info, 0x66);
+							}
+							OneByte(info, feature.Form_I_Opcode16_64);
+							AddUshort(info, info.Imm.uimm16);
+							return;
 						}
-						OneByte(info, feature.Form_I_Opcode16_64);
-						AddUshort(info, info.Imm.uimm16);
-						return;
+						break;
 					case Param::eax:
-						if (bits == 16)
+						if (info.params[1] == Param::imm32)
 						{
-							AddPrefixByte(info, 0x66);
-						}
-						OneByte(info, feature.Form_I_Opcode16_64);
-						AddUlong(info, info.Imm.uimm32);
-						return;
-					case Param::rax:
-						if (bits == 64)
-						{
-							OneByte(info, 0x48);
+							if (bits == 16)
+							{
+								AddPrefixByte(info, 0x66);
+							}
 							OneByte(info, feature.Form_I_Opcode16_64);
 							AddUlong(info, info.Imm.uimm32);
+							return;
 						}
-						else
+						break;
+					case Param::rax:
+						if (info.params[1] == Param::imm32)
 						{
-							Invalid();
+							if (bits == 64)
+							{
+								OneByte(info, 0x48);
+								OneByte(info, feature.Form_I_Opcode16_64);
+								AddUlong(info, info.Imm.uimm32);
+							}
+							else
+							{
+								Invalid();
+							}
+							return;
 						}
-						return;
+						break;
 					default:
 						break;
 				}
@@ -843,7 +850,7 @@ namespace IntelCore
 		{
 			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsImm(info.params[1]))
 			{
-
+				// TODO
 			}
 		}
 
