@@ -870,6 +870,16 @@ namespace IntelCore
 
 		// Extract and check required information from parameters 
 
+		if (IsReg64(info.params[regParam]) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg64(info.params[rmParam]) || IsMem64(info.params[rmParam])) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
 		switch (info.params[regParam])
 		{
 			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
@@ -969,7 +979,7 @@ namespace IntelCore
 				break;
 		}
 
-		bool rexRequired = reg > 8 || rm > 8 || index > 8 || base > 8;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8;
 
 		if (rexRequired && bits != 64)
 		{
@@ -979,9 +989,9 @@ namespace IntelCore
 		if (rexRequired)
 		{
 			int REX_W = IsReg16(info.params[regParam]) ? 0 : 1;
-			int REX_R = reg > 8 ? 1 : 0;
-			int REX_X = sibRequired ? ((index > 8) ? 1 : 0) : 0;
-			int REX_B = sibRequired ? ((base > 8) ? 1 : 0) : ((rm > 8) ? 1 : 0);
+			int REX_R = reg >= 8 ? 1 : 0;
+			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
 			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
 		}
 
