@@ -979,7 +979,7 @@ namespace IntelCore
 				break;
 		}
 
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]);
 
 		if (rexRequired && bits != 64)
 		{
@@ -1421,6 +1421,9 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[0] = to;
+		info.params[1] = from;
+		info.numParams = 2;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
@@ -1434,6 +1437,9 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[0] = to;
+		info.params[1] = from;
+		info.numParams = 2;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
@@ -1447,6 +1453,9 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[0] = to;
+		info.params[1] = from;
+		info.numParams = 2;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
