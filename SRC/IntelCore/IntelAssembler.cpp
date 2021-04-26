@@ -794,6 +794,11 @@ namespace IntelCore
 		{
 			if (IsReg(info.params[0]) && IsImm(info.params[1]))
 			{
+				if (info.params[1] == Param::simm8)
+				{
+					throw "Invalid parameter";
+				}
+
 				switch (info.params[0])
 				{
 					case Param::al:
@@ -1449,14 +1454,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
-		info.params[0] = to;
-		info.params[1] = from;
-		info.numParams = 2;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
@@ -1465,14 +1468,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
-		info.params[0] = to;
-		info.params[1] = from;
-		info.numParams = 2;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
@@ -1481,14 +1482,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
-		info.params[0] = to;
-		info.params[1] = from;
-		info.numParams = 2;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}

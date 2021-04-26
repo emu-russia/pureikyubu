@@ -1108,6 +1108,7 @@ namespace IntelCore
 		imm8,
 		imm16,
 		imm32,
+		simm8,			// Used for instructions where you want to sign extension of immediate 8 to 16/32/64 bits. 
 		ImmEnd,				// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// reg
