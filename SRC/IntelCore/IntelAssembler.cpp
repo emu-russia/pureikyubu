@@ -706,7 +706,14 @@ namespace IntelCore
 		}
 	}
 
-	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t bits, uint8_t ops[])
+	/// <summary>
+	/// It is engaged in the processing of the instruction format based on the specified processor operating mode (16, 32, 64)
+	/// and the structure with feature data supported by the instruction. 
+	/// </summary>
+	/// <param name="info">Instruction information</param>
+	/// <param name="bits">Processor operating mode (16, 32, 64)</param>
+	/// <param name="feature">Instruction features</param>
+	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t rmParam = 0;
@@ -718,78 +725,77 @@ namespace IntelCore
 			throw "Invalid parameters";
 		}
 
-		if (IsImm(info.params[1]))
+		// Try all formats one by one 
+
+		if (feature.forms & InstrForm::Form_I)
 		{
-			if (IsReg(info.params[0]) || IsMem(info.params[0]))
+			if (IsReg(info.params[0]) && IsImm(info.params[1]))
 			{
-				GetMod(info.params[0], mod);
-				reg = 0;		// The `reg` field contains an additional opcode in this case. 
-				GetRm(info.params[0], rm);
-				rmParam = 0;
-			}
-			else
-			{
-				throw "Invalid parameter";
+				switch (info.params[0])
+				{
+					case Param::al:
+						OneByte(info, feature.Form_I_Opcode8);
+						OneByte(info, info.Imm.uimm8);
+						return;
+					case Param::ax:
+						if (bits != 16)
+						{
+							AddPrefixByte(info, 0x66);
+						}
+						OneByte(info, feature.Form_I_Opcode16_64);
+						AddUshort(info, info.Imm.uimm16);
+						return;
+					case Param::eax:
+						if (bits == 16)
+						{
+							AddPrefixByte(info, 0x66);
+						}
+						OneByte(info, feature.Form_I_Opcode16_64);
+						AddUlong(info, info.Imm.uimm32);
+						return;
+					case Param::rax:
+						if (bits == 64)
+						{
+							OneByte(info, 0x48);
+							OneByte(info, feature.Form_I_Opcode16_64);
+							AddUlong(info, info.Imm.uimm32);
+						}
+						else
+						{
+							Invalid();
+						}
+						return;
+					default:
+						break;
+				}
 			}
 		}
-		else
+	
+		if (feature.forms & InstrForm::Form_MI)
 		{
-			if (IsReg(info.params[0]))
+			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsImm(info.params[1]))
 			{
-				if (IsReg(info.params[1]) || IsMem(info.params[1]))
-				{
-					GetMod(info.params[1], mod);
-					GetReg(info.params[0], reg);
-					GetRm(info.params[1], rm);
-					rmParam = 1;
-				}
-				else
-				{
-					throw "Invalid parameter";
-				}
-			}
-			else if (IsMem(info.params[0]))
-			{
-				if (IsReg(info.params[1]))
-				{
-					GetMod(info.params[0], mod);
-					GetReg(info.params[1], reg);
-					GetRm(info.params[0], rm);
-					rmParam = 0;
-				}
-				else
-				{
-					throw "Invalid parameter";
-				}
-			}
-			else
-			{
-				throw "Invalid parameter";
+
 			}
 		}
 
-		// Check that the r/m parameter is a parameter using the SIB mechanism. 
-
-		if (IsSib(info.params[rmParam]))
+		if (feature.forms & InstrForm::Form_MR)
 		{
-			GetSS(info.params[rmParam], scale);
-			GetIndex(info.params[rmParam], index);
-			GetBase(info.params[rmParam], base);
-			sib = true;
+			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsReg(info.params[1]))
+			{
+
+			}
 		}
 
-		// Compile the resulting instruction, mode prefixes and possible disp/imm.
+		if (feature.forms & InstrForm::Form_RM)
+		{
+			if (IsReg(info.params[0]) && IsMem(info.params[1]))
+			{
 
-		uint8_t modrm = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
-		uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			}
+		}
 
-		OneByte(info, ops[0]);
-		OneByte(info, modrm);
-		if (sib) OneByte(info, sibByte);
-		if (IsMemDisp8(info.params[rmParam])) OneByte(info, info.Disp.disp8);
-		if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
-		if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
-
+		throw "Invalid instruction form";
 	}
 
 #pragma endregion "Private"
@@ -817,8 +823,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 16, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 16, feature);
 				break;
 			}
 
@@ -936,8 +955,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 32, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 32, feature);
 				break;
 			}
 
@@ -1055,8 +1087,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 64, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 64, feature);
 				break;
 			}
 
