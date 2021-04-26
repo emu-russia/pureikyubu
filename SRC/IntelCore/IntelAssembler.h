@@ -16,6 +16,37 @@ namespace IntelCore
 	{
 		friend IntelAssemblerUnitTest::IntelAssemblerUnitTest;
 
+		/// <summary>
+		/// A bitmask enumeration to determine which forms of encoding the instruction supports. 
+		/// </summary>
+		enum InstrForm : uint32_t
+		{
+			None = 0,
+			Form_I = 1,				// Simplified version, when the destination is the al/ax/eax/rax register, and the source is imm
+			Form_MI = 2,			// rm, imm
+			Form_MR = 4,			// rm, r  (It will also be used when rm is a register)
+			Form_RM = 8,			// r, rm
+		};
+
+		/// <summary>
+		/// Contains information about which forms the instruction supports and which opcodes are used for the specified forms.
+		/// This structure is an attempt to somehow generalize the chaos of the x86/x64 instruction format.
+		/// </summary>
+		struct InstrFeatures
+		{
+			uint32_t forms;
+			uint8_t Form_RegOpcode;				// The part of the opcode that is contained in the `reg` field of the ModRM byte 
+			uint8_t Form_I_Opcode8;				// e.g. ADC AL, imm8
+			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
+			uint8_t Form_MI_Opcode8;			// e.g. ADC r/m8, imm8
+			uint8_t Form_MI_Opcode16_64;		// e.g. ADC r/m32, imm32
+			uint8_t Form_MI_Opcode_Imm8;		// e.g. ADC r/m32, imm8
+			uint8_t Form_MR_Opcode8;			// e.g. ADC r/m8, r8
+			uint8_t Form_MR_Opcode16_64;		// e.g. ADC r/m16, r16
+			uint8_t Form_RM_Opcode8;			// e.g. ADC r8, r/m8
+			uint8_t Form_RM_Opcode16_64;		// e.g. ADC ADC r64, r/m64
+		};
+
 		static void Invalid();
 		static void OneByte(AnalyzeInfo& info, uint8_t n);
 		static void TwoByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2);
@@ -32,7 +63,14 @@ namespace IntelCore
 		static bool IsSpecial(Param p);
 		static bool IsImm(Param p);
 		static bool IsReg(Param p);
+		static bool IsReg8(Param p);
+		static bool IsReg16(Param p);
+		static bool IsReg32(Param p);
+		static bool IsReg64(Param p);
 		static bool IsMem(Param p);
+		static bool IsMem16(Param p);
+		static bool IsMem32(Param p);
+		static bool IsMem64(Param p);
 		static bool IsSib(Param p);
 		static bool IsMemDisp8(Param p);
 		static bool IsMemDisp16(Param p);
@@ -50,7 +88,8 @@ namespace IntelCore
 		static void GetIndex(Param p, size_t& index);
 		static void GetBase(Param p, size_t& base);
 
-		static void ModRegRm(AnalyzeInfo& info, size_t bits, uint8_t ops[]);
+		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
+		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64);
 
 	public:
 

@@ -194,9 +194,73 @@ namespace IntelCore
 		return Param::RegStart <= p && p <= Param::RegEnd;
 	}
 
+	bool IntelAssembler::IsReg8(Param p)
+	{
+		switch (p)
+		{
+			case Param::al: case Param::cl: case Param::dl: case Param::bl: case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+			case Param::r8b: case Param::r9b: case Param::r10b: case Param::r11b: case Param::r12b: case Param::r13b: case Param::r14b: case Param::r15b:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg16(Param p)
+	{
+		switch (p)
+		{
+			case Param::ax: case Param::cx: case Param::dx: case Param::bx: case Param::sp: case Param::bp: case Param::si: case Param::di:
+			case Param::r8w: case Param::r9w: case Param::r10w: case Param::r11w: case Param::r12w: case Param::r13w: case Param::r14w: case Param::r15w:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg32(Param p)
+	{
+		switch (p)
+		{
+			case Param::eax: case Param::ecx: case Param::edx: case Param::ebx: case Param::esp: case Param::ebp: case Param::esi: case Param::edi:
+			case Param::r8d: case Param::r9d: case Param::r10d: case Param::r11d: case Param::r12d: case Param::r13d: case Param::r14d: case Param::r15d:
+				return true;
+		}
+
+		return false;
+	}
+
+	bool IntelAssembler::IsReg64(Param p)
+	{
+		switch (p)
+		{
+			case Param::rax: case Param::rcx: case Param::rdx: case Param::rbx: case Param::rsp: case Param::rbp: case Param::rsi: case Param::rdi:
+			case Param::r8: case Param::r9: case Param::r10: case Param::r11: case Param::r12: case Param::r13: case Param::r14: case Param::r15:
+				return true;
+		}
+
+		return false;
+	}
+
 	bool IntelAssembler::IsMem(Param p)
 	{
 		return Param::MemStart <= p && p <= Param::MemEnd;
+	}
+
+	bool IntelAssembler::IsMem16(Param p)
+	{
+		return Param::Mem16Start <= p && p <= Param::Mem16End;
+	}
+
+	bool IntelAssembler::IsMem32(Param p)
+	{
+		return (Param::Mem32Start <= p && p <= Param::Mem32End) || (Param::MemSib32Start <= p && p <= Param::MemSib32End);
+	}
+
+	bool IntelAssembler::IsMem64(Param p)
+	{
+		return (Param::Mem64Start <= p && p <= Param::Mem64End) || (Param::MemSib64Start <= p && p <= Param::MemSib64End);
 	}
 
 	bool IntelAssembler::IsSib(Param p)
@@ -245,14 +309,14 @@ namespace IntelCore
 			case Param::m_rax_disp32: case Param::m_rcx_disp32: case Param::m_rdx_disp32: case Param::m_rbx_disp32: case Param::m_rbp_disp32: case Param::m_rsi_disp32: case Param::m_rdi_disp32:
 
 			case Param::sib_eax_disp32: case Param::sib_ecx_disp32: case Param::sib_edx_disp32: case Param::sib_ebx_disp32: case Param::sib_none_disp32: case Param::sib_ebp_disp32: case Param::sib_esi_disp32: case Param::sib_edi_disp32: case Param::sib_r8d_disp32: case Param::sib_r9d_disp32: case Param::sib_r10d_disp32: case Param::sib_r11d_disp32: case Param::sib_r12d_disp32: case Param::sib_r13d_disp32: case Param::sib_r14d_disp32: case Param::sib_r15d_disp32:
-			case Param::sib_eax_2_disp32: case Param::sib_ecx_2_disp32: case Param::sib_edx_2_disp32: case Param::sib_ebx_2_disp32: case Param::sib_ebp_2_disp32: case Param::sib_esi_2_disp32: case Param::sib_edi_2_disp32: case Param::sib_r8d_2_disp32: case Param::sib_r9d_2_disp32: case Param::sib_r10d_2_disp32: case Param::sib_r11d_2_disp32: case Param::sib_r12d_2_disp32: case Param::sib_r13d_2_disp32: case Param::sib_r14d_2_disp32: case Param::sib_r15d_2_disp32:
-			case Param::sib_eax_4_disp32: case Param::sib_ecx_4_disp32: case Param::sib_edx_4_disp32: case Param::sib_ebx_4_disp32: case Param::sib_ebp_4_disp32: case Param::sib_esi_4_disp32: case Param::sib_edi_4_disp32: case Param::sib_r8d_4_disp32: case Param::sib_r9d_4_disp32: case Param::sib_r10d_4_disp32: case Param::sib_r11d_4_disp32: case Param::sib_r12d_4_disp32: case Param::sib_r13d_4_disp32: case Param::sib_r14d_4_disp32: case Param::sib_r15d_4_disp32:
-			case Param::sib_eax_8_disp32: case Param::sib_ecx_8_disp32: case Param::sib_edx_8_disp32: case Param::sib_ebx_8_disp32: case Param::sib_ebp_8_disp32: case Param::sib_esi_8_disp32: case Param::sib_edi_8_disp32: case Param::sib_r8d_8_disp32: case Param::sib_r9d_8_disp32: case Param::sib_r10d_8_disp32: case Param::sib_r11d_8_disp32: case Param::sib_r12d_8_disp32: case Param::sib_r13d_8_disp32: case Param::sib_r14d_8_disp32: case Param::sib_r15d_8_disp32:
+			case Param::sib_eax_2_disp32: case Param::sib_ecx_2_disp32: case Param::sib_edx_2_disp32: case Param::sib_ebx_2_disp32: case Param::sib_none_2_disp32: case Param::sib_ebp_2_disp32: case Param::sib_esi_2_disp32: case Param::sib_edi_2_disp32: case Param::sib_r8d_2_disp32: case Param::sib_r9d_2_disp32: case Param::sib_r10d_2_disp32: case Param::sib_r11d_2_disp32: case Param::sib_r12d_2_disp32: case Param::sib_r13d_2_disp32: case Param::sib_r14d_2_disp32: case Param::sib_r15d_2_disp32:
+			case Param::sib_eax_4_disp32: case Param::sib_ecx_4_disp32: case Param::sib_edx_4_disp32: case Param::sib_ebx_4_disp32: case Param::sib_none_4_disp32: case Param::sib_ebp_4_disp32: case Param::sib_esi_4_disp32: case Param::sib_edi_4_disp32: case Param::sib_r8d_4_disp32: case Param::sib_r9d_4_disp32: case Param::sib_r10d_4_disp32: case Param::sib_r11d_4_disp32: case Param::sib_r12d_4_disp32: case Param::sib_r13d_4_disp32: case Param::sib_r14d_4_disp32: case Param::sib_r15d_4_disp32:
+			case Param::sib_eax_8_disp32: case Param::sib_ecx_8_disp32: case Param::sib_edx_8_disp32: case Param::sib_ebx_8_disp32: case Param::sib_none_8_disp32: case Param::sib_ebp_8_disp32: case Param::sib_esi_8_disp32: case Param::sib_edi_8_disp32: case Param::sib_r8d_8_disp32: case Param::sib_r9d_8_disp32: case Param::sib_r10d_8_disp32: case Param::sib_r11d_8_disp32: case Param::sib_r12d_8_disp32: case Param::sib_r13d_8_disp32: case Param::sib_r14d_8_disp32: case Param::sib_r15d_8_disp32:
 
-			case Param::sib_rax_disp32: case Param::sib_rcx_disp32: case Param::sib_rdx_disp32: case Param::sib_rbx_disp32: case Param::sib_rbp_disp32: case Param::sib_rsi_disp32: case Param::sib_rdi_disp32: case Param::sib_r8_disp32: case Param::sib_r9_disp32: case Param::sib_r10_disp32: case Param::sib_r11_disp32: case Param::sib_r12_disp32: case Param::sib_r13_disp32: case Param::sib_r14_disp32: case Param::sib_r15_disp32:
-			case Param::sib_rax_2_disp32: case Param::sib_rcx_2_disp32: case Param::sib_rdx_2_disp32: case Param::sib_rbx_2_disp32: case Param::sib_rbp_2_disp32: case Param::sib_rsi_2_disp32: case Param::sib_rdi_2_disp32: case Param::sib_r8_2_disp32: case Param::sib_r9_2_disp32: case Param::sib_r10_2_disp32: case Param::sib_r11_2_disp32: case Param::sib_r12_2_disp32: case Param::sib_r13_2_disp32: case Param::sib_r14_2_disp32: case Param::sib_r15_2_disp32:
-			case Param::sib_rax_4_disp32: case Param::sib_rcx_4_disp32: case Param::sib_rdx_4_disp32: case Param::sib_rbx_4_disp32: case Param::sib_rbp_4_disp32: case Param::sib_rsi_4_disp32: case Param::sib_rdi_4_disp32: case Param::sib_r8_4_disp32: case Param::sib_r9_4_disp32: case Param::sib_r10_4_disp32: case Param::sib_r11_4_disp32: case Param::sib_r12_4_disp32: case Param::sib_r13_4_disp32: case Param::sib_r14_4_disp32: case Param::sib_r15_4_disp32:
-			case Param::sib_rax_8_disp32: case Param::sib_rcx_8_disp32: case Param::sib_rdx_8_disp32: case Param::sib_rbx_8_disp32: case Param::sib_rbp_8_disp32: case Param::sib_rsi_8_disp32: case Param::sib_rdi_8_disp32: case Param::sib_r8_8_disp32: case Param::sib_r9_8_disp32: case Param::sib_r10_8_disp32: case Param::sib_r11_8_disp32: case Param::sib_r12_8_disp32: case Param::sib_r13_8_disp32: case Param::sib_r14_8_disp32: case Param::sib_r15_8_disp32:
+			case Param::sib_rax_disp32: case Param::sib_rcx_disp32: case Param::sib_rdx_disp32: case Param::sib_rbx_disp32: case Param::sib_none_disp32_64: case Param::sib_rbp_disp32: case Param::sib_rsi_disp32: case Param::sib_rdi_disp32: case Param::sib_r8_disp32: case Param::sib_r9_disp32: case Param::sib_r10_disp32: case Param::sib_r11_disp32: case Param::sib_r12_disp32: case Param::sib_r13_disp32: case Param::sib_r14_disp32: case Param::sib_r15_disp32:
+			case Param::sib_rax_2_disp32: case Param::sib_rcx_2_disp32: case Param::sib_rdx_2_disp32: case Param::sib_rbx_2_disp32: case Param::sib_none_2_disp32_64: case Param::sib_rbp_2_disp32: case Param::sib_rsi_2_disp32: case Param::sib_rdi_2_disp32: case Param::sib_r8_2_disp32: case Param::sib_r9_2_disp32: case Param::sib_r10_2_disp32: case Param::sib_r11_2_disp32: case Param::sib_r12_2_disp32: case Param::sib_r13_2_disp32: case Param::sib_r14_2_disp32: case Param::sib_r15_2_disp32:
+			case Param::sib_rax_4_disp32: case Param::sib_rcx_4_disp32: case Param::sib_rdx_4_disp32: case Param::sib_rbx_4_disp32: case Param::sib_none_4_disp32_64: case Param::sib_rbp_4_disp32: case Param::sib_rsi_4_disp32: case Param::sib_rdi_4_disp32: case Param::sib_r8_4_disp32: case Param::sib_r9_4_disp32: case Param::sib_r10_4_disp32: case Param::sib_r11_4_disp32: case Param::sib_r12_4_disp32: case Param::sib_r13_4_disp32: case Param::sib_r14_4_disp32: case Param::sib_r15_4_disp32:
+			case Param::sib_rax_8_disp32: case Param::sib_rcx_8_disp32: case Param::sib_rdx_8_disp32: case Param::sib_rbx_8_disp32: case Param::sib_none_8_disp32_64: case Param::sib_rbp_8_disp32: case Param::sib_rsi_8_disp32: case Param::sib_rdi_8_disp32: case Param::sib_r8_8_disp32: case Param::sib_r9_8_disp32: case Param::sib_r10_8_disp32: case Param::sib_r11_8_disp32: case Param::sib_r12_8_disp32: case Param::sib_r13_8_disp32: case Param::sib_r14_8_disp32: case Param::sib_r15_8_disp32:
 
 				return true;
 		}
@@ -706,10 +770,16 @@ namespace IntelCore
 		}
 	}
 
-	void IntelAssembler::ModRegRm(AnalyzeInfo& info, size_t bits, uint8_t ops[])
+	/// <summary>
+	/// It is engaged in the processing of the instruction format based on the specified processor operating mode (16, 32, 64)
+	/// and the structure with feature data supported by the instruction. 
+	/// </summary>
+	/// <param name="info">Instruction information</param>
+	/// <param name="bits">Processor operating mode (16, 32, 64)</param>
+	/// <param name="feature">Instruction features</param>
+	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
-		size_t rmParam = 0;
 		size_t scale = 0, index = 0, base = 0;
 		bool sib = false;
 
@@ -718,78 +788,227 @@ namespace IntelCore
 			throw "Invalid parameters";
 		}
 
-		if (IsImm(info.params[1]))
+		// Try all formats one by one 
+
+		if (feature.forms & InstrForm::Form_I)
 		{
-			if (IsReg(info.params[0]) || IsMem(info.params[0]))
+			if (IsReg(info.params[0]) && IsImm(info.params[1]))
 			{
-				GetMod(info.params[0], mod);
-				reg = 0;		// The `reg` field contains an additional opcode in this case. 
-				GetRm(info.params[0], rm);
-				rmParam = 0;
-			}
-			else
-			{
-				throw "Invalid parameter";
+				switch (info.params[0])
+				{
+					case Param::al:
+						OneByte(info, feature.Form_I_Opcode8);
+						OneByte(info, info.Imm.uimm8);
+						return;
+					case Param::ax:
+						if (bits != 16)
+						{
+							AddPrefixByte(info, 0x66);
+						}
+						OneByte(info, feature.Form_I_Opcode16_64);
+						AddUshort(info, info.Imm.uimm16);
+						return;
+					case Param::eax:
+						if (bits == 16)
+						{
+							AddPrefixByte(info, 0x66);
+						}
+						OneByte(info, feature.Form_I_Opcode16_64);
+						AddUlong(info, info.Imm.uimm32);
+						return;
+					case Param::rax:
+						if (bits == 64)
+						{
+							OneByte(info, 0x48);
+							OneByte(info, feature.Form_I_Opcode16_64);
+							AddUlong(info, info.Imm.uimm32);
+						}
+						else
+						{
+							Invalid();
+						}
+						return;
+					default:
+						break;
+				}
 			}
 		}
-		else
+	
+		if (feature.forms & InstrForm::Form_MI)
 		{
-			if (IsReg(info.params[0]))
+			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsImm(info.params[1]))
 			{
-				if (IsReg(info.params[1]) || IsMem(info.params[1]))
-				{
-					GetMod(info.params[1], mod);
-					GetReg(info.params[0], reg);
-					GetRm(info.params[1], rm);
-					rmParam = 1;
-				}
-				else
-				{
-					throw "Invalid parameter";
-				}
-			}
-			else if (IsMem(info.params[0]))
-			{
-				if (IsReg(info.params[1]))
-				{
-					GetMod(info.params[0], mod);
-					GetReg(info.params[1], reg);
-					GetRm(info.params[0], rm);
-					rmParam = 0;
-				}
-				else
-				{
-					throw "Invalid parameter";
-				}
-			}
-			else
-			{
-				throw "Invalid parameter";
+
 			}
 		}
 
-		// Check that the r/m parameter is a parameter using the SIB mechanism. 
+		if (feature.forms & InstrForm::Form_MR)
+		{
+			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsReg(info.params[1]))
+			{
+				HandleModRegRm(info, bits, 1, 0, feature.Form_MR_Opcode8, feature.Form_MR_Opcode16_64);
+				return;
+			}
+		}
 
-		if (IsSib(info.params[rmParam]))
+		if (feature.forms & InstrForm::Form_RM)
+		{
+			if (IsReg(info.params[0]) && IsMem(info.params[1]))
+			{
+				HandleModRegRm(info, bits, 0, 1, feature.Form_RM_Opcode8, feature.Form_RM_Opcode16_64);
+				return;
+			}
+		}
+
+		throw "Invalid instruction form";
+	}
+
+	void IntelAssembler::HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t scale = 0, index = 0, base = 0;
+
+		// Extract and check required information from parameters 
+
+		if (IsReg64(info.params[regParam]) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg64(info.params[rmParam]) || IsMem64(info.params[rmParam])) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		switch (info.params[regParam])
+		{
+			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+				if (bits == 64)
+				{
+					Invalid();
+				}
+				break;
+
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+				if (bits != 64)
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		switch (info.params[rmParam])
+		{
+			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+				if (bits == 64)
+				{
+					Invalid();
+				}
+				break;
+
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+				if (bits != 64)
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		GetReg(info.params[regParam], reg);
+		GetMod(info.params[rmParam], mod);
+		GetRm(info.params[rmParam], rm);
+
+		bool sibRequired = IsSib(info.params[rmParam]);
+
+		if (sibRequired)
 		{
 			GetSS(info.params[rmParam], scale);
 			GetIndex(info.params[rmParam], index);
 			GetBase(info.params[rmParam], base);
-			sib = true;
 		}
 
-		// Compile the resulting instruction, mode prefixes and possible disp/imm.
+		// Compile the resulting instruction, mode prefixes and possible displacement
 
-		uint8_t modrm = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
-		uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+		if (IsReg32(info.params[regParam]) && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
 
-		OneByte(info, ops[0]);
-		OneByte(info, modrm);
-		if (sib) OneByte(info, sibByte);
+		if (IsReg16(info.params[regParam]) && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		switch (bits)
+		{
+			case 16:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 32:
+				if (IsMem16(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 64:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (info.params[rmParam] == Param::m_eip_disp32)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem16(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8;
+
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = IsReg16(info.params[regParam]) ? 0 : 1;
+			int REX_R = reg >= 8 ? 1 : 0;
+			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, IsReg8(info.params[regParam]) ? opcode8 : opcode16_64 );
+
+		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
+		OneByte(info, modRmByte);
+
+		if (sibRequired)
+		{
+			uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			OneByte(info, sibByte);
+		}
+
 		if (IsMemDisp8(info.params[rmParam])) OneByte(info, info.Disp.disp8);
-		if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
-		if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
-
+		else if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
+		else if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
 	}
 
 #pragma endregion "Private"
@@ -817,8 +1036,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 16, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 16, feature);
 				break;
 			}
 
@@ -936,8 +1168,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 32, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 32, feature);
 				break;
 			}
 
@@ -1055,8 +1300,21 @@ namespace IntelCore
 
 			case Instruction::adc:
 			{
-				uint8_t ops[] = { 0x14, 0x15, 0x80, 0x81, 0x83, 0x10, 0x11, 0x12, 0x13, 2 };
-				ModRegRm(info, 64, ops);
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR | InstrForm::Form_RM;
+				feature.Form_RegOpcode = 2;
+				feature.Form_I_Opcode8 = 0x14;
+				feature.Form_I_Opcode16_64 = 0x15;
+				feature.Form_MI_Opcode8 = 0x80;
+				feature.Form_MI_Opcode16_64 = 0x81;
+				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MR_Opcode8 = 0x10;
+				feature.Form_MR_Opcode16_64 = 0x11;
+				feature.Form_RM_Opcode8 = 0x12;
+				feature.Form_RM_Opcode16_64 = 0x13;
+
+				ProcessGpInstr(info, 64, feature);
 				break;
 			}
 
