@@ -1077,7 +1077,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
@@ -1209,7 +1209,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
@@ -1341,7 +1341,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
