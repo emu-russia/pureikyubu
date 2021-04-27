@@ -1107,7 +1107,7 @@ namespace IntelCore
 			AddPrefixByte(info, 0x66);
 		}
 
-		if (IsReg16(info.params[0]) && bits != 16)
+		if ((IsReg16(info.params[0]) || info.params[1] == Param::imm16 || info.params[1] == Param::simm8_as16) && bits != 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
