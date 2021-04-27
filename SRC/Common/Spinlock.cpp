@@ -10,6 +10,7 @@ void SpinLock::Lock()
         == 1)
     {
         // spin!
+        _mm_pause();
     }
 }
 

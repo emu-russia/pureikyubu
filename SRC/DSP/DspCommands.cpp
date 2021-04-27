@@ -451,7 +451,7 @@ namespace DSP
         {
             if (!_stricmp(args[1].c_str(), dspRegNames[i]))
             {
-                regIndex = i;
+                regIndex = (int)i;
                 break;
             }
         }
