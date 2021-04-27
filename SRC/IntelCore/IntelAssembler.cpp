@@ -2098,6 +2098,8 @@ namespace IntelCore
 
 #pragma region "Quick helpers"
 
+	/// \cond DO_NOT_DOCUMENT
+
 	// Instructions using ModRM / with an immediate operand
 
 	template <> AnalyzeInfo IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
@@ -4683,6 +4685,8 @@ namespace IntelCore
 		Assemble64(info);
 		return info;
 	}
+
+	/// \endcond
 
 #pragma endregion "Quick helpers"
 
