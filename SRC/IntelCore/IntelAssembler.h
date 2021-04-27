@@ -27,6 +27,9 @@ namespace IntelCore
 			Form_MI = 2,			// rm, imm
 			Form_MR = 4,			// rm, r  (It will also be used when rm is a register)
 			Form_RM = 8,			// r, rm
+			Form_MR16 = 0x10,		// rm, r  (It will also be used when rm is a register)  (16-bit only)
+			Form_RM16 = 0x20,		// r, rm (16-bit only)
+			Form_RM32 = 0x40,		// r, rm (32-bit only)
 		};
 
 		/// <summary>
@@ -46,6 +49,8 @@ namespace IntelCore
 			uint8_t Form_MR_Opcode16_64;		// e.g. ADC r/m16, r16
 			uint8_t Form_RM_Opcode8;			// e.g. ADC r8, r/m8
 			uint8_t Form_RM_Opcode16_64;		// e.g. ADC ADC r64, r/m64
+			uint8_t Form_MR_Opcode;				// e.g. ARPL r/m16, r16
+			uint8_t Form_RM_Opcode;				// e.g. BOUND r16, r/m16
 		};
 
 		static void Invalid();
@@ -120,6 +125,8 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo adc(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo add(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo _and(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo arpl(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo bound(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
