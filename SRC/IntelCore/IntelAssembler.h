@@ -7,6 +7,7 @@
 
 namespace IntelAssemblerUnitTest
 {
+	// https://github.com/ogamespec/dolwin-rnd/tree/main/IntelAssemblerUnitTest
 	class IntelAssemblerUnitTest;
 }
 
@@ -40,7 +41,7 @@ namespace IntelCore
 			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
 			uint8_t Form_MI_Opcode8;			// e.g. ADC r/m8, imm8
 			uint8_t Form_MI_Opcode16_64;		// e.g. ADC r/m32, imm32
-			uint8_t Form_MI_Opcode_Imm8;		// e.g. ADC r/m32, imm8
+			uint8_t Form_MI_Opcode_SImm8;		// e.g. ADC r/m32, simm8
 			uint8_t Form_MR_Opcode8;			// e.g. ADC r/m8, r8
 			uint8_t Form_MR_Opcode16_64;		// e.g. ADC r/m16, r16
 			uint8_t Form_RM_Opcode8;			// e.g. ADC r8, r/m8
@@ -90,6 +91,7 @@ namespace IntelCore
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64);
+		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg);
 
 	public:
 

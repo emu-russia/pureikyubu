@@ -779,10 +779,6 @@ namespace IntelCore
 	/// <param name="feature">Instruction features</param>
 	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
 	{
-		size_t mod = 0, reg = 0, rm = 0;
-		size_t scale = 0, index = 0, base = 0;
-		bool sib = false;
-
 		if (info.numParams != 2)
 		{
 			throw "Invalid parameters";
@@ -797,37 +793,53 @@ namespace IntelCore
 				switch (info.params[0])
 				{
 					case Param::al:
-						OneByte(info, feature.Form_I_Opcode8);
-						OneByte(info, info.Imm.uimm8);
-						return;
+						if (info.params[1] == Param::imm8)
+						{
+							OneByte(info, feature.Form_I_Opcode8);
+							OneByte(info, info.Imm.uimm8);
+							return;
+						}
+						break;
 					case Param::ax:
-						if (bits != 16)
+						if (info.params[1] == Param::imm16)
 						{
-							AddPrefixByte(info, 0x66);
+							if (bits != 16)
+							{
+								AddPrefixByte(info, 0x66);
+							}
+							OneByte(info, feature.Form_I_Opcode16_64);
+							AddUshort(info, info.Imm.uimm16);
+							return;
 						}
-						OneByte(info, feature.Form_I_Opcode16_64);
-						AddUshort(info, info.Imm.uimm16);
-						return;
+						break;
 					case Param::eax:
-						if (bits == 16)
+						if (info.params[1] == Param::imm32)
 						{
-							AddPrefixByte(info, 0x66);
-						}
-						OneByte(info, feature.Form_I_Opcode16_64);
-						AddUlong(info, info.Imm.uimm32);
-						return;
-					case Param::rax:
-						if (bits == 64)
-						{
-							OneByte(info, 0x48);
+							if (bits == 16)
+							{
+								AddPrefixByte(info, 0x66);
+							}
 							OneByte(info, feature.Form_I_Opcode16_64);
 							AddUlong(info, info.Imm.uimm32);
+							return;
 						}
-						else
+						break;
+					case Param::rax:
+						if (info.params[1] == Param::imm32)
 						{
-							Invalid();
+							if (bits == 64)
+							{
+								OneByte(info, 0x48);
+								OneByte(info, feature.Form_I_Opcode16_64);
+								AddUlong(info, info.Imm.uimm32);
+							}
+							else
+							{
+								Invalid();
+							}
+							return;
 						}
-						return;
+						break;
 					default:
 						break;
 				}
@@ -838,7 +850,8 @@ namespace IntelCore
 		{
 			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsImm(info.params[1]))
 			{
-
+				HandleModRmImm(info, bits, feature.Form_MI_Opcode8, feature.Form_MI_Opcode16_64, feature.Form_MI_Opcode_SImm8, feature.Form_RegOpcode);
+				return;
 			}
 		}
 
@@ -876,6 +889,34 @@ namespace IntelCore
 		}
 
 		if ((IsReg64(info.params[rmParam]) || IsMem64(info.params[rmParam])) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg8(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg8(info.params[regParam]) && IsReg32(info.params[rmParam])) ||
+			(IsReg8(info.params[regParam]) && IsReg64(info.params[rmParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg16(info.params[regParam]) && IsReg8(info.params[rmParam])) || 
+			(IsReg16(info.params[regParam]) && IsReg32(info.params[rmParam])) || 
+			(IsReg16(info.params[regParam]) && IsReg64(info.params[rmParam])) )
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg32(info.params[regParam]) && IsReg8(info.params[rmParam])) ||
+			(IsReg32(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg32(info.params[regParam]) && IsReg64(info.params[rmParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if ((IsReg64(info.params[regParam]) && IsReg8(info.params[rmParam])) ||
+			(IsReg64(info.params[regParam]) && IsReg16(info.params[rmParam])) ||
+			(IsReg64(info.params[regParam]) && IsReg32(info.params[rmParam])))
 		{
 			throw "Invalid parameter";
 		}
@@ -979,7 +1020,8 @@ namespace IntelCore
 				break;
 		}
 
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8;
+		bool freakingRegs = info.params[regParam] == Param::spl || info.params[regParam] == Param::bpl || info.params[regParam] == Param::sil || info.params[regParam] == Param::dil;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || freakingRegs;
 
 		if (rexRequired && bits != 64)
 		{
@@ -988,7 +1030,7 @@ namespace IntelCore
 
 		if (rexRequired)
 		{
-			int REX_W = IsReg16(info.params[regParam]) ? 0 : 1;
+			int REX_W = (IsReg64(info.params[regParam]) || IsReg64(info.params[rmParam])) ? 1 : 0;
 			int REX_R = reg >= 8 ? 1 : 0;
 			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
 			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
@@ -1009,6 +1051,138 @@ namespace IntelCore
 		if (IsMemDisp8(info.params[rmParam])) OneByte(info, info.Disp.disp8);
 		else if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
 		else if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
+	}
+
+	void IntelAssembler::HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t scale = 0, index = 0, base = 0;
+
+		// Extract and check required information from parameters 
+
+		if (IsReg64(info.params[0]) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		switch (info.params[0])
+		{
+			case Param::ah: case Param::ch: case Param::dh: case Param::bh:
+				if (bits == 64)
+				{
+					Invalid();
+				}
+				break;
+
+			case Param::spl: case Param::bpl: case Param::sil: case Param::dil:
+				if (bits != 64)
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		reg = opcodeReg;
+		GetMod(info.params[0], mod);
+		GetRm(info.params[0], rm);
+
+		bool sibRequired = IsSib(info.params[0]);
+
+		if (sibRequired)
+		{
+			GetSS(info.params[0], scale);
+			GetIndex(info.params[0], index);
+			GetBase(info.params[0], base);
+		}
+
+		// Compile the resulting instruction, mode prefixes and possible displacement
+
+		if (IsReg32(info.params[0]) && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (IsReg16(info.params[0]) && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		switch (bits)
+		{
+			case 16:
+				if (IsMem32(info.params[0]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 32:
+				if (IsMem16(info.params[0]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 64:
+				if (IsMem32(info.params[0]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (info.params[0] == Param::m_eip_disp32)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem16(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		bool freakingRegs = info.params[0] == Param::spl || info.params[0] == Param::bpl || info.params[0] == Param::sil || info.params[0] == Param::dil;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[0]) || freakingRegs;
+
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = IsReg64(info.params[0]) ? 1 : 0;
+			int REX_R = reg >= 8 ? 1 : 0;
+			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, info.params[1] == Param::simm8 ? opcodeSimm8 : (IsReg8(info.params[0]) ? opcode8 : opcode16_64 ));
+
+		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
+		OneByte(info, modRmByte);
+
+		if (sibRequired)
+		{
+			uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			OneByte(info, sibByte);
+		}
+
+		if (IsMemDisp8(info.params[0])) OneByte(info, info.Disp.disp8);
+		else if (IsMemDisp16(info.params[0])) AddUshort(info, info.Disp.disp16);
+		else if (IsMemDisp32(info.params[0])) AddUlong(info, info.Disp.disp32);
+
+		if (info.params[1] == Param::imm8) OneByte(info, info.Imm.uimm8);
+		else if (info.params[1] == Param::simm8) OneByte(info, info.Imm.simm8);
+		else if (info.params[1] == Param::imm16) AddUshort(info, info.Imm.uimm16);
+		else if (info.params[1] == Param::imm32) AddUlong(info, info.Imm.uimm32);
 	}
 
 #pragma endregion "Private"
@@ -1044,7 +1218,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
@@ -1176,7 +1350,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
@@ -1308,7 +1482,7 @@ namespace IntelCore
 				feature.Form_I_Opcode16_64 = 0x15;
 				feature.Form_MI_Opcode8 = 0x80;
 				feature.Form_MI_Opcode16_64 = 0x81;
-				feature.Form_MI_Opcode_Imm8 = 0x83;
+				feature.Form_MI_Opcode_SImm8 = 0x83;
 				feature.Form_MR_Opcode8 = 0x10;
 				feature.Form_MR_Opcode16_64 = 0x11;
 				feature.Form_RM_Opcode8 = 0x12;
@@ -1421,11 +1595,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
@@ -1434,11 +1609,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
@@ -1447,11 +1623,12 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::adc;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
-		if (IsMemDisp(to)) info.Disp.disp64 = disp;
-		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}
