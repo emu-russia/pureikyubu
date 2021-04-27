@@ -1019,7 +1019,8 @@ namespace IntelCore
 				break;
 		}
 
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]);
+		bool freakingRegs = info.params[regParam] == Param::spl || info.params[regParam] == Param::bpl || info.params[regParam] == Param::sil || info.params[regParam] == Param::dil;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || freakingRegs;
 
 		if (rexRequired && bits != 64)
 		{
@@ -1028,7 +1029,7 @@ namespace IntelCore
 
 		if (rexRequired)
 		{
-			int REX_W = IsReg16(info.params[regParam]) ? 0 : 1;
+			int REX_W = (IsReg64(info.params[regParam]) || IsReg64(info.params[rmParam])) ? 1 : 0;
 			int REX_R = reg >= 8 ? 1 : 0;
 			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
 			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
