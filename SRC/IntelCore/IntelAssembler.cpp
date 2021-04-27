@@ -189,6 +189,11 @@ namespace IntelCore
 		return Param::ImmStart <= p && p <= Param::ImmEnd;
 	}
 
+	bool IntelAssembler::IsSImm(Param p)
+	{
+		return (p == Param::simm8_as16 || p == Param::simm8_as32 || p == Param::simm8_as64);
+	}
+
 	bool IntelAssembler::IsReg(Param p)
 	{
 		return Param::RegStart <= p && p <= Param::RegEnd;
@@ -1097,12 +1102,12 @@ namespace IntelCore
 
 		// Compile the resulting instruction, mode prefixes and possible displacement
 
-		if (IsReg32(info.params[0]) && bits == 16)
+		if ((IsReg32(info.params[0]) || info.params[1] == Param::imm32 || info.params[1] == Param::simm8_as32) && bits == 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
 
-		if (IsReg16(info.params[0]) && bits != 16)
+		if ((IsReg16(info.params[0]) || info.params[1] == Param::imm16 || info.params[1] == Param::simm8_as16) && bits != 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
@@ -1164,7 +1169,7 @@ namespace IntelCore
 			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
 		}
 
-		OneByte(info, info.params[1] == Param::simm8 ? opcodeSimm8 : (IsReg8(info.params[0]) ? opcode8 : opcode16_64 ));
+		OneByte(info, IsSImm(info.params[1]) ? opcodeSimm8 : ((info.params[1] == Param::imm8) ? opcode8 : opcode16_64) );
 
 		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
 		OneByte(info, modRmByte);
@@ -1180,7 +1185,7 @@ namespace IntelCore
 		else if (IsMemDisp32(info.params[0])) AddUlong(info, info.Disp.disp32);
 
 		if (info.params[1] == Param::imm8) OneByte(info, info.Imm.uimm8);
-		else if (info.params[1] == Param::simm8) OneByte(info, info.Imm.simm8);
+		else if (IsSImm(info.params[1])) OneByte(info, info.Imm.simm8);
 		else if (info.params[1] == Param::imm16) AddUshort(info, info.Imm.uimm16);
 		else if (info.params[1] == Param::imm32) AddUlong(info, info.Imm.uimm32);
 	}

@@ -63,6 +63,7 @@ namespace IntelCore
 
 		static bool IsSpecial(Param p);
 		static bool IsImm(Param p);
+		static bool IsSImm(Param p);
 		static bool IsReg(Param p);
 		static bool IsReg8(Param p);
 		static bool IsReg16(Param p);
