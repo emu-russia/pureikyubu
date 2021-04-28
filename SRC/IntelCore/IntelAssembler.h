@@ -159,6 +159,8 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo cmp(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo cmpxchg(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo dec(Param p, PtrHint ptrHint=PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo div(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo idiv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();

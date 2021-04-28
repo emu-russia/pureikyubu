@@ -1842,6 +1842,32 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::div:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 6;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::idiv:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 7;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -2201,6 +2227,32 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::div:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 6;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::idiv:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 7;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -2545,6 +2597,32 @@ namespace IntelCore
 				feature.Form_M_Opcode8 = 0xFE;
 				feature.Form_M_Opcode16_64 = 0xFF;
 				feature.Form_O_Opcode = 0x48;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::div:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 6;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::idiv:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 7;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -3261,6 +3339,78 @@ namespace IntelCore
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::div<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::div;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::div<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::div;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::div<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::div;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::idiv<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::idiv;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::idiv<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::idiv;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::idiv<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::idiv;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
