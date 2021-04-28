@@ -800,6 +800,38 @@ namespace IntelCore
 	{
 		// Try all formats one by one 
 
+		if (feature.forms & InstrForm::Form_O && bits != 64)
+		{
+			if (info.numParams != 1)
+			{
+				throw "Invalid parameters";
+			}
+
+			if (IsReg16(info.params[0]) || IsReg32(info.params[0]))
+			{
+				if (IsReg16(info.params[0]) && bits == 32)
+				{
+					AddPrefixByte(info, 0x66);
+				}
+
+				if (IsReg32(info.params[0]) && bits == 16)
+				{
+					AddPrefixByte(info, 0x66);
+				}
+
+				size_t reg;
+				GetReg(info.params[0], reg);
+
+				if (reg >= 8)
+				{
+					Invalid();
+				}
+
+				OneByte(info, feature.Form_O_Opcode | (uint8_t)reg);
+				return;
+			}
+		}
+
 		if (feature.forms & InstrForm::Form_I)
 		{
 			if (info.numParams != 2)
@@ -1006,7 +1038,7 @@ namespace IntelCore
 
 			if (IsReg(info.params[0]) || IsMem(info.params[0]))
 			{
-				HandleModRm(info, bits, feature.Form_M_Opcode, feature.Form_RegOpcode, feature.Extended_Opcode);
+				HandleModRm(info, bits, feature.Form_M_Opcode8, feature.Form_M_Opcode16_64, feature.Form_RegOpcode, feature.Extended_Opcode);
 				return;
 			}
 		}
@@ -1084,7 +1116,7 @@ namespace IntelCore
 		throw "Invalid instruction form";
 	}
 
-	void IntelAssembler::HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -1116,12 +1148,12 @@ namespace IntelCore
 
 		// Compile the resulting instruction, mode prefixes and possible displacement
 
-		if (IsReg32(info.params[0]) && bits == 16)
+		if ((IsReg32(info.params[0]) || info.ptrHint == PtrHint::DwordPtr) && bits == 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
 
-		if (IsReg16(info.params[0]) && bits != 16)
+		if ((IsReg16(info.params[0]) || info.ptrHint == PtrHint::WordPtr) && bits != 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
@@ -1166,7 +1198,7 @@ namespace IntelCore
 				break;
 		}
 
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[0]);
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[0]) || info.ptrHint == PtrHint::QwordPtr;
 
 		if (rexRequired && bits != 64)
 		{
@@ -1175,7 +1207,7 @@ namespace IntelCore
 
 		if (rexRequired)
 		{
-			int REX_W = (IsReg64(info.params[0]) || IsReg64(info.params[0])) ? 1 : 0;
+			int REX_W = (IsReg64(info.params[0]) || info.ptrHint == PtrHint::QwordPtr) ? 1 : 0;
 			int REX_R = reg >= 8 ? 1 : 0;
 			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
 			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
@@ -1187,7 +1219,13 @@ namespace IntelCore
 			OneByte(info, extendedOpcode);
 		}
 
-		OneByte(info, opcode16_64);
+		uint8_t mainOpcode = (IsReg8(info.params[0]) || info.ptrHint == PtrHint::BytePtr) ? opcode8 : opcode16_64;
+		if (mainOpcode == UnusedOpcode)
+		{
+			Invalid();
+		}
+
+		OneByte(info, mainOpcode);
 
 		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
 		OneByte(info, modRmByte);
@@ -1370,7 +1408,7 @@ namespace IntelCore
 		}
 
 		uint8_t mainOpcode = IsReg8(info.params[regParam]) ? opcode8 : opcode16_64;
-		if (mainOpcode == 0xFF)
+		if (mainOpcode == UnusedOpcode)
 		{
 			Invalid();
 		}
@@ -1508,7 +1546,7 @@ namespace IntelCore
 		}
 
 		uint8_t mainOpcode = IsSImm(info.params[1]) ? opcodeSimm8 : ((info.params[1] == Param::imm8) ? opcode8 : opcode16_64);
-		if (mainOpcode == 0xFF)
+		if (mainOpcode == UnusedOpcode)
 		{
 			Invalid();
 		}
@@ -1645,7 +1683,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBC;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1658,7 +1696,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBD;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1671,10 +1709,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xA3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 4;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1687,10 +1725,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xBB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 7;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1703,10 +1741,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xB3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 6;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1719,10 +1757,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xAB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 5;
 
 				ProcessGpInstr(info, 16, feature);
@@ -1736,7 +1774,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Rel16 | InstrForm::Form_Rel32 | InstrForm::Form_M;
 				feature.Form_Rel_Opcode = 0xE8;
 				feature.Form_RegOpcode = 2;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 16, feature);
 				break;
@@ -1749,7 +1788,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Far16 | InstrForm::Form_Far32 | InstrForm::Form_M;
 				feature.Form_FarPtr_Opcode = 0x9A;
 				feature.Form_RegOpcode = 3;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 16, feature);
 				break;
@@ -1783,6 +1823,20 @@ namespace IntelCore
 				feature.Extended_Opcode = 0x0F;
 				feature.Form_MR_Opcode8 = 0xB0;
 				feature.Form_MR_Opcode16_64 = 0xB1;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::dec:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M | InstrForm::Form_O;
+				feature.Form_RegOpcode = 1;
+				feature.Form_M_Opcode8 = 0xFE;
+				feature.Form_M_Opcode16_64 = 0xFF;
+				feature.Form_O_Opcode = 0x48;
 
 				ProcessGpInstr(info, 16, feature);
 				break;
@@ -1988,7 +2042,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBC;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2001,7 +2055,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBD;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2014,10 +2068,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xA3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 4;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2030,10 +2084,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xBB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 7;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2046,10 +2100,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xB3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 6;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2062,10 +2116,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xAB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 5;
 
 				ProcessGpInstr(info, 32, feature);
@@ -2079,7 +2133,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Rel16 | InstrForm::Form_Rel32 | InstrForm::Form_M;
 				feature.Form_Rel_Opcode = 0xE8;
 				feature.Form_RegOpcode = 2;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 32, feature);
 				break;
@@ -2092,7 +2147,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Far16 | InstrForm::Form_Far32 | InstrForm::Form_M;
 				feature.Form_FarPtr_Opcode = 0x9A;
 				feature.Form_RegOpcode = 3;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 32, feature);
 				break;
@@ -2126,6 +2182,20 @@ namespace IntelCore
 				feature.Extended_Opcode = 0x0F;
 				feature.Form_MR_Opcode8 = 0xB0;
 				feature.Form_MR_Opcode16_64 = 0xB1;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::dec:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M | InstrForm::Form_O;
+				feature.Form_RegOpcode = 1;
+				feature.Form_M_Opcode8 = 0xFE;
+				feature.Form_M_Opcode16_64 = 0xFF;
+				feature.Form_O_Opcode = 0x48;
 
 				ProcessGpInstr(info, 32, feature);
 				break;
@@ -2321,7 +2391,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBC;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2334,7 +2404,7 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_RM;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_RM_Opcode8 = 0xFF;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
 				feature.Form_RM_Opcode16_64 = 0xBD;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2347,10 +2417,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xA3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 4;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2363,10 +2433,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xBB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 7;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2379,10 +2449,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xB3;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 6;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2395,10 +2465,10 @@ namespace IntelCore
 
 				feature.forms = InstrForm::Form_MR | InstrForm::Form_MI8;
 				feature.Extended_Opcode = 0x0F;
-				feature.Form_MR_Opcode8 = 0xFF;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
 				feature.Form_MR_Opcode16_64 = 0xAB;
 				feature.Form_MI_Opcode8 = 0xBA;
-				feature.Form_MI_Opcode16_64 = 0xFF;
+				feature.Form_MI_Opcode16_64 = UnusedOpcode;
 				feature.Form_RegOpcode = 5;
 
 				ProcessGpInstr(info, 64, feature);
@@ -2412,7 +2482,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Rel16 | InstrForm::Form_Rel32 | InstrForm::Form_M;
 				feature.Form_Rel_Opcode = 0xE8;
 				feature.Form_RegOpcode = 2;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -2425,7 +2496,8 @@ namespace IntelCore
 				feature.forms = InstrForm::Form_Far16 | InstrForm::Form_Far32 | InstrForm::Form_M;
 				feature.Form_FarPtr_Opcode = 0x9A;
 				feature.Form_RegOpcode = 3;
-				feature.Form_M_Opcode = 0xFF;
+				feature.Form_M_Opcode8 = UnusedOpcode;
+				feature.Form_M_Opcode16_64 = 0xFF;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -2459,6 +2531,20 @@ namespace IntelCore
 				feature.Extended_Opcode = 0x0F;
 				feature.Form_MR_Opcode8 = 0xB0;
 				feature.Form_MR_Opcode16_64 = 0xB1;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::dec:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M | InstrForm::Form_O;
+				feature.Form_RegOpcode = 1;
+				feature.Form_M_Opcode8 = 0xFE;
+				feature.Form_M_Opcode16_64 = 0xFF;
+				feature.Form_O_Opcode = 0x48;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -3137,6 +3223,45 @@ namespace IntelCore
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::dec<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::dec;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::dec<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::dec;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::dec<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::dec;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}

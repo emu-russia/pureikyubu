@@ -36,7 +36,13 @@ namespace IntelCore
 			Form_Rel32 = 0x400,		// rel32
 			Form_Far16 = 0x800,		// farptr16
 			Form_Far32 = 0x1000,	// farptr32
+			Form_O = 0x2000,		// one-byte inc/dec
 		};
+
+		/// <summary>
+		/// If the instruction does not support some mode, specify this opcode
+		/// </summary>
+		static constexpr auto UnusedOpcode = 0x0F;
 
 		/// <summary>
 		/// Contains information about which forms the instruction supports and which opcodes are used for the specified forms.
@@ -49,18 +55,20 @@ namespace IntelCore
 			uint8_t Form_RegOpcode;				// The part of the opcode that is contained in the `reg` field of the ModRM byte 
 			uint8_t Form_I_Opcode8;				// e.g. ADC AL, imm8
 			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
-			uint8_t Form_MI_Opcode8;			// e.g. ADC r/m8, imm8		(If the instruction does not support 8-bit mode, specify 0xFF)
-			uint8_t Form_MI_Opcode16_64;		// e.g. ADC r/m32, imm32	(If the instruction does not support 16/32/64-bit mode, specify 0xFF)
+			uint8_t Form_MI_Opcode8;			// e.g. ADC r/m8, imm8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
+			uint8_t Form_MI_Opcode16_64;		// e.g. ADC r/m32, imm32	(If the instruction does not support 16/32/64-bit mode, specify UnusedOpcode)
 			uint8_t Form_MI_Opcode_SImm8;		// e.g. ADC r/m32, simm8
-			uint8_t Form_MR_Opcode8;			// e.g. ADC r/m8, r8		(If the instruction does not support 8-bit mode, specify 0xFF)
+			uint8_t Form_MR_Opcode8;			// e.g. ADC r/m8, r8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
 			uint8_t Form_MR_Opcode16_64;		// e.g. ADC r/m16, r16		
-			uint8_t Form_RM_Opcode8;			// e.g. ADC r8, r/m8		(If the instruction does not support 8-bit mode, specify 0xFF)
+			uint8_t Form_RM_Opcode8;			// e.g. ADC r8, r/m8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
 			uint8_t Form_RM_Opcode16_64;		// e.g. ADC ADC r64, r/m64
 			uint8_t Form_MR_Opcode;				// e.g. ARPL r/m16, r16
 			uint8_t Form_RM_Opcode;				// e.g. BOUND r16, r/m16
-			uint8_t Form_M_Opcode;				// e.g. CALL r/m32
+			uint8_t Form_M_Opcode8;				// e.g. DEC r/m8			(If the instruction does not support 8-bit mode, specify UnusedOpcode)
+			uint8_t Form_M_Opcode16_64;			// e.g. CALL r/m32
 			uint8_t Form_Rel_Opcode;			// e.g. CALL rel16
 			uint8_t Form_FarPtr_Opcode;			// e.g. CALL far 0x1234:0x1234
+			uint8_t Form_O_Opcode;				// e.g. DEC r16
 		};
 
 		static void Invalid();
@@ -108,7 +116,7 @@ namespace IntelCore
 		static void GetBase(Param p, size_t& base);
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
-		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
+		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 
@@ -150,6 +158,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo callf(Param p, uint16_t seg = 0, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo cmp(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo cmpxchg(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo dec(Param p, PtrHint ptrHint=PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();

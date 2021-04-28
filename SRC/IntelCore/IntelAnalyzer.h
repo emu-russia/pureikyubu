@@ -1664,6 +1664,21 @@ namespace IntelCore
 	constexpr auto InstrMaxSize = 16;
 
 	/// <summary>
+	/// A special hint for instructions in which it is impossible to understand the size of the addressable memory from the parameter.
+	/// For example `dec byte ptr [bx]` and `dec word ptr [bx]` are encoded by different opcodes, but without this hint it is impossible to do this.
+	/// In fact, this is a crutch for the crutchy x86 architecture.
+	/// Take it steady, calm and cool. Architecture is soon 50 years old, it will not stand up to your criticism. 
+	/// </summary>
+	enum PtrHint : size_t
+	{
+		NoHint = 0,
+		BytePtr,
+		WordPtr,
+		DwordPtr,
+		QwordPtr,
+	};
+
+	/// <summary>
 	/// The structure contains all information about the instruction, including possible prefixes and a parameter list.
 	/// This is a deliberate abstraction from the very alien definition of ModRM. All possible combinations of parameters are specified by the Param enumeration.
 	/// </summary>
@@ -1734,6 +1749,11 @@ namespace IntelCore
 			int32_t simm32;
 			int64_t simm64;
 		} Imm;
+
+		/// <summary>
+		/// A special hint for instructions in which it is impossible to understand the size of the addressable memory from the parameter.
+		/// </summary>
+		PtrHint ptrHint;
 	};
 
 }
