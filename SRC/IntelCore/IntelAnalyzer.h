@@ -1113,6 +1113,20 @@ namespace IntelCore
 		simm8_as64,			// Used for instructions where you want to sign extension of immediate 8 to 64 bits. 
 		ImmEnd,				// Special constant to quickly define the category of a parameter. Do not use. 
 
+		// relative (CALL)
+
+		RelStart,
+		rel16,
+		rel32,
+		RelEnd,
+
+		// far pointer (CALL far)
+
+		FarPtrStart,
+		farptr16,			// eg. call far 0x1234:0x1234
+		farptr32,			// eg. call far 0x1234:0x12345678
+		FarPtrEnd,
+
 		// reg
 
 		RegStart,		// Special constant to quickly define the category of a parameter. Do not use. 

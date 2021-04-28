@@ -31,6 +31,11 @@ namespace IntelCore
 			Form_RM = 0x20,			// r, rm
 			Form_RM16 = 0x40,		// r, rm (16-bit only)
 			Form_RM32 = 0x80,		// r, rm (32-bit only)
+			Form_M = 0x100,			// rm16/rm32/rm64
+			Form_Rel16 = 0x200,		// rel16
+			Form_Rel32 = 0x400,		// rel32
+			Form_Far16 = 0x800,		// farptr16
+			Form_Far32 = 0x1000,	// farptr32
 		};
 
 		/// <summary>
@@ -53,6 +58,9 @@ namespace IntelCore
 			uint8_t Form_RM_Opcode16_64;		// e.g. ADC ADC r64, r/m64
 			uint8_t Form_MR_Opcode;				// e.g. ARPL r/m16, r16
 			uint8_t Form_RM_Opcode;				// e.g. BOUND r16, r/m16
+			uint8_t Form_M_Opcode;				// e.g. CALL r/m32
+			uint8_t Form_Rel_Opcode;			// e.g. CALL rel16
+			uint8_t Form_FarPtr_Opcode;			// e.g. CALL far 0x1234:0x1234
 		};
 
 		static void Invalid();
@@ -71,6 +79,8 @@ namespace IntelCore
 		static bool IsSpecial(Param p);
 		static bool IsImm(Param p);
 		static bool IsSImm(Param p);
+		static bool IsRel(Param p);
+		static bool IsFarPtr(Param p);
 		static bool IsReg(Param p);
 		static bool IsReg8(Param p);
 		static bool IsReg16(Param p);
@@ -98,6 +108,7 @@ namespace IntelCore
 		static void GetBase(Param p, size_t& base);
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
+		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 
@@ -135,6 +146,8 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo btc(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo btr(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo bts(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo call(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo callf(Param p, uint16_t seg = 0, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
