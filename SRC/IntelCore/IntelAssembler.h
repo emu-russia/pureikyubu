@@ -31,12 +31,15 @@ namespace IntelCore
 			Form_RM = 0x20,			// r, rm
 			Form_RM16 = 0x40,		// r, rm (16-bit only)
 			Form_RM32 = 0x80,		// r, rm (32-bit only)
-			Form_M = 0x100,			// rm16/rm32/rm64
-			Form_Rel16 = 0x200,		// rel16
-			Form_Rel32 = 0x400,		// rel32
-			Form_Far16 = 0x800,		// farptr16
-			Form_Far32 = 0x1000,	// farptr32
-			Form_O = 0x2000,		// one-byte inc/dec
+			Form_M = 0x100,			// rm8/rm16/rm32/rm64
+			Form_Rel8 = 0x200,		// rel8
+			Form_Rel16 = 0x400,		// rel16
+			Form_Rel32 = 0x800,		// rel32
+			Form_Far16 = 0x1000,	// farptr16
+			Form_Far32 = 0x2000,	// farptr32
+			Form_O = 0x4000,		// one-byte inc/dec
+			Form_RMI = 0x8000,		// r, rm, imm
+			Form_M_Strict = 0x1'0000,	// m8/m16/m32/m64  (INVLPG)
 		};
 
 		/// <summary>
@@ -47,11 +50,14 @@ namespace IntelCore
 		/// <summary>
 		/// Contains information about which forms the instruction supports and which opcodes are used for the specified forms.
 		/// This structure is an attempt to somehow generalize the chaos of the x86/x64 instruction format.
+		/// This structure is used only for internal implementation, so it looks hacky. If you are not going to understand the assembler internals, you can just skip the definition.
 		/// </summary>
 		struct InstrFeatures
 		{
 			uint32_t forms;
-			uint8_t Extended_Opcode;			// Specify a nonzero value if you want an additional opcode before the main one. 
+			uint8_t Extended_Opcode;			// Specify a nonzero value if you want an additional opcode 1 before the main one. 
+			uint8_t Extended_Opcode_RMOnly;		// Additional opcode 1 but only for the RM instruction form
+			uint8_t Extended_Opcode2;			// Specify a nonzero value if you want an additional opcode 2 before the main one. 
 			uint8_t Form_RegOpcode;				// The part of the opcode that is contained in the `reg` field of the ModRM byte 
 			uint8_t Form_I_Opcode8;				// e.g. ADC AL, imm8
 			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
@@ -66,9 +72,12 @@ namespace IntelCore
 			uint8_t Form_RM_Opcode;				// e.g. BOUND r16, r/m16
 			uint8_t Form_M_Opcode8;				// e.g. DEC r/m8			(If the instruction does not support 8-bit mode, specify UnusedOpcode)
 			uint8_t Form_M_Opcode16_64;			// e.g. CALL r/m32
-			uint8_t Form_Rel_Opcode;			// e.g. CALL rel16
+			uint8_t Form_Rel_Opcode8;			// e.g. JMP rel8
+			uint8_t Form_Rel_Opcode16_32;		// e.g. CALL rel16
 			uint8_t Form_FarPtr_Opcode;			// e.g. CALL far 0x1234:0x1234
 			uint8_t Form_O_Opcode;				// e.g. DEC r16
+			uint8_t Form_RMI_Opcode8;			// e.g. IMUL r16, r/m16, imm8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
+			uint8_t Form_RMI_Opcode16_64;		// e.g. IMUL r16, r/m16, imm16
 		};
 
 		static void Invalid();
@@ -117,8 +126,9 @@ namespace IntelCore
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
-		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
+		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00, uint8_t extendedOpcode2 = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
+		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 
 	public:
 
@@ -159,6 +169,32 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo cmp(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo cmpxchg(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo dec(Param p, PtrHint ptrHint=PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo div(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo idiv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param to, Param from, Param i, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo inc(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo invlpg(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo invpcid(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo jmp(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo jmpf(Param p, uint16_t seg = 0, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lar(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lds(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lea(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo les(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lfs(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lgdt(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lgs(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lidt(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lldt(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lmsw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lsl(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lss(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo ltr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+
+		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();

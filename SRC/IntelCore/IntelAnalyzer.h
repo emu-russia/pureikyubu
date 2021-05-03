@@ -1116,6 +1116,7 @@ namespace IntelCore
 		// relative (CALL)
 
 		RelStart,
+		rel8,
 		rel16,
 		rel32,
 		RelEnd,
@@ -1669,7 +1670,7 @@ namespace IntelCore
 	/// In fact, this is a crutch for the crutchy x86 architecture.
 	/// Take it steady, calm and cool. Architecture is soon 50 years old, it will not stand up to your criticism. 
 	/// </summary>
-	enum PtrHint : size_t
+	enum class PtrHint : size_t
 	{
 		NoHint = 0,
 		BytePtr,
