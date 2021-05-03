@@ -31,12 +31,13 @@ namespace IntelCore
 			Form_RM = 0x20,			// r, rm
 			Form_RM16 = 0x40,		// r, rm (16-bit only)
 			Form_RM32 = 0x80,		// r, rm (32-bit only)
-			Form_M = 0x100,			// rm16/rm32/rm64
+			Form_M = 0x100,			// rm8/rm16/rm32/rm64
 			Form_Rel16 = 0x200,		// rel16
 			Form_Rel32 = 0x400,		// rel32
 			Form_Far16 = 0x800,		// farptr16
 			Form_Far32 = 0x1000,	// farptr32
 			Form_O = 0x2000,		// one-byte inc/dec
+			Form_RMI = 0x4000,		// r, rm, imm
 		};
 
 		/// <summary>
@@ -47,11 +48,13 @@ namespace IntelCore
 		/// <summary>
 		/// Contains information about which forms the instruction supports and which opcodes are used for the specified forms.
 		/// This structure is an attempt to somehow generalize the chaos of the x86/x64 instruction format.
+		/// This structure is used only for internal implementation, so it looks hacky. If you are not going to understand the assembler internals, you can just skip the definition.
 		/// </summary>
 		struct InstrFeatures
 		{
 			uint32_t forms;
 			uint8_t Extended_Opcode;			// Specify a nonzero value if you want an additional opcode before the main one. 
+			uint8_t Extended_Opcode_RMOnly;		// Additional opcode but only for the RM instruction form
 			uint8_t Form_RegOpcode;				// The part of the opcode that is contained in the `reg` field of the ModRM byte 
 			uint8_t Form_I_Opcode8;				// e.g. ADC AL, imm8
 			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
@@ -69,6 +72,8 @@ namespace IntelCore
 			uint8_t Form_Rel_Opcode;			// e.g. CALL rel16
 			uint8_t Form_FarPtr_Opcode;			// e.g. CALL far 0x1234:0x1234
 			uint8_t Form_O_Opcode;				// e.g. DEC r16
+			uint8_t Form_RMI_Opcode8;			// e.g. IMUL r16, r/m16, imm8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
+			uint8_t Form_RMI_Opcode16_64;		// e.g. IMUL r16, r/m16, imm16
 		};
 
 		static void Invalid();
@@ -119,6 +124,7 @@ namespace IntelCore
 		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
+		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 
 	public:
 
@@ -161,6 +167,9 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo dec(Param p, PtrHint ptrHint=PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo div(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo idiv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo imul(Param to, Param from, Param i, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
