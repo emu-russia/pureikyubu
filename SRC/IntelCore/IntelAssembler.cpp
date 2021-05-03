@@ -96,6 +96,16 @@ namespace IntelCore
 			throw "PrefixBytes overflow";
 		}
 
+		// Check that there is no such prefix yet
+
+		for (size_t i = 0; i < info.prefixSize; i++)
+		{
+			if (info.prefixBytes[i] == pre)
+			{
+				return;
+			}
+		}
+
 		info.prefixBytes[info.prefixSize] = pre;
 		info.prefixSize++;
 	}
@@ -1063,7 +1073,7 @@ namespace IntelCore
 
 			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsReg(info.params[1]))
 			{
-				HandleModRegRm(info, bits, 1, 0, feature.Form_MR_Opcode8, feature.Form_MR_Opcode16_64, feature.Extended_Opcode);
+				HandleModRegRm(info, bits, 1, 0, feature.Form_MR_Opcode8, feature.Form_MR_Opcode16_64, feature.Extended_Opcode, feature.Extended_Opcode2);
 				return;
 			}
 		}
@@ -1089,7 +1099,8 @@ namespace IntelCore
 			if ((IsReg(info.params[0]) && IsMem(info.params[1])) && info.numParams == 2)
 			{
 				HandleModRegRm(info, bits, 0, 1, feature.Form_RM_Opcode8, feature.Form_RM_Opcode16_64, 
-					feature.Extended_Opcode ? feature.Extended_Opcode : feature.Extended_Opcode_RMOnly );
+					feature.Extended_Opcode ? feature.Extended_Opcode : feature.Extended_Opcode_RMOnly,
+					feature.Extended_Opcode2 );
 				return;
 			}
 		}
@@ -1281,7 +1292,7 @@ namespace IntelCore
 	/// Version for processing "MR" and "RM" forms.
 	/// The "MR" version is also used to process parameters of the `reg, reg` type (i.e. the first `rm` parameter is actually a register).
 	/// </summary>
-	void IntelAssembler::HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode, uint8_t extendedOpcode2)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -1445,6 +1456,11 @@ namespace IntelCore
 		if (extendedOpcode)
 		{
 			OneByte(info, extendedOpcode);
+		}
+
+		if (extendedOpcode2)
+		{
+			OneByte(info, extendedOpcode2);
 		}
 
 		uint8_t mainOpcode = IsReg8(info.params[regParam]) ? opcode8 : opcode16_64;
@@ -2153,6 +2169,28 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::invpcid:
+			{
+				InstrFeatures feature = { 0 };
+
+				// Special processing for INVPCID (only r32 and r64 are allowed)
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0x82;
+
+				AddPrefixByte(info, 0x66);
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -2584,6 +2622,28 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::invpcid:
+			{
+				InstrFeatures feature = { 0 };
+
+				// Special processing for INVPCID (only r32 and r64 are allowed)
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0x82;
+
+				AddPrefixByte(info, 0x66);
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -3001,6 +3061,28 @@ namespace IntelCore
 				feature.Form_M_Opcode8 = 0x01;
 				feature.Form_M_Opcode16_64 = UnusedOpcode;
 
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::invpcid:
+			{
+				InstrFeatures feature = { 0 };
+
+				// Special processing for INVPCID (only r32 and r64 are allowed)
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0x82;
+
+				AddPrefixByte(info, 0x66);
 				ProcessGpInstr(info, 64, feature);
 				break;
 			}
@@ -3978,6 +4060,42 @@ namespace IntelCore
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::invpcid<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::invpcid;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::invpcid<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::invpcid;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::invpcid<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::invpcid;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}

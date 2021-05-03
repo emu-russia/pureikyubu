@@ -54,8 +54,9 @@ namespace IntelCore
 		struct InstrFeatures
 		{
 			uint32_t forms;
-			uint8_t Extended_Opcode;			// Specify a nonzero value if you want an additional opcode before the main one. 
-			uint8_t Extended_Opcode_RMOnly;		// Additional opcode but only for the RM instruction form
+			uint8_t Extended_Opcode;			// Specify a nonzero value if you want an additional opcode 1 before the main one. 
+			uint8_t Extended_Opcode_RMOnly;		// Additional opcode 1 but only for the RM instruction form
+			uint8_t Extended_Opcode2;			// Specify a nonzero value if you want an additional opcode 2 before the main one. 
 			uint8_t Form_RegOpcode;				// The part of the opcode that is contained in the `reg` field of the ModRM byte 
 			uint8_t Form_I_Opcode8;				// e.g. ADC AL, imm8
 			uint8_t Form_I_Opcode16_64;			// e.g. ADC AX, imm16
@@ -123,7 +124,7 @@ namespace IntelCore
 
 		static void ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 		static void HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
-		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
+		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00, uint8_t extendedOpcode2 = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 
@@ -173,6 +174,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo imul(Param to, Param from, Param i, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo inc(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo invlpg(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo invpcid(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
