@@ -1116,6 +1116,7 @@ namespace IntelCore
 		// relative (CALL)
 
 		RelStart,
+		rel8,
 		rel16,
 		rel32,
 		RelEnd,

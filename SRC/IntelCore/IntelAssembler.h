@@ -32,13 +32,14 @@ namespace IntelCore
 			Form_RM16 = 0x40,		// r, rm (16-bit only)
 			Form_RM32 = 0x80,		// r, rm (32-bit only)
 			Form_M = 0x100,			// rm8/rm16/rm32/rm64
-			Form_Rel16 = 0x200,		// rel16
-			Form_Rel32 = 0x400,		// rel32
-			Form_Far16 = 0x800,		// farptr16
-			Form_Far32 = 0x1000,	// farptr32
-			Form_O = 0x2000,		// one-byte inc/dec
-			Form_RMI = 0x4000,		// r, rm, imm
-			Form_M_Strict = 0x8000,	// m8/m16/m32/m64  (INVLPG)
+			Form_Rel8 = 0x200,		// rel8
+			Form_Rel16 = 0x400,		// rel16
+			Form_Rel32 = 0x800,		// rel32
+			Form_Far16 = 0x1000,	// farptr16
+			Form_Far32 = 0x2000,	// farptr32
+			Form_O = 0x4000,		// one-byte inc/dec
+			Form_RMI = 0x8000,		// r, rm, imm
+			Form_M_Strict = 0x1'0000,	// m8/m16/m32/m64  (INVLPG)
 		};
 
 		/// <summary>
@@ -71,7 +72,8 @@ namespace IntelCore
 			uint8_t Form_RM_Opcode;				// e.g. BOUND r16, r/m16
 			uint8_t Form_M_Opcode8;				// e.g. DEC r/m8			(If the instruction does not support 8-bit mode, specify UnusedOpcode)
 			uint8_t Form_M_Opcode16_64;			// e.g. CALL r/m32
-			uint8_t Form_Rel_Opcode;			// e.g. CALL rel16
+			uint8_t Form_Rel_Opcode8;			// e.g. JMP rel8
+			uint8_t Form_Rel_Opcode16_32;		// e.g. CALL rel16
 			uint8_t Form_FarPtr_Opcode;			// e.g. CALL far 0x1234:0x1234
 			uint8_t Form_O_Opcode;				// e.g. DEC r16
 			uint8_t Form_RMI_Opcode8;			// e.g. IMUL r16, r/m16, imm8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
@@ -175,6 +177,8 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo inc(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo invlpg(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo invpcid(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo jmp(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo jmpf(Param p, uint16_t seg = 0, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
