@@ -38,6 +38,7 @@ namespace IntelCore
 			Form_Far32 = 0x1000,	// farptr32
 			Form_O = 0x2000,		// one-byte inc/dec
 			Form_RMI = 0x4000,		// r, rm, imm
+			Form_M_Strict = 0x8000,	// m8/m16/m32/m64  (INVLPG)
 		};
 
 		/// <summary>
@@ -171,6 +172,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo imul(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo imul(Param to, Param from, Param i, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo inc(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo invlpg(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
