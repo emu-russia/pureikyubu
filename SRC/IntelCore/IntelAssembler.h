@@ -180,6 +180,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo jmp(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo jmpf(Param p, uint16_t seg = 0, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo lar(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo lds(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
