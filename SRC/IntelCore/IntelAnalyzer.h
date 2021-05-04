@@ -1108,6 +1108,7 @@ namespace IntelCore
 		imm8,
 		imm16,
 		imm32,
+		imm64,
 		simm8_as16,			// Used for instructions where you want to sign extension of immediate 8 to 16 bits. 
 		simm8_as32,			// Used for instructions where you want to sign extension of immediate 8 to 32 bits. 
 		simm8_as64,			// Used for instructions where you want to sign extension of immediate 8 to 64 bits. 
@@ -1128,6 +1129,14 @@ namespace IntelCore
 		farptr32,			// eg. call far 0x1234:0x12345678
 		FarPtrEnd,
 
+		// moffs (MOV)
+
+		MoffsStart,
+		moffs16,			// mov al, [0x1234]
+		moffs32,			// mov al, [0x12345678]
+		moffs64,			// mov al, [0x12345678aabbccdd]
+		MoffsEnd,
+
 		// reg
 
 		RegStart,		// Special constant to quickly define the category of a parameter. Do not use. 
@@ -1141,6 +1150,12 @@ namespace IntelCore
 		r8d, r9d, r10d, r11d, r12d, r13d, r14d, r15d,
 		rax, rcx, rdx, rbx, rsp, rbp, rsi, rdi, r8, r9, r10, r11, r12, r13, r14, r15,
 		RegEnd,			// Special constant to quickly define the category of a parameter. Do not use. 
+
+		// Sreg
+
+		SregStart,
+		es, cs, ss, ds, fs, gs,
+		SregEnd,
 
 		// 16-bit mem
 		// If you need memory addressing like [BP + DI] and so on. similar, look here.

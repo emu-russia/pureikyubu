@@ -2,6 +2,8 @@
 
 Low-level DSP emulation module.
 
+Includes both custom Macronix 16-bit DSPcore emulation and emulation of external DSPcore hardware "wrapping" (ARAM Accelerator and ADPCM decoder, Mailbox, DMA).
+
 ## DspCore
 
 How does the DSP core work.
@@ -40,6 +42,8 @@ of the microcodes and IROM and bring the emulation to an adequate state.
 The interpreter is not involved in instruction decoding. It receives ready-made information from the analyzer (`AnalyzeInfo` struct).
 
 This is a new concept of emulation of processor systems, which I decided to try on the GameCube DSP.
+
+(This concept was later named `UVNA` - Universal von Neumann Approach)
 
 ## Mailbox Sync
 
