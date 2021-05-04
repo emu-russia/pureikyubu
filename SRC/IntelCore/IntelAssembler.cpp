@@ -1294,6 +1294,34 @@ namespace IntelCore
 			}
 		}
 
+		if ((feature.forms & InstrForm::Form_MSr) && IsSreg(info.params[1]))
+		{
+			if (info.numParams != 2)
+			{
+				throw "Invalid parameters";
+			}
+
+			if (IsReg(info.params[0]) || IsMem(info.params[0]))
+			{
+				HandleModSregRm(info, bits, 1, 0, feature.Form_MSr_Opcode);
+				return;
+			}
+		}
+
+		if ((feature.forms & InstrForm::Form_SrM) && IsSreg(info.params[0]))
+		{
+			if (info.numParams != 2)
+			{
+				throw "Invalid parameters";
+			}
+
+			if (IsReg(info.params[1]) || IsMem(info.params[1]))
+			{
+				HandleModSregRm(info, bits, 0, 1, feature.Form_SrM_Opcode);
+				return;
+			}
+		}
+
 		throw "Invalid instruction form";
 	}
 
@@ -2022,6 +2050,115 @@ namespace IntelCore
 				break;
 		}
 	}
+
+	/// <summary>
+	/// Unfortunately another clone of the ModRM-like addressing handler was needed, but for the case where `reg` is actually `Sreg`.
+	/// Mixing reg and Sreg in the base handler is not a good idea, because it gets even more confusing.
+	/// </summary>
+	void IntelAssembler::HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t scale = 0, index = 0, base = 0;
+
+		// Extract and check required information from parameters 
+
+		GetSreg(info.params[sregParam], reg);
+		GetMod(info.params[rmParam], mod);
+		GetRm(info.params[rmParam], rm);
+
+		bool sibRequired = IsSib(info.params[rmParam]);
+
+		if (sibRequired)
+		{
+			GetSS(info.params[rmParam], scale);
+			GetIndex(info.params[rmParam], index);
+			GetBase(info.params[rmParam], base);
+		}
+
+		// Compile the resulting instruction, mode prefixes and possible displacement
+
+		if ((IsReg32(info.params[rmParam]) || info.ptrHint == PtrHint::DwordPtr) && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if ((IsReg16(info.params[rmParam]) || info.ptrHint == PtrHint::WordPtr) && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		switch (bits)
+		{
+			case 16:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 32:
+				if (IsMem16(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 64:
+				if (IsMem32(info.params[rmParam]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (info.params[rmParam] == Param::m_eip_disp32)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem16(info.params[rmParam]))
+				{
+					Invalid();
+				}
+				break;
+		}
+
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[rmParam]) || info.ptrHint == PtrHint::QwordPtr;
+
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = (IsReg64(info.params[rmParam]) || info.ptrHint == PtrHint::QwordPtr) ? 1 : 0;
+			int REX_R = reg >= 8 ? 1 : 0;
+			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, opcode);
+
+		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
+		OneByte(info, modRmByte);
+
+		if (sibRequired)
+		{
+			uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			OneByte(info, sibByte);
+		}
+
+		if (IsMemDisp8(info.params[rmParam])) OneByte(info, info.Disp.disp8);
+		else if (IsMemDisp16(info.params[rmParam])) AddUshort(info, info.Disp.disp16);
+		else if (IsMemDisp32(info.params[rmParam])) AddUlong(info, info.Disp.disp32);
+	}
+
 
 #pragma endregion "Private"
 
