@@ -891,22 +891,22 @@ namespace IntelCore
 				throw "Invalid parameters";
 			}
 
-			if (!(IsReg8(info.params[0]) && info.params[1] == Param::imm8))
+			if (IsReg8(info.params[0]) && info.params[1] != Param::imm8)
 			{
 				throw "Invalid parameters";
 			}
 
-			if (!(IsReg16(info.params[0]) && info.params[1] == Param::imm16))
+			if (IsReg16(info.params[0]) && info.params[1] != Param::imm16)
 			{
 				throw "Invalid parameters";
 			}
 
-			if (!(IsReg32(info.params[0]) && info.params[1] == Param::imm32))
+			if (IsReg32(info.params[0]) && info.params[1] != Param::imm32)
 			{
 				throw "Invalid parameters";
 			}
 
-			if (!(IsReg64(info.params[0]) && info.params[1] == Param::imm64))
+			if (IsReg64(info.params[0]) && info.params[1] != Param::imm64)
 			{
 				throw "Invalid parameters";
 			}
@@ -925,7 +925,7 @@ namespace IntelCore
 			}
 
 			bool freakingRegs = info.params[0] == Param::spl || info.params[0] == Param::bpl || info.params[0] == Param::sil || info.params[0] == Param::dil;
-			bool rexRequired = reg >= 8 || freakingRegs;
+			bool rexRequired = reg >= 8 || freakingRegs || info.params[1] == Param::imm64;
 
 			if (rexRequired && bits != 64)
 			{
@@ -935,18 +935,20 @@ namespace IntelCore
 			if (rexRequired)
 			{
 				int REX_W = IsReg64(info.params[0]) ? 1 : 0;
-				int REX_R = reg >= 8 ? 1 : 0;
+				int REX_R = 0;
 				int REX_X = 0;
-				int REX_B = 0;
+				int REX_B = reg >= 8 ? 1 : 0;
 				OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
 			}
 
-			OneByte(info, IsReg8(info.params[0]) ? feature.Form_OI_Opcode8 : feature.Form_OI_Opcode16_64);
+			OneByte(info, (IsReg8(info.params[0]) ? feature.Form_OI_Opcode8 : feature.Form_OI_Opcode16_64) | (reg & 7));
 
 			if (info.params[1] == Param::imm8) OneByte(info, info.Imm.uimm8);
 			else if (info.params[1] == Param::imm16) AddUshort(info, info.Imm.uimm16);
 			else if (info.params[1] == Param::imm32) AddUlong(info, info.Imm.uimm32);
 			else if (info.params[1] == Param::imm64) AddQword(info, info.Imm.uimm64);
+
+			return;
 		}
 
 		if (feature.forms & InstrForm::Form_I)
@@ -1551,6 +1553,16 @@ namespace IntelCore
 			AddPrefixByte(info, 0x66);
 		}
 
+		if (IsSreg(info.params[regParam]) && bits == 32)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (IsMem(info.params[rmParam]) && IsSreg(info.params[regParam]) && bits == 64)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
 		switch (bits)
 		{
 			case 16:
@@ -1592,7 +1604,7 @@ namespace IntelCore
 		}
 
 		bool freakingRegs = info.params[regParam] == Param::spl || info.params[regParam] == Param::bpl || info.params[regParam] == Param::sil || info.params[regParam] == Param::dil;
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || freakingRegs;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || (IsReg64(info.params[rmParam]) && IsSreg(info.params[regParam]) && bits == 64) || freakingRegs;
 
 		if (rexRequired && bits != 64)
 		{
@@ -5674,7 +5686,7 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
@@ -5682,13 +5694,13 @@ namespace IntelCore
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
-		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm64 = imm;
 		if (IsMemDisp(to) || IsMemDisp(from) || IsMoffs(to) || IsMoffs(from)) info.Disp.disp64 = disp;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
@@ -5696,13 +5708,13 @@ namespace IntelCore
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
-		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm64 = imm;
 		if (IsMemDisp(to) || IsMemDisp(from) || IsMoffs(to) || IsMoffs(from)) info.Disp.disp64 = disp;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
@@ -5710,7 +5722,7 @@ namespace IntelCore
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
-		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsImm(from)) info.Imm.simm64 = imm;
 		if (IsMemDisp(to) || IsMemDisp(from) || IsMoffs(to) || IsMoffs(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
