@@ -1687,12 +1687,12 @@ namespace IntelCore
 
 		// Compile the resulting instruction, mode prefixes and possible displacement
 
-		if ((IsReg32(info.params[0]) || info.params[1] == Param::imm32 || info.params[1] == Param::simm8_as32) && bits == 16)
+		if ((IsReg32(info.params[0]) || info.params[1] == Param::imm32 || info.params[1] == Param::simm8_as32 || info.ptrHint == PtrHint::DwordPtr) && bits == 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
 
-		if ((IsReg16(info.params[0]) || info.params[1] == Param::imm16 || info.params[1] == Param::simm8_as16) && bits != 16)
+		if ((IsReg16(info.params[0]) || info.params[1] == Param::imm16 || info.params[1] == Param::simm8_as16 || info.ptrHint == PtrHint::WordPtr) && bits != 16)
 		{
 			AddPrefixByte(info, 0x66);
 		}
@@ -1738,7 +1738,7 @@ namespace IntelCore
 		}
 
 		bool freakingRegs = info.params[0] == Param::spl || info.params[0] == Param::bpl || info.params[0] == Param::sil || info.params[0] == Param::dil;
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[0]) || freakingRegs;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[0]) || info.ptrHint == PtrHint::QwordPtr || freakingRegs;
 
 		if (rexRequired && bits != 64)
 		{
@@ -1747,7 +1747,7 @@ namespace IntelCore
 
 		if (rexRequired)
 		{
-			int REX_W = IsReg64(info.params[0]) ? 1 : 0;
+			int REX_W = (IsReg64(info.params[0]) || info.ptrHint == PtrHint::QwordPtr) ? 1 : 0;
 			int REX_R = reg >= 8 ? 1 : 0;
 			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
 			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
@@ -5674,9 +5674,10 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
 		info.instr = Instruction::mov;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -5687,9 +5688,10 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
 		info.instr = Instruction::mov;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -5700,9 +5702,10 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> AnalyzeInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int32_t imm, PtrHint ptrHint, Prefix sr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
 		info.instr = Instruction::mov;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
