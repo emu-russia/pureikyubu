@@ -40,6 +40,9 @@ namespace IntelCore
 			Form_O = 0x4000,		// one-byte inc/dec
 			Form_RMI = 0x8000,		// r, rm, imm
 			Form_M_Strict = 0x1'0000,	// m8/m16/m32/m64  (INVLPG)
+			Form_FD = 0x2'0000,		// e.g. al, moffs8
+			Form_TD = 0x4'0000,		// e.g. moffs8, al
+			Form_OI = 0x8'0000,		// r, imm
 		};
 
 		/// <summary>
@@ -78,6 +81,14 @@ namespace IntelCore
 			uint8_t Form_O_Opcode;				// e.g. DEC r16
 			uint8_t Form_RMI_Opcode8;			// e.g. IMUL r16, r/m16, imm8		(If the instruction does not support 8-bit mode, specify UnusedOpcode)
 			uint8_t Form_RMI_Opcode16_64;		// e.g. IMUL r16, r/m16, imm16
+			uint8_t Form_FD_Opcode8;			// e.g. MOV AL, moffs8
+			uint8_t Form_FD_Opcode16_64;		// e.g. MOV AX, moffs16
+			uint8_t Form_TD_Opcode8;			// e.g. MOV moffs8, AL
+			uint8_t Form_TD_Opcode16_64;		// e.g. MOV moffs16, AX
+			uint8_t Form_OI_Opcode8;			// e.g. MOV r8, imm8
+			uint8_t Form_OI_Opcode16_64;		// e.g. MOV r64, imm64
+			uint8_t Form_MR_Opcode_Sreg;		// Opcode for MOV instructions when Sreg is used
+			uint8_t Form_RM_Opcode_Sreg;		// Opcode for MOV instructions when Sreg is used
 		};
 
 		static void Invalid();
@@ -86,6 +97,7 @@ namespace IntelCore
 		static void TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3);
 		static void AddUshort(AnalyzeInfo& info, uint16_t n);
 		static void AddUlong(AnalyzeInfo& info, uint32_t n);
+		static void AddQword(AnalyzeInfo& info, uint64_t n);
 		static void OneByteImm8(AnalyzeInfo& info, uint8_t n);
 		static void AddImmParam(AnalyzeInfo& info, uint8_t n);
 		static void AddPrefix(AnalyzeInfo& info, Prefix pre);
@@ -98,11 +110,13 @@ namespace IntelCore
 		static bool IsSImm(Param p);
 		static bool IsRel(Param p);
 		static bool IsFarPtr(Param p);
+		static bool IsMoffs(Param p);
 		static bool IsReg(Param p);
 		static bool IsReg8(Param p);
 		static bool IsReg16(Param p);
 		static bool IsReg32(Param p);
 		static bool IsReg64(Param p);
+		static bool IsSreg(Param p);
 		static bool IsMem(Param p);
 		static bool IsMem16(Param p);
 		static bool IsMem32(Param p);
@@ -118,6 +132,7 @@ namespace IntelCore
 		// These methods decompose the parameter into its constituent parts, which are included in the ModRM/SIB byte fields.
 
 		static void GetReg(Param p, size_t& reg);
+		static void GetSreg(Param p, size_t& sreg);
 		static void GetMod(Param p, size_t& mod);
 		static void GetRm(Param p, size_t& rm);
 		static void GetSS(Param p, size_t& scale);
@@ -129,6 +144,7 @@ namespace IntelCore
 		static void HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00, uint8_t extendedOpcode2 = 0x00);
 		static void HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode = 0x00);
 		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
+		static void HandleMoffs(AnalyzeInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64);
 
 	public:
 
@@ -192,6 +208,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo lsl(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo lss(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo ltr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo mov(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
