@@ -43,6 +43,8 @@ namespace IntelCore
 			Form_FD = 0x2'0000,		// e.g. al, moffs8
 			Form_TD = 0x4'0000,		// e.g. moffs8, al
 			Form_OI = 0x8'0000,		// r, imm
+			Form_MSr = 0x10'0000,	// rm16/64, Sreg
+			Form_SrM = 0x20'0000,	// Sreg, rm16/64
 		};
 
 		/// <summary>
@@ -87,8 +89,8 @@ namespace IntelCore
 			uint8_t Form_TD_Opcode16_64;		// e.g. MOV moffs16, AX
 			uint8_t Form_OI_Opcode8;			// e.g. MOV r8, imm8
 			uint8_t Form_OI_Opcode16_64;		// e.g. MOV r64, imm64
-			uint8_t Form_MR_Opcode_Sreg;		// Opcode for MOV instructions when Sreg is used
-			uint8_t Form_RM_Opcode_Sreg;		// Opcode for MOV instructions when Sreg is used
+			uint8_t Form_MSr_Opcode;			// Opcode for MOV instructions when Sreg is used
+			uint8_t Form_SrM_Opcode;			// Opcode for MOV instructions when Sreg is used
 		};
 
 		static void Invalid();

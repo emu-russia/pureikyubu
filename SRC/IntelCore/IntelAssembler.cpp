@@ -1217,11 +1217,9 @@ namespace IntelCore
 				throw "Invalid parameters";
 			}
 
-			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && (IsReg(info.params[1]) || IsSreg(info.params[1])) )
+			if ((IsReg(info.params[0]) || IsMem(info.params[0])) && IsReg(info.params[1]) )
 			{
-				HandleModRegRm(info, bits, 1, 0, 
-					feature.Form_MR_Opcode8,
-					IsSreg(info.params[1]) ? feature.Form_MR_Opcode_Sreg : feature.Form_MR_Opcode16_64, feature.Extended_Opcode, feature.Extended_Opcode2);
+				HandleModRegRm(info, bits, 1, 0, feature.Form_MR_Opcode8, feature.Form_MR_Opcode16_64, feature.Extended_Opcode, feature.Extended_Opcode2);
 				return;
 			}
 		}
@@ -1244,11 +1242,10 @@ namespace IntelCore
 		{
 			// There is no need to check the number of parameters because some instructions can support both M, RM and RMI forms (e.g. IMUL).
 
-			if (((IsReg(info.params[0]) || IsSreg(info.params[0])) && IsMem(info.params[1])) && info.numParams == 2)
+			if ((IsReg(info.params[0]) && IsMem(info.params[1])) && info.numParams == 2)
 			{
 				HandleModRegRm(info, bits, 0, 1, 
-					feature.Form_RM_Opcode8,
-					IsSreg(info.params[0]) ? feature.Form_RM_Opcode_Sreg : feature.Form_RM_Opcode16_64,
+					feature.Form_RM_Opcode8, feature.Form_RM_Opcode16_64,
 					feature.Extended_Opcode ? feature.Extended_Opcode : feature.Extended_Opcode_RMOnly,
 					feature.Extended_Opcode2 );
 				return;
@@ -1521,14 +1518,7 @@ namespace IntelCore
 				break;
 		}
 
-		if (info.instr == Instruction::mov && IsSreg(info.params[regParam]))
-		{
-			GetSreg(info.params[regParam], reg);
-		}
-		else
-		{
-			GetReg(info.params[regParam], reg);
-		}
+		GetReg(info.params[regParam], reg);
 		GetMod(info.params[rmParam], mod);
 		GetRm(info.params[rmParam], rm);
 
@@ -1549,16 +1539,6 @@ namespace IntelCore
 		}
 
 		if (IsReg16(info.params[regParam]) && bits != 16)
-		{
-			AddPrefixByte(info, 0x66);
-		}
-
-		if (IsSreg(info.params[regParam]) && bits == 32)
-		{
-			AddPrefixByte(info, 0x66);
-		}
-
-		if (IsMem(info.params[rmParam]) && IsSreg(info.params[regParam]) && bits == 64)
 		{
 			AddPrefixByte(info, 0x66);
 		}
@@ -1604,7 +1584,7 @@ namespace IntelCore
 		}
 
 		bool freakingRegs = info.params[regParam] == Param::spl || info.params[regParam] == Param::bpl || info.params[regParam] == Param::sil || info.params[regParam] == Param::dil;
-		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || (IsReg64(info.params[rmParam]) && IsSreg(info.params[regParam]) && bits == 64) || freakingRegs;
+		bool rexRequired = reg >= 8 || rm >= 8 || index >= 8 || base >= 8 || IsReg64(info.params[regParam]) || freakingRegs;
 
 		if (rexRequired && bits != 64)
 		{
@@ -2647,14 +2627,14 @@ namespace IntelCore
 			{
 				InstrFeatures feature = { 0 };
 
-				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
+				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_MSr | InstrForm::Form_SrM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
 				feature.Form_RegOpcode = 0;
 				feature.Form_MR_Opcode8 = 0x88;
 				feature.Form_MR_Opcode16_64 = 0x89;
-				feature.Form_MR_Opcode_Sreg = 0x8C;
+				feature.Form_MSr_Opcode = 0x8C;
 				feature.Form_RM_Opcode8 = 0x8A;
 				feature.Form_RM_Opcode16_64 = 0x8B;
-				feature.Form_RM_Opcode_Sreg = 0x8E;
+				feature.Form_SrM_Opcode = 0x8E;
 				feature.Form_FD_Opcode8 = 0xA0;
 				feature.Form_FD_Opcode16_64 = 0xA1;
 				feature.Form_TD_Opcode8 = 0xA2;
@@ -3390,14 +3370,14 @@ namespace IntelCore
 			{
 				InstrFeatures feature = { 0 };
 
-				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
+				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_MSr | InstrForm::Form_SrM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
 				feature.Form_RegOpcode = 0;
 				feature.Form_MR_Opcode8 = 0x88;
 				feature.Form_MR_Opcode16_64 = 0x89;
-				feature.Form_MR_Opcode_Sreg = 0x8C;
+				feature.Form_MSr_Opcode = 0x8C;
 				feature.Form_RM_Opcode8 = 0x8A;
 				feature.Form_RM_Opcode16_64 = 0x8B;
-				feature.Form_RM_Opcode_Sreg = 0x8E;
+				feature.Form_SrM_Opcode = 0x8E;
 				feature.Form_FD_Opcode8 = 0xA0;
 				feature.Form_FD_Opcode16_64 = 0xA1;
 				feature.Form_TD_Opcode8 = 0xA2;
@@ -4101,14 +4081,14 @@ namespace IntelCore
 			{
 				InstrFeatures feature = { 0 };
 
-				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
+				feature.forms = InstrForm::Form_MR | InstrForm::Form_RM | InstrForm::Form_MSr | InstrForm::Form_SrM | InstrForm::Form_FD | InstrForm::Form_TD | InstrForm::Form_OI | InstrForm::Form_MI;
 				feature.Form_RegOpcode = 0;
 				feature.Form_MR_Opcode8 = 0x88;
 				feature.Form_MR_Opcode16_64 = 0x89;
-				feature.Form_MR_Opcode_Sreg = 0x8C;
+				feature.Form_MSr_Opcode = 0x8C;
 				feature.Form_RM_Opcode8 = 0x8A;
 				feature.Form_RM_Opcode16_64 = 0x8B;
-				feature.Form_RM_Opcode_Sreg = 0x8E;
+				feature.Form_SrM_Opcode = 0x8E;
 				feature.Form_FD_Opcode8 = 0xA0;
 				feature.Form_FD_Opcode16_64 = 0xA1;
 				feature.Form_TD_Opcode8 = 0xA2;
