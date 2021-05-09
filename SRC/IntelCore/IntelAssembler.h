@@ -37,7 +37,7 @@ namespace IntelCore
 			Form_Rel32 = 0x800,		// rel32
 			Form_Far16 = 0x1000,	// farptr16
 			Form_Far32 = 0x2000,	// farptr32
-			Form_O = 0x4000,		// one-byte inc/dec
+			Form_O = 0x4000,		// one-byte inc/dec, pop
 			Form_RMI = 0x8000,		// r, rm, imm
 			Form_M_Strict = 0x1'0000,	// m8/m16/m32/m64  (INVLPG)
 			Form_FD = 0x2'0000,		// e.g. al, moffs8
@@ -45,6 +45,8 @@ namespace IntelCore
 			Form_OI = 0x8'0000,		// r, imm
 			Form_MSr = 0x10'0000,	// rm16/64, Sreg
 			Form_SrM = 0x20'0000,	// Sreg, rm16/64
+			Form_RMX = 0x40'0000,	// r, r/m  (MOVSX)
+			Form_RotSh = 0x80'0000,	// Various options for Rotate/Shift instructions
 		};
 
 		/// <summary>
@@ -91,6 +93,10 @@ namespace IntelCore
 			uint8_t Form_OI_Opcode16_64;		// e.g. MOV r64, imm64
 			uint8_t Form_MSr_Opcode;			// Opcode for MOV instructions when Sreg is used
 			uint8_t Form_SrM_Opcode;			// Opcode for MOV instructions when Sreg is used
+			uint8_t Form_M1_Opcode8;			// e.g. RCL r/m8, 1
+			uint8_t Form_M1_Opcode16_64;		// e.g. RCL r/m32, 1
+			uint8_t Form_MC_Opcode8;			// e.g. RCL r/m8, CL
+			uint8_t Form_MC_Opcode16_64;		// e.g. RCL r/m32, CL
 		};
 
 		static void Invalid();
@@ -148,6 +154,8 @@ namespace IntelCore
 		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleMoffs(AnalyzeInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64);
 		static void HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode);
+		static void HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
+		static void HandleModRmRotSh(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 
 	public:
 
@@ -212,6 +220,53 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo lss(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo ltr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo mov(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movbe(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movsx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movsxd(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movzx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo mul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo nop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo _not(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo _or(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo pop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo push(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rcl(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rcr(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rol(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo ror(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sal(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sar(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sbb(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo seta(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setae(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setb(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setbe(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setc(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sete(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setg(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setge(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setl(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setle(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setna(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnae(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnb(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnbe(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnc(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setne(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setng(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnge(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnl(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnle(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setno(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnp(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setns(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setnz(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo seto(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setp(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setpe(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setpo(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sets(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo setz(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
@@ -250,7 +305,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo lahf();
 		template <size_t n> static AnalyzeInfo sahf();
 		template <size_t n> static AnalyzeInfo leave();
-		template <size_t n> static AnalyzeInfo nop();
+		template <size_t n> static AnalyzeInfo nop(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo rdmsr();
 		template <size_t n> static AnalyzeInfo rdpmc();
 		template <size_t n> static AnalyzeInfo rdtsc();
