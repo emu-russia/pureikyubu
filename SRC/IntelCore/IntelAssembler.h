@@ -219,6 +219,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo movsxd(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo movzx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo mul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo nop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
@@ -257,7 +258,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo lahf();
 		template <size_t n> static AnalyzeInfo sahf();
 		template <size_t n> static AnalyzeInfo leave();
-		template <size_t n> static AnalyzeInfo nop();
+		template <size_t n> static AnalyzeInfo nop(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo rdmsr();
 		template <size_t n> static AnalyzeInfo rdpmc();
 		template <size_t n> static AnalyzeInfo rdtsc();

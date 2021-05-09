@@ -3091,7 +3091,26 @@ namespace IntelCore
 			case Instruction::lahf: OneByte(info, 0x9f); break;
 			case Instruction::sahf: OneByte(info, 0x9e); break;
 			case Instruction::leave: OneByte(info, 0xc9); break;
-			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::nop:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0x90);
+				}
+				else
+				{
+					InstrFeatures feature = { 0 };
+
+					feature.forms = InstrForm::Form_M;
+					feature.Form_RegOpcode = 0;
+					feature.Extended_Opcode = 0x0F;
+					feature.Form_M_Opcode8 = UnusedOpcode;
+					feature.Form_M_Opcode16_64 = 0x1F;
+
+					ProcessGpInstr(info, 16, feature);
+				}
+				break;
+			}
 			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
 			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
 			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
@@ -3900,7 +3919,26 @@ namespace IntelCore
 			case Instruction::lahf: OneByte(info, 0x9f); break;
 			case Instruction::sahf: OneByte(info, 0x9e); break;
 			case Instruction::leave: OneByte(info, 0xc9); break;
-			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::nop:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0x90);
+				}
+				else
+				{
+					InstrFeatures feature = { 0 };
+
+					feature.forms = InstrForm::Form_M;
+					feature.Form_RegOpcode = 0;
+					feature.Extended_Opcode = 0x0F;
+					feature.Form_M_Opcode8 = UnusedOpcode;
+					feature.Form_M_Opcode16_64 = 0x1F;
+
+					ProcessGpInstr(info, 32, feature);
+				}
+				break;
+			}
 			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
 			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
 			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
@@ -4688,7 +4726,26 @@ namespace IntelCore
 			case Instruction::lahf: Invalid(); break;
 			case Instruction::sahf: Invalid(); break;
 			case Instruction::leave: OneByte(info, 0xc9); break;
-			case Instruction::nop: OneByte(info, 0x90); break;
+			case Instruction::nop:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0x90);
+				}
+				else
+				{
+					InstrFeatures feature = { 0 };
+
+					feature.forms = InstrForm::Form_M;
+					feature.Form_RegOpcode = 0;
+					feature.Extended_Opcode = 0x0F;
+					feature.Form_M_Opcode8 = UnusedOpcode;
+					feature.Form_M_Opcode16_64 = 0x1F;
+
+					ProcessGpInstr(info, 64, feature);
+				}
+				break;
+			}
 			case Instruction::rdmsr: TwoByte(info, 0x0f, 0x32); break;
 			case Instruction::rdpmc: TwoByte(info, 0x0f, 0x33); break;
 			case Instruction::rdtsc: TwoByte(info, 0x0f, 0x31); break;
@@ -6414,6 +6471,42 @@ namespace IntelCore
 		return info;
 	}
 
+	template <> AnalyzeInfo IntelAssembler::nop<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::nop;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::nop<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::nop;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::nop<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::nop;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
 
 
 
@@ -7315,26 +7408,29 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<16>()
+	template <> AnalyzeInfo IntelAssembler::nop<16>(Prefix pre)
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<32>()
+	template <> AnalyzeInfo IntelAssembler::nop<32>(Prefix pre)
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<64>()
+	template <> AnalyzeInfo IntelAssembler::nop<64>(Prefix pre)
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::nop;
+		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble64(info);
 		return info;
 	}
