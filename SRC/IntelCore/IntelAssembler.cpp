@@ -2785,6 +2785,27 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::movbe:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg8(info.params[1]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM | InstrForm::Form_MR;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xF0;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
+				feature.Form_MR_Opcode16_64 = 0xF1;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -3528,6 +3549,27 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::movbe:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg8(info.params[1]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM | InstrForm::Form_MR;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xF0;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
+				feature.Form_MR_Opcode16_64 = 0xF1;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -4234,6 +4276,27 @@ namespace IntelCore
 				feature.Form_OI_Opcode16_64 = 0xB8;
 				feature.Form_MI_Opcode8 = 0xC6;
 				feature.Form_MI_Opcode16_64 = 0xC7;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::movbe:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg8(info.params[1]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM | InstrForm::Form_MR;
+				feature.Extended_Opcode = 0x0F;
+				feature.Extended_Opcode2 = 0x38;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xF0;
+				feature.Form_MR_Opcode8 = UnusedOpcode;
+				feature.Form_MR_Opcode16_64 = 0xF1;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -5845,7 +5908,41 @@ namespace IntelCore
 		return info;
 	}
 
+	template <> AnalyzeInfo IntelAssembler::movbe<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::movbe;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
 
+	template <> AnalyzeInfo IntelAssembler::movbe<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::movbe;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::movbe<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::movbe;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
 
 
 

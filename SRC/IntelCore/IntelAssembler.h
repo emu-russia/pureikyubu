@@ -212,6 +212,7 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo lss(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo ltr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo mov(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movbe(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
