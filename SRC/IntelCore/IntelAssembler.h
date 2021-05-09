@@ -46,6 +46,7 @@ namespace IntelCore
 			Form_MSr = 0x10'0000,	// rm16/64, Sreg
 			Form_SrM = 0x20'0000,	// Sreg, rm16/64
 			Form_RMX = 0x40'0000,	// r, r/m  (MOVSX)
+			Form_RotSh = 0x80'0000,	// Various options for Rotate/Shift instructions
 		};
 
 		/// <summary>
@@ -92,6 +93,10 @@ namespace IntelCore
 			uint8_t Form_OI_Opcode16_64;		// e.g. MOV r64, imm64
 			uint8_t Form_MSr_Opcode;			// Opcode for MOV instructions when Sreg is used
 			uint8_t Form_SrM_Opcode;			// Opcode for MOV instructions when Sreg is used
+			uint8_t Form_M1_Opcode8;			// e.g. RCL r/m8, 1
+			uint8_t Form_M1_Opcode16_64;		// e.g. RCL r/m32, 1
+			uint8_t Form_MC_Opcode8;			// e.g. RCL r/m8, CL
+			uint8_t Form_MC_Opcode16_64;		// e.g. RCL r/m32, CL
 		};
 
 		static void Invalid();
@@ -150,6 +155,7 @@ namespace IntelCore
 		static void HandleMoffs(AnalyzeInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64);
 		static void HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode);
 		static void HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
+		static void HandleModRmRotSh(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 
 	public:
 
@@ -224,6 +230,12 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo _or(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo pop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo push(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rcl(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rcr(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo rol(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo ror(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sal(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo sar(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
