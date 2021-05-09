@@ -3012,6 +3012,19 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::mul:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 4;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -3808,6 +3821,19 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::mul:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 4;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -4578,6 +4604,19 @@ namespace IntelCore
 				feature.Extended_Opcode = 0x0F;
 				feature.Form_RM_Opcode8 = 0xB6;
 				feature.Form_RM_Opcode16_64 = 0xB7;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::mul:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_M;
+				feature.Form_RegOpcode = 4;
+				feature.Form_M_Opcode8 = 0xF6;
+				feature.Form_M_Opcode16_64 = 0xF7;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -6339,6 +6378,41 @@ namespace IntelCore
 		return info;
 	}
 
+	template <> AnalyzeInfo IntelAssembler::mul<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::mul;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::mul<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::mul;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::mul<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.ptrHint = ptrHint;
+		info.instr = Instruction::mul;
+		info.params[info.numParams++] = p;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(p)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
 
 
 
