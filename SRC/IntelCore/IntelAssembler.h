@@ -45,6 +45,7 @@ namespace IntelCore
 			Form_OI = 0x8'0000,		// r, imm
 			Form_MSr = 0x10'0000,	// rm16/64, Sreg
 			Form_SrM = 0x20'0000,	// Sreg, rm16/64
+			Form_RMX = 0x40'0000,	// r, r/m  (MOVSX)
 		};
 
 		/// <summary>
@@ -148,6 +149,7 @@ namespace IntelCore
 		static void HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleMoffs(AnalyzeInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64);
 		static void HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode);
+		static void HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 
 	public:
 
@@ -213,6 +215,9 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo ltr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo mov(Param to, Param from, uint64_t disp = 0, int64_t imm = 0, PtrHint ptrHint = PtrHint::NoHint, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo movbe(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movsx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movsxd(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo movzx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
