@@ -37,7 +37,7 @@ namespace IntelCore
 			Form_Rel32 = 0x800,		// rel32
 			Form_Far16 = 0x1000,	// farptr16
 			Form_Far32 = 0x2000,	// farptr32
-			Form_O = 0x4000,		// one-byte inc/dec
+			Form_O = 0x4000,		// one-byte inc/dec, pop
 			Form_RMI = 0x8000,		// r, rm, imm
 			Form_M_Strict = 0x1'0000,	// m8/m16/m32/m64  (INVLPG)
 			Form_FD = 0x2'0000,		// e.g. al, moffs8
@@ -220,6 +220,10 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo movzx(Param to, Param from, uint64_t disp = 0, PtrHint ptrHint = PtrHint::BytePtr, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo mul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo nop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo _not(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo _or(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo pop(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo push(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix);
 
 		template <size_t n> static AnalyzeInfo verr(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo verw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
