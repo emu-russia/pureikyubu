@@ -3843,6 +3843,60 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::test:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR;
+				feature.Form_RegOpcode = 0;
+				feature.Form_I_Opcode8 = 0xA8;
+				feature.Form_I_Opcode16_64 = 0xA9;
+				feature.Form_MI_Opcode8 = 0xF6;
+				feature.Form_MI_Opcode16_64 = 0xF7;
+				feature.Form_MI_Opcode_SImm8 = UnusedOpcode;
+				feature.Form_MR_Opcode8 = 0x84;
+				feature.Form_MR_Opcode16_64 = 0x85;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::ud0:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xFF;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::ud1:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xB9;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -5214,6 +5268,60 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::test:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR;
+				feature.Form_RegOpcode = 0;
+				feature.Form_I_Opcode8 = 0xA8;
+				feature.Form_I_Opcode16_64 = 0xA9;
+				feature.Form_MI_Opcode8 = 0xF6;
+				feature.Form_MI_Opcode16_64 = 0xF7;
+				feature.Form_MI_Opcode_SImm8 = UnusedOpcode;
+				feature.Form_MR_Opcode8 = 0x84;
+				feature.Form_MR_Opcode16_64 = 0x85;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::ud0:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xFF;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::ud1:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xB9;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
 
 			case Instruction::verr:
 			{
@@ -6559,6 +6667,60 @@ namespace IntelCore
 				feature.Form_MR_Opcode16_64 = 0x29;
 				feature.Form_RM_Opcode8 = 0x2A;
 				feature.Form_RM_Opcode16_64 = 0x2B;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::test:
+			{
+				InstrFeatures feature = { 0 };
+
+				feature.forms = InstrForm::Form_I | InstrForm::Form_MI | InstrForm::Form_MR;
+				feature.Form_RegOpcode = 0;
+				feature.Form_I_Opcode8 = 0xA8;
+				feature.Form_I_Opcode16_64 = 0xA9;
+				feature.Form_MI_Opcode8 = 0xF6;
+				feature.Form_MI_Opcode16_64 = 0xF7;
+				feature.Form_MI_Opcode_SImm8 = UnusedOpcode;
+				feature.Form_MR_Opcode8 = 0x84;
+				feature.Form_MR_Opcode16_64 = 0x85;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::ud0:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xFF;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::ud1:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg64(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_RM;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_RM_Opcode8 = UnusedOpcode;
+				feature.Form_RM_Opcode16_64 = 0xB9;
 
 				ProcessGpInstr(info, 64, feature);
 				break;
@@ -10312,6 +10474,120 @@ namespace IntelCore
 		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
 		if (IsImm(from)) info.Imm.simm32 = imm;
 		if (IsMemDisp(to) || IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::test<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::test;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::test<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::test;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::test<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::test;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (lock != Prefix::NoPrefix) AddPrefix(info, lock);
+		if (IsImm(from)) info.Imm.simm32 = imm;
+		if (IsMemDisp(to)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud0<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud0;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud0<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud0;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud0<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud0;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud1<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud1;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud1<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud1;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ud1<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ud1;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
+		if (IsMemDisp(from)) info.Disp.disp64 = disp;
 		Assemble64(info);
 		return info;
 	}
