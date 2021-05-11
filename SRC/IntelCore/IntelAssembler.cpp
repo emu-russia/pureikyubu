@@ -300,6 +300,21 @@ namespace IntelCore
 		return Param::SregStart < p && p < Param::SregEnd;
 	}
 
+	bool IntelAssembler::IsCR(Param p)
+	{
+		return Param::CRStart < p && p < Param::CREnd;
+	}
+
+	bool IntelAssembler::IsDR(Param p)
+	{
+		return Param::DRStart < p && p < Param::DREnd;
+	}
+
+	bool IntelAssembler::IsTR(Param p)
+	{
+		return Param::TRStart < p && p < Param::TREnd;
+	}
+
 	bool IntelAssembler::IsMem(Param p)
 	{
 		return Param::MemStart < p && p < Param::MemEnd;
@@ -459,6 +474,25 @@ namespace IntelCore
 			case Param::ds: sreg = 3; break;
 			case Param::fs: sreg = 4; break;
 			case Param::gs: sreg = 5; break;
+
+			default:
+				throw "Invalid parameter";
+		}
+	}
+
+	void IntelAssembler::GetSpecReg(Param p, size_t& reg)
+	{
+		switch (p)
+		{
+			case Param::cr0: case Param::dr0: case Param::tr0: reg = 0; break;
+			case Param::cr1: case Param::dr1: case Param::tr1: reg = 1; break;
+			case Param::cr2: case Param::dr2: case Param::tr2: reg = 2; break;
+			case Param::cr3: case Param::dr3: case Param::tr3: reg = 3; break;
+			case Param::cr4: case Param::dr4: case Param::tr4: reg = 4; break;
+			case Param::cr5: case Param::dr5: case Param::tr5: reg = 5; break;
+			case Param::cr6: case Param::dr6: case Param::tr6: reg = 6; break;
+			case Param::cr7: case Param::dr7: case Param::tr7: reg = 7; break;
+			case Param::cr8: reg = 8; break;
 
 			default:
 				throw "Invalid parameter";
@@ -2792,6 +2826,62 @@ namespace IntelCore
 		else if (info.params[0] == Param::rel32) AddUlong(info, info.Disp.disp32);
 	}
 
+	/// <summary>
+	/// Handling special MOV instructions that work with the CR/DR/TR registers.
+	/// </summary>
+	void IntelAssembler::HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode)
+	{
+		size_t reg, specReg;
+		size_t specRegParam = (IsCR(info.params[0]) || IsDR(info.params[0]) || IsTR(info.params[0])) ? 0 : 1;
+		size_t regParam = specRegParam == 0 ? 1 : 0;
+		bool toSpecialReg = specRegParam == 0;
+
+		if (!(IsReg32(info.params[regParam]) || IsReg64(info.params[regParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (IsReg32(info.params[regParam]) && bits == 64)
+		{
+			Invalid();
+		}
+
+		if (IsReg64(info.params[regParam]) && bits != 64)
+		{
+			Invalid();
+		}
+
+		GetReg(info.params[regParam], reg);
+		GetSpecReg(info.params[specRegParam], specReg);
+
+		if (reg >= 8)
+		{
+			throw "Invalid parameter";
+		}
+
+		bool rexRequired = specReg >= 8;
+		
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = 0;
+			int REX_R = specReg >= 8 ? 1 : 0;
+			int REX_X = 0;
+			int REX_B = 0;
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, 0x0F);
+		OneByte(info, opcode | (toSpecialReg ? 2 : 0));
+
+		uint8_t modRmByte = 0xC0 | ((specReg & 7) << 3) | (reg & 7);
+		OneByte(info, modRmByte);
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
@@ -4317,7 +4407,23 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 16, 0x20);
+				break;
+			}
 
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 16, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				HandleMovSpecial(info, 16, 0x24);
+				break;
+			}
 
 			case Instruction::out:
 			{
@@ -5953,7 +6059,23 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 32, 0x20);
+				break;
+			}
 
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 32, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				HandleMovSpecial(info, 32, 0x24);
+				break;
+			}
 
 			case Instruction::out:
 			{
@@ -7568,6 +7690,24 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 64, 0x20);
+				break;
+			}
+
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 64, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				// Phased out
+				Invalid();
+				break;
+			}
 
 			case Instruction::out:
 			{
@@ -9138,7 +9278,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9152,7 +9309,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9166,7 +9340,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12819,8 +13010,6 @@ namespace IntelCore
 		Assemble64(info);
 		return info;
 	}
-
-
 
 	template <> AnalyzeInfo IntelAssembler::out<16>(Param to, Param from, uint8_t imm)
 	{
