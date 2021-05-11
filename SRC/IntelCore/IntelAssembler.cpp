@@ -4431,6 +4431,101 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -6083,6 +6178,101 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -7712,6 +7902,101 @@ namespace IntelCore
 			case Instruction::out:
 			{
 				HandleInOut(info, 64, false);
+				break;
+			}
+
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
 				break;
 			}
 
@@ -9674,7 +9959,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -9686,7 +9980,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+		
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -9698,7 +10001,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+		
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -9710,7 +10022,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -9723,7 +10044,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -9736,7 +10066,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -13040,6 +13379,66 @@ namespace IntelCore
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<16>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<32>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<64>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<16>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<32>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<64>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
 		Assemble64(info);
 		return info;
 	}

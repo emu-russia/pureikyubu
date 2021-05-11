@@ -337,8 +337,9 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo loopz(Param p, int32_t imm);
 		template <size_t n> static AnalyzeInfo loopne(Param p, int32_t imm);
 		template <size_t n> static AnalyzeInfo loopnz(Param p, int32_t imm);
-
 		template <size_t n> static AnalyzeInfo out(Param to, Param from, uint8_t imm = 0);
+		template <size_t n> static AnalyzeInfo ret(uint16_t imm = 0);
+		template <size_t n> static AnalyzeInfo retf(uint16_t imm = 0);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();
