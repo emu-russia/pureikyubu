@@ -160,6 +160,7 @@ namespace IntelCore
 		static void HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleModRmRotSh(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
 		static void HandleInOut(AnalyzeInfo& info, size_t bits, bool in);
+		static void HandleJcc(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_32);
 
 	public:
 
@@ -293,6 +294,45 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo bswap(Param p);
 		template <size_t n> static AnalyzeInfo in(Param to, Param from, uint8_t imm = 0);
 		template <size_t n> static AnalyzeInfo _int(uint8_t imm);
+		template <size_t n> static AnalyzeInfo jo(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jno(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jb(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jc(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnae(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jae(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnb(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnc(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo je(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jne(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jbe(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jna(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo ja(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnbe(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo js(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jns(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jp(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jpe(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jpo(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnp(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jl(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnge(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jge(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnl(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jle(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jng(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jg(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jnle(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jcxz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jecxz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo jrcxz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo loop(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo loope(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo loopz(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo loopne(Param p, int32_t imm);
+		template <size_t n> static AnalyzeInfo loopnz(Param p, int32_t imm);
+
 		template <size_t n> static AnalyzeInfo out(Param to, Param from, uint8_t imm = 0);
 
 		template <size_t n> static AnalyzeInfo aaa();
