@@ -159,6 +159,7 @@ namespace IntelCore
 		static void HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode);
 		static void HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode = 0x00);
 		static void HandleModRmRotSh(AnalyzeInfo& info, size_t bits, InstrFeatures& feature);
+		static void HandleInOut(AnalyzeInfo& info, size_t bits, bool in);
 
 	public:
 
@@ -288,6 +289,11 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo xadd(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo xchg(Param to, Param from, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo _xor(Param to, Param from, uint64_t disp = 0, int32_t imm = 0, Prefix sr = Prefix::NoPrefix, Prefix lock = Prefix::NoPrefix);
+
+		template <size_t n> static AnalyzeInfo bswap(Param p);
+		template <size_t n> static AnalyzeInfo in(Param to, Param from, uint8_t imm = 0);
+		template <size_t n> static AnalyzeInfo _int(uint8_t imm);
+		template <size_t n> static AnalyzeInfo out(Param to, Param from, uint8_t imm = 0);
 
 		template <size_t n> static AnalyzeInfo aaa();
 		template <size_t n> static AnalyzeInfo aad();

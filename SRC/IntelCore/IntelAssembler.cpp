@@ -1,5 +1,7 @@
 // Intel instruction code generator.
 
+// The module looks a bit bloated, read the TODOs.
+
 #include "pch.h"
 
 namespace IntelCore
@@ -921,6 +923,11 @@ namespace IntelCore
 						AddPrefixByte(info, 0x66);
 					}
 
+					if (feature.Extended_Opcode)
+					{
+						OneByte(info, feature.Extended_Opcode);
+					}
+
 					OneByte(info, feature.Form_O_Opcode | (uint8_t)reg);
 					return;
 				}
@@ -972,6 +979,12 @@ namespace IntelCore
 				if (reg < 8)
 				{
 					AddPrefixByte(info, 0x48);
+					
+					if (feature.Extended_Opcode)
+					{
+						OneByte(info, feature.Extended_Opcode);
+					}
+
 					OneByte(info, feature.Form_O_Opcode | (uint8_t)reg);
 					return;
 				}
@@ -2681,9 +2694,61 @@ namespace IntelCore
 		}
 	}
 
+	/// <summary>
+	/// Process in/out instructions
+	/// </summary>
+	/// <param name="info"></param>
+	/// <param name="bits"></param>
+	/// <param name="in">true: in, false: out</param>
+	void IntelAssembler::HandleInOut(AnalyzeInfo& info, size_t bits, bool in)
+	{
+		if (info.numParams != 2)
+		{
+			throw "Invalid parameters";
+		}
+
+		size_t aParam = in ? 0 : 1;
+		size_t iParam = aParam == 1 ? 0 : 1;
+		bool opcode8 = info.params[aParam] == Param::al;
+
+		if (!(info.params[aParam] == Param::al || info.params[aParam] == Param::ax || info.params[aParam] == Param::eax))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (info.params[aParam] == Param::ax && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (info.params[aParam] == Param::eax && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (info.params[iParam] == Param::imm8)
+		{
+			OneByte(info, opcode8 ? (in ? 0xE4 : 0xE6) : (in ? 0xE5 : 0xE7));
+			OneByte(info, info.Imm.uimm8);
+		}
+		else if (info.params[iParam] == Param::dx)
+		{
+			OneByte(info, opcode8 ? (in ? 0xEC : 0xEE) : (in ? 0xED : 0xEF));
+		}
+		else
+		{
+			throw "Invalid parameter";
+		}
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
+
+	// TODO: When we started development, we were supposed to have different types of `AnalyzeInfo` structures for different modes.
+	// Then it turned out that it is possible to make a universal `AnalyzeInfo`, but the methods remained separate.
+	// Now it's basically a copy-paste for each mode (16, 32, 64), except for one-or-more byte instructions.
+	// We need to collapse all these three methods into single `Assemble(bits)`.
 
 	void IntelAssembler::Assemble16(AnalyzeInfo& info)
 	{
@@ -4042,6 +4107,48 @@ namespace IntelCore
 				feature.Form_RM_Opcode16_64 = 0x33;
 
 				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 16, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 16, false);
 				break;
 			}
 
@@ -5517,6 +5624,48 @@ namespace IntelCore
 				break;
 			}
 
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 32, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 32, false);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -6968,6 +7117,48 @@ namespace IntelCore
 				break;
 			}
 
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 64, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 64, false);
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: Invalid(); break;
@@ -7085,6 +7276,11 @@ namespace IntelCore
 #pragma region "Quick helpers"
 
 	/// \cond DO_NOT_DOCUMENT
+
+	// TODO: If anyone knows how to make templates <16,32,64> without using clone methods, please do so.
+	// c++ templates are type-centric and I haven't been able to find on StackOverflow how to make constant templates with single method.
+	// Now there is just absolute copy-paste, for each mode <16, 32, 64>.
+	// You can of course use `bits` as a parameter, but specifying the bits in parentheses <> looks cooler.
 
 	// Instructions using ModRM / with an immediate operand
 
@@ -10986,6 +11182,130 @@ namespace IntelCore
 	}
 
 	// Simple encoding instructions
+
+	template <> AnalyzeInfo IntelAssembler::bswap<16>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::bswap<32>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::bswap<64>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<16>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<32>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<64>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<16>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<32>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<64>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+
+	template <> AnalyzeInfo IntelAssembler::out<16>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::out<32>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::out<64>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
 
 	// One or more byte instructions
 
