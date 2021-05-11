@@ -9,38 +9,23 @@ namespace Gekko
 	{
 		uint32_t mask = core->interp->GetRotMask(info->paramBits[3], info->paramBits[4]);
 
-		// xor rax, rax
-		// mov eax, [rsi + 4*rS]
-		// if (cl != 0 )
-		//		mov cl, SH
-		//		rol eax, cl
-		// and eax, 0xaabbccdd
-		// mov [rsi + 4*rA], eax
+		// Place rS in eax
 
-		//a:  48 31 c0                xor    rax,rax
-		//d:  8b 46 10                mov    eax,DWORD PTR [rsi+0x10]
-		//10: b1 1f                   mov    cl,0x1f
-		//12: d3 c0                   rol    eax,cl
-		//14: 25 dd cc bb aa          and    eax,0xaabbccdd
-		//19: 89 46 20                mov    DWORD PTR [rsi+0x20],eax
+		seg->Write(IntelAssembler::_xor<64>(IntelCore::Param::rax, IntelCore::Param::rax));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::eax, IntelCore::Param::m_rsi_disp8, (uint64_t)info->paramBits[1] << 2));
 
-		seg->Write8(0x48);
-		seg->Write16(0xc031);
-		seg->Write16(0x468b);
-		seg->Write8(info->paramBits[1] << 2);
+		// If SH != 0, then rotate the bits
 
 		if (info->paramBits[2] != 0)
 		{
-			seg->Write8(0xb1);
-			seg->Write8(info->paramBits[2]);
-			seg->Write16(0xc0d3);
+			seg->Write(IntelAssembler::mov<64>(IntelCore::Param::cl, IntelCore::Param::imm8, 0, info->paramBits[2]));
+			seg->Write(IntelAssembler::rol<64>(IntelCore::Param::eax, IntelCore::Param::cl));
 		}
 
-		seg->Write8(0x25);
-		seg->Write32(mask);
+		// Apply the [MB;ME] mask and write the result to rA
 
-		seg->Write16(0x4689);
-		seg->Write8(info->paramBits[0] << 2);
+		seg->Write(IntelAssembler::_and<64>(IntelCore::Param::eax, IntelCore::Param::imm32, 0, mask));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::m_rsi_disp8, IntelCore::Param::eax, (uint64_t)info->paramBits[0] << 2));
 
 		AddPc(seg);
 		CallTick(seg);

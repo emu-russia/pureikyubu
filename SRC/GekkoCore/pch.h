@@ -36,3 +36,5 @@
 #ifdef _LINUX
 #define _stricmp strcasecmp
 #endif
+
+using namespace IntelCore;

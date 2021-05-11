@@ -1,5 +1,7 @@
 // Intel instruction code generator.
 
+// The module looks a bit bloated, read the TODOs.
+
 #include "pch.h"
 
 namespace IntelCore
@@ -298,6 +300,21 @@ namespace IntelCore
 		return Param::SregStart < p && p < Param::SregEnd;
 	}
 
+	bool IntelAssembler::IsCR(Param p)
+	{
+		return Param::CRStart < p && p < Param::CREnd;
+	}
+
+	bool IntelAssembler::IsDR(Param p)
+	{
+		return Param::DRStart < p && p < Param::DREnd;
+	}
+
+	bool IntelAssembler::IsTR(Param p)
+	{
+		return Param::TRStart < p && p < Param::TREnd;
+	}
+
 	bool IntelAssembler::IsMem(Param p)
 	{
 		return Param::MemStart < p && p < Param::MemEnd;
@@ -457,6 +474,25 @@ namespace IntelCore
 			case Param::ds: sreg = 3; break;
 			case Param::fs: sreg = 4; break;
 			case Param::gs: sreg = 5; break;
+
+			default:
+				throw "Invalid parameter";
+		}
+	}
+
+	void IntelAssembler::GetSpecReg(Param p, size_t& reg)
+	{
+		switch (p)
+		{
+			case Param::cr0: case Param::dr0: case Param::tr0: reg = 0; break;
+			case Param::cr1: case Param::dr1: case Param::tr1: reg = 1; break;
+			case Param::cr2: case Param::dr2: case Param::tr2: reg = 2; break;
+			case Param::cr3: case Param::dr3: case Param::tr3: reg = 3; break;
+			case Param::cr4: case Param::dr4: case Param::tr4: reg = 4; break;
+			case Param::cr5: case Param::dr5: case Param::tr5: reg = 5; break;
+			case Param::cr6: case Param::dr6: case Param::tr6: reg = 6; break;
+			case Param::cr7: case Param::dr7: case Param::tr7: reg = 7; break;
+			case Param::cr8: reg = 8; break;
 
 			default:
 				throw "Invalid parameter";
@@ -921,6 +957,11 @@ namespace IntelCore
 						AddPrefixByte(info, 0x66);
 					}
 
+					if (feature.Extended_Opcode)
+					{
+						OneByte(info, feature.Extended_Opcode);
+					}
+
 					OneByte(info, feature.Form_O_Opcode | (uint8_t)reg);
 					return;
 				}
@@ -972,6 +1013,12 @@ namespace IntelCore
 				if (reg < 8)
 				{
 					AddPrefixByte(info, 0x48);
+					
+					if (feature.Extended_Opcode)
+					{
+						OneByte(info, feature.Extended_Opcode);
+					}
+
 					OneByte(info, feature.Form_O_Opcode | (uint8_t)reg);
 					return;
 				}
@@ -2681,9 +2728,168 @@ namespace IntelCore
 		}
 	}
 
+	/// <summary>
+	/// Process in/out instructions
+	/// </summary>
+	/// <param name="info"></param>
+	/// <param name="bits"></param>
+	/// <param name="in">true: in, false: out</param>
+	void IntelAssembler::HandleInOut(AnalyzeInfo& info, size_t bits, bool in)
+	{
+		if (info.numParams != 2)
+		{
+			throw "Invalid parameters";
+		}
+
+		size_t aParam = in ? 0 : 1;
+		size_t iParam = aParam == 1 ? 0 : 1;
+		bool opcode8 = info.params[aParam] == Param::al;
+
+		if (!(info.params[aParam] == Param::al || info.params[aParam] == Param::ax || info.params[aParam] == Param::eax))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (info.params[aParam] == Param::ax && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (info.params[aParam] == Param::eax && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (info.params[iParam] == Param::imm8)
+		{
+			OneByte(info, opcode8 ? (in ? 0xE4 : 0xE6) : (in ? 0xE5 : 0xE7));
+			OneByte(info, info.Imm.uimm8);
+		}
+		else if (info.params[iParam] == Param::dx)
+		{
+			OneByte(info, opcode8 ? (in ? 0xEC : 0xEE) : (in ? 0xED : 0xEF));
+		}
+		else
+		{
+			throw "Invalid parameter";
+		}
+	}
+
+	/// <summary>
+	/// Process Jcc and LOOP instructions
+	/// </summary>
+	void IntelAssembler::HandleJcc(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_32)
+	{
+		if (!IsRel(info.params[0]))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (info.params[0] == Param::rel16 && bits == 64)
+		{
+			Invalid();
+		}
+
+		// Change operand size in case of mode mismatch
+
+		if (info.params[0] == Param::rel16 && bits != 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		if (info.params[0] == Param::rel32 && bits == 16)
+		{
+			AddPrefixByte(info, 0x66);
+		}
+
+		// Operation code
+
+		if (info.params[0] == Param::rel8)
+		{
+			OneByte(info, opcode8);
+		}
+		else
+		{
+			if (opcode16_32 == UnusedOpcode)
+			{
+				Invalid();
+			}
+
+			OneByte(info, 0x0F);
+			OneByte(info, opcode16_32);
+		}
+
+		// Operand
+
+		if (info.params[0] == Param::rel8) OneByte(info, info.Disp.disp8);
+		else if (info.params[0] == Param::rel16) AddUshort(info, info.Disp.disp16);
+		else if (info.params[0] == Param::rel32) AddUlong(info, info.Disp.disp32);
+	}
+
+	/// <summary>
+	/// Handling special MOV instructions that work with the CR/DR/TR registers.
+	/// </summary>
+	void IntelAssembler::HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode)
+	{
+		size_t reg, specReg;
+		size_t specRegParam = (IsCR(info.params[0]) || IsDR(info.params[0]) || IsTR(info.params[0])) ? 0 : 1;
+		size_t regParam = specRegParam == 0 ? 1 : 0;
+		bool toSpecialReg = specRegParam == 0;
+
+		if (!(IsReg32(info.params[regParam]) || IsReg64(info.params[regParam])))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (IsReg32(info.params[regParam]) && bits == 64)
+		{
+			Invalid();
+		}
+
+		if (IsReg64(info.params[regParam]) && bits != 64)
+		{
+			Invalid();
+		}
+
+		GetReg(info.params[regParam], reg);
+		GetSpecReg(info.params[specRegParam], specReg);
+
+		if (reg >= 8)
+		{
+			throw "Invalid parameter";
+		}
+
+		bool rexRequired = specReg >= 8;
+		
+		if (rexRequired && bits != 64)
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = 0;
+			int REX_R = specReg >= 8 ? 1 : 0;
+			int REX_X = 0;
+			int REX_B = 0;
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		OneByte(info, 0x0F);
+		OneByte(info, opcode | (toSpecialReg ? 2 : 0));
+
+		uint8_t modRmByte = 0xC0 | ((specReg & 7) << 3) | (reg & 7);
+		OneByte(info, modRmByte);
+	}
+
 #pragma endregion "Private"
 
 #pragma region "Base methods"
+
+	// TODO: When we started development, we were supposed to have different types of `AnalyzeInfo` structures for different modes.
+	// Then it turned out that it is possible to make a universal `AnalyzeInfo`, but the methods remained separate.
+	// Now it's basically a copy-paste for each mode (16, 32, 64), except for one-or-more byte instructions.
+	// We need to collapse all these three methods into single `Assemble(bits)`.
 
 	void IntelAssembler::Assemble16(AnalyzeInfo& info)
 	{
@@ -4042,6 +4248,281 @@ namespace IntelCore
 				feature.Form_RM_Opcode16_64 = 0x33;
 
 				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 16, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 16, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::jo:
+			{
+				HandleJcc(info, 16, 0x70, 0x80);
+				break;
+			}
+
+			case Instruction::jno:
+			{
+				HandleJcc(info, 16, 0x71, 0x81);
+				break;
+			}
+
+			case Instruction::jb:
+			{
+				HandleJcc(info, 16, 0x72, 0x82);
+				break;
+			}
+
+			case Instruction::jae:
+			{
+				HandleJcc(info, 16, 0x73, 0x83);
+				break;
+			}
+
+			case Instruction::je:
+			{
+				HandleJcc(info, 16, 0x74, 0x84);
+				break;
+			}
+
+			case Instruction::jne:
+			{
+				HandleJcc(info, 16, 0x75, 0x85);
+				break;
+			}
+
+			case Instruction::jbe:
+			{
+				HandleJcc(info, 16, 0x76, 0x86);
+				break;
+			}
+
+			case Instruction::ja:
+			{
+				HandleJcc(info, 16, 0x77, 0x87);
+				break;
+			}
+
+			case Instruction::js:
+			{
+				HandleJcc(info, 16, 0x78, 0x88);
+				break;
+			}
+
+			case Instruction::jns:
+			{
+				HandleJcc(info, 16, 0x79, 0x89);
+				break;
+			}
+
+			case Instruction::jp:
+			{
+				HandleJcc(info, 16, 0x7A, 0x8A);
+				break;
+			}
+
+			case Instruction::jnp:
+			{
+				HandleJcc(info, 16, 0x7B, 0x8B);
+				break;
+			}
+
+			case Instruction::jl:
+			{
+				HandleJcc(info, 16, 0x7C, 0x8C);
+				break;
+			}
+
+			case Instruction::jge:
+			{
+				HandleJcc(info, 16, 0x7D, 0x8D);
+				break;
+			}
+
+			case Instruction::jle:
+			{
+				HandleJcc(info, 16, 0x7E, 0x8E);
+				break;
+			}
+
+			case Instruction::jg:
+			{
+				HandleJcc(info, 16, 0x7F, 0x8F);
+				break;
+			}
+
+			case Instruction::jcxz:
+			{
+				HandleJcc(info, 16, 0xE3, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loop:
+			{
+				HandleJcc(info, 16, 0xE2, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopz:
+			{
+				HandleJcc(info, 16, 0xE1, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopnz:
+			{
+				HandleJcc(info, 16, 0xE0, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 16, 0x20);
+				break;
+			}
+
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 16, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				HandleMovSpecial(info, 16, 0x24);
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 16, false);
+				break;
+			}
+
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
 				break;
 			}
 
@@ -5517,6 +5998,281 @@ namespace IntelCore
 				break;
 			}
 
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 32, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 32, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::jo:
+			{
+				HandleJcc(info, 32, 0x70, 0x80);
+				break;
+			}
+
+			case Instruction::jno:
+			{
+				HandleJcc(info, 32, 0x71, 0x81);
+				break;
+			}
+
+			case Instruction::jb:
+			{
+				HandleJcc(info, 32, 0x72, 0x82);
+				break;
+			}
+
+			case Instruction::jae:
+			{
+				HandleJcc(info, 32, 0x73, 0x83);
+				break;
+			}
+
+			case Instruction::je:
+			{
+				HandleJcc(info, 32, 0x74, 0x84);
+				break;
+			}
+
+			case Instruction::jne:
+			{
+				HandleJcc(info, 32, 0x75, 0x85);
+				break;
+			}
+
+			case Instruction::jbe:
+			{
+				HandleJcc(info, 32, 0x76, 0x86);
+				break;
+			}
+
+			case Instruction::ja:
+			{
+				HandleJcc(info, 32, 0x77, 0x87);
+				break;
+			}
+
+			case Instruction::js:
+			{
+				HandleJcc(info, 32, 0x78, 0x88);
+				break;
+			}
+
+			case Instruction::jns:
+			{
+				HandleJcc(info, 32, 0x79, 0x89);
+				break;
+			}
+
+			case Instruction::jp:
+			{
+				HandleJcc(info, 32, 0x7A, 0x8A);
+				break;
+			}
+
+			case Instruction::jnp:
+			{
+				HandleJcc(info, 32, 0x7B, 0x8B);
+				break;
+			}
+
+			case Instruction::jl:
+			{
+				HandleJcc(info, 32, 0x7C, 0x8C);
+				break;
+			}
+
+			case Instruction::jge:
+			{
+				HandleJcc(info, 32, 0x7D, 0x8D);
+				break;
+			}
+
+			case Instruction::jle:
+			{
+				HandleJcc(info, 32, 0x7E, 0x8E);
+				break;
+			}
+
+			case Instruction::jg:
+			{
+				HandleJcc(info, 32, 0x7F, 0x8F);
+				break;
+			}
+
+			case Instruction::jcxz:
+			{
+				HandleJcc(info, 32, 0xE3, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loop:
+			{
+				HandleJcc(info, 32, 0xE2, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopz:
+			{
+				HandleJcc(info, 32, 0xE1, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopnz:
+			{
+				HandleJcc(info, 32, 0xE0, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 32, 0x20);
+				break;
+			}
+
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 32, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				HandleMovSpecial(info, 32, 0x24);
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 32, false);
+				break;
+			}
+
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: OneByte(info, 0x37); break;
@@ -6968,6 +7724,282 @@ namespace IntelCore
 				break;
 			}
 
+			// Simple encoding instructions
+
+			case Instruction::bswap:
+			{
+				InstrFeatures feature = { 0 };
+
+				if (IsReg8(info.params[0]) || IsReg16(info.params[0]))
+				{
+					throw "Invalid parameter";
+				}
+
+				feature.forms = InstrForm::Form_O;
+				feature.Extended_Opcode = 0x0F;
+				feature.Form_O_Opcode = 0xC8;
+
+				ProcessGpInstr(info, 64, feature);
+				break;
+			}
+
+			case Instruction::in:
+			{
+				HandleInOut(info, 64, true);
+				break;
+			}
+
+			case Instruction::_int:
+			{
+				if (info.params[0] != Param::imm8)
+				{
+					throw "Invalid parameter";
+				}
+				OneByte(info, 0xCD);
+				OneByte(info, info.Imm.uimm8);
+				break;
+			}
+
+			case Instruction::jo:
+			{
+				HandleJcc(info, 64, 0x70, 0x80);
+				break;
+			}
+
+			case Instruction::jno:
+			{
+				HandleJcc(info, 64, 0x71, 0x81);
+				break;
+			}
+
+			case Instruction::jb:
+			{
+				HandleJcc(info, 64, 0x72, 0x82);
+				break;
+			}
+
+			case Instruction::jae:
+			{
+				HandleJcc(info, 64, 0x73, 0x83);
+				break;
+			}
+
+			case Instruction::je:
+			{
+				HandleJcc(info, 64, 0x74, 0x84);
+				break;
+			}
+
+			case Instruction::jne:
+			{
+				HandleJcc(info, 64, 0x75, 0x85);
+				break;
+			}
+
+			case Instruction::jbe:
+			{
+				HandleJcc(info, 64, 0x76, 0x86);
+				break;
+			}
+
+			case Instruction::ja:
+			{
+				HandleJcc(info, 64, 0x77, 0x87);
+				break;
+			}
+
+			case Instruction::js:
+			{
+				HandleJcc(info, 64, 0x78, 0x88);
+				break;
+			}
+
+			case Instruction::jns:
+			{
+				HandleJcc(info, 64, 0x79, 0x89);
+				break;
+			}
+
+			case Instruction::jp:
+			{
+				HandleJcc(info, 64, 0x7A, 0x8A);
+				break;
+			}
+
+			case Instruction::jnp:
+			{
+				HandleJcc(info, 64, 0x7B, 0x8B);
+				break;
+			}
+
+			case Instruction::jl:
+			{
+				HandleJcc(info, 64, 0x7C, 0x8C);
+				break;
+			}
+
+			case Instruction::jge:
+			{
+				HandleJcc(info, 64, 0x7D, 0x8D);
+				break;
+			}
+
+			case Instruction::jle:
+			{
+				HandleJcc(info, 64, 0x7E, 0x8E);
+				break;
+			}
+
+			case Instruction::jg:
+			{
+				HandleJcc(info, 64, 0x7F, 0x8F);
+				break;
+			}
+
+			case Instruction::jcxz:
+			{
+				HandleJcc(info, 64, 0xE3, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loop:
+			{
+				HandleJcc(info, 64, 0xE2, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopz:
+			{
+				HandleJcc(info, 64, 0xE1, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::loopnz:
+			{
+				HandleJcc(info, 64, 0xE0, UnusedOpcode);
+				break;
+			}
+
+			case Instruction::mov_cr:
+			{
+				HandleMovSpecial(info, 64, 0x20);
+				break;
+			}
+
+			case Instruction::mov_dr:
+			{
+				HandleMovSpecial(info, 64, 0x21);
+				break;
+			}
+
+			case Instruction::mov_tr:
+			{
+				// Phased out
+				Invalid();
+				break;
+			}
+
+			case Instruction::out:
+			{
+				HandleInOut(info, 64, false);
+				break;
+			}
+
+			case Instruction::pop_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::ds:
+						OneByte(info, 0x1F);
+						break;
+					case Param::es:
+						OneByte(info, 0x07);
+						break;
+					case Param::ss:
+						OneByte(info, 0x17);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA1);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA9);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::push_sr:
+			{
+				switch (info.params[0])
+				{
+					case Param::cs:
+						OneByte(info, 0x0E);
+						break;
+					case Param::ds:
+						OneByte(info, 0x1E);
+						break;
+					case Param::es:
+						OneByte(info, 0x06);
+						break;
+					case Param::ss:
+						OneByte(info, 0x16);
+						break;
+					case Param::fs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA0);
+						break;
+					case Param::gs:
+						OneByte(info, 0x0F);
+						OneByte(info, 0xA8);
+						break;
+
+					default:
+						throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::ret:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xC3);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xC2);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
+			case Instruction::retfar:
+			{
+				if (info.numParams == 0)
+				{
+					OneByte(info, 0xCB);
+				}
+				else if (info.numParams == 1 && info.params[0] == Param::imm16)
+				{
+					OneByte(info, 0xCA);
+					AddUshort(info, info.Imm.uimm16);
+				}
+				else
+				{
+					throw "Invalid parameter";
+				}
+				break;
+			}
+
 			// One or more byte instructions
 
 			case Instruction::aaa: Invalid(); break;
@@ -7085,6 +8117,11 @@ namespace IntelCore
 #pragma region "Quick helpers"
 
 	/// \cond DO_NOT_DOCUMENT
+
+	// TODO: If anyone knows how to make templates <16,32,64> without using clone methods, please do so.
+	// c++ templates are type-centric and I haven't been able to find on StackOverflow how to make constant templates with single method.
+	// Now there is just absolute copy-paste, for each mode <16, 32, 64>.
+	// You can of course use `bits` as a parameter, but specifying the bits in parentheses <> looks cooler.
 
 	// Instructions using ModRM / with an immediate operand
 
@@ -8526,7 +9563,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8540,7 +9594,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8554,7 +9625,24 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::mov;
+
+		if (IsCR(to) || IsCR(from))
+		{
+			info.instr = Instruction::mov_cr;
+		}
+		else if (IsDR(to) || IsDR(from))
+		{
+			info.instr = Instruction::mov_dr;
+		}
+		else if (IsTR(to) || IsTR(from))
+		{
+			info.instr = Instruction::mov_tr;
+		}
+		else
+		{
+			info.instr = Instruction::mov;
+		}
+
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8871,7 +9959,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -8883,7 +9980,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+		
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -8895,7 +10001,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::pop;
+		
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::pop_sr;
+		}
+		else
+		{
+			info.instr = Instruction::pop;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		if (IsMemDisp(p)) info.Disp.disp64 = disp;
@@ -8907,7 +10022,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -8920,7 +10044,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -8933,7 +10066,16 @@ namespace IntelCore
 	{
 		AnalyzeInfo info = { 0 };
 		info.ptrHint = ptrHint;
-		info.instr = Instruction::push;
+
+		if (IsSreg(p))
+		{
+			info.instr = Instruction::push_sr;
+		}
+		else
+		{
+			info.instr = Instruction::push;
+		}
+
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
 		info.Imm.simm32 = imm;
@@ -10986,6 +12128,1320 @@ namespace IntelCore
 	}
 
 	// Simple encoding instructions
+
+	template <> AnalyzeInfo IntelAssembler::bswap<16>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::bswap<32>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::bswap<64>(Param p)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::bswap;
+		info.params[info.numParams++] = p;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<16>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<32>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::in<64>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::in;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(from)) info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<16>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<32>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::_int<64>(uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_int;
+		info.params[info.numParams++] = Param::imm8;
+		info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jo<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jo<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jo<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jno<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jno;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jno<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jno;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jno<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jno;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jb<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jb<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jb<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jc<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jc<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jc<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnae<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnae<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnae<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jae<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jae<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jae<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jae;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnb<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnb<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnb<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnb;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnc<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnc<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnc<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnc;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::je<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::je;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::je<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::je;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::je<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::je;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jne<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jne<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jne<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jbe<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jbe<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jbe<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jna<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jna;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jna<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jna;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jna<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jna;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ja<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ja;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ja<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ja;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ja<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ja;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnbe<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnbe<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnbe<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnbe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::js<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::js;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::js<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::js;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::js<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::js;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jns<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jns;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jns<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jns;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jns<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jns;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jp<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jp<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jp<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpe<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpe<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpe<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpe;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpo<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpo<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jpo<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jpo;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnp<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnp<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnp<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnp;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jl<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jl<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jl<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnge<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnge<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnge<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jge<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jge<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jge<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jge;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnl<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnl<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnl<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnl;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jle<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jle<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jle<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jng<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jng;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jng<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jng;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jng<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jng;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jg<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jg;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jg<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jg;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jg<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jg;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnle<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnle<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jnle<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jnle;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jcxz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jcxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jcxz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jcxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jcxz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		Invalid();
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jecxz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jecxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jecxz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jecxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jecxz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jecxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jrcxz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		Invalid();
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jrcxz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		Invalid();
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::jrcxz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::jrcxz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loop<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loop;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loop<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loop;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loop<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loop;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loope<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loope;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loope<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loope;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loope<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loope;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopne<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopne<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopne<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopne;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopnz<16>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopnz<32>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::loopnz<64>(Param p, int32_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::loopnz;
+		info.params[info.numParams++] = p;
+		info.Disp.disp32 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::out<16>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::out<32>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::out<64>(Param to, Param from, uint8_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::out;
+		info.params[info.numParams++] = to;
+		info.params[info.numParams++] = from;
+		if (IsImm(to)) info.Imm.uimm8 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<16>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<32>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::ret<64>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ret;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble64(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<16>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble16(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<32>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble32(info);
+		return info;
+	}
+
+	template <> AnalyzeInfo IntelAssembler::retf<64>(uint16_t imm)
+	{
+		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::retfar;
+		if (imm != 0) info.params[info.numParams++] = Param::imm16;
+		if (imm != 0) info.Imm.uimm16 = imm;
+		Assemble64(info);
+		return info;
+	}
 
 	// One or more byte instructions
 

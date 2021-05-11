@@ -154,8 +154,10 @@ namespace IntelCore
 		jnbe = ja,
 		jae,
 		jnb = jae,
+		jnc = jae,
 		jb,
 		jnae = jb,
+		jc = jb,
 		jbe,
 		jna = jbe,
 		jg, 
@@ -166,8 +168,6 @@ namespace IntelCore
 		jnge = jl,
 		jle, 
 		jng = jle,
-		jc,
-		jnc,
 		jo,
 		jno,
 		js,
@@ -178,6 +178,7 @@ namespace IntelCore
 		jp = jpe,
 		jcxz, 
 		jecxz = jcxz,
+		jrcxz = jcxz,
 		loop,
 		loopz, 
 		loope = loopz,
@@ -288,6 +289,7 @@ namespace IntelCore
 		verr,
 		verw,
 		mov_dr,				// MOV – Move to/from Debug Registers
+		mov_tr,				// MOV – Move to/from Test Registers
 		invd,
 		wbinvd,
 		invlpg,
@@ -1156,6 +1158,20 @@ namespace IntelCore
 		SregStart,
 		es, cs, ss, ds, fs, gs,
 		SregEnd,
+
+		// CR, DR, TR
+
+		CRStart,
+		cr0, cr1, cr2, cr3, cr4, cr5, cr6, cr7, cr8,
+		CREnd,
+
+		DRStart,
+		dr0, dr1, dr2, dr3, dr4, dr5, dr6, dr7,
+		DREnd,
+
+		TRStart,
+		tr0, tr1, tr2, tr3, tr4, tr5, tr6, tr7,
+		TREnd,
 
 		// 16-bit mem
 		// If you need memory addressing like [BP + DI] and so on. similar, look here.
