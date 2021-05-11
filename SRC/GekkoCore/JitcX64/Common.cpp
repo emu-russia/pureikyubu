@@ -3,8 +3,6 @@
 // X64 Register usage:
 // rsi: offset Gekko::regs.gpr
 
-using namespace IntelCore;
-
 namespace Gekko
 {
 	// Special sections of code that are executed at the beginning and end of each translated segment.
