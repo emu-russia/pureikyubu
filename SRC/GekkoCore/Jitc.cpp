@@ -84,6 +84,8 @@ namespace Gekko
 		// TODO
 #endif
 
+		core->compiledSegments++;
+
 		return segment;
 	}
 
@@ -94,7 +96,7 @@ namespace Gekko
 		void (*codePtr)() = (void (*)())code.data();
 		codePtr();
 
-		core->segmentsExecuted++;
+		core->executedSegments++;
 	}
 
 	void CodeSegment::Write8(uint8_t data)

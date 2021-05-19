@@ -31,6 +31,12 @@ namespace Debug
 			case PerfCounter::PEs:
 				return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
 				break;
+			case PerfCounter::CompiledSegments:
+				return Gekko::Gekko->GetCompiledSegmentsCount();
+				break;
+			case PerfCounter::ExecutedSegments:
+				return Gekko::Gekko->GetExecutedSegmentsCount();
+				break;
 		}
 
 		return value;
@@ -51,6 +57,12 @@ namespace Debug
 				break;
 			case PerfCounter::PEs:
 				pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
+				break;
+			case PerfCounter::CompiledSegments:
+				Gekko::Gekko->ResetCompiledSegmentsCount();
+				break;
+			case PerfCounter::ExecutedSegments:
+				Gekko::Gekko->ResetExecutedSegmentsCount();
 				break;
 		}
 	}

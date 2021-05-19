@@ -118,7 +118,6 @@ namespace Gekko
 
         int64_t     one_second;         // one second in timer ticks
         size_t      ops;                // instruction counter (only for debug!)
-        size_t      segmentsExecuted;   // The number of completed recompiler segments.
         
         uint32_t EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG);
         uint32_t EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
@@ -157,6 +156,11 @@ namespace Gekko
         volatile bool resetInstructionCounter = false;
 
         GatherBuffer* gatherBuffer;
+
+        // Stats
+
+        size_t compiledSegments = 0;
+        size_t executedSegments = 0;
 
     public:
 
@@ -234,6 +238,11 @@ namespace Gekko
         void ResetOpcodeStats();
         void RunOpcodeStatsThread();
         void StopOpcodeStatsThread();
+
+        size_t GetCompiledSegmentsCount() { return compiledSegments; }
+        size_t GetExecutedSegmentsCount() { return executedSegments; }
+        void ResetCompiledSegmentsCount() { compiledSegments = 0; }
+        void ResetExecutedSegmentsCount() { executedSegments = 0; }
 
 #pragma endregion "Debug"
 

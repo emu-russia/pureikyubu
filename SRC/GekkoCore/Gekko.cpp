@@ -21,11 +21,11 @@ namespace Gekko
             core->TestBreakpoints();
         }
 
+#if GEKKOCORE_USE_JITC
+        core->jitc->Execute();
+#else
         core->interp->ExecuteOpcode();
-
-        // For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
-
-        //core->jitc->Execute();
+#endif
     }
 
     GekkoCore::GekkoCore()
@@ -100,7 +100,8 @@ namespace Gekko
         gatherBuffer->Reset();
 
         jitc->Reset();
-        segmentsExecuted = 0;
+        ResetCompiledSegmentsCount();
+        ResetExecutedSegmentsCount();
 
         dtlb.InvalidateAll();
         itlb.InvalidateAll();

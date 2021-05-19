@@ -18,6 +18,7 @@
 
 #include "../IntelCore/IntelCore.h"
 
+#include "Config.h"
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"

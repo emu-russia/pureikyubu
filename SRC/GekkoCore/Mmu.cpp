@@ -146,7 +146,7 @@ namespace Gekko
             return BadAddress;
         }
 
-        int key;
+        uint32_t key;
         if (regs.msr & MSR_PR)
         {
             key = sr & 0x2000'0000 ? 4 : 0;     // Kp
@@ -210,7 +210,7 @@ namespace Gekko
                 pte[1] |= 0x100;
 
                 // Check Protection
-                int pp = key | (pte[1] & 3);
+                uint32_t pp = key | (pte[1] & 3);
                 bool protectViolation = false;
                 if (type == MmuAccess::Read || type == MmuAccess::Execute)
                 {
@@ -298,7 +298,7 @@ namespace Gekko
                 pte[1] |= 0x100;
 
                 // Check Protection
-                int pp = key | (pte[1] & 3);
+                uint32_t pp = key | (pte[1] & 3);
                 bool protectViolation = false;
                 if (type == MmuAccess::Read || type == MmuAccess::Execute)
                 {

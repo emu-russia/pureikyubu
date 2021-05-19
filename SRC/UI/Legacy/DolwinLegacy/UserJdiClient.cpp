@@ -13,6 +13,7 @@ namespace UI
 		if (dll == nullptr)
 		{
 			UI::DolwinError(L"Error", L"Failed to load DolwinEmu.dll. This component contains the emulator core and is required for correct operation.");
+			return;
 		}
 
 		CallJdi = (CALL_JDI)GetProcAddress(dll, "CallJdi");
@@ -30,7 +31,10 @@ namespace UI
 	JdiClient::~JdiClient()
 	{
 #ifdef _WINDOWS
-		FreeLibrary(dll);
+		if (dll)
+		{
+			FreeLibrary(dll);
+		}
 #endif
 	}
 

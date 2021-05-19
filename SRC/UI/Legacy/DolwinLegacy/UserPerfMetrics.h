@@ -19,6 +19,12 @@ namespace UI
 		int64_t GetGekkoInstructionsCounter();
 		void ResetGekkoInstructionsCounter();
 
+		int64_t GetGekkoCompiledSegments();
+		void ResetGekkoCompiledSegments();
+
+		int64_t GetGekkoExecutedSegments();
+		void ResetGekkoExecutedSegments();
+
 		int64_t GetDspInstructionsCounter();
 		void ResetDspInstructionsCounter();
 
