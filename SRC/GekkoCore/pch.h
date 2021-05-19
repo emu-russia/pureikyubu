@@ -19,10 +19,10 @@
 #include "../IntelCore/IntelCore.h"
 
 #include "Config.h"
+#include "GekkoCommands.h"
 #include "Gekko.h"
 #include "GekkoAnalyzer.h"
 #include "Interpreter.h"
-#include "GekkoCommands.h"
 #include "GekkoDisasm.h"
 #include "GekkoAssembler.h"
 #include "Jitc.h"

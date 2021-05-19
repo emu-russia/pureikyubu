@@ -964,6 +964,113 @@ namespace Gekko
 		return output;
 	}
 
+	// Output the recompiled segments.
+	Json::Value* JitCommands::CmdJitcDumpSeg(std::vector<std::string>& args)
+	{
+		bool all = (args[1] == "all");
+
+		if (all)
+		{
+			// Pause the emulation if it is running.
+
+			bool running = Gekko->IsRunning();
+			if (running)
+			{
+				Gekko->Suspend();
+			}
+
+			// Loop through segments map
+
+			for (auto it = Gekko->jitc->segments.begin(); it != Gekko->jitc->segments.end(); ++it)
+			{
+				uint32_t vaddr = it->first;
+				CodeSegment* seg = it->second;
+				Report(Channel::Norm, "0x%08X: %zi b\n", seg->addr, seg->size);
+			}
+
+			Report(Channel::CPU, "Total segments: %zi\n", Gekko->jitc->segments.size());
+
+			if (running)
+			{
+				Gekko->Run();
+			}
+		}
+		else
+		{
+			uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
+
+			CodeSegment* seg = Gekko->jitc->SegmentCompiled(vaddr);
+
+			if (seg)
+			{
+				// Output the segment dump in small chunks, line by line.
+				const size_t chunkSize = 28;
+				size_t size = seg->code.size();
+				size_t ofs = 0;
+
+				while (size != 0)
+				{
+					size_t bytesToShow = min(size, chunkSize);
+
+					std::string text;
+
+					while (bytesToShow--)
+					{
+						char hex[0x10] = { 0, };
+						sprintf_s(hex, sizeof(hex), "\\x%02x", seg->code.data()[ofs++]);
+						text += hex;
+					}
+
+					Report(Channel::Norm, "%s\n", text.c_str());
+
+					size -= min(size, chunkSize);
+				}
+			}
+			else
+			{
+				Report(Channel::CPU, "No segment was found at the specified address.\n");
+			}
+		}
+
+		return nullptr;
+	}
+
+	// Invalidate the segment at the specified Gekko virtual address.
+	Json::Value* JitCommands::CmdJitcInvSeg(std::vector<std::string>& args)
+	{
+		uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
+
+		CodeSegment* seg = Gekko->jitc->SegmentCompiled(vaddr);
+
+		if (seg)
+		{
+			if (seg == Gekko->jitc->currentSegment)
+			{
+				Report(Channel::CPU, "You cannot invalidate the current segment, it will cause the emulator to crash.\n");
+			}
+			else
+			{
+				size_t segmentSize = seg->size;
+				Gekko->jitc->Invalidate(vaddr, segmentSize);
+				Report(Channel::CPU, "Segment of size %zi bytes at virtual address 0x%08X is invalidated.\n", segmentSize, vaddr);
+			}
+		}
+		else
+		{
+			Report(Channel::CPU, "No segment was found at the specified address.\n");
+		}
+
+		return nullptr;
+	}
+
+	// Invalidate all recompiler segments except the current one (where GekkoCore is currently executing).
+	Json::Value* JitCommands::CmdJitcInvAll(std::vector<std::string>& args)
+	{
+		Gekko->jitc->InvalidateAll();
+		Report(Channel::CPU, "All segments of the recompiler except the current one are invalidated.\n");
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", CmdRun);
@@ -1020,5 +1127,9 @@ namespace Gekko
 		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
 
 		JDI::Hub.AddCmd("GekkoAssemble", CmdGekkoAssemble);
+
+		JDI::Hub.AddCmd("JitcDumpSeg", JitCommands::CmdJitcDumpSeg);
+		JDI::Hub.AddCmd("JitcInvSeg", JitCommands::CmdJitcInvSeg);
+		JDI::Hub.AddCmd("JitcInvAll", JitCommands::CmdJitcInvAll);
 	}
 }

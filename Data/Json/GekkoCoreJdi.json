@@ -294,21 +294,6 @@
       "output": "UInt32 (assembled instruction)"
     },
 
-    "JitcStats": {
-      "help": "Get recompiler usage statistics.",
-      "hints": "[silent]",
-      "usage": [
-        "Syntax: JitcStats [1]",
-        "Get recompiler usage statistics (number of compiled segments / number of executed segments).",
-        "In silent mode (if you call the command as `JitcStats 1`) the information will not be output as Report, but will be returned only as Json."
-      ],
-      "output": "Array [ UInt64, UInt64 ] (number of compiled segments, number of executed segments)"
-    },
-
-    "JitcClearStats": {
-      "help": "Clear recompiler usage statistics."
-    },
-
     "JitcDumpSeg": {
       "help": "Output the recompiled segments.",
       "args": 1,
@@ -329,7 +314,7 @@
     },
 
     "JitcInvAll": {
-      "help": "Invalidate all recompiler segments except the current one (where GekkoCore is currently executing)."
+      "help": "Invalidate all recompiler segments except the current one."
     }
 
   }

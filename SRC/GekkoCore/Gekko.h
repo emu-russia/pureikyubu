@@ -50,6 +50,7 @@ namespace Gekko
 {
     class Interpreter;
     class Jitc;
+    class JitCommands;
     class CodeSegment;
 
     enum class MmuAccess
@@ -89,6 +90,7 @@ namespace Gekko
         friend Jitc;
         friend CodeSegment;
         friend GatherBuffer;
+        friend JitCommands;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.

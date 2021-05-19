@@ -13,7 +13,7 @@ namespace Gekko
 		GekkoCore* core = nullptr;	// Parent core
 		uint32_t addr = 0;		// Starting Gekko code address (effective)
 		size_t size = 0;		// Size of Gekko code in bytes
-		std::vector<uint8_t> code;	  // Automatically inflates when necessary
+		std::vector<uint8_t> code;	  // Recompiled code, automatically inflates when necessary
 
 		void Run();
 
@@ -26,6 +26,8 @@ namespace Gekko
 
 	class Jitc
 	{
+		friend JitCommands;
+
 		GekkoCore* core;		// Saved instance of the parent core
 
 		std::unordered_map<uint32_t, CodeSegment*> segments;
