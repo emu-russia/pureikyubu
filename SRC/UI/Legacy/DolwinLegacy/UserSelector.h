@@ -50,7 +50,7 @@ bool AddSelectorPath(const std::wstring & fullPath);            // FALSE, if pat
 void ResizeSelector(int width, int height);
 void UpdateSelector();
 int  SelectorGetSelected();
-void SelectorSetSelected(int item);
+void SelectorSetSelected(size_t item);
 void SelectorSetSelected(const std::wstring & filename);
 void SortSelector(SELECTOR_SORT sortBy);
 void DrawSelectorItem(LPDRAWITEMSTRUCT item);

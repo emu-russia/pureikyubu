@@ -824,7 +824,7 @@ int SelectorGetSelected()
     return item;
 }
 
-void SelectorSetSelected(int item)
+void SelectorSetSelected(size_t item)
 {
     if(item >= usel.files.size()) return;
     ListView_SetItemState(usel.hSelectorWindow, item, LVNI_SELECTED, LVNI_SELECTED);
