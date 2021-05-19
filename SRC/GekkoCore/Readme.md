@@ -68,7 +68,7 @@ Translation of individual instructions is carried out with the participation of 
 
 All instructions translators are located in the JitcX64 folder (for translating the X64 code) and JitcX86 (for translating the X86). In total, Gekko contains about 350 instructions, so there are many corresponding modules there :P
 
-Code generation does not use any assemblers in order not to bloat source code. The CodeSegment class contains Write methods for generating binary code directly as raw bytes (X86/X64).
+The code is generated using the assembler of the IntelCore component.
 
 ### Interpreter Fallback
 

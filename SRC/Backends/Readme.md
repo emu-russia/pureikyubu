@@ -8,6 +8,8 @@ At the moment there are 4 types of backends:
 - Output of raw video buffer (`XFB`) for Homebrew (e.g. VideoGdi). This is not a very necessary backend, as the Homebrew scene for the GameCube is not very active right now.
 - Emulation of GameCube controllers (e.g. PadSimpleWin32)
 
+Perhaps GekkoCore recompilers will also be moved to the category of backends (they are not very developed yet, so it doesn't make much sense).
+
 ## Null Backends
 
 There are also dummy backends for maximum code portability.

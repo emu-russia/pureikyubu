@@ -49,10 +49,8 @@ namespace Debug
 		Channel savedChan;
 		std::string text;
 
-		ReportEntry(Channel chan, const std::string& message)
+		ReportEntry(Channel chan, const std::string& message) : savedChan(chan), text(message)
 		{
-			savedChan = chan;
-			text = message;
 		}
 	};
 

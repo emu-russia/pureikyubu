@@ -19,6 +19,7 @@ target_link_libraries (DolwinPlayground LINK_PUBLIC GekkoCore)
 target_link_libraries (DolwinPlayground LINK_PUBLIC GX)
 target_link_libraries (DolwinPlayground LINK_PUBLIC Hardware)
 target_link_libraries (DolwinPlayground LINK_PUBLIC HighLevel)
+target_link_libraries (DolwinPlayground LINK_PUBLIC IntelCore)
 
 target_link_libraries (DolwinPlayground LINK_PUBLIC fmt)
 

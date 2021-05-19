@@ -4,6 +4,7 @@
 
 Interesting to track :
 - The number of emulated Gekko instructions (million per second, mips)
+- Number of recompiled and executed GekkoCore recompiler segments.
 - Number of DSP instructions emulated (million per second, mips)
 - Number of VI interrupts (frames per second)
 - Number of draw operations (PE DrawDone / second)
@@ -29,11 +30,29 @@ namespace UI
 		int64_t gekkoMips = perf->GetGekkoInstructionsCounter();
 		perf->ResetGekkoInstructionsCounter();
 
+		int64_t compiledSegs = perf->GetGekkoCompiledSegments();
+		perf->ResetGekkoCompiledSegments();
+
+		int64_t executedSegs = perf->GetGekkoExecutedSegments();
+		perf->ResetGekkoExecutedSegments();
+
 		int64_t dspMips = perf->GetDspInstructionsCounter();
 		perf->ResetDspInstructionsCounter();
 
+		// If the number of executed segments is zero, then most likely the emulator is running in interpreter mode
+		// or is in debug mode (emulation is temporarily stopped), so there is no point in displaying JITC statistics.
+
 		char str[0x100];
-		sprintf_s(str, sizeof(str), "gekko: %.02f mips, dsp: %.02f mips", (float)gekkoMips / 1000000.f, (float)dspMips / 1000000.f);
+		if (executedSegs != 0)
+		{
+			sprintf_s(str, sizeof(str), "gekko: %.02f mips (jitc %lld/%.02fM), dsp: %.02f mips",
+				(float)gekkoMips / 1000000.f, compiledSegs, (float)executedSegs / 1000000.f, (float)dspMips / 1000000.f);
+		}
+		else
+		{
+			sprintf_s(str, sizeof(str), "gekko: %.02f mips, dsp: %.02f mips",
+				(float)gekkoMips / 1000000.f, (float)dspMips / 1000000.f);
+		}
 
 		int32_t vis = perf->GetVICounter();
 		perf->ResetVICounter();
@@ -69,6 +88,26 @@ namespace UI
 	void PerfMetrics::ResetGekkoInstructionsCounter()
 	{
 		Jdi->ResetPerformanceCounter(0);
+	}
+
+	int64_t PerfMetrics::GetGekkoCompiledSegments()
+	{
+		return Jdi->GetPerformanceCounter(4);
+	}
+
+	void PerfMetrics::ResetGekkoCompiledSegments()
+	{
+		Jdi->ResetPerformanceCounter(4);
+	}
+
+	int64_t PerfMetrics::GetGekkoExecutedSegments()
+	{
+		return Jdi->GetPerformanceCounter(5);
+	}
+
+	void PerfMetrics::ResetGekkoExecutedSegments()
+	{
+		Jdi->ResetPerformanceCounter(5);
 	}
 
 	int64_t PerfMetrics::GetDspInstructionsCounter()

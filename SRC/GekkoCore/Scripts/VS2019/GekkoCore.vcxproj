@@ -166,6 +166,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Cache.h" />
+    <ClInclude Include="..\..\Config.h" />
     <ClInclude Include="..\..\GatherBuffer.h" />
     <ClInclude Include="..\..\Gekko.h" />
     <ClInclude Include="..\..\GekkoAnalyzer.h" />

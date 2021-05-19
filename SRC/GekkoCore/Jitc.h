@@ -10,10 +10,10 @@ namespace Gekko
 	class CodeSegment
 	{
 	public:
-		GekkoCore* core;		// Parent core
+		GekkoCore* core = nullptr;	// Parent core
 		uint32_t addr = 0;		// Starting Gekko code address (effective)
 		size_t size = 0;		// Size of Gekko code in bytes
-		std::vector<uint8_t> code;	  // Automatically inflates when necessary
+		std::vector<uint8_t> code;	  // Recompiled code, automatically inflates when necessary
 
 		void Run();
 
@@ -21,11 +21,13 @@ namespace Gekko
 		void Write16(uint16_t data);
 		void Write32(uint32_t data);
 		void Write64(uint64_t data);
-		void Write(IntelCore::AnalyzeInfo& info);
+		void Write(const IntelCore::AnalyzeInfo& info);
 	};
 
 	class Jitc
 	{
+		friend JitCommands;
+
 		GekkoCore* core;		// Saved instance of the parent core
 
 		std::unordered_map<uint32_t, CodeSegment*> segments;

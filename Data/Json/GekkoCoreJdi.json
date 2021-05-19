@@ -292,6 +292,29 @@
       "hints": "Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 Pc",
       "args": 14,
       "output": "UInt32 (assembled instruction)"
+    },
+
+    "JitcDumpSeg": {
+      "help": "Output the recompiled segments.",
+      "args": 1,
+      "usage": [
+        "Syntax: JitcDumpSeg <all|vaddr>",
+        "If the `all` parameter is given, a list of compiled segments will be displayed (can be large!).",
+        "Specifying the `vaddr` parameter (Gekko's virtual address) will dump the recompiled segment code (if such a segment has already been recompiled at the specified virtual address)."
+      ]
+    },
+
+    "JitcInvSeg": {
+      "help": "Invalidate the segment at the specified Gekko virtual address.",
+      "args": 1,
+      "usage": [
+        "Syntax: JitcInvSeg <vaddr>",
+        "The segment at the specified address will be invalidated and recompiled. You cannot invalidate a segment in which GekkoCore is currently running (this will cause an exception)."
+      ]
+    },
+
+    "JitcInvAll": {
+      "help": "Invalidate all recompiler segments except the current one."
     }
 
   }

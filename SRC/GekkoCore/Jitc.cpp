@@ -84,6 +84,8 @@ namespace Gekko
 		// TODO
 #endif
 
+		core->compiledSegments++;
+
 		return segment;
 	}
 
@@ -94,7 +96,7 @@ namespace Gekko
 		void (*codePtr)() = (void (*)())code.data();
 		codePtr();
 
-		core->segmentsExecuted++;
+		core->executedSegments++;
 	}
 
 	void CodeSegment::Write8(uint8_t data)
@@ -120,7 +122,7 @@ namespace Gekko
 		Write32((uint32_t)(data >> 32));
 	}
 
-	void CodeSegment::Write(IntelCore::AnalyzeInfo& info)
+	void CodeSegment::Write(const IntelCore::AnalyzeInfo& info)
 	{
 		for (size_t i = 0; i < info.prefixSize; i++)
 		{
