@@ -29,10 +29,6 @@ namespace Gekko
 
 		seg->Write16(0xbe48);
 		seg->Write64((uint64_t)core->regs.gpr);
-
-		// DEBUG: Example of using a code generator 
-		//seg->Write(IntelAssembler::adc<64>());
-
 	}
 
 	void Jitc::Epilog(CodeSegment* seg)
