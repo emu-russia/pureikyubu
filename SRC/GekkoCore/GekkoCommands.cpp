@@ -6,14 +6,14 @@ using namespace Debug;
 namespace Gekko
 {
 	// Run processor until break or stop
-	static Json::Value* cmd_run(std::vector<std::string>& args)
+	static Json::Value* CmdRun(std::vector<std::string>& args)
 	{
 		Gekko->Run();
 		return nullptr;
 	}
 
 	// Stop processor execution
-	static Json::Value* cmd_stop(std::vector<std::string>& args)
+	static Json::Value* CmdStop(std::vector<std::string>& args)
 	{
 		if (Gekko->IsRunning())
 		{
@@ -269,7 +269,7 @@ namespace Gekko
 		else Report(Channel::Norm, "HID0[NOOPTI]: 0, The dcbt and dcbtst instructions are enabled\n");
 	}
 
-	static Json::Value* cmd_r(std::vector<std::string>& args)
+	static Json::Value* CmdGetSetReg(std::vector<std::string>& args)
 	{
 		uint32_t(*op)(uint32_t a, uint32_t b) = NULL;
 
@@ -323,28 +323,28 @@ namespace Gekko
 		return nullptr;
 	}
 
-	static Json::Value* cmd_b(std::vector<std::string>& args)
+	static Json::Value* CmdBreakExec(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Gekko->AddBreakpoint(addr);
 		return nullptr;
 	}
 
-	static Json::Value* cmd_br(std::vector<std::string>& args)
+	static Json::Value* CmdBreakRead(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Gekko->AddReadBreak(addr);
 		return nullptr;
 	}
 
-	static Json::Value* cmd_bw(std::vector<std::string>& args)
+	static Json::Value* CmdBreakWrite(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 		Gekko->AddWriteBreak(addr);
 		return nullptr;
 	}
 
-	static Json::Value* cmd_bc(std::vector<std::string>& args)
+	static Json::Value* CmdBreakClearAll(std::vector<std::string>& args)
 	{
 		Gekko->ClearBreakpoints();
 		return nullptr;
@@ -966,13 +966,13 @@ namespace Gekko
 
 	void gekko_init_handlers()
 	{
-		JDI::Hub.AddCmd("run", cmd_run);
-		JDI::Hub.AddCmd("stop", cmd_stop);
-		JDI::Hub.AddCmd("r", cmd_r);
-		JDI::Hub.AddCmd("b", cmd_b);
-		JDI::Hub.AddCmd("br", cmd_br);
-		JDI::Hub.AddCmd("bw", cmd_bw);
-		JDI::Hub.AddCmd("bc", cmd_bc);
+		JDI::Hub.AddCmd("run", CmdRun);
+		JDI::Hub.AddCmd("stop", CmdStop);
+		JDI::Hub.AddCmd("r", CmdGetSetReg);
+		JDI::Hub.AddCmd("b", CmdBreakExec);
+		JDI::Hub.AddCmd("br", CmdBreakRead);
+		JDI::Hub.AddCmd("bw", CmdBreakWrite);
+		JDI::Hub.AddCmd("bc", CmdBreakClearAll);
 		JDI::Hub.AddCmd("CacheLog", CmdCacheLog);
 		JDI::Hub.AddCmd("CacheDebugDisable", CmdCacheDebugDisable);
 

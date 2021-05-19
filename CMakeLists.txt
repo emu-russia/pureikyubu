@@ -28,6 +28,7 @@ add_subdirectory (SRC/GekkoCore/Scripts)
 add_subdirectory (SRC/GX/Scripts)
 add_subdirectory (SRC/Hardware/Scripts)
 add_subdirectory (SRC/HighLevel/Scripts)
+add_subdirectory (SRC/IntelCore/Scripts)
 
 # UI
 add_subdirectory (SRC/UI/Playground/Scripts)
