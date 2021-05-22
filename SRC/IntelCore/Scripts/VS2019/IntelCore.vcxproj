@@ -31,6 +31,7 @@
   <ItemGroup>
     <ClInclude Include="..\..\IntelAnalyzer.h" />
     <ClInclude Include="..\..\IntelAssembler.h" />
+    <ClInclude Include="..\..\IntelAssemblerFpu.h" />
     <ClInclude Include="..\..\IntelCore.h" />
     <ClInclude Include="..\..\pch.h" />
   </ItemGroup>

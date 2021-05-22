@@ -33,27 +33,7 @@ namespace IntelCore
 		return Instruction::FpuInstrStart < instr && instr < Instruction::FpuInstrEnd;
 	}
 
-	void IntelAssembler::FpuAssemble16(AnalyzeInfo& info)
-	{
-		switch (info.instr)
-		{
-
-			default:
-				throw "Invalid instruction";
-		}
-	}
-
-	void IntelAssembler::FpuAssemble32(AnalyzeInfo& info)
-	{
-		switch (info.instr)
-		{
-
-			default:
-				throw "Invalid instruction";
-		}
-	}
-
-	void IntelAssembler::FpuAssemble64(AnalyzeInfo& info)
+	void IntelAssembler::FpuAssemble(size_t bits, AnalyzeInfo& info)
 	{
 		switch (info.instr)
 		{

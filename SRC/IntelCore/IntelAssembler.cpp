@@ -2916,7 +2916,7 @@ namespace IntelCore
 
 		if (IsFpuInstr(info.instr))
 		{
-			FpuAssemble16(info);
+			FpuAssemble(16, info);
 			return;
 		}
 
@@ -4672,7 +4672,7 @@ namespace IntelCore
 
 		if (IsFpuInstr(info.instr))
 		{
-			FpuAssemble32(info);
+			FpuAssemble(32, info);
 			return;
 		}
 
@@ -6428,7 +6428,7 @@ namespace IntelCore
 
 		if (IsFpuInstr(info.instr))
 		{
-			FpuAssemble64(info);
+			FpuAssemble(64, info);
 			return;
 		}
 

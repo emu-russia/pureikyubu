@@ -8,3 +8,4 @@
 
 #include "IntelAnalyzer.h"
 #include "IntelAssembler.h"
+#include "IntelAssemblerFpu.h"
