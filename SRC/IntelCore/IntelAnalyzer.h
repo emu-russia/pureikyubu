@@ -348,6 +348,7 @@ namespace IntelCore
 
 		// x87 FPU Instructions
 
+		FpuInstrStart,
 		fld, fst, fstp, fild, fist, fistp, fbld, fbstp, fxch, fcmove, fcmovne, fcmovb, fcmovbe, fcmovnb, fcmovnbe, fcmovu, fcmovnu,
 		fadd, faddp, fiadd, fsub, fsubp, fisub, fsubr, fsubrp, fisubr, fmul, fmulp, fimul, fdiv, fdivp, fidiv, fdivr, fdivrp, fidivr, fprem, fprem1, fabs, fchs, frndint, fscale, fsqrt, fxtract,
 		fcom, fcomp, fcompp, fucom, fucomp, fucompp, ficom, ficomp, fcomi, fucomi, fcomip, fucomip, ftst, fxam,
@@ -355,6 +356,7 @@ namespace IntelCore
 		fld1, fldz, fldpi, fldl2e, fldln2, fldl2t, fldlg2,
 		fincstp, fdecstp, ffree, finit, fninit, fclex, fnclex, fstcw, fnstcw, fldcw, fstenv, fnstenv, fldenv, fsave, fnsave, frstor, fstsw, fnstsw, wait, fwait = wait, fnop,
 		fxsave, fxrstor,
+		FpuInstrEnd,
 
 		// MMX™ Instructions
 
@@ -837,6 +839,12 @@ namespace IntelCore
 		TRStart,		// Special constant to quickly define the category of a parameter. Do not use. 
 		tr0, tr1, tr2, tr3, tr4, tr5, tr6, tr7,
 		TREnd,			// Special constant to quickly define the category of a parameter. Do not use. 
+
+		// x87 registers
+
+		X87Start,		// Special constant to quickly define the category of a parameter. Do not use. 
+		st0, st = st0, st1, st2, st3, st4, st5, st6, st7,
+		X87End,			// Special constant to quickly define the category of a parameter. Do not use. 
 
 		// 16-bit mem
 		// If you need memory addressing like [BP + DI] and so on. similar, look here.
@@ -1373,6 +1381,7 @@ namespace IntelCore
 		WordPtr,
 		DwordPtr,
 		QwordPtr,
+		XwordPtr,		// m80fp
 	};
 
 	/// <summary>

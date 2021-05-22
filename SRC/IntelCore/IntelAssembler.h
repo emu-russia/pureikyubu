@@ -131,6 +131,7 @@ namespace IntelCore
 		static bool IsCR(Param p);
 		static bool IsDR(Param p);
 		static bool IsTR(Param p);
+		static bool IsFpuReg(Param p);
 		static bool IsMem(Param p);
 		static bool IsMem16(Param p);
 		static bool IsMem32(Param p);
@@ -148,6 +149,7 @@ namespace IntelCore
 		static void GetReg(Param p, size_t& reg);
 		static void GetSreg(Param p, size_t& sreg);
 		static void GetSpecReg(Param p, size_t& reg);
+		static void GetFpuReg(Param p, size_t& reg);
 		static void GetMod(Param p, size_t& mod);
 		static void GetRm(Param p, size_t& rm);
 		static void GetSS(Param p, size_t& scale);
@@ -166,6 +168,11 @@ namespace IntelCore
 		static void HandleInOut(AnalyzeInfo& info, size_t bits, bool in);
 		static void HandleJcc(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_32);
 		static void HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode);
+
+		static bool IsFpuInstr(Instruction instr);
+		static void FpuAssemble16(AnalyzeInfo& info);
+		static void FpuAssemble32(AnalyzeInfo& info);
+		static void FpuAssemble64(AnalyzeInfo& info);
 
 	public:
 
