@@ -53,6 +53,8 @@ This is done because generally speaking the Intel instruction format allows you 
 
 If the generation of instruction prefixes results in 2 prefixes 0x66 and 0x67 simultaneously, the assembler compiles them in order "\x66\x67".
 
+REX/VEX and similar prefixes are not considered as prefixes because they have a special purpose and are essentially part of the instruction opcode.
+
 ## ModRM / SIB
 
 Intel has historically used a very sophisticated addressing scheme, which is defined by a combination of ModRM and SIB byte fields (starting at 32-bit). Long Mode also adds the REX prefix, which further complicates the scheme.
@@ -73,6 +75,8 @@ Thus, `Param` fully defines all possible combinations that can be specified usin
 
 When compiling an instruction, the assembler takes into account the order of the parameters and compiles the corresponding opcodes and ModRM/SIB/REX bytes and the necessary prefixes (for example, if the specified instruction is compiled in 16-bit mode, the corresponding prefix will be added). 
 
+For each ModRM variation, the component contains tangled procedures that collect `AnalyzeInfo` parameters into the corresponding raw bytes. I deliberately divided them into special cases, because the general handler of all ModRM variations is beyond human mind. If someday aliens will reverse engineer Intel processors they'll have to supply a lot of ice for their butts.
+
 ## PtrHint
 
 Some Intel instructions are designed in such a way that it is impossible to understand the size of the addressed operand from a parameter.
@@ -85,3 +89,19 @@ dec dword ptr [eax]		; "\xff\x08"
 ```
 
 To explicitly indicate the size of the operand the `AnalyzeInfo` structure contains the `ptrHint` property.
+
+## x87 FPU Instructions
+
+FPU instructions are Layer2 in terms of this component.
+
+A list of FPU instructions for quick reference is shown in the table.
+
+|Category|List|
+|---|---|
+|Data Transfer|FLD, FST, FSTP, FILD, FIST, FISTP, FBLD, FBSTP, FXCH, FCMOVE, FCMOVNE, FCMOVB, FCMOVBE, FCMOVNB, FCMOVNBE, FCMOVU, FCMOVNU|
+|Basic Arithmetic|FADD, FADDP, FIADD, FSUB, FSUBP, FISUB, FSUBR, FSUBRP, FISUBR, FMUL, FMULP, FIMUL, FDIV, FDIVP, FIDIV, FDIVR, FDIVRP, FIDIVR, FPREM, FPREM1, FABS, FCHS, FRNDINT, FSCALE, FSQRT, FXTRACT|
+|Comparison|FCOM, FCOMP, FCOMPP, FUCOM, FUCOMP, FUCOMPP, FICOM, FICOMP, FCOMI, FUCOMI, FCOMIP, FUCOMIP, FTST, FXAM|
+|Transcendental|FSIN, FCOS, FSINCOS, FPTAN, FPATAN, F2XM1, FYL2X, FYL2XP1|
+|Load Constants|FLD1, FLDZ, FLDPI, FLDL2E, FLDLN2, FLDL2T, FLDLG2|
+|Control|FINCSTP, FDECSTP, FFREE, FINIT, FNINIT, FCLEX, FNCLEX, FSTCW, FNSTCW, FLDCW, FSTENV, FNSTENV, FLDENV, FSAVE, FNSAVE, FRSTOR, FSTSW, FNSTSW, WAIT/FWAIT, FNOP|
+|State Management|FXSAVE, FXRSTOR|
