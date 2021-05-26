@@ -627,6 +627,232 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::fcom:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M32FP | FpuForm_M64FP | FpuForm_STn;
+
+				feature.FpuForm_M32FP_Opcode = 0xD8;
+				feature.FpuForm_M32FP_RegOpcode = 2;
+				feature.FpuForm_M64FP_Opcode = 0xDC;
+				feature.FpuForm_M64FP_RegOpcode = 2;
+				feature.FpuForm_STn_Opcode1 = 0xD8;
+				feature.FpuForm_STn_Opcode2 = 0xD0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fcomp:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M32FP | FpuForm_M64FP | FpuForm_STn;
+
+				feature.FpuForm_M32FP_Opcode = 0xD8;
+				feature.FpuForm_M32FP_RegOpcode = 3;
+				feature.FpuForm_M64FP_Opcode = 0xDC;
+				feature.FpuForm_M64FP_RegOpcode = 3;
+				feature.FpuForm_STn_Opcode1 = 0xD8;
+				feature.FpuForm_STn_Opcode2 = 0xD8;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fcompp:
+			{
+				OneByte(info, 0xDE);
+				OneByte(info, 0xD9);
+				break;
+			}
+
+			case Instruction::fucom:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_STn;
+
+				feature.FpuForm_STn_Opcode1 = 0xDD;
+				feature.FpuForm_STn_Opcode2 = 0xE0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fucomp:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_STn;
+
+				feature.FpuForm_STn_Opcode1 = 0xDD;
+				feature.FpuForm_STn_Opcode2 = 0xE8;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fucompp:
+			{
+				OneByte(info, 0xDA);
+				OneByte(info, 0xE9);
+				break;
+			}
+
+			case Instruction::ficom:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M16INT | FpuForm_M32INT;
+
+				feature.FpuForm_M16INT_Opcode = 0xDE;
+				feature.FpuForm_M16INT_RegOpcode = 2;
+				feature.FpuForm_M32INT_Opcode = 0xDA;
+				feature.FpuForm_M32INT_RegOpcode = 2;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::ficomp:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M16INT | FpuForm_M32INT;
+
+				feature.FpuForm_M16INT_Opcode = 0xDE;
+				feature.FpuForm_M16INT_RegOpcode = 3;
+				feature.FpuForm_M32INT_Opcode = 0xDA;
+				feature.FpuForm_M32INT_RegOpcode = 3;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fcomi:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_ToST0;
+
+				feature.FpuForm_ToST0_Opcode1 = 0xDB;
+				feature.FpuForm_ToST0_Opcode2 = 0xF0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fcomip:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_ToST0;
+
+				feature.FpuForm_ToST0_Opcode1 = 0xDF;
+				feature.FpuForm_ToST0_Opcode2 = 0xF0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fucomi:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_ToST0;
+
+				feature.FpuForm_ToST0_Opcode1 = 0xDB;
+				feature.FpuForm_ToST0_Opcode2 = 0xE8;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fucomip:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_ToST0;
+
+				feature.FpuForm_ToST0_Opcode1 = 0xDF;
+				feature.FpuForm_ToST0_Opcode2 = 0xE8;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::ftst:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xE4);
+				break;
+			}
+
+			case Instruction::fxam:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xE5);
+				break;
+			}
+
+			case Instruction::fsin:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xFE);
+				break;
+			}
+
+			case Instruction::fcos:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xFF);
+				break;
+			}
+
+			case Instruction::fsincos:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xFB);
+				break;
+			}
+
+			case Instruction::fptan:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF2);
+				break;
+			}
+
+			case Instruction::fpatan:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF3);
+				break;
+			}
+
+			case Instruction::f2xm1:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF0);
+				break;
+			}
+
+			case Instruction::fyl2x:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF1);
+				break;
+			}
+
+			case Instruction::fyl2xp1:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF9);
+				break;
+			}
+
 			default:
 				throw "Invalid instruction";
 		}
