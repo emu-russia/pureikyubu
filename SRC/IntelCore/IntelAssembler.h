@@ -170,6 +170,7 @@ namespace IntelCore
 		static void HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode);
 
 		static bool IsFpuInstr(Instruction instr);
+		static void ProcessFpuInstr(AnalyzeInfo& info, size_t bits, FpuInstrFeatures& feature);
 		static void FpuAssemble(size_t bits, AnalyzeInfo& info);
 
 	public:
@@ -432,6 +433,52 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo outsb(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo outsw(Prefix pre = Prefix::NoPrefix);
 		template <size_t n> static AnalyzeInfo outsd(Prefix pre = Prefix::NoPrefix);
+
+		template <size_t n> static AnalyzeInfo fld(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fst(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fstp(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fild(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fist(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fistp(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fbld(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fbstp(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fxch(Param p = Param::st1);
+		template <size_t n> static AnalyzeInfo fcmovb(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmove(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovbe(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovu(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovnb(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovne(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovnbe(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fcmovnu(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fadd(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fadd(Param to, Param from);
+		template <size_t n> static AnalyzeInfo faddp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fiadd(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fsub(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fsubp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fisub(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fsubr(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fsubrp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fisubr(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fmul(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fmulp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fimul(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fdiv(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fdivp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fidiv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fdivr(Param to, Param from);
+		template <size_t n> static AnalyzeInfo fdivrp(Param to = Param::st1, Param from = Param::st0);
+		template <size_t n> static AnalyzeInfo fidivr(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fprem(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fprem1(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fabs(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fchs(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo frndint(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fscale(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fsqrt(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fxtract(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+
 
 	};
 

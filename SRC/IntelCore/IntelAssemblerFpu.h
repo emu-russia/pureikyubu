@@ -35,7 +35,26 @@ namespace IntelCore
 	struct FpuInstrFeatures
 	{
 		uint32_t forms;
-
+		uint8_t FpuForm_M32FP_Opcode;
+		uint8_t FpuForm_M32FP_RegOpcode;
+		uint8_t FpuForm_M64FP_Opcode;
+		uint8_t FpuForm_M64FP_RegOpcode;
+		uint8_t FpuForm_M80FP_Opcode;
+		uint8_t FpuForm_M80FP_RegOpcode;
+		uint8_t FpuForm_M80BCD_Opcode;
+		uint8_t FpuForm_M80BCD_RegOpcode;
+		uint8_t FpuForm_M16INT_Opcode;
+		uint8_t FpuForm_M16INT_RegOpcode;
+		uint8_t FpuForm_M32INT_Opcode;
+		uint8_t FpuForm_M32INT_RegOpcode;
+		uint8_t FpuForm_M64INT_Opcode;
+		uint8_t FpuForm_M64INT_RegOpcode;
+		uint8_t FpuForm_ToST0_Opcode1;
+		uint8_t FpuForm_ToST0_Opcode2;
+		uint8_t FpuForm_FromST0_Opcode1;
+		uint8_t FpuForm_FromST0_Opcode2;
+		uint8_t FpuForm_STn_Opcode1;
+		uint8_t FpuForm_STn_Opcode2;
 	};
 
 }
