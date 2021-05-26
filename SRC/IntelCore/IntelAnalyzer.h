@@ -355,7 +355,7 @@ namespace IntelCore
 		fsin, fcos, fsincos, fptan, fpatan, f2xm1, fyl2x, fyl2xp1,
 		fld1, fldz, fldpi, fldl2e, fldln2, fldl2t, fldlg2,
 		fincstp, fdecstp, ffree, finit, fninit, fclex, fnclex, fstcw, fnstcw, fldcw, fstenv, fnstenv, fldenv, fsave, fnsave, frstor, fstsw, fnstsw, wait, fwait = wait, fnop,
-		fxsave, fxrstor,
+		fxsave, fxsave64, fxrstor, fxrstor64,
 		FpuInstrEnd,
 
 		// MMX™ Instructions
@@ -1382,6 +1382,8 @@ namespace IntelCore
 		DwordPtr,
 		QwordPtr,
 		XwordPtr,		// m80fp
+		M14Ptr, M28Ptr,		// m14/28byte (FPU)
+		M94Ptr, M108Ptr,	// m14/28byte (FPU)
 	};
 
 	/// <summary>

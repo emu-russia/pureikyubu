@@ -902,6 +902,304 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::fincstp:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF7);
+				break;
+			}
+
+			case Instruction::fdecstp:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xF6);
+				break;
+			}
+
+			case Instruction::ffree:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_STn;
+
+				feature.FpuForm_STn_Opcode1 = 0xDD;
+				feature.FpuForm_STn_Opcode2 = 0xC0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::finit:
+			{
+				OneByte(info, 0x9B);
+				OneByte(info, 0xDB);
+				OneByte(info, 0xE3);
+				break;
+			}
+
+			case Instruction::fninit:
+			{
+				OneByte(info, 0xDB);
+				OneByte(info, 0xE3);
+				break;
+			}
+
+			case Instruction::fclex:
+			{
+				OneByte(info, 0x9B);
+				OneByte(info, 0xDB);
+				OneByte(info, 0xE2);
+				break;
+			}
+
+			case Instruction::fnclex:
+			{
+				OneByte(info, 0xDB);
+				OneByte(info, 0xE2);
+				break;
+			}
+
+			case Instruction::fstcw:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M2Byte;
+
+				feature.FpuForm_M2Byte_Opcode = 0xD9;
+				feature.FpuForm_M2Byte_RegOpcode = 7;
+
+				OneByte(info, 0x9B);
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fnstcw:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M2Byte;
+
+				feature.FpuForm_M2Byte_Opcode = 0xD9;
+				feature.FpuForm_M2Byte_RegOpcode = 7;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fldcw:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M2Byte;
+
+				feature.FpuForm_M2Byte_Opcode = 0xD9;
+				feature.FpuForm_M2Byte_RegOpcode = 5;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fstenv:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M14_28Byte;
+
+				feature.FpuForm_M14_28Byte_Opcode = 0xD9;
+				feature.FpuForm_M14_28Byte_RegOpcode = 6;
+
+				OneByte(info, 0x9B);
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fnstenv:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M14_28Byte;
+
+				feature.FpuForm_M14_28Byte_Opcode = 0xD9;
+				feature.FpuForm_M14_28Byte_RegOpcode = 6;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fldenv:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M14_28Byte;
+
+				feature.FpuForm_M14_28Byte_Opcode = 0xD9;
+				feature.FpuForm_M14_28Byte_RegOpcode = 4;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fsave:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M94_108Byte;
+
+				feature.FpuForm_M94_108Byte_Opcode = 0xDD;
+				feature.FpuForm_M94_108Byte_RegOpcode = 6;
+
+				OneByte(info, 0x9B);
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fnsave:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M94_108Byte;
+
+				feature.FpuForm_M94_108Byte_Opcode = 0xDD;
+				feature.FpuForm_M94_108Byte_RegOpcode = 6;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::frstor:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M94_108Byte;
+
+				feature.FpuForm_M94_108Byte_Opcode = 0xDD;
+				feature.FpuForm_M94_108Byte_RegOpcode = 4;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fstsw:
+			{
+				if (info.params[0] == Param::ax && info.numParams == 1)
+				{
+					OneByte(info, 0x9B);
+					OneByte(info, 0xDF);
+					OneByte(info, 0xE0);
+				}
+				else
+				{
+					FpuInstrFeatures feature = { 0 };
+
+					feature.forms = FpuForm_M2Byte;
+
+					feature.FpuForm_M2Byte_Opcode = 0xDD;
+					feature.FpuForm_M2Byte_RegOpcode = 7;
+
+					OneByte(info, 0x9B);
+					ProcessFpuInstr(info, bits, feature);
+				}
+				break;
+			}
+
+			case Instruction::fnstsw:
+			{
+				if (info.params[0] == Param::ax && info.numParams == 1)
+				{
+					OneByte(info, 0xDF);
+					OneByte(info, 0xE0);
+				}
+				else
+				{
+					FpuInstrFeatures feature = { 0 };
+
+					feature.forms = FpuForm_M2Byte;
+
+					feature.FpuForm_M2Byte_Opcode = 0xDD;
+					feature.FpuForm_M2Byte_RegOpcode = 7;
+
+					ProcessFpuInstr(info, bits, feature);
+				}
+				break;
+			}
+
+			case Instruction::fnop:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xD0);
+				break;
+			}
+
+			case Instruction::fxsave:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M512Byte;
+
+				feature.FpuForm_M512Byte_ExtOpcode = 0x0F;
+				feature.FpuForm_M512Byte_Opcode = 0xAE;
+				feature.FpuForm_M512Byte_RegOpcode = 0;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fxsave64:
+			{
+				if (bits == 64)
+				{
+					FpuInstrFeatures feature = { 0 };
+
+					feature.forms = FpuForm_M512Byte;
+
+					feature.FpuForm_M512Byte_ExtOpcode = 0x0F;
+					feature.FpuForm_M512Byte_Opcode = 0xAE;
+					feature.FpuForm_M512Byte_RegOpcode = 0;
+
+					ProcessFpuInstr(info, bits, feature);
+				}
+				else
+				{
+					Invalid();
+				}
+				break;
+			}
+
+			case Instruction::fxrstor:
+			{
+				FpuInstrFeatures feature = { 0 };
+
+				feature.forms = FpuForm_M512Byte;
+
+				feature.FpuForm_M512Byte_ExtOpcode = 0x0F;
+				feature.FpuForm_M512Byte_Opcode = 0xAE;
+				feature.FpuForm_M512Byte_RegOpcode = 1;
+
+				ProcessFpuInstr(info, bits, feature);
+				break;
+			}
+
+			case Instruction::fxrstor64:
+			{
+				if (bits == 64)
+				{
+					FpuInstrFeatures feature = { 0 };
+
+					feature.forms = FpuForm_M512Byte;
+
+					feature.FpuForm_M512Byte_ExtOpcode = 0x0F;
+					feature.FpuForm_M512Byte_Opcode = 0xAE;
+					feature.FpuForm_M512Byte_RegOpcode = 1;
+
+					ProcessFpuInstr(info, bits, feature);
+				}
+				else
+				{
+					Invalid();
+				}
+				break;
+			}
+
 			default:
 				throw "Invalid instruction";
 		}

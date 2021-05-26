@@ -26,7 +26,6 @@ namespace IntelCore
 		FpuForm_M14_28Byte = 0x800,
 		FpuForm_M94_108Byte = 0x1000,
 		FpuForm_M512Byte = 0x2000,
-		FpuForm_AX = 0x4000,
 	};
 
 	/// <summary>
@@ -55,6 +54,15 @@ namespace IntelCore
 		uint8_t FpuForm_FromST0_Opcode2;
 		uint8_t FpuForm_STn_Opcode1;
 		uint8_t FpuForm_STn_Opcode2;
+		uint8_t FpuForm_M2Byte_Opcode;
+		uint8_t FpuForm_M2Byte_RegOpcode;
+		uint8_t FpuForm_M14_28Byte_Opcode;
+		uint8_t FpuForm_M14_28Byte_RegOpcode;
+		uint8_t FpuForm_M94_108Byte_Opcode;
+		uint8_t FpuForm_M94_108Byte_RegOpcode;
+		uint8_t FpuForm_M512Byte_ExtOpcode;
+		uint8_t FpuForm_M512Byte_Opcode;
+		uint8_t FpuForm_M512Byte_RegOpcode;
 	};
 
 }

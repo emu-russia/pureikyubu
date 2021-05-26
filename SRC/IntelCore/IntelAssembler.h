@@ -507,7 +507,29 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo fldlg2();
 		template <size_t n> static AnalyzeInfo fldln2();
 		template <size_t n> static AnalyzeInfo fldz();
-
+		template <size_t n> static AnalyzeInfo fincstp();
+		template <size_t n> static AnalyzeInfo fdecstp();
+		template <size_t n> static AnalyzeInfo ffree(Param p);
+		template <size_t n> static AnalyzeInfo finit();
+		template <size_t n> static AnalyzeInfo fninit();
+		template <size_t n> static AnalyzeInfo fclex();
+		template <size_t n> static AnalyzeInfo fnclex();
+		template <size_t n> static AnalyzeInfo fstcw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fnstcw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fldcw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fstenv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fnstenv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fldenv(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fsave(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fnsave(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo frstor(Param p, PtrHint ptrHint = PtrHint::NoHint, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fstsw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fnstsw(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fnop();
+		template <size_t n> static AnalyzeInfo fxsave(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fxsave64(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fxrstor(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
+		template <size_t n> static AnalyzeInfo fxrstor64(Param p, uint64_t disp = 0, Prefix sr = Prefix::NoPrefix);
 
 	};
 
