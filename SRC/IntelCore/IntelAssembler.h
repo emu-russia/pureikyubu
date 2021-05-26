@@ -500,6 +500,13 @@ namespace IntelCore
 		template <size_t n> static AnalyzeInfo f2xm1();
 		template <size_t n> static AnalyzeInfo fyl2x();
 		template <size_t n> static AnalyzeInfo fyl2xp1();
+		template <size_t n> static AnalyzeInfo fld1();
+		template <size_t n> static AnalyzeInfo fldl2t();
+		template <size_t n> static AnalyzeInfo fldl2e();
+		template <size_t n> static AnalyzeInfo fldpi();
+		template <size_t n> static AnalyzeInfo fldlg2();
+		template <size_t n> static AnalyzeInfo fldln2();
+		template <size_t n> static AnalyzeInfo fldz();
 
 
 	};

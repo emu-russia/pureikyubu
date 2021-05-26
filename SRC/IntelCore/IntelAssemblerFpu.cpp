@@ -853,6 +853,55 @@ namespace IntelCore
 				break;
 			}
 
+			case Instruction::fld1:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xE8);
+				break;
+			}
+
+			case Instruction::fldl2t:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xE9);
+				break;
+			}
+
+			case Instruction::fldl2e:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xEA);
+				break;
+			}
+
+			case Instruction::fldpi:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xEB);
+				break;
+			}
+
+			case Instruction::fldlg2:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xEC);
+				break;
+			}
+
+			case Instruction::fldln2:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xED);
+				break;
+			}
+
+			case Instruction::fldz:
+			{
+				OneByte(info, 0xD9);
+				OneByte(info, 0xEE);
+				break;
+			}
+
 			default:
 				throw "Invalid instruction";
 		}
