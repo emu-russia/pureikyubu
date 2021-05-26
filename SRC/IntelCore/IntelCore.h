@@ -7,4 +7,5 @@
 #pragma once
 
 #include "IntelAnalyzer.h"
+#include "IntelAssemblerFpu.h"
 #include "IntelAssembler.h"

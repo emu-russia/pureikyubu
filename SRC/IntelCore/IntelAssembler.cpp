@@ -140,6 +140,14 @@ namespace IntelCore
 			case Param::RegEnd:
 			case Param::SregStart:
 			case Param::SregEnd:
+			case Param::CRStart:
+			case Param::CREnd:
+			case Param::DRStart:
+			case Param::DREnd:
+			case Param::TRStart:
+			case Param::TREnd:
+			case Param::X87Start:
+			case Param::X87End:
 			case Param::MemStart:
 			case Param::Mem16Start:
 			case Param::Mem16End:
@@ -2906,6 +2914,12 @@ namespace IntelCore
 
 		AssemblePrefixes(info);
 
+		if (IsFpuInstr(info.instr))
+		{
+			FpuAssemble(16, info);
+			return;
+		}
+
 		switch (info.instr)
 		{
 			// Instructions using ModRM / with an immediate operand
@@ -4635,6 +4649,9 @@ namespace IntelCore
 			case Instruction::outsb: OneByte(info, 0x6e); break;
 			case Instruction::outsw: OneByte(info, 0x6f); break;
 			case Instruction::outsd: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
+
+			default:
+				throw "Invalid instruction";
 		}
 	}
 
@@ -4652,6 +4669,12 @@ namespace IntelCore
 		}
 
 		AssemblePrefixes(info);
+
+		if (IsFpuInstr(info.instr))
+		{
+			FpuAssemble(32, info);
+			return;
+		}
 
 		switch (info.instr)
 		{
@@ -6382,6 +6405,9 @@ namespace IntelCore
 			case Instruction::outsb: OneByte(info, 0x6e); break;
 			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 			case Instruction::outsd: OneByte(info, 0x6f); break;
+
+			default:
+				throw "Invalid instruction";
 		}
 	}
 
@@ -6399,6 +6425,12 @@ namespace IntelCore
 		}
 
 		AssemblePrefixes(info);
+
+		if (IsFpuInstr(info.instr))
+		{
+			FpuAssemble(64, info);
+			return;
+		}
 
 		switch (info.instr)
 		{
@@ -8109,6 +8141,9 @@ namespace IntelCore
 			case Instruction::outsb: OneByte(info, 0x6e); break;
 			case Instruction::outsw: AddPrefixByte(info, 0x66); OneByte(info, 0x6f); break;
 			case Instruction::outsd: AddPrefixByte(info, 0x67); OneByte(info, 0x6f); break;
+
+			default:
+				throw "Invalid instruction";
 		}
 	}
 

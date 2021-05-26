@@ -37,7 +37,7 @@ These instruction format extensions can also be viewed as layers and implemented
 |---|---|
 |Instructions using ModRM (some instructions with an immediate operand also fall into this category)|ADC, ADD, AND, ARPL, BOUND, BSF, BSR, BT, BTC, BTR, BTS, CALL (in same segment), CALL (in other segment), CMP, CMPXCHG, DEC, DIV, IDIV, IMUL, INC, INVLPG, INVPCID, JMP (to same segment), JMP (to other segment), LAR, LDS, LEA, LES, LFS, LGDT, LGS, LIDT, LLDT, LMSW, LSL, LSS, LTR, MOV, MOVBE, MOVSX/MOVSXD, MOVZX, MUL, NOP (Multi-byte), NOT, OR, POP, PUSH, RCL, RCR, ROL, ROR, SAL, SAR, SBB, SETcc, SGDT, SHL, SHLD, SHR, SHRD, SIDT, SLDT, SMSW, STR, SUB, TEST, UD0, UD1, VERR, VERW, XADD, XCHG, XOR|
 |Simple encoding instructions|BSWAP, IN, INT n, Jcc, JCXZ/JECXZ/JRCXZ, LOOP, LOOPZ/LOOPE, LOOPNZ/LOOPNE, MOV (Control Registers), MOV (Debug Registers), MOV (Test Registers), OUT, POP (Segment Register), PUSH (Segment Register), RET (to same segment), RET (to other segment)|
-|One or more byte instructions|AAA, AAD, AAM, AAS, CBW, CDQ, CDQE, CLC, CLD, CLI, CLTS, CMC, (REP/REPE/REPNE) CMPSB/CMPSW/CMPSD/CMPSQ, CPUID, CQO, CWD, CWDE, DAA, DAS, HLT, (REP/REPE/REPNE) INSB/INSW/INSD, INT 3, INTO, INT 1, INVD, IRET/IRETD/IRETQ, LAHF, LEAVE, (REP/REPE/REPNE) LODSB/LODSW/LODSD/LODSQ, (REP/REPE/REPNE) MOVSB/MOVSW/MOVSD/MOVSQ, NOP, (REP/REPE/REPNE) OUTSB/OUTSW/OUTSD, POPA/POPAD, POPF/POPFD/POPFQ, PUSHA/PUSHAD, PUSHF/PUSHFD/PUSHFQ, RDMSR, RDPMC, RDTSC, RDTSCP, RSM, SAHF, (REP/REPE/REPNE) SCASB/SCASW/SCASD/SCASQ, STC, STD, STI, (REP/REPE/REPNE) STOSB/STOSW/STOSD/STOSQ, SWAPGS, SYSCALL, SYSRET/SYSRETQ, UD2, WAIT, WBINVD, WRMSR, XLAT/XLATB|
+|One or more byte instructions|AAA, AAD, AAM, AAS, CBW, CDQ, CDQE, CLC, CLD, CLI, CLTS, CMC, (REP/REPE/REPNE) CMPSB/CMPSW/CMPSD/CMPSQ, CPUID, CQO, CWD, CWDE, DAA, DAS, HLT, (REP/REPE/REPNE) INSB/INSW/INSD, INT 3, INTO, INT 1, INVD, IRET/IRETD/IRETQ, LAHF, LEAVE, (REP/REPE/REPNE) LODSB/LODSW/LODSD/LODSQ, (REP/REPE/REPNE) MOVSB/MOVSW/MOVSD/MOVSQ, NOP, (REP/REPE/REPNE) OUTSB/OUTSW/OUTSD, POPA/POPAD, POPF/POPFD/POPFQ, PUSHA/PUSHAD, PUSHF/PUSHFD/PUSHFQ, RDMSR, RDPMC, RDTSC, RDTSCP, RSM, SAHF, (REP/REPE/REPNE) SCASB/SCASW/SCASD/SCASQ, STC, STD, STI, (REP/REPE/REPNE) STOSB/STOSW/STOSD/STOSQ, SWAPGS, SYSCALL, SYSRET/SYSRETQ, UD2, WAIT/FWAIT, WBINVD, WRMSR, XLAT/XLATB|
 
 ## The situation with prefixes
 
@@ -52,6 +52,8 @@ So to get the complete set of bytes of an instruction you have to combine `prefi
 This is done because generally speaking the Intel instruction format allows you to stack 100500 prefixes. Therefore an explicit division is used for convenience.
 
 If the generation of instruction prefixes results in 2 prefixes 0x66 and 0x67 simultaneously, the assembler compiles them in order "\x66\x67".
+
+REX/VEX and similar prefixes are not considered as prefixes because they have a special purpose and are essentially part of the instruction opcode.
 
 ## ModRM / SIB
 
@@ -73,6 +75,8 @@ Thus, `Param` fully defines all possible combinations that can be specified usin
 
 When compiling an instruction, the assembler takes into account the order of the parameters and compiles the corresponding opcodes and ModRM/SIB/REX bytes and the necessary prefixes (for example, if the specified instruction is compiled in 16-bit mode, the corresponding prefix will be added). 
 
+For each ModRM variation, the component contains tangled procedures that collect `AnalyzeInfo` parameters into the corresponding raw bytes. I deliberately divided them into special cases, because the general handler of all ModRM variations is beyond human mind. If someday aliens will reverse engineer Intel processors they'll have to supply a lot of ice for their butts.
+
 ## PtrHint
 
 Some Intel instructions are designed in such a way that it is impossible to understand the size of the addressed operand from a parameter.
@@ -85,3 +89,19 @@ dec dword ptr [eax]		; "\xff\x08"
 ```
 
 To explicitly indicate the size of the operand the `AnalyzeInfo` structure contains the `ptrHint` property.
+
+## x87 FPU Instructions
+
+FPU instructions are Layer2 in terms of this component.
+
+A list of FPU instructions for quick reference is shown in the table.
+
+|Category|List|
+|---|---|
+|Data Transfer|FLD, FST, FSTP, FILD, FIST, FISTP, FBLD, FBSTP, FXCH, FCMOVE, FCMOVNE, FCMOVB, FCMOVBE, FCMOVNB, FCMOVNBE, FCMOVU, FCMOVNU|
+|Basic Arithmetic|FADD, FADDP, FIADD, FSUB, FSUBP, FISUB, FSUBR, FSUBRP, FISUBR, FMUL, FMULP, FIMUL, FDIV, FDIVP, FIDIV, FDIVR, FDIVRP, FIDIVR, FPREM, FPREM1, FABS, FCHS, FRNDINT, FSCALE, FSQRT, FXTRACT|
+|Comparison|FCOM, FCOMP, FCOMPP, FUCOM, FUCOMP, FUCOMPP, FICOM, FICOMP, FCOMI, FUCOMI, FCOMIP, FUCOMIP, FTST, FXAM|
+|Transcendental|FSIN, FCOS, FSINCOS, FPTAN, FPATAN, F2XM1, FYL2X, FYL2XP1|
+|Load Constants|FLD1, FLDZ, FLDPI, FLDL2E, FLDLN2, FLDL2T, FLDLG2|
+|Control|FINCSTP, FDECSTP, FFREE, FINIT, FNINIT, FCLEX, FNCLEX, FSTCW, FNSTCW, FLDCW, FSTENV, FNSTENV, FLDENV, FSAVE, FNSAVE, FRSTOR, FSTSW, FNSTSW, FNOP|
+|State Management|FXSAVE/FXSAVE64, FXRSTOR/FXRSTOR64|

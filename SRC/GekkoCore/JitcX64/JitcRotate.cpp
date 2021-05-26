@@ -24,7 +24,10 @@ namespace Gekko
 
 		// Apply the [MB;ME] mask and write the result to rA
 
-		seg->Write(IntelAssembler::_and<64>(IntelCore::Param::eax, IntelCore::Param::imm32, 0, mask));
+		if (mask != 0xffffffff)
+		{
+			seg->Write(IntelAssembler::_and<64>(IntelCore::Param::eax, IntelCore::Param::imm32, 0, mask));
+		}
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::m_rsi_disp8, IntelCore::Param::eax, (uint64_t)info->paramBits[0] << 2));
 
 		AddPc(seg);
