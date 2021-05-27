@@ -265,7 +265,7 @@ namespace Gekko
 			case Instruction::ps_merge10: PsMerge10(info, seg); break;
 			case Instruction::ps_merge11: PsMerge11(info, seg); break;
 
-			case Instruction::psq_l: PSQLoad(info, seg); break;
+			//case Instruction::psq_l: PSQLoad(info, seg); break;
 
 			default:
 				FallbackStub(info, seg);
