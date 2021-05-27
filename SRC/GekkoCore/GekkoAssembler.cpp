@@ -3514,7 +3514,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfd;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
@@ -3528,7 +3528,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfdu;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
@@ -3542,7 +3542,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfdux;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::Reg;
 		info.paramBits[1] = ra;
@@ -3557,7 +3557,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfdx;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::Reg;
 		info.paramBits[1] = ra;
@@ -3572,7 +3572,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfs;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
@@ -3586,7 +3586,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfsu;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
@@ -3600,7 +3600,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfsux;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::Reg;
 		info.paramBits[1] = ra;
@@ -3615,7 +3615,7 @@ namespace Gekko
 	{
 		AnalyzeInfo info = { 0 };
 		info.instr = Instruction::lfsx;
-		info.param[0] = Param::Reg;
+		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
 		info.param[1] = Param::Reg;
 		info.paramBits[1] = ra;
@@ -3892,282 +3892,629 @@ namespace Gekko
 	uint32_t GekkoAssembler::mcrf(size_t d, size_t s)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mcrf;
+		info.param[0] = Param::Crf;
+		info.paramBits[0] = d;
+		info.param[1] = Param::Crf;
+		info.paramBits[1] = s;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mcrfs(size_t d, size_t s)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mcrfs;
+		info.param[0] = Param::Crf;
+		info.paramBits[0] = d;
+		info.param[1] = Param::Crf;
+		info.paramBits[1] = s;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mcrxr(size_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mcrxr;
+		info.param[0] = Param::Crf;
+		info.paramBits[0] = d;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mfcr(size_t rd)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mfcr;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mffs(size_t rd)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mffs;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rd;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mffs_d(size_t rd)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mffs_d;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rd;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mfmsr(size_t rd)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mfmsr;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mfspr(size_t rd, size_t spr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mfspr;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Num;
+		info.paramBits[1] = spr;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mfsr(size_t rd, size_t sr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mfsr;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Num;
+		info.paramBits[1] = sr;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mfsrin(size_t rd, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mfsrin;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rb;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mftb(size_t rd, size_t tbr)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mftb;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Num;
+		info.paramBits[1] = tbr;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtcrf(size_t crm, size_t rs)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtcrf;
+		info.param[0] = Param::CRM;
+		info.paramBits[0] = crm;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsb0(size_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsb0;
+		info.param[0] = Param::Crb;
+		info.paramBits[0] = d;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsb0_d(size_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsb0_d;
+		info.param[0] = Param::Crb;
+		info.paramBits[0] = d;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsb1(size_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsb1;
+		info.param[0] = Param::Crb;
+		info.paramBits[0] = d;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsb1_d(size_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsb1_d;
+		info.param[0] = Param::Crb;
+		info.paramBits[0] = d;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsf(size_t fm, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsf;
+		info.param[0] = Param::FM;
+		info.paramBits[0] = fm;
+		info.param[1] = Param::FReg;
+		info.paramBits[1] = rb;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsf_d(size_t fm, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsf_d;
+		info.param[0] = Param::FM;
+		info.paramBits[0] = fm;
+		info.param[1] = Param::FReg;
+		info.paramBits[1] = rb;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsfi(size_t d, size_t imm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsfi;
+		info.param[0] = Param::Crf;
+		info.paramBits[0] = d;
+		info.param[1] = Param::Num;
+		info.paramBits[1] = imm;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtfsfi_d(size_t d, size_t imm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtfsfi_d;
+		info.param[0] = Param::Crf;
+		info.paramBits[0] = d;
+		info.param[1] = Param::Num;
+		info.paramBits[1] = imm;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtmsr(size_t rs)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtmsr;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtspr(size_t spr, size_t rs)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtspr;
+		info.param[0] = Param::Num;
+		info.paramBits[0] = spr;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtsr(size_t sr, size_t rs)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtsr;
+		info.param[0] = Param::Num;
+		info.paramBits[0] = sr;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mtsrin(size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mtsrin;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rb;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mulhw(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mulhw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mulhw_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mulhw_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mulhwu(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mulhwu;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mulhwu_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mulhwu_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mulli(size_t rd, size_t ra, int16_t simm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mulli;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Simm;
+		info.Imm.Signed = simm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mullw(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mullw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mullw_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mullw_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mullwo(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mullwo;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::mullwo_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::mullwo_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nand(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nand;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nand_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nand_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::neg(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::neg;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::neg_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::neg_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nego(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nego;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nego_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nego_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nor(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nor;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::nor_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::nor_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::_or(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_or;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::or_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::or_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::orc(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::orc;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::orc_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::orc_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::ori(size_t ra, size_t rs, uint16_t uimm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::ori;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Uimm;
+		info.Imm.Unsigned = uimm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::oris(size_t ra, size_t rs, uint16_t uimm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::oris;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Uimm;
+		info.Imm.Unsigned = uimm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
@@ -4554,36 +4901,114 @@ namespace Gekko
 	uint32_t GekkoAssembler::rlwimi(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwimi;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::rlwimi_d(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwimi_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::rlwinm(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwinm;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::rlwinm_d(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwinm_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::rlwnm(size_t ra, size_t rs, size_t rb, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwnm;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::rlwnm_d(size_t ra, size_t rs, size_t rb, size_t mb, size_t me)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::rlwnm_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.param[3] = Param::Num;
+		info.paramBits[3] = mb;
+		info.param[4] = Param::Num;
+		info.paramBits[4] = me;
+		info.numParam = 5;
+		Assemble(info);
 		return info.instrBits;
 	}
 
@@ -4598,336 +5023,813 @@ namespace Gekko
 	uint32_t GekkoAssembler::slw(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::slw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::slw_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::slw_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sraw(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sraw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sraw_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sraw_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::srawi(size_t ra, size_t rs, size_t sh)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::srawi;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::srawi_d(size_t ra, size_t rs, size_t sh)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::srawi_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = sh;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::srw(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::srw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::srw_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::srw_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stb(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stb;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stbu(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stbu;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stbux(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stbux;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stbx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stbx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfd(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfd;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfdu(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfdu;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfdux(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfdux;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfdx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfdx;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfiwx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfiwx;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfs(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfs;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfsu(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfsu;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfsux(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfsux;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stfsx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stfsx;
+		info.param[0] = Param::FReg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sth(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sth;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sthbrx(size_t rs, size_t ra, uint16_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sthbrx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sthu(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sthu;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sthux(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sthux;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::sthx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::sthx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stmw(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stmw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stswi(size_t rs, size_t ra, uint16_t nb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stswi;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Num;
+		info.paramBits[2] = nb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stswx(size_t rs, size_t ra, uint16_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stswx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stw(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stw;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stwbrx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stwbrx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stwcx_d(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stwcx_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stwu(size_t rs, size_t ra, uint16_t d)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stwu;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::RegOffset;
+		info.paramBits[1] = ra;
+		info.Imm.Unsigned = d;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stwux(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stwux;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::stwx(size_t rs, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::stwx;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rs;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subf(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subf;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subf_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subf_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfo(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfo;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfo_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfo_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfc(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfc;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfc_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfc_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfco(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfco;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfco_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfco_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfe(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfe;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfe_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfe_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfeo(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfeo;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfeo_d(size_t rd, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfeo_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfic(size_t rd, size_t ra, int16_t simm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfic;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Simm;
+		info.Imm.Signed = simm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfme(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfme;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfme_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfme_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfmeo(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfmeo;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfmeo_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfmeo_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfze(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfze;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfze_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfze_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfzeo(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfzeo;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::subfzeo_d(size_t rd, size_t ra)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::subfzeo_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rd;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.numParam = 2;
+		Assemble(info);
 		return info.instrBits;
 	}
 
@@ -4942,6 +5844,11 @@ namespace Gekko
 	uint32_t GekkoAssembler::tlbie(size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::tlbie;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = rb;
+		info.numParam = 1;
+		Assemble(info);
 		return info.instrBits;
 	}
 
@@ -4956,36 +5863,90 @@ namespace Gekko
 	uint32_t GekkoAssembler::tw(size_t to, size_t ra, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::tw;
+		info.param[0] = Param::Num;
+		info.paramBits[0] = to;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::twi(size_t to, size_t ra, int16_t simm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::twi;
+		info.param[0] = Param::Num;
+		info.paramBits[0] = to;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = ra;
+		info.param[2] = Param::Simm;
+		info.Imm.Signed = simm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::_xor(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::_xor;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::xor_d(size_t ra, size_t rs, size_t rb)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::xor_d;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Reg;
+		info.paramBits[2] = rb;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::xori(size_t ra, size_t rs, uint16_t uimm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::xori;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Uimm;
+		info.Imm.Unsigned = uimm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
 	uint32_t GekkoAssembler::xoris(size_t ra, size_t rs, uint16_t uimm)
 	{
 		AnalyzeInfo info = { 0 };
+		info.instr = Instruction::xoris;
+		info.param[0] = Param::Reg;
+		info.paramBits[0] = ra;
+		info.param[1] = Param::Reg;
+		info.paramBits[1] = rs;
+		info.param[2] = Param::Uimm;
+		info.Imm.Unsigned = uimm;
+		info.numParam = 3;
+		Assemble(info);
 		return info.instrBits;
 	}
 
