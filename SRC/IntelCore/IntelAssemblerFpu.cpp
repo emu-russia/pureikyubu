@@ -68,14 +68,44 @@ namespace IntelCore
 
 		// Compile the resulting instruction, mode prefixes and possible displacement
 
-		if ((info.ptrHint == PtrHint::M28Ptr || info.ptrHint == PtrHint::M108Ptr) && bits == 16)
+		switch (bits)
 		{
-			AddPrefixByte(info, 0x67);
-		}
+			case 16:
+				if (IsMem32(info.params[0]) || info.ptrHint == PtrHint::M28Ptr || info.ptrHint == PtrHint::M108Ptr)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
 
-		if ((info.ptrHint == PtrHint::M14Ptr || info.ptrHint == PtrHint::M94Ptr) && bits != 16)
-		{
-			AddPrefixByte(info, 0x67);
+			case 32:
+				if (IsMem16(info.params[0]) || info.ptrHint == PtrHint::M14Ptr || info.ptrHint == PtrHint::M94Ptr)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem64(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
+
+			case 64:
+				if (IsMem32(info.params[0]))
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (info.params[0] == Param::m_eip_disp32)
+				{
+					AddPrefixByte(info, 0x67);
+				}
+				else if (IsMem16(info.params[0]))
+				{
+					Invalid();
+				}
+				break;
 		}
 
 		bool rexRequired = rm >= 8 || index >= 8 || base >= 8;
@@ -164,16 +194,14 @@ namespace IntelCore
 				throw "Invalid parameters";
 			}
 
-			if (!IsFpuReg(info.params[0]))
+			if (IsFpuReg(info.params[0]))
 			{
-				throw "Invalid parameters";
+				size_t reg;
+				GetFpuReg(info.params[0], reg);
+				OneByte(info, feature.FpuForm_STn_Opcode1);
+				OneByte(info, feature.FpuForm_STn_Opcode2 | (reg & 7));
+				return;
 			}
-
-			size_t reg;
-			GetFpuReg(info.params[0], reg);
-			OneByte(info, feature.FpuForm_STn_Opcode1);
-			OneByte(info, feature.FpuForm_STn_Opcode2 | (reg & 7));
-			return;
 		}
 
 		// In the case of FPU instructions, PtrHint selects the opcode used. Changing the operand size makes no sense here.
