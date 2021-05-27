@@ -278,8 +278,11 @@ namespace Gekko
 
     uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
     {
-        //return EffectiveToPhysicalNoMmu(ea, type, WIMG);
+#if GEKKOCORE_SIMPLE_MMU
+        return EffectiveToPhysicalNoMmu(ea, type, WIMG);
+#else
         return EffectiveToPhysicalMmu(ea, type, WIMG);
+#endif
     }
 
 }
