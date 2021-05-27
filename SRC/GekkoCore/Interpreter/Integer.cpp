@@ -5,6 +5,11 @@
 namespace Gekko
 {
 
+	// We use macro programming to compress the source code.
+	// Now I am not very willing to use such things.
+
+	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
+
 #pragma region "ALU Helpers"
 
 	void Interpreter::ADDXER(uint32_t a, AnalyzeInfo& info)
@@ -16,7 +21,7 @@ namespace Gekko
 		res = AddCarry(a, c);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 	}
 
@@ -29,7 +34,7 @@ namespace Gekko
 		res = AddCarry(a, c);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		COMPUTE_CR0(res);
 	}
@@ -44,7 +49,7 @@ namespace Gekko
 		res = AddXer2(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 	}
 
@@ -58,7 +63,7 @@ namespace Gekko
 		res = AddXer2(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		COMPUTE_CR0(res);
 	}
@@ -68,15 +73,15 @@ namespace Gekko
 	// rd = ra + rb
 	void Interpreter::add(AnalyzeInfo& info)
 	{
-		core->regs.gpr[info.paramBits[0]] = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
+		GPR(0) = GPR(1) + GPR(2);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra + rb, CR0
 	void Interpreter::add_d(AnalyzeInfo& info)
 	{
-		uint32_t res = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
-		core->regs.gpr[info.paramBits[0]] = res;
+		uint32_t res = GPR(1) + GPR(2);
+		GPR(0) = res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -84,13 +89,13 @@ namespace Gekko
 	// rd = ra + rb, XER
 	void Interpreter::addo(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool ovf = false;
 
 		res = AddOverflow(a, b);
 		ovf = OverflowBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (ovf)
 		{
 			SET_XER_OV;
@@ -103,13 +108,13 @@ namespace Gekko
 	// rd = ra + rb, CR0, XER
 	void Interpreter::addo_d(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool ovf = false;
 
 		res = AddOverflow(a, b);
 		ovf = OverflowBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (ovf)
 		{
 			SET_XER_OV;
@@ -123,13 +128,13 @@ namespace Gekko
 	// rd = ra + rb, XER[CA]
 	void Interpreter::addc(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		Gekko->regs.pc += 4;
 	}
@@ -137,13 +142,13 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], CR0
 	void Interpreter::addc_d(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
@@ -152,14 +157,14 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], XER[OV]
 	void Interpreter::addco(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool carry = false, ovf = false;
 
 		res = AddCarryOverflow(a, b);
 		carry = CarryBit != 0;
 		ovf = OverflowBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		if (ovf)
 		{
@@ -173,14 +178,14 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], XER[OV], CR0
 	void Interpreter::addco_d(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		bool carry = false, ovf = false;
 
 		res = AddCarryOverflow(a, b);
 		carry = CarryBit != 0;
 		ovf = OverflowBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		if (ovf)
 		{
@@ -195,14 +200,14 @@ namespace Gekko
 	// rd = ra + rb + XER[CA], XER
 	void Interpreter::adde(AnalyzeInfo& info)
 	{
-		ADDXER2(core->regs.gpr[info.paramBits[1]], core->regs.gpr[info.paramBits[2]], info);
+		ADDXER2(GPR(1), GPR(2), info);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra + rb + XER[CA], CR0, XER
 	void Interpreter::adde_d(AnalyzeInfo& info)
 	{
-		ADDXER2D(core->regs.gpr[info.paramBits[1]], core->regs.gpr[info.paramBits[2]], info);
+		ADDXER2D(GPR(1), GPR(2), info);
 		Gekko->regs.pc += 4;
 	}
 
@@ -219,21 +224,21 @@ namespace Gekko
 	// rd = (ra | 0) + SIMM
 	void Interpreter::addi(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->regs.gpr[info.paramBits[0]] = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
-		else core->regs.gpr[info.paramBits[0]] = (int32_t)info.Imm.Signed;
+		if (info.paramBits[1]) GPR(0) = GPR(1) + (int32_t)info.Imm.Signed;
+		else GPR(0) = (int32_t)info.Imm.Signed;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra + SIMM, XER
 	void Interpreter::addic(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = (int32_t)info.Imm.Signed, res;
+		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed, res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		Gekko->regs.pc += 4;
 	}
@@ -241,13 +246,13 @@ namespace Gekko
 	// rd = ra + SIMM, CR0, XER
 	void Interpreter::addic_d(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = (int32_t)info.Imm.Signed, res;
+		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed, res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
@@ -256,22 +261,22 @@ namespace Gekko
 	// rd = (ra | 0) + (SIMM || 0x0000)
 	void Interpreter::addis(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->regs.gpr[info.paramBits[0]] = core->regs.gpr[info.paramBits[1]] + ((int32_t)info.Imm.Signed << 16);
-		else core->regs.gpr[info.paramBits[0]] = (int32_t)info.Imm.Signed << 16;
+		if (info.paramBits[1]) GPR(0) = GPR(1) + ((int32_t)info.Imm.Signed << 16);
+		else GPR(0) = (int32_t)info.Imm.Signed << 16;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra + XER[CA] - 1 (0xffffffff), XER
 	void Interpreter::addme(AnalyzeInfo& info)
 	{
-		ADDXER(core->regs.gpr[info.paramBits[1]] - 1, info);
+		ADDXER(GPR(1) - 1, info);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra + XER[CA] - 1 (0xffffffff), CR0, XER
 	void Interpreter::addme_d(AnalyzeInfo& info)
 	{
-		ADDXERD(core->regs.gpr[info.paramBits[1]] - 1, info);
+		ADDXERD(GPR(1) - 1, info);
 		Gekko->regs.pc += 4;
 	}
 
@@ -295,7 +300,7 @@ namespace Gekko
 	// rd = ra + XER[CA], CR0, XER
 	void Interpreter::addze_d(AnalyzeInfo& info)
 	{
-		ADDXERD(core->regs.gpr[info.paramBits[1]], info);
+		ADDXERD(GPR(1), info);
 		Gekko->regs.pc += 4;
 	}
 
@@ -312,19 +317,19 @@ namespace Gekko
 	// rd = ra / rb (signed)
 	void Interpreter::divw(AnalyzeInfo& info)
 	{
-		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
-		if (b) core->regs.gpr[info.paramBits[0]] = a / b;
+		int32_t a = GPR(1), b = GPR(2);
+		if (b) GPR(0) = a / b;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra / rb (signed), CR0
 	void Interpreter::divw_d(AnalyzeInfo& info)
 	{
-		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		int32_t a = GPR(1), b = GPR(2), res;
 		if (b)
 		{
 			res = a / b;
-			core->regs.gpr[info.paramBits[0]] = res;
+			GPR(0) = res;
 			COMPUTE_CR0(res);
 		}
 		Gekko->regs.pc += 4;
@@ -343,19 +348,19 @@ namespace Gekko
 	// rd = ra / rb (unsigned)
 	void Interpreter::divwu(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
-		if (b) core->regs.gpr[info.paramBits[0]] = a / b;
+		uint32_t a = GPR(1), b = GPR(2);
+		if (b) GPR(0) = a / b;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ra / rb (unsigned), CR0
 	void Interpreter::divwu_d(AnalyzeInfo& info)
 	{
-		uint32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res;
+		uint32_t a = GPR(1), b = GPR(2), res;
 		if (b)
 		{
 			res = a / b;
-			core->regs.gpr[info.paramBits[0]] = res;
+			GPR(0) = res;
 			COMPUTE_CR0(res);
 		}
 		Gekko->regs.pc += 4;
@@ -375,9 +380,9 @@ namespace Gekko
 	// rd = prod[0-31]
 	void Interpreter::mulhw(AnalyzeInfo& info)
 	{
-		int64_t a = (int32_t)core->regs.gpr[info.paramBits[1]], b = (int32_t)core->regs.gpr[info.paramBits[2]], res = a * b;
+		int64_t a = (int32_t)GPR(1), b = (int32_t)GPR(2), res = a * b;
 		res = (res >> 32);
-		core->regs.gpr[info.paramBits[0]] = (int32_t)res;
+		GPR(0) = (int32_t)res;
 		Gekko->regs.pc += 4;
 	}
 
@@ -386,9 +391,9 @@ namespace Gekko
 	// CR0
 	void Interpreter::mulhw_d(AnalyzeInfo& info)
 	{
-		int64_t a = (int32_t)core->regs.gpr[info.paramBits[1]], b = (int32_t)core->regs.gpr[info.paramBits[2]], res = a * b;
+		int64_t a = (int32_t)GPR(1), b = (int32_t)GPR(2), res = a * b;
 		res = (res >> 32);
-		core->regs.gpr[info.paramBits[0]] = (int32_t)res;
+		GPR(0) = (int32_t)res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -397,9 +402,9 @@ namespace Gekko
 	// rd = prod[0-31]
 	void Interpreter::mulhwu(AnalyzeInfo& info)
 	{
-		uint64_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res = a * b;
+		uint64_t a = GPR(1), b = GPR(2), res = a * b;
 		res = (res >> 32);
-		core->regs.gpr[info.paramBits[0]] = (uint32_t)res;
+		GPR(0) = (uint32_t)res;
 		Gekko->regs.pc += 4;
 	}
 
@@ -408,9 +413,9 @@ namespace Gekko
 	// CR0
 	void Interpreter::mulhwu_d(AnalyzeInfo& info)
 	{
-		uint64_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]], res = a * b;
+		uint64_t a = GPR(1), b = GPR(2), res = a * b;
 		res = (res >> 32);
-		core->regs.gpr[info.paramBits[0]] = (uint32_t)res;
+		GPR(0) = (uint32_t)res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -419,7 +424,7 @@ namespace Gekko
 	// rd = prod[16-48]
 	void Interpreter::mulli(AnalyzeInfo& info)
 	{
-		core->regs.gpr[info.paramBits[0]] = core->regs.gpr[info.paramBits[1]] * (int32_t)info.Imm.Signed;
+		GPR(0) = GPR(1) * (int32_t)info.Imm.Signed;
 		Gekko->regs.pc += 4;
 	}
 
@@ -427,9 +432,9 @@ namespace Gekko
 	// rd = prod[16-48]
 	void Interpreter::mullw(AnalyzeInfo& info)
 	{
-		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
+		int32_t a = GPR(1), b = GPR(2);
 		int64_t res = (int64_t)a * (int64_t)b;
-		core->regs.gpr[info.paramBits[0]] = (int32_t)(res & 0x00000000ffffffff);
+		GPR(0) = (int32_t)(res & 0x00000000ffffffff);
 		Gekko->regs.pc += 4;
 	}
 
@@ -438,9 +443,9 @@ namespace Gekko
 	// CR0
 	void Interpreter::mullw_d(AnalyzeInfo& info)
 	{
-		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
+		int32_t a = GPR(1), b = GPR(2);
 		int64_t res = (int64_t)a * (int64_t)b;
-		core->regs.gpr[info.paramBits[0]] = (int32_t)(res & 0x00000000ffffffff);
+		GPR(0) = (int32_t)(res & 0x00000000ffffffff);
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -458,15 +463,15 @@ namespace Gekko
 	// rd = ~ra + 1
 	void Interpreter::neg(AnalyzeInfo& info)
 	{
-		core->regs.gpr[info.paramBits[0]] = ~core->regs.gpr[info.paramBits[1]] + 1;
+		GPR(0) = ~GPR(1) + 1;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + 1, CR0
 	void Interpreter::neg_d(AnalyzeInfo& info)
 	{
-		uint32_t res = ~core->regs.gpr[info.paramBits[1]] + 1;
-		core->regs.gpr[info.paramBits[0]] = res;
+		uint32_t res = ~GPR(1) + 1;
+		GPR(0) = res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -484,15 +489,15 @@ namespace Gekko
 	// rd = ~ra + rb + 1
 	void Interpreter::subf(AnalyzeInfo& info)
 	{
-		core->regs.gpr[info.paramBits[0]] = ~core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]] + 1;
+		GPR(0) = ~GPR(1) + GPR(2) + 1;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + 1, CR0
 	void Interpreter::subf_d(AnalyzeInfo& info)
 	{
-		uint32_t res = ~core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]] + 1;
-		core->regs.gpr[info.paramBits[0]] = res;
+		uint32_t res = ~GPR(1) + GPR(2) + 1;
+		GPR(0) = res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -512,28 +517,28 @@ namespace Gekko
 	// rd = ~ra + rb + 1, XER[CA]
 	void Interpreter::subfc(AnalyzeInfo& info)
 	{
-		uint32_t a = ~core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]] + 1, res;
+		uint32_t a = ~GPR(1), b = GPR(2) + 1, res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
 		if (carry) SET_XER_CA; else RESET_XER_CA;
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + 1, XER[CA], CR0
 	void Interpreter::subfc_d(AnalyzeInfo& info)
 	{
-		uint32_t a = ~core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]] + 1, res;
+		uint32_t a = ~GPR(1), b = GPR(2) + 1, res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
 		if (carry) SET_XER_CA; else RESET_XER_CA;
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		COMPUTE_CR0(res);
 		Gekko->regs.pc += 4;
 	}
@@ -551,14 +556,14 @@ namespace Gekko
 	// rd = ~ra + rb + XER[CA], XER
 	void Interpreter::subfe(AnalyzeInfo& info)
 	{
-		ADDXER2(~core->regs.gpr[info.paramBits[1]], core->regs.gpr[info.paramBits[2]], info);
+		ADDXER2(~GPR(1), GPR(2), info);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + XER[CA], CR0, XER
 	void Interpreter::subfe_d(AnalyzeInfo& info)
 	{
-		ADDXER2D(~core->regs.gpr[info.paramBits[1]], core->regs.gpr[info.paramBits[2]], info);
+		ADDXER2D(~GPR(1), GPR(2), info);
 		Gekko->regs.pc += 4;
 	}
 
@@ -575,13 +580,13 @@ namespace Gekko
 	// rd = ~RRA + SIMM + 1, XER
 	void Interpreter::subfic(AnalyzeInfo& info)
 	{
-		uint32_t a = ~core->regs.gpr[info.paramBits[1]], b = (int32_t)info.Imm.Signed + 1, res;
+		uint32_t a = ~GPR(1), b = (int32_t)info.Imm.Signed + 1, res;
 		bool carry = false;
 
 		res = AddCarry(a, b);
 		carry = CarryBit != 0;
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		if (carry) SET_XER_CA; else RESET_XER_CA;
 		Gekko->regs.pc += 4;
 	}
@@ -589,14 +594,14 @@ namespace Gekko
 	// rd = ~ra + XER[CA] - 1, XER
 	void Interpreter::subfme(AnalyzeInfo& info)
 	{
-		ADDXER(~core->regs.gpr[info.paramBits[1]] - 1, info);
+		ADDXER(~GPR(1) - 1, info);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + XER[CA] - 1, CR0, XER
 	void Interpreter::subfme_d(AnalyzeInfo& info)
 	{
-		ADDXERD(~core->regs.gpr[info.paramBits[1]] - 1, info);
+		ADDXERD(~GPR(1) - 1, info);
 		Gekko->regs.pc += 4;
 	}
 
@@ -613,14 +618,14 @@ namespace Gekko
 	// rd = ~ra + XER[CA], XER
 	void Interpreter::subfze(AnalyzeInfo& info)
 	{
-		ADDXER(~core->regs.gpr[info.paramBits[1]], info);
+		ADDXER(~GPR(1), info);
 		Gekko->regs.pc += 4;
 	}
 
 	// rd = ~ra + XER[CA], CR0, XER
 	void Interpreter::subfze_d(AnalyzeInfo& info)
 	{
-		ADDXERD(~core->regs.gpr[info.paramBits[1]], info);
+		ADDXERD(~GPR(1), info);
 		Gekko->regs.pc += 4;
 	}
 
