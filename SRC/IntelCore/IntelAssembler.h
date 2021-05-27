@@ -170,6 +170,7 @@ namespace IntelCore
 		static void HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode);
 
 		static bool IsFpuInstr(Instruction instr);
+		static void HandleModRmFpu(AnalyzeInfo& info, size_t bits, uint8_t opcode, uint8_t opcodeReg, uint8_t extendedOpcode);
 		static void ProcessFpuInstr(AnalyzeInfo& info, size_t bits, FpuInstrFeatures& feature);
 		static void FpuAssemble(size_t bits, AnalyzeInfo& info);
 

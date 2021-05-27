@@ -509,7 +509,7 @@ namespace IntelCore
 
 	void IntelAssembler::GetMod(Param p, size_t& mod)
 	{
-		if (IsReg(p))
+		if (IsReg(p) || IsFpuReg(p))
 		{
 			mod = 3;
 			return;
@@ -582,6 +582,11 @@ namespace IntelCore
 		if (IsReg(p))
 		{
 			GetReg(p, rm);
+			return;
+		}
+		else if (IsFpuReg(p))
+		{
+			GetFpuReg(p, rm);
 			return;
 		}
 		else if (IsSib(p))

@@ -33,9 +33,242 @@ namespace IntelCore
 		return Instruction::FpuInstrStart < instr && instr < Instruction::FpuInstrEnd;
 	}
 
+	/// <summary>
+	/// A special version of the ModRM handler for FPU instructions.
+	/// </summary>
+	void IntelAssembler::HandleModRmFpu(AnalyzeInfo& info, size_t bits, uint8_t opcode, uint8_t opcodeReg, uint8_t extendedOpcode)
+	{
+		size_t mod = 0, reg = 0, rm = 0;
+		size_t scale = 0, index = 0, base = 0;
+
+		// Extract and check required information from parameters 
+
+		if (IsReg(info.params[0]))
+		{
+			throw "Invalid parameter";
+		}
+
+		if (IsMem64(info.params[0]) && bits != 64)
+		{
+			throw "Invalid parameter";
+		}
+
+		reg = opcodeReg;
+		GetMod(info.params[0], mod);
+		GetRm(info.params[0], rm);
+
+		bool sibRequired = IsSib(info.params[0]);
+
+		if (sibRequired)
+		{
+			GetSS(info.params[0], scale);
+			GetIndex(info.params[0], index);
+			GetBase(info.params[0], base);
+		}
+
+		// Compile the resulting instruction, mode prefixes and possible displacement
+
+		if ((info.ptrHint == PtrHint::M28Ptr || info.ptrHint == PtrHint::M108Ptr) && bits == 16)
+		{
+			AddPrefixByte(info, 0x67);
+		}
+
+		if ((info.ptrHint == PtrHint::M14Ptr || info.ptrHint == PtrHint::M94Ptr) && bits != 16)
+		{
+			AddPrefixByte(info, 0x67);
+		}
+
+		bool rexRequired = rm >= 8 || index >= 8 || base >= 8;
+
+		bool fxSaveRstor64 = info.instr == Instruction::fxsave64 || info.instr == Instruction::fxrstor64;
+
+		if (rexRequired && (bits != 64 || !fxSaveRstor64))
+		{
+			Invalid();
+		}
+
+		if (rexRequired)
+		{
+			int REX_W = 1;
+			int REX_R = 0;
+			int REX_X = sibRequired ? ((index >= 8) ? 1 : 0) : 0;
+			int REX_B = sibRequired ? ((base >= 8) ? 1 : 0) : ((rm >= 8) ? 1 : 0);
+			OneByte(info, 0x40 | (REX_W << 3) | (REX_R << 2) | (REX_X << 1) | REX_B);
+		}
+
+		if (extendedOpcode)
+		{
+			OneByte(info, extendedOpcode);
+		}
+
+		OneByte(info, opcode);
+
+		uint8_t modRmByte = ((mod & 3) << 6) | ((reg & 7) << 3) | (rm & 7);
+		OneByte(info, modRmByte);
+
+		if (sibRequired)
+		{
+			uint8_t sibByte = ((scale & 3) << 6) | ((index & 7) << 3) | (base & 7);
+			OneByte(info, sibByte);
+		}
+
+		if (IsMemDisp8(info.params[0])) OneByte(info, info.Disp.disp8);
+		else if (IsMemDisp16(info.params[0])) AddUshort(info, info.Disp.disp16);
+		else if (IsMemDisp32(info.params[0])) AddUlong(info, info.Disp.disp32);
+	}
+
 	void IntelAssembler::ProcessFpuInstr(AnalyzeInfo& info, size_t bits, FpuInstrFeatures& feature)
 	{
+		if ((feature.forms & FpuForm_ToST0) != 0)
+		{
+			if (info.numParams != 2)
+			{
+				throw "Invalid parameters";
+			}
 
+			if (info.params[0] != Param::st0 || !IsFpuReg(info.params[1]))
+			{
+				throw "Invalid parameters";
+			}
+
+			size_t reg;
+			GetFpuReg(info.params[0], reg);
+			OneByte(info, feature.FpuForm_ToST0_Opcode1);
+			OneByte(info, feature.FpuForm_ToST0_Opcode2 | (reg & 7));
+			return;
+		}
+
+		if ((feature.forms & FpuForm_FromST0) != 0)
+		{
+			if (info.numParams != 2)
+			{
+				throw "Invalid parameters";
+			}
+
+			if (!IsFpuReg(info.params[0]) || info.params[1] != Param::st0)
+			{
+				throw "Invalid parameters";
+			}
+
+			size_t reg;
+			GetFpuReg(info.params[1], reg);
+			OneByte(info, feature.FpuForm_FromST0_Opcode1);
+			OneByte(info, feature.FpuForm_FromST0_Opcode2 | (reg & 7));
+			return;
+		}
+
+		if ((feature.forms & FpuForm_STn) != 0)
+		{
+			if (info.numParams != 1)
+			{
+				throw "Invalid parameters";
+			}
+
+			if (!IsFpuReg(info.params[0]))
+			{
+				throw "Invalid parameters";
+			}
+
+			size_t reg;
+			GetFpuReg(info.params[0], reg);
+			OneByte(info, feature.FpuForm_STn_Opcode1);
+			OneByte(info, feature.FpuForm_STn_Opcode2 | (reg & 7));
+			return;
+		}
+
+		// In the case of FPU instructions, PtrHint selects the opcode used. Changing the operand size makes no sense here.
+
+		if ((feature.forms & FpuForm_M32FP) != 0)
+		{
+			if (info.ptrHint == PtrHint::DwordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M32FP_Opcode, feature.FpuForm_M32FP_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M64FP) != 0)
+		{
+			if (info.ptrHint == PtrHint::QwordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M64FP_Opcode, feature.FpuForm_M64FP_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M80FP) != 0)
+		{
+			if (info.ptrHint == PtrHint::XwordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M80FP_Opcode, feature.FpuForm_M80FP_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M80BCD) != 0)
+		{
+			HandleModRmFpu(info, bits, feature.FpuForm_M80BCD_Opcode, feature.FpuForm_M80BCD_RegOpcode, 0);
+			return;
+		}
+
+		if ((feature.forms & FpuForm_M16INT) != 0)
+		{
+			if (info.ptrHint == PtrHint::WordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M16INT_Opcode, feature.FpuForm_M16INT_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M32INT) != 0)
+		{
+			if (info.ptrHint == PtrHint::DwordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M32INT_Opcode, feature.FpuForm_M32INT_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M64INT) != 0)
+		{
+			if (info.ptrHint == PtrHint::QwordPtr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M64INT_Opcode, feature.FpuForm_M64INT_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M2Byte) != 0)
+		{
+			HandleModRmFpu(info, bits, feature.FpuForm_M2Byte_Opcode, feature.FpuForm_M2Byte_RegOpcode, 0);
+			return;
+		}
+
+		if ((feature.forms & FpuForm_M14_28Byte) != 0)
+		{
+			if (info.ptrHint == PtrHint::M14Ptr || info.ptrHint == PtrHint::M28Ptr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M14_28Byte_Opcode, feature.FpuForm_M14_28Byte_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M94_108Byte) != 0)
+		{
+			if (info.ptrHint == PtrHint::M94Ptr || info.ptrHint == PtrHint::M108Ptr)
+			{
+				HandleModRmFpu(info, bits, feature.FpuForm_M94_108Byte_Opcode, feature.FpuForm_M94_108Byte_RegOpcode, 0);
+				return;
+			}
+		}
+
+		if ((feature.forms & FpuForm_M512Byte) != 0)
+		{
+			HandleModRmFpu(info, bits, feature.FpuForm_M512Byte_Opcode, feature.FpuForm_M512Byte_RegOpcode, feature.FpuForm_M512Byte_ExtOpcode);
+			return;
+		}
+
+		throw "Invalid instruction form";
 	}
 
 	void IntelAssembler::FpuAssemble(size_t bits, AnalyzeInfo& info)
