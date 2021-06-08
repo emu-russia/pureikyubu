@@ -9,52 +9,52 @@ namespace Gekko
 
 	void Jitc::Prolog(CodeSegment* seg)
 	{
-		//0:  48 89 5c 24 08          mov    QWORD PTR [rsp+0x8],rbx
-		//5:  48 89 6c 24 10          mov    QWORD PTR [rsp+0x10],rbp
-		//a:  48 89 74 24 18          mov    QWORD PTR [rsp+0x18],rsi
-		//f:  57                      push   rdi
-		//10: 48 83 ec 40             sub    rsp,0x40
+		// mov    QWORD PTR [rsp+0x8],rbx
+		// mov    QWORD PTR [rsp+0x10],rbp
+		// mov    QWORD PTR [rsp+0x18],rsi
+		// push   rdi
+		// sub    rsp,0x40
 
-		seg->Write8(0x48);
-		seg->Write32(0x08245c89);
-		seg->Write8(0x48);
-		seg->Write32(0x10246c89);
-		seg->Write8(0x48);
-		seg->Write32(0x18247489);
-		seg->Write8(0x57);
-		seg->Write16(0x8348);
-		seg->Write16(0x40ec);
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::sib_none_rsp_disp8, IntelCore::Param::rbx, 0x8));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::sib_none_rsp_disp8, IntelCore::Param::rbp, 0x10));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::sib_none_rsp_disp8, IntelCore::Param::rsi, 0x18));
+		seg->Write(IntelAssembler::push<64>(IntelCore::Param::rdi));
+		seg->Write(IntelAssembler::sub<64>(IntelCore::Param::rsp, IntelCore::Param::imm8, 0, 0x40));
 
 		// mov rsi, Gekko::regs.gpr
 
-		seg->Write16(0xbe48);
-		seg->Write64((uint64_t)core->regs.gpr);
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rsi, IntelCore::Param::imm64, 0, (int64_t)core->regs.gpr));
 	}
 
 	void Jitc::Epilog(CodeSegment* seg)
 	{
-		//14: 48 8b 5c 24 50          mov    rbx,QWORD PTR [rsp+0x50]
-		//19: 48 8b 6c 24 58          mov    rbp,QWORD PTR [rsp+0x58]
-		//1e: 48 8b 74 24 60          mov    rsi,QWORD PTR [rsp+0x60]
-		//23: 48 83 c4 40             add    rsp,0x40
-		//27: 5f                      pop    rdi
-		//28: c3                      ret
+		// mov    rbx,QWORD PTR [rsp+0x50]
+		// mov    rbp,QWORD PTR [rsp+0x58]
+		// mov    rsi,QWORD PTR [rsp+0x60]
+		// add    rsp,0x40
+		// pop    rdi
+		// ret
 
-		seg->Write8(0x48);
-		seg->Write32(0x50245c8b);
-		seg->Write8(0x48);
-		seg->Write32(0x58246c8b);
-		seg->Write8(0x48);
-		seg->Write32(0x6024748b);
-		seg->Write16(0x8348);
-		seg->Write16(0x40c4);
-		seg->Write8(0x5f);
-		seg->Write8(0xc3);
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rbx, IntelCore::Param::sib_none_rsp_disp8, 0x50));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rbp, IntelCore::Param::sib_none_rsp_disp8, 0x58));
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rsi, IntelCore::Param::sib_none_rsp_disp8, 0x60));
+		seg->Write(IntelAssembler::add<64>(IntelCore::Param::rsp, IntelCore::Param::imm8, 0, 0x40));
+		seg->Write(IntelAssembler::pop<64>(IntelCore::Param::rdi));
+		seg->Write(IntelAssembler::ret<64>());
 	}
 
 	size_t Jitc::EpilogSize()
 	{
-		return 21;
+		static size_t size = 0;
+
+		if (size == 0)
+		{
+			CodeSegment seg;
+			Epilog(&seg);
+			size = seg.code.size();
+		}
+
+		return size;
 	}
 
 	// PC = PC + 4
@@ -63,29 +63,16 @@ namespace Gekko
 		// mov rax, offset regs.pc
 		// add dword ptr [rax], 4
 
-		//0:  48 b8 88 77 66 55 44    movabs rax,0x1122334455667788
-		//7:  33 22 11
-		//a:  83 00 04                add    DWORD PTR [rax],0x4
-
-		seg->Write16(0xb848);
-		seg->Write64((uint64_t)&core->regs.pc);
-		seg->Write8(0x83);
-		seg->Write16(0x0400);
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rax, IntelCore::Param::imm64, 0, (int64_t)&core->regs.pc));
+		seg->Write(IntelAssembler::add<64>(IntelCore::Param::m_rax, IntelCore::Param::simm8_as32, 0, 4));
 	}
 
 	void Jitc::CallTick(CodeSegment* seg)
 	{
-		// Call core->Tick
+		// Call Jitc::Tick
 
-		//0:  48 b8 cd ab 78 56 34    movabs rax,0x12345678abcd
-		//7:  12 00 00
-		//17: ff d0                   call   rax
-
-		uint64_t fnPtr = (uint64_t)Jitc::Tick;
-
-		seg->Write16(0xb848);
-		seg->Write64(fnPtr);
-		seg->Write16(0xd0ff);
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rax, IntelCore::Param::imm64, 0, (int64_t)Jitc::Tick));
+		seg->Write(IntelAssembler::call<64>(IntelCore::Param::rax));
 	}
 
 }
