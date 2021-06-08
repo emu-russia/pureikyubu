@@ -1,7 +1,19 @@
 cmake_minimum_required (VERSION 2.8.11)
 project (DolwinPlayground)
 
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Ttext-segment=400000")
+# Choose an X86/X64 build
+
+if (CMAKE_C_SIZEOF_DATA_PTR EQUAL 8)
+  set(X86 OFF)
+  set(X64 ON)
+else ()
+  set(X86 ON)
+  set(X64 OFF)
+endif ()
+
+# Previously, the HLE subsystem required a base address of 0x400000 for the VMCall instruction. VMCall is now disabled and will be redone.
+
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Ttext-segment=400000")
 
 add_definitions (-D_LINUX)
 add_definitions (-DCMAKE_BUILD_TYPE=Debug)

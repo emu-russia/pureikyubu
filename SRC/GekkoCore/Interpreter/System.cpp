@@ -169,11 +169,11 @@ namespace Gekko
 
 		switch (spr)
 		{
-			case (int)SPR::WPAR:
+			case SPR::WPAR:
 				value = (core->regs.spr[spr] & ~0x1f) | (core->gatherBuffer->NotEmpty() ? 1 : 0);
 				break;
 
-			case (int)SPR::HID1:
+			case SPR::HID1:
 				// Gekko PLL_CFG = 0b1000
 				value = 0x8000'0000;
 				break;
@@ -192,11 +192,11 @@ namespace Gekko
 	{
 		int tbr = info.paramBits[1];
 
-		if (tbr == 268)
+		if (tbr == (int)TBR::TBL)
 		{
 			core->regs.gpr[info.paramBits[0]] = core->regs.tb.Part.l;
 		}
-		else if (tbr == 269)
+		else if (tbr == (int)TBR::TBU)
 		{
 			core->regs.gpr[info.paramBits[0]] = core->regs.tb.Part.u;
 		}
@@ -253,7 +253,9 @@ namespace Gekko
 	{
 		int spr = info.paramBits[0];
 
-		if (spr >= 528 && spr <= 543)
+		// Diagnostic output when the BAT registers are changed.
+
+		if (spr >= SPR::IBAT0U && spr <= SPR::DBAT3L)
 		{
 			static const char* bat[] = {
 				"IBAT0U", "IBAT0L", "IBAT1U", "IBAT1L",
@@ -266,17 +268,18 @@ namespace Gekko
 			bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
 			Report(Channel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
-				bat[spr - 528], core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
+				bat[spr - SPR::IBAT0U], core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 		}
-		else switch (spr)
+		
+		switch (spr)
 		{
 			// decrementer
-			case (int)SPR::DEC:
+			case SPR::DEC:
 				//DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
 				break;
 
 			// page table base
-			case (int)SPR::SDR1:
+			case SPR::SDR1:
 			{
 				bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 				bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
@@ -289,22 +292,22 @@ namespace Gekko
 			}
 			break;
 
-			case (int)SPR::TBL:
+			case SPR::TBL:
 				core->regs.tb.Part.l = core->regs.gpr[info.paramBits[1]];
 				Report(Channel::CPU, "Set TBL: 0x%08X\n", core->regs.tb.Part.l);
 				break;
-			case (int)SPR::TBU:
+			case SPR::TBU:
 				core->regs.tb.Part.u = core->regs.gpr[info.paramBits[1]];
 				Report(Channel::CPU, "Set TBU: 0x%08X\n", core->regs.tb.Part.u);
 				break;
 
 			// write gathering buffer
-			case (int)SPR::WPAR:
+			case SPR::WPAR:
 				// A mtspr to WPAR invalidates the data.
 				core->gatherBuffer->Reset();
 				break;
 
-			case (int)SPR::HID0:
+			case SPR::HID0:
 			{
 				uint32_t bits = core->regs.gpr[info.paramBits[1]];
 				core->cache.Enable((bits & HID0_DCE) ? true : false);
@@ -332,12 +335,12 @@ namespace Gekko
 			}
 			break;
 
-			case (int)SPR::HID1:
+			case SPR::HID1:
 				// Read only
 				core->regs.pc += 4;
 				return;
 
-			case (int)SPR::HID2:
+			case SPR::HID2:
 			{
 				uint32_t bits = core->regs.gpr[info.paramBits[1]];
 				core->cache.LockedEnable((bits & HID2_LCE) ? true : false);
@@ -346,10 +349,10 @@ namespace Gekko
 
 			// Locked cache DMA
 
-			case (int)SPR::DMAU:
+			case SPR::DMAU:
 				//DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
 				break;
-			case (int)SPR::DMAL:
+			case SPR::DMAL:
 			{
 				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
 				//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
@@ -378,44 +381,35 @@ namespace Gekko
 			}
 			break;
 
-			// When the GQR values change, the recompiler is invalidated.
-			// This rarely happens.
+			case SPR::GQR0:
+			case SPR::GQR1:
+			case SPR::GQR2:
+			case SPR::GQR3:
+			case SPR::GQR4:
+			case SPR::GQR5:
+			case SPR::GQR6:
+			case SPR::GQR7:
+				break;
 
-			case (int)SPR::GQR0:
-			case (int)SPR::GQR1:
-			case (int)SPR::GQR2:
-			case (int)SPR::GQR3:
-			case (int)SPR::GQR4:
-			case (int)SPR::GQR5:
-			case (int)SPR::GQR6:
-			case (int)SPR::GQR7:
-			{
-				if (core->regs.spr[spr] != core->regs.gpr[info.paramBits[1]])
-				{
-					core->jitc->Reset();
-				}
-			}
-			break;
-
-			case (int)SPR::IBAT0U:
-			case (int)SPR::IBAT0L:
-			case (int)SPR::IBAT1U:
-			case (int)SPR::IBAT1L:
-			case (int)SPR::IBAT2U:
-			case (int)SPR::IBAT2L:
-			case (int)SPR::IBAT3U:
-			case (int)SPR::IBAT3L:
+			case SPR::IBAT0U:
+			case SPR::IBAT0L:
+			case SPR::IBAT1U:
+			case SPR::IBAT1L:
+			case SPR::IBAT2U:
+			case SPR::IBAT2L:
+			case SPR::IBAT3U:
+			case SPR::IBAT3L:
 				core->itlb.InvalidateAll();
 				break;
 
-			case (int)SPR::DBAT0U:
-			case (int)SPR::DBAT0L:
-			case (int)SPR::DBAT1U:
-			case (int)SPR::DBAT1L:
-			case (int)SPR::DBAT2U:
-			case (int)SPR::DBAT2L:
-			case (int)SPR::DBAT3U:
-			case (int)SPR::DBAT3L:
+			case SPR::DBAT0U:
+			case SPR::DBAT0L:
+			case SPR::DBAT1U:
+			case SPR::DBAT1L:
+			case SPR::DBAT2U:
+			case SPR::DBAT2L:
+			case SPR::DBAT3U:
+			case SPR::DBAT3L:
 				core->dtlb.InvalidateAll();
 				break;
 		}

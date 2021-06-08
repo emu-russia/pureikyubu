@@ -803,8 +803,8 @@ namespace Gekko
 		switch(tbr)
 		{
 			// General architecture time-base registers.
-			case 268: return "TBL";
-			case 269: return "TBU";
+			case (int)TBR::TBL: return "TBL";
+			case (int)TBR::TBU: return "TBU";
 		}
 
 		char def[8] = { 0, };

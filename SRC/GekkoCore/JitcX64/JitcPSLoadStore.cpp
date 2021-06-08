@@ -3,8 +3,9 @@
 
 // Under normal conditions, GQR registers are set once and for a long time (__OSPSInit, OSInitFastCast)
 // We use this fact here and do not get the Type/Scale value in runtime, but in compile time.
-
 // When the GQR values change, the recompiler is invalidated.
+
+// ERRATA: This hypothesis did not pass the test, so this code needs to be redone.
 
 namespace Gekko
 {
