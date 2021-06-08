@@ -94,6 +94,10 @@ namespace UI
 		void ResetPerformanceCounter(int counter);
 		std::string GetSystemTime();
 
+		// Misc
+
+		bool JitcEnabled();
+
 	};
 
 	extern JdiClient * Jdi;

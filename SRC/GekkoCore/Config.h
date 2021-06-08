@@ -9,7 +9,7 @@
 #endif
 
 #ifndef GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE
-#define GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE 1	//!< Halt the emulation on an unimplemented opcode, instead of passing control to the interpeter fallback
+#define GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE 0	//!< Halt the emulation on an unimplemented opcode, instead of passing control to the interpeter fallback
 #endif
 
 #ifndef GEKKOCORE_SIMPLE_MMU
