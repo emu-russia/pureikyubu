@@ -35,7 +35,7 @@ namespace Gekko
 	void Interpreter::andc_d(AnalyzeInfo& info)
 	{
 		andc(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs & UIMM, CR0

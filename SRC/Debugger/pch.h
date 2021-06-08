@@ -8,6 +8,7 @@
 #include <cassert>
 #include <atomic>
 #include <cstdarg>
+#include <unordered_map>
 
 #ifdef _LINUX
 #include <string.h>

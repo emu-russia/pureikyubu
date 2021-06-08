@@ -268,7 +268,11 @@ namespace Gekko
 			//case Instruction::psq_l: PSQLoad(info, seg); break;
 
 			default:
+#if GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE
+				Debug::Halt("Unimplemented opcode %s\n", Gekko::GekkoDisasm::InstrToString(info).c_str());
+#else
 				FallbackStub(info, seg);
+#endif
 				break;
 		}
 	}

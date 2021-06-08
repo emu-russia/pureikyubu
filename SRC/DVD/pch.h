@@ -8,6 +8,7 @@
 #include <cassert>
 #include <atomic>
 #include <string.h>
+#include <unordered_map>
 
 #include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"

@@ -80,10 +80,8 @@ namespace Gekko
 	// rd = ra + rb, CR0
 	void Interpreter::add_d(AnalyzeInfo& info)
 	{
-		uint32_t res = GPR(1) + GPR(2);
-		GPR(0) = res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		add(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER
@@ -108,21 +106,8 @@ namespace Gekko
 	// rd = ra + rb, CR0, XER
 	void Interpreter::addo_d(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool ovf = false;
-
-		res = AddOverflow(a, b);
-		ovf = OverflowBit != 0;
-
-		GPR(0) = res;
-		if (ovf)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else RESET_XER_OV;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		addo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER[CA]
@@ -142,16 +127,8 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], CR0
 	void Interpreter::addc_d(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		addc(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER[CA], XER[OV]
@@ -178,23 +155,8 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], XER[OV], CR0
 	void Interpreter::addco_d(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool carry = false, ovf = false;
-
-		res = AddCarryOverflow(a, b);
-		carry = CarryBit != 0;
-		ovf = OverflowBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		if (ovf)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else RESET_XER_OV;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		addco(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb + XER[CA], XER
@@ -246,16 +208,8 @@ namespace Gekko
 	// rd = ra + SIMM, CR0, XER
 	void Interpreter::addic_d(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed, res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		addic(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = (ra | 0) + (SIMM || 0x0000)
@@ -391,11 +345,8 @@ namespace Gekko
 	// CR0
 	void Interpreter::mulhw_d(AnalyzeInfo& info)
 	{
-		int64_t a = (int32_t)GPR(1), b = (int32_t)GPR(2), res = a * b;
-		res = (res >> 32);
-		GPR(0) = (int32_t)res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		mulhw(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-63] = ra * rb
@@ -413,11 +364,8 @@ namespace Gekko
 	// CR0
 	void Interpreter::mulhwu_d(AnalyzeInfo& info)
 	{
-		uint64_t a = GPR(1), b = GPR(2), res = a * b;
-		res = (res >> 32);
-		GPR(0) = (uint32_t)res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		mulhwu(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-48] = ra * SIMM
@@ -443,11 +391,8 @@ namespace Gekko
 	// CR0
 	void Interpreter::mullw_d(AnalyzeInfo& info)
 	{
-		int32_t a = GPR(1), b = GPR(2);
-		int64_t res = (int64_t)a * (int64_t)b;
-		GPR(0) = (int32_t)(res & 0x00000000ffffffff);
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		mullw(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::mullwo(AnalyzeInfo& info)
@@ -470,10 +415,8 @@ namespace Gekko
 	// rd = ~ra + 1, CR0
 	void Interpreter::neg_d(AnalyzeInfo& info)
 	{
-		uint32_t res = ~GPR(1) + 1;
-		GPR(0) = res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		neg(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::nego(AnalyzeInfo& info)
@@ -496,10 +439,8 @@ namespace Gekko
 	// rd = ~ra + rb + 1, CR0
 	void Interpreter::subf_d(AnalyzeInfo& info)
 	{
-		uint32_t res = ~GPR(1) + GPR(2) + 1;
-		GPR(0) = res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		subf(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1, XER
@@ -531,16 +472,8 @@ namespace Gekko
 	// rd = ~ra + rb + 1, XER[CA], CR0
 	void Interpreter::subfc_d(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = GPR(2) + 1, res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		GPR(0) = res;
-		COMPUTE_CR0(res);
-		Gekko->regs.pc += 4;
+		subfc(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::subfco(AnalyzeInfo& info)
