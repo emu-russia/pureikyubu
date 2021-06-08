@@ -105,6 +105,10 @@ namespace Gekko
         Dispatch(info);
     }
 
+    /// <summary>
+    /// Auxiliary call for the recompiler, to execute instructions that are not implemented there.
+    /// </summary>
+    /// <returns>true: An exception occurred during the execution of an instruction, so it is necessary to abort the execution of the recompiled code segment.</returns>
     bool Interpreter::ExecuteInterpeterFallback()
     {
         int WIMG;
@@ -121,7 +125,13 @@ namespace Gekko
         {
             PIReadWord(pa, &instr);
         }
-        if (core->exception) goto JumpPC;  // ISI
+
+        if (core->exception)
+        {
+            // ISI
+            core->exception = false;
+            return true;
+        }
         
         // Decode instruction using GekkoAnalyzer and dispatch
 
@@ -136,16 +146,14 @@ namespace Gekko
             core->ops = 0;
         }
 
-        if (core->exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
-
-        core->Tick();
-
         if (core->exception)
         {
-        JumpPC:
+            // DSI, ALIGN, PROGRAM, FPUNA, SC
             core->exception = false;
             return true;
         }
+
+        core->Tick();
 
         return false;
     }

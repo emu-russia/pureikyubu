@@ -5,30 +5,19 @@ namespace Gekko
 
 	void Jitc::FallbackStub(AnalyzeInfo* info, CodeSegment* seg)
 	{
-		seg->Write8(0x90);		// nop
-
 		// Call ExecuteInterpeterFallback
 
-		//0:  48 b8 cd ab 78 56 34    movabs rax,0x12345678abcd  (ExecuteInterpeterFallback)
-		//7:  12 00 00
-		//17: ff d0                   call   rax
+		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rax, IntelCore::Param::imm64, 0, (int64_t)Jitc::ExecuteInterpeterFallback));
+		seg->Write(IntelAssembler::call<64>(IntelCore::Param::rax));
 
-		uint64_t fnPtr = (uint64_t)Jitc::ExecuteInterpeterFallback;
+		// test   al, al
+		// je     EpilogSize <label>
+		// ...    <EPILOG>
+		//<label>:
 
-		seg->Write16(0xb848);
-		seg->Write64(fnPtr);
-		seg->Write16(0xd0ff);
-
-		//0:  84 c0                   test   al, al
-		//2:  74 01                   je     EpilogSize <label>
-		//4:  ...                     <EPILOG>
-		//00000000000xxx <label>:
-
-		seg->Write16(0xc084);
-		seg->Write8(0x74);
-		seg->Write8((uint8_t)EpilogSize());
+		seg->Write(IntelAssembler::test<64>(IntelCore::Param::al, IntelCore::Param::al));
+		seg->Write(IntelAssembler::je<64>(IntelCore::Param::rel8, EpilogSize()));
 		Epilog(seg);
-
 	}
 
 }
