@@ -10,6 +10,8 @@ namespace Gekko
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rax, IntelCore::Param::imm64, 0, (int64_t)Jitc::ExecuteInterpeterFallback));
 		seg->Write(IntelAssembler::call<64>(IntelCore::Param::rax));
 
+		// If an exception occurs during the execution of an instruction - abort the segment.
+
 		// test   al, al
 		// je     EpilogSize <label>
 		// ...    <EPILOG>
