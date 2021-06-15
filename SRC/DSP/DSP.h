@@ -3,6 +3,11 @@
 
 #pragma once
 
+namespace DspUnitTest
+{
+	class DspUnitTest;
+}
+
 namespace DSP
 {
 	typedef uint32_t DspAddress;		// in halfwords slots 
@@ -79,6 +84,7 @@ namespace DSP
 	{
 		friend DspCore;
 		friend DspInterpreter;
+		friend DspUnitTest::DspUnitTest;
 
 		static const size_t IRAM_SIZE = (8 * 1024);
 		static const size_t IROM_SIZE = (8 * 1024);

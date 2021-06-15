@@ -170,6 +170,7 @@ namespace DSP
 	class DspCore
 	{
 		friend DspInterpreter;
+		friend DspUnitTest::DspUnitTest;
 
 		std::list<DspAddress> breakpoints;		// IMEM breakpoints
 		SpinLock breakPointsSpinLock;
