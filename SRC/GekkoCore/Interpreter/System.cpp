@@ -70,8 +70,8 @@ namespace Gekko
 	void Interpreter::rfi(AnalyzeInfo& info)
 	{
 		core->regs.msr &= ~(0x87C0FF73 | 0x00040000);
-		core->regs.msr |= core->regs.spr[(int)SPR::SRR1] & 0x87C0FF73;
-		core->regs.pc = core->regs.spr[(int)SPR::SRR0] & ~3;
+		core->regs.msr |= core->regs.spr[SPR::SRR1] & 0x87C0FF73;
+		core->regs.pc = core->regs.spr[SPR::SRR0] & ~3;
 	}
 
 	// syscall
@@ -132,8 +132,8 @@ namespace Gekko
 	{
 		uint32_t mask = 0xf0000000 >> (4 * info.paramBits[0]);
 		core->regs.cr &= ~mask;
-		core->regs.cr |= (core->regs.spr[(int)SPR::XER] & 0xf0000000) >> (4 * info.paramBits[0]);
-		core->regs.spr[(int)SPR::XER] &= ~0xf0000000;
+		core->regs.cr |= (core->regs.spr[SPR::XER] & 0xf0000000) >> (4 * info.paramBits[0]);
+		core->regs.spr[SPR::XER] &= ~0xf0000000;
 		core->regs.pc += 4;
 	}
 
@@ -356,17 +356,17 @@ namespace Gekko
 			{
 				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
 				//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
-				if (core->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_DMA_T)
+				if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
 				{
-					uint32_t maddr = core->regs.spr[(int)SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
-					uint32_t lcaddr = core->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_LC_ADDR;
-					size_t length = ((core->regs.spr[(int)SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
-						((core->regs.spr[(int)SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
+					uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
+					uint32_t lcaddr = core->regs.spr[SPR::DMAL] & GEKKO_DMAL_LC_ADDR;
+					size_t length = ((core->regs.spr[SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
+						((core->regs.spr[SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
 					if (length == 0) length = 128;
 					if (core->cache.IsLockedEnable())
 					{
 						core->cache.LockedCacheDma(
-							(core->regs.spr[(int)SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
+							(core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
 							maddr,
 							lcaddr,
 							length);
@@ -431,7 +431,7 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[(int)Gekko::SPR::DAR] = ea;
+			core->regs.spr[Gekko::SPR::DAR] = ea;
 			core->Exception(Exception::DSI);
 			return;
 		}
@@ -457,7 +457,7 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[(int)Gekko::SPR::DAR] = ea;
+			core->regs.spr[Gekko::SPR::DAR] = ea;
 			core->Exception(Exception::DSI);
 			return;
 		}
@@ -476,7 +476,7 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[(int)Gekko::SPR::DAR] = ea;
+			core->regs.spr[Gekko::SPR::DAR] = ea;
 			core->Exception(Exception::DSI);
 			return;
 		}
@@ -487,7 +487,7 @@ namespace Gekko
 	{
 		int WIMG;
 
-		if (core->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
+		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
 			return;
 
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -504,7 +504,7 @@ namespace Gekko
 	{
 		int WIMG;
 
-		if (core->regs.spr[(int)Gekko::SPR::HID0] & HID0_NOOPTI)
+		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
 			return;
 
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -531,7 +531,7 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[(int)Gekko::SPR::DAR] = ea;
+			core->regs.spr[Gekko::SPR::DAR] = ea;
 			core->Exception(Exception::DSI);
 			return;
 		}
@@ -562,7 +562,7 @@ namespace Gekko
 		}
 		else
 		{
-			core->regs.spr[(int)Gekko::SPR::DAR] = ea;
+			core->regs.spr[Gekko::SPR::DAR] = ea;
 			core->Exception(Exception::DSI);
 			return;
 		}

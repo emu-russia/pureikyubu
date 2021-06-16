@@ -271,11 +271,6 @@ namespace Gekko
         exception = true;
     }
 
-    void GekkoCore::ExecuteOpcodeDebug(uint32_t pc, uint32_t instr)
-    {
-        interp->ExecuteOpcodeDirect(pc, instr);
-    }
-
     uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
     {
 #if GEKKOCORE_SIMPLE_MMU

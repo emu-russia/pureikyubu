@@ -44,7 +44,7 @@ namespace Gekko
 	// LR = PC + 4, PC = PC + EXTS(LI || 0b00)
 	void Interpreter::bl(AnalyzeInfo& info)
 	{
-		core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
+		core->regs.spr[SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
@@ -52,7 +52,7 @@ namespace Gekko
 	// LR = PC + 4, PC = EXTS(LI || 0b00)
 	void Interpreter::bla(AnalyzeInfo& info)
 	{
-		core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
+		core->regs.spr[SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
@@ -65,10 +65,10 @@ namespace Gekko
 
 		if (BO(2) == 0)
 		{
-			core->regs.spr[(int)SPR::CTR]--;
+			core->regs.spr[SPR::CTR]--;
 
-			if (BO(3)) ctr_ok = (core->regs.spr[(int)Gekko::SPR::CTR] == 0);
-			else ctr_ok = (core->regs.spr[(int)Gekko::SPR::CTR] != 0);
+			if (BO(3)) ctr_ok = (core->regs.spr[SPR::CTR] == 0);
+			else ctr_ok = (core->regs.spr[SPR::CTR] != 0);
 		}
 		else ctr_ok = true;
 
@@ -121,13 +121,13 @@ namespace Gekko
 	{
 		if (BcTest(info))
 		{
-			Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
+			core->regs.spr[SPR::LR] = core->regs.pc + 4; // LK
 			core->regs.pc = info.Imm.Address;
 			BranchCheck();
 		}
 		else
 		{
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
 	}
 
@@ -135,13 +135,13 @@ namespace Gekko
 	{
 		if (BcTest(info))
 		{
-			Gekko->regs.spr[(int)SPR::LR] = core->regs.pc + 4; // LK
+			core->regs.spr[SPR::LR] = core->regs.pc + 4; // LK
 			core->regs.pc = info.Imm.Address;
 			BranchCheck();
 		}
 		else
 		{
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
 	}
 
@@ -169,7 +169,7 @@ namespace Gekko
 	{
 		if (BctrTest(info))
 		{
-			core->regs.pc = core->regs.spr[(int)SPR::CTR] & ~3;
+			core->regs.pc = core->regs.spr[SPR::CTR] & ~3;
 			BranchCheck();
 		}
 		else
@@ -187,13 +187,13 @@ namespace Gekko
 	{
 		if (BctrTest(info))
 		{
-			core->regs.spr[(int)SPR::LR] = core->regs.pc + 4;
-			core->regs.pc = core->regs.spr[(int)SPR::CTR] & ~3;
+			core->regs.spr[SPR::LR] = core->regs.pc + 4;
+			core->regs.pc = core->regs.spr[SPR::CTR] & ~3;
 			BranchCheck();
 		}
 		else
 		{
-			Gekko->regs.pc += 4;
+			core->regs.pc += 4;
 		}
 	}
 
@@ -206,7 +206,7 @@ namespace Gekko
 	{
 		if (BcTest(info))
 		{
-			core->regs.pc = core->regs.spr[(int)SPR::LR] & ~3;
+			core->regs.pc = core->regs.spr[SPR::LR] & ~3;
 			BranchCheck();
 		}
 		else
@@ -227,8 +227,8 @@ namespace Gekko
 		if (BcTest(info))
 		{
 			uint32_t lr = core->regs.pc + 4;
-			core->regs.pc = core->regs.spr[(int)SPR::LR] & ~3;
-			core->regs.spr[(int)SPR::LR] = lr;
+			core->regs.pc = core->regs.spr[SPR::LR] & ~3;
+			core->regs.spr[SPR::LR] = lr;
 			BranchCheck();
 		}
 		else

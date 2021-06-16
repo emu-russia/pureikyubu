@@ -31,7 +31,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -42,7 +42,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -75,7 +75,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -86,7 +86,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -119,7 +119,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -130,7 +130,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -142,7 +142,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = 1.0 / FPRD(info.paramBits[1]);
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -153,7 +153,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = 1.0 / FPRD(info.paramBits[1]);
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -207,7 +207,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -218,7 +218,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -272,7 +272,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -283,7 +283,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -316,7 +316,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -327,7 +327,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -360,7 +360,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3])));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -371,7 +371,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3])));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -404,7 +404,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3])));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
@@ -415,7 +415,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_FP)
 		{
 			FPRD(info.paramBits[0]) = (float)(-(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3])));
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			COMPUTE_CR1();
 			core->regs.pc += 4;
 		}
@@ -468,7 +468,7 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE)
+			if (core->regs.spr[SPR::HID2] & HID2_PSE)
 			{
 				PS0(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
 				PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
@@ -483,7 +483,7 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE)
+			if (core->regs.spr[SPR::HID2] & HID2_PSE)
 			{
 				PS0(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
 				PS1(info.paramBits[0]) = PS0(info.paramBits[0]);

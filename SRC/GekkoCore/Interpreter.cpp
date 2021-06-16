@@ -96,15 +96,6 @@ namespace Gekko
         core->exception = false;
     }
 
-    // For testing
-    void Interpreter::ExecuteOpcodeDirect(uint32_t pc, uint32_t instr)
-    {
-        core->regs.pc = pc;
-        AnalyzeInfo info;
-        Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
-        Dispatch(info);
-    }
-
     /// <summary>
     /// Auxiliary call for the recompiler, to execute instructions that are not implemented there.
     /// </summary>

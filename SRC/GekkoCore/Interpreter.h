@@ -7,6 +7,7 @@ namespace Gekko
 	class Interpreter
 	{
 		friend Jitc;
+		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
 		GekkoCore* core = nullptr;
 
@@ -403,7 +404,6 @@ namespace Gekko
 		~Interpreter() {}
 
 		void ExecuteOpcode();
-		void ExecuteOpcodeDirect(uint32_t pc, uint32_t instr);
 		bool ExecuteInterpeterFallback();
 
 		uint32_t GetRotMask(int mb, int me);

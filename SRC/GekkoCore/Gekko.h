@@ -2,6 +2,11 @@
 
 #pragma once
 
+namespace GekkoCoreUnitTest
+{
+    class GekkoCoreUnitTest;
+}
+
 #ifdef _LINUX
 #define __FASTCALL __attribute__((fastcall))
 #else
@@ -91,6 +96,7 @@ namespace Gekko
         friend CodeSegment;
         friend GatherBuffer;
         friend JitCommands;
+        friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
         // How many ticks Gekko takes to execute one instruction. 
         // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
@@ -192,8 +198,6 @@ namespace Gekko
         void AssertInterrupt();
         void ClearInterrupt();
         void Exception(Gekko::Exception code);
-
-        void ExecuteOpcodeDebug(uint32_t pc, uint32_t instr);
 
 #pragma region "Memory interface"
 

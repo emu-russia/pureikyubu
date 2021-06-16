@@ -5,10 +5,10 @@
 
 namespace Gekko
 {
-	#define LD_SCALE(n) ((core->regs.spr[(int)SPR::GQRs + n] >> 24) & 0x3f)
-	#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[(int)SPR::GQRs + n] >> 16) & 7)
-	#define ST_SCALE(n) ((core->regs.spr[(int)SPR::GQRs + n] >>  8) & 0x3f)
-	#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[(int)SPR::GQRs + n]      ) & 7)
+	#define LD_SCALE(n) ((core->regs.spr[SPR::GQRs + n] >> 24) & 0x3f)
+	#define LD_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[SPR::GQRs + n] >> 16) & 7)
+	#define ST_SCALE(n) ((core->regs.spr[SPR::GQRs + n] >>  8) & 0x3f)
+	#define ST_TYPE(n)  (GEKKO_QUANT_TYPE)((core->regs.spr[SPR::GQRs + n]      ) & 7)
 
 	// INT -> float (F = I * 2 ** -S)
 	float Interpreter::dequantize(uint32_t data, GEKKO_QUANT_TYPE type, uint8_t scale)
@@ -66,8 +66,8 @@ namespace Gekko
 
 	void Interpreter::psq_lx(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::PROGRAM);
@@ -120,8 +120,8 @@ namespace Gekko
 
 	void Interpreter::psq_stx(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::PROGRAM);
@@ -166,8 +166,8 @@ namespace Gekko
 
 	void Interpreter::psq_lux(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -222,8 +222,8 @@ namespace Gekko
 
 	void Interpreter::psq_stux(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -270,8 +270,8 @@ namespace Gekko
 
 	void Interpreter::psq_l(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::PROGRAM);
@@ -324,8 +324,8 @@ namespace Gekko
 
 	void Interpreter::psq_lu(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 || 
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 || 
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -380,8 +380,8 @@ namespace Gekko
 
 	void Interpreter::psq_st(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0)
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::PROGRAM);
@@ -426,8 +426,8 @@ namespace Gekko
 
 	void Interpreter::psq_stu(AnalyzeInfo& info)
 	{
-		if ((core->regs.spr[(int)SPR::HID2] & HID2_PSE) == 0 ||
-			(core->regs.spr[(int)SPR::HID2] & HID2_LSQE) == 0 ||
+		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
+			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;

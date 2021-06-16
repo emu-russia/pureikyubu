@@ -24,6 +24,7 @@ namespace Gekko
 	class Jitc
 	{
 		friend JitCommands;
+		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
 		GekkoCore* core;		// Saved instance of the parent core
 
