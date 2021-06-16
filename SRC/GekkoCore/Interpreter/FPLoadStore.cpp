@@ -244,11 +244,7 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			float data;
-
-			if (core->regs.spr[SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
-			else data = (float)FPRD(info.paramBits[0]);
-
+			float data = (float)FPRD(info.paramBits[0]);
 			if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, *(uint32_t*)&data);
 			else core->WriteWord((int32_t)info.Imm.Signed, *(uint32_t*)&data);
 			if (core->exception) return;
@@ -264,12 +260,8 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			float data;
+			float data = (float)FPRD(info.paramBits[0]);
 			uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
-
-			if (core->regs.spr[SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
-			else data = (float)FPRD(info.paramBits[0]);
-
 			core->WriteWord(ea, *(uint32_t*)&data);
 			if (core->exception) return;
 			core->regs.gpr[info.paramBits[1]] = ea;
@@ -285,14 +277,9 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			float num;
-			uint32_t* data = (uint32_t*)&num;
+			float data = (float)FPRD(info.paramBits[0]);
 			uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
-
-			if (core->regs.spr[SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
-			else num = (float)FPRD(info.paramBits[0]);
-
-			core->WriteWord(ea, *data);
+			core->WriteWord(ea, *(uint32_t *)&data);
 			if (core->exception) return;
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
@@ -306,14 +293,9 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			float num;
-			uint32_t* data = (uint32_t*)&num;
-
-			if (core->regs.spr[SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
-			else num = (float)FPRD(info.paramBits[0]);
-
-			if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], *data);
-			else core->WriteWord(core->regs.gpr[info.paramBits[2]], *data);
+			float data = (float)FPRD(info.paramBits[0]);
+			if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], *(uint32_t*)&data);
+			else core->WriteWord(core->regs.gpr[info.paramBits[2]], *(uint32_t*)&data);
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
