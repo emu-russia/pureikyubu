@@ -1478,7 +1478,7 @@ namespace Gekko
 	void Analyzer::CrfdsFast(uint32_t instr, AnalyzeInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
-		info->paramBits[1] = DIS_RS >> 2;
+		info->paramBits[1] = DIS_RA >> 2;
 	}
 
 	void Analyzer::Crfd(uint32_t instr, AnalyzeInfo* info)
