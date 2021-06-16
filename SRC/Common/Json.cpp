@@ -330,7 +330,7 @@ bool Json::IsAllowed(uint8_t val, char* allowed)
 
 bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 {
-	char allowedChars[] = "0123456789.eE-";
+	static char allowedChars[] = "0123456789.eE+-";
 	char number[0x100] = { 0, };
 	int numberLen = 0;
 
@@ -368,7 +368,7 @@ bool Json::GetFloat(DeserializeContext* ctx, Token& token)
 
 bool Json::GetInt(DeserializeContext* ctx, Token& token)
 {
-	char allowedChars[] = "0123456789";
+	static char allowedChars[] = "+-0123456789";
 	char number[0x100] = { 0, };
 	int numberLen = 0;
 
