@@ -2,9 +2,6 @@
 
 #pragma once
 
-#include <unordered_map>
-#include <vector>
-
 namespace Gekko
 {
 	class CodeSegment
@@ -27,6 +24,7 @@ namespace Gekko
 	class Jitc
 	{
 		friend JitCommands;
+		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
 		GekkoCore* core;		// Saved instance of the parent core
 

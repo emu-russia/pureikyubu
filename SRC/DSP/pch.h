@@ -9,6 +9,7 @@
 #include <atomic>
 #include <cassert>
 #include <cstring>
+#include <unordered_map>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Json.h"

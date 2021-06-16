@@ -265,10 +265,14 @@ namespace Gekko
 			case Instruction::ps_merge10: PsMerge10(info, seg); break;
 			case Instruction::ps_merge11: PsMerge11(info, seg); break;
 
-			case Instruction::psq_l: PSQLoad(info, seg); break;
+			//case Instruction::psq_l: PSQLoad(info, seg); break;
 
 			default:
+#if GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE
+				Debug::Halt("Unimplemented opcode %s\n", Gekko::GekkoDisasm::InstrToString(info).c_str());
+#else
 				FallbackStub(info, seg);
+#endif
 				break;
 		}
 	}

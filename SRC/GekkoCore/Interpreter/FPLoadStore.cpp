@@ -81,7 +81,7 @@ namespace Gekko
 
 			if (core->exception) return;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
 			else FPRD(info.paramBits[0]) = (double)res;
 			core->regs.pc += 4;
 		}
@@ -105,7 +105,7 @@ namespace Gekko
 
 			if (core->exception) return;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
 			else FPRD(info.paramBits[0]) = (double)res;
 
 			core->regs.gpr[info.paramBits[1]] = ea;
@@ -131,7 +131,7 @@ namespace Gekko
 
 			if (core->exception) return;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
 			else FPRD(info.paramBits[0]) = (double)res;
 
 			core->regs.gpr[info.paramBits[1]] = ea;
@@ -156,7 +156,7 @@ namespace Gekko
 
 			if (core->exception) return;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS0(info.paramBits[0]) = PS1(info.paramBits[0]) = (double)res;
 			else FPRD(info.paramBits[0]) = (double)res;
 			core->regs.pc += 4;
 		}
@@ -246,7 +246,7 @@ namespace Gekko
 		{
 			float data;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
 			else data = (float)FPRD(info.paramBits[0]);
 
 			if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, *(uint32_t*)&data);
@@ -267,7 +267,7 @@ namespace Gekko
 			float data;
 			uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) data = (float)PS0(info.paramBits[0]);
 			else data = (float)FPRD(info.paramBits[0]);
 
 			core->WriteWord(ea, *(uint32_t*)&data);
@@ -289,7 +289,7 @@ namespace Gekko
 			uint32_t* data = (uint32_t*)&num;
 			uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
 			else num = (float)FPRD(info.paramBits[0]);
 
 			core->WriteWord(ea, *data);
@@ -309,7 +309,7 @@ namespace Gekko
 			float num;
 			uint32_t* data = (uint32_t*)&num;
 
-			if (core->regs.spr[(int)SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
+			if (core->regs.spr[SPR::HID2] & HID2_PSE) num = (float)PS0(info.paramBits[0]);
 			else num = (float)FPRD(info.paramBits[0]);
 
 			if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], *data);

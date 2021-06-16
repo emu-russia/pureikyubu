@@ -110,3 +110,39 @@ RunSegment(Gekko::PC);
 There are advanced recompilation techniques where the register values of the previous segment instruction are used for the next. This technique is called register caching.
 
 Dolwin does not support this mechanism, since modern X86/X64 processors are already advanced enough and contain various out-of-order optimizers and rename buffers. There is no need to do this work for them.
+
+## Brief description of Gekko (PowerPC)
+
+The GC CPU - Gekko is based on the PowerPC G3 (third generation) architecture, sources on the Internet point to the 750CXE model, but this is not particularly important, since Gekko is absolutely compatible with the 32-bit "Generic" PowerPC architecture. Generally speaking, in the PowerPC architecture, the processor model does not matter much, as it mainly affects performance. If a program is written with Generic PowerPC, it is guaranteed to run on all models. However, the models do differ from each other with additional "features" which can be used to improve the performance of programs.
+
+Here is a list of what has been added "exclusively" to Gekko:
+- Paired-Single instruction set;
+- The cache can work in lock mode as a scratch-pad buffer. Swapping between the blocked-single cache can be done via DMA or direct write.
+- Performance Counters. Counters for analyzing program performance. With their help the programmer can find out the number of executed instructions, hits/misses in cache and many other things;
+- Level 2 cache (256 KB);
+- Transition prediction block and transition memory table, for optimizing loops. (Those familiar with PowerPC assembler will find the "+" and "-" suffixes in the jump instructions useful);
+- Write Gather Buffer. Quite often used for fast transfer of graphics data packets;
+- Power Management. Three modes are available: DOZE, NAP and SLEEP. Although these modes are not used in games/programs and the Dolphin SDK;
+- Debug interface for executing programs in steps and support for hardware breakpoints;
+
+Now a brief description of what is available to the PowerPC programmer:
+- The processor has 32 32-bit integer registers (denoted r0-r31) and 32 64-bit FPU registers (fr0-fr31). You can apply addition, subtraction, multiplication, division, arithmetic/logic shift operations and also logical operations (AND, OR, etc.) to integers. The same can be done with real numbers in IEEE-754 format of single or double precision (+, -, \*, /), in addition there is also the operation to calculate the square root and polynomial calculation A \* B + C. Special mention should be made of such a unique integer operation as `RLWINM` - which stands for "Rotate operand to the left by n bits, and then apply to it the AND mask", programmatically it can be written as `R = ROTL(A, n) & MASK`. This extremely powerful and versatile operation is widely used by the compiler to optimize C blocks, such as: `if((a >> 8) & 0xFF)` - this expression will be compiled as one(!) RLWINM instruction (including if check).
+- There are only two modes of memory addressing: register + register and register + offset. Gentleman's kit.
+- The processor operates in two modes: user and supervisor. The difference is that some purely system instructions and memory areas cannot be executed in user mode. In short, an analogy can be made here with the real and protected X86 mode.
+- All system functions of the processor are accessed through Special-Purpose Registers.
+- The CR (Condition Register) register is used to compare numbers. It contains 8 fields, each of which contains flags of comparison result. Immediately following the operation is a comparison instruction, which analyzes the state of the selected field register CR and make (or not make) transition. There is also such a convenient thing, how to compare the result of the current operation with zero. Assembler uses a dot suffix (".") to do this, e.g. execute an `add. r3, r4, r5` will go as follows: add r4 and r5, place the result in r3 and compare the result with zero. Place the result of the comparison in the `CR[0]` field.
+- PowerPC has no "Jump" instructions. All jumps are done with "Branch" instructions which are numerous. Procedure calls are implemented via a special register - `LR` (Link Register). To call a procedure you need to execute the instruction "Branch And Link" which will save the return address in the `LR` register. The analog of "Return" is the instruction `blr` - "Branch to Link Register". Cycles like `FOR I=1 TO N` are implemented with the help of the `CTR` register (Counter). Special instruction of transition decreases `CTR` by 1 and makes transition according to the condition (`CTR` equals/not equals 0).
+
+The instruction size is 32 bits. Disassembled PowerPC code looks like this:
+```
+8135D8A8  80A10008  lwz         r5, 8 (r1)
+8135D8AC  8101000C  lwz         r8, 12 (r1)
+8135D8B0  54A6007E  rlwinm      r6, r5, 0, 1, 31
+8135D8B4  7C060000  cmpw        r6, r0
+8135D8B8  90830000  stw         r4, 0 (r3)
+8135D8BC  38E50000  addi        r7, r5, 0
+8135D8C0  38860000  addi        r4, r6, 0
+8135D8C4  4080000C  bge-        0x8135D8D0
+8135D8C8  7C804379  or.         r0, r4, r8
+8135D8CC  4082000C  bne-        0x8135D8D8
+```

@@ -1071,6 +1071,20 @@ namespace Gekko
 		return nullptr;
 	}
 
+	Json::Value* CmdJitcEnabled(std::vector<std::string>& args)
+	{
+		Json::Value* output = new Json::Value();
+		output->type = Json::ValueType::Bool;
+
+#if GEKKOCORE_USE_JITC
+		output->value.AsBool = true;
+#else
+		output->value.AsBool = false;
+#endif
+
+		return output;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", CmdRun);
@@ -1131,5 +1145,6 @@ namespace Gekko
 		JDI::Hub.AddCmd("JitcDumpSeg", JitCommands::CmdJitcDumpSeg);
 		JDI::Hub.AddCmd("JitcInvSeg", JitCommands::CmdJitcInvSeg);
 		JDI::Hub.AddCmd("JitcInvAll", JitCommands::CmdJitcInvAll);
+		JDI::Hub.AddCmd("JitcEnabled", CmdJitcEnabled);
 	}
 }

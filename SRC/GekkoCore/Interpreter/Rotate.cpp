@@ -5,6 +5,11 @@
 namespace Gekko
 {
 
+	// We use macro programming to compress the source code.
+	// Now I am not very willing to use such things.
+
+	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
+
 	// n = SH
 	// r = ROTL(rs, n)
 	// m = MASK(mb, me)
@@ -13,16 +18,16 @@ namespace Gekko
 	void Interpreter::rlwimi(AnalyzeInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
-		uint32_t r = Rotl32(info.paramBits[2], core->regs.gpr[info.paramBits[1]]);
+		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
 		uint32_t res = (r & m) | (core->regs.gpr[info.paramBits[0]] & ~m);
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::rlwimi_d(AnalyzeInfo& info)
 	{
 		rlwimi(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// n = SH
@@ -33,16 +38,16 @@ namespace Gekko
 	void Interpreter::rlwinm(AnalyzeInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
-		uint32_t r = Rotl32(info.paramBits[2], core->regs.gpr[info.paramBits[1]]);
+		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
 		uint32_t res = r & m;
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::rlwinm_d(AnalyzeInfo& info)
 	{
 		rlwinm(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// n = rb[27-31]
@@ -52,16 +57,16 @@ namespace Gekko
 	void Interpreter::rlwnm(AnalyzeInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
-		uint32_t r = Rotl32(core->regs.gpr[info.paramBits[2]] & 0x1f, core->regs.gpr[info.paramBits[1]]);
+		uint32_t r = Rotl32(GPR(2) & 0x1f, GPR(1));
 		uint32_t res = r & m;
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::rlwnm_d(AnalyzeInfo& info)
 	{
 		rlwnm(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 }

@@ -96,15 +96,10 @@ namespace Gekko
         core->exception = false;
     }
 
-    // For testing
-    void Interpreter::ExecuteOpcodeDirect(uint32_t pc, uint32_t instr)
-    {
-        core->regs.pc = pc;
-        AnalyzeInfo info;
-        Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
-        Dispatch(info);
-    }
-
+    /// <summary>
+    /// Auxiliary call for the recompiler, to execute instructions that are not implemented there.
+    /// </summary>
+    /// <returns>true: An exception occurred during the execution of an instruction, so it is necessary to abort the execution of the recompiled code segment.</returns>
     bool Interpreter::ExecuteInterpeterFallback()
     {
         int WIMG;
@@ -121,7 +116,13 @@ namespace Gekko
         {
             PIReadWord(pa, &instr);
         }
-        if (core->exception) goto JumpPC;  // ISI
+
+        if (core->exception)
+        {
+            // ISI
+            core->exception = false;
+            return true;
+        }
         
         // Decode instruction using GekkoAnalyzer and dispatch
 
@@ -136,16 +137,14 @@ namespace Gekko
             core->ops = 0;
         }
 
-        if (core->exception) goto JumpPC;  // DSI, ALIGN, PROGRAM, FPUNA, SC
-
-        core->Tick();
-
         if (core->exception)
         {
-        JumpPC:
+            // DSI, ALIGN, PROGRAM, FPUNA, SC
             core->exception = false;
             return true;
         }
+
+        core->Tick();
 
         return false;
     }
@@ -523,14 +522,14 @@ namespace Gekko
                 Debug::Halt("** CPU ERROR **\n"
                     "unimplemented opcode : %08X\n", core->regs.pc);
 
-                Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-                Gekko->Exception(Exception::PROGRAM);
+                core->PrCause = PrivilegedCause::IllegalInstruction;
+                core->Exception(Exception::PROGRAM);
                 return;
         }
 
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)info.instr]++;
+            core->opcodeStats[(size_t)info.instr]++;
         }
     }
 
@@ -550,7 +549,7 @@ namespace Gekko
         //	Halt(
         //		"Something goes wrong in interpreter, \n"
         //		"program is trying to execute NULL opcode.\n\n"
-        //		"pc:%08X", Gekko->regs.pc);
+        //		"pc:%08X", core->regs.pc);
         //	return;
         //}
 

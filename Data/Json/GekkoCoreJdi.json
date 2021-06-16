@@ -315,6 +315,12 @@
 
     "JitcInvAll": {
       "help": "Invalidate all recompiler segments except the current one."
+    },
+
+    "JitcEnabled": {
+      "internal": true,
+      "help": "A method for the GUI to find out if JITC is enabled or not.",
+      "output": "Bool"
     }
 
   }

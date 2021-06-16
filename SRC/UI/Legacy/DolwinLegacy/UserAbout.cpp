@@ -24,6 +24,8 @@ static INT_PTR CALLBACK AboutProc(
     auto platform = L"x86";
 #endif
 
+    auto jitc = UI::Jdi->JitcEnabled() ? L"JITC" : L"";
+
     UNREFERENCED_PARAMETER(lParam);
     switch(uMsg)
     {
@@ -38,12 +40,12 @@ static INT_PTR CALLBACK AboutProc(
             std::string dateStamp = __DATE__;
             std::string timeStamp = __TIME__;
 
-            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} ({:s} {:s})\n",
+            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
                     APPNAME, APPDESC,
                     L"Copyright 2003,2004,2020,2021 Dolwin team",
                     L"Build version",
                     Util::StringToWstring(UI::Jdi->GetVersion()),
-                    version, platform,
+                    version, platform, jitc, 
                     Util::StringToWstring(dateStamp),
                     Util::StringToWstring(timeStamp) );
 

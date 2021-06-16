@@ -11,6 +11,7 @@
 #include <fstream>
 #include <atomic>
 #include <string.h>
+#include <unordered_map>
 
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"

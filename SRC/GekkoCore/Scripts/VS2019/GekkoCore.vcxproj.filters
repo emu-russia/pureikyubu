@@ -19,6 +19,9 @@
     <Filter Include="JitcX64">
       <UniqueIdentifier>{7829da66-7107-4b73-8d97-85e7f7cfc1b3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="JitcX86">
+      <UniqueIdentifier>{3157c448-4f8d-4b97-99af-3e3eafbbd970}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Gekko.h">
@@ -175,6 +178,69 @@
     </ClCompile>
     <ClCompile Include="..\..\GekkoAssembler.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcCompare.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcCondition.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcFloatingPoint.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcFPLoadStore.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcShift.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX64\JitcSystem.cpp">
+      <Filter>JitcX64</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\Common.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\Fallback.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcBranch.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcCompare.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcCondition.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcFloatingPoint.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcFPLoadStore.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcInteger.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcLoadStore.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcLogical.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcPairedSingle.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcPSLoadStore.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcRotate.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcShift.cpp">
+      <Filter>JitcX86</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\JitcX86\JitcSystem.cpp">
+      <Filter>JitcX86</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

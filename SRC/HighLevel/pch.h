@@ -11,6 +11,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <unordered_map>
 
 #include "../Common/ByteSwap.h"
 #include "../Common/Spinlock.h"

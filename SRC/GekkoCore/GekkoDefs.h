@@ -104,7 +104,7 @@ namespace Gekko
 
 namespace Gekko
 {
-	enum class SPR : int
+	enum SPR
 	{
 		XER = 1,
 		LR = 8,
@@ -156,6 +156,15 @@ namespace Gekko
 		WPAR = 921,
 		DMAU = 922,
 		DMAL = 923,
+	};
+}
+
+namespace Gekko
+{
+	enum class TBR
+	{
+		TBL = 268,
+		TBU = 269,
 	};
 }
 

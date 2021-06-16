@@ -5,6 +5,11 @@
 namespace Gekko
 {
 
+	// We use macro programming to compress the source code.
+	// Now I am not very willing to use such things.
+
+	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
+
 	// n = rb[27-31]
 	// r = ROTL(rs, n)
 	// if rb[26] = 0
@@ -14,21 +19,21 @@ namespace Gekko
 	// (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
 	void Interpreter::slw(AnalyzeInfo& info)
 	{
-		uint32_t n = core->regs.gpr[info.paramBits[2]];
+		uint32_t n = GPR(2);
 
 		uint32_t res;
 
 		if (n & 0x20) res = 0;
-		else res = core->regs.gpr[info.paramBits[1]] << (n & 0x1f);
+		else res = GPR(1) << (n & 0x1f);
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::slw_d(AnalyzeInfo& info)
 	{
 		slw(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// n = rb[27-31]
@@ -41,9 +46,9 @@ namespace Gekko
 	// XER[CA] = S & (r & ~m[0-31] != 0)
 	void Interpreter::sraw(AnalyzeInfo& info)
 	{
-		uint32_t n = core->regs.gpr[info.paramBits[2]];
+		uint32_t n = GPR(2);
 		int32_t res;
-		int32_t src = core->regs.gpr[info.paramBits[1]];
+		int32_t src = GPR(1);
 
 		if (n == 0)
 		{
@@ -70,15 +75,14 @@ namespace Gekko
 			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
 		}
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::sraw_d(AnalyzeInfo& info)
 	{
 		sraw(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
-		Gekko->regs.pc += 4;
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// n = SH
@@ -91,7 +95,7 @@ namespace Gekko
 	{
 		uint32_t n = info.paramBits[2];
 		int32_t res;
-		int32_t src = core->regs.gpr[info.paramBits[1]];
+		int32_t src = GPR(1);
 
 		if (n == 0)
 		{
@@ -104,14 +108,14 @@ namespace Gekko
 			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
 		}
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::srawi_d(AnalyzeInfo& info)
 	{
 		srawi(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// n = rb[27-31]
@@ -123,21 +127,21 @@ namespace Gekko
 	// (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
 	void Interpreter::srw(AnalyzeInfo& info)
 	{
-		uint32_t n = core->regs.gpr[info.paramBits[2]];
+		uint32_t n = GPR(2);
 
 		uint32_t res;
 
 		if (n & 0x20) res = 0;
-		else res = core->regs.gpr[info.paramBits[1]] >> (n & 0x1f);
+		else res = GPR(1) >> (n & 0x1f);
 
-		core->regs.gpr[info.paramBits[0]] = res;
+		GPR(0) = res;
 		core->regs.pc += 4;
 	}
 
 	void Interpreter::srw_d(AnalyzeInfo& info)
 	{
 		srw(info);
-		COMPUTE_CR0(core->regs.gpr[info.paramBits[0]]);
+		COMPUTE_CR0(GPR(0));
 	}
 
 }
