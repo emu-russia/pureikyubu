@@ -522,14 +522,14 @@ namespace Gekko
                 Debug::Halt("** CPU ERROR **\n"
                     "unimplemented opcode : %08X\n", core->regs.pc);
 
-                Gekko->PrCause = PrivilegedCause::IllegalInstruction;
-                Gekko->Exception(Exception::PROGRAM);
+                core->PrCause = PrivilegedCause::IllegalInstruction;
+                core->Exception(Exception::PROGRAM);
                 return;
         }
 
-        if (Gekko->opcodeStatsEnabled)
+        if (core->opcodeStatsEnabled)
         {
-            Gekko->opcodeStats[(size_t)info.instr]++;
+            core->opcodeStats[(size_t)info.instr]++;
         }
     }
 
@@ -549,7 +549,7 @@ namespace Gekko
         //	Halt(
         //		"Something goes wrong in interpreter, \n"
         //		"program is trying to execute NULL opcode.\n\n"
-        //		"pc:%08X", Gekko->regs.pc);
+        //		"pc:%08X", core->regs.pc);
         //	return;
         //}
 
