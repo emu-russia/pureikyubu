@@ -53,9 +53,10 @@ namespace Gekko
 	// rd = (signed)MEM(ea, 2)
 	void Interpreter::lha(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
-		else core->ReadHalfS((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.pc += 4;
 	}
 
@@ -65,8 +66,9 @@ namespace Gekko
 	void Interpreter::lhau(AnalyzeInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
-		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.gpr[info.paramBits[1]] = ea;
 		core->regs.pc += 4;
 	}
@@ -77,8 +79,9 @@ namespace Gekko
 	void Interpreter::lhaux(AnalyzeInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
-		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.gpr[info.paramBits[1]] = ea;
 		core->regs.pc += 4;
 	}
@@ -87,9 +90,10 @@ namespace Gekko
 	// rd = (signed)MEM(ea, 2)
 	void Interpreter::lhax(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
-		else core->ReadHalfS(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.pc += 4;
 	}
 

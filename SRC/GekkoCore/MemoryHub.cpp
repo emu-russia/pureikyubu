@@ -111,12 +111,6 @@ namespace Gekko
 		PIReadHalf(pa, reg);
 	}
 
-	void __FASTCALL GekkoCore::ReadHalfS(uint32_t addr, uint32_t *reg)
-	{
-		ReadHalf(addr, reg);
-		if (*reg & 0x8000) *reg |= 0xffff0000;
-	}
-
 	void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
 	{
 		int WIMG;
