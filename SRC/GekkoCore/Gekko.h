@@ -170,8 +170,8 @@ namespace Gekko
         size_t compiledSegments = 0;
         size_t executedSegments = 0;
 
-        bool        RESERVE = false;    // for lwarx/stwcx.
-        uint32_t    RESERVE_ADDR = 0;	// for lwarx/stwcx.
+        std::atomic<bool> RESERVE = false;    // for lwarx/stwcx.
+        uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
 
     public:
 
