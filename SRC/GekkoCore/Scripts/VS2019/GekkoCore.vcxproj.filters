@@ -170,9 +170,6 @@
     <ClCompile Include="..\..\Breakpoints.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Interpreter\NoAsm.cpp">
-      <Filter>Interpreter</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\OpcodeStats.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -246,13 +243,5 @@
   <ItemGroup>
     <None Include="..\..\Readme.md" />
     <None Include="..\..\..\..\Data\Json\GekkoCoreJdi.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <MASM Include="..\..\Interpreter\AsmX64.asm">
-      <Filter>Interpreter</Filter>
-    </MASM>
-    <MASM Include="..\..\Interpreter\AsmX86.asm">
-      <Filter>Interpreter</Filter>
-    </MASM>
   </ItemGroup>
 </Project>

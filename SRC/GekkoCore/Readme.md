@@ -17,10 +17,6 @@ The DSP core waits for a certain number of ticks to do its job. The Flipper VI e
 If with such a scheme of work the system will produce more frames than necessary, we will artificially slow it down (by delays).
 But while the core is based on an interpreter - the speed is about 10-20 FPS :P
 
-## Why assembler modules are needed
-
-Used in the interpreter to easily get the Overflow and Carry flags. They are obtained directly from your X86 / X64 processor.
-
 ## MMU
 
 GekkoCore supports MMU emulation, while it is still an experimental feature that requires debugging. Subsequently, as the MMU will work more or less correctly, 
