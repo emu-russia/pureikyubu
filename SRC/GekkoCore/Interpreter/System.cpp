@@ -389,6 +389,8 @@ namespace Gekko
 			case SPR::GQR5:
 			case SPR::GQR6:
 			case SPR::GQR7:
+				// In the sense of Dolphin OS, registers GQR1-7 are constantly reloaded when switching threads via `OSLoadContext`.
+				// GQR0 is always 0 and is not reloaded when switching threads.
 				break;
 
 			case SPR::IBAT0U:

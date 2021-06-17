@@ -19,6 +19,8 @@ namespace Gekko
 
 		GekkoCore* core;
 
+		int64_t retireTimeout = 0;
+
 	public:
 
 		GatherBuffer(GekkoCore* parent) : core(parent) {}
