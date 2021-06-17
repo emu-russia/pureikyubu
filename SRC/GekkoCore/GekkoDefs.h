@@ -1,4 +1,4 @@
-// Gekko architecture definitions (from datasheet).
+﻿// Gekko architecture definitions (from datasheet).
 
 #pragma once
 
@@ -77,6 +77,37 @@
 #define WIMG_I		4				// Caching-inhibited 
 #define WIMG_M		2				// Bus lock on access
 #define WIMG_G		1				// Guarded (block out-of-order access)
+
+// FPSCR Bits
+#define FPSCR_FX		(1 << 31)		// Floating-point exception summary
+#define FPSCR_FEX		(1 << 30)		// Floating-point enabled exception summary
+#define FPSCR_VX		(1 << 29)		// Floating-point invalid operation exception summary
+#define FPSCR_OX		(1 << 28)		// Floating-point overflow exception
+#define FPSCR_UX		(1 << 27)		// Floating-point underflow exception
+#define FPSCR_ZX		(1 << 26)		// Floating-point zero divide exception
+#define FPSCR_XX		(1 << 25)		// Floating-point inexact exception
+#define FPSCR_VXSNAN	(1 << 24)		// Floating-point invalid operation exception for SNaN
+#define FPSCR_VXISI		(1 << 23)		// Floating-point invalid operation exception for ∞ – ∞
+#define FPSCR_VXIDI		(1 << 22)		// Floating-point invalid operation exception for ∞ ÷ ∞
+#define FPSCR_VXZDZ		(1 << 21)		// Floating-point invalid operation exception for 0 ÷ 0
+#define FPSCR_VXIMZ		(1 << 20)		// Floating-point invalid operation exception for ∞ * 0
+#define FPSCR_VXVC		(1 << 19)		// Floating-point invalid operation exception for invalid compare
+#define FPSCR_FR		(1 << 18)		// Floating-point fraction rounded
+#define FPSCR_FI		(1 << 17)		// Floating-point fraction inexact
+#define FPSCR_GET_FPRF(fpscr) ((fpscr >> 12) & 0x1f)	// Get floating-point result flags
+#define FPSCR_SET_FPRF(fpscr, n) (fpscr = (fpscr & 0xfffe0fff) | ((n & 0x1f) << 12))	// Set floating-point result flags
+#define FPSCR_RESERVED	(1 << 11)		// Reserved.
+#define FPSCR_VXSOFT	(1 << 10)		// Floating-point invalid operation exception for software request
+#define FPSCR_VXSQRT	(1 << 9)		// Floating-point invalid operation exception for invalid square root
+#define FPSCR_VXCVI	(1 << 8)		// Floating-point invalid operation exception for invalid integer convert
+#define FPSCR_VE	(1 << 7)		// Floating-point invalid operation exception enable
+#define FPSCR_OE	(1 << 6)		// IEEE floating-point overflow exception enable
+#define FPSCR_UE	(1 << 5)		// IEEE floating-point underflow exception enable
+#define FPSCR_ZE	(1 << 4)		// IEEE floating-point zero divide exception enable
+#define FPSCR_XE	(1 << 3)		// Floating-point inexact exception enable
+#define FPSCR_NI	(1 << 2)		// Floating-point non-IEEE mode
+#define FPSCR_GET_RN(fpscr) (fpscr & 3)	// Get floating-point rounding control
+#define FPSCR_SET_RN(fpscr, n) (fpscr = (fpscr & ~3) | (n & 3))	// Set floating-point rounding control
 
 // Exception vectors (physical address)
 
