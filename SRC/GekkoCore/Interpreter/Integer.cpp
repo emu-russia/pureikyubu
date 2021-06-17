@@ -167,9 +167,8 @@ namespace Gekko
 	// rd = ra + SIMM, XER
 	void Interpreter::addic(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed;
 		CarryBit = 0;
-		GPR(0) = FullAdder(a, b);
+		GPR(0) = FullAdder(GPR(1), (int32_t)info.Imm.Signed);
 		if (CarryBit)
 		{
 			SET_XER_CA;

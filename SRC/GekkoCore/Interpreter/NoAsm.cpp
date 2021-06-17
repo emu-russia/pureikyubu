@@ -9,7 +9,7 @@ extern "C"
 }
 
 /// <summary>
-/// Result = a + b + CarryBit. Return carry flag in CarryBit. Return overflow flag in OverflowBit.
+/// Result = a + b + CarryIn. Return carry flag in CarryBit. Return overflow flag in OverflowBit.
 /// </summary>
 /// <param name="a"></param>
 /// <param name="b"></param>
@@ -18,6 +18,9 @@ extern "C" uint32_t __FASTCALL FullAdder(uint32_t a, uint32_t b)
 {
 	uint64_t res = (uint64_t)a + (uint64_t)b + (uint64_t)(CarryBit != 0 ? 1 : 0);
 
+	//A human need only remember that, when doing signed math, adding
+	//two numbers of the same sign must produce a result of the same sign,
+	//otherwise overflow happened.
 	bool msb = (res & 0x8000'0000) != 0 ? true : false;
 	bool aMsb = (a & 0x8000'0000) != 0 ? true : false;
 	bool bMsb = (b & 0x8000'0000) != 0 ? true : false;
