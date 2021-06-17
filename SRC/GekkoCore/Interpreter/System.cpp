@@ -27,8 +27,8 @@ namespace Gekko
 		int WIMG;
 		uint32_t ea = core->regs.gpr[info.paramBits[2]];
 		if (info.paramBits[1]) ea += core->regs.gpr[info.paramBits[1]];
-		RESERVE = true;
-		RESERVE_ADDR = core->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
+		core->RESERVE = true;
+		core->RESERVE_ADDR = core->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
 		core->ReadWord(ea, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
 		core->regs.pc += 4;
@@ -49,12 +49,12 @@ namespace Gekko
 
 		core->regs.cr &= 0x0fffffff;
 
-		if (RESERVE)
+		if (core->RESERVE)
 		{
 			core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
 			if (core->exception) return;
 			core->regs.cr |= GEKKO_CR0_EQ;
-			RESERVE = false;
+			core->RESERVE = false;
 		}
 
 		if (IS_XER_SO) core->regs.cr |= GEKKO_CR0_SO;
@@ -389,6 +389,8 @@ namespace Gekko
 			case SPR::GQR5:
 			case SPR::GQR6:
 			case SPR::GQR7:
+				// In the sense of Dolphin OS, registers GQR1-7 are constantly reloaded when switching threads via `OSLoadContext`.
+				// GQR0 is always 0 and is not reloaded when switching threads.
 				break;
 
 			case SPR::IBAT0U:

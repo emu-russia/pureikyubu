@@ -8,7 +8,7 @@ namespace Gekko
 	// Centralized hub which attracts all memory access requests from the interpreter or recompiler 
 	// (as well as those who they pretend, for example HLE or Debugger).
 
-	void __FASTCALL GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
+	void GekkoCore::ReadByte(uint32_t addr, uint32_t *reg)
 	{
 		int WIMG;
 		if (EnableTestReadBreakpoints)
@@ -39,7 +39,7 @@ namespace Gekko
 		PIReadByte(pa, reg);
 	}
 
-	void __FASTCALL GekkoCore::WriteByte(uint32_t addr, uint32_t data)
+	void GekkoCore::WriteByte(uint32_t addr, uint32_t data)
 	{
 		int WIMG;
 		if (EnableTestWriteBreakpoints)
@@ -54,10 +54,15 @@ namespace Gekko
 			Exception(Exception::DSI);
 			return;
 		}
-	
-		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+
+		if (RESERVE && pa == RESERVE_ADDR)
 		{
-			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			RESERVE = false;
+		}
+	
+		if (regs.spr[Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (regs.spr[Gekko::SPR::WPAR] & ~0x1f))
 			{
 				gatherBuffer->Write8((uint8_t)data);
 				return;
@@ -80,7 +85,7 @@ namespace Gekko
 		PIWriteByte(pa, data);
 	}
 
-	void __FASTCALL GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
+	void GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
 	{
 		int WIMG;
 		if (EnableTestReadBreakpoints)
@@ -111,7 +116,7 @@ namespace Gekko
 		PIReadHalf(pa, reg);
 	}
 
-	void __FASTCALL GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
+	void GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
 	{
 		int WIMG;
 		if (EnableTestWriteBreakpoints)
@@ -127,9 +132,14 @@ namespace Gekko
 			return;
 		}
 
-		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		if (RESERVE && pa == RESERVE_ADDR)
 		{
-			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			RESERVE = false;
+		}
+
+		if (regs.spr[Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (regs.spr[Gekko::SPR::WPAR] & ~0x1f))
 			{
 				gatherBuffer->Write16((uint16_t)data);
 				return;
@@ -152,7 +162,7 @@ namespace Gekko
 		PIWriteHalf(pa, data);
 	}
 
-	void __FASTCALL GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
+	void GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
 	{
 		int WIMG;
 		if (EnableTestReadBreakpoints)
@@ -183,7 +193,7 @@ namespace Gekko
 		PIReadWord(pa, reg);
 	}
 
-	void __FASTCALL GekkoCore::WriteWord(uint32_t addr, uint32_t data)
+	void GekkoCore::WriteWord(uint32_t addr, uint32_t data)
 	{
 		int WIMG;
 		if (EnableTestWriteBreakpoints)
@@ -199,9 +209,14 @@ namespace Gekko
 			return;
 		}
 
-		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		if (RESERVE && pa == RESERVE_ADDR)
 		{
-			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			RESERVE = false;
+		}
+
+		if (regs.spr[Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (regs.spr[Gekko::SPR::WPAR] & ~0x1f))
 			{
 				gatherBuffer->Write32(data);
 				return;
@@ -224,7 +239,7 @@ namespace Gekko
 		PIWriteWord(pa, data);
 	}
 
-	void __FASTCALL GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
+	void GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
 	{
 		int WIMG;
 		if (EnableTestReadBreakpoints)
@@ -257,7 +272,7 @@ namespace Gekko
 		PIReadDouble(pa, reg);
 	}
 
-	void __FASTCALL GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
+	void GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
 	{
 		int WIMG;
 		if (EnableTestWriteBreakpoints)
@@ -273,9 +288,14 @@ namespace Gekko
 			return;
 		}
 
-		if (Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_WPE)
+		if (RESERVE && pa == RESERVE_ADDR)
 		{
-			if ((pa & ~0x1f) == (Gekko::Gekko->regs.spr[(int)Gekko::SPR::WPAR] & ~0x1f))
+			RESERVE = false;
+		}
+
+		if (regs.spr[Gekko::SPR::HID2] & HID2_WPE)
+		{
+			if ((pa & ~0x1f) == (regs.spr[Gekko::SPR::WPAR] & ~0x1f))
 			{
 				gatherBuffer->Write64(*data);
 				return;

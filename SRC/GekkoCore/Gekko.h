@@ -170,6 +170,9 @@ namespace Gekko
         size_t compiledSegments = 0;
         size_t executedSegments = 0;
 
+        std::atomic<bool> RESERVE = false;    // for lwarx/stwcx.
+        uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
+
     public:
 
         // The instruction cache is not emulated because it is accessed only in one direction (Read).
@@ -202,16 +205,15 @@ namespace Gekko
 #pragma region "Memory interface"
 
         // Centralized hub for access to the data bus (memory) from CPU side.
-        // These methods require fastcall, as they are called from recompiled code.
 
-        void __FASTCALL ReadByte(uint32_t addr, uint32_t* reg);
-        void __FASTCALL WriteByte(uint32_t addr, uint32_t data);
-        void __FASTCALL ReadHalf(uint32_t addr, uint32_t* reg);
-        void __FASTCALL WriteHalf(uint32_t addr, uint32_t data);
-        void __FASTCALL ReadWord(uint32_t addr, uint32_t* reg);
-        void __FASTCALL WriteWord(uint32_t addr, uint32_t data);
-        void __FASTCALL ReadDouble(uint32_t addr, uint64_t* reg);
-        void __FASTCALL WriteDouble(uint32_t addr, uint64_t* data);
+        void ReadByte(uint32_t addr, uint32_t* reg);
+        void WriteByte(uint32_t addr, uint32_t data);
+        void ReadHalf(uint32_t addr, uint32_t* reg);
+        void WriteHalf(uint32_t addr, uint32_t data);
+        void ReadWord(uint32_t addr, uint32_t* reg);
+        void WriteWord(uint32_t addr, uint32_t data);
+        void ReadDouble(uint32_t addr, uint64_t* reg);
+        void WriteDouble(uint32_t addr, uint64_t* data);
 
         // Translate address by Mmu
         uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int & WIMG);

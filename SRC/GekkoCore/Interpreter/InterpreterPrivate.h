@@ -2,17 +2,9 @@
 
 #pragma once
 
-#define SET_XER_SO      (core->regs.spr[(int)Gekko::SPR::XER] |=  GEKKO_XER_SO)
-#define SET_XER_OV      (core->regs.spr[(int)Gekko::SPR::XER] |=  GEKKO_XER_OV)
-#define SET_XER_CA      (core->regs.spr[(int)Gekko::SPR::XER] |=  GEKKO_XER_CA)
-
-#define RESET_XER_SO    (core->regs.spr[(int)Gekko::SPR::XER] &= ~GEKKO_XER_SO)
-#define RESET_XER_OV    (core->regs.spr[(int)Gekko::SPR::XER] &= ~GEKKO_XER_OV)
-#define RESET_XER_CA    (core->regs.spr[(int)Gekko::SPR::XER] &= ~GEKKO_XER_CA)
-
-#define IS_XER_SO       ((core->regs.spr[(int)Gekko::SPR::XER] & GEKKO_XER_SO) != 0)
-#define IS_XER_OV       ((core->regs.spr[(int)Gekko::SPR::XER] & GEKKO_XER_OV) != 0)
-#define IS_XER_CA       ((core->regs.spr[(int)Gekko::SPR::XER] & GEKKO_XER_CA) != 0)
+#define IS_XER_SO       ((core->regs.spr[Gekko::SPR::XER] & GEKKO_XER_SO) != 0)
+#define IS_XER_OV       ((core->regs.spr[Gekko::SPR::XER] & GEKKO_XER_OV) != 0)
+#define IS_XER_CA       ((core->regs.spr[Gekko::SPR::XER] & GEKKO_XER_CA) != 0)
 
 #define IS_NAN(n)       (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0)
 #define IS_SNAN(n)      (((n) & 0x7ff0000000000000) == 0x7ff0000000000000 && ((n) & 0x000fffffffffffff) != 0 && ((n) & 0x0008000000000000) == 0)

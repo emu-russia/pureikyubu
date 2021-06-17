@@ -9,6 +9,7 @@ namespace Gekko
 		memset(fifo, 0, sizeof(fifo));
 		readPtr = 0;
 		writePtr = 0;
+		retireTimeout = 0;
 
 		if (log)
 		{
@@ -123,6 +124,14 @@ namespace Gekko
 
 	bool GatherBuffer::NotEmpty()
 	{
+		// The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free
+
+		retireTimeout++;
+		if (retireTimeout >= GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS)
+		{
+			Reset();
+		}
+
 		return readPtr != writePtr;
 	}
 }

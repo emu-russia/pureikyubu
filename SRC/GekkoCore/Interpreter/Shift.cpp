@@ -53,26 +53,26 @@ namespace Gekko
 		if (n == 0)
 		{
 			res = src;
-			RESET_XER_CA;
+			RESET_XER_CA();
 		}
 		else if (n & 0x20)
 		{
 			if (src < 0)
 			{
 				res = 0xffffffff;
-				if (src & 0x7fffffff) SET_XER_CA; else RESET_XER_CA;
+				if (src & 0x7fffffff) SET_XER_CA(); else RESET_XER_CA();
 			}
 			else
 			{
 				res = 0;
-				RESET_XER_CA;
+				RESET_XER_CA();
 			}
 		}
 		else
 		{
 			n = n & 0x1f;
 			res = (int32_t)src >> n;
-			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
+			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA(); else RESET_XER_CA();
 		}
 
 		GPR(0) = res;
@@ -100,12 +100,12 @@ namespace Gekko
 		if (n == 0)
 		{
 			res = src;
-			RESET_XER_CA;
+			RESET_XER_CA();
 		}
 		else
 		{
 			res = src >> n;
-			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA; else RESET_XER_CA;
+			if (src < 0 && (src << (32 - n)) != 0) SET_XER_CA(); else RESET_XER_CA();
 		}
 
 		GPR(0) = res;
