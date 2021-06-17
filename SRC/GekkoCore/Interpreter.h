@@ -394,6 +394,12 @@ namespace Gekko
 
 		void Dispatch(AnalyzeInfo& info);
 
+		uint32_t CarryBit;
+		uint32_t OverflowBit;
+
+		uint32_t FullAdder(uint32_t a, uint32_t b);
+		uint32_t Rotl32(int sa, uint32_t data);
+
 	public:
 		Interpreter(GekkoCore* _core);
 		~Interpreter() {}

@@ -30,12 +30,6 @@
     core->regs.cr = (core->regs.cr & 0xf0ff'ffff) | ((core->regs.fpscr & 0xf000'0000) >> 4);    \
 }
 
-extern "C" uint32_t CarryBit;
-extern "C" uint32_t OverflowBit;
-
-extern "C" uint32_t __FASTCALL FullAdder(uint32_t a, uint32_t b);
-extern "C" uint32_t __FASTCALL Rotl32(int sa, uint32_t data);
-
 #define FPRU(n) (core->regs.fpr[n].uval)
 #define FPRD(n) (core->regs.fpr[n].dbl)
 #define PS0(n)  (core->regs.fpr[n].dbl)

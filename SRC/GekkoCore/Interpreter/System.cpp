@@ -488,7 +488,10 @@ namespace Gekko
 		int WIMG;
 
 		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
+		{
+			core->regs.pc += 4;
 			return;
+		}
 
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
 
@@ -505,7 +508,10 @@ namespace Gekko
 		int WIMG;
 
 		if (core->regs.spr[Gekko::SPR::HID0] & HID0_NOOPTI)
+		{
+			core->regs.pc += 4;
 			return;
+		}
 
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
 

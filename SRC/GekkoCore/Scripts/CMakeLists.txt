@@ -1,7 +1,5 @@
 add_library (GekkoCore SHARED 
 
-    ../Interpreter/NoAsm.cpp
-
     ../Interpreter/Branch.cpp
     ../Interpreter/Compare.cpp
     ../Interpreter/Condition.cpp
