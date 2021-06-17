@@ -1253,7 +1253,7 @@ namespace Gekko
 			case Instruction::lhzx:			Form_DAB(31, 279, false, false, info); break;
 			case Instruction::lwz:			Form_DA_Offset(32, info); break;
 			case Instruction::lwzu:			Form_DA_Offset(33, info); break;
-			case Instruction::lwzux:		Form_DAB(31, 66, false, false, info); break;
+			case Instruction::lwzux:		Form_DAB(31, 55, false, false, info); break;
 			case Instruction::lwzx:			Form_DAB(31, 23, false, false, info); break;
 
 			// Integer Store Instructions
@@ -3460,7 +3460,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3474,7 +3474,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3518,7 +3518,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3532,7 +3532,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3576,7 +3576,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3590,7 +3590,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3634,7 +3634,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3648,7 +3648,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3707,7 +3707,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3721,7 +3721,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3765,7 +3765,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3839,7 +3839,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -3853,7 +3853,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -4526,7 +4526,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.param[2] = Param::Num;
 		info.paramBits[2] = w;
 		info.param[3] = Param::Num;
@@ -4544,7 +4544,7 @@ namespace Gekko
 		info.paramBits[0] = rd;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.param[2] = Param::Num;
 		info.paramBits[2] = w;
 		info.param[3] = Param::Num;
@@ -4600,7 +4600,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.param[2] = Param::Num;
 		info.paramBits[2] = w;
 		info.param[3] = Param::Num;
@@ -4618,7 +4618,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.param[2] = Param::Num;
 		info.paramBits[2] = w;
 		info.param[3] = Param::Num;
@@ -5746,7 +5746,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5760,7 +5760,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5804,7 +5804,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5818,7 +5818,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5877,7 +5877,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5891,7 +5891,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5935,7 +5935,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -5964,7 +5964,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -6008,7 +6008,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -6052,7 +6052,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;
@@ -6096,7 +6096,7 @@ namespace Gekko
 		info.paramBits[0] = rs;
 		info.param[1] = Param::RegOffset;
 		info.paramBits[1] = ra;
-		info.Imm.Unsigned = d;
+		info.Imm.Signed = d;
 		info.numParam = 2;
 		Assemble(info);
 		return info.instrBits;

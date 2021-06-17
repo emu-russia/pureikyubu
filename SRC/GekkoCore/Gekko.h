@@ -207,7 +207,6 @@ namespace Gekko
         void __FASTCALL ReadByte(uint32_t addr, uint32_t* reg);
         void __FASTCALL WriteByte(uint32_t addr, uint32_t data);
         void __FASTCALL ReadHalf(uint32_t addr, uint32_t* reg);
-        void __FASTCALL ReadHalfS(uint32_t addr, uint32_t* reg);    // Signed wrapper. Used only by interpeter. TODO: Wipe it out, ambigious.
         void __FASTCALL WriteHalf(uint32_t addr, uint32_t data);
         void __FASTCALL ReadWord(uint32_t addr, uint32_t* reg);
         void __FASTCALL WriteWord(uint32_t addr, uint32_t data);

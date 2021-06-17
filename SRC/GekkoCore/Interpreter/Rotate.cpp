@@ -19,8 +19,7 @@ namespace Gekko
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
-		uint32_t res = (r & m) | (core->regs.gpr[info.paramBits[0]] & ~m);
-		GPR(0) = res;
+		GPR(0) = (r & m) | (core->regs.gpr[info.paramBits[0]] & ~m);
 		core->regs.pc += 4;
 	}
 
@@ -39,8 +38,7 @@ namespace Gekko
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
-		uint32_t res = r & m;
-		GPR(0) = res;
+		GPR(0) = r & m;
 		core->regs.pc += 4;
 	}
 
@@ -58,8 +56,7 @@ namespace Gekko
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(GPR(2) & 0x1f, GPR(1));
-		uint32_t res = r & m;
-		GPR(0) = res;
+		GPR(0) = r & m;
 		core->regs.pc += 4;
 	}
 

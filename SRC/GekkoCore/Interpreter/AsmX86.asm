@@ -3,62 +3,31 @@
 .model  flat
 .code
 
-public @AddCarry@8
-public @AddOverflow@8
-public @AddCarryOverflow@8
-public @AddXer2@8
+public @FullAdder@8
 public @Rotl32@8
 
 public _CarryBit
 public _OverflowBit
 
-@AddCarry@8 proc
-    mov     dword ptr [_CarryBit], 0
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jnc     @1
-    mov     dword ptr [_CarryBit], 1
-@1:
-    ret         ; eax = result
-@AddCarry@8 endp
-
-@AddOverflow@8 proc
+@FullAdder@8 proc
     mov     dword ptr [_OverflowBit], 0
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jno     @1
-    mov     dword ptr [_OverflowBit], 1
-@1:
-    ret         ; eax = result
-@AddOverflow@8 endp
 
-@AddCarryOverflow@8 proc
-    mov     dword ptr [_CarryBit], 0
-    mov     dword ptr [_OverflowBit], 0
     mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jnc     @1
-    mov     dword ptr [_CarryBit], 1
-@1:
-    jno     @2
-    mov     dword ptr [_OverflowBit], 1
-@2:
-    ret         ; eax = result
-@AddCarryOverflow@8 endp
-
-@AddXer2@8 proc
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
+    add     eax, edx        ; a + b
 
     xor     edx, edx        ; upper 32 bits of 64-bit operand
-    adc     edx, edx
+    adc     edx, edx        ; save carry in edx
 
-    add     eax, [_CarryBit]
+    add     eax, [_CarryBit]    ; a + b + CarryIn
+
+    jno     @1
+    mov     dword ptr [_OverflowBit], 1     ; Save Overflow flag
+@1:
+
     adc     edx, 0
-
-    mov     [_CarryBit], edx    ; now save carry
+    mov     [_CarryBit], edx    ; Save CarryOut
     ret
-@AddXer2@8 endp
+@FullAdder@8 endp
 
 @Rotl32@8 proc
     rol     edx, cl

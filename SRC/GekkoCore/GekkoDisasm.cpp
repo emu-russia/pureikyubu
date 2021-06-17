@@ -843,7 +843,7 @@ namespace Gekko
 			case Param::Uimm:
 				return Imm(info->Imm.Unsigned, true, false);
 			case Param::Crf:
-				sprintf (text, "cr%i", paramBits);
+				sprintf (text, "crf%i", paramBits);
 				break;
 			case Param::RegOffset:
 				sprintf (text, "%s (r%i)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
@@ -859,7 +859,7 @@ namespace Gekko
 			case Param::Tbr:
 				return TbrName(paramBits);
 			case Param::Crb:
-				sprintf (text, "cr%i", paramBits);
+				sprintf (text, "crb%i", paramBits);
 				break;
 			case Param::CRM:
 				sprintf (text, "0x%02X", paramBits);

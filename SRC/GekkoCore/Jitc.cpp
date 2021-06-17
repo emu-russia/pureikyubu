@@ -33,13 +33,11 @@ namespace Gekko
 		segment->code.reserve(0x100);
 		segment->core = core;
 
-		// Usually this is enough, but if the segment is larger, nothing bad will happen, it will just break into several parts.
-
-		size_t maxInstructions = 0x100;
-
 		Prolog(segment);
 
-		while (maxInstructions--)
+		size_t n = maxInstructions;
+
+		while (n--)
 		{
 			if (core->TestBreakpointForJitc(addr))
 				break;

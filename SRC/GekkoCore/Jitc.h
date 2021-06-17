@@ -89,6 +89,9 @@ namespace Gekko
 
 		uint32_t DequantizeTemp = 0;
 
+		// Usually this is enough, but if the segment is larger, nothing bad will happen, it will just break into several parts.
+		size_t maxInstructions = 0x100;
+
 	public:
 		Jitc(GekkoCore* _core);
 		~Jitc();

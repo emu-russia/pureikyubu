@@ -53,9 +53,10 @@ namespace Gekko
 	// rd = (signed)MEM(ea, 2)
 	void Interpreter::lha(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
-		else core->ReadHalfS((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.pc += 4;
 	}
 
@@ -65,8 +66,9 @@ namespace Gekko
 	void Interpreter::lhau(AnalyzeInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
-		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.gpr[info.paramBits[1]] = ea;
 		core->regs.pc += 4;
 	}
@@ -77,8 +79,9 @@ namespace Gekko
 	void Interpreter::lhaux(AnalyzeInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
-		core->ReadHalfS(ea, &core->regs.gpr[info.paramBits[0]]);
+		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.gpr[info.paramBits[1]] = ea;
 		core->regs.pc += 4;
 	}
@@ -87,9 +90,10 @@ namespace Gekko
 	// rd = (signed)MEM(ea, 2)
 	void Interpreter::lhax(AnalyzeInfo& info)
 	{
-		if (info.paramBits[1]) core->ReadHalfS(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
-		else core->ReadHalfS(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
+		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		if (core->exception) return;
+		if (core->regs.gpr[info.paramBits[0]] & 0x8000) core->regs.gpr[info.paramBits[0]] |= 0xffff0000;
 		core->regs.pc += 4;
 	}
 
@@ -435,18 +439,68 @@ namespace Gekko
 			n--;
 		}
 
-		while (i)
+		if (i != 0)
 		{
-			r <<= 8;
-			i--;
+			while (i)
+			{
+				r <<= 8;
+				i--;
+			}
+			core->regs.gpr[rd] = r;
 		}
-		core->regs.gpr[rd] = r;
+
 		core->regs.pc += 4;
 	}
 
+	// ea = (ra | 0) + rb
+	// n = XER[25-31]
+	// r = rd - 1
+	// i = 0
+	// while n > 0
+	//      if i = 0 then
+	//          r = (r + 1) % 32
+	//          GPR(r) = 0
+	//      GPR(r)[i...i+7] = MEM(ea, 1)
+	//      i = i + 8
+	//      if i = 32 then i = 0
+	//      ea = ea + 1
+	//      n = n -1
 	void Interpreter::lswx(AnalyzeInfo& info)
 	{
-		Debug::Halt("lswx\n");
+		int32_t rd = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 4;
+		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
+		uint32_t r = 0, val;
+
+		while (n > 0)
+		{
+			if (i == 0)
+			{
+				i = 4;
+				core->regs.gpr[rd] = r;
+				rd++;
+				rd %= 32;
+				r = 0;
+			}
+			core->ReadByte(ea, &val);
+			if (core->exception) return;
+			r <<= 8;
+			r |= (uint8_t)val;
+			ea++;
+			i--;
+			n--;
+		}
+
+		if (i != 0)
+		{
+			while (i)
+			{
+				r <<= 8;
+				i--;
+			}
+			core->regs.gpr[rd] = r;
+		}
+
+		core->regs.pc += 4;
 	}
 
 	// ea = (ra | 0)
@@ -485,9 +539,40 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
+	// ea = (ra | 0)
+	// n = XER[25-31]
+	// r = rs - 1
+	// i = 0
+	// while n > 0
+	//      if i = 0 then r = (r + 1) % 32
+	//      MEM(ea, 1) = GPR(r)[i...i+7]
+	//      i = i + 8
+	//      if i = 32 then i = 0;
+	//      ea = ea + 1
+	//      n = n -1
 	void Interpreter::stswx(AnalyzeInfo& info)
 	{
-		Debug::Halt("stswx\n");
+		int32_t rs = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 0;
+		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
+		uint32_t r = 0;
+
+		while (n > 0)
+		{
+			if (i == 0)
+			{
+				r = core->regs.gpr[rs];
+				rs++;
+				rs %= 32;
+				i = 4;
+			}
+			core->WriteByte(ea, r >> 24);
+			if (core->exception) return;
+			r <<= 8;
+			ea++;
+			i--;
+			n--;
+		}
+		core->regs.pc += 4;
 	}
 
 }
