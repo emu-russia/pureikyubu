@@ -129,8 +129,7 @@ namespace Gekko
 		retireTimeout++;
 		if (retireTimeout >= GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS)
 		{
-			writePtr = readPtr;
-			retireTimeout = 0;
+			Reset();
 		}
 
 		return readPtr != writePtr;
