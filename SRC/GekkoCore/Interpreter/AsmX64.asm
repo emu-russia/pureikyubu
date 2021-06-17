@@ -1,49 +1,12 @@
 .code
 
-public AddCarry
-public AddOverflow
-public AddCarryOverflow
-public AddcCarryOverflow
+public FullAdder
 public Rotl32
 
 public CarryBit
 public OverflowBit
 
-AddCarry proc
-    mov     dword ptr [CarryBit], 0
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jnc     @1
-    mov     dword ptr [CarryBit], 1
-@1:
-    ret         ; eax = result
-AddCarry endp
-
-AddOverflow proc
-    mov     dword ptr [OverflowBit], 0
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jno     @1
-    mov     dword ptr [OverflowBit], 1
-@1:
-    ret         ; eax = result
-AddOverflow endp
-
-AddCarryOverflow proc
-    mov     dword ptr [CarryBit], 0
-    mov     dword ptr [OverflowBit], 0
-    mov     eax, ecx        ; a
-    add     eax, edx        ; b
-    jnc     @1
-    mov     dword ptr [CarryBit], 1
-@1:
-    jno     @2
-    mov     dword ptr [OverflowBit], 1
-@2:
-    ret         ; eax = result
-AddCarryOverflow endp
-
-AddcCarryOverflow proc
+FullAdder proc
     mov     dword ptr [OverflowBit], 0
 
     mov     eax, ecx        ; a
@@ -61,7 +24,7 @@ AddcCarryOverflow proc
     adc     edx, 0
     mov     [CarryBit], edx    ; Save CarryOut
     ret
-AddcCarryOverflow endp
+FullAdder endp
 
 Rotl32 proc
     rol     edx, cl

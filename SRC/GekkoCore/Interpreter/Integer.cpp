@@ -10,45 +10,6 @@ namespace Gekko
 
 	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
 
-#pragma region "ALU Helpers"
-
-	/// <summary>
-	/// res = a + XER[CA]; XER[CA] = CarryOut.
-	/// </summary>
-	void Interpreter::AddWithXer(uint32_t a, AnalyzeInfo& info)
-	{
-		GPR(0) = AddCarryOverflow(a, (IS_XER_CA) ? 1 : 0);
-
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-	}
-
-	/// <summary>
-	/// res = a + b + XER[CA]; XER[CA] = CarryOut.
-	/// </summary>
-	void Interpreter::AddXerCarry(uint32_t a, uint32_t b, AnalyzeInfo& info)
-	{
-		CarryBit = (IS_XER_CA) ? 1 : 0;
-		GPR(0) = AddcCarryOverflow(a, b);
-
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-	}
-
-#pragma endregion "ALU Helpers"
-
 	// rd = ra + rb
 	void Interpreter::add(AnalyzeInfo& info)
 	{
@@ -66,8 +27,8 @@ namespace Gekko
 	// rd = ra + rb, XER
 	void Interpreter::addo(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2);
-		GPR(0) = AddOverflow(a, b);
+		CarryBit = 0;
+		GPR(0) = FullAdder(GPR(1), GPR(2));
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -90,8 +51,8 @@ namespace Gekko
 	// rd = ra + rb, XER[CA]
 	void Interpreter::addc(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2);
-		GPR(0) = AddCarry(a, b);
+		CarryBit = 0;
+		GPR(0) = FullAdder(GPR(1), GPR(2));
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -113,8 +74,8 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], XER[OV]
 	void Interpreter::addco(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2);
-		GPR(0) = AddCarryOverflow(a, b);
+		CarryBit = 0;
+		GPR(0) = FullAdder(GPR(1), GPR(2));
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -145,7 +106,16 @@ namespace Gekko
 	// rd = ra + rb + XER[CA], XER
 	void Interpreter::adde(AnalyzeInfo& info)
 	{
-		AddXerCarry(GPR(1), GPR(2), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), GPR(2));
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -158,7 +128,16 @@ namespace Gekko
 
 	void Interpreter::addeo(AnalyzeInfo& info)
 	{
-		AddXerCarry(GPR(1), GPR(2), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), GPR(2));
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -189,7 +168,8 @@ namespace Gekko
 	void Interpreter::addic(AnalyzeInfo& info)
 	{
 		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed;
-		GPR(0) = AddCarry(a, b);
+		CarryBit = 0;
+		GPR(0) = FullAdder(a, b);
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -219,7 +199,16 @@ namespace Gekko
 	// rd = ra + XER[CA] - 1 (0xffffffff), XER
 	void Interpreter::addme(AnalyzeInfo& info)
 	{
-		AddWithXer(GPR(1) - 1, info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), -1);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -232,7 +221,16 @@ namespace Gekko
 
 	void Interpreter::addmeo(AnalyzeInfo& info)
 	{
-		AddWithXer(GPR(1) - 1, info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), -1);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -254,7 +252,16 @@ namespace Gekko
 	// rd = ra + XER[CA], XER
 	void Interpreter::addze(AnalyzeInfo& info)
 	{
-		AddWithXer(GPR(1), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), 0);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -267,7 +274,16 @@ namespace Gekko
 
 	void Interpreter::addzeo(AnalyzeInfo& info)
 	{
-		AddWithXer(GPR(1), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(GPR(1), 0);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -442,7 +458,8 @@ namespace Gekko
 
 	void Interpreter::nego(AnalyzeInfo& info)
 	{
-		GPR(0) = AddOverflow(~GPR(1), 1);
+		CarryBit = 0;
+		GPR(0) = FullAdder(~GPR(1), 1);
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -478,8 +495,8 @@ namespace Gekko
 	// rd = ~ra + rb + 1, XER
 	void Interpreter::subfo(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = GPR(2) + 1;
-		GPR(0) = AddOverflow(a, b);
+		CarryBit = 1;
+		GPR(0) = FullAdder(~GPR(1), GPR(2));
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -502,8 +519,8 @@ namespace Gekko
 	// rd = ~ra + rb + 1, XER[CA]
 	void Interpreter::subfc(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = GPR(2) + 1;
-		GPR(0) = AddCarry(a, b);
+		CarryBit = 1;
+		GPR(0) = FullAdder(~GPR(1), GPR(2));
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -524,8 +541,8 @@ namespace Gekko
 
 	void Interpreter::subfco(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = GPR(2) + 1;
-		GPR(0) = AddCarryOverflow(a, b);
+		CarryBit = 1;
+		GPR(0) = FullAdder(~GPR(1), GPR(2));
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -555,7 +572,16 @@ namespace Gekko
 	// rd = ~ra + rb + XER[CA], XER
 	void Interpreter::subfe(AnalyzeInfo& info)
 	{
-		AddXerCarry(~GPR(1), GPR(2), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), GPR(2));
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -568,7 +594,16 @@ namespace Gekko
 
 	void Interpreter::subfeo(AnalyzeInfo& info)
 	{
-		AddXerCarry(~GPR(1), GPR(2), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), GPR(2));
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -590,8 +625,8 @@ namespace Gekko
 	// rd = ~RRA + SIMM + 1, XER
 	void Interpreter::subfic(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = (int32_t)info.Imm.Signed + 1;
-		GPR(0) = AddCarry(a, b);
+		CarryBit = 1;
+		GPR(0) = FullAdder(~GPR(1), (int32_t)info.Imm.Signed);
 		if (CarryBit)
 		{
 			SET_XER_CA;
@@ -606,7 +641,16 @@ namespace Gekko
 	// rd = ~ra + XER[CA] - 1, XER
 	void Interpreter::subfme(AnalyzeInfo& info)
 	{
-		AddWithXer(~GPR(1) - 1, info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), -1);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -619,7 +663,16 @@ namespace Gekko
 
 	void Interpreter::subfmeo(AnalyzeInfo& info)
 	{
-		AddWithXer(~GPR(1) - 1, info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), -1);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
@@ -641,7 +694,16 @@ namespace Gekko
 	// rd = ~ra + XER[CA], XER
 	void Interpreter::subfze(AnalyzeInfo& info)
 	{
-		AddWithXer(~GPR(1), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), 0);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -654,7 +716,16 @@ namespace Gekko
 
 	void Interpreter::subfzeo(AnalyzeInfo& info)
 	{
-		AddWithXer(~GPR(1), info);
+		CarryBit = IS_XER_CA ? 1 : 0;
+		GPR(0) = FullAdder(~GPR(1), 0);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		if (OverflowBit)
 		{
 			SET_XER_OV;
