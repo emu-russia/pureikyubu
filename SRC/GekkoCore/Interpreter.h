@@ -377,8 +377,6 @@ namespace Gekko
 		void callvm(AnalyzeInfo& info);
 
 		uint32_t    rotmask[32][32];    // mask for integer rotate opcodes 
-		bool        RESERVE = false;    // for lwarx/stwcx.   
-		uint32_t    RESERVE_ADDR = 0;	// for lwarx/stwcx.
 		float       ldScale[64];        // for paired-single loads
 		float       stScale[64];        // for paired-single stores
 
