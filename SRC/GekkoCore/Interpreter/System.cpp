@@ -53,11 +53,11 @@ namespace Gekko
 		{
 			core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
 			if (core->exception) return;
-			SET_CR0_EQ;
+			core->regs.cr |= GEKKO_CR0_EQ;
 			RESERVE = false;
 		}
 
-		if (IS_XER_SO) SET_CR0_SO;
+		if (IS_XER_SO) core->regs.cr |= GEKKO_CR0_SO;
 		core->regs.pc += 4;
 	}
 
