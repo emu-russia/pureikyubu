@@ -36,7 +36,7 @@ extern "C" uint32_t OverflowBit;
 extern "C" uint32_t __FASTCALL AddCarry(uint32_t a, uint32_t b);
 extern "C" uint32_t __FASTCALL AddOverflow(uint32_t a, uint32_t b);
 extern "C" uint32_t __FASTCALL AddCarryOverflow(uint32_t a, uint32_t b);
-extern "C" uint32_t __FASTCALL AddXer2(uint32_t a, uint32_t b);
+extern "C" uint32_t __FASTCALL AddcCarryOverflow(uint32_t a, uint32_t b);
 extern "C" uint32_t __FASTCALL Rotl32(int sa, uint32_t data);
 
 #define FPRU(n) (core->regs.fpr[n].uval)

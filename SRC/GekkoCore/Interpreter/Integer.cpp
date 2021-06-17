@@ -12,60 +12,39 @@ namespace Gekko
 
 #pragma region "ALU Helpers"
 
-	void Interpreter::ADDXER(uint32_t a, AnalyzeInfo& info)
+	/// <summary>
+	/// res = a + XER[CA]; XER[CA] = CarryOut.
+	/// </summary>
+	void Interpreter::AddWithXer(uint32_t a, AnalyzeInfo& info)
 	{
-		uint32_t res;
-		uint32_t c = (IS_XER_CA) ? 1 : 0;
-		bool carry = false;
+		GPR(0) = AddCarryOverflow(a, (IS_XER_CA) ? 1 : 0);
 
-		res = AddCarry(a, c);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 	}
 
-	void Interpreter::ADDXERD(uint32_t a, AnalyzeInfo& info)
+	/// <summary>
+	/// res = a + b + XER[CA]; XER[CA] = CarryOut.
+	/// </summary>
+	void Interpreter::AddXerCarry(uint32_t a, uint32_t b, AnalyzeInfo& info)
 	{
-		uint32_t res;
-		uint32_t c = (IS_XER_CA) ? 1 : 0;
-		bool carry = false;
+		CarryBit = (IS_XER_CA) ? 1 : 0;
+		GPR(0) = AddcCarryOverflow(a, b);
 
-		res = AddCarry(a, c);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		COMPUTE_CR0(res);
-	}
-
-	void Interpreter::ADDXER2(uint32_t a, uint32_t b, AnalyzeInfo& info)
-	{
-		uint32_t res;
-		uint32_t c = (IS_XER_CA) ? 1 : 0;
-		bool carry = false;
-
-		CarryBit = c;
-		res = AddXer2(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-	}
-
-	void Interpreter::ADDXER2D(uint32_t a, uint32_t b, AnalyzeInfo& info)
-	{
-		uint32_t res;
-		uint32_t c = (IS_XER_CA) ? 1 : 0;
-		bool carry = false;
-
-		CarryBit = c;
-		res = AddXer2(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		COMPUTE_CR0(res);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 	}
 
 #pragma endregion "ALU Helpers"
@@ -87,19 +66,17 @@ namespace Gekko
 	// rd = ra + rb, XER
 	void Interpreter::addo(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool ovf = false;
-
-		res = AddOverflow(a, b);
-		ovf = OverflowBit != 0;
-
-		GPR(0) = res;
-		if (ovf)
+		uint32_t a = GPR(1), b = GPR(2);
+		GPR(0) = AddOverflow(a, b);
+		if (OverflowBit)
 		{
 			SET_XER_OV;
 			SET_XER_SO;
 		}
-		else RESET_XER_OV;
+		else
+		{
+			RESET_XER_OV;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -113,14 +90,16 @@ namespace Gekko
 	// rd = ra + rb, XER[CA]
 	void Interpreter::addc(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
+		uint32_t a = GPR(1), b = GPR(2);
+		GPR(0) = AddCarry(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -134,21 +113,25 @@ namespace Gekko
 	// rd = ra + rb, XER[CA], XER[OV]
 	void Interpreter::addco(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = GPR(2), res;
-		bool carry = false, ovf = false;
-
-		res = AddCarryOverflow(a, b);
-		carry = CarryBit != 0;
-		ovf = OverflowBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		if (ovf)
+		uint32_t a = GPR(1), b = GPR(2);
+		GPR(0) = AddCarryOverflow(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
+		if (OverflowBit)
 		{
 			SET_XER_OV;
 			SET_XER_SO;
 		}
-		else RESET_XER_OV;
+		else
+		{
+			RESET_XER_OV;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -162,25 +145,36 @@ namespace Gekko
 	// rd = ra + rb + XER[CA], XER
 	void Interpreter::adde(AnalyzeInfo& info)
 	{
-		ADDXER2(GPR(1), GPR(2), info);
+		AddXerCarry(GPR(1), GPR(2), info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ra + rb + XER[CA], CR0, XER
 	void Interpreter::adde_d(AnalyzeInfo& info)
 	{
-		ADDXER2D(GPR(1), GPR(2), info);
-		core->regs.pc += 4;
+		adde(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::addeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("addeo\n");
+		AddXerCarry(GPR(1), GPR(2), info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::addeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("addeo.\n");
+		addeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = (ra | 0) + SIMM
@@ -194,14 +188,16 @@ namespace Gekko
 	// rd = ra + SIMM, XER
 	void Interpreter::addic(AnalyzeInfo& info)
 	{
-		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed, res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
+		uint32_t a = GPR(1), b = (int32_t)info.Imm.Signed;
+		GPR(0) = AddCarry(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -223,49 +219,71 @@ namespace Gekko
 	// rd = ra + XER[CA] - 1 (0xffffffff), XER
 	void Interpreter::addme(AnalyzeInfo& info)
 	{
-		ADDXER(GPR(1) - 1, info);
+		AddWithXer(GPR(1) - 1, info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ra + XER[CA] - 1 (0xffffffff), CR0, XER
 	void Interpreter::addme_d(AnalyzeInfo& info)
 	{
-		ADDXERD(GPR(1) - 1, info);
-		core->regs.pc += 4;
+		addme(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::addmeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("addmeo\n");
+		AddWithXer(GPR(1) - 1, info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::addmeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("addmeo.\n");
+		addmeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + XER[CA], XER
 	void Interpreter::addze(AnalyzeInfo& info)
 	{
-		ADDXER(core->regs.gpr[info.paramBits[1]], info);
+		AddWithXer(GPR(1), info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ra + XER[CA], CR0, XER
 	void Interpreter::addze_d(AnalyzeInfo& info)
 	{
-		ADDXERD(GPR(1), info);
-		core->regs.pc += 4;
+		addze(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::addzeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("addzeo\n");
+		AddWithXer(GPR(1), info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::addzeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("addzeo.\n");
+		addzeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra / rb (signed)
@@ -296,7 +314,8 @@ namespace Gekko
 
 	void Interpreter::divwo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("divwo.\n");
+		divwo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra / rb (unsigned)
@@ -327,7 +346,8 @@ namespace Gekko
 
 	void Interpreter::divwuo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("divwuo.\n");
+		divwuo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-63] = ra * rb
@@ -402,7 +422,8 @@ namespace Gekko
 
 	void Interpreter::mullwo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("mullwo.\n");
+		mullwo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + 1
@@ -421,12 +442,23 @@ namespace Gekko
 
 	void Interpreter::nego(AnalyzeInfo& info)
 	{
-		Debug::Halt("nego\n");
+		GPR(0) = AddOverflow(~GPR(1), 1);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::nego_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("nego.\n");
+		nego(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1
@@ -446,26 +478,40 @@ namespace Gekko
 	// rd = ~ra + rb + 1, XER
 	void Interpreter::subfo(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfo\n");
+		uint32_t a = ~GPR(1), b = GPR(2) + 1;
+		GPR(0) = AddOverflow(a, b);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + 1, CR0, XER
 	void Interpreter::subfo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfo.\n");
+		subfo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1, XER[CA]
 	void Interpreter::subfc(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = GPR(2) + 1, res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		if (carry) SET_XER_CA; else RESET_XER_CA;
-		GPR(0) = res;
+		uint32_t a = ~GPR(1), b = GPR(2) + 1;
+		GPR(0) = AddCarry(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -478,98 +524,153 @@ namespace Gekko
 
 	void Interpreter::subfco(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfco\n");
+		uint32_t a = ~GPR(1), b = GPR(2) + 1;
+		GPR(0) = AddCarryOverflow(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::subfco_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfco.\n");
+		subfco(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + XER[CA], XER
 	void Interpreter::subfe(AnalyzeInfo& info)
 	{
-		ADDXER2(~GPR(1), GPR(2), info);
+		AddXerCarry(~GPR(1), GPR(2), info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + XER[CA], CR0, XER
 	void Interpreter::subfe_d(AnalyzeInfo& info)
 	{
-		ADDXER2D(~GPR(1), GPR(2), info);
-		core->regs.pc += 4;
+		subfe(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::subfeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfeo\n");
+		AddXerCarry(~GPR(1), GPR(2), info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::subfeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfeo.\n");
+		subfeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~RRA + SIMM + 1, XER
 	void Interpreter::subfic(AnalyzeInfo& info)
 	{
-		uint32_t a = ~GPR(1), b = (int32_t)info.Imm.Signed + 1, res;
-		bool carry = false;
-
-		res = AddCarry(a, b);
-		carry = CarryBit != 0;
-
-		GPR(0) = res;
-		if (carry) SET_XER_CA; else RESET_XER_CA;
+		uint32_t a = ~GPR(1), b = (int32_t)info.Imm.Signed + 1;
+		GPR(0) = AddCarry(a, b);
+		if (CarryBit)
+		{
+			SET_XER_CA;
+		}
+		else
+		{
+			RESET_XER_CA;
+		}
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + XER[CA] - 1, XER
 	void Interpreter::subfme(AnalyzeInfo& info)
 	{
-		ADDXER(~GPR(1) - 1, info);
+		AddWithXer(~GPR(1) - 1, info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + XER[CA] - 1, CR0, XER
 	void Interpreter::subfme_d(AnalyzeInfo& info)
 	{
-		ADDXERD(~GPR(1) - 1, info);
-		core->regs.pc += 4;
+		subfme(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::subfmeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfmeo\n");
+		AddWithXer(~GPR(1) - 1, info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::subfmeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfmeo.\n");
+		subfmeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + XER[CA], XER
 	void Interpreter::subfze(AnalyzeInfo& info)
 	{
-		ADDXER(~GPR(1), info);
+		AddWithXer(~GPR(1), info);
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + XER[CA], CR0, XER
 	void Interpreter::subfze_d(AnalyzeInfo& info)
 	{
-		ADDXERD(~GPR(1), info);
-		core->regs.pc += 4;
+		subfze(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 	void Interpreter::subfzeo(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfzeo\n");
+		AddWithXer(~GPR(1), info);
+		if (OverflowBit)
+		{
+			SET_XER_OV;
+			SET_XER_SO;
+		}
+		else
+		{
+			RESET_XER_OV;
+		}
+		core->regs.pc += 4;
 	}
 
 	void Interpreter::subfzeo_d(AnalyzeInfo& info)
 	{
-		Debug::Halt("subfzeo.\n");
+		subfzeo(info);
+		COMPUTE_CR0(GPR(0));
 	}
 
 }

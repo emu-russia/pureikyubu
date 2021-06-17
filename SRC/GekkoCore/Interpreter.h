@@ -392,10 +392,8 @@ namespace Gekko
 		template <typename T>
 		inline void CmpCommon(int crfd, T a, T b);
 
-		void ADDXER(uint32_t a, AnalyzeInfo& info);
-		void ADDXERD(uint32_t a, AnalyzeInfo& info);
-		void ADDXER2(uint32_t a, uint32_t b, AnalyzeInfo& info);
-		void ADDXER2D(uint32_t a, uint32_t b, AnalyzeInfo& info);
+		void AddWithXer(uint32_t a, AnalyzeInfo& info);		// Russians don't laugh
+		void AddXerCarry(uint32_t a, uint32_t b, AnalyzeInfo& info);
 
 		void Dispatch(AnalyzeInfo& info);
 
