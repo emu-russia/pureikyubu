@@ -29,15 +29,7 @@ namespace Gekko
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -53,14 +45,7 @@ namespace Gekko
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -76,23 +61,8 @@ namespace Gekko
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -108,14 +78,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -130,23 +93,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -169,14 +117,7 @@ namespace Gekko
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), (int32_t)info.Imm.Signed);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -200,14 +141,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), -1);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -222,23 +156,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), -1);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -253,14 +172,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), 0);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -275,23 +187,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), 0);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -459,15 +356,7 @@ namespace Gekko
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(~GPR(1), 1);
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -496,15 +385,7 @@ namespace Gekko
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -520,14 +401,7 @@ namespace Gekko
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -542,23 +416,8 @@ namespace Gekko
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -573,14 +432,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -595,23 +447,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -626,14 +463,7 @@ namespace Gekko
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), (int32_t)info.Imm.Signed);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -642,14 +472,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), -1);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -664,23 +487,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), -1);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
@@ -695,14 +503,7 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), 0);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
 		core->regs.pc += 4;
 	}
 
@@ -717,23 +518,8 @@ namespace Gekko
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), 0);
-		if (CarryBit)
-		{
-			SET_XER_CA;
-		}
-		else
-		{
-			RESET_XER_CA;
-		}
-		if (OverflowBit)
-		{
-			SET_XER_OV;
-			SET_XER_SO;
-		}
-		else
-		{
-			RESET_XER_OV;
-		}
+		if (CarryBit) SET_XER_CA(); else RESET_XER_CA();
+		if (OverflowBit) { SET_XER_OV(); SET_XER_SO(); } else RESET_XER_OV();
 		core->regs.pc += 4;
 	}
 
