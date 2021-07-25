@@ -30,6 +30,8 @@ namespace Gekko
 
     GekkoCore::GekkoCore()
     {
+        cache = new Cache(this);
+
         gatherBuffer = new GatherBuffer(this);
 
         interp = new Interpreter(this);
@@ -105,7 +107,7 @@ namespace Gekko
 
         dtlb.InvalidateAll();
         itlb.InvalidateAll();
-        cache.Reset();
+        cache->Reset();
     }
 
     // Modify CPU counters

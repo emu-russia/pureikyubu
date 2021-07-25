@@ -14,8 +14,10 @@ using namespace Debug;
 
 namespace Gekko
 {
-	Cache::Cache()
+	Cache::Cache(GekkoCore* core)
 	{
+		this->core = core;
+
 		cacheData = new uint8_t[cacheSize];
 
 		modifiedBlocks = new bool[cacheSize >> 5];
@@ -137,7 +139,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			Report(Channel::CPU, "Cache::Flush 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::Flush 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
 		}
 	}
 
@@ -150,7 +152,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			Report(Channel::CPU, "Cache::Invalidate 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::Invalidate 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
 		}
 	}
 

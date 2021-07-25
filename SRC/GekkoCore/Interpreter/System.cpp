@@ -310,8 +310,8 @@ namespace Gekko
 			case SPR::HID0:
 			{
 				uint32_t bits = core->regs.gpr[info.paramBits[1]];
-				core->cache.Enable((bits & HID0_DCE) ? true : false);
-				core->cache.Freeze((bits & HID0_DLOCK) ? true : false);
+				core->cache->Enable((bits & HID0_DCE) ? true : false);
+				core->cache->Freeze((bits & HID0_DLOCK) ? true : false);
 				if (bits & HID0_DCFI)
 				{
 					bits &= ~HID0_DCFI;
@@ -343,7 +343,7 @@ namespace Gekko
 			case SPR::HID2:
 			{
 				uint32_t bits = core->regs.gpr[info.paramBits[1]];
-				core->cache.LockedEnable((bits & HID2_LCE) ? true : false);
+				core->cache->LockedEnable((bits & HID2_LCE) ? true : false);
 			}
 			break;
 
@@ -363,9 +363,9 @@ namespace Gekko
 					size_t length = ((core->regs.spr[SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
 						((core->regs.spr[SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
 					if (length == 0) length = 128;
-					if (core->cache.IsLockedEnable())
+					if (core->cache->IsLockedEnable())
 					{
-						core->cache.LockedCacheDma(
+						core->cache->LockedCacheDma(
 							(core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
 							maddr,
 							lcaddr,
@@ -429,7 +429,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.Flush(pa);
+			core->cache->Flush(pa);
 		}
 		else
 		{
@@ -455,7 +455,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.Invalidate(pa);
+			core->cache->Invalidate(pa);
 		}
 		else
 		{
@@ -474,7 +474,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.Store(pa);
+			core->cache->Store(pa);
 		}
 		else
 		{
@@ -500,7 +500,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.Touch(pa);
+			core->cache->Touch(pa);
 		}
 		core->regs.pc += 4;
 	}
@@ -522,7 +522,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Read, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.TouchForStore(pa);
+			core->cache->TouchForStore(pa);
 		}
 		core->regs.pc += 4;
 	}
@@ -535,7 +535,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.Zero(pa);
+			core->cache->Zero(pa);
 		}
 		else
 		{
@@ -554,7 +554,7 @@ namespace Gekko
 	{
 		int WIMG;
 
-		if (!core->cache.IsLockedEnable())
+		if (!core->cache->IsLockedEnable())
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
 			core->Exception(Exception::PROGRAM);
@@ -566,7 +566,7 @@ namespace Gekko
 		uint32_t pa = core->EffectiveToPhysical(ea, MmuAccess::Write, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
-			core->cache.ZeroLocked(pa);
+			core->cache->ZeroLocked(pa);
 		}
 		else
 		{

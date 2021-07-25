@@ -353,14 +353,14 @@ namespace Gekko
 	static Json::Value* CmdCacheLog(std::vector<std::string>& args)
 	{
 		CacheLogLevel level = (CacheLogLevel)atoi(args[1].c_str());
-		Gekko->cache.SetLogLevel(level);
+		Gekko->cache->SetLogLevel(level);
 		return nullptr;
 	}
 
 	static Json::Value* CmdCacheDebugDisable(std::vector<std::string>& args)
 	{
 		bool disable = atoi(args[1].c_str()) ? true : false;
-		Gekko->cache.DebugDisable(disable);
+		Gekko->cache->DebugDisable(disable);
 		return nullptr;
 	}
 
