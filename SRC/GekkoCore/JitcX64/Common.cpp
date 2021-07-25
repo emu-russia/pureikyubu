@@ -19,7 +19,7 @@ namespace Gekko
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::sib_none_rsp_disp8, IntelCore::Param::rbp, 0x10));
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::sib_none_rsp_disp8, IntelCore::Param::rsi, 0x18));
 		seg->Write(IntelAssembler::push<64>(IntelCore::Param::rdi));
-		seg->Write(IntelAssembler::sub<64>(IntelCore::Param::rsp, IntelCore::Param::imm8, 0, 0x40));
+		seg->Write(IntelAssembler::sub<64>(IntelCore::Param::rsp, IntelCore::Param::simm8_as64, 0, 0x40));
 
 		// mov rsi, Gekko::regs.gpr
 
@@ -38,7 +38,7 @@ namespace Gekko
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rbx, IntelCore::Param::sib_none_rsp_disp8, 0x50));
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rbp, IntelCore::Param::sib_none_rsp_disp8, 0x58));
 		seg->Write(IntelAssembler::mov<64>(IntelCore::Param::rsi, IntelCore::Param::sib_none_rsp_disp8, 0x60));
-		seg->Write(IntelAssembler::add<64>(IntelCore::Param::rsp, IntelCore::Param::imm8, 0, 0x40));
+		seg->Write(IntelAssembler::add<64>(IntelCore::Param::rsp, IntelCore::Param::simm8_as64, 0, 0x40));
 		seg->Write(IntelAssembler::pop<64>(IntelCore::Param::rdi));
 		seg->Write(IntelAssembler::ret<64>());
 	}
