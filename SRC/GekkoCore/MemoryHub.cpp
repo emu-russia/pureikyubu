@@ -24,15 +24,15 @@ namespace Gekko
 			return;
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.ReadByte(pa, reg);
+			cache->ReadByte(pa, reg);
 			return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.ReadByte(pa, reg);
+			cache->ReadByte(pa, reg);
 			return;
 		}
 
@@ -69,16 +69,16 @@ namespace Gekko
 			}
 		}
 	
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.WriteByte(pa, data);
+			cache->WriteByte(pa, data);
 			if ((WIMG & WIMG_W) == 0)
 				return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.WriteByte(pa, data);
+			cache->WriteByte(pa, data);
 			return;
 		}
 
@@ -101,15 +101,15 @@ namespace Gekko
 			return;
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.ReadHalf(pa, reg);
+			cache->ReadHalf(pa, reg);
 			return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.ReadHalf(pa, reg);
+			cache->ReadHalf(pa, reg);
 			return;
 		}
 
@@ -146,16 +146,16 @@ namespace Gekko
 			}
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.WriteHalf(pa, data);
+			cache->WriteHalf(pa, data);
 			if ((WIMG & WIMG_W) == 0)
 				return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.WriteHalf(pa, data);
+			cache->WriteHalf(pa, data);
 			return;
 		}
 
@@ -178,15 +178,15 @@ namespace Gekko
 			return;
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.ReadWord(pa, reg);
+			cache->ReadWord(pa, reg);
 			return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.ReadWord(pa, reg);
+			cache->ReadWord(pa, reg);
 			return;
 		}
 
@@ -223,16 +223,16 @@ namespace Gekko
 			}
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.WriteWord(pa, data);
+			cache->WriteWord(pa, data);
 			if ((WIMG & WIMG_W) == 0)
 				return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.WriteWord(pa, data);
+			cache->WriteWord(pa, data);
 			return;
 		}
 
@@ -255,15 +255,15 @@ namespace Gekko
 			return;
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.ReadDouble(pa, reg);
+			cache->ReadDouble(pa, reg);
 			return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.ReadDouble(pa, reg);
+			cache->ReadDouble(pa, reg);
 			return;
 		}
 
@@ -302,16 +302,16 @@ namespace Gekko
 			}
 		}
 
-		if (cache.IsEnabled() && (WIMG & WIMG_I) == 0)
+		if (cache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
-			cache.WriteDouble(pa, data);
+			cache->WriteDouble(pa, data);
 			if ((WIMG & WIMG_W) == 0)
 				return;
 		}
 
-		if (!cache.IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
+		if (!cache->IsEnabled() && (addr & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS)
 		{
-			cache.WriteDouble(pa, data);
+			cache->WriteDouble(pa, data);
 			return;
 		}
 

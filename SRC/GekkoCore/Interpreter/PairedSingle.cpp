@@ -22,7 +22,8 @@ namespace Gekko
 
 	void Interpreter::ps_div_d(AnalyzeInfo& info)
 	{
-		Halt("ps_div.\n");
+		ps_div(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_sub(AnalyzeInfo& info)
@@ -38,7 +39,8 @@ namespace Gekko
 
 	void Interpreter::ps_sub_d(AnalyzeInfo& info)
 	{
-		Halt("ps_sub.\n");
+		ps_sub(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_add(AnalyzeInfo& info)
@@ -54,7 +56,8 @@ namespace Gekko
 
 	void Interpreter::ps_add_d(AnalyzeInfo& info)
 	{
-		Halt("ps_add.\n");
+		ps_add(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_sel(AnalyzeInfo& info)
@@ -70,7 +73,8 @@ namespace Gekko
 
 	void Interpreter::ps_sel_d(AnalyzeInfo& info)
 	{
-		Halt("ps_sel.\n");
+		ps_sel(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_res(AnalyzeInfo& info)
@@ -86,7 +90,8 @@ namespace Gekko
 
 	void Interpreter::ps_res_d(AnalyzeInfo& info)
 	{
-		Halt("ps_res.\n");
+		ps_res(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_mul(AnalyzeInfo& info)
@@ -102,7 +107,8 @@ namespace Gekko
 
 	void Interpreter::ps_mul_d(AnalyzeInfo& info)
 	{
-		Halt("ps_mul.\n");
+		ps_mul(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_rsqrte(AnalyzeInfo& info)
@@ -118,7 +124,8 @@ namespace Gekko
 
 	void Interpreter::ps_rsqrte_d(AnalyzeInfo& info)
 	{
-		Halt("ps_rsqrte.\n");
+		ps_rsqrte(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_msub(AnalyzeInfo& info)
@@ -140,7 +147,8 @@ namespace Gekko
 
 	void Interpreter::ps_msub_d(AnalyzeInfo& info)
 	{
-		Halt("ps_msub.\n");
+		ps_msub(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_madd(AnalyzeInfo& info)
@@ -162,7 +170,8 @@ namespace Gekko
 
 	void Interpreter::ps_madd_d(AnalyzeInfo& info)
 	{
-		Halt("ps_madd.\n");
+		ps_madd(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_nmsub(AnalyzeInfo& info)
@@ -184,7 +193,8 @@ namespace Gekko
 
 	void Interpreter::ps_nmsub_d(AnalyzeInfo& info)
 	{
-		Halt("ps_nmsub.\n");
+		ps_nmsub(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_nmadd(AnalyzeInfo& info)
@@ -206,7 +216,8 @@ namespace Gekko
 
 	void Interpreter::ps_nmadd_d(AnalyzeInfo& info)
 	{
-		Halt("ps_nmadd.\n");
+		ps_nmadd(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_neg(AnalyzeInfo& info)
@@ -222,7 +233,8 @@ namespace Gekko
 
 	void Interpreter::ps_neg_d(AnalyzeInfo& info)
 	{
-		Halt("ps_neg.\n");
+		ps_neg(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_mr(AnalyzeInfo& info)
@@ -238,27 +250,42 @@ namespace Gekko
 
 	void Interpreter::ps_mr_d(AnalyzeInfo& info)
 	{
-		Halt("ps_mr.\n");
+		ps_mr(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_nabs(AnalyzeInfo& info)
 	{
-		Halt("ps_nabs\n");
+		if (core->regs.msr & MSR_FP)
+		{
+			PS0U(info.paramBits[0]) = PS0U(info.paramBits[1]) | 0x8000000000000000;
+			PS1U(info.paramBits[0]) = PS1U(info.paramBits[1]) | 0x8000000000000000;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
 	void Interpreter::ps_nabs_d(AnalyzeInfo& info)
 	{
-		Halt("ps_nabs.\n");
+		ps_nabs(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_abs(AnalyzeInfo& info)
 	{
-		Halt("ps_abs\n");
+		if (core->regs.msr & MSR_FP)
+		{
+			PS0U(info.paramBits[0]) = PS0U(info.paramBits[1]) & ~0x8000000000000000;
+			PS1U(info.paramBits[0]) = PS1U(info.paramBits[1]) & ~0x8000000000000000;
+			core->regs.pc += 4;
+		}
+		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
 	void Interpreter::ps_abs_d(AnalyzeInfo& info)
 	{
-		Halt("ps_abs.\n");
+		ps_abs(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	// Miscellaneous Paired-Single Instructions
@@ -278,7 +305,8 @@ namespace Gekko
 
 	void Interpreter::ps_sum0_d(AnalyzeInfo& info)
 	{
-		Halt("ps_sum0.\n");
+		ps_sum0(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_sum1(AnalyzeInfo& info)
@@ -296,7 +324,8 @@ namespace Gekko
 
 	void Interpreter::ps_sum1_d(AnalyzeInfo& info)
 	{
-		Halt("ps_sum1.\n");
+		ps_sum1(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_muls0(AnalyzeInfo& info)
@@ -314,7 +343,8 @@ namespace Gekko
 
 	void Interpreter::ps_muls0_d(AnalyzeInfo& info)
 	{
-		Halt("ps_muls0.\n");
+		ps_muls0(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_muls1(AnalyzeInfo& info)
@@ -332,7 +362,8 @@ namespace Gekko
 
 	void Interpreter::ps_muls1_d(AnalyzeInfo& info)
 	{
-		Halt("ps_muls1.\n");
+		ps_muls1(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_madds0(AnalyzeInfo& info)
@@ -350,7 +381,8 @@ namespace Gekko
 
 	void Interpreter::ps_madds0_d(AnalyzeInfo& info)
 	{
-		Halt("ps_madds0.\n");
+		ps_madds0(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_madds1(AnalyzeInfo& info)
@@ -368,7 +400,8 @@ namespace Gekko
 
 	void Interpreter::ps_madds1_d(AnalyzeInfo& info)
 	{
-		Halt("ps_madds1.\n");
+		ps_madds1(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_cmpu0(AnalyzeInfo& info)
@@ -478,7 +511,8 @@ namespace Gekko
 
 	void Interpreter::ps_merge00_d(AnalyzeInfo& info)
 	{
-		Halt("ps_merge00.\n");
+		ps_merge00(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_merge01(AnalyzeInfo& info)
@@ -496,7 +530,8 @@ namespace Gekko
 
 	void Interpreter::ps_merge01_d(AnalyzeInfo& info)
 	{
-		Halt("ps_merge01.\n");
+		ps_merge01(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_merge10(AnalyzeInfo& info)
@@ -514,7 +549,8 @@ namespace Gekko
 
 	void Interpreter::ps_merge10_d(AnalyzeInfo& info)
 	{
-		Halt("ps_merge10.\n");
+		ps_merge10(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 	void Interpreter::ps_merge11(AnalyzeInfo& info)
@@ -532,7 +568,8 @@ namespace Gekko
 
 	void Interpreter::ps_merge11_d(AnalyzeInfo& info)
 	{
-		Halt("ps_merge11.\n");
+		ps_merge11(info);
+		if (!core->exception) COMPUTE_CR1();
 	}
 
 }

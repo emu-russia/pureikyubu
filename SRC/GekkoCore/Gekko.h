@@ -178,7 +178,7 @@ namespace Gekko
         // The instruction cache is not emulated because it is accessed only in one direction (Read).
         // Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
 
-        Cache cache;
+        Cache* cache;
 
         // TODO: Will be hidden more
         GekkoRegs regs;

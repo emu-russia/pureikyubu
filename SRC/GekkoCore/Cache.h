@@ -44,8 +44,10 @@ namespace Gekko
 		uint32_t LockedCacheAddr = 0;
 		bool lcenabled = false;
 
+		GekkoCore* core;
+
 	public:
-		Cache();
+		Cache(GekkoCore* core);
 		~Cache();
 
 		void Reset();

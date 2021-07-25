@@ -26,3 +26,5 @@
 #define FPRD(n) (core->regs.fpr[n].dbl)
 #define PS0(n)  (core->regs.fpr[n].dbl)
 #define PS1(n)  (core->regs.ps1[n].dbl)
+#define PS0U(n)  (core->regs.fpr[n].uval)
+#define PS1U(n)  (core->regs.ps1[n].uval)
