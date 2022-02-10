@@ -13,11 +13,11 @@ This project is revived from 2004 in 2020.
 
 ### Windows version
 
-Build using Visual Studio 2015/2019. To build, open Dolwin_VS2015.sln/Dolwin_VS2019.sln and click Build.
+Build using Visual Studio 2019. To build, open Dolwin_VS2019.sln and click Build.
 
 ### Windows Playground version
 
-Build using Visual Studio 2015/2019. To build, open DolwinPlayground_VS2015.sln/DolwinPlayground_VS2019.sln and click Build.
+Build using Visual Studio 2019. To build, open DolwinPlayground_VS2019.sln and click Build.
 
 ### Generic Linux (Ubuntu) version
 
