@@ -32,7 +32,7 @@
     <ClCompile Include="..\..\DduCore.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Mn102Analyzer.cpp">
+    <ClCompile Include="..\..\Mn102Decoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Mn102Disasm.cpp">
@@ -70,7 +70,7 @@
     <ClInclude Include="..\..\DduCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Mn102Analyzer.h">
+    <ClInclude Include="..\..\Mn102Decoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Mn102Disasm.h">
