@@ -5,7 +5,7 @@
 namespace Gekko
 {
 
-	void Interpreter::fadd(DecoderInfo& info)
+	void Interpreter::fadd()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -15,13 +15,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fadd_d(DecoderInfo& info)
+	void Interpreter::fadd_d()
 	{
-		fadd(info);
+		fadd();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fadds(DecoderInfo& info)
+	void Interpreter::fadds()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -32,13 +32,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fadds_d(DecoderInfo& info)
+	void Interpreter::fadds_d()
 	{
-		fadds(info);
+		fadds();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fdiv(DecoderInfo& info)
+	void Interpreter::fdiv()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -48,13 +48,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fdiv_d(DecoderInfo& info)
+	void Interpreter::fdiv_d()
 	{
-		fdiv(info);
+		fdiv();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fdivs(DecoderInfo& info)
+	void Interpreter::fdivs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -65,13 +65,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fdivs_d(DecoderInfo& info)
+	void Interpreter::fdivs_d()
 	{
-		fdivs(info);
+		fdivs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmul(DecoderInfo& info)
+	void Interpreter::fmul()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -81,13 +81,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmul_d(DecoderInfo& info)
+	void Interpreter::fmul_d()
 	{
-		fmul(info);
+		fmul();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmuls(DecoderInfo& info)
+	void Interpreter::fmuls()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -98,13 +98,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmuls_d(DecoderInfo& info)
+	void Interpreter::fmuls_d()
 	{
-		fmuls(info);
+		fmuls();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fres(DecoderInfo& info)
+	void Interpreter::fres()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -115,13 +115,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fres_d(DecoderInfo& info)
+	void Interpreter::fres_d()
 	{
-		fres(info);
+		fres();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::frsqrte(DecoderInfo& info)
+	void Interpreter::frsqrte()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -131,13 +131,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::frsqrte_d(DecoderInfo& info)
+	void Interpreter::frsqrte_d()
 	{
-		frsqrte(info);
+		frsqrte();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fsub(DecoderInfo& info)
+	void Interpreter::fsub()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -147,13 +147,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fsub_d(DecoderInfo& info)
+	void Interpreter::fsub_d()
 	{
-		fsub(info);
+		fsub();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fsubs(DecoderInfo& info)
+	void Interpreter::fsubs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -164,13 +164,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fsubs_d(DecoderInfo& info)
+	void Interpreter::fsubs_d()
 	{
-		fsubs(info);
+		fsubs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fsel(DecoderInfo& info)
+	void Interpreter::fsel()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -180,13 +180,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fsel_d(DecoderInfo& info)
+	void Interpreter::fsel_d()
 	{
-		fsel(info);
+		fsel();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmadd(DecoderInfo& info)
+	void Interpreter::fmadd()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -196,13 +196,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmadd_d(DecoderInfo& info)
+	void Interpreter::fmadd_d()
 	{
-		fmadd(info);
+		fmadd();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmadds(DecoderInfo& info)
+	void Interpreter::fmadds()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -213,13 +213,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmadds_d(DecoderInfo& info)
+	void Interpreter::fmadds_d()
 	{
-		fmadds(info);
+		fmadds();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmsub(DecoderInfo& info)
+	void Interpreter::fmsub()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -229,13 +229,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmsub_d(DecoderInfo& info)
+	void Interpreter::fmsub_d()
 	{
-		fmsub(info);
+		fmsub();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fmsubs(DecoderInfo& info)
+	void Interpreter::fmsubs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -246,13 +246,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmsubs_d(DecoderInfo& info)
+	void Interpreter::fmsubs_d()
 	{
-		fmsubs(info);
+		fmsubs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fnmadd(DecoderInfo& info)
+	void Interpreter::fnmadd()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -262,13 +262,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fnmadd_d(DecoderInfo& info)
+	void Interpreter::fnmadd_d()
 	{
-		fnmadd(info);
+		fnmadd();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fnmadds(DecoderInfo& info)
+	void Interpreter::fnmadds()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -279,13 +279,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fnmadds_d(DecoderInfo& info)
+	void Interpreter::fnmadds_d()
 	{
-		fnmadds(info);
+		fnmadds();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fnmsub(DecoderInfo& info)
+	void Interpreter::fnmsub()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -295,13 +295,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fnmsub_d(DecoderInfo& info)
+	void Interpreter::fnmsub_d()
 	{
-		fnmsub(info);
+		fnmsub();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fnmsubs(DecoderInfo& info)
+	void Interpreter::fnmsubs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -312,13 +312,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fnmsubs_d(DecoderInfo& info)
+	void Interpreter::fnmsubs_d()
 	{
-		fnmsubs(info);
+		fnmsubs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fctiw(DecoderInfo& info)
+	void Interpreter::fctiw()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -328,13 +328,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fctiw_d(DecoderInfo& info)
+	void Interpreter::fctiw_d()
 	{
-		fctiw(info);
+		fctiw();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fctiwz(DecoderInfo& info)
+	void Interpreter::fctiwz()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -344,13 +344,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fctiwz_d(DecoderInfo& info)
+	void Interpreter::fctiwz_d()
 	{
-		fctiwz(info);
+		fctiwz();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::frsp(DecoderInfo& info)
+	void Interpreter::frsp()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -365,13 +365,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::frsp_d(DecoderInfo& info)
+	void Interpreter::frsp_d()
 	{
-		frsp(info);
+		frsp();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fcmpo(DecoderInfo& info)
+	void Interpreter::fcmpo()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -396,7 +396,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fcmpu(DecoderInfo& info)
+	void Interpreter::fcmpu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -421,7 +421,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fabs(DecoderInfo& info)
+	void Interpreter::fabs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -431,14 +431,14 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fabs_d(DecoderInfo& info)
+	void Interpreter::fabs_d()
 	{
-		fabs(info);
+		fabs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
 	// fd = fb
-	void Interpreter::fmr(DecoderInfo& info)
+	void Interpreter::fmr()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -448,13 +448,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fmr_d(DecoderInfo& info)
+	void Interpreter::fmr_d()
 	{
-		fmr(info);
+		fmr();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fnabs(DecoderInfo& info)
+	void Interpreter::fnabs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -464,13 +464,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fnabs_d(DecoderInfo& info)
+	void Interpreter::fnabs_d()
 	{
-		fnabs(info);
+		fnabs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::fneg(DecoderInfo& info)
+	void Interpreter::fneg()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -480,14 +480,14 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::fneg_d(DecoderInfo& info)
+	void Interpreter::fneg_d()
 	{
-		fneg(info);
+		fneg();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
 	// CR[crfD] = FPSCR[crfS]
-	void Interpreter::mcrfs(DecoderInfo& info)
+	void Interpreter::mcrfs()
 	{
 		uint32_t fp = (core->regs.fpscr >> (28 - info.paramBits[1])) & 0xf;
 		core->regs.cr &= ~(0xf0000000 >> info.paramBits[0]);
@@ -496,7 +496,7 @@ namespace Gekko
 	}
 
 	// fd[32-63] = FPSCR
-	void Interpreter::mffs(DecoderInfo& info)
+	void Interpreter::mffs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -507,14 +507,14 @@ namespace Gekko
 	}
 
 	// fd[32-63] = FPSCR, CR1
-	void Interpreter::mffs_d(DecoderInfo& info)
+	void Interpreter::mffs_d()
 	{
-		mffs(info);
+		mffs();
 		if (!core->exception) COMPUTE_CR1();
 	}
 
 	// FPSCR(crbD) = 0 (clear bit)
-	void Interpreter::mtfsb0(DecoderInfo& info)
+	void Interpreter::mtfsb0()
 	{
 		uint32_t m = 1 << (31 - info.paramBits[0]);
 		core->regs.fpscr &= ~m;
@@ -522,14 +522,14 @@ namespace Gekko
 	}
 
 	// FPSCR(crbD) = 0 (clear bit), CR1
-	void Interpreter::mtfsb0_d(DecoderInfo& info)
+	void Interpreter::mtfsb0_d()
 	{
-		mtfsb0(info);
+		mtfsb0();
 		COMPUTE_CR1();
 	}
 
 	// FPSCR(crbD) = 1 (set bit)
-	void Interpreter::mtfsb1(DecoderInfo& info)
+	void Interpreter::mtfsb1()
 	{
 		uint32_t m = 1 << (31 - info.paramBits[0]);
 		core->regs.fpscr = (core->regs.fpscr & ~m) | m;
@@ -537,15 +537,15 @@ namespace Gekko
 	}
 
 	// FPSCR(crbD) = 1 (set bit), CR1
-	void Interpreter::mtfsb1_d(DecoderInfo& info)
+	void Interpreter::mtfsb1_d()
 	{
-		mtfsb1(info);
+		mtfsb1();
 		COMPUTE_CR1();
 	}
 
 	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
 	// FPSCR = (fb & mask) | (FPSCR & ~mask)
-	void Interpreter::mtfsf(DecoderInfo& info)
+	void Interpreter::mtfsf()
 	{
 		uint32_t m = 0, fm = info.paramBits[0];
 
@@ -564,14 +564,14 @@ namespace Gekko
 
 	// mask = (4)FM[0] || (4)FM[1] || ... || (4)FM[7]
 	// FPSCR = (fb & mask) | (FPSCR & ~mask)
-	void Interpreter::mtfsf_d(DecoderInfo& info)
+	void Interpreter::mtfsf_d()
 	{
-		mtfsf(info);
+		mtfsf();
 		COMPUTE_CR1();
 	}
 
 	// FPSCR[crfD] = IMM.
-	void Interpreter::mtfsfi(DecoderInfo& info)
+	void Interpreter::mtfsfi()
 	{
 		int crf = info.paramBits[0] & 7;
 		int imm = info.paramBits[1] & 0xf;
@@ -594,9 +594,9 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::mtfsfi_d(DecoderInfo& info)
+	void Interpreter::mtfsfi_d()
 	{
-		mtfsfi(info);
+		mtfsfi();
 		COMPUTE_CR1();
 	}
 

@@ -64,7 +64,7 @@ namespace Gekko
 		return uval;
 	}
 
-	void Interpreter::psq_lx(DecoderInfo& info)
+	void Interpreter::psq_lx()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
@@ -118,7 +118,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_stx(DecoderInfo& info)
+	void Interpreter::psq_stx()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
@@ -164,7 +164,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_lux(DecoderInfo& info)
+	void Interpreter::psq_lux()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
@@ -220,7 +220,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_stux(DecoderInfo& info)
+	void Interpreter::psq_stux()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||
@@ -268,7 +268,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_l(DecoderInfo& info)
+	void Interpreter::psq_l()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
@@ -322,7 +322,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_lu(DecoderInfo& info)
+	void Interpreter::psq_lu()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 || 
@@ -378,7 +378,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_st(DecoderInfo& info)
+	void Interpreter::psq_st()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
@@ -424,7 +424,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::psq_stu(DecoderInfo& info)
+	void Interpreter::psq_stu()
 	{
 		if ((core->regs.spr[SPR::HID2] & HID2_PSE) == 0 ||
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0 ||

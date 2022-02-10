@@ -33,7 +33,7 @@ namespace Gekko
 
 	// a = ra (signed)
 	// b = SIMM
-	void Interpreter::cmpi(DecoderInfo& info)
+	void Interpreter::cmpi()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]];
 		int32_t b = (int32_t)info.Imm.Signed;
@@ -42,7 +42,7 @@ namespace Gekko
 
 	// a = ra (signed)
 	// b = rb (signed)
-	void Interpreter::cmp(DecoderInfo& info)
+	void Interpreter::cmp()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]];
 		int32_t b = core->regs.gpr[info.paramBits[2]];
@@ -51,7 +51,7 @@ namespace Gekko
 
 	// a = ra (unsigned)
 	// b = 0x0000 || UIMM
-	void Interpreter::cmpli(DecoderInfo& info)
+	void Interpreter::cmpli()
 	{
 		uint32_t a = core->regs.gpr[info.paramBits[1]];
 		uint32_t b = info.Imm.Unsigned;
@@ -60,7 +60,7 @@ namespace Gekko
 
 	// a = ra (unsigned)
 	// b = rb (unsigned)
-	void Interpreter::cmpl(DecoderInfo& info)
+	void Interpreter::cmpl()
 	{
 		uint32_t a = core->regs.gpr[info.paramBits[1]];
 		uint32_t b = core->regs.gpr[info.paramBits[2]];

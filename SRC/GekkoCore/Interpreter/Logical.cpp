@@ -11,35 +11,35 @@ namespace Gekko
 	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
 
 	// ra = rs & rb
-	void Interpreter::_and(DecoderInfo& info)
+	void Interpreter::_and()
 	{
 		GPR(0) = GPR(1) & GPR(2);
 		core->regs.pc += 4;
 	}
 
 	// ra = rs & rb, CR0
-	void Interpreter::and_d(DecoderInfo& info)
+	void Interpreter::and_d()
 	{
-		_and(info);
+		_and();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs & ~rb
-	void Interpreter::andc(DecoderInfo& info)
+	void Interpreter::andc()
 	{
 		GPR(0) = GPR(1) & (~GPR(2));
 		core->regs.pc += 4;
 	}
 
 	// ra = rs & ~rb, CR0
-	void Interpreter::andc_d(DecoderInfo& info)
+	void Interpreter::andc_d()
 	{
-		andc(info);
+		andc();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs & UIMM, CR0
-	void Interpreter::andi_d(DecoderInfo& info)
+	void Interpreter::andi_d()
 	{
 		uint32_t res = GPR(1) & (uint32_t)info.Imm.Unsigned;
 		GPR(0) = res;
@@ -48,7 +48,7 @@ namespace Gekko
 	}
 
 	// ra = rs & (UIMM || 0x0000), CR0
-	void Interpreter::andis_d(DecoderInfo& info)
+	void Interpreter::andis_d()
 	{
 		uint32_t res = GPR(1) & ((uint32_t)info.Imm.Unsigned << 16);
 		GPR(0) = res;
@@ -61,7 +61,7 @@ namespace Gekko
 	//      if rs[n] = 1 then leave
 	//      n = n + 1
 	// ra = n
-	void Interpreter::cntlzw(DecoderInfo& info)
+	void Interpreter::cntlzw()
 	{
 		uint32_t n, m, rs = GPR(1);
 		for (n = 0, m = 1 << 31; n < 32; n++, m >>= 1)
@@ -79,30 +79,30 @@ namespace Gekko
 	//      n = n + 1
 	// ra = n
 	// CR0
-	void Interpreter::cntlzw_d(DecoderInfo& info)
+	void Interpreter::cntlzw_d()
 	{
-		cntlzw(info);
+		cntlzw();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs EQV rb
-	void Interpreter::eqv(DecoderInfo& info)
+	void Interpreter::eqv()
 	{
 		GPR(0) = ~(GPR(1) ^ GPR(2));
 		core->regs.pc += 4;
 	}
 
 	// ra = rs EQV rb, CR0
-	void Interpreter::eqv_d(DecoderInfo& info)
+	void Interpreter::eqv_d()
 	{
-		eqv(info);
+		eqv();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// sign = rs[24]
 	// ra[24-31] = rs[24-31]
 	// ra[0-23] = (24)sign
-	void Interpreter::extsb(DecoderInfo& info)
+	void Interpreter::extsb()
 	{
 		GPR(0) = (uint32_t)(int32_t)(int8_t)(uint8_t)GPR(1);
 		core->regs.pc += 4;
@@ -112,16 +112,16 @@ namespace Gekko
 	// ra[24-31] = rs[24-31]
 	// ra[0-23] = (24)sign
 	// CR0
-	void Interpreter::extsb_d(DecoderInfo& info)
+	void Interpreter::extsb_d()
 	{
-		extsb(info);
+		extsb();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// sign = rs[16]
 	// ra[16-31] = rs[16-31]
 	// ra[0-15] = (16)sign
-	void Interpreter::extsh(DecoderInfo& info)
+	void Interpreter::extsh()
 	{
 		GPR(0) = (uint32_t)(int32_t)(int16_t)(uint16_t)GPR(1);
 		core->regs.pc += 4;
@@ -131,105 +131,105 @@ namespace Gekko
 	// ra[16-31] = rs[16-31]
 	// ra[0-15] = (16)sign
 	// CR0
-	void Interpreter::extsh_d(DecoderInfo& info)
+	void Interpreter::extsh_d()
 	{
-		extsh(info);
+		extsh();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = ~(rs & rb)
-	void Interpreter::nand(DecoderInfo& info)
+	void Interpreter::nand()
 	{
 		GPR(0) = ~(GPR(1) & GPR(2));
 		core->regs.pc += 4;
 	}
 
 	// ra = ~(rs & rb), CR0
-	void Interpreter::nand_d(DecoderInfo& info)
+	void Interpreter::nand_d()
 	{
-		nand(info);
+		nand();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = ~(rs | rb)
-	void Interpreter::nor(DecoderInfo& info)
+	void Interpreter::nor()
 	{
 		GPR(0) = ~(GPR(1) | GPR(2));
 		core->regs.pc += 4;
 	}
 
 	// ra = ~(rs | rb), CR0
-	void Interpreter::nor_d(DecoderInfo& info)
+	void Interpreter::nor_d()
 	{
-		nor(info);
+		nor();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs | rb
-	void Interpreter::_or(DecoderInfo& info)
+	void Interpreter::_or()
 	{
 		GPR(0) = GPR(1) | GPR(2);
 		core->regs.pc += 4;
 	}
 
 	// ra = rs | rb, CR0
-	void Interpreter::or_d(DecoderInfo& info)
+	void Interpreter::or_d()
 	{
-		_or(info);
+		_or();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs | ~rb
-	void Interpreter::orc(DecoderInfo& info)
+	void Interpreter::orc()
 	{
 		GPR(0) = GPR(1) | (~GPR(2));
 		core->regs.pc += 4;
 	}
 
 	// ra = rs | ~rb, CR0
-	void Interpreter::orc_d(DecoderInfo& info)
+	void Interpreter::orc_d()
 	{
-		orc(info);
+		orc();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs | (0x0000 || UIMM)
-	void Interpreter::ori(DecoderInfo& info)
+	void Interpreter::ori()
 	{
 		GPR(0) = GPR(1) | (uint32_t)info.Imm.Unsigned;
 		core->regs.pc += 4;
 	}
 
 	// ra = rs | (UIMM || 0x0000)
-	void Interpreter::oris(DecoderInfo& info)
+	void Interpreter::oris()
 	{
 		GPR(0) = GPR(1) | ((uint32_t)info.Imm.Unsigned << 16);
 		core->regs.pc += 4;
 	}
 
 	// ra = rs ^ rb
-	void Interpreter::_xor(DecoderInfo& info)
+	void Interpreter::_xor()
 	{
 		GPR(0) = GPR(1) ^ GPR(2);
 		core->regs.pc += 4;
 	}
 
 	// ra = rs ^ rb, CR0
-	void Interpreter::xor_d(DecoderInfo& info)
+	void Interpreter::xor_d()
 	{
-		_xor(info);
+		_xor();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// ra = rs ^ (0x0000 || UIMM)
-	void Interpreter::xori(DecoderInfo& info)
+	void Interpreter::xori()
 	{
 		GPR(0) = GPR(1) ^ (uint32_t)info.Imm.Unsigned;
 		core->regs.pc += 4;
 	}
 
 	// ra = rs ^ (UIMM || 0x0000)
-	void Interpreter::xoris(DecoderInfo& info)
+	void Interpreter::xoris()
 	{
 		GPR(0) = GPR(1) ^ ((uint32_t)info.Imm.Unsigned << 16);
 		core->regs.pc += 4;
