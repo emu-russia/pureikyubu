@@ -7,13 +7,13 @@ using namespace Debug;
 namespace Gekko
 {
 
-	void Interpreter::eieio(DecoderInfo& info)
+	void Interpreter::eieio()
 	{
 		core->regs.pc += 4;
 	}
 
 	// instruction synchronize.
-	void Interpreter::isync(DecoderInfo& info)
+	void Interpreter::isync()
 	{
 		core->regs.pc += 4;
 	}
@@ -22,7 +22,7 @@ namespace Gekko
 	// RESERVE = 1
 	// RESERVE_ADDR = physical(ea)
 	// rd = MEM(ea, 4)
-	void Interpreter::lwarx(DecoderInfo& info)
+	void Interpreter::lwarx()
 	{
 		int WIMG;
 		uint32_t ea = core->regs.gpr[info.paramBits[2]];
@@ -42,7 +42,7 @@ namespace Gekko
 	//          RESERVE = 0
 	//      else
 	//          CR0 = 0b00 || 0b0 || XER[SO]
-	void Interpreter::stwcx_d(DecoderInfo& info)
+	void Interpreter::stwcx_d()
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[2]];
 		if (info.paramBits[1]) ea += core->regs.gpr[info.paramBits[1]];
@@ -61,13 +61,13 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::sync(DecoderInfo& info)
+	void Interpreter::sync()
 	{
 		core->regs.pc += 4;
 	}
 
 	// return from exception
-	void Interpreter::rfi(DecoderInfo& info)
+	void Interpreter::rfi()
 	{
 		core->regs.msr &= ~(0x87C0FF73 | 0x00040000);
 		core->regs.msr |= core->regs.spr[SPR::SRR1] & 0x87C0FF73;
@@ -75,14 +75,14 @@ namespace Gekko
 	}
 
 	// syscall
-	void Interpreter::sc(DecoderInfo& info)
+	void Interpreter::sc()
 	{
 		// pseudo-branch (to resume from next instruction after 'rfi')
 		core->regs.pc += 4;
 		core->Exception(Gekko::Exception::SYSCALL);
 	}
 
-	void Interpreter::tw(DecoderInfo& info)
+	void Interpreter::tw()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]], b = core->regs.gpr[info.paramBits[2]];
 		int32_t to = info.paramBits[0];
@@ -104,7 +104,7 @@ namespace Gekko
 		}
 	}
 
-	void Interpreter::twi(DecoderInfo& info)
+	void Interpreter::twi()
 	{
 		int32_t a = core->regs.gpr[info.paramBits[1]], b = (int32_t)info.Imm.Signed;
 		int32_t to = info.paramBits[0];
@@ -128,7 +128,7 @@ namespace Gekko
 
 	// CR[4 * crfD .. 4 * crfd + 3] = XER[0-3]
 	// XER[0..3] = 0b0000
-	void Interpreter::mcrxr(DecoderInfo& info)
+	void Interpreter::mcrxr()
 	{
 		uint32_t mask = 0xf0000000 >> (4 * info.paramBits[0]);
 		core->regs.cr &= ~mask;
@@ -138,14 +138,14 @@ namespace Gekko
 	}
 
 	// rd = cr
-	void Interpreter::mfcr(DecoderInfo& info)
+	void Interpreter::mfcr()
 	{
 		core->regs.gpr[info.paramBits[0]] = core->regs.cr;
 		core->regs.pc += 4;
 	}
 
 	// rd = msr
-	void Interpreter::mfmsr(DecoderInfo& info)
+	void Interpreter::mfmsr()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -162,7 +162,7 @@ namespace Gekko
 	// A detailed study of all SPRs in all modes is in Docs\HW\SPR.txt. If necessary, it will be possible to wind the rights properly.
 
 	// rd = spr
-	void Interpreter::mfspr(DecoderInfo& info)
+	void Interpreter::mfspr()
 	{
 		int spr = info.paramBits[1];
 		uint32_t value;
@@ -188,7 +188,7 @@ namespace Gekko
 	}
 
 	// rd = tbr
-	void Interpreter::mftb(DecoderInfo& info)
+	void Interpreter::mftb()
 	{
 		int tbr = info.paramBits[1];
 
@@ -206,7 +206,7 @@ namespace Gekko
 
 	// mask = (4)CRM[0] || (4)CRM[1] || ... || (4)CRM[7]
 	// CR = (rs & mask) | (CR & ~mask)
-	void Interpreter::mtcrf(DecoderInfo& info)
+	void Interpreter::mtcrf()
 	{
 		uint32_t m, crm = info.paramBits[0], a, d = core->regs.gpr[info.paramBits[1]];
 
@@ -223,7 +223,7 @@ namespace Gekko
 	}
 
 	// msr = rs
-	void Interpreter::mtmsr(DecoderInfo& info)
+	void Interpreter::mtmsr()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -249,7 +249,7 @@ namespace Gekko
 	}
 
 	// spr = rs
-	void Interpreter::mtspr(DecoderInfo& info)
+	void Interpreter::mtspr()
 	{
 		int spr = info.paramBits[0];
 
@@ -421,7 +421,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbf(DecoderInfo& info)
+	void Interpreter::dcbf()
 	{
 		int WIMG;
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -440,7 +440,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbi(DecoderInfo& info)
+	void Interpreter::dcbi()
 	{
 		int WIMG;
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -466,7 +466,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbst(DecoderInfo& info)
+	void Interpreter::dcbst()
 	{
 		int WIMG;
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -485,7 +485,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbt(DecoderInfo& info)
+	void Interpreter::dcbt()
 	{
 		int WIMG;
 
@@ -505,7 +505,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbtst(DecoderInfo& info)
+	void Interpreter::dcbtst()
 	{
 		int WIMG;
 
@@ -527,7 +527,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::dcbz(DecoderInfo& info)
+	void Interpreter::dcbz()
 	{
 		int WIMG;
 		uint32_t ea = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
@@ -550,7 +550,7 @@ namespace Gekko
 	// For example, calling dcbz_l 0xE0000000 will make this address be associated with Locked Cache for subsequent Load/Store operations.
 	// Locked Cache is saved in RAM by another alien mechanism (DMA).
 
-	void Interpreter::dcbz_l(DecoderInfo& info)
+	void Interpreter::dcbz_l()
 	{
 		int WIMG;
 
@@ -579,7 +579,7 @@ namespace Gekko
 
 	// Used as a hint to JITC so that it can invalidate the compiled code at this address.
 
-	void Interpreter::icbi(DecoderInfo& info)
+	void Interpreter::icbi()
 	{
 		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[0]];
 		address &= ~0x1f;
@@ -589,7 +589,7 @@ namespace Gekko
 	}
 
 	// rd = sr[a]
-	void Interpreter::mfsr(DecoderInfo& info)
+	void Interpreter::mfsr()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -603,7 +603,7 @@ namespace Gekko
 	}
 
 	// rd = sr[rb]
-	void Interpreter::mfsrin(DecoderInfo& info)
+	void Interpreter::mfsrin()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -617,7 +617,7 @@ namespace Gekko
 	}
 
 	// sr[a] = rs
-	void Interpreter::mtsr(DecoderInfo& info)
+	void Interpreter::mtsr()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -631,7 +631,7 @@ namespace Gekko
 	}
 
 	// sr[rb] = rs
-	void Interpreter::mtsrin(DecoderInfo& info)
+	void Interpreter::mtsrin()
 	{
 		if (core->regs.msr & MSR_PR)
 		{
@@ -644,24 +644,24 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::tlbie(DecoderInfo& info)
+	void Interpreter::tlbie()
 	{
 		core->dtlb.Invalidate(core->regs.gpr[info.paramBits[0]]);
 		core->itlb.Invalidate(core->regs.gpr[info.paramBits[0]]);
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::tlbsync(DecoderInfo& info)
+	void Interpreter::tlbsync()
 	{
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::eciwx(DecoderInfo& info)
+	void Interpreter::eciwx()
 	{
 		Halt("eciwx\n");
 	}
 
-	void Interpreter::ecowx(DecoderInfo& info)
+	void Interpreter::ecowx()
 	{
 		Halt("ecowx\n");
 	}

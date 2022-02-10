@@ -11,21 +11,21 @@ namespace Gekko
 	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
 
 	// rd = ra + rb
-	void Interpreter::add(DecoderInfo& info)
+	void Interpreter::add()
 	{
 		GPR(0) = GPR(1) + GPR(2);
 		core->regs.pc += 4;
 	}
 
 	// rd = ra + rb, CR0
-	void Interpreter::add_d(DecoderInfo& info)
+	void Interpreter::add_d()
 	{
-		add(info);
+		add();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER
-	void Interpreter::addo(DecoderInfo& info)
+	void Interpreter::addo()
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
@@ -34,14 +34,14 @@ namespace Gekko
 	}
 
 	// rd = ra + rb, CR0, XER
-	void Interpreter::addo_d(DecoderInfo& info)
+	void Interpreter::addo_d()
 	{
-		addo(info);
+		addo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER[CA]
-	void Interpreter::addc(DecoderInfo& info)
+	void Interpreter::addc()
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
@@ -50,14 +50,14 @@ namespace Gekko
 	}
 
 	// rd = ra + rb, XER[CA], CR0
-	void Interpreter::addc_d(DecoderInfo& info)
+	void Interpreter::addc_d()
 	{
-		addc(info);
+		addc();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb, XER[CA], XER[OV]
-	void Interpreter::addco(DecoderInfo& info)
+	void Interpreter::addco()
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
@@ -67,14 +67,14 @@ namespace Gekko
 	}
 
 	// rd = ra + rb, XER[CA], XER[OV], CR0
-	void Interpreter::addco_d(DecoderInfo& info)
+	void Interpreter::addco_d()
 	{
-		addco(info);
+		addco();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + rb + XER[CA], XER
-	void Interpreter::adde(DecoderInfo& info)
+	void Interpreter::adde()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
@@ -83,13 +83,13 @@ namespace Gekko
 	}
 
 	// rd = ra + rb + XER[CA], CR0, XER
-	void Interpreter::adde_d(DecoderInfo& info)
+	void Interpreter::adde_d()
 	{
-		adde(info);
+		adde();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::addeo(DecoderInfo& info)
+	void Interpreter::addeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), GPR(2));
@@ -98,14 +98,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::addeo_d(DecoderInfo& info)
+	void Interpreter::addeo_d()
 	{
-		addeo(info);
+		addeo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = (ra | 0) + SIMM
-	void Interpreter::addi(DecoderInfo& info)
+	void Interpreter::addi()
 	{
 		if (info.paramBits[1]) GPR(0) = GPR(1) + (int32_t)info.Imm.Signed;
 		else GPR(0) = (int32_t)info.Imm.Signed;
@@ -113,7 +113,7 @@ namespace Gekko
 	}
 
 	// rd = ra + SIMM, XER
-	void Interpreter::addic(DecoderInfo& info)
+	void Interpreter::addic()
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(GPR(1), (int32_t)info.Imm.Signed);
@@ -122,14 +122,14 @@ namespace Gekko
 	}
 
 	// rd = ra + SIMM, CR0, XER
-	void Interpreter::addic_d(DecoderInfo& info)
+	void Interpreter::addic_d()
 	{
-		addic(info);
+		addic();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = (ra | 0) + (SIMM || 0x0000)
-	void Interpreter::addis(DecoderInfo& info)
+	void Interpreter::addis()
 	{
 		if (info.paramBits[1]) GPR(0) = GPR(1) + ((int32_t)info.Imm.Signed << 16);
 		else GPR(0) = (int32_t)info.Imm.Signed << 16;
@@ -137,7 +137,7 @@ namespace Gekko
 	}
 
 	// rd = ra + XER[CA] - 1 (0xffffffff), XER
-	void Interpreter::addme(DecoderInfo& info)
+	void Interpreter::addme()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), -1);
@@ -146,13 +146,13 @@ namespace Gekko
 	}
 
 	// rd = ra + XER[CA] - 1 (0xffffffff), CR0, XER
-	void Interpreter::addme_d(DecoderInfo& info)
+	void Interpreter::addme_d()
 	{
-		addme(info);
+		addme();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::addmeo(DecoderInfo& info)
+	void Interpreter::addmeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), -1);
@@ -161,14 +161,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::addmeo_d(DecoderInfo& info)
+	void Interpreter::addmeo_d()
 	{
-		addmeo(info);
+		addmeo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra + XER[CA], XER
-	void Interpreter::addze(DecoderInfo& info)
+	void Interpreter::addze()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), 0);
@@ -177,13 +177,13 @@ namespace Gekko
 	}
 
 	// rd = ra + XER[CA], CR0, XER
-	void Interpreter::addze_d(DecoderInfo& info)
+	void Interpreter::addze_d()
 	{
-		addze(info);
+		addze();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::addzeo(DecoderInfo& info)
+	void Interpreter::addzeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(GPR(1), 0);
@@ -192,14 +192,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::addzeo_d(DecoderInfo& info)
+	void Interpreter::addzeo_d()
 	{
-		addzeo(info);
+		addzeo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra / rb (signed)
-	void Interpreter::divw(DecoderInfo& info)
+	void Interpreter::divw()
 	{
 		int32_t a = GPR(1), b = GPR(2);
 		if (b) GPR(0) = a / b;
@@ -207,7 +207,7 @@ namespace Gekko
 	}
 
 	// rd = ra / rb (signed), CR0
-	void Interpreter::divw_d(DecoderInfo& info)
+	void Interpreter::divw_d()
 	{
 		int32_t a = GPR(1), b = GPR(2), res;
 		if (b)
@@ -219,19 +219,19 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::divwo(DecoderInfo& info)
+	void Interpreter::divwo()
 	{
 		Debug::Halt("divwo\n");
 	}
 
-	void Interpreter::divwo_d(DecoderInfo& info)
+	void Interpreter::divwo_d()
 	{
-		divwo(info);
+		divwo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ra / rb (unsigned)
-	void Interpreter::divwu(DecoderInfo& info)
+	void Interpreter::divwu()
 	{
 		uint32_t a = GPR(1), b = GPR(2);
 		if (b) GPR(0) = a / b;
@@ -239,7 +239,7 @@ namespace Gekko
 	}
 
 	// rd = ra / rb (unsigned), CR0
-	void Interpreter::divwu_d(DecoderInfo& info)
+	void Interpreter::divwu_d()
 	{
 		uint32_t a = GPR(1), b = GPR(2), res;
 		if (b)
@@ -251,20 +251,20 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::divwuo(DecoderInfo& info)
+	void Interpreter::divwuo()
 	{
 		Debug::Halt("divwuo\n");
 	}
 
-	void Interpreter::divwuo_d(DecoderInfo& info)
+	void Interpreter::divwuo_d()
 	{
-		divwuo(info);
+		divwuo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-63] = ra * rb
 	// rd = prod[0-31]
-	void Interpreter::mulhw(DecoderInfo& info)
+	void Interpreter::mulhw()
 	{
 		int64_t a = (int32_t)GPR(1), b = (int32_t)GPR(2), res = a * b;
 		res = (res >> 32);
@@ -275,15 +275,15 @@ namespace Gekko
 	// prod[0-63] = ra * rb
 	// rd = prod[0-31]
 	// CR0
-	void Interpreter::mulhw_d(DecoderInfo& info)
+	void Interpreter::mulhw_d()
 	{
-		mulhw(info);
+		mulhw();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-63] = ra * rb
 	// rd = prod[0-31]
-	void Interpreter::mulhwu(DecoderInfo& info)
+	void Interpreter::mulhwu()
 	{
 		uint64_t a = GPR(1), b = GPR(2), res = a * b;
 		res = (res >> 32);
@@ -294,15 +294,15 @@ namespace Gekko
 	// prod[0-63] = ra * rb
 	// rd = prod[0-31]
 	// CR0
-	void Interpreter::mulhwu_d(DecoderInfo& info)
+	void Interpreter::mulhwu_d()
 	{
-		mulhwu(info);
+		mulhwu();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// prod[0-48] = ra * SIMM
 	// rd = prod[16-48]
-	void Interpreter::mulli(DecoderInfo& info)
+	void Interpreter::mulli()
 	{
 		GPR(0) = GPR(1) * (int32_t)info.Imm.Signed;
 		core->regs.pc += 4;
@@ -310,7 +310,7 @@ namespace Gekko
 
 	// prod[0-48] = ra * rb
 	// rd = prod[16-48]
-	void Interpreter::mullw(DecoderInfo& info)
+	void Interpreter::mullw()
 	{
 		int32_t a = GPR(1), b = GPR(2);
 		int64_t res = (int64_t)a * (int64_t)b;
@@ -321,38 +321,38 @@ namespace Gekko
 	// prod[0-48] = ra * rb
 	// rd = prod[16-48]
 	// CR0
-	void Interpreter::mullw_d(DecoderInfo& info)
+	void Interpreter::mullw_d()
 	{
-		mullw(info);
+		mullw();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::mullwo(DecoderInfo& info)
+	void Interpreter::mullwo()
 	{
 		Debug::Halt("mullwo\n");
 	}
 
-	void Interpreter::mullwo_d(DecoderInfo& info)
+	void Interpreter::mullwo_d()
 	{
-		mullwo(info);
+		mullwo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + 1
-	void Interpreter::neg(DecoderInfo& info)
+	void Interpreter::neg()
 	{
 		GPR(0) = ~GPR(1) + 1;
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + 1, CR0
-	void Interpreter::neg_d(DecoderInfo& info)
+	void Interpreter::neg_d()
 	{
-		neg(info);
+		neg();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::nego(DecoderInfo& info)
+	void Interpreter::nego()
 	{
 		CarryBit = 0;
 		GPR(0) = FullAdder(~GPR(1), 1);
@@ -360,28 +360,28 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::nego_d(DecoderInfo& info)
+	void Interpreter::nego_d()
 	{
-		nego(info);
+		nego();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1
-	void Interpreter::subf(DecoderInfo& info)
+	void Interpreter::subf()
 	{
 		GPR(0) = ~GPR(1) + GPR(2) + 1;
 		core->regs.pc += 4;
 	}
 
 	// rd = ~ra + rb + 1, CR0
-	void Interpreter::subf_d(DecoderInfo& info)
+	void Interpreter::subf_d()
 	{
-		subf(info);
+		subf();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1, XER
-	void Interpreter::subfo(DecoderInfo& info)
+	void Interpreter::subfo()
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
@@ -390,14 +390,14 @@ namespace Gekko
 	}
 
 	// rd = ~ra + rb + 1, CR0, XER
-	void Interpreter::subfo_d(DecoderInfo& info)
+	void Interpreter::subfo_d()
 	{
-		subfo(info);
+		subfo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + 1, XER[CA]
-	void Interpreter::subfc(DecoderInfo& info)
+	void Interpreter::subfc()
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
@@ -406,13 +406,13 @@ namespace Gekko
 	}
 
 	// rd = ~ra + rb + 1, XER[CA], CR0
-	void Interpreter::subfc_d(DecoderInfo& info)
+	void Interpreter::subfc_d()
 	{
-		subfc(info);
+		subfc();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::subfco(DecoderInfo& info)
+	void Interpreter::subfco()
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
@@ -421,14 +421,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::subfco_d(DecoderInfo& info)
+	void Interpreter::subfco_d()
 	{
-		subfco(info);
+		subfco();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + rb + XER[CA], XER
-	void Interpreter::subfe(DecoderInfo& info)
+	void Interpreter::subfe()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
@@ -437,13 +437,13 @@ namespace Gekko
 	}
 
 	// rd = ~ra + rb + XER[CA], CR0, XER
-	void Interpreter::subfe_d(DecoderInfo& info)
+	void Interpreter::subfe_d()
 	{
-		subfe(info);
+		subfe();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::subfeo(DecoderInfo& info)
+	void Interpreter::subfeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), GPR(2));
@@ -452,14 +452,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::subfeo_d(DecoderInfo& info)
+	void Interpreter::subfeo_d()
 	{
-		subfeo(info);
+		subfeo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~RRA + SIMM + 1, XER
-	void Interpreter::subfic(DecoderInfo& info)
+	void Interpreter::subfic()
 	{
 		CarryBit = 1;
 		GPR(0) = FullAdder(~GPR(1), (int32_t)info.Imm.Signed);
@@ -468,7 +468,7 @@ namespace Gekko
 	}
 
 	// rd = ~ra + XER[CA] - 1, XER
-	void Interpreter::subfme(DecoderInfo& info)
+	void Interpreter::subfme()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), -1);
@@ -477,13 +477,13 @@ namespace Gekko
 	}
 
 	// rd = ~ra + XER[CA] - 1, CR0, XER
-	void Interpreter::subfme_d(DecoderInfo& info)
+	void Interpreter::subfme_d()
 	{
-		subfme(info);
+		subfme();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::subfmeo(DecoderInfo& info)
+	void Interpreter::subfmeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), -1);
@@ -492,14 +492,14 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::subfmeo_d(DecoderInfo& info)
+	void Interpreter::subfmeo_d()
 	{
-		subfmeo(info);
+		subfmeo();
 		COMPUTE_CR0(GPR(0));
 	}
 
 	// rd = ~ra + XER[CA], XER
-	void Interpreter::subfze(DecoderInfo& info)
+	void Interpreter::subfze()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), 0);
@@ -508,13 +508,13 @@ namespace Gekko
 	}
 
 	// rd = ~ra + XER[CA], CR0, XER
-	void Interpreter::subfze_d(DecoderInfo& info)
+	void Interpreter::subfze_d()
 	{
-		subfze(info);
+		subfze();
 		COMPUTE_CR0(GPR(0));
 	}
 
-	void Interpreter::subfzeo(DecoderInfo& info)
+	void Interpreter::subfzeo()
 	{
 		CarryBit = IS_XER_CA ? 1 : 0;
 		GPR(0) = FullAdder(~GPR(1), 0);
@@ -523,9 +523,9 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::subfzeo_d(DecoderInfo& info)
+	void Interpreter::subfzeo_d()
 	{
-		subfzeo(info);
+		subfzeo();
 		COMPUTE_CR0(GPR(0));
 	}
 

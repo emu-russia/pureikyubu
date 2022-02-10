@@ -7,7 +7,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// fd = MEM(ea, 8)
-	void Interpreter::lfd(DecoderInfo& info)
+	void Interpreter::lfd()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -22,7 +22,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// fd = MEM(ea, 8)
 	// ra = ea
-	void Interpreter::lfdu(DecoderInfo& info)
+	void Interpreter::lfdu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -38,7 +38,7 @@ namespace Gekko
 	// ea = ra + rb
 	// fd = MEM(ea, 8)
 	// ra = ea
-	void Interpreter::lfdux(DecoderInfo& info)
+	void Interpreter::lfdux()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -53,7 +53,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// fd = MEM(ea, 8)
-	void Interpreter::lfdx(DecoderInfo& info)
+	void Interpreter::lfdx()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -70,7 +70,7 @@ namespace Gekko
 	//      then fd = DOUBLE(MEM(ea, 4))
 	//      else fd(ps0) = SINGLE(MEM(ea, 4))
 	//           fd(ps1) = SINGLE(MEM(ea, 4))
-	void Interpreter::lfs(DecoderInfo& info)
+	void Interpreter::lfs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -94,7 +94,7 @@ namespace Gekko
 	//      else fd(ps0) = SINGLE(MEM(ea, 4))
 	//           fd(ps1) = SINGLE(MEM(ea, 4))
 	// ra = ea
-	void Interpreter::lfsu(DecoderInfo& info)
+	void Interpreter::lfsu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -120,7 +120,7 @@ namespace Gekko
 	//      else fd(ps0) = SINGLE(MEM(ea, 4))
 	//           fd(ps1) = SINGLE(MEM(ea, 4))
 	// ra = ea
-	void Interpreter::lfsux(DecoderInfo& info)
+	void Interpreter::lfsux()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -145,7 +145,7 @@ namespace Gekko
 	//      then fd = DOUBLE(MEM(ea, 4))
 	//      else fd(ps0) = SINGLE(MEM(ea, 4))
 	//           fd(ps1) = SINGLE(MEM(ea, 4))
-	void Interpreter::lfsx(DecoderInfo& info)
+	void Interpreter::lfsx()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -165,7 +165,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 8) = fs
-	void Interpreter::stfd(DecoderInfo& info)
+	void Interpreter::stfd()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -180,7 +180,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// MEM(ea, 8) = fs
 	// ra = ea
-	void Interpreter::stfdu(DecoderInfo& info)
+	void Interpreter::stfdu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -196,7 +196,7 @@ namespace Gekko
 	// ea = ra + rb
 	// MEM(ea, 8) = fs
 	// ra = ea
-	void Interpreter::stfdux(DecoderInfo& info)
+	void Interpreter::stfdux()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -211,7 +211,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 8) = fs
-	void Interpreter::stfdx(DecoderInfo& info)
+	void Interpreter::stfdx()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -225,7 +225,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 4) = fs[32-63]
-	void Interpreter::stfiwx(DecoderInfo& info)
+	void Interpreter::stfiwx()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -240,7 +240,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 4) = SINGLE(fs)
-	void Interpreter::stfs(DecoderInfo& info)
+	void Interpreter::stfs()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -256,7 +256,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// MEM(ea, 4) = SINGLE(fs)
 	// ra = ea
-	void Interpreter::stfsu(DecoderInfo& info)
+	void Interpreter::stfsu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -273,7 +273,7 @@ namespace Gekko
 	// ea = ra + rb
 	// MEM(ea, 4) = SINGLE(fs)
 	// ra = ea
-	void Interpreter::stfsux(DecoderInfo& info)
+	void Interpreter::stfsux()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -289,7 +289,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 4) = SINGLE(fs)
-	void Interpreter::stfsx(DecoderInfo& info)
+	void Interpreter::stfsx()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
