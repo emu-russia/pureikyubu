@@ -303,7 +303,7 @@ namespace DSP
 
 	void DspInterpreter::ExecuteInstr()
 	{
-		// Fetch, analyze and dispatch instruction at pc addr
+		// Fetch, decode and dispatch instruction at pc addr
 
 		DspAddress imemAddr = core->regs.pc;
 

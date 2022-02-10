@@ -1,4 +1,4 @@
-// DSP analyzer
+// DSP instruction decoder
 #include "pch.h"
 
 namespace DSP
