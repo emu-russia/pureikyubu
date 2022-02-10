@@ -312,7 +312,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.u8[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.u8[i]) / (float)pow(2.0, shft);
             }
             break;
 
@@ -334,7 +334,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s8[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.s8[i]) / (float)pow(2.0, shft);
             }
             break;
 
@@ -356,7 +356,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.u16[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.u16[i]) / (float)pow(2.0, shft);
             }
             break;
 
@@ -378,7 +378,7 @@ void FetchComp(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s16[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.s16[i]) / (float)pow(2.0, shft);
             }
             break;
 
@@ -479,7 +479,7 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s8[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.s8[i]) / (float)pow(2.0, shft);
             }
             break;
 
@@ -510,7 +510,7 @@ void FetchNorm(float* comp, int count, int type, int fmt, int shft, GX_FromFutur
 
             for (int i = 0; i < count; i++)
             {
-                comp[i] = (float)(Comp.s16[i]) / pow(2.0, shft);
+                comp[i] = (float)(Comp.s16[i]) / (float)pow(2.0, shft);
             }
             break;
 

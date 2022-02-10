@@ -32,7 +32,7 @@ namespace Debug
 
 		// Hexview
 
-		for (size_t row = 0; row < height - 1; row++)
+		for (int row = 0; row < height - 1; row++)
 		{
 			Print(CuiColor::Normal, 0, row + 1, "%08X", cursor + row * 16);
 

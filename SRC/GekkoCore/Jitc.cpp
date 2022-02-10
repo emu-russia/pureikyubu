@@ -120,7 +120,7 @@ namespace Gekko
 		Write32((uint32_t)(data >> 32));
 	}
 
-	void CodeSegment::Write(const IntelCore::AnalyzeInfo& info)
+	void CodeSegment::Write(const IntelCore::DecoderInfo& info)
 	{
 		for (size_t i = 0; i < info.prefixSize; i++)
 		{

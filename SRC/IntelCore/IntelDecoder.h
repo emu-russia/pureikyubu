@@ -1,5 +1,5 @@
-﻿// AnalyzeInfo structure definitions for X86-16, X86-32, and X64 architectures.
-// There is no instruction analyzer (decoder) here yet.
+﻿// DecoderInfo structure definitions for X86-16, X86-32, and X64 architectures.
+// There is no instruction decoder here yet.
 
 // The AVX-512 is not supported because it is mainly used on server processors, while we are targeting the desktop market.
 
@@ -1390,16 +1390,16 @@ namespace IntelCore
 	/// The structure contains all information about the instruction, including possible prefixes and a parameter list.
 	/// This is a deliberate abstraction from the very alien definition of ModRM. All possible combinations of parameters are specified by the Param enumeration.
 	/// </summary>
-	struct AnalyzeInfo
+	struct DecoderInfo
 	{
 		size_t clearingPaddy;
 
 		/// <summary>
-		/// It is set by the analyzer, for other cases it is not necessary to set it. 
+		/// It is set by the decoder, for other cases it is not necessary to set it. 
 		/// </summary>
 		Category category;
 
-		// When analyzing the flow of instructions, prefixes are separated from instruction,
+		// When decoding the flow of instructions, prefixes are separated from instruction,
 		// so the total size of the code batch will be equal to the size of all prefixes + the size of the instruction itself. 
 
 		/// <summary>

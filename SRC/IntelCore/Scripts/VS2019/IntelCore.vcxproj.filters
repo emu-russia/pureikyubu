@@ -32,7 +32,7 @@
     <ClInclude Include="..\..\IntelCore.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\IntelAnalyzer.h">
+    <ClInclude Include="..\..\IntelDecoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\IntelAssembler.h">
