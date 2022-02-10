@@ -31,10 +31,10 @@ namespace DSP
 
         while (bytesLeft != 0)
         {
-            DSP::AnalyzeInfo info = { 0 };
+            DSP::DecoderInfo info = { 0 };
 
-            // Analyze
-            DSP::Analyzer::Analyze(ucodePtr, ucode.size() - 2 * offset, info);
+            // Decode
+            DSP::Decoder::Decode(ucodePtr, ucode.size() - 2 * offset, info);
 
             // Disassemble
             text += DSP::DspDisasm::Disasm((uint16_t)(offset + start_addr), info) + "\n";
@@ -206,9 +206,9 @@ namespace DSP
                 return nullptr;
             }
 
-            DSP::AnalyzeInfo info = { 0 };
+            DSP::DecoderInfo info = { 0 };
 
-            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+            DSP::Decoder::Decode(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(pcAddr, info);
 
@@ -334,9 +334,9 @@ namespace DSP
                 break;
             }
 
-            DSP::AnalyzeInfo info = { 0 };
+            DSP::DecoderInfo info = { 0 };
 
-            DSP::Analyzer::Analyze(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+            DSP::Decoder::Decode(imemPtr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
             std::string code = DSP::DspDisasm::Disasm(addr, info);
 
@@ -626,7 +626,7 @@ namespace DSP
 
     static bool IsCall(uint32_t address, uint32_t& targetAddress)
     {
-        DSP::AnalyzeInfo info = { 0 };
+        DSP::DecoderInfo info = { 0 };
 
         targetAddress = 0;
 
@@ -636,7 +636,7 @@ namespace DSP
             return false;
         }
 
-        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+        DSP::Decoder::Decode(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
@@ -669,7 +669,7 @@ namespace DSP
 
     static bool IsCallOrJump(uint32_t address, uint32_t& targetAddress)
     {
-        DSP::AnalyzeInfo info = { 0 };
+        DSP::DecoderInfo info = { 0 };
 
         targetAddress = 0;
 
@@ -679,7 +679,7 @@ namespace DSP
             return false;
         }
 
-        DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+        DSP::Decoder::Decode(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
 
         if (info.flowControl)
         {
@@ -720,14 +720,14 @@ namespace DSP
 
         // Disassemble
 
-        DSP::AnalyzeInfo info = { 0 };
+        DSP::DecoderInfo info = { 0 };
 
         std::string text = "";
 
         uint8_t* ptr = (uint8_t*)Flipper::DSP->TranslateIMem(address);
         if (ptr)
         {
-            DSP::Analyzer::Analyze(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
+            DSP::Decoder::Decode(ptr, DSP::DspCore::MaxInstructionSizeInBytes, info);
             text = DSP::DspDisasm::Disasm(address, info);
         }
 

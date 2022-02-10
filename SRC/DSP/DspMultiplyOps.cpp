@@ -8,7 +8,7 @@ using namespace Debug;
 namespace DSP
 {
 
-	void DspInterpreter::p_mpy(AnalyzeInfo& info)
+	void DspInterpreter::p_mpy(DecoderInfo& info)
 	{
 		int64_t s1 = 0;
 		int64_t s2 = 0;
@@ -19,7 +19,7 @@ namespace DSP
 		core->UnpackProd(core->regs.prod);
 	}
 
-	void DspInterpreter::p_mac(AnalyzeInfo& info)
+	void DspInterpreter::p_mac(DecoderInfo& info)
 	{
 		int64_t s1 = 0;
 		int64_t s2 = 0;
@@ -31,7 +31,7 @@ namespace DSP
 		core->UnpackProd(core->regs.prod);
 	}
 
-	void DspInterpreter::p_macn(AnalyzeInfo& info)
+	void DspInterpreter::p_macn(DecoderInfo& info)
 	{
 		int64_t s1 = 0;
 		int64_t s2 = 0;
@@ -43,7 +43,7 @@ namespace DSP
 		core->UnpackProd(core->regs.prod);
 	}
 
-	void DspInterpreter::p_mvmpy(AnalyzeInfo& info)
+	void DspInterpreter::p_mvmpy(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -74,7 +74,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_rnmpy(AnalyzeInfo& info)
+	void DspInterpreter::p_rnmpy(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -108,7 +108,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C7, VFlagRules::V6, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_admpy(AnalyzeInfo& info)
+	void DspInterpreter::p_admpy(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;

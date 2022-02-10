@@ -3,7 +3,7 @@
 
 namespace DSP
 {
-	void Analyzer::ResetInfo(AnalyzeInfo& info)
+	void Decoder::ResetInfo(DecoderInfo& info)
 	{
 		info.sizeInBytes = 0;
 
@@ -17,7 +17,7 @@ namespace DSP
 		info.flowControl = false;
 	}
 
-	void Analyzer::AddParam(AnalyzeInfo& info, DspParameter param)
+	void Decoder::AddParam(DecoderInfo& info, DspParameter param)
 	{
 		assert(info.numParameters < DspAnalyzeNumParam);
 
@@ -25,7 +25,7 @@ namespace DSP
 		info.numParameters++;
 	}
 
-	void Analyzer::AddParamEx(AnalyzeInfo& info, DspParameter param)
+	void Decoder::AddParamEx(DecoderInfo& info, DspParameter param)
 	{
 		assert(info.numParametersEx < DspAnalyzeNumParam);
 
@@ -33,7 +33,7 @@ namespace DSP
 		info.numParametersEx++;
 	}
 
-	void Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm)
+	void Decoder::AddImmOperand(DecoderInfo& info, DspParameter param, uint8_t imm)
 	{
 		AddParam(info, param);
 		if (param == DspParameter::Byte)
@@ -42,7 +42,7 @@ namespace DSP
 			info.ImmOperand2.Byte = imm;
 	}
 
-	void Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm)
+	void Decoder::AddImmOperand(DecoderInfo& info, DspParameter param, int8_t imm)
 	{
 		AddParam(info, param);
 		if (param == DspParameter::SignedByte)
@@ -51,7 +51,7 @@ namespace DSP
 			info.ImmOperand2.SignedByte = imm;
 	}
 
-	void Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm)
+	void Decoder::AddImmOperand(DecoderInfo& info, DspParameter param, uint16_t imm)
 	{
 		AddParam(info, param);
 		if (param == DspParameter::UnsignedShort)
@@ -60,7 +60,7 @@ namespace DSP
 			info.ImmOperand2.UnsignedShort = imm;
 	}
 
-	void Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm)
+	void Decoder::AddImmOperand(DecoderInfo& info, DspParameter param, int16_t imm)
 	{
 		AddParam(info, param);
 		if (param == DspParameter::SignedShort)
@@ -69,7 +69,7 @@ namespace DSP
 			info.ImmOperand2.SignedShort = imm;
 	}
 
-	void Analyzer::AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm)
+	void Decoder::AddImmOperand(DecoderInfo& info, DspParameter param, DspAddress imm)
 	{
 		AddParam(info, param);
 		if (param == DspParameter::Address)
@@ -78,7 +78,7 @@ namespace DSP
 			info.ImmOperand2.Address = imm;
 	}
 
-	void Analyzer::AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info)
+	void Decoder::AddBytes(uint8_t* instrPtr, size_t bytes, DecoderInfo& info)
 	{
 		assert(info.sizeInBytes < sizeof(info.bytes));
 
@@ -86,7 +86,7 @@ namespace DSP
 		info.sizeInBytes += bytes;
 	}
 
-	void Analyzer::Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group0(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter addressreg[] = {
 			DspParameter::r0,
@@ -646,7 +646,7 @@ namespace DSP
 		}
 	}
 
-	void Analyzer::Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group1(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter addressreg[] = {
 			DspParameter::r0,
@@ -795,7 +795,7 @@ namespace DSP
 		}
 	}
 
-	void Analyzer::Group2(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group2(DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter ldsa_reg[] = {
 			DspParameter::x0,
@@ -840,7 +840,7 @@ namespace DSP
 		}
 	}
 
-	void Analyzer::Group3(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group3(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|xor d,s      |0011 00sd 0xxx xxxx|
 		//|xor d,s      |0011 000d 1xxx xxxx|
@@ -987,7 +987,7 @@ namespace DSP
 		GroupMemOps3(info, instrBits);
 	}
 
-	void Analyzer::Group4_6(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group4_6(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|add d,s      |0100 sssd xxxx xxxx|
 		//|sub d,s      |0101 sssd xxxx xxxx|
@@ -1026,7 +1026,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::Group7(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group7(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|addl d,s     |0111 00sd xxxx xxxx|
 		//|inc d        |0111 01dd xxxx xxxx|
@@ -1077,7 +1077,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::Group8(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group8(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|nop          |1000 0000 xxxx xxxx|
 		//|clr d        |1000 d001 xxxx xxxx|
@@ -1164,7 +1164,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::Group9_B(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::Group9_B(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|asr16 d      |1001 d001 xxxx xxxx|
 		//|abs d        |1010 d001 xxxx xxxx|
@@ -1192,7 +1192,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::GroupCD(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupCD(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|cmp d,s      |110s d001 xxxx xxxx|
 
@@ -1210,7 +1210,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::GroupE(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupE(DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter form1_regs[][2] = {
 			{ DspParameter::x0, DspParameter::y0 },
@@ -1242,7 +1242,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::GroupF(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupF(DecoderInfo& info, uint16_t instrBits)
 	{
 		//|lsl16 d      |1111 000d xxxx xxxx|
 		//|mac s1,s2    |1111 001s xxxx xxxx|
@@ -1294,7 +1294,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::GroupMpy(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupMpy(DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter mpy_regs[][2] = {
 			{ DspParameter::Unknown, DspParameter::Unknown },
@@ -1356,7 +1356,7 @@ namespace DSP
 		GroupMemOps4_F(info, instrBits);
 	}
 
-	void Analyzer::GroupMemOps3(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupMemOps3(DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter addressreg[] = {
 			DspParameter::r0,
@@ -1466,7 +1466,7 @@ namespace DSP
 		}
 	}
 
-	void Analyzer::GroupMemOps4_F(AnalyzeInfo& info, uint16_t instrBits)
+	void Decoder::GroupMemOps4_F(DecoderInfo& info, uint16_t instrBits)
 	{
 		static DspParameter addressreg[] = {
 			DspParameter::r0,
@@ -1590,7 +1590,7 @@ namespace DSP
 		}
 	}
 
-	void Analyzer::Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info)
+	void Decoder::Decode(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info)
 	{
 		// Reset info
 

@@ -57,7 +57,7 @@
     <ClCompile Include="..\..\DspDisasm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\DspAnalyzer.cpp">
+    <ClCompile Include="..\..\DspDecoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\DspStack.cpp">
@@ -68,7 +68,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\DspAnalyzer.h">
+    <ClInclude Include="..\..\DspDecoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\DspCommands.h">

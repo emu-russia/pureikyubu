@@ -4,7 +4,7 @@
 namespace DSP
 {
 
-	std::string DspDisasm::ParameterToString(DspParameter index, AnalyzeInfo& info)
+	std::string DspDisasm::ParameterToString(DspParameter index, DecoderInfo& info)
 	{
 		std::string text;
 
@@ -348,7 +348,7 @@ namespace DSP
 		return text;
 	}
 
-	std::string DspDisasm::Disasm(DspAddress startAddr, AnalyzeInfo& info)
+	std::string DspDisasm::Disasm(DspAddress startAddr, DecoderInfo& info)
 	{
 		bool firstParam;
 		std::string text = "";

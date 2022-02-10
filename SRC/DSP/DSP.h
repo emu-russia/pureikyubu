@@ -19,7 +19,7 @@ namespace DSP
 #include "DspStack.h"
 #include "DspAlu.h"
 #include "DspCore.h"
-#include "DspAnalyzer.h"
+#include "DspDecoder.h"
 #include "DspInterpreter.h"
 
 namespace DSP

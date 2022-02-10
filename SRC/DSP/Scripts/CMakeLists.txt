@@ -2,7 +2,7 @@ add_library (DSP SHARED
 	../DSP.cpp
 	../DspAccel.cpp
 	../DspAdpcm.cpp
-	../DspAnalyzer.cpp
+	../DspDecoder.cpp
 	../DspCommands.cpp
 	../DspStack.cpp
 	../DspAlu.cpp

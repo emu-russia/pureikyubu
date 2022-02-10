@@ -132,7 +132,7 @@ namespace DSP
 		return false;
 	}
 
-	void DspInterpreter::Dispatch(AnalyzeInfo& info)
+	void DspInterpreter::Dispatch(DecoderInfo& info)
 	{
 		// A non-flowControl instruction can change the interpreter's internal flag (for example, when trying to access the stack registers with overflow and generating an Error interrupt).
 
@@ -303,7 +303,7 @@ namespace DSP
 
 	void DspInterpreter::ExecuteInstr()
 	{
-		AnalyzeInfo info;
+		DecoderInfo info;
 
 		// Fetch, analyze and dispatch instruction at pc addr
 
@@ -317,7 +317,7 @@ namespace DSP
 			return;
 		}
 
-		Analyzer::Analyze(imemPtr, DspCore::MaxInstructionSizeInBytes, info);
+		Decoder::Decode(imemPtr, DspCore::MaxInstructionSizeInBytes, info);
 
 		Dispatch(info);
 	}

@@ -23,7 +23,7 @@
     <ClCompile Include="..\..\DspAccel.cpp" />
     <ClCompile Include="..\..\DspAdpcm.cpp" />
     <ClCompile Include="..\..\DspAlu.cpp" />
-    <ClCompile Include="..\..\DspAnalyzer.cpp" />
+    <ClCompile Include="..\..\DspDecoder.cpp" />
     <ClCompile Include="..\..\DspCommands.cpp" />
     <ClCompile Include="..\..\DspCore.cpp" />
     <ClCompile Include="..\..\DspDisasm.cpp" />
@@ -47,7 +47,7 @@
     <ClInclude Include="..\..\DspAccel.h" />
     <ClInclude Include="..\..\DspAdpcm.h" />
     <ClInclude Include="..\..\DspAlu.h" />
-    <ClInclude Include="..\..\DspAnalyzer.h" />
+    <ClInclude Include="..\..\DspDecoder.h" />
     <ClInclude Include="..\..\DspCommands.h" />
     <ClInclude Include="..\..\DspCore.h" />
     <ClInclude Include="..\..\DspDisasm.h" />
