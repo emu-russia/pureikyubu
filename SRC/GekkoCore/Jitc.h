@@ -8,7 +8,7 @@ namespace Gekko
 	{
 	public:
 		GekkoCore* core = nullptr;	// Parent core
-		uint32_t addr = 0;		// Starting Gekko code address (effective)
+		uint32_t addr = 0;		// Starting Gekko code address (physical)
 		size_t size = 0;		// Size of Gekko code in bytes
 		std::vector<uint8_t> code;	  // Recompiled code, automatically inflates when necessary
 
@@ -28,10 +28,10 @@ namespace Gekko
 
 		GekkoCore* core;		// Saved instance of the parent core
 
-		std::unordered_map<uint32_t, CodeSegment*> segments;
+		CodeSegment** segments = nullptr;
 
-		CodeSegment* SegmentCompiled(uint32_t addr);
-		CodeSegment* CompileSegment(uint32_t addr);
+		CodeSegment* SegmentCompiled(uint32_t physicalAddr);
+		CodeSegment* CompileSegment(uint32_t physicalAddr, uint32_t virtualAddr);
 		void CompileInstr(DecoderInfo* info, CodeSegment* segment);
 
 		void InvalidateAll();
@@ -91,6 +91,9 @@ namespace Gekko
 
 		// Usually this is enough, but if the segment is larger, nothing bad will happen, it will just break into several parts.
 		size_t maxInstructions = 0x100;
+
+		size_t totalSegmentBytes = 0;
+		size_t totalSegments = 0;
 
 	public:
 		Jitc(GekkoCore* _core);

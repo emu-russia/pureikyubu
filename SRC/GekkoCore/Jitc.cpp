@@ -2,35 +2,35 @@
 
 namespace Gekko
 {
+	typedef CodeSegment* CodeSegmentPtr;
+
 	Jitc::Jitc(GekkoCore* _core)
 	{
 		core = _core;
+		segments = new CodeSegment * [RAMSIZE >> 2];
+		memset(segments, 0, (RAMSIZE >> 2) * sizeof(CodeSegment*));
 	}
 
 	Jitc::~Jitc()
 	{
 		InvalidateAll();
+		delete segments;
 	}
 
-	CodeSegment* Jitc::SegmentCompiled(uint32_t addr)
+	CodeSegment* Jitc::SegmentCompiled(uint32_t physicalAddr)
 	{
-		auto it = segments.find(addr >> 2);
-
-		if (it != segments.end())
-		{
-			return it->second;
-		}
-
-		return nullptr;
+		return segments[physicalAddr >> 2];
 	}
 
-	CodeSegment* Jitc::CompileSegment(uint32_t addr)
+	CodeSegment* Jitc::CompileSegment(uint32_t physicalAddr, uint32_t virtualAddr)
 	{
 		DecoderInfo info = { 0 };
 		CodeSegment* segment = new CodeSegment();
 
-		segment->addr = addr;
-		segment->code.reserve(0x100);
+		uint32_t pa = physicalAddr;
+
+		segment->addr = pa;
+		segment->code.reserve(totalSegments ? totalSegmentBytes / totalSegments : 0x20);
 		segment->core = core;
 
 		Prolog(segment);
@@ -39,30 +39,23 @@ namespace Gekko
 
 		while (n--)
 		{
-			if (core->TestBreakpointForJitc(addr))
+			// TODO:
+			//if (core->TestBreakpointForJitc(addr))
+			//	break;
+
+			// Interrupt the translation at the boundary of the page.
+			if ((pa & ~0xfff) != (physicalAddr & ~0xfff))
 				break;
 
-			int WIMG;
-			uint32_t physicalAddress = core->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
 			uint32_t instr;
+			PIReadWord(pa, &instr);
 
-			// TODO: This moment needs to be rethinked. It makes little sense to generate ISI in the compilation process, 
-			// you need to do this in the process of executing compiled code.
-			// Most likely you need to inject code to generate ISI and break segment compilation.
-
-			if (physicalAddress == BadAddress)
-			{
-				core->Exception(Exception::ISI);
-				break;
-			}
-
-			PIReadWord(physicalAddress, &instr);
-
-			Decoder::DecodeFast(addr, instr, &info);
+			Decoder::DecodeFast(virtualAddr, instr, &info);
 
 			CompileInstr(&info, segment);
 
-			addr += 4;
+			pa += 4;
+			virtualAddr += 4;
 			segment->size += 4;
 
 			if (info.flow)
@@ -72,6 +65,9 @@ namespace Gekko
 		Epilog(segment);
 
 		segments[segment->addr >> 2] = segment;
+
+		totalSegmentBytes += segment->size;
+		totalSegments++;
 
 #ifdef _WINDOWS
 		DWORD notNeeded;
@@ -135,47 +131,45 @@ namespace Gekko
 
 	void Jitc::InvalidateAll()
 	{
-		for (auto it = segments.begin(); it != segments.end(); ++it)
+		size_t segNum = RAMSIZE >> 2;
+		for (size_t n = 0; n < segNum; n++)
 		{
-			if (it->second)
+			if (segments[n] == currentSegment)
 			{
-				if (it->second == currentSegment)
-				{
-					continue;
-				}
-
-				delete it->second;
-				it->second = nullptr;
+				continue;
 			}
+
+			delete segments[n];
+			segments[n] = nullptr;
 		}
-		segments.clear();
 	}
 
 	void Jitc::Invalidate(uint32_t addr, size_t size)
 	{
-		for (auto it = segments.begin(); it != segments.end(); ++it)
+		size_t segNum = RAMSIZE >> 2;
+		for (size_t n = 0; n < segNum; n++)
 		{
-			CodeSegment* seg = it->second;
+			CodeSegment* seg = segments[n];
 			if (seg != nullptr)
 			{
 				// If a invalidated region crosses a segment somehow, invalidate the entire segment.
 
 				if (addr >= seg->addr && seg->addr < (addr + size))
 				{
-					if (it->second != currentSegment)
+					if (seg != currentSegment)
 					{
-						delete it->second;
-						it->second = nullptr;
+						delete seg;
+						segments[n] = nullptr;
 						continue;
 					}
 				}
 
 				if (seg->addr >= addr && addr < (seg->addr + seg->size))
 				{
-					if (it->second != currentSegment)
+					if (seg != currentSegment)
 					{
-						delete it->second;
-						it->second = nullptr;
+						delete seg;
+						segments[n] = nullptr;
 						continue;
 					}
 				}
@@ -185,10 +179,19 @@ namespace Gekko
 
 	void Jitc::Execute()
 	{
-		currentSegment = SegmentCompiled(core->regs.pc);
+		int WIMG;
+		uint32_t physicalAddress = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
+
+		if (physicalAddress == BadAddress)
+		{
+			core->Exception(Exception::ISI);
+			return;
+		}
+
+		currentSegment = SegmentCompiled(physicalAddress);
 		if (currentSegment == nullptr)
 		{
-			currentSegment = CompileSegment(core->regs.pc);
+			currentSegment = CompileSegment(physicalAddress, core->regs.pc);
 		}
 		assert(currentSegment);
 
