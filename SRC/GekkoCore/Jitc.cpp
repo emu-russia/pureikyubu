@@ -39,9 +39,8 @@ namespace Gekko
 
 		while (n--)
 		{
-			// TODO:
-			//if (core->TestBreakpointForJitc(addr))
-			//	break;
+			if (core->TestBreakpointForJitc(virtualAddr))
+				break;
 
 			// Interrupt the translation at the boundary of the page.
 			if ((pa & ~0xfff) != (physicalAddr & ~0xfff))
