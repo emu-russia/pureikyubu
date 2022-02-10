@@ -19,7 +19,7 @@ namespace DSP
 
 	void Decoder::AddParam(DecoderInfo& info, DspParameter param)
 	{
-		assert(info.numParameters < DspAnalyzeNumParam);
+		assert(info.numParameters < DspDecoderNumParam);
 
 		info.params[info.numParameters] = param;
 		info.numParameters++;
@@ -27,7 +27,7 @@ namespace DSP
 
 	void Decoder::AddParamEx(DecoderInfo& info, DspParameter param)
 	{
-		assert(info.numParametersEx < DspAnalyzeNumParam);
+		assert(info.numParametersEx < DspDecoderNumParam);
 
 		info.paramsEx[info.numParametersEx] = param;
 		info.numParametersEx++;

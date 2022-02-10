@@ -122,7 +122,7 @@ BOOL GL_OpenSubsystem()
 
 void GL_CloseSubsystem()
 {
-    if(frameReady) GL_EndFrame();
+    //if(frameReady) GL_EndFrame();
 
     wglMakeCurrent(NULL, NULL);
     wglDeleteContext(hglrc);
