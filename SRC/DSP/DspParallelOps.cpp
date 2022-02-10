@@ -6,7 +6,7 @@ using namespace Debug;
 namespace DSP
 {
 
-	void DspInterpreter::p_add(DecoderInfo& info)
+	void DspInterpreter::p_add()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -69,7 +69,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_addl(DecoderInfo& info)
+	void DspInterpreter::p_addl()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -110,7 +110,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C6, VFlagRules::V4, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_sub(DecoderInfo& info)
+	void DspInterpreter::p_sub()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -173,7 +173,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_amv(DecoderInfo& info)
+	void DspInterpreter::p_amv()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -226,7 +226,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_cmp(DecoderInfo& info)
+	void DspInterpreter::p_cmp()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -263,7 +263,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_inc(DecoderInfo& info)
+	void DspInterpreter::p_inc()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -310,7 +310,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C6, VFlagRules::V4, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_dec(DecoderInfo& info)
+	void DspInterpreter::p_dec()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -357,7 +357,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V8, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_abs(DecoderInfo& info)
+	void DspInterpreter::p_abs()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -395,7 +395,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::V5, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_neg(DecoderInfo& info)
+	void DspInterpreter::p_neg()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -439,7 +439,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_clr(DecoderInfo& info)
+	void DspInterpreter::p_clr()
 	{
 		switch (info.params[0])
 		{
@@ -459,7 +459,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::p_rnd(DecoderInfo& info)
+	void DspInterpreter::p_rnd()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -493,7 +493,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C6, VFlagRules::V4, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_rndp(DecoderInfo& info)
+	void DspInterpreter::p_rndp()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -519,7 +519,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C7, VFlagRules::V6, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_tst(DecoderInfo& info)
+	void DspInterpreter::p_tst()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -557,7 +557,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_lsl16(DecoderInfo& info)
+	void DspInterpreter::p_lsl16()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -588,7 +588,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_lsr16(DecoderInfo& info)
+	void DspInterpreter::p_lsr16()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -619,7 +619,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_asr16(DecoderInfo& info)
+	void DspInterpreter::p_asr16()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -650,7 +650,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_addp(DecoderInfo& info)
+	void DspInterpreter::p_addp()
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -684,7 +684,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C8, VFlagRules::V7, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_set(DecoderInfo& info)
+	void DspInterpreter::p_set()
 	{
 		switch (info.params[0])
 		{
@@ -694,7 +694,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::p_not(DecoderInfo& info)
+	void DspInterpreter::p_not()
 	{
 		uint16_t d = 0;
 		uint16_t s = 0;
@@ -725,7 +725,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_xor(DecoderInfo& info)
+	void DspInterpreter::p_xor()
 	{
 		uint16_t d = 0;
 		uint16_t s = 0;
@@ -772,7 +772,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_and(DecoderInfo& info)
+	void DspInterpreter::p_and()
 	{
 		uint16_t d = 0;
 		uint16_t s = 0;
@@ -819,7 +819,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_or(DecoderInfo& info)
+	void DspInterpreter::p_or()
 	{
 		uint16_t d = 0;
 		uint16_t s = 0;
@@ -866,7 +866,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_lsf(DecoderInfo& info)
+	void DspInterpreter::p_lsf()
 	{
 		int64_t d = 0;
 		int16_t s = 0;
@@ -920,7 +920,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::p_asf(DecoderInfo& info)
+	void DspInterpreter::p_asf()
 	{
 		int64_t d = 0;
 		int16_t s = 0;

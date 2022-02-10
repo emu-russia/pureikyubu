@@ -10,99 +10,102 @@ namespace DSP
 
 		// Regular instructions (single-word)
 
-		void jmp(DecoderInfo& info);
-		void call(DecoderInfo& info);
-		void rets(DecoderInfo& info);
-		void reti(DecoderInfo& info);
-		void trap(DecoderInfo& info);
-		void wait(DecoderInfo& info);
-		void exec(DecoderInfo& info);
-		void loop(DecoderInfo& info);
-		void rep(DecoderInfo& info);
-		void pld(DecoderInfo& info);
-		void mr(DecoderInfo& info);
-		void adsi(DecoderInfo& info);
-		void adli(DecoderInfo& info);
-		void cmpsi(DecoderInfo& info);
-		void cmpli(DecoderInfo& info);
-		void lsfi(DecoderInfo& info);
-		void asfi(DecoderInfo& info);
-		void xorli(DecoderInfo& info);
-		void anli(DecoderInfo& info);
-		void orli(DecoderInfo& info);
-		void norm(DecoderInfo& info);
-		void div(DecoderInfo& info);
-		void addc(DecoderInfo& info);
-		void subc(DecoderInfo& info);
-		void negc(DecoderInfo& info);
-		void _max(DecoderInfo& info);
-		void lsf(DecoderInfo& info);
-		void asf(DecoderInfo& info);
-		void ld(DecoderInfo& info);
-		void st(DecoderInfo& info);
-		void ldsa(DecoderInfo& info);
-		void stsa(DecoderInfo& info);
-		void ldla(DecoderInfo& info);
-		void stla(DecoderInfo& info);
-		void mv(DecoderInfo& info);
-		void mvsi(DecoderInfo& info);
-		void mvli(DecoderInfo& info);
-		void stli(DecoderInfo& info);
-		void clr(DecoderInfo& info);
-		void set(DecoderInfo& info);
-		void btstl(DecoderInfo& info);
-		void btsth(DecoderInfo& info);
+		void jmp();
+		void call();
+		void rets();
+		void reti();
+		void trap();
+		void wait();
+		void exec();
+		void loop();
+		void rep();
+		void pld();
+		void mr();
+		void adsi();
+		void adli();
+		void cmpsi();
+		void cmpli();
+		void lsfi();
+		void asfi();
+		void xorli();
+		void anli();
+		void orli();
+		void norm();
+		void div();
+		void addc();
+		void subc();
+		void negc();
+		void _max();
+		void lsf();
+		void asf();
+		void ld();
+		void st();
+		void ldsa();
+		void stsa();
+		void ldla();
+		void stla();
+		void mv();
+		void mvsi();
+		void mvli();
+		void stli();
+		void clr();
+		void set();
+		void btstl();
+		void btsth();
 
 		// Parallel instructions that occupy the upper part (in the lower part there is a parallel Load / Store / Move instruction)
 
-		void p_add(DecoderInfo& info);
-		void p_addl(DecoderInfo& info);
-		void p_sub(DecoderInfo& info);
-		void p_amv(DecoderInfo& info);
-		void p_cmp(DecoderInfo& info);
-		void p_inc(DecoderInfo& info);
-		void p_dec(DecoderInfo& info);
-		void p_abs(DecoderInfo& info);
-		void p_neg(DecoderInfo& info);
-		void p_clr(DecoderInfo& info);
-		void p_rnd(DecoderInfo& info);
-		void p_rndp(DecoderInfo& info);
-		void p_tst(DecoderInfo& info);
-		void p_lsl16(DecoderInfo& info);
-		void p_lsr16(DecoderInfo& info);
-		void p_asr16(DecoderInfo& info);
-		void p_addp(DecoderInfo& info);
-		void p_set(DecoderInfo& info);
-		void p_mpy(DecoderInfo& info);
-		void p_mac(DecoderInfo& info);
-		void p_macn(DecoderInfo& info);
-		void p_mvmpy(DecoderInfo& info);
-		void p_rnmpy(DecoderInfo& info);
-		void p_admpy(DecoderInfo& info);
-		void p_not(DecoderInfo& info);
-		void p_xor(DecoderInfo& info);
-		void p_and(DecoderInfo& info);
-		void p_or(DecoderInfo& info);
-		void p_lsf(DecoderInfo& info);
-		void p_asf(DecoderInfo& info);
+		void p_add();
+		void p_addl();
+		void p_sub();
+		void p_amv();
+		void p_cmp();
+		void p_inc();
+		void p_dec();
+		void p_abs();
+		void p_neg();
+		void p_clr();
+		void p_rnd();
+		void p_rndp();
+		void p_tst();
+		void p_lsl16();
+		void p_lsr16();
+		void p_asr16();
+		void p_addp();
+		void p_set();
+		void p_mpy();
+		void p_mac();
+		void p_macn();
+		void p_mvmpy();
+		void p_rnmpy();
+		void p_admpy();
+		void p_not();
+		void p_xor();
+		void p_and();
+		void p_or();
+		void p_lsf();
+		void p_asf();
 
 		// Parallel mem opcodes (low part)
 
-		void p_ldd(DecoderInfo& info);
-		void p_ls(DecoderInfo& info);
-		void p_ld(DecoderInfo& info);
-		void p_st(DecoderInfo& info);
-		void p_mv(DecoderInfo& info);
-		void p_mr(DecoderInfo& info);
+		void p_ldd();
+		void p_ls();
+		void p_ld();
+		void p_st();
+		void p_mv();
+		void p_mr();
 
 		// Helpers
 
 		void FetchMpyParams(DspParameter s1p, DspParameter s2p, int64_t& s1, int64_t& s2, bool checkDp);
 		void AdvanceAddress(int r, DspParameter param);
 		bool ConditionTrue(ConditionCode cc);
-		void Dispatch(DecoderInfo& info);
+		void Dispatch();
 
-		// TODO: Cache DecoderInfo?
+		/// <summary>
+		/// Current decoded instruction.
+		/// </summary>
+		DecoderInfo info = { 0 };
 
 		bool flowControl = false;
 

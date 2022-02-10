@@ -8,7 +8,7 @@ namespace DSP
 {
 
 	// ldd d1,rn,mn d2,r3,m3
-	void DspInterpreter::p_ldd(DecoderInfo& info)
+	void DspInterpreter::p_ldd()
 	{
 		int r = (int)info.paramsEx[1];
 		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
@@ -20,7 +20,7 @@ namespace DSP
 	}
 
 	// ls d,r,m r,m,s
-	void DspInterpreter::p_ls(DecoderInfo& info)
+	void DspInterpreter::p_ls()
 	{
 		int r = (int)info.paramsEx[1];
 		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
@@ -32,7 +32,7 @@ namespace DSP
 	}
 
 	// ld d,rn,mn
-	void DspInterpreter::p_ld(DecoderInfo& info)
+	void DspInterpreter::p_ld()
 	{
 		int r = (int)info.paramsEx[1];
 		core->MoveToReg((int)info.paramsEx[0], core->dsp->ReadDMem(core->regs.r[r]));
@@ -40,7 +40,7 @@ namespace DSP
 	}
 
 	// st rn,mn,s
-	void DspInterpreter::p_st(DecoderInfo& info)
+	void DspInterpreter::p_st()
 	{
 		int r = (int)info.paramsEx[0];
 		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.paramsEx[2]));
@@ -48,13 +48,13 @@ namespace DSP
 	}
 
 	// mv d,s
-	void DspInterpreter::p_mv(DecoderInfo& info)
+	void DspInterpreter::p_mv()
 	{
 		core->MoveToReg((int)info.paramsEx[0], core->MoveFromReg((int)info.paramsEx[1]));
 	}
 
 	// mr rn,mn
-	void DspInterpreter::p_mr(DecoderInfo& info)
+	void DspInterpreter::p_mr()
 	{
 		int r = (int)info.paramsEx[0];
 		AdvanceAddress(r, info.paramsEx[1]);
