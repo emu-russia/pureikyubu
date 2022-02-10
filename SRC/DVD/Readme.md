@@ -50,7 +50,7 @@ MemoryMap:
 
 What is `cpu` and what is `controller` is not very clear. If there are two of them, then how does one get direct access to the memory of the other? And if the second one is also based on the processor core, then where is its firmware?
 
-The current implementation is limited by the MN102 instruction analyzer and the disassembler for DVD firmware reversing (planning to find the ADPCM decoder algorithm there).
+The current implementation is limited by the MN102 instruction decoder and the disassembler for DVD firmware reversing (planning to find the ADPCM decoder algorithm there).
 
 ## DDU JDI
 

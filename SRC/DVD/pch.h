@@ -25,7 +25,7 @@
 #include "GCM.h"
 #include "DduCommands.h"
 
-#include "Mn102Analyzer.h"
+#include "Mn102Decoder.h"
 #include "Mn102Disasm.h"
 #include "DvdAdpcmDecode.h"
 

@@ -25,7 +25,7 @@
     <ClCompile Include="..\..\DvdAdpcmDecode.cpp" />
     <ClCompile Include="..\..\FileSystem.cpp" />
     <ClCompile Include="..\..\GCM.cpp" />
-    <ClCompile Include="..\..\Mn102Analyzer.cpp" />
+    <ClCompile Include="..\..\Mn102Decoder.cpp" />
     <ClCompile Include="..\..\Mn102Disasm.cpp" />
     <ClCompile Include="..\..\MountSDK.cpp" />
     <ClCompile Include="..\..\pch.cpp">
@@ -44,7 +44,7 @@
     <ClInclude Include="..\..\DvdStructs.h" />
     <ClInclude Include="..\..\FileSystem.h" />
     <ClInclude Include="..\..\GCM.h" />
-    <ClInclude Include="..\..\Mn102Analyzer.h" />
+    <ClInclude Include="..\..\Mn102Decoder.h" />
     <ClInclude Include="..\..\Mn102Disasm.h" />
     <ClInclude Include="..\..\MountSDK.h" />
     <ClInclude Include="..\..\pch.h" />
