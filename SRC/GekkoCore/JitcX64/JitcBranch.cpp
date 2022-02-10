@@ -3,7 +3,7 @@
 
 namespace Gekko
 {
-	void Jitc::Branch(AnalyzeInfo* info, CodeSegment* seg, bool link)
+	void Jitc::Branch(DecoderInfo* info, CodeSegment* seg, bool link)
 	{
 		// Address is prepared in advance by the analyzer.
 

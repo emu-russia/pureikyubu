@@ -4,7 +4,7 @@
 
 namespace Gekko
 {
-	void GekkoAssembler::CheckParam(AnalyzeInfo& info, size_t paramNum, Param should)
+	void GekkoAssembler::CheckParam(DecoderInfo& info, size_t paramNum, Param should)
 	{
 		if (info.param[paramNum] != should)
 		{
@@ -48,7 +48,7 @@ namespace Gekko
 		res |= 1 << (31 - ppc_bit);
 	}
 
-	void GekkoAssembler::Form_DAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_DAB(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -69,7 +69,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_DA(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_DA(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -88,7 +88,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_ASB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_ASB(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -108,7 +108,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_DASimm(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_DASimm(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -125,7 +125,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_ASUimm(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_ASUimm(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -142,7 +142,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_BranchLong(size_t primary, bool aa, bool lk, AnalyzeInfo& info)
+	void GekkoAssembler::Form_BranchLong(size_t primary, bool aa, bool lk, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -204,7 +204,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_BranchShort(size_t primary, bool aa, bool lk, AnalyzeInfo& info)
+	void GekkoAssembler::Form_BranchShort(size_t primary, bool aa, bool lk, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -271,7 +271,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_BOBI(size_t primary, size_t extended, bool lk, AnalyzeInfo& info)
+	void GekkoAssembler::Form_BOBI(size_t primary, size_t extended, bool lk, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -289,7 +289,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrfDAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrfDAB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -307,7 +307,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrfDCrfS(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrfDCrfS(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -323,7 +323,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrfDASimm(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrfDASimm(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -340,7 +340,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrfDAUimm(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrfDAUimm(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -357,7 +357,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_AS(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_AS(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -375,7 +375,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrbDAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrbDAB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -393,7 +393,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_AB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_AB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -409,12 +409,12 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_SAB(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info)
 	{
 		Form_DAB(primary, extended, oe, rc, info);
 	}
 
-	void GekkoAssembler::Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Extended(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -424,7 +424,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_AS_SHMBME(size_t primary, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_AS_SHMBME(size_t primary, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -447,7 +447,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_ASB_MBME(size_t primary, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_ASB_MBME(size_t primary, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -470,7 +470,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_AS_SH(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_AS_SH(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -490,7 +490,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrDAB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDAB(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -510,7 +510,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrDAC(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDAC(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -530,7 +530,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrDB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDB(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -548,7 +548,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrDACB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDACB(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -570,7 +570,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrD(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -586,7 +586,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrfDFrAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrfDFrAB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -604,7 +604,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_CrbD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_CrbD(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -620,7 +620,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtfsf(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtfsf(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -638,7 +638,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtfsfi(size_t primary, size_t extended, bool rc, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtfsfi(size_t primary, size_t extended, bool rc, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -656,7 +656,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_DA_Offset(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_DA_Offset(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -672,12 +672,12 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_SA_Offset(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_SA_Offset(size_t primary, DecoderInfo& info)
 	{
 		Form_DA_Offset(primary, info);
 	}
 
-	void GekkoAssembler::Form_DA_NB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_DA_NB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -695,12 +695,12 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_SA_NB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_SA_NB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		Form_DA_NB(primary, extended, info);
 	}
 
-	void GekkoAssembler::Form_FrDA_Offset(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDA_Offset(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -716,12 +716,12 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrSA_Offset(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrSA_Offset(size_t primary, DecoderInfo& info)
 	{
 		Form_FrDA_Offset(primary, info);
 	}
 
-	void GekkoAssembler::Form_FrDRegAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrDRegAB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -739,12 +739,12 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_FrSRegAB(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_FrSRegAB(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		Form_FrDRegAB(primary, extended, info);
 	}
 
-	void GekkoAssembler::Form_Trap(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Trap(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -762,7 +762,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_TrapImm(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_TrapImm(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -781,7 +781,7 @@ namespace Gekko
 
 #pragma region "Processor Control Instructions"
 
-	void GekkoAssembler::Form_Mcrxr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mcrxr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -795,7 +795,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mfcr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mfcr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -809,7 +809,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mfmsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mfmsr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -823,7 +823,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mfspr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mfspr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -839,7 +839,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mftb(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mftb(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -855,7 +855,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtcrf(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtcrf(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -871,7 +871,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtmsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtmsr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -885,7 +885,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtspr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtspr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -905,7 +905,7 @@ namespace Gekko
 
 #pragma region "Segment Register Manipulation Instructions"
 
-	void GekkoAssembler::Form_Mfsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mfsr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -921,7 +921,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mfsrin(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mfsrin(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -937,7 +937,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtsr(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtsr(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -953,7 +953,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_Mtsrin(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Mtsrin(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -971,7 +971,7 @@ namespace Gekko
 
 #pragma endregion "Segment Register Manipulation Instructions"
 
-	void GekkoAssembler::Form_Tlbie(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_Tlbie(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -985,7 +985,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_PsqLoadStoreIndexed(size_t primary, size_t extended, AnalyzeInfo& info)
+	void GekkoAssembler::Form_PsqLoadStoreIndexed(size_t primary, size_t extended, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -1007,7 +1007,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Form_PsqLoadStore(size_t primary, AnalyzeInfo& info)
+	void GekkoAssembler::Form_PsqLoadStore(size_t primary, DecoderInfo& info)
 	{
 		uint32_t res = 0;
 
@@ -1027,7 +1027,7 @@ namespace Gekko
 		info.instrBits = res;
 	}
 
-	void GekkoAssembler::Assemble(AnalyzeInfo& info)
+	void GekkoAssembler::Assemble(DecoderInfo& info)
 	{
 		// The GUM uses the non-standard DAB form. The extended opcode field for these instructions appears on the OE field for regular DAB format.
 		// Therefore, you have to mask msb for the extended opcode value, and set the OE field to true.
@@ -1488,7 +1488,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::add(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::add;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1503,7 +1503,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::add_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::add_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1518,7 +1518,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1533,7 +1533,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1548,7 +1548,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addc(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addc;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1563,7 +1563,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addc_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addc_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1578,7 +1578,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addco(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addco;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1593,7 +1593,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addco_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addco_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1608,7 +1608,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::adde(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::adde;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1623,7 +1623,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::adde_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::adde_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1638,7 +1638,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addeo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1653,7 +1653,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addeo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1668,7 +1668,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addi(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1683,7 +1683,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addic(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addic;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1698,7 +1698,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addic_d(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addic_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1713,7 +1713,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addis(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addis;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1728,7 +1728,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addme(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addme;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1741,7 +1741,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addme_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addme_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1754,7 +1754,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addmeo(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addmeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1767,7 +1767,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addmeo_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addmeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1780,7 +1780,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addze(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addze;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1793,7 +1793,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addze_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addze_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1806,7 +1806,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addzeo(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addzeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1819,7 +1819,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::addzeo_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::addzeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -1832,7 +1832,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::_and(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_and;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1847,7 +1847,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::and_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::and_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1862,7 +1862,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::andc(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::andc;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1877,7 +1877,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::andc_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::andc_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1892,7 +1892,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::andi_d(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::andi_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1907,7 +1907,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::andis_d(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::andis_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -1922,7 +1922,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::b(uint32_t pc, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::b;
 		info.param[0] = Param::Address;
@@ -1934,7 +1934,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ba(uint32_t pc, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::ba;
 		info.param[0] = Param::Address;
@@ -1946,7 +1946,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bl(uint32_t pc, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bl;
 		info.param[0] = Param::Address;
@@ -1958,7 +1958,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bla(uint32_t pc, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bla;
 		info.param[0] = Param::Address;
@@ -1970,7 +1970,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bc(uint32_t pc, size_t bo, size_t bi, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bc;
 		info.param[0] = Param::Num;
@@ -1986,7 +1986,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bca(uint32_t pc, size_t bo, size_t bi, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bca;
 		info.param[0] = Param::Num;
@@ -2002,7 +2002,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bcl(uint32_t pc, size_t bo, size_t bi, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bcl;
 		info.param[0] = Param::Num;
@@ -2018,7 +2018,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bcla(uint32_t pc, size_t bo, size_t bi, uint32_t ta)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.pc = pc;
 		info.instr = Instruction::bcla;
 		info.param[0] = Param::Num;
@@ -2034,7 +2034,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bcctr(size_t bo, size_t bi)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bcctr;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = bo;
@@ -2047,7 +2047,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bcctrl(size_t bo, size_t bi)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bcctrl;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = bo;
@@ -2060,7 +2060,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bclr(size_t bo, size_t bi)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bclr;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = bo;
@@ -2073,7 +2073,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::bclrl(size_t bo, size_t bi)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bclrl;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = bo;
@@ -2086,7 +2086,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cmp(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmp;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -2101,7 +2101,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cmpi(size_t crfd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpi;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -2116,7 +2116,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cmpl(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpl;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -2131,7 +2131,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cmpli(size_t crfd, size_t ra, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpli;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -2146,7 +2146,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cntlzw(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cntlzw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2159,7 +2159,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cntlzw_d(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cntlzw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2172,7 +2172,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crand(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crand;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2187,7 +2187,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crandc(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crandc;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2202,7 +2202,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::creqv(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::creqv;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2217,7 +2217,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crnand(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crnand;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2232,7 +2232,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crnor(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crnor;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2247,7 +2247,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::cror(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cror;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2262,7 +2262,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crorc(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crorc;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2277,7 +2277,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::crxor(size_t d, size_t a, size_t b)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::crxor;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -2292,7 +2292,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbf(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbf;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2305,7 +2305,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbi(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2318,7 +2318,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbst(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbst;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2331,7 +2331,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbt(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbt;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2344,7 +2344,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbtst(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbtst;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2357,7 +2357,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbz(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbz;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2370,7 +2370,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::dcbz_l(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::dcbz_l;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2383,7 +2383,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divw(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2398,7 +2398,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divw_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2413,7 +2413,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2428,7 +2428,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2443,7 +2443,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwu(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2458,7 +2458,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwu_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwu_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2473,7 +2473,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwuo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwuo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2488,7 +2488,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::divwuo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::divwuo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2503,7 +2503,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::eciwx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::eciwx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -2518,7 +2518,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ecowx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ecowx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -2533,7 +2533,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::eieio()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::eieio;
 		Assemble(info);
 		return info.instrBits;
@@ -2541,7 +2541,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::eqv(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::eqv;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2556,7 +2556,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::eqv_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::eqv_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2571,7 +2571,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::extsb(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::extsb;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2584,7 +2584,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::extsb_d(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::extsb_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2597,7 +2597,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::extsh(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::extsh;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2610,7 +2610,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::extsh_d(size_t ra, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::extsh_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -2623,7 +2623,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fabs(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fabs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2636,7 +2636,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fabs_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fabs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2649,7 +2649,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fadd(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fadd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2664,7 +2664,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fadd_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fadd_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2679,7 +2679,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fadds(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fadds;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2694,7 +2694,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fadds_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fadds_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2709,7 +2709,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fcmpo(size_t crfD, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fcmpo;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfD;
@@ -2724,7 +2724,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fcmpu(size_t crfD, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fcmpu;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfD;
@@ -2739,7 +2739,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fctiw(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fctiw;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2752,7 +2752,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fctiw_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fctiw_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2765,7 +2765,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fctiwz(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fctiwz;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2778,7 +2778,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fctiwz_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fctiwz_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2791,7 +2791,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fdiv(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fdiv;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2806,7 +2806,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fdiv_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fdiv_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2821,7 +2821,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fdivs(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fdivs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2836,7 +2836,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fdivs_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fdivs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2851,7 +2851,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmadd(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmadd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2868,7 +2868,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmadd_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmadd_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2885,7 +2885,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmadds(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmadds;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2902,7 +2902,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmadds_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmadds_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2919,7 +2919,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmr(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmr;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2932,7 +2932,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmr_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmr_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2945,7 +2945,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmsub(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmsub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2962,7 +2962,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmsub_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmsub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2979,7 +2979,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmsubs(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmsubs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -2996,7 +2996,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmsubs_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmsubs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3013,7 +3013,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmul(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmul;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3028,7 +3028,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmul_d(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmul_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3043,7 +3043,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmuls(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmuls;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3058,7 +3058,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fmuls_d(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fmuls_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3073,7 +3073,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnabs(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnabs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3086,7 +3086,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnabs_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnabs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3099,7 +3099,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fneg(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fneg;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3112,7 +3112,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fneg_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fneg_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3125,7 +3125,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmadd(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmadd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3142,7 +3142,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmadd_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmadd_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3159,7 +3159,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmadds(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmadds;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3176,7 +3176,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmadds_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmadds_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3193,7 +3193,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmsub(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmsub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3210,7 +3210,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmsub_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmsub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3227,7 +3227,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmsubs(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmsubs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3244,7 +3244,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fnmsubs_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fnmsubs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3261,7 +3261,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fres(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fres;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3274,7 +3274,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fres_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fres_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3287,7 +3287,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::frsp(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::frsp;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3300,7 +3300,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::frsp_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::frsp_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3313,7 +3313,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::frsqrte(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::frsqrte;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3326,7 +3326,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::frsqrte_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::frsqrte_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3339,7 +3339,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsel(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsel;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3356,7 +3356,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsel_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsel_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3373,7 +3373,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsub(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3388,7 +3388,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsub_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3403,7 +3403,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsubs(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsubs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3418,7 +3418,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::fsubs_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::fsubs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3433,7 +3433,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::icbi(size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::icbi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -3446,7 +3446,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::isync()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::isync;
 		Assemble(info);
 		return info.instrBits;
@@ -3454,7 +3454,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lbz(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lbz;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3468,7 +3468,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lbzu(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lbzu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3482,7 +3482,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lbzux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lbzux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3497,7 +3497,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lbzx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lbzx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3512,7 +3512,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfd(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3526,7 +3526,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfdu(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfdu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3540,7 +3540,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfdux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfdux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3555,7 +3555,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfdx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfdx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3570,7 +3570,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfs(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3584,7 +3584,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfsu(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfsu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3598,7 +3598,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfsux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfsux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3613,7 +3613,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lfsx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfsx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3628,7 +3628,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lha(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lha;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3642,7 +3642,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhau(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhau;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3656,7 +3656,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhaux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhaux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3671,7 +3671,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhax(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhax;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3686,7 +3686,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhbrx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhbrx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3701,7 +3701,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhz(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhz;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3715,7 +3715,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhzu(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhzu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3729,7 +3729,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhzux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhzux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3744,7 +3744,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lhzx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lhzx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3759,7 +3759,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lmw(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lmw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3773,7 +3773,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lswi(size_t rd, size_t ra, size_t nb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lswi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3788,7 +3788,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lswx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lswx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3803,7 +3803,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwarx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwarx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3818,7 +3818,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwbrx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwbrx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3833,7 +3833,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwz(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwz;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3847,7 +3847,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwzu(size_t rd, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwzu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3861,7 +3861,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwzux(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwzux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3876,7 +3876,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::lwzx(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lwzx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3891,7 +3891,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mcrf(size_t d, size_t s)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mcrf;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = d;
@@ -3904,7 +3904,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mcrfs(size_t d, size_t s)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mcrfs;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = d;
@@ -3917,7 +3917,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mcrxr(size_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mcrxr;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = d;
@@ -3928,7 +3928,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mfcr(size_t rd)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mfcr;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3939,7 +3939,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mffs(size_t rd)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mffs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3950,7 +3950,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mffs_d(size_t rd)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mffs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -3961,7 +3961,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mfmsr(size_t rd)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mfmsr;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3972,7 +3972,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mfspr(size_t rd, size_t spr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mfspr;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3985,7 +3985,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mfsr(size_t rd, size_t sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mfsr;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -3998,7 +3998,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mfsrin(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mfsrin;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4011,7 +4011,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mftb(size_t rd, size_t tbr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mftb;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4024,7 +4024,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtcrf(size_t crm, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtcrf;
 		info.param[0] = Param::CRM;
 		info.paramBits[0] = crm;
@@ -4037,7 +4037,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsb0(size_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsb0;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -4048,7 +4048,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsb0_d(size_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsb0_d;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -4059,7 +4059,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsb1(size_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsb1;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -4070,7 +4070,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsb1_d(size_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsb1_d;
 		info.param[0] = Param::Crb;
 		info.paramBits[0] = d;
@@ -4081,7 +4081,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsf(size_t fm, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsf;
 		info.param[0] = Param::FM;
 		info.paramBits[0] = fm;
@@ -4094,7 +4094,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsf_d(size_t fm, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsf_d;
 		info.param[0] = Param::FM;
 		info.paramBits[0] = fm;
@@ -4107,7 +4107,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsfi(size_t d, size_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsfi;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = d;
@@ -4120,7 +4120,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtfsfi_d(size_t d, size_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtfsfi_d;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = d;
@@ -4133,7 +4133,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtmsr(size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtmsr;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -4144,7 +4144,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtspr(size_t spr, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtspr;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = spr;
@@ -4157,7 +4157,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtsr(size_t sr, size_t rs)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtsr;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = sr;
@@ -4170,7 +4170,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mtsrin(size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mtsrin;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -4183,7 +4183,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mulhw(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mulhw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4198,7 +4198,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mulhw_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mulhw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4213,7 +4213,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mulhwu(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mulhwu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4228,7 +4228,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mulhwu_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mulhwu_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4243,7 +4243,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mulli(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mulli;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4258,7 +4258,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mullw(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mullw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4273,7 +4273,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mullw_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mullw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4288,7 +4288,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mullwo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mullwo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4303,7 +4303,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::mullwo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::mullwo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4318,7 +4318,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nand(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nand;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4333,7 +4333,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nand_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nand_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4348,7 +4348,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::neg(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::neg;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4361,7 +4361,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::neg_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::neg_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4374,7 +4374,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nego(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nego;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4387,7 +4387,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nego_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nego_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -4400,7 +4400,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nor(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nor;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4415,7 +4415,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::nor_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nor_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4430,7 +4430,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::_or(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_or;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4445,7 +4445,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::or_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::or_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4460,7 +4460,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::orc(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::orc;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4475,7 +4475,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::orc_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::orc_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4490,7 +4490,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ori(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ori;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4505,7 +4505,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::oris(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::oris;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -4520,7 +4520,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_l(size_t rd, size_t ra, uint16_t d, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_l;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4538,7 +4538,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_lu(size_t rd, size_t ra, uint16_t d, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_lu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4556,7 +4556,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_lux(size_t rd, size_t ra, size_t rb, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_lux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4575,7 +4575,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_lx(size_t rd, size_t ra, size_t rb, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_lx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4594,7 +4594,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_st(size_t rs, size_t ra, uint16_t d, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_st;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -4612,7 +4612,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_stu(size_t rs, size_t ra, uint16_t d, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_stu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -4630,7 +4630,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_stux(size_t rs, size_t ra, size_t rb, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_stux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -4649,7 +4649,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::psq_stx(size_t rs, size_t ra, size_t rb, size_t w, size_t i)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::psq_stx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -4668,7 +4668,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_abs(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_abs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4681,7 +4681,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_abs_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_abs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4694,7 +4694,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_add(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_add;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4709,7 +4709,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_add_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_add_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4724,7 +4724,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_cmpo0(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_cmpo0;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -4739,7 +4739,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_cmpo1(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_cmpo1;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -4754,7 +4754,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_cmpu0(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_cmpu0;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -4769,7 +4769,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_cmpu1(size_t crfd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_cmpu1;
 		info.param[0] = Param::Crf;
 		info.paramBits[0] = crfd;
@@ -4784,7 +4784,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_div(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_div;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4799,7 +4799,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_div_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_div_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4814,7 +4814,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madd(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4831,7 +4831,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madd_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madd_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4848,7 +4848,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madds0(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madds0;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4865,7 +4865,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madds0_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madds0_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4882,7 +4882,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madds1(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madds1;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4899,7 +4899,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_madds1_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_madds1_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4916,7 +4916,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge00(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge00;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4931,7 +4931,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge00_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge00_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4946,7 +4946,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge01(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge01;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4961,7 +4961,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge01_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge01_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4976,7 +4976,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge10(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge10;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -4991,7 +4991,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge10_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge10_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5006,7 +5006,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge11(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge11;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5021,7 +5021,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_merge11_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_merge11_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5036,7 +5036,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_mr(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_mr;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5049,7 +5049,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_mr_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_mr_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5062,7 +5062,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_msub(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_msub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5079,7 +5079,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_msub_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_msub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5096,7 +5096,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_mul(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_mul;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5111,7 +5111,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_mul_d(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_mul_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5126,7 +5126,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_muls0(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_muls0;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5141,7 +5141,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_muls0_d(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_muls0_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5156,7 +5156,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_muls1(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_muls1;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5171,7 +5171,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_muls1_d(size_t rd, size_t ra, size_t rc)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_muls1_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5186,7 +5186,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nabs(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nabs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5199,7 +5199,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nabs_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nabs_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5212,7 +5212,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_neg(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_neg;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5225,7 +5225,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_neg_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_neg_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5238,7 +5238,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nmadd(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nmadd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5255,7 +5255,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nmadd_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nmadd_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5272,7 +5272,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nmsub(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nmsub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5289,7 +5289,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_nmsub_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_nmsub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5306,7 +5306,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_res(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_res;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5319,7 +5319,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_res_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_res_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5332,7 +5332,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_rsqrte(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_rsqrte;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5345,7 +5345,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_rsqrte_d(size_t rd, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_rsqrte_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5358,7 +5358,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sel(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sel;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5375,7 +5375,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sel_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sel_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5392,7 +5392,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sub(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sub;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5407,7 +5407,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sub_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sub_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5422,7 +5422,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sum0(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sum0;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5439,7 +5439,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sum0_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sum0_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5456,7 +5456,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sum1(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sum1;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5473,7 +5473,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::ps_sum1_d(size_t rd, size_t ra, size_t rc, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ps_sum1_d;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rd;
@@ -5490,7 +5490,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rfi()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rfi;
 		Assemble(info);
 		return info.instrBits;
@@ -5498,7 +5498,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwimi(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwimi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5517,7 +5517,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwimi_d(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwimi_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5536,7 +5536,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwinm(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwinm;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5555,7 +5555,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwinm_d(size_t ra, size_t rs, size_t sh, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwinm_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5574,7 +5574,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwnm(size_t ra, size_t rs, size_t rb, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwnm;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5593,7 +5593,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::rlwnm_d(size_t ra, size_t rs, size_t rb, size_t mb, size_t me)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rlwnm_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5612,7 +5612,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sc()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sc;
 		Assemble(info);
 		return info.instrBits;
@@ -5620,7 +5620,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::slw(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::slw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5635,7 +5635,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::slw_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::slw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5650,7 +5650,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sraw(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sraw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5665,7 +5665,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sraw_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sraw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5680,7 +5680,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::srawi(size_t ra, size_t rs, size_t sh)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::srawi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5695,7 +5695,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::srawi_d(size_t ra, size_t rs, size_t sh)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::srawi_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5710,7 +5710,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::srw(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::srw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5725,7 +5725,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::srw_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::srw_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -5740,7 +5740,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stb(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stb;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5754,7 +5754,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stbu(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stbu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5768,7 +5768,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stbux(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stbux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5783,7 +5783,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stbx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stbx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5798,7 +5798,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfd(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfd;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5812,7 +5812,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfdu(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfdu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5826,7 +5826,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfdux(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfdux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5841,7 +5841,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfdx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfdx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5856,7 +5856,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfiwx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfiwx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5871,7 +5871,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfs(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfs;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5885,7 +5885,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfsu(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfsu;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5899,7 +5899,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfsux(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfsux;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5914,7 +5914,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stfsx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stfsx;
 		info.param[0] = Param::FReg;
 		info.paramBits[0] = rs;
@@ -5929,7 +5929,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sth(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sth;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5943,7 +5943,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sthbrx(size_t rs, size_t ra, uint16_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sthbrx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5958,7 +5958,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sthu(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sthu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5972,7 +5972,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sthux(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sthux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -5987,7 +5987,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sthx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sthx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6002,7 +6002,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stmw(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stmw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6016,7 +6016,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stswi(size_t rs, size_t ra, uint16_t nb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stswi;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6031,7 +6031,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stswx(size_t rs, size_t ra, uint16_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stswx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6046,7 +6046,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stw(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stw;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6060,7 +6060,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stwbrx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stwbrx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6075,7 +6075,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stwcx_d(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stwcx_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -6090,7 +6090,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stwu(size_t rs, size_t ra, uint16_t d)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stwu;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6104,7 +6104,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stwux(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stwux;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6119,7 +6119,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::stwx(size_t rs, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stwx;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rs;
@@ -6134,7 +6134,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subf(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subf;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6149,7 +6149,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subf_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subf_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6164,7 +6164,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6179,7 +6179,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6194,7 +6194,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfc(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfc;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6209,7 +6209,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfc_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfc_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6224,7 +6224,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfco(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfco;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6239,7 +6239,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfco_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfco_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6254,7 +6254,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfe(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfe;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6269,7 +6269,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfe_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfe_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6284,7 +6284,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfeo(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6299,7 +6299,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfeo_d(size_t rd, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6314,7 +6314,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfic(size_t rd, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfic;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6329,7 +6329,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfme(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfme;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6342,7 +6342,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfme_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfme_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6355,7 +6355,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfmeo(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfmeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6368,7 +6368,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfmeo_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfmeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6381,7 +6381,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfze(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfze;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6394,7 +6394,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfze_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfze_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6407,7 +6407,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfzeo(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfzeo;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6420,7 +6420,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::subfzeo_d(size_t rd, size_t ra)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::subfzeo_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rd;
@@ -6433,7 +6433,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::sync()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sync;
 		Assemble(info);
 		return info.instrBits;
@@ -6441,7 +6441,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::tlbie(size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::tlbie;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = rb;
@@ -6452,7 +6452,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::tlbsync()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::tlbsync;
 		Assemble(info);
 		return info.instrBits;
@@ -6460,7 +6460,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::tw(size_t to, size_t ra, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::tw;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = to;
@@ -6475,7 +6475,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::twi(size_t to, size_t ra, int16_t simm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::twi;
 		info.param[0] = Param::Num;
 		info.paramBits[0] = to;
@@ -6490,7 +6490,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::_xor(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_xor;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -6505,7 +6505,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::xor_d(size_t ra, size_t rs, size_t rb)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xor_d;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -6520,7 +6520,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::xori(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xori;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;
@@ -6535,7 +6535,7 @@ namespace Gekko
 
 	uint32_t GekkoAssembler::xoris(size_t ra, size_t rs, uint16_t uimm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xoris;
 		info.param[0] = Param::Reg;
 		info.paramBits[0] = ra;

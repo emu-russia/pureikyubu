@@ -9,7 +9,7 @@ namespace Gekko
 
 	// Paired-Single Floating Point Arithmetic Instructions
 
-	void Interpreter::ps_div(AnalyzeInfo& info)
+	void Interpreter::ps_div(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -20,13 +20,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_div_d(AnalyzeInfo& info)
+	void Interpreter::ps_div_d(DecoderInfo& info)
 	{
 		ps_div(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_sub(AnalyzeInfo& info)
+	void Interpreter::ps_sub(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -37,13 +37,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_sub_d(AnalyzeInfo& info)
+	void Interpreter::ps_sub_d(DecoderInfo& info)
 	{
 		ps_sub(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_add(AnalyzeInfo& info)
+	void Interpreter::ps_add(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -54,13 +54,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_add_d(AnalyzeInfo& info)
+	void Interpreter::ps_add_d(DecoderInfo& info)
 	{
 		ps_add(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_sel(AnalyzeInfo& info)
+	void Interpreter::ps_sel(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -71,13 +71,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_sel_d(AnalyzeInfo& info)
+	void Interpreter::ps_sel_d(DecoderInfo& info)
 	{
 		ps_sel(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_res(AnalyzeInfo& info)
+	void Interpreter::ps_res(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -88,13 +88,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_res_d(AnalyzeInfo& info)
+	void Interpreter::ps_res_d(DecoderInfo& info)
 	{
 		ps_res(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_mul(AnalyzeInfo& info)
+	void Interpreter::ps_mul(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -105,13 +105,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_mul_d(AnalyzeInfo& info)
+	void Interpreter::ps_mul_d(DecoderInfo& info)
 	{
 		ps_mul(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_rsqrte(AnalyzeInfo& info)
+	void Interpreter::ps_rsqrte(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -122,13 +122,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_rsqrte_d(AnalyzeInfo& info)
+	void Interpreter::ps_rsqrte_d(DecoderInfo& info)
 	{
 		ps_rsqrte(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_msub(AnalyzeInfo& info)
+	void Interpreter::ps_msub(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -145,13 +145,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_msub_d(AnalyzeInfo& info)
+	void Interpreter::ps_msub_d(DecoderInfo& info)
 	{
 		ps_msub(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_madd(AnalyzeInfo& info)
+	void Interpreter::ps_madd(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -168,13 +168,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_madd_d(AnalyzeInfo& info)
+	void Interpreter::ps_madd_d(DecoderInfo& info)
 	{
 		ps_madd(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_nmsub(AnalyzeInfo& info)
+	void Interpreter::ps_nmsub(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -191,13 +191,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_nmsub_d(AnalyzeInfo& info)
+	void Interpreter::ps_nmsub_d(DecoderInfo& info)
 	{
 		ps_nmsub(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_nmadd(AnalyzeInfo& info)
+	void Interpreter::ps_nmadd(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -214,13 +214,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_nmadd_d(AnalyzeInfo& info)
+	void Interpreter::ps_nmadd_d(DecoderInfo& info)
 	{
 		ps_nmadd(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_neg(AnalyzeInfo& info)
+	void Interpreter::ps_neg(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -231,13 +231,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_neg_d(AnalyzeInfo& info)
+	void Interpreter::ps_neg_d(DecoderInfo& info)
 	{
 		ps_neg(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_mr(AnalyzeInfo& info)
+	void Interpreter::ps_mr(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -248,13 +248,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_mr_d(AnalyzeInfo& info)
+	void Interpreter::ps_mr_d(DecoderInfo& info)
 	{
 		ps_mr(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_nabs(AnalyzeInfo& info)
+	void Interpreter::ps_nabs(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -265,13 +265,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_nabs_d(AnalyzeInfo& info)
+	void Interpreter::ps_nabs_d(DecoderInfo& info)
 	{
 		ps_nabs(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_abs(AnalyzeInfo& info)
+	void Interpreter::ps_abs(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -282,7 +282,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_abs_d(AnalyzeInfo& info)
+	void Interpreter::ps_abs_d(DecoderInfo& info)
 	{
 		ps_abs(info);
 		if (!core->exception) COMPUTE_CR1();
@@ -290,7 +290,7 @@ namespace Gekko
 
 	// Miscellaneous Paired-Single Instructions
 
-	void Interpreter::ps_sum0(AnalyzeInfo& info)
+	void Interpreter::ps_sum0(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -303,13 +303,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_sum0_d(AnalyzeInfo& info)
+	void Interpreter::ps_sum0_d(DecoderInfo& info)
 	{
 		ps_sum0(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_sum1(AnalyzeInfo& info)
+	void Interpreter::ps_sum1(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -322,13 +322,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_sum1_d(AnalyzeInfo& info)
+	void Interpreter::ps_sum1_d(DecoderInfo& info)
 	{
 		ps_sum1(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_muls0(AnalyzeInfo& info)
+	void Interpreter::ps_muls0(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -341,13 +341,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_muls0_d(AnalyzeInfo& info)
+	void Interpreter::ps_muls0_d(DecoderInfo& info)
 	{
 		ps_muls0(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_muls1(AnalyzeInfo& info)
+	void Interpreter::ps_muls1(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -360,13 +360,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_muls1_d(AnalyzeInfo& info)
+	void Interpreter::ps_muls1_d(DecoderInfo& info)
 	{
 		ps_muls1(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_madds0(AnalyzeInfo& info)
+	void Interpreter::ps_madds0(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -379,13 +379,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_madds0_d(AnalyzeInfo& info)
+	void Interpreter::ps_madds0_d(DecoderInfo& info)
 	{
 		ps_madds0(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_madds1(AnalyzeInfo& info)
+	void Interpreter::ps_madds1(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -398,13 +398,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_madds1_d(AnalyzeInfo& info)
+	void Interpreter::ps_madds1_d(DecoderInfo& info)
 	{
 		ps_madds1(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_cmpu0(AnalyzeInfo& info)
+	void Interpreter::ps_cmpu0(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -427,7 +427,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_cmpo0(AnalyzeInfo& info)
+	void Interpreter::ps_cmpo0(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -450,7 +450,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_cmpu1(AnalyzeInfo& info)
+	void Interpreter::ps_cmpu1(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -473,7 +473,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_cmpo1(AnalyzeInfo& info)
+	void Interpreter::ps_cmpo1(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -496,7 +496,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_merge00(AnalyzeInfo& info)
+	void Interpreter::ps_merge00(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -509,13 +509,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_merge00_d(AnalyzeInfo& info)
+	void Interpreter::ps_merge00_d(DecoderInfo& info)
 	{
 		ps_merge00(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_merge01(AnalyzeInfo& info)
+	void Interpreter::ps_merge01(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -528,13 +528,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_merge01_d(AnalyzeInfo& info)
+	void Interpreter::ps_merge01_d(DecoderInfo& info)
 	{
 		ps_merge01(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_merge10(AnalyzeInfo& info)
+	void Interpreter::ps_merge10(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -547,13 +547,13 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_merge10_d(AnalyzeInfo& info)
+	void Interpreter::ps_merge10_d(DecoderInfo& info)
 	{
 		ps_merge10(info);
 		if (!core->exception) COMPUTE_CR1();
 	}
 
-	void Interpreter::ps_merge11(AnalyzeInfo& info)
+	void Interpreter::ps_merge11(DecoderInfo& info)
 	{
 		if (core->regs.msr & MSR_FP)
 		{
@@ -566,7 +566,7 @@ namespace Gekko
 		else core->Exception(Gekko::Exception::FPUNAVAIL);
 	}
 
-	void Interpreter::ps_merge11_d(AnalyzeInfo& info)
+	void Interpreter::ps_merge11_d(DecoderInfo& info)
 	{
 		ps_merge11(info);
 		if (!core->exception) COMPUTE_CR1();

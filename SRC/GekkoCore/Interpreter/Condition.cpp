@@ -6,7 +6,7 @@ namespace Gekko
 {
 
 	// CR[crbd] = CR[crba] & CR[crbb]
-	void Interpreter::crand(AnalyzeInfo& info)
+	void Interpreter::crand(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 		
@@ -19,7 +19,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = CR[crba] & ~CR[crbb]
-	void Interpreter::crandc(AnalyzeInfo& info)
+	void Interpreter::crandc(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -32,7 +32,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = CR[crba] EQV CR[crbb]
-	void Interpreter::creqv(AnalyzeInfo& info)
+	void Interpreter::creqv(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -45,7 +45,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = !(CR[crba] & CR[crbb])
-	void Interpreter::crnand(AnalyzeInfo& info)
+	void Interpreter::crnand(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -58,7 +58,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = !(CR[crba] | CR[crbb])
-	void Interpreter::crnor(AnalyzeInfo& info)
+	void Interpreter::crnor(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -71,7 +71,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = CR[crba] | CR[crbb]
-	void Interpreter::cror(AnalyzeInfo& info)
+	void Interpreter::cror(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -84,7 +84,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = CR[crba] | ~CR[crbb]
-	void Interpreter::crorc(AnalyzeInfo& info)
+	void Interpreter::crorc(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -97,7 +97,7 @@ namespace Gekko
 	}
 
 	// CR[crbd] = CR[crba] ^ CR[crbb]
-	void Interpreter::crxor(AnalyzeInfo& info)
+	void Interpreter::crxor(DecoderInfo& info)
 	{
 		uint32_t crbd = info.paramBits[0], crba = info.paramBits[1], crbb = info.paramBits[2];
 
@@ -110,7 +110,7 @@ namespace Gekko
 	}
 
 	// CR[4*crfd .. 4*crfd + 3] = CR[4*crfs .. 4*crfs + 3]
-	void Interpreter::mcrf(AnalyzeInfo& info)
+	void Interpreter::mcrf(DecoderInfo& info)
 	{
 		int32_t crfd = 4 * (7 - info.paramBits[0]), crfs = 4 * (7 - info.paramBits[1]);
 		core->regs.cr = (core->regs.cr & (~(0xf << crfd))) | (((core->regs.cr >> crfs) & 0xf) << crfd);

@@ -17,7 +17,7 @@ namespace Gekko
 	// else m = (32)0
 	// ra = r & m
 	// (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
-	void Interpreter::slw(AnalyzeInfo& info)
+	void Interpreter::slw(DecoderInfo& info)
 	{
 		uint32_t n = GPR(2);
 
@@ -30,7 +30,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::slw_d(AnalyzeInfo& info)
+	void Interpreter::slw_d(DecoderInfo& info)
 	{
 		slw(info);
 		COMPUTE_CR0(GPR(0));
@@ -44,7 +44,7 @@ namespace Gekko
 	// S = rs(0)
 	// ra = r & m | (32)S & ~m
 	// XER[CA] = S & (r & ~m[0-31] != 0)
-	void Interpreter::sraw(AnalyzeInfo& info)
+	void Interpreter::sraw(DecoderInfo& info)
 	{
 		uint32_t n = GPR(2);
 		int32_t res;
@@ -79,7 +79,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::sraw_d(AnalyzeInfo& info)
+	void Interpreter::sraw_d(DecoderInfo& info)
 	{
 		sraw(info);
 		COMPUTE_CR0(GPR(0));
@@ -91,7 +91,7 @@ namespace Gekko
 	// sign = rs[0]
 	// ra = r & m | (32)sign & ~m
 	// XER[CA] = sign(0) & ((r & ~m) != 0)
-	void Interpreter::srawi(AnalyzeInfo& info)
+	void Interpreter::srawi(DecoderInfo& info)
 	{
 		uint32_t n = info.paramBits[2];
 		int32_t res;
@@ -112,7 +112,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::srawi_d(AnalyzeInfo& info)
+	void Interpreter::srawi_d(DecoderInfo& info)
 	{
 		srawi(info);
 		COMPUTE_CR0(GPR(0));
@@ -125,7 +125,7 @@ namespace Gekko
 	// else m = (32)0
 	// ra = r & m
 	// (simply : ra = rs >> rb, or ra = 0, if rb[26] = 1)
-	void Interpreter::srw(AnalyzeInfo& info)
+	void Interpreter::srw(DecoderInfo& info)
 	{
 		uint32_t n = GPR(2);
 
@@ -138,7 +138,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::srw_d(AnalyzeInfo& info)
+	void Interpreter::srw_d(DecoderInfo& info)
 	{
 		srw(info);
 		COMPUTE_CR0(GPR(0));

@@ -39,7 +39,7 @@ namespace Gekko
 	#define DIS_SPR     ((DIS_RB << 5) | DIS_RA)
 	#define DIS_TBR     ((DIS_RB << 5) | DIS_RA)
 
-	void Analyzer::OpMain(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::OpMain(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr >> 26)
 		{
@@ -150,7 +150,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::OpMainFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::OpMainFast(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr >> 26)
 		{
@@ -263,7 +263,7 @@ namespace Gekko
 
 	#pragma region "Primary 19"
 
-	void Analyzer::Op19(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op19(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7ff)
 		{
@@ -290,7 +290,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::Op19Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op19Fast(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7ff)
 		{
@@ -321,7 +321,7 @@ namespace Gekko
 
 	#pragma region "Primary 31"
 
-	void Analyzer::Op31(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op31(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7ff)
 		{
@@ -518,7 +518,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::Op31Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op31Fast(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7ff)
 		{
@@ -719,7 +719,7 @@ namespace Gekko
 
 	#pragma region "Primary 59"
 
-	void Analyzer::Op59(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op59(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x3f)
 		{
@@ -752,7 +752,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::Op59Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op59Fast(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x3f)
 		{
@@ -789,7 +789,7 @@ namespace Gekko
 
 	#pragma region "Primary 63"
 
-	void Analyzer::Op63(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op63(uint32_t instr, DecoderInfo* info)
 	{
 		// Check Madd first
 		
@@ -862,7 +862,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::Op63Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op63Fast(uint32_t instr, DecoderInfo* info)
 	{
 		// Check Madd first
 		
@@ -939,7 +939,7 @@ namespace Gekko
 
 	#pragma region "Primary 4"
 
-	void Analyzer::Op4(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op4(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7f)
 		{
@@ -1018,7 +1018,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::Op4Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Op4Fast(uint32_t instr, DecoderInfo* info)
 	{
 		switch (instr & 0x7f)
 		{
@@ -1101,7 +1101,7 @@ namespace Gekko
 
 	#pragma region "Parameters"
 
-	void Analyzer::Dab(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Dab(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1110,14 +1110,14 @@ namespace Gekko
 		DabFast(instr, info);
 	}
 
-	void Analyzer::DabFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DabFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::FrDRegAb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDRegAb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::FReg;
@@ -1126,14 +1126,14 @@ namespace Gekko
 		FrDRegAbFast(instr, info);
 	}
 
-	void Analyzer::FrDRegAbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDRegAbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::DaSimm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaSimm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1142,14 +1142,14 @@ namespace Gekko
 		DaSimmFast(instr, info);
 	}
 
-	void Analyzer::DaSimmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaSimmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->Imm.Signed = DIS_SIMM;
 	}
 
-	void Analyzer::Da(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Da(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1157,13 +1157,13 @@ namespace Gekko
 		DaFast(instr, info);
 	}
 
-	void Analyzer::DaFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 	}
 
-	void Analyzer::Asb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Asb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1172,14 +1172,14 @@ namespace Gekko
 		AsbFast(instr, info);
 	}
 
-	void Analyzer::AsbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::AsUimm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsUimm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1188,21 +1188,21 @@ namespace Gekko
 		AsUimmFast(instr, info);
 	}
 
-	void Analyzer::AsUimmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsUimmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
 		info->Imm.Unsigned = DIS_UIMM;
 	}
 
-	void Analyzer::TargetAddr(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::TargetAddr(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::Address;
 		TargetAddrFast(instr, info);
 	}
 
-	void Analyzer::TargetAddrFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::TargetAddrFast(uint32_t instr, DecoderInfo* info)
 	{
 		uint32_t target = instr & 0x03fffffc;
 		if (target & 0x02000000) target |= 0xfc000000;
@@ -1212,7 +1212,7 @@ namespace Gekko
 		info->flow = true;
 	}
 
-	void Analyzer::BoBiTargetAddr(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::BoBiTargetAddr(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Num;
@@ -1221,7 +1221,7 @@ namespace Gekko
 		BoBiTargetAddrFast(instr, info);
 	}
 
-	void Analyzer::BoBiTargetAddrFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::BoBiTargetAddrFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
@@ -1234,7 +1234,7 @@ namespace Gekko
 		info->flow = true;
 	}
 
-	void Analyzer::BoBi(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::BoBi(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Num;
@@ -1242,14 +1242,14 @@ namespace Gekko
 		BoBiFast(instr, info);
 	}
 
-	void Analyzer::BoBiFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::BoBiFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->flow = true;
 	}
 
-	void Analyzer::CrfDab(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDab(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Crf;
@@ -1258,14 +1258,14 @@ namespace Gekko
 		CrfDabFast(instr, info);
 	}
 
-	void Analyzer::CrfDabFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDabFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::CrfDaSimm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDaSimm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Crf;
@@ -1274,14 +1274,14 @@ namespace Gekko
 		CrfDaSimmFast(instr, info);
 	}
 
-	void Analyzer::CrfDaSimmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDaSimmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RA;
 		info->Imm.Signed = DIS_SIMM;
 	}
 
-	void Analyzer::CrfDaUimm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDaUimm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Crf;
@@ -1290,14 +1290,14 @@ namespace Gekko
 		CrfDaUimmFast(instr, info);
 	}
 
-	void Analyzer::CrfDaUimmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfDaUimmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RA;
 		info->Imm.Unsigned = DIS_UIMM;
 	}
 
-	void Analyzer::As(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::As(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1305,13 +1305,13 @@ namespace Gekko
 		AsFast(instr, info);
 	}
 
-	void Analyzer::AsFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
 	}
 
-	void Analyzer::CrbDab(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrbDab(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Crb;
@@ -1320,14 +1320,14 @@ namespace Gekko
 		CrbDabFast(instr, info);
 	}
 
-	void Analyzer::CrbDabFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrbDabFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::Ab(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Ab(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1335,13 +1335,13 @@ namespace Gekko
 		AbFast(instr, info);
 	}
 
-	void Analyzer::AbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RB;
 	}
 
-	void Analyzer::FrDb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::FReg;
@@ -1349,13 +1349,13 @@ namespace Gekko
 		FrDbFast(instr, info);
 	}
 
-	void Analyzer::FrDbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RB;
 	}
 
-	void Analyzer::FrDab(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDab(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::FReg;
@@ -1364,14 +1364,14 @@ namespace Gekko
 		FrDabFast(instr, info);
 	}
 
-	void Analyzer::FrDabFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDabFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::CrfdFrAb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdFrAb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Crf;
@@ -1380,14 +1380,14 @@ namespace Gekko
 		CrfdFrAbFast(instr, info);
 	}
 
-	void Analyzer::CrfdFrAbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdFrAbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::FrDacb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDacb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 4;
 		info->param[0] = Param::FReg;
@@ -1397,7 +1397,7 @@ namespace Gekko
 		FrDacbFast(instr, info);
 	}
 
-	void Analyzer::FrDacbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDacbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
@@ -1405,7 +1405,7 @@ namespace Gekko
 		info->paramBits[3] = DIS_RB;
 	}
 
-	void Analyzer::FrDac(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDac(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::FReg;
@@ -1414,14 +1414,14 @@ namespace Gekko
 		FrDacFast(instr, info);
 	}
 
-	void Analyzer::FrDacFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrDacFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RC;
 	}
 
-	void Analyzer::DaOffset(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaOffset(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1429,14 +1429,14 @@ namespace Gekko
 		DaOffsetFast(instr, info);
 	}
 
-	void Analyzer::DaOffsetFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaOffsetFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->Imm.Signed = DIS_SIMM;
 	}
 
-	void Analyzer::FrdaOffset(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrdaOffset(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::FReg;
@@ -1444,14 +1444,14 @@ namespace Gekko
 		DaOffsetFast(instr, info);
 	}
 
-	void Analyzer::FrdaOffsetFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrdaOffsetFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->Imm.Signed = DIS_SIMM;
 	}
 
-	void Analyzer::DaNb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaNb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1460,14 +1460,14 @@ namespace Gekko
 		DaNbFast(instr, info);
 	}
 
-	void Analyzer::DaNbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DaNbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::Crfds(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Crfds(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Crf;
@@ -1475,61 +1475,61 @@ namespace Gekko
 		CrfdsFast(instr, info);
 	}
 
-	void Analyzer::CrfdsFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdsFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RA >> 2;
 	}
 
-	void Analyzer::Crfd(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Crfd(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::Crf;
 		CrfdFast(instr, info);
 	}
 
-	void Analyzer::CrfdFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 	}
 
-	void Analyzer::D(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::D(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::Reg;
 		DFast(instr, info);
 	}
 
-	void Analyzer::DFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 	}
 
-	void Analyzer::B(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::B(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::Reg;
 		BFast(instr, info);
 	}
 
-	void Analyzer::BFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::BFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RB;
 	}
 
-	void Analyzer::Frd(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Frd(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::FReg;
 		FrdFast(instr, info);
 	}
 
-	void Analyzer::FrdFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrdFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 	}
 
-	void Analyzer::DSpr(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DSpr(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1537,13 +1537,13 @@ namespace Gekko
 		DSprFast(instr, info);
 	}
 
-	void Analyzer::DSprFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DSprFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_SPR;
 	}
 
-	void Analyzer::DSr(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DSr(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1551,13 +1551,13 @@ namespace Gekko
 		DSrFast(instr, info);
 	}
 
-	void Analyzer::DSrFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DSrFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA & 0xF;
 	}
 
-	void Analyzer::Db(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Db(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1565,13 +1565,13 @@ namespace Gekko
 		DbFast(instr, info);
 	}
 
-	void Analyzer::DbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RB;
 	}
 
-	void Analyzer::DTbr(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DTbr(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Reg;
@@ -1579,13 +1579,13 @@ namespace Gekko
 		DTbrFast(instr, info);
 	}
 
-	void Analyzer::DTbrFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DTbrFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_TBR;
 	}
 
-	void Analyzer::Crms(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Crms(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::CRM;
@@ -1593,25 +1593,25 @@ namespace Gekko
 		CrmsFast(instr, info);
 	}
 
-	void Analyzer::CrmsFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrmsFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_CRM;
 	}
 
-	void Analyzer::Crbd(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Crbd(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 1;
 		info->param[0] = Param::Crb;
 		CrbdFast(instr, info);
 	}
 
-	void Analyzer::CrbdFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrbdFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 	}
 
-	void Analyzer::FmFrb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FmFrb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::FM;
@@ -1619,13 +1619,13 @@ namespace Gekko
 		FmFrbFast(instr, info);
 	}
 
-	void Analyzer::FmFrbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FmFrbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_FM;
 		info->paramBits[1] = DIS_RB;
 	}
 
-	void Analyzer::CrfdImm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdImm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Crf;
@@ -1633,13 +1633,13 @@ namespace Gekko
 		CrfdImmFast(instr, info);
 	}
 
-	void Analyzer::CrfdImmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::CrfdImmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD >> 2;
 		info->paramBits[1] = DIS_RB >> 1;
 	}
 
-	void Analyzer::SprS(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SprS(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Spr;
@@ -1647,13 +1647,13 @@ namespace Gekko
 		SprSFast(instr, info);
 	}
 
-	void Analyzer::SprSFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SprSFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_SPR;
 		info->paramBits[1] = DIS_RD;
 	}
 
-	void Analyzer::SrS(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SrS(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 2;
 		info->param[0] = Param::Sr;
@@ -1661,13 +1661,13 @@ namespace Gekko
 		SrSFast(instr, info);
 	}
 
-	void Analyzer::SrSFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SrSFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA & 0xF;
 	}
 
-	void Analyzer::FrRegOffsetWi(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrRegOffsetWi(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 4;
 		info->param[0] = Param::FReg;
@@ -1677,7 +1677,7 @@ namespace Gekko
 		FrRegOffsetWiFast(instr, info);
 	}
 
-	void Analyzer::FrRegOffsetWiFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrRegOffsetWiFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
@@ -1687,7 +1687,7 @@ namespace Gekko
 		if (instr & 0x800) info->Imm.Signed |= 0xF000;
 	}
 
-	void Analyzer::FrAbWi(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrAbWi(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 5;
 		info->param[0] = Param::FReg;
@@ -1698,7 +1698,7 @@ namespace Gekko
 		FrAbWiFast(instr, info);
 	}
 
-	void Analyzer::FrAbWiFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::FrAbWiFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RD;
 		info->paramBits[1] = DIS_RA;
@@ -1707,7 +1707,7 @@ namespace Gekko
 		info->paramBits[4] = (instr >> 7) & 7;		// I
 	}
 
-	void Analyzer::AsImm3(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsImm3(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 5;
 		info->param[0] = Param::Reg;
@@ -1718,7 +1718,7 @@ namespace Gekko
 		AsImm3Fast(instr, info);
 	}
 
-	void Analyzer::AsImm3Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsImm3Fast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
@@ -1727,7 +1727,7 @@ namespace Gekko
 		info->paramBits[4] = (instr >> 1) & 0x1F;
 	}
 
-	void Analyzer::AsbImm2(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsbImm2(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 5;
 		info->param[0] = Param::Reg;
@@ -1738,7 +1738,7 @@ namespace Gekko
 		AsbImm2Fast(instr, info);
 	}
 
-	void Analyzer::AsbImm2Fast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsbImm2Fast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
@@ -1747,7 +1747,7 @@ namespace Gekko
 		info->paramBits[4] = (instr >> 1) & 0x1F;
 	}
 
-	void Analyzer::AsImm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsImm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1756,14 +1756,14 @@ namespace Gekko
 		AsImmFast(instr, info);
 	}
 
-	void Analyzer::AsImmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::AsImmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RA;
 		info->paramBits[1] = DIS_RS;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::SaImm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SaImm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Reg;
@@ -1772,14 +1772,14 @@ namespace Gekko
 		SaImmFast(instr, info);
 	}
 
-	void Analyzer::SaImmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::SaImmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RS;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::ImmAb(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::ImmAb(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Num;
@@ -1788,14 +1788,14 @@ namespace Gekko
 		ImmAbFast(instr, info);
 	}
 
-	void Analyzer::ImmAbFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::ImmAbFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RS;
 		info->paramBits[1] = DIS_RA;
 		info->paramBits[2] = DIS_RB;
 	}
 
-	void Analyzer::ImmASimm(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::ImmASimm(uint32_t instr, DecoderInfo* info)
 	{
 		info->numParam = 3;
 		info->param[0] = Param::Num;
@@ -1804,7 +1804,7 @@ namespace Gekko
 		ImmASimmFast(instr, info);
 	}
 
-	void Analyzer::ImmASimmFast(uint32_t instr, AnalyzeInfo* info)
+	void Decoder::ImmASimmFast(uint32_t instr, DecoderInfo* info)
 	{
 		info->paramBits[0] = DIS_RS;
 		info->paramBits[1] = DIS_RA;
@@ -1813,7 +1813,7 @@ namespace Gekko
 
 	#pragma endregion "Parameters"
 
-	void Analyzer::Analyze(uint32_t pc, uint32_t instr, AnalyzeInfo* info)
+	void Decoder::Decode(uint32_t pc, uint32_t instr, DecoderInfo* info)
 	{
 		info->instr = Instruction::Unknown;
 		info->instrBits = instr;
@@ -1831,7 +1831,7 @@ namespace Gekko
 		}
 	}
 
-	void Analyzer::AnalyzeFast(uint32_t pc, uint32_t instr, AnalyzeInfo* info)
+	void Decoder::DecodeFast(uint32_t pc, uint32_t instr, DecoderInfo* info)
 	{
 		info->instr = Instruction::Unknown;
 		info->instrBits = instr;
