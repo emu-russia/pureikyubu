@@ -1,7 +1,7 @@
 // DSP analyzer.
 // Can be used by disassembler as well as by interpreter/jitc.
 
-// TODO: replace the imperative approach of the analyzer with the use of neural networks
+// TODO: replace the imperative approach of the decoder with the use of neural networks
 
 #pragma once
 
@@ -238,9 +238,9 @@ namespace DSP
 		always = 0b1111,	// Always
 	};
 
-	#define DspAnalyzeNumParam 6
+	#define DspDecoderNumParam 6
 
-	struct AnalyzeInfo
+	struct DecoderInfo
 	{
 		uint32_t clearingPaddy;		// To use {0} on structure
 
@@ -265,8 +265,8 @@ namespace DSP
 		size_t numParameters;		// Number of instruction parameters
 		size_t numParametersEx;		// Number of parallel mem instruction parameters
 
-		DspParameter params[DspAnalyzeNumParam];		// Processed parameters (ready to output)
-		DspParameter paramsEx[DspAnalyzeNumParam];		// Processed parallel mem opcode parameters (ready to output)
+		DspParameter params[DspDecoderNumParam];		// Processed parameters (ready to output)
+		DspParameter paramsEx[DspDecoderNumParam];		// Processed parallel mem opcode parameters (ready to output)
 
 		bool flowControl;		// Call, jump or another flow control instruction
 
@@ -296,40 +296,40 @@ namespace DSP
 
 	};
 
-	class Analyzer
+	class Decoder
 	{
 		// Internal helpers
 
-		static void ResetInfo(AnalyzeInfo& info);
+		static void ResetInfo(DecoderInfo& info);
 
-		static void Group0(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits);
-		static void Group1(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info, uint16_t instrBits);
-		static void Group2(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group3(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group4_6(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group7(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group8(AnalyzeInfo& info, uint16_t instrBits);
-		static void Group9_B(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupCD(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupE(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupF(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMpy(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps3(AnalyzeInfo& info, uint16_t instrBits);
-		static void GroupMemOps4_F(AnalyzeInfo& info, uint16_t instrBits);
+		static void Group0(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info, uint16_t instrBits);
+		static void Group1(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info, uint16_t instrBits);
+		static void Group2(DecoderInfo& info, uint16_t instrBits);
+		static void Group3(DecoderInfo& info, uint16_t instrBits);
+		static void Group4_6(DecoderInfo& info, uint16_t instrBits);
+		static void Group7(DecoderInfo& info, uint16_t instrBits);
+		static void Group8(DecoderInfo& info, uint16_t instrBits);
+		static void Group9_B(DecoderInfo& info, uint16_t instrBits);
+		static void GroupCD(DecoderInfo& info, uint16_t instrBits);
+		static void GroupE(DecoderInfo& info, uint16_t instrBits);
+		static void GroupF(DecoderInfo& info, uint16_t instrBits);
+		static void GroupMpy(DecoderInfo& info, uint16_t instrBits);
+		static void GroupMemOps3(DecoderInfo& info, uint16_t instrBits);
+		static void GroupMemOps4_F(DecoderInfo& info, uint16_t instrBits);
 
-		static void AddParam(AnalyzeInfo& info, DspParameter param);
-		static void AddParamEx(AnalyzeInfo& info, DspParameter param);
+		static void AddParam(DecoderInfo& info, DspParameter param);
+		static void AddParamEx(DecoderInfo& info, DspParameter param);
 
-		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, uint8_t imm);
-		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, int8_t imm);
-		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, uint16_t imm);
-		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, int16_t imm);
-		static void AddImmOperand(AnalyzeInfo& info, DspParameter param, DspAddress imm);
+		static void AddImmOperand(DecoderInfo& info, DspParameter param, uint8_t imm);
+		static void AddImmOperand(DecoderInfo& info, DspParameter param, int8_t imm);
+		static void AddImmOperand(DecoderInfo& info, DspParameter param, uint16_t imm);
+		static void AddImmOperand(DecoderInfo& info, DspParameter param, int16_t imm);
+		static void AddImmOperand(DecoderInfo& info, DspParameter param, DspAddress imm);
 
-		static void AddBytes(uint8_t* instrPtr, size_t bytes, AnalyzeInfo& info);
+		static void AddBytes(uint8_t* instrPtr, size_t bytes, DecoderInfo& info);
 
 	public:
 
-		static void Analyze(uint8_t* instrPtr, size_t instrMaxSize, AnalyzeInfo& info);
+		static void Decode(uint8_t* instrPtr, size_t instrMaxSize, DecoderInfo& info);
 	};
 }

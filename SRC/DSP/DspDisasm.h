@@ -8,7 +8,7 @@ namespace DSP
 	{
 		// Utilities used by disasm
 
-		static std::string ParameterToString(DspParameter index, AnalyzeInfo& info);
+		static std::string ParameterToString(DspParameter index, DecoderInfo& info);
 		static std::string InstrToString(DspRegularInstruction, ConditionCode);
 		static std::string ParrallelInstrToString(DspParallelInstruction);
 		static std::string ParrallelMemInstrToString(DspParallelMemInstruction);
@@ -34,6 +34,6 @@ namespace DSP
 
 	public:
 
-		static std::string Disasm(DspAddress startAddr, AnalyzeInfo& info);
+		static std::string Disasm(DspAddress startAddr, DecoderInfo& info);
 	};
 }

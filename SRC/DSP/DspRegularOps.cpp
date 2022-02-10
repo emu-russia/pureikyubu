@@ -6,7 +6,7 @@ using namespace Debug;
 namespace DSP
 {
 
-	void DspInterpreter::jmp(AnalyzeInfo& info)
+	void DspInterpreter::jmp(DecoderInfo& info)
 	{
 		DspAddress address;
 
@@ -34,7 +34,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::call(AnalyzeInfo& info)
+	void DspInterpreter::call(DecoderInfo& info)
 	{
 		DspAddress address;
 
@@ -69,7 +69,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::rets(AnalyzeInfo& info)
+	void DspInterpreter::rets(DecoderInfo& info)
 	{
 		if (ConditionTrue(info.cc))
 		{
@@ -90,7 +90,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::reti(AnalyzeInfo& info)
+	void DspInterpreter::reti(DecoderInfo& info)
 	{
 		if (ConditionTrue(info.cc))
 		{
@@ -102,18 +102,18 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::trap(AnalyzeInfo& info)
+	void DspInterpreter::trap(DecoderInfo& info)
 	{
 		core->AssertInterrupt(DspInterrupt::Trap);
 	}
 
-	void DspInterpreter::wait(AnalyzeInfo& info)
+	void DspInterpreter::wait(DecoderInfo& info)
 	{
 		// In a real DSP, Clk is disabled and only the interrupt generation circuitry remains active. 
 		// In the emulator, due to the fact that the instruction is flowControl, pc changes will not occur and the emulated DSP will "hang" on the execution of the `wait` instruction until an interrupt occurs.
 	}
 
-	void DspInterpreter::exec(AnalyzeInfo& info)
+	void DspInterpreter::exec(DecoderInfo& info)
 	{
 		if (ConditionTrue(info.cc))
 		{
@@ -125,7 +125,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::loop(AnalyzeInfo& info)
+	void DspInterpreter::loop(DecoderInfo& info)
 	{
 		int lc;
 		DspAddress end_addr;
@@ -168,7 +168,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::rep(AnalyzeInfo& info)
+	void DspInterpreter::rep(DecoderInfo& info)
 	{
 		int rc;
 
@@ -192,20 +192,20 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::pld(AnalyzeInfo& info)
+	void DspInterpreter::pld(DecoderInfo& info)
 	{
 		int r = (int)info.params[1];
 		core->MoveToReg((int)info.params[0], core->dsp->ReadIMem(core->regs.r[r]) );
 		AdvanceAddress(r, info.params[2]);
 	}
 
-	void DspInterpreter::mr(AnalyzeInfo& info)
+	void DspInterpreter::mr(DecoderInfo& info)
 	{
 		int r = (int)info.params[0];
 		AdvanceAddress(r, info.params[1]);
 	}
 
-	void DspInterpreter::adsi(AnalyzeInfo& info)
+	void DspInterpreter::adsi(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -238,7 +238,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::adli(AnalyzeInfo& info)
+	void DspInterpreter::adli(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -271,7 +271,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::cmpsi(AnalyzeInfo& info)
+	void DspInterpreter::cmpsi(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -294,7 +294,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::cmpli(AnalyzeInfo& info)
+	void DspInterpreter::cmpli(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -317,7 +317,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::lsfi(AnalyzeInfo& info)
+	void DspInterpreter::lsfi(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		uint16_t s = 0;
@@ -357,7 +357,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::asfi(AnalyzeInfo& info)
+	void DspInterpreter::asfi(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		uint16_t s = 0;
@@ -397,7 +397,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::xorli(AnalyzeInfo& info)
+	void DspInterpreter::xorli(DecoderInfo& info)
 	{
 		uint16_t d = 0;
 		uint16_t s = info.ImmOperand.UnsignedShort;
@@ -428,7 +428,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::anli(AnalyzeInfo& info)
+	void DspInterpreter::anli(DecoderInfo& info)
 	{
 		uint16_t d = 0;
 		uint16_t s = info.ImmOperand.UnsignedShort;
@@ -459,7 +459,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::orli(AnalyzeInfo& info)
+	void DspInterpreter::orli(DecoderInfo& info)
 	{
 		uint16_t d = 0;
 		uint16_t s = info.ImmOperand.UnsignedShort;
@@ -490,17 +490,17 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::norm(AnalyzeInfo& info)
+	void DspInterpreter::norm(DecoderInfo& info)
 	{
 		Halt("DspInterpreter::norm\n");
 	}
 
-	void DspInterpreter::div(AnalyzeInfo& info)
+	void DspInterpreter::div(DecoderInfo& info)
 	{
 		Halt("DspInterpreter::div\n");
 	}
 
-	void DspInterpreter::addc(AnalyzeInfo& info)
+	void DspInterpreter::addc(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -541,7 +541,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C1, VFlagRules::V1, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::subc(AnalyzeInfo& info)
+	void DspInterpreter::subc(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -582,7 +582,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C2, VFlagRules::V2, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::negc(AnalyzeInfo& info)
+	void DspInterpreter::negc(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -613,7 +613,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C4, VFlagRules::V3, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::_max(AnalyzeInfo& info)
+	void DspInterpreter::_max(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int64_t s = 0;
@@ -654,7 +654,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::C5, VFlagRules::Zero, ZFlagRules::Z2, NFlagRules::N2, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::lsf(AnalyzeInfo& info)
+	void DspInterpreter::lsf(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int16_t s = 0;
@@ -708,7 +708,7 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::asf(AnalyzeInfo& info)
+	void DspInterpreter::asf(DecoderInfo& info)
 	{
 		int64_t d = 0;
 		int16_t s = 0;
@@ -762,27 +762,27 @@ namespace DSP
 		core->ModifyFlags(d, s, r, CFlagRules::Zero, VFlagRules::Zero, ZFlagRules::Z1, NFlagRules::N1, EFlagRules::E1, UFlagRules::U1);
 	}
 
-	void DspInterpreter::ld(AnalyzeInfo& info)
+	void DspInterpreter::ld(DecoderInfo& info)
 	{
 		int r = (int)info.params[1];
 		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(core->regs.r[r]) );
 		AdvanceAddress(r, info.params[2]);
 	}
 
-	void DspInterpreter::st(AnalyzeInfo& info)
+	void DspInterpreter::st(DecoderInfo& info)
 	{
 		int r = (int)info.params[0];
 		core->dsp->WriteDMem(core->regs.r[r], core->MoveFromReg((int)info.params[2]) );
 		AdvanceAddress(r, info.params[1]);
 	}
 
-	void DspInterpreter::ldsa(AnalyzeInfo& info)
+	void DspInterpreter::ldsa(DecoderInfo& info)
 	{
 		core->MoveToReg((int)info.params[0], 
 			core->dsp->ReadDMem( (DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address))) );
 	}
 
-	void DspInterpreter::stsa(AnalyzeInfo& info)
+	void DspInterpreter::stsa(DecoderInfo& info)
 	{
 		uint16_t s;
 
@@ -804,37 +804,37 @@ namespace DSP
 		core->dsp->WriteDMem((DspAddress)((core->regs.dpp << 8) | (info.ImmOperand.Address)), s);
 	}
 
-	void DspInterpreter::ldla(AnalyzeInfo& info)
+	void DspInterpreter::ldla(DecoderInfo& info)
 	{
 		core->MoveToReg((int)info.params[0], core->dsp->ReadDMem(info.ImmOperand.Address) );
 	}
 
-	void DspInterpreter::stla(AnalyzeInfo& info)
+	void DspInterpreter::stla(DecoderInfo& info)
 	{
 		core->dsp->WriteDMem(info.ImmOperand.Address, core->MoveFromReg((int)info.params[1]) );
 	}
 
-	void DspInterpreter::mv(AnalyzeInfo& info)
+	void DspInterpreter::mv(DecoderInfo& info)
 	{
 		core->MoveToReg((int)info.params[0], core->MoveFromReg((int)info.params[1]));
 	}
 
-	void DspInterpreter::mvsi(AnalyzeInfo& info)
+	void DspInterpreter::mvsi(DecoderInfo& info)
 	{
 		core->MoveToReg((int)info.params[0], (int16_t)info.ImmOperand.SignedByte);
 	}
 
-	void DspInterpreter::mvli(AnalyzeInfo& info)
+	void DspInterpreter::mvli(DecoderInfo& info)
 	{
 		core->MoveToReg((int)info.params[0], info.ImmOperand.UnsignedShort);
 	}
 
-	void DspInterpreter::stli(AnalyzeInfo& info)
+	void DspInterpreter::stli(DecoderInfo& info)
 	{
 		core->dsp->WriteDMem(info.ImmOperand.Address, info.ImmOperand2.UnsignedShort);
 	}
 
-	void DspInterpreter::clr(AnalyzeInfo& info)
+	void DspInterpreter::clr(DecoderInfo& info)
 	{
 		switch (info.params[0])
 		{
@@ -851,7 +851,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::set(AnalyzeInfo& info)
+	void DspInterpreter::set(DecoderInfo& info)
 	{
 		switch (info.params[0])
 		{
@@ -868,7 +868,7 @@ namespace DSP
 		}
 	}
 
-	void DspInterpreter::btstl(AnalyzeInfo& info)
+	void DspInterpreter::btstl(DecoderInfo& info)
 	{
 		uint16_t val = 0;
 
@@ -888,7 +888,7 @@ namespace DSP
 		core->regs.psr.tb = (val & info.ImmOperand.UnsignedShort) == 0;
 	}
 	
-	void DspInterpreter::btsth(AnalyzeInfo& info)
+	void DspInterpreter::btsth(DecoderInfo& info)
 	{
 		uint16_t val = 0;
 
