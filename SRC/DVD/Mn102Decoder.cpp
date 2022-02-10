@@ -1,11 +1,11 @@
-// The analyzer is a key component of the processor module.
+// The decoder is a key component of the processor module.
 // It is used by all other interested components (disassembler, interpreter, etc.)
 
 #include "pch.h"
 
 namespace DVD
 {
-	bool MnAnalyze::Main(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::Main(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		*instrPtr++ = *instrPtr++;
 		info->instrSize++;
@@ -296,42 +296,42 @@ namespace DVD
 		return true;
 	}
 
-	bool MnAnalyze::F0(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F0(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F1(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F1(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F2(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F2(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F3(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F3(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F4(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F4(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F5(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F5(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::F7(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::F7(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		return false;
 	}
 
-	bool MnAnalyze::FetchImm8(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::FetchImm8(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		if (instrMaxSize < sizeof(uint8_t))
 			return false;
@@ -341,7 +341,7 @@ namespace DVD
 		return true;
 	}
 
-	bool MnAnalyze::FetchImm16(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::FetchImm16(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		if (instrMaxSize < 2 * sizeof(uint8_t))
 			return false;
@@ -353,7 +353,7 @@ namespace DVD
 		return true;
 	}
 
-	bool MnAnalyze::FetchImm24(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::FetchImm24(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		if (instrMaxSize < 3 * sizeof(uint8_t))
 			return false;
@@ -367,7 +367,7 @@ namespace DVD
 		return true;
 	}
 
-	bool MnAnalyze::AddOp(MnInstrInfo* info, MnOperand op, int bits)
+	bool MnDecoder::AddOp(MnInstrInfo* info, MnOperand op, int bits)
 	{
 		if (info->numOp >= MnInstrInfoOperands)
 			return false;
@@ -380,7 +380,7 @@ namespace DVD
 		return true;
 	}
 
-	bool MnAnalyze::Analyze(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
+	bool MnDecoder::Decode(uint8_t* instrPtr, size_t instrMaxSize, MnInstrInfo* info)
 	{
 		assert(instrPtr);
 		assert(info);

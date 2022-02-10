@@ -1,4 +1,4 @@
-// Matsushita MN102 instruction analyzer.
+// Matsushita MN102 instruction decoder.
 
 #pragma once
 
@@ -167,7 +167,7 @@ namespace DVD
 
 	};
 
-	class MnAnalyze
+	class MnDecoder
 	{
 		uint8_t* instrPtr = nullptr;		// Temporary pointer
 
@@ -188,7 +188,7 @@ namespace DVD
 
 	public:
 
-		bool Analyze(uint8_t * instrPtr, size_t instrMaxSize, MnInstrInfo * info);
+		bool Decode(uint8_t * instrPtr, size_t instrMaxSize, MnInstrInfo * info);
 
 	};
 }
