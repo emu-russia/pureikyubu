@@ -146,8 +146,9 @@ namespace Gekko
 
 	void Jitc::Invalidate(uint32_t addr, size_t size)
 	{
-		size_t segNum = RAMSIZE >> 2;
-		for (size_t n = 0; n < segNum; n++)
+		size_t segStart = addr >> 2;
+		size_t segEnd = (addr + size + 4) >> 2;
+		for (size_t n = segStart; n < segEnd; n++)
 		{
 			CodeSegment* seg = segments[n];
 			if (seg != nullptr)

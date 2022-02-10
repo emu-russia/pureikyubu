@@ -584,7 +584,14 @@ namespace Gekko
 		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[0]];
 		address &= ~0x1f;
 
-		core->jitc->Invalidate(address, 32);
+		int WIMG;
+		uint32_t physicalAddress = core->EffectiveToPhysical(address, MmuAccess::Execute, WIMG);
+
+		if (physicalAddress != BadAddress)
+		{
+			core->jitc->Invalidate(physicalAddress, 32);
+		}
+		
 		core->regs.pc += 4;
 	}
 
