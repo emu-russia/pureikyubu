@@ -8,7 +8,7 @@ namespace Gekko
 	#define PS0(n)  (core->regs.fpr[n].dbl)
 	#define PS1(n)  (core->regs.ps1[n].dbl)
 	
-	void Jitc::PsAdd(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsAdd(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1
@@ -44,7 +44,7 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::PsSub(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsSub(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1
@@ -80,7 +80,7 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::PsMerge00(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsMerge00(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1
@@ -121,7 +121,7 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::PsMerge01(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsMerge01(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1
@@ -153,7 +153,7 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::PsMerge10(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsMerge10(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1
@@ -185,7 +185,7 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::PsMerge11(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PsMerge11(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov  rcx, offset ps0
 		// mov  rdx, offset ps1

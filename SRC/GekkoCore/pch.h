@@ -22,7 +22,7 @@
 #include "Config.h"
 #include "GekkoCommands.h"
 #include "Gekko.h"
-#include "GekkoAnalyzer.h"
+#include "GekkoDecoder.h"
 #include "Interpreter.h"
 #include "GekkoDisasm.h"
 #include "GekkoAssembler.h"

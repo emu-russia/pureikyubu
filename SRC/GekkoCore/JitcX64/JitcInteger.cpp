@@ -4,7 +4,7 @@
 namespace Gekko
 {
 
-	void Jitc::Add(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::Add(DecoderInfo* info, CodeSegment* seg)
 	{
 		// mov eax, [rsi + 4*p1]
 		// add eax, [rsi + 4*p2]
@@ -27,15 +27,15 @@ namespace Gekko
 		CallTick(seg);
 	}
 
-	void Jitc::Addd(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::Addd(DecoderInfo* info, CodeSegment* seg)
 	{
 	}
 
-	void Jitc::Addo(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::Addo(DecoderInfo* info, CodeSegment* seg)
 	{
 	}
 
-	void Jitc::Addod(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::Addod(DecoderInfo* info, CodeSegment* seg)
 	{
 	}
 

@@ -15,7 +15,7 @@ namespace Gekko
 	// m = MASK(mb, me)
 	// ra = (r & m) | (ra & ~m)
 	// CR0 (if .)
-	void Interpreter::rlwimi(AnalyzeInfo& info)
+	void Interpreter::rlwimi(DecoderInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
@@ -23,7 +23,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::rlwimi_d(AnalyzeInfo& info)
+	void Interpreter::rlwimi_d(DecoderInfo& info)
 	{
 		rlwimi(info);
 		COMPUTE_CR0(GPR(0));
@@ -34,7 +34,7 @@ namespace Gekko
 	// m = MASK(MB, ME)
 	// ra = r & m
 	// CR0 (if .)
-	void Interpreter::rlwinm(AnalyzeInfo& info)
+	void Interpreter::rlwinm(DecoderInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(info.paramBits[2], GPR(1));
@@ -42,7 +42,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::rlwinm_d(AnalyzeInfo& info)
+	void Interpreter::rlwinm_d(DecoderInfo& info)
 	{
 		rlwinm(info);
 		COMPUTE_CR0(GPR(0));
@@ -52,7 +52,7 @@ namespace Gekko
 	// r = ROTL(rs, n)
 	// m = MASK(MB, ME)
 	// ra = r & m
-	void Interpreter::rlwnm(AnalyzeInfo& info)
+	void Interpreter::rlwnm(DecoderInfo& info)
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
 		uint32_t r = Rotl32(GPR(2) & 0x1f, GPR(1));
@@ -60,7 +60,7 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	void Interpreter::rlwnm_d(AnalyzeInfo& info)
+	void Interpreter::rlwnm_d(DecoderInfo& info)
 	{
 		rlwnm(info);
 		COMPUTE_CR0(GPR(0));

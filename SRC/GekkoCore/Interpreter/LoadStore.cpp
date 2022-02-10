@@ -7,7 +7,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// rd = 0x000000 || MEM(ea, 1)
-	void Interpreter::lbz(AnalyzeInfo& info)
+	void Interpreter::lbz(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadByte(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadByte((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
@@ -18,7 +18,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// rd = 0x000000 || MEM(ea, 1)
 	// ra = ea
-	void Interpreter::lbzu(AnalyzeInfo& info)
+	void Interpreter::lbzu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->ReadByte(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -30,7 +30,7 @@ namespace Gekko
 	// ea = ra + rb
 	// rd = 0x000000 || MEM(ea, 1)
 	// ra = ea
-	void Interpreter::lbzux(AnalyzeInfo& info)
+	void Interpreter::lbzux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->ReadByte(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -41,7 +41,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = 0x000000 || MEM(ea, 1)
-	void Interpreter::lbzx(AnalyzeInfo& info)
+	void Interpreter::lbzx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadByte(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadByte(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
@@ -51,7 +51,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// rd = (signed)MEM(ea, 2)
-	void Interpreter::lha(AnalyzeInfo& info)
+	void Interpreter::lha(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadHalf((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
@@ -63,7 +63,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// rd = (signed)MEM(ea, 2)
 	// ra = ea
-	void Interpreter::lhau(AnalyzeInfo& info)
+	void Interpreter::lhau(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -76,7 +76,7 @@ namespace Gekko
 	// ea = ra + rb
 	// rd = (signed)MEM(ea, 2)
 	// ra = ea
-	void Interpreter::lhaux(AnalyzeInfo& info)
+	void Interpreter::lhaux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -88,7 +88,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = (signed)MEM(ea, 2)
-	void Interpreter::lhax(AnalyzeInfo& info)
+	void Interpreter::lhax(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
@@ -99,7 +99,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// rd = 0x0000 || MEM(ea, 2)
-	void Interpreter::lhz(AnalyzeInfo& info)
+	void Interpreter::lhz(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadHalf((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
@@ -110,7 +110,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// rd = 0x0000 || MEM(ea, 2)
 	// ra = ea
-	void Interpreter::lhzu(AnalyzeInfo& info)
+	void Interpreter::lhzu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -122,7 +122,7 @@ namespace Gekko
 	// ea = ra + rb
 	// rd = 0x0000 || MEM(ea, 2)
 	// ra = ea
-	void Interpreter::lhzux(AnalyzeInfo& info)
+	void Interpreter::lhzux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->ReadHalf(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -133,7 +133,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = 0x0000 || MEM(ea, 2)
-	void Interpreter::lhzx(AnalyzeInfo& info)
+	void Interpreter::lhzx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadHalf(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
@@ -143,7 +143,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// rd = MEM(ea, 4)
-	void Interpreter::lwz(AnalyzeInfo& info)
+	void Interpreter::lwz(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadWord((int32_t)info.Imm.Signed, &core->regs.gpr[info.paramBits[0]]);
@@ -154,7 +154,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// rd = MEM(ea, 4)
 	// ra = ea
-	void Interpreter::lwzu(AnalyzeInfo& info)
+	void Interpreter::lwzu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->ReadWord(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -166,7 +166,7 @@ namespace Gekko
 	// ea = ra + rb
 	// rd = MEM(ea, 4)
 	// ra = ea
-	void Interpreter::lwzux(AnalyzeInfo& info)
+	void Interpreter::lwzux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->ReadWord(ea, &core->regs.gpr[info.paramBits[0]]);
@@ -177,7 +177,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = MEM(ea, 4)
-	void Interpreter::lwzx(AnalyzeInfo& info)
+	void Interpreter::lwzx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
 		else core->ReadWord(core->regs.gpr[info.paramBits[2]], &core->regs.gpr[info.paramBits[0]]);
@@ -187,7 +187,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 1) = rs[24-31]
-	void Interpreter::stb(AnalyzeInfo& info)
+	void Interpreter::stb(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteByte(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
 		else core->WriteByte((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
@@ -198,7 +198,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// MEM(ea, 1) = rs[24-31]
 	// ra = ea
-	void Interpreter::stbu(AnalyzeInfo& info)
+	void Interpreter::stbu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->WriteByte(ea, core->regs.gpr[info.paramBits[0]]);
@@ -210,7 +210,7 @@ namespace Gekko
 	// ea = ra + rb
 	// MEM(ea, 1) = rs[24-31]
 	// ra = ea
-	void Interpreter::stbux(AnalyzeInfo& info)
+	void Interpreter::stbux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->WriteByte(ea, core->regs.gpr[info.paramBits[0]]);
@@ -221,7 +221,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 1) = rs[24-31]
-	void Interpreter::stbx(AnalyzeInfo& info)
+	void Interpreter::stbx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteByte(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
 		else core->WriteByte(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
@@ -231,7 +231,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 2) = rs[16-31]
-	void Interpreter::sth(AnalyzeInfo& info)
+	void Interpreter::sth(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
 		else core->WriteHalf((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
@@ -242,7 +242,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// MEM(ea, 2) = rs[16-31]
 	// ra = ea
-	void Interpreter::sthu(AnalyzeInfo& info)
+	void Interpreter::sthu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->WriteHalf(ea, core->regs.gpr[info.paramBits[0]]);
@@ -254,7 +254,7 @@ namespace Gekko
 	// ea = ra + rb
 	// MEM(ea, 2) = rs[16-31]
 	// ra = ea
-	void Interpreter::sthux(AnalyzeInfo& info)
+	void Interpreter::sthux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->WriteHalf(ea, core->regs.gpr[info.paramBits[0]]);
@@ -265,7 +265,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 2) = rs[16-31]
-	void Interpreter::sthx(AnalyzeInfo& info)
+	void Interpreter::sthx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
 		else core->WriteHalf(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
@@ -275,7 +275,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + SIMM
 	// MEM(ea, 4) = rs
-	void Interpreter::stw(AnalyzeInfo& info)
+	void Interpreter::stw(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
 		else core->WriteWord((int32_t)info.Imm.Signed, core->regs.gpr[info.paramBits[0]]);
@@ -286,7 +286,7 @@ namespace Gekko
 	// ea = ra + SIMM
 	// MEM(ea, 4) = rs
 	// ra = ea
-	void Interpreter::stwu(AnalyzeInfo& info)
+	void Interpreter::stwu(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
@@ -298,7 +298,7 @@ namespace Gekko
 	// ea = ra + rb
 	// MEM(ea, 4) = rs
 	// ra = ea
-	void Interpreter::stwux(AnalyzeInfo& info)
+	void Interpreter::stwux(DecoderInfo& info)
 	{
 		uint32_t ea = core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]];
 		core->WriteWord(ea, core->regs.gpr[info.paramBits[0]]);
@@ -309,7 +309,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 4) = rs
-	void Interpreter::stwx(AnalyzeInfo& info)
+	void Interpreter::stwx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
 		else core->WriteWord(core->regs.gpr[info.paramBits[2]], core->regs.gpr[info.paramBits[0]]);
@@ -319,7 +319,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = 0x0000 || MEM(ea+1, 1) || MEM(EA, 1)
-	void Interpreter::lhbrx(AnalyzeInfo& info)
+	void Interpreter::lhbrx(DecoderInfo& info)
 	{
 		uint32_t val;
 		if (info.paramBits[1]) core->ReadHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
@@ -331,7 +331,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// rd = MEM(ea+3, 1) || MEM(ea+2, 1) || MEM(ea+1, 1) || MEM(ea, 1)
-	void Interpreter::lwbrx(AnalyzeInfo& info)
+	void Interpreter::lwbrx(DecoderInfo& info)
 	{
 		uint32_t val;
 		if (info.paramBits[1]) core->ReadWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], &val);
@@ -343,7 +343,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 2) = rs[24-31] || rs[16-23]
-	void Interpreter::sthbrx(AnalyzeInfo& info)
+	void Interpreter::sthbrx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteHalf(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT16((uint16_t)core->regs.gpr[info.paramBits[0]]));
 		else core->WriteHalf(core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT16((uint16_t)core->regs.gpr[info.paramBits[0]]));
@@ -353,7 +353,7 @@ namespace Gekko
 
 	// ea = (ra | 0) + rb
 	// MEM(ea, 4) = rs[24-31] || rs[16-23] || rs[8-15] || rs[0-7]
-	void Interpreter::stwbrx(AnalyzeInfo& info)
+	void Interpreter::stwbrx(DecoderInfo& info)
 	{
 		if (info.paramBits[1]) core->WriteWord(core->regs.gpr[info.paramBits[1]] + core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT32(core->regs.gpr[info.paramBits[0]]));
 		else core->WriteWord(core->regs.gpr[info.paramBits[2]], _BYTESWAP_UINT32(core->regs.gpr[info.paramBits[0]]));
@@ -367,7 +367,7 @@ namespace Gekko
 	//      GPR(r) = MEM(ea, 4)
 	//      r = r + 1
 	//      ea = ea + 4
-	void Interpreter::lmw(AnalyzeInfo& info)
+	void Interpreter::lmw(DecoderInfo& info)
 	{
 		uint32_t ea;
 		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
@@ -387,7 +387,7 @@ namespace Gekko
 	//      MEM(ea, 4) = GPR(r)
 	//      r = r + 1
 	//      ea = ea + 4
-	void Interpreter::stmw(AnalyzeInfo& info)
+	void Interpreter::stmw(DecoderInfo& info)
 	{
 		uint32_t ea;
 		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
@@ -414,7 +414,7 @@ namespace Gekko
 	//      if i = 32 then i = 0
 	//      ea = ea + 1
 	//      n = n -1
-	void Interpreter::lswi(AnalyzeInfo& info)
+	void Interpreter::lswi(DecoderInfo& info)
 	{
 		int32_t rd = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 4;
 		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
@@ -465,7 +465,7 @@ namespace Gekko
 	//      if i = 32 then i = 0
 	//      ea = ea + 1
 	//      n = n -1
-	void Interpreter::lswx(AnalyzeInfo& info)
+	void Interpreter::lswx(DecoderInfo& info)
 	{
 		int32_t rd = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 4;
 		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];
@@ -514,7 +514,7 @@ namespace Gekko
 	//      if i = 32 then i = 0;
 	//      ea = ea + 1
 	//      n = n -1
-	void Interpreter::stswi(AnalyzeInfo& info)
+	void Interpreter::stswi(DecoderInfo& info)
 	{
 		int32_t rs = info.paramBits[0], n = (info.paramBits[2]) ? (info.paramBits[2]) : 32, i = 0;
 		uint32_t ea = (info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0;
@@ -550,7 +550,7 @@ namespace Gekko
 	//      if i = 32 then i = 0;
 	//      ea = ea + 1
 	//      n = n -1
-	void Interpreter::stswx(AnalyzeInfo& info)
+	void Interpreter::stswx(DecoderInfo& info)
 	{
 		int32_t rs = info.paramBits[0], n = core->regs.spr[SPR::XER] & 0x7f, i = 0;
 		uint32_t ea = ((info.paramBits[1]) ? (core->regs.gpr[info.paramBits[1]]) : 0) + core->regs.gpr[info.paramBits[2]];

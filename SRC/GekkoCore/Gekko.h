@@ -14,7 +14,7 @@ namespace GekkoCoreUnitTest
 #endif
 
 #include "GekkoDefs.h"
-#include "GekkoAnalyzer.h"
+#include "GekkoDecoder.h"
 #include "GatherBuffer.h"
 #include "TLB.h"
 #include "Cache.h"

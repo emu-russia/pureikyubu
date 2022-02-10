@@ -18,7 +18,7 @@ namespace Gekko
 		void Write16(uint16_t data);
 		void Write32(uint32_t data);
 		void Write64(uint64_t data);
-		void Write(const IntelCore::AnalyzeInfo& info);
+		void Write(const IntelCore::DecoderInfo& info);
 	};
 
 	class Jitc
@@ -32,7 +32,7 @@ namespace Gekko
 
 		CodeSegment* SegmentCompiled(uint32_t addr);
 		CodeSegment* CompileSegment(uint32_t addr);
-		void CompileInstr(AnalyzeInfo* info, CodeSegment* segment);
+		void CompileInstr(DecoderInfo* info, CodeSegment* segment);
 
 		void InvalidateAll();
 
@@ -47,28 +47,28 @@ namespace Gekko
 		typedef void(__FASTCALL* LoadDelegate)(uint32_t addr, uint32_t* reg);
 		typedef void(__FASTCALL* StoreDelegate)(uint32_t addr, uint32_t* reg);
 
-		void FallbackStub(AnalyzeInfo* info, CodeSegment* seg);
+		void FallbackStub(DecoderInfo* info, CodeSegment* seg);
 
-		void Add(AnalyzeInfo* info, CodeSegment* seg);
-		void Addd(AnalyzeInfo* info, CodeSegment* seg);
-		void Addo(AnalyzeInfo* info, CodeSegment* seg);
-		void Addod(AnalyzeInfo* info, CodeSegment* seg);
+		void Add(DecoderInfo* info, CodeSegment* seg);
+		void Addd(DecoderInfo* info, CodeSegment* seg);
+		void Addo(DecoderInfo* info, CodeSegment* seg);
+		void Addod(DecoderInfo* info, CodeSegment* seg);
 
-		void Branch(AnalyzeInfo* info, CodeSegment* seg, bool link);
+		void Branch(DecoderInfo* info, CodeSegment* seg, bool link);
 
-		void LoadImm(AnalyzeInfo* info, CodeSegment* seg, LoadDelegate loadProc);
+		void LoadImm(DecoderInfo* info, CodeSegment* seg, LoadDelegate loadProc);
 
-		void Rlwinm(AnalyzeInfo* info, CodeSegment* seg);
+		void Rlwinm(DecoderInfo* info, CodeSegment* seg);
 
-		void PsAdd(AnalyzeInfo* info, CodeSegment* seg);
-		void PsSub(AnalyzeInfo* info, CodeSegment* seg);
-		void PsMerge00(AnalyzeInfo* info, CodeSegment* seg);
-		void PsMerge01(AnalyzeInfo* info, CodeSegment* seg);
-		void PsMerge10(AnalyzeInfo* info, CodeSegment* seg);
-		void PsMerge11(AnalyzeInfo* info, CodeSegment* seg);
+		void PsAdd(DecoderInfo* info, CodeSegment* seg);
+		void PsSub(DecoderInfo* info, CodeSegment* seg);
+		void PsMerge00(DecoderInfo* info, CodeSegment* seg);
+		void PsMerge01(DecoderInfo* info, CodeSegment* seg);
+		void PsMerge10(DecoderInfo* info, CodeSegment* seg);
+		void PsMerge11(DecoderInfo* info, CodeSegment* seg);
 
 		void Dequantize(CodeSegment* seg, void* psReg, GEKKO_QUANT_TYPE type, uint8_t scale, bool secondReg);
-		void PSQLoad(AnalyzeInfo* info, CodeSegment* seg);
+		void PSQLoad(DecoderInfo* info, CodeSegment* seg);
 
 		// These methods require fastcall, as they are called from recompiled code.
 

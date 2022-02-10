@@ -3,7 +3,7 @@
 
 namespace Gekko
 {
-	void Jitc::LoadImm(AnalyzeInfo* info, CodeSegment* seg, LoadDelegate loadProc)
+	void Jitc::LoadImm(DecoderInfo* info, CodeSegment* seg, LoadDelegate loadProc)
 	{
 		// mov  ecx, SIMM
 		// if (RA)

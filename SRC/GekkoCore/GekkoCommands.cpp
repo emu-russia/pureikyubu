@@ -654,11 +654,11 @@ namespace Gekko
 
 		if (ptr != nullptr)
 		{
-			AnalyzeInfo info = { 0 };
+			DecoderInfo info = { 0 };
 
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
-			Gekko::Analyzer::Analyze(addr, instr, &info);
+			Gekko::Decoder::Decode(addr, instr, &info);
 
 			text = Gekko::GekkoDisasm::Disasm(addr, &info, false, false);
 		}
@@ -679,8 +679,8 @@ namespace Gekko
 		bool showAddress = strtoul(args[3].c_str(), nullptr, 0) != 0;
 		bool showBytes = strtoul(args[4].c_str(), nullptr, 0) != 0;
 
-		AnalyzeInfo info = { 0 };
-		Gekko::Analyzer::Analyze(addr, instr, &info);
+		DecoderInfo info = { 0 };
+		Gekko::Decoder::Decode(addr, instr, &info);
 
 		std::string text = Gekko::GekkoDisasm::Disasm(addr, &info, showAddress, showBytes);
 
@@ -709,12 +709,12 @@ namespace Gekko
 
 		if (pa < RAMSIZE)
 		{
-			AnalyzeInfo info = { 0 };
+			DecoderInfo info = { 0 };
 
 			uint8_t* ptr = &mi.ram[pa];
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
-			Gekko::Analyzer::Analyze(addr, instr, &info);
+			Gekko::Decoder::Decode(addr, instr, &info);
 
 			flowControl = info.flow;
 			targetAddress = info.Imm.Address;
@@ -796,9 +796,9 @@ namespace Gekko
 		uint32_t pc = strtoul(args[1].c_str(), nullptr, 0);
 		uint32_t opcode = strtoul(args[2].c_str(), nullptr, 0);
 
-		Gekko::AnalyzeInfo info = { 0 };
+		Gekko::DecoderInfo info = { 0 };
 
-		Gekko::Analyzer::Analyze(pc, opcode, &info);
+		Gekko::Decoder::Decode(pc, opcode, &info);
 
 		// Array: [Int instr, Int numParams, Int param0, Int paramBits0, Int param1, Int paramBits1, Int param2, Int paramBits2, Int param3, Int paramBits3, Int param4, Int paramBits4, UInt32 immedValue, UInt32 newPc, Bool flow]
 
@@ -848,7 +848,7 @@ namespace Gekko
 	// Return the name of the Gekko instruction (Gekko::Instruction)
 	static Json::Value* CmdGekkoInstrToString(std::vector<std::string>& args)
 	{
-		Gekko::AnalyzeInfo info = { 0 };
+		Gekko::DecoderInfo info = { 0 };
 		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
 
 		std::string instrName = Gekko::GekkoDisasm::InstrToString(&info);
@@ -864,7 +864,7 @@ namespace Gekko
 	// Return the parameter name of a Gekko instruction (Gekko::Param)
 	static Json::Value* CmdGekkoInstrParamToString(std::vector<std::string>& args)
 	{
-		Gekko::AnalyzeInfo info = { 0 };
+		Gekko::DecoderInfo info = { 0 };
 
 		info.param[0] = (Gekko::Param)strtoul(args[1].c_str(), nullptr, 0);
 		info.paramBits[0] = strtoul(args[2].c_str(), nullptr, 0);
@@ -900,9 +900,9 @@ namespace Gekko
 	// Assemble Gekko instruction based on analyzer information
 	static Json::Value* CmdGekkoAssemble(std::vector<std::string>& args)
 	{
-		// Get parameters and construct AnalyzeInfo
+		// Get parameters and construct DecoderInfo
 
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 
 		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
 	

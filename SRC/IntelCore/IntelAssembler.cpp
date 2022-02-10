@@ -14,7 +14,7 @@ namespace IntelCore
 		throw "Invalid instruction in specified mode";
 	}
 
-	void IntelAssembler::OneByte(AnalyzeInfo& info, uint8_t n)
+	void IntelAssembler::OneByte(DecoderInfo& info, uint8_t n)
 	{
 		if (info.instrSize >= InstrMaxSize)
 		{
@@ -25,26 +25,26 @@ namespace IntelCore
 		info.instrSize++;
 	}
 
-	void IntelAssembler::TwoByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2)
+	void IntelAssembler::TwoByte(DecoderInfo& info, uint8_t b1, uint8_t b2)
 	{
 		OneByte(info, b1);
 		OneByte(info, b2);
 	}
 
-	void IntelAssembler::TriByte(AnalyzeInfo& info, uint8_t b1, uint8_t b2, uint8_t b3)
+	void IntelAssembler::TriByte(DecoderInfo& info, uint8_t b1, uint8_t b2, uint8_t b3)
 	{
 		OneByte(info, b1);
 		OneByte(info, b2);
 		OneByte(info, b3);
 	}
 
-	void IntelAssembler::AddUshort(AnalyzeInfo& info, uint16_t n)
+	void IntelAssembler::AddUshort(DecoderInfo& info, uint16_t n)
 	{
 		OneByte(info, n & 0xff);
 		OneByte(info, (n >> 8) & 0xff);
 	}
 
-	void IntelAssembler::AddUlong(AnalyzeInfo& info, uint32_t n)
+	void IntelAssembler::AddUlong(DecoderInfo& info, uint32_t n)
 	{
 		OneByte(info, n & 0xff);
 		OneByte(info, (n >> 8) & 0xff);
@@ -52,7 +52,7 @@ namespace IntelCore
 		OneByte(info, (n >> 24) & 0xff);
 	}
 
-	void IntelAssembler::AddQword(AnalyzeInfo& info, uint64_t n)
+	void IntelAssembler::AddQword(DecoderInfo& info, uint64_t n)
 	{
 		OneByte(info, n & 0xff);
 		OneByte(info, (n >> 8) & 0xff);
@@ -64,7 +64,7 @@ namespace IntelCore
 		OneByte(info, (n >> 56) & 0xff);
 	}
 
-	void IntelAssembler::OneByteImm8(AnalyzeInfo& info, uint8_t n)
+	void IntelAssembler::OneByteImm8(DecoderInfo& info, uint8_t n)
 	{
 		if (info.numParams != 1)
 		{
@@ -80,7 +80,7 @@ namespace IntelCore
 		OneByte(info, info.Imm.uimm8);
 	}
 
-	void IntelAssembler::AddImmParam(AnalyzeInfo& info, uint8_t n)
+	void IntelAssembler::AddImmParam(DecoderInfo& info, uint8_t n)
 	{
 		if (info.numParams >= ParamsMax)
 		{
@@ -92,7 +92,7 @@ namespace IntelCore
 		info.numParams++;
 	}
 
-	void IntelAssembler::AddPrefix(AnalyzeInfo& info, Prefix pre)
+	void IntelAssembler::AddPrefix(DecoderInfo& info, Prefix pre)
 	{
 		if (info.numPrefixes >= PrefixMaxSize)
 		{
@@ -103,7 +103,7 @@ namespace IntelCore
 		info.numPrefixes++;
 	}
 
-	void IntelAssembler::AddPrefixByte(AnalyzeInfo& info, uint8_t pre)
+	void IntelAssembler::AddPrefixByte(DecoderInfo& info, uint8_t pre)
 	{
 		if (info.prefixSize >= PrefixMaxSize)
 		{
@@ -412,7 +412,7 @@ namespace IntelCore
 	/// <summary>
 	/// Used to compile a prefix list into raw form (bytes).
 	/// </summary>
-	void IntelAssembler::AssemblePrefixes(AnalyzeInfo& info)
+	void IntelAssembler::AssemblePrefixes(DecoderInfo& info)
 	{
 		for (size_t i = 0; i < info.numPrefixes; i++)
 		{
@@ -897,7 +897,7 @@ namespace IntelCore
 	/// <param name="info">Instruction information</param>
 	/// <param name="bits">Processor operating mode (16, 32, 64)</param>
 	/// <param name="feature">Instruction features</param>
-	void IntelAssembler::ProcessGpInstr(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
+	void IntelAssembler::ProcessGpInstr(DecoderInfo& info, size_t bits, InstrFeatures& feature)
 	{
 		// Try all formats one by one 
 
@@ -1558,7 +1558,7 @@ namespace IntelCore
 	/// <param name="opcode16_64">Base opcode for 16/32/64-bit instruction form</param>
 	/// <param name="opcodeReg">Extended opcode, which is used instead of the reg field in the ModRM byte.</param>
 	/// <param name="extendedOpcode">Escape opcode, for example 0x0F. If it is 0x00, it is not used.</param>
-	void IntelAssembler::HandleModRm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRm(DecoderInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeReg, uint8_t extendedOpcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -1707,7 +1707,7 @@ namespace IntelCore
 	/// Version for processing "MR" and "RM" forms.
 	/// The "MR" version is also used to process parameters of the `reg, reg` type (i.e. the first `rm` parameter is actually a register).
 	/// </summary>
-	void IntelAssembler::HandleModRegRm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode, uint8_t extendedOpcode2)
+	void IntelAssembler::HandleModRegRm(DecoderInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode, uint8_t extendedOpcode2)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -1903,7 +1903,7 @@ namespace IntelCore
 	/// <summary>
 	/// Version for processing "MI" type instruction forms. The reg field in the ModRM byte contains an additional opcode.
 	/// </summary>
-	void IntelAssembler::HandleModRmImm(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRmImm(DecoderInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t opcodeSimm8, uint8_t opcodeReg, uint8_t extendedOpcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -2050,7 +2050,7 @@ namespace IntelCore
 	/// Did you think you were out of options? I thought.
 	/// This is the "RMI" or "MRI" version of instruction form processing, with immediate as the third parameter.
 	/// </summary>
-	void IntelAssembler::HandleModRegRmImm(AnalyzeInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRegRmImm(DecoderInfo& info, size_t bits, size_t regParam, size_t rmParam, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -2242,7 +2242,7 @@ namespace IntelCore
 		else if (info.params[2] == Param::imm32) AddUlong(info, info.Imm.uimm32);
 	}
 
-	void IntelAssembler::HandleMoffs(AnalyzeInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64)
+	void IntelAssembler::HandleMoffs(DecoderInfo& info, size_t bits, size_t regParam, size_t moffsParam, uint8_t opcode8, uint8_t opcode16_64)
 	{
 		switch (info.params[regParam])
 		{
@@ -2295,7 +2295,7 @@ namespace IntelCore
 	/// Unfortunately another clone of the ModRM-like addressing handler was needed, but for the case where `reg` is actually `Sreg`.
 	/// Mixing reg and Sreg in the base handler is not a good idea, because it gets even more confusing.
 	/// </summary>
-	void IntelAssembler::HandleModSregRm(AnalyzeInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode)
+	void IntelAssembler::HandleModSregRm(DecoderInfo& info, size_t bits, size_t sregParam, size_t rmParam, uint8_t opcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -2402,7 +2402,7 @@ namespace IntelCore
 	/// <summary>
 	/// This version of the RM form can accept register (R) instead of "M" and also does not check for operand size matching (the opcode-associated size is taken as the second operand).
 	/// </summary>
-	void IntelAssembler::HandleModRegRmx(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode)
+	void IntelAssembler::HandleModRegRmx(DecoderInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_64, uint8_t extendedOpcode)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -2568,7 +2568,7 @@ namespace IntelCore
 	/// <summary>
 	/// Different ModRM options for Rotate/Shift instructions.
 	/// </summary>
-	void IntelAssembler::HandleModRmRotSh(AnalyzeInfo& info, size_t bits, InstrFeatures& feature)
+	void IntelAssembler::HandleModRmRotSh(DecoderInfo& info, size_t bits, InstrFeatures& feature)
 	{
 		size_t mod = 0, reg = 0, rm = 0;
 		size_t scale = 0, index = 0, base = 0;
@@ -2747,7 +2747,7 @@ namespace IntelCore
 	/// <param name="info"></param>
 	/// <param name="bits"></param>
 	/// <param name="in">true: in, false: out</param>
-	void IntelAssembler::HandleInOut(AnalyzeInfo& info, size_t bits, bool in)
+	void IntelAssembler::HandleInOut(DecoderInfo& info, size_t bits, bool in)
 	{
 		if (info.numParams != 2)
 		{
@@ -2791,7 +2791,7 @@ namespace IntelCore
 	/// <summary>
 	/// Process Jcc and LOOP instructions
 	/// </summary>
-	void IntelAssembler::HandleJcc(AnalyzeInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_32)
+	void IntelAssembler::HandleJcc(DecoderInfo& info, size_t bits, uint8_t opcode8, uint8_t opcode16_32)
 	{
 		if (!IsRel(info.params[0]))
 		{
@@ -2842,7 +2842,7 @@ namespace IntelCore
 	/// <summary>
 	/// Handling special MOV instructions that work with the CR/DR/TR registers.
 	/// </summary>
-	void IntelAssembler::HandleMovSpecial(AnalyzeInfo& info, size_t bits, uint8_t opcode)
+	void IntelAssembler::HandleMovSpecial(DecoderInfo& info, size_t bits, uint8_t opcode)
 	{
 		size_t reg, specReg;
 		size_t specRegParam = (IsCR(info.params[0]) || IsDR(info.params[0]) || IsTR(info.params[0])) ? 0 : 1;
@@ -2899,12 +2899,12 @@ namespace IntelCore
 
 #pragma region "Base methods"
 
-	// TODO: When we started development, we were supposed to have different types of `AnalyzeInfo` structures for different modes.
-	// Then it turned out that it is possible to make a universal `AnalyzeInfo`, but the methods remained separate.
+	// TODO: When we started development, we were supposed to have different types of `DecoderInfo` structures for different modes.
+	// Then it turned out that it is possible to make a universal `DecoderInfo`, but the methods remained separate.
 	// Now it's basically a copy-paste for each mode (16, 32, 64), except for one-or-more byte instructions.
 	// We need to collapse all these three methods into single `Assemble(bits)`.
 
-	void IntelAssembler::Assemble16(AnalyzeInfo& info)
+	void IntelAssembler::Assemble16(DecoderInfo& info)
 	{
 		info.prefixSize = 0;
 		info.instrSize = 0;
@@ -4660,7 +4660,7 @@ namespace IntelCore
 		}
 	}
 
-	void IntelAssembler::Assemble32(AnalyzeInfo& info)
+	void IntelAssembler::Assemble32(DecoderInfo& info)
 	{
 		info.prefixSize = 0;
 		info.instrSize = 0;
@@ -6416,7 +6416,7 @@ namespace IntelCore
 		}
 	}
 
-	void IntelAssembler::Assemble64(AnalyzeInfo& info)
+	void IntelAssembler::Assemble64(DecoderInfo& info)
 	{
 		info.prefixSize = 0;
 		info.instrSize = 0;
@@ -8165,9 +8165,9 @@ namespace IntelCore
 
 	// Instructions using ModRM / with an immediate operand
 
-	template <> AnalyzeInfo IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::adc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::adc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8179,9 +8179,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::adc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::adc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8193,9 +8193,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::adc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::adc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8207,9 +8207,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::add<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::add<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::add;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8221,9 +8221,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::add<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::add<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::add;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8235,9 +8235,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::add<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::add<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::add;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8249,9 +8249,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_and<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_and<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_and;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8263,9 +8263,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_and<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_and<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_and;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8277,9 +8277,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_and<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_and<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_and;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8291,9 +8291,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::arpl<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::arpl<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::arpl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8303,9 +8303,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::arpl<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::arpl<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::arpl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8315,9 +8315,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::arpl<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::arpl<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::arpl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8327,9 +8327,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bound<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bound<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bound;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8339,9 +8339,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bound<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bound<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bound;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8351,9 +8351,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bound<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bound<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bound;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8363,9 +8363,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsf<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsf<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsf;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8375,9 +8375,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsf<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsf<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsf;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8387,9 +8387,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsf<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsf<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsf;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8399,9 +8399,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsr<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsr<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8411,9 +8411,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsr<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsr<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8423,9 +8423,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bsr<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bsr<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bsr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8435,9 +8435,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bt<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bt<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bt;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8448,9 +8448,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bt<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bt<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bt;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8461,9 +8461,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bt<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bt<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bt;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8474,9 +8474,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btc<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8487,9 +8487,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btc<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8500,9 +8500,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btc<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btc;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8513,9 +8513,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btr<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btr<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8526,9 +8526,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btr<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btr<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8539,9 +8539,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::btr<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::btr<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::btr;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8552,9 +8552,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bts<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bts<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bts;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8565,9 +8565,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bts<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bts<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bts;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8578,9 +8578,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bts<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::bts<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bts;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8591,9 +8591,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::call<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::call<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::call;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8602,9 +8602,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::call<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::call<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::call;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8613,9 +8613,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::call<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::call<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::call;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8624,9 +8624,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::callf<16>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::callf<16>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::callfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8636,9 +8636,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::callf<32>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::callf<32>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::callfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8648,9 +8648,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::callf<64>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::callf<64>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::callfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -8660,9 +8660,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmp<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmp<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmp;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8674,9 +8674,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmp<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmp<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmp;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8688,9 +8688,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmp<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmp<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmp;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8702,9 +8702,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpxchg<16>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmpxchg<16>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpxchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8715,9 +8715,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpxchg<32>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmpxchg<32>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpxchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8728,9 +8728,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpxchg<64>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::cmpxchg<64>(Param to, Param from, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmpxchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8741,9 +8741,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::dec<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::dec<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::dec;
 		info.params[info.numParams++] = p;
@@ -8754,9 +8754,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::dec<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::dec<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::dec;
 		info.params[info.numParams++] = p;
@@ -8767,9 +8767,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::dec<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::dec<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::dec;
 		info.params[info.numParams++] = p;
@@ -8780,9 +8780,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::div<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::div<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::div;
 		info.params[info.numParams++] = p;
@@ -8792,9 +8792,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::div<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::div<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::div;
 		info.params[info.numParams++] = p;
@@ -8804,9 +8804,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::div<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::div<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::div;
 		info.params[info.numParams++] = p;
@@ -8816,9 +8816,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::idiv<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::idiv<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::idiv;
 		info.params[info.numParams++] = p;
@@ -8828,9 +8828,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::idiv<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::idiv<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::idiv;
 		info.params[info.numParams++] = p;
@@ -8840,9 +8840,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::idiv<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::idiv<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::idiv;
 		info.params[info.numParams++] = p;
@@ -8852,9 +8852,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = p;
@@ -8864,9 +8864,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = p;
@@ -8876,9 +8876,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = p;
@@ -8888,9 +8888,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8900,9 +8900,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8912,9 +8912,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8924,9 +8924,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<16>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<16>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8938,9 +8938,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<32>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<32>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8952,9 +8952,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::imul<64>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::imul<64>(Param to, Param from, Param i, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::imul;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -8966,9 +8966,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::inc<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::inc<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::inc;
 		info.params[info.numParams++] = p;
@@ -8979,9 +8979,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::inc<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::inc<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::inc;
 		info.params[info.numParams++] = p;
@@ -8992,9 +8992,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::inc<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::inc<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::inc;
 		info.params[info.numParams++] = p;
@@ -9005,9 +9005,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invlpg<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invlpg<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::invlpg;
 		info.params[info.numParams++] = p;
@@ -9017,9 +9017,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invlpg<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invlpg<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::invlpg;
 		info.params[info.numParams++] = p;
@@ -9029,9 +9029,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invlpg<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invlpg<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::invlpg;
 		info.params[info.numParams++] = p;
@@ -9041,9 +9041,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invpcid<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invpcid<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invpcid;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9053,9 +9053,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invpcid<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invpcid<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invpcid;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9065,9 +9065,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invpcid<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::invpcid<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invpcid;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9077,9 +9077,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmp<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmp<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmp;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9088,9 +9088,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmp<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmp<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmp;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9099,9 +9099,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmp<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmp<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmp;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9110,9 +9110,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmpf<16>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmpf<16>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmpfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9122,9 +9122,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmpf<32>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmpf<32>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmpfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9134,9 +9134,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jmpf<64>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::jmpf<64>(Param p, uint16_t seg, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jmpfar;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9146,9 +9146,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lar<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lar<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lar;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9158,9 +9158,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lar<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lar<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lar;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9170,9 +9170,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lar<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lar<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lar;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9182,9 +9182,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lds<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lds<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lds;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9194,9 +9194,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lds<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lds<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lds;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9206,9 +9206,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lds<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lds<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lds;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9218,9 +9218,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lea<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lea<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lea;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9230,9 +9230,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lea<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lea<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lea;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9242,9 +9242,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lea<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lea<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lea;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9254,9 +9254,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::les<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::les<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::les;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9266,9 +9266,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::les<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::les<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::les;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9278,9 +9278,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::les<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::les<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::les;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9290,9 +9290,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lfs<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lfs<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9302,9 +9302,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lfs<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lfs<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9314,9 +9314,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lfs<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lfs<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lfs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9326,9 +9326,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgdt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgdt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9337,9 +9337,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgdt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgdt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9348,9 +9348,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgdt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgdt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9359,9 +9359,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgs<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgs<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9371,9 +9371,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgs<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgs<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9383,9 +9383,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lgs<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lgs<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lgs;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9395,9 +9395,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lidt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lidt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9406,9 +9406,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lidt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lidt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9417,9 +9417,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lidt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lidt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9428,9 +9428,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lldt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lldt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9439,9 +9439,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lldt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lldt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9450,9 +9450,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lldt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lldt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9461,9 +9461,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lmsw<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lmsw<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lmsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9472,9 +9472,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lmsw<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lmsw<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lmsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9483,9 +9483,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lmsw<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lmsw<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lmsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9494,9 +9494,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lsl<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lsl<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lsl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9506,9 +9506,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lsl<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lsl<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lsl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9518,9 +9518,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lsl<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lsl<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lsl;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9530,9 +9530,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lss<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lss<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lss;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9542,9 +9542,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lss<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lss<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lss;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9554,9 +9554,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lss<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::lss<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lss;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9566,9 +9566,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ltr<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ltr<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ltr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9577,9 +9577,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ltr<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ltr<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ltr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9588,9 +9588,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ltr<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ltr<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ltr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -9599,9 +9599,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mov<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsCR(to) || IsCR(from))
@@ -9630,9 +9630,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mov<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsCR(to) || IsCR(from))
@@ -9661,9 +9661,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mov<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsCR(to) || IsCR(from))
@@ -9692,9 +9692,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movbe<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movbe<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movbe;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9704,9 +9704,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movbe<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movbe<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movbe;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9716,9 +9716,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movbe<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movbe<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movbe;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9728,9 +9728,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsx<16>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsx<16>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movsx;
 		info.params[info.numParams++] = to;
@@ -9741,9 +9741,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsx<32>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsx<32>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movsx;
 		info.params[info.numParams++] = to;
@@ -9754,9 +9754,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsx<64>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsx<64>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movsx;
 		info.params[info.numParams++] = to;
@@ -9767,9 +9767,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsxd<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsxd<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movsxd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9779,9 +9779,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsxd<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsxd<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movsxd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9791,9 +9791,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsxd<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movsxd<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::movsxd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9803,9 +9803,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movzx<16>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movzx<16>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movzx;
 		info.params[info.numParams++] = to;
@@ -9816,9 +9816,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movzx<32>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movzx<32>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movzx;
 		info.params[info.numParams++] = to;
@@ -9829,9 +9829,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movzx<64>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::movzx<64>(Param to, Param from, uint64_t disp, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::movzx;
 		info.params[info.numParams++] = to;
@@ -9842,9 +9842,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mul<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mul<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::mul;
 		info.params[info.numParams++] = p;
@@ -9854,9 +9854,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mul<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mul<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::mul;
 		info.params[info.numParams++] = p;
@@ -9866,9 +9866,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::mul<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::mul<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::mul;
 		info.params[info.numParams++] = p;
@@ -9878,9 +9878,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::nop<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::nop;
 		info.params[info.numParams++] = p;
@@ -9890,9 +9890,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::nop<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::nop;
 		info.params[info.numParams++] = p;
@@ -9902,9 +9902,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::nop<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::nop;
 		info.params[info.numParams++] = p;
@@ -9914,9 +9914,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_not<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_not<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::_not;
 		info.params[info.numParams++] = p;
@@ -9927,9 +9927,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_not<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_not<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::_not;
 		info.params[info.numParams++] = p;
@@ -9940,9 +9940,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_not<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_not<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::_not;
 		info.params[info.numParams++] = p;
@@ -9953,9 +9953,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_or<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_or<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_or;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9967,9 +9967,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_or<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_or<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_or;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9981,9 +9981,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_or<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_or<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_or;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -9995,9 +9995,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pop<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::pop<16>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsSreg(p))
@@ -10016,9 +10016,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pop<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::pop<32>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		
 		if (IsSreg(p))
@@ -10037,9 +10037,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pop<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::pop<64>(Param p, PtrHint ptrHint, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		
 		if (IsSreg(p))
@@ -10058,9 +10058,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::push<16>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::push<16>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsSreg(p))
@@ -10080,9 +10080,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::push<32>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::push<32>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsSreg(p))
@@ -10102,9 +10102,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::push<64>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::push<64>(Param p, PtrHint ptrHint, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 
 		if (IsSreg(p))
@@ -10124,9 +10124,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcl<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcl<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcl;
 		info.params[info.numParams++] = to;
@@ -10138,9 +10138,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcl<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcl<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcl;
 		info.params[info.numParams++] = to;
@@ -10152,9 +10152,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcl<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcl<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcl;
 		info.params[info.numParams++] = to;
@@ -10166,9 +10166,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcr<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcr<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcr;
 		info.params[info.numParams++] = to;
@@ -10180,9 +10180,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcr<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcr<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcr;
 		info.params[info.numParams++] = to;
@@ -10194,9 +10194,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rcr<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rcr<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rcr;
 		info.params[info.numParams++] = to;
@@ -10208,9 +10208,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rol<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rol<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rol;
 		info.params[info.numParams++] = to;
@@ -10222,9 +10222,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rol<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rol<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rol;
 		info.params[info.numParams++] = to;
@@ -10236,9 +10236,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rol<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::rol<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::rol;
 		info.params[info.numParams++] = to;
@@ -10250,9 +10250,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ror<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ror<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::ror;
 		info.params[info.numParams++] = to;
@@ -10264,9 +10264,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ror<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ror<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::ror;
 		info.params[info.numParams++] = to;
@@ -10278,9 +10278,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ror<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ror<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::ror;
 		info.params[info.numParams++] = to;
@@ -10292,9 +10292,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sal<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sal<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sal;
 		info.params[info.numParams++] = to;
@@ -10306,9 +10306,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sal<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sal<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sal;
 		info.params[info.numParams++] = to;
@@ -10320,9 +10320,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sal<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sal<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sal;
 		info.params[info.numParams++] = to;
@@ -10334,9 +10334,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sar<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sar<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sar;
 		info.params[info.numParams++] = to;
@@ -10348,9 +10348,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sar<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sar<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sar;
 		info.params[info.numParams++] = to;
@@ -10362,9 +10362,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sar<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sar<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::sar;
 		info.params[info.numParams++] = to;
@@ -10376,9 +10376,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sbb<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sbb<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sbb;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -10390,9 +10390,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sbb<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sbb<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sbb;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -10404,9 +10404,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sbb<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sbb<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sbb;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -10418,9 +10418,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seta<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seta<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seta;
 		info.params[info.numParams++] = p;
@@ -10430,9 +10430,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seta<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seta<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seta;
 		info.params[info.numParams++] = p;
@@ -10442,9 +10442,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seta<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seta<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seta;
 		info.params[info.numParams++] = p;
@@ -10454,9 +10454,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setae<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setae<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setae;
 		info.params[info.numParams++] = p;
@@ -10466,9 +10466,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setae<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setae<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setae;
 		info.params[info.numParams++] = p;
@@ -10478,9 +10478,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setae<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setae<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setae;
 		info.params[info.numParams++] = p;
@@ -10490,9 +10490,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setb<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setb<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setb;
 		info.params[info.numParams++] = p;
@@ -10502,9 +10502,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setb<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setb<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setb;
 		info.params[info.numParams++] = p;
@@ -10514,9 +10514,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setb<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setb<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setb;
 		info.params[info.numParams++] = p;
@@ -10526,9 +10526,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setbe<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setbe<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setbe;
 		info.params[info.numParams++] = p;
@@ -10538,9 +10538,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setbe<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setbe<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setbe;
 		info.params[info.numParams++] = p;
@@ -10550,9 +10550,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setbe<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setbe<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setbe;
 		info.params[info.numParams++] = p;
@@ -10562,9 +10562,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setc<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setc<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setc;
 		info.params[info.numParams++] = p;
@@ -10574,9 +10574,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setc<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setc<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setc;
 		info.params[info.numParams++] = p;
@@ -10586,9 +10586,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setc<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setc<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setc;
 		info.params[info.numParams++] = p;
@@ -10598,9 +10598,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sete<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sete<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sete;
 		info.params[info.numParams++] = p;
@@ -10610,9 +10610,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sete<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sete<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sete;
 		info.params[info.numParams++] = p;
@@ -10622,9 +10622,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sete<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sete<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sete;
 		info.params[info.numParams++] = p;
@@ -10634,9 +10634,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setg<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setg<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setg;
 		info.params[info.numParams++] = p;
@@ -10646,9 +10646,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setg<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setg<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setg;
 		info.params[info.numParams++] = p;
@@ -10658,9 +10658,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setg<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setg<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setg;
 		info.params[info.numParams++] = p;
@@ -10670,9 +10670,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setge<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setge<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setge;
 		info.params[info.numParams++] = p;
@@ -10682,9 +10682,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setge<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setge<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setge;
 		info.params[info.numParams++] = p;
@@ -10694,9 +10694,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setge<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setge<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setge;
 		info.params[info.numParams++] = p;
@@ -10706,9 +10706,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setl<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setl<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setl;
 		info.params[info.numParams++] = p;
@@ -10718,9 +10718,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setl<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setl<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setl;
 		info.params[info.numParams++] = p;
@@ -10730,9 +10730,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setl<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setl<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setl;
 		info.params[info.numParams++] = p;
@@ -10742,9 +10742,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setle<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setle<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setle;
 		info.params[info.numParams++] = p;
@@ -10754,9 +10754,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setle<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setle<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setle;
 		info.params[info.numParams++] = p;
@@ -10766,9 +10766,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setle<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setle<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setle;
 		info.params[info.numParams++] = p;
@@ -10778,9 +10778,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setna<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setna<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setna;
 		info.params[info.numParams++] = p;
@@ -10790,9 +10790,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setna<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setna<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setna;
 		info.params[info.numParams++] = p;
@@ -10802,9 +10802,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setna<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setna<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setna;
 		info.params[info.numParams++] = p;
@@ -10814,9 +10814,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnae<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnae<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnae;
 		info.params[info.numParams++] = p;
@@ -10826,9 +10826,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnae<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnae<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnae;
 		info.params[info.numParams++] = p;
@@ -10838,9 +10838,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnae<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnae<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnae;
 		info.params[info.numParams++] = p;
@@ -10850,9 +10850,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnb<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnb<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnb;
 		info.params[info.numParams++] = p;
@@ -10862,9 +10862,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnb<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnb<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnb;
 		info.params[info.numParams++] = p;
@@ -10874,9 +10874,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnb<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnb<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnb;
 		info.params[info.numParams++] = p;
@@ -10886,9 +10886,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnbe<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnbe<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnbe;
 		info.params[info.numParams++] = p;
@@ -10898,9 +10898,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnbe<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnbe<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnbe;
 		info.params[info.numParams++] = p;
@@ -10910,9 +10910,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnbe<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnbe<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnbe;
 		info.params[info.numParams++] = p;
@@ -10922,9 +10922,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnc<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnc<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnc;
 		info.params[info.numParams++] = p;
@@ -10934,9 +10934,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnc<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnc<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnc;
 		info.params[info.numParams++] = p;
@@ -10946,9 +10946,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnc<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnc<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnc;
 		info.params[info.numParams++] = p;
@@ -10958,9 +10958,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setne<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setne<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setne;
 		info.params[info.numParams++] = p;
@@ -10970,9 +10970,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setne<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setne<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setne;
 		info.params[info.numParams++] = p;
@@ -10982,9 +10982,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setne<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setne<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setne;
 		info.params[info.numParams++] = p;
@@ -10994,9 +10994,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setng<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setng<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setng;
 		info.params[info.numParams++] = p;
@@ -11006,9 +11006,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setng<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setng<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setng;
 		info.params[info.numParams++] = p;
@@ -11018,9 +11018,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setng<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setng<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setng;
 		info.params[info.numParams++] = p;
@@ -11030,9 +11030,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnge<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnge<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnge;
 		info.params[info.numParams++] = p;
@@ -11042,9 +11042,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnge<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnge<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnge;
 		info.params[info.numParams++] = p;
@@ -11054,9 +11054,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnge<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnge<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnge;
 		info.params[info.numParams++] = p;
@@ -11066,9 +11066,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnl<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnl<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnl;
 		info.params[info.numParams++] = p;
@@ -11078,9 +11078,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnl<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnl<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnl;
 		info.params[info.numParams++] = p;
@@ -11090,9 +11090,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnl<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnl<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnl;
 		info.params[info.numParams++] = p;
@@ -11102,9 +11102,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnle<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnle<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnle;
 		info.params[info.numParams++] = p;
@@ -11114,9 +11114,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnle<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnle<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnle;
 		info.params[info.numParams++] = p;
@@ -11126,9 +11126,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnle<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnle<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnle;
 		info.params[info.numParams++] = p;
@@ -11138,9 +11138,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setno<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setno<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setno;
 		info.params[info.numParams++] = p;
@@ -11150,9 +11150,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setno<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setno<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setno;
 		info.params[info.numParams++] = p;
@@ -11162,9 +11162,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setno<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setno<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setno;
 		info.params[info.numParams++] = p;
@@ -11174,9 +11174,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnp<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnp<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnp;
 		info.params[info.numParams++] = p;
@@ -11186,9 +11186,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnp<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnp<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnp;
 		info.params[info.numParams++] = p;
@@ -11198,9 +11198,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnp<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnp<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnp;
 		info.params[info.numParams++] = p;
@@ -11210,9 +11210,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setns<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setns<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setns;
 		info.params[info.numParams++] = p;
@@ -11222,9 +11222,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setns<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setns<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setns;
 		info.params[info.numParams++] = p;
@@ -11234,9 +11234,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setns<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setns<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setns;
 		info.params[info.numParams++] = p;
@@ -11246,9 +11246,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnz<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnz<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnz;
 		info.params[info.numParams++] = p;
@@ -11258,9 +11258,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnz<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnz<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnz;
 		info.params[info.numParams++] = p;
@@ -11270,9 +11270,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setnz<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setnz<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setnz;
 		info.params[info.numParams++] = p;
@@ -11282,9 +11282,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seto<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seto<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seto;
 		info.params[info.numParams++] = p;
@@ -11294,9 +11294,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seto<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seto<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seto;
 		info.params[info.numParams++] = p;
@@ -11306,9 +11306,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::seto<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::seto<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::seto;
 		info.params[info.numParams++] = p;
@@ -11318,9 +11318,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setp<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setp<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setp;
 		info.params[info.numParams++] = p;
@@ -11330,9 +11330,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setp<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setp<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setp;
 		info.params[info.numParams++] = p;
@@ -11342,9 +11342,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setp<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setp<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setp;
 		info.params[info.numParams++] = p;
@@ -11354,9 +11354,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpe<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpe<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpe;
 		info.params[info.numParams++] = p;
@@ -11366,9 +11366,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpe<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpe<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpe;
 		info.params[info.numParams++] = p;
@@ -11378,9 +11378,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpe<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpe<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpe;
 		info.params[info.numParams++] = p;
@@ -11390,9 +11390,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpo<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpo<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpo;
 		info.params[info.numParams++] = p;
@@ -11402,9 +11402,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpo<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpo<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpo;
 		info.params[info.numParams++] = p;
@@ -11414,9 +11414,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setpo<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setpo<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setpo;
 		info.params[info.numParams++] = p;
@@ -11426,9 +11426,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sets<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sets<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sets;
 		info.params[info.numParams++] = p;
@@ -11438,9 +11438,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sets<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sets<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sets;
 		info.params[info.numParams++] = p;
@@ -11450,9 +11450,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sets<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sets<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::sets;
 		info.params[info.numParams++] = p;
@@ -11462,9 +11462,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setz<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setz<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setz;
 		info.params[info.numParams++] = p;
@@ -11474,9 +11474,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setz<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setz<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setz;
 		info.params[info.numParams++] = p;
@@ -11486,9 +11486,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::setz<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::setz<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = PtrHint::BytePtr;
 		info.instr = Instruction::setz;
 		info.params[info.numParams++] = p;
@@ -11498,9 +11498,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sgdt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sgdt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11509,9 +11509,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sgdt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sgdt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11520,9 +11520,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sgdt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sgdt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sgdt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11531,9 +11531,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shl<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shl<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shl;
 		info.params[info.numParams++] = to;
@@ -11545,9 +11545,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shl<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shl<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shl;
 		info.params[info.numParams++] = to;
@@ -11559,9 +11559,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shl<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shl<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shl;
 		info.params[info.numParams++] = to;
@@ -11573,9 +11573,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shld<16>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shld<16>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shld;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11587,9 +11587,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shld<32>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shld<32>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shld;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11601,9 +11601,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shld<64>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shld<64>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shld;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11615,9 +11615,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shr<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shr<16>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shr;
 		info.params[info.numParams++] = to;
@@ -11629,9 +11629,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shr<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shr<32>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shr;
 		info.params[info.numParams++] = to;
@@ -11643,9 +11643,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shr<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shr<64>(Param to, Param from, uint64_t disp, int64_t imm, PtrHint ptrHint, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.ptrHint = ptrHint;
 		info.instr = Instruction::shr;
 		info.params[info.numParams++] = to;
@@ -11657,9 +11657,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shrd<16>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shrd<16>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shrd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11671,9 +11671,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shrd<32>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shrd<32>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shrd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11685,9 +11685,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::shrd<64>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
+	template <> DecoderInfo IntelAssembler::shrd<64>(Param to, Param from, Param c, uint64_t disp, int32_t imm, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::shrd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11699,9 +11699,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sidt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sidt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11710,9 +11710,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sidt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sidt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11721,9 +11721,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sidt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sidt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sidt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11732,9 +11732,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sldt<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sldt<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11743,9 +11743,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sldt<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sldt<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11754,9 +11754,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sldt<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::sldt<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sldt;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11765,9 +11765,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::smsw<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::smsw<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::smsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11776,9 +11776,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::smsw<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::smsw<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::smsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11787,9 +11787,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::smsw<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::smsw<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::smsw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11798,9 +11798,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::str<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::str<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::str;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11809,9 +11809,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::str<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::str<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::str;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11820,9 +11820,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::str<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::str<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::str;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11831,9 +11831,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sub<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sub<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sub;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11845,9 +11845,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sub<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sub<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sub;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11859,9 +11859,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sub<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::sub<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sub;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11873,9 +11873,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::test<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::test<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::test;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11887,9 +11887,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::test<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::test<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::test;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11901,9 +11901,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::test<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::test<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::test;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11915,9 +11915,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud0<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud0<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud0;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11927,9 +11927,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud0<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud0<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud0;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11939,9 +11939,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud0<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud0<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud0;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11951,9 +11951,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud1<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud1<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud1;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11963,9 +11963,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud1<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud1<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud1;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11975,9 +11975,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud1<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::ud1<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud1;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -11987,9 +11987,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verr<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verr<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -11998,9 +11998,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verr<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verr<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12009,9 +12009,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verr<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verr<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verr;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12020,9 +12020,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verw<16>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verw<16>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12031,9 +12031,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verw<32>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verw<32>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12042,9 +12042,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::verw<64>(Param p, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::verw<64>(Param p, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::verw;
 		info.params[info.numParams++] = p;
 		if (sr != Prefix::NoPrefix) AddPrefix(info, sr);
@@ -12053,9 +12053,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xadd<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xadd<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xadd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12065,9 +12065,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xadd<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xadd<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xadd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12077,9 +12077,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xadd<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xadd<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xadd;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12089,9 +12089,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xchg<16>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xchg<16>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12101,9 +12101,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xchg<32>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xchg<32>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12113,9 +12113,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xchg<64>(Param to, Param from, uint64_t disp, Prefix sr)
+	template <> DecoderInfo IntelAssembler::xchg<64>(Param to, Param from, uint64_t disp, Prefix sr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xchg;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12125,9 +12125,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_xor<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_xor<16>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_xor;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12139,9 +12139,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_xor<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_xor<32>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_xor;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12153,9 +12153,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_xor<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
+	template <> DecoderInfo IntelAssembler::_xor<64>(Param to, Param from, uint64_t disp, int32_t imm, Prefix sr, Prefix lock)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_xor;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12169,36 +12169,36 @@ namespace IntelCore
 
 	// Simple encoding instructions
 
-	template <> AnalyzeInfo IntelAssembler::bswap<16>(Param p)
+	template <> DecoderInfo IntelAssembler::bswap<16>(Param p)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bswap;
 		info.params[info.numParams++] = p;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bswap<32>(Param p)
+	template <> DecoderInfo IntelAssembler::bswap<32>(Param p)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bswap;
 		info.params[info.numParams++] = p;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::bswap<64>(Param p)
+	template <> DecoderInfo IntelAssembler::bswap<64>(Param p)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::bswap;
 		info.params[info.numParams++] = p;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::in<16>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::in<16>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::in;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12207,9 +12207,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::in<32>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::in<32>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::in;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12218,9 +12218,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::in<64>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::in<64>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::in;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -12229,9 +12229,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_int<16>(uint8_t imm)
+	template <> DecoderInfo IntelAssembler::_int<16>(uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_int;
 		info.params[info.numParams++] = Param::imm8;
 		info.Imm.uimm8 = imm;
@@ -12239,9 +12239,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_int<32>(uint8_t imm)
+	template <> DecoderInfo IntelAssembler::_int<32>(uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_int;
 		info.params[info.numParams++] = Param::imm8;
 		info.Imm.uimm8 = imm;
@@ -12249,9 +12249,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::_int<64>(uint8_t imm)
+	template <> DecoderInfo IntelAssembler::_int<64>(uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::_int;
 		info.params[info.numParams++] = Param::imm8;
 		info.Imm.uimm8 = imm;
@@ -12259,9 +12259,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jo<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jo<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12269,9 +12269,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jo<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jo<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12279,9 +12279,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jo<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jo<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12289,9 +12289,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jno<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jno<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jno;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12299,9 +12299,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jno<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jno<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jno;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12309,9 +12309,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jno<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jno<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jno;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12319,9 +12319,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jb<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jb<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12329,9 +12329,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jb<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jb<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12339,9 +12339,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jb<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jb<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12349,9 +12349,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jc<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jc<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12359,9 +12359,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jc<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jc<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12369,9 +12369,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jc<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jc<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12379,9 +12379,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnae<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnae<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12389,9 +12389,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnae<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnae<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12399,9 +12399,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnae<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnae<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12409,9 +12409,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jae<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jae<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12419,9 +12419,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jae<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jae<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12429,9 +12429,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jae<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jae<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jae;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12439,9 +12439,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnb<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnb<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12449,9 +12449,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnb<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnb<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12459,9 +12459,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnb<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnb<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnb;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12469,9 +12469,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnc<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnc<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12479,9 +12479,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnc<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnc<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12489,9 +12489,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnc<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnc<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnc;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12499,9 +12499,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::je<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::je<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::je;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12509,9 +12509,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::je<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::je<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::je;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12519,9 +12519,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::je<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::je<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::je;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12529,9 +12529,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12539,9 +12539,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12549,9 +12549,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12559,9 +12559,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jne<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jne<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12569,9 +12569,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jne<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jne<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12579,9 +12579,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jne<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jne<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12589,9 +12589,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12599,9 +12599,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12609,9 +12609,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12619,9 +12619,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jbe<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jbe<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12629,9 +12629,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jbe<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jbe<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12639,9 +12639,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jbe<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jbe<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12649,9 +12649,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jna<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jna<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jna;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12659,9 +12659,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jna<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jna<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jna;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12669,9 +12669,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jna<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jna<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jna;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12679,9 +12679,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ja<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::ja<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ja;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12689,9 +12689,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ja<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::ja<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ja;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12699,9 +12699,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ja<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::ja<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ja;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12709,9 +12709,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnbe<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnbe<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12719,9 +12719,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnbe<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnbe<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12729,9 +12729,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnbe<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnbe<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnbe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12739,9 +12739,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::js<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::js<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::js;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12749,9 +12749,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::js<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::js<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::js;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12759,9 +12759,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::js<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::js<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::js;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12769,9 +12769,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jns<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jns<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jns;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12779,9 +12779,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jns<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jns<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jns;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12789,9 +12789,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jns<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jns<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jns;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12799,9 +12799,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jp<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jp<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12809,9 +12809,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jp<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jp<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12819,9 +12819,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jp<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jp<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12829,9 +12829,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpe<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpe<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12839,9 +12839,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpe<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpe<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12849,9 +12849,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpe<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpe<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpe;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12859,9 +12859,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpo<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpo<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12869,9 +12869,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpo<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpo<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12879,9 +12879,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jpo<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jpo<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jpo;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12889,9 +12889,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnp<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnp<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12899,9 +12899,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnp<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnp<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12909,9 +12909,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnp<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnp<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnp;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12919,9 +12919,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jl<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jl<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12929,9 +12929,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jl<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jl<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12939,9 +12939,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jl<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jl<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12949,9 +12949,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnge<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnge<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12959,9 +12959,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnge<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnge<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12969,9 +12969,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnge<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnge<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12979,9 +12979,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jge<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jge<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12989,9 +12989,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jge<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jge<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -12999,9 +12999,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jge<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jge<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jge;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13009,9 +13009,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnl<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnl<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13019,9 +13019,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnl<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnl<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13029,9 +13029,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnl<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnl<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnl;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13039,9 +13039,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jle<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jle<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13049,9 +13049,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jle<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jle<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13059,9 +13059,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jle<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jle<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13069,9 +13069,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jng<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jng<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jng;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13079,9 +13079,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jng<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jng<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jng;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13089,9 +13089,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jng<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jng<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jng;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13099,9 +13099,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jg<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jg<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jg;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13109,9 +13109,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jg<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jg<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jg;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13119,9 +13119,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jg<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jg<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jg;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13129,9 +13129,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnle<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnle<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13139,9 +13139,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnle<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnle<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13149,9 +13149,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jnle<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jnle<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jnle;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13159,9 +13159,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jcxz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jcxz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jcxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13169,9 +13169,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jcxz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jcxz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jcxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13179,16 +13179,16 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jcxz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jcxz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		Invalid();
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jecxz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jecxz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jecxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13196,9 +13196,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jecxz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jecxz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jecxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13206,9 +13206,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jecxz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jecxz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jecxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13216,23 +13216,23 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jrcxz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jrcxz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		Invalid();
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jrcxz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jrcxz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		Invalid();
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::jrcxz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::jrcxz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::jrcxz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13240,9 +13240,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loop<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loop<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loop;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13250,9 +13250,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loop<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loop<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loop;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13260,9 +13260,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loop<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loop<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loop;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13270,9 +13270,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loope<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loope<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loope;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13280,9 +13280,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loope<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loope<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loope;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13290,9 +13290,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loope<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loope<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loope;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13300,9 +13300,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13310,9 +13310,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13320,9 +13320,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13330,9 +13330,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopne<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopne<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13340,9 +13340,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopne<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopne<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13350,9 +13350,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopne<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopne<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopne;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13360,9 +13360,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopnz<16>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopnz<16>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13370,9 +13370,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopnz<32>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopnz<32>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13380,9 +13380,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::loopnz<64>(Param p, int32_t imm)
+	template <> DecoderInfo IntelAssembler::loopnz<64>(Param p, int32_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::loopnz;
 		info.params[info.numParams++] = p;
 		info.Disp.disp32 = imm;
@@ -13390,9 +13390,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::out<16>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::out<16>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::out;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -13401,9 +13401,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::out<32>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::out<32>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::out;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -13412,9 +13412,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::out<64>(Param to, Param from, uint8_t imm)
+	template <> DecoderInfo IntelAssembler::out<64>(Param to, Param from, uint8_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::out;
 		info.params[info.numParams++] = to;
 		info.params[info.numParams++] = from;
@@ -13423,9 +13423,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ret<16>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::ret<16>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ret;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13433,9 +13433,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ret<32>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::ret<32>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ret;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13443,9 +13443,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ret<64>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::ret<64>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ret;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13453,9 +13453,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::retf<16>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::retf<16>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::retfar;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13463,9 +13463,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::retf<32>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::retf<32>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::retfar;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13473,9 +13473,9 @@ namespace IntelCore
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::retf<64>(uint16_t imm)
+	template <> DecoderInfo IntelAssembler::retf<64>(uint16_t imm)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::retfar;
 		if (imm != 0) info.params[info.numParams++] = Param::imm16;
 		if (imm != 0) info.Imm.uimm16 = imm;
@@ -13485,2157 +13485,2157 @@ namespace IntelCore
 
 	// One or more byte instructions
 
-	template <> AnalyzeInfo IntelAssembler::aaa<16>()
+	template <> DecoderInfo IntelAssembler::aaa<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aaa<32>()
+	template <> DecoderInfo IntelAssembler::aaa<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aaa<64>()
+	template <> DecoderInfo IntelAssembler::aaa<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aaa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<16>()
+	template <> DecoderInfo IntelAssembler::aad<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<16>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aad<16>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<32>()
+	template <> DecoderInfo IntelAssembler::aad<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<32>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aad<32>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<64>()
+	template <> DecoderInfo IntelAssembler::aad<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, 10);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aad<64>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aad<64>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aad;
 		AddImmParam(info, v);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<16>()
+	template <> DecoderInfo IntelAssembler::aam<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<16>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aam<16>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<32>()
+	template <> DecoderInfo IntelAssembler::aam<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<32>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aam<32>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<64>()
+	template <> DecoderInfo IntelAssembler::aam<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, 10);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aam<64>(uint8_t v)
+	template <> DecoderInfo IntelAssembler::aam<64>(uint8_t v)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aam;
 		AddImmParam(info, v);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aas<16>()
+	template <> DecoderInfo IntelAssembler::aas<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aas<32>()
+	template <> DecoderInfo IntelAssembler::aas<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::aas<64>()
+	template <> DecoderInfo IntelAssembler::aas<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::aas;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cbw<16>()
+	template <> DecoderInfo IntelAssembler::cbw<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cbw<32>()
+	template <> DecoderInfo IntelAssembler::cbw<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cbw<64>()
+	template <> DecoderInfo IntelAssembler::cbw<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cbw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwde<16>()
+	template <> DecoderInfo IntelAssembler::cwde<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwde<32>()
+	template <> DecoderInfo IntelAssembler::cwde<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwde<64>()
+	template <> DecoderInfo IntelAssembler::cwde<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwde;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdqe<16>()
+	template <> DecoderInfo IntelAssembler::cdqe<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdqe<32>()
+	template <> DecoderInfo IntelAssembler::cdqe<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdqe<64>()
+	template <> DecoderInfo IntelAssembler::cdqe<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdqe;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwd<16>()
+	template <> DecoderInfo IntelAssembler::cwd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwd<32>()
+	template <> DecoderInfo IntelAssembler::cwd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cwd<64>()
+	template <> DecoderInfo IntelAssembler::cwd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cwd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdq<16>()
+	template <> DecoderInfo IntelAssembler::cdq<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdq<32>()
+	template <> DecoderInfo IntelAssembler::cdq<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cdq<64>()
+	template <> DecoderInfo IntelAssembler::cdq<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cdq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cqo<16>()
+	template <> DecoderInfo IntelAssembler::cqo<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cqo<32>()
+	template <> DecoderInfo IntelAssembler::cqo<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cqo<64>()
+	template <> DecoderInfo IntelAssembler::cqo<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cqo;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clc<16>()
+	template <> DecoderInfo IntelAssembler::clc<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clc<32>()
+	template <> DecoderInfo IntelAssembler::clc<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clc<64>()
+	template <> DecoderInfo IntelAssembler::clc<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cld<16>()
+	template <> DecoderInfo IntelAssembler::cld<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cld<32>()
+	template <> DecoderInfo IntelAssembler::cld<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cld<64>()
+	template <> DecoderInfo IntelAssembler::cld<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cld;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cli<16>()
+	template <> DecoderInfo IntelAssembler::cli<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cli<32>()
+	template <> DecoderInfo IntelAssembler::cli<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cli<64>()
+	template <> DecoderInfo IntelAssembler::cli<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cli;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clts<16>()
+	template <> DecoderInfo IntelAssembler::clts<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clts<32>()
+	template <> DecoderInfo IntelAssembler::clts<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::clts<64>()
+	template <> DecoderInfo IntelAssembler::clts<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::clts;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmc<16>()
+	template <> DecoderInfo IntelAssembler::cmc<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmc<32>()
+	template <> DecoderInfo IntelAssembler::cmc<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmc<64>()
+	template <> DecoderInfo IntelAssembler::cmc<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cmc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stc<16>()
+	template <> DecoderInfo IntelAssembler::stc<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stc<32>()
+	template <> DecoderInfo IntelAssembler::stc<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stc<64>()
+	template <> DecoderInfo IntelAssembler::stc<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::stc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::std<16>()
+	template <> DecoderInfo IntelAssembler::std<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::std<32>()
+	template <> DecoderInfo IntelAssembler::std<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::std<64>()
+	template <> DecoderInfo IntelAssembler::std<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::std;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sti<16>()
+	template <> DecoderInfo IntelAssembler::sti<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sti<32>()
+	template <> DecoderInfo IntelAssembler::sti<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sti<64>()
+	template <> DecoderInfo IntelAssembler::sti<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sti;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cpuid<16>()
+	template <> DecoderInfo IntelAssembler::cpuid<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cpuid<32>()
+	template <> DecoderInfo IntelAssembler::cpuid<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cpuid<64>()
+	template <> DecoderInfo IntelAssembler::cpuid<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::cpuid;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::daa<16>()
+	template <> DecoderInfo IntelAssembler::daa<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::daa<32>()
+	template <> DecoderInfo IntelAssembler::daa<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::daa<64>()
+	template <> DecoderInfo IntelAssembler::daa<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::daa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::das<16>()
+	template <> DecoderInfo IntelAssembler::das<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::das<32>()
+	template <> DecoderInfo IntelAssembler::das<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::das<64>()
+	template <> DecoderInfo IntelAssembler::das<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::das;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::hlt<16>()
+	template <> DecoderInfo IntelAssembler::hlt<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::hlt<32>()
+	template <> DecoderInfo IntelAssembler::hlt<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::hlt<64>()
+	template <> DecoderInfo IntelAssembler::hlt<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::hlt;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int3<16>()
+	template <> DecoderInfo IntelAssembler::int3<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int3<32>()
+	template <> DecoderInfo IntelAssembler::int3<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int3<64>()
+	template <> DecoderInfo IntelAssembler::int3<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int3;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::into<16>()
+	template <> DecoderInfo IntelAssembler::into<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::into<32>()
+	template <> DecoderInfo IntelAssembler::into<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::into<64>()
+	template <> DecoderInfo IntelAssembler::into<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::into;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int1<16>()
+	template <> DecoderInfo IntelAssembler::int1<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int1<32>()
+	template <> DecoderInfo IntelAssembler::int1<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::int1<64>()
+	template <> DecoderInfo IntelAssembler::int1<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::int1;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invd<16>()
+	template <> DecoderInfo IntelAssembler::invd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invd<32>()
+	template <> DecoderInfo IntelAssembler::invd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::invd<64>()
+	template <> DecoderInfo IntelAssembler::invd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::invd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iret<16>()
+	template <> DecoderInfo IntelAssembler::iret<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iret<32>()
+	template <> DecoderInfo IntelAssembler::iret<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iret<64>()
+	template <> DecoderInfo IntelAssembler::iret<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iret;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretd<16>()
+	template <> DecoderInfo IntelAssembler::iretd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretd<32>()
+	template <> DecoderInfo IntelAssembler::iretd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretd<64>()
+	template <> DecoderInfo IntelAssembler::iretd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretq<16>()
+	template <> DecoderInfo IntelAssembler::iretq<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretq<32>()
+	template <> DecoderInfo IntelAssembler::iretq<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::iretq<64>()
+	template <> DecoderInfo IntelAssembler::iretq<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::iretq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lahf<16>()
+	template <> DecoderInfo IntelAssembler::lahf<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lahf<32>()
+	template <> DecoderInfo IntelAssembler::lahf<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lahf<64>()
+	template <> DecoderInfo IntelAssembler::lahf<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::lahf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sahf<16>()
+	template <> DecoderInfo IntelAssembler::sahf<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sahf<32>()
+	template <> DecoderInfo IntelAssembler::sahf<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sahf<64>()
+	template <> DecoderInfo IntelAssembler::sahf<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sahf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::leave<16>()
+	template <> DecoderInfo IntelAssembler::leave<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::leave<32>()
+	template <> DecoderInfo IntelAssembler::leave<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::leave<64>()
+	template <> DecoderInfo IntelAssembler::leave<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::leave;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::nop<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nop;
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::nop<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nop;
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::nop<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::nop<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::nop;
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdmsr<16>()
+	template <> DecoderInfo IntelAssembler::rdmsr<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdmsr<32>()
+	template <> DecoderInfo IntelAssembler::rdmsr<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdmsr<64>()
+	template <> DecoderInfo IntelAssembler::rdmsr<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdmsr;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdpmc<16>()
+	template <> DecoderInfo IntelAssembler::rdpmc<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdpmc<32>()
+	template <> DecoderInfo IntelAssembler::rdpmc<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdpmc<64>()
+	template <> DecoderInfo IntelAssembler::rdpmc<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdpmc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtsc<16>()
+	template <> DecoderInfo IntelAssembler::rdtsc<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtsc<32>()
+	template <> DecoderInfo IntelAssembler::rdtsc<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtsc<64>()
+	template <> DecoderInfo IntelAssembler::rdtsc<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtsc;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtscp<16>()
+	template <> DecoderInfo IntelAssembler::rdtscp<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtscp<32>()
+	template <> DecoderInfo IntelAssembler::rdtscp<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rdtscp<64>()
+	template <> DecoderInfo IntelAssembler::rdtscp<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rdtscp;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rsm<16>()
+	template <> DecoderInfo IntelAssembler::rsm<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rsm<32>()
+	template <> DecoderInfo IntelAssembler::rsm<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::rsm<64>()
+	template <> DecoderInfo IntelAssembler::rsm<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::rsm;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::swapgs<16>()
+	template <> DecoderInfo IntelAssembler::swapgs<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::swapgs<32>()
+	template <> DecoderInfo IntelAssembler::swapgs<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::swapgs<64>()
+	template <> DecoderInfo IntelAssembler::swapgs<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::swapgs;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::syscall<16>()
+	template <> DecoderInfo IntelAssembler::syscall<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::syscall<32>()
+	template <> DecoderInfo IntelAssembler::syscall<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::syscall<64>()
+	template <> DecoderInfo IntelAssembler::syscall<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::syscall;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysret<16>()
+	template <> DecoderInfo IntelAssembler::sysret<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysret<32>()
+	template <> DecoderInfo IntelAssembler::sysret<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysret<64>()
+	template <> DecoderInfo IntelAssembler::sysret<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysret;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysretq<16>()
+	template <> DecoderInfo IntelAssembler::sysretq<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysretq<32>()
+	template <> DecoderInfo IntelAssembler::sysretq<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::sysretq<64>()
+	template <> DecoderInfo IntelAssembler::sysretq<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::sysretq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud2<16>()
+	template <> DecoderInfo IntelAssembler::ud2<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud2<32>()
+	template <> DecoderInfo IntelAssembler::ud2<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::ud2<64>()
+	template <> DecoderInfo IntelAssembler::ud2<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::ud2;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wait<16>()
+	template <> DecoderInfo IntelAssembler::wait<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wait<32>()
+	template <> DecoderInfo IntelAssembler::wait<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wait<64>()
+	template <> DecoderInfo IntelAssembler::wait<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::fwait<16>()
+	template <> DecoderInfo IntelAssembler::fwait<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::fwait<32>()
+	template <> DecoderInfo IntelAssembler::fwait<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::fwait<64>()
+	template <> DecoderInfo IntelAssembler::fwait<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wait;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wbinvd<16>()
+	template <> DecoderInfo IntelAssembler::wbinvd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wbinvd<32>()
+	template <> DecoderInfo IntelAssembler::wbinvd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wbinvd<64>()
+	template <> DecoderInfo IntelAssembler::wbinvd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wbinvd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wrmsr<16>()
+	template <> DecoderInfo IntelAssembler::wrmsr<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wrmsr<32>()
+	template <> DecoderInfo IntelAssembler::wrmsr<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::wrmsr<64>()
+	template <> DecoderInfo IntelAssembler::wrmsr<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::wrmsr;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xlatb<16>()
+	template <> DecoderInfo IntelAssembler::xlatb<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xlatb<32>()
+	template <> DecoderInfo IntelAssembler::xlatb<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::xlatb<64>()
+	template <> DecoderInfo IntelAssembler::xlatb<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::xlatb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popa<16>()
+	template <> DecoderInfo IntelAssembler::popa<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popa<32>()
+	template <> DecoderInfo IntelAssembler::popa<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popa<64>()
+	template <> DecoderInfo IntelAssembler::popa<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popa;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popad<16>()
+	template <> DecoderInfo IntelAssembler::popad<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popad<32>()
+	template <> DecoderInfo IntelAssembler::popad<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popad<64>()
+	template <> DecoderInfo IntelAssembler::popad<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popad;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popf<16>()
+	template <> DecoderInfo IntelAssembler::popf<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popf<32>()
+	template <> DecoderInfo IntelAssembler::popf<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popf<64>()
+	template <> DecoderInfo IntelAssembler::popf<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfd<16>()
+	template <> DecoderInfo IntelAssembler::popfd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfd<32>()
+	template <> DecoderInfo IntelAssembler::popfd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfd<64>()
+	template <> DecoderInfo IntelAssembler::popfd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfq<16>()
+	template <> DecoderInfo IntelAssembler::popfq<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfq<32>()
+	template <> DecoderInfo IntelAssembler::popfq<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::popfq<64>()
+	template <> DecoderInfo IntelAssembler::popfq<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::popfq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pusha<16>()
+	template <> DecoderInfo IntelAssembler::pusha<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pusha<32>()
+	template <> DecoderInfo IntelAssembler::pusha<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pusha<64>()
+	template <> DecoderInfo IntelAssembler::pusha<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pusha;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushad<16>()
+	template <> DecoderInfo IntelAssembler::pushad<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushad<32>()
+	template <> DecoderInfo IntelAssembler::pushad<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushad<64>()
+	template <> DecoderInfo IntelAssembler::pushad<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushad;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushf<16>()
+	template <> DecoderInfo IntelAssembler::pushf<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushf<32>()
+	template <> DecoderInfo IntelAssembler::pushf<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushf<64>()
+	template <> DecoderInfo IntelAssembler::pushf<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushf;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfd<16>()
+	template <> DecoderInfo IntelAssembler::pushfd<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfd<32>()
+	template <> DecoderInfo IntelAssembler::pushfd<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfd<64>()
+	template <> DecoderInfo IntelAssembler::pushfd<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfq<16>()
+	template <> DecoderInfo IntelAssembler::pushfq<16>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfq<32>()
+	template <> DecoderInfo IntelAssembler::pushfq<32>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::pushfq<64>()
+	template <> DecoderInfo IntelAssembler::pushfq<64>()
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		info.instr = Instruction::pushfq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsq<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsq<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::cmpsq<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::cmpsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::cmpsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsq<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsq<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::lodsq<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::lodsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::lodsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsq<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsq<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsq<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsq<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::movsq<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::movsq<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::movsq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasq<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasq<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasq<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasq<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::scasq<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::scasq<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::scasq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosq<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosq<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosq<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosq<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::stosq<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::stosq<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::stosq;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::insd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::insd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::insd;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsb<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsb<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsb<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsb<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsb<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsb<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsb;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsw<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsw<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsw<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsw<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsw<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsw<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsw;
 		Assemble64(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsd<16>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsd<16>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble16(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsd<32>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsd<32>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble32(info);
 		return info;
 	}
 
-	template <> AnalyzeInfo IntelAssembler::outsd<64>(Prefix pre)
+	template <> DecoderInfo IntelAssembler::outsd<64>(Prefix pre)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		if (pre != Prefix::NoPrefix) AddPrefix(info, pre);
 		info.instr = Instruction::outsd;
 		Assemble64(info);

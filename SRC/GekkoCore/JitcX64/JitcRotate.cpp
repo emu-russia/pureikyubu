@@ -5,7 +5,7 @@ namespace Gekko
 {
 
 	// rlwinm rA,rS,SH,MB,ME 
-	void Jitc::Rlwinm(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::Rlwinm(DecoderInfo* info, CodeSegment* seg)
 	{
 		uint32_t mask = core->interp->GetRotMask(info->paramBits[3], info->paramBits[4]);
 

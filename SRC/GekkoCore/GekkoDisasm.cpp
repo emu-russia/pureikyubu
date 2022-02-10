@@ -6,7 +6,7 @@ namespace Gekko
 	// Branch conditional.
 	// Disp:1 - branch with displacement..
 	// Disp:0 - branch by register (L:1 for LR, L:0 for CTR).
-	std::string GekkoDisasm::Bcx(AnalyzeInfo* info, bool Disp, bool L, bool & simple, bool skipOperand[5])
+	std::string GekkoDisasm::Bcx(DecoderInfo* info, bool Disp, bool L, bool & simple, bool skipOperand[5])
 	{
 		int bo = info->paramBits[0], bi = info->paramBits[1];
 		uint16_t uimm = info->Imm.Unsigned;
@@ -92,7 +92,7 @@ namespace Gekko
 	}
 
 	// Not all simplified instructions are supported. Some of those presented in the manual are so simplified that they only confuse.
-	std::string GekkoDisasm::SimplifiedInstruction(AnalyzeInfo* info, bool& simple, bool skipOperand[5])
+	std::string GekkoDisasm::SimplifiedInstruction(DecoderInfo* info, bool& simple, bool skipOperand[5])
 	{
 		static const char* t_cond[32] = {
 			NULL, "lgt", "llt", NULL, "eq", "lge", "lle", NULL,
@@ -355,7 +355,7 @@ namespace Gekko
 		return std::string(buf);
 	}
 
-	std::string GekkoDisasm::InstrToString(AnalyzeInfo* info)
+	std::string GekkoDisasm::InstrToString(DecoderInfo* info)
 	{
 		// This switch-case spent approximately 4200 Joules.
 		switch (info->instr)
@@ -826,7 +826,7 @@ namespace Gekko
 		return out;
 	}
 
-	std::string GekkoDisasm::ParamToString(Param param, int paramBits, AnalyzeInfo* info)
+	std::string GekkoDisasm::ParamToString(Param param, int paramBits, DecoderInfo* info)
 	{
 		char text[0x20] = { 0, };
 
@@ -916,7 +916,7 @@ namespace Gekko
 		}
 	}
 
-	std::string GekkoDisasm::Disasm(uint32_t pc, AnalyzeInfo* info, bool showAddress, bool showInstr)
+	std::string GekkoDisasm::Disasm(uint32_t pc, DecoderInfo* info, bool showAddress, bool showInstr)
 	{
 		std::string text = "";
 		// Some simplified instructions hide part of the operands.

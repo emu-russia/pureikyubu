@@ -26,7 +26,7 @@ namespace Gekko
 
 	CodeSegment* Jitc::CompileSegment(uint32_t addr)
 	{
-		AnalyzeInfo info = { 0 };
+		DecoderInfo info = { 0 };
 		CodeSegment* segment = new CodeSegment();
 
 		segment->addr = addr;
@@ -58,7 +58,7 @@ namespace Gekko
 
 			PIReadWord(physicalAddress, &instr);
 
-			Analyzer::AnalyzeFast(addr, instr, &info);
+			Decoder::DecodeFast(addr, instr, &info);
 
 			CompileInstr(&info, segment);
 
@@ -120,7 +120,7 @@ namespace Gekko
 		Write32((uint32_t)(data >> 32));
 	}
 
-	void CodeSegment::Write(const IntelCore::AnalyzeInfo& info)
+	void CodeSegment::Write(const IntelCore::DecoderInfo& info)
 	{
 		for (size_t i = 0; i < info.prefixSize; i++)
 		{
@@ -236,7 +236,7 @@ namespace Gekko
 		Gekko->ops++;
 	}
 
-	void Jitc::CompileInstr(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::CompileInstr(DecoderInfo* info, CodeSegment* seg)
 	{
 		switch (info->instr)
 		{

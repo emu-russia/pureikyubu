@@ -52,7 +52,7 @@ namespace Gekko
 
         for (size_t i = 0; i < maxCount; i++)
         {
-            AnalyzeInfo info;
+            DecoderInfo info;
 
             info.instr = unsorted[i].instr;
             Report(Channel::Norm, "%s: %i\n", GekkoDisasm::InstrToString(&info).c_str(), unsorted[i].count);

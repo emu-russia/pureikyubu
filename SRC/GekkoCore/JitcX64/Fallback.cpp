@@ -3,7 +3,7 @@
 namespace Gekko
 {
 
-	void Jitc::FallbackStub(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::FallbackStub(DecoderInfo* info, CodeSegment* seg)
 	{
 		// Call ExecuteInterpeterFallback
 

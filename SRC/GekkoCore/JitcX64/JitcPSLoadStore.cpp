@@ -202,7 +202,7 @@ namespace Gekko
 		seg->Write32(0x0a110ff2);
 	}
 
-	void Jitc::PSQLoad(AnalyzeInfo* info, CodeSegment* seg)
+	void Jitc::PSQLoad(DecoderInfo* info, CodeSegment* seg)
 	{
 		// EA
 

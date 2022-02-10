@@ -6,6 +6,6 @@
 
 #pragma once
 
-#include "IntelAnalyzer.h"
+#include "IntelDecoder.h"
 #include "IntelAssemblerFpu.h"
 #include "IntelAssembler.h"

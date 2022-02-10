@@ -28,21 +28,21 @@ namespace Gekko
 	}
 
 	// PC = PC + EXTS(LI || 0b00)
-	void Interpreter::b(AnalyzeInfo& info)
+	void Interpreter::b(DecoderInfo& info)
 	{
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
 
 	// PC = EXTS(LI || 0b00)
-	void Interpreter::ba(AnalyzeInfo& info)
+	void Interpreter::ba(DecoderInfo& info)
 	{
 		core->regs.pc = info.Imm.Address;
 		BranchCheck();
 	}
 
 	// LR = PC + 4, PC = PC + EXTS(LI || 0b00)
-	void Interpreter::bl(AnalyzeInfo& info)
+	void Interpreter::bl(DecoderInfo& info)
 	{
 		core->regs.spr[SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
@@ -50,7 +50,7 @@ namespace Gekko
 	}
 
 	// LR = PC + 4, PC = EXTS(LI || 0b00)
-	void Interpreter::bla(AnalyzeInfo& info)
+	void Interpreter::bla(DecoderInfo& info)
 	{
 		core->regs.spr[SPR::LR] = core->regs.pc + 4;
 		core->regs.pc = info.Imm.Address;
@@ -58,7 +58,7 @@ namespace Gekko
 	}
 
 	// calculation of conditional branch
-	bool Interpreter::BcTest(AnalyzeInfo& info)
+	bool Interpreter::BcTest(DecoderInfo& info)
 	{
 		bool ctr_ok, cond_ok;
 		int bo = info.paramBits[0], bi = info.paramBits[1];
@@ -91,7 +91,7 @@ namespace Gekko
 	//      if AA = 1
 	//          then PC = EXTS(BD || 0b00)
 	//          else PC = PC + EXTS(BD || 0b00)
-	void Interpreter::bc(AnalyzeInfo& info)
+	void Interpreter::bc(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{
@@ -104,7 +104,7 @@ namespace Gekko
 		}
 	}
 
-	void Interpreter::bca(AnalyzeInfo& info)
+	void Interpreter::bca(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{
@@ -117,7 +117,7 @@ namespace Gekko
 		}
 	}
 
-	void Interpreter::bcl(AnalyzeInfo& info)
+	void Interpreter::bcl(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{
@@ -131,7 +131,7 @@ namespace Gekko
 		}
 	}
 
-	void Interpreter::bcla(AnalyzeInfo& info)
+	void Interpreter::bcla(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{
@@ -146,7 +146,7 @@ namespace Gekko
 	}
 
 	// calculation of conditional to count register branch
-	bool Interpreter::BctrTest(AnalyzeInfo& info)
+	bool Interpreter::BctrTest(DecoderInfo& info)
 	{
 		bool cond_ok;
 		int bo = info.paramBits[0], bi = info.paramBits[1];
@@ -165,7 +165,7 @@ namespace Gekko
 	// if cond_ok
 	//      then
 	//              PC = CTR || 0b00
-	void Interpreter::bcctr(AnalyzeInfo& info)
+	void Interpreter::bcctr(DecoderInfo& info)
 	{
 		if (BctrTest(info))
 		{
@@ -183,7 +183,7 @@ namespace Gekko
 	//      then
 	//              LR = PC + 4
 	//              PC = CTR || 0b00
-	void Interpreter::bcctrl(AnalyzeInfo& info)
+	void Interpreter::bcctrl(DecoderInfo& info)
 	{
 		if (BctrTest(info))
 		{
@@ -202,7 +202,7 @@ namespace Gekko
 	// cond_ok = BO0 | (CR[BI] EQV BO1)
 	// if ctr_ok & cond_ok then
 	//      PC = LR[0-29] || 0b00
-	void Interpreter::bclr(AnalyzeInfo& info)
+	void Interpreter::bclr(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{
@@ -222,7 +222,7 @@ namespace Gekko
 	//      NLR = PC + 4
 	//      PC = LR[0-29] || 0b00
 	//      LR = NLR
-	void Interpreter::bclrl(AnalyzeInfo& info)
+	void Interpreter::bclrl(DecoderInfo& info)
 	{
 		if (BcTest(info))
 		{

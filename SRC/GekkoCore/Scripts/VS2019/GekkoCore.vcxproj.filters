@@ -39,7 +39,7 @@
     <ClInclude Include="..\..\GekkoDefs.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\GekkoAnalyzer.h">
+    <ClInclude Include="..\..\GekkoDecoder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\GekkoDisasm.h">
@@ -83,7 +83,7 @@
     <ClCompile Include="..\..\Mmu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\GekkoAnalyzer.cpp">
+    <ClCompile Include="..\..\GekkoDecoder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\GekkoDisasm.cpp">

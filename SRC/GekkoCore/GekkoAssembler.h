@@ -15,7 +15,7 @@ namespace Gekko
 		/// <param name="info">Information about Gekko instruction. If the parameter does not match the required type, throw an exception</param>
 		/// <param name="paramNum">Parameter number</param>
 		/// <param name="should">What type should the parameter be</param>
-		static void CheckParam(AnalyzeInfo& info, size_t paramNum, Param should);
+		static void CheckParam(DecoderInfo& info, size_t paramNum, Param should);
 
 		/// <summary>
 		/// Pack the bit value into an instruction. Bit numbering in PowerPC format (msb = 0). If the value does not fit into the range, throw an exception.
@@ -46,18 +46,18 @@ namespace Gekko
 		/// <param name="rc">Rc bit</param>
 		/// <param name="info">Instruction information with parameters</param>
 		/// <returns>info.instrBits: assembled Gekko instruction (32 bit)</returns>
-		static void Form_DAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+		static void Form_DAB(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info);
 
 		/// <summary>
 		/// Shorter XO version.
 		/// Example: addme rD,rA
 		/// </summary>
-		static void Form_DA(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
+		static void Form_DA(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info);
 
 		/// <summary>
 		/// Example: and. rA,rS,rB
 		/// </summary>
-		static void Form_ASB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_ASB(size_t primary, size_t extended, bool rc, DecoderInfo& info);
 
 		/// <summary>
 		/// SIMM version of `D` instruction form.
@@ -66,114 +66,114 @@ namespace Gekko
 		/// <param name="primary">Primary opcode value</param>
 		/// <param name="info">Instruction information with parameters</param>
 		/// <returns>info.instrBits: assembled Gekko instruction (32 bit)</returns>
-		static void Form_DASimm(size_t primary, AnalyzeInfo& info);
+		static void Form_DASimm(size_t primary, DecoderInfo& info);
 
 		/// <summary>
 		/// Example: andi. rA,rS,UIMM
 		/// </summary>
-		static void Form_ASUimm(size_t primary, AnalyzeInfo& info);
+		static void Form_ASUimm(size_t primary, DecoderInfo& info);
 
 		/// <summary>
 		/// Long branch.
 		/// Example: bl target_addr
 		/// </summary>
-		static void Form_BranchLong(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
+		static void Form_BranchLong(size_t primary, bool aa, bool lk, DecoderInfo& info);
 
 		/// <summary>
 		/// Branch conditional by offset.
 		/// Example: bc 12,0,target_addr
 		/// </summary>
-		static void Form_BranchShort(size_t primary, bool aa, bool lk, AnalyzeInfo& info);
+		static void Form_BranchShort(size_t primary, bool aa, bool lk, DecoderInfo& info);
 
 		/// <summary>
 		/// Branch CTR/LR BO, BI
 		/// Example: bcctr 4, 10
 		/// </summary>
-		static void Form_BOBI(size_t primary, size_t extended, bool lk, AnalyzeInfo& info);
+		static void Form_BOBI(size_t primary, size_t extended, bool lk, DecoderInfo& info);
 
 		// Further on the same principle
 
-		static void Form_CrfDAB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_CrfDCrfS(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_CrfDASimm(size_t primary, AnalyzeInfo& info);
-		static void Form_CrfDAUimm(size_t primary, AnalyzeInfo& info);
-		static void Form_AS(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_CrbDAB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_AB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_SAB(size_t primary, size_t extended, bool oe, bool rc, AnalyzeInfo& info);
-		static void Form_Extended(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_CrfDAB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_CrfDCrfS(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_CrfDASimm(size_t primary, DecoderInfo& info);
+		static void Form_CrfDAUimm(size_t primary, DecoderInfo& info);
+		static void Form_AS(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_CrbDAB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_AB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_SAB(size_t primary, size_t extended, bool oe, bool rc, DecoderInfo& info);
+		static void Form_Extended(size_t primary, size_t extended, DecoderInfo& info);
 		
 		// Rotate/shift
 
-		static void Form_AS_SHMBME(size_t primary, bool rc, AnalyzeInfo& info);
-		static void Form_ASB_MBME(size_t primary, bool rc, AnalyzeInfo& info);
-		static void Form_AS_SH(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_AS_SHMBME(size_t primary, bool rc, DecoderInfo& info);
+		static void Form_ASB_MBME(size_t primary, bool rc, DecoderInfo& info);
+		static void Form_AS_SH(size_t primary, size_t extended, bool rc, DecoderInfo& info);
 
 		// Floating-Point
 
-		static void Form_FrDAB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_FrDAC(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_FrDB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_FrDACB(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_FrD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_CrfDFrAB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_CrbD(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_Mtfsf(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
-		static void Form_Mtfsfi(size_t primary, size_t extended, bool rc, AnalyzeInfo& info);
+		static void Form_FrDAB(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_FrDAC(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_FrDB(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_FrDACB(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_FrD(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_CrfDFrAB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_CrbD(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_Mtfsf(size_t primary, size_t extended, bool rc, DecoderInfo& info);
+		static void Form_Mtfsfi(size_t primary, size_t extended, bool rc, DecoderInfo& info);
 
 		// Load and Store
 
-		static void Form_DA_Offset(size_t primary, AnalyzeInfo& info);
-		static void Form_SA_Offset(size_t primary, AnalyzeInfo& info);
-		static void Form_DA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_SA_NB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_FrDA_Offset(size_t primary, AnalyzeInfo& info);
-		static void Form_FrSA_Offset(size_t primary, AnalyzeInfo& info);
-		static void Form_FrDRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_FrSRegAB(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_DA_Offset(size_t primary, DecoderInfo& info);
+		static void Form_SA_Offset(size_t primary, DecoderInfo& info);
+		static void Form_DA_NB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_SA_NB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_FrDA_Offset(size_t primary, DecoderInfo& info);
+		static void Form_FrSA_Offset(size_t primary, DecoderInfo& info);
+		static void Form_FrDRegAB(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_FrSRegAB(size_t primary, size_t extended, DecoderInfo& info);
 
 		// Trap Instructions
 
-		static void Form_Trap(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_TrapImm(size_t primary, AnalyzeInfo& info);
+		static void Form_Trap(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_TrapImm(size_t primary, DecoderInfo& info);
 
 		// Processor Control Instructions.
 
-		static void Form_Mcrxr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mfcr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mfmsr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mfspr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mftb(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mtcrf(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mtmsr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mtspr(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mcrxr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mfcr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mfmsr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mfspr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mftb(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mtcrf(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mtmsr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mtspr(size_t primary, size_t extended, DecoderInfo& info);
 
 		// Segment Register Manipulation Instructions
 
-		static void Form_Mfsr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mfsrin(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mtsr(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_Mtsrin(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Mfsr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mfsrin(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mtsr(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_Mtsrin(size_t primary, size_t extended, DecoderInfo& info);
 
 		// Lookaside Buffer Management Instructions
 
-		static void Form_Tlbie(size_t primary, size_t extended, AnalyzeInfo& info);
+		static void Form_Tlbie(size_t primary, size_t extended, DecoderInfo& info);
 
 		// Paired Single
 
-		static void Form_PsqLoadStoreIndexed(size_t primary, size_t extended, AnalyzeInfo& info);
-		static void Form_PsqLoadStore(size_t primary, AnalyzeInfo& info);
+		static void Form_PsqLoadStoreIndexed(size_t primary, size_t extended, DecoderInfo& info);
+		static void Form_PsqLoadStore(size_t primary, DecoderInfo& info);
 
 
 	public:
 
 		/// <summary>
-		/// Build a Gekko instruction based on the information from the `AnalyzeInfo` structure.
+		/// Build a Gekko instruction based on the information from the `DecoderInfo` structure.
 		/// All assembler errors are thrown as exceptions.
 		/// </summary>
 		/// <param name="info">Instruction information (including current pc value)</param>
 		/// <returns>info.instrBits: Gekko instruction (32 bit)</returns>
-		static void Assemble(AnalyzeInfo& info);
+		static void Assemble(DecoderInfo& info);
 
 		// Quick helpers
 

@@ -52,7 +52,7 @@ endif ()
     ../Cache.cpp
     ../GatherBuffer.cpp
     ../Gekko.cpp
-    ../GekkoAnalyzer.cpp
+    ../GekkoDecoder.cpp
     ../GekkoCommands.cpp
     ../GekkoDisasm.cpp
     ../GekkoAssembler.cpp

@@ -29,7 +29,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\IntelAnalyzer.h" />
+    <ClInclude Include="..\..\IntelDecoder.h" />
     <ClInclude Include="..\..\IntelAssembler.h" />
     <ClInclude Include="..\..\IntelAssemblerFpu.h" />
     <ClInclude Include="..\..\IntelCore.h" />

@@ -113,8 +113,8 @@ namespace Gekko
         
         // Decode instruction using GekkoAnalyzer and dispatch
 
-        AnalyzeInfo info;
-        Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
+        DecoderInfo info;
+        Decoder::Decode(core->regs.pc, instr, &info);
         Dispatch(info);
         core->ops++;
 
@@ -165,8 +165,8 @@ namespace Gekko
         
         // Decode instruction using GekkoAnalyzer and dispatch
 
-        AnalyzeInfo info;
-        Analyzer::AnalyzeFast(core->regs.pc, instr, &info);
+        DecoderInfo info;
+        Decoder::DecodeFast(core->regs.pc, instr, &info);
         Dispatch(info);
         core->ops++;
 
@@ -188,7 +188,7 @@ namespace Gekko
         return false;
     }
 
-    void Interpreter::Dispatch(AnalyzeInfo& info)
+    void Interpreter::Dispatch(DecoderInfo& info)
     {
         switch (info.instr)
         {
@@ -578,7 +578,7 @@ namespace Gekko
     }
 
     // high level call
-    void Interpreter::callvm(AnalyzeInfo& info)
+    void Interpreter::callvm(DecoderInfo& info)
     {
         // Dolwin module base should be specified as 0x400000 in project properties
         //void (*pcall)() = (void (*)())((void*)(uint64_t)op);
