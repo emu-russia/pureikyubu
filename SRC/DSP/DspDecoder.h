@@ -1,4 +1,4 @@
-// DSP analyzer.
+// DSP instruction decoder.
 // Can be used by disassembler as well as by interpreter/jitc.
 
 // TODO: replace the imperative approach of the decoder with the use of neural networks

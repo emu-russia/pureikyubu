@@ -18,7 +18,7 @@ Intel architecture actually hides three architectures (`modes`):
 
 All three architectures are the core on which the processor instructions are based, which are listed in the manual under the `General-Purpose Instructions` and `System Instructions` categories.
 
-Accordingly, the first layer that must be implemented in `AnalyzeInfo` is the specified categories of instructions and the specifics of their format.
+Accordingly, the first layer that must be implemented in `DecoderInfo` is the specified categories of instructions and the specifics of their format.
 
 Then there are extensions, mainly related to speeding up the calculation of float/double/simd:
 - x87 FPU Instructions
@@ -43,7 +43,7 @@ These instruction format extensions can also be viewed as layers and implemented
 
 Prefixes are stored separately from the instruction code.
 
-The `AnalyzeInfo` structure contains two sets of properties for working with prefixes:
+The `DecoderInfo` structure contains two sets of properties for working with prefixes:
 - Input array of prefixes, which is used when generating instruction code (`prefixes` property)
 - Compiled prefixes (raw bytes) (`prefixBytes` property)
 
@@ -65,7 +65,7 @@ This component abstracts whole kitchen by simply specifying the type of the para
 adc [EAX * 2 + ECX + 0x11], EBX
 ```
 
-is represented in the `AnalyzeInfo` structure with the following parameters:
+is represented in the `DecoderInfo` structure with the following parameters:
 
 - `Param::sib_eax_2_ecx_disp8`
 - `Param::ebx`
@@ -75,7 +75,7 @@ Thus, `Param` fully defines all possible combinations that can be specified usin
 
 When compiling an instruction, the assembler takes into account the order of the parameters and compiles the corresponding opcodes and ModRM/SIB/REX bytes and the necessary prefixes (for example, if the specified instruction is compiled in 16-bit mode, the corresponding prefix will be added). 
 
-For each ModRM variation, the component contains tangled procedures that collect `AnalyzeInfo` parameters into the corresponding raw bytes. I deliberately divided them into special cases, because the general handler of all ModRM variations is beyond human mind. If someday aliens will reverse engineer Intel processors they'll have to supply a lot of ice for their butts.
+For each ModRM variation, the component contains tangled procedures that collect `DecoderInfo` parameters into the corresponding raw bytes. I deliberately divided them into special cases, because the general handler of all ModRM variations is beyond human mind. If someday aliens will reverse engineer Intel processors they'll have to supply a lot of ice for their butts.
 
 ## PtrHint
 
@@ -88,7 +88,7 @@ dec byte ptr [eax]		; "\xfe\x08"
 dec dword ptr [eax]		; "\xff\x08"
 ```
 
-To explicitly indicate the size of the operand the `AnalyzeInfo` structure contains the `ptrHint` property.
+To explicitly indicate the size of the operand the `DecoderInfo` structure contains the `ptrHint` property.
 
 ## x87 FPU Instructions
 
