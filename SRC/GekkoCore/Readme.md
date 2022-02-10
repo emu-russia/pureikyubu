@@ -36,7 +36,7 @@ with it using any instructions).
 
 The interpreter has been rewritten to use a generic decoder.
 
-Each instruction handler already receives ready-made decoded information (`AnalyzeInfo`) and does not perform decoding. 
+Each instruction handler already receives ready-made decoded information (`DecoderInfo`) and does not perform decoding. 
 
 To speed up the operation of some instructions (Paired-Single Load Store and Rotate), pre-prepared tables are used.
 
@@ -48,11 +48,7 @@ A recompiler or just-in-time compiler (JITC) is a widespread practice for optimi
 
 The recompiler translates code into sections called "segments". Each segment is a continuous section of Gekko code (that is, the segment ends on the first branch instruction, or any other instruction that non-linearly changes the Program Counter register).
 
-All recompiled segments are stored in a cache arranged as `std::unordered_map`. The key is the starting address >> 2 (all Gekko instructions are 4 byte aligned) of the segment.
-
-```c++
-std::unordered_map<uint32_t, CodeSegment*> segments;
-```
+All recompiled segments are stored in a indexed cache. The index is the starting physical address >> 2 (all Gekko instructions are 4 byte aligned) of the segment.
 
 ### Segment Translation
 
@@ -60,7 +56,7 @@ Segment translation is the actual process of recompiling a Gekko code segment in
 
 Translation is carried out instruction by instruction, until the end of the segment (branch). The last branch is also translated.
 
-Translation of individual instructions is carried out with the participation of the GekkoAnalyzer component. The instruction is analyzed, and then the structure with the analyzed information (AnalyzeInfo) is passed to the code generator of the corresponding instruction.
+Translation of individual instructions is carried out with the participation of the GekkoDecoder component. The instruction is decoded, and then the structure with the decoded information (`DecoderInfo`) is passed to the code generator of the corresponding instruction.
 
 All instructions translators are located in the JitcX64 folder (for translating the X64 code) and JitcX86 (for translating the X86). In total, Gekko contains about 350 instructions, so there are many corresponding modules there :P
 

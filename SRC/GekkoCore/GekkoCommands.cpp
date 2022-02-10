@@ -981,14 +981,22 @@ namespace Gekko
 
 			// Loop through segments map
 
-			for (auto it = Gekko->jitc->segments.begin(); it != Gekko->jitc->segments.end(); ++it)
+			size_t segCount = 0;
+
+			size_t segMax = RAMSIZE >> 2;
+
+			for (size_t n=0; n<segMax; n++)
 			{
-				uint32_t vaddr = it->first;
-				CodeSegment* seg = it->second;
+				uint32_t paddr = n << 2;
+				CodeSegment* seg = Gekko->jitc->segments[n];
+				if (!seg)
+					continue;
+
 				Report(Channel::Norm, "0x%08X: %zi b\n", seg->addr, seg->size);
+				segCount++;
 			}
 
-			Report(Channel::CPU, "Total segments: %zi\n", Gekko->jitc->segments.size());
+			Report(Channel::CPU, "Total segments: %zi\n", segCount);
 
 			if (running)
 			{
