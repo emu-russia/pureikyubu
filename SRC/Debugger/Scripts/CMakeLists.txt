@@ -4,4 +4,5 @@ add_library (Debugger SHARED
 	../Report.cpp
 	../SamplingProfiler.cpp
 	../Perf.cpp
+	../GekkoCommands.cpp
 )
