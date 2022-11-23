@@ -68,6 +68,8 @@
 
 #include "../Debugger/Debugger.h"
 
-#include "../GekkoCore/Gekko.h"
+#include "../GekkoCore/GekkoCore.h"
+
+extern Gekko::GekkoCore* Core;
 
 #include "../HighLevel/TimeFormat.h"

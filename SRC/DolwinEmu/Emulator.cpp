@@ -4,6 +4,8 @@
 // Emulator state
 Emulator emu;
 
+Gekko::GekkoCore *Core;
+
 void EMUGetHwConfig(HWConfig * config)
 {
     memset(config, 0, sizeof(HWConfig));
@@ -68,7 +70,7 @@ void EMUOpen(const std::wstring& filename)
     Debug::Log = new Debug::EventLog();
 
     // open other sub-systems
-    Gekko::Gekko->Reset();
+    Core->Reset();
     HWConfig* hwconfig = new HWConfig;
     EMUGetHwConfig(hwconfig);
     Flipper::HW = new Flipper::Flipper(hwconfig);
@@ -93,8 +95,8 @@ void EMUClose()
 
     HLEClose();
 
-    Gekko::Gekko->Suspend();
-	Gekko::Gekko->Reset();
+    Core->Suspend();
+    Core->Reset();
 
     delete Flipper::HW;
     Flipper::HW = nullptr;
@@ -108,7 +110,7 @@ void EMUClose()
 // reset emulator
 void EMUReset()
 {
-    bool runningBefore = Gekko::Gekko->IsRunning();
+    bool runningBefore = Core->IsRunning();
     EMUClose();
     EMUOpen(emu.lastLoaded);
     if (runningBefore)
@@ -124,7 +126,8 @@ void EMUCtor()
         return;
     }
     JDI::Hub.AddNode(DEBUGGER_JDI_JSON, Debug::Reflector);
-    Gekko::Gekko = new Gekko::GekkoCore();
+    JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, Debug::gekko_init_handlers);
+    Core = new Gekko::GekkoCore();
     Flipper::DSP = new DSP::Dsp16();
     Flipper::Gx = new GX::GXCore();
     JDI::Hub.AddNode(EMU_JDI_JSON, EmuReflector);
@@ -143,13 +146,14 @@ void EMUDtor()
     JDI::Hub.RemoveNode(EMU_JDI_JSON);
     DVD::Unmount();
     DVD::ShutdownSubsystem();
-    delete Gekko::Gekko;
-    Gekko::Gekko = nullptr;
+    delete Core;
+    Core = nullptr;
     delete Flipper::DSP;
     Flipper::DSP = nullptr;
     delete Flipper::Gx;
     Flipper::Gx = nullptr;
     HLEShutdown();
+    JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
     JDI::Hub.RemoveNode(DEBUGGER_JDI_JSON);
     delete Debug::g_PerfCounters;
     emu.init = false;
@@ -165,9 +169,9 @@ void EMURun()
         return;
     }
 
-    if (!Gekko::Gekko->IsRunning())
+    if (!Core->IsRunning())
     {
-        Gekko::Gekko->Run();
+        Core->Run();
     }
 }
 
@@ -181,8 +185,8 @@ void EMUStop()
         return;
     }
 
-    if (Gekko::Gekko->IsRunning())
+    if (Core->IsRunning())
     {
-        Gekko::Gekko->Suspend();
+        Core->Suspend();
     }
 }

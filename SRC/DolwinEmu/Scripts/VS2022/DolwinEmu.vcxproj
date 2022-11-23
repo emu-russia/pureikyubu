@@ -89,9 +89,6 @@
     <ProjectReference Include="..\..\..\HighLevel\Scripts\VS2022\GCNHighLevel.vcxproj">
       <Project>{8b3f4adc-dc10-442c-bbba-8c5ba201fdbc}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\IntelCore\Scripts\VS2022\IntelCore.vcxproj">
-      <Project>{01481d7e-ee3a-453b-8a98-1cb98df87b5f}</Project>
-    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

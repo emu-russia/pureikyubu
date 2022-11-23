@@ -90,17 +90,6 @@ enum class PIInterruptSource
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
-// Interface for accessing memory and memory-mapped registers from the processor side.
-// For more details see Docs/HW/ProcessorInterface.md
-
-void PIReadByte(uint32_t phys_addr, uint32_t* reg);
-void PIWriteByte(uint32_t phys_addr, uint32_t data);
-void PIReadHalf(uint32_t phys_addr, uint32_t* reg);
-void PIWriteHalf(uint32_t phys_addr, uint32_t data);
-void PIReadWord(uint32_t phys_addr, uint32_t* reg);
-void PIWriteWord(uint32_t phys_addr, uint32_t data);
-void PIReadDouble(uint32_t phys_addr, uint64_t* reg);
-void PIWriteDouble(uint32_t phys_addr, uint64_t* data);
 void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32]);
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 

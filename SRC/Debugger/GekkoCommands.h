@@ -4,7 +4,7 @@
 
 #define GEKKO_CORE_JDI_JSON L"./Data/Json/GekkoCoreJdi.json"
 
-namespace Gekko
+namespace Debug
 {
 	/// <summary>
 	/// To avoid making the entire Jitc context public, just friend this class.

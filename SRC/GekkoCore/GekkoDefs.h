@@ -115,23 +115,25 @@ namespace Gekko
 {
 	enum class Exception : uint32_t
 	{
-		RESET = 0x0100,
-		MACHINE = 0x0200,
-		DSI = 0x0300,
-		ISI = 0x0400,
-		INTERRUPT = 0x0500,
-		ALIGN = 0x0600,
-		PROGRAM = 0x0700,
-		FPUNAVAIL = 0x0800,
-		DECREMENTER = 0x0900,
-		SYSCALL = 0x0C00,
-		PERFMON = 0x0D00,
-		IABR = 0x1300,
-		THERMAL = 0x1700,
+		EXCEPTION_RESERVED = 0x00000,
+		EXCEPTION_SYSTEM_RESET = 0x00100,
+		EXCEPTION_MACHINE_CHECK = 0x00200,
+		EXCEPTION_DSI = 0x00300,
+		EXCEPTION_ISI = 0x00400,
+		EXCEPTION_EXTERNAL_INTERRUPT = 0x00500,
+		EXCEPTION_ALIGNMENT = 0x00600,
+		EXCEPTION_PROGRAM = 0x00700,
+		EXCEPTION_FP_UNAVAILABLE = 0x00800,
+		EXCEPTION_DECREMENTER = 0x00900,
+		EXCEPTION_SYSTEM_CALL = 0x00C00,
+		EXCEPTION_TRACE = 0x00D00,
+		EXCEPTION_PERFORMANCE_MONITOR = 0x00F00,
+		EXCEPTION_IABR = 0x01300,
+		EXCEPTION_THERMAL = 0x01700,
 	};
 }
 
-// Sprs
+// SPRs
 
 namespace Gekko
 {
@@ -229,3 +231,22 @@ enum class GEKKO_QUANT_TYPE
 
 // Left until all lurking bugs are eliminated.
 #define DOLPHIN_OS_LOCKED_CACHE_ADDRESS 0xE000'0000
+
+// floating point register
+union FPREG
+{
+	double         dbl;
+	uint64_t       uval;
+};
+
+// time-base
+union TBREG
+{
+	volatile int64_t   sval;               // for comparsion
+	volatile uint64_t  uval;               // for incrementing
+	struct
+	{
+		uint32_t     l;                  // for output
+		uint32_t     u;
+	} Part;
+};

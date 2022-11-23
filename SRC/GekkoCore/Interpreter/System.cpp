@@ -2,8 +2,6 @@
 #include "../pch.h"
 #include "InterpreterPrivate.h"
 
-using namespace Debug;
-
 namespace Gekko
 {
 
@@ -79,7 +77,7 @@ namespace Gekko
 	{
 		// pseudo-branch (to resume from next instruction after 'rfi')
 		core->regs.pc += 4;
-		core->Exception(Gekko::Exception::SYSCALL);
+		core->Exception(Gekko::Exception::EXCEPTION_SYSTEM_CALL);
 	}
 
 	void Interpreter::tw()
@@ -96,7 +94,7 @@ namespace Gekko
 			// pseudo-branch (to resume from next instruction after 'rfi')
 			core->regs.pc += 4;
 			core->PrCause = PrivilegedCause::Trap;
-			core->Exception(Gekko::Exception::PROGRAM);
+			core->Exception(Gekko::Exception::EXCEPTION_PROGRAM);
 		}
 		else
 		{
@@ -118,7 +116,7 @@ namespace Gekko
 			// pseudo-branch (to resume from next instruction after 'rfi')
 			core->regs.pc += 4;
 			core->PrCause = PrivilegedCause::Trap;
-			core->Exception(Gekko::Exception::PROGRAM);
+			core->Exception(Gekko::Exception::EXCEPTION_PROGRAM);
 		}
 		else
 		{
@@ -150,7 +148,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -228,7 +226,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -267,7 +265,7 @@ namespace Gekko
 			bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 			bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-			Report(Channel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
+			core->Report("%s <- %08X (IR:%i DR:%i pc:%08X)\n",
 				bat[spr - SPR::IBAT0U], core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 		}
 		
@@ -284,7 +282,7 @@ namespace Gekko
 				bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 				bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-				Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+				core->Report("SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
 					core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 
 				core->dtlb.InvalidateAll();
@@ -294,11 +292,11 @@ namespace Gekko
 
 			case SPR::TBL:
 				core->regs.tb.Part.l = core->regs.gpr[info.paramBits[1]];
-				Report(Channel::CPU, "Set TBL: 0x%08X\n", core->regs.tb.Part.l);
+				core->Report("Set TBL: 0x%08X\n", core->regs.tb.Part.l);
 				break;
 			case SPR::TBU:
 				core->regs.tb.Part.u = core->regs.gpr[info.paramBits[1]];
-				Report(Channel::CPU, "Set TBU: 0x%08X\n", core->regs.tb.Part.u);
+				core->Report("Set TBU: 0x%08X\n", core->regs.tb.Part.u);
 				break;
 
 			// write gathering buffer
@@ -319,14 +317,16 @@ namespace Gekko
 					// On a real system, after a global cache invalidation, the data still remains in the L2 cache.
 					// We cannot afford global invalidation, as the L2 cache is not supported.
 
-					Report(Channel::CPU, "Data Cache Flash Invalidate\n");
+					core->Report("Data Cache Flash Invalidate\n");
 				}
 				if (bits & HID0_ICFI)
 				{
 					bits &= ~HID0_ICFI;
+#if GEKKOCORE_USE_JITC
 					core->jitc->Reset();
+#endif
 
-					Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
+					core->Report("Instruction Cache Flash Invalidate\n");
 				}
 
 				core->regs.spr[spr] = bits;
@@ -434,7 +434,7 @@ namespace Gekko
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::DSI);
+			core->Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 		core->regs.pc += 4;
@@ -448,7 +448,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -460,7 +460,7 @@ namespace Gekko
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::DSI);
+			core->Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 		core->regs.pc += 4;
@@ -479,7 +479,7 @@ namespace Gekko
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::DSI);
+			core->Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 		core->regs.pc += 4;
@@ -540,7 +540,7 @@ namespace Gekko
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::DSI);
+			core->Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 		core->regs.pc += 4;
@@ -557,7 +557,7 @@ namespace Gekko
 		if (!core->cache->IsLockedEnable())
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -571,7 +571,7 @@ namespace Gekko
 		else
 		{
 			core->regs.spr[Gekko::SPR::DAR] = ea;
-			core->Exception(Exception::DSI);
+			core->Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 		core->regs.pc += 4;
@@ -587,10 +587,12 @@ namespace Gekko
 		int WIMG;
 		uint32_t physicalAddress = core->EffectiveToPhysical(address, MmuAccess::Execute, WIMG);
 
+#if GEKKOCORE_USE_JITC
 		if (physicalAddress != BadAddress)
 		{
 			core->jitc->Invalidate(physicalAddress, 32);
 		}
+#endif
 		
 		core->regs.pc += 4;
 	}
@@ -601,7 +603,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -615,7 +617,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -629,7 +631,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -643,7 +645,7 @@ namespace Gekko
 		if (core->regs.msr & MSR_PR)
 		{
 			core->PrCause = PrivilegedCause::Privileged;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -665,12 +667,12 @@ namespace Gekko
 
 	void Interpreter::eciwx()
 	{
-		Halt("eciwx\n");
+		core->Halt("eciwx\n");
 	}
 
 	void Interpreter::ecowx()
 	{
-		Halt("ecowx\n");
+		core->Halt("ecowx\n");
 	}
 
 }

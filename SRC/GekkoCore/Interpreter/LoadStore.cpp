@@ -373,7 +373,7 @@ namespace Gekko
 		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		else ea = (int32_t)info.Imm.Signed;
 
-		for (int r = info.paramBits[0]; r < 32; r++, ea += 4)
+		for (size_t r = info.paramBits[0]; r < 32; r++, ea += 4)
 		{
 			core->ReadWord(ea, &core->regs.gpr[r]);
 			if (core->exception) return;
@@ -393,7 +393,7 @@ namespace Gekko
 		if (info.paramBits[1]) ea = core->regs.gpr[info.paramBits[1]] + (int32_t)info.Imm.Signed;
 		else ea = (int32_t)info.Imm.Signed;
 
-		for (int r = info.paramBits[0]; r < 32; r++, ea += 4)
+		for (size_t r = info.paramBits[0]; r < 32; r++, ea += 4)
 		{
 			core->WriteWord(ea, core->regs.gpr[r]);
 			if (core->exception) return;

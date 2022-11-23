@@ -3,8 +3,8 @@
 
 using namespace Debug;
 
-#define PARAM(n)    Gekko::Gekko->regs.gpr[3+n]
-#define RET_VAL     Gekko::Gekko->regs.gpr[3]
+#define PARAM(n)    Core->regs.gpr[3+n]
+#define RET_VAL     Core->regs.gpr[3]
 #define SWAP        _BYTESWAP_UINT32
 
 // internal OS vars
@@ -39,8 +39,8 @@ void OSSetCurrentContext(void)
 {
     __OSCurrentContext  = PARAM(0);
     __OSPhysicalContext = __OSCurrentContext & RAMMASK; // simple translation
-    Gekko::Gekko->WriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
-    Gekko::Gekko->WriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
+    Core->WriteWord(OS_CURRENT_CONTEXT, __OSCurrentContext);
+    Core->WriteWord(OS_PHYSICAL_CONTEXT, __OSPhysicalContext);
 
     OSContext *c = (OSContext *)(&mi.ram[__OSPhysicalContext]);
 
@@ -55,10 +55,10 @@ void OSSetCurrentContext(void)
         //MSR &= ~MSR_FP;
 
         c->srr[1] |= SWAP(MSR_FP);
-        Gekko::Gekko->regs.msr |= MSR_FP;
+        Core->regs.msr |= MSR_FP;
     }
 
-    Gekko::Gekko->regs.msr |= MSR_RI;
+    Core->regs.msr |= MSR_RI;
 }
 
 void OSGetCurrentContext(void)
@@ -77,23 +77,23 @@ void OSSaveContext(void)
 
     // save gprs
     for(i=13; i<32; i++)
-        c->gpr[i] = SWAP(Gekko::Gekko->regs.gpr[i]);
+        c->gpr[i] = SWAP(Core->regs.gpr[i]);
 
     // save gqrs 1..7 (GRQ0 is always 0)
     for(i=1; i<8; i++)
-        c->gqr[i] = SWAP(Gekko::Gekko->regs.spr[(int)Gekko::SPR::GQRs + i]);
+        c->gqr[i] = SWAP(Core->regs.spr[(int)Gekko::SPR::GQRs + i]);
 
     // misc regs
-    c->cr = SWAP(Gekko::Gekko->regs.cr);
-    c->lr = SWAP(Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR]);
-    c->ctr = SWAP(Gekko::Gekko->regs.spr[(int)Gekko::SPR::CTR]);
-    c->xer = SWAP(Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER]);
+    c->cr = SWAP(Core->regs.cr);
+    c->lr = SWAP(Core->regs.spr[(int)Gekko::SPR::LR]);
+    c->ctr = SWAP(Core->regs.spr[(int)Gekko::SPR::CTR]);
+    c->xer = SWAP(Core->regs.spr[(int)Gekko::SPR::XER]);
     c->srr[0] = c->lr;
-    c->srr[1] = SWAP(Gekko::Gekko->regs.msr);
+    c->srr[1] = SWAP(Core->regs.msr);
 
-    c->gpr[1] = SWAP(Gekko::Gekko->regs.gpr[1]);
-    c->gpr[2] = SWAP(Gekko::Gekko->regs.gpr[2]);
-    c->gpr[3] = SWAP(Gekko::Gekko->regs.gpr[0] = 1);
+    c->gpr[1] = SWAP(Core->regs.gpr[1]);
+    c->gpr[2] = SWAP(Core->regs.gpr[2]);
+    c->gpr[3] = SWAP(Core->regs.gpr[0] = 1);
 
     RET_VAL = 0;
     // usual blr
@@ -110,16 +110,16 @@ void OSLoadContext(void)
     // r0, r4, r5, r6 are garbed here ..
 
     // load gprs 0..2
-    Gekko::Gekko->regs.gpr[0] = SWAP(c->gpr[0]);
-    Gekko::Gekko->regs.gpr[1] = SWAP(c->gpr[1]);   // SP
-    Gekko::Gekko->regs.gpr[2] = SWAP(c->gpr[2]);   // SDA2
+    Core->regs.gpr[0] = SWAP(c->gpr[0]);
+    Core->regs.gpr[1] = SWAP(c->gpr[1]);   // SP
+    Core->regs.gpr[2] = SWAP(c->gpr[2]);   // SDA2
     
     // always load FP/PS context
     OSLoadFPUContext();
 
     // load gqrs 1..7 (GRQ0 is always 0)
     for(int i=1; i<8; i++)
-        Gekko::Gekko->regs.spr[(int)Gekko::SPR::GQRs + i] = SWAP(c->gqr[i]);
+        Core->regs.spr[(int)Gekko::SPR::GQRs + i] = SWAP(c->gqr[i]);
 
     // load other gprs
     uint16_t state = (c->state >> 8) | (c->state << 8);
@@ -128,26 +128,26 @@ void OSLoadContext(void)
         state &= ~OS_CONTEXT_STATE_EXC;
         c->state = (state >> 8) | (state << 8);
         for(int i=5; i<32; i++)
-            Gekko::Gekko->regs.gpr[i] = SWAP(c->gpr[i]);
+            Core->regs.gpr[i] = SWAP(c->gpr[i]);
     }
     else
     {
         for(int i=13; i<32; i++)
-            Gekko::Gekko->regs.gpr[i] = SWAP(c->gpr[i]);
+            Core->regs.gpr[i] = SWAP(c->gpr[i]);
     }
 
     // misc regs
-    Gekko::Gekko->regs.cr  = SWAP(c->cr);
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = SWAP(c->lr);
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::CTR] = SWAP(c->ctr);
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::XER] = SWAP(c->xer);
+    Core->regs.cr  = SWAP(c->cr);
+    Core->regs.spr[(int)Gekko::SPR::LR] = SWAP(c->lr);
+    Core->regs.spr[(int)Gekko::SPR::CTR] = SWAP(c->ctr);
+    Core->regs.spr[(int)Gekko::SPR::XER] = SWAP(c->xer);
 
     // set srr regs to update msr and pc
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::SRR0] = SWAP(c->srr[0]);
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::SRR1] = SWAP(c->srr[1]);
+    Core->regs.spr[(int)Gekko::SPR::SRR0] = SWAP(c->srr[0]);
+    Core->regs.spr[(int)Gekko::SPR::SRR1] = SWAP(c->srr[1]);
 
-    Gekko::Gekko->regs.gpr[3] = SWAP(c->gpr[3]);
-    Gekko::Gekko->regs.gpr[4] = SWAP(c->gpr[4]);
+    Core->regs.gpr[3] = SWAP(c->gpr[3]);
+    Core->regs.gpr[4] = SWAP(c->gpr[4]);
     // rfi will be called
 }
 
@@ -161,7 +161,7 @@ void OSClearContext(void)
     if(PARAM(0) == __OSDefaultThread/*context*/) 
     {
         __OSDefaultThread = 0;
-        Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
+        Core->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
     }
 }
 
@@ -185,8 +185,8 @@ void OSInitContext(void)
 
     for(i=3; i<32; i++)
         c->gpr[i] = 0;
-    c->gpr[2] = SWAP(Gekko::Gekko->regs.gpr[2]);
-    c->gpr[13] = SWAP(Gekko::Gekko->regs.gpr[13]);
+    c->gpr[2] = SWAP(Core->regs.gpr[2]);
+    c->gpr[13] = SWAP(Core->regs.gpr[13]);
 }
 
 void OSLoadFPUContext(void)
@@ -197,17 +197,17 @@ void OSLoadFPUContext(void)
     //u16 state = (c->state >> 8) | (c->state << 8);
     //if(! (state & OS_CONTEXT_STATE_FPSAVED) )
     {
-        Gekko::Gekko->regs.fpscr = SWAP(c->fpscr);
+        Core->regs.fpscr = SWAP(c->fpscr);
 
         for(int i=0; i<32; i++)
         {
-            if(Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
+            if(Core->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
             {
-                Gekko::Gekko->regs.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
-                swap_double(&Gekko::Gekko->regs.ps1[i].uval);
+                Core->regs.ps1[i].uval = *(uint64_t *)(&c->psr[i]);
+                swap_double(&Core->regs.ps1[i].uval);
             }
-            Gekko::Gekko->regs.fpr[i].uval = *(uint64_t *)(&c->fpr[i]);
-            swap_double(&Gekko::Gekko->regs.fpr[i].uval);
+            Core->regs.fpr[i].uval = *(uint64_t *)(&c->fpr[i]);
+            swap_double(&Core->regs.fpr[i].uval);
         }
     }
 }
@@ -218,15 +218,15 @@ void OSSaveFPUContext(void)
     OSContext * c = (OSContext *)(&mi.ram[PARAM(2) & RAMMASK]);
 
     //c->state |= (OS_CONTEXT_STATE_FPSAVED >> 8) | (OS_CONTEXT_STATE_FPSAVED << 8);
-    c->fpscr = SWAP(Gekko::Gekko->regs.fpscr);
+    c->fpscr = SWAP(Core->regs.fpscr);
 
     for(int i=0; i<32; i++)
     {
-        *(uint64_t *)(&c->fpr[i]) = Gekko::Gekko->regs.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = Core->regs.fpr[i].uval;
         swap_double(&c->fpr[i]);
-        if(Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
+        if(Core->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
         {
-            *(uint64_t *)(&c->psr[i]) = Gekko::Gekko->regs.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = Core->regs.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }
@@ -236,16 +236,16 @@ void OSFillFPUContext(void)
 {
     OSContext * c = (OSContext *)(&mi.ram[PARAM(0) & RAMMASK]);
     
-    Gekko::Gekko->regs.msr |= MSR_FP;
-    c->fpscr = SWAP(Gekko::Gekko->regs.fpscr);
+    Core->regs.msr |= MSR_FP;
+    c->fpscr = SWAP(Core->regs.fpscr);
 
     for(int i=0; i<32; i++)
     {
-        *(uint64_t *)(&c->fpr[i]) = Gekko::Gekko->regs.fpr[i].uval;
+        *(uint64_t *)(&c->fpr[i]) = Core->regs.fpr[i].uval;
         swap_double(&c->fpr[i]);
-        if(Gekko::Gekko->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
+        if(Core->regs.spr[(int)Gekko::SPR::HID2] & HID2_PSE)
         {
-            *(uint64_t *)(&c->psr[i]) = Gekko::Gekko->regs.ps1[i].uval;
+            *(uint64_t *)(&c->psr[i]) = Core->regs.ps1[i].uval;
             swap_double(&c->psr[i]);
         }
     }
@@ -257,8 +257,8 @@ void __OSContextInit(void)
     Report(Channel::HLE, "Note: FP-Unavail is NOT used and FPRs are always saved.\n\n");
 
     __OSDefaultThread = 0;
-    Gekko::Gekko->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
-    Gekko::Gekko->regs.msr |= (MSR_FP | MSR_RI);
+    Core->WriteWord(OS_DEFAULT_THREAD, __OSDefaultThread);
+    Core->regs.msr |= (MSR_FP | MSR_RI);
 }
 
 /* ---------------------------------------------------------------------------
@@ -268,24 +268,24 @@ void __OSContextInit(void)
 // called VERY often!
 void OSDisableInterrupts(void)
 {
-    uint32_t prev = Gekko::Gekko->regs.msr;
-    Gekko::Gekko->regs.msr &= ~MSR_EE;
+    uint32_t prev = Core->regs.msr;
+    Core->regs.msr &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
 }
 
 // this one is rare
 void OSEnableInterrupts(void)
 {
-    uint32_t prev = Gekko::Gekko->regs.msr;
-    Gekko::Gekko->regs.msr |= MSR_EE;
+    uint32_t prev = Core->regs.msr;
+    Core->regs.msr |= MSR_EE;
     RET_VAL = (prev >> 15) & 1;
 }
 
 // called VERY often!
 void OSRestoreInterrupts(void)
 {
-    uint32_t prev = Gekko::Gekko->regs.msr;
-    if(PARAM(0)) Gekko::Gekko->regs.msr |= MSR_EE;
-    else Gekko::Gekko->regs.msr &= ~MSR_EE;
+    uint32_t prev = Core->regs.msr;
+    if(PARAM(0)) Core->regs.msr |= MSR_EE;
+    else Core->regs.msr &= ~MSR_EE;
     RET_VAL = (prev >> 15) & 1;
 }

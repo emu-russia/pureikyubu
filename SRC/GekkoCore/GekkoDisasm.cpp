@@ -8,7 +8,7 @@ namespace Gekko
 	// Disp:0 - branch by register (L:1 for LR, L:0 for CTR).
 	std::string GekkoDisasm::Bcx(DecoderInfo* info, bool Disp, bool L, bool & simple, bool skipOperand[5])
 	{
-		int bo = info->paramBits[0], bi = info->paramBits[1];
+		size_t bo = info->paramBits[0], bi = info->paramBits[1];
 		uint16_t uimm = info->Imm.Unsigned;
 
 		char mnem[0x20] = { 0, };
@@ -714,7 +714,7 @@ namespace Gekko
 		return "";
 	}
 
-	std::string GekkoDisasm::SprName(int spr)
+	std::string GekkoDisasm::SprName(size_t spr)
 	{
 		switch (spr)
 		{
@@ -794,11 +794,11 @@ namespace Gekko
 		}
 
 		char def[0x10] = { 0, };
-		sprintf (def, "%u", spr);
+		sprintf (def, "%zd", spr);
 		return def;
 	}
 
-	std::string GekkoDisasm::TbrName(int tbr)
+	std::string GekkoDisasm::TbrName(size_t tbr)
 	{
 		switch(tbr)
 		{
@@ -808,7 +808,7 @@ namespace Gekko
 		}
 
 		char def[8] = { 0, };
-		sprintf (def, "%u", tbr);
+		sprintf (def, "%zd", tbr);
 		return def;
 	}
 
@@ -826,46 +826,46 @@ namespace Gekko
 		return out;
 	}
 
-	std::string GekkoDisasm::ParamToString(Param param, int paramBits, DecoderInfo* info)
+	std::string GekkoDisasm::ParamToString(Param param, size_t paramBits, DecoderInfo* info)
 	{
 		char text[0x20] = { 0, };
 
 		switch (param)
 		{
 			case Param::Reg:
-				sprintf (text, "r%i", paramBits);
+				sprintf (text, "r%zd", paramBits);
 				break;
 			case Param::FReg:
-				sprintf (text, "fr%i", paramBits);
+				sprintf (text, "fr%zd", paramBits);
 				break;
 			case Param::Simm:
 				return Imm((int)(int32_t)info->Imm.Signed, false, true);
 			case Param::Uimm:
 				return Imm(info->Imm.Unsigned, true, false);
 			case Param::Crf:
-				sprintf (text, "crf%i", paramBits);
+				sprintf (text, "crf%zd", paramBits);
 				break;
 			case Param::RegOffset:
-				sprintf (text, "%s (r%i)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
+				sprintf (text, "%s (r%zd)", Imm((int)(int32_t)info->Imm.Signed, false, true).c_str(), paramBits);
 				break;
 			case Param::Num:
-				sprintf (text, "%i", paramBits);
+				sprintf (text, "%zd", paramBits);
 				break;
 			case Param::Spr:
 				return SprName(paramBits);
 			case Param::Sr:
-				sprintf (text, "%i", paramBits);
+				sprintf (text, "%zd", paramBits);
 				break;
 			case Param::Tbr:
 				return TbrName(paramBits);
 			case Param::Crb:
-				sprintf (text, "crb%i", paramBits);
+				sprintf (text, "crb%zd", paramBits);
 				break;
 			case Param::CRM:
-				sprintf (text, "0x%02X", paramBits);
+				sprintf (text, "0x%02X", (uint8_t)paramBits);
 				break;
 			case Param::FM:
-				sprintf (text, "0x%02X", paramBits);
+				sprintf (text, "0x%02X", (uint8_t)paramBits);
 				break;
 			case Param::Address:
 				sprintf (text, "0x%08X", info->Imm.Address);

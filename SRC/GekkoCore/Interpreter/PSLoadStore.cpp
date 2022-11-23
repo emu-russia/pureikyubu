@@ -70,13 +70,13 @@ namespace Gekko
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
 		if (core->regs.msr & MSR_FP)
 		{
-			int i = info.paramBits[4];
+			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
 			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
@@ -115,7 +115,7 @@ namespace Gekko
 
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_stx()
@@ -124,13 +124,13 @@ namespace Gekko
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
 		if (core->regs.msr & MSR_FP)
 		{
-			int i = info.paramBits[4];
+			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]];
 			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(i);
@@ -161,7 +161,7 @@ namespace Gekko
 
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_lux()
@@ -171,13 +171,13 @@ namespace Gekko
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
 		if (core->regs.msr & MSR_FP)
 		{
-			int i = info.paramBits[4];
+			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]], data0, data1;
 			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)LD_SCALE(i);
@@ -217,7 +217,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = EA;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_stux()
@@ -227,13 +227,13 @@ namespace Gekko
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
 		if (core->regs.msr & MSR_FP)
 		{
-			int i = info.paramBits[4];
+			size_t i = info.paramBits[4];
 			uint32_t EA = core->regs.gpr[info.paramBits[2]];
 			int32_t d = info.paramBits[0];
 			uint8_t scale = (uint8_t)ST_SCALE(i);
@@ -265,7 +265,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = EA;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_l()
@@ -274,7 +274,7 @@ namespace Gekko
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -319,7 +319,7 @@ namespace Gekko
 
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_lu()
@@ -329,7 +329,7 @@ namespace Gekko
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -375,7 +375,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = EA;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_st()
@@ -384,7 +384,7 @@ namespace Gekko
 			(core->regs.spr[SPR::HID2] & HID2_LSQE) == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -421,7 +421,7 @@ namespace Gekko
 
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::psq_stu()
@@ -431,7 +431,7 @@ namespace Gekko
 			info.paramBits[1] == 0)
 		{
 			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::PROGRAM);
+			core->Exception(Exception::EXCEPTION_PROGRAM);
 			return;
 		}
 
@@ -469,7 +469,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = EA;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 }

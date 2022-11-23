@@ -20,7 +20,7 @@ namespace Debug
 		switch (counter)
 		{
 			case PerfCounter::GekkoInstructions:
-				return Gekko::Gekko->GetInstructionCounter();
+				return Core->GetInstructionCounter();
 				break;
 			case PerfCounter::DspInstructions:
 				return Flipper::DSP->core->GetInstructionCounter();
@@ -32,10 +32,10 @@ namespace Debug
 				return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
 				break;
 			case PerfCounter::CompiledSegments:
-				return Gekko::Gekko->GetCompiledSegmentsCount();
+				return Core->GetCompiledSegmentsCount();
 				break;
 			case PerfCounter::ExecutedSegments:
-				return Gekko::Gekko->GetExecutedSegmentsCount();
+				return Core->GetExecutedSegmentsCount();
 				break;
 		}
 
@@ -47,7 +47,7 @@ namespace Debug
 		switch (counter)
 		{
 			case PerfCounter::GekkoInstructions:
-				Gekko::Gekko->ResetInstructionCounter();
+				Core->ResetInstructionCounter();
 				break;
 			case PerfCounter::DspInstructions:
 				Flipper::DSP->core->ResetInstructionCounter();
@@ -59,10 +59,10 @@ namespace Debug
 				pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
 				break;
 			case PerfCounter::CompiledSegments:
-				Gekko::Gekko->ResetCompiledSegmentsCount();
+				Core->ResetCompiledSegmentsCount();
 				break;
 			case PerfCounter::ExecutedSegments:
-				Gekko::Gekko->ResetExecutedSegmentsCount();
+				Core->ResetExecutedSegmentsCount();
 				break;
 		}
 	}

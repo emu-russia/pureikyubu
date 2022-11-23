@@ -3,8 +3,6 @@
 
 namespace Gekko
 {
-    GekkoCore* Gekko;
-
     // The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
     void GekkoCore::GekkoThreadProc(void* Parameter)
     {
@@ -36,9 +34,9 @@ namespace Gekko
 
         interp = new Interpreter(this);
 
+#if GEKKOCORE_USE_JITC
         jitc = new Jitc(this);
-
-        JDI::Hub.AddNode(GEKKO_CORE_JDI_JSON, gekko_init_handlers);
+#endif
 
         gekkoThread = new Thread(GekkoThreadProc, false, this, "GekkoCore");
 
@@ -50,9 +48,10 @@ namespace Gekko
         StopOpcodeStatsThread();
         delete gekkoThread;
         delete interp;
+#if GEKKOCORE_USE_JITC
         delete jitc;
+#endif
         delete gatherBuffer;
-        JDI::Hub.RemoveNode(GEKKO_CORE_JDI_JSON);
     }
 
     // Reset processor
@@ -101,7 +100,9 @@ namespace Gekko
 
         gatherBuffer->Reset();
 
+#if GEKKOCORE_USE_JITC
         jitc->Reset();
+#endif
         ResetCompiledSegmentsCount();
         ResetExecutedSegmentsCount();
 
@@ -122,7 +123,7 @@ namespace Gekko
             if (regs.msr & MSR_EE)
             {
                 decreq = 1;
-                Debug::Report(Debug::Channel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
+                Report("decrementer exception (OS alarm), pc:%08X\n", regs.pc);
             }
         }
     }
@@ -183,7 +184,7 @@ namespace Gekko
 
         if (exception)
         {
-            Debug::Halt("CPU Double Fault!\n");
+            Halt("CPU Double Fault!\n");
         }
 
         // save regs
@@ -192,7 +193,7 @@ namespace Gekko
         regs.spr[Gekko::SPR::SRR1] = regs.msr;
 
         // Special processing for MMU
-        if (code == Exception::ISI)
+        if (code == Exception::EXCEPTION_ISI)
         {
             regs.spr[Gekko::SPR::SRR1] &= 0x0fff'ffff;
 
@@ -214,7 +215,7 @@ namespace Gekko
                     break;
             }
         }
-        else if (code == Exception::DSI)
+        else if (code == Exception::EXCEPTION_DSI)
         {
             regs.spr[Gekko::SPR::DSISR] = 0;
 
@@ -238,7 +239,7 @@ namespace Gekko
         }
 
         // Special processing for Program
-        if (code == Exception::PROGRAM)
+        if (code == Exception::EXCEPTION_PROGRAM)
         {
             regs.spr[Gekko::SPR::SRR1] &= 0x0000'ffff;
 
@@ -282,4 +283,13 @@ namespace Gekko
 #endif
     }
 
+    void GekkoCore::Halt(const char* text, ...)
+    {
+
+    }
+
+    void GekkoCore::Report(const char* text, ...)
+    {
+
+    }
 }

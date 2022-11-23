@@ -26,7 +26,7 @@ namespace GX
 		memset(&state, 0, sizeof(state));
 
 		state.tickPerFifo = 100;
-		state.updateTbrValue = Gekko::Gekko->GetTicks() + state.tickPerFifo;
+		state.updateTbrValue = Core->GetTicks() + state.tickPerFifo;
 
 		fifo->Reset();
 

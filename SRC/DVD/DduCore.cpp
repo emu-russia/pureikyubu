@@ -250,7 +250,7 @@ namespace DVD
 		// Wait Gekko ticks
 		if (!core->transferRateNoLimit)
 		{
-			int64_t ticks = Gekko::Gekko->GetTicks();
+			int64_t ticks = Core->GetTicks();
 			if (ticks >= core->savedGekkoTicks)
 			{
 				core->savedGekkoTicks = ticks + core->dduTicksPerByte;
@@ -373,7 +373,7 @@ namespace DVD
 			// If AISCLK is enabled but streaming is not enabled by the DDU command, DVD Audio will output only zeros.
 
 			// If its time to send sample
-			int64_t ticks = Gekko::Gekko->GetTicks();
+			int64_t ticks = Core->GetTicks();
 			if (ticks < core->nextGekkoTicksToSample)
 			{
 				continue;
@@ -479,7 +479,7 @@ namespace DVD
 	void DduCore::SetDvdAudioSampleRate(DvdAudioSampleRate rate)
 	{
 		sampleRate = rate;
-		nextGekkoTicksToSample = Gekko::Gekko->GetTicks() + TicksPerSample();
+		nextGekkoTicksToSample = Core->GetTicks() + TicksPerSample();
 	}
 
 	// Reset internal state. If you forget something, then it will come out later..
@@ -494,7 +494,7 @@ namespace DVD
 		streamingCachePtr = streamCacheSize;
 		state = DduThreadState::WriteCommand;
 		ResetStats();
-		gekkoOneSecond = Gekko::Gekko->OneSecond();
+		gekkoOneSecond = Core->OneSecond();
 		dduTicksPerByte = gekkoOneSecond / transferRate;
 		SetDvdAudioSampleRate(DvdAudioSampleRate::Rate_48000);
 		streamEnabledByDduCommand = false;
@@ -560,7 +560,7 @@ namespace DVD
 		ddBusBusy = true;
 		busDir = direction;
 
-		savedGekkoTicks = Gekko::Gekko->GetTicks() + dduTicksPerByte;
+		savedGekkoTicks = Core->GetTicks() + dduTicksPerByte;
 
 		dduThread->Resume();
 	}

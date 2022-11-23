@@ -16,7 +16,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + SIMM
@@ -32,7 +32,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + rb
@@ -48,7 +48,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + rb
@@ -62,7 +62,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + SIMM
@@ -85,7 +85,7 @@ namespace Gekko
 			else FPRD(info.paramBits[0]) = (double)res;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + SIMM
@@ -111,7 +111,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + rb
@@ -137,7 +137,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + rb
@@ -160,7 +160,7 @@ namespace Gekko
 			else FPRD(info.paramBits[0]) = (double)res;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + SIMM
@@ -174,7 +174,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + SIMM
@@ -190,7 +190,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + rb
@@ -206,7 +206,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + rb
@@ -220,7 +220,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + rb
@@ -235,7 +235,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + SIMM
@@ -250,7 +250,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + SIMM
@@ -267,7 +267,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = ra + rb
@@ -284,7 +284,7 @@ namespace Gekko
 			core->regs.gpr[info.paramBits[1]] = ea;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// ea = (ra | 0) + rb
@@ -299,7 +299,7 @@ namespace Gekko
 			if (core->exception) return;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 }

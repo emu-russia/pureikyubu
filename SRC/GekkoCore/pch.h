@@ -15,28 +15,15 @@
 #include "../Common/Spinlock.h"
 #include "../Common/Thread.h"
 #include "../Common/Json.h"
-#include "../Common/Jdi.h"
-
-#include "../IntelCore/IntelCore.h"
 
 #include "Config.h"
-#include "GekkoCommands.h"
-#include "Gekko.h"
+#include "GekkoCore.h"
 #include "GekkoDecoder.h"
 #include "Interpreter.h"
 #include "GekkoDisasm.h"
-#include "GekkoAssembler.h"
+#if GEKKOCORE_USE_JITC
 #include "Jitc.h"
+#endif
 #include "TLB.h"
 #include "Cache.h"
-
-#include "../Hardware/HWConfig.h"
-#include "../Hardware/MI.h"
-#include "../Hardware/PI.h"
-#include "../Debugger/Debugger.h"
-
-#ifdef _LINUX
-#define _stricmp strcasecmp
-#endif
-
-using namespace IntelCore;
+#include "SixtyBus.h"

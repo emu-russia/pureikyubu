@@ -33,6 +33,9 @@
     <ClCompile Include="..\..\Perf.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\GekkoCommands.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\pch.h">
@@ -56,9 +59,13 @@
     <ClInclude Include="..\..\Perf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\GekkoCommands.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Data\Json\DebuggerJdi.json" />
     <None Include="..\..\Readme.md" />
+    <None Include="..\..\..\..\Data\Json\GekkoCoreJdi.json" />
   </ItemGroup>
 </Project>

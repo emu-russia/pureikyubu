@@ -13,6 +13,9 @@ namespace Gekko
 
     uint32_t GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
     {
+        #define RAMMASK 0x0fffffff
+        #define BOOTROM_START_ADDRESS 0xfff00000
+
         WIMG = WIMG_I;      // Caching inhibited
 
         // Locked cache
@@ -189,8 +192,8 @@ namespace Gekko
 
             uint32_t pte[2];
 
-            PIReadWord(primaryPteAddr, &pte[0]);
-            PIReadWord(primaryPteAddr + 4, &pte[1]);
+            SixtyBus_ReadWord(primaryPteAddr, &pte[0]);
+            SixtyBus_ReadWord(primaryPteAddr + 4, &pte[1]);
 
             // Check Hash Bit
 
@@ -231,7 +234,7 @@ namespace Gekko
                 {
                     pte[1] |= 0x80;     // Changed
                 }
-                PIWriteWord(primaryPteAddr + 4, pte[1]);
+                SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
 
                 if (protectViolation)
                 {
@@ -263,7 +266,7 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                PIWriteWord(primaryPteAddr + 4, pte[1]);
+                SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
             }
 
             primaryPteAddr += 8;
@@ -277,8 +280,8 @@ namespace Gekko
 
             uint32_t pte[2];
 
-            PIReadWord(secondaryPteAddr, &pte[0]);
-            PIReadWord(secondaryPteAddr + 4, &pte[1]);
+            SixtyBus_ReadWord(secondaryPteAddr, &pte[0]);
+            SixtyBus_ReadWord(secondaryPteAddr + 4, &pte[1]);
 
             // Check Hash Bit
 
@@ -320,7 +323,7 @@ namespace Gekko
                 {
                     pte[1] |= 0x80;
                 }
-                PIWriteWord(secondaryPteAddr + 4, pte[1]);
+                SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
 
                 if (protectViolation)
                 {
@@ -352,7 +355,7 @@ namespace Gekko
             {
                 // Referenced
                 pte[1] |= 0x100;
-                PIWriteWord(secondaryPteAddr + 4, pte[1]);
+                SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
             }
 
             secondaryPteAddr += 8;

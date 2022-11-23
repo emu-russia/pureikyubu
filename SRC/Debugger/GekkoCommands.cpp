@@ -1,23 +1,21 @@
 // Processor debug commands.
 #include "pch.h"
 
-using namespace Debug;
-
-namespace Gekko
+namespace Debug
 {
 	// Run processor until break or stop
 	static Json::Value* CmdRun(std::vector<std::string>& args)
 	{
-		Gekko->Run();
+		Core->Run();
 		return nullptr;
 	}
 
 	// Stop processor execution
 	static Json::Value* CmdStop(std::vector<std::string>& args)
 	{
-		if (Gekko->IsRunning())
+		if (Core->IsRunning())
 		{
-			Gekko->Suspend();
+			Core->Suspend();
 		}
 		return nullptr;
 	}
@@ -27,127 +25,127 @@ namespace Gekko
 	// Get pointer to Gekko register.
 	static uint32_t* getreg(const char* name)
 	{
-		if (!_stricmp(name, "r0")) return &Gekko->regs.gpr[0];
-		else if (!_stricmp(name, "r1")) return &Gekko->regs.gpr[1];
-		else if (!_stricmp(name, "r2")) return &Gekko->regs.gpr[2];
-		else if (!_stricmp(name, "r3")) return &Gekko->regs.gpr[3];
-		else if (!_stricmp(name, "r4")) return &Gekko->regs.gpr[4];
-		else if (!_stricmp(name, "r5")) return &Gekko->regs.gpr[5];
-		else if (!_stricmp(name, "r6")) return &Gekko->regs.gpr[6];
-		else if (!_stricmp(name, "r7")) return &Gekko->regs.gpr[7];
-		else if (!_stricmp(name, "r8")) return &Gekko->regs.gpr[8];
-		else if (!_stricmp(name, "r9")) return &Gekko->regs.gpr[9];
-		else if (!_stricmp(name, "r10")) return &Gekko->regs.gpr[10];
-		else if (!_stricmp(name, "r11")) return &Gekko->regs.gpr[11];
-		else if (!_stricmp(name, "r12")) return &Gekko->regs.gpr[12];
-		else if (!_stricmp(name, "r13")) return &Gekko->regs.gpr[13];
-		else if (!_stricmp(name, "r14")) return &Gekko->regs.gpr[14];
-		else if (!_stricmp(name, "r15")) return &Gekko->regs.gpr[15];
-		else if (!_stricmp(name, "r16")) return &Gekko->regs.gpr[16];
-		else if (!_stricmp(name, "r17")) return &Gekko->regs.gpr[17];
-		else if (!_stricmp(name, "r18")) return &Gekko->regs.gpr[18];
-		else if (!_stricmp(name, "r19")) return &Gekko->regs.gpr[19];
-		else if (!_stricmp(name, "r20")) return &Gekko->regs.gpr[20];
-		else if (!_stricmp(name, "r21")) return &Gekko->regs.gpr[21];
-		else if (!_stricmp(name, "r22")) return &Gekko->regs.gpr[22];
-		else if (!_stricmp(name, "r23")) return &Gekko->regs.gpr[23];
-		else if (!_stricmp(name, "r24")) return &Gekko->regs.gpr[24];
-		else if (!_stricmp(name, "r25")) return &Gekko->regs.gpr[25];
-		else if (!_stricmp(name, "r26")) return &Gekko->regs.gpr[26];
-		else if (!_stricmp(name, "r27")) return &Gekko->regs.gpr[27];
-		else if (!_stricmp(name, "r28")) return &Gekko->regs.gpr[28];
-		else if (!_stricmp(name, "r29")) return &Gekko->regs.gpr[29];
-		else if (!_stricmp(name, "r30")) return &Gekko->regs.gpr[30];
-		else if (!_stricmp(name, "r31")) return &Gekko->regs.gpr[31];
+		if (!_stricmp(name, "r0")) return &Core->regs.gpr[0];
+		else if (!_stricmp(name, "r1")) return &Core->regs.gpr[1];
+		else if (!_stricmp(name, "r2")) return &Core->regs.gpr[2];
+		else if (!_stricmp(name, "r3")) return &Core->regs.gpr[3];
+		else if (!_stricmp(name, "r4")) return &Core->regs.gpr[4];
+		else if (!_stricmp(name, "r5")) return &Core->regs.gpr[5];
+		else if (!_stricmp(name, "r6")) return &Core->regs.gpr[6];
+		else if (!_stricmp(name, "r7")) return &Core->regs.gpr[7];
+		else if (!_stricmp(name, "r8")) return &Core->regs.gpr[8];
+		else if (!_stricmp(name, "r9")) return &Core->regs.gpr[9];
+		else if (!_stricmp(name, "r10")) return &Core->regs.gpr[10];
+		else if (!_stricmp(name, "r11")) return &Core->regs.gpr[11];
+		else if (!_stricmp(name, "r12")) return &Core->regs.gpr[12];
+		else if (!_stricmp(name, "r13")) return &Core->regs.gpr[13];
+		else if (!_stricmp(name, "r14")) return &Core->regs.gpr[14];
+		else if (!_stricmp(name, "r15")) return &Core->regs.gpr[15];
+		else if (!_stricmp(name, "r16")) return &Core->regs.gpr[16];
+		else if (!_stricmp(name, "r17")) return &Core->regs.gpr[17];
+		else if (!_stricmp(name, "r18")) return &Core->regs.gpr[18];
+		else if (!_stricmp(name, "r19")) return &Core->regs.gpr[19];
+		else if (!_stricmp(name, "r20")) return &Core->regs.gpr[20];
+		else if (!_stricmp(name, "r21")) return &Core->regs.gpr[21];
+		else if (!_stricmp(name, "r22")) return &Core->regs.gpr[22];
+		else if (!_stricmp(name, "r23")) return &Core->regs.gpr[23];
+		else if (!_stricmp(name, "r24")) return &Core->regs.gpr[24];
+		else if (!_stricmp(name, "r25")) return &Core->regs.gpr[25];
+		else if (!_stricmp(name, "r26")) return &Core->regs.gpr[26];
+		else if (!_stricmp(name, "r27")) return &Core->regs.gpr[27];
+		else if (!_stricmp(name, "r28")) return &Core->regs.gpr[28];
+		else if (!_stricmp(name, "r29")) return &Core->regs.gpr[29];
+		else if (!_stricmp(name, "r30")) return &Core->regs.gpr[30];
+		else if (!_stricmp(name, "r31")) return &Core->regs.gpr[31];
 
-		else if (!_stricmp(name, "sp")) return &Gekko->regs.gpr[1];
-		else if (!_stricmp(name, "sd1")) return &Gekko->regs.gpr[13];
-		else if (!_stricmp(name, "sd2")) return &Gekko->regs.gpr[2];
+		else if (!_stricmp(name, "sp")) return &Core->regs.gpr[1];
+		else if (!_stricmp(name, "sd1")) return &Core->regs.gpr[13];
+		else if (!_stricmp(name, "sd2")) return &Core->regs.gpr[2];
 
-		else if (!_stricmp(name, "cr")) return &Gekko->regs.cr;
-		else if (!_stricmp(name, "fpscr")) return &Gekko->regs.fpscr;
-		else if (!_stricmp(name, "xer")) return &Gekko->regs.spr[(int)Gekko::SPR::XER];
-		else if (!_stricmp(name, "lr")) return &Gekko->regs.spr[(int)Gekko::SPR::LR];
-		else if (!_stricmp(name, "ctr")) return &Gekko->regs.spr[(int)Gekko::SPR::CTR];
-		else if (!_stricmp(name, "msr")) return &Gekko->regs.msr;
+		else if (!_stricmp(name, "cr")) return &Core->regs.cr;
+		else if (!_stricmp(name, "fpscr")) return &Core->regs.fpscr;
+		else if (!_stricmp(name, "xer")) return &Core->regs.spr[(int)Gekko::SPR::XER];
+		else if (!_stricmp(name, "lr")) return &Core->regs.spr[(int)Gekko::SPR::LR];
+		else if (!_stricmp(name, "ctr")) return &Core->regs.spr[(int)Gekko::SPR::CTR];
+		else if (!_stricmp(name, "msr")) return &Core->regs.msr;
 
-		else if (!_stricmp(name, "sr0")) return &Gekko->regs.sr[0];
-		else if (!_stricmp(name, "sr1")) return &Gekko->regs.sr[1];
-		else if (!_stricmp(name, "sr2")) return &Gekko->regs.sr[2];
-		else if (!_stricmp(name, "sr3")) return &Gekko->regs.sr[3];
-		else if (!_stricmp(name, "sr4")) return &Gekko->regs.sr[4];
-		else if (!_stricmp(name, "sr5")) return &Gekko->regs.sr[5];
-		else if (!_stricmp(name, "sr6")) return &Gekko->regs.sr[6];
-		else if (!_stricmp(name, "sr7")) return &Gekko->regs.sr[7];
-		else if (!_stricmp(name, "sr8")) return &Gekko->regs.sr[8];
-		else if (!_stricmp(name, "sr9")) return &Gekko->regs.sr[9];
-		else if (!_stricmp(name, "sr10")) return &Gekko->regs.sr[10];
-		else if (!_stricmp(name, "sr11")) return &Gekko->regs.sr[11];
-		else if (!_stricmp(name, "sr12")) return &Gekko->regs.sr[12];
-		else if (!_stricmp(name, "sr13")) return &Gekko->regs.sr[13];
-		else if (!_stricmp(name, "sr14")) return &Gekko->regs.sr[14];
-		else if (!_stricmp(name, "sr15")) return &Gekko->regs.sr[15];
+		else if (!_stricmp(name, "sr0")) return &Core->regs.sr[0];
+		else if (!_stricmp(name, "sr1")) return &Core->regs.sr[1];
+		else if (!_stricmp(name, "sr2")) return &Core->regs.sr[2];
+		else if (!_stricmp(name, "sr3")) return &Core->regs.sr[3];
+		else if (!_stricmp(name, "sr4")) return &Core->regs.sr[4];
+		else if (!_stricmp(name, "sr5")) return &Core->regs.sr[5];
+		else if (!_stricmp(name, "sr6")) return &Core->regs.sr[6];
+		else if (!_stricmp(name, "sr7")) return &Core->regs.sr[7];
+		else if (!_stricmp(name, "sr8")) return &Core->regs.sr[8];
+		else if (!_stricmp(name, "sr9")) return &Core->regs.sr[9];
+		else if (!_stricmp(name, "sr10")) return &Core->regs.sr[10];
+		else if (!_stricmp(name, "sr11")) return &Core->regs.sr[11];
+		else if (!_stricmp(name, "sr12")) return &Core->regs.sr[12];
+		else if (!_stricmp(name, "sr13")) return &Core->regs.sr[13];
+		else if (!_stricmp(name, "sr14")) return &Core->regs.sr[14];
+		else if (!_stricmp(name, "sr15")) return &Core->regs.sr[15];
 
-		else if (!_stricmp(name, "ibat0u")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT0U];
-		else if (!_stricmp(name, "ibat1u")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT1U];
-		else if (!_stricmp(name, "ibat2u")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT2U];
-		else if (!_stricmp(name, "ibat3u")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT3U];
-		else if (!_stricmp(name, "ibat0l")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT0L];
-		else if (!_stricmp(name, "ibat1l")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT1L];
-		else if (!_stricmp(name, "ibat2l")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT2L];
-		else if (!_stricmp(name, "ibat3l")) return &Gekko->regs.spr[(int)Gekko::SPR::IBAT3L];
-		else if (!_stricmp(name, "dbat0u")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT0U];
-		else if (!_stricmp(name, "dbat1u")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT1U];
-		else if (!_stricmp(name, "dbat2u")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT2U];
-		else if (!_stricmp(name, "dbat3u")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT3U];
-		else if (!_stricmp(name, "dbat0l")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT0L];
-		else if (!_stricmp(name, "dbat1l")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT1L];
-		else if (!_stricmp(name, "dbat2l")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT2L];
-		else if (!_stricmp(name, "dbat3l")) return &Gekko->regs.spr[(int)Gekko::SPR::DBAT3L];
+		else if (!_stricmp(name, "ibat0u")) return &Core->regs.spr[(int)Gekko::SPR::IBAT0U];
+		else if (!_stricmp(name, "ibat1u")) return &Core->regs.spr[(int)Gekko::SPR::IBAT1U];
+		else if (!_stricmp(name, "ibat2u")) return &Core->regs.spr[(int)Gekko::SPR::IBAT2U];
+		else if (!_stricmp(name, "ibat3u")) return &Core->regs.spr[(int)Gekko::SPR::IBAT3U];
+		else if (!_stricmp(name, "ibat0l")) return &Core->regs.spr[(int)Gekko::SPR::IBAT0L];
+		else if (!_stricmp(name, "ibat1l")) return &Core->regs.spr[(int)Gekko::SPR::IBAT1L];
+		else if (!_stricmp(name, "ibat2l")) return &Core->regs.spr[(int)Gekko::SPR::IBAT2L];
+		else if (!_stricmp(name, "ibat3l")) return &Core->regs.spr[(int)Gekko::SPR::IBAT3L];
+		else if (!_stricmp(name, "dbat0u")) return &Core->regs.spr[(int)Gekko::SPR::DBAT0U];
+		else if (!_stricmp(name, "dbat1u")) return &Core->regs.spr[(int)Gekko::SPR::DBAT1U];
+		else if (!_stricmp(name, "dbat2u")) return &Core->regs.spr[(int)Gekko::SPR::DBAT2U];
+		else if (!_stricmp(name, "dbat3u")) return &Core->regs.spr[(int)Gekko::SPR::DBAT3U];
+		else if (!_stricmp(name, "dbat0l")) return &Core->regs.spr[(int)Gekko::SPR::DBAT0L];
+		else if (!_stricmp(name, "dbat1l")) return &Core->regs.spr[(int)Gekko::SPR::DBAT1L];
+		else if (!_stricmp(name, "dbat2l")) return &Core->regs.spr[(int)Gekko::SPR::DBAT2L];
+		else if (!_stricmp(name, "dbat3l")) return &Core->regs.spr[(int)Gekko::SPR::DBAT3L];
 
-		else if (!_stricmp(name, "sdr1")) return &Gekko->regs.spr[(int)Gekko::SPR::SDR1];
-		else if (!_stricmp(name, "sprg0")) return &Gekko->regs.spr[(int)Gekko::SPR::SPRG0];
-		else if (!_stricmp(name, "sprg1")) return &Gekko->regs.spr[(int)Gekko::SPR::SPRG1];
-		else if (!_stricmp(name, "sprg2")) return &Gekko->regs.spr[(int)Gekko::SPR::SPRG2];
-		else if (!_stricmp(name, "sprg3")) return &Gekko->regs.spr[(int)Gekko::SPR::SPRG3];
-		else if (!_stricmp(name, "dar")) return &Gekko->regs.spr[(int)Gekko::SPR::DAR];
-		else if (!_stricmp(name, "dsisr")) return &Gekko->regs.spr[(int)Gekko::SPR::DSISR];
-		else if (!_stricmp(name, "srr0")) return &Gekko->regs.spr[(int)Gekko::SPR::SRR0];
-		else if (!_stricmp(name, "srr1")) return &Gekko->regs.spr[(int)Gekko::SPR::SRR1];
-		else if (!_stricmp(name, "pmc1")) return &Gekko->regs.spr[953];
-		else if (!_stricmp(name, "pmc2")) return &Gekko->regs.spr[954];
-		else if (!_stricmp(name, "pmc3")) return &Gekko->regs.spr[957];
-		else if (!_stricmp(name, "pmc4")) return &Gekko->regs.spr[958];
-		else if (!_stricmp(name, "mmcr0")) return &Gekko->regs.spr[952];
-		else if (!_stricmp(name, "mmcr1")) return &Gekko->regs.spr[956];
-		else if (!_stricmp(name, "sia")) return &Gekko->regs.spr[955];
-		else if (!_stricmp(name, "sda")) return &Gekko->regs.spr[959];
+		else if (!_stricmp(name, "sdr1")) return &Core->regs.spr[(int)Gekko::SPR::SDR1];
+		else if (!_stricmp(name, "sprg0")) return &Core->regs.spr[(int)Gekko::SPR::SPRG0];
+		else if (!_stricmp(name, "sprg1")) return &Core->regs.spr[(int)Gekko::SPR::SPRG1];
+		else if (!_stricmp(name, "sprg2")) return &Core->regs.spr[(int)Gekko::SPR::SPRG2];
+		else if (!_stricmp(name, "sprg3")) return &Core->regs.spr[(int)Gekko::SPR::SPRG3];
+		else if (!_stricmp(name, "dar")) return &Core->regs.spr[(int)Gekko::SPR::DAR];
+		else if (!_stricmp(name, "dsisr")) return &Core->regs.spr[(int)Gekko::SPR::DSISR];
+		else if (!_stricmp(name, "srr0")) return &Core->regs.spr[(int)Gekko::SPR::SRR0];
+		else if (!_stricmp(name, "srr1")) return &Core->regs.spr[(int)Gekko::SPR::SRR1];
+		else if (!_stricmp(name, "pmc1")) return &Core->regs.spr[953];
+		else if (!_stricmp(name, "pmc2")) return &Core->regs.spr[954];
+		else if (!_stricmp(name, "pmc3")) return &Core->regs.spr[957];
+		else if (!_stricmp(name, "pmc4")) return &Core->regs.spr[958];
+		else if (!_stricmp(name, "mmcr0")) return &Core->regs.spr[952];
+		else if (!_stricmp(name, "mmcr1")) return &Core->regs.spr[956];
+		else if (!_stricmp(name, "sia")) return &Core->regs.spr[955];
+		else if (!_stricmp(name, "sda")) return &Core->regs.spr[959];
 
-		else if (!_stricmp(name, "gqr0")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR0];
-		else if (!_stricmp(name, "gqr1")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR1];
-		else if (!_stricmp(name, "gqr2")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR2];
-		else if (!_stricmp(name, "gqr3")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR3];
-		else if (!_stricmp(name, "gqr4")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR4];
-		else if (!_stricmp(name, "gqr5")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR5];
-		else if (!_stricmp(name, "gqr6")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR6];
-		else if (!_stricmp(name, "gqr7")) return &Gekko->regs.spr[(int)Gekko::SPR::GQR7];
+		else if (!_stricmp(name, "gqr0")) return &Core->regs.spr[(int)Gekko::SPR::GQR0];
+		else if (!_stricmp(name, "gqr1")) return &Core->regs.spr[(int)Gekko::SPR::GQR1];
+		else if (!_stricmp(name, "gqr2")) return &Core->regs.spr[(int)Gekko::SPR::GQR2];
+		else if (!_stricmp(name, "gqr3")) return &Core->regs.spr[(int)Gekko::SPR::GQR3];
+		else if (!_stricmp(name, "gqr4")) return &Core->regs.spr[(int)Gekko::SPR::GQR4];
+		else if (!_stricmp(name, "gqr5")) return &Core->regs.spr[(int)Gekko::SPR::GQR5];
+		else if (!_stricmp(name, "gqr6")) return &Core->regs.spr[(int)Gekko::SPR::GQR6];
+		else if (!_stricmp(name, "gqr7")) return &Core->regs.spr[(int)Gekko::SPR::GQR7];
 
-		else if (!_stricmp(name, "hid0")) return &Gekko->regs.spr[(int)Gekko::SPR::HID0];
-		else if (!_stricmp(name, "hid1")) return &Gekko->regs.spr[(int)Gekko::SPR::HID1];
-		else if (!_stricmp(name, "hid2")) return &Gekko->regs.spr[(int)Gekko::SPR::HID2];
+		else if (!_stricmp(name, "hid0")) return &Core->regs.spr[(int)Gekko::SPR::HID0];
+		else if (!_stricmp(name, "hid1")) return &Core->regs.spr[(int)Gekko::SPR::HID1];
+		else if (!_stricmp(name, "hid2")) return &Core->regs.spr[(int)Gekko::SPR::HID2];
 
-		else if (!_stricmp(name, "dabr")) return &Gekko->regs.spr[(int)Gekko::SPR::DABR];
-		else if (!_stricmp(name, "iabr")) return &Gekko->regs.spr[(int)Gekko::SPR::IABR];
-		else if (!_stricmp(name, "wpar")) return &Gekko->regs.spr[(int)Gekko::SPR::WPAR];
-		else if (!_stricmp(name, "l2cr")) return &Gekko->regs.spr[1017];
-		else if (!_stricmp(name, "dmau")) return &Gekko->regs.spr[(int)Gekko::SPR::DMAU];
-		else if (!_stricmp(name, "dmal")) return &Gekko->regs.spr[(int)Gekko::SPR::DMAL];
-		else if (!_stricmp(name, "thrm1")) return &Gekko->regs.spr[1020];
-		else if (!_stricmp(name, "thrm2")) return &Gekko->regs.spr[1021];
-		else if (!_stricmp(name, "thrm3")) return &Gekko->regs.spr[1022];
-		else if (!_stricmp(name, "ictc")) return &Gekko->regs.spr[1019];
+		else if (!_stricmp(name, "dabr")) return &Core->regs.spr[(int)Gekko::SPR::DABR];
+		else if (!_stricmp(name, "iabr")) return &Core->regs.spr[(int)Gekko::SPR::IABR];
+		else if (!_stricmp(name, "wpar")) return &Core->regs.spr[(int)Gekko::SPR::WPAR];
+		else if (!_stricmp(name, "l2cr")) return &Core->regs.spr[1017];
+		else if (!_stricmp(name, "dmau")) return &Core->regs.spr[(int)Gekko::SPR::DMAU];
+		else if (!_stricmp(name, "dmal")) return &Core->regs.spr[(int)Gekko::SPR::DMAL];
+		else if (!_stricmp(name, "thrm1")) return &Core->regs.spr[1020];
+		else if (!_stricmp(name, "thrm2")) return &Core->regs.spr[1021];
+		else if (!_stricmp(name, "thrm3")) return &Core->regs.spr[1022];
+		else if (!_stricmp(name, "ictc")) return &Core->regs.spr[1019];
 
-		else if (!_stricmp(name, "pc")) return &Gekko->regs.pc;   // Wow !
+		else if (!_stricmp(name, "pc")) return &Core->regs.pc;   // Wow !
 
 		return NULL;
 	}
@@ -326,41 +324,41 @@ namespace Gekko
 	static Json::Value* CmdBreakExec(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
-		Gekko->AddBreakpoint(addr);
+		Core->AddBreakpoint(addr);
 		return nullptr;
 	}
 
 	static Json::Value* CmdBreakRead(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
-		Gekko->AddReadBreak(addr);
+		Core->AddReadBreak(addr);
 		return nullptr;
 	}
 
 	static Json::Value* CmdBreakWrite(std::vector<std::string>& args)
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
-		Gekko->AddWriteBreak(addr);
+		Core->AddWriteBreak(addr);
 		return nullptr;
 	}
 
 	static Json::Value* CmdBreakClearAll(std::vector<std::string>& args)
 	{
-		Gekko->ClearBreakpoints();
+		Core->ClearBreakpoints();
 		return nullptr;
 	}
 
 	static Json::Value* CmdCacheLog(std::vector<std::string>& args)
 	{
-		CacheLogLevel level = (CacheLogLevel)atoi(args[1].c_str());
-		Gekko->cache->SetLogLevel(level);
+		Gekko::CacheLogLevel level = (Gekko::CacheLogLevel)atoi(args[1].c_str());
+		Core->cache->SetLogLevel(level);
 		return nullptr;
 	}
 
 	static Json::Value* CmdCacheDebugDisable(std::vector<std::string>& args)
 	{
 		bool disable = atoi(args[1].c_str()) ? true : false;
-		Gekko->cache->DebugDisable(disable);
+		Core->cache->DebugDisable(disable);
 		return nullptr;
 	}
 
@@ -369,38 +367,38 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Bool;
 
-		output->value.AsBool = Gekko->IsRunning();
+		output->value.AsBool = Core->IsRunning();
 
 		return output;
 	}
 
 	static Json::Value* CmdGekkoRun(std::vector<std::string>& args)
 	{
-		Gekko->Run();
+		Core->Run();
 		return nullptr;
 	}
 
 	static Json::Value* CmdGekkoSuspend(std::vector<std::string>& args)
 	{
-		Gekko->Suspend();
+		Core->Suspend();
 		return nullptr;
 	}
 
 	static Json::Value* CmdGekkoStep(std::vector<std::string>& args)
 	{
-		if (!Gekko->IsRunning())
+		if (!Core->IsRunning())
 		{
-			Gekko->Step();
+			Core->Step();
 		}
 		return nullptr;
 	}
 
 	static Json::Value* CmdGekkoSkipInstruction(std::vector<std::string>& args)
 	{
-		if (!Gekko->IsRunning())
+		if (!Core->IsRunning())
 		{
-			Report(Channel::CPU, "Skipped instruction at: 0x%08X!\n", Gekko->regs.pc);
-			Gekko->regs.pc += 4;
+			Report(Channel::CPU, "Skipped instruction at: 0x%08X!\n", Core->regs.pc);
+			Core->regs.pc += 4;
 		}
 		return nullptr;
 	}
@@ -412,7 +410,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsUint32 = Gekko->regs.gpr[n];
+		output->value.AsUint32 = Core->regs.gpr[n];
 
 		return output;
 	}
@@ -424,7 +422,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.fpr[n].uval;
+		output->value.AsInt = Core->regs.fpr[n].uval;
 
 		return output;
 	}
@@ -436,7 +434,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.ps1[n].uval;
+		output->value.AsInt = Core->regs.ps1[n].uval;
 
 		return output;
 	}
@@ -446,7 +444,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.pc;
+		output->value.AsInt = Core->regs.pc;
 
 		return output;
 	}
@@ -456,7 +454,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.msr;
+		output->value.AsInt = Core->regs.msr;
 
 		return output;
 	}
@@ -466,7 +464,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.cr;
+		output->value.AsInt = Core->regs.cr;
 
 		return output;
 	}
@@ -476,7 +474,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsInt = Gekko->regs.fpscr;
+		output->value.AsInt = Core->regs.fpscr;
 
 		return output;
 	}
@@ -488,7 +486,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsUint32 = Gekko->regs.spr[n];
+		output->value.AsUint32 = Core->regs.spr[n];
 
 		return output;
 	}
@@ -500,7 +498,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsUint32 = Gekko->regs.sr[n];
+		output->value.AsUint32 = Core->regs.sr[n];
 
 		return output;
 	}
@@ -510,7 +508,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsUint32 = Gekko->regs.tb.Part.u;
+		output->value.AsUint32 = Core->regs.tb.Part.u;
 
 		return output;
 	}
@@ -520,7 +518,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Int;
 
-		output->value.AsUint32 = Gekko->regs.tb.Part.l;
+		output->value.AsUint32 = Core->regs.tb.Part.l;
 
 		return output;
 	}
@@ -534,7 +532,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Read, WIMG);
 		}
 
 		Json::Value* output = new Json::Value();
@@ -554,7 +552,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
 		}
 
 		Json::Value* output = new Json::Value();
@@ -574,7 +572,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Read, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Read, WIMG);
 		}
 
 		Json::Value* output = new Json::Value();
@@ -594,7 +592,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
 		}
 
 		Json::Value* output = new Json::Value();
@@ -612,7 +610,7 @@ namespace Gekko
 		Json::Value* output = new Json::Value();
 		output->type = Json::ValueType::Bool;
 
-		output->value.AsBool = Gekko->IsBreakpoint(addr);
+		output->value.AsBool = Core->IsBreakpoint(addr);
 
 		return output;
 	}
@@ -621,7 +619,7 @@ namespace Gekko
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
-		Gekko->ToggleBreakpoint(addr);
+		Core->ToggleBreakpoint(addr);
 
 		return nullptr;
 	}
@@ -630,7 +628,7 @@ namespace Gekko
 	{
 		uint32_t addr = strtoul(args[1].c_str(), nullptr, 0);
 
-		Gekko->AddOneShotBreakpoint(addr);
+		Core->AddOneShotBreakpoint(addr);
 
 		return nullptr;
 	}
@@ -645,7 +643,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
 		}
 
 		std::string text = "";
@@ -654,7 +652,7 @@ namespace Gekko
 
 		if (ptr != nullptr)
 		{
-			DecoderInfo info = { 0 };
+			Gekko::DecoderInfo info = { 0 };
 
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
 
@@ -679,7 +677,7 @@ namespace Gekko
 		bool showAddress = strtoul(args[3].c_str(), nullptr, 0) != 0;
 		bool showBytes = strtoul(args[4].c_str(), nullptr, 0) != 0;
 
-		DecoderInfo info = { 0 };
+		Gekko::DecoderInfo info = { 0 };
 		Gekko::Decoder::Decode(addr, instr, &info);
 
 		std::string text = Gekko::GekkoDisasm::Disasm(addr, &info, showAddress, showBytes);
@@ -701,7 +699,7 @@ namespace Gekko
 		if (JDI::Hub.ExecuteFastBool("IsLoaded"))
 		{
 			int WIMG;
-			pa = Gekko->EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+			pa = Core->EffectiveToPhysical(addr, Gekko::MmuAccess::Execute, WIMG);
 		}
 
 		bool flowControl = false;
@@ -709,7 +707,7 @@ namespace Gekko
 
 		if (pa < RAMSIZE)
 		{
-			DecoderInfo info = { 0 };
+			Gekko::DecoderInfo info = { 0 };
 
 			uint8_t* ptr = &mi.ram[pa];
 			uint32_t instr = _BYTESWAP_UINT32(*(uint32_t*)ptr);
@@ -737,18 +735,7 @@ namespace Gekko
 		}
 
 		uint32_t ea = strtoul(args[1].c_str(), nullptr, 0);
-		uint32_t pa = Gekko::BadAddress;
-		if (Gekko::Gekko)
-		{
-			int WIMG;
-			pa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Execute, WIMG);
-		}
-		if (pa == Gekko::BadAddress)
-		{
-			return nullptr;
-		}
-
-		PIWriteWord(pa, 0x6000'0000);
+		Core->WriteWord(ea, 0x6000'0000);
 
 		return nullptr;
 	}
@@ -757,7 +744,7 @@ namespace Gekko
 	static Json::Value* CmdEnableOpcodeStats(std::vector<std::string>& args)
 	{
 		bool enable = strtoul(args[1].c_str(), nullptr, 0) != 0 ? true : false;
-		Gekko::Gekko->EnableOpcodeStats(enable);
+		Core->EnableOpcodeStats(enable);
 		return nullptr;
 	}
 
@@ -765,28 +752,28 @@ namespace Gekko
 	static Json::Value* CmdPrintOpcodeStats(std::vector<std::string>& args)
 	{
 		size_t maxCount = strtoul(args[1].c_str(), nullptr, 0);
-		Gekko::Gekko->PrintOpcodeStats(maxCount);
+		Core->PrintOpcodeStats(maxCount);
 		return nullptr;
 	}
 
 	// Clears statistics of opcode usage
 	static Json::Value* CmdResetOpcodeStats(std::vector<std::string>& args)
 	{
-		Gekko::Gekko->ResetOpcodeStats();
+		Core->ResetOpcodeStats();
 		return nullptr;
 	}
 
 	// Runs a low priority thread that prints opcode statistics once a second
 	static Json::Value* CmdRunOpcodeStats(std::vector<std::string>& args)
 	{
-		Gekko::Gekko->RunOpcodeStatsThread();
+		Core->RunOpcodeStatsThread();
 		return nullptr;
 	}
 
 	// Stop the thread that outputs the opcode statistics
 	static Json::Value* CmdStopOpcodeStats(std::vector<std::string>& args)
 	{
-		Gekko::Gekko->StopOpcodeStatsThread();
+		Core->StopOpcodeStatsThread();
 		return nullptr;
 	}
 
@@ -806,7 +793,7 @@ namespace Gekko
 		output->type = Json::ValueType::Array;
 
 		output->AddInt(nullptr, (int)info.instr);
-		output->AddInt(nullptr, info.numParam);
+		output->AddInt(nullptr, (int)info.numParam);
 
 		uint32_t imm = 0;
 
@@ -897,72 +884,7 @@ namespace Gekko
 		return output;
 	}
 
-	// Assemble Gekko instruction based on analyzer information
-	static Json::Value* CmdGekkoAssemble(std::vector<std::string>& args)
-	{
-		// Get parameters and construct DecoderInfo
-
-		DecoderInfo info = { 0 };
-
-		info.instr = (Gekko::Instruction)strtoul(args[1].c_str(), nullptr, 0);
-	
-		info.numParam = strtoul(args[2].c_str(), nullptr, 0);
-
-		for (size_t i = 0; i < info.numParam; i++)
-		{
-			Param param = (Param)strtoul(args[3 + 2 * i].c_str(), nullptr, 0);
-			uint32_t paramBits = strtoul(args[3 + 2 * i + 1].c_str(), nullptr, 0);
-
-			switch (param)
-			{
-				case Param::Simm:
-					info.param[i] = param;
-					info.paramBits[i] = 0;
-					info.Imm.Signed = (int16_t)strtoul(args[13].c_str(), nullptr, 0);
-					break;
-
-				case Param::Uimm:
-					info.param[i] = param;
-					info.paramBits[i] = 0;
-					info.Imm.Unsigned = (uint16_t)strtoul(args[13].c_str(), nullptr, 0);
-					break;
-
-				case Param::Address:
-					info.param[i] = param;
-					info.paramBits[i] = 0;
-					info.Imm.Address = strtoul(args[13].c_str(), nullptr, 0);
-					break;
-
-				default:
-					info.param[i] = param;
-					info.paramBits[i] = paramBits;
-					break;
-			}
-		}
-
-		info.pc = strtoul(args[14].c_str(), nullptr, 0);
-
-		// Assemble
-
-		try
-		{
-			Gekko::GekkoAssembler::Assemble(info);
-		}
-		catch (...)
-		{
-			Debug::Report(Channel::CPU, "GekkoAssemble failed!");
-			info.instrBits = 0;
-		}
-
-		// Output result
-
-		Json::Value* output = new Json::Value();
-		output->type = Json::ValueType::Int;
-
-		output->value.AsUint32 = info.instrBits;
-
-		return output;
-	}
+#if 0
 
 	// Output the recompiled segments.
 	Json::Value* JitCommands::CmdJitcDumpSeg(std::vector<std::string>& args)
@@ -973,10 +895,10 @@ namespace Gekko
 		{
 			// Pause the emulation if it is running.
 
-			bool running = Gekko->IsRunning();
+			bool running = Core->IsRunning();
 			if (running)
 			{
-				Gekko->Suspend();
+				Core->Suspend();
 			}
 
 			// Loop through segments map
@@ -988,7 +910,7 @@ namespace Gekko
 			for (size_t n=0; n<segMax; n++)
 			{
 				uint32_t paddr = n << 2;
-				CodeSegment* seg = Gekko->jitc->segments[n];
+				CodeSegment* seg = Core->jitc->segments[n];
 				if (!seg)
 					continue;
 
@@ -1000,14 +922,14 @@ namespace Gekko
 
 			if (running)
 			{
-				Gekko->Run();
+				Core->Run();
 			}
 		}
 		else
 		{
 			uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
 
-			CodeSegment* seg = Gekko->jitc->SegmentCompiled(vaddr);
+			CodeSegment* seg = Core->jitc->SegmentCompiled(vaddr);
 
 			if (seg)
 			{
@@ -1048,18 +970,18 @@ namespace Gekko
 	{
 		uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
 
-		CodeSegment* seg = Gekko->jitc->SegmentCompiled(vaddr);
+		CodeSegment* seg = Core->jitc->SegmentCompiled(vaddr);
 
 		if (seg)
 		{
-			if (seg == Gekko->jitc->currentSegment)
+			if (seg == Core->jitc->currentSegment)
 			{
 				Report(Channel::CPU, "You cannot invalidate the current segment, it will cause the emulator to crash.\n");
 			}
 			else
 			{
 				size_t segmentSize = seg->size;
-				Gekko->jitc->Invalidate(vaddr, segmentSize);
+				Core->jitc->Invalidate(vaddr, segmentSize);
 				Report(Channel::CPU, "Segment of size %zi bytes at virtual address 0x%08X is invalidated.\n", segmentSize, vaddr);
 			}
 		}
@@ -1074,7 +996,7 @@ namespace Gekko
 	// Invalidate all recompiler segments except the current one (where GekkoCore is currently executing).
 	Json::Value* JitCommands::CmdJitcInvAll(std::vector<std::string>& args)
 	{
-		Gekko->jitc->InvalidateAll();
+		Core->jitc->InvalidateAll();
 		Report(Channel::CPU, "All segments of the recompiler except the current one are invalidated.\n");
 		return nullptr;
 	}
@@ -1092,6 +1014,8 @@ namespace Gekko
 
 		return output;
 	}
+
+#endif
 
 	void gekko_init_handlers()
 	{
@@ -1148,11 +1072,9 @@ namespace Gekko
 		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);
 		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
 
-		JDI::Hub.AddCmd("GekkoAssemble", CmdGekkoAssemble);
-
-		JDI::Hub.AddCmd("JitcDumpSeg", JitCommands::CmdJitcDumpSeg);
-		JDI::Hub.AddCmd("JitcInvSeg", JitCommands::CmdJitcInvSeg);
-		JDI::Hub.AddCmd("JitcInvAll", JitCommands::CmdJitcInvAll);
-		JDI::Hub.AddCmd("JitcEnabled", CmdJitcEnabled);
+		//JDI::Hub.AddCmd("JitcDumpSeg", JitCommands::CmdJitcDumpSeg);
+		//JDI::Hub.AddCmd("JitcInvSeg", JitCommands::CmdJitcInvSeg);
+		//JDI::Hub.AddCmd("JitcInvAll", JitCommands::CmdJitcInvAll);
+		//JDI::Hub.AddCmd("JitcEnabled", CmdJitcEnabled);
 	}
 }

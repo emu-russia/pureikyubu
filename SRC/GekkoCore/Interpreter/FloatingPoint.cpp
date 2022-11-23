@@ -12,7 +12,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) + FPRD(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fadd_d()
@@ -29,7 +29,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fadds_d()
@@ -45,7 +45,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) / FPRD(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fdiv_d()
@@ -62,7 +62,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fdivs_d()
@@ -78,7 +78,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmul_d()
@@ -95,7 +95,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmuls_d()
@@ -112,7 +112,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fres_d()
@@ -128,7 +128,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = 1.0 / sqrt(FPRD(info.paramBits[1]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::frsqrte_d()
@@ -144,7 +144,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) - FPRD(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fsub_d()
@@ -161,7 +161,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fsubs_d()
@@ -177,7 +177,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = (FPRD(info.paramBits[1]) >= 0.0) ? (FPRD(info.paramBits[2])) : (FPRD(info.paramBits[3]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fsel_d()
@@ -193,7 +193,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmadd_d()
@@ -210,7 +210,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmadds_d()
@@ -226,7 +226,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmsub_d()
@@ -243,7 +243,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmsubs_d()
@@ -259,7 +259,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) + FPRD(info.paramBits[3]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fnmadd_d()
@@ -276,7 +276,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fnmadds_d()
@@ -292,7 +292,7 @@ namespace Gekko
 			FPRD(info.paramBits[0]) = -(FPRD(info.paramBits[1]) * FPRD(info.paramBits[2]) - FPRD(info.paramBits[3]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fnmsub_d()
@@ -309,7 +309,7 @@ namespace Gekko
 			if (core->regs.spr[SPR::HID2] & HID2_PSE) PS1(info.paramBits[0]) = PS0(info.paramBits[0]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fnmsubs_d()
@@ -325,7 +325,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fctiw_d()
@@ -341,7 +341,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = (uint64_t)(uint32_t)(int32_t)FPRD(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fctiwz_d()
@@ -362,7 +362,7 @@ namespace Gekko
 			else FPRD(info.paramBits[0]) = (float)FPRD(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::frsp_d()
@@ -375,7 +375,7 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int32_t n = info.paramBits[0];
+			int32_t n = (int32_t)info.paramBits[0];
 			double a = FPRD(info.paramBits[1]), b = FPRD(info.paramBits[2]);
 			uint64_t da = FPRU(info.paramBits[1]), db = FPRU(info.paramBits[2]);
 			uint32_t c;
@@ -393,14 +393,14 @@ namespace Gekko
 			}
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fcmpu()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int32_t n = info.paramBits[0];
+			int32_t n = (int32_t)info.paramBits[0];
 			double a = FPRD(info.paramBits[1]), b = FPRD(info.paramBits[2]);
 			uint64_t da = FPRU(info.paramBits[1]), db = FPRU(info.paramBits[2]);
 			uint32_t c;
@@ -418,7 +418,7 @@ namespace Gekko
 			}
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fabs()
@@ -428,7 +428,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) & ~0x8000000000000000;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fabs_d()
@@ -445,7 +445,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fmr_d()
@@ -461,7 +461,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) | 0x8000000000000000;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fnabs_d()
@@ -477,7 +477,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = FPRU(info.paramBits[1]) ^ 0x8000000000000000;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::fneg_d()
@@ -503,7 +503,7 @@ namespace Gekko
 			FPRU(info.paramBits[0]) = (uint64_t)core->regs.fpscr;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	// fd[32-63] = FPSCR, CR1
@@ -547,7 +547,7 @@ namespace Gekko
 	// FPSCR = (fb & mask) | (FPSCR & ~mask)
 	void Interpreter::mtfsf()
 	{
-		uint32_t m = 0, fm = info.paramBits[0];
+		uint32_t m = 0, fm = (uint32_t)info.paramBits[0];
 
 		for (int i = 7; i >= 0; i--)
 		{

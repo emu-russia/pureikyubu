@@ -221,7 +221,7 @@ namespace Gekko
 
 	void Interpreter::divwo()
 	{
-		Debug::Halt("divwo\n");
+		core->Halt("divwo\n");
 	}
 
 	void Interpreter::divwo_d()
@@ -253,7 +253,7 @@ namespace Gekko
 
 	void Interpreter::divwuo()
 	{
-		Debug::Halt("divwuo\n");
+		core->Halt("divwuo\n");
 	}
 
 	void Interpreter::divwuo_d()
@@ -329,7 +329,7 @@ namespace Gekko
 
 	void Interpreter::mullwo()
 	{
-		Debug::Halt("mullwo\n");
+		core->Halt("mullwo\n");
 	}
 
 	void Interpreter::mullwo_d()

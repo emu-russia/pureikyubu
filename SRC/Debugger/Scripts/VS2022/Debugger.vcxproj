@@ -21,6 +21,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\DebugCommands.cpp" />
     <ClCompile Include="..\..\EventLog.cpp" />
+    <ClCompile Include="..\..\GekkoCommands.cpp" />
     <ClCompile Include="..\..\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -35,6 +36,7 @@
     <ClInclude Include="..\..\DebugCommands.h" />
     <ClInclude Include="..\..\Debugger.h" />
     <ClInclude Include="..\..\EventLog.h" />
+    <ClInclude Include="..\..\GekkoCommands.h" />
     <ClInclude Include="..\..\pch.h" />
     <ClInclude Include="..\..\Perf.h" />
     <ClInclude Include="..\..\Report.h" />
@@ -42,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\..\..\Data\Json\DebuggerJdi.json" />
+    <None Include="..\..\..\..\Data\Json\GekkoCoreJdi.json" />
     <None Include="..\..\Readme.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

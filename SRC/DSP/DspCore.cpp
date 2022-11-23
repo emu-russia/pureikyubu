@@ -196,9 +196,9 @@ namespace DSP
 	{
 		Report(Channel::DSP, "DspCore::HardReset\n");
 
-		if (Gekko::Gekko != nullptr)
+		if (Core != nullptr)
 		{
-			dsp->savedGekkoTicks = Gekko::Gekko->GetTicks();
+			dsp->savedGekkoTicks = Core->GetTicks();
 		}
 
 		repeatCount = 0;
@@ -248,7 +248,7 @@ namespace DSP
 
 	void DspCore::Update()
 	{
-		uint64_t ticks = Gekko::Gekko->GetTicks();
+		uint64_t ticks = Core->GetTicks();
 
 		if (ticks >= (dsp->savedGekkoTicks + GekkoTicksPerDspInstruction))
 		{
@@ -261,7 +261,7 @@ namespace DSP
 				{
 					Halt("DSP: IMEM breakpoint at 0x%04X\n", regs.pc);
 					dsp->Suspend();
-					Gekko::Gekko->Suspend();
+					Core->Suspend();
 					return;
 				}
 
@@ -269,7 +269,7 @@ namespace DSP
 				{
 					oneShotBreakpoint = 0xffff;
 					dsp->Suspend();
-					Gekko::Gekko->Suspend();
+					Core->Suspend();
 					return;
 				}
 			}

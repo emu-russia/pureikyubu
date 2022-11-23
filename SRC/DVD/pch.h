@@ -19,7 +19,9 @@
 #include "../Common/String.h"
 
 #include "../Debugger/Debugger.h"
-#include "../GekkoCore/Gekko.h"
+#include "../GekkoCore/GekkoCore.h"
+
+extern Gekko::GekkoCore* Core;
 
 #include "DVD.h"
 #include "GCM.h"

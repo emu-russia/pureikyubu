@@ -6,13 +6,13 @@ namespace Debug
 	{
 		SamplingProfiler* profiler = (SamplingProfiler *)Parameter;
 
-		uint64_t ticks = Gekko::Gekko->GetTicks();
+		uint64_t ticks = Core->GetTicks();
 		if (ticks >= (profiler->savedGekkoTbr + profiler->pollingInterval))
 		{
 			profiler->savedGekkoTbr = ticks;
 
 			profiler->sampleData->AddUInt64(nullptr, ticks);
-			profiler->sampleData->AddUInt32(nullptr, Gekko::Gekko->regs.pc);
+			profiler->sampleData->AddUInt32(nullptr, Core->regs.pc);
 		}
 	}
 
@@ -20,8 +20,8 @@ namespace Debug
 	{
 		filename = jsonFileName;
 
-		pollingInterval = periodMs * (Gekko::Gekko->OneSecond() / 1000);
-		savedGekkoTbr = Gekko::Gekko->GetTicks();
+		pollingInterval = periodMs * (Core->OneSecond() / 1000);
+		savedGekkoTbr = Core->GetTicks();
 
 		json = new Json();
 

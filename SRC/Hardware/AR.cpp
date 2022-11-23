@@ -42,9 +42,9 @@ static void ARINT()
 
 static void ARAMDmaThread(void* Parameter)
 {
-    if (Gekko::Gekko->GetTicks() < aram.gekkoTicks)
+    if (Core->GetTicks() < aram.gekkoTicks)
         return;
-    aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
+    aram.gekkoTicks = Core->GetTicks() + aram.gekkoTicksPerSlice;
 
     int type = aram.cnt >> 31;
     uint32_t cnt = aram.cnt & 0x3FF'FFE0;
@@ -130,7 +130,7 @@ static void ARDMA()
 
     assert(!aram.dmaThread->IsRunning());
     Flipper::ai.dcr |= AIDCR_ARDMA;
-    aram.gekkoTicks = Gekko::Gekko->GetTicks() + aram.gekkoTicksPerSlice;
+    aram.gekkoTicks = Core->GetTicks() + aram.gekkoTicksPerSlice;
     aram.dspRunningBeforeAramDma = Flipper::DSP->IsRunning();
     //if (aram.dspRunningBeforeAramDma)
     //{

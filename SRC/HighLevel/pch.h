@@ -21,7 +21,9 @@
 #include "../Common/File.h"
 #include "../Common/String.h"
 
-#include "../GekkoCore/Gekko.h"
+#include "../GekkoCore/GekkoCore.h"
+
+extern Gekko::GekkoCore* Core;
 
 #include "HighLevel.h"
 

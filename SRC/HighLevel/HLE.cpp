@@ -7,10 +7,10 @@ HLEControl hle;
 
 // ---------------------------------------------------------------------------
 
-void os_ignore() { Report(Channel::HLE, "High level ignore (pc: %08X, %s)\n", Gekko::Gekko->regs.pc, SYMName(Gekko::Gekko->regs.pc)); }
-void os_ret0()   { Gekko::Gekko->regs.gpr[3] = 0; }
-void os_ret1()   { Gekko::Gekko->regs.gpr[3] = 1; }
-void os_trap()   { Gekko::Gekko->regs.pc = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] - 4; Halt("High level trap (pc: %08X)!\n", Gekko::Gekko->regs.pc); }
+void os_ignore() { Report(Channel::HLE, "High level ignore (pc: %08X, %s)\n", Core->regs.pc, SYMName(Core->regs.pc)); }
+void os_ret0()   { Core->regs.gpr[3] = 0; }
+void os_ret1()   { Core->regs.gpr[3] = 1; }
+void os_trap()   { Core->regs.pc = Core->regs.spr[(int)Gekko::SPR::LR] - 4; Halt("High level trap (pc: %08X)!\n", Core->regs.pc); }
 
 // HLE Ignore (you know what are you doing!)
 static const char *osignore[] = {
@@ -152,9 +152,9 @@ void HLEClose()
 
 void HLEExecuteCallback(uint32_t entryPoint)
 {
-    uint32_t old = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR];
-    Gekko::Gekko->regs.pc = entryPoint;
-    Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = 0;
-    while (Gekko::Gekko->regs.pc) Gekko::Gekko->Step();
-    Gekko::Gekko->regs.pc = Gekko::Gekko->regs.spr[(int)Gekko::SPR::LR] = old;
+    uint32_t old = Core->regs.spr[(int)Gekko::SPR::LR];
+    Core->regs.pc = entryPoint;
+    Core->regs.spr[(int)Gekko::SPR::LR] = 0;
+    while (Core->regs.pc) Core->Step();
+    Core->regs.pc = Core->regs.spr[(int)Gekko::SPR::LR] = old;
 }

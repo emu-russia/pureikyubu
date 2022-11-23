@@ -30,7 +30,7 @@ namespace Debug
 		Json::Value* tid = entry->AddInt("pid", (int)chan);
 		assert(tid);
 
-		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
 		Json::Value* ph = entry->AddAnsiString("ph", "B");
@@ -55,7 +55,7 @@ namespace Debug
 		Json::Value* tid = entry->AddInt("pid", (int)chan);
 		assert(tid);
 
-		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
 		Json::Value* ph = entry->AddAnsiString("ph", "E");
@@ -77,7 +77,7 @@ namespace Debug
 		Json::Value* tid = entry->AddInt("pid", (int)chan);
 		assert(tid);
 
-		Json::Value* ts = entry->AddUInt64("ts", Gekko::Gekko->GetTicks());
+		Json::Value* ts = entry->AddUInt64("ts", Core->GetTicks());
 		assert(ts);
 
 		Json::Value* ph = entry->AddAnsiString("ph", "I");

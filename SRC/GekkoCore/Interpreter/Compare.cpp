@@ -21,7 +21,7 @@ namespace Gekko
 	//          else c = 0b001
 	// CR[4*crf..4*crf+3] = c || XER[SO]
 	template <typename T>
-	inline void Interpreter::CmpCommon(int crfd, T a, T b)
+	inline void Interpreter::CmpCommon(size_t crfd, T a, T b)
 	{
 		// TODO: Optimize
 		if (a < b) SET_CR_LT(crfd); else RESET_CR_LT(crfd);

@@ -19,25 +19,6 @@ namespace GekkoCoreUnitTest
 #include "TLB.h"
 #include "Cache.h"
 
-// floating point register
-union FPREG
-{
-    double         dbl;
-    uint64_t       uval;
-};
-
-// time-base
-union TBREG
-{
-    volatile int64_t   sval;               // for comparsion
-    volatile uint64_t  uval;               // for incrementing
-    struct
-    {
-        uint32_t     l;                  // for output
-        uint32_t     u;
-    } Part;
-};
-
 struct GekkoRegs
 {
     uint32_t    gpr[32];            // general purpose regs
@@ -51,11 +32,15 @@ struct GekkoRegs
     TBREG       tb;                 // time-base counter (timer)
 };
 
+namespace Debug
+{
+    class JitCommands;
+}
+
 namespace Gekko
 {
     class Interpreter;
     class Jitc;
-    class JitCommands;
     class CodeSegment;
 
     enum class MmuAccess
@@ -95,7 +80,6 @@ namespace Gekko
         friend Jitc;
         friend CodeSegment;
         friend GatherBuffer;
-        friend JitCommands;
         friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
         // How many ticks Gekko takes to execute one instruction. 
@@ -251,9 +235,10 @@ namespace Gekko
         void ResetCompiledSegmentsCount() { compiledSegments = 0; }
         void ResetExecutedSegmentsCount() { executedSegments = 0; }
 
+        void Halt(const char* text, ...);
+        void Report(const char* text, ...);
+
 #pragma endregion "Debug"
 
     };
-
-    extern GekkoCore* Gekko;
 }

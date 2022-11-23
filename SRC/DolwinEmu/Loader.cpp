@@ -97,8 +97,8 @@ uint32_t LoadDOL(const std::wstring& dolname)
     BootROM(false, false, config->consoleVer);
 
     /* Setup registers. */
-    Gekko::Gekko->regs.gpr[1] = 0x816ffffc;
-    Gekko::Gekko->regs.gpr[13] = 0x81100000;      // Fake sda1
+    Core->regs.gpr[1] = 0x816ffffc;
+    Core->regs.gpr[13] = 0x81100000;      // Fake sda1
 
     // DO NOT CLEAR BSS !
 
@@ -513,7 +513,7 @@ void LoadFile(const std::wstring& filename)
     // set entrypoint (for DVD, PC will set in apploader)
     if (!dvd)
     {
-        Gekko::Gekko->regs.pc = entryPoint;
+        Core->regs.pc = entryPoint;
     }
 
     // There is Fuse on the motherboard, which determines the video encoder mode. 

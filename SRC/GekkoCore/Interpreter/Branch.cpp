@@ -13,7 +13,7 @@ namespace Gekko
 	{
 		if (core->intFlag && (core->regs.msr & MSR_EE))
 		{
-			core->Exception(Gekko::Exception::INTERRUPT);
+			core->Exception(Gekko::Exception::EXCEPTION_EXTERNAL_INTERRUPT);
 			core->exception = false;
 			return;
 		}
@@ -23,7 +23,7 @@ namespace Gekko
 		if (core->decreq && (core->regs.msr & MSR_EE))
 		{
 			core->decreq = false;
-			core->Exception(Gekko::Exception::DECREMENTER);
+			core->Exception(Gekko::Exception::EXCEPTION_DECREMENTER);
 		}
 	}
 
@@ -61,7 +61,7 @@ namespace Gekko
 	bool Interpreter::BcTest()
 	{
 		bool ctr_ok, cond_ok;
-		int bo = info.paramBits[0], bi = info.paramBits[1];
+		size_t bo = info.paramBits[0], bi = info.paramBits[1];
 
 		if (BO(2) == 0)
 		{
@@ -149,7 +149,7 @@ namespace Gekko
 	bool Interpreter::BctrTest()
 	{
 		bool cond_ok;
-		int bo = info.paramBits[0], bi = info.paramBits[1];
+		size_t bo = info.paramBits[0], bi = info.paramBits[1];
 
 		if (BO(0) == 0)
 		{

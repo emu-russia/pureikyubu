@@ -388,7 +388,7 @@ namespace Gekko
 		bool BctrTest();
 
 		template <typename T>
-		inline void CmpCommon(int crfd, T a, T b);
+		inline void CmpCommon(size_t crfd, T a, T b);
 
 		void Dispatch();
 
@@ -396,7 +396,7 @@ namespace Gekko
 		uint32_t OverflowBit;
 
 		uint32_t FullAdder(uint32_t a, uint32_t b);
-		uint32_t Rotl32(int sa, uint32_t data);
+		uint32_t Rotl32(size_t sa, uint32_t data);
 
 		void SET_XER_SO() { core->regs.spr[Gekko::SPR::XER] |= GEKKO_XER_SO; }
 		void SET_XER_OV() { core->regs.spr[Gekko::SPR::XER] |= GEKKO_XER_OV; }

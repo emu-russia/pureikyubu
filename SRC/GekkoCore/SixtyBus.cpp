@@ -20,7 +20,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -36,7 +36,7 @@ namespace Gekko
 			return;
 		}
 
-		PIReadByte(pa, reg);
+		SixtyBus_ReadByte(pa, reg);
 	}
 
 	void GekkoCore::WriteByte(uint32_t addr, uint32_t data)
@@ -51,7 +51,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -82,7 +82,7 @@ namespace Gekko
 			return;
 		}
 
-		PIWriteByte(pa, data);
+		SixtyBus_WriteByte(pa, data);
 	}
 
 	void GekkoCore::ReadHalf(uint32_t addr, uint32_t *reg)
@@ -97,7 +97,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -113,7 +113,7 @@ namespace Gekko
 			return;
 		}
 
-		PIReadHalf(pa, reg);
+		SixtyBus_ReadHalf(pa, reg);
 	}
 
 	void GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
@@ -128,7 +128,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -159,7 +159,7 @@ namespace Gekko
 			return;
 		}
 
-		PIWriteHalf(pa, data);
+		SixtyBus_WriteHalf(pa, data);
 	}
 
 	void GekkoCore::ReadWord(uint32_t addr, uint32_t *reg)
@@ -174,7 +174,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -190,7 +190,7 @@ namespace Gekko
 			return;
 		}
 
-		PIReadWord(pa, reg);
+		SixtyBus_ReadWord(pa, reg);
 	}
 
 	void GekkoCore::WriteWord(uint32_t addr, uint32_t data)
@@ -205,7 +205,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -236,7 +236,7 @@ namespace Gekko
 			return;
 		}
 
-		PIWriteWord(pa, data);
+		SixtyBus_WriteWord(pa, data);
 	}
 
 	void GekkoCore::ReadDouble(uint32_t addr, uint64_t *reg)
@@ -251,7 +251,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -269,7 +269,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		PIReadDouble(pa, reg);
+		SixtyBus_ReadDouble(pa, reg);
 	}
 
 	void GekkoCore::WriteDouble(uint32_t addr, uint64_t *data)
@@ -284,7 +284,7 @@ namespace Gekko
 		if (pa == BadAddress)
 		{
 			regs.spr[(int)SPR::DAR] = addr;
-			Exception(Exception::DSI);
+			Exception(Exception::EXCEPTION_DSI);
 			return;
 		}
 
@@ -317,7 +317,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		PIWriteDouble(pa, data);
+		SixtyBus_WriteDouble(pa, data);
 	}
 
 }
