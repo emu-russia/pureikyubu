@@ -36,3 +36,7 @@
 #include "Debugger.h"
 
 extern Gekko::GekkoCore* Core;
+
+#ifdef _LINUX
+#define _stricmp strcasecmp
+#endif
