@@ -151,7 +151,7 @@ namespace HLE
         }
         else
         {
-            timeStr = OSTimeFormat(Gekko::Gekko->GetTicks(), false);
+            timeStr = OSTimeFormat(Core->GetTicks(), false);
         }
 
         Json::Value* output = new Json::Value();
@@ -172,7 +172,7 @@ namespace HLE
         }
         else
         {
-            timeStr = OSTimeFormat(Gekko::Gekko->GetTicks(), true);
+            timeStr = OSTimeFormat(Core->GetTicks(), true);
         }
 
         Json::Value* output = new Json::Value();

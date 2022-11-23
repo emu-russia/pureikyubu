@@ -154,9 +154,9 @@ namespace Debug
 
 		if (haltCpu)
 		{
-			if (Gekko::Gekko->IsRunning())
+			if (Core->IsRunning())
 			{
-				Gekko::Gekko->Suspend();
+				Core->Suspend();
 			}
 		}
 	}

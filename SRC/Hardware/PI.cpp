@@ -16,277 +16,293 @@ static void (*hw_write32[0x10000])(uint32_t, uint32_t);
 
 #pragma region "Processor Memory Interface"
 
+// Interface for accessing memory and memory-mapped registers from the processor side.
+// For more details see Docs/HW/ProcessorInterface.md
+
 // In previous versions, this functionality was mistakenly located in the MI module.
 // After a sufficient study of architecture, it became clear that, in fact, it belongs here.
 
-void PIReadByte(uint32_t pa, uint32_t* reg)
+namespace Gekko
 {
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
+    void SixtyBus_ReadByte(uint32_t pa, uint32_t* reg)
     {
-        *reg = 0;
-        return;
-    }
+        uint8_t* ptr;
 
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        if (mi.BootromPresent)
+        if (mi.ram == nullptr)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            *reg = 0;
+            return;
+        }
+
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            if (mi.BootromPresent)
+            {
+                ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+                *reg = (uint32_t)*ptr;
+            }
+            else
+            {
+                *reg = 0xFF;
+            }
+            return;
+        }
+
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_read8[pa & 0xffff](pa, reg);
+            return;
+        }
+
+        // bus load byte
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
             *reg = (uint32_t)*ptr;
         }
         else
         {
-            *reg = 0xFF;
+            *reg = 0;
         }
-        return;
     }
 
-    // hardware trap
-    if (pa >= HW_BASE)
+    void SixtyBus_WriteByte(uint32_t pa, uint32_t data)
     {
-        hw_read8[pa & 0xffff](pa, reg);
-        return;
-    }
+        uint8_t* ptr;
 
-    // bus load byte
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *reg = (uint32_t)*ptr;
-    }
-    else
-    {
-        *reg = 0;
-    }
-}
-
-void PIWriteByte(uint32_t pa, uint32_t data)
-{
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
-    {
-        return;
-    }
-
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        return;
-    }
-
-    // hardware trap
-    if (pa >= HW_BASE)
-    {
-        hw_write8[pa & 0xffff](pa, (uint8_t)data);
-        return;
-    }
-
-    // bus store byte
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *ptr = (uint8_t)data;
-    }
-}
-
-void PIReadHalf(uint32_t pa, uint32_t* reg)
-{
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
-    {
-        *reg = 0;
-        return;
-    }
-
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        if (mi.BootromPresent)
+        if (mi.ram == nullptr)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            return;
+        }
+
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            return;
+        }
+
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_write8[pa & 0xffff](pa, (uint8_t)data);
+            return;
+        }
+
+        // bus store byte
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
+            *ptr = (uint8_t)data;
+        }
+    }
+
+    void SixtyBus_ReadHalf(uint32_t pa, uint32_t* reg)
+    {
+        uint8_t* ptr;
+
+        if (mi.ram == nullptr)
+        {
+            *reg = 0;
+            return;
+        }
+
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            if (mi.BootromPresent)
+            {
+                ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+                *reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
+            }
+            else
+            {
+                *reg = 0xFFFF;
+            }
+            return;
+        }
+
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_read16[pa & 0xfffe](pa, reg);
+            return;
+        }
+
+        // bus load halfword
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
             *reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
         }
         else
         {
-            *reg = 0xFFFF;
+            *reg = 0;
         }
-        return;
     }
 
-    // hardware trap
-    if (pa >= HW_BASE)
+    void SixtyBus_WriteHalf(uint32_t pa, uint32_t data)
     {
-        hw_read16[pa & 0xfffe](pa, reg);
-        return;
-    }
+        uint8_t* ptr;
 
-    // bus load halfword
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *reg = (uint32_t)_BYTESWAP_UINT16(*(uint16_t*)ptr);
-    }
-    else
-    {
-        *reg = 0;
-    }
-}
-
-void PIWriteHalf(uint32_t pa, uint32_t data)
-{
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
-    {
-        return;
-    }
-
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        return;
-    }
-
-    // hardware trap
-    if (pa >= HW_BASE)
-    {
-        hw_write16[pa & 0xfffe](pa, data);
-        return;
-    }
-
-    // bus store halfword
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
-    }
-}
-
-void PIReadWord(uint32_t pa, uint32_t* reg)
-{
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
-    {
-        *reg = 0;
-        return;
-    }
-
-    // bus load word
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
-        return;
-    }
-
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        if (mi.BootromPresent)
+        if (mi.ram == nullptr)
         {
-            ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+            return;
+        }
+
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            return;
+        }
+
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_write16[pa & 0xfffe](pa, data);
+            return;
+        }
+
+        // bus store halfword
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
+            *(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
+        }
+    }
+
+    void SixtyBus_ReadWord(uint32_t pa, uint32_t* reg)
+    {
+        uint8_t* ptr;
+
+        if (mi.ram == nullptr)
+        {
+            *reg = 0;
+            return;
+        }
+
+        // bus load word
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
             *reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
+            return;
         }
-        else
+
+        if (pa >= BOOTROM_START_ADDRESS)
         {
-            *reg = 0xFFFFFFFF;
+            if (mi.BootromPresent)
+            {
+                ptr = &mi.bootrom[pa - BOOTROM_START_ADDRESS];
+                *reg = _BYTESWAP_UINT32(*(uint32_t*)ptr);
+            }
+            else
+            {
+                *reg = 0xFFFFFFFF;
+            }
+            return;
         }
-        return;
-    }
 
-    // hardware trap
-    if (pa >= HW_BASE)
-    {
-        hw_read32[pa & 0xfffc](pa, reg);
-        return;
-    }
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_read32[pa & 0xfffc](pa, reg);
+            return;
+        }
 
-    // embedded frame buffer
-    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
-    {
-        *reg = Flipper::Gx->EfbPeek(pa);
-        return;
-    }
+        // embedded frame buffer
+        if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
+        {
+            *reg = Flipper::Gx->EfbPeek(pa);
+            return;
+        }
 
-    *reg = 0;
-}
-
-void PIWriteWord(uint32_t pa, uint32_t data)
-{
-    uint8_t* ptr;
-
-    if (mi.ram == nullptr)
-    {
-        return;
-    }
-
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        return;
-    }
-
-    // hardware trap
-    if (pa >= HW_BASE)
-    {
-        hw_write32[pa & 0xfffc](pa, data);
-        return;
-    }
-
-    // embedded frame buffer
-    if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
-    {
-        Flipper::Gx->EfbPoke(pa, data);
-        return;
-    }
-
-    // bus store word
-    if (pa < mi.ramSize)
-    {
-        ptr = &mi.ram[pa];
-        *(uint32_t*)ptr = _BYTESWAP_UINT32(data);
-    }
-}
-
-//
-// longlongs are never used in GC hardware access
-//
-
-void PIReadDouble(uint32_t pa, uint64_t* reg)
-{
-    if (pa >= BOOTROM_START_ADDRESS)
-    {
-        assert(true);
-    }
-
-    if (pa >= RAMSIZE || mi.ram == nullptr)
-    {
         *reg = 0;
-        return;
     }
 
-    uint8_t* buf = &mi.ram[pa];
-
-    // bus load doubleword
-    *reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
-}
-
-void PIWriteDouble(uint32_t pa, uint64_t* data)
-{
-    if (pa >= BOOTROM_START_ADDRESS)
+    void SixtyBus_WriteWord(uint32_t pa, uint32_t data)
     {
-        return;
+        uint8_t* ptr;
+
+        if (mi.ram == nullptr)
+        {
+            return;
+        }
+
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            return;
+        }
+
+        // hardware trap
+        if (pa >= HW_BASE)
+        {
+            hw_write32[pa & 0xfffc](pa, data);
+            return;
+        }
+
+        // embedded frame buffer
+        if ((pa & PI_EFB_ADDRESS_MASK) == PI_MEMSPACE_EFB)
+        {
+            Flipper::Gx->EfbPoke(pa, data);
+            return;
+        }
+
+        // bus store word
+        if (pa < mi.ramSize)
+        {
+            ptr = &mi.ram[pa];
+            *(uint32_t*)ptr = _BYTESWAP_UINT32(data);
+        }
     }
 
-    if (pa >= RAMSIZE || mi.ram == nullptr)
+    //
+    // longlongs are never used in GC hardware access
+    //
+
+    void SixtyBus_ReadDouble(uint32_t pa, uint64_t* reg)
     {
-        return;
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            assert(true);
+        }
+
+        if (pa >= RAMSIZE || mi.ram == nullptr)
+        {
+            *reg = 0;
+            return;
+        }
+
+        uint8_t* buf = &mi.ram[pa];
+
+        // bus load doubleword
+        *reg = _BYTESWAP_UINT64(*(uint64_t*)buf);
     }
 
-    uint8_t* buf = &mi.ram[pa];
+    void SixtyBus_WriteDouble(uint32_t pa, uint64_t* data)
+    {
+        if (pa >= BOOTROM_START_ADDRESS)
+        {
+            return;
+        }
 
-    // bus store doubleword
-    *(uint64_t*)buf = _BYTESWAP_UINT64(*data);
+        if (pa >= RAMSIZE || mi.ram == nullptr)
+        {
+            return;
+        }
+
+        uint8_t* buf = &mi.ram[pa];
+
+        // bus store doubleword
+        *(uint64_t*)buf = _BYTESWAP_UINT64(*data);
+    }
+
+    void SixtyBus_ReadBurst(uint32_t phys_addr, uint8_t burstData[32])
+    {
+        PIReadBurst(phys_addr, burstData);
+    }
+
+    void SixtyBus_WriteBurst(uint32_t phys_addr, uint8_t burstData[32])
+    {
+        PIWriteBurst(phys_addr, burstData);
+    }
 }
 
 void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
@@ -487,7 +503,7 @@ static void printOut(uint32_t mask, const char *fix)
             buf += "INT ";
         }
     }
-    Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf.c_str(), fix, Gekko::Gekko->regs.pc, Gekko::Gekko->GetTicks());
+    Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf.c_str(), fix, Core->regs.pc, Core->GetTicks());
 }
 
 // assert interrupt
@@ -511,11 +527,11 @@ void PIAssertInt(uint32_t mask)
 
     if (pi.intsr & pi.intmr)
     {
-        Gekko::Gekko->AssertInterrupt();
+        Core->AssertInterrupt();
     }
     else
     {
-        Gekko::Gekko->ClearInterrupt();
+        Core->ClearInterrupt();
     }
 }
 
@@ -533,11 +549,11 @@ void PIClearInt(uint32_t mask)
 
     if (pi.intsr & pi.intmr)
     {
-        Gekko::Gekko->AssertInterrupt();
+        Core->AssertInterrupt();
     }
     else
     {
-        Gekko::Gekko->ClearInterrupt();
+        Core->ClearInterrupt();
     }
 }
 

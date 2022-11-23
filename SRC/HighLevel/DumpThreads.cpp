@@ -16,7 +16,7 @@ namespace HLE
 
 		// Translate effective address
 
-		uint32_t threadPa = Gekko::Gekko->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
+		uint32_t threadPa = Core->EffectiveToPhysical(ea, Gekko::MmuAccess::Read, WIMG);
 		if (threadPa == Gekko::BadAddress)
 		{
 			Report(Channel::Norm, "Invalid thread effective address: 0x%08X\n", ea);
@@ -68,7 +68,7 @@ namespace HLE
 
 		uint32_t linkActiveEffectiveAddr = OS_LINK_ACTIVE;
 
-		uint32_t linkActivePa = Gekko::Gekko->EffectiveToPhysical(linkActiveEffectiveAddr, Gekko::MmuAccess::Read, WIMG);
+		uint32_t linkActivePa = Core->EffectiveToPhysical(linkActiveEffectiveAddr, Gekko::MmuAccess::Read, WIMG);
 		if (linkActivePa == Gekko::BadAddress)
 		{
 			if (displayOnScreen)
@@ -144,7 +144,7 @@ namespace HLE
 
 		// Get context pointer
 
-		uint32_t physAddr = Gekko::Gekko->EffectiveToPhysical(effectiveAddr, Gekko::MmuAccess::Read, WIMG);
+		uint32_t physAddr = Core->EffectiveToPhysical(effectiveAddr, Gekko::MmuAccess::Read, WIMG);
 
 		if (physAddr == Gekko::BadAddress)
 		{

@@ -20,7 +20,7 @@
 #include "../Common/File.h"
 #include "../Common/String.h"
 
-#include "../GekkoCore/Gekko.h"
+#include "../GekkoCore/GekkoCore.h"
 #include "../GekkoCore/Interpreter.h"
 #include "../HighLevel/HighLevel.h"
 #include "../Hardware/HWConfig.h"
@@ -43,3 +43,5 @@
 #ifdef _LINUX
 #define _wcsicmp wcscasecmp
 #endif
+
+extern Gekko::GekkoCore* Core;

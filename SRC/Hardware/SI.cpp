@@ -472,7 +472,7 @@ static void no_read(uint32_t addr, uint32_t *reg)
 
 void SIPoll()
 {
-    int64_t ticks = Gekko::Gekko->GetTicks();
+    int64_t ticks = Core->GetTicks();
     if (ticks < si.pollingTime)
     {
         return;
@@ -553,7 +553,7 @@ void SIOpen()
     // clear all registers
     memset(&si, 0, sizeof(SIControl));
 
-    si.pollingTime = Gekko::Gekko->GetTicks() + SI_POLLING_INTERVAL;
+    si.pollingTime = Core->GetTicks() + SI_POLLING_INTERVAL;
 
     // these values are actually written when IPL boots
     // meaning is unknown (some pad command) and no need to be known

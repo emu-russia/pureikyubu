@@ -162,7 +162,7 @@ namespace Flipper
     static void AIStartDMA()
     {
         ai.dcnt = ai.len & ~AID_EN;
-        ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
+        ai.dmaTime = Core->GetTicks() + AIGetTime(32, ai.dmaRate);
         ai.currentDmaAddr = (ai.madr_hi << 16) | ai.madr_lo;
         if (ai.log)
         {
@@ -187,7 +187,7 @@ namespace Flipper
             ai.dcnt--;
         }
 
-        ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(bytes, ai.dmaRate);
+        ai.dmaTime = Core->GetTicks() + AIGetTime(bytes, ai.dmaRate);
     }
 
     static void AIStopDMA()
@@ -492,7 +492,7 @@ namespace Flipper
     // Update audio DMA thread
     static void AIUpdate(void* Parameter)
     {
-        if ((uint64_t)Gekko::Gekko->GetTicks() >= ai.dmaTime)
+        if ((uint64_t)Core->GetTicks() >= ai.dmaTime)
         {
             if (ai.dcnt == 0)
             {
@@ -533,9 +533,9 @@ namespace Flipper
 
         ai.audioThread = new Thread(AIUpdate, true, nullptr, "AI");
 
-        ai.one_second = Gekko::Gekko->OneSecond();
+        ai.one_second = Core->OneSecond();
         ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
-        ai.dmaTime = Gekko::Gekko->GetTicks() + AIGetTime(32, ai.dmaRate);
+        ai.dmaTime = Core->GetTicks() + AIGetTime(32, ai.dmaRate);
         ai.log = false;
         AIStopDMA();
 

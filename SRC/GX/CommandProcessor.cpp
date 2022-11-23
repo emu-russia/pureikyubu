@@ -44,7 +44,7 @@ namespace GX
 	{
 		GXCore* gx = (GXCore*)Param;
 
-		int64_t ticks = Gekko::Gekko->GetTicks();
+		int64_t ticks = Core->GetTicks();
 		if (ticks < gx->state.updateTbrValue)
 		{
 			return;

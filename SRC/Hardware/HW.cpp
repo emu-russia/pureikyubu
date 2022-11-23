@@ -18,7 +18,7 @@ namespace Flipper
     {
         Flipper* flipper = (Flipper*)Parameter;
 
-        int64_t ticks = Gekko::Gekko->GetTicks();
+        int64_t ticks = Core->GetTicks();
         if (ticks < flipper->hwUpdateTbrValue)
         {
             return;

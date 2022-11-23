@@ -21,7 +21,9 @@
 
 #include "../Hardware/HWConfig.h"
 
-#include "../GekkoCore/Gekko.h"				// For TimeBase
+#include "../GekkoCore/GekkoCore.h"				// For TimeBase
+
+extern Gekko::GekkoCore* Core;
 
 #include "../Debugger/Debugger.h"
 #include "../Debugger/EventLog.h"

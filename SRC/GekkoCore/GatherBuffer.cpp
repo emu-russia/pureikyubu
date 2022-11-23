@@ -1,7 +1,5 @@
 #include "pch.h"
 
-using namespace Debug;
-
 namespace Gekko
 {
 	void GatherBuffer::Reset()
@@ -13,7 +11,7 @@ namespace Gekko
 
 		if (log)
 		{
-			Report(Channel::CPU, "GatherBuffer::Reset");
+			core->Report("GatherBuffer::Reset");
 		}
 	}
 
@@ -42,7 +40,7 @@ namespace Gekko
 				text += byteText;
 			}
 
-			Report(Channel::CPU, "GatherBuffer::WriteBytes: %s", text.c_str());
+			core->Report("GatherBuffer::WriteBytes: %s", text.c_str());
 		}
 
 		if (size < 4)
@@ -89,10 +87,10 @@ namespace Gekko
 
 			if (log)
 			{
-				Report(Channel::CPU, "Burst gather buffer. Bytes left: %zi\n", GatherSize());
+				core->Report("Burst gather buffer. Bytes left: %zi\n", GatherSize());
 			}
 
-			PIWriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
+			SixtyBus_WriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
 		}
 	}
 

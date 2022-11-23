@@ -7,3 +7,4 @@
 #include "EventLog.h"
 #include "SamplingProfiler.h"
 #include "Perf.h"
+#include "GekkoCommands.h"

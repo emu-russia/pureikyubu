@@ -93,7 +93,7 @@ namespace Gekko
 	// XER[CA] = sign(0) & ((r & ~m) != 0)
 	void Interpreter::srawi()
 	{
-		uint32_t n = info.paramBits[2];
+		uint32_t n = (uint32_t)info.paramBits[2];
 		int32_t res;
 		int32_t src = GPR(1);
 

@@ -2,8 +2,6 @@
 #include "../pch.h"
 #include "InterpreterPrivate.h"
 
-using namespace Debug;
-
 namespace Gekko
 {
 
@@ -17,7 +15,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = PS1(info.paramBits[1]) / PS1(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_div_d()
@@ -34,7 +32,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = PS1(info.paramBits[1]) - PS1(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_sub_d()
@@ -51,7 +49,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = PS1(info.paramBits[1]) + PS1(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_add_d()
@@ -68,7 +66,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = (PS1(info.paramBits[1]) >= 0.0) ? (PS1(info.paramBits[2])) : (PS1(info.paramBits[3]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_sel_d()
@@ -85,7 +83,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = 1.0f / PS1(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_res_d()
@@ -102,7 +100,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = PS1(info.paramBits[1]) * PS1(info.paramBits[2]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_mul_d()
@@ -119,7 +117,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = 1.0f / sqrt(PS1(info.paramBits[1]));
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_rsqrte_d()
@@ -142,7 +140,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = (a * c) - b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_msub_d()
@@ -165,7 +163,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = (a * c) + b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_madd_d()
@@ -188,7 +186,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = -((a * c) - b);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_nmsub_d()
@@ -211,7 +209,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = -((a * c) + b);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_nmadd_d()
@@ -228,7 +226,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = -PS1(info.paramBits[1]);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_neg_d()
@@ -245,7 +243,7 @@ namespace Gekko
 			PS0(info.paramBits[0]) = p0, PS1(info.paramBits[0]) = p1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_mr_d()
@@ -262,7 +260,7 @@ namespace Gekko
 			PS1U(info.paramBits[0]) = PS1U(info.paramBits[1]) | 0x8000000000000000;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_nabs_d()
@@ -279,7 +277,7 @@ namespace Gekko
 			PS1U(info.paramBits[0]) = PS1U(info.paramBits[1]) & ~0x8000000000000000;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_abs_d()
@@ -300,7 +298,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = s1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_sum0_d()
@@ -319,7 +317,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = s1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_sum1_d()
@@ -338,7 +336,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = m1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_muls0_d()
@@ -357,7 +355,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = m1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_muls1_d()
@@ -376,7 +374,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = s1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_madds0_d()
@@ -395,7 +393,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = s1;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_madds1_d()
@@ -408,7 +406,7 @@ namespace Gekko
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int n = info.paramBits[0];
+			size_t n = info.paramBits[0];
 			double a = PS0(info.paramBits[1]), b = PS0(info.paramBits[2]);
 			uint64_t da, db;
 			uint32_t c;
@@ -424,14 +422,14 @@ namespace Gekko
 			SET_CRF(n, c);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_cmpo0()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int n = info.paramBits[0];
+			size_t n = info.paramBits[0];
 			double a = PS0(info.paramBits[1]), b = PS0(info.paramBits[2]);
 			uint64_t da, db;
 			uint32_t c;
@@ -447,14 +445,14 @@ namespace Gekko
 			SET_CRF(n, c);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_cmpu1()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int n = info.paramBits[0];
+			size_t n = info.paramBits[0];
 			double a = PS1(info.paramBits[1]), b = PS1(info.paramBits[2]);
 			uint64_t da, db;
 			uint32_t c;
@@ -470,14 +468,14 @@ namespace Gekko
 			SET_CRF(n, c);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_cmpo1()
 	{
 		if (core->regs.msr & MSR_FP)
 		{
-			int n = info.paramBits[0];
+			size_t n = info.paramBits[0];
 			double a = PS1(info.paramBits[1]), b = PS1(info.paramBits[2]);
 			uint64_t da, db;
 			uint32_t c;
@@ -493,7 +491,7 @@ namespace Gekko
 			SET_CRF(n, c);
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_merge00()
@@ -506,7 +504,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_merge00_d()
@@ -525,7 +523,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_merge01_d()
@@ -544,7 +542,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_merge10_d()
@@ -563,7 +561,7 @@ namespace Gekko
 			PS1(info.paramBits[0]) = b;
 			core->regs.pc += 4;
 		}
-		else core->Exception(Gekko::Exception::FPUNAVAIL);
+		else core->Exception(Gekko::Exception::EXCEPTION_FP_UNAVAILABLE);
 	}
 
 	void Interpreter::ps_merge11_d()

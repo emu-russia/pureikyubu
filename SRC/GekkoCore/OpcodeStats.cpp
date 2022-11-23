@@ -2,8 +2,6 @@
 
 #include "pch.h"
 
-using namespace Debug;
-
 namespace Gekko
 {
     struct OpcodeSortedEntry
@@ -55,10 +53,10 @@ namespace Gekko
             DecoderInfo info;
 
             info.instr = unsorted[i].instr;
-            Report(Channel::Norm, "%s: %i\n", GekkoDisasm::InstrToString(&info).c_str(), unsorted[i].count);
+            Report("%s: %i\n", GekkoDisasm::InstrToString(&info).c_str(), unsorted[i].count);
         }
 
-        Report(Channel::Norm, "  \n");
+        Report("  \n");
     }
 
     void GekkoCore::ResetOpcodeStats()

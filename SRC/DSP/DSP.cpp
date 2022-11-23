@@ -69,7 +69,7 @@ namespace DSP
 			{
 				Report(Channel::DSP, "Run\n");
 			}
-			savedGekkoTicks = Gekko::Gekko->GetTicks();
+			savedGekkoTicks = Core->GetTicks();
 		}
 		_TE();
 	}

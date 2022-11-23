@@ -437,7 +437,7 @@ namespace Gekko
 
 		size_t numParam;
 		Param param[5];
-		int paramBits[5];
+		size_t paramBits[5];
 
 		// The value for Immediate parameters is stored here instead of paramBits. I don't know why I did this, it would probably be good to store it in paramBits, but I don't want to redo it anymore.
 

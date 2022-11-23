@@ -100,7 +100,7 @@ static void vi_set_timing()
     vi.inter = (reg & VI_CR_NIN) ? 0 : 1;
     vi.mode  = VI_CR_FMT(reg);
     if(vi.mode == 2) vi.mode = VI_NTSC_LIKE; // MPAL same as NTSC
-    vi.vtime = Gekko::Gekko->GetTicks();
+    vi.vtime = Core->GetTicks();
 
     switch(vi.mode)
     {
@@ -118,9 +118,9 @@ static void vi_set_timing()
 // step line counter(s), update GUI and poll controller
 void VIUpdate()
 {
-    if((Gekko::Gekko->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
+    if((Core->GetTicks() - vi.vtime) >= (vi.one_frame / vi.vcount))
     {
-        vi.vtime = Gekko::Gekko->GetTicks();
+        vi.vtime = Core->GetTicks();
 
         uint32_t currentBeamPos = VI_POS_VCT(vi.pos);
         uint32_t triggerBeamPos = VI_INT_VCT(vi.int0);
@@ -365,7 +365,7 @@ void VIOpen(HWConfig * config)
     // clear VI regs
     memset(&vi, 0, sizeof(VIControl));
 
-    vi.one_second = Gekko::Gekko->OneSecond();
+    vi.one_second = Core->OneSecond();
 
     // read VI settings
     vi.log = config->vi_log;

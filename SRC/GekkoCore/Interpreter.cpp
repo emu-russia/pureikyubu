@@ -81,7 +81,7 @@ namespace Gekko
     /// <param name="sa">Rotate bits amount</param>
     /// <param name="data">Source</param>
     /// <returns>Result</returns>
-    uint32_t Interpreter::Rotl32(int sa, uint32_t data)
+    uint32_t Interpreter::Rotl32(size_t sa, uint32_t data)
     {
         return (data << sa) | (data >> ((32 - sa) & 31));
     }
@@ -98,11 +98,11 @@ namespace Gekko
         pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
-            core->Exception(Exception::ISI);
+            core->Exception(Exception::EXCEPTION_ISI);
         }
         else
         {
-            PIReadWord(pa, &instr);
+            SixtyBus_ReadWord(pa, &instr);
         }
         // ISI
         if (core->exception)
@@ -148,11 +148,11 @@ namespace Gekko
         pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
         if (pa == Gekko::BadAddress)
         {
-            core->Exception(Exception::ISI);
+            core->Exception(Exception::EXCEPTION_ISI);
         }
         else
         {
-            PIReadWord(pa, &instr);
+            SixtyBus_ReadWord(pa, &instr);
         }
 
         if (core->exception)
@@ -556,11 +556,11 @@ namespace Gekko
             // TODO: CallVM opcode.
 
             default:
-                Debug::Halt("** CPU ERROR **\n"
+                core->Halt("** CPU ERROR **\n"
                     "unimplemented opcode : %08X\n", core->regs.pc);
 
                 core->PrCause = PrivilegedCause::IllegalInstruction;
-                core->Exception(Exception::PROGRAM);
+                core->Exception(Exception::EXCEPTION_PROGRAM);
                 return;
         }
 
@@ -592,7 +592,7 @@ namespace Gekko
 
         //pcall();
 
-        Debug::Halt("callvm: Temporary not implemented!\n");
+        core->Halt("callvm: Temporary not implemented!\n");
     }
 
 }

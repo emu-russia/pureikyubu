@@ -7,8 +7,6 @@
 
 #include "pch.h"
 
-using namespace Debug;
-
 namespace Gekko
 {
     void GekkoCore::AddBreakpoint(uint32_t addr)
@@ -25,9 +23,11 @@ namespace Gekko
         }
         if (!exists)
         {
-            Report(Channel::CPU, "Breakpoint added: 0x%08X\n", addr);
+            Report("Breakpoint added: 0x%08X\n", addr);
             breakPointsExecute.push_back(addr);
+#if GEKKOCORE_USE_JITC
             jitc->Invalidate(addr, 4);
+#endif
             EnableTestBreakpoints = true;
         }
         breakPointsLock.Unlock();
@@ -47,9 +47,11 @@ namespace Gekko
         }
         if (exists)
         {
-            Report(Channel::CPU, "Breakpoint removed: 0x%08X\n", addr);
+            Report("Breakpoint removed: 0x%08X\n", addr);
             breakPointsExecute.remove(addr);
+#if GEKKOCORE_USE_JITC
             jitc->Invalidate(addr, 4);
+#endif
         }
         if (breakPointsExecute.size() == 0)
         {
