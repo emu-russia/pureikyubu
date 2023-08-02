@@ -33,9 +33,14 @@
 #include "gekkodisasm.h"
 #include "gekkodebug.h"
 
+#include "dsp.h"
+#include "dspcore.h"
+#include "dspdec.h"
+#include "dspdisasm.h"
+#include "dspdebug.h"
+
 #include "flipper.h"
 #include "dvd.h"
-#include "dsp.h"
 #include "gfx.h"
 #include "ai.h"
 #include "cp.h"
@@ -53,11 +58,11 @@
 #include "si.h"
 #include "flipperdebug.h"
 
-#include "dsp.h"
-#include "dspcore.h"
-#include "dspdec.h"
-#include "dspdisasm.h"
-#include "dspdebug.h"
+#include "debug.h"
+#include "cui.h"
+#include "debugui.h"
+
+#include "ui.h"
 
 #define _TB(s)
 #define _TE()

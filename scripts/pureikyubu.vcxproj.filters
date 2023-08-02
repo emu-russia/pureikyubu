@@ -181,6 +181,9 @@
     <ClInclude Include="..\src\os.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\debug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ai.cpp">
@@ -307,6 +310,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\os.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\debug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
