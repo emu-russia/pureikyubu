@@ -129,6 +129,11 @@
     <ClCompile Include="..\src\xf.cpp" />
     <ClCompile Include="..\src\xfb.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\thirdparty\fmt\Scripts\VS2022\fmt.vcxproj">
+      <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

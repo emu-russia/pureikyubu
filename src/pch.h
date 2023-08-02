@@ -10,6 +10,13 @@
 #include <string.h>
 #include <unordered_map>
 
+#ifdef _WINDOWS
+#include <windows.h>
+#include <shlobj.h>
+#include <commctrl.h>
+#include "res/resource.h"
+#endif
+
 #ifdef _LINUX
 #include <memory.h>
 #include <string.h>
@@ -22,6 +29,9 @@
 #include <dirent.h>		// BuildFileTree
 #define _stricmp strcasecmp
 #endif
+
+#include "../thirdparty/fmt/fmt/format.h"
+#include "../thirdparty/fmt/fmt/printf.h"
 
 #include "utils.h"
 #include "json.h"
