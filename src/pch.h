@@ -27,6 +27,12 @@
 #include "json.h"
 #include "jdi.h"
 
+#include "gekko.h"
+#include "gekkodec.h"
+#include "gekkoc.h"
+#include "gekkodisasm.h"
+#include "gekkodebug.h"
+
 #include "flipper.h"
 #include "dvd.h"
 #include "dsp.h"
@@ -46,6 +52,12 @@
 #include "xfb.h"
 #include "si.h"
 #include "flipperdebug.h"
+
+#include "dsp.h"
+#include "dspcore.h"
+#include "dspdec.h"
+#include "dspdisasm.h"
+#include "dspdebug.h"
 
 #define _TB(s)
 #define _TE()
