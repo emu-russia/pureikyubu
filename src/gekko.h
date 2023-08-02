@@ -287,6 +287,11 @@ namespace GekkoCoreUnitTest
 #endif
 
 
+namespace Gekko
+{
+    class GekkoCore;
+}
+
 
 namespace Gekko
 {
