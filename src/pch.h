@@ -39,6 +39,7 @@
 #include "utils.h"
 #include "json.h"
 #include "jdi.h"
+#include "jdiserver.h"
 
 #include "gekko.h"
 #include "gekkodec.h"
@@ -77,7 +78,11 @@
 #include "cui.h"
 #include "debugui.h"
 
+#include "config.h"
+#include "main.h"
 #include "ui.h"
 
 #define _TB(s)
 #define _TE()
+
+extern Gekko::GekkoCore* Core;
