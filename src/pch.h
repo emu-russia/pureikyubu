@@ -9,6 +9,7 @@
 #include <atomic>
 #include <string.h>
 #include <unordered_map>
+#include <fstream>
 
 #ifdef _WINDOWS
 #include <windows.h>
