@@ -187,6 +187,9 @@
     <ClInclude Include="..\src\audionull.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\osdebug.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\ai.cpp">
@@ -319,6 +322,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\src\audionull.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\osdebug.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

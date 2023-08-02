@@ -75,6 +75,10 @@
 #include "si.h"
 #include "flipperdebug.h"
 
+#include "sym.h"
+#include "os.h"
+#include "osdebug.h"
+
 #include "debug.h"
 #include "cui.h"
 #include "debugui.h"
