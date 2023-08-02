@@ -36,6 +36,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\ai.h" />
     <ClInclude Include="..\src\audio.h" />
+    <ClInclude Include="..\src\audionull.h" />
     <ClInclude Include="..\src\bootrtc.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\cp.h" />
@@ -82,6 +83,12 @@
   <ItemGroup>
     <ClCompile Include="..\src\ai.cpp" />
     <ClCompile Include="..\src\audio.cpp" />
+    <ClCompile Include="..\src\audionull.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\bootrtc.cpp" />
     <ClCompile Include="..\src\config.cpp" />
     <ClCompile Include="..\src\cp.cpp" />
