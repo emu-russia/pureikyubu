@@ -33,6 +33,9 @@
 #include "../thirdparty/fmt/fmt/format.h"
 #include "../thirdparty/fmt/fmt/printf.h"
 
+#define my_max(a,b) (((a) > (b)) ? (a) : (b))
+#define my_min(a,b) (((a) < (b)) ? (a) : (b))
+
 #include "utils.h"
 #include "json.h"
 #include "jdi.h"
@@ -49,8 +52,10 @@
 #include "dspdisasm.h"
 #include "dspdebug.h"
 
-#include "flipper.h"
 #include "dvd.h"
+#include "dvddebug.h"
+
+#include "flipper.h"
 #include "gfx.h"
 #include "ai.h"
 #include "cp.h"
