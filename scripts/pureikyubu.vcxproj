@@ -37,7 +37,6 @@
     <ClInclude Include="..\src\ai.h" />
     <ClInclude Include="..\src\audio.h" />
     <ClInclude Include="..\src\bootrtc.h" />
-    <ClInclude Include="..\src\cmd.h" />
     <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\cp.h" />
     <ClInclude Include="..\src\cui.h" />
@@ -82,7 +81,6 @@
     <ClCompile Include="..\src\ai.cpp" />
     <ClCompile Include="..\src\audio.cpp" />
     <ClCompile Include="..\src\bootrtc.cpp" />
-    <ClCompile Include="..\src\cmd.cpp" />
     <ClCompile Include="..\src\config.cpp" />
     <ClCompile Include="..\src\cp.cpp" />
     <ClCompile Include="..\src\cui.cpp" />

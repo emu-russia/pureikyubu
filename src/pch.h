@@ -10,6 +10,19 @@
 #include <string.h>
 #include <unordered_map>
 
+#ifdef _LINUX
+#include <memory.h>
+#include <string.h>
+#include <unistd.h>		// usleep
+#include <pthread.h>
+#include <signal.h>
+#include <libgen.h>		// dirname / basename
+#include <sys/types.h>
+#include <sys/stat.h>	// _wstat (IsDirectory)
+#include <dirent.h>		// BuildFileTree
+#define _stricmp strcasecmp
+#endif
+
 #include "utils.h"
 #include "json.h"
 #include "jdi.h"
@@ -33,3 +46,6 @@
 #include "xfb.h"
 #include "si.h"
 #include "flipperdebug.h"
+
+#define _TB(s)
+#define _TE()
