@@ -9,6 +9,8 @@ GameCube is the hardware masterpiece of Nintendo/ArtX engineers and it's a pleas
 
 ## Build
 
+:warning: Currently the build is not going through, due to refactoring of the codebase. We will finish it soon.
+
 ### Windows version
 
 Build using Visual Studio 2022. To build, open `scripts/pureikyubu.sln` and click Build.
