@@ -42,15 +42,15 @@
 #include "jdi.h"
 #include "jdiserver.h"
 
-#include "gekko.h"
 #include "gekkodec.h"
+#include "gekko.h"
 #include "gekkoc.h"
 #include "gekkodisasm.h"
 #include "gekkodebug.h"
 
 #include "dsp.h"
-#include "dspcore.h"
 #include "dspdec.h"
+#include "dspcore.h"
 #include "dspdisasm.h"
 #include "dspdebug.h"
 
