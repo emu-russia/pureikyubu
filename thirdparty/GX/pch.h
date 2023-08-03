@@ -11,6 +11,10 @@
 #include <string.h>
 #include <unordered_map>
 
+#ifdef _WINDOWS
+#include <windows.h>
+#endif
+
 #include "../../src/utils.h"
 #include "../../src/json.h"
 #include "../../src/jdi.h"

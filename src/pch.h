@@ -74,6 +74,11 @@
 #include "xfb.h"
 #include "si.h"
 #include "flipperdebug.h"
+#include "cp.h"
+
+// TODO: Phased out
+#include "../thirdparty/DolwinVideo/GX.h"
+#include "../thirdparty/GX/GXCore.h"
 
 namespace Flipper
 {

@@ -239,7 +239,7 @@ namespace Util
         char* _Ext)
     {
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
         _splitpath(_Path, _Drive, _Dir, _Filename, _Ext);
 #endif
 
@@ -313,7 +313,7 @@ namespace Util
             rootDir.pop_back();
         }
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
 
         std::wstring search_path = rootDir + L"/*.*";
         WIN32_FIND_DATAW fd = { 0 };
@@ -381,7 +381,7 @@ namespace Util
     bool IsDirectory(std::wstring path)
     {
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
 
         DWORD attr = ::GetFileAttributesW(path.c_str());
 

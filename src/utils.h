@@ -1,7 +1,25 @@
+/*
+
+This section contains common API that have almost atomic significance for all projects.
+
+- Spinlock: Mutually exclusive access synchronization.
+- Thread: Portable threads.
+- File: File utilities
+- String: String utilities
+- ByteSwap: Portable byte-swap API
+
+# Note on Threads
+
+Emulator uses Suspend/Resume methods as control primitives.
+
+The thread procedure is called `Worker`. Unlike conventional implementations, it does not contain an infinite loop, but simply makes one iteration of the thread.
+The infinite loop is implemented above (in Thread) to support the Suspend/Resume mechanism, where it is not supported by the native thread implementation (for example, in pthreads).
+
+*/
 
 #pragma once
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
 
 class SpinLock
 {
@@ -34,9 +52,6 @@ public:
 
 #endif
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
-#include <windows.h>
-#endif
 
 typedef void (*ThreadProc)(void* param);
 
@@ -59,7 +74,7 @@ class Thread
 
 	// Take care about this place. If it will differ between your projects you get wrecked!
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
 	HANDLE threadHandle = INVALID_HANDLE_VALUE;
 	DWORD threadId = 0;
 	static DWORD WINAPI RingleaderThreadProc(LPVOID lpParameter);
@@ -137,7 +152,7 @@ namespace Util
 
 }
 
-#if defined(_WINDOWS) || defined(_PLAYGROUND_WINDOWS)
+#if defined(_WINDOWS)
 
 #include <intrin.h>
 

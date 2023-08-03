@@ -1,10 +1,10 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Visual C++ generated include file.
-// Used by Dolwin.rc
+// Used by pureikyubu.rc
 //
 #define ID_POPUP_FILE                   0
 #define IDR_MANIFEST                    1
-#define IDI_DOLWIN_ICON                 101
+#define IDI_PUREI_ICON                  101
 #define IDR_ACCELERATOR                 103
 #define IDR_MAIN_MENU                   104
 #define ID_STATUS_BAR                   105

@@ -1,4 +1,5 @@
 // Json Debug Inteface 
+// More information can be found in [JsonDebugInteface.md](https://github.com/ogamespec/dolwin-docs/blob/master/EMU/JsonDebugInterface.md)
 
 #pragma once
 
