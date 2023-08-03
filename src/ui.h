@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 void    AboutDialog(HWND hwndParent);
 
@@ -109,23 +109,7 @@ namespace UI
 {
 	class JdiClient
 	{
-#ifdef _WINDOWS
-		CALL_JDI CallJdi = nullptr;
-		CALL_JDI_NO_RETURN CallJdiNoReturn = nullptr;
-		CALL_JDI_RETURN_INT CallJdiReturnInt = nullptr;
-		CALL_JDI_RETURN_STRING CallJdiReturnString = nullptr;
-		CALL_JDI_RETURN_BOOL CallJdiReturnBool = nullptr;
-
-		HMODULE dll = nullptr;
-#endif
-
 	public:
-
-#ifdef _WINDOWS
-		JDI_ADD_NODE JdiAddNode = nullptr;
-		JDI_REMOVE_NODE JdiRemoveNode = nullptr;
-		JDI_ADD_CMD JdiAddCmd = nullptr;
-#endif
 
 		JdiClient();
 		~JdiClient();
@@ -189,8 +173,8 @@ namespace UI
 
 
 // version info
-#define APPNAME L"Dolwin"
-#define APPDESC L"Nintendo Gamecube Emulator"
+#define APPNAME L"プレイキューブ"
+#define APPDESC L"Nintendo GameCube Emulator"
 
 namespace UI
 {

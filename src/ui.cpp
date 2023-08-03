@@ -173,11 +173,11 @@ Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
 
 void UIReflector()
 {
-    UI::Jdi->JdiAddCmd("UIError", CmdUIError);
-    UI::Jdi->JdiAddCmd("UIReport", CmdUIReport);
-    UI::Jdi->JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
-    UI::Jdi->JdiAddCmd("d", CmdShowMemory);
-    UI::Jdi->JdiAddCmd("u", CmdShowDisassembly);
+    JdiAddCmd("UIError", CmdUIError);
+    JdiAddCmd("UIReport", CmdUIReport);
+    JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+    JdiAddCmd("d", CmdShowMemory);
+    JdiAddCmd("u", CmdShowDisassembly);
 }
 
 // UI file utilities
@@ -813,34 +813,10 @@ namespace UI
 
     JdiClient::JdiClient()
     {
-#ifdef _WINDOWS
-        dll = LoadLibraryA("DolwinEmu.dll");
-        if (dll == nullptr)
-        {
-            UI::DolwinError(L"Error", L"Failed to load DolwinEmu.dll. This component contains the emulator core and is required for correct operation.");
-            return;
-        }
-
-        CallJdi = (CALL_JDI)GetProcAddress(dll, "CallJdi");
-        CallJdiNoReturn = (CALL_JDI_NO_RETURN)GetProcAddress(dll, "CallJdiNoReturn");
-        CallJdiReturnInt = (CALL_JDI_RETURN_INT)GetProcAddress(dll, "CallJdiReturnInt");
-        CallJdiReturnString = (CALL_JDI_RETURN_STRING)GetProcAddress(dll, "CallJdiReturnString");
-        CallJdiReturnBool = (CALL_JDI_RETURN_BOOL)GetProcAddress(dll, "CallJdiReturnBool");
-
-        JdiAddNode = (JDI_ADD_NODE)GetProcAddress(dll, "JdiAddNode");
-        JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
-        JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
-#endif
     }
 
     JdiClient::~JdiClient()
     {
-#ifdef _WINDOWS
-        if (dll)
-        {
-            FreeLibrary(dll);
-        }
-#endif
     }
 
     // Generic
@@ -1191,26 +1167,6 @@ static bool IsDirectoryExists(LPCWSTR szPath)
         (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
 }
 
-static void InitFileSystem(HINSTANCE hInst)
-{
-    wchar_t cwd[0x1000];
-
-    // Set current working directory relative to Dolwin executable
-    GetModuleFileName(hInst, cwd, sizeof(cwd));
-    *(wcsrchr(cwd, L'\\') + 1) = 0;
-    SetCurrentDirectory(cwd);
-
-    // Check for default settings.
-
-    if (!Util::FileExists(L"./Data/DefaultSettings.json"))
-    {
-        UI::DolwinError(L"Error",
-            L"No default settings found.\n\n"
-            L"If you are a developer and run Dolwin from Visual Studio, make sure your working directory (DolwinLegacy Properties -> Debugging -> Working Directory) is set to $(SolutionDir).\n\n"
-            L"If you are a user, make sure that the main executable file Dolwin.exe is located in the directory with the `Data` folder. The `Data` folder contains all important data for the emulator to work.");
-    }
-}
-
 // return file name without quotes
 char* FixCommandLine(char* lpCmdLine)
 {
@@ -1234,7 +1190,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    InitFileSystem(hInstance);
+    EMUCtor();
 
     // Create an interface for communicating with the emulator core
 
@@ -4747,7 +4703,7 @@ static void OnMainWindowCreate(HWND hwnd)
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
     // Add UI methods
-    UI::Jdi->JdiAddNode(UI_JDI_JSON, UIReflector);
+    JdiAddNode(UI_JDI_JSON, UIReflector);
 
     // simulate close operation, like we just stopped emu
     OnMainWindowClosed();
@@ -4758,7 +4714,7 @@ static void OnMainWindowDestroy()
 {
     UI::Jdi->Unload();
 
-    UI::Jdi->JdiRemoveNode(UI_JDI_JSON);
+    JdiRemoveNode(UI_JDI_JSON);
 
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
@@ -4990,6 +4946,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         case WM_DESTROY:
         {
             OnMainWindowDestroy();
+            EMUDtor();
             return 0;
         }
         

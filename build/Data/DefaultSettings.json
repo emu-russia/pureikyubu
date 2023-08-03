@@ -1,7 +1,7 @@
 {
 	"info":
 	{
-		"description": "Default Dolwin configuration. Loaded before Settings.json"
+		"description": "Default configuration. Loaded before Settings.json"
 	},
 
 	"ui":
