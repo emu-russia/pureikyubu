@@ -1967,6 +1967,9 @@ namespace DVD
 
 // DVD banner helpers for file selector. 
 
+#ifdef _WINDOWS
+
+// TODO: linux
 
 std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile)
 {
@@ -2023,3 +2026,5 @@ std::vector<uint8_t> DVDLoadBanner(const wchar_t* dvdFile)
 
     return banner;
 }
+
+#endif // _WINDOWS

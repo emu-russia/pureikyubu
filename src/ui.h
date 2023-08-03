@@ -32,11 +32,13 @@ After switching to cross-platform, it is obvious to completely switch to Unicode
 
 #pragma once
 
+#ifdef _WINDOWS
 void    AboutDialog(HWND hwndParent);
+#endif
 
 // The UI needs to implement a small number of methods that are used in the emulator core.
 
-#define UI_JDI_JSON "Data\\Json\\UIJdi.json"
+#define UI_JDI_JSON "./Data/Json/UIJdi.json"
 
 void UIReflector();
 
@@ -89,6 +91,8 @@ void UIReflector();
 
 /* UI file utilities API. */
 
+#ifdef _WINDOWS
+
 namespace UI
 {
     enum class FileType
@@ -111,6 +115,8 @@ namespace UI
 
 
 void    FontConfigure(HWND hParent);
+
+#endif // _WINDOWS
 
 
 
@@ -175,6 +181,12 @@ namespace UI
 		void Stop();
 		void Reset();
 
+		// Debug interface
+
+		std::string DebugChannelToString(int chan);
+		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
+		int64_t GetResetGekkoMipsCounter();
+
 		// Performance Counters, SystemTime
 
 		int64_t GetPerformanceCounter(int counter);
@@ -203,6 +215,7 @@ namespace UI
 	void Report(const wchar_t* fmt, ...);
 }
 
+#ifdef _WINDOWS
 
 /*
  * Calls the memcard settings dialog
@@ -212,6 +225,8 @@ void MemcardConfigure(int num, HWND hParent);
 
 
 void PADConfigure(long padnum, HWND hwndParent);
+
+#endif // _WINDOWS
 
 
 
@@ -304,6 +319,8 @@ enum class SELECTOR_SORT
 	Comment,
 };
 
+#ifdef _WINDOWS
+
 /* Selector API */
 void CreateSelector();
 void CloseSelector();
@@ -349,16 +366,21 @@ public:
 
 extern  UserSelector usel;
 
+#endif // _WINDOWS
 
 
 // TODO: Make settings as a generalized unified version of PropertyGrid, so as not to suffer from scattered controls and tabs.
+
+#ifdef _WINDOWS
 
 void    ResetAllSettings();
 void    OpenSettingsDialog(HWND hParent, HINSTANCE hInst);
 void    EditFileFilter(HWND hwnd);
 
+#endif // _WINDOWS
 
 
+#ifdef _WINDOWS
 
 /* WS_CLIPCHILDREN and WS_CLIPSIBLINGS are need for OpenGL, but GX plugin   */
 /* should take care about proper window style itself !!                     */
@@ -411,3 +433,5 @@ extern UserWindow wnd;
 
 extern Debug::DspDebug* dspDebug;
 extern Debug::GekkoDebug* gekkoDebug;
+
+#endif // _WINDOWS

@@ -1,5 +1,5 @@
 cmake_minimum_required (VERSION 2.8.11)
-project (DolwinPlayground)
+project (pureikyubu)
 
 # Choose an X86/X64 build
 
@@ -11,10 +11,6 @@ else ()
   set(X64 OFF)
 endif ()
 
-# Previously, the HLE subsystem required a base address of 0x400000 for the VMCall instruction. VMCall is now disabled and will be redone.
-
-#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Ttext-segment=400000")
-
 add_definitions (-D_LINUX)
 add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 
@@ -22,24 +18,55 @@ add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 add_compile_options(-Wno-attributes)
 
 # ThirdParty
-add_subdirectory (ThirdParty/fmt/Scripts)
+add_subdirectory (thirdparty/fmt/Scripts)
+add_subdirectory (thirdparty/GX/Scripts)
 
-# Backends
-add_subdirectory (SRC/Backends/AudioNull/Scripts)
-add_subdirectory (SRC/Backends/VideoNull/Scripts)
-add_subdirectory (SRC/Backends/GraphicsNull/Scripts)
-add_subdirectory (SRC/Backends/PadNull/Scripts)
+add_executable (pureikyubu 
+	src/ai.cpp
+	src/audionull.cpp
+	src/bootrtc.cpp
+	src/config.cpp
+	src/cp.cpp
+	src/debug.cpp
+	src/di.cpp
+	src/dsp.cpp
+	src/dspcore.cpp
+	src/dspdebug.cpp
+	src/dspdec.cpp
+	src/dspdisasm.cpp
+	src/dvd.cpp
+	src/dvddebug.cpp
+	src/exi.cpp
+	src/flipper.cpp
+	src/flipperdebug.cpp
+	src/gekko.cpp
+	src/gekkoc.cpp
+	src/gekkodebug.cpp
+	src/gekkodec.cpp
+	src/gekkodisasm.cpp
+	src/gfx.cpp
+	src/gfxnull.cpp
+	src/jdi.cpp
+	src/jdiserver.cpp
+	src/json.cpp
+	src/main.cpp
+	src/mem.cpp
+	src/memcard.cpp
+	src/os.cpp
+	src/osdebug.cpp
+	src/padnull.cpp
+	src/pe.cpp
+	src/pi.cpp
+	src/si.cpp
+	src/sym.cpp
+	src/uisimple.cpp
+	src/utils.cpp
+	src/vi.cpp
+	src/xf.cpp
+	src/xfbnull.cpp
+)
 
-# DolwinEmu Core
-add_subdirectory (SRC/Common/Scripts)
-add_subdirectory (SRC/Debugger/Scripts)
-add_subdirectory (SRC/DolwinEmu/Scripts)
-add_subdirectory (SRC/DSP/Scripts)
-add_subdirectory (SRC/DVD/Scripts)
-add_subdirectory (SRC/GekkoCore/Scripts)
-add_subdirectory (SRC/GX/Scripts)
-add_subdirectory (SRC/Hardware/Scripts)
-add_subdirectory (SRC/HighLevel/Scripts)
-
-# UI
-add_subdirectory (SRC/UI/Playground/Scripts)
+target_link_libraries (pureikyubu LINK_PUBLIC fmt)
+target_link_libraries (pureikyubu LINK_PUBLIC GX)
+find_package (Threads)
+target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT})

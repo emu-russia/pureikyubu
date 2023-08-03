@@ -43,7 +43,7 @@ CMakeCache.txt
 *.a
 *.so
 
-DolwinPlayground
+build/pureikyubu
 
 /*.json
 
