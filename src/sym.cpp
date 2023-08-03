@@ -236,7 +236,7 @@ void SYMList(const char *str)
 
 
 // MAP files loader. currently there are support for three MAP file formats: 
-// Dolwin custom ("RAW"), CodeWarrior and GCC-like.
+// Custom ("RAW"), CodeWarrior and GCC-like.
 
 // load CodeWarrior-generated map file
 // thanks Dolphin team for idea
@@ -333,7 +333,7 @@ static MAP_FORMAT LoadMapGCC(const wchar_t *mapname)
     return MAP_FORMAT::GCC;
 }
 
-// load Dolwin format map-file
+// load raw format map-file
 static MAP_FORMAT LoadMapRAW(const wchar_t *mapname)
 {
     /* Open the map file. */

@@ -614,8 +614,7 @@ uint32_t LoadDOLFromMemory(DolHeader *dol, uint32_t ofs)
 // ---------------------------------------------------------------------------
 // ELF loader
 
-// swapping endiannes. dont use Dolwin memory swap, and keep whole
-// code to be portable for other applications.
+// swapping endiannes.
 
 static int CheckELFHeader(ElfEhdr *hdr)
 {
@@ -893,7 +892,7 @@ void GetDiskId(std::wstring& diskId)
     diskId = fmt::sprintf(L"%.4s", diskIdWchar);
 }
 
-/* Load any Dolwin-supported file */
+/* Load any supported file */
 void LoadFile(const std::wstring& filename)
 {
     uint32_t entryPoint = 0;

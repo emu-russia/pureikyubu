@@ -5216,7 +5216,7 @@ namespace Gekko
 	// high level call
 	void Interpreter::callvm()
 	{
-		// Dolwin module base should be specified as 0x400000 in project properties
+		// module base should be specified as 0x400000 in project properties
 		//void (*pcall)() = (void (*)())((void*)(uint64_t)op);
 
 		//if (op == 0)

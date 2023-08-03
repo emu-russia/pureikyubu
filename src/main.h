@@ -14,7 +14,7 @@ Thus, if the Gekko thread is in a suspended state, all other hardware modules ar
 
 ## Supported file formats
 
-Dolwin supports the following file formats:
+Supported formats:
 - DOL
 - ELF
 - BIN (not sure if this works and generally there are probably no demos left in .bin format)

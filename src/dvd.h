@@ -553,7 +553,7 @@ struct DVDBanner
 	uint8_t      image[2 * DVD_BANNER_WIDTH * DVD_BANNER_HEIGHT]; // RGB5A3 texture
 	uint8_t      shortTitle[32];             // game name (short, for IPL menu)
 	uint8_t      shortMaker[32];             // developer
-	uint8_t      longTitle[64];              // game name (long, for Dolwin =:))
+	uint8_t      longTitle[64];              // game name (long)
 	uint8_t      longMaker[64];              // developer (long description)
 	uint8_t      comment[128];               // comments. may include '\n'
 };

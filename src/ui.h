@@ -167,8 +167,8 @@ namespace UI
 namespace UI
 {
 	// basic message output
-	void DolwinError(const wchar_t* title, const wchar_t* fmt, ...);
-	void DolwinReport(const wchar_t* fmt, ...);
+	void Error(const wchar_t* title, const wchar_t* fmt, ...);
+	void Report(const wchar_t* fmt, ...);
 }
 
 

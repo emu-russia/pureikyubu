@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "res/sjis.h"
 
-// Dolwin about dialog
+// About dialog
 
 static bool opened = false;
 static HWND dlgAbout;
@@ -119,7 +119,7 @@ Json::Value* CmdUIError(std::vector<std::string>& args)
         text += args[i] + " ";
     }
 
-    UI::DolwinError(L"Error", L"%s", Util::StringToWstring(text).c_str());
+    UI::Error(L"Error", L"%s", Util::StringToWstring(text).c_str());
 
     return nullptr;
 }
@@ -138,7 +138,7 @@ Json::Value* CmdUIReport(std::vector<std::string>& args)
         text += args[i] + " ";
     }
 
-    UI::DolwinReport(L"%s", Util::StringToWstring(text).c_str());
+    UI::Report(L"%s", Util::StringToWstring(text).c_str());
 
     return nullptr;
 }
@@ -1102,7 +1102,7 @@ namespace UI
 namespace UI
 {
     // fatal error
-    void DolwinError(const wchar_t* title, const wchar_t* fmt, ...)
+    void Error(const wchar_t* title, const wchar_t* fmt, ...)
     {
         va_list arg;
         wchar_t buf[0x1000];
@@ -1123,7 +1123,7 @@ namespace UI
     }
 
     // application message
-    void DolwinReport(const wchar_t* fmt, ...)
+    void Report(const wchar_t* fmt, ...)
     {
         va_list arg;
         wchar_t buf[0x1000];
@@ -1141,19 +1141,19 @@ namespace UI
 // Check for multiple instancies.
 static void LockMultipleCalls()
 {
-    static HANDLE dolwinsem;
+    static HANDLE sema;
 
     // mutex will fail if semephore already exists
-    dolwinsem = CreateMutex(NULL, 0, APPNAME);
-    if (dolwinsem == NULL)
+    sema = CreateMutex(NULL, 0, APPNAME);
+    if (sema == NULL)
     {
         auto app_name = std::wstring(APPNAME);
-        UI::DolwinReport(L"We are already running %s!!", app_name);
+        UI::Report(L"We are already running %s!!", app_name);
         exit(0);    // return good
     }
-    CloseHandle(dolwinsem);
+    CloseHandle(sema);
 
-    dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
+    sema = CreateSemaphore(NULL, 0, 1, APPNAME);
 }
 
 static bool IsDirectoryExists(LPCWSTR szPath)
@@ -1193,7 +1193,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     UI::Jdi = new UI::JdiClient;
 
-    // Allow only one instance of Dolwin to run at once?
+    // Allow only one instance of application to run at once?
     if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
@@ -1225,8 +1225,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    // Should never reach this point. Dolwin always exits.
-    UI::DolwinError(L"Error", L"SHOULD NEVER REACH HERE");
+    // Should never reach this point. Emu always exits.
+    UI::Error(L"Error", L"SHOULD NEVER REACH HERE");
     return -2;
 }
 
@@ -2546,7 +2546,7 @@ static void add_path(std::wstring& path)
     size_t len = path.length() + 1;
     if (len >= MAX_PATH)
     {
-        UI::DolwinReport(L"Too long path string: %s", path.c_str());
+        UI::Report(L"Too long path string: %s", path.c_str());
         return;
     }
 
@@ -2776,7 +2776,7 @@ static bool add_banner(uint8_t* banner, int* bA, int* bB)
 
                 if (bitdepth == 8)
                 {
-                    // you can test 8-bit in XP, running Dolwin in 256 colors
+                    // you can test 8-bit in XP, running in 256 colors
                     *ptrA++ =
                         *ptrB++ = (uint8_t)(r | g ^ b);
                 }
@@ -3907,7 +3907,7 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
             case IDC_WINDALL:
             {
                 ResetAllSettings();
-                UI::DolwinReport(
+                UI::Report(
                     L"All Settings have been deleted.\n"
                     L"Default values will be restored after first run."
                 );
@@ -4706,7 +4706,7 @@ static void OnMainWindowCreate(HWND hwnd)
     OnMainWindowClosed();
 }
 
-// called once, when Dolwin exits to OS
+// called once, when emu exits to OS
 static void OnMainWindowDestroy()
 {
     UI::Jdi->Unload();
