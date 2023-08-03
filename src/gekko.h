@@ -88,7 +88,7 @@ The Gekko run loop in recompilation mode looks something like this:
 
 if (!SegmentCompiled(Gekko::PC))
 {
-    CompileSegment(Gekko::PC);
+	CompileSegment(Gekko::PC);
 }
 
 RunSegment(Gekko::PC);
@@ -281,106 +281,106 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 
 namespace Gekko
 {
-    enum class Exception : uint32_t
-    {
-        EXCEPTION_RESERVED = 0x00000,
-        EXCEPTION_SYSTEM_RESET = 0x00100,
-        EXCEPTION_MACHINE_CHECK = 0x00200,
-        EXCEPTION_DSI = 0x00300,
-        EXCEPTION_ISI = 0x00400,
-        EXCEPTION_EXTERNAL_INTERRUPT = 0x00500,
-        EXCEPTION_ALIGNMENT = 0x00600,
-        EXCEPTION_PROGRAM = 0x00700,
-        EXCEPTION_FP_UNAVAILABLE = 0x00800,
-        EXCEPTION_DECREMENTER = 0x00900,
-        EXCEPTION_SYSTEM_CALL = 0x00C00,
-        EXCEPTION_TRACE = 0x00D00,
-        EXCEPTION_PERFORMANCE_MONITOR = 0x00F00,
-        EXCEPTION_IABR = 0x01300,
-        EXCEPTION_THERMAL = 0x01700,
-    };
+	enum class Exception : uint32_t
+	{
+		EXCEPTION_RESERVED = 0x00000,
+		EXCEPTION_SYSTEM_RESET = 0x00100,
+		EXCEPTION_MACHINE_CHECK = 0x00200,
+		EXCEPTION_DSI = 0x00300,
+		EXCEPTION_ISI = 0x00400,
+		EXCEPTION_EXTERNAL_INTERRUPT = 0x00500,
+		EXCEPTION_ALIGNMENT = 0x00600,
+		EXCEPTION_PROGRAM = 0x00700,
+		EXCEPTION_FP_UNAVAILABLE = 0x00800,
+		EXCEPTION_DECREMENTER = 0x00900,
+		EXCEPTION_SYSTEM_CALL = 0x00C00,
+		EXCEPTION_TRACE = 0x00D00,
+		EXCEPTION_PERFORMANCE_MONITOR = 0x00F00,
+		EXCEPTION_IABR = 0x01300,
+		EXCEPTION_THERMAL = 0x01700,
+	};
 }
 
 // SPRs
 
 namespace Gekko
 {
-    enum SPR
-    {
-        XER = 1,
-        LR = 8,
-        CTR = 9,
-        DSISR = 18,
-        DAR = 19,
-        DEC = 22,
-        SDR1 = 25,
-        SRR0 = 26,
-        SRR1 = 27,
-        SPRG0 = 272,
-        SPRG1 = 273,
-        SPRG2 = 274,
-        SPRG3 = 275,
-        EAR = 282,
-        TBL = 284,
-        TBU = 285,
-        PVR = 287,
-        IBAT0U = 528,
-        IBAT0L = 529,
-        IBAT1U = 530,
-        IBAT1L = 531,
-        IBAT2U = 532,
-        IBAT2L = 533,
-        IBAT3U = 534,
-        IBAT3L = 535,
-        DBAT0U = 536,
-        DBAT0L = 537,
-        DBAT1U = 538,
-        DBAT1L = 539,
-        DBAT2U = 540,
-        DBAT2L = 541,
-        DBAT3U = 542,
-        DBAT3L = 543,
-        HID0 = 1008,
-        HID1 = 1009,
-        IABR = 1010,
-        DABR = 1013,
-        GQRs = 912,
-        GQR0 = 912,
-        GQR1 = 913,
-        GQR2 = 914,
-        GQR3 = 915,
-        GQR4 = 916,
-        GQR5 = 917,
-        GQR6 = 918,
-        GQR7 = 919,
-        HID2 = 920,
-        WPAR = 921,
-        DMAU = 922,
-        DMAL = 923,
-    };
+	enum SPR
+	{
+		XER = 1,
+		LR = 8,
+		CTR = 9,
+		DSISR = 18,
+		DAR = 19,
+		DEC = 22,
+		SDR1 = 25,
+		SRR0 = 26,
+		SRR1 = 27,
+		SPRG0 = 272,
+		SPRG1 = 273,
+		SPRG2 = 274,
+		SPRG3 = 275,
+		EAR = 282,
+		TBL = 284,
+		TBU = 285,
+		PVR = 287,
+		IBAT0U = 528,
+		IBAT0L = 529,
+		IBAT1U = 530,
+		IBAT1L = 531,
+		IBAT2U = 532,
+		IBAT2L = 533,
+		IBAT3U = 534,
+		IBAT3L = 535,
+		DBAT0U = 536,
+		DBAT0L = 537,
+		DBAT1U = 538,
+		DBAT1L = 539,
+		DBAT2U = 540,
+		DBAT2L = 541,
+		DBAT3U = 542,
+		DBAT3L = 543,
+		HID0 = 1008,
+		HID1 = 1009,
+		IABR = 1010,
+		DABR = 1013,
+		GQRs = 912,
+		GQR0 = 912,
+		GQR1 = 913,
+		GQR2 = 914,
+		GQR3 = 915,
+		GQR4 = 916,
+		GQR5 = 917,
+		GQR6 = 918,
+		GQR7 = 919,
+		HID2 = 920,
+		WPAR = 921,
+		DMAU = 922,
+		DMAL = 923,
+	};
 }
 
 namespace Gekko
 {
-    enum class TBR
-    {
-        TBL = 268,
-        TBU = 269,
-    };
+	enum class TBR
+	{
+		TBL = 268,
+		TBU = 269,
+	};
 }
 
 // Quantization data types
 
 enum class GEKKO_QUANT_TYPE
 {
-    SINGLE_FLOAT = 0,		// single-precision floating-point (no conversion)
-    RESERVED1,
-    RESERVED2,
-    RESERVED3,
-    U8 = 4,			// unsigned 8 bit integer
-    U16 = 5,		// unsigned 16 bit integer
-    S8 = 6,			// signed 8 bit integer
-    S16 = 7,		// signed 16 bit integer
+	SINGLE_FLOAT = 0,		// single-precision floating-point (no conversion)
+	RESERVED1,
+	RESERVED2,
+	RESERVED3,
+	U8 = 4,			// unsigned 8 bit integer
+	U16 = 5,		// unsigned 16 bit integer
+	S8 = 6,			// signed 8 bit integer
+	S16 = 7,		// signed 16 bit integer
 };
 
 #define GEKKO_DMAU_MEM_ADDR 0xffff'ffe0
@@ -403,26 +403,26 @@ enum class GEKKO_QUANT_TYPE
 // floating point register
 union FPREG
 {
-    double         dbl;
-    uint64_t       uval;
+	double         dbl;
+	uint64_t       uval;
 };
 
 // time-base
 union TBREG
 {
-    volatile int64_t   sval;               // for comparsion
-    volatile uint64_t  uval;               // for incrementing
-    struct
-    {
-        uint32_t     l;                  // for output
-        uint32_t     u;
-    } Part;
+	volatile int64_t   sval;               // for comparsion
+	volatile uint64_t  uval;               // for incrementing
+	struct
+	{
+		uint32_t     l;                  // for output
+		uint32_t     u;
+	} Part;
 };
 
 
 namespace GekkoCoreUnitTest
 {
-    class GekkoCoreUnitTest;
+	class GekkoCoreUnitTest;
 }
 
 #ifdef _LINUX
@@ -434,7 +434,7 @@ namespace GekkoCoreUnitTest
 
 namespace Gekko
 {
-    class GekkoCore;
+	class GekkoCore;
 }
 
 
@@ -442,23 +442,23 @@ namespace Gekko
 
 namespace Gekko
 {
-    struct TLBEntry
-    {
-        uint32_t addressTag;
-        int8_t wimg;
-    };
+	struct TLBEntry
+	{
+		uint32_t addressTag;
+		int8_t wimg;
+	};
 
-    class TLB
-    {
-        std::unordered_map<int, TLBEntry*> tlb;
+	class TLB
+	{
+		std::unordered_map<int, TLBEntry*> tlb;
 
-    public:
-        bool Exists(uint32_t ea, uint32_t& pa, int& WIMG);
-        void Map(uint32_t ea, uint32_t pa, int WIMG);
+	public:
+		bool Exists(uint32_t ea, uint32_t& pa, int& WIMG);
+		void Map(uint32_t ea, uint32_t pa, int WIMG);
 
-        void Invalidate(uint32_t ea);
-        void InvalidateAll();
-    };
+		void Invalidate(uint32_t ea);
+		void InvalidateAll();
+	};
 }
 
 
@@ -468,87 +468,87 @@ namespace Gekko
 
 namespace Gekko
 {
-    enum class CacheLogLevel
-    {
-        None = 0,
-        Commands,
-        MemOps,
-    };
+	enum class CacheLogLevel
+	{
+		None = 0,
+		Commands,
+		MemOps,
+	};
 
-    class Cache
-    {
-        uint8_t* cacheData;
-        const size_t cacheSize = 0x01800000;    // 24 MBytes
+	class Cache
+	{
+		uint8_t* cacheData;
+		const size_t cacheSize = 0x01800000;    // 24 MBytes
 
-        // A sign that the cache block is dirty (does not match the value in RAM).
-        bool* modifiedBlocks = nullptr;
+		// A sign that the cache block is dirty (does not match the value in RAM).
+		bool* modifiedBlocks = nullptr;
 
-        // Cache block invalid, must be casted-in before use
-        bool* invalidBlocks = nullptr;
+		// Cache block invalid, must be casted-in before use
+		bool* invalidBlocks = nullptr;
 
-        bool IsDirty(uint32_t pa);
-        void SetDirty(uint32_t pa, bool dirty);
+		bool IsDirty(uint32_t pa);
+		void SetDirty(uint32_t pa, bool dirty);
 
-        bool IsInvalid(uint32_t pa);
-        void SetInvalid(uint32_t pa, bool invalid);
+		bool IsInvalid(uint32_t pa);
+		void SetInvalid(uint32_t pa, bool invalid);
 
-        bool enabled = false;
-        bool frozen = false;
+		bool enabled = false;
+		bool frozen = false;
 
-        CacheLogLevel log = CacheLogLevel::None;
+		CacheLogLevel log = CacheLogLevel::None;
 
-        void CastIn(uint32_t pa);		// Mem -> Cache
-        void CastOut(uint32_t pa);		// Cache -> Mem
+		void CastIn(uint32_t pa);		// Mem -> Cache
+		void CastOut(uint32_t pa);		// Cache -> Mem
 
-        // You can disable cache emulation for debugging purposes.
-        // This does not apply to a locked cache.
-        bool DisableForDebugReasons = true;
+		// You can disable cache emulation for debugging purposes.
+		// This does not apply to a locked cache.
+		bool DisableForDebugReasons = true;
 
-        uint8_t* LockedCache = nullptr;
-        uint32_t LockedCacheAddr = 0;
-        bool lcenabled = false;
+		uint8_t* LockedCache = nullptr;
+		uint32_t LockedCacheAddr = 0;
+		bool lcenabled = false;
 
-        GekkoCore* core;
+		GekkoCore* core;
 
-    public:
-        Cache(GekkoCore* core);
-        ~Cache();
+	public:
+		Cache(GekkoCore* core);
+		~Cache();
 
-        void Reset();
+		void Reset();
 
-        void Enable(bool enable);
-        bool IsEnabled() { return enabled; }
+		void Enable(bool enable);
+		bool IsEnabled() { return enabled; }
 
-        void Freeze(bool freeze);
-        bool IsFrozen() { return frozen; }
+		void Freeze(bool freeze);
+		bool IsFrozen() { return frozen; }
 
-        void LockedEnable(bool enable);
-        bool IsLockedEnable() { return lcenabled; }
+		void LockedEnable(bool enable);
+		bool IsLockedEnable() { return lcenabled; }
 
-        // Physical addressing
+		// Physical addressing
 
-        void Flush(uint32_t pa);
-        void Invalidate(uint32_t pa);
-        void Store(uint32_t pa);
-        void Touch(uint32_t pa);
-        void TouchForStore(uint32_t pa);
-        void Zero(uint32_t pa);
-        void ZeroLocked(uint32_t pa);
+		void Flush(uint32_t pa);
+		void Invalidate(uint32_t pa);
+		void Store(uint32_t pa);
+		void Touch(uint32_t pa);
+		void TouchForStore(uint32_t pa);
+		void Zero(uint32_t pa);
+		void ZeroLocked(uint32_t pa);
 
-        void ReadByte(uint32_t addr, uint32_t* reg);
-        void WriteByte(uint32_t addr, uint32_t data);
-        void ReadHalf(uint32_t addr, uint32_t* reg);
-        void WriteHalf(uint32_t addr, uint32_t data);
-        void ReadWord(uint32_t addr, uint32_t* reg);
-        void WriteWord(uint32_t addr, uint32_t data);
-        void ReadDouble(uint32_t addr, uint64_t* reg);
-        void WriteDouble(uint32_t addr, uint64_t* data);
+		void ReadByte(uint32_t addr, uint32_t* reg);
+		void WriteByte(uint32_t addr, uint32_t data);
+		void ReadHalf(uint32_t addr, uint32_t* reg);
+		void WriteHalf(uint32_t addr, uint32_t data);
+		void ReadWord(uint32_t addr, uint32_t* reg);
+		void WriteWord(uint32_t addr, uint32_t data);
+		void ReadDouble(uint32_t addr, uint64_t* reg);
+		void WriteDouble(uint32_t addr, uint64_t* data);
 
-        void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
+		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 
-        void SetLogLevel(CacheLogLevel level) { log = level; }
-        void DebugDisable(bool disable);
-    };
+		void SetLogLevel(CacheLogLevel level) { log = level; }
+		void DebugDisable(bool disable);
+	};
 }
 
 
@@ -556,37 +556,37 @@ namespace Gekko
 
 namespace Gekko
 {
-    class GekkoCore;
+	class GekkoCore;
 
-    class GatherBuffer
-    {
-        uint8_t fifo[32 * 4] = { 0 };
-        size_t readPtr = 0;
-        size_t writePtr = 0;
+	class GatherBuffer
+	{
+		uint8_t fifo[32 * 4] = { 0 };
+		size_t readPtr = 0;
+		size_t writePtr = 0;
 
-        void WriteBytes(uint8_t* data, size_t size);
-        size_t GatherSize();
+		void WriteBytes(uint8_t* data, size_t size);
+		size_t GatherSize();
 
-        bool log = false;
+		bool log = false;
 
-        GekkoCore* core;
+		GekkoCore* core;
 
-        int64_t retireTimeout = 0;
+		int64_t retireTimeout = 0;
 
-    public:
+	public:
 
-        GatherBuffer(GekkoCore* parent) : core(parent) {}
+		GatherBuffer(GekkoCore* parent) : core(parent) {}
 
-        void Reset();
+		void Reset();
 
-        void Write8(uint8_t value);
-        void Write16(uint16_t value);
-        void Write32(uint32_t value);
-        void Write64(uint64_t value);
+		void Write8(uint8_t value);
+		void Write16(uint16_t value);
+		void Write32(uint32_t value);
+		void Write64(uint64_t value);
 
-        bool NotEmpty();
+		bool NotEmpty();
 
-    };
+	};
 }
 
 
@@ -595,224 +595,224 @@ namespace Gekko
 
 struct GekkoRegs
 {
-    uint32_t    gpr[32];            // general purpose regs
-    FPREG       fpr[32], ps1[32];   // floating point regs (fpr=ps0 for paired singles)
-    uint32_t    spr[1024];          // special purpose regs
-    uint32_t    sr[16];             // segment regs
-    uint32_t    cr;                 // condition reg
-    uint32_t    msr;                // machine state reg
-    uint32_t    fpscr;              // FP status/control reg (rounding only for now)
-    uint32_t    pc;                 // program counter
-    TBREG       tb;                 // time-base counter (timer)
+	uint32_t    gpr[32];            // general purpose regs
+	FPREG       fpr[32], ps1[32];   // floating point regs (fpr=ps0 for paired singles)
+	uint32_t    spr[1024];          // special purpose regs
+	uint32_t    sr[16];             // segment regs
+	uint32_t    cr;                 // condition reg
+	uint32_t    msr;                // machine state reg
+	uint32_t    fpscr;              // FP status/control reg (rounding only for now)
+	uint32_t    pc;                 // program counter
+	TBREG       tb;                 // time-base counter (timer)
 };
 
 namespace Debug
 {
-    class JitCommands;
+	class JitCommands;
 }
 
 namespace Gekko
 {
-    class Interpreter;
-    class Jitc;
-    class CodeSegment;
+	class Interpreter;
+	class Jitc;
+	class CodeSegment;
 
-    enum class MmuAccess
-    {
-        Read = 0,
-        Write,
-        Execute,
-    };
+	enum class MmuAccess
+	{
+		Read = 0,
+		Write,
+		Execute,
+	};
 
-    // MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
-    constexpr uint32_t BadAddress = 0xffff'ffff;
+	// MMU never throws Gekko exceptions. If something went wrong, BadAddress is returned. Then the consumer decides what to do.
+	constexpr uint32_t BadAddress = 0xffff'ffff;
 
-    // So that the consumer can understand what went wrong.
-    enum class MmuResult
-    {
-        Ok = 0,
-        PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
-        ProtectedFetch,    // Block/page protection violation 
-        ProtectedRead,     // Block/page protection violation 
-        ProtectedWrite,    // Block/page protection violation 
-        NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
-    };
+	// So that the consumer can understand what went wrong.
+	enum class MmuResult
+	{
+		Ok = 0,
+		PageFault,      // No matching PTE found in page tables (and no matching BAT array entry)
+		ProtectedFetch,    // Block/page protection violation 
+		ProtectedRead,     // Block/page protection violation 
+		ProtectedWrite,    // Block/page protection violation 
+		NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
+	};
 
-    // The reason the PROGRAM exception occurred.
-    enum class PrivilegedCause
-    {
-        None = 0,
-        FpuEnabled,
-        IllegalInstruction,
-        Privileged,
-        Trap,
-    };
+	// The reason the PROGRAM exception occurred.
+	enum class PrivilegedCause
+	{
+		None = 0,
+		FpuEnabled,
+		IllegalInstruction,
+		Privileged,
+		Trap,
+	};
 
-    class GekkoCore
-    {
-        friend Interpreter;
-        friend Jitc;
-        friend CodeSegment;
-        friend GatherBuffer;
-        friend GekkoCoreUnitTest::GekkoCoreUnitTest;
+	class GekkoCore
+	{
+		friend Interpreter;
+		friend Jitc;
+		friend CodeSegment;
+		friend GatherBuffer;
+		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
-        // How many ticks Gekko takes to execute one instruction. 
-        // Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
-        // Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
-        static const int CounterStep = 2;
+		// How many ticks Gekko takes to execute one instruction. 
+		// Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
+		// Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
+		static const int CounterStep = 2;
 
-        Thread* gekkoThread = nullptr;
-        static void GekkoThreadProc(void* Parameter);
+		Thread* gekkoThread = nullptr;
+		static void GekkoThreadProc(void* Parameter);
 
-        std::list<uint32_t> breakPointsExecute;
-        std::list<uint32_t> breakPointsRead;
-        std::list<uint32_t> breakPointsWrite;
-        SpinLock breakPointsLock;
-        uint32_t oneShotBreakpoint = BadAddress;
+		std::list<uint32_t> breakPointsExecute;
+		std::list<uint32_t> breakPointsRead;
+		std::list<uint32_t> breakPointsWrite;
+		SpinLock breakPointsLock;
+		uint32_t oneShotBreakpoint = BadAddress;
 
-        bool TestBreakpointForJitc(uint32_t addr);
-        void TestBreakpoints();
-        void TestReadBreakpoints(uint32_t accessAddress);
-        void TestWriteBreakpoints(uint32_t accessAddress);
+		bool TestBreakpointForJitc(uint32_t addr);
+		void TestBreakpoints();
+		void TestReadBreakpoints(uint32_t accessAddress);
+		void TestWriteBreakpoints(uint32_t accessAddress);
 
-        bool EnableTestBreakpoints = false;
-        bool EnableTestReadBreakpoints = false;
-        bool EnableTestWriteBreakpoints = false;
+		bool EnableTestBreakpoints = false;
+		bool EnableTestReadBreakpoints = false;
+		bool EnableTestWriteBreakpoints = false;
 
-        Interpreter* interp;
-        Jitc* jitc;
+		Interpreter* interp;
+		Jitc* jitc;
 
-        int64_t     one_second;         // one second in timer ticks
-        size_t      ops;                // instruction counter (only for debug!)
+		int64_t     one_second;         // one second in timer ticks
+		size_t      ops;                // instruction counter (only for debug!)
 
-        uint32_t EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG);
-        uint32_t EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
+		uint32_t EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG);
+		uint32_t EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
 
-        volatile bool decreq = false;       // decrementer exception request
-        volatile bool intFlag = false;      // INT signal
-        volatile bool exception = false;    // exception pending
+		volatile bool decreq = false;       // decrementer exception request
+		volatile bool intFlag = false;      // INT signal
+		volatile bool exception = false;    // exception pending
 
-        MmuResult MmuLastResult = MmuResult::Ok;
+		MmuResult MmuLastResult = MmuResult::Ok;
 
-        // For convenient access to BAT registers (Mmu related)
-        uint32_t* dbatu[4];
-        uint32_t* dbatl[4];
-        uint32_t* ibatu[4];
-        uint32_t* ibatl[4];
+		// For convenient access to BAT registers (Mmu related)
+		uint32_t* dbatu[4];
+		uint32_t* dbatl[4];
+		uint32_t* ibatu[4];
+		uint32_t* ibatl[4];
 
-        bool BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type, int& WIMG);
-        uint32_t SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG);
+		bool BlockAddressTranslation(uint32_t ea, uint32_t& pa, MmuAccess type, int& WIMG);
+		uint32_t SegmentTranslation(uint32_t ea, MmuAccess type, int& WIMG);
 
-        TLB dtlb;
-        TLB itlb;
+		TLB dtlb;
+		TLB itlb;
 
-        PrivilegedCause PrCause;
+		PrivilegedCause PrCause;
 
-        // Opcode stats
-        int opcodeStats[(size_t)Instruction::Max] = { 0 };
-        bool opcodeStatsEnabled = false;
-        Thread* opcodeStatsThread = nullptr;
-        static void OpcodeStatsThreadProc(void* Parameter);
+		// Opcode stats
+		int opcodeStats[(size_t)Instruction::Max] = { 0 };
+		bool opcodeStatsEnabled = false;
+		Thread* opcodeStatsThread = nullptr;
+		static void OpcodeStatsThreadProc(void* Parameter);
 
-        // Used to safely stop the main GekkoCore thread. In suspended state, the thread goes into a low-priority loop waiting for the start of emulation.
-        // You can't just do Thread->Suspend(), because the thread can stop at an important part of the emulation and after restarting the emulation it will go into the #UB-state.
-        volatile bool suspended = true;
+		// Used to safely stop the main GekkoCore thread. In suspended state, the thread goes into a low-priority loop waiting for the start of emulation.
+		// You can't just do Thread->Suspend(), because the thread can stop at an important part of the emulation and after restarting the emulation it will go into the #UB-state.
+		volatile bool suspended = true;
 
-        // Request to clear instruction counter
-        volatile bool resetInstructionCounter = false;
+		// Request to clear instruction counter
+		volatile bool resetInstructionCounter = false;
 
-        GatherBuffer* gatherBuffer;
+		GatherBuffer* gatherBuffer;
 
-        // Stats
+		// Stats
 
-        size_t compiledSegments = 0;
-        size_t executedSegments = 0;
+		size_t compiledSegments = 0;
+		size_t executedSegments = 0;
 
-        bool RESERVE = false;    // for lwarx/stwcx.
-        uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
+		bool RESERVE = false;    // for lwarx/stwcx.
+		uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
 
-    public:
+	public:
 
-        // The instruction cache is not emulated because it is accessed only in one direction (Read).
-        // Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
+		// The instruction cache is not emulated because it is accessed only in one direction (Read).
+		// Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
 
-        Cache* cache;
+		Cache* cache;
 
-        // TODO: Will be hidden more
-        GekkoRegs regs;
+		// TODO: Will be hidden more
+		GekkoRegs regs;
 
-        GekkoCore();
-        ~GekkoCore();
+		GekkoCore();
+		~GekkoCore();
 
-        void Run() { suspended = false; }
-        bool IsRunning() { return !suspended; }
-        void Suspend() { suspended = true; }
+		void Run() { suspended = false; }
+		bool IsRunning() { return !suspended; }
+		void Suspend() { suspended = true; }
 
-        void Reset();
+		void Reset();
 
-        void Tick();
-        int64_t GetTicks();
-        int64_t OneSecond();
+		void Tick();
+		int64_t GetTicks();
+		int64_t OneSecond();
 
-        void Step();
+		void Step();
 
-        void AssertInterrupt();
-        void ClearInterrupt();
-        void Exception(Gekko::Exception code);
+		void AssertInterrupt();
+		void ClearInterrupt();
+		void Exception(Gekko::Exception code);
 
 #pragma region "Memory interface"
 
-        // Centralized hub for access to the data bus (memory) from CPU side.
+		// Centralized hub for access to the data bus (memory) from CPU side.
 
-        void ReadByte(uint32_t addr, uint32_t* reg);
-        void WriteByte(uint32_t addr, uint32_t data);
-        void ReadHalf(uint32_t addr, uint32_t* reg);
-        void WriteHalf(uint32_t addr, uint32_t data);
-        void ReadWord(uint32_t addr, uint32_t* reg);
-        void WriteWord(uint32_t addr, uint32_t data);
-        void ReadDouble(uint32_t addr, uint64_t* reg);
-        void WriteDouble(uint32_t addr, uint64_t* data);
+		void ReadByte(uint32_t addr, uint32_t* reg);
+		void WriteByte(uint32_t addr, uint32_t data);
+		void ReadHalf(uint32_t addr, uint32_t* reg);
+		void WriteHalf(uint32_t addr, uint32_t data);
+		void ReadWord(uint32_t addr, uint32_t* reg);
+		void WriteWord(uint32_t addr, uint32_t data);
+		void ReadDouble(uint32_t addr, uint64_t* reg);
+		void WriteDouble(uint32_t addr, uint64_t* data);
 
-        // Translate address by Mmu
-        uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG);
+		// Translate address by Mmu
+		uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG);
 
-        static void SwapArea(uint32_t* addr, int count);
-        static void SwapAreaHalf(uint16_t* addr, int count);
+		static void SwapArea(uint32_t* addr, int count);
+		static void SwapAreaHalf(uint16_t* addr, int count);
 
 #pragma endregion "Memory interface"
 
 #pragma region "Debug"
 
-        void AddBreakpoint(uint32_t addr);
-        void RemoveBreakpoint(uint32_t addr);
-        void AddReadBreak(uint32_t addr);
-        void AddWriteBreak(uint32_t addr);
-        void ClearBreakpoints();
+		void AddBreakpoint(uint32_t addr);
+		void RemoveBreakpoint(uint32_t addr);
+		void AddReadBreak(uint32_t addr);
+		void AddWriteBreak(uint32_t addr);
+		void ClearBreakpoints();
 
-        void AddOneShotBreakpoint(uint32_t addr);
+		void AddOneShotBreakpoint(uint32_t addr);
 
-        void ToggleBreakpoint(uint32_t addr);
-        bool IsBreakpoint(uint32_t addr);
+		void ToggleBreakpoint(uint32_t addr);
+		bool IsBreakpoint(uint32_t addr);
 
-        int64_t GetInstructionCounter() { return ops; }
-        void ResetInstructionCounter() { resetInstructionCounter = true; }
+		int64_t GetInstructionCounter() { return ops; }
+		void ResetInstructionCounter() { resetInstructionCounter = true; }
 
-        bool IsOpcodeStatsEnabled();
-        void EnableOpcodeStats(bool enable);
-        void PrintOpcodeStats(size_t maxCount);
-        void ResetOpcodeStats();
-        void RunOpcodeStatsThread();
-        void StopOpcodeStatsThread();
+		bool IsOpcodeStatsEnabled();
+		void EnableOpcodeStats(bool enable);
+		void PrintOpcodeStats(size_t maxCount);
+		void ResetOpcodeStats();
+		void RunOpcodeStatsThread();
+		void StopOpcodeStatsThread();
 
-        size_t GetCompiledSegmentsCount() { return compiledSegments; }
-        size_t GetExecutedSegmentsCount() { return executedSegments; }
-        void ResetCompiledSegmentsCount() { compiledSegments = 0; }
-        void ResetExecutedSegmentsCount() { executedSegments = 0; }
+		size_t GetCompiledSegmentsCount() { return compiledSegments; }
+		size_t GetExecutedSegmentsCount() { return executedSegments; }
+		void ResetCompiledSegmentsCount() { compiledSegments = 0; }
+		void ResetExecutedSegmentsCount() { executedSegments = 0; }
 
-        void Halt(const char* text, ...);
-        void Report(const char* text, ...);
+		void Halt(const char* text, ...);
+		void Report(const char* text, ...);
 
 #pragma endregion "Debug"
 
-    };
+	};
 }

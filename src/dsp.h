@@ -89,15 +89,15 @@ The debugging interface specification provided by this component can be found in
 // ARAM state (registers and other data)
 struct ARControl
 {
-    uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
-    volatile uint32_t    mmaddr, araddr;     // DMA address
-    volatile uint32_t    cnt;                // count + transfer type (bit31)
-    uint16_t    size;               // "AR_SIZE" (0x5012) register
-    Thread* dmaThread;
-    int64_t gekkoTicks;
-    size_t gekkoTicksPerSlice;
-    bool dspRunningBeforeAramDma;
-    bool log;
+	uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
+	volatile uint32_t    mmaddr, araddr;     // DMA address
+	volatile uint32_t    cnt;                // count + transfer type (bit31)
+	uint16_t    size;               // "AR_SIZE" (0x5012) register
+	Thread* dmaThread;
+	int64_t gekkoTicks;
+	size_t gekkoTicksPerSlice;
+	bool dspRunningBeforeAramDma;
+	bool log;
 };
 
 void    AROpen();
