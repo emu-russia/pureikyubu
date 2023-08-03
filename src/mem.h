@@ -17,13 +17,13 @@
 
 struct MIControl
 {
-    uint8_t* ram;
-    size_t ramSize;
+	uint8_t* ram;
+	size_t ramSize;
 
-    uint8_t* bootrom;       ///< Descrambled (Thank you segher, you already have a place in heaven)
-    size_t bootromSize;
+	uint8_t* bootrom;       ///< Descrambled (Thank you segher, you already have a place in heaven)
+	size_t bootromSize;
 
-    bool    BootromPresent;     ///< loaded and descrambled valid bootrom
+	bool    BootromPresent;     ///< loaded and descrambled valid bootrom
 
 };
 

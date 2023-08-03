@@ -34,8 +34,8 @@ void    os_trap();
 // HLE state variables
 struct HLEControl
 {
-    // current loaded map file
-    wchar_t       mapfile[0x1000];
+	// current loaded map file
+	wchar_t       mapfile[0x1000];
 };
 
 extern  HLEControl hle;
@@ -50,18 +50,18 @@ void    HLEExecuteCallback(uint32_t entryPoint);
 
 
 /* ---------------------------------------------------------------------------
-    Memory operations
+	Memory operations
 --------------------------------------------------------------------------- */
 
 void    HLE_memcpy();
 void    HLE_memset();
 
 /* ---------------------------------------------------------------------------
-    String operations
+	String operations
 --------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------
-    FP Math
+	FP Math
 --------------------------------------------------------------------------- */
 
 void    HLE_sin();
@@ -76,16 +76,16 @@ void    HLE_ceil();
 
 namespace HLE
 {
-    std::string OSTimeFormat(uint64_t tbr, bool noDate);
+	std::string OSTimeFormat(uint64_t tbr, bool noDate);
 }
 
 
 
 namespace HLE
 {
-    Json::Value* DumpDolphinOsThreads(bool displayOnScreen);
+	Json::Value* DumpDolphinOsThreads(bool displayOnScreen);
 
-    Json::Value* DumpDolphinOsContext(uint32_t effectiveAddr, bool displayOnScreen);
+	Json::Value* DumpDolphinOsContext(uint32_t effectiveAddr, bool displayOnScreen);
 }
 
 
@@ -93,7 +93,7 @@ namespace HLE
 void    MTXOpen();
 
 /* ---------------------------------------------------------------------------
-    General stuff
+	General stuff
 --------------------------------------------------------------------------- */
 
 /*/
@@ -114,7 +114,7 @@ void    C_MTXInverse(void);
 void    C_MTXInvXpose(void);
 
 /* ---------------------------------------------------------------------------
-    Matrix-vector
+	Matrix-vector
 --------------------------------------------------------------------------- */
 
 /*/
@@ -125,7 +125,7 @@ void    MTXMultVecArraySR   ( Mtx m, VecPtr srcBase, VecPtr dstBase, u32 count )
 /*/
 
 /* ---------------------------------------------------------------------------
-    Affine matrix math
+	Affine matrix math
 --------------------------------------------------------------------------- */
 
 /*/
@@ -141,18 +141,18 @@ void    MTXRotAxisRad       ( Mtx m, VecPtr axis, f32 rad );
 /*/
 
 /* ---------------------------------------------------------------------------
-    Look at utility
+	Look at utility
 --------------------------------------------------------------------------- */
 
 /*/
 void    MTXLookAt           ( Mtx           m,
-                              Point3dPtr    camPos,
-                              VecPtr        camUp,
-                              Point3dPtr    target );
+							  Point3dPtr    camPos,
+							  VecPtr        camUp,
+							  Point3dPtr    target );
 /*/
 
 /* ---------------------------------------------------------------------------
-    Project matrix stuff
+	Project matrix stuff
 --------------------------------------------------------------------------- */
 
 /*/
@@ -162,23 +162,23 @@ void    MTXOrtho            ( Mtx44 m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f 
 /*/
 
 /* ---------------------------------------------------------------------------
-    Texture projection
+	Texture projection
 --------------------------------------------------------------------------- */
 
 /*/
 void    MTXLightFrustum     ( Mtx m, f32 t, f32 b, f32 l, f32 r, f32 n,
-                              f32 scaleS, f32 scaleT, f32 transS,
-                              f32 transT );
+							  f32 scaleS, f32 scaleT, f32 transS,
+							  f32 transT );
 
 void    MTXLightPerspective ( Mtx m, f32 fovY, f32 aspect, f32 scaleS,
-                              f32 scaleT, f32 transS, f32 transT );
+							  f32 scaleT, f32 transS, f32 transT );
 
 void    MTXLightOrtho       ( Mtx m, f32 t, f32 b, f32 l, f32 r, f32 scaleS,
-                              f32 scaleT, f32 transS, f32 transT );
+							  f32 scaleT, f32 transS, f32 transT );
 /*/
 
 /* ---------------------------------------------------------------------------
-    Vector operations
+	Vector operations
 --------------------------------------------------------------------------- */
 
 /*/
@@ -197,7 +197,7 @@ void    VECHalfAngle        ( VecPtr a, VecPtr b, VecPtr half );
 /*/
 
 /* ---------------------------------------------------------------------------
-    Quaternions
+	Quaternions
 --------------------------------------------------------------------------- */
 
 /*/
@@ -217,9 +217,9 @@ void    QUATMtx             ( QuaternionPtr r, Mtx m );
 void    QUATLerp            ( QuaternionPtr p, QuaternionPtr q, QuaternionPtr r, f32 t );
 void    QUATSlerp           ( QuaternionPtr p, QuaternionPtr q, QuaternionPtr r, f32 t );
 void    QUATSquad           ( QuaternionPtr p, QuaternionPtr a, QuaternionPtr b,
-                              QuaternionPtr q, QuaternionPtr r, f32 t );
+							  QuaternionPtr q, QuaternionPtr r, f32 t );
 void    QUATCompA           ( QuaternionPtr qprev, QuaternionPtr q,
-                              QuaternionPtr qnext, QuaternionPtr a );
+							  QuaternionPtr qnext, QuaternionPtr a );
 /*/
 
 
@@ -228,7 +228,7 @@ void    QUATCompA           ( QuaternionPtr qprev, QuaternionPtr q,
 // Note: all structures are big-endian (like on GC), use swap on access!
 
 /* ---------------------------------------------------------------------------
-    OS low memory vars
+	OS low memory vars
 --------------------------------------------------------------------------- */
 
 #define OS_PHYSICAL_CONTEXT     0x800000C0      // OSContext *
@@ -238,7 +238,7 @@ void    QUATCompA           ( QuaternionPtr qprev, QuaternionPtr q,
 #define OS_CURRENT_THREAD       0x800000E4      // OSThread *
 
 /* ---------------------------------------------------------------------------
-    Context API
+	Context API
 --------------------------------------------------------------------------- */
 
 // floating point context modes
@@ -256,75 +256,75 @@ void    QUATCompA           ( QuaternionPtr qprev, QuaternionPtr q,
 // CPU context
 struct OSContext
 {
-    // GPRs
-    uint32_t     gpr[32];
+	// GPRs
+	uint32_t     gpr[32];
 
-    uint32_t     cr, lr, ctr, xer;
+	uint32_t     cr, lr, ctr, xer;
 
-    // FPRs (or paired-single 0-part)
-    union
-    {
-        double      fpr[32];
-        uint64_t    fprAsUint[32];
-    };
+	// FPRs (or paired-single 0-part)
+	union
+	{
+		double      fpr[32];
+		uint64_t    fprAsUint[32];
+	};
 
-    uint32_t     fpscr_pad;
-    uint32_t     fpscr;          // dummy in emulator
+	uint32_t     fpscr_pad;
+	uint32_t     fpscr;          // dummy in emulator
 
-    // exception handling regs
-    uint32_t     srr[2];
+	// exception handling regs
+	uint32_t     srr[2];
 
-    // context flags
-    uint16_t     mode;           // one of OS_CONTEXT_MODE*
-    uint16_t     state;          // or'ed OS_CONTEXT_STATE*
+	// context flags
+	uint16_t     mode;           // one of OS_CONTEXT_MODE*
+	uint16_t     state;          // or'ed OS_CONTEXT_STATE*
 
-    // gekko-specific regs
-    uint32_t     gqr[8];         // quantization mode regs
+	// gekko-specific regs
+	uint32_t     gqr[8];         // quantization mode regs
 
-    uint32_t    padding;
+	uint32_t    padding;
 
-    union
-    {
-        double      psr[32];        // paired-single 1-part
-        uint64_t    psrAsUint[32];
-    };
+	union
+	{
+		double      psr[32];        // paired-single 1-part
+		uint64_t    psrAsUint[32];
+	};
 
 };
 
 struct OSThreadLink
 {
-    uint32_t    next;
-    uint32_t    prev;
+	uint32_t    next;
+	uint32_t    prev;
 };
 
 struct OSThreadQueue
 {
-    uint32_t    head;
-    uint32_t    tail;
+	uint32_t    head;
+	uint32_t    tail;
 };
 
 typedef OSThreadQueue OSMutexQueue;
 
 struct OSThread
 {
-    OSContext   context;
+	OSContext   context;
 
-    uint16_t    state;
-    uint16_t    attr;
-    int32_t     suspend;
-    uint32_t    priority;
-    uint32_t    base;
-    uint32_t    val;
+	uint16_t    state;
+	uint16_t    attr;
+	int32_t     suspend;
+	uint32_t    priority;
+	uint32_t    base;
+	uint32_t    val;
 
-    uint32_t    queue;
-    OSThreadLink link;
-    OSThreadQueue queueJoin;
-    uint32_t    mutex;
-    OSMutexQueue queueMutex;
-    OSThreadLink linkActive;
+	uint32_t    queue;
+	OSThreadLink link;
+	OSThreadQueue queueJoin;
+	uint32_t    mutex;
+	OSMutexQueue queueMutex;
+	OSThreadLink linkActive;
 
-    uint32_t    stackBase;
-    uint32_t    stackEnd;
+	uint32_t    stackBase;
+	uint32_t    stackEnd;
 };
 
 #pragma pack(pop)
@@ -343,7 +343,7 @@ void    OSFillFPUContext(void);
 void    __OSContextInit(void);
 
 /* ---------------------------------------------------------------------------
-    Interrupt handling
+	Interrupt handling
 --------------------------------------------------------------------------- */
 
 void    OSDisableInterrupts(void);

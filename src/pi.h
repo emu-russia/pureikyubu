@@ -65,22 +65,22 @@
 
 enum class PIInterruptSource
 {
-    PI,
-    RSW,
-    DI,
-    SI,
-    EXI,
-    AI,
-    DSP,
-    MEM,
-    VI,
-    PE_TOKEN,
-    PE_FINISH,
-    CP,
-    DEBUG,
-    HSP,
+	PI,
+	RSW,
+	DI,
+	SI,
+	EXI,
+	AI,
+	DSP,
+	MEM,
+	VI,
+	PE_TOKEN,
+	PE_FINISH,
+	CP,
+	DEBUG,
+	HSP,
 
-    Max,
+	Max,
 };
 
 // hardware registers base (physical address)
@@ -107,12 +107,12 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 // PI state (registers and other data)
 struct PIControl
 {
-    volatile uint32_t    intsr;          // interrupt cause
-    volatile uint32_t    intmr;          // interrupt mask
-    bool        rswhack;        // reset "switch" hack
-    bool        log;            // log interrupts
-    uint32_t    consoleVer;     // console version
-    int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters
+	volatile uint32_t    intsr;          // interrupt cause
+	volatile uint32_t    intmr;          // interrupt mask
+	bool        rswhack;        // reset "switch" hack
+	bool        log;            // log interrupts
+	uint32_t    consoleVer;     // console version
+	int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters
 };
 
 extern  PIControl pi;
@@ -123,7 +123,7 @@ void PIOpen(HWConfig* config);
 void PIClose();
 
 void PISetTrap(
-    uint32_t type,                                       // 8, 16 or 32
-    uint32_t addr,                                       // physical address of trap
-    void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
-    void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap
+	uint32_t type,                                       // 8, 16 or 32
+	uint32_t addr,                                       // physical address of trap
+	void (*rdTrap)(uint32_t, uint32_t*) = NULL,  // register read trap
+	void (*wrTrap)(uint32_t, uint32_t) = NULL);  // register write trap

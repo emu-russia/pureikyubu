@@ -3,15 +3,15 @@
 // symbolic entry
 struct SYM
 {
-    uint32_t eaddr;             // effective address
-    char* savedName;          // symbolic description
-    void    (*routine)();       // associated high-level call
+	uint32_t eaddr;             // effective address
+	char* savedName;          // symbolic description
+	void    (*routine)();       // associated high-level call
 };
 
 // all important variables are here
 struct SYMControl
 {
-    std::map<uint32_t, SYM*> symmap;
+	std::map<uint32_t, SYM*> symmap;
 };
 
 extern  SYMControl sym;
@@ -28,20 +28,20 @@ void    SYMList(const char* str = "*");
 // advanced stuff (dont use it, if you dont know how)
 void    SYMSetWorkspace(SYMControl* useIt);
 void    SYMCompareWorkspaces(
-    SYMControl* source,
-    SYMControl* dest,
-    // callback is called when symbol in source wasnt found in dest
-    void (*DiffCallback)(uint32_t ea, char* name)
+	SYMControl* source,
+	SYMControl* dest,
+	// callback is called when symbol in source wasnt found in dest
+	void (*DiffCallback)(uint32_t ea, char* name)
 );
 
 
 
 enum class MAP_FORMAT : int
 {
-    BAD = 0,
-    RAW,             // MAP format, invented by org
-    CW,              // CodeWarrior
-    GCC,             // GCC
+	BAD = 0,
+	RAW,             // MAP format, invented by org
+	CW,              // CodeWarrior
+	GCC,             // GCC
 };
 
 MAP_FORMAT LoadMAP(const wchar_t* mapname, bool add = false);
