@@ -27,7 +27,6 @@ add_executable (pureikyubu
 	src/config.cpp
 	src/cp.cpp
 	src/debug.cpp
-	src/debuguisimple.cp
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp

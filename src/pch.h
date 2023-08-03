@@ -8,6 +8,7 @@
 #include <cassert>
 #include <atomic>
 #include <string.h>
+#include <cstdarg>
 #include <unordered_map>
 #include <fstream>
 
@@ -30,6 +31,7 @@
 #include <sys/stat.h>	// _wstat (IsDirectory)
 #include <dirent.h>		// BuildFileTree
 #define _stricmp strcasecmp
+#define _wcsicmp wcscasecmp
 #endif
 
 #include "../thirdparty/fmt/fmt/format.h"
@@ -71,7 +73,11 @@
 #include "memcard.h"
 #include "bootrtc.h"
 #include "pad.h"
+#ifdef _WINDOWS
 #include "audio.h"
+#else
+#include "audionull.h"
+#endif
 #include "xfb.h"
 #include "si.h"
 #include "flipperdebug.h"
@@ -94,12 +100,16 @@ namespace Flipper
 #include "osdebug.h"
 
 #include "debug.h"
+#ifdef _WINDOWS
 #include "cui.h"
 #include "debugui.h"
+#endif
 
 #include "config.h"
 #include "main.h"
+#ifdef _WINDOWS
 #include "ui.h"
+#endif
 
 #define _TB(s)
 #define _TE()
