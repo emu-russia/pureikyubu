@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "res/sjis.h"
 
-// Dolwin about dialog
+// About dialog
 
 static bool opened = false;
 static HWND dlgAbout;
@@ -32,58 +32,58 @@ static INT_PTR CALLBACK AboutProc(
     switch (uMsg)
     {
         // prepare swap dialog
-    case WM_INITDIALOG:
-    {
-        dlgAbout = hwndDlg;
-        ShowWindow(dlgAbout, SW_NORMAL);
-        SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
-        CenterChildWindow(GetParent(dlgAbout), dlgAbout);
+        case WM_INITDIALOG:
+        {
+            dlgAbout = hwndDlg;
+            ShowWindow(dlgAbout, SW_NORMAL);
+            SendMessage(dlgAbout, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
+            CenterChildWindow(GetParent(dlgAbout), dlgAbout);
 
-        std::string dateStamp = __DATE__;
-        std::string timeStamp = __TIME__;
+            std::string dateStamp = __DATE__;
+            std::string timeStamp = __TIME__;
 
-        auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
-            APPNAME, APPDESC,
-            L"Copyright 2003-2023 Dolwin team, emu-russia",
-            L"Build version",
-            Util::StringToWstring(UI::Jdi->GetVersion()),
-            version, platform, jitc,
-            Util::StringToWstring(dateStamp),
-            Util::StringToWstring(timeStamp));
+            auto buffer = fmt::format(L"{:s} - {:s}\n{:s}\n{:s} {:s} {:s} {:s} {:s} ({:s} {:s})\n",
+                APPNAME, APPDESC,
+                L"Copyright 2003-2023 Dolwin team, emu-russia",
+                L"Build version",
+                Util::StringToWstring(UI::Jdi->GetVersion()),
+                version, platform, jitc,
+                Util::StringToWstring(dateStamp),
+                Util::StringToWstring(timeStamp));
 
-        SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
-        return true;
-    }
+            SetDlgItemText(dlgAbout, IDC_ABOUT_RELEASE, buffer.c_str());
+            return true;
+        }
 
-    // close button -> kill about
-    case WM_CLOSE:
-    {
-        DestroyWindow(dlgAbout);
-        dlgAbout = NULL;
-        opened = false;
-        break;
-    }
-
-    case WM_COMMAND:
-    {
-        if (wParam == IDCANCEL)
+        // close button -> kill about
+        case WM_CLOSE:
         {
             DestroyWindow(dlgAbout);
             dlgAbout = NULL;
             opened = false;
-            return TRUE;
+            break;
         }
 
-        if (wParam == IDOK)
+        case WM_COMMAND:
         {
-            DestroyWindow(dlgAbout);
-            dlgAbout = NULL;
-            opened = false;
-            return TRUE;
-        }
+            if (wParam == IDCANCEL)
+            {
+                DestroyWindow(dlgAbout);
+                dlgAbout = NULL;
+                opened = false;
+                return TRUE;
+            }
 
-        break;
-    }
+            if (wParam == IDOK)
+            {
+                DestroyWindow(dlgAbout);
+                dlgAbout = NULL;
+                opened = false;
+                return TRUE;
+            }
+
+            break;
+        }
     }
 
     return FALSE;
@@ -119,7 +119,7 @@ Json::Value* CmdUIError(std::vector<std::string>& args)
         text += args[i] + " ";
     }
 
-    UI::DolwinError(L"Error", L"%s", Util::StringToWstring(text).c_str());
+    UI::Error(L"Error", L"%s", Util::StringToWstring(text).c_str());
 
     return nullptr;
 }
@@ -138,7 +138,7 @@ Json::Value* CmdUIReport(std::vector<std::string>& args)
         text += args[i] + " ";
     }
 
-    UI::DolwinReport(L"%s", Util::StringToWstring(text).c_str());
+    UI::Report(L"%s", Util::StringToWstring(text).c_str());
 
     return nullptr;
 }
@@ -173,11 +173,11 @@ Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
 
 void UIReflector()
 {
-    UI::Jdi->JdiAddCmd("UIError", CmdUIError);
-    UI::Jdi->JdiAddCmd("UIReport", CmdUIReport);
-    UI::Jdi->JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
-    UI::Jdi->JdiAddCmd("d", CmdShowMemory);
-    UI::Jdi->JdiAddCmd("u", CmdShowDisassembly);
+    JdiAddCmd("UIError", CmdUIError);
+    JdiAddCmd("UIReport", CmdUIReport);
+    JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
+    JdiAddCmd("d", CmdShowMemory);
+    JdiAddCmd("u", CmdShowDisassembly);
 }
 
 // UI file utilities
@@ -199,16 +199,16 @@ namespace UI
 
         switch (type)
         {
-        case FileType::All:
-        case FileType::Json:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
-            break;
-        case FileType::Dvd:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
-            break;
-        case FileType::Map:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
-            break;
+            case FileType::All:
+            case FileType::Json:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
+                break;
+            case FileType::Dvd:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
+                break;
+            case FileType::Map:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
+                break;
         }
 
         memset(szFileName, 0, sizeof(szFileName));
@@ -271,29 +271,29 @@ namespace UI
             ofn.hwndOwner = hwnd;
             switch (type)
             {
-            case FileType::All:
-                ofn.lpstrFilter =
-                    L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
-                    L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-                    L"Binary Files (*.bin)\0*.bin\0"
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Dvd:
-                ofn.lpstrFilter =
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Map:
-                ofn.lpstrFilter =
-                    L"Symbolic information files (*.map)\0*.map\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Json:
-                ofn.lpstrFilter =
-                    L"Json files (*.json)\0*.json\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
+                case FileType::All:
+                    ofn.lpstrFilter =
+                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                        L"Binary Files (*.bin)\0*.bin\0"
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Dvd:
+                    ofn.lpstrFilter =
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Map:
+                    ofn.lpstrFilter =
+                        L"Symbolic information files (*.map)\0*.map\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Json:
+                    ofn.lpstrFilter =
+                        L"Json files (*.json)\0*.json\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
             }
 
             ofn.lpstrCustomFilter = NULL;
@@ -326,16 +326,16 @@ namespace UI
 
             switch (type)
             {
-            case FileType::All:
-            case FileType::Json:
-                UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
-                break;
-            case FileType::Dvd:
-                UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
-                break;
-            case FileType::Map:
-                UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
-                break;
+                case FileType::All:
+                case FileType::Json:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    break;
+                case FileType::Dvd:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    break;
+                case FileType::Map:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    break;
             }
 
             SetCurrentDirectory(prevDir);
@@ -363,16 +363,16 @@ namespace UI
 
         switch (type)
         {
-        case FileType::All:
-        case FileType::Json:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
-            break;
-        case FileType::Dvd:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
-            break;
-        case FileType::Map:
-            lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
-            break;
+            case FileType::All:
+            case FileType::Json:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_ALL, USER_UI);
+                break;
+            case FileType::Dvd:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_DVD, USER_UI);
+                break;
+            case FileType::Map:
+                lastDir = UI::Jdi->GetConfigString(USER_LASTDIR_MAP, USER_UI);
+                break;
         }
 
         memset(szFileName, 0, sizeof(szFileName));
@@ -383,29 +383,29 @@ namespace UI
             ofn.hwndOwner = hwnd;
             switch (type)
             {
-            case FileType::All:
-                ofn.lpstrFilter =
-                    L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
-                    L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-                    L"Binary Files (*.bin)\0*.bin\0"
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Dvd:
-                ofn.lpstrFilter =
-                    L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Map:
-                ofn.lpstrFilter =
-                    L"Symbolic information files (*.map)\0*.map\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
-            case FileType::Json:
-                ofn.lpstrFilter =
-                    L"Json files (*.json)\0*.json\0"
-                    L"All Files (*.*)\0*.*\0";
-                break;
+                case FileType::All:
+                    ofn.lpstrFilter =
+                        L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+                        L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
+                        L"Binary Files (*.bin)\0*.bin\0"
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Dvd:
+                    ofn.lpstrFilter =
+                        L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Map:
+                    ofn.lpstrFilter =
+                        L"Symbolic information files (*.map)\0*.map\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
+                case FileType::Json:
+                    ofn.lpstrFilter =
+                        L"Json files (*.json)\0*.json\0"
+                        L"All Files (*.*)\0*.*\0";
+                    break;
             }
 
             ofn.lpstrCustomFilter = NULL;
@@ -438,16 +438,16 @@ namespace UI
 
             switch (type)
             {
-            case FileType::All:
-            case FileType::Json:
-                UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
-                break;
-            case FileType::Dvd:
-                UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
-                break;
-            case FileType::Map:
-                UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
-                break;
+                case FileType::All:
+                case FileType::Json:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_ALL, lastDir, USER_UI);
+                    break;
+                case FileType::Dvd:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_DVD, lastDir, USER_UI);
+                    break;
+                case FileType::Map:
+                    UI::Jdi->SetConfigString(USER_LASTDIR_MAP, lastDir, USER_UI);
+                    break;
             }
 
             SetCurrentDirectory(prevDir);
@@ -713,32 +713,13 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
     int i;
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-        CenterChildWindow(parentWnd, hwndDlg);
-        SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
-        EnumFonts(hwndDlg);
-        return TRUE;
+        case WM_INITDIALOG:
+            CenterChildWindow(parentWnd, hwndDlg);
+            SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
+            EnumFonts(hwndDlg);
+            return TRUE;
 
-    case WM_CLOSE:
-        for (i = 0; i < 256; i++)
-        {
-            if (FontAnsiList[i])
-            {
-                free(FontAnsiList[i]);
-                FontAnsiList[i] = NULL;
-            }
-            if (FontSjisList[i])
-            {
-                free(FontSjisList[i]);
-                FontSjisList[i] = NULL;
-            }
-        }
-        EndDialog(hwndDlg, 0);
-        return TRUE;
-
-    case WM_COMMAND:
-        if (wParam == IDCANCEL)
-        {
+        case WM_CLOSE:
             for (i = 0; i < 256; i++)
             {
                 if (FontAnsiList[i])
@@ -754,39 +735,58 @@ static INT_PTR CALLBACK FontSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wParam,
             }
             EndDialog(hwndDlg, 0);
             return TRUE;
-        }
-        if (wParam == IDOK)
-        {
 
-            AnsiSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_GETCURSEL, 0, 0);
-            SjisSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_GETCURSEL, 0, 0);
-
-            if (wcscmp(FontAnsiList[AnsiSelected], FontAnsiFile) != 0)
-                FontSetAnsiFile(FontAnsiList[AnsiSelected]);
-
-            if (wcscmp(FontSjisList[SjisSelected], FontSjisFile) != 0)
-                FontSetSjisFile(FontSjisList[SjisSelected]);
-
-            for (i = 0; i < 256; i++)
+        case WM_COMMAND:
+            if (wParam == IDCANCEL)
             {
-                if (FontAnsiList[i])
+                for (i = 0; i < 256; i++)
                 {
-                    free(FontAnsiList[i]);
-                    FontAnsiList[i] = NULL;
+                    if (FontAnsiList[i])
+                    {
+                        free(FontAnsiList[i]);
+                        FontAnsiList[i] = NULL;
+                    }
+                    if (FontSjisList[i])
+                    {
+                        free(FontSjisList[i]);
+                        FontSjisList[i] = NULL;
+                    }
                 }
-                if (FontSjisList[i])
-                {
-                    free(FontSjisList[i]);
-                    FontSjisList[i] = NULL;
-                }
+                EndDialog(hwndDlg, 0);
+                return TRUE;
             }
-            EndDialog(hwndDlg, 0);
-            return TRUE;
-        }
-        break;
+            if (wParam == IDOK)
+            {
 
-    default:
-        return FALSE;
+                AnsiSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_ANSICOMBO, CB_GETCURSEL, 0, 0);
+                SjisSelected = (int)SendDlgItemMessage(hwndDlg, IDC_FONT_SJISCOMBO, CB_GETCURSEL, 0, 0);
+
+                if (wcscmp(FontAnsiList[AnsiSelected], FontAnsiFile) != 0)
+                    FontSetAnsiFile(FontAnsiList[AnsiSelected]);
+
+                if (wcscmp(FontSjisList[SjisSelected], FontSjisFile) != 0)
+                    FontSetSjisFile(FontSjisList[SjisSelected]);
+
+                for (i = 0; i < 256; i++)
+                {
+                    if (FontAnsiList[i])
+                    {
+                        free(FontAnsiList[i]);
+                        FontAnsiList[i] = NULL;
+                    }
+                    if (FontSjisList[i])
+                    {
+                        free(FontSjisList[i]);
+                        FontSjisList[i] = NULL;
+                    }
+                }
+                EndDialog(hwndDlg, 0);
+                return TRUE;
+            }
+            break;
+
+        default:
+            return FALSE;
     }
     return FALSE;
 }
@@ -813,34 +813,10 @@ namespace UI
 
     JdiClient::JdiClient()
     {
-#ifdef _WINDOWS
-        dll = LoadLibraryA("DolwinEmu.dll");
-        if (dll == nullptr)
-        {
-            UI::DolwinError(L"Error", L"Failed to load DolwinEmu.dll. This component contains the emulator core and is required for correct operation.");
-            return;
-        }
-
-        CallJdi = (CALL_JDI)GetProcAddress(dll, "CallJdi");
-        CallJdiNoReturn = (CALL_JDI_NO_RETURN)GetProcAddress(dll, "CallJdiNoReturn");
-        CallJdiReturnInt = (CALL_JDI_RETURN_INT)GetProcAddress(dll, "CallJdiReturnInt");
-        CallJdiReturnString = (CALL_JDI_RETURN_STRING)GetProcAddress(dll, "CallJdiReturnString");
-        CallJdiReturnBool = (CALL_JDI_RETURN_BOOL)GetProcAddress(dll, "CallJdiReturnBool");
-
-        JdiAddNode = (JDI_ADD_NODE)GetProcAddress(dll, "JdiAddNode");
-        JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
-        JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
-#endif
     }
 
     JdiClient::~JdiClient()
     {
-#ifdef _WINDOWS
-        if (dll)
-        {
-            FreeLibrary(dll);
-        }
-#endif
     }
 
     // Generic
@@ -1114,10 +1090,7 @@ namespace UI
 
     bool JdiClient::JitcEnabled()
     {
-        Json::Value* value = CallJdi("JitcEnabled");
-        bool enabled = value->value.AsBool;
-        delete value;
-        return enabled;
+        return false;
     }
 
 }
@@ -1129,7 +1102,7 @@ namespace UI
 namespace UI
 {
     // fatal error
-    void DolwinError(const wchar_t* title, const wchar_t* fmt, ...)
+    void Error(const wchar_t* title, const wchar_t* fmt, ...)
     {
         va_list arg;
         wchar_t buf[0x1000];
@@ -1150,7 +1123,7 @@ namespace UI
     }
 
     // application message
-    void DolwinReport(const wchar_t* fmt, ...)
+    void Report(const wchar_t* fmt, ...)
     {
         va_list arg;
         wchar_t buf[0x1000];
@@ -1168,19 +1141,19 @@ namespace UI
 // Check for multiple instancies.
 static void LockMultipleCalls()
 {
-    static HANDLE dolwinsem;
+    static HANDLE sema;
 
     // mutex will fail if semephore already exists
-    dolwinsem = CreateMutex(NULL, 0, APPNAME);
-    if (dolwinsem == NULL)
+    sema = CreateMutex(NULL, 0, APPNAME);
+    if (sema == NULL)
     {
         auto app_name = std::wstring(APPNAME);
-        UI::DolwinReport(L"We are already running %s!!", app_name);
+        UI::Report(L"We are already running %s!!", app_name);
         exit(0);    // return good
     }
-    CloseHandle(dolwinsem);
+    CloseHandle(sema);
 
-    dolwinsem = CreateSemaphore(NULL, 0, 1, APPNAME);
+    sema = CreateSemaphore(NULL, 0, 1, APPNAME);
 }
 
 static bool IsDirectoryExists(LPCWSTR szPath)
@@ -1189,26 +1162,6 @@ static bool IsDirectoryExists(LPCWSTR szPath)
 
     return (dwAttrib != INVALID_FILE_ATTRIBUTES &&
         (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
-}
-
-static void InitFileSystem(HINSTANCE hInst)
-{
-    wchar_t cwd[0x1000];
-
-    // Set current working directory relative to Dolwin executable
-    GetModuleFileName(hInst, cwd, sizeof(cwd));
-    *(wcsrchr(cwd, L'\\') + 1) = 0;
-    SetCurrentDirectory(cwd);
-
-    // Check for default settings.
-
-    if (!Util::FileExists(L"./Data/DefaultSettings.json"))
-    {
-        UI::DolwinError(L"Error",
-            L"No default settings found.\n\n"
-            L"If you are a developer and run Dolwin from Visual Studio, make sure your working directory (DolwinLegacy Properties -> Debugging -> Working Directory) is set to $(SolutionDir).\n\n"
-            L"If you are a user, make sure that the main executable file Dolwin.exe is located in the directory with the `Data` folder. The `Data` folder contains all important data for the emulator to work.");
-    }
 }
 
 // return file name without quotes
@@ -1234,13 +1187,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(nShowCmd);
 
-    InitFileSystem(hInstance);
+    EMUCtor();
 
     // Create an interface for communicating with the emulator core
 
     UI::Jdi = new UI::JdiClient;
 
-    // Allow only one instance of Dolwin to run at once?
+    // Allow only one instance of application to run at once?
     if (UI::Jdi->GetConfigBool(USER_RUNONCE, USER_UI))
     {
         LockMultipleCalls();
@@ -1272,8 +1225,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
     }
 
-    // Should never reach this point. Dolwin always exits.
-    UI::DolwinError(L"Error", L"SHOULD NEVER REACH HERE");
+    // Should never reach this point. Emu always exits.
+    UI::Error(L"Error", L"SHOULD NEVER REACH HERE");
     return -2;
 }
 
@@ -1281,99 +1234,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 int um_num;
 BOOL um_filechanged;
-
 wchar_t Memcard_filename[2][0x1000];
-bool SyncSave;
-bool Memcard_Connected[2];
-
-/* Memcard ids by number of blocks */
-#define MEMCARD_ID_64       (0x0004)
-#define MEMCARD_ID_128      (0x0008)
-#define MEMCARD_ID_256      (0x0010)
-#define MEMCARD_ID_512      (0x0020)
-#define MEMCARD_ID_1024     (0x0040)
-#define MEMCARD_ID_2048     (0x0080)
-
-/* Memcard ids by number of usable blocks */
-#define MEMCARD_ID_59       MEMCARD_ID_64
-#define MEMCARD_ID_123      MEMCARD_ID_128
-#define MEMCARD_ID_251      MEMCARD_ID_256
-#define MEMCARD_ID_507      MEMCARD_ID_512
-#define MEMCARD_ID_1019     MEMCARD_ID_1024 
-#define MEMCARD_ID_2043     MEMCARD_ID_2048
-
-#define MEMCARD_ERASEBYTE 0x00
-//#define MEMCARD_ERASEBYTE 0xFF
-
-#define Num_Memcard_ValidSizes 6
-
-const uint32_t Memcard_ValidSizes[Num_Memcard_ValidSizes] = {
-    0x00080000, //524288 bytes , // Memory Card 59
-    0x00100000, //1048576 bytes , // Memory Card 123
-    0x00200000, //2097152 bytes , // Memory Card 251
-    0x00400000, //4194304 bytes , // Memory Card 507
-    0x00800000, //8388608 bytes , // Memory Card 1019
-    0x01000000  //16777216 bytes , // Memory Card 2043
-};
-
-#define Memcard_BlockSize       8192
-#define Memcard_BlockSize_log2  13 // just to make shifts instead of mult. or div.
-#define Memcard_SectorSize      512
-#define Memcard_SectorSize_log2 9 // just to make shifts instead of mult. or div.
-#define Memcard_PageSize        128
-#define Memcard_PageSize_log2   7 // just to make shifts instead of mult. or div.
-
-/*
- * Creates a new memcard file
- * memcard_id should be one of the following:
- * MEMCARD_ID_64       (0x0004)
- * MEMCARD_ID_128      (0x0008)
- * MEMCARD_ID_256      (0x0010)
- * MEMCARD_ID_512      (0x0020)
- * MEMCARD_ID_1024     (0x0040)
- * MEMCARD_ID_2048     (0x0080)
- */
-bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id) {
-    FILE* newfile;
-    uint32_t b, blocks;
-    uint8_t newfile_buffer[Memcard_BlockSize];
-
-    switch (memcard_id) {
-    case MEMCARD_ID_64:
-    case MEMCARD_ID_128:
-    case MEMCARD_ID_256:
-    case MEMCARD_ID_512:
-    case MEMCARD_ID_1024:
-    case MEMCARD_ID_2048:
-        /* 17 = Mbits to byte conversion */
-        blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2);
-        break;
-    default:
-        UI::DolwinError(L"Memcard Error", L"Wrong card id for creating file.");
-        return false;
-    }
-
-    newfile = nullptr;
-    _wfopen_s(&newfile, path, L"wb");
-
-    if (newfile == NULL) {
-        UI::DolwinError(L"Memcard Error", L"Error while trying to create memcard file.");
-        return false;
-    }
-
-    memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
-    for (b = 0; b < blocks; b++) {
-        if (fwrite(newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-            UI::DolwinError(L"Memcard Error", L"Error while trying to write memcard file.");
-
-            fclose(newfile);
-            return false;
-        }
-    }
-
-    fclose(newfile);
-    return true;
-}
 
 static wchar_t* NewMemcardFileProc(HWND hwnd, wchar_t* lastDir)
 {
@@ -1489,37 +1350,37 @@ static INT_PTR CALLBACK MemcardChooseSizeProc(HWND hwndDlg, UINT uMsg, WPARAM wP
 
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-        CenterChildWindow(wnd.hMainWindow, hwndDlg);
-        SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
+        case WM_INITDIALOG:
+            CenterChildWindow(wnd.hMainWindow, hwndDlg);
+            SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
 
-        for (index = 0; index < Num_Memcard_ValidSizes; index++) {
-            int blocks, kb;
-            blocks = Memcard_ValidSizes[index] / Memcard_BlockSize;
-            kb = Memcard_ValidSizes[index] / 1024;
-            swprintf_s(buf, _countof(buf) - 1, L"%d blocks  (%d Kb)", blocks, kb);
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_INSERTSTRING, (WPARAM)index, (LPARAM)buf);
-        }
-        SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
+            for (index = 0; index < Num_Memcard_ValidSizes; index++) {
+                int blocks, kb;
+                blocks = Memcard_ValidSizes[index] / Memcard_BlockSize;
+                kb = Memcard_ValidSizes[index] / 1024;
+                swprintf_s(buf, _countof(buf) - 1, L"%d blocks  (%d Kb)", blocks, kb);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_INSERTSTRING, (WPARAM)index, (LPARAM)buf);
+            }
+            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_SETCURSEL, (WPARAM)0, (LPARAM)0);
 
-        return TRUE;
-    case WM_CLOSE:
-        EndDialog(hwndDlg, -1);
-        return TRUE;
-    case WM_COMMAND:
-        switch (wParam) {
-        case IDCANCEL:
+            return TRUE;
+        case WM_CLOSE:
             EndDialog(hwndDlg, -1);
             return TRUE;
-        case IDOK:
-            index = (int)SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_GETCURSEL, 0, 0);
-            EndDialog(hwndDlg, index);
+        case WM_COMMAND:
+            switch (wParam) {
+            case IDCANCEL:
+                EndDialog(hwndDlg, -1);
+                return TRUE;
+            case IDOK:
+                index = (int)SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZES, CB_GETCURSEL, 0, 0);
+                EndDialog(hwndDlg, index);
 
-            return TRUE;
-        }
-        return FALSE;
-    default:
-        return FALSE;
+                return TRUE;
+            }
+            return FALSE;
+        default:
+            return FALSE;
     }
     return FALSE;
 }
@@ -1535,201 +1396,201 @@ static INT_PTR CALLBACK MemcardSettingsProc(HWND hwndDlg, UINT uMsg, WPARAM wPar
 
     switch (uMsg)
     {
-    case WM_INITDIALOG:
-        CenterChildWindow(wnd.hMainWindow, hwndDlg);
-        SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
+        case WM_INITDIALOG:
+            CenterChildWindow(wnd.hMainWindow, hwndDlg);
+            SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
 
-        if (um_num == 0)
-            SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard A Settings");
-        else if (um_num == 1)
-            SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard B Settings");
+            if (um_num == 0)
+                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard A Settings");
+            else if (um_num == 1)
+                SendMessage(hwndDlg, WM_SETTEXT, (WPARAM)0, lParam = (LPARAM)L"Memcard B Settings");
 
-        SyncSave = UI::Jdi->GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
-
-        if (um_num == 0)
-        {
-            Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
-            wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS)).c_str());
-        }
-        else if (um_num == 1)
-        {
-            Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
-            wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS)).c_str());
-        }
-
-        if (SyncSave)
-            CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
-                IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_TRUE);
-        else
-            CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
-                IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_FALSE);
-
-        if (Memcard_Connected[um_num])
-            CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
-
-        wcscpy_s(buf, _countof(buf) - 1, Memcard_filename[um_num]);
-        filename = wcsrchr(buf, L'\\');
-        if (filename == NULL) {
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-        }
-        else {
-            *filename = L'\0';
-            filename++;
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-        }
-
-        if (Util::FileExists(buf))
-        {
-            fileSize = Util::FileSize(buf);
-        }
-        else
-        {
-            Memcard_Connected[um_num] = false;
-            fileSize = 0;
-        }
-
-        if (Memcard_Connected[um_num]) {
-            swprintf_s(buf, _countof(buf) - 1, L"Size: %d usable blocks (%d Kb)",
-                (int)(fileSize / Memcard_BlockSize - 5), (int)(fileSize / 1024));
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-        }
-        else {
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
-        }
-
-        um_filechanged = FALSE;
-        return TRUE;
-    case WM_CLOSE:
-        EndDialog(hwndDlg, 0);
-        return TRUE;
-    case WM_COMMAND:
-        switch (wParam) {
-        case IDC_MEMCARD_NEW:
-            newsize = DialogBox(GetModuleHandle(NULL),
-                MAKEINTRESOURCE(IDD_MEMCARD_CHOOSESIZE),
-                hwndDlg,
-                MemcardChooseSizeProc);
-            if (newsize == -1) return TRUE;
-            newsize = Memcard_ValidSizes[newsize];
-
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
-            filename = NewMemcardFileProc(hwndDlg, buf);
-            if (filename == NULL) return TRUE;
-            wcscpy_s(buf, _countof(buf) - 1, filename);
-
-            /* create the file */
-            if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE;
-
-            filename = wcsrchr(buf, L'\\');
-            if (filename == NULL) {
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-            }
-            else {
-                *filename = '\0';
-                filename++;
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-            }
-
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
-
-            um_filechanged = TRUE;
-            return TRUE;
-
-        case IDC_MEMCARD_CHOOSEFILE:
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
-            filename = ChooseMemcardFileProc(hwndDlg, buf);
-            if (filename == NULL) return TRUE;
-            wcscpy_s(buf, _countof(buf) - 1, filename);
-
-            filename = wcsrchr(buf, L'\\');
-            if (filename == NULL) {
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-            }
-            else {
-                *filename = '\0';
-                filename++;
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
-            }
-            SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
-
-            um_filechanged = TRUE;
-            return TRUE;
-        case IDCANCEL:
-            EndDialog(hwndDlg, 0);
-            return TRUE;
-        case IDOK:
-            if (um_filechanged == TRUE)
-            {
-                size_t Fnsize, Pathsize;
-                Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
-                Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
-
-                if (Fnsize + 1 + Pathsize + 1 >= sizeof(Memcard_filename[um_num])) {
-                    swprintf_s(buf, _countof(buf) - 1, L"File full path must be less than %zi characters.", sizeof(Memcard_filename[um_num]));
-                    MessageBox(hwndDlg, buf, L"Invalid filename", 0);
-                    return TRUE;
-                }
-
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)(Pathsize + 1), (LPARAM)(LPCTSTR)buf);
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT, (WPARAM)(Fnsize + 1), (LPARAM)(LPCTSTR)buf2);
-
-                wcscat_s(buf, _countof(buf) - 1, L"\\");
-                wcscat_s(buf, _countof(buf) - 1, buf2);
-            }
-            else
-            {
-                size_t Fnsize, Pathsize;
-                Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
-                Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
-
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)(Pathsize + 1), (LPARAM)(LPCTSTR)buf);
-                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT, (WPARAM)(Fnsize + 1), (LPARAM)(LPCTSTR)buf2);
-
-                wcscat_s(buf, _countof(buf) - 1, L"\\");
-                wcscat_s(buf, _countof(buf) - 1, buf2);
-            }
-
-            if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED)
-                SyncSave = false;
-            else
-                SyncSave = true;
-
-            if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_CONNECTED) == BST_CHECKED) {
-                /* memcard is supposed to be connected */
-
-                Memcard_Connected[um_num] = true;
-            }
-            else {
-                /* memcard is supposed to be disconnected */
-
-                Memcard_Connected[um_num] = false;
-            }
-
-            // Writeback settings
+            SyncSave = UI::Jdi->GetConfigBool(Memcard_SyncSave_Key, USER_MEMCARDS);
 
             if (um_num == 0)
             {
-                wcscpy_s(Memcard_filename[0], _countof(Memcard_filename[0]), buf);
-                UI::Jdi->SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
-                UI::Jdi->SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
+                Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardA_Connected_Key, USER_MEMCARDS);
+                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardA_Filename_Key, USER_MEMCARDS)).c_str());
+            }
+            else if (um_num == 1)
+            {
+                Memcard_Connected[um_num] = UI::Jdi->GetConfigBool(MemcardB_Connected_Key, USER_MEMCARDS);
+                wcscpy_s(Memcard_filename[um_num], _countof(Memcard_filename[um_num]), Util::StringToWstring(UI::Jdi->GetConfigString(MemcardB_Filename_Key, USER_MEMCARDS)).c_str());
+            }
+
+            if (SyncSave)
+                CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
+                    IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_TRUE);
+            else
+                CheckRadioButton(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE,
+                    IDC_MEMCARD_SYNCSAVE_TRUE, IDC_MEMCARD_SYNCSAVE_FALSE);
+
+            if (Memcard_Connected[um_num])
+                CheckDlgButton(hwndDlg, IDC_MEMCARD_CONNECTED, BST_CHECKED);
+
+            wcscpy_s(buf, _countof(buf) - 1, Memcard_filename[um_num]);
+            filename = wcsrchr(buf, L'\\');
+            if (filename == NULL) {
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+            }
+            else {
+                *filename = L'\0';
+                filename++;
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+            }
+
+            if (Util::FileExists(buf))
+            {
+                fileSize = Util::FileSize(buf);
             }
             else
             {
-                wcscpy_s(Memcard_filename[1], _countof(Memcard_filename[1]), buf);
-                UI::Jdi->SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
-                UI::Jdi->SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
+                Memcard_Connected[um_num] = false;
+                fileSize = 0;
             }
-            UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
 
+            if (Memcard_Connected[um_num]) {
+                swprintf_s(buf, _countof(buf) - 1, L"Size: %d usable blocks (%d Kb)",
+                    (int)(fileSize / Memcard_BlockSize - 5), (int)(fileSize / 1024));
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+            }
+            else {
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
+            }
+
+            um_filechanged = FALSE;
+            return TRUE;
+        case WM_CLOSE:
             EndDialog(hwndDlg, 0);
             return TRUE;
-        }
-        return FALSE;
-    default:
-        return FALSE;
+        case WM_COMMAND:
+            switch (wParam) {
+            case IDC_MEMCARD_NEW:
+                newsize = DialogBox(GetModuleHandle(NULL),
+                    MAKEINTRESOURCE(IDD_MEMCARD_CHOOSESIZE),
+                    hwndDlg,
+                    MemcardChooseSizeProc);
+                if (newsize == -1) return TRUE;
+                newsize = Memcard_ValidSizes[newsize];
+
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
+                filename = NewMemcardFileProc(hwndDlg, buf);
+                if (filename == NULL) return TRUE;
+                wcscpy_s(buf, _countof(buf) - 1, filename);
+
+                /* create the file */
+                if (MCCreateMemcardFile(filename, (uint16_t)(newsize >> 17)) == FALSE) return TRUE;
+
+                filename = wcsrchr(buf, L'\\');
+                if (filename == NULL) {
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                }
+                else {
+                    *filename = '\0';
+                    filename++;
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                }
+
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
+
+                um_filechanged = TRUE;
+                return TRUE;
+
+            case IDC_MEMCARD_CHOOSEFILE:
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)256, (LPARAM)(LPCTSTR)buf);
+                filename = ChooseMemcardFileProc(hwndDlg, buf);
+                if (filename == NULL) return TRUE;
+                wcscpy_s(buf, _countof(buf) - 1, filename);
+
+                filename = wcsrchr(buf, L'\\');
+                if (filename == NULL) {
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                }
+                else {
+                    *filename = '\0';
+                    filename++;
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)filename);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_SETTEXT, (WPARAM)0, (LPARAM)(LPCTSTR)buf);
+                }
+                SendDlgItemMessage(hwndDlg, IDC_MEMCARD_SIZEDESC, WM_SETTEXT, (WPARAM)0, (LPARAM)L"Not connected");
+
+                um_filechanged = TRUE;
+                return TRUE;
+            case IDCANCEL:
+                EndDialog(hwndDlg, 0);
+                return TRUE;
+            case IDOK:
+                if (um_filechanged == TRUE)
+                {
+                    size_t Fnsize, Pathsize;
+                    Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+                    Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+
+                    if (Fnsize + 1 + Pathsize + 1 >= sizeof(Memcard_filename[um_num])) {
+                        swprintf_s(buf, _countof(buf) - 1, L"File full path must be less than %zi characters.", sizeof(Memcard_filename[um_num]));
+                        MessageBox(hwndDlg, buf, L"Invalid filename", 0);
+                        return TRUE;
+                    }
+
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)(Pathsize + 1), (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT, (WPARAM)(Fnsize + 1), (LPARAM)(LPCTSTR)buf2);
+
+                    wcscat_s(buf, _countof(buf) - 1, L"\\");
+                    wcscat_s(buf, _countof(buf) - 1, buf2);
+                }
+                else
+                {
+                    size_t Fnsize, Pathsize;
+                    Fnsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+                    Pathsize = SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXTLENGTH, (WPARAM)0, (LPARAM)0);
+
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_PATH, WM_GETTEXT, (WPARAM)(Pathsize + 1), (LPARAM)(LPCTSTR)buf);
+                    SendDlgItemMessage(hwndDlg, IDC_MEMCARD_FILE, WM_GETTEXT, (WPARAM)(Fnsize + 1), (LPARAM)(LPCTSTR)buf2);
+
+                    wcscat_s(buf, _countof(buf) - 1, L"\\");
+                    wcscat_s(buf, _countof(buf) - 1, buf2);
+                }
+
+                if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_SYNCSAVE_FALSE) == BST_CHECKED)
+                    SyncSave = false;
+                else
+                    SyncSave = true;
+
+                if (IsDlgButtonChecked(hwndDlg, IDC_MEMCARD_CONNECTED) == BST_CHECKED) {
+                    /* memcard is supposed to be connected */
+
+                    Memcard_Connected[um_num] = true;
+                }
+                else {
+                    /* memcard is supposed to be disconnected */
+
+                    Memcard_Connected[um_num] = false;
+                }
+
+                // Writeback settings
+
+                if (um_num == 0)
+                {
+                    wcscpy_s(Memcard_filename[0], _countof(Memcard_filename[0]), buf);
+                    UI::Jdi->SetConfigBool(MemcardA_Connected_Key, Memcard_Connected[0], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardA_Filename_Key, Util::WstringToString(Memcard_filename[0]), USER_MEMCARDS);
+                }
+                else
+                {
+                    wcscpy_s(Memcard_filename[1], _countof(Memcard_filename[1]), buf);
+                    UI::Jdi->SetConfigBool(MemcardB_Connected_Key, Memcard_Connected[1], USER_MEMCARDS);
+                    UI::Jdi->SetConfigString(MemcardB_Filename_Key, Util::WstringToString(Memcard_filename[1]), USER_MEMCARDS);
+                }
+                UI::Jdi->SetConfigBool(Memcard_SyncSave_Key, SyncSave, USER_MEMCARDS);
+
+                EndDialog(hwndDlg, 0);
+                return TRUE;
+            }
+            return FALSE;
+        default:
+            return FALSE;
     }
     return FALSE;
 }
@@ -2117,32 +1978,32 @@ void PADDefaultConfig(HWND hwndDlg)
 {
     switch (pad.padToConfigure)
     {
-    case 0:
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = 0x24;        // Home
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = 0x23;      // End
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = 0x2e;      // Del
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = 0x22;     // PgDn
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = 0;
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = 0x26;    // Up
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = 0;
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = 0x28;  // Down
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = 0;
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = 0x25;  // Left
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = 0;
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = 0x27; // Right
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = 0x68;      // Num 8
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = 0x62;    // Num 2
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = 0x64;    // Num 4
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = 0x66;   // Num 6
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = 0x51;  // Q
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = 0x57;  // W
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = 0x45;  // E
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = 0x58;         // X
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = 0x5a;         // Z
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = 0x53;         // S
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = 0x41;         // A
-        pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = 0xd;      // Enter
-        break;
+        case 0:
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_UP] = 0x24;        // Home
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_DOWN] = 0x23;      // End
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_LEFT] = 0x2e;      // Del
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_RIGHT] = 0x22;     // PgDn
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP50] = 0;
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XUP100] = 0x26;    // Up
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN50] = 0;
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XDOWN100] = 0x28;  // Down
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT50] = 0;
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XLEFT100] = 0x25;  // Left
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT50] = 0;
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_XRIGHT100] = 0x27; // Right
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXUP] = 0x68;      // Num 8
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXDOWN] = 0x62;    // Num 2
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXLEFT] = 0x64;    // Num 4
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_CXRIGHT] = 0x66;   // Num 6
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERL] = 0x51;  // Q
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERR] = 0x57;  // W
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_TRIGGERZ] = 0x45;  // E
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_A] = 0x58;         // X
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_B] = 0x5a;         // Z
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_X] = 0x53;         // S
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_Y] = 0x41;         // A
+            pad.config[pad.padToConfigure].vkeys[VKEY_FOR_START] = 0xd;      // Enter
+            break;
     }
 
     // reload
@@ -2685,7 +2546,7 @@ static void add_path(std::wstring& path)
     size_t len = path.length() + 1;
     if (len >= MAX_PATH)
     {
-        UI::DolwinReport(L"Too long path string: %s", path.c_str());
+        UI::Report(L"Too long path string: %s", path.c_str());
         return;
     }
 
@@ -2915,7 +2776,7 @@ static bool add_banner(uint8_t* banner, int* bA, int* bB)
 
                 if (bitdepth == 8)
                 {
-                    // you can test 8-bit in XP, running Dolwin in 256 colors
+                    // you can test 8-bit in XP, running in 256 colors
                     *ptrA++ =
                         *ptrB++ = (uint8_t)(r | g ^ b);
                 }
@@ -3290,25 +3151,25 @@ void DrawSelectorItem(LPDRAWITEMSTRUCT item)
     ListView_GetItemRect(usel.hSelectorWindow, ID, &rc, LVIR_ICON);
     switch (file->type)
     {
-    case SELECTOR_FILE::Dvd:
-        ImageList_Draw(bannerList, file->icon[selected], DC,
-            rc.left, rc.top, ILD_NORMAL);
-        break;
+        case SELECTOR_FILE::Dvd:
+            ImageList_Draw(bannerList, file->icon[selected], DC,
+                rc.left, rc.top, ILD_NORMAL);
+            break;
 
-    case SELECTOR_FILE::Executable:
-        HICON hIcon;
-        if (usel.smallIcons)
-        {
-            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
-            DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
-        }
-        else
-        {
-            hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
-            DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
-        }
-        DeleteObject(hIcon);
-        break;
+        case SELECTOR_FILE::Executable:
+            HICON hIcon;
+            if (usel.smallIcons)
+            {
+                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_SMALL_ICON));
+                DrawIcon(DC, (rc.right - rc.left) / 2 - 4, rc.top, hIcon);
+            }
+            else
+            {
+                hIcon = LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_GCN_ICON));
+                DrawIcon(DC, (rc.right - rc.left) / 2 - 16, rc.top, hIcon);
+            }
+            DeleteObject(hIcon);
+            break;
     }
 
     // other columns
@@ -3504,23 +3365,23 @@ static void getdispinfo(LPNMHDR pnmh)
 
     switch (lpdi->item.iSubItem)
     {
-    case 0:
-        wcharStr = L" ";
-        break;
-    case 1:         /* Title */
-        wcharStr = file->title;
-        break;
-    case 2:         /* Length */
-        wcharStr = UI::FileSmartSize(file->size);
-        break;
-    case 3:         /* ID */
-        wcharStr = file->id;
-        break;
-    case 4:         /* Comment */
-        wcharStr = file->comment;
-        break;
-    default:
-        break;
+        case 0:
+            wcharStr = L" ";
+            break;
+        case 1:         /* Title */
+            wcharStr = file->title;
+            break;
+        case 2:         /* Length */
+            wcharStr = UI::FileSmartSize(file->size);
+            break;
+        case 3:         /* ID */
+            wcharStr = file->id;
+            break;
+        case 4:         /* Comment */
+            wcharStr = file->comment;
+            break;
+        default:
+            break;
     }
 
     if (!wcharStr.empty())
@@ -3533,11 +3394,11 @@ static void columnclick(int col)
 {
     switch (col)
     {
-    case 0: SortSelector(SELECTOR_SORT::Default); break;
-    case 1: SortSelector(SELECTOR_SORT::Title); break;
-    case 2: SortSelector(SELECTOR_SORT::Size); break;
-    case 3: SortSelector(SELECTOR_SORT::ID); break;
-    case 4: SortSelector(SELECTOR_SORT::Comment); break;
+        case 0: SortSelector(SELECTOR_SORT::Default); break;
+        case 1: SortSelector(SELECTOR_SORT::Title); break;
+        case 2: SortSelector(SELECTOR_SORT::Size); break;
+        case 3: SortSelector(SELECTOR_SORT::ID); break;
+        case 4: SortSelector(SELECTOR_SORT::Comment); break;
     }
 }
 
@@ -3587,12 +3448,12 @@ void NotifySelector(LPNMHDR pnmh)
 
     switch (pnmh->code)
     {
-    case LVN_COLUMNCLICK: columnclick(((NM_LISTVIEW*)pnmh)->iSubItem); break;
-    case LVN_GETDISPINFO: getdispinfo(pnmh); break;
-    case NM_CLICK: mouseclick(0); break;
-    case NM_RCLICK: mouseclick(1); break;
-    case NM_RETURN: doubleclick(); break;
-    case NM_DBLCLK: doubleclick(); break;
+        case LVN_COLUMNCLICK: columnclick(((NM_LISTVIEW*)pnmh)->iSubItem); break;
+        case LVN_GETDISPINFO: getdispinfo(pnmh); break;
+        case NM_CLICK: mouseclick(0); break;
+        case NM_RCLICK: mouseclick(1); break;
+        case NM_RETURN: doubleclick(); break;
+        case NM_DBLCLK: doubleclick(); break;
     }
 }
 
@@ -3675,28 +3536,28 @@ void SortSelector(SELECTOR_SORT sortBy)
 
         switch (sortBy)
         {
-        case SELECTOR_SORT::Default:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_type);
-            //qsort(usel.files, dvds, sizeof(UserFile), sort_by_title);
-            //qsort(&usel.files[dvds], usel.filenum-dvds, sizeof(UserFile), sort_by_title);
-            break;
-        case SELECTOR_SORT::Filename:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_filename);
-            break;
-        case SELECTOR_SORT::Title:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_title);
-            break;
-        case SELECTOR_SORT::Size:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_size);
-            break;
-        case SELECTOR_SORT::ID:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_gameid);
-            break;
-        case SELECTOR_SORT::Comment:
-            //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_comment);
-            break;
-        default:
-            break;
+            case SELECTOR_SORT::Default:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_type);
+                //qsort(usel.files, dvds, sizeof(UserFile), sort_by_title);
+                //qsort(&usel.files[dvds], usel.filenum-dvds, sizeof(UserFile), sort_by_title);
+                break;
+            case SELECTOR_SORT::Filename:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_filename);
+                break;
+            case SELECTOR_SORT::Title:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_title);
+                break;
+            case SELECTOR_SORT::Size:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_size);
+                break;
+            case SELECTOR_SORT::ID:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_gameid);
+                break;
+            case SELECTOR_SORT::Comment:
+                //qsort(usel.files, usel.filenum, sizeof(UserFile), sort_by_comment);
+                break;
+            default:
+                break;
         }
 
         usel.sortBy = sortBy;
@@ -4020,14 +3881,6 @@ void ResetAllSettings()
     // Danger zone
 }
 
-/* Make sure path have ending '\\' */
-static void fix_path(std::wstring& path)
-{
-    if (path.back() != L'\\')
-    {
-        path.push_back(L'\\');
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Emulator
@@ -4038,44 +3891,44 @@ static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 
     switch (message)
     {
-    case WM_INITDIALOG:
-        // seems propsheet callback is shit :)
-        // this trick do the same job
-        propSheet = GetParent(hDlg);
-        CenterChildWindow(hParentWnd, propSheet);
+        case WM_INITDIALOG:
+            // seems propsheet callback is shit :)
+            // this trick do the same job
+            propSheet = GetParent(hDlg);
+            CenterChildWindow(hParentWnd, propSheet);
 
-        hChildDlg[0] = hDlg;
-        LoadSettings(0);
-        return TRUE;
+            hChildDlg[0] = hDlg;
+            LoadSettings(0);
+            return TRUE;
 
-    case WM_COMMAND:
-        switch (wParam)
-        {
-        case IDC_WINDALL:
-        {
-            ResetAllSettings();
-            UI::DolwinReport(
-                L"All Settings have been deleted.\n"
-                L"Default values will be restored after first run."
-            );
-            for (int i = 0; i < 4; i++) LoadSettings(i);
-        }
-        break;
+        case WM_COMMAND:
+            switch (wParam)
+            {
+            case IDC_WINDALL:
+            {
+                ResetAllSettings();
+                UI::Report(
+                    L"All Settings have been deleted.\n"
+                    L"Default values will be restored after first run."
+                );
+                for (int i = 0; i < 4; i++) LoadSettings(i);
+            }
+            break;
 
-        case IDC_ENSURE_WINDALL:
-        {
-            if (IsDlgButtonChecked(hDlg, IDC_ENSURE_WINDALL))
-                EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 1);
-            else
-                EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
-        }
-        break;
-        }
-        break;
+            case IDC_ENSURE_WINDALL:
+            {
+                if (IsDlgButtonChecked(hDlg, IDC_ENSURE_WINDALL))
+                    EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 1);
+                else
+                    EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
+            }
+            break;
+            }
+            break;
 
-    case WM_NOTIFY:
-        if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-        break;
+        case WM_NOTIFY:
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
+            break;
     }
     return FALSE;
 }
@@ -4091,61 +3944,61 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 
     switch (message)
     {
-    case WM_INITDIALOG:
-        hChildDlg[1] = hDlg;
-        LoadSettings(1);
-        return true;
+        case WM_INITDIALOG:
+            hChildDlg[1] = hDlg;
+            LoadSettings(1);
+            return true;
 
-    case WM_COMMAND:
-        switch (wParam)
-        {
-        case IDC_FILEFILTER:
-        {
-            EditFileFilter(hDlg);
-            break;
-        }
-        case IDC_ADDPATH:
-        {
-            path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
-            if (!path.empty())
+        case WM_COMMAND:
+            switch (wParam)
             {
-                fix_path(path);
-
-                /* Check if already present. */
-                max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
-                for (i = 0; i < max; i++)
+            case IDC_FILEFILTER:
+            {
+                EditFileFilter(hDlg);
+                break;
+            }
+            case IDC_ADDPATH:
+            {
+                path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
+                if (!path.empty())
                 {
-                    SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
-                    if (path == text) break;
+                    fix_path(path);
+
+                    /* Check if already present. */
+                    max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+                    for (i = 0; i < max; i++)
+                    {
+                        SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
+                        if (path == text) break;
+                    }
+
+                    /* Add new path. */
+                    if (i == max)
+                    {
+                        SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
+                        needSelUpdate = TRUE;
+                    }
                 }
 
-                /* Add new path. */
-                if (i == max)
-                {
-                    SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
-                    needSelUpdate = TRUE;
-                }
+                break;
+            }
+            case IDC_KILLPATH:
+            {
+                curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
+                SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
+                needSelUpdate = TRUE;
+
+                break;
+            }
             }
 
             break;
-        }
-        case IDC_KILLPATH:
-        {
-            curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
-            SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
-            needSelUpdate = TRUE;
 
+        case WM_NOTIFY:
+        {
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
             break;
         }
-        }
-
-        break;
-
-    case WM_NOTIFY:
-    {
-        if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-        break;
-    }
     }
 
     return FALSE;
@@ -4159,67 +4012,67 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
     auto file = std::wstring();
     switch (message)
     {
-    case WM_INITDIALOG:
-    {
-        hChildDlg[2] = hDlg;
-        LoadSettings(2);
-        return true;
-    }
-    case WM_NOTIFY:
-    {
-        if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-        break;
-    }
-    case WM_COMMAND:
-    {
-        switch (wParam)
+        case WM_INITDIALOG:
         {
-        case IDC_CHOOSE_BOOTROM:
+            hChildDlg[2] = hDlg;
+            LoadSettings(2);
+            return true;
+        }
+        case WM_NOTIFY:
         {
-            file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-            if (!file.empty())
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
+            break;
+        }
+        case WM_COMMAND:
+        {
+            switch (wParam)
             {
-                SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
+            case IDC_CHOOSE_BOOTROM:
+            {
+                file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+                if (!file.empty())
+                {
+                    SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
+                }
+                else
+                {
+                    SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
+                }
+
+                break;
             }
-            else
+            case IDC_CHOOSE_DSPDROM:
             {
-                SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
+                file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+                if (!file.empty())
+                {
+                    SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
+                }
+                else
+                {
+                    SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
+                }
+
+                break;
+            }
+            case IDC_CHOOSE_DSPIROM:
+            {
+                file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+                if (!file.empty())
+                {
+                    SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
+                }
+                else
+                {
+                    SetDlgItemText(hDlg, IDC_DSPIROM_FILE, L"");
+                }
+
+                break;
+            }
             }
 
             break;
         }
-        case IDC_CHOOSE_DSPDROM:
-        {
-            file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-            if (!file.empty())
-            {
-                SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
-            }
-            else
-            {
-                SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
-            }
-
-            break;
-        }
-        case IDC_CHOOSE_DSPIROM:
-        {
-            file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-            if (!file.empty())
-            {
-                SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
-            }
-            else
-            {
-                SetDlgItemText(hDlg, IDC_DSPIROM_FILE, L"");
-            }
-
-            break;
-        }
-        }
-
-        break;
-    }
     }
 
     return FALSE;
@@ -4232,14 +4085,14 @@ static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wP
 {
     switch (message)
     {
-    case WM_INITDIALOG:
-        hChildDlg[3] = hDlg;
-        LoadSettings(3);
-        return TRUE;
+        case WM_INITDIALOG:
+            hChildDlg[3] = hDlg;
+            LoadSettings(3);
+            return TRUE;
 
-    case WM_NOTIFY:
-        if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-        break;
+        case WM_NOTIFY:
+            if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
+            break;
     }
     return FALSE;
 }
@@ -4303,7 +4156,7 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
     psh.dwFlags = PSH_USEHICON | /*PSH_PROPTITLE |*/ PSH_NOAPPLYNOW | PSH_PROPSHEETPAGE;
     psh.hwndParent = hParentWnd;
     psh.hInstance = hParentInst;
-    psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
+    psh.hIcon = LoadIcon(hParentInst, MAKEINTRESOURCE(IDI_PUREI_ICON));
     psh.pszCaption = title.data();
     psh.nPages = sizeof(psp) / sizeof(PROPSHEETPAGE);
     psh.nStartPage = 0;
@@ -4367,67 +4220,67 @@ static INT_PTR CALLBACK FileFilterProc(
     switch (uMsg)
     {
         // prepare dialog
-    case WM_INITDIALOG:
-    {
-        CenterChildWindow(GetParent(hwndDlg), hwndDlg);
+        case WM_INITDIALOG:
+        {
+            CenterChildWindow(GetParent(hwndDlg), hwndDlg);
 
-        // set dialog appearance
-        ShowWindow(hwndDlg, SW_NORMAL);
-        SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_DOLWIN_ICON)));
+            // set dialog appearance
+            ShowWindow(hwndDlg, SW_NORMAL);
+            SendMessage(hwndDlg, WM_SETICON, (WPARAM)ICON_BIG, (LPARAM)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(IDI_PUREI_ICON)));
 
-        // fill by default info
-        usel.filter = UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
-        filter_string(hwndDlg, usel.filter);
-        check_filter(hwndDlg, usel.filter);
-        return TRUE;
-    }
+            // fill by default info
+            usel.filter = UI::Jdi->GetConfigInt(USER_FILTER, USER_UI);
+            filter_string(hwndDlg, usel.filter);
+            check_filter(hwndDlg, usel.filter);
+            return TRUE;
+        }
 
-    // close button
-    case WM_CLOSE:
-    {
-        EndDialog(hwndDlg, 0);
-        return TRUE;
-    }
-
-    // dialog controls
-    case WM_COMMAND:
-    {
-        if (wParam == IDOK)
+        // close button
+        case WM_CLOSE:
         {
             EndDialog(hwndDlg, 0);
+            return TRUE;
+        }
 
-            // save information and update selector (if filter was changed)
-            if ((uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI) != usel.filter)
-            {
-                UI::Jdi->SetConfigInt(USER_FILTER, usel.filter, USER_UI);
-                UpdateSelector();
-            }
-            return TRUE;
-        }
-        switch (LOWORD(wParam))
+        // dialog controls
+        case WM_COMMAND:
         {
-        case IDC_DOL_FILTER:                    // DOL
-            usel.filter ^= 0xff000000;
-            filter_string(hwndDlg, usel.filter);
-            check_filter(hwndDlg, usel.filter);
-            return TRUE;
-        case IDC_ELF_FILTER:                    // ELF
-            usel.filter ^= 0x00ff0000;
-            filter_string(hwndDlg, usel.filter);
-            check_filter(hwndDlg, usel.filter);
-            return TRUE;
-        case IDC_GCM_FILTER:                    // GCM
-            usel.filter ^= 0x0000ff00;
-            filter_string(hwndDlg, usel.filter);
-            check_filter(hwndDlg, usel.filter);
-            return TRUE;
-        case IDC_GMP_FILTER:                    // ISO
-            usel.filter ^= 0x000000ff;
-            filter_string(hwndDlg, usel.filter);
-            check_filter(hwndDlg, usel.filter);
-            return TRUE;
+            if (wParam == IDOK)
+            {
+                EndDialog(hwndDlg, 0);
+
+                // save information and update selector (if filter was changed)
+                if ((uint32_t)UI::Jdi->GetConfigInt(USER_FILTER, USER_UI) != usel.filter)
+                {
+                    UI::Jdi->SetConfigInt(USER_FILTER, usel.filter, USER_UI);
+                    UpdateSelector();
+                }
+                return TRUE;
+            }
+            switch (LOWORD(wParam))
+            {
+            case IDC_DOL_FILTER:                    // DOL
+                usel.filter ^= 0xff000000;
+                filter_string(hwndDlg, usel.filter);
+                check_filter(hwndDlg, usel.filter);
+                return TRUE;
+            case IDC_ELF_FILTER:                    // ELF
+                usel.filter ^= 0x00ff0000;
+                filter_string(hwndDlg, usel.filter);
+                check_filter(hwndDlg, usel.filter);
+                return TRUE;
+            case IDC_GCM_FILTER:                    // GCM
+                usel.filter ^= 0x0000ff00;
+                filter_string(hwndDlg, usel.filter);
+                check_filter(hwndDlg, usel.filter);
+                return TRUE;
+            case IDC_GMP_FILTER:                    // ISO
+                usel.filter ^= 0x000000ff;
+                filter_string(hwndDlg, usel.filter);
+                check_filter(hwndDlg, usel.filter);
+                return TRUE;
+            }
         }
-    }
     }
 
     return FALSE;
@@ -4847,18 +4700,18 @@ static void OnMainWindowCreate(HWND hwnd)
     DragAcceptFiles(wnd.hMainWindow, TRUE);
 
     // Add UI methods
-    UI::Jdi->JdiAddNode(UI_JDI_JSON, UIReflector);
+    JdiAddNode(UI_JDI_JSON, UIReflector);
 
     // simulate close operation, like we just stopped emu
     OnMainWindowClosed();
 }
 
-// called once, when Dolwin exits to OS
+// called once, when emu exits to OS
 static void OnMainWindowDestroy()
 {
     UI::Jdi->Unload();
 
-    UI::Jdi->JdiRemoveNode(UI_JDI_JSON);
+    JdiRemoveNode(UI_JDI_JSON);
 
     // disable drop operation
     DragAcceptFiles(wnd.hMainWindow, FALSE);
@@ -5090,6 +4943,7 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
         case WM_DESTROY:
         {
             OnMainWindowDestroy();
+            EMUDtor();
             return 0;
         }
         
@@ -5530,7 +5384,7 @@ HWND CreateMainWindow(HINSTANCE hInstance)
     wc.cbClsExtra    = wc.cbWndExtra = 0;
     wc.hbrBackground = (HBRUSH)GetStockObject(DKGRAY_BRUSH);
     wc.hCursor       = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_DOLWIN_ICON));
+    wc.hIcon         = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_PUREI_ICON));
     wc.hInstance     = hInstance;
     wc.lpfnWndProc   = WindowProc;
     wc.lpszClassName = CLASS_NAME;

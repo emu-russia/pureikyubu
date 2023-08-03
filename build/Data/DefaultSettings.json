@@ -1,0 +1,71 @@
+{
+	"info":
+	{
+		"description": "Default configuration. Loaded before Settings.json"
+	},
+
+	"ui":
+	{
+		"DOLDEBUG": false,
+		"FILTER": 4294967295,
+		"LASTDIR_ALL": "./",
+		"LASTDIR_DVD": "./",
+		"LASTDIR_MAP": "./Data",
+		"LASTDIR_PATCH": "./Data",
+		"LASTFILE": "",
+		"ONTOP": false,
+		"PATH": "./",
+		"RECENT0": "",
+		"RECENT1": "",
+		"RECENT2": "",
+		"RECENT3": "",
+		"RECENT4": "",
+		"RECENTNUM": 0,
+		"RUNONCE": true,
+		"SELECTOR": true,
+		"SMALLICONS": true,
+		"SORTVIEW": 1
+	},
+
+	"loader":
+	{
+		"BINORG": 12544,
+		"MAKEMAP": true
+	},
+
+	"hardware":
+	{
+		"ANSI": "Data/AnsiFont.szp",
+		"SJIS": "Data/SjisFont.szp",
+		"CONSOLE": 3,
+		"EXI_LOG": true,
+		"OS_REPORT": true,
+		"RSWHACK": true,
+		"VI_LOG": false,
+		"VI_XFB": true,
+		"BOOTROM": "Data/gc-ntsc-10.bin",
+		"DSP_DROM": "Data/dsp_drom.bin",
+		"DSP_IROM": "Data/dsp_irom.bin",
+	},
+
+	"hle":
+	{
+		"HLEMTX": false
+	},
+
+	"controllers":
+	{
+		"PluggedIn_0": false,
+		"PluggedIn_1": false,
+		"PluggedIn_2": false,
+		"PluggedIn_3": false
+	},
+
+	"memcards":
+	{
+		"Memcard_SyncSave": false,
+		"MemcardA_Connected": false,
+		"MemcardB_Connected": false
+	}
+	
+}

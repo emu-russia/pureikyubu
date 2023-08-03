@@ -1,6 +1,6 @@
 /*
 
-# Dolwin user variables access. Json-based.
+# User variables access. Json-based.
 
 ## How the settings worked before.
 
@@ -26,12 +26,12 @@ static void LoadSettings()
 		return;
 
 	// Load default settings
-	if (!Util::FileExists(DOLWIN_DEFAULT_SETTINGS))
+	if (!Util::FileExists(EMU_DEFAULT_SETTINGS))
 	{
 		throw "Default settings missing!";
 	}
 
-	auto jsonText = Util::FileLoad(DOLWIN_DEFAULT_SETTINGS);
+	auto jsonText = Util::FileLoad(EMU_DEFAULT_SETTINGS);
 	if (jsonText.empty())
 	{
 		throw "Default settings missing!";
@@ -42,9 +42,9 @@ static void LoadSettings()
 	// Merge with current settings.
 	settings.Clone(&defaultSettings);
 
-	if (Util::FileExists(DOLWIN_SETTINGS))
+	if (Util::FileExists(EMU_SETTINGS))
 	{
-		jsonText = Util::FileLoad(DOLWIN_SETTINGS);
+		jsonText = Util::FileLoad(EMU_SETTINGS);
 		assert(!jsonText.empty());
 
 		Json currentSettings;
@@ -74,7 +74,7 @@ static void SaveSettings()
 	std::vector<uint8_t> text(2 * textSize, 0);
 	settings.Serialize(text.data(), 2 * textSize, textSize);
 
-	Util::FileSave(DOLWIN_SETTINGS, text);
+	Util::FileSave(EMU_SETTINGS, text);
 }
 
 

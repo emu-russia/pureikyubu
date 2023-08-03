@@ -19,6 +19,8 @@
 #include "../../src/utils.h"
 #include "../../src/json.h"
 #include "../../src/jdi.h"
+#include "../../src/flipper.h"
+#include "../../src/debug.h"
 
 #include "GL.h"
 #include "GX.h"

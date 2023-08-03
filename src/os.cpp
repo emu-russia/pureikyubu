@@ -164,7 +164,7 @@ void HLEExecuteCallback(uint32_t entryPoint)
 #define PARAM(n)    Core->regs.gpr[3+n]
 #define RET_VAL     Core->regs.gpr[3]
 #define SWAP        _BYTESWAP_UINT32
-#define FPRD(n)     Core->regs.fpr[n].dbl
+#define FPRDBL(n)     Core->regs.fpr[n].dbl
 
 // fast longlong swap, invented by org
 static void swap_double(void* srcPtr)
@@ -231,13 +231,13 @@ void HLE_memset()
 // double sin(double x)
 void HLE_sin()
 {
-    FPRD(1) = sin(FPRD(1));
+    FPRDBL(1) = sin(FPRDBL(1));
 }
 
 // double cos(double x)
 void HLE_cos()
 {
-    FPRD(1) = cos(FPRD(1));
+    FPRDBL(1) = cos(FPRDBL(1));
 }
 
 // double modf(double x, double * intptr)
@@ -246,7 +246,7 @@ void HLE_modf()
     int WIMG;
     double * intptr = (double *)(&mi.ram[Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG)]);
     
-    FPRD(1) = modf(FPRD(1), intptr);
+    FPRDBL(1) = modf(FPRDBL(1), intptr);
     swap_double(intptr);
 }
 
@@ -256,26 +256,26 @@ void HLE_frexp()
     int WIMG;
     uint32_t * expptr = (uint32_t *)(&mi.ram[Core->EffectiveToPhysical(PARAM(0), Gekko::MmuAccess::Read, WIMG)]);
     
-    FPRD(1) = frexp(FPRD(1), (int *)expptr);
+    FPRDBL(1) = frexp(FPRDBL(1), (int *)expptr);
     *expptr = SWAP(*expptr);
 }
 
 // double ldexp(double x, int exp)
 void HLE_ldexp()
 {
-    FPRD(1) = ldexp(FPRD(1), (int)PARAM(0));
+    FPRDBL(1) = ldexp(FPRDBL(1), (int)PARAM(0));
 }
 
 // double floor(double x)
 void HLE_floor()
 {
-    FPRD(1) = floor(FPRD(1));
+    FPRDBL(1) = floor(FPRDBL(1));
 }
 
 // double ceil(double x)
 void HLE_ceil()
 {
-    FPRD(1) = ceil(FPRD(1));
+    FPRDBL(1) = ceil(FPRDBL(1));
 }
 
 
@@ -823,20 +823,6 @@ static  uint32_t     __OSDefaultThread;      // OS_DEFAULT_THREAD
 // IMPORTANT : FPRs are ALWAYS saved, because FP Unavail handler is not used
 
 // stack operations are not emulated, because they are simple
-
-// fast longlong swap, invented by org
-static void swap_double(void *srcPtr)
-{
-    uint8_t *src = (uint8_t*)srcPtr;
-    uint8_t t;
-
-    for(int i=0; i<4; i++)
-    {
-        t = src[7-i];
-        src[7-i] = src[i];
-        src[i] = t;
-    }
-}
 
 void OSSetCurrentContext(void)
 {

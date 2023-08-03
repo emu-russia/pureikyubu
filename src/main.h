@@ -14,7 +14,7 @@ Thus, if the Gekko thread is in a suspended state, all other hardware modules ar
 
 ## Supported file formats
 
-Dolwin supports the following file formats:
+Supported formats:
 - DOL
 - ELF
 - BIN (not sure if this works and generally there are probably no demos left in .bin format)
@@ -37,7 +37,7 @@ A list of commands can be found in EmuJdi.json
 
 #pragma once
 
-#define EMU_VERSION L"0.16"
+#define EMU_VERSION L"1.0"
 
 void    EMUGetHwConfig(HWConfig* config);
 

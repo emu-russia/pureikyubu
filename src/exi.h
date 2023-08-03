@@ -71,7 +71,7 @@ struct SRAM
 #define ANSI_SIZE   0x3000
 #define SJIS_SIZE   0x4D000
 
-// location of SRAM dump in Dolwin filesystem 
+// location of SRAM dump in filesystem 
 #define SRAM_FILE   L"./Data/sram.bin"
 
 // ---------------------------------------------------------------------------

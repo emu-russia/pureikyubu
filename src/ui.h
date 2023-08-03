@@ -1,3 +1,35 @@
+﻿/*
+
+Old interface from Dolwin 0.10.
+
+Used simply to give the user some kind of interface.
+
+No longer evolving, left until a replacement for a more modern UI appears.
+
+## Technical features
+
+At the heart of the interface is the "Selector" - a custom ListView with a list of executable files (DOL/ELF) and disk images (GCM).
+
+The emulator settings dialog is used only for modifying Settings.json.
+
+## Controller Settings Dialog (PAD)
+
+This dialog is used to configure the PadSimpleWin32 backend.
+
+When there is actual support for USB controllers, it will probably be redesigned.
+
+In short, the current controller settings are strongly tied to the PadSimpleWin32 backend, which is not very good, but for now it is as it is.
+
+## The situation with strings
+
+There is now a miniature hell of using strings.
+
+Historically, Dolwin only supported Ansi (`std::string`). During the code refresh process, all strings were translated to TCHAR. Who does not know - this is such a mutant that depends on the `_UNICODE` macro: if the macro is defined, all TCHARs are Unicode strings, otherwise Ansi.
+
+After switching to cross-platform, it is obvious to completely switch to Unicode (`std::wstring`). But this will be done only by preliminary refactoring (separation of the UI from the emulator core).
+
+*/
+
 #pragma once
 
 void    AboutDialog(HWND hwndParent);
@@ -93,39 +125,11 @@ namespace JDI
 	typedef void (*JdiReflector)();
 }
 
-#ifdef _WINDOWS
-typedef Json::Value* (__cdecl* CALL_JDI)(const char* request);
-typedef bool(__cdecl* CALL_JDI_NO_RETURN)(const char* request);
-typedef bool(__cdecl* CALL_JDI_RETURN_INT)(const char* request, int* valueOut);
-typedef bool(__cdecl* CALL_JDI_RETURN_STRING)(const char* request, char* valueOut, size_t valueSize);
-typedef bool(__cdecl* CALL_JDI_RETURN_BOOL)(const char* request, bool* valueOut);
-
-typedef void(__cdecl* JDI_ADD_NODE)(const char* filename, JDI::JdiReflector reflector);
-typedef void(__cdecl* JDI_REMOVE_NODE)(const char* filename);
-typedef void(__cdecl* JDI_ADD_CMD)(const char* name, JDI::CmdDelegate command);
-#endif
-
 namespace UI
 {
 	class JdiClient
 	{
-#ifdef _WINDOWS
-		CALL_JDI CallJdi = nullptr;
-		CALL_JDI_NO_RETURN CallJdiNoReturn = nullptr;
-		CALL_JDI_RETURN_INT CallJdiReturnInt = nullptr;
-		CALL_JDI_RETURN_STRING CallJdiReturnString = nullptr;
-		CALL_JDI_RETURN_BOOL CallJdiReturnBool = nullptr;
-
-		HMODULE dll = nullptr;
-#endif
-
 	public:
-
-#ifdef _WINDOWS
-		JDI_ADD_NODE JdiAddNode = nullptr;
-		JDI_REMOVE_NODE JdiRemoveNode = nullptr;
-		JDI_ADD_CMD JdiAddCmd = nullptr;
-#endif
 
 		JdiClient();
 		~JdiClient();
@@ -189,14 +193,14 @@ namespace UI
 
 
 // version info
-#define APPNAME L"Dolwin"
-#define APPDESC L"Nintendo Gamecube Emulator"
+#define APPNAME L"プレイキューブ"
+#define APPDESC L"Nintendo GameCube Emulator"
 
 namespace UI
 {
 	// basic message output
-	void DolwinError(const wchar_t* title, const wchar_t* fmt, ...);
-	void DolwinReport(const wchar_t* fmt, ...);
+	void Error(const wchar_t* title, const wchar_t* fmt, ...);
+	void Report(const wchar_t* fmt, ...);
 }
 
 
@@ -206,42 +210,6 @@ namespace UI
 void MemcardConfigure(int num, HWND hParent);
 
 
-
-enum
-{
-	VKEY_FOR_UP = 0,
-	VKEY_FOR_DOWN,
-	VKEY_FOR_LEFT,
-	VKEY_FOR_RIGHT,
-	VKEY_FOR_XUP50,
-	VKEY_FOR_XUP100,
-	VKEY_FOR_XDOWN50,
-	VKEY_FOR_XDOWN100,
-	VKEY_FOR_XLEFT50,
-	VKEY_FOR_XLEFT100,
-	VKEY_FOR_XRIGHT50,
-	VKEY_FOR_XRIGHT100,
-	VKEY_FOR_CXUP,
-	VKEY_FOR_CXDOWN,
-	VKEY_FOR_CXLEFT,
-	VKEY_FOR_CXRIGHT,
-	VKEY_FOR_TRIGGERL,
-	VKEY_FOR_TRIGGERR,
-	VKEY_FOR_TRIGGERZ,
-	VKEY_FOR_A,
-	VKEY_FOR_B,
-	VKEY_FOR_X,
-	VKEY_FOR_Y,
-	VKEY_FOR_START,
-
-	VKEY_FOR_MAX
-};
-
-typedef struct
-{
-	bool    plugged;
-	int     vkeys[VKEY_FOR_MAX];    // -1 - undefined
-} PADCONF;
 
 void PADConfigure(long padnum, HWND hwndParent);
 

@@ -441,7 +441,7 @@ namespace DVD
 	}
 
 	/// <summary>
-	/// Unfortunately, all demos in the SDK are in ELF format. Therefore, we will use PONG.DOL as the main program, which is included in each Dolwin release and is a full resident of the project :p
+	/// Unfortunately, all demos in the SDK are in ELF format. Therefore, we will use PONG.DOL as the main program, which is included in each release and is a full resident of the project :p
 	/// </summary>
 	/// <returns></returns>
 	bool MountDolphinSdk::GenDol()

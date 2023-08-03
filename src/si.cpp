@@ -12,7 +12,7 @@ SIControl si;
 
 // SI_EXILK is not used (same as EXI clock timing, because of instant EXI transfers)
 
-// Dolwin polling schematics :
+// SI.cpp polling schematics :
 /*/
      -----
     | OUT |
@@ -24,7 +24,6 @@ SIControl si;
 /*/
 
 // Note : digital L and R are only set when its analog key is pressed all the way down;
-// Dolwin plugin is only supporting the fact, that L/R are pressed.
 
 // ---------------------------------------------------------------------------
 // dispatch command

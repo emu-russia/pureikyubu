@@ -2,29 +2,6 @@
 
 #include "pch.h"
 
-#ifdef _WINDOWS
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
-{
-    switch (ul_reason_for_call)
-    {
-        case DLL_PROCESS_ATTACH:
-            EMUCtor();
-            Debug::Report(Debug::Channel::Loader, "Module base: 0x%x\n", hModule);
-            break;
-        case DLL_PROCESS_DETACH:
-            EMUDtor();
-            break;
-        case DLL_THREAD_ATTACH:
-        case DLL_THREAD_DETACH:
-            break;
-    }
-    return TRUE;
-}
-#endif // _WINDOWS
-
 #define endl    ( line[p] == 0 )
 #define space   ( line[p] == 0x20 )
 #define quot    ( line[p] == '\'' )
@@ -112,13 +89,7 @@ static void Tokenize(const char* line, std::vector<std::string>& args)
 #undef dquot
 #undef endl
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 Json::Value* 
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdi(const char* request)
 {
     std::vector<std::string> args;
@@ -128,26 +99,14 @@ CallJdi(const char* request)
     return JDI::Hub.Execute(args);
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 bool 
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdiNoReturn(const char* request)
 {
     CallJdi(request);
     return true;
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 bool 
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdiReturnInt(const char* request, int* valueOut)
 {
     if (!valueOut)
@@ -172,13 +131,7 @@ CallJdiReturnInt(const char* request, int* valueOut)
     return true;
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 bool 
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
 {
     if (!valueOut)
@@ -240,13 +193,7 @@ CallJdiReturnString(const char* request, char* valueOut, size_t valueSize)
     return true;
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 bool 
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdiReturnBool(const char* request, bool* valueOut)
 {
     if (!valueOut)
@@ -279,49 +226,25 @@ CallJdiReturnBool(const char* request, bool* valueOut)
     return true;
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 void 
-#ifdef _WINDOWS
-__cdecl
-#endif
 JdiAddNode(const char* filename, JDI::JdiReflector reflector)
 {
     JDI::Hub.AddNode(Util::StringToWstring(filename), reflector);
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 void 
-#ifdef _WINDOWS
-__cdecl 
-#endif
 JdiRemoveNode(const char* filename)
 {
     JDI::Hub.RemoveNode(Util::StringToWstring(filename));
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 void 
-#ifdef _WINDOWS
-__cdecl
-#endif
 JdiAddCmd(const char* name, JDI::CmdDelegate command)
 {
     JDI::Hub.AddCmd(name, command);
 }
 
-#ifdef _WINDOWS
-extern "C" __declspec(dllexport)
-#endif
 void
-#ifdef _WINDOWS
-__cdecl
-#endif
 CallJdiReturnJson(const char* request, char * reply, size_t replySize)
 {
     std::vector<std::string> args;

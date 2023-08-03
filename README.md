@@ -9,13 +9,13 @@ GameCube is the hardware masterpiece of Nintendo/ArtX engineers and it's a pleas
 
 ## Build
 
-:warning: Currently the build is not going through, due to refactoring of the codebase. We will finish it soon.
-
 ### Windows version
 
 Build using Visual Studio 2022. To build, open `scripts/pureikyubu.sln` and click Build.
 
 ### Generic Linux (Ubuntu) version
+
+:warning: Currently the build is not going through, due to refactoring of the codebase. We will finish it soon.
 
 ```
 cd ~
@@ -33,7 +33,7 @@ Requirements: CMake, pthread.
 
 ## Credits
 
-We would like to say Thanks to people, who helped us to make Dolwin:
+We would like to say Thanks to people, who helped us to make Dolwin/pureikyubu:
 - Costis: gcdev.com and some valuable information
 - Titanik: made GC development possible
 - tmbinc: details of GC bootrom and first working GX demos

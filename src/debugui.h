@@ -132,39 +132,11 @@ namespace JDI
 	typedef void (*JdiReflector)();
 }
 
-#ifdef _WINDOWS
-typedef Json::Value* (__cdecl* CALL_JDI)(const char* request);
-typedef bool(__cdecl* CALL_JDI_NO_RETURN)(const char* request);
-typedef bool(__cdecl* CALL_JDI_RETURN_INT)(const char* request, int* valueOut);
-typedef bool(__cdecl* CALL_JDI_RETURN_STRING)(const char* request, char* valueOut, size_t valueSize);
-typedef bool(__cdecl* CALL_JDI_RETURN_BOOL)(const char* request, bool* valueOut);
-
-typedef void(__cdecl* JDI_ADD_NODE)(const char* filename, JDI::JdiReflector reflector);
-typedef void(__cdecl* JDI_REMOVE_NODE)(const char* filename);
-typedef void(__cdecl* JDI_ADD_CMD)(const char* name, JDI::CmdDelegate command);
-#endif
-
 namespace Debug
 {
 	class JdiClient
 	{
-#ifdef _WINDOWS
-		CALL_JDI CallJdi = nullptr;
-		CALL_JDI_NO_RETURN CallJdiNoReturn = nullptr;
-		CALL_JDI_RETURN_INT CallJdiReturnInt = nullptr;
-		CALL_JDI_RETURN_STRING CallJdiReturnString = nullptr;
-		CALL_JDI_RETURN_BOOL CallJdiReturnBool = nullptr;
-
-		HMODULE dll = nullptr;
-#endif
-
 	public:
-
-#ifdef _WINDOWS
-		JDI_ADD_NODE JdiAddNode = nullptr;
-		JDI_REMOVE_NODE JdiRemoveNode = nullptr;
-		JDI_ADD_CMD JdiAddCmd = nullptr;
-#endif
 
 		JdiClient();
 		~JdiClient();
@@ -245,6 +217,35 @@ namespace Debug
 	extern JdiClient* Jdi;
 }
 
+// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
+
+namespace Debug
+{
+	class DspDebug;
+
+	class DspImem : public CuiWindow
+	{
+		friend DspDebug;
+
+		static const uint32_t IROM_START_ADDRESS = 0x8000;
+
+		uint32_t current = 0x8000;
+		uint32_t cursor = 0x8000;
+		size_t wordsOnScreen = 0;
+
+		bool AddressVisible(uint32_t address);
+
+		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
+
+	public:
+		DspImem(RECT& rect, std::string name, Cui* parent);
+
+		virtual void OnDraw();
+		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+	};
+
+}
+
 // Visual DSP Debugger
 
 namespace Debug
@@ -285,34 +286,6 @@ namespace Debug
 
 }
 
-// Do not forget that DSP addressing is done with freaking 16-bit slots (`words`)
-
-namespace Debug
-{
-	class DspDebug;
-
-	class DspImem : public CuiWindow
-	{
-		friend DspDebug;
-
-		static const uint32_t IROM_START_ADDRESS = 0x8000;
-
-		uint32_t current = 0x8000;
-		uint32_t cursor = 0x8000;
-		size_t wordsOnScreen = 0;
-
-		bool AddressVisible(uint32_t address);
-
-		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
-
-	public:
-		DspImem(RECT& rect, std::string name, Cui* parent);
-
-		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
-	};
-
-}
 
 namespace Debug
 {
@@ -383,58 +356,6 @@ namespace Debug
 
 namespace Debug
 {
-
-	// Machine State Flags
-#define MSR_BIT(n)			(1 << (31-(n)))
-#define MSR_RESERVED        0xFFFA0088
-#define MSR_POW             (MSR_BIT(13))               // Power management enable
-#define MSR_ILE             (MSR_BIT(15))               // Exception little-endian mode
-#define MSR_EE              (MSR_BIT(16))               // External interrupt enable
-#define MSR_PR              (MSR_BIT(17))               // User privilege level
-#define MSR_FP              (MSR_BIT(18))               // Floating-point available
-#define MSR_ME              (MSR_BIT(19))               // Machine check enable
-#define MSR_FE0             (MSR_BIT(20))               // Floating-point exception mode 0
-#define MSR_SE              (MSR_BIT(21))               // Single-step trace enable
-#define MSR_BE              (MSR_BIT(22))               // Branch trace enable
-#define MSR_FE1             (MSR_BIT(23))               // Floating-point exception mode 1
-#define MSR_IP              (MSR_BIT(25))               // Exception prefix
-#define MSR_IR              (MSR_BIT(26))               // Instruction address translation
-#define MSR_DR              (MSR_BIT(27))               // Data address translation
-#define MSR_PM              (MSR_BIT(29))               // Performance monitor mode
-#define MSR_RI              (MSR_BIT(30))               // Recoverable exception
-#define MSR_LE              (MSR_BIT(31))               // Little-endian mode enable
-
-#define HID0_EMCP	0x8000'0000
-#define HID0_DBP	0x4000'0000
-#define HID0_EBA	0x2000'0000
-#define HID0_EBD	0x1000'0000
-#define HID0_BCLK	0x0800'0000
-#define HID0_ECLK	0x0200'0000
-#define HID0_PAR	0x0100'0000
-#define HID0_DOZE	0x0080'0000
-#define HID0_NAP	0x0040'0000
-#define HID0_SLEEP	0x0020'0000
-#define HID0_DPM	0x0010'0000
-#define HID0_NHR	0x0001'0000			// Not hard reset (software-use only)
-#define HID0_ICE	0x0000'8000
-#define HID0_DCE	0x0000'4000
-#define HID0_ILOCK	0x0000'2000
-#define HID0_DLOCK	0x0000'1000
-#define HID0_ICFI	0x0000'0800
-#define HID0_DCFI	0x0000'0400
-#define HID0_SPD	0x0000'0200
-#define HID0_IFEM	0x0000'0100
-#define HID0_SGE	0x0000'0080
-#define HID0_DCFA	0x0000'0040
-#define HID0_BTIC	0x0000'0020
-#define HID0_ABE	0x0000'0008
-#define HID0_BHT	0x0000'0004
-#define HID0_NOOPTI	0x0000'0001
-
-#define HID2_LSQE   0x8000'0000          // PS load/store quantization
-#define HID2_WPE    0x4000'0000          // gathering enabled
-#define HID2_PSE    0x2000'0000          // PS-mode
-#define HID2_LCE    0x1000'0000          // locked cache enable
 
 #define Gekko_SPR_XER 1
 #define Gekko_SPR_LR 8
@@ -551,8 +472,6 @@ namespace Debug
 
 	class MemoryView : public CuiWindow
 	{
-		static const size_t RAMSIZE = 0x0180'0000;	// 24 MBytes
-
 		uint32_t cursor = 0x8000'0000;
 
 		std::string hexbyte(uint32_t addr);

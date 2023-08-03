@@ -40,9 +40,7 @@
 
     useful VI regs : VI_DISP_CR, VI_TFBL, VI_DISP_POS, VI_INT0.
     dont care about others. Nintendo promised to add HCOUNT (line) interrupt,
-    but until it is not used by IPL, we will not use it too. there is not
-    much time before GC farewell (year 2006), so if N will not update
-    production boards, this will never happen.
+    but until it is not used by IPL, we will not use it too.
 
 --------------------------------------------------------------------------- */
 

@@ -232,8 +232,8 @@ CAPTION "About"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     DEFPUSHBUTTON   "OK",IDOK,198,43,50,15
-    ICON            IDI_APP_ICON,IDC_STATIC,11,8,21,20
-    LTEXT           "pureikyubu - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2023, emu-russia\nBuild version 0.11 (21:23:32 5 Mar 2020)",IDC_ABOUT_RELEASE,48,5,186,25
+    ICON            IDI_PUREI_ICON,IDC_STATIC,11,8,21,20
+    LTEXT           "pureikyubu - Nintendo GAMECUBE Emulator for Windows\nCopyright 2003-2023, Dolwin team & contributors\nBuild version 1.0 (21:23:32 5 Mar 2020)",IDC_ABOUT_RELEASE,48,5,186,25
 END
 
 
@@ -321,7 +321,7 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_APP_ICON         ICON                    "pureikyubu.ico"
+IDI_PUREI_ICON          ICON                    "pureikyubu.ico"
 
 IDI_GCN_ICON            ICON                    "GCN.ico"
 
@@ -347,45 +347,6 @@ IDB_BITMAP6             BITMAP                  "padTriggerL.bmp"
 
 IDB_BITMAP7             BITMAP                  "padTriggerR.bmp"
 
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,1,0,0
- PRODUCTVERSION 0,1,0,0
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x1L
-#else
- FILEFLAGS 0x0L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x1L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040904b0"
-        BEGIN
-            VALUE "Comments", "There is no knowledge, that is not power."
-            VALUE "CompanyName", "© 2003-2023 emu-russia"
-            VALUE "FileDescription", "pureikyubu - Nintendo GameCube Emulator"
-            VALUE "FileVersion", "0, 1, 0, 0"
-            VALUE "InternalName", "pureikyubu"
-            VALUE "LegalCopyright", "© 2003-2023 emu-russia"
-            VALUE "OriginalFilename", "pureikyubu.exe"
-            VALUE "ProductName", "pureikyubu"
-            VALUE "ProductVersion", "0, 1, 6, 0"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x409, 1200
-    END
-END
 
 
 /////////////////////////////////////////////////////////////////////////////
