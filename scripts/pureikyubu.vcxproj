@@ -113,6 +113,12 @@
     <ClCompile Include="..\src\gekkodec.cpp" />
     <ClCompile Include="..\src\gekkodisasm.cpp" />
     <ClCompile Include="..\src\gfx.cpp" />
+    <ClCompile Include="..\src\gfxnull.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\jdi.cpp" />
     <ClCompile Include="..\src\jdiserver.cpp" />
     <ClCompile Include="..\src\json.cpp" />
@@ -122,6 +128,12 @@
     <ClCompile Include="..\src\os.cpp" />
     <ClCompile Include="..\src\osdebug.cpp" />
     <ClCompile Include="..\src\pad.cpp" />
+    <ClCompile Include="..\src\padnull.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -137,6 +149,12 @@
     <ClCompile Include="..\src\vi.cpp" />
     <ClCompile Include="..\src\xf.cpp" />
     <ClCompile Include="..\src\xfb.cpp" />
+    <ClCompile Include="..\src\xfbnull.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\thirdparty\DolwinVideo\Scripts\VS2022\DolwinVideo.vcxproj">
