@@ -339,8 +339,5 @@
     <ClCompile Include="..\src\uisimple.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\debuguisimple.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

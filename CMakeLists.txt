@@ -18,7 +18,8 @@ add_definitions (-DCMAKE_BUILD_TYPE=Debug)
 add_compile_options(-Wno-attributes)
 
 # ThirdParty
-add_subdirectory (ThirdParty/fmt/Scripts)
+add_subdirectory (thirdparty/fmt/Scripts)
+add_subdirectory (thirdparty/GX/Scripts)
 
 add_executable (pureikyubu 
 	src/ai.cpp
@@ -64,3 +65,8 @@ add_executable (pureikyubu
 	src/xf.cpp
 	src/xfbnull.cpp
 )
+
+target_link_libraries (pureikyubu LINK_PUBLIC fmt)
+target_link_libraries (pureikyubu LINK_PUBLIC GX)
+find_package (Threads)
+target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT})

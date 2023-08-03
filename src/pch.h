@@ -10,6 +10,8 @@
 #include <string.h>
 #include <cstdarg>
 #include <unordered_map>
+#include <math.h>
+#include <limits.h>
 #include <fstream>
 
 #ifdef _WINDOWS
@@ -31,6 +33,7 @@
 #include <sys/stat.h>	// _wstat (IsDirectory)
 #include <dirent.h>		// BuildFileTree
 #define _stricmp strcasecmp
+#define _strnicmp strncasecmp
 #define _wcsicmp wcscasecmp
 #endif
 
@@ -107,9 +110,7 @@ namespace Flipper
 
 #include "config.h"
 #include "main.h"
-#ifdef _WINDOWS
 #include "ui.h"
-#endif
 
 #define _TB(s)
 #define _TE()
