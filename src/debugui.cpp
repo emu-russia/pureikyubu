@@ -518,30 +518,10 @@ namespace Debug
 
 	JdiClient::JdiClient()
 	{
-#ifdef _WINDOWS
-		dll = LoadLibraryA("DolwinEmu.dll");
-		if (dll == nullptr)
-		{
-			throw "Load DolwinEmu failed!";
-		}
-
-		CallJdi = (CALL_JDI)GetProcAddress(dll, "CallJdi");
-		CallJdiNoReturn = (CALL_JDI_NO_RETURN)GetProcAddress(dll, "CallJdiNoReturn");
-		CallJdiReturnInt = (CALL_JDI_RETURN_INT)GetProcAddress(dll, "CallJdiReturnInt");
-		CallJdiReturnString = (CALL_JDI_RETURN_STRING)GetProcAddress(dll, "CallJdiReturnString");
-		CallJdiReturnBool = (CALL_JDI_RETURN_BOOL)GetProcAddress(dll, "CallJdiReturnBool");
-
-		JdiAddNode = (JDI_ADD_NODE)GetProcAddress(dll, "JdiAddNode");
-		JdiRemoveNode = (JDI_REMOVE_NODE)GetProcAddress(dll, "JdiRemoveNode");
-		JdiAddCmd = (JDI_ADD_CMD)GetProcAddress(dll, "JdiAddCmd");
-#endif
 	}
 
 	JdiClient::~JdiClient()
 	{
-#ifdef _WINDOWS
-		FreeLibrary(dll);
-#endif
 	}
 
 	// Generic

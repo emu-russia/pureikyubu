@@ -1090,10 +1090,7 @@ namespace UI
 
     bool JdiClient::JitcEnabled()
     {
-        Json::Value* value = CallJdi("JitcEnabled");
-        bool enabled = value->value.AsBool;
-        delete value;
-        return enabled;
+        return false;
     }
 
 }
