@@ -375,7 +375,7 @@ int main(int argc, char** argv)
 
 	if (argc < 2)
 	{
-		printf("Use: DolwinPlayground <file>\n");
+		printf("Use: pureikyubu <file>\n");
 		return -1;
 	}
 
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
 
 	// Say hello
 
-	printf("Dolwin Playground, emulator version %s\n", UI::SimpleJdi.GetVersion().c_str());
+	printf("pureikyubu, emulator version %s\n", UI::SimpleJdi.GetVersion().c_str());
 
 	// Load file and run
 
