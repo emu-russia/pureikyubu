@@ -5,6 +5,16 @@
 
 namespace DSP
 {
+	typedef uint32_t DspAddress;		// in halfwords slots 
+}
+
+namespace DspUnitTest
+{
+	class DspUnitTest;
+}
+
+namespace DSP
+{
 	// DSP instructions are in a hybrid format: some instructions occupy a full 16-bit word, and some can be packed as two parallel instructions per word.
 
 	// Regular instructions (single-word)

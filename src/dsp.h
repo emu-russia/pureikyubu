@@ -47,16 +47,6 @@ extern  ARControl aram;
 // GAMECUBE DSP Interface.
 // In the previous version, the DSPcore implementation was mixed with the hardware binding (IFX) implementation. In this version, these entities are separated.
 
-namespace DspUnitTest
-{
-	class DspUnitTest;
-}
-
-namespace DSP
-{
-	typedef uint32_t DspAddress;		// in halfwords slots 
-}
-
 namespace DSP
 {
 	union DspAccelAddress
@@ -97,6 +87,38 @@ namespace DSP
 		Pcm16 = 0x000A,			// Signed 16 bit PCM mono
 		Pcm8 = 0x0019,			// Signed 8 bit PCM mono
 		Adpcm = 0x0000,			// ADPCM encoded (both standard & extended)
+	};
+
+}
+
+
+// DSP DMA registers
+
+namespace DSP
+{
+
+	struct DspDmaRegs
+	{
+		union
+		{
+			struct
+			{
+				uint16_t	l;
+				uint16_t	h;
+			};
+			uint32_t	bits;
+		} mmemAddr;
+		DspAddress  dspAddr;
+		uint16_t	blockSize;
+		union
+		{
+			struct
+			{
+				unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
+				unsigned Imem : 1;			// 0: DMEM, 1: IMEM
+			};
+			uint16_t	bits;
+		} control;
 	};
 
 }
@@ -267,38 +289,6 @@ namespace DSP
 
 #pragma endregion "Flipper interface"
 
-	};
-
-}
-
-// DSP DMA registers
-
-
-namespace DSP
-{
-
-	struct DspDmaRegs
-	{
-		union
-		{
-			struct
-			{
-				uint16_t	l;
-				uint16_t	h;
-			};
-			uint32_t	bits;
-		} mmemAddr;
-		DspAddress  dspAddr;
-		uint16_t	blockSize;
-		union
-		{
-			struct
-			{
-				unsigned Dsp2Mmem : 1;		// 0: MMEM -> DSP, 1: DSP -> MMEM
-				unsigned Imem : 1;			// 0: DMEM, 1: IMEM
-			};
-			uint16_t	bits;
-		} control;
 	};
 
 }

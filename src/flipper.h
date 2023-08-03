@@ -58,9 +58,4 @@ namespace Flipper
 	};
 
 	extern Flipper* HW;
-
-	// TODO: I do not like these lonely definitions, which, moreover, have to be created far away in the emulation module (Emulator.cpp).
-	// Need to make one single class for the Flipper ASIC and move them there.
-	extern DSP::Dsp16* DSP;
-	extern GX::GXCore* Gx;
 }
