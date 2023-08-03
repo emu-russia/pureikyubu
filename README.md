@@ -18,11 +18,12 @@ Build using Visual Studio 2022. To build, open `scripts/pureikyubu.sln` and clic
 :warning: Currently the build is not going through, due to refactoring of the codebase. We will finish it soon.
 
 ```
-cd ~
+# Choose a suitable folder to store a clone of the repository, cd there and then
 git clone https://github.com/emu-russia/pureikyubu.git 
 cd pureikyubu
-cmake ./
-cmake --build ./
+cd build
+cmake ..
+make
 ```
 
 Requirements: CMake, pthread.

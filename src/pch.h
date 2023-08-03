@@ -12,6 +12,7 @@
 #include <fstream>
 
 #ifdef _WINDOWS
+#include <conio.h>
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>

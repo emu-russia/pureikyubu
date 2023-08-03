@@ -175,6 +175,12 @@ namespace UI
 		void Stop();
 		void Reset();
 
+		// Debug interface
+
+		std::string DebugChannelToString(int chan);
+		void QueryDebugMessages(std::list<std::pair<int, std::string>>& queue);
+		int64_t GetResetGekkoMipsCounter();
+
 		// Performance Counters, SystemTime
 
 		int64_t GetPerformanceCounter(int counter);
