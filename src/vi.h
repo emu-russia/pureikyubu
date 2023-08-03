@@ -78,10 +78,10 @@
 
 struct RGB
 {
-    uint8_t Blue;
-    uint8_t Green;
-    uint8_t Red;
-    uint8_t Reserved;
+	uint8_t Blue;
+	uint8_t Green;
+	uint8_t Red;
+	uint8_t Reserved;
 };
 
 #pragma pack(pop)
@@ -89,28 +89,28 @@ struct RGB
 // VI state (registers and other data)
 struct VIControl
 {
-    volatile uint16_t    disp_cr;    // display configuration register
-    volatile uint32_t    tfbl;       // video buffer (top field)
-    volatile uint32_t    bfbl;       // video buffer (bottom field)
-    volatile uint32_t    pos;        // beam position
-    volatile uint32_t    int0;       // INT0 status
+	volatile uint16_t    disp_cr;    // display configuration register
+	volatile uint32_t    tfbl;       // video buffer (top field)
+	volatile uint32_t    bfbl;       // video buffer (bottom field)
+	volatile uint32_t    pos;        // beam position
+	volatile uint32_t    int0;       // INT0 status
 
-    volatile uint32_t    mode;       // see VI modes
-    bool        inter;      // 1, if interlace
-    volatile uint32_t    vcount;     // number of lines for single frame
-    int64_t     vtime;      // frame timer
-    int64_t     one_frame;  // frame length in CPU timer ticks
+	volatile uint32_t    mode;       // see VI modes
+	bool        inter;      // 1, if interlace
+	volatile uint32_t    vcount;     // number of lines for single frame
+	int64_t     vtime;      // frame timer
+	int64_t     one_frame;  // frame length in CPU timer ticks
 
-    bool        xfb;        // enable video frame buffer (GDI)
-    uint8_t* xfbbuf;     // translated TFBL pointer
-    RGB* gfxbuf;     // DIB
+	bool        xfb;        // enable video frame buffer (GDI)
+	uint8_t* xfbbuf;     // translated TFBL pointer
+	RGB* gfxbuf;     // DIB
 
-    bool        log;        // do debugger log output
-    size_t      frames;     // frames rendered by VI
+	bool        log;        // do debugger log output
+	size_t      frames;     // frames rendered by VI
 
-    int64_t     one_second;     // one CPU second in timer ticks
+	int64_t     one_second;     // one CPU second in timer ticks
 
-    int         videoEncoderFuse;
+	int         videoEncoderFuse;
 };
 
 extern  VIControl vi;

@@ -69,31 +69,31 @@ namespace Debug
 	{
 		switch (chan)
 		{
-		case Channel::Norm: return "";
-		case Channel::Info: return "Info";
-		case Channel::Error: return "Error";
-		case Channel::Header: return "Header";
+			case Channel::Norm: return "";
+			case Channel::Info: return "Info";
+			case Channel::Error: return "Error";
+			case Channel::Header: return "Header";
 
-		case Channel::CP: return "CP";
-		case Channel::PE: return "PE";
-		case Channel::VI: return "VI";
-		case Channel::GP: return "GP";
-		case Channel::PI: return "PI";
-		case Channel::CPU: return "CPU";
-		case Channel::MI: return "MI";
-		case Channel::DSP: return "DSP";
-		case Channel::DI: return "DI";
-		case Channel::AR: return "AR";
-		case Channel::AI: return "AI";
-		case Channel::AIS: return "AIS";
-		case Channel::SI: return "SI";
-		case Channel::EXI: return "EXI";
-		case Channel::MC: return "MC";
-		case Channel::DVD: return "DVD";
-		case Channel::AX: return "AX";
+			case Channel::CP: return "CP";
+			case Channel::PE: return "PE";
+			case Channel::VI: return "VI";
+			case Channel::GP: return "GP";
+			case Channel::PI: return "PI";
+			case Channel::CPU: return "CPU";
+			case Channel::MI: return "MI";
+			case Channel::DSP: return "DSP";
+			case Channel::DI: return "DI";
+			case Channel::AR: return "AR";
+			case Channel::AI: return "AI";
+			case Channel::AIS: return "AIS";
+			case Channel::SI: return "SI";
+			case Channel::EXI: return "EXI";
+			case Channel::MC: return "MC";
+			case Channel::DVD: return "DVD";
+			case Channel::AX: return "AX";
 
-		case Channel::Loader: return "Loader";
-		case Channel::HLE: return "HLE";
+			case Channel::Loader: return "Loader";
+			case Channel::HLE: return "HLE";
 		}
 
 		return "Unknown";
@@ -634,24 +634,24 @@ namespace Debug
 
 		switch (counter)
 		{
-		case PerfCounter::GekkoInstructions:
-			return Core->GetInstructionCounter();
-			break;
-		case PerfCounter::DspInstructions:
-			return Flipper::DSP->core->GetInstructionCounter();
-			break;
-		case PerfCounter::VIs:
-			return pi.intCounters[(size_t)PIInterruptSource::VI];
-			break;
-		case PerfCounter::PEs:
-			return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
-			break;
-		case PerfCounter::CompiledSegments:
-			return Core->GetCompiledSegmentsCount();
-			break;
-		case PerfCounter::ExecutedSegments:
-			return Core->GetExecutedSegmentsCount();
-			break;
+			case PerfCounter::GekkoInstructions:
+				return Core->GetInstructionCounter();
+				break;
+			case PerfCounter::DspInstructions:
+				return Flipper::DSP->core->GetInstructionCounter();
+				break;
+			case PerfCounter::VIs:
+				return pi.intCounters[(size_t)PIInterruptSource::VI];
+				break;
+			case PerfCounter::PEs:
+				return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
+				break;
+			case PerfCounter::CompiledSegments:
+				return Core->GetCompiledSegmentsCount();
+				break;
+			case PerfCounter::ExecutedSegments:
+				return Core->GetExecutedSegmentsCount();
+				break;
 		}
 
 		return value;
@@ -661,24 +661,24 @@ namespace Debug
 	{
 		switch (counter)
 		{
-		case PerfCounter::GekkoInstructions:
-			Core->ResetInstructionCounter();
-			break;
-		case PerfCounter::DspInstructions:
-			Flipper::DSP->core->ResetInstructionCounter();
-			break;
-		case PerfCounter::VIs:
-			pi.intCounters[(size_t)PIInterruptSource::VI] = 0;
-			break;
-		case PerfCounter::PEs:
-			pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
-			break;
-		case PerfCounter::CompiledSegments:
-			Core->ResetCompiledSegmentsCount();
-			break;
-		case PerfCounter::ExecutedSegments:
-			Core->ResetExecutedSegmentsCount();
-			break;
+			case PerfCounter::GekkoInstructions:
+				Core->ResetInstructionCounter();
+				break;
+			case PerfCounter::DspInstructions:
+				Flipper::DSP->core->ResetInstructionCounter();
+				break;
+			case PerfCounter::VIs:
+				pi.intCounters[(size_t)PIInterruptSource::VI] = 0;
+				break;
+			case PerfCounter::PEs:
+				pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
+				break;
+			case PerfCounter::CompiledSegments:
+				Core->ResetCompiledSegmentsCount();
+				break;
+			case PerfCounter::ExecutedSegments:
+				Core->ResetExecutedSegmentsCount();
+				break;
 		}
 	}
 

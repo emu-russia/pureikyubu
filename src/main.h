@@ -53,9 +53,9 @@ void    EMUStop();          // Stop Gekko
 // all important data is placed here
 typedef struct Emulator
 {
-    bool    init;
-    bool    loaded;         // file loaded
-    std::wstring lastLoaded;
+	bool    init;
+	bool    loaded;         // file loaded
+	std::wstring lastLoaded;
 } Emulator;
 
 extern  Emulator emu;
@@ -76,19 +76,19 @@ void EmuReflector();
 
 struct DolHeader
 {
-    uint32_t textOffset[DOL_NUM_TEXT];
-    uint32_t dataOffset[DOL_NUM_DATA];
+	uint32_t textOffset[DOL_NUM_TEXT];
+	uint32_t dataOffset[DOL_NUM_DATA];
 
-    uint32_t textAddress[DOL_NUM_TEXT];
-    uint32_t dataAddress[DOL_NUM_DATA];
+	uint32_t textAddress[DOL_NUM_TEXT];
+	uint32_t dataAddress[DOL_NUM_DATA];
 
-    uint32_t textSize[DOL_NUM_TEXT];
-    uint32_t dataSize[DOL_NUM_DATA];
+	uint32_t textSize[DOL_NUM_TEXT];
+	uint32_t dataSize[DOL_NUM_DATA];
 
-    uint32_t bssAddress;
-    uint32_t bssSize;
-    uint32_t entryPoint;
-    uint32_t padd[7];
+	uint32_t bssAddress;
+	uint32_t bssSize;
+	uint32_t entryPoint;
+	uint32_t padd[7];
 };
 
 // ELF format definitions (sufficient to load files of this format)
@@ -101,50 +101,50 @@ using ElfSword = long;
 
 struct ElfEhdr
 {
-    uint8_t e_ident[16];
+	uint8_t e_ident[16];
 
-    ElfHalf e_type;
-    ElfHalf e_machine;
-    ElfWord e_version;
-    ElfAddr e_entry;
-    ElfOff  e_phoff;
+	ElfHalf e_type;
+	ElfHalf e_machine;
+	ElfWord e_version;
+	ElfAddr e_entry;
+	ElfOff  e_phoff;
 
-    ElfOff  e_shoff;
-    ElfWord e_flags;
-    ElfHalf e_ehsize;
-    ElfHalf e_phentsize;
-    ElfHalf e_phnum;
-    ElfHalf e_shentsize;
+	ElfOff  e_shoff;
+	ElfWord e_flags;
+	ElfHalf e_ehsize;
+	ElfHalf e_phentsize;
+	ElfHalf e_phnum;
+	ElfHalf e_shentsize;
 
-    ElfHalf e_shnum;
-    ElfHalf e_shstrndx;
+	ElfHalf e_shnum;
+	ElfHalf e_shstrndx;
 };
 
 struct ElfPhdr
 {
-    ElfWord p_type;
-    ElfOff  p_offset;
-    ElfAddr p_vaddr;
-    ElfAddr p_paddr;
-    ElfWord p_filesz;
-    ElfWord p_memsz;
-    ElfWord p_flags;
-    ElfWord p_align;
+	ElfWord p_type;
+	ElfOff  p_offset;
+	ElfAddr p_vaddr;
+	ElfAddr p_paddr;
+	ElfWord p_filesz;
+	ElfWord p_memsz;
+	ElfWord p_flags;
+	ElfWord p_align;
 };
 
 enum ELF_IDENT
 {
-    EI_MAG0 = 0,
-    EI_MAG1,
-    EI_MAG2,
-    EI_MAG3,
-    EI_CLASS,
-    EI_DATA,
-    EI_VERSION,
-    EI_OSABI,
-    EI_ABIVERSION,
-    EI_PAD,
-    EI_NIDENT = 16,
+	EI_MAG0 = 0,
+	EI_MAG1,
+	EI_MAG2,
+	EI_MAG3,
+	EI_CLASS,
+	EI_DATA,
+	EI_VERSION,
+	EI_OSABI,
+	EI_ABIVERSION,
+	EI_PAD,
+	EI_NIDENT = 16,
 };
 
 #define ELFCLASS32  1

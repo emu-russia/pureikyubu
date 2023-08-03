@@ -58,51 +58,51 @@
 
 namespace Flipper
 {
-    class AudioMixer;
+	class AudioMixer;
 
-    // AI state (registers and other data)
-    struct AIControl
-    {
-        // AID
-        std::atomic<uint16_t> dcr;  // AI/DSP control register
-        volatile uint16_t    madr_hi;        // DMA start address hi
-        volatile uint16_t    madr_lo;        // DMA start address lo
-        volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
-        volatile uint16_t    dcnt;           // DMA count-down
+	// AI state (registers and other data)
+	struct AIControl
+	{
+		// AID
+		std::atomic<uint16_t> dcr;  // AI/DSP control register
+		volatile uint16_t    madr_hi;        // DMA start address hi
+		volatile uint16_t    madr_lo;        // DMA start address lo
+		volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
+		volatile uint16_t    dcnt;           // DMA count-down
 
-        // AIS
-        volatile uint32_t    cr;             // AIS control reg
-        volatile uint32_t    vr;             // AIS volume
-        volatile uint32_t    scnt;           // sample counter
-        volatile uint32_t    it;             // sample counter trigger
+		// AIS
+		volatile uint32_t    cr;             // AIS control reg
+		volatile uint32_t    vr;             // AIS volume
+		volatile uint32_t    scnt;           // sample counter
+		volatile uint32_t    it;             // sample counter trigger
 
-        // helpers
-        uint32_t    currentDmaAddr; // current DMA address
-        int32_t     dmaRate;        // copy of DFR value (32000/48000)
-        uint64_t    dmaTime;        // audio DMA update time 
+		// helpers
+		uint32_t    currentDmaAddr; // current DMA address
+		int32_t     dmaRate;        // copy of DFR value (32000/48000)
+		uint64_t    dmaTime;        // audio DMA update time 
 
-        Thread* audioThread;    // The main AI thread that receives samples from AI DMA FIFO and DVD Audio (which accumulate in AIS FIFO).
-        // When FIFOs overflow - AudioThread Feed Mixer.
+		Thread* audioThread;    // The main AI thread that receives samples from AI DMA FIFO and DVD Audio (which accumulate in AIS FIFO).
+		// When FIFOs overflow - AudioThread Feed Mixer.
 
-        uint8_t     streamFifo[32];
-        size_t      streamFifoPtr;
+		uint8_t     streamFifo[32];
+		size_t      streamFifoPtr;
 
-        int64_t     one_second;     // one CPU second in timer ticks
-        bool        log;            // Enable AI log
+		int64_t     one_second;     // one CPU second in timer ticks
+		bool        log;            // Enable AI log
 
-        uint8_t     zeroes[32];
+		uint8_t     zeroes[32];
 
-        AudioMixer* Mixer = nullptr;
-    };
+		AudioMixer* Mixer = nullptr;
+	};
 
-    extern  AIControl ai;
+	extern  AIControl ai;
 
-    void    AIOpen(HWConfig* config);
-    void    AIClose();
+	void    AIOpen(HWConfig* config);
+	void    AIClose();
 
-    // Used by DspCore
+	// Used by DspCore
 
-    void    DSPAssertInt();
-    bool    DSPGetInterruptStatus();
-    bool    DSPGetResetModifier();
+	void    DSPAssertInt();
+	bool    DSPGetInterruptStatus();
+	bool    DSPGetResetModifier();
 }

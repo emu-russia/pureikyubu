@@ -3,295 +3,295 @@
 
 namespace Gekko
 {
-    // The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
-    void GekkoCore::GekkoThreadProc(void* Parameter)
-    {
-        GekkoCore* core = (GekkoCore*)Parameter;
+	// The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
+	void GekkoCore::GekkoThreadProc(void* Parameter)
+	{
+		GekkoCore* core = (GekkoCore*)Parameter;
 
-        if (core->suspended)
-        {
-            Thread::Sleep(50);
-            return;
-        }
+		if (core->suspended)
+		{
+			Thread::Sleep(50);
+			return;
+		}
 
-        if (core->EnableTestBreakpoints)
-        {
-            core->TestBreakpoints();
-        }
+		if (core->EnableTestBreakpoints)
+		{
+			core->TestBreakpoints();
+		}
 
 #if GEKKOCORE_USE_JITC
-        core->jitc->Execute();
+		core->jitc->Execute();
 #else
-        core->interp->ExecuteOpcode();
+		core->interp->ExecuteOpcode();
 #endif
-    }
+	}
 
-    GekkoCore::GekkoCore()
-    {
-        cache = new Cache(this);
+	GekkoCore::GekkoCore()
+	{
+		cache = new Cache(this);
 
-        gatherBuffer = new GatherBuffer(this);
+		gatherBuffer = new GatherBuffer(this);
 
-        interp = new Interpreter(this);
+		interp = new Interpreter(this);
 
 #if GEKKOCORE_USE_JITC
-        jitc = new Jitc(this);
+		jitc = new Jitc(this);
 #endif
 
-        gekkoThread = new Thread(GekkoThreadProc, false, this, "GekkoCore");
+		gekkoThread = new Thread(GekkoThreadProc, false, this, "GekkoCore");
 
-        Reset();
-    }
+		Reset();
+	}
 
-    GekkoCore::~GekkoCore()
-    {
-        StopOpcodeStatsThread();
-        delete gekkoThread;
-        delete interp;
+	GekkoCore::~GekkoCore()
+	{
+		StopOpcodeStatsThread();
+		delete gekkoThread;
+		delete interp;
 #if GEKKOCORE_USE_JITC
-        delete jitc;
+		delete jitc;
 #endif
-        delete gatherBuffer;
-    }
+		delete gatherBuffer;
+	}
 
-    // Reset processor
-    void GekkoCore::Reset()
-    {
-        one_second = CPU_TIMER_CLOCK;
-        intFlag = false;
-        ops = 0;
+	// Reset processor
+	void GekkoCore::Reset()
+	{
+		one_second = CPU_TIMER_CLOCK;
+		intFlag = false;
+		ops = 0;
 
-        // TODO: Make switchable
-        //EffectiveToPhysical = &GekkoCore::EffectiveToPhysicalNoMmu;
+		// TODO: Make switchable
+		//EffectiveToPhysical = &GekkoCore::EffectiveToPhysicalNoMmu;
 
-        // BAT registers are scattered across the SPR address space. This is not very convenient, we will make it convenient.
+		// BAT registers are scattered across the SPR address space. This is not very convenient, we will make it convenient.
 
-        dbatu[0] = &regs.spr[SPR::DBAT0U];
-        dbatu[1] = &regs.spr[SPR::DBAT1U];
-        dbatu[2] = &regs.spr[SPR::DBAT2U];
-        dbatu[3] = &regs.spr[SPR::DBAT3U];
+		dbatu[0] = &regs.spr[SPR::DBAT0U];
+		dbatu[1] = &regs.spr[SPR::DBAT1U];
+		dbatu[2] = &regs.spr[SPR::DBAT2U];
+		dbatu[3] = &regs.spr[SPR::DBAT3U];
 
-        dbatl[0] = &regs.spr[SPR::DBAT0L];
-        dbatl[1] = &regs.spr[SPR::DBAT1L];
-        dbatl[2] = &regs.spr[SPR::DBAT2L];
-        dbatl[3] = &regs.spr[SPR::DBAT3L];
+		dbatl[0] = &regs.spr[SPR::DBAT0L];
+		dbatl[1] = &regs.spr[SPR::DBAT1L];
+		dbatl[2] = &regs.spr[SPR::DBAT2L];
+		dbatl[3] = &regs.spr[SPR::DBAT3L];
 
-        ibatu[0] = &regs.spr[SPR::IBAT0U];
-        ibatu[1] = &regs.spr[SPR::IBAT1U];
-        ibatu[2] = &regs.spr[SPR::IBAT2U];
-        ibatu[3] = &regs.spr[SPR::IBAT3U];
+		ibatu[0] = &regs.spr[SPR::IBAT0U];
+		ibatu[1] = &regs.spr[SPR::IBAT1U];
+		ibatu[2] = &regs.spr[SPR::IBAT2U];
+		ibatu[3] = &regs.spr[SPR::IBAT3U];
 
-        ibatl[0] = &regs.spr[SPR::IBAT0L];
-        ibatl[1] = &regs.spr[SPR::IBAT1L];
-        ibatl[2] = &regs.spr[SPR::IBAT2L];
-        ibatl[3] = &regs.spr[SPR::IBAT3L];
+		ibatl[0] = &regs.spr[SPR::IBAT0L];
+		ibatl[1] = &regs.spr[SPR::IBAT1L];
+		ibatl[2] = &regs.spr[SPR::IBAT2L];
+		ibatl[3] = &regs.spr[SPR::IBAT3L];
 
-        // Registers
+		// Registers
 
-        memset(&regs, 0, sizeof(regs));
+		memset(&regs, 0, sizeof(regs));
 
-        // Disable translation for now
-        regs.msr &= ~(MSR_DR | MSR_IR);
+		// Disable translation for now
+		regs.msr &= ~(MSR_DR | MSR_IR);
 
-        regs.tb.uval = 0;
-        regs.spr[SPR::HID1] = 0x8000'0000;
-        regs.spr[SPR::DEC] = 0;
-        regs.spr[SPR::CTR] = 0;
+		regs.tb.uval = 0;
+		regs.spr[SPR::HID1] = 0x8000'0000;
+		regs.spr[SPR::DEC] = 0;
+		regs.spr[SPR::CTR] = 0;
 
-        gatherBuffer->Reset();
+		gatherBuffer->Reset();
 
 #if GEKKOCORE_USE_JITC
-        jitc->Reset();
+		jitc->Reset();
 #endif
-        ResetCompiledSegmentsCount();
-        ResetExecutedSegmentsCount();
+		ResetCompiledSegmentsCount();
+		ResetExecutedSegmentsCount();
 
-        dtlb.InvalidateAll();
-        itlb.InvalidateAll();
-        cache->Reset();
-    }
+		dtlb.InvalidateAll();
+		itlb.InvalidateAll();
+		cache->Reset();
+	}
 
-    // Modify CPU counters
-    void GekkoCore::Tick()
-    {
-        regs.tb.uval += CounterStep;         // timer
+	// Modify CPU counters
+	void GekkoCore::Tick()
+	{
+		regs.tb.uval += CounterStep;         // timer
 
-        uint32_t old = regs.spr[SPR::DEC];
-        regs.spr[SPR::DEC]--;          // decrementer
-        if ((old ^ regs.spr[SPR::DEC]) & 0x80000000)
-        {
-            if (regs.msr & MSR_EE)
-            {
-                decreq = 1;
-                Report("decrementer exception (OS alarm), pc:%08X\n", regs.pc);
-            }
-        }
-    }
+		uint32_t old = regs.spr[SPR::DEC];
+		regs.spr[SPR::DEC]--;          // decrementer
+		if ((old ^ regs.spr[SPR::DEC]) & 0x80000000)
+		{
+			if (regs.msr & MSR_EE)
+			{
+				decreq = 1;
+				Report("decrementer exception (OS alarm), pc:%08X\n", regs.pc);
+			}
+		}
+	}
 
-    int64_t GekkoCore::GetTicks()
-    {
-        return regs.tb.sval;
-    }
+	int64_t GekkoCore::GetTicks()
+	{
+		return regs.tb.sval;
+	}
 
-    // 1 second of emulated CPU time.
-    int64_t GekkoCore::OneSecond()
-    {
-        return one_second;
-    }
+	// 1 second of emulated CPU time.
+	int64_t GekkoCore::OneSecond()
+	{
+		return one_second;
+	}
 
-    // Swap longs (no need in assembly, used by tools)
-    void GekkoCore::SwapArea(uint32_t* addr, int count)
-    {
-        uint32_t* until = addr + count / sizeof(uint32_t);
+	// Swap longs (no need in assembly, used by tools)
+	void GekkoCore::SwapArea(uint32_t* addr, int count)
+	{
+		uint32_t* until = addr + count / sizeof(uint32_t);
 
-        while (addr != until)
-        {
-            *addr = _BYTESWAP_UINT32(*addr);
-            addr++;
-        }
-    }
+		while (addr != until)
+		{
+			*addr = _BYTESWAP_UINT32(*addr);
+			addr++;
+		}
+	}
 
-    // Swap shorts (no need in assembly, used by tools)
-    void GekkoCore::SwapAreaHalf(uint16_t* addr, int count)
-    {
-        uint16_t* until = addr + count / sizeof(uint16_t);
+	// Swap shorts (no need in assembly, used by tools)
+	void GekkoCore::SwapAreaHalf(uint16_t* addr, int count)
+	{
+		uint16_t* until = addr + count / sizeof(uint16_t);
 
-        while (addr != until)
-        {
-            *addr = _BYTESWAP_UINT16(*addr);
-            addr++;
-        }
-    }
+		while (addr != until)
+		{
+			*addr = _BYTESWAP_UINT16(*addr);
+			addr++;
+		}
+	}
 
-    void GekkoCore::Step()
-    {
-        interp->ExecuteOpcode();
-    }
+	void GekkoCore::Step()
+	{
+		interp->ExecuteOpcode();
+	}
 
-    void GekkoCore::AssertInterrupt()
-    {
-        intFlag = true;
-    }
+	void GekkoCore::AssertInterrupt()
+	{
+		intFlag = true;
+	}
 
-    void GekkoCore::ClearInterrupt()
-    {
-        intFlag = false;
-    }
+	void GekkoCore::ClearInterrupt()
+	{
+		intFlag = false;
+	}
 
-    void GekkoCore::Exception(Gekko::Exception code)
-    {
-        //DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+	void GekkoCore::Exception(Gekko::Exception code)
+	{
+		//DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
 
-        if (exception)
-        {
-            Halt("CPU Double Fault!\n");
-        }
+		if (exception)
+		{
+			Halt("CPU Double Fault!\n");
+		}
 
-        // save regs
+		// save regs
 
-        regs.spr[Gekko::SPR::SRR0] = regs.pc;
-        regs.spr[Gekko::SPR::SRR1] = regs.msr;
+		regs.spr[Gekko::SPR::SRR0] = regs.pc;
+		regs.spr[Gekko::SPR::SRR1] = regs.msr;
 
-        // Special processing for MMU
-        if (code == Exception::EXCEPTION_ISI)
-        {
-            regs.spr[Gekko::SPR::SRR1] &= 0x0fff'ffff;
+		// Special processing for MMU
+		if (code == Exception::EXCEPTION_ISI)
+		{
+			regs.spr[Gekko::SPR::SRR1] &= 0x0fff'ffff;
 
-            switch (MmuLastResult)
-            {
-            case MmuResult::PageFault:
-                regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
-                break;
+			switch (MmuLastResult)
+			{
+			case MmuResult::PageFault:
+				regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
+				break;
 
-            case MmuResult::ProtectedFetch:
-                regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
-                break;
+			case MmuResult::ProtectedFetch:
+				regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
+				break;
 
-            case MmuResult::NoExecute:
-                regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
-                break;
+			case MmuResult::NoExecute:
+				regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
+				break;
 
-            default:
-                break;
-            }
-        }
-        else if (code == Exception::EXCEPTION_DSI)
-        {
-            regs.spr[Gekko::SPR::DSISR] = 0;
+			default:
+				break;
+			}
+		}
+		else if (code == Exception::EXCEPTION_DSI)
+		{
+			regs.spr[Gekko::SPR::DSISR] = 0;
 
-            switch (MmuLastResult)
-            {
-            case MmuResult::PageFault:
-                regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
-                break;
+			switch (MmuLastResult)
+			{
+			case MmuResult::PageFault:
+				regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
+				break;
 
-            case MmuResult::ProtectedRead:
-                regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
-                break;
+			case MmuResult::ProtectedRead:
+				regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
+				break;
 
-            case MmuResult::ProtectedWrite:
-                regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
-                break;
+			case MmuResult::ProtectedWrite:
+				regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
+				break;
 
-            default:
-                break;
-            }
-        }
+			default:
+				break;
+			}
+		}
 
-        // Special processing for Program
-        if (code == Exception::EXCEPTION_PROGRAM)
-        {
-            regs.spr[Gekko::SPR::SRR1] &= 0x0000'ffff;
+		// Special processing for Program
+		if (code == Exception::EXCEPTION_PROGRAM)
+		{
+			regs.spr[Gekko::SPR::SRR1] &= 0x0000'ffff;
 
-            switch (PrCause)
-            {
-            case PrivilegedCause::FpuEnabled:
-                regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
-                break;
-            case PrivilegedCause::IllegalInstruction:
-                regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
-                break;
-            case PrivilegedCause::Privileged:
-                regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
-                break;
-            case PrivilegedCause::Trap:
-                regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
-                break;
-            default:
-                break;
-            }
-        }
+			switch (PrCause)
+			{
+			case PrivilegedCause::FpuEnabled:
+				regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
+				break;
+			case PrivilegedCause::IllegalInstruction:
+				regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
+				break;
+			case PrivilegedCause::Privileged:
+				regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
+				break;
+			case PrivilegedCause::Trap:
+				regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
+				break;
+			default:
+				break;
+			}
+		}
 
-        // disable address translation
-        regs.msr &= ~(MSR_IR | MSR_DR);
+		// disable address translation
+		regs.msr &= ~(MSR_IR | MSR_DR);
 
-        regs.msr &= ~MSR_RI;
+		regs.msr &= ~MSR_RI;
 
-        regs.msr &= ~MSR_EE;
+		regs.msr &= ~MSR_EE;
 
-        // change PC and set exception flag
-        regs.pc = (uint32_t)code;
-        exception = true;
-    }
+		// change PC and set exception flag
+		regs.pc = (uint32_t)code;
+		exception = true;
+	}
 
-    uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
-    {
+	uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
+	{
 #if GEKKOCORE_SIMPLE_MMU
-        return EffectiveToPhysicalNoMmu(ea, type, WIMG);
+		return EffectiveToPhysicalNoMmu(ea, type, WIMG);
 #else
-        return EffectiveToPhysicalMmu(ea, type, WIMG);
+		return EffectiveToPhysicalMmu(ea, type, WIMG);
 #endif
-    }
+	}
 
-    void GekkoCore::Halt(const char* text, ...)
-    {
+	void GekkoCore::Halt(const char* text, ...)
+	{
 
-    }
+	}
 
-    void GekkoCore::Report(const char* text, ...)
-    {
+	void GekkoCore::Report(const char* text, ...)
+	{
 
-    }
+	}
 }
 
 
@@ -331,7 +331,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadByte(pa, reg);
+		PIReadByte(pa, reg);
 	}
 
 	void GekkoCore::WriteByte(uint32_t addr, uint32_t data)
@@ -377,7 +377,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteByte(pa, data);
+		PIWriteByte(pa, data);
 	}
 
 	void GekkoCore::ReadHalf(uint32_t addr, uint32_t* reg)
@@ -408,7 +408,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadHalf(pa, reg);
+		PIReadHalf(pa, reg);
 	}
 
 	void GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
@@ -454,7 +454,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteHalf(pa, data);
+		PIWriteHalf(pa, data);
 	}
 
 	void GekkoCore::ReadWord(uint32_t addr, uint32_t* reg)
@@ -485,7 +485,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadWord(pa, reg);
+		PIReadWord(pa, reg);
 	}
 
 	void GekkoCore::WriteWord(uint32_t addr, uint32_t data)
@@ -531,7 +531,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteWord(pa, data);
+		PIWriteWord(pa, data);
 	}
 
 	void GekkoCore::ReadDouble(uint32_t addr, uint64_t* reg)
@@ -564,7 +564,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		SixtyBus_ReadDouble(pa, reg);
+		PIReadDouble(pa, reg);
 	}
 
 	void GekkoCore::WriteDouble(uint32_t addr, uint64_t* data)
@@ -612,7 +612,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		SixtyBus_WriteDouble(pa, data);
+		PIWriteDouble(pa, data);
 	}
 
 }
@@ -672,210 +672,210 @@ namespace Gekko
 
 namespace Gekko
 {
-    void GekkoCore::AddBreakpoint(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        bool exists = false;
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == addr)
-            {
-                exists = true;
-                break;
-            }
-        }
-        if (!exists)
-        {
-            Report("Breakpoint added: 0x%08X\n", addr);
-            breakPointsExecute.push_back(addr);
+	void GekkoCore::AddBreakpoint(uint32_t addr)
+	{
+		breakPointsLock.Lock();
+		bool exists = false;
+		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+		{
+			if (*it == addr)
+			{
+				exists = true;
+				break;
+			}
+		}
+		if (!exists)
+		{
+			Report("Breakpoint added: 0x%08X\n", addr);
+			breakPointsExecute.push_back(addr);
 #if GEKKOCORE_USE_JITC
-            jitc->Invalidate(addr, 4);
+			jitc->Invalidate(addr, 4);
 #endif
-            EnableTestBreakpoints = true;
-        }
-        breakPointsLock.Unlock();
-    }
+			EnableTestBreakpoints = true;
+		}
+		breakPointsLock.Unlock();
+	}
 
-    void GekkoCore::RemoveBreakpoint(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        bool exists = false;
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == addr)
-            {
-                exists = true;
-                break;
-            }
-        }
-        if (exists)
-        {
-            Report("Breakpoint removed: 0x%08X\n", addr);
-            breakPointsExecute.remove(addr);
+	void GekkoCore::RemoveBreakpoint(uint32_t addr)
+	{
+		breakPointsLock.Lock();
+		bool exists = false;
+		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+		{
+			if (*it == addr)
+			{
+				exists = true;
+				break;
+			}
+		}
+		if (exists)
+		{
+			Report("Breakpoint removed: 0x%08X\n", addr);
+			breakPointsExecute.remove(addr);
 #if GEKKOCORE_USE_JITC
-            jitc->Invalidate(addr, 4);
+			jitc->Invalidate(addr, 4);
 #endif
-        }
-        if (breakPointsExecute.size() == 0)
-        {
-            EnableTestBreakpoints = false;
-        }
-        breakPointsLock.Unlock();
-    }
+		}
+		if (breakPointsExecute.size() == 0)
+		{
+			EnableTestBreakpoints = false;
+		}
+		breakPointsLock.Unlock();
+	}
 
-    void GekkoCore::AddReadBreak(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        breakPointsRead.push_back(addr);
-        breakPointsLock.Unlock();
-        EnableTestReadBreakpoints = true;
-    }
+	void GekkoCore::AddReadBreak(uint32_t addr)
+	{
+		breakPointsLock.Lock();
+		breakPointsRead.push_back(addr);
+		breakPointsLock.Unlock();
+		EnableTestReadBreakpoints = true;
+	}
 
-    void GekkoCore::AddWriteBreak(uint32_t addr)
-    {
-        breakPointsLock.Lock();
-        breakPointsWrite.push_back(addr);
-        breakPointsLock.Unlock();
-        EnableTestWriteBreakpoints = true;
-    }
+	void GekkoCore::AddWriteBreak(uint32_t addr)
+	{
+		breakPointsLock.Lock();
+		breakPointsWrite.push_back(addr);
+		breakPointsLock.Unlock();
+		EnableTestWriteBreakpoints = true;
+	}
 
-    void GekkoCore::ClearBreakpoints()
-    {
-        breakPointsLock.Lock();
-        breakPointsExecute.clear();
-        breakPointsRead.clear();
-        breakPointsWrite.clear();
-        breakPointsLock.Unlock();
-        EnableTestBreakpoints = false;
-        EnableTestReadBreakpoints = false;
-        EnableTestWriteBreakpoints = false;
-    }
+	void GekkoCore::ClearBreakpoints()
+	{
+		breakPointsLock.Lock();
+		breakPointsExecute.clear();
+		breakPointsRead.clear();
+		breakPointsWrite.clear();
+		breakPointsLock.Unlock();
+		EnableTestBreakpoints = false;
+		EnableTestReadBreakpoints = false;
+		EnableTestWriteBreakpoints = false;
+	}
 
-    bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
-    {
-        if (!EnableTestBreakpoints)
-            return false;
+	bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
+	{
+		if (!EnableTestBreakpoints)
+			return false;
 
-        if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
-        {
-            oneShotBreakpoint = BadAddress;
-            return true;
-        }
+		if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
+		{
+			oneShotBreakpoint = BadAddress;
+			return true;
+		}
 
-        bool exists = false;
+		bool exists = false;
 
-        breakPointsLock.Lock();
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == addr)
-            {
-                exists = true;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
+		breakPointsLock.Lock();
+		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+		{
+			if (*it == addr)
+			{
+				exists = true;
+				break;
+			}
+		}
+		breakPointsLock.Unlock();
 
-        return exists;
-    }
+		return exists;
+	}
 
-    void GekkoCore::TestBreakpoints()
-    {
-        if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
-        {
-            oneShotBreakpoint = BadAddress;
-            Halt("One shot breakpoint\n");
-        }
+	void GekkoCore::TestBreakpoints()
+	{
+		if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
+		{
+			oneShotBreakpoint = BadAddress;
+			Halt("One shot breakpoint\n");
+		}
 
-        uint32_t addr = BadAddress;
+		uint32_t addr = BadAddress;
 
-        breakPointsLock.Lock();
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == regs.pc)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
+		breakPointsLock.Lock();
+		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+		{
+			if (*it == regs.pc)
+			{
+				addr = *it;
+				break;
+			}
+		}
+		breakPointsLock.Unlock();
 
-        if (addr != BadAddress)
-        {
-            Halt("Gekko suspended at addr: 0x%08X\n", addr);
-        }
-    }
+		if (addr != BadAddress)
+		{
+			Halt("Gekko suspended at addr: 0x%08X\n", addr);
+		}
+	}
 
-    void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
-    {
-        uint32_t addr = BadAddress;
+	void GekkoCore::TestReadBreakpoints(uint32_t accessAddress)
+	{
+		uint32_t addr = BadAddress;
 
-        breakPointsLock.Lock();
-        for (auto it = breakPointsRead.begin(); it != breakPointsRead.end(); ++it)
-        {
-            if (*it == accessAddress)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
+		breakPointsLock.Lock();
+		for (auto it = breakPointsRead.begin(); it != breakPointsRead.end(); ++it)
+		{
+			if (*it == accessAddress)
+			{
+				addr = *it;
+				break;
+			}
+		}
+		breakPointsLock.Unlock();
 
-        if (addr != BadAddress)
-        {
-            Halt("Gekko suspended trying to read: 0x%08X\n", addr);
-        }
-    }
+		if (addr != BadAddress)
+		{
+			Halt("Gekko suspended trying to read: 0x%08X\n", addr);
+		}
+	}
 
-    void GekkoCore::TestWriteBreakpoints(uint32_t accessAddress)
-    {
-        uint32_t addr = BadAddress;
+	void GekkoCore::TestWriteBreakpoints(uint32_t accessAddress)
+	{
+		uint32_t addr = BadAddress;
 
-        breakPointsLock.Lock();
-        for (auto it = breakPointsWrite.begin(); it != breakPointsWrite.end(); ++it)
-        {
-            if (*it == accessAddress)
-            {
-                addr = *it;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
+		breakPointsLock.Lock();
+		for (auto it = breakPointsWrite.begin(); it != breakPointsWrite.end(); ++it)
+		{
+			if (*it == accessAddress)
+			{
+				addr = *it;
+				break;
+			}
+		}
+		breakPointsLock.Unlock();
 
-        if (addr != BadAddress)
-        {
-            Halt("Gekko suspended trying to write: 0x%08X\n", addr);
-        }
-    }
+		if (addr != BadAddress)
+		{
+			Halt("Gekko suspended trying to write: 0x%08X\n", addr);
+		}
+	}
 
-    void GekkoCore::AddOneShotBreakpoint(uint32_t addr)
-    {
-        oneShotBreakpoint = addr;
-        EnableTestBreakpoints = true;
-    }
+	void GekkoCore::AddOneShotBreakpoint(uint32_t addr)
+	{
+		oneShotBreakpoint = addr;
+		EnableTestBreakpoints = true;
+	}
 
-    void GekkoCore::ToggleBreakpoint(uint32_t addr)
-    {
-        if (IsBreakpoint(addr))
-            RemoveBreakpoint(addr);
-        else
-            AddBreakpoint(addr);
-    }
+	void GekkoCore::ToggleBreakpoint(uint32_t addr)
+	{
+		if (IsBreakpoint(addr))
+			RemoveBreakpoint(addr);
+		else
+			AddBreakpoint(addr);
+	}
 
-    bool GekkoCore::IsBreakpoint(uint32_t addr)
-    {
-        bool exists = false;
-        breakPointsLock.Lock();
-        for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-        {
-            if (*it == addr)
-            {
-                exists = true;
-                break;
-            }
-        }
-        breakPointsLock.Unlock();
-        return exists;
-    }
+	bool GekkoCore::IsBreakpoint(uint32_t addr)
+	{
+		bool exists = false;
+		breakPointsLock.Lock();
+		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
+		{
+			if (*it == addr)
+			{
+				exists = true;
+				break;
+			}
+		}
+		breakPointsLock.Unlock();
+		return exists;
+	}
 }
 
 
@@ -1120,7 +1120,7 @@ namespace Gekko
 			core->Report("Cache::CastIn: 0x%08X\n", pa & ~0x1f);
 		}
 
-		SixtyBus_ReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::CastOut(uint32_t pa)
@@ -1135,7 +1135,7 @@ namespace Gekko
 			core->Report("Cache::CastOut: 0x%08X\n", pa & ~0x1f);
 		}
 
-		SixtyBus_WriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::ReadByte(uint32_t addr, uint32_t* reg)
@@ -1490,7 +1490,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				SixtyBus_ReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}
@@ -1505,7 +1505,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				SixtyBus_WriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}
@@ -1618,7 +1618,7 @@ namespace Gekko
 				core->Report("Burst gather buffer. Bytes left: %zi\n", GatherSize());
 			}
 
-			SixtyBus_WriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
+			PIWriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
 		}
 	}
 
@@ -1855,8 +1855,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			SixtyBus_ReadWord(primaryPteAddr, &pte[0]);
-			SixtyBus_ReadWord(primaryPteAddr + 4, &pte[1]);
+			PIReadWord(primaryPteAddr, &pte[0]);
+			PIReadWord(primaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1897,7 +1897,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;     // Changed
 				}
-				SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
+				PIWriteWord(primaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -1929,7 +1929,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
+				PIWriteWord(primaryPteAddr + 4, pte[1]);
 			}
 
 			primaryPteAddr += 8;
@@ -1943,8 +1943,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			SixtyBus_ReadWord(secondaryPteAddr, &pte[0]);
-			SixtyBus_ReadWord(secondaryPteAddr + 4, &pte[1]);
+			PIReadWord(secondaryPteAddr, &pte[0]);
+			PIReadWord(secondaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1986,7 +1986,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;
 				}
-				SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
+				PIWriteWord(secondaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -2018,7 +2018,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
+				PIWriteWord(secondaryPteAddr + 4, pte[1]);
 			}
 
 			secondaryPteAddr += 8;

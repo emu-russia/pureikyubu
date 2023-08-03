@@ -37,33 +37,33 @@
 
 /* structure of a memcard buffer */
 struct Memcard {
-    wchar_t filename[0x1000]; // filename where the memcard data is stores 
-    FILE* file;        // pointer to that file
-    uint32_t size;           // size of the memcard in bytes
-    uint8_t* data;          // pointer to the memcard raw data (stored in little endian order)
-    bool connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
-    uint16_t ID;             // manufacturer and device code
-    uint8_t status;          // current status
+	wchar_t filename[0x1000]; // filename where the memcard data is stores 
+	FILE* file;        // pointer to that file
+	uint32_t size;           // size of the memcard in bytes
+	uint8_t* data;          // pointer to the memcard raw data (stored in little endian order)
+	bool connected;     // indicates if the memcard is actually 'connected', meaning all data in the structure is valid
+	uint16_t ID;             // manufacturer and device code
+	uint8_t status;          // current status
 
-    //  Command Reader
-    uint8_t Command;
-    int databytes;
-    int dummybytes;
-    uint32_t executionFlags;
-    void (*procedure)(Memcard*);
-    int databytesread;
-    int dummybytesread;
-    uint32_t commandData;
-    bool ready;
-    EXIRegs* exi;
+	//  Command Reader
+	uint8_t Command;
+	int databytes;
+	int dummybytes;
+	uint32_t executionFlags;
+	void (*procedure)(Memcard*);
+	int databytesread;
+	int dummybytesread;
+	uint32_t commandData;
+	bool ready;
+	EXIRegs* exi;
 };
 
 struct MCCommand {
-    int databytes;
-    int dummybytes;
-    uint32_t executionFlags;
-    void (*procedure)(Memcard*);
-    uint8_t Command;
+	int databytes;
+	int dummybytes;
+	uint32_t executionFlags;
+	void (*procedure)(Memcard*);
+	uint8_t Command;
 };
 
 #define Memcard_BlockSize       8192

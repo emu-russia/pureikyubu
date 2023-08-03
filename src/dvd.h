@@ -64,32 +64,32 @@ The debugging interface specification provided by this component can be found in
 
 namespace DVD
 {
-    void InitSubsystem();
-    void ShutdownSubsystem();
+	void InitSubsystem();
+	void ShutdownSubsystem();
 
-    // Mount current DVD image for read/seek/open file operations
-    bool MountFile(const wchar_t* file);
-    bool MountFile(const std::string& file);
-    bool MountFile(const std::wstring& file);
+	// Mount current DVD image for read/seek/open file operations
+	bool MountFile(const wchar_t* file);
+	bool MountFile(const std::string& file);
+	bool MountFile(const std::wstring& file);
 
-    // Mount DolphinSDK directory
-    bool MountSdk(const wchar_t* path);
-    bool MountSdk(std::string path);
+	// Mount DolphinSDK directory
+	bool MountSdk(const wchar_t* path);
+	bool MountSdk(std::string path);
 
-    // Unmount
-    void Unmount();
+	// Unmount
+	void Unmount();
 
-    bool IsMounted();
+	bool IsMounted();
 
-    // Seek and read operations on mounted DVD
-    void Seek(int position);
-    int GetSeek();
-    bool Read(void* buffer, size_t length);
+	// Seek and read operations on mounted DVD
+	void Seek(int position);
+	int GetSeek();
+	bool Read(void* buffer, size_t length);
 
-    // Open file in DVD root. Return file position, or 0 if no such file.
-    // Note: DVD must be mounted first!
-    // example use : long banner = DVDOpenFile("/opening.bnr");
-    long OpenFile(std::string& dvdfile);
+	// Open file in DVD root. Return file position, or 0 if no such file.
+	// Note: DVD must be mounted first!
+	// example use : long banner = DVDOpenFile("/opening.bnr");
+	long OpenFile(std::string& dvdfile);
 }
 
 // GAMECUBE Disk Structures
@@ -106,14 +106,14 @@ namespace DVD
 
 struct DiskID
 {
-    char gameName[4];
-    char company[2];
-    uint8_t diskNumber;
-    uint8_t gameVersion;
-    uint8_t streaming;
-    uint8_t streamingBufSize;
-    uint8_t padding[18];
-    uint32_t magicNumber;       // DVD_DISKID_MAGIC
+	char gameName[4];
+	char company[2];
+	uint8_t diskNumber;
+	uint8_t gameVersion;
+	uint8_t streaming;
+	uint8_t streamingBufSize;
+	uint8_t padding[18];
+	uint32_t magicNumber;       // DVD_DISKID_MAGIC
 };
 
 //
@@ -129,13 +129,13 @@ struct DiskID
 
 struct DVDBB2
 {
-    uint32_t     bootFilePosition;          // Where DOL executable is 
-    uint32_t     FSTPosition;
-    uint32_t     FSTLength;
-    uint32_t     FSTMaxLength;
-    uint32_t     userPosition;          // FST location in memory. A strange architectural solution, one could do OSAlloc.
-    uint32_t     userLength;            // FST size in memory
-    uint8_t      padding[8];
+	uint32_t     bootFilePosition;          // Where DOL executable is 
+	uint32_t     FSTPosition;
+	uint32_t     FSTLength;
+	uint32_t     FSTMaxLength;
+	uint32_t     userPosition;          // FST location in memory. A strange architectural solution, one could do OSAlloc.
+	uint32_t     userLength;            // FST size in memory
+	uint8_t      padding[8];
 };
 
 // BI2 is omitted here..
@@ -154,22 +154,22 @@ struct DVDBB2
 
 struct DVDFileEntry
 {
-    uint8_t      isDir;                  // 1, if directory
-    uint8_t      nameOffsetHi;      // Relative to Name Table start
-    uint16_t     nameOffsetLo;
-    union
-    {
-        struct                      // file
-        {
-            uint32_t     fileOffset;        // Relative to disk start (0)
-            uint32_t     fileLength;        // In bytes
-        };
-        struct                      // directory
-        {
-            uint32_t     parentOffset;   // parent directory FST index
-            uint32_t     nextOffset;     // next directory FST index
-        };
-    };
+	uint8_t      isDir;                  // 1, if directory
+	uint8_t      nameOffsetHi;      // Relative to Name Table start
+	uint16_t     nameOffsetLo;
+	union
+	{
+		struct                      // file
+		{
+			uint32_t     fileOffset;        // Relative to disk start (0)
+			uint32_t     fileLength;        // In bytes
+		};
+		struct                      // directory
+		{
+			uint32_t     parentOffset;   // parent directory FST index
+			uint32_t     nextOffset;     // next directory FST index
+		};
+	};
 };
 
 // Additional information: FSTNotes.md
@@ -307,12 +307,12 @@ namespace DVD
 // all important data is placed here
 struct DVDControl
 {
-    bool mountedImage;
-    wchar_t gcm_filename[0x1000];
-    int   gcm_size;       // size of mounted file
-    int   seekval;        // current DVD position
+	bool mountedImage;
+	wchar_t gcm_filename[0x1000];
+	int   gcm_size;       // size of mounted file
+	int   seekval;        // current DVD position
 
-    DVD::MountDolphinSdk* mountedSdk;
+	DVD::MountDolphinSdk* mountedSdk;
 };
 
 extern DVDControl dvd;             // share with other modules

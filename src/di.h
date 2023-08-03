@@ -45,17 +45,17 @@
 // DI state (registers and other data)
 struct DIControl
 {
-    volatile uint32_t        sr, cvr, cr;    // DI registers
-    volatile uint32_t        mar, len;
-    volatile uint8_t         cmdbuf[12];
-    volatile uint8_t         immbuf[4];
-    volatile uint32_t        cfg;
-    uint8_t         dmaFifo[32];
+	volatile uint32_t        sr, cvr, cr;    // DI registers
+	volatile uint32_t        mar, len;
+	volatile uint8_t         cmdbuf[12];
+	volatile uint8_t         immbuf[4];
+	volatile uint32_t        cfg;
+	uint8_t         dmaFifo[32];
 
-    int             dduToHostByteCounter;
-    int             hostToDduByteCounter;
+	int             dduToHostByteCounter;
+	int             hostToDduByteCounter;
 
-    bool            log;
+	bool            log;
 };
 
 extern  DIControl di;

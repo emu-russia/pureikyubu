@@ -23,11 +23,11 @@ The infinite loop is implemented above (in Thread) to support the Suspend/Resume
 
 class SpinLock
 {
-    volatile long _lock = 0;
+	volatile long _lock = 0;
 
 public:
-    void Lock();
-    void Unlock();
+	void Lock();
+	void Unlock();
 };
 
 #endif
@@ -36,18 +36,18 @@ public:
 
 class SpinLock
 {
-    std::atomic_flag locked = ATOMIC_FLAG_INIT;
+	std::atomic_flag locked = ATOMIC_FLAG_INIT;
 public:
 
-    void Lock()
-    {
-        while (locked.test_and_set(std::memory_order_acquire)) { ; }
-    }
+	void Lock()
+	{
+		while (locked.test_and_set(std::memory_order_acquire)) { ; }
+	}
 
-    void Unlock()
-    {
-        locked.clear(std::memory_order_release);
-    }
+	void Unlock()
+	{
+		locked.clear(std::memory_order_release);
+	}
 };
 
 #endif
@@ -108,47 +108,47 @@ public:
 
 namespace Util
 {
-    std::string WstringToString(const std::wstring& wstr);
+	std::string WstringToString(const std::wstring& wstr);
 
-    std::wstring StringToWstring(const std::string& str);
+	std::wstring StringToWstring(const std::string& str);
 
-    // Get the size of a file.
+	// Get the size of a file.
 
-    size_t FileSize(const std::string& filename);
-    size_t FileSize(const std::wstring& filename);
-    size_t FileSize(const wchar_t* filename);
+	size_t FileSize(const std::string& filename);
+	size_t FileSize(const std::wstring& filename);
+	size_t FileSize(const wchar_t* filename);
 
-    // Check whenever the file exists
+	// Check whenever the file exists
 
-    bool FileExists(const std::string& filename);
-    bool FileExists(const std::wstring& filename);
-    bool FileExists(const wchar_t* filename);
+	bool FileExists(const std::string& filename);
+	bool FileExists(const std::wstring& filename);
+	bool FileExists(const wchar_t* filename);
 
-    // Load data from a file
+	// Load data from a file
 
-    std::vector<uint8_t> FileLoad(const std::string& filename);
-    std::vector<uint8_t> FileLoad(const std::wstring& filename);
-    std::vector<uint8_t> FileLoad(const wchar_t* filename);
+	std::vector<uint8_t> FileLoad(const std::string& filename);
+	std::vector<uint8_t> FileLoad(const std::wstring& filename);
+	std::vector<uint8_t> FileLoad(const wchar_t* filename);
 
-    // Save data to file
+	// Save data to file
 
-    bool FileSave(const std::string& filename, std::vector<uint8_t>& data);
-    bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data);
-    bool FileSave(const wchar_t* filename, std::vector<uint8_t>& data);
+	bool FileSave(const std::string& filename, std::vector<uint8_t>& data);
+	bool FileSave(const std::wstring& filename, std::vector<uint8_t>& data);
+	bool FileSave(const wchar_t* filename, std::vector<uint8_t>& data);
 
-    void SplitPath(const char* _Path,
-        char* _Drive,
-        char* _Dir,
-        char* _Filename,
-        char* _Ext);
+	void SplitPath(const char* _Path,
+		char* _Drive,
+		char* _Dir,
+		char* _Filename,
+		char* _Ext);
 
-    // Get a list of files and directories, relative to the root directory
+	// Get a list of files and directories, relative to the root directory
 
-    void BuildFileTree(std::wstring rootDir, std::list<std::wstring>& names);
+	void BuildFileTree(std::wstring rootDir, std::list<std::wstring>& names);
 
-    // Check if the entity is a directory or a file.
+	// Check if the entity is a directory or a file.
 
-    bool IsDirectory(std::wstring path);
+	bool IsDirectory(std::wstring path);
 
 }
 

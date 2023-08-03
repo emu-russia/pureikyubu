@@ -12,14 +12,14 @@
 
 #define COMPUTE_CR0(r)                                  \
 {                                                       \
-    (core->regs.cr = (core->regs.cr & 0x0fff'ffff)|     \
-    (IS_XER_SO ? (GEKKO_CR0_SO) : (0)) |                \
-    (((int32_t)(r) < 0) ? (GEKKO_CR0_LT) : (((int32_t)(r) > 0) ? (GEKKO_CR0_GT) : (GEKKO_CR0_EQ))));\
+	(core->regs.cr = (core->regs.cr & 0x0fff'ffff)|     \
+	(IS_XER_SO ? (GEKKO_CR0_SO) : (0)) |                \
+	(((int32_t)(r) < 0) ? (GEKKO_CR0_LT) : (((int32_t)(r) > 0) ? (GEKKO_CR0_GT) : (GEKKO_CR0_EQ))));\
 }
 
 #define COMPUTE_CR1()                                   \
 {                                                       \
-    core->regs.cr = (core->regs.cr & 0xf0ff'ffff) | ((core->regs.fpscr & 0xf000'0000) >> 4);    \
+	core->regs.cr = (core->regs.cr & 0xf0ff'ffff) | ((core->regs.fpscr & 0xf000'0000) >> 4);    \
 }
 
 #define FPRU(n) (core->regs.fpr[n].uval)

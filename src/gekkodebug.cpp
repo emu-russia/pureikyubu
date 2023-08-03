@@ -861,15 +861,15 @@ namespace Debug
 
 		switch (info.param[0])
 		{
-		case Gekko::Param::Simm:
-			info.Imm.Signed = imm;
-			break;
-		case Gekko::Param::Uimm:
-			info.Imm.Unsigned = imm;
-			break;
-		case Gekko::Param::Address:
-			info.Imm.Address = imm;
-			break;
+			case Gekko::Param::Simm:
+				info.Imm.Signed = imm;
+				break;
+			case Gekko::Param::Uimm:
+				info.Imm.Unsigned = imm;
+				break;
+			case Gekko::Param::Address:
+				info.Imm.Address = imm;
+				break;
 		}
 
 		std::string paramName = Gekko::GekkoDisasm::ParamName(info.param[0]);

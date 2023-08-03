@@ -111,66 +111,66 @@ namespace DSP
 
 		switch (cf)
 		{
-		case CFlagRules::Zero:
-			regs.psr.c = 0;
-			break;
-		case CFlagRules::C1:
-			regs.psr.c = (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39)));
-			break;
-		case CFlagRules::C2:
-			regs.psr.c = (bit(d, 39) & ~bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 39)));
-			break;
-		case CFlagRules::C3:
-			regs.psr.c = (bit(d, 39) ^ bit(s, 15)) != 0 ? (bit(d, 39) & bit(s, 15)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 15))) : (bit(d, 39) & ~bit(s, 15)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 15)));
-			break;
-		case CFlagRules::C4:
-			regs.psr.c = ~bit(d, 39) & ~bit(r, 39);
-			break;
-		case CFlagRules::C5:
-			regs.psr.c = (bit(d, 39) ^ bit(s, 31)) == 0 ? (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39))) : (bit(d, 39) & ~bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 39)));
-			break;
-		case CFlagRules::C6:
-			regs.psr.c = bit(d, 39) & ~bit(r, 39);
-			break;
-		case CFlagRules::C7:
-			regs.psr.c = bit(d, 39) & ~bit(r, 39);		// Prod
-			break;
-		case CFlagRules::C8:
-			regs.psr.c = (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39)));	// Prod
-			break;
+			case CFlagRules::Zero:
+				regs.psr.c = 0;
+				break;
+			case CFlagRules::C1:
+				regs.psr.c = (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39)));
+				break;
+			case CFlagRules::C2:
+				regs.psr.c = (bit(d, 39) & ~bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 39)));
+				break;
+			case CFlagRules::C3:
+				regs.psr.c = (bit(d, 39) ^ bit(s, 15)) != 0 ? (bit(d, 39) & bit(s, 15)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 15))) : (bit(d, 39) & ~bit(s, 15)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 15)));
+				break;
+			case CFlagRules::C4:
+				regs.psr.c = ~bit(d, 39) & ~bit(r, 39);
+				break;
+			case CFlagRules::C5:
+				regs.psr.c = (bit(d, 39) ^ bit(s, 31)) == 0 ? (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39))) : (bit(d, 39) & ~bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | ~bit(s, 39)));
+				break;
+			case CFlagRules::C6:
+				regs.psr.c = bit(d, 39) & ~bit(r, 39);
+				break;
+			case CFlagRules::C7:
+				regs.psr.c = bit(d, 39) & ~bit(r, 39);		// Prod
+				break;
+			case CFlagRules::C8:
+				regs.psr.c = (bit(d, 39) & bit(s, 39)) | (~bit(r, 39) & (bit(d, 39) | bit(s, 39)));	// Prod
+				break;
 		}
 
 		// Overflow
 
 		switch (vf)
 		{
-		case VFlagRules::Zero:
-			regs.psr.v = 0;
-			break;
-		case VFlagRules::V1:
-			regs.psr.v = (bit(d, 39) & bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & ~bit(s, 39) & bit(r, 39));
-			break;
-		case VFlagRules::V2:
-			regs.psr.v = (bit(d, 39) & ~bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & bit(s, 39) & bit(r, 39));
-			break;
-		case VFlagRules::V3:
-			regs.psr.v = bit(d, 39) & bit(r, 39);
-			break;
-		case VFlagRules::V4:
-			regs.psr.v = ~bit(d, 39) & bit(r, 39);
-			break;
-		case VFlagRules::V5:
-			regs.psr.v = bit(r, 39);
-			break;
-		case VFlagRules::V6:
-			regs.psr.v = ~bit(d, 39) & bit(r, 39);	// Prod
-			break;
-		case VFlagRules::V7:
-			regs.psr.v = (bit(d, 39) & bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & ~bit(s, 39) & bit(r, 39));	// Prod
-			break;
-		case VFlagRules::V8:
-			regs.psr.v = bit(d, 39) & ~bit(r, 39);
-			break;
+			case VFlagRules::Zero:
+				regs.psr.v = 0;
+				break;
+			case VFlagRules::V1:
+				regs.psr.v = (bit(d, 39) & bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & ~bit(s, 39) & bit(r, 39));
+				break;
+			case VFlagRules::V2:
+				regs.psr.v = (bit(d, 39) & ~bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & bit(s, 39) & bit(r, 39));
+				break;
+			case VFlagRules::V3:
+				regs.psr.v = bit(d, 39) & bit(r, 39);
+				break;
+			case VFlagRules::V4:
+				regs.psr.v = ~bit(d, 39) & bit(r, 39);
+				break;
+			case VFlagRules::V5:
+				regs.psr.v = bit(r, 39);
+				break;
+			case VFlagRules::V6:
+				regs.psr.v = ~bit(d, 39) & bit(r, 39);	// Prod
+				break;
+			case VFlagRules::V7:
+				regs.psr.v = (bit(d, 39) & bit(s, 39) & ~bit(r, 39)) | (~bit(d, 39) & ~bit(s, 39) & bit(r, 39));	// Prod
+				break;
+			case VFlagRules::V8:
+				regs.psr.v = bit(d, 39) & ~bit(r, 39);
+				break;
 		}
 
 		// Sticky overflow
@@ -184,48 +184,48 @@ namespace DSP
 
 		switch (zf)
 		{
-		case ZFlagRules::Z1:
-			regs.psr.z = r == 0;
-			break;
-		case ZFlagRules::Z2:
-			regs.psr.z = (r & 0xffff'0000) == 0;
-			break;
-		case ZFlagRules::Z3:
-			regs.psr.z = (r & 0xff'ffff'ffff) == 0;
-			break;
+			case ZFlagRules::Z1:
+				regs.psr.z = r == 0;
+				break;
+			case ZFlagRules::Z2:
+				regs.psr.z = (r & 0xffff'0000) == 0;
+				break;
+			case ZFlagRules::Z3:
+				regs.psr.z = (r & 0xff'ffff'ffff) == 0;
+				break;
 		}
 
 		// Negative
 
 		switch (nf)
 		{
-		case NFlagRules::N1:
-			regs.psr.n = bit(r, 39);
-			break;
-		case NFlagRules::N2:
-			regs.psr.n = bit(r, 31);
-			break;
+			case NFlagRules::N1:
+				regs.psr.n = bit(r, 39);
+				break;
+			case NFlagRules::N2:
+				regs.psr.n = bit(r, 31);
+				break;
 		}
 
 		// Extension (above s32)
 
 		switch (ef)
 		{
-		case EFlagRules::E1:
-		{
-			uint64_t ext = (r >> 31) & 0x1ff;
-			regs.psr.e = !(ext == 0b0'0000'0000 || ext == 0b1'1111'1111);
-			break;
-		}
+			case EFlagRules::E1:
+			{
+				uint64_t ext = (r >> 31) & 0x1ff;
+				regs.psr.e = !(ext == 0b0'0000'0000 || ext == 0b1'1111'1111);
+				break;
+			}
 		}
 
 		// Unnormalization
 
 		switch (uf)
 		{
-		case UFlagRules::U1:
-			regs.psr.u = ~(bit(r, 31) ^ bit(r, 30));
-			break;
+			case UFlagRules::U1:
+				regs.psr.u = ~(bit(r, 31) ^ bit(r, 30));
+				break;
 		}
 	}
 
@@ -357,37 +357,37 @@ namespace DSP
 
 		switch (id)
 		{
-		case DspInterrupt::Reset:
-			break;
-		case DspInterrupt::Error:
-			Halt("DspCore::AssertInterrupt - `Error` counted as non-recoverable\n");
-			break;
-		case DspInterrupt::Trap:
-			break;
+			case DspInterrupt::Reset:
+				break;
+			case DspInterrupt::Error:
+				Halt("DspCore::AssertInterrupt - `Error` counted as non-recoverable\n");
+				break;
+			case DspInterrupt::Trap:
+				break;
 
-		case DspInterrupt::Acrs:
-		case DspInterrupt::Acwe:
-		case DspInterrupt::Dcre:
-			// ACRS, ACWE and DCRE interrupts are generated regardless of whether the ET bit is set or cleared (controlled only by the TE1 bit)
-			if (regs.psr.te1 == 0)
-			{
-				return;
-			}
-			break;
+			case DspInterrupt::Acrs:
+			case DspInterrupt::Acwe:
+			case DspInterrupt::Dcre:
+				// ACRS, ACWE and DCRE interrupts are generated regardless of whether the ET bit is set or cleared (controlled only by the TE1 bit)
+				if (regs.psr.te1 == 0)
+				{
+					return;
+				}
+				break;
 
-		case DspInterrupt::AiDma:
-			if ((regs.psr.te2 & regs.psr.et) == 0)
-			{
-				return;
-			}
-			break;
+			case DspInterrupt::AiDma:
+				if ((regs.psr.te2 & regs.psr.et) == 0)
+				{
+					return;
+				}
+				break;
 
-		case DspInterrupt::CpuInt:
-			if ((regs.psr.te3 & regs.psr.et) == 0)
-			{
-				return;
-			}
-			break;
+			case DspInterrupt::CpuInt:
+				if ((regs.psr.te3 & regs.psr.et) == 0)
+				{
+					return;
+				}
+				break;
 		}
 
 		// Pending
@@ -405,25 +405,25 @@ namespace DSP
 
 		switch (id)
 		{
-		case DspInterrupt::Reset:
-		case DspInterrupt::Error:
-		case DspInterrupt::Trap:
-			pendingDelay = 0;
-			break;
+			case DspInterrupt::Reset:
+			case DspInterrupt::Error:
+			case DspInterrupt::Trap:
+				pendingDelay = 0;
+				break;
 
-		case DspInterrupt::Acrs:
-		case DspInterrupt::Acwe:
-		case DspInterrupt::Dcre:
-			pendingDelay = 0;
-			break;
+			case DspInterrupt::Acrs:
+			case DspInterrupt::Acwe:
+			case DspInterrupt::Dcre:
+				pendingDelay = 0;
+				break;
 
-		case DspInterrupt::AiDma:
-			pendingDelay = 0;
-			break;
+			case DspInterrupt::AiDma:
+				pendingDelay = 0;
+				break;
 
-		case DspInterrupt::CpuInt:
-			pendingDelay = 2;
-			break;
+			case DspInterrupt::CpuInt:
+				pendingDelay = 2;
+				break;
 		}
 
 		intr.pendingDelay[(size_t)id] = pendingDelay;
@@ -832,109 +832,109 @@ namespace DSP
 	{
 		switch (reg)
 		{
-		case (int)DspRegister::r0:
-		case (int)DspRegister::r1:
-		case (int)DspRegister::r2:
-		case (int)DspRegister::r3:
-			regs.r[reg] = val;
-			break;
-		case (int)DspRegister::m0:
-		case (int)DspRegister::m1:
-		case (int)DspRegister::m2:
-		case (int)DspRegister::m3:
-			regs.m[reg - (int)DspRegister::m0] = val;
-			break;
-		case (int)DspRegister::l0:
-		case (int)DspRegister::l1:
-		case (int)DspRegister::l2:
-		case (int)DspRegister::l3:
-			regs.l[reg - (int)DspRegister::l0] = val;
-			break;
-		case (int)DspRegister::pcs:
-			if (!regs.pcs->push(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::pss:
-			if (!regs.pss->push(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::eas:
-			if (!regs.eas->push(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::lcs:
-			if (!regs.lcs->push(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::a2:
-			regs.a.h = val & 0xff;
-			break;
-		case (int)DspRegister::b2:
-			regs.b.h = val & 0xff;
-			break;
-		case (int)DspRegister::dpp:
-			regs.dpp = val & 0xff;
-			break;
-		case (int)DspRegister::psr:
-			regs.psr.bits = val;
-			break;
-		case (int)DspRegister::ps0:
-			regs.prod.l = val;
-			break;
-		case (int)DspRegister::ps1:
-			regs.prod.m1 = val;
-			break;
-		case (int)DspRegister::ps2:
-			regs.prod.h = val & 0xff;
-			break;
-		case (int)DspRegister::pc1:
-			regs.prod.m2 = val;
-			break;
-		case (int)DspRegister::x0:
-			regs.x.l = val;
-			break;
-		case (int)DspRegister::y0:
-			regs.y.l = val;
-			break;
-		case (int)DspRegister::x1:
-			regs.x.h = val;
-			break;
-		case (int)DspRegister::y1:
-			regs.y.h = val;
-			break;
-		case (int)DspRegister::a0:
-			regs.a.l = val;
-			break;
-		case (int)DspRegister::b0:
-			regs.b.l = val;
-			break;
-		case (int)DspRegister::a1:
-			regs.a.m = val;
-			if (regs.psr.xl)
-			{
-				regs.a.h = (val & 0x8000) ? 0xFF : 0;
-				regs.a.l = 0;
-			}
-			break;
-		case (int)DspRegister::b1:
-			regs.b.m = val;
-			if (regs.psr.xl)
-			{
-				regs.b.h = (val & 0x8000) ? 0xFF : 0;
-				regs.b.l = 0;
-			}
-			break;
-		default:
-			Halt("DspCore::MoveToReg: invalid register index: %i\n", reg);
-			break;
+			case (int)DspRegister::r0:
+			case (int)DspRegister::r1:
+			case (int)DspRegister::r2:
+			case (int)DspRegister::r3:
+				regs.r[reg] = val;
+				break;
+			case (int)DspRegister::m0:
+			case (int)DspRegister::m1:
+			case (int)DspRegister::m2:
+			case (int)DspRegister::m3:
+				regs.m[reg - (int)DspRegister::m0] = val;
+				break;
+			case (int)DspRegister::l0:
+			case (int)DspRegister::l1:
+			case (int)DspRegister::l2:
+			case (int)DspRegister::l3:
+				regs.l[reg - (int)DspRegister::l0] = val;
+				break;
+			case (int)DspRegister::pcs:
+				if (!regs.pcs->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::pss:
+				if (!regs.pss->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::eas:
+				if (!regs.eas->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::lcs:
+				if (!regs.lcs->push(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::a2:
+				regs.a.h = val & 0xff;
+				break;
+			case (int)DspRegister::b2:
+				regs.b.h = val & 0xff;
+				break;
+			case (int)DspRegister::dpp:
+				regs.dpp = val & 0xff;
+				break;
+			case (int)DspRegister::psr:
+				regs.psr.bits = val;
+				break;
+			case (int)DspRegister::ps0:
+				regs.prod.l = val;
+				break;
+			case (int)DspRegister::ps1:
+				regs.prod.m1 = val;
+				break;
+			case (int)DspRegister::ps2:
+				regs.prod.h = val & 0xff;
+				break;
+			case (int)DspRegister::pc1:
+				regs.prod.m2 = val;
+				break;
+			case (int)DspRegister::x0:
+				regs.x.l = val;
+				break;
+			case (int)DspRegister::y0:
+				regs.y.l = val;
+				break;
+			case (int)DspRegister::x1:
+				regs.x.h = val;
+				break;
+			case (int)DspRegister::y1:
+				regs.y.h = val;
+				break;
+			case (int)DspRegister::a0:
+				regs.a.l = val;
+				break;
+			case (int)DspRegister::b0:
+				regs.b.l = val;
+				break;
+			case (int)DspRegister::a1:
+				regs.a.m = val;
+				if (regs.psr.xl)
+				{
+					regs.a.h = (val & 0x8000) ? 0xFF : 0;
+					regs.a.l = 0;
+				}
+				break;
+			case (int)DspRegister::b1:
+				regs.b.m = val;
+				if (regs.psr.xl)
+				{
+					regs.b.h = (val & 0x8000) ? 0xFF : 0;
+					regs.b.l = 0;
+				}
+				break;
+			default:
+				Halt("DspCore::MoveToReg: invalid register index: %i\n", reg);
+				break;
 		}
 	}
 
@@ -944,135 +944,135 @@ namespace DSP
 
 		switch (reg)
 		{
-		case (int)DspRegister::r0:
-		case (int)DspRegister::r1:
-		case (int)DspRegister::r2:
-		case (int)DspRegister::r3:
-			val = regs.r[reg];
-			break;
-		case (int)DspRegister::m0:
-		case (int)DspRegister::m1:
-		case (int)DspRegister::m2:
-		case (int)DspRegister::m3:
-			val = regs.m[reg - (int)DspRegister::m0];
-			break;
-		case (int)DspRegister::l0:
-		case (int)DspRegister::l1:
-		case (int)DspRegister::l2:
-		case (int)DspRegister::l3:
-			val = regs.l[reg - (int)DspRegister::l0];
-			break;
-		case (int)DspRegister::pcs:
-			if (!regs.pcs->pop(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::pss:
-			if (!regs.pss->pop(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::eas:
-			if (!regs.eas->pop(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::lcs:
-			if (!regs.lcs->pop(val))
-			{
-				AssertInterrupt(DspInterrupt::Error);
-			}
-			break;
-		case (int)DspRegister::a2:
-			val = regs.a.h & 0xff;
-			break;
-		case (int)DspRegister::b2:
-			val = regs.b.h & 0xff;
-			break;
-		case (int)DspRegister::dpp:
-			val = regs.dpp & 0xff;
-			break;
-		case (int)DspRegister::psr:
-			val = regs.psr.bits;
-			break;
-		case (int)DspRegister::ps0:
-			val = regs.prod.l;
-			break;
-		case (int)DspRegister::ps1:
-			val = regs.prod.m1;
-			break;
-		case (int)DspRegister::ps2:
-			val = regs.prod.h & 0xff;
-			break;
-		case (int)DspRegister::pc1:
-			val = regs.prod.m2;
-			break;
-		case (int)DspRegister::x0:
-			val = regs.x.l;
-			break;
-		case (int)DspRegister::y0:
-			val = regs.y.l;
-			break;
-		case (int)DspRegister::x1:
-			val = regs.x.h;
-			break;
-		case (int)DspRegister::y1:
-			val = regs.y.h;
-			break;
-		case (int)DspRegister::a0:
-			val = regs.a.l;
-			break;
-		case (int)DspRegister::b0:
-			val = regs.b.l;
-			break;
-		case (int)DspRegister::a1:
-			if (regs.psr.xl)
-			{
-				//int64_t a = SignExtend40(regs.ac[0].sbits) >> 16;
-				//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
-
-				int64_t a = SignExtend40(regs.a.sbits);
-				if (a != (int32_t)a)
+			case (int)DspRegister::r0:
+			case (int)DspRegister::r1:
+			case (int)DspRegister::r2:
+			case (int)DspRegister::r3:
+				val = regs.r[reg];
+				break;
+			case (int)DspRegister::m0:
+			case (int)DspRegister::m1:
+			case (int)DspRegister::m2:
+			case (int)DspRegister::m3:
+				val = regs.m[reg - (int)DspRegister::m0];
+				break;
+			case (int)DspRegister::l0:
+			case (int)DspRegister::l1:
+			case (int)DspRegister::l2:
+			case (int)DspRegister::l3:
+				val = regs.l[reg - (int)DspRegister::l0];
+				break;
+			case (int)DspRegister::pcs:
+				if (!regs.pcs->pop(val))
 				{
-					val = a > 0 ? 0x7fff : 0x8000;
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::pss:
+				if (!regs.pss->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::eas:
+				if (!regs.eas->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::lcs:
+				if (!regs.lcs->pop(val))
+				{
+					AssertInterrupt(DspInterrupt::Error);
+				}
+				break;
+			case (int)DspRegister::a2:
+				val = regs.a.h & 0xff;
+				break;
+			case (int)DspRegister::b2:
+				val = regs.b.h & 0xff;
+				break;
+			case (int)DspRegister::dpp:
+				val = regs.dpp & 0xff;
+				break;
+			case (int)DspRegister::psr:
+				val = regs.psr.bits;
+				break;
+			case (int)DspRegister::ps0:
+				val = regs.prod.l;
+				break;
+			case (int)DspRegister::ps1:
+				val = regs.prod.m1;
+				break;
+			case (int)DspRegister::ps2:
+				val = regs.prod.h & 0xff;
+				break;
+			case (int)DspRegister::pc1:
+				val = regs.prod.m2;
+				break;
+			case (int)DspRegister::x0:
+				val = regs.x.l;
+				break;
+			case (int)DspRegister::y0:
+				val = regs.y.l;
+				break;
+			case (int)DspRegister::x1:
+				val = regs.x.h;
+				break;
+			case (int)DspRegister::y1:
+				val = regs.y.h;
+				break;
+			case (int)DspRegister::a0:
+				val = regs.a.l;
+				break;
+			case (int)DspRegister::b0:
+				val = regs.b.l;
+				break;
+			case (int)DspRegister::a1:
+				if (regs.psr.xl)
+				{
+					//int64_t a = SignExtend40(regs.ac[0].sbits) >> 16;
+					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
+
+					int64_t a = SignExtend40(regs.a.sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.a.m;
+					}
 				}
 				else
 				{
 					val = regs.a.m;
 				}
-			}
-			else
-			{
-				val = regs.a.m;
-			}
-			break;
-		case (int)DspRegister::b1:
-			if (regs.psr.xl)
-			{
-				//int64_t a = SignExtend40(regs.ac[1].sbits) >> 16;
-				//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
-
-				int64_t a = SignExtend40(regs.b.sbits);
-				if (a != (int32_t)a)
+				break;
+			case (int)DspRegister::b1:
+				if (regs.psr.xl)
 				{
-					val = a > 0 ? 0x7fff : 0x8000;
+					//int64_t a = SignExtend40(regs.ac[1].sbits) >> 16;
+					//val = (uint16_t)(max(-0x8000, min(a, 0x7fff)));
+
+					int64_t a = SignExtend40(regs.b.sbits);
+					if (a != (int32_t)a)
+					{
+						val = a > 0 ? 0x7fff : 0x8000;
+					}
+					else
+					{
+						val = regs.b.m;
+					}
 				}
 				else
 				{
 					val = regs.b.m;
 				}
-			}
-			else
-			{
-				val = regs.b.m;
-			}
-			break;
-		default:
-			Halt("DspCore::MoveFromReg: invalid register index: %i\n", reg);
-			break;
+				break;
+			default:
+				Halt("DspCore::MoveFromReg: invalid register index: %i\n", reg);
+				break;
 		}
 		return val;
 	}
@@ -1099,37 +1099,37 @@ namespace DSP
 	{
 		switch (s1p)
 		{
-		case DspParameter::x0:
-			s1 = core->regs.x.l;
-			break;
-		case DspParameter::x1:
-			s1 = core->regs.x.h;
-			break;
-		case DspParameter::y1:
-			s1 = core->regs.y.h;
-			break;
-		case DspParameter::a1:
-			s1 = core->regs.a.m;
-			break;
-		case DspParameter::b1:
-			s1 = core->regs.b.m;
-			break;
+			case DspParameter::x0:
+				s1 = core->regs.x.l;
+				break;
+			case DspParameter::x1:
+				s1 = core->regs.x.h;
+				break;
+			case DspParameter::y1:
+				s1 = core->regs.y.h;
+				break;
+			case DspParameter::a1:
+				s1 = core->regs.a.m;
+				break;
+			case DspParameter::b1:
+				s1 = core->regs.b.m;
+				break;
 		}
 
 		switch (s2p)
 		{
-		case DspParameter::x0:
-			s2 = core->regs.x.l;
-			break;
-		case DspParameter::x1:
-			s2 = core->regs.x.h;
-			break;
-		case DspParameter::y0:
-			s2 = core->regs.y.l;
-			break;
-		case DspParameter::y1:
-			s2 = core->regs.y.h;
-			break;
+			case DspParameter::x0:
+				s2 = core->regs.x.l;
+				break;
+			case DspParameter::x1:
+				s2 = core->regs.x.h;
+				break;
+			case DspParameter::y0:
+				s2 = core->regs.y.l;
+				break;
+			case DspParameter::y1:
+				s2 = core->regs.y.h;
+				break;
 		}
 
 		if (core->regs.psr.dp && checkDp)
@@ -1159,32 +1159,32 @@ namespace DSP
 	{
 		switch (param)
 		{
-		case DspParameter::mod_none:
-			break;
-		case DspParameter::mod_dec:
-			core->ArAdvance(r, -1);
-			break;
-		case DspParameter::mod_inc:
-			core->ArAdvance(r, +1);
-			break;
-		case DspParameter::mod_plus_m0:
-			core->ArAdvance(r, core->regs.m[0]);
-			break;
-		case DspParameter::mod_plus_m1:
-			core->ArAdvance(r, core->regs.m[1]);
-			break;
-		case DspParameter::mod_plus_m2:
-			core->ArAdvance(r, core->regs.m[2]);
-			break;
-		case DspParameter::mod_plus_m3:
-			core->ArAdvance(r, core->regs.m[3]);
-			break;
-		case DspParameter::mod_minus_m:
-			core->ArAdvance(r, -core->regs.m[r]);
-			break;
-		case DspParameter::mod_plus_m:
-			core->ArAdvance(r, core->regs.m[r]);
-			break;
+			case DspParameter::mod_none:
+				break;
+			case DspParameter::mod_dec:
+				core->ArAdvance(r, -1);
+				break;
+			case DspParameter::mod_inc:
+				core->ArAdvance(r, +1);
+				break;
+			case DspParameter::mod_plus_m0:
+				core->ArAdvance(r, core->regs.m[0]);
+				break;
+			case DspParameter::mod_plus_m1:
+				core->ArAdvance(r, core->regs.m[1]);
+				break;
+			case DspParameter::mod_plus_m2:
+				core->ArAdvance(r, core->regs.m[2]);
+				break;
+			case DspParameter::mod_plus_m3:
+				core->ArAdvance(r, core->regs.m[3]);
+				break;
+			case DspParameter::mod_minus_m:
+				core->ArAdvance(r, -core->regs.m[r]);
+				break;
+			case DspParameter::mod_plus_m:
+				core->ArAdvance(r, core->regs.m[r]);
+				break;
 		}
 	}
 
@@ -1192,22 +1192,22 @@ namespace DSP
 	{
 		switch (cc)
 		{
-		case ConditionCode::ge: return (core->regs.psr.n ^ core->regs.psr.v) == 0;
-		case ConditionCode::lt: return (core->regs.psr.n ^ core->regs.psr.v) != 0;
-		case ConditionCode::gt: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) == 0;
-		case ConditionCode::le: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) != 0;
-		case ConditionCode::nz: return core->regs.psr.z == 0;
-		case ConditionCode::z: return core->regs.psr.z != 0;
-		case ConditionCode::nc: return core->regs.psr.c == 0;
-		case ConditionCode::c: return core->regs.psr.c != 0;
-		case ConditionCode::ne: return core->regs.psr.e == 0;
-		case ConditionCode::e: return core->regs.psr.e != 0;
-		case ConditionCode::nm: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) == 0;
-		case ConditionCode::m: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) != 0;
-		case ConditionCode::nt: return core->regs.psr.tb == 0;
-		case ConditionCode::t: return core->regs.psr.tb != 0;
-		case ConditionCode::v: return core->regs.psr.v != 0;
-		case ConditionCode::always: return true;
+			case ConditionCode::ge: return (core->regs.psr.n ^ core->regs.psr.v) == 0;
+			case ConditionCode::lt: return (core->regs.psr.n ^ core->regs.psr.v) != 0;
+			case ConditionCode::gt: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) == 0;
+			case ConditionCode::le: return (core->regs.psr.z | (core->regs.psr.n ^ core->regs.psr.v)) != 0;
+			case ConditionCode::nz: return core->regs.psr.z == 0;
+			case ConditionCode::z: return core->regs.psr.z != 0;
+			case ConditionCode::nc: return core->regs.psr.c == 0;
+			case ConditionCode::c: return core->regs.psr.c != 0;
+			case ConditionCode::ne: return core->regs.psr.e == 0;
+			case ConditionCode::e: return core->regs.psr.e != 0;
+			case ConditionCode::nm: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) == 0;
+			case ConditionCode::m: return (core->regs.psr.z | (~core->regs.psr.u & ~core->regs.psr.e)) != 0;
+			case ConditionCode::nt: return core->regs.psr.tb == 0;
+			case ConditionCode::t: return core->regs.psr.tb != 0;
+			case ConditionCode::v: return core->regs.psr.v != 0;
+			case ConditionCode::always: return true;
 		}
 
 		return false;
@@ -1223,50 +1223,50 @@ namespace DSP
 		{
 			switch (info.instr)
 			{
-			case DspRegularInstruction::jmp: jmp(); break;
-			case DspRegularInstruction::call: call(); break;
-			case DspRegularInstruction::rets: rets(); break;
-			case DspRegularInstruction::reti: reti(); break;
-			case DspRegularInstruction::trap: trap(); break;
-			case DspRegularInstruction::wait: wait(); break;
-			case DspRegularInstruction::exec: exec(); break;
-			case DspRegularInstruction::loop: loop(); break;
-			case DspRegularInstruction::rep: rep(); break;
-			case DspRegularInstruction::pld: pld(); break;
-			case DspRegularInstruction::nop:
-				break;
-			case DspRegularInstruction::mr: mr(); break;
-			case DspRegularInstruction::adsi: adsi(); break;
-			case DspRegularInstruction::adli: adli(); break;
-			case DspRegularInstruction::cmpsi: cmpsi(); break;
-			case DspRegularInstruction::cmpli: cmpli(); break;
-			case DspRegularInstruction::lsfi: lsfi(); break;
-			case DspRegularInstruction::asfi: asfi(); break;
-			case DspRegularInstruction::xorli: xorli(); break;
-			case DspRegularInstruction::anli: anli(); break;
-			case DspRegularInstruction::orli: orli(); break;
-			case DspRegularInstruction::norm: norm(); break;
-			case DspRegularInstruction::div: div(); break;
-			case DspRegularInstruction::addc: addc(); break;
-			case DspRegularInstruction::subc: subc(); break;
-			case DspRegularInstruction::negc: negc(); break;
-			case DspRegularInstruction::max: _max(); break;
-			case DspRegularInstruction::lsf: lsf(); break;
-			case DspRegularInstruction::asf: asf(); break;
-			case DspRegularInstruction::ld: ld(); break;
-			case DspRegularInstruction::st: st(); break;
-			case DspRegularInstruction::ldsa: ldsa(); break;
-			case DspRegularInstruction::stsa: stsa(); break;
-			case DspRegularInstruction::ldla: ldla(); break;
-			case DspRegularInstruction::stla: stla(); break;
-			case DspRegularInstruction::mv: mv(); break;
-			case DspRegularInstruction::mvsi: mvsi(); break;
-			case DspRegularInstruction::mvli: mvli(); break;
-			case DspRegularInstruction::stli: stli(); break;
-			case DspRegularInstruction::clr: clr(); break;
-			case DspRegularInstruction::set: set(); break;
-			case DspRegularInstruction::btstl: btstl(); break;
-			case DspRegularInstruction::btsth: btsth(); break;
+				case DspRegularInstruction::jmp: jmp(); break;
+				case DspRegularInstruction::call: call(); break;
+				case DspRegularInstruction::rets: rets(); break;
+				case DspRegularInstruction::reti: reti(); break;
+				case DspRegularInstruction::trap: trap(); break;
+				case DspRegularInstruction::wait: wait(); break;
+				case DspRegularInstruction::exec: exec(); break;
+				case DspRegularInstruction::loop: loop(); break;
+				case DspRegularInstruction::rep: rep(); break;
+				case DspRegularInstruction::pld: pld(); break;
+				case DspRegularInstruction::nop:
+					break;
+				case DspRegularInstruction::mr: mr(); break;
+				case DspRegularInstruction::adsi: adsi(); break;
+				case DspRegularInstruction::adli: adli(); break;
+				case DspRegularInstruction::cmpsi: cmpsi(); break;
+				case DspRegularInstruction::cmpli: cmpli(); break;
+				case DspRegularInstruction::lsfi: lsfi(); break;
+				case DspRegularInstruction::asfi: asfi(); break;
+				case DspRegularInstruction::xorli: xorli(); break;
+				case DspRegularInstruction::anli: anli(); break;
+				case DspRegularInstruction::orli: orli(); break;
+				case DspRegularInstruction::norm: norm(); break;
+				case DspRegularInstruction::div: div(); break;
+				case DspRegularInstruction::addc: addc(); break;
+				case DspRegularInstruction::subc: subc(); break;
+				case DspRegularInstruction::negc: negc(); break;
+				case DspRegularInstruction::max: _max(); break;
+				case DspRegularInstruction::lsf: lsf(); break;
+				case DspRegularInstruction::asf: asf(); break;
+				case DspRegularInstruction::ld: ld(); break;
+				case DspRegularInstruction::st: st(); break;
+				case DspRegularInstruction::ldsa: ldsa(); break;
+				case DspRegularInstruction::stsa: stsa(); break;
+				case DspRegularInstruction::ldla: ldla(); break;
+				case DspRegularInstruction::stla: stla(); break;
+				case DspRegularInstruction::mv: mv(); break;
+				case DspRegularInstruction::mvsi: mvsi(); break;
+				case DspRegularInstruction::mvli: mvli(); break;
+				case DspRegularInstruction::stli: stli(); break;
+				case DspRegularInstruction::clr: clr(); break;
+				case DspRegularInstruction::set: set(); break;
+				case DspRegularInstruction::btstl: btstl(); break;
+				case DspRegularInstruction::btsth: btsth(); break;
 			}
 
 			core->instructionCounter++;
@@ -1275,50 +1275,50 @@ namespace DSP
 		{
 			switch (info.parallelInstr)
 			{
-			case DspParallelInstruction::add: p_add(); break;
-			case DspParallelInstruction::addl: p_addl(); break;
-			case DspParallelInstruction::sub: p_sub(); break;
-			case DspParallelInstruction::amv: p_amv(); break;
-			case DspParallelInstruction::cmp: p_cmp(); break;
-			case DspParallelInstruction::inc: p_inc(); break;
-			case DspParallelInstruction::dec: p_dec(); break;
-			case DspParallelInstruction::abs: p_abs(); break;
-			case DspParallelInstruction::neg: p_neg(); break;
-			case DspParallelInstruction::clr: p_clr(); break;
-			case DspParallelInstruction::rnd: p_rnd(); break;
-			case DspParallelInstruction::rndp: p_rndp(); break;
-			case DspParallelInstruction::tst: p_tst(); break;
-			case DspParallelInstruction::lsl16: p_lsl16(); break;
-			case DspParallelInstruction::lsr16: p_lsr16(); break;
-			case DspParallelInstruction::asr16: p_asr16(); break;
-			case DspParallelInstruction::addp: p_addp(); break;
-			case DspParallelInstruction::nop:
-				break;
-			case DspParallelInstruction::set: p_set(); break;
-			case DspParallelInstruction::mpy: p_mpy(); break;
-			case DspParallelInstruction::mac: p_mac(); break;
-			case DspParallelInstruction::macn: p_macn(); break;
-			case DspParallelInstruction::mvmpy: p_mvmpy(); break;
-			case DspParallelInstruction::rnmpy: p_rnmpy(); break;
-			case DspParallelInstruction::admpy: p_admpy(); break;
-			case DspParallelInstruction::_not: p_not(); break;
-			case DspParallelInstruction::_xor: p_xor(); break;
-			case DspParallelInstruction::_and: p_and(); break;
-			case DspParallelInstruction::_or: p_or(); break;
-			case DspParallelInstruction::lsf: p_lsf(); break;
-			case DspParallelInstruction::asf: p_asf(); break;
+				case DspParallelInstruction::add: p_add(); break;
+				case DspParallelInstruction::addl: p_addl(); break;
+				case DspParallelInstruction::sub: p_sub(); break;
+				case DspParallelInstruction::amv: p_amv(); break;
+				case DspParallelInstruction::cmp: p_cmp(); break;
+				case DspParallelInstruction::inc: p_inc(); break;
+				case DspParallelInstruction::dec: p_dec(); break;
+				case DspParallelInstruction::abs: p_abs(); break;
+				case DspParallelInstruction::neg: p_neg(); break;
+				case DspParallelInstruction::clr: p_clr(); break;
+				case DspParallelInstruction::rnd: p_rnd(); break;
+				case DspParallelInstruction::rndp: p_rndp(); break;
+				case DspParallelInstruction::tst: p_tst(); break;
+				case DspParallelInstruction::lsl16: p_lsl16(); break;
+				case DspParallelInstruction::lsr16: p_lsr16(); break;
+				case DspParallelInstruction::asr16: p_asr16(); break;
+				case DspParallelInstruction::addp: p_addp(); break;
+				case DspParallelInstruction::nop:
+					break;
+				case DspParallelInstruction::set: p_set(); break;
+				case DspParallelInstruction::mpy: p_mpy(); break;
+				case DspParallelInstruction::mac: p_mac(); break;
+				case DspParallelInstruction::macn: p_macn(); break;
+				case DspParallelInstruction::mvmpy: p_mvmpy(); break;
+				case DspParallelInstruction::rnmpy: p_rnmpy(); break;
+				case DspParallelInstruction::admpy: p_admpy(); break;
+				case DspParallelInstruction::_not: p_not(); break;
+				case DspParallelInstruction::_xor: p_xor(); break;
+				case DspParallelInstruction::_and: p_and(); break;
+				case DspParallelInstruction::_or: p_or(); break;
+				case DspParallelInstruction::lsf: p_lsf(); break;
+				case DspParallelInstruction::asf: p_asf(); break;
 			}
 
 			switch (info.parallelMemInstr)
 			{
-			case DspParallelMemInstruction::ldd: p_ldd(); break;
-			case DspParallelMemInstruction::ls: p_ls(); break;
-			case DspParallelMemInstruction::ld: p_ld(); break;
-			case DspParallelMemInstruction::st: p_st(); break;
-			case DspParallelMemInstruction::mv: p_mv(); break;
-			case DspParallelMemInstruction::mr: p_mr(); break;
-			case DspParallelMemInstruction::nop:
-				break;
+				case DspParallelMemInstruction::ldd: p_ldd(); break;
+				case DspParallelMemInstruction::ls: p_ls(); break;
+				case DspParallelMemInstruction::ld: p_ld(); break;
+				case DspParallelMemInstruction::st: p_st(); break;
+				case DspParallelMemInstruction::mv: p_mv(); break;
+				case DspParallelMemInstruction::mr: p_mr(); break;
+				case DspParallelMemInstruction::nop:
+					break;
 			}
 
 			core->instructionCounter += 2;
@@ -1524,12 +1524,12 @@ namespace DSP
 
 		switch (info.params[0])
 		{
-		case DspParameter::a:
-			s = DspCore::SignExtend40(core->regs.a.bits);
-			break;
-		case DspParameter::b:
-			s = DspCore::SignExtend40(core->regs.b.bits);
-			break;
+			case DspParameter::a:
+				s = DspCore::SignExtend40(core->regs.a.bits);
+				break;
+			case DspParameter::b:
+				s = DspCore::SignExtend40(core->regs.b.bits);
+				break;
 		}
 
 		core->PackProd(core->regs.prod);
@@ -1538,12 +1538,12 @@ namespace DSP
 
 		switch (info.params[0])
 		{
-		case DspParameter::a:
-			core->regs.a.bits = r;
-			break;
-		case DspParameter::b:
-			core->regs.b.bits = r;
-			break;
+			case DspParameter::a:
+				core->regs.a.bits = r;
+				break;
+			case DspParameter::b:
+				core->regs.b.bits = r;
+				break;
 		}
 
 		core->regs.prod.bitsPacked = s1 * s2;

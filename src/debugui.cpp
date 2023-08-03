@@ -143,29 +143,29 @@ namespace Debug
 
 		switch (Vkey)
 		{
-		case VK_UP:
-			messagePtr++;
-			break;
+			case VK_UP:
+				messagePtr++;
+				break;
 
-		case VK_DOWN:
-			messagePtr--;
-			break;
+			case VK_DOWN:
+				messagePtr--;
+				break;
 
-		case VK_PRIOR:	// Page Up
-			messagePtr += (int)(height - 1);
-			break;
+			case VK_PRIOR:	// Page Up
+				messagePtr += (int)(height - 1);
+				break;
 
-		case VK_NEXT:	// Page Down
-			messagePtr -= (int)(height - 1);
-			break;
+			case VK_NEXT:	// Page Down
+				messagePtr -= (int)(height - 1);
+				break;
 
-		case VK_HOME:
-			messagePtr = (int)history.size() - 2;
-			break;
+			case VK_HOME:
+				messagePtr = (int)history.size() - 2;
+				break;
 
-		case VK_END:
-			messagePtr = 0;
-			break;
+			case VK_END:
+				messagePtr = 0;
+				break;
 		}
 
 		messagePtr = max(0, min(messagePtr, (int)history.size() - 2));

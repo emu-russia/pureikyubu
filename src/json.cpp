@@ -99,40 +99,40 @@ void Json::EmitWcharString(SerializeContext* ctx, wchar_t* str, bool sizeOnly)
 
 		switch (cp)
 		{
-		case '\"':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, '\"', sizeOnly);
-			break;
-		case '\\':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			break;
-		case '/':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, '/', sizeOnly);
-			break;
-		case '\b':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, 'b', sizeOnly);
-			break;
-		case '\f':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, 'f', sizeOnly);
-			break;
-		case '\n':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, 'n', sizeOnly);
-			break;
-		case '\r':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, 'r', sizeOnly);
-			break;
-		case '\t':
-			EmitCodePoint(ctx, '\\', sizeOnly);
-			EmitCodePoint(ctx, 't', sizeOnly);
-			break;
-		default:
-			EmitCodePoint(ctx, cp, sizeOnly);
+			case '\"':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, '\"', sizeOnly);
+				break;
+			case '\\':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				break;
+			case '/':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, '/', sizeOnly);
+				break;
+			case '\b':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, 'b', sizeOnly);
+				break;
+			case '\f':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, 'f', sizeOnly);
+				break;
+			case '\n':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, 'n', sizeOnly);
+				break;
+			case '\r':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, 'r', sizeOnly);
+				break;
+			case '\t':
+				EmitCodePoint(ctx, '\\', sizeOnly);
+				EmitCodePoint(ctx, 't', sizeOnly);
+				break;
+			default:
+				EmitCodePoint(ctx, cp, sizeOnly);
 		}
 
 		ptr++;
@@ -155,11 +155,11 @@ bool Json::IsWhiteSpace(uint8_t value)
 {
 	switch (value)
 	{
-	case ' ':
-	case '\r':
-	case '\n':
-	case '\t':
-		return true;
+		case ' ':
+		case '\r':
+		case '\n':
+		case '\t':
+			return true;
 	}
 	return false;
 }
@@ -168,13 +168,13 @@ bool Json::IsControl(uint8_t value)
 {
 	switch (value)
 	{
-	case '{':
-	case '}':
-	case '[':
-	case ']':
-	case ':':
-	case ',':
-		return true;
+		case '{':
+		case '}':
+		case '[':
+		case ']':
+		case ':':
+		case ',':
+			return true;
 	}
 	return false;
 }
@@ -297,16 +297,16 @@ bool Json::GetString(DeserializeContext* ctx, Token& token)
 			cp = FetchCodepoint(ctx);
 			switch (cp)
 			{
-			case '\"': cp = '\"'; break;
-			case '\\': cp = '\\'; break;
-			case '/': cp = '/'; break;
-			case 'b': cp = '\b'; break;
-			case 'f': cp = '\f'; break;
-			case 'n': cp = '\n'; break;
-			case 'r': cp = '\r'; break;
-			case 't': cp = '\t'; break;
-			case 'u': throw "uXXXX not supported";
-			default: throw "Invalid escape sequence";
+				case '\"': cp = '\"'; break;
+				case '\\': cp = '\\'; break;
+				case '/': cp = '/'; break;
+				case 'b': cp = '\b'; break;
+				case 'f': cp = '\f'; break;
+				case 'n': cp = '\n'; break;
+				case 'r': cp = '\r'; break;
+				case 't': cp = '\t'; break;
+				case 'u': throw "uXXXX not supported";
+				default: throw "Invalid escape sequence";
 			}
 		}
 
@@ -424,36 +424,36 @@ void Json::GetToken(Token& token, DeserializeContext* ctx)
 
 	switch (ctx->ptr[0])
 	{
-	case '{':
-		token.type = TokenType::ObjectStart;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
-	case '}':
-		token.type = TokenType::ObjectEnd;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
-	case '[':
-		token.type = TokenType::ArrayStart;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
-	case ']':
-		token.type = TokenType::ArrayEnd;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
-	case ':':
-		token.type = TokenType::Colon;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
-	case ',':
-		token.type = TokenType::Comma;
-		ctx->ptr++;
-		ctx->offset++;
-		return;
+		case '{':
+			token.type = TokenType::ObjectStart;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
+		case '}':
+			token.type = TokenType::ObjectEnd;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
+		case '[':
+			token.type = TokenType::ArrayStart;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
+		case ']':
+			token.type = TokenType::ArrayEnd;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
+		case ':':
+			token.type = TokenType::Colon;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
+		case ',':
+			token.type = TokenType::Comma;
+			ctx->ptr++;
+			ctx->offset++;
+			return;
 	}
 
 	// Try get literal
@@ -523,40 +523,40 @@ void Json::Value::DeserializeObject(DeserializeContext* ctx)
 
 		switch (token.type)
 		{
-		case TokenType::String:
+			case TokenType::String:
 
-			Json::GetToken(colon, ctx);
-			assert(colon.type == TokenType::Colon);
+				Json::GetToken(colon, ctx);
+				assert(colon.type == TokenType::Colon);
 
-			child = new Value(this);
-			children.push_back(child);
-			child->Deserialize(ctx, token.value.AsString);
+				child = new Value(this);
+				children.push_back(child);
+				child->Deserialize(ctx, token.value.AsString);
 
-			if (token.value.AsString != nullptr)
-			{
-				delete[] token.value.AsString;
-			}
+				if (token.value.AsString != nullptr)
+				{
+					delete[] token.value.AsString;
+				}
 
-			counter++;
+				counter++;
 
-			Json::GetToken(comma, ctx);
-			if (comma.type == TokenType::Comma)
-			{
+				Json::GetToken(comma, ctx);
+				if (comma.type == TokenType::Comma)
+				{
+					break;
+				}
+				else if (comma.type == TokenType::ObjectEnd)
+				{
+					return;
+				}
+				else
+				{
+					throw "Json Object Syntax Error";
+				}
+
 				break;
-			}
-			else if (comma.type == TokenType::ObjectEnd)
-			{
+
+			case TokenType::ObjectEnd:
 				return;
-			}
-			else
-			{
-				throw "Json Object Syntax Error";
-			}
-
-			break;
-
-		case TokenType::ObjectEnd:
-			return;
 		}
 	}
 }
@@ -608,14 +608,14 @@ void Json::Value::DeserializeArray(DeserializeContext* ctx)
 
 		switch (token.type)
 		{
-		case TokenType::Comma:
-			break;
+			case TokenType::Comma:
+				break;
 
-		case TokenType::ArrayEnd:
-			return;
+			case TokenType::ArrayEnd:
+				return;
 
-		default:
-			throw "Json Array Syntax Error";
+			default:
+				throw "Json Array Syntax Error";
 		}
 	}
 }
@@ -628,70 +628,70 @@ void Json::Value::Serialize(SerializeContext* ctx, int depth, bool sizeOnly)
 
 	switch (type)
 	{
-	case ValueType::Object:
-		Indent(ctx, depth, sizeOnly);
-		Json::EmitText(ctx, "{\r\n", sizeOnly);
+		case ValueType::Object:
+			Indent(ctx, depth, sizeOnly);
+			Json::EmitText(ctx, "{\r\n", sizeOnly);
 
-		for (auto it = children.begin(); it != children.end(); ++it)
-		{
-			if (it != children.begin())
+			for (auto it = children.begin(); it != children.end(); ++it)
 			{
-				Json::EmitText(ctx, ",\r\n", sizeOnly);
+				if (it != children.begin())
+				{
+					Json::EmitText(ctx, ",\r\n", sizeOnly);
+				}
+
+				Value* child = *it;
+
+				Indent(ctx, depth + 1, sizeOnly);
+				Json::EmitChar(ctx, '\"', sizeOnly);
+				Json::EmitText(ctx, child->name, sizeOnly);
+				Json::EmitChar(ctx, '\"', sizeOnly);
+				Json::EmitText(ctx, " : ", sizeOnly);
+
+				child->Serialize(ctx, depth + 1, sizeOnly);
 			}
 
-			Value* child = *it;
+			Indent(ctx, depth, sizeOnly);
+			Json::EmitText(ctx, "}\r\n", sizeOnly);
+			break;
+		case ValueType::Array:
+			Indent(ctx, depth, sizeOnly);
+			Json::EmitText(ctx, "[ ", sizeOnly);
 
-			Indent(ctx, depth + 1, sizeOnly);
-			Json::EmitChar(ctx, '\"', sizeOnly);
-			Json::EmitText(ctx, child->name, sizeOnly);
-			Json::EmitChar(ctx, '\"', sizeOnly);
-			Json::EmitText(ctx, " : ", sizeOnly);
-
-			child->Serialize(ctx, depth + 1, sizeOnly);
-		}
-
-		Indent(ctx, depth, sizeOnly);
-		Json::EmitText(ctx, "}\r\n", sizeOnly);
-		break;
-	case ValueType::Array:
-		Indent(ctx, depth, sizeOnly);
-		Json::EmitText(ctx, "[ ", sizeOnly);
-
-		for (auto it = children.begin(); it != children.end(); ++it)
-		{
-			if (it != children.begin())
+			for (auto it = children.begin(); it != children.end(); ++it)
 			{
-				Json::EmitText(ctx, ", ", sizeOnly);
+				if (it != children.begin())
+				{
+					Json::EmitText(ctx, ", ", sizeOnly);
+				}
+
+				Value* child = *it;
+				child->Serialize(ctx, depth + 1, sizeOnly);
 			}
 
-			Value* child = *it;
-			child->Serialize(ctx, depth + 1, sizeOnly);
-		}
-
-		Indent(ctx, depth, sizeOnly);
-		Json::EmitChar(ctx, ']', sizeOnly);
-		break;
-	case ValueType::Null:
-		Json::EmitText(ctx, "null", sizeOnly);
-		break;
-	case ValueType::Bool:
-		Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
-		break;
-	case ValueType::Int:
-		swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%I64u", value.AsInt);
-		EmitWcharString(ctx, temp, sizeOnly);
-		break;
-	case ValueType::Float:
-		swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%.4f", value.AsFloat);
-		EmitWcharString(ctx, temp, sizeOnly);
-		break;
-	case ValueType::String:
-		Json::EmitChar(ctx, '\"', sizeOnly);
-		EmitWcharString(ctx, value.AsString, sizeOnly);
-		Json::EmitChar(ctx, '\"', sizeOnly);
-		break;
-	default:
-		throw "Unknown ValueType";
+			Indent(ctx, depth, sizeOnly);
+			Json::EmitChar(ctx, ']', sizeOnly);
+			break;
+		case ValueType::Null:
+			Json::EmitText(ctx, "null", sizeOnly);
+			break;
+		case ValueType::Bool:
+			Json::EmitText(ctx, value.AsBool ? "true" : "false", sizeOnly);
+			break;
+		case ValueType::Int:
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%I64u", value.AsInt);
+			EmitWcharString(ctx, temp, sizeOnly);
+			break;
+		case ValueType::Float:
+			swprintf(temp, sizeof(temp) / sizeof(temp[0]) - 1, L"%.4f", value.AsFloat);
+			EmitWcharString(ctx, temp, sizeOnly);
+			break;
+		case ValueType::String:
+			Json::EmitChar(ctx, '\"', sizeOnly);
+			EmitWcharString(ctx, value.AsString, sizeOnly);
+			Json::EmitChar(ctx, '\"', sizeOnly);
+			break;
+		default:
+			throw "Unknown ValueType";
 	}
 }
 
@@ -705,48 +705,48 @@ void Json::Value::Deserialize(DeserializeContext* ctx, wchar_t* keyName)
 
 	switch (token.type)
 	{
-	case TokenType::ObjectStart:
-		DeserializeObject(ctx);
-		break;
-	case TokenType::ArrayStart:
-		DeserializeArray(ctx);
-		break;
+		case TokenType::ObjectStart:
+			DeserializeObject(ctx);
+			break;
+		case TokenType::ArrayStart:
+			DeserializeArray(ctx);
+			break;
 
-	case TokenType::String:
-		type = ValueType::String;
-		if (token.value.AsString != nullptr)
-		{
-			value.AsString = CloneStr(token.value.AsString);
-			delete[] token.value.AsString;
-		}
-		else
-		{
-			value.AsString = nullptr;
-		}
-		break;
-	case TokenType::Int:
-		type = ValueType::Int;
-		value.AsInt = token.value.AsInt;
-		break;
-	case TokenType::Float:
-		type = ValueType::Float;
-		value.AsFloat = token.value.AsFloat;
-		break;
-	case TokenType::True:
-		type = ValueType::Bool;
-		value.AsBool = true;
-		break;
-	case TokenType::False:
-		type = ValueType::Bool;
-		value.AsBool = false;
-		break;
-	case TokenType::Null:
-		type = ValueType::Null;
-		break;
+		case TokenType::String:
+			type = ValueType::String;
+			if (token.value.AsString != nullptr)
+			{
+				value.AsString = CloneStr(token.value.AsString);
+				delete[] token.value.AsString;
+			}
+			else
+			{
+				value.AsString = nullptr;
+			}
+			break;
+		case TokenType::Int:
+			type = ValueType::Int;
+			value.AsInt = token.value.AsInt;
+			break;
+		case TokenType::Float:
+			type = ValueType::Float;
+			value.AsFloat = token.value.AsFloat;
+			break;
+		case TokenType::True:
+			type = ValueType::Bool;
+			value.AsBool = true;
+			break;
+		case TokenType::False:
+			type = ValueType::Bool;
+			value.AsBool = false;
+			break;
+		case TokenType::Null:
+			type = ValueType::Null;
+			break;
 
-	default:
-		throw "Json Syntax Error";
-		break;
+		default:
+			throw "Json Syntax Error";
+			break;
 	}
 }
 
@@ -890,25 +890,25 @@ Json::Value* Json::Value::Add(Value* _parent, Value* other)
 	child->name = CloneName(other->name);
 	switch (other->type)
 	{
-	case ValueType::Array:
-	case ValueType::Object:
-		for (auto it = other->children.begin(); it != other->children.end(); ++it)
-		{
-			child->children.push_back(Add(child, *it));
-		}
-		break;
-	case ValueType::Bool:
-		child->value.AsBool = other->value.AsBool;
-		break;
-	case ValueType::Int:
-		child->value.AsInt = other->value.AsInt;
-		break;
-	case ValueType::Float:
-		child->value.AsFloat = other->value.AsFloat;
-		break;
-	case ValueType::String:
-		child->value.AsString = CloneStr(other->value.AsString);
-		break;
+		case ValueType::Array:
+		case ValueType::Object:
+			for (auto it = other->children.begin(); it != other->children.end(); ++it)
+			{
+				child->children.push_back(Add(child, *it));
+			}
+			break;
+		case ValueType::Bool:
+			child->value.AsBool = other->value.AsBool;
+			break;
+		case ValueType::Int:
+			child->value.AsInt = other->value.AsInt;
+			break;
+		case ValueType::Float:
+			child->value.AsFloat = other->value.AsFloat;
+			break;
+		case ValueType::String:
+			child->value.AsString = CloneStr(other->value.AsString);
+			break;
 	}
 	return child;
 }
@@ -950,33 +950,33 @@ Json::Value* Json::Value::Replace(Value* _parent, Value* other)
 
 	switch (other->type)
 	{
-	case ValueType::Array:
-	case ValueType::Object:
-		for (auto it = other->children.begin(); it != other->children.end(); ++it)
-		{
-			Value* sibling = Replace(child, *it);
-			if (sibling != nullptr)
+		case ValueType::Array:
+		case ValueType::Object:
+			for (auto it = other->children.begin(); it != other->children.end(); ++it)
 			{
-				child->children.push_back(sibling);
+				Value* sibling = Replace(child, *it);
+				if (sibling != nullptr)
+				{
+					child->children.push_back(sibling);
+				}
 			}
-		}
-		break;
-	case ValueType::Bool:
-		child->value.AsBool = other->value.AsBool;
-		break;
-	case ValueType::Int:
-		child->value.AsInt = other->value.AsInt;
-		break;
-	case ValueType::Float:
-		child->value.AsFloat = other->value.AsFloat;
-		break;
-	case ValueType::String:
-		if (child->value.AsString)
-		{
-			delete[] child->value.AsString;
-		}
-		child->value.AsString = CloneStr(other->value.AsString);
-		break;
+			break;
+		case ValueType::Bool:
+			child->value.AsBool = other->value.AsBool;
+			break;
+		case ValueType::Int:
+			child->value.AsInt = other->value.AsInt;
+			break;
+		case ValueType::Float:
+			child->value.AsFloat = other->value.AsFloat;
+			break;
+		case ValueType::String:
+			if (child->value.AsString)
+			{
+				delete[] child->value.AsString;
+			}
+			child->value.AsString = CloneStr(other->value.AsString);
+			break;
 	}
 
 	return newChild ? child : nullptr;

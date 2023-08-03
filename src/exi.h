@@ -45,26 +45,26 @@
 // EXI registers block
 struct EXIRegs
 {
-    volatile uint32_t         csr;            // communication register 
-    volatile uint32_t         madr;           // memory address (32 byte aligned)
-    volatile uint32_t         len;            // size (32 bytes aligned)
-    volatile uint32_t         cr;             // control register
-    volatile uint32_t         data;           // immediate data register
+	volatile uint32_t         csr;            // communication register 
+	volatile uint32_t         madr;           // memory address (32 byte aligned)
+	volatile uint32_t         len;            // size (32 bytes aligned)
+	volatile uint32_t         cr;             // control register
+	volatile uint32_t         data;           // immediate data register
 };
 
 // SRAM structure layout. see YAGCD for details.
 struct SRAM
 {
-    uint16_t     checkSum;
-    uint16_t     checkSumInv;
-    uint32_t     ead0;
-    uint32_t     ead1;
-    uint32_t     counterBias;
-    int8_t       displayOffsetH;
-    uint8_t      ntd;
-    uint8_t      language;
-    uint8_t      flags;
-    uint8_t      dummy[44];          // reserved for future        
+	uint16_t     checkSum;
+	uint16_t     checkSumInv;
+	uint32_t     ead0;
+	uint32_t     ead1;
+	uint32_t     counterBias;
+	int8_t       displayOffsetH;
+	uint8_t      ntd;
+	uint8_t      language;
+	uint8_t      flags;
+	uint8_t      dummy[44];          // reserved for future        
 };
 
 // bootrom encoded font sizes
@@ -80,25 +80,25 @@ struct SRAM
 // EXI state (registers and other data)
 struct EIControl
 {
-    // hardware state
-    EXIRegs     regs[3];        // exi registers
-    SRAM        sram;           // battery-backed memory (misc console settings)
-    uint8_t* ansiFont;       // bootrom font (loaded from file)
-    uint8_t* sjisFont;
-    uint32_t    rtcVal;         // last updated RTC value
-    uint32_t    ad16;           // trace step
-    char        uart[256];      // UART I/O buffer
-    uint32_t    upos;           // UART buffer position (if > 0, UART buffer not empty)
+	// hardware state
+	EXIRegs     regs[3];        // exi registers
+	SRAM        sram;           // battery-backed memory (misc console settings)
+	uint8_t* ansiFont;       // bootrom font (loaded from file)
+	uint8_t* sjisFont;
+	uint32_t    rtcVal;         // last updated RTC value
+	uint32_t    ad16;           // trace step
+	char        uart[256];      // UART I/O buffer
+	uint32_t    upos;           // UART buffer position (if > 0, UART buffer not empty)
 
-    // helper variables used for EXI transfers
-    int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
-    uint32_t    ad16_cmd;       // command for AD16
-    bool        firstImm;       // first imm write is always command
-    uint32_t    mxaddr;         // "address" inside MX chip for transfers
-    bool        uartNE;
+	// helper variables used for EXI transfers
+	int32_t     chan, sel;      // curent selected chan:device (sel=-1 no device)
+	uint32_t    ad16_cmd;       // command for AD16
+	bool        firstImm;       // first imm write is always command
+	uint32_t    mxaddr;         // "address" inside MX chip for transfers
+	bool        uartNE;
 
-    bool        log;            // allow log EXI activities
-    bool        osReport;       // allow UART debugger output (log not affecting this)
+	bool        log;            // allow log EXI activities
+	bool        osReport;       // allow UART debugger output (log not affecting this)
 };
 
 extern  EIControl exi;
