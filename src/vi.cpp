@@ -102,14 +102,14 @@ static void vi_set_timing()
 
     switch (vi.mode)
     {
-    case VI_NTSC_LIKE:
-        vi.one_frame = vi.one_second / 30;
-        vi.vcount = (vi.inter) ? VI_NTSC_INTER : VI_NTSC_NON_INTER;
-        break;
-    case VI_PAL_LIKE:
-        vi.one_frame = vi.one_second / 25;
-        vi.vcount = (vi.inter) ? VI_PAL_INTER : VI_PAL_NON_INTER;
-        break;
+        case VI_NTSC_LIKE:
+            vi.one_frame = vi.one_second / 30;
+            vi.vcount = (vi.inter) ? VI_NTSC_INTER : VI_NTSC_NON_INTER;
+            break;
+        case VI_PAL_LIKE:
+            vi.one_frame = vi.one_second / 25;
+            vi.vcount = (vi.inter) ? VI_PAL_INTER : VI_PAL_NON_INTER;
+            break;
     }
 }
 
@@ -171,34 +171,34 @@ static void vi_read16(uint32_t addr, uint32_t* reg)
 {
     switch (addr & 0x7f)
     {
-    case 0x02:      // display control
-        *reg = vi.disp_cr & ~1;
-        *reg |= vi.videoEncoderFuse & 1;
-        return;
-    case 0x1C:      // video buffer hi (TOP)
-        *reg = vi.tfbl >> 16;
-        return;
-    case 0x1E:      // video buffer low (TOP)
-        *reg = (uint16_t)vi.tfbl;
-        return;
-    case 0x24:      // video buffer hi (BOTTOM)
-        *reg = vi.bfbl >> 16;
-        return;
-    case 0x26:      // video buffer low (BOTTOM)
-        *reg = (uint16_t)vi.bfbl;
-        return;
-    case 0x2C:      // beam position hi
-        *reg = vi.pos >> 16;
-        return;
-    case 0x2E:      // beam position low
-        *reg = (uint16_t)vi.pos;
-        return;
-    case 0x30:      // int0 control hi
-        *reg = vi.int0 >> 16;
-        return;
-    case 0x32:      // int0 control low
-        *reg = (uint16_t)vi.int0;
-        return;
+        case 0x02:      // display control
+            *reg = vi.disp_cr & ~1;
+            *reg |= vi.videoEncoderFuse & 1;
+            return;
+        case 0x1C:      // video buffer hi (TOP)
+            *reg = vi.tfbl >> 16;
+            return;
+        case 0x1E:      // video buffer low (TOP)
+            *reg = (uint16_t)vi.tfbl;
+            return;
+        case 0x24:      // video buffer hi (BOTTOM)
+            *reg = vi.bfbl >> 16;
+            return;
+        case 0x26:      // video buffer low (BOTTOM)
+            *reg = (uint16_t)vi.bfbl;
+            return;
+        case 0x2C:      // beam position hi
+            *reg = vi.pos >> 16;
+            return;
+        case 0x2E:      // beam position low
+            *reg = (uint16_t)vi.pos;
+            return;
+        case 0x30:      // int0 control hi
+            *reg = vi.int0 >> 16;
+            return;
+        case 0x32:      // int0 control low
+            *reg = (uint16_t)vi.int0;
+            return;
     }
     *reg = 0;
 }
@@ -207,74 +207,74 @@ static void vi_write16(uint32_t addr, uint32_t data)
 {
     switch (addr & 0x7f)
     {
-    case 0x02:      // display control
-        vi.disp_cr = (uint16_t)data;
-        vi_set_timing();
-        return;
-    case 0x1C:      // video buffer hi (TOP)
-        vi.tfbl &= 0x0000ffff;
-        vi.tfbl |= data << 16;
-        if (vi.log)
-        {
-            Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
-        }
-        vi.tfbl &= 0xffffff;
-        if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-        else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
-        return;
-    case 0x1E:      // video buffer low (TOP)
-        vi.tfbl &= 0xffff0000;
-        vi.tfbl |= (uint16_t)data;
-        if (vi.log)
-        {
-            Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
-        }
-        vi.tfbl &= 0xffffff;
-        if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-        else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
-        return;
-    case 0x24:      // video buffer hi (BOTTOM)
-        vi.bfbl &= 0x0000ffff;
-        vi.bfbl |= data << 16;
-        vi.bfbl &= 0xffffff;
-        if (vi.log)
-        {
-            Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
-        }
-        //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
-        //else vi.xfbbuf = &RAM[vi.bfbl];
-        return;
-    case 0x26:      // video buffer low (BOTTOM)
-        vi.bfbl &= 0xffff0000;
-        vi.bfbl |= (uint16_t)data;
-        vi.bfbl &= 0xffffff;
-        if (vi.log)
-        {
-            Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
-        }
-        //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
-        //else vi.xfbbuf = &RAM[vi.bfbl];
-        return;
-    case 0x2C:      // beam position hi
-        vi.pos &= 0x0000ffff;
-        vi.pos |= data << 16;
-        return;
-    case 0x2E:      // beam position low
-        vi.pos &= 0xffff0000;
-        vi.pos |= (uint16_t)data;
-        return;
-    case 0x30:      // int0 control hi
-        vi.int0 &= 0x0000ffff;
-        vi.int0 |= data << 16;
-        if ((vi.int0 & VI_INT_INT) == 0)
-        {
-            PIClearInt(PI_INTERRUPT_VI);
-        }
-        return;
-    case 0x32:      // int0 control low
-        vi.int0 &= 0xffff0000;
-        vi.int0 |= (uint16_t)data;
-        return;
+        case 0x02:      // display control
+            vi.disp_cr = (uint16_t)data;
+            vi_set_timing();
+            return;
+        case 0x1C:      // video buffer hi (TOP)
+            vi.tfbl &= 0x0000ffff;
+            vi.tfbl |= data << 16;
+            if (vi.log)
+            {
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            }
+            vi.tfbl &= 0xffffff;
+            if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
+            return;
+        case 0x1E:      // video buffer low (TOP)
+            vi.tfbl &= 0xffff0000;
+            vi.tfbl |= (uint16_t)data;
+            if (vi.log)
+            {
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (vi.tfbl >> 24) & 0xf);
+            }
+            vi.tfbl &= 0xffffff;
+            if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
+            return;
+        case 0x24:      // video buffer hi (BOTTOM)
+            vi.bfbl &= 0x0000ffff;
+            vi.bfbl |= data << 16;
+            vi.bfbl &= 0xffffff;
+            if (vi.log)
+            {
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
+            //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
+            //else vi.xfbbuf = &RAM[vi.bfbl];
+            return;
+        case 0x26:      // video buffer low (BOTTOM)
+            vi.bfbl &= 0xffff0000;
+            vi.bfbl |= (uint16_t)data;
+            vi.bfbl &= 0xffffff;
+            if (vi.log)
+            {
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
+            //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
+            //else vi.xfbbuf = &RAM[vi.bfbl];
+            return;
+        case 0x2C:      // beam position hi
+            vi.pos &= 0x0000ffff;
+            vi.pos |= data << 16;
+            return;
+        case 0x2E:      // beam position low
+            vi.pos &= 0xffff0000;
+            vi.pos |= (uint16_t)data;
+            return;
+        case 0x30:      // int0 control hi
+            vi.int0 &= 0x0000ffff;
+            vi.int0 |= data << 16;
+            if ((vi.int0 & VI_INT_INT) == 0)
+            {
+                PIClearInt(PI_INTERRUPT_VI);
+            }
+            return;
+        case 0x32:      // int0 control low
+            vi.int0 &= 0xffff0000;
+            vi.int0 |= (uint16_t)data;
+            return;
     }
 }
 
@@ -282,22 +282,22 @@ static void vi_read32(uint32_t addr, uint32_t* reg)
 {
     switch (addr & 0x7f)
     {
-    case 0x00:      // display control
-        *reg = (uint32_t)(vi.disp_cr & ~1);
-        *reg |= vi.videoEncoderFuse & 1;
-        return;
-    case 0x1C:      // video buffer (TOP)
-        *reg = vi.tfbl;
-        return;
-    case 0x24:      // video buffer (BOTTOM)
-        *reg = vi.bfbl;
-        return;
-    case 0x2C:      // beam position
-        *reg = vi.pos;
-        return;
-    case 0x30:      // int0 control
-        *reg = vi.int0;
-        return;
+        case 0x00:      // display control
+            *reg = (uint32_t)(vi.disp_cr & ~1);
+            *reg |= vi.videoEncoderFuse & 1;
+            return;
+        case 0x1C:      // video buffer (TOP)
+            *reg = vi.tfbl;
+            return;
+        case 0x24:      // video buffer (BOTTOM)
+            *reg = vi.bfbl;
+            return;
+        case 0x2C:      // beam position
+            *reg = vi.pos;
+            return;
+        case 0x30:      // int0 control
+            *reg = vi.int0;
+            return;
     }
     *reg = 0;
 }
@@ -306,38 +306,38 @@ static void vi_write32(uint32_t addr, uint32_t data)
 {
     switch (addr & 0x7f)
     {
-    case 0x00:      // display control
-        vi.disp_cr = (uint16_t)data;
-        vi_set_timing();
-        return;
-    case 0x1C:      // video buffer (TOP)
-        vi.tfbl = data & 0xffffff;
-        if (vi.log)
-        {
-            Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
-        }
-        if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
-        else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
-        return;
-    case 0x24:      // video buffer (BOTTOM)
-        vi.bfbl = data & 0xffffff;
-        if (vi.log)
-        {
-            Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
-        }
-        //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
-        //else vi.xfbbuf = &RAM[vi.bfbl];
-        return;
-    case 0x2C:      // beam position
-        vi.pos = data;
-        return;
-    case 0x30:      // int0 control
-        vi.int0 = data;
-        if ((vi.int0 & VI_INT_INT) == 0)
-        {
-            PIClearInt(PI_INTERRUPT_VI);
-        }
-        return;
+        case 0x00:      // display control
+            vi.disp_cr = (uint16_t)data;
+            vi_set_timing();
+            return;
+        case 0x1C:      // video buffer (TOP)
+            vi.tfbl = data & 0xffffff;
+            if (vi.log)
+            {
+                Report(Channel::VI, "TFBL set to %08X (xof=%i)\n", vi.tfbl, (data >> 24) & 0xf);
+            }
+            if (vi.tfbl >= mi.ramSize) vi.xfbbuf = NULL;
+            else vi.xfbbuf = &mi.ram[vi.tfbl & RAMMASK];
+            return;
+        case 0x24:      // video buffer (BOTTOM)
+            vi.bfbl = data & 0xffffff;
+            if (vi.log)
+            {
+                Report(Channel::VI, "BFBL set to %08X\n", vi.bfbl);
+            }
+            //if(vi.bfbl >= RAMSIZE) vi.xfbbuf = NULL;
+            //else vi.xfbbuf = &RAM[vi.bfbl];
+            return;
+        case 0x2C:      // beam position
+            vi.pos = data;
+            return;
+        case 0x30:      // int0 control
+            vi.int0 = data;
+            if ((vi.int0 & VI_INT_INT) == 0)
+            {
+                PIClearInt(PI_INTERRUPT_VI);
+            }
+            return;
     }
 }
 

@@ -345,48 +345,48 @@ namespace JDI
 
 		switch (value->type)
 		{
-		case Json::ValueType::Object:
-			Report(Channel::Norm, "%sObject %s: ", indent,
-				value->name ? value->name : "");
-			for (auto it = value->children.begin(); it != value->children.end(); ++it)
-			{
-				Json::Value* child = *it;
-				Dump(child, depth + 1);
-			}
-			break;
-		case Json::ValueType::Array:
-			Report(Channel::Norm, "%sArray %s: ", indent,
-				value->name ? value->name : "");
-			for (auto it = value->children.begin(); it != value->children.end(); ++it)
-			{
-				Json::Value* child = *it;
-				Dump(child, depth + 1);
-			}
-			break;
+			case Json::ValueType::Object:
+				Report(Channel::Norm, "%sObject %s: ", indent,
+					value->name ? value->name : "");
+				for (auto it = value->children.begin(); it != value->children.end(); ++it)
+				{
+					Json::Value* child = *it;
+					Dump(child, depth + 1);
+				}
+				break;
+			case Json::ValueType::Array:
+				Report(Channel::Norm, "%sArray %s: ", indent,
+					value->name ? value->name : "");
+				for (auto it = value->children.begin(); it != value->children.end(); ++it)
+				{
+					Json::Value* child = *it;
+					Dump(child, depth + 1);
+				}
+				break;
 
-		case Json::ValueType::Bool:
-			Report(Channel::Norm, "%s%s: Bool %s", indent,
-				value->name ? value->name : "",
-				value->value.AsBool ? "True" : "False");
-			break;
-		case Json::ValueType::Null:
-			Report(Channel::Norm, "%s%s: Null", indent,
-				value->name ? value->name : "");
-			break;
+			case Json::ValueType::Bool:
+				Report(Channel::Norm, "%s%s: Bool %s", indent,
+					value->name ? value->name : "",
+					value->value.AsBool ? "True" : "False");
+				break;
+			case Json::ValueType::Null:
+				Report(Channel::Norm, "%s%s: Null", indent,
+					value->name ? value->name : "");
+				break;
 
-		case Json::ValueType::Int:
-			Report(Channel::Norm, "%s%s: Int: %I64u", indent,
-				value->name ? value->name : "", value->value.AsInt);
-			break;
-		case Json::ValueType::Float:
-			Report(Channel::Norm, "%s%s: Float: %.4f", indent,
-				value->name ? value->name : "", value->value.AsFloat);
-			break;
+			case Json::ValueType::Int:
+				Report(Channel::Norm, "%s%s: Int: %I64u", indent,
+					value->name ? value->name : "", value->value.AsInt);
+				break;
+			case Json::ValueType::Float:
+				Report(Channel::Norm, "%s%s: Float: %.4f", indent,
+					value->name ? value->name : "", value->value.AsFloat);
+				break;
 
-		case Json::ValueType::String:
-			Report(Channel::Norm, "%s%s: String: %s", indent,
-				value->name ? value->name : "", Util::WstringToString(value->value.AsString).c_str());
-			break;
+			case Json::ValueType::String:
+				Report(Channel::Norm, "%s%s: String: %s", indent,
+					value->name ? value->name : "", Util::WstringToString(value->value.AsString).c_str());
+				break;
 		}
 	}
 

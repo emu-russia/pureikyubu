@@ -462,27 +462,27 @@ static uint32_t MAPFuncChecksum (uint32_t offsetStart, uint32_t offsetEnd)
         op3 = 0;
         auxop = op >> 26;
         switch (auxop) {
-        case 4:
-            op2 = opcode & 0x0000003F;
-            switch ( op2 ) {
-            case 0:
-            case 8:
-            case 16:
-            case 21:
-            case 22:
-                op3 = opcode & 0x000007C0;
-            }
-            break;
-        case 19:
-        case 31: 
-        case 63: 
-            op2 = opcode & 0x000007FF;
-            break;
-        case 59:
-            op2 = opcode & 0x0000003F;
-            if ( op2 < 16 ) 
-                op3 = opcode & 0x000007C0;
-            break;
+            case 4:
+                op2 = opcode & 0x0000003F;
+                switch ( op2 ) {
+                case 0:
+                case 8:
+                case 16:
+                case 21:
+                case 22:
+                    op3 = opcode & 0x000007C0;
+                }
+                break;
+            case 19:
+            case 31: 
+            case 63: 
+                op2 = opcode & 0x000007FF;
+                break;
+            case 59:
+                op2 = opcode & 0x0000003F;
+                if ( op2 < 16 ) 
+                    op3 = opcode & 0x000007C0;
+                break;
         }
         // Checksum only uses opcode, not opcode data, because opcode data changes 
         // in all compilations, but opcodes dont!
@@ -609,26 +609,26 @@ void MAPAddRange (uint32_t offsetStart, uint32_t offsetEnd)
         op = opcode >> 26, op2 = 0;
 
         switch (op) {
-        case 18: //bl and bla
-            switch(opcode & 3) {
-            case 1:
-            case 3:
-                target = opcode & 0x03fffffc;
-                if(target & 0x02000000) target |= 0xfc000000;
-                if ((opcode & 3) == 1) target += offsetStart;
-                MAPAddMark(target, false);
+            case 18: //bl and bla
+                switch(opcode & 3) {
+                case 1:
+                case 3:
+                    target = opcode & 0x03fffffc;
+                    if(target & 0x02000000) target |= 0xfc000000;
+                    if ((opcode & 3) == 1) target += offsetStart;
+                    MAPAddMark(target, false);
+                    break;
+                }
                 break;
-            }
-            break;
-        case 19: //OP2
-            op2 = opcode & 0x7ff;
-            switch(op2) {
-            case 32:
-            case 33:
-            case 100:
-                MAPAddMark (offsetStart, true);
-            }
-            break;
+            case 19: //OP2
+                op2 = opcode & 0x7ff;
+                switch(op2) {
+                case 32:
+                case 33:
+                case 100:
+                    MAPAddMark (offsetStart, true);
+                }
+                break;
         }
         offsetStart += 4;
     }

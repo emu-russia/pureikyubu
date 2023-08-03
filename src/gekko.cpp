@@ -331,7 +331,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadByte(pa, reg);
+		PIReadByte(pa, reg);
 	}
 
 	void GekkoCore::WriteByte(uint32_t addr, uint32_t data)
@@ -377,7 +377,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteByte(pa, data);
+		PIWriteByte(pa, data);
 	}
 
 	void GekkoCore::ReadHalf(uint32_t addr, uint32_t* reg)
@@ -408,7 +408,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadHalf(pa, reg);
+		PIReadHalf(pa, reg);
 	}
 
 	void GekkoCore::WriteHalf(uint32_t addr, uint32_t data)
@@ -454,7 +454,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteHalf(pa, data);
+		PIWriteHalf(pa, data);
 	}
 
 	void GekkoCore::ReadWord(uint32_t addr, uint32_t* reg)
@@ -485,7 +485,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_ReadWord(pa, reg);
+		PIReadWord(pa, reg);
 	}
 
 	void GekkoCore::WriteWord(uint32_t addr, uint32_t data)
@@ -531,7 +531,7 @@ namespace Gekko
 			return;
 		}
 
-		SixtyBus_WriteWord(pa, data);
+		PIWriteWord(pa, data);
 	}
 
 	void GekkoCore::ReadDouble(uint32_t addr, uint64_t* reg)
@@ -564,7 +564,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		SixtyBus_ReadDouble(pa, reg);
+		PIReadDouble(pa, reg);
 	}
 
 	void GekkoCore::WriteDouble(uint32_t addr, uint64_t* data)
@@ -612,7 +612,7 @@ namespace Gekko
 
 		// It is suspected that this type of single-beat transaction is not supported by Flipper PI.
 
-		SixtyBus_WriteDouble(pa, data);
+		PIWriteDouble(pa, data);
 	}
 
 }
@@ -1120,7 +1120,7 @@ namespace Gekko
 			core->Report("Cache::CastIn: 0x%08X\n", pa & ~0x1f);
 		}
 
-		SixtyBus_ReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::CastOut(uint32_t pa)
@@ -1135,7 +1135,7 @@ namespace Gekko
 			core->Report("Cache::CastOut: 0x%08X\n", pa & ~0x1f);
 		}
 
-		SixtyBus_WriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
+		PIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
 	}
 
 	void Cache::ReadByte(uint32_t addr, uint32_t* reg)
@@ -1490,7 +1490,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				SixtyBus_ReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIReadBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}
@@ -1505,7 +1505,7 @@ namespace Gekko
 
 			for (size_t i = 0; i < bursts; i++)
 			{
-				SixtyBus_WriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
+				PIWriteBurst(memaddr, &LockedCache[lcaddr & 0x3fff]);
 				memaddr += 32;
 				lcaddr += 32;
 			}
@@ -1618,7 +1618,7 @@ namespace Gekko
 				core->Report("Burst gather buffer. Bytes left: %zi\n", GatherSize());
 			}
 
-			SixtyBus_WriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
+			PIWriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
 		}
 	}
 
@@ -1855,8 +1855,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			SixtyBus_ReadWord(primaryPteAddr, &pte[0]);
-			SixtyBus_ReadWord(primaryPteAddr + 4, &pte[1]);
+			PIReadWord(primaryPteAddr, &pte[0]);
+			PIReadWord(primaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1897,7 +1897,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;     // Changed
 				}
-				SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
+				PIWriteWord(primaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -1929,7 +1929,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				SixtyBus_WriteWord(primaryPteAddr + 4, pte[1]);
+				PIWriteWord(primaryPteAddr + 4, pte[1]);
 			}
 
 			primaryPteAddr += 8;
@@ -1943,8 +1943,8 @@ namespace Gekko
 
 			uint32_t pte[2];
 
-			SixtyBus_ReadWord(secondaryPteAddr, &pte[0]);
-			SixtyBus_ReadWord(secondaryPteAddr + 4, &pte[1]);
+			PIReadWord(secondaryPteAddr, &pte[0]);
+			PIReadWord(secondaryPteAddr + 4, &pte[1]);
 
 			// Check Hash Bit
 
@@ -1986,7 +1986,7 @@ namespace Gekko
 				{
 					pte[1] |= 0x80;
 				}
-				SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
+				PIWriteWord(secondaryPteAddr + 4, pte[1]);
 
 				if (protectViolation)
 				{
@@ -2018,7 +2018,7 @@ namespace Gekko
 			{
 				// Referenced
 				pte[1] |= 0x100;
-				SixtyBus_WriteWord(secondaryPteAddr + 4, pte[1]);
+				PIWriteWord(secondaryPteAddr + 4, pte[1]);
 			}
 
 			secondaryPteAddr += 8;

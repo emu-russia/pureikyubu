@@ -261,210 +261,210 @@ void MXTransfer()
     // read or write ?
     switch (EXI_CR_RW(exi.regs[0].cr))
     {
-    case 0:                 // read
-    {
-        if (dma)             // dma
+        case 0:                 // read
         {
-            ofs = exi.mxaddr & 0x7fffffff;
-            if (ofs == 0x20000100)
+            if (dma)             // dma
             {
-                if (exi.regs[0].len > sizeof(SRAM))
+                ofs = exi.mxaddr & 0x7fffffff;
+                if (ofs == 0x20000100)
                 {
-                    Report(Channel::EXI, "wrong input buffer size for SRAM read dma\n");
+                    if (exi.regs[0].len > sizeof(SRAM))
+                    {
+                        Report(Channel::EXI, "wrong input buffer size for SRAM read dma\n");
+                        return;
+                    }
+                    memcpy(&mi.ram[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
                     return;
                 }
-                memcpy(&mi.ram[exi.regs[0].madr & RAMMASK], &exi.sram, sizeof(SRAM));
-                return;
-            }
-            if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
-            {
-                if (mi.BootromPresent)
+                if ((ofs >= 0x001fcf00) && (ofs < (0x001fcf00 + ANSI_SIZE)))
+                {
+                    if (mi.BootromPresent)
+                    {
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &mi.bootrom[ofs],
+                            exi.regs[0].len
+                        );
+                    }
+                    else
+                    {
+                        assert(exi.ansiFont);
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &exi.ansiFont[ofs - 0x001fcf00],
+                            exi.regs[0].len
+                        );
+                    }
+                    if (exi.log) Report(Channel::EXI, "ansi font copy to %08X (%i)\n",
+                        exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+                    return;
+                }
+                if ((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
+                {
+                    if (mi.BootromPresent)
+                    {
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &mi.bootrom[ofs],
+                            exi.regs[0].len
+                        );
+                    }
+                    else
+                    {
+                        assert(exi.sjisFont);
+                        memcpy(
+                            &mi.ram[exi.regs[0].madr & RAMMASK],
+                            &exi.sjisFont[ofs - 0x001aff00],
+                            exi.regs[0].len
+                        );
+                    }
+                    if (exi.log) Report(Channel::EXI, "sjis font copy to %08X (%i)\n",
+                        exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+                    return;
+                }
+
+                // Bootrom reads
+
+                if (ofs < mi.bootromSize && mi.BootromPresent)
                 {
                     memcpy(
                         &mi.ram[exi.regs[0].madr & RAMMASK],
                         &mi.bootrom[ofs],
                         exi.regs[0].len
                     );
+                    if (exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
+                        exi.regs[0].madr | 0x80000000, exi.regs[0].len);
+                    return;
+                }
+
+                if (ofs)
+                {
+                    if (exi.log) Report(Channel::EXI, "unknown MX chip dma read\n");
+                }
+            }
+            else                // immediate access
+            {
+                ofs = exi.mxaddr & 0x7fffffff;
+                if (ofs == 0x20000000)
+                {
+                    RTCUpdate();
+                    exi.regs[0].data = exi.rtcVal;
+                    return;
+                }
+                else if ((ofs >= 0x20000100) && (ofs < (0x20000100 + (sizeof(SRAM) << 6))))
+                {
+                    int len = EXI_CR_TLEN(exi.regs[0].cr);
+                    uint8_t* sofs = (uint8_t*)&exi.sram + ((ofs >> 6) & 0xff) - 4;
+                    uint8_t* rofs = (uint8_t*)&exi.regs[0].data;
+                    switch (len)
+                    {
+                    case 0:         // byte
+                        rofs[0] =
+                            rofs[1] =
+                            rofs[2] = 0;
+                        rofs[3] = sofs[0];
+                        exi.mxaddr += 1 << 6;
+                        break;
+                    case 1:         // hword
+                        rofs[0] =
+                            rofs[1] = 0;
+                        rofs[2] = sofs[1];
+                        rofs[3] = sofs[0];
+                        exi.mxaddr += 2 << 6;
+                        break;
+                    case 2:         // triplet
+                        rofs[0] = 0;
+                        rofs[1] = sofs[2];
+                        rofs[2] = sofs[1];
+                        rofs[3] = sofs[0];
+                        exi.mxaddr += 3 << 6;
+                        break;
+                    case 3:         // word
+                        rofs[0] = sofs[3];
+                        rofs[1] = sofs[2];
+                        rofs[2] = sofs[1];
+                        rofs[3] = sofs[0];
+                        exi.mxaddr += 4 << 6;
+                        break;
+                    }
+                    if (exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
+                    return;
+                }
+                else if (ofs == 0x20010000)
+                {
+                    exi.regs[0].data = 0x03000000;
+                    return;
                 }
                 else
                 {
-                    assert(exi.ansiFont);
-                    memcpy(
-                        &mi.ram[exi.regs[0].madr & RAMMASK],
-                        &exi.ansiFont[ofs - 0x001fcf00],
-                        exi.regs[0].len
-                    );
+                    Halt("EXI: Unknown MX chip read immediate from %08X", ofs);
                 }
-                if (exi.log) Report(Channel::EXI, "ansi font copy to %08X (%i)\n",
-                    exi.regs[0].madr | 0x80000000, exi.regs[0].len);
-                return;
             }
-            if ((ofs >= 0x001aff00) && (ofs < (0x001aff00 + SJIS_SIZE)))
-            {
-                if (mi.BootromPresent)
-                {
-                    memcpy(
-                        &mi.ram[exi.regs[0].madr & RAMMASK],
-                        &mi.bootrom[ofs],
-                        exi.regs[0].len
-                    );
-                }
-                else
-                {
-                    assert(exi.sjisFont);
-                    memcpy(
-                        &mi.ram[exi.regs[0].madr & RAMMASK],
-                        &exi.sjisFont[ofs - 0x001aff00],
-                        exi.regs[0].len
-                    );
-                }
-                if (exi.log) Report(Channel::EXI, "sjis font copy to %08X (%i)\n",
-                    exi.regs[0].madr | 0x80000000, exi.regs[0].len);
-                return;
-            }
-
-            // Bootrom reads
-
-            if (ofs < mi.bootromSize && mi.BootromPresent)
-            {
-                memcpy(
-                    &mi.ram[exi.regs[0].madr & RAMMASK],
-                    &mi.bootrom[ofs],
-                    exi.regs[0].len
-                );
-                if (exi.log) Report(Channel::EXI, "bootrom copy to %08X (%i)\n",
-                    exi.regs[0].madr | 0x80000000, exi.regs[0].len);
-                return;
-            }
-
-            if (ofs)
-            {
-                if (exi.log) Report(Channel::EXI, "unknown MX chip dma read\n");
-            }
-        }
-        else                // immediate access
-        {
-            ofs = exi.mxaddr & 0x7fffffff;
-            if (ofs == 0x20000000)
-            {
-                RTCUpdate();
-                exi.regs[0].data = exi.rtcVal;
-                return;
-            }
-            else if ((ofs >= 0x20000100) && (ofs < (0x20000100 + (sizeof(SRAM) << 6))))
-            {
-                int len = EXI_CR_TLEN(exi.regs[0].cr);
-                uint8_t* sofs = (uint8_t*)&exi.sram + ((ofs >> 6) & 0xff) - 4;
-                uint8_t* rofs = (uint8_t*)&exi.regs[0].data;
-                switch (len)
-                {
-                case 0:         // byte
-                    rofs[0] =
-                        rofs[1] =
-                        rofs[2] = 0;
-                    rofs[3] = sofs[0];
-                    exi.mxaddr += 1 << 6;
-                    break;
-                case 1:         // hword
-                    rofs[0] =
-                        rofs[1] = 0;
-                    rofs[2] = sofs[1];
-                    rofs[3] = sofs[0];
-                    exi.mxaddr += 2 << 6;
-                    break;
-                case 2:         // triplet
-                    rofs[0] = 0;
-                    rofs[1] = sofs[2];
-                    rofs[2] = sofs[1];
-                    rofs[3] = sofs[0];
-                    exi.mxaddr += 3 << 6;
-                    break;
-                case 3:         // word
-                    rofs[0] = sofs[3];
-                    rofs[1] = sofs[2];
-                    rofs[2] = sofs[1];
-                    rofs[3] = sofs[0];
-                    exi.mxaddr += 4 << 6;
-                    break;
-                }
-                if (exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
-                return;
-            }
-            else if (ofs == 0x20010000)
-            {
-                exi.regs[0].data = 0x03000000;
-                return;
-            }
-            else
-            {
-                Halt("EXI: Unknown MX chip read immediate from %08X", ofs);
-            }
-        }
-        return;
-    }
-
-    case 1:                 // write
-    {
-        if (dma)             // dma
-        {
-            Halt("EXI: unknown MX chip write dma\n");
             return;
         }
-        else                // immediate access
+
+        case 1:                 // write
         {
-            if (exi.firstImm)
+            if (dma)             // dma
             {
-                exi.firstImm = false;
-                exi.mxaddr = exi.regs[0].data;
-                if (exi.mxaddr < 0x20000000) exi.mxaddr >>= 6;
+                Halt("EXI: unknown MX chip write dma\n");
+                return;
             }
-            else
+            else                // immediate access
             {
-                uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
-                uint32_t data = _BYTESWAP_UINT32(exi.regs[0].data);
-
-                ofs = exi.mxaddr & 0x7fffffff;
-                if ((ofs >= 0x20000100) && (ofs <= 0x20001000))
+                if (exi.firstImm)
                 {
-                    // SRAM immediate writes
-                    uint32_t pos = (((ofs - 256) >> 6) & 0x3F);
-
-                    if (exi.log) Report(Channel::EXI, "SRAM write immediate pos %d data %08x bytes %08x\n",
-                        pos, exi.regs[0].data, bytes);
-
-                    memcpy(((uint8_t*)&exi.sram) + pos, &data, bytes);
-                    exi.mxaddr += (bytes << 6);
+                    exi.firstImm = false;
+                    exi.mxaddr = exi.regs[0].data;
+                    if (exi.mxaddr < 0x20000000) exi.mxaddr >>= 6;
                 }
-                else if ((ofs >= 0x20010000) && (ofs < 0x20010100))
+                else
                 {
-                    // UART I/O
-                    uint8_t* buf = (uint8_t*)&data;
-                    for (uint32_t n = 0; n < bytes; n++)
-                    {
-                        exi.uart[exi.upos++] = buf[n];
+                    uint32_t bytes = (EXI_CR_TLEN(exi.regs[0].cr) + 1);
+                    uint32_t data = _BYTESWAP_UINT32(exi.regs[0].data);
 
-                        // output UART buffer after de-select
-                        if (buf[n] == 13)
+                    ofs = exi.mxaddr & 0x7fffffff;
+                    if ((ofs >= 0x20000100) && (ofs <= 0x20001000))
+                    {
+                        // SRAM immediate writes
+                        uint32_t pos = (((ofs - 256) >> 6) & 0x3F);
+
+                        if (exi.log) Report(Channel::EXI, "SRAM write immediate pos %d data %08x bytes %08x\n",
+                            pos, exi.regs[0].data, bytes);
+
+                        memcpy(((uint8_t*)&exi.sram) + pos, &data, bytes);
+                        exi.mxaddr += (bytes << 6);
+                    }
+                    else if ((ofs >= 0x20010000) && (ofs < 0x20010100))
+                    {
+                        // UART I/O
+                        uint8_t* buf = (uint8_t*)&data;
+                        for (uint32_t n = 0; n < bytes; n++)
                         {
-                            exi.uart[exi.upos] = 0;
-                            exi.upos = 0;
-                            if (exi.osReport) Report(Channel::Info, "%s", uartf(exi.uart));
+                            exi.uart[exi.upos++] = buf[n];
+
+                            // output UART buffer after de-select
+                            if (buf[n] == 13)
+                            {
+                                exi.uart[exi.upos] = 0;
+                                exi.upos = 0;
+                                if (exi.osReport) Report(Channel::Info, "%s", uartf(exi.uart));
+                            }
                         }
                     }
+                    else Report(Channel::EXI, "Unknown MX chip write immediate to %08X", ofs);
                 }
-                else Report(Channel::EXI, "Unknown MX chip write immediate to %08X", ofs);
+            }
+            return;
+        }
+
+        default:
+        {
+            if (EXI_CR_RW(exi.regs[0].cr))
+            {
+                Report(Channel::EXI, "unknown EXI transfer mode for MX chip\n");
             }
         }
-        return;
-    }
-
-    default:
-    {
-        if (EXI_CR_RW(exi.regs[0].cr))
-        {
-            Report(Channel::EXI, "unknown EXI transfer mode for MX chip\n");
-        }
-    }
     }
 }
 
@@ -474,41 +474,41 @@ void ADTransfer()
     // read or write ?
     switch (EXI_CR_RW(exi.regs[2].cr))
     {
-    case 0:                 // read
-    {
-        if (exi.ad16_cmd == 0) exi.regs[2].data = 0x04120000;
-        else if (exi.ad16_cmd == 0xa2000000) exi.regs[2].data = exi.ad16 << 16;
-        else Report(Channel::EXI, "unknown AD16 command\n");
-        return;
-    }
-
-    case 1:                 // write
-    {
-        if (exi.firstImm)
+        case 0:                 // read
         {
-            exi.firstImm = false;
-            exi.ad16_cmd = exi.regs[2].data;
+            if (exi.ad16_cmd == 0) exi.regs[2].data = 0x04120000;
+            else if (exi.ad16_cmd == 0xa2000000) exi.regs[2].data = exi.ad16 << 16;
+            else Report(Channel::EXI, "unknown AD16 command\n");
+            return;
         }
-        else
+
+        case 1:                 // write
         {
-            if (exi.ad16_cmd != 0xa0000000)
+            if (exi.firstImm)
             {
-                Report(Channel::EXI, "unknown AD command (%08X)\n", exi.ad16_cmd);
-                return;
+                exi.firstImm = false;
+                exi.ad16_cmd = exi.regs[2].data;
             }
-            exi.ad16 = exi.regs[2].data >> 16;
-            if (exi.log) Report(Channel::EXI, "AD16 set to %04X\n", exi.ad16);
+            else
+            {
+                if (exi.ad16_cmd != 0xa0000000)
+                {
+                    Report(Channel::EXI, "unknown AD command (%08X)\n", exi.ad16_cmd);
+                    return;
+                }
+                exi.ad16 = exi.regs[2].data >> 16;
+                if (exi.log) Report(Channel::EXI, "AD16 set to %04X\n", exi.ad16);
+            }
+            return;
         }
-        return;
-    }
 
-    default:
-    {
-        if (EXI_CR_RW(exi.regs[2].cr))
+        default:
         {
-            Report(Channel::EXI, "unknown EXI transfer mode for AD16\n");
+            if (EXI_CR_RW(exi.regs[2].cr))
+            {
+                Report(Channel::EXI, "unknown EXI transfer mode for AD16\n");
+            }
         }
-    }
     }
 }
 

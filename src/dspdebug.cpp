@@ -509,25 +509,25 @@ namespace DSP
 
         switch ((DspRegister)reg)
         {
-        case DspRegister::pcs:
-            output->value.AsUint16 = Flipper::DSP->core->regs.pcs->top();
-            break;
+            case DspRegister::pcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pcs->top();
+                break;
 
-        case DspRegister::pss:
-            output->value.AsUint16 = Flipper::DSP->core->regs.pss->top();
-            break;
+            case DspRegister::pss:
+                output->value.AsUint16 = Flipper::DSP->core->regs.pss->top();
+                break;
 
-        case DspRegister::eas:
-            output->value.AsUint16 = Flipper::DSP->core->regs.eas->top();
-            break;
+            case DspRegister::eas:
+                output->value.AsUint16 = Flipper::DSP->core->regs.eas->top();
+                break;
 
-        case DspRegister::lcs:
-            output->value.AsUint16 = Flipper::DSP->core->regs.lcs->top();
-            break;
+            case DspRegister::lcs:
+                output->value.AsUint16 = Flipper::DSP->core->regs.lcs->top();
+                break;
 
-        default:
-            output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
-            break;
+            default:
+                output->value.AsUint16 = Flipper::DSP->core->MoveFromReg(reg);
+                break;
         }
 
         return output;

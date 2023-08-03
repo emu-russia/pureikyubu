@@ -4740,7 +4740,7 @@ namespace Gekko
 		}
 		else
 		{
-			SixtyBus_ReadWord(pa, &instr);
+			PIReadWord(pa, &instr);
 		}
 		// ISI
 		if (core->exception)
@@ -4790,7 +4790,7 @@ namespace Gekko
 		}
 		else
 		{
-			SixtyBus_ReadWord(pa, &instr);
+			PIReadWord(pa, &instr);
 		}
 
 		if (core->exception)

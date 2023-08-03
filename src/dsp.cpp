@@ -442,61 +442,61 @@ namespace DSP
 		{
 			switch (addr)
 			{
-			case (DspAddress)DspHardwareRegs::DSMAH:
-				return DmaRegs.mmemAddr.h;
-			case (DspAddress)DspHardwareRegs::DSMAL:
-				return DmaRegs.mmemAddr.l;
-			case (DspAddress)DspHardwareRegs::DSPA:
-				return DmaRegs.dspAddr;
-			case (DspAddress)DspHardwareRegs::DSCR:
-				return DmaRegs.control.bits;
-			case (DspAddress)DspHardwareRegs::DSBL:
-				return DmaRegs.blockSize;
+				case (DspAddress)DspHardwareRegs::DSMAH:
+					return DmaRegs.mmemAddr.h;
+				case (DspAddress)DspHardwareRegs::DSMAL:
+					return DmaRegs.mmemAddr.l;
+				case (DspAddress)DspHardwareRegs::DSPA:
+					return DmaRegs.dspAddr;
+				case (DspAddress)DspHardwareRegs::DSCR:
+					return DmaRegs.control.bits;
+				case (DspAddress)DspHardwareRegs::DSBL:
+					return DmaRegs.blockSize;
 
-			case (DspAddress)DspHardwareRegs::CMBH:
-				return CpuToDspReadHi(true);
-			case (DspAddress)DspHardwareRegs::CMBL:
-				return CpuToDspReadLo(true);
-			case (DspAddress)DspHardwareRegs::DMBH:
-				return DspToCpuReadHi(true);
-			case (DspAddress)DspHardwareRegs::DMBL:
-				return DspToCpuReadLo(true);
+				case (DspAddress)DspHardwareRegs::CMBH:
+					return CpuToDspReadHi(true);
+				case (DspAddress)DspHardwareRegs::CMBL:
+					return CpuToDspReadLo(true);
+				case (DspAddress)DspHardwareRegs::DMBH:
+					return DspToCpuReadHi(true);
+				case (DspAddress)DspHardwareRegs::DMBL:
+					return DspToCpuReadLo(true);
 
-			case (DspAddress)DspHardwareRegs::DIRQ:
-				return Flipper::DSPGetInterruptStatus() ? 1 : 0;
+				case (DspAddress)DspHardwareRegs::DIRQ:
+					return Flipper::DSPGetInterruptStatus() ? 1 : 0;
 
-			case (DspAddress)DspHardwareRegs::ACSAH:
-				return Accel.StartAddress.h;
-			case (DspAddress)DspHardwareRegs::ACSAL:
-				return Accel.StartAddress.l;
-			case (DspAddress)DspHardwareRegs::ACEAH:
-				return Accel.EndAddress.h;
-			case (DspAddress)DspHardwareRegs::ACEAL:
-				return Accel.EndAddress.l;
-			case (DspAddress)DspHardwareRegs::ACCAH:
-				return Accel.CurrAddress.h;
-			case (DspAddress)DspHardwareRegs::ACCAL:
-				return Accel.CurrAddress.l;
+				case (DspAddress)DspHardwareRegs::ACSAH:
+					return Accel.StartAddress.h;
+				case (DspAddress)DspHardwareRegs::ACSAL:
+					return Accel.StartAddress.l;
+				case (DspAddress)DspHardwareRegs::ACEAH:
+					return Accel.EndAddress.h;
+				case (DspAddress)DspHardwareRegs::ACEAL:
+					return Accel.EndAddress.l;
+				case (DspAddress)DspHardwareRegs::ACCAH:
+					return Accel.CurrAddress.h;
+				case (DspAddress)DspHardwareRegs::ACCAL:
+					return Accel.CurrAddress.l;
 
-			case (DspAddress)DspHardwareRegs::ACFMT:
-				return Accel.Fmt;
-			case (DspAddress)DspHardwareRegs::ACPDS:
-				return Accel.AdpcmPds;
-			case (DspAddress)DspHardwareRegs::ACYN1:
-				return Accel.AdpcmYn1;
-			case (DspAddress)DspHardwareRegs::ACYN2:
-				return Accel.AdpcmYn2;
-			case (DspAddress)DspHardwareRegs::ACGAN:
-				return Accel.AdpcmGan;
+				case (DspAddress)DspHardwareRegs::ACFMT:
+					return Accel.Fmt;
+				case (DspAddress)DspHardwareRegs::ACPDS:
+					return Accel.AdpcmPds;
+				case (DspAddress)DspHardwareRegs::ACYN1:
+					return Accel.AdpcmYn1;
+				case (DspAddress)DspHardwareRegs::ACYN2:
+					return Accel.AdpcmYn2;
+				case (DspAddress)DspHardwareRegs::ACGAN:
+					return Accel.AdpcmGan;
 
-			case (DspAddress)DspHardwareRegs::ACDAT2:
-				return AccelReadData(true);
-			case (DspAddress)DspHardwareRegs::ACDAT:
-				return AccelReadData(false);
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					return AccelReadData(true);
+				case (DspAddress)DspHardwareRegs::ACDAT:
+					return AccelReadData(false);
 
-			default:
-				Report(Channel::DSP, "Unknown HW read 0x%04X\n", addr);
-				break;
+				default:
+					Report(Channel::DSP, "Unknown HW read 0x%04X\n", addr);
+					break;
 			}
 
 			return 0;
@@ -531,213 +531,213 @@ namespace DSP
 		{
 			switch (addr)
 			{
-			case (DspAddress)DspHardwareRegs::DSMAH:
-				DmaRegs.mmemAddr.h = value & 0x03ff;
-				if (logDspDma)
-				{
-					Report(Channel::DSP, "DSMAH: 0x%04X\n", DmaRegs.mmemAddr.h);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::DSMAL:
-				DmaRegs.mmemAddr.l = value & ~3;
-				if (logDspDma)
-				{
-					Report(Channel::DSP, "DSMAL: 0x%04X\n", DmaRegs.mmemAddr.l);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::DSPA:
-				DmaRegs.dspAddr = value & ~1;
-				if (logDspDma)
-				{
-					Report(Channel::DSP, "DSPA: 0x%04X\n", DmaRegs.dspAddr);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::DSCR:
-				DmaRegs.control.bits = value & 3;
-				if (logDspDma)
-				{
-					Report(Channel::DSP, "DSCR: 0x%04X\n", DmaRegs.control.bits);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::DSBL:
-				DmaRegs.blockSize = value & ~3;
-				if (logDspDma)
-				{
-					Report(Channel::DSP, "DSBL: 0x%04X\n", DmaRegs.blockSize);
-				}
-				DoDma();
-				break;
-
-			case (DspAddress)DspHardwareRegs::CMBH:
-				Halt("DSP is not allowed to write processor Mailbox!");
-				Suspend();
-				break;
-			case (DspAddress)DspHardwareRegs::CMBL:
-				Halt("DSP is not allowed to write processor Mailbox!");
-				Suspend();
-				break;
-			case (DspAddress)DspHardwareRegs::DMBH:
-				DspToCpuWriteHi(value);
-				break;
-			case (DspAddress)DspHardwareRegs::DMBL:
-				DspToCpuWriteLo(value);
-				break;
-
-			case (DspAddress)DspHardwareRegs::DIRQ:
-				if (value & 1)
-				{
-					if (logDspInterrupts)
+				case (DspAddress)DspHardwareRegs::DSMAH:
+					DmaRegs.mmemAddr.h = value & 0x03ff;
+					if (logDspDma)
 					{
-						Report(Channel::DSP, "DspHardwareRegs::DIRQ\n");
+						Report(Channel::DSP, "DSMAH: 0x%04X\n", DmaRegs.mmemAddr.h);
 					}
-					Flipper::DSPAssertInt();
-				}
-				break;
+					break;
+				case (DspAddress)DspHardwareRegs::DSMAL:
+					DmaRegs.mmemAddr.l = value & ~3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSMAL: 0x%04X\n", DmaRegs.mmemAddr.l);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::DSPA:
+					DmaRegs.dspAddr = value & ~1;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSPA: 0x%04X\n", DmaRegs.dspAddr);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::DSCR:
+					DmaRegs.control.bits = value & 3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSCR: 0x%04X\n", DmaRegs.control.bits);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::DSBL:
+					DmaRegs.blockSize = value & ~3;
+					if (logDspDma)
+					{
+						Report(Channel::DSP, "DSBL: 0x%04X\n", DmaRegs.blockSize);
+					}
+					DoDma();
+					break;
 
-			case (DspAddress)DspHardwareRegs::ACSAH:
-				Accel.StartAddress.h = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACSAH = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACSAL:
-				Accel.StartAddress.l = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACSAL = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACEAH:
-				Accel.EndAddress.h = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACEAH = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACEAL:
-				Accel.EndAddress.l = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACEAL = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACCAH:
-				Accel.CurrAddress.h = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACCAH = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACCAL:
-				Accel.CurrAddress.l = value;
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACCAL = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACDAT2:
-				AccelWriteData(value);
-				if (logAccel)
-				{
-					Report(Channel::DSP, "ACDAT2 = 0x%04X\n", value);
-				}
-				break;
+				case (DspAddress)DspHardwareRegs::CMBH:
+					Halt("DSP is not allowed to write processor Mailbox!");
+					Suspend();
+					break;
+				case (DspAddress)DspHardwareRegs::CMBL:
+					Halt("DSP is not allowed to write processor Mailbox!");
+					Suspend();
+					break;
+				case (DspAddress)DspHardwareRegs::DMBH:
+					DspToCpuWriteHi(value);
+					break;
+				case (DspAddress)DspHardwareRegs::DMBL:
+					DspToCpuWriteLo(value);
+					break;
 
-			case (DspAddress)DspHardwareRegs::ACFMT:
-				Accel.Fmt = value;
-				if (logAccel || logAdpcm)
-				{
-					Report(Channel::DSP, "ACFMT = 0x%04X\n", value);
-				}
-				break;
+				case (DspAddress)DspHardwareRegs::DIRQ:
+					if (value & 1)
+					{
+						if (logDspInterrupts)
+						{
+							Report(Channel::DSP, "DspHardwareRegs::DIRQ\n");
+						}
+						Flipper::DSPAssertInt();
+					}
+					break;
 
-			case (DspAddress)DspHardwareRegs::ACPDS:
-				Accel.AdpcmPds = value;
-				if (logAdpcm)
-				{
-					Report(Channel::DSP, "ACPDS = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACYN1:
-				Accel.AdpcmYn1 = value;
-				if (logAdpcm)
-				{
-					Report(Channel::DSP, "ACYN1 = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACYN2:
-				Accel.AdpcmYn2 = value;
-				if (logAdpcm)
-				{
-					Report(Channel::DSP, "ACYN2 = 0x%04X\n", value);
-				}
-				break;
-			case (DspAddress)DspHardwareRegs::ACGAN:
-				Accel.AdpcmGan = value;
-				if (logAdpcm)
-				{
-					Report(Channel::DSP, "ACGAN = 0x%04X\n", value);
-				}
-				break;
+				case (DspAddress)DspHardwareRegs::ACSAH:
+					Accel.StartAddress.h = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACSAH = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACSAL:
+					Accel.StartAddress.l = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACSAL = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACEAH:
+					Accel.EndAddress.h = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACEAH = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACEAL:
+					Accel.EndAddress.l = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACEAL = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACCAH:
+					Accel.CurrAddress.h = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACCAH = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACCAL:
+					Accel.CurrAddress.l = value;
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACCAL = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACDAT2:
+					AccelWriteData(value);
+					if (logAccel)
+					{
+						Report(Channel::DSP, "ACDAT2 = 0x%04X\n", value);
+					}
+					break;
 
-			case (DspAddress)DspHardwareRegs::ADPCM_A00:
-				Accel.AdpcmCoef[0] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A10:
-				Accel.AdpcmCoef[1] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A20:
-				Accel.AdpcmCoef[2] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A30:
-				Accel.AdpcmCoef[3] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A40:
-				Accel.AdpcmCoef[4] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A50:
-				Accel.AdpcmCoef[5] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A60:
-				Accel.AdpcmCoef[6] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A70:
-				Accel.AdpcmCoef[7] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A01:
-				Accel.AdpcmCoef[8] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A11:
-				Accel.AdpcmCoef[9] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A21:
-				Accel.AdpcmCoef[10] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A31:
-				Accel.AdpcmCoef[11] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A41:
-				Accel.AdpcmCoef[12] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A51:
-				Accel.AdpcmCoef[13] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A61:
-				Accel.AdpcmCoef[14] = value;
-				break;
-			case (DspAddress)DspHardwareRegs::ADPCM_A71:
-				Accel.AdpcmCoef[15] = value;
-				break;
+				case (DspAddress)DspHardwareRegs::ACFMT:
+					Accel.Fmt = value;
+					if (logAccel || logAdpcm)
+					{
+						Report(Channel::DSP, "ACFMT = 0x%04X\n", value);
+					}
+					break;
 
-			case (DspAddress)DspHardwareRegs::UNKNOWN_FFB0:
-			case (DspAddress)DspHardwareRegs::UNKNOWN_FFB1:
-				Report(Channel::DSP, "Known unknown HW write 0x%04X = 0x%04X\n", addr, value);
-				break;
+				case (DspAddress)DspHardwareRegs::ACPDS:
+					Accel.AdpcmPds = value;
+					if (logAdpcm)
+					{
+						Report(Channel::DSP, "ACPDS = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACYN1:
+					Accel.AdpcmYn1 = value;
+					if (logAdpcm)
+					{
+						Report(Channel::DSP, "ACYN1 = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACYN2:
+					Accel.AdpcmYn2 = value;
+					if (logAdpcm)
+					{
+						Report(Channel::DSP, "ACYN2 = 0x%04X\n", value);
+					}
+					break;
+				case (DspAddress)DspHardwareRegs::ACGAN:
+					Accel.AdpcmGan = value;
+					if (logAdpcm)
+					{
+						Report(Channel::DSP, "ACGAN = 0x%04X\n", value);
+					}
+					break;
 
-			default:
-				Report(Channel::DSP, "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
-				break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A00:
+					Accel.AdpcmCoef[0] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A10:
+					Accel.AdpcmCoef[1] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A20:
+					Accel.AdpcmCoef[2] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A30:
+					Accel.AdpcmCoef[3] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A40:
+					Accel.AdpcmCoef[4] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A50:
+					Accel.AdpcmCoef[5] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A60:
+					Accel.AdpcmCoef[6] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A70:
+					Accel.AdpcmCoef[7] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A01:
+					Accel.AdpcmCoef[8] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A11:
+					Accel.AdpcmCoef[9] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A21:
+					Accel.AdpcmCoef[10] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A31:
+					Accel.AdpcmCoef[11] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A41:
+					Accel.AdpcmCoef[12] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A51:
+					Accel.AdpcmCoef[13] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A61:
+					Accel.AdpcmCoef[14] = value;
+					break;
+				case (DspAddress)DspHardwareRegs::ADPCM_A71:
+					Accel.AdpcmCoef[15] = value;
+					break;
+
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB0:
+				case (DspAddress)DspHardwareRegs::UNKNOWN_FFB1:
+					Report(Channel::DSP, "Known unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					break;
+
+				default:
+					Report(Channel::DSP, "Unknown HW write 0x%04X = 0x%04X\n", addr, value);
+					break;
 			}
 			return;
 		}
@@ -825,39 +825,39 @@ namespace DSP
 
 		switch (Accel.Fmt & 3)
 		{
-		case 0:
+			case 0:
 
-			// Refresh pred/scale
-			if ((Accel.CurrAddress.addr & 0xF) == 0 && ((Accel.Fmt >> 2) & 3) == 0)
-			{
-				Accel.AdpcmPds = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
-				Accel.CurrAddress.addr += 2;
-			}
+				// Refresh pred/scale
+				if ((Accel.CurrAddress.addr & 0xF) == 0 && ((Accel.Fmt >> 2) & 3) == 0)
+				{
+					Accel.AdpcmPds = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
+					Accel.CurrAddress.addr += 2;
+				}
 
-			// TODO: Check currAddr == endAddr after Pred/Scale update.
+				// TODO: Check currAddr == endAddr after Pred/Scale update.
 
-			tempByte = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
-			if ((Accel.CurrAddress.addr & 1) == 0)
-			{
-				val = tempByte >> 4;		// High nibble
-			}
-			else
-			{
-				val = tempByte & 0xf;		// Low nibble
-			}
-			break;
+				tempByte = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff) / 2);
+				if ((Accel.CurrAddress.addr & 1) == 0)
+				{
+					val = tempByte >> 4;		// High nibble
+				}
+				else
+				{
+					val = tempByte & 0xf;		// Low nibble
+				}
+				break;
 
-		case 1:
-			val = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff));
-			break;
+			case 1:
+				val = *(uint8_t*)(aram.mem + (Accel.CurrAddress.addr & 0x07ff'ffff));
+				break;
 
-		case 2:
-			val = _BYTESWAP_UINT16(*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)));
-			break;
+			case 2:
+				val = _BYTESWAP_UINT16(*(uint16_t*)(aram.mem + 2 * (uint64_t)(Accel.CurrAddress.addr & 0x07ff'ffff)));
+				break;
 
-		default:
-			Halt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
-			break;
+			default:
+				Halt("DSP: Invalid accelerator mode: 0x%04X\n", Accel.Fmt);
+				break;
 		}
 
 		Accel.CurrAddress.addr++;
@@ -931,9 +931,6 @@ namespace DSP
 
 // DSP PCM/ADPCM Decoder
 
-#define my_max(a,b) (((a) > (b)) ? (a) : (b))
-#define my_min(a,b) (((a) < (b)) ? (a) : (b))
-
 namespace DSP
 {
 	uint16_t Dsp16::DecodeAdpcm(uint16_t in)
@@ -944,52 +941,52 @@ namespace DSP
 
 		switch ((Accel.Fmt >> 2) & 3)
 		{
-		case 0:
-		{
-			int pred = (Accel.AdpcmPds >> 4) & 7;
-			int scale = Accel.AdpcmPds & 0xf;
-			int16_t gain = 1 << scale;
+			case 0:
+			{
+				int pred = (Accel.AdpcmPds >> 4) & 7;
+				int scale = Accel.AdpcmPds & 0xf;
+				int16_t gain = 1 << scale;
 
-			if (scale > 0xc)
-				scale = 0xc;
+				if (scale > 0xc)
+					scale = 0xc;
 
-			int16_t xn = in << 11;
-			if (xn & 0x4000)
-				xn |= 0x8000;
+				int16_t xn = in << 11;
+				if (xn & 0x4000)
+					xn |= 0x8000;
 
-			yn = (int64_t)(int32_t)(int16_t)Accel.AdpcmYn1 * (int64_t)(int32_t)(int16_t)Accel.AdpcmCoef[2 * pred]
-				+ (int64_t)(int32_t)(int16_t)Accel.AdpcmYn2 * (int64_t)(int32_t)(int16_t)Accel.AdpcmCoef[2 * pred + 1] +
-				(int64_t)(int32_t)xn * gain;
+				yn = (int64_t)(int32_t)(int16_t)Accel.AdpcmYn1 * (int64_t)(int32_t)(int16_t)Accel.AdpcmCoef[2 * pred]
+					+ (int64_t)(int32_t)(int16_t)Accel.AdpcmYn2 * (int64_t)(int32_t)(int16_t)Accel.AdpcmCoef[2 * pred + 1] +
+					(int64_t)(int32_t)xn * gain;
 
-			Accel.AdpcmYn2 = Accel.AdpcmYn1;
-			Accel.AdpcmYn1 = (uint16_t)(yn >> 11);
-			break;
-		}
+				Accel.AdpcmYn2 = Accel.AdpcmYn1;
+				Accel.AdpcmYn1 = (uint16_t)(yn >> 11);
+				break;
+			}
 
-		case 1:
-			yn = (int64_t)(int32_t)((int16_t)(in << 8)) * Accel.AdpcmGan;
-			break;
+			case 1:
+				yn = (int64_t)(int32_t)((int16_t)(in << 8)) * Accel.AdpcmGan;
+				break;
 
-		case 2:
-			yn = (int64_t)(int32_t)(int16_t)in * Accel.AdpcmGan;
-			break;
+			case 2:
+				yn = (int64_t)(int32_t)(int16_t)in * Accel.AdpcmGan;
+				break;
 		}
 
 		switch (outputMode)
 		{
-		case 0:
-			out = yn >> 11;
-			out = my_max(-0x8000, my_min(out, 0x7FFF));
-			break;
-		case 1:
-			out = yn & 0xffff;
-			break;
-		case 2:
-			out = (yn >> 16);
-			break;
-		case 3:
-			Halt("DSP: Unsupported Decoder output mode\n");
-			break;
+			case 0:
+				out = yn >> 11;
+				out = my_max(-0x8000, my_min(out, 0x7FFF));
+				break;
+			case 1:
+				out = yn & 0xffff;
+				break;
+			case 2:
+				out = (yn >> 16);
+				break;
+			case 3:
+				Halt("DSP: Unsupported Decoder output mode\n");
+				break;
 		}
 
 		//Report(Channel::DSP, "0x%08X = 0x%04X\n", (Accel.CurrAddress.addr & 0x07FF'FFFF) - 1, (uint16_t)out);

@@ -105,17 +105,17 @@ void* Thread::RingleaderThreadProc(void* args)
         switch (thread->command)
         {
             // command to pause thread..
-        case 0:
-            pthread_cond_wait(&thread->cond_var, &thread->mutex);
-            break;
+            case 0:
+                pthread_cond_wait(&thread->cond_var, &thread->mutex);
+                break;
 
             // command to run..
-        case 1:
-            if (thread->ctx.proc)
-            {
-                thread->ctx.proc(thread->ctx.context);
-            }
-            break;
+            case 1:
+                if (thread->ctx.proc)
+                {
+                    thread->ctx.proc(thread->ctx.context);
+                }
+                break;
         }
 
         pthread_mutex_unlock(&thread->mutex);
