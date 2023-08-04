@@ -57,8 +57,12 @@ add_executable (pureikyubu
 	src/padnull.cpp
 	src/pe.cpp
 	src/pi.cpp
+	src/ras.cpp
 	src/si.cpp
+	src/su.cpp
 	src/sym.cpp
+	src/tev.cpp
+	src/tx.cpp
 	src/uisimple.cpp
 	src/utils.cpp
 	src/vi.cpp
