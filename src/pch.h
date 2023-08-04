@@ -70,9 +70,9 @@
 #include "pi.h"
 #include "mem.h"
 #include "di.h"
+#include "bootrtc.h"
 #include "exi.h"
 #include "memcard.h"
-#include "bootrtc.h"
 #include "pad.h"
 #ifdef _WINDOWS
 #include "audio.h"

@@ -37,7 +37,7 @@ A list of commands can be found in EmuJdi.json
 
 #pragma once
 
-#define EMU_VERSION L"1.0"
+#define EMU_VERSION L"1.1"
 
 void    EMUGetHwConfig(HWConfig* config);
 
