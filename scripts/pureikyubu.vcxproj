@@ -72,9 +72,13 @@
     <ClInclude Include="..\src\pch.h" />
     <ClInclude Include="..\src\pe.h" />
     <ClInclude Include="..\src\pi.h" />
+    <ClInclude Include="..\src\ras.h" />
     <ClInclude Include="..\src\res\resource.h" />
     <ClInclude Include="..\src\si.h" />
+    <ClInclude Include="..\src\su.h" />
     <ClInclude Include="..\src\sym.h" />
+    <ClInclude Include="..\src\tev.h" />
+    <ClInclude Include="..\src\tx.h" />
     <ClInclude Include="..\src\ui.h" />
     <ClInclude Include="..\src\utils.h" />
     <ClInclude Include="..\src\vi.h" />
@@ -142,8 +146,12 @@
     </ClCompile>
     <ClCompile Include="..\src\pe.cpp" />
     <ClCompile Include="..\src\pi.cpp" />
+    <ClCompile Include="..\src\ras.cpp" />
     <ClCompile Include="..\src\si.cpp" />
+    <ClCompile Include="..\src\su.cpp" />
     <ClCompile Include="..\src\sym.cpp" />
+    <ClCompile Include="..\src\tev.cpp" />
+    <ClCompile Include="..\src\tx.cpp" />
     <ClCompile Include="..\src\ui.cpp" />
     <ClCompile Include="..\src\uisimple.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -168,9 +176,6 @@
     </ProjectReference>
     <ProjectReference Include="..\thirdparty\fmt\Scripts\VS2022\fmt.vcxproj">
       <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\thirdparty\GX\Scripts\VS2022\GX.vcxproj">
-      <Project>{1386fc99-a29c-410c-b3d1-2a7e233f57d4}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">

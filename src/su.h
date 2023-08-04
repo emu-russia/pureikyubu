@@ -1,11 +1,8 @@
-// ByPass registers definitions
-
 #pragma once
 
 namespace GX
 {
-
-	// BP (ByPass) address space (SU/TEV etc) Registers
+	// SU BP (ByPass) address space (SU/RAS/TEV etc) Registers
 
 	enum class BPRegister
 	{

@@ -66,15 +66,13 @@
 #include "flipper.h"
 #include "gfx.h"
 #include "ai.h"
-#include "cp.h"
-#include "pe.h"
 #include "vi.h"
 #include "pi.h"
 #include "mem.h"
 #include "di.h"
+#include "bootrtc.h"
 #include "exi.h"
 #include "memcard.h"
-#include "bootrtc.h"
 #include "pad.h"
 #ifdef _WINDOWS
 #include "audio.h"
@@ -88,7 +86,6 @@
 
 // TODO: Phased out
 #include "../thirdparty/DolwinVideo/GX.h"
-#include "../thirdparty/GX/GXCore.h"
 
 namespace Flipper
 {

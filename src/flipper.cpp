@@ -39,7 +39,8 @@ namespace Flipper
 		PIOpen(config); // interrupts, console regs
 		MIOpen(config); // memory protection and 1T-SRAM interface
 		VIOpen(config); // video (TV)
-		CP_PEOpen();    // Command Processor & PixelEngin
+		CPOpen();		// Command Processor
+		PEOpen();		// PixelEngine
 		AIOpen(config); // audio (AID and AIS)
 		AROpen();       // aux. memory (ARAM)
 		EIOpen(config); // expansion interface (EXI)
@@ -93,7 +94,8 @@ namespace Flipper
 
 		DSP->Suspend();
 
-		CP_PEClose();
+		CPClose();
+		PEClose();
 		AIClose();
 		ARClose();      // release ARAM
 		EIClose();      // take care about closing of memcards and BBA
