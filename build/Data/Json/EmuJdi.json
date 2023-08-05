@@ -1,6 +1,6 @@
 {
   "info": {
-    "description": "Dolwin Emulator Jey-Dai specs.",
+    "description": "Emulator Jey-Dai specs.",
     "helpGroup": "EMU Control Commands"
   },
 
@@ -40,7 +40,7 @@
     },
 
     "exit": {
-      "help": "Exit"
+      "help": "Exit (also: x, quit, q)"
     },
     "quit": {
       "internal": true,
@@ -152,6 +152,10 @@
       "usage": [
         "Use: SetConfigBool <section> <param> <value>"
       ]
+    },
+
+    "threads": {
+      "help": "Show emulator threads (Util::Thread)"
     }
 
   }

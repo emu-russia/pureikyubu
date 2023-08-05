@@ -83,12 +83,12 @@ namespace Flipper
 
 		JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
 
-		hwUpdateThread = new Thread(HwUpdateThread, false, this, "HW");
+		hwUpdateThread = EMUCreateThread(HwUpdateThread, false, this, "HW");
 	}
 
 	Flipper::~Flipper()
 	{
-		delete hwUpdateThread;
+		EMUJoinThread(hwUpdateThread);
 
 		JDI::Hub.RemoveNode(HW_JDI_JSON);
 

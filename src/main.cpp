@@ -8,6 +8,27 @@ Emulator emu;
 
 Gekko::GekkoCore *Core;
 
+std::list<Thread*> emu_threads;
+
+/// <summary>
+/// Create an emulator thread. It is used to keep statistics on threads, using the `threads` command.
+/// </summary>
+Thread* EMUCreateThread(ThreadProc threadProc, bool suspended, void* context, const char* name)
+{
+	Thread *thread = new Thread(threadProc, suspended, context, name);
+	emu_threads.push_back(thread);
+	return thread;
+}
+
+/// <summary>
+/// Stop the thread and delete from history.
+/// </summary>
+void EMUJoinThread(Thread* thread)
+{
+	emu_threads.remove(thread);
+	delete thread;
+}
+
 void EMUGetHwConfig(HWConfig * config)
 {
 	memset(config, 0, sizeof(HWConfig));
@@ -428,6 +449,16 @@ static Json::Value* CmdSetConfigBool(std::vector<std::string>& args)
 	return nullptr;
 }
 
+static Json::Value* CmdThreads(std::vector<std::string>& args)
+{
+	Report(Channel::Norm, "Emulator threads:\n");
+	for (auto it = emu_threads.begin(); it != emu_threads.end(); ++it) {
+		Thread* thread = *it;
+		Report(Channel::Norm, "- %s: %s\n", thread->GetName(), thread->IsRunning() ? "Running" : "Suspended");
+	}
+	return nullptr;
+}
+
 void EmuReflector()
 {
 	JDI::Hub.AddCmd("FileLoad", EmuFileLoad);
@@ -451,6 +482,8 @@ void EmuReflector()
 	JDI::Hub.AddCmd("SetConfigInt", CmdSetConfigInt);
 	JDI::Hub.AddCmd("GetConfigBool", CmdGetConfigBool);
 	JDI::Hub.AddCmd("SetConfigBool", CmdSetConfigBool);
+
+	JDI::Hub.AddCmd("threads", CmdThreads);
 }
 
 

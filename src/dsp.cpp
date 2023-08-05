@@ -256,12 +256,12 @@ void AROpen()
 	PISetTrap(16, AR_MODE, ar_hack_mode, no_write);
 	PISetTrap(16, AR_REFRESH, no_read, no_write);
 
-	aram.dmaThread = new Thread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
+	aram.dmaThread = EMUCreateThread(ARAMDmaThread, true, nullptr, "ARAMDmaThread");
 }
 
 void ARClose()
 {
-	delete aram.dmaThread;
+	EMUJoinThread(aram.dmaThread);
 	aram.dmaThread = nullptr;
 
 	// destroy ARAM
@@ -279,7 +279,7 @@ namespace DSP
 
 	Dsp16::Dsp16()
 	{
-		dspThread = new Thread(DspThreadProc, true, this, "DspCore");
+		dspThread = EMUCreateThread(DspThreadProc, true, this, "DspCore");
 
 		core = new DspCore(this);
 
@@ -288,7 +288,7 @@ namespace DSP
 
 	Dsp16::~Dsp16()
 	{
-		delete dspThread;
+		EMUJoinThread(dspThread);
 		delete core;
 
 		JDI::Hub.RemoveNode(DSP_JDI_JSON);

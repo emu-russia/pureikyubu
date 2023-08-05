@@ -50,6 +50,9 @@ void    EMUReset();         // Reset
 void    EMURun();           // Run Gekko
 void    EMUStop();          // Stop Gekko
 
+Thread* EMUCreateThread(ThreadProc threadProc, bool suspended, void* context, const char* name);
+void EMUJoinThread(Thread* thread);
+
 // all important data is placed here
 typedef struct Emulator
 {

@@ -361,12 +361,12 @@ void DebugThreadProc(void* param)
 
 void DebugStart()
 {
-	debugger = new Thread(DebugThreadProc, false, nullptr, "DebugThread");
+	debugger = EMUCreateThread(DebugThreadProc, false, nullptr, "DebugThread");
 }
 
 void DebugStop()
 {
-	delete debugger;
+	EMUJoinThread(debugger);
 }
 
 int main(int argc, char** argv)

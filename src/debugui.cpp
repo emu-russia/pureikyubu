@@ -10,7 +10,7 @@ namespace Debug
 	ReportWindow::ReportWindow(RECT& rect, std::string name, Cui* parent)
 		: CuiWindow(rect, name, parent)
 	{
-		thread = new Thread(ThreadProc, false, this, "ReportWindow");
+		thread = EMUCreateThread(ThreadProc, false, this, "ReportWindow");
 
 		if (history.empty())
 		{
@@ -20,7 +20,7 @@ namespace Debug
 
 	ReportWindow::~ReportWindow()
 	{
-		delete thread;
+		EMUJoinThread(thread);
 	}
 
 	void ReportWindow::ThreadProc(void* param)

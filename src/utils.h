@@ -102,6 +102,8 @@ public:
 	void Suspend();
 	bool IsRunning() { return running; }
 
+	const char* GetName() { return threadName.c_str(); }
+
 	static void Sleep(size_t milliseconds);
 };
 
