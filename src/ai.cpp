@@ -31,6 +31,9 @@
 	AI FIFO DMA may be controlled through AISetDSPSampleRate().
 /*/
 
+// AI is a very simple device. It polls the DSP with L/R samples and also gets samples from the DVD (AIS). Then it does FIR and SRC and outputs the sound to the outside.
+// But of course from the outside (register interface) everything seems very confusing. Who knew that the AI DMA controller is actually in the DSP.
+
 using namespace Debug;
 
 namespace Flipper
@@ -563,7 +566,6 @@ namespace Flipper
 	void AIClose()
 	{
 		AIStopDMA();
-		delete ai.audioThread;
 		EMUJoinThread(ai.audioThread);
 		DVD::DDU->SetStreamCallback(nullptr);
 		delete ai.Mixer;

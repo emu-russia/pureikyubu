@@ -1,17 +1,8 @@
 #pragma once
 
-// DSP registers
+// TODO: Drag the AID+AIS mixer from audio.cpp here and make audio.cpp play a simple buffer. This way it will be more similar to real HW.
+// TODO: Drag CDCR register handling into dsp.cpp to be close to real HW
 
-// 16-bit access
-#define DSP_OUTMBOXH        0x0C005000      // CPU->DSP mailbox
-#define DSP_OUTMBOXL        0x0C005002
-#define DSP_INMBOXH         0x0C005004      // DSP->CPU mailbox
-#define DSP_INMBOXL         0x0C005006
-#define AI_DCR              0x0C00500A      // AI/DSP control register
-#define AID_MADRH           0x0C005030      // DMA start address (High)
-#define AID_MADRL           0x0C005032      // DMA start address (Low)
-#define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
-#define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
 
 // AI Streaming registers
 
@@ -24,20 +15,6 @@
 #define AIS_UNUSED_5        0x0C006C14
 #define AIS_UNUSED_6        0x0C006C18
 #define AIS_UNUSED_7        0x0C006C1C
-
-// AI/DSP Control Register mask
-#define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
-#define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
-#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
-#define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
-#define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
-#define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
-#define AIDCR_ARINT         (1 << 5)        // ARAM DMA interrupt status (RWC)
-#define AIDCR_AIINTMSK      (1 << 4)        // AI DMA interrupt mask (RW)
-#define AIDCR_AIINT         (1 << 3)        // AI DMA interrupt status (RWC)
-#define AIDCR_HALT          (1 << 2)        // halt DSP (stop ucoding)
-#define AIDCR_DINT          (1 << 1)        // CPU->DSP interrupt
-#define AIDCR_RES           (1 << 0)        // reset DSP (waits for 0)
 
 // enable bit in AIDLEN register
 #define AID_EN              (1 << 15)

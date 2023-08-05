@@ -105,6 +105,33 @@ void    ARClose();
 
 extern  ARControl aram;
 
+// DSP<->PI registers
+
+// 16-bit access
+#define DSP_OUTMBOXH        0x0C005000      // CPU->DSP mailbox
+#define DSP_OUTMBOXL        0x0C005002
+#define DSP_INMBOXH         0x0C005004      // DSP->CPU mailbox
+#define DSP_INMBOXL         0x0C005006
+#define AI_DCR              0x0C00500A      // AI/DSP control register (the real name of this register is CDCR. Well, we almost guessed :))
+#define AID_MADRH           0x0C005030      // DMA start address (High)
+#define AID_MADRL           0x0C005032      // DMA start address (Low)
+#define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
+#define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
+
+// AI/DSP Control Register mask
+#define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
+#define AIDCR_DSPDMA        (1 << 10)       // DSP dma in progress
+#define AIDCR_ARDMA         (1 << 9)        // ARAM dma in progress
+#define AIDCR_DSPINTMSK     (1 << 8)        // DSP->CPU interrupt mask (ReadWrite)
+#define AIDCR_DSPINT        (1 << 7)        // DSP->CPU interrupt status (ReadWrite-Clear)
+#define AIDCR_ARINTMSK      (1 << 6)        // ARAM DMA interrupt mask (RW)
+#define AIDCR_ARINT         (1 << 5)        // ARAM DMA interrupt status (RWC)
+#define AIDCR_AIINTMSK      (1 << 4)        // AI DMA interrupt mask (RW)
+#define AIDCR_AIINT         (1 << 3)        // AI DMA interrupt status (RWC)
+#define AIDCR_HALT          (1 << 2)        // halt DSP (stop ucoding)
+#define AIDCR_DINT          (1 << 1)        // CPU->DSP interrupt
+#define AIDCR_RES           (1 << 0)        // reset DSP (waits for 0)
+
 
 // GAMECUBE DSP Interface.
 // In the previous version, the DSPcore implementation was mixed with the hardware binding (IFX) implementation. In this version, these entities are separated.
