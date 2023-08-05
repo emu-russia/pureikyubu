@@ -1369,8 +1369,8 @@ namespace DVD
 
 	DduCore::DduCore()
 	{
-		dduThread = new Thread(DduThreadProc, true, this, "DvdData");
-		dvdAudioThread = new Thread(DvdAudioThreadProc, true, this, "DvdAudio");
+		dduThread = EMUCreateThread(DduThreadProc, true, this, "DvdData");
+		dvdAudioThread = EMUCreateThread(DvdAudioThreadProc, true, this, "DvdAudio");
 
 		dataCache = new uint8_t[dataCacheSize];
 		memset(dataCache, 0, dataCacheSize);
@@ -1401,8 +1401,8 @@ namespace DVD
 		}
 
 		TransferComplete();
-		delete dduThread;
-		delete dvdAudioThread;
+		EMUJoinThread(dduThread);
+		EMUJoinThread(dvdAudioThread);
 		delete[] dataCache;
 		delete[] streamingCache;
 	}

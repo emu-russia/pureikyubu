@@ -24,14 +24,14 @@ namespace GX
 
 		fifo->Reset();
 
-		state.cp_thread = new Thread(CPThread, false, this, "CPThread");
+		state.cp_thread = EMUCreateThread(CPThread, false, this, "CPThread");
 	}
 
 	void GXCore::Close()
 	{
 		if (state.cp_thread)
 		{
-			delete state.cp_thread;
+			EMUJoinThread(state.cp_thread);
 			state.cp_thread = nullptr;
 		}
 	}

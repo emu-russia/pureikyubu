@@ -1,6 +1,6 @@
 {
   "info": {
-    "description": "Dolwin UI Jey-Dai specs.",
+    "description": "UI Jey-Dai specs.",
     "helpGroup": "UI Commands"
   },
 
@@ -28,7 +28,7 @@
 
     "GetRenderTarget": {
       "internal": true,
-      "help": "Return UI Render Target object",
+      "help": "Return UI Render Target object (example: HWND). Flipper GFX will use to output graphics",
       "output": "Int"
     },
 

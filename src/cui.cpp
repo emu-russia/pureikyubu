@@ -40,12 +40,12 @@ namespace Debug
 
 		SetConsoleTitleA(title.c_str());
 
-		cuiThread = new Thread(CuiThreadProc, false, this, "CuiThread");
+		cuiThread = EMUCreateThread(CuiThreadProc, false, this, "CuiThread");
 	}
 
 	Cui::~Cui()
 	{
-		delete cuiThread;
+		EMUJoinThread(cuiThread);
 
 		while (!windows.empty())
 		{

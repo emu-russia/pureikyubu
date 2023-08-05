@@ -531,7 +531,7 @@ namespace Flipper
 
 		DVD::DDU->SetStreamCallback(AIStreamCallback);
 
-		ai.audioThread = new Thread(AIUpdate, true, nullptr, "AI");
+		ai.audioThread = EMUCreateThread(AIUpdate, true, nullptr, "AI");
 
 		ai.one_second = Core->OneSecond();
 		ai.dmaRate = ai.cr & AICR_DFR ? 32000 : 48000;
@@ -564,7 +564,7 @@ namespace Flipper
 	{
 		AIStopDMA();
 		delete ai.audioThread;
-		ai.audioThread = nullptr;
+		EMUJoinThread(ai.audioThread);
 		DVD::DDU->SetStreamCallback(nullptr);
 		delete ai.Mixer;
 	}

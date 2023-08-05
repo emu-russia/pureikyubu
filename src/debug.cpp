@@ -195,12 +195,12 @@ namespace Debug
 		sampleData = rootObj->AddArray("sampleData");
 		assert(sampleData);
 
-		thread = new Thread(ThreadProc, false, this, "SamplingProfiler");
+		thread = EMUCreateThread(ThreadProc, false, this, "SamplingProfiler");
 	}
 
 	SamplingProfiler::~SamplingProfiler()
 	{
-		delete thread;
+		EMUJoinThread(thread);
 
 		size_t textSize = 0;
 

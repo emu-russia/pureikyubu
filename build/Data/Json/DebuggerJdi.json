@@ -1,6 +1,6 @@
 {
   "info": {
-    "description": "DolwinEmu core Debug Interface.",
+    "description": "Debug Interface.",
     "helpGroup": "Debugger Interface"
   },
 

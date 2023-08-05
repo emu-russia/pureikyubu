@@ -38,7 +38,7 @@ namespace Gekko
 		jitc = new Jitc(this);
 #endif
 
-		gekkoThread = new Thread(GekkoThreadProc, false, this, "GekkoCore");
+		gekkoThread = EMUCreateThread(GekkoThreadProc, false, this, "GekkoCore");
 
 		Reset();
 	}
@@ -46,7 +46,7 @@ namespace Gekko
 	GekkoCore::~GekkoCore()
 	{
 		StopOpcodeStatsThread();
-		delete gekkoThread;
+		EMUJoinThread(gekkoThread);
 		delete interp;
 #if GEKKOCORE_USE_JITC
 		delete jitc;
@@ -2114,7 +2114,7 @@ namespace Gekko
 	{
 		if (opcodeStatsThread == nullptr)
 		{
-			opcodeStatsThread = new Thread(OpcodeStatsThreadProc, false, this, "OpcodeStats");
+			opcodeStatsThread = EMUCreateThread(OpcodeStatsThreadProc, false, this, "OpcodeStats");
 			EnableOpcodeStats(true);
 		}
 	}
@@ -2123,7 +2123,7 @@ namespace Gekko
 	{
 		if (opcodeStatsThread != nullptr)
 		{
-			delete opcodeStatsThread;
+			EMUJoinThread(opcodeStatsThread);
 			opcodeStatsThread = nullptr;
 			EnableOpcodeStats(false);
 		}

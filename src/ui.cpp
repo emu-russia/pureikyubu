@@ -2427,12 +2427,12 @@ namespace UI
 
 	PerfMetrics::PerfMetrics()
 	{
-		perfThread = new Thread(PerfThreadProc, false, this, "PerfThread");
+		perfThread = EMUCreateThread(PerfThreadProc, false, this, "PerfThread");
 	}
 
 	PerfMetrics::~PerfMetrics()
 	{
-		delete perfThread;
+		EMUJoinThread(perfThread);
 	}
 
 	int64_t PerfMetrics::GetGekkoInstructionsCounter()

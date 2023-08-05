@@ -39,7 +39,7 @@
         ". is used to update current loaded map.\n",
         "path can be relative\n",
         "Examples of use: savemap .\n",
-        "                 savemap Data\\my.map\n",
+        "                 savemap Data/my.map\n",
         "See also: name loadmap addmap\n"
       ]
     },
