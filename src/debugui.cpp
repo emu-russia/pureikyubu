@@ -1,6 +1,7 @@
 #include "pch.h"
 
-// Displaying message history. It can be used both by the system debugger and as part of the DSP Debugger.
+// TODO: Integrate DSP Debug into a common debugger. Historically, DSP Debug was done on Cui, but then the old debugger was moved to Cui as well
+// But I couldn't get my hands on combining them. So now you have to switch between two consoles.
 
 namespace Debug
 {
@@ -235,7 +236,6 @@ namespace Debug
 
 }
 
-// Status window, to display the current state of the debugger
 
 namespace Debug
 {
@@ -256,12 +256,12 @@ namespace Debug
 
 		switch (_mode)
 		{
-		case DebugMode::Ready:
-			text = "Ready. Press PgUp to look behind.";
-			break;
-		case DebugMode::Scrolling:
-			text = "Scroll Mode - Press PgUp, PgDown, Up, Down to scroll.";
-			break;
+			case DebugMode::Ready:
+				text = "Ready. Press PgUp to look behind.";
+				break;
+			case DebugMode::Scrolling:
+				text = "Scroll Mode - Press PgUp, PgDown, Up, Down to scroll.";
+				break;
 		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, 2, 0, text);

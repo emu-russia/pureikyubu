@@ -47,6 +47,7 @@ Gekko and DSP disassemblers are in the emulator core, in the corresponding compo
 namespace Debug
 {
 
+	// Displaying message history. It can be used both by the system debugger and as part of the DSP Debugger.
 	class ReportWindow : public CuiWindow
 	{
 		static const size_t maxMessages = 32 * 1024;
@@ -79,6 +80,7 @@ namespace Debug
 		Scrolling,
 	};
 
+	// Status window, to display the current state of the debugger
 	class StatusWindow : public CuiWindow
 	{
 		DebugMode _mode = DebugMode::Ready;

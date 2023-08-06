@@ -472,6 +472,15 @@ namespace Debug
 	static Json::Value* ShowHelp(std::vector<std::string>& args)
 	{
 		JDI::Hub.Help();
+		Report(Channel::Header, "## Debugger F-Keys\n");
+		Report(Channel::Norm, "- F1: Registers (left/right arrows to select registers)\n");
+		Report(Channel::Norm, "- F2: Memory dump\n");
+		Report(Channel::Norm, "- F3: Instruction disassembly\n");
+		Report(Channel::Norm, "- F5: Start emulation to breakpoint/pause emulation (break)\n");
+		Report(Channel::Norm, "- F9: Toogle instruction breakpoint\n");
+		Report(Channel::Norm, "- F10: Step over\n");
+		Report(Channel::Norm, "- F11: Step into\n");
+		Report(Channel::Norm, "- F12: Skip instruction\n");
 		return nullptr;
 	}
 

@@ -365,7 +365,7 @@ namespace DSP
 		return nullptr;
 	}
 
-	// Dump DSP IFX
+	// Dump DSPCore mapped hardware registers
 	static Json::Value* cmd_difx(std::vector<std::string>& args)
 	{
 		if (Flipper::DSP->IsRunning())
@@ -374,7 +374,7 @@ namespace DSP
 			return nullptr;
 		}
 
-		Report(Channel::Norm, "DSP IFX Dump:\n");
+		Report(Channel::Norm, "DSPCore mapped HW registers dump:\n");
 
 		Flipper::DSP->DumpIfx();
 		return nullptr;
@@ -431,15 +431,14 @@ namespace DSP
 		}
 
 		static const char* dspRegNames[] = {
-			"ar0", "ar1", "ar2", "ar3",
-			"ix0", "ix1", "ix2", "ix3",
-			"lm0", "lm1", "lm2", "lm3",
-			"st0", "st1", "st2", "st3",
-			"ac0h", "ac1h",
-			"config", "sr",
-			"prodl", "prodm1", "prodh", "prodm2",
-			"ax0l", "ax0h", "ax1l", "ax1h",
-			"ac0l", "ac1l", "ac0m", "ac1m"
+			"r0", "r1", "r2", "r3",
+			"m0", "m1", "m2", "m3",
+			"l0", "l1", "l2", "l3",
+			"pcs", "pss", "eas", "lcs",
+			"a2", "b2", "dpp", "psr",
+			"ps0", "ps1", "ps2", "pc1",
+			"x0", "y0", "x1", "y1",
+			"a0", "b0", "a1", "b1",
 		};
 		size_t dspRegNamesNum = sizeof(dspRegNames) / sizeof(dspRegNames[0]);
 
