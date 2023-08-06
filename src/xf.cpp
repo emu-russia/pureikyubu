@@ -768,7 +768,7 @@ namespace GX
         }
 
         // load geometry matrix
-        if ((startIdx >= 0x0000) && (startIdx < 0x0400))
+        if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < XF_NORMAL_MATRIX_MEMORY_ID))
         {
             for (size_t i = 0; i < amount; i++)
             {
@@ -776,7 +776,7 @@ namespace GX
             }
         }
         // load normal matrix
-        else if ((startIdx >= 0x0400) && (startIdx < 0x0500))
+        else if ((startIdx >= XF_NORMAL_MATRIX_MEMORY_ID) && (startIdx < XF_DUALTEX_MATRIX_MEMORY_ID))
         {
             for (size_t i = 0; i < amount; i++)
             {
@@ -784,7 +784,7 @@ namespace GX
             }
         }
         // load post-trans matrix
-        else if ((startIdx >= 0x0500) && (startIdx < 0x0600))
+        else if ((startIdx >= XF_DUALTEX_MATRIX_MEMORY_ID) && (startIdx < XF_LIGHT_MEMORY_ID))
         {
             for (size_t i = 0; i < amount; i++)
             {
@@ -797,7 +797,7 @@ namespace GX
             // set matrix index
             //
 
-            case XF_MATINDEX_A:
+            case XF_MATINDEX_A_ID:
             {
                 xfRegs.matidxA.matidx = gxfifo->Read32();
                 xfRegs.posidx = xfRegs.matidxA.pos;
@@ -809,7 +809,7 @@ namespace GX
             }
             return;
 
-            case XF_MATINDEX_B:
+            case XF_MATINDEX_B_ID:
             {
                 xfRegs.matidxB.matidx = gxfifo->Read32();
                 xfRegs.texidx[4] = xfRegs.matidxB.tex4;
@@ -823,7 +823,7 @@ namespace GX
             // load projection matrix
             //
 
-            case XF_PROJECTION:
+            case XF_PROJECTION_A_ID:
             {
                 float pMatrix[7];
 
@@ -883,7 +883,7 @@ namespace GX
             // load viewport configuration
             // 
 
-            case XF_VIEWPORT:
+            case XF_VIEWPORT_SCALE_X_ID:
             {
                 float w, h, x, y, zf, zn;
 
@@ -919,14 +919,14 @@ namespace GX
             // load light object (unaligned writes not supported)
             //
 
-            case XF_LIGHT0:
-            case XF_LIGHT1:
-            case XF_LIGHT2:
-            case XF_LIGHT3:
-            case XF_LIGHT4:
-            case XF_LIGHT5:
-            case XF_LIGHT6:
-            case XF_LIGHT7:
+            case XF_LIGHT0_ID:
+            case XF_LIGHT1_ID:
+            case XF_LIGHT2_ID:
+            case XF_LIGHT3_ID:
+            case XF_LIGHT4_ID:
+            case XF_LIGHT5_ID:
+            case XF_LIGHT6_ID:
+            case XF_LIGHT7_ID:
             {
                 unsigned lnum = (startIdx >> 4) & 7;
 
@@ -953,7 +953,7 @@ namespace GX
             }
             return;
 
-            case XF_INVTXSPEC:
+            case XF_INVTXSPEC_ID:
             {
                 xfRegs.vtxSpec.bits = gxfifo->Read32();
             }
@@ -963,25 +963,25 @@ namespace GX
             // channel constant color registers
             //
 
-            case XF_AMBIENT0:
+            case XF_AMBIENT0_ID:
             {
                 xfRegs.ambient[0].RGBA = gxfifo->Read32();
             }
             return;
 
-            case XF_AMBIENT1:
+            case XF_AMBIENT1_ID:
             {
                 xfRegs.ambient[1].RGBA = gxfifo->Read32();
             }
             return;
 
-            case XF_MATERIAL0:
+            case XF_MATERIAL0_ID:
             {
                 xfRegs.material[0].RGBA = gxfifo->Read32();
             }
             return;
 
-            case XF_MATERIAL1:
+            case XF_MATERIAL1_ID:
             {
                 xfRegs.material[1].RGBA = gxfifo->Read32();
             }
@@ -991,7 +991,7 @@ namespace GX
             // channel control registers
             //
 
-            case XF_COLOR0CNTL:
+            case XF_COLOR0CNTL_ID:
             {
                 xfRegs.color[0].Chan = gxfifo->Read32();
 
@@ -1007,7 +1007,7 @@ namespace GX
             }
             return;
 
-            case XF_COLOR1CNTL:
+            case XF_COLOR1CNTL_ID:
             {
                 xfRegs.color[1].Chan = gxfifo->Read32();
 
@@ -1023,7 +1023,7 @@ namespace GX
             }
             return;
 
-            case XF_ALPHA0CNTL:
+            case XF_ALPHA0CNTL_ID:
             {
                 xfRegs.alpha[0].Chan = gxfifo->Read32();
 
@@ -1039,7 +1039,7 @@ namespace GX
             }
             return;
 
-            case XF_ALPHA1CNTL:
+            case XF_ALPHA1CNTL_ID:
             {
                 xfRegs.alpha[1].Chan = gxfifo->Read32();
 
@@ -1059,21 +1059,21 @@ namespace GX
             // set dualtex enable / disable
             //
 
-            case XF_DUALTEX:
+            case XF_DUALTEX_ID:
             {
                 xfRegs.dualtex = gxfifo->Read32();
                 //GFXError("dual texgen : %s", (regData[0]) ? ("on") : ("off"));
             }
             return;
 
-            case XF_DUALGEN0:
-            case XF_DUALGEN1:
-            case XF_DUALGEN2:
-            case XF_DUALGEN3:
-            case XF_DUALGEN4:
-            case XF_DUALGEN5:
-            case XF_DUALGEN6:
-            case XF_DUALGEN7:
+            case XF_DUALGEN0_ID:
+            case XF_DUALGEN1_ID:
+            case XF_DUALGEN2_ID:
+            case XF_DUALGEN3_ID:
+            case XF_DUALGEN4_ID:
+            case XF_DUALGEN5_ID:
+            case XF_DUALGEN6_ID:
+            case XF_DUALGEN7_ID:
             {
                 size_t n = startIdx - XF_DUALGEN0;
 
@@ -1102,7 +1102,7 @@ namespace GX
             // number of output colors
             //
 
-            case XF_NUMCOLS:
+            case XF_NUMCOLS_ID:
             {
                 xfRegs.numcol = gxfifo->Read32();
             }
@@ -1112,7 +1112,7 @@ namespace GX
             // set number of texgens
             //
 
-            case XF_NUMTEX:
+            case XF_NUMTEX_ID:
             {
                 xfRegs.numtex = gxfifo->Read32();
             }
@@ -1122,14 +1122,14 @@ namespace GX
             // set texgen configuration
             //
 
-            case XF_TEXGEN0:
-            case XF_TEXGEN1:
-            case XF_TEXGEN2:
-            case XF_TEXGEN3:
-            case XF_TEXGEN4:
-            case XF_TEXGEN5:
-            case XF_TEXGEN6:
-            case XF_TEXGEN7:
+            case XF_TEXGEN0_ID:
+            case XF_TEXGEN1_ID:
+            case XF_TEXGEN2_ID:
+            case XF_TEXGEN3_ID:
+            case XF_TEXGEN4_ID:
+            case XF_TEXGEN5_ID:
+            case XF_TEXGEN6_ID:
+            case XF_TEXGEN7_ID:
             {
                 unsigned num = startIdx & 7;
 

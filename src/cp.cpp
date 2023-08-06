@@ -567,112 +567,112 @@ namespace GX
 
 		switch(index)
 		{
-			case CP_MATIDX_A:
+			case CP_MATINDEX_A_ID:
 			{
 				cpRegs.matidxA.matidx = value;
 				//GFXError("cp posidx : %i", cpRegs.matidxA.pos);
 			}
 			return;
 
-			case CP_MATIDX_B:
+			case CP_MATINDEX_B_ID:
 			{
 				cpRegs.matidxB.matidx = value;
 			}
 			return;
 
-			case CP_VCD_LO:
+			case CP_VCD_LO_ID:
 			{
 				cpRegs.vcdLo.vcdlo = value;
 				FifoReconfigure();
 			}
 			return;
 
-			case CP_VCD_HI:
+			case CP_VCD_HI_ID:
 			{
 				cpRegs.vcdHi.vcdhi = value;
 				FifoReconfigure();
 			}
 			return;
 
-			case CP_VAT0_A:
-			case CP_VAT1_A:
-			case CP_VAT2_A:
-			case CP_VAT3_A:
-			case CP_VAT4_A:
-			case CP_VAT5_A:
-			case CP_VAT6_A:
-			case CP_VAT7_A:
+			case CP_VAT_A_ID | 0:
+			case CP_VAT_A_ID | 1:
+			case CP_VAT_A_ID | 2:
+			case CP_VAT_A_ID | 3:
+			case CP_VAT_A_ID | 4:
+			case CP_VAT_A_ID | 5:
+			case CP_VAT_A_ID | 6:
+			case CP_VAT_A_ID | 7:
 			{
 				cpRegs.vatA[index & 7].vata = value;
 				FifoReconfigure();
 			}
 			return;
 
-			case CP_VAT0_B:
-			case CP_VAT1_B:
-			case CP_VAT2_B:
-			case CP_VAT3_B:
-			case CP_VAT4_B:
-			case CP_VAT5_B:
-			case CP_VAT6_B:
-			case CP_VAT7_B:
+			case CP_VAT_B_ID | 0:
+			case CP_VAT_B_ID | 1:
+			case CP_VAT_B_ID | 2:
+			case CP_VAT_B_ID | 3:
+			case CP_VAT_B_ID | 4:
+			case CP_VAT_B_ID | 5:
+			case CP_VAT_B_ID | 6:
+			case CP_VAT_B_ID | 7:
 			{
 				cpRegs.vatB[index & 7].vatb = value;
 				FifoReconfigure();
 			}
 			return;
 
-			case CP_VAT0_C:
-			case CP_VAT1_C:
-			case CP_VAT2_C:
-			case CP_VAT3_C:
-			case CP_VAT4_C:
-			case CP_VAT5_C:
-			case CP_VAT6_C:
-			case CP_VAT7_C:
+			case CP_VAT_C_ID | 0:
+			case CP_VAT_C_ID | 1:
+			case CP_VAT_C_ID | 2:
+			case CP_VAT_C_ID | 3:
+			case CP_VAT_C_ID | 4:
+			case CP_VAT_C_ID | 5:
+			case CP_VAT_C_ID | 6:
+			case CP_VAT_C_ID | 7:
 			{
 				cpRegs.vatC[index & 7].vatc = value;
 				FifoReconfigure();
 			}
 			return;
 
-			case CP_ARRAY_BASE | 0:
-			case CP_ARRAY_BASE | 1:
-			case CP_ARRAY_BASE | 2:
-			case CP_ARRAY_BASE | 3:
-			case CP_ARRAY_BASE | 4:
-			case CP_ARRAY_BASE | 5:
-			case CP_ARRAY_BASE | 6:
-			case CP_ARRAY_BASE | 7:
-			case CP_ARRAY_BASE | 8:
-			case CP_ARRAY_BASE | 9:
-			case CP_ARRAY_BASE | 0xa:
-			case CP_ARRAY_BASE | 0xb:
-			case CP_ARRAY_BASE | 0xc:
-			case CP_ARRAY_BASE | 0xd:
-			case CP_ARRAY_BASE | 0xe:
-			case CP_ARRAY_BASE | 0xf:
+			case CP_ARRAY_BASE_ID | 0:
+			case CP_ARRAY_BASE_ID | 1:
+			case CP_ARRAY_BASE_ID | 2:
+			case CP_ARRAY_BASE_ID | 3:
+			case CP_ARRAY_BASE_ID | 4:
+			case CP_ARRAY_BASE_ID | 5:
+			case CP_ARRAY_BASE_ID | 6:
+			case CP_ARRAY_BASE_ID | 7:
+			case CP_ARRAY_BASE_ID | 8:
+			case CP_ARRAY_BASE_ID | 9:
+			case CP_ARRAY_BASE_ID | 0xa:
+			case CP_ARRAY_BASE_ID | 0xb:
+			case CP_ARRAY_BASE_ID | 0xc:
+			case CP_ARRAY_BASE_ID | 0xd:
+			case CP_ARRAY_BASE_ID | 0xe:
+			case CP_ARRAY_BASE_ID | 0xf:
 			{
 				cpRegs.arbase[index & 0xf] = value;
 			}
 			return;
 
-			case CP_ARRAY_STRIDE | 0:
-			case CP_ARRAY_STRIDE | 1:
-			case CP_ARRAY_STRIDE | 2:
-			case CP_ARRAY_STRIDE | 3:
-			case CP_ARRAY_STRIDE | 4:
-			case CP_ARRAY_STRIDE | 5:
-			case CP_ARRAY_STRIDE | 6:
-			case CP_ARRAY_STRIDE | 7:
-			case CP_ARRAY_STRIDE | 8:
-			case CP_ARRAY_STRIDE | 9:
-			case CP_ARRAY_STRIDE | 0xa:
-			case CP_ARRAY_STRIDE | 0xb:
-			case CP_ARRAY_STRIDE | 0xc:
-			case CP_ARRAY_STRIDE | 0xd:
-			case CP_ARRAY_STRIDE | 0xe:
-			case CP_ARRAY_STRIDE | 0xf:
+			case CP_ARRAY_STRIDE_ID | 0:
+			case CP_ARRAY_STRIDE_ID | 1:
+			case CP_ARRAY_STRIDE_ID | 2:
+			case CP_ARRAY_STRIDE_ID | 3:
+			case CP_ARRAY_STRIDE_ID | 4:
+			case CP_ARRAY_STRIDE_ID | 5:
+			case CP_ARRAY_STRIDE_ID | 6:
+			case CP_ARRAY_STRIDE_ID | 7:
+			case CP_ARRAY_STRIDE_ID | 8:
+			case CP_ARRAY_STRIDE_ID | 9:
+			case CP_ARRAY_STRIDE_ID | 0xa:
+			case CP_ARRAY_STRIDE_ID | 0xb:
+			case CP_ARRAY_STRIDE_ID | 0xc:
+			case CP_ARRAY_STRIDE_ID | 0xd:
+			case CP_ARRAY_STRIDE_ID | 0xe:
+			case CP_ARRAY_STRIDE_ID | 0xf:
 			{
 				cpRegs.arstride[index & 0xf] = value & 0xFF;
 			}

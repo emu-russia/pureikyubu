@@ -74,7 +74,7 @@ namespace GX
         switch (index)
         {
             // draw done
-            case PE_DONE:
+            case PE_DONE_ID:
             {
                 GPFrameDone();
                 CPDrawDone();
@@ -82,13 +82,13 @@ namespace GX
             return;
 
             // token
-            case PE_TOKEN_INT:
+            case PE_TOKEN_INT_ID:
             {
                 bpRegs.tokint = (uint16_t)value;
             }
             return;
 
-            case PE_TOKEN:
+            case PE_TOKEN_ID:
             {
                 if ((uint16_t)value == bpRegs.tokint)
                 {
@@ -103,7 +103,7 @@ namespace GX
             // application : clipping
             //
 
-            case BP_GEN_MODE:
+            case GEN_MODE_ID:
             {
                 static int cull_modes[4] = {
                     GFX_CULL_NONE,
@@ -122,7 +122,7 @@ namespace GX
             // set scissor box
             //
 
-            case BP_SU_SCIS0:
+            case SU_SCIS0_ID:
             {
                 int x, y, w, h;
 
@@ -138,7 +138,7 @@ namespace GX
             }
             return;
 
-            case BP_SU_SCIS1:
+            case SU_SCIS1_ID:
             {
                 int x, y, w, h;
 
@@ -158,21 +158,21 @@ namespace GX
             // set copy clear color/z
             //
 
-            case PE_COPY_CLEAR_AR:
+            case PE_COPY_CLEAR_AR_ID:
             {
                 copyClearRGBA.A = (uint8_t)(value >> 8);
                 copyClearRGBA.R = (uint8_t)(value);
                 return;
             }
 
-            case PE_COPY_CLEAR_GB:
+            case PE_COPY_CLEAR_GB_ID:
             {
                 copyClearRGBA.G = (uint8_t)(value >> 8);
                 copyClearRGBA.B = (uint8_t)(value);
             }
             return;
 
-            case PE_COPY_CLEAR_Z:
+            case PE_COPY_CLEAR_Z_ID:
             {
                 copyClearZ = value & 0xffffff;
                 GL_SetClear(copyClearRGBA, copyClearZ);
@@ -183,7 +183,7 @@ namespace GX
             // texture image width, height, format
             //
 
-            case TX_SETIMAGE_0_0:
+            case TX_SETIMAGE0_I0_ID:
             {
                 bpRegs.teximg0[0].hex = value;
                 bpRegs.valid[0][0] = TRUE;
@@ -195,7 +195,7 @@ namespace GX
             // texture image base
             //
 
-            case TX_SETIMAGE_3_0:
+            case TX_SETIMAGE3_I0_ID:
             {
                 bpRegs.teximg3[0].hex = value;
                 bpRegs.valid[3][0] = TRUE;
@@ -207,7 +207,7 @@ namespace GX
             // load tlut
             //
 
-            case TX_LOADTLUT0:
+            case TX_LOADTLUT0_ID:
             {
                 bpRegs.loadtlut0.hex = value;
 
@@ -219,7 +219,7 @@ namespace GX
             }
             return;
 
-            case TX_LOADTLUT1:
+            case TX_LOADTLUT1_ID:
             {
                 bpRegs.loadtlut1.hex = value;
 
@@ -235,7 +235,7 @@ namespace GX
             // set tlut
             //
 
-            case TX_SETTLUT_0:
+            case TX_SETTLUT_I0_ID:
             {
                 bpRegs.settlut[0].hex = value;
             }
@@ -245,7 +245,7 @@ namespace GX
             // set texture modes
             //
 
-            case TX_SETMODE_0_0:
+            case TX_SETMODE0_I0_ID:
             {
                 bpRegs.texmode0[0].hex = value;
             }
@@ -255,7 +255,7 @@ namespace GX
             // set blending rules
             //
 
-            case PE_CMODE0:
+            case PE_CMODE0_ID:
             {
                 bpRegs.cmode0.hex = value;
 
@@ -374,7 +374,7 @@ namespace GX
             }
             return;
 
-            case PE_CMODE1:
+            case PE_CMODE1_ID:
             {
                 bpRegs.cmode1.hex = value;
             }
@@ -432,28 +432,28 @@ namespace GX
             // texture coord scale
             //
 
-            case SU_SSIZE_0:
-            case SU_SSIZE_1:
-            case SU_SSIZE_2:
-            case SU_SSIZE_3:
-            case SU_SSIZE_4:
-            case SU_SSIZE_5:
-            case SU_SSIZE_6:
-            case SU_SSIZE_7:
+            case SU_SSIZE0_ID:
+            case SU_SSIZE1_ID:
+            case SU_SSIZE2_ID:
+            case SU_SSIZE3_ID:
+            case SU_SSIZE4_ID:
+            case SU_SSIZE5_ID:
+            case SU_SSIZE6_ID:
+            case SU_SSIZE7_ID:
             {
                 int num = (index >> 1) & 1;
                 bpRegs.ssize[num].hex = value;
             }
             return;
 
-            case SU_TSIZE_0:
-            case SU_TSIZE_1:
-            case SU_TSIZE_2:
-            case SU_TSIZE_3:
-            case SU_TSIZE_4:
-            case SU_TSIZE_5:
-            case SU_TSIZE_6:
-            case SU_TSIZE_7:
+            case SU_TSIZE0_ID:
+            case SU_TSIZE1_ID:
+            case SU_TSIZE2_ID:
+            case SU_TSIZE3_ID:
+            case SU_TSIZE4_ID:
+            case SU_TSIZE5_ID:
+            case SU_TSIZE6_ID:
+            case SU_TSIZE7_ID:
             {
                 int num = (index >> 1) & 1;
                 bpRegs.tsize[num].hex = value;

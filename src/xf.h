@@ -12,7 +12,7 @@ namespace GX
 
 	// XF Registers
 
-	enum class XFRegister
+	enum XFRegister : size_t
 	{
 		// 0x0000...0x03FF - ModelView/Texture Matrix memory. This block is formed by the matrix memory. Its address range is 0 to 1k, but only 256 entries are used. This memory is organized in a 64 entry by four 32b words.
 

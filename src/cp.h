@@ -186,7 +186,7 @@ namespace GX
 
 	// CP Registers (from GX side). These registers are available only for writing, with the CP_LoadRegs command
 
-	enum class CPRegister
+	enum CPRegister : size_t
 	{
 		CP_VC_STAT_RESET_ID = 0x00,
 		CP_STAT_ENABLE_ID = 0x10,

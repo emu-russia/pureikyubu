@@ -5,7 +5,7 @@ namespace GX
 	// SU BP (ByPass) address space (SU/RAS/TEV etc) Registers
 	// There is no such entity as "BP" in Flipper. SU is simply used to "throw" registers further down the shop (to RAS, TEV, TX)
 
-	enum class BPRegister
+	enum BPRegister : size_t
 	{
 		GEN_MODE_ID = 0x00,
 
