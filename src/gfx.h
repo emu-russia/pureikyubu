@@ -187,6 +187,12 @@ namespace GX
 
 #pragma region "Setup Unit"
 
+		GenMode		genmode;		// TODO: SU?
+		SU_SCIS0    scis0;                  // 0x20
+		SU_SCIS1    scis1;                  // 0x21
+		SU_TS0      ssize[8];               // 0x3n
+		SU_TS1      tsize[8];               // 0x3n
+
 		void GL_SetScissor(int x, int y, int w, int h);
 		void GL_SetCullMode(int mode);
 		void tryLoadTex(int id);
@@ -205,6 +211,14 @@ namespace GX
 
 
 #pragma region "Texture Engine (Old)"
+
+		LoadTlut0   loadtlut0;              // 0x64
+		LoadTlut1   loadtlut1;              // 0x65
+		TexMode0    texmode0[8];            // 0x80-0x83, 0xA0-0xA3
+		TEXIMAGE0   teximg0[8];             // 0x88-0x8B, 0xA8-0xAB
+		TEXIMAGE3   teximg3[8];             // 0x94-0x97, 0xB4-0xB7
+		SetTlut     settlut[8];             // 0x98-0x9B, 0xB8-0xBB
+		bool        texvalid[4][8];
 
 		void TexInit();
 		void TexFree();
@@ -228,6 +242,10 @@ namespace GX
 
 		Color copyClearRGBA;
 		uint32_t copyClearZ;
+		uint16_t tokint;
+		PE_ZMODE    zmode;                  // 0x40
+		ColMode0    cmode0;                 // 0x41
+		ColMode1    cmode1;                 // 0x42
 
 		void GL_SetClear(Color clr, uint32_t z);
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);

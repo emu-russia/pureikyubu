@@ -9,7 +9,7 @@ using namespace Debug;
 namespace GX
 {
 
-    void GL_SetScissor(int x, int y, int w, int h)
+    void GXCore::GL_SetScissor(int x, int y, int w, int h)
     {
         //h += 32;
 #ifndef NO_VIEWPORT
@@ -17,7 +17,7 @@ namespace GX
 #endif
     }
 
-    void GL_SetCullMode(int mode)
+    void GXCore::GL_SetCullMode(int mode)
     {
         /*/
             switch(mode)
@@ -43,18 +43,18 @@ namespace GX
 
     void GXCore::tryLoadTex(int id)
     {
-        if (bpRegs.valid[0][id] && bpRegs.valid[3][id])
+        if (texvalid[0][id] && texvalid[3][id])
         {
-            bpRegs.valid[0][id] =
-            bpRegs.valid[3][id] = false;
+            texvalid[0][id] =
+            texvalid[3][id] = false;
 
 #ifndef WIREFRAME
             LoadTexture(
-                bpRegs.teximg3[id].base << 5,
+                teximg3[id].base << 5,
                 id,
-                bpRegs.teximg0[id].fmt,
-                bpRegs.teximg0[id].width + 1,
-                bpRegs.teximg0[id].height + 1
+                teximg0[id].fmt,
+                teximg0[id].width + 1,
+                teximg0[id].height + 1
             );
 #endif
         }
@@ -84,16 +84,16 @@ namespace GX
             // token
             case PE_TOKEN_INT_ID:
             {
-                bpRegs.tokint = (uint16_t)value;
+                tokint = (uint16_t)value;
             }
             return;
 
             case PE_TOKEN_ID:
             {
-                if ((uint16_t)value == bpRegs.tokint)
+                if ((uint16_t)value == tokint)
                 {
                     GPFrameDone();
-                    CPDrawToken(bpRegs.tokint);
+                    CPDrawToken(tokint);
                 }
             }
             return;
@@ -111,10 +111,10 @@ namespace GX
                     GFX_CULL_FRONT,
                     GFX_CULL_ALL,
                 };
-                bpRegs.genmode.hex = value;
+                genmode.bits = value;
                 //GFXError("%i", bpRegs.genmode.cull);
 
-                GL_SetCullMode(cull_modes[bpRegs.genmode.cull]);
+                GL_SetCullMode(cull_modes[genmode.cull]);
             }
             return;
 
@@ -126,12 +126,12 @@ namespace GX
             {
                 int x, y, w, h;
 
-                bpRegs.scis0.scis0 = value;
+                scis0.bits = value;
 
-                x = bpRegs.scis0.sux - 342;
-                y = bpRegs.scis0.suy - 342;
-                w = bpRegs.scis1.suw - bpRegs.scis0.sux + 1;
-                h = bpRegs.scis1.suh - bpRegs.scis0.suy + 1;
+                x = scis0.sux - 342;
+                y = scis0.suy - 342;
+                w = scis1.suw - scis0.sux + 1;
+                h = scis1.suh - scis0.suy + 1;
 
                 //GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
                 GL_SetScissor(x, y, w, h);
@@ -142,12 +142,12 @@ namespace GX
             {
                 int x, y, w, h;
 
-                bpRegs.scis1.scis1 = value;
+                scis1.bits = value;
 
-                x = bpRegs.scis0.sux - 342;
-                y = bpRegs.scis0.suy - 342;
-                w = bpRegs.scis1.suw - bpRegs.scis0.sux + 1;
-                h = bpRegs.scis1.suh - bpRegs.scis0.suy + 1;
+                x = scis0.sux - 342;
+                y = scis0.suy - 342;
+                w = scis1.suw - scis0.sux + 1;
+                h = scis1.suh - scis0.suy + 1;
 
                 //GFXError("scissor (%i, %i)-(%i, %i)", x, y, w, h);
                 GL_SetScissor(x, y, w, h);
@@ -185,8 +185,8 @@ namespace GX
 
             case TX_SETIMAGE0_I0_ID:
             {
-                bpRegs.teximg0[0].hex = value;
-                bpRegs.valid[0][0] = TRUE;
+                teximg0[0].bits = value;
+                texvalid[0][0] = true;
                 tryLoadTex(0);
             }
             return;
@@ -197,8 +197,8 @@ namespace GX
 
             case TX_SETIMAGE3_I0_ID:
             {
-                bpRegs.teximg3[0].hex = value;
-                bpRegs.valid[3][0] = TRUE;
+                teximg3[0].bits = value;
+                texvalid[3][0] = true;
                 tryLoadTex(0);
             }
             return;
@@ -209,24 +209,24 @@ namespace GX
 
             case TX_LOADTLUT0_ID:
             {
-                bpRegs.loadtlut0.hex = value;
+                loadtlut0.bits = value;
 
                 LoadTlut(
-                    (bpRegs.loadtlut0.base << 5),   // ram address
-                    (bpRegs.loadtlut1.tmem << 9),   // tlut offset
-                    bpRegs.loadtlut1.count          // tlut size
+                    (loadtlut0.base << 5),   // ram address
+                    (loadtlut1.tmem << 9),   // tlut offset
+                    loadtlut1.count          // tlut size
                 );
             }
             return;
 
             case TX_LOADTLUT1_ID:
             {
-                bpRegs.loadtlut1.hex = value;
+                loadtlut1.bits = value;
 
                 LoadTlut(
-                    (bpRegs.loadtlut0.base << 5),   // ram address
-                    (bpRegs.loadtlut1.tmem << 9),   // tlut offset
-                    bpRegs.loadtlut1.count          // tlut size
+                    (loadtlut0.base << 5),   // ram address
+                    (loadtlut1.tmem << 9),   // tlut offset
+                    loadtlut1.count          // tlut size
                 );
             }
             return;
@@ -237,7 +237,7 @@ namespace GX
 
             case TX_SETTLUT_I0_ID:
             {
-                bpRegs.settlut[0].hex = value;
+                settlut[0].bits = value;
             }
             return;
 
@@ -247,7 +247,7 @@ namespace GX
 
             case TX_SETMODE0_I0_ID:
             {
-                bpRegs.texmode0[0].hex = value;
+                texmode0[0].bits = value;
             }
             return;
 
@@ -257,7 +257,7 @@ namespace GX
 
             case PE_CMODE0_ID:
             {
-                bpRegs.cmode0.hex = value;
+                cmode0.bits = value;
 
                 static const char* logicop[] = {
                     "clear",
@@ -301,18 +301,18 @@ namespace GX
                 };
 
                 /*/
-                            GFXError(
-                                "blend rules\n\n"
-                                "blend:%s, logic:%s\n"
-                                "logic op : %s\n"
-                                "sfactor : %s\n"
-                                "dfactor : %s\n",
-                                (bpRegs.cmode0.blend_en) ? ("on") : ("off"),
-                                (bpRegs.cmode0.logop_en) ? ("on") : ("off"),
-                                logicop[bpRegs.cmode0.logop],
-                                sfactor[bpRegs.cmode0.sfactor],
-                                dfactor[bpRegs.cmode0.dfactor]
-                            );
+                GFXError(
+                    "blend rules\n\n"
+                    "blend:%s, logic:%s\n"
+                    "logic op : %s\n"
+                    "sfactor : %s\n"
+                    "dfactor : %s\n",
+                    (bpRegs.cmode0.blend_en) ? ("on") : ("off"),
+                    (bpRegs.cmode0.logop_en) ? ("on") : ("off"),
+                    logicop[bpRegs.cmode0.logop],
+                    sfactor[bpRegs.cmode0.sfactor],
+                    dfactor[bpRegs.cmode0.dfactor]
+                );
                 /*/
 
                 static uint32_t glsf[] = {
@@ -338,10 +338,10 @@ namespace GX
                 };
 
                 // blend hack
-                if (bpRegs.cmode0.blend_en)
+                if (cmode0.blend_en)
                 {
                     glEnable(GL_BLEND);
-                    glBlendFunc(glsf[bpRegs.cmode0.sfactor], gldf[bpRegs.cmode0.dfactor]);
+                    glBlendFunc(glsf[cmode0.sfactor], gldf[cmode0.dfactor]);
                 }
                 else glDisable(GL_BLEND);
 
@@ -365,10 +365,10 @@ namespace GX
                 };
 
                 // logic operations
-                if (bpRegs.cmode0.logop_en)
+                if (cmode0.logop_en)
                 {
                     glEnable(GL_COLOR_LOGIC_OP);
-                    glLogicOp(logop[bpRegs.cmode0.logop]);
+                    glLogicOp(logop[cmode0.logop]);
                 }
                 else glDisable(GL_COLOR_LOGIC_OP);
             }
@@ -376,7 +376,7 @@ namespace GX
 
             case PE_CMODE1_ID:
             {
-                bpRegs.cmode1.hex = value;
+                cmode1.bits = value;
             }
             return;
 
@@ -404,25 +404,25 @@ namespace GX
                     GL_ALWAYS
                 };
 
-                bpRegs.zmode.hex = value;
+                zmode.bits = value;
 
                 /*/
-                            GFXError(
-                                "z mode:\n"
-                                "compare: %s\n"
-                                "func: %s\n"
-                                "update: %s",
-                                (bpRegs.zmode.enable) ? ("yes") : ("no"),
-                                zf[bpRegs.zmode.func],
-                                (bpRegs.zmode.mask) ? ("yes") : ("no")
-                            );
+                GFXError(
+                    "z mode:\n"
+                    "compare: %s\n"
+                    "func: %s\n"
+                    "update: %s",
+                    (bpRegs.zmode.enable) ? ("yes") : ("no"),
+                    zf[bpRegs.zmode.func],
+                    (bpRegs.zmode.mask) ? ("yes") : ("no")
+                );
                 /*/
 
-                if (bpRegs.zmode.enable)
+                if (zmode.enable)
                 {
                     glEnable(GL_DEPTH_TEST);
-                    glDepthFunc(glzf[bpRegs.zmode.func]);
-                    glDepthMask(bpRegs.zmode.mask);
+                    glDepthFunc(glzf[zmode.func]);
+                    glDepthMask(zmode.mask);
                 }
                 else glDisable(GL_DEPTH_TEST);
             }
@@ -442,7 +442,7 @@ namespace GX
             case SU_SSIZE7_ID:
             {
                 int num = (index >> 1) & 1;
-                bpRegs.ssize[num].hex = value;
+                ssize[num].bits = value;
             }
             return;
 
@@ -456,7 +456,7 @@ namespace GX
             case SU_TSIZE7_ID:
             {
                 int num = (index >> 1) & 1;
-                bpRegs.tsize[num].hex = value;
+                tsize[num].bits = value;
             }
             return;
 

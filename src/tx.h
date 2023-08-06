@@ -31,6 +31,80 @@ namespace GX
 
     // Indirect texture scale
 
+
+    // texture params
+    union TEXIMAGE0
+    {
+        struct
+        {
+            unsigned    width : 10;
+            unsigned    height : 10;
+            unsigned    fmt : 4;
+            unsigned    op : 8;
+        };
+        uint32_t     bits;
+    };
+
+    // texture location
+    union TEXIMAGE3
+    {
+        struct
+        {
+            unsigned    base : 24;
+            unsigned    op : 8;
+        };
+        uint32_t     bits;
+    };
+
+    // texture mode 0
+    union TexMode0
+    {
+        struct
+        {
+            unsigned    wrap_s : 2;
+            unsigned    wrap_t : 2;
+            unsigned    mag : 1;
+            unsigned    min : 3;
+            unsigned    diaglod : 1;
+            unsigned    lodbias : 10;
+            unsigned    maxaniso : 2;
+            unsigned    lodclamp : 3;
+            unsigned    rid : 8;
+        };
+        uint32_t     bits;
+    };
+
+    // 0x64
+    union LoadTlut0
+    {
+        struct
+        {
+            unsigned    base : 20;
+        };
+        uint32_t     bits;
+    };
+
+    // 0x65
+    union LoadTlut1
+    {
+        struct
+        {
+            unsigned    tmem : 10;
+            unsigned    count : 10;
+        };
+        uint32_t     bits;
+    };
+
+    union SetTlut
+    {
+        struct
+        {
+            unsigned    tmem : 10;
+            unsigned    fmt : 2;
+        };
+        uint32_t     bits;
+    };
+
 }
 
 

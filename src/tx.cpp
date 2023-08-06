@@ -79,7 +79,7 @@ namespace GX
                 uint8_t  rgb[3];     // RGB triplet
                 {
                     Color c;
-                    c.RGBA = _byteswap_ulong(rgbaBuf->RGBA);
+                    c.RGBA = _BYTESWAP_UINT32(rgbaBuf->RGBA);
                     rgb[0] = c.B;   // B
                     rgb[1] = c.G;   // G
                     rgb[2] = c.R;   // R
@@ -94,8 +94,8 @@ namespace GX
 
     void GXCore::GetTlutCol(Color* c, unsigned id, unsigned entry)
     {
-        uint16_t* tptr = (uint16_t*)(&tlut[(bpRegs.settlut[id].tmem << 9) + 2 * entry]);
-        int fmt = bpRegs.settlut[id].fmt;
+        uint16_t* tptr = (uint16_t*)(&tlut[(settlut[id].tmem << 9) + 2 * entry]);
+        int fmt = settlut[id].fmt;
 
         switch (fmt)
         {
@@ -108,7 +108,7 @@ namespace GX
 
         case 1:     // RGB565
         {
-            uint16_t p = _byteswap_ushort(*tptr);
+            uint16_t p = _BYTESWAP_UINT16(*tptr);
 
             uint8_t r = p >> 11;
             uint8_t g = (p >> 5) & 0x3f;
@@ -123,7 +123,7 @@ namespace GX
 
         case 2:     // RGB5A3
         {
-            uint16_t p = _byteswap_ushort(*tptr);
+            uint16_t p = _BYTESWAP_UINT16(*tptr);
             if (p >> 15)
             {
                 p &= ~0x8000;   // clear A-bit
@@ -169,8 +169,8 @@ namespace GX
 #define GL_MIRRORED_REPEAT_ARB          0x8370
 #endif
         static uint32_t wrap[4] = { GL_CLAMP, GL_REPEAT, GL_MIRRORED_REPEAT_ARB, GL_REPEAT };
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[bpRegs.texmode0[id].wrap_s]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[bpRegs.texmode0[id].wrap_t]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap[texmode0[id].wrap_s]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap[texmode0[id].wrap_t]);
 
         glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, TEXMODE);
 
@@ -182,8 +182,8 @@ namespace GX
             GL_LINEAR_MIPMAP_NEAREST,
             GL_LINEAR_MIPMAP_LINEAR
         };
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[bpRegs.texmode0[id].min]);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[bpRegs.texmode0[id].mag]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[texmode0[id].min]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[texmode0[id].mag]);
 
         glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
@@ -332,7 +332,7 @@ namespace GX
                                     texbuf[ofs].G =
                                     texbuf[ofs].B = *ptr << 4;
                                 texbuf[ofs].A = *ptr >> 4;
-                                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                                 ptr++;
                             }
                 break;
@@ -354,7 +354,7 @@ namespace GX
                                 texbuf[ofs].R =
                                     texbuf[ofs].G =
                                     texbuf[ofs].B = *ptr++;
-                                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                             }
                 break;
             }
@@ -371,7 +371,7 @@ namespace GX
                             for (u = 0; u < 4; u++)
                             {
                                 unsigned ofs = width * (t + v) + s + u;
-                                uint16_t p = _byteswap_ushort(*ptr++);
+                                uint16_t p = _BYTESWAP_UINT16(*ptr++);
 
                                 uint8_t r = p >> 11;
                                 uint8_t g = (p >> 5) & 0x3f;
@@ -381,7 +381,7 @@ namespace GX
                                 texbuf[ofs].G = (g << 2) | (g >> 4);
                                 texbuf[ofs].B = (b << 3) | (b >> 2);
                                 texbuf[ofs].A = 255;
-                                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                             }
                 break;
             }
@@ -398,7 +398,7 @@ namespace GX
                             for (u = 0; u < 4; u++)
                             {
                                 unsigned ofs = width * (t + v) + s + u;
-                                uint16_t p = _byteswap_ushort(*ptr++);
+                                uint16_t p = _BYTESWAP_UINT16(*ptr++);
                                 if (p >> 15)
                                 {
                                     p &= ~0x8000;   // clear A-bit
@@ -424,7 +424,7 @@ namespace GX
                                     texbuf[ofs].B = (b << 4) | b;
                                     texbuf[ofs].A = a | (a << 3) | ((a << 9) & 3);
                                 }
-                                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                             }
                 break;
             }
@@ -452,7 +452,7 @@ namespace GX
                                 unsigned ofs = width * (t + v) + s + u;
                                 texbuf[ofs].G = *ptr++;
                                 texbuf[ofs].B = *ptr++;
-                                texbuf[ofs].RGBA = _byteswap_ulong(texbuf[ofs].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                             }
                     }
                 break;
@@ -473,10 +473,10 @@ namespace GX
                                 unsigned ofs = width * (t + v) + s + u;
                                 uint8_t e = *ptr++;
                                 GetTlutCol(&rgba, id, e >> 4);
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgba.RGBA);
                                 ofs++;
                                 GetTlutCol(&rgba, id, e & 0xf);
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgba.RGBA);
                             }
                 break;
             }
@@ -496,7 +496,7 @@ namespace GX
                                 int ofs = width * (t + v) + s + u;
                                 uint8_t idx = *ptr++;
                                 GetTlutCol(&rgba, id, idx);
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgba.RGBA);
                             }
                 break;
             }
@@ -514,9 +514,9 @@ namespace GX
                             for (u = 0; u < 4; u++)
                             {
                                 unsigned ofs = width * (t + v) + s + u;
-                                uint16_t idx = _byteswap_ushort(*ptr++) & 0x3ff;
+                                uint16_t idx = _BYTESWAP_UINT16(*ptr++) & 0x3ff;
                                 GetTlutCol(&rgba, id, idx);
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgba.RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgba.RGBA);
                             }
                 break;
             };
@@ -541,7 +541,7 @@ namespace GX
                         ptr += sizeof(S3TC_BLK);
                         for (v = 0; v < 4; v++)
                         {
-                            p = _byteswap_ushort(blk.rgb0);
+                            p = _BYTESWAP_UINT16(blk.rgb0);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -550,7 +550,7 @@ namespace GX
                             rgb[0].G = (g << 2) | (g >> 4);
                             rgb[0].B = (b << 3) | (b >> 2);
 
-                            p = _byteswap_ushort(blk.rgb1);
+                            p = _BYTESWAP_UINT16(blk.rgb1);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -589,7 +589,7 @@ namespace GX
                             {
                                 unsigned ofs = width * (t + v) + s + u;
                                 uint8_t p = (texel >> shft) & 3;
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
                             }
                         }
 
@@ -598,7 +598,7 @@ namespace GX
                         ptr += sizeof(S3TC_BLK);
                         for (v = 0; v < 4; v++)
                         {
-                            p = _byteswap_ushort(blk.rgb0);
+                            p = _BYTESWAP_UINT16(blk.rgb0);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -607,7 +607,7 @@ namespace GX
                             rgb[0].G = (g << 2) | (g >> 4);
                             rgb[0].B = (b << 3) | (b >> 2);
 
-                            p = _byteswap_ushort(blk.rgb1);
+                            p = _BYTESWAP_UINT16(blk.rgb1);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -646,7 +646,7 @@ namespace GX
                             {
                                 unsigned ofs = width * (t + v) + s + u;
                                 uint8_t p = (texel >> shft) & 3;
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
                             }
                         }
 
@@ -655,7 +655,7 @@ namespace GX
                         ptr += sizeof(S3TC_BLK);
                         for (v = 4; v < 8; v++)
                         {
-                            p = _byteswap_ushort(blk.rgb0);
+                            p = _BYTESWAP_UINT16(blk.rgb0);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -664,7 +664,7 @@ namespace GX
                             rgb[0].G = (g << 2) | (g >> 4);
                             rgb[0].B = (b << 3) | (b >> 2);
 
-                            p = _byteswap_ushort(blk.rgb1);
+                            p = _BYTESWAP_UINT16(blk.rgb1);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -703,7 +703,7 @@ namespace GX
                             {
                                 unsigned ofs = width * (t + v) + s + u;
                                 uint8_t p = (texel >> shft) & 3;
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
                             }
                         }
 
@@ -712,7 +712,7 @@ namespace GX
                         ptr += sizeof(S3TC_BLK);
                         for (v = 4; v < 8; v++)
                         {
-                            p = _byteswap_ushort(blk.rgb0);
+                            p = _BYTESWAP_UINT16(blk.rgb0);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -722,7 +722,7 @@ namespace GX
                             rgb[0].B = (b << 3) | (b >> 2);
                             rgb[0].A = 255;
 
-                            p = _byteswap_ushort(blk.rgb1);
+                            p = _BYTESWAP_UINT16(blk.rgb1);
                             r = p >> 11;
                             g = (p >> 5) & 0x3f;
                             b = p & 0x1f;
@@ -762,7 +762,7 @@ namespace GX
                             {
                                 unsigned ofs = width * (t + v) + s + u;
                                 uint8_t p = (texel >> shft) & 3;
-                                texbuf[ofs].RGBA = _byteswap_ulong(rgb[p].RGBA);
+                                texbuf[ofs].RGBA = _BYTESWAP_UINT32(rgb[p].RGBA);
                             }
                         }
                     }

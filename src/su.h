@@ -189,6 +189,68 @@ namespace GX
 	};
 
 
+	// gen mode (SU?)
+	union GenMode
+	{
+		struct
+		{
+			unsigned    ntex : 4;
+			unsigned    ncol : 5;
+			unsigned    msen : 1;
+			unsigned    ntev : 4;
+			unsigned    cull : 2;
+			unsigned    nbmp : 3;
+			unsigned    zfreeze : 5;
+		};
+		uint32_t     bits;
+	};
+
+	// 0x20
+	union SU_SCIS0
+	{
+		struct
+		{
+			unsigned    suy : 12;
+			unsigned    sux : 12;
+			unsigned    rid : 8;
+		};
+		uint32_t     bits;
+	};
+
+	// 0x21
+	union SU_SCIS1
+	{
+		struct
+		{
+			unsigned    suh : 12;
+			unsigned    suw : 12;
+			unsigned    rid : 8;
+		};
+		uint32_t     bits;
+	};
+
+	// 0x3n
+	union SU_TS0
+	{
+		struct
+		{
+			unsigned    ssize : 16;
+			unsigned    dontcare : 16;
+		};
+		uint32_t     bits;
+	};
+
+	union SU_TS1
+	{
+		struct
+		{
+			unsigned    tsize : 16;
+			unsigned    dontcare : 16;
+		};
+		uint32_t     bits;
+	};
+
+
 	// triangle cull rules
 	#define GFX_CULL_NONE       0
 	#define GFX_CULL_FRONT      1

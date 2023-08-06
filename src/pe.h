@@ -50,6 +50,49 @@ namespace GX
 
 	// Alpha read mode
 
+	// 0x40
+	union PE_ZMODE
+	{
+		struct
+		{
+			unsigned    enable : 1;
+			unsigned    func : 3;
+			unsigned    mask : 1;
+		};
+		uint32_t     bits;
+	};
+
+	// 0x41
+	union ColMode0
+	{
+		struct
+		{
+			unsigned    blend_en : 1;
+			unsigned    logop_en : 1;
+			unsigned    dither_en : 1;
+			unsigned    col_mask : 1;
+			unsigned    alpha_mask : 1;
+			unsigned    dfactor : 3;
+			unsigned    sfactor : 3;
+			unsigned    blebdop : 1;
+			unsigned    logop : 12;
+		};
+		uint32_t     bits;
+	};
+
+	// 0x42
+	union ColMode1
+	{
+		struct
+		{
+			unsigned    const_alpha_en : 1;
+			unsigned    rsrv : 7;
+			unsigned    const_alpha : 8;
+			unsigned    rid : 16;
+		};
+		uint32_t     bits;
+	};
+
 }
 
 void PEOpen();
