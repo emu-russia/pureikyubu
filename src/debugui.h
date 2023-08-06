@@ -62,11 +62,11 @@ namespace Debug
 		std::list<std::string> SplitMessages(std::string str);
 
 	public:
-		ReportWindow(RECT& rect, std::string name, Cui* parent);
+		ReportWindow(CuiRect& rect, std::string name, Cui* parent);
 		~ReportWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -86,11 +86,11 @@ namespace Debug
 		DebugMode _mode = DebugMode::Ready;
 
 	public:
-		StatusWindow(RECT& rect, std::string name, Cui* parent);
+		StatusWindow(CuiRect& rect, std::string name, Cui* parent);
 		~StatusWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetMode(DebugMode mode);
 	};
@@ -117,11 +117,11 @@ namespace Debug
 		void ClearCmdline();
 
 	public:
-		CmdlineWindow(RECT& rect, std::string name, Cui* parent);
+		CmdlineWindow(CuiRect& rect, std::string name, Cui* parent);
 		~CmdlineWindow();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -240,10 +240,10 @@ namespace Debug
 		std::vector<std::pair<uint32_t, uint32_t>> browseHist;
 
 	public:
-		DspImem(RECT& rect, std::string name, Cui* parent);
+		DspImem(CuiRect& rect, std::string name, Cui* parent);
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -263,7 +263,7 @@ namespace Debug
 	public:
 		DspDebug();
 
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -280,10 +280,10 @@ namespace Debug
 		uint32_t current = 0;
 
 	public:
-		DspDmem(RECT& rect, std::string name, Cui* parent);
+		DspDmem(CuiRect& rect, std::string name, Cui* parent);
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -320,10 +320,10 @@ namespace Debug
 		void Memorize();
 
 	public:
-		DspRegs(RECT& rect, std::string name, Cui* parent);
+		DspRegs(CuiRect& rect, std::string name, Cui* parent);
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -344,11 +344,11 @@ namespace Debug
 		int DisasmLine(int line, uint32_t addr);
 
 	public:
-		GekkoDisasm(RECT& rect, std::string name, Cui* parent);
+		GekkoDisasm(CuiRect& rect, std::string name, Cui* parent);
 		~GekkoDisasm();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		uint32_t GetCursor();
 		void SetCursor(uint32_t address);
@@ -358,58 +358,6 @@ namespace Debug
 
 namespace Debug
 {
-
-#define Gekko_SPR_XER 1
-#define Gekko_SPR_LR 8
-#define Gekko_SPR_CTR 9
-#define Gekko_SPR_DSISR 18
-#define Gekko_SPR_DAR 19
-#define Gekko_SPR_DEC 22
-#define Gekko_SPR_SDR1 25
-#define Gekko_SPR_SRR0 26
-#define Gekko_SPR_SRR1 27
-#define Gekko_SPR_SPRG0 272
-#define Gekko_SPR_SPRG1 273
-#define Gekko_SPR_SPRG2 274
-#define Gekko_SPR_SPRG3 275
-#define Gekko_SPR_EAR 282
-#define Gekko_SPR_TBL 284
-#define Gekko_SPR_TBU 285
-#define Gekko_SPR_PVR 287
-#define Gekko_SPR_IBAT0U 528
-#define Gekko_SPR_IBAT0L 529
-#define Gekko_SPR_IBAT1U 530
-#define Gekko_SPR_IBAT1L 531
-#define Gekko_SPR_IBAT2U 532
-#define Gekko_SPR_IBAT2L 533
-#define Gekko_SPR_IBAT3U 534
-#define Gekko_SPR_IBAT3L 535
-#define Gekko_SPR_DBAT0U 536
-#define Gekko_SPR_DBAT0L 537
-#define Gekko_SPR_DBAT1U 538
-#define Gekko_SPR_DBAT1L 539
-#define Gekko_SPR_DBAT2U 540
-#define Gekko_SPR_DBAT2L 541
-#define Gekko_SPR_DBAT3U 542
-#define Gekko_SPR_DBAT3L 543
-#define Gekko_SPR_HID0 1008
-#define Gekko_SPR_HID1 1009
-#define Gekko_SPR_IABR 1010
-#define Gekko_SPR_DABR 1013
-#define Gekko_SPR_GQRs 912
-#define Gekko_SPR_GQR0 912
-#define Gekko_SPR_GQR1 913
-#define Gekko_SPR_GQR2 914
-#define Gekko_SPR_GQR3 915
-#define Gekko_SPR_GQR4 916
-#define Gekko_SPR_GQR5 917
-#define Gekko_SPR_GQR6 918
-#define Gekko_SPR_GQR7 919
-#define Gekko_SPR_HID2 920
-#define Gekko_SPR_WPAR 921
-#define Gekko_SPR_DMAU 922
-#define Gekko_SPR_DMAL 923
-
 	enum class GekkoRegmode
 	{
 		GPR = 0,
@@ -459,11 +407,11 @@ namespace Debug
 		std::string smart_size(size_t size);
 
 	public:
-		GekkoRegs(RECT& rect, std::string name, Cui* parent);
+		GekkoRegs(CuiRect& rect, std::string name, Cui* parent);
 		~GekkoRegs();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 	};
 
 }
@@ -480,11 +428,11 @@ namespace Debug
 		char charbyte(uint32_t addr);
 
 	public:
-		MemoryView(RECT& rect, std::string name, Cui* parent);
+		MemoryView(CuiRect& rect, std::string name, Cui* parent);
 		~MemoryView();
 
 		virtual void OnDraw();
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetCursor(uint32_t address);
 	};
@@ -517,7 +465,7 @@ namespace Debug
 	public:
 		GekkoDebug();
 
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void SetMemoryCursor(uint32_t virtualAddress);
 		void SetDisasmCursor(uint32_t virtualAddress);

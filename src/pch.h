@@ -100,10 +100,8 @@ namespace Flipper
 #include "osdebug.h"
 
 #include "debug.h"
-#ifdef _WINDOWS
 #include "cui.h"
 #include "debugui.h"
-#endif
 
 #include "config.h"
 #include "main.h"
