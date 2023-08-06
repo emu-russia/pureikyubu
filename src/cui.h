@@ -26,6 +26,46 @@ namespace Debug
 		White,
 	};
 
+	/// <summary>
+	/// In order not to use Win32 RECT this intermediate portable representation is used.
+	/// </summary>
+	struct CuiRect
+	{
+		long left;
+		long top;
+		long right;
+		long bottom;
+	};
+
+	enum class CuiVkey
+	{
+		Unknown = 0,
+		Up,
+		Down,
+		Left,
+		Right,
+		PageUp,
+		PageDown,
+		Home,
+		End,
+		Escape,
+		Enter,
+		Backspace,
+		Delete,
+		F1,
+		F2,
+		F3,
+		F4,
+		F5,
+		F6,
+		F7,
+		F8,
+		F9,
+		F10,
+		F11,
+		F12,
+	};
+
 	class Cui;
 
 	class CuiWindow
@@ -34,11 +74,13 @@ namespace Debug
 
 		std::string wndName;
 
+#ifdef _WINDOWS
 		// This is where the contents of the window are stored. The region data is displayed by the wndRect coordinates.
 		CHAR_INFO* backBuf = nullptr;
+#endif
 
 		// Window layout in CUI.
-		RECT wndRect;
+		CuiRect wndRect;
 
 		void PutChar(CuiColor back, CuiColor front, int x, int y, char c);
 
@@ -50,14 +92,14 @@ namespace Debug
 		Cui* cui = nullptr;
 
 	public:
-		CuiWindow(RECT& rect, std::string name, Cui* parent);
+		CuiWindow(CuiRect& rect, std::string name, Cui* parent);
 		virtual ~CuiWindow();
 
 		// Redraw itself if invalidated.
 		virtual void OnDraw() = 0;
 
 		// Key event. Comes only if the window is active (SetFocus true)
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl) = 0;
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl) = 0;
 
 		void Invalidate() { invalidated = true; }
 		bool NeedRedraw() { return invalidated; }
@@ -79,8 +121,10 @@ namespace Debug
 	{
 		std::list<CuiWindow*> windows;
 
+#ifdef _WINDOWS
 		HANDLE StdInput;
 		HANDLE StdOutput;
+#endif
 
 		size_t conWidth;
 		size_t conHeight;
@@ -101,7 +145,7 @@ namespace Debug
 		// A global CUI key event handler (for example, to switch focus between windows). 
 		// In addition, each active window also receives key event.
 
-		virtual void OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl);
+		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
 
 		void ShowCursor(bool show);
 		void SetCursor(int x, int y);

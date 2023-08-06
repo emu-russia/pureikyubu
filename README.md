@@ -15,6 +15,8 @@ Build using Visual Studio 2022. To build, open `scripts/pureikyubu.sln` and clic
 
 ### Generic Linux (Ubuntu) version
 
+The Linux build does not yet have support for graphics, sound and a full Debug UI. All emulation output can be seen only through debug messages.
+
 ```
 # Choose a suitable folder to store a clone of the repository, cd there and then
 git clone https://github.com/emu-russia/pureikyubu.git 
@@ -22,6 +24,7 @@ cd pureikyubu
 cd build
 cmake ..
 make
+./pureikyubu pong.dol
 ```
 
 Requirements: CMake, pthread.

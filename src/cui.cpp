@@ -62,6 +62,42 @@ namespace Debug
 		Sleep(100);
 	}
 
+	/// <summary>
+	/// Convert Windows VK to abstract Cui VK, to improve code portability.
+	/// </summary>
+	static CuiVkey WindowVKToCuiVkey(WORD vk)
+	{
+		switch (vk)
+		{
+			case VK_UP: return CuiVkey::Up;
+			case VK_DOWN: return CuiVkey::Down;
+			case VK_LEFT: return CuiVkey::Left;
+			case VK_RIGHT: return CuiVkey::Right;
+			case VK_PRIOR: return CuiVkey::PageUp;
+			case VK_NEXT: return CuiVkey::PageDown;
+			case VK_HOME: return CuiVkey::Home;
+			case VK_END: return CuiVkey::End;
+			case VK_ESCAPE: return CuiVkey::Escape;
+			case VK_RETURN: return CuiVkey::Enter;
+			case VK_BACK: return CuiVkey::Backspace;
+			case VK_DELETE: return CuiVkey::Delete;
+			case VK_F1: return CuiVkey::F1;
+			case VK_F2: return CuiVkey::F2;
+			case VK_F3: return CuiVkey::F3;
+			case VK_F4: return CuiVkey::F4;
+			case VK_F5: return CuiVkey::F5;
+			case VK_F6: return CuiVkey::F6;
+			case VK_F7: return CuiVkey::F7;
+			case VK_F8: return CuiVkey::F8;
+			case VK_F9: return CuiVkey::F9;
+			case VK_F10: return CuiVkey::F10;
+			case VK_F11: return CuiVkey::F11;
+			case VK_F12: return CuiVkey::F12;
+			default: break;
+		}
+		return CuiVkey::Unknown;
+	}
+
 	void Cui::CuiThreadProc(void* Parameter)
 	{
 		INPUT_RECORD record;
@@ -103,7 +139,8 @@ namespace Debug
 			bool shiftPressed = (ctrl & SHIFT_PRESSED) != 0;
 			bool ctrlPressed = (ctrl & (LEFT_CTRL_PRESSED | RIGHT_CTRL_PRESSED)) != 0;
 
-			cui->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
+			CuiVkey cui_vk = WindowVKToCuiVkey(vcode);
+			cui->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
 
 			for (auto it = cui->windows.begin(); it != cui->windows.end(); ++it)
 			{
@@ -111,7 +148,7 @@ namespace Debug
 
 				if (wnd->active)
 				{
-					wnd->OnKeyPress(ascii, vcode, shiftPressed, ctrlPressed);
+					wnd->OnKeyPress(ascii, cui_vk, shiftPressed, ctrlPressed);
 				}
 			}
 		}
@@ -131,7 +168,7 @@ namespace Debug
 		}
 	}
 
-	void Cui::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void Cui::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 	}
 
@@ -188,7 +225,7 @@ namespace Debug
 
 #pragma region "CuiWindow"
 
-	CuiWindow::CuiWindow(RECT& rect, std::string name, Cui* parent)
+	CuiWindow::CuiWindow(CuiRect& rect, std::string name, Cui* parent)
 	{
 		wndRect = rect;
 		wndName = name;

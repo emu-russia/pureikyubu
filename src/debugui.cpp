@@ -1,13 +1,14 @@
 #include "pch.h"
 
-// Displaying message history. It can be used both by the system debugger and as part of the DSP Debugger.
+// TODO: Integrate DSP Debug into a common debugger. Historically, DSP Debug was done on Cui, but then the old debugger was moved to Cui as well
+// But I couldn't get my hands on combining them. So now you have to switch between two consoles.
 
 namespace Debug
 {
 	// Make it global so that the message history is saved for the entire lifetime of the application.
 	static std::vector<std::pair<CuiColor, std::string>> history;
 
-	ReportWindow::ReportWindow(RECT& rect, std::string name, Cui* parent)
+	ReportWindow::ReportWindow(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow(rect, name, parent)
 	{
 		thread = EMUCreateThread(ThreadProc, false, this, "ReportWindow");
@@ -137,38 +138,38 @@ namespace Debug
 		}
 	}
 
-	void ReportWindow::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void ReportWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		// Up, Down, Home, End, PageUp, PageDown
 
 		switch (Vkey)
 		{
-			case VK_UP:
+			case CuiVkey::Up:
 				messagePtr++;
 				break;
 
-			case VK_DOWN:
+			case CuiVkey::Down:
 				messagePtr--;
 				break;
 
-			case VK_PRIOR:	// Page Up
+			case CuiVkey::PageUp:
 				messagePtr += (int)(height - 1);
 				break;
 
-			case VK_NEXT:	// Page Down
+			case CuiVkey::PageDown:
 				messagePtr -= (int)(height - 1);
 				break;
 
-			case VK_HOME:
+			case CuiVkey::Home:
 				messagePtr = (int)history.size() - 2;
 				break;
 
-			case VK_END:
+			case CuiVkey::End:
 				messagePtr = 0;
 				break;
 		}
 
-		messagePtr = max(0, min(messagePtr, (int)history.size() - 2));
+		messagePtr = my_max(0, my_min(messagePtr, (int)history.size() - 2));
 
 		Invalidate();
 	}
@@ -235,11 +236,10 @@ namespace Debug
 
 }
 
-// Status window, to display the current state of the debugger
 
 namespace Debug
 {
-	StatusWindow::StatusWindow(RECT& rect, std::string name, Cui* parent)
+	StatusWindow::StatusWindow(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow(rect, name, parent)
 	{
 	}
@@ -256,18 +256,18 @@ namespace Debug
 
 		switch (_mode)
 		{
-		case DebugMode::Ready:
-			text = "Ready. Press PgUp to look behind.";
-			break;
-		case DebugMode::Scrolling:
-			text = "Scroll Mode - Press PgUp, PgDown, Up, Down to scroll.";
-			break;
+			case DebugMode::Ready:
+				text = "Ready. Press PgUp to look behind.";
+				break;
+			case DebugMode::Scrolling:
+				text = "Scroll Mode - Press PgUp, PgDown, Up, Down to scroll.";
+				break;
 		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, 2, 0, text);
 	}
 
-	void StatusWindow::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void StatusWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 	}
 
@@ -285,7 +285,7 @@ namespace Debug
 namespace Debug
 {
 
-	CmdlineWindow::CmdlineWindow(RECT& rect, std::string name, Cui* parent)
+	CmdlineWindow::CmdlineWindow(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 	}
@@ -305,7 +305,7 @@ namespace Debug
 		SetCursor((int)(promptSize + curpos), 0);
 	}
 
-	void CmdlineWindow::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void CmdlineWindow::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		if (Ascii >= 0x20 && Ascii < 128)
 		{
@@ -335,21 +335,21 @@ namespace Debug
 
 			switch (Vkey)
 			{
-				case VK_LEFT:
+				case CuiVkey::Left:
 					if (ctrl) SearchLeft();
 					else if (curpos != 0) curpos--;
 					break;
-				case VK_RIGHT:
+				case CuiVkey::Right:
 					if (editlen != 0 && (curpos != editlen))
 					{
 						if (ctrl) SearchRight();
 						else if (curpos < editlen) curpos++;
 					}
 					break;
-				case VK_RETURN:
+				case CuiVkey::Enter:
 					Process();
 					break;
-				case VK_BACK:
+				case CuiVkey::Backspace:
 					if (curpos != 0)
 					{
 						if (editlen == curpos)
@@ -363,19 +363,19 @@ namespace Debug
 						curpos--;
 					}
 					break;
-				case VK_DELETE:
+				case CuiVkey::Delete:
 					if (editlen != 0)
 					{
 						text = text.substr(0, curpos) + (((curpos + 1) < editlen) ? text.substr(curpos + 1) : "");
 					}
 					break;
-				case VK_HOME:
+				case CuiVkey::Home:
 					curpos = 0;
 					break;
-				case VK_END:
+				case CuiVkey::End:
 					curpos = editlen;
 					break;
-				case VK_UP:
+				case CuiVkey::Up:
 					historyPos--;
 					if (historyPos < 0)
 					{
@@ -387,7 +387,7 @@ namespace Debug
 						curpos = text.size();
 					}
 					break;
-				case VK_DOWN:
+				case CuiVkey::Down:
 					historyPos++;
 					if (historyPos >= history.size())
 					{
@@ -555,7 +555,7 @@ namespace Debug
 		char str[0x100] = { 0 };
 		char cmd[0x30] = { 0, };
 
-		sprintf_s(cmd, sizeof(cmd), "GetChannelName %i", chan);
+		sprintf(cmd, "GetChannelName %i", chan);
 
 		bool res = CallJdiReturnString(cmd, str, sizeof(str) - 1);
 		if (!res)
@@ -666,7 +666,7 @@ namespace Debug
 	uint32_t JdiClient::GetGpr(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GetGpr %zi", n);
+		sprintf(cmd, "GetGpr %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -680,7 +680,7 @@ namespace Debug
 	uint64_t JdiClient::GetPs0(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GetPs0 %zi", n);
+		sprintf(cmd, "GetPs0 %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -694,7 +694,7 @@ namespace Debug
 	uint64_t JdiClient::GetPs1(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GetPs1 %zi", n);
+		sprintf(cmd, "GetPs1 %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -752,7 +752,7 @@ namespace Debug
 	uint32_t JdiClient::GetSpr(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GetSpr %zi", n);
+		sprintf(cmd, "GetSpr %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -766,7 +766,7 @@ namespace Debug
 	uint32_t JdiClient::GetSr(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GetSr %zi", n);
+		sprintf(cmd, "GetSr %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -802,7 +802,7 @@ namespace Debug
 	void* JdiClient::TranslateDMmu(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "TranslateDMmu 0x%08X", address);
+		sprintf(cmd, "TranslateDMmu 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -816,7 +816,7 @@ namespace Debug
 	void* JdiClient::TranslateIMmu(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "TranslateIMmu 0x%08X", address);
+		sprintf(cmd, "TranslateIMmu 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -830,7 +830,7 @@ namespace Debug
 	uint32_t JdiClient::VirtualToPhysicalDMmu(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "VirtualToPhysicalDMmu 0x%08X", address);
+		sprintf(cmd, "VirtualToPhysicalDMmu 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -844,7 +844,7 @@ namespace Debug
 	uint32_t JdiClient::VirtualToPhysicalIMmu(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "VirtualToPhysicalIMmu 0x%08X", address);
+		sprintf(cmd, "VirtualToPhysicalIMmu 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -858,7 +858,7 @@ namespace Debug
 	bool JdiClient::GekkoTestBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GekkoTestBreakpoint 0x%08X", address);
+		sprintf(cmd, "GekkoTestBreakpoint 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -872,7 +872,7 @@ namespace Debug
 	void JdiClient::GekkoToggleBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GekkoToggleBreakpoint 0x%08X", address);
+		sprintf(cmd, "GekkoToggleBreakpoint 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 		delete output;
@@ -881,7 +881,7 @@ namespace Debug
 	void JdiClient::GekkoAddOneShotBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GekkoAddOneShotBreakpoint 0x%08X", address);
+		sprintf(cmd, "GekkoAddOneShotBreakpoint 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 		delete output;
@@ -890,7 +890,7 @@ namespace Debug
 	std::string JdiClient::GekkoDisasm(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GekkoDisasm 0x%08X", address);
+		sprintf(cmd, "GekkoDisasm 0x%08X", address);
 
 		char text[0x200];
 
@@ -902,7 +902,7 @@ namespace Debug
 	bool JdiClient::GekkoIsBranch(uint32_t address, uint32_t& targetAddress)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "GekkoIsBranch 0x%08X", address);
+		sprintf(cmd, "GekkoIsBranch 0x%08X", address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -933,7 +933,7 @@ namespace Debug
 	uint32_t JdiClient::AddressByName(const std::string& name)
 	{
 		char cmd[0x100];
-		sprintf_s(cmd, sizeof(cmd), "AddressByName %s", name.c_str());
+		sprintf(cmd, "AddressByName %s", name.c_str());
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -947,7 +947,7 @@ namespace Debug
 	std::string JdiClient::NameByAddress(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "NameByAddress 0x%08X", address);
+		sprintf(cmd, "NameByAddress 0x%08X", address);
 
 		char name[0x200];
 
@@ -983,7 +983,7 @@ namespace Debug
 	uint16_t JdiClient::DspGetReg(size_t n)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspGetReg %zi", n);
+		sprintf(cmd, "DspGetReg %zi", n);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1030,7 +1030,7 @@ namespace Debug
 	void* JdiClient::DspTranslateDMem(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspTranslateDMem 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspTranslateDMem 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1044,7 +1044,7 @@ namespace Debug
 	void* JdiClient::DspTranslateIMem(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspTranslateIMem 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspTranslateIMem 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1058,7 +1058,7 @@ namespace Debug
 	bool JdiClient::DspTestBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspTestBreakpoint 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspTestBreakpoint 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1072,7 +1072,7 @@ namespace Debug
 	void JdiClient::DspToggleBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspToggleBreakpoint 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspToggleBreakpoint 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 		delete output;
@@ -1081,7 +1081,7 @@ namespace Debug
 	void JdiClient::DspAddOneShotBreakpoint(uint32_t address)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspAddOneShotBreakpoint 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspAddOneShotBreakpoint 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 		delete output;
@@ -1090,7 +1090,7 @@ namespace Debug
 	std::string JdiClient::DspDisasm(uint32_t address, size_t& instrSizeWords, bool& flowControl)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspDisasm 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspDisasm 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1124,7 +1124,7 @@ namespace Debug
 	bool JdiClient::DspIsCall(uint32_t address, uint32_t& targetAddress)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspIsCall 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspIsCall 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1153,7 +1153,7 @@ namespace Debug
 	bool JdiClient::DspIsCallOrJump(uint32_t address, uint32_t& targetAddress)
 	{
 		char cmd[0x40];
-		sprintf_s(cmd, sizeof(cmd), "DspIsCallOrJump 0x%04X", (uint16_t)address);
+		sprintf(cmd, "DspIsCallOrJump 0x%04X", (uint16_t)address);
 
 		Json::Value* output = CallJdi(cmd);
 
@@ -1195,7 +1195,7 @@ namespace Debug
 			Jdi = new JdiClient;
 		}
 
-		RECT rect;
+		CuiRect rect;
 
 		rect.left = 0;
 		rect.top = 0;
@@ -1232,11 +1232,11 @@ namespace Debug
 		SetWindowFocus("DspImem");
 	}
 
-	void DspDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void DspDebug::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
 
-		if ((Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
+		if ((Vkey == CuiVkey::Backspace || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
 		{
 			SetWindowFocus("Cmdline");
 			InvalidateAll();
@@ -1245,24 +1245,24 @@ namespace Debug
 
 		switch (Vkey)
 		{
-			case VK_F1:
+			case CuiVkey::F1:
 				SetWindowFocus("DspRegs");
 				InvalidateAll();
 				break;
-			case VK_F2:
+			case CuiVkey::F2:
 				SetWindowFocus("DspDmem");
 				InvalidateAll();
 				break;
-			case VK_F3:
+			case CuiVkey::F3:
 				SetWindowFocus("DspImem");
 				InvalidateAll();
 				break;
-			case VK_F4:
+			case CuiVkey::F4:
 				SetWindowFocus("ReportWindow");
 				InvalidateAll();
 				break;
 
-			case VK_F5:
+			case CuiVkey::F5:
 				// Suspend/Run both cores
 				if (Jdi->DspIsRunning())
 				{
@@ -1276,7 +1276,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_F10:
+			case CuiVkey::F10:
 				// Step Over
 				if (!Jdi->DspIsRunning())
 				{
@@ -1296,7 +1296,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_F11:
+			case CuiVkey::F11:
 				// Step Into
 				Jdi->DspStep();
 				if (!imemWindow->AddressVisible(Jdi->DspGetPc()))
@@ -1314,7 +1314,7 @@ namespace Debug
 namespace Debug
 {
 
-	DspDmem::DspDmem(RECT& rect, std::string name, Cui* parent) :
+	DspDmem::DspDmem(CuiRect& rect, std::string name, Cui* parent) :
 		CuiWindow(rect, name, parent)
 	{
 	}
@@ -1357,7 +1357,7 @@ namespace Debug
 
 			// Address
 
-			sprintf_s(text, sizeof(text) - 1, "%04X: ", addr);
+			sprintf(text, "%04X: ", addr);
 			Print(CuiColor::Black, CuiColor::Normal, 0, y, text);
 
 			// Raw Words
@@ -1366,8 +1366,8 @@ namespace Debug
 
 			for (size_t i = 0; i < 8; i++)
 			{
-				uint16_t word = _byteswap_ushort(ptr[i]);
-				sprintf_s(text, sizeof(text) - 1, "%04X ", word);
+				uint16_t word = _BYTESWAP_UINT16(ptr[i]);
+				sprintf(text, "%04X ", word);
 				Print(CuiColor::Black, CuiColor::Normal, x, y, text);
 				x += 5;
 			}
@@ -1377,7 +1377,7 @@ namespace Debug
 		}
 	}
 
-	void DspDmem::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void DspDmem::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		size_t lines = height - 1;
 
@@ -1388,35 +1388,35 @@ namespace Debug
 
 		switch (Vkey)
 		{
-			case VK_UP:
+			case CuiVkey::Up:
 				if (current >= 8)
 					current -= 8;
 				break;
 
-			case VK_DOWN:
+			case CuiVkey::Down:
 				current += 8;
 				if (current > 0x3000)
 					current = 0x3000;
 				break;
 
-			case VK_PRIOR:
+			case CuiVkey::PageUp:
 				if (current < lines * 8)
 					current = 0;
 				else
 					current -= (uint32_t)(lines * 8);
 				break;
 
-			case VK_NEXT:
+			case CuiVkey::PageDown:
 				current += (uint32_t)(lines * 8);
 				if (current > 0x3000)
 					current = 0x3000;
 				break;
 
-			case VK_HOME:
+			case CuiVkey::Home:
 				current = 0;
 				break;
 
-			case VK_END:
+			case CuiVkey::End:
 				current = DROM_START_ADDRESS;
 				break;
 		}
@@ -1429,7 +1429,7 @@ namespace Debug
 namespace Debug
 {
 
-	DspImem::DspImem(RECT& rect, std::string name, Cui* parent) :
+	DspImem::DspImem(CuiRect& rect, std::string name, Cui* parent) :
 		CuiWindow(rect, name, parent)
 	{
 	}
@@ -1494,7 +1494,7 @@ namespace Debug
 		}
 	}
 
-	void DspImem::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void DspImem::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
 
@@ -1505,7 +1505,7 @@ namespace Debug
 
 		switch (Vkey)
 		{
-			case VK_UP:
+			case CuiVkey::Up:
 				if (AddressVisible(cursor))
 				{
 					if (cursor > 0)
@@ -1524,7 +1524,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_DOWN:
+			case CuiVkey::Down:
 				if (AddressVisible(cursor))
 					cursor++;
 				else
@@ -1535,20 +1535,20 @@ namespace Debug
 				}
 				break;
 
-			case VK_PRIOR:
+			case CuiVkey::PageUp:
 				if (current < (height - 1))
 					current = 0;
 				else
 					current -= (uint32_t)(height - 1);
 				break;
 
-			case VK_NEXT:
+			case CuiVkey::PageDown:
 				current += (uint32_t)(wordsOnScreen ? wordsOnScreen : height - 1);
 				if (current >= 0x8A00)
 					current = 0x8A00;
 				break;
 
-			case VK_HOME:
+			case CuiVkey::Home:
 				if (ctrl)
 				{
 					current = cursor = 0;
@@ -1559,18 +1559,18 @@ namespace Debug
 				}
 				break;
 
-			case VK_END:
+			case CuiVkey::End:
 				current = IROM_START_ADDRESS;
 				break;
 
-			case VK_F9:
+			case CuiVkey::F9:
 				if (AddressVisible(cursor))
 				{
 					Jdi->DspToggleBreakpoint(cursor);
 				}
 				break;
 
-			case VK_RETURN:
+			case CuiVkey::Enter:
 				if (Jdi->DspIsCallOrJump(cursor, targetAddress))
 				{
 					std::pair<uint32_t, uint32_t> last(current, cursor);
@@ -1579,7 +1579,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_ESCAPE:
+			case CuiVkey::Escape:
 				if (browseHist.size() > 0)
 				{
 					std::pair<uint32_t, uint32_t> last = browseHist.back();
@@ -1621,7 +1621,7 @@ namespace Debug
 		"te0", "te1", "te2", "te3", "et", "im", "xl", "dp",
 	};
 
-	DspRegs::DspRegs(RECT& rect, std::string name, Cui* parent) :
+	DspRegs::DspRegs(CuiRect& rect, std::string name, Cui* parent) :
 		CuiWindow(rect, name, parent)
 	{
 		Memorize();
@@ -1749,7 +1749,7 @@ namespace Debug
 			x, y, "%-3s: %i", PsrBitNames[n], (psr & mask) ? 1 : 0);
 	}
 
-	void DspRegs::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void DspRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		Invalidate();
 	}
@@ -1772,7 +1772,7 @@ namespace Debug
 	GekkoDebug::GekkoDebug()
 		: Cui ("Debug Console", width, height)
 	{
-		RECT rect;
+		CuiRect rect;
 
 		// Create an interface for communicating with the emulator core, if it has not been created yet.
 
@@ -1850,9 +1850,9 @@ namespace Debug
 		SetWindowFocus("Cmdline");
 	}
 
-	void GekkoDebug::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void GekkoDebug::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
-		if ((Vkey == 0x8 || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
+		if ((Vkey == CuiVkey::Backspace || (Ascii >= 0x20 && Ascii < 256)) && !cmdline->IsActive())
 		{
 			SetWindowFocus("Cmdline");
 			status->SetMode(DebugMode::Ready);
@@ -1862,28 +1862,28 @@ namespace Debug
 
 		switch (Vkey)
 		{
-			case VK_F1:
+			case CuiVkey::F1:
 				SetWindowFocus("GekkoRegs");
 				InvalidateAll();
 				break;
 
-			case VK_F2:
+			case CuiVkey::F2:
 				SetWindowFocus("MemoryView");
 				InvalidateAll();
 				break;
 
-			case VK_F3:
+			case CuiVkey::F3:
 				SetWindowFocus("GekkoDisasm");
 				InvalidateAll();
 				break;
 
-			case VK_F4:
+			case CuiVkey::F4:
 				SetWindowFocus("ReportWindow");
 				status->SetMode(DebugMode::Scrolling);
 				InvalidateAll();
 				break;
 
-			case VK_F5:
+			case CuiVkey::F5:
 				// Continue/break Gekko execution
 				if (Jdi->IsLoaded())
 				{
@@ -1900,13 +1900,13 @@ namespace Debug
 				}
 				break;
 
-			case VK_F9:
+			case CuiVkey::F9:
 				// Toggle Breakpoint
 				Jdi->GekkoToggleBreakpoint(disasm->GetCursor());
 				disasm->Invalidate();
 				break;
 
-			case VK_F10:
+			case CuiVkey::F10:
 				// Step Over
 				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
@@ -1916,7 +1916,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_F11:
+			case CuiVkey::F11:
 				// Step Into
 				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
@@ -1926,7 +1926,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_F12:
+			case CuiVkey::F12:
 				// Skip instruction
 				if (Jdi->IsLoaded() && !Jdi->IsRunning())
 				{
@@ -1935,7 +1935,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_ESCAPE:
+			case CuiVkey::Escape:
 				if (msgs->IsActive())
 				{
 					SetWindowFocus("Cmdline");
@@ -1944,7 +1944,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_PRIOR:
+			case CuiVkey::PageUp:
 				if (cmdline->IsActive())
 				{
 					SetWindowFocus("ReportWindow");
@@ -1980,7 +1980,7 @@ namespace Debug
 namespace Debug
 {
 
-	GekkoDisasm::GekkoDisasm(RECT& rect, std::string name, Cui* parent)
+	GekkoDisasm::GekkoDisasm(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 		uint32_t main = Jdi->AddressByName("main");
@@ -2009,7 +2009,7 @@ namespace Debug
 		}
 
 		char hint[0x100] = { 0, };
-		sprintf_s(hint, sizeof(hint), " cursor:0x%08X phys:0x%08X pc:0x%08X", 
+		sprintf(hint, " cursor:0x%08X phys:0x%08X pc:0x%08X", 
 			cursor, Jdi->VirtualToPhysicalIMmu(cursor), Jdi->GetPc());
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
@@ -2027,20 +2027,20 @@ namespace Debug
 		}
 	}
 
-	void GekkoDisasm::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void GekkoDisasm::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		uint32_t targetAddress = 0;
 
 		switch (Vkey)
 		{
-			case VK_HOME:
+			case CuiVkey::Home:
 				SetCursor(Jdi->GetPc());
 				break;
 
-			case VK_END:
+			case CuiVkey::End:
 				break;
 
-			case VK_UP:
+			case CuiVkey::Up:
 				if (cursor < address)
 				{
 					cursor = address;
@@ -2058,7 +2058,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_DOWN:
+			case CuiVkey::Down:
 				if (cursor < address)
 				{
 					cursor = address;
@@ -2076,7 +2076,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_PRIOR:
+			case CuiVkey::PageUp:
 				address -= (uint32_t)(4 * height - 4);
 				if (!IsCursorVisible())
 				{
@@ -2084,7 +2084,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_NEXT:
+			case CuiVkey::PageDown:
 				address += (uint32_t)(4 * (height - disa_sub_h) - 4);
 				if (!IsCursorVisible())
 				{
@@ -2092,7 +2092,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_RETURN:
+			case CuiVkey::Enter:
 				if (Jdi->GekkoIsBranch(cursor, targetAddress))
 				{
 					std::pair<uint32_t, uint32_t> last(address, cursor);
@@ -2101,7 +2101,7 @@ namespace Debug
 				}
 				break;
 
-			case VK_ESCAPE:
+			case CuiVkey::Escape:
 				if (browseHist.size() > 0)
 				{
 					std::pair<uint32_t, uint32_t> last = browseHist.back();
@@ -2174,7 +2174,7 @@ namespace Debug
 
 		// Print address and opcode
 
-		uint32_t opcode = _byteswap_ulong (*ptr);
+		uint32_t opcode = _BYTESWAP_UINT32(*ptr);
 
 		Print(bg, CuiColor::Normal, 0, line, "%08X  ", addr);
 		Print(bg, CuiColor::Cyan, 10, line, "%08X  ", opcode);
@@ -2239,7 +2239,7 @@ namespace Debug
 		"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 	};
 
-	GekkoRegs::GekkoRegs(RECT& rect, std::string name, Cui* parent)
+	GekkoRegs::GekkoRegs(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 		Memorize();
@@ -2293,17 +2293,17 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void GekkoRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		switch (Vkey)
 		{
-			case VK_LEFT:
-			case VK_PRIOR:
+			case CuiVkey::Left:
+			case CuiVkey::PageUp:
 				RotateView(false);
 				break;
 
-			case VK_RIGHT:
-			case VK_NEXT:
+			case CuiVkey::Right:
+			case CuiVkey::PageDown:
 				RotateView(true);
 				break;
 		}
@@ -2369,35 +2369,35 @@ namespace Debug
 		// Values
 
 		Print(CuiColor::Normal, 32, 1, "%08X", Jdi->GetCr());
-		Print(CuiColor::Normal, 32, 2, "%08X", Jdi->GetSpr(Gekko_SPR_XER));
-		Print(CuiColor::Normal, 32, 4, "%08X", Jdi->GetSpr(Gekko_SPR_CTR));
-		Print(CuiColor::Normal, 32, 5, "%08X", Jdi->GetSpr(Gekko_SPR_DEC));
+		Print(CuiColor::Normal, 32, 2, "%08X", Jdi->GetSpr(Gekko::SPR::XER));
+		Print(CuiColor::Normal, 32, 4, "%08X", Jdi->GetSpr(Gekko::SPR::CTR));
+		Print(CuiColor::Normal, 32, 5, "%08X", Jdi->GetSpr(Gekko::SPR::DEC));
 		Print(CuiColor::Normal, 32, 8, "%08X", Jdi->GetPc());
-		Print(CuiColor::Normal, 32, 9, "%08X", Jdi->GetSpr(Gekko_SPR_LR));
+		Print(CuiColor::Normal, 32, 9, "%08X", Jdi->GetSpr(Gekko::SPR::LR));
 		Print(CuiColor::Normal, 32, 14, "%08X:%08X", Jdi->GetTbu(), Jdi->GetTbl());
 
 		uint32_t msr = Jdi->GetMsr();
-		uint32_t hid2 = Jdi->GetSpr(Gekko_SPR_HID2);
+		uint32_t hid2 = Jdi->GetSpr(Gekko::SPR::HID2);
 
 		Print(CuiColor::Normal, 48, 1, "%08X", msr);
 		Print(CuiColor::Normal, 48, 2, "%08X", Jdi->GetFpscr());
-		Print(CuiColor::Normal, 48, 4, "%08X", Jdi->GetSpr(Gekko_SPR_HID0));
-		Print(CuiColor::Normal, 48, 5, "%08X", Jdi->GetSpr(Gekko_SPR_HID1));
+		Print(CuiColor::Normal, 48, 4, "%08X", Jdi->GetSpr(Gekko::SPR::HID0));
+		Print(CuiColor::Normal, 48, 5, "%08X", Jdi->GetSpr(Gekko::SPR::HID1));
 		Print(CuiColor::Normal, 48, 6, "%08X", hid2);
-		Print(CuiColor::Normal, 48, 8, "%08X", Jdi->GetSpr(Gekko_SPR_WPAR));
-		Print(CuiColor::Normal, 48, 9, "%08X", Jdi->GetSpr(Gekko_SPR_DMAU));
-		Print(CuiColor::Normal, 48, 10, "%08X", Jdi->GetSpr(Gekko_SPR_DMAL));
+		Print(CuiColor::Normal, 48, 8, "%08X", Jdi->GetSpr(Gekko::SPR::WPAR));
+		Print(CuiColor::Normal, 48, 9, "%08X", Jdi->GetSpr(Gekko::SPR::DMAU));
+		Print(CuiColor::Normal, 48, 10, "%08X", Jdi->GetSpr(Gekko::SPR::DMAL));
 
-		Print(CuiColor::Normal, 64, 1, "%08X", Jdi->GetSpr(Gekko_SPR_DSISR));
-		Print(CuiColor::Normal, 64, 2, "%08X", Jdi->GetSpr(Gekko_SPR_DAR));
-		Print(CuiColor::Normal, 64, 4, "%08X", Jdi->GetSpr(Gekko_SPR_SRR0));
-		Print(CuiColor::Normal, 64, 5, "%08X", Jdi->GetSpr(Gekko_SPR_SRR1));
-		Print(CuiColor::Normal, 64, 8, "%08X", Jdi->GetSpr(Gekko_SPR_SPRG0));
-		Print(CuiColor::Normal, 64, 9, "%08X", Jdi->GetSpr(Gekko_SPR_SPRG1));
-		Print(CuiColor::Normal, 64, 10, "%08X", Jdi->GetSpr(Gekko_SPR_SPRG2));
-		Print(CuiColor::Normal, 64, 11, "%08X", Jdi->GetSpr(Gekko_SPR_SPRG3));
-		Print(CuiColor::Normal, 64, 13, "%08X", Jdi->GetSpr(Gekko_SPR_EAR));
-		Print(CuiColor::Normal, 64, 14, "%08X", Jdi->GetSpr(Gekko_SPR_PVR));
+		Print(CuiColor::Normal, 64, 1, "%08X", Jdi->GetSpr(Gekko::SPR::DSISR));
+		Print(CuiColor::Normal, 64, 2, "%08X", Jdi->GetSpr(Gekko::SPR::DAR));
+		Print(CuiColor::Normal, 64, 4, "%08X", Jdi->GetSpr(Gekko::SPR::SRR0));
+		Print(CuiColor::Normal, 64, 5, "%08X", Jdi->GetSpr(Gekko::SPR::SRR1));
+		Print(CuiColor::Normal, 64, 8, "%08X", Jdi->GetSpr(Gekko::SPR::SPRG0));
+		Print(CuiColor::Normal, 64, 9, "%08X", Jdi->GetSpr(Gekko::SPR::SPRG1));
+		Print(CuiColor::Normal, 64, 10, "%08X", Jdi->GetSpr(Gekko::SPR::SPRG2));
+		Print(CuiColor::Normal, 64, 11, "%08X", Jdi->GetSpr(Gekko::SPR::SPRG3));
+		Print(CuiColor::Normal, 64, 13, "%08X", Jdi->GetSpr(Gekko::SPR::EAR));
+		Print(CuiColor::Normal, 64, 14, "%08X", Jdi->GetSpr(Gekko::SPR::PVR));
 
 		// Some cpu flags.
 
@@ -2442,13 +2442,13 @@ namespace Debug
 
 		for (y = 1; y <= 8; y++)
 		{
-			uint32_t gqr = Jdi->GetSpr(Gekko_SPR_GQRs + y - 1);
+			uint32_t gqr = Jdi->GetSpr(Gekko::SPR::GQRs + y - 1);
 
 			Print(CuiColor::Cyan, 64, y, "gqr%i ", y - 1);
 			Print(CuiColor::Normal, 69, y, "%08X", gqr);
 		}
 
-		uint32_t hid2 = Jdi->GetSpr(Gekko_SPR_HID2);
+		uint32_t hid2 = Jdi->GetSpr(Gekko::SPR::HID2);
 
 		Print(CuiColor::Cyan, 64, 10, "PSE   ");
 		Print(CuiColor::Cyan, 64, 11, "LSQ   ");
@@ -2478,34 +2478,34 @@ namespace Debug
 
 		// Values
 
-		Print(CuiColor::Normal, 6, 11, "%08X", Jdi->GetSpr(Gekko_SPR_SDR1));
+		Print(CuiColor::Normal, 6, 11, "%08X", Jdi->GetSpr(Gekko::SPR::SDR1));
 
 		uint32_t msr = Jdi->GetMsr();
 
 		Print(CuiColor::Normal, 6, 13, "%i", (msr & MSR_IR) ? 1 : 0);
 		Print(CuiColor::Normal, 6, 14, "%i", (msr & MSR_DR) ? 1 : 0);
 
-		Print(CuiColor::Normal, 6, 1, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_DBAT0U), Jdi->GetSpr(Gekko_SPR_DBAT0L));
-		Print(CuiColor::Normal, 6, 2, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_DBAT1U), Jdi->GetSpr(Gekko_SPR_DBAT1L));
-		Print(CuiColor::Normal, 6, 3, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_DBAT2U), Jdi->GetSpr(Gekko_SPR_DBAT2L));
-		Print(CuiColor::Normal, 6, 4, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_DBAT3U), Jdi->GetSpr(Gekko_SPR_DBAT3L));
+		Print(CuiColor::Normal, 6, 1, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::DBAT0U), Jdi->GetSpr(Gekko::SPR::DBAT0L));
+		Print(CuiColor::Normal, 6, 2, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::DBAT1U), Jdi->GetSpr(Gekko::SPR::DBAT1L));
+		Print(CuiColor::Normal, 6, 3, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::DBAT2U), Jdi->GetSpr(Gekko::SPR::DBAT2L));
+		Print(CuiColor::Normal, 6, 4, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::DBAT3U), Jdi->GetSpr(Gekko::SPR::DBAT3L));
 
-		Print(CuiColor::Normal, 6, 6, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_IBAT0U), Jdi->GetSpr(Gekko_SPR_IBAT0L));
-		Print(CuiColor::Normal, 6, 7, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_IBAT1U), Jdi->GetSpr(Gekko_SPR_IBAT1L));
-		Print(CuiColor::Normal, 6, 8, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_IBAT2U), Jdi->GetSpr(Gekko_SPR_IBAT2L));
-		Print(CuiColor::Normal, 6, 9, "%08X:%08X", Jdi->GetSpr(Gekko_SPR_IBAT3U), Jdi->GetSpr(Gekko_SPR_IBAT3L));
+		Print(CuiColor::Normal, 6, 6, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::IBAT0U), Jdi->GetSpr(Gekko::SPR::IBAT0L));
+		Print(CuiColor::Normal, 6, 7, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::IBAT1U), Jdi->GetSpr(Gekko::SPR::IBAT1L));
+		Print(CuiColor::Normal, 6, 8, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::IBAT2U), Jdi->GetSpr(Gekko::SPR::IBAT2L));
+		Print(CuiColor::Normal, 6, 9, "%08X:%08X", Jdi->GetSpr(Gekko::SPR::IBAT3U), Jdi->GetSpr(Gekko::SPR::IBAT3L));
 
 		// BATs detailed
 
-		describe_bat_reg(24, 1, Jdi->GetSpr(Gekko_SPR_DBAT0U), Jdi->GetSpr(Gekko_SPR_DBAT0L), false);
-		describe_bat_reg(24, 2, Jdi->GetSpr(Gekko_SPR_DBAT1U), Jdi->GetSpr(Gekko_SPR_DBAT1L), false);
-		describe_bat_reg(24, 3, Jdi->GetSpr(Gekko_SPR_DBAT2U), Jdi->GetSpr(Gekko_SPR_DBAT2L), false);
-		describe_bat_reg(24, 4, Jdi->GetSpr(Gekko_SPR_DBAT3U), Jdi->GetSpr(Gekko_SPR_DBAT3L), false);
+		describe_bat_reg(24, 1, Jdi->GetSpr(Gekko::SPR::DBAT0U), Jdi->GetSpr(Gekko::SPR::DBAT0L), false);
+		describe_bat_reg(24, 2, Jdi->GetSpr(Gekko::SPR::DBAT1U), Jdi->GetSpr(Gekko::SPR::DBAT1L), false);
+		describe_bat_reg(24, 3, Jdi->GetSpr(Gekko::SPR::DBAT2U), Jdi->GetSpr(Gekko::SPR::DBAT2L), false);
+		describe_bat_reg(24, 4, Jdi->GetSpr(Gekko::SPR::DBAT3U), Jdi->GetSpr(Gekko::SPR::DBAT3L), false);
 
-		describe_bat_reg(24, 6, Jdi->GetSpr(Gekko_SPR_IBAT0U), Jdi->GetSpr(Gekko_SPR_IBAT0L), true);
-		describe_bat_reg(24, 7, Jdi->GetSpr(Gekko_SPR_IBAT1U), Jdi->GetSpr(Gekko_SPR_IBAT1L), true);
-		describe_bat_reg(24, 8, Jdi->GetSpr(Gekko_SPR_IBAT2U), Jdi->GetSpr(Gekko_SPR_IBAT2L), true);
-		describe_bat_reg(24, 9, Jdi->GetSpr(Gekko_SPR_IBAT3U), Jdi->GetSpr(Gekko_SPR_IBAT3L), true);
+		describe_bat_reg(24, 6, Jdi->GetSpr(Gekko::SPR::IBAT0U), Jdi->GetSpr(Gekko::SPR::IBAT0L), true);
+		describe_bat_reg(24, 7, Jdi->GetSpr(Gekko::SPR::IBAT1U), Jdi->GetSpr(Gekko::SPR::IBAT1L), true);
+		describe_bat_reg(24, 8, Jdi->GetSpr(Gekko::SPR::IBAT2U), Jdi->GetSpr(Gekko::SPR::IBAT2L), true);
+		describe_bat_reg(24, 9, Jdi->GetSpr(Gekko::SPR::IBAT3U), Jdi->GetSpr(Gekko::SPR::IBAT3L), true);
 
 		// Segment regs
 
@@ -2658,7 +2658,7 @@ namespace Debug
 
 		char temp[0x100];
 
-		sprintf_s(temp, sizeof(temp), "%08X->%08X" " %-6s" " %c%c%c%c" " %s %s" " %s",
+		sprintf(temp, "%08X->%08X" " %-6s" " %c%c%c%c" " %s %s" " %s",
 			EStart, PStart, smart_size(blkSize).c_str(),
 			w ? 'W' : '-',
 			i ? 'I' : '-',
@@ -2677,19 +2677,19 @@ namespace Debug
 
 		if (size < 1024)
 		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%zi byte", size);
+			sprintf(tempBuf, "%zi byte", size);
 		}
 		else if (size < 1024 * 1024)
 		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%zi KB", size / 1024);
+			sprintf(tempBuf, "%zi KB", size / 1024);
 		}
 		else if (size < 1024 * 1024 * 1024)
 		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%zi MB", size / 1024 / 1024);
+			sprintf(tempBuf, "%zi MB", size / 1024 / 1024);
 		}
 		else
 		{
-			sprintf_s(tempBuf, sizeof(tempBuf), "%1.1f GB", (float)size / 1024 / 1024 / 1024);
+			sprintf(tempBuf, "%1.1f GB", (float)size / 1024 / 1024 / 1024);
 		}
 
 		return tempBuf;
@@ -2703,7 +2703,7 @@ namespace Debug
 namespace Debug
 {
 
-	MemoryView::MemoryView(RECT& rect, std::string name, Cui* parent)
+	MemoryView::MemoryView(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 	}
@@ -2723,7 +2723,7 @@ namespace Debug
 		}
 
 		char hint[0x100] = { 0, };
-		sprintf_s(hint, sizeof(hint), " phys:0x%08X stack:0x%08X sda1:0x%08X sda2:0x%08X", 
+		sprintf(hint, " phys:0x%08X stack:0x%08X sda1:0x%08X sda2:0x%08X", 
 			Jdi->VirtualToPhysicalDMmu(cursor), Jdi->GetGpr(1), Jdi->GetGpr(13), Jdi->GetGpr(2));
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, hint);
@@ -2751,26 +2751,26 @@ namespace Debug
 		}
 	}
 
-	void MemoryView::OnKeyPress(char Ascii, int Vkey, bool shift, bool ctrl)
+	void MemoryView::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		switch (Vkey)
 		{
-			case VK_HOME:
+			case CuiVkey::Home:
 				cursor = 0x8000'0000;
 				break;
-			case VK_END:
+			case CuiVkey::End:
 				cursor = (0x8000'0000 | RAMSIZE) - (uint32_t)((height - 1) * 16);
 				break;
-			case VK_NEXT:
+			case CuiVkey::PageDown:
 				cursor += (uint32_t)((height - 1) * 16);
 				break;
-			case VK_PRIOR:
+			case CuiVkey::PageUp:
 				cursor -= (uint32_t)((height - 1) * 16);
 				break;
-			case VK_UP:
+			case CuiVkey::Up:
 				cursor -= 16;
 				break;
-			case VK_DOWN:
+			case CuiVkey::Down:
 				cursor += 16;
 				break;
 		}
@@ -2791,7 +2791,7 @@ namespace Debug
 		if (ptr)
 		{
 			char buf[0x10];
-			sprintf_s(buf, sizeof(buf), "%02X", *ptr);
+			sprintf(buf, "%02X", *ptr);
 			return buf;
 		}
 		else

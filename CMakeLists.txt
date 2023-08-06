@@ -26,7 +26,9 @@ add_executable (pureikyubu
 	src/bootrtc.cpp
 	src/config.cpp
 	src/cp.cpp
+	src/cuinull.cpp
 	src/debug.cpp
+	src/debugui.cpp
 	src/di.cpp
 	src/dsp.cpp
 	src/dspcore.cpp
