@@ -550,8 +550,8 @@ namespace GX
 
 }
 
-typedef void (*GXDrawDoneCallback)();
-typedef void (*GXDrawTokenCallback)(uint16_t tokenValue);
+void CPDrawDone();
+void CPDrawToken(uint16_t tokenValue);
 
 void CPOpen();
 void CPClose();

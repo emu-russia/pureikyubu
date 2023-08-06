@@ -3,11 +3,9 @@
 
 using namespace Debug;
 
-// TODO: Refactoring hacks
-
 size_t pe_done_num;   // number of drawdone (PE_FINISH) events
 
-static void CPDrawDoneCallback()
+void CPDrawDone()
 {
 	pe_done_num++;
 	if (pe_done_num == 1)
@@ -18,7 +16,7 @@ static void CPDrawDoneCallback()
 	Flipper::Gx->CPDrawDoneCallback();
 }
 
-static void CPDrawTokenCallback(uint16_t tokenValue)
+void CPDrawToken(uint16_t tokenValue)
 {
 	vi.xfb = false;     // disable VI output
 
@@ -91,9 +89,6 @@ void CPOpen()
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_ADDR_ID), CPRegRead, CPRegWrite);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_DATAL_ID), CPRegRead, CPRegWrite);
 	PISetTrap(16, PI_REG16_TO_SPACE(PI_REGSPACE_CP, GX::CPMappedRegister::CP_XF_DATAH_ID), CPRegRead, CPRegWrite);
-
-	// TODO: Refactoring hacks
-	GXSetDrawCallbacks(CPDrawDoneCallback, CPDrawTokenCallback);
 }
 
 void CPClose()

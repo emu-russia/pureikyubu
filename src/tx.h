@@ -1,5 +1,5 @@
 // This module deals with everything related to textures: from Flipper's point of view (loading into TMEM, conversion),
-// and from the point of view of graphics backend (texture transfer to the real graphics device, bindings).
+// and from the point of view of graphics backend (texture upload to the real graphics device, bindings).
 #pragma once
 
 // TODO: Old implementation, will be redone nicely.

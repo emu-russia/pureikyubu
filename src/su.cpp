@@ -80,10 +80,7 @@ namespace GX
             case PE_DONE:
             {
                 GPFrameDone();
-                if (GxDrawDone)
-                {
-                    GxDrawDone();
-                }
+                CPDrawDone();
             }
             return;
 
@@ -96,10 +93,10 @@ namespace GX
 
             case PE_TOKEN:
             {
-                if (GxDrawToken && (uint16_t)value == bpRegs.tokint)
+                if ((uint16_t)value == bpRegs.tokint)
                 {
                     GPFrameDone();
-                    GxDrawToken(bpRegs.tokint);
+                    CPDrawToken(bpRegs.tokint);
                 }
             }
             return;

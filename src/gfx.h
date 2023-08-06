@@ -97,7 +97,7 @@ namespace GX
 		void Open(HWConfig* config);
 		void Close();
 
-		bool GL_LazyOpenSubsystem(void* hwnd);
+		bool GL_LazyOpenSubsystem();
 		bool GL_OpenSubsystem();
 		void GL_CloseSubsystem();
 		void GL_BeginFrame();
@@ -113,12 +113,6 @@ namespace GX
 		uint16_t CpReadReg(CPMappedRegister id);
 		void CpWriteReg(CPMappedRegister id, uint16_t value);
 
-		// Pixel Engine
-		uint16_t PeReadReg(PEMappedRegister id);
-		void PeWriteReg(PEMappedRegister id, uint16_t value);
-		uint32_t EfbPeek(uint32_t addr);
-		void EfbPoke(uint32_t addr, uint32_t value);
-
 		// PI->CP Registers
 		uint32_t PiCpReadReg(PI_CPMappedRegister id);
 		void PiCpWriteReg(PI_CPMappedRegister id, uint32_t value);
@@ -126,7 +120,6 @@ namespace GX
 		// Streaming FIFO (32-byte burst-only)
 		void FifoWriteBurst(uint8_t data[32]);
 
-		// TODO: Refactoring hacks
 		void CPDrawDoneCallback();
 		void CPDrawTokenCallback(uint16_t tokenValue);
 
@@ -151,28 +144,6 @@ namespace GX
 #pragma endregion "Command Processor"
 
 
-#pragma region "Setup Unit"
-
-		void GL_SetScissor(int x, int y, int w, int h);
-		void GL_SetCullMode(int mode);
-		void tryLoadTex(int id);
-		void loadBPReg(size_t index, uint32_t value);
-
-#pragma endregion "Setup Unit"
-
-#pragma region "Texture Engine (Old)"
-
-		void TexInit();
-		void TexFree();
-		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
-		void GetTlutCol(Color* c, unsigned id, unsigned entry);
-		void RebindTexture(unsigned id);
-		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
-		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
-
-#pragma endregion "Texture Engine (Old)"
-
-
 #pragma region "Transform Unit (Old)"
 
 		void DoLights(const Vertex* v);
@@ -187,6 +158,16 @@ namespace GX
 #pragma endregion "Transform Unit (Old)"
 
 
+#pragma region "Setup Unit"
+
+		void GL_SetScissor(int x, int y, int w, int h);
+		void GL_SetCullMode(int mode);
+		void tryLoadTex(int id);
+		void loadBPReg(size_t index, uint32_t value);
+
+#pragma endregion "Setup Unit"
+
+
 #pragma region "Rasterizers"
 
 		void GL_RenderTriangle(const Vertex* v0, const Vertex* v1, const Vertex* v2);
@@ -196,6 +177,26 @@ namespace GX
 #pragma endregion "Rasterizers"
 
 
+#pragma region "Texture Engine (Old)"
+
+		void TexInit();
+		void TexFree();
+		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
+		void GetTlutCol(Color* c, unsigned id, unsigned entry);
+		void RebindTexture(unsigned id);
+		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
+		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
+
+#pragma endregion "Texture Engine (Old)"
+
+
+#pragma region "TEV"
+
+		// TBD.
+
+#pragma endregion "TEV"
+
+
 #pragma region "Pixel Engine"
 
 		void GL_SetClear(Color clr, uint32_t z);
@@ -203,8 +204,13 @@ namespace GX
 		void GL_MakeSnapshot(char* path);
 		void GL_SaveBitmap(uint8_t* buf);
 
+		// Pixel Engine mapped regs
+		uint16_t PeReadReg(PEMappedRegister id);
+		void PeWriteReg(PEMappedRegister id, uint16_t value);
+		uint32_t EfbPeek(uint32_t addr);
+		void EfbPoke(uint32_t addr, uint32_t value);
+
 #pragma endregion "Pixel Engine"
 
 	};
-
 }
