@@ -23,46 +23,6 @@ typedef struct _Vertex
 #define GFX_CULL_BACK       2
 #define GFX_CULL_ALL        3
 
-// platform core descriptor
-// all paltform-dependent code goes here
-typedef struct
-{
-    // platform initialization
-    BOOL(*OpenSubsystem)(HWND hwnd);
-    void    (*CloseSubsystem)();
-
-    // frame begin / end
-    void    (*BeginFrame)();
-    void    (*EndFrame)();
-    void    (*MakeSnapshot)(char* path);
-    void    (*SaveBitmap)(uint8_t* buf);
-
-    // do rendering
-    void    (*RenderTriangle)(
-        const Vertex* v0,
-        const Vertex* v1,
-        const Vertex* v2
-        );
-    void    (*RenderLine)(
-        const Vertex* v0,
-        const Vertex* v1
-        );
-    void    (*RenderPoint)(
-        const Vertex* v0
-        );
-
-    // load matricies
-    void    (*SetProjection)(float* mtx);       // 4x4
-    void    (*SetViewport)(int x, int y, int w, int h, float znear, float zfar);
-    void    (*SetScissor)(int x, int y, int w, int h);
-
-    // set clearing color / z
-    void    (*SetClear)(Color clr, uint32_t z);
-
-    // culling modes
-    void    (*SetCullMode)(int mode);
-} Renderer;
-
 BOOL GL_LazyOpenSubsystem(HWND hwnd);
 BOOL GL_OpenSubsystem();
 void GL_CloseSubsystem();

@@ -385,7 +385,7 @@ int main(int argc, char** argv)
 
 	// Say hello
 
-	printf("pureikyubu, emulator version %s\n", UI::SimpleJdi.GetVersion().c_str());
+	printf("pureikyubu, Nintendo GameCube emulator version %s\n", UI::SimpleJdi.GetVersion().c_str());
 
 	// Load file and run
 

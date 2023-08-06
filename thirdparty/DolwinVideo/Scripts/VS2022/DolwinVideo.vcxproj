@@ -155,7 +155,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Backend.h" />
     <ClInclude Include="..\..\Fifo.h" />
     <ClInclude Include="..\..\FifoProcessor.h" />
     <ClInclude Include="..\..\GL.h" />
@@ -166,7 +165,6 @@
     <ClInclude Include="..\..\XF.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Backend.cpp" />
     <ClCompile Include="..\..\Fifo.cpp" />
     <ClCompile Include="..\..\FifoProcessor.cpp" />
     <ClCompile Include="..\..\GL.cpp" />
