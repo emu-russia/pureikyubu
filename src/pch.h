@@ -86,9 +86,6 @@
 #include "flipperdebug.h"
 #include "cp.h"
 
-// TODO: Phased out
-#include "../thirdparty/DolwinVideo/GX.h"
-
 namespace Flipper
 {
 	// TODO: I do not like these lonely definitions, which, moreover, have to be created far away in the emulation module (Emulator.cpp).

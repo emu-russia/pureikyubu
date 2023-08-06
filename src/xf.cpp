@@ -764,7 +764,7 @@ namespace GX
 
     // index range = 0000..FFFF
     // reg size = 32 bit
-    void GXCore::loadXFRegs(size_t startIdx, size_t amount)
+    void GXCore::loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo)
     {
         state.xfLoads += (uint32_t)amount;
 

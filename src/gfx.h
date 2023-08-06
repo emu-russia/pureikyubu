@@ -78,12 +78,23 @@ namespace GX
 		FifoProcessor * fifo;		// Internal CP FIFO
 
 		bool GpRegsLog = false;
+		bool gxOpened = false;
+		bool frame_done = true;
+		bool logDrawCommands = false;
+		bool disableDraw = false;
+
+		size_t usevat;	// current VAT
+		Vertex* vtx; // current vertex to collect data
+
+		HWND hwndMain;
+
+		uint32_t lastFifoSize;
 
 	public:
 		GXCore();
 		~GXCore();
 
-		void Open();
+		void Open(HWConfig* config);
 		void Close();
 
 		bool GL_LazyOpenSubsystem(void* hwnd);
@@ -124,7 +135,18 @@ namespace GX
 
 #pragma region "Command Processor"
 
+		void GXWriteFifo(uint8_t dataPtr[32]);
 		void loadCPReg(size_t index, uint32_t value);
+		std::string AttrToString(VertexAttr attr);
+		int gx_vtxsize(unsigned v);
+		void FifoReconfigure();
+		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
+		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
+		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
+		Color FetchColor(int type, int fmt, FifoProcessor* gxfifo, ArrayId arrayId);
+		void FifoWalk(unsigned vatnum, FifoProcessor* gxfifo);
+		void GxBadFifo(uint8_t command);
+		void GxCommand(FifoProcessor* gxfifo);
 
 #pragma endregion "Command Processor"
 
@@ -160,7 +182,7 @@ namespace GX
 		void NormalTransform(float* out, const float* in);
 		void GL_SetProjection(float* mtx);
 		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
-		void loadXFRegs(size_t startIdx, size_t amount);
+		void loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo);
 
 #pragma endregion "Transform Unit (Old)"
 

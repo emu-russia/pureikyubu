@@ -2,11 +2,13 @@
 #pragma once
 
 // With CP it's very complicated, this component has spread its tentacles almost all over the Flipper chip:
-// - There is an interface with PI so that Gekko can do burst transactions in FIFO (PI CP fifo)
+// - There is an interface with PI so that Gekko can do burst transactions in FIFO (PI_CPMappedRegister)
 // - There is another interface where some CP registers are mapped to the HW address space (CPMappedRegister)
 // - CP registers can also be accessed using FIFO commands (CP_CMD_LOAD_CPREG)
 // I'll describe how CP works a little later, but I get the impression that the developers in the process of
 // development twisted it this way and that and it turned out "well, this". It could have been made prettier :)
+
+// Vertex Cache is not supported.
 
 namespace GX
 {
@@ -548,6 +550,8 @@ namespace GX
 
 }
 
+typedef void (*GXDrawDoneCallback)();
+typedef void (*GXDrawTokenCallback)(uint16_t tokenValue);
 
 void CPOpen();
 void CPClose();

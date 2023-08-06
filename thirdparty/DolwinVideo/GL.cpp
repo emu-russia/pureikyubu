@@ -15,10 +15,6 @@ static HDC hdcgl;
 static PAINTSTRUCT psFrame;
 static int frameReady = 0;
 
-// forward reference
-void GL_EndFrame();
-void GL_DoSnapshot(BOOL sel, FILE *f, uint8_t *dst, int width, int height);
-
 // optionable
 static uint32_t  scr_w = 640, scr_h = 480;
 
