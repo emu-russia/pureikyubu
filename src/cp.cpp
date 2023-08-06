@@ -552,6 +552,137 @@ namespace GX
 		Report(Channel::Norm, "   break:0x%08X", state.cpregs.bpptr);
 	}
 
+	// index range = 00..FF
+	// reg size = 32 bit
+	void GXCore::loadCPReg(size_t index, uint32_t value)
+	{
+		state.cpLoads++;
+
+		if (GpRegsLog)
+		{
+			Report(Channel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
+		}
+
+		switch(index)
+		{
+			case CP_MATIDX_A:
+			{
+				cpRegs.matidxA.matidx = value;
+				//GFXError("cp posidx : %i", cpRegs.matidxA.pos);
+			}
+			return;
+
+			case CP_MATIDX_B:
+			{
+				cpRegs.matidxB.matidx = value;
+			}
+			return;
+
+			case CP_VCD_LO:
+			{
+				cpRegs.vcdLo.vcdlo = value;
+				FifoReconfigure();
+			}
+			return;
+
+			case CP_VCD_HI:
+			{
+				cpRegs.vcdHi.vcdhi = value;
+				FifoReconfigure();
+			}
+			return;
+
+			case CP_VAT0_A:
+			case CP_VAT1_A:
+			case CP_VAT2_A:
+			case CP_VAT3_A:
+			case CP_VAT4_A:
+			case CP_VAT5_A:
+			case CP_VAT6_A:
+			case CP_VAT7_A:
+			{
+				cpRegs.vatA[index & 7].vata = value;
+				FifoReconfigure();
+			}
+			return;
+
+			case CP_VAT0_B:
+			case CP_VAT1_B:
+			case CP_VAT2_B:
+			case CP_VAT3_B:
+			case CP_VAT4_B:
+			case CP_VAT5_B:
+			case CP_VAT6_B:
+			case CP_VAT7_B:
+			{
+				cpRegs.vatB[index & 7].vatb = value;
+				FifoReconfigure();
+			}
+			return;
+
+			case CP_VAT0_C:
+			case CP_VAT1_C:
+			case CP_VAT2_C:
+			case CP_VAT3_C:
+			case CP_VAT4_C:
+			case CP_VAT5_C:
+			case CP_VAT6_C:
+			case CP_VAT7_C:
+			{
+				cpRegs.vatC[index & 7].vatc = value;
+				FifoReconfigure();
+			}
+			return;
+
+			case CP_ARRAY_BASE | 0:
+			case CP_ARRAY_BASE | 1:
+			case CP_ARRAY_BASE | 2:
+			case CP_ARRAY_BASE | 3:
+			case CP_ARRAY_BASE | 4:
+			case CP_ARRAY_BASE | 5:
+			case CP_ARRAY_BASE | 6:
+			case CP_ARRAY_BASE | 7:
+			case CP_ARRAY_BASE | 8:
+			case CP_ARRAY_BASE | 9:
+			case CP_ARRAY_BASE | 0xa:
+			case CP_ARRAY_BASE | 0xb:
+			case CP_ARRAY_BASE | 0xc:
+			case CP_ARRAY_BASE | 0xd:
+			case CP_ARRAY_BASE | 0xe:
+			case CP_ARRAY_BASE | 0xf:
+			{
+				cpRegs.arbase[index & 0xf] = value;
+			}
+			return;
+
+			case CP_ARRAY_STRIDE | 0:
+			case CP_ARRAY_STRIDE | 1:
+			case CP_ARRAY_STRIDE | 2:
+			case CP_ARRAY_STRIDE | 3:
+			case CP_ARRAY_STRIDE | 4:
+			case CP_ARRAY_STRIDE | 5:
+			case CP_ARRAY_STRIDE | 6:
+			case CP_ARRAY_STRIDE | 7:
+			case CP_ARRAY_STRIDE | 8:
+			case CP_ARRAY_STRIDE | 9:
+			case CP_ARRAY_STRIDE | 0xa:
+			case CP_ARRAY_STRIDE | 0xb:
+			case CP_ARRAY_STRIDE | 0xc:
+			case CP_ARRAY_STRIDE | 0xd:
+			case CP_ARRAY_STRIDE | 0xe:
+			case CP_ARRAY_STRIDE | 0xf:
+			{
+				cpRegs.arstride[index & 0xf] = value & 0xFF;
+			}
+			return;
+
+			default:
+			{
+				Report(Channel::GP, "Unknown CP load, index: 0x%02X", index);
+			}
+		}
+	}
+
 	#pragma endregion "Dealing with registers"
 
 

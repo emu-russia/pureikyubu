@@ -1,5 +1,10 @@
 // Transform Unit
 
+// This module deals with geometric transformation and lighting of vertices that come from CP.
+// All parameters (matrices) are stored in a special memory (XF).
+// In the real Flipper XF is made from microcode ROM, but is still part of a fixed pipeline.
+// In an emulator, XF can be done entirely programmatically (as in the current old and crooked implementation), or using vertex shaders.
+
 #pragma once
 
 namespace GX
@@ -156,15 +161,6 @@ namespace GX
 
 	// Light parameters
 
-	union Color
-	{
-		struct
-		{
-			uint8_t     a, b, g, r;
-		};
-		uint32_t rgba;
-	};
-
 	struct Light
 	{
 		uint32_t Reserved[3];
@@ -312,3 +308,24 @@ namespace GX
 #pragma pack(pop)
 
 }
+
+
+
+// TODO: Old implementation, will be redone nicely.
+
+// current vertex data
+typedef struct _Vertex
+{
+	float       pos[3];         // x, y, z
+	float       nrm[9];         // x, y, z, normalized to [0, 1]
+	Color       col[2];         // 2 color / alpha (RGBA)
+	float       tcoord[8][4];   // s, t for eight tex units, last two for texgen
+} Vertex;
+
+typedef struct
+{
+	float   out[4];
+} TexGenOut;
+
+extern  Color   rasca[2];
+extern  TexGenOut   tgout[8];

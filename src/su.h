@@ -3,6 +3,7 @@
 namespace GX
 {
 	// SU BP (ByPass) address space (SU/RAS/TEV etc) Registers
+	// There is no such entity as "BP" in Flipper. SU is simply used to "throw" registers further down the shop (to RAS, TEV, TX)
 
 	enum class BPRegister
 	{
@@ -257,4 +258,10 @@ namespace GX
 
 	// Alpha read mode
 
+
+	// triangle cull rules
+	#define GFX_CULL_NONE       0
+	#define GFX_CULL_FRONT      1
+	#define GFX_CULL_BACK       2
+	#define GFX_CULL_ALL        3
 }

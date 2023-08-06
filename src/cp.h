@@ -509,6 +509,10 @@ namespace GX
 		size_t writePtr = 0;
 		bool allocated = false;
 
+		GXCore* gxcore = nullptr;
+		SpinLock lock;
+
+	public:
 		size_t GetSize();
 		bool EnoughToExecute();
 
@@ -525,10 +529,6 @@ namespace GX
 
 		void ExecuteCommand();
 
-		GXCore* gxcore = nullptr;
-		SpinLock lock;
-
-	public:
 		FifoProcessor(GXCore* gx);
 		FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size);	// Call FIFO
 		~FifoProcessor();

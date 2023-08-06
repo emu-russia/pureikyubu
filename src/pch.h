@@ -19,6 +19,8 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
+#include <gl/gl.h>
+#include <gl/glu.h>
 #include "res/resource.h"
 #endif
 

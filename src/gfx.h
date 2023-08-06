@@ -2,12 +2,12 @@
 #pragma once
 
 #include "cp.h"
+#include "pe.h"
 #include "xf.h"
 #include "su.h"
 #include "ras.h"
 #include "tev.h"
 #include "tx.h"
-#include "pe.h"
 
 namespace GX
 {
@@ -58,12 +58,20 @@ namespace GX
 
 		FifoProcessor * fifo;		// Internal CP FIFO
 
+		bool GpRegsLog = false;
+
 	public:
 		GXCore();
 		~GXCore();
 
 		void Open();
 		void Close();
+
+		bool GL_LazyOpenSubsystem(void* hwnd);
+		bool GL_OpenSubsystem();
+		void GL_CloseSubsystem();
+		void GL_BeginFrame();
+		void GL_EndFrame();
 
 		// Debug
 		void DumpPIFIFO();
@@ -94,6 +102,67 @@ namespace GX
 
 #pragma endregion "Interface to Flipper"
 
+
+#pragma region "Command Processor"
+
+		void loadCPReg(size_t index, uint32_t value);
+
+#pragma endregion "Command Processor"
+
+
+#pragma region "Setup Unit"
+
+		void GL_SetScissor(int x, int y, int w, int h);
+		void GL_SetCullMode(int mode);
+		void tryLoadTex(int id);
+		void loadBPReg(size_t index, uint32_t value);
+
+#pragma endregion "Setup Unit"
+
+#pragma region "Texture Engine (Old)"
+
+		void TexInit();
+		void TexFree();
+		void DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height);
+		void GetTlutCol(Color* c, unsigned id, unsigned entry);
+		void RebindTexture(unsigned id);
+		void LoadTexture(uint32_t addr, int id, int fmt, int width, int height);
+		void LoadTlut(uint32_t addr, uint32_t tmem, uint32_t cnt);
+
+#pragma endregion "Texture Engine (Old)"
+
+
+#pragma region "Transform Unit (Old)"
+
+		void DoLights(const Vertex* v);
+		void DoTexGen(const Vertex* v);
+		void VECNormalize(float vec[3]);
+		void ApplyModelview(float* out, const float* in);
+		void NormalTransform(float* out, const float* in);
+		void GL_SetProjection(float* mtx);
+		void GL_SetViewport(int x, int y, int w, int h, float znear, float zfar);
+		void loadXFRegs(size_t startIdx, size_t amount);
+
+#pragma endregion "Transform Unit (Old)"
+
+
+#pragma region "Rasterizers"
+
+		void GL_RenderTriangle(const Vertex* v0, const Vertex* v1, const Vertex* v2);
+		void GL_RenderLine(const Vertex* v0, const Vertex* v1);
+		void GL_RenderPoint(const Vertex* v0);
+
+#pragma endregion "Rasterizers"
+
+
+#pragma region "Pixel Engine"
+
+		void GL_SetClear(Color clr, uint32_t z);
+		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);
+		void GL_MakeSnapshot(char* path);
+		void GL_SaveBitmap(uint8_t* buf);
+
+#pragma endregion "Pixel Engine"
 
 	};
 
