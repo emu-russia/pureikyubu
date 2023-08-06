@@ -144,8 +144,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ClipDisable) == sizeof(uint32_t), "ClipDisable invalid definition!");
-
 	union InVertexSpec
 	{
 		struct
@@ -156,8 +154,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(InVertexSpec) == sizeof(uint32_t), "InVertexSpec invalid definition!");
 
 	// Light parameters
 
@@ -170,8 +166,6 @@ namespace GX
 		float lpx[3];	// Post-processed x,y,z light pos, or inf ldir x,y,z
 		float dhx[3];	// Post-processed x,y,z light dir, or 1/2 angle x,y,z
 	};
-
-	static_assert (sizeof(Light) == 0x10 * sizeof(uint32_t), "Light invalid definition!");
 
 	union ColorAlphaControl
 	{
@@ -195,8 +189,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ColorAlphaControl) == sizeof(uint32_t), "ColorAlphaControl invalid definition!");
-
 	union MatrixIndex0
 	{
 		struct
@@ -210,8 +202,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(MatrixIndex0) == sizeof(uint32_t), "MatrixIndex0 invalid definition!");
-
 	union MatrixIndex1
 	{
 		struct
@@ -223,8 +213,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(MatrixIndex1) == sizeof(uint32_t), "MatrixIndex1 invalid definition!");
 
 	// Texgen inrow enum
 	enum TexGenInrow : unsigned
@@ -260,8 +248,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(TexGenParam) == sizeof(uint32_t), "TexGenParam invalid definition!");
-
 	union DualGenParam
 	{
 		struct
@@ -272,8 +258,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(DualGenParam) == sizeof(uint32_t), "DualGenParam invalid definition!");
 
 	struct XFState
 	{

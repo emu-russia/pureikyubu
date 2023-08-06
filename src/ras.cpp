@@ -1,5 +1,7 @@
 #include "pch.h"
 
+// Now we're putting all the drawing on the shoulders of the graphics API. If we get bored, we can make a software rasterizer.
+
 namespace GX
 {
     void GXCore::GL_RenderTriangle(
@@ -16,7 +18,7 @@ namespace GX
         ApplyModelview(mv[2], v2->pos);
 
 #ifndef WIREFRAME
-        if (xfRegs.numtex && tID[0])
+        if (state.xf.numTex && tID[0])
         {
             glEnable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, tID[0]->bind);
@@ -30,14 +32,14 @@ namespace GX
             {
 #ifndef WIREFRAME
                 // color hack
-                if (xfRegs.numcol)
+                if (state.xf.numColors)
                 {
                     DoLights(vn[v]);
                     glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
                 }
 
                 // texture hack
-                if (xfRegs.numtex && tID[0])
+                if (state.xf.numTex && tID[0])
                 {
                     DoTexGen(vn[v]);
                     tgout[0].out[0] *= tID[0]->ds;

@@ -2,6 +2,39 @@
 // and from the point of view of graphics backend (texture upload to the real graphics device, bindings).
 #pragma once
 
+namespace GX
+{
+
+    // Texture offset
+
+    // Texture Culling mode
+
+    // Texture Clip mode
+
+    // Texture Wrap mode
+
+    // Texture filter
+
+    // Texture format
+
+    // Tlut format
+
+    // Tlut size
+
+    // Indirect texture format
+
+    // Indirect texture bias select
+
+    // Indirect texture alpha select
+
+    // Indirect texture wrap
+
+    // Indirect texture scale
+
+}
+
+
+
 // TODO: Old implementation, will be redone nicely.
 
 // texture entry
