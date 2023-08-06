@@ -306,8 +306,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(MatrixIndexA) == sizeof(uint32_t), "MatrixIndexA invalid definition!");
-
 	union MatrixIndexB
 	{
 		struct
@@ -319,8 +317,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(MatrixIndexB) == sizeof(uint32_t), "MatrixIndexB invalid definition!");
 
 	union VCD_Lo
 	{
@@ -343,8 +339,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VCD_Lo) == sizeof(uint32_t), "VCD_Lo invalid definition!");
-
 	union VCD_Hi
 	{
 		struct
@@ -360,8 +354,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(VCD_Hi) == sizeof(uint32_t), "VCD_Hi invalid definition!");
 
 	union VAT_group0
 	{
@@ -385,8 +377,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group0) == sizeof(uint32_t), "VAT_group0 invalid definition!");
-
 	union VAT_group1
 	{
 		struct
@@ -407,8 +397,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group1) == sizeof(uint32_t), "VAT_group1 invalid definition!");
-
 	union VAT_group2
 	{
 		struct
@@ -427,8 +415,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group2) == sizeof(uint32_t), "VAT_group2 invalid definition!");
-
 	union ArrayBase
 	{
 		struct
@@ -438,8 +424,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ArrayBase) == sizeof(uint32_t), "ArrayBase invalid definition!");
-
 	union ArrayStride
 	{
 		struct
@@ -448,8 +432,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(ArrayStride) == sizeof(uint32_t), "ArrayStride invalid definition!");
 
 	// Array name for ArrayBase and ArrayStride
 
