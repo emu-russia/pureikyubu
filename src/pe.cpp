@@ -72,10 +72,10 @@ namespace GX
 		cb = clr.B;
 		ca = clr.A;
 		clear_z = z;
-		set_clear = TRUE;
+		set_clear = true;
 
 		/*/
-			if(set_clear == TRUE)
+			if(set_clear)
 			{
 				glClearColor(
 					(float)(cr / 255.0f),

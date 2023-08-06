@@ -5,11 +5,6 @@ using namespace Debug;
 
 #define NO_VIEWPORT
 
-TexGenOut   tgout[8];
-
-// lighting stage output colors
-Color   rasca[2];
-
 namespace GX
 {
 
@@ -50,17 +45,17 @@ namespace GX
         VECNormalize(out);
     }
 
-#define CLAMP(n)                \
-{                               \
-    if(n <-1.0f) n =-1.0f;      \
-    if(n > 1.0f) n = 1.0f;      \
-}
+    #define CLAMP(n)                \
+    {                               \
+        if(n <-1.0f) n =-1.0f;      \
+        if(n > 1.0f) n = 1.0f;      \
+    }
 
-#define CLAMP0(n)               \
-{                               \
-    if(n < 0.0f) n = 0.0f;      \
-    if(n > 1.0f) n = 1.0f;      \
-}
+    #define CLAMP0(n)               \
+    {                               \
+        if(n < 0.0f) n = 0.0f;      \
+        if(n > 1.0f) n = 1.0f;      \
+    }
 
     // color0 only calculation
     void GXCore::DoLights(const Vertex* v)
@@ -761,7 +756,6 @@ namespace GX
 #endif
     }
 
-
     // index range = 0000..FFFF
     // reg size = 32 bit
     void GXCore::loadXFRegs(size_t startIdx, size_t amount, FifoProcessor* gxfifo)
@@ -778,7 +772,7 @@ namespace GX
         {
             for (size_t i = 0; i < amount; i++)
             {
-                *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = fifo->ReadFloat();
+                *(float*)(((uint8_t*)xfRegs.posmtx + 4 * startIdx) + 4 * i) = gxfifo->ReadFloat();
             }
         }
         // load normal matrix
@@ -786,7 +780,7 @@ namespace GX
         {
             for (size_t i = 0; i < amount; i++)
             {
-                *(float*)(((uint8_t*)xfRegs.nrmmtx + 4 * (startIdx - 0x400)) + 4 * i) = fifo->ReadFloat();
+                *(float*)(((uint8_t*)xfRegs.nrmmtx + 4 * (startIdx - 0x400)) + 4 * i) = gxfifo->ReadFloat();
             }
         }
         // load post-trans matrix
@@ -794,7 +788,7 @@ namespace GX
         {
             for (size_t i = 0; i < amount; i++)
             {
-                *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = fifo->ReadFloat();
+                *(float*)(((uint8_t*)xfRegs.postmtx + 4 * (startIdx - 0x500)) + 4 * i) = gxfifo->ReadFloat();
             }
         }
         else switch (startIdx)
@@ -805,7 +799,7 @@ namespace GX
 
             case XF_MATINDEX_A:
             {
-                xfRegs.matidxA.matidx = fifo->Read32();
+                xfRegs.matidxA.matidx = gxfifo->Read32();
                 xfRegs.posidx = xfRegs.matidxA.pos;
                 xfRegs.texidx[0] = xfRegs.matidxA.tex0;
                 xfRegs.texidx[1] = xfRegs.matidxA.tex1;
@@ -817,7 +811,7 @@ namespace GX
 
             case XF_MATINDEX_B:
             {
-                xfRegs.matidxB.matidx = fifo->Read32();
+                xfRegs.matidxB.matidx = gxfifo->Read32();
                 xfRegs.texidx[4] = xfRegs.matidxB.tex4;
                 xfRegs.texidx[5] = xfRegs.matidxB.tex5;
                 xfRegs.texidx[6] = xfRegs.matidxB.tex6;
@@ -833,13 +827,13 @@ namespace GX
             {
                 float pMatrix[7];
 
-                pMatrix[0] = fifo->ReadFloat();
-                pMatrix[1] = fifo->ReadFloat();
-                pMatrix[2] = fifo->ReadFloat();
-                pMatrix[3] = fifo->ReadFloat();
-                pMatrix[4] = fifo->ReadFloat();
-                pMatrix[5] = fifo->ReadFloat();
-                pMatrix[6] = fifo->ReadFloat();
+                pMatrix[0] = gxfifo->ReadFloat();
+                pMatrix[1] = gxfifo->ReadFloat();
+                pMatrix[2] = gxfifo->ReadFloat();
+                pMatrix[3] = gxfifo->ReadFloat();
+                pMatrix[4] = gxfifo->ReadFloat();
+                pMatrix[5] = gxfifo->ReadFloat();
+                pMatrix[6] = gxfifo->ReadFloat();
 
                 float Matrix[4][4];
                 if (pMatrix[6] == 0)
@@ -897,13 +891,13 @@ namespace GX
                 // read coefficients
                 //
 
-                xfRegs.vp_scale[0] = fifo->ReadFloat();   // w / 2
-                xfRegs.vp_scale[1] = fifo->ReadFloat();   // -h / 2
-                xfRegs.vp_scale[2] = fifo->ReadFloat();   // ZMAX * (zfar - znear)
+                xfRegs.vp_scale[0] = gxfifo->ReadFloat();   // w / 2
+                xfRegs.vp_scale[1] = gxfifo->ReadFloat();   // -h / 2
+                xfRegs.vp_scale[2] = gxfifo->ReadFloat();   // ZMAX * (zfar - znear)
 
-                xfRegs.vp_offs[0] = fifo->ReadFloat();    // x + w/2 + 342
-                xfRegs.vp_offs[1] = fifo->ReadFloat();    // y + h/2 + 342
-                xfRegs.vp_offs[2] = fifo->ReadFloat();    // ZMAX * zfar
+                xfRegs.vp_offs[0] = gxfifo->ReadFloat();    // x + w/2 + 342
+                xfRegs.vp_offs[1] = gxfifo->ReadFloat();    // y + h/2 + 342
+                xfRegs.vp_offs[2] = gxfifo->ReadFloat();    // ZMAX * zfar
 
                 //
                 // convert them to human usable form
@@ -936,32 +930,32 @@ namespace GX
             {
                 unsigned lnum = (startIdx >> 4) & 7;
 
-                xfRegs.light[lnum].rsrv[0] = fifo->Read32();
-                xfRegs.light[lnum].rsrv[1] = fifo->Read32();
-                xfRegs.light[lnum].rsrv[2] = fifo->Read32();
-                xfRegs.light[lnum].color.RGBA = fifo->Read32();
+                xfRegs.light[lnum].rsrv[0] = gxfifo->Read32();
+                xfRegs.light[lnum].rsrv[1] = gxfifo->Read32();
+                xfRegs.light[lnum].rsrv[2] = gxfifo->Read32();
+                xfRegs.light[lnum].color.RGBA = gxfifo->Read32();
 
-                xfRegs.light[lnum].a[0] = fifo->ReadFloat();
-                xfRegs.light[lnum].a[1] = fifo->ReadFloat();
-                xfRegs.light[lnum].a[2] = fifo->ReadFloat();
+                xfRegs.light[lnum].a[0] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].a[1] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].a[2] = gxfifo->ReadFloat();
 
-                xfRegs.light[lnum].k[0] = fifo->ReadFloat();
-                xfRegs.light[lnum].k[1] = fifo->ReadFloat();
-                xfRegs.light[lnum].k[2] = fifo->ReadFloat();
+                xfRegs.light[lnum].k[0] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].k[1] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].k[2] = gxfifo->ReadFloat();
 
-                xfRegs.light[lnum].pos[0] = fifo->ReadFloat();
-                xfRegs.light[lnum].pos[1] = fifo->ReadFloat();
-                xfRegs.light[lnum].pos[2] = fifo->ReadFloat();
+                xfRegs.light[lnum].pos[0] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].pos[1] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].pos[2] = gxfifo->ReadFloat();
 
-                xfRegs.light[lnum].dir[0] = fifo->ReadFloat();
-                xfRegs.light[lnum].dir[1] = fifo->ReadFloat();
-                xfRegs.light[lnum].dir[2] = fifo->ReadFloat();
+                xfRegs.light[lnum].dir[0] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].dir[1] = gxfifo->ReadFloat();
+                xfRegs.light[lnum].dir[2] = gxfifo->ReadFloat();
             }
             return;
 
             case XF_INVTXSPEC:
             {
-                xfRegs.vtxSpec.bits = fifo->Read32();
+                xfRegs.vtxSpec.bits = gxfifo->Read32();
             }
             return;
 
@@ -971,25 +965,25 @@ namespace GX
 
             case XF_AMBIENT0:
             {
-                xfRegs.ambient[0].RGBA = fifo->Read32();
+                xfRegs.ambient[0].RGBA = gxfifo->Read32();
             }
             return;
 
             case XF_AMBIENT1:
             {
-                xfRegs.ambient[1].RGBA = fifo->Read32();
+                xfRegs.ambient[1].RGBA = gxfifo->Read32();
             }
             return;
 
             case XF_MATERIAL0:
             {
-                xfRegs.material[0].RGBA = fifo->Read32();
+                xfRegs.material[0].RGBA = gxfifo->Read32();
             }
             return;
 
             case XF_MATERIAL1:
             {
-                xfRegs.material[1].RGBA = fifo->Read32();
+                xfRegs.material[1].RGBA = gxfifo->Read32();
             }
             return;
 
@@ -999,7 +993,7 @@ namespace GX
 
             case XF_COLOR0CNTL:
             {
-                xfRegs.color[0].Chan = fifo->Read32();
+                xfRegs.color[0].Chan = gxfifo->Read32();
 
                 // change light mask
                 xfRegs.colmask[0][0] = (xfRegs.color[0].Light0) ? (TRUE) : (FALSE);
@@ -1015,7 +1009,7 @@ namespace GX
 
             case XF_COLOR1CNTL:
             {
-                xfRegs.color[1].Chan = fifo->Read32();
+                xfRegs.color[1].Chan = gxfifo->Read32();
 
                 // change light mask
                 xfRegs.colmask[0][1] = (xfRegs.color[1].Light0) ? (TRUE) : (FALSE);
@@ -1031,7 +1025,7 @@ namespace GX
 
             case XF_ALPHA0CNTL:
             {
-                xfRegs.alpha[0].Chan = fifo->Read32();
+                xfRegs.alpha[0].Chan = gxfifo->Read32();
 
                 // change light mask
                 xfRegs.amask[0][0] = (xfRegs.alpha[0].Light0) ? (TRUE) : (FALSE);
@@ -1047,7 +1041,7 @@ namespace GX
 
             case XF_ALPHA1CNTL:
             {
-                xfRegs.alpha[1].Chan = fifo->Read32();
+                xfRegs.alpha[1].Chan = gxfifo->Read32();
 
                 // change light mask
                 xfRegs.amask[0][1] = (xfRegs.alpha[1].Light0) ? (TRUE) : (FALSE);
@@ -1067,7 +1061,7 @@ namespace GX
 
             case XF_DUALTEX:
             {
-                xfRegs.dualtex = fifo->Read32();
+                xfRegs.dualtex = gxfifo->Read32();
                 //GFXError("dual texgen : %s", (regData[0]) ? ("on") : ("off"));
             }
             return;
@@ -1083,7 +1077,7 @@ namespace GX
             {
                 size_t n = startIdx - XF_DUALGEN0;
 
-                fifo->Read32();
+                gxfifo->Read32();
 
                 //ASSERT(amount != 1);
 
@@ -1110,7 +1104,7 @@ namespace GX
 
             case XF_NUMCOLS:
             {
-                xfRegs.numcol = fifo->Read32();
+                xfRegs.numcol = gxfifo->Read32();
             }
             return;
 
@@ -1120,7 +1114,7 @@ namespace GX
 
             case XF_NUMTEX:
             {
-                xfRegs.numtex = fifo->Read32();
+                xfRegs.numtex = gxfifo->Read32();
             }
             return;
 
@@ -1159,7 +1153,7 @@ namespace GX
                     "", "", ""
                 };
 
-                xfRegs.texgen[num].hex = fifo->Read32();
+                xfRegs.texgen[num].hex = gxfifo->Read32();
 
                 /*/
                             GFXError(
@@ -1192,7 +1186,7 @@ namespace GX
 
                 while (amount--)
                 {
-                    fifo->Read32();
+                    gxfifo->Read32();
                 }
             }
         }

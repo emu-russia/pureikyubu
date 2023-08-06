@@ -326,6 +326,3 @@ typedef struct
 {
 	float   out[4];
 } TexGenOut;
-
-extern  Color   rasca[2];
-extern  TexGenOut   tgout[8];

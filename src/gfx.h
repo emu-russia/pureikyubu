@@ -90,6 +90,28 @@ namespace GX
 
 		uint32_t lastFifoSize;
 
+		uint8_t cr, cg, cb, ca;
+		uint32_t clear_z = -1;
+		bool set_clear = false;
+
+		bool make_shot = false;
+		FILE* snap_file;
+		uint32_t snap_w, snap_h;
+
+		HGLRC hglrc;
+		HDC hdcgl;
+
+		PAINTSTRUCT psFrame;
+		int frameReady = 0;
+
+		// optionable
+		uint32_t scr_w = 640, scr_h = 480;
+
+		// perfomance counters
+		uint32_t frames, tris, pts, lines;
+
+		Vertex tri[3];		// triangle to be rendered
+
 	public:
 		GXCore();
 		~GXCore();
@@ -102,6 +124,7 @@ namespace GX
 		void GL_CloseSubsystem();
 		void GL_BeginFrame();
 		void GL_EndFrame();
+		void GPFrameDone();
 
 		// Debug
 		void DumpPIFIFO();
@@ -145,6 +168,10 @@ namespace GX
 
 
 #pragma region "Transform Unit (Old)"
+
+		TexGenOut tgout[8];
+		// lighting stage output colors
+		Color rasca[2];
 
 		void DoLights(const Vertex* v);
 		void DoTexGen(const Vertex* v);
@@ -198,6 +225,9 @@ namespace GX
 
 
 #pragma region "Pixel Engine"
+
+		Color copyClearRGBA;
+		uint32_t copyClearZ;
 
 		void GL_SetClear(Color clr, uint32_t z);
 		void GL_DoSnapshot(bool sel, FILE* f, uint8_t* dst, int width, int height);

@@ -64,9 +64,6 @@ namespace GX
     // reg size = 24 bit (value is already masked)
     void GXCore::loadBPReg(size_t index, uint32_t value)
     {
-        static Color    copyClearRGBA;
-        static uint32_t      copyClearZ;
-
         state.bpLoads++;
 
         if (GpRegsLog)
@@ -469,5 +466,4 @@ namespace GX
             }
         }
     }
-
 }
