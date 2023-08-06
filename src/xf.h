@@ -287,6 +287,8 @@ namespace GX
 		uint32_t numTex;			// 0x103f. Number of active textures
 		TexGenParam tex[8];			// 0x1040-0x1047
 		DualGenParam dualTex[8];		// 0x1050-0x1057
+
+		unsigned posidx, texidx[8];		// pos index, tex index
 	};
 
 #pragma pack(pop)

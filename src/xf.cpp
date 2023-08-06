@@ -21,7 +21,7 @@ namespace GX
     // perform position transform
     void GXCore::ApplyModelview(float* out, const float* in)
     {
-        float* mx = &xfRegs.posmtx[xfRegs.posidx][0];
+        float* mx = &xfRegs.posmtx[state.xf.posidx][0];
 
         out[0] = in[0] * mx[0] + in[1] * mx[1] + in[2] * mx[2] + mx[3];
         out[1] = in[0] * mx[4] + in[1] * mx[5] + in[2] * mx[6] + mx[7];
@@ -32,7 +32,7 @@ namespace GX
     // matrix must be the inverse transpose of the modelview matrix
     void GXCore::NormalTransform(float* out, const float* in)
     {
-        float* mx = &xfRegs.nrmmtx[xfRegs.posidx][0];
+        float* mx = &xfRegs.nrmmtx[state.xf.posidx][0];
 
         out[0] = in[0];
         out[1] = in[1];
@@ -600,7 +600,7 @@ namespace GX
 
         if (state.xf.numTex == 0)
         {
-            mx = &xfRegs.posmtx[xfRegs.texidx[0]][0];
+            mx = &xfRegs.posmtx[state.xf.texidx[0]][0];
             in[0] = v->tcoord[0][0];
             in[1] = v->tcoord[0][1];
             in[2] = 1.0f;
@@ -634,7 +634,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX0:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[0]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[0]][0];
                         in[0] = v->tcoord[0][0];
                         in[1] = v->tcoord[0][1];
                         in[2] = 1.0f;
@@ -644,7 +644,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX1:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[1]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[1]][0];
                         in[0] = v->tcoord[1][0];
                         in[1] = v->tcoord[1][1];
                         in[2] = 1.0f;
@@ -654,7 +654,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX2:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[2]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[2]][0];
                         in[0] = v->tcoord[2][0];
                         in[1] = v->tcoord[2][1];
                         in[2] = 1.0f;
@@ -664,7 +664,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX3:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[3]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[3]][0];
                         in[0] = v->tcoord[3][0];
                         in[1] = v->tcoord[3][1];
                         in[2] = 1.0f;
@@ -674,7 +674,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX4:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[4]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[4]][0];
                         in[0] = v->tcoord[4][0];
                         in[1] = v->tcoord[4][1];
                         in[2] = 1.0f;
@@ -684,7 +684,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX5:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[5]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[5]][0];
                         in[0] = v->tcoord[5][0];
                         in[1] = v->tcoord[5][1];
                         in[2] = 1.0f;
@@ -694,7 +694,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX6:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[6]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[6]][0];
                         in[0] = v->tcoord[6][0];
                         in[1] = v->tcoord[6][1];
                         in[2] = 1.0f;
@@ -704,7 +704,7 @@ namespace GX
 
                     case XF_TEXGEN_INROW_TEX7:
                     {
-                        mx = &xfRegs.posmtx[xfRegs.texidx[7]][0];
+                        mx = &xfRegs.posmtx[state.xf.texidx[7]][0];
                         in[0] = v->tcoord[7][0];
                         in[1] = v->tcoord[7][1];
                         in[2] = 1.0f;
@@ -713,7 +713,7 @@ namespace GX
                     break;
                 }
 
-                mx = &xfRegs.posmtx[xfRegs.texidx[n]][0];
+                mx = &xfRegs.posmtx[state.xf.texidx[n]][0];
 
                 // st or stq ?
                 if (xfRegs.texgen[n].pojection)
@@ -800,11 +800,11 @@ namespace GX
             case XF_MATINDEX_A_ID:
             {
                 xfRegs.matidxA.matidx = gxfifo->Read32();
-                xfRegs.posidx = xfRegs.matidxA.pos;
-                xfRegs.texidx[0] = xfRegs.matidxA.tex0;
-                xfRegs.texidx[1] = xfRegs.matidxA.tex1;
-                xfRegs.texidx[2] = xfRegs.matidxA.tex2;
-                xfRegs.texidx[3] = xfRegs.matidxA.tex3;
+                state.xf.posidx = xfRegs.matidxA.pos;
+                state.xf.texidx[0] = xfRegs.matidxA.tex0;
+                state.xf.texidx[1] = xfRegs.matidxA.tex1;
+                state.xf.texidx[2] = xfRegs.matidxA.tex2;
+                state.xf.texidx[3] = xfRegs.matidxA.tex3;
                 //GFXError("xf posidx : %i", xfRegs.matidxA.pos);
             }
             return;
@@ -812,10 +812,10 @@ namespace GX
             case XF_MATINDEX_B_ID:
             {
                 xfRegs.matidxB.matidx = gxfifo->Read32();
-                xfRegs.texidx[4] = xfRegs.matidxB.tex4;
-                xfRegs.texidx[5] = xfRegs.matidxB.tex5;
-                xfRegs.texidx[6] = xfRegs.matidxB.tex6;
-                xfRegs.texidx[7] = xfRegs.matidxB.tex7;
+                state.xf.texidx[4] = xfRegs.matidxB.tex4;
+                state.xf.texidx[5] = xfRegs.matidxB.tex5;
+                state.xf.texidx[6] = xfRegs.matidxB.tex6;
+                state.xf.texidx[7] = xfRegs.matidxB.tex7;
             }
             return;
 

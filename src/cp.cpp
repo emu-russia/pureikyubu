@@ -1,6 +1,8 @@
 // CP - command processor
 #include "pch.h"
 
+// TODO: It's a bit crooked right now after refactoring, but will settle with time
+
 using namespace Debug;
 
 size_t pe_done_num;   // number of drawdone (PE_FINISH) events
@@ -556,7 +558,7 @@ namespace GX
 
 	// index range = 00..FF
 	// reg size = 32 bit
-	void GXCore::loadCPReg(size_t index, uint32_t value)
+	void GXCore::loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo)
 	{
 		state.cpLoads++;
 
@@ -569,28 +571,27 @@ namespace GX
 		{
 			case CP_MATINDEX_A_ID:
 			{
-				cpRegs.matidxA.matidx = value;
-				//GFXError("cp posidx : %i", cpRegs.matidxA.pos);
+				state.cp.matIndexA.bits = value;
 			}
 			return;
 
 			case CP_MATINDEX_B_ID:
 			{
-				cpRegs.matidxB.matidx = value;
+				state.cp.matIndexB.bits = value;
 			}
 			return;
 
 			case CP_VCD_LO_ID:
 			{
-				cpRegs.vcdLo.vcdlo = value;
-				FifoReconfigure();
+				state.cp.vcdLo.bits = value;
+				FifoReconfigure(gxfifo);
 			}
 			return;
 
 			case CP_VCD_HI_ID:
 			{
-				cpRegs.vcdHi.vcdhi = value;
-				FifoReconfigure();
+				state.cp.vcdHi.bits = value;
+				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -603,8 +604,8 @@ namespace GX
 			case CP_VAT_A_ID | 6:
 			case CP_VAT_A_ID | 7:
 			{
-				cpRegs.vatA[index & 7].vata = value;
-				FifoReconfigure();
+				state.cp.vatA[index & 7].bits = value;
+				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -617,8 +618,8 @@ namespace GX
 			case CP_VAT_B_ID | 6:
 			case CP_VAT_B_ID | 7:
 			{
-				cpRegs.vatB[index & 7].vatb = value;
-				FifoReconfigure();
+				state.cp.vatB[index & 7].bits = value;
+				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -631,8 +632,8 @@ namespace GX
 			case CP_VAT_C_ID | 6:
 			case CP_VAT_C_ID | 7:
 			{
-				cpRegs.vatC[index & 7].vatc = value;
-				FifoReconfigure();
+				state.cp.vatC[index & 7].bits = value;
+				FifoReconfigure(gxfifo);
 			}
 			return;
 
@@ -653,7 +654,7 @@ namespace GX
 			case CP_ARRAY_BASE_ID | 0xe:
 			case CP_ARRAY_BASE_ID | 0xf:
 			{
-				cpRegs.arbase[index & 0xf] = value;
+				state.cp.arrayBase[index & 0xf].bits = value;
 			}
 			return;
 
@@ -674,7 +675,7 @@ namespace GX
 			case CP_ARRAY_STRIDE_ID | 0xe:
 			case CP_ARRAY_STRIDE_ID | 0xf:
 			{
-				cpRegs.arstride[index & 0xf] = value & 0xFF;
+				state.cp.arrayStride[index & 0xf].bits = value & 0xFF;
 			}
 			return;
 
@@ -1052,22 +1053,22 @@ namespace GX
 		static int fmtsz[] = { 1, 1, 2, 2, 4 };
 		static int cfmtsz[] = { 2, 3, 4, 2, 4, 4 };
 
-		if (cpRegs.vcdLo.pmidx)  vtxsize++;
-		if (cpRegs.vcdLo.t0midx) vtxsize++;
-		if (cpRegs.vcdLo.t1midx) vtxsize++;
-		if (cpRegs.vcdLo.t2midx) vtxsize++;
-		if (cpRegs.vcdLo.t3midx) vtxsize++;
-		if (cpRegs.vcdLo.t4midx) vtxsize++;
-		if (cpRegs.vcdLo.t5midx) vtxsize++;
-		if (cpRegs.vcdLo.t6midx) vtxsize++;
-		if (cpRegs.vcdLo.t7midx) vtxsize++;
+		if (state.cp.vcdLo.PosNrmMatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex0MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex1MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex2MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex3MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex4MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex5MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex6MatIdx) vtxsize++;
+		if (state.cp.vcdLo.Tex7MatIdx) vtxsize++;
 
 		// Position
 
-		switch (cpRegs.vcdLo.pos)
+		switch (state.cp.vcdLo.Position)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatA[v].posfmt] * cntp[cpRegs.vatA[v].poscnt];
+				vtxsize += fmtsz[state.cp.vatA[v].posfmt] * cntp[state.cp.vatA[v].poscnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1079,27 +1080,27 @@ namespace GX
 
 		// Normal
 
-		switch (cpRegs.vcdLo.nrm)
+		switch (state.cp.vcdLo.Normal)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatA[v].nrmfmt] * cntn[cpRegs.vatA[v].nrmcnt];
+				vtxsize += fmtsz[state.cp.vatA[v].nrmfmt] * cntn[state.cp.vatA[v].nrmcnt];
 				break;
 			case VCD_INDEX8:
-				if (cpRegs.vatA[v].nrmidx3) vtxsize += 3;
+				if (state.cp.vatA[v].nrmidx3) vtxsize += 3;
 				else vtxsize += 1;
 				break;
 			case VCD_INDEX16:
-				if (cpRegs.vatA[v].nrmidx3) vtxsize += 2 * 3;
+				if (state.cp.vatA[v].nrmidx3) vtxsize += 2 * 3;
 				else vtxsize += 2;
 				break;
 		}
 
 		// Colors
 
-		switch (cpRegs.vcdLo.col0)
+		switch (state.cp.vcdLo.Color0)
 		{
 			case VCD_DIRECT:
-				vtxsize += cfmtsz[cpRegs.vatA[v].col0fmt];
+				vtxsize += cfmtsz[state.cp.vatA[v].col0fmt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1109,10 +1110,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdLo.col1)
+		switch (state.cp.vcdLo.Color1)
 		{
 			case VCD_DIRECT:
-				vtxsize += cfmtsz[cpRegs.vatA[v].col1fmt];
+				vtxsize += cfmtsz[state.cp.vatA[v].col1fmt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1124,10 +1125,10 @@ namespace GX
 
 		// TexCoords
 
-		switch (cpRegs.vcdHi.tex0)
+		switch (state.cp.vcdHi.Tex0Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatA[v].tex0fmt] * cntt[cpRegs.vatA[v].tex0cnt];
+				vtxsize += fmtsz[state.cp.vatA[v].tex0fmt] * cntt[state.cp.vatA[v].tex0cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1137,10 +1138,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex1)
+		switch (state.cp.vcdHi.Tex1Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatB[v].tex1fmt] * cntt[cpRegs.vatB[v].tex1cnt];
+				vtxsize += fmtsz[state.cp.vatB[v].tex1fmt] * cntt[state.cp.vatB[v].tex1cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1150,10 +1151,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex2)
+		switch (state.cp.vcdHi.Tex2Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatB[v].tex2fmt] * cntt[cpRegs.vatB[v].tex2cnt];
+				vtxsize += fmtsz[state.cp.vatB[v].tex2fmt] * cntt[state.cp.vatB[v].tex2cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1163,10 +1164,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex3)
+		switch (state.cp.vcdHi.Tex3Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatB[v].tex3fmt] * cntt[cpRegs.vatB[v].tex3cnt];
+				vtxsize += fmtsz[state.cp.vatB[v].tex3fmt] * cntt[state.cp.vatB[v].tex3cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1176,10 +1177,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex4)
+		switch (state.cp.vcdHi.Tex4Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatB[v].tex4fmt] * cntt[cpRegs.vatB[v].tex4cnt];
+				vtxsize += fmtsz[state.cp.vatB[v].tex4fmt] * cntt[state.cp.vatB[v].tex4cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1189,10 +1190,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex5)
+		switch (state.cp.vcdHi.Tex5Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatC[v].tex5fmt] * cntt[cpRegs.vatC[v].tex5cnt];
+				vtxsize += fmtsz[state.cp.vatC[v].tex5fmt] * cntt[state.cp.vatC[v].tex5cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1202,10 +1203,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex6)
+		switch (state.cp.vcdHi.Tex6Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatC[v].tex6fmt] * cntt[cpRegs.vatC[v].tex6cnt];
+				vtxsize += fmtsz[state.cp.vatC[v].tex6fmt] * cntt[state.cp.vatC[v].tex6cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1215,10 +1216,10 @@ namespace GX
 				break;
 		}
 
-		switch (cpRegs.vcdHi.tex7)
+		switch (state.cp.vcdHi.Tex7Coord)
 		{
 			case VCD_DIRECT:
-				vtxsize += fmtsz[cpRegs.vatC[v].tex7fmt] * cntt[cpRegs.vatC[v].tex7cnt];
+				vtxsize += fmtsz[state.cp.vatC[v].tex7fmt] * cntt[state.cp.vatC[v].tex7cnt];
 				break;
 			case VCD_INDEX8:
 				vtxsize += 1;
@@ -1231,18 +1232,19 @@ namespace GX
 		return vtxsize;
 	}
 
-	void GXCore::FifoReconfigure()
+	void GXCore::FifoReconfigure(FifoProcessor *gxfifo)
 	{
 		for (unsigned v = 0; v < 8; v++)
 		{
-			VtxSize[v] = gx_vtxsize(v);
+			fifo->vertexSize[v] = gx_vtxsize(v);
 		}
 	}
 
 	void * GXCore::GetArrayPtr(ArrayId arrayId, int idx, int compSize)
 	{
-		uint32_t address = cpRegs.arbase[(size_t)arrayId] + (uint32_t)idx * cpRegs.arstride[(size_t)arrayId];
-		return &mi.ram[address & RAMMASK];
+		uint32_t address = state.cp.arrayBase[(size_t)arrayId].Base + 
+			(uint32_t)idx * state.cp.arrayStride[(size_t)arrayId].Stride;
+		return MIGetMemoryPointerForVertexArray(address);
 	}
 
 	void GXCore::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
@@ -1698,61 +1700,61 @@ namespace GX
 	void GXCore::FifoWalk(unsigned vatnum, FifoProcessor* gxfifo)
 	{
 		// overrided by 'mtxidx' attributes
-		xfRegs.posidx = xfRegs.matidxA.pos;
-		xfRegs.texidx[0] = xfRegs.matidxA.tex0;
-		xfRegs.texidx[1] = xfRegs.matidxA.tex1;
-		xfRegs.texidx[2] = xfRegs.matidxA.tex2;
-		xfRegs.texidx[3] = xfRegs.matidxA.tex3;
-		xfRegs.texidx[4] = xfRegs.matidxB.tex4;
-		xfRegs.texidx[5] = xfRegs.matidxB.tex5;
-		xfRegs.texidx[6] = xfRegs.matidxB.tex6;
-		xfRegs.texidx[7] = xfRegs.matidxB.tex7;
+		state.xf.posidx = state.xf.matIdxA.PosNrmMatIdx;
+		state.xf.texidx[0] = state.xf.matIdxA.Tex0MatIdx;
+		state.xf.texidx[1] = state.xf.matIdxA.Tex1MatIdx;
+		state.xf.texidx[2] = state.xf.matIdxA.Tex2MatIdx;
+		state.xf.texidx[3] = state.xf.matIdxA.Tex3MatIdx;
+		state.xf.texidx[4] = state.xf.matIdxB.Tex4MatIdx;
+		state.xf.texidx[5] = state.xf.matIdxB.Tex5MatIdx;
+		state.xf.texidx[6] = state.xf.matIdxB.Tex6MatIdx;
+		state.xf.texidx[7] = state.xf.matIdxB.Tex7MatIdx;
 
 		// Matrix Index
 
-		if (cpRegs.vcdLo.pmidx)
+		if (state.cp.vcdLo.PosNrmMatIdx)
 		{
-			xfRegs.posidx = gxfifo->Read8();
+			state.xf.posidx = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t0midx)
+		if (state.cp.vcdLo.Tex0MatIdx)
 		{
-			xfRegs.texidx[0] = gxfifo->Read8();
+			state.xf.texidx[0] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t1midx)
+		if (state.cp.vcdLo.Tex1MatIdx)
 		{
-			xfRegs.texidx[1] = gxfifo->Read8();
+			state.xf.texidx[1] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t2midx)
+		if (state.cp.vcdLo.Tex2MatIdx)
 		{
-			xfRegs.texidx[2] = gxfifo->Read8();
+			state.xf.texidx[2] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t3midx)
+		if (state.cp.vcdLo.Tex3MatIdx)
 		{
-			xfRegs.texidx[3] = gxfifo->Read8();
+			state.xf.texidx[3] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t4midx)
+		if (state.cp.vcdLo.Tex4MatIdx)
 		{
-			xfRegs.texidx[4] = gxfifo->Read8();
+			state.xf.texidx[4] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t5midx)
+		if (state.cp.vcdLo.Tex5MatIdx)
 		{
-			xfRegs.texidx[5] = gxfifo->Read8();
+			state.xf.texidx[5] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t6midx)
+		if (state.cp.vcdLo.Tex6MatIdx)
 		{
-			xfRegs.texidx[6] = gxfifo->Read8();
+			state.xf.texidx[6] = gxfifo->Read8();
 		}
 
-		if (cpRegs.vcdLo.t7midx)
+		if (state.cp.vcdLo.Tex7MatIdx)
 		{
-			xfRegs.texidx[7] = gxfifo->Read8();
+			state.xf.texidx[7] = gxfifo->Read8();
 		}
 
 		// Position
@@ -1760,10 +1762,10 @@ namespace GX
 		vtx->pos[0] = vtx->pos[1] = vtx->pos[2] = 1.0f;
 
 		FetchComp(vtx->pos,
-			cpRegs.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
-			cpRegs.vcdLo.pos,
-			cpRegs.vatA[vatnum].posfmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatA[vatnum].posshft : 0,
+			state.cp.vatA[vatnum].poscnt == VCNT_POS_XYZ ? 3 : 2,
+			state.cp.vcdLo.Position,
+			state.cp.vatA[vatnum].posfmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatA[vatnum].posshft : 0,
 			gxfifo,
 			ArrayId::Pos);
 
@@ -1775,7 +1777,7 @@ namespace GX
 
 		int nrmshft = 0;
 
-		switch (cpRegs.vatA[vatnum].nrmfmt)
+		switch (state.cp.vatA[vatnum].nrmfmt)
 		{
 			case VFMT_S8:
 				nrmshft = 6;
@@ -1786,101 +1788,101 @@ namespace GX
 		}
 
 		FetchNorm(vtx->nrm,
-			cpRegs.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
-			cpRegs.vcdLo.nrm,
-			cpRegs.vatA[vatnum].nrmfmt,
+			state.cp.vatA[vatnum].nrmcnt == VCNT_NRM_NBT ? 9 : 3,
+			state.cp.vcdLo.Normal,
+			state.cp.vatA[vatnum].nrmfmt,
 			nrmshft,
 			gxfifo,
 			ArrayId::Nrm,
-			cpRegs.vatA[vatnum].nrmidx3 ? true : false);
+			state.cp.vatA[vatnum].nrmidx3 ? true : false);
 
 		// Color0 
 
-		vtx->col[0] = FetchColor(cpRegs.vcdLo.col0, cpRegs.vatA[vatnum].col0fmt, fifo, ArrayId::Color0);
+		vtx->col[0] = FetchColor(state.cp.vcdLo.Color0, state.cp.vatA[vatnum].col0fmt, fifo, ArrayId::Color0);
 
 		// Color1
 
-		vtx->col[1] = FetchColor(cpRegs.vcdLo.col1, cpRegs.vatA[vatnum].col1fmt, fifo, ArrayId::Color1);
+		vtx->col[1] = FetchColor(state.cp.vcdLo.Color1, state.cp.vatA[vatnum].col1fmt, fifo, ArrayId::Color1);
 
 		// TexNCoord
 
 		vtx->tcoord[0][0] = vtx->tcoord[0][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[0],
-			cpRegs.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex0,
-			cpRegs.vatA[vatnum].tex0fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatA[vatnum].tex0shft : 0,
+			state.cp.vatA[vatnum].tex0cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex0Coord,
+			state.cp.vatA[vatnum].tex0fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatA[vatnum].tex0shft : 0,
 			gxfifo,
 			ArrayId::Tex0Coord);
 
 		vtx->tcoord[1][0] = vtx->tcoord[1][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[1],
-			cpRegs.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex1,
-			cpRegs.vatB[vatnum].tex1fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex1shft : 0,
+			state.cp.vatB[vatnum].tex1cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex1Coord,
+			state.cp.vatB[vatnum].tex1fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex1shft : 0,
 			gxfifo,
 			ArrayId::Tex1Coord);
 
 		vtx->tcoord[2][0] = vtx->tcoord[2][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[2],
-			cpRegs.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex2,
-			cpRegs.vatB[vatnum].tex2fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex2shft : 0,
+			state.cp.vatB[vatnum].tex2cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex2Coord,
+			state.cp.vatB[vatnum].tex2fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex2shft : 0,
 			gxfifo,
 			ArrayId::Tex2Coord);
 
 		vtx->tcoord[3][0] = vtx->tcoord[3][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[3],
-			cpRegs.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex3,
-			cpRegs.vatB[vatnum].tex3fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatB[vatnum].tex3shft : 0,
+			state.cp.vatB[vatnum].tex3cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex3Coord,
+			state.cp.vatB[vatnum].tex3fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatB[vatnum].tex3shft : 0,
 			gxfifo,
 			ArrayId::Tex3Coord);
 
 		vtx->tcoord[4][0] = vtx->tcoord[4][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[4],
-			cpRegs.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex4,
-			cpRegs.vatB[vatnum].tex4fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex4shft : 0,
+			state.cp.vatB[vatnum].tex4cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex4Coord,
+			state.cp.vatB[vatnum].tex4fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex4shft : 0,
 			gxfifo,
 			ArrayId::Tex4Coord);
 
 		vtx->tcoord[5][0] = vtx->tcoord[5][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[5],
-			cpRegs.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex5,
-			cpRegs.vatC[vatnum].tex5fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex5shft : 0,
+			state.cp.vatC[vatnum].tex5cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex5Coord,
+			state.cp.vatC[vatnum].tex5fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex5shft : 0,
 			gxfifo,
 			ArrayId::Tex5Coord);
 
 		vtx->tcoord[6][0] = vtx->tcoord[6][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[6],
-			cpRegs.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex6,
-			cpRegs.vatC[vatnum].tex6fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex6shft : 0,
+			state.cp.vatC[vatnum].tex6cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex6Coord,
+			state.cp.vatC[vatnum].tex6fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex6shft : 0,
 			gxfifo,
 			ArrayId::Tex6Coord);
 
 		vtx->tcoord[7][0] = vtx->tcoord[7][1] = 1.0f;
 
 		FetchComp(vtx->tcoord[7],
-			cpRegs.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
-			cpRegs.vcdHi.tex7,
-			cpRegs.vatC[vatnum].tex7fmt,
-			cpRegs.vatA[vatnum].bytedeq ? cpRegs.vatC[vatnum].tex7shft : 0,
+			state.cp.vatC[vatnum].tex7cnt == VCNT_TEX_ST ? 2 : 1,
+			state.cp.vcdHi.Tex7Coord,
+			state.cp.vatC[vatnum].tex7fmt,
+			state.cp.vatA[vatnum].bytedeq ? state.cp.vatC[vatnum].tex7shft : 0,
 			gxfifo,
 			ArrayId::Tex7Coord);
 	}
@@ -2014,7 +2016,7 @@ namespace GX
 			{
 				uint8_t index = gxfifo->Read8();
 				uint32_t word = gxfifo->Read32();
-				loadCPReg(index, word);
+				loadCPReg(index, word, gxfifo);
 				break;
 			}
 
@@ -2456,4 +2458,5 @@ namespace GX
 				break;
 			}
 		}
+	}
 }

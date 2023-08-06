@@ -152,10 +152,10 @@ namespace GX
 #pragma region "Command Processor"
 
 		void GXWriteFifo(uint8_t dataPtr[32]);
-		void loadCPReg(size_t index, uint32_t value);
+		void loadCPReg(size_t index, uint32_t value, FifoProcessor* gxfifo);
 		std::string AttrToString(VertexAttr attr);
 		int gx_vtxsize(unsigned v);
-		void FifoReconfigure();
+		void FifoReconfigure(FifoProcessor* gxfifo);
 		void* GetArrayPtr(ArrayId arrayId, int idx, int compSize);
 		void FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId);
 		void FetchNorm(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId, bool nrmidx3);
