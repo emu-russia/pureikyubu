@@ -289,6 +289,8 @@ namespace GX
 		DualGenParam dualTex[8];		// 0x1050-0x1057
 
 		unsigned posidx, texidx[8];		// pos index, tex index
+		bool colmask[8][2];				// light color mask
+		bool amask[8][2];				// light alpha mask
 	};
 
 #pragma pack(pop)
