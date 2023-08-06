@@ -1,4 +1,14 @@
+// GFX Command Processor
 #pragma once
+
+// With CP it's very complicated, this component has spread its tentacles almost all over the Flipper chip:
+// - There is an interface with PI so that Gekko can do burst transactions in FIFO (PI_CPMappedRegister)
+// - There is another interface where some CP registers are mapped to the HW address space (CPMappedRegister)
+// - CP registers can also be accessed using FIFO commands (CP_CMD_LOAD_CPREG)
+// I'll describe how CP works a little later, but I get the impression that the developers in the process of
+// development twisted it this way and that and it turned out "well, this". It could have been made prettier :)
+
+// Vertex Cache is not supported.
 
 namespace GX
 {
@@ -176,7 +186,7 @@ namespace GX
 
 	// CP Registers (from GX side). These registers are available only for writing, with the CP_LoadRegs command
 
-	enum class CPRegister
+	enum CPRegister : size_t
 	{
 		CP_VC_STAT_RESET_ID = 0x00,
 		CP_STAT_ENABLE_ID = 0x10,
@@ -296,8 +306,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(MatrixIndexA) == sizeof(uint32_t), "MatrixIndexA invalid definition!");
-
 	union MatrixIndexB
 	{
 		struct
@@ -309,8 +317,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(MatrixIndexB) == sizeof(uint32_t), "MatrixIndexB invalid definition!");
 
 	union VCD_Lo
 	{
@@ -333,8 +339,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VCD_Lo) == sizeof(uint32_t), "VCD_Lo invalid definition!");
-
 	union VCD_Hi
 	{
 		struct
@@ -350,8 +354,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(VCD_Hi) == sizeof(uint32_t), "VCD_Hi invalid definition!");
 
 	union VAT_group0
 	{
@@ -375,8 +377,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group0) == sizeof(uint32_t), "VAT_group0 invalid definition!");
-
 	union VAT_group1
 	{
 		struct
@@ -397,8 +397,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group1) == sizeof(uint32_t), "VAT_group1 invalid definition!");
-
 	union VAT_group2
 	{
 		struct
@@ -417,8 +415,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(VAT_group2) == sizeof(uint32_t), "VAT_group2 invalid definition!");
-
 	union ArrayBase
 	{
 		struct
@@ -428,8 +424,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ArrayBase) == sizeof(uint32_t), "ArrayBase invalid definition!");
-
 	union ArrayStride
 	{
 		struct
@@ -438,8 +432,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(ArrayStride) == sizeof(uint32_t), "ArrayStride invalid definition!");
 
 	// Array name for ArrayBase and ArrayStride
 
@@ -509,6 +501,10 @@ namespace GX
 		size_t writePtr = 0;
 		bool allocated = false;
 
+		GXCore* gxcore = nullptr;
+		SpinLock lock;
+
+	public:
 		size_t GetSize();
 		bool EnoughToExecute();
 
@@ -525,10 +521,6 @@ namespace GX
 
 		void ExecuteCommand();
 
-		GXCore* gxcore = nullptr;
-		SpinLock lock;
-
-	public:
 		FifoProcessor(GXCore* gx);
 		FifoProcessor(GXCore* gx, uint8_t* fifoPtr, size_t size);	// Call FIFO
 		~FifoProcessor();
@@ -540,6 +532,8 @@ namespace GX
 
 }
 
+void CPDrawDone();
+void CPDrawToken(uint16_t tokenValue);
 
 void CPOpen();
 void CPClose();

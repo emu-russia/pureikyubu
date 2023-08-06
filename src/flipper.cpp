@@ -77,8 +77,7 @@ namespace Flipper
 
 		Report(Channel::Norm, "\n");
 
-		Gx->Open();
-		GXOpen(config, mi.ram);
+		Gx->Open(config);
 		PADOpen();
 
 		JDI::Hub.AddNode(HW_JDI_JSON, hw_init_handlers);
@@ -105,7 +104,6 @@ namespace Flipper
 		PIClose();
 
 		PADClose();
-		GXClose();
 		Gx->Close();
 	}
 
@@ -115,5 +113,4 @@ namespace Flipper
 		VIUpdate();
 		SIPoll();
 	}
-
 }

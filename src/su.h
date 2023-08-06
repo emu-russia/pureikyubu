@@ -3,8 +3,9 @@
 namespace GX
 {
 	// SU BP (ByPass) address space (SU/RAS/TEV etc) Registers
+	// There is no such entity as "BP" in Flipper. SU is simply used to "throw" registers further down the shop (to RAS, TEV, TX)
 
-	enum class BPRegister
+	enum BPRegister : size_t
 	{
 		GEN_MODE_ID = 0x00,
 
@@ -187,74 +188,72 @@ namespace GX
 		TEV_KSEL_7_ID = 0xFD,
 	};
 
-	// Texture offset
 
-	// Texture Culling mode
+	// gen mode (SU?)
+	union GenMode
+	{
+		struct
+		{
+			unsigned    ntex : 4;
+			unsigned    ncol : 5;
+			unsigned    msen : 1;
+			unsigned    ntev : 4;
+			unsigned    cull : 2;
+			unsigned    nbmp : 3;
+			unsigned    zfreeze : 5;
+		};
+		uint32_t     bits;
+	};
 
-	// Texture Clip mode
+	// 0x20
+	union SU_SCIS0
+	{
+		struct
+		{
+			unsigned    suy : 12;
+			unsigned    sux : 12;
+			unsigned    rid : 8;
+		};
+		uint32_t     bits;
+	};
 
-	// Texture Wrap mode
+	// 0x21
+	union SU_SCIS1
+	{
+		struct
+		{
+			unsigned    suh : 12;
+			unsigned    suw : 12;
+			unsigned    rid : 8;
+		};
+		uint32_t     bits;
+	};
 
-	// Texture filter
+	// 0x3n
+	union SU_TS0
+	{
+		struct
+		{
+			unsigned    ssize : 16;
+			unsigned    dontcare : 16;
+		};
+		uint32_t     bits;
+	};
 
-	// Texture format
+	union SU_TS1
+	{
+		struct
+		{
+			unsigned    tsize : 16;
+			unsigned    dontcare : 16;
+		};
+		uint32_t     bits;
+	};
 
-	// Tlut format
 
-	// Tlut size
-
-	// Indirect texture format
-
-	// Indirect texture bias select
-
-	// Indirect texture alpha select
-
-	// Indirect texture wrap
-
-	// Indirect texture scale
-
-	// TEV Reg ID
-
-	// TEV Op
-
-	// TEV Color argument
-
-	// TEV Alpha argument
-
-	// TEV Bias
-
-	// TEV Clamp mode
-
-	// TEV KColor select
-
-	// TEV KAlpha select
-
-	// TEV Color channel
-
-	// Alpha Op
-
-	// TEV Scale
-
-	// Fog type
-
-	// Blend mode
-
-	// Blend factor
-
-	// Compare
-
-	// Logic Op
-
-	// Pixel format
-
-	// Z format
-
-	// TEV Mode
-
-	// Projection type
-
-	// Tex Op
-
-	// Alpha read mode
-
+	// triangle cull rules
+	#define GFX_CULL_NONE       0
+	#define GFX_CULL_FRONT      1
+	#define GFX_CULL_BACK       2
+	#define GFX_CULL_ALL        3
 }

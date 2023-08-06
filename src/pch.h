@@ -19,6 +19,8 @@
 #include <windows.h>
 #include <shlobj.h>
 #include <commctrl.h>
+#include <gl/gl.h>
+#include <gl/glu.h>
 #include "res/resource.h"
 #endif
 
@@ -83,9 +85,6 @@
 #include "si.h"
 #include "flipperdebug.h"
 #include "cp.h"
-
-// TODO: Phased out
-#include "../thirdparty/DolwinVideo/GX.h"
 
 namespace Flipper
 {

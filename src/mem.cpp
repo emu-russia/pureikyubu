@@ -133,3 +133,11 @@ uint8_t* MITranslatePhysicalAddress(uint32_t physAddr, size_t bytes)
 
 	return nullptr;
 }
+
+/// <summary>
+/// Used for memory access from the CP side, for Vertex Array.
+/// </summary>
+void* MIGetMemoryPointerForVertexArray(uint32_t phys_addr)
+{
+	return &mi.ram[phys_addr & RAMMASK];
+}

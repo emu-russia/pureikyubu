@@ -7,8 +7,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "pureikyubu", "pureikyubu.vc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fmt", "..\thirdparty\fmt\Scripts\VS2022\fmt.vcxproj", "{768EB97B-424B-407E-B52C-B66465E9D169}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DolwinVideo", "..\thirdparty\DolwinVideo\Scripts\VS2022\DolwinVideo.vcxproj", "{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,14 +31,6 @@ Global
 		{768EB97B-424B-407E-B52C-B66465E9D169}.Release|x64.Build.0 = Release|x64
 		{768EB97B-424B-407E-B52C-B66465E9D169}.Release|x86.ActiveCfg = Release|Win32
 		{768EB97B-424B-407E-B52C-B66465E9D169}.Release|x86.Build.0 = Release|Win32
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x64.ActiveCfg = Debug|x64
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x64.Build.0 = Debug|x64
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x86.ActiveCfg = Debug|Win32
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Debug|x86.Build.0 = Debug|Win32
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x64.ActiveCfg = Release|x64
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x64.Build.0 = Release|x64
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x86.ActiveCfg = Release|Win32
-		{11D1FEFC-6EC3-461D-9DDA-BFBD0AA80B69}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -123,12 +123,6 @@
     <ClCompile Include="..\src\gekkodec.cpp" />
     <ClCompile Include="..\src\gekkodisasm.cpp" />
     <ClCompile Include="..\src\gfx.cpp" />
-    <ClCompile Include="..\src\gfxnull.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\jdi.cpp" />
     <ClCompile Include="..\src\jdiserver.cpp" />
     <ClCompile Include="..\src\json.cpp" />
@@ -177,9 +171,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\thirdparty\DolwinVideo\Scripts\VS2022\DolwinVideo.vcxproj">
-      <Project>{11d1fefc-6ec3-461d-9dda-bfbd0aa80b69}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\thirdparty\fmt\Scripts\VS2022\fmt.vcxproj">
       <Project>{768eb97b-424b-407e-b52c-b66465e9d169}</Project>
     </ProjectReference>

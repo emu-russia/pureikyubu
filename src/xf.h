@@ -1,5 +1,10 @@
 // Transform Unit
 
+// This module deals with geometric transformation and lighting of vertices that come from CP.
+// All parameters (matrices) are stored in a special memory (XF).
+// In the real Flipper XF is made from microcode ROM, but is still part of a fixed pipeline.
+// In an emulator, XF can be done entirely programmatically (as in the current old and crooked implementation), or using vertex shaders.
+
 #pragma once
 
 namespace GX
@@ -7,7 +12,7 @@ namespace GX
 
 	// XF Registers
 
-	enum class XFRegister
+	enum XFRegister : size_t
 	{
 		// 0x0000...0x03FF - ModelView/Texture Matrix memory. This block is formed by the matrix memory. Its address range is 0 to 1k, but only 256 entries are used. This memory is organized in a 64 entry by four 32b words.
 
@@ -139,8 +144,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ClipDisable) == sizeof(uint32_t), "ClipDisable invalid definition!");
-
 	union InVertexSpec
 	{
 		struct
@@ -152,18 +155,7 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(InVertexSpec) == sizeof(uint32_t), "InVertexSpec invalid definition!");
-
 	// Light parameters
-
-	union Color
-	{
-		struct
-		{
-			uint8_t     a, b, g, r;
-		};
-		uint32_t rgba;
-	};
 
 	struct Light
 	{
@@ -174,8 +166,6 @@ namespace GX
 		float lpx[3];	// Post-processed x,y,z light pos, or inf ldir x,y,z
 		float dhx[3];	// Post-processed x,y,z light dir, or 1/2 angle x,y,z
 	};
-
-	static_assert (sizeof(Light) == 0x10 * sizeof(uint32_t), "Light invalid definition!");
 
 	union ColorAlphaControl
 	{
@@ -199,8 +189,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(ColorAlphaControl) == sizeof(uint32_t), "ColorAlphaControl invalid definition!");
-
 	union MatrixIndex0
 	{
 		struct
@@ -214,8 +202,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(MatrixIndex0) == sizeof(uint32_t), "MatrixIndex0 invalid definition!");
-
 	union MatrixIndex1
 	{
 		struct
@@ -227,8 +213,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(MatrixIndex1) == sizeof(uint32_t), "MatrixIndex1 invalid definition!");
 
 	// Texgen inrow enum
 	enum TexGenInrow : unsigned
@@ -264,8 +248,6 @@ namespace GX
 		uint32_t bits;
 	};
 
-	static_assert (sizeof(TexGenParam) == sizeof(uint32_t), "TexGenParam invalid definition!");
-
 	union DualGenParam
 	{
 		struct
@@ -276,8 +258,6 @@ namespace GX
 		};
 		uint32_t bits;
 	};
-
-	static_assert (sizeof(DualGenParam) == sizeof(uint32_t), "DualGenParam invalid definition!");
 
 	struct XFState
 	{
@@ -307,8 +287,30 @@ namespace GX
 		uint32_t numTex;			// 0x103f. Number of active textures
 		TexGenParam tex[8];			// 0x1040-0x1047
 		DualGenParam dualTex[8];		// 0x1050-0x1057
+
+		unsigned posidx, texidx[8];		// pos index, tex index
+		bool colmask[8][2];				// light color mask
+		bool amask[8][2];				// light alpha mask
 	};
 
 #pragma pack(pop)
 
 }
+
+
+
+// TODO: Old implementation, will be redone nicely.
+
+// current vertex data
+typedef struct _Vertex
+{
+	float       pos[3];         // x, y, z
+	float       nrm[9];         // x, y, z, normalized to [0, 1]
+	Color       col[2];         // 2 color / alpha (RGBA)
+	float       tcoord[8][4];   // s, t for eight tex units, last two for texgen
+} Vertex;
+
+typedef struct
+{
+	float   out[4];
+} TexGenOut;

@@ -46,7 +46,6 @@ add_executable (pureikyubu
 	src/gekkodec.cpp
 	src/gekkodisasm.cpp
 	src/gfx.cpp
-	src/gfxnull.cpp
 	src/jdi.cpp
 	src/jdiserver.cpp
 	src/json.cpp
