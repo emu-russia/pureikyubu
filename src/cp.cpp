@@ -742,10 +742,10 @@ namespace GX
 
 		lock.Unlock();
 
-		while (EnoughToExecute())
-		{
-			ExecuteCommand();
-		}
+		//while (EnoughToExecute())
+		//{
+		//	ExecuteCommand();
+		//}
 	}
 
 	size_t FifoProcessor::GetSize()
