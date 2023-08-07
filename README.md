@@ -31,7 +31,8 @@ Requirements: CMake, pthread.
 
 ## Progress
 
-![progress_ikaruga](/imgstore/progress_ikaruga.png)
+|![progress_bs2](/imgstore/progress_bs2.png)|![progress_ikaruga](/imgstore/progress_ikaruga.png)|
+|---|---|
 
 ## Credits
 

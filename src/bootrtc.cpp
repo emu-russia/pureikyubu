@@ -640,3 +640,14 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 		ReadFST(); // load FST, for demos
 	}
 }
+
+bool IsBootromPALRevision()
+{
+	if (mi.BootromPresent) {
+
+		if (strstr((char*)mi.bootrom, "PAL")) {
+			return true;
+		}
+	}
+	return false;
+}

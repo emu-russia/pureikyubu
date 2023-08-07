@@ -964,4 +964,10 @@ void LoadFile(const std::wstring& filename)
 		DVD::Region region = DVD::RegionById(id);
 		VISetEncoderFuse(DVD::IsNtsc(region) ? 0 : 1);
 	}
+
+	// Do the same for the bootstrap.
+	if (bootrom) {
+
+		VISetEncoderFuse(IsBootromPALRevision() ? 1 : 0);
+	}
 }

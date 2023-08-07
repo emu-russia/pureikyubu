@@ -643,6 +643,16 @@ static void read_config(uint32_t addr, uint32_t* reg)
 }
 
 //
+// PI_STRGTH
+//
+
+static void write_strength(uint32_t addr, uint32_t data)
+{
+	// Just so the BS doesn't give an error on unmapped HW.
+	Report(Channel::PI, "Strength: 0x%08x\n", data);
+}
+
+//
 // PI fifo (CPU)
 //
 
@@ -682,6 +692,7 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_CHIPID, read_FlipperID, nullptr);
 	PISetTrap(8, PI_CONFIG, read_config, write_config);
 	PISetTrap(32, PI_CONFIG, read_config, write_config);
+	PISetTrap(32, PI_STRGTH, nullptr, write_strength);
 
 	// Processor interface CP fifo.
 	// Some of the CP FIFO registers are mapped to PI registers for the reason that writes to the FIFO Stream Pointer are made by the Gekko Burst transactions and are serviced by PI.
