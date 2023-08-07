@@ -99,63 +99,63 @@ namespace GX
 
         switch (fmt)
         {
-        case 0:     // IA8
-        {
-            c->A = *tptr & 0xff;
-            c->R = c->G = c->B = *tptr >> 8;
-        }
-        return;
-
-        case 1:     // RGB565
-        {
-            uint16_t p = _BYTESWAP_UINT16(*tptr);
-
-            uint8_t r = p >> 11;
-            uint8_t g = (p >> 5) & 0x3f;
-            uint8_t b = p & 0x1f;
-
-            c->R = (r << 3) | (r >> 2);
-            c->G = (g << 2) | (g >> 4);
-            c->B = (b << 3) | (b >> 2);
-            c->A = 255;
-        }
-        return;
-
-        case 2:     // RGB5A3
-        {
-            uint16_t p = _BYTESWAP_UINT16(*tptr);
-            if (p >> 15)
+            case 0:     // IA8
             {
-                p &= ~0x8000;   // clear A-bit
+                c->A = *tptr & 0xff;
+                c->R = c->G = c->B = *tptr >> 8;
+            }
+            return;
 
-                uint8_t r = p >> 10;
-                uint8_t g = (p >> 5) & 0x1f;
+            case 1:     // RGB565
+            {
+                uint16_t p = _BYTESWAP_UINT16(*tptr);
+
+                uint8_t r = p >> 11;
+                uint8_t g = (p >> 5) & 0x3f;
                 uint8_t b = p & 0x1f;
 
                 c->R = (r << 3) | (r >> 2);
-                c->G = (g << 3) | (g >> 2);
+                c->G = (g << 2) | (g >> 4);
                 c->B = (b << 3) | (b >> 2);
                 c->A = 255;
             }
-            else
+            return;
+
+            case 2:     // RGB5A3
             {
-                uint8_t r = (p >> 8) & 0xf;
-                uint8_t g = (p >> 4) & 0xf;
-                uint8_t b = p & 0xf;
-                uint8_t a = p >> 12;
+                uint16_t p = _BYTESWAP_UINT16(*tptr);
+                if (p >> 15)
+                {
+                    p &= ~0x8000;   // clear A-bit
 
-                c->R = (r << 4) | r;
-                c->G = (g << 4) | g;
-                c->B = (b << 4) | b;
-                c->A = a | (a << 3) | ((a << 9) & 3);
+                    uint8_t r = p >> 10;
+                    uint8_t g = (p >> 5) & 0x1f;
+                    uint8_t b = p & 0x1f;
+
+                    c->R = (r << 3) | (r >> 2);
+                    c->G = (g << 3) | (g >> 2);
+                    c->B = (b << 3) | (b >> 2);
+                    c->A = 255;
+                }
+                else
+                {
+                    uint8_t r = (p >> 8) & 0xf;
+                    uint8_t g = (p >> 4) & 0xf;
+                    uint8_t b = p & 0xf;
+                    uint8_t a = p >> 12;
+
+                    c->R = (r << 4) | r;
+                    c->G = (g << 4) | g;
+                    c->B = (b << 4) | b;
+                    c->A = a | (a << 3) | ((a << 9) & 3);
+                }
             }
-        }
-        return;
+            return;
 
-        default:
-        {
-            Debug::Halt("GX: Unknown TLUT format: %i", fmt);
-        }
+            default:
+            {
+                Debug::Halt("GX: Unknown TLUT format: %i", fmt);
+            }
         }
     }
 
@@ -282,14 +282,14 @@ namespace GX
                             {
                                 unsigned ofs = width * (t + v) + s + u;
                                 texbuf[ofs].R =
-                                    texbuf[ofs].G =
-                                    texbuf[ofs].B =
-                                    texbuf[ofs].A = (*ptr >> 4) | (*ptr & 0xf0);
+                                texbuf[ofs].G =
+                                texbuf[ofs].B =
+                                texbuf[ofs].A = (*ptr >> 4) | (*ptr & 0xf0);
                                 ofs++;
                                 texbuf[ofs].R =
-                                    texbuf[ofs].G =
-                                    texbuf[ofs].B =
-                                    texbuf[ofs].A = (*ptr << 4) | (*ptr & 0x0f);
+                                texbuf[ofs].G =
+                                texbuf[ofs].B =
+                                texbuf[ofs].A = (*ptr << 4) | (*ptr & 0x0f);
                                 ptr++;
                             }
                 break;
@@ -308,9 +308,9 @@ namespace GX
                             {
                                 int ofs = width * (t + v) + s + u;
                                 texbuf[ofs].R =
-                                    texbuf[ofs].G =
-                                    texbuf[ofs].B =
-                                    texbuf[ofs].A = *ptr++;
+                                texbuf[ofs].G =
+                                texbuf[ofs].B =
+                                texbuf[ofs].A = *ptr++;
                             }
                 break;
             }
@@ -329,8 +329,8 @@ namespace GX
                             {
                                 int ofs = width * (u + 4 * s) + 8 * t + v;
                                 texbuf[ofs].R =
-                                    texbuf[ofs].G =
-                                    texbuf[ofs].B = *ptr << 4;
+                                texbuf[ofs].G =
+                                texbuf[ofs].B = *ptr << 4;
                                 texbuf[ofs].A = *ptr >> 4;
                                 texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                                 ptr++;
@@ -352,8 +352,8 @@ namespace GX
                                 unsigned ofs = width * (t + v) + s + u;
                                 texbuf[ofs].A = *ptr++;
                                 texbuf[ofs].R =
-                                    texbuf[ofs].G =
-                                    texbuf[ofs].B = *ptr++;
+                                texbuf[ofs].G =
+                                texbuf[ofs].B = *ptr++;
                                 texbuf[ofs].RGBA = _BYTESWAP_UINT32(texbuf[ofs].RGBA);
                             }
                 break;

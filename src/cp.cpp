@@ -765,7 +765,14 @@ namespace GX
 
 		switch(cmd)
 		{
-			case CPCommand::CP_CMD_NOP:
+			case CPCommand::CP_CMD_NOP | 0:
+			case CPCommand::CP_CMD_NOP | 1:
+			case CPCommand::CP_CMD_NOP | 2:
+			case CPCommand::CP_CMD_NOP | 3:
+			case CPCommand::CP_CMD_NOP | 4:
+			case CPCommand::CP_CMD_NOP | 5:
+			case CPCommand::CP_CMD_NOP | 6:
+			case CPCommand::CP_CMD_NOP | 7:
 				return true;
 
 			case CPCommand::CP_CMD_VCACHE_INVD | 0:
@@ -1929,12 +1936,21 @@ namespace GX
 
 		uint8_t cmd = gxfifo->Read8();
 
-		//DBReport2(DbgChannel::GP, "GxCommand: 0x%02X\n", cmd);
+		if (logOpcode) {
+			Report(Channel::GP, "GxCommand: 0x%02X\n", cmd);
+		}
 
 		switch(cmd)
 		{
 			// do nothing
-			case CP_CMD_NOP:
+			case CP_CMD_NOP | 0:
+			case CP_CMD_NOP | 1:
+			case CP_CMD_NOP | 2:
+			case CP_CMD_NOP | 3:
+			case CP_CMD_NOP | 4:
+			case CP_CMD_NOP | 5:
+			case CP_CMD_NOP | 6:
+			case CP_CMD_NOP | 7:
 				break;
 
 			case CP_CMD_VCACHE_INVD | 0:
@@ -1945,7 +1961,7 @@ namespace GX
 			case CP_CMD_VCACHE_INVD | 5:
 			case CP_CMD_VCACHE_INVD | 6:
 			case CP_CMD_VCACHE_INVD | 7:
-				//DBReport2(DbgChannel::GP, "Invalidate V$\n");
+				//Report(Channel::GP, "Invalidate V$\n");
 				break;
 
 			case CP_CMD_CALL_DL | 0:
@@ -1963,7 +1979,7 @@ namespace GX
 
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
+					Report(Channel::GP, "CP_CMD_CALL_DL: addr: 0x%08X, size: %i\n", physAddress, size);
 				}
 
 				FifoProcessor* callDlFifo = new FifoProcessor(this, fifoPtr, size);
@@ -2048,7 +2064,7 @@ namespace GX
 				start = gxfifo->Read16();
 				len = (start >> 12) + 1;
 				start &= 0xfff;
-				Report(Channel::GP, "OP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
+				Report(Channel::GP, "CP_CMD_LOAD_INDXA: idx: %i, start: %i, len: %i\n", idx, start, len);
 				break;
 			}
 
@@ -2066,7 +2082,7 @@ namespace GX
 				start = gxfifo->Read16();
 				len = (start >> 12) + 1;
 				start &= 0xfff;
-				Report(Channel::GP, "OP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
+				Report(Channel::GP, "CP_CMD_LOAD_INDXB: idx: %i, start: %i, len: %i\n", idx, start, len);
 				break;
 			}
 
@@ -2084,7 +2100,7 @@ namespace GX
 				start = gxfifo->Read16();
 				len = (start >> 12) + 1;
 				start &= 0xfff;
-				Report(Channel::GP, "OP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
+				Report(Channel::GP, "CP_CMD_LOAD_INDXC: idx: %i, start: %i, len: %i\n", idx, start, len);
 				break;
 			}
 
@@ -2102,7 +2118,7 @@ namespace GX
 				start = gxfifo->Read16();
 				len = (start >> 12) + 1;
 				start &= 0xfff;
-				Report(Channel::GP, "OP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
+				Report(Channel::GP, "CP_CMD_LOAD_INDXD: idx: %i, start: %i, len: %i\n", idx, start, len);
 				break;
 			}
 
@@ -2125,7 +2141,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_QUAD: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 					1---2       tri1: 0-1-2
@@ -2168,7 +2184,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_TRIANGLE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 					1---2       tri: 0-1-2
@@ -2211,7 +2227,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_STRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 						1---3---5   tri1: 0-1-2
@@ -2269,7 +2285,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_FAN: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 					1---2---3   tri1: 0-1-2
@@ -2326,7 +2342,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_LINE: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 						1   3   5
@@ -2370,7 +2386,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_LINESTRIP: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 						1   3   5
@@ -2423,7 +2439,7 @@ namespace GX
 				usevat = vatnum;
 				if (logDrawCommands)
 				{
-					Report(Channel::GP, "OP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
+					Report(Channel::GP, "CP_CMD_DRAW_POINT: vtxnum: %i, vat: %i\n", vtxnum, vatnum);
 				}
 															/*/
 					0---0       tri: 0-0-0 (1x1x1 tri)
