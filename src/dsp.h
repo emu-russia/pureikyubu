@@ -62,49 +62,6 @@ The debugging interface specification provided by this component can be found in
 
 #pragma once
 
-#define ARAMSIZE        (16 * 1024 * 1024)  // 16 mb
-#define ARAM            aram.mem
-
-// aram dma transfer type (CNT bit31)
-#define RAM_TO_ARAM     0
-#define ARAM_TO_RAM     1
-
-// known ARAM controller registers
-#define AR_SIZE             0x0C005012      // 16 bit regs
-#define AR_MODE             0x0C005016
-#define AR_REFRESH          0x0C00501A
-#define AR_DMA_MMADDR_H     0x0C005020
-#define AR_DMA_MMADDR_L     0x0C005022
-#define AR_DMA_ARADDR_H     0x0C005024
-#define AR_DMA_ARADDR_L     0x0C005026
-#define AR_DMA_CNT_H        0x0C005028
-#define AR_DMA_CNT_L        0x0C00502A
-
-#define AR_DMA_MMADDR       0x0C005020      // 32 bit regs
-#define AR_DMA_ARADDR       0x0C005024
-#define AR_DMA_CNT          0x0C005028
-
-// not sure about AR_SIZE, AR_MODE and AR_REFRESH.
-
-// ARAM state (registers and other data)
-struct ARControl
-{
-	uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
-	volatile uint32_t    mmaddr, araddr;     // DMA address
-	volatile uint32_t    cnt;                // count + transfer type (bit31)
-	uint16_t    size;               // "AR_SIZE" (0x5012) register
-	Thread* dmaThread;
-	int64_t gekkoTicks;
-	size_t gekkoTicksPerSlice;
-	bool dspRunningBeforeAramDma;
-	bool log;
-};
-
-void    AROpen();
-void    ARClose();
-
-extern  ARControl aram;
-
 // DSP<->PI registers
 
 // 16-bit access
@@ -113,10 +70,29 @@ extern  ARControl aram;
 #define DSP_INMBOXH         0x0C005004      // DSP->CPU mailbox
 #define DSP_INMBOXL         0x0C005006
 #define AI_DCR              0x0C00500A      // AI/DSP control register (the real name of this register is CDCR. Well, we almost guessed :))
+// known ARAM controller registers (not sure about AR_SIZE, AR_MODE and AR_REFRESH)
+#define AR_SIZE             0x0C005012
+#define AR_MODE             0x0C005016
+#define AR_REFRESH          0x0C00501A
+#define AR_DMA_MMADDR_H     0x0C005020
+#define AR_DMA_MMADDR_L     0x0C005022
+#define AR_DMA_ARADDR_H     0x0C005024
+#define AR_DMA_ARADDR_L     0x0C005026
+#define AR_DMA_CNT_H        0x0C005028
+#define AR_DMA_CNT_L        0x0C00502A
+// AI DMA
 #define AID_MADRH           0x0C005030      // DMA start address (High)
 #define AID_MADRL           0x0C005032      // DMA start address (Low)
 #define AID_LEN             0x0C005036      // DMA control/DMA length (length of audio data in 32 Byte blocks)
 #define AID_CNT             0x0C00503A      // counts down to zero showing how many 32 Byte blocks are left
+
+#define AR_DMA_MMADDR       0x0C005020      // ARAM 32 bit regs
+#define AR_DMA_ARADDR       0x0C005024
+#define AR_DMA_CNT          0x0C005028
+
+// aram dma transfer type (CNT bit31)
+#define RAM_TO_ARAM     0
+#define ARAM_TO_RAM     1
 
 // AI/DSP Control Register mask
 #define AIDCR_RESETMOD      (1 << 11)       // 1: DSP Reset from 0x8000, 0: DSP Reset from 0x0000 (__OSInitAudioSystem)
@@ -381,3 +357,29 @@ namespace DSP
 	};
 
 }
+
+
+// TODO: Old code, need to merge with DSP Accelerator into one entity, and make ARAM DMA as a generic DspDma module (together with AI DMA and DSP DMA)
+
+
+#define ARAMSIZE        (16 * 1024 * 1024)  // 16 mb
+#define ARAM            aram.mem
+
+// ARAM state (registers and other data)
+struct ARControl
+{
+	uint8_t* mem;                // aux. memory buffer (size is ARAMSIZE)
+	volatile uint32_t    mmaddr, araddr;     // DMA address
+	volatile uint32_t    cnt;                // count + transfer type (bit31)
+	uint16_t    size;               // "AR_SIZE" (0x5012) register
+	Thread* dmaThread;
+	int64_t gekkoTicks;
+	size_t gekkoTicksPerSlice;
+	bool dspRunningBeforeAramDma;
+	bool log;
+};
+
+void    AROpen();
+void    ARClose();
+
+extern  ARControl aram;
