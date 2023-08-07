@@ -523,6 +523,7 @@ void PIAssertInt(uint32_t mask)
 }
 
 // clear interrupt
+// Also used by external modules to clear read-only INTSR bits
 void PIClearInt(uint32_t mask)
 {
 	if (pi.intsr & mask)
@@ -549,12 +550,13 @@ void PIClearInt(uint32_t mask)
 
 static void read_intsr(uint32_t addr, uint32_t* reg)
 {
-	*reg = pi.intsr /* | PI_INTSR_RSTSWB*/;
+	*reg = pi.intsr /* | PI_INTSR_RSTSWB */;
 }
 
-// writes turns them off ?
+// Write 1 clears only ARAM, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
 static void write_intsr(uint32_t addr, uint32_t data)
 {
+	data &= (PI_INTERRUPT_ARAM | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
 	PIClearInt(data);
 }
 

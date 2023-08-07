@@ -29,7 +29,7 @@
 #define PI_EFB_ADDRESS_MASK 0xFF80'0000
 
 #define PI_INTSR            0x0C003000      // master interrupt reg
-#define PI_INTMR            0x0C003004      // master interrupt mask
+#define PI_INTMR            0x0C003004      // master interrupt mask (a set bit means that the interrupt is enabled)
 #define PI_BASE             0x0C00300C      // PI CP fifo base
 #define PI_TOP              0x0C003010      // PI CP fifo top
 #define PI_WRPTR            0x0C003014      // PI CP fifo write pointer
