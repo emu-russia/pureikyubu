@@ -768,15 +768,15 @@ namespace GX
         }
 
         // load geometry matrix
-        if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < XF_NORMAL_MATRIX_MEMORY_ID))
+        if ((startIdx >= XF_MATRIX_MEMORY_ID) && (startIdx < (XF_MATRIX_MEMORY_ID + XF_MATRIX_MEMORY_SIZE)))
         {
             for (size_t i = 0; i < amount; i++)
             {
-                state.xf.mvTexMtx[startIdx + i] = gxfifo->ReadFloat();
+                state.xf.mvTexMtx[(startIdx - XF_MATRIX_MEMORY_ID) + i] = gxfifo->ReadFloat();
             }
         }
         // load normal matrix
-        else if ((startIdx >= XF_NORMAL_MATRIX_MEMORY_ID) && (startIdx < XF_DUALTEX_MATRIX_MEMORY_ID))
+        else if ((startIdx >= XF_NORMAL_MATRIX_MEMORY_ID) && (startIdx < (XF_NORMAL_MATRIX_MEMORY_ID + XF_NORMAL_MATRIX_MEMORY_SIZE)))
         {
             for (size_t i = 0; i < amount; i++)
             {
@@ -784,7 +784,7 @@ namespace GX
             }
         }
         // load post-trans matrix
-        else if ((startIdx >= XF_DUALTEX_MATRIX_MEMORY_ID) && (startIdx < XF_LIGHT_MEMORY_ID))
+        else if ((startIdx >= XF_DUALTEX_MATRIX_MEMORY_ID) && (startIdx < (XF_DUALTEX_MATRIX_MEMORY_ID + XF_DUALTEX_MATRIX_MEMORY_SIZE)))
         {
             for (size_t i = 0; i < amount; i++)
             {
