@@ -1794,11 +1794,11 @@ namespace GX
 
 		// Color0 
 
-		vtx->col[0] = FetchColor(state.cp.vcdLo.Color0, state.cp.vatA[vatnum].col0fmt, fifo, ArrayId::Color0);
+		vtx->col[0] = FetchColor(state.cp.vcdLo.Color0, state.cp.vatA[vatnum].col0fmt, gxfifo, ArrayId::Color0);
 
 		// Color1
 
-		vtx->col[1] = FetchColor(state.cp.vcdLo.Color1, state.cp.vatA[vatnum].col1fmt, fifo, ArrayId::Color1);
+		vtx->col[1] = FetchColor(state.cp.vcdLo.Color1, state.cp.vatA[vatnum].col1fmt, gxfifo, ArrayId::Color1);
 
 		// TexNCoord
 
