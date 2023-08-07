@@ -313,7 +313,7 @@ namespace DSP
 		uint16_t DecodeAdpcm(uint16_t nibble);
 
 		// Logging control
-		bool logMailbox = false;
+		bool logMailbox = true;
 		bool logInsaneMailbox = false;
 		bool logDspControlBits = false;
 		bool logDspInterrupts = false;

@@ -65,7 +65,6 @@ namespace DSP
 
 	void Dsp16::Run()
 	{
-		_TB(Dsp16::Run);
 		if (!dspThread->IsRunning())
 		{
 			dspThread->Resume();
@@ -75,12 +74,10 @@ namespace DSP
 			}
 			savedGekkoTicks = Core->GetTicks();
 		}
-		_TE();
 	}
 
 	void Dsp16::Suspend()
 	{
-		_TB(Dsp16::Suspend);
 		if (dspThread->IsRunning())
 		{
 			if (logDspControlBits)
@@ -89,7 +86,6 @@ namespace DSP
 			}
 			dspThread->Suspend();
 		}
-		_TE();
 	}
 
 	void Dsp16::ResetIfx()
@@ -736,7 +732,6 @@ namespace DSP
 	// Instant DMA
 	void Dsp16::DoDma()
 	{
-		_TB(Dsp16::DoDma);
 		uint8_t* ptr = nullptr;
 
 		if (logDspDma)
@@ -757,7 +752,6 @@ namespace DSP
 		if (ptr == nullptr)
 		{
 			Halt("Dsp16::DoDma: invalid dsp address: 0x%04X\n", DmaRegs.dspAddr);
-			_TE();
 			return;
 		}
 
@@ -797,7 +791,6 @@ namespace DSP
 		}
 #endif
 
-		_TE();
 	}
 
 	void Dsp16::SpecialAramImemDma(uint8_t* ptr, size_t byteCount)
@@ -823,7 +816,6 @@ namespace DSP
 
 	void Dsp16::CpuToDspWriteHi(uint16_t value)
 	{
-		_TB(Dsp16::CpuToDspWriteHi);
 		CpuToDspLock[0].Lock();
 
 		if (logInsaneMailbox)
@@ -841,12 +833,10 @@ namespace DSP
 
 		CpuToDspMailbox[0] = value & 0x7FFF;
 		CpuToDspLock[0].Unlock();
-		_TE();
 	}
 
 	void Dsp16::CpuToDspWriteLo(uint16_t value)
 	{
-		_TB(Dsp16::CpuToDspWriteLo);
 		CpuToDspLock[1].Lock();
 
 		if (logInsaneMailbox)
@@ -862,11 +852,15 @@ namespace DSP
 			Report(Channel::DSP, "CPU Write Message: 0x%04X_%04X\n", CpuToDspMailbox[0], CpuToDspMailbox[1]);
 		}
 		CpuToDspLock[1].Unlock();
-		_TE();
 	}
 
 	uint16_t Dsp16::CpuToDspReadHi(bool ReadByDsp)
 	{
+		if (logInsaneMailbox)
+		{
+			Report(Channel::DSP, "CpuToDspReadHi\n");
+		}
+
 		CpuToDspLock[0].Lock();
 		uint16_t value = CpuToDspMailbox[0];
 		CpuToDspLock[0].Unlock();
@@ -887,6 +881,11 @@ namespace DSP
 
 	uint16_t Dsp16::CpuToDspReadLo(bool ReadByDsp)
 	{
+		if (logInsaneMailbox)
+		{
+			Report(Channel::DSP, "CpuToDspReadLo\n");
+		}
+
 		CpuToDspLock[1].Lock();
 		uint16_t value = CpuToDspMailbox[1];
 		if (ReadByDsp)
@@ -907,7 +906,6 @@ namespace DSP
 
 	void Dsp16::DspToCpuWriteHi(uint16_t value)
 	{
-		_TB(Dsp16::DspToCpuWriteHi);
 		DspToCpuLock[0].Lock();
 
 		if (logInsaneMailbox)
@@ -925,12 +923,10 @@ namespace DSP
 
 		DspToCpuMailbox[0] = value & 0x7FFF;
 		DspToCpuLock[0].Unlock();
-		_TE();
 	}
 
 	void Dsp16::DspToCpuWriteLo(uint16_t value)
 	{
-		_TB(Dsp16::DspToCpuWriteLo);
 		DspToCpuLock[1].Lock();
 
 		if (logInsaneMailbox)
@@ -947,7 +943,6 @@ namespace DSP
 		}
 
 		DspToCpuLock[1].Unlock();
-		_TE();
 	}
 
 	uint16_t Dsp16::DspToCpuReadHi(bool ReadByDsp)

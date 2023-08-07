@@ -406,19 +406,19 @@ void PISetTrap(
 	// select trap type
 	switch (type)
 	{
-	case 8:
-		PISetTrap8(addr, rdTrap, wrTrap);
-		break;
-	case 16:
-		PISetTrap16(addr, rdTrap, wrTrap);
-		break;
-	case 32:
-		PISetTrap32(addr, rdTrap, wrTrap);
-		break;
+		case 8:
+			PISetTrap8(addr, rdTrap, wrTrap);
+			break;
+		case 16:
+			PISetTrap16(addr, rdTrap, wrTrap);
+			break;
+		case 32:
+			PISetTrap32(addr, rdTrap, wrTrap);
+			break;
 
-		// should never happen
-	default:
-		throw "PI: Unknown trap type";
+			// should never happen
+		default:
+			throw "PI: Unknown trap type";
 	}
 }
 
@@ -459,20 +459,20 @@ static const char* intdesc(uint32_t mask)
 {
 	switch (mask & 0xffff)
 	{
-	case PI_INTERRUPT_HSP: return "HSP";
-	case PI_INTERRUPT_DEBUG: return "DEBUG";
-	case PI_INTERRUPT_CP: return "CP";
-	case PI_INTERRUPT_PE_FINISH: return "PE_FINISH";
-	case PI_INTERRUPT_PE_TOKEN: return "PE_TOKEN";
-	case PI_INTERRUPT_VI: return "VI";
-	case PI_INTERRUPT_MEM: return "MEM";
-	case PI_INTERRUPT_DSP: return "DSP";
-	case PI_INTERRUPT_AI: return "AI";
-	case PI_INTERRUPT_EXI: return "EXI";
-	case PI_INTERRUPT_SI: return "SI";
-	case PI_INTERRUPT_DI: return "DI";
-	case PI_INTERRUPT_RSW: return "RSW";
-	case PI_INTERRUPT_PI: return "PI_ERROR";
+		case PI_INTERRUPT_ARAM: return "ARAM";
+		case PI_INTERRUPT_DEBUG: return "DEBUG";
+		case PI_INTERRUPT_CP: return "CP";
+		case PI_INTERRUPT_PE_FINISH: return "PE_FINISH";
+		case PI_INTERRUPT_PE_TOKEN: return "PE_TOKEN";
+		case PI_INTERRUPT_VI: return "VI";
+		case PI_INTERRUPT_MEM: return "MEM";
+		case PI_INTERRUPT_DSP: return "DSP";
+		case PI_INTERRUPT_AI: return "AI";
+		case PI_INTERRUPT_EXI: return "EXI";
+		case PI_INTERRUPT_SI: return "SI";
+		case PI_INTERRUPT_DI: return "DI";
+		case PI_INTERRUPT_RSW: return "RSW";
+		case PI_INTERRUPT_PI: return "PI_ERROR";
 	}
 
 	// default
@@ -482,7 +482,7 @@ static const char* intdesc(uint32_t mask)
 static void printOut(uint32_t mask, const char* fix)
 {
 	std::string buf;
-	for (uint32_t m = 1; m <= PI_INTERRUPT_HSP; m <<= 1)
+	for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
 	{
 		if (mask & m)
 		{
@@ -549,7 +549,7 @@ void PIClearInt(uint32_t mask)
 
 static void read_intsr(uint32_t addr, uint32_t* reg)
 {
-	*reg = pi.intsr;
+	*reg = pi.intsr | PI_INTSR_RSTSWB;
 }
 
 // writes turns them off ?
@@ -571,7 +571,7 @@ static void write_intmr(uint32_t addr, uint32_t data)
 	if (pi.intmr && pi.log)
 	{
 		std::string buf;
-		for (uint32_t m = 1; m <= PI_INTERRUPT_HSP; m <<= 1)
+		for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
 		{
 			if (pi.intmr & m)
 			{
