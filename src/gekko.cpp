@@ -1,6 +1,8 @@
 // CPU controls 
 #include "pch.h"
 
+using namespace Debug;
+
 namespace Gekko
 {
 	// The main driving force behind the entire emulator. All other threads are based on changing the TBR Gekko register.
@@ -123,7 +125,7 @@ namespace Gekko
 			if (regs.msr & MSR_EE)
 			{
 				decreq = 1;
-				Report("decrementer exception (OS alarm), pc:%08X\n", regs.pc);
+				Report(Channel::CPU, "decrementer exception (OS alarm), pc:%08X\n", regs.pc);
 			}
 		}
 	}
@@ -281,16 +283,6 @@ namespace Gekko
 #else
 		return EffectiveToPhysicalMmu(ea, type, WIMG);
 #endif
-	}
-
-	void GekkoCore::Halt(const char* text, ...)
-	{
-
-	}
-
-	void GekkoCore::Report(const char* text, ...)
-	{
-
 	}
 }
 
@@ -686,7 +678,7 @@ namespace Gekko
 		}
 		if (!exists)
 		{
-			Report("Breakpoint added: 0x%08X\n", addr);
+			Report(Channel::CPU, "Breakpoint added: 0x%08X\n", addr);
 			breakPointsExecute.push_back(addr);
 #if GEKKOCORE_USE_JITC
 			jitc->Invalidate(addr, 4);
@@ -710,7 +702,7 @@ namespace Gekko
 		}
 		if (exists)
 		{
-			Report("Breakpoint removed: 0x%08X\n", addr);
+			Report(Channel::CPU, "Breakpoint removed: 0x%08X\n", addr);
 			breakPointsExecute.remove(addr);
 #if GEKKOCORE_USE_JITC
 			jitc->Invalidate(addr, 4);
@@ -917,7 +909,7 @@ namespace Gekko
 
 	void Cache::Reset()
 	{
-		core->Report("Cache::Reset\n");
+		Report(Channel::CPU, "Cache::Reset\n");
 
 		for (size_t i = 0; i < (cacheSize >> 5); i++)
 		{
@@ -937,7 +929,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Enable %i\n", enable ? 1 : 0);
+			Report(Channel::CPU, "Cache::Enable %i\n", enable ? 1 : 0);
 		}
 	}
 
@@ -947,7 +939,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Freeze %i\n", freeze ? 1 : 0);
+			Report(Channel::CPU, "Cache::Freeze %i\n", freeze ? 1 : 0);
 		}
 	}
 
@@ -957,7 +949,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::LockedEnable %i\n", enable ? 1 : 0);
+			Report(Channel::CPU, "Cache::LockedEnable %i\n", enable ? 1 : 0);
 		}
 	}
 
@@ -978,7 +970,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps && dirty)
 		{
-			core->Report("Cache::SetDirty. pa: 0x%08X\n", pa & ~0x1f);
+			Report(Channel::CPU, "Cache::SetDirty. pa: 0x%08X\n", pa & ~0x1f);
 		}
 	}
 
@@ -999,7 +991,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps && invalid)
 		{
-			core->Report("Cache::SetInvalid. pa: 0x%08X\n", pa & ~0x1f);
+			Report(Channel::CPU, "Cache::SetInvalid. pa: 0x%08X\n", pa & ~0x1f);
 		}
 	}
 
@@ -1017,7 +1009,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Flush 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
+			Report(Channel::CPU, "Cache::Flush 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
 		}
 	}
 
@@ -1030,7 +1022,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Invalidate 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
+			Report(Channel::CPU, "Cache::Invalidate 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
 		}
 	}
 
@@ -1047,7 +1039,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Store 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::Store 0x%08X\n", pa);
 		}
 	}
 
@@ -1062,7 +1054,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Touch 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::Touch 0x%08X\n", pa);
 		}
 	}
 
@@ -1077,7 +1069,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::TouchForStore 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::TouchForStore 0x%08X\n", pa);
 		}
 	}
 
@@ -1092,7 +1084,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::Zero 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::Zero 0x%08X\n", pa);
 		}
 	}
 
@@ -1100,7 +1092,7 @@ namespace Gekko
 	{
 		if (log >= CacheLogLevel::Commands)
 		{
-			core->Report("Cache::ZeroLocked 0x%08X\n", pa);
+			Report(Channel::CPU, "Cache::ZeroLocked 0x%08X\n", pa);
 		}
 
 		LockedCacheAddr = pa & ~0x3FFF;
@@ -1117,7 +1109,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::CastIn: 0x%08X\n", pa & ~0x1f);
+			Report(Channel::CPU, "Cache::CastIn: 0x%08X\n", pa & ~0x1f);
 		}
 
 		PIReadBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
@@ -1132,7 +1124,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::CastOut: 0x%08X\n", pa & ~0x1f);
+			Report(Channel::CPU, "Cache::CastOut: 0x%08X\n", pa & ~0x1f);
 		}
 
 		PIWriteBurst(pa & ~0x1f, &cacheData[pa & ~0x1f]);
@@ -1164,7 +1156,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::ReadByte. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+			Report(Channel::CPU, "Cache::ReadByte. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
 		}
 	}
 
@@ -1193,7 +1185,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::WriteByte. addr: 0x%08X, data: 0x%08X\n", addr, data);
+			Report(Channel::CPU, "Cache::WriteByte. addr: 0x%08X, data: 0x%08X\n", addr, data);
 		}
 
 		SetDirty(addr, true);
@@ -1224,7 +1216,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
 		{
-			core->Report("Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::ReadHalf: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
 
@@ -1240,7 +1232,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::ReadHalf. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+			Report(Channel::CPU, "Cache::ReadHalf. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
 		}
 	}
 
@@ -1268,7 +1260,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint16_t)))
 		{
-			core->Report("Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::WriteHalf: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint16_t);
 
@@ -1286,7 +1278,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::WriteHalf. addr: 0x%08X, data: 0x%08X\n", addr, data);
+			Report(Channel::CPU, "Cache::WriteHalf. addr: 0x%08X, data: 0x%08X\n", addr, data);
 		}
 
 		SetDirty(addr, true);
@@ -1317,7 +1309,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
 		{
-			core->Report("Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::ReadWord: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
 
@@ -1333,7 +1325,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::ReadWord. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
+			Report(Channel::CPU, "Cache::ReadWord. addr: 0x%08X, *reg: 0x%08X\n", addr, *reg);
 		}
 	}
 
@@ -1361,7 +1353,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint32_t)))
 		{
-			core->Report("Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::WriteWord: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint32_t);
 
@@ -1379,7 +1371,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::WriteWord. addr: 0x%08X, data: 0x%08X\n", addr, data);
+			Report(Channel::CPU, "Cache::WriteWord. addr: 0x%08X, data: 0x%08X\n", addr, data);
 		}
 
 		SetDirty(addr, true);
@@ -1410,7 +1402,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
 		{
-			core->Report("Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::ReadDouble: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
 
@@ -1426,7 +1418,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::ReadDouble. addr: 0x%08X, *reg: 0x%llX\n", addr, *reg);
+			Report(Channel::CPU, "Cache::ReadDouble. addr: 0x%08X, *reg: 0x%llX\n", addr, *reg);
 		}
 	}
 
@@ -1454,7 +1446,7 @@ namespace Gekko
 
 		if ((addr & 0x1f) > (32 - sizeof(uint64_t)))
 		{
-			core->Report("Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
+			Report(Channel::CPU, "Cache::WriteDouble: Unaligned cache access addr:0x%08X!\n", addr);
 
 			uint32_t nextCacheLineAddr = addr + sizeof(uint64_t);
 
@@ -1472,7 +1464,7 @@ namespace Gekko
 
 		if (log >= CacheLogLevel::MemOps)
 		{
-			core->Report("Cache::WriteDouble. addr: 0x%08X, data: 0x%llX\n", addr, data);
+			Report(Channel::CPU, "Cache::WriteDouble. addr: 0x%08X, data: 0x%llX\n", addr, data);
 		}
 
 		SetDirty(addr, true);
@@ -1485,7 +1477,7 @@ namespace Gekko
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				core->Report("Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
+				Report(Channel::CPU, "Load Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
 			for (size_t i = 0; i < bursts; i++)
@@ -1500,7 +1492,7 @@ namespace Gekko
 
 			if (log >= CacheLogLevel::MemOps)
 			{
-				core->Report("Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
+				Report(Channel::CPU, "Store Locked Cache: memadr: 0x%08X, lcaddr: 0x%08X, bursts: %i\n", memaddr, lcaddr, bursts);
 			}
 
 			for (size_t i = 0; i < bursts; i++)
@@ -1516,11 +1508,11 @@ namespace Gekko
 	{
 		if (disable)
 		{
-			core->Report("Cache disabled for debug purposes");
+			Report(Channel::CPU, "Cache disabled for debug purposes");
 		}
 		else
 		{
-			core->Report("Cache works normally");
+			Report(Channel::CPU, "Cache works normally");
 		}
 		DisableForDebugReasons = disable;
 	}
@@ -1539,7 +1531,7 @@ namespace Gekko
 
 		if (log)
 		{
-			core->Report("GatherBuffer::Reset");
+			Report(Channel::CPU, "GatherBuffer::Reset");
 		}
 	}
 
@@ -1568,7 +1560,7 @@ namespace Gekko
 				text += byteText;
 			}
 
-			core->Report("GatherBuffer::WriteBytes: %s", text.c_str());
+			Report(Channel::CPU, "GatherBuffer::WriteBytes: %s", text.c_str());
 		}
 
 		if (size < 4)
@@ -1615,7 +1607,7 @@ namespace Gekko
 
 			if (log)
 			{
-				core->Report("Burst gather buffer. Bytes left: %zi\n", GatherSize());
+				Report(Channel::CPU, "Burst gather buffer. Bytes left: %zi\n", GatherSize());
 			}
 
 			PIWriteBurst(core->regs.spr[(int)SPR::WPAR] & ~0x1f, burstData);
@@ -2084,10 +2076,10 @@ namespace Gekko
 			DecoderInfo info;
 
 			info.instr = unsorted[i].instr;
-			Report("%s: %i\n", GekkoDisasm::InstrToString(&info).c_str(), unsorted[i].count);
+			Report(Channel::CPU, "%s: %i\n", GekkoDisasm::InstrToString(&info).c_str(), unsorted[i].count);
 		}
 
-		Report("  \n");
+		Report(Channel::CPU, "  \n");
 	}
 
 	void GekkoCore::ResetOpcodeStats()

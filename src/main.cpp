@@ -52,7 +52,6 @@ void EMUGetHwConfig(HWConfig * config)
 
 	config->videoEncoderFuse = 0;
 
-	config->rswhack = GetConfigBool(USER_PI_RSWHACK, USER_HW);
 	config->consoleVer = GetConfigInt(USER_CONSOLE, USER_HW);
 
 	config->exi_log = GetConfigBool(USER_EXI_LOG, USER_HW);
@@ -382,7 +381,6 @@ static Json::Value* CmdGetConfig(std::vector<std::string>& args)
 	Report(Channel::Norm, "%s = %s\n", USER_SJIS, Util::WstringToString(GetConfigString(USER_SJIS, USER_HW)).c_str());
 	Report(Channel::Norm, "%s = 0x%08X\n", USER_CONSOLE, GetConfigInt(USER_CONSOLE, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_OS_REPORT, GetConfigBool(USER_OS_REPORT, USER_HW));
-	Report(Channel::Norm, "%s = %i\n", USER_PI_RSWHACK, GetConfigBool(USER_PI_RSWHACK, USER_HW));
 	Report(Channel::Norm, "%s = %i\n", USER_VI_XFB, GetConfigBool(USER_VI_XFB, USER_HW));
 
 	Report(Channel::Norm, "%s = %s\n", USER_BOOTROM, Util::WstringToString(GetConfigString(USER_BOOTROM, USER_HW)).c_str());
@@ -490,7 +488,6 @@ void EmuReflector()
 /* Supported formats are :                                      */
 /*      .dol        - GAMECUBE custom executable                */
 /*      .elf        - standard executable                       */
-/*      .bin        - binary file (loaded at BINORG offset)     */
 /*      .gcm        - game master data (GC DVD images)          */
 
 /* ---------------------------------------------------------------------------  */
@@ -802,48 +799,6 @@ uint32_t LoadELF(const std::wstring& elfname)
 	return elf_entrypoint;
 }
 
-// ---------------------------------------------------------------------------
-// BIN loader
-
-// return BINORG offset, or 0 if cannot load.
-// use physical addressing!
-uint32_t LoadBIN(const std::wstring& binname)
-{
-	uint32_t org = GetConfigInt(USER_BINORG, USER_LOADER);
-
-	/* Binary file loading address is above RAM. */
-	if (org >= RAMSIZE)
-	{
-		return 0;
-	}
-
-	/* Try to load file. */
-	auto file = std::ifstream(Util::WstringToString(binname).c_str(), std::ifstream::binary | std::ifstream::ate);
-	
-	/* Nothing to load? */
-	if (!file.is_open())
-	{
-		return 0;
-	}
-	
-	/* Get the size of the file. */
-	auto fsize = file.tellg();
-	file.seekg(std::ifstream::beg);
-
-	/* Limit by RAMSIZE. */
-	if((org + fsize) > RAMSIZE)
-	{
-		fsize = RAMSIZE - org;
-	}
-
-	file.read((char*)&mi.ram[org], fsize);
-	file.close();
-
-	Report(Channel::Loader, "Loaded binary file at %08X (0x%08X)\n\n", org, fsize);
-	org |= 0x80000000;
-	return org;     // its me =:)
-}
-
 /* ---------------------------------------------------------------------------  */
 /* File loader engine                                                           */
 
@@ -952,11 +907,6 @@ void LoadFile(const std::wstring& filename)
 		else if (!_wcsicmp(extension, L".elf"))
 		{
 			entryPoint = LoadELF(filename);
-			dvd = false;
-		}
-		else if (!_wcsicmp(extension, L".bin"))
-		{
-			entryPoint = LoadBIN(filename);
 			dvd = false;
 		}
 		else if (!_wcsicmp(extension, L".iso"))

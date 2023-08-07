@@ -14,7 +14,6 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_MEMCARDS	"memcards"
 
 // Loader section variables
-#define USER_BINORG	"BINORG"			// binary file loading offset (physical address)
 #define USER_MAKEMAP "MAKEMAP"			// 1: make map file, if missing (find symbols)
 
 // Hardware section variables
@@ -22,7 +21,6 @@ constexpr auto EMU_SETTINGS = L"./Data/Settings.json";
 #define USER_SJIS		"SJIS"          // bootrom SJIS font
 #define USER_CONSOLE	"CONSOLE"       // console version (see YAGCD)
 #define USER_OS_REPORT	"OS_REPORT"     // 1: allow debugger output (by EXI)
-#define USER_PI_RSWHACK	"RSWHACK"		// reset button hack
 #define USER_VI_COUNT	"VI_COUNT"      // lines count per single frame (0:auto)
 #define USER_VI_XFB		"VI_XFB"        // enable video frame buffer (GDI)
 #define USER_BOOTROM	"BOOTROM"		// Bootrom

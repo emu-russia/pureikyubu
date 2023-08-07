@@ -29,7 +29,6 @@
 
 	"loader":
 	{
-		"BINORG": 12544,
 		"MAKEMAP": true
 	},
 
@@ -40,7 +39,6 @@
 		"CONSOLE": 3,
 		"EXI_LOG": true,
 		"OS_REPORT": true,
-		"RSWHACK": true,
 		"VI_LOG": false,
 		"VI_XFB": true,
 		"BOOTROM": "Data/gc-ntsc-10.bin",

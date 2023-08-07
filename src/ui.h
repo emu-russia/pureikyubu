@@ -76,7 +76,6 @@ void UIReflector();
 #define USER_SJIS		"SJIS"          // bootrom SJIS font
 #define USER_CONSOLE	"CONSOLE"       // console version (see YAGCD)
 #define USER_OS_REPORT	"OS_REPORT"     // 1: allow debugger output (by EXI)
-#define USER_PI_RSWHACK	"RSWHACK"		// reset button hack
 #define USER_BOOTROM	"BOOTROM"		// Bootrom
 #define USER_DSP_DROM	"DSP_DROM"      // DSP DROM
 #define USER_DSP_IROM	"DSP_IROM"		// DSP IROM
@@ -277,7 +276,7 @@ namespace UI
 
 
 
-/* File type (*.bin is not supported, and can be opened only by File->Open) */
+/* File type */
 enum class SELECTOR_FILE
 {
 	Executable = 1,     /* any GC executable (*.dol, *.elf) */

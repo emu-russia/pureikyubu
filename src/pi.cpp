@@ -549,7 +549,7 @@ void PIClearInt(uint32_t mask)
 
 static void read_intsr(uint32_t addr, uint32_t* reg)
 {
-	*reg = pi.intsr | ((pi.rswhack & 1) << 16);
+	*reg = pi.intsr;
 }
 
 // writes turns them off ?
@@ -661,9 +661,8 @@ void PIOpen(HWConfig* config)
 {
 	Report(Channel::PI, "Processor interface\n");
 
-	pi.rswhack = config->rswhack;
 	pi.consoleVer = config->consoleVer;
-	pi.log = false;
+	pi.log = true;
 
 	// now any access will generate unhandled warning,
 	// if emulator try to read or write register,

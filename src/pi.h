@@ -109,7 +109,6 @@ struct PIControl
 {
 	volatile uint32_t    intsr;          // interrupt cause
 	volatile uint32_t    intmr;          // interrupt mask
-	bool        rswhack;        // reset "switch" hack
 	bool        log;            // log interrupts
 	uint32_t    consoleVer;     // console version
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters

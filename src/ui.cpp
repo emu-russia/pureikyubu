@@ -273,9 +273,8 @@ namespace UI
 			{
 				case FileType::All:
 					ofn.lpstrFilter =
-						L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso)\0*.dol;*.elf;*.gcm;*.iso\0"
 						L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-						L"Binary Files (*.bin)\0*.bin\0"
 						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
@@ -385,9 +384,8 @@ namespace UI
 			{
 				case FileType::All:
 					ofn.lpstrFilter =
-						L"All Supported Files (*.dol, *.elf, *.bin, *.gcm, *.iso)\0*.dol;*.elf;*.bin;*.gcm;*.iso\0"
+						L"All Supported Files (*.dol, *.elf, *.gcm, *.iso)\0*.dol;*.elf;*.gcm;*.iso\0"
 						L"GameCube Executable Files (*.dol, *.elf)\0*.dol;*.elf\0"
-						L"Binary Files (*.bin)\0*.bin\0"
 						L"GameCube DVD Images (*.gcm, *.iso)\0*.gcm;*.iso\0"
 						L"All Files (*.*)\0*.*\0";
 					break;
@@ -4755,10 +4753,6 @@ void OnMainWindowOpened(const wchar_t* currentFileName)
 		{
 			dvd = false;
 		}
-		else if (!_wcsicmp(extension, L".bin"))
-		{
-			dvd = false;
-		}
 		else if (!_wcsicmp(extension, L".iso"))
 		{
 			dvd = true;
@@ -5307,7 +5301,6 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 			// extension filter
 			if(_wcsicmp(L".dol", wcsrchr(fileName, L'.')) &&
 			   _wcsicmp(L".elf", wcsrchr(fileName, L'.')) &&
-			   _wcsicmp(L".bin", wcsrchr(fileName, L'.')) &&
 			   _wcsicmp(L".iso", wcsrchr(fileName, L'.')) &&
 			   _wcsicmp(L".gcm", wcsrchr(fileName, L'.')) ) break;
 
