@@ -301,7 +301,7 @@ namespace DSP
 
 		volatile uint16_t DspToCpuMailbox[2];		// DMBH, DMBL
 		SpinLock DspToCpuLock[2];
-
+		
 		volatile uint16_t CpuToDspMailbox[2];		// CMBH, CMBL
 		SpinLock CpuToDspLock[2];
 
@@ -318,7 +318,7 @@ namespace DSP
 		bool logDspControlBits = false;
 		bool logDspInterrupts = false;
 		bool logNonconditionalCallJmp = false;
-		bool logDspDma = false;
+		bool logDspDma = true;
 		bool logAccel = false;
 		bool logAdpcm = false;
 		bool dumpUcode = false;

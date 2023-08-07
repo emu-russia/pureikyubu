@@ -42,7 +42,7 @@
 #define PI_STRGTH           0x0C003030
 #define PI_CPUDBB           0x0C003034
 
-#define PI_INTSR_RSTSWB		0x10000			// The state of the reset switch button. Non-maskable INTSR bit (0: switch pressed, 1: switch is not pressed)
+#define PI_INTSR_RSTSWB		0x10000			// The state of the reset switch button. Non-maskable INTSR bit
 
 // PI interrupt regs mask
 #define PI_INTERRUPT_ARAM		0x2000      // high-speed port (SDRAM)

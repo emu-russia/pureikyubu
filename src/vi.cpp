@@ -158,13 +158,13 @@ void VIUpdate()
 static void vi_read8(uint32_t addr, uint32_t* reg)
 {
 	// TODO
-	Report(Channel::VI, "VI READ8");
+	Report(Channel::VI, "VI READ8\n");
 	*reg = 0;
 }
 
 static void vi_write8(uint32_t addr, uint32_t data)
 {
-	Report(Channel::VI, "VI WRITE8");
+	Report(Channel::VI, "VI WRITE8\n");
 }
 
 static void vi_read16(uint32_t addr, uint32_t* reg)
@@ -383,7 +383,7 @@ void VIOpen(HWConfig* config)
 		bool res = VideoOutOpen(config, 640, 480, &vi.gfxbuf);
 		if (!res)
 		{
-			Report(Channel::VI, "VI cant startup VideoOut backend!");
+			Report(Channel::VI, "VI cant startup VideoOut backend!\n");
 			vi.xfb = false;
 		}
 	}

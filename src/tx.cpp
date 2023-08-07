@@ -154,7 +154,7 @@ namespace GX
 
             default:
             {
-                Debug::Halt("GX: Unknown TLUT format: %i", fmt);
+                Debug::Halt("GX: Unknown TLUT format: %i\n", fmt);
             }
         }
     }

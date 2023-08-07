@@ -423,7 +423,7 @@ void MCTransfer() {
 		}
 		break;
 	default:
-		Halt("MC: Unknown memcard transfer type");
+		Halt("MC: Unknown memcard transfer type\n");
 	}
 }
 
@@ -462,7 +462,7 @@ bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id) {
 		blocks = ((uint32_t)memcard_id) << (17 - Memcard_BlockSize_log2);
 		break;
 	default:
-		Halt("MC: Wrong card id for creating file.");
+		Halt("MC: Wrong card id for creating file.\n");
 		return false;
 	}
 
@@ -470,14 +470,14 @@ bool    MCCreateMemcardFile(const wchar_t* path, uint16_t memcard_id) {
 	newfile = fopen(Util::WstringToString(path).c_str(), "wb");
 
 	if (newfile == NULL) {
-		Halt("MC: Error while trying to create memcard file.");
+		Halt("MC: Error while trying to create memcard file.\n");
 		return false;
 	}
 
 	memset(newfile_buffer, MEMCARD_ERASEBYTE, Memcard_BlockSize);
 	for (b = 0; b < blocks; b++) {
 		if (fwrite(newfile_buffer, Memcard_BlockSize, 1, newfile) != 1) {
-			Halt("MC: Error while trying to write memcard file.");
+			Halt("MC: Error while trying to write memcard file.\n");
 
 			fclose(newfile);
 			return false;

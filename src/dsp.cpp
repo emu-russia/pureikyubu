@@ -298,11 +298,11 @@ namespace DSP
 					break;
 
 				case (DspAddress)DspHardwareRegs::CMBH:
-					Halt("DSP is not allowed to write processor Mailbox!");
+					Halt("DSP is not allowed to write processor Mailbox!\n");
 					Suspend();
 					break;
 				case (DspAddress)DspHardwareRegs::CMBL:
-					Halt("DSP is not allowed to write processor Mailbox!");
+					Halt("DSP is not allowed to write processor Mailbox!\n");
 					Suspend();
 					break;
 				case (DspAddress)DspHardwareRegs::DMBH:
@@ -823,14 +823,6 @@ namespace DSP
 			Report(Channel::DSP, "CpuToDspWriteHi: 0x%04X\n", value);
 		}
 
-		if (CpuToDspMailbox[0] & 0x8000)
-		{
-			if (logMailbox)
-			{
-				Report(Channel::DSP, "CPU Message discarded.\n");
-			}
-		}
-
 		CpuToDspMailbox[0] = value & 0x7FFF;
 		CpuToDspLock[0].Unlock();
 	}
@@ -864,18 +856,6 @@ namespace DSP
 		CpuToDspLock[0].Lock();
 		uint16_t value = CpuToDspMailbox[0];
 		CpuToDspLock[0].Unlock();
-
-		// TODO:
-
-		// If DSP is running and is in a waiting cycle for a message from the CPU, 
-		// we put it in the HALT state until the processor sends a message through the Mailbox.
-
-		//if ((value & 0x8000) == 0 && IsRunning() && ReadByDsp)
-		//{
-		//	DBReport2(DbgChannel::DSP, "Wait CPU Mailbox\n");
-		//	Suspend();
-		//}
-
 		return value;
 	}
 
@@ -913,14 +893,6 @@ namespace DSP
 			Report(Channel::DSP, "DspToCpuWriteHi: 0x%04X\n", value);
 		}
 
-		if (DspToCpuMailbox[0] & 0x8000)
-		{
-			if (logMailbox)
-			{
-				Report(Channel::DSP, "DSP Message discarded.\n");
-			}
-		}
-
 		DspToCpuMailbox[0] = value & 0x7FFF;
 		DspToCpuLock[0].Unlock();
 	}
@@ -950,7 +922,6 @@ namespace DSP
 		DspToCpuLock[0].Lock();
 		uint16_t value = DspToCpuMailbox[0];
 		DspToCpuLock[0].Unlock();
-
 		return value;
 	}
 
@@ -1050,6 +1021,9 @@ static void ARAMDmaThread(void* Parameter)
 		//{
 		//    Flipper::HW->DSP->Run();
 		//}
+		if (aram.log) {
+			Report(Channel::AR, "Suspending ARAM DMA Thread\n");
+		}
 		aram.dmaThread->Suspend();
 	}
 }
@@ -1067,10 +1041,10 @@ static void ARDMA()
 		{
 			if (!specialAramDspDma)
 			{
-				Report(Channel::AR, "RAM copy %08X -> %08X (%i)", aram.mmaddr, aram.araddr, cnt);
+				Report(Channel::AR, "RAM copy %08X -> %08X (%i)\n", aram.mmaddr, aram.araddr, cnt);
 			}
 		}
-		else Report(Channel::AR, "ARAM copy %08X -> %08X (%i)", aram.araddr, aram.mmaddr, cnt);
+		else Report(Channel::AR, "ARAM copy %08X -> %08X (%i)\n", aram.araddr, aram.mmaddr, cnt);
 	}
 
 	// Special ARAM DMA (DSP Init)
@@ -1106,7 +1080,10 @@ static void ARDMA()
 
 	// For other cases - delegate job to thread
 
-	assert(!aram.dmaThread->IsRunning());
+	if (aram.dmaThread->IsRunning()) {
+		Halt("There is some nonsense going on: the ARAM DMA Thread needs to be started while it is still running.\n");
+	}
+
 	Flipper::ai.dcr |= AIDCR_ARDMA;
 	aram.gekkoTicks = Core->GetTicks() + aram.gekkoTicksPerSlice;
 	aram.dspRunningBeforeAramDma = Flipper::DSP->IsRunning();
@@ -1114,6 +1091,9 @@ static void ARDMA()
 	//{
 	//    Flipper::HW->DSP->Suspend();
 	//}
+	if (aram.log) {
+		Report(Channel::AR, "Resuming ARAM DMA Thread\n");
+	}
 	aram.dmaThread->Resume();
 }
 
@@ -1213,8 +1193,8 @@ void AROpen()
 
 	// clear registers
 	aram.mmaddr = aram.araddr = aram.cnt = 0;
-	aram.gekkoTicksPerSlice = 1;
-	aram.log = false;
+	aram.gekkoTicksPerSlice = 4;
+	aram.log = true;
 
 	// set traps to aram registers
 	PISetTrap(16, AR_DMA_MMADDR_H, ar_read_maddr_h, ar_write_maddr_h);

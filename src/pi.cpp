@@ -320,32 +320,32 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 static void def_hw_read8(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access:  R8 %08X", addr);
+	Halt("PI: Unhandled HW access:  R8 %08X\n", addr);
 }
 
 static void def_hw_write8(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
+	Halt("PI: Unhandled HW access:  W8 %08X = %02X\n", addr, (uint8_t)data);
 }
 
 static void def_hw_read16(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access: R16 %08X", addr);
+	Halt("PI: Unhandled HW access: R16 %08X\n", addr);
 }
 
 static void def_hw_write16(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
+	Halt("PI: Unhandled HW access: W16 %08X = %04X\n", addr, (uint16_t)data);
 }
 
 static void def_hw_read32(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access: R32 %08X", addr);
+	Halt("PI: Unhandled HW access: R32 %08X\n", addr);
 }
 
 static void def_hw_write32(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access: W32 %08X = %08X", addr, data);
+	Halt("PI: Unhandled HW access: W32 %08X = %08X\n", addr, data);
 }
 
 // ---------------------------------------------------------------------------
@@ -490,7 +490,7 @@ static void printOut(uint32_t mask, const char* fix)
 			buf += "INT ";
 		}
 	}
-	Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf.c_str(), fix, Core->regs.pc, Core->GetTicks());
+	Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)\n", buf.c_str(), fix, Core->regs.pc, Core->GetTicks());
 }
 
 // assert interrupt
@@ -549,7 +549,7 @@ void PIClearInt(uint32_t mask)
 
 static void read_intsr(uint32_t addr, uint32_t* reg)
 {
-	*reg = pi.intsr | PI_INTSR_RSTSWB;
+	*reg = pi.intsr /* | PI_INTSR_RSTSWB*/;
 }
 
 // writes turns them off ?

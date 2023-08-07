@@ -41,11 +41,11 @@ namespace Flipper
 	struct AIControl
 	{
 		// AID
-		std::atomic<uint16_t> dcr;  // AI/DSP control register
-		volatile uint16_t    madr_hi;        // DMA start address hi
-		volatile uint16_t    madr_lo;        // DMA start address lo
-		volatile uint16_t    len;            // DMA control/DMA length (length of audio data)
-		volatile uint16_t    dcnt;           // DMA count-down
+		volatile uint16_t dcr;			// AI/DSP control register
+		volatile uint16_t madr_hi;		// DMA start address hi
+		volatile uint16_t madr_lo;		// DMA start address lo
+		volatile uint16_t len;			// DMA control/DMA length (length of audio data)
+		volatile uint16_t dcnt;			// DMA count-down
 
 		// AIS
 		volatile uint32_t    cr;             // AIS control reg

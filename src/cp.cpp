@@ -108,7 +108,7 @@ namespace GX
 		{
 			state.cpregs.sr |= CP_SR_BPINT;
 			PIAssertInt(PI_INTERRUPT_CP);
-			Report(Channel::CP, "BREAK");
+			Report(Channel::CP, "BREAK\n");
 		}
 	}
 
@@ -118,7 +118,7 @@ namespace GX
 		{
 			state.cpregs.sr |= CP_SR_OVF;
 			PIAssertInt(PI_INTERRUPT_CP);
-			Report(Channel::CP, "OVF");
+			Report(Channel::CP, "OVF\n");
 		}
 	}
 
@@ -128,7 +128,7 @@ namespace GX
 		{
 			state.cpregs.sr |= CP_SR_UVF;
 			PIAssertInt(PI_INTERRUPT_CP);
-			Report(Channel::CP, "UVF");
+			Report(Channel::CP, "UVF\n");
 		}
 	}
 
@@ -523,11 +523,11 @@ namespace GX
 	// show PI fifo configuration
 	void GXCore::DumpPIFIFO()
 	{
-		Report(Channel::Norm, "PI fifo configuration");
-		Report(Channel::Norm, "   base :0x%08X", state.pi_cp_base);
-		Report(Channel::Norm, "   top  :0x%08X", state.pi_cp_top);
-		Report(Channel::Norm, "   wrptr:0x%08X", state.pi_cp_wrptr);
-		Report(Channel::Norm, "   wrap :%i", (state.pi_cp_wrptr & PI_CPWRT_WRAP) ? (1) : (0));
+		Report(Channel::Norm, "PI fifo configuration\n");
+		Report(Channel::Norm, "   base :0x%08X\n", state.pi_cp_base);
+		Report(Channel::Norm, "   top  :0x%08X\n", state.pi_cp_top);
+		Report(Channel::Norm, "   wrptr:0x%08X\n", state.pi_cp_wrptr);
+		Report(Channel::Norm, "   wrap :%i\n", (state.pi_cp_wrptr & PI_CPWRT_WRAP) ? (1) : (0));
 	}
 
 	// show CP fifo configuration
@@ -539,17 +539,17 @@ namespace GX
 		char lw = (state.cpregs.cr & CP_CR_UVFEN) ? ('U') : ('u');    // low-wmark
 		char hw = (state.cpregs.cr & CP_CR_OVFEN) ? ('O') : ('o');    // high-wmark
 
-		Report(Channel::Norm, "CP %sfifo configuration:%c%c%c", md, bp, lw, hw);
-		Report(Channel::Norm, " status :0x%08X", state.cpregs.sr);
-		Report(Channel::Norm, " enable :0x%08X", state.cpregs.cr);
-		Report(Channel::Norm, "   base :0x%08X", state.cpregs.base);
-		Report(Channel::Norm, "   top  :0x%08X", state.cpregs.top);
-		Report(Channel::Norm, "   low  :0x%08X", state.cpregs.lomark);
-		Report(Channel::Norm, "   high :0x%08X", state.cpregs.himark);
-		Report(Channel::Norm, "   cnt  :0x%08X", state.cpregs.cnt);
-		Report(Channel::Norm, "   wrptr:0x%08X", state.cpregs.wrptr);
-		Report(Channel::Norm, "   rdptr:0x%08X", state.cpregs.rdptr);
-		Report(Channel::Norm, "   break:0x%08X", state.cpregs.bpptr);
+		Report(Channel::Norm, "CP %sfifo configuration:%c%c%c\n", md, bp, lw, hw);
+		Report(Channel::Norm, " status :0x%08X\n", state.cpregs.sr);
+		Report(Channel::Norm, " enable :0x%08X\n", state.cpregs.cr);
+		Report(Channel::Norm, "   base :0x%08X\n", state.cpregs.base);
+		Report(Channel::Norm, "   top  :0x%08X\n", state.cpregs.top);
+		Report(Channel::Norm, "   low  :0x%08X\n", state.cpregs.lomark);
+		Report(Channel::Norm, "   high :0x%08X\n", state.cpregs.himark);
+		Report(Channel::Norm, "   cnt  :0x%08X\n", state.cpregs.cnt);
+		Report(Channel::Norm, "   wrptr:0x%08X\n", state.cpregs.wrptr);
+		Report(Channel::Norm, "   rdptr:0x%08X\n", state.cpregs.rdptr);
+		Report(Channel::Norm, "   break:0x%08X\n", state.cpregs.bpptr);
 	}
 
 	// index range = 00..FF
@@ -560,7 +560,7 @@ namespace GX
 
 		if (GpRegsLog)
 		{
-			Report(Channel::GP, "Load CP: index: 0x%02X, data: 0x%08X", index, value);
+			Report(Channel::GP, "Load CP: index: 0x%02X, data: 0x%08X\n", index, value);
 		}
 
 		switch(index)
@@ -677,7 +677,7 @@ namespace GX
 
 			default:
 			{
-				Report(Channel::GP, "Unknown CP load, index: 0x%02X", index);
+				Report(Channel::GP, "Unknown CP load, index: 0x%02X\n", index);
 			}
 		}
 	}

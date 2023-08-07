@@ -173,11 +173,13 @@ namespace Gekko
 	void GekkoCore::AssertInterrupt()
 	{
 		intFlag = true;
+		//Report(Channel::CPU, "AssertInterrupt\n");
 	}
 
 	void GekkoCore::ClearInterrupt()
 	{
 		intFlag = false;
+		//Report(Channel::CPU, "ClearInterrupt\n");
 	}
 
 	void GekkoCore::Exception(Gekko::Exception code)
