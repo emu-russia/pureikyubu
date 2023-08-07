@@ -251,7 +251,7 @@ void MXTransfer()
 				}
 				else
 				{
-					Halt("EXI: Unknown MX chip read immediate from %08X", ofs);
+					Halt("EXI: Unknown MX chip read immediate from %08X\n", ofs);
 				}
 			}
 			return;

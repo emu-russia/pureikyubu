@@ -1864,7 +1864,7 @@ namespace DVD
 	void DduCore::Break()
 	{
 		// Abort data transfer
-		Report(Channel::DVD, "DDU Break");
+		Report(Channel::DVD, "DDU Break\n");
 		ddBusBusy = false;
 	}
 
@@ -1930,7 +1930,7 @@ namespace DVD
 	{
 		if (logTransfers)
 		{
-			Report(Channel::DVD, "TransferComplete");
+			Report(Channel::DVD, "TransferComplete\n");
 		}
 
 		ddBusBusy = false;

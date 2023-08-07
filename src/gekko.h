@@ -809,9 +809,6 @@ namespace Gekko
 		void ResetCompiledSegmentsCount() { compiledSegments = 0; }
 		void ResetExecutedSegmentsCount() { executedSegments = 0; }
 
-		void Halt(const char* text, ...);
-		void Report(const char* text, ...);
-
 #pragma endregion "Debug"
 
 	};

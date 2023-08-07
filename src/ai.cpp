@@ -150,7 +150,7 @@ namespace Flipper
 			PIAssertInt(PI_INTERRUPT_DSP);
 			if (ai.log)
 			{
-				Report(Channel::AI, "AIDINT");
+				Report(Channel::AI, "AIDINT\n");
 			}
 		}
 	}
@@ -412,8 +412,8 @@ namespace Flipper
 	static void read_in_mbox_h(uint32_t addr, uint32_t* reg) { *reg = DSP->DspToCpuReadHi(false); }
 	static void read_in_mbox_l(uint32_t addr, uint32_t* reg) { *reg = DSP->DspToCpuReadLo(false); }
 
-	static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }
-	static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!"); }
+	static void write_in_mbox_h(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
+	static void write_in_mbox_l(uint32_t addr, uint32_t data) { Halt("Processor is not allowed to write DSP Mailbox!\n"); }
 
 	void DSPAssertInt()
 	{

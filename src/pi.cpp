@@ -320,32 +320,32 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 
 static void def_hw_read8(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access:  R8 %08X", addr);
+	Halt("PI: Unhandled HW access:  R8 %08X\n", addr);
 }
 
 static void def_hw_write8(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access:  W8 %08X = %02X", addr, (uint8_t)data);
+	Halt("PI: Unhandled HW access:  W8 %08X = %02X\n", addr, (uint8_t)data);
 }
 
 static void def_hw_read16(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access: R16 %08X", addr);
+	Halt("PI: Unhandled HW access: R16 %08X\n", addr);
 }
 
 static void def_hw_write16(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access: W16 %08X = %04X", addr, (uint16_t)data);
+	Halt("PI: Unhandled HW access: W16 %08X = %04X\n", addr, (uint16_t)data);
 }
 
 static void def_hw_read32(uint32_t addr, uint32_t* reg)
 {
-	Halt("PI: Unhandled HW access: R32 %08X", addr);
+	Halt("PI: Unhandled HW access: R32 %08X\n", addr);
 }
 
 static void def_hw_write32(uint32_t addr, uint32_t data)
 {
-	Halt("PI: Unhandled HW access: W32 %08X = %08X", addr, data);
+	Halt("PI: Unhandled HW access: W32 %08X = %08X\n", addr, data);
 }
 
 // ---------------------------------------------------------------------------
@@ -406,19 +406,19 @@ void PISetTrap(
 	// select trap type
 	switch (type)
 	{
-	case 8:
-		PISetTrap8(addr, rdTrap, wrTrap);
-		break;
-	case 16:
-		PISetTrap16(addr, rdTrap, wrTrap);
-		break;
-	case 32:
-		PISetTrap32(addr, rdTrap, wrTrap);
-		break;
+		case 8:
+			PISetTrap8(addr, rdTrap, wrTrap);
+			break;
+		case 16:
+			PISetTrap16(addr, rdTrap, wrTrap);
+			break;
+		case 32:
+			PISetTrap32(addr, rdTrap, wrTrap);
+			break;
 
-		// should never happen
-	default:
-		throw "PI: Unknown trap type";
+			// should never happen
+		default:
+			throw "PI: Unknown trap type";
 	}
 }
 
@@ -459,20 +459,20 @@ static const char* intdesc(uint32_t mask)
 {
 	switch (mask & 0xffff)
 	{
-	case PI_INTERRUPT_HSP: return "HSP";
-	case PI_INTERRUPT_DEBUG: return "DEBUG";
-	case PI_INTERRUPT_CP: return "CP";
-	case PI_INTERRUPT_PE_FINISH: return "PE_FINISH";
-	case PI_INTERRUPT_PE_TOKEN: return "PE_TOKEN";
-	case PI_INTERRUPT_VI: return "VI";
-	case PI_INTERRUPT_MEM: return "MEM";
-	case PI_INTERRUPT_DSP: return "DSP";
-	case PI_INTERRUPT_AI: return "AI";
-	case PI_INTERRUPT_EXI: return "EXI";
-	case PI_INTERRUPT_SI: return "SI";
-	case PI_INTERRUPT_DI: return "DI";
-	case PI_INTERRUPT_RSW: return "RSW";
-	case PI_INTERRUPT_PI: return "PI_ERROR";
+		case PI_INTERRUPT_ARAM: return "ARAM";
+		case PI_INTERRUPT_DEBUG: return "DEBUG";
+		case PI_INTERRUPT_CP: return "CP";
+		case PI_INTERRUPT_PE_FINISH: return "PE_FINISH";
+		case PI_INTERRUPT_PE_TOKEN: return "PE_TOKEN";
+		case PI_INTERRUPT_VI: return "VI";
+		case PI_INTERRUPT_MEM: return "MEM";
+		case PI_INTERRUPT_DSP: return "DSP";
+		case PI_INTERRUPT_AI: return "AI";
+		case PI_INTERRUPT_EXI: return "EXI";
+		case PI_INTERRUPT_SI: return "SI";
+		case PI_INTERRUPT_DI: return "DI";
+		case PI_INTERRUPT_RSW: return "RSW";
+		case PI_INTERRUPT_PI: return "PI_ERROR";
 	}
 
 	// default
@@ -482,7 +482,7 @@ static const char* intdesc(uint32_t mask)
 static void printOut(uint32_t mask, const char* fix)
 {
 	std::string buf;
-	for (uint32_t m = 1; m <= PI_INTERRUPT_HSP; m <<= 1)
+	for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
 	{
 		if (mask & m)
 		{
@@ -490,7 +490,7 @@ static void printOut(uint32_t mask, const char* fix)
 			buf += "INT ";
 		}
 	}
-	Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)", buf.c_str(), fix, Core->regs.pc, Core->GetTicks());
+	Report(Channel::PI, "%s%s (pc: %08X, time: 0x%llx)\n", buf.c_str(), fix, Core->regs.pc, Core->GetTicks());
 }
 
 // assert interrupt
@@ -523,6 +523,7 @@ void PIAssertInt(uint32_t mask)
 }
 
 // clear interrupt
+// Also used by external modules to clear read-only INTSR bits
 void PIClearInt(uint32_t mask)
 {
 	if (pi.intsr & mask)
@@ -549,12 +550,13 @@ void PIClearInt(uint32_t mask)
 
 static void read_intsr(uint32_t addr, uint32_t* reg)
 {
-	*reg = pi.intsr | ((pi.rswhack & 1) << 16);
+	*reg = pi.intsr /* | PI_INTSR_RSTSWB */;
 }
 
-// writes turns them off ?
+// Write 1 clears only ARAM, DEBUG, RSW and PI interrupts. The rest is cleared in a tricky way in the corresponding modules.
 static void write_intsr(uint32_t addr, uint32_t data)
 {
+	data &= (PI_INTERRUPT_ARAM | PI_INTERRUPT_DEBUG | PI_INTERRUPT_RSW | PI_INTERRUPT_PI);
 	PIClearInt(data);
 }
 
@@ -571,7 +573,7 @@ static void write_intmr(uint32_t addr, uint32_t data)
 	if (pi.intmr && pi.log)
 	{
 		std::string buf;
-		for (uint32_t m = 1; m <= PI_INTERRUPT_HSP; m <<= 1)
+		for (uint32_t m = 1; m <= PI_INTERRUPT_MSB; m <<= 1)
 		{
 			if (pi.intmr & m)
 			{
@@ -661,7 +663,6 @@ void PIOpen(HWConfig* config)
 {
 	Report(Channel::PI, "Processor interface\n");
 
-	pi.rswhack = config->rswhack;
 	pi.consoleVer = config->consoleVer;
 	pi.log = false;
 

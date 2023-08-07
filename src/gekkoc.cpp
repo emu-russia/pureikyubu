@@ -1,6 +1,7 @@
 
 #include "pch.h"
-#include "gekkoc.h"
+
+using namespace Debug;
 
 // Branch Instructions
 
@@ -1565,7 +1566,7 @@ namespace Gekko
 
 	void Interpreter::divwo()
 	{
-		core->Halt("divwo\n");
+		Halt("divwo\n");
 	}
 
 	void Interpreter::divwo_d()
@@ -1597,7 +1598,7 @@ namespace Gekko
 
 	void Interpreter::divwuo()
 	{
-		core->Halt("divwuo\n");
+		Halt("divwuo\n");
 	}
 
 	void Interpreter::divwuo_d()
@@ -1673,7 +1674,7 @@ namespace Gekko
 
 	void Interpreter::mullwo()
 	{
-		core->Halt("mullwo\n");
+		Halt("mullwo\n");
 	}
 
 	void Interpreter::mullwo_d()
@@ -4224,7 +4225,7 @@ namespace Gekko
 			bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 			bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-			core->Report("%s <- %08X (IR:%i DR:%i pc:%08X)\n",
+			Report(Channel::CPU, "%s <- %08X (IR:%i DR:%i pc:%08X)\n",
 				bat[spr - SPR::IBAT0U], core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 		}
 
@@ -4241,7 +4242,7 @@ namespace Gekko
 			bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
 			bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-			core->Report("SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+			Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
 				core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 
 			core->dtlb.InvalidateAll();
@@ -4251,11 +4252,11 @@ namespace Gekko
 
 		case SPR::TBL:
 			core->regs.tb.Part.l = core->regs.gpr[info.paramBits[1]];
-			core->Report("Set TBL: 0x%08X\n", core->regs.tb.Part.l);
+			Report(Channel::CPU, "Set TBL: 0x%08X\n", core->regs.tb.Part.l);
 			break;
 		case SPR::TBU:
 			core->regs.tb.Part.u = core->regs.gpr[info.paramBits[1]];
-			core->Report("Set TBU: 0x%08X\n", core->regs.tb.Part.u);
+			Report(Channel::CPU, "Set TBU: 0x%08X\n", core->regs.tb.Part.u);
 			break;
 
 			// write gathering buffer
@@ -4276,7 +4277,7 @@ namespace Gekko
 				// On a real system, after a global cache invalidation, the data still remains in the L2 cache.
 				// We cannot afford global invalidation, as the L2 cache is not supported.
 
-				core->Report("Data Cache Flash Invalidate\n");
+				Report(Channel::CPU, "Data Cache Flash Invalidate\n");
 			}
 			if (bits & HID0_ICFI)
 			{
@@ -4285,7 +4286,7 @@ namespace Gekko
 				core->jitc->Reset();
 #endif
 
-				core->Report("Instruction Cache Flash Invalidate\n");
+				Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
 			}
 
 			core->regs.spr[spr] = bits;
@@ -4626,12 +4627,12 @@ namespace Gekko
 
 	void Interpreter::eciwx()
 	{
-		core->Halt("eciwx\n");
+		Halt("eciwx\n");
 	}
 
 	void Interpreter::ecowx()
 	{
-		core->Halt("ecowx\n");
+		Halt("ecowx\n");
 	}
 
 }
@@ -5194,7 +5195,7 @@ namespace Gekko
 			// TODO: CallVM opcode.
 
 		default:
-			core->Halt("** CPU ERROR **\n"
+			Halt("** CPU ERROR **\n"
 				"unimplemented opcode : %08X\n", core->regs.pc);
 
 			core->PrCause = PrivilegedCause::IllegalInstruction;
@@ -5230,7 +5231,7 @@ namespace Gekko
 
 		//pcall();
 
-		core->Halt("callvm: Temporary not implemented!\n");
+		Halt("callvm: Temporary not implemented!\n");
 	}
 
 }

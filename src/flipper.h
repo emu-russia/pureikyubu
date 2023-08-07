@@ -50,7 +50,6 @@ struct HWConfig
 
 	// PI
 	uint32_t    consoleVer;
-	bool        rswhack;
 
 	// EI
 	bool        exi_log;

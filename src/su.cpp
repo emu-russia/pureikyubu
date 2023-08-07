@@ -68,7 +68,7 @@ namespace GX
 
         if (GpRegsLog)
         {
-            Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X", index, value);
+            Report(Channel::GP, "Load BP: index: 0x%02X, data: 0x%08X\n", index, value);
         }
 
         switch (index)
@@ -462,7 +462,7 @@ namespace GX
 
             default:
             {
-                Report(Channel::GP, "Unknown BP load, index: 0x%02X", index);
+                Report(Channel::GP, "Unknown BP load, index: 0x%02X\n", index);
             }
         }
     }
