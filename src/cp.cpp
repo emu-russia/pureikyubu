@@ -186,11 +186,7 @@ namespace GX
 
 			gx->state.cpregs.sr &= ~CP_SR_CMD_IDLE;
 
-			// TODO: Refactoring hacks
-
 			gx->GXWriteFifo(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
-
-			//gx->fifo->WriteBytes(&mi.ram[gx->state.cpregs.rdptr & RAMMASK]);
 
 			gx->state.cpregs.sr |= CP_SR_CMD_IDLE;
 
@@ -1236,7 +1232,7 @@ namespace GX
 	{
 		for (unsigned v = 0; v < 8; v++)
 		{
-			fifo->vertexSize[v] = gx_vtxsize(v);
+			gxfifo->vertexSize[v] = gx_vtxsize(v);
 		}
 	}
 
@@ -1266,10 +1262,10 @@ namespace GX
 			case VCD_NONE:      // Skip attribute
 				return;
 			case VCD_INDEX8:
-				ptr = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
+				ptr = GetArrayPtr(arrayId, gxfifo->Read8(), fmtsz[fmt]);
 				break;
 			case VCD_INDEX16:
-				ptr = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
+				ptr = GetArrayPtr(arrayId, gxfifo->Read16(), fmtsz[fmt]);
 				break;
 			default:
 				ptr = nullptr;
@@ -1283,7 +1279,7 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u8[i] = fifo->Read8();
+						Comp.u8[i] = gxfifo->Read8();
 					}
 				}
 				else
@@ -1305,7 +1301,7 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.s8[i] = fifo->Read8();
+						Comp.s8[i] = gxfifo->Read8();
 					}
 				}
 				else
@@ -1327,14 +1323,14 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u16[i] = fifo->Read16();
+						Comp.u16[i] = gxfifo->Read16();
 					}
 				}
 				else
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+						Comp.u16[i] = _BYTESWAP_UINT16(((uint16_t*)ptr)[i]);
 					}
 				}
 
@@ -1349,14 +1345,14 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.s16[i] = fifo->Read16();
+						Comp.s16[i] = gxfifo->Read16();
 					}
 				}
 				else
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.s16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+						Comp.s16[i] = _BYTESWAP_UINT16(((uint16_t*)ptr)[i]);
 					}
 				}
 
@@ -1371,14 +1367,14 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u32[i] = fifo->Read32();
+						Comp.u32[i] = gxfifo->Read32();
 					}
 				}
 				else
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u32[i] = _byteswap_ulong(((uint32_t*)ptr)[i]);
+						Comp.u32[i] = _BYTESWAP_UINT32(((uint32_t*)ptr)[i]);
 					}
 				}
 
@@ -1417,19 +1413,19 @@ namespace GX
 			case VCD_NONE:      // Skip attribute
 				return;
 			case VCD_INDEX8:
-				ptr1 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
+				ptr1 = GetArrayPtr(arrayId, gxfifo->Read8(), fmtsz[fmt]);
 				if (count == 9 && nrmidx3)
 				{
-					ptr2 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
-					ptr3 = GetArrayPtr(arrayId, fifo->Read8(), fmtsz[fmt]);
+					ptr2 = GetArrayPtr(arrayId, gxfifo->Read8(), fmtsz[fmt]);
+					ptr3 = GetArrayPtr(arrayId, gxfifo->Read8(), fmtsz[fmt]);
 				}
 				break;
 			case VCD_INDEX16:
-				ptr1 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
+				ptr1 = GetArrayPtr(arrayId, gxfifo->Read16(), fmtsz[fmt]);
 				if (count == 9 && nrmidx3)
 				{
-					ptr2 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
-					ptr3 = GetArrayPtr(arrayId, fifo->Read16(), fmtsz[fmt]);
+					ptr2 = GetArrayPtr(arrayId, gxfifo->Read16(), fmtsz[fmt]);
+					ptr3 = GetArrayPtr(arrayId, gxfifo->Read16(), fmtsz[fmt]);
 				}
 				break;
 		}
@@ -1441,7 +1437,7 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.s8[i] = fifo->Read8();
+						Comp.s8[i] = gxfifo->Read8();
 					}
 				}
 				else
@@ -1472,7 +1468,7 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.s16[i] = fifo->Read16();
+						Comp.s16[i] = gxfifo->Read16();
 					}
 				}
 				else
@@ -1488,7 +1484,7 @@ namespace GX
 						{
 							ptr = ptr1;
 						}
-						Comp.s16[i] = _byteswap_ushort(((uint16_t*)ptr)[i]);
+						Comp.s16[i] = _BYTESWAP_UINT16(((uint16_t*)ptr)[i]);
 					}
 				}
 
@@ -1503,7 +1499,7 @@ namespace GX
 				{
 					for (int i = 0; i < count; i++)
 					{
-						Comp.u32[i] = fifo->Read32();
+						Comp.u32[i] = gxfifo->Read32();
 					}
 				}
 				else
@@ -1519,7 +1515,7 @@ namespace GX
 						{
 							ptr = ptr1;
 						}
-						Comp.u32[i] = _byteswap_ulong(((uint32_t*)ptr)[i]);
+						Comp.u32[i] = _BYTESWAP_UINT32(((uint32_t*)ptr)[i]);
 					}
 				}
 
@@ -1556,10 +1552,10 @@ namespace GX
 			case VCD_NONE:      // Skip attribute
 				return col;
 			case VCD_INDEX8:
-				ptr = GetArrayPtr(arrayId, fifo->Read8(), cfmtsz[fmt]);
+				ptr = GetArrayPtr(arrayId, gxfifo->Read8(), cfmtsz[fmt]);
 				break;
 			case VCD_INDEX16:
-				ptr = GetArrayPtr(arrayId, fifo->Read16(), cfmtsz[fmt]);
+				ptr = GetArrayPtr(arrayId, gxfifo->Read16(), cfmtsz[fmt]);
 				break;
 			default:
 				ptr = nullptr;
@@ -1572,11 +1568,11 @@ namespace GX
 
 				if (type == VCD_DIRECT)
 				{
-					p16 = fifo->Read16();
+					p16 = gxfifo->Read16();
 				}
 				else
 				{
-					p16 = _byteswap_ushort(((uint16_t*)ptr)[0]);
+					p16 = _BYTESWAP_UINT16(((uint16_t*)ptr)[0]);
 				}
 
 				r = p16 >> 11;
@@ -1593,9 +1589,9 @@ namespace GX
 			case VFMT_RGB8:
 				if (type == VCD_DIRECT)
 				{
-					col.R = fifo->Read8();
-					col.G = fifo->Read8();
-					col.B = fifo->Read8();
+					col.R = gxfifo->Read8();
+					col.G = gxfifo->Read8();
+					col.B = gxfifo->Read8();
 				}
 				else
 				{
@@ -1609,10 +1605,10 @@ namespace GX
 			case VFMT_RGBX8:
 				if (type == VCD_DIRECT)
 				{
-					col.R = fifo->Read8();
-					col.G = fifo->Read8();
-					col.B = fifo->Read8();
-					fifo->Read8();
+					col.R = gxfifo->Read8();
+					col.G = gxfifo->Read8();
+					col.B = gxfifo->Read8();
+					gxfifo->Read8();
 				}
 				else
 				{
@@ -1627,11 +1623,11 @@ namespace GX
 
 				if (type == VCD_DIRECT)
 				{
-					p16 = fifo->Read16();
+					p16 = gxfifo->Read16();
 				}
 				else
 				{
-					p16 = _byteswap_ushort(((uint16_t*)ptr)[0]);
+					p16 = _BYTESWAP_UINT16(((uint16_t*)ptr)[0]);
 				}
 
 				r = (p16 >> 12) & 0xf;
@@ -1650,7 +1646,7 @@ namespace GX
 
 				if (type == VCD_DIRECT)
 				{
-					p32 = ((uint32_t)fifo->Read8() << 16) | ((uint32_t)fifo->Read8() << 8) | fifo->Read8();
+					p32 = ((uint32_t)gxfifo->Read8() << 16) | ((uint32_t)gxfifo->Read8() << 8) | gxfifo->Read8();
 				}
 				else
 				{
@@ -1673,10 +1669,10 @@ namespace GX
 
 				if (type == VCD_DIRECT)
 				{
-					col.R = fifo->Read8();
-					col.G = fifo->Read8();
-					col.B = fifo->Read8();
-					col.A = fifo->Read8();
+					col.R = gxfifo->Read8();
+					col.G = gxfifo->Read8();
+					col.B = gxfifo->Read8();
+					col.A = gxfifo->Read8();
 				}
 				else
 				{
