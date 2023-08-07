@@ -662,7 +662,7 @@ void PIOpen(HWConfig* config)
 	Report(Channel::PI, "Processor interface\n");
 
 	pi.consoleVer = config->consoleVer;
-	pi.log = true;
+	pi.log = false;
 
 	// now any access will generate unhandled warning,
 	// if emulator try to read or write register,

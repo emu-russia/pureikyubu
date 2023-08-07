@@ -1078,6 +1078,26 @@ static void ARDMA()
 		return;
 	}
 
+	// For fast transactions, complete the DMA immediately because interthreading takes longer than the DMA readiness check in ar.a::__ARCheckSize..
+
+	if (cnt <= 32) {
+
+		if (type == RAM_TO_ARAM) {
+			memcpy(&ARAM[aram.araddr], &mi.ram[aram.mmaddr], 32);
+		}
+		else {
+			memcpy(&mi.ram[aram.mmaddr], &ARAM[aram.araddr], 32);
+		}
+
+		aram.araddr += 32;
+		aram.mmaddr += 32;
+		aram.cnt = 0;
+
+		Flipper::ai.dcr &= ~AIDCR_ARDMA;
+		ARINT();	// invoke aram TC interrupt
+		return;
+	}
+
 	// For other cases - delegate job to thread
 
 	if (aram.dmaThread->IsRunning()) {

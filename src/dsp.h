@@ -294,7 +294,7 @@ namespace DSP
 		bool logDspControlBits = false;
 		bool logDspInterrupts = false;
 		bool logNonconditionalCallJmp = false;
-		bool logDspDma = true;
+		bool logDspDma = false;
 		bool logAccel = false;
 		bool logAdpcm = false;
 		bool dumpUcode = false;
