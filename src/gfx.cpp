@@ -1,5 +1,7 @@
 #include "pch.h"
 
+using namespace Debug;
+
 namespace GX
 {
 	GXCore::GXCore()
@@ -102,21 +104,24 @@ namespace GX
 
     bool GXCore::GL_OpenSubsystem()
     {
+        if (backend_started)
+            return true;
+
         hdcgl = GetDC(hwndMain);
 
-        if (hdcgl == NULL) return FALSE;
+        if (hdcgl == NULL) return false;
 
         if (GL_SetPixelFormat(hdcgl) == 0)
         {
             ReleaseDC(hwndMain, hdcgl);
-            return FALSE;
+            return false;
         }
 
         hglrc = wglCreateContext(hdcgl);
         if (hglrc == NULL)
         {
             ReleaseDC(hwndMain, hdcgl);
-            return FALSE;
+            return false;
         }
 
         wglMakeCurrent(hdcgl, hglrc);
@@ -143,15 +148,21 @@ namespace GX
         // clear performance counters
         frames = tris = pts = lines = 0;
 
+        backend_started = true;
         return true;
     }
 
     void GXCore::GL_CloseSubsystem()
     {
+        if (!backend_started)
+            return;
+
         //if(frameReady) GL_EndFrame();
 
         wglMakeCurrent(NULL, NULL);
         wglDeleteContext(hglrc);
+
+        backend_started = false;
     }
 
     // init rendering (call before drawing FIFO primitives)
@@ -162,7 +173,7 @@ namespace GX
         BeginPaint(hwndMain, &psFrame);
         glDrawBuffer(GL_BACK);
 
-        if (set_clear == TRUE)
+        if (set_clear)
         {
             glClearColor(
                 (float)(cr / 255.0f),
@@ -173,7 +184,7 @@ namespace GX
 
             glClearDepth((double)(clear_z / 16777215.0));
 
-            set_clear = FALSE;
+            set_clear = false;
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -183,7 +194,7 @@ namespace GX
     // done rendering (call when frame is ready)
     void GXCore::GL_EndFrame()
     {
-        BOOL showPerf = FALSE;
+        bool showPerf = false;
         if (!frameReady) return;
 
         /*/
@@ -202,8 +213,8 @@ namespace GX
         // do snapshot
         if (make_shot)
         {
-            make_shot = FALSE;
-            GL_DoSnapshot(FALSE, snap_file, NULL, snap_w, snap_h);
+            make_shot = false;
+            GL_DoSnapshot(false, snap_file, NULL, snap_w, snap_h);
         }
 
         glFinish();
@@ -211,6 +222,7 @@ namespace GX
         EndPaint(hwndMain, &psFrame);
 
         frameReady = 0;
+        //Report(Channel::GP, "gfx frame: %d\n", frames);
         frames++;
         tris = pts = lines = 0;
         state.cpLoads = state.bpLoads = state.xfLoads = 0;

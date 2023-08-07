@@ -77,18 +77,19 @@ namespace GX
 
 		FifoProcessor * fifo = nullptr;	// Internal CP FIFO
 
-		bool GpRegsLog = false;
 		bool gxOpened = false;
 		bool frame_done = true;
-		bool logDrawCommands = false;
 		bool disableDraw = false;
+
+		// logging
+		bool logOpcode = false;
+		bool logDrawCommands = false;
+		bool GpRegsLog = false;
 
 		size_t usevat;	// current VAT
 		Vertex* vtx; // current vertex to collect data
 
 		HWND hwndMain;
-
-		uint32_t lastFifoSize;
 
 		uint8_t cr = 0, cg = 0, cb = 0, ca = 0;
 		uint32_t clear_z = -1;
@@ -103,6 +104,7 @@ namespace GX
 
 		PAINTSTRUCT psFrame{};
 		int frameReady = 0;
+		bool backend_started = false;
 
 		// optionable
 		uint32_t scr_w = 640, scr_h = 480;

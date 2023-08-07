@@ -713,7 +713,7 @@ namespace GX
                     break;
                 }
 
-                mx = &state.xf.mvTexMtx[state.xf.texidx[n] * 0];
+                mx = &state.xf.mvTexMtx[state.xf.texidx[n] * 4];
 
                 // st or stq ?
                 if (state.xf.tex[n].projection)
