@@ -582,12 +582,12 @@ void BootROM(bool dvd, bool rtc, uint32_t consoleVer)
 	// IBATs
 	Core->regs.spr[(int)Gekko::SPR::IBAT0U] = Core->regs.spr[(int)Gekko::SPR::DBAT0U];
 	Core->regs.spr[(int)Gekko::SPR::IBAT0L] = Core->regs.spr[(int)Gekko::SPR::DBAT0L];
-	Core->regs.spr[(int)Gekko::SPR::IBAT1U] = Core->regs.spr[(int)Gekko::SPR::DBAT1U];
-	Core->regs.spr[(int)Gekko::SPR::IBAT1L] = Core->regs.spr[(int)Gekko::SPR::DBAT1L];
-	Core->regs.spr[(int)Gekko::SPR::IBAT2U] = Core->regs.spr[(int)Gekko::SPR::DBAT2U];
-	Core->regs.spr[(int)Gekko::SPR::IBAT2L] = Core->regs.spr[(int)Gekko::SPR::DBAT2L];
-	Core->regs.spr[(int)Gekko::SPR::IBAT3U] = Core->regs.spr[(int)Gekko::SPR::DBAT3U];
-	Core->regs.spr[(int)Gekko::SPR::IBAT3L] = Core->regs.spr[(int)Gekko::SPR::DBAT3L];
+	Core->regs.spr[(int)Gekko::SPR::IBAT1U] = 0;
+	Core->regs.spr[(int)Gekko::SPR::IBAT1L] = 0;
+	Core->regs.spr[(int)Gekko::SPR::IBAT2U] = 0;
+	Core->regs.spr[(int)Gekko::SPR::IBAT2L] = 0;
+	Core->regs.spr[(int)Gekko::SPR::IBAT3U] = 0;
+	Core->regs.spr[(int)Gekko::SPR::IBAT3L] = 0;
 	// MSR MMU bits
 	Core->regs.msr |= (MSR_IR | MSR_DR);               // enable translation
 	// page table

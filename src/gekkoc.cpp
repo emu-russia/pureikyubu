@@ -4512,7 +4512,7 @@ namespace Gekko
 	void Interpreter::icbi()
 	{
 		int WIMG;
-		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[0]];
+		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
 		address &= ~0x1f;
 
 		if (core->regs.msr & MSR_PR)
@@ -4522,7 +4522,7 @@ namespace Gekko
 			return;
 		}
 
-		uint32_t pa = core->EffectiveToPhysical(address, MmuAccess::Write, WIMG);
+		uint32_t pa = core->EffectiveToPhysical(address, MmuAccess::Read, WIMG);
 		if (pa != Gekko::BadAddress)
 		{
 			core->icache->Invalidate(pa);

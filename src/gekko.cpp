@@ -171,7 +171,7 @@ namespace Gekko
 
 	void GekkoCore::Exception(Gekko::Exception code)
 	{
-		Halt("Gekko Exception: #%04X\n", (uint16_t)code);
+		//Halt("Gekko Exception: #%04X\n", (uint16_t)code);
 
 		if (exception)
 		{
