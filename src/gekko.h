@@ -629,11 +629,6 @@ namespace Gekko
 
 		GatherBuffer* gatherBuffer;
 
-		// Stats
-
-		size_t compiledSegments = 0;
-		size_t executedSegments = 0;
-
 		bool RESERVE = false;    // for lwarx/stwcx.
 		uint32_t RESERVE_ADDR = 0;	// for lwarx/stwcx.
 
@@ -642,7 +637,6 @@ namespace Gekko
 		Cache* cache;
 		Cache* icache;
 
-		// TODO: Will be hidden more
 		GekkoRegs regs;
 
 		GekkoCore();
@@ -708,11 +702,6 @@ namespace Gekko
 		void ResetOpcodeStats();
 		void RunOpcodeStatsThread();
 		void StopOpcodeStatsThread();
-
-		size_t GetCompiledSegmentsCount() { return compiledSegments; }
-		size_t GetExecutedSegmentsCount() { return executedSegments; }
-		void ResetCompiledSegmentsCount() { compiledSegments = 0; }
-		void ResetExecutedSegmentsCount() { executedSegments = 0; }
 
 #pragma endregion "Debug"
 

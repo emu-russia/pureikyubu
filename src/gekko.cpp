@@ -21,26 +21,21 @@ namespace Gekko
 			core->TestBreakpoints();
 		}
 
-#if GEKKOCORE_USE_JITC
-		core->jitc->Execute();
-#else
 		core->interp->ExecuteOpcode();
-#endif
 	}
 
 	GekkoCore::GekkoCore()
 	{
 		cache = new Cache(this);
 		icache = new Cache(this);
-		icache->SetLogLevel(CacheLogLevel::MemOps);
+		
+		// DEBUG
+		//cache->SetLogLevel(CacheLogLevel::MemOps);
+		//icache->SetLogLevel(CacheLogLevel::MemOps);
 
 		gatherBuffer = new GatherBuffer(this);
 
 		interp = new Interpreter(this);
-
-#if GEKKOCORE_USE_JITC
-		jitc = new Jitc(this);
-#endif
 
 		gekkoThread = EMUCreateThread(GekkoThreadProc, false, this, "GekkoCore");
 
@@ -52,9 +47,6 @@ namespace Gekko
 		StopOpcodeStatsThread();
 		EMUJoinThread(gekkoThread);
 		delete interp;
-#if GEKKOCORE_USE_JITC
-		delete jitc;
-#endif
 		delete gatherBuffer;
 	}
 
@@ -103,12 +95,6 @@ namespace Gekko
 		regs.spr[SPR::CTR] = 0;
 
 		gatherBuffer->Reset();
-
-#if GEKKOCORE_USE_JITC
-		jitc->Reset();
-#endif
-		ResetCompiledSegmentsCount();
-		ResetExecutedSegmentsCount();
 
 		dtlb.InvalidateAll();
 		itlb.InvalidateAll();
@@ -185,7 +171,7 @@ namespace Gekko
 
 	void GekkoCore::Exception(Gekko::Exception code)
 	{
-		//DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+		Halt("Gekko Exception: #%04X\n", (uint16_t)code);
 
 		if (exception)
 		{
@@ -621,6 +607,12 @@ namespace Gekko
 			return;
 		}
 
+		// You don't need to use the ICache in BS1, even if it is enabled
+		if (pa >= BOOTROM_START_ADDRESS) {
+			PIReadWord(pa, reg);
+			return;
+		}
+
 		if (icache->IsEnabled() && (WIMG & WIMG_I) == 0)
 		{
 			icache->ReadWord(pa, reg);
@@ -703,9 +695,6 @@ namespace Gekko
 		{
 			Report(Channel::CPU, "Breakpoint added: 0x%08X\n", addr);
 			breakPointsExecute.push_back(addr);
-#if GEKKOCORE_USE_JITC
-			jitc->Invalidate(addr, 4);
-#endif
 			EnableTestBreakpoints = true;
 		}
 		breakPointsLock.Unlock();
@@ -727,9 +716,6 @@ namespace Gekko
 		{
 			Report(Channel::CPU, "Breakpoint removed: 0x%08X\n", addr);
 			breakPointsExecute.remove(addr);
-#if GEKKOCORE_USE_JITC
-			jitc->Invalidate(addr, 4);
-#endif
 		}
 		if (breakPointsExecute.size() == 0)
 		{

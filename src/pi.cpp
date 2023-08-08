@@ -636,7 +636,10 @@ static void write_config(uint32_t addr, uint32_t data)
 
 		if (data & PI_CONFIG_MEMRSTB)
 		{
+			// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
+
 			Report(Channel::PI, "MEM Reset requested.\n");
+			memset(mi.ram, 0, mi.ramSize);
 		}
 
 		if (data & PI_CONFIG_DIRSTB)

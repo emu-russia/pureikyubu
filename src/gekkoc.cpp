@@ -4251,17 +4251,12 @@ namespace Gekko
 				if (bits & HID0_DCFI)
 				{
 					bits &= ~HID0_DCFI;
-
 					Report(Channel::CPU, "Data Cache Flash Invalidate\n");
 					core->cache->FlashInvalidate();
 				}
 				if (bits & HID0_ICFI)
 				{
 					bits &= ~HID0_ICFI;
-#if GEKKOCORE_USE_JITC
-					core->jitc->Reset();
-#endif
-
 					Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
 					core->icache->FlashInvalidate();
 				}
@@ -4514,8 +4509,6 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	// Used as a hint to JITC so that it can invalidate the compiled code at this address.
-
 	void Interpreter::icbi()
 	{
 		int WIMG;
@@ -4540,13 +4533,6 @@ namespace Gekko
 			return;
 		}
 		core->regs.pc += 4;
-
-#if GEKKOCORE_USE_JITC
-		if (physicalAddress != BadAddress)
-		{
-			core->jitc->Invalidate(physicalAddress, 32);
-		}
-#endif
 	}
 
 	// rd = sr[a]
