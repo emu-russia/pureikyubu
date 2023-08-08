@@ -422,10 +422,6 @@ namespace Gekko
 		void CastIn(uint32_t pa);		// Mem -> Cache
 		void CastOut(uint32_t pa);		// Cache -> Mem
 
-		// You can disable cache emulation for debugging purposes.
-		// This does not apply to a locked cache.
-		bool DisableForDebugReasons = true;
-
 		uint8_t* LockedCache = nullptr;
 		uint32_t LockedCacheAddr = 0;
 		bool lcenabled = false;
@@ -470,7 +466,6 @@ namespace Gekko
 		void LockedCacheDma(bool MemToCache, uint32_t memaddr, uint32_t lcaddr, size_t bursts);
 
 		void SetLogLevel(CacheLogLevel level) { log = level; }
-		void DebugDisable(bool disable);
 	};
 }
 

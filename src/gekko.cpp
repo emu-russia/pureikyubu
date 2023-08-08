@@ -913,11 +913,6 @@ namespace Gekko
 	{
 		enabled = enable;
 
-		if (DisableForDebugReasons)
-		{
-			enabled = false;
-		}
-
 		if (log >= CacheLogLevel::Commands)
 		{
 			Report(Channel::CPU, "Cache::Enable %i\n", enable ? 1 : 0);
@@ -1143,7 +1138,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1173,7 +1168,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1204,7 +1199,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1249,7 +1244,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1297,7 +1292,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1342,7 +1337,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1390,7 +1385,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1435,7 +1430,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1503,20 +1498,6 @@ namespace Gekko
 			}
 		}
 	}
-
-	void Cache::DebugDisable(bool disable)
-	{
-		if (disable)
-		{
-			Report(Channel::CPU, "Cache disabled for debug purposes");
-		}
-		else
-		{
-			Report(Channel::CPU, "Cache works normally");
-		}
-		DisableForDebugReasons = disable;
-	}
-
 }
 
 

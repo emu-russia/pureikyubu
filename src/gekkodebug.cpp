@@ -355,13 +355,6 @@ namespace Debug
 		return nullptr;
 	}
 
-	static Json::Value* CmdCacheDebugDisable(std::vector<std::string>& args)
-	{
-		bool disable = atoi(args[1].c_str()) ? true : false;
-		Core->cache->DebugDisable(disable);
-		return nullptr;
-	}
-
 	static Json::Value* CmdIsRunning(std::vector<std::string>& args)
 	{
 		Json::Value* output = new Json::Value();
@@ -894,7 +887,6 @@ namespace Debug
 		JDI::Hub.AddCmd("bw", CmdBreakWrite);
 		JDI::Hub.AddCmd("bc", CmdBreakClearAll);
 		JDI::Hub.AddCmd("CacheLog", CmdCacheLog);
-		JDI::Hub.AddCmd("CacheDebugDisable", CmdCacheDebugDisable);
 
 		JDI::Hub.AddCmd("IsRunning", CmdIsRunning);
 		JDI::Hub.AddCmd("GekkoRun", CmdGekkoRun);
