@@ -31,6 +31,8 @@ namespace Gekko
 	GekkoCore::GekkoCore()
 	{
 		cache = new Cache(this);
+		icache = new Cache(this);
+		icache->SetLogLevel(CacheLogLevel::MemOps);
 
 		gatherBuffer = new GatherBuffer(this);
 
@@ -111,6 +113,7 @@ namespace Gekko
 		dtlb.InvalidateAll();
 		itlb.InvalidateAll();
 		cache->Reset();
+		icache->Reset();
 	}
 
 	// Modify CPU counters
@@ -173,13 +176,11 @@ namespace Gekko
 	void GekkoCore::AssertInterrupt()
 	{
 		intFlag = true;
-		//Report(Channel::CPU, "AssertInterrupt\n");
 	}
 
 	void GekkoCore::ClearInterrupt()
 	{
 		intFlag = false;
-		//Report(Channel::CPU, "ClearInterrupt\n");
 	}
 
 	void GekkoCore::Exception(Gekko::Exception code)
@@ -620,11 +621,11 @@ namespace Gekko
 			return;
 		}
 
-		//if (icache->IsEnabled() && (WIMG & WIMG_I) == 0)
-		//{
-		//	icache->ReadWord(pa, reg);
-		//	return;
-		//}
+		if (icache->IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			icache->ReadWord(pa, reg);
+			return;
+		}
 
 		PIReadWord(pa, reg);
 	}
@@ -763,33 +764,6 @@ namespace Gekko
 		EnableTestBreakpoints = false;
 		EnableTestReadBreakpoints = false;
 		EnableTestWriteBreakpoints = false;
-	}
-
-	bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
-	{
-		if (!EnableTestBreakpoints)
-			return false;
-
-		if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
-		{
-			oneShotBreakpoint = BadAddress;
-			return true;
-		}
-
-		bool exists = false;
-
-		breakPointsLock.Lock();
-		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-		{
-			if (*it == addr)
-			{
-				exists = true;
-				break;
-			}
-		}
-		breakPointsLock.Unlock();
-
-		return exists;
 	}
 
 	void GekkoCore::TestBreakpoints()
@@ -932,12 +906,7 @@ namespace Gekko
 	void Cache::Reset()
 	{
 		Report(Channel::CPU, "Cache::Reset\n");
-
-		for (size_t i = 0; i < (cacheSize >> 5); i++)
-		{
-			modifiedBlocks[i] = false;
-			invalidBlocks[i] = true;
-		}
+		FlashInvalidate();
 	}
 
 	void Cache::Enable(bool enable)
@@ -1045,6 +1014,15 @@ namespace Gekko
 		if (log >= CacheLogLevel::Commands)
 		{
 			Report(Channel::CPU, "Cache::Invalidate 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
+		}
+	}
+
+	void Cache::FlashInvalidate()
+	{
+		size_t blocks_num = cacheSize >> 5;
+		for (size_t n = 0; n < blocks_num; n++) {
+			modifiedBlocks[n] = false;
+			invalidBlocks[n] = true;
 		}
 	}
 
@@ -1685,30 +1663,6 @@ namespace Gekko
 
 namespace Gekko
 {
-
-	// A simple translation, which is configured by the Dolphin OS software environment (until it starts using MMU for ARAM mapping).
-
-	uint32_t GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
-	{
-		WIMG = WIMG_I;      // Caching inhibited
-
-		// Locked cache
-		if ((ea & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS && cache->IsLockedEnable())
-		{
-			WIMG = 0;
-			return ea;
-		}
-
-		// Required to run bootrom
-		if ((ea & ~0xfffff) == BOOTROM_START_ADDRESS)
-		{
-			return ea;
-		}
-
-		// Ignore no memory, page faults, alignment, etc errors
-		return ea & RAMMASK;
-	}
-
 	// Native address translation defined by PowerPC architecture. There are some alien moments (Hash for Page Tables), but overall its fine.
 
 	uint32_t GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)

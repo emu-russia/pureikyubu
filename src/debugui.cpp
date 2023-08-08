@@ -1863,7 +1863,7 @@ namespace Debug
 		switch (Vkey)
 		{
 			case CuiVkey::F1:
-				SetWindowFocus("GekkoRegs");
+				SetWindowFocus("DebugRegs");
 				InvalidateAll();
 				break;
 
@@ -2276,20 +2276,20 @@ namespace Debug
 
 		switch (mode)
 		{
-			case DebuRegmode::GPR: modeText = "Gekko GPR"; break;
-			case DebuRegmode::FPR: modeText = "Gekko FPR"; break;
-			case DebuRegmode::PSR: modeText = "Gekko PSR"; break;
-			case DebuRegmode::MMU: modeText = "Gekko MMU"; break;
+			case DebugRegmode::GPR: modeText = "Gekko GPR"; break;
+			case DebugRegmode::FPR: modeText = "Gekko FPR"; break;
+			case DebugRegmode::PSR: modeText = "Gekko PSR"; break;
+			case DebugRegmode::MMU: modeText = "Gekko MMU"; break;
 		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, modeText);
 
 		switch (mode)
 		{
-			case DebuRegmode::GPR: ShowGprs(); break;
-			case DebuRegmode::FPR: ShowFprs(); break;
-			case DebuRegmode::PSR: ShowPairedSingle(); break;
-			case DebuRegmode::MMU: ShowMmu(); break;
+			case DebugRegmode::GPR: ShowGprs(); break;
+			case DebugRegmode::FPR: ShowFprs(); break;
+			case DebugRegmode::PSR: ShowPairedSingle(); break;
+			case DebugRegmode::MMU: ShowMmu(); break;
 		}
 	}
 
@@ -2525,20 +2525,20 @@ namespace Debug
 		{
 			switch (mode)
 			{
-				case DebuRegmode::GPR: mode = DebuRegmode::FPR; break;
-				case DebuRegmode::FPR: mode = DebuRegmode::PSR; break;
-				case DebuRegmode::PSR: mode = DebuRegmode::MMU; break;
-				case DebuRegmode::MMU: mode = DebuRegmode::GPR; break;
+				case DebugRegmode::GPR: mode = DebugRegmode::FPR; break;
+				case DebugRegmode::FPR: mode = DebugRegmode::PSR; break;
+				case DebugRegmode::PSR: mode = DebugRegmode::MMU; break;
+				case DebugRegmode::MMU: mode = DebugRegmode::GPR; break;
 			}
 		}
 		else
 		{
 			switch (mode)
 			{
-				case DebuRegmode::GPR: mode = DebuRegmode::MMU; break;
-				case DebuRegmode::FPR: mode = DebuRegmode::GPR; break;
-				case DebuRegmode::PSR: mode = DebuRegmode::FPR; break;
-				case DebuRegmode::MMU: mode = DebuRegmode::PSR; break;
+				case DebugRegmode::GPR: mode = DebugRegmode::MMU; break;
+				case DebugRegmode::FPR: mode = DebugRegmode::GPR; break;
+				case DebugRegmode::PSR: mode = DebugRegmode::FPR; break;
+				case DebugRegmode::MMU: mode = DebugRegmode::PSR; break;
 			}
 		}
 	}

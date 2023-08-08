@@ -28,10 +28,9 @@ TLB is the history of MMU translations, to speed up address translation. TLB is 
 
 ## Cache Support
 
-Supported data cache emulation and Locked L1 Data Cache.
+Supported instruction and data cache emulation and Locked L1 Data Cache.
 
-Emulation of instruction cache and L2 Cache is not required. The instructions are always executed in one direction (Fetch), so there is no need to store them in the cache,
-you can immediately take them from memory. L2 Cache is also not required, since it works completely transparently for executable programs (there is no way to perform operations
+L2 Cache is also not required, since it works completely transparently for executable programs (there is no way to perform operations
 with it using any instructions).
 
 ## Interpreter Architecture
@@ -41,69 +40,6 @@ The interpreter has been rewritten to use a generic decoder.
 Each instruction handler already receives ready-made decoded information (`DecoderInfo`) and does not perform decoding.
 
 To speed up the operation of some instructions (Paired-Single Load Store and Rotate), pre-prepared tables are used.
-
-## Recompiler Architecture
-
-A recompiler or just-in-time compiler (JITC) is a widespread practice for optimizing emulators. Executable code of the emulated system (in this case, IBM Gekko) is translated into the executable code of the processor where the emulator is running (in this case, Intel X86/X64).
-
-### Basics
-
-The recompiler translates code into sections called "segments". Each segment is a continuous section of Gekko code (that is, the segment ends on the first branch instruction, or any other instruction that non-linearly changes the Program Counter register).
-
-All recompiled segments are stored in a indexed cache. The index is the starting physical address >> 2 (all Gekko instructions are 4 byte aligned) of the segment.
-
-### Segment Translation
-
-Segment translation is the actual process of recompiling a Gekko code segment into X86/X64 code.
-
-Translation is carried out instruction by instruction, until the end of the segment (branch). The last branch is also translated.
-
-Translation of individual instructions is carried out with the participation of the GekkoDecoder component. The instruction is decoded, and then the structure with the decoded information (`DecoderInfo`) is passed to the code generator of the corresponding instruction.
-
-All instructions translators are located in the JitcX64 folder (for translating the X64 code) and JitcX86 (for translating the X86). In total, Gekko contains about 350 instructions, so there are many corresponding modules there :P
-
-The code is generated using the assembler of the IntelCore component.
-
-### Interpreter Fallback
-
-At the initial stages of development (or for testing), it is possible to translate the code in such a way that the execution of the instruction is passed to the interpreter.
-
-The code implementing this is in the Fallback.cpp module.
-
-### Recompiler Invalidation
-
-From time to time, an emulated program loads new software modules (overlays). In this case, the new code is loaded into the memory in place of the old code.
-
-Gekko has a handy mechanism for tracking this. The `icbi` instruction is used to discard the old recompiled code.
-
-The recompiler is also invalidated after setting or removing breakpoints and several other cases.
-
-The current executable segment is not invalidated, as this will lead to an exception.
-
-### Running Recompiled Code
-
-The Gekko run loop in recompilation mode looks something like this:
-
-```c++
-
-if (!SegmentCompiled(Gekko::PC))
-{
-	CompileSegment(Gekko::PC);
-}
-
-RunSegment(Gekko::PC);
-
-// Check decrementer ...
-
-// Check pending interrupt request ...
-
-```
-
-### Register Caching
-
-There are advanced recompilation techniques where the register values of the previous segment instruction are used for the next. This technique is called register caching.
-
-Dolwin does not support this mechanism, since modern X86/X64 processors are already advanced enough and contain various out-of-order optimizers and rename buffers. There is no need to do this work for them.
 
 ## Brief description of Gekko (PowerPC)
 
@@ -148,20 +84,6 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #pragma once
 
 // Compile time macros for GekkoCore.
-
-// For debugging purposes, Jitc is not yet turned on when the code is uploaded to master.
-
-#ifndef GEKKOCORE_USE_JITC
-#define GEKKOCORE_USE_JITC 0	//!< Use the recompiler during main code execution (in runtime). Debugging (step-by-step execution) is always done using the interpreter.
-#endif
-
-#ifndef GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE
-#define GEKKOCORE_JITC_HALT_ON_UNIMPLEMENTED_OPCODE 0	//!< Halt the emulation on an unimplemented opcode, instead of passing control to the interpeter fallback
-#endif
-
-#ifndef GEKKOCORE_SIMPLE_MMU
-#define GEKKOCORE_SIMPLE_MMU 0	//!< Use the simple MMU translation used in Dolphin OS (until games start using ARAM mapping, also not suitable for GC-Linux).
-#endif
 
 #ifndef GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS
 #define GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS 10000		//!< The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free (WPAR[BNE] = 0)
@@ -529,6 +451,7 @@ namespace Gekko
 
 		void Flush(uint32_t pa);
 		void Invalidate(uint32_t pa);
+		void FlashInvalidate();
 		void Store(uint32_t pa);
 		void Touch(uint32_t pa);
 		void TouchForStore(uint32_t pa);
@@ -606,16 +529,9 @@ struct GekkoRegs
 	TBREG       tb;                 // time-base counter (timer)
 };
 
-namespace Debug
-{
-	class JitCommands;
-}
-
 namespace Gekko
 {
 	class Interpreter;
-	class Jitc;
-	class CodeSegment;
 
 	enum class MmuAccess
 	{
@@ -651,8 +567,6 @@ namespace Gekko
 	class GekkoCore
 	{
 		friend Interpreter;
-		friend Jitc;
-		friend CodeSegment;
 		friend GatherBuffer;
 		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
@@ -670,7 +584,6 @@ namespace Gekko
 		SpinLock breakPointsLock;
 		uint32_t oneShotBreakpoint = BadAddress;
 
-		bool TestBreakpointForJitc(uint32_t addr);
 		void TestBreakpoints();
 		void TestReadBreakpoints(uint32_t accessAddress);
 		void TestWriteBreakpoints(uint32_t accessAddress);
@@ -680,12 +593,10 @@ namespace Gekko
 		bool EnableTestWriteBreakpoints = false;
 
 		Interpreter* interp;
-		Jitc* jitc;
 
 		int64_t     one_second;         // one second in timer ticks
 		size_t      ops;                // instruction counter (only for debug!)
 
-		uint32_t EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG);
 		uint32_t EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG);
 
 		volatile bool decreq = false;       // decrementer exception request
@@ -733,10 +644,8 @@ namespace Gekko
 
 	public:
 
-		// The instruction cache is not emulated because it is accessed only in one direction (Read).
-		// Accordingly, it makes no sense to store a copy of RAM, you can just immediately read it from memory.
-
 		Cache* cache;
+		Cache* icache;
 
 		// TODO: Will be hidden more
 		GekkoRegs regs;

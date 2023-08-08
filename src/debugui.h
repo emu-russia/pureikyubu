@@ -365,7 +365,7 @@ namespace Debug
 
 namespace Debug
 {
-	enum class DebuRegmode
+	enum class DebugRegmode
 	{
 		GPR = 0,
 		FPR,
@@ -390,7 +390,7 @@ namespace Debug
 
 	class DebugRegs : public CuiWindow
 	{
-		DebuRegmode mode = DebuRegmode::GPR;
+		DebugRegmode mode = DebugRegmode::GPR;
 
 		uint32_t savedGpr[32] = { 0 };
 		Fpreg savedPs0[32] = { 0 };
