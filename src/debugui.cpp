@@ -1788,7 +1788,7 @@ namespace Debug
 		rect.right = width;
 		rect.bottom = regsHeight - 1;
 
-		regs = new GekkoRegs(rect, "GekkoRegs", this);
+		regs = new DebugRegs(rect, "DebugRegs", this);
 
 		AddWindow(regs);
 
@@ -2239,17 +2239,17 @@ namespace Debug
 		"r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31"
 	};
 
-	GekkoRegs::GekkoRegs(CuiRect& rect, std::string name, Cui* parent)
+	DebugRegs::DebugRegs(CuiRect& rect, std::string name, Cui* parent)
 		: CuiWindow (rect, name, parent)
 	{
 		Memorize();
 	}
 
-	GekkoRegs::~GekkoRegs()
+	DebugRegs::~DebugRegs()
 	{
 	}
 
-	void GekkoRegs::OnDraw()
+	void DebugRegs::OnDraw()
 	{
 		Fill(CuiColor::Black, CuiColor::Normal, ' ');
 
@@ -2276,24 +2276,24 @@ namespace Debug
 
 		switch (mode)
 		{
-			case GekkoRegmode::GPR: modeText = "GPR"; break;
-			case GekkoRegmode::FPR: modeText = "FPR"; break;
-			case GekkoRegmode::PSR: modeText = "PSR"; break;
-			case GekkoRegmode::MMU: modeText = "MMU"; break;
+			case DebuRegmode::GPR: modeText = "Gekko GPR"; break;
+			case DebuRegmode::FPR: modeText = "Gekko FPR"; break;
+			case DebuRegmode::PSR: modeText = "Gekko PSR"; break;
+			case DebuRegmode::MMU: modeText = "Gekko MMU"; break;
 		}
 
 		Print(CuiColor::Cyan, CuiColor::Black, (int)(head.size() + 3), 0, modeText);
 
 		switch (mode)
 		{
-			case GekkoRegmode::GPR: ShowGprs(); break;
-			case GekkoRegmode::FPR: ShowFprs(); break;
-			case GekkoRegmode::PSR: ShowPairedSingle(); break;
-			case GekkoRegmode::MMU: ShowMmu(); break;
+			case DebuRegmode::GPR: ShowGprs(); break;
+			case DebuRegmode::FPR: ShowFprs(); break;
+			case DebuRegmode::PSR: ShowPairedSingle(); break;
+			case DebuRegmode::MMU: ShowMmu(); break;
 		}
 	}
 
-	void GekkoRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
+	void DebugRegs::OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl)
 	{
 		switch (Vkey)
 		{
@@ -2311,7 +2311,7 @@ namespace Debug
 		Invalidate();
 	}
 
-	void GekkoRegs::Memorize()
+	void DebugRegs::Memorize()
 	{
 		for (size_t n = 0; n < 32; n++)
 		{
@@ -2321,7 +2321,7 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::ShowGprs()
+	void DebugRegs::ShowGprs()
 	{
 		int y;
 
@@ -2334,7 +2334,7 @@ namespace Debug
 		ShowOtherRegs();
 	}
 
-	void GekkoRegs::ShowOtherRegs()
+	void DebugRegs::ShowOtherRegs()
 	{
 		// Names
 
@@ -2419,7 +2419,7 @@ namespace Debug
 		Print(CuiColor::Normal, 78, 7, "%i", (hid2 & HID2_LCE) ? 1 : 0); // Cache locked?
 	}
 
-	void GekkoRegs::ShowFprs()
+	void DebugRegs::ShowFprs()
 	{
 		int y;
 
@@ -2430,7 +2430,7 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::ShowPairedSingle()
+	void DebugRegs::ShowPairedSingle()
 	{
 		int y;
 
@@ -2457,7 +2457,7 @@ namespace Debug
 		Print(CuiColor::Normal, 70, 11, "%i", (hid2 & HID2_LSQE) ? 1 : 0); // Load/Store Quantization?
 	}
 
-	void GekkoRegs::ShowMmu()
+	void DebugRegs::ShowMmu()
 	{
 		// Names
 
@@ -2519,31 +2519,31 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::RotateView(bool forward)
+	void DebugRegs::RotateView(bool forward)
 	{
 		if (forward)
 		{
 			switch (mode)
 			{
-				case GekkoRegmode::GPR: mode = GekkoRegmode::FPR; break;
-				case GekkoRegmode::FPR: mode = GekkoRegmode::PSR; break;
-				case GekkoRegmode::PSR: mode = GekkoRegmode::MMU; break;
-				case GekkoRegmode::MMU: mode = GekkoRegmode::GPR; break;
+				case DebuRegmode::GPR: mode = DebuRegmode::FPR; break;
+				case DebuRegmode::FPR: mode = DebuRegmode::PSR; break;
+				case DebuRegmode::PSR: mode = DebuRegmode::MMU; break;
+				case DebuRegmode::MMU: mode = DebuRegmode::GPR; break;
 			}
 		}
 		else
 		{
 			switch (mode)
 			{
-				case GekkoRegmode::GPR: mode = GekkoRegmode::MMU; break;
-				case GekkoRegmode::FPR: mode = GekkoRegmode::GPR; break;
-				case GekkoRegmode::PSR: mode = GekkoRegmode::FPR; break;
-				case GekkoRegmode::MMU: mode = GekkoRegmode::PSR; break;
+				case DebuRegmode::GPR: mode = DebuRegmode::MMU; break;
+				case DebuRegmode::FPR: mode = DebuRegmode::GPR; break;
+				case DebuRegmode::PSR: mode = DebuRegmode::FPR; break;
+				case DebuRegmode::MMU: mode = DebuRegmode::PSR; break;
 			}
 		}
 	}
 
-	void GekkoRegs::print_gprreg(int x, int y, int num)
+	void DebugRegs::print_gprreg(int x, int y, int num)
 	{
 		uint32_t value = Jdi->GetGpr(num);
 
@@ -2560,7 +2560,7 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::print_fpreg(int x, int y, int num)
+	void DebugRegs::print_fpreg(int x, int y, int num)
 	{
 		Fpreg value;
 
@@ -2586,7 +2586,7 @@ namespace Debug
 		}
 	}
 
-	void GekkoRegs::print_ps(int x, int y, int num)
+	void DebugRegs::print_ps(int x, int y, int num)
 	{
 		Fpreg ps0, ps1;
 
@@ -2622,7 +2622,7 @@ namespace Debug
 		}
 	}
 
-	int GekkoRegs::cntlzw(uint32_t val)
+	int DebugRegs::cntlzw(uint32_t val)
 	{
 		int i;
 		for (i = 0; i < 32; i++)
@@ -2632,7 +2632,7 @@ namespace Debug
 		return ((i == 32) ? 31 : i);
 	}
 
-	void GekkoRegs::describe_bat_reg(int x, int y, uint32_t up, uint32_t lo, bool instr)
+	void DebugRegs::describe_bat_reg(int x, int y, uint32_t up, uint32_t lo, bool instr)
 	{
 		// Use plain numbers, no definitions (for best compatibility).
 		uint32_t bepi = (up >> 17) & 0x7fff;
@@ -2671,7 +2671,7 @@ namespace Debug
 		Print(CuiColor::Normal, x, y, temp);
 	}
 
-	std::string GekkoRegs::smart_size(size_t size)
+	std::string DebugRegs::smart_size(size_t size)
 	{
 		char tempBuf[0x20] = { 0, };
 
