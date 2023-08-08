@@ -33,7 +33,7 @@
 #define PI_BASE             0x0C00300C      // PI CP fifo base
 #define PI_TOP              0x0C003010      // PI CP fifo top
 #define PI_WRPTR            0x0C003014      // PI CP fifo write pointer
-#define PI_CPABT            0x0C003018      // Abort PI CP FIFO?
+#define PI_CPABT            0x0C003018      // Abort PI CP FIFO
 #define PI_PIESR            0x0C00301C
 #define PI_PIEAR            0x0C003020
 #define PI_CONFIG           0x0C003024      // PI CFG + reset bits

@@ -44,7 +44,7 @@ void SRAMSave(SRAM* s)
 // use to get updated RTC
 void RTCUpdate()
 {
-	exi.rtcVal = 0;// (uint32_t)time(NULL) - MAGIC_VALUE;
+	exi.rtcVal = 0;//(uint32_t)time(NULL) - MAGIC_VALUE;
 }
 
 //
@@ -212,34 +212,34 @@ void MXTransfer()
 					uint8_t* rofs = (uint8_t*)&exi.regs[0].data;
 					switch (len)
 					{
-					case 0:         // byte
-						rofs[0] =
-							rofs[1] =
-							rofs[2] = 0;
-						rofs[3] = sofs[0];
-						exi.mxaddr += 1 << 6;
-						break;
-					case 1:         // hword
-						rofs[0] =
-							rofs[1] = 0;
-						rofs[2] = sofs[1];
-						rofs[3] = sofs[0];
-						exi.mxaddr += 2 << 6;
-						break;
-					case 2:         // triplet
-						rofs[0] = 0;
-						rofs[1] = sofs[2];
-						rofs[2] = sofs[1];
-						rofs[3] = sofs[0];
-						exi.mxaddr += 3 << 6;
-						break;
-					case 3:         // word
-						rofs[0] = sofs[3];
-						rofs[1] = sofs[2];
-						rofs[2] = sofs[1];
-						rofs[3] = sofs[0];
-						exi.mxaddr += 4 << 6;
-						break;
+						case 0:         // byte
+							rofs[0] =
+								rofs[1] =
+								rofs[2] = 0;
+							rofs[3] = sofs[0];
+							exi.mxaddr += 1 << 6;
+							break;
+						case 1:         // hword
+							rofs[0] =
+								rofs[1] = 0;
+							rofs[2] = sofs[1];
+							rofs[3] = sofs[0];
+							exi.mxaddr += 2 << 6;
+							break;
+						case 2:         // triplet
+							rofs[0] = 0;
+							rofs[1] = sofs[2];
+							rofs[2] = sofs[1];
+							rofs[3] = sofs[0];
+							exi.mxaddr += 3 << 6;
+							break;
+						case 3:         // word
+							rofs[0] = sofs[3];
+							rofs[1] = sofs[2];
+							rofs[2] = sofs[1];
+							rofs[3] = sofs[0];
+							exi.mxaddr += 4 << 6;
+							break;
 					}
 					if (exi.log) Report(Channel::EXI, "immediate read SRAM (ofs:%i, len:%i)\n", ((ofs >> 6) & 0xff) - 4, len + 1);
 					return;
@@ -306,7 +306,7 @@ void MXTransfer()
 							}
 						}
 					}
-					else Report(Channel::EXI, "Unknown MX chip write immediate to %08X", ofs);
+					else Report(Channel::EXI, "Unknown MX chip write immediate to %08X\n", ofs);
 				}
 			}
 			return;

@@ -717,6 +717,7 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_BASE, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_TOP, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
+	PISetTrap(32, PI_CPABT, nullptr, PI_CPRegWrite);
 
 	// Reset interrupt counters
 	for (size_t i = 0; i < (size_t)PIInterruptSource::Max; i++)

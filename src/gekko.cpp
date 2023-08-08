@@ -203,20 +203,20 @@ namespace Gekko
 
 			switch (MmuLastResult)
 			{
-			case MmuResult::PageFault:
-				regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
-				break;
+				case MmuResult::PageFault:
+					regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
+					break;
 
-			case MmuResult::ProtectedFetch:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
-				break;
+				case MmuResult::ProtectedFetch:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
+					break;
 
-			case MmuResult::NoExecute:
-				regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
-				break;
+				case MmuResult::NoExecute:
+					regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
+					break;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 		else if (code == Exception::EXCEPTION_DSI)
@@ -225,20 +225,20 @@ namespace Gekko
 
 			switch (MmuLastResult)
 			{
-			case MmuResult::PageFault:
-				regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
-				break;
+				case MmuResult::PageFault:
+					regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
+					break;
 
-			case MmuResult::ProtectedRead:
-				regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
-				break;
+				case MmuResult::ProtectedRead:
+					regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
+					break;
 
-			case MmuResult::ProtectedWrite:
-				regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
-				break;
+				case MmuResult::ProtectedWrite:
+					regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
+					break;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 
@@ -249,20 +249,20 @@ namespace Gekko
 
 			switch (PrCause)
 			{
-			case PrivilegedCause::FpuEnabled:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
-				break;
-			case PrivilegedCause::IllegalInstruction:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
-				break;
-			case PrivilegedCause::Privileged:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
-				break;
-			case PrivilegedCause::Trap:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
-				break;
-			default:
-				break;
+				case PrivilegedCause::FpuEnabled:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
+					break;
+				case PrivilegedCause::IllegalInstruction:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
+					break;
+				case PrivilegedCause::Privileged:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
+					break;
+				case PrivilegedCause::Trap:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
+					break;
+				default:
+					break;
 			}
 		}
 
@@ -1670,9 +1670,6 @@ namespace Gekko
 
 	uint32_t GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
 	{
-#define RAMMASK 0x0fffffff
-#define BOOTROM_START_ADDRESS 0xfff00000
-
 		WIMG = WIMG_I;      // Caching inhibited
 
 		// Locked cache
@@ -1897,15 +1894,15 @@ namespace Gekko
 				{
 					switch (type)
 					{
-					case MmuAccess::Read:
-						MmuLastResult = MmuResult::ProtectedRead;
-						break;
-					case MmuAccess::Write:
-						MmuLastResult = MmuResult::ProtectedWrite;
-						break;
-					case MmuAccess::Execute:
-						MmuLastResult = MmuResult::ProtectedFetch;
-						break;
+						case MmuAccess::Read:
+							MmuLastResult = MmuResult::ProtectedRead;
+							break;
+						case MmuAccess::Write:
+							MmuLastResult = MmuResult::ProtectedWrite;
+							break;
+						case MmuAccess::Execute:
+							MmuLastResult = MmuResult::ProtectedFetch;
+							break;
 					}
 
 					return BadAddress;
@@ -1986,15 +1983,15 @@ namespace Gekko
 				{
 					switch (type)
 					{
-					case MmuAccess::Read:
-						MmuLastResult = MmuResult::ProtectedRead;
-						break;
-					case MmuAccess::Write:
-						MmuLastResult = MmuResult::ProtectedWrite;
-						break;
-					case MmuAccess::Execute:
-						MmuLastResult = MmuResult::ProtectedFetch;
-						break;
+						case MmuAccess::Read:
+							MmuLastResult = MmuResult::ProtectedRead;
+							break;
+						case MmuAccess::Write:
+							MmuLastResult = MmuResult::ProtectedWrite;
+							break;
+						case MmuAccess::Execute:
+							MmuLastResult = MmuResult::ProtectedFetch;
+							break;
 					}
 
 					return BadAddress;
