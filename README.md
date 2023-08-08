@@ -34,6 +34,13 @@ Requirements: CMake, pthread.
 |![progress_bs2](/imgstore/progress_bs2.png)|![progress_ikaruga](/imgstore/progress_ikaruga.png)|
 |---|---|
 
+```
+F1ReB4LL — Вчера, в 22:27
+Шёл одиннадцатый год, скрины с долвина всё так же показывали один лишь биос
+org — Вчера, в 23:21
+Ваще-то с 2003 разработка ведётся
+```
+
 ## Credits
 
 We would like to say Thanks to people, who helped us to make Dolwin/pureikyubu:
