@@ -220,6 +220,11 @@ static void exi_select(int chan)
 
 static void write_csr(int chan, uint32_t data)
 {
+	if (chan == 0 && (data & EXI_CSR_ROMDIS) != 0) {
+
+		Report(Channel::EXI, "BootROM Decryption Disabled\n");
+	}
+
 	// clear interrupts 
 	exi.regs[chan].csr &= ~(data & EXI_CSR_INTERRUPTS);
 

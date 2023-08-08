@@ -98,25 +98,26 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #define CPU_BUS_CLOCK   (CPU_CORE_CLOCK / 3)
 #define CPU_TIMER_CLOCK (CPU_BUS_CLOCK / 4)
 
+#define GEKKO_BIT(n)		(1 << (31-n))
+
 // Machine State Flags
-#define MSR_BIT(n)			(1 << (31-n))
 #define MSR_RESERVED        0xFFFA0088
-#define MSR_POW             (MSR_BIT(13))               // Power management enable
-#define MSR_ILE             (MSR_BIT(15))               // Exception little-endian mode
-#define MSR_EE              (MSR_BIT(16))               // External interrupt enable
-#define MSR_PR              (MSR_BIT(17))               // User privilege level
-#define MSR_FP              (MSR_BIT(18))               // Floating-point available
-#define MSR_ME              (MSR_BIT(19))               // Machine check enable
-#define MSR_FE0             (MSR_BIT(20))               // Floating-point exception mode 0
-#define MSR_SE              (MSR_BIT(21))               // Single-step trace enable
-#define MSR_BE              (MSR_BIT(22))               // Branch trace enable
-#define MSR_FE1             (MSR_BIT(23))               // Floating-point exception mode 1
-#define MSR_IP              (MSR_BIT(25))               // Exception prefix
-#define MSR_IR              (MSR_BIT(26))               // Instruction address translation
-#define MSR_DR              (MSR_BIT(27))               // Data address translation
-#define MSR_PM              (MSR_BIT(29))               // Performance monitor mode
-#define MSR_RI              (MSR_BIT(30))               // Recoverable exception
-#define MSR_LE              (MSR_BIT(31))               // Little-endian mode enable
+#define MSR_POW             (GEKKO_BIT(13))               // Power management enable
+#define MSR_ILE             (GEKKO_BIT(15))               // Exception little-endian mode
+#define MSR_EE              (GEKKO_BIT(16))               // External interrupt enable
+#define MSR_PR              (GEKKO_BIT(17))               // User privilege level
+#define MSR_FP              (GEKKO_BIT(18))               // Floating-point available
+#define MSR_ME              (GEKKO_BIT(19))               // Machine check enable
+#define MSR_FE0             (GEKKO_BIT(20))               // Floating-point exception mode 0
+#define MSR_SE              (GEKKO_BIT(21))               // Single-step trace enable
+#define MSR_BE              (GEKKO_BIT(22))               // Branch trace enable
+#define MSR_FE1             (GEKKO_BIT(23))               // Floating-point exception mode 1
+#define MSR_IP              (GEKKO_BIT(25))               // Exception prefix
+#define MSR_IR              (GEKKO_BIT(26))               // Instruction address translation
+#define MSR_DR              (GEKKO_BIT(27))               // Data address translation
+#define MSR_PM              (GEKKO_BIT(29))               // Performance monitor mode
+#define MSR_RI              (GEKKO_BIT(30))               // Recoverable exception
+#define MSR_LE              (GEKKO_BIT(31))               // Little-endian mode enable
 
 #define HID0_EMCP	0x8000'0000
 #define HID0_DBP	0x4000'0000
@@ -199,6 +200,14 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 #define FPSCR_GET_RN(fpscr) (fpscr & 3)	// Get floating-point rounding control
 #define FPSCR_SET_RN(fpscr, n) (fpscr = (fpscr & ~3) | (n & 3))	// Set floating-point rounding control
 
+#define GEKKO_L2CR_L2E			GEKKO_BIT(0)
+#define GEKKO_L2CR_L2CE			GEKKO_BIT(1)
+#define GEKKO_L2CR_L2DO			GEKKO_BIT(9)
+#define GEKKO_L2CR_L2I			GEKKO_BIT(10)
+#define GEKKO_L2CR_L2WT			GEKKO_BIT(12)
+#define GEKKO_L2CR_L2TS			GEKKO_BIT(13)
+#define GEKKO_L2CR_L2IP			GEKKO_BIT(31)
+
 // Exception vectors (physical address)
 
 namespace Gekko
@@ -266,6 +275,7 @@ namespace Gekko
 		HID1 = 1009,
 		IABR = 1010,
 		DABR = 1013,
+		L2CR = 1017,
 		GQRs = 912,
 		GQR0 = 912,
 		GQR1 = 913,

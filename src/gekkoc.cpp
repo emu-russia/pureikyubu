@@ -4346,6 +4346,18 @@ namespace Gekko
 			case SPR::DBAT3L:
 				core->dtlb.InvalidateAll();
 				break;
+
+			case SPR::L2CR:
+			{
+				uint32_t bits = core->regs.gpr[info.paramBits[1]];
+				//if (bits & GEKKO_L2CR_L2E) {
+				//	if (bits & GEKKO_L2CR_L2I) {
+				//		core->cache->FlashInvalidate();
+				//		Report(Channel::CPU, "L2 Cache Global Invalidate\n");
+				//	}
+				//}
+			}
+			break;
 		}
 
 		// default
@@ -4708,6 +4720,15 @@ namespace Gekko
 	void Interpreter::ExecuteOpcode()
 	{
 		uint32_t instr = 0;
+
+		// Hack for the first time.
+		// Since we are using an "infinite" cache, the old data from the memory check (0x55555555) remains in it after BS2 is loaded;
+		// So when entering BS2, you just need to invalidate the DCache.
+		// Need to figure out why this is happening / come up with a better place to do it
+
+		if (core->regs.pc == 0x81300000) {
+			Core->cache->FlashInvalidate();
+		}
 
 		// Fetch instruction
 
