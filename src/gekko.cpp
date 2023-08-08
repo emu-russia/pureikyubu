@@ -21,24 +21,21 @@ namespace Gekko
 			core->TestBreakpoints();
 		}
 
-#if GEKKOCORE_USE_JITC
-		core->jitc->Execute();
-#else
 		core->interp->ExecuteOpcode();
-#endif
 	}
 
 	GekkoCore::GekkoCore()
 	{
 		cache = new Cache(this);
+		icache = new Cache(this);
+		
+		// DEBUG
+		//cache->SetLogLevel(CacheLogLevel::MemOps);
+		//icache->SetLogLevel(CacheLogLevel::MemOps);
 
 		gatherBuffer = new GatherBuffer(this);
 
 		interp = new Interpreter(this);
-
-#if GEKKOCORE_USE_JITC
-		jitc = new Jitc(this);
-#endif
 
 		gekkoThread = EMUCreateThread(GekkoThreadProc, false, this, "GekkoCore");
 
@@ -50,9 +47,6 @@ namespace Gekko
 		StopOpcodeStatsThread();
 		EMUJoinThread(gekkoThread);
 		delete interp;
-#if GEKKOCORE_USE_JITC
-		delete jitc;
-#endif
 		delete gatherBuffer;
 	}
 
@@ -102,15 +96,10 @@ namespace Gekko
 
 		gatherBuffer->Reset();
 
-#if GEKKOCORE_USE_JITC
-		jitc->Reset();
-#endif
-		ResetCompiledSegmentsCount();
-		ResetExecutedSegmentsCount();
-
 		dtlb.InvalidateAll();
 		itlb.InvalidateAll();
 		cache->Reset();
+		icache->Reset();
 	}
 
 	// Modify CPU counters
@@ -173,18 +162,16 @@ namespace Gekko
 	void GekkoCore::AssertInterrupt()
 	{
 		intFlag = true;
-		//Report(Channel::CPU, "AssertInterrupt\n");
 	}
 
 	void GekkoCore::ClearInterrupt()
 	{
 		intFlag = false;
-		//Report(Channel::CPU, "ClearInterrupt\n");
 	}
 
 	void GekkoCore::Exception(Gekko::Exception code)
 	{
-		//DBReport2(DbgChannel::CPU, "Gekko Exception: #%04X\n", (uint16_t)code);
+		//Halt("Gekko Exception: #%04X\n", (uint16_t)code);
 
 		if (exception)
 		{
@@ -203,20 +190,20 @@ namespace Gekko
 
 			switch (MmuLastResult)
 			{
-			case MmuResult::PageFault:
-				regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
-				break;
+				case MmuResult::PageFault:
+					regs.spr[Gekko::SPR::SRR1] |= 0x4000'0000;
+					break;
 
-			case MmuResult::ProtectedFetch:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
-				break;
+				case MmuResult::ProtectedFetch:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0800'0000;
+					break;
 
-			case MmuResult::NoExecute:
-				regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
-				break;
+				case MmuResult::NoExecute:
+					regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
+					break;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 		else if (code == Exception::EXCEPTION_DSI)
@@ -225,20 +212,20 @@ namespace Gekko
 
 			switch (MmuLastResult)
 			{
-			case MmuResult::PageFault:
-				regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
-				break;
+				case MmuResult::PageFault:
+					regs.spr[Gekko::SPR::DSISR] |= 0x4000'0000;
+					break;
 
-			case MmuResult::ProtectedRead:
-				regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
-				break;
+				case MmuResult::ProtectedRead:
+					regs.spr[Gekko::SPR::DSISR] |= 0x0800'0000;
+					break;
 
-			case MmuResult::ProtectedWrite:
-				regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
-				break;
+				case MmuResult::ProtectedWrite:
+					regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
+					break;
 
-			default:
-				break;
+				default:
+					break;
 			}
 		}
 
@@ -249,20 +236,20 @@ namespace Gekko
 
 			switch (PrCause)
 			{
-			case PrivilegedCause::FpuEnabled:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
-				break;
-			case PrivilegedCause::IllegalInstruction:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
-				break;
-			case PrivilegedCause::Privileged:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
-				break;
-			case PrivilegedCause::Trap:
-				regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
-				break;
-			default:
-				break;
+				case PrivilegedCause::FpuEnabled:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0010'0000;
+					break;
+				case PrivilegedCause::IllegalInstruction:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0008'0000;
+					break;
+				case PrivilegedCause::Privileged:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0004'0000;
+					break;
+				case PrivilegedCause::Trap:
+					regs.spr[Gekko::SPR::SRR1] |= 0x0002'0000;
+					break;
+				default:
+					break;
 			}
 		}
 
@@ -609,6 +596,32 @@ namespace Gekko
 		PIWriteDouble(pa, data);
 	}
 
+	void GekkoCore::Fetch(uint32_t addr, uint32_t* reg)
+	{
+		int WIMG;
+
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		if (pa == BadAddress)
+		{
+			Exception(Exception::EXCEPTION_ISI);
+			return;
+		}
+
+		// You don't need to use the ICache in BS1, even if it is enabled
+		if (pa >= BOOTROM_START_ADDRESS) {
+			PIReadWord(pa, reg);
+			return;
+		}
+
+		if (icache->IsEnabled() && (WIMG & WIMG_I) == 0)
+		{
+			icache->ReadWord(pa, reg);
+			return;
+		}
+
+		PIReadWord(pa, reg);
+	}
+
 }
 
 
@@ -682,9 +695,6 @@ namespace Gekko
 		{
 			Report(Channel::CPU, "Breakpoint added: 0x%08X\n", addr);
 			breakPointsExecute.push_back(addr);
-#if GEKKOCORE_USE_JITC
-			jitc->Invalidate(addr, 4);
-#endif
 			EnableTestBreakpoints = true;
 		}
 		breakPointsLock.Unlock();
@@ -706,9 +716,6 @@ namespace Gekko
 		{
 			Report(Channel::CPU, "Breakpoint removed: 0x%08X\n", addr);
 			breakPointsExecute.remove(addr);
-#if GEKKOCORE_USE_JITC
-			jitc->Invalidate(addr, 4);
-#endif
 		}
 		if (breakPointsExecute.size() == 0)
 		{
@@ -743,33 +750,6 @@ namespace Gekko
 		EnableTestBreakpoints = false;
 		EnableTestReadBreakpoints = false;
 		EnableTestWriteBreakpoints = false;
-	}
-
-	bool GekkoCore::TestBreakpointForJitc(uint32_t addr)
-	{
-		if (!EnableTestBreakpoints)
-			return false;
-
-		if (oneShotBreakpoint != BadAddress && regs.pc == oneShotBreakpoint)
-		{
-			oneShotBreakpoint = BadAddress;
-			return true;
-		}
-
-		bool exists = false;
-
-		breakPointsLock.Lock();
-		for (auto it = breakPointsExecute.begin(); it != breakPointsExecute.end(); ++it)
-		{
-			if (*it == addr)
-			{
-				exists = true;
-				break;
-			}
-		}
-		breakPointsLock.Unlock();
-
-		return exists;
 	}
 
 	void GekkoCore::TestBreakpoints()
@@ -912,22 +892,12 @@ namespace Gekko
 	void Cache::Reset()
 	{
 		Report(Channel::CPU, "Cache::Reset\n");
-
-		for (size_t i = 0; i < (cacheSize >> 5); i++)
-		{
-			modifiedBlocks[i] = false;
-			invalidBlocks[i] = true;
-		}
+		FlashInvalidate();
 	}
 
 	void Cache::Enable(bool enable)
 	{
 		enabled = enable;
-
-		if (DisableForDebugReasons)
-		{
-			enabled = false;
-		}
 
 		if (log >= CacheLogLevel::Commands)
 		{
@@ -1025,6 +995,15 @@ namespace Gekko
 		if (log >= CacheLogLevel::Commands)
 		{
 			Report(Channel::CPU, "Cache::Invalidate 0x%08X, pc: 0x%08X\n", pa, core->regs.pc);
+		}
+	}
+
+	void Cache::FlashInvalidate()
+	{
+		size_t blocks_num = cacheSize >> 5;
+		for (size_t n = 0; n < blocks_num; n++) {
+			modifiedBlocks[n] = false;
+			invalidBlocks[n] = true;
 		}
 	}
 
@@ -1145,7 +1124,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1175,7 +1154,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1206,7 +1185,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1251,7 +1230,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1299,7 +1278,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1344,7 +1323,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1392,7 +1371,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1437,7 +1416,7 @@ namespace Gekko
 			}
 		}
 
-		if (addr >= cacheSize || DisableForDebugReasons)
+		if (addr >= cacheSize)
 			return;
 
 		if (IsInvalid(addr))
@@ -1505,20 +1484,6 @@ namespace Gekko
 			}
 		}
 	}
-
-	void Cache::DebugDisable(bool disable)
-	{
-		if (disable)
-		{
-			Report(Channel::CPU, "Cache disabled for debug purposes");
-		}
-		else
-		{
-			Report(Channel::CPU, "Cache works normally");
-		}
-		DisableForDebugReasons = disable;
-	}
-
 }
 
 
@@ -1665,33 +1630,6 @@ namespace Gekko
 
 namespace Gekko
 {
-
-	// A simple translation, which is configured by the Dolphin OS software environment (until it starts using MMU for ARAM mapping).
-
-	uint32_t GekkoCore::EffectiveToPhysicalNoMmu(uint32_t ea, MmuAccess type, int& WIMG)
-	{
-#define RAMMASK 0x0fffffff
-#define BOOTROM_START_ADDRESS 0xfff00000
-
-		WIMG = WIMG_I;      // Caching inhibited
-
-		// Locked cache
-		if ((ea & ~0x3fff) == DOLPHIN_OS_LOCKED_CACHE_ADDRESS && cache->IsLockedEnable())
-		{
-			WIMG = 0;
-			return ea;
-		}
-
-		// Required to run bootrom
-		if ((ea & ~0xfffff) == BOOTROM_START_ADDRESS)
-		{
-			return ea;
-		}
-
-		// Ignore no memory, page faults, alignment, etc errors
-		return ea & RAMMASK;
-	}
-
 	// Native address translation defined by PowerPC architecture. There are some alien moments (Hash for Page Tables), but overall its fine.
 
 	uint32_t GekkoCore::EffectiveToPhysicalMmu(uint32_t ea, MmuAccess type, int& WIMG)
@@ -1897,15 +1835,15 @@ namespace Gekko
 				{
 					switch (type)
 					{
-					case MmuAccess::Read:
-						MmuLastResult = MmuResult::ProtectedRead;
-						break;
-					case MmuAccess::Write:
-						MmuLastResult = MmuResult::ProtectedWrite;
-						break;
-					case MmuAccess::Execute:
-						MmuLastResult = MmuResult::ProtectedFetch;
-						break;
+						case MmuAccess::Read:
+							MmuLastResult = MmuResult::ProtectedRead;
+							break;
+						case MmuAccess::Write:
+							MmuLastResult = MmuResult::ProtectedWrite;
+							break;
+						case MmuAccess::Execute:
+							MmuLastResult = MmuResult::ProtectedFetch;
+							break;
 					}
 
 					return BadAddress;
@@ -1986,15 +1924,15 @@ namespace Gekko
 				{
 					switch (type)
 					{
-					case MmuAccess::Read:
-						MmuLastResult = MmuResult::ProtectedRead;
-						break;
-					case MmuAccess::Write:
-						MmuLastResult = MmuResult::ProtectedWrite;
-						break;
-					case MmuAccess::Execute:
-						MmuLastResult = MmuResult::ProtectedFetch;
-						break;
+						case MmuAccess::Read:
+							MmuLastResult = MmuResult::ProtectedRead;
+							break;
+						case MmuAccess::Write:
+							MmuLastResult = MmuResult::ProtectedWrite;
+							break;
+						case MmuAccess::Execute:
+							MmuLastResult = MmuResult::ProtectedFetch;
+							break;
 					}
 
 					return BadAddress;

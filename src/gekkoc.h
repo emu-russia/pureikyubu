@@ -38,7 +38,6 @@ namespace Gekko
 {
 	class Interpreter
 	{
-		friend Jitc;
 		friend GekkoCoreUnitTest::GekkoCoreUnitTest;
 
 		GekkoCore* core = nullptr;
@@ -424,8 +423,8 @@ namespace Gekko
 
 		void Dispatch();
 
-		uint32_t CarryBit;
-		uint32_t OverflowBit;
+		uint32_t CarryBit = 0;
+		uint32_t OverflowBit = 0;
 
 		uint32_t FullAdder(uint32_t a, uint32_t b);
 		uint32_t Rotl32(size_t sa, uint32_t data);
@@ -448,7 +447,6 @@ namespace Gekko
 		~Interpreter() {}
 
 		void ExecuteOpcode();
-		bool ExecuteInterpeterFallback();
 
 		uint32_t GetRotMask(int mb, int me);
 	};

@@ -355,13 +355,6 @@ namespace Debug
 		return nullptr;
 	}
 
-	static Json::Value* CmdCacheDebugDisable(std::vector<std::string>& args)
-	{
-		bool disable = atoi(args[1].c_str()) ? true : false;
-		Core->cache->DebugDisable(disable);
-		return nullptr;
-	}
-
 	static Json::Value* CmdIsRunning(std::vector<std::string>& args)
 	{
 		Json::Value* output = new Json::Value();
@@ -884,139 +877,6 @@ namespace Debug
 		return output;
 	}
 
-#if 0
-
-	// Output the recompiled segments.
-	Json::Value* JitCommands::CmdJitcDumpSeg(std::vector<std::string>& args)
-	{
-		bool all = (args[1] == "all");
-
-		if (all)
-		{
-			// Pause the emulation if it is running.
-
-			bool running = Core->IsRunning();
-			if (running)
-			{
-				Core->Suspend();
-			}
-
-			// Loop through segments map
-
-			size_t segCount = 0;
-
-			size_t segMax = RAMSIZE >> 2;
-
-			for (size_t n = 0; n < segMax; n++)
-			{
-				uint32_t paddr = n << 2;
-				CodeSegment* seg = Core->jitc->segments[n];
-				if (!seg)
-					continue;
-
-				Report(Channel::Norm, "0x%08X: %zi b\n", seg->addr, seg->size);
-				segCount++;
-			}
-
-			Report(Channel::CPU, "Total segments: %zi\n", segCount);
-
-			if (running)
-			{
-				Core->Run();
-			}
-		}
-		else
-		{
-			uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
-
-			CodeSegment* seg = Core->jitc->SegmentCompiled(vaddr);
-
-			if (seg)
-			{
-				// Output the segment dump in small chunks, line by line.
-				const size_t chunkSize = 28;
-				size_t size = seg->code.size();
-				size_t ofs = 0;
-
-				while (size != 0)
-				{
-					size_t bytesToShow = min(size, chunkSize);
-
-					std::string text;
-
-					while (bytesToShow--)
-					{
-						char hex[0x10] = { 0, };
-						sprintf_s(hex, sizeof(hex), "\\x%02x", seg->code.data()[ofs++]);
-						text += hex;
-					}
-
-					Report(Channel::Norm, "%s\n", text.c_str());
-
-					size -= min(size, chunkSize);
-				}
-			}
-			else
-			{
-				Report(Channel::CPU, "No segment was found at the specified address.\n");
-			}
-		}
-
-		return nullptr;
-	}
-
-	// Invalidate the segment at the specified Gekko virtual address.
-	Json::Value* JitCommands::CmdJitcInvSeg(std::vector<std::string>& args)
-	{
-		uint32_t vaddr = strtoul(args[1].c_str(), nullptr, 0);
-
-		CodeSegment* seg = Core->jitc->SegmentCompiled(vaddr);
-
-		if (seg)
-		{
-			if (seg == Core->jitc->currentSegment)
-			{
-				Report(Channel::CPU, "You cannot invalidate the current segment, it will cause the emulator to crash.\n");
-			}
-			else
-			{
-				size_t segmentSize = seg->size;
-				Core->jitc->Invalidate(vaddr, segmentSize);
-				Report(Channel::CPU, "Segment of size %zi bytes at virtual address 0x%08X is invalidated.\n", segmentSize, vaddr);
-			}
-		}
-		else
-		{
-			Report(Channel::CPU, "No segment was found at the specified address.\n");
-		}
-
-		return nullptr;
-	}
-
-	// Invalidate all recompiler segments except the current one (where GekkoCore is currently executing).
-	Json::Value* JitCommands::CmdJitcInvAll(std::vector<std::string>& args)
-	{
-		Core->jitc->InvalidateAll();
-		Report(Channel::CPU, "All segments of the recompiler except the current one are invalidated.\n");
-		return nullptr;
-	}
-
-	Json::Value* CmdJitcEnabled(std::vector<std::string>& args)
-	{
-		Json::Value* output = new Json::Value();
-		output->type = Json::ValueType::Bool;
-
-#if GEKKOCORE_USE_JITC
-		output->value.AsBool = true;
-#else
-		output->value.AsBool = false;
-#endif
-
-		return output;
-	}
-
-#endif
-
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", CmdRun);
@@ -1027,7 +887,6 @@ namespace Debug
 		JDI::Hub.AddCmd("bw", CmdBreakWrite);
 		JDI::Hub.AddCmd("bc", CmdBreakClearAll);
 		JDI::Hub.AddCmd("CacheLog", CmdCacheLog);
-		JDI::Hub.AddCmd("CacheDebugDisable", CmdCacheDebugDisable);
 
 		JDI::Hub.AddCmd("IsRunning", CmdIsRunning);
 		JDI::Hub.AddCmd("GekkoRun", CmdGekkoRun);
@@ -1071,10 +930,5 @@ namespace Debug
 		JDI::Hub.AddCmd("GekkoAnalyze", CmdGekkoAnalyze);
 		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);
 		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
-
-		//JDI::Hub.AddCmd("JitcDumpSeg", JitCommands::CmdJitcDumpSeg);
-		//JDI::Hub.AddCmd("JitcInvSeg", JitCommands::CmdJitcInvSeg);
-		//JDI::Hub.AddCmd("JitcInvAll", JitCommands::CmdJitcInvAll);
-		//JDI::Hub.AddCmd("JitcEnabled", CmdJitcEnabled);
 	}
 }

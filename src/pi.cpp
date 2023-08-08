@@ -514,6 +514,13 @@ void PIAssertInt(uint32_t mask)
 
 	if (pi.intsr & pi.intmr)
 	{
+		if (pi.log) {
+			int64_t ticks_now = Core->GetTicks();
+			int64_t ticks_passed = ticks_now - pi.last_int_ticks;
+			Report(Channel::PI, "Ticks passed: %lld (%d us)\n", ticks_passed, ticks_passed / pi.one_microsecond);
+			pi.last_int_ticks = ticks_now;
+		}
+
 		Core->AssertInterrupt();
 	}
 	else
@@ -629,7 +636,10 @@ static void write_config(uint32_t addr, uint32_t data)
 
 		if (data & PI_CONFIG_MEMRSTB)
 		{
+			// BS1 clears memory so that VI does not produce nasty garbage when XFB loads.
+
 			Report(Channel::PI, "MEM Reset requested.\n");
+			memset(mi.ram, 0, mi.ramSize);
 		}
 
 		if (data & PI_CONFIG_DIRSTB)
@@ -694,6 +704,8 @@ void PIOpen(HWConfig* config)
 	pi.intsr = pi.intmr = 0;
 	
 	pi.intbrk = 0;
+	pi.last_int_ticks = 0;
+	pi.one_microsecond = Core->OneSecond() / 1000000;
 
 	// set interrupt registers hooks
 	PISetTrap(32, PI_INTSR, read_intsr, write_intsr);
@@ -708,6 +720,7 @@ void PIOpen(HWConfig* config)
 	PISetTrap(32, PI_BASE, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_TOP, PI_CPRegRead, PI_CPRegWrite);
 	PISetTrap(32, PI_WRPTR, PI_CPRegRead, PI_CPRegWrite);
+	PISetTrap(32, PI_CPABT, nullptr, PI_CPRegWrite);
 
 	// Reset interrupt counters
 	for (size_t i = 0; i < (size_t)PIInterruptSource::Max; i++)

@@ -1,4 +1,3 @@
-
 #include "pch.h"
 
 using namespace Debug;
@@ -7,8 +6,7 @@ using namespace Debug;
 
 namespace Gekko
 {
-
-	// info.Imm.Address is always pre-calculated, there is no need to perform operations on the `pc`, just write a new address there. 
+	// info.Imm.Address is always pre-calculated, there is no need to perform operations on the `pc`, just write a new address there.
 
 	#define BO(n)       ((bo >> (4-n)) & 1)
 
@@ -1339,18 +1337,15 @@ namespace Gekko
 
 }
 
-
 // Integer Instructions
 
 namespace Gekko
 {
-
 	// We use macro programming to compress the source code.
 	// Now I am not very willing to use such things.
+	#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
 
-#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
-
-// rd = ra + rb
+	// rd = ra + rb
 	void Interpreter::add()
 	{
 		GPR(0) = GPR(1) + GPR(2);
@@ -2466,13 +2461,7 @@ namespace Gekko
 
 namespace Gekko
 {
-
-	// We use macro programming to compress the source code.
-	// Now I am not very willing to use such things.
-
-#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
-
-// ra = rs & rb
+	// ra = rs & rb
 	void Interpreter::_and()
 	{
 		GPR(0) = GPR(1) & GPR(2);
@@ -3750,17 +3739,11 @@ namespace Gekko
 
 namespace Gekko
 {
-
-	// We use macro programming to compress the source code.
-	// Now I am not very willing to use such things.
-
-#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
-
-// n = SH
-// r = ROTL(rs, n)
-// m = MASK(mb, me)
-// ra = (r & m) | (ra & ~m)
-// CR0 (if .)
+	// n = SH
+	// r = ROTL(rs, n)
+	// m = MASK(mb, me)
+	// ra = (r & m) | (ra & ~m)
+	// CR0 (if .)
 	void Interpreter::rlwimi()
 	{
 		uint32_t m = rotmask[info.paramBits[3]][info.paramBits[4]];
@@ -3818,19 +3801,13 @@ namespace Gekko
 
 namespace Gekko
 {
-
-	// We use macro programming to compress the source code.
-	// Now I am not very willing to use such things.
-
-#define GPR(n) (core->regs.gpr[info.paramBits[(n)]])
-
-// n = rb[27-31]
-// r = ROTL(rs, n)
-// if rb[26] = 0
-// then m = MASK(0, 31-n)
-// else m = (32)0
-// ra = r & m
-// (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
+	// n = rb[27-31]
+	// r = ROTL(rs, n)
+	// if rb[26] = 0
+	// then m = MASK(0, 31-n)
+	// else m = (32)0
+	// ra = r & m
+	// (simply : ra = rs << rb, or ra = 0, if rb[26] = 1)
 	void Interpreter::slw()
 	{
 		uint32_t n = GPR(2);
@@ -4127,18 +4104,18 @@ namespace Gekko
 
 		switch (spr)
 		{
-		case SPR::WPAR:
-			value = (core->regs.spr[spr] & ~0x1f) | (core->gatherBuffer->NotEmpty() ? 1 : 0);
-			break;
+			case SPR::WPAR:
+				value = (core->regs.spr[spr] & ~0x1f) | (core->gatherBuffer->NotEmpty() ? 1 : 0);
+				break;
 
-		case SPR::HID1:
-			// Gekko PLL_CFG = 0b1000
-			value = 0x8000'0000;
-			break;
+			case SPR::HID1:
+				// Gekko PLL_CFG = 0b1000
+				value = 0x8000'0000;
+				break;
 
-		default:
-			value = core->regs.spr[spr];
-			break;
+			default:
+				value = core->regs.spr[spr];
+				break;
 		}
 
 		core->regs.gpr[info.paramBits[0]] = value;
@@ -4232,147 +4209,154 @@ namespace Gekko
 		switch (spr)
 		{
 			// decrementer
-		case SPR::DEC:
-			//DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
-			break;
+			case SPR::DEC:
+				//DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
+				break;
 
-			// page table base
-		case SPR::SDR1:
-		{
-			bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
-			bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
-
-			Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
-				core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
-
-			core->dtlb.InvalidateAll();
-			core->itlb.InvalidateAll();
-		}
-		break;
-
-		case SPR::TBL:
-			core->regs.tb.Part.l = core->regs.gpr[info.paramBits[1]];
-			Report(Channel::CPU, "Set TBL: 0x%08X\n", core->regs.tb.Part.l);
-			break;
-		case SPR::TBU:
-			core->regs.tb.Part.u = core->regs.gpr[info.paramBits[1]];
-			Report(Channel::CPU, "Set TBU: 0x%08X\n", core->regs.tb.Part.u);
-			break;
-
-			// write gathering buffer
-		case SPR::WPAR:
-			// A mtspr to WPAR invalidates the data.
-			core->gatherBuffer->Reset();
-			break;
-
-		case SPR::HID0:
-		{
-			uint32_t bits = core->regs.gpr[info.paramBits[1]];
-			core->cache->Enable((bits & HID0_DCE) ? true : false);
-			core->cache->Freeze((bits & HID0_DLOCK) ? true : false);
-			if (bits & HID0_DCFI)
+				// page table base
+			case SPR::SDR1:
 			{
-				bits &= ~HID0_DCFI;
+				bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
+				bool msr_dr = (core->regs.msr & MSR_DR) ? true : false;
 
-				// On a real system, after a global cache invalidation, the data still remains in the L2 cache.
-				// We cannot afford global invalidation, as the L2 cache is not supported.
+				Report(Channel::CPU, "SDR <- %08X (IR:%i DR:%i pc:%08X)\n",
+					core->regs.gpr[info.paramBits[1]], msr_ir, msr_dr, core->regs.pc);
 
-				Report(Channel::CPU, "Data Cache Flash Invalidate\n");
+				core->dtlb.InvalidateAll();
+				core->itlb.InvalidateAll();
 			}
-			if (bits & HID0_ICFI)
-			{
-				bits &= ~HID0_ICFI;
-#if GEKKOCORE_USE_JITC
-				core->jitc->Reset();
-#endif
-
-				Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
-			}
-
-			core->regs.spr[spr] = bits;
-			core->regs.pc += 4;
-			return;
-		}
-		break;
-
-		case SPR::HID1:
-			// Read only
-			core->regs.pc += 4;
-			return;
-
-		case SPR::HID2:
-		{
-			uint32_t bits = core->regs.gpr[info.paramBits[1]];
-			core->cache->LockedEnable((bits & HID2_LCE) ? true : false);
-		}
-		break;
-
-		// Locked cache DMA
-
-		case SPR::DMAU:
-			//DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
 			break;
-		case SPR::DMAL:
-		{
-			core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
-			//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
-			if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
+
+			case SPR::TBL:
+				core->regs.tb.Part.l = core->regs.gpr[info.paramBits[1]];
+				Report(Channel::CPU, "Set TBL: 0x%08X\n", core->regs.tb.Part.l);
+				break;
+			case SPR::TBU:
+				core->regs.tb.Part.u = core->regs.gpr[info.paramBits[1]];
+				Report(Channel::CPU, "Set TBU: 0x%08X\n", core->regs.tb.Part.u);
+				break;
+
+				// write gathering buffer
+			case SPR::WPAR:
+				// A mtspr to WPAR invalidates the data.
+				core->gatherBuffer->Reset();
+				break;
+
+			case SPR::HID0:
 			{
-				uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
-				uint32_t lcaddr = core->regs.spr[SPR::DMAL] & GEKKO_DMAL_LC_ADDR;
-				size_t length = ((core->regs.spr[SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
-					((core->regs.spr[SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
-				if (length == 0) length = 128;
-				if (core->cache->IsLockedEnable())
+				uint32_t bits = core->regs.gpr[info.paramBits[1]];
+				core->cache->Enable((bits & HID0_DCE) ? true : false);
+				core->icache->Enable((bits & HID0_ICE) ? true : false);
+				core->cache->Freeze((bits & HID0_DLOCK) ? true : false);
+				if (bits & HID0_DCFI)
 				{
-					core->cache->LockedCacheDma(
-						(core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
-						maddr,
-						lcaddr,
-						length);
+					bits &= ~HID0_DCFI;
+					Report(Channel::CPU, "Data Cache Flash Invalidate\n");
+					core->cache->FlashInvalidate();
 				}
+				if (bits & HID0_ICFI)
+				{
+					bits &= ~HID0_ICFI;
+					Report(Channel::CPU, "Instruction Cache Flash Invalidate\n");
+					core->icache->FlashInvalidate();
+				}
+
+				core->regs.spr[spr] = bits;
+				core->regs.pc += 4;
+				return;
 			}
-
-			// It makes no sense to implement such a small Queue. We make all transactions instant.
-
-			core->regs.spr[spr] &= ~(GEKKO_DMAL_DMA_T | GEKKO_DMAL_DMA_F);
-			core->regs.pc += 4;
-			return;
-		}
-		break;
-
-		case SPR::GQR0:
-		case SPR::GQR1:
-		case SPR::GQR2:
-		case SPR::GQR3:
-		case SPR::GQR4:
-		case SPR::GQR5:
-		case SPR::GQR6:
-		case SPR::GQR7:
-			// In the sense of Dolphin OS, registers GQR1-7 are constantly reloaded when switching threads via `OSLoadContext`.
-			// GQR0 is always 0 and is not reloaded when switching threads.
 			break;
 
-		case SPR::IBAT0U:
-		case SPR::IBAT0L:
-		case SPR::IBAT1U:
-		case SPR::IBAT1L:
-		case SPR::IBAT2U:
-		case SPR::IBAT2L:
-		case SPR::IBAT3U:
-		case SPR::IBAT3L:
-			core->itlb.InvalidateAll();
+			case SPR::HID1:
+				// Read only
+				core->regs.pc += 4;
+				return;
+
+			case SPR::HID2:
+			{
+				uint32_t bits = core->regs.gpr[info.paramBits[1]];
+				core->cache->LockedEnable((bits & HID2_LCE) ? true : false);
+			}
 			break;
 
-		case SPR::DBAT0U:
-		case SPR::DBAT0L:
-		case SPR::DBAT1U:
-		case SPR::DBAT1L:
-		case SPR::DBAT2U:
-		case SPR::DBAT2L:
-		case SPR::DBAT3U:
-		case SPR::DBAT3L:
-			core->dtlb.InvalidateAll();
+			// Locked cache DMA
+
+			case SPR::DMAU:
+				//DBReport2(DbgChannel::CPU, "DMAU: 0x%08X\n", RRS);
+				break;
+			case SPR::DMAL:
+			{
+				core->regs.spr[spr] = core->regs.gpr[info.paramBits[1]];
+				//DBReport2(DbgChannel::CPU, "DMAL: 0x%08X\n", RRS);
+				if (core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_T)
+				{
+					uint32_t maddr = core->regs.spr[SPR::DMAU] & GEKKO_DMAU_MEM_ADDR;
+					uint32_t lcaddr = core->regs.spr[SPR::DMAL] & GEKKO_DMAL_LC_ADDR;
+					size_t length = ((core->regs.spr[SPR::DMAU] & GEKKO_DMAU_DMA_LEN_U) << GEKKO_DMA_LEN_SHIFT) |
+						((core->regs.spr[SPR::DMAL] >> GEKKO_DMA_LEN_SHIFT) & GEKKO_DMAL_DMA_LEN_L);
+					if (length == 0) length = 128;
+					if (core->cache->IsLockedEnable())
+					{
+						core->cache->LockedCacheDma(
+							(core->regs.spr[SPR::DMAL] & GEKKO_DMAL_DMA_LD) ? true : false,
+							maddr,
+							lcaddr,
+							length);
+					}
+				}
+
+				// It makes no sense to implement such a small Queue. We make all transactions instant.
+
+				core->regs.spr[spr] &= ~(GEKKO_DMAL_DMA_T | GEKKO_DMAL_DMA_F);
+				core->regs.pc += 4;
+				return;
+			}
+			break;
+
+			case SPR::GQR0:
+			case SPR::GQR1:
+			case SPR::GQR2:
+			case SPR::GQR3:
+			case SPR::GQR4:
+			case SPR::GQR5:
+			case SPR::GQR6:
+			case SPR::GQR7:
+				// In the sense of Dolphin OS, registers GQR1-7 are constantly reloaded when switching threads via `OSLoadContext`.
+				// GQR0 is always 0 and is not reloaded when switching threads.
+				break;
+
+			case SPR::IBAT0U:
+			case SPR::IBAT0L:
+			case SPR::IBAT1U:
+			case SPR::IBAT1L:
+			case SPR::IBAT2U:
+			case SPR::IBAT2L:
+			case SPR::IBAT3U:
+			case SPR::IBAT3L:
+				core->itlb.InvalidateAll();
+				break;
+
+			case SPR::DBAT0U:
+			case SPR::DBAT0L:
+			case SPR::DBAT1U:
+			case SPR::DBAT1L:
+			case SPR::DBAT2U:
+			case SPR::DBAT2L:
+			case SPR::DBAT3U:
+			case SPR::DBAT3L:
+				core->dtlb.InvalidateAll();
+				break;
+
+			case SPR::L2CR:
+			{
+				uint32_t bits = core->regs.gpr[info.paramBits[1]];
+				//if (bits & GEKKO_L2CR_L2E) {
+				//	if (bits & GEKKO_L2CR_L2I) {
+				//		core->cache->FlashInvalidate();
+				//		Report(Channel::CPU, "L2 Cache Global Invalidate\n");
+				//	}
+				//}
+			}
 			break;
 		}
 
@@ -4537,23 +4521,29 @@ namespace Gekko
 		core->regs.pc += 4;
 	}
 
-	// Used as a hint to JITC so that it can invalidate the compiled code at this address.
-
 	void Interpreter::icbi()
 	{
-		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[0]];
+		int WIMG;
+		uint32_t address = info.paramBits[0] ? core->regs.gpr[info.paramBits[0]] + core->regs.gpr[info.paramBits[1]] : core->regs.gpr[info.paramBits[1]];
 		address &= ~0x1f;
 
-		int WIMG;
-		uint32_t physicalAddress = core->EffectiveToPhysical(address, MmuAccess::Execute, WIMG);
-
-#if GEKKOCORE_USE_JITC
-		if (physicalAddress != BadAddress)
+		if (core->regs.msr & MSR_PR)
 		{
-			core->jitc->Invalidate(physicalAddress, 32);
+			core->PrCause = PrivilegedCause::Privileged;
+			core->Exception(Exception::EXCEPTION_PROGRAM);
+			return;
 		}
-#endif
 
+		uint32_t pa = core->EffectiveToPhysical(address, MmuAccess::Read, WIMG);
+		if (pa != Gekko::BadAddress)
+		{
+			core->icache->Invalidate(pa);
+		}
+		else
+		{
+			core->Exception(Exception::EXCEPTION_ISI);
+			return;
+		}
 		core->regs.pc += 4;
 	}
 
@@ -4729,20 +4719,20 @@ namespace Gekko
 	// parse and execute single opcode
 	void Interpreter::ExecuteOpcode()
 	{
-		int WIMG;
-		uint32_t instr = 0, pa;
+		uint32_t instr = 0;
 
-		// execute one instruction
-		// (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-		pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
-		if (pa == Gekko::BadAddress)
-		{
-			core->Exception(Exception::EXCEPTION_ISI);
+		// Hack for the first time.
+		// Since we are using an "infinite" cache, the old data from the memory check (0x55555555) remains in it after BS2 is loaded;
+		// So when entering BS2, you just need to invalidate the DCache.
+		// Need to figure out why this is happening / come up with a better place to do it
+
+		if (core->regs.pc == 0x81300000) {
+			Core->cache->FlashInvalidate();
 		}
-		else
-		{
-			PIReadWord(pa, &instr);
-		}
+
+		// Fetch instruction
+
+		core->Fetch(core->regs.pc, &instr);
 		// ISI
 		if (core->exception)
 		{
@@ -4750,9 +4740,9 @@ namespace Gekko
 			return;
 		}
 
-		// Decode instruction using GekkoAnalyzer and dispatch
+		// Decode instruction and dispatch
 
-		Decoder::Decode(core->regs.pc, instr, &info);
+		Decoder::DecodeFast(core->regs.pc, instr, &info);
 		Dispatch();
 		core->ops++;
 
@@ -4773,434 +4763,382 @@ namespace Gekko
 		core->exception = false;
 	}
 
-	/// <summary>
-	/// Auxiliary call for the recompiler, to execute instructions that are not implemented there.
-	/// </summary>
-	/// <returns>true: An exception occurred during the execution of an instruction, so it is necessary to abort the execution of the recompiled code segment.</returns>
-	bool Interpreter::ExecuteInterpeterFallback()
-	{
-		int WIMG;
-		uint32_t instr = 0, pa;
-
-		// execute one instruction
-		// (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-		pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
-		if (pa == Gekko::BadAddress)
-		{
-			core->Exception(Exception::EXCEPTION_ISI);
-		}
-		else
-		{
-			PIReadWord(pa, &instr);
-		}
-
-		if (core->exception)
-		{
-			// ISI
-			core->exception = false;
-			return true;
-		}
-
-		// Decode instruction using GekkoAnalyzer and dispatch
-
-		Decoder::DecodeFast(core->regs.pc, instr, &info);
-		Dispatch();
-		core->ops++;
-
-		if (core->resetInstructionCounter)
-		{
-			core->resetInstructionCounter = false;
-			core->ops = 0;
-		}
-
-		if (core->exception)
-		{
-			// DSI, ALIGN, PROGRAM, FPUNA, SC
-			core->exception = false;
-			return true;
-		}
-
-		core->Tick();
-
-		return false;
-	}
-
 	void Interpreter::Dispatch()
 	{
 		switch (info.instr)
 		{
-		case Instruction::b: b(); break;
-		case Instruction::ba: ba(); break;
-		case Instruction::bl: bl(); break;
-		case Instruction::bla: bla(); break;
-		case Instruction::bc: bc(); break;
-		case Instruction::bca: bca(); break;
-		case Instruction::bcl: bcl(); break;
-		case Instruction::bcla: bcla(); break;
-		case Instruction::bcctr: bcctr(); break;
-		case Instruction::bcctrl: bcctrl(); break;
-		case Instruction::bclr: bclr(); break;
-		case Instruction::bclrl: bclrl(); break;
+			case Instruction::b: b(); break;
+			case Instruction::ba: ba(); break;
+			case Instruction::bl: bl(); break;
+			case Instruction::bla: bla(); break;
+			case Instruction::bc: bc(); break;
+			case Instruction::bca: bca(); break;
+			case Instruction::bcl: bcl(); break;
+			case Instruction::bcla: bcla(); break;
+			case Instruction::bcctr: bcctr(); break;
+			case Instruction::bcctrl: bcctrl(); break;
+			case Instruction::bclr: bclr(); break;
+			case Instruction::bclrl: bclrl(); break;
 
-		case Instruction::cmpi: cmpi(); break;
-		case Instruction::cmp: cmp(); break;
-		case Instruction::cmpli: cmpli(); break;
-		case Instruction::cmpl: cmpl(); break;
+			case Instruction::cmpi: cmpi(); break;
+			case Instruction::cmp: cmp(); break;
+			case Instruction::cmpli: cmpli(); break;
+			case Instruction::cmpl: cmpl(); break;
 
-		case Instruction::crand: crand(); break;
-		case Instruction::crandc: crandc(); break;
-		case Instruction::creqv: creqv(); break;
-		case Instruction::crnand: crnand(); break;
-		case Instruction::crnor: crnor(); break;
-		case Instruction::cror: cror(); break;
-		case Instruction::crorc: crorc(); break;
-		case Instruction::crxor: crxor(); break;
-		case Instruction::mcrf: mcrf(); break;
+			case Instruction::crand: crand(); break;
+			case Instruction::crandc: crandc(); break;
+			case Instruction::creqv: creqv(); break;
+			case Instruction::crnand: crnand(); break;
+			case Instruction::crnor: crnor(); break;
+			case Instruction::cror: cror(); break;
+			case Instruction::crorc: crorc(); break;
+			case Instruction::crxor: crxor(); break;
+			case Instruction::mcrf: mcrf(); break;
 
-		case Instruction::fadd: fadd(); break;
-		case Instruction::fadd_d: fadd_d(); break;
-		case Instruction::fadds: fadds(); break;
-		case Instruction::fadds_d: fadds_d(); break;
-		case Instruction::fdiv: fdiv(); break;
-		case Instruction::fdiv_d: fdiv_d(); break;
-		case Instruction::fdivs: fdivs(); break;
-		case Instruction::fdivs_d: fdivs_d(); break;
-		case Instruction::fmul: fmul(); break;
-		case Instruction::fmul_d: fmul_d(); break;
-		case Instruction::fmuls: fmuls(); break;
-		case Instruction::fmuls_d: fmuls_d(); break;
-		case Instruction::fres: fres(); break;
-		case Instruction::fres_d: fres_d(); break;
-		case Instruction::frsqrte: frsqrte(); break;
-		case Instruction::frsqrte_d: frsqrte_d(); break;
-		case Instruction::fsub: fsub(); break;
-		case Instruction::fsub_d: fsub_d(); break;
-		case Instruction::fsubs: fsubs(); break;
-		case Instruction::fsubs_d: fsubs_d(); break;
-		case Instruction::fsel: fsel(); break;
-		case Instruction::fsel_d: fsel_d(); break;
-		case Instruction::fmadd: fmadd(); break;
-		case Instruction::fmadd_d: fmadd_d(); break;
-		case Instruction::fmadds: fmadds(); break;
-		case Instruction::fmadds_d: fmadds_d(); break;
-		case Instruction::fmsub: fmsub(); break;
-		case Instruction::fmsub_d: fmsub_d(); break;
-		case Instruction::fmsubs: fmsubs(); break;
-		case Instruction::fmsubs_d: fmsubs_d(); break;
-		case Instruction::fnmadd: fnmadd(); break;
-		case Instruction::fnmadd_d: fnmadd_d(); break;
-		case Instruction::fnmadds: fnmadds(); break;
-		case Instruction::fnmadds_d: fnmadds_d(); break;
-		case Instruction::fnmsub: fnmsub(); break;
-		case Instruction::fnmsub_d: fnmsub_d(); break;
-		case Instruction::fnmsubs: fnmsubs(); break;
-		case Instruction::fnmsubs_d: fnmsubs_d(); break;
-		case Instruction::fctiw: fctiw(); break;
-		case Instruction::fctiw_d: fctiw_d(); break;
-		case Instruction::fctiwz: fctiwz(); break;
-		case Instruction::fctiwz_d: fctiwz_d(); break;
-		case Instruction::frsp: frsp(); break;
-		case Instruction::frsp_d: frsp_d(); break;
-		case Instruction::fcmpo: fcmpo(); break;
-		case Instruction::fcmpu: fcmpu(); break;
-		case Instruction::fabs: fabs(); break;
-		case Instruction::fabs_d: fabs_d(); break;
-		case Instruction::fmr: fmr(); break;
-		case Instruction::fmr_d: fmr_d(); break;
-		case Instruction::fnabs: fnabs(); break;
-		case Instruction::fnabs_d: fnabs_d(); break;
-		case Instruction::fneg: fneg(); break;
-		case Instruction::fneg_d: fneg_d(); break;
+			case Instruction::fadd: fadd(); break;
+			case Instruction::fadd_d: fadd_d(); break;
+			case Instruction::fadds: fadds(); break;
+			case Instruction::fadds_d: fadds_d(); break;
+			case Instruction::fdiv: fdiv(); break;
+			case Instruction::fdiv_d: fdiv_d(); break;
+			case Instruction::fdivs: fdivs(); break;
+			case Instruction::fdivs_d: fdivs_d(); break;
+			case Instruction::fmul: fmul(); break;
+			case Instruction::fmul_d: fmul_d(); break;
+			case Instruction::fmuls: fmuls(); break;
+			case Instruction::fmuls_d: fmuls_d(); break;
+			case Instruction::fres: fres(); break;
+			case Instruction::fres_d: fres_d(); break;
+			case Instruction::frsqrte: frsqrte(); break;
+			case Instruction::frsqrte_d: frsqrte_d(); break;
+			case Instruction::fsub: fsub(); break;
+			case Instruction::fsub_d: fsub_d(); break;
+			case Instruction::fsubs: fsubs(); break;
+			case Instruction::fsubs_d: fsubs_d(); break;
+			case Instruction::fsel: fsel(); break;
+			case Instruction::fsel_d: fsel_d(); break;
+			case Instruction::fmadd: fmadd(); break;
+			case Instruction::fmadd_d: fmadd_d(); break;
+			case Instruction::fmadds: fmadds(); break;
+			case Instruction::fmadds_d: fmadds_d(); break;
+			case Instruction::fmsub: fmsub(); break;
+			case Instruction::fmsub_d: fmsub_d(); break;
+			case Instruction::fmsubs: fmsubs(); break;
+			case Instruction::fmsubs_d: fmsubs_d(); break;
+			case Instruction::fnmadd: fnmadd(); break;
+			case Instruction::fnmadd_d: fnmadd_d(); break;
+			case Instruction::fnmadds: fnmadds(); break;
+			case Instruction::fnmadds_d: fnmadds_d(); break;
+			case Instruction::fnmsub: fnmsub(); break;
+			case Instruction::fnmsub_d: fnmsub_d(); break;
+			case Instruction::fnmsubs: fnmsubs(); break;
+			case Instruction::fnmsubs_d: fnmsubs_d(); break;
+			case Instruction::fctiw: fctiw(); break;
+			case Instruction::fctiw_d: fctiw_d(); break;
+			case Instruction::fctiwz: fctiwz(); break;
+			case Instruction::fctiwz_d: fctiwz_d(); break;
+			case Instruction::frsp: frsp(); break;
+			case Instruction::frsp_d: frsp_d(); break;
+			case Instruction::fcmpo: fcmpo(); break;
+			case Instruction::fcmpu: fcmpu(); break;
+			case Instruction::fabs: fabs(); break;
+			case Instruction::fabs_d: fabs_d(); break;
+			case Instruction::fmr: fmr(); break;
+			case Instruction::fmr_d: fmr_d(); break;
+			case Instruction::fnabs: fnabs(); break;
+			case Instruction::fnabs_d: fnabs_d(); break;
+			case Instruction::fneg: fneg(); break;
+			case Instruction::fneg_d: fneg_d(); break;
 
-		case Instruction::mcrfs: mcrfs(); break;
-		case Instruction::mffs: mffs(); break;
-		case Instruction::mffs_d: mffs_d(); break;
-		case Instruction::mtfsb0: mtfsb0(); break;
-		case Instruction::mtfsb0_d: mtfsb0_d(); break;
-		case Instruction::mtfsb1: mtfsb1(); break;
-		case Instruction::mtfsb1_d: mtfsb1_d(); break;
-		case Instruction::mtfsf: mtfsf(); break;
-		case Instruction::mtfsf_d: mtfsf_d(); break;
-		case Instruction::mtfsfi: mtfsfi(); break;
-		case Instruction::mtfsfi_d: mtfsfi_d(); break;
+			case Instruction::mcrfs: mcrfs(); break;
+			case Instruction::mffs: mffs(); break;
+			case Instruction::mffs_d: mffs_d(); break;
+			case Instruction::mtfsb0: mtfsb0(); break;
+			case Instruction::mtfsb0_d: mtfsb0_d(); break;
+			case Instruction::mtfsb1: mtfsb1(); break;
+			case Instruction::mtfsb1_d: mtfsb1_d(); break;
+			case Instruction::mtfsf: mtfsf(); break;
+			case Instruction::mtfsf_d: mtfsf_d(); break;
+			case Instruction::mtfsfi: mtfsfi(); break;
+			case Instruction::mtfsfi_d: mtfsfi_d(); break;
 
-		case Instruction::lfd: lfd(); break;
-		case Instruction::lfdu: lfdu(); break;
-		case Instruction::lfdux: lfdux(); break;
-		case Instruction::lfdx: lfdx(); break;
-		case Instruction::lfs: lfs(); break;
-		case Instruction::lfsu: lfsu(); break;
-		case Instruction::lfsux: lfsux(); break;
-		case Instruction::lfsx: lfsx(); break;
-		case Instruction::stfd: stfd(); break;
-		case Instruction::stfdu: stfdu(); break;
-		case Instruction::stfdux: stfdux(); break;
-		case Instruction::stfdx: stfdx(); break;
-		case Instruction::stfiwx: stfiwx(); break;
-		case Instruction::stfs: stfs(); break;
-		case Instruction::stfsu: stfsu(); break;
-		case Instruction::stfsux: stfsux(); break;
-		case Instruction::stfsx: stfsx(); break;
+			case Instruction::lfd: lfd(); break;
+			case Instruction::lfdu: lfdu(); break;
+			case Instruction::lfdux: lfdux(); break;
+			case Instruction::lfdx: lfdx(); break;
+			case Instruction::lfs: lfs(); break;
+			case Instruction::lfsu: lfsu(); break;
+			case Instruction::lfsux: lfsux(); break;
+			case Instruction::lfsx: lfsx(); break;
+			case Instruction::stfd: stfd(); break;
+			case Instruction::stfdu: stfdu(); break;
+			case Instruction::stfdux: stfdux(); break;
+			case Instruction::stfdx: stfdx(); break;
+			case Instruction::stfiwx: stfiwx(); break;
+			case Instruction::stfs: stfs(); break;
+			case Instruction::stfsu: stfsu(); break;
+			case Instruction::stfsux: stfsux(); break;
+			case Instruction::stfsx: stfsx(); break;
 
-		case Instruction::add: add(); break;
-		case Instruction::add_d: add_d(); break;
-		case Instruction::addo: addo(); break;
-		case Instruction::addo_d: addo_d(); break;
-		case Instruction::addc: addc(); break;
-		case Instruction::addc_d: addc_d(); break;
-		case Instruction::addco: addco(); break;
-		case Instruction::addco_d: addco_d(); break;
-		case Instruction::adde: adde(); break;
-		case Instruction::adde_d: adde_d(); break;
-		case Instruction::addeo: addeo(); break;
-		case Instruction::addeo_d: addeo_d(); break;
-		case Instruction::addi: addi(); break;
-		case Instruction::addic: addic(); break;
-		case Instruction::addic_d: addic_d(); break;
-		case Instruction::addis: addis(); break;
-		case Instruction::addme: addme(); break;
-		case Instruction::addme_d: addme_d(); break;
-		case Instruction::addmeo: addmeo(); break;
-		case Instruction::addmeo_d: addmeo_d(); break;
-		case Instruction::addze: addze(); break;
-		case Instruction::addze_d: addze_d(); break;
-		case Instruction::addzeo: addzeo(); break;
-		case Instruction::addzeo_d: addzeo_d(); break;
-		case Instruction::divw: divw(); break;
-		case Instruction::divw_d: divw_d(); break;
-		case Instruction::divwo: divwo(); break;
-		case Instruction::divwo_d: divwo_d(); break;
-		case Instruction::divwu: divwu(); break;
-		case Instruction::divwu_d: divwu_d(); break;
-		case Instruction::divwuo: divwuo(); break;
-		case Instruction::divwuo_d: divwuo_d(); break;
-		case Instruction::mulhw: mulhw(); break;
-		case Instruction::mulhw_d: mulhw_d(); break;
-		case Instruction::mulhwu: mulhwu(); break;
-		case Instruction::mulhwu_d: mulhwu_d(); break;
-		case Instruction::mulli: mulli(); break;
-		case Instruction::mullw: mullw(); break;
-		case Instruction::mullw_d: mullw_d(); break;
-		case Instruction::mullwo: mullwo(); break;
-		case Instruction::mullwo_d: mullwo_d(); break;
-		case Instruction::neg: neg(); break;
-		case Instruction::neg_d: neg_d(); break;
-		case Instruction::nego: nego(); break;
-		case Instruction::nego_d: nego_d(); break;
-		case Instruction::subf: subf(); break;
-		case Instruction::subf_d: subf_d(); break;
-		case Instruction::subfo: subfo(); break;
-		case Instruction::subfo_d: subfo_d(); break;
-		case Instruction::subfc: subfc(); break;
-		case Instruction::subfc_d: subfc_d(); break;
-		case Instruction::subfco: subfco(); break;
-		case Instruction::subfco_d: subfco_d(); break;
-		case Instruction::subfe: subfe(); break;
-		case Instruction::subfe_d: subfe_d(); break;
-		case Instruction::subfeo: subfeo(); break;
-		case Instruction::subfeo_d: subfeo_d(); break;
-		case Instruction::subfic: subfic(); break;
-		case Instruction::subfme: subfme(); break;
-		case Instruction::subfme_d: subfme_d(); break;
-		case Instruction::subfmeo: subfmeo(); break;
-		case Instruction::subfmeo_d: subfmeo_d(); break;
-		case Instruction::subfze: subfze(); break;
-		case Instruction::subfze_d: subfze_d(); break;
-		case Instruction::subfzeo: subfzeo(); break;
-		case Instruction::subfzeo_d: subfzeo_d(); break;
+			case Instruction::add: add(); break;
+			case Instruction::add_d: add_d(); break;
+			case Instruction::addo: addo(); break;
+			case Instruction::addo_d: addo_d(); break;
+			case Instruction::addc: addc(); break;
+			case Instruction::addc_d: addc_d(); break;
+			case Instruction::addco: addco(); break;
+			case Instruction::addco_d: addco_d(); break;
+			case Instruction::adde: adde(); break;
+			case Instruction::adde_d: adde_d(); break;
+			case Instruction::addeo: addeo(); break;
+			case Instruction::addeo_d: addeo_d(); break;
+			case Instruction::addi: addi(); break;
+			case Instruction::addic: addic(); break;
+			case Instruction::addic_d: addic_d(); break;
+			case Instruction::addis: addis(); break;
+			case Instruction::addme: addme(); break;
+			case Instruction::addme_d: addme_d(); break;
+			case Instruction::addmeo: addmeo(); break;
+			case Instruction::addmeo_d: addmeo_d(); break;
+			case Instruction::addze: addze(); break;
+			case Instruction::addze_d: addze_d(); break;
+			case Instruction::addzeo: addzeo(); break;
+			case Instruction::addzeo_d: addzeo_d(); break;
+			case Instruction::divw: divw(); break;
+			case Instruction::divw_d: divw_d(); break;
+			case Instruction::divwo: divwo(); break;
+			case Instruction::divwo_d: divwo_d(); break;
+			case Instruction::divwu: divwu(); break;
+			case Instruction::divwu_d: divwu_d(); break;
+			case Instruction::divwuo: divwuo(); break;
+			case Instruction::divwuo_d: divwuo_d(); break;
+			case Instruction::mulhw: mulhw(); break;
+			case Instruction::mulhw_d: mulhw_d(); break;
+			case Instruction::mulhwu: mulhwu(); break;
+			case Instruction::mulhwu_d: mulhwu_d(); break;
+			case Instruction::mulli: mulli(); break;
+			case Instruction::mullw: mullw(); break;
+			case Instruction::mullw_d: mullw_d(); break;
+			case Instruction::mullwo: mullwo(); break;
+			case Instruction::mullwo_d: mullwo_d(); break;
+			case Instruction::neg: neg(); break;
+			case Instruction::neg_d: neg_d(); break;
+			case Instruction::nego: nego(); break;
+			case Instruction::nego_d: nego_d(); break;
+			case Instruction::subf: subf(); break;
+			case Instruction::subf_d: subf_d(); break;
+			case Instruction::subfo: subfo(); break;
+			case Instruction::subfo_d: subfo_d(); break;
+			case Instruction::subfc: subfc(); break;
+			case Instruction::subfc_d: subfc_d(); break;
+			case Instruction::subfco: subfco(); break;
+			case Instruction::subfco_d: subfco_d(); break;
+			case Instruction::subfe: subfe(); break;
+			case Instruction::subfe_d: subfe_d(); break;
+			case Instruction::subfeo: subfeo(); break;
+			case Instruction::subfeo_d: subfeo_d(); break;
+			case Instruction::subfic: subfic(); break;
+			case Instruction::subfme: subfme(); break;
+			case Instruction::subfme_d: subfme_d(); break;
+			case Instruction::subfmeo: subfmeo(); break;
+			case Instruction::subfmeo_d: subfmeo_d(); break;
+			case Instruction::subfze: subfze(); break;
+			case Instruction::subfze_d: subfze_d(); break;
+			case Instruction::subfzeo: subfzeo(); break;
+			case Instruction::subfzeo_d: subfzeo_d(); break;
 
-		case Instruction::lbz: lbz(); break;
-		case Instruction::lbzu: lbzu(); break;
-		case Instruction::lbzux: lbzux(); break;
-		case Instruction::lbzx: lbzx(); break;
-		case Instruction::lha: lha(); break;
-		case Instruction::lhau: lhau(); break;
-		case Instruction::lhaux: lhaux(); break;
-		case Instruction::lhax: lhax(); break;
-		case Instruction::lhz: lhz(); break;
-		case Instruction::lhzu: lhzu(); break;
-		case Instruction::lhzux: lhzux(); break;
-		case Instruction::lhzx: lhzx(); break;
-		case Instruction::lwz: lwz(); break;
-		case Instruction::lwzu: lwzu(); break;
-		case Instruction::lwzux: lwzux(); break;
-		case Instruction::lwzx: lwzx(); break;
-		case Instruction::stb: stb(); break;
-		case Instruction::stbu: stbu(); break;
-		case Instruction::stbux: stbux(); break;
-		case Instruction::stbx: stbx(); break;
-		case Instruction::sth: sth(); break;
-		case Instruction::sthu: sthu(); break;
-		case Instruction::sthux: sthux(); break;
-		case Instruction::sthx: sthx(); break;
-		case Instruction::stw: stw(); break;
-		case Instruction::stwu: stwu(); break;
-		case Instruction::stwux: stwux(); break;
-		case Instruction::stwx: stwx(); break;
-		case Instruction::lhbrx: lhbrx(); break;
-		case Instruction::lwbrx: lwbrx(); break;
-		case Instruction::sthbrx: sthbrx(); break;
-		case Instruction::stwbrx: stwbrx(); break;
-		case Instruction::lmw: lmw(); break;
-		case Instruction::stmw: stmw(); break;
-		case Instruction::lswi: lswi(); break;
-		case Instruction::lswx: lswx(); break;
-		case Instruction::stswi: stswi(); break;
-		case Instruction::stswx: stswx(); break;
+			case Instruction::lbz: lbz(); break;
+			case Instruction::lbzu: lbzu(); break;
+			case Instruction::lbzux: lbzux(); break;
+			case Instruction::lbzx: lbzx(); break;
+			case Instruction::lha: lha(); break;
+			case Instruction::lhau: lhau(); break;
+			case Instruction::lhaux: lhaux(); break;
+			case Instruction::lhax: lhax(); break;
+			case Instruction::lhz: lhz(); break;
+			case Instruction::lhzu: lhzu(); break;
+			case Instruction::lhzux: lhzux(); break;
+			case Instruction::lhzx: lhzx(); break;
+			case Instruction::lwz: lwz(); break;
+			case Instruction::lwzu: lwzu(); break;
+			case Instruction::lwzux: lwzux(); break;
+			case Instruction::lwzx: lwzx(); break;
+			case Instruction::stb: stb(); break;
+			case Instruction::stbu: stbu(); break;
+			case Instruction::stbux: stbux(); break;
+			case Instruction::stbx: stbx(); break;
+			case Instruction::sth: sth(); break;
+			case Instruction::sthu: sthu(); break;
+			case Instruction::sthux: sthux(); break;
+			case Instruction::sthx: sthx(); break;
+			case Instruction::stw: stw(); break;
+			case Instruction::stwu: stwu(); break;
+			case Instruction::stwux: stwux(); break;
+			case Instruction::stwx: stwx(); break;
+			case Instruction::lhbrx: lhbrx(); break;
+			case Instruction::lwbrx: lwbrx(); break;
+			case Instruction::sthbrx: sthbrx(); break;
+			case Instruction::stwbrx: stwbrx(); break;
+			case Instruction::lmw: lmw(); break;
+			case Instruction::stmw: stmw(); break;
+			case Instruction::lswi: lswi(); break;
+			case Instruction::lswx: lswx(); break;
+			case Instruction::stswi: stswi(); break;
+			case Instruction::stswx: stswx(); break;
 
-		case Instruction::_and: _and(); break;
-		case Instruction::and_d: and_d(); break;
-		case Instruction::andc: andc(); break;
-		case Instruction::andc_d: andc_d(); break;
-		case Instruction::andi_d: andi_d(); break;
-		case Instruction::andis_d: andis_d(); break;
-		case Instruction::cntlzw: cntlzw(); break;
-		case Instruction::cntlzw_d: cntlzw_d(); break;
-		case Instruction::eqv: eqv(); break;
-		case Instruction::eqv_d: eqv_d(); break;
-		case Instruction::extsb: extsb(); break;
-		case Instruction::extsb_d: extsb_d(); break;
-		case Instruction::extsh: extsh(); break;
-		case Instruction::extsh_d: extsh_d(); break;
-		case Instruction::nand: nand(); break;
-		case Instruction::nand_d: nand_d(); break;
-		case Instruction::nor: nor(); break;
-		case Instruction::nor_d: nor_d(); break;
-		case Instruction::_or: _or(); break;
-		case Instruction::or_d: or_d(); break;
-		case Instruction::orc: orc(); break;
-		case Instruction::orc_d: orc_d(); break;
-		case Instruction::ori: ori(); break;
-		case Instruction::oris: oris(); break;
-		case Instruction::_xor: _xor(); break;
-		case Instruction::xor_d: xor_d(); break;
-		case Instruction::xori: xori(); break;
-		case Instruction::xoris: xoris(); break;
+			case Instruction::_and: _and(); break;
+			case Instruction::and_d: and_d(); break;
+			case Instruction::andc: andc(); break;
+			case Instruction::andc_d: andc_d(); break;
+			case Instruction::andi_d: andi_d(); break;
+			case Instruction::andis_d: andis_d(); break;
+			case Instruction::cntlzw: cntlzw(); break;
+			case Instruction::cntlzw_d: cntlzw_d(); break;
+			case Instruction::eqv: eqv(); break;
+			case Instruction::eqv_d: eqv_d(); break;
+			case Instruction::extsb: extsb(); break;
+			case Instruction::extsb_d: extsb_d(); break;
+			case Instruction::extsh: extsh(); break;
+			case Instruction::extsh_d: extsh_d(); break;
+			case Instruction::nand: nand(); break;
+			case Instruction::nand_d: nand_d(); break;
+			case Instruction::nor: nor(); break;
+			case Instruction::nor_d: nor_d(); break;
+			case Instruction::_or: _or(); break;
+			case Instruction::or_d: or_d(); break;
+			case Instruction::orc: orc(); break;
+			case Instruction::orc_d: orc_d(); break;
+			case Instruction::ori: ori(); break;
+			case Instruction::oris: oris(); break;
+			case Instruction::_xor: _xor(); break;
+			case Instruction::xor_d: xor_d(); break;
+			case Instruction::xori: xori(); break;
+			case Instruction::xoris: xoris(); break;
 
-		case Instruction::ps_div: ps_div(); break;
-		case Instruction::ps_div_d: ps_div_d(); break;
-		case Instruction::ps_sub: ps_sub(); break;
-		case Instruction::ps_sub_d: ps_sub_d(); break;
-		case Instruction::ps_add: ps_add(); break;
-		case Instruction::ps_add_d: ps_add_d(); break;
-		case Instruction::ps_sel: ps_sel(); break;
-		case Instruction::ps_sel_d: ps_sel_d(); break;
-		case Instruction::ps_res: ps_res(); break;
-		case Instruction::ps_res_d: ps_res_d(); break;
-		case Instruction::ps_mul: ps_mul(); break;
-		case Instruction::ps_mul_d: ps_mul_d(); break;
-		case Instruction::ps_rsqrte: ps_rsqrte(); break;
-		case Instruction::ps_rsqrte_d: ps_rsqrte_d(); break;
-		case Instruction::ps_msub: ps_msub(); break;
-		case Instruction::ps_msub_d: ps_msub_d(); break;
-		case Instruction::ps_madd: ps_madd(); break;
-		case Instruction::ps_madd_d: ps_madd_d(); break;
-		case Instruction::ps_nmsub: ps_nmsub(); break;
-		case Instruction::ps_nmsub_d: ps_nmsub_d(); break;
-		case Instruction::ps_nmadd: ps_nmadd(); break;
-		case Instruction::ps_nmadd_d: ps_nmadd_d(); break;
-		case Instruction::ps_neg: ps_neg(); break;
-		case Instruction::ps_neg_d: ps_neg_d(); break;
-		case Instruction::ps_mr: ps_mr(); break;
-		case Instruction::ps_mr_d: ps_mr_d(); break;
-		case Instruction::ps_nabs: ps_nabs(); break;
-		case Instruction::ps_nabs_d: ps_nabs_d(); break;
-		case Instruction::ps_abs: ps_abs(); break;
-		case Instruction::ps_abs_d: ps_abs_d(); break;
+			case Instruction::ps_div: ps_div(); break;
+			case Instruction::ps_div_d: ps_div_d(); break;
+			case Instruction::ps_sub: ps_sub(); break;
+			case Instruction::ps_sub_d: ps_sub_d(); break;
+			case Instruction::ps_add: ps_add(); break;
+			case Instruction::ps_add_d: ps_add_d(); break;
+			case Instruction::ps_sel: ps_sel(); break;
+			case Instruction::ps_sel_d: ps_sel_d(); break;
+			case Instruction::ps_res: ps_res(); break;
+			case Instruction::ps_res_d: ps_res_d(); break;
+			case Instruction::ps_mul: ps_mul(); break;
+			case Instruction::ps_mul_d: ps_mul_d(); break;
+			case Instruction::ps_rsqrte: ps_rsqrte(); break;
+			case Instruction::ps_rsqrte_d: ps_rsqrte_d(); break;
+			case Instruction::ps_msub: ps_msub(); break;
+			case Instruction::ps_msub_d: ps_msub_d(); break;
+			case Instruction::ps_madd: ps_madd(); break;
+			case Instruction::ps_madd_d: ps_madd_d(); break;
+			case Instruction::ps_nmsub: ps_nmsub(); break;
+			case Instruction::ps_nmsub_d: ps_nmsub_d(); break;
+			case Instruction::ps_nmadd: ps_nmadd(); break;
+			case Instruction::ps_nmadd_d: ps_nmadd_d(); break;
+			case Instruction::ps_neg: ps_neg(); break;
+			case Instruction::ps_neg_d: ps_neg_d(); break;
+			case Instruction::ps_mr: ps_mr(); break;
+			case Instruction::ps_mr_d: ps_mr_d(); break;
+			case Instruction::ps_nabs: ps_nabs(); break;
+			case Instruction::ps_nabs_d: ps_nabs_d(); break;
+			case Instruction::ps_abs: ps_abs(); break;
+			case Instruction::ps_abs_d: ps_abs_d(); break;
 
-		case Instruction::ps_sum0: ps_sum0(); break;
-		case Instruction::ps_sum0_d: ps_sum0_d(); break;
-		case Instruction::ps_sum1: ps_sum1(); break;
-		case Instruction::ps_sum1_d: ps_sum1_d(); break;
-		case Instruction::ps_muls0: ps_muls0(); break;
-		case Instruction::ps_muls0_d: ps_muls0_d(); break;
-		case Instruction::ps_muls1: ps_muls1(); break;
-		case Instruction::ps_muls1_d: ps_muls1_d(); break;
-		case Instruction::ps_madds0: ps_madds0(); break;
-		case Instruction::ps_madds0_d: ps_madds0_d(); break;
-		case Instruction::ps_madds1: ps_madds1(); break;
-		case Instruction::ps_madds1_d: ps_madds1_d(); break;
-		case Instruction::ps_cmpu0: ps_cmpu0(); break;
-		case Instruction::ps_cmpo0: ps_cmpo0(); break;
-		case Instruction::ps_cmpu1: ps_cmpu1(); break;
-		case Instruction::ps_cmpo1: ps_cmpo1(); break;
-		case Instruction::ps_merge00: ps_merge00(); break;
-		case Instruction::ps_merge00_d: ps_merge00_d(); break;
-		case Instruction::ps_merge01: ps_merge01(); break;
-		case Instruction::ps_merge01_d: ps_merge01_d(); break;
-		case Instruction::ps_merge10: ps_merge10(); break;
-		case Instruction::ps_merge10_d: ps_merge10_d(); break;
-		case Instruction::ps_merge11: ps_merge11(); break;
-		case Instruction::ps_merge11_d: ps_merge11_d(); break;
+			case Instruction::ps_sum0: ps_sum0(); break;
+			case Instruction::ps_sum0_d: ps_sum0_d(); break;
+			case Instruction::ps_sum1: ps_sum1(); break;
+			case Instruction::ps_sum1_d: ps_sum1_d(); break;
+			case Instruction::ps_muls0: ps_muls0(); break;
+			case Instruction::ps_muls0_d: ps_muls0_d(); break;
+			case Instruction::ps_muls1: ps_muls1(); break;
+			case Instruction::ps_muls1_d: ps_muls1_d(); break;
+			case Instruction::ps_madds0: ps_madds0(); break;
+			case Instruction::ps_madds0_d: ps_madds0_d(); break;
+			case Instruction::ps_madds1: ps_madds1(); break;
+			case Instruction::ps_madds1_d: ps_madds1_d(); break;
+			case Instruction::ps_cmpu0: ps_cmpu0(); break;
+			case Instruction::ps_cmpo0: ps_cmpo0(); break;
+			case Instruction::ps_cmpu1: ps_cmpu1(); break;
+			case Instruction::ps_cmpo1: ps_cmpo1(); break;
+			case Instruction::ps_merge00: ps_merge00(); break;
+			case Instruction::ps_merge00_d: ps_merge00_d(); break;
+			case Instruction::ps_merge01: ps_merge01(); break;
+			case Instruction::ps_merge01_d: ps_merge01_d(); break;
+			case Instruction::ps_merge10: ps_merge10(); break;
+			case Instruction::ps_merge10_d: ps_merge10_d(); break;
+			case Instruction::ps_merge11: ps_merge11(); break;
+			case Instruction::ps_merge11_d: ps_merge11_d(); break;
 
-		case Instruction::psq_lx: psq_lx(); break;
-		case Instruction::psq_stx: psq_stx(); break;
-		case Instruction::psq_lux: psq_lux(); break;
-		case Instruction::psq_stux: psq_stux(); break;
-		case Instruction::psq_l: psq_l(); break;
-		case Instruction::psq_lu: psq_lu(); break;
-		case Instruction::psq_st: psq_st(); break;
-		case Instruction::psq_stu: psq_stu(); break;
+			case Instruction::psq_lx: psq_lx(); break;
+			case Instruction::psq_stx: psq_stx(); break;
+			case Instruction::psq_lux: psq_lux(); break;
+			case Instruction::psq_stux: psq_stux(); break;
+			case Instruction::psq_l: psq_l(); break;
+			case Instruction::psq_lu: psq_lu(); break;
+			case Instruction::psq_st: psq_st(); break;
+			case Instruction::psq_stu: psq_stu(); break;
 
-		case Instruction::rlwimi: rlwimi(); break;
-		case Instruction::rlwimi_d: rlwimi_d(); break;
-		case Instruction::rlwinm: rlwinm(); break;
-		case Instruction::rlwinm_d: rlwinm_d(); break;
-		case Instruction::rlwnm: rlwnm(); break;
-		case Instruction::rlwnm_d: rlwnm_d(); break;
+			case Instruction::rlwimi: rlwimi(); break;
+			case Instruction::rlwimi_d: rlwimi_d(); break;
+			case Instruction::rlwinm: rlwinm(); break;
+			case Instruction::rlwinm_d: rlwinm_d(); break;
+			case Instruction::rlwnm: rlwnm(); break;
+			case Instruction::rlwnm_d: rlwnm_d(); break;
 
-		case Instruction::slw: slw(); break;
-		case Instruction::slw_d: slw_d(); break;
-		case Instruction::sraw: sraw(); break;
-		case Instruction::sraw_d: sraw_d(); break;
-		case Instruction::srawi: srawi(); break;
-		case Instruction::srawi_d: srawi_d(); break;
-		case Instruction::srw: srw(); break;
-		case Instruction::srw_d: srw_d(); break;
+			case Instruction::slw: slw(); break;
+			case Instruction::slw_d: slw_d(); break;
+			case Instruction::sraw: sraw(); break;
+			case Instruction::sraw_d: sraw_d(); break;
+			case Instruction::srawi: srawi(); break;
+			case Instruction::srawi_d: srawi_d(); break;
+			case Instruction::srw: srw(); break;
+			case Instruction::srw_d: srw_d(); break;
 
-		case Instruction::eieio: eieio(); break;
-		case Instruction::isync: isync(); break;
-		case Instruction::lwarx: lwarx(); break;
-		case Instruction::stwcx_d: stwcx_d(); break;
-		case Instruction::sync: sync(); break;
-		case Instruction::rfi: rfi(); break;
-		case Instruction::sc: sc(); break;
-		case Instruction::tw: tw(); break;
-		case Instruction::twi: twi(); break;
-		case Instruction::mcrxr: mcrxr(); break;
-		case Instruction::mfcr: mfcr(); break;
-		case Instruction::mfmsr: mfmsr(); break;
-		case Instruction::mfspr: mfspr(); break;
-		case Instruction::mftb: mftb(); break;
-		case Instruction::mtcrf: mtcrf(); break;
-		case Instruction::mtmsr: mtmsr(); break;
-		case Instruction::mtspr: mtspr(); break;
-		case Instruction::dcbf: dcbf(); break;
-		case Instruction::dcbi: dcbi(); break;
-		case Instruction::dcbst: dcbst(); break;
-		case Instruction::dcbt: dcbt(); break;
-		case Instruction::dcbtst: dcbtst(); break;
-		case Instruction::dcbz: dcbz(); break;
-		case Instruction::dcbz_l: dcbz_l(); break;
-		case Instruction::icbi: icbi(); break;
-		case Instruction::mfsr: mfsr(); break;
-		case Instruction::mfsrin: mfsrin(); break;
-		case Instruction::mtsr: mtsr(); break;
-		case Instruction::mtsrin: mtsrin(); break;
-		case Instruction::tlbie: tlbie(); break;
-		case Instruction::tlbsync: tlbsync(); break;
-		case Instruction::eciwx: eciwx(); break;
-		case Instruction::ecowx: ecowx(); break;
+			case Instruction::eieio: eieio(); break;
+			case Instruction::isync: isync(); break;
+			case Instruction::lwarx: lwarx(); break;
+			case Instruction::stwcx_d: stwcx_d(); break;
+			case Instruction::sync: sync(); break;
+			case Instruction::rfi: rfi(); break;
+			case Instruction::sc: sc(); break;
+			case Instruction::tw: tw(); break;
+			case Instruction::twi: twi(); break;
+			case Instruction::mcrxr: mcrxr(); break;
+			case Instruction::mfcr: mfcr(); break;
+			case Instruction::mfmsr: mfmsr(); break;
+			case Instruction::mfspr: mfspr(); break;
+			case Instruction::mftb: mftb(); break;
+			case Instruction::mtcrf: mtcrf(); break;
+			case Instruction::mtmsr: mtmsr(); break;
+			case Instruction::mtspr: mtspr(); break;
+			case Instruction::dcbf: dcbf(); break;
+			case Instruction::dcbi: dcbi(); break;
+			case Instruction::dcbst: dcbst(); break;
+			case Instruction::dcbt: dcbt(); break;
+			case Instruction::dcbtst: dcbtst(); break;
+			case Instruction::dcbz: dcbz(); break;
+			case Instruction::dcbz_l: dcbz_l(); break;
+			case Instruction::icbi: icbi(); break;
+			case Instruction::mfsr: mfsr(); break;
+			case Instruction::mfsrin: mfsrin(); break;
+			case Instruction::mtsr: mtsr(); break;
+			case Instruction::mtsrin: mtsrin(); break;
+			case Instruction::tlbie: tlbie(); break;
+			case Instruction::tlbsync: tlbsync(); break;
+			case Instruction::eciwx: eciwx(); break;
+			case Instruction::ecowx: ecowx(); break;
 
-			// TODO: CallVM opcode.
+				// TODO: CallVM opcode.
 
-		default:
-			Halt("** CPU ERROR **\n"
-				"unimplemented opcode : %08X\n", core->regs.pc);
+			default:
+				Halt("** CPU ERROR **\n"
+					"unimplemented opcode : %08X\n", core->regs.pc);
 
-			core->PrCause = PrivilegedCause::IllegalInstruction;
-			core->Exception(Exception::EXCEPTION_PROGRAM);
-			return;
+				core->PrCause = PrivilegedCause::IllegalInstruction;
+				core->Exception(Exception::EXCEPTION_PROGRAM);
+				return;
 		}
 
 		if (core->opcodeStatsEnabled)
@@ -5233,5 +5171,4 @@ namespace Gekko
 
 		Halt("callvm: Temporary not implemented!\n");
 	}
-
 }

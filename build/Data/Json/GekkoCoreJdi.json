@@ -73,14 +73,6 @@
       ]
     },
 
-    "CacheDebugDisable": {
-      "help": "Disable cache emulation despite Gekko register settings",
-      "args": 1,
-      "usage": [
-        "Syntax: CacheDebugDisable <0|1>"
-      ]
-    },
-
     "IsRunning": {
       "internal": true,
       "output": "Bool"

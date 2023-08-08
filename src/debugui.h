@@ -365,7 +365,7 @@ namespace Debug
 
 namespace Debug
 {
-	enum class GekkoRegmode
+	enum class DebugRegmode
 	{
 		GPR = 0,
 		FPR,
@@ -388,9 +388,9 @@ namespace Debug
 
 #pragma pack(pop)
 
-	class GekkoRegs : public CuiWindow
+	class DebugRegs : public CuiWindow
 	{
-		GekkoRegmode mode = GekkoRegmode::GPR;
+		DebugRegmode mode = DebugRegmode::GPR;
 
 		uint32_t savedGpr[32] = { 0 };
 		Fpreg savedPs0[32] = { 0 };
@@ -414,8 +414,8 @@ namespace Debug
 		std::string smart_size(size_t size);
 
 	public:
-		GekkoRegs(CuiRect& rect, std::string name, Cui* parent);
-		~GekkoRegs();
+		DebugRegs(CuiRect& rect, std::string name, Cui* parent);
+		~DebugRegs();
 
 		virtual void OnDraw();
 		virtual void OnKeyPress(char Ascii, CuiVkey Vkey, bool shift, bool ctrl);
@@ -462,7 +462,7 @@ namespace Debug
 		static const size_t memViewHeight = 8;
 		static const size_t disaHeight = 28;
 
-		GekkoRegs* regs = nullptr;
+		DebugRegs* regs = nullptr;
 		MemoryView* memview = nullptr;
 		GekkoDisasm* disasm = nullptr;
 		ReportWindow* msgs = nullptr;

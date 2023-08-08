@@ -165,6 +165,7 @@ namespace GX
 		void FifoWalk(unsigned vatnum, FifoProcessor* gxfifo);
 		void GxBadFifo(uint8_t command);
 		void GxCommand(FifoProcessor* gxfifo);
+		void CPAbortFifo();
 
 #pragma endregion "Command Processor"
 

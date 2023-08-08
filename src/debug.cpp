@@ -655,12 +655,6 @@ namespace Debug
 			case PerfCounter::PEs:
 				return pi.intCounters[(size_t)PIInterruptSource::PE_FINISH];
 				break;
-			case PerfCounter::CompiledSegments:
-				return Core->GetCompiledSegmentsCount();
-				break;
-			case PerfCounter::ExecutedSegments:
-				return Core->GetExecutedSegmentsCount();
-				break;
 		}
 
 		return value;
@@ -681,12 +675,6 @@ namespace Debug
 				break;
 			case PerfCounter::PEs:
 				pi.intCounters[(size_t)PIInterruptSource::PE_FINISH] = 0;
-				break;
-			case PerfCounter::CompiledSegments:
-				Core->ResetCompiledSegmentsCount();
-				break;
-			case PerfCounter::ExecutedSegments:
-				Core->ResetExecutedSegmentsCount();
 				break;
 		}
 	}

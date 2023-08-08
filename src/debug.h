@@ -189,8 +189,6 @@ namespace Debug
 		DspInstructions,		// Number of DSP instructions executed
 		VIs,				// Number of VI VBlank interrupts (based on PI interrupt counters)
 		PEs,				// Number of PE DRAW_DONE operations (based on PI interrupt counters)
-		CompiledSegments,	// Number of compiled GekkoCore recompiler segments.
-		ExecutedSegments,	// Number of executed GekkoCore recompiler segments.
 
 		Max,
 	};

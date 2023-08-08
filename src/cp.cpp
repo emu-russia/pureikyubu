@@ -233,6 +233,12 @@ namespace GX
 		TOKEN_INT();
 	}
 
+	void GXCore::CPAbortFifo()
+	{
+		Report(Channel::GP, "CP Abort FIFO\n");
+		fifo->Reset();
+	}
+
 	uint16_t GXCore::CpReadReg(CPMappedRegister id)
 	{
 		switch (id)
@@ -483,7 +489,9 @@ namespace GX
 				state.pi_cp_wrptr = value & ~0x1f;
 				break;
 			case PI_CPMappedRegister::PI_CPABT_ID:
-				Report(Channel::GP, "PI CP Abort write not implemented!\n");
+				if ((value & 1) != 0) {
+					CPAbortFifo();
+				}
 				break;
 		}
 	}

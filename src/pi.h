@@ -33,7 +33,7 @@
 #define PI_BASE             0x0C00300C      // PI CP fifo base
 #define PI_TOP              0x0C003010      // PI CP fifo top
 #define PI_WRPTR            0x0C003014      // PI CP fifo write pointer
-#define PI_CPABT            0x0C003018      // Abort PI CP FIFO?
+#define PI_CPABT            0x0C003018      // Abort PI CP FIFO
 #define PI_PIESR            0x0C00301C
 #define PI_PIEAR            0x0C003020
 #define PI_CONFIG           0x0C003024      // PI CFG + reset bits
@@ -118,6 +118,8 @@ struct PIControl
 	bool        log;			// log interrupts
 	uint32_t    consoleVer;		// console version
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
+	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
+	int64_t one_microsecond;	// one CPU microsecond in timer ticks
 };
 
 extern  PIControl pi;
