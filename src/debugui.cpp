@@ -2817,3 +2817,31 @@ namespace Debug
 	}
 
 }
+
+
+namespace Debug
+{
+	Json::Value* CmdShowMemory(std::vector<std::string>& args)
+	{
+		if (gekkoDebug)
+		{
+			gekkoDebug->SetMemoryCursor(strtoul(args[1].c_str(), nullptr, 0));
+		}
+		return nullptr;
+	}
+
+	Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
+	{
+		if (gekkoDebug)
+		{
+			gekkoDebug->SetDisasmCursor(strtoul(args[1].c_str(), nullptr, 0));
+		}
+		return nullptr;
+	}
+
+	void DebugUIReflector()
+	{
+		JdiAddCmd("d", CmdShowMemory);
+		JdiAddCmd("u", CmdShowDisassembly);
+	}
+}

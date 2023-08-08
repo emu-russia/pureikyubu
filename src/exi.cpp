@@ -14,7 +14,7 @@
 
 	SRAM : little piece of battery-backed data. 64 bytes or so.
 	RTC  : 32-bit counter of seconds, since current millenium
-	AD16 : debugging 32-bit register
+	AD16 : This is most likely a debugging device called `Barnacle`.
 
 	memcard should be in another module (see MC.cpp)
 	broad band adapter should be in another module (see BBA.cpp)
@@ -62,17 +62,8 @@ using namespace Debug;
 // SI state (registers and other data)
 EIControl exi;
 
-// bootrom copyright message (at offset 0). PAL only, NTSC has garbage.
-// can be used by apps to detect PAL/NTSC cube.
-static  char palver[0x100] = "(C) 1999-2001 Nintendo.  All rights reserved."
-"(C) 1999 ArtX Inc.  All rights reserved."
-"PAL  Revision 1.0 ";
-//                            ^^^
-static  char ntscver[0x100] = "ABRACADABRA";
-
 // forward refs on EXI transfers
 void    UnknownTransfer();  // ???
-void    MXTransfer();       // bootrom, RTC and SRAM
 void    ADTransfer();       // AD16
 
 // EXI transfer bindings
@@ -150,7 +141,8 @@ void UnknownTransfer()
 	}
 }
 
-// AD chip? transfer (EXI device 2:0)
+// AD16 device transfer (EXI device 2:0)
+// This is most likely a debugging device called `Barnacle`.
 void ADTransfer()
 {
 	// read or write ?
