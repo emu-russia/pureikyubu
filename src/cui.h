@@ -80,7 +80,7 @@ namespace Debug
 #endif
 
 		// Window layout in CUI.
-		CuiRect wndRect;
+		CuiRect wndRect{};
 
 		void PutChar(CuiColor back, CuiColor front, int x, int y, char c);
 
@@ -122,12 +122,12 @@ namespace Debug
 		std::list<CuiWindow*> windows;
 
 #ifdef _WINDOWS
-		HANDLE StdInput;
-		HANDLE StdOutput;
+		HANDLE StdInput = 0;
+		HANDLE StdOutput = 0;
 #endif
 
-		size_t conWidth;
-		size_t conHeight;
+		size_t conWidth = 0;
+		size_t conHeight = 0;
 
 		Thread* cuiThread = nullptr;
 		static void CuiThreadProc(void* Parameter);

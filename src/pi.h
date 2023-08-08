@@ -93,6 +93,8 @@ enum class PIInterruptSource
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
+// Program interface that implements transactions over Gekko 60x Bus
+
 void PIReadByte(uint32_t pa, uint32_t* reg);
 void PIWriteByte(uint32_t pa, uint32_t data);
 void PIReadHalf(uint32_t pa, uint32_t* reg);
@@ -110,19 +112,29 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 // PI state (registers and other data)
 struct PIControl
 {
-	volatile uint32_t    intsr;          // interrupt cause
-	volatile uint32_t    intmr;          // interrupt mask
-	bool        log;            // log interrupts
-	uint32_t    consoleVer;     // console version
-	int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters
+	volatile uint32_t intsr;	// interrupt cause
+	volatile uint32_t intmr;	// interrupt mask
+	volatile uint32_t intbrk;	// one-shot interrup breakpoint
+	bool        log;			// log interrupts
+	uint32_t    consoleVer;		// console version
+	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
 };
 
 extern  PIControl pi;
+
+// The role of the /HRESET signal is performed by the PIOpen/PIClose pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing
 
 void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)
 void PIOpen(HWConfig* config);
 void PIClose();
+
+/// <summary>
+/// Set the breakpoint (Halt) to trigger once per interrupt.
+/// Used by debug commands for step-by-step debugging of system runtime.
+/// </summary>
+/// <param name="mask">Mask of interrupts that require a one-shot break</param>
+void PIBreakOnNextInt(uint32_t mask);
 
 void PISetTrap(
 	uint32_t type,                                       // 8, 16 or 32

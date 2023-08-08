@@ -7,10 +7,10 @@ This component emulates everything inside the ASIC Flipper, *except* the graphic
 ![Flipper_Block_Diagram](https://github.com/ogamespec/dolwin-docs/blob/master/HW/Flipper_ASIC_Block_Diagram.png?raw=true)
 
 A short tour into the Flipper stuff, without shocking details:
-- AI: Audio DMA
+- AI: Audio Mixer
 - CP: Command Processor for GX FIFO
 - EXI: SPI-like Macronix interface
-- MI: Memory Interface
+- MI(MEM): Memory Interface
 - PI: Processor Interface (interrupts, etc.)
 - SI: Serial Interface (goes to GameCube controllers connectors)
 - VI: Video output

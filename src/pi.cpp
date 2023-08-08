@@ -520,6 +520,13 @@ void PIAssertInt(uint32_t mask)
 	{
 		Core->ClearInterrupt();
 	}
+
+	if (pi.intbrk != 0) {
+		if ((pi.intbrk & mask) != 0) {
+			pi.intbrk &= ~mask;
+			Halt("A one-time interrupt breakpoint has been triggered %s\n", intdesc(mask));
+		}
+	}
 }
 
 // clear interrupt
@@ -685,6 +692,8 @@ void PIOpen(HWConfig* config)
 
 	// clear interrupt registers
 	pi.intsr = pi.intmr = 0;
+	
+	pi.intbrk = 0;
 
 	// set interrupt registers hooks
 	PISetTrap(32, PI_INTSR, read_intsr, write_intsr);
@@ -710,4 +719,9 @@ void PIOpen(HWConfig* config)
 void PIClose()
 {
 	PIClearTraps();
+}
+
+void PIBreakOnNextInt(uint32_t mask)
+{
+	pi.intbrk |= mask;
 }
