@@ -772,6 +772,7 @@ namespace Gekko
 		void WriteWord(uint32_t addr, uint32_t data);
 		void ReadDouble(uint32_t addr, uint64_t* reg);
 		void WriteDouble(uint32_t addr, uint64_t* data);
+		void Fetch(uint32_t addr, uint32_t* reg);
 
 		// Translate address by Mmu
 		uint32_t EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG);

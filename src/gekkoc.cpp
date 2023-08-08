@@ -4729,20 +4729,11 @@ namespace Gekko
 	// parse and execute single opcode
 	void Interpreter::ExecuteOpcode()
 	{
-		int WIMG;
-		uint32_t instr = 0, pa;
+		uint32_t instr = 0;
 
-		// execute one instruction
-		// (possible CPU_EXCEPTION_DSI, ISI, ALIGN, PROGRAM, FPUNAVAIL, SYSCALL)
-		pa = core->EffectiveToPhysical(core->regs.pc, MmuAccess::Execute, WIMG);
-		if (pa == Gekko::BadAddress)
-		{
-			core->Exception(Exception::EXCEPTION_ISI);
-		}
-		else
-		{
-			PIReadWord(pa, &instr);
-		}
+		// Fetch instruction
+
+		core->Fetch(core->regs.pc, &instr);
 		// ISI
 		if (core->exception)
 		{

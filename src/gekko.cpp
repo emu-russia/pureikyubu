@@ -609,6 +609,26 @@ namespace Gekko
 		PIWriteDouble(pa, data);
 	}
 
+	void GekkoCore::Fetch(uint32_t addr, uint32_t* reg)
+	{
+		int WIMG;
+
+		uint32_t pa = EffectiveToPhysical(addr, MmuAccess::Execute, WIMG);
+		if (pa == BadAddress)
+		{
+			Exception(Exception::EXCEPTION_ISI);
+			return;
+		}
+
+		//if (icache->IsEnabled() && (WIMG & WIMG_I) == 0)
+		//{
+		//	icache->ReadWord(pa, reg);
+		//	return;
+		//}
+
+		PIReadWord(pa, reg);
+	}
+
 }
 
 
