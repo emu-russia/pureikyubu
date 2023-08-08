@@ -153,31 +153,11 @@ Json::Value* CmdGetRenderTarget(std::vector<std::string>& args)
 	return value;
 }
 
-Json::Value* CmdShowMemory(std::vector<std::string>& args)
-{
-	if (gekkoDebug)
-	{
-		gekkoDebug->SetMemoryCursor(strtoul(args[1].c_str(), nullptr, 0));
-	}
-	return nullptr;
-}
-
-Json::Value* CmdShowDisassembly(std::vector<std::string>& args)
-{
-	if (gekkoDebug)
-	{
-		gekkoDebug->SetDisasmCursor(strtoul(args[1].c_str(), nullptr, 0));
-	}
-	return nullptr;
-}
-
 void UIReflector()
 {
 	JdiAddCmd("UIError", CmdUIError);
 	JdiAddCmd("UIReport", CmdUIReport);
 	JdiAddCmd("GetRenderTarget", CmdGetRenderTarget);
-	JdiAddCmd("d", CmdShowMemory);
-	JdiAddCmd("u", CmdShowDisassembly);
 }
 
 // UI file utilities
@@ -582,8 +562,6 @@ static int      AnsiSelected, SjisSelected;     // current selected in combo
 static wchar_t    FontAnsiFile[MAX_PATH];         // copy of user variable
 static wchar_t    FontSjisFile[MAX_PATH];         // copy of user variables
 
-#define ANSI_FONT_SIZE   0x3000
-
 // ---------------------------------------------------------------------------
 
 static void FontSetAnsiFile(const TCHAR* filename)
@@ -610,7 +588,7 @@ static void AddFont(HWND hwndDlg, TCHAR* file)
 
 	// check font type
 	size_t size = Util::FileSize(file);
-	BOOL is_ansi = (size <= ANSI_FONT_SIZE);
+	BOOL is_ansi = (size <= ANSI_SIZE);
 
 	if (is_ansi)
 	{   // Ansi type
@@ -2334,8 +2312,8 @@ INT_PTR CALLBACK PADConfigDialogProc(HWND hwndDlg, UINT uMsg, WPARAM wParam, LPA
 		}
 		break;
 
-	default:
-		return FALSE;
+		default:
+			return FALSE;
 	}
 	return FALSE;
 }
@@ -2512,9 +2490,6 @@ UserSelector usel;
 
 /* List of banners. */
 static HIMAGELIST bannerList;
-
-// size of DVD image
-#define DVD_SIZE            0x57058000  // 1.4 GB
 
 /* ---------------------------------------------------------------------------  */
 /* PATH management                                                              */
@@ -3695,22 +3670,21 @@ void SetSelectorIconSize(bool smallIcon)
 }
 
 
+// ---------------------------------------------------------------------------
 // Settings dialog (to configure user variables)
 
-// all user variables (except memory cards vars) are placed in UserConfig.h
+// all user variables (except memory cards vars) are placed in config.h
 
 // parent window and instance
-static HWND         hParentWnd, hChildDlg[4];
+static HWND         hParentWnd, hChildDlg[2];
 static HINSTANCE    hParentInst;
-static BOOL         settingsLoaded[4];
+static BOOL         settingsLoaded[2];
 static BOOL         needSelUpdate;
 
 static const wchar_t* tabs[] =
 {
-	L"Emulator",
 	L"GUI/Selector",
 	L"GCN Hardware",
-	L"GCN HLE"
 };
 
 static struct ConsoleVersion
@@ -3734,23 +3708,12 @@ static char* int2str(int i)
 	return str;
 }
 
-// ---------------------------------------------------------------------------
-
 static void LoadSettings(int n)         // dialogs created
 {
 	HWND hDlg = hChildDlg[n];
 
-	// Emulator
-	if (n == 0)
-	{
-		CheckDlgButton(hDlg, IDC_ENSURE_WINDALL, BST_UNCHECKED);
-		EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
-
-		settingsLoaded[0] = TRUE;
-	}
-
 	// GUI/Selector
-	if (n == 1)
+	if (n == 0)
 	{
 		for (auto it = usel.paths.begin(); it != usel.paths.end(); ++it)
 		{
@@ -3759,11 +3722,11 @@ static void LoadSettings(int n)         // dialogs created
 		}
 
 		needSelUpdate = FALSE;
-		settingsLoaded[1] = TRUE;
+		settingsLoaded[n] = TRUE;
 	}
 
 	// GCN Hardware
-	if (n == 2)
+	if (n == 1)
 	{
 		uint32_t ver = UI::Jdi->GetConfigInt(USER_CONSOLE, USER_HW);
 		int i = 0, selected = -1;
@@ -3795,16 +3758,7 @@ static void LoadSettings(int n)         // dialogs created
 		SetDlgItemText(hDlg, IDC_DSPDROM_FILE, Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_DROM, USER_HW)).c_str());
 		SetDlgItemText(hDlg, IDC_DSPIROM_FILE, Util::StringToWstring(UI::Jdi->GetConfigString(USER_DSP_IROM, USER_HW)).c_str());
 
-		settingsLoaded[2] = TRUE;
-	}
-
-	// GCN High Level
-	if (n == 3)
-	{
-		CheckDlgButton(hDlg, IDC_MTXHLE, BST_UNCHECKED);
-		CheckDlgButton(hDlg, IDC_DSP_FAKE, BST_UNCHECKED);
-
-		settingsLoaded[3] = TRUE;
+		settingsLoaded[n] = TRUE;
 	}
 }
 
@@ -3813,18 +3767,10 @@ static void SaveSettings()              // OK pressed
 	int i;
 	auto buf = std::wstring(0x1000, 0);
 
-	/* Emulator. */
+	/* GUI/Selector. */
 	if (settingsLoaded[0])
 	{
 		HWND hDlg = hChildDlg[0];
-
-		// Nothing
-	}
-
-	/* GUI/Selector. */
-	if (settingsLoaded[1])
-	{
-		HWND hDlg = hChildDlg[1];
 		int max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
 		static wchar_t text_buffer[1024];
 
@@ -3851,9 +3797,9 @@ static void SaveSettings()              // OK pressed
 	}
 
 	// GCN Hardwre
-	if (settingsLoaded[2])
+	if (settingsLoaded[1])
 	{
-		HWND hDlg = hChildDlg[2];
+		HWND hDlg = hChildDlg[1];
 		int selected = (int)SendDlgItemMessage(hDlg, IDC_CONSOLE_VER, CB_GETCURSEL, 0, 0);
 		UI::Jdi->SetConfigInt(USER_CONSOLE, consoleVersion[selected].ver, USER_HW);
 
@@ -3864,76 +3810,10 @@ static void SaveSettings()              // OK pressed
 		GetDlgItemText(hDlg, IDC_DSPIROM_FILE, (LPWSTR)buf.data(), (int)buf.size());
 		UI::Jdi->SetConfigString(USER_DSP_IROM, Util::WstringToString(buf), USER_HW);
 	}
-
-	// GCN High Level
-	if (settingsLoaded[3])
-	{
-		HWND hDlg = hChildDlg[3];
-
-		// Nothing
-	}
-}
-
-void ResetAllSettings()
-{
-	// Danger zone
 }
 
 
-// ---------------------------------------------------------------------------
-// Emulator
-
-static INT_PTR CALLBACK EmulatorSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	HWND propSheet;
-
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			// seems propsheet callback is shit :)
-			// this trick do the same job
-			propSheet = GetParent(hDlg);
-			CenterChildWindow(hParentWnd, propSheet);
-
-			hChildDlg[0] = hDlg;
-			LoadSettings(0);
-			return TRUE;
-
-		case WM_COMMAND:
-			switch (wParam)
-			{
-			case IDC_WINDALL:
-			{
-				ResetAllSettings();
-				UI::Report(
-					L"All Settings have been deleted.\n"
-					L"Default values will be restored after first run."
-				);
-				for (int i = 0; i < 4; i++) LoadSettings(i);
-			}
-			break;
-
-			case IDC_ENSURE_WINDALL:
-			{
-				if (IsDlgButtonChecked(hDlg, IDC_ENSURE_WINDALL))
-					EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 1);
-				else
-					EnableWindow(GetDlgItem(hDlg, IDC_WINDALL), 0);
-			}
-			break;
-			}
-			break;
-
-		case WM_NOTIFY:
-			if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-			break;
-	}
-	return FALSE;
-}
-
-/* ---------------------------------------------------------------------------  */
-/* UserMenu                                                                     */
-
+// UserMenu
 static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int i;
@@ -3943,53 +3823,52 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 	switch (message)
 	{
 		case WM_INITDIALOG:
-			hChildDlg[1] = hDlg;
-			LoadSettings(1);
+			hChildDlg[0] = hDlg;
+			LoadSettings(0);
 			return true;
 
 		case WM_COMMAND:
 			switch (wParam)
 			{
-			case IDC_FILEFILTER:
-			{
-				EditFileFilter(hDlg);
-				break;
-			}
-			case IDC_ADDPATH:
-			{
-				path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
-				if (!path.empty())
+				case IDC_FILEFILTER:
 				{
-					fix_path(path);
-
-					/* Check if already present. */
-					max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
-					for (i = 0; i < max; i++)
-					{
-						SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
-						if (path == text) break;
-					}
-
-					/* Add new path. */
-					if (i == max)
-					{
-						SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
-						needSelUpdate = TRUE;
-					}
+					EditFileFilter(hDlg);
+					break;
 				}
+				case IDC_ADDPATH:
+				{
+					path = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::Directory);
+					if (!path.empty())
+					{
+						fix_path(path);
 
-				break;
-			}
-			case IDC_KILLPATH:
-			{
-				curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
-				SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
-				needSelUpdate = TRUE;
+						/* Check if already present. */
+						max = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCOUNT, 0, 0);
+						for (i = 0; i < max; i++)
+						{
+							SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETTEXT, i, (LPARAM)text.data());
+							if (path == text) break;
+						}
 
-				break;
-			}
-			}
+						/* Add new path. */
+						if (i == max)
+						{
+							SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_ADDSTRING, 0, (LPARAM)path.data());
+							needSelUpdate = TRUE;
+						}
+					}
 
+					break;
+				}
+				case IDC_KILLPATH:
+				{
+					curSel = (int)SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_GETCURSEL, 0, 0);
+					SendDlgItemMessage(hDlg, IDC_PATHLIST, LB_DELETESTRING, (WPARAM)curSel, 0);
+					needSelUpdate = TRUE;
+
+					break;
+				}
+			}
 			break;
 
 		case WM_NOTIFY:
@@ -4002,9 +3881,7 @@ static INT_PTR CALLBACK UserMenuSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 	return FALSE;
 }
 
-/* ---------------------------------------------------------------------------  */
-/* GCN Hardware                                                                 */
-
+// GCN Hardware
 static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	auto file = std::wstring();
@@ -4012,8 +3889,8 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 	{
 		case WM_INITDIALOG:
 		{
-			hChildDlg[2] = hDlg;
-			LoadSettings(2);
+			hChildDlg[1] = hDlg;
+			LoadSettings(1);
 			return true;
 		}
 		case WM_NOTIFY:
@@ -4025,48 +3902,48 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 		{
 			switch (wParam)
 			{
-			case IDC_CHOOSE_BOOTROM:
-			{
-				file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-				if (!file.empty())
+				case IDC_CHOOSE_BOOTROM:
 				{
-					SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
-				}
-				else
-				{
-					SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
-				}
+					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					if (!file.empty())
+					{
+						SetDlgItemText(hDlg, IDC_BOOTROM_FILE, file.c_str());
+					}
+					else
+					{
+						SetDlgItemText(hDlg, IDC_BOOTROM_FILE, L"");
+					}
 
-				break;
-			}
-			case IDC_CHOOSE_DSPDROM:
-			{
-				file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-				if (!file.empty())
-				{
-					SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
+					break;
 				}
-				else
+				case IDC_CHOOSE_DSPDROM:
 				{
-					SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
-				}
+					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					if (!file.empty())
+					{
+						SetDlgItemText(hDlg, IDC_DSPDROM_FILE, file.c_str());
+					}
+					else
+					{
+						SetDlgItemText(hDlg, IDC_DSPDROM_FILE, L"");
+					}
 
-				break;
-			}
-			case IDC_CHOOSE_DSPIROM:
-			{
-				file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
-				if (!file.empty())
-				{
-					SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
+					break;
 				}
-				else
+				case IDC_CHOOSE_DSPIROM:
 				{
-					SetDlgItemText(hDlg, IDC_DSPIROM_FILE, L"");
-				}
+					file = UI::FileOpenDialog(wnd.hMainWindow, UI::FileType::All);
+					if (!file.empty())
+					{
+						SetDlgItemText(hDlg, IDC_DSPIROM_FILE, file.c_str());
+					}
+					else
+					{
+						SetDlgItemText(hDlg, IDC_DSPIROM_FILE, L"");
+					}
 
-				break;
-			}
+					break;
+				}
 			}
 
 			break;
@@ -4076,77 +3953,35 @@ static INT_PTR CALLBACK HardwareSettingsProc(HWND hDlg, UINT message, WPARAM wPa
 	return FALSE;
 }
 
-// ---------------------------------------------------------------------------
-// GCN High Level
-
-static INT_PTR CALLBACK HighLevelSettingsProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	switch (message)
-	{
-		case WM_INITDIALOG:
-			hChildDlg[3] = hDlg;
-			LoadSettings(3);
-			return TRUE;
-
-		case WM_NOTIFY:
-			if (((NMHDR FAR*)lParam)->code == PSN_APPLY) SaveSettings();
-			break;
-	}
-	return FALSE;
-}
-
-// ---------------------------------------------------------------------------
-
 void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 {
 	hParentWnd = hParent;
 	hParentInst = hInst;
 
-	PROPSHEETPAGE psp[4] = { 0 };
+	PROPSHEETPAGE psp[2] = { 0 };
 	PROPSHEETHEADER psh = { 0 };
 
-	// Emulator page
+	// UserMenu page
 	psp[0].dwSize = sizeof(PROPSHEETPAGE);
 	psp[0].dwFlags = PSP_USETITLE;
 	psp[0].hInstance = hParentInst;
-	psp[0].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_EMU);
-	psp[0].pfnDlgProc = EmulatorSettingsProc;
+	psp[0].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GUI);
+	psp[0].pfnDlgProc = UserMenuSettingsProc;
 	psp[0].pszTitle = tabs[0];
 	psp[0].lParam = 0;
 	psp[0].pfnCallback = NULL;
-
-	// UserMenu page
-	psp[1].dwSize = sizeof(PROPSHEETPAGE);
-	psp[1].dwFlags = PSP_USETITLE;
-	psp[1].hInstance = hParentInst;
-	psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_GUI);
-	psp[1].pfnDlgProc = UserMenuSettingsProc;
-	psp[1].pszTitle = tabs[1];
-	psp[1].lParam = 0;
-	psp[1].pfnCallback = NULL;
 	settingsLoaded[0] = FALSE;
 
 	// Hardware page
-	psp[2].dwSize = sizeof(PROPSHEETPAGE);
-	psp[2].dwFlags = PSP_USETITLE;
-	psp[2].hInstance = hParentInst;
-	psp[2].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_HW);
-	psp[2].pfnDlgProc = HardwareSettingsProc;
-	psp[2].pszTitle = tabs[2];
-	psp[2].lParam = 0;
-	psp[2].pfnCallback = NULL;
+	psp[1].dwSize = sizeof(PROPSHEETPAGE);
+	psp[1].dwFlags = PSP_USETITLE;
+	psp[1].hInstance = hParentInst;
+	psp[1].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_HW);
+	psp[1].pfnDlgProc = HardwareSettingsProc;
+	psp[1].pszTitle = tabs[1];
+	psp[1].lParam = 0;
+	psp[1].pfnCallback = NULL;
 	settingsLoaded[1] = FALSE;
-
-	// High Level page
-	psp[3].dwSize = sizeof(PROPSHEETPAGE);
-	psp[3].dwFlags = PSP_USETITLE;
-	psp[3].hInstance = hParentInst;
-	psp[3].pszTemplate = MAKEINTRESOURCE(IDD_SETTINGS_HLE);
-	psp[3].pfnDlgProc = HighLevelSettingsProc;
-	psp[3].pszTitle = tabs[3];
-	psp[3].lParam = 0;
-	psp[3].pfnCallback = NULL;
-	settingsLoaded[2] = FALSE;
 
 	// property sheet
 	auto title = fmt::format(L"Configure {:s}", APPNAME);
@@ -4160,7 +3995,6 @@ void OpenSettingsDialog(HWND hParent, HINSTANCE hInst)
 	psh.nStartPage = 0;
 	psh.ppsp = (LPCPROPSHEETPAGE)&psp;
 	psh.pfnCallback = NULL;
-	settingsLoaded[3] = FALSE;
 
 	PropertySheet(&psh);    // blocking call
 }
@@ -4699,6 +4533,7 @@ static void OnMainWindowCreate(HWND hwnd)
 
 	// Add UI methods
 	JdiAddNode(UI_JDI_JSON, UIReflector);
+	JdiAddNode(DEBUG_UI_JDI_JSON, Debug::DebugUIReflector);
 
 	// simulate close operation, like we just stopped emu
 	OnMainWindowClosed();
@@ -4710,6 +4545,7 @@ static void OnMainWindowDestroy()
 	UI::Jdi->Unload();
 
 	JdiRemoveNode(UI_JDI_JSON);
+	JdiRemoveNode(DEBUG_UI_JDI_JSON);
 
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);
