@@ -118,6 +118,8 @@ struct PIControl
 	bool        log;			// log interrupts
 	uint32_t    consoleVer;		// console version
 	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
+	int64_t last_int_ticks;		// Core TBR value since the last interrupt (for statistics)
+	int64_t one_microsecond;	// one CPU microsecond in timer ticks
 };
 
 extern  PIControl pi;
