@@ -97,11 +97,15 @@ namespace Flipper
 
 	static Json::Value* cmd_nextvi(std::vector<std::string>& args)
 	{
+		PIBreakOnNextInt(PI_INTERRUPT_VI);
+		Core->Run();
 		return nullptr;
 	}
 
 	static Json::Value* cmd_nextpe(std::vector<std::string>& args)
 	{
+		PIBreakOnNextInt(PI_INTERRUPT_PE_FINISH | PI_INTERRUPT_PE_TOKEN);
+		Core->Run();
 		return nullptr;
 	}
 
@@ -111,7 +115,7 @@ namespace Flipper
 		JDI::Hub.AddCmd("ramsave", cmd_ramsave);
 		JDI::Hub.AddCmd("aramload", cmd_aramload);
 		JDI::Hub.AddCmd("aramsave", cmd_aramsave);
-		JDI::Hub.AddCmd("cmd_nextvi", cmd_nextvi);
-		JDI::Hub.AddCmd("cmd_nextpe", cmd_nextpe);
+		JDI::Hub.AddCmd("nvi", cmd_nextvi);
+		JDI::Hub.AddCmd("npe", cmd_nextpe);
 	}
 };

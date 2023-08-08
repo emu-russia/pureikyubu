@@ -112,11 +112,12 @@ void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32]);
 // PI state (registers and other data)
 struct PIControl
 {
-	volatile uint32_t    intsr;          // interrupt cause
-	volatile uint32_t    intmr;          // interrupt mask
-	bool        log;            // log interrupts
-	uint32_t    consoleVer;     // console version
-	int64_t     intCounters[(size_t)PIInterruptSource::Max];      // interrupt counters
+	volatile uint32_t intsr;	// interrupt cause
+	volatile uint32_t intmr;	// interrupt mask
+	volatile uint32_t intbrk;	// one-shot interrup breakpoint
+	bool        log;			// log interrupts
+	uint32_t    consoleVer;		// console version
+	int64_t     intCounters[(size_t)PIInterruptSource::Max];	// interrupt counters
 };
 
 extern  PIControl pi;
@@ -127,6 +128,13 @@ void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)
 void PIOpen(HWConfig* config);
 void PIClose();
+
+/// <summary>
+/// Set the breakpoint (Halt) to trigger once per interrupt.
+/// Used by debug commands for step-by-step debugging of system runtime.
+/// </summary>
+/// <param name="mask">Mask of interrupts that require a one-shot break</param>
+void PIBreakOnNextInt(uint32_t mask);
 
 void PISetTrap(
 	uint32_t type,                                       // 8, 16 or 32
