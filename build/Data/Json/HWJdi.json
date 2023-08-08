@@ -40,6 +40,14 @@
         "Syntax: aramsave <file> <address> <size>\n",
         "Example of use: aramsave samples.bin 0x10000 0x200\n"
       ]
+    },
+
+    "nvi": {
+      "help": "Run emulation until the next VI interrupt. You can perform frame-by-frame emulation from a VI perspective"
+    },
+
+    "npe": {
+      "help": "Run emulation until the next PE interrupt (Done/Token). You can perform frame-by-frame emulation from the GFX Engine perspective"
     }
 
   },

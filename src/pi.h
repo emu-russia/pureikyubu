@@ -93,6 +93,8 @@ enum class PIInterruptSource
 // note : it must not be greater 0xffff, unless you need to change code.
 #define HW_MAX_KNOWN    0x8010
 
+// Program interface that implements transactions over Gekko 60x Bus
+
 void PIReadByte(uint32_t pa, uint32_t* reg);
 void PIWriteByte(uint32_t pa, uint32_t data);
 void PIReadHalf(uint32_t pa, uint32_t* reg);
@@ -118,6 +120,8 @@ struct PIControl
 };
 
 extern  PIControl pi;
+
+// The role of the /HRESET signal is performed by the PIOpen/PIClose pairing. The role of INT signal is performed by PIAssertInt/PIClearInt pairing
 
 void PIAssertInt(uint32_t mask);  // set interrupt(s)
 void PIClearInt(uint32_t mask);   // clear interrupt(s)

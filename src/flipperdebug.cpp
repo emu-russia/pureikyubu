@@ -95,11 +95,23 @@ namespace Flipper
 		return nullptr;
 	}
 
+	static Json::Value* cmd_nextvi(std::vector<std::string>& args)
+	{
+		return nullptr;
+	}
+
+	static Json::Value* cmd_nextpe(std::vector<std::string>& args)
+	{
+		return nullptr;
+	}
+
 	void hw_init_handlers()
 	{
 		JDI::Hub.AddCmd("ramload", cmd_ramload);
 		JDI::Hub.AddCmd("ramsave", cmd_ramsave);
 		JDI::Hub.AddCmd("aramload", cmd_aramload);
 		JDI::Hub.AddCmd("aramsave", cmd_aramsave);
+		JDI::Hub.AddCmd("cmd_nextvi", cmd_nextvi);
+		JDI::Hub.AddCmd("cmd_nextpe", cmd_nextpe);
 	}
 };
