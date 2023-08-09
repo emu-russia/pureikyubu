@@ -884,7 +884,6 @@ void GetDiskId(std::wstring& diskId)
 void LoadFile(const std::wstring& filename)
 {
 	uint32_t entryPoint = 0;
-	bool bootrom = false;
 	bool dvd = false;
 	std::wstring diskId;
 
@@ -893,7 +892,7 @@ void LoadFile(const std::wstring& filename)
 	{
 		entryPoint = BOOTROM_START_ADDRESS + 0x100;
 		dvd = false;
-		bootrom = true;
+		emu.bootrom = true;
 	}
 	else
 	{
@@ -930,7 +929,7 @@ void LoadFile(const std::wstring& filename)
 	}
 
 	// simulate bootrom
-	if (!bootrom)
+	if (!emu.bootrom)
 	{
 		HWConfig* config = new HWConfig;
 		EMUGetHwConfig(config);
@@ -940,7 +939,7 @@ void LoadFile(const std::wstring& filename)
 	}
 
 	// autoload map file
-	if (!bootrom)
+	if (!emu.bootrom)
 	{
 		AutoloadMap(filename, dvd, diskId);
 	}
@@ -966,7 +965,7 @@ void LoadFile(const std::wstring& filename)
 	}
 
 	// Do the same for the bootstrap.
-	if (bootrom) {
+	if (emu.bootrom) {
 
 		VISetEncoderFuse(IsBootromPALRevision() ? 1 : 0);
 	}

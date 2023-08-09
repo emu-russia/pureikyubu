@@ -897,6 +897,13 @@ namespace Gekko
 
 	void Cache::Enable(bool enable)
 	{
+		// TODO
+		// Dirty hack so far. The cache is required for bootrom to work correctly when loading an application using Apploader. If you start DVD with Bootrom HLE at once, the games work more stable without cache.
+		// We need to fix the cache.
+		if (!emu.bootrom) {
+			enable = false;
+		}
+
 		enabled = enable;
 
 		if (log >= CacheLogLevel::Commands)
