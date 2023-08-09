@@ -73,6 +73,6 @@ add_executable (pureikyubu
 target_link_libraries (pureikyubu LINK_PUBLIC fmt)
 find_package (Threads)
 find_package(OpenGL REQUIRED)
-include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
+include_directories( ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_INCLUDE_DIRS} )
 
 target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
