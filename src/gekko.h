@@ -382,6 +382,7 @@ namespace Gekko
 	{
 		uint32_t addressTag;
 		int8_t wimg;
+		uint32_t pc;		// PC value when the record was added to the TLB so that it can be tracked
 	};
 
 	class TLB
@@ -390,10 +391,12 @@ namespace Gekko
 
 	public:
 		bool Exists(uint32_t ea, uint32_t& pa, int& WIMG);
-		void Map(uint32_t ea, uint32_t pa, int WIMG);
+		void Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG);
 
 		void Invalidate(uint32_t ea);
 		void InvalidateAll();
+
+		void Dump();
 	};
 }
 
@@ -561,6 +564,7 @@ namespace Gekko
 		ProtectedRead,     // Block/page protection violation 
 		ProtectedWrite,    // Block/page protection violation 
 		NoExecute,      // No-execute protection violation / Instruction fetch from guarded memory
+		DirectStore,		// Gekko does not support Direct Store segments
 	};
 
 	// The reason the PROGRAM exception occurred.
@@ -716,6 +720,10 @@ namespace Gekko
 		void ResetOpcodeStats();
 		void RunOpcodeStatsThread();
 		void StopOpcodeStatsThread();
+
+		void DumpDTLB();
+		void DumpITLB();
+		void InvalidateTLBAll();
 
 #pragma endregion "Debug"
 
