@@ -41,7 +41,7 @@
 		"OS_REPORT": true,
 		"VI_LOG": false,
 		"VI_XFB": true,
-		"BOOTROM": "Data/gc-ntsc-10.bin",
+		"BOOTROM": "Data/gc-ntsc-11.bin",
 		"DSP_DROM": "Data/dsp_drom.bin",
 		"DSP_IROM": "Data/dsp_irom.bin",
 	},
