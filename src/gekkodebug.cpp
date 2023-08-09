@@ -803,15 +803,15 @@ namespace Debug
 
 			switch (info.param[i])
 			{
-			case Gekko::Param::Simm:
-				imm = (uint32_t)(int32_t)info.Imm.Signed;
-				break;
-			case Gekko::Param::Uimm:
-				imm = (uint32_t)info.Imm.Unsigned;
-				break;
-			case Gekko::Param::Address:
-				imm = info.Imm.Address;
-				break;
+				case Gekko::Param::Simm:
+					imm = (uint32_t)(int32_t)info.Imm.Signed;
+					break;
+				case Gekko::Param::Uimm:
+					imm = (uint32_t)info.Imm.Unsigned;
+					break;
+				case Gekko::Param::Address:
+					imm = info.Imm.Address;
+					break;
 			}
 
 			output->AddInt(nullptr, (int)info.param[i]);
@@ -877,6 +877,25 @@ namespace Debug
 		return output;
 	}
 
+	static Json::Value* CmdDumpDTLB(std::vector<std::string>& args)
+	{
+		Core->DumpDTLB();
+		return nullptr;
+	}
+
+	static Json::Value* CmdDumpITLB(std::vector<std::string>& args)
+	{
+		Core->DumpITLB();
+		return nullptr;
+	}
+
+	static Json::Value* CmdInvalidateTLB(std::vector<std::string>& args)
+	{
+		Core->InvalidateTLBAll();
+		Report(Channel::CPU, "All TLB are invalidated\n");
+		return nullptr;
+	}
+
 	void gekko_init_handlers()
 	{
 		JDI::Hub.AddCmd("run", CmdRun);
@@ -930,5 +949,9 @@ namespace Debug
 		JDI::Hub.AddCmd("GekkoAnalyze", CmdGekkoAnalyze);
 		JDI::Hub.AddCmd("GekkoInstrToString", CmdGekkoInstrToString);
 		JDI::Hub.AddCmd("GekkoInstrParamToString", CmdGekkoInstrParamToString);
+
+		JDI::Hub.AddCmd("dtlb", CmdDumpDTLB);
+		JDI::Hub.AddCmd("itlb", CmdDumpITLB);
+		JDI::Hub.AddCmd("tlbinv", CmdInvalidateTLB);
 	}
 }

@@ -276,6 +276,18 @@
       "hints": "<param> <paramBits> <immedValue>",
       "args": 3,
       "output": "Array: [String paramName, String paramDecoded]"
+    },
+
+    "dtlb": {
+      "help": "Display DTLB state"
+    },
+
+    "itlb": {
+      "help": "Display ITLB state"
+    },
+
+    "tlbinv": {
+      "help": "Invalidate both DTLB/ITLB"
     }
 
   }

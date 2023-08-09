@@ -202,6 +202,10 @@ namespace Gekko
 					regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
 					break;
 
+				case MmuResult::DirectStore:
+					regs.spr[Gekko::SPR::SRR1] |= 0x1000'0000;
+					break;
+
 				default:
 					break;
 			}
@@ -224,13 +228,17 @@ namespace Gekko
 					regs.spr[Gekko::SPR::DSISR] |= 0x0A00'0000;
 					break;
 
+				case MmuResult::DirectStore:
+					regs.spr[Gekko::SPR::DSISR] |= 0x0400'0000;
+					break;
+
 				default:
 					break;
 			}
 		}
 
 		// Special processing for Program
-		if (code == Exception::EXCEPTION_PROGRAM)
+		else if (code == Exception::EXCEPTION_PROGRAM)
 		{
 			regs.spr[Gekko::SPR::SRR1] &= 0x0000'ffff;
 
@@ -267,11 +275,7 @@ namespace Gekko
 
 	uint32_t GekkoCore::EffectiveToPhysical(uint32_t ea, MmuAccess type, int& WIMG)
 	{
-#if GEKKOCORE_SIMPLE_MMU
-		return EffectiveToPhysicalNoMmu(ea, type, WIMG);
-#else
 		return EffectiveToPhysicalMmu(ea, type, WIMG);
-#endif
 	}
 }
 
@@ -640,11 +644,12 @@ namespace Gekko
 		return false;
 	}
 
-	void TLB::Map(uint32_t ea, uint32_t pa, int WIMG)
+	void TLB::Map(uint32_t ea, uint32_t pa, uint32_t pc, int WIMG)
 	{
 		TLBEntry* entry = new TLBEntry;
 		entry->addressTag = pa >> 12;
 		entry->wimg = WIMG;
+		entry->pc = pc;
 		tlb[ea >> 12] = entry;
 	}
 
@@ -665,6 +670,16 @@ namespace Gekko
 			delete it->second;
 		}
 		tlb.clear();
+	}
+
+	void TLB::Dump()
+	{
+		for (auto it = tlb.begin(); it != tlb.end(); ++it)
+		{
+			uint32_t ea = it->first << 12;
+			TLBEntry* entry = it->second;
+			Report(Channel::CPU, "EA 0x%08X -> PA 0x%08X (wimg: %d, pc: 0x%08X)\n", ea, entry->addressTag << 12, entry->wimg, entry->pc);
+		}
 	}
 }
 
@@ -1663,15 +1678,6 @@ namespace Gekko
 			pa = SegmentTranslation(ea, type, WIMG);
 		}
 
-		// Put in TLB
-
-#if GEKKOCORE_USE_TLB
-		if (MmuLastResult == MmuResult::Ok)
-		{
-			tlb->Map(ea, pa, WIMG);
-		}
-#endif
-
 		return pa;
 	}
 
@@ -1703,6 +1709,10 @@ namespace Gekko
 					pa = (pa << 17) | (ea & 0x1ffff);
 					WIMG = (*ibatl[n] >> 3) & 0xf;
 					MmuLastResult = MmuResult::Ok;
+					// Put in TLB
+#if GEKKOCORE_USE_TLB
+					itlb.Map(ea, pa, Core->regs.pc, WIMG);
+#endif
 					return true;
 				}
 			}
@@ -1731,6 +1741,10 @@ namespace Gekko
 					pa = (pa << 17) | (ea & 0x1ffff);
 					WIMG = (*dbatl[n] >> 3) & 0xf;
 					MmuLastResult = MmuResult::Ok;
+					// Put in TLB
+#if GEKKOCORE_USE_TLB
+					dtlb.Map(ea, pa, Core->regs.pc, WIMG);
+#endif
 					return true;
 				}
 			}
@@ -1745,9 +1759,14 @@ namespace Gekko
 	{
 		int ptegUpper;
 
-		// Direct Store (T=1) not supported (and it's not even checked, because it makes no sense).
-
 		uint32_t sr = regs.sr[ea >> 28];
+
+		// Direct Store (T=1) is used by default by Dolphin OS to throw a DSI/ISI exception
+		if (sr & 0x8000'0000)
+		{
+			MmuLastResult = MmuResult::DirectStore;
+			return BadAddress;
+		}
 
 		if (sr & 0x1000'0000 && type == MmuAccess::Execute)
 		{
@@ -1865,6 +1884,15 @@ namespace Gekko
 				{
 					WIMG = (pte[1] >> 3) & 0xf;
 				}
+				// Put in TLB
+#if GEKKOCORE_USE_TLB
+				if (type == MmuAccess::Execute) {
+					itlb.Map(ea, pa, Core->regs.pc, WIMG);
+				}
+				else {
+					dtlb.Map(ea, pa, Core->regs.pc, WIMG);
+				}
+#endif
 				MmuLastResult = MmuResult::Ok;
 				return pa;
 			}
@@ -1954,6 +1982,15 @@ namespace Gekko
 				{
 					WIMG = (pte[1] >> 3) & 0xf;
 				}
+				// Put in TLB
+#if GEKKOCORE_USE_TLB
+				if (type == MmuAccess::Execute) {
+					itlb.Map(ea, pa, Core->regs.pc, WIMG);
+				}
+				else {
+					dtlb.Map(ea, pa, Core->regs.pc, WIMG);
+				}
+#endif
 				MmuLastResult = MmuResult::Ok;
 				return pa;
 			}
@@ -1969,6 +2006,22 @@ namespace Gekko
 
 		MmuLastResult = MmuResult::PageFault;
 		return BadAddress;
+	}
+
+	void GekkoCore::DumpDTLB()
+	{
+		dtlb.Dump();
+	}
+
+	void GekkoCore::DumpITLB()
+	{
+		itlb.Dump();
+	}
+
+	void GekkoCore::InvalidateTLBAll()
+	{
+		dtlb.InvalidateAll();
+		itlb.InvalidateAll();
 	}
 
 }

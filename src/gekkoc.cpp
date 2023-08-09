@@ -4213,7 +4213,7 @@ namespace Gekko
 				//DBReport2(DbgChannel::CPU, "set decrementer (OS alarm) to %08X\n", RRS);
 				break;
 
-				// page table base
+			// page table base
 			case SPR::SDR1:
 			{
 				bool msr_ir = (core->regs.msr & MSR_IR) ? true : false;
