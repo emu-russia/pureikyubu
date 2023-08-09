@@ -237,7 +237,23 @@ namespace GX
 
 #pragma region "TEV"
 
-		// TBD.
+		TEV_ColorEnv tev_color_env[16]{};
+		TEV_AlphaEnv tev_alpha_env[16]{};
+		TEV_RegisterL tev_regl[4]{};
+		TEV_RegisterH tev_regh[4]{};
+		TEV_RangeAdj_Contol tev_rangeadj_control{};
+		TEV_RangeAdj tev_range_adj[5]{};
+		TEV_FogParam0 tev_fog_param0{};
+		TEV_FogParam1 tev_fog_param1{};
+		TEV_FogParam2 tev_fog_param2{};
+		TEV_FogParam3 tev_fog_param3{};
+		TEV_FogColor tev_fog_color{};
+		TEV_AlphaFunc tev_alpha_func{};
+		TEV_ZEnv0 tev_zenv0{};
+		TEV_ZEnv1 tev_zenv1{};
+		TEV_KSel tev_ksel[8]{};
+
+		// TBD: Konst regs where to?
 
 #pragma endregion "TEV"
 

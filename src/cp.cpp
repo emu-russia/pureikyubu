@@ -2003,7 +2003,7 @@ namespace GX
 
 			// ---------------------------------------------------------------
 			// loading of internal regs
-            
+			
 			case CP_CMD_LOAD_BPREG | 0:
 			case CP_CMD_LOAD_BPREG | 1:
 			case CP_CMD_LOAD_BPREG | 2:
@@ -2471,7 +2471,7 @@ namespace GX
 
 			// ---------------------------------------------------------------
 			// Unknown/unsupported fifo command
-            
+			
 			default:
 			{
 				GxBadFifo(cmd);
