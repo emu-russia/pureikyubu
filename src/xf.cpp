@@ -19,7 +19,7 @@ namespace GX
 	}
 
 	// perform position transform
-	void GXCore::ApplyModelview(float* out, const float* in)
+	void GXCore::XF_ApplyModelview(float* out, const float* in)
 	{
 		float* mx = &state.xf.mvTexMtx[state.xf.posidx * 4];
 
@@ -58,14 +58,15 @@ namespace GX
 	}
 
 	// color0 only calculation
-	void GXCore::DoLights(const Vertex* v)
+	void GXCore::XF_DoLights(const Vertex* v)
 	{
 		float vpos[3], vnrm[3];
 		float col[3], res[3];
 		float mat[3], amb[3];
 		float illum[3];
 
-		ApplyModelview(vpos, v->pos);
+		// TODO: Second time? :/
+		XF_ApplyModelview(vpos, v->pos);
 
 		// -------------------------------------------------------------------
 
@@ -593,7 +594,7 @@ namespace GX
 	}
 
 	// generate NUMTEX coordinates
-	void GXCore::DoTexGen(const Vertex* v)
+	void GXCore::XF_DoTexGen(const Vertex* v)
 	{
 		float   in[4], q;
 		float* mx;

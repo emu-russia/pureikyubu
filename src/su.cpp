@@ -20,26 +20,26 @@ namespace GX
 
 	void GXCore::GL_SetCullMode(int mode)
 	{
-			switch(mode)
-			{
-				case GEN_REJECT_NONE:
-					glDisable(GL_CULL_FACE);
-					break;
-				case GEN_REJECT_FRONT:
-					// TODO: It's mixed up so far, not sure why, but it has to be that way
-					glEnable(GL_CULL_FACE);
-					glCullFace(GL_BACK);
-					break;
-				case GEN_REJECT_BACK:
-					// TODO: It's mixed up so far, not sure why, but it has to be that way
-					glEnable(GL_CULL_FACE);
-					glCullFace(GL_FRONT);
-					break;
-				case GEN_REJECT_ALL:
-					glEnable(GL_CULL_FACE);
-					glCullFace(GL_FRONT_AND_BACK);
-					break;
-			}
+		switch(mode)
+		{
+			case GEN_REJECT_NONE:
+				glDisable(GL_CULL_FACE);
+				break;
+			case GEN_REJECT_FRONT:
+				// TODO: It's mixed up so far, not sure why, but it has to be that way
+				glEnable(GL_CULL_FACE);
+				glCullFace(GL_BACK);
+				break;
+			case GEN_REJECT_BACK:
+				// TODO: It's mixed up so far, not sure why, but it has to be that way
+				glEnable(GL_CULL_FACE);
+				glCullFace(GL_FRONT);
+				break;
+			case GEN_REJECT_ALL:
+				glEnable(GL_CULL_FACE);
+				glCullFace(GL_FRONT_AND_BACK);
+				break;
+		}
 	}
 
 	void GXCore::tryLoadTex(int id)
@@ -523,6 +523,7 @@ namespace GX
 			default:
 			{
 				Report(Channel::GP, "Unknown BP load, index: 0x%02X\n", index);
+				break;
 			}
 		}
 	}
