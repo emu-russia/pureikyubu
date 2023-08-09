@@ -31,8 +31,8 @@ Requirements: CMake, pthread, OpenGL.
 
 ## Progress
 
-|![progress_bs2](/imgstore/progress_bs2.png)|![progress_ikaruga](/imgstore/progress_ikaruga.png)|
-|---|---|
+|![progress_bs2](/imgstore/progress_bs2.png)|![progress_ikaruga](/imgstore/progress_ikaruga.png)|![progress_luigi](/imgstore/progress_luigi.png)|
+|---|---|---|
 
 ```
 F1ReB4LL — Вчера, в 22:27
