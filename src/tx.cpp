@@ -101,14 +101,14 @@ namespace GX
 
 		switch (fmt)
 		{
-			case 0:     // IA8
+			case TLUT_IA8:
 			{
 				c->A = *tptr & 0xff;
 				c->R = c->G = c->B = *tptr >> 8;
 			}
-			return;
+			break;
 
-			case 1:     // RGB565
+			case TLUT_RGB565:
 			{
 				uint16_t p = _BYTESWAP_UINT16(*tptr);
 
@@ -121,9 +121,9 @@ namespace GX
 				c->B = (b << 3) | (b >> 2);
 				c->A = 255;
 			}
-			return;
+			break;
 
-			case 2:     // RGB5A3
+			case TLUT_RGB5A3:
 			{
 				uint16_t p = _BYTESWAP_UINT16(*tptr);
 				if (p >> 15)
@@ -152,11 +152,12 @@ namespace GX
 					c->A = a | (a << 3) | ((a << 9) & 3);
 				}
 			}
-			return;
+			break;
 
 			default:
 			{
 				Debug::Halt("GX: Unknown TLUT format: %i\n", fmt);
+				break;
 			}
 		}
 	}
@@ -184,8 +185,8 @@ namespace GX
 			GL_LINEAR_MIPMAP_NEAREST,
 			GL_LINEAR_MIPMAP_LINEAR
 		};
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[texmode0[id].min]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[texmode0[id].mag]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filt[texmode0[id].min_filter]);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filt[texmode0[id].mag_filter]);
 
 		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 

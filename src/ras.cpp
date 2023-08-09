@@ -42,15 +42,21 @@ namespace GX
 		switch (prim)
 		{
 			case RAS_QUAD:
-				glBegin(GL_QUADS);
+				glBegin(ras_wireframe ? GL_LINE_LOOP : GL_QUADS);
 				break;
 			case RAS_TRIANGLE:
-				glBegin(GL_TRIANGLES);
+				glBegin(ras_wireframe ? GL_LINE_LOOP : GL_TRIANGLES);
 				break;
 			case RAS_TRIANGLE_STRIP:
+				if (ras_wireframe) {
+					glPolygonMode(GL_FRONT, GL_LINE);
+				}
 				glBegin(GL_TRIANGLE_STRIP);
 				break;
 			case RAS_TRIANGLE_FAN:
+				if (ras_wireframe) {
+					glPolygonMode(GL_FRONT, GL_LINE);
+				}
 				glBegin(GL_TRIANGLE_FAN);
 				break;
 			case RAS_LINE:
@@ -107,7 +113,12 @@ namespace GX
 		if (state.xf.numColors)
 		{
 			XF_DoLights(v);
-			glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
+			if (ras_wireframe) {
+				glColor3ub(0, 255, 255);
+			}
+			else {
+				glColor4ub(rasca[0].R, rasca[0].G, rasca[0].B, rasca[0].A);
+			}
 		}
 
 		// texture hack
