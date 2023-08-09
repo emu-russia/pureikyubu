@@ -1640,12 +1640,14 @@ namespace Gekko
 
 		// Try TLB
 
+#if GEKKOCORE_USE_TLB
 		TLB* tlb = (type == MmuAccess::Execute) ? &itlb : &dtlb;
 
 		if (tlb->Exists(ea, pa, WIMG))
 		{
 			return pa;
 		}
+#endif
 
 		// First, try the block translation, if it doesn’t work, try the Page Table.
 
@@ -1656,10 +1658,12 @@ namespace Gekko
 
 		// Put in TLB
 
+#if GEKKOCORE_USE_TLB
 		if (MmuLastResult == MmuResult::Ok)
 		{
 			tlb->Map(ea, pa, WIMG);
 		}
+#endif
 
 		return pa;
 	}

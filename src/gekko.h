@@ -86,7 +86,11 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 // Compile time macros for GekkoCore.
 
 #ifndef GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS
-#define GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS 10000		//!< The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free (WPAR[BNE] = 0)
+#define GEKKOCORE_GATHER_BUFFER_RETIRE_TICKS 10000		// The GatherBuffer has an undocumented feature - after a certain number of cycles the data in it is destroyed and it becomes free (WPAR[BNE] = 0)
+#endif
+
+#ifndef GEKKOCORE_USE_TLB
+#define GEKKOCORE_USE_TLB 1				// Use TLB for address translation
 #endif
 
 
@@ -94,7 +98,7 @@ The instruction size is 32 bits. Disassembled PowerPC code looks like this:
 
 // GC bus clock is running on 1/3 of CPU clock, and timer is
 // running on 1/4 of bus clock (1/12 of CPU clock)
-#define CPU_CORE_CLOCK  486000000u  // 486 mhz (its not 485, stop bugging me!)
+#define CPU_CORE_CLOCK  486000000u  // 486 MHz
 #define CPU_BUS_CLOCK   (CPU_CORE_CLOCK / 3)
 #define CPU_TIMER_CLOCK (CPU_BUS_CLOCK / 4)
 
