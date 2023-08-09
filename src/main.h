@@ -58,6 +58,7 @@ typedef struct Emulator
 	bool    init;
 	bool    loaded;         // file loaded
 	std::wstring lastLoaded;
+	bool	bootrom;		// The emulator is running in Bootrom runtime mode
 } Emulator;
 
 extern  Emulator emu;
