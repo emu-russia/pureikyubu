@@ -8,12 +8,14 @@ namespace GX
 
 	enum BPRegister : size_t
 	{
+		// "Gen" registers are shared between all GFX blocks and have global purpose
 		GEN_MODE_ID = 0x00,
 		GEN_MSLOC0 = 0x01,
 		GEN_MSLOC1 = 0x02,
 		GEN_MSLOC2 = 0x03,
 		GEN_MSLOC3 = 0x04,
 
+		// Bump mapping Unit
 		BUMP_MATRIX_A0_ID = 0x6,
 		BUMP_MATRIX_B0_ID = 0x7,
 		BUMP_MATRIX_C0_ID = 0x8,
@@ -26,11 +28,11 @@ namespace GX
 		BUMP_IMASK_ID = 0x0f,
 		BUMP_CMD_ID = 0x10,			// 0x10...0x1f
 
+		// Setup Unit/Rasterizers regs
 		SU_SCIS0_ID = 0x20,
 		SU_SCIS1_ID = 0x21,
 		SU_LPSIZE_ID = 0x22,
 		SU_PERF_ID = 0x23,
-
 		RAS1_PERF_ID = 0x24,
 		RAS1_SS0_ID = 0x25,
 		RAS1_SS1_ID = 0x26,
@@ -61,6 +63,7 @@ namespace GX
 		SU_SSIZE7_ID = 0x3E,
 		SU_TSIZE7_ID = 0x3F,
 
+		// Pixel Engine
 		PE_ZMODE_ID = 0x40,
 		PE_CMODE0_ID = 0x41,
 		PE_CMODE1_ID = 0x42,
@@ -88,6 +91,7 @@ namespace GX
 		PE_CHICKEN_ID = 0x58,
 		PE_QUAD_OFFSET_ID = 0x59,
 
+		// Texture
 		TX_LOADBLOCK0_ID = 0x60,
 		TX_LOADBLOCK1_ID = 0x61,
 		TX_LOADBLOCK2_ID = 0x62,
@@ -157,6 +161,7 @@ namespace GX
 		TX_SETTLUT_I6_ID = 0xBA,
 		TX_SETTLUT_I7_ID = 0xBB,
 
+		// TEV Regs
 		TEV_COLOR_ENV_0_ID = 0xC0,
 		TEV_ALPHA_ENV_0_ID = 0xC1,
 		TEV_COLOR_ENV_1_ID = 0xC2,

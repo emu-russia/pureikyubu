@@ -1790,9 +1790,11 @@ namespace GX
 
 		switch (state.cp.vatA[vatnum].nrmfmt)
 		{
+			case VFMT_U8:
 			case VFMT_S8:
 				nrmshft = 6;
 				break;
+			case VFMT_U16:
 			case VFMT_S16:
 				nrmshft = 14;
 				break;

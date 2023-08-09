@@ -172,7 +172,7 @@ namespace GX
 			return;
 
 			//
-			// texture image width, height, format
+			// SetImage0. texture image width, height, format
 			//
 
 			case TX_SETIMAGE0_I0_ID:
@@ -183,8 +183,68 @@ namespace GX
 			}
 			return;
 
+			case TX_SETIMAGE0_I1_ID:
+			{
+				teximg0[1].bits = value;
+				texvalid[0][1] = true;
+				//tryLoadTex(1);
+			}
+			return;
+
+			case TX_SETIMAGE0_I2_ID:
+			{
+				teximg0[2].bits = value;
+				texvalid[0][2] = true;
+				//tryLoadTex(2);
+			}
+			return;
+
+			case TX_SETIMAGE0_I3_ID:
+			{
+				teximg0[3].bits = value;
+				texvalid[0][3] = true;
+				//tryLoadTex(3);
+			}
+			return;
+
+			case TX_SETIMAGE0_I4_ID:
+			{
+				teximg0[4].bits = value;
+				texvalid[0][4] = true;
+				//tryLoadTex(4);
+			}
+			return;
+
+			case TX_SETIMAGE0_I5_ID:
+			{
+				teximg0[5].bits = value;
+				texvalid[0][5] = true;
+				//tryLoadTex(5);
+			}
+			return;
+
+			case TX_SETIMAGE0_I6_ID:
+			{
+				teximg0[6].bits = value;
+				texvalid[0][6] = true;
+				//tryLoadTex(6);
+			}
+			return;
+
+			case TX_SETIMAGE0_I7_ID:
+			{
+				teximg0[7].bits = value;
+				texvalid[0][7] = true;
+				//tryLoadTex(7);
+			}
+			return;
+
+			// SetImage1
+
+			// SetImage2
+
 			//
-			// texture image base
+			// SetImage3. texture image base
 			//
 
 			case TX_SETIMAGE3_I0_ID:
@@ -192,6 +252,62 @@ namespace GX
 				teximg3[0].bits = value;
 				texvalid[3][0] = true;
 				tryLoadTex(0);
+			}
+			return;
+
+			case TX_SETIMAGE3_I1_ID:
+			{
+				teximg3[1].bits = value;
+				texvalid[3][1] = true;
+				//tryLoadTex(1);
+			}
+			return;
+
+			case TX_SETIMAGE3_I2_ID:
+			{
+				teximg3[2].bits = value;
+				texvalid[3][2] = true;
+				//tryLoadTex(2);
+			}
+			return;
+
+			case TX_SETIMAGE3_I3_ID:
+			{
+				teximg3[3].bits = value;
+				texvalid[3][3] = true;
+				//tryLoadTex(3);
+			}
+			return;
+
+			case TX_SETIMAGE3_I4_ID:
+			{
+				teximg3[4].bits = value;
+				texvalid[3][4] = true;
+				//tryLoadTex(4);
+			}
+			return;
+
+			case TX_SETIMAGE3_I5_ID:
+			{
+				teximg3[5].bits = value;
+				texvalid[3][5] = true;
+				//tryLoadTex(5);
+			}
+			return;
+
+			case TX_SETIMAGE3_I6_ID:
+			{
+				teximg3[6].bits = value;
+				texvalid[3][6] = true;
+				//tryLoadTex(6);
+			}
+			return;
+
+			case TX_SETIMAGE3_I7_ID:
+			{
+				teximg3[7].bits = value;
+				texvalid[3][7] = true;
+				//tryLoadTex(7);
 			}
 			return;
 

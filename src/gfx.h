@@ -111,7 +111,7 @@ namespace GX
 		uint32_t scr_w = 640, scr_h = 480;
 
 		// perfomance counters
-		uint32_t frames = 0, tris = 0, pts = 0, lines = 0;
+		size_t frames = 0, tris = 0, pts = 0, lines = 0;
 
 		Vertex tri[3]{};		// triangle to be rendered
 
@@ -206,6 +206,8 @@ namespace GX
 
 #pragma region "Rasterizers"
 
+		bool ras_wireframe = false;			// Enable wireframe drawing of primitives (DEBUG)
+
 		RAS_Primitive last_prim{};
 		size_t ras_vtx_num{};
 		bool ras_use_texture = false;
@@ -222,8 +224,11 @@ namespace GX
 		LoadTlut0 loadtlut0;		// 0x64
 		LoadTlut1 loadtlut1;		// 0x65
 		TexMode0 texmode0[8];		// 0x80-0x83, 0xA0-0xA3
-		TEXIMAGE0 teximg0[8];		// 0x88-0x8B, 0xA8-0xAB
-		TEXIMAGE3 teximg3[8];		// 0x94-0x97, 0xB4-0xB7
+		TexMode1 texmode1[8];		// 0x84-0x87, 0xA4-0xA7
+		TexImage0 teximg0[8];		// 0x88-0x8B, 0xA8-0xAB
+		TexImage1 teximg1[8];		// 0x8C-0x8F, 0xAC-0xAF
+		TexImage2 teximg2[8];		// 0x90-0x93, 0xB0-0xB3
+		TexImage3 teximg3[8];		// 0x94-0x97, 0xB4-0xB7
 		SetTlut settlut[8];			// 0x98-0x9B, 0xB8-0xBB
 		bool texvalid[4][8];
 
