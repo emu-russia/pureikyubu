@@ -10,7 +10,7 @@
 
 static      TexEntry    tcache[MAX];
 static      unsigned    tptr;
-static      UINT        texlist[MAX+1];     // gl texture list (0 entry reserved)
+static      GLuint      texlist[MAX+1];     // gl texture list (0 entry reserved)
 static      uint8_t     tlut[1024 * 1024];  // temporary TLUT buffer
 
 TexEntry    *tID[8];                        // texture unit bindings
@@ -46,6 +46,7 @@ namespace GX
 
     void GXCore::DumpTexture(Color* rgbaBuf, uint32_t addr, int fmt, int width, int height)
     {
+#ifdef _WINDOWS
         char    path[256];
         FILE* f;
         uint8_t      hdr[14 + 40];   // bmp header
@@ -90,6 +91,7 @@ namespace GX
         }
 
         fclose(f);
+#endif // _WINDOWS
     }
 
     void GXCore::GetTlutCol(Color* c, unsigned id, unsigned entry)

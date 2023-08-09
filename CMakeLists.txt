@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 2.8)
 project (pureikyubu)
 
 # Choose an X86/X64 build
@@ -72,4 +72,7 @@ add_executable (pureikyubu
 
 target_link_libraries (pureikyubu LINK_PUBLIC fmt)
 find_package (Threads)
-target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT})
+find_package(OpenGL REQUIRED)
+include_directories( ${OPENGL_INCLUDE_DIRS}  ${GLUT_INCLUDE_DIRS} )
+
+target_link_libraries (pureikyubu ${CMAKE_THREAD_LIBS_INIT} ${OPENGL_LIBRARIES} ${GLUT_LIBRARY})
