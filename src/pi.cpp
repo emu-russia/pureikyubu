@@ -505,11 +505,7 @@ void PIAssertInt(uint32_t mask)
 		}
 	}
 
-#ifdef _LINUX
-	PIInterruptSource intSource = (PIInterruptSource)(31 - __builtin_clz(mask));
-#else
-	PIInterruptSource intSource = (PIInterruptSource)(31 - __lzcnt(mask));
-#endif
+	PIInterruptSource intSource = (PIInterruptSource)(31 - CNTLZ(mask));
 	pi.intCounters[(size_t)intSource]++;
 
 	if (pi.intsr & pi.intmr)

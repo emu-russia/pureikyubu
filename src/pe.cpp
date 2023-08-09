@@ -179,14 +179,14 @@ namespace GX
 			snap_file = NULL;
 		}
 		snap_file = fopen(path, "wb");
-		if (snap_file) make_shot = TRUE;
+		if (snap_file) make_shot = true;
 	}
 
 	// make small snapshot for savestate
 	// new size 160x120
 	void GXCore::GL_SaveBitmap(uint8_t* buf)
 	{
-		GL_DoSnapshot(TRUE, NULL, buf, 160, 120);
+		GL_DoSnapshot(true, NULL, buf, 160, 120);
 	}
 
 }

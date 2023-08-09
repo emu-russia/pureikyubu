@@ -397,7 +397,4 @@ struct UserWindow
 
 extern UserWindow wnd;
 
-extern Debug::DspDebug* dspDebug;
-extern Debug::GekkoDebug* gekkoDebug;
-
 #endif // _WINDOWS

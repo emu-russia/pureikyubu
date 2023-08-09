@@ -478,6 +478,10 @@ namespace Debug
 		void SetDisasmCursor(uint32_t virtualAddress);
 
 	};
-
 }
 
+namespace Debug
+{
+	extern DspDebug* dspDebug;
+	extern GekkoDebug* gekkoDebug;
+}

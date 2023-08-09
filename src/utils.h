@@ -173,3 +173,10 @@ namespace Util
 #define _BYTESWAP_UINT64 __bswap_64
 
 #endif
+
+
+#ifdef _LINUX
+#define CNTLZ(mask) __builtin_clz(mask)
+#else
+#define CNTLZ(mask) __lzcnt(mask)
+#endif

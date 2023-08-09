@@ -5,6 +5,12 @@
 
 namespace Debug
 {
+	DspDebug* dspDebug;
+	GekkoDebug* gekkoDebug;
+}
+
+namespace Debug
+{
 	// Make it global so that the message history is saved for the entire lifetime of the application.
 	static std::vector<std::pair<CuiColor, std::string>> history;
 

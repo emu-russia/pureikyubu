@@ -3178,9 +3178,9 @@ static void doubleclick()
 
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		gekkoDebug->InvalidateAll();
+		Debug::gekkoDebug->InvalidateAll();
 	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
@@ -3909,9 +3909,6 @@ void EditFileFilter(HWND hwnd)
 /* All important data is placed here */
 UserWindow wnd;
 
-Debug::DspDebug* dspDebug;
-Debug::GekkoDebug* gekkoDebug;
-
 /* ---------------------------------------------------------------------------  */
 /* Statusbar                                                                    */
 
@@ -4145,9 +4142,9 @@ void LoadRecentFile(int index)
 	std::wstring path = GetRecentEntry((RecentNum+1) - index);
 	UI::Jdi->Unload();
 	UI::Jdi->LoadFile(Util::WstringToString(path));
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		gekkoDebug->InvalidateAll();
+		Debug::gekkoDebug->InvalidateAll();
 	}
 	OnMainWindowOpened(path.c_str());
 	UI::Jdi->Run();
@@ -4257,7 +4254,7 @@ static void OnMainWindowCreate(HWND hwnd)
 	CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
 	if (UI::Jdi->GetConfigBool(USER_DOLDEBUG, USER_UI))
 	{
-		gekkoDebug = new Debug::GekkoDebug();
+		Debug::gekkoDebug = new Debug::GekkoDebug();
 		CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
 	}
 
@@ -4322,14 +4319,14 @@ static void OnMainWindowDestroy()
 	// disable drop operation
 	DragAcceptFiles(wnd.hMainWindow, FALSE);
 
-	if (gekkoDebug)
+	if (Debug::gekkoDebug)
 	{
-		delete gekkoDebug;
+		delete Debug::gekkoDebug;
 	}
 
-	if (dspDebug)
+	if (Debug::dspDebug)
 	{
-		delete dspDebug;
+		delete Debug::dspDebug;
 	}
 
 	UI::Jdi->ExecuteCommand("exit");
@@ -4571,9 +4568,9 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 					loadFile:
 					
 						UI::Jdi->LoadFile(Util::WstringToString(name));
-						if (gekkoDebug)
+						if (Debug::gekkoDebug)
 						{
-							gekkoDebug->InvalidateAll();
+							Debug::gekkoDebug->InvalidateAll();
 						}
 						OnMainWindowOpened(name.c_str());
 						UI::Jdi->Run();
@@ -4607,13 +4604,13 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				{
 					UI::Jdi->LoadFile("Bootrom");
 					OnMainWindowOpened(L"Bootrom");
-					if (gekkoDebug == nullptr)
+					if (Debug::gekkoDebug == nullptr)
 					{
 						UI::Jdi->Run();
 					}
 					else
 					{
-						gekkoDebug->SetDisasmCursor(0xfff0'0100);
+						Debug::gekkoDebug->SetDisasmCursor(0xfff0'0100);
 					}
 					return 0;
 				}
@@ -4798,25 +4795,25 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				// Open/close system-wide debugger
 				case ID_DEBUG_CONSOLE:
 				{
-					if (dspDebug)
+					if (Debug::dspDebug)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-						delete dspDebug;
-						dspDebug = nullptr;
+						delete Debug::dspDebug;
+						Debug::dspDebug = nullptr;
 					}
 
-					if (gekkoDebug == nullptr)
+					if (Debug::gekkoDebug == nullptr)
 					{   // open
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_CHECKED);
-						gekkoDebug = new Debug::GekkoDebug();
+						Debug::gekkoDebug = new Debug::GekkoDebug();
 						UI::Jdi->SetConfigBool(USER_DOLDEBUG, true, USER_UI);
 						SetStatusText(STATUS_ENUM::Progress, L"Debugger opened");
 					}
 					else
 					{   // close
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-						delete gekkoDebug;
-						gekkoDebug = nullptr;
+						delete Debug::gekkoDebug;
+						Debug::gekkoDebug = nullptr;
 						UI::Jdi->SetConfigBool(USER_DOLDEBUG, false, USER_UI);
 						SetStatusText(STATUS_ENUM::Progress, L"Debugger closed");
 					}
@@ -4825,24 +4822,24 @@ static LRESULT CALLBACK WindowProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lP
 				// Open/close DSP Debug
 				case ID_DSP_DEBUG:
 				{
-					if (gekkoDebug)
+					if (Debug::gekkoDebug)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DEBUG_CONSOLE, MF_BYCOMMAND | MF_UNCHECKED);
-						delete gekkoDebug;
-						gekkoDebug = nullptr;
+						delete Debug::gekkoDebug;
+						Debug::gekkoDebug = nullptr;
 					}
 
-					if (dspDebug == nullptr)
+					if (Debug::dspDebug == nullptr)
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_CHECKED);
-						dspDebug = new Debug::DspDebug();
+						Debug::dspDebug = new Debug::DspDebug();
 						SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger opened");
 					}
 					else
 					{
 						CheckMenuItem(wnd.hMainMenu, ID_DSP_DEBUG, MF_BYCOMMAND | MF_UNCHECKED);
-						delete dspDebug;
-						dspDebug = nullptr;
+						delete Debug::dspDebug;
+						Debug::dspDebug = nullptr;
 						SetStatusText(STATUS_ENUM::Progress, L"DSP Debugger closed");
 					}
 					return 0;

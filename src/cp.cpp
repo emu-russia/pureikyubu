@@ -1255,7 +1255,7 @@ namespace GX
 	{
 		uint32_t address = state.cp.arrayBase[(size_t)arrayId].Base + 
 			(uint32_t)idx * state.cp.arrayStride[(size_t)arrayId].Stride;
-		return MIGetMemoryPointerForVertexArray(address);
+		return MIGetMemoryPointerForCP(address);
 	}
 
 	void GXCore::FetchComp(float* comp, int count, int type, int fmt, int shft, FifoProcessor* gxfifo, ArrayId arrayId)
