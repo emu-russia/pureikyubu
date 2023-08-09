@@ -19,8 +19,7 @@ static void (*hw_write32[0x10000])(uint32_t, uint32_t);
 // Interface for accessing memory and memory-mapped registers from the processor side.
 // For more details see Docs/HW/ProcessorInterface.md
 
-// In previous versions, this functionality was mistakenly located in the MI module.
-// After a sufficient study of architecture, it became clear that, in fact, it belongs here.
+// Actually, all memory errors should generate a PI interrupt, but we keep it simple and just output debug messages.
 
 void PIReadByte(uint32_t pa, uint32_t* reg)
 {
@@ -61,6 +60,7 @@ void PIReadByte(uint32_t pa, uint32_t* reg)
 	}
 	else
 	{
+		Report(Channel::PI, "Unmapped memory read byte: 0x%08X\n", pa);
 		*reg = 0;
 	}
 }
@@ -91,6 +91,10 @@ void PIWriteByte(uint32_t pa, uint32_t data)
 	{
 		ptr = &mi.ram[pa];
 		*ptr = (uint8_t)data;
+	}
+	else
+	{
+		Report(Channel::PI, "Unmapped memory write byte: 0x%08X\n", pa);
 	}
 }
 
@@ -133,6 +137,7 @@ void PIReadHalf(uint32_t pa, uint32_t* reg)
 	}
 	else
 	{
+		Report(Channel::PI, "Unmapped memory read uint16: 0x%08X\n", pa);
 		*reg = 0;
 	}
 }
@@ -163,6 +168,10 @@ void PIWriteHalf(uint32_t pa, uint32_t data)
 	{
 		ptr = &mi.ram[pa];
 		*(uint16_t*)ptr = _BYTESWAP_UINT16((uint16_t)data);
+	}
+	else
+	{
+		Report(Channel::PI, "Unmapped memory write uint16: 0x%08X\n", pa);
 	}
 }
 
@@ -212,6 +221,7 @@ void PIReadWord(uint32_t pa, uint32_t* reg)
 		return;
 	}
 
+	Report(Channel::PI, "Unmapped memory read word: 0x%08X\n", pa);
 	*reg = 0;
 }
 
@@ -249,6 +259,10 @@ void PIWriteWord(uint32_t pa, uint32_t data)
 		ptr = &mi.ram[pa];
 		*(uint32_t*)ptr = _BYTESWAP_UINT32(data);
 	}
+	else
+	{
+		Report(Channel::PI, "Unmapped memory write word: 0x%08X\n", pa);
+	}
 }
 
 //
@@ -259,11 +273,13 @@ void PIReadDouble(uint32_t pa, uint64_t* reg)
 {
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
-		assert(true);
+		Halt("PI: Attempting to read uint64_t from BootROM\n");
+		return;
 	}
 
 	if (pa >= RAMSIZE || mi.ram == nullptr)
 	{
+		Report(Channel::PI, "Unmapped memory read uint64: 0x%08X\n", pa);
 		*reg = 0;
 		return;
 	}
@@ -278,11 +294,13 @@ void PIWriteDouble(uint32_t pa, uint64_t* data)
 {
 	if (pa >= BOOTROM_START_ADDRESS)
 	{
+		Halt("PI: Attempting to write uint64_t to BootROM\n");
 		return;
 	}
 
 	if (pa >= RAMSIZE || mi.ram == nullptr)
 	{
+		Report(Channel::PI, "Unmapped memory write uint64: 0x%08X\n", pa);
 		return;
 	}
 
@@ -294,22 +312,27 @@ void PIWriteDouble(uint32_t pa, uint64_t* data)
 
 void PIReadBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
-	if ((phys_addr + 32) > RAMSIZE)
+	if ((phys_addr + 32) > RAMSIZE) {
+		Halt("PI: Unmapped read burst\n");
 		return;
+	}
 
 	memcpy(burstData, &mi.ram[phys_addr], 32);
 }
 
 void PIWriteBurst(uint32_t phys_addr, uint8_t burstData[32])
 {
+	// You can actually write anywhere on the page, but no one does that, so here's a simplified check.
 	if (phys_addr == PI_REGSPACE_GX_FIFO)
 	{
 		Flipper::Gx->FifoWriteBurst(burstData);
 		return;
 	}
 
-	if ((phys_addr + 32) > RAMSIZE)
+	if ((phys_addr + 32) > RAMSIZE) {
+		Halt("PI: Unmapped write burst\n");
 		return;
+	}
 
 	memcpy(&mi.ram[phys_addr], burstData, 32);
 }

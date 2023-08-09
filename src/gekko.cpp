@@ -108,7 +108,7 @@ namespace Gekko
 		regs.tb.uval += CounterStep;         // timer
 
 		uint32_t old = regs.spr[SPR::DEC];
-		regs.spr[SPR::DEC]--;          // decrementer
+		regs.spr[SPR::DEC] -= DecrementerStep;          // decrementer
 		if ((old ^ regs.spr[SPR::DEC]) & 0x80000000)
 		{
 			if (regs.msr & MSR_EE)

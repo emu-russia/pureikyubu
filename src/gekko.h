@@ -587,6 +587,7 @@ namespace Gekko
 		// Ideally, 1 instruction is executed in 1 tick. But it is unlikely that at the current level it is possible to achieve the performance of 486 MIPS.
 		// Therefore, we are a little tricky and "slow down" the work of the emulated processor (we make several ticks per 1 instruction).
 		static const int CounterStep = 2;
+		static const int DecrementerStep = 1;
 
 		Thread* gekkoThread = nullptr;
 		static void GekkoThreadProc(void* Parameter);
